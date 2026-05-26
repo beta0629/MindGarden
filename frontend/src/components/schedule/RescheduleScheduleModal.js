@@ -15,6 +15,7 @@ import {
 import ScheduleTimeSelectionPanel from './ScheduleTimeSelectionPanel';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
+import { useTranslation } from 'react-i18next';
 
 const TITLE = '예약 변경';
 const LABEL_DATE = '날짜';
@@ -90,6 +91,7 @@ const RescheduleScheduleModal = ({
   events = [],
   onSuccess
 }) => {
+  const { t } = useTranslation();
   const [dateStr, setDateStr] = useState('');
   const [consultationType, setConsultationType] = useState('INDIVIDUAL');
   const [selectedDuration, setSelectedDuration] = useState(DEFAULT_DURATION_CODE);
@@ -200,7 +202,7 @@ const RescheduleScheduleModal = ({
       onClose?.();
     } catch (e) {
       console.error('예약 변경 실패:', e);
-      notificationManager.error(e?.message || '예약 변경에 실패했습니다.');
+      notificationManager.error(e?.message || t('schedule:RescheduleScheduleModal.t_a1423935'));
     } finally {
       setSaving(false);
     }

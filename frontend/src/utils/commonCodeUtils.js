@@ -1,6 +1,7 @@
 import { apiGet } from './ajax';
 import { getCommonCodes as getCommonCodesStandard } from './commonCodeApi';
 import { COMMON_CODE_API } from '../constants/api';
+import i18n from '../i18n';
 
 /**
  * 공통 코드 관련 유틸리티 함수들
@@ -151,10 +152,10 @@ export const getGradeKoreanName = async(grade) => {
         console.error(`등급 한글명 조회 실패 (${grade}):`, error);
         // 기본값 반환
         const defaultMap = {
-            'CONSULTANT_JUNIOR': '주니어 상담사',
-            'CONSULTANT_SENIOR': '시니어 상담사',
-            'CONSULTANT_EXPERT': '엑스퍼트 상담사',
-            'CONSULTANT_MASTER': '마스터 상담사'
+            'CONSULTANT_JUNIOR': i18n.t('common:utils.commonCodeUtils.t_5b834c7d'),
+            'CONSULTANT_SENIOR': i18n.t('common:utils.commonCodeUtils.t_013f6666'),
+            'CONSULTANT_EXPERT': i18n.t('common:utils.commonCodeUtils.t_23af2a01'),
+            'CONSULTANT_MASTER': i18n.t('common:utils.commonCodeUtils.t_befb1541')
         };
         return defaultMap[grade] || grade;
     }
@@ -246,13 +247,13 @@ export const getPackageOptions = async() => {
             // 패키지별 라벨 생성
             let label;
             if (code.codeValue === 'BASIC') {
-                label = '기본 패키지';
+                label = i18n.t('common:utils.commonCodeUtils.t_abbbd087');
             } else if (code.codeValue === 'STANDARD') {
-                label = '표준 패키지';
+                label = i18n.t('common:utils.commonCodeUtils.t_4af5ee37');
             } else if (code.codeValue === 'PREMIUM') {
-                label = '프리미엄 패키지';
+                label = i18n.t('common:utils.commonCodeUtils.t_86857e94');
             } else if (code.codeValue === 'VIP') {
-                label = 'VIP 패키지';
+                label = i18n.t('common:utils.commonCodeUtils.t_551ef423');
             } else if (code.codeValue.startsWith('SINGLE_')) {
                 // SINGLE_ 패키지는 코드값 그대로 사용 (SINGLE_30000, SINGLE_35000 등)
                 label = code.codeValue;
@@ -275,11 +276,11 @@ export const getPackageOptions = async() => {
         console.error('패키지 옵션 조회 실패:', error);
         // 기본값 반환
         return [
-            { value: 'BASIC', label: '기본 패키지 (20회기, 200,000원)', sessions: 20, price: 200000 },
-            { value: 'STANDARD', label: '표준 패키지 (20회기, 400,000원)', sessions: 20, price: 400000 },
-            { value: 'PREMIUM', label: '프리미엄 패키지 (20회기, 600,000원)', sessions: 20, price: 600000 },
-            { value: 'VIP', label: 'VIP 패키지 (20회기, 1,000,000원)', sessions: 20, price: 1000000 },
-            { value: 'SINGLE_30000', label: '단회기 (30,000원)', sessions: 1, price: 30000 }
+            { value: 'BASIC', label: i18n.t('common:utils.commonCodeUtils.t_4939184d'), sessions: 20, price: 200000 },
+            { value: 'STANDARD', label: i18n.t('common:utils.commonCodeUtils.t_fe2fd9b9'), sessions: 20, price: 400000 },
+            { value: 'PREMIUM', label: i18n.t('common:utils.commonCodeUtils.t_ffb0f4c9'), sessions: 20, price: 600000 },
+            { value: 'VIP', label: i18n.t('common:utils.commonCodeUtils.t_2e74e850'), sessions: 20, price: 1000000 },
+            { value: 'SINGLE_30000', label: i18n.t('common:utils.commonCodeUtils.t_4aecc83a'), sessions: 1, price: 30000 }
         ];
     }
 };

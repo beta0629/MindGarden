@@ -42,13 +42,13 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
       case 'currentPassword':
         if (!value.trim()) {
           isValid = false;
-          message = '현재 비밀번호를 입력해주세요.';
+          message = t('common:mypage.PasswordChangeModal.t_4ed21ecf');
         }
         break;
       case 'newPassword':
         if (!value.trim()) {
           isValid = false;
-          message = '새 비밀번호를 입력해주세요.';
+          message = t('common:mypage.PasswordChangeModal.t_b0bdea92');
         } else {
           const policyMsg = getFirstLoginPasswordViolationMessage(value);
           if (policyMsg) {
@@ -56,17 +56,17 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             message = policyMsg;
           } else if (value === currentPassword) {
             isValid = false;
-            message = '새 비밀번호는 현재 비밀번호와 달라야 합니다.';
+            message = t('common:mypage.PasswordChangeModal.t_89a14bed');
           }
         }
         break;
       case 'confirmPassword':
         if (!value.trim()) {
           isValid = false;
-          message = '비밀번호 확인을 입력해주세요.';
+          message = t('common:mypage.PasswordChangeModal.t_ecdaae18');
         } else if (value !== newPassword) {
           isValid = false;
-          message = '비밀번호 확인이 일치하지 않습니다.';
+          message = t('common:mypage.PasswordChangeModal.t_3b1a1c12');
         }
         break;
       default:
@@ -146,11 +146,11 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         confirmPassword: formData.confirmPassword
       });
       if (result && result.success) {
-        notificationManager.show('비밀번호가 변경되었습니다.', 'info');
+        notificationManager.show(t('common:mypage.PasswordChangeModal.t_3c574e69'), 'info');
         onSuccess?.();
         onClose();
       } else {
-        const msg = (result && result.message) || '비밀번호 변경에 실패했습니다.';
+        const msg = (result && result.message) || t('common:mypage.PasswordChangeModal.t_c88dfb0d');
         setSubmitError(msg);
         notificationManager.show(msg, 'error');
       }
@@ -177,7 +177,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title={tempPassword ? '임시 비밀번호 변경' : '비밀번호 변경'}
+      title={tempPassword ? '임시 비밀번호 변경' : t('common:mypage.PasswordChangeModal.t_4c7b9670')}
       size="medium"
       backdropClick={!tempPassword}
       showCloseButton={!tempPassword}
@@ -224,7 +224,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               aria-label="비밀번호 표시 전환"
               preventDoubleClick={false}
             >
-              {showPassword.current ? '숨김' : '표시'}
+              {showPassword.current ? '숨김' : t('common:mypage.PasswordChangeModal.t_a61d568e')}
             </MGButton>
           </div>
           {!validation.currentPassword.isValid ? (
@@ -266,7 +266,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               aria-label="비밀번호 표시 전환"
               preventDoubleClick={false}
             >
-              {showPassword.new ? '숨김' : '표시'}
+              {showPassword.new ? '숨김' : t('common:mypage.PasswordChangeModal.t_a61d568e')}
             </MGButton>
           </div>
           {!validation.newPassword.isValid ? (
@@ -311,7 +311,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               aria-label="비밀번호 표시 전환"
               preventDoubleClick={false}
             >
-              {showPassword.confirm ? '숨김' : '표시'}
+              {showPassword.confirm ? '숨김' : t('common:mypage.PasswordChangeModal.t_a61d568e')}
             </MGButton>
           </div>
           {!validation.confirmPassword.isValid ? (

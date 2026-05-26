@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 /**
  * 마이페이지 리뉴얼 UI 상수 (문구·탭 키)
  *
@@ -35,9 +36,9 @@ export const MYPAGE_TAB_LABELS = {
 };
 
 export const getSocialProviderLabel = (provider) => {
-  if (provider === 'KAKAO') return '카카오';
-  if (provider === 'NAVER') return '네이버';
-  return provider || '소셜';
+  if (provider === 'KAKAO') return i18n.t('common:constants.mypageUi.t_b8423e84');
+  if (provider === 'NAVER') return i18n.t('common:constants.mypageUi.t_4c2122fb');
+  return provider || i18n.t('common:constants.mypageUi.t_03f42e16');
 };
 
 /** 마이페이지 소셜 연동 콜백 URL에 message가 없을 때 토스트 기본 문구 */

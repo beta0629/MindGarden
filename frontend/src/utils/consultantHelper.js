@@ -52,16 +52,16 @@ export const formatConsultantGenderLabel = (gender) => {
   }
   const u = String(gender).trim().toUpperCase();
   if (u === 'MALE' || u === 'M') {
-    return '남성';
+    return i18n.t('common:utils.consultantHelper.t_90667e94');
   }
   if (u === 'FEMALE' || u === 'F') {
-    return '여성';
+    return i18n.t('common:utils.consultantHelper.t_def5b68e');
   }
-  if (u === '남' || u === '남성') {
-    return '남성';
+  if (u === i18n.t('common:utils.consultantHelper.t_fd3f3922') || u === i18n.t('common:utils.consultantHelper.t_90667e94')) {
+    return i18n.t('common:utils.consultantHelper.t_90667e94');
   }
-  if (u === '여' || u === '여성') {
-    return '여성';
+  if (u === i18n.t('common:utils.consultantHelper.t_445287d4') || u === i18n.t('common:utils.consultantHelper.t_def5b68e')) {
+    return i18n.t('common:utils.consultantHelper.t_def5b68e');
   }
   return String(gender).trim();
 };
@@ -142,9 +142,9 @@ export const getConsultantBadgeDisplay = (consultant) => {
   }
   const years = consultant?.yearsOfExperience ?? 0;
   const num = Number(years);
-  if (num >= 6) return { label: '시니어 상담사', level: 'senior' };
-  if (num >= 3) return { label: '매니어 상담사', level: 'manier' };
-  return { label: '주니어 상담사', level: 'junior' };
+  if (num >= 6) return { label: i18n.t('common:utils.consultantHelper.t_013f6666'), level: 'senior' };
+  if (num >= 3) return { label: i18n.t('common:utils.consultantHelper.t_97b944c7'), level: 'manier' };
+  return { label: i18n.t('common:utils.consultantHelper.t_5b834c7d'), level: 'junior' };
 };
 
 /**
@@ -176,10 +176,10 @@ export const getConsultantGradeStyles = async() => {
     } catch (error) {
         console.warn('상담사 등급 스타일 조회 실패, 기본값 사용:', error);
         return {
-            'CONSULTANT_JUNIOR': { color: 'var(--mg-warning-500)', icon: 'Star', label: '주니어 상담사' },
-            'CONSULTANT_SENIOR': { color: 'var(--mg-warning-500)', icon: 'Star', label: '시니어 상담사' },
-            'CONSULTANT_EXPERT': { color: 'var(--mg-warning-500)', icon: 'Star', label: '엑스퍼트 상담사' },
-            'CONSULTANT_MASTER': { color: 'var(--mg-error-600)', icon: 'Crown', label: '마스터 상담사' }
+            'CONSULTANT_JUNIOR': { color: 'var(--mg-warning-500)', icon: 'Star', label: i18n.t('common:utils.consultantHelper.t_5b834c7d') },
+            'CONSULTANT_SENIOR': { color: 'var(--mg-warning-500)', icon: 'Star', label: i18n.t('common:utils.consultantHelper.t_013f6666') },
+            'CONSULTANT_EXPERT': { color: 'var(--mg-warning-500)', icon: 'Star', label: i18n.t('common:utils.consultantHelper.t_23af2a01') },
+            'CONSULTANT_MASTER': { color: 'var(--mg-error-600)', icon: 'Crown', label: i18n.t('common:utils.consultantHelper.t_befb1541') }
         };
     }
 };
@@ -215,6 +215,7 @@ export const getConsultantWithStats = async(consultantId) => {
  * @returns {Promise<Array>} 상담사 목록 + 통계 정보
  */
 import StandardizedApi from './standardizedApi';
+import i18n from '../i18n';
 
 export const getAllConsultantsWithStats = async() => {
     try {
@@ -253,7 +254,7 @@ export const getAllConsultantsWithStats = async() => {
                         email: user?.email,
                         role: user?.role
                     });
-                    throw new Error('tenantId를 가져올 수 없습니다. 세션을 확인해주세요.');
+                    throw new Error(i18n.t('common:utils.consultantHelper.t_b393bf27'));
                 }
             }
             
@@ -305,9 +306,9 @@ export const formatConsultantClientCount = (consultant) => {
     const max = consultant.maxClients || 0;
     
     if (max > 0) {
-        return `${current}/${max}명`;
+        return i18n.t('common:utils.consultantHelper.t_3b0a6d32');
     }
-    return `${current}명`;
+    return i18n.t('common:utils.consultantHelper.t_ecb515b1');
 };
 
 /**

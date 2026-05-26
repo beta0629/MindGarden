@@ -350,12 +350,12 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     const ms = clientStatus?.mappingStatus;
     const badges = [];
     if (ms === 'PENDING') {
-      badges.push({ key: 'match', className: 'mg-v2-status-badge mg-v2-badge--info', label: '진행 중인 매칭' });
+      badges.push({ key: 'match', className: 'mg-v2-status-badge mg-v2-badge--info', label: t('common:client.ClientDashboard.t_7be8ada9') });
     } else if (ms === 'ACTIVE') {
-      badges.push({ key: 'active', className: 'mg-v2-status-badge mg-v2-badge--success', label: '상담 진행 중' });
+      badges.push({ key: 'active', className: 'mg-v2-status-badge mg-v2-badge--success', label: t('common:client.ClientDashboard.t_07de2f32') });
     }
     if (clientStatus?.paymentStatus === 'PENDING') {
-      badges.push({ key: 'pay', className: 'mg-v2-status-badge mg-v2-badge--warning', label: '결제 확인 필요' });
+      badges.push({ key: 'pay', className: 'mg-v2-status-badge mg-v2-badge--warning', label: t('common:client.ClientDashboard.t_db16bb78') });
     }
     return badges;
   }, [clientStatus]);
@@ -368,17 +368,17 @@ const ClientDashboard = ({ user: userFromRoute }) => {
   const coreConsultationSummary = useMemo(() => {
     const ms = clientStatus?.mappingStatus;
     if (ms === 'PENDING') {
-      return '상담사 배정·매칭을 준비 중입니다. 안내가 오면 일정을 확인해 주세요.';
+      return t('common:client.ClientDashboard.t_d7f3f1d4');
     }
     if (primaryActiveMapping) {
       const namePart = primaryActiveMapping.consultantName
         ? `${toDisplayString(primaryActiveMapping.consultantName, '')} 상담사 · `
         : '';
-      const pkg = toDisplayString(primaryActiveMapping.packageName, '상담 패키지');
+      const pkg = toDisplayString(primaryActiveMapping.packageName, t('common:client.ClientDashboard.t_17cef764'));
       const rem = primaryActiveMapping.remainingSessions ?? 0;
-      return `${namePart}${pkg} · 남은 회기 ${rem}회`;
+      return t('common:client.ClientDashboard.t_d23413ca');
     }
-    return '진행 중인 상담 매칭이 없습니다. 일정·문의는 메시지로 연결할 수 있어요.';
+    return t('common:client.ClientDashboard.t_6d8a0e47');
   }, [clientStatus, primaryActiveMapping]);
 
   const pageShell = (body) => (
@@ -410,9 +410,9 @@ const ClientDashboard = ({ user: userFromRoute }) => {
 
   const getGreetingPrefix = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return '좋은 아침이에요';
-    if (hour < 18) return '좋은 오후에요';
-    return '좋은 저녁이에요';
+    if (hour < 12) return t('common:client.ClientDashboard.t_69c40d10');
+    if (hour < 18) return t('common:client.ClientDashboard.t_2f3e0450');
+    return t('common:client.ClientDashboard.t_c626e85b');
   };
 
   const handleCustomerSupportClick = () => {
@@ -474,7 +474,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                           담당 상담사 · <SafeText>{primaryActiveMapping.consultantName}</SafeText>
                         </>
                       ) : (
-                        '담당 상담사 · 배정 전'
+                        t('common:client.ClientDashboard.t_e85b3406')
                       )}
                     </span>
                   </div>
@@ -526,14 +526,14 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                                 : 'mg-v2-status-badge mg-v2-badge--neutral'
                             }
                           >
-                            {idx === 0 ? '다음 일정' : '예정'}
+                            {idx === 0 ? '다음 일정' : t('common:client.ClientDashboard.t_7ba9542c')}
                           </span>
                           <time className="client-dash__time" dateTime={schedule.date}>
                             {formatScheduleCardDateTime(schedule)}
                           </time>
                         </div>
                         <h3 id={`client-dash-action-${idx}`} className="client-dash__card-title">
-                          <SafeText>{schedule.title || '상담 일정'}</SafeText>
+                          <SafeText>{schedule.title || t('common:client.ClientDashboard.t_4968e29c')}</SafeText>
                         </h3>
                         <p className="client-dash__card-text">
                           장소·링크 정보는 일정 화면에서 확인할 수 있어요.
@@ -595,7 +595,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                   {
                     id: 'remainingSessions',
                     icon: <Heart size={28} aria-hidden />,
-                    label: '남은 회기',
+                    label: t('common:client.ClientDashboard.t_e9792c10'),
                     value: toSafeNumber(consultationData.remainingSessions),
                     iconVariant: 'gray',
                     onClick: () => navigate('/client/session-management')
@@ -603,7 +603,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                   {
                     id: 'thisMonthConsultations',
                     icon: <Calendar size={28} aria-hidden />,
-                    label: '이번 달 상담',
+                    label: t('common:client.ClientDashboard.t_4af64dc5'),
                     value: toSafeNumber(consultationData.thisMonthScheduleCount),
                     iconVariant: 'blue',
                     onClick: () => navigate('/client/schedule')
@@ -611,7 +611,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
                   {
                     id: 'unreadMessages',
                     icon: <Bell size={28} aria-hidden />,
-                    label: '읽지 않은 메시지',
+                    label: t('common:client.ClientDashboard.t_83cce32e'),
                     value: toSafeNumber(unreadMessageCount),
                     iconVariant: 'orange',
                     subtitleBadge: toSafeNumber(unreadMessageCount) > 0 ? '새 소식' : null,

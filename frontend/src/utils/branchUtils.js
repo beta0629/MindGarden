@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 /**
  * 지점 관련 유틸리티 함수들
 /**
@@ -31,14 +32,14 @@
  */
 export const getBranchNameByCode = (branchCode) => {
     const branchNameMap = {
-        'MAIN001': '본점',
-        'HQ': '본사',
-        'GANGNAM': '강남점',
-        'HONGDAE': '홍대점',
-        'JAMSIL': '잠실점',
-        'SINCHON': '신촌점',
-        'SONGDO': '인천송도점',
-        'UIJUNGBU': '의정부점'
+        'MAIN001': i18n.t('common:utils.branchUtils.t_42b4455c'),
+        'HQ': i18n.t('common:utils.branchUtils.t_1c966608'),
+        'GANGNAM': i18n.t('common:utils.branchUtils.t_aef85490'),
+        'HONGDAE': i18n.t('common:utils.branchUtils.t_4c56952f'),
+        'JAMSIL': i18n.t('common:utils.branchUtils.t_470661e8'),
+        'SINCHON': i18n.t('common:utils.branchUtils.t_1b63f63d'),
+        'SONGDO': i18n.t('common:utils.branchUtils.t_19f07fa5'),
+        'UIJUNGBU': i18n.t('common:utils.branchUtils.t_5763e01c')
     };
     
     return branchNameMap[branchCode] || branchCode;
@@ -113,10 +114,10 @@ export const isValidBranchCode = (branchCode) => {
  */
 export const getBranchTypeName = (branchType) => {
     const typeMap = {
-        'MAIN': '본사',
-        'FRANCHISE': '가맹점',
-        'DIRECT': '직영점',
-        'PARTNER': '파트너'
+        'MAIN': i18n.t('common:utils.branchUtils.t_1c966608'),
+        'FRANCHISE': i18n.t('common:utils.branchUtils.t_0ed3337d'),
+        'DIRECT': i18n.t('common:utils.branchUtils.t_5ff158b6'),
+        'PARTNER': i18n.t('common:utils.branchUtils.t_46dc11e9')
     };
     
     return typeMap[branchType] || branchType;
@@ -135,14 +136,14 @@ export const getBranchTypeName = (branchType) => {
  */
 export const getBranchStatusName = (branchStatus) => {
     const statusMap = {
-        'PLANNING': '계획',
-        'PREPARING': '준비중',
+        'PLANNING': i18n.t('common:utils.branchUtils.t_a0264f75'),
+        'PREPARING': i18n.t('common:utils.branchUtils.t_cb22883c'),
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'ACTIVE': '활성',
+        'ACTIVE': i18n.t('common:utils.branchUtils.t_6a2123a3'),
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'SUSPENDED': '중단',
+        'SUSPENDED': i18n.t('common:utils.branchUtils.t_d2e7e7b0'),
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        'CLOSED': '폐점'
+        'CLOSED': i18n.t('common:utils.branchUtils.t_74479f35')
     };
     
     return statusMap[branchStatus] || branchStatus;

@@ -111,11 +111,11 @@ const FinancialTransactionForm = ({
       if (response.ok && body.success) {
         setCommonCodes(body.data);
       } else {
-        setError(body.message || '공통 코드를 불러오는데 실패했습니다.');
+        setError(body.message || t('erp:FinancialTransactionForm.t_1c08ebb9'));
       }
     } catch (err) {
       console.error('공통 코드 로드 실패:', err);
-      setError('공통 코드를 불러오는데 실패했습니다.');
+      setError(t('erp:FinancialTransactionForm.t_1c08ebb9'));
     } finally {
       setLoadingCodes(false);
     }
@@ -145,39 +145,39 @@ const FinancialTransactionForm = ({
     const normalizedAmount = rawAmount.replace(/,/g, '').trim();
 
     if (!transactionType) {
-      const msg = '거래 유형을 선택해 주세요.';
+      const msg = t('erp:FinancialTransactionForm.t_f108b48b');
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
       return;
     }
     if (!category) {
-      const msg = '카테고리를 선택해 주세요.';
+      const msg = t('erp:FinancialTransactionForm.t_f0820885');
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
       return;
     }
     if (!normalizedAmount) {
-      const msg = '금액을 입력해 주세요.';
+      const msg = t('erp:FinancialTransactionForm.t_81281005');
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
       return;
     }
     const amount = Number(normalizedAmount);
     if (!Number.isFinite(amount) || amount < 0) {
-      const msg = '금액은 0 이상의 유효한 숫자로 입력해 주세요.';
+      const msg = t('erp:FinancialTransactionForm.t_75c74865');
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
       return;
     }
     if (!transactionDate) {
-      const msg = '거래일을 입력해 주세요.';
+      const msg = t('erp:FinancialTransactionForm.t_d01ebea8');
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
       return;
     }
 
     if (isApprovedReadOnly) {
-      const msg = '승인된 거래는 수정할 수 없습니다.';
+      const msg = t('erp:FinancialTransactionForm.t_3f717d2e');
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
       return;
@@ -185,7 +185,7 @@ const FinancialTransactionForm = ({
 
     const tenantIdResolved = await getTenantId(true);
     if (!tenantIdResolved || !String(tenantIdResolved).trim()) {
-      const msg = '테넌트 정보를 확인할 수 없습니다. 다시 로그인한 뒤 시도해 주세요.';
+      const msg = t('erp:FinancialTransactionForm.t_1092fe69');
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
       return;
@@ -243,19 +243,19 @@ const FinancialTransactionForm = ({
           ERP_API.FINANCE_TRANSACTION_BY_ID(initialTransaction.id),
           payload
         );
-        setSuccessMessage('수정되었습니다.');
-        notificationManager.show('거래가 수정되었습니다.', 'success', 3000);
+        setSuccessMessage(t('erp:FinancialTransactionForm.t_9b968290'));
+        notificationManager.show(t('erp:FinancialTransactionForm.t_c9b9eb43'), 'success', 3000);
         onSuccess?.(data);
         onClose?.();
       } else {
         const data = await StandardizedApi.post(ERP_API.FINANCE_TRANSACTIONS, payload);
-        setSuccessMessage('등록되었습니다. 수입/지출에 자동 반영됩니다.');
-        notificationManager.show('수입/지출이 등록되었습니다.', 'success', 3000);
+        setSuccessMessage(t('erp:FinancialTransactionForm.t_b1a934f2'));
+        notificationManager.show(t('erp:FinancialTransactionForm.t_7ac94417'), 'success', 3000);
         onSuccess?.(data);
         onClose?.();
       }
     } catch (err) {
-      const msg = err?.message || (mode === 'edit' ? '거래 수정 중 오류가 발생했습니다.' : '거래 등록 중 오류가 발생했습니다.');
+      const msg = err?.message || (mode === 'edit' ? '거래 수정 중 오류가 발생했습니다.' : t('erp:FinancialTransactionForm.t_fd91d864'));
       setError(msg);
       notificationManager.show(msg, 'error', 4000);
     } finally {
@@ -294,7 +294,7 @@ const FinancialTransactionForm = ({
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title={mode === 'edit' ? '거래 수정' : '수입/지출 등록'}
+      title={mode === 'edit' ? '거래 수정' : t('erp:FinancialTransactionForm.t_84c4996a')}
       size="medium"
       backdropClick={true}
       showCloseButton={true}
@@ -370,7 +370,7 @@ const FinancialTransactionForm = ({
                 subcategory: ''
               }))}
               options={[
-                { value: '', label: '카테고리를 선택하세요' },
+                { value: '', label: t('erp:FinancialTransactionForm.t_8289d31e') },
                 ...currentCategories.map(category => ({
                   value: category.codeValue,
                   label: category.codeLabel
@@ -400,7 +400,7 @@ const FinancialTransactionForm = ({
               value={formData.subcategory}
               onChange={(val) => setFormData(prev => ({ ...prev, subcategory: val }))}
               options={[
-                { value: '', label: '세부 카테고리를 선택하세요' },
+                { value: '', label: t('erp:FinancialTransactionForm.t_ae1beb82') },
                 ...filteredSubcategories.map(subcategory => ({
                   value: subcategory.codeValue,
                   label: subcategory.codeLabel
@@ -579,7 +579,7 @@ const FinancialTransactionForm = ({
               preventDoubleClick={false}
               disabled={isApprovedReadOnly}
             >
-              {mode === 'edit' ? '저장하기' : '등록하기'}
+              {mode === 'edit' ? '저장하기' : t('erp:FinancialTransactionForm.t_8c04ab88')}
             </MGButton>
           </div>
         </form>

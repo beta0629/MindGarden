@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './NotificationCenter.css';
+import i18n from '../../i18n';
+import { useTranslation } from 'react-i18next';
 
 const API_ENDPOINT = '/api/v1/system-notifications';
 
@@ -41,16 +43,16 @@ const EMPTY_DESC = '새 알림이 도착하면 여기에 표시됩니다';
 const SWIPE_THRESHOLD = 60;
 
 const getTimeGroup = (dateString) => {
-  if (!dateString) return '이전';
+  if (!dateString) return i18n.t('common:common.NotificationCenter.t_dc03452e');
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now - date;
   const diffDay = Math.floor(diffMs / 86400000);
 
-  if (diffDay === 0 && date.toDateString() === now.toDateString()) return '오늘';
-  if (diffDay <= 1) return '어제';
-  if (diffDay <= 7) return '이번주';
-  return '이전';
+  if (diffDay === 0 && date.toDateString() === now.toDateString()) return i18n.t('common:common.NotificationCenter.t_2bdce5e8');
+  if (diffDay <= 1) return i18n.t('common:common.NotificationCenter.t_476b58b7');
+  if (diffDay <= 7) return i18n.t('common:common.NotificationCenter.t_1b9a365a');
+  return i18n.t('common:common.NotificationCenter.t_dc03452e');
 };
 
 const formatNotifTime = (dateString) => {
@@ -61,9 +63,9 @@ const formatNotifTime = (dateString) => {
   const diffMin = Math.floor(diffMs / 60000);
   const diffHour = Math.floor(diffMs / 3600000);
 
-  if (diffMin < 1) return '방금';
-  if (diffMin < 60) return `${diffMin}분 전`;
-  if (diffHour < 24) return `${diffHour}시간 전`;
+  if (diffMin < 1) return i18n.t('common:common.NotificationCenter.t_aec5ef39');
+  if (diffMin < 60) return i18n.t('common:common.NotificationCenter.t_96b0d060');
+  if (diffHour < 24) return i18n.t('common:common.NotificationCenter.t_310782ab');
 
   return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
@@ -72,6 +74,7 @@ const NotificationCenter = ({
   currentUserId,
   themeVariant = 'client'
 }) => {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('ALL');
@@ -207,7 +210,7 @@ const NotificationCenter = ({
           </div>
           <div className="mg-notif-center__content">
             <h4 className={`mg-notif-center__title ${!notif.isRead ? 'mg-notif-center__title--unread' : ''}`}>
-              {notif.title || notif.subject || '알림'}
+              {notif.title || notif.subject || t('common:common.NotificationCenter.t_e29d147e')}
             </h4>
             <p className="mg-notif-center__body">
               {notif.content || notif.message || notif.body || ''}

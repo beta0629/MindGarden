@@ -25,11 +25,13 @@ import '../RecentActivities.css';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { SCHEDULE_API } from '../../../constants/api';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SCHEDULES_ADMIN_STATISTICS = '/api/v1/schedules/admin/statistics';
 
 const RecentActivitiesWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   // 역할별 API 엔드포인트 결정
   const getDataSourceConfig = () => {
     if (!user?.role) return { type: 'static' };
@@ -119,16 +121,16 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       let timeAgo;
       if (diffDays === 0) {
         const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-        timeAgo = diffHours === 0 ? '방금 전' : `${diffHours}시간 전`;
+        timeAgo = diffHours === 0 ? '방금 전' : t('common:dashboard.RecentActivitiesWidget.t_1ae9fb85');
       } else if (diffDays < 7) {
-        timeAgo = `${diffDays}일 전`;
+        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_da3b8e4b');
       } else {
-        timeAgo = `${Math.floor(diffDays / 7)}주 전`;
+        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_d18346fb');
       }
       
       activities.push({
         type: 'schedule',
-        title: `${schedule.consultantName} 상담사와의 상담 일정 ${getStatusLabel(schedule.status)}`,
+        title: t('common:dashboard.RecentActivitiesWidget.t_0b53d412'),
         time: timeAgo,
         details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
       });
@@ -136,9 +138,9 @@ const RecentActivitiesWidget = ({ widget, user }) => {
 
     return activities.length > 0 ? activities : [{
       type: 'info',
-      title: '최근 활동이 없습니다',
-      time: '현재',
-      details: '아직 등록된 활동이 없습니다'
+      title: t('common:dashboard.RecentActivitiesWidget.t_1e3d7c5d'),
+      time: t('common:dashboard.RecentActivitiesWidget.t_001e4be2'),
+      details: t('common:dashboard.RecentActivitiesWidget.t_fcf8da06')
     }];
   };
 
@@ -166,14 +168,14 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       let timeAgo;
       if (diffDays === 0) {
         const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-        timeAgo = diffHours === 0 ? '방금 전' : `${diffHours}시간 전`;
+        timeAgo = diffHours === 0 ? '방금 전' : t('common:dashboard.RecentActivitiesWidget.t_1ae9fb85');
       } else if (diffDays < 7) {
-        timeAgo = `${diffDays}일 전`;
+        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_da3b8e4b');
       } else {
-        timeAgo = `${Math.floor(diffDays / 7)}주 전`;
+        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_d18346fb');
       }
 
-      let displayName = '내담자';
+      let displayName = t('common:dashboard.RecentActivitiesWidget.t_82bba86b');
       if (schedule.clientName && !schedule.clientName.includes('==')) {
         displayName = schedule.clientName;
       } else if (schedule.clientNickname && !schedule.clientNickname.includes('==')) {
@@ -182,10 +184,10 @@ const RecentActivitiesWidget = ({ widget, user }) => {
         displayName = schedule.title;
       }
 
-      if (displayName !== '내담자' || schedule.clientId) {
+      if (displayName !== t('common:dashboard.RecentActivitiesWidget.t_82bba86b') || schedule.clientId) {
         activities.push({
           type: 'schedule',
-          title: `${displayName}과의 상담 일정 ${getStatusLabel(schedule.status)}`,
+          title: t('common:dashboard.RecentActivitiesWidget.t_9533079f'),
           time: timeAgo,
           details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
         });
@@ -194,9 +196,9 @@ const RecentActivitiesWidget = ({ widget, user }) => {
 
     return activities.length > 0 ? activities : [{
       type: 'info',
-      title: '최근 활동이 없습니다',
-      time: '현재',
-      details: '아직 등록된 활동이 없습니다'
+      title: t('common:dashboard.RecentActivitiesWidget.t_1e3d7c5d'),
+      time: t('common:dashboard.RecentActivitiesWidget.t_001e4be2'),
+      details: t('common:dashboard.RecentActivitiesWidget.t_fcf8da06')
     }];
   };
 
@@ -207,27 +209,27 @@ const RecentActivitiesWidget = ({ widget, user }) => {
     if (data?.totalUsers > 0) {
       activities.push({
         type: 'profile',
-        title: `총 ${data.totalUsers}명의 사용자 관리`,
-        time: '오늘',
-        details: '전체 사용자 현황을 확인했습니다'
+        title: t('common:dashboard.RecentActivitiesWidget.t_62be4f58'),
+        time: t('common:dashboard.RecentActivitiesWidget.t_2bdce5e8'),
+        details: t('common:dashboard.RecentActivitiesWidget.t_0032cd55')
       });
     }
     
     if (data?.todayConsultations > 0) {
       activities.push({
         type: 'schedule',
-        title: `오늘 ${data.todayConsultations}건의 상담 일정 관리`,
-        time: '오늘',
-        details: '오늘의 상담 일정을 확인했습니다'
+        title: t('common:dashboard.RecentActivitiesWidget.t_8a236019'),
+        time: t('common:dashboard.RecentActivitiesWidget.t_2bdce5e8'),
+        details: t('common:dashboard.RecentActivitiesWidget.t_a02347c2')
       });
     }
     
     // 기본 활동 추가
     activities.push({
       type: 'consultation',
-      title: '시스템 현황 점검',
-      time: '1시간 전',
-      details: '전체 시스템 상태를 점검했습니다'
+      title: t('common:dashboard.RecentActivitiesWidget.t_298e2355'),
+      time: t('common:dashboard.RecentActivitiesWidget.t_9581f13a'),
+      details: t('common:dashboard.RecentActivitiesWidget.t_1787f9b2')
     });
 
     return activities;

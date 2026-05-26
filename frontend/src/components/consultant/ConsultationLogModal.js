@@ -24,6 +24,7 @@ import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PRIORITY';
@@ -123,7 +124,7 @@ const applyConsultationLogApiValidationErrors = (error, setValidationErrors) => 
     return fieldMap[keys[0]];
   }
   if (keys.length > 1) {
-    return `${fieldMap[keys[0]]} · ${keys.length - 1}개 필드 추가 확인`;
+    return i18n.t('common:consultant.ConsultationLogModal.t_ec4468bd');
   }
   return toDisplayString(data.message, '');
 };
@@ -417,9 +418,9 @@ const ConsultationLogModal = ({
   const riskLevels = priorityOptions;
 
   const goalAchievementLevels = [
-    { value: 'LOW', label: '낮음', color: 'var(--mg-error-500)' },
-    { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)' },
-    { value: 'HIGH', label: '높음', color: 'var(--mg-success-500)' }
+    { value: 'LOW', label: t('common:consultant.ConsultationLogModal.t_437ac8ce'), color: 'var(--mg-error-500)' },
+    { value: 'MEDIUM', label: t('common:consultant.ConsultationLogModal.t_2179da2c'), color: 'var(--mg-warning-500)' },
+    { value: 'HIGH', label: t('common:consultant.ConsultationLogModal.t_962636f4'), color: 'var(--mg-success-500)' }
   ];
 
   const loadCompletionStatusCodes = useCallback(async() => {
@@ -438,26 +439,26 @@ const ConsultationLogModal = ({
       } else {
         setCompletionStatusOptions([
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+          { value: 'COMPLETED', label: t('common:consultant.ConsultationLogModal.t_8d868037'), icon: '✅', color: 'var(--mg-success-500)', description: t('common:consultant.ConsultationLogModal.t_0ea90460') },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '작업 대기' },
+          { value: 'PENDING', label: t('common:consultant.ConsultationLogModal.t_df72a875'), icon: '⏳', color: 'var(--mg-warning-500)', description: t('common:consultant.ConsultationLogModal.t_f1fea4e3') },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-info-500)', description: '작업 진행중' },
+          { value: 'IN_PROGRESS', label: t('common:consultant.ConsultationLogModal.t_0dae9079'), icon: '🔄', color: 'var(--mg-info-500)', description: t('common:consultant.ConsultationLogModal.t_b52f3df3') },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)', description: '작업 취소' }
+          { value: 'CANCELLED', label: t('common:consultant.ConsultationLogModal.t_19b2d19b'), icon: '❌', color: 'var(--mg-error-500)', description: t('common:consultant.ConsultationLogModal.t_ca1719e1') }
         ]);
       }
     } catch (error) {
       console.error('완료 상태 코드 로드 실패:', error);
       setCompletionStatusOptions([
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+        { value: 'COMPLETED', label: t('common:consultant.ConsultationLogModal.t_8d868037'), icon: '✅', color: 'var(--mg-success-500)', description: t('common:consultant.ConsultationLogModal.t_0ea90460') },
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '작업 대기' },
+        { value: 'PENDING', label: t('common:consultant.ConsultationLogModal.t_df72a875'), icon: '⏳', color: 'var(--mg-warning-500)', description: t('common:consultant.ConsultationLogModal.t_f1fea4e3') },
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-info-500)', description: '작업 진행중' },
+        { value: 'IN_PROGRESS', label: t('common:consultant.ConsultationLogModal.t_0dae9079'), icon: '🔄', color: 'var(--mg-info-500)', description: t('common:consultant.ConsultationLogModal.t_b52f3df3') },
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)', description: '작업 취소' }
+        { value: 'CANCELLED', label: t('common:consultant.ConsultationLogModal.t_19b2d19b'), icon: '❌', color: 'var(--mg-error-500)', description: t('common:consultant.ConsultationLogModal.t_ca1719e1') }
       ]);
     } finally {
       setLoadingCompletionCodes(false);
@@ -537,7 +538,7 @@ const ConsultationLogModal = ({
       }
 
       if (!record) {
-        notificationManager.show('상담일지를 찾을 수 없습니다.', 'error');
+        notificationManager.show(t('common:consultant.ConsultationLogModal.t_c6c0f291'), 'error');
         return;
       }
 
@@ -554,14 +555,14 @@ const ConsultationLogModal = ({
           // 기본 정보만으로 설정
           setClient({ 
             id: cId, 
-            name: record.clientName || `내담자 #${cId}`,
+            name: record.clientName || t('common:consultant.ConsultationLogModal.t_7941899e'),
             email: record.clientEmail || '',
             phone: record.clientPhone || ''
           });
           setClientWithStats({ 
             client: { 
               id: cId, 
-              name: record.clientName || `내담자 #${cId}`,
+              name: record.clientName || t('common:consultant.ConsultationLogModal.t_7941899e'),
               email: record.clientEmail || '',
               phone: record.clientPhone || ''
             } 
@@ -609,12 +610,12 @@ const ConsultationLogModal = ({
 
       const comments = [];
       if (record.specialConsiderations && String(record.specialConsiderations).trim()) {
-        comments.push({ source: '이전 상담일지 특이사항', text: record.specialConsiderations });
+        comments.push({ source: t('common:consultant.ConsultationLogModal.t_e7bcdb2a'), text: record.specialConsiderations });
       }
       setImportantComments(comments);
     } catch (error) {
       console.error('상담일지 단건 로드 오류:', error);
-      notificationManager.show('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(t('common:consultant.ConsultationLogModal.t_3e5e7abe'), 'error');
     } finally {
       contentDirtyRef.current = false;
       setLoading(false);
@@ -641,7 +642,7 @@ const ConsultationLogModal = ({
             setClient(clientData);
           }
         } catch (err) {
-          if (isAdmin && (err?.status === 403 || err?.message?.includes('권한'))) {
+          if (isAdmin && (err?.status === 403 || err?.message?.includes(t('common:consultant.ConsultationLogModal.t_4d02bde7')))) {
             try {
               const usersRes = await apiGet('/api/admin/users');
               const userList = Array.isArray(usersRes) ? usersRes : (usersRes?.data ?? []);
@@ -744,15 +745,15 @@ const ConsultationLogModal = ({
 
       const comments = [];
       if (scheduleData?.notes && String(scheduleData.notes).trim()) {
-        comments.push({ source: '일정 메모', text: scheduleData.notes });
+        comments.push({ source: t('common:consultant.ConsultationLogModal.t_c266f81d'), text: scheduleData.notes });
       }
       if (loadedRecord?.specialConsiderations && String(loadedRecord.specialConsiderations).trim()) {
-        comments.push({ source: '이전 상담일지 특이사항', text: loadedRecord.specialConsiderations });
+        comments.push({ source: t('common:consultant.ConsultationLogModal.t_e7bcdb2a'), text: loadedRecord.specialConsiderations });
       }
       setImportantComments(comments);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
-      notificationManager.show('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+      notificationManager.show(t('common:consultant.ConsultationLogModal.t_3e5e7abe'), 'error');
     } finally {
       contentDirtyRef.current = false;
       setLoading(false);
@@ -815,33 +816,33 @@ const ConsultationLogModal = ({
     const errors = {};
     
     if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
-      errors.sessionDurationMinutes = '세션 시간을 입력해주세요 (최소 1분)';
+      errors.sessionDurationMinutes = t('common:consultant.ConsultationLogModal.t_7f40290f');
     }
     
     if (!formData.clientCondition || formData.clientCondition.trim() === '') {
-      errors.clientCondition = '내담자 상태를 입력해주세요';
+      errors.clientCondition = t('common:consultant.ConsultationLogModal.t_d431db7c');
     } else if (String(formData.clientCondition).length > CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH) {
-      errors.clientCondition = `내담자 상태는 ${CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH}자 이하로 입력해주세요`;
+      errors.clientCondition = t('common:consultant.ConsultationLogModal.t_82f32b59');
     }
     
     if (!formData.mainIssues || formData.mainIssues.trim() === '') {
-      errors.mainIssues = '주요 이슈를 입력해주세요';
+      errors.mainIssues = t('common:consultant.ConsultationLogModal.t_27da1035');
     }
     
     if (!formData.interventionMethods || formData.interventionMethods.trim() === '') {
-      errors.interventionMethods = '개입 방법을 입력해주세요';
+      errors.interventionMethods = t('common:consultant.ConsultationLogModal.t_8b0e82cb');
     }
     
     if (!formData.clientResponse || formData.clientResponse.trim() === '') {
-      errors.clientResponse = '내담자 반응을 입력해주세요';
+      errors.clientResponse = t('common:consultant.ConsultationLogModal.t_4b56e38c');
     }
     
     if (!formData.riskAssessment || formData.riskAssessment === '') {
-      errors.riskAssessment = '위험도 평가를 선택해주세요';
+      errors.riskAssessment = t('common:consultant.ConsultationLogModal.t_213f1150');
     }
     
     if (!formData.progressEvaluation || formData.progressEvaluation.trim() === '') {
-      errors.progressEvaluation = '진행 평가를 입력해주세요';
+      errors.progressEvaluation = t('common:consultant.ConsultationLogModal.t_784bce95');
     }
     
     setValidationErrors(errors);
@@ -850,7 +851,7 @@ const ConsultationLogModal = ({
 
   const handleSave = async() => {
     if (!validateForm()) {
-      notificationManager.error('필수 항목을 모두 입력해주세요.');
+      notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
       return;
     }
 
@@ -860,7 +861,7 @@ const ConsultationLogModal = ({
       try {
         await persistClientNotesIfNeeded();
       } catch (memoErr) {
-        notificationManager.show(toErrorMessage(memoErr, '메모 저장에 실패했습니다.'), 'error');
+        notificationManager.show(toErrorMessage(memoErr, t('common:consultant.ConsultationLogModal.t_dbd13555')), 'error');
         return;
       }
 
@@ -893,7 +894,7 @@ const ConsultationLogModal = ({
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
         notificationManager.show(
-          isEditMode ? '상담일지가 수정되었습니다.' : '상담일지가 저장되었습니다.',
+          isEditMode ? '상담일지가 수정되었습니다.' : t('common:consultant.ConsultationLogModal.t_41ce4bfb'),
           'success'
         );
         if (tenantIdStr && draftScope) {
@@ -905,18 +906,18 @@ const ConsultationLogModal = ({
         onSave && onSave(record);
         if (recordId) onClose && onClose();
       } else {
-        throw new Error(response?.message || '저장에 실패했습니다.');
+        throw new Error(response?.message || t('common:consultant.ConsultationLogModal.t_8a91f40c'));
       }
     } catch (error) {
       console.error('저장 오류:', error);
       const validationToast = applyConsultationLogApiValidationErrors(error, setValidationErrors);
       if (validationToast != null) {
         notificationManager.show(
-          toDisplayString(validationToast, '저장 중 오류가 발생했습니다.'),
+          toDisplayString(validationToast, t('common:consultant.ConsultationLogModal.t_fb06e15d')),
           'error'
         );
       } else {
-        notificationManager.show(toErrorMessage(error, '저장 중 오류가 발생했습니다.'), 'error');
+        notificationManager.show(toErrorMessage(error, t('common:consultant.ConsultationLogModal.t_fb06e15d')), 'error');
       }
     } finally {
       setSaving(false);
@@ -925,7 +926,7 @@ const ConsultationLogModal = ({
 
   const handleComplete = async() => {
     if (!validateForm()) {
-      notificationManager.error('필수 항목을 모두 입력해주세요.');
+      notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
       return;
     }
 
@@ -935,7 +936,7 @@ const ConsultationLogModal = ({
       try {
         await persistClientNotesIfNeeded();
       } catch (memoErr) {
-        notificationManager.show(toErrorMessage(memoErr, '메모 저장에 실패했습니다.'), 'error');
+        notificationManager.show(toErrorMessage(memoErr, t('common:consultant.ConsultationLogModal.t_dbd13555')), 'error');
         return;
       }
 
@@ -968,7 +969,7 @@ const ConsultationLogModal = ({
       const record = response?.data ?? response;
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
-        notificationManager.show('상담일지가 완료되었습니다.', 'success');
+        notificationManager.show(t('common:consultant.ConsultationLogModal.t_b571e260'), 'success');
         if (tenantIdStr && draftScope) {
           removeConsultationLogLocalDraft(tenantIdStr, draftScope);
         }
@@ -977,18 +978,18 @@ const ConsultationLogModal = ({
         onSave && onSave(record);
         onClose();
       } else {
-        throw new Error(response?.message || '완료 처리에 실패했습니다.');
+        throw new Error(response?.message || t('common:consultant.ConsultationLogModal.t_cbbfa91c'));
       }
     } catch (error) {
       console.error('완료 처리 오류:', error);
       const validationToast = applyConsultationLogApiValidationErrors(error, setValidationErrors);
       if (validationToast != null) {
         notificationManager.show(
-          toDisplayString(validationToast, '완료 처리 중 오류가 발생했습니다.'),
+          toDisplayString(validationToast, t('common:consultant.ConsultationLogModal.t_bb634bec')),
           'error'
         );
       } else {
-        notificationManager.show(toErrorMessage(error, '완료 처리 중 오류가 발생했습니다.'), 'error');
+        notificationManager.show(toErrorMessage(error, t('common:consultant.ConsultationLogModal.t_bb634bec')), 'error');
       }
     } finally {
       setSaving(false);

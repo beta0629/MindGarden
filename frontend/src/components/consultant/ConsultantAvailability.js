@@ -54,20 +54,20 @@ const ConsultantAvailability = () => {
       } else {
         // API 응답이 없을 때 기본값 설정
         setDurationOptions([
-          { value: '30_MIN', label: '30분', icon: '⏰', color: 'var(--mg-primary-500)', description: '30분 상담' },
-          { value: '60_MIN', label: '60분', icon: '⏰', color: 'var(--mg-success-500)', description: '60분 상담' },
-          { value: '90_MIN', label: '90분', icon: '⏰', color: 'var(--mg-warning-500)', description: '90분 상담' },
-          { value: '120_MIN', label: '120분', icon: '⏰', color: 'var(--mg-error-500)', description: '120분 상담' }
+          { value: '30_MIN', label: t('common:consultant.ConsultantAvailability.t_ae2424d4'), icon: '⏰', color: 'var(--mg-primary-500)', description: t('common:consultant.ConsultantAvailability.t_87d0c960') },
+          { value: '60_MIN', label: t('common:consultant.ConsultantAvailability.t_c1818994'), icon: '⏰', color: 'var(--mg-success-500)', description: t('common:consultant.ConsultantAvailability.t_bde284d8') },
+          { value: '90_MIN', label: t('common:consultant.ConsultantAvailability.t_2f5c88ab'), icon: '⏰', color: 'var(--mg-warning-500)', description: t('common:consultant.ConsultantAvailability.t_905f4356') },
+          { value: '120_MIN', label: t('common:consultant.ConsultantAvailability.t_ddbc1163'), icon: '⏰', color: 'var(--mg-error-500)', description: t('common:consultant.ConsultantAvailability.t_26e4dbdc') }
         ]);
       }
     } catch (error) {
       console.error('시간 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setDurationOptions([
-        { value: '30_MIN', label: '30분', icon: '⏰', color: 'var(--mg-primary-500)', description: '30분 상담' },
-        { value: '60_MIN', label: '60분', icon: '⏰', color: 'var(--mg-success-500)', description: '60분 상담' },
-        { value: '90_MIN', label: '90분', icon: '⏰', color: 'var(--mg-warning-500)', description: '90분 상담' },
-        { value: '120_MIN', label: '120분', icon: '⏰', color: 'var(--mg-error-500)', description: '120분 상담' }
+        { value: '30_MIN', label: t('common:consultant.ConsultantAvailability.t_ae2424d4'), icon: '⏰', color: 'var(--mg-primary-500)', description: t('common:consultant.ConsultantAvailability.t_87d0c960') },
+        { value: '60_MIN', label: t('common:consultant.ConsultantAvailability.t_c1818994'), icon: '⏰', color: 'var(--mg-success-500)', description: t('common:consultant.ConsultantAvailability.t_bde284d8') },
+        { value: '90_MIN', label: t('common:consultant.ConsultantAvailability.t_2f5c88ab'), icon: '⏰', color: 'var(--mg-warning-500)', description: t('common:consultant.ConsultantAvailability.t_905f4356') },
+        { value: '120_MIN', label: t('common:consultant.ConsultantAvailability.t_ddbc1163'), icon: '⏰', color: 'var(--mg-error-500)', description: t('common:consultant.ConsultantAvailability.t_26e4dbdc') }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -96,13 +96,13 @@ const ConsultantAvailability = () => {
 
   // 요일 상수
   const DAYS_OF_WEEK = [
-    { key: 'MONDAY', label: '월요일', short: '월' },
-    { key: 'TUESDAY', label: '화요일', short: '화' },
-    { key: 'WEDNESDAY', label: '수요일', short: '수' },
-    { key: 'THURSDAY', label: '목요일', short: '목' },
-    { key: 'FRIDAY', label: '금요일', short: '금' },
-    { key: 'SATURDAY', label: '토요일', short: '토' },
-    { key: 'SUNDAY', label: '일요일', short: '일' }
+    { key: 'MONDAY', label: t('common:consultant.ConsultantAvailability.t_d77265f0'), short: t('common:consultant.ConsultantAvailability.t_75448692') },
+    { key: 'TUESDAY', label: t('common:consultant.ConsultantAvailability.t_85674ecb'), short: t('common:consultant.ConsultantAvailability.t_adb4a282') },
+    { key: 'WEDNESDAY', label: t('common:consultant.ConsultantAvailability.t_66dadc9b'), short: t('common:consultant.ConsultantAvailability.t_c04eb2ef') },
+    { key: 'THURSDAY', label: t('common:consultant.ConsultantAvailability.t_73259471'), short: t('common:consultant.ConsultantAvailability.t_5664a634') },
+    { key: 'FRIDAY', label: t('common:consultant.ConsultantAvailability.t_5054e8b8'), short: t('common:consultant.ConsultantAvailability.t_cf5632c7') },
+    { key: 'SATURDAY', label: t('common:consultant.ConsultantAvailability.t_618ad44e'), short: t('common:consultant.ConsultantAvailability.t_b9e40662') },
+    { key: 'SUNDAY', label: t('common:consultant.ConsultantAvailability.t_4a7e4be4'), short: t('common:consultant.ConsultantAvailability.t_06cf3e90') }
   ];
 
   // 시간 슬롯 생성 (30분 단위) - 10:00부터 20:00 시작까지(20:00 행 포함)
@@ -147,11 +147,11 @@ const ConsultantAvailability = () => {
         setAvailability(Array.isArray(response) ? response : (response?.data || []));
       } else {
         console.error('❌ 상담 가능 시간 로드 실패:', response?.message);
-        setError(response?.message || '상담 가능 시간을 불러오는데 실패했습니다.');
+        setError(response?.message || t('common:consultant.ConsultantAvailability.t_0381b27b'));
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 로드 중 오류:', err);
-      setError(err?.message || '상담 가능 시간을 불러오는 중 오류가 발생했습니다.');
+      setError(err?.message || t('common:consultant.ConsultantAvailability.t_5035bbea'));
     } finally {
       setLoading(false);
     }
@@ -170,11 +170,11 @@ const ConsultantAvailability = () => {
         setShowAddModal(false);
       } else {
         console.error('❌ 상담 가능 시간 추가 실패:', response?.message);
-        setError(response?.message || '상담 가능 시간 추가에 실패했습니다.');
+        setError(response?.message || t('common:consultant.ConsultantAvailability.t_8abc6dc2'));
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 추가 중 오류:', err);
-      setError(err?.message || '상담 가능 시간 추가 중 오류가 발생했습니다.');
+      setError(err?.message || t('common:consultant.ConsultantAvailability.t_3f25f524'));
     }
   };
 
@@ -191,11 +191,11 @@ const ConsultantAvailability = () => {
         setEditingSlot(null);
       } else {
         console.error('❌ 상담 가능 시간 수정 실패:', response?.message);
-        setError(response?.message || '상담 가능 시간 수정에 실패했습니다.');
+        setError(response?.message || t('common:consultant.ConsultantAvailability.t_9cc31774'));
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 수정 중 오류:', err);
-      setError(err?.message || '상담 가능 시간 수정 중 오류가 발생했습니다.');
+      setError(err?.message || t('common:consultant.ConsultantAvailability.t_aa721e53'));
     }
   };
 
@@ -211,11 +211,11 @@ const ConsultantAvailability = () => {
         await loadAvailability();
       } else {
         console.error('❌ 상담 가능 시간 삭제 실패:', response?.message);
-        setError(response?.message || '상담 가능 시간 삭제에 실패했습니다.');
+        setError(response?.message || t('common:consultant.ConsultantAvailability.t_dcdc1896'));
       }
     } catch (err) {
       console.error('❌ 상담 가능 시간 삭제 중 오류:', err);
-      setError(err?.message || '상담 가능 시간 삭제 중 오류가 발생했습니다.');
+      setError(err?.message || t('common:consultant.ConsultantAvailability.t_422803c0'));
     }
   };
 
@@ -230,7 +230,7 @@ const ConsultantAvailability = () => {
   }, {});
 
   const pageShell = (body, options = {}) => {
-    const { title = '상담 가능 시간 관리', subtitle = '상담 가능한 시간을 설정하여 내담자들이 예약할 수 있도록 합니다.', actions } = options;
+    const { title = t('common:consultant.ConsultantAvailability.t_09b4a1ce'), subtitle = t('common:consultant.ConsultantAvailability.t_eecb782f'), actions } = options;
     return (
       <ContentArea ariaLabel="상담 가능 시간">
         <ContentHeader
@@ -310,7 +310,7 @@ const ConsultantAvailability = () => {
                 </MGButton>
               </div>
             </div>,
-            { subtitle: '로그인 후 상담 가능 시간을 관리할 수 있습니다.' }
+            { subtitle: t('common:consultant.ConsultantAvailability.t_4f3fe0b5') }
           )}
         </>
       );
@@ -325,7 +325,7 @@ const ConsultantAvailability = () => {
                 <h3 className="consultant-availability-error-title">접근 권한이 없습니다</h3>
                 <p className="consultant-availability-error-message">상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
                 <p className="consultant-availability-error-detail">
-                  현재 사용자 역할: {userRole || '없음'}
+                  현재 사용자 역할: {userRole || t('common:consultant.ConsultantAvailability.t_d58fa73a')}
                 </p>
                 <MGButton
                   variant="warning"
@@ -339,7 +339,7 @@ const ConsultantAvailability = () => {
                 </MGButton>
               </div>
             </div>,
-            { subtitle: '상담사 또는 관리자 계정으로 다시 시도해 주세요.' }
+            { subtitle: t('common:consultant.ConsultantAvailability.t_466a86db') }
           )}
         </>
       );
@@ -501,11 +501,11 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
     const newErrors = {};
 
     if (!formData.startTime) {
-      newErrors.startTime = '시작 시간을 선택해주세요.';
+      newErrors.startTime = t('common:consultant.ConsultantAvailability.t_73dc954c');
     }
 
     if (!formData.endTime) {
-      newErrors.endTime = '종료 시간을 선택해주세요.';
+      newErrors.endTime = t('common:consultant.ConsultantAvailability.t_eda41253');
     }
 
     if (formData.startTime && formData.endTime) {
@@ -513,12 +513,12 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
       const end = new Date(`2000-01-01T${formData.endTime}`);
       
       if (start >= end) {
-        newErrors.endTime = '종료 시간은 시작 시간보다 늦어야 합니다.';
+        newErrors.endTime = t('common:consultant.ConsultantAvailability.t_d4fc48de');
       }
     }
 
     if (!formData.duration || formData.duration < 30) {
-      newErrors.duration = '상담 시간은 최소 30분 이상이어야 합니다.';
+      newErrors.duration = t('common:consultant.ConsultantAvailability.t_2e4219bc');
     }
 
     setErrors(newErrors);
@@ -537,7 +537,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? '상담 가능 시간 수정' : '상담 가능 시간 추가'}
+      title={initialData ? '상담 가능 시간 수정' : t('common:consultant.ConsultantAvailability.t_49a945a6')}
       size="medium"
       variant="form"
       className="mg-v2-ad-b0kla"
@@ -567,7 +567,7 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
             preventDoubleClick={false}
           >
             <i className="bi bi-check-circle" />
-            {initialData ? '수정' : '추가'}
+            {initialData ? '수정' : t('common:consultant.ConsultantAvailability.t_57942995')}
           </MGButton>
         </>
       )}

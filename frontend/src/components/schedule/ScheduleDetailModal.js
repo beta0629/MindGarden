@@ -149,7 +149,7 @@ const ScheduleDetailModal = ({
             st == null ||
             st === '' ||
             (typeof st === 'string' && st.trim() === '') ||
-            st === '알 수 없음';
+            st === t('schedule:ScheduleDetailModal.t_8916b639');
         if (!statusInvalid) {
             return st;
         }
@@ -176,7 +176,7 @@ const ScheduleDetailModal = ({
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
             setScheduleStatusOptions([]);
-            notificationManager.error('스케줄 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
+            notificationManager.error(t('schedule:ScheduleDetailModal.t_e72bdf24'));
         } finally {
             setLoadingCodes(false);
         }
@@ -233,8 +233,8 @@ const ScheduleDetailModal = ({
         let parsedConsultantName = dd.consultantName;
         let parsedClientName = dd.clientName;
 
-        if ((!parsedConsultantName || parsedConsultantName === '상담사 정보 없음' || parsedConsultantName === 'undefined') &&
-            (!parsedClientName || parsedClientName === '내담자 정보 없음' || parsedClientName === 'undefined')) {
+        if ((!parsedConsultantName || parsedConsultantName === t('schedule:ScheduleDetailModal.t_44b8c965') || parsedConsultantName === 'undefined') &&
+            (!parsedClientName || parsedClientName === t('schedule:ScheduleDetailModal.t_032787e1') || parsedClientName === 'undefined')) {
             const titleStr = toDisplayString(dd.title, '');
             if (titleStr && titleStr.includes(' - ')) {
                 const names = titleStr.split(' - ');
@@ -256,23 +256,23 @@ const ScheduleDetailModal = ({
             setLoading(true);
             console.log('❌ 스케줄 취소 요청:', scheduleData?.id);
             const cancelledStatusOption = scheduleStatusOptions.find(opt =>
-                opt.value === 'CANCELLED' || opt.label?.includes('취소')
+                opt.value === 'CANCELLED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_19b2d19b'))
             );
             const statusCode = cancelledStatusOption?.value ?? 'CANCELLED';
             const response = await StandardizedApi.put(`/api/v1/schedules/${scheduleData.id}`, {
                 status: statusCode,
-                description: '사용자에 의해 취소됨'
+                description: t('schedule:ScheduleDetailModal.t_4da34051')
             });
             if (response != null) {
-                notificationManager.success('예약이 취소되었습니다.');
+                notificationManager.success(t('schedule:ScheduleDetailModal.t_f70065ae'));
                 onScheduleUpdated?.();
                 onClose();
             } else {
-                throw new Error('예약 취소에 실패했습니다.');
+                throw new Error(t('schedule:ScheduleDetailModal.t_4659e40d'));
             }
         } catch (error) {
             console.error('❌ 예약 취소 실패:', error);
-            notificationManager.error(`예약 취소에 실패했습니다: ${error.message}`);
+            notificationManager.error(t('schedule:ScheduleDetailModal.t_dc4ce696'));
         } finally {
             setLoading(false);
             setShowCancelConfirm(false);
@@ -284,7 +284,7 @@ const ScheduleDetailModal = ({
      */
     const handleConfirmSchedule = async() => {
         if (!scheduleData?.id) {
-            notificationManager.error('스케줄 정보가 올바르지 않습니다.');
+            notificationManager.error(t('schedule:ScheduleDetailModal.t_70e5dfa5'));
             return;
         }
         setLoading(true);
@@ -293,10 +293,10 @@ const ScheduleDetailModal = ({
             const confirmRole = encodeURIComponent(user?.role || USER_ROLES.ADMIN);
             const response = await StandardizedApi.put(
                 `/api/v1/schedules/${scheduleData.id}/confirm?userRole=${confirmRole}`,
-                { adminNote: adminNote || '입금 확인 완료' }
+                { adminNote: adminNote || t('schedule:ScheduleDetailModal.t_2709bbf3') }
             );
             if (response != null) {
-                notificationManager.success('예약이 확정되었습니다.');
+                notificationManager.success(t('schedule:ScheduleDetailModal.t_cb46263d'));
                 onScheduleUpdated?.();
                 try {
                   window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
@@ -305,11 +305,11 @@ const ScheduleDetailModal = ({
                 }
                 onClose();
             } else {
-                throw new Error('예약 확정에 실패했습니다.');
+                throw new Error(t('schedule:ScheduleDetailModal.t_6e90da17'));
             }
         } catch (error) {
             console.error('❌ 예약 확정 실패:', error);
-            notificationManager.error(`예약 확정에 실패했습니다: ${error.message}`);
+            notificationManager.error(t('schedule:ScheduleDetailModal.t_fd96349e'));
         } finally {
             setLoading(false);
             setShowConfirmModal(false);
@@ -468,35 +468,35 @@ const ScheduleDetailModal = ({
      */
     const convertConsultationTypeToKorean = (consultationType) => {
         const typeMap = {
-            'INDIVIDUAL': '개인상담',
-            'COUPLE': '부부상담',
-            'FAMILY': '가족상담',
-            'INITIAL': '초기상담',
-            'GROUP': '그룹상담'
+            'INDIVIDUAL': t('schedule:ScheduleDetailModal.t_efda14c0'),
+            'COUPLE': t('schedule:ScheduleDetailModal.t_62b69843'),
+            'FAMILY': t('schedule:ScheduleDetailModal.t_aaa928a6'),
+            'INITIAL': t('schedule:ScheduleDetailModal.t_d90982dc'),
+            'GROUP': t('schedule:ScheduleDetailModal.t_607ecaca')
         };
-        return typeMap[consultationType] || consultationType || "알 수 없음";
+        return typeMap[consultationType] || consultationType || t('schedule:ScheduleDetailModal.t_8916b639');
     };
 
 /**
      * 상태값을 한글로 변환 (코드값/한글 라벨 모두 처리, fallback 포함)
      */
     const convertStatusToKorean = (status) => {
-        if (status == null || status === '') return '알 수 없음';
+        if (status == null || status === '') return t('schedule:ScheduleDetailModal.t_8916b639');
         const byValue = scheduleStatusOptions.find(opt => opt.value === status);
         if (byValue && byValue.label) return byValue.label;
         const byLabel = scheduleStatusOptions.find(opt => opt.label === status);
         if (byLabel && byLabel.label) return byLabel.label;
         const code = getStatusCodeValue(status);
         const fallbackMap = {
-            CANCELLED: '취소됨',
-            BOOKED: '예약됨',
-            COMPLETED: '완료됨',
-            CONFIRMED: '확정됨',
-            VACATION: '휴가',
-            AVAILABLE: '가능',
-            TENTATIVE_PENDING_PAYMENT: '결제 대기 (가예약)'
+            CANCELLED: t('schedule:ScheduleDetailModal.t_3aa9e7ee'),
+            BOOKED: t('schedule:ScheduleDetailModal.t_69692a2a'),
+            COMPLETED: t('schedule:ScheduleDetailModal.t_1f74613e'),
+            CONFIRMED: t('schedule:ScheduleDetailModal.t_b8a98744'),
+            VACATION: t('schedule:ScheduleDetailModal.t_4cdf9ae5'),
+            AVAILABLE: t('schedule:ScheduleDetailModal.t_9614672b'),
+            TENTATIVE_PENDING_PAYMENT: t('schedule:ScheduleDetailModal.t_35205a43')
         };
-        return fallbackMap[code] || status || '알 수 없음';
+        return fallbackMap[code] || status || t('schedule:ScheduleDetailModal.t_8916b639');
     };
 
 /**
@@ -516,17 +516,17 @@ const ScheduleDetailModal = ({
      */
     const getVacationTypeDisplay = (vacationType) => {
         const typeMap = {
-            'ALL_DAY': '🏖️ 하루 종일 휴가',
-            'FULL_DAY': '🏖️ 하루 종일 휴가',
-            'MORNING': '🌅 오전 휴가 (09:00-13:00)',
-            'MORNING_HALF_1': '🌅 오전 반반차 1 (09:00-11:00)',
-            'MORNING_HALF_2': '🌅 오전 반반차 2 (11:00-13:00)',
-            'AFTERNOON': '🌆 오후 휴가 (14:00-18:00)',
-            'AFTERNOON_HALF_1': '🌆 오후 반반차 1 (14:00-16:00)',
-            'AFTERNOON_HALF_2': '🌆 오후 반반차 2 (16:00-18:00)',
-            'CUSTOM_TIME': '⏰ 시간 지정 휴가'
+            'ALL_DAY': t('schedule:ScheduleDetailModal.t_c59d51f5'),
+            'FULL_DAY': t('schedule:ScheduleDetailModal.t_c59d51f5'),
+            'MORNING': t('schedule:ScheduleDetailModal.t_31408297'),
+            'MORNING_HALF_1': t('schedule:ScheduleDetailModal.t_64e76ae5'),
+            'MORNING_HALF_2': t('schedule:ScheduleDetailModal.t_ebbd7667'),
+            'AFTERNOON': t('schedule:ScheduleDetailModal.t_5a929057'),
+            'AFTERNOON_HALF_1': t('schedule:ScheduleDetailModal.t_96dea9f3'),
+            'AFTERNOON_HALF_2': t('schedule:ScheduleDetailModal.t_63c6a9c2'),
+            'CUSTOM_TIME': t('schedule:ScheduleDetailModal.t_a5e8754f')
         };
-        return typeMap[vacationType] || '🏖️ 휴가';
+        return typeMap[vacationType] || t('schedule:ScheduleDetailModal.t_81a22ad8');
     };
 
     /**
@@ -543,7 +543,7 @@ const ScheduleDetailModal = ({
             });
 
             if (response != null) {
-                notificationManager.success('상태가 변경되었습니다.');
+                notificationManager.success(t('schedule:ScheduleDetailModal.t_decb7579'));
                 onScheduleUpdated?.();
                 if (newStatus === 'CONFIRMED') {
                   try {
@@ -560,11 +560,11 @@ const ScheduleDetailModal = ({
                 };
                 setLocalScheduleOverride(merged);
             } else {
-                throw new Error(response?.message || '상태 변경에 실패했습니다.');
+                throw new Error(response?.message || t('schedule:ScheduleDetailModal.t_6a68eb67'));
             }
         } catch (error) {
             console.error('❌ 상태 변경 실패:', error);
-            notificationManager.error(`상태 변경에 실패했습니다: ${error.message}`);
+            notificationManager.error(t('schedule:ScheduleDetailModal.t_d034ac4a'));
         } finally {
             setLoading(false);
         }
@@ -575,7 +575,7 @@ const ScheduleDetailModal = ({
      */
     const handleWriteConsultationLog = () => {
         if (!scheduleData?.id) {
-            notificationManager.error('스케줄 정보가 올바르지 않습니다.');
+            notificationManager.error(t('schedule:ScheduleDetailModal.t_70e5dfa5'));
             return;
         }
         
@@ -590,7 +590,7 @@ const ScheduleDetailModal = ({
      */
     const handleEditSchedule = () => {
         if (!scheduleData?.id) {
-            notificationManager.error('스케줄 정보가 올바르지 않습니다.');
+            notificationManager.error(t('schedule:ScheduleDetailModal.t_70e5dfa5'));
             return;
         }
 
@@ -629,45 +629,45 @@ const ScheduleDetailModal = ({
                 displayData.clientPhone || displayData.clientMobile || displayData.phone;
             const clientEmailRaw = displayData.clientEmail || displayData.email;
             return [
-                { label: '이름', value: toDisplayString(parsedClientName, dash) },
-                { label: '사용자 ID', value: toDisplayString(displayData.clientId, dash) },
+                { label: t('schedule:ScheduleDetailModal.t_9aa18e50'), value: toDisplayString(parsedClientName, dash) },
+                { label: t('schedule:ScheduleDetailModal.t_7db258e6'), value: toDisplayString(displayData.clientId, dash) },
                 {
-                    label: '연락처',
+                    label: t('schedule:ScheduleDetailModal.t_4374db90'),
                     value: toDisplayString(
                         applyPartyPiiPolicy(clientPhoneRaw, 'phone', user),
                         dash
                     )
                 },
                 {
-                    label: '이메일',
+                    label: t('schedule:ScheduleDetailModal.t_3c37764a'),
                     value: toDisplayString(applyPartyPiiPolicy(clientEmailRaw, 'email', user), dash)
                 },
-                { label: '일정 상태', value: statusLine },
-                { label: '상담 유형', value: typeLine },
-                { label: '일시', value: dateTimeLine }
+                { label: t('schedule:ScheduleDetailModal.t_27e729aa'), value: statusLine },
+                { label: t('schedule:ScheduleDetailModal.t_c6c6281f'), value: typeLine },
+                { label: t('schedule:ScheduleDetailModal.t_abfcf6cf'), value: dateTimeLine }
             ];
         }
 
         return [
-            { label: '이름', value: toDisplayString(parsedConsultantName, dash) },
-            { label: '사용자 ID', value: toDisplayString(displayData.consultantId, dash) },
+            { label: t('schedule:ScheduleDetailModal.t_9aa18e50'), value: toDisplayString(parsedConsultantName, dash) },
+            { label: t('schedule:ScheduleDetailModal.t_7db258e6'), value: toDisplayString(displayData.consultantId, dash) },
             {
-                label: '연락처',
+                label: t('schedule:ScheduleDetailModal.t_4374db90'),
                 value: toDisplayString(
                     applyPartyPiiPolicy(displayData.consultantPhone, 'phone', user),
                     dash
                 )
             },
             {
-                label: '이메일',
+                label: t('schedule:ScheduleDetailModal.t_3c37764a'),
                 value: toDisplayString(
                     applyPartyPiiPolicy(displayData.consultantEmail, 'email', user),
                     dash
                 )
             },
-            { label: '일정 상태', value: statusLine },
-            { label: '상담 유형', value: typeLine },
-            { label: '일시', value: dateTimeLine }
+            { label: t('schedule:ScheduleDetailModal.t_27e729aa'), value: statusLine },
+            { label: t('schedule:ScheduleDetailModal.t_c6c6281f'), value: typeLine },
+            { label: t('schedule:ScheduleDetailModal.t_abfcf6cf'), value: dateTimeLine }
         ];
     };
 
@@ -762,7 +762,7 @@ const ScheduleDetailModal = ({
                 )}
                 {isStatus(resolveStatusForActions(displayData), 'CONFIRMED') && (() => {
                     const completedStatus = scheduleStatusOptions.find(opt =>
-                        opt.value === 'COMPLETED' || opt.label?.includes('완료')
+                        opt.value === 'COMPLETED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_8d868037'))
                     )?.value || 'COMPLETED';
                     return (
                         <>
@@ -819,7 +819,7 @@ const ScheduleDetailModal = ({
                 })()}
                 {isStatus(resolveStatusForActions(displayData), 'COMPLETED') && (() => {
                     const bookedStatus = scheduleStatusOptions.find(opt =>
-                        opt.value === 'BOOKED' || opt.label?.includes('예약')
+                        opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
                     return (
                         <MGButton
@@ -842,7 +842,7 @@ const ScheduleDetailModal = ({
                 })()}
                 {isStatus(resolveStatusForActions(displayData), 'CANCELLED') && (() => {
                     const bookedStatus = scheduleStatusOptions.find(opt =>
-                        opt.value === 'BOOKED' || opt.label?.includes('예약')
+                        opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
                     return (
                         <MGButton
@@ -945,7 +945,7 @@ const ScheduleDetailModal = ({
                         <div className="schedule-detail-modal__persist-note-hint" role="note">
                             <SafeText>
                                 {toDisplayString(
-                                    '예약 확정 시 여기서 입력하는 메모는 입금 확인용(일회)입니다. 약속·후속 조치 등 지속 관리는 상단의 특이사항 탭에서 기록합니다.',
+                                    t('schedule:ScheduleDetailModal.t_a00dbe79'),
                                     ''
                                 )}
                             </SafeText>
@@ -976,8 +976,8 @@ const ScheduleDetailModal = ({
                                 <span className="schedule-detail-modal__summary-value">
                                     <SafeText>
                                         {toSafeNumber(clientNotesUnresolvedCount, 0) > 0
-                                            ? `${toSafeNumber(clientNotesUnresolvedCount, 0)}건 미해소`
-                                            : '없음'}
+                                            ? t('schedule:ScheduleDetailModal.t_bb03a4c6')
+                                            : t('schedule:ScheduleDetailModal.t_d58fa73a')}
                                     </SafeText>
                                 </span>
                             </div>
@@ -1021,7 +1021,7 @@ const ScheduleDetailModal = ({
                                         name={<SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>}
                                         badges={
                                           <span className="schedule-detail-modal__party-role-label">
-                                            {getProfessionalProviderTypeLabel(displayData.consultantProfessionalProviderTypeCode) || '상담사'}
+                                            {getProfessionalProviderTypeLabel(displayData.consultantProfessionalProviderTypeCode) || t('schedule:ScheduleDetailModal.t_293bb79c')}
                                           </span>
                                         }
                                         onClick={() => setPartyQuickView('consultant')}
@@ -1040,7 +1040,7 @@ const ScheduleDetailModal = ({
                                         name={<SafeText fallback="상담사 정보 없음">{parsedConsultantName}</SafeText>}
                                         badges={
                                           <span className="schedule-detail-modal__party-role-label">
-                                            {getProfessionalProviderTypeLabel(displayData.consultantProfessionalProviderTypeCode) || '상담사'}
+                                            {getProfessionalProviderTypeLabel(displayData.consultantProfessionalProviderTypeCode) || t('schedule:ScheduleDetailModal.t_293bb79c')}
                                           </span>
                                         }
                                         renderActions={canPartyQuickSummary ? () => (
@@ -1072,7 +1072,7 @@ const ScheduleDetailModal = ({
                 <SchedulePartyQuickViewModal
                     isOpen
                     onClose={() => handlePartyQuickViewClose()}
-                    title={partyQuickView === 'client' ? '내담자 요약' : '상담사 요약'}
+                    title={partyQuickView === 'client' ? '내담자 요약' : t('schedule:ScheduleDetailModal.t_49b67be5')}
                     zIndex={SCHEDULE_DETAIL_Z_INDEX_PARTY_QUICK}
                     rows={buildPartySummaryRows(partyQuickView)}
                     userManagementType={partyQuickView}

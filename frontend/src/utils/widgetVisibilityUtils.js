@@ -22,6 +22,7 @@ import {
 import { apiGet } from './ajax';
 import { sessionManager } from './sessionManager';
 import { USER_ROLES } from '../constants/roles';
+import i18n from '../i18n';
 
 /**
  * 업종별 허용 위젯 타입 반환 (동적)
@@ -404,7 +405,7 @@ const fetchRoleInfoFromCommonCode = async(userRole) => {
     };
   }
   
-  throw new Error(`역할 정보를 찾을 수 없습니다: ${userRole}`);
+  throw new Error(i18n.t('common:utils.widgetVisibilityUtils.t_97567d43'));
 };
 
 /**
@@ -559,7 +560,7 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
   };
   
   if (!widgetType) {
-    result.reason = '위젯 타입이 필요합니다.';
+    result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_9a3eff70');
     return result;
   }
   
@@ -574,40 +575,40 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
     // 공통 위젯은 업종 정보 없이도 허용
     result.category = 'common';
     result.allowed = true;
-    result.reason = '공통 위젯입니다.';
+    result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_4ebba3ed');
   } else if (erpTypes.includes(normalizedType)) {
     // ERP 위젯도 업종 정보 없이 허용 (Feature Flag로 제어)
     result.category = 'erp';
     result.allowed = true;
-    result.reason = 'ERP 위젯입니다.';
+    result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_69f2b706');
   } else if (consultationTypes.includes(normalizedType)) {
     // 상담소 특화 위젯은 업종 검증 필요
     result.category = 'consultation';
     if (!businessType) {
-      result.reason = '업종 정보가 필요합니다. (상담소 전용)';
+      result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_9b144b0b');
       return result;
     }
     if (businessType.toUpperCase() === 'CONSULTATION') {
       result.allowed = true;
-      result.reason = '상담소 특화 위젯입니다.';
+      result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_da5c44f5');
     } else {
-      result.reason = '상담소 전용 위젯입니다.';
+      result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_10591783');
     }
   } else if (academyTypes.includes(normalizedType)) {
     // 학원 특화 위젯은 업종 검증 필요
     result.category = 'academy';
     if (!businessType) {
-      result.reason = '업종 정보가 필요합니다. (학원 전용)';
+      result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_50c0fd39');
       return result;
     }
     if (businessType.toUpperCase() === 'ACADEMY') {
       result.allowed = true;
-      result.reason = '학원 특화 위젯입니다.';
+      result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_25bd3037');
     } else {
-      result.reason = '학원 전용 위젯입니다.';
+      result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_6320c2bb');
     }
   } else {
-    result.reason = '지원하지 않는 위젯 타입입니다.';
+    result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_874f4ba1');
     return result;
   }
   
@@ -616,7 +617,7 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
     result.requiresAdmin = true;
     if (!isAdminRole(userRole)) {
       result.allowed = false;
-      result.reason = '관리자 권한이 필요합니다.';
+      result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_7bcf83f7');
     }
   }
   

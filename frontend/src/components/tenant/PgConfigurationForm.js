@@ -177,13 +177,13 @@ const PgConfigurationForm = ({
   const prevPgProviderRef = useRef('');
 
   const pgProviders = [
-    { value: 'TOSS', label: '토스페이먼츠' },
+    { value: 'TOSS', label: t('common:tenant.PgConfigurationForm.t_aa04d957') },
     { value: PG_PROVIDER_IAMPORT, label: PG_PROVIDER_IAMPORT_DISPLAY_LABEL },
-    { value: 'KAKAO', label: '카카오페이' },
-    { value: 'NAVER', label: '네이버페이' },
-    { value: 'PAYPAL', label: '페이팔' },
-    { value: 'STRIPE', label: '스트라이프' },
-    { value: PG_PROVIDER_KICC, label: 'KICC 이지페이' }
+    { value: 'KAKAO', label: t('common:tenant.PgConfigurationForm.t_dff4009a') },
+    { value: 'NAVER', label: t('common:tenant.PgConfigurationForm.t_9ef12bda') },
+    { value: 'PAYPAL', label: t('common:tenant.PgConfigurationForm.t_2fc07f63') },
+    { value: 'STRIPE', label: t('common:tenant.PgConfigurationForm.t_2ee2f0ac') },
+    { value: PG_PROVIDER_KICC, label: t('common:tenant.PgConfigurationForm.t_cf64b1ae') }
   ];
 
   const isIamportPortoneV2 = formData.pgProvider === PG_PROVIDER_IAMPORT;
@@ -281,53 +281,53 @@ const PgConfigurationForm = ({
     const newErrors = {};
 
     if (!formData.pgProvider) {
-      newErrors.pgProvider = 'PG사를 선택해주세요.';
+      newErrors.pgProvider = t('common:tenant.PgConfigurationForm.t_d5d2a5e5');
     }
 
     if (isKicc) {
       if (!formData.merchantId || !String(formData.merchantId).trim()) {
-        newErrors.merchantId = 'Mall ID(상점 ID)를 입력해주세요.';
+        newErrors.merchantId = t('common:tenant.PgConfigurationForm.t_a5c3076a');
       }
       if (!formData.apiKey || !String(formData.apiKey).trim()) {
-        newErrors.apiKey = 'API 키를 입력해주세요.';
+        newErrors.apiKey = t('common:tenant.PgConfigurationForm.t_cd49be19');
       }
       if (!formData.secretKey || !String(formData.secretKey).trim()) {
-        newErrors.secretKey = '상점 검증키(Secret Key)를 입력해주세요.';
+        newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_d43a548a');
       }
     } else if (isIamportPortoneV2) {
       if (!formData.storeId || !String(formData.storeId).trim()) {
-        newErrors.storeId = '스토어 ID를 입력해주세요.';
+        newErrors.storeId = t('common:tenant.PgConfigurationForm.t_6a5134ed');
       }
       if (!formData.secretKey || !String(formData.secretKey).trim()) {
-        newErrors.secretKey = 'API 시크릿을 입력해주세요.';
+        newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_3d449702');
       }
     } else {
       if (!formData.apiKey) {
-        newErrors.apiKey = 'API 키를 입력해주세요.';
+        newErrors.apiKey = t('common:tenant.PgConfigurationForm.t_cd49be19');
       }
       if (!formData.secretKey) {
-        newErrors.secretKey = '시크릿 키를 입력해주세요.';
+        newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_e42ddd31');
       }
     }
 
     if (formData.pgName && formData.pgName.length > 255) {
-      newErrors.pgName = 'PG사 명칭은 255자 이하여야 합니다.';
+      newErrors.pgName = t('common:tenant.PgConfigurationForm.t_4a435c0a');
     }
 
     if (formData.webhookUrl && formData.webhookUrl.length > 500) {
-      newErrors.webhookUrl = 'Webhook URL은 500자 이하여야 합니다.';
+      newErrors.webhookUrl = t('common:tenant.PgConfigurationForm.t_f3743bfe');
     }
 
     if (formData.returnUrl && formData.returnUrl.length > 500) {
-      newErrors.returnUrl = '리턴 URL은 500자 이하여야 합니다.';
+      newErrors.returnUrl = t('common:tenant.PgConfigurationForm.t_8101f8ed');
     }
 
     if (formData.cancelUrl && formData.cancelUrl.length > 500) {
-      newErrors.cancelUrl = '취소 URL은 500자 이하여야 합니다.';
+      newErrors.cancelUrl = t('common:tenant.PgConfigurationForm.t_8ba1d18f');
     }
 
     if (formData.notes && formData.notes.length > 1000) {
-      newErrors.notes = '비고는 1000자 이하여야 합니다.';
+      newErrors.notes = t('common:tenant.PgConfigurationForm.t_f663f1e7');
     }
 
     setErrors(newErrors);
@@ -382,7 +382,7 @@ const PgConfigurationForm = ({
     e.preventDefault();
 
     if (!validate()) {
-      showNotification('입력한 정보를 확인해주세요.', 'error');
+      showNotification(t('common:tenant.PgConfigurationForm.t_bb1c62fb'), 'error');
       return;
     }
 
@@ -392,15 +392,15 @@ const PgConfigurationForm = ({
       const payload = buildSavePayload();
       await onSave(payload);
       if (mode === 'create') {
-        showNotification('PG 설정이 등록되었습니다. 운영 포털에서 승인 절차를 진행합니다.', 'success');
+        showNotification(t('common:tenant.PgConfigurationForm.t_83bf7f65'), 'success');
       } else {
-        showNotification('PG 설정이 수정되었습니다. 다시 승인 절차를 진행합니다.', 'success');
+        showNotification(t('common:tenant.PgConfigurationForm.t_cae8f1c3'), 'success');
       }
     } catch (error) {
       console.error('PG 설정 저장 실패:', error);
       const errorMessage = error.response?.data?.message ||
         error.message ||
-        'PG 설정 저장 중 오류가 발생했습니다.';
+        t('common:tenant.PgConfigurationForm.t_8edd164d');
       showNotification(errorMessage, 'error');
 
       if (error.response?.data?.errors) {
@@ -424,12 +424,12 @@ const PgConfigurationForm = ({
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
-        showNotification('웹훅 URL을 클립보드에 복사했습니다.', 'success');
+        showNotification(t('common:tenant.PgConfigurationForm.t_77a74d03'), 'success');
       } else {
-        showNotification('이 환경에서는 자동 복사를 지원하지 않습니다. URL을 직접 선택해 복사해 주세요.', 'error');
+        showNotification(t('common:tenant.PgConfigurationForm.t_fdbe55b2'), 'error');
       }
     } catch {
-      showNotification('복사에 실패했습니다. URL을 직접 선택해 복사해 주세요.', 'error');
+      showNotification(t('common:tenant.PgConfigurationForm.t_be39b65c'), 'error');
     }
   };
 
@@ -441,10 +441,10 @@ const PgConfigurationForm = ({
     try {
       const res = await testPgConnection(tenantId, configId);
       const ok = res?.success === true || res?.result === 'SUCCESS';
-      const msg = toDisplayString(res?.message, ok ? '연결 테스트가 완료되었습니다.' : '연결 테스트에 실패했습니다.');
+      const msg = toDisplayString(res?.message, ok ? '연결 테스트가 완료되었습니다.' : t('common:tenant.PgConfigurationForm.t_e2b9fb5a'));
       showNotification(msg, ok ? 'success' : 'error');
     } catch (error) {
-      const msg = error.response?.data?.message || error.message || '연결 테스트 중 오류가 발생했습니다.';
+      const msg = error.response?.data?.message || error.message || t('common:tenant.PgConfigurationForm.t_1ab6153d');
       showNotification(msg, 'error');
     } finally {
       setTestConnectionLoading(false);
@@ -470,7 +470,7 @@ const PgConfigurationForm = ({
           <>
             <h2>
               <CreditCardIcon size={24} />
-              {mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
+              {mode === 'create' ? 'PG 설정 등록' : t('common:tenant.PgConfigurationForm.t_f83199fc')}
             </h2>
             <p className="form-description">
               결제 게이트웨이 설정 정보를 입력해주세요. 입력한 정보는 암호화되어 저장되며, 승인 후 사용 가능합니다.
@@ -620,12 +620,12 @@ const PgConfigurationForm = ({
                     className: 'icon-button'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label={showApiKey ? 'API 키 숨기기' : 'API 키 보기'}
+                  aria-label={showApiKey ? 'API 키 숨기기' : t('common:tenant.PgConfigurationForm.t_d0ebfa2a')}
                   variant="outline"
                   size="small"
                   preventDoubleClick={false}
                 >
-                  {showApiKey ? '숨기기' : '보기'}
+                  {showApiKey ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
                 </MGButton>
               </div>
               {getFieldError('apiKey') && (
@@ -650,7 +650,7 @@ const PgConfigurationForm = ({
                   type={showSecretKey ? 'text' : 'password'}
                   value={formData.secretKey}
                   onChange={(e) => handleChange('secretKey', e.target.value)}
-                  placeholder={mode === 'edit' ? '변경 시에만 새 값 입력' : 'HMAC 메시지 인증용 상점 검증키'}
+                  placeholder={mode === 'edit' ? '변경 시에만 새 값 입력' : t('common:tenant.PgConfigurationForm.t_8587def7')}
                   className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
                   autoComplete="new-password"
                   aria-required="true"
@@ -667,12 +667,12 @@ const PgConfigurationForm = ({
                     className: 'icon-button'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label={showSecretKey ? '상점 검증키 숨기기' : '상점 검증키 보기'}
+                  aria-label={showSecretKey ? '상점 검증키 숨기기' : t('common:tenant.PgConfigurationForm.t_96cd8c4c')}
                   variant="outline"
                   size="small"
                   preventDoubleClick={false}
                 >
-                  {showSecretKey ? '숨기기' : '보기'}
+                  {showSecretKey ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
                 </MGButton>
               </div>
               {getFieldError('secretKey') && (
@@ -790,8 +790,8 @@ const PgConfigurationForm = ({
                 <p className="pg-config-portone-v2-test-hint">
                   <SafeText>
                     {mode === 'create'
-                      ? '연결 테스트는 저장 후 상세 화면에서 진행할 수 있습니다.'
-                      : '연결 테스트를 실행할 수 없습니다. 테넌트·설정 정보를 확인해 주세요.'}
+                      ? t('common:tenant.PgConfigurationForm.t_ad81f645')
+                      : t('common:tenant.PgConfigurationForm.t_d21ecf7f')}
                   </SafeText>
                 </p>
               )}
@@ -849,7 +849,7 @@ const PgConfigurationForm = ({
                   type={showSecretKey ? 'text' : 'password'}
                   value={formData.secretKey}
                   onChange={(e) => handleChange('secretKey', e.target.value)}
-                  placeholder={mode === 'edit' ? '변경 시에만 새 API 시크릿을 입력하세요' : 'API 시크릿을 입력하세요'}
+                  placeholder={mode === 'edit' ? '변경 시에만 새 API 시크릿을 입력하세요' : t('common:tenant.PgConfigurationForm.t_ba8eeaae')}
                   className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
                   autoComplete="new-password"
                   aria-required="true"
@@ -866,12 +866,12 @@ const PgConfigurationForm = ({
                     className: 'icon-button'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label={showSecretKey ? 'API 시크릿 숨기기' : 'API 시크릿 보기'}
+                  aria-label={showSecretKey ? 'API 시크릿 숨기기' : t('common:tenant.PgConfigurationForm.t_d5bd3438')}
                   variant="outline"
                   size="small"
                   preventDoubleClick={false}
                 >
-                  {showSecretKey ? '숨기기' : '보기'}
+                  {showSecretKey ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
                 </MGButton>
               </div>
               {getFieldError('secretKey') && (
@@ -958,12 +958,12 @@ const PgConfigurationForm = ({
                     className: 'icon-button'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label={showPortoneWebhookSecret ? '웹훅 시크릿 숨기기' : '웹훅 시크릿 보기'}
+                  aria-label={showPortoneWebhookSecret ? '웹훅 시크릿 숨기기' : t('common:tenant.PgConfigurationForm.t_3ffc55f8')}
                   variant="outline"
                   size="small"
                   preventDoubleClick={false}
                 >
-                  {showPortoneWebhookSecret ? '숨기기' : '보기'}
+                  {showPortoneWebhookSecret ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
                 </MGButton>
               </div>
               <small id="portoneWebhookSecret-help" className="help-text">
@@ -1083,12 +1083,12 @@ const PgConfigurationForm = ({
                     className: 'icon-button'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label={showApiKey ? 'API 키 숨기기' : 'API 키 보기'}
+                  aria-label={showApiKey ? 'API 키 숨기기' : t('common:tenant.PgConfigurationForm.t_d0ebfa2a')}
                   variant="outline"
                   size="small"
                   preventDoubleClick={false}
                 >
-                  {showApiKey ? '숨기기' : '보기'}
+                  {showApiKey ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
                 </MGButton>
               </div>
               {getFieldError('apiKey') && (
@@ -1130,12 +1130,12 @@ const PgConfigurationForm = ({
                     className: 'icon-button'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  aria-label={showSecretKey ? '시크릿 키 숨기기' : '시크릿 키 보기'}
+                  aria-label={showSecretKey ? '시크릿 키 숨기기' : t('common:tenant.PgConfigurationForm.t_7d1d1d68')}
                   variant="outline"
                   size="small"
                   preventDoubleClick={false}
                 >
-                  {showSecretKey ? '숨기기' : '보기'}
+                  {showSecretKey ? '숨기기' : t('common:tenant.PgConfigurationForm.t_58d6978a')}
                 </MGButton>
               </div>
               {getFieldError('secretKey') && (
@@ -1314,8 +1314,8 @@ const PgConfigurationForm = ({
               <p className="pg-config-portone-v2-test-hint">
                 <SafeText>
                   {mode === 'create'
-                    ? '연결 테스트는 저장 후 상세 화면에서 진행할 수 있습니다.'
-                    : '연결 테스트를 실행할 수 없습니다. 테넌트·설정 정보를 확인해 주세요.'}
+                    ? t('common:tenant.PgConfigurationForm.t_ad81f645')
+                    : t('common:tenant.PgConfigurationForm.t_d21ecf7f')}
                 </SafeText>
               </p>
             )}
@@ -1344,9 +1344,9 @@ const PgConfigurationForm = ({
           disabled={loading}
           loading={loading}
           preventDoubleClick={false}
-          aria-label={mode === 'create' ? 'PG 설정 등록' : 'PG 설정 수정'}
+          aria-label={mode === 'create' ? 'PG 설정 등록' : t('common:tenant.PgConfigurationForm.t_f83199fc')}
         >
-          {mode === 'create' ? '등록' : '수정'}
+          {mode === 'create' ? '등록' : t('common:tenant.PgConfigurationForm.t_e1407b51')}
         </MGButton>
       </div>
     </form>

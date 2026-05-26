@@ -40,7 +40,7 @@ const PasswordResetModal = ({
         const newErrors = {};
 
         if (!newPassword || newPassword.trim().length === 0) {
-            newErrors.newPassword = '새 비밀번호를 입력해주세요.';
+            newErrors.newPassword = t('admin:PasswordResetModal.t_b0bdea92');
         } else {
             const policyMsg = getFirstLoginPasswordViolationMessage(newPassword);
             if (policyMsg) {
@@ -49,9 +49,9 @@ const PasswordResetModal = ({
         }
 
         if (!confirmPassword || confirmPassword.trim().length === 0) {
-            newErrors.confirmPassword = '비밀번호 확인란에 위와 동일한 비밀번호를 입력해주세요.';
+            newErrors.confirmPassword = t('admin:PasswordResetModal.t_61208c3a');
         } else if (newPassword !== confirmPassword) {
-            newErrors.confirmPassword = '위 비밀번호와 일치하지 않습니다. 다시 입력해주세요.';
+            newErrors.confirmPassword = t('admin:PasswordResetModal.t_04c6bcf5');
         }
 
         setErrors(newErrors);
@@ -75,8 +75,8 @@ const PasswordResetModal = ({
         }
     };
 
-    const userTypeLabel = userType === 'client' ? '내담자' : '상담사';
-    const userName = user?.name || user?.email || '사용자';
+    const userTypeLabel = userType === 'client' ? '내담자' : t('admin:PasswordResetModal.t_293bb79c');
+    const userName = user?.name || user?.email || t('admin:PasswordResetModal.t_5c50d9e5');
 
     return (
         <UnifiedModal
@@ -160,10 +160,10 @@ const PasswordResetModal = ({
                             className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-form-input-toggle`}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                            aria-label={showPassword ? '비밀번호 숨기기' : t('admin:PasswordResetModal.t_8f3ebd49')}
                             preventDoubleClick={false}
                         >
-                            {showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                            {showPassword ? '비밀번호 숨기기' : t('admin:PasswordResetModal.t_8f3ebd49')}
                         </MGButton>
                     </div>
                     {errors.newPassword && (
@@ -200,10 +200,10 @@ const PasswordResetModal = ({
                             className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-form-input-toggle`}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                            aria-label={showPassword ? '비밀번호 숨기기' : t('admin:PasswordResetModal.t_8f3ebd49')}
                             preventDoubleClick={false}
                         >
-                            {showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                            {showPassword ? '비밀번호 숨기기' : t('admin:PasswordResetModal.t_8f3ebd49')}
                         </MGButton>
                     </div>
                     {errors.confirmPassword && (

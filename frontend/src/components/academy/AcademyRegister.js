@@ -111,37 +111,37 @@ const AcademyRegister = () => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = '이름을 입력해주세요.';
+      newErrors.name = t('common:academy.AcademyRegister.t_66610c9b');
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = '이메일을 입력해주세요.';
+      newErrors.email = t('common:academy.AcademyRegister.t_7b265b56');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 형식을 입력해주세요.';
+      newErrors.email = t('common:academy.AcademyRegister.t_60304b0f');
     }
 
     if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해주세요.';
+      newErrors.password = t('common:academy.AcademyRegister.t_f2e5e9cb');
     } else if (formData.password.length < 8) {
-      newErrors.password = '비밀번호는 8자 이상이어야 합니다.';
+      newErrors.password = t('common:academy.AcademyRegister.t_c1b8b5d4');
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
+      newErrors.confirmPassword = t('common:academy.AcademyRegister.t_ecdaae18');
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+      newErrors.confirmPassword = t('common:academy.AcademyRegister.t_c3b85cd6');
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = '전화번호를 입력해주세요.';
+      newErrors.phone = t('common:academy.AcademyRegister.t_04e284b7');
     }
 
     if (!formData.agreeTerms) {
-      newErrors.agreeTerms = '이용약관에 동의해주세요.';
+      newErrors.agreeTerms = t('common:academy.AcademyRegister.t_d04777b6');
     }
 
     if (!formData.agreePrivacy) {
-      newErrors.agreePrivacy = '개인정보처리방침에 동의해주세요.';
+      newErrors.agreePrivacy = t('common:academy.AcademyRegister.t_26e48ff9');
     }
 
     setErrors(newErrors);
@@ -156,7 +156,7 @@ const AcademyRegister = () => {
     }
 
     if (!tenantId) {
-      notificationManager.error('테넌트 정보가 없습니다.');
+      notificationManager.error(t('common:academy.AcademyRegister.t_6e006872'));
       return;
     }
 
@@ -175,19 +175,19 @@ const AcademyRegister = () => {
       const data = await response.json();
 
       if (data.success) {
-        notificationManager.success('회원가입이 완료되었습니다.');
+        notificationManager.success(t('common:academy.AcademyRegister.t_8f9fb3e6'));
         navigate('/login', { 
           state: { 
-            message: '회원가입이 완료되었습니다. 로그인해주세요.',
+            message: t('common:academy.AcademyRegister.t_227b55f9'),
             email: formData.email 
           } 
         });
       } else {
-        notificationManager.error(data.message || '회원가입에 실패했습니다.');
+        notificationManager.error(data.message || t('common:academy.AcademyRegister.t_e144fb1d'));
       }
     } catch (error) {
       console.error('회원가입 실패:', error);
-      notificationManager.error('회원가입 중 오류가 발생했습니다.');
+      notificationManager.error(t('common:academy.AcademyRegister.t_7358144a'));
     } finally {
       setLoading(false);
     }
@@ -196,7 +196,7 @@ const AcademyRegister = () => {
   // SNS 로그인 핸들러 (테넌트 정보 포함)
   const handleSocialLogin = async(provider) => {
     if (!tenantId) {
-      notificationManager.error('테넌트 정보가 없습니다.');
+      notificationManager.error(t('common:academy.AcademyRegister.t_6e006872'));
       return;
     }
 
@@ -216,11 +216,11 @@ const AcademyRegister = () => {
           await googleLogin();
           break;
         default:
-          notificationManager.error('지원하지 않는 소셜 로그인입니다.');
+          notificationManager.error(t('common:academy.AcademyRegister.t_24e60727'));
       }
     } catch (error) {
       console.error('SNS 로그인 실패:', error);
-      notificationManager.error('SNS 로그인 중 오류가 발생했습니다.');
+      notificationManager.error(t('common:academy.AcademyRegister.t_fee37614'));
     }
   };
 

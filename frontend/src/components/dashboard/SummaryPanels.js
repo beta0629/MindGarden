@@ -30,29 +30,29 @@ const SummaryPanels = ({ user, consultationData }) => {
 
   // 전문 분야 영어를 한글로 변환
   const convertSpecialtyToKorean = (specialty) => {
-    if (!specialty) return '전문 분야 미정';
+    if (!specialty) return t('common:dashboard.SummaryPanels.t_59e54ed1');
     
     const specialtyMap = {
-      'DEPRESSION': '우울증',
-      'ANXIETY': '불안장애',
-      'TRAUMA': '트라우마',
-      'RELATIONSHIP': '관계상담',
-      'FAMILY': '가족상담',
-      'COUPLE': '부부상담',
-      'CHILD': '아동상담',
-      'ADOLESCENT': '청소년상담',
-      'ADDICTION': '중독상담',
-      'EATING_DISORDER': '섭식장애',
-      'PERSONALITY': '성격장애',
-      'BIPOLAR': '양극성장애',
-      'OCD': '강박장애',
-      'PTSD': '외상후스트레스장애',
-      'GRIEF': '상실상담',
-      'CAREER': '진로상담',
-      'STRESS': '스트레스관리',
-      'SLEEP': '수면장애',
-      'ANGER': '분노조절',
-      'SELF_ESTEEM': '자존감'
+      'DEPRESSION': t('common:dashboard.SummaryPanels.t_ab01081f'),
+      'ANXIETY': t('common:dashboard.SummaryPanels.t_dc470840'),
+      'TRAUMA': t('common:dashboard.SummaryPanels.t_a7f0acf4'),
+      'RELATIONSHIP': t('common:dashboard.SummaryPanels.t_5f7b31c3'),
+      'FAMILY': t('common:dashboard.SummaryPanels.t_aaa928a6'),
+      'COUPLE': t('common:dashboard.SummaryPanels.t_62b69843'),
+      'CHILD': t('common:dashboard.SummaryPanels.t_a3a0c008'),
+      'ADOLESCENT': t('common:dashboard.SummaryPanels.t_62dd9bfa'),
+      'ADDICTION': t('common:dashboard.SummaryPanels.t_e00f86f0'),
+      'EATING_DISORDER': t('common:dashboard.SummaryPanels.t_eadeca31'),
+      'PERSONALITY': t('common:dashboard.SummaryPanels.t_64289520'),
+      'BIPOLAR': t('common:dashboard.SummaryPanels.t_06ce7165'),
+      'OCD': t('common:dashboard.SummaryPanels.t_d6006d9e'),
+      'PTSD': t('common:dashboard.SummaryPanels.t_85fa51cf'),
+      'GRIEF': t('common:dashboard.SummaryPanels.t_62d41eac'),
+      'CAREER': t('common:dashboard.SummaryPanels.t_a9676d11'),
+      'STRESS': t('common:dashboard.SummaryPanels.t_15a15b24'),
+      'SLEEP': t('common:dashboard.SummaryPanels.t_4af66e7c'),
+      'ANGER': t('common:dashboard.SummaryPanels.t_53166452'),
+      'SELF_ESTEEM': t('common:dashboard.SummaryPanels.t_1544ba61')
     };
 
     return specialty.split(',').map(s => {

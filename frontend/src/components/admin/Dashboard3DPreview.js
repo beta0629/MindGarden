@@ -19,8 +19,10 @@ import { FaEye } from 'react-icons/fa';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './Dashboard3DPreview.css';
+import { useTranslation } from 'react-i18next';
 
 const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미리보기' }) => {
+  const { t } = useTranslation();
   const [rotation, setRotation] = useState({ x: -15, y: 25 });
   const [scale, setScale] = useState(0.8);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -82,15 +84,15 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
   // 위젯 렌더링 (간단한 미리보기)
   const renderWidgetPreview = (widget, index) => {
     const widgetTypeNames = {
-      'welcome': '환영 위젯',
-      'statistics': '통계 위젯',
-      'summary-statistics': '요약 통계',
-      'chart': '차트 위젯',
-      'table': '테이블 위젯',
-      'calendar': '캘린더 위젯',
-      'schedule': '일정 위젯',
-      'activity-list': '활동 목록',
-      'custom': '커스텀 위젯'
+      'welcome': t('admin:Dashboard3DPreview.t_aecb8ded'),
+      'statistics': t('admin:Dashboard3DPreview.t_58b0fd13'),
+      'summary-statistics': t('admin:Dashboard3DPreview.t_9ad4d55e'),
+      'chart': t('admin:Dashboard3DPreview.t_7bcc71c7'),
+      'table': t('admin:Dashboard3DPreview.t_a72c4c73'),
+      'calendar': t('admin:Dashboard3DPreview.t_b0fbd64a'),
+      'schedule': t('admin:Dashboard3DPreview.t_fb58d653'),
+      'activity-list': t('admin:Dashboard3DPreview.t_f45a3756'),
+      'custom': t('admin:Dashboard3DPreview.t_62544024')
     };
 
     const widgetName = widgetTypeNames[widget.type] || widget.type;
@@ -212,7 +214,7 @@ const Dashboard3DPreview = ({ dashboardConfig, dashboardName = '대시보드 미
             loading={false}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           >
-            {isFullscreen ? '전체화면 종료' : '전체화면'}
+            {isFullscreen ? '전체화면 종료' : t('admin:Dashboard3DPreview.t_0e42a470')}
           </MGButton>
         </div>
       </div>

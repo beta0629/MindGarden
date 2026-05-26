@@ -23,6 +23,7 @@ import {
     VALIDATION,
     PERMISSIONS
 } from '../constants/tenantCodeConstants';
+import i18n from '../i18n';
 
 /**
  * 코드 그룹이 테넌트 코드인지 확인
@@ -70,37 +71,37 @@ export const validateFormData = (formData) => {
 
     // 필수 필드 검증
     if (!formData.codeValue || formData.codeValue.trim().length === 0) {
-        errors.codeValue = '코드 값은 필수입니다.';
+        errors.codeValue = i18n.t('common:utils.tenantCodeUtils.t_ba8caead');
         isValid = false;
     } else if (formData.codeValue.length > VALIDATION.CODE_VALUE_MAX_LENGTH) {
-        errors.codeValue = `코드 값은 ${VALIDATION.CODE_VALUE_MAX_LENGTH}자 이하여야 합니다.`;
+        errors.codeValue = i18n.t('common:utils.tenantCodeUtils.t_1174495e');
         isValid = false;
     }
 
     if (!formData.codeLabel || formData.codeLabel.trim().length === 0) {
-        errors.codeLabel = '코드 라벨은 필수입니다.';
+        errors.codeLabel = i18n.t('common:utils.tenantCodeUtils.t_a9424678');
         isValid = false;
     } else if (formData.codeLabel.length > VALIDATION.CODE_LABEL_MAX_LENGTH) {
-        errors.codeLabel = `코드 라벨은 ${VALIDATION.CODE_LABEL_MAX_LENGTH}자 이하여야 합니다.`;
+        errors.codeLabel = i18n.t('common:utils.tenantCodeUtils.t_7d5fc97c');
         isValid = false;
     }
 
     if (!formData.koreanName || formData.koreanName.trim().length === 0) {
-        errors.koreanName = '한글명은 필수입니다.';
+        errors.koreanName = i18n.t('common:utils.tenantCodeUtils.t_bdfd7551');
         isValid = false;
     } else if (formData.koreanName.length > VALIDATION.KOREAN_NAME_MAX_LENGTH) {
-        errors.koreanName = `한글명은 ${VALIDATION.KOREAN_NAME_MAX_LENGTH}자 이하여야 합니다.`;
+        errors.koreanName = i18n.t('common:utils.tenantCodeUtils.t_58d81f11');
         isValid = false;
     }
 
     // 선택적 필드 검증
     if (formData.codeDescription && formData.codeDescription.length > VALIDATION.DESCRIPTION_MAX_LENGTH) {
-        errors.codeDescription = `설명은 ${VALIDATION.DESCRIPTION_MAX_LENGTH}자 이하여야 합니다.`;
+        errors.codeDescription = i18n.t('common:utils.tenantCodeUtils.t_5034fb9f');
         isValid = false;
     }
 
     if (formData.sortOrder < VALIDATION.SORT_ORDER_MIN || formData.sortOrder > VALIDATION.SORT_ORDER_MAX) {
-        errors.sortOrder = `정렬 순서는 ${VALIDATION.SORT_ORDER_MIN}~${VALIDATION.SORT_ORDER_MAX} 사이여야 합니다.`;
+        errors.sortOrder = i18n.t('common:utils.tenantCodeUtils.t_d08f803f');
         isValid = false;
     }
 
@@ -256,7 +257,7 @@ export const getGroupDisplayName = (groupName, metadata = {}) => {
  */
 export const getGroupDescription = (groupName, metadata = {}) => {
     const groupMetadata = metadata[groupName];
-    return groupMetadata?.description || '코드 그룹 설명';
+    return groupMetadata?.description || i18n.t('common:utils.tenantCodeUtils.t_8e8ca9ef');
 };
 
 /**
@@ -328,5 +329,5 @@ export const formatErrorMessage = (error) => {
         return error.message;
     }
     
-    return '알 수 없는 오류가 발생했습니다.';
+    return i18n.t('common:utils.tenantCodeUtils.t_c9a3b44a');
 };

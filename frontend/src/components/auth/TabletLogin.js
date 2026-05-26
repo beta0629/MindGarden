@@ -405,7 +405,7 @@ const TabletLogin = () => {
         showTooltip(data.message || t('auth:tabletLogin.msg.smsLoginFailed'), 'error');
         
         // 로그인 실패 시 회원가입 안내
-        if (data.message && data.message.includes('회원가입')) {
+        if (data.message && data.message.includes(t('auth:TabletLogin.t_ecb4cc87'))) {
           showTooltip(t('auth:tabletLogin.msg.signupRequired'), 'info');
           // 회원가입 모달 표시 또는 회원가입 페이지로 이동
         }
@@ -450,7 +450,7 @@ const TabletLogin = () => {
       console.log('🔤 디코딩된 에러 메시지:', decodedError);
       
       // 에러 메시지에 "간편 회원가입이 필요합니다"가 포함되어 있으면 모달 표시
-      if (decodedError.includes('간편 회원가입이 필요합니다')) {
+      if (decodedError.includes(t('auth:TabletLogin.t_01def405'))) {
         console.log('🔍 간편 회원가입 필요 감지 - 에러 메시지에서');
         
         // URL에서 사용자 정보 파싱
@@ -468,7 +468,7 @@ const TabletLogin = () => {
         });
         
         // 카카오 또는 네이버로 추정 (에러 메시지에서 판단)
-        const detectedProvider = decodedError.includes('카카오') ? 'kakao' : 'naver';
+        const detectedProvider = decodedError.includes(t('auth:TabletLogin.t_b8423e84')) ? 'kakao' : 'naver';
         
       const socialUserInfo = {
         provider: String(urlProvider || detectedProvider || '').trim().toUpperCase(),
@@ -560,14 +560,14 @@ const TabletLogin = () => {
         console.error('OAuth2 콜백 처리 오류:', error);
         
         // 에러 메시지를 사용자에게 표시
-        let errorMessage = '소셜 로그인 처리 중 오류가 발생했습니다.';
+        let errorMessage = t('auth:TabletLogin.t_146976a0');
         
-        if (error.message.includes('state 검증 실패')) {
-          errorMessage = '보안 검증에 실패했습니다. 다시 시도해주세요.';
-        } else if (error.message.includes('세션 설정')) {
-          errorMessage = '로그인 세션 설정에 실패했습니다. 다시 시도해주세요.';
-        } else if (error.message.includes('OAuth2 인증 실패')) {
-          errorMessage = '소셜 인증에 실패했습니다. 다시 시도해주세요.';
+        if (error.message.includes(t('auth:TabletLogin.t_1707069b'))) {
+          errorMessage = t('auth:TabletLogin.t_d687fbac');
+        } else if (error.message.includes(t('auth:TabletLogin.t_f868e5cc'))) {
+          errorMessage = t('auth:TabletLogin.t_235fddb8');
+        } else if (error.message.includes(t('auth:TabletLogin.t_9509df49'))) {
+          errorMessage = t('auth:TabletLogin.t_258c2755');
         }
         
         showTooltip(errorMessage, 'error');
@@ -613,7 +613,7 @@ const TabletLogin = () => {
         await redirectToDynamicDashboard(authResponse, navigate);
       } else {
         console.log('❌ 간편 회원가입 - 세션 설정 실패');
-        notificationManager.show('세션 설정에 실패했습니다.', 'error');
+        notificationManager.show(t('auth:TabletLogin.t_53ec68ef'), 'error');
       }
     } else {
       // userInfo 미포함: 서버가 Set-Cookie로 세션을 붙인 뒤 응답하는 경우가 많아 SPA 내에서 먼저 동기화 시도

@@ -2759,28 +2759,28 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     const newErrors = {};
     
     if (!formData.entryDate) {
-      newErrors.entryDate = '기준일자는 필수입니다.';
+      newErrors.entryDate = t('erp:IntegratedFinanceDashboard.t_4edb8370');
     }
     
     if (lines.length < 2) {
-      newErrors.lines = '최소 2개의 라인이 필요합니다.';
+      newErrors.lines = t('erp:IntegratedFinanceDashboard.t_7cc8f4a2');
     }
     
     lines.forEach((line, index) => {
       if (!line.accountId) {
-        newErrors[`line_${index}_accountId`] = '계정과목을 선택해주세요.';
+        newErrors[`line_${index}_accountId`] = t('erp:IntegratedFinanceDashboard.t_c9ff66ad');
       }
       if (!line.debitAmount && !line.creditAmount) {
-        newErrors[`line_${index}_amount`] = '차변 또는 대변 금액을 입력해주세요.';
+        newErrors[`line_${index}_amount`] = t('erp:IntegratedFinanceDashboard.t_e0c855e4');
       }
       if (line.debitAmount && line.creditAmount) {
-        newErrors[`line_${index}_amount`] = '차변과 대변을 동시에 입력할 수 없습니다.';
+        newErrors[`line_${index}_amount`] = t('erp:IntegratedFinanceDashboard.t_3f2e9254');
       }
     });
     
     const { totalDebit, totalCredit } = calculateTotals();
     if (totalDebit !== totalCredit) {
-      newErrors.balance = `차변/대변 불균형: 차변 ${formatCurrency(totalDebit)}, 대변 ${formatCurrency(totalCredit)}`;
+      newErrors.balance = t('erp:IntegratedFinanceDashboard.t_06797db7');
     }
     
     setErrors(newErrors);
@@ -3048,29 +3048,29 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
     const newErrors = {};
     
     if (!formData.ruleName.trim()) {
-      newErrors.ruleName = '규칙명은 필수입니다.';
+      newErrors.ruleName = t('erp:IntegratedFinanceDashboard.t_23175710');
     }
     
     if (!formData.settlementType) {
-      newErrors.settlementType = '정산 유형은 필수입니다.';
+      newErrors.settlementType = t('erp:IntegratedFinanceDashboard.t_914fdd09');
     }
     
     if (!formData.calculationMethod) {
-      newErrors.calculationMethod = '계산 방법은 필수입니다.';
+      newErrors.calculationMethod = t('erp:IntegratedFinanceDashboard.t_7bd57070');
     }
     
     // calculationParams JSON 검증
     try {
       const params = JSON.parse(formData.calculationParams);
       if (formData.calculationMethod === 'PERCENTAGE' && !params.percentage) {
-        newErrors.calculationParams = 'PERCENTAGE 방법은 percentage 파라미터가 필요합니다.';
+        newErrors.calculationParams = t('erp:IntegratedFinanceDashboard.t_9cd43675');
       } else if (formData.calculationMethod === 'FIXED' && !params.amount) {
-        newErrors.calculationParams = 'FIXED 방법은 amount 파라미터가 필요합니다.';
+        newErrors.calculationParams = t('erp:IntegratedFinanceDashboard.t_30cab1c2');
       } else if (formData.calculationMethod === 'TIERED' && !params.tiers) {
-        newErrors.calculationParams = 'TIERED 방법은 tiers 파라미터가 필요합니다.';
+        newErrors.calculationParams = t('erp:IntegratedFinanceDashboard.t_ab319941');
       }
     } catch (e) {
-      newErrors.calculationParams = '유효한 JSON 형식이 아닙니다.';
+      newErrors.calculationParams = t('erp:IntegratedFinanceDashboard.t_dc1ddd42');
     }
     
     setErrors(newErrors);
@@ -3459,28 +3459,28 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     const newErrors = {};
     
     if (!formData.entryDate) {
-      newErrors.entryDate = '기준일자는 필수입니다.';
+      newErrors.entryDate = t('erp:IntegratedFinanceDashboard.t_4edb8370');
     }
     
     if (lines.length < 2) {
-      newErrors.lines = '최소 2개의 라인이 필요합니다.';
+      newErrors.lines = t('erp:IntegratedFinanceDashboard.t_7cc8f4a2');
     }
     
     lines.forEach((line, index) => {
       if (!line.accountId) {
-        newErrors[`line_${index}_accountId`] = '계정과목을 선택해주세요.';
+        newErrors[`line_${index}_accountId`] = t('erp:IntegratedFinanceDashboard.t_c9ff66ad');
       }
       if (!line.debitAmount && !line.creditAmount) {
-        newErrors[`line_${index}_amount`] = '차변 또는 대변 금액을 입력해주세요.';
+        newErrors[`line_${index}_amount`] = t('erp:IntegratedFinanceDashboard.t_e0c855e4');
       }
       if (line.debitAmount && line.creditAmount) {
-        newErrors[`line_${index}_amount`] = '차변과 대변을 동시에 입력할 수 없습니다.';
+        newErrors[`line_${index}_amount`] = t('erp:IntegratedFinanceDashboard.t_3f2e9254');
       }
     });
     
     const { totalDebit, totalCredit } = calculateTotals();
     if (totalDebit !== totalCredit) {
-      newErrors.balance = `차변/대변 불균형: 차변 ${formatCurrency(totalDebit)}, 대변 ${formatCurrency(totalCredit)}`;
+      newErrors.balance = t('erp:IntegratedFinanceDashboard.t_06797db7');
     }
     
     setErrors(newErrors);

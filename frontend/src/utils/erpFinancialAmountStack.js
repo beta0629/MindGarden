@@ -3,6 +3,7 @@
  * UI는 FinancialManagement·FinancialTransactionForm 등에서 이 모듈만 사용한다.
  */
 import { toSafeNumber } from './safeDisplay';
+import i18n from '../i18n';
 
 /** 승인·청구 총액(거래 금액) — 목록·폼 금액 필드 라벨 공통 */
 export const FINANCIAL_AMOUNT_STACK_LABEL_TOTAL = '승인·청구 총액(거래 금액)';
@@ -56,7 +57,7 @@ export function legacyWithholdingAmountProbablyInTaxField(transaction) {
   const r = transaction.remarks;
   const combined = `${d != null ? d : ''} ${r != null ? r : ''}`;
   const lower = combined.toLowerCase();
-  return lower.includes('원천징수') || lower.includes('사업소득');
+  return lower.includes(i18n.t('common:utils.erpFinancialAmountStack.t_533ef9b2')) || lower.includes(i18n.t('common:utils.erpFinancialAmountStack.t_7fb985ad'));
 }
 
 /**
@@ -139,7 +140,7 @@ export function shouldShowCardSettlementSection(transaction) {
  */
 export function formatKrw(amount) {
   if (!amount && amount !== 0) {
-    return '0원';
+    return i18n.t('common:utils.erpFinancialAmountStack.t_2360563e');
   }
   const n = typeof amount === 'number' ? amount : toSafeNumber(amount);
   return `${new Intl.NumberFormat('ko-KR').format(n)}원`;

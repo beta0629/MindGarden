@@ -27,6 +27,7 @@ import { setLoginSession, redirectToDashboard, logSessionInfo } from './session'
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import notificationManager from './notification';
 import { cachedApiCall, CACHE_CONFIG } from './apiCache';
+import i18n from '../i18n';
 
 let oauth2Config = null;
 
@@ -125,10 +126,10 @@ export const kakaoLogin = async() => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
+        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         notificationManager.show(friendlyMessage, 'error');
-        throw new Error('서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요.');
+        throw new Error(i18n.t('common:utils.socialLogin.t_11aa9c1b'));
       }
     }
 
@@ -142,21 +143,21 @@ export const kakaoLogin = async() => {
     console.log('백엔드 응답 상태:', response.status, response.statusText);
     
     if (!response.ok) {
-      let errorMessage = '카카오 로그인을 시작할 수 없습니다.';
+      let errorMessage = i18n.t('common:utils.socialLogin.t_f2ce3edf');
       try {
         const errorData = await response.json();
         // 백엔드 오류 메시지 추출
         if (errorData.message) {
           errorMessage = errorData.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
-          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
-            errorMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
+          if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704')) || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
           }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
-          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
-            errorMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
+          if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704')) || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
           }
         }
       } catch (parseError) {
@@ -189,11 +190,11 @@ export const kakaoLogin = async() => {
       window.location.href = authUrl;
     } else {
       console.error('백엔드 응답 데이터 구조 오류:', data);
-      throw new Error('백엔드에서 인증 URL을 받지 못했습니다.');
+      throw new Error(i18n.t('common:utils.socialLogin.t_25681767'));
     }
   } catch (error) {
     console.error('카카오 로그인 상세 오류:', error);
-    notificationManager.show(`카카오 로그인 오류: ${error.message}`, 'error');
+    notificationManager.show(i18n.t('common:utils.socialLogin.t_8cdad74b'), 'error');
   }
 };
 
@@ -214,10 +215,10 @@ export const naverLogin = async() => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
+        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         notificationManager.show(friendlyMessage, 'error');
-        throw new Error('서브도메인이 필요합니다. 올바른 서브도메인으로 접속 후 다시 시도해주세요.');
+        throw new Error(i18n.t('common:utils.socialLogin.t_11aa9c1b'));
       }
     }
 
@@ -228,21 +229,21 @@ export const naverLogin = async() => {
       headers: { Accept: 'application/json' }
     });
     if (!response.ok) {
-      let errorMessage = '네이버 로그인을 시작할 수 없습니다.';
+      let errorMessage = i18n.t('common:utils.socialLogin.t_d5a04e24');
       try {
         const errorData = await response.json();
         // 백엔드 오류 메시지 추출
         if (errorData.message) {
           errorMessage = errorData.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
-          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
-            errorMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
+          if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704')) || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
           }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
-          if (errorMessage.includes('테넌트 정보가 없습니다') || errorMessage.includes('서브도메인')) {
-            errorMessage = `서브도메인이 필요합니다.\n\n예: mindgarden.dev.core-solution.co.kr\n\n현재 도메인: ${host}\n\n올바른 서브도메인으로 접속 후 다시 시도해주세요.`;
+          if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704')) || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
           }
         }
       } catch (parseError) {
@@ -274,11 +275,11 @@ export const naverLogin = async() => {
       window.location.href = authUrl;
     } else {
       console.error('백엔드 응답 데이터 구조 오류:', data);
-      throw new Error('백엔드에서 인증 URL을 받지 못했습니다.');
+      throw new Error(i18n.t('common:utils.socialLogin.t_25681767'));
     }
   } catch (error) {
     console.error('네이버 로그인 오류:', error);
-    notificationManager.show('네이버 로그인을 시작할 수 없습니다.', 'error');
+    notificationManager.show(i18n.t('common:utils.socialLogin.t_d5a04e24'), 'error');
   }
 };
 
@@ -309,7 +310,7 @@ export const googleLogin = () => {
     window.location.href = `${config.authUrl}?${params.toString()}`;
   } catch (error) {
     console.error('구글 로그인 오류:', error);
-    notificationManager.show('구글 로그인을 시작할 수 없습니다.', 'info');
+    notificationManager.show(i18n.t('common:utils.socialLogin.t_712c6d0b'), 'info');
   }
 };
 
@@ -336,7 +337,7 @@ export const facebookLogin = () => {
     window.location.href = `${config.authUrl}?${params.toString()}`;
   } catch (error) {
     console.error('페이스북 로그인 오류:', error);
-    notificationManager.show('페이스북 로그인을 시작할 수 없습니다.', 'info');
+    notificationManager.show(i18n.t('common:utils.socialLogin.t_9cac74ea'), 'info');
   }
 };
 
@@ -347,7 +348,7 @@ export const handleOAuthCallback = async(provider, code, state) => {
   try {
     const savedState = sessionStorage.get('oauth_state');
     if (state !== savedState) {
-      throw new Error('OAuth2 state 검증 실패');
+      throw new Error(i18n.t('common:utils.socialLogin.t_28155c80'));
     }
     
     sessionStorage.remove('oauth_state');
@@ -398,13 +399,13 @@ export const handleOAuthCallback = async(provider, code, state) => {
       } else {
         console.error('세션 설정에 실패했습니다.');
         // 세션 설정 실패 시에도 로그인 페이지로 이동하지 않음
-        throw new Error('세션 설정에 실패했습니다.');
+        throw new Error(i18n.t('common:utils.socialLogin.t_53ec68ef'));
       }
     } else if (result.requiresSignup) {
       console.log('간편 회원가입 필요:', result.socialUserInfo);
       return { requiresSignup: true, socialUserInfo: result.socialUserInfo };
     } else {
-      throw new Error(result.message || 'OAuth2 인증 실패');
+      throw new Error(result.message || i18n.t('common:utils.socialLogin.t_9509df49'));
     }
   } catch (error) {
     console.error('OAuth2 콜백 처리 오류:', error);

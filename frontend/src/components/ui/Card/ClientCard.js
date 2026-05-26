@@ -6,6 +6,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import './ClientCard.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 공통 내담자 카드 컴포넌트
@@ -32,16 +33,17 @@ const ClientCard = ({
     /** B0KlA: 매핑/세션 없을 때 CTA 비활성 */
     selectDisabled = false
 }) => {
+  const { t } = useTranslation();
 /**
      * 상태에 따른 클래스명 반환
      */
     const getStatusClass = () => {
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        if (client.status === 'ACTIVE' || client.status === '진행중') return 'active';
-        if (client.status === 'SCHEDULED' || client.status === '예약됨') return 'scheduled';
+        if (client.status === 'ACTIVE' || client.status === t('common:ui.ClientCard.t_0dae9079')) return 'active';
+        if (client.status === 'SCHEDULED' || client.status === t('common:ui.ClientCard.t_69692a2a')) return 'scheduled';
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        if (client.status === 'COMPLETED' || client.status === '완료') return 'completed';
-        if (client.status === 'PAUSED' || client.status === '일시정지') return 'paused';
+        if (client.status === 'COMPLETED' || client.status === t('common:ui.ClientCard.t_8d868037')) return 'completed';
+        if (client.status === 'PAUSED' || client.status === t('common:ui.ClientCard.t_3b69928d')) return 'paused';
         return 'default';
     };
 
@@ -51,11 +53,11 @@ const ClientCard = ({
     const getStatusText = () => {
         const statusClass = getStatusClass();
         switch (statusClass) {
-            case 'active': return '진행중';
-            case 'scheduled': return '예약됨';
-            case 'completed': return '완료';
-            case 'paused': return '일시정지';
-            default: return '대기중';
+            case 'active': return t('common:ui.ClientCard.t_0dae9079');
+            case 'scheduled': return t('common:ui.ClientCard.t_69692a2a');
+            case 'completed': return t('common:ui.ClientCard.t_8d868037');
+            case 'paused': return t('common:ui.ClientCard.t_3b69928d');
+            default: return t('common:ui.ClientCard.t_9b3a3ba2');
         }
     };
 
@@ -158,8 +160,8 @@ const ClientCard = ({
         const scheduleSelect = scheduleClientSelectMode;
         const progressPct = getProgressPercentage();
         const sessionInfo = getSessionInfo();
-        const displayName = toDisplayString(client.name, '내담자');
-        const lastConsultLabel = toDisplayString(client.lastConsultationDate, '없음');
+        const displayName = toDisplayString(client.name, t('common:ui.ClientCard.t_82bba86b'));
+        const lastConsultLabel = toDisplayString(client.lastConsultationDate, t('common:ui.ClientCard.t_d58fa73a'));
         const rootClass = [
             'mg-client-card',
             'mg-client-card--detailed',
@@ -189,7 +191,7 @@ const ClientCard = ({
                 role: 'button',
                 tabIndex: 0,
                 onKeyDown: keyboardActivation,
-                'aria-label': `${displayName} 내담자 선택`
+                'aria-label': t('common:ui.ClientCard.t_210b3445')
             };
 
         if (scheduleSelect) {
@@ -267,7 +269,7 @@ const ClientCard = ({
                                         <CheckCircle size={14} aria-hidden="true" className="mg-client-card__select-icon" />
                                         선택됨
                                     </>
-                                ) : '선택하기'}
+                                ) : t('common:ui.ClientCard.t_344b0a34')}
                             </MGButton>
                         </div>
                     )}
@@ -354,7 +356,7 @@ const ClientCard = ({
                                 size="small"
                                 preventDoubleClick={false}
                             >
-                                {selected ? '선택됨' : '선택하기'}
+                                {selected ? '선택됨' : t('common:ui.ClientCard.t_344b0a34')}
                             </MGButton>
 
                             {!scheduleSelect && (

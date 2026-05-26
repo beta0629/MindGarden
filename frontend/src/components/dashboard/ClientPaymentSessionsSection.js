@@ -14,6 +14,7 @@ import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/a
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentSessionsSection.css';
+import { useTranslation } from 'react-i18next';
 /**
  * 내담자 결제 내역 및 총회기수 섹션 컴포넌트
 /**
@@ -73,6 +74,7 @@ const ClientPaymentSessionsSection = ({
   parentMappings,
   parentMappingsFetchFailed = false
 }) => {
+  const { t } = useTranslation();
   const [paymentData, setPaymentData] = useState({
     totalSessions: 0,
     usedSessions: 0,
@@ -99,7 +101,7 @@ const ClientPaymentSessionsSection = ({
         applyMappingsToPaymentState(parentMappings, setPaymentData);
       } catch (e) {
         console.error('결제 및 회기 데이터 적용 실패:', e);
-        setError('데이터를 불러오는 중 오류가 발생했습니다.');
+        setError(t('common:dashboard.ClientPaymentSessionsSection.t_3e5e7abe'));
       } finally {
         setIsLoading(false);
       }
@@ -133,7 +135,7 @@ const ClientPaymentSessionsSection = ({
       applyMappingsToPaymentState(mappings, setPaymentData);
     } catch (error) {
       console.error('결제 및 회기 데이터 로드 실패:', error);
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      setError(t('common:dashboard.ClientPaymentSessionsSection.t_3e5e7abe'));
     } finally {
       setIsLoading(false);
     }
@@ -183,28 +185,28 @@ const ClientPaymentSessionsSection = ({
   };
 
   const getStatusText = (status) => {
-    if (!status) return '미결제';
+    if (!status) return t('common:dashboard.ClientPaymentSessionsSection.t_8c5d2272');
     
     const statusTextMap = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': '확인됨',
-      'PAY': '결제확인',
-      'DEP': '입금확인',
+      'CONFIRMED': t('common:dashboard.ClientPaymentSessionsSection.t_d1a349f7'),
+      'PAY': t('common:dashboard.ClientPaymentSessionsSection.t_f8e2bb71'),
+      'DEP': t('common:dashboard.ClientPaymentSessionsSection.t_a1b8faac'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'APPROVED': '승인완료',
+      'APPROVED': t('common:dashboard.ClientPaymentSessionsSection.t_0eb721a5'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'PENDING': '대기중',
+      'PENDING': t('common:dashboard.ClientPaymentSessionsSection.t_9b3a3ba2'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'REJECTED': '거부됨',
-      'REFUNDED': '환불됨',
+      'REJECTED': t('common:dashboard.ClientPaymentSessionsSection.t_851085ad'),
+      'REFUNDED': t('common:dashboard.ClientPaymentSessionsSection.t_415cbe4c'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'COMPLETED': '완료',
-      'FAILED': '실패',
+      'COMPLETED': t('common:dashboard.ClientPaymentSessionsSection.t_8d868037'),
+      'FAILED': t('common:dashboard.ClientPaymentSessionsSection.t_732fe33a'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CANCELLED': '취소'
+      'CANCELLED': t('common:dashboard.ClientPaymentSessionsSection.t_19b2d19b')
     };
     
-    return statusTextMap[status] || status || '미결제';
+    return statusTextMap[status] || status || t('common:dashboard.ClientPaymentSessionsSection.t_8c5d2272');
   };
 
   if (isLoading) {

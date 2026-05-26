@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 /**
  * 색상 유틸리티 함수
 /**
@@ -216,27 +217,27 @@ export const getVacationBgColor = (type) => {
  */
 export const getStatusLabel = (status) => {
   const labelMap = {
-    'REQUESTED': '요청됨',
-    'ASSIGNED': '배정됨',
+    'REQUESTED': i18n.t('common:utils.colorUtils.t_ffcc5746'),
+    'ASSIGNED': i18n.t('common:utils.colorUtils.t_2222c553'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'CONFIRMED': '확정',
+    'CONFIRMED': i18n.t('common:utils.colorUtils.t_55536106'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'BOOKED': '예약',
+    'BOOKED': i18n.t('common:utils.colorUtils.t_17f4b478'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'IN_PROGRESS': '진행중',
+    'IN_PROGRESS': i18n.t('common:utils.colorUtils.t_0dae9079'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'COMPLETED': '완료',
+    'COMPLETED': i18n.t('common:utils.colorUtils.t_8d868037'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'CANCELLED': '취소됨',
-    'NO_SHOW': '노쇼',
+    'CANCELLED': i18n.t('common:utils.colorUtils.t_3aa9e7ee'),
+    'NO_SHOW': i18n.t('common:utils.colorUtils.t_70e1136a'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'PENDING': '대기중',
+    'PENDING': i18n.t('common:utils.colorUtils.t_9b3a3ba2'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'ACTIVE': '활성',
+    'ACTIVE': i18n.t('common:utils.colorUtils.t_6a2123a3'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'INACTIVE': '비활성',
+    'INACTIVE': i18n.t('common:utils.colorUtils.t_fae2014b'),
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    'SUSPENDED': '정지'
+    'SUSPENDED': i18n.t('common:utils.colorUtils.t_1d441e78')
   };
   
   return labelMap[status] || status;
@@ -251,10 +252,10 @@ export const getStatusLabel = (status) => {
  */
 export const getGradeLabel = (grade) => {
   const labelMap = {
-    'JUNIOR': '주니어',
-    'SENIOR': '시니어',
-    'EXPERT': '전문가',
-    'MASTER': '마스터'
+    'JUNIOR': i18n.t('common:utils.colorUtils.t_d6ebcb35'),
+    'SENIOR': i18n.t('common:utils.colorUtils.t_68a6a8b6'),
+    'EXPERT': i18n.t('common:utils.colorUtils.t_44bd2ea1'),
+    'MASTER': i18n.t('common:utils.colorUtils.t_5f6cf8e4')
   };
   
   return labelMap[grade] || grade;
@@ -269,10 +270,10 @@ export const getGradeLabel = (grade) => {
  */
 export const getRoleLabel = (role) => {
   const labelMap = {
-    'CLIENT': '내담자',
-    'CONSULTANT': '상담사',
-    'ADMIN': '관리자',
-    'STAFF': '사무원'
+    'CLIENT': i18n.t('common:utils.colorUtils.t_82bba86b'),
+    'CONSULTANT': i18n.t('common:utils.colorUtils.t_293bb79c'),
+    'ADMIN': i18n.t('common:utils.colorUtils.t_ec873cb1'),
+    'STAFF': i18n.t('common:utils.colorUtils.t_dd38bda1')
   };
   
   return labelMap[role] || role;

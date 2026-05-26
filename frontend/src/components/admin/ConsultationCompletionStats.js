@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import ConsultationCompletionStatsView from '../ui/Statistics/ConsultationCompletionStatsView';
 import { apiGet } from '../../utils/ajax';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
@@ -20,6 +21,7 @@ const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/c
  * @version 2.0.0 (Presentational/Container 분리)
  */
 const ConsultationCompletionStats = () => {
+    const { t } = useTranslation();
     // ========== 상태 관리 ==========
     const [statistics, setStatistics] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ const ConsultationCompletionStats = () => {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const period = `${year}-${month}`;
-            const label = `${year}년 ${month}월`;
+            const label = t('admin:ConsultationCompletionStats.t_180f1c39');
             options.push({ value: period, label });
         }
         
@@ -53,41 +55,41 @@ const ConsultationCompletionStats = () => {
 
     const convertGradeToKorean = (grade) => {
         const gradeMap = {
-            'CONSULTANT_JUNIOR': '주니어',
-            'CONSULTANT_SENIOR': '시니어',
-            'CONSULTANT_EXPERT': '엑스퍼트',
-            'CONSULTANT_MASTER': '마스터'
+            'CONSULTANT_JUNIOR': t('admin:ConsultationCompletionStats.t_d6ebcb35'),
+            'CONSULTANT_SENIOR': t('admin:ConsultationCompletionStats.t_68a6a8b6'),
+            'CONSULTANT_EXPERT': t('admin:ConsultationCompletionStats.t_de4b2ea8'),
+            'CONSULTANT_MASTER': t('admin:ConsultationCompletionStats.t_5f6cf8e4')
         };
         return gradeMap[grade] || grade;
     };
 
     const convertSpecialtyToKorean = (specialty) => {
-        if (!specialty) return '전문분야 미설정';
+        if (!specialty) return t('admin:ConsultationCompletionStats.t_dd74ab3f');
         
         const specialtyMap = {
-            'DEPRESSION': '우울증',
-            'ANXIETY': '불안장애',
-            'TRAUMA': '트라우마',
-            'RELATIONSHIP': '관계상담',
-            'FAMILY': '가족상담',
-            'COUPLE': '부부상담',
-            'CHILD': '아동상담',
-            'ADOLESCENT': '청소년상담',
-            'ADDICTION': '중독상담',
-            'EATING_DISORDER': '섭식장애',
-            'PERSONALITY': '성격장애',
-            'BIPOLAR': '양극성장애',
-            'OCD': '강박장애',
-            'PTSD': '외상후스트레스장애',
-            'GRIEF': '상실상담',
-            'CAREER': '진로상담',
-            'STRESS': '스트레스관리',
-            'SLEEP': '수면장애',
-            'ANGER': '분노조절',
-            'SELF_ESTEEM': '자존감',
-            'INDIVIDUAL': '개인상담',
-            'GROUP': '그룹상담',
-            'INITIAL': '초기상담'
+            'DEPRESSION': t('admin:ConsultationCompletionStats.t_ab01081f'),
+            'ANXIETY': t('admin:ConsultationCompletionStats.t_dc470840'),
+            'TRAUMA': t('admin:ConsultationCompletionStats.t_a7f0acf4'),
+            'RELATIONSHIP': t('admin:ConsultationCompletionStats.t_5f7b31c3'),
+            'FAMILY': t('admin:ConsultationCompletionStats.t_aaa928a6'),
+            'COUPLE': t('admin:ConsultationCompletionStats.t_62b69843'),
+            'CHILD': t('admin:ConsultationCompletionStats.t_a3a0c008'),
+            'ADOLESCENT': t('admin:ConsultationCompletionStats.t_62dd9bfa'),
+            'ADDICTION': t('admin:ConsultationCompletionStats.t_e00f86f0'),
+            'EATING_DISORDER': t('admin:ConsultationCompletionStats.t_eadeca31'),
+            'PERSONALITY': t('admin:ConsultationCompletionStats.t_64289520'),
+            'BIPOLAR': t('admin:ConsultationCompletionStats.t_06ce7165'),
+            'OCD': t('admin:ConsultationCompletionStats.t_d6006d9e'),
+            'PTSD': t('admin:ConsultationCompletionStats.t_85fa51cf'),
+            'GRIEF': t('admin:ConsultationCompletionStats.t_62d41eac'),
+            'CAREER': t('admin:ConsultationCompletionStats.t_a9676d11'),
+            'STRESS': t('admin:ConsultationCompletionStats.t_15a15b24'),
+            'SLEEP': t('admin:ConsultationCompletionStats.t_4af66e7c'),
+            'ANGER': t('admin:ConsultationCompletionStats.t_53166452'),
+            'SELF_ESTEEM': t('admin:ConsultationCompletionStats.t_1544ba61'),
+            'INDIVIDUAL': t('admin:ConsultationCompletionStats.t_efda14c0'),
+            'GROUP': t('admin:ConsultationCompletionStats.t_607ecaca'),
+            'INITIAL': t('admin:ConsultationCompletionStats.t_d90982dc')
         };
         
         if (specialty.includes(',')) {
@@ -117,11 +119,11 @@ const ConsultationCompletionStats = () => {
                 setStatistics(response.data || []);
             } else {
                 console.error('❌ API 응답 실패:', response);
-                setError('통계 데이터를 불러오는데 실패했습니다.');
+                setError(t('admin:ConsultationCompletionStats.t_fce1bb26'));
             }
         } catch (err) {
             console.error('상담 완료 건수 통계 로드 실패:', err);
-            setError('통계 데이터를 불러오는데 실패했습니다.');
+            setError(t('admin:ConsultationCompletionStats.t_fce1bb26'));
         } finally {
             setLoading(false);
         }

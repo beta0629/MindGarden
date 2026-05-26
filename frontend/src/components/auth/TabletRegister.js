@@ -21,6 +21,7 @@ import { TermsOfServiceContent } from '../common/TermsOfService';
 import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
 import '../common/PrivacyPolicy.css';
 import './AuthPageCommon.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CONFIG_OAUTH2 = '/api/v1/auth/config/oauth2';
@@ -37,6 +38,7 @@ const GENDER_FROM_RRN = {
 const GENDER_LABEL = { MALE: '남성', FEMALE: '여성', OTHER: '기타' };
 
 const TabletRegister = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -226,7 +228,7 @@ const TabletRegister = () => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = '이름을 입력해주세요.';
+      newErrors.name = t('auth:TabletRegister.t_66610c9b');
     }
 
     if (!formData.email.trim()) {
@@ -236,15 +238,15 @@ const TabletRegister = () => {
     }
 
     if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해주세요.';
+      newErrors.password = t('auth:TabletRegister.t_f2e5e9cb');
     } else if (formData.password.length < 8) {
-      newErrors.password = '비밀번호는 8자 이상이어야 합니다.';
+      newErrors.password = t('auth:TabletRegister.t_c1b8b5d4');
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
+      newErrors.confirmPassword = t('auth:TabletRegister.t_ecdaae18');
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+      newErrors.confirmPassword = t('auth:TabletRegister.t_c3b85cd6');
     }
 
     if (!formData.phone.trim()) {
@@ -254,18 +256,18 @@ const TabletRegister = () => {
     }
 
     if (formData.rrnFirst6.length !== 6 || !/^\d{6}$/.test(formData.rrnFirst6)) {
-      newErrors.rrnFirst6 = '주민번호 앞 6자리를 입력해주세요.';
+      newErrors.rrnFirst6 = t('auth:TabletRegister.t_96373d36');
     }
     if (formData.rrnLast1.length !== 1 || !/^\d$/.test(formData.rrnLast1)) {
-      newErrors.rrnLast1 = '주민번호 뒤 1자리를 입력해주세요.';
+      newErrors.rrnLast1 = t('auth:TabletRegister.t_2d7e7026');
     }
 
     if (!formData.agreeTerms) {
-      newErrors.agreeTerms = '이용약관에 동의해주세요.';
+      newErrors.agreeTerms = t('auth:TabletRegister.t_d04777b6');
     }
 
     if (!formData.agreePrivacy) {
-      newErrors.agreePrivacy = '개인정보처리방침에 동의해주세요.';
+      newErrors.agreePrivacy = t('auth:TabletRegister.t_26e48ff9');
     }
 
     setErrors(newErrors);
@@ -328,15 +330,15 @@ const TabletRegister = () => {
 
       if (response.ok) {
         await response.json();
-        notificationManager.show('회원가입이 완료되었습니다!', 'info');
+        notificationManager.show(t('auth:TabletRegister.t_b7c5bac0'), 'info');
         navigate('/login');
       } else {
         const error = await response.json();
-        notificationManager.show(error.message || '회원가입에 실패했습니다.', 'error');
+        notificationManager.show(error.message || t('auth:TabletRegister.t_e144fb1d'), 'error');
       }
     } catch (error) {
       console.error('회원가입 오류:', error);
-      notificationManager.show('회원가입 중 오류가 발생했습니다.', 'info');
+      notificationManager.show(t('auth:TabletRegister.t_7358144a'), 'info');
     } finally {
       setIsLoading(false);
     }
@@ -410,7 +412,7 @@ const TabletRegister = () => {
             <div className="mg-v2-form-group">
               <span className="mg-v2-form-label">성별</span>
               <p className="mg-v2-form-readonly">
-                성별: {formData.gender ? GENDER_LABEL[formData.gender] : '주민번호 뒤 1자리 입력 시 자동 표시'}
+                성별: {formData.gender ? GENDER_LABEL[formData.gender] : t('auth:TabletRegister.t_16ee319a')}
               </p>
             </div>
 
@@ -482,7 +484,7 @@ const TabletRegister = () => {
                     onClick={() => togglePassword('password')}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
-                    aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+                    aria-label={showPassword ? '비밀번호 숨기기' : t('auth:TabletRegister.t_11759640')}
                   >
                     {showPassword ? '👁️' : '👁️‍🗨️'}
                   </MGButton>
@@ -512,7 +514,7 @@ const TabletRegister = () => {
                     onClick={() => togglePassword('confirmPassword')}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
-                    aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+                    aria-label={showConfirmPassword ? '비밀번호 숨기기' : t('auth:TabletRegister.t_11759640')}
                   >
                     {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                   </MGButton>

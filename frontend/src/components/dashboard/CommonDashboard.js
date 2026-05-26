@@ -133,18 +133,18 @@ const CommonDashboard = ({ user: propUser }) => {
           
           let timeAgo;
           if (daysDiff === 0) {
-            timeAgo = '오늘';
+            timeAgo = t('common:dashboard.CommonDashboard.t_2bdce5e8');
           } else if (daysDiff === 1) {
-            timeAgo = '1일 전';
+            timeAgo = t('common:dashboard.CommonDashboard.t_623b0456');
           } else if (daysDiff < 7) {
-            timeAgo = `${daysDiff}일 전`;
+            timeAgo = t('common:dashboard.CommonDashboard.t_a9427798');
           } else {
-            timeAgo = `${Math.floor(daysDiff / 7)}주 전`;
+            timeAgo = t('common:dashboard.CommonDashboard.t_7e205ec8');
           }
           
           recentActivities.push({
             type: 'schedule',
-            title: `${schedule.consultantName} 상담사와의 상담 일정 ${getStatusLabel(schedule.status)}`,
+            title: t('common:dashboard.CommonDashboard.t_0b53d412'),
             time: timeAgo,
             details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
           });
@@ -153,9 +153,9 @@ const CommonDashboard = ({ user: propUser }) => {
         if (recentActivities.length === 0) {
           recentActivities.push({
             type: 'info',
-            title: '최근 활동이 없습니다',
-            time: '현재',
-            details: '아직 등록된 활동이 없습니다'
+            title: t('common:dashboard.CommonDashboard.t_1e3d7c5d'),
+            time: t('common:dashboard.CommonDashboard.t_001e4be2'),
+            details: t('common:dashboard.CommonDashboard.t_fcf8da06')
           });
         }
         
@@ -169,8 +169,8 @@ const CommonDashboard = ({ user: propUser }) => {
               consultantMap.set(consultantId, {
                 id: consultantId,
                 name: consultantName,
-                specialty: '상담 심리학', // 기본값, 추후 API에서 가져올 수 있음
-                intro: '전문적이고 따뜻한 상담을 제공합니다.',
+                specialty: t('common:dashboard.CommonDashboard.t_7e72bb3a'), // 기본값, 추후 API에서 가져올 수 있음
+                intro: t('common:dashboard.CommonDashboard.t_dac8356a'),
                 profileImage: null
               });
             }
@@ -206,9 +206,9 @@ const CommonDashboard = ({ user: propUser }) => {
         weeklyConsultations: 0,
         todayConsultations: 0,
         consultantInfo: {
-          name: '데이터 로드 실패',
-          specialty: '정보 없음',
-          intro: '데이터를 불러오는데 실패했습니다.',
+          name: t('common:dashboard.CommonDashboard.t_c862e499'),
+          specialty: t('common:dashboard.CommonDashboard.t_534fb589'),
+          intro: t('common:dashboard.CommonDashboard.t_8926711b'),
           profileImage: null
         }
       }));
@@ -311,29 +311,29 @@ const CommonDashboard = ({ user: propUser }) => {
           
           let timeAgo;
           if (daysDiff === 0) {
-            timeAgo = '오늘';
+            timeAgo = t('common:dashboard.CommonDashboard.t_2bdce5e8');
           } else if (daysDiff === 1) {
-            timeAgo = '1일 전';
+            timeAgo = t('common:dashboard.CommonDashboard.t_623b0456');
           } else if (daysDiff < 7) {
-            timeAgo = `${daysDiff}일 전`;
+            timeAgo = t('common:dashboard.CommonDashboard.t_a9427798');
           } else {
-            timeAgo = `${Math.floor(daysDiff / 7)}주 전`;
+            timeAgo = t('common:dashboard.CommonDashboard.t_7e205ec8');
           }
           
-          let displayName = '내담자';
+          let displayName = t('common:dashboard.CommonDashboard.t_82bba86b');
           
           if (schedule.clientName && schedule.clientName !== 'null' && schedule.clientName !== 'undefined' && schedule.clientName.trim() !== '') {
             displayName = schedule.clientName;
           } else if (schedule.consultantName && schedule.consultantName !== 'null' && schedule.consultantName !== 'undefined' && schedule.consultantName.trim() !== '') {
-            displayName = `상담사 ${schedule.consultantName}`;
+            displayName = t('common:dashboard.CommonDashboard.t_70875dc6');
           } else if (schedule.title && schedule.title.trim() !== '') {
             displayName = schedule.title;
           }
           
-          if (displayName !== '내담자' || schedule.clientId) {
+          if (displayName !== t('common:dashboard.CommonDashboard.t_82bba86b') || schedule.clientId) {
             recentActivities.push({
               type: 'schedule',
-              title: `${displayName}과의 상담 일정 ${getStatusLabel(schedule.status)}`,
+              title: t('common:dashboard.CommonDashboard.t_9533079f'),
               time: timeAgo,
               details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
             });
@@ -343,9 +343,9 @@ const CommonDashboard = ({ user: propUser }) => {
         if (recentActivities.length === 0) {
           recentActivities.push({
             type: 'info',
-            title: '최근 활동이 없습니다',
-            time: '현재',
-            details: '아직 등록된 활동이 없습니다'
+            title: t('common:dashboard.CommonDashboard.t_1e3d7c5d'),
+            time: t('common:dashboard.CommonDashboard.t_001e4be2'),
+            details: t('common:dashboard.CommonDashboard.t_fcf8da06')
           });
         }
         
@@ -418,26 +418,26 @@ const CommonDashboard = ({ user: propUser }) => {
           if (stats.totalUsers > 0) {
             recentActivities.push({
               type: 'profile',
-              title: `총 ${stats.totalUsers}명의 사용자 관리`,
-              time: '오늘',
-              details: '전체 사용자 현황을 확인했습니다'
+              title: t('common:dashboard.CommonDashboard.t_f936a2a6'),
+              time: t('common:dashboard.CommonDashboard.t_2bdce5e8'),
+              details: t('common:dashboard.CommonDashboard.t_0032cd55')
             });
           }
           
           if (stats.todayConsultations > 0) {
             recentActivities.push({
               type: 'schedule',
-              title: `오늘 ${stats.todayConsultations}건의 상담 일정 관리`,
-              time: '오늘',
-              details: '오늘의 상담 일정을 확인했습니다'
+              title: t('common:dashboard.CommonDashboard.t_ff62af5f'),
+              time: t('common:dashboard.CommonDashboard.t_2bdce5e8'),
+              details: t('common:dashboard.CommonDashboard.t_a02347c2')
             });
           }
           
           recentActivities.push({
             type: 'consultation',
-            title: '시스템 현황 점검',
-            time: '1시간 전',
-            details: '전체 시스템 상태를 점검했습니다'
+            title: t('common:dashboard.CommonDashboard.t_298e2355'),
+            time: t('common:dashboard.CommonDashboard.t_9581f13a'),
+            details: t('common:dashboard.CommonDashboard.t_1787f9b2')
           });
           
           setConsultationData(prev => ({
@@ -652,34 +652,34 @@ const CommonDashboard = ({ user: propUser }) => {
   }, []); // 빈 의존성 배열로 변경 (시간 업데이트는 독립적)
 
   const getDashboardTitle = () => {
-    if (!user?.role) return '대시보드';
+    if (!user?.role) return t('common:dashboard.CommonDashboard.t_2859873b');
     
     switch (user.role) {
       case USER_ROLES.CLIENT:
-        return '내담자 대시보드';
+        return t('common:dashboard.CommonDashboard.t_d57c9a6e');
       case USER_ROLES.CONSULTANT:
-        return '상담사 대시보드';
+        return t('common:dashboard.CommonDashboard.t_5f9ac71e');
       case USER_ROLES.ADMIN:
       case LEGACY_USER_ROLES.SUPER_ADMIN:
-        return '관리자 대시보드';
+        return t('common:dashboard.CommonDashboard.t_d6d446d5');
       default:
-        return '대시보드';
+        return t('common:dashboard.CommonDashboard.t_2859873b');
     }
   };
 
   const getDashboardSubtitle = () => {
-    if (!user?.role) return '대시보드에 오신 것을 환영합니다';
+    if (!user?.role) return t('common:dashboard.CommonDashboard.t_3ae5c041');
     
     switch (user.role) {
       case USER_ROLES.CLIENT:
-        return '내담자님의 상담 현황을 확인하세요';
+        return t('common:dashboard.CommonDashboard.t_28a5db09');
       case USER_ROLES.CONSULTANT:
-        return '상담사님의 상담 일정을 관리하세요';
+        return t('common:dashboard.CommonDashboard.t_9c1a2a3f');
       case USER_ROLES.ADMIN:
       case LEGACY_USER_ROLES.SUPER_ADMIN:
-        return '관리자님의 시스템 현황을 확인하세요';
+        return t('common:dashboard.CommonDashboard.t_4a005759');
       default:
-        return '대시보드에 오신 것을 환영합니다';
+        return t('common:dashboard.CommonDashboard.t_3ae5c041');
     }
   };
 
@@ -760,7 +760,7 @@ const CommonDashboard = ({ user: propUser }) => {
           widget={{ 
             id: 'welcome-widget',
             type: 'welcome',
-            title: '환영합니다',
+            title: t('common:dashboard.CommonDashboard.t_b0814cee'),
             config: {
               currentTime: currentTime,
               showWeather: true
@@ -787,7 +787,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'personalized-messages-widget',
               type: 'personalized-messages',
-              title: '맞춤형 메시지',
+              title: t('common:dashboard.CommonDashboard.t_6cf7cc1c'),
               config: {
                 maxMessages: 5,
                 showGuides: true
@@ -815,7 +815,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'payment-sessions-widget',
               type: 'payment-sessions',
-              title: '결제 내역 및 회기 현황',
+              title: t('common:dashboard.CommonDashboard.t_fe8f5d1e'),
               config: {
                 showStats: true,
                 showRecentPayments: true,
@@ -840,7 +840,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'ratable-consultations-widget',
               type: 'ratable-consultations',
-              title: '상담사 평가',
+              title: t('common:dashboard.CommonDashboard.t_2ee2ab8d'),
               config: {
                 showEmptyState: true,
                 enableRatingModal: true
@@ -864,7 +864,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'consultant-client-widget',
               type: 'consultant-client',
-              title: '내 내담자',
+              title: t('common:dashboard.CommonDashboard.t_916ea01d'),
               config: {
                 showStats: true,
                 maxClients: 5,
@@ -889,7 +889,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'consultant-rating-widget',
               type: 'consultant-rating',
-              title: '내담자 평가 통계',
+              title: t('common:dashboard.CommonDashboard.t_897e7715'),
               config: {
                 showRecentRatings: true,
                 showDistribution: true,
@@ -914,7 +914,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'consultation-record-widget',
               type: 'consultation-record',
-              title: '상담일지 관리',
+              title: t('common:dashboard.CommonDashboard.t_690aa174'),
               config: {
                 showStats: true,
                 showRecentRecords: true,
@@ -940,7 +940,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'healing-card-widget',
               type: 'healing-card',
-              title: '오늘의 힐링',
+              title: t('common:dashboard.CommonDashboard.t_5a019728'),
               config: {
                 category: null, // 모든 카테고리
                 autoRefresh: true
@@ -963,7 +963,7 @@ const CommonDashboard = ({ user: propUser }) => {
           widget={{ 
             id: 'schedule-widget',
             type: 'schedule',
-            title: '스케줄 관리',
+            title: t('common:dashboard.CommonDashboard.t_6ddcca42'),
             config: {
               showQuickActions: true,
               showConsultantMessage: true
@@ -986,7 +986,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'summary-panels-widget',
               type: 'summary-panels',
-              title: '요약 패널',
+              title: t('common:dashboard.CommonDashboard.t_9e317faa'),
               config: {
                 showSchedules: true,
                 showStats: true,
@@ -1027,7 +1027,7 @@ const CommonDashboard = ({ user: propUser }) => {
           widget={{ 
             id: 'recent-activities-widget',
             type: 'recent-activities',
-            title: '최근 활동',
+            title: t('common:dashboard.CommonDashboard.t_cfc809ff'),
             config: {
               maxItems: 5,
               showViewAll: true
@@ -1050,7 +1050,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'system-notification-widget',
               type: 'system-notification',
-              title: '시스템 알림',
+              title: t('common:dashboard.CommonDashboard.t_050149e0'),
               config: {
                 maxItems: 5,
                 showUnreadBadge: true,
@@ -1075,7 +1075,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'erp-purchase-request-widget',
               type: 'erp-purchase-request',
-              title: 'ERP 구매 요청',
+              title: t('common:dashboard.CommonDashboard.t_54e8cd08'),
               config: {
                 isAccordion: true,
                 showPendingBadge: true,
@@ -1100,7 +1100,7 @@ const CommonDashboard = ({ user: propUser }) => {
             widget={{ 
               id: 'client-message-widget',
               type: 'client-message',
-              title: '알림 및 메시지',
+              title: t('common:dashboard.CommonDashboard.t_d49d6871'),
               config: {
                 showUnreadCount: true,
                 maxMessages: 10,

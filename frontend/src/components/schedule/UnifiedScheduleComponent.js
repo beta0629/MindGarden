@@ -39,6 +39,7 @@ import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolid
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SCHEDULES_ADMIN = '/api/v1/schedules/admin';
@@ -79,6 +80,7 @@ const UnifiedScheduleComponent = ({
   disableCalendarEventDrag: disableCalendarEventDragProp,
   acceptExternalCalendarDrops: acceptExternalCalendarDropsProp
 }) => {
+    const { t } = useTranslation();
     const resolvedDisableCalendarEventDrag =
         disableCalendarEventDragProp !== undefined && disableCalendarEventDragProp !== null
             ? Boolean(disableCalendarEventDragProp)
@@ -119,7 +121,7 @@ const UnifiedScheduleComponent = ({
 
     // ========== 유틸리티 함수 ==========
     const formatTime = (timeObj) => {
-        if (!timeObj) return '시간 미정';
+        if (!timeObj) return t('schedule:UnifiedScheduleComponent.t_f7548f70');
         try {
             return timeObj.toLocaleTimeString('ko-KR', { 
                 hour: '2-digit', 
@@ -127,24 +129,24 @@ const UnifiedScheduleComponent = ({
             });
         } catch (error) {
             console.warn('시간 변환 오류:', error);
-            return '시간 미정';
+            return t('schedule:UnifiedScheduleComponent.t_f7548f70');
         }
     };
 
     const convertStatusToKorean = (status) => {
         const statusOption = scheduleStatusOptions.find(option => option.value === status);
-        return statusOption ? statusOption.label : status || "알 수 없음";
+        return statusOption ? statusOption.label : status || t('schedule:UnifiedScheduleComponent.t_8916b639');
     };
 
     const convertConsultationTypeToKorean = (consultationType) => {
         const typeMap = {
-            'INDIVIDUAL': '개인상담',
-            'COUPLE': '부부상담',
-            'FAMILY': '가족상담',
-            'INITIAL': '초기상담',
-            'GROUP': '그룹상담'
+            'INDIVIDUAL': t('schedule:UnifiedScheduleComponent.t_efda14c0'),
+            'COUPLE': t('schedule:UnifiedScheduleComponent.t_62b69843'),
+            'FAMILY': t('schedule:UnifiedScheduleComponent.t_aaa928a6'),
+            'INITIAL': t('schedule:UnifiedScheduleComponent.t_d90982dc'),
+            'GROUP': t('schedule:UnifiedScheduleComponent.t_607ecaca')
         };
-        return typeMap[consultationType] || consultationType || "알 수 없음";
+        return typeMap[consultationType] || consultationType || t('schedule:UnifiedScheduleComponent.t_8916b639');
     };
 
     const getConsultantColor = (consultantId) => {
@@ -165,41 +167,41 @@ const UnifiedScheduleComponent = ({
         switch (type) {
             case 'MORNING':
                 endDate = new Date(`${date}T13:00:00+09:00`);
-                title = '🌅 오전 휴무';
+                title = t('schedule:UnifiedScheduleComponent.t_4086e200');
                 backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'AFTERNOON':
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(`${date}T20:00:00+09:00`);
-                title = '🌇 오후 휴무';
+                title = t('schedule:UnifiedScheduleComponent.t_03a4088f');
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_1':
                 endDate = new Date(`${date}T11:00:00+09:00`);
-                title = '🌄 오전 반반차 1';
+                title = t('schedule:UnifiedScheduleComponent.t_27ce5a99');
                 backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_2':
                 startDate.setHours(11, 0, 0);
                 endDate = new Date(`${date}T13:00:00+09:00`);
-                title = '🌄 오전 반반차 2';
+                title = t('schedule:UnifiedScheduleComponent.t_0b305409');
                 backgroundColor = 'var(--ad-b0kla-orange)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_1':
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(`${date}T16:00:00+09:00`);
-                title = '🌆 오후 반반차 1';
+                title = t('schedule:UnifiedScheduleComponent.t_b66d49f8');
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_2':
                 startDate.setHours(16, 0, 0);
                 endDate = new Date(`${date}T20:00:00+09:00`);
-                title = '🌆 오후 반반차 2';
+                title = t('schedule:UnifiedScheduleComponent.t_1b553c84');
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = false;
                 break;
@@ -207,19 +209,19 @@ const UnifiedScheduleComponent = ({
                 if (startTime && endTime) {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
                     endDate = new Date(`${date}T${endTime}+09:00`);
-                    title = '⏰ 사용자 정의 휴무';
+                    title = t('schedule:UnifiedScheduleComponent.t_4e2cc1a9');
                     backgroundColor = 'var(--ad-b0kla-blue)';
                     allDay = false;
                 } else {
                     endDate = new Date(`${date}T23:59:59+09:00`);
-                    title = '⏰ 사용자 정의 휴무';
+                    title = t('schedule:UnifiedScheduleComponent.t_4e2cc1a9');
                     backgroundColor = 'var(--ad-b0kla-blue)';
                 }
                 break;
             case 'ALL_DAY':
             case 'FULL_DAY':
                 endDate = new Date(`${date}T23:59:59+09:00`);
-                title = '🏖️ 하루 종일 휴무';
+                title = t('schedule:UnifiedScheduleComponent.t_2017dfc0');
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 allDay = true;
                 break;
@@ -232,7 +234,7 @@ const UnifiedScheduleComponent = ({
                     endDate = new Date(`${date}T23:59:59+09:00`);
                     allDay = true;
                 }
-                title = '🏖️ 휴무';
+                title = t('schedule:UnifiedScheduleComponent.t_ec6faefc');
                 backgroundColor = 'var(--ad-b0kla-danger)';
                 break;
         }
@@ -305,7 +307,7 @@ const UnifiedScheduleComponent = ({
             console.error('일정 상태 코드 로드 실패:', error);
             // 하드코딩된 fallback 제거 - 공통코드에서만 조회
             setScheduleStatusOptions([]);
-            notificationManager.error('스케줄 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
+            notificationManager.error(t('schedule:UnifiedScheduleComponent.t_e72bdf24'));
         } finally {
             setLoadingCodes(false);
         }
@@ -331,17 +333,17 @@ const UnifiedScheduleComponent = ({
                     console.log('👥 response.consultants에서 추출:', consultantsList.length, '개');
                 } else if (Array.isArray(response)) {
                     consultantsList = response;
-                    console.log('👥 response (배열)에서 추출:', consultantsList.length, '개');
+                    console.log('👥 response (배열)에서 추출:', consultantsList.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                 } else if (response.data && Array.isArray(response.data)) {
                     consultantsList = response.data;
-                    console.log('👥 response.data (배열)에서 추출:', consultantsList.length, '개');
+                    console.log('👥 response.data (배열)에서 추출:', consultantsList.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                 } else if (response.success && response.data) {
                     if (response.data.consultants && Array.isArray(response.data.consultants)) {
                         consultantsList = response.data.consultants;
                         console.log('👥 response.success.data.consultants에서 추출:', consultantsList.length, '개');
                     } else if (Array.isArray(response.data)) {
                         consultantsList = response.data;
-                        console.log('👥 response.success.data (배열)에서 추출:', consultantsList.length, '개');
+                        console.log('👥 response.success.data (배열)에서 추출:', consultantsList.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                     }
                 }
             }
@@ -446,10 +448,10 @@ const UnifiedScheduleComponent = ({
                         return null;
                     }
                     
-                    const isCompleted = schedule.status === 'COMPLETED' || schedule.status === '완료됨';
+                    const isCompleted = schedule.status === 'COMPLETED' || schedule.status === t('schedule:UnifiedScheduleComponent.t_1f74613e');
                     return {
                         id: schedule.id,
-                        title: schedule.title || '상담',
+                        title: schedule.title || t('schedule:UnifiedScheduleComponent.t_c023a4c5'),
                         start: startDateStr,
                         end: endDateStr,
                         backgroundColor: getConsultantColor(schedule.consultantId),
@@ -521,7 +523,7 @@ const UnifiedScheduleComponent = ({
                 // response.data가 배열인 경우
                 else if (response.data && Array.isArray(response.data)) {
                     schedules = response.data;
-                    console.log('📅 response.data (배열)에서 추출:', schedules.length, '개');
+                    console.log('📅 response.data (배열)에서 추출:', schedules.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                 }
                 // response.success가 있고 response.data가 있는 경우 (원본 ApiResponse 구조)
                 else if (response.success && response.data) {
@@ -530,7 +532,7 @@ const UnifiedScheduleComponent = ({
                         console.log('📅 response.success.data.schedules에서 추출:', schedules.length, '개');
                     } else if (Array.isArray(response.data)) {
                         schedules = response.data;
-                        console.log('📅 response.success.data (배열)에서 추출:', schedules.length, '개');
+                        console.log('📅 response.success.data (배열)에서 추출:', schedules.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                     }
                 } else {
                     console.warn('⚠️ 응답 형식을 파악할 수 없습니다:', response);
@@ -572,10 +574,10 @@ const UnifiedScheduleComponent = ({
                             return null;
                         }
                         
-                        const isCompleted = schedule.status === 'COMPLETED' || schedule.status === '완료됨';
+                        const isCompleted = schedule.status === 'COMPLETED' || schedule.status === t('schedule:UnifiedScheduleComponent.t_1f74613e');
                         return {
                             id: schedule.id,
-                            title: schedule.title || '상담',
+                            title: schedule.title || t('schedule:UnifiedScheduleComponent.t_c023a4c5'),
                             start: startDateStr,
                             end: endDateStr,
                             backgroundColor: getConsultantColor(schedule.consultantId),
@@ -714,7 +716,7 @@ const UnifiedScheduleComponent = ({
         // 상담사는 휴가만 등록 가능
         if (userRole === USER_ROLES.CONSULTANT) {
             if (isPastDate) {
-                notificationManager.warning('과거 날짜에는 휴가를 등록할 수 없습니다.');
+                notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_4f49954f'));
                 return;
             }
             
@@ -728,7 +730,7 @@ const UnifiedScheduleComponent = ({
         // 관리자·스텝은 스케줄/휴가 선택 모달 표시
         if (isAdminLikeScheduleUserRole(userRole)) {
             if (isPastDate) {
-                notificationManager.warning('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
+                notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_6a4cece6'));
                 return;
             }
             
@@ -740,11 +742,11 @@ const UnifiedScheduleComponent = ({
 
         // 내담자: 캘린더 조회 전용 — 스케줄 생성 권한 없음
         if (userRole === USER_ROLES.CLIENT) {
-            notificationManager.info('내담자는 캘린더에서 일정을 직접 등록할 수 없습니다. 상담사 또는 관리자에게 문의해 주세요.');
+            notificationManager.info(t('schedule:UnifiedScheduleComponent.t_3d31a46b'));
             return;
         }
 
-        notificationManager.warning('스케줄 생성 권한이 없습니다.');
+        notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_92aa6c16'));
     };
 
     const handleScheduleClick = () => {
@@ -776,17 +778,17 @@ const UnifiedScheduleComponent = ({
             console.log('🏖️ 휴가 이벤트 클릭');
             
             let { consultantName } = event.extendedProps;
-            if (!consultantName || consultantName === 'undefined' || consultantName === '알 수 없음') {
+            if (!consultantName || consultantName === 'undefined' || consultantName === t('schedule:UnifiedScheduleComponent.t_8916b639')) {
                 if (event.extendedProps.consultantId && event.extendedProps.consultantId !== 'undefined') {
-                    consultantName = `상담사 ${event.extendedProps.consultantId}`;
+                    consultantName = t('schedule:UnifiedScheduleComponent.t_b09a1acc');
                 } else {
-                    consultantName = '상담사 정보 없음';
+                    consultantName = t('schedule:UnifiedScheduleComponent.t_44b8c965');
                 }
             }
             
             // 공통코드에서 VACATION 상태값 조회
             const vacationStatus = scheduleStatusOptions.find(opt => 
-                opt.value === 'VACATION' || opt.label?.includes('휴가')
+                opt.value === 'VACATION' || opt.label?.includes(t('schedule:UnifiedScheduleComponent.t_4cdf9ae5'))
             )?.value || 'VACATION'; // fallback (공통코드 미로드 시)
             
             const consultantIdVal = event.extendedProps.consultantId;
@@ -797,13 +799,13 @@ const UnifiedScheduleComponent = ({
                 calendarEventType: CALENDAR_EXTENDED_TYPE_VACATION,
                 title: event.title,
                 consultantName: consultantName,
-                clientName: '휴가',
+                clientName: t('schedule:UnifiedScheduleComponent.t_4cdf9ae5'),
                 consultationType: 'VACATION',
                 startTime: event.allDay ? '하루 종일' : formatTime(event.start),
                 endTime: event.allDay ? '하루 종일' : formatTime(event.end),
                 status: vacationStatus,
-                description: event.extendedProps.reason || event.extendedProps.description || '휴가',
-                reason: event.extendedProps.reason || event.extendedProps.description || '휴가',
+                description: event.extendedProps.reason || event.extendedProps.description || t('schedule:UnifiedScheduleComponent.t_4cdf9ae5'),
+                reason: event.extendedProps.reason || event.extendedProps.description || t('schedule:UnifiedScheduleComponent.t_4cdf9ae5'),
                 vacationType: event.extendedProps.vacationType,
                 date: event.extendedProps.date
             };
@@ -816,8 +818,8 @@ const UnifiedScheduleComponent = ({
         const koreanStatus = event.extendedProps.statusKorean || convertStatusToKorean(event.extendedProps.status);
         const koreanConsultationType = convertConsultationTypeToKorean(event.extendedProps.consultationType);
         
-        const consultantName = event.extendedProps.consultantName || '상담사 정보 없음';
-        const clientName = event.extendedProps.clientName || '내담자 정보 없음';
+        const consultantName = event.extendedProps.consultantName || t('schedule:UnifiedScheduleComponent.t_44b8c965');
+        const clientName = event.extendedProps.clientName || t('schedule:UnifiedScheduleComponent.t_032787e1');
 
         const startDate = event.start;
         const endDate = event.end;
@@ -890,9 +892,9 @@ const UnifiedScheduleComponent = ({
         const status = event.extendedProps?.status;
 
         // 완료된 스케줄은 드래그 이동 불가
-        if (status === 'COMPLETED' || status === '완료됨') {
+        if (status === 'COMPLETED' || status === t('schedule:UnifiedScheduleComponent.t_1f74613e')) {
             info.revert();
-            notificationManager.warning('완료된 스케줄은 이동할 수 없습니다.');
+            notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_5c8ac544'));
             return;
         }
 
@@ -901,7 +903,7 @@ const UnifiedScheduleComponent = ({
 
         if (isPastDateOnly(newStart)) {
             info.revert();
-            notificationManager.warning('과거 날짜로는 스케줄을 이동할 수 없습니다.');
+            notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_07d3fa9e'));
             return;
         }
 
@@ -910,7 +912,7 @@ const UnifiedScheduleComponent = ({
             hasConsultantScheduleTimeOverlap(events, event.id, movedConsultantId, newStart, newEnd)
         ) {
             info.revert();
-            notificationManager.warning('해당 시간대에 이미 예약 또는 휴가가 있어 이동할 수 없습니다.');
+            notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_b308792e'));
             return;
         }
 
@@ -919,12 +921,12 @@ const UnifiedScheduleComponent = ({
             await StandardizedApi.put(`/api/v1/schedules/${event.id}`, body);
 
             console.log('✅ 스케줄 이동 완료');
-            notificationManager.success('스케줄 이동이 완료되었습니다.');
+            notificationManager.success(t('schedule:UnifiedScheduleComponent.t_8c3f9ec7'));
             await loadSchedules(); // 스케줄 다시 로드
         } catch (error) {
             console.error('스케줄 이동 오류:', error);
             info.revert();
-            notificationManager.error('스케줄 이동 중 오류가 발생했습니다.');
+            notificationManager.error(t('schedule:UnifiedScheduleComponent.t_68ed75e7'));
         }
     };
 

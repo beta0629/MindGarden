@@ -152,20 +152,20 @@ const SocialSignupModal = ({
     const newErrors = {};
 
     if (!formData.email || !isValidEmail(formData.email)) {
-      newErrors.email = '올바른 이메일 형식이 아닙니다.';
+      newErrors.email = t('auth:SocialSignupModal.t_13a1b03d');
     }
 
     if (!socialUser?.needsBranchMapping) {
       const dn = (formData.displayName || '').trim();
       if (!dn) {
-        newErrors.displayName = '이름(표시명)을 입력해주세요.';
+        newErrors.displayName = t('auth:SocialSignupModal.t_1096a3f8');
       } else if (dn.length < 2) {
-        newErrors.displayName = '이름(표시명)은 2자 이상 입력해주세요.';
+        newErrors.displayName = t('auth:SocialSignupModal.t_925c99e1');
       }
 
       const phoneDigits = normalizeKoreanMobileDigits(formData.phone);
       if (phoneDigits && !isValidKoreanMobileDigits(phoneDigits)) {
-        newErrors.phone = '휴대폰 번호 형식을 확인해주세요.';
+        newErrors.phone = t('auth:SocialSignupModal.t_04f28a33');
       }
     }
 
@@ -209,7 +209,7 @@ const SocialSignupModal = ({
 
     if (!privacyConsents.privacy || !privacyConsents.terms) {
       setErrors({
-        privacy: '개인정보 수집 및 이용 동의와 이용약관에 동의해주세요.'
+        privacy: t('auth:SocialSignupModal.t_394bc3f4')
       });
       return;
     }
@@ -300,7 +300,7 @@ const SocialSignupModal = ({
 
       if (isSocialSignupSuccess(response)) {
         if (socialUser.needsBranchMapping) {
-          notificationManager.show('계정이 활성화되었습니다. 다시 로그인해주세요.', 'success');
+          notificationManager.show(t('auth:SocialSignupModal.t_2a0f1b15'), 'success');
           onClose();
           redirectToLoginPageOnce();
         } else {
@@ -310,7 +310,7 @@ const SocialSignupModal = ({
       } else {
         const submitFailMsg = toDisplayString(
           response.message,
-          '회원가입에 실패했습니다.'
+          t('auth:SocialSignupModal.t_e144fb1d')
         );
         setErrors({ submit: submitFailMsg });
         notificationManager.show(submitFailMsg, 'error');
@@ -323,7 +323,7 @@ const SocialSignupModal = ({
           : '';
       const submitErrMsg = toDisplayString(
         fromThrown || toErrorMessage(error?.response?.data ?? error, ''),
-        '회원가입 처리 중 오류가 발생했습니다.'
+        t('auth:SocialSignupModal.t_278b8500')
       );
       setErrors({ submit: submitErrMsg });
       notificationManager.show(submitErrMsg, 'error');
@@ -337,15 +337,15 @@ const SocialSignupModal = ({
     navigate('/login');
   };
 
-  const modalTitle = socialUser?.needsBranchMapping ? '계정 활성화' : '간편 회원가입';
+  const modalTitle = socialUser?.needsBranchMapping ? '계정 활성화' : t('auth:SocialSignupModal.t_5a98d720');
   const modalSubtitle = socialUser?.needsBranchMapping
     ? '계정을 활성화합니다'
-    : '소셜 계정 정보로 간편하게 가입하세요';
+    : t('auth:SocialSignupModal.t_3f220312');
 
   const isKakao = socialUser?.provider === 'KAKAO';
   const providerKey = isKakao ? 'kakao' : 'naver';
-  const providerLabel = isKakao ? '카카오' : '네이버';
-  const providerAction = socialUser?.needsBranchMapping ? '계정 활성화' : '가입';
+  const providerLabel = isKakao ? '카카오' : t('auth:SocialSignupModal.t_4c2122fb');
+  const providerAction = socialUser?.needsBranchMapping ? '계정 활성화' : t('auth:SocialSignupModal.t_8b92576f');
 
   return (
     <>
@@ -362,7 +362,7 @@ const SocialSignupModal = ({
         <div className="social-signup-modal">
           <section
             className="social-signup-modal__provider"
-            aria-label={toDisplayString(`${providerLabel} 계정`)}
+            aria-label={toDisplayString(t('auth:SocialSignupModal.t_58fd029d'))}
           >
             <span
               className="social-signup-modal__provider-badge"
@@ -375,7 +375,7 @@ const SocialSignupModal = ({
             </span>
             <span className="social-signup-modal__provider-name">
               {toDisplayString(
-                `${providerLabel} 계정으로 ${providerAction}`
+                t('auth:SocialSignupModal.t_3bfa55ba')
               )}
             </span>
           </section>
@@ -550,7 +550,7 @@ const SocialSignupModal = ({
                 preventDoubleClick={false}
                 onClick={handleSubmit}
               >
-                {socialUser?.needsBranchMapping ? '계정 활성화 완료' : '회원가입 완료'}
+                {socialUser?.needsBranchMapping ? '계정 활성화 완료' : t('auth:SocialSignupModal.t_59e75cc1')}
               </MGButton>
             </div>
           </form>

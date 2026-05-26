@@ -25,6 +25,7 @@ import { apiGet } from '../../../utils/ajax';
 import { normalizeMappingsListPayload } from '../../../utils/apiResponseNormalize';
 import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
@@ -36,6 +37,7 @@ const PAYMENT_STATE_ICON_SIZE = 40;
 const MAPPINGS_WIDGET_FETCH_ERROR = '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 
 const PaymentSessionsWidget = ({ widget, user }) => {
+  const { t } = useTranslation();
   const getDataSourceConfig = () => ({
     type: 'api',
     cache: true,
@@ -167,28 +169,28 @@ const PaymentSessionsWidget = ({ widget, user }) => {
   };
 
   const getStatusText = (status) => {
-    if (!status) return '미결제';
+    if (!status) return t('common:dashboard.PaymentSessionsWidget.t_8c5d2272');
     
     const statusTextMap = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': '확인됨',
-      'PAY': '결제확인',
-      'DEP': '입금확인',
+      'CONFIRMED': t('common:dashboard.PaymentSessionsWidget.t_d1a349f7'),
+      'PAY': t('common:dashboard.PaymentSessionsWidget.t_f8e2bb71'),
+      'DEP': t('common:dashboard.PaymentSessionsWidget.t_a1b8faac'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'APPROVED': '승인완료',
+      'APPROVED': t('common:dashboard.PaymentSessionsWidget.t_0eb721a5'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'PENDING': '대기중',
+      'PENDING': t('common:dashboard.PaymentSessionsWidget.t_9b3a3ba2'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'REJECTED': '거부됨',
-      'REFUNDED': '환불됨',
+      'REJECTED': t('common:dashboard.PaymentSessionsWidget.t_851085ad'),
+      'REFUNDED': t('common:dashboard.PaymentSessionsWidget.t_415cbe4c'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'COMPLETED': '완료',
-      'FAILED': '실패',
+      'COMPLETED': t('common:dashboard.PaymentSessionsWidget.t_8d868037'),
+      'FAILED': t('common:dashboard.PaymentSessionsWidget.t_732fe33a'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CANCELLED': '취소'
+      'CANCELLED': t('common:dashboard.PaymentSessionsWidget.t_19b2d19b')
     };
     
-    return statusTextMap[status] || status || '미결제';
+    return statusTextMap[status] || status || t('common:dashboard.PaymentSessionsWidget.t_8c5d2272');
   };
 
   const defaultPaymentData = {
@@ -211,7 +213,7 @@ const PaymentSessionsWidget = ({ widget, user }) => {
       onRefresh={refresh}
       customActions={[
         {
-          label: '새로고침',
+          label: t('common:dashboard.PaymentSessionsWidget.t_deb94acf'),
           onClick: refresh,
           disabled: loading
         }

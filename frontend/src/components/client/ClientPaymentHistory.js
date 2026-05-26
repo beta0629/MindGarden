@@ -68,7 +68,7 @@ const ClientPaymentHistory = () => {
 
       const userResponse = await StandardizedApi.get(API_AUTH_CURRENT_USER);
       if (!userResponse || !userResponse.id) {
-        throw new Error('로그인이 필요합니다.');
+        throw new Error(t('common:client.ClientPaymentHistory.t_5271ee34'));
       }
 
       const userId = userResponse.id;
@@ -77,7 +77,7 @@ const ClientPaymentHistory = () => {
         clientId: userId
       });
       if (isApiGetNullFailure(mappingsResponse)) {
-        throw new Error('결제 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        throw new Error(t('common:client.ClientPaymentHistory.t_3642c6bf'));
       }
       const mappings = normalizeMappingsListPayload(mappingsResponse);
 
@@ -98,7 +98,7 @@ const ClientPaymentHistory = () => {
 
     } catch (err) {
       console.error('결제 데이터 로드 실패:', err);
-      setError(err.message || '결제 데이터를 불러오는데 실패했습니다.');
+      setError(err.message || t('common:client.ClientPaymentHistory.t_4e27bdaa'));
     } finally {
       if (fromErrorRetry) {
         setRetryLoading(false);
@@ -111,16 +111,16 @@ const ClientPaymentHistory = () => {
   const getStatusText = (status) => {
     const statusMap = {
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': '결제완료',
-      'PAY': '결제확인',
-      'DEP': '입금확인',
+      'CONFIRMED': t('common:client.ClientPaymentHistory.t_cd79fb92'),
+      'PAY': t('common:client.ClientPaymentHistory.t_f8e2bb71'),
+      'DEP': t('common:client.ClientPaymentHistory.t_a1b8faac'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'PENDING': '결제대기',
+      'PENDING': t('common:client.ClientPaymentHistory.t_ffc400e0'),
       // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'REJECTED': '결제실패',
-      'REFUNDED': '환불완료'
+      'REJECTED': t('common:client.ClientPaymentHistory.t_13b9aa71'),
+      'REFUNDED': t('common:client.ClientPaymentHistory.t_43aa0bad')
     };
-    return statusMap[status] || '미결제';
+    return statusMap[status] || t('common:client.ClientPaymentHistory.t_8c5d2272');
   };
 
   const getStatusClass = (status) => {
@@ -140,11 +140,11 @@ const ClientPaymentHistory = () => {
 
   const getMethodText = (method) => {
     const methodMap = {
-      'CARD': '카드',
-      'CASH': '현금',
-      'BANK_TRANSFER': '계좌이체'
+      'CARD': t('common:client.ClientPaymentHistory.t_7dedeb82'),
+      'CASH': t('common:client.ClientPaymentHistory.t_6102409b'),
+      'BANK_TRANSFER': t('common:client.ClientPaymentHistory.t_72cb76b3')
     };
-    return methodMap[method] || '미지정';
+    return methodMap[method] || t('common:client.ClientPaymentHistory.t_5c1a705c');
   };
 
   const formatCurrency = (amount) => {
@@ -155,7 +155,7 @@ const ClientPaymentHistory = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return '알 수 없음';
+    if (!dateString) return t('common:client.ClientPaymentHistory.t_8916b639');
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -357,7 +357,7 @@ const ClientPaymentHistory = () => {
               <div className="payment-item__header">
                 <div className="payment-item__title">
                   <Package size={20} />
-                  <h4>{mapping.packageName || '상담 패키지'}</h4>
+                  <h4>{mapping.packageName || t('common:client.ClientPaymentHistory.t_17cef764')}</h4>
                 </div>
                 <div className="payment-item__amount">
                   {formatCurrency(mapping.packagePrice || 0)}
@@ -373,7 +373,7 @@ const ClientPaymentHistory = () => {
                 <div className="payment-item__detail">
                   <User size={16} />
                   <span className="payment-item__detail-label">상담사:</span>
-                  <span className="payment-item__detail-value">{mapping.consultant?.consultantName || '미지정'}</span>
+                  <span className="payment-item__detail-value">{mapping.consultant?.consultantName || t('common:client.ClientPaymentHistory.t_5c1a705c')}</span>
                 </div>
                 <div className="payment-item__detail">
                   <Calendar size={16} />

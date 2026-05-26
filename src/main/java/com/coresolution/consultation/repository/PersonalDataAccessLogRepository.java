@@ -97,7 +97,7 @@ public interface PersonalDataAccessLogRepository extends JpaRepository<PersonalD
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM PersonalDataAccessLog p WHERE p.tenantId = :tenantId AND p.accessTime < :cutoffDate")
-    long deleteByTenantIdAndAccessTimeBefore(@Param("tenantId") String tenantId, @Param("cutoffDate") LocalDateTime cutoffDate);
+    int deleteByTenantIdAndAccessTimeBefore(@Param("tenantId") String tenantId, @Param("cutoffDate") LocalDateTime cutoffDate);
     
     /**
      * 테넌트별 특정 개인정보 유형의 접근 로그 조회 (tenantId 필터링)

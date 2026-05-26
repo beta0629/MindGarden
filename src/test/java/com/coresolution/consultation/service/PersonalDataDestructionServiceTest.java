@@ -80,7 +80,7 @@ class PersonalDataDestructionServiceTest {
         when(salaryCalculationRepository.findExpiredSalariesForDestructionByTenantId(any(), any(LocalDateTime.class)))
             .thenReturn(Collections.emptyList());
         when(personalDataAccessLogRepository.deleteByTenantIdAndAccessTimeBefore(any(), any(LocalDateTime.class)))
-            .thenReturn(0L);
+            .thenReturn(0);
 
         personalDataDestructionService.destroyExpiredPersonalData();
 

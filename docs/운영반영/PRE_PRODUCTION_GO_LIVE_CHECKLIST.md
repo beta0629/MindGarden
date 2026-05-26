@@ -1,8 +1,8 @@
 # 운영 반영(Go-Live) 전 체크리스트
 
 **문서 유형**: 운영 준비 · 전 에이전트 합의용  
-**버전**: 2.0.0  
-**최종 갱신**: 2026-04-12  
+**버전**: 2.1.0  
+**최종 갱신**: 2026-05-26 (§5.8 자동 발송 스케줄러 플래그 검증 게이트 추가 — wellness-tip 자동 발송 차단 핫픽스)
 **상태**: 상시 업데이트 (배포 직전 반드시 최신본 확인)
 
 > **오케스트레이션 위임**: 운영 반영 플랜 수립·실행을 **core-planner(기획)** 에게 위임하면, 본 체크리스트·데이터 선별·서브에이전트(shell·core-debugger·core-tester·문서정리 등) 분배실행을 주관하여 오케스트레이션한다. "운영 반영 플랜 수립해줘", "Go-Live 오케스트레이션 진행해줘" 등으로 호출.
@@ -125,6 +125,19 @@
 | 5.5 | 연결 풀·타임아웃·읽기 부하(리플리카) 정책 |
 | 5.6 | **데이터 선별**: 마스터·참조는 Flyway, **개발 테스트·개인정보 덤프는 운영 미이관**. **운영 테넌트는 Mind Garden 온보딩으로만 생성**(개발 테넌트 덤프 금지) — [PRODUCTION_ESSENTIAL_DATA.md](../deployment/PRODUCTION_ESSENTIAL_DATA.md) §1.1 · 온보딩·엣지: [SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md](../deployment/SEC01_PUBLIC_ONBOARDING_EDGE_AND_OPS.md) |
 | 5.7 | **MySQL 연결 합산(배포 전)**: `(앱 인스턴스 수 × Hikari maximum-pool-size)` + 기타 DB 클라이언트 ≤ MySQL `max_connections`. 초과 시 `Too many connections` 발생 가능. 풀 상한은 `HIKARI_MAXIMUM_POOL_SIZE` 등으로 조절 — [DEV_DEPLOYMENT_STABILITY_CHECKLIST.md](../troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md) 2.4 참고 |
+| 5.8 | **자동 발송 스케줄러 플래그 4종 검증** (배포 직후 필수): 운영 안전 기본값은 `false` — [NOTIFICATION_SCHEDULER_SAFE_DEFAULT.md](../standards/NOTIFICATION_SCHEDULER_SAFE_DEFAULT.md). 아래 SQL 결과가 정확히 **4 행**, `config_value` 가 운영 결정값(기본 `'false'`)과 일치하는지 확인. ON 이 필요한 키만 어드민/SQL `UPDATE` 로 별도 활성화. |
+
+```sql
+-- 5.8 자동 발송 스케줄러 플래그 검증 (배포 직후)
+SELECT config_key, config_value, is_active, updated_at, updated_by
+  FROM system_config
+ WHERE tenant_id = ''
+   AND category  = 'NOTIFICATION'
+   AND config_key LIKE 'notification.scheduler.%'
+ ORDER BY config_key;
+-- 기대: 4 행 (wellness-tip / consultation-record-alert / workflow-automation / reservation-reminder)
+-- 기본 운영 정책: 모두 'false'. 발화가 필요한 키만 명시적 'true' UPDATE.
+```
 
 ---
 

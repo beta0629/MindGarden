@@ -1,20 +1,33 @@
 # 회기 관리 시스템 정책 결정 합의서
 
-**버전**: 0.1.0 (초안)
+**버전**: 0.2.0 (v2 — 사용자 컨펌 반영 + Phase 2/3 상세 설계)
 **작성일**: 2026-05-26
+**갱신일**: 2026-05-26
 **작성**: core-planner
-**상태**: 사용자 컨펌 대기
+**상태**: ✅ 사용자 컨펌 확정 (Q1–Q4 + 보조 결정)
 **참조 인벤토리**: explore Agent `6701d730` (회기 SSOT / PL-SQL 드리프트 / 환불 / 노쇼 인벤토리)
-**병렬 작업**: P0/P1 핫픽스 3건 — core-coder Agent `1dd0d0ae` 진행 중
+**병렬 작업**: P0/P1 핫픽스 3건 — core-coder Agent `1dd0d0ae` 진행 중 · Phase 1 PL/SQL 폐기 — core-coder Agent `d15ef2dc` 진행 중
 
 ---
 
 ## 0. 문서 목적
 
-본 문서는 회기(session) 관리 시스템의 4대 미해결 정책 이슈를 사용자 결정으로 확정하기 위한 **정책 합의서**이다.
+본 문서는 회기(session) 관리 시스템의 4대 미해결 정책 이슈를 사용자 결정으로 확정하고, Phase 2/3 상세 설계를 기록하는 **정책 합의서**이다.
+
+- v0.1.0 (commit `ad4592ee8`): 초안 + 옵션 비교 + 권고.
+- **v0.2.0 (본 문서)**: 사용자 컨펌 결과 + §2.1/§3.1/§4.1 상세 설계 + §5 Phase 갱신.
 - 코드/DB/Flyway 변경은 0건 (read-only).
-- 사용자 컨펌 → 결정별 core-coder/core-planner 위임 분배.
-- 본 합의서는 결정 후 `docs/standards/SESSION_STANDARD.md` 와 교차 참조될 예정.
+- 결정별 core-coder/core-planner/core-tester 위임은 별도 진행.
+- 본 합의서는 `docs/standards/SESSION_STANDARD.md` 와 교차 참조될 예정.
+
+### 0.1 사용자 컨펌 확정 요약
+
+| Q | 확정 | 보조 결정 |
+|---|------|-----------|
+| **Q1** | **1A** — PL/SQL 폐기 | — (core-coder `d15ef2dc` 진행 중) |
+| **Q2** | **2A** — BOOKED 유지 + 노쇼 보상 룰 | **A** — 0.5건 환원 허용 (24h 이내 50%) |
+| **Q3** | **3A** — 자동 일괄 취소 (`REFUND_AUTO_CANCEL`) | **C** — 다채널 알림 의무화 (인앱 + 이메일 + 푸시 + 알림톡) |
+| **Q4** | **4B** — 양방향 webhook 즉시 도입 | **A** — ERP 측 콜백 협의 완료, 즉시 Phase 3 진입 |
 
 ---
 
@@ -60,13 +73,13 @@ IN_PROGRESS / VACATION / COMPLETED / CANCELLED
 
 ---
 
-## 2. 4개 결정 사항
+## 2. 4개 결정 사항 (확정)
 
-각 결정은 **옵션 A/B/C × 권고 × 위험 × 작업량 추정** 표로 정리한다.
+각 결정은 **옵션 A/B/C × 권고 × 위험 × 작업량 추정** 표로 정리한다. ✅ 표시 = 사용자 컨펌 확정.
 
 ---
 
-### 결정 1 — PL/SQL 표준화 프로시저의 거취
+### 결정 1 — PL/SQL 표준화 프로시저의 거취 ✅ **1A 확정**
 
 **현재 상태**: 5종 프로시저가 5개월+ 비활성화 상태. Java enum(`MappingStatusConstants`) 과 매핑 충돌(L1.3 표) → 활성화 시 즉시 데이터 손상.
 
@@ -80,15 +93,15 @@ IN_PROGRESS / VACATION / COMPLETED / CANCELLED
 
 | 옵션 | 내용 | 장점 | 위험 | 작업량 |
 |------|------|------|------|--------|
-| **A (권고, 폐기)** | 5종 프로시저 + `PlSqlMappingSyncServiceImpl` 호출부 일괄 제거. Java 단일 경로 유지. Flyway: `DROP PROCEDURE IF EXISTS ...` 5종 + Java 파일 제거. | SSOT(Java) 명확화, 드리프트 영구 차단, 유지보수 부담 0 | 향후 PL/SQL 트랜잭션 일관성 이점을 잃음. 백업 SQL 보존 필요(아카이브) | S (1-2 PR, 마이그레이션 1건, 회귀 테스트 mapping 도메인 전수) |
-| B (정합 마이그레이션) | PL/SQL `'COMPLETED'` → `'SESSIONS_EXHAUSTED'`, 결제 검증 `APPROVED OR CONFIRMED` 로 수정. PL/SQL 활성화. | PL/SQL 트랜잭션 일관성 활용 가능 | 5개월간 미가동 → 재활성화 시 회귀 위험 大. Java/PL-SQL 듀얼 경로 영구 유지 비용 | M~L (PL/SQL 5종 수정 + 통합 테스트 + 활성화 절차 + 운영 모니터링) |
-| C (감사 전용 분리) | PL/SQL 은 비즈니스 로직 비활성, 감사 로그 전용 함수로 재설계 (READ-ONLY 트리거/뷰). | 감사 일관성 확보 | 복잡도 高, 재설계 부담, 실효성 불명확 | L (재설계 + 마이그레이션 + 테스트) |
+| **A ✅ (확정, 폐기)** | 5종 프로시저 + `PlSqlMappingSyncServiceImpl` 호출부 일괄 제거. Java 단일 경로 유지. Flyway: `DROP PROCEDURE IF EXISTS ...` 5종 + Java 파일 제거. | SSOT(Java) 명확화, 드리프트 영구 차단, 유지보수 부담 0 | 향후 PL/SQL 트랜잭션 일관성 이점을 잃음. 백업 SQL 보존 필요(아카이브) | S (1-2 PR, 마이그레이션 1건, 회귀 테스트 mapping 도메인 전수) |
+| B (정합 마이그레이션) | PL/SQL `'COMPLETED'` → `'SESSIONS_EXHAUSTED'`, 결제 검증 `APPROVED OR CONFIRMED` 로 수정. PL/SQL 활성화. | PL/SQL 트랜잭션 일관성 활용 가능 | 5개월간 미가동 → 재활성화 시 회귀 위험 大. Java/PL-SQL 듀얼 경로 영구 유지 비용 | M~L |
+| C (감사 전용 분리) | PL/SQL 은 비즈니스 로직 비활성, 감사 로그 전용 함수로 재설계 (READ-ONLY 트리거/뷰). | 감사 일관성 확보 | 복잡도 高, 재설계 부담, 실효성 불명확 | L |
 
-**권고**: **옵션 A (폐기)**. 5개월 미가동 + Java SSOT 가 안정적이며, 드리프트 위험을 영구 제거. 폐기 시 `database/schema/archived/` 로 SQL 원본 이동(이력 보존).
+**확정**: **옵션 A (폐기)**. 폐기 시 `database/schema/archived/` 로 SQL 원본 이동(이력 보존). **위임**: core-coder Agent `d15ef2dc` (Phase 1, 진행 중).
 
 ---
 
-### 결정 2 — 회기 차감 시점 + 노쇼 정책
+### 결정 2 — 회기 차감 시점 + 노쇼 정책 ✅ **2A + 0.5건 환원 확정**
 
 **현재 상태**:
 - 회기 차감 = `Schedule` BOOKED/CONFIRMED/IN_PROGRESS 점유 전이 시점 (상담 종료 보장 없음).
@@ -97,27 +110,76 @@ IN_PROGRESS / VACATION / COMPLETED / CANCELLED
 
 | 옵션 | 내용 | 장점 | 위험 | 작업량 |
 |------|------|------|------|--------|
-| **A (권고, BOOKED 유지 + 노쇼 보상)** | 차감 시점은 현재 BOOKED 유지. `ScheduleStatus` 에 `NO_SHOW` / `LATE_CANCEL` 추가. 시간 기준 보상 룰 도입 (예: 24h 이전 취소 = 100% 복원, 24h 이내 = 50% 복원, 노쇼 = 0% 복원). 보상 시 `consultant_client_mappings` 회기 컬럼 보정. | 기존 캘린더 UX 무변경. 노쇼 정책 명문화. 점진 도입 가능 | 보상 룰 마이그레이션 (과거 노쇼 일정 회기 보정 여부 결정 필요). UI 보상 사유 표기 추가 | M (enum 추가 + 정책 서비스 + UI 노쇼 액션 + 보상 트랜잭션) |
-| B (COMPLETED 시점 이동) | 차감 시점을 상담 종료(COMPLETED) 로 이동. 예약 시 가차감(예약 점유 가산) 별도 컬럼/뷰로 노출. | 회기 = 실제 사용 으로 정확 | 캘린더 가용성 표시 변경 + UI 회귀 위험 大. `remaining_sessions` 의미 변경 → 프론트/리포트/통계 전수 회귀. 작업량 大 | L (도메인 의미 변경 + 프론트 회귀 + 통계 재계산) |
-| C (혼합 — 예약/사용 분리) | BOOKED 시점 = 회기 "예약"(`reserved_sessions` 신설, 차감 안 됨). COMPLETED 시점 = 회기 "사용"(`used_sessions` 차감). `Schedule.session_sequence` 활용. UI 표기 분리. | B 의 정확성 + 가용성 가시성 | 컬럼 신설 + Flyway + 통계 동시 갱신 + 노쇼 정책 별도 정의 필요. 가장 복잡 | L+ (스키마 + 도메인 + 통계 + UI + 마이그레이션) |
+| **A ✅ (확정, BOOKED 유지 + 노쇼 보상)** | 차감 시점은 현재 BOOKED 유지. `ScheduleStatus` 에 `NO_SHOW` / `LATE_CANCEL` 추가. 시간 기준 보상 룰 도입. 보상 시 `consultant_client_mappings` 회기 컬럼 보정. | 기존 캘린더 UX 무변경. 노쇼 정책 명문화. 점진 도입 가능 | 보상 룰 마이그레이션 (과거 노쇼 일정 회기 보정 여부 결정 필요). UI 보상 사유 표기 추가 | M |
+| B (COMPLETED 시점 이동) | 차감 시점을 상담 종료(COMPLETED) 로 이동. | 회기 = 실제 사용 으로 정확 | 캘린더/통계 전수 회귀. 작업량 大 | L |
+| C (혼합 — 예약/사용 분리) | BOOKED 시점 = 회기 "예약". COMPLETED 시점 = 회기 "사용". | B 의 정확성 + 가용성 가시성 | 컬럼 신설 + Flyway + 통계 동시 갱신. 가장 복잡 | L+ |
 
-**권고**: **옵션 A (BOOKED 유지 + 노쇼 보상)**. 현행 동작 보존하면서 정책 공백을 메우는 최소 침습 경로. 향후 데이터 누적 후 옵션 C 로 이행 가능.
-
-**보상 룰 초안 (옵션 A 권고 시 사용자 컨펌 필요)**:
-
-| 사유 | 시점 | 회기 복원율 | 비고 |
-|------|------|------------|------|
-| 내담자 자발 취소 | 24h 이전 | 100% | 일정 CANCELLED, 회기 1건 환원 |
-| 내담자 자발 취소 | 24h 이내 ~ 시작 전 | 50% | 정책상 패널티, 0.5건 환원 |
-| 노쇼 (NO_SHOW) | 시작 시각 경과 + 미참여 | 0% | 회기 차감 유지, 일정 NO_SHOW 표시 |
-| 지각 (LATE_CANCEL) | 시작 직전 취소 | 0% | 노쇼와 동일 처리 (정책 자유) |
-| 상담사 사유 취소 | 시점 무관 | 100% | 자동 100% 복원 |
-
-> 0.5건 복원이 회계/통계와 충돌하면 0% / 100% 이진 룰로 단순화 가능 (사용자 결정).
+**확정**: **옵션 A (BOOKED 유지 + 노쇼 보상)** + **보조 A (0.5건 환원 허용)**.
 
 ---
 
-### 결정 3 — 부분 환불 후 미래 일정 자동 취소 정책
+### 2.1 노쇼 보상 룰 상세 (Q2 + Q2 보조 = 2A · 0.5건 환원)
+
+#### 2.1.1 보상 룰 매트릭스 (확정)
+
+| 사유 | 시점 조건 | `ScheduleStatus` | 회기 환원율 | 처리 |
+|------|-----------|------------------|------------|------|
+| 내담자 자발 취소 | **≥ 24h before slot** (시작 시각 기준) | `CANCELLED` | **100%** | `used_sessions--`, `remaining_sessions++` (1건) |
+| 내담자 자발 취소 | **< 24h before slot, > 시작 시각** | `CANCELLED` | **50%** | 0.5건 환원 (§2.1.2 옵션 c 권고) |
+| 지각 (LATE_CANCEL) | 시작 직전 ~ 시작 시각 | `LATE_CANCEL` | **50%** | 24h 이내 취소와 **동일 규칙** |
+| 노쇼 (NO_SHOW) | **시작 시각 경과 후 미참석** | `NO_SHOW` | **0%** | `used_sessions` 유지 (차감 확정) |
+| 상담사 사유 취소 | 시점 무관 | `CANCELLED` | **100%** | 자동 1건 환원 |
+
+> **24h 기준**: 일정 `startAt` (slot 시작 시각) 대비 취소/변경 요청 시각. 타임존 = 테넌트 기본 (`Asia/Seoul`).
+
+#### 2.1.2 신규 ScheduleStatus
+
+| enum 값 | 설명 | 점유(`occupiesTimeForConflictCheck`) | 회기 차감 |
+|---------|------|--------------------------------------|----------|
+| `NO_SHOW` | 시작 시각 경과 후 미참석 | false (종료 상태) | 유지 (0% 환원) |
+| `LATE_CANCEL` | 시작 직전 취소 (지각 취소) | false | 50% 환원 |
+
+- 공통코드 `SCHEDULE_STATUS_GROUP` 시드 추가 (Flyway 분리, Phase 2).
+- 관리자/상담사 UI: 노쇼·지각 처리 액션 + 사유 선택.
+
+#### 2.1.3 0.5건 환원 처리 옵션 (택 1 — 합의서 명시)
+
+| 옵션 | 방식 | 장점 | 단점 |
+|------|------|------|------|
+| **(a) 별도 컬럼** | `consultant_client_mappings.half_session_credit` 신설 + UI 표기 분리 | 정수 컬럼 의미 보존, UI 분리 표기 용이 | 컬럼 추가, 2개 잔여 개념 혼재 |
+| **(b) 분수 사용량** | `used_sessions` → `DECIMAL(5,1)` 변경 + 표기 정수/분수 토글 | 단일 컬럼으로 표현 | 기존 int 의미 변경 → 통계/리포트/프론트 전수 회귀 |
+| **(c) ✅ 권고 — 보상 거래 별도 기록** | 회기 컬럼(`total`/`used`/`remaining`)은 **정수 유지** + `session_compensation_history` 테이블 신설 | 감사 추적 우선, UI 표기 단순(정수 + 보상 이력), 회귀 충격 최소 | 테이블/서비스 추가 |
+
+**권고 (확정)**: **옵션 (c)** — 회기 컬럼 정수 유지 + `session_compensation_history` 별도 기록.
+
+##### `session_compensation_history` 스키마 (Phase 2 설계안)
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | BIGINT PK | |
+| `mapping_id` | BIGINT FK | `consultant_client_mappings.id` |
+| `schedule_id` | BIGINT FK (nullable) | 연관 일정 |
+| `compensation_type` | VARCHAR | `FULL_RESTORE` / `HALF_RESTORE` / `NO_RESTORE` |
+| `amount` | DECIMAL(3,1) | 환원량 (1.0 / 0.5 / 0.0) |
+| `reason_code` | VARCHAR | `CANCEL_24H_PLUS` / `CANCEL_24H_MINUS` / `LATE_CANCEL` / `NO_SHOW` / `CONSULTANT_CANCEL` |
+| `applied_by` | BIGINT | 처리 사용자 ID |
+| `applied_at` | TIMESTAMP | |
+| `tenant_id` | VARCHAR | 멀티테넌트 격리 |
+
+- 0.5건 환원 시: `remaining_sessions` 는 정수 유지, **누적 0.5 × 2 = 1건** 도달 시 `remaining_sessions++` + 이력 2행 기록 (또는 배치 정산).
+- UI: 매핑 상세에 "보상 이력" 탭 — `amount` 합산 표시.
+
+#### 2.1.4 Phase 2 구현 범위 (core-coder + core-tester)
+
+1. `ScheduleStatus` enum + 공통코드 시드.
+2. `SessionCompensationService` — 24h 경계 판정 + 보상 트랜잭션.
+3. `session_compensation_history` Flyway + JPA 엔티티.
+4. 관리자 노쇼/지각 처리 UI + API.
+5. 보상 시나리오별 통합 테스트 (100% / 50% / 0% / 상담사 취소).
+
+---
+
+### 결정 3 — 부분 환불 후 미래 일정 자동 취소 정책 ✅ **3A + 다채널 알림 확정**
 
 **현재 상태**:
 - `partialRefundMapping(L3507)` 은 회기 컬럼만 갱신 + remaining=0 시 status `SESSIONS_EXHAUSTED` 만 설정.
@@ -126,169 +188,311 @@ IN_PROGRESS / VACATION / COMPLETED / CANCELLED
 
 | 옵션 | 내용 | 장점 | 위험 | 작업량 |
 |------|------|------|------|--------|
-| **A (권고, 자동 일괄 취소)** | P0-B 핫픽스 그대로 유지 → remaining=0 시 미래 일정 자동 CANCELLED + 알림 발송 (관리자/상담사/내담자). 사유: `REFUND_AUTO_CANCEL`. | 데이터 정합 자동 보장. 추가 UI 분기 없음 | 의도치 않은 일정 취소 시 복구 어려움. 알림 누락 시 사용자 혼란 | S (P0-B 의 후속 알림 채널 추가 + 감사 로그) |
-| B (사용자 동의 모달) | 부분 환불 처리 전 모달: "남은 회기가 0이 됩니다. 미래 예약 X건을 자동 취소합니까?" 확인 후 처리. | UX 명확. 관리자 의사결정 가시화 | 환불 워크플로 분기 추가 (single-step → 2-step). 야간 자동 환불 배치와 충돌 가능 | M (백엔드 미리보기 API + 프론트 모달 + i18n) |
-| C (정책 알림만) | 자동 취소 X. 사용자에게 알림만 발송 + 별도 취소 액션 필요. | 최소 침습 | remaining=0 + 미래 BOOKED 잔존 → 데이터 정합 깨짐 (스케줄러/통계/캘린더 충돌). 비권장 | S (알림만) |
+| **A ✅ (확정, 자동 일괄 취소)** | remaining=0 시 미래 일정 자동 CANCELLED + 다채널 알림. 사유: `REFUND_AUTO_CANCEL`. | 데이터 정합 자동 보장 | 의도치 않은 취소 시 복구 어려움 | S~M |
+| B (사용자 동의 모달) | 환불 전 확인 모달 | UX 명확 | 2-step 워크플로, 배치 충돌 | M |
+| C (정책 알림만) | 자동 취소 X | 최소 침습 | 데이터 정합 깨짐. **비권장** | S |
 
-**권고**: **옵션 A (자동 일괄 취소)**. P0-B 핫픽스의 자연스러운 후속. 다만 **취소 사유 코드 신설(`REFUND_AUTO_CANCEL`) + 감사 로그 + 다채널 알림** 을 정책 표준으로 명문화.
-
-**옵션 A 확장 안전장치 (사용자 컨펌 필요)**:
-1. 미래 일정 N건 임계치(예: N>=5) 시 추가 확인 모달 강제.
-2. 자동 취소된 일정 24h 이내 복구 액션(undo) 제공.
-3. 알림 채널: 인앱 + 이메일(option) + 푸시.
+**확정**: **옵션 A (자동 일괄 취소)** + **보조 C (다채널 알림 의무화 — 사용자 채널 선호도 무시, 일괄 발송)**.
 
 ---
 
-### 결정 4 — ERP 환불 webhook 경로
+### 3.1 자동 일괄 취소 + 다채널 알림 의무 (Q3 + Q3 보조 = 3A · 다채널)
+
+#### 3.1.1 적용 대상
+
+| 메서드 | 트리거 | 일정 처리 |
+|--------|--------|----------|
+| `partialRefundMapping` | 부분 환불 후 `remaining_sessions = 0` | 미래 BOOKED/CONFIRMED → `CANCELLED`, 사유 = `REFUND_AUTO_CANCEL` |
+| `terminateMapping` | 매핑 종료/전액 환불 | 미래 일정 일괄 `CANCELLED`, 사유 = `REFUND_AUTO_CANCEL` |
+
+#### 3.1.2 알림 채널 의무 (4채널 일괄 발송)
+
+> **사용자 채널 선호도 무시** — 환불 자동 취소는 법적/운영 고지 성격 → 4채널 모두 발송.
+
+| # | 채널 | 구현 | 비고 |
+|---|------|------|------|
+| 1 | **인앱 알림** | `Notification` 엔티티 생성 | 내담자 + 상담사 + (해당 시) 관리자 |
+| 2 | **이메일** | `EmailService.sendAutoCancelNotification` | 신규 메서드 |
+| 3 | **모바일 푸시** | `mobilePushDispatchService.dispatchAutoCancellation` | 신규 메서드 |
+| 4 | **알림톡** | `AlimtalkService` + 템플릿 `AUTO_CANCEL_REFUND` | **솔라피 신규 템플릿 등록 필요** (§3.1.4) |
+
+#### 3.1.3 알림 표준 카피 (Q3 보조 = C)
+
+| 필드 | 내용 |
+|------|------|
+| **제목** | `예약 취소 안내 (환불 처리)` |
+| **본문** | `환불 처리로 인해 [N건] 의 예약이 자동 취소되었습니다. 자세한 사항은 마이페이지에서 확인하세요.` |
+| **변수** | `[N]` = 취소된 미래 일정 건수 |
+
+- 인앱/푸시: 제목 + 본문 축약.
+- 이메일: HTML 템플릿 + 마이페이지 딥링크.
+- 알림톡: 솔라피 템플릿 변수 `{cancelCount}`, `{mypageUrl}`.
+
+#### 3.1.4 솔라피 `AUTO_CANCEL_REFUND` 템플릿 등록 (권고)
+
+| 항목 | 값 |
+|------|-----|
+| 템플릿 코드 | `AUTO_CANCEL_REFUND` |
+| 카테고리 | 예약/취소 |
+| 본문 예시 | `[MindGarden] 환불 처리로 인해 #{cancelCount}건의 예약이 자동 취소되었습니다. 자세한 사항은 #{mypageUrl} 에서 확인하세요.` |
+| 등록 시점 | **Phase 0 (P0-B 후속)** — 알림 구현과 동시 |
+| 담당 | core-coder (코드) + 운영 (솔라피 콘솔 템플릿 승인) |
+
+#### 3.1.5 감사 로그
+
+| 대상 | 기록 내용 |
+|------|----------|
+| `consultant_client_mappings.notes` | `REFUND_AUTO_CANCEL: N건 취소, 처리자={userId}, 시각={timestamp}` |
+| `consultant_client_mapping_history` | 행 추가 — 사유 코드, 취소 건수, 처리 사용자 ID |
+| 알림 발송 결과 | 채널별 `{channel: SUCCESS|FAIL, error?}` JSON (인앱/이메일/푸시/알림톡) |
+
+---
+
+### 결정 4 — ERP 환불 webhook 경로 ✅ **4B + 즉시 Phase 3 진입 확정**
 
 **현재 상태**:
-- `sendToErpSystem(L4496-4516)` 모의 전송. 항상 `success=true` 반환 (`AdminServiceImpl.java:4509-4510`).
+- `sendToErpSystem(L4496-4516)` 모의 전송. 항상 `success=true` 반환.
 - 실제 ERP webhook 수신 경로 없음.
-- 외부 ERP 가 단독 환불 처리 시 정합 미정의 (`docs/debug/REFUND_SYSTEM_ERP_AND_UI_ANALYSIS.md` §3 참조).
 
 | 옵션 | 내용 | 장점 | 위험 | 작업량 |
 |------|------|------|------|--------|
-| A (단방향 송신) | Mindgarden → ERP 환불 정보 송신만 유지(현행). ERP 단독 환불 시 관리자 수동 동기. | 구현 부담 0 | ERP 단독 환불 처리 시 우리 DB 갱신 누락 누적 | XS |
-| B (양방향 webhook) | ERP → Mindgarden webhook 수신 endpoint 신설(`POST /api/v1/erp/callbacks/refund-completed`) + 서명/멱등 검증 + 자동 환불 동기. | 실시간 정합 자동 보장 | ERP 측 콜백 구현 협의 필수. 보안(HMAC/IP whitelist) + 멱등 + 재시도 설계 부담. ERP 일정 의존 | L (수신 API + 보안 + 멱등 + 재시도 + 통합 테스트 + ERP 협의) |
-| **C (권고, 선택적 동기 — 관리자 게이트)** | ERP 측 환불 → Mindgarden 관리자용 "ERP 환불 반영" 화면(`POST /api/v1/admin/mappings/{id}/reflect-erp-refund`) + 사람 게이트 후 적용. 향후 옵션 B 로 무중단 이행 가능. | 사람 게이트로 오반영 위험 차단. 단계적 도입 가능 | 수동 작업 필요. 누락/지연 가능. UI 작업 부담 | M (관리자 화면 + API + 재무 거래 생성 재사용 + 감사 로그) |
+| A (단방향 송신) | Mindgarden → ERP 송신만 | 구현 부담 0 | ERP 단독 환불 시 DB 갱신 누락 | XS |
+| **B ✅ (확정, 양방향 webhook)** | ERP → Mindgarden webhook 수신 + 서명/멱등 + 자동 환불 동기 | 실시간 정합 자동 보장 | 보안 + 멱등 + 재시도 설계 | L |
+| C (관리자 게이트) | 사람 게이트 후 적용 | 오반영 위험 차단 | 수동 작업/지연 | M |
 
-**권고**: **옵션 C (선택적 동기 — 관리자 게이트)**. ERP 측 콜백 협의 미정 상태에서 즉시 도입 가능. **추후 ERP 협의 완료 시 옵션 B 로 점진 확장** (옵션 C 의 reflect API 가 옵션 B webhook 수신 핸들러로 그대로 재사용됨).
-
-**옵션 C 확장 단계 안 (사용자 컨펌 필요)**:
-1. **Phase 1 (Now)**: 옵션 C 관리자 게이트 화면 + API.
-2. **Phase 2 (ERP 협의 후)**: 옵션 B webhook endpoint 추가, 동일 핸들러 재사용.
-3. **Phase 3 (운영 안정 후)**: `getRefundHistory.erpStatus` 고정 `"SENT"` → ERP 실제 처리 결과 반영.
+**확정**: **옵션 B (양방향 webhook 즉시 도입)** + **보조 A (ERP 측 콜백 협의 완료 → Phase 3 즉시 진입)**.
+**Phase 4 (선택)**: 옵션 C 관리자 게이트 (`reflect-erp-refund`) — 수동 보정 대비.
 
 ---
 
-## 3. 결정 후 Phase 계획
+### 4.1 ERP 양방향 webhook 상세 설계 (Q4 + Q4 보조 = 4B · 즉시 진입)
 
-권고 조합(**1A · 2A · 3A · 4C**) 기준 작업 분배 안. 사용자 컨펌 후 확정.
+#### 4.1.1 Endpoint
 
-### Phase 0 — 즉시 (P0/P1 핫픽스 완료 직후, core-coder)
-- **결정 3-A 후속**: 자동 취소 사유 코드(`REFUND_AUTO_CANCEL`) + 감사 로그 + 다채널 알림.
-- **위임**: core-coder Agent (P0-B 후속).
+| 항목 | 값 |
+|------|-----|
+| **URL** | `POST /api/v1/integration/erp/refund-webhook` |
+| **Content-Type** | `application/json` |
+| **멱등 키** | `X-Idempotency-Key` 헤더 (ERP 측 환불 `transactionId`) |
 
-### Phase 1 — 1주 (PL/SQL 폐기, core-coder + deployer)
-- **결정 1-A**: 5종 프로시저 + `PlSqlMappingSyncServiceImpl` 제거. Flyway 마이그레이션 1건. 백업 SQL `database/schema/archived/` 이동.
-- **회귀 테스트**: 매핑 도메인 전수(`UseSession`, `AddSessions`, `partialRefund`, `terminate`, `SyncAllMappings`).
-- **위임**: core-coder + 배포 게이트 deployer.
+**HTTP 응답**:
 
-### Phase 2 — 2주 (노쇼 정책 + 보상, core-planner + core-coder)
-- **결정 2-A**: `ScheduleStatus` 에 `NO_SHOW` / `LATE_CANCEL` 추가 + 보상 룰 서비스 + 관리자 노쇼 처리 UI + 보상 룰 테이블/공통코드.
-- **선행 의존**: 보상 룰 사용자 컨펌(0.5건 vs 0/100% 이진).
-- **위임**: core-planner(스키마/룰 설계) → core-coder(구현).
+| 코드 | 의미 |
+|------|------|
+| `200` | 수신·처리 성공 |
+| `409` | 중복 idempotency key (이미 처리됨) |
+| `400` | 서명 불일치 / 페이로드 검증 실패 / 타임스탬프 만료 |
+| `500` | 내부 처리 실패 (ERP 재시도 대상) |
 
-### Phase 3 — 1개월 (ERP 관리자 게이트, core-coder)
-- **결정 4-C**: 관리자 "ERP 환불 반영" 화면 + `reflect-erp-refund` API + 감사 로그.
-- **위임**: core-coder.
+#### 4.1.2 보안
 
-### Phase 4 — 추후 (ERP 양방향, ERP 협의 완료 시)
-- **결정 4-C → 4-B 확장**: webhook 수신 endpoint + HMAC 검증 + 멱등 키.
-- **위임**: core-planner(보안 설계) → core-coder.
+| 항목 | 구현 |
+|------|------|
+| **HMAC SHA-256** | `X-Mindgarden-Signature` 헤더 — ERP 공유 비밀키로 페이로드 서명 검증 |
+| **IP allowlist** | `application.yml` → `mindgarden.integration.erp.allowed-ips` (협의된 ERP IP 등록) |
+| **TLS only** | HTTP 요청 거부 (443/TLS 필수) |
+| **Replay 방지** | `X-Timestamp` 헤더 — **5분 이내** 요청만 허용 |
+
+서명 생성 (ERP 측):
+```
+signature = HMAC-SHA256(secret, timestamp + "." + rawBody)
+```
+
+#### 4.1.3 페이로드 (예시)
+
+```json
+{
+  "transactionId": "ERP-20260601-001",
+  "tenantId": "...",
+  "mappingId": 123,
+  "refundType": "FULL",
+  "refundAmount": 50000,
+  "refundSessions": 3,
+  "reason": "고객 요청 전액 환불",
+  "occurredAt": "2026-06-01T10:00:00+09:00"
+}
+```
+
+| 필드 | 필수 | 설명 |
+|------|------|------|
+| `transactionId` | ✅ | ERP 고유 거래 ID (= idempotency key) |
+| `tenantId` | ✅ | 테넌트 격리 |
+| `mappingId` | ✅ | `consultant_client_mappings.id` |
+| `refundType` | ✅ | `FULL` \| `PARTIAL` |
+| `refundAmount` | ✅ | 환불 금액 (원) |
+| `refundSessions` | PARTIAL 시 | 환불 회기 수 |
+| `reason` | | ERP 측 사유 |
+| `occurredAt` | ✅ | ERP 처리 시각 (ISO-8601) |
+
+#### 4.1.4 처리 흐름
+
+```
+ERP POST refund-webhook
+  │
+  ├─ 1. TLS + IP allowlist 검증
+  ├─ 2. X-Timestamp (5분) + HMAC SHA-256 검증
+  ├─ 3. X-Idempotency-Key 중복 검사 → 409 if exists
+  ├─ 4. mapping payment_status / status 정합 확인
+  ├─ 5. refundType 분기:
+  │     ├─ FULL  → terminateMapping (사유 = ERP_WEBHOOK_REFUND)
+  │     └─ PARTIAL → partialRefundMapping (사유 = ERP_WEBHOOK_REFUND)
+  ├─ 6. 회기 컬럼 갱신 + 미래 일정 일괄 CANCELLED (§3.1, REFUND_AUTO_CANCEL)
+  ├─ 7. 다채널 알림 발송 (§3.1.2, 4채널)
+  ├─ 8. erp_refund_webhook_log 기록
+  └─ 9. 200 OK 응답
+```
+
+#### 4.1.5 재시도 + 감사
+
+| 항목 | 정책 |
+|------|------|
+| **ERP 재시도** | 5분 간격 × 5회 (멱등 키로 중복 차단) |
+| **Dead letter (선택)** | 5회 실패 → Slack 알림 → 관리자 수동 조치 |
+| **로그 테이블** | `erp_refund_webhook_log` 신설 |
+
+##### `erp_refund_webhook_log` 스키마 (Phase 3 설계안)
+
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | BIGINT PK | |
+| `idempotency_key` | VARCHAR UNIQUE | `transactionId` |
+| `request_body` | TEXT | 원본 JSON |
+| `signature` | VARCHAR | 수신 서명 |
+| `client_ip` | VARCHAR | 요청 IP |
+| `status` | VARCHAR | `RECEIVED` / `PROCESSED` / `DUPLICATE` / `FAILED` |
+| `error_message` | TEXT (nullable) | 실패 시 |
+| `processed_at` | TIMESTAMP | |
+| `tenant_id` | VARCHAR | |
+
+#### 4.1.6 단계적 진행 (Phase 3 분할)
+
+| Sub-Phase | 기간 | 범위 | 위임 |
+|-----------|------|------|------|
+| **Phase 3.1** | 1주 | webhook endpoint 신설 + HMAC + IP allowlist + 멱등 + `erp_refund_webhook_log` + 단위 테스트 | core-coder (보안) |
+| **Phase 3.2** | 1주 | `partialRefundMapping`/`terminateMapping` 통합 + §3.1 다채널 알림 통합 + 통합 테스트 | core-coder + core-tester |
+| **Phase 3.3** | 1주 | ERP stage 환경 연동 테스트 + 운영 반영 + deployer | core-coder + core-tester + ERP 협의 + deployer |
+| **Phase 4 (선택)** | — | 4C 관리자 게이트 (`POST /api/v1/admin/mappings/{id}/reflect-erp-refund`) — 수동 보정 대비 | core-coder |
 
 ---
 
-## 4. KPI + 검증
+## 5. Phase 진행 순서 (갱신)
 
-### 4.1 KPI
+확정 조합: **1A · 2A · 3A · 4B**.
+
+| Phase | 결정 | 의존 | 기간 | 위임 대상 |
+|-------|------|------|------|-----------|
+| **Phase 0 (즉시)** | 3A 후속 — P0-B + `REFUND_AUTO_CANCEL` + §3.1 다채널 알림 + 솔라피 `AUTO_CANCEL_REFUND` | PR #3 (P0-B) 머지 후 | 즉시 | core-coder |
+| **Phase 1 (1주)** | 1A — PL/SQL 5종 + `PlSqlMappingSyncServiceImpl` 폐기 | 독립 (**Agent `d15ef2dc` 진행 중**) | 1주 | core-coder + deployer |
+| **Phase 2 (2주)** | 2A — §2.1 노쇼 보상 룰 + `NO_SHOW`/`LATE_CANCEL` + `session_compensation_history` | Phase 1 머지 후 | 2주 | core-coder + core-tester |
+| **Phase 3 (3주)** | 4B — §4.1 ERP webhook (3.1 → 3.2 → 3.3) | Phase 0 + Phase 2 머지 후 | 3주 | core-coder (보안) + core-tester (통합) + ERP 협의 |
+| **Phase 4 (선택)** | 4C — 관리자 ERP 환불 반영 게이트 | Phase 3 도입 후 | — | core-coder |
+
+### 5.1 분배실행 표 (다음 위임 권고)
+
+| Phase | subagent | 전달 prompt 요약 | 병렬 |
+|-------|----------|-----------------|------|
+| **Phase 0** | core-coder | P0-B 후속: `REFUND_AUTO_CANCEL` 사유 코드 + §3.1 4채널 알림 + `EmailService.sendAutoCancelNotification` + `dispatchAutoCancellation` + `AlimtalkService` `AUTO_CANCEL_REFUND` + 감사 로그 | PR #3 머지 후 단독 |
+| **Phase 2** | core-coder | §2.1: `ScheduleStatus` NO_SHOW/LATE_CANCEL + `SessionCompensationService` + `session_compensation_history` (옵션 c) + 관리자 UI | Phase 1 머지 후 |
+| **Phase 2** | core-tester | 보상 룰 시나리오 통합 테스트 (100%/50%/0%/상담사 취소) | core-coder와 병렬 (API 확정 후) |
+| **Phase 3.1** | core-coder | §4.1.1–4.1.2: `POST /api/v1/integration/erp/refund-webhook` + HMAC + IP allowlist + 멱등 + `erp_refund_webhook_log` + 단위 테스트 | Phase 0+2 머지 후 |
+| **Phase 3.2** | core-coder + core-tester | §4.1.4 처리 흐름 + §3.1 알림 통합 + E2E | 3.1 완료 후 |
+| **Phase 3.3** | core-coder + deployer | ERP stage 연동 + 운영 반영 | 3.2 완료 후 |
+
+---
+
+## 6. KPI + 검증
+
+### 6.1 KPI
 
 | 지표 | 측정 방법 | 목표 |
 |------|----------|------|
-| K1. PL/SQL 호출 0건 | `PlSqlMappingSyncServiceImpl` 호출 카운터 + 운영 로그 grep | Phase 1 완료 후 0건 유지 (드리프트 종결) |
-| K2. 회기 정합성 | `consultant_client_mappings` 무결성 배치(`ValidateMappingIntegrity` 의 Java 포팅): `total = used + remaining` 검증 | 일 위반 0건 |
-| K3. 환불 후 일정 정합 | 부분 환불 + remaining=0 사례에서 미래 BOOKED/CONFIRMED 잔존 0건 | 100% |
-| K4. 노쇼 정책 적용율 | 노쇼/지각 사유 회기 보상 트랜잭션 수 / `Schedule.NO_SHOW` 발생 수 | 100% |
-| K5. ERP 반영 시간 | 옵션 C 관리자 반영 평균 처리 시간 | < 1 영업일 |
+| K1. PL/SQL 호출 0건 | `PlSqlMappingSyncServiceImpl` 호출 카운터 + 운영 로그 grep | Phase 1 완료 후 0건 유지 |
+| K2. 회기 정합성 | `total = used + remaining` 무결성 배치 | 일 위반 0건 |
+| K3. 환불 후 일정 정합 | 부분/전액 환불 후 미래 BOOKED/CONFIRMED 잔존 0건 | 100% |
+| K4. 노쇼 정책 적용율 | 보상 트랜잭션 수 / `NO_SHOW`·`LATE_CANCEL` 발생 수 | 100% |
+| K5. ERP webhook 처리율 | `erp_refund_webhook_log` PROCESSED / 수신 총건 | 100% (5회 재시도 내) |
+| K6. 다채널 알림 발송율 | REFUND_AUTO_CANCEL 시 4채널 SUCCESS 비율 | ≥ 99% (채널별) |
 
-### 4.2 회귀 테스트 항목
+### 6.2 회귀 테스트 항목
 
 - 매핑 도메인: 회기 사용/추가/환불/소진/만료 시나리오.
-- 일정 도메인: BOOKED → COMPLETED / NO_SHOW / CANCELLED 전이.
-- 환불 도메인: 부분/전액 환불 후 미래 일정 처리.
-- ERP 동기화: 옵션 C 관리자 반영 → 매핑/재무 거래 일관성.
-- 통계 도메인: `remaining_sessions` / `used_sessions` 의 의미 무변경 확인 (옵션 2-A 권고 시).
+- 일정 도메인: BOOKED → COMPLETED / NO_SHOW / LATE_CANCEL / CANCELLED 전이.
+- 환불 도메인: 부분/전액 환불 후 미래 일정 + §3.1 알림.
+- ERP webhook: HMAC 검증 / 멱등 / FULL·PARTIAL 분기 / 재시도.
+- 보상 도메인: 24h 경계 / 0.5건 누적 / NO_SHOW 0% 환원.
+- 통계 도메인: `remaining_sessions` / `used_sessions` 정수 의미 무변경 (옵션 2.1.3-c).
 
 ---
 
-## 5. 사용자 컨펌 Q1-Q4 후보 옵션
+## 7. 사용자 컨펌 기록 (확정)
 
-> **본 절은 사용자 컨펌 입력 폼.** 각 Q 에 옵션 1개 선택 + 보조 결정 답변.
+> **2026-05-26 사용자 컨펌 완료.** 아래는 확정 기록.
 
 ### Q1. PL/SQL 표준화 프로시저의 거취
-- ☐ 1A — **폐기** (권고). 5종 프로시저 + 호출 Java 일괄 제거. 백업 SQL 아카이브.
-- ☐ 1B — 정합 마이그레이션. PL/SQL 활성화.
-- ☐ 1C — 감사 전용 분리.
+- ✅ **1A — 폐기** (확정). 5종 프로시저 + 호출 Java 일괄 제거. 백업 SQL 아카이브.
 
 ### Q2. 회기 차감 시점 + 노쇼 정책
-- ☐ 2A — **BOOKED 유지 + 노쇼 보상 룰 도입** (권고).
-- ☐ 2B — 차감 시점을 COMPLETED 로 이동.
-- ☐ 2C — 혼합(예약/사용 컬럼 분리).
+- ✅ **2A — BOOKED 유지 + 노쇼 보상 룰 도입** (확정).
 
-**Q2 보조 결정** (2A 선택 시):
-- ☐ 보상 룰 = **0.5건 환원 허용** (24h 이내 50%) (권고).
-- ☐ 보상 룰 = 0/100% 이진(0.5건 환원 없음).
-- ☐ 과거 노쇼 일정 회기 보정: ☐ 적용 / ☐ 미적용 / ☐ 별도 검토.
+**Q2 보조 결정** (확정):
+- ✅ 보상 룰 = **0.5건 환원 허용** (24h 이전 100% / 24h 이내 50% / 노쇼 0% / LATE_CANCEL 50%).
+- ☐ 과거 노쇼 일정 회기 보정: **별도 검토** (Phase 2 착수 전 결정).
 
 ### Q3. 부분 환불 후 미래 일정 자동 취소 정책
-- ☐ 3A — **자동 일괄 취소** (권고). 사유 `REFUND_AUTO_CANCEL` + 감사 + 다채널 알림.
-- ☐ 3B — 사용자 동의 모달.
-- ☐ 3C — 정책 알림만 (비권장).
+- ✅ **3A — 자동 일괄 취소** (확정). 사유 `REFUND_AUTO_CANCEL` + 감사 + 다채널 알림.
 
-**Q3 보조 결정** (3A 선택 시):
-- ☐ 임계치 N건 이상 시 추가 확인 모달: ☐ 도입 / ☐ 미도입.
-- ☐ 24h 이내 undo 액션: ☐ 도입 / ☐ 미도입.
-- ☐ 알림 채널: ☐ 인앱 / ☐ 이메일 / ☐ 푸시 (복수 선택).
+**Q3 보조 결정** (확정):
+- ☐ 임계치 N건 이상 추가 확인 모달: **미도입** (3A 단순 경로).
+- ☐ 24h 이내 undo 액션: **미도입** (v2 범위 외).
+- ✅ 알림 채널: **인앱 + 이메일 + 푸시 + 알림톡** (4채널 의무, 선호도 무시).
 
 ### Q4. ERP 환불 webhook 경로
-- ☐ 4A — 단방향 송신 유지(현행).
-- ☐ 4B — 양방향 webhook (즉시).
-- ☐ 4C — **선택적 동기(관리자 게이트)** (권고). Phase 2/3 로 4B 확장 가능.
+- ✅ **4B — 양방향 webhook (즉시)** (확정).
 
-**Q4 보조 결정** (4C 선택 시):
-- ☐ Phase 4 webhook 확장 일정: ☐ 즉시 협의 / ☐ 운영 3개월 후 / ☐ 미정.
-- ☐ `getRefundHistory.erpStatus` 실제 반영: ☐ Phase 3 동시 / ☐ 별도 결정.
+**Q4 보조 결정** (확정):
+- ✅ ERP 측 콜백 **협의 완료** → **Phase 3 즉시 진입**.
+- ☐ Phase 4 (4C 관리자 게이트): **선택** — Phase 3 안정 후 수동 보정용.
 
 ---
 
-## 6. 게이트 (운영 반영 / Flyway / 회귀 테스트)
+## 8. 게이트 (운영 반영 / Flyway / 회귀 테스트)
 
-본 합의서 외부에서 실제 코드/DB 변경 시 반드시 통과해야 할 게이트.
-
-### 6.1 운영 반영 게이트
-- ✅ **사용자 컨펌 완료** (Q1-Q4 결정).
-- ✅ **변경 단위 PR 분리**: 결정별 1 PR(또는 1-2 PR), 단일 PR 에 다중 결정 포함 금지.
+### 8.1 운영 반영 게이트
+- ✅ **사용자 컨펌 완료** (Q1–Q4 + 보조 결정).
+- ✅ **변경 단위 PR 분리**: Phase별 1 PR(또는 1–2 PR), 단일 PR 에 다중 Phase 포함 금지.
 - ✅ **deployer 위임 + 운영 배포 윈도우 준수** (`docs/standards/DEPLOYMENT_STANDARD.md` 정합).
 
-### 6.2 Flyway 게이트
-- ✅ Phase 1 (PL/SQL 폐기): `DROP PROCEDURE IF EXISTS` 5종 + 백업 SQL `database/schema/archived/` 이동(1 마이그레이션, idempotent).
-- ✅ Phase 2 (노쇼 정책): `ScheduleStatus` enum 추가는 코드만, 공통코드(`SCHEDULE_STATUS_GROUP`) 시드는 마이그레이션 분리.
-- ✅ 모든 마이그레이션은 `docs/standards/DATABASE_MIGRATION_STANDARD.md` 의 idempotent 원칙 준수.
+### 8.2 Flyway 게이트
+- ✅ Phase 1 (PL/SQL 폐기): `DROP PROCEDURE IF EXISTS` 5종 + 백업 SQL `database/schema/archived/` (1 마이그레이션).
+- ✅ Phase 2 (노쇼): `session_compensation_history` 테이블 + `ScheduleStatus` 공통코드 시드 (마이그레이션 분리).
+- ✅ Phase 3 (ERP webhook): `erp_refund_webhook_log` 테이블 (마이그레이션 1건).
+- ✅ 모든 마이그레이션: `docs/standards/DATABASE_MIGRATION_STANDARD.md` idempotent 원칙.
 
-### 6.3 회귀 테스트 게이트
+### 8.3 회귀 테스트 게이트
 - ✅ 매핑 도메인 단위 테스트 통과.
-- ✅ Phase 2 노쇼 정책: 보상 룰 시나리오별 통합 테스트 작성.
-- ✅ Phase 3 ERP 게이트: 관리자 화면 e2e + 멱등 테스트.
-- ✅ 회귀 충격 평가: 통계/리포트/캘린더/모바일 앱 시나리오 영향도.
+- ✅ Phase 2: §2.1 보상 룰 시나리오별 통합 테스트.
+- ✅ Phase 3: ERP webhook HMAC/멱등/E2E + §3.1 알림 발송 검증.
+- ✅ 회귀 충격: 통계/리포트/캘린더/모바일 앱 영향도.
 
-### 6.4 본 합의서 자체 게이트 (Read-Only)
-- ❌ 본 합의서는 코드/DB/Flyway 변경 0건.
-- ❌ core-coder / deployer 호출 금지 (위임은 사용자 컨펌 후 별도 진행).
+### 8.4 본 합의서 v2 게이트 (Read-Only)
+- ❌ 본 v2 갱신은 코드/DB/Flyway 변경 0건.
+- ❌ core-coder / deployer 호출 금지 (위임은 사용자 검수 후 별도 진행).
 - ✅ 단일 파일(`docs/standards/SESSION_MANAGEMENT_POLICY_DECISIONS.md`).
 - ✅ `docs/session-mgmt-policy` 브랜치 커밋 + push.
 
 ---
 
-## 7. 다음 단계
+## 9. 다음 단계
 
-1. **사용자 컨펌**: Q1-Q4 + 보조 결정.
-2. **컨펌 후 분배**:
-   - 결정 1A → core-coder (PL/SQL 폐기 PR + 백업 아카이브).
-   - 결정 2A → core-planner(보상 룰 스키마/공통코드 설계) → core-coder.
-   - 결정 3A → core-coder (P0-B 후속, 알림/감사 보강).
-   - 결정 4C → core-coder (관리자 게이트 화면 + API).
-3. **합의서 갱신**: 사용자 컨펌 결과 반영 후 본 문서 v1.0.0 으로 승격.
+1. **사용자 검수**: 본 v2 합의서 (§2.1 / §3.1 / §4.1 / §5) 확인.
+2. **Phase 진입 위임** (검수 후 별도 진행):
+   - **Phase 0** → core-coder: P0-B 후속 + §3.1 다채널 알림 + 솔라피 `AUTO_CANCEL_REFUND`.
+   - **Phase 1** → core-coder `d15ef2dc` (진행 중): PL/SQL 폐기 PR 완료 + deployer.
+   - **Phase 2** → core-coder + core-tester: §2.1 노쇼 보상 룰 (Phase 1 머지 후).
+   - **Phase 3** → core-coder (보안) + core-tester (통합) + ERP 협의: §4.1 webhook 3.1→3.3.
+   - **Phase 4 (선택)** → core-coder: 4C 관리자 게이트.
+3. **합의서 승격**: Phase 0 착수 후 v1.0.0 formal release 검토.
 
 ---
 
-**문서 끝.** 본 합의서는 정책 합의용 read-only 산출물. 코드 변경은 사용자 컨펌 + 별도 core-coder 위임으로 진행.
+**문서 끝.** v0.2.0 — 정책 합의 + Phase 2/3 상세 설계 read-only 산출물. 코드 변경은 Phase별 core-coder 위임으로 진행.

@@ -92,7 +92,7 @@
   overflow: visible;
 }
 
-/* 좌측 매칭 목록 */
+/* 좌측 매칭 목록 — 옵션 A: collapse 토글 지원 (320px ↔ 48px) */
 .integrated-schedule__sidebar {
   min-width: 320px;
   width: 320px;
@@ -105,6 +105,28 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: width 0.2s ease, min-width 0.2s ease, padding 0.2s ease;
+}
+
+.integrated-schedule__sidebar--collapsed {
+  width: 48px;
+  min-width: 48px;
+  padding: var(--mg-spacing-12, 12px) var(--mg-spacing-xs, 4px);
+}
+
+/* 사이드바 헤더(타이틀 + 토글) — 접힘 시 토글만 노출 */
+.integrated-schedule__sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm, 8px);
+  margin-bottom: var(--mg-spacing-16);
+}
+
+.integrated-schedule__sidebar--collapsed .integrated-schedule__sidebar-header {
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0;
 }
 
 .integrated-schedule__sidebar-title {
@@ -114,7 +136,8 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--mg-color-text-main);
-  margin-bottom: var(--mg-spacing-16);
+  margin: 0;
+  min-width: 0;
 }
 
 .integrated-schedule__sidebar-title::before {
@@ -124,6 +147,79 @@
   height: 16px;
   background-color: var(--mg-color-primary-main);
   border-radius: 2px;
+}
+
+.integrated-schedule__sidebar--collapsed .integrated-schedule__sidebar-title {
+  flex-direction: column;
+  font-size: 0;
+  gap: var(--mg-spacing-xs, 4px);
+}
+
+.integrated-schedule__sidebar--collapsed .integrated-schedule__sidebar-title::before {
+  width: 4px;
+  height: 24px;
+}
+
+.integrated-schedule__sidebar-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 var(--mg-spacing-xs, 4px);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--mg-color-primary-main);
+  background-color: color-mix(in srgb, var(--mg-color-primary-main, var(--mg-primary-500)) 12%, var(--mg-color-surface-main));
+  border-radius: var(--mg-radius-full, 9999px);
+}
+
+.integrated-schedule__sidebar--collapsed .integrated-schedule__sidebar-count {
+  font-size: var(--font-size-xs);
+  min-width: 22px;
+  height: 22px;
+  padding: 0 var(--mg-spacing-xs, 4px);
+}
+
+/* 사이드바 토글 버튼 (chevron) */
+.integrated-schedule__sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  color: var(--mg-color-text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-sm, 8px);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.integrated-schedule__sidebar-toggle:hover {
+  color: var(--mg-color-text-main);
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  background-color: var(--mg-color-surface-sub);
+}
+
+.integrated-schedule__sidebar-toggle:focus-visible {
+  outline: none;
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  box-shadow: 0 0 0 2px var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__sidebar-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+}
+
+.integrated-schedule__sidebar-body[hidden] {
+  display: none;
 }
 
 /* 필터: 세그먼트 컨트롤(pill) 형태 — 정보 밀도 상향(간격·패딩 축소, 터치 최소 영역 유지) */
@@ -390,10 +486,10 @@
   white-space: nowrap;
 }
 
-/* 우측 캘린더 */
+/* 우측 캘린더 — 옵션 A: 가용 공간 모두 차지 (좌측·상단 collapse 시 풀 폭) */
 .integrated-schedule__calendar-wrapper {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 700px;
   min-height: 0;
   background-color: var(--mg-color-background-main);
   border: 1px solid var(--mg-color-border-main);
@@ -568,8 +664,23 @@
 
 /* 공휴일·daygrid 레이어(z-index 등): ScheduleCalendarView.css — [data-calendar-skin="integrated"] .mg-v2-schedule-calendar-view 하위로만 정의(SSOT) */
 
-@media (max-width: var(--mg-breakpoint-lg, 1024px)) {
-  .integrated-schedule__sidebar {
-    display: none;
+/**
+ * 반응형 break point 정합:
+ *  - ≥ 1280px : 사이드바 펼침 기본 (사용자 선호 우선)
+ *  - 1024-1280px : JS matchMedia 가 자동 접힘 (사용자 토글 가능)
+ *  - ≤ 1024px : strict 접힘 — JS 자동 접힘 + CSS 강제 (사용자 토글 가능, 단 좁은 폭에서 캘린더 가독성 우선)
+ *  CSS @media 는 var() 미지원 → 픽셀 리터럴 1024 사용 (디자인 토큰 SSOT 와 정합).
+ */
+@media (max-width: 1024px) {
+  .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
+    width: 280px;
+    min-width: 280px;
+  }
+  .integrated-schedule__sidebar--collapsed {
+    width: 48px;
+    min-width: 48px;
+  }
+  .integrated-schedule__calendar-wrapper {
+    min-width: 0;
   }
 }

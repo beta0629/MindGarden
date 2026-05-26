@@ -475,6 +475,89 @@
   box-shadow: var(--ad-b0kla-shadow);
 }
 
+/* ===== Schedule Legend Collapsible (옵션 A, calendarSkin=integrated 전용) ===== */
+.mg-v2-ad-b0kla .mg-v2-schedule-legend--collapsible {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  padding: 0;
+  margin-bottom: var(--mg-spacing-12, 0.75rem);
+  overflow: hidden;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  width: 100%;
+  min-height: 40px;
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend__toggle:hover {
+  background-color: var(--mg-color-surface-sub, var(--ad-b0kla-bg));
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend__toggle:focus-visible {
+  outline: none;
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  box-shadow: inset 0 0 0 2px var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend__toggle-heading {
+  font-weight: 700;
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend__toggle-summary {
+  flex: 1;
+  min-width: 0;
+  font-weight: 400;
+  font-size: var(--font-size-xs);
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend__toggle-icon {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--mg-color-text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend--collapsed .mg-v2-schedule-legend__toggle-icon {
+  transform: rotate(-90deg);
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend__body {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem) var(--mg-spacing-md, 1rem);
+  border-top: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend__body[hidden] {
+  display: none;
+}
+
+.mg-v2-ad-b0kla .mg-v2-schedule-legend--collapsed {
+  margin-bottom: var(--mg-spacing-sm, 0.5rem);
+}
+
 .mg-v2-ad-b0kla .mg-v2-legend-section-right {
   margin-left: auto;
 }

@@ -2505,6 +2505,21 @@
       "custom": "커스텀 위젯"
     }
   },
+  "integratedSchedule": {
+    "sidebar": {
+      "toggleAria": "매칭 목록 패널 토글",
+      "expandAria": "매칭 목록 패널 펼치기",
+      "collapseAria": "매칭 목록 패널 접기",
+      "collapsedBadgeLabel": "매칭 {{count}}건"
+    },
+    "legend": {
+      "heading": "안내",
+      "summary": "공휴일 · 회기 표기 · 상담사",
+      "toggleAria": "안내 영역 토글",
+      "expandAria": "안내 영역 펼치기",
+      "collapseAria": "안내 영역 접기"
+    }
+  },
   "aiProvider": {
     "constants": {
       "providerDescription": {

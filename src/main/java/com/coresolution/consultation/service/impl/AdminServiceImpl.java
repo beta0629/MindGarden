@@ -736,11 +736,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         // 트랙 C (NOTIFICATION_BATCH_MESSAGE_DESIGN §11) — 신규 매칭 환영 알림톡 (user 영구 1회 멱등).
         // 매핑 update/재활성화는 본 분기를 통과하지 않으며, 동일 user 이력은 dispatch 측 멱등 가드로 차단됨.
-        try {
-            batchNotificationDispatchService.dispatchClientWelcomeFirst(savedMapping.getId());
-        } catch (Exception welcomeError) {
-            log.warn("CLIENT_WELCOME_FIRST 발송 실패(무시): mappingId={}, error={}",
-                savedMapping.getId(), welcomeError.getMessage());
+        // 단회기 가드 (docs/standards/NOTIFICATION_BUSINESS_RULES.md):
+        // total_sessions == 1 인 신규 매핑은 환영 메시지(CLIENT_WELCOME_FIRST) 를 모든 채널(SMS/알림톡/인앱/푸시) 차단한다.
+        // 단회기 빈도가 높아 매번 환영 메시지를 발송하면 스팸이 되므로 호출자 가드(옵션 A)로 dispatch 호출 자체를 skip.
+        // null(컬럼 NULL) 은 안전하게 단회기 아님으로 간주하여 정상 발송한다.
+        Integer totalSessions = savedMapping.getTotalSessions();
+        if (totalSessions != null && totalSessions == 1) {
+            log.info("📭 단회기 매핑(total_sessions=1) — CLIENT_WELCOME_FIRST 모든 채널 차단: mappingId={}, clientId={}",
+                savedMapping.getId(),
+                savedMapping.getClient() != null ? savedMapping.getClient().getId() : null);
+        } else {
+            try {
+                batchNotificationDispatchService.dispatchClientWelcomeFirst(savedMapping.getId());
+            } catch (Exception welcomeError) {
+                log.warn("CLIENT_WELCOME_FIRST 발송 실패(무시): mappingId={}, error={}",
+                    savedMapping.getId(), welcomeError.getMessage());
+            }
         }
         return savedMapping;
     }

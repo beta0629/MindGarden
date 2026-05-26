@@ -86,6 +86,8 @@
     "scan-css": "node scripts/scan-css-classes.js",
     "generate-css-docs": "node scripts/generate-css-docs.js",
     "check:token-ssot": "node ../scripts/design-system/color-management/check-token-ssot.js",
+    "check:i18n-seed": "node ../scripts/i18n/validate-i18n-seed.js",
+    "check:i18n-seed:report": "node ../scripts/i18n/validate-i18n-seed.js --report",
     "lint:codemod-mappings": "node ../scripts/design-system/color-management/validate-codemod-mappings.js",
     "lint:codemod-mappings:strict": "node ../scripts/design-system/color-management/validate-codemod-mappings.js --strict",
     "count:hardcoded-colors": "node ../scripts/design-system/color-management/count-hardcoded-colors.js",

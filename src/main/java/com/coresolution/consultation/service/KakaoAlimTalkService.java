@@ -84,6 +84,24 @@ public interface KakaoAlimTalkService {
     boolean isServiceAvailable();
 
     /**
+     * 부분 환불 / 강제 종료로 회기 소진(remaining&lt;=0) 시 자동 일괄 취소된 미래 예약 안내 알림톡
+     * (2026-05-26 Phase 0, Q3=3A·보조=C).
+     *
+     * <p>회기관리 운영 정책 합의서 v2 결정에 따라 인앱·이메일·푸시·알림톡 4채널 의무 통지의
+     * 알림톡 채널을 담당한다. 약관·전자상거래법상 의무 통지에 해당하여 사용자 채널 선호도와
+     * 무관하게 발송한다. 솔라피 비즈 템플릿 코드는 {@code ALIMTALK_BIZ_TEMPLATE_CODE} 공통코드
+     * {@code AUTO_CANCEL_REFUND} 행을 우선 조회하고, 미시드 시 기본 키 {@code AUTO_CANCEL_REFUND}
+     * 를 사용한다. 솔라피 검수 미통과 상태에서는 응답 실패가 발생할 수 있으며, 호출자는 false
+     * 반환 시 인앱·이메일·푸시 채널 결과를 보존한 채 감사 로그에 실패를 기록한다.</p>
+     *
+     * @param phoneNumber 수신자 복호화된 전화번호
+     * @param cancelCount 자동 취소된 일정 수
+     * @param mypageUrl 마이페이지 URL (템플릿 변수, 없으면 빈 문자열 사용)
+     * @return 발송 성공 여부
+     */
+    boolean sendAutoCancelRefund(String phoneNumber, int cancelCount, String mypageUrl);
+
+    /**
      * 직전 {@link #sendAlimTalk(String, String, java.util.Map)} 호출에서 발생한 오류 상세를 한 번만 조회.
      *
      * <p>구현체는 호출 스레드 단위(예: {@link ThreadLocal})로 상태를 유지하고,

@@ -67,6 +67,7 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.ProfessionalProviderTypeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserService;
@@ -142,6 +143,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final ProfessionalProviderTypeService professionalProviderTypeService;
     private final MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
     private final BatchNotificationDispatchService batchNotificationDispatchService;
+    private final RefundAutoCancelNotificationService refundAutoCancelNotificationService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -3437,7 +3439,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         mappingRepository.save(mapping);
         
-        cancelFutureSchedulesForExhaustedMapping(mapping, tenantId, reason);
+        // SSOT 핫픽스 2026-05-26 (P0-B): 미래 BOOKED/CONFIRMED 일정 일괄 CANCELLED 전이.
+        // 사유는 회기관리 합의서 v2 (Q3=3A) 에 따라 REFUND_AUTO_CANCEL 코드로 표준화.
+        int cancelledScheduleCount = cancelFutureSchedulesForExhaustedMapping(
+                mapping, tenantId, AdminServiceUserFacingMessages.REFUND_AUTO_CANCEL_REASON_CODE);
+        // Phase 0 (Q3=3A·보조=C): 4채널 의무 통지 (인앱·이메일·푸시·알림톡) + audit notes 누적.
+        notifyRefundAutoCancel4Channels(mapping, tenantId, cancelledScheduleCount);
         
         try {
             User client = mapping.getClient();
@@ -3518,6 +3525,84 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", mapping.getId(), e);
             return 0;
         }
+    }
+
+    /**
+     * 회기 소진(remaining&lt;=0)·강제 종료 직후 4채널 의무 통지 발송 + 감사 로그 누적
+     * (2026-05-26 Phase 0, Q3=3A·보조=C).
+     *
+     * <p>운영 정책 합의서 v2(63558fb49) 결정에 따라 인앱·이메일·푸시·알림톡 4채널 발송을 시도한다.
+     * 사용자 채널 선호도와 무관한 의무 통지(약관·전자상거래법)이므로
+     * {@link RefundAutoCancelNotificationService} 가 채널 선호도 우회·예외 격리·결과 집계를 모두
+     * 담당한다. 채널별 결과는 {@code mapping.notes} 에 한 줄 audit 로그로 누적해 운영자가
+     * 사후 점검할 수 있도록 한다(별도 매핑 이력 테이블이 도입되면 그쪽으로 이관).</p>
+     *
+     * <p>호출 전 {@link #cancelFutureSchedulesForExhaustedMapping}으로 미래 일정 일괄 CANCELLED 전이
+     * 가 완료되어 있어야 한다. {@code cancelCount &lt;= 0} 이면 통지를 skip 한다 — 취소된 일정이
+     * 없으면 사용자에게 알릴 내용이 없다(예: 강제 종료 시 미래 예약 0건).</p>
+     *
+     * @param mapping     대상 매핑 (consultant, client 초기화 필수)
+     * @param tenantId    테넌트 ID
+     * @param cancelCount 자동 취소된 일정 수
+     */
+    private void notifyRefundAutoCancel4Channels(ConsultantClientMapping mapping, String tenantId, int cancelCount) {
+        if (cancelCount <= 0) {
+            log.info("자동 취소 4채널 통지 skip: 취소된 일정 없음 MappingID={}", mapping.getId());
+            return;
+        }
+        if (mapping.getClient() == null) {
+            log.warn("자동 취소 4채널 통지 skip: client null MappingID={}", mapping.getId());
+            return;
+        }
+        try {
+            String mypageUrl = AdminServiceUserFacingMessages.AUTO_CANCEL_MYPAGE_PATH;
+            Map<String, String> channelResults = refundAutoCancelNotificationService
+                    .dispatchRefundAutoCancelNotification(
+                            tenantId, mapping.getClient(), mapping.getId(), cancelCount, mypageUrl);
+
+            String channelsJson = serializeChannelResults(channelResults);
+            String auditLine = String.format(
+                    AdminServiceUserFacingMessages.NOTES_AUTO_CANCEL_NOTIFY_LINE_FMT,
+                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                    cancelCount,
+                    channelsJson);
+            String prevNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+            mapping.setNotes(prevNotes.isEmpty() ? auditLine : prevNotes + "\n" + auditLine);
+            mappingRepository.save(mapping);
+        } catch (Exception e) {
+            // 통지 실패가 환불·취소 본 흐름을 막지 않도록 격리. 운영 사후 분석을 위해 ERROR 로그 보존.
+            log.error("❌ 자동 취소 4채널 통지 실패: MappingID={}", mapping.getId(), e);
+        }
+    }
+
+    /**
+     * 4채널 결과 맵을 {@code {"key":"OK", ...}} JSON 한 줄 문자열로 직렬화. 외부 라이브러리 미사용
+     * (BaseEntity 외 의존 추가 회피). 값에 포함될 수 있는 문자는 영문/숫자/하이픈/괄호로 제한되어
+     * JSON 이스케이프 부담이 적다.
+     */
+    private static String serializeChannelResults(Map<String, String> results) {
+        StringBuilder sb = new StringBuilder(64);
+        sb.append('{');
+        boolean first = true;
+        for (Map.Entry<String, String> e : results.entrySet()) {
+            if (!first) {
+                sb.append(',');
+            }
+            first = false;
+            sb.append('"').append(e.getKey()).append("\":\"");
+            String v = e.getValue() != null ? e.getValue() : "";
+            // JSON 안전성을 위해 큰따옴표·역슬래시만 escape.
+            for (int i = 0; i < v.length(); i++) {
+                char c = v.charAt(i);
+                if (c == '"' || c == '\\') {
+                    sb.append('\\');
+                }
+                sb.append(c);
+            }
+            sb.append('"');
+        }
+        sb.append('}');
+        return sb.toString();
     }
 
     @Override
@@ -3647,8 +3732,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         // SSOT 핫픽스 2026-05-26 (P0-B): remaining<=0 도달 시 terminateMapping 과 동일하게 미래
         // BOOKED/CONFIRMED 일정을 일괄 CANCELLED 로 전이해 정합성을 맞춘다.
+        // 회기관리 합의서 v2 (Q3=3A) 에 따라 사유 코드 REFUND_AUTO_CANCEL 명시 + 4채널 의무 통지 (보조=C).
         if (sessionsExhaustedAfterRefund) {
-            cancelFutureSchedulesForExhaustedMapping(mapping, tenantId, reason);
+            int cancelledScheduleCount = cancelFutureSchedulesForExhaustedMapping(
+                    mapping, tenantId, AdminServiceUserFacingMessages.REFUND_AUTO_CANCEL_REASON_CODE);
+            notifyRefundAutoCancel4Channels(mapping, tenantId, cancelledScheduleCount);
         }
         
         try {

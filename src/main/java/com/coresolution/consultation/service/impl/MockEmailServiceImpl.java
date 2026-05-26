@@ -491,6 +491,13 @@ public class MockEmailServiceImpl implements EmailService {
             default -> "Mock 기본 템플릿";
         };
     }
+
+    @Override
+    public boolean sendAutoCancelNotification(String toEmail, int cancelCount, String mypageUrl) {
+        log.info("Mock 환불 자동 취소 이메일 발송: to={}, cancelCount={}, mypageUrl={}",
+                toEmail, cancelCount, mypageUrl);
+        return toEmail != null && !toEmail.isBlank();
+    }
     
     // ==================== Private Methods ====================
     

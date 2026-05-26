@@ -273,9 +273,45 @@ public final class AdminServiceUserFacingMessages {
     public static final String NOTES_PARTIAL_REFUND_LINE_FMT =
             "[부분 환불] %s - 사유: %s, 환불 회기: %d회, 환불 금액: %,d원, 남은 회기: %d회";
 
-    /** 환불 처리로 스케줄 자동 취소 시 notes 접두 (뒤에 사유 문자열 연결) */
+    /**
+     * 환불 처리로 스케줄 자동 취소 시 notes 접두 (뒤에 사유 문자열 연결).
+     *
+     * <p>2026-05-26 Phase 0 (Q3=3A) — 운영 정책 합의서 v2 결정에 따라 사유 코드
+     * {@code REFUND_AUTO_CANCEL} 을 prefix 에 명시하여 grep/감사 추적이 용이하도록 한다.
+     * 한국어 설명은 그대로 유지된다(기존 사용자 화면·운영 콘솔 검색 호환).</p>
+     */
     public static final String SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL =
-            "[환불 처리로 인한 자동 취소] ";
+            "[REFUND_AUTO_CANCEL 환불 처리로 인한 자동 취소] ";
+
+    /** 회기관리 합의서 v2 Q3=3A — 환불 자동 취소 사유 코드(스케줄/매핑 audit 공통). */
+    public static final String REFUND_AUTO_CANCEL_REASON_CODE = "REFUND_AUTO_CANCEL";
+
+    /**
+     * Phase 0 (Q3=3A·보조=C) 4채널 의무 알림 제목 (인앱·이메일·푸시·알림톡 공통).
+     */
+    public static final String REFUND_AUTO_CANCEL_NOTIFICATION_TITLE = "예약 취소 안내 (환불 처리)";
+
+    /**
+     * Phase 0 4채널 의무 알림 본문 포맷.
+     * <p>인자: {@code cancelCount}(취소된 일정 수). 마이페이지 URL 안내는 본문에 포함되며 채널별 데이터로도 전달된다.</p>
+     */
+    public static final String REFUND_AUTO_CANCEL_NOTIFICATION_BODY_FMT =
+            "환불 처리로 인해 %d건의 예약이 자동 취소되었습니다. 자세한 사항은 마이페이지에서 확인하세요.";
+
+    /**
+     * 4채널 의무 알림 감사 로그 (매핑 notes append) 한 줄 포맷.
+     * <p>인자: 일시 문자열, 취소 일정 수, 채널 결과 JSON 문자열
+     * (예: {@code {"inapp":"OK","email":"OK","push":"OK","alimtalk":"FAIL"}}).</p>
+     */
+    public static final String NOTES_AUTO_CANCEL_NOTIFY_LINE_FMT =
+            "[AUTO_CANCEL_NOTIFY %s] cancelCount=%d channels=%s";
+
+    /**
+     * 4채널 의무 통지에서 안내하는 마이페이지 회기관리 진입 경로.
+     * <p>현재는 정적 path. 향후 호스트 + locale 합성이 필요하면 {@code application.yml}
+     * 의 {@code mindgarden.notification.refund-auto-cancel.mypage-url} 로 외부화한다.</p>
+     */
+    public static final String AUTO_CANCEL_MYPAGE_PATH = "/mypage/sessions";
 
     public static final String PACKAGE_NAME_ADDITIONAL_FALLBACK = "추가 패키지";
 

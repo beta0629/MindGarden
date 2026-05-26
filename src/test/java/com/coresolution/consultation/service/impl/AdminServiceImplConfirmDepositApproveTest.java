@@ -16,6 +16,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
+import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -152,6 +153,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     private MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
     @Mock
     private BatchNotificationDispatchService batchNotificationDispatchService;
+    @Mock
+    private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
 
     /** JDBC 없이 TransactionTemplate(REQUIRES_NEW) 콜백만 수행 */
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
@@ -215,7 +218,8 @@ class AdminServiceImplConfirmDepositApproveTest {
                 scheduleService,
                 professionalProviderTypeService,
                 mappingSettlementNotificationHelper,
-                batchNotificationDispatchService);
+                batchNotificationDispatchService,
+                refundAutoCancelNotificationService);
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

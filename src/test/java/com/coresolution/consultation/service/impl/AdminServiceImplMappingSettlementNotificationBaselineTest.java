@@ -13,6 +13,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
+import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -111,6 +112,7 @@ class AdminServiceImplMappingSettlementNotificationBaselineTest {
     @Mock private ProfessionalProviderTypeService professionalProviderTypeService;
     @Mock private MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
     @Mock private BatchNotificationDispatchService batchNotificationDispatchService;
+    @Mock private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
 
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
         @Override
@@ -173,7 +175,8 @@ class AdminServiceImplMappingSettlementNotificationBaselineTest {
                 scheduleService,
                 professionalProviderTypeService,
                 mappingSettlementNotificationHelper,
-                batchNotificationDispatchService);
+                batchNotificationDispatchService,
+                refundAutoCancelNotificationService);
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

@@ -3,7 +3,9 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -33,6 +35,7 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.ProfessionalProviderTypeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
@@ -61,6 +64,9 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
@@ -119,6 +125,7 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
     @Mock private ProfessionalProviderTypeService professionalProviderTypeService;
     @Mock private MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
     @Mock private BatchNotificationDispatchService batchNotificationDispatchService;
+    @Mock private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
 
     /** JDBC 없이 REQUIRES_NEW 콜백만 수행 (실패해도 부모 트랜잭션 영향 없도록 모킹) */
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
@@ -182,7 +189,8 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
                 scheduleService,
                 professionalProviderTypeService,
                 mappingSettlementNotificationHelper,
-                batchNotificationDispatchService);
+                batchNotificationDispatchService,
+                refundAutoCancelNotificationService);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 
@@ -242,6 +250,61 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
     }
 
     @Test
+    @DisplayName("Phase 0 (Q3=3A·보조=C): 부분 환불 후 회기 소진 시 4채널 의무 통지 오케스트레이터 호출")
+    void partialRefundMapping_whenSessionsExhausted_dispatchesFourChannelMandatoryNotification() {
+        Long mappingId = 600L;
+        Long consultantId = 30L;
+        Long clientId = 40L;
+
+        ConsultantClientMapping mapping = buildMappingWithRemaining(mappingId, consultantId, clientId, 2, 8, 10);
+        Schedule futureBooked = buildSchedule(910L, consultantId, clientId, LocalDate.now().plusDays(3), ScheduleStatus.BOOKED);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("SESSIONS_EXHAUSTED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
+                .thenReturn(ScheduleStatus.BOOKED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
+                .thenReturn(ScheduleStatus.CONFIRMED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
+                .thenReturn(ScheduleStatus.CANCELLED.name());
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of(futureBooked));
+
+        // 채널별 결과: alimtalk 만 실패 (검수 미통과 시뮬레이션) → 다른 채널은 OK 로 발송 유지.
+        Map<String, String> channelResults = new LinkedHashMap<>();
+        channelResults.put("inapp", "OK");
+        channelResults.put("email", "OK");
+        channelResults.put("push", "OK");
+        channelResults.put("alimtalk", "FAIL(SolapiATA 1042)");
+        when(refundAutoCancelNotificationService.dispatchRefundAutoCancelNotification(
+                eq(TEST_TENANT_ID), any(), eq(mappingId), anyInt(), anyString()))
+                .thenReturn(channelResults);
+
+        adminService.partialRefundMapping(mappingId, 2, "부분 환불 — 회기 소진 통지 검증");
+
+        // 사유 코드는 REFUND_AUTO_CANCEL 로 표준화되어 스케줄 notes 에 명시되어야 한다.
+        assertThat(futureBooked.getNotes()).contains("REFUND_AUTO_CANCEL");
+        // 4채널 오케스트레이터는 정확히 cancelCount=1 로 호출되어야 한다.
+        verify(refundAutoCancelNotificationService).dispatchRefundAutoCancelNotification(
+                eq(TEST_TENANT_ID), any(), eq(mappingId), eq(1), anyString());
+        // 매핑 notes 에는 [AUTO_CANCEL_NOTIFY ...] audit 라인이 누적되어야 한다.
+        assertThat(mapping.getNotes())
+                .contains("[AUTO_CANCEL_NOTIFY")
+                .contains("cancelCount=1")
+                .contains("\"inapp\":\"OK\"")
+                .contains("\"email\":\"OK\"")
+                .contains("\"push\":\"OK\"")
+                .contains("\"alimtalk\":\"FAIL(SolapiATA 1042)\"");
+    }
+
+    @Test
     @DisplayName("부분 환불 후 remaining > 0 이면 미래 일정 일괄 취소는 호출되지 않는다")
     void partialRefundMapping_whenRemainingStillPositive_skipsScheduleCancellation() {
         Long mappingId = 556L;
@@ -265,6 +328,84 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
         org.mockito.Mockito.verify(scheduleRepository, org.mockito.Mockito.never())
                 .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
                         eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class));
+        // 회기가 남아있으면 4채널 의무 통지 오케스트레이터도 호출되지 않는다 (자동 취소된 일정 없음).
+        org.mockito.Mockito.verifyNoInteractions(refundAutoCancelNotificationService);
+    }
+
+    @Test
+    @DisplayName("회기 소진 시 취소된 일정이 0건이면 4채널 오케스트레이터는 호출되지 않는다 (의무 통지 사유 없음)")
+    void partialRefundMapping_whenExhaustedButNoFutureSchedules_skipsFourChannelNotification() {
+        Long mappingId = 557L;
+        Long consultantId = 12L;
+        Long clientId = 22L;
+
+        ConsultantClientMapping mapping = buildMappingWithRemaining(mappingId, consultantId, clientId, 1, 9, 10);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("SESSIONS_EXHAUSTED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
+                .thenReturn(ScheduleStatus.BOOKED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
+                .thenReturn(ScheduleStatus.CONFIRMED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
+                .thenReturn(ScheduleStatus.CANCELLED.name());
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of());
+
+        adminService.partialRefundMapping(mappingId, 1, "회기 소진 — 자동 취소 일정 없음");
+
+        // remaining=0 이지만 미래 일정이 없으므로 의무 통지 사유 없음.
+        assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(mapping.getStatus()).isEqualTo(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
+        org.mockito.Mockito.verifyNoInteractions(refundAutoCancelNotificationService);
+    }
+
+    @Test
+    @DisplayName("4채널 통지 오케스트레이터가 예외를 던져도 부분 환불 본 흐름은 정상 완료된다 (예외 격리)")
+    void partialRefundMapping_whenNotificationOrchestratorThrows_doesNotBreakRefundFlow() {
+        Long mappingId = 601L;
+        Long consultantId = 31L;
+        Long clientId = 41L;
+
+        ConsultantClientMapping mapping = buildMappingWithRemaining(mappingId, consultantId, clientId, 2, 8, 10);
+        Schedule futureBooked = buildSchedule(920L, consultantId, clientId, LocalDate.now().plusDays(2), ScheduleStatus.BOOKED);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("SESSIONS_EXHAUSTED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
+                .thenReturn(ScheduleStatus.BOOKED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
+                .thenReturn(ScheduleStatus.CONFIRMED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
+                .thenReturn(ScheduleStatus.CANCELLED.name());
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of(futureBooked));
+        when(refundAutoCancelNotificationService.dispatchRefundAutoCancelNotification(
+                anyString(), any(), anyLong(), anyInt(), anyString()))
+                .thenThrow(new RuntimeException("simulated orchestrator failure"));
+
+        // 본 흐름은 예외 없이 완료되어야 한다(통지 실패가 환불·상태 전이를 막지 않음).
+        adminService.partialRefundMapping(mappingId, 2, "오케스트레이터 예외 격리 검증");
+
+        assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(mapping.getStatus()).isEqualTo(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
+        assertThat(futureBooked.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        verify(refundAutoCancelNotificationService).dispatchRefundAutoCancelNotification(
+                eq(TEST_TENANT_ID), any(), eq(mappingId), eq(1), anyString());
     }
 
     private ConsultantClientMapping buildMappingWithRemaining(Long mappingId, Long consultantId, Long clientId,

@@ -1313,6 +1313,47 @@ public class EmailServiceImpl implements EmailService {
             default -> getSystemNotificationTemplate();
         };
     }
+
+    @Override
+    public boolean sendAutoCancelNotification(String toEmail, int cancelCount, String mypageUrl) {
+        if (toEmail == null || toEmail.isBlank()) {
+            log.warn("환불 자동 취소 이메일 발송 실패: 수신 이메일 없음");
+            return false;
+        }
+        int safeCount = Math.max(cancelCount, 0);
+        String subject = "[마인드가든] "
+                + com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages
+                        .REFUND_AUTO_CANCEL_NOTIFICATION_TITLE;
+        StringBuilder content = new StringBuilder();
+        content.append(String.format(
+                com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages
+                        .REFUND_AUTO_CANCEL_NOTIFICATION_BODY_FMT,
+                safeCount));
+        if (mypageUrl != null && !mypageUrl.isBlank()) {
+            content.append("\n\n마이페이지: ").append(mypageUrl.trim());
+        }
+        try {
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail.trim())
+                    .subject(subject)
+                    .content(content.toString())
+                    .type("TEXT")
+                    .fromEmail("noreply@mindgarden.com")
+                    .fromName("마인드가든")
+                    .build();
+            EmailResponse response = sendEmail(request);
+            if (response != null && response.isSuccess()) {
+                log.info("✅ 환불 자동 취소 이메일 발송 성공: to={}, count={}", toEmail, safeCount);
+                return true;
+            }
+            log.warn("⚠️ 환불 자동 취소 이메일 발송 실패: to={}, message={}",
+                    toEmail, response != null ? response.getMessage() : "no-response");
+            return false;
+        } catch (Exception e) {
+            log.error("❌ 환불 자동 취소 이메일 발송 중 오류: to={}", toEmail, e);
+            return false;
+        }
+    }
     
     // ==================== 급여 이메일 템플릿 ====================
     

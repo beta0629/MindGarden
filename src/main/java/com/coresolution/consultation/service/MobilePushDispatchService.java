@@ -179,6 +179,26 @@ public interface MobilePushDispatchService {
             String skuCode);
 
     /**
+     * 회기 소진(remaining&lt;=0) 자동 일괄 취소 의무 통지 푸시(2026-05-26 Phase 0, Q3=3A·보조=C).
+     *
+     * <p>회기관리 운영 정책 합의서 v2 결정에 따라 부분 환불·강제 종료로 미래 예약이 일괄 취소된
+     * 사용자에게 인앱·이메일·푸시·알림톡 4채널 의무 통지의 푸시 채널을 담당한다. 약관·전자상거래법상
+     * 의무 통지에 해당하여 {@code MobilePushSettings} 카테고리/사용자 채널 선호도를 우회하지만,
+     * (a) 토큰 없음·(b) Expo 인프라 미설정·(c) 동일 mappingId 중복 호출은 정상 skip 한다.</p>
+     *
+     * <p>다른 dispatch 메서드와 달리 본 메서드는 화이트리스트({@link
+     * com.coresolution.consultation.constant.MobilePushAllowedEvents}) 통과를 전제로 하지만
+     * 카테고리 게이트는 우회하기 위해 {@code dispatchFanout} 을 사용하지 않고 자체 경로를 사용한다.</p>
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param userId 수신 사용자 PK (내담자 {@code users.id})
+     * @param mappingId 매핑 PK (멱등 dedupe 키)
+     * @param cancelCount 자동 취소된 일정 수
+     * @param mypageUrl 마이페이지 URL (Expo data 페이로드, 없으면 null/빈 문자열 허용)
+     */
+    void dispatchAutoCancellation(String tenantId, Long userId, Long mappingId, int cancelCount, String mypageUrl);
+
+    /**
      * 어드민 수동 다중 발송용 푸시 broadcast.
      *
      * <p>기존 fanout({@code dispatchFanout}) 화이트리스트({@link

@@ -8,6 +8,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
@@ -31,6 +32,14 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
 
     private final DataSource dataSource;
     private final JdbcTemplate jdbcTemplate;
+
+    /**
+     * SimpleJdbcCall 스키마 명시용 SSOT.
+     * spring.datasource.url 의 ${DB_NAME} 과 동일 SSOT 를 상속하여 다중 스키마(core_solution + mind_garden)
+     * 동명 프로시저 메타 충돌(SimpleJdbcCallOperations.metaData() 시그니처 모호)을 차단한다.
+     */
+    @Value("${spring.datasource.schema-name:${DB_NAME:core_solution}}")
+    private String dbSchemaName;
 
     /**
      * 일별 통계 업데이트 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
@@ -98,7 +107,8 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             log.debug("🔍 PL/SQL 프로시저 호출 시도: {}", procedureName);
 
             SimpleJdbcCall jdbcCall =
-                    new SimpleJdbcCall(dataSource).withProcedureName(procedureName)
+                    new SimpleJdbcCall(dataSource).withSchemaName(dbSchemaName)
+                            .withProcedureName(procedureName)
                             .declareParameters(new SqlParameter("p_stat_date", Types.DATE));
 
             Map<String, Object> params = new HashMap<>();
@@ -171,6 +181,7 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
 
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
+                    .withSchemaName(dbSchemaName)
                     .withProcedureName("UpdateAllConsultantPerformance")
                     .declareParameters(new SqlParameter("p_performance_date", Types.DATE));
 
@@ -199,7 +210,8 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
 
         try {
             SimpleJdbcCall jdbcCall =
-                    new SimpleJdbcCall(dataSource).withProcedureName("DailyPerformanceMonitoring")
+                    new SimpleJdbcCall(dataSource).withSchemaName(dbSchemaName)
+                            .withProcedureName("DailyPerformanceMonitoring")
                             .declareParameters(new SqlParameter("p_tenant_id", Types.VARCHAR),
                                     new SqlParameter("p_monitoring_date", Types.DATE),
                                     new SqlParameter("p_processed_by", Types.VARCHAR),

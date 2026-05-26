@@ -1,6 +1,6 @@
 /**
  * NotificationCenterScreen — 알림 센터 공용 컴포넌트
- * 상담사/내담자 양쪽에서 재사용
+ * 상담사·내담자·어드민·스태프에서 재사용
  *
  * @author MindGarden
  * @since 2026-05-12

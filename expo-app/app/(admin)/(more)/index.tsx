@@ -7,7 +7,8 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Bell, LogOut, ShieldCheck } from 'lucide-react-native';
+import { Bell, LogOut, Settings, ShieldCheck } from 'lucide-react-native';
+import { ADMIN_HOME_ROUTES } from '@/constants/adminHomeCopy';
 import { useTheme } from '@/theme';
 import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
@@ -99,8 +100,14 @@ export default function AdminMoreScreen() {
             ) : null}
             <MenuListItem
               icon={Bell}
+              title={ADMIN_MOBILE_MORE_COPY.NOTIFICATION_CENTER}
+              subtitle={ADMIN_MOBILE_MORE_COPY.NOTIFICATION_CENTER_SUB}
+              onPress={() => router.push(ADMIN_HOME_ROUTES.NOTIFICATION_CENTER)}
+            />
+            <MenuListItem
+              icon={Settings}
               title={ADMIN_MOBILE_MORE_COPY.NOTIFICATION_SETTINGS}
-              onPress={() => router.push('/(admin)/(more)/notification-settings')}
+              onPress={() => router.push(ADMIN_HOME_ROUTES.NOTIFICATION_SETTINGS)}
             />
           </View>
         </View>

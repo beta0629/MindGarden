@@ -1,9 +1,20 @@
 import {
   buildShopOrderDetailPath,
   buildShopSkuDetailPath,
+  CLIENT_SHOP_MENU_TEMPORARILY_DISABLED,
   CLIENT_SHOP_ROUTES,
+  isClientShopMoreMenuVisible,
   isShopOrderAwaitingPayment,
 } from '@/constants/clientShopConstants';
+
+describe('isClientShopMoreMenuVisible', () => {
+  it('hides menu when temporarily disabled or tenant shop off', () => {
+    expect(CLIENT_SHOP_MENU_TEMPORARILY_DISABLED).toBe(true);
+    expect(isClientShopMoreMenuVisible(true)).toBe(false);
+    expect(isClientShopMoreMenuVisible(false)).toBe(false);
+    expect(isClientShopMoreMenuVisible(undefined)).toBe(false);
+  });
+});
 
 describe('CLIENT_SHOP_ROUTES', () => {
   it('exposes orders and sku detail base paths', () => {

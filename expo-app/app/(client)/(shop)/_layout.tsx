@@ -4,9 +4,14 @@
  * @author MindGarden
  * @since 2026-05-19
  */
-import { Stack } from 'expo-router';
+import { Redirect, Stack, type Href } from 'expo-router';
+import { CLIENT_SHOP_MENU_TEMPORARILY_DISABLED } from '@/constants/clientShopConstants';
 
 export default function ClientShopLayout() {
+  if (CLIENT_SHOP_MENU_TEMPORARILY_DISABLED) {
+    return <Redirect href={'/(client)/(more)' as Href} />;
+  }
+
   return (
     <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="index" />

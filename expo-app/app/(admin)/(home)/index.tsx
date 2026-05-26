@@ -69,7 +69,7 @@ export default function AdminHomeScreen() {
         title={ADMIN_MOBILE_HOME_COPY.TITLE}
         rightAction={
           <Pressable
-            onPress={() => router.push(ADMIN_HOME_ROUTES.NOTIFICATION_SETTINGS)}
+            onPress={() => router.push(ADMIN_HOME_ROUTES.NOTIFICATION_CENTER)}
             accessibilityRole="button"
             accessibilityLabel={ADMIN_MOBILE_HOME_COPY.LINK_NOTIFICATIONS}
             hitSlop={8}
@@ -170,7 +170,7 @@ export default function AdminHomeScreen() {
                 icon={<Bell size={18} color={theme.colors.primary} />}
                 style={styles.statCard}
                 showAccentBar
-                onPress={() => router.push(ADMIN_HOME_ROUTES.NOTIFICATION_SETTINGS)}
+                onPress={() => router.push(ADMIN_HOME_ROUTES.NOTIFICATION_CENTER)}
               />
               <StatCard
                 label={ADMIN_MOBILE_HOME_COPY.TODAY_SCHEDULES}

@@ -33,5 +33,6 @@ export const ADMIN_HOME_ROUTES = {
   CREATE_SCHEDULE: '/(admin)/(operation)/schedule/create',
   SCHEDULE: '/(admin)/(operation)/schedule',
   MESSAGES: '/(admin)/(messages)',
+  NOTIFICATION_CENTER: '/(admin)/(more)/notifications',
   NOTIFICATION_SETTINGS: '/(admin)/(more)/notification-settings',
 } as const;

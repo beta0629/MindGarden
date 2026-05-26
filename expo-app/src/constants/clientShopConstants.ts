@@ -5,6 +5,25 @@
  * @since 2026-05-19
  */
 
+/** 임시 비노출 — 더보기 메뉴·딥링크 방어. 재개 시 false */
+export const CLIENT_SHOP_MENU_TEMPORARILY_DISABLED = true;
+
+/**
+ * 더보기 「온라인 쇼핑」 메뉴 노출 여부
+ *
+ * @param clientShopEnabled 테넌트 CLIENT_SHOP 컴포넌트 활성 여부
+ */
+export const isClientShopMoreMenuVisible = (
+  clientShopEnabled: boolean | undefined,
+): boolean =>
+  clientShopEnabled === true && !CLIENT_SHOP_MENU_TEMPORARILY_DISABLED;
+
+/** 쇼핑 스택 직접 진입 시 안내 (임시 비노출) */
+export const CLIENT_SHOP_TEMPORARILY_UNAVAILABLE_COPY = {
+  TITLE: '준비 중',
+  DESCRIPTION: '온라인 쇼핑은 곧 제공될 예정입니다.',
+} as const;
+
 /** Expo Router 경로 — `(client)/(shop)/` 스택 */
 export const CLIENT_SHOP_ROUTES = {
   CATALOG: '/(client)/(shop)',

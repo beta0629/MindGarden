@@ -115,14 +115,14 @@ const PurchaseManagement = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="구매 관리">
+      <AdminCommonLayout title={t('erp:PurchaseManagement.t_cd94ff1e')}>
         <ContentHeader
-          title="구매 관리"
+          title={t('erp:PurchaseManagement.t_cd94ff1e')}
           subtitle="세션 확인 중"
         />
         <ContentArea className="erp-system mg-v2-content-area" ariaLabel="구매 관리">
           <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
-            <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+            <UnifiedLoading type="inline" text={t('erp:PurchaseManagement.t_85173dd2')} />
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -131,10 +131,10 @@ const PurchaseManagement = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title="구매 관리">
+      <AdminCommonLayout title={t('erp:PurchaseManagement.t_cd94ff1e')}>
         <div className="erp-error">
-          <h3>로그인이 필요합니다.</h3>
-          <p>구매 관리 기능을 사용하려면 로그인해주세요.</p>
+          <h3>{t('erp:PurchaseManagement.t_5271ee34')}</h3>
+          <p>{t('erp:PurchaseManagement.t_f48ee334')}</p>
         </div>
       </AdminCommonLayout>
     );
@@ -144,12 +144,12 @@ const PurchaseManagement = () => {
     loading && !purchaseInitialFetchDone && !(error && hasDataError);
 
   return (
-    <AdminCommonLayout title="구매 관리">
+    <AdminCommonLayout title={t('erp:PurchaseManagement.t_cd94ff1e')}>
       <ContentArea className="erp-system mg-v2-content-area">
         <ErpPageShell
           headerSlot={
             <ContentHeader
-              title="구매 관리"
+              title={t('erp:PurchaseManagement.t_cd94ff1e')}
               subtitle="조달·품목·구매 요청을 허브에서 오갈 수 있습니다. 아래에서 목록·주문을 확인하세요."
             />
           }
@@ -167,7 +167,7 @@ const PurchaseManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                비품 목록
+                {t('erp:PurchaseManagement.t_46c40a40')}
               </MGButton>
               <MGButton
                 type="button"
@@ -178,7 +178,7 @@ const PurchaseManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                구매 요청
+                {t('erp:PurchaseManagement.t_eb7ad905')}
               </MGButton>
               <MGButton
                 type="button"
@@ -189,7 +189,7 @@ const PurchaseManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                구매 주문
+                {t('erp:PurchaseManagement.t_ebc926a3')}
               </MGButton>
             </div>
 
@@ -206,9 +206,9 @@ const PurchaseManagement = () => {
                       loading={silentListRefreshing}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       disabled={loading}
-                      aria-label="목록 새로고침"
+                      aria-label={t('erp:PurchaseManagement.t_bf198903')}
                     >
-                      목록 새로고침
+                      {t('erp:PurchaseManagement.t_bf198903')}
                     </MGButton>
                   </div>
                 }
@@ -218,13 +218,13 @@ const PurchaseManagement = () => {
             <div className="erp-content" aria-busy={loading || silentListRefreshing}>
             {showInitialInlineLoad && (
               <div className="erp-initial-fetch-inline" role="status" aria-live="polite">
-                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                <UnifiedLoading type="inline" text={t('erp:PurchaseManagement.t_ef1822ad')} />
               </div>
             )}
 
             {loading && !showInitialInlineLoad && (
               <div className="purchase-management-loading">
-                <UnifiedLoading type="inline" text="로딩 중..." />
+                <UnifiedLoading type="inline" text={t('erp:PurchaseManagement.t_06e61b86')} />
               </div>
             )}
 
@@ -250,7 +250,7 @@ const PurchaseManagement = () => {
             <>
               {activeTab === 'items' && (
                 <div className="erp-section">
-                  <h2>비품 목록</h2>
+                  <h2>{t('erp:PurchaseManagement.t_46c40a40')}</h2>
                   <div className="erp-grid">
                     {items.map((item) => (
                       <div key={item.id} className="erp-card">
@@ -264,19 +264,19 @@ const PurchaseManagement = () => {
                           <p className="erp-description"><SafeText>{item.description}</SafeText></p>
                           <div className="erp-details">
                             <div className="erp-detail">
-                              <span className="erp-label">가격:</span>
+                              <span className="erp-label">{t('erp:PurchaseManagement.t_c6100567')}</span>
                               <span className="erp-value">{toDisplayString(item.unitPrice != null ? `${item.unitPrice.toLocaleString()}원` : '—')}</span>
                             </div>
                             <div className="erp-detail">
-                              <span className="erp-label">재고:</span>
+                              <span className="erp-label">{t('erp:PurchaseManagement.t_6e77c13a')}</span>
                               <span className="erp-value">{toDisplayString(item.stockQuantity)}개</span>
                             </div>
                             <div className="erp-detail">
-                              <span className="erp-label">카테고리:</span>
+                              <span className="erp-label">{t('erp:PurchaseManagement.t_f668237a')}</span>
                               <span className="erp-value"><SafeText>{item.category}</SafeText></span>
                             </div>
                             <div className="erp-detail">
-                              <span className="erp-label">공급업체:</span>
+                              <span className="erp-label">{t('erp:PurchaseManagement.t_23bd46ca')}</span>
                               <span className="erp-value"><SafeText>{item.supplier}</SafeText></span>
                             </div>
                           </div>
@@ -289,7 +289,7 @@ const PurchaseManagement = () => {
                             className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
-                            구매 요청
+                            {t('erp:PurchaseManagement.t_eb7ad905')}
                           </MGButton>
                         </div>
                       </div>
@@ -300,7 +300,7 @@ const PurchaseManagement = () => {
 
               {activeTab === 'requests' && (
                 <div className="erp-section">
-                  <h2>구매 요청</h2>
+                  <h2>{t('erp:PurchaseManagement.t_eb7ad905')}</h2>
                   <div className="mg-purchase-request-cards-grid">
                     {purchaseRequests.map((request) => (
                       <MGCard
@@ -315,11 +315,11 @@ const PurchaseManagement = () => {
 
                         <div className="mg-purchase-request-card__body">
                           <div className="mg-purchase-request-card__field">
-                            <span className="mg-purchase-request-card__label">아이템</span>
+                            <span className="mg-purchase-request-card__label">{t('erp:PurchaseManagement.t_b62250fe')}</span>
                             <span className="mg-purchase-request-card__value"><SafeText>{request.itemName}</SafeText></span>
                           </div>
                           <div className="mg-purchase-request-card__field">
-                            <span className="mg-purchase-request-card__label">수량</span>
+                            <span className="mg-purchase-request-card__label">{t('erp:PurchaseManagement.t_7294d680')}</span>
                             <span className="mg-purchase-request-card__value">{toDisplayString(request.quantity)}개</span>
                           </div>
                           <div className="mg-purchase-request-card__field">
@@ -339,7 +339,7 @@ const PurchaseManagement = () => {
                             preventDoubleClick={true}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
-                            상세
+                            {t('erp:PurchaseManagement.t_bb446431')}
                           </MGButton>
                         </div>
                       </MGCard>
@@ -350,7 +350,7 @@ const PurchaseManagement = () => {
 
               {activeTab === 'orders' && (
                 <div className="erp-section">
-                  <h2>구매 주문</h2>
+                  <h2>{t('erp:PurchaseManagement.t_ebc926a3')}</h2>
                   <div className="mg-purchase-order-cards-grid">
                     {purchaseOrders.map((order) => (
                       <MGCard
@@ -365,11 +365,11 @@ const PurchaseManagement = () => {
 
                         <div className="mg-purchase-order-card__body">
                           <div className="mg-purchase-order-card__field">
-                            <span className="mg-purchase-order-card__label">공급업체</span>
+                            <span className="mg-purchase-order-card__label">{t('erp:PurchaseManagement.t_e7e7b803')}</span>
                             <span className="mg-purchase-order-card__value"><SafeText>{order.supplier}</SafeText></span>
                           </div>
                           <div className="mg-purchase-order-card__field">
-                            <span className="mg-purchase-order-card__label">총 금액</span>
+                            <span className="mg-purchase-order-card__label">{t('erp:PurchaseManagement.t_3554ecbb')}</span>
                             <span className="mg-purchase-order-card__value mg-purchase-order-card__value--amount">
                               {toDisplayString(order.totalAmount != null ? `${order.totalAmount.toLocaleString()}원` : '—')}
                             </span>
@@ -391,7 +391,7 @@ const PurchaseManagement = () => {
                             preventDoubleClick={true}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
-                            상세
+                            {t('erp:PurchaseManagement.t_bb446431')}
                           </MGButton>
                         </div>
                       </MGCard>

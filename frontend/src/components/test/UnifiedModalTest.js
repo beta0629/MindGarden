@@ -34,8 +34,8 @@ const UnifiedModalTest = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>🎯 UnifiedModal 테스트</h1>
-      <p>다양한 모달 설정을 테스트해보세요.</p>
+      <h1>{t('common:test.UnifiedModalTest.t_e9bb58ff')}</h1>
+      <p>{t('common:test.UnifiedModalTest.t_be57c462')}</p>
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
         <MGButton
@@ -45,7 +45,7 @@ const UnifiedModalTest = () => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => openModal('basic')}
         >
-          기본 모달
+          {t('common:test.UnifiedModalTest.t_c72bf800')}
         </MGButton>
 
         <MGButton
@@ -55,7 +55,7 @@ const UnifiedModalTest = () => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => openModal('confirm')}
         >
-          확인 모달
+          {t('common:test.UnifiedModalTest.t_5048b857')}
         </MGButton>
 
         <MGButton
@@ -65,7 +65,7 @@ const UnifiedModalTest = () => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => openModal('form')}
         >
-          폼 모달
+          {t('common:test.UnifiedModalTest.t_6ff39052')}
         </MGButton>
 
         <MGButton
@@ -75,7 +75,7 @@ const UnifiedModalTest = () => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => openModal('large')}
         >
-          큰 모달
+          {t('common:test.UnifiedModalTest.t_9f235cac')}
         </MGButton>
 
         <MGButton
@@ -85,7 +85,7 @@ const UnifiedModalTest = () => {
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => openModal('loading')}
         >
-          로딩 모달
+          {t('common:test.UnifiedModalTest.t_0244b79f')}
         </MGButton>
       </div>
 
@@ -93,20 +93,20 @@ const UnifiedModalTest = () => {
       <div className="mg-modal"
         isOpen={modals.basic}
         onClose={() => closeModal('basic')}
-        title="기본 모달"
+        title={t('common:test.UnifiedModalTest.t_c72bf800')}
         subtitle="이것은 기본 모달입니다."
         size="medium"
         variant="default"
       >
-        <p>이것은 기본 모달의 내용입니다.</p>
-        <p>ESC 키를 누르거나 배경을 클릭하면 닫힙니다.</p>
+        <p>{t('common:test.UnifiedModalTest.t_7506f709')}</p>
+        <p>{t('common:test.UnifiedModalTest.t_d2f27838')}</p>
       </div>
 
       {/* 확인 모달 */}
       <div className="mg-modal"
         isOpen={modals.confirm}
         onClose={() => closeModal('confirm')}
-        title="확인 모달"
+        title={t('common:test.UnifiedModalTest.t_5048b857')}
         subtitle="정말로 이 작업을 수행하시겠습니까?"
         size="small"
         variant="confirm"
@@ -133,14 +133,14 @@ const UnifiedModalTest = () => {
           </div>
         }
       >
-        <p>이 작업은 되돌릴 수 없습니다.</p>
+        <p>{t('common:test.UnifiedModalTest.t_cdfb991d')}</p>
       </div>
 
       {/* 폼 모달 */}
       <div className="mg-modal"
         isOpen={modals.form}
         onClose={() => closeModal('form')}
-        title="폼 모달"
+        title={t('common:test.UnifiedModalTest.t_6ff39052')}
         subtitle="정보를 입력해주세요."
         size="medium"
         variant="form"
@@ -171,29 +171,29 @@ const UnifiedModalTest = () => {
       >
         <form id="test-form" onSubmit={handleSubmit}>
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>이름:</label>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>{t('common:test.UnifiedModalTest.t_ed325800')}</label>
             <input 
               type="text" 
               // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
               style={{ width: '100%', padding: '8px', border: '1px solid var(--mg-color-border-main)', borderRadius: '4px' }}
-              placeholder="이름을 입력하세요"
+              placeholder={t('common:test.UnifiedModalTest.t_25cf7f26')}
             />
           </div>
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>이메일:</label>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>{t('common:test.UnifiedModalTest.t_6b943a10')}</label>
             <input 
               type="email" 
               // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
               style={{ width: '100%', padding: '8px', border: '1px solid var(--mg-color-border-main)', borderRadius: '4px' }}
-              placeholder="이메일을 입력하세요"
+              placeholder={t('common:test.UnifiedModalTest.t_d83f68e8')}
             />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>메모:</label>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>{t('common:test.UnifiedModalTest.t_4fd63c03')}</label>
             <textarea 
               // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
               style={{ width: '100%', padding: '8px', border: '1px solid var(--mg-color-border-main)', borderRadius: '4px', height: '80px' }}
-              placeholder="메모를 입력하세요"
+              placeholder={t('common:test.UnifiedModalTest.t_69f2b568')}
             />
           </div>
         </form>
@@ -203,13 +203,13 @@ const UnifiedModalTest = () => {
       <div className="mg-modal"
         isOpen={modals.large}
         onClose={() => closeModal('large')}
-        title="큰 모달"
+        title={t('common:test.UnifiedModalTest.t_9f235cac')}
         subtitle="더 많은 내용을 표시할 수 있습니다."
         size="large"
         variant="default"
       >
         <div style={{ height: '400px', overflowY: 'auto', padding: '10px', backgroundColor: 'var(--mg-gray-100)', borderRadius: '4px' }}>
-          <h3>스크롤 가능한 내용</h3>
+          <h3>{t('common:test.UnifiedModalTest.t_56ecb4fe')}</h3>
           {Array.from({ length: 50 }, (_, i) => (
             <p key={i}>이것은 {i + 1}번째 줄입니다. 스크롤을 확인해보세요.</p>
           ))}
@@ -220,7 +220,7 @@ const UnifiedModalTest = () => {
       <div className="mg-modal"
         isOpen={modals.loading}
         onClose={() => closeModal('loading')}
-        title="로딩 모달"
+        title={t('common:test.UnifiedModalTest.t_0244b79f')}
         subtitle="데이터 처리 중입니다"
         size="medium"
         variant="default"
@@ -228,13 +228,13 @@ const UnifiedModalTest = () => {
       >
         <div style={{ textAlign: 'center', padding: '20px' }}>
           <h4 style={{ color: 'var(--color-text-primary)', marginBottom: '16px' }}>
-            📊 데이터 처리 중
+            {t('common:test.UnifiedModalTest.t_30417b98')}
           </h4>
           <p style={{ color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
-            서버에서 정보를 가져오고 있습니다.
+            {t('common:test.UnifiedModalTest.t_4b834882')}
           </p>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-            잠시만 기다려주세요...
+            {t('common:test.UnifiedModalTest.t_8d71c009')}
           </p>
         </div>
       </div>

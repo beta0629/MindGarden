@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
+import { useTranslation } from 'react-i18next';
 
 const ERP_QUICK_ICON_SIZE = 28;
 
@@ -41,11 +42,12 @@ const ErpQuickActionsPanel = ({
   hasIntegratedFinanceView,
   hasRefundManage
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
     <div className="mg-v2-ad-b0kla__card erp-quick-actions">
-      <h2 className="mg-v2-ad-b0kla__section-title">빠른 액션</h2>
+      <h2 className="mg-v2-ad-b0kla__section-title">{t('erp:ErpQuickActionsPanel.t_15e878d3')}</h2>
       <div className="mg-v2-ad-b0kla__admin-grid erp-quick-actions__grid">
         {hasPurchaseRequestView && (
           <MGButton
@@ -63,8 +65,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green" aria-hidden>
               <ShoppingCart size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">구매 요청하기</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">상품 및 비품 구매 요청을 제출합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_0d17bd87')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_7206e8ed')}</span>
           </MGButton>
         )}
         {hasApprovalManage && (
@@ -83,8 +85,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange" aria-hidden>
               <ClipboardCheck size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">승인 관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">구매 요청 승인 및 거부를 관리합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_492092db')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_c06444e2')}</span>
           </MGButton>
         )}
         {hasItemManage && (
@@ -103,8 +105,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue" aria-hidden>
               <Package size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">아이템 관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">등록된 비품 및 상품을 관리합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_145d6a1a')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_676f0b4e')}</span>
           </MGButton>
         )}
         {hasBudgetManage && (
@@ -123,8 +125,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--gray" aria-hidden>
               <Wallet size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">예산 관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">지점별 예산을 설정하고 관리합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_caa5739a')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_d82748f6')}</span>
           </MGButton>
         )}
         {hasSalaryManage && hasTaxManage && (
@@ -143,8 +145,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green" aria-hidden>
               <Calculator size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">급여 세금 통합관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">급여 계산·세금 통계를 한 화면에서 관리합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_b2b665ae')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_b0639a72')}</span>
           </MGButton>
         )}
         {hasSalaryManage && !hasTaxManage && (
@@ -163,8 +165,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green" aria-hidden>
               <Calculator size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">급여 관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">상담사 급여 계산 및 지급을 관리합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_5abac593')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_9d302085')}</span>
           </MGButton>
         )}
         {!hasSalaryManage && hasTaxManage && (
@@ -183,8 +185,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange" aria-hidden>
               <Calculator size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">세금 관리</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">원천징수 및 세금 관련 업무를 관리합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_780e38c6')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_525a8466')}</span>
           </MGButton>
         )}
         {hasIntegratedFinanceView && (
@@ -203,8 +205,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue" aria-hidden>
               <LineChart size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">수입·지출 한눈에</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">거래·손익·정산을 한곳에서 확인합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_73da76eb')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_291d851a')}</span>
           </MGButton>
         )}
         {hasRefundManage && (
@@ -223,8 +225,8 @@ const ErpQuickActionsPanel = ({
             <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--orange" aria-hidden>
               <RotateCcw size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
             </div>
-            <span className="mg-v2-ad-b0kla__admin-label">환불 관리 시스템</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">환불 요청 및 처리 내역을 관리합니다</span>
+            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_ce897476')}</span>
+            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_6534bc2e')}</span>
           </MGButton>
         )}
       </div>

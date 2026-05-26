@@ -158,7 +158,7 @@ const PgConfigurationList = () => {
     return (
       <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
-          <UnifiedLoading type="inline" text="PG 설정 목록을 불러오는 중..." variant="pulse" />
+          <UnifiedLoading type="inline" text={t('common:tenant.PgConfigurationList.t_38760583')} variant="pulse" />
         </ContentArea>
       </AdminCommonLayout>
     );
@@ -170,7 +170,7 @@ const PgConfigurationList = () => {
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
           <div className="error-message">
             <AlertCircleIcon size={24} />
-            <p>로그인이 필요합니다.</p>
+            <p>{t('common:tenant.PgConfigurationList.t_5271ee34')}</p>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -183,7 +183,7 @@ const PgConfigurationList = () => {
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
           <div className="error-message">
             <AlertCircleIcon size={24} />
-            <p>테넌트 정보를 찾을 수 없습니다.</p>
+            <p>{t('common:tenant.PgConfigurationList.t_8f990fec')}</p>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -195,7 +195,7 @@ const PgConfigurationList = () => {
       <>
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
             <ContentHeader
-              title="PG 설정 관리"
+              title={t('common:tenant.PgConfigurationList.t_13162a5e')}
               subtitle="결제 게이트웨이 설정을 조회·등록·관리합니다."
               titleId="pg-config-list-title"
               actions={
@@ -208,7 +208,7 @@ const PgConfigurationList = () => {
                   onClick={() => navigate('/tenant/pg-configurations/new')}
                   preventDoubleClick={false}
                 >
-                  PG 설정 등록
+                  {t('common:tenant.PgConfigurationList.t_61ce87de')}
                 </MGButton>
               }
             />
@@ -219,11 +219,11 @@ const PgConfigurationList = () => {
             <SearchIcon size={18} />
             <input
               type="text"
-              placeholder="PG사명, 제공자, 비고로 검색..."
+              placeholder={t('common:tenant.PgConfigurationList.t_4598635c')}
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
               className="search-input"
-              aria-label="PG 설정 검색"
+              aria-label={t('common:tenant.PgConfigurationList.t_75c13af6')}
             />
           </div>
           
@@ -232,26 +232,26 @@ const PgConfigurationList = () => {
               value={filters.status}
               onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
               className="filter-select"
-              aria-label="상태 필터"
+              aria-label={t('common:tenant.PgConfigurationList.t_1dfdb50f')}
             >
-              <option value="">전체 상태</option>
+              <option value="">{t('common:tenant.PgConfigurationList.t_21caa442')}</option>
               {/* 표준화: 상태값 공통코드 동적 조회 권장 getCommonCodes('STATUS_GROUP') */}
-              <option value="PENDING">대기 중</option>
+              <option value="PENDING">{t('common:tenant.PgConfigurationList.t_ec425b26')}</option>
               <option value="APPROVED">{t('common.labels.approved')}</option>
               <option value="REJECTED">{t('admin.labels.rejected')}</option>
-              <option value="ACTIVE">활성화</option>
-              <option value="INACTIVE">비활성화</option>
+              <option value="ACTIVE">{t('common:tenant.PgConfigurationList.t_bbf831ad')}</option>
+              <option value="INACTIVE">{t('common:tenant.PgConfigurationList.t_8ff58636')}</option>
             </select>
             
             <select
               value={filters.approvalStatus}
               onChange={(e) => setFilters(prev => ({ ...prev, approvalStatus: e.target.value }))}
               className="filter-select"
-              aria-label="승인 상태 필터"
+              aria-label={t('common:tenant.PgConfigurationList.t_b2a166d3')}
             >
-              <option value="">전체 승인 상태</option>
+              <option value="">{t('common:tenant.PgConfigurationList.t_82f25333')}</option>
               {/* 표준화: 승인 상태 공통코드 동적 조회 권장 */}
-              <option value="PENDING">승인 대기</option>
+              <option value="PENDING">{t('common:tenant.PgConfigurationList.t_f5aaa7c5')}</option>
               <option value="APPROVED">{t('common.labels.approved')}</option>
               <option value="REJECTED">{t('admin.labels.rejected')}</option>
             </select>
@@ -282,8 +282,8 @@ const PgConfigurationList = () => {
         {configurations.length === 0 ? (
           <div className="empty-state">
             <CreditCardIcon size={48} />
-            <h3>PG 설정이 없습니다</h3>
-            <p>새로운 PG 설정을 등록해주세요.</p>
+            <h3>{t('common:tenant.PgConfigurationList.t_8755c9a8')}</h3>
+            <p>{t('common:tenant.PgConfigurationList.t_72539156')}</p>
             <MGButton
               type="button"
               variant="primary"
@@ -292,7 +292,7 @@ const PgConfigurationList = () => {
               onClick={() => navigate('/tenant/pg-configurations/new')}
               preventDoubleClick={false}
             >
-              PG 설정 등록
+              {t('common:tenant.PgConfigurationList.t_61ce87de')}
             </MGButton>
           </div>
         ) : (
@@ -311,7 +311,7 @@ const PgConfigurationList = () => {
                       {renderStatusBadge(config.status)}
                       {renderApprovalBadge(config.approvalStatus)}
                       {config.testMode && (
-                        <StatusBadge variant="info">테스트 모드</StatusBadge>
+                        <StatusBadge variant="info">{t('common:tenant.PgConfigurationList.t_cfd49442')}</StatusBadge>
                       )}
                     </div>
                   </div>
@@ -320,30 +320,30 @@ const PgConfigurationList = () => {
                 <div className="card-body">
                   <div className="card-info">
                     <div className="info-item">
-                      <span className="info-label">PG 제공자:</span>
+                      <span className="info-label">{t('common:tenant.PgConfigurationList.t_6fa6eaf8')}</span>
                       <span className="info-value">{config.pgProvider}</span>
                     </div>
                     {config.merchantId && (
                       <div className="info-item">
-                        <span className="info-label">가맹점 ID:</span>
+                        <span className="info-label">{t('common:tenant.PgConfigurationList.t_028977fd')}</span>
                         <span className="info-value">{config.merchantId}</span>
                       </div>
                     )}
                     {config.storeId && (
                       <div className="info-item">
-                        <span className="info-label">스토어 ID:</span>
+                        <span className="info-label">{t('common:tenant.PgConfigurationList.t_74c0ddf7')}</span>
                         <span className="info-value">{config.storeId}</span>
                       </div>
                     )}
                     {config.notes && (
                       <div className="info-item">
-                        <span className="info-label">비고:</span>
+                        <span className="info-label">{t('common:tenant.PgConfigurationList.t_d8da18b1')}</span>
                         <span className="info-value">{config.notes}</span>
                       </div>
                     )}
                     {config.lastConnectionTestAt && (
                       <div className="info-item">
-                        <span className="info-label">마지막 연결 테스트:</span>
+                        <span className="info-label">{t('common:tenant.PgConfigurationList.t_4521343d')}</span>
                         <span className="info-value">
                           {new Date(config.lastConnectionTestAt).toLocaleString('ko-KR')}
                         </span>
@@ -363,7 +363,7 @@ const PgConfigurationList = () => {
                       onClick={() => navigate(`/tenant/pg-configurations/${config.configId}`)}
                       preventDoubleClick={false}
                     >
-                      상세보기
+                      {t('common:tenant.PgConfigurationList.t_7ffb5a8b')}
                     </MGButton>
 
                     {config.status === 'APPROVED' && (
@@ -382,7 +382,7 @@ const PgConfigurationList = () => {
                         loading={testingConnection === config.configId}
                         preventDoubleClick={false}
                       >
-                        연결 테스트
+                        {t('common:tenant.PgConfigurationList.t_3da5c18d')}
                       </MGButton>
                     )}
 
@@ -420,7 +420,7 @@ const PgConfigurationList = () => {
                   {config.approvalStatus === 'PENDING' && (
                     <div className="pending-notice">
                       <ClockIcon size={14} />
-                      <span>승인 대기 중입니다. 승인 후 사용 가능합니다.</span>
+                      <span>{t('common:tenant.PgConfigurationList.t_5f44a8c3')}</span>
                     </div>
                   )}
 
@@ -441,7 +441,7 @@ const PgConfigurationList = () => {
         <UnifiedModal
           isOpen={Boolean(showDeleteModal && selectedConfig)}
           onClose={() => setShowDeleteModal(false)}
-          title="PG 설정 삭제"
+          title={t('common:tenant.PgConfigurationList.t_bb36d692')}
           size="small"
           variant="confirm"
           className="mg-v2-ad-b0kla"
@@ -481,7 +481,7 @@ const PgConfigurationList = () => {
                 <strong>{selectedConfig.pgName || selectedConfig.pgProvider}</strong>
                 {' '}설정을 삭제하시겠습니까?
               </p>
-              <p className="warning-text">이 작업은 되돌릴 수 없습니다.</p>
+              <p className="warning-text">{t('common:tenant.PgConfigurationList.t_cdfb991d')}</p>
             </>
           )}
         </UnifiedModal>

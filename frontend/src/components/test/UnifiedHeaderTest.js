@@ -42,11 +42,11 @@ const UnifiedHeaderTest = () => {
         boxShadow: '0 4px 20px var(--mg-shadow-light)',
         minWidth: '250px'
       }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>헤더 테스트 컨트롤</h3>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>{t('common:test.UnifiedHeaderTest.t_d5bad20f')}</h3>
         
         <div style={{ marginBottom: '12px' }}>
           <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            로고 타입:
+            {t('common:test.UnifiedHeaderTest.t_db8183f5')}
           </label>
           <select 
             value={logoType} 
@@ -54,15 +54,15 @@ const UnifiedHeaderTest = () => {
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
             style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--mg-color-border-main)' }}
           >
-            <option value="text">텍스트 로고</option>
-            <option value="image">이미지 로고</option>
-            <option value="custom">커스텀 로고 (SVG)</option>
+            <option value="text">{t('common:test.UnifiedHeaderTest.t_8e5e1e37')}</option>
+            <option value="image">{t('common:test.UnifiedHeaderTest.t_8e07117c')}</option>
+            <option value="custom">{t('common:test.UnifiedHeaderTest.t_58c9fb73')}</option>
           </select>
         </div>
 
         <div style={{ marginBottom: '12px' }}>
           <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: '500' }}>
-            헤더 스타일:
+            {t('common:test.UnifiedHeaderTest.t_0505689a')}
           </label>
           <select 
             value={variant} 
@@ -70,9 +70,9 @@ const UnifiedHeaderTest = () => {
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-ddd)
             style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--mg-color-border-main)' }}
           >
-            <option value="default">기본</option>
-            <option value="compact">컴팩트</option>
-            <option value="transparent">투명</option>
+            <option value="default">{t('common:test.UnifiedHeaderTest.t_7f1d8c41')}</option>
+            <option value="compact">{t('common:test.UnifiedHeaderTest.t_369ca429')}</option>
+            <option value="transparent">{t('common:test.UnifiedHeaderTest.t_071a71d7')}</option>
           </select>
         </div>
 
@@ -84,7 +84,7 @@ const UnifiedHeaderTest = () => {
               onChange={(e) => setSticky(e.target.checked)}
               style={{ marginRight: '8px' }}
             />
-            상단 고정
+            {t('common:test.UnifiedHeaderTest.t_f174663d')}
           </label>
         </div>
       </div>
@@ -127,54 +127,54 @@ const UnifiedHeaderTest = () => {
       <div style={{ padding: '40px 20px', maxWidth: '800px', margin: '0 auto' }}>
         // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-1f2937)
         <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px', color: 'var(--mg-color-text-main)' }}>
-          UnifiedHeader 테스트 페이지
+          {t('common:test.UnifiedHeaderTest.t_04f14990')}
         </h1>
         
         <div style={{ marginBottom: '32px' }}>
           // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
           <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '16px', color: 'var(--mg-color-text-secondary-dark)' }}>
-            로고 확장성 테스트
+            {t('common:test.UnifiedHeaderTest.t_9bd4e650')}
           </h2>
           // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
           <p style={{ fontSize: '16px', lineHeight: '1.6', color: 'var(--mg-color-text-secondary)', marginBottom: '16px' }}>
-            이 페이지에서는 향후 커스텀 로고가 적용될 때를 대비한 헤더 시스템을 테스트합니다.
+            {t('common:test.UnifiedHeaderTest.t_d6029dc3')}
           </p>
           // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
           <ul style={{ fontSize: '16px', lineHeight: '1.6', color: 'var(--mg-color-text-secondary)', paddingLeft: '20px' }}>
-            <li>텍스트 로고: 기본 브랜드명 표시</li>
-            <li>이미지 로고: PNG/JPG 파일 지원</li>
-            <li>커스텀 로고: SVG 등 HTML 직접 삽입</li>
-            <li>반응형 크기 조정</li>
-            <li>다크 모드 대응</li>
+            <li>{t('common:test.UnifiedHeaderTest.t_aa835c65')}</li>
+            <li>{t('common:test.UnifiedHeaderTest.t_064011f4')}</li>
+            <li>{t('common:test.UnifiedHeaderTest.t_7471b6a6')}</li>
+            <li>{t('common:test.UnifiedHeaderTest.t_4d5b77e9')}</li>
+            <li>{t('common:test.UnifiedHeaderTest.t_0f3d917e')}</li>
           </ul>
         </div>
 
         <div style={{ marginBottom: '32px' }}>
           // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
           <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '16px', color: 'var(--mg-color-text-secondary-dark)' }}>
-            헤더 스타일 변형
+            {t('common:test.UnifiedHeaderTest.t_6e94cbb0')}
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e5e7eb)
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-background-main) -> var(--mg-custom-f9fafb)
             <div style={{ padding: '20px', background: 'var(--mg-color-background-main)', borderRadius: '8px', border: '1px solid var(--mg-color-border-main)' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>기본 스타일</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>{t('common:test.UnifiedHeaderTest.t_d34a4b44')}</h3>
               // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
-              <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>표준 높이와 패딩</p>
+              <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>{t('common:test.UnifiedHeaderTest.t_7d9d04ed')}</p>
             </div>
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e5e7eb)
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-background-main) -> var(--mg-custom-f9fafb)
             <div style={{ padding: '20px', background: 'var(--mg-color-background-main)', borderRadius: '8px', border: '1px solid var(--mg-color-border-main)' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>컴팩트 스타일</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>{t('common:test.UnifiedHeaderTest.t_e3137c7f')}</h3>
               // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
-              <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>작은 높이와 패딩</p>
+              <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>{t('common:test.UnifiedHeaderTest.t_59182fe1')}</p>
             </div>
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-border-main) -> var(--mg-custom-e5e7eb)
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-background-main) -> var(--mg-custom-f9fafb)
             <div style={{ padding: '20px', background: 'var(--mg-color-background-main)', borderRadius: '8px', border: '1px solid var(--mg-color-border-main)' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>투명 스타일</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>{t('common:test.UnifiedHeaderTest.t_4ddc8eed')}</h3>
               // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
-              <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>투명 배경과 테두리</p>
+              <p style={{ fontSize: '14px', color: 'var(--mg-color-text-secondary)' }}>{t('common:test.UnifiedHeaderTest.t_64a365e3')}</p>
             </div>
           </div>
         </div>
@@ -182,11 +182,11 @@ const UnifiedHeaderTest = () => {
         <div style={{ marginBottom: '32px' }}>
           // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
           <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '16px', color: 'var(--mg-color-text-secondary-dark)' }}>
-            스크롤 테스트
+            {t('common:test.UnifiedHeaderTest.t_ef7b95f8')}
           </h2>
           // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
           <p style={{ fontSize: '16px', lineHeight: '1.6', color: 'var(--mg-color-text-secondary)', marginBottom: '16px' }}>
-            상단 고정 옵션을 켜고 아래로 스크롤해보세요. 헤더가 상단에 고정되는 것을 확인할 수 있습니다.
+            {t('common:test.UnifiedHeaderTest.t_40bf6e1d')}
           </p>
         </div>
 
@@ -197,11 +197,11 @@ const UnifiedHeaderTest = () => {
           <div style={{ textAlign: 'center', paddingTop: '100px' }}>
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
             <h2 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '16px', color: 'var(--mg-color-text-secondary-dark)' }}>
-              스크롤 테스트 영역
+              {t('common:test.UnifiedHeaderTest.t_5e1005f0')}
             </h2>
             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary) -> var(--mg-custom-6b7280)
             <p style={{ fontSize: '18px', color: 'var(--mg-color-text-secondary)' }}>
-              이 영역을 스크롤하면서 헤더의 동작을 확인해보세요.
+              {t('common:test.UnifiedHeaderTest.t_d1148076')}
             </p>
           </div>
         </div>

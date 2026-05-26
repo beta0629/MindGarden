@@ -6,12 +6,14 @@ import SafeText from '../common/SafeText';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ComplianceMenu.css';
+import { useTranslation } from 'react-i18next';
 
 function ComplianceMenuNav({ items }) {
+  const { t } = useTranslation();
   return (
     <nav
       className="mg-v2-compliance-menu__nav"
-      aria-label="컴플라이언스 하위 메뉴"
+      aria-label={t('common:compliance.ComplianceMenu.t_10513476')}
     >
       <ul className="mg-v2-compliance-menu__grid">
         {items.map((item) => {
@@ -45,38 +47,39 @@ function ComplianceMenuNav({ items }) {
 }
 
 function ComplianceMenuInfoSection() {
+  const { t } = useTranslation();
   return (
     <section
       className="mg-v2-compliance-menu__info"
       aria-labelledby="compliance-menu-info-heading"
     >
       <h2 id="compliance-menu-info-heading" className="mg-v2-compliance-menu__info-sr-title">
-        부가 정보
+        {t('common:compliance.ComplianceMenu.t_bff88cb5')}
       </h2>
       <div className="mg-v2-compliance-menu__info-grid">
         <article className="mg-v2-compliance-menu__info-card mg-v2-ad-b0kla__card">
           <h3 className="mg-v2-compliance-menu__info-card-title">
-            <span>법적 근거</span>
+            <span>{t('common:compliance.ComplianceMenu.t_1a4b5c83')}</span>
           </h3>
           <ul className="mg-v2-compliance-menu__info-list">
-            <li>개인정보보호법</li>
-            <li>정보통신망법</li>
-            <li>의료법</li>
-            <li>상법</li>
-            <li>근로기준법</li>
+            <li>{t('common:compliance.ComplianceMenu.t_a1daf6b9')}</li>
+            <li>{t('common:compliance.ComplianceMenu.t_3f6bbd56')}</li>
+            <li>{t('common:compliance.ComplianceMenu.t_db718916')}</li>
+            <li>{t('common:compliance.ComplianceMenu.t_06d297ee')}</li>
+            <li>{t('common:compliance.ComplianceMenu.t_e72c96de')}</li>
           </ul>
         </article>
 
         <article className="mg-v2-compliance-menu__info-card mg-v2-ad-b0kla__card">
           <h3 className="mg-v2-compliance-menu__info-card-title">
-            <span>주요 기능</span>
+            <span>{t('common:compliance.ComplianceMenu.t_d0684bf7')}</span>
           </h3>
           <ul className="mg-v2-compliance-menu__info-list">
-            <li>실시간 모니터링</li>
-            <li>자동화된 파기 시스템</li>
-            <li>접근 로그 관리</li>
-            <li>영향평가 자동화</li>
-            <li>교육 프로그램 관리</li>
+            <li>{t('common:compliance.ComplianceMenu.t_5c559556')}</li>
+            <li>{t('common:compliance.ComplianceMenu.t_90a46e86')}</li>
+            <li>{t('common:compliance.ComplianceMenu.t_919d32c5')}</li>
+            <li>{t('common:compliance.ComplianceMenu.t_45982811')}</li>
+            <li>{t('common:compliance.ComplianceMenu.t_32fad31d')}</li>
           </ul>
         </article>
 
@@ -84,18 +87,18 @@ function ComplianceMenuInfoSection() {
           className="mg-v2-compliance-menu__info-card mg-v2-compliance-menu__info-card--full mg-v2-ad-b0kla__card"
         >
           <h3 className="mg-v2-compliance-menu__info-card-title">
-            <span>문의 및 지원</span>
+            <span>{t('common:compliance.ComplianceMenu.t_21c6983d')}</span>
           </h3>
           <div className="mg-v2-compliance-menu__contact">
             <p>
-              <strong>개인정보보호책임자:</strong>{' '}
+              <strong>{t('common:compliance.ComplianceMenu.t_5823eb2a')}</strong>{' '}
               privacy@mindgarden.co.kr
             </p>
             <p>
-              <strong>전화:</strong> 02-1234-5678
+              <strong>{t('common:compliance.ComplianceMenu.t_ca3404dd')}</strong> 02-1234-5678
             </p>
             <p>
-              <strong>주소:</strong> 서울시 강남구 테헤란로 123
+              <strong>{t('common:compliance.ComplianceMenu.t_069db422')}</strong> {t('common:compliance.ComplianceMenu.t_c9092377')}
             </p>
           </div>
         </article>
@@ -112,6 +115,7 @@ function ComplianceMenuInfoSection() {
  * @since 2024-12-19
  */
 const ComplianceMenu = () => {
+  const { t } = useTranslation();
   const complianceMenuItems = [
     {
       id: 'dashboard',
@@ -172,12 +176,12 @@ const ComplianceMenu = () => {
   ];
 
   return (
-    <AdminCommonLayout title="컴플라이언스 관리">
+    <AdminCommonLayout title={t('common:compliance.ComplianceMenu.t_77eda937')}>
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="컴플라이언스 관리 콘텐츠">
             <ContentHeader
-              title="컴플라이언스 관리"
+              title={t('common:compliance.ComplianceMenu.t_77eda937')}
               subtitle="개인정보보호법 및 관련 법령 준수를 위한 통합 관리 허브입니다."
               titleId="compliance-menu-page-title"
             />

@@ -155,8 +155,8 @@ const HeadquartersLogin = () => {
   if (isLoadingInfo) {
     return (
       <CommonPageTemplate 
-        title="본사 로그인" 
-        description="본사 정보를 불러오는 중..."
+        title={t('auth:HeadquartersLogin.t_065a8763')} 
+        description={t('auth:HeadquartersLogin.t_4d70d036')}
         bodyClass="branch-login-page"
       >
         <UnifiedHeader />
@@ -164,7 +164,7 @@ const HeadquartersLogin = () => {
           <div className="login-card">
             <div className="loading-spinner">
               <div className="spinner" />
-              <p>본사 정보를 불러오는 중...</p>
+              <p>{t('auth:HeadquartersLogin.t_4d70d036')}</p>
             </div>
           </div>
         </div>
@@ -176,8 +176,8 @@ const HeadquartersLogin = () => {
   if (error) {
     return (
       <CommonPageTemplate 
-        title="본사 로그인" 
-        description="본사 정보를 불러올 수 없습니다"
+        title={t('auth:HeadquartersLogin.t_065a8763')} 
+        description={t('auth:HeadquartersLogin.t_fb94c0c5')}
         bodyClass="branch-login-page"
       >
         <UnifiedHeader />
@@ -185,7 +185,7 @@ const HeadquartersLogin = () => {
           <div className="login-card">
             <div className="error-state">
               <div className="error-icon">❌</div>
-              <h3>본사 정보를 불러올 수 없습니다</h3>
+              <h3>{t('auth:HeadquartersLogin.t_fb94c0c5')}</h3>
               <p>{error}</p>
               <div className="error-actions">
                 <MGButton
@@ -207,7 +207,7 @@ const HeadquartersLogin = () => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
-                  메인 로그인으로 이동
+                  {t('auth:HeadquartersLogin.t_673763d7')}
                 </MGButton>
               </div>
             </div>
@@ -221,8 +221,8 @@ const HeadquartersLogin = () => {
 
   return (
     <CommonPageTemplate 
-      title="본사 로그인" 
-      description="본사 관리자 로그인"
+      title={t('auth:HeadquartersLogin.t_065a8763')} 
+      description={t('auth:HeadquartersLogin.t_9f7b9d3a')}
       bodyClass="branch-login-page"
     >
       <UnifiedHeader />
@@ -256,7 +256,7 @@ const HeadquartersLogin = () => {
           <form onSubmit={handleHeadquartersLogin} className="login-form">
             {/* 이메일 입력 */}
             <div className="form-group">
-              <label htmlFor="email">이메일 *</label>
+              <label htmlFor="email">{t('auth:HeadquartersLogin.t_1b12f93c')}</label>
               <input
                 type="email"
                 id="email"
@@ -264,14 +264,14 @@ const HeadquartersLogin = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className="form-input"
-                placeholder="이메일을 입력하세요"
+                placeholder={t('auth:HeadquartersLogin.t_d83f68e8')}
                 required
               />
             </div>
 
             {/* 비밀번호 입력 */}
             <div className="form-group">
-              <label htmlFor="password">비밀번호 *</label>
+              <label htmlFor="password">{t('auth:HeadquartersLogin.t_85339326')}</label>
               <div className="password-input-group">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -280,7 +280,7 @@ const HeadquartersLogin = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="비밀번호를 입력하세요"
+                  placeholder={t('auth:HeadquartersLogin.t_1e89d217')}
                   required
                 />
                 <MGButton
@@ -307,19 +307,19 @@ const HeadquartersLogin = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              로그인
+              {t('auth:HeadquartersLogin.t_e225a6fd')}
             </MGButton>
           </form>
 
           {/* 본사 로그인 안내 */}
           <div className="login-info">
             <div className="info-box headquarters-info">
-              <h4>🏢 본사 로그인</h4>
+              <h4>{t('auth:HeadquartersLogin.t_455394a1')}</h4>
               <ul>
-                <li>본사 관리자만 로그인 가능합니다</li>
-                <li>전체 지점 관리 및 통계 조회</li>
-                <li>시스템 설정 및 사용자 관리</li>
-                <li>지점별 성과 모니터링</li>
+                <li>{t('auth:HeadquartersLogin.t_f75eed47')}</li>
+                <li>{t('auth:HeadquartersLogin.t_08b3a850')}</li>
+                <li>{t('auth:HeadquartersLogin.t_a3794379')}</li>
+                <li>{t('auth:HeadquartersLogin.t_14579401')}</li>
               </ul>
             </div>
           </div>
@@ -334,7 +334,7 @@ const HeadquartersLogin = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              지점 로그인
+              {t('auth:HeadquartersLogin.t_81c33687')}
             </MGButton>
             <MGButton
               type="button"
@@ -344,7 +344,7 @@ const HeadquartersLogin = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              메인 로그인으로 이동
+              {t('auth:HeadquartersLogin.t_673763d7')}
             </MGButton>
           </div>
         </div>

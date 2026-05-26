@@ -590,12 +590,12 @@ const SalaryManagement = () => {
     && toSalaryNumber(previewResult.specialSupportAmount) > 0;
 
   return (
-    <AdminCommonLayout title="급여 관리">
+    <AdminCommonLayout title={t('erp:SalaryManagement.t_5abac593')}>
       <ContentArea className="mg-v2-content-area" ariaLabel="급여·세금 관리 콘텐츠">
             <ErpPageShell
               headerSlot={
                 <ContentHeader
-                  title="급여·세금 관리"
+                  title={t('erp:SalaryManagement.t_9b3c0eb3')}
                   subtitle="상담사 급여 및 세금 계산·통계"
                   actions={
                     <>
@@ -603,7 +603,7 @@ const SalaryManagement = () => {
                         variant="outline"
                         size="small"
                         onClick={() => setIsConfigModalOpen(true)}
-                        aria-label="급여 기산일 설정"
+                        aria-label={t('erp:SalaryManagement.t_a1802bde')}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({
                           variant: 'outline',
@@ -611,7 +611,7 @@ const SalaryManagement = () => {
                           className: 'salary-management__header-btn'
                         })}
                       >
-                        <span className="salary-management__header-btn-text">기산일 설정</span>
+                        <span className="salary-management__header-btn-text">{t('erp:SalaryManagement.t_583cbabc')}</span>
                       </MGButton>
                       <MGButton
                         variant="primary"
@@ -623,9 +623,9 @@ const SalaryManagement = () => {
                           size: 'sm',
                           className: 'salary-management__header-btn salary-management__header-btn--primary'
                         })}
-                        aria-label="한 번에 계산"
+                        aria-label={t('erp:SalaryManagement.t_e9a9e95d')}
                       >
-                        <span className="salary-management__header-btn-text">한 번에 계산</span>
+                        <span className="salary-management__header-btn-text">{t('erp:SalaryManagement.t_e9a9e95d')}</span>
                       </MGButton>
                     </>
                   }
@@ -634,7 +634,7 @@ const SalaryManagement = () => {
               tabsSlot={
                 <div className="mg-v2-ad-b0kla__section salary-management__tabs-wrap">
                   {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- W3C 탭 패턴상 tablist는 div 컨테이너 사용 */}
-                  <div className="mg-tabs" role="tablist" aria-label="급여 관리 탭">
+                  <div className="mg-tabs" role="tablist" aria-label={t('erp:SalaryManagement.t_eeb28eec')}>
                     <MGButton
                       type="button"
                       variant="outline"
@@ -647,7 +647,7 @@ const SalaryManagement = () => {
                       onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
                       preventDoubleClick={false}
                     >
-                      급여 프로필
+                      {t('erp:SalaryManagement.t_053a17e1')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -661,7 +661,7 @@ const SalaryManagement = () => {
                       onClick={() => setActiveTabAndUrl(TAB_CALC)}
                       preventDoubleClick={false}
                     >
-                      급여 계산
+                      {t('erp:SalaryManagement.t_b2e25782')}
                     </MGButton>
                     <MGButton
                       type="button"
@@ -675,7 +675,7 @@ const SalaryManagement = () => {
                       onClick={() => setActiveTabAndUrl(TAB_TAX)}
                       preventDoubleClick={false}
                     >
-                      세금 관리
+                      {t('erp:SalaryManagement.t_780e38c6')}
                     </MGButton>
                   </div>
                 </div>
@@ -685,7 +685,7 @@ const SalaryManagement = () => {
             <div className="mg-v2-ad-b0kla salary-management__main">
             {showInitialInlineLoad ? (
               <div className="salary-management__initial-load" role="status" aria-live="polite" aria-busy="true">
-                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                <UnifiedLoading type="inline" text={t('erp:SalaryManagement.t_ef1822ad')} />
               </div>
             ) : (
               <>
@@ -693,7 +693,7 @@ const SalaryManagement = () => {
             <section className="mg-v2-ad-b0kla__card salary-filter-block" aria-labelledby="salary-filter-title">
               <h2 id="salary-filter-title" className="mg-v2-ad-b0kla__section-title salary-filter-block__title">
                 <span className="salary-filter-block__accent" aria-hidden />
-                계산 대상 선택
+                {t('erp:SalaryManagement.t_2e7b5ca6')}
               </h2>
               <div className="mg-w-full">
               <ErpFilterToolbar
@@ -701,7 +701,7 @@ const SalaryManagement = () => {
                 primaryRow={(
                   <div className="salary-filter-block__group">
                     <div className="salary-filter-block__field">
-                      <label htmlFor="salary-period" className="mg-v2-form-label">기간</label>
+                      <label htmlFor="salary-period" className="mg-v2-form-label">{t('erp:SalaryManagement.t_2622331e')}</label>
                       <select
                         id="salary-period"
                         value={selectedPeriod}
@@ -714,9 +714,9 @@ const SalaryManagement = () => {
                           }
                         }}
                         className="mg-v2-select"
-                        aria-label="기간 선택"
+                        aria-label={t('erp:SalaryManagement.t_49470825')}
                       >
-                        <option value="">기간 선택</option>
+                        <option value="">{t('erp:SalaryManagement.t_49470825')}</option>
                         {periodOptions.map(opt => (
                           <option key={opt.value} value={opt.value}>{toDisplayString(opt.label)}</option>
                         ))}
@@ -724,7 +724,7 @@ const SalaryManagement = () => {
                     </div>
                     {selectedPeriod && (
                       <div className="salary-filter-block__field salary-filter-block__period-display" role="status">
-                        <span className="mg-v2-form-label">실제 계산 기간</span>
+                        <span className="mg-v2-form-label">{t('erp:SalaryManagement.t_e5602930')}</span>
                         <span className="salary-filter-block__period-text">
                           {calculationPeriodDisplay
                             ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
@@ -745,11 +745,11 @@ const SalaryManagement = () => {
                           })}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => setIsConfigModalOpen(true)}
-                          title="기산일 기준 기간입니다. 설정에서 변경할 수 있습니다."
-                          aria-label="기산일 설정"
+                          title={t('erp:SalaryManagement.t_9bf8207c')}
+                          aria-label={t('erp:SalaryManagement.t_583cbabc')}
                           preventDoubleClick={false}
                         >
-                          설정
+                          {t('erp:SalaryManagement.t_c14a567e')}
                         </MGButton>
                       </div>
                     )}
@@ -770,22 +770,22 @@ const SalaryManagement = () => {
                           }
                         }}
                         className="mg-v2-select"
-                        aria-label="상담사 선택"
+                        aria-label={t('erp:SalaryManagement.t_fc554626')}
                       >
-                        <option value="">상담사 선택</option>
+                        <option value="">{t('erp:SalaryManagement.t_fc554626')}</option>
                         {consultants.map(c => (
                           <option key={c.id} value={c.id}>{toDisplayString(c.name)}</option>
                         ))}
                       </select>
                     </div>
                     <div className="salary-filter-block__field">
-                      <label htmlFor="salary-payday" className="mg-v2-form-label">급여 지급일</label>
+                      <label htmlFor="salary-payday" className="mg-v2-form-label">{t('erp:SalaryManagement.t_41604b0b')}</label>
                       <select
                         id="salary-payday"
                         value={selectedPayDay}
                         onChange={(e) => setSelectedPayDay(e.target.value)}
                         className="mg-v2-select"
-                        aria-label="급여 지급일 선택"
+                        aria-label={t('erp:SalaryManagement.t_e37bade0')}
                       >
                         {payDayOptions.map(opt => (
                           <option key={opt.codeValue} value={opt.codeValue}>{toDisplayString(opt.codeLabel)}</option>
@@ -803,14 +803,14 @@ const SalaryManagement = () => {
                       loading={silentListRefreshing}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       disabled={loading}
-                      aria-label="데이터 새로고침"
+                      aria-label={t('erp:SalaryManagement.t_8edcbb09')}
                       className={buildErpMgButtonClassName({
                         variant: 'secondary',
                         size: 'sm',
                         loading: silentListRefreshing
                       })}
                     >
-                      데이터 새로고침
+                      {t('erp:SalaryManagement.t_8edcbb09')}
                     </MGButton>
                     <MGButton
                       variant="primary"
@@ -830,7 +830,7 @@ const SalaryManagement = () => {
                         loading
                       })}
                     >
-                      계산하기
+                      {t('erp:SalaryManagement.t_dd64b2ef')}
                     </MGButton>
                   </div>
                 )}
@@ -848,7 +848,7 @@ const SalaryManagement = () => {
                   <div className="salary-profile-block__header mg-v2-mapping-list-block__header">
                     <div className="mg-v2-mapping-list-block__title">
                       <span className="salary-profile-block__accent" aria-hidden />
-                      상담사 급여 프로필
+                      {t('erp:SalaryManagement.t_ea9daadc')}
                     </div>
                     <div className="d-flex gap-2 align-items-center">
                       <ViewModeToggle
@@ -867,7 +867,7 @@ const SalaryManagement = () => {
                           size: 'sm'
                         })}
                       >
-                        새 프로필 생성
+                        {t('erp:SalaryManagement.t_52ede1a8')}
                       </MGButton>
                     </div>
                   </div>
@@ -884,7 +884,7 @@ const SalaryManagement = () => {
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         className={buildErpMgButtonClassName({ variant: 'primary' })}
                       >
-                        지금 프로필 작성하기
+                        {t('erp:SalaryManagement.t_9ec66b62')}
                       </MGButton>
                     </div>
                   )}
@@ -893,7 +893,7 @@ const SalaryManagement = () => {
                         <p className="salary-management__loading-text">{t('common.messages.loadingData')}</p>
                       </div>
                     ) : consultants.length === 0 ? (
-                      <p className="salary-profile-block__empty-state">상담사 데이터가 없습니다.</p>
+                      <p className="salary-profile-block__empty-state">{t('erp:SalaryManagement.t_fcdc229f')}</p>
                     ) : salaryProfiles.length > 0 ? (
                       profileViewMode === 'list' ? (
                         <ListTableView
@@ -941,7 +941,7 @@ const SalaryManagement = () => {
                                       size: 'sm'
                                     })}
                                   >
-                                    편집
+                                    {t('erp:SalaryManagement.t_d482e14b')}
                                   </MGButton>
                                 )}
                                 onCardClick={openModal}
@@ -976,7 +976,7 @@ const SalaryManagement = () => {
                                         size: 'sm'
                                       })}
                                     >
-                                      프로필 조회
+                                      {t('erp:SalaryManagement.t_5b384d76')}
                                     </MGButton>
                                     <MGButton
                                       variant="outline"
@@ -988,7 +988,7 @@ const SalaryManagement = () => {
                                         size: 'sm'
                                       })}
                                     >
-                                      편집
+                                      {t('erp:SalaryManagement.t_d482e14b')}
                                     </MGButton>
                                   </>
                                 )}
@@ -1012,7 +1012,7 @@ const SalaryManagement = () => {
                   <div className="salary-calc-block__header">
                     <h2 className="mg-v2-ad-b0kla__section-title salary-calc-block__title">
                       <span className="salary-calc-block__accent" aria-hidden />
-                      급여 계산
+                      {t('erp:SalaryManagement.t_b2e25782')}
                     </h2>
                     {salaryProfiles.length === 0 && (
                       <MGButton
@@ -1025,17 +1025,17 @@ const SalaryManagement = () => {
                           size: 'sm'
                         })}
                       >
-                        지금 작성하기
+                        {t('erp:SalaryManagement.t_79536663')}
                       </MGButton>
                     )}
                   </div>
                   <div className="salary-calc-block__preview">
                     {previewResult && (
                       <div className="mg-v2-ad-b0kla__card salary-calc-block__preview-card">
-                        <h3 className="salary-calc-block__preview-title">계산 결과 미리보기</h3>
+                        <h3 className="salary-calc-block__preview-title">{t('erp:SalaryManagement.t_2e4c953b')}</h3>
                         {previewResult.periodStart && previewResult.periodEnd && (
                           <p className="salary-calc-block__preview-period">
-                            적용 기간: <SafeText>{previewResult.periodStart}</SafeText> ~ <SafeText>{previewResult.periodEnd}</SafeText> (기산일 기준)
+                            {t('erp:SalaryManagement.t_2b7495ab')} <SafeText>{previewResult.periodStart}</SafeText> ~ <SafeText>{previewResult.periodEnd}</SafeText> {t('erp:SalaryManagement.t_f4ae3170')}
                           </p>
                         )}
                         <div className="salary-calc-block__preview-summary">
@@ -1073,7 +1073,7 @@ const SalaryManagement = () => {
                             </>
                           ) : (
                             <div className="salary-calc-block__preview-card-item">
-                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">총 급여</span>
+                              <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_bd8a97b2')}</span>
                               <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.grossSalary)}</span>
                             </div>
                           )}
@@ -1089,20 +1089,20 @@ const SalaryManagement = () => {
                             </div>
                           )}
                           <div className="salary-calc-block__preview-card-item">
-                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">세금·공제</span>
+                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_84bfbb23')}</span>
                             <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">-{formatCurrency(previewResult.taxAmount)}</span>
                           </div>
                           <div className="salary-calc-block__preview-card-item salary-calc-block__preview-card-item--net">
-                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">실지급액</span>
+                            <span className="mg-v2-ad-b0kla__kpi-label salary-management__stat-label">{t('erp:SalaryManagement.t_1ca8bc0d')}</span>
                             <span className="mg-v2-ad-b0kla__kpi-value salary-management__stat-value">{formatCurrency(previewResult.netSalary)}</span>
                           </div>
                         </div>
                         <dl className="salary-calc-block__preview-grid">
                           <dt className="salary-management__stat-label">{t('common.labels.consultant')}</dt>
                           <dd className="salary-management__stat-value"><SafeText>{previewResult.consultantName}</SafeText></dd>
-                          <dt className="salary-management__stat-label">기간</dt>
+                          <dt className="salary-management__stat-label">{t('erp:SalaryManagement.t_2622331e')}</dt>
                           <dd className="salary-management__stat-value"><SafeText>{previewResult.period}</SafeText></dd>
-                          <dt className="salary-management__stat-label">상담 건수</dt>
+                          <dt className="salary-management__stat-label">{t('erp:SalaryManagement.t_b193260c')}</dt>
                           <dd className="salary-management__stat-value">{toDisplayString(previewResult.consultationCount)}건</dd>
                         </dl>
                         <div className="mg-v2-card-actions salary-calc-block__preview-actions">
@@ -1156,7 +1156,7 @@ const SalaryManagement = () => {
                               loading: confirmSalaryLoading
                             })}
                           >
-                            확정
+                            {t('erp:SalaryManagement.t_55536106')}
                           </MGButton>
                           <MGButton
                             variant="outline"
@@ -1165,11 +1165,11 @@ const SalaryManagement = () => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             className={buildErpMgButtonClassName({ variant: 'outline' })}
                           >
-                            다시 계산
+                            {t('erp:SalaryManagement.t_2f1d7d00')}
                           </MGButton>
                         </div>
                         <p className="salary-calc-block__preview-notice">
-                          미리보기만으로는 DB에 저장되지 않습니다. <strong>확정</strong>해야 급여·세금 내역이 저장되며,
+                          {t('erp:SalaryManagement.t_6c60769a')} <strong>{t('erp:SalaryManagement.t_55536106')}</strong>해야 급여·세금 내역이 저장되며,
                           세금 관리 탭 통계에도 반영됩니다.
                           동일 상담사·동일 월에 이미 확정된 급여가 있으면 확정할 수 없습니다. 아래「급여 계산 내역」을 확인해 주세요.
                         </p>
@@ -1177,7 +1177,7 @@ const SalaryManagement = () => {
                     )}
                   </div>
                   <div className="salary-calc-block__list">
-                    <h3 className="mg-v2-ad-b0kla__section-title salary-calc-block__list-title">급여 계산 내역</h3>
+                    <h3 className="mg-v2-ad-b0kla__section-title salary-calc-block__list-title">{t('erp:SalaryManagement.t_82821fb8')}</h3>
                     {!loading && salaryCalculations.length === 0 && (
                       <div className="salary-calc-block__empty" role="status" data-state="empty">
                         <p className="salary-calc-block__empty-message">
@@ -1209,7 +1209,7 @@ const SalaryManagement = () => {
                             </div>
                           )}
                           <div className="salary-management__detail-row">
-                            <span>총 급여 (세전)</span>
+                            <span>{t('erp:SalaryManagement.t_92a15637')}</span>
                             <span>
                               {formatCurrency(
                                 calculation.grossSalary != null && calculation.grossSalary !== ''
@@ -1225,7 +1225,7 @@ const SalaryManagement = () => {
                             </div>
                           )}
                           <div className="salary-management__detail-row salary-management__detail-row--total">
-                            <span>실지급액 (세후)</span>
+                            <span>{t('erp:SalaryManagement.t_c3363939')}</span>
                             <span>
                               {formatCurrency(
                                 calculation.netSalary != null && calculation.netSalary !== ''
@@ -1235,7 +1235,7 @@ const SalaryManagement = () => {
                             </span>
                           </div>
                           <div className="salary-management__detail-row">
-                            <span>상담 건수</span>
+                            <span>{t('erp:SalaryManagement.t_b193260c')}</span>
                             <span>{toDisplayString(calculation.consultationCount)}건</span>
                           </div>
                         </div>
@@ -1253,7 +1253,7 @@ const SalaryManagement = () => {
                               size: 'sm'
                             })}
                           >
-                            세금 내역 보기
+                            {t('erp:SalaryManagement.t_3c8aa4d4')}
                           </MGButton>
                           {normalizeSalaryCalculationStatus(calculation.status) === SALARY_STATUS.CALCULATED && (
                             <MGButton
@@ -1286,7 +1286,7 @@ const SalaryManagement = () => {
                               size: 'sm'
                             })}
                           >
-                            출력
+                            {t('erp:SalaryManagement.t_2df41b9a')}
                           </MGButton>
                           <SalaryPrintComponent
                             salaryData={calculation}
@@ -1312,7 +1312,7 @@ const SalaryManagement = () => {
                   <div className="salary-tax-block__header">
                     <h2 className="mg-v2-ad-b0kla__section-title salary-tax-block__title">
                       <span className="salary-tax-block__accent" aria-hidden />
-                      세금 통계
+                      {t('erp:SalaryManagement.t_5708430f')}
                     </h2>
                     <MGButton
                       variant="primary"
@@ -1327,19 +1327,19 @@ const SalaryManagement = () => {
                         loading: loading && activeTab === TAB_TAX
                       })}
                     >
-                      세금 통계 조회
+                      {t('erp:SalaryManagement.t_593249b4')}
                     </MGButton>
                   </div>
                   {taxStatistics ? (
                     <div className="mg-v2-ad-b0kla__card salary-tax-block__card">
-                      <h3 className="salary-tax-block__card-title">세금 통계 내역</h3>
+                      <h3 className="salary-tax-block__card-title">{t('erp:SalaryManagement.t_269e8dc5')}</h3>
                       <div className="salary-tax-block__card-body">
                         <div className="salary-management__detail-row">
-                          <span>총 세금액</span>
+                          <span>{t('erp:SalaryManagement.t_f338f53f')}</span>
                           <span className="salary-tax-block__value">{formatCurrency(taxStatistics.totalTaxAmount || 0)}</span>
                         </div>
                         <div className="salary-management__detail-row">
-                          <span>세금 건수</span>
+                          <span>{t('erp:SalaryManagement.t_b9a382d3')}</span>
                           <span>{toDisplayString(taxStatistics.taxCount ?? taxStatistics.totalCalculations ?? 0)}건</span>
                         </div>
                         {TAX_BREAKDOWN_ORDER.map((key) => {
@@ -1355,7 +1355,7 @@ const SalaryManagement = () => {
                           );
                         })}
                         <div className="salary-management__detail-row salary-management__detail-row--total">
-                          <span>총 공제액</span>
+                          <span>{t('erp:SalaryManagement.t_6f01f8c9')}</span>
                           <span>-{formatCurrency(taxStatistics.totalTaxAmount || 0)}</span>
                         </div>
                       </div>
@@ -1369,7 +1369,7 @@ const SalaryManagement = () => {
                             size: 'sm'
                           })}
                         >
-                          세금 상세 내역 보기
+                          {t('erp:SalaryManagement.t_9b206b2c')}
                         </MGButton>
                         <MGButton
                           variant="primary"
@@ -1380,13 +1380,13 @@ const SalaryManagement = () => {
                             size: 'sm'
                           })}
                         >
-                          출력
+                          {t('erp:SalaryManagement.t_2df41b9a')}
                         </MGButton>
                       </div>
                     </div>
                   ) : (
                     <div className="salary-tax-block__empty" data-state="empty">
-                      <p>세금 통계를 조회하려면 기간을 선택한 뒤 &quot;세금 통계 조회&quot; 버튼을 클릭하세요.</p>
+                      <p>{t('erp:SalaryManagement.t_2b4bcb92')}</p>
                     </div>
                   )}
                 </section>
@@ -1404,14 +1404,14 @@ const SalaryManagement = () => {
           aria-live="polite"
           aria-busy="true"
         >
-          <UnifiedLoading type="inline" text="로딩 중..." />
+          <UnifiedLoading type="inline" text={t('erp:SalaryManagement.t_06e61b86')} />
         </div>
       )}
 
       <UnifiedModal
         isOpen={isConsultantPickerOpen}
         onClose={closeConsultantPicker}
-        title="상담사 선택"
+        title={t('erp:SalaryManagement.t_fc554626')}
         subtitle="급여 프로필을 작성할 상담사를 선택하세요."
         size="small"
         backdropClick={true}
@@ -1419,7 +1419,7 @@ const SalaryManagement = () => {
         className="mg-v2-ad-b0kla"
       >
         {consultants.length === 0 ? (
-          <p className="salary-profile-block__empty-state mg-v2-mb-md">상담사가 없습니다.</p>
+          <p className="salary-profile-block__empty-state mg-v2-mb-md">{t('erp:SalaryManagement.t_dba1b53d')}</p>
         ) : (
           <ul className="mg-v2-list-container">
             {consultants.map((consultant) => (

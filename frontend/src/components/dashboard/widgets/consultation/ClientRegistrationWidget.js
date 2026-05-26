@@ -280,7 +280,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
           // 등록 버튼 화면
           <div className="registration-welcome">
             <div className="welcome-icon-wrapper" />
-            <h3 className="welcome-title">내담자 등록</h3>
+            <h3 className="welcome-title">{t('common:dashboard.ClientRegistrationWidget.t_bee0f19e')}</h3>
             <p className="welcome-description">
               {
                 widget.config?.emptyMessage || 
@@ -301,14 +301,14 @@ const ClientRegistrationWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowForm(true)}
             >
-              내담자 등록 시작
+              {t('common:dashboard.ClientRegistrationWidget.t_e6cc711d')}
             </MGButton>
           </div>
         ) : (
           // 등록 폼
           <div className="registration-form-container">
             <div className="form-header">
-              <h3 className="form-title">내담자 정보 입력</h3>
+              <h3 className="form-title">{t('common:dashboard.ClientRegistrationWidget.t_4285a9ff')}</h3>
               <MGButton
                 variant="outline"
                 size="small"
@@ -331,14 +331,14 @@ const ClientRegistrationWidget = ({ widget, user }) => {
             <form onSubmit={handleSubmit} className="client-registration-form">
               {/* 필수 필드 */}
               <div className="form-section">
-                <h4 className="section-title">기본 정보</h4>
+                <h4 className="section-title">{t('common:dashboard.ClientRegistrationWidget.t_eb7f501b')}</h4>
                 <p className="mg-v2-form-help mg-v2-form-help--spacing-3">
                   {VALIDATION_MESSAGES.HELP_EMAIL_OR_PHONE_ONE_REQUIRED}
                 </p>
                 <div className="form-grid">
                   <div className="form-group">
                     <label htmlFor="userId" className="form-label">
-                      아이디 <span className="required">*</span>
+                      {t('common:dashboard.ClientRegistrationWidget.t_8dd085d9')} <span className="required">*</span>
                     </label>
                     <input
                       type="text"
@@ -348,7 +348,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                       onChange={handleInputChange}
                       required
                       className={`form-control ${getFieldError('userId') ? 'error' : ''}`}
-                      placeholder="로그인 아이디"
+                      placeholder={t('common:dashboard.ClientRegistrationWidget.t_8f56d137')}
                     />
                     {getFieldError('userId') && (
                       <div className="field-error">
@@ -401,7 +401,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="password" className="form-label">
-                      비밀번호 <span className="required">*</span>
+                      {t('common:dashboard.ClientRegistrationWidget.t_81973897')} <span className="required">*</span>
                     </label>
                     <input
                       type="password"
@@ -411,7 +411,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                       onChange={handleInputChange}
                       required
                       className={`form-control ${getFieldError('password') ? 'error' : ''}`}
-                      placeholder="로그인 비밀번호"
+                      placeholder={t('common:dashboard.ClientRegistrationWidget.t_6669670d')}
                     />
                     {getFieldError('password') && (
                       <div className="field-error">
@@ -423,7 +423,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="phone" className="form-label">
-                      휴대폰 번호
+                      {t('common:dashboard.ClientRegistrationWidget.t_58169883')}
                     </label>
                     <input
                       type="tel"
@@ -444,7 +444,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-row two-cols">
                     <div className="form-group">
-                      <label htmlFor="rrnFirst6" className="form-label">주민번호 앞 6자리 (선택)</label>
+                      <label htmlFor="rrnFirst6" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_61537487')}</label>
                       <input
                         type="text"
                         id="rrnFirst6"
@@ -461,7 +461,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                       )}
                     </div>
                     <div className="form-group">
-                      <label htmlFor="rrnLast1" className="form-label">주민번호 뒤 1자리 (선택)</label>
+                      <label htmlFor="rrnLast1" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_77fb1e91')}</label>
                       <input
                         type="text"
                         id="rrnLast1"
@@ -484,10 +484,10 @@ const ClientRegistrationWidget = ({ widget, user }) => {
               {/* 추가 정보 (간단 폼이 아닌 경우만) */}
               {!showCompactForm && (
                 <div className="form-section">
-                  <h4 className="section-title">추가 정보</h4>
+                  <h4 className="section-title">{t('common:dashboard.ClientRegistrationWidget.t_9b3193e1')}</h4>
                   <div className="form-grid">
                     <div className="form-group">
-                      <label htmlFor="age" className="form-label">나이</label>
+                      <label htmlFor="age" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_6c620e5c')}</label>
                       <input
                         type="number"
                         id="age"
@@ -497,7 +497,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                         className={`form-control ${getFieldError('age') ? 'error' : ''}`}
                         min="1"
                         max="150"
-                        placeholder="나이 입력"
+                        placeholder={t('common:dashboard.ClientRegistrationWidget.t_6e3ab51c')}
                       />
                       {getFieldError('age') && (
                         <div className="field-error">
@@ -508,7 +508,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label className="form-label">주소 검색</label>
+                      <label className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_1c2422dd')}</label>
                       <div className="address-search-row">
                         <MGButton
                           type="button"
@@ -537,20 +537,20 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                             }
                           }}
                         >
-                          주소 검색
+                          {t('common:dashboard.ClientRegistrationWidget.t_1c2422dd')}
                         </MGButton>
                         <input
                           type="text"
                           readOnly
                           className="form-control address-display"
                           value={formData.address || ''}
-                          placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                          placeholder={t('common:dashboard.ClientRegistrationWidget.t_c44d8d97')}
                         />
                       </div>
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="addressDetail" className="form-label">상세 주소</label>
+                      <label htmlFor="addressDetail" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_dad291cb')}</label>
                       <input
                         type="text"
                         id="addressDetail"
@@ -558,12 +558,12 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                         value={formData.addressDetail}
                         onChange={handleInputChange}
                         className="form-control"
-                        placeholder="동, 호수, 상세 주소를 입력하세요."
+                        placeholder={t('common:dashboard.ClientRegistrationWidget.t_9c34782e')}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="postalCode" className="form-label">우편번호</label>
+                      <label htmlFor="postalCode" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_cd21379e')}</label>
                       <input
                         type="text"
                         id="postalCode"
@@ -577,7 +577,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="consultationPurpose" className="form-label">상담 목적</label>
+                      <label htmlFor="consultationPurpose" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_616cc241')}</label>
                       <textarea
                         id="consultationPurpose"
                         name="consultationPurpose"
@@ -585,12 +585,12 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                         onChange={handleInputChange}
                         className="form-control"
                         rows={3}
-                        placeholder="상담 목적을 입력해주세요"
+                        placeholder={t('common:dashboard.ClientRegistrationWidget.t_a526dd86')}
                       />
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="consultationHistory" className="form-label">상담 이력</label>
+                      <label htmlFor="consultationHistory" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_8829f6b0')}</label>
                       <textarea
                         id="consultationHistory"
                         name="consultationHistory"
@@ -598,12 +598,12 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                         onChange={handleInputChange}
                         className="form-control"
                         rows={2}
-                        placeholder="이전 상담 경험"
+                        placeholder={t('common:dashboard.ClientRegistrationWidget.t_71ebad6c')}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="emergencyContact" className="form-label">비상 연락처 이름</label>
+                      <label htmlFor="emergencyContact" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_468315a5')}</label>
                       <input
                         type="text"
                         id="emergencyContact"
@@ -611,12 +611,12 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                         value={formData.emergencyContact}
                         onChange={handleInputChange}
                         className="form-control"
-                        placeholder="비상 연락처 이름"
+                        placeholder={t('common:dashboard.ClientRegistrationWidget.t_468315a5')}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="emergencyPhone" className="form-label">비상 연락처 전화번호</label>
+                      <label htmlFor="emergencyPhone" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_6c2274e9')}</label>
                       <input
                         type="tel"
                         id="emergencyPhone"
@@ -635,7 +635,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="notes" className="form-label">메모</label>
+                      <label htmlFor="notes" className="form-label">{t('common:dashboard.ClientRegistrationWidget.t_f3ce23c8')}</label>
                       <textarea
                         id="notes"
                         name="notes"
@@ -643,7 +643,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                         onChange={handleInputChange}
                         className="form-control"
                         rows={3}
-                        placeholder="추가 메모"
+                        placeholder={t('common:dashboard.ClientRegistrationWidget.t_ee55c948')}
                       />
                     </div>
                   </div>
@@ -678,7 +678,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleReset}
                 >
-                  초기화
+                  {t('common:dashboard.ClientRegistrationWidget.t_ff75b4ff')}
                 </MGButton>
                 <MGButton
                   type="submit"
@@ -692,7 +692,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                   loading={submitting}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  내담자 등록
+                  {t('common:dashboard.ClientRegistrationWidget.t_bee0f19e')}
                 </MGButton>
               </div>
             </form>

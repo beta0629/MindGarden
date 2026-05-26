@@ -251,15 +251,15 @@ const ImprovedTaxManagement = () => {
 
   const renderBreakdownTable = (breakdown) => (
     <div className="im-tax-mgmt__breakdown-wrap">
-      <h3 className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__breakdown-title">세목별 breakdown</h3>
+      <h3 className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__breakdown-title">{t('erp:ImprovedTaxManagement.t_99bf4f09')}</h3>
       <table className="im-tax-mgmt__table salary-table">
         <thead>
           <tr>
             <th className="im-tax-mgmt__th" scope="col">
-              세목
+              {t('erp:ImprovedTaxManagement.t_3f0b0fef')}
             </th>
             <th className="im-tax-mgmt__th im-tax-mgmt__th--numeric" scope="col">
-              금액
+              {t('erp:ImprovedTaxManagement.t_64454827')}
             </th>
           </tr>
         </thead>
@@ -281,13 +281,13 @@ const ImprovedTaxManagement = () => {
 
   if (!sessionIsLoggedIn || !sessionUser) {
     return (
-      <AdminCommonLayout title="세무 관리">
+      <AdminCommonLayout title={t('erp:ImprovedTaxManagement.t_7d278dea')}>
         <ContentArea className="erp-system erp-container" ariaLabel="세무 관리">
           <ErpPageShell mainAriaLabel="세무 관리 로그인 안내">
             <div className="im-tax-mgmt__login-hint">
               <ErpEmptyState
-                title="로그인이 필요합니다."
-                description="세무 관리 기능을 사용하려면 로그인해 주세요."
+                title={t('erp:ImprovedTaxManagement.t_5271ee34')}
+                description={t('erp:ImprovedTaxManagement.t_77283b7a')}
               />
             </div>
           </ErpPageShell>
@@ -297,14 +297,14 @@ const ImprovedTaxManagement = () => {
   }
 
   return (
-    <AdminCommonLayout title="세무 관리">
+    <AdminCommonLayout title={t('erp:ImprovedTaxManagement.t_7d278dea')}>
       <ContentArea className="erp-system erp-container" ariaLabel="세무 관리 콘텐츠">
         <ErpPageShell
           mainAriaLabel="세무 관리 본문"
           headerSlot={
             <>
               <ContentHeader
-                title="세무 관리"
+                title={t('erp:ImprovedTaxManagement.t_7d278dea')}
                 subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다."
               />
               <div className="mg-w-full mg-mb-md">
@@ -313,7 +313,7 @@ const ImprovedTaxManagement = () => {
                   primaryRow={(
                     <div className="im-tax-mgmt__filter-toolbar-row">
                       <label className="mg-v2-content-header__period im-tax-mgmt__header-period">
-                        <span className="im-tax-mgmt__header-period-label">기간</span>
+                        <span className="im-tax-mgmt__header-period-label">{t('erp:ImprovedTaxManagement.t_2622331e')}</span>
                         <input
                           type="month"
                           value={selectedPeriod}
@@ -335,7 +335,7 @@ const ImprovedTaxManagement = () => {
                           onClick={() => setShowCreateModal(true)}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
-                          추가 세금 계산
+                          {t('erp:ImprovedTaxManagement.t_a2085381')}
                         </MGButton>
                       )}
                     </div>
@@ -354,9 +354,9 @@ const ImprovedTaxManagement = () => {
                         loading={silentListRefreshing}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         disabled={loading || silentListRefreshing}
-                        aria-label="데이터 새로고침"
+                        aria-label={t('erp:ImprovedTaxManagement.t_8edcbb09')}
                       >
-                        데이터 새로고침
+                        {t('erp:ImprovedTaxManagement.t_8edcbb09')}
                       </MGButton>
                     </div>
                   )}
@@ -375,7 +375,7 @@ const ImprovedTaxManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                개요
+                {t('erp:ImprovedTaxManagement.t_476966c5')}
               </MGButton>
               <MGButton
                 type="button"
@@ -386,7 +386,7 @@ const ImprovedTaxManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                세금 계산
+                {t('erp:ImprovedTaxManagement.t_6df7a2a5')}
               </MGButton>
               <MGButton
                 type="button"
@@ -397,7 +397,7 @@ const ImprovedTaxManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                신고서
+                {t('erp:ImprovedTaxManagement.t_891e4acc')}
               </MGButton>
               <MGButton
                 type="button"
@@ -408,7 +408,7 @@ const ImprovedTaxManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                설정
+                {t('erp:ImprovedTaxManagement.t_c14a567e')}
               </MGButton>
             </div>
           }
@@ -416,7 +416,7 @@ const ImprovedTaxManagement = () => {
           <div className="im-tax-mgmt__shell-body" aria-busy={loading}>
             {loading && (
               <div role="status" aria-live="polite" aria-busy="true">
-                <UnifiedLoading type="inline" text="로딩 중..." />
+                <UnifiedLoading type="inline" text={t('erp:ImprovedTaxManagement.t_06e61b86')} />
               </div>
             )}
 
@@ -447,32 +447,32 @@ const ImprovedTaxManagement = () => {
                 {activeTab === 'overview' && (
                   <section className="im-tax-mgmt__section" aria-labelledby="im-tax-overview-heading">
                     <h2 id="im-tax-overview-heading" className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__section-title">
-                      세무 개요
+                      {t('erp:ImprovedTaxManagement.t_a248081b')}
                     </h2>
                     {statistics ? (
                       <>
                         <div className="im-tax-mgmt__kpi-grid">
                           <ErpKpiStatCard
-                            title="총 세금액"
+                            title={t('erp:ImprovedTaxManagement.t_f338f53f')}
                             value={statistics.totalTaxAmount}
                             formatType={ERP_NUMBER_FORMAT.CURRENCY}
                             variant={ERP_KPI_STAT_VARIANT.PRIMARY}
                             trend={{ direction: 'neutral', label: selectedPeriod }}
                           />
                           <ErpKpiStatCard
-                            title="계산 건수"
+                            title={t('erp:ImprovedTaxManagement.t_e5536e2b')}
                             value={statistics.totalCalculations ?? 0}
                             formatType={ERP_NUMBER_FORMAT.COUNT}
                             trend={{ direction: 'neutral', label: '급여 계산 기준' }}
                           />
                           <ErpKpiStatCard
-                            title="총 급여"
+                            title={t('erp:ImprovedTaxManagement.t_bd8a97b2')}
                             value={statistics.totalGrossSalary}
                             formatType={ERP_NUMBER_FORMAT.CURRENCY}
                             trend={{ direction: 'neutral', label: '총 지급액' }}
                           />
                           <ErpKpiStatCard
-                            title="실지급액"
+                            title={t('erp:ImprovedTaxManagement.t_1ca8bc0d')}
                             value={statistics.totalNetSalary}
                             formatType={ERP_NUMBER_FORMAT.CURRENCY}
                             trend={{ direction: 'neutral', label: '공제 후' }}
@@ -482,8 +482,8 @@ const ImprovedTaxManagement = () => {
                       </>
                     ) : (
                       <ErpEmptyState
-                        title="해당 기간 데이터가 없습니다."
-                        description="다른 기간을 선택하거나 급여·세금 계산을 먼저 진행해 주세요."
+                        title={t('erp:ImprovedTaxManagement.t_29a90114')}
+                        description={t('erp:ImprovedTaxManagement.t_c5f33970')}
                       />
                     )}
                   </section>
@@ -492,32 +492,32 @@ const ImprovedTaxManagement = () => {
                 {activeTab === 'calculations' && (
                   <section className="im-tax-mgmt__section" aria-labelledby="im-tax-calc-heading">
                     <h2 id="im-tax-calc-heading" className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__section-title">
-                      세금 계산 · 기간별 통계
+                      {t('erp:ImprovedTaxManagement.t_a8983a31')}
                     </h2>
                     {statistics ? (
                       <>
                         <div className="im-tax-mgmt__kpi-grid im-tax-mgmt__kpi-grid--tight">
                           <ErpKpiStatCard
-                            title="총 세금"
+                            title={t('erp:ImprovedTaxManagement.t_f5b0a6d0')}
                             value={statistics.totalTaxAmount}
                             formatType={ERP_NUMBER_FORMAT.CURRENCY}
                             variant={ERP_KPI_STAT_VARIANT.PRIMARY}
                           />
                           <ErpKpiStatCard
-                            title="계산 건수"
+                            title={t('erp:ImprovedTaxManagement.t_e5536e2b')}
                             value={statistics.totalCalculations ?? 0}
                             formatType={ERP_NUMBER_FORMAT.COUNT}
                           />
                         </div>
                         {statistics.breakdown ? renderBreakdownTable(statistics.breakdown) : null}
                         <p className="im-tax-mgmt__hint">
-                          상단 「추가 세금 계산」으로 급여 계산에 추가 세금을 반영할 수 있습니다.
+                          {t('erp:ImprovedTaxManagement.t_0e5e7b15')}
                         </p>
                       </>
                     ) : (
                       <ErpEmptyState
-                        title="해당 기간 데이터가 없습니다."
-                        description="통계를 불러올 수 없거나 급여 계산 데이터가 없습니다."
+                        title={t('erp:ImprovedTaxManagement.t_29a90114')}
+                        description={t('erp:ImprovedTaxManagement.t_c04a1227')}
                       />
                     )}
                   </section>
@@ -526,22 +526,22 @@ const ImprovedTaxManagement = () => {
                 {activeTab === 'reports' && (
                   <section className="im-tax-mgmt__section" aria-labelledby="im-tax-report-heading">
                     <h2 id="im-tax-report-heading" className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__section-title">
-                      세금 신고서
+                      {t('erp:ImprovedTaxManagement.t_ef417b76')}
                     </h2>
                     <div className="im-tax-mgmt__report-grid">
                       <article className="im-tax-mgmt__report-card">
                         <div className="im-tax-mgmt__report-card-head">
-                          <h3 className="im-tax-mgmt__report-card-title">부가가치세 신고</h3>
+                          <h3 className="im-tax-mgmt__report-card-title">{t('erp:ImprovedTaxManagement.t_ae3ed896')}</h3>
                           <FileText className="im-tax-mgmt__report-icon--primary" size={20} aria-hidden />
                         </div>
-                        <p className="im-tax-mgmt__report-desc">분기별 부가가치세 신고서 작성 및 제출</p>
+                        <p className="im-tax-mgmt__report-desc">{t('erp:ImprovedTaxManagement.t_200139ee')}</p>
                         <div className="im-tax-mgmt__report-meta">
                           <div className="im-tax-mgmt__report-meta-row">
-                            <span className="im-tax-mgmt__report-meta-label">다음 신고일:</span>
+                            <span className="im-tax-mgmt__report-meta-label">{t('erp:ImprovedTaxManagement.t_c11f41a0')}</span>
                             <ErpSafeText value={REPORT_TAB_COPY.VAT_NEXT_DATE} />
                           </div>
                           <div className="im-tax-mgmt__report-meta-row">
-                            <span className="im-tax-mgmt__report-meta-label">상태:</span>
+                            <span className="im-tax-mgmt__report-meta-label">{t('erp:ImprovedTaxManagement.t_09ac262b')}</span>
                             <ErpSafeText value="준비 중" />
                           </div>
                         </div>
@@ -558,25 +558,25 @@ const ImprovedTaxManagement = () => {
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
-                            신고서 작성
+                            {t('erp:ImprovedTaxManagement.t_1081e36a')}
                           </MGButton>
                         </div>
                       </article>
                       <article className="im-tax-mgmt__report-card">
                         <div className="im-tax-mgmt__report-card-head">
-                          <h3 className="im-tax-mgmt__report-card-title">소득세 신고</h3>
+                          <h3 className="im-tax-mgmt__report-card-title">{t('erp:ImprovedTaxManagement.t_d1a2dbcf')}</h3>
                           <FileText className="im-tax-mgmt__report-icon--success" size={20} aria-hidden />
                         </div>
-                        <p className="im-tax-mgmt__report-desc">연말정산 및 소득세 신고서 작성</p>
+                        <p className="im-tax-mgmt__report-desc">{t('erp:ImprovedTaxManagement.t_262be2b8')}</p>
                         <div className="im-tax-mgmt__report-meta">
                           <div className="im-tax-mgmt__report-meta-row">
-                            <span className="im-tax-mgmt__report-meta-label">신고 기간:</span>
+                            <span className="im-tax-mgmt__report-meta-label">{t('erp:ImprovedTaxManagement.t_a08d4f5d')}</span>
                             <ErpSafeText
                               value={`${REPORT_TAB_COPY.INCOME_RANGE_START} ~ ${REPORT_TAB_COPY.INCOME_RANGE_END}`}
                             />
                           </div>
                           <div className="im-tax-mgmt__report-meta-row">
-                            <span className="im-tax-mgmt__report-meta-label">상태:</span>
+                            <span className="im-tax-mgmt__report-meta-label">{t('erp:ImprovedTaxManagement.t_09ac262b')}</span>
                             <ErpSafeText value="진행 중" />
                           </div>
                         </div>
@@ -593,7 +593,7 @@ const ImprovedTaxManagement = () => {
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
-                            신고서 확인
+                            {t('erp:ImprovedTaxManagement.t_819a6fdd')}
                           </MGButton>
                         </div>
                       </article>
@@ -604,12 +604,12 @@ const ImprovedTaxManagement = () => {
                 {activeTab === 'settings' && (
                   <section className="im-tax-mgmt__section" aria-labelledby="im-tax-settings-heading">
                     <h2 id="im-tax-settings-heading" className="mg-v2-ad-b0kla__chart-title im-tax-mgmt__section-title">
-                      세무 설정
+                      {t('erp:ImprovedTaxManagement.t_f236670f')}
                     </h2>
                     {taxCategories.length === 0 ? (
                       <ErpEmptyState
-                        title="등록된 세금 카테고리가 없습니다."
-                        description="공통코드(TAX_CATEGORY)를 확인하거나 관리자에게 문의해 주세요."
+                        title={t('erp:ImprovedTaxManagement.t_6f76108d')}
+                        description={t('erp:ImprovedTaxManagement.t_473f1870')}
                       />
                     ) : (
                       <div className="im-tax-mgmt__settings-grid">
@@ -628,11 +628,11 @@ const ImprovedTaxManagement = () => {
                             </p>
                             <div className="im-tax-mgmt__settings-meta">
                               <div>
-                                <span className="im-tax-mgmt__report-meta-label">코드:</span>
+                                <span className="im-tax-mgmt__report-meta-label">{t('erp:ImprovedTaxManagement.t_3c6d4b7d')}</span>
                                 <ErpSafeText value={category.codeValue} fallback="-" />
                               </div>
                               <div>
-                                <span className="im-tax-mgmt__report-meta-label">세율:</span>
+                                <span className="im-tax-mgmt__report-meta-label">{t('erp:ImprovedTaxManagement.t_14e2e2bc')}</span>
                                 <ErpSafeText value={getCategoryTaxRateLabel(category)} />
                               </div>
                             </div>
@@ -651,7 +651,7 @@ const ImprovedTaxManagement = () => {
       <UnifiedModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="추가 세금 계산"
+        title={t('erp:ImprovedTaxManagement.t_a2085381')}
         subtitle="급여 계산에 추가 세금을 반영합니다."
         size="medium"
         variant="form"
@@ -685,14 +685,14 @@ const ImprovedTaxManagement = () => {
               loading={loading}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              계산 반영
+              {t('erp:ImprovedTaxManagement.t_c367c7db')}
             </MGButton>
           </>
         }
       >
         <div className="im-tax-mgmt-modal__field">
           <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-calculationId">
-            급여 계산 *
+            {t('erp:ImprovedTaxManagement.t_5acdba99')}
           </label>
           <select
             id="tax-modal-calculationId"
@@ -700,7 +700,7 @@ const ImprovedTaxManagement = () => {
             value={newTaxItem.calculationId}
             onChange={(e) => setNewTaxItem({ ...newTaxItem, calculationId: e.target.value })}
           >
-            <option value="">선택</option>
+            <option value="">{t('erp:ImprovedTaxManagement.t_08109e41')}</option>
             {calculationsList.map((c) => (
               <option key={c.id} value={c.id}>
                 ID {c.id} · {c.consultant?.name ?? c.consultantId ?? '-'} ·{' '}
@@ -710,13 +710,13 @@ const ImprovedTaxManagement = () => {
           </select>
           {calculationsList.length === 0 && (
             <small className="im-tax-mgmt-modal__hint">
-              해당 기간 급여 계산이 없습니다. 급여 관리에서 먼저 계산해 주세요.
+              {t('erp:ImprovedTaxManagement.t_e521e28c')}
             </small>
           )}
         </div>
         <div className="im-tax-mgmt-modal__field">
           <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-grossAmount">
-            과세 기준 금액 *
+            {t('erp:ImprovedTaxManagement.t_d19c4f97')}
           </label>
           <input
             id="tax-modal-grossAmount"
@@ -730,7 +730,7 @@ const ImprovedTaxManagement = () => {
         </div>
         <div className="im-tax-mgmt-modal__field">
           <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-taxType">
-            세금 유형 *
+            {t('erp:ImprovedTaxManagement.t_8f15db05')}
           </label>
           <select
             id="tax-modal-taxType"
@@ -747,7 +747,7 @@ const ImprovedTaxManagement = () => {
         </div>
         <div className="im-tax-mgmt-modal__field">
           <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-taxRate">
-            세율 (%) *
+            {t('erp:ImprovedTaxManagement.t_2c3f3c8d')}
           </label>
           <input
             id="tax-modal-taxRate"
@@ -761,7 +761,7 @@ const ImprovedTaxManagement = () => {
         </div>
         <div className="im-tax-mgmt-modal__field">
           <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-taxName">
-            세금명 (선택)
+            {t('erp:ImprovedTaxManagement.t_7d1044b5')}
           </label>
           <input
             id="tax-modal-taxName"
@@ -773,7 +773,7 @@ const ImprovedTaxManagement = () => {
         </div>
         <div className="im-tax-mgmt-modal__field">
           <label className="im-tax-mgmt-modal__label" htmlFor="tax-modal-description">
-            설명 (선택)
+            {t('erp:ImprovedTaxManagement.t_e4a45c95')}
           </label>
           <textarea
             id="tax-modal-description"

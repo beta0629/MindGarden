@@ -177,7 +177,7 @@ const PgConfigurationDetail = () => {
     return (
       <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
         <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
-          <UnifiedLoading type="inline" text="PG 설정 상세를 불러오는 중..." variant="pulse" />
+          <UnifiedLoading type="inline" text={t('common:tenant.PgConfigurationDetail.t_f7022e97')} variant="pulse" />
         </ContentArea>
       </AdminCommonLayout>
     );
@@ -189,7 +189,7 @@ const PgConfigurationDetail = () => {
         <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
           <div className="error-message">
             <AlertCircleIcon size={24} />
-            <p>로그인이 필요합니다.</p>
+            <p>{t('common:tenant.PgConfigurationDetail.t_5271ee34')}</p>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -202,7 +202,7 @@ const PgConfigurationDetail = () => {
         <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
           <div className="error-message">
             <AlertCircleIcon size={24} />
-            <p>테넌트 정보를 찾을 수 없습니다.</p>
+            <p>{t('common:tenant.PgConfigurationDetail.t_8f990fec')}</p>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -224,7 +224,7 @@ const PgConfigurationDetail = () => {
               onClick={() => navigate('/tenant/pg-configurations')}
               preventDoubleClick={false}
             >
-              목록으로
+              {t('common:tenant.PgConfigurationDetail.t_6305eb23')}
             </MGButton>
           </div>
         </ContentArea>
@@ -246,7 +246,7 @@ const PgConfigurationDetail = () => {
                     {renderStatusBadge(config.status)}
                     {renderApprovalBadge(config.approvalStatus)}
                     {config.testMode && (
-                      <span className="status-badge status-badge--info">테스트 모드</span>
+                      <span className="status-badge status-badge--info">{t('common:tenant.PgConfigurationDetail.t_cfd49442')}</span>
                     )}
                   </div>
                   <div className="pg-config-detail__header-buttons">
@@ -259,7 +259,7 @@ const PgConfigurationDetail = () => {
                       onClick={() => navigate('/tenant/pg-configurations')}
                       preventDoubleClick={false}
                     >
-                      목록으로
+                      {t('common:tenant.PgConfigurationDetail.t_6305eb23')}
                     </MGButton>
                     {config.approvalStatus === 'PENDING' && (
                       <>
@@ -303,7 +303,7 @@ const PgConfigurationDetail = () => {
                         loading={testingConnection}
                         preventDoubleClick={false}
                       >
-                        연결 테스트
+                        {t('common:tenant.PgConfigurationDetail.t_3da5c18d')}
                       </MGButton>
                     )}
                   </div>
@@ -313,32 +313,32 @@ const PgConfigurationDetail = () => {
             <main className="pg-config-detail pg-config-detail__body">
         {/* 기본 정보 */}
         <section className="detail-section" aria-labelledby="basic-info-heading">
-          <h2 id="basic-info-heading">기본 정보</h2>
+          <h2 id="basic-info-heading">{t('common:tenant.PgConfigurationDetail.t_eb7f501b')}</h2>
           <div className="detail-grid">
             <div className="detail-item">
-              <label>PG 제공자</label>
+              <label>{t('common:tenant.PgConfigurationDetail.t_491fa1fa')}</label>
               <div className="detail-value"><SafeText>{config.pgProvider}</SafeText></div>
             </div>
             <div className="detail-item">
-              <label>PG사 명칭</label>
+              <label>{t('common:tenant.PgConfigurationDetail.t_9be04456')}</label>
               <div className="detail-value"><SafeText fallback="-">{config.pgName}</SafeText></div>
             </div>
             <div className="detail-item">
-              <label>가맹점 ID</label>
+              <label>{t('common:tenant.PgConfigurationDetail.t_fd31712d')}</label>
               <div className="detail-value"><SafeText fallback="-">{config.merchantId}</SafeText></div>
             </div>
             <div className="detail-item">
-              <label>스토어 ID</label>
+              <label>{t('common:tenant.PgConfigurationDetail.t_ed6daa8a')}</label>
               <div className="detail-value"><SafeText fallback="-">{config.storeId}</SafeText></div>
             </div>
             <div className="detail-item">
-              <label>테스트 모드</label>
+              <label>{t('common:tenant.PgConfigurationDetail.t_cfd49442')}</label>
               <div className="detail-value">
                 {config.testMode ? '예' : '아니오'}
               </div>
             </div>
             <div className="detail-item">
-              <label>등록일</label>
+              <label>{t('common:tenant.PgConfigurationDetail.t_6f80446e')}</label>
               <div className="detail-value">
                 {config.createdAt ? new Date(config.createdAt).toLocaleString('ko-KR') : '-'}
               </div>
@@ -349,11 +349,11 @@ const PgConfigurationDetail = () => {
         {/* URL 정보 */}
         {(config.webhookUrl || config.returnUrl || config.cancelUrl) && (
           <section className="detail-section" aria-labelledby="url-info-heading">
-            <h2 id="url-info-heading">URL 정보</h2>
+            <h2 id="url-info-heading">{t('common:tenant.PgConfigurationDetail.t_bef186e5')}</h2>
             <div className="detail-grid">
               {config.webhookUrl && (
                 <div className="detail-item detail-item--full">
-                  <label>웹훅 URL</label>
+                  <label>{t('common:tenant.PgConfigurationDetail.t_08d56e4c')}</label>
                   <div className="detail-value detail-value--url">
                     <a href={toDisplayString(config.webhookUrl, '#')} target="_blank" rel="noopener noreferrer">
                       <SafeText>{config.webhookUrl}</SafeText>
@@ -364,7 +364,7 @@ const PgConfigurationDetail = () => {
               )}
               {config.returnUrl && (
                 <div className="detail-item detail-item--full">
-                  <label>리턴 URL</label>
+                  <label>{t('common:tenant.PgConfigurationDetail.t_075badce')}</label>
                   <div className="detail-value detail-value--url">
                     <a href={toDisplayString(config.returnUrl, '#')} target="_blank" rel="noopener noreferrer">
                       <SafeText>{config.returnUrl}</SafeText>
@@ -375,7 +375,7 @@ const PgConfigurationDetail = () => {
               )}
               {config.cancelUrl && (
                 <div className="detail-item detail-item--full">
-                  <label>취소 URL</label>
+                  <label>{t('common:tenant.PgConfigurationDetail.t_73f8dcaf')}</label>
                   <div className="detail-value detail-value--url">
                     <a href={toDisplayString(config.cancelUrl, '#')} target="_blank" rel="noopener noreferrer">
                       <SafeText>{config.cancelUrl}</SafeText>
@@ -390,12 +390,12 @@ const PgConfigurationDetail = () => {
         
         {/* 키 정보 */}
         <section className="detail-section" aria-labelledby="key-info-heading">
-          <h2 id="key-info-heading">키 정보</h2>
+          <h2 id="key-info-heading">{t('common:tenant.PgConfigurationDetail.t_5688ba74')}</h2>
           <div className="key-info">
             {!showKeys ? (
               <div className="key-placeholder">
                 <KeyIcon size={24} />
-                <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
+                <p>{t('common:tenant.PgConfigurationDetail.t_59ff126a')}</p>
                 <MGButton
                   type="button"
                   variant="secondary"
@@ -410,13 +410,13 @@ const PgConfigurationDetail = () => {
                   loading={loadingKeys}
                   preventDoubleClick={false}
                 >
-                  키 확인
+                  {t('common:tenant.PgConfigurationDetail.t_0086a11b')}
                 </MGButton>
               </div>
             ) : (
               <div className="key-display">
                 <div className="key-item">
-                  <label>API 키</label>
+                  <label>{t('common:tenant.PgConfigurationDetail.t_84a0aecd')}</label>
                   <div className="key-value">
                     <code>{decryptedKeys?.apiKey || '***'}</code>
                     <MGButton
@@ -432,17 +432,17 @@ const PgConfigurationDetail = () => {
                         navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
                         showNotification('API 키가 복사되었습니다.', 'success');
                       }}
-                      title="복사"
+                      title={t('common:tenant.PgConfigurationDetail.t_a55b1ecb')}
                       variant="outline"
                       size="small"
                       preventDoubleClick={false}
                     >
-                      복사
+                      {t('common:tenant.PgConfigurationDetail.t_a55b1ecb')}
                     </MGButton>
                   </div>
                 </div>
                 <div className="key-item">
-                  <label>시크릿 키</label>
+                  <label>{t('common:tenant.PgConfigurationDetail.t_84414129')}</label>
                   <div className="key-value">
                     <code>{decryptedKeys?.secretKey || '***'}</code>
                     <MGButton
@@ -458,12 +458,12 @@ const PgConfigurationDetail = () => {
                         navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
                         showNotification('시크릿 키가 복사되었습니다.', 'success');
                       }}
-                      title="복사"
+                      title={t('common:tenant.PgConfigurationDetail.t_a55b1ecb')}
                       variant="outline"
                       size="small"
                       preventDoubleClick={false}
                     >
-                      복사
+                      {t('common:tenant.PgConfigurationDetail.t_a55b1ecb')}
                     </MGButton>
                   </div>
                 </div>
@@ -495,7 +495,7 @@ const PgConfigurationDetail = () => {
         {/* 연결 테스트 결과 */}
         {config.lastConnectionTestAt && (
           <div className="detail-section">
-            <h2>연결 테스트 결과</h2>
+            <h2>{t('common:tenant.PgConfigurationDetail.t_94d2ddf9')}</h2>
             <div className="connection-test-result">
               <div className="test-result-header">
                 <div className="test-result-status">
@@ -521,17 +521,17 @@ const PgConfigurationDetail = () => {
         
         {/* 승인 정보 */}
         <section className="detail-section" aria-labelledby="approval-info-heading">
-          <h2 id="approval-info-heading">승인 정보</h2>
+          <h2 id="approval-info-heading">{t('common:tenant.PgConfigurationDetail.t_52de78a8')}</h2>
           {config.approvalStatus === 'PENDING' && (
             <div className="approval-status-pending">
               <ClockIcon size={24} />
               <div>
-                <h3>승인 대기 중</h3>
-                <p>이 PG 설정은 운영 포털에서 승인 대기 중입니다. 승인 후 사용할 수 있습니다.</p>
+                <h3>{t('common:tenant.PgConfigurationDetail.t_464a0c5d')}</h3>
+                <p>{t('common:tenant.PgConfigurationDetail.t_d53d999d')}</p>
                 {config.requestedAt && (
                   <div className="request-info">
                     <span>요청 시각: {new Date(config.requestedAt).toLocaleString('ko-KR')}</span>
-                    {config.requestedBy && <span>요청자: <SafeText>{config.requestedBy}</SafeText></span>}
+                    {config.requestedBy && <span>{t('common:tenant.PgConfigurationDetail.t_17102fe2')} <SafeText>{config.requestedBy}</SafeText></span>}
                   </div>
                 )}
               </div>
@@ -545,13 +545,13 @@ const PgConfigurationDetail = () => {
                 <div className="detail-grid">
                   {config.approvedBy && (
                     <div className="detail-item">
-                      <label>승인자</label>
+                      <label>{t('common:tenant.PgConfigurationDetail.t_f5c67354')}</label>
                       <div className="detail-value"><SafeText>{config.approvedBy}</SafeText></div>
                     </div>
                   )}
                   {config.approvedAt && (
                     <div className="detail-item">
-                      <label>승인 시각</label>
+                      <label>{t('common:tenant.PgConfigurationDetail.t_be138184')}</label>
                       <div className="detail-value">
                         {new Date(config.approvedAt).toLocaleString('ko-KR')}
                       </div>
@@ -568,7 +568,7 @@ const PgConfigurationDetail = () => {
                 <h3>{t('admin.labels.rejected')}</h3>
                 {config.rejectionReason && (
                   <div className="detail-item detail-item--full">
-                    <label>거부 사유</label>
+                    <label>{t('common:tenant.PgConfigurationDetail.t_9ec8e88f')}</label>
                     <div className="detail-value detail-value--error">
                       <SafeText>{config.rejectionReason}</SafeText>
                     </div>
@@ -576,13 +576,13 @@ const PgConfigurationDetail = () => {
                 )}
                 {config.approvedBy && (
                   <div className="detail-item">
-                    <label>처리자</label>
+                    <label>{t('common:tenant.PgConfigurationDetail.t_269206b7')}</label>
                     <div className="detail-value"><SafeText>{config.approvedBy}</SafeText></div>
                   </div>
                 )}
                 {config.approvedAt && (
                   <div className="detail-item">
-                    <label>처리 시각</label>
+                    <label>{t('common:tenant.PgConfigurationDetail.t_e1c71060')}</label>
                     <div className="detail-value">
                       {new Date(config.approvedAt).toLocaleString('ko-KR')}
                     </div>
@@ -596,7 +596,7 @@ const PgConfigurationDetail = () => {
         {/* 비고 */}
         {config.notes && (
           <div className="detail-section">
-            <h2>비고</h2>
+            <h2>{t('common:tenant.PgConfigurationDetail.t_75cffa41')}</h2>
             <SafeText tag="div" className="detail-notes">{config.notes}</SafeText>
           </div>
         )}
@@ -606,7 +606,7 @@ const PgConfigurationDetail = () => {
           <div className="detail-section">
             <h2>
               <HistoryIcon size={20} />
-              변경 이력
+              {t('common:tenant.PgConfigurationDetail.t_14bf3e5b')}
             </h2>
             <div className="history-list">
               {config.history.map((item, index) => (
@@ -619,7 +619,7 @@ const PgConfigurationDetail = () => {
                   </div>
                   {item.changedBy && (
                     <div className="history-user">
-                      변경자: <SafeText>{item.changedBy}</SafeText>
+                      {t('common:tenant.PgConfigurationDetail.t_fc272f0f')} <SafeText>{item.changedBy}</SafeText>
                     </div>
                   )}
                   {item.description && (
@@ -637,7 +637,7 @@ const PgConfigurationDetail = () => {
         <UnifiedModal
           isOpen={Boolean(showDeleteModal && config)}
           onClose={() => setShowDeleteModal(false)}
-          title="PG 설정 삭제"
+          title={t('common:tenant.PgConfigurationDetail.t_bb36d692')}
           size="small"
           variant="confirm"
           className="mg-v2-ad-b0kla"
@@ -687,7 +687,7 @@ const PgConfigurationDetail = () => {
                 </strong>
                 {' '}설정을 삭제하시겠습니까?
               </p>
-              <p className="warning-text">이 작업은 되돌릴 수 없습니다.</p>
+              <p className="warning-text">{t('common:tenant.PgConfigurationDetail.t_cdfb991d')}</p>
             </>
           )}
         </UnifiedModal>

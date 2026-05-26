@@ -81,6 +81,16 @@ SKIP_FILES = {
 }
 
 
+def is_skip_file(rel: str) -> bool:
+    if rel in SKIP_FILES:
+        return True
+    # Storybook CSF: render: () => (...) 형태에서 anonymous arrow 안 한국어가 hook 미주입
+    # 환경에서 호출되어 t-undefined 발생. 별도 라운드에서 명시 컴포넌트 분리 후 흡수.
+    if rel.endswith((".stories.js", ".stories.jsx", ".stories.ts", ".stories.tsx")):
+        return True
+    return False
+
+
 # ──────────────────── 유틸 ────────────────────
 def slug_for(text: str) -> str:
     """Korean 텍스트 → 안정 슬러그 (sha1 8자)."""
@@ -422,8 +432,8 @@ def wave1_process_file(rel: str, source: str, dry: bool):
     데이터 테이블 (module-level const) 은 SKIP — i18n 미초기화 위험.
     JSX 컨텍스트는 Wave-2 가 담당하므로 P1 매칭에서 JSX text/prop 직접 매칭은 회피.
     """
-    if rel in SKIP_FILES:
-        return None  # 데이터 테이블 SKIP
+    if is_skip_file(rel):
+        return None  # 데이터 테이블 / Storybook SKIP
     ns, prefix = classify_namespace(rel)
     is_jsx = detect_jsx(source)
     mask = build_context_mask(source)
@@ -548,10 +558,68 @@ def wave1_process_file(rel: str, source: str, dry: bool):
     }
 
 
+# ──────────────────── 묵시 반환 컴포넌트 → 명시 본문 변환 ────────────────────
+def convert_implicit_return_components(source: str) -> str:
+    """`const ComponentName = (...) => (...)` 형태를 `=> { return (...); }`로 변환.
+    useTranslation 훅 주입을 위한 본문 `{` 확보.
+    """
+    decl_re = re.compile(
+        r"(?:^|[\n;}])\s*(?:export\s+(?:default\s+)?)?(?:const|let|var)\s+([A-Z][A-Za-z0-9_]*)\s*="
+    )
+    edits = []
+    for m in decl_re.finditer(source):
+        i = m.end()
+        # skip wrappers
+        while True:
+            wrap = re.match(r"\s*(?:React\.)?(?:memo|forwardRef|observer)\s*\(", source[i:])
+            if not wrap:
+                break
+            i += wrap.end()
+        while i < len(source) and source[i].isspace():
+            i += 1
+        if i >= len(source):
+            continue
+        if source[i] == "(":
+            close = find_matching_paren(source, i)
+            if close < 0:
+                continue
+            j = close + 1
+        elif source[i].isalpha() or source[i] in "_$":
+            j = i
+            while j < len(source) and (source[j].isalnum() or source[j] in "_$"):
+                j += 1
+        else:
+            continue
+        while j < len(source) and source[j].isspace():
+            j += 1
+        if source[j: j + 2] != "=>":
+            continue
+        j += 2
+        while j < len(source) and source[j].isspace():
+            j += 1
+        if j >= len(source) or source[j] != "(":
+            continue
+        # 묵시 반환 — 짝 `)` 찾기
+        close = find_matching_paren(source, j)
+        if close < 0:
+            continue
+        edits.append({"open_paren": j, "close_paren": close})
+    edits.sort(key=lambda e: -e["open_paren"])
+    out = source
+    for e in edits:
+        # `(....)` 자체를 그대로 두고 앞뒤로 `{ return ` ... `; }` 추가
+        # close_paren 위치가 ')' 인덱스 → 그 다음에 `; }` 삽입
+        out = out[: e["close_paren"] + 1] + ";\n}" + out[e["close_paren"] + 1:]
+        out = out[: e["open_paren"]] + "{ return " + out[e["open_paren"]:]
+    return out
+
+
 # ──────────────────── Wave-2 P2/P3 흡수 (JSX) ────────────────────
 def wave2_process_file(rel: str, source: str, dry: bool):
-    if rel in SKIP_FILES:
+    if is_skip_file(rel):
         return None
+    # 묵시 반환 컴포넌트를 명시 본문으로 변환 (hook 주입 가능하게)
+    source = convert_implicit_return_components(source)
     ns, prefix = classify_namespace(rel)
     is_jsx = True  # P2/P3 대상은 모두 JSX
     mask = build_context_mask(source)
@@ -1097,9 +1165,10 @@ def run_wave(wave: int, dry_run: bool, fileset_override: list = None):
         abs_path = ROOT / rel
         if not abs_path.exists():
             continue
-        if rel in SKIP_FILES:
+        if is_skip_file(rel):
             summary["files_skipped_data"] += 1
-            summary["skipped_files"].append({"path": rel, "reason": "data-table-guard"})
+            reason = "data-table-guard" if rel in SKIP_FILES else "storybook-csf-guard"
+            summary["skipped_files"].append({"path": rel, "reason": reason})
             continue
         source = abs_path.read_text(encoding="utf-8")
         if wave == 1:

@@ -437,12 +437,12 @@ const BrandingManagement = () => {
     : (formData.favicon ? '현재 파비콘이 등록되어 있습니다.' : 'PNG 또는 ICO · 드래그하여 놓기');
 
   return (
-    <AdminCommonLayout title="브랜딩 관리">
+    <AdminCommonLayout title={t('admin:BrandingManagement.t_fe06000d')}>
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="브랜딩 관리 본문">
             <ContentHeader
-              title="브랜딩 관리"
+              title={t('admin:BrandingManagement.t_fe06000d')}
               subtitle="테넌트의 로고, 상호명, 색상을 설정하여 브랜드 아이덴티티를 구축하세요."
               titleId={BRANDING_MGMT_TITLE_ID}
             />
@@ -453,7 +453,7 @@ const BrandingManagement = () => {
               lang="ko"
             >
               {isLoading ? (
-                <UnifiedLoading type="inline" text="브랜딩 정보를 불러오는 중..." />
+                <UnifiedLoading type="inline" text={t('admin:BrandingManagement.t_a70f6f09')} />
               ) : (
                 <form
                   id={BRANDING_FORM_ID}
@@ -468,12 +468,12 @@ const BrandingManagement = () => {
                     <header className="mg-branding-settings__section-head">
                       <span className="mg-branding-settings__accent-bar" aria-hidden="true" />
                       <h2 id="branding-logo-heading" className="mg-branding-settings__section-title">
-                        로고 업로드
+                        {t('admin:BrandingManagement.t_31cba6e1')}
                       </h2>
                     </header>
                     <div className="mg-branding-settings__section-body">
                       <p id="branding-logo-desc" className="mg-branding-settings__hint">
-                        권장 형식은 PNG 또는 SVG입니다. 드래그하여 놓거나 클릭하여 파일을 선택하세요.
+                        {t('admin:BrandingManagement.t_eeffce99')}
                       </p>
                       <input
                         ref={logoInputRef}
@@ -496,7 +496,7 @@ const BrandingManagement = () => {
                           <span className="mg-branding-settings__logo-preview-inner">
                             <img
                               src={logoPreview}
-                              alt="로고 미리보기"
+                              alt={t('admin:BrandingManagement.t_2abbfc24')}
                               className="mg-branding-settings__logo-image"
                               onError={(e) => {
                                 e.currentTarget.onerror = null;
@@ -515,17 +515,17 @@ const BrandingManagement = () => {
                               })}
                               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={handleLogoRemove}
-                              title="로고 제거"
+                              title={t('admin:BrandingManagement.t_86e88c24')}
                               preventDoubleClick={false}
                             >
-                              제거
+                              {t('admin:BrandingManagement.t_11f2aa43')}
                             </MGButton>
                           </span>
                         ) : logoPreview && logoPreviewLoadFailed ? (
                           <span className="mg-branding-settings__logo-preview-inner">
                             <span className="mg-branding-settings__upload-text">
-                              <span className="mg-branding-settings__upload-primary">로고를 표시할 수 없습니다</span>
-                              <span className="mg-branding-settings__upload-secondary">다른 파일을 선택하거나 제거 후 다시 업로드해 주세요.</span>
+                              <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_b16adc73')}</span>
+                              <span className="mg-branding-settings__upload-secondary">{t('admin:BrandingManagement.t_c6ba89c0')}</span>
                             </span>
                             <MGButton
                               type="button"
@@ -539,10 +539,10 @@ const BrandingManagement = () => {
                               })}
                               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                               onClick={handleLogoRemove}
-                              title="로고 제거"
+                              title={t('admin:BrandingManagement.t_86e88c24')}
                               preventDoubleClick={false}
                             >
-                              제거
+                              {t('admin:BrandingManagement.t_11f2aa43')}
                             </MGButton>
                           </span>
                         ) : (
@@ -554,8 +554,8 @@ const BrandingManagement = () => {
                               </svg>
                             </span>
                             <span className="mg-branding-settings__upload-text">
-                              <span className="mg-branding-settings__upload-primary">파일을 여기로 끌어다 놓기</span>
-                              <span className="mg-branding-settings__upload-secondary">또는 클릭하여 선택 · PNG, JPG, SVG (최대 5MB)</span>
+                              <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_a32cd706')}</span>
+                              <span className="mg-branding-settings__upload-secondary">{t('admin:BrandingManagement.t_c0e6b336')}</span>
                             </span>
                           </>
                         )}
@@ -576,14 +576,14 @@ const BrandingManagement = () => {
                     <header className="mg-branding-settings__section-head">
                       <span className="mg-branding-settings__accent-bar" aria-hidden="true" />
                       <h2 id="branding-company-heading" className="mg-branding-settings__section-title">
-                        회사 정보
+                        {t('admin:BrandingManagement.t_04c77329')}
                       </h2>
                     </header>
                     <div className="mg-branding-settings__section-body">
                       <div className="mg-branding-settings__grid mg-branding-settings__grid--2col">
                         <div className="mg-branding-settings__field">
                           <label className="mg-branding-settings__label" htmlFor="branding-company-name">
-                            회사명 (한글)
+                            {t('admin:BrandingManagement.t_0cb593e1')}
                             <span className="mg-branding-settings__required" aria-hidden="true">
                               {' '}
                               *
@@ -609,7 +609,7 @@ const BrandingManagement = () => {
                         </div>
                         <div className="mg-branding-settings__field">
                           <label className="mg-branding-settings__label" htmlFor="branding-company-name-en">
-                            회사명 (영문)
+                            {t('admin:BrandingManagement.t_babce7d2')}
                           </label>
                           <input
                             type="text"
@@ -639,17 +639,17 @@ const BrandingManagement = () => {
                     <header className="mg-branding-settings__section-head">
                       <span className="mg-branding-settings__accent-bar" aria-hidden="true" />
                       <h2 id="branding-colors-heading" className="mg-branding-settings__section-title">
-                        브랜드 색상
+                        {t('admin:BrandingManagement.t_2ba435ab')}
                       </h2>
                     </header>
                     <div className="mg-branding-settings__section-body">
                       <p id="branding-colors-desc" className="mg-branding-settings__hint">
-                        주요 색상과 보조 색상을 지정합니다. 미리보기에서 적용 결과를 확인할 수 있습니다.
+                        {t('admin:BrandingManagement.t_24bc76e0')}
                       </p>
                       <div className="mg-branding-settings__grid mg-branding-settings__grid--2col">
                         <div className="mg-branding-settings__field">
                           <label className="mg-branding-settings__label" htmlFor="branding-color-primary">
-                            주요 색상
+                            {t('admin:BrandingManagement.t_33ba33a7')}
                           </label>
                           <div className="mg-branding-settings__color-row">
                             <input
@@ -667,7 +667,7 @@ const BrandingManagement = () => {
                               name="colorPrimaryHex"
                               inputMode="text"
                               spellCheck={false}
-                              aria-label="주요 색상 HEX 값"
+                              aria-label={t('admin:BrandingManagement.t_80ab5b00')}
                               value={formData.primaryColor}
                               onChange={(e) => onPrimaryHexInput(e.target.value)}
                               maxLength={7}
@@ -682,7 +682,7 @@ const BrandingManagement = () => {
                         </div>
                         <div className="mg-branding-settings__field">
                           <label className="mg-branding-settings__label" htmlFor="branding-color-secondary">
-                            보조 색상
+                            {t('admin:BrandingManagement.t_8b65954e')}
                           </label>
                           <div className="mg-branding-settings__color-row">
                             <input
@@ -700,7 +700,7 @@ const BrandingManagement = () => {
                               name="colorSecondaryHex"
                               inputMode="text"
                               spellCheck={false}
-                              aria-label="보조 색상 HEX 값"
+                              aria-label={t('admin:BrandingManagement.t_2204106a')}
                               value={formData.secondaryColor}
                               onChange={(e) => onSecondaryHexInput(e.target.value)}
                               maxLength={7}
@@ -724,12 +724,12 @@ const BrandingManagement = () => {
                     <header className="mg-branding-settings__section-head">
                       <span className="mg-branding-settings__accent-bar" aria-hidden="true" />
                       <h2 id="branding-favicon-heading" className="mg-branding-settings__section-title">
-                        파비콘
+                        {t('admin:BrandingManagement.t_63387472')}
                       </h2>
                     </header>
                     <div className="mg-branding-settings__section-body">
                       <p id="branding-favicon-desc" className="mg-branding-settings__hint">
-                        정사각형 이미지(예: 32×32 이상)를 권장합니다. 선택 시 서버에 업로드되며 저장 시 반영됩니다.
+                        {t('admin:BrandingManagement.t_f4929e2f')}
                       </p>
                       <input
                         ref={faviconInputRef}
@@ -755,7 +755,7 @@ const BrandingManagement = () => {
                           </svg>
                         </span>
                         <span className="mg-branding-settings__upload-text">
-                          <span className="mg-branding-settings__upload-primary">파비콘 파일 선택</span>
+                          <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_98973df4')}</span>
                           <span className="mg-branding-settings__upload-secondary">
                             {toDisplayString(faviconSecondaryText)}
                           </span>
@@ -773,10 +773,10 @@ const BrandingManagement = () => {
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={handleFaviconRemove}
-                            title="선택한 파비콘 파일 초기화"
+                            title={t('admin:BrandingManagement.t_c0acdcfd')}
                             preventDoubleClick={false}
                           >
-                            선택 해제
+                            {t('admin:BrandingManagement.t_bf3e2aa4')}
                           </MGButton>
                         )}
                       </label>
@@ -791,7 +791,7 @@ const BrandingManagement = () => {
 
                   <footer className="mg-branding-settings__footer" aria-labelledby="branding-actions-heading">
                     <h2 id="branding-actions-heading" className="mg-branding-settings__sr-only">
-                      브랜딩 설정 작업
+                      {t('admin:BrandingManagement.t_ce732639')}
                     </h2>
                     <div className="mg-branding-settings__actions mg-branding-settings__actions--split mg-v2-card-actions">
                       <div className="mg-branding-settings__actions-leading">
@@ -808,7 +808,7 @@ const BrandingManagement = () => {
                           disabled={isSaving || isUploading}
                           preventDoubleClick={false}
                         >
-                          미리보기
+                          {t('admin:BrandingManagement.t_2f1c9d7b')}
                         </MGButton>
                         <MGButton
                           type="button"
@@ -823,7 +823,7 @@ const BrandingManagement = () => {
                           disabled={!hasChanges || isSaving || isUploading}
                           preventDoubleClick={false}
                         >
-                          초기화
+                          {t('admin:BrandingManagement.t_ff75b4ff')}
                         </MGButton>
                       </div>
                       <div className="mg-branding-settings__actions-trailing">
@@ -855,13 +855,13 @@ const BrandingManagement = () => {
       <UnifiedModal
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
-        title="브랜딩 미리보기"
+        title={t('admin:BrandingManagement.t_9b893812')}
         size="large"
         variant="detail"
       >
         <div className="mg-branding-settings__preview">
           <p className="mg-branding-settings__preview-lead">
-            변경사항이 적용된 헤더의 모습입니다.
+            {t('admin:BrandingManagement.t_93a836d0')}
           </p>
           <div className="mg-branding-settings__preview-demo">
             <div className="mg-branding-settings__preview-header-demo">
@@ -882,7 +882,7 @@ const BrandingManagement = () => {
                       {toDisplayString(previewData.companyName || 'CoreSolution')}
                     </span>
                     <span className="mg-branding-settings__preview-subtitle">
-                      로고 미리보기를 불러올 수 없습니다
+                      {t('admin:BrandingManagement.t_50ee3c24')}
                     </span>
                   </div>
                 ) : (

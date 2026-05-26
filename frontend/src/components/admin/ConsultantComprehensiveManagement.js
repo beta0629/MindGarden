@@ -1240,7 +1240,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     if (loading) {
         if (embedded) {
-            return <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />;
+            return <UnifiedLoading type="inline" text={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')} variant="pulse" />;
         }
         return (
             <AdminCommonLayout title={t('admin:consultant.title')}>
@@ -1253,7 +1253,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
                             />
                             <main aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}>
-                                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
+                                <UnifiedLoading type="inline" text={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')} variant="pulse" />
                             </main>
                         </ContentArea>
                     </div>
@@ -1323,7 +1323,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <ClipboardList size={24} />
                                             </div>
                                             <div className="mg-v2-mapping-kpi-section__info">
-                                                <span className="mg-v2-mapping-kpi-section__label">오늘 스케줄</span>
+                                                <span className="mg-v2-mapping-kpi-section__label">{t('admin:ConsultantComprehensiveManagement.t_0bc1947b')}</span>
                                                 <span className="mg-v2-mapping-kpi-section__value">{toDisplayString(stats.todaySchedules)}건</span>
                                             </div>
                                         </div>
@@ -1336,7 +1336,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             <SearchInput
                                                 value={searchTerm}
                                                 onChange={handleSearch}
-                                                placeholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
+                                                placeholder={t('admin:ConsultantComprehensiveManagement.t_c03d75f9')}
                                             />
                                         </div>
                                         <div className="mg-v2-mapping-search-section__chips">
@@ -1354,7 +1354,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     })}
                                                     onClick={() => handleOpenModal('create')}
                                                 >
-                                                    새 상담사 등록
+                                                    {t('admin:ConsultantComprehensiveManagement.t_72bf00c9')}
                                                 </MGButton>
                                             )}
                                             {consultantFilterOptions.map((opt) => (
@@ -1382,7 +1382,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 <ContentSection noCard className="mg-v2-mapping-list-block">
                                     <ContentCard className="mg-v2-mapping-list-block__card">
                                         <div className="mg-v2-mapping-list-block__header">
-                                            <div className="mg-v2-mapping-list-block__title">상담사 목록</div>
+                                            <div className="mg-v2-mapping-list-block__title">{t('admin:ConsultantComprehensiveManagement.t_8a952452')}</div>
                                             <ViewModeToggle
                                                 viewMode={viewMode}
                                                 onViewModeChange={setViewMode}
@@ -1396,7 +1396,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     <Users size={48} />
                                                 </div>
                                                 <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title')}</h3>
-                                                <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
+                                                <p className="mg-v2-mapping-list-block__empty-desc">{t('admin:ConsultantComprehensiveManagement.t_cff51bee')}</p>
                                                 <MGButton
                                                     type="button"
                                                     variant="primary"
@@ -1408,7 +1408,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     })}
                                                     onClick={() => handleOpenModal('create')}
                                                 >
-                                                                                                       새 상담사 등록
+                                                                                                       {t('admin:ConsultantComprehensiveManagement.t_72bf00c9')}
                                                 </MGButton>
                                             </div>
                                         ) : viewMode === 'largeCard' ? (
@@ -1512,7 +1512,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             <SearchInput
                                                 value={searchTerm}
                                                 onChange={handleSearch}
-                                                placeholder="이름, 이메일, 전화번호 또는 #태그로 검색..."
+                                                placeholder={t('admin:ConsultantComprehensiveManagement.t_c03d75f9')}
                                             />
                                         </div>
                                         <div className="mg-v2-mapping-search-section__chips">
@@ -1530,7 +1530,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     })}
                                                     onClick={() => handleOpenModal('create')}
                                                 >
-                                                    새 상담사 등록
+                                                    {t('admin:ConsultantComprehensiveManagement.t_72bf00c9')}
                                                 </MGButton>
                                             )}
                                             {consultantFilterOptions.map((opt) => (
@@ -1558,7 +1558,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 <ContentSection noCard className="mg-v2-mapping-list-block">
                                     <ContentCard className="mg-v2-mapping-list-block__card">
                                         <div className="mg-v2-mapping-list-block__header">
-                                            <div className="mg-v2-mapping-list-block__title">상담사 목록</div>
+                                            <div className="mg-v2-mapping-list-block__title">{t('admin:ConsultantComprehensiveManagement.t_8a952452')}</div>
                                             <ViewModeToggle
                                                 viewMode={viewMode}
                                                 onViewModeChange={setViewMode}
@@ -1572,7 +1572,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     <Users size={48} />
                                                 </div>
                                                 <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title')}</h3>
-                                                <p className="mg-v2-mapping-list-block__empty-desc">새 상담사를 등록해보세요.</p>
+                                                <p className="mg-v2-mapping-list-block__empty-desc">{t('admin:ConsultantComprehensiveManagement.t_cff51bee')}</p>
                                                 <MGButton
                                                     type="button"
                                                     variant="primary"
@@ -1584,7 +1584,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     })}
                                                     onClick={() => handleOpenModal('create')}
                                                 >
-                                                                                                       새 상담사 등록
+                                                                                                       {t('admin:ConsultantComprehensiveManagement.t_72bf00c9')}
                                                 </MGButton>
                                             </div>
                                         ) : viewMode === 'largeCard' ? (
@@ -1703,7 +1703,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             })}
                             onClick={() => handleOpenModal('create')}
                         >
-                                                       새 상담사 등록
+                                                       {t('admin:ConsultantComprehensiveManagement.t_72bf00c9')}
                         </MGButton>
                     }
                 />
@@ -1756,13 +1756,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     <h5>{t('admin:consultant.section.basicInfo')}</h5>
                                     <div className="mg-v2-detail-grid">
                                         <div className="mg-v2-detail-item">
-                                            <span className="mg-v2-detail-label">성별:</span>
+                                            <span className="mg-v2-detail-label">{t('admin:ConsultantComprehensiveManagement.t_f4767ec3')}</span>
                                             <span className="mg-v2-detail-value">
                                                 <SafeText fallback="-">{viewGenderLabel ?? null}</SafeText>
                                             </span>
                                         </div>
                                         <div className="mg-v2-detail-item">
-                                            <span className="mg-v2-detail-label">나이:</span>
+                                            <span className="mg-v2-detail-label">{t('admin:ConsultantComprehensiveManagement.t_d5a23ca7')}</span>
                                             <span className="mg-v2-detail-value">
                                                 <SafeText fallback="-">
                                                     {viewAgeYears != null ? `${viewAgeYears}세` : null}
@@ -1770,11 +1770,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                             </span>
                                         </div>
                                         <div className="mg-v2-detail-item">
-                                            <span className="mg-v2-detail-label">전화번호:</span>
+                                            <span className="mg-v2-detail-label">{t('admin:ConsultantComprehensiveManagement.t_75db0f2b')}</span>
                                             <span className="mg-v2-detail-value"><SafeText fallback="전화번호 없음">{selectedConsultant.phone}</SafeText></span>
                                         </div>
                                         <div className="mg-v2-detail-item">
-                                            <span className="mg-v2-detail-label">가입일:</span>
+                                            <span className="mg-v2-detail-label">{t('admin:ConsultantComprehensiveManagement.t_95b70823')}</span>
                                             <span className="mg-v2-detail-value">
                                                 <SafeText fallback="-">
                                                   {selectedConsultant.createdAt ? new Date(selectedConsultant.createdAt).toLocaleDateString('ko-KR') : null}
@@ -1794,7 +1794,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 maxItems={10}
                                             />
                                         ) : (
-                                            <span className="mg-v2-no-data">전문분야 정보가 없습니다.</span>
+                                            <span className="mg-v2-no-data">{t('admin:ConsultantComprehensiveManagement.t_19ad510e')}</span>
                                         )}
                                     </div>
                                 </div>
@@ -1826,21 +1826,21 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             return (
                 <div className="mg-v2-modal-body">
                     <div className="mg-v2-delete-confirmation">
-                        <p><SafeText fallback="이 상담사">{selectedConsultant?.name}</SafeText>를 정말 삭제하시겠습니까?</p>
+                        <p><SafeText fallback="이 상담사">{selectedConsultant?.name}</SafeText>{t('admin:ConsultantComprehensiveManagement.t_537a7a1c')}</p>
                         {selectedConsultant && (
                             <div className="mg-v2-detail-grid">
                                 <div className="mg-v2-detail-item">
-                                    <span className="mg-v2-detail-label">이름:</span>
+                                    <span className="mg-v2-detail-label">{t('admin:ConsultantComprehensiveManagement.t_ed325800')}</span>
                                     <span className="mg-v2-detail-value"><SafeText fallback="-">{selectedConsultant.name}</SafeText></span>
                                 </div>
                                 <div className="mg-v2-detail-item">
-                                    <span className="mg-v2-detail-label">이메일:</span>
+                                    <span className="mg-v2-detail-label">{t('admin:ConsultantComprehensiveManagement.t_6b943a10')}</span>
                                     <span className="mg-v2-detail-value"><SafeText fallback="-">{selectedConsultant.email}</SafeText></span>
                                 </div>
                             </div>
                         )}
                         <p className="mg-v2-warning-text">
-                            ⚠️ 이 작업은 되돌릴 수 없습니다.
+                            {t('admin:ConsultantComprehensiveManagement.t_ef61194c')}
                         </p>
                     </div>
                 </div>
@@ -1852,7 +1852,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     {(modalType === 'create') && (
                         <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
                             <p className="mg-v2-info-text">
-                                💡 비밀번호는 정책에 맞는 값으로 자동 채워집니다. 비우면 임시 비밀번호(이메일 안내)로 등록됩니다.
+                                {t('admin:ConsultantComprehensiveManagement.t_996eef81')}
                             </p>
                         </div>
                     )}
@@ -1867,7 +1867,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     />
                     {(modalType === 'create' || modalType === 'edit') && (
                         <div className="mg-v2-form-group">
-                            <label htmlFor="consultant-professional-type" className="mg-v2-form-label">전문가 유형 *</label>
+                            <label htmlFor="consultant-professional-type" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_c133165d')}</label>
                             <select
                                 id="consultant-professional-type"
                                 name="professionalTypeCode"
@@ -1888,11 +1888,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     {/* 공통 순서: 1. 주민번호 2. 이름 3. 전화번호 4. 주소 → 나머지 */}
                     <div className="mg-v2-form-group">
                         {modalType === 'edit' && (
-                            <small className="mg-v2-form-help">수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.</small>
+                            <small className="mg-v2-form-help">{t('admin:ConsultantComprehensiveManagement.t_8ef3de07')}</small>
                         )}
                         <div className="mg-v2-form-row mg-v2-form-row--two">
                             <div className="mg-v2-form-group">
-                                <label htmlFor="consultant-rrnFirst6" className="mg-v2-form-label">주민번호 앞 6자리 (선택)</label>
+                                <label htmlFor="consultant-rrnFirst6" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_61537487')}</label>
                                 <input
                                     type="text"
                                     id="consultant-rrnFirst6"
@@ -1906,7 +1906,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 />
                             </div>
                             <div className="mg-v2-form-group">
-                                <label htmlFor="consultant-rrnLast1" className="mg-v2-form-label">주민번호 뒤 1자리 (선택)</label>
+                                <label htmlFor="consultant-rrnLast1" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_77fb1e91')}</label>
                                 <input
                                     type="text"
                                     id="consultant-rrnLast1"
@@ -1922,13 +1922,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         </div>
                     </div>
                     <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">이름 *</label>
+                        <label className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_8417fb91')}</label>
                         <input
                             type="text"
                             name="name"
                             value={formData.name || ''}
                             onChange={handleFormChange}
-                            placeholder="이름을 입력하세요"
+                            placeholder={t('admin:ConsultantComprehensiveManagement.t_25cf7f26')}
                             className="mg-v2-form-input"
                             required
                         />
@@ -1936,7 +1936,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     <KoreanMobileDuplicateField
                         id="consultant-phone"
                         name="phone"
-                        label="전화번호"
+                        label={t('admin:ConsultantComprehensiveManagement.t_9a1c3aaa')}
                         value={formData.phone || ''}
                         onChange={handleFormChange}
                         onDuplicateClick={handleConsultantPhoneDuplicateCheck}
@@ -1946,7 +1946,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         checkStatus={consultantPhoneCheckStatus === 'duplicate' ? 'duplicate' : consultantPhoneCheckStatus === 'available' ? 'available' : null}
                         messageDuplicate={VALIDATION_MESSAGES.PHONE_EXISTS}
                         messageAvailable={VALIDATION_MESSAGES.PHONE_AVAILABLE}
-                        placeholder="전화번호를 입력하세요 (선택사항)"
+                        placeholder={t('admin:ConsultantComprehensiveManagement.t_13749b95')}
                         maxLength={13}
                         autoComplete="tel"
                         onBlur={(e) => {
@@ -1956,7 +1956,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         }}
                     />
                     <div className="mg-v2-form-group">
-                        <label htmlFor="consultant-grade" className="mg-v2-form-label">등급</label>
+                        <label htmlFor="consultant-grade" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_89dbf513')}</label>
                         <select
                             id="consultant-grade"
                             name="grade"
@@ -1964,7 +1964,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                             onChange={handleFormChange}
                             className="mg-v2-form-input"
                         >
-                            <option value="">등급 선택</option>
+                            <option value="">{t('admin:ConsultantComprehensiveManagement.t_952a9e9a')}</option>
                             {gradeOptions.map((opt) => (
                                 <option key={opt.codeValue} value={opt.codeValue}>
                                     {toDisplayString(opt.codeLabel)}
@@ -1973,7 +1973,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         </select>
                     </div>
                     <div className="mg-v2-form-group">
-                        <label className="mg-v2-form-label">주소 검색</label>
+                        <label className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_1c2422dd')}</label>
                         <div className="mg-v2-address-search-row">
                             <MGButton
                                 type="button"
@@ -1998,31 +1998,31 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     }
                                 }}
                             >
-                                주소 검색
+                                {t('admin:ConsultantComprehensiveManagement.t_1c2422dd')}
                             </MGButton>
                             <input
                                 type="text"
                                 readOnly
                                 className="mg-v2-form-input mg-v2-form-input--readonly"
                                 value={formData.address || ''}
-                                placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                                placeholder={t('admin:ConsultantComprehensiveManagement.t_c44d8d97')}
                             />
                         </div>
                     </div>
                     <div className="mg-v2-form-group">
-                        <label htmlFor="consultant-addressDetail" className="mg-v2-form-label">상세 주소</label>
+                        <label htmlFor="consultant-addressDetail" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_dad291cb')}</label>
                         <input
                             type="text"
                             id="consultant-addressDetail"
                             name="addressDetail"
                             value={formData.addressDetail || ''}
                             onChange={handleFormChange}
-                            placeholder="동, 호수, 상세 주소를 입력하세요."
+                            placeholder={t('admin:ConsultantComprehensiveManagement.t_9c34782e')}
                             className="mg-v2-form-input"
                         />
                     </div>
                     <div className="mg-v2-form-group">
-                        <label htmlFor="consultant-postalCode" className="mg-v2-form-label">우편번호</label>
+                        <label htmlFor="consultant-postalCode" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_cd21379e')}</label>
                         <input
                             type="text"
                             id="consultant-postalCode"
@@ -2083,7 +2083,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     </div>
                     {modalType === 'create' && (
                         <div className="mg-v2-form-group">
-                            <label className="mg-v2-form-label">비밀번호</label>
+                            <label className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_81973897')}</label>
                             <input
                                 type="password"
                                 name="password"
@@ -2098,11 +2098,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                         </div>
                     )}
                     <div className="mg-v2-form-group">
-                        <label id="consultant-specialty-label" className="mg-v2-form-label">전문분야</label>
+                        <label id="consultant-specialty-label" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_6a1abaf0')}</label>
                         <div className="mg-v2-form-help mg-v2-specialty-help-row">
                             <span className="mg-v2-specialty-help-row__hint">
                                 <span aria-hidden="true">💡</span>
-                                <span>여러 개의 전문분야를 선택할 수 있습니다.</span>
+                                <span>{t('admin:ConsultantComprehensiveManagement.t_f3e38df7')}</span>
                             </span>
                             <span className="mg-v2-specialty-help-row__actions">
                                 <MGButton
@@ -2174,25 +2174,25 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 <h3 className="mg-v2-section-heading__title">{t('admin:consultant.section.credentials')}</h3>
                             </div>
                             <div className="mg-v2-form-group">
-                                <label htmlFor="consultant-qualifications" className="mg-v2-form-label">자격증 (선택)</label>
+                                <label htmlFor="consultant-qualifications" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_c44d2799')}</label>
                                 <input
                                     type="text"
                                     id="consultant-qualifications"
                                     name="qualifications"
                                     value={formData.qualifications || ''}
                                     onChange={handleFormChange}
-                                    placeholder="보유 자격증을 입력하세요. 예) 정신건강임상심리사 1급, 상담심리사 1급"
+                                    placeholder={t('admin:ConsultantComprehensiveManagement.t_7edd2cd8')}
                                     className="mg-v2-form-input"
                                 />
                             </div>
                             <div className="mg-v2-form-group">
-                                <label htmlFor="consultant-workHistory" className="mg-v2-form-label">경력사항 (선택)</label>
+                                <label htmlFor="consultant-workHistory" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_c2bd8daf')}</label>
                                 <textarea
                                     id="consultant-workHistory"
                                     name="workHistory"
                                     value={formData.workHistory || ''}
                                     onChange={handleFormChange}
-                                    placeholder="관련 경력 및 근무 이력을 입력하세요."
+                                    placeholder={t('admin:ConsultantComprehensiveManagement.t_8f92fc9c')}
                                     className="mg-v2-form-textarea"
                                     rows={3}
                                 />
@@ -2324,7 +2324,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             <UnifiedModal
                 isOpen={showDeleteConfirm}
                 onClose={() => setShowDeleteConfirm(false)}
-                title="상담사 삭제 확인"
+                title={t('admin:ConsultantComprehensiveManagement.t_88f873b8')}
                 size="medium"
                 variant="confirm"
                 className="mg-v2-ad-b0kla"
@@ -2365,7 +2365,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 }
             >
                 <div className="mg-v2-modal-body">
-                    <p><SafeText fallback="이 상담사">{selectedConsultant?.name}</SafeText>를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                    <p><SafeText fallback="이 상담사">{selectedConsultant?.name}</SafeText>{t('admin:ConsultantComprehensiveManagement.t_eb69022a')}</p>
                 </div>
             </UnifiedModal>
 
@@ -2389,7 +2389,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     }
 
     return (
-        <AdminCommonLayout title="상담사 종합관리">
+        <AdminCommonLayout title={t('admin:ConsultantComprehensiveManagement.t_cc2e9864')}>
             <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel="상담사 종합관리 본문">

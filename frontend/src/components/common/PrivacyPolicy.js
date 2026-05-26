@@ -2,6 +2,7 @@ import React from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './PrivacyPolicy.css';
+import { useTranslation } from 'react-i18next';
 
 const PRIVACY_PAGE_TITLE_ID = 'privacy-policy-page-title';
 
@@ -13,93 +14,94 @@ const PRIVACY_PAGE_TITLE_ID = 'privacy-policy-page-title';
  */
 
 /** 레이아웃 없이 개인정보처리방침 본문만 렌더 (페이지·모달 공용). omitHeading: ContentHeader와 함께 쓸 때 h1 중복 방지 */
-export const PrivacyPolicyContent = ({ omitHeading = false }) => (
+export const PrivacyPolicyContent = ({ omitHeading = false }) => {
+  const { t } = useTranslation(); return (
   <div className="privacy-policy-container">
         {omitHeading ? null : (
           <h1 className="privacy-policy-title">
-            개인정보 처리방침
+            {t('common:common.PrivacyPolicy.t_532136c0')}
           </h1>
         )}
 
         <div className="privacy-policy-info-box">
           <p className="privacy-policy-info-text">
-            <strong>시행일자:</strong> 2025년 1월 17일<br />
-            <strong>최종 수정일:</strong> 2025년 1월 17일
+            <strong>{t('common:common.PrivacyPolicy.t_e5d18bfe')}</strong> {t('common:common.PrivacyPolicy.t_36fe9935')}<br />
+            <strong>{t('common:common.PrivacyPolicy.t_a5d3df85')}</strong> {t('common:common.PrivacyPolicy.t_36fe9935')}
           </p>
         </div>
 
         <div className="privacy-policy-section">
           <h2 className="privacy-policy-section-title">
-            1. 개인정보의 처리목적
+            {t('common:common.PrivacyPolicy.t_fd6f6646')}
           </h2>
           <p className="privacy-policy-section-content">
             Core Solution(이하 "회사")은 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
           </p>
           <ul className="privacy-policy-list">
-            <li>회원 가입 및 관리: 회원 식별, 가입의사 확인, 본인확인, 회원자격 유지·관리</li>
-            <li>상담 서비스 제공: 상담 예약, 상담 진행, 상담 기록 관리</li>
-            <li>결제 및 환불 처리: 서비스 이용료 결제, 환불 처리</li>
-            <li>고객 지원: 문의사항 처리, 불만사항 처리</li>
-            <li>마케팅 및 광고: 이벤트 정보 제공, 맞춤형 서비스 제공</li>
+            <li>{t('common:common.PrivacyPolicy.t_a8fd12d9')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_12846947')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_c11994e7')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_42a827f7')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_6daeb968')}</li>
           </ul>
         </div>
 
         <div className="mg-v2-terms-section">
           <h2 className="mg-v2-terms-title">
-            2. 개인정보의 처리 및 보유기간
+            {t('common:common.PrivacyPolicy.t_a8c993da')}
           </h2>
           <p className="mg-v2-terms-paragraph">
-            회사는 법령에 따른 개인정보 보유·이용기간 또는 정보주체로부터 개인정보를 수집 시에 동의받은 개인정보 보유·이용기간 내에서 개인정보를 처리·보유합니다.
+            {t('common:common.PrivacyPolicy.t_0ece66e5')}
           </p>
           <div className="mg-v2-terms-box">
             <h3 className="mg-v2-terms-subtitle">
-              각각의 개인정보 처리 및 보유기간은 다음과 같습니다:
+              {t('common:common.PrivacyPolicy.t_8a683d46')}
             </h3>
             <ul className="mg-v2-terms-list">
-              <li><strong>회원 정보:</strong> 회원 탈퇴 시까지 (단, 관계법령에 의해 보존이 필요한 경우 해당 기간까지)</li>
-              <li><strong>상담 기록:</strong> 상담 완료 후 5년 (의료법에 의한 의료기록 보존 의무)</li>
-              <li><strong>결제 정보:</strong> 결제 완료 후 5년 (전자상거래법에 의한 거래기록 보존 의무)</li>
-              <li><strong>마케팅 정보:</strong> 동의 철회 시까지</li>
+              <li><strong>{t('common:common.PrivacyPolicy.t_ae768302')}</strong> {t('common:common.PrivacyPolicy.t_59c2d7cd')}</li>
+              <li><strong>{t('common:common.PrivacyPolicy.t_78aeed55')}</strong> {t('common:common.PrivacyPolicy.t_5f6c751c')}</li>
+              <li><strong>{t('common:common.PrivacyPolicy.t_309d534b')}</strong> {t('common:common.PrivacyPolicy.t_334d3323')}</li>
+              <li><strong>{t('common:common.PrivacyPolicy.t_fb47ef09')}</strong> {t('common:common.PrivacyPolicy.t_f8354f48')}</li>
             </ul>
           </div>
         </div>
 
         <div className="mg-v2-terms-section">
           <h2 className="mg-v2-terms-title">
-            3. 처리하는 개인정보의 항목
+            {t('common:common.PrivacyPolicy.t_18c957fe')}
           </h2>
           <div className="mg-v2-terms-box">
             <h3 className="mg-v2-terms-subtitle">
-              필수 수집 항목:
+              {t('common:common.PrivacyPolicy.t_40a20ec3')}
             </h3>
             <ul className="mg-v2-terms-list mg-v2-terms-list-spaced">
-              <li>이름, 이메일, 전화번호</li>
-              <li>생년월일, 성별</li>
-              <li>주소 (상담 서비스 제공을 위해)</li>
-              <li>상담 목적 및 상담 이력</li>
+              <li>{t('common:common.PrivacyPolicy.t_470d4295')}</li>
+              <li>{t('common:common.PrivacyPolicy.t_dd0aad0f')}</li>
+              <li>{t('common:common.PrivacyPolicy.t_583081af')}</li>
+              <li>{t('common:common.PrivacyPolicy.t_bc866762')}</li>
             </ul>
             
             <h3 className="mg-v2-terms-subtitle">
-              선택 수집 항목:
+              {t('common:common.PrivacyPolicy.t_475ba3ec')}
             </h3>
             <ul className="mg-v2-terms-list">
-              <li>프로필 사진</li>
-              <li>마케팅 정보 수신 동의</li>
-              <li>추가 연락처</li>
+              <li>{t('common:common.PrivacyPolicy.t_eef7e4cd')}</li>
+              <li>{t('common:common.PrivacyPolicy.t_0f3e23cf')}</li>
+              <li>{t('common:common.PrivacyPolicy.t_70f97ab4')}</li>
             </ul>
           </div>
         </div>
 
         <div className="mg-v2-terms-section">
           <h2 className="mg-v2-terms-title">
-            4. 개인정보의 제3자 제공
+            {t('common:common.PrivacyPolicy.t_5146831a')}
           </h2>
           <p className="mg-v2-terms-paragraph">
-            회사는 개인정보를 제1조(개인정보의 처리목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 개인정보보호법 제17조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다.
+            {t('common:common.PrivacyPolicy.t_46db9499')}
           </p>
           <div className="privacy-policy-warning-box">
             <p className="mg-v2-text-sm mg-v2-m-0 privacy-policy-warning-text">
-              <strong>주의:</strong> 상담 서비스 제공을 위해 상담사에게 필요한 최소한의 정보만 제공되며,
+              <strong>{t('common:common.PrivacyPolicy.t_7c999074')}</strong> 상담 서비스 제공을 위해 상담사에게 필요한 최소한의 정보만 제공되며,
               이는 상담 서비스의 질적 향상을 위한 목적으로만 사용됩니다.
             </p>
           </div>
@@ -107,94 +109,97 @@ export const PrivacyPolicyContent = ({ omitHeading = false }) => (
 
         <div className="mg-v2-terms-section">
           <h2 className="mg-v2-terms-title">
-            5. 개인정보 처리의 위탁
+            {t('common:common.PrivacyPolicy.t_ac5b249f')}
           </h2>
           <p className="mg-v2-terms-paragraph">
-            회사는 원활한 개인정보 업무처리를 위하여 다음과 같이 개인정보 처리업무를 위탁하고 있습니다:
+            {t('common:common.PrivacyPolicy.t_74ebc067')}
           </p>
           <div className="mg-v2-terms-box">
             <ul className="mg-v2-terms-list">
-              <li><strong>결제 처리:</strong> 토스페이먼츠, 카카오페이, 네이버페이</li>
-              <li><strong>이메일 발송:</strong> AWS SES</li>
-              <li><strong>데이터 저장:</strong> AWS RDS (암호화 적용)</li>
+              <li><strong>{t('common:common.PrivacyPolicy.t_241552e6')}</strong> {t('common:common.PrivacyPolicy.t_d5c1903f')}</li>
+              <li><strong>{t('common:common.PrivacyPolicy.t_a957e3d2')}</strong> AWS SES</li>
+              <li><strong>{t('common:common.PrivacyPolicy.t_29cc6c6d')}</strong> {t('common:common.PrivacyPolicy.t_740e4b8e')}</li>
             </ul>
           </div>
         </div>
 
         <div className="mg-v2-terms-section">
           <h2 className="mg-v2-terms-title">
-            6. 정보주체의 권리·의무 및 행사방법
+            {t('common:common.PrivacyPolicy.t_0456052e')}
           </h2>
           <p className="mg-v2-terms-paragraph">
-            정보주체는 회사에 대해 언제든지 다음 각 호의 개인정보 보호 관련 권리를 행사할 수 있습니다:
+            {t('common:common.PrivacyPolicy.t_69b97b1e')}
           </p>
           <ul className="mg-v2-terms-list">
-            <li>개인정보 처리현황 통지요구</li>
-            <li>개인정보 열람요구</li>
-            <li>개인정보 정정·삭제요구</li>
-            <li>개인정보 처리정지요구</li>
+            <li>{t('common:common.PrivacyPolicy.t_7c864764')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_2949c33c')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_e75b23a5')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_8100b7fb')}</li>
           </ul>
           <p className="mg-v2-text-sm mg-v2-text-secondary privacy-policy-rights-note">
-            권리 행사는 회사에 대해 서면, 전화, 전자우편, 모사전송(FAX) 등을 통하여 하실 수 있으며 회사는 이에 대해 지체없이 조치하겠습니다.
+            {t('common:common.PrivacyPolicy.t_235b6c70')}
           </p>
         </div>
 
         <div className="mg-v2-terms-section">
           <h2 className="mg-v2-terms-title">
-            7. 개인정보의 안전성 확보조치
+            {t('common:common.PrivacyPolicy.t_6a8e6e76')}
           </h2>
           <p className="mg-v2-terms-paragraph">
-            회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다:
+            {t('common:common.PrivacyPolicy.t_c3b68299')}
           </p>
           <ul className="mg-v2-terms-list">
-            <li>관리적 조치: 내부관리계획 수립·시행, 전담조직 운영</li>
-            <li>기술적 조치: 개인정보처리시스템 등의 접근권한 관리, 접근통제시스템 설치</li>
-            <li>물리적 조치: 전산실, 자료보관실 등의 접근통제</li>
-            <li>암호화: 개인정보는 암호화하여 저장 및 관리</li>
+            <li>{t('common:common.PrivacyPolicy.t_4bbe0f1d')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_6b426210')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_660e37dc')}</li>
+            <li>{t('common:common.PrivacyPolicy.t_21785f42')}</li>
           </ul>
         </div>
 
         <div className="mg-v2-terms-section">
           <h2 className="mg-v2-terms-title">
-            8. 개인정보 보호책임자
+            {t('common:common.PrivacyPolicy.t_3b710eba')}
           </h2>
           <div className="mg-v2-terms-box">
             <p className="mg-v2-mb-md">
-              <strong>개인정보 보호책임자:</strong> Core Solution 개인정보보호팀
+              <strong>{t('common:common.PrivacyPolicy.t_4101b50b')}</strong> {t('common:common.PrivacyPolicy.t_811affdb')}
             </p>
             <p className="mg-v2-mb-md">
-              <strong>연락처:</strong> privacy@mindgarden.co.kr
+              <strong>{t('common:common.PrivacyPolicy.t_286de003')}</strong> privacy@mindgarden.co.kr
             </p>
             <p className="mg-v2-m-0">
-              <strong>전화:</strong> 02-1234-5678
+              <strong>{t('common:common.PrivacyPolicy.t_ca3404dd')}</strong> 02-1234-5678
             </p>
           </div>
         </div>
 
         <div className="mg-v2-terms-section">
           <h2 className="mg-v2-terms-title">
-            9. 개인정보 처리방침의 변경
+            {t('common:common.PrivacyPolicy.t_0e22fee1')}
           </h2>
           <p className="mg-v2-terms-paragraph">
-            이 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.
+            {t('common:common.PrivacyPolicy.t_acaa73ca')}
           </p>
         </div>
 
         <div className="privacy-policy-conclusion-box">
           <p className="privacy-policy-conclusion-text">
-            <strong>본 개인정보처리방침은 2025년 1월 17일부터 시행됩니다.</strong>
+            <strong>{t('common:common.PrivacyPolicy.t_99908d83')}</strong>
           </p>
         </div>
   </div>
 );
+};
 
-const PrivacyPolicy = () => (
-  <AdminCommonLayout title="개인정보처리방침">
+const PrivacyPolicy = () => {
+  const { t } = useTranslation(); return (
+  <AdminCommonLayout title={t('common:common.PrivacyPolicy.t_339679c5')}>
     <ContentArea ariaLabel="개인정보 처리방침">
-      <ContentHeader title="개인정보 처리방침" titleId={PRIVACY_PAGE_TITLE_ID} />
+      <ContentHeader title={t('common:common.PrivacyPolicy.t_532136c0')} titleId={PRIVACY_PAGE_TITLE_ID} />
       <PrivacyPolicyContent omitHeading />
     </ContentArea>
   </AdminCommonLayout>
 );
+};
 
 export default PrivacyPolicy;

@@ -894,18 +894,18 @@ const BalanceSheetTab = () => {
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} className="mg-v2-input" />
         </div>
         <p className="mg-v2-caption integrated-finance-balance-sheet-hint integrated-finance-caption-box">
-          임대료·비용 내역은 <strong>손익 현황</strong> 탭에서 확인할 수 있습니다. 대차대조표는 자산·부채·자본만 표시됩니다.
+          {t('erp:IntegratedFinanceDashboard.t_8a427b76')} <strong>{t('erp:IntegratedFinanceDashboard.t_503ed7af')}</strong> {t('erp:IntegratedFinanceDashboard.t_04bb2cfc')}
         </p>
         {allZero && (
           <p className="mg-v2-caption integrated-finance-caption-box">
-            기준일자까지 등록된 거래가 없어 금액이 0으로 표시됩니다.
+            {t('erp:IntegratedFinanceDashboard.t_c40d517e')}
           </p>
         )}
         <div className="balance-sheet-grid">
           <div className="mg-v2-ad-b0kla__card balance-sheet-card balance-sheet-card--assets mg-v2-ad-b0kla__card-accent">
             <h3 className="balance-sheet-card-title">
               <TrendingUp className="balance-sheet-card-icon" size={24} />
-              자산
+              {t('erp:IntegratedFinanceDashboard.t_40ce1366')}
             </h3>
             <div className="balance-sheet-section">
               <div className="balance-sheet-items">
@@ -915,7 +915,7 @@ const BalanceSheetTab = () => {
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
-                )) : <div className="balance-sheet-item">자산 항목 없음</div>}
+                )) : <div className="balance-sheet-item">{t('erp:IntegratedFinanceDashboard.t_9c3a3f30')}</div>}
               </div>
               <div className="balance-sheet-grand-total">
                 자산 합계:{' '}
@@ -926,7 +926,7 @@ const BalanceSheetTab = () => {
           <div className="mg-v2-ad-b0kla__card balance-sheet-card balance-sheet-card--liabilities mg-v2-ad-b0kla__card-accent--orange">
             <h3 className="balance-sheet-card-title">
               <TrendingDown className="balance-sheet-card-icon" size={24} />
-              부채
+              {t('erp:IntegratedFinanceDashboard.t_a8af129d')}
             </h3>
             <div className="balance-sheet-section">
               <div className="balance-sheet-items">
@@ -936,7 +936,7 @@ const BalanceSheetTab = () => {
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
-                )) : <div className="balance-sheet-item">부채 항목 없음</div>}
+                )) : <div className="balance-sheet-item">{t('erp:IntegratedFinanceDashboard.t_45becb25')}</div>}
               </div>
               <div className="balance-sheet-grand-total">
                 부채 합계:{' '}
@@ -947,7 +947,7 @@ const BalanceSheetTab = () => {
           <div className="mg-v2-ad-b0kla__card balance-sheet-card balance-sheet-card--equity mg-v2-ad-b0kla__card-accent--blue">
             <h3 className="balance-sheet-card-title">
               <PieChart className="balance-sheet-card-icon" size={24} />
-              자본
+              {t('erp:IntegratedFinanceDashboard.t_72fc673e')}
             </h3>
             <div className="balance-sheet-section">
               <div className="balance-sheet-items">
@@ -957,7 +957,7 @@ const BalanceSheetTab = () => {
                     {': '}
                     <ErpSafeNumber value={item.balance ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </div>
-                )) : <div className="balance-sheet-item">자본 항목 없음</div>}
+                )) : <div className="balance-sheet-item">{t('erp:IntegratedFinanceDashboard.t_fe30dfd1')}</div>}
               </div>
               <div className="balance-sheet-grand-total">
                 자본 합계:{' '}
@@ -1139,7 +1139,7 @@ const IncomeStatementTab = () => {
     <div>
       <DashboardSection title={t('erp:finance.financialStatements.incomeStatement')} icon={<BarChart3 size={24} />}>
         <p className="mg-v2-caption integrated-finance-caption--lead">
-          비용·수익 항목별 내역은 아래 카드에서 확인할 수 있습니다. (ERP 원장 기준)
+          {t('erp:IntegratedFinanceDashboard.t_cb2bd6d4')}
         </p>
         <div className="mg-v2-mb-md">
           <div className="mg-v2-form-row">
@@ -1155,14 +1155,14 @@ const IncomeStatementTab = () => {
         </div>
         {allZero && (
           <p className="mg-v2-caption integrated-finance-caption-box">
-            선택한 기간에 등록된 거래가 없어 금액이 0으로 표시됩니다.
+            {t('erp:IntegratedFinanceDashboard.t_0406ca93')}
           </p>
         )}
         <div className="income-statement-grid">
           <div className="mg-v2-ad-b0kla__card income-statement-card income-statement-card--revenue mg-v2-ad-b0kla__card-accent">
             <h3 className="income-statement-card-title">
               <TrendingUp className="income-statement-card-icon" size={24} />
-              수익
+              {t('erp:IntegratedFinanceDashboard.t_bd6b144b')}
             </h3>
             <div className="income-statement-items">
               {revenueItems.length > 0 ? revenueItems.map((item, idx) => (
@@ -1175,10 +1175,10 @@ const IncomeStatementTab = () => {
                     <ErpSafeNumber value={item.amount ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </span>
                 </div>
-              )) : <div className="income-statement-item">수익 항목 없음</div>}
+              )) : <div className="income-statement-item">{t('erp:IntegratedFinanceDashboard.t_e14564e5')}</div>}
               <div className="income-statement-total">
                 <div className="income-statement-total-row">
-                  <span>수익 총계:</span>
+                  <span>{t('erp:IntegratedFinanceDashboard.t_f9662494')}</span>
                   <span>
                     <ErpSafeNumber value={revenueTotal} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </span>
@@ -1189,7 +1189,7 @@ const IncomeStatementTab = () => {
           <div className="mg-v2-ad-b0kla__card income-statement-card income-statement-card--expenses mg-v2-ad-b0kla__card-accent--orange">
             <h3 className="income-statement-card-title">
               <TrendingDown className="income-statement-card-icon" size={24} />
-              비용
+              {t('erp:IntegratedFinanceDashboard.t_5b4db159')}
             </h3>
             <div className="income-statement-items">
               {expensesItems.length > 0 ? expensesItems.map((item, idx) => (
@@ -1202,10 +1202,10 @@ const IncomeStatementTab = () => {
                     <ErpSafeNumber value={item.amount ?? 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </span>
                 </div>
-              )) : <div className="income-statement-item">비용 항목 없음</div>}
+              )) : <div className="income-statement-item">{t('erp:IntegratedFinanceDashboard.t_c0c508ea')}</div>}
               <div className="income-statement-total">
                 <div className="income-statement-total-row">
-                  <span>비용 총계:</span>
+                  <span>{t('erp:IntegratedFinanceDashboard.t_4b54fb40')}</span>
                   <span>
                     <ErpSafeNumber value={expensesTotal} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                   </span>
@@ -1219,12 +1219,12 @@ const IncomeStatementTab = () => {
           <div className="net-income-decoration-2" />
           <h3 className="net-income-title">
             <DollarSign className="net-income-icon" size={32} />
-            당기순이익
+            {t('erp:IntegratedFinanceDashboard.t_6e15ff0a')}
           </h3>
           <div className="net-income-value">
             <ErpSafeNumber value={netIncome} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
           </div>
-          <div className="net-income-subtitle">수익 총계 - 비용 총계</div>
+          <div className="net-income-subtitle">{t('erp:IntegratedFinanceDashboard.t_a6c6e6a6')}</div>
         </div>
       </DashboardSection>
     </div>
@@ -1338,7 +1338,7 @@ const CashFlowStatementTab = () => {
         <div className="balance-sheet-card balance-sheet-card--assets">
           <h3 className="balance-sheet-card-title">
             <TrendingUp className="balance-sheet-card-icon" size={24} />
-            영업 활동 현금흐름
+            {t('erp:IntegratedFinanceDashboard.t_f15f51e1')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">
@@ -1360,7 +1360,7 @@ const CashFlowStatementTab = () => {
         <div className="balance-sheet-card balance-sheet-card--liabilities">
           <h3 className="balance-sheet-card-title">
             <TrendingDown className="balance-sheet-card-icon" size={24} />
-            투자 활동 현금흐름
+            {t('erp:IntegratedFinanceDashboard.t_15d96a9f')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">
@@ -1382,7 +1382,7 @@ const CashFlowStatementTab = () => {
         <div className="balance-sheet-card balance-sheet-card--equity">
           <h3 className="balance-sheet-card-title">
             <PieChart className="balance-sheet-card-icon" size={24} />
-            재무 활동 현금흐름
+            {t('erp:IntegratedFinanceDashboard.t_f7463dea')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">
@@ -1410,13 +1410,13 @@ const CashFlowStatementTab = () => {
         <div className="net-income-decoration-2" />
         <h3 className="net-income-title">
           <DollarSign className="net-income-icon" size={32} />
-          현금 및 현금성 자산 증가
+          {t('erp:IntegratedFinanceDashboard.t_9022e388')}
         </h3>
         <div className="net-income-value">
           {formatCurrency(cashFlowData?.netCashIncrease || 0)}
         </div>
         <div className="net-income-subtitle">
-          영업 + 투자 + 재무 활동 현금흐름 합계
+          {t('erp:IntegratedFinanceDashboard.t_42e91619')}
         </div>
       </div>
       </DashboardSection>
@@ -1481,7 +1481,7 @@ const DailyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--assets">
           <h3 className="balance-sheet-card-title">
             <TrendingUp className="balance-sheet-card-icon" size={24} />
-            일간 수입
+            {t('erp:IntegratedFinanceDashboard.t_c287a129')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">상담료: {formatCurrency(reportData?.dailyIncome?.consultationFees || 0)}</div>
@@ -1496,7 +1496,7 @@ const DailyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--liabilities">
           <h3 className="balance-sheet-card-title">
             <TrendingDown className="balance-sheet-card-icon" size={24} />
-            일간 지출
+            {t('erp:IntegratedFinanceDashboard.t_3f4ef7e7')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">급여: {formatCurrency(reportData?.dailyExpenses?.salary || 0)}</div>
@@ -1513,13 +1513,13 @@ const DailyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--equity">
           <h3 className="balance-sheet-card-title">
             <DollarSign className="balance-sheet-card-icon" size={24} />
-            일간 순이익
+            {t('erp:IntegratedFinanceDashboard.t_ca59323b')}
           </h3>
           <div className="net-income-value">
             {formatCurrency(reportData?.dailyNetIncome || 0)}
           </div>
           <div className="net-income-subtitle">
-            수입 - 지출
+            {t('erp:IntegratedFinanceDashboard.t_e6facbd1')}
           </div>
         </div>
       </div>
@@ -1528,26 +1528,26 @@ const DailyReportTab = ({ period }) => {
       <div className="finance-transactions-section">
         <h3 className="finance-transactions-title">
           <BarChart3 size={24} className="finance-icon-inline" />
-          일간 거래 건수
+          {t('erp:IntegratedFinanceDashboard.t_9722153a')}
         </h3>
         <div className="finance-transactions-grid">
           <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.consultations || 0}
             </div>
-            <div className="finance-transaction-label">상담 건수</div>
+            <div className="finance-transaction-label">{t('erp:IntegratedFinanceDashboard.t_b193260c')}</div>
           </div>
           <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.purchases || 0}
             </div>
-            <div className="finance-transaction-label">구매 건수</div>
+            <div className="finance-transaction-label">{t('erp:IntegratedFinanceDashboard.t_7ca6d58c')}</div>
           </div>
           <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.payments || 0}
             </div>
-            <div className="finance-transaction-label">결제 건수</div>
+            <div className="finance-transaction-label">{t('erp:IntegratedFinanceDashboard.t_4605883a')}</div>
           </div>
         </div>
       </div>
@@ -1677,7 +1677,7 @@ const MonthlyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--assets">
           <h3 className="balance-sheet-card-title">
             <TrendingUp className="balance-sheet-card-icon" size={24} />
-            월간 수입
+            {t('erp:IntegratedFinanceDashboard.t_daac83af')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">상담수익: {formatCurrency(reportData?.monthlyIncome?.consultationRevenue || 0)}</div>
@@ -1692,7 +1692,7 @@ const MonthlyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--liabilities">
           <h3 className="balance-sheet-card-title">
             <TrendingDown className="balance-sheet-card-icon" size={24} />
-            월간 지출
+            {t('erp:IntegratedFinanceDashboard.t_c50691bb')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">급여지출: {formatCurrency(reportData?.monthlyExpenses?.salaryExpense || 0)}</div>
@@ -1711,13 +1711,13 @@ const MonthlyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--equity">
           <h3 className="balance-sheet-card-title">
             <DollarSign className="balance-sheet-card-icon" size={24} />
-            월간 순이익
+            {t('erp:IntegratedFinanceDashboard.t_7a481b77')}
           </h3>
           <div className="net-income-value">
             {formatCurrency(reportData?.monthlyNetIncome || 0)}
           </div>
           <div className="net-income-subtitle">
-            수입 - 지출
+            {t('erp:IntegratedFinanceDashboard.t_e6facbd1')}
           </div>
         </div>
       </div>
@@ -1726,26 +1726,26 @@ const MonthlyReportTab = ({ period }) => {
       <div className="finance-transactions-section">
         <h3 className="finance-transactions-title">
           <BarChart3 size={24} className="finance-icon-inline" />
-          월간 거래 건수
+          {t('erp:IntegratedFinanceDashboard.t_ec580a00')}
         </h3>
         <div className="finance-transactions-grid">
           <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.consultations || 0}
             </div>
-            <div className="finance-transaction-label">상담 건수</div>
+            <div className="finance-transaction-label">{t('erp:IntegratedFinanceDashboard.t_b193260c')}</div>
           </div>
           <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.purchases || 0}
             </div>
-            <div className="finance-transaction-label">구매 건수</div>
+            <div className="finance-transaction-label">{t('erp:IntegratedFinanceDashboard.t_7ca6d58c')}</div>
           </div>
           <div className="mg-v2-ad-b0kla__card finance-transaction-card">
             <div className="finance-transaction-value">
               {reportData?.transactionCount?.payments || 0}
             </div>
-            <div className="finance-transaction-label">결제 건수</div>
+            <div className="finance-transaction-label">{t('erp:IntegratedFinanceDashboard.t_4605883a')}</div>
           </div>
         </div>
       </div>
@@ -1852,7 +1852,7 @@ const YearlyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--assets">
           <h3 className="balance-sheet-card-title">
             <TrendingUp className="balance-sheet-card-icon" size={24} />
-            년간 수입
+            {t('erp:IntegratedFinanceDashboard.t_6ab822db')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">상담수익: {formatCurrency(reportData?.yearlyIncome?.consultationRevenue || 0)}</div>
@@ -1867,7 +1867,7 @@ const YearlyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--liabilities">
           <h3 className="balance-sheet-card-title">
             <TrendingDown className="balance-sheet-card-icon" size={24} />
-            년간 지출
+            {t('erp:IntegratedFinanceDashboard.t_cca4fed4')}
           </h3>
           <div className="balance-sheet-items">
             <div className="balance-sheet-item">급여지출: {formatCurrency(reportData?.yearlyExpenses?.salaryExpense || 0)}</div>
@@ -1887,13 +1887,13 @@ const YearlyReportTab = ({ period }) => {
         <div className="balance-sheet-card balance-sheet-card--equity">
           <h3 className="balance-sheet-card-title">
             <DollarSign className="balance-sheet-card-icon" size={24} />
-            년간 순이익
+            {t('erp:IntegratedFinanceDashboard.t_227ad796')}
           </h3>
           <div className="net-income-value">
             {formatCurrency(reportData?.yearlyNetIncome || 0)}
           </div>
           <div className="net-income-subtitle">
-            수입 - 지출
+            {t('erp:IntegratedFinanceDashboard.t_e6facbd1')}
           </div>
         </div>
       </div>
@@ -1990,25 +1990,25 @@ const JournalEntriesTab = () => {
           {showHelp && (
             <div className="integrated-finance-journal-help-body">
               <div className="mg-v2-mb-sm">
-                <strong>거래(Journal Entry)</strong>는 모든 회계 거래를 기록하는 기본 단위입니다.
+                <strong>{t('erp:IntegratedFinanceDashboard.t_dfe15712')}</strong>{t('erp:IntegratedFinanceDashboard.t_e53ab146')}
               </div>
               <ul className="integrated-finance-journal-help-list">
                 <li>
-                  <strong>차변(Debit):</strong> 자산 증가, 비용 발생, 부채 감소, 자본 감소를 의미합니다.
+                  <strong>{t('erp:IntegratedFinanceDashboard.t_25e23a36')}</strong> {t('erp:IntegratedFinanceDashboard.t_6ee24a45')}
                 </li>
                 <li>
-                  <strong>대변(Credit):</strong> 자산 감소, 수익 발생, 부채 증가, 자본 증가를 의미합니다.
+                  <strong>{t('erp:IntegratedFinanceDashboard.t_c9bbd974')}</strong> {t('erp:IntegratedFinanceDashboard.t_9ebdf46a')}
                 </li>
                 <li>
-                  <strong>복식부기 원칙:</strong> 모든 거래는 차변 합계와 대변 합계가 반드시 일치해야 합니다.
+                  <strong>{t('erp:IntegratedFinanceDashboard.t_5f2b552c')}</strong> {t('erp:IntegratedFinanceDashboard.t_0e8cdecd')}
                 </li>
                 <li>
-                  <strong>처리 순서:</strong> 작성 → 승인 → 반영 순서로 진행됩니다.
+                  <strong>{t('erp:IntegratedFinanceDashboard.t_28422af2')}</strong> {t('erp:IntegratedFinanceDashboard.t_c5cb7914')}
                 </li>
               </ul>
               <div className="integrated-finance-journal-help-example">
-                <strong>예시:</strong> 현금 100만원으로 사무용품을 구매한 경우<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;차변: 사무용품비 100만원 / 대변: 현금 100만원
+                <strong>{t('erp:IntegratedFinanceDashboard.t_0fda3566')}</strong> {t('erp:IntegratedFinanceDashboard.t_0af52b9d')}<br />
+                {t('erp:IntegratedFinanceDashboard.t_a998f926')}
               </div>
             </div>
           )}
@@ -2030,19 +2030,19 @@ const JournalEntriesTab = () => {
           <table className="mg-table" data-label={t('erp:finance.tableCell.entryList')}>
             <thead>
               <tr>
-                <th>거래번호</th>
-                <th>기준일자</th>
-                <th>차변합계</th>
-                <th>대변합계</th>
+                <th>{t('erp:IntegratedFinanceDashboard.t_75618eb6')}</th>
+                <th>{t('erp:IntegratedFinanceDashboard.t_c9059e77')}</th>
+                <th>{t('erp:IntegratedFinanceDashboard.t_b1fe25b7')}</th>
+                <th>{t('erp:IntegratedFinanceDashboard.t_268afd48')}</th>
                 <th>{t('common.labels.status')}</th>
-                <th>작업</th>
+                <th>{t('erp:IntegratedFinanceDashboard.t_9d9bf438')}</th>
               </tr>
             </thead>
             <tbody>
               {entries.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="mg-v2-text-center mg-v2-text-secondary">
-                    등록된 거래가 없습니다.
+                    {t('erp:IntegratedFinanceDashboard.t_d39e2de2')}
                   </td>
                 </tr>
               ) : (
@@ -2067,7 +2067,7 @@ const JournalEntriesTab = () => {
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => { setSelectedEntry(entry); setShowDetailModal(true); }}
                         >
-                          상세
+                          {t('erp:IntegratedFinanceDashboard.t_bb446431')}
                         </MGButton>
                         {entry.entryStatus === 'DRAFT' && (
                           <MGButton
@@ -2078,7 +2078,7 @@ const JournalEntriesTab = () => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => handleApprove(entry.id)}
                           >
-                            승인
+                            {t('erp:IntegratedFinanceDashboard.t_0d1cd671')}
                           </MGButton>
                         )}
                         {entry.entryStatus === 'APPROVED' && (
@@ -2090,7 +2090,7 @@ const JournalEntriesTab = () => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => handlePost(entry.id)}
                           >
-                            반영
+                            {t('erp:IntegratedFinanceDashboard.t_c2ecc56e')}
                           </MGButton>
                         )}
                       </div>
@@ -2192,7 +2192,7 @@ const LedgersTab = () => {
               onChange={(e) => setSelectedAccountId(e.target.value ? Number.parseInt(e.target.value, 10) : null)}
               aria-label={t('erp:finance.accessibility.selectBankAccount')}
             >
-              <option value="">계좌를 선택하세요</option>
+              <option value="">{t('erp:IntegratedFinanceDashboard.t_c7d2ce37')}</option>
               {accountList.map((acc) => (
                 <option key={acc.id} value={acc.id}>
                   {[acc.bankName, acc.accountNumber, acc.accountHolder].filter(Boolean).join(' - ')}
@@ -2222,7 +2222,7 @@ const LedgersTab = () => {
               loading={loading}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             >
-              조회
+              {t('erp:IntegratedFinanceDashboard.t_72d116b0')}
             </MGButton>
           </div>
         </div>
@@ -2232,13 +2232,13 @@ const LedgersTab = () => {
             <table className="mg-table" data-label={t('erp:finance.tableCell.ledgerList')}>
               <thead>
                 <tr>
-                  <th>계정과목</th>
-                  <th>기간 시작</th>
-                  <th>기간 종료</th>
-                  <th>기초잔액</th>
-                  <th>차변합계</th>
-                  <th>대변합계</th>
-                  <th>기말잔액</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_e0082da7')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_2ae8f75b')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_8c2de782')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_e59c6244')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_b1fe25b7')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_268afd48')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_3c9eb20f')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2261,9 +2261,9 @@ const LedgersTab = () => {
             </table>
           </div>
         ) : selectedAccountId ? (
-          <p className="mg-v2-text-center mg-v2-text-secondary">내역이 없습니다.</p>
+          <p className="mg-v2-text-center mg-v2-text-secondary">{t('erp:IntegratedFinanceDashboard.t_95f691db')}</p>
         ) : (
-          <p className="mg-v2-text-center mg-v2-text-secondary">계정을 선택해주세요.</p>
+          <p className="mg-v2-text-center mg-v2-text-secondary">{t('erp:IntegratedFinanceDashboard.t_bdc12efc')}</p>
         )}
 
         {/* 원장 상세 모달 */}
@@ -2366,7 +2366,7 @@ const SettlementTab = () => {
             onClick={() => setActiveSubTab('rules')}
             preventDoubleClick={false}
           >
-            정산 규칙
+            {t('erp:IntegratedFinanceDashboard.t_eea988fa')}
           </MGButton>
           <MGButton
             type="button"
@@ -2378,7 +2378,7 @@ const SettlementTab = () => {
             onClick={() => setActiveSubTab('results')}
             preventDoubleClick={false}
           >
-            정산 결과
+            {t('erp:IntegratedFinanceDashboard.t_b9930f1d')}
           </MGButton>
         </div>
 
@@ -2393,25 +2393,25 @@ const SettlementTab = () => {
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => { setEditingRule(null); setShowCreateRuleModal(true); }}
               >
-                규칙 생성
+                {t('erp:IntegratedFinanceDashboard.t_70d42f7c')}
               </MGButton>
             </div>
             <div className="mg-v2-table-container">
               <table className="mg-table" data-label={t('erp:finance.tableCell.ruleList')}>
               <thead>
                 <tr>
-                  <th>규칙명</th>
-                  <th>업종 유형</th>
-                  <th>정산 유형</th>
-                  <th>계산 방법</th>
-                  <th>활성화</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_1a60785a')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_86a04795')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_6360d03c')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_9ffa584e')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_bbf831ad')}</th>
                 </tr>
               </thead>
               <tbody>
                 {rules.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="mg-v2-text-center mg-v2-text-secondary">
-                      정산 규칙이 없습니다.
+                      {t('erp:IntegratedFinanceDashboard.t_fcdfa0e1')}
                     </td>
                   </tr>
                 ) : (
@@ -2469,7 +2469,7 @@ const SettlementTab = () => {
                   }}
                   disabled={!settlementPeriod}
                 >
-                  정산 계산
+                  {t('erp:IntegratedFinanceDashboard.t_e0a17999')}
                 </MGButton>
               </div>
             </div>
@@ -2478,21 +2478,21 @@ const SettlementTab = () => {
               <table className="mg-table" data-label={t('erp:finance.tableCell.resultList')}>
                 <thead>
                   <tr>
-                    <th>정산번호</th>
-                    <th>정산기간</th>
-                    <th>총매출</th>
-                    <th>수수료</th>
-                    <th>로열티</th>
-                    <th>순정산액</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_cdce81e5')}</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_e57bcb40')}</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_ea484586')}</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_34f036ed')}</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_6952b7dc')}</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_7238f603')}</th>
                     <th>{t('common.labels.status')}</th>
-                    <th>작업</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_9d9bf438')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {settlements.length === 0 ? (
                     <tr>
                       <td colSpan="8" className="mg-v2-text-center mg-v2-text-secondary">
-                        정산 결과가 없습니다.
+                        {t('erp:IntegratedFinanceDashboard.t_a4cc7e00')}
                       </td>
                     </tr>
                   ) : (
@@ -2529,7 +2529,7 @@ const SettlementTab = () => {
                                 }
                               }}
                             >
-                              승인
+                              {t('erp:IntegratedFinanceDashboard.t_0d1cd671')}
                             </MGButton>
                           )}
                         </td>
@@ -2598,7 +2598,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
         ) : entryDetail ? (
           <div className="mg-v2-form-group">
             <div className="mg-v2-mb-md">
-              <label className="mg-v2-label">거래번호</label>
+              <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_75618eb6')}</label>
               <div className="mg-v2-text">{entryDetail.entryNumber}</div>
             </div>
             <div className="mg-v2-mb-md">
@@ -2615,14 +2615,14 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
             </div>
             {entryDetail.lines && entryDetail.lines.length > 0 && (
               <div className="mg-v2-mb-md">
-                <label className="mg-v2-label">거래 라인</label>
+                <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_a7b82e12')}</label>
                 <div className="mg-v2-table-container">
                   <table className="mg-table" data-label={t('erp:finance.tableCell.lineList')}>
                     <thead>
                       <tr>
-                        <th>계정</th>
-                        <th>차변</th>
-                        <th>대변</th>
+                        <th>{t('erp:IntegratedFinanceDashboard.t_615212b2')}</th>
+                        <th>{t('erp:IntegratedFinanceDashboard.t_1746f4f4')}</th>
+                        <th>{t('erp:IntegratedFinanceDashboard.t_e308c65d')}</th>
                         <th>{t('common.labels.description')}</th>
                       </tr>
                     </thead>
@@ -2642,7 +2642,7 @@ const JournalEntryDetailModal = ({ entry, onClose, onRefresh }) => {
             )}
           </div>
         ) : (
-          <p className="mg-v2-text-center mg-v2-text-secondary">거래 정보를 불러올 수 없습니다.</p>
+          <p className="mg-v2-text-center mg-v2-text-secondary">{t('erp:IntegratedFinanceDashboard.t_bd4237f3')}</p>
         )}
         </div>
         <div className="mg-v2-modal-footer">
@@ -2842,12 +2842,12 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
         <div className="integrated-finance-journal-modal-guide__row">
           <Info size={16} className="integrated-finance-journal-modal-guide__icon" />
           <div>
-            <strong>거래 등록 가이드:</strong>
+            <strong>{t('erp:IntegratedFinanceDashboard.t_75711a45')}</strong>
             <ul>
-              <li>차변과 대변은 한 라인에 동시에 입력할 수 없습니다.</li>
-              <li>차변 합계와 대변 합계가 반드시 일치해야 합니다.</li>
-              <li>최소 2개 이상의 라인이 필요합니다.</li>
-              <li><strong>계정과목</strong>: 아래 목록에서 선택합니다. 목록이 비어 있으면 운영 현황 &gt; 데이터 동기화를 먼저 실행해 주세요.</li>
+              <li>{t('erp:IntegratedFinanceDashboard.t_14475934')}</li>
+              <li>{t('erp:IntegratedFinanceDashboard.t_599b4fa3')}</li>
+              <li>{t('erp:IntegratedFinanceDashboard.t_282b6505')}</li>
+              <li><strong>{t('erp:IntegratedFinanceDashboard.t_e0082da7')}</strong>{t('erp:IntegratedFinanceDashboard.t_ab926f56')}</li>
             </ul>
           </div>
         </div>
@@ -2856,7 +2856,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
       <div className="mg-v2-form-group" aria-busy={loading || accountTypesLoading}>
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            기준일자 <span className="mg-v2-text-danger">*</span>
+            {t('erp:IntegratedFinanceDashboard.t_c9059e77')} <span className="mg-v2-text-danger">*</span>
           </label>
           <input
             type="date"
@@ -2880,7 +2880,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
 
         <div className="mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
-            <label className="mg-v2-label">거래 라인</label>
+            <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_a7b82e12')}</label>
             <MGButton
               variant="outline"
               size="small"
@@ -2889,7 +2889,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleAddLine}
             >
-              라인 추가
+              {t('erp:IntegratedFinanceDashboard.t_e4105b98')}
             </MGButton>
           </div>
           {accountTypesError && (
@@ -2899,18 +2899,18 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
           )}
           {!accountTypesError && accountTypes.length === 0 && !accountTypesLoading && (
             <div className="mg-v2-mb-sm integrated-finance-journal-inline-hint--muted">
-              계정과목이 없습니다. 운영 현황 &gt; 데이터 동기화를 먼저 실행해 주세요.
+              {t('erp:IntegratedFinanceDashboard.t_96b6735a')}
             </div>
           )}
           <div className="mg-v2-table-container">
             <table className="mg-table" data-label={t('erp:finance.tableCell.lineInput')}>
               <thead>
                 <tr>
-                  <th>계정과목</th>
-                  <th>차변</th>
-                  <th>대변</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_e0082da7')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_1746f4f4')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_e308c65d')}</th>
                   <th>{t('common.labels.description')}</th>
-                  <th>작업</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_9d9bf438')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2923,7 +2923,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                         onChange={(e) => handleLineChange(index, 'accountId', e.target.value)}
                         disabled={accountTypesLoading || !!accountTypesError || accountTypes.length === 0}
                       >
-                        <option value="">계정과목 선택</option>
+                        <option value="">{t('erp:IntegratedFinanceDashboard.t_8e1a5364')}</option>
                         {accountTypes.map((at) => (
                           <option key={at.accountId} value={String(at.accountId)}>
                             {at.label}
@@ -2983,7 +2983,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
               </tbody>
               <tfoot>
                 <tr>
-                  <td className="mg-v2-font-weight-bold">합계</td>
+                  <td className="mg-v2-font-weight-bold">{t('erp:IntegratedFinanceDashboard.t_3dcb27ed')}</td>
                   <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
                     {formatCurrency(totalDebit)}
                   </td>
@@ -2995,7 +2995,7 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
                       <div className="mg-v2-text-danger mg-v2-text-xs">{errors.balance}</div>
                     )}
                     {isBalanced && !errors.balance && (
-                      <div className="mg-v2-text-success mg-v2-text-xs">✓ 차변/대변 균형</div>
+                      <div className="mg-v2-text-success mg-v2-text-xs">{t('erp:IntegratedFinanceDashboard.t_5850b62d')}</div>
                     )}
                   </td>
                 </tr>
@@ -3126,7 +3126,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
       <div className="mg-v2-form-group">
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            규칙명 <span className="mg-v2-text-danger">*</span>
+            {t('erp:IntegratedFinanceDashboard.t_1a60785a')} <span className="mg-v2-text-danger">*</span>
           </label>
           <input
             type="text"
@@ -3139,22 +3139,22 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
         </div>
 
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">업종 유형</label>
+          <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_86a04795')}</label>
           <select
             className="mg-v2-select"
             value={formData.businessType}
             onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
           >
-            <option value="">선택 안함</option>
+            <option value="">{t('erp:IntegratedFinanceDashboard.t_6a59f428')}</option>
             <option value="CONSULTATION">{t('common.labels.consultation')}</option>
-            <option value="EDUCATION">교육</option>
-            <option value="HEALTHCARE">의료</option>
+            <option value="EDUCATION">{t('erp:IntegratedFinanceDashboard.t_05c5ced0')}</option>
+            <option value="HEALTHCARE">{t('erp:IntegratedFinanceDashboard.t_bbfe9579')}</option>
           </select>
         </div>
 
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            정산 유형 <span className="mg-v2-text-danger">*</span>
+            {t('erp:IntegratedFinanceDashboard.t_6360d03c')} <span className="mg-v2-text-danger">*</span>
           </label>
           <select
             className={`mg-v2-select ${errors.settlementType ? 'mg-v2-input-error' : ''}`}
@@ -3162,32 +3162,32 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
             onChange={(e) => setFormData({ ...formData, settlementType: e.target.value })}
           >
             <option value="">{t('common.messages.pleaseSelect')}</option>
-            <option value="COMMISSION">수수료</option>
-            <option value="ROYALTY">로열티</option>
-            <option value="REVENUE_SHARE">매출 분배</option>
+            <option value="COMMISSION">{t('erp:IntegratedFinanceDashboard.t_34f036ed')}</option>
+            <option value="ROYALTY">{t('erp:IntegratedFinanceDashboard.t_6952b7dc')}</option>
+            <option value="REVENUE_SHARE">{t('erp:IntegratedFinanceDashboard.t_9cae8188')}</option>
           </select>
           {errors.settlementType && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.settlementType}</div>}
         </div>
 
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            계산 방법 <span className="mg-v2-text-danger">*</span>
+            {t('erp:IntegratedFinanceDashboard.t_9ffa584e')} <span className="mg-v2-text-danger">*</span>
           </label>
           <select
             className={`mg-v2-select ${errors.calculationMethod ? 'mg-v2-input-error' : ''}`}
             value={formData.calculationMethod}
             onChange={(e) => setFormData({ ...formData, calculationMethod: e.target.value })}
           >
-            <option value="PERCENTAGE">비율 (PERCENTAGE)</option>
-            <option value="FIXED">고정액 (FIXED)</option>
-            <option value="TIERED">구간별 (TIERED)</option>
+            <option value="PERCENTAGE">{t('erp:IntegratedFinanceDashboard.t_7ccb31ed')}</option>
+            <option value="FIXED">{t('erp:IntegratedFinanceDashboard.t_c2027705')}</option>
+            <option value="TIERED">{t('erp:IntegratedFinanceDashboard.t_3d83aafa')}</option>
           </select>
           {errors.calculationMethod && <div className="mg-v2-text-danger mg-v2-text-xs">{errors.calculationMethod}</div>}
         </div>
 
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            계산 파라미터 (JSON) <span className="mg-v2-text-danger">*</span>
+            {t('erp:IntegratedFinanceDashboard.t_e29851ac')} <span className="mg-v2-text-danger">*</span>
           </label>
           <textarea
             className={`mg-v2-input ${errors.calculationParams ? 'mg-v2-input-error' : ''}`}
@@ -3216,7 +3216,7 @@ const SettlementRuleModal = ({ rule, onClose, onRefresh }) => {
               checked={formData.isActive}
               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
             />
-            활성화
+            {t('erp:IntegratedFinanceDashboard.t_bbf831ad')}
           </label>
         </div>
       </div>
@@ -3293,33 +3293,33 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
     >
       <div className="mg-v2-form-group">
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">계정과목</label>
+          <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_e0082da7')}</label>
           <div className="mg-v2-text">{ledger.accountId}</div>
         </div>
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">기간</label>
+          <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_2622331e')}</label>
           <div className="mg-v2-text">{ledger.periodStart} ~ {ledger.periodEnd}</div>
         </div>
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">기초잔액</label>
+          <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_e59c6244')}</label>
           <div className="mg-v2-text">{formatCurrency(ledger.openingBalance || 0)}</div>
         </div>
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">차변합계</label>
+          <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_b1fe25b7')}</label>
           <div className="mg-v2-text">{formatCurrency(ledger.totalDebit || 0)}</div>
         </div>
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">대변합계</label>
+          <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_268afd48')}</label>
           <div className="mg-v2-text">{formatCurrency(ledger.totalCredit || 0)}</div>
         </div>
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">기말잔액</label>
+          <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_3c9eb20f')}</label>
           <div className="mg-v2-text mg-v2-font-weight-bold">{formatCurrency(ledger.closingBalance || 0)}</div>
         </div>
 
         {/* 분개 내역 */}
         <div className="mg-v2-mb-md">
-          <label className="mg-v2-label">관련 거래 내역</label>
+          <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_1c40f088')}</label>
           {loadingEntries ? (
             <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
               <UnifiedLoading type="inline" text={t('erp:finance.loading.ledgerEntries')} />
@@ -3329,10 +3329,10 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
               <table className="mg-table" data-label={t('erp:finance.tableCell.historyList')}>
                 <thead>
                   <tr>
-                    <th>거래번호</th>
-                    <th>기준일자</th>
-                    <th>차변</th>
-                    <th>대변</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_75618eb6')}</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_c9059e77')}</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_1746f4f4')}</th>
+                    <th>{t('erp:IntegratedFinanceDashboard.t_e308c65d')}</th>
                     <th>{t('common.labels.description')}</th>
                   </tr>
                 </thead>
@@ -3353,7 +3353,7 @@ const LedgerDetailModal = ({ ledger, onClose }) => {
               </table>
             </div>
           ) : (
-            <p className="mg-v2-text-center mg-v2-text-secondary">관련 거래 내역이 없습니다.</p>
+            <p className="mg-v2-text-center mg-v2-text-secondary">{t('erp:IntegratedFinanceDashboard.t_5374379b')}</p>
           )}
         </div>
       </div>
@@ -3540,13 +3540,13 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
       <div className="mg-v2-form-group" aria-busy={loading || accountTypesLoading}>
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            거래번호
+            {t('erp:IntegratedFinanceDashboard.t_75618eb6')}
           </label>
           <div className="mg-v2-text">{entry.entryNumber}</div>
         </div>
         <div className="mg-v2-mb-md">
           <label className="mg-v2-label">
-            기준일자 <span className="mg-v2-text-danger">*</span>
+            {t('erp:IntegratedFinanceDashboard.t_c9059e77')} <span className="mg-v2-text-danger">*</span>
           </label>
           <input
             type="date"
@@ -3570,7 +3570,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
 
         <div className="mg-v2-mb-md">
           <div className="mg-v2-flex mg-v2-justify-between mg-v2-mb-sm">
-            <label className="mg-v2-label">거래 라인</label>
+            <label className="mg-v2-label">{t('erp:IntegratedFinanceDashboard.t_a7b82e12')}</label>
             <MGButton
               variant="outline"
               size="small"
@@ -3579,7 +3579,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleAddLine}
             >
-              라인 추가
+              {t('erp:IntegratedFinanceDashboard.t_e4105b98')}
             </MGButton>
           </div>
           {accountTypesError && (
@@ -3589,18 +3589,18 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
           )}
           {!accountTypesError && accountTypes.length === 0 && !accountTypesLoading && (
             <div className="mg-v2-mb-sm integrated-finance-journal-inline-hint--muted">
-              계정과목이 없습니다. 운영 현황 &gt; 데이터 동기화를 먼저 실행해 주세요.
+              {t('erp:IntegratedFinanceDashboard.t_96b6735a')}
             </div>
           )}
           <div className="mg-v2-table-container">
             <table className="mg-table" data-label={t('erp:finance.tableCell.lineInput')}>
               <thead>
                 <tr>
-                  <th>계정과목</th>
-                  <th>차변</th>
-                  <th>대변</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_e0082da7')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_1746f4f4')}</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_e308c65d')}</th>
                   <th>{t('common.labels.description')}</th>
-                  <th>작업</th>
+                  <th>{t('erp:IntegratedFinanceDashboard.t_9d9bf438')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -3613,7 +3613,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                         onChange={(e) => handleLineChange(index, 'accountId', e.target.value)}
                         disabled={accountTypesLoading || !!accountTypesError || accountTypes.length === 0}
                       >
-                        <option value="">계정과목 선택</option>
+                        <option value="">{t('erp:IntegratedFinanceDashboard.t_8e1a5364')}</option>
                         {accountTypes.map((at) => (
                           <option key={at.accountId} value={String(at.accountId)}>
                             {at.label}
@@ -3673,7 +3673,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
               </tbody>
               <tfoot>
                 <tr>
-                  <td className="mg-v2-font-weight-bold">합계</td>
+                  <td className="mg-v2-font-weight-bold">{t('erp:IntegratedFinanceDashboard.t_3dcb27ed')}</td>
                   <td className={`mg-v2-font-weight-bold ${isBalanced ? 'mg-v2-text-success' : 'mg-v2-text-danger'}`}>
                     {formatCurrency(totalDebit)}
                   </td>
@@ -3685,7 +3685,7 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
                       <div className="mg-v2-text-danger mg-v2-text-xs">{errors.balance}</div>
                     )}
                     {isBalanced && !errors.balance && (
-                      <div className="mg-v2-text-success mg-v2-text-xs">✓ 차변/대변 균형</div>
+                      <div className="mg-v2-text-success mg-v2-text-xs">{t('erp:IntegratedFinanceDashboard.t_5850b62d')}</div>
                     )}
                   </td>
                 </tr>

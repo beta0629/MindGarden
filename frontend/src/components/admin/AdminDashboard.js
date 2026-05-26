@@ -636,9 +636,9 @@ const AdminDashboard = ({ user: propUser }) => {
                 const logWindow = window.open('', '_blank');
                 logWindow.document.write(`
                     <html>
-                        <head><title>시스템 로그</title></head>
+                        <head><title>{t('admin:AdminDashboard.t_e0975ea1')}</title></head>
                         <body>
-                            <h2>최근 시스템 로그</h2>
+                            <h2>{t('admin:AdminDashboard.t_4445543b')}</h2>
                             <pre style="white-space: pre-wrap; font-family: monospace;">${JSON.stringify(logs, null, 2)}</pre>
                         </body>
                     </html>
@@ -697,7 +697,7 @@ const AdminDashboard = ({ user: propUser }) => {
         return (
             <div className="admin-dashboard">
                 <div className="admin-dashboard-content">
-                    <UnifiedLoading type="inline" text="로딩 중..." />
+                    <UnifiedLoading type="inline" text={t('admin:AdminDashboard.t_06e61b86')} />
                 </div>
             </div>
         );
@@ -716,7 +716,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 <div className="mg-v2-ad-b0kla__header-right">
                     <div className="mg-v2-ad-b0kla__search">
                         <Search size={18} className="mg-v2-ad-b0kla__search-icon" />
-                        <span className="mg-v2-ad-b0kla__search-placeholder">통합 검색...</span>
+                        <span className="mg-v2-ad-b0kla__search-placeholder">{t('admin:AdminDashboard.t_21ba917e')}</span>
                     </div>
                     <div className="mg-v2-ad-b0kla__icon-group">
                         <MGButton
@@ -732,9 +732,9 @@ const AdminDashboard = ({ user: propUser }) => {
                             onClick={() => setShowStatisticsModal(true)}
                             type="button"
                             preventDoubleClick={false}
-                            aria-label="통계"
+                            aria-label={t('admin:AdminDashboard.t_4938fae0')}
                         >
-                            통계
+                            {t('admin:AdminDashboard.t_4938fae0')}
                         </MGButton>
                         <MGButton
                             type="button"
@@ -747,10 +747,10 @@ const AdminDashboard = ({ user: propUser }) => {
                                 className: 'mg-v2-ad-b0kla__icon-btn'
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            aria-label="캘린더"
+                            aria-label={t('admin:AdminDashboard.t_fc8c5b69')}
                             preventDoubleClick={false}
                         >
-                            캘린더
+                            {t('admin:AdminDashboard.t_fc8c5b69')}
                         </MGButton>
                         <MGButton
                             type="button"
@@ -780,10 +780,10 @@ const AdminDashboard = ({ user: propUser }) => {
                                 className: 'mg-v2-ad-b0kla__icon-btn'
                             })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            aria-label="테마"
+                            aria-label={t('admin:AdminDashboard.t_5d8fee11')}
                             preventDoubleClick={false}
                         >
-                            테마
+                            {t('admin:AdminDashboard.t_5d8fee11')}
                         </MGButton>
                     </div>
                 </div>
@@ -913,7 +913,7 @@ const AdminDashboard = ({ user: propUser }) => {
                                 const allZero = values.length > 0 && values.every((v) => v === 0);
                                 if (allZero) {
                                     return (
-                                        <p className="mg-v2-ad-b0kla__chart-empty">기간 내 완료된 상담이 없습니다.</p>
+                                        <p className="mg-v2-ad-b0kla__chart-empty">{t('admin:AdminDashboard.t_385902d3')}</p>
                                     );
                                 }
                                 return (
@@ -940,20 +940,20 @@ const AdminDashboard = ({ user: propUser }) => {
                         ) : (
                             <>
                                 <Activity size={48} className="mg-v2-ad-b0kla__chart-placeholder-icon" />
-                                <span>차트 영역</span>
+                                <span>{t('admin:AdminDashboard.t_26d3855d')}</span>
                             </>
                         )}
                     </div>
                 </div>
                 <div className="mg-v2-ad-b0kla__card">
-                    <h3 className="mg-v2-ad-b0kla__counselor-title">우수 상담사 평점</h3>
+                    <h3 className="mg-v2-ad-b0kla__counselor-title">{t('admin:AdminDashboard.t_187d6016')}</h3>
                     <div className="mg-v2-ad-b0kla__counselor-list">
                         {topConsultantsData.length > 0 ? (
                             topConsultantsData.map((c, i) => (
                                 <ConsultantRatingCard key={i} {...c} />
                             ))
                         ) : (
-                            <p className="mg-v2-ad-b0kla__counselor-empty">평가 데이터가 없습니다.</p>
+                            <p className="mg-v2-ad-b0kla__counselor-empty">{t('admin:AdminDashboard.t_4b363218')}</p>
                         )}
                     </div>
                 </div>
@@ -1041,7 +1041,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     return canViewPendingDeposits;
                 })() && pendingDepositStats.count > 0 && (
                     <DashboardSection
-                        title="입금 확인 대기 알림"
+                        title={t('admin:AdminDashboard.t_3e527e81')}
                         subtitle="결제 확인 완료, 입금 대기 중인 매칭"
                         icon={<AlertTriangle />}
                     >
@@ -1049,25 +1049,25 @@ const AdminDashboard = ({ user: propUser }) => {
                             <StatCard
                                 icon={<AlertTriangle />}
                                 value={`${pendingDepositStats.count}건`}
-                                label="입금 확인 대기"
+                                label={t('admin:AdminDashboard.t_8246effd')}
                                 onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`)}
                             />
                             <StatCard
                                 icon={<DollarSign />}
                                 value={`${pendingDepositStats.totalAmount.toLocaleString()}원`}
-                                label="대기 중인 금액"
+                                label={t('admin:AdminDashboard.t_f5eb6825')}
                                 onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`)}
                             />
                             <StatCard
                                 icon={<Clock />}
                                 value={`${pendingDepositStats.oldestHours}시간`}
-                                label="최장 대기 시간"
+                                label={t('admin:AdminDashboard.t_6937810e')}
                                 onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`)}
                             />
                             <StatCard
                                 icon={<Settings />}
                                 value="처리하기"
-                                label="입금 확인 처리"
+                                label={t('admin:AdminDashboard.t_53046e0a')}
                                 onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                             />
                         </div>
@@ -1153,10 +1153,10 @@ const AdminDashboard = ({ user: propUser }) => {
                             <Heart />
                             <div>
                                 <h3 className="mg-h4 mg-mb-0">
-                                    상담사 평가 통계
+                                    {t('admin:AdminDashboard.t_5b099eae')}
                                 </h3>
                                 <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
-                                    전체 상담사 평가 현황 및 만족도 지표 (클릭하여 펼치기/접기)
+                                    {t('admin:AdminDashboard.t_daa1a939')}
                                 </p>
                             </div>
                         </div>
@@ -1171,19 +1171,19 @@ const AdminDashboard = ({ user: propUser }) => {
                                 <StatCard
                                     icon={<Heart />}
                                     value={`${stats.consultantRatingStats?.totalRatings || 0}개`}
-                                    label="총 평가 수"
+                                    label={t('admin:AdminDashboard.t_0ebac2e7')}
                                     onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                                 />
                                 <StatCard
                                     icon={<Trophy />}
                                     value={(stats.consultantRatingStats?.averageScore || 0).toFixed(1)}
-                                    label="전체 평균 점수"
+                                    label={t('admin:AdminDashboard.t_380b3971')}
                                     onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                                 />
                                 <StatCard
                                     icon={<Users />}
                                     value={`${stats.consultantRatingStats?.topConsultants?.length || 0}명`}
-                                    label="평가받은 상담사"
+                                    label={t('admin:AdminDashboard.t_67de8d58')}
                                     onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
                                 />
                             </div>
@@ -1196,7 +1196,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
                 {/* 환불 통계 섹션 */}
                 <DashboardSection
-                    title="환불 현황"
+                    title={t('admin:AdminDashboard.t_ac9f714d')}
                     subtitle="최근 1개월 환불 통계"
                     icon={<RotateCcw />}
                 >
@@ -1204,25 +1204,25 @@ const AdminDashboard = ({ user: propUser }) => {
                         <StatCard
                             icon={<Receipt />}
                             value={`${refundStats.totalRefundCount}건`}
-                            label="환불 건수"
+                            label={t('admin:AdminDashboard.t_e07e5754')}
                             onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<Calendar />}
                             value={`${refundStats.totalRefundedSessions}회`}
-                            label="환불 회기"
+                            label={t('admin:AdminDashboard.t_7362540d')}
                             onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<DollarSign />}
                             value={`${refundStats.totalRefundAmount.toLocaleString()}원`}
-                            label="환불 금액"
+                            label={t('admin:AdminDashboard.t_ca5c157c')}
                             onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<TrendingUp />}
                             value={`${refundStats.averageRefundPerCase.toLocaleString()}원`}
-                            label="평균 환불액"
+                            label={t('admin:AdminDashboard.t_5c45c1f3')}
                             onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                     </div>
@@ -1231,7 +1231,7 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* 상담 완료 건수 통계 (어드민/수퍼어드민/지점수퍼어드민) */}
             {RoleUtils.isAdmin(propUser || sessionUser) && (
                     <DashboardSection
-                        title="상담 완료 통계"
+                        title={t('admin:AdminDashboard.t_16789d0d')}
                         subtitle="월별 상담 완료 현황 및 성과 지표"
                         icon={<Target />}
                     >
@@ -1239,26 +1239,26 @@ const AdminDashboard = ({ user: propUser }) => {
                             <StatCard
                                 icon={<CheckCircle />}
                                 value={`${stats.consultationStats?.totalCompleted || 0}건`}
-                                label="총 완료 상담"
+                                label={t('admin:AdminDashboard.t_6911ff22')}
                                 onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}
                             />
                             <StatCard
                                 icon={<TrendingUp />}
                                 value={`${stats.consultationStats?.completionRate || 0}%`}
-                                label="완료율"
+                                label={t('admin:AdminDashboard.t_611cadb3')}
                                 onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                             />
                             <StatCard
                                 icon={<PieChart />}
                                 value={`${stats.consultationStats?.averageCompletionTime || 0}분`}
-                                label="평균 완료 시간"
+                                label={t('admin:AdminDashboard.t_ece12c9a')}
                             />
                         </div>
                         
                         {/* 월별 상담 완료 차트 */}
                         {stats.consultationStats?.monthlyData && stats.consultationStats.monthlyData.length > 0 && (
                             <div className="mg-chart-container">
-                                <h4 className="mg-chart-title">월별 상담 완료 현황</h4>
+                                <h4 className="mg-chart-title">{t('admin:AdminDashboard.t_6e833dec')}</h4>
                                 <div className="mg-chart-grid">
                                     {stats.consultationStats.monthlyData.slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS).map((data, index) => {
                                         const maxCount = Math.max(...stats.consultationStats.monthlyData.map(d => d.completedCount));
@@ -1283,7 +1283,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
             {/* 관리 기능 */}
             <DashboardSection
-                title="관리 기능"
+                title={t('admin:AdminDashboard.t_e05c0827')}
                 subtitle="시스템 관리 및 설정 기능"
                 icon={<Settings />}
             >
@@ -1302,7 +1302,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     >
                         <AdminMgmtCardIcon icon={Users} tone="blue" />
                         <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.userManagement')}</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">상담사·내담자 통합 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_5b997a6e')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1317,8 +1317,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={CalendarDays} tone="green" />
-                        <span className="mg-v2-ad-b0kla__admin-label">통합 스케줄링</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">매칭 대기자와 캘린더를 한 화면에서 스케줄 등록</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_d67bbae4')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_bc774ca3')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1333,8 +1333,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={ClipboardList} tone="orange" />
-                        <span className="mg-v2-ad-b0kla__admin-label">상담일지 조회</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_f00037ae')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_da19d0b8')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1349,8 +1349,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Calendar} tone="green" />
-                        <span className="mg-v2-ad-b0kla__admin-label">스케줄 관리</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">상담 일정을 관리하고 조정합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_6ddcca42')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_ad9cf841')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1365,8 +1365,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Target} tone="gray" />
-                        <span className="mg-v2-ad-b0kla__admin-label">회기 관리</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">상담 회기를 등록하고 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_be89c264')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_6d774c2e')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1382,8 +1382,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={CheckCircle} tone="green" />
-                        <span className="mg-v2-ad-b0kla__admin-label">스케줄 자동 완료</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄을 자동으로 완료 처리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_7ad7a72d')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_b1698575')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1399,8 +1399,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={BellRing} tone="orange" />
-                        <span className="mg-v2-ad-b0kla__admin-label">스케줄 완료 + 알림</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">지난 스케줄 완료 처리 및 상담일지 미작성 알림</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_4a726da5')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_d9e01adc')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1416,7 +1416,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     >
                         <AdminMgmtCardIcon icon={UserCog} tone="blue" />
                         <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.consultantManagement')}</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">상담사 정보를 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_880e9dbb')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1432,7 +1432,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     >
                         <AdminMgmtCardIcon icon={UserRound} tone="green" />
                         <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.clientManagement')}</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">내담자 정보를 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_9ee4da97')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1447,8 +1447,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Link2} tone="orange" />
-                        <span className="mg-v2-ad-b0kla__admin-label">매칭 시스템</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">상담사와 내담자 매칭을 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_fd7633e1')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_04f1992b')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1463,8 +1463,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Tags} tone="gray" />
-                        <span className="mg-v2-ad-b0kla__admin-label">공통코드</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">시스템 공통코드를 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_8314805e')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_7af6ac13')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1479,8 +1479,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Megaphone} tone="blue" />
-                        <span className="mg-v2-ad-b0kla__admin-label">시스템 공지 관리</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">전체/상담사/내담자 공지를 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_2feecd90')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_74a14a1c')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1495,8 +1495,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={LayoutDashboard} tone="gray" />
-                        <span className="mg-v2-ad-b0kla__admin-label">대시보드 관리</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">역할별 대시보드를 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_d8189860')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_4d9e086e')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1512,7 +1512,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     >
                         <AdminMgmtCardIcon icon={Settings} tone="gray" />
                         <span className="mg-v2-ad-b0kla__admin-label">{t('admin.labels.systemSettings')}</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">OpenAI API 키 및 시스템 설정을 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_9f21b98f')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1527,8 +1527,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Database} tone="gray" />
-                        <span className="mg-v2-ad-b0kla__admin-label">캐시 모니터링</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">시스템 캐시 성능을 실시간으로 모니터링합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_487a67da')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_1b5bff7b')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1543,8 +1543,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Shield} tone="orange" />
-                        <span className="mg-v2-ad-b0kla__admin-label">보안 모니터링</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">실시간 보안 위협 탐지 및 시스템 보안 관리</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_131144ac')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_af541421')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1559,8 +1559,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Activity} tone="green" />
-                        <span className="mg-v2-ad-b0kla__admin-label">API 성능 모니터링</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">API 응답 시간과 성능 지표를 실시간으로 추적합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_f0b0eec7')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_684e9439')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1575,8 +1575,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={MessageCircle} tone="blue" />
-                        <span className="mg-v2-ad-b0kla__admin-label">메시지 관리</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">상담사-내담자 메시지를 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_e10a5e2d')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_2d82c7b9')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1591,8 +1591,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Brain} tone="orange" />
-                        <span className="mg-v2-ad-b0kla__admin-label">심리검사 리포트(AI)</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">TCI/MMPI 업로드 및 리포트 생성을 관리합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_244d1631')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_83b39c2e')}</span>
                     </MGButton>
                     <MGButton
                         type="button"
@@ -1607,15 +1607,15 @@ const AdminDashboard = ({ user: propUser }) => {
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Merge} tone="orange" />
-                        <span className="mg-v2-ad-b0kla__admin-label">중복 매칭 통합</span>
-                        <span className="mg-v2-ad-b0kla__admin-desc">중복된 상담사-내담자 매칭을 통합합니다</span>
+                        <span className="mg-v2-ad-b0kla__admin-label">{t('admin:AdminDashboard.t_405c91bb')}</span>
+                        <span className="mg-v2-ad-b0kla__admin-desc">{t('admin:AdminDashboard.t_4ab1f2f3')}</span>
                     </MGButton>
                 </div>
             </DashboardSection>
 
             {/* 시스템 상태 */}
             <DashboardSection
-                title="시스템 상태"
+                title={t('admin:AdminDashboard.t_86a99580')}
                 subtitle="서버 및 데이터베이스 상태 모니터링"
                 icon={<Settings />}
             >
@@ -1628,7 +1628,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
             {/* 시스템 도구 */}
             <DashboardSection
-                title="시스템 도구"
+                title={t('admin:AdminDashboard.t_e9f4e81d')}
                 subtitle="시스템 관리 및 유지보수 도구"
                 icon={<Settings />}
             >
@@ -1644,7 +1644,7 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* 컴플라이언스 관리 (관리자 전용) */}
             {RoleUtils.isAdmin(propUser || sessionUser) && (
                 <DashboardSection
-                    title="컴플라이언스 관리"
+                    title={t('admin:AdminDashboard.t_77eda937')}
                     subtitle="규정 준수 및 보안 관리"
                     icon={<Shield />}
                 >
@@ -1653,24 +1653,24 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <i className="bi bi-shield-check" />
                             </div>
-                            <h3>컴플라이언스 대시보드</h3>
-                            <p className="mg-management-description">개인정보보호법 준수 현황을 모니터링합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_9b717d7e')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_eaa6abdf')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE_DASHBOARD)}>
                             <div className="mg-management-icon">
                                 <i className="bi bi-graph-up" />
                             </div>
-                            <h3>개인정보 처리 현황</h3>
-                            <p className="mg-management-description">개인정보 처리 현황 및 통계를 관리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_857f68b1')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_642671e1')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE_DESTRUCTION)}>
                             <div className="mg-management-icon">
                                 <i className="bi bi-trash" />
                             </div>
-                            <h3>개인정보 파기 관리</h3>
-                            <p className="mg-management-description">자동화된 개인정보 파기 시스템을 관리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_b6746d96')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_0d9a96f5')}</p>
                         </div>
                     </div>
                 </DashboardSection>
@@ -1679,7 +1679,7 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* ERP 관리 */}
             <PermissionGroupGuard groupCode="DASHBOARD_ERP">
                 <DashboardSection
-                    title="운영·재무"
+                    title={t('admin:AdminDashboard.t_27fbf687')}
                     subtitle="운영·재무 메뉴"
                     icon={<Settings />}
                 >
@@ -1696,72 +1696,72 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaChartLine />
                             </div>
-                            <h3>운영 현황</h3>
-                            <p className="mg-management-description">수입·지출·구매를 한눈에 확인합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_03df899e')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_234f86e4')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
                             <div className="mg-management-icon">
                                 <FaShoppingCart />
                             </div>
-                            <h3>구매 요청</h3>
-                            <p className="mg-management-description">상담사 구매 요청을 관리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_eb7ad905')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_fa037cbe')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate(buildErpApprovalHubPath('admin'))}>
                             <div className="mg-management-icon">
                                 <FaCheckCircle />
                             </div>
-                            <h3>관리자 승인</h3>
-                            <p className="mg-management-description">구매 요청을 검토하고 승인합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_f2fe49d3')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_16d95697')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate(buildErpApprovalHubPath('super'))}>
                             <div className="mg-management-icon">
                                 <FaCheckCircle />
                             </div>
-                            <h3>수퍼 관리자 승인</h3>
-                            <p className="mg-management-description">최종 승인을 처리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_aa9e8662')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_f92efbf4')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
                             <div className="mg-management-icon">
                                 <FaBox />
                             </div>
-                            <h3>아이템 관리</h3>
-                            <p className="mg-management-description">구매 가능한 아이템을 관리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_145d6a1a')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_818316a0')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => setShowErpReport(true)}>
                             <div className="mg-management-icon">
                                 <FaFileExport />
                             </div>
-                            <h3>운영 리포트</h3>
-                            <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_c2178d4f')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_f8cdc578')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate('/erp/budgets')}>
                             <div className="mg-management-icon">
                                 <FaWallet />
                             </div>
-                            <h3>예산 관리</h3>
-                            <p className="mg-management-description">부서별 예산을 관리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_caa5739a')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_8db0f5af')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate('/erp/orders')}>
                             <div className="mg-management-icon">
                                 <FaTruck />
                             </div>
-                            <h3>주문 관리</h3>
-                            <p className="mg-management-description">발주 및 배송을 관리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_0078005e')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_60658851')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.ERP_FINANCIAL)}>
                             <div className="mg-management-icon">
                                 <FaDollarSign />
                             </div>
-                            <h3>수입·지출 관리</h3>
-                            <p className="mg-management-description">수입/지출 통합 관리 및 대차대조표</p>
+                            <h3>{t('admin:AdminDashboard.t_9e80e8e0')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_f4e02772')}</p>
                         </div>
                     </div>
                 </DashboardSection>
@@ -1769,7 +1769,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
             {/* 통계 및 분석 */}
             <DashboardSection
-                    title="통계 및 분석"
+                    title={t('admin:AdminDashboard.t_8110adef')}
                     subtitle="시스템 통계 및 성과 분석"
                     icon={<BarChart />}
                 >
@@ -1778,8 +1778,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaChartBar />
                             </div>
-                            <h3>성과 지표 대시보드</h3>
-                            <p className="mg-management-description">실시간 성과 지표를 확인하고 재계산합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_c3d8bc4e')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_9ef7d6a9')}</p>
                         </div>
                     </div>
                 </DashboardSection>
@@ -1796,8 +1796,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaUserGraduate />
                             </div>
-                            <h3>전문분야 관리</h3>
-                            <p className="mg-management-description">상담사별 전문분야를 설정하고 관리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_9894b482')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_2102ff28')}</p>
                         </div>
                     </div>
             </DashboardSection>
@@ -1814,8 +1814,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-management-icon">
                             <FaUsers />
                         </div>
-                        <h3>내담자 종합 관리</h3>
-                        <p className="mg-management-description">내담자 정보를 종합적으로 관리합니다</p>
+                        <h3>{t('admin:AdminDashboard.t_398d1756')}</h3>
+                        <p className="mg-management-description">{t('admin:AdminDashboard.t_43e07fb4')}</p>
                     </div>
                 </div>
             </DashboardSection>
@@ -1823,7 +1823,7 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* 재무 관리 */}
             {PermissionChecks.canAccessFinance(userPermissions) && (
                 <DashboardSection
-                    title="재무 관리"
+                    title={t('admin:AdminDashboard.t_98b859f6')}
                     subtitle="수입, 지출 및 재무 분석"
                     icon={<DollarSign />}
                 >
@@ -1835,8 +1835,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaRedo />
                             </div>
-                            <h3>반복 지출 관리</h3>
-                            <p className="mg-management-description">정기적인 지출을 설정하고 관리합니다</p>
+                            <h3>{t('admin:AdminDashboard.t_9eb4bb71')}</h3>
+                            <p className="mg-management-description">{t('admin:AdminDashboard.t_7a66b026')}</p>
                         </div>
                     </div>
                 </DashboardSection>
@@ -1858,7 +1858,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             onClick={() => setShowToastState(false)}
                             preventDoubleClick={false}
-                            aria-label="알림 닫기"
+                            aria-label={t('admin:AdminDashboard.t_d7556ddd')}
                         >
                             ×
                         </MGButton>
@@ -1895,7 +1895,7 @@ const AdminDashboard = ({ user: propUser }) => {
             <UnifiedModal
                 isOpen={showStatisticsModal}
                 onClose={() => setShowStatisticsModal(false)}
-                title="통계 대시보드"
+                title={t('admin:AdminDashboard.t_505d75b1')}
                 size="large"
                 showCloseButton={true}
                 backdropClick={true}

@@ -162,10 +162,10 @@ const AdminApprovalDashboard = () => {
       {requests.length === 0 ? (
         <section className="mg-v2-section" aria-labelledby="approval-admin-empty-title">
           <CardContainer>
-            <h3 id="approval-admin-empty-title" className="mg-h4">승인 대기 목록</h3>
+            <h3 id="approval-admin-empty-title" className="mg-h4">{t('erp:AdminApprovalDashboard.t_e018899d')}</h3>
             <div className="mg-v2-card-body">
               <div className="approval-dashboard-empty">
-                승인 대기 중인 구매 요청이 없습니다.
+                {t('erp:AdminApprovalDashboard.t_b4c9b299')}
               </div>
             </div>
           </CardContainer>
@@ -185,17 +185,17 @@ const AdminApprovalDashboard = () => {
                 <div className="mg-v2-card-body">
                   <div className="approval-request-info">
                     <div className="approval-request-grid">
-                      <div><strong>요청자:</strong> <SafeText fallback="알 수 없음">{request.requester?.name}</SafeText></div>
-                      <div><strong>요청일:</strong> <ErpSafeText value={formatApprovalDate(request.createdAt)} /></div>
-                      <div><strong>아이템:</strong> <SafeText fallback="알 수 없음">{request.item?.name}</SafeText></div>
-                      <div><strong>수량:</strong> <ErpSafeText value={request.quantity} />개</div>
-                      <div><strong>단가:</strong> <ErpSafeText value={formatApprovalCurrency(request.unitPrice)} /></div>
-                      <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(request.totalAmount)} /></div>
+                      <div><strong>{t('erp:AdminApprovalDashboard.t_17102fe2')}</strong> <SafeText fallback="알 수 없음">{request.requester?.name}</SafeText></div>
+                      <div><strong>{t('erp:AdminApprovalDashboard.t_b478a5ad')}</strong> <ErpSafeText value={formatApprovalDate(request.createdAt)} /></div>
+                      <div><strong>{t('erp:AdminApprovalDashboard.t_f2e00fdf')}</strong> <SafeText fallback="알 수 없음">{request.item?.name}</SafeText></div>
+                      <div><strong>{t('erp:AdminApprovalDashboard.t_46dfd8e0')}</strong> <ErpSafeText value={request.quantity} />{t('erp:AdminApprovalDashboard.t_11600c9a')}</div>
+                      <div><strong>{t('erp:AdminApprovalDashboard.t_a10017a8')}</strong> <ErpSafeText value={formatApprovalCurrency(request.unitPrice)} /></div>
+                      <div><strong>{t('erp:AdminApprovalDashboard.t_e2749f0f')}</strong> <ErpSafeText value={formatApprovalCurrency(request.totalAmount)} /></div>
                     </div>
 
                     {request.reason && (
                       <div className="approval-request-reason">
-                        <strong>사유:</strong>
+                        <strong>{t('erp:AdminApprovalDashboard.t_0d80f691')}</strong>
                         <div className="approval-request-reason-text">
                           <SafeText>{request.reason}</SafeText>
                         </div>
@@ -211,7 +211,7 @@ const AdminApprovalDashboard = () => {
                         preventDoubleClick={false}
                         onClick={() => handleApprove(request)}
                       >
-                        승인
+                        {t('erp:AdminApprovalDashboard.t_0d1cd671')}
                       </MGButton>
                       <MGButton
                         variant={mapErpVariantToMg('danger')}
@@ -221,7 +221,7 @@ const AdminApprovalDashboard = () => {
                         preventDoubleClick={false}
                         onClick={() => handleReject(request)}
                       >
-                        거부
+                        {t('erp:AdminApprovalDashboard.t_36fa7537')}
                       </MGButton>
                     </div>
                   </div>
@@ -235,7 +235,7 @@ const AdminApprovalDashboard = () => {
       <UnifiedModal
         isOpen={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
-        title="구매 요청 승인"
+        title={t('erp:AdminApprovalDashboard.t_2ae8c324')}
         size="auto"
         backdropClick
         className="mg-v2-ad-b0kla"
@@ -243,22 +243,22 @@ const AdminApprovalDashboard = () => {
         {selectedRequest && (
           <div aria-busy={processing}>
             <div className="approval-request-details">
-              <h4>승인할 구매 요청</h4>
+              <h4>{t('erp:AdminApprovalDashboard.t_d8c50e38')}</h4>
               <div className="approval-request-info-box">
-                <div><strong>아이템:</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
-                <div><strong>수량:</strong> <ErpSafeText value={selectedRequest.quantity} />개</div>
-                <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
+                <div><strong>{t('erp:AdminApprovalDashboard.t_f2e00fdf')}</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
+                <div><strong>{t('erp:AdminApprovalDashboard.t_46dfd8e0')}</strong> <ErpSafeText value={selectedRequest.quantity} />{t('erp:AdminApprovalDashboard.t_11600c9a')}</div>
+                <div><strong>{t('erp:AdminApprovalDashboard.t_e2749f0f')}</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
               </div>
             </div>
 
             <div className="approval-request-comment-group">
               <label className="approval-request-comment-label">
-                승인 코멘트 (선택사항)
+                {t('erp:AdminApprovalDashboard.t_bee4541d')}
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="승인 사유나 추가 코멘트를 입력하세요..."
+                placeholder={t('erp:AdminApprovalDashboard.t_49c6d86b')}
                 rows="3"
                 className="approval-request-comment-textarea"
               />
@@ -288,7 +288,7 @@ const AdminApprovalDashboard = () => {
                 onClick={submitApproval}
                 loading={processing}
               >
-                승인하기
+                {t('erp:AdminApprovalDashboard.t_49a2435b')}
               </MGButton>
             </div>
           </div>
@@ -298,7 +298,7 @@ const AdminApprovalDashboard = () => {
       <UnifiedModal
         isOpen={showRejectionModal}
         onClose={() => setShowRejectionModal(false)}
-        title="구매 요청 거부"
+        title={t('erp:AdminApprovalDashboard.t_4c549b61')}
         size="auto"
         backdropClick
         className="mg-v2-ad-b0kla"
@@ -306,22 +306,22 @@ const AdminApprovalDashboard = () => {
         {selectedRequest && (
           <div aria-busy={processing}>
             <div className="approval-request-comment-group">
-              <h4>거부할 구매 요청</h4>
+              <h4>{t('erp:AdminApprovalDashboard.t_82938fa2')}</h4>
               <div className="approval-request-info-box">
-                <div><strong>아이템:</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
-                <div><strong>수량:</strong> <ErpSafeText value={selectedRequest.quantity} />개</div>
-                <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
+                <div><strong>{t('erp:AdminApprovalDashboard.t_f2e00fdf')}</strong> <SafeText>{selectedRequest.item?.name}</SafeText></div>
+                <div><strong>{t('erp:AdminApprovalDashboard.t_46dfd8e0')}</strong> <ErpSafeText value={selectedRequest.quantity} />{t('erp:AdminApprovalDashboard.t_11600c9a')}</div>
+                <div><strong>{t('erp:AdminApprovalDashboard.t_e2749f0f')}</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
               </div>
             </div>
 
             <div className="approval-request-comment-group">
               <label className="approval-request-comment-label">
-                거부 사유 *
+                {t('erp:AdminApprovalDashboard.t_f1908d6e')}
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="거부 사유를 입력하세요..."
+                placeholder={t('erp:AdminApprovalDashboard.t_b5091061')}
                 rows="3"
                 required
                 className="approval-request-comment-textarea"
@@ -353,7 +353,7 @@ const AdminApprovalDashboard = () => {
                 loading={processing}
                 disabled={!comment.trim()}
               >
-                거부하기
+                {t('erp:AdminApprovalDashboard.t_9aa55896')}
               </MGButton>
             </div>
           </div>

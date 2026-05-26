@@ -27,9 +27,9 @@ const ButtonExamples = () => {
 
   return (<div className="mg-v2-v2-v2-section">
       <div className="mg-v2-v2-v2-section-header">
-        <h2 className="mg-v2-v2-v2-section-title">Button 컴포넌트 예시</h2>
+        <h2 className="mg-v2-v2-v2-section-title">{t('common:ui.ButtonExamples.t_008544cf')}</h2>
         <p className="mg-v2-v2-v2-section-subtitle">
-          공통 MGButton을 래핑한 ui/Button — 동일 스타일·동작의 다양한 사용 예시
+          {t('common:ui.ButtonExamples.t_c871021f')}
         </p>
       </div>
 
@@ -37,11 +37,11 @@ const ButtonExamples = () => {
         {/* 기본 사용법 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>기본 사용법</h3>
+            <h3>{t('common:ui.ButtonExamples.t_7428b07a')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
-              <Button>기본 버튼</Button>
+              <Button>{t('common:ui.ButtonExamples.t_35b9b029')}</Button>
               <Button variant="primary">Primary</Button>
               <Button variant="secondary">Secondary</Button>
               <Button variant="success">Success</Button>
@@ -52,7 +52,7 @@ const ButtonExamples = () => {
         {/* 크기 변형 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>크기 변형</h3>
+            <h3>{t('common:ui.ButtonExamples.t_61af72a4')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-center mg-v2-v2-v2-flex-wrap">
@@ -66,7 +66,7 @@ const ButtonExamples = () => {
         {/* 색상 변형 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>색상 변형</h3>
+            <h3>{t('common:ui.ButtonExamples.t_5a893307')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
@@ -86,15 +86,15 @@ const ButtonExamples = () => {
         {/* 아이콘 버튼 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>아이콘 버튼</h3>
+            <h3>{t('common:ui.ButtonExamples.t_371019dc')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
-              <Button icon="PLUS">추가</Button>
-              <Button icon="EDIT" variant="secondary">편집</Button>
+              <Button icon="PLUS">{t('common:ui.ButtonExamples.t_57942995')}</Button>
+              <Button icon="EDIT" variant="secondary">{t('common:ui.ButtonExamples.t_d482e14b')}</Button>
               <Button icon="TRASH" variant="error">{t('common.actions.delete')}</Button>
               <Button icon="SAVE" variant="success">{t('common.actions.save')}</Button>
-              <Button icon="SEARCH" variant="outline">검색</Button>
+              <Button icon="SEARCH" variant="outline">{t('common:ui.ButtonExamples.t_4f5a3f69')}</Button>
             </div>
           </div>
         </div>
@@ -102,14 +102,14 @@ const ButtonExamples = () => {
         {/* 아이콘 위치 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>아이콘 위치</h3>
+            <h3>{t('common:ui.ButtonExamples.t_9eb8967a')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
               <Button icon="CHEVRON_LEFT" iconPosition="left">{t('common.actions.prev')}</Button>
-              <Button icon="CHEVRON_RIGHT" iconPosition="right">다음</Button>
-              <Button icon="DOWNLOAD" iconPosition="left" variant="outline">다운로드</Button>
-              <Button icon="UPLOAD" iconPosition="right" variant="outline">업로드</Button>
+              <Button icon="CHEVRON_RIGHT" iconPosition="right">{t('common:ui.ButtonExamples.t_854c76f3')}</Button>
+              <Button icon="DOWNLOAD" iconPosition="left" variant="outline">{t('common:ui.ButtonExamples.t_5c5095ab')}</Button>
+              <Button icon="UPLOAD" iconPosition="right" variant="outline">{t('common:ui.ButtonExamples.t_51672ccd')}</Button>
             </div>
           </div>
         </div>
@@ -117,14 +117,14 @@ const ButtonExamples = () => {
         {/* 상태별 버튼 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>상태별 버튼</h3>
+            <h3>{t('common:ui.ButtonExamples.t_33f26ed9')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
-              <Button>정상</Button>
-              <Button disabled>비활성화</Button>
-              <Button loading>로딩 중</Button>
-              <Button loading loadingText="처리 중...">로딩 중 (커스텀 텍스트)</Button>
+              <Button>{t('common:ui.ButtonExamples.t_f6846cfc')}</Button>
+              <Button disabled>{t('common:ui.ButtonExamples.t_8ff58636')}</Button>
+              <Button loading>{t('common:ui.ButtonExamples.t_ce520073')}</Button>
+              <Button loading loadingText="처리 중...">{t('common:ui.ButtonExamples.t_4cbc3762')}</Button>
             </div>
           </div>
         </div>
@@ -132,25 +132,25 @@ const ButtonExamples = () => {
         {/* 클릭 이벤트 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>클릭 이벤트</h3>
+            <h3>{t('common:ui.ButtonExamples.t_7c950dd6')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
               <Button onClick={() => handleClick('normal')}>
-                일반 클릭
+                {t('common:ui.ButtonExamples.t_778b4155')}
               </Button>
               <Button 
                 onClick={handleAsyncClick}
                 loading={loading}
                 loadingText="처리 중..."
               >
-                비동기 처리
+                {t('common:ui.ButtonExamples.t_4a34b41a')}
               </Button>
               <Button 
                 onClick={() => handleClick('prevent')}
                 preventDoubleClick={true}
               >
-                중복 클릭 방지
+                {t('common:ui.ButtonExamples.t_0347ee2a')}
               </Button>
             </div>
             {clickedButton && (<p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-text-center mg-v2-v2-v2-mt-md">
@@ -162,13 +162,13 @@ const ButtonExamples = () => {
         {/* 전체 너비 버튼 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>전체 너비 버튼</h3>
+            <h3>{t('common:ui.ButtonExamples.t_ed8da2b9')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-flex-column mg-v2-v2-v2-gap-sm">
-              <Button fullWidth>전체 너비 버튼</Button>
-              <Button fullWidth variant="outline">전체 너비 아웃라인</Button>
-              <Button fullWidth variant="ghost">전체 너비 고스트</Button>
+              <Button fullWidth>{t('common:ui.ButtonExamples.t_ed8da2b9')}</Button>
+              <Button fullWidth variant="outline">{t('common:ui.ButtonExamples.t_2ae899f5')}</Button>
+              <Button fullWidth variant="ghost">{t('common:ui.ButtonExamples.t_a38d8aba')}</Button>
             </div>
           </div>
         </div>
@@ -176,13 +176,13 @@ const ButtonExamples = () => {
         {/* 버튼 그룹 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>버튼 그룹</h3>
+            <h3>{t('common:ui.ButtonExamples.t_0bc66126')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-button-group">
-              <Button variant="outline">왼쪽</Button>
-              <Button variant="outline">가운데</Button>
-              <Button variant="outline">오른쪽</Button>
+              <Button variant="outline">{t('common:ui.ButtonExamples.t_2df94c84')}</Button>
+              <Button variant="outline">{t('common:ui.ButtonExamples.t_d80a4e0c')}</Button>
+              <Button variant="outline">{t('common:ui.ButtonExamples.t_16f66ac2')}</Button>
             </div>
           </div>
         </div>
@@ -190,12 +190,12 @@ const ButtonExamples = () => {
         {/* 버튼 툴바 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>버튼 툴바</h3>
+            <h3>{t('common:ui.ButtonExamples.t_309852d0')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-button-toolbar">
-              <Button icon="PLUS" size="small">추가</Button>
-              <Button icon="EDIT" size="small" variant="secondary">편집</Button>
+              <Button icon="PLUS" size="small">{t('common:ui.ButtonExamples.t_57942995')}</Button>
+              <Button icon="EDIT" size="small" variant="secondary">{t('common:ui.ButtonExamples.t_d482e14b')}</Button>
               <Button icon="TRASH" size="small" variant="error">{t('common.actions.delete')}</Button>
               <Button icon="SAVE" size="small" variant="success">{t('common.actions.save')}</Button>
             </div>
@@ -205,17 +205,17 @@ const ButtonExamples = () => {
         {/* 역할별 테마 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>역할별 테마</h3>
+            <h3>{t('common:ui.ButtonExamples.t_a161461d')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             {/* theme role → data-role only (not HTML ARIA role) */}
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
               {/* eslint-disable-next-line jsx-a11y/aria-role */}
-              <Button role="CLIENT" icon="HEART">내담자 테마</Button>
+              <Button role="CLIENT" icon="HEART">{t('common:ui.ButtonExamples.t_d33f6077')}</Button>
               {/* eslint-disable-next-line jsx-a11y/aria-role */}
-              <Button role="CONSULTANT" icon="USERS">상담사 테마</Button>
+              <Button role="CONSULTANT" icon="USERS">{t('common:ui.ButtonExamples.t_7fb4b214')}</Button>
               {/* eslint-disable-next-line jsx-a11y/aria-role */}
-              <Button role="ADMIN" icon="SETTINGS">관리자 테마</Button>
+              <Button role="ADMIN" icon="SETTINGS">{t('common:ui.ButtonExamples.t_13b1dc34')}</Button>
             </div>
           </div>
         </div>
@@ -223,7 +223,7 @@ const ButtonExamples = () => {
         {/* 실제 사용 예시 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>실제 사용 예시</h3>
+            <h3>{t('common:ui.ButtonExamples.t_7bd1e28d')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
@@ -232,14 +232,14 @@ const ButtonExamples = () => {
                 variant="primary"
                 onClick={() => handleClick('create')}
               >
-                새로 만들기
+                {t('common:ui.ButtonExamples.t_45a596e0')}
               </Button>
               <Button 
                 icon="EDIT" 
                 variant="secondary"
                 onClick={() => handleClick('edit')}
               >
-                편집
+                {t('common:ui.ButtonExamples.t_d482e14b')}
               </Button>
               <Button 
                 icon="TRASH" 

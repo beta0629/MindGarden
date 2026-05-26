@@ -436,17 +436,17 @@ const PaymentManagement = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="결제 관리">
-        <UnifiedLoading type="inline" text="결제 내역을 불러오는 중..." />
+      <AdminCommonLayout title={t('common:super-admin.PaymentManagement.t_4bdf9fd1')}>
+        <UnifiedLoading type="inline" text={t('common:super-admin.PaymentManagement.t_eb11e9a6')} />
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout title="결제 관리">
+    <AdminCommonLayout title={t('common:super-admin.PaymentManagement.t_4bdf9fd1')}>
       <ContentArea ariaLabel="수퍼어드민 결제 관리">
         <ContentHeader
-          title="결제 관리"
+          title={t('common:super-admin.PaymentManagement.t_4bdf9fd1')}
           subtitle="결제 내역 조회, 상태 관리 및 통계"
           titleId={PAYMENT_PAGE_TITLE_ID}
           actions={(
@@ -459,7 +459,7 @@ const PaymentManagement = () => {
                 onClick={() => exportPayments()}
                 preventDoubleClick={false}
               >
-                데이터 내보내기
+                {t('common:super-admin.PaymentManagement.t_7dcea1f4')}
               </MGButton>
               <MGButton
                 type="button"
@@ -469,7 +469,7 @@ const PaymentManagement = () => {
                 onClick={() => showPaymentAnalytics()}
                 preventDoubleClick={false}
               >
-                결제 분석
+                {t('common:super-admin.PaymentManagement.t_335ea044')}
               </MGButton>
               <MGButton
                 type="button"
@@ -489,27 +489,27 @@ const PaymentManagement = () => {
         {/* 통계 카드 */}
         <div className="statistics-grid">
           <div className="stat-card">
-            <div className="stat-title">총 결제 금액</div>
+            <div className="stat-title">{t('common:super-admin.PaymentManagement.t_5c7affbb')}</div>
             <div className="stat-value">
               {formatCurrency(statistics.totalAmount || 0)}
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-title">승인된 결제</div>
+            <div className="stat-title">{t('common:super-admin.PaymentManagement.t_2e659d7c')}</div>
             <div className="stat-value">
               // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               {statistics.statusCounts?.APPROVED || 0}건
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-title">대기 중인 결제</div>
+            <div className="stat-title">{t('common:super-admin.PaymentManagement.t_a932a475')}</div>
             <div className="stat-value">
               // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               {statistics.statusCounts?.PENDING || 0}건
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-title">환불된 결제</div>
+            <div className="stat-title">{t('common:super-admin.PaymentManagement.t_f3fba5df')}</div>
             <div className="stat-value">
               {statistics.statusCounts?.REFUNDED || 0}건
             </div>
@@ -519,7 +519,7 @@ const PaymentManagement = () => {
         {/* 필터 */}
         <div className="filters">
           <div className="filter-group">
-            <label>결제 상태</label>
+            <label>{t('common:super-admin.PaymentManagement.t_d39b762e')}</label>
             <select 
               value={filters.status} 
               onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -551,7 +551,7 @@ const PaymentManagement = () => {
           </div>
 
           <div className="filter-group">
-            <label>결제 대행사</label>
+            <label>{t('common:super-admin.PaymentManagement.t_da641026')}</label>
             <select 
               value={filters.provider}
               onChange={(e) => handleFilterChange('provider', e.target.value)}
@@ -567,7 +567,7 @@ const PaymentManagement = () => {
           </div>
 
           <div className="filter-group">
-            <label>시작 날짜</label>
+            <label>{t('common:super-admin.PaymentManagement.t_61b44386')}</label>
             <input
               type="date"
               value={filters.startDate}
@@ -576,7 +576,7 @@ const PaymentManagement = () => {
           </div>
 
           <div className="filter-group">
-            <label>종료 날짜</label>
+            <label>{t('common:super-admin.PaymentManagement.t_0043b752')}</label>
             <input
               type="date"
               value={filters.endDate}
@@ -601,7 +601,7 @@ const PaymentManagement = () => {
                 onClick={() => handleBulkAction('approve', selectedPayments)}
                 preventDoubleClick={false}
               >
-                일괄 승인
+                {t('common:super-admin.PaymentManagement.t_a3b01015')}
               </MGButton>
               <MGButton
                 type="button"
@@ -612,7 +612,7 @@ const PaymentManagement = () => {
                 onClick={() => handleBulkAction('cancel', selectedPayments)}
                 preventDoubleClick={false}
               >
-                일괄 취소
+                {t('common:super-admin.PaymentManagement.t_27fb23da')}
               </MGButton>
               <MGButton
                 type="button"
@@ -623,7 +623,7 @@ const PaymentManagement = () => {
                 onClick={() => handleBulkAction('refund', selectedPayments)}
                 preventDoubleClick={false}
               >
-                일괄 환불
+                {t('common:super-admin.PaymentManagement.t_7e3b3b4f')}
               </MGButton>
               <MGButton
                 type="button"
@@ -634,7 +634,7 @@ const PaymentManagement = () => {
                 onClick={() => setSelectedPayments([])}
                 preventDoubleClick={false}
               >
-                선택 해제
+                {t('common:super-admin.PaymentManagement.t_bf3e2aa4')}
               </MGButton>
             </div>
           </div>
@@ -652,7 +652,7 @@ const PaymentManagement = () => {
                   onChange={(e) => handleSelectAll(e.target.checked)}
                   className="mg-payment-select-all__checkbox"
                 />
-                <span>전체 선택</span>
+                <span>{t('common:super-admin.PaymentManagement.t_0aa04a70')}</span>
               </label>
             </div>
           )}
@@ -682,7 +682,7 @@ const PaymentManagement = () => {
                 
                 <div className="mg-payment-card__body">
                   <div className="mg-payment-card__field">
-                    <span className="mg-payment-card__label">금액</span>
+                    <span className="mg-payment-card__label">{t('common:super-admin.PaymentManagement.t_64454827')}</span>
                     <span className="mg-payment-card__value mg-payment-card__value--amount">
                       {formatCurrency(payment.amount)}
                     </span>
@@ -698,19 +698,19 @@ const PaymentManagement = () => {
                     <span className="mg-payment-card__value">{payment.method || '-'}</span>
                   </div>
                   <div className="mg-payment-card__field">
-                    <span className="mg-payment-card__label">대행사</span>
+                    <span className="mg-payment-card__label">{t('common:super-admin.PaymentManagement.t_0ae2b5e8')}</span>
                     <span className="mg-payment-card__value">{payment.provider || '-'}</span>
                   </div>
                   <div className="mg-payment-card__field">
-                    <span className="mg-payment-card__label">결제자</span>
+                    <span className="mg-payment-card__label">{t('common:super-admin.PaymentManagement.t_5c6659bc')}</span>
                     <span className="mg-payment-card__value">{payment.payerId || '-'}</span>
                   </div>
                   <div className="mg-payment-card__field">
-                    <span className="mg-payment-card__label">생성일</span>
+                    <span className="mg-payment-card__label">{t('common:super-admin.PaymentManagement.t_a5466453')}</span>
                     <span className="mg-payment-card__value">{formatDate(payment.createdAt)}</span>
                   </div>
                   <div className="mg-payment-card__field">
-                    <span className="mg-payment-card__label">승인일</span>
+                    <span className="mg-payment-card__label">{t('common:super-admin.PaymentManagement.t_c2700b57')}</span>
                     <span className="mg-payment-card__value">
                       {payment.approvedAt ? formatDate(payment.approvedAt) : '-'}
                     </span>
@@ -729,7 +729,7 @@ const PaymentManagement = () => {
                         onClick={() => handleStatusUpdate(payment.paymentId, 'APPROVED')}
                         preventDoubleClick={true}
                       >
-                        승인
+                        {t('common:super-admin.PaymentManagement.t_0d1cd671')}
                       </MGButton>
                     )}
                     {payment.status === 'PENDING' && (
@@ -753,7 +753,7 @@ const PaymentManagement = () => {
                         onClick={() => handleRefund(payment.paymentId, payment.amount)}
                         preventDoubleClick={true}
                       >
-                        환불
+                        {t('common:super-admin.PaymentManagement.t_14e82af6')}
                       </MGButton>
                     )}
                   </div>
@@ -791,7 +791,7 @@ const PaymentManagement = () => {
             onClick={() => handlePageChange(pagination.currentPage + 1)}
             preventDoubleClick={false}
           >
-            다음
+            {t('common:super-admin.PaymentManagement.t_854c76f3')}
           </MGButton>
         </div>
 

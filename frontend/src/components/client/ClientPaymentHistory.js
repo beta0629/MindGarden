@@ -169,7 +169,7 @@ const ClientPaymentHistory = () => {
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="결제 내역">
           <ContentHeader
-            title="결제 내역"
+            title={t('common:client.ClientPaymentHistory.t_42e677b1')}
             subtitle="결제 내역과 패키지 정보를 확인하세요"
             titleId={CLIENT_PAYMENT_HISTORY_TITLE_ID}
           />
@@ -193,10 +193,10 @@ const ClientPaymentHistory = () => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout title="결제 내역" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="결제 이력을 불러오는 중..." />
+            <UnifiedLoading type="inline" text={t('common:client.ClientPaymentHistory.t_c721f3cb')} />
           </div>
         )}
       </AdminCommonLayout>
@@ -205,14 +205,14 @@ const ClientPaymentHistory = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout title="결제 내역" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-payment-history">
             <div className="payment-error">
               <div className="payment-error__icon">
                 <AlertTriangle size={48} />
               </div>
-              <h3 className="payment-error__title">오류가 발생했습니다</h3>
+              <h3 className="payment-error__title">{t('common:client.ClientPaymentHistory.t_11d2f578')}</h3>
               <p className="payment-error__message">{error}</p>
               <MGButton
                 variant="primary"
@@ -233,15 +233,15 @@ const ClientPaymentHistory = () => {
 
   if (!paymentData || paymentData.mappings.length === 0) {
     return (
-      <AdminCommonLayout title="결제 내역" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-payment-history">
             <div className="payment-empty">
               <div className="payment-empty__icon">
                 <CreditCard size={48} />
               </div>
-              <h3 className="payment-empty__title">결제 내역이 없습니다</h3>
-              <p className="payment-empty__text">아직 결제한 패키지가 없습니다.</p>
+              <h3 className="payment-empty__title">{t('common:client.ClientPaymentHistory.t_2a891787')}</h3>
+              <p className="payment-empty__text">{t('common:client.ClientPaymentHistory.t_9c4f45b8')}</p>
               <MGButton
                 variant="primary"
                 className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
@@ -251,7 +251,7 @@ const ClientPaymentHistory = () => {
                 }}
                 preventDoubleClick={false}
               >
-                대시보드로 이동
+                {t('common:client.ClientPaymentHistory.t_3898de91')}
               </MGButton>
             </div>
           </div>
@@ -261,7 +261,7 @@ const ClientPaymentHistory = () => {
   }
 
   return (
-    <AdminCommonLayout title="결제 내역" className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
       {pageShell(
         <div className="client-payment-history">
         {/* 통계 카드 */}
@@ -271,7 +271,7 @@ const ClientPaymentHistory = () => {
               <DollarSign size={20} />
             </div>
             <div className="payment-stat-content">
-              <div className="payment-stat-label">총 결제금액</div>
+              <div className="payment-stat-label">{t('common:client.ClientPaymentHistory.t_8594df96')}</div>
               <div className="payment-stat-value">{formatCurrency(paymentData.totalAmount)}</div>
             </div>
           </div>
@@ -281,7 +281,7 @@ const ClientPaymentHistory = () => {
               <CalendarCheck size={20} />
             </div>
             <div className="payment-stat-content">
-              <div className="payment-stat-label">총 회기</div>
+              <div className="payment-stat-label">{t('common:client.ClientPaymentHistory.t_7a0890a2')}</div>
               <div className="payment-stat-value">{paymentData.totalSessions}회</div>
             </div>
           </div>
@@ -291,7 +291,7 @@ const ClientPaymentHistory = () => {
               <CheckCircle size={20} />
             </div>
             <div className="payment-stat-content">
-              <div className="payment-stat-label">결제완료</div>
+              <div className="payment-stat-label">{t('common:client.ClientPaymentHistory.t_cd79fb92')}</div>
               <div className="payment-stat-value">{paymentData.completedPayments}건</div>
             </div>
           </div>
@@ -301,7 +301,7 @@ const ClientPaymentHistory = () => {
               <Clock size={20} />
             </div>
             <div className="payment-stat-content">
-              <div className="payment-stat-label">결제대기</div>
+              <div className="payment-stat-label">{t('common:client.ClientPaymentHistory.t_ffc400e0')}</div>
               <div className="payment-stat-value">{paymentData.pendingPayments}건</div>
             </div>
           </div>
@@ -309,7 +309,7 @@ const ClientPaymentHistory = () => {
 
         {/* 필터 섹션 */}
         <div className="payment-filter">
-          <h3 className="payment-filter__title">결제 내역</h3>
+          <h3 className="payment-filter__title">{t('common:client.ClientPaymentHistory.t_42e677b1')}</h3>
           <div className="payment-filter__buttons">
             <MGButton
               type="button"
@@ -327,7 +327,7 @@ const ClientPaymentHistory = () => {
               onClick={() => setFilter('completed')}
               preventDoubleClick={false}
             >
-              결제완료
+              {t('common:client.ClientPaymentHistory.t_cd79fb92')}
             </MGButton>
             <MGButton
               type="button"
@@ -336,7 +336,7 @@ const ClientPaymentHistory = () => {
               onClick={() => setFilter('pending')}
               preventDoubleClick={false}
             >
-              결제대기
+              {t('common:client.ClientPaymentHistory.t_ffc400e0')}
             </MGButton>
             <MGButton
               type="button"
@@ -345,7 +345,7 @@ const ClientPaymentHistory = () => {
               onClick={() => setFilter('refunded')}
               preventDoubleClick={false}
             >
-              환불완료
+              {t('common:client.ClientPaymentHistory.t_43aa0bad')}
             </MGButton>
           </div>
         </div>
@@ -367,28 +367,28 @@ const ClientPaymentHistory = () => {
               <div className="payment-item__body">
                 <div className="payment-item__detail">
                   <CalendarCheck size={16} />
-                  <span className="payment-item__detail-label">회기 수:</span>
+                  <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_389ebf64')}</span>
                   <span className="payment-item__detail-value">{mapping.totalSessions || 0}회</span>
                 </div>
                 <div className="payment-item__detail">
                   <User size={16} />
-                  <span className="payment-item__detail-label">상담사:</span>
+                  <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_a30d6da9')}</span>
                   <span className="payment-item__detail-value">{mapping.consultant?.consultantName || t('common:client.ClientPaymentHistory.t_5c1a705c')}</span>
                 </div>
                 <div className="payment-item__detail">
                   <Calendar size={16} />
-                  <span className="payment-item__detail-label">결제일:</span>
+                  <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_58548549')}</span>
                   <span className="payment-item__detail-value">{formatDate(mapping.paymentDate)}</span>
                 </div>
                 <div className="payment-item__detail">
                   <CreditCard size={16} />
-                  <span className="payment-item__detail-label">결제방법:</span>
+                  <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_bbf114f3')}</span>
                   <span className="payment-item__detail-value">{getMethodText(mapping.paymentMethod)}</span>
                 </div>
                 {mapping.paymentReference && (
                   <div className="payment-item__detail">
                     <FileText size={16} />
-                    <span className="payment-item__detail-label">참조번호:</span>
+                    <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_9b0be667')}</span>
                     <span className="payment-item__detail-value">{mapping.paymentReference}</span>
                   </div>
                 )}
@@ -405,25 +405,25 @@ const ClientPaymentHistory = () => {
 
         {/* 환불 정책 */}
         <div className="payment-policy">
-          <h3 className="payment-policy__title">환불 정책</h3>
+          <h3 className="payment-policy__title">{t('common:client.ClientPaymentHistory.t_e84a4b85')}</h3>
           <div className="payment-policy__list">
             <div className="payment-policy__item">
               <div className="payment-policy__icon">
                 <CheckCircle size={20} />
               </div>
-              <span>사용하지 않은 회기는 100% 환불 가능합니다.</span>
+              <span>{t('common:client.ClientPaymentHistory.t_6ae660ec')}</span>
             </div>
             <div className="payment-policy__item">
               <div className="payment-policy__icon">
                 <Clock size={20} />
               </div>
-              <span>환불 신청은 결제일로부터 7일 이내에 가능합니다.</span>
+              <span>{t('common:client.ClientPaymentHistory.t_36cdd21f')}</span>
             </div>
             <div className="payment-policy__item">
               <div className="payment-policy__icon">
                 <Phone size={20} />
               </div>
-              <span>환불 문의는 고객센터로 연락해주세요.</span>
+              <span>{t('common:client.ClientPaymentHistory.t_76dd1d3d')}</span>
             </div>
           </div>
         </div>

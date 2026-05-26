@@ -338,7 +338,7 @@ const PgApprovalManagement = () => {
     return (
       <AdminCommonLayout title={t('admin.messages.pgApprovalManagement')}>
         <ContentArea ariaLabel="PG 설정 승인 관리">
-          <UnifiedLoading type="inline" text="PG 설정 목록을 불러오는 중..." />
+          <UnifiedLoading type="inline" text={t('common:ops.PgApprovalManagement.t_38760583')} />
         </ContentArea>
       </AdminCommonLayout>
     );
@@ -350,7 +350,7 @@ const PgApprovalManagement = () => {
         <ContentArea ariaLabel="PG 설정 승인 관리">
           <div className="error-message">
             <AlertCircleIcon size={24} />
-            <p>로그인이 필요합니다.</p>
+            <p>{t('common:ops.PgApprovalManagement.t_5271ee34')}</p>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -373,29 +373,29 @@ const PgApprovalManagement = () => {
             <SearchIcon size={18} />
             <input
               type="text"
-              placeholder="PG사명, 제공자, 테넌트 ID, 비고로 검색..."
+              placeholder={t('common:ops.PgApprovalManagement.t_5ee0e576')}
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
               className="search-input"
-              aria-label="PG 설정 검색"
+              aria-label={t('common:ops.PgApprovalManagement.t_75c13af6')}
             />
           </div>
           
           <div className="filter-group">
             <input
               type="text"
-              placeholder="테넌트 ID"
+              placeholder={t('common:ops.PgApprovalManagement.t_065dd028')}
               value={filters.tenantId}
               onChange={(e) => setFilters(prev => ({ ...prev, tenantId: e.target.value }))}
               className="filter-input"
-              aria-label="테넌트 ID 필터"
+              aria-label={t('common:ops.PgApprovalManagement.t_6a0defe0')}
             />
             
             <select
               value={filters.pgProvider}
               onChange={(e) => setFilters(prev => ({ ...prev, pgProvider: e.target.value }))}
               className="filter-select"
-              aria-label="PG 제공자 필터"
+              aria-label={t('common:ops.PgApprovalManagement.t_f160bbf3')}
             >
               {pgProviders.map(provider => (
                 <option key={provider.value} value={provider.value}>
@@ -428,8 +428,8 @@ const PgApprovalManagement = () => {
         {pendingConfigs.length === 0 ? (
           <div className="empty-state">
             <CheckCircleIcon size={48} />
-            <h3>승인 대기 중인 PG 설정이 없습니다</h3>
-            <p>모든 PG 설정이 처리되었습니다.</p>
+            <h3>{t('common:ops.PgApprovalManagement.t_22d262e7')}</h3>
+            <p>{t('common:ops.PgApprovalManagement.t_48f623b9')}</p>
           </div>
         ) : (
           <div className="pg-approval-cards">
@@ -446,11 +446,11 @@ const PgApprovalManagement = () => {
                     <div className="card-badges">
                       <span className="status-badge status-badge--warning">
                         <ClockIcon size={14} />
-                        승인 대기
+                        {t('common:ops.PgApprovalManagement.t_f5aaa7c5')}
                       </span>
                       {config.testMode && (
                         <span className="status-badge status-badge--info">
-                          테스트 모드
+                          {t('common:ops.PgApprovalManagement.t_cfd49442')}
                         </span>
                       )}
                     </div>
@@ -460,22 +460,22 @@ const PgApprovalManagement = () => {
                 <div className="card-body">
                   <div className="card-info">
                     <div className="info-item">
-                      <span className="info-label">테넌트 ID:</span>
+                      <span className="info-label">{t('common:ops.PgApprovalManagement.t_05fdda06')}</span>
                       <span className="info-value"><SafeText>{config.tenantId}</SafeText></span>
                     </div>
                     <div className="info-item">
-                      <span className="info-label">PG 제공자:</span>
+                      <span className="info-label">{t('common:ops.PgApprovalManagement.t_6fa6eaf8')}</span>
                       <span className="info-value"><SafeText>{config.pgProvider}</SafeText></span>
                     </div>
                     {config.merchantId && (
                       <div className="info-item">
-                        <span className="info-label">가맹점 ID:</span>
+                        <span className="info-label">{t('common:ops.PgApprovalManagement.t_028977fd')}</span>
                         <span className="info-value"><SafeText>{config.merchantId}</SafeText></span>
                       </div>
                     )}
                     {config.requestedAt && (
                       <div className="info-item">
-                        <span className="info-label">요청 시각:</span>
+                        <span className="info-label">{t('common:ops.PgApprovalManagement.t_94852390')}</span>
                         <span className="info-value">
                           {toDisplayString(new Date(config.requestedAt).toLocaleString('ko-KR'))}
                         </span>
@@ -483,13 +483,13 @@ const PgApprovalManagement = () => {
                     )}
                     {config.requestedBy && (
                       <div className="info-item">
-                        <span className="info-label">요청자:</span>
+                        <span className="info-label">{t('common:ops.PgApprovalManagement.t_17102fe2')}</span>
                         <span className="info-value"><SafeText>{config.requestedBy}</SafeText></span>
                       </div>
                     )}
                     {config.notes && (
                       <div className="info-item">
-                        <span className="info-label">비고:</span>
+                        <span className="info-label">{t('common:ops.PgApprovalManagement.t_d8da18b1')}</span>
                         <span className="info-value"><SafeText>{config.notes}</SafeText></span>
                       </div>
                     )}
@@ -510,7 +510,7 @@ const PgApprovalManagement = () => {
                       onClick={() => loadConfigDetail(config.configId)}
                       disabled={loadingDetail}
                     >
-                      상세보기
+                      {t('common:ops.PgApprovalManagement.t_7ffb5a8b')}
                     </MGButton>
                     
                     <MGButton
@@ -526,7 +526,7 @@ const PgApprovalManagement = () => {
                       disabled={testingConnection === config.configId}
                       loading={testingConnection === config.configId}
                     >
-                      연결 테스트
+                      {t('common:ops.PgApprovalManagement.t_3da5c18d')}
                     </MGButton>
                     
                     <MGButton
@@ -539,7 +539,7 @@ const PgApprovalManagement = () => {
                         setShowApprovalModal(true);
                       }}
                     >
-                      승인
+                      {t('common:ops.PgApprovalManagement.t_0d1cd671')}
                     </MGButton>
                     
                     <MGButton
@@ -552,7 +552,7 @@ const PgApprovalManagement = () => {
                         setShowRejectModal(true);
                       }}
                     >
-                      거부
+                      {t('common:ops.PgApprovalManagement.t_36fa7537')}
                     </MGButton>
                   </div>
                   
@@ -575,7 +575,7 @@ const PgApprovalManagement = () => {
         <UnifiedModal
           isOpen={showApprovalModal && !!selectedConfig}
           onClose={handleCloseApprovalModal}
-          title="PG 설정 승인"
+          title={t('common:ops.PgApprovalManagement.t_92de67b7')}
           size="medium"
           variant="form"
           className="mg-v2-ad-b0kla"
@@ -609,7 +609,7 @@ const PgApprovalManagement = () => {
                   disabled={loading}
                   loading={loading}
                 >
-                  승인
+                  {t('common:ops.PgApprovalManagement.t_0d1cd671')}
                 </MGButton>
               </>
             ) : null
@@ -619,15 +619,15 @@ const PgApprovalManagement = () => {
             <>
               <div className="approval-info">
                 <p>
-                  <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> 설정을 승인하시겠습니까?
+                  <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> {t('common:ops.PgApprovalManagement.t_c8c50efd')}
                 </p>
                 <div className="approval-details">
                   <div className="detail-row">
-                    <span className="detail-label">테넌트 ID:</span>
+                    <span className="detail-label">{t('common:ops.PgApprovalManagement.t_05fdda06')}</span>
                     <span className="detail-value"><SafeText>{selectedConfig.tenantId}</SafeText></span>
                   </div>
                   <div className="detail-row">
-                    <span className="detail-label">PG 제공자:</span>
+                    <span className="detail-label">{t('common:ops.PgApprovalManagement.t_6fa6eaf8')}</span>
                     <span className="detail-value"><SafeText>{selectedConfig.pgProvider}</SafeText></span>
                   </div>
                 </div>
@@ -641,10 +641,10 @@ const PgApprovalManagement = () => {
                     onChange={(e) => setApprovalForm(prev => ({ ...prev, testConnection: e.target.checked }))}
                     className="form-checkbox"
                   />
-                  <span>승인 전 연결 테스트 수행</span>
+                  <span>{t('common:ops.PgApprovalManagement.t_dc9d5407')}</span>
                 </label>
                 <small className="help-text">
-                  연결 테스트를 수행하여 PG 설정이 정상적으로 작동하는지 확인합니다.
+                  {t('common:ops.PgApprovalManagement.t_ec39cccf')}
                 </small>
 
                 {testResult && testResult.configId === selectedConfig.configId && (
@@ -682,18 +682,18 @@ const PgApprovalManagement = () => {
                     disabled={testingConnection === selectedConfig.configId}
                     loading={testingConnection === selectedConfig.configId}
                   >
-                    지금 테스트하기
+                    {t('common:ops.PgApprovalManagement.t_e664e209')}
                   </MGButton>
                 )}
               </div>
 
               <div className="form-group">
-                <label htmlFor="approvalNotes">승인 메모 (선택)</label>
+                <label htmlFor="approvalNotes">{t('common:ops.PgApprovalManagement.t_60e3454a')}</label>
                 <textarea
                   id="approvalNotes"
                   value={approvalForm.notes}
                   onChange={(e) => setApprovalForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="승인 관련 메모를 입력하세요"
+                  placeholder={t('common:ops.PgApprovalManagement.t_5b2b3181')}
                   className="form-textarea"
                   rows={3}
                   maxLength={500}
@@ -709,7 +709,7 @@ const PgApprovalManagement = () => {
         <UnifiedModal
           isOpen={showRejectModal && !!selectedConfig}
           onClose={handleCloseRejectModal}
-          title="PG 설정 거부"
+          title={t('common:ops.PgApprovalManagement.t_52355093')}
           size="medium"
           variant="form"
           className="mg-v2-ad-b0kla"
@@ -743,7 +743,7 @@ const PgApprovalManagement = () => {
                   disabled={loading || !rejectForm.rejectionReason.trim()}
                   loading={loading}
                 >
-                  거부
+                  {t('common:ops.PgApprovalManagement.t_36fa7537')}
                 </MGButton>
               </>
             ) : null
@@ -753,22 +753,22 @@ const PgApprovalManagement = () => {
             <>
               <div className="reject-info">
                 <p>
-                  <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> 설정을 거부하시겠습니까?
+                  <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong> {t('common:ops.PgApprovalManagement.t_8c7c3fe0')}
                 </p>
                 <p className="warning-text">
-                  거부 사유는 테넌트에게 전달됩니다.
+                  {t('common:ops.PgApprovalManagement.t_6e6f8d88')}
                 </p>
               </div>
 
               <div className="form-group">
                 <label htmlFor="rejectionReason" className="required">
-                  거부 사유 <span className="required-mark">*</span>
+                  {t('common:ops.PgApprovalManagement.t_9ec8e88f')} <span className="required-mark">*</span>
                 </label>
                 <textarea
                   id="rejectionReason"
                   value={rejectForm.rejectionReason}
                   onChange={(e) => setRejectForm(prev => ({ ...prev, rejectionReason: e.target.value }))}
-                  placeholder="거부 사유를 입력하세요"
+                  placeholder={t('common:ops.PgApprovalManagement.t_dd95e4b6')}
                   className="form-textarea"
                   rows={4}
                   required
@@ -785,7 +785,7 @@ const PgApprovalManagement = () => {
         <UnifiedModal
           isOpen={showDetailModal && !!configDetail}
           onClose={handleCloseDetailModal}
-          title="PG 설정 상세 정보"
+          title={t('common:ops.PgApprovalManagement.t_96765567')}
           size="large"
           variant="detail"
           className="mg-v2-ad-b0kla"
@@ -808,42 +808,42 @@ const PgApprovalManagement = () => {
           {configDetail && (
             <div className="modal-body--scrollable">
               <div className="detail-section">
-                <h3>기본 정보</h3>
+                <h3>{t('common:ops.PgApprovalManagement.t_eb7f501b')}</h3>
                 <div className="detail-grid">
                   <div className="detail-item">
-                    <label>테넌트 ID</label>
+                    <label>{t('common:ops.PgApprovalManagement.t_065dd028')}</label>
                     <div className="detail-value"><SafeText>{configDetail.tenantId}</SafeText></div>
                   </div>
                   <div className="detail-item">
-                    <label>PG 제공자</label>
+                    <label>{t('common:ops.PgApprovalManagement.t_491fa1fa')}</label>
                     <div className="detail-value"><SafeText>{configDetail.pgProvider}</SafeText></div>
                   </div>
                   <div className="detail-item">
-                    <label>PG사 명칭</label>
+                    <label>{t('common:ops.PgApprovalManagement.t_9be04456')}</label>
                     <div className="detail-value"><SafeText fallback="-">{configDetail.pgName}</SafeText></div>
                   </div>
                   <div className="detail-item">
-                    <label>가맹점 ID</label>
+                    <label>{t('common:ops.PgApprovalManagement.t_fd31712d')}</label>
                     <div className="detail-value"><SafeText fallback="-">{configDetail.merchantId}</SafeText></div>
                   </div>
                   <div className="detail-item">
-                    <label>스토어 ID</label>
+                    <label>{t('common:ops.PgApprovalManagement.t_ed6daa8a')}</label>
                     <div className="detail-value"><SafeText fallback="-">{configDetail.storeId}</SafeText></div>
                   </div>
                   <div className="detail-item">
-                    <label>테스트 모드</label>
+                    <label>{t('common:ops.PgApprovalManagement.t_cfd49442')}</label>
                     <div className="detail-value">{configDetail.testMode ? '예' : '아니오'}</div>
                   </div>
                 </div>
               </div>
 
               <div className="detail-section">
-                <h3>키 정보</h3>
+                <h3>{t('common:ops.PgApprovalManagement.t_5688ba74')}</h3>
                 <div className="key-info">
                   {!showKeys ? (
                     <div className="key-placeholder">
                       <KeyIcon size={24} />
-                      <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
+                      <p>{t('common:ops.PgApprovalManagement.t_59ff126a')}</p>
                       <MGButton
                         variant="secondary"
                         className={buildErpMgButtonClassName({
@@ -856,13 +856,13 @@ const PgApprovalManagement = () => {
                         disabled={loadingKeys}
                         loading={loadingKeys}
                       >
-                        키 확인
+                        {t('common:ops.PgApprovalManagement.t_0086a11b')}
                       </MGButton>
                     </div>
                   ) : (
                     <div className="key-display">
                       <div className="key-item">
-                        <label>API 키</label>
+                        <label>{t('common:ops.PgApprovalManagement.t_84a0aecd')}</label>
                         <div className="key-value">
                           <code><SafeText>{decryptedKeys?.apiKey || '***'}</SafeText></code>
                           <MGButton
@@ -883,12 +883,12 @@ const PgApprovalManagement = () => {
                             }}
                             title={toDisplayString('복사')}
                           >
-                            복사
+                            {t('common:ops.PgApprovalManagement.t_a55b1ecb')}
                           </MGButton>
                         </div>
                       </div>
                       <div className="key-item">
-                        <label>시크릿 키</label>
+                        <label>{t('common:ops.PgApprovalManagement.t_84414129')}</label>
                         <div className="key-value">
                           <code><SafeText>{decryptedKeys?.secretKey || '***'}</SafeText></code>
                           <MGButton
@@ -909,7 +909,7 @@ const PgApprovalManagement = () => {
                             }}
                             title={toDisplayString('복사')}
                           >
-                            복사
+                            {t('common:ops.PgApprovalManagement.t_a55b1ecb')}
                           </MGButton>
                         </div>
                       </div>
@@ -936,7 +936,7 @@ const PgApprovalManagement = () => {
 
               {(configDetail.webhookUrl || configDetail.returnUrl || configDetail.cancelUrl) && (
                 <div className="detail-section">
-                  <h3>URL 정보</h3>
+                  <h3>{t('common:ops.PgApprovalManagement.t_bef186e5')}</h3>
                   <div className="detail-grid">
                     {configDetail.webhookUrl && (
                       <div className="detail-item detail-item--full">
@@ -977,7 +977,7 @@ const PgApprovalManagement = () => {
 
               {configDetail.notes && (
                 <div className="detail-section">
-                  <h3>비고</h3>
+                  <h3>{t('common:ops.PgApprovalManagement.t_75cffa41')}</h3>
                   <div className="detail-notes">
                     <SafeText>{configDetail.notes}</SafeText>
                   </div>

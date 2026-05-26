@@ -145,7 +145,7 @@ const ClientSessionManagement = () => {
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="회기 관리">
           <ContentHeader
-            title="회기 관리"
+            title={t('common:client.ClientSessionManagement.t_be89c264')}
             subtitle="상담 회기 현황과 사용 내역을 확인하세요"
             titleId={CLIENT_SESSION_MGMT_TITLE_ID}
           />
@@ -159,10 +159,10 @@ const ClientSessionManagement = () => {
 
   if (isLoading) {
     return (
-      <AdminCommonLayout title="회기 관리" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="회기 데이터를 불러오는 중..." />
+            <UnifiedLoading type="inline" text={t('common:client.ClientSessionManagement.t_0810a0e8')} />
           </div>
         )}
       </AdminCommonLayout>
@@ -171,14 +171,14 @@ const ClientSessionManagement = () => {
 
   if (error) {
     return (
-      <AdminCommonLayout title="회기 관리" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-session-management">
             <div className="error-container">
               <div className="error-icon">
                 <i className="bi bi-exclamation-triangle" />
               </div>
-              <h3>오류가 발생했습니다</h3>
+              <h3>{t('common:client.ClientSessionManagement.t_11d2f578')}</h3>
               <p>{error}</p>
               <MGButton
                 variant="primary"
@@ -199,22 +199,22 @@ const ClientSessionManagement = () => {
 
   if (!sessionData || sessionData.mappings.length === 0) {
     return (
-      <AdminCommonLayout title="회기 관리" className="mg-v2-dashboard-layout">
+      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
         {pageShell(
           <div className="client-session-management">
             <div className="no-data-container">
               <div className="no-data-icon">
                 <i className="bi bi-calendar-check" />
               </div>
-              <h3>회기 정보가 없습니다</h3>
-              <p>아직 상담사와 연결된 패키지가 없습니다.</p>
+              <h3>{t('common:client.ClientSessionManagement.t_b7ad4ec9')}</h3>
+              <p>{t('common:client.ClientSessionManagement.t_39d9cc39')}</p>
               <MGButton
                 variant="primary"
                 className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                 onClick={() => navigate('/client/wellness')}
                 preventDoubleClick={false}
               >
-                웰니스 가이드 보기
+                {t('common:client.ClientSessionManagement.t_9bc94122')}
               </MGButton>
             </div>
           </div>
@@ -224,7 +224,7 @@ const ClientSessionManagement = () => {
   }
 
   return (
-    <AdminCommonLayout title="회기 관리" className="mg-v2-dashboard-layout">
+    <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
       {pageShell(
         <div className="client-session-management">
         {/* 햄버거 메뉴 드롭다운 */}
@@ -247,7 +247,7 @@ const ClientSessionManagement = () => {
                 preventDoubleClick={false}
               >
                 <i className="bi bi-clock-history client-session-menu-icon" />
-                회기 관리
+                {t('common:client.ClientSessionManagement.t_be89c264')}
               </MGButton>
               <MGButton
                 variant="outline"
@@ -256,7 +256,7 @@ const ClientSessionManagement = () => {
                 preventDoubleClick={false}
               >
                 <i className="bi bi-credit-card client-session-menu-icon" />
-                결제 내역
+                {t('common:client.ClientSessionManagement.t_42e677b1')}
               </MGButton>
               <MGButton
                 variant="outline"
@@ -265,7 +265,7 @@ const ClientSessionManagement = () => {
                 preventDoubleClick={false}
               >
                 <i className="bi bi-book client-session-menu-icon" />
-                상담 가이드
+                {t('common:client.ClientSessionManagement.t_52ae8856')}
               </MGButton>
             </div>
           </div>
@@ -278,9 +278,9 @@ const ClientSessionManagement = () => {
               <i className="bi bi-calendar-check" />
             </div>
             <div className="card-content">
-              <h3>총 회기</h3>
+              <h3>{t('common:client.ClientSessionManagement.t_7a0890a2')}</h3>
               <p className="number">{sessionData.totalSessions}</p>
-              <span className="unit">회</span>
+              <span className="unit">{t('common:client.ClientSessionManagement.t_2fc05c02')}</span>
             </div>
           </div>
 
@@ -289,9 +289,9 @@ const ClientSessionManagement = () => {
               <i className="bi bi-check-circle" />
             </div>
             <div className="card-content">
-              <h3>사용한 회기</h3>
+              <h3>{t('common:client.ClientSessionManagement.t_5ed8ec73')}</h3>
               <p className="number">{sessionData.usedSessions}</p>
-              <span className="unit">회</span>
+              <span className="unit">{t('common:client.ClientSessionManagement.t_2fc05c02')}</span>
             </div>
           </div>
 
@@ -300,9 +300,9 @@ const ClientSessionManagement = () => {
               <i className="bi bi-clock" />
             </div>
             <div className="card-content">
-              <h3>남은 회기</h3>
+              <h3>{t('common:client.ClientSessionManagement.t_e9792c10')}</h3>
               <p className="number">{sessionData.remainingSessions}</p>
-              <span className="unit">회</span>
+              <span className="unit">{t('common:client.ClientSessionManagement.t_2fc05c02')}</span>
             </div>
           </div>
         </div>
@@ -310,7 +310,7 @@ const ClientSessionManagement = () => {
         {/* 진행률 표시 */}
         <div className="progress-section">
           <div className="progress-header">
-            <span>회기 사용률</span>
+            <span>{t('common:client.ClientSessionManagement.t_621164fa')}</span>
             <span className="progress-percentage">
               {sessionData.totalSessions > 0 
                 ? Math.round((sessionData.usedSessions / sessionData.totalSessions) * 100)
@@ -345,15 +345,15 @@ const ClientSessionManagement = () => {
                 </div>
                 <div className="package-card-content">
                   <div className="detail-item">
-                    <span className="label">총 회기</span>
+                    <span className="label">{t('common:client.ClientSessionManagement.t_7a0890a2')}</span>
                     <span className="value">{mapping.totalSessions}회</span>
                   </div>
                   <div className="detail-item">
-                    <span className="label">사용</span>
+                    <span className="label">{t('common:client.ClientSessionManagement.t_7f3ba385')}</span>
                     <span className="value">{mapping.usedSessions || 0}회</span>
                   </div>
                   <div className="detail-item">
-                    <span className="label">남은 회기</span>
+                    <span className="label">{t('common:client.ClientSessionManagement.t_e9792c10')}</span>
                     <span className="value">{mapping.remainingSessions || 0}회</span>
                   </div>
                   <div className="detail-item">
@@ -361,7 +361,7 @@ const ClientSessionManagement = () => {
                     <span className="value">{mapping.consultant?.consultantName || '미지정'}</span>
                   </div>
                   <div className="detail-item">
-                    <span className="label">연결일</span>
+                    <span className="label">{t('common:client.ClientSessionManagement.t_851081d2')}</span>
                     <span className="value">
                       {mapping.createdAt ? formatDate(mapping.createdAt) : '알 수 없음'}
                     </span>
@@ -376,7 +376,7 @@ const ClientSessionManagement = () => {
         <div className="consultation-history">
           <h3>
             <i className="bi bi-calendar3 mg-color-primary" />
-            최근 상담 일정
+            {t('common:client.ClientSessionManagement.t_47ff87a2')}
           </h3>
           {sessionData.schedules && sessionData.schedules.length > 0 ? (
             <div className="consultation-list">
@@ -409,7 +409,7 @@ const ClientSessionManagement = () => {
           ) : (
             <div className="no-consultations">
               <i className="bi bi-calendar-x" />
-              <p>아직 상담 일정이 없습니다.</p>
+              <p>{t('common:client.ClientSessionManagement.t_f4226e93')}</p>
             </div>
           )}
         </div>

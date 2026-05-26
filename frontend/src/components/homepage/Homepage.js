@@ -11,8 +11,10 @@ import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import '../../styles/main.css';
 import './Homepage.css';
+import { useTranslation } from 'react-i18next';
 
 const Homepage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -121,7 +123,7 @@ const Homepage = () => {
                     onClick={handleLogin}
                     preventDoubleClick={false}
                   >
-                    로그인
+                    {t('common:homepage.Homepage.t_e225a6fd')}
                   </MGButton>
                   <MGButton
                     type="button"
@@ -135,7 +137,7 @@ const Homepage = () => {
                     onClick={handleRegister}
                     preventDoubleClick={false}
                   >
-                    회원가입
+                    {t('common:homepage.Homepage.t_ecb4cc87')}
                   </MGButton>
                 </nav>
                 <MGButton
@@ -150,7 +152,7 @@ const Homepage = () => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleHamburgerToggle}
                   preventDoubleClick={false}
-                  aria-label="메뉴 열기"
+                  aria-label={t('common:homepage.Homepage.t_195da620')}
                 >
                   <i className="bi bi-list" />
                 </MGButton>
@@ -164,7 +166,7 @@ const Homepage = () => {
           <div className="hamburger-menu-overlay" onClick={handleOverlayClick}>
             <div className="hamburger-menu" onClick={(e) => e.stopPropagation()}>
               <div className="hamburger-menu-header">
-                <h3>메뉴</h3>
+                <h3>{t('common:homepage.Homepage.t_076925c5')}</h3>
                 <MGButton
                   type="button"
                   variant="outline"
@@ -177,7 +179,7 @@ const Homepage = () => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => setIsMenuOpen(false)}
                   preventDoubleClick={false}
-                  aria-label="메뉴 닫기"
+                  aria-label={t('common:homepage.Homepage.t_923b2615')}
                 >
                   <i className="bi bi-x" />
                 </MGButton>
@@ -197,7 +199,7 @@ const Homepage = () => {
                   preventDoubleClick={false}
                 >
                   <i className="bi bi-house" />
-                  홈
+                  {t('common:homepage.Homepage.t_13a46f96')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -213,7 +215,7 @@ const Homepage = () => {
                   preventDoubleClick={false}
                 >
                   <i className="bi bi-info-circle" />
-                  소개
+                  {t('common:homepage.Homepage.t_fa255f0c')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -229,7 +231,7 @@ const Homepage = () => {
                   preventDoubleClick={false}
                 >
                   <i className="bi bi-heart" />
-                  서비스
+                  {t('common:homepage.Homepage.t_45c901dc')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -245,7 +247,7 @@ const Homepage = () => {
                   preventDoubleClick={false}
                 >
                   <i className="bi bi-telephone" />
-                  문의
+                  {t('common:homepage.Homepage.t_0fc1eee5')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -261,7 +263,7 @@ const Homepage = () => {
                   preventDoubleClick={false}
                 >
                   <i className="bi bi-box-arrow-in-right" />
-                  로그인
+                  {t('common:homepage.Homepage.t_e225a6fd')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -277,7 +279,7 @@ const Homepage = () => {
                   preventDoubleClick={false}
                 >
                   <i className="bi bi-person-plus" />
-                  회원가입
+                  {t('common:homepage.Homepage.t_ecb4cc87')}
                 </MGButton>
               </div>
             </div>
@@ -288,8 +290,8 @@ const Homepage = () => {
         <section className="mg-v2-homepage-hero">
           <div className="mg-v2-homepage-hero-overlay" />
           <div className="mg-v2-homepage-hero-content">
-            <h1 className="mg-v2-homepage-hero-title">비즈니스의 핵심을 솔루션하다</h1>
-            <p className="mg-v2-homepage-hero-subtitle">Core Solution과 함께 비즈니스의 모든 과정을 통합하고 자동화하여 혁신적인 성장을 경험하세요.</p>
+            <h1 className="mg-v2-homepage-hero-title">{t('common:homepage.Homepage.t_532c5f8e')}</h1>
+            <p className="mg-v2-homepage-hero-subtitle">{t('common:homepage.Homepage.t_9b6a94eb')}</p>
             <MGButton
               type="button"
               variant="primary"
@@ -318,7 +320,7 @@ const Homepage = () => {
               }}
               preventDoubleClick={false}
             >
-              무료로 시작하기
+              {t('common:homepage.Homepage.t_7bbd5bba')}
             </MGButton>
           </div>
           <div className="mg-v2-homepage-scroll-indicator" aria-hidden="true">
@@ -331,27 +333,27 @@ const Homepage = () => {
 
         {/* Features Section */}
         <section id="homepage-features" className="mg-v2-homepage-features">
-          <h2 className="mg-v2-homepage-section-title">복잡한 비즈니스, Core Solution 하나로 끝내세요</h2>
+          <h2 className="mg-v2-homepage-section-title">{t('common:homepage.Homepage.t_93b319e0')}</h2>
           <div className="mg-v2-homepage-features-grid">
             <div className="mg-v2-card">
               <div className="mg-v2-card-image bg-img-data" />
               <div className="mg-v2-card-content">
-                <h3 className="mg-v2-card-title">데이터 분석/대시보드</h3>
-                <p className="mg-v2-card-desc">실시간으로 비즈니스 지표를 분석하고 의사결정을 가속화하세요.</p>
+                <h3 className="mg-v2-card-title">{t('common:homepage.Homepage.t_09d6d7e8')}</h3>
+                <p className="mg-v2-card-desc">{t('common:homepage.Homepage.t_0deda332')}</p>
               </div>
             </div>
             <div className="mg-v2-card">
               <div className="mg-v2-card-image bg-img-finance" />
               <div className="mg-v2-card-content">
-                <h3 className="mg-v2-card-title">재무/회계 관리</h3>
-                <p className="mg-v2-card-desc">투명하고 체계적인 재무 관리로 기업의 건전성을 확보합니다.</p>
+                <h3 className="mg-v2-card-title">{t('common:homepage.Homepage.t_26689987')}</h3>
+                <p className="mg-v2-card-desc">{t('common:homepage.Homepage.t_662f130f')}</p>
               </div>
             </div>
             <div className="mg-v2-card">
               <div className="mg-v2-card-image bg-img-collab" />
               <div className="mg-v2-card-content">
-                <h3 className="mg-v2-card-title">협업 및 커뮤니케이션</h3>
-                <p className="mg-v2-card-desc">팀원들과 원활하게 소통하고 업무 효율성을 극대화하세요.</p>
+                <h3 className="mg-v2-card-title">{t('common:homepage.Homepage.t_cf4bbccd')}</h3>
+                <p className="mg-v2-card-desc">{t('common:homepage.Homepage.t_beb6763b')}</p>
               </div>
             </div>
           </div>
@@ -362,8 +364,8 @@ const Homepage = () => {
           <div className="mg-v2-homepage-split-image bg-img-split" />
           <div className="mg-v2-homepage-split-text">
             <span className="mg-v2-homepage-split-subtitle">SEAMLESS INTEGRATION</span>
-            <h2 className="mg-v2-homepage-split-title">모든 데이터를 한 곳에서 투명하게 관리하세요</h2>
-            <p className="mg-v2-homepage-split-desc">흩어져 있던 재무, 인사, 운영 데이터를 통합하여 하나의 대시보드에서 효율적으로 관리하고 비즈니스 인사이트를 도출합니다.</p>
+            <h2 className="mg-v2-homepage-split-title">{t('common:homepage.Homepage.t_cf78c9e3')}</h2>
+            <p className="mg-v2-homepage-split-desc">{t('common:homepage.Homepage.t_cc30f363')}</p>
             <MGButton
               type="button"
               variant="outline"
@@ -377,14 +379,14 @@ const Homepage = () => {
               onClick={scrollToHomepageFeatures}
               preventDoubleClick={false}
             >
-              자세히 알아보기 →
+              {t('common:homepage.Homepage.t_8871edb9')}
             </MGButton>
           </div>
         </section>
 
         {/* Bottom CTA & Footer */}
         <section className="mg-v2-homepage-bottom-cta">
-          <h2 className="mg-v2-homepage-bottom-cta-title">지금 바로 비즈니스의 핵심을 바꿔보세요.</h2>
+          <h2 className="mg-v2-homepage-bottom-cta-title">{t('common:homepage.Homepage.t_f6cb0de3')}</h2>
           <MGButton
             type="button"
             variant="outline"
@@ -398,7 +400,7 @@ const Homepage = () => {
             onClick={handleRegister}
             preventDoubleClick={false}
           >
-            회원가입 하고 시작하기
+            {t('common:homepage.Homepage.t_f6a6f901')}
           </MGButton>
         </section>
 
@@ -406,10 +408,10 @@ const Homepage = () => {
           <p className="mg-v2-homepage-footer-text">© 2026 Core Solution. All rights reserved.</p>
           <div className="mg-v2-homepage-footer-links">
             <Link className="mg-v2-homepage-footer-link" to="/terms">
-              이용약관
+              {t('common:homepage.Homepage.t_3b9e30dd')}
             </Link>
             <Link className="mg-v2-homepage-footer-link" to="/privacy">
-              개인정보처리방침
+              {t('common:homepage.Homepage.t_339679c5')}
             </Link>
           </div>
         </footer>

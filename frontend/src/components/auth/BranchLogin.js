@@ -14,6 +14,7 @@ import { LOGIN_CREDENTIALS_MISMATCH_MESSAGE } from '../../constants/loginDisplay
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './BranchLogin.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 지점별 로그인 컴포넌트
@@ -27,6 +28,7 @@ import './BranchLogin.css';
  * @since 2025-09-12
  */
 const BranchLogin = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { setUser, setBranch } = useSession();
   
@@ -163,8 +165,8 @@ const BranchLogin = () => {
 
   return (
     <CommonPageTemplate 
-      title="지점별 로그인" 
-      description="본사 또는 지점별로 로그인하세요"
+      title={t('auth:BranchLogin.t_197f3d5c')} 
+      description={t('auth:BranchLogin.t_168ddc72')}
       bodyClass="branch-login-page"
     >
       <UnifiedHeader />
@@ -172,8 +174,8 @@ const BranchLogin = () => {
       <div className="branch-login-container">
         <div className="login-card">
           <div className="login-header">
-            <h2>Core Solution 로그인</h2>
-            <p>본사 또는 지점별로 로그인하세요</p>
+            <h2>{t('auth:BranchLogin.t_4cef9553')}</h2>
+            <p>{t('auth:BranchLogin.t_168ddc72')}</p>
           </div>
 
           {/* 로그인 유형 선택 */}
@@ -186,7 +188,7 @@ const BranchLogin = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              🏢 본사 로그인
+              {t('auth:BranchLogin.t_455394a1')}
             </MGButton>
             <MGButton
               type="button"
@@ -196,7 +198,7 @@ const BranchLogin = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              🏪 지점 로그인
+              {t('auth:BranchLogin.t_d7acdddc')}
             </MGButton>
           </div>
 
@@ -204,7 +206,7 @@ const BranchLogin = () => {
             {/* 지점 선택 (지점 로그인시에만 표시) */}
             {loginType === 'BRANCH' && (
               <div className="form-group">
-                <label htmlFor="branchCode">지점 선택 *</label>
+                <label htmlFor="branchCode">{t('auth:BranchLogin.t_5bc468b5')}</label>
                 <select
                   id="branchCode"
                   name="branchCode"
@@ -213,7 +215,7 @@ const BranchLogin = () => {
                   className="form-select"
                   required
                 >
-                  <option value="">지점을 선택하세요</option>
+                  <option value="">{t('auth:BranchLogin.t_bf6143c1')}</option>
                   {branches.map((branch) => (
                     <option key={branch.id} value={branch.branchCode}>
                       {branch.branchCode} - {branch.branchName}
@@ -225,7 +227,7 @@ const BranchLogin = () => {
 
             {/* 이메일 입력 */}
             <div className="form-group">
-              <label htmlFor="email">이메일 *</label>
+              <label htmlFor="email">{t('auth:BranchLogin.t_1b12f93c')}</label>
               <input
                 type="email"
                 id="email"
@@ -233,14 +235,14 @@ const BranchLogin = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className="form-input"
-                placeholder="이메일을 입력하세요"
+                placeholder={t('auth:BranchLogin.t_d83f68e8')}
                 required
               />
             </div>
 
             {/* 비밀번호 입력 */}
             <div className="form-group">
-              <label htmlFor="password">비밀번호 *</label>
+              <label htmlFor="password">{t('auth:BranchLogin.t_85339326')}</label>
               <div className="password-input-group">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -249,7 +251,7 @@ const BranchLogin = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="비밀번호를 입력하세요"
+                  placeholder={t('auth:BranchLogin.t_1e89d217')}
                   required
                 />
                 <MGButton
@@ -276,7 +278,7 @@ const BranchLogin = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              로그인
+              {t('auth:BranchLogin.t_e225a6fd')}
             </MGButton>
           </form>
 
@@ -284,20 +286,20 @@ const BranchLogin = () => {
           <div className="login-info">
             {loginType === 'HEADQUARTERS' ? (
               <div className="info-box headquarters-info">
-                <h4>🏢 본사 로그인</h4>
+                <h4>{t('auth:BranchLogin.t_455394a1')}</h4>
                 <ul>
-                  <li>본사 관리자만 로그인 가능합니다</li>
-                  <li>전체 지점 관리 및 통계 조회</li>
-                  <li>시스템 설정 및 사용자 관리</li>
+                  <li>{t('auth:BranchLogin.t_f75eed47')}</li>
+                  <li>{t('auth:BranchLogin.t_08b3a850')}</li>
+                  <li>{t('auth:BranchLogin.t_a3794379')}</li>
                 </ul>
               </div>
             ) : (
               <div className="info-box branch-info">
-                <h4>🏪 지점 로그인</h4>
+                <h4>{t('auth:BranchLogin.t_d7acdddc')}</h4>
                 <ul>
-                  <li>해당 지점에 소속된 사용자만 로그인 가능</li>
-                  <li>지점별 상담사/내담자 관리</li>
-                  <li>지점 운영 및 통계 조회</li>
+                  <li>{t('auth:BranchLogin.t_5422e720')}</li>
+                  <li>{t('auth:BranchLogin.t_7aaf462d')}</li>
+                  <li>{t('auth:BranchLogin.t_7501a0b2')}</li>
                 </ul>
               </div>
             )}
@@ -313,7 +315,7 @@ const BranchLogin = () => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
             >
-              기존 로그인 페이지로 이동
+              {t('auth:BranchLogin.t_d2cf4f35')}
             </MGButton>
           </div>
         </div>

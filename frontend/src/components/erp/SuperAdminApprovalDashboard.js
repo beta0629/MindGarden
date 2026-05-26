@@ -161,10 +161,10 @@ const SuperAdminApprovalDashboard = () => {
       {requests.length === 0 ? (
         <section className="mg-v2-section" aria-labelledby="approval-super-empty-title">
           <CardContainer>
-            <h3 id="approval-super-empty-title" className="mg-h4">승인 대기 목록</h3>
+            <h3 id="approval-super-empty-title" className="mg-h4">{t('erp:SuperAdminApprovalDashboard.t_e018899d')}</h3>
             <div className="mg-v2-card-body">
               <div className="approval-dashboard-empty">
-                수퍼 관리자 승인 대기 중인 구매 요청이 없습니다.
+                {t('erp:SuperAdminApprovalDashboard.t_3b5f7831')}
               </div>
             </div>
           </CardContainer>
@@ -184,24 +184,24 @@ const SuperAdminApprovalDashboard = () => {
                 <div className="mg-v2-card-body">
                   <div className="approval-request-info">
                     <div className="approval-request-grid">
-                      <div><strong>요청자:</strong> <ErpSafeText value={request.requester?.name} fallback="알 수 없음" /></div>
-                      <div><strong>요청일:</strong> <ErpSafeText value={formatApprovalDate(request.createdAt)} /></div>
-                      <div><strong>아이템:</strong> <ErpSafeText value={request.item?.name} fallback="알 수 없음" /></div>
-                      <div><strong>수량:</strong> <ErpSafeText value={request.quantity} />개</div>
-                      <div><strong>단가:</strong> <ErpSafeText value={formatApprovalCurrency(request.unitPrice)} /></div>
-                      <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(request.totalAmount)} /></div>
+                      <div><strong>{t('erp:SuperAdminApprovalDashboard.t_17102fe2')}</strong> <ErpSafeText value={request.requester?.name} fallback="알 수 없음" /></div>
+                      <div><strong>{t('erp:SuperAdminApprovalDashboard.t_b478a5ad')}</strong> <ErpSafeText value={formatApprovalDate(request.createdAt)} /></div>
+                      <div><strong>{t('erp:SuperAdminApprovalDashboard.t_f2e00fdf')}</strong> <ErpSafeText value={request.item?.name} fallback="알 수 없음" /></div>
+                      <div><strong>{t('erp:SuperAdminApprovalDashboard.t_46dfd8e0')}</strong> <ErpSafeText value={request.quantity} />{t('erp:SuperAdminApprovalDashboard.t_11600c9a')}</div>
+                      <div><strong>{t('erp:SuperAdminApprovalDashboard.t_a10017a8')}</strong> <ErpSafeText value={formatApprovalCurrency(request.unitPrice)} /></div>
+                      <div><strong>{t('erp:SuperAdminApprovalDashboard.t_e2749f0f')}</strong> <ErpSafeText value={formatApprovalCurrency(request.totalAmount)} /></div>
                     </div>
 
                     {request.adminApprover && (
                       <div className="approval-admin-info">
                         <div className="approval-admin-status">
-                          관리자 승인 완료
+                          {t('erp:SuperAdminApprovalDashboard.t_6e756c95')}
                         </div>
                         <div className="mg-v2-text-sm">
-                          <div><strong>승인자:</strong> <ErpSafeText value={request.adminApprover?.name} fallback="알 수 없음" /></div>
-                          <div><strong>승인일:</strong> <ErpSafeText value={formatApprovalDate(request.adminApprovedAt)} /></div>
+                          <div><strong>{t('erp:SuperAdminApprovalDashboard.t_ba598083')}</strong> <ErpSafeText value={request.adminApprover?.name} fallback="알 수 없음" /></div>
+                          <div><strong>{t('erp:SuperAdminApprovalDashboard.t_f8ec57cf')}</strong> <ErpSafeText value={formatApprovalDate(request.adminApprovedAt)} /></div>
                           {request.adminComment && (
-                            <div><strong>코멘트:</strong> <ErpSafeText value={request.adminComment} /></div>
+                            <div><strong>{t('erp:SuperAdminApprovalDashboard.t_59b435fe')}</strong> <ErpSafeText value={request.adminComment} /></div>
                           )}
                         </div>
                       </div>
@@ -209,7 +209,7 @@ const SuperAdminApprovalDashboard = () => {
 
                     {request.reason && (
                       <div className="super-admin-form-group">
-                        <strong>요청 사유:</strong>
+                        <strong>{t('erp:SuperAdminApprovalDashboard.t_ba8f0ebc')}</strong>
                         <div className="super-admin-reason-box">
                           <ErpSafeText value={request.reason} />
                         </div>
@@ -225,7 +225,7 @@ const SuperAdminApprovalDashboard = () => {
                         preventDoubleClick={false}
                         onClick={() => handleApprove(request)}
                       >
-                        최종 승인
+                        {t('erp:SuperAdminApprovalDashboard.t_aa4f2203')}
                       </MGButton>
                       <MGButton
                         variant={mapErpVariantToMg('danger')}
@@ -235,7 +235,7 @@ const SuperAdminApprovalDashboard = () => {
                         preventDoubleClick={false}
                         onClick={() => handleReject(request)}
                       >
-                        거부
+                        {t('erp:SuperAdminApprovalDashboard.t_36fa7537')}
                       </MGButton>
                     </div>
                   </div>
@@ -249,7 +249,7 @@ const SuperAdminApprovalDashboard = () => {
       <UnifiedModal
         isOpen={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
-        title="구매 요청 최종 승인"
+        title={t('erp:SuperAdminApprovalDashboard.t_fec1c31c')}
         size="auto"
         backdropClick
         className="mg-v2-ad-b0kla"
@@ -257,23 +257,23 @@ const SuperAdminApprovalDashboard = () => {
         {selectedRequest && (
           <div aria-busy={processing}>
             <div className="mg-v2-form-group">
-              <h4>최종 승인할 구매 요청</h4>
+              <h4>{t('erp:SuperAdminApprovalDashboard.t_5ad9ad00')}</h4>
               <div className="super-admin-info-box">
-                <div><strong>아이템:</strong> <ErpSafeText value={selectedRequest.item?.name} /></div>
-                <div><strong>수량:</strong> <ErpSafeText value={selectedRequest.quantity} />개</div>
-                <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
-                <div><strong>요청자:</strong> <ErpSafeText value={selectedRequest.requester?.name} /></div>
+                <div><strong>{t('erp:SuperAdminApprovalDashboard.t_f2e00fdf')}</strong> <ErpSafeText value={selectedRequest.item?.name} /></div>
+                <div><strong>{t('erp:SuperAdminApprovalDashboard.t_46dfd8e0')}</strong> <ErpSafeText value={selectedRequest.quantity} />{t('erp:SuperAdminApprovalDashboard.t_11600c9a')}</div>
+                <div><strong>{t('erp:SuperAdminApprovalDashboard.t_e2749f0f')}</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
+                <div><strong>{t('erp:SuperAdminApprovalDashboard.t_17102fe2')}</strong> <ErpSafeText value={selectedRequest.requester?.name} /></div>
               </div>
             </div>
 
             <div className="mg-v2-form-group">
               <label className="super-admin-form-label">
-                최종 승인 코멘트 (선택사항)
+                {t('erp:SuperAdminApprovalDashboard.t_47579c2e')}
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="최종 승인 사유나 추가 코멘트를 입력하세요..."
+                placeholder={t('erp:SuperAdminApprovalDashboard.t_252e7f72')}
                 rows="3"
                 className="super-admin-textarea"
               />
@@ -303,7 +303,7 @@ const SuperAdminApprovalDashboard = () => {
                 onClick={submitApproval}
                 loading={processing}
               >
-                최종 승인하기
+                {t('erp:SuperAdminApprovalDashboard.t_c1dd57c6')}
               </MGButton>
             </div>
           </div>
@@ -313,7 +313,7 @@ const SuperAdminApprovalDashboard = () => {
       <UnifiedModal
         isOpen={showRejectionModal}
         onClose={() => setShowRejectionModal(false)}
-        title="구매 요청 거부"
+        title={t('erp:SuperAdminApprovalDashboard.t_4c549b61')}
         size="auto"
         backdropClick
         className="mg-v2-ad-b0kla"
@@ -321,23 +321,23 @@ const SuperAdminApprovalDashboard = () => {
         {selectedRequest && (
           <div aria-busy={processing}>
             <div className="mg-v2-form-group">
-              <h4>거부할 구매 요청</h4>
+              <h4>{t('erp:SuperAdminApprovalDashboard.t_82938fa2')}</h4>
               <div className="super-admin-info-box">
-                <div><strong>아이템:</strong> <ErpSafeText value={selectedRequest.item?.name} /></div>
-                <div><strong>수량:</strong> <ErpSafeText value={selectedRequest.quantity} />개</div>
-                <div><strong>총액:</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
-                <div><strong>요청자:</strong> <ErpSafeText value={selectedRequest.requester?.name} /></div>
+                <div><strong>{t('erp:SuperAdminApprovalDashboard.t_f2e00fdf')}</strong> <ErpSafeText value={selectedRequest.item?.name} /></div>
+                <div><strong>{t('erp:SuperAdminApprovalDashboard.t_46dfd8e0')}</strong> <ErpSafeText value={selectedRequest.quantity} />{t('erp:SuperAdminApprovalDashboard.t_11600c9a')}</div>
+                <div><strong>{t('erp:SuperAdminApprovalDashboard.t_e2749f0f')}</strong> <ErpSafeText value={formatApprovalCurrency(selectedRequest.totalAmount)} /></div>
+                <div><strong>{t('erp:SuperAdminApprovalDashboard.t_17102fe2')}</strong> <ErpSafeText value={selectedRequest.requester?.name} /></div>
               </div>
             </div>
 
             <div className="mg-v2-form-group">
               <label className="super-admin-form-label">
-                거부 사유 *
+                {t('erp:SuperAdminApprovalDashboard.t_f1908d6e')}
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="거부 사유를 입력하세요..."
+                placeholder={t('erp:SuperAdminApprovalDashboard.t_b5091061')}
                 rows="3"
                 required
                 className="super-admin-textarea"
@@ -369,7 +369,7 @@ const SuperAdminApprovalDashboard = () => {
                 loading={processing}
                 disabled={!comment.trim()}
               >
-                거부하기
+                {t('erp:SuperAdminApprovalDashboard.t_9aa55896')}
               </MGButton>
             </div>
           </div>

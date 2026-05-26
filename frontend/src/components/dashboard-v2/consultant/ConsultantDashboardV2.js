@@ -21,6 +21,7 @@ import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantDashboard.css';
 import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES_UNREAD_COUNT = '/api/v1/consultation-messages/unread-count';
@@ -36,6 +37,7 @@ const kpiLucideProps = {
 };
 
 const ConsultantDashboardV2 = ({ user }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState('');
@@ -516,7 +518,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       return (
         <div className="empty-state">
           <div className="mg-v2-spinner" />
-          <span className="empty-state-text">일정을 불러오는 중...</span>
+          <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_185723e2')}</span>
         </div>
       );
     }
@@ -552,7 +554,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     return (
       <div className="empty-state">
         <Icon name="CALENDAR" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
-        <span className="empty-state-text">오늘·어제 예정된 일정이 없습니다.</span>
+        <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_b2218467')}</span>
       </div>
     );
   };
@@ -562,7 +564,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       return (
         <div className="empty-state">
           <div className="mg-v2-spinner" />
-          <span className="empty-state-text">일정을 불러오는 중...</span>
+          <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_185723e2')}</span>
         </div>
       );
     }
@@ -622,7 +624,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     return (
       <div className="empty-state">
         <Icon name="CALENDAR" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
-        <span className="empty-state-text">다가오는 상담이 없습니다.</span>
+        <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_7f221836')}</span>
       </div>
     );
   };
@@ -637,7 +639,7 @@ const ConsultantDashboardV2 = ({ user }) => {
   const dashboardShell = (mainBody) => (
     <ContentArea ariaLabel="상담사 대시보드">
       <ContentHeader
-        title="상담 대시보드"
+        title={t('common:dashboard-v2.ConsultantDashboardV2.t_808c1f0c')}
         subtitle={`${user?.name || '상담사'} 선생님, 환영합니다. 오늘(${todayDateStr}) 일정·알림·내담 현황을 한곳에서 확인하세요.`}
         titleId={CONSULTANT_DASHBOARD_TITLE_ID}
         actions={<QuickActionBar onNavigate={navigate} />}
@@ -648,16 +650,16 @@ const ConsultantDashboardV2 = ({ user }) => {
 
   if (loading && user?.id) {
     return (
-      <AdminCommonLayout title="상담사 대시보드">
+      <AdminCommonLayout title={t('common:dashboard-v2.ConsultantDashboardV2.t_5f9ac71e')}>
         {dashboardShell(
-          <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />
+          <UnifiedLoading type="inline" text={t('common:dashboard-v2.ConsultantDashboardV2.t_484d08c9')} />
         )}
       </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout title="상담사 대시보드">
+    <AdminCommonLayout title={t('common:dashboard-v2.ConsultantDashboardV2.t_5f9ac71e')}>
       {dashboardShell(
         <>
         {/* 테넌트 미설정 안내 배너 */}
@@ -719,7 +721,7 @@ const ConsultantDashboardV2 = ({ user }) => {
           
           {/* Section A: 최근 일정 (오늘·어제) - 테넌트별 조회는 백엔드 TenantContextHolder 적용 */}
           <ContentSection
-            title="최근 일정 (오늘·어제)"
+            title={t('common:dashboard-v2.ConsultantDashboardV2.t_f39a6b65')}
             titleIcon={<Icon name="CLOCK" size="LG" color="TRANSPARENT" />}
             actions={
               <MGButton
@@ -736,7 +738,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                 onClick={() => navigate('/consultant/schedule')}
                 preventDoubleClick={false}
               >
-                <span>전체보기</span>
+                <span>{t('common:dashboard-v2.ConsultantDashboardV2.t_96999c6c')}</span>
               </MGButton>
             }
           >
@@ -747,7 +749,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
           {/* Section B: 다가오는 상담 (신규) */}
           <ContentSection
-            title="다가오는 상담"
+            title={t('common:dashboard-v2.ConsultantDashboardV2.t_1e4cd526')}
             titleIcon={<Icon name="CALENDAR" size="LG" color="TRANSPARENT" />}
             actions={
               <MGButton
@@ -764,7 +766,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                 onClick={() => navigate('/consultant/schedule')}
                 preventDoubleClick={false}
               >
-                <span>전체보기</span>
+                <span>{t('common:dashboard-v2.ConsultantDashboardV2.t_96999c6c')}</span>
               </MGButton>
             }
           >
@@ -775,7 +777,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
           {/* Section C: 최근 알림 */}
           <ContentSection
-            title="최근 알림"
+            title={t('common:dashboard-v2.ConsultantDashboardV2.t_74e4a0da')}
             titleIcon={<Icon name="BELL" size="LG" color="TRANSPARENT" />}
             actions={
               <MGButton
@@ -792,7 +794,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                 onClick={() => navigate('/notifications')}
                 preventDoubleClick={false}
               >
-                <span>전체보기</span>
+                <span>{t('common:dashboard-v2.ConsultantDashboardV2.t_96999c6c')}</span>
               </MGButton>
             }
           >
@@ -814,7 +816,7 @@ const ConsultantDashboardV2 = ({ user }) => {
               ) : (
                 <div className="empty-state">
                   <Icon name="BELL" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
-                  <span className="empty-state-text">새로운 알림이 없습니다.</span>
+                  <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_00fa1636')}</span>
                 </div>
               )}
             </div>
@@ -822,7 +824,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
           {/* Section D: 주간 상담 현황 (전체 너비) */}
           <ContentSection
-            title="주간 상담 현황"
+            title={t('common:dashboard-v2.ConsultantDashboardV2.t_2a22e022')}
             titleIcon={<Icon name="BAR_CHART_3" size="LG" color="TRANSPARENT" />}
             className="mg-v2-content-section--full"
           >
@@ -830,7 +832,7 @@ const ConsultantDashboardV2 = ({ user }) => {
               {dashboardData.weeklyStats.length === 0 ? (
                 <div className="empty-state">
                   <Icon name="BAR_CHART_3" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
-                  <span className="empty-state-text">최근 주간 상담 추이 데이터가 없습니다.</span>
+                  <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_b283cb3a')}</span>
                 </div>
               ) : (
                 <div className="chart-container">

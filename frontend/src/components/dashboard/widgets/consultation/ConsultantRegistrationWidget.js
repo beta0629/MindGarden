@@ -290,7 +290,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
           // 등록 버튼 화면
           <div className="registration-welcome">
             <div className="welcome-icon-wrapper" />
-            <h3 className="welcome-title">상담사 등록</h3>
+            <h3 className="welcome-title">{t('common:dashboard.ConsultantRegistrationWidget.t_2b4a8bea')}</h3>
             <p className="welcome-description">
               {
                 widget.config?.emptyMessage || 
@@ -311,14 +311,14 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowForm(true)}
             >
-              상담사 등록 시작
+              {t('common:dashboard.ConsultantRegistrationWidget.t_b4ed9bd7')}
             </MGButton>
           </div>
         ) : (
           // 등록 폼
           <div className="registration-form-container">
             <div className="form-header">
-              <h3 className="form-title">상담사 정보 입력</h3>
+              <h3 className="form-title">{t('common:dashboard.ConsultantRegistrationWidget.t_afbe24bb')}</h3>
               <MGButton
                 variant="outline"
                 size="small"
@@ -341,11 +341,11 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
             <form onSubmit={handleSubmit} className="consultant-registration-form">
               {/* 필수 필드 */}
               <div className="form-section">
-                <h4 className="section-title">기본 정보</h4>
+                <h4 className="section-title">{t('common:dashboard.ConsultantRegistrationWidget.t_eb7f501b')}</h4>
                 <div className="form-grid">
                   <div className="form-group">
                     <label htmlFor="userId" className="form-label">
-                      아이디 <span className="required">*</span>
+                      {t('common:dashboard.ConsultantRegistrationWidget.t_8dd085d9')} <span className="required">*</span>
                     </label>
                     <input
                       type="text"
@@ -355,7 +355,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                       onChange={handleInputChange}
                       required
                       className={`form-control ${getFieldError('userId') ? 'error' : ''}`}
-                      placeholder="로그인 아이디"
+                      placeholder={t('common:dashboard.ConsultantRegistrationWidget.t_8f56d137')}
                     />
                     {getFieldError('userId') && (
                       <div className="field-error">
@@ -388,7 +388,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="professionalTypeCode" className="form-label">
-                      전문가 유형 <span className="required">*</span>
+                      {t('common:dashboard.ConsultantRegistrationWidget.t_a910cb43')} <span className="required">*</span>
                     </label>
                     <select
                       id="professionalTypeCode"
@@ -430,7 +430,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="password" className="form-label">
-                      비밀번호 <span className="required">*</span>
+                      {t('common:dashboard.ConsultantRegistrationWidget.t_81973897')} <span className="required">*</span>
                     </label>
                     <input
                       type="password"
@@ -440,7 +440,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                       onChange={handleInputChange}
                       required
                       className={`form-control ${getFieldError('password') ? 'error' : ''}`}
-                      placeholder="로그인 비밀번호"
+                      placeholder={t('common:dashboard.ConsultantRegistrationWidget.t_6669670d')}
                     />
                     {getFieldError('password') && (
                       <div className="field-error">
@@ -452,7 +452,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-group">
                     <label htmlFor="phone" className="form-label">
-                      전화번호 <span className="required">*</span>
+                      {t('common:dashboard.ConsultantRegistrationWidget.t_9a1c3aaa')} <span className="required">*</span>
                     </label>
                     <input
                       type="tel"
@@ -474,7 +474,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
                   <div className="form-row two-cols">
                     <div className="form-group">
-                      <label htmlFor="rrnFirst6" className="form-label">주민번호 앞 6자리 (선택)</label>
+                      <label htmlFor="rrnFirst6" className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_61537487')}</label>
                       <input
                         type="text"
                         id="rrnFirst6"
@@ -492,7 +492,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                       )}
                     </div>
                     <div className="form-group">
-                      <label htmlFor="rrnLast1" className="form-label">주민번호 뒤 1자리 (선택)</label>
+                      <label htmlFor="rrnLast1" className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_77fb1e91')}</label>
                       <input
                         type="text"
                         id="rrnLast1"
@@ -518,11 +518,11 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                 <div className="form-section">
                   <h4 className="section-title">
                     
-                    전문 정보
+                    {t('common:dashboard.ConsultantRegistrationWidget.t_ac4050b9')}
                   </h4>
                   <div className="form-grid">
                     <div className="form-group full-width">
-                      <label htmlFor="specialization" className="form-label">전문 분야</label>
+                      <label htmlFor="specialization" className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_b04e1c0c')}</label>
                       <select
                         id="specialization"
                         name="specialization"
@@ -530,20 +530,20 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         onChange={handleInputChange}
                         className="form-control"
                       >
-                        <option value="">전문 분야 선택</option>
-                        <option value="개인상담">개인상담</option>
+                        <option value="">{t('common:dashboard.ConsultantRegistrationWidget.t_c95a1266')}</option>
+                        <option value="개인상담">{t('common:dashboard.ConsultantRegistrationWidget.t_efda14c0')}</option>
                         <option value="부부상담">{t('common.labels.coupleConsultation')}</option>
                         <option value="가족상담">{t('common.labels.familyConsultation')}</option>
-                        <option value="청소년상담">청소년상담</option>
-                        <option value="트라우마상담">트라우마상담</option>
-                        <option value="중독상담">중독상담</option>
-                        <option value="직업상담">직업상담</option>
+                        <option value="청소년상담">{t('common:dashboard.ConsultantRegistrationWidget.t_62dd9bfa')}</option>
+                        <option value="트라우마상담">{t('common:dashboard.ConsultantRegistrationWidget.t_308bfd55')}</option>
+                        <option value="중독상담">{t('common:dashboard.ConsultantRegistrationWidget.t_e00f86f0')}</option>
+                        <option value="직업상담">{t('common:dashboard.ConsultantRegistrationWidget.t_c0cbed8a')}</option>
                         <option value="기타">{t('admin.labels.other')}</option>
                       </select>
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="qualifications" className="form-label">자격증 (선택)</label>
+                      <label htmlFor="qualifications" className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_c44d2799')}</label>
                       <input
                         type="text"
                         id="qualifications"
@@ -551,12 +551,12 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         value={formData.qualifications}
                         onChange={handleInputChange}
                         className="form-control"
-                        placeholder="보유 자격증을 입력하세요. 예) 정신건강임상심리사 1급, 상담심리사 1급"
+                        placeholder={t('common:dashboard.ConsultantRegistrationWidget.t_7edd2cd8')}
                       />
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="workHistory" className="form-label">경력사항 (선택)</label>
+                      <label htmlFor="workHistory" className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_c2bd8daf')}</label>
                       <textarea
                         id="workHistory"
                         name="workHistory"
@@ -564,7 +564,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         onChange={handleInputChange}
                         className="form-control"
                         rows={3}
-                        placeholder="관련 경력 및 근무 이력을 입력하세요."
+                        placeholder={t('common:dashboard.ConsultantRegistrationWidget.t_8f92fc9c')}
                       />
                     </div>
                   </div>
@@ -574,10 +574,10 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
               {/* 추가 정보 */}
               {!showCompactForm && (
                 <div className="form-section">
-                  <h4 className="section-title">추가 정보</h4>
+                  <h4 className="section-title">{t('common:dashboard.ConsultantRegistrationWidget.t_9b3193e1')}</h4>
                   <div className="form-grid">
                     <div className="form-group full-width">
-                      <label className="form-label">주소 검색</label>
+                      <label className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_1c2422dd')}</label>
                       <div className="address-search-row">
                         <MGButton
                           type="button"
@@ -606,20 +606,20 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                             }
                           }}
                         >
-                          주소 검색
+                          {t('common:dashboard.ConsultantRegistrationWidget.t_1c2422dd')}
                         </MGButton>
                         <input
                           type="text"
                           readOnly
                           className="form-control address-display"
                           value={formData.address || ''}
-                          placeholder="주소 검색 버튼을 눌러 주소를 입력하세요."
+                          placeholder={t('common:dashboard.ConsultantRegistrationWidget.t_c44d8d97')}
                         />
                       </div>
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="addressDetail" className="form-label">상세 주소</label>
+                      <label htmlFor="addressDetail" className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_dad291cb')}</label>
                       <input
                         type="text"
                         id="addressDetail"
@@ -627,12 +627,12 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         value={formData.addressDetail}
                         onChange={handleInputChange}
                         className="form-control"
-                        placeholder="동, 호수, 상세 주소를 입력하세요."
+                        placeholder={t('common:dashboard.ConsultantRegistrationWidget.t_9c34782e')}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="postalCode" className="form-label">우편번호</label>
+                      <label htmlFor="postalCode" className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_cd21379e')}</label>
                       <input
                         type="text"
                         id="postalCode"
@@ -646,7 +646,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label htmlFor="notes" className="form-label">메모</label>
+                      <label htmlFor="notes" className="form-label">{t('common:dashboard.ConsultantRegistrationWidget.t_f3ce23c8')}</label>
                       <textarea
                         id="notes"
                         name="notes"
@@ -654,7 +654,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                         onChange={handleInputChange}
                         className="form-control"
                         rows={3}
-                        placeholder="추가 메모"
+                        placeholder={t('common:dashboard.ConsultantRegistrationWidget.t_ee55c948')}
                       />
                     </div>
                   </div>
@@ -689,7 +689,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleReset}
                 >
-                  초기화
+                  {t('common:dashboard.ConsultantRegistrationWidget.t_ff75b4ff')}
                 </MGButton>
                 <MGButton
                   type="submit"
@@ -703,7 +703,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                   loading={submitting}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  상담사 등록
+                  {t('common:dashboard.ConsultantRegistrationWidget.t_2b4a8bea')}
                 </MGButton>
               </div>
             </form>

@@ -1015,8 +1015,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
-            aria-label="일정"
-            title="일정"
+            aria-label={t('common:dashboard-v2.AdminDashboardV2.t_b2cb2d40')}
+            title={t('common:dashboard-v2.AdminDashboardV2.t_b2cb2d40')}
             preventDoubleClick={false}
           >
             <Calendar size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
@@ -1040,8 +1040,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             size="small"
             className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            aria-label="테마"
-            title="테마"
+            aria-label={t('common:dashboard-v2.AdminDashboardV2.t_5d8fee11')}
+            title={t('common:dashboard-v2.AdminDashboardV2.t_5d8fee11')}
             onClick={() => {}}
             preventDoubleClick={false}
           >
@@ -1089,7 +1089,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 id="admin-viz-group-title"
                 className="mg-v2-content-visualization-group__title"
               >
-                시각화
+                {t('common:dashboard-v2.AdminDashboardV2.t_01c7a211')}
               </h2>
             </div>
             <div className="mg-v2-content-visualization-group__grid">
@@ -1149,7 +1149,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 const allZero = values.length > 0 && values.every((v) => v === 0);
                 if (allZero) {
                   return (
-                    <p className="mg-v2-ad-b0kla__chart-empty">기간 내 완료된 상담이 없습니다.</p>
+                    <p className="mg-v2-ad-b0kla__chart-empty">{t('common:dashboard-v2.AdminDashboardV2.t_385902d3')}</p>
                   );
                 }
                 const maxVal = Math.max(...values, 1);
@@ -1202,7 +1202,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <div className="mg-v2-ad-b0kla__card">
             <div className="mg-v2-ad-b0kla__chart-header">
               <div>
-                <h3 className="mg-v2-ad-b0kla__chart-title">예약 vs 완료</h3>
+                <h3 className="mg-v2-ad-b0kla__chart-title">{t('common:dashboard-v2.AdminDashboardV2.t_7c466a6b')}</h3>
                 <p className="mg-v2-ad-b0kla__chart-desc">
                   {lineChartPeriod === 'weekly'
                     ? '최근 6주 예약·완료 추이'
@@ -1222,7 +1222,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   onClick={() => setLineChartPeriod('monthly')}
                   preventDoubleClick={false}
                 >
-                  월간
+                  {t('common:dashboard-v2.AdminDashboardV2.t_e81e0fc4')}
                 </MGButton>
                 <MGButton
                   type="button"
@@ -1236,7 +1236,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   onClick={() => setLineChartPeriod('weekly')}
                   preventDoubleClick={false}
                 >
-                  주간
+                  {t('common:dashboard-v2.AdminDashboardV2.t_9cbaf58b')}
                 </MGButton>
               </div>
             </div>
@@ -1264,7 +1264,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 if (allZero) {
                   return (
                     <p className="mg-v2-ad-b0kla__chart-empty">
-                      기간 내 데이터가 없습니다.
+                      {t('common:dashboard-v2.AdminDashboardV2.t_04eae6b1')}
                     </p>
                   );
                 }
@@ -1337,8 +1337,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             </div>
           </div>
           <div className="mg-v2-ad-b0kla__card">
-            <h3 className="mg-v2-ad-b0kla__chart-title">단계별 현황</h3>
-            <p className="mg-v2-ad-b0kla__chart-desc">5단계 건수 비율</p>
+            <h3 className="mg-v2-ad-b0kla__chart-title">{t('common:dashboard-v2.AdminDashboardV2.t_e46896c4')}</h3>
+            <p className="mg-v2-ad-b0kla__chart-desc">{t('common:dashboard-v2.AdminDashboardV2.t_0b7b7f1d')}</p>
             <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-ad-b0kla__chart-wrapper--donut">
               {(() => {
                 const stepValues = [
@@ -1352,7 +1352,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 const allZero = total === 0;
                 if (allZero) {
                   return (
-                    <p className="mg-v2-ad-b0kla__chart-empty">단계별 데이터가 없습니다.</p>
+                    <p className="mg-v2-ad-b0kla__chart-empty">{t('common:dashboard-v2.AdminDashboardV2.t_ec38756f')}</p>
                   );
                 }
                 return (
@@ -1397,10 +1397,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </section>
         </div>
         <div className="mg-v2-ad-b0kla__card">
-          <h3 className="mg-v2-ad-b0kla__counselor-title">상담사 별 통합데이터</h3>
-          <p className="mg-v2-ad-b0kla__counselor-subtitle">평점·상담 완료·완료율</p>
+          <h3 className="mg-v2-ad-b0kla__counselor-title">{t('common:dashboard-v2.AdminDashboardV2.t_8d3e51bd')}</h3>
+          <p className="mg-v2-ad-b0kla__counselor-subtitle">{t('common:dashboard-v2.AdminDashboardV2.t_a785fe0e')}</p>
           <div className="mg-v2-ad-b0kla__integrated-data-period">
-            <span className="mg-v2-ad-b0kla__integrated-data-period-label">집계 기간</span>
+            <span className="mg-v2-ad-b0kla__integrated-data-period-label">{t('common:dashboard-v2.AdminDashboardV2.t_11d00e88')}</span>
             <div className="mg-v2-ad-b0kla__integrated-data-period-tabs">
               <MGButton
                 type="button"
@@ -1430,7 +1430,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 onClick={() => setIntegratedDataPeriodType('month')}
                 preventDoubleClick={false}
               >
-                월별
+                {t('common:dashboard-v2.AdminDashboardV2.t_12966a35')}
               </MGButton>
               <MGButton
                 type="button"
@@ -1445,13 +1445,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 onClick={() => setIntegratedDataPeriodType('year')}
                 preventDoubleClick={false}
               >
-                년도별
+                {t('common:dashboard-v2.AdminDashboardV2.t_219c86c5')}
               </MGButton>
             </div>
             {integratedDataPeriodType === 'month' && (
               <div className="mg-v2-ad-b0kla__integrated-data-month-picker">
                 <select
-                  aria-label="년도 선택"
+                  aria-label={t('common:dashboard-v2.AdminDashboardV2.t_b35716f4')}
                   value={integratedDataYear}
                   onChange={(e) => setIntegratedDataYear(Number(e.target.value))}
                   className="mg-v2-ad-b0kla__select mg-v2-ad-b0kla__select--sm"
@@ -1461,7 +1461,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   ))}
                 </select>
                 <select
-                  aria-label="월 선택"
+                  aria-label={t('common:dashboard-v2.AdminDashboardV2.t_681272a5')}
                   value={integratedDataMonth}
                   onChange={(e) => setIntegratedDataMonth(Number(e.target.value))}
                   className="mg-v2-ad-b0kla__select mg-v2-ad-b0kla__select--sm"
@@ -1474,12 +1474,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             )}
           </div>
           <div className="mg-v2-ad-b0kla__integrated-data-view-toggle">
-            <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label="통합데이터 뷰 전환">
+            <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label={t('common:dashboard-v2.AdminDashboardV2.t_207726af')}>
               <MGButton
                 type="button"
                 role="tab"
                 aria-selected={integratedDataView === 'table'}
-                aria-label="테이블 뷰"
+                aria-label={t('common:dashboard-v2.AdminDashboardV2.t_7489fc34')}
                 className={buildErpMgButtonClassName({
                   variant: 'primary',
                   size: 'md',
@@ -1490,13 +1490,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 onClick={() => setIntegratedDataView('table')}
                 preventDoubleClick={false}
               >
-                테이블
+                {t('common:dashboard-v2.AdminDashboardV2.t_fac1ca9e')}
               </MGButton>
               <MGButton
                 type="button"
                 role="tab"
                 aria-selected={integratedDataView === 'graph'}
-                aria-label="그래프 뷰"
+                aria-label={t('common:dashboard-v2.AdminDashboardV2.t_2b8a0c37')}
                 className={buildErpMgButtonClassName({
                   variant: 'primary',
                   size: 'md',
@@ -1507,13 +1507,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 onClick={() => setIntegratedDataView('graph')}
                 preventDoubleClick={false}
               >
-                그래프
+                {t('common:dashboard-v2.AdminDashboardV2.t_dde8c315')}
               </MGButton>
               <MGButton
                 type="button"
                 role="tab"
                 aria-selected={integratedDataView === 'progress'}
-                aria-label="프로그레스 뷰"
+                aria-label={t('common:dashboard-v2.AdminDashboardV2.t_df669265')}
                 className={buildErpMgButtonClassName({
                   variant: 'primary',
                   size: 'md',
@@ -1524,7 +1524,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 onClick={() => setIntegratedDataView('progress')}
                 preventDoubleClick={false}
               >
-                프로그레스
+                {t('common:dashboard-v2.AdminDashboardV2.t_24f72a6f')}
               </MGButton>
             </div>
           </div>
@@ -1534,11 +1534,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                 {integratedDataView === 'table' && (
                   <>
                     <div className="mg-v2-ad-b0kla__integrated-data-header">
-                      <span className="mg-v2-ad-b0kla__integrated-data-th mg-v2-ad-b0kla__integrated-data-th--rank">순위</span>
-                      <span className="mg-v2-ad-b0kla__integrated-data-th">상담사명</span>
-                      <span className="mg-v2-ad-b0kla__integrated-data-th">평점</span>
-                      <span className="mg-v2-ad-b0kla__integrated-data-th">완료 건수</span>
-                      <span className="mg-v2-ad-b0kla__integrated-data-th">완료율</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th mg-v2-ad-b0kla__integrated-data-th--rank">{t('common:dashboard-v2.AdminDashboardV2.t_d15876f1')}</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th">{t('common:dashboard-v2.AdminDashboardV2.t_55daf2fa')}</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th">{t('common:dashboard-v2.AdminDashboardV2.t_d2473dd4')}</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th">{t('common:dashboard-v2.AdminDashboardV2.t_34e293ee')}</span>
+                      <span className="mg-v2-ad-b0kla__integrated-data-th">{t('common:dashboard-v2.AdminDashboardV2.t_611cadb3')}</span>
                     </div>
                     <div className="mg-v2-ad-b0kla__counselor-list mg-v2-ad-b0kla__integrated-data-list">
                       {consultantIntegratedData.map((row, index) => {
@@ -1664,7 +1664,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               </>
             ) : (
               <p className="mg-v2-ad-b0kla__counselor-empty mg-v2-ad-b0kla__integrated-data-empty">
-                상담사 통합 데이터가 없습니다.
+                {t('common:dashboard-v2.AdminDashboardV2.t_312e7722')}
               </p>
             )}
           </div>
@@ -1673,32 +1673,32 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
       {!HIDE_DASHBOARD_MENUS && (
       <ContentSection
-        title="환불 현황"
+        title={t('common:dashboard-v2.AdminDashboardV2.t_ac9f714d')}
         subtitle="최근 1개월 환불 통계"
       >
         <div className="mg-stats-grid">
           <StatCard
             icon={<Icon name="RECEIPT" size="LG" color="TRANSPARENT" />}
             value={`${refundStats.totalRefundCount}건`}
-            label="환불 건수"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_e07e5754')}
             onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
           />
           <StatCard
             icon={<FaCalendarAlt />}
             value={`${refundStats.totalRefundedSessions}회`}
-            label="환불 회기"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_7362540d')}
             onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
           />
           <StatCard
             icon={<Icon name="DOLLAR_SIGN" size="LG" color="TRANSPARENT" />}
             value={`${refundStats.totalRefundAmount.toLocaleString()}원`}
-            label="환불 금액"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_ca5c157c')}
             onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
           />
           <StatCard
             icon={<Icon name="TRENDING_UP" size="LG" color="TRANSPARENT" />}
             value={`${refundStats.averageRefundPerCase.toLocaleString()}원`}
-            label="평균 환불액"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_5c45c1f3')}
             onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
           />
         </div>
@@ -1739,7 +1739,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       </div>
 
       <ContentSection
-        title="관리 기능"
+        title={t('common:dashboard-v2.AdminDashboardV2.t_e05c0827')}
         subtitle="시스템 관리 및 설정 기능"
       >
         <div className="mg-v2-ad-b0kla__admin-grid">
@@ -1748,29 +1748,29 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             icon={Users}
             tone="blue"
             label={t('admin.labels.userManagement')}
-            description="상담사·내담자 통합 관리"
+            description={t('common:dashboard-v2.AdminDashboardV2.t_5b997a6e')}
           />
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.INTEGRATED_SCHEDULE}
             icon={CalendarDays}
             tone="green"
-            label="통합 스케줄링"
-            description="매칭 대기자와 캘린더를 한 화면에서 스케줄 등록"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_d67bbae4')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_bc774ca3')}
           />
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.CONSULTATION_LOGS}
             icon={ClipboardList}
             tone="orange"
-            label="상담일지 조회"
-            description="상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_f00037ae')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_da19d0b8')}
           />
           {!HIDE_ADMIN_CARD_IDS.has('sessions') && (
             <AdminMgmtNavCard
               to={ADMIN_ROUTES.SESSIONS}
               icon={Target}
               tone="gray"
-              label="회기 관리"
-              description="상담 회기를 등록하고 관리합니다"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_be89c264')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_6d774c2e')}
             />
           )}
           {!HIDE_ADMIN_CARD_IDS.has('schedule-auto-complete') && (
@@ -1779,8 +1779,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               loading={autoCompleteLoading}
               icon={CheckCircle}
               tone="green"
-              label="스케줄 자동 완료"
-              description="지난 스케줄을 자동으로 완료 처리합니다"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_7ad7a72d')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_b1698575')}
             />
           )}
           {!HIDE_ADMIN_CARD_IDS.has('schedule-complete-reminder') && (
@@ -1789,8 +1789,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               loading={autoCompleteWithReminderLoading}
               icon={BellRing}
               tone="orange"
-              label="스케줄 완료 + 알림"
-              description="지난 스케줄 완료 처리 및 상담일지 미작성 알림"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_4a726da5')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_d9e01adc')}
             />
           )}
           {!HIDE_ADMIN_CARD_IDS.has('consultant-comprehensive') && (
@@ -1799,7 +1799,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               icon={UserCog}
               tone="blue"
               label={t('admin.labels.consultantManagement')}
-              description="상담사 정보를 관리합니다"
+              description={t('common:dashboard-v2.AdminDashboardV2.t_880e9dbb')}
             />
           )}
           {!HIDE_ADMIN_CARD_IDS.has('client-comprehensive') && canManageClients && (
@@ -1808,23 +1808,23 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               icon={UserRound}
               tone="green"
               label={t('admin.labels.clientManagement')}
-              description="내담자 정보를 관리합니다"
+              description={t('common:dashboard-v2.AdminDashboardV2.t_9ee4da97')}
             />
           )}
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.MAPPING_MANAGEMENT}
             icon={Link2}
             tone="orange"
-            label="매칭 시스템"
-            description="상담사와 내담자 매칭을 관리합니다"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_fd7633e1')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_04f1992b')}
           />
           {!HIDE_ADMIN_CARD_IDS.has('schedule-management') && (
             <AdminMgmtNavCard
               to={ADMIN_ROUTES.SCHEDULES}
               icon={Calendar}
               tone="green"
-              label="스케줄 관리"
-              description="상담 일정을 관리하고 조정합니다"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_6ddcca42')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_ad9cf841')}
             />
           )}
           {!HIDE_ADMIN_CARD_IDS.has('user-management') && PermissionChecks.canManageUsers(userPermissions) && (
@@ -1833,37 +1833,37 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               icon={Users}
               tone="blue"
               label={t('admin.labels.userManagement')}
-              description="사용자 역할 변경 및 권한 관리"
+              description={t('common:dashboard-v2.AdminDashboardV2.t_fbc2c417')}
             />
           )}
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.COMMON_CODES}
             icon={Tags}
             tone="gray"
-            label="공통코드"
-            description="시스템 공통코드를 관리합니다"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_8314805e')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_7af6ac13')}
           />
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.PACKAGE_PRICING}
             icon={Package}
             tone="orange"
-            label="패키지 요금 관리"
-            description="상담 패키지별 가격·회기 수 관리"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_72264d4a')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_fa7e1261')}
           />
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.NOTIFICATIONS}
             icon={Megaphone}
             tone="blue"
-            label="알림·메시지 관리"
-            description="시스템 공지와 메시지를 한 화면에서 관리합니다"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_78fd5c8c')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_0b3b105a')}
           />
           {!HIDE_ADMIN_CARD_IDS.has('dashboards') && (
             <AdminMgmtNavCard
               to={ADMIN_ROUTES.DASHBOARDS}
               icon={LayoutDashboard}
               tone="gray"
-              label="대시보드 관리"
-              description="역할별 대시보드를 관리합니다"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_d8189860')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_4d9e086e')}
             />
           )}
           <AdminMgmtNavCard
@@ -1878,8 +1878,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               to={ADMIN_ROUTES.CACHE_MONITORING}
               icon={Database}
               tone="gray"
-              label="캐시 모니터링"
-              description="시스템 캐시 성능을 실시간으로 모니터링합니다"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_487a67da')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_1b5bff7b')}
             />
           )}
           {!HIDE_ADMIN_CARD_IDS.has('security-monitoring') && (
@@ -1887,38 +1887,38 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               to={ADMIN_ROUTES.SECURITY_MONITORING}
               icon={Shield}
               tone="orange"
-              label="보안 모니터링"
-              description="실시간 보안 위협 탐지 및 시스템 보안 관리"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_131144ac')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_af541421')}
             />
           )}
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.API_PERFORMANCE}
             icon={Activity}
             tone="green"
-            label="API 성능 모니터링"
-            description="API 응답 시간과 성능 지표를 실시간으로 추적합니다"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_f0b0eec7')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_684e9439')}
           />
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.MESSAGES}
             icon={MessageCircle}
             tone="blue"
-            label="메시지 관리"
-            description="상담사-내담자 메시지를 관리합니다"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_e10a5e2d')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_2d82c7b9')}
           />
           <AdminMgmtNavCard
             to={ADMIN_ROUTES.PSYCH_ASSESSMENTS}
             icon={Brain}
             tone="orange"
-            label="심리검사 리포트(AI)"
-            description="TCI/MMPI 업로드 및 리포트 생성을 관리합니다"
+            label={t('common:dashboard-v2.AdminDashboardV2.t_244d1631')}
+            description={t('common:dashboard-v2.AdminDashboardV2.t_83b39c2e')}
           />
           {!HIDE_ADMIN_CARD_IDS.has('wellness') && (
             <AdminMgmtNavCard
               to="/admin/wellness"
               icon={Sparkles}
               tone="green"
-              label="웰니스 알림 관리"
-              description="AI 기반 웰니스 컨텐츠 생성 및 비용 관리"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_50acf7af')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_af000453')}
             />
           )}
           {!HIDE_ADMIN_CARD_IDS.has('merge-duplicate-mappings') && (
@@ -1927,8 +1927,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               loading={mergeDuplicateLoading}
               icon={Merge}
               tone="orange"
-              label="중복 매칭 통합"
-              description="중복된 상담사-내담자 매칭을 통합합니다"
+              label={t('common:dashboard-v2.AdminDashboardV2.t_405c91bb')}
+              description={t('common:dashboard-v2.AdminDashboardV2.t_4ab1f2f3')}
             />
           )}
         </div>
@@ -1944,7 +1944,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowToastState(false)}
               preventDoubleClick={false}
-              aria-label="알림 닫기"
+              aria-label={t('common:dashboard-v2.AdminDashboardV2.t_d7556ddd')}
             >
               ×
             </MGButton>
@@ -1975,7 +1975,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       <UnifiedModal
         isOpen={showStatisticsModal}
         onClose={() => setShowStatisticsModal(false)}
-        title="통계 대시보드"
+        title={t('common:dashboard-v2.AdminDashboardV2.t_505d75b1')}
         size="large"
         showCloseButton={true}
         backdropClick={true}
@@ -2013,7 +2013,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     return (
       <div className="admin-dashboard">
         <div className="admin-dashboard-content">
-          <UnifiedLoading type="inline" text="로딩 중..." />
+          <UnifiedLoading type="inline" text={t('common:dashboard-v2.AdminDashboardV2.t_06e61b86')} />
         </div>
       </div>
     );

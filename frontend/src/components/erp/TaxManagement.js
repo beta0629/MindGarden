@@ -20,8 +20,10 @@ import './ErpCommon.css';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT, ErpFilterToolbar } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import { useTranslation } from 'react-i18next';
 
 const TaxManagement = () => {
+    const { t } = useTranslation();
     const [taxCalculations, setTaxCalculations] = useState([]);
     const [taxStatistics, setTaxStatistics] = useState(null);
     const [selectedPeriod, setSelectedPeriod] = useState('');
@@ -112,9 +114,9 @@ const TaxManagement = () => {
     ];
 
     return (
-        <AdminCommonLayout title="세금 관리">
+        <AdminCommonLayout title={t('erp:TaxManagement.t_780e38c6')}>
             <ContentHeader
-                title="세무 관리"
+                title={t('erp:TaxManagement.t_7d278dea')}
                 subtitle="세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다"
             />
             <ContentArea className="erp-system mg-dashboard-layout" ariaLabel="세금 관리 콘텐츠">
@@ -127,12 +129,12 @@ const TaxManagement = () => {
                                 value={selectedPeriod}
                                 onChange={(e) => setSelectedPeriod(e.target.value)}
                                 className="mg-v2-select mg-v2-erp-filter-toolbar__period-select"
-                                aria-label="기간 선택"
+                                aria-label={t('erp:TaxManagement.t_49470825')}
                             >
-                                <option key="tax-period-default" value="">기간 선택</option>
-                                <option key="2025-01" value="2025-01">2025년 1월</option>
-                                <option key="2025-02" value="2025-02">2025년 2월</option>
-                                <option key="2025-03" value="2025-03">2025년 3월</option>
+                                <option key="tax-period-default" value="">{t('erp:TaxManagement.t_49470825')}</option>
+                                <option key="2025-01" value="2025-01">{t('erp:TaxManagement.t_b50dddd4')}</option>
+                                <option key="2025-02" value="2025-02">{t('erp:TaxManagement.t_21b2dfe8')}</option>
+                                <option key="2025-03" value="2025-03">{t('erp:TaxManagement.t_89bd2e25')}</option>
                             </select>
                         </div>
                     )}
@@ -140,7 +142,7 @@ const TaxManagement = () => {
                 </div>
                 {loading ? (
                     <div className="erp-initial-fetch-inline" role="status" aria-live="polite" aria-busy="true">
-                        <UnifiedLoading type="inline" text="세금 데이터를 불러오는 중..." />
+                        <UnifiedLoading type="inline" text={t('erp:TaxManagement.t_098245ce')} />
                     </div>
                 ) : (
                     <>
@@ -155,7 +157,7 @@ const TaxManagement = () => {
                                 <div className="mg-dashboard-stat-value">
                                     <ErpSafeNumber value={taxStatistics.totalTaxAmount || 0} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
                                 </div>
-                                <div className="mg-dashboard-stat-label">총 세금액</div>
+                                <div className="mg-dashboard-stat-label">{t('erp:TaxManagement.t_f338f53f')}</div>
                             </div>
                         </div>
                         <div className="mg-dashboard-stat-card">
@@ -166,7 +168,7 @@ const TaxManagement = () => {
                                 <div className="mg-dashboard-stat-value">
                                     <ErpSafeNumber value={taxStatistics.taxCount || 0} formatType={ERP_NUMBER_FORMAT.COUNT} />
                                 </div>
-                                <div className="mg-dashboard-stat-label">세금 건수</div>
+                                <div className="mg-dashboard-stat-label">{t('erp:TaxManagement.t_b9a382d3')}</div>
                             </div>
                         </div>
                         <div className="mg-dashboard-stat-card">
@@ -177,7 +179,7 @@ const TaxManagement = () => {
                                 <div className="mg-dashboard-stat-value">
                                     <ErpSafeText value={taxStatistics.period || 'N/A'} />
                                 </div>
-                                <div className="mg-dashboard-stat-label">기간</div>
+                                <div className="mg-dashboard-stat-label">{t('erp:TaxManagement.t_2622331e')}</div>
                             </div>
                         </div>
                     </div>
@@ -198,7 +200,7 @@ const TaxManagement = () => {
                                 preventDoubleClick={false}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                세금 통계
+                                {t('erp:TaxManagement.t_5708430f')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -209,7 +211,7 @@ const TaxManagement = () => {
                                 preventDoubleClick={false}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                세금 내역
+                                {t('erp:TaxManagement.t_6932db18')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -220,7 +222,7 @@ const TaxManagement = () => {
                                 preventDoubleClick={false}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                추가 세금
+                                {t('erp:TaxManagement.t_e2b0a017')}
                             </MGButton>
                         </div>
 
@@ -231,7 +233,7 @@ const TaxManagement = () => {
                             {activeTab === 'statistics' && (
                                 <>
                                     <div className="mg-dashboard-section-header">
-                                        <h3 className="mg-dashboard-section-title">세금 유형별 내역</h3>
+                                        <h3 className="mg-dashboard-section-title">{t('erp:TaxManagement.t_577e127e')}</h3>
                                         <MGButton
                                             variant="primary"
                                             size="medium"
@@ -242,7 +244,7 @@ const TaxManagement = () => {
                                             onClick={() => loadTaxStatistics(selectedPeriod)}
                                             disabled={!selectedPeriod}
                                         >
-                                            통계 조회
+                                            {t('erp:TaxManagement.t_2f7a3772')}
                                         </MGButton>
                                     </div>
                                     
@@ -284,7 +286,7 @@ const TaxManagement = () => {
                             {activeTab === 'calculations' && (
                                 <>
                                     <div className="mg-dashboard-section-header">
-                                        <h3 className="mg-dashboard-section-title">세금 내역</h3>
+                                        <h3 className="mg-dashboard-section-title">{t('erp:TaxManagement.t_6932db18')}</h3>
                                         <select 
                                             value={selectedTaxType} 
                                             onChange={(e) => {
@@ -295,7 +297,7 @@ const TaxManagement = () => {
                                             }}
                                             className="mg-v2-select"
                                         >
-                                            <option key="tax-type-default-1" value="">세금 유형 선택</option>
+                                            <option key="tax-type-default-1" value="">{t('erp:TaxManagement.t_073fcb6d')}</option>
                                             {taxTypes.map(type => (
                                                 <option key={type.value} value={type.value}>
                                                     {type.label}
@@ -325,7 +327,7 @@ const TaxManagement = () => {
                                                     <div className="tax-calculation-details">
                                                         <div className="mg-info-row">
                                                             <div className="mg-info-item">
-                                                                <span className="mg-info-label">세율</span>
+                                                                <span className="mg-info-label">{t('erp:TaxManagement.t_71173785')}</span>
                                                                 <span className="mg-info-value">
                                                                     <ErpSafeNumber
                                                                         value={Number(calculation.taxRate) * 100}
@@ -334,7 +336,7 @@ const TaxManagement = () => {
                                                                 </span>
                                                             </div>
                                                             <div className="mg-info-item">
-                                                                <span className="mg-info-label">과세표준</span>
+                                                                <span className="mg-info-label">{t('erp:TaxManagement.t_0e9fb38f')}</span>
                                                                 <span className="mg-info-value">
                                                                     <ErpSafeNumber
                                                                         value={calculation.taxableAmount}
@@ -345,7 +347,7 @@ const TaxManagement = () => {
                                                         </div>
                                                         <div className="mg-info-row mg-info-row-highlight">
                                                             <div className="mg-info-item">
-                                                                <span className="mg-info-label">세금액</span>
+                                                                <span className="mg-info-label">{t('erp:TaxManagement.t_0fc71915')}</span>
                                                                 <span className="mg-info-value mg-info-value--highlight">
                                                                     <ErpSafeNumber
                                                                         value={calculation.taxAmount}
@@ -354,7 +356,7 @@ const TaxManagement = () => {
                                                                 </span>
                                                             </div>
                                                             <div className="mg-info-item">
-                                                                <span className="mg-info-label">계산일</span>
+                                                                <span className="mg-info-label">{t('erp:TaxManagement.t_7758c8fd')}</span>
                                                                 <span className="mg-info-value">
                                                                     <ErpSafeText value={formatDate(calculation.createdAt)} />
                                                                 </span>
@@ -377,32 +379,32 @@ const TaxManagement = () => {
                             {activeTab === 'additional' && (
                                 <>
                                     <div className="mg-dashboard-section-header">
-                                        <h3 className="mg-dashboard-section-title">추가 세금 계산</h3>
+                                        <h3 className="mg-dashboard-section-title">{t('erp:TaxManagement.t_a2085381')}</h3>
                                     </div>
                                     
                                     <div className="mg-dashboard-section-content">
                                         <div className="mg-v2-card tax-additional-form">
                                             <div className="mg-v2-form">
                                                 <div className="mg-v2-form-group">
-                                                    <label className="mg-v2-label">급여 계산 ID</label>
+                                                    <label className="mg-v2-label">{t('erp:TaxManagement.t_79572313')}</label>
                                                     <input 
                                                         type="number" 
                                                         className="mg-v2-input"
-                                                        placeholder="급여 계산 ID를 입력하세요"
+                                                        placeholder={t('erp:TaxManagement.t_baf8a1ed')}
                                                     />
                                                 </div>
                                                 <div className="mg-v2-form-group">
-                                                    <label className="mg-v2-label">총 급여액</label>
+                                                    <label className="mg-v2-label">{t('erp:TaxManagement.t_57af763a')}</label>
                                                     <input 
                                                         type="number" 
                                                         className="mg-v2-input"
-                                                        placeholder="총 급여액을 입력하세요"
+                                                        placeholder={t('erp:TaxManagement.t_7047935e')}
                                                     />
                                                 </div>
                                                 <div className="mg-v2-form-group">
-                                                    <label className="mg-v2-label">세금 유형</label>
+                                                    <label className="mg-v2-label">{t('erp:TaxManagement.t_7140eb65')}</label>
                                                     <select className="mg-v2-select">
-                                                        <option key="tax-type-default-2" value="">세금 유형 선택</option>
+                                                        <option key="tax-type-default-2" value="">{t('erp:TaxManagement.t_073fcb6d')}</option>
                                                         {taxTypes.map(type => (
                                                             <option key={type.value} value={type.value}>
                                                                 {type.label}
@@ -411,12 +413,12 @@ const TaxManagement = () => {
                                                     </select>
                                                 </div>
                                                 <div className="mg-v2-form-group">
-                                                    <label className="mg-v2-label">세율 (%)</label>
+                                                    <label className="mg-v2-label">{t('erp:TaxManagement.t_af5a9902')}</label>
                                                     <input 
                                                         type="number" 
                                                         step="0.01"
                                                         className="mg-v2-input"
-                                                        placeholder="세율을 입력하세요 (예: 3.3)"
+                                                        placeholder={t('erp:TaxManagement.t_013a1071')}
                                                     />
                                                 </div>
                                                 <div className="mg-v2-form-group">
@@ -429,7 +431,7 @@ const TaxManagement = () => {
                                                         loading={loading}
                                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                                     >
-                                                        세금 계산
+                                                        {t('erp:TaxManagement.t_6df7a2a5')}
                                                     </MGButton>
                                                 </div>
                                             </div>

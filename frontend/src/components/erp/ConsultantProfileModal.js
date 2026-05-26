@@ -365,7 +365,7 @@ const ConsultantProfileModal = ({
             <div className="consultant-profile-modal-body" aria-busy={profileLoading || saving}>
                 <div className="consultant-profile-info-section salary-management__profile-view">
                     <div className="consultant-profile-info-header">
-                        <h4 className="consultant-profile-info-title">급여 프로필</h4>
+                        <h4 className="consultant-profile-info-title">{t('erp:ConsultantProfileModal.t_053a17e1')}</h4>
                         {!showSalaryForm && (
                             <MGButton
                                 type="button"
@@ -386,11 +386,11 @@ const ConsultantProfileModal = ({
                     </div>
                         
                         {profileLoading ? (
-                            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
+                            <UnifiedLoading type="inline" text={t('erp:ConsultantProfileModal.t_ef1822ad')} />
                         ) : salaryProfile ? (
                             <div className="consultant-profile-info-grid">
                                 <div className="consultant-profile-info-item">
-                                    <label className="consultant-profile-info-label">급여 유형</label>
+                                    <label className="consultant-profile-info-label">{t('erp:ConsultantProfileModal.t_72429c36')}</label>
                                     <span className="consultant-profile-info-value">
                                         <ErpSafeText
                                             value={
@@ -401,7 +401,7 @@ const ConsultantProfileModal = ({
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
-                                    <label className="consultant-profile-info-label">상담사 등급</label>
+                                    <label className="consultant-profile-info-label">{t('erp:ConsultantProfileModal.t_0953df54')}</label>
                                     <span className="consultant-profile-info-value">
                                         <ErpSafeText
                                             value={
@@ -412,7 +412,7 @@ const ConsultantProfileModal = ({
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
-                                    <label className="consultant-profile-info-label">기본 급여</label>
+                                    <label className="consultant-profile-info-label">{t('erp:ConsultantProfileModal.t_4b88ae28')}</label>
                                     <span className="consultant-profile-info-value">
                                         {salaryProfile.baseSalary ? (
                                             <ErpSafeNumber value={salaryProfile.baseSalary} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
@@ -422,7 +422,7 @@ const ConsultantProfileModal = ({
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
-                                    <label className="consultant-profile-info-label">사업자 등록</label>
+                                    <label className="consultant-profile-info-label">{t('erp:ConsultantProfileModal.t_b3b60552')}</label>
                                     <span className="consultant-profile-info-value">
                                         <ErpSafeText
                                             value={
@@ -434,13 +434,13 @@ const ConsultantProfileModal = ({
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item">
-                                    <label className="consultant-profile-info-label">옵션 유형</label>
+                                    <label className="consultant-profile-info-label">{t('erp:ConsultantProfileModal.t_d7137aa1')}</label>
                                     <span className="consultant-profile-info-value">
                                         <ErpSafeText value="상담 완료 시 자동 적용" />
                                     </span>
                                 </div>
                                 <div className="consultant-profile-info-item consultant-profile-info-item--full-width">
-                                    <label className="consultant-profile-info-label">계약 조건</label>
+                                    <label className="consultant-profile-info-label">{t('erp:ConsultantProfileModal.t_4a40e123')}</label>
                                     <span className="consultant-profile-info-value">
                                         <ErpSafeText value={salaryProfile.contractTerms || '정보 없음'} />
                                     </span>
@@ -456,25 +456,25 @@ const ConsultantProfileModal = ({
                         {showSalaryForm && (
                             <form onSubmit={handleSalaryProfileSubmit} className="salary-profile-form consultant-profile-form">
                                 <div className="consultant-profile-form-notice">
-                                    <h5 className="consultant-profile-form-notice-title">💡 안내사항</h5>
+                                    <h5 className="consultant-profile-form-notice-title">{t('erp:ConsultantProfileModal.t_2c19fada')}</h5>
                                     <ul className="consultant-profile-form-notice-list">
-                                        <li>상담사 등급에 따라 기본 급여가 자동으로 설정됩니다</li>
-                                        <li>등급이 올라갈수록 2,000원씩 증가합니다</li>
-                                        <li>기본 설정값은 계약서에 따라 다를 수 있습니다</li>
-                                        <li>수퍼 관리자가 직접 선택할 수 있습니다</li>
+                                        <li>{t('erp:ConsultantProfileModal.t_bde45bf1')}</li>
+                                        <li>{t('erp:ConsultantProfileModal.t_499b7de4')}</li>
+                                        <li>{t('erp:ConsultantProfileModal.t_edd1a975')}</li>
+                                        <li>{t('erp:ConsultantProfileModal.t_6bbb21dc')}</li>
                                     </ul>
                                 </div>
 
                                 <div className="consultant-profile-form-grid">
                                     <div className="consultant-profile-form-item">
-                                        <label className="consultant-profile-form-label">급여 유형 *</label>
+                                        <label className="consultant-profile-form-label">{t('erp:ConsultantProfileModal.t_8c7f0b03')}</label>
                                         <select
                                             value={salaryFormData.salaryType}
                                             onChange={(e) => setSalaryFormData({ ...salaryFormData, salaryType: e.target.value })}
                                             className="consultant-profile-form-select"
                                             required
                                         >
-                                            <option key="salary-type-default" value="">급여 유형 선택</option>
+                                            <option key="salary-type-default" value="">{t('erp:ConsultantProfileModal.t_d0369644')}</option>
                                             {salaryTypes.map((type, index) => (
                                                 <option key={`salary-type-${type.codeValue}-${index}`} value={type.codeValue}>
                                                     {type.codeLabel}
@@ -483,7 +483,7 @@ const ConsultantProfileModal = ({
                                         </select>
                                     </div>
                                     <div className="consultant-profile-form-item">
-                                        <label className="consultant-profile-form-label">상담사 등급 *</label>
+                                        <label className="consultant-profile-form-label">{t('erp:ConsultantProfileModal.t_31daa8a7')}</label>
                                         <select
                                             value={salaryFormData.grade || ''}
                                             onChange={(e) => {
@@ -501,7 +501,7 @@ const ConsultantProfileModal = ({
                                             className="consultant-profile-form-select"
                                             required
                                         >
-                                            <option key="grade-default" value="">등급 선택</option>
+                                            <option key="grade-default" value="">{t('erp:ConsultantProfileModal.t_952a9e9a')}</option>
                                             {grades.map((grade, index) => (
                                                 <option key={`grade-${grade.codeValue}-${index}`} value={grade.codeValue}>
                                                     {grade.codeLabel}
@@ -510,7 +510,7 @@ const ConsultantProfileModal = ({
                                         </select>
                                     </div>
                                     <div className="consultant-profile-form-item">
-                                        <label className="consultant-profile-form-label">기본 급여</label>
+                                        <label className="consultant-profile-form-label">{t('erp:ConsultantProfileModal.t_4b88ae28')}</label>
                                         <div className="consultant-profile-form-readonly">
                                             {salaryFormData.baseSalary ? (
                                                 <ErpSafeNumber value={salaryFormData.baseSalary} formatType={ERP_NUMBER_FORMAT.CURRENCY} />
@@ -520,17 +520,17 @@ const ConsultantProfileModal = ({
                                         </div>
                                     </div>
                                     <div className="consultant-profile-form-item">
-                                        <label className="consultant-profile-form-label">사업자 등록 여부</label>
+                                        <label className="consultant-profile-form-label">{t('erp:ConsultantProfileModal.t_b45746ad')}</label>
                                         <select
                                             value={salaryFormData.isBusinessRegistered ? 'true' : 'false'}
                                             onChange={(e) => setSalaryFormData({ ...salaryFormData, isBusinessRegistered: e.target.value === 'true' })}
                                             className="consultant-profile-form-select"
                                         >
-                                            <option key="false" value="false">일반 프리랜서 (3.3% 원천징수만)</option>
-                                            <option key="true" value="true">사업자 등록 (부가세 10% + 원천징수 3.3%)</option>
+                                            <option key="false" value="false">{t('erp:ConsultantProfileModal.t_c24b2c06')}</option>
+                                            <option key="true" value="true">{t('erp:ConsultantProfileModal.t_7ff8d90e')}</option>
                                         </select>
                                         <small className="consultant-profile-form-help">
-                                            사업자 등록 여부에 따라 세금 계산이 달라집니다
+                                            {t('erp:ConsultantProfileModal.t_50956aa6')}
                                         </small>
                                     </div>
                                     
@@ -538,7 +538,7 @@ const ConsultantProfileModal = ({
                                     {salaryFormData.isBusinessRegistered && (
                                         <>
                                             <div className="consultant-profile-form-item">
-                                                <label className="consultant-profile-form-label">사업자 등록번호 *</label>
+                                                <label className="consultant-profile-form-label">{t('erp:ConsultantProfileModal.t_331978d3')}</label>
                                                 <input
                                                     type="text"
                                                     value={salaryFormData.businessRegistrationNumber}
@@ -547,42 +547,42 @@ const ConsultantProfileModal = ({
                                                     className="consultant-profile-form-input"
                                                 />
                                                 <small className="consultant-profile-form-help">
-                                                    사업자 등록번호를 입력하세요 (예: 123-45-67890)
+                                                    {t('erp:ConsultantProfileModal.t_21ee24db')}
                                                 </small>
                                             </div>
                                             <div className="consultant-profile-form-item">
-                                                <label className="consultant-profile-form-label">사업자명 *</label>
+                                                <label className="consultant-profile-form-label">{t('erp:ConsultantProfileModal.t_91e79603')}</label>
                                                 <input
                                                     type="text"
                                                     value={salaryFormData.businessName}
                                                     onChange={(e) => setSalaryFormData({ ...salaryFormData, businessName: e.target.value })}
-                                                    placeholder="사업자명을 입력하세요"
+                                                    placeholder={t('erp:ConsultantProfileModal.t_989279da')}
                                                     className="consultant-profile-form-input"
                                                 />
                                                 <small className="consultant-profile-form-help">
-                                                    사업자 등록증에 기재된 사업자명을 입력하세요
+                                                    {t('erp:ConsultantProfileModal.t_af94da51')}
                                                 </small>
                                             </div>
                                         </>
                                     )}
                                     <div className="consultant-profile-form-item">
-                                        <label className="consultant-profile-form-label">옵션 유형</label>
+                                        <label className="consultant-profile-form-label">{t('erp:ConsultantProfileModal.t_d7137aa1')}</label>
                                         <div className="consultant-profile-form-readonly">
-                                            💡 옵션 유형은 상담 완료 시 자동으로 적용됩니다
+                                            {t('erp:ConsultantProfileModal.t_56c05578')}
                                             <br />
                                             <small className="consultant-profile-form-help">
-                                                • 초기상담: +5,000원<br />
-                                                • 가족상담: +3,000원<br />
-                                                • 기타 상담 유형에 따라 자동 계산
+                                                {t('erp:ConsultantProfileModal.t_4a69959e')}<br />
+                                                {t('erp:ConsultantProfileModal.t_c5da258a')}<br />
+                                                {t('erp:ConsultantProfileModal.t_7aca75e7')}
                                             </small>
                                         </div>
                                     </div>
                                     <div className="consultant-profile-form-item consultant-profile-form-item--full-width">
-                                        <label className="consultant-profile-form-label">계약 조건</label>
+                                        <label className="consultant-profile-form-label">{t('erp:ConsultantProfileModal.t_4a40e123')}</label>
                                         <textarea
                                             value={salaryFormData.contractTerms}
                                             onChange={(e) => setSalaryFormData({ ...salaryFormData, contractTerms: e.target.value })}
-                                            placeholder="계약 조건을 입력하세요"
+                                            placeholder={t('erp:ConsultantProfileModal.t_a9565def')}
                                             className="consultant-profile-form-textarea"
                                             rows="3"
                                         />

@@ -157,7 +157,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
             <div className="mg-v2-form-section">
               <h3 className="mg-v2-section-title">
                 <User size={20} className="mg-v2-section-title-icon" />
-                기본 정보
+                {t('common:consultant.ClientInfoModal.t_eb7f501b')}
               </h3>
               <div className="mg-v2-form-row">
                 <div className="mg-v2-form-group">
@@ -169,19 +169,19 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     onChange={handleInputChange}
                     required
                     disabled={!isEditing && mode !== 'add'}
-                    placeholder="내담자 이름"
+                    placeholder={t('common:consultant.ClientInfoModal.t_0a12c521')}
                     className="mg-v2-form-input"
                   />
                 </div>
                 <div className="mg-v2-form-group">
-                  <label className="mg-v2-form-label">나이</label>
+                  <label className="mg-v2-form-label">{t('common:consultant.ClientInfoModal.t_6c620e5c')}</label>
                   <input
                     type="number"
                     name="age"
                     value={formData.age}
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
-                    placeholder="나이"
+                    placeholder={t('common:consultant.ClientInfoModal.t_6c620e5c')}
                     min="1"
                     max="120"
                     className="mg-v2-form-input"
@@ -193,7 +193,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                 <div className="mg-v2-form-group">
                   <label className="mg-v2-form-label">
                     <Phone size={16} className="mg-v2-form-label-icon" />
-                    연락처
+                    {t('common:consultant.ClientInfoModal.t_4374db90')}
                   </label>
                   <input
                     type="tel"
@@ -227,25 +227,25 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
             <div className="mg-v2-form-section">
               <h3 className="mg-v2-section-title">
                 <Home size={20} className="mg-v2-section-title-icon" />
-                주소 정보
+                {t('common:consultant.ClientInfoModal.t_7a6339ff')}
               </h3>
               <div className="mg-v2-form-row">
                 <div className="mg-v2-form-group">
-                  <label className="mg-v2-form-label">우편번호</label>
+                  <label className="mg-v2-form-label">{t('common:consultant.ClientInfoModal.t_cd21379e')}</label>
                   <input
                     type="text"
                     name="postalCode"
                     value={formData.postalCode}
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
-                    placeholder="우편번호"
+                    placeholder={t('common:consultant.ClientInfoModal.t_cd21379e')}
                     className="mg-v2-form-input"
                   />
                 </div>
                 <div className="mg-v2-form-group">
                   <label className="mg-v2-form-label">
                     <MapPin size={16} className="mg-v2-form-label-icon" />
-                    주소
+                    {t('common:consultant.ClientInfoModal.t_117bab80')}
                   </label>
                   <input
                     type="text"
@@ -253,20 +253,20 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     value={formData.address}
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
-                    placeholder="기본 주소"
+                    placeholder={t('common:consultant.ClientInfoModal.t_f1f2b596')}
                     className="mg-v2-form-input"
                   />
                 </div>
               </div>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">상세주소</label>
+                <label className="mg-v2-form-label">{t('common:consultant.ClientInfoModal.t_b6007980')}</label>
                 <input
                   type="text"
                   name="addressDetail"
                   value={formData.addressDetail}
                   onChange={handleInputChange}
                   disabled={!isEditing && mode !== 'add'}
-                  placeholder="상세 주소"
+                  placeholder={t('common:consultant.ClientInfoModal.t_dad291cb')}
                   className="mg-v2-form-input"
                 />
               </div>
@@ -276,29 +276,29 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
             <div className="mg-v2-form-section">
               <h3 className="mg-v2-section-title">
                 <MessageSquare size={20} className="mg-v2-section-title-icon" />
-                상담 정보
+                {t('common:consultant.ClientInfoModal.t_96a0680f')}
               </h3>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">상담 목적 <span className="mg-v2-form-label-required">*</span></label>
+                <label className="mg-v2-form-label">{t('common:consultant.ClientInfoModal.t_616cc241')} <span className="mg-v2-form-label-required">*</span></label>
                 <textarea
                   name="consultationPurpose"
                   value={formData.consultationPurpose}
                   onChange={handleInputChange}
                   required
                   disabled={!isEditing && mode !== 'add'}
-                  placeholder="어떤 문제로 상담을 원하시나요? (예: 스트레스, 관계 문제, 직장 문제 등)"
+                  placeholder={t('common:consultant.ClientInfoModal.t_10cda82b')}
                   rows="3"
                   className="mg-v2-form-textarea"
                 />
               </div>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">상담 이력</label>
+                <label className="mg-v2-form-label">{t('common:consultant.ClientInfoModal.t_8829f6b0')}</label>
                 <textarea
                   name="consultationHistory"
                   value={formData.consultationHistory}
                   onChange={handleInputChange}
                   disabled={!isEditing && mode !== 'add'}
-                  placeholder="이전 상담 경험이나 치료 이력이 있다면 기록해주세요"
+                  placeholder={t('common:consultant.ClientInfoModal.t_02e13e16')}
                   rows="3"
                   className="mg-v2-form-textarea"
                 />
@@ -309,23 +309,23 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
             <div className="mg-v2-form-section">
               <h3 className="mg-v2-section-title">
                 <AlertCircle size={20} className="mg-v2-section-title-icon" />
-                비상연락처
+                {t('common:consultant.ClientInfoModal.t_52d03ca5')}
               </h3>
               <div className="mg-v2-form-row">
                 <div className="mg-v2-form-group">
-                  <label className="mg-v2-form-label">비상연락처 이름</label>
+                  <label className="mg-v2-form-label">{t('common:consultant.ClientInfoModal.t_958a26bd')}</label>
                   <input
                     type="text"
                     name="emergencyContact"
                     value={formData.emergencyContact}
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
-                    placeholder="비상시 연락할 사람"
+                    placeholder={t('common:consultant.ClientInfoModal.t_8daeea39')}
                     className="mg-v2-form-input"
                   />
                 </div>
                 <div className="mg-v2-form-group">
-                  <label className="mg-v2-form-label">비상연락처 번호</label>
+                  <label className="mg-v2-form-label">{t('common:consultant.ClientInfoModal.t_89068adf')}</label>
                   <input
                     type="tel"
                     name="emergencyPhone"
@@ -343,16 +343,16 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
             <div className="mg-v2-form-section">
               <h3 className="mg-v2-section-title">
                 <FileText size={20} className="mg-v2-section-title-icon" />
-                메모
+                {t('common:consultant.ClientInfoModal.t_f3ce23c8')}
               </h3>
               <div className="mg-v2-form-group">
-                <label className="mg-v2-form-label">추가 메모</label>
+                <label className="mg-v2-form-label">{t('common:consultant.ClientInfoModal.t_ee55c948')}</label>
                 <textarea
                   name="notes"
                   value={formData.notes}
                   onChange={handleInputChange}
                   disabled={!isEditing && mode !== 'add'}
-                  placeholder="내담자에 대한 추가 정보나 특이사항을 기록해주세요"
+                  placeholder={t('common:consultant.ClientInfoModal.t_a5f482fe')}
                   rows="3"
                   className="mg-v2-form-textarea"
                 />

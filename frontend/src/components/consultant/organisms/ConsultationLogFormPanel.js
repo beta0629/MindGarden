@@ -2,6 +2,7 @@ import React from 'react';
 import { FileText } from 'lucide-react';
 import BadgeSelect from '../../common/BadgeSelect';
 import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../../constants/consultationLogAutosaveConstants';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 상담일지 작성 폼 — 상담 내용 슈퍼블록(안 B) + 추가 기록 그리드
@@ -16,10 +17,11 @@ const ConsultationLogFormPanel = ({
   goalAchievementLevels,
   completionStatusOptions,
   loadingCodes
-}) => (
+}) => {
+  const { t } = useTranslation(); return (
   <section
     className="mg-v2-form-section mg-v2-consultation-log-modal__form-panel"
-    aria-label="상담일지 작성"
+    aria-label={t('common:consultant.ConsultationLogFormPanel.t_a0658140')}
   >
     <section
       className="mg-v2-consultation-log__content-superblock"
@@ -32,19 +34,19 @@ const ConsultationLogFormPanel = ({
           className="mg-v2-consultation-log__superblock-title"
         >
           <FileText size={20} className="mg-v2-text-primary" aria-hidden="true" />
-          상담 내용
+          {t('common:consultant.ConsultationLogFormPanel.t_d57a09e8')}
         </h3>
       </div>
       <div className="mg-v2-consultation-log__superblock-stack">
         <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-          <label className="mg-v2-label" htmlFor="consultation-log-client-condition">내담자 상태 *</label>
+          <label className="mg-v2-label" htmlFor="consultation-log-client-condition">{t('common:consultant.ConsultationLogFormPanel.t_9ac70e52')}</label>
           <textarea
             id="consultation-log-client-condition"
             name="clientCondition"
             value={formData.clientCondition}
             onChange={handleInputChange}
             maxLength={CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH}
-            placeholder="내담자의 현재 상태를 기록해주세요."
+            placeholder={t('common:consultant.ConsultationLogFormPanel.t_005dc7d0')}
             className={[
               'mg-v2-input',
               'mg-v2-w-full',
@@ -57,13 +59,13 @@ const ConsultationLogFormPanel = ({
         </div>
 
         <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-          <label className="mg-v2-label" htmlFor="consultation-log-main-issues">주요 이슈 *</label>
+          <label className="mg-v2-label" htmlFor="consultation-log-main-issues">{t('common:consultant.ConsultationLogFormPanel.t_745ec930')}</label>
           <textarea
             id="consultation-log-main-issues"
             name="mainIssues"
             value={formData.mainIssues}
             onChange={handleInputChange}
-            placeholder="이번 세션에서 다룬 주요 이슈를 기록해주세요."
+            placeholder={t('common:consultant.ConsultationLogFormPanel.t_334286d2')}
             className={[
               'mg-v2-input',
               'mg-v2-w-full',
@@ -75,13 +77,13 @@ const ConsultationLogFormPanel = ({
         </div>
 
         <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-          <label className="mg-v2-label" htmlFor="consultation-log-intervention">개입 방법 *</label>
+          <label className="mg-v2-label" htmlFor="consultation-log-intervention">{t('common:consultant.ConsultationLogFormPanel.t_5620da99')}</label>
           <textarea
             id="consultation-log-intervention"
             name="interventionMethods"
             value={formData.interventionMethods}
             onChange={handleInputChange}
-            placeholder="사용한 상담 기법이나 개입 방법을 기록해주세요."
+            placeholder={t('common:consultant.ConsultationLogFormPanel.t_0f043ff9')}
             className={[
               'mg-v2-input',
               'mg-v2-w-full',
@@ -93,13 +95,13 @@ const ConsultationLogFormPanel = ({
         </div>
 
         <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-          <label className="mg-v2-label" htmlFor="consultation-log-client-response">내담자 반응 *</label>
+          <label className="mg-v2-label" htmlFor="consultation-log-client-response">{t('common:consultant.ConsultationLogFormPanel.t_03054139')}</label>
           <textarea
             id="consultation-log-client-response"
             name="clientResponse"
             value={formData.clientResponse}
             onChange={handleInputChange}
-            placeholder="내담자의 반응이나 변화를 기록해주세요."
+            placeholder={t('common:consultant.ConsultationLogFormPanel.t_7feaaf9f')}
             className={[
               'mg-v2-input',
               'mg-v2-w-full',
@@ -112,11 +114,11 @@ const ConsultationLogFormPanel = ({
       </div>
     </section>
 
-    <h3 className="mg-v2-consultation-log__section-heading">추가 기록·세션 메타</h3>
+    <h3 className="mg-v2-consultation-log__section-heading">{t('common:consultant.ConsultationLogFormPanel.t_58052cef')}</h3>
 
     <div className="mg-v2-form-grid mg-v2-consultation-log-modal__form-grid">
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-session-date">세션 일자 *</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-session-date">{t('common:consultant.ConsultationLogFormPanel.t_9d161eee')}</label>
         <input
           id="consultation-log-session-date"
           type="date"
@@ -130,7 +132,7 @@ const ConsultationLogFormPanel = ({
       </div>
 
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-session-duration">세션 시간 (분) *</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-session-duration">{t('common:consultant.ConsultationLogFormPanel.t_1bc36f5f')}</label>
         <input
           id="consultation-log-session-duration"
           type="number"
@@ -149,43 +151,43 @@ const ConsultationLogFormPanel = ({
       </div>
 
       <div className="mg-v2-form-group">
-        <span className="mg-v2-label">세션 완료 여부</span>
+        <span className="mg-v2-label">{t('common:consultant.ConsultationLogFormPanel.t_19279be8')}</span>
         <BadgeSelect
           options={completionStatusOptions.map((o) => ({ value: o.value, label: o.label }))}
           value={formData.isSessionCompleted === true ? 'COMPLETED' : 'PENDING'}
           onChange={(v) => setFormData((prev) => ({ ...prev, isSessionCompleted: v === 'COMPLETED' }))}
-          placeholder="선택하세요"
+          placeholder={t('common:consultant.ConsultationLogFormPanel.t_c2255771')}
           className="mg-v2-form-badge-select mg-v2-w-full"
           disabled
         />
       </div>
 
       <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-next-session">다음 세션 계획</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-next-session">{t('common:consultant.ConsultationLogFormPanel.t_6856fca3')}</label>
         <textarea
           id="consultation-log-next-session"
           name="nextSessionPlan"
           value={formData.nextSessionPlan}
           onChange={handleInputChange}
-          placeholder="다음 세션에서 다룰 내용을 기록해주세요."
+          placeholder={t('common:consultant.ConsultationLogFormPanel.t_0f0c4cbc')}
           className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
         />
       </div>
 
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-homework">과제 부여</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-homework">{t('common:consultant.ConsultationLogFormPanel.t_a6c7c7d5')}</label>
         <textarea
           id="consultation-log-homework"
           name="homeworkAssigned"
           value={formData.homeworkAssigned}
           onChange={handleInputChange}
-          placeholder="부여한 과제나 숙제를 기록해주세요."
+          placeholder={t('common:consultant.ConsultationLogFormPanel.t_99abba3d')}
           className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
         />
       </div>
 
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-homework-due">과제 제출 기한</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-homework-due">{t('common:consultant.ConsultationLogFormPanel.t_ec235921')}</label>
         <input
           id="consultation-log-homework-due"
           type="date"
@@ -197,7 +199,7 @@ const ConsultationLogFormPanel = ({
       </div>
 
       <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <span className="mg-v2-label">위험도 평가 *</span>
+        <span className="mg-v2-label">{t('common:consultant.ConsultationLogFormPanel.t_92495efd')}</span>
         <BadgeSelect
           options={riskLevels.map((l) => ({
             value: l.value,
@@ -206,8 +208,8 @@ const ConsultationLogFormPanel = ({
           }))}
           value={formData.riskAssessment}
           onChange={(v) => handleInputChange({ target: { name: 'riskAssessment', value: v } })}
-          placeholder="위험도를 선택하세요"
-          aria-label="위험도 평가 필수 선택"
+          placeholder={t('common:consultant.ConsultationLogFormPanel.t_39150dda')}
+          aria-label={t('common:consultant.ConsultationLogFormPanel.t_327ab968')}
           className="mg-v2-form-badge-select mg-v2-w-full mg-v2-consultation-log-modal__badge-select-grid mg-v2-consultation-log-modal__badge-select-grid--5"
           disabled={loadingCodes}
           error={!!validationErrors.riskAssessment}
@@ -215,37 +217,37 @@ const ConsultationLogFormPanel = ({
       </div>
 
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-risk-factors">위험 요인</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-risk-factors">{t('common:consultant.ConsultationLogFormPanel.t_af04804c')}</label>
         <textarea
           id="consultation-log-risk-factors"
           name="riskFactors"
           value={formData.riskFactors}
           onChange={handleInputChange}
-          placeholder="발견된 위험 요인을 기록해주세요."
+          placeholder={t('common:consultant.ConsultationLogFormPanel.t_eced8efb')}
           className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
         />
       </div>
 
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-emergency">응급 대응 계획</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-emergency">{t('common:consultant.ConsultationLogFormPanel.t_b42e785a')}</label>
         <textarea
           id="consultation-log-emergency"
           name="emergencyResponsePlan"
           value={formData.emergencyResponsePlan}
           onChange={handleInputChange}
-          placeholder="응급 상황 시 대응 계획을 기록해주세요."
+          placeholder={t('common:consultant.ConsultationLogFormPanel.t_9fecf02e')}
           className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
         />
       </div>
 
       <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-        <label className="mg-v2-label" htmlFor="consultation-log-progress-eval">진행 평가 *</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-progress-eval">{t('common:consultant.ConsultationLogFormPanel.t_ad582d54')}</label>
         <textarea
           id="consultation-log-progress-eval"
           name="progressEvaluation"
           value={formData.progressEvaluation}
           onChange={handleInputChange}
-          placeholder="전반적인 진행 상황을 평가해주세요."
+          placeholder={t('common:consultant.ConsultationLogFormPanel.t_139e8e66')}
           className={[
             'mg-v2-input',
             'mg-v2-w-full',
@@ -273,18 +275,18 @@ const ConsultationLogFormPanel = ({
       </div>
 
       <div className="mg-v2-form-group">
-        <span className="mg-v2-label">목표 달성도</span>
+        <span className="mg-v2-label">{t('common:consultant.ConsultationLogFormPanel.t_51041d7f')}</span>
         <BadgeSelect
           options={goalAchievementLevels.map((l) => ({ value: l.value, label: l.label }))}
           value={formData.goalAchievement}
           onChange={(v) => handleInputChange({ target: { name: 'goalAchievement', value: v } })}
-          placeholder="선택하세요"
+          placeholder={t('common:consultant.ConsultationLogFormPanel.t_c2255771')}
           className="mg-v2-form-badge-select mg-v2-w-full mg-v2-consultation-log-modal__badge-select-grid mg-v2-consultation-log-modal__badge-select-grid--3"
         />
       </div>
 
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-family">가족 관계</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-family">{t('common:consultant.ConsultationLogFormPanel.t_38576d81')}</label>
         <textarea
           id="consultation-log-family"
           name="familyRelationships"
@@ -295,7 +297,7 @@ const ConsultationLogFormPanel = ({
       </div>
 
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-social">사회적 지지</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-social">{t('common:consultant.ConsultationLogFormPanel.t_293a0731')}</label>
         <textarea
           id="consultation-log-social"
           name="socialSupport"
@@ -306,7 +308,7 @@ const ConsultationLogFormPanel = ({
       </div>
 
       <div className="mg-v2-form-group">
-        <label className="mg-v2-label" htmlFor="consultation-log-medical">의료/복용 약물</label>
+        <label className="mg-v2-label" htmlFor="consultation-log-medical">{t('common:consultant.ConsultationLogFormPanel.t_dcfbe09c')}</label>
         <textarea
           id="consultation-log-medical"
           name="medicalInformation"
@@ -318,13 +320,13 @@ const ConsultationLogFormPanel = ({
 
       {!formData.isSessionCompleted && (
         <div className="mg-v2-form-group mg-v2-consultation-log-modal__form-group-full">
-          <label className="mg-v2-label" htmlFor="consultation-log-incomplete">미완료 사유</label>
+          <label className="mg-v2-label" htmlFor="consultation-log-incomplete">{t('common:consultant.ConsultationLogFormPanel.t_58561e6f')}</label>
           <textarea
             id="consultation-log-incomplete"
             name="incompletionReason"
             value={formData.incompletionReason}
             onChange={handleInputChange}
-            placeholder="세션이 미완료된 사유를 기록해주세요."
+            placeholder={t('common:consultant.ConsultationLogFormPanel.t_085c53bc')}
             className="mg-v2-input mg-v2-w-full mg-v2-consultation-log-modal__textarea"
           />
         </div>
@@ -332,5 +334,6 @@ const ConsultationLogFormPanel = ({
     </div>
   </section>
 );
+};
 
 export default ConsultationLogFormPanel;

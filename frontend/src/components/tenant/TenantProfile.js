@@ -283,10 +283,10 @@ const TenantProfile = () => {
 
   if (sessionLoading || !isLoggedIn || !user) {
     return (
-      <AdminCommonLayout title="테넌트 프로필">
+      <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="inline" text="테넌트 정보를 불러오는 중..." variant="pulse" />
+            <UnifiedLoading type="inline" text={t('common:tenant.TenantProfile.t_42f5bfb9')} variant="pulse" />
           </div>
         </div>
       </AdminCommonLayout>
@@ -295,12 +295,12 @@ const TenantProfile = () => {
 
   if (!tenantId) {
     return (
-      <AdminCommonLayout title="테넌트 프로필">
+      <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <div className="tenant-profile-error">
               <AlertCircleIcon size={24} />
-              <p>테넌트 정보를 찾을 수 없습니다.</p>
+              <p>{t('common:tenant.TenantProfile.t_8f990fec')}</p>
             </div>
           </div>
         </div>
@@ -310,10 +310,10 @@ const TenantProfile = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="테넌트 프로필">
+      <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="inline" text="테넌트 프로필을 불러오는 중..." variant="pulse" />
+            <UnifiedLoading type="inline" text={t('common:tenant.TenantProfile.t_ca5bf104')} variant="pulse" />
           </div>
         </div>
       </AdminCommonLayout>
@@ -322,12 +322,12 @@ const TenantProfile = () => {
 
   if (!tenantInfo) {
     return (
-      <AdminCommonLayout title="테넌트 프로필">
+      <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <div className="tenant-profile-error">
               <AlertCircleIcon size={24} />
-              <p>테넌트 정보를 찾을 수 없습니다.</p>
+              <p>{t('common:tenant.TenantProfile.t_8f990fec')}</p>
             </div>
           </div>
         </div>
@@ -336,7 +336,7 @@ const TenantProfile = () => {
   }
 
   return (
-    <AdminCommonLayout title="테넌트 프로필">
+    <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
       <div className="mg-v2-tenant-profile">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="테넌트 프로필 콘텐츠">
@@ -352,7 +352,7 @@ const TenantProfile = () => {
             <div
               className="mg-v2-ad-b0kla__pill-toggle mg-v2-tenant-profile__pill-toggle"
               role="tablist"
-              aria-label="테넌트 프로필 섹션"
+              aria-label={t('common:tenant.TenantProfile.t_15c8471b')}
             >
               <MGButton
                 type="button"
@@ -369,7 +369,7 @@ const TenantProfile = () => {
                 onClick={() => setActiveTab('overview')}
                 preventDoubleClick={false}
               >
-                개요
+                {t('common:tenant.TenantProfile.t_476966c5')}
               </MGButton>
               <MGButton
                 type="button"
@@ -386,7 +386,7 @@ const TenantProfile = () => {
                 onClick={() => setActiveTab('subscription')}
                 preventDoubleClick={false}
               >
-                구돉 관리
+                {t('common:tenant.TenantProfile.t_3ba22bb7')}
               </MGButton>
               <MGButton
                 type="button"
@@ -403,7 +403,7 @@ const TenantProfile = () => {
                 onClick={() => setActiveTab('payment')}
                 preventDoubleClick={false}
               >
-                결제 수단
+                {t('common:tenant.TenantProfile.t_bb94631a')}
               </MGButton>
             </div>
 
@@ -414,7 +414,7 @@ const TenantProfile = () => {
               {activeTab === 'overview' && (
                 <div className="mg-v2-tenant-profile__overview tenant-profile-overview">
                   <ContentSection
-                    title="테넌트 정보"
+                    title={t('common:tenant.TenantProfile.t_2c8c8cc3')}
                     actions={
                       canRenameTenant ? (
                         <MGButton
@@ -427,22 +427,22 @@ const TenantProfile = () => {
                           data-testid="tenant-profile-rename-open"
                           preventDoubleClick={false}
                         >
-                          이름 변경
+                          {t('common:tenant.TenantProfile.t_73e5a894')}
                         </MGButton>
                       ) : null
                     }
                   >
                     <div className="mg-v2-tenant-profile__grid">
                       <div className="mg-v2-tenant-profile__field">
-                        <label>테넌트 ID</label>
+                        <label>{t('common:tenant.TenantProfile.t_065dd028')}</label>
                         <p><SafeText>{tenantInfo.tenantId}</SafeText></p>
                       </div>
                       <div className="mg-v2-tenant-profile__field">
-                        <label>테넌트명</label>
+                        <label>{t('common:tenant.TenantProfile.t_dacf2653')}</label>
                         <p><SafeText>{tenantInfo.name}</SafeText></p>
                       </div>
                       <div className="mg-v2-tenant-profile__field">
-                        <label>업종</label>
+                        <label>{t('common:tenant.TenantProfile.t_0fb1a92d')}</label>
                         <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
                       </div>
                       <div className="mg-v2-tenant-profile__field">
@@ -503,7 +503,7 @@ const TenantProfile = () => {
                     </div>
                   </ContentSection>
 
-                  <ContentSection title="구독 정보">
+                  <ContentSection title={t('common:tenant.TenantProfile.t_d37f5764')}>
                     {subscriptions.length > 0 ? (
                       <div className="subscription-summary">
                         {subscriptions.map((subscription) => (
@@ -524,11 +524,11 @@ const TenantProfile = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="no-data">등록된 구독이 없습니다.</p>
+                      <p className="no-data">{t('common:tenant.TenantProfile.t_70a800f9')}</p>
                     )}
                   </ContentSection>
 
-                  <ContentSection title="결제 수단">
+                  <ContentSection title={t('common:tenant.TenantProfile.t_bb94631a')}>
                     {paymentMethods.length > 0 ? (
                       <div className="payment-method-summary">
                         {paymentMethods.map((pm) => (
@@ -536,13 +536,13 @@ const TenantProfile = () => {
                             <CreditCardIcon size={16} />
                             <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
                             {pm.isDefault && (
-                              <span className="default-badge">기본</span>
+                              <span className="default-badge">{t('common:tenant.TenantProfile.t_7f1d8c41')}</span>
                             )}
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="no-data">등록된 결제 수단이 없습니다.</p>
+                      <p className="no-data">{t('common:tenant.TenantProfile.t_54f1a72f')}</p>
                     )}
                   </ContentSection>
                 </div>
@@ -550,7 +550,7 @@ const TenantProfile = () => {
 
               {activeTab === 'subscription' && (
                 <ContentSection
-                  title="구독 관리"
+                  title={t('common:tenant.TenantProfile.t_0679f434')}
                   className="mg-v2-tenant-profile__subscription-wrap tenant-profile-subscription"
                 >
                   <SubscriptionManagement tenantId={tenantId} />
@@ -559,7 +559,7 @@ const TenantProfile = () => {
 
               {activeTab === 'payment' && (
                 <ContentSection
-                  title="결제 수단 관리"
+                  title={t('common:tenant.TenantProfile.t_0f845acb')}
                   actions={
                     <MGButton
                       type="button"
@@ -570,7 +570,7 @@ const TenantProfile = () => {
                       onClick={() => setShowPaymentMethodRegistration(true)}
                       preventDoubleClick={false}
                     >
-                      결제 수단 추가
+                      {t('common:tenant.TenantProfile.t_9f9cf174')}
                     </MGButton>
                   }
                   className="mg-v2-tenant-profile__payment-wrap tenant-profile-payment"
@@ -598,12 +598,12 @@ const TenantProfile = () => {
                               <div className="payment-method-name">
                                 <SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText>
                                 {pm.isDefault && (
-                                  <span className="default-badge">기본</span>
+                                  <span className="default-badge">{t('common:tenant.TenantProfile.t_7f1d8c41')}</span>
                                 )}
                               </div>
                               {pm.cardExpiry && (
                                 <div className="payment-method-expiry">
-                                  만료일: <SafeText>{pm.cardExpiry}</SafeText>
+                                  {t('common:tenant.TenantProfile.t_fabb8d23')} <SafeText>{pm.cardExpiry}</SafeText>
                                 </div>
                               )}
                             </div>
@@ -625,7 +625,7 @@ const TenantProfile = () => {
                                 title={toDisplayString('기본 결제 수단으로 설정')}
                                 preventDoubleClick={false}
                               >
-                                기본 설정
+                                {t('common:tenant.TenantProfile.t_0a49fd14')}
                               </MGButton>
                             )}
                             <MGButton
@@ -651,7 +651,7 @@ const TenantProfile = () => {
                     ) : (
                       <div className="no-payment-methods">
                         <CreditCardIcon size={48} />
-                        <p>등록된 결제 수단이 없습니다.</p>
+                        <p>{t('common:tenant.TenantProfile.t_54f1a72f')}</p>
                         <MGButton
                           type="button"
                           variant="primary"
@@ -660,7 +660,7 @@ const TenantProfile = () => {
                           onClick={() => setShowPaymentMethodRegistration(true)}
                           preventDoubleClick={false}
                         >
-                          결제 수단 추가
+                          {t('common:tenant.TenantProfile.t_9f9cf174')}
                         </MGButton>
                       </div>
                     )}
@@ -673,7 +673,7 @@ const TenantProfile = () => {
           <UnifiedModal
             isOpen={showTenantNameModal}
             onClose={closeTenantNameModal}
-            title="테넌트명 변경"
+            title={t('common:tenant.TenantProfile.t_3981095c')}
             size="small"
             variant="form"
             backdropClick={!tenantNameSaving}
@@ -724,7 +724,7 @@ const TenantProfile = () => {
             <form id="tenant-profile-rename-form" onSubmit={handleTenantNameSave} noValidate>
               <div className="mg-v2-form-group">
                 <label className="mg-v2-label" htmlFor={tenantNameInputId}>
-                  테넌트명
+                  {t('common:tenant.TenantProfile.t_dacf2653')}
                 </label>
                 <input
                   id={tenantNameInputId}

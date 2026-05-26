@@ -45,9 +45,9 @@ const ModalExamples = () => {
 
   return (<div className="mg-v2-v2-v2-section">
       <div className="mg-v2-v2-v2-section-header">
-        <h2 className="mg-v2-v2-v2-section-title">Modal 컴포넌트 예시</h2>
+        <h2 className="mg-v2-v2-v2-section-title">{t('common:ui.ModalExamples.t_6b9aed6b')}</h2>
         <p className="mg-v2-v2-v2-section-subtitle">
-          ReactDOM.createPortal을 사용한 모달 컴포넌트의 다양한 사용법
+          {t('common:ui.ModalExamples.t_8ab1d2cd')}
         </p>
       </div>
 
@@ -55,15 +55,15 @@ const ModalExamples = () => {
         {/* 기본 사용법 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>기본 사용법</h3>
+            <h3>{t('common:ui.ModalExamples.t_7428b07a')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
               <Button onClick={() => openModal('basic')}>
-                기본 모달
+                {t('common:ui.ModalExamples.t_c72bf800')}
               </Button>
               <Button onClick={() => openModal('withTitle')} variant="secondary">
-                제목 있는 모달
+                {t('common:ui.ModalExamples.t_722cdf1f')}
               </Button>
             </div>
           </div>
@@ -72,7 +72,7 @@ const ModalExamples = () => {
         {/* 크기 변형 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>크기 변형</h3>
+            <h3>{t('common:ui.ModalExamples.t_61af72a4')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
@@ -95,7 +95,7 @@ const ModalExamples = () => {
         {/* 변형 스타일 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>변형 스타일</h3>
+            <h3>{t('common:ui.ModalExamples.t_165c37ce')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
@@ -115,18 +115,18 @@ const ModalExamples = () => {
         {/* 닫기 옵션 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>닫기 옵션</h3>
+            <h3>{t('common:ui.ModalExamples.t_be3ecdac')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
               <Button onClick={() => openModal('noCloseButton')} variant="warning">
-                닫기 버튼 없음
+                {t('common:ui.ModalExamples.t_f5d13e79')}
               </Button>
               <Button onClick={() => openModal('noOverlayClose')} variant="error">
-                오버레이 클릭 비활성화
+                {t('common:ui.ModalExamples.t_fb658fed')}
               </Button>
               <Button onClick={() => openModal('noEscapeClose')} variant="info">
-                ESC 키 비활성화
+                {t('common:ui.ModalExamples.t_f9c13b1b')}
               </Button>
             </div>
           </div>
@@ -135,24 +135,24 @@ const ModalExamples = () => {
         {/* 상태별 모달 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>상태별 모달</h3>
+            <h3>{t('common:ui.ModalExamples.t_b8798555')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
               <Button onClick={() => openModal('loading')} variant="primary">
-                로딩 모달
+                {t('common:ui.ModalExamples.t_0244b79f')}
               </Button>
               <Button onClick={() => openModal('error')} variant="error">
-                에러 모달
+                {t('common:ui.ModalExamples.t_5edd0c03')}
               </Button>
               <Button onClick={() => openModal('success')} variant="success">
-                성공 모달
+                {t('common:ui.ModalExamples.t_b65966b8')}
               </Button>
               <Button onClick={() => openModal('warning')} variant="warning">
-                경고 모달
+                {t('common:ui.ModalExamples.t_002fdad3')}
               </Button>
               <Button onClick={() => openModal('info')} variant="info">
-                정보 모달
+                {t('common:ui.ModalExamples.t_5f790327')}
               </Button>
             </div>
           </div>
@@ -161,7 +161,7 @@ const ModalExamples = () => {
         {/* 실제 사용 예시 */}
         <div className="mg-v2-v2-v2-card">
           <div className="mg-v2-v2-v2-card-header">
-            <h3>실제 사용 예시</h3>
+            <h3>{t('common:ui.ModalExamples.t_7bd1e28d')}</h3>
           </div>
           <div className="mg-v2-v2-v2-card-content">
             <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-md mg-v2-v2-v2-flex-wrap">
@@ -169,14 +169,14 @@ const ModalExamples = () => {
                 icon="PLUS" 
                 onClick={() => openModal('create')}
               >
-                새로 만들기
+                {t('common:ui.ModalExamples.t_45a596e0')}
               </Button>
               <Button 
                 icon="EDIT" 
                 variant="secondary"
                 onClick={() => openModal('edit')}
               >
-                편집
+                {t('common:ui.ModalExamples.t_d482e14b')}
               </Button>
               <Button 
                 icon="TRASH" 
@@ -190,7 +190,7 @@ const ModalExamples = () => {
                 variant="outline"
                 onClick={() => openModal('settings')}
               >
-                설정
+                {t('common:ui.ModalExamples.t_c14a567e')}
               </Button>
             </div>
           </div>
@@ -203,9 +203,9 @@ const ModalExamples = () => {
         onClose={() => closeModal('basic')}
       >
         <div className="mg-v2-v2-v2-text-center">
-          <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-mb-md">기본 모달</h3>
+          <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-mb-md">{t('common:ui.ModalExamples.t_c72bf800')}</h3>
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            이것은 기본 모달입니다. 오버레이를 클릭하거나 ESC 키를 눌러 닫을 수 있습니다.
+            {t('common:ui.ModalExamples.t_99a261f7')}
           </p>
           <Button onClick={() => closeModal('basic')}>
             {t('common.actions.confirm')}
@@ -216,11 +216,11 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.withTitle}
         onClose={() => closeModal('withTitle')}
-        title="제목 있는 모달"
+        title={t('common:ui.ModalExamples.t_722cdf1f')}
       >
         <div className="mg-v2-v2-v2-text-center">
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            이 모달은 제목이 있습니다. 헤더에 제목이 표시됩니다.
+            {t('common:ui.ModalExamples.t_b9ecd69d')}
           </p>
           <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-sm mg-v2-v2-v2-justify-center">
             <Button onClick={() => closeModal('withTitle')}>
@@ -236,19 +236,19 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.large}
         onClose={() => closeModal('large')}
-        title="큰 모달"
+        title={t('common:ui.ModalExamples.t_9f235cac')}
         size="large"
       >
         <div>
-          <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-mb-md">큰 모달</h3>
+          <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-mb-md">{t('common:ui.ModalExamples.t_9f235cac')}</h3>
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-md">
-            이 모달은 큰 크기입니다. 더 많은 내용을 표시할 수 있습니다.
+            {t('common:ui.ModalExamples.t_6a5e100d')}
           </p>
           <div className="mg-v2-v2-v2-card mg-v2-v2-v2-mb-md">
             <div className="mg-v2-v2-v2-card-content">
-              <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-mb-sm">카드 예시</h4>
+              <h4 className="mg-v2-v2-v2-h4 mg-v2-v2-v2-mb-sm">{t('common:ui.ModalExamples.t_2f9c07cb')}</h4>
               <p className="mg-v2-v2-v2-text-sm">
-                모달 안에 카드를 넣을 수도 있습니다.
+                {t('common:ui.ModalExamples.t_4bcc86d9')}
               </p>
             </div>
           </div>
@@ -266,12 +266,12 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.drawer}
         onClose={() => closeModal('drawer')}
-        title="드로어 모달"
+        title={t('common:ui.ModalExamples.t_8a343c8c')}
         variant="drawer"
       >
         <div>
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-md">
-            이 모달은 드로어 스타일입니다. 화면 하단에서 올라옵니다.
+            {t('common:ui.ModalExamples.t_28547d93')}
           </p>
           <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-sm mg-v2-v2-v2-justify-center">
             <Button onClick={() => closeModal('drawer')}>
@@ -284,13 +284,13 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.fullscreen}
         onClose={() => closeModal('fullscreen')}
-        title="전체 화면 모달"
+        title={t('common:ui.ModalExamples.t_231dd0f7')}
         variant="fullscreen"
       >
         <div className="mg-v2-v2-v2-text-center">
-          <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-mb-md">전체 화면 모달</h3>
+          <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-mb-md">{t('common:ui.ModalExamples.t_231dd0f7')}</h3>
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            이 모달은 전체 화면을 차지합니다. 모바일에서 유용합니다.
+            {t('common:ui.ModalExamples.t_45163a62')}
           </p>
           <Button onClick={() => closeModal('fullscreen')}>
             {t('common.actions.close')}
@@ -301,12 +301,12 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.noCloseButton}
         onClose={() => closeModal('noCloseButton')}
-        title="닫기 버튼 없음"
+        title={t('common:ui.ModalExamples.t_f5d13e79')}
         showCloseButton={false}
       >
         <div className="mg-v2-v2-v2-text-center">
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            이 모달은 닫기 버튼이 없습니다. 오버레이 클릭이나 ESC 키로만 닫을 수 있습니다.
+            {t('common:ui.ModalExamples.t_93903eb9')}
           </p>
           <Button onClick={() => closeModal('noCloseButton')}>
             {t('common.actions.confirm')}
@@ -317,12 +317,12 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.noOverlayClose}
         onClose={() => closeModal('noOverlayClose')}
-        title="오버레이 클릭 비활성화"
+        title={t('common:ui.ModalExamples.t_fb658fed')}
         closeOnOverlayClick={false}
       >
         <div className="mg-v2-v2-v2-text-center">
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            이 모달은 오버레이 클릭으로 닫을 수 없습니다. 닫기 버튼이나 ESC 키를 사용하세요.
+            {t('common:ui.ModalExamples.t_3cc6056c')}
           </p>
           <Button onClick={() => closeModal('noOverlayClose')}>
             {t('common.actions.confirm')}
@@ -333,12 +333,12 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.noEscapeClose}
         onClose={() => closeModal('noEscapeClose')}
-        title="ESC 키 비활성화"
+        title={t('common:ui.ModalExamples.t_f9c13b1b')}
         closeOnEscape={false}
       >
         <div className="mg-v2-v2-v2-text-center">
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            이 모달은 ESC 키로 닫을 수 없습니다. 닫기 버튼이나 오버레이 클릭을 사용하세요.
+            {t('common:ui.ModalExamples.t_2471e8fb')}
           </p>
           <Button onClick={() => closeModal('noEscapeClose')}>
             {t('common.actions.confirm')}
@@ -349,7 +349,7 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.loading}
         onClose={() => closeModal('loading')}
-        title="로딩 모달"
+        title={t('common:ui.ModalExamples.t_0244b79f')}
         className="mg-v2-v2-v2-modal--loading"
       >
         <div className="mg-v2-v2-v2-text-center">
@@ -357,7 +357,7 @@ const ModalExamples = () => {
             <Icon name="LOADER" loading />
           </div>
           <p className="mg-v2-v2-v2-text-md">
-            데이터를 불러오는 중입니다...
+            {t('common:ui.ModalExamples.t_17c9c3e4')}
           </p>
         </div>
       </Modal>
@@ -365,7 +365,7 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.error}
         onClose={() => closeModal('error')}
-        title="에러 모달"
+        title={t('common:ui.ModalExamples.t_5edd0c03')}
         className="mg-v2-v2-v2-modal--error"
       >
         <div className="mg-v2-v2-v2-text-center">
@@ -373,7 +373,7 @@ const ModalExamples = () => {
             <Icon name="ALERT_CIRCLE" color="ERROR" />
           </div>
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            오류가 발생했습니다. 다시 시도해주세요.
+            {t('common:ui.ModalExamples.t_e246063e')}
           </p>
           <Button onClick={() => closeModal('error')}>
             {t('common.actions.confirm')}
@@ -384,7 +384,7 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.success}
         onClose={() => closeModal('success')}
-        title="성공 모달"
+        title={t('common:ui.ModalExamples.t_b65966b8')}
         className="mg-v2-v2-v2-modal--success"
       >
         <div className="mg-v2-v2-v2-text-center">
@@ -392,7 +392,7 @@ const ModalExamples = () => {
             <Icon name="CHECK_CIRCLE" color="SUCCESS" />
           </div>
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            작업이 성공적으로 완료되었습니다.
+            {t('common:ui.ModalExamples.t_720352aa')}
           </p>
           <Button onClick={() => closeModal('success')}>
             {t('common.actions.confirm')}
@@ -403,7 +403,7 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.warning}
         onClose={() => closeModal('warning')}
-        title="경고 모달"
+        title={t('common:ui.ModalExamples.t_002fdad3')}
         className="mg-v2-v2-v2-modal--warning"
       >
         <div className="mg-v2-v2-v2-text-center">
@@ -411,14 +411,14 @@ const ModalExamples = () => {
             <Icon name="ALERT_TRIANGLE" color="WARNING" />
           </div>
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?
+            {t('common:ui.ModalExamples.t_bc6047ac')}
           </p>
           <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-gap-sm mg-v2-v2-v2-justify-center">
             <Button variant="outline" onClick={() => closeModal('warning')}>
               {t('common.actions.cancel')}
             </Button>
             <Button variant="warning" onClick={() => closeModal('warning')}>
-              계속
+              {t('common:ui.ModalExamples.t_995224fb')}
             </Button>
           </div>
         </div>
@@ -427,7 +427,7 @@ const ModalExamples = () => {
       <Modal
         isOpen={modals.info}
         onClose={() => closeModal('info')}
-        title="정보 모달"
+        title={t('common:ui.ModalExamples.t_5f790327')}
         className="mg-v2-v2-v2-modal--info"
       >
         <div className="mg-v2-v2-v2-text-center">
@@ -435,7 +435,7 @@ const ModalExamples = () => {
             <Icon name="INFO" color="INFO" />
           </div>
           <p className="mg-v2-v2-v2-text-md mg-v2-v2-v2-mb-lg">
-            이 기능에 대한 추가 정보입니다.
+            {t('common:ui.ModalExamples.t_44ef4acd')}
           </p>
           <Button onClick={() => closeModal('info')}>
             {t('common.actions.confirm')}

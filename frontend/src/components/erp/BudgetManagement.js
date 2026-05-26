@@ -302,14 +302,14 @@ const BudgetManagement = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="예산 관리">
+      <AdminCommonLayout title={t('erp:BudgetManagement.t_caa5739a')}>
         <ContentArea className="erp-system mg-v2-content-area mg-v2-ad-b0kla">
           <div className="erp-session-inline-load">
             <ContentHeader
-              title="예산 관리"
+              title={t('erp:BudgetManagement.t_caa5739a')}
               subtitle="세션 정보를 확인하는 중입니다."
             />
-            <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+            <UnifiedLoading type="inline" text={t('erp:BudgetManagement.t_85173dd2')} />
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -318,7 +318,7 @@ const BudgetManagement = () => {
 
   if (!isLoggedIn) {
     return (
-      <AdminCommonLayout title="예산 관리">
+      <AdminCommonLayout title={t('erp:BudgetManagement.t_caa5739a')}>
         <div className="erp-system">
           <div className="erp-container">
             <div className="erp-login-required">
@@ -336,7 +336,7 @@ const BudgetManagement = () => {
                       className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                      세션 새로고침
+                      {t('erp:BudgetManagement.t_b0b6bb07')}
                     </MGButton>
                     <MGButton
                       variant="primary"
@@ -345,13 +345,13 @@ const BudgetManagement = () => {
                       className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
-                      로그인
+                      {t('erp:BudgetManagement.t_e225a6fd')}
                     </MGButton>
                   </div>
                 </div>
                 <div className="erp-login-content">
-                  <h3>로그인이 필요합니다.</h3>
-                  <p>예산 관리 기능을 사용하려면 로그인해주세요.</p>
+                  <h3>{t('erp:BudgetManagement.t_5271ee34')}</h3>
+                  <p>{t('erp:BudgetManagement.t_4d4c741f')}</p>
                 </div>
               </div>
             </div>
@@ -365,12 +365,12 @@ const BudgetManagement = () => {
     loading && !budgetInitialFetchDone && !(error && hasDataError);
 
   return (
-    <AdminCommonLayout title="예산 관리">
+    <AdminCommonLayout title={t('erp:BudgetManagement.t_caa5739a')}>
       <ContentArea className="erp-system mg-v2-content-area mg-v2-ad-b0kla">
         <ErpPageShell
           headerSlot={
             <ContentHeader
-              title="예산 관리"
+              title={t('erp:BudgetManagement.t_caa5739a')}
               subtitle="예산 계획 및 관리를 할 수 있습니다."
             />
           }
@@ -385,7 +385,7 @@ const BudgetManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                예산 목록
+                {t('erp:BudgetManagement.t_0631bf34')}
               </MGButton>
               <MGButton
                 type="button"
@@ -396,7 +396,7 @@ const BudgetManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                카테고리
+                {t('erp:BudgetManagement.t_31125b29')}
               </MGButton>
               <MGButton
                 type="button"
@@ -407,7 +407,7 @@ const BudgetManagement = () => {
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
-                보고서
+                {t('erp:BudgetManagement.t_c9883f78')}
               </MGButton>
             </div>
           }
@@ -427,9 +427,9 @@ const BudgetManagement = () => {
                       loading={silentListRefreshing}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       disabled={loading}
-                      aria-label="목록 새로고침"
+                      aria-label={t('erp:BudgetManagement.t_bf198903')}
                     >
-                      목록 새로고침
+                      {t('erp:BudgetManagement.t_bf198903')}
                     </MGButton>
                   </div>
                 }
@@ -474,50 +474,50 @@ const BudgetManagement = () => {
                     <div className="erp-stats-grid mb-4 mg-v2-erp-dashboard-kpi-grid">
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">총 예산</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">{t('erp:BudgetManagement.t_b8a443b3')}</h3>
                           <PiggyBank size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--primary">
                             {formatCurrency(budgets.reduce((sum, b) => sum + (b.totalBudget || 0), 0))}
                           </div>
-                          <span className="mg-v2-ad-b0kla__kpi-label">전체 예산 합계</span>
+                          <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_f41a7f05')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange erp-stat-card">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">사용 금액</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">{t('erp:BudgetManagement.t_8dacd326')}</h3>
                           <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--warning" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
                             {formatCurrency(budgets.reduce((sum, b) => sum + (b.usedBudget || 0), 0))}
                           </div>
-                          <span className="mg-v2-ad-b0kla__kpi-label">사용된 금액</span>
+                          <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_d1af9444')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">잔여 금액</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">{t('erp:BudgetManagement.t_cc5d8b16')}</h3>
                           <Wallet size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
                             {formatCurrency(budgets.reduce((sum, b) => sum + (b.remainingBudget || 0), 0))}
                           </div>
-                          <span className="mg-v2-ad-b0kla__kpi-label">잔액</span>
+                          <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_b025a34c')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue erp-stat-card">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">예산 개수</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">{t('erp:BudgetManagement.t_76a9ae4e')}</h3>
                           <List size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">
                             {toDisplayString(budgets.length)}개
                           </div>
-                          <span className="mg-v2-ad-b0kla__kpi-label">등록된 예산</span>
+                          <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_6cd25c68')}</span>
                         </div>
                       </div>
                     </div>
@@ -526,9 +526,9 @@ const BudgetManagement = () => {
                       <div className="erp-section-title">
                         <h2>
                           <i className="bi bi-list-ul" />
-                          예산 목록
+                          {t('erp:BudgetManagement.t_0631bf34')}
                         </h2>
-                        <p>등록된 예산을 관리하고 모니터링할 수 있습니다.</p>
+                        <p>{t('erp:BudgetManagement.t_344cfb55')}</p>
                       </div>
                       {canManageBudget && (
                         <MGButton
@@ -539,7 +539,7 @@ const BudgetManagement = () => {
                           onClick={() => setShowCreateModal(true)}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         >
-                          새 예산 추가
+                          {t('erp:BudgetManagement.t_68d316e7')}
                         </MGButton>
                       )}
                     </div>
@@ -572,7 +572,7 @@ const BudgetManagement = () => {
                                         className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                                         onClick={() => openEditModal(budget)}
                                         title={t('common.actions.edit')}
-                                        aria-label="예산 수정"
+                                        aria-label={t('erp:BudgetManagement.t_82fa5b68')}
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                       >
                                         {t('common.actions.edit')}
@@ -584,7 +584,7 @@ const BudgetManagement = () => {
                                         className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
                                         onClick={() => handleDeleteBudget(budget.id)}
                                         title={t('common.actions.delete')}
-                                        aria-label="예산 삭제"
+                                        aria-label={t('erp:BudgetManagement.t_112efb89')}
                                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                       >
                                         {t('common.actions.delete')}
@@ -605,15 +605,15 @@ const BudgetManagement = () => {
 
                                   <div className="erp-budget-amounts">
                                     <div className="erp-budget-amount">
-                                      <span className="erp-amount-label">총 예산</span>
+                                      <span className="erp-amount-label">{t('erp:BudgetManagement.t_b8a443b3')}</span>
                                       <span className="erp-amount-value">{formatCurrency(budget.totalBudget)}</span>
                                     </div>
                                     <div className="erp-budget-amount">
-                                      <span className="erp-amount-label">사용 금액</span>
+                                      <span className="erp-amount-label">{t('erp:BudgetManagement.t_8dacd326')}</span>
                                       <span className="erp-amount-value">{formatCurrency(budget.usedBudget || 0)}</span>
                                     </div>
                                     <div className="erp-budget-amount">
-                                      <span className="erp-amount-label">잔여 금액</span>
+                                      <span className="erp-amount-label">{t('erp:BudgetManagement.t_cc5d8b16')}</span>
                                       <span
                                         className={`erp-amount-value ${isOverBudget ? 'text-danger' : 'text-success'}`}
                                       >
@@ -624,7 +624,7 @@ const BudgetManagement = () => {
 
                                   <div className="erp-budget-progress">
                                     <div className="erp-progress-header">
-                                      <span>사용률</span>
+                                      <span>{t('erp:BudgetManagement.t_897659ea')}</span>
                                       <span className={`fw-bold ${isOverBudget ? 'text-danger' : 'text-primary'}`}>
                                         {usagePercentage.toFixed(1)}%
                                       </span>
@@ -651,8 +651,8 @@ const BudgetManagement = () => {
                           <div className="erp-empty-icon">
                             <PiggyBank size={24} aria-hidden />
                           </div>
-                          <h3>예산이 없습니다</h3>
-                          <p>새로운 예산을 추가하여 시작해보세요.</p>
+                          <h3>{t('erp:BudgetManagement.t_269c245f')}</h3>
+                          <p>{t('erp:BudgetManagement.t_6bed278b')}</p>
                           {canManageBudget && (
                             <MGButton
                               variant="primary"
@@ -662,7 +662,7 @@ const BudgetManagement = () => {
                               onClick={() => setShowCreateModal(true)}
                               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                              첫 번째 예산 추가
+                              {t('erp:BudgetManagement.t_c58ced33')}
                             </MGButton>
                           )}
                         </div>
@@ -677,9 +677,9 @@ const BudgetManagement = () => {
                       <div className="erp-section-title">
                         <h2>
                           <i className="bi bi-tags" />
-                          예산 카테고리
+                          {t('erp:BudgetManagement.t_8c78d195')}
                         </h2>
-                        <p>예산 분류를 위한 카테고리 목록입니다.</p>
+                        <p>{t('erp:BudgetManagement.t_9a81db87')}</p>
                       </div>
                     </div>
 
@@ -699,13 +699,13 @@ const BudgetManagement = () => {
                               </p>
                               <div className="erp-details">
                                 <div className="erp-detail">
-                                  <span className="erp-label">코드:</span>
+                                  <span className="erp-label">{t('erp:BudgetManagement.t_3c6d4b7d')}</span>
                                   <span className="erp-value">
                                     <SafeText>{category.codeValue}</SafeText>
                                   </span>
                                 </div>
                                 <div className="erp-detail">
-                                  <span className="erp-label">정렬:</span>
+                                  <span className="erp-label">{t('erp:BudgetManagement.t_d98008e6')}</span>
                                   <span className="erp-value">
                                     <SafeText>{category.sortOrder}</SafeText>
                                   </span>
@@ -720,8 +720,8 @@ const BudgetManagement = () => {
                         <div className="erp-empty-icon">
                           <i className="bi bi-tags" />
                         </div>
-                        <h3>예산 카테고리가 없습니다</h3>
-                        <p>로그인 후 예산 카테고리를 확인할 수 있습니다.</p>
+                        <h3>{t('erp:BudgetManagement.t_3053c77f')}</h3>
+                        <p>{t('erp:BudgetManagement.t_e6dde6df')}</p>
                         {!isLoggedIn && (
                           <MGButton
                             variant="primary"
@@ -730,7 +730,7 @@ const BudgetManagement = () => {
                             className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           >
-                            로그인하기
+                            {t('erp:BudgetManagement.t_3ddd853b')}
                           </MGButton>
                         )}
                       </div>
@@ -744,52 +744,52 @@ const BudgetManagement = () => {
                       <div className="erp-section-title">
                         <h2>
                           <i className="bi bi-graph-up" />
-                          예산 보고서
+                          {t('erp:BudgetManagement.t_a2c1e850')}
                         </h2>
-                        <p>예산 사용 현황과 통계를 확인할 수 있습니다.</p>
+                        <p>{t('erp:BudgetManagement.t_61334e66')}</p>
                       </div>
                     </div>
 
                     <div className="erp-stats-grid mg-v2-erp-dashboard-kpi-grid">
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">총 예산</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">{t('erp:BudgetManagement.t_b8a443b3')}</h3>
                           <DollarSign size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--primary" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--primary">
                             {formatCurrency(budgets.reduce((sum, b) => sum + (b.totalBudget || 0), 0))}
                           </div>
-                          <span className="mg-v2-ad-b0kla__kpi-label">전체 예산</span>
+                          <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_802b3641')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--orange erp-stat-card">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">사용된 예산</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">{t('erp:BudgetManagement.t_20a7e171')}</h3>
                           <TrendingUp size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--warning" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
                             {formatCurrency(budgets.reduce((sum, b) => sum + (b.usedBudget || 0), 0))}
                           </div>
-                          <span className="mg-v2-ad-b0kla__kpi-label">사용 금액</span>
+                          <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_8dacd326')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent erp-stat-card">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">잔여 예산</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">{t('erp:BudgetManagement.t_9215d601')}</h3>
                           <PiggyBank size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--success" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
                             {formatCurrency(budgets.reduce((sum, b) => sum + (b.remainingBudget || 0), 0))}
                           </div>
-                          <span className="mg-v2-ad-b0kla__kpi-label">잔액</span>
+                          <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_b025a34c')}</span>
                         </div>
                       </div>
                       <div className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent--blue erp-stat-card">
                         <div className="mg-v2-ad-b0kla__chart-header">
-                          <h3 className="mg-v2-ad-b0kla__chart-title">평균 사용률</h3>
+                          <h3 className="mg-v2-ad-b0kla__chart-title">{t('erp:BudgetManagement.t_2b80b7a9')}</h3>
                           <Percent size={24} aria-hidden className="mg-v2-ad-b0kla__kpi-value--info" />
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
@@ -801,7 +801,7 @@ const BudgetManagement = () => {
                               return `${usageRate.toFixed(1)}%`;
                             })()}
                           </div>
-                          <span className="mg-v2-ad-b0kla__kpi-label">전체 사용률</span>
+                          <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_b097d9c4')}</span>
                         </div>
                       </div>
                     </div>
@@ -811,9 +811,9 @@ const BudgetManagement = () => {
                         <div className="erp-section-title">
                           <h3>
                             <i className="bi bi-pie-chart" />
-                            카테고리별 예산 현황
+                            {t('erp:BudgetManagement.t_73719010')}
                           </h3>
-                          <p>각 카테고리별 예산 사용 현황을 확인할 수 있습니다.</p>
+                          <p>{t('erp:BudgetManagement.t_fc8663a3')}</p>
                         </div>
                       </div>
 
@@ -855,15 +855,15 @@ const BudgetManagement = () => {
                                   <div className="erp-card-body">
                                     <div className="erp-budget-amounts">
                                       <div className="erp-budget-amount">
-                                        <span className="erp-amount-label">총 예산</span>
+                                        <span className="erp-amount-label">{t('erp:BudgetManagement.t_b8a443b3')}</span>
                                         <span className="erp-amount-value">{formatCurrency(stats.totalBudget)}</span>
                                       </div>
                                       <div className="erp-budget-amount">
-                                        <span className="erp-amount-label">사용 금액</span>
+                                        <span className="erp-amount-label">{t('erp:BudgetManagement.t_8dacd326')}</span>
                                         <span className="erp-amount-value">{formatCurrency(stats.usedBudget)}</span>
                                       </div>
                                       <div className="erp-budget-amount">
-                                        <span className="erp-amount-label">잔여 금액</span>
+                                        <span className="erp-amount-label">{t('erp:BudgetManagement.t_cc5d8b16')}</span>
                                         <span
                                           className={`erp-amount-value ${isOverBudget ? 'text-danger' : 'text-success'}`}
                                         >
@@ -874,7 +874,7 @@ const BudgetManagement = () => {
 
                                     <div className="erp-budget-progress">
                                       <div className="erp-progress-header">
-                                        <span>사용률</span>
+                                        <span>{t('erp:BudgetManagement.t_897659ea')}</span>
                                         <span className={`fw-bold ${isOverBudget ? 'text-danger' : 'text-primary'}`}>
                                           {usageRate.toFixed(1)}%
                                         </span>
@@ -902,8 +902,8 @@ const BudgetManagement = () => {
                           <div className="erp-empty-icon">
                             <i className="bi bi-pie-chart" />
                           </div>
-                          <h3>예산 데이터가 없습니다</h3>
-                          <p>예산을 추가하면 카테고리별 통계를 확인할 수 있습니다.</p>
+                          <h3>{t('erp:BudgetManagement.t_de94235d')}</h3>
+                          <p>{t('erp:BudgetManagement.t_4f467e91')}</p>
                         </div>
                       )}
                     </div>
@@ -922,7 +922,7 @@ const BudgetManagement = () => {
           setShowCreateModal(false);
           resetNewBudgetForm();
         }}
-        title="새 예산 추가"
+        title={t('erp:BudgetManagement.t_68d316e7')}
         size="medium"
         showCloseButton
         backdropClick
@@ -931,7 +931,7 @@ const BudgetManagement = () => {
         <form onSubmit={handleCreateBudget}>
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label" htmlFor="budget-create-name">
-              예산명
+              {t('erp:BudgetManagement.t_b67f8470')}
             </label>
             <input
               id="budget-create-name"
@@ -943,7 +943,7 @@ const BudgetManagement = () => {
           </div>
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label" htmlFor="budget-create-category">
-              카테고리
+              {t('erp:BudgetManagement.t_31125b29')}
             </label>
             <select
               id="budget-create-category"
@@ -951,7 +951,7 @@ const BudgetManagement = () => {
               value={newBudget.category}
               onChange={(e) => setNewBudget({ ...newBudget, category: e.target.value })}
             >
-              <option value="">카테고리 선택</option>
+              <option value="">{t('erp:BudgetManagement.t_afd8cf39')}</option>
               {budgetCategories.map((category) => (
                 <option key={category.id} value={category.codeValue}>
                   {toDisplayString(category.codeLabel)}
@@ -961,7 +961,7 @@ const BudgetManagement = () => {
           </div>
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label" htmlFor="budget-create-planned">
-              계획 금액
+              {t('erp:BudgetManagement.t_f6a306d3')}
             </label>
             <input
               id="budget-create-planned"
@@ -988,7 +988,7 @@ const BudgetManagement = () => {
           <div className="mg-v2-form-grid">
             <div>
               <label className="mg-v2-form-label" htmlFor="budget-create-start">
-                시작일
+                {t('erp:BudgetManagement.t_453c56f5')}
               </label>
               <input
                 id="budget-create-start"
@@ -1000,7 +1000,7 @@ const BudgetManagement = () => {
             </div>
             <div>
               <label className="mg-v2-form-label" htmlFor="budget-create-end">
-                종료일
+                {t('erp:BudgetManagement.t_cad7c84c')}
               </label>
               <input
                 id="budget-create-end"
@@ -1013,7 +1013,7 @@ const BudgetManagement = () => {
           </div>
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label" htmlFor="budget-create-dept">
-              부서
+              {t('erp:BudgetManagement.t_e5b530d6')}
             </label>
             <input
               id="budget-create-dept"
@@ -1047,7 +1047,7 @@ const BudgetManagement = () => {
               preventDoubleClick={false}
               loading={loading}
             >
-              생성
+              {t('erp:BudgetManagement.t_d1a2d3a2')}
             </MGButton>
           </div>
         </form>
@@ -1056,7 +1056,7 @@ const BudgetManagement = () => {
       <UnifiedModal
         isOpen={!!editingBudget}
         onClose={() => setEditingBudget(null)}
-        title="예산 수정"
+        title={t('erp:BudgetManagement.t_82fa5b68')}
         size="medium"
         showCloseButton
         backdropClick
@@ -1066,7 +1066,7 @@ const BudgetManagement = () => {
           <form onSubmit={handleSaveEdit}>
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label" htmlFor="budget-edit-name">
-                예산명
+                {t('erp:BudgetManagement.t_b67f8470')}
               </label>
               <input
                 id="budget-edit-name"
@@ -1078,7 +1078,7 @@ const BudgetManagement = () => {
             </div>
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label" htmlFor="budget-edit-category">
-                카테고리
+                {t('erp:BudgetManagement.t_31125b29')}
               </label>
               <select
                 id="budget-edit-category"
@@ -1086,7 +1086,7 @@ const BudgetManagement = () => {
                 value={editingBudget.category || ''}
                 onChange={(e) => updateEditingField('category', e.target.value)}
               >
-                <option value="">카테고리 선택</option>
+                <option value="">{t('erp:BudgetManagement.t_afd8cf39')}</option>
                 {budgetCategories.map((category) => (
                   <option key={category.id} value={category.codeValue}>
                     {toDisplayString(category.codeLabel)}
@@ -1096,7 +1096,7 @@ const BudgetManagement = () => {
             </div>
             <div className="mg-v2-form-group">
               <label className="mg-v2-form-label" htmlFor="budget-edit-total">
-                총 예산
+                {t('erp:BudgetManagement.t_b8a443b3')}
               </label>
               <input
                 id="budget-edit-total"
@@ -1126,7 +1126,7 @@ const BudgetManagement = () => {
             <div className="mg-v2-form-grid">
               <div>
                 <label className="mg-v2-form-label" htmlFor="budget-edit-year">
-                  연도
+                  {t('erp:BudgetManagement.t_d5bc99dd')}
                 </label>
                 <input
                   id="budget-edit-year"
@@ -1138,7 +1138,7 @@ const BudgetManagement = () => {
               </div>
               <div>
                 <label className="mg-v2-form-label" htmlFor="budget-edit-month">
-                  월
+                  {t('erp:BudgetManagement.t_75448692')}
                 </label>
                 <input
                   id="budget-edit-month"

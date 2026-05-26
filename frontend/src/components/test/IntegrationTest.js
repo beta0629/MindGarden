@@ -15,6 +15,7 @@ import {
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './IntegrationTest.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 통합 테스트 컴포넌트
@@ -30,6 +31,7 @@ import './IntegrationTest.css';
  * @since 2025-01-05
  */
 const IntegrationTest = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [testResults, setTestResults] = useState(null);
   const [healthStatus, setHealthStatus] = useState(null);
@@ -264,7 +266,7 @@ const IntegrationTest = () => {
             gap: '8px'
           }}>
             <span style={{ fontSize: 'var(--font-size-xxl)' }}>⚡</span>
-            테스트 실행
+            {t('common:test.IntegrationTest.t_44750343')}
           </h3>
           <div style={{
             display: 'grid',
@@ -375,7 +377,7 @@ const IntegrationTest = () => {
               gap: '8px'
             }}>
               <span style={{ fontSize: 'var(--font-size-xxl)' }}>📊</span>
-              통합 테스트 결과
+              {t('common:test.IntegrationTest.t_c761127f')}
             </h3>
             <div style={{
               padding: '20px',
@@ -418,19 +420,19 @@ const IntegrationTest = () => {
               }}>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>시작 시간:</strong> {formatDateTime(testResults.startTime)}
+                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_97379b03')}</strong> {formatDateTime(testResults.startTime)}
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>종료 시간:</strong> {formatDateTime(testResults.endTime)}
+                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_86fe74ca')}</strong> {formatDateTime(testResults.endTime)}
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>실행 시간:</strong> {testResults.executionTimeMs}ms
+                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_f7f1463b')}</strong> {testResults.executionTimeMs}ms
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)', gridColumn: '1 / -1' }}>
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>메시지:</strong> {testResults.message || testResults.errorMessage}
+                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_1f9d49fa')}</strong> {testResults.message || testResults.errorMessage}
                 </p>
               </div>
               
@@ -449,7 +451,7 @@ const IntegrationTest = () => {
                     fontWeight: '600',
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-1f2937)
                     color: 'var(--mg-color-text-main)'
-                  }}>개별 테스트 결과:</h5>
+                  }}>{t('common:test.IntegrationTest.t_cc9372ef')}</h5>
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -532,7 +534,7 @@ const IntegrationTest = () => {
               gap: '8px'
             }}>
               <span style={{ fontSize: 'var(--font-size-xxl)' }}>💚</span>
-              시스템 헬스 상태
+              {t('common:test.IntegrationTest.t_e13821a9')}
             </h3>
             <div style={{
               padding: '20px',
@@ -555,7 +557,7 @@ const IntegrationTest = () => {
                   fontWeight: '600',
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-1f2937)
                   color: 'var(--mg-color-text-main)'
-                }}>시스템 상태</h4>
+                }}>{t('common:test.IntegrationTest.t_86a99580')}</h4>
                 <span style={{
                   padding: '6px 12px',
                   backgroundColor: healthStatus.overallStatus === 'HEALTHY' ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
@@ -575,15 +577,15 @@ const IntegrationTest = () => {
               }}>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>확인 시간:</strong> {formatDateTime(healthStatus.timestamp)}
+                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_4d0ba054')}</strong> {formatDateTime(healthStatus.timestamp)}
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>사용자 수:</strong> {healthStatus.userCount}
+                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_2812416b')}</strong> {healthStatus.userCount}
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)', gridColumn: '1 / -1' }}>
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>메시지:</strong>{' '}
+                  <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_1f9d49fa')}</strong>{' '}
                   {toDisplayString(healthStatus.message)}
                 </p>
               </div>
@@ -602,7 +604,7 @@ const IntegrationTest = () => {
                   fontWeight: '600',
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-1f2937)
                   color: 'var(--mg-color-text-main)'
-                }}>서비스 상태:</h5>
+                }}>{t('common:test.IntegrationTest.t_f3782d6d')}</h5>
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -673,7 +675,7 @@ const IntegrationTest = () => {
               gap: '8px'
             }}>
               <span style={{ fontSize: 'var(--font-size-xxl)' }}>⚡</span>
-              성능 테스트 결과
+              {t('common:test.IntegrationTest.t_8a66f21a')}
             </h3>
             <div style={{
               padding: '20px',
@@ -696,7 +698,7 @@ const IntegrationTest = () => {
                   fontWeight: '600',
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-1f2937)
                   color: 'var(--mg-color-text-main)'
-                }}>성능 측정 결과</h4>
+                }}>{t('common:test.IntegrationTest.t_b88b3021')}</h4>
                 <span style={{
                   padding: '6px 12px',
                   backgroundColor: performanceResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
@@ -718,15 +720,15 @@ const IntegrationTest = () => {
                   }}>
                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                      <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>평균 응답 시간:</strong> {performanceResults.averageResponseTime?.toFixed(2)}ms
+                      <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_c23bfba1')}</strong> {performanceResults.averageResponseTime?.toFixed(2)}ms
                     </p>
                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                      <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>최대 응답 시간:</strong> {performanceResults.maxResponseTime}ms
+                      <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_114ad829')}</strong> {performanceResults.maxResponseTime}ms
                     </p>
                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                      <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>최소 응답 시간:</strong> {performanceResults.minResponseTime}ms
+                      <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_8da1b466')}</strong> {performanceResults.minResponseTime}ms
                     </p>
                   </div>
                   <div style={{
@@ -743,7 +745,7 @@ const IntegrationTest = () => {
                       fontWeight: '600',
                       // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-1f2937)
                       color: 'var(--mg-color-text-main)'
-                    }}>개별 응답 시간:</h5>
+                    }}>{t('common:test.IntegrationTest.t_1c1f53f4')}</h5>
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
@@ -771,7 +773,7 @@ const IntegrationTest = () => {
                 <div>
                   <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                    <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>오류:</strong> {performanceResults.error}
+                    <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_af2dd61e')}</strong> {performanceResults.error}
                   </p>
                 </div>
               )}
@@ -801,7 +803,7 @@ const IntegrationTest = () => {
               gap: '8px'
             }}>
               <span style={{ fontSize: 'var(--font-size-xxl)' }}>🔒</span>
-              보안 테스트 결과
+              {t('common:test.IntegrationTest.t_9f4b25f8')}
             </h3>
             <div style={{
               padding: '20px',
@@ -824,7 +826,7 @@ const IntegrationTest = () => {
                   fontWeight: '600',
                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-main) -> var(--mg-custom-1f2937)
                   color: 'var(--mg-color-text-main)'
-                }}>보안 검증 결과</h4>
+                }}>{t('common:test.IntegrationTest.t_7e0217d0')}</h4>
                 <span style={{
                   padding: '6px 12px',
                   backgroundColor: securityResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
@@ -853,7 +855,7 @@ const IntegrationTest = () => {
                     border: '1px solid var(--mg-color-border-main)'
                   }}>
                     <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary-dark)', fontWeight: '500' }}>
-                      <strong>암호화 작동:</strong>
+                      <strong>{t('common:test.IntegrationTest.t_ae37a86f')}</strong>
                     </span>
                     <span style={{
                       padding: '4px 8px',
@@ -877,7 +879,7 @@ const IntegrationTest = () => {
                     border: '1px solid var(--mg-color-border-main)'
                   }}>
                     <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary-dark)', fontWeight: '500' }}>
-                      <strong>역할 검증:</strong>
+                      <strong>{t('common:test.IntegrationTest.t_bc0826f1')}</strong>
                     </span>
                     <span style={{
                       padding: '4px 8px',
@@ -902,7 +904,7 @@ const IntegrationTest = () => {
                     gridColumn: '1 / -1'
                   }}>
                     <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary-dark)', fontWeight: '500' }}>
-                      <strong>보안 점수:</strong>
+                      <strong>{t('common:test.IntegrationTest.t_eb0db623')}</strong>
                     </span>
                     <span style={{
                       padding: '4px 8px',
@@ -920,7 +922,7 @@ const IntegrationTest = () => {
                 <div>
                   <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--mg-color-text-secondary)' }}>
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: var(--mg-color-text-secondary-dark) -> var(--mg-custom-374151)
-                    <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>오류:</strong> {securityResults.error}
+                    <strong style={{ color: 'var(--mg-color-text-secondary-dark)' }}>{t('common:test.IntegrationTest.t_af2dd61e')}</strong> {securityResults.error}
                   </p>
                 </div>
               )}

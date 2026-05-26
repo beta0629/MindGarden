@@ -324,7 +324,7 @@ const ScheduleDetailModal = ({
         <UnifiedModal
             isOpen={showCancelConfirm}
             onClose={() => setShowCancelConfirm(false)}
-            title="예약 취소 확인"
+            title={t('schedule:ScheduleDetailModal.t_98f3fec9')}
             size="large"
             variant="confirm"
             zIndex={SCHEDULE_DETAIL_Z_INDEX_CONFIRM}
@@ -348,7 +348,7 @@ const ScheduleDetailModal = ({
                         onClick={() => setShowCancelConfirm(false)}
                         disabled={loading}
                     >
-                        아니오
+                        {t('schedule:ScheduleDetailModal.t_cfef357d')}
                     </MGButton>
                     <MGButton
                         type="button"
@@ -364,12 +364,12 @@ const ScheduleDetailModal = ({
                         onClick={handleCancelSchedule}
                         loading={loading}
                     >
-                        예, 취소합니다
+                        {t('schedule:ScheduleDetailModal.t_dd7bb7ae')}
                     </MGButton>
                 </div>
             )}
         >
-            <p>정말로 이 예약을 취소하시겠습니까?</p>
+            <p>{t('schedule:ScheduleDetailModal.t_e45e3fc9')}</p>
         </UnifiedModal>
     );
 
@@ -380,7 +380,7 @@ const ScheduleDetailModal = ({
         <UnifiedModal
             isOpen={showConfirmModal}
             onClose={() => setShowConfirmModal(false)}
-            title="예약 확정"
+            title={t('schedule:ScheduleDetailModal.t_a64e8746')}
             size="large"
             variant="confirm"
             zIndex={SCHEDULE_DETAIL_Z_INDEX_CONFIRM}
@@ -420,18 +420,18 @@ const ScheduleDetailModal = ({
                         onClick={handleConfirmSchedule}
                         loading={loading}
                     >
-                        확정
+                        {t('schedule:ScheduleDetailModal.t_55536106')}
                     </MGButton>
                 </div>
             )}
         >
-            <p>내담자의 입금을 확인하셨습니까?</p>
+            <p>{t('schedule:ScheduleDetailModal.t_31b8f8ba')}</p>
             <div className="mg-form-group">
-                <label className="mg-v2-label">입금 확인 메모 (선택, 예약 확정 시에만 저장)</label>
+                <label className="mg-v2-label">{t('schedule:ScheduleDetailModal.t_ba4baffb')}</label>
                 <textarea
                     value={adminNote}
                     onChange={(e) => setAdminNote(e.target.value)}
-                    placeholder="입금 확인 완료"
+                    placeholder={t('schedule:ScheduleDetailModal.t_2709bbf3')}
                     className="mg-v2-textarea mg-v2-input schedule-detail-modal__admin-note-input"
                 />
             </div>
@@ -449,7 +449,7 @@ const ScheduleDetailModal = ({
                 <UnifiedModal
                     isOpen={true}
                     onClose={onClose}
-                    title="처리 중"
+                    title={t('schedule:ScheduleDetailModal.t_bd04d7e4')}
                     size="large"
                     loading={true}
                     showCloseButton={false}
@@ -684,10 +684,10 @@ const ScheduleDetailModal = ({
             return (
                 <div className="schedule-detail-modal__footer-msg">
                     <p className="schedule-detail-modal__footer-msg-lead">
-                        🏖️ 이 이벤트는 상담사의 휴가입니다.
+                        {t('schedule:ScheduleDetailModal.t_cb2cab8e')}
                     </p>
                     <p className="schedule-detail-modal__footer-msg-sub">
-                        해당 시간대에는 상담이 불가능합니다.
+                        {t('schedule:ScheduleDetailModal.t_d403d748')}
                     </p>
                 </div>
             );
@@ -696,10 +696,10 @@ const ScheduleDetailModal = ({
             return (
                 <div className="schedule-detail-modal__footer-msg schedule-detail-modal__footer-msg--client">
                     <p className="schedule-detail-modal__footer-msg-lead schedule-detail-modal__footer-msg-lead--neutral">
-                        📅 예약 정보를 확인하실 수 있습니다.
+                        {t('schedule:ScheduleDetailModal.t_43407f7e')}
                     </p>
                     <p className="schedule-detail-modal__footer-msg-sub">
-                        예약 변경이 필요하신 경우 상담사에게 문의해주세요.
+                        {t('schedule:ScheduleDetailModal.t_d8085f4b')}
                     </p>
                 </div>
             );
@@ -723,7 +723,7 @@ const ScheduleDetailModal = ({
                                 onClick={handleEditSchedule}
                                 disabled={loading}
                             >
-                                예약 변경
+                                {t('schedule:ScheduleDetailModal.t_a8136a0a')}
                             </MGButton>
                         )}
                         <MGButton
@@ -740,7 +740,7 @@ const ScheduleDetailModal = ({
                             onClick={() => setShowConfirmModal(true)}
                             disabled={loading}
                         >
-                            예약 확정
+                            {t('schedule:ScheduleDetailModal.t_a64e8746')}
                         </MGButton>
                         <MGButton
                             type="button"
@@ -756,7 +756,7 @@ const ScheduleDetailModal = ({
                             onClick={() => setShowCancelConfirm(true)}
                             disabled={loading}
                         >
-                            예약 취소
+                            {t('schedule:ScheduleDetailModal.t_7f40dc74')}
                         </MGButton>
                     </>
                 )}
@@ -780,7 +780,7 @@ const ScheduleDetailModal = ({
                                 onClick={handleWriteConsultationLog}
                                 disabled={loading}
                             >
-                                상담일지 작성
+                                {t('schedule:ScheduleDetailModal.t_a0658140')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -796,7 +796,7 @@ const ScheduleDetailModal = ({
                                 onClick={() => handleStatusChange(completedStatus)}
                                 disabled={loading}
                             >
-                                완료 처리
+                                {t('schedule:ScheduleDetailModal.t_a9f9a032')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -812,7 +812,7 @@ const ScheduleDetailModal = ({
                                 onClick={() => setShowCancelConfirm(true)}
                                 disabled={loading}
                             >
-                                예약 취소
+                                {t('schedule:ScheduleDetailModal.t_7f40dc74')}
                             </MGButton>
                         </>
                     );
@@ -836,7 +836,7 @@ const ScheduleDetailModal = ({
                             onClick={() => handleStatusChange(bookedStatus)}
                             disabled={loading}
                         >
-                            다시 예약
+                            {t('schedule:ScheduleDetailModal.t_2b4049c1')}
                         </MGButton>
                     );
                 })()}
@@ -859,7 +859,7 @@ const ScheduleDetailModal = ({
                             onClick={() => handleStatusChange(bookedStatus)}
                             disabled={loading}
                         >
-                            다시 예약
+                            {t('schedule:ScheduleDetailModal.t_2b4049c1')}
                         </MGButton>
                     );
                 })()}
@@ -873,7 +873,7 @@ const ScheduleDetailModal = ({
             <UnifiedModal
                 isOpen={isOpen}
                 onClose={onClose}
-                title="일정 상세"
+                title={t('schedule:ScheduleDetailModal.t_9cd38a93')}
                 size="large"
                 backdropClick={true}
                 showCloseButton={true}
@@ -891,7 +891,7 @@ const ScheduleDetailModal = ({
                         <div
                             className="schedule-detail-modal__tabs__track"
                             role="tablist"
-                            aria-label="일정 상세 보기"
+                            aria-label={t('schedule:ScheduleDetailModal.t_b07dbada')}
                         >
                             <MGButton
                                 type="button"
@@ -908,7 +908,7 @@ const ScheduleDetailModal = ({
                                 aria-selected={activeDetailTab === 'detail'}
                                 role="tab"
                             >
-                                상세
+                                {t('schedule:ScheduleDetailModal.t_bb446431')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -959,20 +959,20 @@ const ScheduleDetailModal = ({
                             </StatusBadge>
                         </div>
                         <div className="schedule-detail-modal__summary-item">
-                            <span className="schedule-detail-modal__summary-label">유형</span>
+                            <span className="schedule-detail-modal__summary-label">{t('schedule:ScheduleDetailModal.t_80577c5f')}</span>
                             <span className="schedule-detail-modal__summary-value">
                                 <SafeText>{isVacationEvent() ? getVacationTypeDisplay(displayData.vacationType) : convertConsultationTypeToKorean(displayData.consultationType)}</SafeText>
                             </span>
                         </div>
                         <div className="schedule-detail-modal__summary-item">
-                            <span className="schedule-detail-modal__summary-label">시간</span>
+                            <span className="schedule-detail-modal__summary-label">{t('schedule:ScheduleDetailModal.t_6c35133c')}</span>
                             <span className="schedule-detail-modal__summary-value">
                                 <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
                             </span>
                         </div>
                         {showNotesTab && (
                             <div className="schedule-detail-modal__summary-item">
-                                <span className="schedule-detail-modal__summary-label">특이사항</span>
+                                <span className="schedule-detail-modal__summary-label">{t('schedule:ScheduleDetailModal.t_e5261918')}</span>
                                 <span className="schedule-detail-modal__summary-value">
                                     <SafeText>
                                         {toSafeNumber(clientNotesUnresolvedCount, 0) > 0
@@ -999,7 +999,7 @@ const ScheduleDetailModal = ({
                                         aria-expanded={partyQuickView === 'client'}
                                         aria-label={`내담자 요약 열기, ${toDisplayString(parsedClientName, '내담자')}`}
                                         renderActions={() => (
-                                            <span className="schedule-detail-modal__party-card-hint">요약 보기</span>
+                                            <span className="schedule-detail-modal__party-card-hint">{t('schedule:ScheduleDetailModal.t_c72a6f07')}</span>
                                         )}
                                     />
                                 ) : (
@@ -1009,7 +1009,7 @@ const ScheduleDetailModal = ({
                                         name={<SafeText fallback="내담자 정보 없음">{parsedClientName}</SafeText>}
                                         badges={<span className="schedule-detail-modal__party-role-label">{t('common.labels.client')}</span>}
                                         renderActions={canPartyQuickSummary ? () => (
-                                            <span className="schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
+                                            <span className="schedule-detail-modal__party-link--disabled">{t('schedule:ScheduleDetailModal.t_e870adbf')}</span>
                                         ) : undefined}
                                     />
                                 )}
@@ -1030,7 +1030,7 @@ const ScheduleDetailModal = ({
                                         aria-expanded={partyQuickView === 'consultant'}
                                         aria-label={`상담사 요약 열기, ${toDisplayString(parsedConsultantName, '상담사')}`}
                                         renderActions={() => (
-                                            <span className="schedule-detail-modal__party-card-hint">요약 보기</span>
+                                            <span className="schedule-detail-modal__party-card-hint">{t('schedule:ScheduleDetailModal.t_c72a6f07')}</span>
                                         )}
                                     />
                                 ) : (
@@ -1044,7 +1044,7 @@ const ScheduleDetailModal = ({
                                           </span>
                                         }
                                         renderActions={canPartyQuickSummary ? () => (
-                                            <span className="schedule-detail-modal__party-link--disabled">ID 정보 없음</span>
+                                            <span className="schedule-detail-modal__party-link--disabled">{t('schedule:ScheduleDetailModal.t_e870adbf')}</span>
                                         ) : undefined}
                                     />
                                 )}
@@ -1052,11 +1052,11 @@ const ScheduleDetailModal = ({
                     )}
 
                     <div className="section-content schedule-detail-modal__detail-rows">
-                        <ClientSummaryField label="이벤트" className="schedule-detail-modal__detail-row">
+                        <ClientSummaryField label={t('schedule:ScheduleDetailModal.t_bff20dc3')} className="schedule-detail-modal__detail-row">
                             <SafeText>{displayData.title}</SafeText>
                         </ClientSummaryField>
                         {isVacationEvent() && (
-                            <ClientSummaryField label="휴가 사유" className="schedule-detail-modal__detail-row">
+                            <ClientSummaryField label={t('schedule:ScheduleDetailModal.t_772af33f')} className="schedule-detail-modal__detail-row">
                                 <SafeText fallback="사유 없음">{displayData.description ?? displayData.reason}</SafeText>
                             </ClientSummaryField>
                         )}

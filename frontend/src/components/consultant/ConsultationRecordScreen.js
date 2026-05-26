@@ -523,10 +523,10 @@ const ConsultationRecordScreen = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="상담일지 작성">
+      <AdminCommonLayout title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}>
         <ContentArea ariaLabel="상담일지 작성 로딩">
           <div className="consultation-record-screen-loading">
-            <div className="mg-loading">로딩중...</div>
+            <div className="mg-loading">{t('common:consultant.ConsultationRecordScreen.t_f596b561')}</div>
           </div>
         </ContentArea>
       </AdminCommonLayout>
@@ -535,10 +535,10 @@ const ConsultationRecordScreen = () => {
 
   if (!consultation || !client) {
     return (
-      <AdminCommonLayout title="상담일지 작성">
+      <AdminCommonLayout title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}>
         <ContentArea ariaLabel="상담일지 작성">
           <ContentHeader
-            title="상담일지 작성"
+            title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}
             subtitle="상담 정보를 불러올 수 없습니다."
             titleId={CONSULTATION_RECORD_TITLE_ID}
           />
@@ -548,10 +548,10 @@ const ConsultationRecordScreen = () => {
   }
 
   return (
-    <AdminCommonLayout title="상담일지 작성">
+    <AdminCommonLayout title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}>
       <ContentArea ariaLabel="상담일지 작성">
         <ContentHeader
-          title="상담일지 작성"
+          title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}
           subtitle="내담자 정보와 세션 내용을 기록합니다."
           titleId={CONSULTATION_RECORD_TITLE_ID}
         />
@@ -559,7 +559,7 @@ const ConsultationRecordScreen = () => {
       {/* 내담자 정보 카드 */}
       <div className="mg-v2-card mg-mb-lg">
         <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
-          👤 내담자 정보
+          {t('common:consultant.ConsultationRecordScreen.t_dac6c054')}
         </h2>
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
@@ -567,11 +567,11 @@ const ConsultationRecordScreen = () => {
             <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>나이</span>
+            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_6c620e5c')}</span>
             <span style={styles.clientInfoValue}>{client.age != null ? `${client.age}세` : '—'}</span>
           </div>
           <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>성별</span>
+            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_77737feb')}</span>
             <span style={styles.clientInfoValue}>
               <SafeText>{client.gender === 'MALE' ? '남' : client.gender === 'FEMALE' ? '여' : client.gender}</SafeText>
             </span>
@@ -581,11 +581,11 @@ const ConsultationRecordScreen = () => {
             <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.email}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>전화번호</span>
+            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_9a1c3aaa')}</span>
             <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.phone}</SafeText></span>
           </div>
           <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>주소</span>
+            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_117bab80')}</span>
             <span style={styles.clientInfoValue}>
               <SafeText fallback="정보 없음">{[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ')}</SafeText>
             </span>
@@ -604,7 +604,7 @@ const ConsultationRecordScreen = () => {
             </span>
           </div>
           <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>등급</span>
+            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_89dbf513')}</span>
             <span style={styles.clientInfoValue}>
               {client.grade === 'BRONZE' && '🥉 브론즈'}
               {client.grade === 'SILVER' && '🥈 실버'}
@@ -614,7 +614,7 @@ const ConsultationRecordScreen = () => {
             </span>
           </div>
           <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>가입일</span>
+            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_170f7b92')}</span>
             <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.createdAt?.split('T')[0]}</SafeText></span>
           </div>
         </div>
@@ -625,13 +625,13 @@ const ConsultationRecordScreen = () => {
       {/* 상담일지 작성 폼 */}
       <div style={styles.formCard}>
         <h2 style={styles.formTitle}>
-          📋 상담일지 작성
+          {t('common:consultant.ConsultationRecordScreen.t_b8e6fb4d')}
         </h2>
         
         <div style={styles.formGrid}>
           {/* 기본 정보 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>세션 일자 *</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_9d161eee')}</label>
             <input
               type="date"
               name="sessionDate"
@@ -643,7 +643,7 @@ const ConsultationRecordScreen = () => {
           </div>
           
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>세션 번호</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_6ee27466')}</label>
             <input
               type="number"
               name="sessionNumber"
@@ -655,7 +655,7 @@ const ConsultationRecordScreen = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>세션 시간 (분)</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_ad01b2b5')}</label>
             <input
               type="number"
               name="sessionDurationMinutes"
@@ -668,7 +668,7 @@ const ConsultationRecordScreen = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>세션 완료 여부</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_19279be8')}</label>
             <select
               name="isSessionCompleted"
               value={formData.isSessionCompleted}
@@ -685,12 +685,12 @@ const ConsultationRecordScreen = () => {
 
           {/* 내담자 상태 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>내담자 현재 상태 *</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_fa35dc53')}</label>
             <textarea
               name="clientCondition"
               value={formData.clientCondition}
               onChange={handleInputChange}
-              placeholder="내담자의 현재 상태, 기분, 행동 등을 자세히 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_d59656e7')}
               style={styles.formTextarea}
               required
             />
@@ -698,12 +698,12 @@ const ConsultationRecordScreen = () => {
 
           {/* 주요 이슈 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>주요 상담 이슈 *</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_e633a3f6')}</label>
             <textarea
               name="mainIssues"
               value={formData.mainIssues}
               onChange={handleInputChange}
-              placeholder="이번 세션에서 다룬 주요 이슈나 문제를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_1e9fdda7')}
               style={styles.formTextarea}
               required
             />
@@ -711,12 +711,12 @@ const ConsultationRecordScreen = () => {
 
           {/* 개입 방법 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>개입 방법 *</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_5620da99')}</label>
             <textarea
               name="interventionMethods"
               value={formData.interventionMethods}
               onChange={handleInputChange}
-              placeholder="사용한 상담 기법, 치료 방법, 개입 전략 등을 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_5159282d')}
               style={styles.formTextarea}
               required
             />
@@ -724,12 +724,12 @@ const ConsultationRecordScreen = () => {
 
           {/* 내담자 반응 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>내담자 반응 및 변화 *</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_845225fc')}</label>
             <textarea
               name="clientResponse"
               value={formData.clientResponse}
               onChange={handleInputChange}
-              placeholder="내담자의 반응, 변화, 감정 표현 등을 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_8fd7e314')}
               style={styles.formTextarea}
               required
             />
@@ -737,30 +737,30 @@ const ConsultationRecordScreen = () => {
 
           {/* 다음 세션 계획 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>다음 세션 계획</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_6856fca3')}</label>
             <textarea
               name="nextSessionPlan"
               value={formData.nextSessionPlan}
               onChange={handleInputChange}
-              placeholder="다음 세션에서 다룰 계획이나 목표를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_39067e66')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 과제 부여 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>과제 부여</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_a6c7c7d5')}</label>
             <textarea
               name="homeworkAssigned"
               value={formData.homeworkAssigned}
               onChange={handleInputChange}
-              placeholder="내담자에게 부여한 과제나 숙제를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_b4fdaee3')}
               style={styles.formTextarea}
             />
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>과제 제출 기한</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_ec235921')}</label>
             <input
               type="date"
               name="homeworkDueDate"
@@ -772,7 +772,7 @@ const ConsultationRecordScreen = () => {
 
           {/* 위험도 평가 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>위험도 평가 *</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_92495efd')}</label>
             <select
               name="riskAssessment"
               value={formData.riskAssessment}
@@ -781,7 +781,7 @@ const ConsultationRecordScreen = () => {
               required
               disabled={loadingCodes}
             >
-              <option value="">위험도를 선택하세요</option>
+              <option value="">{t('common:consultant.ConsultationRecordScreen.t_39150dda')}</option>
               {riskLevels.map(level => (
                 <option key={level.value} value={level.value} style={{ color: level.color }}>
                   {level.icon} {level.label}
@@ -791,19 +791,19 @@ const ConsultationRecordScreen = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>위험 요소</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_be6337f1')}</label>
             <textarea
               name="riskFactors"
               value={formData.riskFactors}
               onChange={handleInputChange}
-              placeholder="위험 요소나 우려사항을 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_b4a5c279')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 진행도 평가 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>진행도 점수 (0-100)</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_e7b28555')}</label>
             <input
               type="range"
               name="progressScore"
@@ -820,19 +820,19 @@ const ConsultationRecordScreen = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>진행도 평가</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_526df8c3')}</label>
             <textarea
               name="progressEvaluation"
               value={formData.progressEvaluation}
               onChange={handleInputChange}
-              placeholder="진행도에 대한 상세한 평가를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_c7df43de')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 목표 달성도 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>목표 달성도</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_51041d7f')}</label>
             <select
               name="goalAchievement"
               value={formData.goalAchievement}
@@ -848,108 +848,108 @@ const ConsultationRecordScreen = () => {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>목표 달성 상세</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_5a5ee490')}</label>
             <textarea
               name="goalAchievementDetails"
               value={formData.goalAchievementDetails}
               onChange={handleInputChange}
-              placeholder="목표 달성에 대한 상세한 내용을 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_3a2cf0b7')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 상담사 관찰사항 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>상담사 관찰사항</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_1cf7189f')}</label>
             <textarea
               name="consultantObservations"
               value={formData.consultantObservations}
               onChange={handleInputChange}
-              placeholder="상담사가 관찰한 내용을 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_d81ff6a0')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 상담사 평가 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>상담사 평가</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_2ee2ab8d')}</label>
             <textarea
               name="consultantAssessment"
               value={formData.consultantAssessment}
               onChange={handleInputChange}
-              placeholder="상담사가 평가한 내용을 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_49ffbe86')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 특별 고려사항 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>특별 고려사항</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_aec2075b')}</label>
             <textarea
               name="specialConsiderations"
               value={formData.specialConsiderations}
               onChange={handleInputChange}
-              placeholder="특별히 고려해야 할 사항을 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_a7a3fb64')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 의료 정보 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>의료 정보</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_824dd6de')}</label>
             <textarea
               name="medicalInformation"
               value={formData.medicalInformation}
               onChange={handleInputChange}
-              placeholder="의료 관련 정보를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_d3a6608a')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 약물 정보 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>약물 정보</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_b933b126')}</label>
             <textarea
               name="medicationInfo"
               value={formData.medicationInfo}
               onChange={handleInputChange}
-              placeholder="복용 중인 약물 정보를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_eda8a47e')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 가족 관계 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>가족 관계</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_38576d81')}</label>
             <textarea
               name="familyRelationships"
               value={formData.familyRelationships}
               onChange={handleInputChange}
-              placeholder="가족 관계에 대한 정보를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_b531fee5')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 사회적 지원 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>사회적 지원</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_4cba7523')}</label>
             <textarea
               name="socialSupport"
               value={formData.socialSupport}
               onChange={handleInputChange}
-              placeholder="사회적 지원 체계에 대한 정보를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_78039485')}
               style={styles.formTextarea}
             />
           </div>
 
           {/* 환경적 요인 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>환경적 요인</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_45dd416d')}</label>
             <textarea
               name="environmentalFactors"
               value={formData.environmentalFactors}
               onChange={handleInputChange}
-              placeholder="환경적 요인에 대한 정보를 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_7679a7f3')}
               style={styles.formTextarea}
             />
           </div>
@@ -957,12 +957,12 @@ const ConsultationRecordScreen = () => {
           {/* 미완료 사유 */}
           {!formData.isSessionCompleted && (
             <div style={styles.formGroup}>
-              <label style={styles.formLabel}>미완료 사유</label>
+              <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_58561e6f')}</label>
               <textarea
                 name="incompletionReason"
                 value={formData.incompletionReason}
                 onChange={handleInputChange}
-                placeholder="세션이 미완료된 이유를 기록해주세요."
+                placeholder={t('common:consultant.ConsultationRecordScreen.t_0c9f8f20')}
                 style={styles.formTextarea}
               />
             </div>
@@ -970,7 +970,7 @@ const ConsultationRecordScreen = () => {
 
           {/* 다음 세션 예정일 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>다음 세션 예정일</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_f2b8c5e7')}</label>
             <input
               type="date"
               name="nextSessionDate"
@@ -982,18 +982,18 @@ const ConsultationRecordScreen = () => {
 
           {/* 후속 조치사항 */}
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>후속 조치사항</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_0a6da346')}</label>
             <textarea
               name="followUpActions"
               value={formData.followUpActions}
               onChange={handleInputChange}
-              placeholder="후속 조치가 필요한 사항을 기록해주세요."
+              placeholder={t('common:consultant.ConsultationRecordScreen.t_8e6ab501')}
               style={styles.formTextarea}
             />
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.formLabel}>후속 조치 기한</label>
+            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_83b65ae8')}</label>
             <input
               type="date"
               name="followUpDueDate"
@@ -1025,7 +1025,7 @@ const ConsultationRecordScreen = () => {
             disabled={saving}
             loading={saving}
           >
-            💾 저장
+            {t('common:consultant.ConsultationRecordScreen.t_854d3bd6')}
           </MGButton>
           <MGButton
             type="button"
@@ -1036,7 +1036,7 @@ const ConsultationRecordScreen = () => {
             disabled={saving}
             loading={saving}
           >
-            ✅ 완료
+            {t('common:consultant.ConsultationRecordScreen.t_e43453e6')}
           </MGButton>
         </div>
       </div>

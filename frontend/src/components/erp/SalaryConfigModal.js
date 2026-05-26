@@ -144,7 +144,7 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title="급여 기산일 설정"
+      title={t('erp:SalaryConfigModal.t_a1802bde')}
       size="medium"
       className="mg-v2-ad-b0kla salary-config-modal"
     >
@@ -167,10 +167,10 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           )}
 
           <div className="config-section">
-            <h4>급여 기산일 설정</h4>
-            <p className="config-section-desc">매월 급여를 몇 일 기준으로 계산할지 정합니다. 선택한 날짜가 해당 월의 계산 시작일이 됩니다.</p>
+            <h4>{t('erp:SalaryConfigModal.t_a1802bde')}</h4>
+            <p className="config-section-desc">{t('erp:SalaryConfigModal.t_495add23')}</p>
             <div className="config-item">
-              <label>월급여 기산일</label>
+              <label>{t('erp:SalaryConfigModal.t_78ec5cce')}</label>
               <BadgeSelect
                 value={configs.monthlyBaseDay}
                 onChange={(val) => handleInputChange('monthlyBaseDay', val)}
@@ -181,8 +181,8 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             </div>
 
             <div className="config-item">
-              <label>급여 지급일</label>
-              <span className="config-item-hint">해당 월 급여를 다음 달 몇 일에 지급할지 선택합니다.</span>
+              <label>{t('erp:SalaryConfigModal.t_41604b0b')}</label>
+              <span className="config-item-hint">{t('erp:SalaryConfigModal.t_cd31fe36')}</span>
               <BadgeSelect
                 value={configs.paymentDay}
                 onChange={(val) => handleInputChange('paymentDay', Number(val))}
@@ -193,8 +193,8 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
             </div>
 
             <div className="config-item">
-              <label>급여 마감일</label>
-              <span className="config-item-hint">해당 월에 포함할 상담·실적을 몇 일까지로 볼지(마감일) 정합니다.</span>
+              <label>{t('erp:SalaryConfigModal.t_c260dfde')}</label>
+              <span className="config-item-hint">{t('erp:SalaryConfigModal.t_8b2e3d73')}</span>
               <BadgeSelect
                 value={configs.cutoffDay}
                 onChange={(val) => handleInputChange('cutoffDay', val)}
@@ -206,10 +206,10 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
 
           <div className="config-section">
-            <h4>배치 설정</h4>
+            <h4>{t('erp:SalaryConfigModal.t_b4be4900')}</h4>
             
             <div className="config-item">
-              <label>배치 실행 주기</label>
+              <label>{t('erp:SalaryConfigModal.t_1ea0bbdd')}</label>
               <BadgeSelect
                 value={configs.batchCycle}
                 onChange={(val) => handleInputChange('batchCycle', val)}
@@ -221,10 +221,10 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
 
           <div className="config-section">
-            <h4>급여 계산 방식</h4>
-            <p className="config-section-desc">상담사 급여를 어떤 기준으로 계산할지(상담 건수·시간당·고정급 등) 선택합니다.</p>
+            <h4>{t('erp:SalaryConfigModal.t_fd1fdee1')}</h4>
+            <p className="config-section-desc">{t('erp:SalaryConfigModal.t_6b0a032e')}</p>
             <div className="config-item">
-              <label>계산 방식</label>
+              <label>{t('erp:SalaryConfigModal.t_516c6018')}</label>
               <BadgeSelect
                 value={configs.calculationMethod}
                 onChange={(val) => handleInputChange('calculationMethod', val)}
@@ -236,30 +236,30 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
           </div>
 
           <div className="config-preview">
-            <h4>설정 미리보기</h4>
+            <h4>{t('erp:SalaryConfigModal.t_d2776aa0')}</h4>
             <div className="preview-item">
-              <span>급여 기산일:</span>
+              <span>{t('erp:SalaryConfigModal.t_c1b19919')}</span>
               <ErpSafeText
                 className="preview-item__value"
                 value={configs.monthlyBaseDay === 'LAST_DAY' ? '매월 말일' : `매월 ${configs.monthlyBaseDay}일`}
               />
             </div>
             <div className="preview-item">
-              <span>급여 지급일:</span>
+              <span>{t('erp:SalaryConfigModal.t_76c14995')}</span>
               <ErpSafeText
                 className="preview-item__value"
                 value={`익월 ${configs.paymentDay}일`}
               />
             </div>
             <div className="preview-item">
-              <span>급여 마감일:</span>
+              <span>{t('erp:SalaryConfigModal.t_7410b88d')}</span>
               <ErpSafeText
                 className="preview-item__value"
                 value={configs.cutoffDay === 'LAST_DAY' ? '매월 말일' : `매월 ${configs.cutoffDay}일`}
               />
             </div>
             <div className="preview-item">
-              <span>배치 주기:</span>
+              <span>{t('erp:SalaryConfigModal.t_b81fc18d')}</span>
               <ErpSafeText
                 className="preview-item__value"
                 value={configs.batchCycle === 'MONTHLY' ? '월별' : configs.batchCycle === 'SEMI_MONTHLY' ? '반월별' : '주별'}

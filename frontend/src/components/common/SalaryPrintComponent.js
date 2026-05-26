@@ -2,6 +2,7 @@ import React from 'react';
 import PrintComponent from './PrintComponent';
 import { SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL } from '../../constants/salaryConstants';
 import { buildSalaryCalculationComponentRows } from '../../utils/salaryCalculationDisplay';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 급여 계산서 프린트 컴포넌트
@@ -32,9 +33,10 @@ const SalaryPrintComponent = ({
   includeTaxDetails = true,
   includeCalculationDetails = true
 }) => {
+  const { t } = useTranslation();
 
   if (!salaryData) {
-    return <div>급여 데이터가 없습니다.</div>;
+    return <div>{t('common:common.SalaryPrintComponent.t_f00ebcb0')}</div>;
   }
 
   const toNum = (value) => {
@@ -119,7 +121,7 @@ const SalaryPrintComponent = ({
       }}
     >
       <div className="salary-header">
-        <h1 className="salary-title">급여 계산서</h1>
+        <h1 className="salary-title">{t('common:common.SalaryPrintComponent.t_3974b882')}</h1>
         <div className="salary-subtitle">
           {period} 급여 지급 내역
         </div>
@@ -127,22 +129,22 @@ const SalaryPrintComponent = ({
 
       <div className="salary-info">
         <div>
-          <strong>상담사:</strong> {consultantName}
+          <strong>{t('common:common.SalaryPrintComponent.t_a30d6da9')}</strong> {consultantName}
         </div>
         <div>
-          <strong>계산 기간:</strong> {period}
+          <strong>{t('common:common.SalaryPrintComponent.t_4a3e877f')}</strong> {period}
         </div>
         <div>
-          <strong>출력일:</strong> {new Date().toLocaleDateString('ko-KR')}
+          <strong>{t('common:common.SalaryPrintComponent.t_dbc050d6')}</strong> {new Date().toLocaleDateString('ko-KR')}
         </div>
       </div>
 
       <table className="salary-table">
         <thead>
           <tr>
-            <th className="salary-table-header salary-table-header--item">항목</th>
-            <th className="salary-table-header salary-table-header--amount">금액</th>
-            <th className="salary-table-header salary-table-header--note">비고</th>
+            <th className="salary-table-header salary-table-header--item">{t('common:common.SalaryPrintComponent.t_1e591967')}</th>
+            <th className="salary-table-header salary-table-header--amount">{t('common:common.SalaryPrintComponent.t_64454827')}</th>
+            <th className="salary-table-header salary-table-header--note">{t('common:common.SalaryPrintComponent.t_75cffa41')}</th>
           </tr>
         </thead>
         <tbody>
@@ -161,47 +163,47 @@ const SalaryPrintComponent = ({
             </tr>
           )}
           <tr className="total-row">
-            <td className="label">총 급여 (세전)</td>
+            <td className="label">{t('common:common.SalaryPrintComponent.t_92a15637')}</td>
             <td>{formatCurrency(grossPreTax)}</td>
             <td>-</td>
           </tr>
           {includeTaxDetails && (
             <tr className="tax-row">
-              <td className="label">원천징수 (3.3%)</td>
+              <td className="label">{t('common:common.SalaryPrintComponent.t_315a1dfd')}</td>
               <td>-{formatCurrency(salaryData.taxAmount)}</td>
-              <td>세금</td>
+              <td>{t('common:common.SalaryPrintComponent.t_8f266fdc')}</td>
             </tr>
           )}
           <tr className="net-row">
-            <td className="label">실지급액 (세후)</td>
+            <td className="label">{t('common:common.SalaryPrintComponent.t_c3363939')}</td>
             <td>{formatCurrency(netSalary)}</td>
-            <td>최종 지급액</td>
+            <td>{t('common:common.SalaryPrintComponent.t_090d1302')}</td>
           </tr>
         </tbody>
       </table>
 
       {includeCalculationDetails && (
         <div className="salary-calculation-details">
-          <h3 className="salary-calculation-title">계산 상세</h3>
+          <h3 className="salary-calculation-title">{t('common:common.SalaryPrintComponent.t_d76f1031')}</h3>
           <table className="salary-table">
             <tbody>
               <tr>
-                <td className="label salary-table-label">상담 완료 건수</td>
+                <td className="label salary-table-label">{t('common:common.SalaryPrintComponent.t_822f299d')}</td>
                 <td className="salary-table-value">{salaryData.consultationCount || 0}건</td>
                 <td className="salary-table-desc">
                   {period} 기간 중 완료된 상담 건수
                 </td>
               </tr>
               <tr>
-                <td className="label">계산 상태</td>
+                <td className="label">{t('common:common.SalaryPrintComponent.t_e185943a')}</td>
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 <td>{salaryData.status || 'PENDING'}</td>
-                <td className="salary-table-desc">급여 계산 상태</td>
+                <td className="salary-table-desc">{t('common:common.SalaryPrintComponent.t_a594214b')}</td>
               </tr>
               <tr>
-                <td className="label">지급 예정일</td>
+                <td className="label">{t('common:common.SalaryPrintComponent.t_dc14e91c')}</td>
                 <td>{salaryData.payDate || '-'}</td>
-                <td className="salary-table-desc">실제 지급 예정일</td>
+                <td className="salary-table-desc">{t('common:common.SalaryPrintComponent.t_e91bda46')}</td>
               </tr>
             </tbody>
           </table>
@@ -210,10 +212,10 @@ const SalaryPrintComponent = ({
 
       <div className="salary-footer">
         <div className="salary-footer-text">
-          본 급여 계산서는 Core Solution 통합 상담관리 시스템에서 자동 생성되었습니다.
+          {t('common:common.SalaryPrintComponent.t_92adb3f6')}
         </div>
         <div className="salary-footer-text">
-          문의사항이 있으시면 관리자에게 연락해주세요.
+          {t('common:common.SalaryPrintComponent.t_a7368a3f')}
         </div>
       </div>
     </PrintComponent>

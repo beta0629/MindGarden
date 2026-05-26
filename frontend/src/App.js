@@ -392,7 +392,7 @@ function AppContent() {
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/landing" element={<CounselingCenterLanding />} />
             <Route path="/test/modal" element={<div className="mg-modal" />} />
-            <Route path="/test/loading" element={<div className="mg-loading">로딩중...</div>} />
+            <Route path="/test/loading" element={<div className="mg-loading">{t('common:misc.App.t_f596b561')}</div>} />
             <Route path="/test/header" element={<UnifiedHeader />} />
             {/* Phase 3: 통합 로그인 시스템 */}
             <Route path="/login" element={<UnifiedLogin />} />
@@ -539,7 +539,7 @@ function AppContent() {
               path="/consultant/salary-settlement"
               element={(
                 <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
-                  <AdminCommonLayout title="급여 정산">
+                  <AdminCommonLayout title={t('common:misc.App.t_943bafd7')}>
                     <div className="mg-v2-ad-b0kla">
                       <div className="mg-v2-ad-b0kla__container">
                         <ConsultantSalarySettlement />
@@ -553,7 +553,7 @@ function AppContent() {
             {/* 상담사 리뉴얼 라우트 (ConsultantAppShell) */}
             <Route path="/consultant/renewal" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
-                <ConsultantAppShell title="홈" />
+                <ConsultantAppShell title={t('common:misc.App.t_13a46f96')} />
               </ProtectedRoute>
             }>
               <Route index element={<Navigate to="/consultant/renewal/dashboard" replace />} />
@@ -571,7 +571,7 @@ function AppContent() {
             {/* 상담사 "더보기" 하위 라우트 (웰니스·커뮤니티 접근) */}
             <Route path="/consultant/more" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
-                <ConsultantAppShell title="더보기" />
+                <ConsultantAppShell title={t('common:misc.App.t_0b680789')} />
               </ProtectedRoute>
             }>
               <Route index element={<ConsultantMoreHub />} />
@@ -584,7 +584,7 @@ function AppContent() {
             {/* 내담자 "더보기" 하위 라우트 */}
             <Route path="/client/more" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                <ClientAppShell title="더보기" />
+                <ClientAppShell title={t('common:misc.App.t_0b680789')} />
               </ProtectedRoute>
             }>
               <Route path="community" element={<CommunityFeed primaryColor="var(--mg-client-primary)" />} />
@@ -760,7 +760,7 @@ function AppContent() {
             <Route
               path="/admin/integrated-schedule"
               element={
-                <AdminCommonLayout title="통합 스케줄링">
+                <AdminCommonLayout title={t('common:misc.App.t_d67bbae4')}>
                   <IntegratedMatchingSchedule />
                 </AdminCommonLayout>
               }
@@ -842,7 +842,7 @@ function AppContent() {
               />
             } />
             <Route path="/admin/statistics" element={
-              <AdminCommonLayout title="통계">
+              <AdminCommonLayout title={t('common:misc.App.t_4938fae0')}>
                 <StatisticsDashboard 
                   userRole={user?.role || USER_ROLES.ADMIN}
                   userId={user?.id}
@@ -850,7 +850,7 @@ function AppContent() {
               </AdminCommonLayout>
             } />
             <Route path="/admin/statistics-dashboard" element={
-              <AdminCommonLayout title="통계 대시보드">
+              <AdminCommonLayout title={t('common:misc.App.t_505d75b1')}>
                 <StatisticsDashboard 
                   userRole={user?.role || USER_ROLES.ADMIN}
                   userId={user?.id}
@@ -862,20 +862,20 @@ function AppContent() {
             {/* 시스템 관리 라우트 (준비중) */}
             <Route path="/admin/system" element={
               <ComingSoon 
-                title="시스템 도구"
-                description="시스템 도구 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+                title={t('common:misc.App.t_e9f4e81d')}
+                description={t('common:misc.App.t_9c05a0b8')}
               />
             } />
             <Route path="/admin/logs" element={
               <ComingSoon 
-                title="시스템 로그"
-                description="시스템 로그 조회 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+                title={t('common:misc.App.t_e0975ea1')}
+                description={t('common:misc.App.t_b33b95c1')}
               />
             } />
             <Route path="/admin/settings" element={
               <ComingSoon 
-                title="관리자 설정"
-                description="관리자 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+                title={t('common:misc.App.t_5fb8cd23')}
+                description={t('common:misc.App.t_31e74062')}
               />
             } />
             
@@ -896,8 +896,8 @@ function AppContent() {
             <Route path="/erp/salary" element={<SalaryManagement />} />
             <Route path="/erp/orders" element={
               <ComingSoon 
-                title="주문 관리"
-                description="주문 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+                title={t('common:misc.App.t_0078005e')}
+                description={t('common:misc.App.t_51d5ba99')}
               />
             } />
             
@@ -908,14 +908,14 @@ function AppContent() {
             <Route path="/admin/erp/budget" element={<Navigate to="/erp/budget" replace />} />
             <Route path="/admin/erp/reports" element={
               <ComingSoon 
-                title="ERP 보고서"
-                description="ERP 보고서 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+                title={t('common:misc.App.t_8834c5d2')}
+                description={t('common:misc.App.t_5415fec8')}
               />
             } />
             
             {/* 관리자 추가 메뉴 (준비중) */}
             <Route path="/admin/branches" element={
-              <ComingSoon title="준비 중" description="해당 기능은 현재 개발 중입니다." />
+              <ComingSoon title={t('common:misc.App.t_e86e2d3d')} description={t('common:misc.App.t_4faaeca4')} />
             } />
             <Route path="/admin/branch-create" element={<Navigate to="/admin/branches" replace />} />
             <Route path="/admin/branch-hierarchy" element={<Navigate to="/admin/branches" replace />} />

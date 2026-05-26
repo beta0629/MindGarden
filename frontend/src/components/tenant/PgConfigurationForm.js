@@ -473,7 +473,7 @@ const PgConfigurationForm = ({
               {mode === 'create' ? 'PG 설정 등록' : t('common:tenant.PgConfigurationForm.t_f83199fc')}
             </h2>
             <p className="form-description">
-              결제 게이트웨이 설정 정보를 입력해주세요. 입력한 정보는 암호화되어 저장되며, 승인 후 사용 가능합니다.
+              {t('common:tenant.PgConfigurationForm.t_d037693e')}
             </p>
           </>
         )}
@@ -481,11 +481,11 @@ const PgConfigurationForm = ({
           <div className="form-info-box">
             <InfoIcon size={18} />
             <div>
-              <strong>안내사항</strong>
+              <strong>{t('common:tenant.PgConfigurationForm.t_bb58140f')}</strong>
               <ul>
-                <li>등록한 PG 설정은 운영 포털에서 승인 절차를 거칩니다.</li>
-                <li>승인 대기 중에는 수정 및 삭제가 가능합니다.</li>
-                <li>승인 완료 후에는 수정이 제한됩니다.</li>
+                <li>{t('common:tenant.PgConfigurationForm.t_e33f60a4')}</li>
+                <li>{t('common:tenant.PgConfigurationForm.t_2867aeed')}</li>
+                <li>{t('common:tenant.PgConfigurationForm.t_e4cbd4d6')}</li>
               </ul>
             </div>
           </div>
@@ -494,8 +494,8 @@ const PgConfigurationForm = ({
           <div className="form-warning-box">
             <AlertCircleIcon size={18} />
             <div>
-              <strong>수정 안내</strong>
-              <p>승인 대기 중인 설정만 수정할 수 있습니다. 수정 후 다시 승인 절차를 거칩니다.</p>
+              <strong>{t('common:tenant.PgConfigurationForm.t_b1e3631b')}</strong>
+              <p>{t('common:tenant.PgConfigurationForm.t_989f1eea')}</p>
             </div>
           </div>
         )}
@@ -505,7 +505,7 @@ const PgConfigurationForm = ({
         {/* PG 제공자 */}
         <div className="form-group">
           <label htmlFor="pgProvider" className="required">
-            PG사 <span className="required-mark">*</span>
+            {t('common:tenant.PgConfigurationForm.t_8501bba2')} <span className="required-mark">*</span>
           </label>
           <select
             id="pgProvider"
@@ -514,7 +514,7 @@ const PgConfigurationForm = ({
             className={`form-select ${getFieldError('pgProvider') ? 'error' : ''}`}
             disabled={mode === 'edit'}
           >
-            <option value="">PG사를 선택하세요</option>
+            <option value="">{t('common:tenant.PgConfigurationForm.t_f1298535')}</option>
             {pgProviders.map((provider) => (
               <option key={provider.value} value={provider.value}>
                 {provider.label}
@@ -535,26 +535,26 @@ const PgConfigurationForm = ({
             aria-labelledby="pg-config-kicc-section-title"
           >
             <h3 id="pg-config-kicc-section-title" className="pg-config-form__kicc-title">
-              KICC 이지페이 연동
+              {t('common:tenant.PgConfigurationForm.t_fe50a080')}
             </h3>
             <div className="mg-v2-ad-b0kla-info-box pg-config-portone-v2-banner" role="status">
               <p className="mg-v2-info-text pg-config-portone-v2-notice-line">
-                KICC 이지페이 온라인 결제 API 연동입니다. Mall ID는 가맹점 ID 필드에 입력합니다. API 키·상점 검증키는 KICC에서 발급받은 값을 사용합니다.
+                {t('common:tenant.PgConfigurationForm.t_a964d7a4')}
               </p>
               <ul className="pg-config-kicc-doc-list">
                 <li>
                   <a href={KICC_DOCS_LLM_INDEX_URL} target="_blank" rel="noopener noreferrer">
-                    API 목록 (llms.txt)
+                    {t('common:tenant.PgConfigurationForm.t_9b5b8bc2')}
                   </a>
                 </li>
                 <li>
                   <a href={KICC_DOCS_ONLINE_PAYMENT_BASE} target="_blank" rel="noopener noreferrer">
-                    온라인 결제 개요·연동
+                    {t('common:tenant.PgConfigurationForm.t_754a3ee1')}
                   </a>
                 </li>
                 <li>
                   <a href={KICC_DOCS_AI_GUIDE_URL} target="_blank" rel="noopener noreferrer">
-                    AI 연동 주의(민감정보·타임아웃 등)
+                    {t('common:tenant.PgConfigurationForm.t_87393955')}
                   </a>
                 </li>
               </ul>
@@ -562,14 +562,14 @@ const PgConfigurationForm = ({
 
             <div className="form-group">
               <label htmlFor="merchantIdKicc" className="required">
-                Mall ID (상점 ID) <span className="required-mark">*</span>
+                {t('common:tenant.PgConfigurationForm.t_600349b6')} <span className="required-mark">*</span>
               </label>
               <input
                 id="merchantIdKicc"
                 type="text"
                 value={formData.merchantId}
                 onChange={(e) => handleChange('merchantId', e.target.value)}
-                placeholder="KICC에서 부여한 Mall ID"
+                placeholder={t('common:tenant.PgConfigurationForm.t_0f6d2993')}
                 className={`form-input ${getFieldError('merchantId') ? 'error' : ''}`}
                 maxLength={255}
                 autoComplete="off"
@@ -587,15 +587,15 @@ const PgConfigurationForm = ({
                 <InfoIcon size={14} aria-hidden="true" />
                 문서상 8바이트 상점 ID입니다. 연동 세부 사항은{' '}
                 <a href={KICC_DOCS_ONLINE_PAYMENT_BASE} target="_blank" rel="noopener noreferrer">
-                  KICC 온라인 결제 문서
+                  {t('common:tenant.PgConfigurationForm.t_d6366a39')}
                 </a>
-                를 참고하세요.
+                {t('common:tenant.PgConfigurationForm.t_b416d62f')}
               </small>
             </div>
 
             <div className="form-group">
               <label htmlFor="apiKeyKicc" className="required">
-                API 키 <span className="required-mark">*</span>
+                {t('common:tenant.PgConfigurationForm.t_84a0aecd')} <span className="required-mark">*</span>
               </label>
               <div className="input-with-icon">
                 <input
@@ -603,7 +603,7 @@ const PgConfigurationForm = ({
                   type={showApiKey ? 'text' : 'password'}
                   value={formData.apiKey}
                   onChange={(e) => handleChange('apiKey', e.target.value)}
-                  placeholder="KICC에서 안내한 상점 연동용 키"
+                  placeholder={t('common:tenant.PgConfigurationForm.t_f7b19082')}
                   className={`form-input ${getFieldError('apiKey') ? 'error' : ''}`}
                   autoComplete="new-password"
                   aria-required="true"
@@ -636,13 +636,13 @@ const PgConfigurationForm = ({
               )}
               <small id="apiKeyKicc-help" className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                저장 시 암호화됩니다. Phase 2에서 API 유형별로 사용합니다.
+                {t('common:tenant.PgConfigurationForm.t_7d80d562')}
               </small>
             </div>
 
             <div className="form-group">
               <label htmlFor="secretKeyKicc" className="required">
-                상점 검증키 (Secret Key) <span className="required-mark">*</span>
+                {t('common:tenant.PgConfigurationForm.t_011a415d')} <span className="required-mark">*</span>
               </label>
               <div className="input-with-icon">
                 <input
@@ -683,7 +683,7 @@ const PgConfigurationForm = ({
               )}
               <small id="secretKeyKicc-help" className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                승인·취소 등 msgAuthValue(HMAC-SHA256)에 사용됩니다. 연결 테스트는 거래상태 조회 API로 도메인·Mall ID를 확인합니다.
+                {t('common:tenant.PgConfigurationForm.t_0808c655')}
               </small>
             </div>
 
@@ -695,25 +695,25 @@ const PgConfigurationForm = ({
                   onChange={(e) => handleChange('testMode', e.target.checked)}
                   className="form-checkbox"
                 />
-                <span>테스트 모드</span>
+                <span>{t('common:tenant.PgConfigurationForm.t_cfd49442')}</span>
               </label>
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
                 테스트·운영 API 엔드포인트는 KICC 문서를 따릅니다.{' '}
                 <a href={KICC_DOCS_ONLINE_PAYMENT_BASE} target="_blank" rel="noopener noreferrer">
-                  온라인 결제 개요·연동
+                  {t('common:tenant.PgConfigurationForm.t_754a3ee1')}
                 </a>
               </small>
             </div>
 
             <div className="form-group">
-              <label htmlFor="kiccEasypayHostTest">이지페이 API 호스트 (테스트, 선택)</label>
+              <label htmlFor="kiccEasypayHostTest">{t('common:tenant.PgConfigurationForm.t_48f84567')}</label>
               <input
                 id="kiccEasypayHostTest"
                 type="text"
                 value={kiccEasypayHostTest}
                 onChange={(e) => setKiccEasypayHostTest(e.target.value)}
-                placeholder="비우면 서버 기본값·배포 설정 사용"
+                placeholder={t('common:tenant.PgConfigurationForm.t_14a0bb74')}
                 className="form-input"
                 maxLength={255}
                 autoComplete="off"
@@ -727,13 +727,13 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="kiccEasypayHostProd">이지페이 API 호스트 (운영, 선택)</label>
+              <label htmlFor="kiccEasypayHostProd">{t('common:tenant.PgConfigurationForm.t_94a4e6b3')}</label>
               <input
                 id="kiccEasypayHostProd"
                 type="text"
                 value={kiccEasypayHostProd}
                 onChange={(e) => setKiccEasypayHostProd(e.target.value)}
-                placeholder="비우면 서버 기본값·배포 설정 사용"
+                placeholder={t('common:tenant.PgConfigurationForm.t_14a0bb74')}
                 className="form-input"
                 maxLength={255}
                 autoComplete="off"
@@ -747,12 +747,12 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="notesKicc">비고 (선택)</label>
+              <label htmlFor="notesKicc">{t('common:tenant.PgConfigurationForm.t_3dc2da68')}</label>
               <textarea
                 id="notesKicc"
                 value={formData.notes}
                 onChange={(e) => handleChange('notes', e.target.value)}
-                placeholder="추가 정보나 메모를 입력하세요"
+                placeholder={t('common:tenant.PgConfigurationForm.t_66385fb9')}
                 className={`form-textarea ${getFieldError('notes') ? 'error' : ''}`}
                 rows={4}
                 maxLength={1000}
@@ -782,9 +782,9 @@ const PgConfigurationForm = ({
                 disabled={!canRunConnectionTest || testConnectionLoading}
                 loading={testConnectionLoading}
                 preventDoubleClick={false}
-                aria-label="PG 연결 테스트"
+                aria-label={t('common:tenant.PgConfigurationForm.t_66268139')}
               >
-                연결 테스트
+                {t('common:tenant.PgConfigurationForm.t_3da5c18d')}
               </MGButton>
               {!canRunConnectionTest && (
                 <p className="pg-config-portone-v2-test-hint">
@@ -811,14 +811,14 @@ const PgConfigurationForm = ({
             {/* B: 스토어 ID */}
             <div className="form-group">
               <label htmlFor="storeId" className="required">
-                스토어 ID <span className="required-mark">*</span>
+                {t('common:tenant.PgConfigurationForm.t_ed6daa8a')} <span className="required-mark">*</span>
               </label>
               <input
                 id="storeId"
                 type="text"
                 value={formData.storeId}
                 onChange={(e) => handleChange('storeId', e.target.value)}
-                placeholder="포트원 콘솔의 스토어 ID"
+                placeholder={t('common:tenant.PgConfigurationForm.t_7ea65e7f')}
                 className={`form-input ${getFieldError('storeId') ? 'error' : ''}`}
                 maxLength={255}
                 autoComplete="off"
@@ -834,14 +834,14 @@ const PgConfigurationForm = ({
               )}
               <small id="storeId-help" className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                포트원 결제모듈 V2 연동 시 콘솔에 표시되는 스토어 ID입니다. 입력 시 REST V2 API 시크릿 검증 경로가 사용됩니다.
+                {t('common:tenant.PgConfigurationForm.t_b673ba6f')}
               </small>
             </div>
 
             {/* C: API 시크릿 */}
             <div className="form-group">
               <label htmlFor="secretKey" className="required">
-                API 시크릿 <span className="required-mark">*</span>
+                {t('common:tenant.PgConfigurationForm.t_45959aa8')} <span className="required-mark">*</span>
               </label>
               <div className="input-with-icon">
                 <input
@@ -882,21 +882,21 @@ const PgConfigurationForm = ({
               )}
               <small id="secretKey-help" className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                포트원 REST V2 로그인(api-secret)에 사용됩니다. 저장 시 암호화되며, 수정 시에는 변경할 때만 새 값을 입력하면 됩니다.
+                {t('common:tenant.PgConfigurationForm.t_9aec1615')}
               </small>
             </div>
 
             {/* D: 웹훅 안내 */}
             <section className="pg-config-portone-v2-section" aria-labelledby="portone-webhook-guide-title">
               <h3 id="portone-webhook-guide-title" className="pg-config-portone-v2-section-title">
-                웹훅 URL 안내
+                {t('common:tenant.PgConfigurationForm.t_a8fb6e31')}
               </h3>
               <p className="pg-config-portone-v2-readonly-hint">
-                아래 값은 읽기 전용입니다. 포트원 콘솔 웹훅 설정에 동일하게 등록하세요.
+                {t('common:tenant.PgConfigurationForm.t_b3988a4e')}
               </p>
               <div className="pg-config-portone-v2-copy-row">
                 <label className="sr-only" htmlFor="portone-webhook-url-readonly">
-                  웹훅 URL
+                  {t('common:tenant.PgConfigurationForm.t_08d56e4c')}
                 </label>
                 <input
                   id="portone-webhook-url-readonly"
@@ -913,9 +913,9 @@ const PgConfigurationForm = ({
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleCopyWebhookUrl}
                   preventDoubleClick={false}
-                  aria-label="웹훅 URL 복사"
+                  aria-label={t('common:tenant.PgConfigurationForm.t_15c171af')}
                 >
-                  복사
+                  {t('common:tenant.PgConfigurationForm.t_a55b1ecb')}
                 </MGButton>
               </div>
               <dl className="pg-config-portone-v2-meta">
@@ -943,7 +943,7 @@ const PgConfigurationForm = ({
                   type={showPortoneWebhookSecret ? 'text' : 'password'}
                   value={portoneWebhookSecret}
                   onChange={(e) => handlePortoneWebhookSecretChange(e.target.value)}
-                  placeholder="포트원 콘솔에서 발급한 웹훅 시크릿"
+                  placeholder={t('common:tenant.PgConfigurationForm.t_e47bf0cd')}
                   className={`form-input ${getFieldError('portoneWebhookSecret') ? 'error' : ''}`}
                   autoComplete="new-password"
                   aria-describedby="portoneWebhookSecret-help"
@@ -977,13 +977,13 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="pgNameIamport">PG사 명칭 (선택)</label>
+              <label htmlFor="pgNameIamport">{t('common:tenant.PgConfigurationForm.t_28b4d68c')}</label>
               <input
                 id="pgNameIamport"
                 type="text"
                 value={formData.pgName}
                 onChange={(e) => handleChange('pgName', e.target.value)}
-                placeholder="예: 포트원 스토어 표시명"
+                placeholder={t('common:tenant.PgConfigurationForm.t_8e1e7a19')}
                 className={`form-input ${getFieldError('pgName') ? 'error' : ''}`}
                 maxLength={255}
               />
@@ -1003,21 +1003,21 @@ const PgConfigurationForm = ({
                   onChange={(e) => handleChange('testMode', e.target.checked)}
                   className="form-checkbox"
                 />
-                <span>테스트 모드</span>
+                <span>{t('common:tenant.PgConfigurationForm.t_cfd49442')}</span>
               </label>
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                테스트 모드에서는 실제 결제가 발생하지 않을 수 있습니다.
+                {t('common:tenant.PgConfigurationForm.t_6549da14')}
               </small>
             </div>
 
             <div className="form-group">
-              <label htmlFor="notesIamport">비고 (선택)</label>
+              <label htmlFor="notesIamport">{t('common:tenant.PgConfigurationForm.t_3dc2da68')}</label>
               <textarea
                 id="notesIamport"
                 value={formData.notes}
                 onChange={(e) => handleChange('notes', e.target.value)}
-                placeholder="추가 정보나 메모를 입력하세요"
+                placeholder={t('common:tenant.PgConfigurationForm.t_66385fb9')}
                 className={`form-textarea ${getFieldError('notes') ? 'error' : ''}`}
                 rows={4}
                 maxLength={1000}
@@ -1038,13 +1038,13 @@ const PgConfigurationForm = ({
         {!isIamportPortoneV2 && !isKicc && (
           <>
             <div className="form-group">
-              <label htmlFor="pgName">PG사 명칭 (선택)</label>
+              <label htmlFor="pgName">{t('common:tenant.PgConfigurationForm.t_28b4d68c')}</label>
               <input
                 id="pgName"
                 type="text"
                 value={formData.pgName}
                 onChange={(e) => handleChange('pgName', e.target.value)}
-                placeholder="예: 토스페이먼츠 테스트"
+                placeholder={t('common:tenant.PgConfigurationForm.t_f44152a8')}
                 className={`form-input ${getFieldError('pgName') ? 'error' : ''}`}
                 maxLength={255}
               />
@@ -1058,7 +1058,7 @@ const PgConfigurationForm = ({
 
             <div className="form-group">
               <label htmlFor="apiKey" className="required">
-                API 키 <span className="required-mark">*</span>
+                {t('common:tenant.PgConfigurationForm.t_84a0aecd')} <span className="required-mark">*</span>
               </label>
               <div className="input-with-icon">
                 <input
@@ -1066,7 +1066,7 @@ const PgConfigurationForm = ({
                   type={showApiKey ? 'text' : 'password'}
                   value={formData.apiKey}
                   onChange={(e) => handleChange('apiKey', e.target.value)}
-                  placeholder="API 키를 입력하세요"
+                  placeholder={t('common:tenant.PgConfigurationForm.t_5783418a')}
                   className={`form-input ${getFieldError('apiKey') ? 'error' : ''}`}
                   required
                   aria-required="true"
@@ -1099,13 +1099,13 @@ const PgConfigurationForm = ({
               )}
               <small id="apiKey-help" className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                API 키는 암호화되어 저장됩니다.
+                {t('common:tenant.PgConfigurationForm.t_280ae096')}
               </small>
             </div>
 
             <div className="form-group">
               <label htmlFor="secretKeyGeneric" className="required">
-                시크릿 키 <span className="required-mark">*</span>
+                {t('common:tenant.PgConfigurationForm.t_84414129')} <span className="required-mark">*</span>
               </label>
               <div className="input-with-icon">
                 <input
@@ -1113,7 +1113,7 @@ const PgConfigurationForm = ({
                   type={showSecretKey ? 'text' : 'password'}
                   value={formData.secretKey}
                   onChange={(e) => handleChange('secretKey', e.target.value)}
-                  placeholder="시크릿 키를 입력하세요"
+                  placeholder={t('common:tenant.PgConfigurationForm.t_cbcaefe9')}
                   className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
                   required
                   aria-required="true"
@@ -1146,38 +1146,38 @@ const PgConfigurationForm = ({
               )}
               <small id="secretKey-help-generic" className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                시크릿 키는 암호화되어 저장됩니다.
+                {t('common:tenant.PgConfigurationForm.t_12a840c6')}
               </small>
             </div>
 
             <div className="form-group">
-              <label htmlFor="merchantId">가맹점 ID (선택)</label>
+              <label htmlFor="merchantId">{t('common:tenant.PgConfigurationForm.t_de21a984')}</label>
               <input
                 id="merchantId"
                 type="text"
                 value={formData.merchantId}
                 onChange={(e) => handleChange('merchantId', e.target.value)}
-                placeholder="가맹점 ID를 입력하세요"
+                placeholder={t('common:tenant.PgConfigurationForm.t_ad2b7227')}
                 className="form-input"
                 maxLength={255}
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="storeIdGeneric">스토어 ID (선택)</label>
+              <label htmlFor="storeIdGeneric">{t('common:tenant.PgConfigurationForm.t_b4cc2524')}</label>
               <input
                 id="storeIdGeneric"
                 type="text"
                 value={formData.storeId}
                 onChange={(e) => handleChange('storeId', e.target.value)}
-                placeholder="스토어 ID를 입력하세요"
+                placeholder={t('common:tenant.PgConfigurationForm.t_29b3011a')}
                 className="form-input"
                 maxLength={255}
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="webhookUrl">웹훅 URL (선택)</label>
+              <label htmlFor="webhookUrl">{t('common:tenant.PgConfigurationForm.t_5827d6bc')}</label>
               <input
                 id="webhookUrl"
                 type="url"
@@ -1196,7 +1196,7 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="settingsJson">추가 설정 (JSON, 선택)</label>
+              <label htmlFor="settingsJson">{t('common:tenant.PgConfigurationForm.t_e18506f5')}</label>
               <textarea
                 id="settingsJson"
                 value={formData.settingsJson}
@@ -1208,12 +1208,12 @@ const PgConfigurationForm = ({
               />
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                PG별 추가 옵션을 JSON으로 전달합니다.
+                {t('common:tenant.PgConfigurationForm.t_37f36b9e')}
               </small>
             </div>
 
             <div className="form-group">
-              <label htmlFor="returnUrl">리턴 URL (선택)</label>
+              <label htmlFor="returnUrl">{t('common:tenant.PgConfigurationForm.t_a40bc1d3')}</label>
               <input
                 id="returnUrl"
                 type="url"
@@ -1232,7 +1232,7 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="cancelUrl">취소 URL (선택)</label>
+              <label htmlFor="cancelUrl">{t('common:tenant.PgConfigurationForm.t_d513d006')}</label>
               <input
                 id="cancelUrl"
                 type="url"
@@ -1258,21 +1258,21 @@ const PgConfigurationForm = ({
                   onChange={(e) => handleChange('testMode', e.target.checked)}
                   className="form-checkbox"
                 />
-                <span>테스트 모드</span>
+                <span>{t('common:tenant.PgConfigurationForm.t_cfd49442')}</span>
               </label>
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
-                테스트 모드에서는 실제 결제가 발생하지 않습니다.
+                {t('common:tenant.PgConfigurationForm.t_ca86098c')}
               </small>
             </div>
 
             <div className="form-group">
-              <label htmlFor="notes">비고 (선택)</label>
+              <label htmlFor="notes">{t('common:tenant.PgConfigurationForm.t_3dc2da68')}</label>
               <textarea
                 id="notes"
                 value={formData.notes}
                 onChange={(e) => handleChange('notes', e.target.value)}
-                placeholder="추가 정보나 메모를 입력하세요"
+                placeholder={t('common:tenant.PgConfigurationForm.t_66385fb9')}
                 className={`form-textarea ${getFieldError('notes') ? 'error' : ''}`}
                 rows={4}
                 maxLength={1000}
@@ -1306,9 +1306,9 @@ const PgConfigurationForm = ({
               disabled={!canRunConnectionTest || testConnectionLoading}
               loading={testConnectionLoading}
               preventDoubleClick={false}
-              aria-label="PG 연결 테스트"
+              aria-label={t('common:tenant.PgConfigurationForm.t_66268139')}
             >
-              연결 테스트
+              {t('common:tenant.PgConfigurationForm.t_3da5c18d')}
             </MGButton>
             {!canRunConnectionTest && (
               <p className="pg-config-portone-v2-test-hint">

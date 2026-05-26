@@ -3,6 +3,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 
 
 /**
@@ -27,6 +28,7 @@ export function getComplianceLevelModifier(level) {
 }
 
 export function OverallSection({ overallStatus, levelMod }) {
+  const { t } = useTranslation();
   if (!overallStatus) {
     return null;
   }
@@ -37,11 +39,11 @@ export function OverallSection({ overallStatus, levelMod }) {
     >
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h2 id="compliance-overall-heading" className="mg-v2-compliance-dashboard__card-title">
-          <span>종합 컴플라이언스 현황</span>
+          <span>{t('common:compliance.ComplianceDashboardCards.t_b53a88c2')}</span>
         </h2>
         <div className="mg-v2-compliance-dashboard__metrics">
           <div className="mg-v2-compliance-dashboard__metric">
-            <div className="mg-v2-compliance-dashboard__metric-label">종합 점수</div>
+            <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_29ac7208')}</div>
             <div
               className={`mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--${levelMod}`}
             >
@@ -49,7 +51,7 @@ export function OverallSection({ overallStatus, levelMod }) {
             </div>
           </div>
           <div className="mg-v2-compliance-dashboard__metric">
-            <div className="mg-v2-compliance-dashboard__metric-label">준수 수준</div>
+            <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_b6f6192b')}</div>
             <div
               className={`mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--inline mg-v2-compliance-dashboard__metric-value--${levelMod}`}
             >
@@ -57,7 +59,7 @@ export function OverallSection({ overallStatus, levelMod }) {
             </div>
           </div>
           <div className="mg-v2-compliance-dashboard__metric">
-            <div className="mg-v2-compliance-dashboard__metric-label">마지막 업데이트</div>
+            <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_d735b02d')}</div>
             <div className="mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--neutral">
               <SafeText fallback="N/A">
                 {overallStatus.lastUpdated
@@ -73,6 +75,7 @@ export function OverallSection({ overallStatus, levelMod }) {
 }
 
 export function ProcessingCard({ processingStatus }) {
+  const { t } = useTranslation();
   if (!processingStatus) {
     return null;
   }
@@ -80,17 +83,17 @@ export function ProcessingCard({ processingStatus }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>개인정보 처리 현황</span>
+          <span>{t('common:compliance.ComplianceDashboardCards.t_857f68b1')}</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">총 처리 건수:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_087f0ee4')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               {toDisplayString(processingStatus.totalCount ?? 0)}건
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">데이터 유형별:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_2b112411')}</span>
             <div className="mg-v2-compliance-dashboard__subgrid">
               {processingStatus.dataTypeStats &&
                 Object.entries(processingStatus.dataTypeStats).map(([type, count]) => (
@@ -110,6 +113,7 @@ export function ProcessingCard({ processingStatus }) {
 }
 
 export function ImpactCard({ impactAssessment }) {
+  const { t } = useTranslation();
   if (!impactAssessment) {
     return null;
   }
@@ -117,11 +121,11 @@ export function ImpactCard({ impactAssessment }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>개인정보 영향평가</span>
+          <span>{t('common:compliance.ComplianceDashboardCards.t_c1f0c59c')}</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">전체 위험도:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ff2e0b95')}</span>
             <span className="mg-v2-compliance-dashboard__value mg-v2-compliance-dashboard__value--risk">
               <SafeText fallback="미평가">
                 {impactAssessment.overallAssessment?.overallRiskLevel}
@@ -129,7 +133,7 @@ export function ImpactCard({ impactAssessment }) {
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">준수 상태:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_4ac79a4b')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="미평가">
                 {impactAssessment.overallAssessment?.complianceStatus}
@@ -137,7 +141,7 @@ export function ImpactCard({ impactAssessment }) {
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">개선 필요 영역:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_a6f23a87')}</span>
             <div className="mg-v2-compliance-dashboard__list">
               {impactAssessment.overallAssessment?.improvementAreas?.map((area) => (
                 <div key={area} className="mg-v2-compliance-dashboard__list-item">
@@ -153,6 +157,7 @@ export function ImpactCard({ impactAssessment }) {
 }
 
 export function BreachCard({ breachResponse }) {
+  const { t } = useTranslation();
   if (!breachResponse) {
     return null;
   }
@@ -160,17 +165,17 @@ export function BreachCard({ breachResponse }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>개인정보 침해사고 대응</span>
+          <span>{t('common:compliance.ComplianceDashboardCards.t_d7e04c00')}</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">대응팀 구성:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_71083ed2')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="N/A">{breachResponse.responseTeam?.teamLeader}</SafeText>
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">긴급 연락처:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_65c0f5a2')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="N/A">
                 {breachResponse.responseTeam?.contactInfo?.emergency}
@@ -178,7 +183,7 @@ export function BreachCard({ breachResponse }) {
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">대응 절차:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_7df26b5b')}</span>
             <div className="mg-v2-compliance-dashboard__list">
               {breachResponse.responseProcedures &&
                 Object.entries(breachResponse.responseProcedures).map(([step, procedure]) => (
@@ -198,6 +203,7 @@ export function BreachCard({ breachResponse }) {
 }
 
 export function EducationCard({ educationStatus }) {
+  const { t } = useTranslation();
   if (!educationStatus) {
     return null;
   }
@@ -205,11 +211,11 @@ export function EducationCard({ educationStatus }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>개인정보보호 교육 현황</span>
+          <span>{t('common:compliance.ComplianceDashboardCards.t_e9f98a96')}</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">이수율:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ffd1b583')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="N/A">
                 {educationStatus.completionStatus?.completionRate}
@@ -217,13 +223,13 @@ export function EducationCard({ educationStatus }) {
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">전체 임직원:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_467bd916')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               {toDisplayString(educationStatus.completionStatus?.totalEmployees ?? 0)}명
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">교육 프로그램:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_5fa20d46')}</span>
             <div className="mg-v2-compliance-dashboard__list">
               {educationStatus.educationPrograms &&
                 Object.entries(educationStatus.educationPrograms).map(([type, program]) => (
@@ -243,6 +249,7 @@ export function EducationCard({ educationStatus }) {
 }
 
 export function PolicyCard({ policyStatus }) {
+  const { t } = useTranslation();
   if (!policyStatus) {
     return null;
   }
@@ -250,11 +257,11 @@ export function PolicyCard({ policyStatus }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>개인정보 처리방침 현황</span>
+          <span>{t('common:compliance.ComplianceDashboardCards.t_95ab9a6b')}</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">회사명:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ea1ba45c')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="N/A">
                 {policyStatus.policyComponents?.basicInfo?.companyName}
@@ -262,7 +269,7 @@ export function PolicyCard({ policyStatus }) {
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">개인정보보호책임자:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_5823eb2a')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="N/A">
                 {policyStatus.policyComponents?.basicInfo?.privacyOfficer}
@@ -270,7 +277,7 @@ export function PolicyCard({ policyStatus }) {
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">마지막 업데이트:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_88107ea4')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="N/A">
                 {policyStatus.policyComponents?.basicInfo?.lastUpdated}
@@ -278,7 +285,7 @@ export function PolicyCard({ policyStatus }) {
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">다음 검토일:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_99ac659e')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="N/A">
                 {policyStatus.nextReviewDate
@@ -294,6 +301,7 @@ export function PolicyCard({ policyStatus }) {
 }
 
 export function DestructionCard({ destructionStatus }) {
+  const { t } = useTranslation();
   if (!destructionStatus) {
     return null;
   }
@@ -301,17 +309,17 @@ export function DestructionCard({ destructionStatus }) {
     <article className="mg-v2-compliance-dashboard__cell">
       <ContentCard className="mg-v2-compliance-dashboard__card">
         <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>개인정보 파기 현황</span>
+          <span>{t('common:compliance.ComplianceDashboardCards.t_aa3f6e4d')}</span>
         </h3>
         <div className="mg-v2-compliance-dashboard__card-body">
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">최근 1개월 파기 건수:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_87b2fe52')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               {toDisplayString(destructionStatus.totalDestroyed ?? 0)}건
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">마지막 파기:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_8d4540b5')}</span>
             <span className="mg-v2-compliance-dashboard__value">
               <SafeText fallback="N/A">
                 {destructionStatus.lastDestruction
@@ -321,7 +329,7 @@ export function DestructionCard({ destructionStatus }) {
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">파기 통계:</span>
+            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_c0c358b3')}</span>
             <div className="mg-v2-compliance-dashboard__subgrid">
               {destructionStatus.destructionStats &&
                 Object.entries(destructionStatus.destructionStats).map(([type, count]) => (
@@ -341,10 +349,11 @@ export function DestructionCard({ destructionStatus }) {
 }
 
 export function ComplianceQuickActions({ onOpenImpact, onOpenDestruction, onOpenEduPlan }) {
+  const { t } = useTranslation();
   return (
     <section
       className="mg-v2-compliance-dashboard__actions"
-      aria-label="컴플라이언스 빠른 작업"
+      aria-label={t('common:compliance.ComplianceDashboardCards.t_b5305340')}
     >
       <MGButton
         type="button"
@@ -354,7 +363,7 @@ export function ComplianceQuickActions({ onOpenImpact, onOpenDestruction, onOpen
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={onOpenImpact}
       >
-        영향평가 실행
+        {t('common:compliance.ComplianceDashboardCards.t_86fdae04')}
       </MGButton>
       <MGButton
         type="button"
@@ -364,7 +373,7 @@ export function ComplianceQuickActions({ onOpenImpact, onOpenDestruction, onOpen
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={onOpenDestruction}
       >
-        전체 파기 실행
+        {t('common:compliance.ComplianceDashboardCards.t_a7aed244')}
       </MGButton>
       <MGButton
         type="button"
@@ -374,7 +383,7 @@ export function ComplianceQuickActions({ onOpenImpact, onOpenDestruction, onOpen
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={onOpenEduPlan}
       >
-        교육 계획 수립
+        {t('common:compliance.ComplianceDashboardCards.t_419560bd')}
       </MGButton>
     </section>
   );

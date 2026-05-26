@@ -74,7 +74,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         <UnifiedModal
             isOpen={isOpen}
             onClose={onClose}
-            title="매칭 상세 정보"
+            title={t('admin:MappingDetailModal.t_693f386f')}
             size="large"
             className="mg-v2-ad-b0kla"
             backdropClick
@@ -96,7 +96,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                 {loading ? (
                     <div className="mg-v2-modal-body">
                         <div className="mg-v2-loading-container">
-                            <div className="mg-loading">로딩중...</div>
+                            <div className="mg-loading">{t('admin:MappingDetailModal.t_f596b561')}</div>
                         </div>
                     </div>
                 ) : (
@@ -112,7 +112,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 preventDoubleClick={false}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                기본 정보
+                                {t('admin:MappingDetailModal.t_eb7f501b')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -123,7 +123,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 preventDoubleClick={false}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                결제 정보
+                                {t('admin:MappingDetailModal.t_cc4993c8')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -134,7 +134,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 preventDoubleClick={false}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                회기 정보
+                                {t('admin:MappingDetailModal.t_8e5a3487')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -145,7 +145,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 preventDoubleClick={false}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                ERP 연동
+                                {t('admin:MappingDetailModal.t_36c76014')}
                             </MGButton>
                             <MGButton
                                 type="button"
@@ -156,7 +156,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 preventDoubleClick={false}
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             >
-                                변경 이력
+                                {t('admin:MappingDetailModal.t_14bf3e5b')}
                             </MGButton>
                         </div>
 
@@ -167,10 +167,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                             {activeTab === 'basic' && (
                                 <div className="basic-info-tab">
                                     <div className="mg-v2-ad-b0kla__card info-section">
-                                        <h4 className="mg-v2-ad-b0kla__section-title"><User size={18} className="mg-v2-icon-inline" /> 매칭 기본 정보</h4>
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><User size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_fd720290')}</h4>
                                         <div className="info-grid">
                                             <div className="info-item">
-                                                <label>매칭 ID</label>
+                                                <label>{t('admin:MappingDetailModal.t_8fddc854')}</label>
                                                 <span>#{mapping?.id}</span>
                                             </div>
                                             <div className="info-item">
@@ -178,18 +178,18 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 <span><StatusBadge status={mapping?.status} /></span>
                                             </div>
                                             <div className="info-item">
-                                                <label>결제 상태</label>
+                                                <label>{t('admin:MappingDetailModal.t_d39b762e')}</label>
                                                 <span>{getPaymentStatusBadge(mapping?.paymentStatus)}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>소속</label>
+                                                <label>{t('admin:MappingDetailModal.t_5d24a2fc')}</label>
                                                 <span>{mapping?.branchCode || '-'}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="mg-v2-ad-b0kla__card info-section">
-                                        <h4 className="mg-v2-ad-b0kla__section-title"><User size={18} className="mg-v2-icon-inline" /> 참여자 정보</h4>
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><User size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_94e68210')}</h4>
                                         <div className="participants-info mg-v2-ad-b0kla__counselor-list">
                                             <div className="mg-v2-ad-b0kla__counselor-item participant-card consultant">
                                                 <div className="mg-v2-ad-b0kla__counselor-avatar mg-v2-ad-b0kla__counselor-avatar--green">
@@ -213,22 +213,22 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                     </div>
 
                                     <div className="mg-v2-ad-b0kla__card info-section">
-                                        <h4 className="mg-v2-ad-b0kla__section-title"><Calendar size={18} className="mg-v2-icon-inline" /> 일정 정보</h4>
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><Calendar size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_615aae20')}</h4>
                                         <div className="info-grid">
                                             <div className="info-item">
-                                                <label>시작일</label>
+                                                <label>{t('admin:MappingDetailModal.t_453c56f5')}</label>
                                                 <span>{formatDate(mapping?.startDate)}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>생성일</label>
+                                                <label>{t('admin:MappingDetailModal.t_a5466453')}</label>
                                                 <span>{formatDate(mapping?.createdAt)}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>수정일</label>
+                                                <label>{t('admin:MappingDetailModal.t_38313ae9')}</label>
                                                 <span>{formatDate(mapping?.updatedAt)}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>종료일</label>
+                                                <label>{t('admin:MappingDetailModal.t_cad7c84c')}</label>
                                                 <span>{formatDate(mapping?.endDate)}</span>
                                             </div>
                                         </div>
@@ -239,20 +239,20 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                             {activeTab === 'payment' && (
                                 <div className="payment-info-tab">
                                     <div className="mg-v2-ad-b0kla__card info-section">
-                                        <h4 className="mg-v2-ad-b0kla__section-title"><CreditCard size={18} className="mg-v2-icon-inline" /> 결제 정보</h4>
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><CreditCard size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_cc4993c8')}</h4>
                                         <div className="info-grid">
                                             <div className="info-item">
-                                                <label>패키지명</label>
+                                                <label>{t('admin:MappingDetailModal.t_86796c3d')}</label>
                                                 <span>{mapping?.packageName || '-'}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>패키지 가격</label>
+                                                <label>{t('admin:MappingDetailModal.t_db433938')}</label>
                                                 <span className="amount-highlight">
                                                     {formatCurrency(mapping?.packagePrice)}
                                                 </span>
                                             </div>
                                             <div className="info-item">
-                                                <label>실제 결제 금액</label>
+                                                <label>{t('admin:MappingDetailModal.t_5fb664c2')}</label>
                                                 <span className="amount-highlight">
                                                     {formatCurrency(mapping?.paymentAmount)}
                                                 </span>
@@ -262,11 +262,11 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 <span>{getMappingPaymentMethodDisplayLabel(mapping?.paymentMethod)}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>결제 참조번호</label>
+                                                <label>{t('admin:MappingDetailModal.t_45e5e4dd')}</label>
                                                 <span>{mapping?.paymentReference || '-'}</span>
                                             </div>
                                             <div className="info-item">
-                                                <label>결제일</label>
+                                                <label>{t('admin:MappingDetailModal.t_f1e49d04')}</label>
                                                 <span>{formatDate(mapping?.paymentDate)}</span>
                                             </div>
                                         </div>
@@ -274,19 +274,19 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
                                     {detailInfo && (
                                         <div className="mg-v2-ad-b0kla__card info-section">
-                                            <h4 className="mg-v2-ad-b0kla__section-title"><CheckCircle size={18} className="mg-v2-icon-inline" /> 금액 일관성 검사</h4>
+                                            <h4 className="mg-v2-ad-b0kla__section-title"><CheckCircle size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_6a1cd6fb')}</h4>
                                             <div className="consistency-check">
                                                 {detailInfo.isConsistent ? (
                                                     <div className="consistency-success">
                                                         <CheckCircle size={20} className="mg-v2-icon-inline" />
-                                                        <span>모든 금액이 일관적입니다</span>
+                                                        <span>{t('admin:MappingDetailModal.t_88d7cf42')}</span>
                                                     </div>
                                                 ) : (
                                                     <div className="consistency-warning">
                                                         <AlertTriangle size={20} className="mg-v2-icon-inline" />
                                                         <div>
-                                                            <p><strong>문제:</strong> {detailInfo.consistencyMessage}</p>
-                                                            <p><strong>권장사항:</strong> {detailInfo.consistencyRecommendation}</p>
+                                                            <p><strong>{t('admin:MappingDetailModal.t_82eefca1')}</strong> {detailInfo.consistencyMessage}</p>
+                                                            <p><strong>{t('admin:MappingDetailModal.t_580f3e93')}</strong> {detailInfo.consistencyRecommendation}</p>
                                                         </div>
                                                     </div>
                                                 )}
@@ -299,30 +299,30 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                             {activeTab === 'sessions' && (
                                 <div className="sessions-info-tab">
                                     <div className="mg-v2-ad-b0kla__card info-section">
-                                        <h4 className="mg-v2-ad-b0kla__section-title"><Calendar size={18} className="mg-v2-icon-inline" /> 회기 현황</h4>
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><Calendar size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_5920af29')}</h4>
                                         <div className="sessions-summary">
                                             <div className="session-card total">
                                                 <div className="session-number">{mapping?.totalSessions || 0}</div>
-                                                <div className="session-label">총 회기</div>
+                                                <div className="session-label">{t('admin:MappingDetailModal.t_7a0890a2')}</div>
                                             </div>
                                             <div className="session-card used">
                                                 <div className="session-number">{mapping?.usedSessions || 0}</div>
-                                                <div className="session-label">사용 회기</div>
+                                                <div className="session-label">{t('admin:MappingDetailModal.t_28e2e19c')}</div>
                                             </div>
                                             <div className="session-card remaining">
                                                 <div className="session-number">{mapping?.remainingSessions || 0}</div>
-                                                <div className="session-label">남은 회기</div>
+                                                <div className="session-label">{t('admin:MappingDetailModal.t_e9792c10')}</div>
                                             </div>
                                         </div>
                                         
                                         {detailInfo && (
                                             <div className="session-details">
                                                 <div className="info-item">
-                                                    <label>회기당 단가</label>
+                                                    <label>{t('admin:MappingDetailModal.t_392dbd62')}</label>
                                                     <span>{formatCurrency(detailInfo.pricePerSession)}</span>
                                                 </div>
                                                 <div className="progress-section">
-                                                    <label>진행률</label>
+                                                    <label>{t('admin:MappingDetailModal.t_b147953e')}</label>
                                                     <div className="session-progress">
                                                         <div className="progress-bar">
                                                             <div 
@@ -344,7 +344,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                             {activeTab === 'erp' && (
                                 <div className="erp-info-tab">
                                     <div className="mg-v2-ad-b0kla__card info-section">
-                                        <h4 className="mg-v2-ad-b0kla__section-title"><TrendingUp size={18} className="mg-v2-icon-inline" /> ERP 연동 상태</h4>
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><TrendingUp size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_ef40fbc0')}</h4>
                                         {detailInfo?.relatedTransactions && detailInfo.relatedTransactions.length > 0 ? (
                                             <div className="erp-transactions">
                                                 {detailInfo.relatedTransactions.map((transaction, index) => (
@@ -374,8 +374,8 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                         ) : (
                                             <div className="no-erp-data">
                                                 <AlertTriangle size={24} className="mg-v2-icon-inline" />
-                                                <p>연동된 ERP 거래가 없습니다</p>
-                                                <small>입금 확인 후 자동으로 ERP 거래가 생성됩니다</small>
+                                                <p>{t('admin:MappingDetailModal.t_8e57b798')}</p>
+                                                <small>{t('admin:MappingDetailModal.t_88715daf')}</small>
                                             </div>
                                         )}
                                     </div>
@@ -385,7 +385,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                             {activeTab === 'history' && (
                                 <div className="history-info-tab">
                                     <div className="mg-v2-ad-b0kla__card info-section">
-                                        <h4 className="mg-v2-ad-b0kla__section-title"><Clock size={18} className="mg-v2-icon-inline" /> 변경 이력</h4>
+                                        <h4 className="mg-v2-ad-b0kla__section-title"><Clock size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_14bf3e5b')}</h4>
                                         {mapping?.notes ? (
                                             <div className="notes-content">
                                                 {mapping.notes.split('\n').map((note, index) => (
@@ -398,14 +398,14 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                         ) : (
                                             <div className="no-history">
                                                 <Info size={24} className="mg-v2-icon-inline" />
-                                                <p>변경 이력이 없습니다</p>
+                                                <p>{t('admin:MappingDetailModal.t_de40a59e')}</p>
                                             </div>
                                         )}
                                     </div>
 
                                     {mapping?.specialConsiderations && (
                                         <div className="mg-v2-ad-b0kla__card info-section">
-                                            <h4 className="mg-v2-ad-b0kla__section-title mg-v2-ad-b0kla__card-accent--orange"><AlertTriangle size={18} className="mg-v2-icon-inline" /> 특별 고려사항</h4>
+                                            <h4 className="mg-v2-ad-b0kla__section-title mg-v2-ad-b0kla__card-accent--orange"><AlertTriangle size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_aec2075b')}</h4>
                                             <div className="special-considerations">
                                                 {mapping.specialConsiderations}
                                             </div>

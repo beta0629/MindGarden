@@ -3437,49 +3437,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         mappingRepository.save(mapping);
         
-        try {
-            log.info("🔍 환불 처리 관련 스케줄 조회 시작: 상담사ID={}, 내담자ID={}, 오늘날짜={}", 
-                    mapping.getConsultant().getId(), mapping.getClient().getId(), LocalDate.now());
-            
-            List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(tenantId, 
-                mapping.getConsultant().getId(), 
-                mapping.getClient().getId(), 
-                LocalDate.now()
-            );
-            
-            log.info("📅 조회된 미래 스케줄: {}개", futureSchedules.size());
-            
-            int cancelledScheduleCount = 0;
-            for (Schedule schedule : futureSchedules) {
-                log.info("📋 스케줄 확인: ID={}, 날짜={}, 시간={}-{}, 상태={}, 상담사ID={}, 내담자ID={}", 
-                        schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(), 
-                        schedule.getStatus(), schedule.getConsultantId(), schedule.getClientId());
-                
-                String bookedStatus = getScheduleStatusCode("BOOKED");
-                String confirmedStatus = getScheduleStatusCode("CONFIRMED");
-                if (schedule.getStatus().name().equals(bookedStatus) || schedule.getStatus().name().equals(confirmedStatus)) {
-                    log.info("🚫 스케줄 취소 처리: ID={}, 기존상태={}", schedule.getId(), schedule.getStatus());
-                    
-                    String cancelledStatus = getScheduleStatusCode("CANCELLED");
-                    schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
-                    schedule.setNotes(schedule.getNotes() != null
-                            ? schedule.getNotes() + "\n" + AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL + reason
-                            : AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL + reason);
-                    schedule.setUpdatedAt(LocalDateTime.now());
-                    scheduleRepository.save(schedule);
-                    cancelledScheduleCount++;
-                    
-                    log.info("✅ 스케줄 취소 완료: ID={}, 새상태={}", schedule.getId(), schedule.getStatus());
-                } else {
-                    log.info("⏭️ 스케줄 취소 스킵: ID={}, 상태={} (BOOKED/CONFIRMED가 아님)", schedule.getId(), schedule.getStatus());
-                }
-            }
-            
-            log.info("📅 환불 처리로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
-            
-        } catch (Exception e) {
-            log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", id, e);
-        }
+        cancelFutureSchedulesForExhaustedMapping(mapping, tenantId, reason);
         
         try {
             User client = mapping.getClient();
@@ -3502,12 +3460,73 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 id, refundedSessions, refundAmount, mapping.getConsultant().getName(), mapping.getClient().getName());
     }
 
+    /**
+     * 회기 소진(remaining<=0) 또는 강제 종료된 매핑의 미래 BOOKED/CONFIRMED 일정을 일괄 CANCELLED로 전이한다.
+     *
+     * <p>SSOT 핫픽스 2026-05-26 (P0-B): {@code terminateMapping}과 {@code partialRefundMapping}이
+     * 회기 소진 시 동일한 후처리(미래 일정 일괄 취소)를 수행하도록 정합성을 맞춘다.</p>
+     *
+     * @param mapping  대상 매핑 (consultant, client 초기화 필수)
+     * @param tenantId 테넌트 ID
+     * @param reason   취소 사유 (스케줄 notes 누적용)
+     * @return 취소된 스케줄 개수 (실패 시 0)
+     */
+    private int cancelFutureSchedulesForExhaustedMapping(ConsultantClientMapping mapping, String tenantId, String reason) {
+        try {
+            log.info("🔍 환불/소진 처리 관련 스케줄 조회 시작: MappingID={}, 상담사ID={}, 내담자ID={}, 오늘날짜={}",
+                    mapping.getId(), mapping.getConsultant().getId(), mapping.getClient().getId(), LocalDate.now());
+
+            List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                    tenantId,
+                    mapping.getConsultant().getId(),
+                    mapping.getClient().getId(),
+                    LocalDate.now()
+            );
+
+            log.info("📅 조회된 미래 스케줄: {}개", futureSchedules.size());
+
+            String bookedStatus = getScheduleStatusCode("BOOKED");
+            String confirmedStatus = getScheduleStatusCode("CONFIRMED");
+            String cancelledStatus = getScheduleStatusCode("CANCELLED");
+
+            int cancelledScheduleCount = 0;
+            for (Schedule schedule : futureSchedules) {
+                log.info("📋 스케줄 확인: ID={}, 날짜={}, 시간={}-{}, 상태={}, 상담사ID={}, 내담자ID={}",
+                        schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(),
+                        schedule.getStatus(), schedule.getConsultantId(), schedule.getClientId());
+
+                if (schedule.getStatus().name().equals(bookedStatus) || schedule.getStatus().name().equals(confirmedStatus)) {
+                    log.info("🚫 스케줄 취소 처리: ID={}, 기존상태={}", schedule.getId(), schedule.getStatus());
+
+                    schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
+                    schedule.setNotes(schedule.getNotes() != null
+                            ? schedule.getNotes() + "\n" + AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL + reason
+                            : AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL + reason);
+                    schedule.setUpdatedAt(LocalDateTime.now());
+                    scheduleRepository.save(schedule);
+                    cancelledScheduleCount++;
+
+                    log.info("✅ 스케줄 취소 완료: ID={}, 새상태={}", schedule.getId(), schedule.getStatus());
+                } else {
+                    log.info("⏭️ 스케줄 취소 스킵: ID={}, 상태={} (BOOKED/CONFIRMED가 아님)", schedule.getId(), schedule.getStatus());
+                }
+            }
+
+            log.info("📅 환불/소진 처리로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
+            return cancelledScheduleCount;
+        } catch (Exception e) {
+            log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", mapping.getId(), e);
+            return 0;
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void partialRefundMapping(Long id, int refundSessions, String reason) {
         log.info("🔧 부분 환불 처리 시작: ID={}, 환불회기={}, 사유={}", id, refundSessions, reason);
         
-        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
+        String tenantId = getTenantId();
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
@@ -3616,7 +3635,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String updatedNotes = currentNotes.isEmpty() ? refundNote : currentNotes + "\n" + refundNote;
         mapping.setNotes(updatedNotes);
         
-        if (mapping.getRemainingSessions() <= 0) {
+        boolean sessionsExhaustedAfterRefund = mapping.getRemainingSessions() <= 0;
+        if (sessionsExhaustedAfterRefund) {
             String sessionsExhaustedStatus = getMappingStatusCode("SESSIONS_EXHAUSTED");
             mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(sessionsExhaustedStatus));
             mapping.setEndDate(LocalDateTime.now());
@@ -3624,6 +3644,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         mappingRepository.save(mapping);
+        
+        // SSOT 핫픽스 2026-05-26 (P0-B): remaining<=0 도달 시 terminateMapping 과 동일하게 미래
+        // BOOKED/CONFIRMED 일정을 일괄 CANCELLED 로 전이해 정합성을 맞춘다.
+        if (sessionsExhaustedAfterRefund) {
+            cancelFutureSchedulesForExhaustedMapping(mapping, tenantId, reason);
+        }
         
         try {
             User client = mapping.getClient();

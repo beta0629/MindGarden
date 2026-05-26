@@ -20,6 +20,7 @@ import {
   normalizeMappingsListPayload,
   normalizeScheduleListPayload
 } from '../../utils/apiResponseNormalize';
+import { calculateClientSessionTotalsFromMappings } from '../../utils/clientSessionTotals';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
@@ -71,14 +72,16 @@ const ClientSessionManagement = () => {
       const schedulesResponse = await apiGet(`/api/v1/schedules?userId=${userId}&userRole=CLIENT`);
       const schedules = normalizeScheduleListPayload(schedulesResponse);
 
-      const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
-      const usedSessions = schedules.filter(s => s.status === '완료').length;
-      const remainingSessions = totalSessions - usedSessions;
+      // SSOT 핫픽스 2026-05-26 (P1-C): 회기 카운트는 mapping SSOT (totalSessions/usedSessions/
+      // remainingSessions) 직접 합산. 이전 구현은 schedules.filter(s => s.status === '완료').length
+      // 였으나 백엔드 Schedule.status enum (COMPLETED) 과 한글 '완료' 가 항상 불일치하여 0 반환,
+      // 또한 mapping SSOT 를 우회하므로 BOOKED → CANCELLED → 복원 시나리오에서 화면 카운트가 깨졌다.
+      const sessionTotals = calculateClientSessionTotalsFromMappings(mappings);
 
       setSessionData({
-        totalSessions,
-        usedSessions,
-        remainingSessions,
+        totalSessions: sessionTotals.totalSessions,
+        usedSessions: sessionTotals.usedSessions,
+        remainingSessions: sessionTotals.remainingSessions,
         mappings: mappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
         schedules: schedules.sort((a, b) => new Date(b.date) - new Date(a.date))
       });

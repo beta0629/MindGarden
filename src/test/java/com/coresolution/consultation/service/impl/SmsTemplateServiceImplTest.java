@@ -3,6 +3,9 @@ package com.coresolution.consultation.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,11 +13,13 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.SmsDispatchFlagKeys;
 import com.coresolution.consultation.dto.SmsTemplateAdminItem;
 import com.coresolution.consultation.dto.SmsTemplatePreviewResponse;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,11 +53,15 @@ class SmsTemplateServiceImplTest {
     @Mock
     private CommonCodeRepository commonCodeRepository;
 
+    @Mock
+    private SystemConfigService systemConfigService;
+
     private SmsTemplateServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new SmsTemplateServiceImpl(commonCodeRepository, new ObjectMapper());
+        service = new SmsTemplateServiceImpl(commonCodeRepository, new ObjectMapper(),
+                systemConfigService);
     }
 
     @Test
@@ -246,6 +255,163 @@ class SmsTemplateServiceImplTest {
         assertThat(data.getMissingVariables()).contains("packageName", "consultantName");
         assertThat(data.getByteLength()).isGreaterThan(0);
         assertThat(data.isFromTenantOverride()).isFalse();
+    }
+
+    @Test
+    @DisplayName("isAutoDispatchEnabledFor — 글로벌 OFF + 종목 OFF → false")
+    void isAutoDispatchEnabledFor_globalOff_templateOff_returnsFalse() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), anyBoolean()))
+            .thenReturn(false);
+
+        boolean enabled = service.isAutoDispatchEnabledFor(KEY, TENANT_ID);
+
+        assertThat(enabled).isFalse();
+    }
+
+    @Test
+    @DisplayName("isAutoDispatchEnabledFor — 글로벌 OFF + 종목 ON → false (글로벌 우선)")
+    void isAutoDispatchEnabledFor_globalOff_templateOn_returnsFalseGlobalWins() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), anyBoolean()))
+            .thenReturn(false);
+
+        boolean enabled = service.isAutoDispatchEnabledFor(KEY, TENANT_ID);
+
+        assertThat(enabled).isFalse();
+    }
+
+    @Test
+    @DisplayName("isAutoDispatchEnabledFor — 글로벌 ON + 종목 OFF → false")
+    void isAutoDispatchEnabledFor_globalOn_templateOff_returnsFalse() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), anyBoolean()))
+            .thenReturn(true);
+        CommonCode tenant = buildRow(TENANT_ID, "tenant body");
+        tenant.setExtraData("{\"dispatch_enabled\":false}");
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))
+            .thenReturn(Optional.of(tenant));
+
+        boolean enabled = service.isAutoDispatchEnabledFor(KEY, TENANT_ID);
+
+        assertThat(enabled).isFalse();
+    }
+
+    @Test
+    @DisplayName("isAutoDispatchEnabledFor — 글로벌 ON + 종목 ON → true")
+    void isAutoDispatchEnabledFor_globalOn_templateOn_returnsTrue() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), anyBoolean()))
+            .thenReturn(true);
+        CommonCode tenant = buildRow(TENANT_ID, "tenant body");
+        tenant.setExtraData("{\"dispatch_enabled\":true}");
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))
+            .thenReturn(Optional.of(tenant));
+
+        boolean enabled = service.isAutoDispatchEnabledFor(KEY, TENANT_ID);
+
+        assertThat(enabled).isTrue();
+    }
+
+    @Test
+    @DisplayName("isAutoDispatchEnabledFor — 테넌트 override 가 있을 때 종목 플래그는 테넌트 row 우선")
+    void isAutoDispatchEnabledFor_tenantOverridePreferredOverGlobal() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), anyBoolean()))
+            .thenReturn(true);
+        CommonCode tenant = buildRow(TENANT_ID, "tenant body");
+        tenant.setExtraData("{\"dispatch_enabled\":true}");
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))
+            .thenReturn(Optional.of(tenant));
+
+        boolean enabled = service.isAutoDispatchEnabledFor(KEY, TENANT_ID);
+
+        assertThat(enabled).isTrue();
+    }
+
+    @Test
+    @DisplayName("isAutoDispatchEnabledFor — 테넌트 override 미지정이면 글로벌 row 의 dispatch_enabled 사용")
+    void isAutoDispatchEnabledFor_fallsBackToGlobalRow() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), anyBoolean()))
+            .thenReturn(true);
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))
+            .thenReturn(Optional.empty());
+        CommonCode global = buildRow(null, "global body");
+        global.setExtraData("{\"dispatch_enabled\":true,\"category\":\"BOOKING\"}");
+        when(commonCodeRepository.findCoreCodeByGroupAndValue(GROUP, KEY))
+            .thenReturn(Optional.of(global));
+
+        boolean enabled = service.isAutoDispatchEnabledFor(KEY, TENANT_ID);
+
+        assertThat(enabled).isTrue();
+    }
+
+    @Test
+    @DisplayName("isAutoDispatchEnabledFor — 두 row 모두 dispatch_enabled 키가 없으면 DEFAULT_ENABLED(false)")
+    void isAutoDispatchEnabledFor_returnsDefaultWhenKeysAbsent() {
+        when(systemConfigService.getGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), anyBoolean()))
+            .thenReturn(true);
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))
+            .thenReturn(Optional.empty());
+        CommonCode global = buildRow(null, "global body");
+        global.setExtraData("{\"category\":\"BOOKING\"}");
+        when(commonCodeRepository.findCoreCodeByGroupAndValue(GROUP, KEY))
+            .thenReturn(Optional.of(global));
+
+        boolean enabled = service.isAutoDispatchEnabledFor(KEY, TENANT_ID);
+
+        assertThat(enabled).as("SmsDispatchFlagKeys.DEFAULT_ENABLED 가 false 라 차단")
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("setGlobalAutoDispatchEnabled — SystemConfigService 호출 위임")
+    void setGlobalAutoDispatchEnabled_delegatesToSystemConfigService() {
+        service.setGlobalAutoDispatchEnabled(true, currentUser());
+
+        verify(systemConfigService).setGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), eq(true), anyString());
+    }
+
+    @Test
+    @DisplayName("updateAutoDispatchFlag — 신규 row 신설 + extra_data.dispatch_enabled 머지")
+    void updateAutoDispatchFlag_createsRowWithExtraDataMerged() {
+        CommonCode global = buildRow(null, "global body");
+        global.setExtraData("{\"category\":\"BOOKING\",\"variables\":[\"clientName\"]}");
+        when(commonCodeRepository.findCoreCodeByGroupAndValue(GROUP, KEY))
+            .thenReturn(Optional.of(global));
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT_ID, GROUP, KEY))
+            .thenReturn(Optional.empty());
+        when(systemConfigService.getGlobalBoolean(
+                eq(SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED), anyBoolean()))
+            .thenReturn(true);
+
+        service.updateAutoDispatchFlag(KEY, true, TENANT_ID, currentUser());
+
+        ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
+        verify(commonCodeRepository).save(captor.capture());
+        CommonCode saved = captor.getValue();
+        assertThat(saved.getTenantId()).isEqualTo(TENANT_ID);
+        assertThat(saved.getCodeValue()).isEqualTo(KEY);
+        assertThat(saved.getExtraData())
+                .as("extra_data.dispatch_enabled=true 가 머지되고 기존 키 보존")
+                .contains("\"dispatch_enabled\":true")
+                .contains("\"category\":\"BOOKING\"")
+                .contains("\"variables\"");
+    }
+
+    @Test
+    @DisplayName("updateAutoDispatchFlag — 글로벌 row 가 없으면 IllegalArgumentException")
+    void updateAutoDispatchFlag_throwsWhenGlobalMissing() {
+        when(commonCodeRepository.findCoreCodeByGroupAndValue(GROUP, KEY))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateAutoDispatchFlag(KEY, true, TENANT_ID, currentUser()))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(commonCodeRepository, never()).save(any());
     }
 
     private CommonCode buildRow(String tenantId, String content) {

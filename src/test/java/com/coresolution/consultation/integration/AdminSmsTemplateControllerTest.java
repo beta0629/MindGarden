@@ -28,6 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -36,6 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -206,6 +208,114 @@ class AdminSmsTemplateControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/admin/sms-templates/global-dispatch — ADMIN 200, 게이트 토글 위임")
+    @WithMockUser(roles = {"ADMIN"})
+    void patchGlobalDispatch_whenAdmin_returns200() throws Exception {
+        when(smsTemplateService.isGlobalAutoDispatchEnabled()).thenReturn(true);
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(buildCurrentUser());
+
+            mockMvc.perform(patch("/api/v1/admin/sms-templates/global-dispatch")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.globalDispatchEnabled").value(true));
+        }
+
+        verify(smsTemplateService).setGlobalAutoDispatchEnabled(eq(true), any());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/admin/sms-templates/global-dispatch — STAFF 권한이면 403")
+    @WithMockUser(roles = {"STAFF"})
+    void patchGlobalDispatch_whenStaff_returns403() throws Exception {
+        mockMvc.perform(patch("/api/v1/admin/sms-templates/global-dispatch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+            .andExpect(status().isForbidden());
+
+        verify(smsTemplateService, never()).setGlobalAutoDispatchEnabled(anyBoolean(), any());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/admin/sms-templates/global-dispatch — enabled 누락 시 400")
+    @WithMockUser(roles = {"ADMIN"})
+    void patchGlobalDispatch_whenEnabledMissing_returns400() throws Exception {
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(buildCurrentUser());
+
+            mockMvc.perform(patch("/api/v1/admin/sms-templates/global-dispatch")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{}"))
+                .andExpect(status().isBadRequest());
+        }
+
+        verify(smsTemplateService, never()).setGlobalAutoDispatchEnabled(anyBoolean(), any());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/admin/sms-templates/{key}/dispatch — ADMIN 200")
+    @WithMockUser(roles = {"ADMIN"})
+    void patchTemplateDispatch_whenAdmin_returns200() throws Exception {
+        SmsTemplateAdminItem item = SmsTemplateAdminItem.builder()
+            .key(TEMPLATE_KEY)
+            .tenantDispatchEnabled(true)
+            .globalDispatchEnabled(true)
+            .effectiveDispatchEnabled(true)
+            .build();
+        when(smsTemplateService.updateAutoDispatchFlag(eq(TEMPLATE_KEY), eq(true), eq(TENANT_ID), any()))
+            .thenReturn(item);
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(buildCurrentUser());
+
+            mockMvc.perform(patch("/api/v1/admin/sms-templates/" + TEMPLATE_KEY + "/dispatch")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.tenantDispatchEnabled").value(true))
+                .andExpect(jsonPath("$.data.effectiveDispatchEnabled").value(true));
+        }
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/admin/sms-templates/{key}/dispatch — 잘못된 templateKey 면 400")
+    @WithMockUser(roles = {"ADMIN"})
+    void patchTemplateDispatch_whenKeyInvalid_returns400() throws Exception {
+        when(smsTemplateService.updateAutoDispatchFlag(anyString(), anyBoolean(), anyString(), any()))
+            .thenThrow(new IllegalArgumentException("글로벌 SMS 템플릿이 존재하지 않습니다: UNKNOWN"));
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(buildCurrentUser());
+
+            mockMvc.perform(patch("/api/v1/admin/sms-templates/UNKNOWN/dispatch")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+                .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/admin/sms-templates/{key}/dispatch — STAFF 권한이면 403")
+    @WithMockUser(roles = {"STAFF"})
+    void patchTemplateDispatch_whenStaff_returns403() throws Exception {
+        mockMvc.perform(patch("/api/v1/admin/sms-templates/" + TEMPLATE_KEY + "/dispatch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+            .andExpect(status().isForbidden());
+
+        verify(smsTemplateService, never()).updateAutoDispatchFlag(
+                anyString(), anyBoolean(), anyString(), any());
     }
 
     private User buildCurrentUser() {

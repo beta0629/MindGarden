@@ -87,6 +87,11 @@ class NotificationServiceImplSmsFallbackTest {
         // SmsTemplateService 가 SSOT — DB 시드 미존재 시 빈 Optional → buildSmsMessage null → SMS skip.
         when(smsTemplateService.renderForType(anyString(), nullable(String.class), any(), any()))
             .thenReturn(java.util.Optional.empty());
+        // 2단계 게이트(글로벌 + 종목별, V20260603_002 + SmsDispatchFlagKeys) — 본 테스트군은 게이트 ON
+        // 시나리오만 검증하므로 default ON 으로 stub. 게이트 OFF 회귀는 별도 테스트에서 override.
+        when(smsTemplateService.isAutoDispatchEnabledFor(anyString(), nullable(String.class)))
+            .thenReturn(true);
+        when(smsTemplateService.isGlobalAutoDispatchEnabled()).thenReturn(true);
     }
 
     @AfterEach
@@ -103,6 +108,22 @@ class NotificationServiceImplSmsFallbackTest {
         notificationService.sendPaymentCompleted(user, 500_000L, "10회 패키지", "김상담");
 
         // 알림톡은 실패(setTenant에서 false 반환), SMS 는 buildSmsMessage=null → 발송 skip.
+        verify(smsAuthService, never()).sendNotificationMessage(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("SMS_GATE — 글로벌 OFF 면 시드가 있어도 SMS 자동 발송 skip ([SMS_GATE] 로그 흔적)")
+    void sendPaymentCompleted_whenGateGlobalOff_skipsSmsEvenIfTemplateExists() {
+        User user = userWithPhone();
+        // 시드가 있어도 게이트가 차단하면 SMS 자동 발송은 발생하지 않아야 한다.
+        when(smsTemplateService.renderForType(eq("PAYMENT_COMPLETED"), eq(TENANT_ID), any(), any()))
+            .thenReturn(java.util.Optional.of("결제 완료"));
+        when(smsTemplateService.isAutoDispatchEnabledFor(eq("PAYMENT_COMPLETED"), eq(TENANT_ID)))
+            .thenReturn(false);
+        when(smsTemplateService.isGlobalAutoDispatchEnabled()).thenReturn(false);
+
+        notificationService.sendPaymentCompleted(user, 500_000L, "10회 패키지", "김상담");
+
         verify(smsAuthService, never()).sendNotificationMessage(anyString(), anyString());
     }
 

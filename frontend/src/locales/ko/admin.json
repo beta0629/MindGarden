@@ -310,9 +310,25 @@
       "counter": "선택됨 {{count}} / {{max}}",
       "maxError": "최대 {{max}}명까지 선택할 수 있습니다.",
       "atLeastOne": "수신자를 최소 1명 이상 선택해 주세요.",
+      "atLeastOneOrPhone": "등록 사용자 또는 전화번호 중 최소 1개를 입력해 주세요.",
       "selectedListTitle": "선택된 수신자",
       "removeChip": "선택 해제",
-      "noResultsHint": "이름·이메일·전화 일부를 입력해 검색하세요."
+      "noResultsHint": "이름·이메일·전화 일부를 입력해 검색하세요.",
+      "totalCounter": "총 수신자 {{total}} / {{max}} (등록 {{users}}명 + 전화번호 {{phones}}건)"
+    },
+    "phone": {
+      "title": "전화번호 직접 추가",
+      "hint": "등록된 사용자 외 임의 전화번호로 발송할 때 사용하세요. SMS·알림톡 채널만 지원합니다.",
+      "placeholder": "01012345678",
+      "addButton": "추가",
+      "removeAria": "전화번호 제거",
+      "required": "전화번호를 입력해 주세요.",
+      "invalid": "올바른 한국 휴대전화 형식이 아닙니다.",
+      "duplicate": "이미 추가된 전화번호입니다.",
+      "limitReached": "전체 수신자 50명 상한에 도달했습니다.",
+      "pushNotSupported": "푸시 채널은 전화번호 직접 입력을 지원하지 않습니다. 등록된 사용자만 선택해 주세요.",
+      "listTitle": "추가된 전화번호 ({{count}}건)",
+      "summaryRow": "전화번호 직접 입력 {{count}}건"
     },
     "sms": {
       "contentLabel": "SMS 본문",
@@ -438,6 +454,10 @@
       "PUSH_OPTED_OUT": "사용자가 알림을 끔(시스템 카테고리 OFF).",
       "PUSH_DUPLICATE": "동일 배치 멱등 중복으로 스킵되었습니다.",
       "PUSH_EXPO_FAILED": "Expo Push API 호출이 실패했습니다.",
+      "PHONE_NUMBER_INVALID": "올바른 한국 휴대전화 형식이 아닙니다.",
+      "PHONE_NOT_SUPPORTED_FOR_PUSH": "푸시 채널은 전화번호 직접 입력을 지원하지 않습니다.",
+      "RECIPIENTS_REQUIRED": "수신자 또는 전화번호 중 최소 1개를 지정해야 합니다.",
+      "RECIPIENTS_LIMIT_EXCEEDED": "한 번에 최대 50명까지 발송할 수 있습니다.",
       "forbidden": "이 도구에 접근할 권한이 없습니다. (ADMIN/STAFF 전용)",
       "loadFailed": "데이터를 불러오지 못했습니다.",
       "sendFailed": "발송에 실패했습니다.",
@@ -2038,6 +2058,28 @@
       "saveFailed": "저장에 실패했습니다.",
       "deleteFailed": "삭제에 실패했습니다.",
       "previewFailed": "미리보기에 실패했습니다."
+    },
+    "globalDispatch": {
+      "title": "자동 SMS 발송 (전체)",
+      "description": "글로벌 OFF 시 모든 자동 트리거 SMS 가 차단됩니다. 어드민 수동 발송과 인증 OTP 는 영향 없음.",
+      "confirmOn": "자동 SMS 발송을 전체 활성화합니다. 알림톡 검수가 통과되었는지 확인하셨습니까?"
+    },
+    "templateDispatch": {
+      "label": "자동 발송",
+      "disabledByGlobal": "글로벌 토글이 OFF 입니다"
+    },
+    "dispatch": {
+      "badge": {
+        "on": "발송 ON",
+        "off": "발송 OFF"
+      }
+    },
+    "banner": {
+      "gateNotice": "자동 SMS 발송은 글로벌 + 종목별 2단계 토글로 제어됩니다. 수동 발송·인증 OTP 는 영향 없음."
+    },
+    "action": {
+      "dispatchUpdated": "발송 플래그가 갱신되었습니다.",
+      "dispatchUpdateFailed": "발송 플래그 갱신에 실패했습니다."
     }
   },
   "tenantCommonCode": {

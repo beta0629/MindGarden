@@ -78,7 +78,15 @@ export const MANUAL_NOTIFICATION_ERROR_CODES = Object.freeze({
   PUSH_NO_TOKEN: 'PUSH_NO_TOKEN',
   PUSH_OPTED_OUT: 'PUSH_OPTED_OUT',
   PUSH_DUPLICATE: 'PUSH_DUPLICATE',
-  PUSH_EXPO_FAILED: 'PUSH_EXPO_FAILED'
+  PUSH_EXPO_FAILED: 'PUSH_EXPO_FAILED',
+  /** 2026-05-27 PHONE 모드 — 정규화·검증 실패한 임의 전화번호. */
+  PHONE_NUMBER_INVALID: 'PHONE_NUMBER_INVALID',
+  /** 2026-05-27 PUSH 채널은 PHONE 모드 미지원. */
+  PHONE_NOT_SUPPORTED_FOR_PUSH: 'PHONE_NOT_SUPPORTED_FOR_PUSH',
+  /** 2026-05-27 userIds·phoneNumbers 모두 비어 있음. */
+  RECIPIENTS_REQUIRED: 'RECIPIENTS_REQUIRED',
+  /** 2026-05-27 userIds + phoneNumbers 합산 50명 초과. */
+  RECIPIENTS_LIMIT_EXCEEDED: 'RECIPIENTS_LIMIT_EXCEEDED'
 });
 
 /** 수신자 최대 선택 인원 (백엔드 검증과 동일하게 유지: 1~50). */
@@ -101,6 +109,48 @@ export const MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH = 1000;
 
 /** 히스토리 기본 페이지 크기. */
 export const MANUAL_NOTIFICATION_HISTORY_DEFAULT_SIZE = 20;
+
+/**
+ * 한국 휴대전화 정규식 — 백엔드 SSOT({@code LoginIdentifierUtils.isValidKoreanMobileDigits})
+ * 와 동일 의미. 백엔드는 정규화 후 {@code ^01(0\d{8}|[16789]\d{7,8})$} 만 허용.
+ * 프론트는 사용자 편의로 하이픈을 허용한다(010-1234-5678 / 01012345678 모두 통과).
+ * 실제 발송 가능 여부는 백엔드 정규화·검증이 최종 판정한다.
+ *
+ * @since 2026-05-27 (PHONE 모드)
+ */
+export const KOREAN_MOBILE_PATTERN = /^01(0\d{8}|[16789]\d{7,8})$/;
+
+/**
+ * 사용자 입력 휴대전화 번호를 정규화한다 — 하이픈·공백 제거 후 숫자만 반환.
+ * 백엔드의 {@code LoginIdentifierUtils.normalizeKoreanMobileDigits} 와 동일 의미.
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+export const normalizeManualNotificationPhone = (value) => {
+  if (value == null) {
+    return '';
+  }
+  return String(value).replace(/[\s-]/g, '');
+};
+
+/**
+ * 정규화된 휴대전화를 표시용 마스킹 문자열로 변환한다(010-****-1234 형태).
+ * 백엔드 {@code PhoneLogMasking.maskForLog} 와 의미 동일(11자리 010 휴대폰 기준).
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+export const maskManualNotificationPhoneForDisplay = (value) => {
+  const digits = normalizeManualNotificationPhone(value);
+  if (digits.length < 4) {
+    return digits;
+  }
+  if (digits.length <= 8) {
+    return `${digits.slice(0, 3)}-****`;
+  }
+  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
+};
 
 /**
  * HTTP 429 단일 rate-limit 응답을 표준화된 에러로 변환.
@@ -169,7 +219,11 @@ export const fetchLiveTemplates = async() => {
 
 /**
  * SMS 일괄 발송 (BulkSmsManualRequest).
- * @param {{ userIds: number[], content: string, reason: string }} payload
+ *
+ * <p>2026-05-27 — {@code phoneNumbers} 필드 추가(PHONE 모드). {@code userIds} 와 합산하여
+ * 최대 50명. 둘 다 비어 있으면 백엔드가 {@code RECIPIENTS_REQUIRED} 로 차단한다.
+ *
+ * @param {{ userIds?: number[], phoneNumbers?: string[], content: string, reason: string }} payload
  * @returns {Promise<any>}
  */
 export const sendSmsBatch = async(payload) => {
@@ -182,8 +236,13 @@ export const sendSmsBatch = async(payload) => {
 
 /**
  * 카카오 알림톡 일괄 발송 (BulkAlimtalkManualRequest).
+ *
+ * <p>2026-05-27 — {@code phoneNumbers} 필드 추가(PHONE 모드). {@code userIds} 와 합산하여
+ * 최대 50명. 솔라피 검수 통과 후 PHONE 모드 알림톡 정상화.
+ *
  * @param {{
- *   userIds: number[],
+ *   userIds?: number[],
+ *   phoneNumbers?: string[],
  *   templateCode: string,
  *   templateSource: ('COMMON_CODE'|'SOLAPI'),
  *   templateParams: Record<string, string>,
@@ -307,6 +366,9 @@ export default {
   MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH,
   MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH,
   MANUAL_NOTIFICATION_HISTORY_DEFAULT_SIZE,
+  KOREAN_MOBILE_PATTERN,
+  normalizeManualNotificationPhone,
+  maskManualNotificationPhoneForDisplay,
   searchRecipients,
   fetchCommonCodeTemplates,
   fetchLiveTemplates,

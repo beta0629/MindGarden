@@ -2,8 +2,14 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.dto.erp.accounting.AccountingEntryDetailDto;
+import com.coresolution.consultation.dto.erp.accounting.AccountingEntryListDto;
+import com.coresolution.consultation.dto.erp.accounting.JournalEntryLineDto;
 import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
@@ -33,7 +39,9 @@ import org.springframework.transaction.TransactionStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -753,5 +761,167 @@ class AccountingServiceImplTest {
         assertEquals(4, saved.size());
         assertEquals(Long.valueOf(4L), saved.get(1).getAccountId());
         assertEquals(Long.valueOf(4L), saved.get(2).getAccountId());
+    }
+
+    @Test
+    @DisplayName("getJournalEntries: lines 포함 DTO 목록 반환 (LazyInit 회귀 가드)")
+    void getJournalEntries_returnsListDtoWithLines() {
+        BigDecimal total = new BigDecimal("100000.00");
+        JournalEntryLine cashLine = JournalEntryLine.builder()
+                .id(11L)
+                .tenantId(TEST_TENANT_ID)
+                .accountId(3L)
+                .lineNumber(1)
+                .debitAmount(total)
+                .creditAmount(BigDecimal.ZERO)
+                .description("현금 입금")
+                .build();
+        cashLine.setIsDeleted(false);
+        JournalEntryLine revenueLine = JournalEntryLine.builder()
+                .id(12L)
+                .tenantId(TEST_TENANT_ID)
+                .accountId(1L)
+                .lineNumber(2)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(total)
+                .description("상담료 매출")
+                .build();
+        revenueLine.setIsDeleted(false);
+        JournalEntryLine deletedLine = JournalEntryLine.builder()
+                .id(13L)
+                .tenantId(TEST_TENANT_ID)
+                .accountId(99L)
+                .lineNumber(3)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(BigDecimal.ZERO)
+                .description("삭제된 라인")
+                .build();
+        deletedLine.setIsDeleted(true);
+
+        AccountingEntry entry = AccountingEntry.builder()
+                .id(501L)
+                .tenantId(TEST_TENANT_ID)
+                .entryNumber("JE-test-2026-0001")
+                .entryDate(LocalDate.of(2026, 5, 27))
+                .description("테스트 분개")
+                .totalDebit(total)
+                .totalCredit(total)
+                .entryStatus(AccountingEntry.EntryStatus.POSTED)
+                .approvalStatus(AccountingEntry.ApprovalStatus.APPROVED)
+                .lines(new ArrayList<>(Arrays.asList(cashLine, revenueLine, deletedLine)))
+                .build();
+
+        when(accountingEntryRepository.findByTenantIdWithLines(TEST_TENANT_ID))
+                .thenReturn(Collections.singletonList(entry));
+
+        List<AccountingEntryListDto> result = accountingService.getJournalEntries(TEST_TENANT_ID);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        AccountingEntryListDto dto = result.get(0);
+        assertEquals(Long.valueOf(501L), dto.getId());
+        assertEquals(TEST_TENANT_ID, dto.getTenantId());
+        assertEquals("JE-test-2026-0001", dto.getEntryNumber());
+        assertEquals("POSTED", dto.getEntryStatus());
+        assertEquals("APPROVED", dto.getApprovalStatus());
+        assertEquals(0, dto.getTotalDebit().compareTo(total));
+        assertEquals(0, dto.getTotalCredit().compareTo(total));
+        // 삭제된 라인은 응답에서 제외 (lineCount=2)
+        assertEquals(Integer.valueOf(2), dto.getLineCount());
+        assertNotNull(dto.getLines());
+        assertEquals(2, dto.getLines().size());
+        JournalEntryLineDto firstLine = dto.getLines().get(0);
+        assertEquals(Long.valueOf(11L), firstLine.getId());
+        assertEquals(Long.valueOf(3L), firstLine.getAccountId());
+        assertEquals(0, firstLine.getDebitAmount().compareTo(total));
+    }
+
+    @Test
+    @DisplayName("getJournalEntries: 빈 목록 반환 시 빈 DTO 리스트")
+    void getJournalEntries_emptyResultReturnsEmptyList() {
+        when(accountingEntryRepository.findByTenantIdWithLines(TEST_TENANT_ID))
+                .thenReturn(Collections.emptyList());
+
+        List<AccountingEntryListDto> result = accountingService.getJournalEntries(TEST_TENANT_ID);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getJournalEntries: 다른 테넌트 컨텍스트면 IllegalStateException")
+    void getJournalEntries_tenantMismatch_throws() {
+        TenantContextHolder.setTenantId("tenant-other");
+        try {
+            assertThrows(IllegalStateException.class,
+                    () -> accountingService.getJournalEntries(TEST_TENANT_ID));
+        } finally {
+            TenantContextHolder.setTenantId(TEST_TENANT_ID);
+        }
+    }
+
+    @Test
+    @DisplayName("getJournalEntry: lines·승인메타 포함 상세 DTO 반환")
+    void getJournalEntry_returnsDetailDtoWithLines() {
+        BigDecimal total = new BigDecimal("55000.00");
+        JournalEntryLine line = JournalEntryLine.builder()
+                .id(21L)
+                .tenantId(TEST_TENANT_ID)
+                .accountId(2L)
+                .lineNumber(1)
+                .debitAmount(total)
+                .creditAmount(BigDecimal.ZERO)
+                .description("비용")
+                .build();
+        line.setIsDeleted(false);
+
+        AccountingEntry entry = AccountingEntry.builder()
+                .id(602L)
+                .tenantId(TEST_TENANT_ID)
+                .entryNumber("JE-test-2026-0002")
+                .entryDate(LocalDate.of(2026, 5, 27))
+                .description("비용 분개")
+                .totalDebit(total)
+                .totalCredit(total)
+                .entryStatus(AccountingEntry.EntryStatus.APPROVED)
+                .approvalStatus(AccountingEntry.ApprovalStatus.APPROVED)
+                .approverId(7L)
+                .approvalComment("자동승인")
+                .lines(new ArrayList<>(Collections.singletonList(line)))
+                .build();
+
+        when(accountingEntryRepository.findByTenantIdAndIdWithLines(TEST_TENANT_ID, 602L))
+                .thenReturn(Optional.of(entry));
+
+        AccountingEntryDetailDto detail = accountingService.getJournalEntry(TEST_TENANT_ID, 602L);
+
+        assertNotNull(detail);
+        assertEquals(Long.valueOf(602L), detail.getId());
+        assertEquals("APPROVED", detail.getEntryStatus());
+        assertEquals(Long.valueOf(7L), detail.getApproverId());
+        assertEquals("자동승인", detail.getApprovalComment());
+        assertEquals(Integer.valueOf(1), detail.getLineCount());
+        assertEquals(1, detail.getLines().size());
+        assertEquals(Long.valueOf(21L), detail.getLines().get(0).getId());
+    }
+
+    @Test
+    @DisplayName("getJournalEntry: 분개 미존재 시 IllegalArgumentException")
+    void getJournalEntry_notFound_throws() {
+        when(accountingEntryRepository.findByTenantIdAndIdWithLines(TEST_TENANT_ID, 999L))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> accountingService.getJournalEntry(TEST_TENANT_ID, 999L));
+        assertNotNull(ex.getMessage());
+        assertTrue(ex.getMessage().contains("999"));
+    }
+
+    @Test
+    @DisplayName("AccountingEntryListDto.fromEntity: null 입력 시 null 반환")
+    void listDtoFromEntity_nullSafety() {
+        assertNull(AccountingEntryListDto.fromEntity(null));
+        assertNull(AccountingEntryDetailDto.fromEntity(null));
+        assertNull(JournalEntryLineDto.fromEntity(null));
     }
 }

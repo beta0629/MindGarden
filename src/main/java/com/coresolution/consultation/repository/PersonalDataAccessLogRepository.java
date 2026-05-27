@@ -34,13 +34,16 @@ public interface PersonalDataAccessLogRepository extends JpaRepository<PersonalD
         @Param("endDate") LocalDateTime endDate);
     
     /**
-     * 테넌트별 대상 사용자 ID로 접근 이력 조회 (tenantId 필터링)
+     * 테넌트별 대상 사용자 ID로 접근 이력 조회 (tenantId 필터링).
+     *
+     * <p>V20260604_002 (W2 P0) 적용 후 {@code target_user_id} 컬럼이 BIGINT 로 변경됨에 따라
+     * {@code String} → {@code Long} 으로 시그니처 정합화.</p>
      */
     @Query("SELECT pdal FROM PersonalDataAccessLog pdal WHERE pdal.tenantId = :tenantId AND pdal.targetUserId = :targetUserId AND pdal.accessTime BETWEEN :startDate AND :endDate")
     List<PersonalDataAccessLog> findByTenantIdAndTargetUserIdAndAccessTimeBetween(
         @Param("tenantId") String tenantId,
-        @Param("targetUserId") String targetUserId, 
-        @Param("startDate") LocalDateTime startDate, 
+        @Param("targetUserId") Long targetUserId,
+        @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate);
     
     /**
@@ -150,13 +153,15 @@ public interface PersonalDataAccessLogRepository extends JpaRepository<PersonalD
         @Param("endDate") LocalDateTime endDate);
     
     /**
-     * 테넌트별 특정 사용자의 개인정보 접근 횟수 조회 (tenantId 필터링)
+     * 테넌트별 특정 사용자의 개인정보 접근 횟수 조회 (tenantId 필터링).
+     *
+     * <p>V20260604_002 (W2 P0) — {@code targetUserId} 시그니처 {@code String} → {@code Long}.</p>
      */
     @Query("SELECT COUNT(p) FROM PersonalDataAccessLog p WHERE p.tenantId = :tenantId AND p.targetUserId = :targetUserId AND p.accessTime BETWEEN :startDate AND :endDate")
     long countByTenantIdAndTargetUserIdAndAccessTimeBetween(
         @Param("tenantId") String tenantId,
-        @Param("targetUserId") String targetUserId, 
-        @Param("startDate") LocalDateTime startDate, 
+        @Param("targetUserId") Long targetUserId,
+        @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate);
     
     /**
@@ -200,10 +205,12 @@ public interface PersonalDataAccessLogRepository extends JpaRepository<PersonalD
     
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 대상 사용자 접근 이력 노출! findByTenantIdAndTargetUserIdAndAccessTimeBetween 사용하세요.
+     *
+     * <p>V20260604_002 (W2 P0): {@code targetUserId} 시그니처 {@code String} → {@code Long}.</p>
      */
     @Deprecated
     List<PersonalDataAccessLog> findByTargetUserIdAndAccessTimeBetween(
-        String targetUserId, LocalDateTime startDate, LocalDateTime endDate);
+        Long targetUserId, LocalDateTime startDate, LocalDateTime endDate);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없음! findByTenantIdAndAccessorIdAndAccessTimeBetween 사용하세요.
@@ -294,10 +301,12 @@ public interface PersonalDataAccessLogRepository extends JpaRepository<PersonalD
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없음! countByTenantIdAndTargetUserIdAndAccessTimeBetween 사용하세요.
+     *
+     * <p>V20260604_002 (W2 P0): {@code targetUserId} 시그니처 {@code String} → {@code Long}.</p>
      */
     @Deprecated
     long countByTargetUserIdAndAccessTimeBetween(
-        String targetUserId, LocalDateTime startDate, LocalDateTime endDate);
+        Long targetUserId, LocalDateTime startDate, LocalDateTime endDate);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없음! countByTenantIdAndAccessorIdAndAccessTimeBetween 사용하세요.

@@ -58,7 +58,7 @@ public class PersonalDataRequestController {
             currentUser.getName(),
             "USER_INFO",
             "READ",
-            currentUser.getId().toString(),
+            currentUser.getId(),
             currentUser.getName(),
             "사용자 본인 열람 요청",
             "SUCCESS",

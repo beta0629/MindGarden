@@ -99,10 +99,29 @@ public interface AdminService {
     ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
 
     /**
-     * 상담사 삭제
+     * 상담사 삭제 (USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5 — 7일 보존 윈도우 진입).
+     *
+     * <p>Phase 2-β 정착(v1.1) 이후 본 메서드는 하드/소프트 삭제를 직접 수행하지 않고
+     * {@code UserLifecycleService.transitionTo(..., DELETED_BY_ADMIN, ...)} 단일 진입점으로
+     * 위임한다. 활성 매핑·미래 스케줄 가드는 기존대로 유지한다.</p>
+     *
+     * @param id            대상 상담사 users.id
+     * @param adminUserId   강제 종료를 수행한 어드민 users.id (감사 추적 필수)
+     * @param adminRoleCode 어드민 행위자 role 코드 (예: ADMIN / HQ_ADMIN / BRANCH_SUPER_ADMIN)
+     * @param reason        강제 종료 사유 (audit_logs / destruction_logs 적재, 필수)
      */
+    void deleteConsultant(Long id, Long adminUserId, String adminRoleCode, String reason);
+
+    /**
+     * 상담사 삭제 — 레거시 시그니처(기본 reason 자동 채움) 호환 위임.
+     *
+     * @deprecated Phase 2-β 이후 모든 호출은 {@link #deleteConsultant(Long, Long, String, String)}
+     *     을 사용해야 한다. 본 시그니처는 컨트롤러 마이그레이션 동안 후방 호환만 유지하며,
+     *     adminUserId/reason 누락 시 audit 추적이 약화되므로 호출 금지.
+     */
+    @Deprecated
     void deleteConsultant(Long id);
-    
+
     /**
      * 상담사 삭제 (다른 상담사로 이전 포함)
      */
@@ -114,8 +133,27 @@ public interface AdminService {
     Map<String, Object> checkConsultantDeletionStatus(Long consultantId);
 
     /**
-     * 내담자 삭제
+     * 내담자 삭제 (USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5 — 7일 보존 윈도우 진입).
+     *
+     * <p>Phase 2-β 정착(v1.1) 이후 본 메서드는 하드/소프트 삭제를 직접 수행하지 않고
+     * {@code UserLifecycleService.transitionTo(..., DELETED_BY_ADMIN, ...)} 단일 진입점으로
+     * 위임한다. 활성 매핑·결제 대기·미래 스케줄 가드는 기존대로 유지한다.</p>
+     *
+     * @param id            대상 내담자 users.id
+     * @param adminUserId   강제 종료를 수행한 어드민 users.id (감사 추적 필수)
+     * @param adminRoleCode 어드민 행위자 role 코드 (예: ADMIN / HQ_ADMIN / STAFF / BRANCH_SUPER_ADMIN)
+     * @param reason        강제 종료 사유 (audit_logs / destruction_logs 적재, 필수)
      */
+    void deleteClient(Long id, Long adminUserId, String adminRoleCode, String reason);
+
+    /**
+     * 내담자 삭제 — 레거시 시그니처(기본 reason 자동 채움) 호환 위임.
+     *
+     * @deprecated Phase 2-β 이후 모든 호출은 {@link #deleteClient(Long, Long, String, String)}
+     *     을 사용해야 한다. 본 시그니처는 컨트롤러 마이그레이션 동안 후방 호환만 유지하며,
+     *     adminUserId/reason 누락 시 audit 추적이 약화되므로 호출 금지.
+     */
+    @Deprecated
     void deleteClient(Long id);
     
     /**

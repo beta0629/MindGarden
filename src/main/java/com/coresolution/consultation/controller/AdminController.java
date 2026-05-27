@@ -1987,13 +1987,24 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 상담사 삭제 (비활성화)
+     * 상담사 강제 종료 — DELETED_BY_ADMIN 7일 보존 윈도우 진입.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5. 사유(reason)는 audit_logs 적재 위해 필수.
+     * 본 컨트롤러는 세션에서 어드민 사용자 정보를 추출하여 service 로 위임한다.</p>
      */
     @DeleteMapping("/consultants/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteConsultant(@PathVariable Long id) {
-        log.info("🔧 상담사 삭제: ID={}", id);
-        adminService.deleteConsultant(id);
-        return deleted("상담사가 성공적으로 삭제되었습니다");
+    public ResponseEntity<ApiResponse<Void>> deleteConsultant(
+            @PathVariable Long id,
+            @RequestParam(name = "reason", required = false) String reason,
+            HttpSession session) {
+        log.info("🔧 상담사 강제 종료: ID={}, reason={}", id, reason);
+        User currentAdmin = SessionUtils.getCurrentUser(session);
+        Long adminUserId = currentAdmin != null ? currentAdmin.getId()
+                : SessionUtils.getCurrentUserId();
+        String adminRole = currentAdmin != null && currentAdmin.getRole() != null
+                ? currentAdmin.getRole().name() : UserRole.ADMIN.name();
+        adminService.deleteConsultant(id, adminUserId, adminRole, reason);
+        return deleted("상담사가 성공적으로 강제 종료되었습니다 (7일 내 되돌리기 가능)");
     }
 
     /**
@@ -2025,14 +2036,25 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 내담자 삭제 (관리자, 스태프만 가능)
+     * 내담자 강제 종료 — DELETED_BY_ADMIN 7일 보존 윈도우 진입 (관리자, 스태프만 가능).
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5. 사유(reason)는 audit_logs 적재 위해 필수.
+     * 본 컨트롤러는 세션에서 어드민 사용자 정보를 추출하여 service 로 위임한다.</p>
      */
     @DeleteMapping("/clients/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<ApiResponse<Void>> deleteClient(@PathVariable Long id) {
-        log.info("🔧 내담자 삭제: ID={}", id);
-        adminService.deleteClient(id);
-        return deleted("내담자가 성공적으로 삭제되었습니다");
+    public ResponseEntity<ApiResponse<Void>> deleteClient(
+            @PathVariable Long id,
+            @RequestParam(name = "reason", required = false) String reason,
+            HttpSession session) {
+        log.info("🔧 내담자 강제 종료: ID={}, reason={}", id, reason);
+        User currentAdmin = SessionUtils.getCurrentUser(session);
+        Long adminUserId = currentAdmin != null ? currentAdmin.getId()
+                : SessionUtils.getCurrentUserId();
+        String adminRole = currentAdmin != null && currentAdmin.getRole() != null
+                ? currentAdmin.getRole().name() : UserRole.ADMIN.name();
+        adminService.deleteClient(id, adminUserId, adminRole, reason);
+        return deleted("내담자가 성공적으로 강제 종료되었습니다 (7일 내 되돌리기 가능)");
     }
 
     /**

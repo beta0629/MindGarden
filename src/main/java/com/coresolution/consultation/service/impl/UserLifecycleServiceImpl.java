@@ -83,8 +83,9 @@ public class UserLifecycleServiceImpl implements UserLifecycleService {
                     .build();
         }
 
-        // 일반 전이 — withdrawal stamp 처리 + audit_logs 기록
+        // 일반 전이 — withdrawal stamp + admin-delete stamp 처리 + audit_logs 기록
         applyWithdrawalStamp(user, fromState, newState, now);
+        applyAdminDeleteStamp(user, fromState, newState, actor, now);
         user.setLifecycleState(newState);
         user.setUpdatedAt(now);
         userRepository.save(user);
@@ -146,7 +147,36 @@ public class UserLifecycleServiceImpl implements UserLifecycleService {
     }
 
     /**
-     * audit_logs.action enum 매핑 — §8.2 표.
+     * 어드민 강제 종료 / 되돌리기 stamp 처리 — Phase 2-β Q5.
+     *
+     * <ul>
+     *   <li>DELETED_BY_ADMIN 진입 → {@code deleted_at = now} stamp + {@code deleted_by_admin_id}
+     *       = actor.actorUserId (어드민 actor 필수, 누락 시 IllegalArgumentException). 7일
+     *       보존 윈도우 cron 의 기준점.</li>
+     *   <li>DELETED_BY_ADMIN → ACTIVE 복귀 → {@code deleted_at = null} +
+     *       {@code deleted_by_admin_id = null} clear (복원 이력은 audit_logs 에 남는다).</li>
+     *   <li>그 외 전이 → 변경 없음 (자발 탈퇴 등은 deleted_at 사용하지 않음).</li>
+     * </ul>
+     */
+    void applyAdminDeleteStamp(
+            User user, LifecycleState fromState, LifecycleState newState,
+            Actor actor, LocalDateTime now) {
+        if (newState == LifecycleState.DELETED_BY_ADMIN) {
+            if (actor.getActorUserId() == null) {
+                throw new IllegalArgumentException(
+                        "Actor.actorUserId must not be null for DELETED_BY_ADMIN transition");
+            }
+            user.setDeletedAt(now);
+            user.setDeletedByAdminId(actor.getActorUserId());
+        } else if (fromState == LifecycleState.DELETED_BY_ADMIN
+                && newState == LifecycleState.ACTIVE) {
+            user.setDeletedAt(null);
+            user.setDeletedByAdminId(null);
+        }
+    }
+
+    /**
+     * audit_logs.action enum 매핑 — §8.2 표 + Phase 2-β 어드민 강제 종료 / 되돌리기.
      */
     static AuditAction resolveAuditAction(LifecycleState fromState, LifecycleState newState) {
         if (newState == LifecycleState.WITHDRAWAL_PENDING) {
@@ -156,7 +186,12 @@ public class UserLifecycleServiceImpl implements UserLifecycleService {
             return AuditAction.USER_WITHDRAWAL_CANCEL;
         }
         if (newState == LifecycleState.DELETED_BY_ADMIN) {
-            return AuditAction.ADMIN_FORCE_DEACTIVATE;
+            // Phase 2-β Q5 — 어드민 강제 종료 (7일 보존 윈도우 진입)
+            return AuditAction.ADMIN_FORCED_DELETE;
+        }
+        if (fromState == LifecycleState.DELETED_BY_ADMIN && newState == LifecycleState.ACTIVE) {
+            // Phase 2-β Q5 — 어드민 7일 윈도우 내 되돌리기
+            return AuditAction.ADMIN_RESTORE;
         }
         if (newState == LifecycleState.DORMANT) {
             return AuditAction.USER_DORMANT_TRANSITION;

@@ -19,7 +19,9 @@ const SMS_TEMPLATE_ENDPOINTS = Object.freeze({
   LIST: BASE_PATH,
   ITEM: (key) => `${BASE_PATH}/${encodeURIComponent(key)}`,
   TENANT_OVERRIDE: (key) => `${BASE_PATH}/${encodeURIComponent(key)}/tenant-override`,
-  PREVIEW: (key) => `${BASE_PATH}/${encodeURIComponent(key)}/preview`
+  PREVIEW: (key) => `${BASE_PATH}/${encodeURIComponent(key)}/preview`,
+  GLOBAL_DISPATCH: `${BASE_PATH}/global-dispatch`,
+  TEMPLATE_DISPATCH: (key) => `${BASE_PATH}/${encodeURIComponent(key)}/dispatch`
 });
 
 /**
@@ -55,11 +57,30 @@ export const deleteSmsTemplateTenantOverride = (key) =>
 export const previewSmsTemplate = (key, payload) =>
   StandardizedApi.post(SMS_TEMPLATE_ENDPOINTS.PREVIEW(key), payload || {});
 
+/**
+ * 글로벌 자동 SMS 발송 게이트 토글 (옵션 C 1/2).
+ * @param {{ enabled: boolean }} payload
+ * @returns {Promise<any>}
+ */
+export const patchGlobalDispatchFlag = (payload) =>
+  StandardizedApi.patch(SMS_TEMPLATE_ENDPOINTS.GLOBAL_DISPATCH, payload);
+
+/**
+ * 종목별 자동 SMS 발송 게이트 토글 (옵션 C 2/2).
+ * @param {string} key SMS_TEMPLATE 키
+ * @param {{ enabled: boolean }} payload
+ * @returns {Promise<any>}
+ */
+export const patchTemplateDispatchFlag = (key, payload) =>
+  StandardizedApi.patch(SMS_TEMPLATE_ENDPOINTS.TEMPLATE_DISPATCH(key), payload);
+
 const smsTemplateApi = {
   getSmsTemplates,
   updateSmsTemplateTenantOverride,
   deleteSmsTemplateTenantOverride,
   previewSmsTemplate,
+  patchGlobalDispatchFlag,
+  patchTemplateDispatchFlag,
   SMS_TEMPLATE_ENDPOINTS
 };
 

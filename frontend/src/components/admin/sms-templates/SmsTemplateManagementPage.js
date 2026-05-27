@@ -31,7 +31,9 @@ import {
   getSmsTemplates,
   updateSmsTemplateTenantOverride,
   deleteSmsTemplateTenantOverride,
-  previewSmsTemplate
+  previewSmsTemplate,
+  patchGlobalDispatchFlag,
+  patchTemplateDispatchFlag
 } from '../../../api/admin/smsTemplateApi';
 import './SmsTemplateManagementPage.css';
 
@@ -65,9 +67,15 @@ const SmsTemplateManagementPage = () => {
   const [previewResult, setPreviewResult] = useState(null);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [globalEnableModalOpen, setGlobalEnableModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+
+  const globalDispatchEnabled = useMemo(
+    () => items.some((item) => item?.globalDispatchEnabled === true),
+    [items]
+  );
 
   const isAdmin = RoleUtils.hasAnyRole(user, [USER_ROLES.ADMIN]);
   const hasAccess = RoleUtils.hasAnyRole(user, ALLOWED_ROLES);
@@ -238,6 +246,59 @@ const SmsTemplateManagementPage = () => {
     }
   }, [selectedKey, loadList, t]);
 
+  const submitGlobalDispatchToggle = useCallback(async(enabled) => {
+    setSubmitting(true);
+    try {
+      await patchGlobalDispatchFlag({ enabled });
+      notificationManager.show(
+        t('smsTemplate.action.dispatchUpdated'),
+        'success'
+      );
+      await loadList();
+    } catch (error) {
+      console.error('SMS 글로벌 게이트 토글 실패', error);
+      notificationManager.show(
+        t('smsTemplate.action.dispatchUpdateFailed'),
+        'error'
+      );
+    } finally {
+      setSubmitting(false);
+      setGlobalEnableModalOpen(false);
+    }
+  }, [loadList, t]);
+
+  const handleGlobalToggle = useCallback((nextEnabled) => {
+    if (nextEnabled) {
+      // ON 으로 전환은 운영 게이트 해제 — 알림톡 검수 통과 확인 후에만 활성화 (확인 모달).
+      setGlobalEnableModalOpen(true);
+      return;
+    }
+    submitGlobalDispatchToggle(false);
+  }, [submitGlobalDispatchToggle]);
+
+  const handleTemplateDispatchToggle = useCallback(async(templateKey, nextEnabled) => {
+    if (!templateKey || !isAdmin) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await patchTemplateDispatchFlag(templateKey, { enabled: nextEnabled });
+      notificationManager.show(
+        t('smsTemplate.action.dispatchUpdated'),
+        'success'
+      );
+      await loadList();
+    } catch (error) {
+      console.error('SMS 종목 게이트 토글 실패', error);
+      notificationManager.show(
+        t('smsTemplate.action.dispatchUpdateFailed'),
+        'error'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }, [isAdmin, loadList, t]);
+
   const pageTitle = t('smsTemplate.page.title');
   const pageSubtitle = t('smsTemplate.page.subtitle');
 
@@ -262,6 +323,45 @@ const SmsTemplateManagementPage = () => {
             title={pageTitle}
             subtitle={pageSubtitle}
           />
+
+          <aside
+            className="mg-admin-sms-template__banner"
+            data-testid="sms-template-gate-banner"
+            role="note"
+          >
+            {t('smsTemplate.banner.gateNotice')}
+          </aside>
+
+          <section
+            className="mg-admin-sms-template__global-toggle"
+            data-testid="sms-template-global-toggle"
+            aria-label={t('smsTemplate.globalDispatch.title')}
+          >
+            <div className="mg-admin-sms-template__global-toggle-text">
+              <h3 className="mg-admin-sms-template__global-toggle-title">
+                {t('smsTemplate.globalDispatch.title')}
+              </h3>
+              <p className="mg-admin-sms-template__global-toggle-description">
+                {t('smsTemplate.globalDispatch.description')}
+              </p>
+            </div>
+            <label className="mg-admin-sms-template__switch">
+              <input
+                type="checkbox"
+                className="mg-admin-sms-template__switch-input"
+                checked={globalDispatchEnabled}
+                onChange={(event) => handleGlobalToggle(event.target.checked)}
+                disabled={!isAdmin || submitting}
+                data-testid="sms-template-global-toggle-input"
+              />
+              <span className="mg-admin-sms-template__switch-slider" aria-hidden="true" />
+              <span className="mg-admin-sms-template__switch-label">
+                {globalDispatchEnabled
+                  ? t('smsTemplate.dispatch.badge.on')
+                  : t('smsTemplate.dispatch.badge.off')}
+              </span>
+            </label>
+          </section>
 
           <section
             className="mg-admin-sms-template__panel"
@@ -332,7 +432,49 @@ const SmsTemplateManagementPage = () => {
                               {t('smsTemplate.list.overrideBadge')}
                             </span>
                           )}
+                          <span
+                            className={`mg-admin-sms-template__dispatch-badge${
+                              item.effectiveDispatchEnabled
+                                ? ' mg-admin-sms-template__dispatch-badge--on'
+                                : ' mg-admin-sms-template__dispatch-badge--off'
+                            }`}
+                            data-testid={`sms-template-dispatch-badge-${item.key}`}
+                          >
+                            {item.effectiveDispatchEnabled
+                              ? t('smsTemplate.dispatch.badge.on')
+                              : t('smsTemplate.dispatch.badge.off')}
+                          </span>
                         </button>
+                        <label
+                          className={`mg-admin-sms-template__template-toggle${
+                            !globalDispatchEnabled
+                              ? ' mg-admin-sms-template__template-toggle--disabled'
+                              : ''
+                          }`}
+                          title={
+                            !globalDispatchEnabled
+                              ? t('smsTemplate.templateDispatch.disabledByGlobal')
+                              : undefined
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            className="mg-admin-sms-template__switch-input"
+                            checked={Boolean(item.tenantDispatchEnabled
+                                ?? item.effectiveDispatchEnabled)}
+                            onChange={(event) =>
+                              handleTemplateDispatchToggle(item.key, event.target.checked)
+                            }
+                            disabled={
+                              !isAdmin || submitting || !globalDispatchEnabled
+                            }
+                            data-testid={`sms-template-toggle-${item.key}`}
+                          />
+                          <span className="mg-admin-sms-template__switch-slider" aria-hidden="true" />
+                          <span className="mg-admin-sms-template__switch-label">
+                            {t('smsTemplate.templateDispatch.label')}
+                          </span>
+                        </label>
                       </li>
                     ))}
                   </ul>
@@ -552,6 +694,39 @@ const SmsTemplateManagementPage = () => {
       >
         <div data-testid="sms-template-delete-modal-body">
           {t('smsTemplate.modals.deleteBody')}
+        </div>
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={globalEnableModalOpen}
+        onClose={() => setGlobalEnableModalOpen(false)}
+        title={t('smsTemplate.globalDispatch.title')}
+        subtitle={t('smsTemplate.globalDispatch.confirmOn')}
+        variant="alert"
+        actions={
+          <>
+            <MGButton
+              type="button"
+              variant="secondary"
+              onClick={() => setGlobalEnableModalOpen(false)}
+              disabled={submitting}
+            >
+              {t('common:cancel')}
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="primary"
+              onClick={() => submitGlobalDispatchToggle(true)}
+              loading={submitting}
+              data-testid="sms-template-global-dispatch-confirm"
+            >
+              {t('smsTemplate.dispatch.badge.on')}
+            </MGButton>
+          </>
+        }
+      >
+        <div data-testid="sms-template-global-dispatch-modal-body">
+          {t('smsTemplate.globalDispatch.description')}
         </div>
       </UnifiedModal>
     </AdminCommonLayout>

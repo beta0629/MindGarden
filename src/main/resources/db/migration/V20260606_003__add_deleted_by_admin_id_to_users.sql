@@ -1,5 +1,6 @@
 -- =============================================================================
--- V20260606_002 — Phase 2-β 어드민 강제 종료 (USER_LIFECYCLE_TERMINATION_POLICY)
+-- V20260606_003 — Phase 2-β 어드민 강제 종료 (USER_LIFECYCLE_TERMINATION_POLICY)
+-- (hotfix: PR #33 의 V20260606_002__add_withdrawal_options_to_users.sql 슬롯 충돌로 _002 → _003 rename)
 --
 -- 입력 보고서: docs/standards/USER_LIFECYCLE_TERMINATION_POLICY.md (v1.1)
 --   §0.1 Q5 결정 = 어드민 강제 종료 7일 보존 윈도우 + 어드민 "되돌리기"

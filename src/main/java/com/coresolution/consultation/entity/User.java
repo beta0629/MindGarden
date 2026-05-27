@@ -169,7 +169,7 @@ public class User extends BaseEntity {
      * audit_logs 에 동일 actor_user_id 가 기록되지만, pending-deletion 목록 조회 시 join 비용을
      * 줄이기 위해 users 테이블에 캐시 컬럼으로 둔다. 자발 탈퇴/자동 cron 진입 행은 NULL.</p>
      *
-     * <p>Flyway V20260606_002 로 추가된 {@code deleted_by_admin_id} 컬럼과 매핑된다.</p>
+     * <p>Flyway V20260606_003 로 추가된 {@code deleted_by_admin_id} 컬럼과 매핑된다.</p>
      */
     @Column(name = "deleted_by_admin_id")
     private Long deletedByAdminId;

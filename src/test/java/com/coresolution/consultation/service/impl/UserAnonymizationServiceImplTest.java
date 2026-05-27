@@ -9,6 +9,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -20,9 +23,13 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.dto.lifecycle.AnonymizeResult;
 import com.coresolution.consultation.entity.AuditLog;
+import com.coresolution.consultation.entity.CommunityComment;
+import com.coresolution.consultation.entity.CommunityPost;
 import com.coresolution.consultation.entity.PersonalDataDestructionLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AuditLogRepository;
+import com.coresolution.consultation.repository.CommunityCommentRepository;
+import com.coresolution.consultation.repository.CommunityPostRepository;
 import com.coresolution.consultation.repository.PersonalDataDestructionLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserAnonymizationService;
@@ -34,6 +41,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -52,6 +60,8 @@ class UserAnonymizationServiceImplTest {
     @Mock private UserRepository userRepository;
     @Mock private AuditLogRepository auditLogRepository;
     @Mock private PersonalDataDestructionLogRepository personalDataDestructionLogRepository;
+    @Mock private CommunityPostRepository communityPostRepository;
+    @Mock private CommunityCommentRepository communityCommentRepository;
 
     @InjectMocks
     private UserAnonymizationServiceImpl service;
@@ -85,6 +95,12 @@ class UserAnonymizationServiceImplTest {
         user.setIsSocialAccount(true);
         user.setEmailVerificationToken("evt-token");
         user.setPasswordResetToken("prt-token");
+
+        // Q12-b 기본 — community sweep 은 옵션 false 시 호출되지 않으므로 lenient stub
+        Mockito.lenient().when(communityPostRepository.findByAuthor_Id(USER_ID))
+                .thenReturn(Collections.emptyList());
+        Mockito.lenient().when(communityCommentRepository.findByAuthor_Id(USER_ID))
+                .thenReturn(Collections.emptyList());
     }
 
     @Test
@@ -364,6 +380,113 @@ class UserAnonymizationServiceImplTest {
                 ArgumentCaptor.forClass(PersonalDataDestructionLog.class);
         verify(personalDataDestructionLogRepository).save(dCaptor.capture());
         assertThat(dCaptor.getValue().getExecutedByUserId()).isNull();
+    }
+
+    // ---------- Q12-b deleteCommunityBody 옵션 분기 ----------
+
+    @Test
+    @DisplayName("Q12-b: withdrawal_options_json=null → community 본문 KEEP (sweep 미호출)")
+    void q12b_defaultOption_skipsCommunitySweep() {
+        user.setWithdrawalOptionsJson(null);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogRepository.save(any(AuditLog.class)))
+                .thenReturn(AuditLog.builder().id(11L).build());
+        when(personalDataDestructionLogRepository.save(any(PersonalDataDestructionLog.class)))
+                .thenReturn(PersonalDataDestructionLog.builder().id(22L).build());
+
+        service.anonymize(USER_ID, Actor.system(), "WITHDRAWAL_GRACE_EXPIRED");
+
+        verify(communityPostRepository, never()).saveAll(any());
+        verify(communityCommentRepository, never()).saveAll(any());
+        assertThat(user.getWithdrawalOptionsJson()).isNull();
+    }
+
+    @Test
+    @DisplayName("Q12-b: deleteCommunityBody=true → 본인 작성 게시글·댓글 body 익명화 + soft-delete")
+    void q12b_optionTrue_anonymizesCommunityBodies() {
+        user.setWithdrawalOptionsJson("{\"deleteCommunityBody\":true}");
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogRepository.save(any(AuditLog.class)))
+                .thenReturn(AuditLog.builder().id(11L).build());
+        when(personalDataDestructionLogRepository.save(any(PersonalDataDestructionLog.class)))
+                .thenReturn(PersonalDataDestructionLog.builder().id(22L).build());
+
+        CommunityPost p1 = new CommunityPost();
+        p1.setBody("원본 게시글 본문 1");
+        p1.setTenantId(TENANT_ID);
+        p1.setIsDeleted(false);
+        CommunityPost p2 = new CommunityPost();
+        p2.setBody("원본 게시글 본문 2");
+        p2.setTenantId(TENANT_ID);
+        p2.setIsDeleted(true);
+        Mockito.when(communityPostRepository.findByAuthor_Id(USER_ID))
+                .thenReturn(Arrays.asList(p1, p2));
+
+        CommunityComment c1 = new CommunityComment();
+        c1.setBody("원본 댓글 1");
+        c1.setTenantId(TENANT_ID);
+        c1.setIsDeleted(false);
+        Mockito.when(communityCommentRepository.findByAuthor_Id(USER_ID))
+                .thenReturn(Collections.singletonList(c1));
+
+        service.anonymize(USER_ID, Actor.system(), "WITHDRAWAL_GRACE_EXPIRED");
+
+        assertThat(p1.getBody())
+                .isEqualTo(UserAnonymizationServiceImpl.COMMUNITY_BODY_TOMBSTONE);
+        assertThat(p1.getIsDeleted()).isTrue();
+        assertThat(p1.getDeletedAt()).isNotNull();
+        assertThat(p2.getBody())
+                .isEqualTo(UserAnonymizationServiceImpl.COMMUNITY_BODY_TOMBSTONE);
+        assertThat(c1.getBody())
+                .isEqualTo(UserAnonymizationServiceImpl.COMMUNITY_BODY_TOMBSTONE);
+        assertThat(c1.getIsDeleted()).isTrue();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<CommunityPost>> postCaptor =
+                ArgumentCaptor.forClass(List.class);
+        verify(communityPostRepository).saveAll(postCaptor.capture());
+        assertThat(postCaptor.getValue()).hasSize(2);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<CommunityComment>> commentCaptor =
+                ArgumentCaptor.forClass(List.class);
+        verify(communityCommentRepository).saveAll(commentCaptor.capture());
+        assertThat(commentCaptor.getValue()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Q12-b: deleteCommunityBody=true 옵션이지만 본인 게시글이 없으면 saveAll 미호출")
+    void q12b_optionTrue_noPosts_noSaveAll() {
+        user.setWithdrawalOptionsJson("{\"deleteCommunityBody\":true}");
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogRepository.save(any(AuditLog.class)))
+                .thenReturn(AuditLog.builder().id(11L).build());
+        when(personalDataDestructionLogRepository.save(any(PersonalDataDestructionLog.class)))
+                .thenReturn(PersonalDataDestructionLog.builder().id(22L).build());
+
+        service.anonymize(USER_ID, Actor.system(), "WITHDRAWAL_GRACE_EXPIRED");
+
+        verify(communityPostRepository, never()).saveAll(any());
+        verify(communityCommentRepository, never()).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("Q12-b: legacy/이상한 JSON 값은 안전하게 기본값 (KEEP) 으로 해석")
+    void q12b_legacyJson_treatedAsDefault() {
+        user.setWithdrawalOptionsJson("{\"deleteCommunityBody\":false,\"unknownLegacy\":true}");
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogRepository.save(any(AuditLog.class)))
+                .thenReturn(AuditLog.builder().id(11L).build());
+        when(personalDataDestructionLogRepository.save(any(PersonalDataDestructionLog.class)))
+                .thenReturn(PersonalDataDestructionLog.builder().id(22L).build());
+
+        service.anonymize(USER_ID, Actor.system(), "WITHDRAWAL_GRACE_EXPIRED");
+
+        verify(communityPostRepository, never()).saveAll(any());
     }
 
     @Test

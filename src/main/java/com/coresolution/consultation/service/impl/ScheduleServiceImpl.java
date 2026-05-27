@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ConsultationType;
+import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ScheduleResponse;
@@ -34,6 +35,7 @@ import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
+import com.coresolution.consultation.service.ConsultantClientMappingHistoryService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
@@ -50,6 +52,7 @@ import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -97,6 +100,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final MobilePushDispatchService mobilePushDispatchService;
     private final ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
     private final BatchNotificationDispatchService batchNotificationDispatchService;
+    private final ConsultantClientMappingHistoryService consultantClientMappingHistoryService;
+    private final ObjectMapper sessionHistoryObjectMapper = new ObjectMapper();
 
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -120,7 +125,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             ScheduleListUserFieldsResolver scheduleListUserFieldsResolver,
             MobilePushDispatchService mobilePushDispatchService,
             ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper,
-            BatchNotificationDispatchService batchNotificationDispatchService) {
+            BatchNotificationDispatchService batchNotificationDispatchService,
+            ConsultantClientMappingHistoryService consultantClientMappingHistoryService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -143,6 +149,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.mobilePushDispatchService = mobilePushDispatchService;
         this.scheduleCreatedNotificationHelper = scheduleCreatedNotificationHelper;
         this.batchNotificationDispatchService = batchNotificationDispatchService;
+        this.consultantClientMappingHistoryService = consultantClientMappingHistoryService;
     }
     
     
@@ -783,6 +790,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 freshMapping.getId(), freshMapping.getTotalSessions(),
                 freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
         persistSessionSequenceBeforeDeduction(scheduleForSequence, freshMapping);
+        // 옵션 B: SESSION_USED history 기록을 위해 차감 전 스냅샷 캡처
+        String beforeStateJson = serializeSessionSnapshot(freshMapping);
         freshMapping.useSession();
         mappingRepository.save(freshMapping);
         try {
@@ -792,6 +801,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.error("회기 사용 후 동기화 실패: mappingId={}, error={}",
                     mappingId, syncError.getMessage(), syncError);
         }
+        recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson,
+                scheduleForSequence != null ? scheduleForSequence.getId() : null);
         try {
             Integer rem = freshMapping.getRemainingSessions();
             if (rem != null && rem > 0 && rem <= 2) {
@@ -801,6 +812,71 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("회기 임박 푸시 실패: mappingId={}", mappingId, pushEx);
         }
         dispatchSessionLifecycleNotification(freshMapping);
+    }
+
+    /**
+     * 회기 차감 전·후 스냅샷 직렬화.
+     * remainingSessions, usedSessions, totalSessions, status 핵심 필드만 캡처(LAZY 프록시 회피).
+     *
+     * @param mapping 매핑 엔티티
+     * @return JSON 문자열 (실패 시 null)
+     */
+    private String serializeSessionSnapshot(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return null;
+        }
+        try {
+            Map<String, Object> snapshot = new HashMap<>();
+            snapshot.put("totalSessions", mapping.getTotalSessions());
+            snapshot.put("usedSessions", mapping.getUsedSessions());
+            snapshot.put("remainingSessions", mapping.getRemainingSessions());
+            snapshot.put("status", mapping.getStatus() != null ? mapping.getStatus().name() : null);
+            snapshot.put("paymentStatus",
+                    mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null);
+            return sessionHistoryObjectMapper.writeValueAsString(snapshot);
+        } catch (Exception e) {
+            log.warn("세션 스냅샷 직렬화 실패: mappingId={}, error={}",
+                    mapping.getId(), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 회기 사용(SESSION_USED) 이력 한 건 기록. 동일 트랜잭션에서 실행되어 실패 시 부모 트랜잭션을 보호한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 차감 후 매핑 (after 스냅샷용)
+     * @param beforeStateJson 차감 전 스냅샷
+     * @param scheduleId 회기를 사용한 스케줄 ID (nullable)
+     */
+    private void recordSessionUsedHistory(String tenantId, ConsultantClientMapping mapping,
+            String beforeStateJson, Long scheduleId) {
+        if (mapping == null || mapping.getId() == null) {
+            return;
+        }
+        try {
+            String afterStateJson = serializeSessionSnapshot(mapping);
+            Long consultantUserId = mapping.getConsultant() != null
+                    ? mapping.getConsultant().getId() : null;
+            Long clientUserId = mapping.getClient() != null
+                    ? mapping.getClient().getId() : null;
+            String reason = scheduleId != null
+                    ? ("SESSION_USED via schedule " + scheduleId)
+                    : "SESSION_USED";
+            consultantClientMappingHistoryService.record(
+                    tenantId,
+                    mapping.getId(),
+                    clientUserId,
+                    consultantUserId,
+                    MappingHistoryEventType.SESSION_USED,
+                    beforeStateJson,
+                    afterStateJson,
+                    null,
+                    reason);
+        } catch (Exception historyError) {
+            log.warn("SESSION_USED 이력 기록 실패(무시): mappingId={}, error={}",
+                    mapping.getId(), historyError.getMessage());
+        }
     }
 
     @Override
@@ -1876,6 +1952,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
             persistSessionSequenceBeforeDeduction(scheduleForSequence, freshMapping);
 
+            // 옵션 B: SESSION_USED history 기록을 위해 차감 전 스냅샷 캡처
+            String beforeStateJson = serializeSessionSnapshot(freshMapping);
+
             freshMapping.useSession();
             mappingRepository.save(freshMapping);
 
@@ -1886,6 +1965,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 log.error("❌ 회기 사용 후 동기화 실패: mappingId={}, error={}",
                         mappingId, syncError.getMessage(), syncError);
             }
+
+            recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson,
+                    scheduleForSequence != null ? scheduleForSequence.getId() : null);
 
             log.info("✅ 회기 사용 완료: 남은 회기 수 {}", freshMapping.getRemainingSessions());
 

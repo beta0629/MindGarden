@@ -664,3 +664,193 @@
 .mg-mypage-consent-notice .mg-mypage__section-description {
   margin-top: var(--mg-spacing-xs);
 }
+
+/* ============================================================
+ * 자발 회원 탈퇴 UI — USER_LIFECYCLE_TERMINATION_POLICY §2.3
+ * 디자이너 §B/§C 시안 + B0KlA 토큰 SSOT.
+ * ============================================================ */
+
+/* 탈퇴 신청 모달 폼 */
+.mg-mypage-withdrawal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.mg-mypage-withdrawal-form__alert {
+  padding: var(--mg-spacing-md);
+  background: var(--mg-warning-50, var(--mg-color-background-main));
+  border: 1px solid var(--mg-warning-500, var(--mg-color-border-main));
+  border-radius: var(--mg-radius-md, var(--mg-spacing-sm));
+}
+
+.mg-mypage-withdrawal-form__alert-title {
+  margin: 0 0 var(--mg-spacing-xs);
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-bold);
+  color: var(--mg-color-text-main);
+}
+
+.mg-mypage-withdrawal-form__alert-list {
+  margin: 0;
+  padding-left: var(--mg-spacing-lg);
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-text-secondary);
+  line-height: var(--mg-line-height-relaxed, 1.5);
+}
+
+.mg-mypage-withdrawal-form__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mg-mypage-withdrawal-form__label {
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-medium);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-mypage-withdrawal-form__input,
+.mg-mypage-withdrawal-form__textarea {
+  width: 100%;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  font-size: var(--mg-font-sm);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md, var(--mg-spacing-sm));
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-main);
+  box-sizing: border-box;
+}
+
+.mg-mypage-withdrawal-form__input:focus,
+.mg-mypage-withdrawal-form__textarea:focus {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: 1px;
+}
+
+.mg-mypage-withdrawal-form__radio-list,
+.mg-mypage-withdrawal-form__checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+}
+
+.mg-mypage-withdrawal-form__radio-item,
+.mg-mypage-withdrawal-form__checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm);
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-text-main);
+  cursor: pointer;
+}
+
+.mg-mypage-withdrawal-form__hint {
+  margin: 0;
+  font-size: var(--mg-font-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-mypage-withdrawal-form__agreement {
+  font-weight: var(--mg-font-medium);
+}
+
+.mg-mypage-withdrawal-form__error {
+  margin: 0;
+  font-size: var(--mg-font-xs);
+  color: var(--mg-error-600);
+}
+
+.mg-mypage-withdrawal-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--mg-spacing-md);
+}
+
+@media (max-width: 28rem) {
+  .mg-mypage-withdrawal-form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .mg-mypage-withdrawal-form__actions .mg-button.mg-v2-button {
+    width: 100%;
+  }
+}
+
+/* 탈퇴 유예 기간 위젯 (마이페이지 최상단) */
+.mg-mypage-withdrawal-widget {
+  margin-bottom: var(--mg-spacing-lg);
+  border-left: 4px solid var(--mg-error-500, var(--mg-color-border-main));
+}
+
+.mg-mypage-withdrawal-widget__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  margin: 0 0 var(--mg-spacing-md);
+  padding: 0;
+}
+
+.mg-mypage-withdrawal-widget__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  font-size: var(--mg-font-sm);
+}
+
+.mg-mypage-withdrawal-widget__meta-row dt {
+  min-width: 7rem;
+  margin: 0;
+  font-weight: var(--mg-font-medium);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-mypage-withdrawal-widget__meta-row dd {
+  margin: 0;
+  color: var(--mg-color-text-main);
+}
+
+.mg-mypage-withdrawal-widget__meta-row--muted dd {
+  color: var(--mg-color-text-secondary);
+}
+
+/* 전역 탈퇴 진행 중 배너 */
+.mg-withdrawal-pending-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  margin: 0;
+  border-radius: 0;
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-medium);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mg-withdrawal-pending-banner__message {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mg-withdrawal-pending-banner__link {
+  flex-shrink: 0;
+  color: inherit;
+  text-decoration: underline;
+  font-weight: var(--mg-font-bold);
+}
+
+.mg-withdrawal-pending-banner__link:hover,
+.mg-withdrawal-pending-banner__link:focus {
+  text-decoration-thickness: 2px;
+}

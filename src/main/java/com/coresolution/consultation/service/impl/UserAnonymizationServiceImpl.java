@@ -17,10 +17,15 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.dto.lifecycle.AnonymizeResult;
+import com.coresolution.consultation.dto.lifecycle.WithdrawalOptions;
 import com.coresolution.consultation.entity.AuditLog;
+import com.coresolution.consultation.entity.CommunityComment;
+import com.coresolution.consultation.entity.CommunityPost;
 import com.coresolution.consultation.entity.PersonalDataDestructionLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AuditLogRepository;
+import com.coresolution.consultation.repository.CommunityCommentRepository;
+import com.coresolution.consultation.repository.CommunityPostRepository;
 import com.coresolution.consultation.repository.PersonalDataDestructionLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserAnonymizationService;
@@ -54,9 +59,14 @@ public class UserAnonymizationServiceImpl implements UserAnonymizationService {
             "social_provider", "social_provider_user_id", "is_social_account",
             "email_verification_token", "password_reset_token");
 
+    /** Q12-b 본문도 삭제 옵션 적용 시 본문 자리에 적재되는 surrogate (운영 노출 안전). */
+    static final String COMMUNITY_BODY_TOMBSTONE = "[작성자 탈퇴로 함께 삭제된 본문입니다.]";
+
     private final UserRepository userRepository;
     private final AuditLogRepository auditLogRepository;
     private final PersonalDataDestructionLogRepository personalDataDestructionLogRepository;
+    private final CommunityPostRepository communityPostRepository;
+    private final CommunityCommentRepository communityCommentRepository;
 
     @Override
     @Transactional
@@ -91,8 +101,15 @@ public class UserAnonymizationServiceImpl implements UserAnonymizationService {
         String beforeNameHash = sha256Hex(beforeName);
         String beforePhoneHash = sha256Hex(beforePhone);
 
+        // Q12-b 본인 옵션 — community body 처리 분기 (PII 매트릭스 적용 전 시점에 분리 적용)
+        WithdrawalOptions options =
+                WithdrawalOptions.fromJsonOrDefaults(user.getWithdrawalOptionsJson());
+        CommunitySweepResult communitySweep = applyCommunityBodyOption(userId, options, now);
+
         // PII 매트릭스 적용 — §3.2 users 표
         applyUsersPiiMatrix(user, epochSeconds);
+        // 보관된 옵션 정리 — ANONYMIZED 후에는 더 이상 필요 없음
+        user.setWithdrawalOptionsJson(null);
 
         userRepository.save(user);
 
@@ -125,8 +142,10 @@ public class UserAnonymizationServiceImpl implements UserAnonymizationService {
         PersonalDataDestructionLog savedDestruction =
                 personalDataDestructionLogRepository.save(destruction);
 
-        log.info("[Lifecycle] anonymize complete: userId={}, actor={}, reason={}",
-                userId, actor, reason);
+        log.info("[Lifecycle] anonymize complete: userId={}, actor={}, reason={}, "
+                        + "communityPostsAnonymized={}, communityCommentsAnonymized={}",
+                userId, actor, reason,
+                communitySweep.posts, communitySweep.comments);
 
         return AnonymizeResult.builder()
                 .userId(userId)
@@ -136,6 +155,71 @@ public class UserAnonymizationServiceImpl implements UserAnonymizationService {
                 .destructionLogId(savedDestruction.getId())
                 .anonymizedAt(now)
                 .build();
+    }
+
+    /**
+     * Q12-b — 본인 옵션 "본문도 삭제" 처리.
+     *
+     * <p>{@code deleteCommunityBody=false} (default) 인 경우 author 익명화만 수행 (본 service 가
+     * users 테이블의 PII 만 처리하므로 자식 author 참조는 자동 해소). 본문은 KEEP.</p>
+     *
+     * <p>{@code deleteCommunityBody=true} 인 경우 본인이 작성한 모든 게시글·댓글의 body 를
+     * {@link #COMMUNITY_BODY_TOMBSTONE} 으로 치환하고 soft-delete 처리한다. body 컬럼이
+     * NOT NULL 이므로 NULL 대신 surrogate 사용.</p>
+     *
+     * @param userId  대상 users.id
+     * @param options 본인 옵션
+     * @param now     처리 시각 (deletedAt 적용용)
+     * @return 본 회차에 처리된 community 행 수 (audit/log 용)
+     */
+    CommunitySweepResult applyCommunityBodyOption(
+            Long userId, WithdrawalOptions options, LocalDateTime now) {
+        if (options == null || !options.isDeleteCommunityBody()) {
+            return CommunitySweepResult.NONE;
+        }
+
+        int postCount = 0;
+        int commentCount = 0;
+
+        List<CommunityPost> posts = communityPostRepository.findByAuthor_Id(userId);
+        for (CommunityPost post : posts) {
+            // 이미 isDeleted 인 행도 body 는 한 번 더 익명화 — idempotent 보장 + 잔존 PII 차단
+            post.setBody(COMMUNITY_BODY_TOMBSTONE);
+            if (!Boolean.TRUE.equals(post.getIsDeleted())) {
+                post.setIsDeleted(true);
+                post.setDeletedAt(now);
+            }
+            postCount++;
+        }
+        if (!posts.isEmpty()) {
+            communityPostRepository.saveAll(posts);
+        }
+
+        List<CommunityComment> comments = communityCommentRepository.findByAuthor_Id(userId);
+        for (CommunityComment comment : comments) {
+            comment.setBody(COMMUNITY_BODY_TOMBSTONE);
+            if (!Boolean.TRUE.equals(comment.getIsDeleted())) {
+                comment.setIsDeleted(true);
+                comment.setDeletedAt(now);
+            }
+            commentCount++;
+        }
+        if (!comments.isEmpty()) {
+            communityCommentRepository.saveAll(comments);
+        }
+
+        return new CommunitySweepResult(postCount, commentCount);
+    }
+
+    /** community sweep 처리 결과 — log 용. */
+    static final class CommunitySweepResult {
+        static final CommunitySweepResult NONE = new CommunitySweepResult(0, 0);
+        final int posts;
+        final int comments;
+        CommunitySweepResult(int posts, int comments) {
+            this.posts = posts;
+            this.comments = comments;
+        }
     }
 
     /**

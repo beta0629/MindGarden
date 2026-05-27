@@ -1933,6 +1933,13 @@
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",
       "createFailed": "매칭 생성 중 오류가 발생했습니다."
+    },
+    "paymentTiming": {
+      "title": "결제 방식",
+      "advance": "선납 입금 (현행 흐름)",
+      "sameDayCard": "사후 카드 결제 (당일 방문)",
+      "sameDayCardHint": "매칭은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 카드 결제 모달에서 결제하면 매칭이 활성화되고 회기 1회가 자동 차감됩니다.",
+      "sameDayCardCompletionNotice": "결제 대기 매칭이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 매칭을 활성화하세요."
     }
   },
   "vacationModal": {
@@ -2491,6 +2498,49 @@
         "ended": "종료",
         "sessionsExhaustedShort": "회기소진",
         "cancelled": "취소"
+      }
+    },
+    "checkout": {
+      "sameDay": {
+        "title": "당일 카드 결제 + 매칭 활성화",
+        "paymentMethod": {
+          "label": "결제 방식",
+          "creditCard": "신용카드",
+          "debitCard": "체크카드",
+          "other": "기타"
+        },
+        "paymentReference": {
+          "label": "결제 승인번호",
+          "placeholder": "예: APP-20260528-001"
+        },
+        "paymentAmount": {
+          "label": "결제 금액 (원)"
+        },
+        "sameDaySession": {
+          "label": "당일 가예약 일정 ID (선택)",
+          "placeholder": "선택사항",
+          "hint": "비워두면 당일 가예약 중 첫 일정이 자동 확정됩니다."
+        },
+        "submit": "당일 결제 + 매칭 활성화",
+        "cancel": "취소",
+        "success": "당일 카드 결제가 완료되고 매칭이 활성화되었습니다.",
+        "error": {
+          "noMapping": "결제 대상 매칭이 선택되지 않았습니다.",
+          "missingMethod": "결제 방식을 선택해주세요.",
+          "missingReference": "결제 승인번호를 입력해주세요.",
+          "invalidAmount": "결제 금액은 0보다 큰 숫자여야 합니다.",
+          "generic": "당일 카드 결제 중 오류가 발생했습니다."
+        }
+      }
+    },
+    "integrated": {
+      "pendingPayment": {
+        "alert": {
+          "title": "결제 대기 매칭",
+          "count": "결제 대기 매칭이 {{count}}건 있습니다.",
+          "action": "결제 대기 목록 필터",
+          "checkoutSameDay": "당일 결제"
+        }
       }
     },
     "refund": {

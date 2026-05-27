@@ -110,7 +110,12 @@ export const MYPAGE_API = {
   
   // 소셜 계정 (ClientProfileController 하위 조회 / ClientSocialAccountController 연동 해제)
   GET_SOCIAL_ACCOUNTS: '/api/v1/clients/profile/social-accounts',
-  MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts/social-account'
+  MANAGE_SOCIAL_ACCOUNT: '/api/v1/clients/social-accounts/social-account',
+
+  // 자발 회원 탈퇴 — USER_LIFECYCLE_TERMINATION_POLICY §2.3 자발 경로
+  WITHDRAWAL_REQUEST: '/api/v1/mypage/withdrawal/request',
+  WITHDRAWAL_CANCEL: '/api/v1/mypage/withdrawal/cancel',
+  WITHDRAWAL_STATUS: '/api/v1/mypage/withdrawal/status'
 };
 
 // 역할별 프로필 API (표준화 2025-12-05: /api/v1/ 경로 적용)

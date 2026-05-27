@@ -36,6 +36,7 @@ import koTerms from '../locales/ko/terms.json';
 import koTestNotification from '../locales/ko/testNotification.json';
 import koSystemConfig from '../locales/ko/systemConfig.json';
 import koSmsTemplate from '../locales/ko/smsTemplate.json';
+import koMypage from '../locales/ko/mypage.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -119,7 +120,8 @@ i18n
         terms: koTerms,
         testNotification: koTestNotification,
         systemConfig: koSystemConfig,
-        smsTemplate: koSmsTemplate
+        smsTemplate: koSmsTemplate,
+        mypage: koMypage
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
@@ -139,7 +141,8 @@ i18n
       'terms',
       'testNotification',
       'systemConfig',
-      'smsTemplate'
+      'smsTemplate',
+      'mypage'
     ],
     interpolation: {
       escapeValue: false

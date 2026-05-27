@@ -12,6 +12,14 @@ import lombok.Setter;
 /**
  * 어드민 테스트 카카오 알림톡 발송 요청 DTO.
  *
+ * <p>모드별 필수 필드:
+ * <ul>
+ *   <li>{@link TestNotificationRecipientMode#SELF} — {@code userId}/{@code phoneNumber} 모두 무시.</li>
+ *   <li>{@link TestNotificationRecipientMode#USER} — {@code userId} 필수.</li>
+ *   <li>{@link TestNotificationRecipientMode#PHONE} — {@code phoneNumber} 필수
+ *       (한국 휴대폰 11자리). 모드 분기 검증은 서비스 레이어가 수행한다.</li>
+ * </ul>
+ *
  * <p>{@link #fallbackToSms}가 true이면 알림톡 발송 실패 시 SMS로 폴백한다.
  *
  * @author MindGarden
@@ -28,6 +36,14 @@ public class TestAlimtalkRequest {
 
     /** {@code recipientMode=USER}일 때 필수. */
     private Long userId;
+
+    /**
+     * {@code recipientMode=PHONE}일 때 필수. 한국 휴대폰(예: {@code 01012345678}).
+     *
+     * <p>{@code @NotBlank} 는 사용하지 않는다(SELF/USER 모드에서는 무시).
+     */
+    @Size(max = 20, message = "전화번호는 20자 이하여야 합니다.")
+    private String phoneNumber;
 
     @NotBlank(message = "템플릿 코드는 필수입니다.")
     @Size(max = 100, message = "템플릿 코드는 100자 이하여야 합니다.")
@@ -63,10 +79,11 @@ public class TestAlimtalkRequest {
      * Lombok {@link Builder}와 {@link NoArgsConstructor} 공존을 위한 명시적 생성자.
      */
     public TestAlimtalkRequest(TestNotificationRecipientMode recipientMode, Long userId,
-            String templateCode, Map<String, String> templateParams, String reason,
-            boolean fallbackToSms, String templateSource) {
+            String phoneNumber, String templateCode, Map<String, String> templateParams,
+            String reason, boolean fallbackToSms, String templateSource) {
         this.recipientMode = recipientMode;
         this.userId = userId;
+        this.phoneNumber = phoneNumber;
         this.templateCode = templateCode;
         this.templateParams = templateParams;
         this.reason = reason;

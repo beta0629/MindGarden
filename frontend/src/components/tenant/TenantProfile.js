@@ -16,8 +16,6 @@ const CreditCardIcon = ICONS.CREDIT_CARD;
 const DollarSignIcon = ICONS.DOLLAR_SIGN;
 const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
-import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
-import SubscriptionManagement from '../billing/SubscriptionManagement';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -52,12 +50,9 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './TenantProfile.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
-import { useConfirm } from '../../hooks/useConfirm';
-import i18n from '../../i18n';
 
 const TenantProfile = () => {
   const { t } = useTranslation(['common', 'admin']);
-  const [confirm, ConfirmModal] = useConfirm();
   const navigate = useNavigate();
   const {
     user,
@@ -71,7 +66,6 @@ const TenantProfile = () => {
   const [tenantInfo, setTenantInfo] = useState(null);
   const [subscriptions, setSubscriptions] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
-  const [showPaymentMethodRegistration, setShowPaymentMethodRegistration] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // overview, subscription, payment
   const [showTenantNameModal, setShowTenantNameModal] = useState(false);
   const [tenantNameDraft, setTenantNameDraft] = useState('');
@@ -241,58 +235,6 @@ const TenantProfile = () => {
       setPaymentMethods(paymentMethods || []);
     } catch (err) {
       console.error('결제 수단 로드 실패:', err);
-    }
-  };
-
-/**
-   * 결제 수단 삭제
-   */
-  const handleDeletePaymentMethod = async(paymentMethodId) => {
-    const ok = await confirm({
-      messageKey: 'admin:tenant.payment.deleteConfirm',
-      variant: 'danger'
-    });
-    if (!ok) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/v1/billing/payment-methods/${paymentMethodId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(i18n.t('error:tenant.TenantProfile.t_45f32c03'));
-      }
-
-      notificationManager.success('결제 수단이 삭제되었습니다.');
-      loadPaymentMethods();
-    } catch (err) {
-      console.error('결제 수단 삭제 실패:', err);
-      notificationManager.error('결제 수단 삭제에 실패했습니다.');
-    }
-  };
-
-/**
-   * 기본 결제 수단 설정
-   */
-  const handleSetDefaultPaymentMethod = async(paymentMethodId) => {
-    try {
-      const response = await fetch(`/api/v1/billing/payment-methods/${paymentMethodId}/set-default?tenantId=${tenantId}`, {
-        method: 'PUT',
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(i18n.t('error:tenant.TenantProfile.t_c5be59ee'));
-      }
-
-      notificationManager.success('기본 결제 수단이 설정되었습니다.');
-      loadPaymentMethods();
-    } catch (err) {
-      console.error('기본 결제 수단 설정 실패:', err);
-      notificationManager.error('기본 결제 수단 설정에 실패했습니다.');
     }
   };
 
@@ -611,127 +553,71 @@ const TenantProfile = () => {
 
               {activeTab === 'subscription' && (
                 <ContentSection
-                  title={t('common:tenant.TenantProfile.t_0679f434')}
+                  title={t('admin:tenantProfile.card.subscription', { defaultValue: t('common:tenant.TenantProfile.t_d37f5764') })}
                   className="mg-v2-tenant-profile__subscription-wrap tenant-profile-subscription"
+                  data-testid="tenant-profile-subscription-section"
                 >
-                  <SubscriptionManagement tenantId={tenantId} />
+                  {subscriptions.length > 0 ? (
+                    <div className="subscription-summary">
+                      {subscriptions.map((subscription) => (
+                        <div key={subscription.subscriptionId} className="subscription-summary-item">
+                          <div>
+                            <strong><SafeText fallback="요금제">{subscription.planName}</SafeText></strong>
+                            <span className={`subscription-status subscription-status--${toDisplayString(subscription.status, 'unknown').toLowerCase()}`}>
+                              <SafeText>{subscription.status}</SafeText>
+                            </span>
+                          </div>
+                          {subscription.amount != null && (
+                            <div className="subscription-amount">
+                              <DollarSignIcon size={16} />
+                              {toSafeNumber(subscription.amount).toLocaleString()}원
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      className="mg-v2-tenant-profile__empty"
+                      icon={<TenantSubscriptionEmptyIllustration />}
+                      title={t('admin:tenantProfile.empty.subscription.headline')}
+                      description={t('admin:tenantProfile.empty.subscription.subcopy')}
+                    />
+                  )}
                 </ContentSection>
               )}
 
               {activeTab === 'payment' && (
                 <ContentSection
-                  title={t('common:tenant.TenantProfile.t_0f845acb')}
-                  actions={
-                    <MGButton
-                      type="button"
-                      variant="primary"
-                      size="small"
-                      className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => setShowPaymentMethodRegistration(true)}
-                      preventDoubleClick={false}
-                    >
-                      {t('common:tenant.TenantProfile.t_9f9cf174')}
-                    </MGButton>
-                  }
+                  title={t('admin:tenantProfile.card.payment', { defaultValue: t('common:tenant.TenantProfile.t_bb94631a') })}
                   className="mg-v2-tenant-profile__payment-wrap tenant-profile-payment"
+                  data-testid="tenant-profile-payment-section"
                 >
-                  {showPaymentMethodRegistration && (
-                    <div className="payment-method-registration-wrapper">
-                      <PaymentMethodRegistration
-                        tenantId={tenantId}
-                        onSuccess={() => {
-                          setShowPaymentMethodRegistration(false);
-                          loadPaymentMethods();
-                        }}
-                        onCancel={() => setShowPaymentMethodRegistration(false)}
-                      />
-                    </div>
-                  )}
-
-                  <div className="payment-method-list">
-                    {paymentMethods.length > 0 ? (
-                      paymentMethods.map((pm) => (
-                        <div key={pm.paymentMethodId} className="payment-method-card">
-                          <div className="payment-method-card-content">
-                            <CreditCardIcon size={24} />
-                            <div className="payment-method-info">
-                              <div className="payment-method-name">
-                                <SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText>
-                                {pm.isDefault && (
-                                  <span className="default-badge">{t('common:tenant.TenantProfile.t_7f1d8c41')}</span>
-                                )}
-                              </div>
-                              {pm.cardExpiry && (
-                                <div className="payment-method-expiry">
-                                  {t('common:tenant.TenantProfile.t_fabb8d23')} <SafeText>{pm.cardExpiry}</SafeText>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="payment-method-actions">
-                            {!pm.isDefault && (
-                              <MGButton
-                                type="button"
-                                variant="outline"
-                                size="small"
-                                className={buildErpMgButtonClassName({
-                                  variant: 'outline',
-                                  size: 'sm',
-                                  loading: false,
-                                  className: 'payment-method-action-btn'
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                onClick={() => handleSetDefaultPaymentMethod(pm.paymentMethodId)}
-                                title={toDisplayString('기본 결제 수단으로 설정')}
-                                preventDoubleClick={false}
-                              >
-                                {t('common:tenant.TenantProfile.t_0a49fd14')}
-                              </MGButton>
-                            )}
-                            <MGButton
-                              type="button"
-                              variant="outline"
-                              size="small"
-                              className={buildErpMgButtonClassName({
-                                variant: 'outline',
-                                size: 'sm',
-                                loading: false,
-                                className: 'payment-method-action-btn payment-method-action-btn--danger'
-                              })}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              onClick={() => handleDeletePaymentMethod(pm.paymentMethodId)}
-                              title={toDisplayString('삭제')}
-                              preventDoubleClick={false}
-                            >
-                              {t('admin.actions.delete')}
-                            </MGButton>
-                          </div>
+                  {paymentMethods.length > 0 ? (
+                    <div className="payment-method-summary">
+                      {paymentMethods.map((pm) => (
+                        <div key={pm.paymentMethodId} className="payment-method-summary-item">
+                          <CreditCardIcon size={16} />
+                          <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
+                          {pm.cardExpiry && (
+                            <span className="payment-method-expiry">
+                              {t('common:tenant.TenantProfile.t_fabb8d23')} <SafeText>{pm.cardExpiry}</SafeText>
+                            </span>
+                          )}
+                          {pm.isDefault && (
+                            <span className="default-badge">{t('common:tenant.TenantProfile.t_7f1d8c41')}</span>
+                          )}
                         </div>
-                      ))
-                    ) : (
-                      <EmptyState
-                        className="mg-v2-tenant-profile__empty"
-                        icon={<TenantPaymentEmptyIllustration />}
-                        title={t('admin:tenantProfile.empty.payment.headline')}
-                        description={t('admin:tenantProfile.empty.payment.subcopy')}
-                        action={(
-                          <MGButton
-                            type="button"
-                            variant="primary"
-                            size="medium"
-                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() => setShowPaymentMethodRegistration(true)}
-                            data-testid="tenant-profile-payment-empty-register"
-                            preventDoubleClick={false}
-                          >
-                            {t('admin:tenantProfile.empty.payment.cta')}
-                          </MGButton>
-                        )}
-                      />
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      className="mg-v2-tenant-profile__empty"
+                      icon={<TenantPaymentEmptyIllustration />}
+                      title={t('admin:tenantProfile.empty.payment.headline')}
+                      description={t('admin:tenantProfile.empty.payment.subcopy')}
+                    />
+                  )}
                 </ContentSection>
               )}
             </div>
@@ -829,7 +715,6 @@ const TenantProfile = () => {
               </div>
             </form>
           </UnifiedModal>
-          <ConfirmModal />
         </div>
       </div>
     </AdminCommonLayout>

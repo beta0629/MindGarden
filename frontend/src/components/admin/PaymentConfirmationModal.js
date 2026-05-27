@@ -14,6 +14,13 @@ import { useTranslation } from 'react-i18next';
 const API_ADMIN_PAYMENTS_CONFIRM = '/api/v1/admin/payments/confirm';
 const API_ADMIN_PAYMENTS_CANCEL = '/api/v1/admin/payments/cancel';
 
+// 외부 브랜드 SSOT (Kakao/Naver 브랜드 가이드 공식 색상) — 운영 게이트 허용.
+// 운영 minified 번들에서 CSS_VARIABLES.SOCIAL.BUTTONS 가 undefined 로 평가되는
+// P0 회피용 nullish 가드. 별도 디버거에서 진짜 원인(tree-shaking/circular import 의심)
+// 추적 중이며, 본 상수는 매칭관리 P0 화면 깨짐 즉시 복구용.
+const KAKAO_BRAND_COLOR = CSS_VARIABLES?.SOCIAL?.BUTTONS?.KAKAO?.COLOR ?? '#FEE500';
+const NAVER_BRAND_COLOR = CSS_VARIABLES?.SOCIAL?.BUTTONS?.NAVER?.COLOR ?? '#03C75A';
+
 
 /**
  * 결제 확인 모달 컴포넌트
@@ -116,8 +123,8 @@ const PaymentConfirmationModal = ({
     { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
     { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
     { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' },
-    { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: CSS_VARIABLES.SOCIAL.BUTTONS.KAKAO.COLOR, description: '카카오페이 간편결제' },
-    { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: 'var(--mg-color-naver-green)', description: '네이버페이 간편결제' },
+    { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: KAKAO_BRAND_COLOR, description: '카카오페이 간편결제' },
+    { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: NAVER_BRAND_COLOR, description: '네이버페이 간편결제' },
     { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
     { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
     { value: 'OTHER', label: '기타', icon: '💱', color: 'var(--mg-color-text-secondary)', description: '기타 결제 방법' }

@@ -138,6 +138,17 @@ environment:
   validation:
     enabled: true  # 운영 환경에서 필수 환경 변수 검증 활성화
 
+# Phase 2-β 단독 운영 배포 (2026-05-28) — D+0~D+7 dry-run 강제
+# tester V2 보고서(d64ece5f8) + USER_LIFECYCLE_TERMINATION_POLICY v1.2 §10.
+# 운영 systemd drop-in 으로 환경 변수 명시 설정 누락 시에도 안전하도록 prod 프로파일에서 강제.
+# D+7 결재 통과 시 본 블록 제거(또는 false 로 전환) 후 별도 hotfix PR 로 dry-run=false 전환.
+mindgarden:
+  scheduler:
+    withdrawal-grace:
+      dry-run: ${MINDGARDEN_SCHEDULER_WITHDRAWAL_GRACE_DRY_RUN:true}
+    admin-delete-retention:
+      dry-run: ${MINDGARDEN_SCHEDULER_ADMIN_DELETE_RETENTION_DRY_RUN:true}
+
 # 프로덕션 환경에서 중복 로그인 방지 활성화
 session:
   duplicate-login-check:

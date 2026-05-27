@@ -118,10 +118,61 @@ class PiiScrubberTest {
                 .doesNotContain("1234567890123456");
     }
 
+    // ---------- 외국인등록번호 (Phase 5 v1.2 확장) ----------
+
+    @Test
+    @DisplayName("scrubArn: 외국인등록번호 901010-5234567 패턴 치환")
+    void scrubArn_with_dash() {
+        assertThat(PiiScrubber.scrubArn("외국인 901010-5234567 입니다."))
+                .contains(TOKEN)
+                .doesNotContain("901010-5234567");
+    }
+
+    @Test
+    @DisplayName("scrubArn: null/빈 문자열은 그대로 반환")
+    void scrubArn_nullOrEmpty() {
+        assertThat(PiiScrubber.scrubArn(null)).isNull();
+        assertThat(PiiScrubber.scrubArn("")).isEqualTo("");
+    }
+
+    // ---------- 계좌번호 (Phase 5 v1.2 확장) ----------
+
+    @Test
+    @DisplayName("scrubBank: 일반 계좌번호 110-12-345678 패턴 치환")
+    void scrubBank_typical() {
+        assertThat(PiiScrubber.scrubBank("계좌 110-12-345678 입금"))
+                .contains(TOKEN)
+                .doesNotContain("110-12-345678");
+    }
+
+    @Test
+    @DisplayName("scrubBank: null/빈 문자열은 그대로 반환")
+    void scrubBank_nullOrEmpty() {
+        assertThat(PiiScrubber.scrubBank(null)).isNull();
+        assertThat(PiiScrubber.scrubBank("")).isEqualTo("");
+    }
+
+    // ---------- URL (Phase 5 v1.2 확장) ----------
+
+    @Test
+    @DisplayName("scrubUrl: https URL 패턴 치환")
+    void scrubUrl_https() {
+        assertThat(PiiScrubber.scrubUrl("참조 https://example.com/path?q=1 확인"))
+                .contains(TOKEN)
+                .doesNotContain("https://example.com");
+    }
+
+    @Test
+    @DisplayName("scrubUrl: null/빈 문자열은 그대로 반환")
+    void scrubUrl_nullOrEmpty() {
+        assertThat(PiiScrubber.scrubUrl(null)).isNull();
+        assertThat(PiiScrubber.scrubUrl("")).isEqualTo("");
+    }
+
     // ---------- scrubAll ----------
 
     @Test
-    @DisplayName("scrubAll: 4종 패턴 모두 한 번에 치환")
+    @DisplayName("scrubAll: 4종 패턴(legacy) 모두 한 번에 치환")
     void scrubAll_combined() {
         String input = "연락처 010-1111-2222 / 등록 901010-1234567 / 메일 user@example.com / 카드 1234-5678-9012-3456";
         String out = PiiScrubber.scrubAll(input);
@@ -131,6 +182,24 @@ class PiiScrubberTest {
                 .doesNotContain("user@example.com")
                 .doesNotContain("1234-5678-9012-3456");
         assertThat(countMatches(out, TOKEN)).isGreaterThanOrEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("scrubAll: 7종 패턴(Phase 5 v1.2 확장) 모두 한 번에 치환")
+    void scrubAll_all_seven_patterns() {
+        String input = "전화 010-1111-2222 / 주민 901010-1234567 / 외국인 901010-5234567 "
+                + "/ 이메일 user@example.com / URL https://example.com/x / 카드 1234-5678-9012-3456 "
+                + "/ 계좌 110-12-345678";
+        String out = PiiScrubber.scrubAll(input);
+        assertThat(out)
+                .doesNotContain("010-1111-2222")
+                .doesNotContain("901010-1234567")
+                .doesNotContain("901010-5234567")
+                .doesNotContain("user@example.com")
+                .doesNotContain("https://example.com")
+                .doesNotContain("1234-5678-9012-3456")
+                .doesNotContain("110-12-345678");
+        assertThat(countMatches(out, TOKEN)).isGreaterThanOrEqualTo(7);
     }
 
     @Test

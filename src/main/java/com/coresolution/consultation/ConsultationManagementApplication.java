@@ -16,9 +16,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import com.coresolution.consultation.config.AdminTestNotificationProperties;
 import com.coresolution.consultation.config.BatchNotificationProperties;
 import com.coresolution.consultation.config.ExpoPushProperties;
+import com.coresolution.consultation.config.LifecycleCutoffProperties;
 import com.coresolution.consultation.config.MobileAppVersionProperties;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.config.NotificationRetentionProperties;
+import com.coresolution.consultation.config.PiiScrubberProperties;
 import com.coresolution.core.config.KiccEasypayProperties;
 
 /**
@@ -60,7 +62,9 @@ import com.coresolution.core.config.KiccEasypayProperties;
         MobileAppVersionProperties.class,
         AdminTestNotificationProperties.class,
         BatchNotificationProperties.class,
-        NotificationRetentionProperties.class
+        NotificationRetentionProperties.class,
+        LifecycleCutoffProperties.class,
+        PiiScrubberProperties.class
 })
 public class ConsultationManagementApplication {
 

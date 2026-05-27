@@ -55,10 +55,15 @@ public class PersonalDataAccessLog extends BaseEntity {
     private String accessType;
 
     /**
-     * 대상 사용자 ID
+     * 대상 사용자 ID — users.id (BIGINT).
+     *
+     * <p>V20260604_002 (W2 P0 fix) 적용 후 컬럼 타입이 VARCHAR(255) → BIGINT 로 정착되고
+     * FK {@code fk_pdal_target_user → users(id)} 가 신설된다. 본 필드도 {@code String} →
+     * {@code Long} 으로 정합화하여 Hibernate 매핑 실패를 회피한다. 사용자와 무관한 데이터
+     * (예: 결제·상담기록·급여 PK) 는 {@link #dataIdentifier} 컬럼을 사용한다.</p>
      */
     @Column(name = "target_user_id")
-    private String targetUserId;
+    private Long targetUserId;
 
     /**
      * 대상 사용자 이름

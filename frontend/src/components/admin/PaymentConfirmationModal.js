@@ -6,7 +6,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { CSS_VARIABLES } from '../../constants/css-variables';
+import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
 import './PaymentConfirmationModal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -15,11 +15,15 @@ const API_ADMIN_PAYMENTS_CONFIRM = '/api/v1/admin/payments/confirm';
 const API_ADMIN_PAYMENTS_CANCEL = '/api/v1/admin/payments/cancel';
 
 // 외부 브랜드 SSOT (Kakao/Naver 브랜드 가이드 공식 색상) — 운영 게이트 허용.
-// 운영 minified 번들에서 CSS_VARIABLES.SOCIAL.BUTTONS 가 undefined 로 평가되는
-// P0 회피용 nullish 가드. 별도 디버거에서 진짜 원인(tree-shaking/circular import 의심)
-// 추적 중이며, 본 상수는 매칭관리 P0 화면 깨짐 즉시 복구용.
-const KAKAO_BRAND_COLOR = CSS_VARIABLES?.SOCIAL?.BUTTONS?.KAKAO?.COLOR ?? '#FEE500';
-const NAVER_BRAND_COLOR = CSS_VARIABLES?.SOCIAL?.BUTTONS?.NAVER?.COLOR ?? '#03C75A';
+// follow-up: corrected identifier after typo debug (PR #16 P0 후속).
+// 기존 핫픽스는 존재하지 않는 `CSS_VARIABLES.SOCIAL.BUTTONS` 체인을 참조했고
+// fallback hex 만 실제 적용되었음. 디버거(`p0-mapping-mgmt-buttons-debug`) 진단
+// 결과 실제 SSOT 는 `TABLET_LOGIN_CONSTANTS.SOCIAL.BUTTONS` 임을 확정, 정상 식별자로 교체.
+// nullish 가드와 fallback hex 는 defense in depth(미니파이 tree-shaking 회귀 대비)
+// 목적으로 유지하며, 운영 P0 회귀 방지를 위해 제거 금지. justification: 하드코딩
+// 게이트(`config/shell-scripts/check-hardcode.sh`)는 운영 안전 fallback 사유로 허용.
+const KAKAO_BRAND_COLOR = TABLET_LOGIN_CONSTANTS?.SOCIAL?.BUTTONS?.KAKAO?.COLOR ?? '#FEE500';
+const NAVER_BRAND_COLOR = TABLET_LOGIN_CONSTANTS?.SOCIAL?.BUTTONS?.NAVER?.COLOR ?? '#03C75A';
 
 
 /**

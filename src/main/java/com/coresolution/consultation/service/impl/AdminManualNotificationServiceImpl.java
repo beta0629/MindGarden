@@ -26,6 +26,7 @@ import com.coresolution.consultation.repository.AdminTestNotificationLogReposito
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminManualNotificationService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import org.springframework.data.domain.Page;
@@ -63,8 +64,23 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     /** 수신자 전화번호 누락(복호화 실패 포함). */
     public static final String ERROR_CODE_RECIPIENT_PHONE_MISSING = "RECIPIENT_PHONE_MISSING";
 
+    /** PHONE 모드 — 정규화·검증 실패한 임의 입력 전화번호(2026-05-27). */
+    public static final String ERROR_CODE_PHONE_NUMBER_INVALID = "PHONE_NUMBER_INVALID";
+
+    /** PUSH 채널은 PHONE 모드를 지원하지 않음(2026-05-27). */
+    public static final String ERROR_CODE_PHONE_NOT_SUPPORTED_FOR_PUSH = "PHONE_NOT_SUPPORTED_FOR_PUSH";
+
+    /** userIds·phoneNumbers 모두 비어 있어 발송 대상이 없음(2026-05-27). */
+    public static final String ERROR_CODE_RECIPIENTS_REQUIRED = "RECIPIENTS_REQUIRED";
+
+    /** 합산 수신자 상한 초과(2026-05-27 — PHONE 모드와 함께 합산 검증 도입). */
+    public static final String ERROR_CODE_RECIPIENTS_LIMIT_EXCEEDED = "RECIPIENTS_LIMIT_EXCEEDED";
+
     /** 푸시 broadcast 전용 placeholder — admin_test_notification_logs.recipient_phone_masked NOT NULL 충족. */
     public static final String PUSH_PHONE_PLACEHOLDER = "[push]";
+
+    /** 한 배치당 합산 수신자 상한 — userIds + phoneNumbers ≤ {@value}. */
+    public static final int MAX_RECIPIENTS_PER_BATCH = 50;
 
     private final UserRepository userRepository;
     private final AdminTestNotificationLogRepository logRepository;
@@ -85,31 +101,39 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
         String batchId = UUID.randomUUID().toString();
         LocalDateTime startedAt = LocalDateTime.now();
         List<Long> orderedIds = dedupePreserveOrder(request.getUserIds());
+        List<String> orderedPhones = dedupePhonesPreserveOrder(request.getPhoneNumbers());
+        int totalRecipients = orderedIds.size() + orderedPhones.size();
+
+        // 2026-05-27 — userIds·phoneNumbers 모두 비어 있으면 전체 차단.
+        if (totalRecipients == 0) {
+            return blockedResponse(batchId, TestNotificationChannel.SMS, startedAt, 0,
+                ERROR_CODE_RECIPIENTS_REQUIRED,
+                "수신자 또는 전화번호 중 최소 1개를 지정해야 합니다.");
+        }
+        // 50명 합산 상한 — 컨트롤러 Bean Validation 은 userIds/phoneNumbers 각각 50 이하만 보장.
+        if (totalRecipients > MAX_RECIPIENTS_PER_BATCH) {
+            return blockedResponse(batchId, TestNotificationChannel.SMS, startedAt,
+                totalRecipients, ERROR_CODE_RECIPIENTS_LIMIT_EXCEEDED,
+                "한 번에 최대 " + MAX_RECIPIENTS_PER_BATCH + "명까지 발송할 수 있습니다."
+                    + " (요청=" + totalRecipients + ", userIds=" + orderedIds.size()
+                    + ", phoneNumbers=" + orderedPhones.size() + ")");
+        }
 
         // Q5 — rate-limit 잔여가 요청 수신자 수 미만이면 전체 차단(0건 발송, 감사로그 0행).
         AdminTestNotificationRateLimiter.Decision decision =
             rateLimiter.tryAcquire(tenantId, currentUser.getId());
-        if (!hasEnoughCapacity(decision, orderedIds.size())) {
+        if (!hasEnoughCapacity(decision, totalRecipients)) {
             String message = "분당/일당 발송 한도가 부족하여 배치 전체가 차단되었습니다."
-                + " (요청=" + orderedIds.size() + ", 분당잔여=" + decision.remainingPerMinute()
+                + " (요청=" + totalRecipients + ", 분당잔여=" + decision.remainingPerMinute()
                 + ", 일당잔여=" + decision.remainingPerDay() + ")";
-            log.warn("어드민 수동 다중 SMS — rate-limit 부족으로 차단: tenantId={}, userId={}, ids={}",
-                tenantId, currentUser.getId(), orderedIds.size());
-            return BulkNotificationResponse.builder()
-                .batchId(batchId)
-                .channel(TestNotificationChannel.SMS)
-                .startedAt(startedAt)
-                .totalCount(orderedIds.size())
-                .successCount(0)
-                .failureCount(orderedIds.size())
-                .batchErrorCode(ERROR_CODE_RATE_LIMIT_EXCEEDED_BULK)
-                .batchErrorMessage(message)
-                .results(Collections.emptyList())
-                .build();
+            log.warn("어드민 수동 다중 SMS — rate-limit 부족으로 차단: tenantId={}, userId={}, total={}",
+                tenantId, currentUser.getId(), totalRecipients);
+            return blockedResponse(batchId, TestNotificationChannel.SMS, startedAt,
+                totalRecipients, ERROR_CODE_RATE_LIMIT_EXCEEDED_BULK, message);
         }
 
         Map<Long, User> resolved = resolveUsers(tenantId, orderedIds);
-        List<BulkRecipientResult> results = new ArrayList<>(orderedIds.size());
+        List<BulkRecipientResult> results = new ArrayList<>(totalRecipients);
         int successCount = 0;
         for (Long userId : orderedIds) {
             User target = resolved.get(userId);
@@ -143,13 +167,59 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
                 .build());
         }
 
+        // PHONE 모드 — userIds 처리 후 별개 루프. 정규화 실패는 row 단위 PHONE_NUMBER_INVALID 로
+        // 기록하고 다른 발송은 계속 진행한다. 정규화 성공한 원소만 SMS 디스패치한다.
+        for (String rawPhone : orderedPhones) {
+            String normalizedPhone;
+            try {
+                normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(rawPhone);
+            } catch (IllegalArgumentException e) {
+                results.add(BulkRecipientResult.builder()
+                    .userId(null)
+                    .name(null)
+                    .phoneMasked(PhoneLogMasking.maskForLog(normalizeForMask(rawPhone)))
+                    .success(false)
+                    .errorCode(ERROR_CODE_PHONE_NUMBER_INVALID)
+                    .errorMessage(e.getMessage())
+                    .solapiGroupId(null)
+                    .solapiMessageId(null)
+                    .logId(null)
+                    .build());
+                continue;
+            }
+            String maskedPhone = PhoneLogMasking.maskForLog(normalizedPhone);
+            AdminTestNotificationLog logEntry = logger.logAttempt(tenantId, currentUser.getId(),
+                currentUser.getUserId(), TestNotificationRecipientMode.PHONE, null,
+                maskedPhone, TestNotificationChannel.SMS, null, null,
+                request.getContent(), request.getReason(), batchId);
+            rateLimiter.recordAttempt(tenantId, currentUser.getId());
+            NotificationDispatchHelper.DispatchResult dispatch =
+                dispatchHelper.dispatchSms(normalizedPhone, request.getContent());
+            logger.updateResult(logEntry.getId(), dispatch.success(), null, null,
+                dispatch.errorCode(), dispatch.errorMessage());
+            if (dispatch.success()) {
+                successCount++;
+            }
+            results.add(BulkRecipientResult.builder()
+                .userId(null)
+                .name(null)
+                .phoneMasked(maskedPhone)
+                .success(dispatch.success())
+                .errorCode(dispatch.errorCode())
+                .errorMessage(dispatch.errorMessage())
+                .solapiGroupId(null)
+                .solapiMessageId(null)
+                .logId(logEntry.getId())
+                .build());
+        }
+
         return BulkNotificationResponse.builder()
             .batchId(batchId)
             .channel(TestNotificationChannel.SMS)
             .startedAt(startedAt)
-            .totalCount(orderedIds.size())
+            .totalCount(totalRecipients)
             .successCount(successCount)
-            .failureCount(orderedIds.size() - successCount)
+            .failureCount(totalRecipients - successCount)
             .results(results)
             .build();
     }
@@ -164,6 +234,22 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
         String batchId = UUID.randomUUID().toString();
         LocalDateTime startedAt = LocalDateTime.now();
         List<Long> orderedIds = dedupePreserveOrder(request.getUserIds());
+        List<String> orderedPhones = dedupePhonesPreserveOrder(request.getPhoneNumbers());
+        int totalRecipients = orderedIds.size() + orderedPhones.size();
+
+        // 2026-05-27 — userIds·phoneNumbers 모두 비어 있으면 전체 차단.
+        if (totalRecipients == 0) {
+            return blockedResponse(batchId, TestNotificationChannel.ALIMTALK, startedAt, 0,
+                ERROR_CODE_RECIPIENTS_REQUIRED,
+                "수신자 또는 전화번호 중 최소 1개를 지정해야 합니다.");
+        }
+        if (totalRecipients > MAX_RECIPIENTS_PER_BATCH) {
+            return blockedResponse(batchId, TestNotificationChannel.ALIMTALK, startedAt,
+                totalRecipients, ERROR_CODE_RECIPIENTS_LIMIT_EXCEEDED,
+                "한 번에 최대 " + MAX_RECIPIENTS_PER_BATCH + "명까지 발송할 수 있습니다."
+                    + " (요청=" + totalRecipients + ", userIds=" + orderedIds.size()
+                    + ", phoneNumbers=" + orderedPhones.size() + ")");
+        }
 
         // 공통코드 매핑 사전 검증 — 매핑 없음 시 0건 발송으로 전체 차단(기획 Q5 와 동일 정책 확장).
         boolean liveMode = request.getTemplateSource() == TestNotificationAlimtalkTemplateSource.SOLAPI;
@@ -177,40 +263,22 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
                     + " 어드민 UI '솔라피 전체 보기' 에서 실 templateId 를 선택해 주세요.";
                 log.warn("어드민 수동 다중 알림톡 — 매핑 없음으로 차단: codeValue={}, tenantId={}",
                     request.getTemplateCode(), tenantId);
-                return BulkNotificationResponse.builder()
-                    .batchId(batchId)
-                    .channel(TestNotificationChannel.ALIMTALK)
-                    .startedAt(startedAt)
-                    .totalCount(orderedIds.size())
-                    .successCount(0)
-                    .failureCount(orderedIds.size())
-                    .batchErrorCode(ERROR_CODE_TEMPLATE_NOT_MAPPED)
-                    .batchErrorMessage(message)
-                    .results(Collections.emptyList())
-                    .build();
+                return blockedResponse(batchId, TestNotificationChannel.ALIMTALK, startedAt,
+                    totalRecipients, ERROR_CODE_TEMPLATE_NOT_MAPPED, message);
             }
             effectiveTemplateCode = mapped;
         }
 
         AdminTestNotificationRateLimiter.Decision decision =
             rateLimiter.tryAcquire(tenantId, currentUser.getId());
-        if (!hasEnoughCapacity(decision, orderedIds.size())) {
+        if (!hasEnoughCapacity(decision, totalRecipients)) {
             String message = "분당/일당 발송 한도가 부족하여 배치 전체가 차단되었습니다."
-                + " (요청=" + orderedIds.size() + ", 분당잔여=" + decision.remainingPerMinute()
+                + " (요청=" + totalRecipients + ", 분당잔여=" + decision.remainingPerMinute()
                 + ", 일당잔여=" + decision.remainingPerDay() + ")";
-            log.warn("어드민 수동 다중 알림톡 — rate-limit 부족으로 차단: tenantId={}, ids={}",
-                tenantId, orderedIds.size());
-            return BulkNotificationResponse.builder()
-                .batchId(batchId)
-                .channel(TestNotificationChannel.ALIMTALK)
-                .startedAt(startedAt)
-                .totalCount(orderedIds.size())
-                .successCount(0)
-                .failureCount(orderedIds.size())
-                .batchErrorCode(ERROR_CODE_RATE_LIMIT_EXCEEDED_BULK)
-                .batchErrorMessage(message)
-                .results(Collections.emptyList())
-                .build();
+            log.warn("어드민 수동 다중 알림톡 — rate-limit 부족으로 차단: tenantId={}, total={}",
+                tenantId, totalRecipients);
+            return blockedResponse(batchId, TestNotificationChannel.ALIMTALK, startedAt,
+                totalRecipients, ERROR_CODE_RATE_LIMIT_EXCEEDED_BULK, message);
         }
 
         Map<String, String> baseParams = request.getTemplateParams() == null
@@ -218,7 +286,7 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
             : new HashMap<>(request.getTemplateParams());
 
         Map<Long, User> resolved = resolveUsers(tenantId, orderedIds);
-        List<BulkRecipientResult> results = new ArrayList<>(orderedIds.size());
+        List<BulkRecipientResult> results = new ArrayList<>(totalRecipients);
         int successCount = 0;
         for (Long userId : orderedIds) {
             User target = resolved.get(userId);
@@ -255,13 +323,60 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
                 .build());
         }
 
+        // PHONE 모드 — 정규화·검증·발송을 row 단위로 분리. 검증 실패는 PHONE_NUMBER_INVALID 로 row 기록.
+        for (String rawPhone : orderedPhones) {
+            String normalizedPhone;
+            try {
+                normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(rawPhone);
+            } catch (IllegalArgumentException e) {
+                results.add(BulkRecipientResult.builder()
+                    .userId(null)
+                    .name(null)
+                    .phoneMasked(PhoneLogMasking.maskForLog(normalizeForMask(rawPhone)))
+                    .success(false)
+                    .errorCode(ERROR_CODE_PHONE_NUMBER_INVALID)
+                    .errorMessage(e.getMessage())
+                    .solapiGroupId(null)
+                    .solapiMessageId(null)
+                    .logId(null)
+                    .build());
+                continue;
+            }
+            String maskedPhone = PhoneLogMasking.maskForLog(normalizedPhone);
+            Map<String, String> params = new HashMap<>(baseParams);
+            AdminTestNotificationLog logEntry = logger.logAttempt(tenantId, currentUser.getId(),
+                currentUser.getUserId(), TestNotificationRecipientMode.PHONE, null,
+                maskedPhone, TestNotificationChannel.ALIMTALK,
+                request.getTemplateCode(), params, null, request.getReason(), batchId);
+            rateLimiter.recordAttempt(tenantId, currentUser.getId());
+            NotificationDispatchHelper.DispatchResult dispatch =
+                dispatchHelper.dispatchAlimtalk(normalizedPhone, effectiveTemplateCode, params);
+            logger.updateResult(logEntry.getId(), dispatch.success(),
+                dispatch.solapiGroupId(), dispatch.solapiMessageId(),
+                dispatch.errorCode(), dispatch.errorMessage());
+            if (dispatch.success()) {
+                successCount++;
+            }
+            results.add(BulkRecipientResult.builder()
+                .userId(null)
+                .name(null)
+                .phoneMasked(maskedPhone)
+                .success(dispatch.success())
+                .errorCode(dispatch.errorCode())
+                .errorMessage(dispatch.errorMessage())
+                .solapiGroupId(dispatch.solapiGroupId())
+                .solapiMessageId(dispatch.solapiMessageId())
+                .logId(logEntry.getId())
+                .build());
+        }
+
         return BulkNotificationResponse.builder()
             .batchId(batchId)
             .channel(TestNotificationChannel.ALIMTALK)
             .startedAt(startedAt)
-            .totalCount(orderedIds.size())
+            .totalCount(totalRecipients)
             .successCount(successCount)
-            .failureCount(orderedIds.size() - successCount)
+            .failureCount(totalRecipients - successCount)
             .results(results)
             .build();
     }
@@ -277,6 +392,16 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
         LocalDateTime startedAt = LocalDateTime.now();
         List<Long> orderedIds = dedupePreserveOrder(request.getUserIds());
 
+        // 2026-05-27 — PUSH 채널은 PHONE 모드 미지원. phoneNumbers 가 비어있지 않으면 전체 차단.
+        List<String> requestedPhones = request.getPhoneNumbers();
+        if (requestedPhones != null && !requestedPhones.isEmpty()) {
+            log.warn("어드민 수동 다중 푸시 — PHONE 모드 시도 차단: tenantId={}, userId={}, phones={}",
+                tenantId, currentUser.getId(), requestedPhones.size());
+            return blockedResponse(batchId, TestNotificationChannel.PUSH, startedAt,
+                orderedIds.size(), ERROR_CODE_PHONE_NOT_SUPPORTED_FOR_PUSH,
+                "푸시 채널은 전화번호 직접 입력을 지원하지 않습니다. 등록된 사용자만 선택해 주세요.");
+        }
+
         // SMS·알림톡과 동일 rate-limit 풀 사용 — 어드민 남용 방지. 잔여 < 요청 수신자 수면 전체 차단.
         AdminTestNotificationRateLimiter.Decision decision =
             rateLimiter.tryAcquire(tenantId, currentUser.getId());
@@ -286,17 +411,8 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
                 + ", 일당잔여=" + decision.remainingPerDay() + ")";
             log.warn("어드민 수동 다중 푸시 — rate-limit 부족으로 차단: tenantId={}, userId={}, ids={}",
                 tenantId, currentUser.getId(), orderedIds.size());
-            return BulkNotificationResponse.builder()
-                .batchId(batchId)
-                .channel(TestNotificationChannel.PUSH)
-                .startedAt(startedAt)
-                .totalCount(orderedIds.size())
-                .successCount(0)
-                .failureCount(orderedIds.size())
-                .batchErrorCode(ERROR_CODE_RATE_LIMIT_EXCEEDED_BULK)
-                .batchErrorMessage(message)
-                .results(Collections.emptyList())
-                .build();
+            return blockedResponse(batchId, TestNotificationChannel.PUSH, startedAt,
+                orderedIds.size(), ERROR_CODE_RATE_LIMIT_EXCEEDED_BULK, message);
         }
 
         // dispatchAdminAnnouncement 가 사용자 단위 SKIPPED/FAILED 사유를 결과로 돌려준다.
@@ -466,6 +582,72 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
             }
         }
         return new ArrayList<>(seen);
+    }
+
+    /**
+     * PHONE 모드 — 원본 입력 순서를 보존하면서 dedupe 한다. 정규화 전 단계의 raw 문자열을
+     * 그대로 사용한다(정규화는 발송 직전에 row 단위로 수행해 실패 row 만 분리하기 위함).
+     * 빈 문자열·공백은 제거한다.
+     *
+     * @param phones 요청 전화번호 목록(null/빈 허용)
+     * @return 순서 보존 dedupe 결과
+     */
+    private List<String> dedupePhonesPreserveOrder(List<String> phones) {
+        if (phones == null || phones.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<String> seen = new LinkedHashSet<>();
+        for (String raw : phones) {
+            if (raw == null) {
+                continue;
+            }
+            String trimmed = raw.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            seen.add(trimmed);
+        }
+        return new ArrayList<>(seen);
+    }
+
+    /**
+     * 정규화 실패한 원본 전화번호 입력에 대해 마스킹용 숫자열을 추출한다. 정규화 자체가 실패했으므로
+     * {@link LoginIdentifierUtils} 의 strict 정규화를 거치지 않고, 단순히 비숫자만 제거한다.
+     *
+     * @param raw 원본 입력
+     * @return 숫자만 남긴 문자열({@link PhoneLogMasking#maskForLog(String)} 입력용)
+     */
+    private String normalizeForMask(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        return raw.replaceAll("[^0-9]", "");
+    }
+
+    /**
+     * 배치 전체 차단 응답을 빌드한다(감사로그 0행, results 비움).
+     *
+     * @param batchId 배치 ID
+     * @param channel 채널
+     * @param startedAt 시작 시각
+     * @param totalCount 요청 수신자 총수(차단 시에도 응답에 보존)
+     * @param errorCode 배치 에러 코드
+     * @param errorMessage 사용자 노출 메시지
+     * @return 배치 차단 응답
+     */
+    private BulkNotificationResponse blockedResponse(String batchId, TestNotificationChannel channel,
+            LocalDateTime startedAt, int totalCount, String errorCode, String errorMessage) {
+        return BulkNotificationResponse.builder()
+            .batchId(batchId)
+            .channel(channel)
+            .startedAt(startedAt)
+            .totalCount(totalCount)
+            .successCount(0)
+            .failureCount(totalCount)
+            .batchErrorCode(errorCode)
+            .batchErrorMessage(errorMessage)
+            .results(Collections.emptyList())
+            .build();
     }
 
     /**

@@ -41,6 +41,9 @@ import {
   MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH,
   MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH,
   MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH,
+  KOREAN_MOBILE_PATTERN,
+  normalizeManualNotificationPhone,
+  maskManualNotificationPhoneForDisplay,
   searchRecipients,
   fetchCommonCodeTemplates,
   fetchLiveTemplates,
@@ -75,6 +78,11 @@ const ManualNotificationForm = ({ onBatchSent }) => {
   const [recipientLoading, setRecipientLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [maxExceededWarning, setMaxExceededWarning] = useState(false);
+
+  // 2026-05-27 — PHONE 모드: 등록되지 않은 임의 휴대전화 직접 입력. SMS/알림톡 채널만 지원.
+  const [phoneDraft, setPhoneDraft] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [phoneList, setPhoneList] = useState([]);
 
   const [smsContent, setSmsContent] = useState('');
 
@@ -171,8 +179,14 @@ const ManualNotificationForm = ({ onBatchSent }) => {
   const reasonShortWarning = reasonTrimmedLength > 0
     && reasonTrimmedLength < MANUAL_NOTIFICATION_REASON_RECOMMENDED_MIN_LENGTH;
 
+  // 2026-05-27 — PHONE 모드 지원 채널(SMS·알림톡). PUSH 는 토큰 매핑 필수라서 PHONE 미지원.
+  const isPhoneModeChannel = channel === MANUAL_NOTIFICATION_CHANNEL.SMS
+    || channel === MANUAL_NOTIFICATION_CHANNEL.ALIMTALK;
+  const totalRecipients = selectedUsers.length
+    + (isPhoneModeChannel ? phoneList.length : 0);
+
   const isAllRequiredFilled = useMemo(() => {
-    if (selectedUsers.length === 0 || selectedUsers.length > MANUAL_NOTIFICATION_MAX_RECIPIENTS) {
+    if (totalRecipients === 0 || totalRecipients > MANUAL_NOTIFICATION_MAX_RECIPIENTS) {
       return false;
     }
     if (reasonTrimmedLength === 0 || reason.length > MANUAL_NOTIFICATION_REASON_MAX_LENGTH) {
@@ -201,16 +215,87 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       return !value || !String(value).trim();
     });
     return !missingRequired;
-  }, [selectedUsers, reasonTrimmedLength, reason, channel, smsContent, pushTitle, pushBody,
+  }, [totalRecipients, reasonTrimmedLength, reason, channel, smsContent, pushTitle, pushBody,
     templateCode, templateVariableDefs, templateParams]);
+
+  /**
+   * 사용자 입력 휴대전화를 검증한다 — 단계: trim → 정규화(하이픈·공백 제거) → 정규식 → 중복.
+   * 빈 값은 "추가" 버튼 비활성용 안내, 형식·중복은 인라인 에러.
+   */
+  const validatePhone = useCallback((value) => {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) {
+      return '';
+    }
+    const normalized = normalizeManualNotificationPhone(trimmed);
+    if (!KOREAN_MOBILE_PATTERN.test(normalized)) {
+      return t('manualNotification.phone.invalid');
+    }
+    if (phoneList.includes(normalized)) {
+      return t('manualNotification.phone.duplicate');
+    }
+    return '';
+  }, [phoneList, t]);
+
+  const handlePhoneDraftChange = useCallback((e) => {
+    const next = e.target.value;
+    setPhoneDraft(next);
+    setPhoneError(validatePhone(next));
+  }, [validatePhone]);
+
+  const addPhone = useCallback(() => {
+    const trimmed = phoneDraft.trim();
+    if (!trimmed) {
+      setPhoneError(t('manualNotification.phone.required'));
+      return;
+    }
+    const normalized = normalizeManualNotificationPhone(trimmed);
+    if (!KOREAN_MOBILE_PATTERN.test(normalized)) {
+      setPhoneError(t('manualNotification.phone.invalid'));
+      return;
+    }
+    if (phoneList.includes(normalized)) {
+      setPhoneError(t('manualNotification.phone.duplicate'));
+      return;
+    }
+    if (selectedUsers.length + phoneList.length >= MANUAL_NOTIFICATION_MAX_RECIPIENTS) {
+      setPhoneError(t('manualNotification.phone.limitReached'));
+      return;
+    }
+    setPhoneList((prev) => [...prev, normalized]);
+    setPhoneDraft('');
+    setPhoneError('');
+  }, [phoneDraft, phoneList, selectedUsers.length, t]);
+
+  const removePhone = useCallback((index) => {
+    setPhoneList((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // PUSH 채널로 전환 시 phoneList 가 남아있으면 자동 비우는 가드 — 백엔드와 이중 가드.
+  useEffect(() => {
+    if (channel === MANUAL_NOTIFICATION_CHANNEL.PUSH) {
+      if (phoneList.length > 0) {
+        setPhoneList([]);
+      }
+      if (phoneDraft) {
+        setPhoneDraft('');
+      }
+      if (phoneError) {
+        setPhoneError('');
+      }
+    }
+  }, [channel, phoneList.length, phoneDraft, phoneError]);
 
   const buildPayload = useCallback(() => {
     const userIds = selectedUsers
       .map((u) => Number(u.userId))
       .filter((n) => Number.isFinite(n) && n > 0);
+    // PUSH 채널은 PHONE 모드 미지원 — 백엔드 가드와 일관되도록 payload 에 phoneNumbers 포함 X.
+    const includePhones = channel !== MANUAL_NOTIFICATION_CHANNEL.PUSH && phoneList.length > 0;
     const base = {
       userIds,
-      reason: reason.trim()
+      reason: reason.trim(),
+      ...(includePhones ? { phoneNumbers: phoneList } : {})
     };
     if (channel === MANUAL_NOTIFICATION_CHANNEL.SMS) {
       return { ...base, content: smsContent.trim() };
@@ -226,7 +311,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         : MANUAL_NOTIFICATION_TEMPLATE_SOURCE.COMMON_CODE,
       templateParams: templateParams || {}
     };
-  }, [selectedUsers, reason, channel, smsContent, pushTitle, pushBody, templateCode,
+  }, [selectedUsers, phoneList, reason, channel, smsContent, pushTitle, pushBody, templateCode,
     templatesLive, templateParams]);
 
   const closeConfirm = useCallback(() => {
@@ -277,9 +362,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         batchId: '',
         channel,
         startedAt: '',
-        totalCount: selectedUsers.length,
+        totalCount: totalRecipients,
         successCount: 0,
-        failureCount: selectedUsers.length,
+        failureCount: totalRecipients,
         batchErrorCode: code,
         batchErrorMessage: message,
         results: [],
@@ -291,13 +376,14 @@ const ManualNotificationForm = ({ onBatchSent }) => {
     } finally {
       setSubmitting(false);
     }
-  }, [isAllRequiredFilled, submitting, buildPayload, channel, selectedUsers.length, closeConfirm, onBatchSent, t]);
+  }, [isAllRequiredFilled, submitting, buildPayload, channel, totalRecipients, closeConfirm,
+    onBatchSent, t]);
 
   const handleSendClick = () => {
     if (!isAllRequiredFilled || submitting) {
       return;
     }
-    if (selectedUsers.length <= IMMEDIATE_SEND_THRESHOLD) {
+    if (totalRecipients <= IMMEDIATE_SEND_THRESHOLD) {
       doSend();
       return;
     }
@@ -339,10 +425,30 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       <li>
         <strong>{t('manualNotification.summary.recipientCount')}:</strong>{' '}
         {t('manualNotification.summary.recipientCountValue', {
-          count: selectedUsers.length,
+          count: totalRecipients,
           defaultValue: '{{count}}명'
         })}
+        {phoneList.length > 0 && (
+          <span className={`${FORM_CLASS}__hint`}>
+            {' '}
+            ({t('manualNotification.summary.recipientCountValue', {
+              count: selectedUsers.length,
+              defaultValue: '{{count}}명'
+            })}
+            {' + '}
+            {t('manualNotification.phone.summaryRow', {
+              count: phoneList.length,
+              defaultValue: '전화번호 직접 입력 {{count}}건'
+            })})
+          </span>
+        )}
       </li>
+      {phoneList.length > 0 && (
+        <li>
+          <strong>{t('manualNotification.phone.title')}:</strong>{' '}
+          {phoneList.map((p) => maskManualNotificationPhoneForDisplay(p)).join(', ')}
+        </li>
+      )}
       {channel === MANUAL_NOTIFICATION_CHANNEL.ALIMTALK && templateCode && (
         <>
           <li>
@@ -415,7 +521,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           onQueryChange={setRecipientQuery}
           options={recipientOptions}
           loading={recipientLoading}
-          maxCount={MANUAL_NOTIFICATION_MAX_RECIPIENTS}
+          maxCount={MANUAL_NOTIFICATION_MAX_RECIPIENTS - (isPhoneModeChannel ? phoneList.length : 0)}
           onLimitExceeded={handleLimitExceeded}
         />
         {maxExceededWarning && (
@@ -426,7 +532,117 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             })}
           </p>
         )}
+        {isPhoneModeChannel && (selectedUsers.length > 0 || phoneList.length > 0) && (
+          <p className={`${FORM_CLASS}__hint`}>
+            {t('manualNotification.recipient.totalCounter', {
+              total: totalRecipients,
+              max: MANUAL_NOTIFICATION_MAX_RECIPIENTS,
+              users: selectedUsers.length,
+              phones: phoneList.length,
+              defaultValue:
+                '총 수신자 {{total}} / {{max}} (등록 {{users}}명 + 전화번호 {{phones}}건)'
+            })}
+          </p>
+        )}
       </section>
+
+      {isPhoneModeChannel && (
+        <section
+          className={`${FORM_CLASS}__section`}
+          aria-labelledby="mg-manual-notif-phone-title"
+        >
+          <h3
+            id="mg-manual-notif-phone-title"
+            className={`${FORM_CLASS}__section-title`}
+          >
+            {t('manualNotification.phone.title')}
+          </h3>
+          <p className={`${FORM_CLASS}__hint`}>
+            {t('manualNotification.phone.hint')}
+          </p>
+          <div className={`${FORM_CLASS}__phone-input-row`}>
+            <input
+              id="mg-manual-notif-phone-input"
+              type="tel"
+              className={`${FORM_CLASS}__input`}
+              value={phoneDraft}
+              onChange={handlePhoneDraftChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addPhone();
+                }
+              }}
+              placeholder={t('manualNotification.phone.placeholder')}
+              aria-invalid={Boolean(phoneError)}
+              aria-describedby={phoneError ? 'mg-manual-notif-phone-error' : undefined}
+              autoComplete="off"
+            />
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: `${FORM_CLASS}__phone-add-btn`
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              disabled={
+                !phoneDraft.trim()
+                  || Boolean(phoneError)
+                  || selectedUsers.length + phoneList.length >= MANUAL_NOTIFICATION_MAX_RECIPIENTS
+              }
+              onClick={addPhone}
+            >
+              {t('manualNotification.phone.addButton')}
+            </MGButton>
+          </div>
+          {phoneError && (
+            <p
+              id="mg-manual-notif-phone-error"
+              className={`${FORM_CLASS}__inline-error`}
+              role="alert"
+            >
+              {phoneError}
+            </p>
+          )}
+          {phoneList.length > 0 && (
+            <div className={`${FORM_CLASS}__phone-list-wrapper`}>
+              <p className={`${FORM_CLASS}__hint`}>
+                {t('manualNotification.phone.listTitle', {
+                  count: phoneList.length,
+                  defaultValue: '추가된 전화번호 ({{count}}건)'
+                })}
+              </p>
+              <ul className={`${FORM_CLASS}__phone-list`}>
+                {phoneList.map((p, i) => (
+                  <li key={p} className={`${FORM_CLASS}__phone-chip`}>
+                    <span className={`${FORM_CLASS}__phone-chip-label`}>
+                      {maskManualNotificationPhoneForDisplay(p)}
+                    </span>
+                    <button
+                      type="button"
+                      className={`${FORM_CLASS}__phone-chip-remove`}
+                      onClick={() => removePhone(i)}
+                      aria-label={t('manualNotification.phone.removeAria')}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+
+      {channel === MANUAL_NOTIFICATION_CHANNEL.PUSH && (
+        <p className={`${FORM_CLASS}__hint ${FORM_CLASS}__hint--warn`} role="note">
+          {t('manualNotification.phone.pushNotSupported')}
+        </p>
+      )}
 
       {channel === MANUAL_NOTIFICATION_CHANNEL.SMS && (
         <section

@@ -26,24 +26,28 @@ public class PersonalDataAccessLogService {
     private final PersonalDataAccessLogRepository personalDataAccessLogRepository;
     
     /**
-     * 개인정보 접근 로그 기록
-     * 
+     * 개인정보 접근 로그 기록.
+     *
+     * <p>V20260604_002 (W2 P0): {@code targetUserId} 가 {@link Long} (users.id) 으로 정합화됨.
+     * 사용자와 무관한 데이터(결제·상담기록·급여 등) 식별자는 {@code dataIdentifier} 컬럼으로
+     * 분리해 저장한다.</p>
+     *
      * @param accessorId 접근자 ID
      * @param accessorName 접근자 이름
      * @param dataType 개인정보 유형
      * @param accessType 접근 유형
-     * @param targetUserId 대상 사용자 ID
+     * @param targetUserId 대상 사용자 PK (users.id) — 사용자 무관 데이터면 {@code null}
      * @param targetUserName 대상 사용자 이름
      * @param reason 접근 사유
      * @param result 처리 결과
-     * @param dataIdentifier 데이터 식별자
+     * @param dataIdentifier 데이터 식별자 (예: "USER_123", "PAYMENT_456")
      * @param dataDetails 데이터 상세 정보
      * @param request HTTP 요청
      */
     @Transactional
-    public void logPersonalDataAccess(String accessorId, String accessorName, String dataType, 
-                                    String accessType, String targetUserId, String targetUserName,
-                                    String reason, String result, String dataIdentifier, 
+    public void logPersonalDataAccess(String accessorId, String accessorName, String dataType,
+                                    String accessType, Long targetUserId, String targetUserName,
+                                    String reason, String result, String dataIdentifier,
                                     String dataDetails, HttpServletRequest request) {
         
         try {
@@ -90,14 +94,16 @@ public class PersonalDataAccessLogService {
     }
     
     /**
-     * 특정 사용자의 개인정보 접근 이력 조회
-     * 
-     * @param targetUserId 대상 사용자 ID
+     * 특정 사용자의 개인정보 접근 이력 조회.
+     *
+     * <p>V20260604_002 (W2 P0): {@code targetUserId} 시그니처 {@code String} → {@code Long}.</p>
+     *
+     * @param targetUserId 대상 사용자 PK (users.id)
      * @param startDate 시작 날짜
      * @param endDate 종료 날짜
      * @return 접근 이력 목록
      */
-    public List<PersonalDataAccessLog> getPersonalDataAccessHistory(String targetUserId, 
+    public List<PersonalDataAccessLog> getPersonalDataAccessHistory(Long targetUserId,
                                                                   LocalDateTime startDate, LocalDateTime endDate) {
         return personalDataAccessLogRepository.findByTargetUserIdAndAccessTimeBetween(
             targetUserId, startDate, endDate);

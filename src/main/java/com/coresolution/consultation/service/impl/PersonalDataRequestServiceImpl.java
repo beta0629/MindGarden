@@ -70,13 +70,12 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
             // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
             // personalData.put("branchCode", user.getBranchCode());
             
-            // 개인정보 접근 로그 기록
             personalDataAccessLogRepository.save(PersonalDataAccessLog.builder()
                 .accessorId(userId.toString())
                 .accessorName(decryptedName)
                 .dataType("USER_INFO")
                 .accessType("READ")
-                .targetUserId(userId.toString())
+                .targetUserId(userId)
                 .targetUserName(decryptedName)
                 .accessTime(LocalDateTime.now())
                 .ipAddress(getClientIpAddress(request))
@@ -123,13 +122,12 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
             }
             
-            // 개인정보 삭제 요청 로그 기록
             personalDataAccessLogRepository.save(PersonalDataAccessLog.builder()
                 .accessorId(userId.toString())
                 .accessorName(encryptionUtil.safeDecrypt(user.getName()))
                 .dataType("USER_INFO")
                 .accessType("DELETE")
-                .targetUserId(userId.toString())
+                .targetUserId(userId)
                 .targetUserName(encryptionUtil.safeDecrypt(user.getName()))
                 .accessTime(LocalDateTime.now())
                 .ipAddress(getClientIpAddress(request))
@@ -171,7 +169,7 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
         try {
             List<PersonalDataAccessLog> accessLogs = personalDataAccessLogRepository
                 .findByTargetUserIdAndAccessTimeBetween(
-                    userId.toString(),
+                    userId,
                     startDate,
                     endDate
                 );

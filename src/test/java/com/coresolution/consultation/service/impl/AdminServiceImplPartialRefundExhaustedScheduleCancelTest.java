@@ -190,7 +190,9 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
                 professionalProviderTypeService,
                 mappingSettlementNotificationHelper,
                 batchNotificationDispatchService,
-                refundAutoCancelNotificationService);
+                refundAutoCancelNotificationService,
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.service.UserLifecycleService.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

@@ -310,7 +310,7 @@ class UserLifecycleServiceImplTest {
     }
 
     @Test
-    @DisplayName("transitionTo ACTIVE → DELETED_BY_ADMIN: ADMIN_FORCE_DEACTIVATE audit action")
+    @DisplayName("transitionTo ACTIVE → DELETED_BY_ADMIN: ADMIN_FORCED_DELETE audit action + stamp")
     void transitionTo_active_to_deletedByAdmin_audit() {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
         stubSaveAndAudit();
@@ -318,12 +318,56 @@ class UserLifecycleServiceImplTest {
         service.transitionTo(USER_ID,
                 LifecycleState.DELETED_BY_ADMIN,
                 Actor.user(99L, "ADMIN"),
-                "ADMIN_FORCE_DEACTIVATE");
+                "ADMIN_FORCED_DELETE");
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogRepository).save(captor.capture());
         assertThat(captor.getValue().getAction())
-                .isEqualTo(AuditAction.ADMIN_FORCE_DEACTIVATE);
+                .as("Phase 2-β 어드민 강제 종료는 ADMIN_FORCED_DELETE 로 기록되어야 한다")
+                .isEqualTo(AuditAction.ADMIN_FORCED_DELETE);
+        assertThat(user.getDeletedAt())
+                .as("DELETED_BY_ADMIN 진입 시 deleted_at stamp")
+                .isNotNull();
+        assertThat(user.getDeletedByAdminId())
+                .as("DELETED_BY_ADMIN 진입 시 deleted_by_admin_id 는 actor.actorUserId 와 동일")
+                .isEqualTo(99L);
+    }
+
+    @Test
+    @DisplayName("transitionTo DELETED_BY_ADMIN → ACTIVE: ADMIN_RESTORE audit action + stamp clear")
+    void transitionTo_deletedByAdmin_to_active_restore() {
+        user.setLifecycleState(LifecycleState.DELETED_BY_ADMIN);
+        user.setDeletedAt(LocalDateTime.now().minusDays(2));
+        user.setDeletedByAdminId(99L);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        stubSaveAndAudit();
+
+        service.transitionTo(USER_ID,
+                LifecycleState.ACTIVE,
+                Actor.user(99L, "ADMIN"),
+                "ADMIN_RESTORE: 잘못된 종료 취소");
+
+        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogRepository).save(captor.capture());
+        assertThat(captor.getValue().getAction())
+                .as("DELETED_BY_ADMIN → ACTIVE 는 ADMIN_RESTORE 로 기록되어야 한다")
+                .isEqualTo(AuditAction.ADMIN_RESTORE);
+        assertThat(user.getDeletedAt()).isNull();
+        assertThat(user.getDeletedByAdminId()).isNull();
+        assertThat(user.getLifecycleState()).isEqualTo(LifecycleState.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("transitionTo DELETED_BY_ADMIN 진입 시 actor.actorUserId 누락 → IllegalArgumentException")
+    void transitionTo_deletedByAdmin_without_adminId_throws() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.transitionTo(USER_ID,
+                LifecycleState.DELETED_BY_ADMIN,
+                Actor.system(),
+                "ADMIN_FORCED_DELETE"))
+                .as("Actor.system() (actorUserId=null) 으로 DELETED_BY_ADMIN 진입 차단")
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

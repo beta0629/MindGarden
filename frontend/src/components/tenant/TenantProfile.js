@@ -25,9 +25,14 @@ import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
+import EmptyState from '../common/EmptyState';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import {
+  TenantSubscriptionEmptyIllustration,
+  TenantPaymentEmptyIllustration
+} from './TenantProfileIllustrations';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import {
   TENANT_API_PATHS,
@@ -79,6 +84,26 @@ const TenantProfile = () => {
   const tenantId = sessionInfo?.tenantId || user?.tenantId;
   const canRenameTenant = canEditTenantDisplayName(user);
   const canOpenAdminNotificationSettings = hasAnyRole([USER_ROLES.ADMIN, USER_ROLES.STAFF]);
+
+  const renderChangeNameButton = (size = 'medium') => (
+    <MGButton
+      type="button"
+      variant="outline"
+      size={size}
+      className={buildErpMgButtonClassName({
+        variant: 'outline',
+        size: size === 'medium' ? 'md' : size,
+        loading: false
+      })}
+      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+      onClick={openTenantNameModal}
+      aria-label={t('admin:tenantProfile.actions.changeNameAria')}
+      data-testid="tenant-profile-rename-open"
+      preventDoubleClick={false}
+    >
+      {t('admin:tenantProfile.actions.changeName')}
+    </MGButton>
+  );
 
   useEffect(() => {
     if (sessionLoading) {
@@ -340,13 +365,18 @@ const TenantProfile = () => {
     <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
       <div className="mg-v2-tenant-profile">
         <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="테넌트 프로필 콘텐츠">
+          <ContentArea ariaLabel={t('admin:tenantProfile.header.regionLabel')}>
             <div className="tenant-profile-header">
               <ContentHeader
                 title={toDisplayString(tenantInfo.name, '테넌트')}
-                subtitle="테넌트 상태 및 결제 정보 관리"
+                subtitle={t('admin:tenantProfile.header.subtitle')}
                 titleId="tenant-profile-title"
-                actions={renderStatusBadge(tenantInfo.status)}
+                actions={(
+                  <div className="mg-v2-tenant-profile__header-actions">
+                    {canRenameTenant ? renderChangeNameButton('medium') : null}
+                    {renderStatusBadge(tenantInfo.status)}
+                  </div>
+                )}
               />
             </div>
 
@@ -414,46 +444,32 @@ const TenantProfile = () => {
             >
               {activeTab === 'overview' && (
                 <div className="mg-v2-tenant-profile__overview tenant-profile-overview">
-                  <ContentSection
-                    title={t('common:tenant.TenantProfile.t_2c8c8cc3')}
-                    actions={
-                      canRenameTenant ? (
-                        <MGButton
-                          type="button"
-                          variant="outline"
-                          size="medium"
-                          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={openTenantNameModal}
-                          data-testid="tenant-profile-rename-open"
-                          preventDoubleClick={false}
-                        >
-                          {t('common:tenant.TenantProfile.t_73e5a894')}
-                        </MGButton>
-                      ) : null
-                    }
-                  >
-                    <div className="mg-v2-tenant-profile__grid">
-                      <div className="mg-v2-tenant-profile__field">
-                        <label>{t('common:tenant.TenantProfile.t_065dd028')}</label>
-                        <p><SafeText>{tenantInfo.tenantId}</SafeText></p>
+                  <ContentSection title={t('admin:tenantProfile.card.tenantInfo')}>
+                    <div className="mg-v2-tenant-profile__grid mg-v2-tenant-profile__grid--two-col">
+                      <div className="mg-v2-tenant-profile__column">
+                        <div className="mg-v2-tenant-profile__field">
+                          <label>{t('common:tenant.TenantProfile.t_065dd028')}</label>
+                          <p><SafeText>{tenantInfo.tenantId}</SafeText></p>
+                        </div>
+                        <div className="mg-v2-tenant-profile__field">
+                          <label>{t('common:tenant.TenantProfile.t_dacf2653')}</label>
+                          <p><SafeText>{tenantInfo.name}</SafeText></p>
+                        </div>
                       </div>
-                      <div className="mg-v2-tenant-profile__field">
-                        <label>{t('common:tenant.TenantProfile.t_dacf2653')}</label>
-                        <p><SafeText>{tenantInfo.name}</SafeText></p>
-                      </div>
-                      <div className="mg-v2-tenant-profile__field">
-                        <label>{t('common:tenant.TenantProfile.t_0fb1a92d')}</label>
-                        <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
-                      </div>
-                      <div className="mg-v2-tenant-profile__field">
-                        <label>{t('admin.labels.status')}</label>
-                        <div>{renderStatusBadge(tenantInfo.status)}</div>
+                      <div className="mg-v2-tenant-profile__column">
+                        <div className="mg-v2-tenant-profile__field">
+                          <label>{t('common:tenant.TenantProfile.t_0fb1a92d')}</label>
+                          <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
+                        </div>
+                        <div className="mg-v2-tenant-profile__field">
+                          <label>{t('admin.labels.status')}</label>
+                          <div>{renderStatusBadge(tenantInfo.status)}</div>
+                        </div>
                       </div>
                     </div>
                   </ContentSection>
 
-                  <ContentSection title={TENANT_PROFILE_NOTIFICATIONS_SECTION_TITLE}>
+                  <ContentSection title={t('admin:tenantProfile.card.notifications', { defaultValue: TENANT_PROFILE_NOTIFICATIONS_SECTION_TITLE })}>
                     <div className="mg-v2-tenant-profile__grid">
                       <div className="mg-v2-tenant-profile__field">
                         <label>{TENANT_PROFILE_KAKAO_ALIMTALK_LABEL}</label>
@@ -504,7 +520,10 @@ const TenantProfile = () => {
                     </div>
                   </ContentSection>
 
-                  <ContentSection title={t('common:tenant.TenantProfile.t_d37f5764')}>
+                  <ContentSection
+                    title={t('admin:tenantProfile.card.subscription', { defaultValue: t('common:tenant.TenantProfile.t_d37f5764') })}
+                    className="mg-v2-tenant-profile__overview-card"
+                  >
                     {subscriptions.length > 0 ? (
                       <div className="subscription-summary">
                         {subscriptions.map((subscription) => (
@@ -525,11 +544,33 @@ const TenantProfile = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="no-data">{t('common:tenant.TenantProfile.t_70a800f9')}</p>
+                      <EmptyState
+                        className="mg-v2-tenant-profile__empty"
+                        icon={<TenantSubscriptionEmptyIllustration />}
+                        title={t('admin:tenantProfile.empty.subscription.headline')}
+                        description={t('admin:tenantProfile.empty.subscription.subcopy')}
+                        action={(
+                          <MGButton
+                            type="button"
+                            variant="primary"
+                            size="medium"
+                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={() => setActiveTab('subscription')}
+                            data-testid="tenant-profile-empty-subscription-cta"
+                            preventDoubleClick={false}
+                          >
+                            {t('admin:tenantProfile.empty.subscription.cta')}
+                          </MGButton>
+                        )}
+                      />
                     )}
                   </ContentSection>
 
-                  <ContentSection title={t('common:tenant.TenantProfile.t_bb94631a')}>
+                  <ContentSection
+                    title={t('admin:tenantProfile.card.payment', { defaultValue: t('common:tenant.TenantProfile.t_bb94631a') })}
+                    className="mg-v2-tenant-profile__overview-card"
+                  >
                     {paymentMethods.length > 0 ? (
                       <div className="payment-method-summary">
                         {paymentMethods.map((pm) => (
@@ -543,7 +584,26 @@ const TenantProfile = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="no-data">{t('common:tenant.TenantProfile.t_54f1a72f')}</p>
+                      <EmptyState
+                        className="mg-v2-tenant-profile__empty"
+                        icon={<TenantPaymentEmptyIllustration />}
+                        title={t('admin:tenantProfile.empty.payment.headline')}
+                        description={t('admin:tenantProfile.empty.payment.subcopy')}
+                        action={(
+                          <MGButton
+                            type="button"
+                            variant="primary"
+                            size="medium"
+                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={() => setActiveTab('payment')}
+                            data-testid="tenant-profile-empty-payment-cta"
+                            preventDoubleClick={false}
+                          >
+                            {t('admin:tenantProfile.empty.payment.cta')}
+                          </MGButton>
+                        )}
+                      />
                     )}
                   </ContentSection>
                 </div>
@@ -650,20 +710,26 @@ const TenantProfile = () => {
                         </div>
                       ))
                     ) : (
-                      <div className="no-payment-methods">
-                        <CreditCardIcon size={48} />
-                        <p>{t('common:tenant.TenantProfile.t_54f1a72f')}</p>
-                        <MGButton
-                          type="button"
-                          variant="primary"
-                          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => setShowPaymentMethodRegistration(true)}
-                          preventDoubleClick={false}
-                        >
-                          {t('common:tenant.TenantProfile.t_9f9cf174')}
-                        </MGButton>
-                      </div>
+                      <EmptyState
+                        className="mg-v2-tenant-profile__empty"
+                        icon={<TenantPaymentEmptyIllustration />}
+                        title={t('admin:tenantProfile.empty.payment.headline')}
+                        description={t('admin:tenantProfile.empty.payment.subcopy')}
+                        action={(
+                          <MGButton
+                            type="button"
+                            variant="primary"
+                            size="medium"
+                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={() => setShowPaymentMethodRegistration(true)}
+                            data-testid="tenant-profile-payment-empty-register"
+                            preventDoubleClick={false}
+                          >
+                            {t('admin:tenantProfile.empty.payment.cta')}
+                          </MGButton>
+                        )}
+                      />
                     )}
                   </div>
                 </ContentSection>

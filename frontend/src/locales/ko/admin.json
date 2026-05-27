@@ -2405,6 +2405,36 @@
       "deleteConfirm": "정말 이 결제 수단을 삭제하시겠습니까?"
     }
   },
+  "tenantProfile": {
+    "header": {
+      "subtitle": "테넌트 상태 및 결제 정보 관리",
+      "regionLabel": "테넌트 프로필 콘텐츠"
+    },
+    "actions": {
+      "changeName": "이름 변경",
+      "changeNameAria": "테넌트 이름 변경"
+    },
+    "card": {
+      "tenantInfo": "테넌트 정보",
+      "notifications": "알림·연동",
+      "subscription": "구독 정보",
+      "payment": "결제 수단"
+    },
+    "empty": {
+      "subscription": {
+        "headline": "구독 정보가 없습니다",
+        "subcopy": "이용 중인 요금제와 기간을 확인하세요.",
+        "cta": "구독 추가",
+        "illustrationAria": "구독 정보 빈 상태 일러스트"
+      },
+      "payment": {
+        "headline": "등록된 결제 수단이 없습니다",
+        "subcopy": "정기 결제를 위한 카드/계좌를 등록해주세요.",
+        "cta": "결제 수단 등록",
+        "illustrationAria": "결제 수단 빈 상태 일러스트"
+      }
+    }
+  },
   "mapping": {
     "page": {
       "title": "매칭 관리",

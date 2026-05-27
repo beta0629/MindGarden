@@ -67,6 +67,8 @@ const AdminTenantSmsSettingsPage = lazy(() => import('./components/admin/AdminTe
 const AdminTestNotificationPage = lazy(() => import('./components/admin/system/AdminTestNotificationPage'));
 const AdminManualNotificationPage = lazy(() => import('./components/admin/manual-notification/AdminManualNotificationPage'));
 const SmsTemplateManagementPage = lazy(() => import('./components/admin/sms-templates/SmsTemplateManagementPage'));
+const AdminBillingSubscriptionsPage = lazy(() => import('./components/admin/billing/SubscriptionsPage'));
+const AdminBillingPaymentMethodsPage = lazy(() => import('./components/admin/billing/PaymentMethodsPage'));
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -817,6 +819,16 @@ function AppContent() {
             <Route path="/admin/ops/pg-approval" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
                 <PgApprovalManagement />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.BILLING_SUBSCRIPTIONS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminBillingSubscriptionsPage />
+              </ProtectedRoute>
+            } />
+            <Route path={ADMIN_ROUTES.BILLING_PAYMENT_METHODS} element={
+              <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
+                <AdminBillingPaymentMethodsPage />
               </ProtectedRoute>
             } />
             <Route path="/admin/psych-assessment" element={<PsychAssessmentLegacyRedirect />} />

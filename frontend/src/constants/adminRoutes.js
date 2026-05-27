@@ -83,6 +83,10 @@ export const ADMIN_ROUTES = {
     /** P2-admin 포인트·리워드 정책(MVP) */
     SHOP_POINT_POLICIES: '/admin/shop/point-policies',
     /** P2-admin 온라인 주문·환불 */
-    SHOP_ORDERS: '/admin/shop/orders'
+    SHOP_ORDERS: '/admin/shop/orders',
+    /** 결제/구독 — 구독 관리 라우트 (테넌트 결제·구독 SSOT 분리, 옵션 C, 2026-05-27) */
+    BILLING_SUBSCRIPTIONS: '/admin/billing/subscriptions',
+    /** 결제/구독 — 결제 수단 관리 라우트 (테넌트 결제·구독 SSOT 분리, 옵션 C, 2026-05-27) */
+    BILLING_PAYMENT_METHODS: '/admin/billing/payment-methods'
 };
 

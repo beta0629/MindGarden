@@ -13,6 +13,7 @@ import { getDashboardPathByRole } from '../constants/session';
 
 const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
 const CLIENT_SHOP_LNB_GROUP_LABEL = '온라인 쇼핑';
+const BILLING_ADMIN_LNB_GROUP_LABEL = '결제/구독';
 
 const SHOP_ADMIN_LNB_ROLES = new Set([
   USER_ROLES.ADMIN,
@@ -220,6 +221,57 @@ export function mergeShopAdminLnbItems(items, options = {}) {
         { to: ADMIN_ROUTES.SHOP_CATALOG_SKUS, icon: 'PACKAGE', label: '상품(SKU) 관리', end: true },
         { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true },
         { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: '온라인 주문', end: true }
+      ]
+    }
+  ];
+}
+
+/**
+ * DB LNB에 어드민 「결제/구독」 그룹이 없을 때 폴백 보강.
+ *
+ * - 옵션 C (라우트 + 모달) 분리 PR (2026-05-27) 후속: Flyway 시드 (V20260530_003)
+ *   배포 전에도 ADMIN/STAFF LNB 에 결제·구독 항목이 정상 노출되도록 한다.
+ * - `mergeShopAdminLnbItems` 패턴과 동일하게 비-admin 역할은 폴백 미삽입 (운영 누출 차단).
+ * - 기존 어드민 LNB 트리에 `/admin/billing/subscriptions` 또는 `/admin/billing/payment-methods`
+ *   경로가 이미 포함되어 있으면 (DB 시드 배포 후) 폴백을 추가하지 않는다.
+ *
+ * @param {Array} items LNB 트리 (DB 응답 또는 폴백)
+ * @param {{ userRole?: string }} [options]
+ * @returns {typeof items}
+ */
+export function mergeBillingAdminLnbItems(items, options = {}) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+  if (!isShopAdminLnbRole(options.userRole)) {
+    return items;
+  }
+  const billingPaths = new Set([
+    ADMIN_ROUTES.BILLING_SUBSCRIPTIONS,
+    ADMIN_ROUTES.BILLING_PAYMENT_METHODS
+  ]);
+  const hasBilling = items.some((item) => {
+    if (billingPaths.has(item.to)) {
+      return true;
+    }
+    if (Array.isArray(item.children)) {
+      return item.children.some((c) => billingPaths.has(c.to));
+    }
+    return false;
+  });
+  if (hasBilling) {
+    return items;
+  }
+  return [
+    ...items,
+    {
+      to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS,
+      icon: 'CREDIT_CARD',
+      label: BILLING_ADMIN_LNB_GROUP_LABEL,
+      end: false,
+      children: [
+        { to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS, icon: 'RECEIPT', label: '구독 관리', end: true },
+        { to: ADMIN_ROUTES.BILLING_PAYMENT_METHODS, icon: 'CREDIT_CARD', label: '결제 수단', end: true }
       ]
     }
   ];

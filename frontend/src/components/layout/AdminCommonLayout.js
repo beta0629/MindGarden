@@ -23,6 +23,7 @@ import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import {
   deriveGnbQuickNavigateActionsFromLnb,
   getLnbTreeFromResponse,
+  mergeBillingAdminLnbItems,
   mergeClientShopLnbItems,
   mergeShopAdminLnbItems,
   mergeSupplementalAdminLnbItems,
@@ -79,13 +80,17 @@ const AdminCommonLayout = ({
             });
           } else {
             normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled, userRole });
+            normalized = mergeBillingAdminLnbItems(normalized, { userRole });
           }
           setLnbMenuItems(normalized);
         } else {
           setLnbMenuItems(
             userRole === USER_ROLES.CLIENT
               ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-              : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole })
+              : mergeBillingAdminLnbItems(
+                mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
+                { userRole }
+              )
           );
         }
       })
@@ -94,7 +99,10 @@ const AdminCommonLayout = ({
           setLnbMenuItems(
             userRole === USER_ROLES.CLIENT
               ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-              : mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole })
+              : mergeBillingAdminLnbItems(
+                mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
+                { userRole }
+              )
           );
         }
       });

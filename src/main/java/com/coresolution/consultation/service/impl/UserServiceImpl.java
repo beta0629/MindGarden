@@ -9,15 +9,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import com.coresolution.consultation.constant.EmailConstants;
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.dto.ProfileImageInfo;
+import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.BaseRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -62,7 +65,10 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private BranchService branchService;
-    
+
+    @Autowired
+    private UserLifecycleService userLifecycleService;
+
     // ==================== BaseService 구현 ====================
     
     public Optional<User> findById(Long id) {
@@ -1067,14 +1073,42 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
     
+    /**
+     * 사용자 계정 삭제 — USER_LIFECYCLE_TERMINATION_POLICY §3.6 SSOT redirect.
+     *
+     * <p>Phase 1 + 2-α 전이 그래프 정착 후 본 호출은 {@link UserLifecycleService} 단일 진입점으로
+     * redirect 된다. 자발 탈퇴 본인 흐름은 {@link com.coresolution.consultation.controller.UserWithdrawalController}
+     * 의 {@code POST /api/v1/mypage/withdrawal/request} 사용을 권장. 본 메서드는 기존 호출자
+     * (DELETE /api/v1/users/{id}/account 등) 의 backward-compat 보존을 위해 SYSTEM actor 로
+     * WITHDRAWAL_PENDING 진입을 수행하여 30일 유예 후 자동 ANONYMIZE 되도록 한다.</p>
+     *
+     * @deprecated 자발 탈퇴는 {@code UserWithdrawalController}, 어드민 강제는 Phase 2-β 의
+     *             {@code AdminServiceImpl} 신규 redirect 사용을 권장.
+     */
     @Override
+    @Deprecated
     public void deleteUserAccount(Long id) {
-        softDeleteById(id);
+        userLifecycleService.transitionTo(
+                id,
+                LifecycleState.WITHDRAWAL_PENDING,
+                Actor.system(),
+                "LEGACY_DELETE_USER_ACCOUNT_API");
     }
-    
+
+    /**
+     * 사용자 계정 복구 — Phase 1 + 2-α 정합. WITHDRAWAL_PENDING → ACTIVE 또는
+     * DELETED_BY_ADMIN → ACTIVE 복귀. ANONYMIZED 후는 복원 불가 (TERMINAL).
+     *
+     * @deprecated lifecycle SSOT 정합 — {@link UserLifecycleService#transitionTo} 직접 호출 권장.
+     */
     @Override
+    @Deprecated
     public void restoreUserAccount(Long id) {
-        restoreById(id);
+        userLifecycleService.transitionTo(
+                id,
+                LifecycleState.ACTIVE,
+                Actor.system(),
+                "LEGACY_RESTORE_USER_ACCOUNT_API");
     }
     
     @Override

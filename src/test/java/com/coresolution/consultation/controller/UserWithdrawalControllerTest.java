@@ -19,6 +19,7 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.dto.lifecycle.TransitionResult;
+import com.coresolution.consultation.dto.lifecycle.WithdrawalOptions;
 import com.coresolution.consultation.dto.lifecycle.WithdrawalRequestDto;
 import com.coresolution.consultation.dto.lifecycle.WithdrawalStatusDto;
 import com.coresolution.consultation.entity.User;
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -79,7 +81,7 @@ class UserWithdrawalControllerTest {
     @Test
     @DisplayName("request: 비밀번호 일치 + ACTIVE → WITHDRAWAL_PENDING 전이 + 만료 시각 노출")
     void request_success() {
-        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "이유");
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "이유", null);
         TransitionResult result = TransitionResult.builder()
                 .userId(USER_ID)
                 .fromState(LifecycleState.ACTIVE)
@@ -91,7 +93,8 @@ class UserWithdrawalControllerTest {
             mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
             when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
             when(passwordService.matches("plain-pw", "encoded-pw")).thenReturn(true);
-            when(userLifecycleService.requestWithdrawal(eq(USER_ID), any(Actor.class)))
+            when(userLifecycleService.requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), any(WithdrawalOptions.class)))
                     .thenReturn(result);
 
             ResponseEntity<ApiResponse<Map<String, Object>>> response =
@@ -105,15 +108,17 @@ class UserWithdrawalControllerTest {
             assertThat(body.get("graceDays"))
                     .isEqualTo(UserWithdrawalController.WITHDRAWAL_GRACE_PERIOD_DAYS);
             assertThat(body.get("withdrawalExpiresAt")).isNotNull();
+            // Q12-b — null payload default false 정합
+            assertThat(body.get("deleteCommunityBody")).isEqualTo(false);
             verify(userLifecycleService, times(1))
-                    .requestWithdrawal(eq(USER_ID), any(Actor.class));
+                    .requestWithdrawal(eq(USER_ID), any(Actor.class), any(WithdrawalOptions.class));
         }
     }
 
     @Test
     @DisplayName("request: 비밀번호 불일치 시 401 + 전이 호출 없음")
     void request_passwordMismatch_returns401() {
-        WithdrawalRequestDto req = new WithdrawalRequestDto("wrong-pw", null);
+        WithdrawalRequestDto req = new WithdrawalRequestDto("wrong-pw", null, null);
         try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
             mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
             when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
@@ -124,7 +129,97 @@ class UserWithdrawalControllerTest {
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
             verify(userLifecycleService, never())
-                    .requestWithdrawal(anyLong(), any(Actor.class));
+                    .requestWithdrawal(anyLong(), any(Actor.class), any(WithdrawalOptions.class));
+        }
+    }
+
+    @Test
+    @DisplayName("request Q12-b: deleteCommunityBody=true → WithdrawalOptions.of(true) 위임")
+    void request_deleteCommunityBody_true_passesOption() {
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "사유", Boolean.TRUE);
+        TransitionResult result = TransitionResult.builder()
+                .userId(USER_ID)
+                .fromState(LifecycleState.ACTIVE)
+                .toState(LifecycleState.WITHDRAWAL_PENDING)
+                .auditLogId(111L)
+                .transitionedAt(LocalDateTime.now())
+                .build();
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+            when(passwordService.matches("plain-pw", "encoded-pw")).thenReturn(true);
+            when(userLifecycleService.requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), any(WithdrawalOptions.class)))
+                    .thenReturn(result);
+
+            ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                    controller.requestWithdrawal(session, req);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            Map<String, Object> body = response.getBody().getData();
+            assertThat(body.get("deleteCommunityBody")).isEqualTo(true);
+
+            ArgumentCaptor<WithdrawalOptions> optionsCaptor =
+                    ArgumentCaptor.forClass(WithdrawalOptions.class);
+            verify(userLifecycleService).requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), optionsCaptor.capture());
+            assertThat(optionsCaptor.getValue().isDeleteCommunityBody()).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("request Q12-b: deleteCommunityBody=false → WithdrawalOptions.defaults() 위임")
+    void request_deleteCommunityBody_false_passesDefaults() {
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "사유", Boolean.FALSE);
+        TransitionResult result = TransitionResult.builder()
+                .userId(USER_ID)
+                .fromState(LifecycleState.ACTIVE)
+                .toState(LifecycleState.WITHDRAWAL_PENDING)
+                .transitionedAt(LocalDateTime.now())
+                .build();
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+            when(passwordService.matches("plain-pw", "encoded-pw")).thenReturn(true);
+            when(userLifecycleService.requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), any(WithdrawalOptions.class)))
+                    .thenReturn(result);
+
+            controller.requestWithdrawal(session, req);
+
+            ArgumentCaptor<WithdrawalOptions> optionsCaptor =
+                    ArgumentCaptor.forClass(WithdrawalOptions.class);
+            verify(userLifecycleService).requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), optionsCaptor.capture());
+            assertThat(optionsCaptor.getValue().isDeleteCommunityBody()).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("request Q12-b: deleteCommunityBody=null (페이로드 누락) → false 기본값")
+    void request_deleteCommunityBody_null_defaultsToFalse() {
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", null, null);
+        TransitionResult result = TransitionResult.builder()
+                .userId(USER_ID)
+                .fromState(LifecycleState.ACTIVE)
+                .toState(LifecycleState.WITHDRAWAL_PENDING)
+                .transitionedAt(LocalDateTime.now())
+                .build();
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+            when(passwordService.matches("plain-pw", "encoded-pw")).thenReturn(true);
+            when(userLifecycleService.requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), any(WithdrawalOptions.class)))
+                    .thenReturn(result);
+
+            controller.requestWithdrawal(session, req);
+
+            ArgumentCaptor<WithdrawalOptions> optionsCaptor =
+                    ArgumentCaptor.forClass(WithdrawalOptions.class);
+            verify(userLifecycleService).requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), optionsCaptor.capture());
+            assertThat(optionsCaptor.getValue().isDeleteCommunityBody()).isFalse();
         }
     }
 

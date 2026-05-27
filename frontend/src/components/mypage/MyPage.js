@@ -24,6 +24,8 @@ import SecuritySection from './components/SecuritySection';
 import SocialAccountsSection from './components/SocialAccountsSection';
 import PasswordResetModal from './components/PasswordResetModal';
 import PasswordChangeModal from './components/PasswordChangeModal';
+import WithdrawalRequestModal from './components/WithdrawalRequestModal';
+import WithdrawalPendingWidget from './components/WithdrawalPendingWidget';
 import {
   MYPAGE_TITLE_ID,
   MYPAGE_TAB_SET,
@@ -71,6 +73,8 @@ const MyPage = () => {
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [socialUnlinkTarget, setSocialUnlinkTarget] = useState(null);
   const [showLogoutOtherConfirm, setShowLogoutOtherConfirm] = useState(false);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [withdrawalStatus, setWithdrawalStatus] = useState(null);
   const [formData, setFormData] = useState({
     userId: '',
     nickname: '',
@@ -438,6 +442,39 @@ const MyPage = () => {
     notificationManager.show('비밀번호가 변경되었습니다.', 'success');
   };
 
+  const loadWithdrawalStatus = useCallback(async() => {
+    try {
+      const response = await mypageApi.getWithdrawalStatus();
+      const payload =
+        response && typeof response === 'object' && response.data && typeof response.data === 'object'
+          ? response.data
+          : response;
+      setWithdrawalStatus(payload || null);
+    } catch (error) {
+      console.error('탈퇴 상태 조회 실패:', error);
+      setWithdrawalStatus(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWithdrawalStatus();
+  }, [loadWithdrawalStatus]);
+
+  const handleOpenWithdrawalModal = () => {
+    setShowWithdrawalModal(true);
+  };
+
+  const handleWithdrawalRequestSuccess = () => {
+    loadWithdrawalStatus();
+  };
+
+  const handleWithdrawalCancelled = () => {
+    loadWithdrawalStatus();
+  };
+
+  const isWithdrawalPending =
+    !!withdrawalStatus && withdrawalStatus.lifecycleState === 'WITHDRAWAL_PENDING';
+
   const handleLinkSocialAccount = async(provider) => {
     try {
       notificationManager.show(
@@ -529,6 +566,14 @@ const MyPage = () => {
               }
             />
 
+        {isWithdrawalPending ? (
+          <WithdrawalPendingWidget
+            withdrawalExpiresAt={withdrawalStatus?.withdrawalExpiresAt}
+            withdrawalRequestedAt={withdrawalStatus?.withdrawalRequestedAt}
+            onCancelled={handleWithdrawalCancelled}
+          />
+        ) : null}
+
         <nav className="mg-mypage__tabs" aria-label="마이페이지 섹션">
           <ul className="mg-mypage__tab-list mg-v2-ad-b0kla__pill-toggle" role="tablist">
             {visibleTabs.map((tabKey) => (
@@ -603,6 +648,8 @@ const MyPage = () => {
                   onPasswordChange={handlePasswordChange}
                   onPasswordReset={handlePasswordReset}
                   onRequestLogoutOtherDevices={() => setShowLogoutOtherConfirm(true)}
+                  onRequestWithdrawal={handleOpenWithdrawalModal}
+                  isWithdrawalPending={isWithdrawalPending}
                 />
               </div>
             </section>
@@ -651,6 +698,12 @@ const MyPage = () => {
         isOpen={showPasswordChangeModal}
         onClose={() => setShowPasswordChangeModal(false)}
         onSuccess={handlePasswordChangeSuccess}
+      />
+
+      <WithdrawalRequestModal
+        isOpen={showWithdrawalModal}
+        onClose={() => setShowWithdrawalModal(false)}
+        onSuccess={handleWithdrawalRequestSuccess}
       />
 
       <ConfirmModal

@@ -3,6 +3,7 @@ package com.coresolution.consultation.service;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.dto.lifecycle.TransitionResult;
+import com.coresolution.consultation.dto.lifecycle.WithdrawalOptions;
 import com.coresolution.consultation.exception.IllegalStateTransitionException;
 
 /**
@@ -39,11 +40,31 @@ public interface UserLifecycleService {
     /**
      * 자발 탈퇴 신청 — ACTIVE → WITHDRAWAL_PENDING 전이 + withdrawal_requested_at stamp.
      *
+     * <p>본인 옵션 없이 호출하는 호환용 시그니처. 내부적으로
+     * {@link WithdrawalOptions#defaults()} 로 위임된다.</p>
+     *
      * @param userId 대상 users.id (본인)
      * @param actor  행위자 (본인)
      * @return 전이 결과
      */
     TransitionResult requestWithdrawal(Long userId, Actor actor);
+
+    /**
+     * 자발 탈퇴 신청 — ACTIVE → WITHDRAWAL_PENDING 전이 + withdrawal_requested_at stamp +
+     * withdrawal_options_json 직렬화.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY v1.1 §0.1 Q12-b — 본인이 선택한 옵션을
+     * {@code users.withdrawal_options_json} 컬럼에 보관한다. 30일 유예 만료 후
+     * {@code WithdrawalGracePeriodScheduler} 가 ANONYMIZED 전이 시점에
+     * {@link com.coresolution.consultation.service.UserAnonymizationService} 로 옵션을
+     * 복원·전달하여 community body 처리 등 PII 분기에 사용한다.</p>
+     *
+     * @param userId  대상 users.id (본인)
+     * @param actor   행위자 (본인)
+     * @param options 본인 선택 옵션 (null 인 경우 {@link WithdrawalOptions#defaults()} 로 해석)
+     * @return 전이 결과
+     */
+    TransitionResult requestWithdrawal(Long userId, Actor actor, WithdrawalOptions options);
 
     /**
      * 자발 탈퇴 취소 — WITHDRAWAL_PENDING → ACTIVE 전이 + withdrawal_requested_at clear.

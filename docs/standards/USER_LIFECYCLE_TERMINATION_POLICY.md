@@ -5,6 +5,7 @@
 > **버전 이력**:
 > - **v1.0** (2026-05-27, commit `cc7a58ad8`): 초안 — `is_active`/`is_deleted` SSOT 분기, FK cascade 정적 분석, §10 결정 질문 12개 잠정 권고.
 > - **v1.1** (2026-05-27, 본 갱신): (a) core-debugger 운영 DB FK 실측 흡수 (FK 57개 — 56 `NO ACTION` + 1 `CASCADE` 인 `consultant_mood_tracking_ibfk_1`), (b) 사용자 결정 15건 (Q1~Q12 + W1~W3) 권장 default 일괄 채택, (c) §4 placeholder 제거 + 시나리오×테이블 매트릭스 본문화, (d) core-coder Phase 0 정착 (cb88d0689 + ec922de12) 흡수, (e) Phase 0~5 실행 일정 정착, (f) 부록 C·D 신설.
+> - **v1.2** (2026-05-28): 메인 웹검색 법령 근거 재검증 — Q9, Q10, Q11 갱신 및 사용자 결재 변수 신설.
 >
 > **입력 보고서**:
 > - `docs/standards/SELF_WITHDRAWAL_PROCESS_AUDIT.md` (자발 회원탈퇴 점검 — Agent `cda90711`)
@@ -30,9 +31,9 @@
 | **Q6** | 재가입 cooldown | 즉시 가능 + 어드민 사유별 cooldown 옵션 어드민 설정 가능. |
 | **Q7** | CONSULTANT `specialization` | KEEP (통계 우선). |
 | **Q8** | `mood_journal_*` / `self_assessment_*` | HARD_DELETE (애플리케이션 명시 DELETE — DB FK cascade 안 됨). |
-| **Q9** | DORMANT → ANONYMIZED 추가 경과 | 4년 (총 5년) + 별도 PII vault 테이블. |
-| **Q10** | `consultation_records` 보존 | 10년 (의료법 §22). 법무 자문 별도 추적. |
-| **Q11** | 자유 입력 PII 스크러빙 | 정규식 우선 → AI 단계적 도입. |
+| **Q9** | DORMANT → ANONYMIZED 추가 경과 | 사업자 자율 결정 (개정 §39의6 적용) — 기본값 1년 DORMANT + 4년 추가 anonymize (총 5년) 유지. 단 근거를 "법령 강제"가 아닌 "사업자 자율 정책 + 동의서 명시"로 변경. §21제3항 (세법 5년·전금법 5년) 분리보관 의무는 별도 유지. |
+| **Q10** | `consultation_records` 보존 | MindGarden 비즈니스 정체성에 따라 분기: 비의료 상담 플랫폼 (default) → 3년 (학회 윤리강령 + 동의서 명시) / 의료기관 연계 → 10년 (의료법 §22) / 하이브리드 → 상담 유형별 분기. 사용자 결재 필수 변수. |
+| **Q11** | 자유 입력 PII 스크러빙 | 3단계 로드맵 명시: 1) 정규식 (즉시 도입), 2) alphagyuu/Korean-PII-Masking-BERT (6개월 내 PoC), 3) ehd0309/ko-pii-public-v1 (12개월 내 확장). mcp-pii-tools는 PIPA §17 검토 후 선택적 도입. |
 | **Q12** | `community_*` 본인 글 | author 익명화 (default) + 본인 옵션 "본문도 삭제" 선택 가능. |
 | **W1** | 컴플라이언스 추적 6 테이블 신설 (P0) | `audit_logs`, `notifications`, `personal_data_destruction_logs`, `consultant_client_mapping_history`, `session_compensation_history`, `client_satisfaction_surveys` — 즉시 마이그레이션 (core-coder 병행). |
 | **W2** | `personal_data_access_logs.target_user_id` 타입 (P0) | `varchar(255)` → `bigint`. 운영 0 행 = 안전 무중단. |
@@ -58,7 +59,11 @@
 4. **마이그레이션 ↔ 운영 FK diff** — V21 `refresh_token_store` FK 가 운영에 누락, V32 `fk_user_role_user CASCADE` 가 운영 실측 `NO ACTION` (`CREATE TABLE IF NOT EXISTS` + hbm2ddl 선행 충돌).
 5. **컴플라이언스 추적 6 테이블 부재** (W1) — PIPA 시행령 §16 위반 risk.
 
-### §0.4 P0 게이트 — Phase 0 정착 완료 (core-coder)
+### §0.4 변경 이력
+
+- **v1.2 (2026-05-28)** — 메인 웹검색 법령 근거 재검증 (Q9, Q10, Q11 갱신 및 사용자 결재 변수 신설)
+
+### §0.5 P0 게이트 — Phase 0 정착 완료 (core-coder)
 
 - **W1** 6 테이블 신설 마이그레이션 — `V20260604_001` 정착 (commit `cb88d0689`).
 - **W2** `personal_data_access_logs.target_user_id` 타입 변경 — `V20260604_002` 정착 (commit `cb88d0689`). entity·repository·service Long 정합 (commit `ec922de12`, 39 테스트 PASS).
@@ -441,6 +446,18 @@ UserLifecycleService.transitionTo(userId, newState, actor, reason)
 
 → 세 경로 모두 `ANONYMIZED` 로 수렴 → `HARD_DELETED_PENDING` → `row gone` 의 단일 종착 그래프.
 
+### §6.3 보존·파기 기간 표 (v1.2 갱신)
+
+| 데이터 유형 | 법령 / 정책 근거 | 보존 기간 | 비고 |
+|---|---|---|---|
+| `users.email/name/phone` PII | 개인정보보호법 §21 + 동의서 | 익명화 대상 (즉시) | 탈퇴/anonymize 시점 즉시 surrogate 치환 |
+| `consultation_records` (상담 기록) | 비의료 → 학회 윤리 / 의료 → 의료법 §22 | 3년 또는 10년 (Q10 분기) | 비의료 3년, 의료기관 연계 10년 |
+| `payments` / `financial_transactions` | 전자상거래법 §6 + 국세기본법 §85의3 | 5년 (분리보관) | 결제 및 세무 정보 |
+| `consent_logs` (동의 이력) | 개인정보보호법 §22 | 3년 | 개인정보보호위 가이드 기준 |
+| `audit_logs` (감사 로그) | 개인정보보호법 §29 + 정보보호 표준 | 3년 ~ 5년 | 보안 이벤트 및 파기 기록 |
+| `mood_journal_*` / `self_assessment_*` | 본인 의사 (자발적 데이터) | 즉시 삭제 | 탈퇴/anonymize 시점 즉시 삭제 |
+| `community_*` 본문 | 본인 옵션 | 본인 선택 | 기본 익명화, 본인 요청 시 삭제 |
+
 ---
 
 ## §7. 재가입·재활성 규칙
@@ -614,7 +631,42 @@ Phase 0 (W1·W2 entity·service skeleton) 은 정착 완료. 비즈니스 로직
 
 ---
 
-## §10. 결정 요약 — 사용자 결재 완료 v1.1 (15건 전원 권장 default 채택)
+## §10. 사용자 결재 변수 신설 (v1.2)
+
+### §10.1 비즈니스 정체성 (Q10 핵심 변수)
+- **A. 비의료 상담 플랫폼 (default)**: 3년 보존 (학회 윤리강령 + 동의서 명시)
+- **B. 의료기관 연계 (의원 제휴)**: 10년 보존 (의료법 §22)
+- **C. 하이브리드**: 상담 유형별 분기 처리
+- **D. 판단 보류**: 안전하게 10년 유지
+
+### §10.2 휴면 정책 일수 (Q9 — 자율)
+- **A. 1년 DORMANT + 4년 anonymize (v1.1 유지, default)**
+- **B. 6개월 DORMANT (적극)**
+- **C. 2년 DORMANT (보수)**
+
+### §10.3 AI PII 스크러빙 도입 시점 (Q11)
+- **A. 1단계 정규식만 + 향후 단계적 (default)**
+- **B. 1+2단계 일괄 도입 (KcBERT 즉시)**
+- **C. 외부 GPT-4o (mcp-pii-tools) PIPA §17 검토 후 도입**
+
+---
+
+## §11. 법령 매트릭스 신설 (v1.2)
+
+| 법령 | 조항 | 적용 데이터 | 보존 기간 | 비고 |
+|---|---|---|---|---|
+| **개인정보보호법** | §21/§22/§29 (2024 개정) | 모든 PII | 최상 | - |
+| **개인정보보호법** | §39의6 (구 유효기간제) | - | 폐지 (2023.9.15) | 강제 아님 |
+| **의료법** | §22 + 시행규칙 §15 | 의료 한정 | 2026.3.4 | 비의료라면 X |
+| **전자상거래법** | §6 | 결제 정보 | 현행 | 결제 5년 |
+| **국세기본법** | §85의3 | 세무 | 현행 | 세금 관련 5년 |
+| **전자금융거래법** | §22 | 결제 정보 | 현행 | 금융 거래 5년 |
+| **상법** | §33 | 회계 | 현행 | 회계 장부 10년 |
+| **청소년상담사·한국상담심리학회 윤리강령** | 학회 자율 | 윤리 | 비의료 권장 (3년) | - |
+
+---
+
+## §12. 결정 요약 — 사용자 결재 완료 v1.1 (15건 전원 권장 default 채택)
 
 > v1.0 의 결정 질문 12개 (Q1~Q12) + debugger P0 게이트 3개 (W1~W3) 모두 **권장 default 일괄 채택** 으로 결재 완료 (2026-05-27). 본 §10 은 결정 결과를 단일 표로 정착하여, 후속 위임 (§11) 에 입력으로 사용한다.
 
@@ -651,11 +703,11 @@ Phase 0 (W1·W2 entity·service skeleton) 은 정착 완료. 비즈니스 로직
 
 ---
 
-## §11. 실행 일정 — Phase 0~5 우선순위·의존성
+## §13. 실행 일정 — Phase 0~5 우선순위·의존성
 
 > v1.0 의 "후속 단계 위임 순서" 를 Phase 0~5 일정 + 의존성 표 로 정착. Phase 0 (W1·W2) 는 정착 완료 (cb88d0689 / ec922de12).
 
-### §11.1 Phase 일정 표
+### §13.1 Phase 일정 표
 
 | Phase | 명칭 | 담당 | 산출 | 의존성 | 완료 상태 | commit 또는 위임 |
 |---|---|---|---|---|---|---|
@@ -667,7 +719,7 @@ Phase 0 (W1·W2 entity·service skeleton) 은 정착 완료. 비즈니스 로직
 | **4** | `community_*` Q12 옵션 b 본문 삭제 UI/API | core-coder + core-designer | (a) Q12 default = author 익명화는 Phase 2 매트릭스로 자동 적용, (b) 본인 옵션 "본문도 삭제" — 마이페이지 게시글 관리 UI + API + audit_logs 기록 | Phase 2-α | 위임 대기 | — |
 | **5** | 의료법 stamp + Q11 AI 단계적 도입 | 법무 + core-coder | (a) `PersonalDataDestructionService.destroyExpiredConsultationData:154` 5년 → 10년 cutoff 갱신 (Q10), (b) 의료법 §22 적용 범위 / 시행규칙 §17 절차 법무 자문 stamp, (c) Q11 AI 기반 본문 스크러빙 검증 + 단계적 도입 | Phase 2-α + 법무 결재 | 위임 대기 (법무 의존) | — |
 
-### §11.2 Phase 간 의존성 그래프
+### §13.2 Phase 간 의존성 그래프
 
 ```
 Phase 0 (정착 완료)
@@ -683,7 +735,7 @@ Phase 0 (정착 완료)
 - **차단 의존**: Phase 5 는 법무 자문 stamp 대기 — 코드 변경 자체는 작지만 법적 stamp 필수.
 - **Phase 1 의 운영 위험도**: 운영 0 incident 골든 윈도우 (§0.2) 안에 실행 시 무중단. 매핑 cron 의 영향 행 = 0.
 
-### §11.3 위임 입력·테스트 가이드 (메인 어시스턴트 → core-planner)
+### §13.3 위임 입력·테스트 가이드 (메인 어시스턴트 → core-planner)
 
 - **Phase 1**: §3.6 + §10.1 (Q1) → `V20260605_001` 마이그 + 매핑 cron 1회 + 파생 쿼리 갱신.
 - **Phase 2-α**: §3·§4.4·§7.1·§8 + Q2/Q3/Q11/W3 + Phase 0 정착 사양 → `UserLifecycleService` + `UserAnonymizationService` + 자발 탈퇴 API + 정규식 스크러빙.

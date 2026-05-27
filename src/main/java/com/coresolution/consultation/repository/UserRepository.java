@@ -1587,4 +1587,39 @@ public interface UserRepository extends BaseRepository<User, Long> {
             + "AND u.lastLoginAt < :cutoff "
             + "AND u.isDeleted = false")
     List<User> findDormantBatchCandidates(@Param("cutoff") LocalDateTime cutoff);
+
+    /**
+     * 테넌트별 휴면(DORMANT) 사용자 페이지네이션 조회 — Phase 4 어드민 모니터링 UI 입력.
+     *
+     * <p>{@code lifecycle_state=DORMANT AND tenant_id=:tenantId} 인 사용자만 조회한다.
+     * 어드민 모니터링 UI 는 vault 행을 통한 사전 통지·익명화 예정 시각도 함께 표시하므로
+     * 호출자가 vault 행과 join 해 응답을 빌드한다.</p>
+     *
+     * @param tenantId 테넌트 ID (멀티테넌트 격리)
+     * @param pageable 페이징
+     * @return 페이지네이션된 DORMANT 사용자 페이지
+     */
+    @Query("SELECT u FROM User u "
+            + "WHERE u.tenantId = :tenantId "
+            + "AND u.lifecycleState = com.coresolution.consultation.constant.LifecycleState.DORMANT "
+            + "ORDER BY u.updatedAt DESC")
+    Page<User> findDormantUsersByTenantId(
+            @Param("tenantId") String tenantId, Pageable pageable);
+
+    /**
+     * 단일 휴면(DORMANT) 사용자 조회 — Phase 4 어드민 상세 UI 입력.
+     *
+     * <p>{@code lifecycle_state=DORMANT AND tenant_id=:tenantId AND id=:userId} 만 반환한다.
+     * 다른 상태 (ACTIVE, ANONYMIZED 등) 사용자는 본 메서드로 조회되지 않는다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param userId   대상 users.id
+     * @return DORMANT 사용자 Optional
+     */
+    @Query("SELECT u FROM User u "
+            + "WHERE u.tenantId = :tenantId "
+            + "AND u.id = :userId "
+            + "AND u.lifecycleState = com.coresolution.consultation.constant.LifecycleState.DORMANT")
+    Optional<User> findDormantUserByTenantIdAndId(
+            @Param("tenantId") String tenantId, @Param("userId") Long userId);
 }

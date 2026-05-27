@@ -190,6 +190,12 @@ mindgarden:
     dormant-period-years: ${MINDGARDEN_LIFECYCLE_DORMANT_PERIOD_YEARS:1}
     anonymize-after-dormant-years: ${MINDGARDEN_LIFECYCLE_ANONYMIZE_AFTER_DORMANT_YEARS:4}
     pre-notice-days-before: ${MINDGARDEN_LIFECYCLE_PRE_NOTICE_DAYS_BEFORE:30}
+    # Phase 4 — 커뮤니티 작성자 익명화 (옵션 b — 본문 KEEP + 작성자 익명).
+    # enabled=false 면 anonymize 흐름에서 community 단계 전체 SKIP (운영 토글).
+    # tables 콤마 구분 — community_posts / community_comments. community_replies 도입 시 추가.
+    community-anonymization:
+      enabled: ${MINDGARDEN_COMMUNITY_ANONYMIZATION_ENABLED:true}
+      tables: ${MINDGARDEN_COMMUNITY_TABLES:community_posts,community_comments}
 
   security:
     # CAPTCHA (Cloudflare Turnstile). enabled=false 시 검증 생략(no-op). 시크릿·사이트키는 환경 변수로만 주입.

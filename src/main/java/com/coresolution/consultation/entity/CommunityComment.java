@@ -38,4 +38,16 @@ public class CommunityComment extends BaseEntity {
 
     @Column(name = "body", nullable = false, columnDefinition = "TEXT")
     private String body;
+
+    /**
+     * 작성자 익명화 여부 — Phase 4 옵션 b (USER_LIFECYCLE_TERMINATION_POLICY §10.12 Q12).
+     *
+     * <p>{@code true} 면 UI 가 작성자 이름 대신 "[삭제된 사용자]" 를 표시한다. 본문은 보존.</p>
+     */
+    @Column(name = "author_anonymized", nullable = false)
+    private boolean authorAnonymized;
+
+    /** 작성자 익명화 시각 — null 이면 미익명. */
+    @Column(name = "author_anonymized_at")
+    private java.time.LocalDateTime authorAnonymizedAt;
 }

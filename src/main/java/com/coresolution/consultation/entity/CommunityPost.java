@@ -69,4 +69,17 @@ public class CommunityPost extends BaseEntity {
 
     @Column(name = "moderation_note", length = 500)
     private String moderationNote;
+
+    /**
+     * 작성자 익명화 여부 — Phase 4 옵션 b (USER_LIFECYCLE_TERMINATION_POLICY §10.12 Q12).
+     *
+     * <p>{@code true} 면 UI 가 작성자 이름 대신 "[삭제된 사용자]" 를 표시하고 프로필 이미지를
+     * placeholder 로 대체한다. 본문은 보존된다 (저작권 + 커뮤니티 유지). false 면 일반 노출.</p>
+     */
+    @Column(name = "author_anonymized", nullable = false)
+    private boolean authorAnonymized;
+
+    /** 작성자 익명화 시각 — null 이면 미익명. */
+    @Column(name = "author_anonymized_at")
+    private java.time.LocalDateTime authorAnonymizedAt;
 }

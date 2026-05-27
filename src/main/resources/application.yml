@@ -185,6 +185,26 @@ mindgarden:
       # 공개 온보딩 접두(GET 검사 등). POST+onboarding-create-path 정확 일치는 위 버킷만 적용(중복 카운트 방지)
       onboarding-public-path-prefix: /api/v1/onboarding/
       onboarding-public-requests-per-minute: 30
+  # 사용자 라이프사이클(자동 파기·익명화·휴면) 정책.
+  # 정책서 v1.2 (docs/standards/USER_LIFECYCLE_TERMINATION_POLICY.md) §0.1 Q9~Q11 결재 결과 반영.
+  lifecycle:
+    cutoff:
+      # 비즈니스 정체성: NON_MEDICAL(default, 학회 윤리강령 3년) | MEDICAL(의료법 §22 10년)
+      business-mode: NON_MEDICAL
+      policy-version: v1.2-2026-05-28
+      # 카테고리별 보존 연수 (분기는 LifecycleCutoffProperties#getRetentionYears 로 단일화)
+      user-data-years: 1
+      consultation-records-years: 3
+      medical-consultation-records-years: 10
+      payments-years: 5
+      salary-data-years: 3
+      access-logs-years: 1
+      audit-logs-years: 3
+      consent-logs-years: 3
+    # 자유 입력 PII 스크러빙 — 1단계 정규식(default). Phase 5.1 BERT / Phase 5.3 GPT 후속.
+    pii-scrubber:
+      strategy: regex
+      enabled-patterns: email,phone,rrn,arn,card,bank,url
   # 라이프사이클 관련 배치 스케줄러 운영 토글 (USER_LIFECYCLE_TERMINATION_POLICY §6.2 / Q5).
   # enabled=false 이면 빈 자체가 생성되지 않아 cron 미실행. dry-run=true 이면 후보 조회·로깅만 수행하고
   # transitionTo(ANONYMIZED) 호출은 생략 — 운영 검증·tester M2 권고.

@@ -12,7 +12,7 @@
  * @see docs/standards/TESTING_STANDARD.md
  */
 import React from 'react';
-import { render, screen, waitFor, within, act } from '@testing-library/react';
+import { render, screen, waitFor, within, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 jest.mock('react-i18next', () => ({
@@ -263,6 +263,125 @@ describe('TenantProfile UI/UX (2026-05-27)', () => {
         const inlineBorderLeft = card.style && card.style.borderLeft;
         expect(inlineBorderLeft || '').toBe('');
       });
+    });
+  });
+
+  /**
+   * P1 핫픽스 회귀 가드 (explore 보고서 GAP #1·#2·#3)
+   *
+   * - GAP #1: `.mg-v2-tenant-profile` 스코프에 페이지 전용 `max-width: 1200px` override 가 없어야 한다
+   *   (글로벌 `var(--mg-container-max)` SSOT 위배 방지)
+   * - GAP #2: `subscription`/`payment` 탭 활성화 시 `<SubscriptionManagement>` / `<PaymentMethodRegistration>`
+   *   임베드가 *절대* 렌더되지 않아야 한다 (페이지 헤더·사이드바·3중 카드 중복 회귀 방지)
+   * - GAP #3: 빈 상태에서 ContentSection 1개 + EmptyState 1개만 렌더 (별도 카드 outline 없이)
+   */
+  describe('P1 핫픽스 회귀 가드 — GAP #1 (max-width override 금지)', () => {
+    it('TenantProfile 컨테이너에 inline max-width 가 적용되지 않는다 (글로벌 SSOT 위임)', async() => {
+      const { container } = await act(async() => renderTenantProfile());
+      await screen.findByTestId('tenant-profile-rename-open');
+      const containers = container.querySelectorAll('.mg-v2-tenant-profile .mg-v2-ad-b0kla__container');
+      expect(containers.length).toBeGreaterThan(0);
+      containers.forEach((el) => {
+        const inlineMaxWidth = el.style && el.style.maxWidth;
+        expect(inlineMaxWidth || '').toBe('');
+      });
+    });
+  });
+
+  describe('P1 핫픽스 회귀 가드 — GAP #2 (subscription/payment 탭 standalone 임베드 금지)', () => {
+    // mock t() 가 key 자체를 반환하므로 탭 라벨도 i18n 키로 매칭 (TenantProfile.js 의 정의 기준).
+    const TAB_LABEL_KEY = {
+      subscription: 'common:tenant.TenantProfile.t_3ba22bb7',
+      payment: 'common:tenant.TenantProfile.t_bb94631a'
+    };
+
+    const switchTab = async(tabKey) => {
+      const tab = screen.getByRole('tab', { name: TAB_LABEL_KEY[tabKey] });
+      await act(async() => {
+        fireEvent.click(tab);
+      });
+    };
+
+    it('subscription 탭 활성화 시 <SubscriptionManagement /> 임베드가 렌더되지 않는다', async() => {
+      await act(async() => {
+        renderTenantProfile();
+      });
+      await screen.findByTestId('tenant-profile-rename-open');
+      await switchTab('subscription');
+      expect(screen.queryByTestId('subscription-management')).toBeNull();
+    });
+
+    it('payment 탭 활성화 시 <PaymentMethodRegistration /> 임베드가 렌더되지 않는다', async() => {
+      await act(async() => {
+        renderTenantProfile();
+      });
+      await screen.findByTestId('tenant-profile-rename-open');
+      await switchTab('payment');
+      expect(screen.queryByTestId('payment-method-registration')).toBeNull();
+    });
+
+    it('subscription 탭 빈 상태에서 단일 ContentSection + EmptyState 만 렌더된다', async() => {
+      const { container } = await act(async() => renderTenantProfile());
+      await screen.findByTestId('tenant-profile-rename-open');
+      await switchTab('subscription');
+
+      const panel = container.querySelector('[role="tabpanel"]');
+      expect(panel).not.toBeNull();
+      const sections = panel.querySelectorAll('.mg-v2-content-section');
+      expect(sections.length).toBe(1);
+      const empties = panel.querySelectorAll('.mg-v2-empty-state');
+      expect(empties.length).toBe(1);
+    });
+
+    it('payment 탭 빈 상태에서 단일 ContentSection + EmptyState 만 렌더된다', async() => {
+      const { container } = await act(async() => renderTenantProfile());
+      await screen.findByTestId('tenant-profile-rename-open');
+      await switchTab('payment');
+
+      const panel = container.querySelector('[role="tabpanel"]');
+      expect(panel).not.toBeNull();
+      const sections = panel.querySelectorAll('.mg-v2-content-section');
+      expect(sections.length).toBe(1);
+      const empties = panel.querySelectorAll('.mg-v2-empty-state');
+      expect(empties.length).toBe(1);
+    });
+
+    it('subscription 탭에 데이터가 있을 때 요약 리스트가 렌더된다 (EmptyState 미렌더)', async() => {
+      getSubscriptions.mockResolvedValue([
+        { subscriptionId: 'sub-1', planName: '베이직', status: 'ACTIVE', amount: 39000 }
+      ]);
+      const { container } = await act(async() => renderTenantProfile());
+      await screen.findByTestId('tenant-profile-rename-open');
+      await switchTab('subscription');
+
+      const panel = container.querySelector('[role="tabpanel"]');
+      await waitFor(() => {
+        const summary = panel.querySelector('.subscription-summary');
+        expect(summary).not.toBeNull();
+      });
+      const items = panel.querySelectorAll('.subscription-summary-item');
+      expect(items.length).toBe(1);
+      const empties = panel.querySelectorAll('.mg-v2-empty-state');
+      expect(empties.length).toBe(0);
+    });
+
+    it('payment 탭에 데이터가 있을 때 요약 리스트가 렌더된다 (EmptyState 미렌더)', async() => {
+      getPaymentMethods.mockResolvedValue([
+        { paymentMethodId: 'pm-1', cardNumber: '****-****-****-1234', isDefault: true }
+      ]);
+      const { container } = await act(async() => renderTenantProfile());
+      await screen.findByTestId('tenant-profile-rename-open');
+      await switchTab('payment');
+
+      const panel = container.querySelector('[role="tabpanel"]');
+      await waitFor(() => {
+        const summary = panel.querySelector('.payment-method-summary');
+        expect(summary).not.toBeNull();
+      });
+      const items = panel.querySelectorAll('.payment-method-summary-item');
+      expect(items.length).toBe(1);
+      const empties = panel.querySelectorAll('.mg-v2-empty-state');
+      expect(empties.length).toBe(0);
     });
   });
 });

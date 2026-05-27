@@ -2038,6 +2038,28 @@
       "saveFailed": "저장에 실패했습니다.",
       "deleteFailed": "삭제에 실패했습니다.",
       "previewFailed": "미리보기에 실패했습니다."
+    },
+    "globalDispatch": {
+      "title": "자동 SMS 발송 (전체)",
+      "description": "글로벌 OFF 시 모든 자동 트리거 SMS 가 차단됩니다. 어드민 수동 발송과 인증 OTP 는 영향 없음.",
+      "confirmOn": "자동 SMS 발송을 전체 활성화합니다. 알림톡 검수가 통과되었는지 확인하셨습니까?"
+    },
+    "templateDispatch": {
+      "label": "자동 발송",
+      "disabledByGlobal": "글로벌 토글이 OFF 입니다"
+    },
+    "dispatch": {
+      "badge": {
+        "on": "발송 ON",
+        "off": "발송 OFF"
+      }
+    },
+    "banner": {
+      "gateNotice": "자동 SMS 발송은 글로벌 + 종목별 2단계 토글로 제어됩니다. 수동 발송·인증 OTP 는 영향 없음."
+    },
+    "action": {
+      "dispatchUpdated": "발송 플래그가 갱신되었습니다.",
+      "dispatchUpdateFailed": "발송 플래그 갱신에 실패했습니다."
     }
   },
   "tenantCommonCode": {

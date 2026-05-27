@@ -372,6 +372,18 @@ public class NotificationServiceImpl implements NotificationService {
     private String buildSmsMessage(NotificationType type, String[] params) {
         try {
             String tenantId = TenantContextHolder.getTenantId();
+
+            // 2단계 게이트(글로벌 + 종목별, V20260603_002 + SmsDispatchFlagKeys) — 사용자 결정(2026-05-27,
+            // 옵션 C). 양쪽 모두 ON 일 때만 발송. 어드민 수동 발송·인증 OTP 는 본 경로 비경유 → 우회.
+            if (!smsTemplateService.isAutoDispatchEnabledFor(type.name(), tenantId)) {
+                String reason = smsTemplateService.isGlobalAutoDispatchEnabled()
+                        ? "template_off"
+                        : "global_off";
+                log.info("[SMS_GATE] templateKey={} tenant={} skip reason={}",
+                        type.name(), tenantId, reason);
+                return null;
+            }
+
             Map<String, String> variables = buildSmsTemplateVariables(type, params);
             Optional<String> rendered = smsTemplateService.renderForType(
                     type.name(), tenantId, variables, params);

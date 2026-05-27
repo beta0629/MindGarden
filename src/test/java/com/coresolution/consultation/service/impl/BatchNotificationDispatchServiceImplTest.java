@@ -115,6 +115,13 @@ class BatchNotificationDispatchServiceImplTest {
             dispatchHelper, templateMappingResolver, encryptionUtil, properties,
             smsTemplateService);
 
+        // 2단계 게이트(글로벌 + 종목별, V20260603_002 + SmsDispatchFlagKeys) — 본 테스트군은 게이트 ON
+        // 동작 시나리오를 검증하므로 setUp 에서 일괄 ON 으로 stub 한다. 게이트 OFF 회귀 시나리오는
+        // 별도 테스트에서 명시 override 한다.
+        when(smsTemplateService.isAutoDispatchEnabledFor(anyString(), anyString()))
+            .thenReturn(true);
+        when(smsTemplateService.isGlobalAutoDispatchEnabled()).thenReturn(true);
+
         TenantContext.setTenantId(TENANT_ID);
 
         // 복호화: 입력값을 그대로 반환 (테스트 단순화).

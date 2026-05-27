@@ -7,13 +7,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.SmsDispatchFlagKeys;
 import com.coresolution.consultation.dto.SmsTemplateAdminItem;
 import com.coresolution.consultation.dto.SmsTemplatePreviewResponse;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.SmsTemplateService;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.SmsTemplateRenderer;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -44,8 +47,12 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     /** {@code extra_data.variables} 키 (List). */
     static final String EXTRA_KEY_VARIABLES = "variables";
 
+    /** updatedBy 가 비었을 때 사용할 fallback (감사 로그). */
+    private static final String DEFAULT_UPDATED_BY = "ADMIN";
+
     private final CommonCodeRepository commonCodeRepository;
     private final ObjectMapper objectMapper;
+    private final SystemConfigService systemConfigService;
 
     @Override
     @Transactional(readOnly = true)
@@ -229,6 +236,151 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
                 .build());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isAutoDispatchEnabledFor(String templateKey, String tenantId) {
+        if (templateKey == null || templateKey.isBlank()) {
+            return false;
+        }
+
+        boolean globalEnabled = isGlobalAutoDispatchEnabled();
+        if (!globalEnabled) {
+            return false;
+        }
+
+        Boolean tenantValue = (tenantId != null && !tenantId.isBlank())
+                ? commonCodeRepository
+                    .findTenantCodeByGroupAndValue(tenantId, CODE_GROUP_SMS_TEMPLATE, templateKey)
+                    .map(CommonCode::getExtraData)
+                    .map(this::readDispatchEnabledFromExtra)
+                    .orElse(null)
+                : null;
+        if (tenantValue != null) {
+            return tenantValue;
+        }
+
+        Boolean globalValue = commonCodeRepository
+                .findCoreCodeByGroupAndValue(CODE_GROUP_SMS_TEMPLATE, templateKey)
+                .map(CommonCode::getExtraData)
+                .map(this::readDispatchEnabledFromExtra)
+                .orElse(null);
+        if (globalValue != null) {
+            return globalValue;
+        }
+        return SmsDispatchFlagKeys.DEFAULT_ENABLED;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isGlobalAutoDispatchEnabled() {
+        return systemConfigService.getGlobalBoolean(
+                SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED,
+                SmsDispatchFlagKeys.DEFAULT_ENABLED);
+    }
+
+    @Override
+    @Transactional
+    public void setGlobalAutoDispatchEnabled(boolean enabled, User updatedBy) {
+        String actor = resolveActor(updatedBy);
+        systemConfigService.setGlobalBoolean(
+                SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED, enabled, actor);
+        log.info("[SMS_GATE_TOGGLE] global={} by={}", enabled, actor);
+    }
+
+    @Override
+    @Transactional
+    public SmsTemplateAdminItem updateAutoDispatchFlag(String templateKey, boolean enabled,
+            String tenantId, User updatedBy) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId 가 필요합니다.");
+        }
+        if (templateKey == null || templateKey.isBlank()) {
+            throw new IllegalArgumentException("templateKey 가 필요합니다.");
+        }
+
+        CommonCode core = commonCodeRepository
+                .findCoreCodeByGroupAndValue(CODE_GROUP_SMS_TEMPLATE, templateKey)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "글로벌 SMS 템플릿이 존재하지 않습니다: " + templateKey));
+
+        Optional<CommonCode> existing = commonCodeRepository.findTenantCodeByGroupAndValue(
+                tenantId, CODE_GROUP_SMS_TEMPLATE, templateKey);
+
+        CommonCode row;
+        if (existing.isPresent()) {
+            row = existing.get();
+            if (Boolean.FALSE.equals(row.getIsActive())) {
+                row.setIsActive(true);
+            }
+            if (Boolean.TRUE.equals(row.getIsDeleted())) {
+                row.setIsDeleted(false);
+                row.setDeletedAt(null);
+            }
+        } else {
+            row = CommonCode.builder()
+                    .codeGroup(CODE_GROUP_SMS_TEMPLATE)
+                    .codeValue(templateKey)
+                    .codeLabel(core.getCodeLabel())
+                    .koreanName(core.getKoreanName())
+                    .codeDescription(core.getCodeDescription())
+                    .sortOrder(core.getSortOrder() != null ? core.getSortOrder() : 0)
+                    .extraData(core.getExtraData())
+                    .isActive(true)
+                    .build();
+            row.setTenantId(tenantId);
+        }
+
+        row.setExtraData(writeDispatchEnabledIntoExtra(row.getExtraData(), enabled));
+        commonCodeRepository.save(row);
+        String actor = resolveActor(updatedBy);
+        log.info("[SMS_GATE_TOGGLE] template={} tenant={} enabled={} by={}",
+                templateKey, tenantId, enabled, actor);
+
+        return toAdminItem(core, row);
+    }
+
+    /**
+     * {@code extra_data} JSON 에 {@code dispatch_enabled} 키를 머지한다.
+     *
+     * <p>기존 키(category/variables/trigger/priority 등)는 보존하고 dispatch_enabled 만 갱신한다.
+     * 직렬화 실패 시 안전한 단일 키 JSON 으로 fallback 하여 row 갱신을 막지 않는다.
+     *
+     * @param currentJson 기존 extra_data (null/blank 허용)
+     * @param enabled     새 dispatch_enabled 값
+     * @return 머지된 JSON 문자열
+     */
+    private String writeDispatchEnabledIntoExtra(String currentJson, boolean enabled) {
+        Map<String, Object> base = new LinkedHashMap<>(parseExtraData(currentJson));
+        base.put(SmsDispatchFlagKeys.EXTRA_KEY_DISPATCH_ENABLED, enabled);
+        try {
+            return objectMapper.writeValueAsString(base);
+        } catch (JsonProcessingException e) {
+            log.warn("extra_data 직렬화 실패 — 단일 키 JSON fallback: err={}", e.getMessage());
+            return enabled
+                    ? "{\"" + SmsDispatchFlagKeys.EXTRA_KEY_DISPATCH_ENABLED + "\":true}"
+                    : "{\"" + SmsDispatchFlagKeys.EXTRA_KEY_DISPATCH_ENABLED + "\":false}";
+        }
+    }
+
+    /**
+     * 감사 로그용 actor 문자열 — User.id/userId 우선, 없으면 fallback.
+     *
+     * @param user 로그인 사용자 (null 안전)
+     * @return 비어있지 않은 actor 식별자
+     */
+    private String resolveActor(User user) {
+        if (user == null) {
+            return DEFAULT_UPDATED_BY;
+        }
+        if (user.getUserId() != null && !user.getUserId().isBlank()) {
+            return user.getUserId();
+        }
+        if (user.getId() != null) {
+            return String.valueOf(user.getId());
+        }
+        return DEFAULT_UPDATED_BY;
+    }
+
     private SmsTemplateAdminItem toAdminItem(CommonCode core, CommonCode tenantOverride) {
         Map<String, Object> extras = parseExtraData(core.getExtraData());
         String category = stringValue(extras.get(EXTRA_KEY_CATEGORY));
@@ -240,6 +392,14 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
                 && trimToNull(tenantOverride.getCodeLabel()) != null;
 
         String tenantContent = hasOverride ? tenantOverride.getCodeLabel() : null;
+
+        boolean globalDispatch = isGlobalAutoDispatchEnabled();
+        Boolean tenantDispatchOverride = hasOverride
+                ? readDispatchEnabledFromExtra(tenantOverride.getExtraData())
+                : null;
+        boolean tenantDispatch = tenantDispatchOverride != null
+                ? tenantDispatchOverride
+                : Boolean.TRUE.equals(extras.get(SmsDispatchFlagKeys.EXTRA_KEY_DISPATCH_ENABLED));
 
         return SmsTemplateAdminItem.builder()
                 .key(core.getCodeValue())
@@ -254,7 +414,37 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
                 .updatedAt(hasOverride ? tenantOverride.getUpdatedAt() : core.getUpdatedAt())
                 .updatedByLabel(hasOverride ? "TENANT" : "GLOBAL")
                 .tenantOverride(hasOverride)
+                .globalDispatchEnabled(globalDispatch)
+                .tenantDispatchEnabled(tenantDispatch)
+                .effectiveDispatchEnabled(globalDispatch && tenantDispatch)
                 .build();
+    }
+
+    /**
+     * {@code extra_data} JSON 에서 {@code dispatch_enabled} 키를 안전하게 읽어온다.
+     *
+     * @param json {@code common_codes.extra_data} 원본 (null/blank 허용)
+     * @return 명시적 true/false, 키가 없거나 파싱 실패면 {@code null}
+     */
+    private Boolean readDispatchEnabledFromExtra(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        Map<String, Object> extras = parseExtraData(json);
+        Object value = extras.get(SmsDispatchFlagKeys.EXTRA_KEY_DISPATCH_ENABLED);
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value instanceof String str) {
+            String normalized = str.trim().toLowerCase();
+            if ("true".equals(normalized)) {
+                return Boolean.TRUE;
+            }
+            if ("false".equals(normalized)) {
+                return Boolean.FALSE;
+            }
+        }
+        return null;
     }
 
     private Map<String, Object> parseExtraData(String json) {

@@ -92,4 +92,61 @@ public interface SmsTemplateService {
      */
     Optional<SmsTemplatePreviewResponse> preview(String templateKey, String tenantId,
             Map<String, String> variables, boolean preferTenantOverride);
+
+    /**
+     * 자동 SMS 발송 2단계 게이트(글로벌 + 종목별) — 양쪽 모두 ON 일 때만 {@code true}.
+     *
+     * <p>판정 순서:
+     * <ol>
+     *   <li>글로벌 게이트 — {@code SystemConfigService.getGlobalBoolean(
+     *       SmsDispatchFlagKeys.SMS_AUTO_DISPATCH_ENABLED,
+     *       SmsDispatchFlagKeys.DEFAULT_ENABLED)}. {@code false} 면 즉시 {@code false}.</li>
+     *   <li>종목별 게이트 — 테넌트 override row 의 {@code extra_data.dispatch_enabled}
+     *       (있으면 우선) → 없으면 글로벌 row 의 동일 키. 둘 다 없으면
+     *       {@link com.coresolution.consultation.constant.SmsDispatchFlagKeys#DEFAULT_ENABLED}.</li>
+     * </ol>
+     *
+     * <p>호출자는 본 메서드가 {@code false} 를 반환하면 SMS 발송을 skip 해야 한다
+     * ({@code NotificationServiceImpl.buildSmsMessage},
+     * {@code BatchNotificationDispatchServiceImpl.renderSmsBody}).
+     *
+     * <p>우회 경로(어드민 수동 발송, 인증 OTP) 는 본 메서드를 호출하지 않는다.
+     *
+     * @param templateKey {@code common_codes.code_value} (예: PAYMENT_COMPLETED)
+     * @param tenantId    현재 테넌트 ID — null 이면 글로벌 row 만 참조
+     * @return 글로벌·종목별 모두 ON 이면 {@code true}, 아니면 {@code false}
+     */
+    boolean isAutoDispatchEnabledFor(String templateKey, String tenantId);
+
+    /**
+     * 글로벌 자동 SMS 발송 게이트 — 어드민 UI 토글 상태 표시용.
+     *
+     * @return system_config 의 현재 글로벌 토글 (행 누락 시
+     *     {@link com.coresolution.consultation.constant.SmsDispatchFlagKeys#DEFAULT_ENABLED})
+     */
+    boolean isGlobalAutoDispatchEnabled();
+
+    /**
+     * 글로벌 자동 SMS 발송 게이트 토글 — 어드민 PATCH 엔드포인트 용.
+     *
+     * @param enabled   {@code true}=ON, {@code false}=OFF
+     * @param updatedBy 수행자 (감사 로그용 — null/blank 면 "ADMIN" 으로 대체)
+     */
+    void setGlobalAutoDispatchEnabled(boolean enabled, User updatedBy);
+
+    /**
+     * 종목별 자동 SMS 발송 토글 — 어드민 PATCH 엔드포인트 용.
+     *
+     * <p>테넌트 override row 의 {@code extra_data.dispatch_enabled} 를 {@code enabled} 로
+     * 설정한다. 테넌트 override 가 없으면 글로벌 row 의 본문을 복사하여 신설한다 — 이후
+     * 어드민이 본문 편집 시 동일 row 가 재사용된다.
+     *
+     * @param templateKey {@code common_codes.code_value}
+     * @param enabled     {@code true}=ON, {@code false}=OFF
+     * @param tenantId    현재 테넌트 ID (필수)
+     * @param updatedBy   수행자 (감사 로그용)
+     * @return 갱신된 어드민 행 (UI 즉시 갱신용)
+     */
+    SmsTemplateAdminItem updateAutoDispatchFlag(String templateKey, boolean enabled,
+            String tenantId, User updatedBy);
 }

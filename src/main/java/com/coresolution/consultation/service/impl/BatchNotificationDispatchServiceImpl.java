@@ -695,6 +695,20 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      */
     private String renderSmsBody(String templateCode, Map<String, String> variables) {
         String tenantId = TenantContextHolder.getTenantId();
+
+        // 2단계 게이트(글로벌 + 종목별, V20260603_002 + SmsDispatchFlagKeys) — 사용자 결정(2026-05-27,
+        // 옵션 C). 양쪽 모두 ON 일 때만 발송. 어드민 수동 발송·인증 OTP 는 본 경로 비경유 → 우회.
+        // 정적 fallback(properties.smsStaticFallbackEnabled) 도 게이트 OFF 면 무시한다 — 게이트는 시드
+        // 누락 폴백보다 우선하는 운영 안전 SSOT.
+        if (!smsTemplateService.isAutoDispatchEnabledFor(templateCode, tenantId)) {
+            String reason = smsTemplateService.isGlobalAutoDispatchEnabled()
+                ? "template_off"
+                : "global_off";
+            log.info("[SMS_GATE] templateKey={} tenant={} skip reason={}",
+                templateCode, tenantId, reason);
+            return null;
+        }
+
         try {
             Optional<String> rendered = smsTemplateService.renderForType(
                 templateCode, tenantId, variables, null);

@@ -310,16 +310,31 @@ public class PersonalDataDestructionService {
     }
     
     /**
-     * 개인정보 파기 로그 기록
+     * 개인정보 파기 로그 기록.
+     *
+     * <p>V20260604_002 (W2 P0) 정합: {@code targetUserId} 가 {@code users.id} (BIGINT) 컬럼으로
+     * 정착되고 FK {@code fk_pdal_target_user} 가 신설되었으므로 USER_DATA 가 아닌 비-사용자
+     * 식별자(CONSULTATION_RECORD/PAYMENT_DATA/SALARY_DATA 등)는 {@code targetUserId} 에 넣을 수
+     * 없다. 비-사용자 식별자는 {@link PersonalDataAccessLog#dataIdentifier} 컬럼에만 적재하고
+     * {@code targetUserId} 는 {@code null} 로 둔다.</p>
      */
     private void logPersonalDataDestruction(String accessorId, String dataType, String dataId, String reason) {
         try {
+            Long targetUserId = null;
+            if ("USER_DATA".equals(dataType) && dataId != null) {
+                try {
+                    targetUserId = Long.valueOf(dataId);
+                } catch (NumberFormatException nfe) {
+                    log.warn("USER_DATA 파기 로그의 dataId 가 숫자 변환 실패 — targetUserId null 처리: dataId={}", dataId);
+                }
+            }
+
             PersonalDataAccessLog accessLog = PersonalDataAccessLog.builder()
                 .accessorId(accessorId)
                 .accessorName("SYSTEM")
                 .dataType(dataType)
                 .accessType("DELETE")
-                .targetUserId(dataId)
+                .targetUserId(targetUserId)
                 .targetUserName("SYSTEM")
                 .accessTime(LocalDateTime.now())
                 .ipAddress("127.0.0.1")
@@ -330,9 +345,9 @@ public class PersonalDataDestructionService {
                 .sessionId("SYSTEM")
                 .userAgent("PersonalDataDestructionService")
                 .build();
-            
+
             personalDataAccessLogRepository.save(accessLog);
-            
+
         } catch (Exception e) {
             log.error("개인정보 파기 로그 기록 실패: {}", e.getMessage(), e);
         }

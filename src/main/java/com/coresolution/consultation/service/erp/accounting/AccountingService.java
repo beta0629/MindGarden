@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.erp.accounting;
 
 import com.coresolution.consultation.dto.AccountTypeForJournalDto;
+import com.coresolution.consultation.dto.erp.accounting.AccountingEntryDetailDto;
+import com.coresolution.consultation.dto.erp.accounting.AccountingEntryListDto;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
@@ -33,14 +35,27 @@ public interface AccountingService {
     AccountingEntry postJournalEntry(String tenantId, Long entryId);
     
     /**
-     * 분개 목록 조회
+     * 분개 목록 조회.
+     * <p>
+     * 응답 직렬화 시 {@link AccountingEntry#getLines()} LAZY 컬렉션 접근으로
+     * {@code LazyInitializationException} 이 발생하지 않도록 트랜잭션 경계 안에서
+     * DTO 로 매핑하여 반환한다.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @return 분개 목록 DTO (라인 포함)
      */
-    List<AccountingEntry> getJournalEntries(String tenantId);
-    
+    List<AccountingEntryListDto> getJournalEntries(String tenantId);
+
     /**
-     * 분개 상세 조회
+     * 분개 상세 조회.
+     * <p>
+     * 응답 직렬화 시 LAZY 회피를 위해 트랜잭션 경계 안에서 DTO 로 매핑한다.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param entryId  분개 ID
+     * @return 분개 상세 DTO
      */
-    AccountingEntry getJournalEntry(String tenantId, Long entryId);
+    AccountingEntryDetailDto getJournalEntry(String tenantId, Long entryId);
     
     /**
      * FinancialTransaction에서 분개 자동 생성

@@ -3,6 +3,8 @@ package com.coresolution.consultation.controller.erp;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.erp.accounting.AccountingEntryDetailDto;
+import com.coresolution.consultation.dto.erp.accounting.AccountingEntryListDto;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
@@ -101,7 +103,8 @@ public class AccountingController extends BaseApiController {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("분개 목록 조회: tenantId={}", tenantId);
 
-        List<AccountingEntry> entries = accountingService.getJournalEntries(tenantId);
+        // 엔티티 직접 반환 시 lines LAZY 로 인한 LazyInitializationException 발생 → DTO 프로젝션.
+        List<AccountingEntryListDto> entries = accountingService.getJournalEntries(tenantId);
         return success(entries);
     }
 
@@ -119,7 +122,7 @@ public class AccountingController extends BaseApiController {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("분개 상세 조회: tenantId={}, entryId={}", tenantId, id);
 
-        AccountingEntry entry = accountingService.getJournalEntry(tenantId, id);
+        AccountingEntryDetailDto entry = accountingService.getJournalEntry(tenantId, id);
         return success(entry);
     }
 

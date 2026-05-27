@@ -22,6 +22,36 @@ public interface AccountingEntryRepository extends JpaRepository<AccountingEntry
      */
     @Query("SELECT e FROM AccountingEntry e WHERE e.tenantId = :tenantId AND e.isDeleted = false ORDER BY e.entryDate DESC, e.entryNumber DESC")
     List<AccountingEntry> findByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트별 분개 목록 조회 (lines LEFT JOIN FETCH).
+     * <p>
+     * {@link AccountingEntry#getLines()} 가 LAZY 컬렉션이라 응답 직렬화 시점에
+     * {@code LazyInitializationException} 이 발생한다. DTO 매핑 시 트랜잭션 경계
+     * 안에서 라인까지 함께 로딩하기 위해 LEFT JOIN FETCH 와 DISTINCT 를 사용한다.
+     * 컬렉션 페치로 인한 행 곱 방지를 위해 정렬은 Java 단에서 수행하지 않고
+     * 엔트리 단위 정렬만 SQL 에서 적용한다.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @return 분개 엔티티 목록 (라인 함께 로딩)
+     */
+    @Query("SELECT DISTINCT e FROM AccountingEntry e LEFT JOIN FETCH e.lines l "
+            + "WHERE e.tenantId = :tenantId AND e.isDeleted = false "
+            + "ORDER BY e.entryDate DESC, e.entryNumber DESC")
+    List<AccountingEntry> findByTenantIdWithLines(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트별 분개 ID 조회 (lines LEFT JOIN FETCH).
+     * 상세 응답 직렬화 시 LAZY 회피.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param id       분개 ID
+     * @return 분개 엔티티 (라인 함께 로딩), 없으면 empty
+     */
+    @Query("SELECT DISTINCT e FROM AccountingEntry e LEFT JOIN FETCH e.lines l "
+            + "WHERE e.tenantId = :tenantId AND e.id = :id AND e.isDeleted = false")
+    Optional<AccountingEntry> findByTenantIdAndIdWithLines(@Param("tenantId") String tenantId,
+            @Param("id") Long id);
     
     /**
      * 테넌트별 분개 번호로 조회

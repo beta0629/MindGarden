@@ -5,12 +5,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.converter.UserRoleConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
@@ -40,7 +43,9 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_users_phone", columnList = "phone"),
         @Index(name = "idx_users_role", columnList = "role"),
         @Index(name = "idx_users_grade", columnList = "grade"),
-        @Index(name = "idx_users_is_deleted", columnList = "is_deleted")
+        @Index(name = "idx_users_is_deleted", columnList = "is_deleted"),
+        @Index(name = "idx_users_lifecycle_state", columnList = "tenant_id, lifecycle_state"),
+        @Index(name = "idx_users_withdrawal_pending", columnList = "lifecycle_state, withdrawal_requested_at")
     },
     uniqueConstraints = {
         @UniqueConstraint(name = "UK_users_email_tenant", columnNames = {"email", "tenant_id"}),
@@ -122,10 +127,40 @@ public class User extends BaseEntity {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
     
+    /**
+     * 운영적 정지 플래그.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §3.6 (Q1) — {@link #lifecycleState} 가 SSOT 가
+     * 되면서 {@code is_active} 는 (a) 비밀번호 5회 실패 잠금, (b) 이메일 미인증, (c) 상담사
+     * 자격 심사 대기, (d) 운영자 일시 로그인 차단 등 <strong>종료 의도가 없는 운영적 정지</strong>
+     * 한정으로만 의미가 보존된다. 종료/탈퇴/익명화 분기에는 사용 금지 — Phase 5 종료 후 본 컬럼은
+     * 별도 마이그레이션으로 제거된다.</p>
+     */
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
-    
+
+    /**
+     * SSOT 회원 lifecycle 단계 (USER_LIFECYCLE_TERMINATION_POLICY §3.6, Q1).
+     *
+     * <p>Flyway V20260605_001 로 추가된 {@code lifecycle_state} 컬럼과 매핑된다. 자발/강제/자동
+     * 종료의 단일 진실원이며 모든 상태 전이는 {@code UserLifecycleService.transitionTo(...)}
+     * 단일 진입점으로 수행되어야 한다.</p>
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "lifecycle_state", nullable = false, length = 30)
+    @Builder.Default
+    private LifecycleState lifecycleState = LifecycleState.ACTIVE;
+
+    /**
+     * 자발 탈퇴 신청(=WITHDRAWAL_PENDING) 진입 시각 (USER_LIFECYCLE_TERMINATION_POLICY Q3).
+     *
+     * <p>Flyway V20260605_002 로 추가된 {@code withdrawal_requested_at} 컬럼과 매핑된다.
+     * 30일 유예 만료 cron 의 기준점. WITHDRAWAL_PENDING 외 상태에서는 항상 {@code null}.</p>
+     */
+    @Column(name = "withdrawal_requested_at")
+    private LocalDateTime withdrawalRequestedAt;
+
     /**
      * 소셜 계정 여부
      */
@@ -364,10 +399,38 @@ public class User extends BaseEntity {
     }
     
     /**
-     * 사용자 활성화/비활성화
+     * 사용자 활성화/비활성화 (운영적 정지 한정).
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §3.6 (Q1) — 본 setter 는 비밀번호 잠금/이메일
+     * 미인증 등 <strong>종료 의도가 없는 운영적 정지</strong> 에만 사용. 종료/탈퇴/익명화
+     * 분기는 {@code UserLifecycleService.transitionTo(...)} 를 사용하라.</p>
      */
     public void setActive(Boolean active) {
         this.isActive = active;
+    }
+
+    /**
+     * SSOT lifecycle 단계 setter.
+     *
+     * <p>비즈니스 코드는 직접 호출하지 말고 {@code UserLifecycleService.transitionTo(...)}
+     * 단일 진입점을 사용한다 (전이 가드·audit·destruction 로그 동시 처리). 본 setter 는
+     * Lombok 호환·Phase 1 매핑·테스트 용으로만 노출된다.</p>
+     */
+    public void setLifecycleState(LifecycleState lifecycleState) {
+        this.lifecycleState = lifecycleState;
+    }
+
+    public LifecycleState getLifecycleState() {
+        return lifecycleState;
+    }
+
+    /** WITHDRAWAL_PENDING 진입 시각 (Q3 30일 유예 기준점). */
+    public LocalDateTime getWithdrawalRequestedAt() {
+        return withdrawalRequestedAt;
+    }
+
+    public void setWithdrawalRequestedAt(LocalDateTime withdrawalRequestedAt) {
+        this.withdrawalRequestedAt = withdrawalRequestedAt;
     }
     
     // Getter & Setter
@@ -640,6 +703,7 @@ public class User extends BaseEntity {
                 ", role='" + role + '\'' +
                 ", grade='" + grade + '\'' +
                 ", isActive=" + isActive +
+                ", lifecycleState=" + lifecycleState +
                 ", isEmailVerified=" + isEmailVerified +
                 '}';
     }

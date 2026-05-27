@@ -186,6 +186,21 @@
     font-weight: 600;
 }
 
+/* PHONE 모드 — 전화번호 직접 입력 (2026-05-27 추가) */
+.mg-test-notif-form__phone-input {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-xs);
+    margin-top: var(--mg-spacing-sm);
+}
+
+.mg-test-notif-form__error {
+    font-size: 0.8125rem;
+    color: var(--mg-color-error);
+    font-weight: 600;
+    margin: 0;
+}
+
 .mg-test-notif-form__rate {
     display: flex;
     align-items: center;

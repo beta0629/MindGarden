@@ -45,8 +45,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * {@code AdminTestNotificationController} MockMvc 테스트.
  *
- * <p>커버리지: 200 (ADMIN SELF 발송) / 400 (PHONE 모드 거부) / 403 (CONSULTANT 권한 거부) /
- * 429 (rate-limit 초과). 기획서 §4.X C2(admin_staff) / C3(self_plus_db) / C5(10_100) 검증.
+ * <p>커버리지: 200 (ADMIN SELF 발송) / 200 (ADMIN PHONE 모드 — 2026-05-27 정정) /
+ * 403 (CONSULTANT 권한 거부) / 429 (rate-limit 초과).
+ * 기획서 §4.X C2(admin_staff) / C5(10_100) 검증. PHONE 모드는 정상 허용으로 전환되어
+ * 컨트롤러는 더 이상 거부하지 않으며, 형식 검증은 서비스 레이어가 담당한다.
  *
  * @author MindGarden
  * @since 2026-05-22
@@ -180,23 +182,47 @@ class AdminTestNotificationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /alimtalk — PHONE 모드는 백엔드에서 거부(400)")
+    @DisplayName("POST /alimtalk — PHONE 모드 + 유효 번호: 200(서비스 위임, 컨트롤러 거부 없음)")
     @WithMockUser(roles = {"ADMIN"})
-    void sendAlimtalk_whenPhoneMode_returns400() throws Exception {
-        String rawJson = "{"
-            + "\"recipientMode\":\"PHONE\","
-            + "\"templateCode\":\"CONSULTATION_CONFIRMED\","
-            + "\"templateParams\":{},"
-            + "\"reason\":\"PHONE 모드 거부 시나리오\""
-            + "}";
+    void sendAlimtalk_whenPhoneMode_delegatesToService() throws Exception {
+        // 2026-05-27 정정 — PHONE 모드 정상 허용. 컨트롤러는 단순 위임만 검증.
+        TestAlimtalkRequest request = TestAlimtalkRequest.builder()
+            .recipientMode(TestNotificationRecipientMode.PHONE)
+            .phoneNumber("01012345678")
+            .templateCode("KA01TP250101000000000000000099")
+            .templateParams(new java.util.HashMap<>())
+            .reason("PHONE 모드 알림톡 위임 검증")
+            .templateSource("SOLAPI")
+            .build();
 
-        mockMvc.perform(post("/api/v1/admin/test-notifications/alimtalk")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(rawJson))
-            .andExpect(status().isBadRequest());
+        TestNotificationResponse response = TestNotificationResponse.builder()
+            .success(true)
+            .sentAt(LocalDateTime.now())
+            .logId(456L)
+            .build();
 
-        verify(adminTestNotificationService, never())
-            .sendAlimtalk(anyString(), any(User.class), any(TestAlimtalkRequest.class));
+        Decision allowed = Decision.allowed(9, 99);
+        when(adminTestNotificationService.checkRateLimit(eq(TEST_TENANT_ID), any()))
+            .thenReturn(allowed);
+        when(adminTestNotificationService.sendAlimtalk(eq(TEST_TENANT_ID), any(User.class),
+                any(TestAlimtalkRequest.class)))
+            .thenReturn(response);
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(buildCurrentUser());
+
+            mockMvc.perform(post("/api/v1/admin/test-notifications/alimtalk")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.success").value(true))
+                .andExpect(jsonPath("$.data.logId").value(456));
+        }
+
+        verify(adminTestNotificationService)
+            .sendAlimtalk(eq(TEST_TENANT_ID), any(User.class), any(TestAlimtalkRequest.class));
     }
 
     private User buildCurrentUser() {

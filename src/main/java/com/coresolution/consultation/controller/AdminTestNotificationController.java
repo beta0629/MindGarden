@@ -10,7 +10,6 @@ import com.coresolution.consultation.dto.TestNotificationAlimtalkTemplate;
 import com.coresolution.consultation.dto.TestNotificationChannel;
 import com.coresolution.consultation.dto.TestNotificationHistoryItem;
 import com.coresolution.consultation.dto.TestNotificationRecipient;
-import com.coresolution.consultation.dto.TestNotificationRecipientMode;
 import com.coresolution.consultation.dto.TestNotificationResponse;
 import com.coresolution.consultation.dto.TestSmsRequest;
 import com.coresolution.consultation.entity.User;
@@ -46,7 +45,9 @@ import lombok.extern.slf4j.Slf4j;
  * 권한: 기획서 §4.X C2({@code admin_staff}, 2026-05-22 정정) — 현행 4역할({@code ADMIN}/{@code STAFF}/
  * {@code CONSULTANT}/{@code CLIENT}) 중 {@code ADMIN}·{@code STAFF}만 허용. 그 외 403.
  *
- * <p>수신자 범위(C3): {@code SELF}/{@code USER}만 허용. {@code PHONE} 모드는 본 PR 범위 외(요청 시 400).
+ * <p>수신자 범위: 2026-05-27 정정 — {@code SELF}/{@code USER}/{@code PHONE} 3종 모두 허용.
+ * PHONE 모드는 어드민이 임의 전화번호 직접 입력(목록 외 수신자 지원). 형식 검증·정규화·마스킹은
+ * 서비스 레이어({@code AdminTestNotificationServiceImpl#resolveRecipient})가 수행한다.
  *
  * @author MindGarden
  * @since 2026-05-22
@@ -65,7 +66,6 @@ public class AdminTestNotificationController extends BaseApiController {
 
     static final String ERROR_CODE_TENANT_CONTEXT_MISSING = "TENANT_CONTEXT_MISSING";
     static final String ERROR_CODE_AUTH_REQUIRED = "AUTH_REQUIRED";
-    static final String ERROR_CODE_PHONE_MODE_UNSUPPORTED = "RECIPIENT_PHONE_MODE_UNSUPPORTED";
     static final String ERROR_CODE_RATE_LIMIT = "RATE_LIMIT_EXCEEDED";
     static final String ERROR_CODE_INVALID_REQUEST = "INVALID_REQUEST";
 
@@ -146,9 +146,6 @@ public class AdminTestNotificationController extends BaseApiController {
         if (currentUser == null || currentUser.getId() == null) {
             return authMissing();
         }
-        if (!isSupportedMode(request.getRecipientMode())) {
-            return phoneModeUnsupported();
-        }
 
         Decision decision = service.checkRateLimit(tenantId, currentUser.getId());
         if (decision.exceeded()) {
@@ -177,9 +174,6 @@ public class AdminTestNotificationController extends BaseApiController {
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null || currentUser.getId() == null) {
             return authMissing();
-        }
-        if (!isSupportedMode(request.getRecipientMode())) {
-            return phoneModeUnsupported();
         }
 
         Decision decision = service.checkRateLimit(tenantId, currentUser.getId());
@@ -230,11 +224,6 @@ public class AdminTestNotificationController extends BaseApiController {
         return success(historyPage);
     }
 
-    private boolean isSupportedMode(TestNotificationRecipientMode mode) {
-        return mode == TestNotificationRecipientMode.SELF
-            || mode == TestNotificationRecipientMode.USER;
-    }
-
     private Boolean parseSuccessFilter(String result) {
         if (result == null || result.isBlank()) {
             return null;
@@ -274,11 +263,6 @@ public class AdminTestNotificationController extends BaseApiController {
 
     private ResponseEntity<ErrorResponse> authMissing() {
         return unauthorized("로그인이 필요합니다.");
-    }
-
-    private ResponseEntity<ErrorResponse> phoneModeUnsupported() {
-        return badRequest("recipientMode=PHONE은 지원되지 않습니다. (C3=self_plus_db)",
-            ERROR_CODE_PHONE_MODE_UNSUPPORTED);
     }
 
     private ResponseEntity<ApiResponse<Map<String, Object>>> rateLimited(Decision decision) {

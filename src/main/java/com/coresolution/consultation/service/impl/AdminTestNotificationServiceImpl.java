@@ -38,6 +38,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminTestNotificationService;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -65,10 +66,19 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class AdminTestNotificationServiceImpl implements AdminTestNotificationService {
 
+    /**
+     * @deprecated PHONE 모드 정상 허용(2026-05-27) 이후 발화 경로가 사실상 없으나,
+     *     enum이 null인 비정상 요청을 대비해 코드 자체는 유지한다.
+     */
+    @Deprecated
     static final String ERROR_CODE_PHONE_MODE_UNSUPPORTED = "RECIPIENT_PHONE_MODE_UNSUPPORTED";
     static final String ERROR_CODE_RECIPIENT_NOT_FOUND = "RECIPIENT_NOT_FOUND";
     static final String ERROR_CODE_RECIPIENT_PHONE_MISSING = "RECIPIENT_PHONE_MISSING";
     static final String ERROR_CODE_USER_ID_REQUIRED = "USER_ID_REQUIRED";
+    /** {@code recipientMode=PHONE}인데 {@code phoneNumber}가 비어 있음. */
+    static final String ERROR_CODE_PHONE_NUMBER_REQUIRED = "PHONE_NUMBER_REQUIRED";
+    /** {@code recipientMode=PHONE}인데 {@code phoneNumber}가 한국 휴대폰 형식이 아님. */
+    static final String ERROR_CODE_PHONE_NUMBER_INVALID = "PHONE_NUMBER_INVALID";
     static final String ERROR_CODE_SEND_FAILED = NotificationDispatchHelper.ERROR_CODE_SEND_FAILED;
     static final String ERROR_CODE_ALIMTALK_DISABLED = "ALIMTALK_SERVICE_UNAVAILABLE";
     /** 라이브 템플릿 조회 사전 검증 — 솔라피 자격증명(테넌트 settings + ENV) 모두 미설정. */
@@ -351,7 +361,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     @Override
     public TestNotificationResponse sendSms(String tenantId, User currentUser, TestSmsRequest request) {
         ResolvedRecipient recipient = resolveRecipient(tenantId, currentUser,
-            request.getRecipientMode(), request.getUserId());
+            request.getRecipientMode(), request.getUserId(), request.getPhoneNumber());
         if (recipient.errorCode() != null) {
             return TestNotificationResponse.builder()
                 .success(false)
@@ -386,7 +396,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     public TestNotificationResponse sendAlimtalk(String tenantId, User currentUser,
             TestAlimtalkRequest request) {
         ResolvedRecipient recipient = resolveRecipient(tenantId, currentUser,
-            request.getRecipientMode(), request.getUserId());
+            request.getRecipientMode(), request.getUserId(), request.getPhoneNumber());
         if (recipient.errorCode() != null) {
             return TestNotificationResponse.builder()
                 .success(false)
@@ -498,7 +508,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     }
 
     private ResolvedRecipient resolveRecipient(String tenantId, User currentUser,
-            TestNotificationRecipientMode mode, Long userId) {
+            TestNotificationRecipientMode mode, Long userId, String rawPhoneNumber) {
         if (mode == null) {
             return ResolvedRecipient.error(ERROR_CODE_PHONE_MODE_UNSUPPORTED,
                 "recipientMode is required");
@@ -532,9 +542,30 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
                 return new ResolvedRecipient(target.getId(), targetPhone,
                     PhoneLogMasking.maskForLog(targetPhone), null, null);
 
+            case PHONE:
+                if (rawPhoneNumber == null || rawPhoneNumber.isBlank()) {
+                    return ResolvedRecipient.error(ERROR_CODE_PHONE_NUMBER_REQUIRED,
+                        "phoneNumber is required for PHONE mode");
+                }
+                String normalizedPhone;
+                try {
+                    normalizedPhone = LoginIdentifierUtils
+                        .normalizeAndValidateKoreanMobileForSms(rawPhoneNumber);
+                } catch (RuntimeException e) {
+                    // 응답 메시지에 원본 번호 노출 회피 — 마스킹된 진단만 남긴다.
+                    String maskedRaw = PhoneLogMasking.maskForLog(rawPhoneNumber);
+                    log.warn("어드민 테스트 발송 — PHONE 모드 번호 형식 오류: rawMasked={}, reason={}",
+                        maskedRaw, e.getMessage());
+                    return ResolvedRecipient.error(ERROR_CODE_PHONE_NUMBER_INVALID,
+                        "phoneNumber is not a valid Korean mobile");
+                }
+                // PHONE 모드는 user 매핑이 없으므로 recipientUserId=null 로 감사로그 저장.
+                return new ResolvedRecipient(null, normalizedPhone,
+                    PhoneLogMasking.maskForLog(normalizedPhone), null, null);
+
             default:
                 return ResolvedRecipient.error(ERROR_CODE_PHONE_MODE_UNSUPPORTED,
-                    "recipientMode " + mode + " is not supported (C3=self_plus_db)");
+                    "recipientMode " + mode + " is not supported");
         }
     }
 

@@ -1,7 +1,7 @@
 /**
  * 어드민 SMS·카카오 알림톡 테스트 발송 폼 (Organism).
  *
- * - 수신자: SELF / DB 사용자 (임의 번호 입력 모드 미구현, C3 컨펌)
+ * - 수신자: SELF / DB 사용자 / **임의 전화번호 입력(PHONE, 2026-05-27 추가)**
  * - 채널: SMS / 알림톡 탭 (C4: 코드 enum + 솔라피 전체 보기 토글)
  * - rate-limit 잔여 카운터: 분당 N/10 · 일당 M/100 (C5)
  * - prod 한정 2-step UnifiedModal (C7) — process.env.REACT_APP_ENV === 'production'
@@ -29,8 +29,31 @@ import {
 import { normalizeApiListPayload } from '../../../constants/adminWebScaffold';
 import './TestNotificationForm.css';
 
-const RECIPIENT_MODE = Object.freeze({ SELF: 'SELF', USER: 'USER' });
+const RECIPIENT_MODE = Object.freeze({ SELF: 'SELF', USER: 'USER', PHONE: 'PHONE' });
 const CHANNEL = Object.freeze({ SMS: 'SMS', ALIMTALK: 'ALIMTALK' });
+
+/**
+ * 한국 휴대폰 형식(010/011/016/017/018/019). 백엔드 `LoginIdentifierUtils.isValidKoreanMobileDigits`
+ * 규약과 동등하나 프론트는 하이픈 허용 입력을 그대로 매칭한다. 정규화는 백엔드가 SSOT 로 수행.
+ */
+const KOREAN_MOBILE_PATTERN = /^01[016789]-?\d{3,4}-?\d{4}$/;
+
+/**
+ * 확인 모달용 표시 마스킹 — `010-****-1234` 형식.
+ * 백엔드 감사로그 마스킹과 분리(로그는 `PhoneLogMasking.maskForLog` SSOT).
+ *
+ * @param {string} raw 원본 입력(하이픈 포함 가능)
+ * @returns {string} 마스킹 문자열
+ */
+const maskPhoneForDisplay = (raw) => {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (digits.length < 8) {
+    return raw || '';
+  }
+  const head = digits.slice(0, 3);
+  const tail = digits.slice(-4);
+  return `${head}-****-${tail}`;
+};
 const TEMPLATE_SOURCE = Object.freeze({ COMMON_CODE: 'COMMON_CODE', SOLAPI: 'SOLAPI' });
 const MODAL_STEP = Object.freeze({
   IDLE: 'idle',
@@ -67,6 +90,8 @@ const TestNotificationForm = ({ onSentSuccess }) => {
   const [recipients, setRecipients] = useState([]);
   const [recipientLoading, setRecipientLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   const [channel, setChannel] = useState(CHANNEL.SMS);
   const [smsMessage, setSmsMessage] = useState('');
@@ -182,12 +207,28 @@ const TestNotificationForm = ({ onSentSuccess }) => {
     };
   }, [smsMessage, t]);
 
+  const validatePhoneNumber = useCallback((value) => {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) {
+      return t('testNotification.recipient.phoneRequired');
+    }
+    if (!KOREAN_MOBILE_PATTERN.test(trimmed)) {
+      return t('testNotification.recipient.phoneInvalid');
+    }
+    return '';
+  }, [t]);
+
   const isAllRequiredFilled = useMemo(() => {
     if (!reason.trim() || reason.length > REASON_MAX_LENGTH) {
       return false;
     }
     if (recipientMode === RECIPIENT_MODE.USER && !selectedUserId) {
       return false;
+    }
+    if (recipientMode === RECIPIENT_MODE.PHONE) {
+      if (!phoneNumber.trim() || phoneError) {
+        return false;
+      }
     }
     if (counters.minuteRemaining <= 0 || counters.dayRemaining <= 0) {
       return false;
@@ -206,13 +247,16 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       return !value || !String(value).trim();
     });
     return !missingRequired;
-  }, [reason, recipientMode, selectedUserId, counters, channel, smsMessage, templateCode, templateVariableDefs, templateParams]);
+  }, [reason, recipientMode, selectedUserId, phoneNumber, phoneError, counters, channel, smsMessage, templateCode, templateVariableDefs, templateParams]);
 
   const buildPayload = useCallback(() => {
     const base = {
       recipientMode,
       userId: recipientMode === RECIPIENT_MODE.USER && selectedUserId
         ? Number(selectedUserId)
+        : null,
+      phoneNumber: recipientMode === RECIPIENT_MODE.PHONE
+        ? phoneNumber.trim()
         : null,
       reason: reason.trim()
     };
@@ -226,7 +270,7 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       fallbackToSms: false,
       templateSource: templatesLive ? TEMPLATE_SOURCE.SOLAPI : TEMPLATE_SOURCE.COMMON_CODE
     };
-  }, [recipientMode, selectedUserId, reason, channel, smsMessage, templateCode, templateParams, templatesLive]);
+  }, [recipientMode, selectedUserId, phoneNumber, reason, channel, smsMessage, templateCode, templateParams, templatesLive]);
 
   const doSend = useCallback(async() => {
     setSubmitting(true);
@@ -317,13 +361,18 @@ const TestNotificationForm = ({ onSentSuccess }) => {
       <BadgeSelect
         options={[
           { value: RECIPIENT_MODE.SELF, label: t('testNotification.recipient.self') },
-          { value: RECIPIENT_MODE.USER, label: t('testNotification.recipient.user') }
+          { value: RECIPIENT_MODE.USER, label: t('testNotification.recipient.user') },
+          { value: RECIPIENT_MODE.PHONE, label: t('testNotification.recipient.phone') }
         ]}
         value={recipientMode}
         onChange={(val) => {
           setRecipientMode(val);
-          if (val === RECIPIENT_MODE.SELF) {
+          if (val !== RECIPIENT_MODE.USER) {
             setSelectedUserId('');
+          }
+          if (val !== RECIPIENT_MODE.PHONE) {
+            setPhoneNumber('');
+            setPhoneError('');
           }
         }}
         aria-label={t('testNotification.recipient.title')}
@@ -348,6 +397,35 @@ const TestNotificationForm = ({ onSentSuccess }) => {
               : t('testNotification.recipient.searchPlaceholder')}
             aria-label={t('testNotification.recipient.user')}
           />
+        </div>
+      )}
+      {recipientMode === RECIPIENT_MODE.PHONE && (
+        <div className="mg-test-notif-form__phone-input">
+          <label className="mg-test-notif-form__label" htmlFor="mg-test-notif-phone">
+            {t('testNotification.recipient.phoneLabel')}
+          </label>
+          <input
+            id="mg-test-notif-phone"
+            type="tel"
+            className="mg-test-notif-form__input"
+            value={phoneNumber}
+            onChange={(e) => {
+              const next = e.target.value;
+              setPhoneNumber(next);
+              setPhoneError(validatePhoneNumber(next));
+            }}
+            placeholder={t('testNotification.recipient.phonePlaceholder')}
+            aria-invalid={phoneError ? 'true' : 'false'}
+            aria-describedby={phoneError ? 'mg-test-notif-phone-error' : 'mg-test-notif-phone-hint'}
+          />
+          {phoneError && (
+            <p id="mg-test-notif-phone-error" className="mg-test-notif-form__error" role="alert">
+              {phoneError}
+            </p>
+          )}
+          <p id="mg-test-notif-phone-hint" className="mg-test-notif-form__hint">
+            {t('testNotification.recipient.phoneHint')}
+          </p>
         </div>
       )}
     </section>
@@ -531,13 +609,21 @@ const TestNotificationForm = ({ onSentSuccess }) => {
     </p>
   );
 
+  const renderRecipientSummary = () => {
+    if (recipientMode === RECIPIENT_MODE.SELF) {
+      return t('testNotification.recipient.self');
+    }
+    if (recipientMode === RECIPIENT_MODE.USER) {
+      return `${t('testNotification.recipient.user')} (#${selectedUserId})`;
+    }
+    return `${t('testNotification.recipient.phone')} (${maskPhoneForDisplay(phoneNumber)})`;
+  };
+
   const renderConfirmSummary = () => (
     <ul className="mg-test-notif-form__summary">
       <li>
         <strong>{t('testNotification.recipient.title')}: </strong>
-        {recipientMode === RECIPIENT_MODE.SELF
-          ? t('testNotification.recipient.self')
-          : `${t('testNotification.recipient.user')} (#${selectedUserId})`}
+        {renderRecipientSummary()}
       </li>
       <li>
         <strong>{t('testNotification.channel.title')}: </strong>

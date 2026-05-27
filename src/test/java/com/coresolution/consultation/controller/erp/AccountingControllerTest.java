@@ -53,6 +53,13 @@ import org.springframework.http.ResponseEntity;
 class AccountingControllerTest {
 
     private static final String TENANT_ID = "tenant-acct-ctrl-test";
+    private static final String LIST_ENTRY_NUMBER = "JE-test-2026-0001";
+    private static final String DETAIL_ENTRY_NUMBER = "JE-test-2026-0002";
+    private static final String CASH_DEPOSIT_DESC = "현금 입금";
+    private static final String EXPENSE_DESC = "비용";
+    private static final String AUTO_APPROVE_COMMENT = "자동승인";
+    private static final BigDecimal LIST_AMOUNT = new BigDecimal("100000");
+    private static final BigDecimal DETAIL_AMOUNT = new BigDecimal("55000");
 
     @Mock
     private AccountingService accountingService;
@@ -118,17 +125,17 @@ class AccountingControllerTest {
                 .id(1001L)
                 .accountId(3L)
                 .lineNumber(1)
-                .debitAmount(new BigDecimal("100000"))
+                .debitAmount(LIST_AMOUNT)
                 .creditAmount(BigDecimal.ZERO)
-                .description("현금 입금")
+                .description(CASH_DEPOSIT_DESC)
                 .build();
         AccountingEntryListDto entry = AccountingEntryListDto.builder()
                 .id(2001L)
                 .tenantId(TENANT_ID)
-                .entryNumber("JE-test-2026-0001")
+                .entryNumber(LIST_ENTRY_NUMBER)
                 .entryDate(LocalDate.of(2026, 5, 27))
-                .totalDebit(new BigDecimal("100000"))
-                .totalCredit(new BigDecimal("100000"))
+                .totalDebit(LIST_AMOUNT)
+                .totalCredit(LIST_AMOUNT)
                 .entryStatus("POSTED")
                 .approvalStatus("APPROVED")
                 .createdAt(LocalDateTime.of(2026, 5, 27, 10, 0))
@@ -196,21 +203,21 @@ class AccountingControllerTest {
                 .id(11L)
                 .accountId(2L)
                 .lineNumber(1)
-                .debitAmount(new BigDecimal("55000"))
+                .debitAmount(DETAIL_AMOUNT)
                 .creditAmount(BigDecimal.ZERO)
-                .description("비용")
+                .description(EXPENSE_DESC)
                 .build();
         AccountingEntryDetailDto detail = AccountingEntryDetailDto.builder()
                 .id(602L)
                 .tenantId(TENANT_ID)
-                .entryNumber("JE-test-2026-0002")
+                .entryNumber(DETAIL_ENTRY_NUMBER)
                 .entryDate(LocalDate.of(2026, 5, 27))
-                .totalDebit(new BigDecimal("55000"))
-                .totalCredit(new BigDecimal("55000"))
+                .totalDebit(DETAIL_AMOUNT)
+                .totalCredit(DETAIL_AMOUNT)
                 .entryStatus("APPROVED")
                 .approvalStatus("APPROVED")
                 .approverId(7L)
-                .approvalComment("자동승인")
+                .approvalComment(AUTO_APPROVE_COMMENT)
                 .lineCount(1)
                 .lines(Collections.singletonList(line))
                 .build();

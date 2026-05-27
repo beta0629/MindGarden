@@ -65,6 +65,10 @@ import static org.mockito.Mockito.when;
 class AccountingServiceImplTest {
 
     private static final String TEST_TENANT_ID = "tenant-test-" + java.util.UUID.randomUUID();
+    private static final String LIST_ENTRY_NUMBER = "JE-test-2026-0001";
+    private static final String DETAIL_ENTRY_NUMBER = "JE-test-2026-0002";
+    private static final String EXPENSE_DESC = "비용";
+    private static final String AUTO_APPROVE_COMMENT = "자동승인";
 
     @Mock
     private AccountingEntryRepository accountingEntryRepository;
@@ -801,7 +805,7 @@ class AccountingServiceImplTest {
         AccountingEntry entry = AccountingEntry.builder()
                 .id(501L)
                 .tenantId(TEST_TENANT_ID)
-                .entryNumber("JE-test-2026-0001")
+                .entryNumber(LIST_ENTRY_NUMBER)
                 .entryDate(LocalDate.of(2026, 5, 27))
                 .description("테스트 분개")
                 .totalDebit(total)
@@ -821,7 +825,7 @@ class AccountingServiceImplTest {
         AccountingEntryListDto dto = result.get(0);
         assertEquals(Long.valueOf(501L), dto.getId());
         assertEquals(TEST_TENANT_ID, dto.getTenantId());
-        assertEquals("JE-test-2026-0001", dto.getEntryNumber());
+        assertEquals(LIST_ENTRY_NUMBER, dto.getEntryNumber());
         assertEquals("POSTED", dto.getEntryStatus());
         assertEquals("APPROVED", dto.getApprovalStatus());
         assertEquals(0, dto.getTotalDebit().compareTo(total));
@@ -871,14 +875,14 @@ class AccountingServiceImplTest {
                 .lineNumber(1)
                 .debitAmount(total)
                 .creditAmount(BigDecimal.ZERO)
-                .description("비용")
+                .description(EXPENSE_DESC)
                 .build();
         line.setIsDeleted(false);
 
         AccountingEntry entry = AccountingEntry.builder()
                 .id(602L)
                 .tenantId(TEST_TENANT_ID)
-                .entryNumber("JE-test-2026-0002")
+                .entryNumber(DETAIL_ENTRY_NUMBER)
                 .entryDate(LocalDate.of(2026, 5, 27))
                 .description("비용 분개")
                 .totalDebit(total)
@@ -886,7 +890,7 @@ class AccountingServiceImplTest {
                 .entryStatus(AccountingEntry.EntryStatus.APPROVED)
                 .approvalStatus(AccountingEntry.ApprovalStatus.APPROVED)
                 .approverId(7L)
-                .approvalComment("자동승인")
+                .approvalComment(AUTO_APPROVE_COMMENT)
                 .lines(new ArrayList<>(Collections.singletonList(line)))
                 .build();
 
@@ -899,7 +903,7 @@ class AccountingServiceImplTest {
         assertEquals(Long.valueOf(602L), detail.getId());
         assertEquals("APPROVED", detail.getEntryStatus());
         assertEquals(Long.valueOf(7L), detail.getApproverId());
-        assertEquals("자동승인", detail.getApprovalComment());
+        assertEquals(AUTO_APPROVE_COMMENT, detail.getApprovalComment());
         assertEquals(Integer.valueOf(1), detail.getLineCount());
         assertEquals(1, detail.getLines().size());
         assertEquals(Long.valueOf(21L), detail.getLines().get(0).getId());

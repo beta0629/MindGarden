@@ -1968,7 +1968,8 @@
     "sessionPrice": "세션/가격",
     "success": "매칭이 완료되었습니다! 상담사: {{consultant}}, 내담자: {{client}}",
     "warn": {
-      "selectBoth": "상담사와 내담자를 모두 선택해주세요."
+      "selectBoth": "상담사와 내담자를 모두 선택해주세요.",
+      "missingPackage": "패키지·회기수·가격을 모두 선택해 주세요."
     },
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
@@ -2570,7 +2571,8 @@
           "missingMethod": "결제 방식을 선택해주세요.",
           "missingReference": "결제 승인번호를 입력해주세요.",
           "invalidAmount": "결제 금액은 0보다 큰 숫자여야 합니다.",
-          "generic": "당일 카드 결제 중 오류가 발생했습니다."
+          "generic": "당일 카드 결제 중 오류가 발생했습니다.",
+          "invalidMapping": "매칭 정보가 누락되었습니다 (상담사 또는 패키지). 신규 매칭을 다시 생성한 후 진행해 주세요."
         }
       }
     },

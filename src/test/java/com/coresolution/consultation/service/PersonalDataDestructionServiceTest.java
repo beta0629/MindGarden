@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
+import com.coresolution.consultation.config.LifecycleCutoffProperties;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -47,6 +49,9 @@ class PersonalDataDestructionServiceTest {
     private SalaryCalculationRepository salaryCalculationRepository;
     @Mock
     private TenantService tenantService;
+
+    @Spy
+    private LifecycleCutoffProperties cutoffProperties = new LifecycleCutoffProperties();
 
     @InjectMocks
     private PersonalDataDestructionService personalDataDestructionService;

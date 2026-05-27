@@ -11,12 +11,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Heart, MessageCircle, MoreHorizontal, Plus,
   Users, Flag
 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { useAlert } from '../../hooks/useAlert';
+import {
+  getAuthorAvatarInitial,
+  getAuthorDisplay
+} from '../../utils/communityAuthorDisplay';
 import './CommunityFeed.css';
 
 const TABS = [
@@ -64,6 +69,7 @@ const INITIAL_POSTS = [
 const CommunityFeed = ({ primaryColor }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation('community');
   const [alert, AlertModal] = useAlert();
   const [activeTab, setActiveTab] = useState('reviews');
   const [posts, setPosts] = useState(() => {
@@ -198,12 +204,12 @@ const CommunityFeed = ({ primaryColor }) => {
                 style={{ animationDelay: `${idx * 50}ms` }}
               >
                 <div className="community__post-header">
-                  <div className={`community__post-avatar${post.isConsultant ? ' community__post-avatar--consultant' : ''}`}>
-                    {post.author.charAt(0)}
+                  <div className={`community__post-avatar${post.isConsultant ? ' community__post-avatar--consultant' : ''}${post.authorAnonymized ? ' community__post-avatar--anonymized' : ''}`}>
+                    {getAuthorAvatarInitial(post, t)}
                   </div>
                   <div className="community__post-author-info">
-                    <div className="community__post-author">{post.author}</div>
-                    {post.specialty && (
+                    <div className="community__post-author">{getAuthorDisplay(post, t)}</div>
+                    {post.specialty && !post.authorAnonymized && (
                       <div className="community__post-specialty">{post.specialty}</div>
                     )}
                   </div>

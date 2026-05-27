@@ -79,6 +79,7 @@ import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ComplianceMenu from './components/compliance/ComplianceMenu';
 import ComplianceDashboard from './components/compliance/ComplianceDashboard';
+import DormantUsersPage from './components/admin/lifecycle/DormantUsersPage';
 import ActivityHistory from './pages/client/ActivityHistory';
 import ConsultantClientList from './components/consultant/ConsultantClientList';
 import ConsultantAvailability from './components/consultant/ConsultantAvailability';
@@ -733,7 +734,10 @@ function AppContent() {
             <Route path="/admin/compliance/policy" element={<ComplianceDashboard />} />
             <Route path="/admin/compliance/destruction" element={<ComplianceDashboard />} />
             <Route path="/admin/compliance/audit" element={<ComplianceDashboard />} />
-            
+
+            {/* Phase 4 — 휴면 사용자 모니터링 (정책서 §10.9 + §10.12) */}
+            <Route path="/admin/lifecycle/dormant-users" element={<DormantUsersPage />} />
+
             {/* 공통 라우트 (모든 사용자) */}
             <Route path="/help" element={<HelpPage />} />
             

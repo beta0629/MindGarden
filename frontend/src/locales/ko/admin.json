@@ -3222,5 +3222,75 @@
       "paymentFailed": "결제 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.",
       "loadFailed": "데이터를 불러오는데 실패했습니다."
     }
+  },
+  "lifecycle": {
+    "dormantUsers": {
+      "pageTitle": "휴면 사용자 관리",
+      "pageSubtitle": "1년 비활성 사용자(DORMANT)의 4년 안정 보관 진행 상태를 확인하고 강제 복귀 또는 즉시 익명화할 수 있습니다.",
+      "table": {
+        "id": "ID",
+        "userId": "사용자 ID",
+        "role": "역할",
+        "dormantEnteredAt": "휴면 진입",
+        "anonymizeScheduledAt": "익명화 예정",
+        "preNoticeSentAt": "사전 통지",
+        "preNoticeChannel": "통지 채널",
+        "vault": "Vault",
+        "actions": "작업"
+      },
+      "vault": {
+        "present": "보관 중",
+        "missing": "Vault 누락"
+      },
+      "actions": {
+        "viewDetail": "상세",
+        "reactivate": "복귀",
+        "forceAnonymize": "즉시 익명화"
+      },
+      "empty": {
+        "title": "휴면 사용자가 없습니다",
+        "description": "현재 테넌트에 DORMANT 상태의 사용자가 없습니다."
+      },
+      "error": {
+        "load": "휴면 사용자 목록을 불러오지 못했습니다.",
+        "loadDetail": "휴면 사용자 상세 정보를 불러오지 못했습니다.",
+        "reactivate": "휴면 사용자 복귀 처리에 실패했습니다.",
+        "forceAnonymize": "휴면 사용자 즉시 익명화 처리에 실패했습니다."
+      },
+      "success": {
+        "reactivate": "휴면 사용자가 활성 상태로 복귀했습니다.",
+        "forceAnonymize": "휴면 사용자가 즉시 익명화되었습니다."
+      },
+      "detail": {
+        "sectionUser": "사용자 정보",
+        "sectionVault": "Vault 메타데이터",
+        "sectionAudit": "커뮤니티 익명화 이력",
+        "lifecycleState": "라이프사이클 상태",
+        "lastLoginAt": "최근 로그인",
+        "updatedAt": "최근 갱신",
+        "auditCount": "커뮤니티 익명화 이력 (건)",
+        "vaultMissingWarning": "Vault 행이 없어 복귀할 수 없습니다. 운영 담당자에게 문의하세요.",
+        "back": "목록으로",
+        "noPiiNotice": "원본 PII (이름·이메일·전화)는 안전 보관(AES-256-GCM)되어 본 화면에 절대 노출되지 않습니다. 복귀(Reactivate) 처리 시점에만 복호화되어 사용자 행으로 복원됩니다."
+      },
+      "reactivateModal": {
+        "title": "휴면 사용자 복귀",
+        "confirmMessage": "선택한 사용자를 휴면 상태에서 활성으로 복귀시킵니다. Vault 의 PII 가 복호화되어 사용자 행에 원복됩니다. 진행할까요?",
+        "confirm": "복귀 처리",
+        "cancel": "취소",
+        "processing": "복귀 처리 중..."
+      },
+      "forceAnonymizeModal": {
+        "title": "휴면 사용자 즉시 익명화",
+        "warning": "이 작업은 되돌릴 수 없습니다.",
+        "confirmMessage": "선택한 휴면 사용자의 PII 를 즉시 익명화하고 Vault 를 파기합니다. 4년 안정 보관 기간이 만료되지 않았더라도 운영 결재 후 실행되어야 합니다. 진행할까요?",
+        "confirm": "익명화 실행",
+        "cancel": "취소",
+        "processing": "익명화 처리 중..."
+      }
+    },
+    "community": {
+      "anonymizedAuthorLabel": "[삭제된 사용자]"
+    }
   }
 }

@@ -2,6 +2,8 @@ package com.coresolution.consultation.scheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -133,6 +135,24 @@ class WithdrawalGracePeriodSchedulerTest {
         scheduler.anonymizeExpiredWithdrawals();
 
         verify(userRepository).findExpiredWithdrawalPendingUsers(any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("runOnce dry-run: 후보가 있어도 transitionTo 호출되지 않음 (tester M2 권고)")
+    void runOnce_dryRun_doesNotCallTransition() {
+        scheduler.setDryRunForTest(true);
+        User u1 = userWith(301L);
+        User u2 = userWith(302L);
+        when(userRepository.findExpiredWithdrawalPendingUsers(any(LocalDateTime.class)))
+                .thenReturn(List.of(u1, u2));
+
+        int processed = scheduler.runOnce();
+
+        assertThat(processed)
+                .as("dry-run 모드에서는 후보 수를 반환")
+                .isEqualTo(2);
+        verify(userLifecycleService, never()).transitionTo(
+                anyLong(), any(LifecycleState.class), any(Actor.class), anyString());
     }
 
     private User userWith(Long id) {

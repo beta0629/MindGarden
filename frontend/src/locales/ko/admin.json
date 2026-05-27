@@ -1343,6 +1343,47 @@
       "successMessage": "{{name}}님이 상담사로 성공적으로 변경되었습니다.",
       "successDefault": "사용자 역할이 성공적으로 변경되었습니다.",
       "failMessage": "역할 변경에 실패했습니다."
+    },
+    "pendingDeletion": {
+      "tabTitle": "삭제 대기",
+      "pageTitle": "강제 종료된 사용자 (7일 보존)",
+      "subtitle": "관리자에 의해 강제 종료된 사용자입니다. 7일 이내 되돌리기 가능합니다.",
+      "empty": "강제 종료 대기 중인 사용자가 없습니다.",
+      "loading": "삭제 대기 사용자를 불러오는 중...",
+      "loadError": "삭제 대기 사용자를 불러오지 못했습니다.",
+      "column": {
+        "name": "이름",
+        "email": "이메일",
+        "role": "역할",
+        "deletedAt": "삭제 일자",
+        "daysRemaining": "남은 일",
+        "reason": "삭제 사유",
+        "deletedByAdmin": "삭제 어드민",
+        "actions": "액션"
+      },
+      "daysRemainingValue": "{{count}}일",
+      "daysRemainingExpired": "만료됨",
+      "action": {
+        "restore": "되돌리기"
+      },
+      "modal": {
+        "title": "강제 종료 되돌리기",
+        "subtitle": "{{name}}님의 강제 종료를 되돌립니다. 사유를 입력하세요.",
+        "reasonLabel": "되돌리기 사유",
+        "reasonPlaceholder": "되돌리기 사유를 입력하세요 (500자 이내)",
+        "reasonHint": "사유는 감사 로그에 기록됩니다.",
+        "confirm": "되돌리기",
+        "cancel": "취소"
+      },
+      "toast": {
+        "success": "강제 종료 되돌리기가 완료되었습니다.",
+        "failure": "되돌리기에 실패했습니다."
+      },
+      "error": {
+        "reasonRequired": "되돌리기 사유는 필수입니다.",
+        "reasonTooLong": "되돌리기 사유는 500자 이하여야 합니다.",
+        "expired": "이미 익명화 진입, 복원 불가 (7일 보존 윈도우 만료)"
+      }
     }
   },
   "widgetEditor": {

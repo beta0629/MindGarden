@@ -667,6 +667,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String terminatedStatus = getMappingStatusCode("TERMINATED");
             
             for (ConsultantClientMapping existingMapping : existingMappings) {
+                // 옵션 B (예약 우선 매칭): PENDING_PAYMENT / PAYMENT_CONFIRMED 매핑은
+                // 사후 카드 결제 대기 상태이므로 자동 TERMINATED 대상에서 제외한다.
+                // (디러티 정리는 별도 어드민 UI에서 수동 종료)
+                ConsultantClientMapping.MappingStatus currentStatus = existingMapping.getStatus();
+                if (currentStatus == ConsultantClientMapping.MappingStatus.PENDING_PAYMENT
+                        || currentStatus == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED) {
+                    log.info("⏸️ 옵션 B 가드: 결제 대기 매핑 자동 종료 제외: 매칭ID={}, 상태={}",
+                            existingMapping.getId(), currentStatus);
+                    continue;
+                }
                 try {
                 existingMapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
                 } catch (IllegalArgumentException e) {
@@ -1472,6 +1482,84 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Hibernate.initialize(savedMapping.getClient());
         notifyMappingSettlement(savedMapping, MappingSettlementScenario.MAPPING_APPROVED);
         return savedMapping;
+    }
+
+    /**
+     * 옵션 B (예약 우선 매칭) — 당일 카드 결제 단일 트랜잭션 진입점.
+     * <p>
+     * 합의서 (`docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md`)
+     * §2/§3 시퀀스에 따라 confirmPayment + confirmDeposit + approveMapping을 자동 연속
+     * 호출하여 PENDING_PAYMENT → PAYMENT_CONFIRMED → DEPOSIT_PENDING → ACTIVE로 전이시킨다.
+     * confirmDeposit 내부의 finalizeTentativeBookingsAfterDepositPhase4b()가 TENTATIVE_PENDING_PAYMENT
+     * 가예약 일정 중 첫 1건을 BOOKED로 전환하고 매핑에서 회기 1회를 즉시 차감한다.
+     * <p>
+     * 단회기(totalSessions=1): 잔여 1 → 차감 → 잔여 0 → entity `useSession` 가드가 자동 SESSIONS_EXHAUSTED 전이.
+     * n회 패키지: 잔여 n → 차감 → 잔여 n-1 → approveMapping 호출 후 ACTIVE 도달.
+     * 가예약이 없는 경우: 회기 부여만 수행되고 차감은 0회.
+     * <p>
+     * 클래스 레벨 {@code @Transactional} 안에서 모두 실행되며, ERP RECEIVABLE 거래는 confirmPayment 내부의
+     * {@code runInNewTransaction(...)} (PROPAGATION_REQUIRES_NEW)로 분리되어 부모 트랜잭션 rollback-only
+     * 마킹을 방지한다. {@code @Version} 낙관적 잠금이 useSession 차감 경합 시 OCC를 자동 적용한다.
+     *
+     * @param mappingId 대상 매핑 ID (PENDING_PAYMENT 상태여야 함)
+     * @param paymentMethod 결제 방식
+     * @param paymentReference 결제 승인번호
+     * @param paymentAmount 결제 금액
+     * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable, 향후 확장용 메타데이터)
+     * @return 최종 ACTIVE 또는 SESSIONS_EXHAUSTED 상태의 매핑
+     */
+    @Override
+    public ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId) {
+        log.info("💳 옵션 B 당일 카드 결제 시작: mappingId={}, method={}, ref={}, amount={}, sameDaySchedule={}",
+                mappingId, paymentMethod, paymentReference, paymentAmount, sameDaySessionScheduleId);
+
+        if (mappingId == null) {
+            throw new IllegalArgumentException("mappingId는 필수입니다.");
+        }
+        if (paymentMethod == null || paymentMethod.isBlank()) {
+            throw new IllegalArgumentException("paymentMethod는 필수입니다.");
+        }
+        if (paymentReference == null || paymentReference.isBlank()) {
+            throw new IllegalArgumentException("paymentReference는 필수입니다.");
+        }
+        if (paymentAmount == null || paymentAmount <= 0) {
+            throw new IllegalArgumentException("paymentAmount는 0보다 커야 합니다.");
+        }
+
+        String tenantId = getTenantId();
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+
+        ConsultantClientMapping.PaymentStatus currentPaymentStatus = mapping.getPaymentStatus();
+        if (currentPaymentStatus == ConsultantClientMapping.PaymentStatus.APPROVED) {
+            throw new IllegalStateException(
+                    "이미 승인된 결제입니다. mappingId=" + mappingId + ", paymentStatus=" + currentPaymentStatus);
+        }
+
+        // Step 1: confirmPayment (paymentStatus → CONFIRMED, status → PAYMENT_CONFIRMED).
+        //   내부에서 ERP RECEIVABLE 거래를 runInNewTransaction(REQUIRES_NEW)로 분리.
+        confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
+
+        // Step 2: confirmDeposit (paymentStatus → APPROVED, status → DEPOSIT_PENDING + 회기 부여).
+        //   내부에서 finalizeTentativeBookingsAfterDepositPhase4b()가 TENTATIVE 가예약을 BOOKED 전환 + 회기 1회 차감.
+        ConsultantClientMapping afterDeposit = confirmDeposit(mappingId, paymentReference);
+
+        // Step 3: 회기 차감 결과에 따른 분기.
+        //   단회기 (totalSessions=1): entity useSession 가드가 이미 SESSIONS_EXHAUSTED로 전이 →
+        //     approveMapping 게이트 (DEPOSIT_PENDING 요구)에 어긋나므로 호출하지 않고 그대로 반환.
+        //   n회 패키지 또는 가예약 없음: status가 여전히 DEPOSIT_PENDING → approveMapping으로 ACTIVE 전이.
+        ConsultantClientMapping.MappingStatus statusAfterDeposit = afterDeposit.getStatus();
+        if (statusAfterDeposit == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+            log.info("✅ 옵션 B 당일 카드 결제 완료 (단회기 소진): mappingId={}, status={}",
+                    mappingId, statusAfterDeposit);
+            return afterDeposit;
+        }
+
+        ConsultantClientMapping approved = approveMapping(mappingId, "SYSTEM_AUTO_OPTION_B");
+        log.info("✅ 옵션 B 당일 카드 결제 완료: mappingId={}, status={}, remainingSessions={}",
+                mappingId, approved.getStatus(), approved.getRemainingSessions());
+        return approved;
     }
 
     private void notifyMappingSettlement(ConsultantClientMapping mapping, MappingSettlementScenario scenario) {

@@ -20,6 +20,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.dto.lifecycle.AnonymizeResult;
 import com.coresolution.consultation.dto.lifecycle.TransitionResult;
+import com.coresolution.consultation.dto.lifecycle.WithdrawalOptions;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.IllegalStateTransitionException;
@@ -244,6 +245,48 @@ class UserLifecycleServiceImplTest {
         assertThat(result.getFromState()).isEqualTo(LifecycleState.ACTIVE);
         assertThat(result.getToState()).isEqualTo(LifecycleState.WITHDRAWAL_PENDING);
         assertThat(user.getWithdrawalRequestedAt()).isNotNull();
+        // 기본 옵션 — withdrawal_options_json 은 null
+        assertThat(user.getWithdrawalOptionsJson()).isNull();
+    }
+
+    @Test
+    @DisplayName("requestWithdrawal(options): Q12-b deleteCommunityBody=true → withdrawal_options_json 저장")
+    void requestWithdrawal_withOptions_persistsJson() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        stubSaveAndAudit();
+
+        TransitionResult result = service.requestWithdrawal(
+                USER_ID, Actor.user(USER_ID, "CLIENT"), WithdrawalOptions.of(true));
+
+        assertThat(result.getToState()).isEqualTo(LifecycleState.WITHDRAWAL_PENDING);
+        assertThat(user.getWithdrawalOptionsJson())
+                .as("Q12-b 옵션은 users.withdrawal_options_json 컬럼에 JSON 으로 보관된다")
+                .contains("\"deleteCommunityBody\":true");
+    }
+
+    @Test
+    @DisplayName("requestWithdrawal(options): 기본 옵션 — withdrawal_options_json NULL 유지")
+    void requestWithdrawal_withDefaultOptions_keepsNull() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        stubSaveAndAudit();
+
+        service.requestWithdrawal(USER_ID, Actor.user(USER_ID, "CLIENT"),
+                WithdrawalOptions.defaults());
+
+        assertThat(user.getWithdrawalOptionsJson())
+                .as("기본 옵션은 storage 효율을 위해 NULL 로 유지된다")
+                .isNull();
+    }
+
+    @Test
+    @DisplayName("requestWithdrawal(options): null options 인자도 안전하게 기본값으로 해석")
+    void requestWithdrawal_withNullOptions_safe() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        stubSaveAndAudit();
+
+        service.requestWithdrawal(USER_ID, Actor.user(USER_ID, "CLIENT"), null);
+
+        assertThat(user.getWithdrawalOptionsJson()).isNull();
     }
 
     @Test
@@ -251,6 +294,7 @@ class UserLifecycleServiceImplTest {
     void cancelWithdrawal_calls_transitionTo() {
         user.setLifecycleState(LifecycleState.WITHDRAWAL_PENDING);
         user.setWithdrawalRequestedAt(LocalDateTime.now().minusDays(2));
+        user.setWithdrawalOptionsJson("{\"deleteCommunityBody\":true}");
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
         stubSaveAndAudit();
 
@@ -260,6 +304,9 @@ class UserLifecycleServiceImplTest {
         assertThat(result.getFromState()).isEqualTo(LifecycleState.WITHDRAWAL_PENDING);
         assertThat(result.getToState()).isEqualTo(LifecycleState.ACTIVE);
         assertThat(user.getWithdrawalRequestedAt()).isNull();
+        assertThat(user.getWithdrawalOptionsJson())
+                .as("취소 시점에 보관된 옵션은 정리되어야 한다 (재요청 시 깨끗한 상태)")
+                .isNull();
     }
 
     @Test

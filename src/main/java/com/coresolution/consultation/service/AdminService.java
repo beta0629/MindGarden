@@ -263,6 +263,25 @@ public interface AdminService {
     ConsultantClientMapping approveMapping(Long mappingId, String adminName);
 
     /**
+     * 옵션 B (예약 우선 매칭) — 당일 카드 결제 단일 트랜잭션 진입점.
+     * <p>
+     * confirmPayment + confirmDeposit + approveMapping을 자동 연속 호출하여 매핑 상태를
+     * PENDING_PAYMENT → PAYMENT_CONFIRMED → DEPOSIT_PENDING → ACTIVE로 전이시킨다.
+     * confirmDeposit 직후 finalizeTentativeSchedulesAfterDepositConfirmed가 호출되어
+     * TENTATIVE_PENDING_PAYMENT 가예약 일정 1건이 BOOKED로 전환되고 회기 1회가 즉시 차감된다.
+     * (단회기 패키지: 잔여 0 + SESSIONS_EXHAUSTED 자동 전이 / n회 패키지: 잔여 n-1 + ACTIVE)
+     *
+     * @param mappingId 대상 매핑 ID
+     * @param paymentMethod 결제 방식 (신용카드/체크카드/기타)
+     * @param paymentReference 결제 승인번호 또는 참조
+     * @param paymentAmount 결제 금액
+     * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable — 가예약 없이 회기 부여만 가능)
+     * @return 최종 ACTIVE 또는 SESSIONS_EXHAUSTED 상태 매핑 (회기 카운터 반영)
+     */
+    ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId);
+
+    /**
      * 관리자 거부
      */
     ConsultantClientMapping rejectMapping(Long mappingId, String reason);

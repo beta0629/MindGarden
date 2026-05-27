@@ -162,6 +162,19 @@ public class User extends BaseEntity {
     private LocalDateTime withdrawalRequestedAt;
 
     /**
+     * 자발 탈퇴 본인 옵션 JSON (USER_LIFECYCLE_TERMINATION_POLICY v1.1 §0.1 Q12-b).
+     *
+     * <p>Flyway V20260606_002 로 추가된 {@code withdrawal_options_json} 컬럼과 매핑된다.
+     * WITHDRAWAL_PENDING 진입 시점에 {@link com.coresolution.consultation.dto.lifecycle.WithdrawalOptions#toJsonOrNull()}
+     * 직렬화 결과를 저장하고, 30일 유예 만료 후 ANONYMIZED 전이 시점에
+     * {@link com.coresolution.consultation.dto.lifecycle.WithdrawalOptions#fromJsonOrDefaults(String)}
+     * 로 복원하여 community body 등 사용자-선택 PII 처리 분기에 사용된다.
+     * 기본값 (모든 옵션 미선택) 은 NULL.</p>
+     */
+    @Column(name = "withdrawal_options_json", columnDefinition = "TEXT")
+    private String withdrawalOptionsJson;
+
+    /**
      * 어드민 강제 종료(=DELETED_BY_ADMIN) 진입 시 강제 종료를 수행한 어드민 users.id.
      *
      * <p>USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5 — 7일 보존 윈도우 동안 어드민 대시보드에서

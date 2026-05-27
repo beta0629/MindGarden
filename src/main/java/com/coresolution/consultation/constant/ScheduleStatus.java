@@ -11,8 +11,8 @@ public enum ScheduleStatus {
     
     AVAILABLE("가능", "#28a745", "✅"),           // 예약 가능한 시간대
     BOOKED("예약됨", "#007bff", "📅"),           // 상담 예약됨
-    /** 입금·결제 전 가예약(선점). DESIGN: 결제 대기 (가예약). Phase 4b에서 BOOKED·회기 차감으로 전환 예정. */
-    TENTATIVE_PENDING_PAYMENT("결제 대기 (가예약)", "#fd7e14", "⏳"),
+    /** 입금·결제 전 가예약(선점). 옵션 B (예약 우선 매칭): 사후 결제 예약. Phase 4b에서 BOOKED·회기 차감으로 전환 예정. */
+    TENTATIVE_PENDING_PAYMENT("사후 결제 예약", "#fd7e14", "⏳"),
     CONFIRMED("확정됨", "#17a2b8", "✅"),         // 상담 확정됨
     /** 상담 세션이 시작되어 진행 중인 슬롯(Expo·관리 화면에서 진행중 배지용). */
     IN_PROGRESS("진행중", "#fd7e14", "🔄"),

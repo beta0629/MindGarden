@@ -7,6 +7,7 @@ import java.util.Map;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.dto.lifecycle.TransitionResult;
+import com.coresolution.consultation.dto.lifecycle.WithdrawalOptions;
 import com.coresolution.consultation.dto.lifecycle.WithdrawalRequestDto;
 import com.coresolution.consultation.dto.lifecycle.WithdrawalStatusDto;
 import com.coresolution.consultation.entity.User;
@@ -82,7 +83,9 @@ public class UserWithdrawalController extends BaseApiController {
         }
 
         Actor actor = Actor.user(currentUser.getId(), currentUser.getRole().name());
-        TransitionResult result = userLifecycleService.requestWithdrawal(currentUser.getId(), actor);
+        WithdrawalOptions options = WithdrawalOptions.of(request.isDeleteCommunityBodyOrFalse());
+        TransitionResult result = userLifecycleService.requestWithdrawal(
+                currentUser.getId(), actor, options);
 
         Map<String, Object> body = new HashMap<>();
         body.put("userId", result.getUserId());
@@ -91,6 +94,7 @@ public class UserWithdrawalController extends BaseApiController {
         body.put("withdrawalExpiresAt",
                 result.getTransitionedAt().plusDays(WITHDRAWAL_GRACE_PERIOD_DAYS));
         body.put("graceDays", WITHDRAWAL_GRACE_PERIOD_DAYS);
+        body.put("deleteCommunityBody", options.isDeleteCommunityBody());
 
         return success("회원 탈퇴 신청이 접수되었습니다.", body);
     }

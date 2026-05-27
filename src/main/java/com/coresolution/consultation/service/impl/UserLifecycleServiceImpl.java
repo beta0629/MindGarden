@@ -7,6 +7,7 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.dto.lifecycle.AnonymizeResult;
 import com.coresolution.consultation.dto.lifecycle.TransitionResult;
+import com.coresolution.consultation.dto.lifecycle.WithdrawalOptions;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.IllegalStateTransitionException;
@@ -116,15 +117,38 @@ public class UserLifecycleServiceImpl implements UserLifecycleService {
     @Override
     @Transactional
     public TransitionResult requestWithdrawal(Long userId, Actor actor) {
-        return transitionTo(userId, LifecycleState.WITHDRAWAL_PENDING, actor,
+        return requestWithdrawal(userId, actor, WithdrawalOptions.defaults());
+    }
+
+    @Override
+    @Transactional
+    public TransitionResult requestWithdrawal(Long userId, Actor actor, WithdrawalOptions options) {
+        WithdrawalOptions resolved = options != null ? options : WithdrawalOptions.defaults();
+        TransitionResult result = transitionTo(userId, LifecycleState.WITHDRAWAL_PENDING, actor,
                 "SELF_WITHDRAWAL_REQUEST");
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "User disappeared after transitionTo: " + userId));
+        // toJsonOrNull() — 기본값은 null 반환 → 컬럼 NULL 유지 (storage 효율 + idempotent 비교).
+        user.setWithdrawalOptionsJson(resolved.toJsonOrNull());
+        userRepository.save(user);
+
+        return result;
     }
 
     @Override
     @Transactional
     public TransitionResult cancelWithdrawal(Long userId, Actor actor) {
-        return transitionTo(userId, LifecycleState.ACTIVE, actor,
+        TransitionResult result = transitionTo(userId, LifecycleState.ACTIVE, actor,
                 "SELF_WITHDRAWAL_CANCEL");
+        // 취소 시점에 보관된 옵션 정리 (재요청 시 깨끗한 상태에서 다시 적재).
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "User disappeared after transitionTo: " + userId));
+        user.setWithdrawalOptionsJson(null);
+        userRepository.save(user);
+        return result;
     }
 
     /**

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import notificationManager from '../../../utils/notification';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -19,7 +20,14 @@ const parseUaSummary = () => {
   return os ? `${os} · ${browser}` : browser;
 };
 
-const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOtherDevices }) => {
+const SecuritySection = ({
+  onPasswordChange,
+  onPasswordReset,
+  onRequestLogoutOtherDevices,
+  onRequestWithdrawal,
+  isWithdrawalPending
+}) => {
+  const { t } = useTranslation('mypage');
   const deviceLabel = useMemo(() => parseUaSummary(), []);
 
   return (
@@ -121,6 +129,48 @@ const SecuritySection = ({ onPasswordChange, onPasswordReset, onRequestLogoutOth
           >
             다른 기기 모두 로그아웃
           </MGButton>
+        </div>
+      </article>
+
+      <article
+        className="mg-v2-ad-b0kla__card mg-mypage__card"
+        aria-labelledby="mg-mypage-security-account-title"
+        data-testid="mypage-security-account-section"
+      >
+        <div className="mg-mypage__section-head">
+          <span className="mg-mypage__section-accent" aria-hidden="true" />
+          <div className="mg-mypage__section-head-text">
+            <h2
+              id="mg-mypage-security-account-title"
+              className="mg-mypage__section-title"
+            >
+              {t('withdrawal.sectionTitle')}
+            </h2>
+          </div>
+        </div>
+        <div className="mg-mypage__card-body">
+          <p className="mg-mypage__section-description">
+            {t('withdrawal.sectionDescription')}
+          </p>
+          <div className="mg-mypage__readonly-row">
+            <MGButton
+              type="button"
+              className={buildErpMgButtonClassName({
+                variant: 'danger',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={onRequestWithdrawal || (() =>
+                notificationManager.show('회원 탈퇴 신청 기능을 사용할 수 없습니다.', 'info')
+              )}
+              variant="danger"
+              disabled={isWithdrawalPending}
+              data-testid="mypage-security-withdrawal-button"
+            >
+              {t('withdrawal.openModalButton')}
+            </MGButton>
+          </div>
         </div>
       </article>
     </>

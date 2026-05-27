@@ -214,6 +214,12 @@ mindgarden:
     dormant-period-years: ${MINDGARDEN_LIFECYCLE_DORMANT_PERIOD_YEARS:1}
     anonymize-after-dormant-years: ${MINDGARDEN_LIFECYCLE_ANONYMIZE_AFTER_DORMANT_YEARS:4}
     pre-notice-days-before: ${MINDGARDEN_LIFECYCLE_PRE_NOTICE_DAYS_BEFORE:30}
+    # ---- Phase 4: 커뮤니티 작성자 익명화 (옵션 b — 본문 KEEP + 작성자 익명) — 정책서 §10.12 Q12 ----
+    # enabled=false 면 anonymize 흐름에서 community 단계 전체 SKIP (운영 토글).
+    # tables 콤마 구분 — community_posts / community_comments. community_replies 도입 시 추가.
+    community-anonymization:
+      enabled: ${MINDGARDEN_COMMUNITY_ANONYMIZATION_ENABLED:true}
+      tables: ${MINDGARDEN_COMMUNITY_TABLES:community_posts,community_comments}
   # =====================================================
   # 라이프사이클 관련 배치 스케줄러 운영 토글 (USER_LIFECYCLE_TERMINATION_POLICY §6.2 / §10.9 / Q5).
   # enabled=false 이면 빈 자체가 생성되지 않아 cron 미실행. dry-run=true 이면 후보 조회·로깅만 수행하고

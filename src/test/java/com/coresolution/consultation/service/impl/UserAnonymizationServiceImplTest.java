@@ -32,6 +32,7 @@ import com.coresolution.consultation.repository.CommunityCommentRepository;
 import com.coresolution.consultation.repository.CommunityPostRepository;
 import com.coresolution.consultation.repository.PersonalDataDestructionLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.CommunityAnonymizationService;
 import com.coresolution.consultation.service.UserAnonymizationService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -62,6 +63,7 @@ class UserAnonymizationServiceImplTest {
     @Mock private PersonalDataDestructionLogRepository personalDataDestructionLogRepository;
     @Mock private CommunityPostRepository communityPostRepository;
     @Mock private CommunityCommentRepository communityCommentRepository;
+    @Mock private CommunityAnonymizationService communityAnonymizationService;
 
     @InjectMocks
     private UserAnonymizationServiceImpl service;
@@ -101,6 +103,11 @@ class UserAnonymizationServiceImplTest {
                 .thenReturn(Collections.emptyList());
         Mockito.lenient().when(communityCommentRepository.findByAuthor_Id(USER_ID))
                 .thenReturn(Collections.emptyList());
+        // Phase 4 옵션 b — community author 익명화 service mock (모든 호출에 기본 NONE 반환)
+        Mockito.lenient().when(communityAnonymizationService.anonymizeCommunityRecords(
+                Mockito.anyLong(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.any(), Mockito.any()))
+                .thenReturn(CommunityAnonymizationService.Result.NONE);
     }
 
     @Test
@@ -487,6 +494,63 @@ class UserAnonymizationServiceImplTest {
         service.anonymize(USER_ID, Actor.system(), "WITHDRAWAL_GRACE_EXPIRED");
 
         verify(communityPostRepository, never()).saveAll(any());
+    }
+
+    // ---------- Phase 4 옵션 b — 작성자 익명화 통합 ----------
+
+    @Test
+    @DisplayName("Phase 4 옵션 b: anonymize 호출 시 CommunityAnonymizationService 가 항상 호출된다 "
+            + "(reason / actor 전파)")
+    void phase4_optionB_invokesCommunityAnonymizationService() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogRepository.save(any(AuditLog.class)))
+                .thenReturn(AuditLog.builder().id(11L).build());
+        when(personalDataDestructionLogRepository.save(any(PersonalDataDestructionLog.class)))
+                .thenReturn(PersonalDataDestructionLog.builder().id(22L).build());
+
+        service.anonymize(USER_ID, Actor.user(99L, "ADMIN"), "ADMIN_FORCED_DELETION");
+
+        verify(communityAnonymizationService).anonymizeCommunityRecords(
+                Mockito.eq(USER_ID), Mockito.eq(TENANT_ID),
+                Mockito.eq("ADMIN_FORCED"),
+                Mockito.eq(99L), Mockito.eq("ADMIN"));
+    }
+
+    @Test
+    @DisplayName("Phase 4 옵션 b: DORMANT_AUTO reason 은 audit 표준값 DORMANT_AUTO_4Y 로 정규화")
+    void phase4_optionB_dormantReasonNormalized() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogRepository.save(any(AuditLog.class)))
+                .thenReturn(AuditLog.builder().id(11L).build());
+        when(personalDataDestructionLogRepository.save(any(PersonalDataDestructionLog.class)))
+                .thenReturn(PersonalDataDestructionLog.builder().id(22L).build());
+
+        service.anonymize(USER_ID, Actor.system(), "DORMANT_AUTO_FOUR_YEARS");
+
+        verify(communityAnonymizationService).anonymizeCommunityRecords(
+                Mockito.eq(USER_ID), Mockito.eq(TENANT_ID),
+                Mockito.eq("DORMANT_AUTO_4Y"),
+                Mockito.isNull(), Mockito.eq("SYSTEM"));
+    }
+
+    @Test
+    @DisplayName("Phase 4 옵션 b: WITHDRAWAL_GRACE_EXPIRED reason 은 SELF_WITHDRAWAL 로 정규화")
+    void phase4_optionB_selfWithdrawalReasonNormalized() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogRepository.save(any(AuditLog.class)))
+                .thenReturn(AuditLog.builder().id(11L).build());
+        when(personalDataDestructionLogRepository.save(any(PersonalDataDestructionLog.class)))
+                .thenReturn(PersonalDataDestructionLog.builder().id(22L).build());
+
+        service.anonymize(USER_ID, Actor.user(USER_ID, "CLIENT"), "WITHDRAWAL_GRACE_EXPIRED");
+
+        verify(communityAnonymizationService).anonymizeCommunityRecords(
+                Mockito.eq(USER_ID), Mockito.eq(TENANT_ID),
+                Mockito.eq("SELF_WITHDRAWAL"),
+                Mockito.eq(USER_ID), Mockito.eq("CLIENT"));
     }
 
     @Test

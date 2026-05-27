@@ -28,6 +28,7 @@ import com.coresolution.consultation.repository.CommunityCommentRepository;
 import com.coresolution.consultation.repository.CommunityPostRepository;
 import com.coresolution.consultation.repository.PersonalDataDestructionLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.CommunityAnonymizationService;
 import com.coresolution.consultation.service.UserAnonymizationService;
 
 import lombok.RequiredArgsConstructor;
@@ -67,6 +68,7 @@ public class UserAnonymizationServiceImpl implements UserAnonymizationService {
     private final PersonalDataDestructionLogRepository personalDataDestructionLogRepository;
     private final CommunityPostRepository communityPostRepository;
     private final CommunityCommentRepository communityCommentRepository;
+    private final CommunityAnonymizationService communityAnonymizationService;
 
     @Override
     @Transactional
@@ -106,6 +108,14 @@ public class UserAnonymizationServiceImpl implements UserAnonymizationService {
                 WithdrawalOptions.fromJsonOrDefaults(user.getWithdrawalOptionsJson());
         CommunitySweepResult communitySweep = applyCommunityBodyOption(userId, options, now);
 
+        // Phase 4 옵션 b — 본문 KEEP + 작성자 익명화 (정책서 §10.12 Q12 기본 처리).
+        // body 삭제 옵션을 선택한 경우에도 본 단계가 실행되어 author_anonymized 플래그를 토글하고
+        // community_anonymization_audit 를 남긴다 (audit SSOT).
+        CommunityAnonymizationService.Result communityAuthorResult =
+                communityAnonymizationService.anonymizeCommunityRecords(
+                        userId, user.getTenantId(), resolveCommunityReason(reason),
+                        actor.getActorUserId(), actor.getActorRole());
+
         // PII 매트릭스 적용 — §3.2 users 표
         applyUsersPiiMatrix(user, epochSeconds);
         // 보관된 옵션 정리 — ANONYMIZED 후에는 더 이상 필요 없음
@@ -143,9 +153,14 @@ public class UserAnonymizationServiceImpl implements UserAnonymizationService {
                 personalDataDestructionLogRepository.save(destruction);
 
         log.info("[Lifecycle] anonymize complete: userId={}, actor={}, reason={}, "
-                        + "communityPostsAnonymized={}, communityCommentsAnonymized={}",
+                        + "communityPostsBodyDeleted={}, communityCommentsBodyDeleted={}, "
+                        + "communityAuthorAnonymizedPosts={}, communityAuthorAnonymizedComments={}, "
+                        + "communityAuditRecords={}",
                 userId, actor, reason,
-                communitySweep.posts, communitySweep.comments);
+                communitySweep.posts, communitySweep.comments,
+                communityAuthorResult.postsAnonymized(),
+                communityAuthorResult.commentsAnonymized(),
+                communityAuthorResult.auditRecordsCreated());
 
         return AnonymizeResult.builder()
                 .userId(userId)
@@ -296,6 +311,33 @@ public class UserAnonymizationServiceImpl implements UserAnonymizationService {
             // SHA-256 은 표준 — 도달 불가 경로
             throw new IllegalStateException("SHA-256 not available", e);
         }
+    }
+
+    /**
+     * 사유 키워드로부터 community_anonymization_audit.anonymization_reason 표준 값을 해석한다.
+     *
+     * <p>업스트림 anonymize 호출자는 다양한 reason 문자열을 보내므로 (예:
+     * "WITHDRAWAL_GRACE_EXPIRED", "DORMANT_AUTO_FOUR_YEARS", "ADMIN_FORCED_DELETE") 본 메서드가
+     * §10.12 audit 분류 표준 값으로 정규화한다.</p>
+     *
+     * @param reason 원본 사유
+     * @return SELF_WITHDRAWAL | DELETED_BY_ADMIN | DORMANT_AUTO_4Y | ADMIN_FORCED
+     */
+    static String resolveCommunityReason(String reason) {
+        if (reason == null) {
+            return "SELF_WITHDRAWAL";
+        }
+        String upper = reason.toUpperCase();
+        if (upper.contains("ADMIN_FORCED") || upper.contains("FORCED_DELETE")) {
+            return "ADMIN_FORCED";
+        }
+        if (upper.contains("ADMIN") || upper.contains("WINDOW_EXPIRED")) {
+            return "DELETED_BY_ADMIN";
+        }
+        if (upper.contains("DORMANT")) {
+            return "DORMANT_AUTO_4Y";
+        }
+        return "SELF_WITHDRAWAL";
     }
 
     /**

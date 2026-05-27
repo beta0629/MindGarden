@@ -19,6 +19,7 @@ import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
+import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
@@ -46,6 +47,7 @@ import {
 import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
+import { computePendingPaymentAlert } from './utils/pendingPaymentAlertUtils';
 
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
@@ -92,6 +94,8 @@ const IntegratedMatchingSchedule = () => {
   const [statusFilter, setStatusFilter] = useState('ongoing');
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
+  // 옵션 B (예약 우선 매칭) — 당일 카드 결제 모달 상태
+  const [checkoutSameDayMapping, setCheckoutSameDayMapping] = useState(null);
   const [approveProcessing, setApproveProcessing] = useState(false);
   const sidebarListRef = useRef(null);
 
@@ -248,9 +252,16 @@ const IntegratedMatchingSchedule = () => {
     handleDropFromExternal(new Date(), mappingPayload);
   };
 
-  const handleMappingCreated = () => {
+  const handleMappingCreated = (result) => {
     setCreateMappingModalOpen(false);
     loadMappings();
+    // 옵션 B 사후 카드 분기: 생성된 PENDING_PAYMENT 매핑을 받아 CheckoutSameDayModal 자동 오픈.
+    if (result && result.paymentTiming === 'SAME_DAY_CARD' && result.mappingId) {
+      setCheckoutSameDayMapping({
+        id: result.mappingId,
+        packagePrice: result.packagePrice ?? null
+      });
+    }
   };
 
   const handlePaymentConfirmed = () => {
@@ -260,6 +271,11 @@ const IntegratedMatchingSchedule = () => {
 
   const handleDepositConfirmed = () => {
     setDepositModalMapping(null);
+    loadMappings();
+  };
+
+  const handleCheckoutSameDayCompleted = () => {
+    setCheckoutSameDayMapping(null);
     loadMappings();
   };
 
@@ -319,6 +335,54 @@ const IntegratedMatchingSchedule = () => {
             actions={headerActions}
             titleId="integrated-schedule-page-title"
           />
+
+          {/* 옵션 B (예약 우선 매칭) — PENDING_PAYMENT 알림 카드 */}
+          {(() => {
+            const { visible, count: pendingPaymentCount, firstPending } =
+              computePendingPaymentAlert(mappings);
+            if (!visible) {
+              return null;
+            }
+            return (
+              <div
+                className="integrated-schedule__pending-payment-alert"
+                role="status"
+                aria-live="polite"
+                data-testid="integrated-schedule-pending-payment-alert"
+              >
+                <div className="integrated-schedule__pending-payment-alert-text">
+                  <strong className="integrated-schedule__pending-payment-alert-title">
+                    {t('admin:mapping.integrated.pendingPayment.alert.title')}
+                  </strong>
+                  <span className="integrated-schedule__pending-payment-alert-count">
+                    {t('admin:mapping.integrated.pendingPayment.alert.count', { count: pendingPaymentCount })}
+                  </span>
+                </div>
+                <div className="integrated-schedule__pending-payment-alert-actions">
+                  <MGButton
+                    type="button"
+                    variant="secondary"
+                    size="small"
+                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
+                    onClick={() => setStatusFilter('PENDING_PAYMENT')}
+                    preventDoubleClick={false}
+                  >
+                    {t('admin:mapping.integrated.pendingPayment.alert.action')}
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    size="small"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm' })}
+                    onClick={() => setCheckoutSameDayMapping(firstPending)}
+                    preventDoubleClick={false}
+                  >
+                    {t('admin:mapping.integrated.pendingPayment.alert.checkoutSameDay')}
+                  </MGButton>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="integrated-schedule__content">
         <aside
@@ -558,6 +622,14 @@ const IntegratedMatchingSchedule = () => {
           onClose={() => setDepositModalMapping(null)}
           mapping={depositModalMapping}
           onDepositConfirmed={handleDepositConfirmed}
+        />
+      )}
+      {checkoutSameDayMapping && (
+        <CheckoutSameDayModal
+          isOpen={!!checkoutSameDayMapping}
+          onClose={() => setCheckoutSameDayMapping(null)}
+          mapping={checkoutSameDayMapping}
+          onCheckoutCompleted={handleCheckoutSameDayCompleted}
         />
       )}
     </div>

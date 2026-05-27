@@ -656,3 +656,51 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== 옵션 B (예약 우선 매칭) — 결제 방식 라디오 분기 ===== */
+.mg-v2-mapping-creation-modal__payment-timing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 8px);
+  padding: var(--mg-spacing-md, 12px);
+  margin-bottom: var(--mg-spacing-md, 12px);
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
+  border-radius: var(--ad-b0kla-radius, 8px);
+  background: var(--ad-b0kla-bg-soft, var(--mg-color-surface));
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-legend {
+  font-weight: var(--mg-font-weight-semibold, 600);
+  font-size: var(--mg-font-size-sm, 13px);
+  color: var(--ad-b0kla-text-strong, var(--mg-color-text));
+  padding: 0 var(--mg-spacing-xs, 4px);
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+  cursor: pointer;
+  font-size: var(--mg-font-size-sm, 13px);
+  color: var(--ad-b0kla-text, var(--mg-color-text));
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-option input[type='radio'] {
+  cursor: pointer;
+  accent-color: var(--ad-b0kla-accent, var(--mg-color-primary));
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-hint {
+  margin: var(--mg-spacing-xs, 4px) 0 0 0;
+  font-size: var(--mg-font-size-xs, 12px);
+  color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
+}
+
+.mg-v2-mapping-creation-modal__completion-notice {
+  margin-top: var(--mg-spacing-md, 12px);
+  padding: var(--mg-spacing-md, 12px);
+  border-radius: var(--ad-b0kla-radius, 8px);
+  background: var(--ad-b0kla-bg-soft, var(--mg-color-surface));
+  font-size: var(--mg-font-size-sm, 13px);
+  color: var(--ad-b0kla-text, var(--mg-color-text));
+}

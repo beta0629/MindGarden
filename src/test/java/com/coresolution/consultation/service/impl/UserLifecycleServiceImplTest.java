@@ -25,7 +25,9 @@ import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.IllegalStateTransitionException;
 import com.coresolution.consultation.repository.AuditLogRepository;
+import com.coresolution.consultation.repository.DormantUserPiiVaultRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.DormantPiiVaultService;
 import com.coresolution.consultation.service.UserAnonymizationService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +55,8 @@ class UserLifecycleServiceImplTest {
     @Mock private UserRepository userRepository;
     @Mock private AuditLogRepository auditLogRepository;
     @Mock private UserAnonymizationService userAnonymizationService;
+    @Mock private DormantUserPiiVaultRepository dormantUserPiiVaultRepository;
+    @Mock private DormantPiiVaultService dormantPiiVaultService;
 
     @InjectMocks
     private UserLifecycleServiceImpl service;

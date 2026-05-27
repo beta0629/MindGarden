@@ -46,5 +46,27 @@
       "cancelLink": "탈퇴 취소하러 가기",
       "ariaLabel": "회원 탈퇴 진행 중 알림"
     }
+  },
+  "dormant": {
+    "preNotice": {
+      "emailSubject": "[MindGarden] 휴면 계정 익명화 30일 사전 안내",
+      "title": "휴면 계정 익명화 사전 안내",
+      "greeting": "안녕하세요, {{name}}님",
+      "bodyLine1": "1년 이상 로그인 기록이 없어 회원님의 계정이 휴면 상태로 전환되었습니다.",
+      "bodyLine2": "개인정보보호법에 따라 추가 4년간 안정 보관 후 익명화 처리될 예정입니다.",
+      "bodyLine3": "현재 익명화 예정일까지 약 {{days}}일이 남았습니다 (익명화 예정일: {{anonymizeScheduledAt}}).",
+      "reactivationCta": "지금 로그인하시면 휴면 상태가 즉시 해제되어 계정을 계속 이용하실 수 있습니다.",
+      "footer": "본 안내는 개인정보보호법 제29조에 따른 사전 통지 의무로 발송되었습니다.",
+      "channel": {
+        "EMAIL": "이메일",
+        "KAKAO": "카카오 알림톡",
+        "SMS": "문자 메시지"
+      }
+    },
+    "reactivate": {
+      "successTitle": "휴면 계정이 해제되었습니다",
+      "successMessage": "이전 계정 정보가 복원되어 다시 이용하실 수 있습니다.",
+      "failureMessage": "휴면 계정 해제 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+    }
   }
 }

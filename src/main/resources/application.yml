@@ -167,6 +167,30 @@ mindgarden:
       android-store-url: ""
       android-apk-url: ""
       ios-store-url: ""
+  # =====================================================
+  # Phase 3 휴면(DORMANT) + 익명화 배치 + 30일 사전 통지 (정책서 v1.2 §10.9)
+  # =====================================================
+  # Dry-run 초기 default=true: Phase 3 운영 진입 시 반드시 1주 dry-run 검증 후 false 전환.
+  # dormant-pii-encryption-key: Base64(32 bytes) AES-256 키. 운영 yml/환경변수에서 명시 — 절대 코드 하드코딩 금지.
+  scheduler:
+    dormant-batch:
+      enabled: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_ENABLED:true}
+      dry-run: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_DRY_RUN:true}
+      cron: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_CRON:0 0 4 * * *}
+    anonymize-batch:
+      enabled: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_ENABLED:true}
+      dry-run: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_DRY_RUN:true}
+      cron: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_CRON:0 30 4 * * *}
+    dormant-pre-notice:
+      enabled: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_ENABLED:true}
+      dry-run: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_DRY_RUN:true}
+      cron: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_CRON:0 0 9 * * *}
+  lifecycle:
+    dormant-pii-encryption-key: ${MINDGARDEN_DORMANT_PII_ENC_KEY:}
+    dormant-period-years: ${MINDGARDEN_LIFECYCLE_DORMANT_PERIOD_YEARS:1}
+    anonymize-after-dormant-years: ${MINDGARDEN_LIFECYCLE_ANONYMIZE_AFTER_DORMANT_YEARS:4}
+    pre-notice-days-before: ${MINDGARDEN_LIFECYCLE_PRE_NOTICE_DAYS_BEFORE:30}
+
   security:
     # CAPTCHA (Cloudflare Turnstile). enabled=false 시 검증 생략(no-op). 시크릿·사이트키는 환경 변수로만 주입.
     captcha:

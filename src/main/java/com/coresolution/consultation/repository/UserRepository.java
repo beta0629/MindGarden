@@ -1564,4 +1564,27 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.lifecycleState = :state")
     long countByTenantIdAndLifecycleState(
             @Param("tenantId") String tenantId, @Param("state") LifecycleState state);
+
+    /**
+     * 1년 비활성 휴면(DORMANT) 전환 후보 조회 — Phase 3 DormantUserBatchService 입력
+     * (USER_LIFECYCLE_TERMINATION_POLICY v1.2 §10.9 Q9).
+     *
+     * <p>{@code lifecycle_state = ACTIVE AND last_login_at IS NOT NULL AND last_login_at &lt; :cutoff}
+     * 인 모든 테넌트 across 사용자를 조회한다. {@code last_login_at IS NULL} 인 신규 가입자는
+     * 정책서 의도상 1년 카운트 기준 모호 — 본 batch 에서는 제외하고 후속 정책(가입일 기준 카운트)
+     * 합의 후 별도 처리.</p>
+     *
+     * <p>WITHDRAWAL_CANCELLED 상태는 본 enum 에 존재하지 않는다 — 취소된 사용자는 ACTIVE 로
+     * 복귀하므로 본 쿼리의 ACTIVE 필터로 자연 포함된다.</p>
+     *
+     * @param cutoff 1년 전 시각 (LocalDateTime.now().minusYears(1))
+     * @return DORMANT 전환 후보 사용자 목록
+     */
+    @Query("SELECT u FROM User u "
+            + "WHERE u.lifecycleState = "
+            + "com.coresolution.consultation.constant.LifecycleState.ACTIVE "
+            + "AND u.lastLoginAt IS NOT NULL "
+            + "AND u.lastLoginAt < :cutoff "
+            + "AND u.isDeleted = false")
+    List<User> findDormantBatchCandidates(@Param("cutoff") LocalDateTime cutoff);
 }

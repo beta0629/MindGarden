@@ -74,4 +74,25 @@ public interface UserLifecycleService {
      * @return 전이 결과
      */
     TransitionResult cancelWithdrawal(Long userId, Actor actor);
+
+    /**
+     * 휴면 사용자 활성 복귀 — DORMANT → ACTIVE 전이 + dormant_user_pii_vault 복호화/원복.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY v1.2 §10.9 (Q9) — 4년 안정 보관 기간 중 사용자가
+     * 로그인하거나 명시적 복귀를 요청한 경우 본 메서드를 호출한다. 단일 트랜잭션 내에서:</p>
+     * <ol>
+     *   <li>vault 행 조회 — 없으면 IllegalArgumentException (DORMANT 가 아니거나 이미 복구됨)</li>
+     *   <li>encrypted_pii AES-256-GCM 복호화 → {@link com.coresolution.consultation.dto.lifecycle.DormantUserPiiSnapshot}</li>
+     *   <li>{@link com.coresolution.consultation.entity.User} 행에 PII 원복</li>
+     *   <li>lifecycle_state = ACTIVE 전이 (audit_logs.PII_VAULT_RESTORE 기록)</li>
+     *   <li>vault 행 hard delete (PII 영구 파기)</li>
+     * </ol>
+     *
+     * @param userId   대상 users.id
+     * @param tenantId 테넌트 ID (vault 행 멀티테넌트 격리 검증)
+     * @param actor    행위자 (본인 또는 ADMIN)
+     * @return 전이 결과 (PII_VAULT_RESTORE audit log id 포함)
+     * @throws IllegalArgumentException userId 미존재 / vault 행 없음 / 복호화 실패
+     */
+    TransitionResult reactivate(Long userId, String tenantId, Actor actor);
 }

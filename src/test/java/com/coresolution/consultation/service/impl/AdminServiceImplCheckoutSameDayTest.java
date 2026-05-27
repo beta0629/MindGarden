@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserIdGenerator;
+import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
@@ -142,6 +143,7 @@ class AdminServiceImplCheckoutSameDayTest {
     @Mock private MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
     @Mock private BatchNotificationDispatchService batchNotificationDispatchService;
     @Mock private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
+    @Mock private UserLifecycleService userLifecycleService;
 
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
         @Override
@@ -206,7 +208,8 @@ class AdminServiceImplCheckoutSameDayTest {
                 professionalProviderTypeService,
                 mappingSettlementNotificationHelper,
                 batchNotificationDispatchService,
-                refundAutoCancelNotificationService);
+                refundAutoCancelNotificationService,
+                userLifecycleService);
         spyService = Mockito.spy(realService);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

@@ -167,36 +167,6 @@ mindgarden:
       android-store-url: ""
       android-apk-url: ""
       ios-store-url: ""
-  # =====================================================
-  # Phase 3 휴면(DORMANT) + 익명화 배치 + 30일 사전 통지 (정책서 v1.2 §10.9)
-  # =====================================================
-  # Dry-run 초기 default=true: Phase 3 운영 진입 시 반드시 1주 dry-run 검증 후 false 전환.
-  # dormant-pii-encryption-key: Base64(32 bytes) AES-256 키. 운영 yml/환경변수에서 명시 — 절대 코드 하드코딩 금지.
-  scheduler:
-    dormant-batch:
-      enabled: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_ENABLED:true}
-      dry-run: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_DRY_RUN:true}
-      cron: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_CRON:0 0 4 * * *}
-    anonymize-batch:
-      enabled: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_ENABLED:true}
-      dry-run: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_DRY_RUN:true}
-      cron: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_CRON:0 30 4 * * *}
-    dormant-pre-notice:
-      enabled: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_ENABLED:true}
-      dry-run: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_DRY_RUN:true}
-      cron: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_CRON:0 0 9 * * *}
-  lifecycle:
-    dormant-pii-encryption-key: ${MINDGARDEN_DORMANT_PII_ENC_KEY:}
-    dormant-period-years: ${MINDGARDEN_LIFECYCLE_DORMANT_PERIOD_YEARS:1}
-    anonymize-after-dormant-years: ${MINDGARDEN_LIFECYCLE_ANONYMIZE_AFTER_DORMANT_YEARS:4}
-    pre-notice-days-before: ${MINDGARDEN_LIFECYCLE_PRE_NOTICE_DAYS_BEFORE:30}
-    # Phase 4 — 커뮤니티 작성자 익명화 (옵션 b — 본문 KEEP + 작성자 익명).
-    # enabled=false 면 anonymize 흐름에서 community 단계 전체 SKIP (운영 토글).
-    # tables 콤마 구분 — community_posts / community_comments. community_replies 도입 시 추가.
-    community-anonymization:
-      enabled: ${MINDGARDEN_COMMUNITY_ANONYMIZATION_ENABLED:true}
-      tables: ${MINDGARDEN_COMMUNITY_TABLES:community_posts,community_comments}
-
   security:
     # CAPTCHA (Cloudflare Turnstile). enabled=false 시 검증 생략(no-op). 시크릿·사이트키는 환경 변수로만 주입.
     captcha:
@@ -215,6 +185,68 @@ mindgarden:
       # 공개 온보딩 접두(GET 검사 등). POST+onboarding-create-path 정확 일치는 위 버킷만 적용(중복 카운트 방지)
       onboarding-public-path-prefix: /api/v1/onboarding/
       onboarding-public-requests-per-minute: 30
+  # =====================================================
+  # 사용자 라이프사이클(자동 파기·익명화·휴면·cutoff·PII 스크러빙) 통합 정책.
+  # 정책서 v1.2 (docs/standards/USER_LIFECYCLE_TERMINATION_POLICY.md) §0.1 Q9~Q11 / §10.9 반영.
+  # =====================================================
+  lifecycle:
+    # ---- Phase 5: cutoff (만료 데이터 파기) ----
+    cutoff:
+      # 비즈니스 정체성: NON_MEDICAL(default, 학회 윤리강령 3년) | MEDICAL(의료법 §22 10년)
+      business-mode: NON_MEDICAL
+      policy-version: v1.2-2026-05-28
+      # 카테고리별 보존 연수 (분기는 LifecycleCutoffProperties#getRetentionYears 로 단일화)
+      user-data-years: 1
+      consultation-records-years: 3
+      medical-consultation-records-years: 10
+      payments-years: 5
+      salary-data-years: 3
+      access-logs-years: 1
+      audit-logs-years: 3
+      consent-logs-years: 3
+    # ---- Phase 5: 자유 입력 PII 스크러빙 — 1단계 정규식(default). Phase 5.1 BERT / Phase 5.3 GPT 후속. ----
+    pii-scrubber:
+      strategy: regex
+      enabled-patterns: email,phone,rrn,arn,card,bank,url
+    # ---- Phase 3: 휴면(DORMANT) + 익명화 배치 + 30일 사전 통지 (정책서 §10.9) ----
+    # dormant-pii-encryption-key: Base64(32 bytes) AES-256 키. 운영 systemd Environment 에서 주입 — 절대 코드 하드코딩 금지.
+    dormant-pii-encryption-key: ${MINDGARDEN_DORMANT_PII_ENC_KEY:}
+    dormant-period-years: ${MINDGARDEN_LIFECYCLE_DORMANT_PERIOD_YEARS:1}
+    anonymize-after-dormant-years: ${MINDGARDEN_LIFECYCLE_ANONYMIZE_AFTER_DORMANT_YEARS:4}
+    pre-notice-days-before: ${MINDGARDEN_LIFECYCLE_PRE_NOTICE_DAYS_BEFORE:30}
+    # ---- Phase 4: 커뮤니티 작성자 익명화 (옵션 b — 본문 KEEP + 작성자 익명) — 정책서 §10.12 Q12 ----
+    # enabled=false 면 anonymize 흐름에서 community 단계 전체 SKIP (운영 토글).
+    # tables 콤마 구분 — community_posts / community_comments. community_replies 도입 시 추가.
+    community-anonymization:
+      enabled: ${MINDGARDEN_COMMUNITY_ANONYMIZATION_ENABLED:true}
+      tables: ${MINDGARDEN_COMMUNITY_TABLES:community_posts,community_comments}
+  # =====================================================
+  # 라이프사이클 관련 배치 스케줄러 운영 토글 (USER_LIFECYCLE_TERMINATION_POLICY §6.2 / §10.9 / Q5).
+  # enabled=false 이면 빈 자체가 생성되지 않아 cron 미실행. dry-run=true 이면 후보 조회·로깅만 수행하고
+  # transitionTo(...) 호출은 생략 — 운영 검증·tester M2 권고.
+  # =====================================================
+  scheduler:
+    # ---- Phase 2-β: 자발 탈퇴 30일 유예 + 어드민 강제 종료 7일 보존 ----
+    withdrawal-grace:
+      enabled: ${MINDGARDEN_SCHEDULER_WITHDRAWAL_GRACE_ENABLED:true}
+      dry-run: ${MINDGARDEN_SCHEDULER_WITHDRAWAL_GRACE_DRY_RUN:false}
+    admin-delete-retention:
+      enabled: ${MINDGARDEN_SCHEDULER_ADMIN_DELETE_RETENTION_ENABLED:true}
+      dry-run: ${MINDGARDEN_SCHEDULER_ADMIN_DELETE_RETENTION_DRY_RUN:false}
+    # ---- Phase 3: 1년 휴면 batch + 4년차 anonymize batch + 30일 사전 통지 ----
+    # Dry-run 초기 default=true: Phase 3 운영 진입 시 반드시 1주 dry-run 검증 후 false 전환.
+    dormant-batch:
+      enabled: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_ENABLED:true}
+      dry-run: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_DRY_RUN:true}
+      cron: ${MINDGARDEN_SCHEDULER_DORMANT_BATCH_CRON:0 0 4 * * *}
+    anonymize-batch:
+      enabled: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_ENABLED:true}
+      dry-run: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_DRY_RUN:true}
+      cron: ${MINDGARDEN_SCHEDULER_ANONYMIZE_BATCH_CRON:0 30 4 * * *}
+    dormant-pre-notice:
+      enabled: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_ENABLED:true}
+      dry-run: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_DRY_RUN:true}
+      cron: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_CRON:0 0 9 * * *}
 
 # JWT 설정 (프로파일별 설정에서 기본값 제공)
 jwt:

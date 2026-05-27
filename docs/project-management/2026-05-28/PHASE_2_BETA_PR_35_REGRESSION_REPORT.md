@@ -1,5 +1,11 @@
 # PR #35 Phase 2-β 어드민 강제 종료 + 7일 윈도우 cron + 되돌리기 UI — 회귀 검수 보고서
 
+> **⚠️ OBSOLETE — 2026-05-28 KST**
+>
+> 본 보고서는 V1(commit `03641e99f`) 기준이며, 후속 코더 조치(commit `6f3f2b4e3` rename Flyway + `c886a9a42` develop merge + `e8f0efdad` dry-run 토글)로 **HIGH H1 (Flyway 슬롯 충돌) + MEDIUM M2 (dry-run 토글 부재) 모두 해소** 되었다.
+>
+> 최신 검수 결과는 [`PHASE_2_BETA_PR_35_REGRESSION_REPORT_V2.md`](./PHASE_2_BETA_PR_35_REGRESSION_REPORT_V2.md) (**결론: PASS**) 참조.
+
 - **검수 일시**: 2026-05-28 KST
 - **검수자**: core-tester (서브에이전트)
 - **PR**: [#35 feat(lifecycle): Phase 2-β — 어드민 강제 종료 redirect + 7일 윈도우 cron + 되돌리기 UI (Q5)](https://github.com/beta0629/MindGarden/pull/35)

@@ -70,6 +70,9 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
+import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.dto.lifecycle.Actor;
+import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
@@ -144,6 +147,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final MappingSettlementNotificationHelper mappingSettlementNotificationHelper;
     private final BatchNotificationDispatchService batchNotificationDispatchService;
     private final RefundAutoCancelNotificationService refundAutoCancelNotificationService;
+    private final UserLifecycleService userLifecycleService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -2971,40 +2975,59 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteConsultant(Long id) {
-        log.info("🗑️ 상담사 삭제 처리 시작: ID={}", id);
-        
+    public void deleteConsultant(
+            Long id, Long adminUserId, String adminRoleCode, String reason) {
+        log.info("🗑️ 상담사 강제 종료 처리 시작 (Q5 7일 보존 윈도우): ID={}, adminUserId={}, reason={}",
+                id, adminUserId, reason);
+
         String tenantId = getTenantId();
         User consultant = userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND));
-        
+
         if (consultant.getRole() == null || !consultant.getRole().isProfessionalProvider()) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_CANNOT_DELETE_NON_CONSULTANT);
         }
-        
+
+        // 활성 매핑 가드 — 이관이 필요한 경우 deleteConsultantWithTransfer 를 사용
         List<ConsultantClientMapping> activeMappings = mappingRepository
                 .findByConsultantIdAndStatusNot(tenantId, id, ConsultantClientMapping.MappingStatus.TERMINATED);
-        
+
         if (!activeMappings.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 활성 매칭이 있습니다. 다른 상담사로 이전이 필요합니다.", activeMappings.size());
             throw new RuntimeException(String.format(
                     AdminServiceUserFacingMessages.MSG_CONSULTANT_ACTIVE_MAPPINGS_TRANSFER_FMT,
                     activeMappings.size()));
         }
-        
+
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
-        
+
         if (!futureSchedules.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 예정된 스케줄이 있습니다. 다른 상담사로 이전이 필요합니다.", futureSchedules.size());
             throw new RuntimeException(String.format(
                     AdminServiceUserFacingMessages.MSG_CONSULTANT_FUTURE_SCHEDULES_TRANSFER_FMT,
                     futureSchedules.size()));
         }
-        
-        consultant.setIsActive(false);
-        userRepository.save(consultant);
-        
-        log.info("✅ 상담사 삭제 완료: ID={}, 이름={}", id, consultant.getName());
+
+        // Phase 2-β redirect — 직접 setIsActive(false) 대신 lifecycle 단일 진입점 호출.
+        // UserLifecycleService 가 (a) 전이 그래프 가드, (b) deleted_at + deleted_by_admin_id stamp,
+        // (c) audit_logs (ADMIN_FORCED_DELETE) 기록을 단일 트랜잭션으로 수행한다.
+        Actor actor = resolveAdminActor(adminUserId, adminRoleCode);
+        String resolvedReason = resolveAdminReason(reason, "ADMIN_FORCED_DELETE_CONSULTANT");
+        userLifecycleService.transitionTo(id, LifecycleState.DELETED_BY_ADMIN, actor, resolvedReason);
+
+        log.info("✅ 상담사 강제 종료 완료 (DELETED_BY_ADMIN, 7일 윈도우 진입): ID={}, 이름={}",
+                id, consultant.getName());
+    }
+
+    @Override
+    @Deprecated
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteConsultant(Long id) {
+        // 레거시 호환 — SessionUtils 에서 현재 어드민 정보 추출 후 새 시그니처로 위임.
+        // 신규 호출은 모두 deleteConsultant(id, adminUserId, adminRoleCode, reason) 사용.
+        Long currentAdminId = SessionUtils.getCurrentUserId();
+        deleteConsultant(id, currentAdminId, UserRole.ADMIN.name(),
+                "ADMIN_FORCED_DELETE_CONSULTANT_LEGACY");
     }
 
     @Override
@@ -3249,13 +3272,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteClient(Long id) {
-        log.info("🗑️ 내담자 삭제 처리 시작: ID={}", id);
+    public void deleteClient(
+            Long id, Long adminUserId, String adminRoleCode, String reason) {
+        log.info("🗑️ 내담자 강제 종료 처리 시작 (Q5 7일 보존 윈도우): ID={}, adminUserId={}, reason={}",
+                id, adminUserId, reason);
         String tenantId = getTenantId();
-        
+
         User client = userRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_CLIENT_NOT_FOUND));
-        
+
         if (client.getRole() != UserRole.CLIENT) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_CANNOT_DELETE_NON_CLIENT);
         }
@@ -3348,14 +3373,59 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         log.info("📅 내담자 삭제로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
-        
-        client.setIsActive(false);
-        userRepository.save(client);
+
+        // Phase 2-β redirect — 직접 setIsActive(false) 대신 lifecycle 단일 진입점 호출.
+        // UserLifecycleService 가 (a) 전이 그래프 가드, (b) deleted_at + deleted_by_admin_id stamp,
+        // (c) audit_logs (ADMIN_FORCED_DELETE) 기록을 단일 트랜잭션으로 수행한다.
+        Actor actor = resolveAdminActor(adminUserId, adminRoleCode);
+        String resolvedReason = resolveAdminReason(reason, "ADMIN_FORCED_DELETE_CLIENT");
+        userLifecycleService.transitionTo(id, LifecycleState.DELETED_BY_ADMIN, actor, resolvedReason);
 
         clientStatsService.evictTenantClientsWithStatsListCache(tenantId);
         clientStatsService.evictClientStatsCache(tenantId, id);
 
-        log.info("✅ 내담자 삭제 완료: ID={}, 이름={}, 취소된 스케줄={}개", id, client.getName(), cancelledScheduleCount);
+        log.info("✅ 내담자 강제 종료 완료 (DELETED_BY_ADMIN, 7일 윈도우 진입): ID={}, 이름={}, 취소된 스케줄={}개",
+                id, client.getName(), cancelledScheduleCount);
+    }
+
+    @Override
+    @Deprecated
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteClient(Long id) {
+        // 레거시 호환 — SessionUtils 에서 현재 어드민 정보 추출 후 새 시그니처로 위임.
+        // 신규 호출은 모두 deleteClient(id, adminUserId, adminRoleCode, reason) 사용.
+        Long currentAdminId = SessionUtils.getCurrentUserId();
+        deleteClient(id, currentAdminId, UserRole.ADMIN.name(),
+                "ADMIN_FORCED_DELETE_CLIENT_LEGACY");
+    }
+
+    /**
+     * 어드민 actor 빌드 헬퍼 — adminUserId/roleCode null/blank 가드 + Actor.user 생성.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §8 — 어드민 강제 종료/되돌리기 시 actor.actorUserId
+     * 누락은 audit 추적 불가하므로 즉시 IllegalArgumentException 으로 차단한다.</p>
+     */
+    private static Actor resolveAdminActor(Long adminUserId, String adminRoleCode) {
+        if (adminUserId == null) {
+            throw new IllegalArgumentException(
+                    "adminUserId must not be null for admin lifecycle transition");
+        }
+        String role = (adminRoleCode == null || adminRoleCode.isBlank())
+                ? UserRole.ADMIN.name() : adminRoleCode;
+        return Actor.user(adminUserId, role);
+    }
+
+    /**
+     * 어드민 강제 종료 사유 검증 헬퍼 — null/blank 시 기본값으로 폴백.
+     *
+     * <p>정책 §8 = 사유 필수. 그러나 레거시 호출 (deleteClient(Long) 등) 호환을 위해
+     * blank 인 경우 호출 컨텍스트의 기본 사유를 사용한다. 신규 호출은 모두 명시 사유 전달.</p>
+     */
+    private static String resolveAdminReason(String reason, String defaultReason) {
+        if (reason != null && !reason.isBlank()) {
+            return reason;
+        }
+        return defaultReason;
     }
 
     @Override

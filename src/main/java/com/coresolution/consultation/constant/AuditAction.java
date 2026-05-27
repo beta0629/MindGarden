@@ -28,7 +28,14 @@ public enum AuditAction {
     /** 휴면 사전 통지 (30일 전 알림 발송 시점) — Phase 3 cron. */
     AUTO_DORMANT_NOTIFIED("AUTO_DORMANT_NOTIFIED", "enums.AuditAction.AUTO_DORMANT_NOTIFIED"),
     /** DORMANT vault → users PII 복원 (재로그인 시점) — Phase 3. */
-    PII_VAULT_RESTORE("PII_VAULT_RESTORE", "enums.AuditAction.PII_VAULT_RESTORE");
+    PII_VAULT_RESTORE("PII_VAULT_RESTORE", "enums.AuditAction.PII_VAULT_RESTORE"),
+    /** Phase 2-β — 어드민 강제 종료 (ACTIVE → DELETED_BY_ADMIN, Q5 7일 윈도우 진입). */
+    ADMIN_FORCED_DELETE("ADMIN_FORCED_DELETE", "enums.AuditAction.ADMIN_FORCED_DELETE"),
+    /** Phase 2-β — 어드민 7일 윈도우 내 되돌리기 (DELETED_BY_ADMIN → ACTIVE). */
+    ADMIN_RESTORE("ADMIN_RESTORE", "enums.AuditAction.ADMIN_RESTORE"),
+    /** Phase 2-β — 어드민 강제 종료 7일 윈도우 만료 후 자동 익명화 (DELETED_BY_ADMIN → ANONYMIZED). */
+    ADMIN_FORCED_DELETE_ANONYMIZED(
+            "ADMIN_FORCED_DELETE_ANONYMIZED", "enums.AuditAction.ADMIN_FORCED_DELETE_ANONYMIZED");
 
     private final String code;
     private final String messageKey;

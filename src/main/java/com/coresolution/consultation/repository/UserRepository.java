@@ -1622,4 +1622,59 @@ public interface UserRepository extends BaseRepository<User, Long> {
             + "AND u.lifecycleState = com.coresolution.consultation.constant.LifecycleState.DORMANT")
     Optional<User> findDormantUserByTenantIdAndId(
             @Param("tenantId") String tenantId, @Param("userId") Long userId);
+
+    /**
+     * 어드민 강제 종료 7일 보존 윈도우 만료 후보 조회 (Q5 결정 — AdminDeleteRetentionScheduler 입력).
+     *
+     * <p>{@code lifecycle_state=DELETED_BY_ADMIN AND deleted_at < :cutoff} 인 행을 모든 테넌트
+     * across 로 조회한다. 시스템 cron 이 호출하므로 테넌트 컨텍스트 우회.</p>
+     *
+     * @param cutoff 7일 전 시각 (LocalDateTime.now().minusDays(7))
+     * @return 만료 후보 목록
+     */
+    @Query("SELECT u FROM User u WHERE u.lifecycleState = "
+            + "com.coresolution.consultation.constant.LifecycleState.DELETED_BY_ADMIN "
+            + "AND u.deletedAt IS NOT NULL "
+            + "AND u.deletedAt < :cutoff")
+    List<User> findExpiredDeletedByAdminUsers(@Param("cutoff") LocalDateTime cutoff);
+
+    /**
+     * 어드민 강제 종료 7일 보존 윈도우 내 사용자 페이지 조회 (pending-deletion 어드민 화면).
+     *
+     * <p>{@code lifecycle_state=DELETED_BY_ADMIN AND deleted_at >= :cutoff} 인 행을 테넌트
+     * 격리 필터링해서 페이지 단위로 조회한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param cutoff   7일 전 시각 (LocalDateTime.now().minusDays(7))
+     * @param pageable 페이지
+     * @return 7일 윈도우 내 강제 종료 사용자 페이지
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.lifecycleState = "
+            + "com.coresolution.consultation.constant.LifecycleState.DELETED_BY_ADMIN "
+            + "AND u.deletedAt IS NOT NULL "
+            + "AND u.deletedAt >= :cutoff")
+    org.springframework.data.domain.Page<User> findPendingDeletionByTenantId(
+            @Param("tenantId") String tenantId,
+            @Param("cutoff") LocalDateTime cutoff,
+            org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * 어드민 강제 종료 7일 보존 윈도우 내 사용자 페이지 조회 — 역할 필터.
+     *
+     * @param tenantId 테넌트 ID
+     * @param cutoff   7일 전 시각
+     * @param role     역할 필터 (CLIENT/CONSULTANT 등)
+     * @param pageable 페이지
+     * @return 페이지
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.lifecycleState = "
+            + "com.coresolution.consultation.constant.LifecycleState.DELETED_BY_ADMIN "
+            + "AND u.deletedAt IS NOT NULL "
+            + "AND u.deletedAt >= :cutoff "
+            + "AND u.role = :role")
+    org.springframework.data.domain.Page<User> findPendingDeletionByTenantIdAndRole(
+            @Param("tenantId") String tenantId,
+            @Param("cutoff") LocalDateTime cutoff,
+            @Param("role") com.coresolution.consultation.constant.UserRole role,
+            org.springframework.data.domain.Pageable pageable);
 }

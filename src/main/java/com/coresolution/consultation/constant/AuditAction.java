@@ -22,7 +22,13 @@ public enum AuditAction {
     USER_WITHDRAWAL_REQUEST("USER_WITHDRAWAL_REQUEST", "enums.AuditAction.USER_WITHDRAWAL_REQUEST"),
     USER_WITHDRAWAL_CANCEL("USER_WITHDRAWAL_CANCEL", "enums.AuditAction.USER_WITHDRAWAL_CANCEL"),
     USER_RESTORE("USER_RESTORE", "enums.AuditAction.USER_RESTORE"),
-    ADMIN_FORCE_DEACTIVATE("ADMIN_FORCE_DEACTIVATE", "enums.AuditAction.ADMIN_FORCE_DEACTIVATE");
+    ADMIN_FORCE_DEACTIVATE("ADMIN_FORCE_DEACTIVATE", "enums.AuditAction.ADMIN_FORCE_DEACTIVATE"),
+    /** 익명화 사전 통지 (30일 전 알림 발송 시점) — Phase 3 cron. */
+    AUTO_ANONYMIZE_NOTIFIED("AUTO_ANONYMIZE_NOTIFIED", "enums.AuditAction.AUTO_ANONYMIZE_NOTIFIED"),
+    /** 휴면 사전 통지 (30일 전 알림 발송 시점) — Phase 3 cron. */
+    AUTO_DORMANT_NOTIFIED("AUTO_DORMANT_NOTIFIED", "enums.AuditAction.AUTO_DORMANT_NOTIFIED"),
+    /** DORMANT vault → users PII 복원 (재로그인 시점) — Phase 3. */
+    PII_VAULT_RESTORE("PII_VAULT_RESTORE", "enums.AuditAction.PII_VAULT_RESTORE");
 
     private final String code;
     private final String messageKey;

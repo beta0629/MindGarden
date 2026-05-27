@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import org.springframework.data.domain.Page;
@@ -35,10 +36,18 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Optional<User> findByTenantIdAndIdIgnoringDeleted(@Param("tenantId") String tenantId, @Param("id") Long id);
     
     /**
-     * 테넌트별 사용자 ID로 사용자 조회 (테넌트 필터링)
-     * 표준화 2025-12-08: username -> userId
+     * 테넌트별 사용자 ID 로 활성-유사 사용자 조회.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §3.6 step 5 — lifecycle SSOT 정합.
+     * 표준화 2025-12-08: username -> userId.</p>
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.userId = :userId AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.userId = :userId "
+            + "AND u.isDeleted = false "
+            + "AND u.lifecycleState IN "
+            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
+            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
+            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
+            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
     Optional<User> findByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") String userId);
 
     /**
@@ -79,12 +88,37 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Optional<User> findByUserIdAndIsActive(String userId, Boolean isActive);
     
     /**
-     * 테넌트별 사용자 ID로 사용자 존재 여부 확인 (테넌트 필터링)
-     * 표준화 2025-12-08: username -> userId
+     * 테넌트별 사용자 ID 로 활성-유사 사용자 존재 여부 확인.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §3.6 step 5 — lifecycle SSOT 정합.
+     * 표준화 2025-12-08: username -> userId.</p>
      */
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.tenantId = :tenantId AND u.userId = :userId AND u.isDeleted = false")
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
+            + "WHERE u.tenantId = :tenantId AND u.userId = :userId "
+            + "AND u.isDeleted = false "
+            + "AND u.lifecycleState IN "
+            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
+            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
+            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
+            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
     boolean existsByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") String userId);
     
+    /**
+     * 테넌트 + 이메일로 활성-유사 사용자 존재 여부 확인.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §3.6 step 5 — lifecycle SSOT 정합. 익명화된 행
+     * (ANONYMIZED / HARD_DELETED / DELETED_BY_ADMIN) 는 검색에서 제외하여 동일 이메일 재가입을
+     * 보장한다. 기존 {@code is_deleted=false} 단일 필터는 backward-compat 차원에서 보존하되
+     * 신규 호출은 본 메서드 또는 {@link #existsByTenantIdAndEmailAndActiveLifecycle} 권장.</p>
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
+            + "WHERE u.tenantId = :tenantId AND u.email = :email "
+            + "AND u.isDeleted = false "
+            + "AND u.lifecycleState IN "
+            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
+            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
+            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
+            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
     boolean existsByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
     
     /**
@@ -109,9 +143,18 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<Object[]> findExpiredUsersForDestruction(LocalDateTime cutoffDate);
     
     /**
-     * 테넌트별 이메일로 사용자 조회 (테넌트 필터링)
+     * 테넌트별 이메일로 활성-유사 사용자 조회.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §3.6 step 5 — lifecycle SSOT 정합. ANONYMIZED 행은
+     * 동일 이메일 재가입 보장을 위해 검색에서 제외 (W3 tombstone 으로 email surrogate 도 적용됨).</p>
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email = :email AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email = :email "
+            + "AND u.isDeleted = false "
+            + "AND u.lifecycleState IN "
+            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
+            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
+            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
+            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
     Optional<User> findByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
     
     /**
@@ -1444,4 +1487,81 @@ public interface UserRepository extends BaseRepository<User, Long> {
         + "WHERE u.id = :id AND u.tenantId = :tenantId")
     void updatePasswordCompletingCredentialChange(@Param("id") Long id, @Param("tenantId") String tenantId,
         @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
+
+    // ==================== Lifecycle SSOT 쿼리 (USER_LIFECYCLE_TERMINATION_POLICY §3.6) ====================
+
+    /**
+     * Lifecycle 단계로 사용자 조회 (테넌트 격리).
+     *
+     * @param tenantId 테넌트 ID
+     * @param state    {@link LifecycleState}
+     * @return 사용자 목록
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.lifecycleState = :state")
+    List<User> findByTenantIdAndLifecycleState(
+            @Param("tenantId") String tenantId, @Param("state") LifecycleState state);
+
+    /**
+     * 자발 탈퇴 30일 유예 만료 후보 조회 (Q3 결정 — WithdrawalGracePeriodScheduler 입력).
+     *
+     * <p>{@code lifecycle_state=WITHDRAWAL_PENDING AND withdrawal_requested_at < :cutoff} 인
+     * 행을 모든 테넌트 across 로 조회한다. 시스템 cron 이 호출하므로 테넌트 컨텍스트 우회.</p>
+     *
+     * @param cutoff 30일 전 시각 (LocalDateTime.now().minusDays(30))
+     * @return 만료 후보 목록
+     */
+    @Query("SELECT u FROM User u WHERE u.lifecycleState = "
+            + "com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING "
+            + "AND u.withdrawalRequestedAt IS NOT NULL "
+            + "AND u.withdrawalRequestedAt < :cutoff")
+    List<User> findExpiredWithdrawalPendingUsers(@Param("cutoff") LocalDateTime cutoff);
+
+    /**
+     * 활성-유사(ACTIVE / SUSPENDED / WITHDRAWAL_PENDING / DORMANT) 상태 + 이메일 존재 여부.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §3.6 step 5 — 이메일 중복 검사는 익명화된 행을
+     * 제외해야 동일 이메일 재가입이 가능하다. 본 메서드는 {@link #existsByTenantIdAndEmail}
+     * 의 lifecycle SSOT 후속 메서드.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param email    이메일
+     * @return 활성-유사 상태에 해당 이메일이 존재하면 true
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
+            + "WHERE u.tenantId = :tenantId AND u.email = :email "
+            + "AND u.lifecycleState IN "
+            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
+            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
+            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
+            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
+    boolean existsByTenantIdAndEmailAndActiveLifecycle(
+            @Param("tenantId") String tenantId, @Param("email") String email);
+
+    /**
+     * 활성-유사 상태 + userId 존재 여부 — 동일 user_id 재가입 가드.
+     *
+     * @param tenantId 테넌트 ID
+     * @param userId   user_id (string)
+     * @return 활성-유사 상태에 해당 userId 존재하면 true
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
+            + "WHERE u.tenantId = :tenantId AND u.userId = :userId "
+            + "AND u.lifecycleState IN "
+            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
+            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
+            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
+            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
+    boolean existsByTenantIdAndUserIdAndActiveLifecycle(
+            @Param("tenantId") String tenantId, @Param("userId") String userId);
+
+    /**
+     * Lifecycle 상태별 카운트 — 운영 대시보드 / 모니터링 용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param state    {@link LifecycleState}
+     * @return 카운트
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.lifecycleState = :state")
+    long countByTenantIdAndLifecycleState(
+            @Param("tenantId") String tenantId, @Param("state") LifecycleState state);
 }

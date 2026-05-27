@@ -1,0 +1,72 @@
+/**
+ * 테넌트 프로필 — B0KlA 빈 상태 일러스트 토큰 매핑
+ *
+ * 핸드오프 §C 컬러 팔레트:
+ *   - Base: var(--ad-b0kla-bg) — Surface
+ *   - Stroke/Line: var(--ad-b0kla-border) — Border
+ *   - Accent: var(--ad-b0kla-green) — Primary B0KlA green
+ *
+ * 모든 색상은 토큰을 사용하고, 다크 모드(prefers-color-scheme: dark)에서도
+ * 동일 토큰을 통해 자동 정합한다.
+ *
+ * @author CoreSolution
+ * @since 2026-05-27
+ */
+
+.mg-v2-tenant-profile__illustration {
+  display: block;
+  flex-shrink: 0;
+}
+
+.mg-v2-tenant-profile__illustration-surface {
+  fill: var(--ad-b0kla-bg);
+  stroke: var(--ad-b0kla-border);
+  stroke-width: 2;
+}
+
+.mg-v2-tenant-profile__illustration-accent {
+  fill: var(--ad-b0kla-green-bg);
+  stroke: var(--ad-b0kla-green);
+  stroke-width: 2;
+}
+
+.mg-v2-tenant-profile__illustration-stroke {
+  fill: var(--ad-b0kla-border);
+  stroke: none;
+}
+
+.mg-v2-tenant-profile__illustration-stroke-block {
+  fill: var(--ad-b0kla-border);
+  stroke: none;
+  opacity: 0.7;
+}
+
+.mg-v2-tenant-profile__illustration-line {
+  stroke: var(--ad-b0kla-border);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.mg-v2-tenant-profile__illustration-card-line {
+  stroke: var(--ad-b0kla-bg);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.mg-v2-tenant-profile__illustration-check {
+  fill: none;
+  stroke: var(--ad-b0kla-green);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mg-v2-tenant-profile__illustration-clip {
+  fill: var(--ad-b0kla-bg);
+  stroke: var(--ad-b0kla-border);
+  stroke-width: 2;
+}
+
+.mg-v2-tenant-profile__illustration-clip-dot {
+  fill: var(--ad-b0kla-green);
+}

@@ -1,17 +1,39 @@
+/**
+ * 테넌트 프로필 UI/UX 토큰 정합 스타일시트
+ *
+ * - 핸드오프 §B / §D / §G 기반 (B0KlA 디자인 토큰 + 2-컬럼 grid + 빈 상태 정책).
+ * - 모든 색상·spacing·radius 는 `--ad-b0kla-*`, `--mg-spacing-*` 토큰을 사용한다.
+ * - 좌측 vertical accent bar(`border-left: 4px solid var(--ad-b0kla-green)`) 는 제거됨 (핸드오프 §B).
+ * - 반응형: ≥1280 / 1024-1279 / 768-1023 / <768 (핸드오프 §D).
+ *
+ * @author CoreSolution
+ * @since 2025-11-22
+ * @updated 2026-05-27 (테넌트 프로필 UI/UX 개선)
+ */
+
 /* B0KlA 래퍼(mg-v2-ad-b0kla) + ContentArea/ContentHeader/ContentSection 조합 */
 .mg-v2-tenant-profile .mg-v2-ad-b0kla__container {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* ContentSection 카드: 좌측 B0KlA 그린 악센트 */
+/* 좌측 vertical accent bar 제거 — 핸드오프 §B '카드 장식 및 제거 정책' */
 .mg-v2-tenant-profile .mg-v2-content-section--card {
-  border-left: 4px solid var(--ad-b0kla-green);
+  border-left: none;
 }
 
 .tenant-profile-header {
   width: 100%;
   min-width: 0;
+}
+
+/* ContentHeader 우측 영역: "이름 변경" 액션 + "활성" 배지 — 핸드오프 §A */
+.mg-v2-tenant-profile__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
+  justify-content: flex-end;
 }
 
 .mg-v2-tenant-profile__pill-toggle {
@@ -37,10 +59,28 @@
   gap: var(--mg-spacing-md, 1rem);
 }
 
+/* 기본 grid (알림·연동 카드 등 자동 줄바꿈용) */
 .mg-v2-tenant-profile__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: var(--mg-spacing-md, 1rem);
+}
+
+/*
+ * 2-컬럼 좌우 분할 grid (테넌트 정보 카드) — 핸드오프 §A (Q1=A)
+ * - ≥1024px : 2-컬럼 유지
+ * - <1024px : 1-컬럼 stack
+ */
+.mg-v2-tenant-profile__grid--two-col {
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--mg-spacing-lg, 1.5rem);
+}
+
+.mg-v2-tenant-profile__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, 1rem);
+  min-width: 0;
 }
 
 .mg-v2-tenant-profile__field label {
@@ -55,6 +95,18 @@
   margin: 0;
   font-size: 1rem;
   color: var(--ad-b0kla-title-color);
+}
+
+/* 빈 상태 카드 높이 정책 — 핸드오프 §C / §D */
+.mg-v2-tenant-profile__overview-card .mg-v2-empty-state {
+  min-height: 240px;
+  padding: var(--mg-spacing-xl, 2rem) var(--mg-spacing-lg, 1.5rem);
+}
+
+.mg-v2-tenant-profile__empty .mg-v2-empty-state__icon {
+  width: 100px;
+  height: 100px;
+  margin-bottom: var(--mg-spacing-md, 1rem);
 }
 
 .subscription-summary,
@@ -107,13 +159,6 @@
   border-radius: var(--ad-b0kla-radius-sm);
   font-size: 0.75rem;
   font-weight: 500;
-}
-
-.no-data {
-  color: var(--ad-b0kla-text-secondary);
-  font-style: italic;
-  text-align: center;
-  padding: var(--mg-spacing-xl, 2rem);
 }
 
 .payment-method-registration-wrapper {
@@ -214,22 +259,6 @@
   transform: none;
 }
 
-.no-payment-methods {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem var(--mg-spacing-lg, 1.5rem);
-  text-align: center;
-  color: var(--ad-b0kla-text-secondary);
-}
-
-.no-payment-methods svg {
-  margin-bottom: var(--mg-spacing-md, 1rem);
-  opacity: 0.5;
-  color: var(--ad-b0kla-icon-color);
-}
-
 .tenant-profile-error {
   display: flex;
   flex-direction: column;
@@ -244,6 +273,22 @@
   margin-bottom: var(--mg-spacing-md, 1rem);
 }
 
+/* ===== 반응형 — 핸드오프 §D ===== */
+
+/* Desktop Standard: 1024px ~ 1279px — column gap 16px 로 축소 */
+@media (max-width: 1279px) {
+  .mg-v2-tenant-profile__grid--two-col {
+    gap: var(--mg-spacing-md, 1rem);
+  }
+}
+
+/* Tablet 및 Mobile: <1024px — 1-컬럼 stack */
+@media (max-width: 1023px) {
+  .mg-v2-tenant-profile__grid--two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .subscription-summary-item,
   .payment-method-card {
@@ -255,5 +300,11 @@
   .payment-method-card-content,
   .payment-method-actions {
     width: 100%;
+  }
+
+  /* Header actions wrap 정책 — 핸드오프 §D 모바일 */
+  .mg-v2-tenant-profile__header-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }

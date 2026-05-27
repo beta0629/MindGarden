@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.dto.AccountTypeForJournalDto;
+import com.coresolution.consultation.dto.erp.accounting.AccountingEntryDetailDto;
+import com.coresolution.consultation.dto.erp.accounting.AccountingEntryListDto;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.CommonCode;
@@ -171,17 +173,23 @@ public class AccountingServiceImpl implements AccountingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AccountingEntry> getJournalEntries(String tenantId) {
+    public List<AccountingEntryListDto> getJournalEntries(String tenantId) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
-        return accountingEntryRepository.findByTenantId(tenantId);
+        // LEFT JOIN FETCH 로 lines 까지 함께 로딩하여 LazyInit 회피 + N+1 차단.
+        List<AccountingEntry> entries = accountingEntryRepository.findByTenantIdWithLines(tenantId);
+        return entries.stream()
+                .map(AccountingEntryListDto::fromEntity)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public AccountingEntry getJournalEntry(String tenantId, Long entryId) {
+    public AccountingEntryDetailDto getJournalEntry(String tenantId, Long entryId) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
-        return accountingEntryRepository.findByTenantIdAndId(tenantId, entryId)
+        AccountingEntry entry = accountingEntryRepository
+                .findByTenantIdAndIdWithLines(tenantId, entryId)
                 .orElseThrow(() -> new IllegalArgumentException("분개를 찾을 수 없습니다: " + entryId));
+        return AccountingEntryDetailDto.fromEntity(entry);
     }
 
     /**

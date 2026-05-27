@@ -528,21 +528,30 @@ audit_logs (
 
 ### §8.2 `action` enum (정착 코드 — `AuditAction` 도메인 enum)
 
-| action | 의미 | source | 호출 위치 (Phase 2~5 위임) |
+> **출처**: `com.coresolution.consultation.constant.AuditAction` (ec922de12). `code` + `messageKey=enums.AuditAction.<NAME>` 로 i18n SSOT. 하드코딩 게이트 통과.
+
+| action (정착 코드) | 의미 | source | 호출 위치 (Phase 2~5 위임) |
 |---|---|---|---|
-| `SELF_WITHDRAWAL_REQUESTED` | 자발 탈퇴 신청 | SELF | `UserLifecycleService.requestWithdrawal` |
-| `SELF_WITHDRAWAL_CANCELLED` | 본인 30일 내 취소 | SELF | `UserLifecycleService.cancelWithdrawal` |
 | `USER_ANONYMIZE` | anonymize 실행 (자발/강제/자동 공통 종착) | SELF·ADMIN·SYSTEM | `UserAnonymizationService.anonymize` |
-| `ADMIN_FORCED_INACTIVATE` | 어드민 비활성 (`DELETED_BY_ADMIN`) | ADMIN | `AdminServiceImpl.deleteClient/deleteConsultant` |
-| `ADMIN_ROLLBACK` | 어드민 7일 내 롤백 | ADMIN | `AdminServiceImpl.restoreClient/restoreConsultant` |
 | `USER_DORMANT_TRANSITION` | DORMANT 진입 | SYSTEM | `DormantUserBatchService` (Phase 3) |
-| `AUTO_DORMANT_REACTIVATED` | 본인 재로그인 복원 | SELF | `LoginService` 가드 |
-| `AUTO_ANONYMIZE_NOTIFIED` | 익명화 사전 통지 (30일 전) | SYSTEM | `AnonymizeBatchService` |
 | `USER_HARD_DELETE` | 행 hard delete (보존 의무 만료) | SYSTEM | `PersonalDataDestructionService` (Phase 5) |
 | `LIFECYCLE_STATE_CHANGE` | 일반 상태 전이 (default fallback) | * | `UserLifecycleService.transitionTo` |
-| `PII_VAULT_RESTORE` | DORMANT vault → users PII 복원 | SELF | `LoginService` 가드 |
+| `USER_WITHDRAWAL_REQUEST` | 자발 탈퇴 신청 | SELF | `UserLifecycleService.requestWithdrawal` |
+| `USER_WITHDRAWAL_CANCEL` | 본인 30일 내 취소 | SELF | `UserLifecycleService.cancelWithdrawal` |
+| `USER_RESTORE` | 어드민 7일 내 롤백 / DORMANT 재로그인 복원 | ADMIN·SELF | `AdminServiceImpl.restoreClient` / `LoginService` 가드 |
+| `ADMIN_FORCE_DEACTIVATE` | 어드민 강제 비활성 (`DELETED_BY_ADMIN`) | ADMIN | `AdminServiceImpl.deleteClient/deleteConsultant` |
 
-> **정착 코드**: `com.coresolution.consultation.constant.AuditAction` (ec922de12). `code` + `messageKey=enums.AuditAction.<NAME>` 로 i18n SSOT. 하드코딩 게이트 통과.
+#### §8.2.1 Phase 2~3 위임 시 추가 필요한 `AuditAction` 값 (fix-forward)
+
+> v1.0 §8 의 가칭 enum 과 정착 코드 사이 diff 분석 결과, 아래 3 값은 정착 enum 에 부재 → **Phase 2~3 위임 시 `AuditAction` enum 에 추가 + i18n 메시지 키 정착 필요**:
+
+| 추가 필요 값 | 의미 | 부재로 인한 영향 |
+|---|---|---|
+| `AUTO_ANONYMIZE_NOTIFIED` | 익명화 사전 통지 (30일 전 알림 발송 시점) | Phase 3 cron 의 사전 통지 단계를 audit 으로 추적 불가 — `LIFECYCLE_STATE_CHANGE` 로 대체 시 의미 모호 |
+| `AUTO_DORMANT_NOTIFIED` | 휴면 사전 통지 (30일 전 알림 발송 시점) | 동일 |
+| `PII_VAULT_RESTORE` | DORMANT vault → users PII 복원 (재로그인 시점) | `USER_RESTORE` 와 별도 추적 권장 — vault 복원 vs 단순 상태 복원 구분 필요 |
+
+→ **Phase 2 위임 (UserLifecycleService 구현) 시 위 3 값 enum 추가 + 메시지 키 (`messages/enums_*.properties`) + `LifecycleEnumsTest` 매트릭스 확장 동시 처리**. 별도 마이그레이션 불필요 (audit_logs.action 은 VARCHAR(60) 자유 적재).
 
 ### §8.3 `personal_data_destruction_logs` — PIPA 시행령 §16 충족
 

@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
+import com.coresolution.consultation.dto.CheckoutSameDayRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
@@ -1878,6 +1879,44 @@ public class AdminController extends BaseApiController {
                 ConsultantClientMappingResponse.fromEntity(mapping);
 
         return created("매칭이 성공적으로 생성되었습니다", response);
+    }
+
+    /**
+     * 옵션 B (예약 우선 매칭) — 당일 카드 결제 단일 진입점.
+     * <p>
+     * 합의서: {@code docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md}.
+     * PENDING_PAYMENT 상태 매핑 1건에 대해 결제 정보를 입력받아
+     * confirmPayment + confirmDeposit + approveMapping을 단일 트랜잭션으로 연속 호출하여
+     * 매핑을 ACTIVE(또는 단회기 소진 시 SESSIONS_EXHAUSTED)로 전이시킨다.
+     *
+     * @param mappingId 대상 매핑 ID
+     * @param request 결제 정보 (paymentMethod, paymentReference, paymentAmount, sameDaySessionScheduleId)
+     * @param session HTTP 세션 (MAPPING_MANAGE 권한 + tenantId 검증)
+     * @return 최종 매핑 상태가 반영된 응답 DTO
+     */
+    @PostMapping("/mappings/{mappingId}/checkout-same-day")
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> checkoutSameDay(
+            @PathVariable Long mappingId,
+            @RequestBody @Valid CheckoutSameDayRequest request,
+            HttpSession session) {
+        log.info("💳 옵션 B 당일 카드 결제 요청: mappingId={}", mappingId);
+
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "MAPPING_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        }
+
+        ConsultantClientMapping mapping = adminService.checkoutSameDayCard(
+                mappingId,
+                request.getPaymentMethod(),
+                request.getPaymentReference(),
+                request.getPaymentAmount(),
+                request.getSameDaySessionScheduleId());
+
+        ConsultantClientMappingResponse response =
+                ConsultantClientMappingResponse.fromEntity(mapping);
+        return success("옵션 B 당일 카드 결제가 완료되었습니다.", response);
     }
 
     /**

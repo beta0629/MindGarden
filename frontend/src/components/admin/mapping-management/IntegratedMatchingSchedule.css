@@ -684,3 +684,39 @@
     min-width: 0;
   }
 }
+
+/* ===== 옵션 B (예약 우선 매칭) — PENDING_PAYMENT 알림 카드 ===== */
+.integrated-schedule__pending-payment-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-md, 12px);
+  margin: var(--mg-spacing-md, 12px) 0;
+  padding: var(--mg-spacing-md, 12px) var(--mg-spacing-lg, 16px);
+  border: 1px solid var(--ad-b0kla-warning-border, var(--mg-color-warning-border));
+  border-radius: var(--ad-b0kla-radius, 8px);
+  background: var(--ad-b0kla-warning-bg, var(--mg-color-warning-soft));
+  color: var(--ad-b0kla-text-strong, var(--mg-color-text));
+}
+
+.integrated-schedule__pending-payment-alert-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 4px);
+}
+
+.integrated-schedule__pending-payment-alert-title {
+  font-weight: var(--mg-font-weight-semibold, 600);
+  font-size: var(--mg-font-size-sm, 13px);
+}
+
+.integrated-schedule__pending-payment-alert-count {
+  font-size: var(--mg-font-size-xs, 12px);
+  color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
+}
+
+.integrated-schedule__pending-payment-alert-actions {
+  display: inline-flex;
+  gap: var(--mg-spacing-sm, 8px);
+}

@@ -75,7 +75,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     paymentReference: '',
     responsibility: DEFAULT_MAPPING_CONFIG.RESPONSIBILITY,
     specialConsiderations: '',
-    notes: ''
+    notes: '',
+    // 옵션 B (예약 우선 매칭): ADVANCE = 선납 입금(현행) / SAME_DAY_CARD = 사후 카드 결제
+    paymentTiming: 'ADVANCE'
   });
 
   const generateReferenceNumber = (method = 'BANK_TRANSFER') => {
@@ -285,6 +287,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }
     setLoading(true);
     try {
+      const isSameDayCard = paymentInfo.paymentTiming === 'SAME_DAY_CARD';
       const mappingData = {
         consultantId: selectedConsultant.id,
         clientId: selectedClient.id,
@@ -295,7 +298,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         specialConsiderations: paymentInfo.specialConsiderations,
         paymentStatus: 'PENDING',
         totalSessions: paymentInfo.totalSessions,
-        remainingSessions: paymentInfo.totalSessions,
+        // 옵션 B 사후 카드 결제: 신규 매칭에 회기를 즉시 부여하지 않고 PENDING_PAYMENT 유지.
+        // confirmDeposit (checkoutSameDayCard 내부) 단계에서 totalSessions를 채운다.
+        remainingSessions: isSameDayCard ? 0 : paymentInfo.totalSessions,
         packageName: paymentInfo.packageName,
         packagePrice: paymentInfo.packagePrice,
         paymentAmount: paymentInfo.packagePrice,
@@ -303,7 +308,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         paymentReference: paymentInfo.paymentReference,
         mappingType: 'NEW'
       };
-      await apiPost(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, mappingData);
+      const response = await apiPost(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, mappingData);
       if (paymentInfo.packageName) {
         localStorage.setItem('lastUsedPackage', JSON.stringify({
           packageName: paymentInfo.packageName,
@@ -321,7 +326,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         })
       );
       setStep(5);
-      onMappingCreated?.();
+      // 옵션 B: 사후 카드 분기는 새 매핑 ID를 후속 모달에 전달하기 위해 응답에서 추출.
+      const createdMappingId = response?.data?.id ?? response?.id ?? null;
+      onMappingCreated?.({
+        paymentTiming: paymentInfo.paymentTiming,
+        mappingId: createdMappingId,
+        packagePrice: paymentInfo.packagePrice
+      });
     } catch (apiError) {
       const msg = apiError?.response?.data?.message || apiError?.message || t('admin:mappingCreation.error.createFailed');
       notificationManager.error(msg);
@@ -641,6 +652,43 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         {step === 4 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
             <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.payment')}</h3>
+            {/* 옵션 B: 결제 방식 선택 (선납 / 사후 카드) — 합의서 §0 Q4 */}
+            <fieldset
+              className="mg-v2-mapping-creation-modal__payment-timing"
+              aria-labelledby="mapping-creation-payment-timing-legend"
+            >
+              <legend
+                id="mapping-creation-payment-timing-legend"
+                className="mg-v2-mapping-creation-modal__payment-timing-legend"
+              >
+                {t('admin:mappingCreation.paymentTiming.title')}
+              </legend>
+              <label className="mg-v2-mapping-creation-modal__payment-timing-option">
+                <input
+                  type="radio"
+                  name="mapping-creation-payment-timing"
+                  value="ADVANCE"
+                  checked={paymentInfo.paymentTiming === 'ADVANCE'}
+                  onChange={() => setPaymentInfo(prev => ({ ...prev, paymentTiming: 'ADVANCE' }))}
+                />
+                <span>{t('admin:mappingCreation.paymentTiming.advance')}</span>
+              </label>
+              <label className="mg-v2-mapping-creation-modal__payment-timing-option">
+                <input
+                  type="radio"
+                  name="mapping-creation-payment-timing"
+                  value="SAME_DAY_CARD"
+                  checked={paymentInfo.paymentTiming === 'SAME_DAY_CARD'}
+                  onChange={() => setPaymentInfo(prev => ({ ...prev, paymentTiming: 'SAME_DAY_CARD' }))}
+                />
+                <span>{t('admin:mappingCreation.paymentTiming.sameDayCard')}</span>
+              </label>
+              {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (
+                <p className="mg-v2-mapping-creation-modal__payment-timing-hint">
+                  {t('admin:mappingCreation.paymentTiming.sameDayCardHint')}
+                </p>
+              )}
+            </fieldset>
             <div className="mg-v2-mapping-creation-modal__summary-bar">
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
                 <User size={16} /> {toDisplayString(selectedConsultant?.name)}
@@ -747,6 +795,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               <p><strong>{t('admin:mappingCreation.step.package')}:</strong> {toDisplayString(paymentInfo.packageName)}</p>
               <p><strong>{t('admin:mappingCreation.sessionPrice')}:</strong> {paymentInfo.totalSessions}{t('admin:mappingCreation.sessionUnitShort')} · {paymentInfo.packagePrice?.toLocaleString()}{t('admin:mappingCreation.currency')}</p>
             </div>
+            {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (
+              <p className="mg-v2-mapping-creation-modal__completion-notice">
+                {t('admin:mappingCreation.paymentTiming.sameDayCardCompletionNotice')}
+              </p>
+            )}
           </section>
         )}
       </div>

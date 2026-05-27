@@ -256,10 +256,21 @@ const IntegratedMatchingSchedule = () => {
     setCreateMappingModalOpen(false);
     loadMappings();
     // 옵션 B 사후 카드 분기: 생성된 PENDING_PAYMENT 매핑을 받아 CheckoutSameDayModal 자동 오픈.
+    // P0 핫픽스 2026-05-28: 매핑 정보가 누락된 경우 모달 자동 진입을 차단해 NPE/표시 오류를 막는다.
     if (result && result.paymentTiming === 'SAME_DAY_CARD' && result.mappingId) {
+      if (!result.consultantId || !result.packageName) {
+        notificationManager.error('매칭 정보가 누락되어 결제 모달을 열 수 없습니다.');
+        return;
+      }
       setCheckoutSameDayMapping({
         id: result.mappingId,
-        packagePrice: result.packagePrice ?? null
+        consultantId: result.consultantId,
+        consultantName: result.consultantName,
+        clientId: result.clientId,
+        clientName: result.clientName,
+        packageName: result.packageName,
+        packagePrice: result.packagePrice ?? null,
+        totalSessions: result.totalSessions ?? null
       });
     }
   };
@@ -374,7 +385,15 @@ const IntegratedMatchingSchedule = () => {
                     variant="primary"
                     size="small"
                     className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm' })}
-                    onClick={() => setCheckoutSameDayMapping(firstPending)}
+                    onClick={() => {
+                      // P0 핫픽스 2026-05-28: PENDING_PAYMENT 매핑이라도
+                      // consultantId/packageName 이 누락되면 결제 모달 진입을 차단.
+                      if (!firstPending?.consultantId || !firstPending?.packageName) {
+                        notificationManager.warning('이 매칭은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 매칭을 다시 생성해 주세요.');
+                        return;
+                      }
+                      setCheckoutSameDayMapping(firstPending);
+                    }}
                     preventDoubleClick={false}
                   >
                     {t('admin:mapping.integrated.pendingPayment.alert.checkoutSameDay')}

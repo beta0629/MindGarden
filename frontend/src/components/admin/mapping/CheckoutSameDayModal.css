@@ -59,3 +59,13 @@
   font-size: var(--mg-font-size-xs, 12px);
   color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
 }
+
+/* P0 핫픽스 2026-05-28: 매핑 정보 누락 시 alert 박스 */
+.mg-v2-checkout-same-day-modal__invalid-alert {
+  padding: var(--mg-spacing-md, 12px);
+  border-radius: var(--ad-b0kla-radius, 8px);
+  background: var(--mg-color-warning-bg, #fff3cd);
+  color: var(--mg-color-warning-text, #856404);
+  font-size: var(--mg-font-size-sm, 13px);
+  line-height: var(--mg-line-height-md, 1.6);
+}

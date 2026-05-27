@@ -1,0 +1,151 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TenantProfileIllustrations TenantPaymentEmptyIllustration 지갑+카드 SVG 도형이 렌더된다 (스냅샷) 1`] = `
+<svg
+  aria-hidden="true"
+  class="mg-v2-tenant-profile__illustration"
+  focusable="false"
+  height="100"
+  role="img"
+  viewBox="0 0 100 100"
+  width="100"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect
+    class="mg-v2-tenant-profile__illustration-surface"
+    height="48"
+    rx="8"
+    ry="8"
+    width="72"
+    x="14"
+    y="30"
+  />
+  <rect
+    class="mg-v2-tenant-profile__illustration-accent"
+    height="36"
+    rx="6"
+    ry="6"
+    width="56"
+    x="22"
+    y="22"
+  />
+  <rect
+    class="mg-v2-tenant-profile__illustration-stroke-block"
+    height="6"
+    width="56"
+    x="22"
+    y="30"
+  />
+  <line
+    class="mg-v2-tenant-profile__illustration-card-line"
+    x1="30"
+    x2="46"
+    y1="46"
+    y2="46"
+  />
+  <line
+    class="mg-v2-tenant-profile__illustration-card-line"
+    x1="50"
+    x2="66"
+    y1="46"
+    y2="46"
+  />
+  <rect
+    class="mg-v2-tenant-profile__illustration-clip"
+    height="14"
+    rx="4"
+    ry="4"
+    width="20"
+    x="60"
+    y="50"
+  />
+  <circle
+    class="mg-v2-tenant-profile__illustration-clip-dot"
+    cx="74"
+    cy="57"
+    r="3"
+  />
+</svg>
+`;
+
+exports[`TenantProfileIllustrations TenantSubscriptionEmptyIllustration 체크마크 등 SVG 도형이 렌더된다 (스냅샷) 1`] = `
+<svg
+  aria-hidden="true"
+  class="mg-v2-tenant-profile__illustration"
+  focusable="false"
+  height="100"
+  role="img"
+  viewBox="0 0 100 100"
+  width="100"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect
+    class="mg-v2-tenant-profile__illustration-surface"
+    height="64"
+    rx="10"
+    ry="10"
+    width="72"
+    x="14"
+    y="22"
+  />
+  <rect
+    class="mg-v2-tenant-profile__illustration-accent"
+    height="16"
+    rx="10"
+    ry="10"
+    width="72"
+    x="14"
+    y="22"
+  />
+  <rect
+    class="mg-v2-tenant-profile__illustration-accent"
+    height="6"
+    width="72"
+    x="14"
+    y="32"
+  />
+  <rect
+    class="mg-v2-tenant-profile__illustration-stroke"
+    height="14"
+    rx="2"
+    ry="2"
+    width="4"
+    x="30"
+    y="14"
+  />
+  <rect
+    class="mg-v2-tenant-profile__illustration-stroke"
+    height="14"
+    rx="2"
+    ry="2"
+    width="4"
+    x="66"
+    y="14"
+  />
+  <line
+    class="mg-v2-tenant-profile__illustration-line"
+    x1="26"
+    x2="74"
+    y1="50"
+    y2="50"
+  />
+  <line
+    class="mg-v2-tenant-profile__illustration-line"
+    x1="26"
+    x2="66"
+    y1="62"
+    y2="62"
+  />
+  <line
+    class="mg-v2-tenant-profile__illustration-line"
+    x1="26"
+    x2="58"
+    y1="74"
+    y2="74"
+  />
+  <polyline
+    class="mg-v2-tenant-profile__illustration-check"
+    points="74,60 78,64 86,56"
+  />
+</svg>
+`;

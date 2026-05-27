@@ -175,6 +175,19 @@ public class User extends BaseEntity {
     private String withdrawalOptionsJson;
 
     /**
+     * 어드민 강제 종료(=DELETED_BY_ADMIN) 진입 시 강제 종료를 수행한 어드민 users.id.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5 — 7일 보존 윈도우 동안 어드민 대시보드에서
+     * "되돌리기" 기능을 제공하기 위해, 누가 강제 종료를 수행했는지 조회용 컬럼을 보강한다.
+     * audit_logs 에 동일 actor_user_id 가 기록되지만, pending-deletion 목록 조회 시 join 비용을
+     * 줄이기 위해 users 테이블에 캐시 컬럼으로 둔다. 자발 탈퇴/자동 cron 진입 행은 NULL.</p>
+     *
+     * <p>Flyway V20260606_003 로 추가된 {@code deleted_by_admin_id} 컬럼과 매핑된다.</p>
+     */
+    @Column(name = "deleted_by_admin_id")
+    private Long deletedByAdminId;
+
+    /**
      * 소셜 계정 여부
      */
     @Column(name = "is_social_account", nullable = false)

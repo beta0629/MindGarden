@@ -1,0 +1,118 @@
+/**
+ * 어드민 — 구독 관리 라우트 페이지 스타일.
+ *
+ * 디자이너 핸드오프(2026-05-27 §B/§D/§E) 정합:
+ *  - mg-v2-ad-b0kla 패턴 + 글로벌 SSOT 너비(`var(--mg-container-max)`)에 위임.
+ *  - 페이지 전용 `max-width` override 금지 (TenantProfile P1 회귀 재발 방지).
+ *  - 카드 그리드: ≥1024px 2~3 컬럼, 768~1023px 2 컬럼, <768px 1 컬럼.
+ *  - 모든 색상·간격·radius 는 디자인 토큰(var(--mg-v2-* / --ad-b0kla-* / --mg-spacing-*))만 사용.
+ *
+ * @author MindGarden
+ * @since 2026-05-27
+ */
+
+.mg-admin-billing-subscriptions {
+  width: 100%;
+  min-height: 100%;
+}
+
+.mg-admin-billing-subscriptions__empty {
+  padding: var(--mg-spacing-xl, var(--mg-v2-space-32));
+}
+
+.mg-admin-billing-subscriptions__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mg-spacing-md, var(--mg-v2-space-16));
+}
+
+@media (min-width: 768px) {
+  .mg-admin-billing-subscriptions__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .mg-admin-billing-subscriptions__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.mg-admin-billing-subscriptions__card {
+  background: var(--mg-v2-surface, var(--ad-b0kla-bg));
+  border: 1px solid var(--mg-v2-border-base, var(--ad-b0kla-border));
+  border-radius: var(--mg-v2-radius-16, var(--mg-radius-lg));
+  padding: var(--mg-spacing-lg, var(--mg-v2-space-24));
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, var(--mg-v2-space-16));
+}
+
+.mg-admin-billing-subscriptions__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm, var(--mg-v2-space-12));
+}
+
+.mg-admin-billing-subscriptions__card-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, var(--mg-v2-space-8));
+}
+
+.mg-admin-billing-subscriptions__card-title {
+  margin: 0;
+  font-size: var(--mg-font-size-lg, 1rem);
+  font-weight: var(--mg-font-weight-semibold, 600);
+  color: var(--mg-v2-text-primary, var(--ad-b0kla-text));
+}
+
+.mg-admin-billing-subscriptions__card-body {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mg-spacing-sm, var(--mg-v2-space-12));
+}
+
+.mg-admin-billing-subscriptions__card-body > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--mg-spacing-sm, var(--mg-v2-space-12));
+}
+
+.mg-admin-billing-subscriptions__card-body dt {
+  color: var(--mg-v2-text-secondary, var(--ad-b0kla-text-secondary));
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.mg-admin-billing-subscriptions__card-body dd {
+  margin: 0;
+  color: var(--mg-v2-text-primary, var(--ad-b0kla-text));
+  font-weight: var(--mg-font-weight-semibold, 600);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, var(--mg-v2-space-8));
+}
+
+.mg-admin-billing-subscriptions__card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mg-spacing-sm, var(--mg-v2-space-12));
+}
+
+.mg-admin-billing-subscriptions__reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, var(--mg-v2-space-12));
+}
+
+.mg-admin-billing-subscriptions__policy {
+  margin: 0;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--mg-v2-text-secondary, var(--ad-b0kla-text-secondary));
+}

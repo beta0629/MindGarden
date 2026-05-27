@@ -1,0 +1,27 @@
+/**
+ * SubscriptionManagement 임베드 래퍼 — UnifiedModal 내부 정합 스타일.
+ *
+ * - 기존 `SubscriptionManagement` 가 들고 있는 SimpleLayout / 자체 white card 디자인이
+ *   UnifiedModal 내부에서 중복 렌더되지 않도록 표면(레이아웃) 톤만 reset.
+ * - 디자인 토큰만 사용 (var(--mg-* / --mg-v2-* / --ad-b0kla-*)).
+ *
+ * @author MindGarden
+ * @since 2026-05-27
+ */
+
+.mg-admin-billing-subscription-management-wrapper {
+  display: block;
+  width: 100%;
+}
+
+/* SubscriptionManagement 내부 컨테이너의 outer padding/margin 을 모달 body 와 정합시킨다. */
+.mg-admin-billing-subscription-management-wrapper .subscription-management {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.mg-admin-billing-subscription-management-wrapper .subscription-management__header {
+  display: none;
+}

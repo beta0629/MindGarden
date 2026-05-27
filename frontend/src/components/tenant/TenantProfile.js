@@ -498,7 +498,7 @@ const TenantProfile = () => {
                             size="medium"
                             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() => setActiveTab('subscription')}
+                            onClick={() => navigate(ADMIN_ROUTES.BILLING_SUBSCRIPTIONS)}
                             data-testid="tenant-profile-empty-subscription-cta"
                             preventDoubleClick={false}
                           >
@@ -538,7 +538,7 @@ const TenantProfile = () => {
                             size="medium"
                             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() => setActiveTab('payment')}
+                            onClick={() => navigate(ADMIN_ROUTES.BILLING_PAYMENT_METHODS)}
                             data-testid="tenant-profile-empty-payment-cta"
                             preventDoubleClick={false}
                           >
@@ -582,6 +582,20 @@ const TenantProfile = () => {
                       icon={<TenantSubscriptionEmptyIllustration />}
                       title={t('admin:tenantProfile.empty.subscription.headline')}
                       description={t('admin:tenantProfile.empty.subscription.subcopy')}
+                      action={(
+                        <MGButton
+                          type="button"
+                          variant="primary"
+                          size="medium"
+                          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          onClick={() => navigate(ADMIN_ROUTES.BILLING_SUBSCRIPTIONS)}
+                          data-testid="tenant-profile-tab-subscription-cta"
+                          preventDoubleClick={false}
+                        >
+                          {t('admin:billing.actions.addSubscription')}
+                        </MGButton>
+                      )}
                     />
                   )}
                 </ContentSection>
@@ -616,6 +630,20 @@ const TenantProfile = () => {
                       icon={<TenantPaymentEmptyIllustration />}
                       title={t('admin:tenantProfile.empty.payment.headline')}
                       description={t('admin:tenantProfile.empty.payment.subcopy')}
+                      action={(
+                        <MGButton
+                          type="button"
+                          variant="primary"
+                          size="medium"
+                          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          onClick={() => navigate(ADMIN_ROUTES.BILLING_PAYMENT_METHODS)}
+                          data-testid="tenant-profile-tab-payment-cta"
+                          preventDoubleClick={false}
+                        >
+                          {t('admin:billing.actions.addPaymentMethod')}
+                        </MGButton>
+                      )}
                     />
                   )}
                 </ContentSection>

@@ -1,0 +1,26 @@
+/**
+ * PaymentMethodRegistration 임베드 래퍼 — UnifiedModal 내부 정합 스타일.
+ *
+ * - 기존 `PaymentMethodRegistration` 의 자체 white card / 헤더 디자인이
+ *   UnifiedModal 내부에서 중복 렌더되지 않도록 표면(레이아웃) 톤만 reset.
+ * - 디자인 토큰만 사용 (var(--mg-* / --mg-v2-* / --ad-b0kla-*)).
+ *
+ * @author MindGarden
+ * @since 2026-05-27
+ */
+
+.mg-admin-billing-payment-method-registration-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.mg-admin-billing-payment-method-registration-wrapper .payment-method-registration {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.mg-admin-billing-payment-method-registration-wrapper .payment-method-registration__header {
+  display: none;
+}

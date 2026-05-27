@@ -86,8 +86,11 @@ import notificationManager from '../../../../utils/notification';
 const mockStandardizedApi = StandardizedApi;
 const mockNotificationManager = notificationManager;
 
+// P0 핫픽스 2026-05-28: 모달이 진입 가드(consultantId/packageName 필수)를 체크하므로
+// 정상 시나리오 테스트는 consultantId 도 함께 전달한다.
 const baseMapping = {
   id: 1001,
+  consultantId: 2002,
   packageName: 'test-package',
   packagePrice: 500000
 };
@@ -186,5 +189,58 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     });
     expect(mockNotificationManager.success).toHaveBeenCalled();
     expect(onCheckoutCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  // P0 핫픽스 2026-05-28: 진입 가드 — 매핑 정보 누락 시 결제 폼 대신 alert 박스 표시.
+  describe('P0 핫픽스 — 매핑 정보 누락 진입 가드', () => {
+    test('mapping.consultantId 누락 → alert 박스 표시 + 결제 폼 미렌더', () => {
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={jest.fn()}
+          mapping={{ id: 1001, packageName: 'test-package' /* consultantId 누락 */ }}
+        />
+      );
+      const alertBox = screen.getByRole('alert');
+      expect(alertBox).toBeInTheDocument();
+      expect(alertBox.textContent).toMatch(/admin:mapping\.checkout\.sameDay\.error\.invalidMapping/);
+      // 결제 폼 라디오 미렌더 확인
+      expect(screen.queryByDisplayValue('CREDIT_CARD')).toBeNull();
+    });
+
+    test('mapping.packageName 누락 → alert 박스 표시 + 결제 폼 미렌더', () => {
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={jest.fn()}
+          mapping={{ id: 1001, consultantId: 2002 /* packageName 누락 */ }}
+        />
+      );
+      const alertBox = screen.getByRole('alert');
+      expect(alertBox).toBeInTheDocument();
+      expect(screen.queryByDisplayValue('CREDIT_CARD')).toBeNull();
+    });
+
+    test('mapping.id 누락 → alert 박스 표시', () => {
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={jest.fn()}
+          mapping={{ consultantId: 2002, packageName: 'test-package' /* id 누락 */ }}
+        />
+      );
+      const alertBox = screen.getByRole('alert');
+      expect(alertBox).toBeInTheDocument();
+    });
+
+    test('mapping 모두 정상 → 결제 폼(라디오·승인번호 입력) 정상 표시', () => {
+      render(
+        <CheckoutSameDayModal isOpen onClose={jest.fn()} mapping={baseMapping} />
+      );
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
+      expect(screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label'))
+        .toBeInTheDocument();
+    });
   });
 });

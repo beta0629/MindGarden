@@ -281,8 +281,17 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   };
 
   const handleCreateMapping = async() => {
-    if (!selectedConsultant || !selectedClient) {
+    // P0 핫픽스 2026-05-28: 신규 매칭 생성 진입 가드 강화.
+    // 누락된 필드는 후속 CheckoutSameDayModal/결제 흐름에서 NPE를 유발한다.
+    if (!selectedConsultant?.id || !selectedClient?.id) {
       notificationManager.warning(t('admin:mappingCreation.warn.selectBoth'));
+      return;
+    }
+    if (!paymentInfo.packageName
+        || !((paymentInfo.totalSessions || 0) > 0)
+        || !((paymentInfo.packagePrice || 0) > 0)) {
+      notificationManager.error(t('admin:mappingCreation.warn.missingPackage', '패키지·회기수·가격을 모두 선택해 주세요.'));
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -327,11 +336,18 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       );
       setStep(5);
       // 옵션 B: 사후 카드 분기는 새 매핑 ID를 후속 모달에 전달하기 위해 응답에서 추출.
+      // P0 핫픽스 2026-05-28: CheckoutSameDayModal 진입 가드를 위해 매핑 식별·상담사·내담자·패키지 정보를 모두 함께 전달.
       const createdMappingId = response?.data?.id ?? response?.id ?? null;
       onMappingCreated?.({
         paymentTiming: paymentInfo.paymentTiming,
         mappingId: createdMappingId,
-        packagePrice: paymentInfo.packagePrice
+        consultantId: selectedConsultant.id,
+        consultantName: selectedConsultant.name,
+        clientId: selectedClient.id,
+        clientName: selectedClient.name,
+        packageName: paymentInfo.packageName,
+        packagePrice: paymentInfo.packagePrice,
+        totalSessions: paymentInfo.totalSessions
       });
     } catch (apiError) {
       const msg = apiError?.response?.data?.message || apiError?.message || t('admin:mappingCreation.error.createFailed');
@@ -345,15 +361,17 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     setStep(1);
     setSelectedConsultant(null);
     setSelectedClient(null);
+    // P0 핫픽스 2026-05-28: default 패키지 강제 제거 — 초기 state 와 동일하게 0/null 로 초기화.
     setPaymentInfo({
-      totalSessions: DEFAULT_MAPPING_CONFIG.TOTAL_SESSIONS,
-      packageName: DEFAULT_MAPPING_CONFIG.PACKAGE_NAME,
-      packagePrice: DEFAULT_MAPPING_CONFIG.PACKAGE_PRICE,
+      totalSessions: 0,
+      packageName: null,
+      packagePrice: 0,
       paymentMethod: 'BANK_TRANSFER',
       paymentReference: '',
-      responsibility: DEFAULT_MAPPING_CONFIG.RESPONSIBILITY,
+      responsibility: '',
       specialConsiderations: '',
-      notes: ''
+      notes: '',
+      paymentTiming: 'ADVANCE'
     });
   };
 
@@ -362,10 +380,19 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     onClose();
   };
 
+  // P0 핫픽스 2026-05-28 + 사용자 요청 step swap:
+  // step 1=상담사, 2=내담자, 3=패키지(가드 강화), 4=결제(timing 확정).
   const canProceed = () => {
-    if (step === 1) return !!selectedConsultant;
-    if (step === 2) return !!paymentInfo.packageName;
-    if (step === 3) return !!selectedClient;
+    if (step === 1) return !!selectedConsultant?.id;
+    if (step === 2) return !!selectedClient?.id;
+    if (step === 3) {
+      return !!paymentInfo.packageName
+        && (paymentInfo.totalSessions || 0) > 0
+        && (paymentInfo.packagePrice || 0) > 0;
+    }
+    if (step === 4) {
+      return ['ADVANCE', 'SAME_DAY_CARD'].includes(paymentInfo.paymentTiming);
+    }
     return true;
   };
 
@@ -514,8 +541,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           </section>
         )}
 
-        {/* 2단계: 패키지 */}
-        {step === 2 && (
+        {/* 3단계: 패키지 (사용자 요청 2026-05-28 step swap — 이전: 2단계) */}
+        {step === 3 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
             <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.selectPackage')}</h3>
             {loadingPackageCodes ? (
@@ -569,8 +596,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           </section>
         )}
 
-        {/* 3단계: 내담자 */}
-        {step === 3 && (
+        {/* 2단계: 내담자 (사용자 요청 2026-05-28 step swap — 이전: 3단계) */}
+        {step === 2 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
             <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.selectClient')}</h3>
             <div className="mg-v2-mapping-creation-modal__filters">

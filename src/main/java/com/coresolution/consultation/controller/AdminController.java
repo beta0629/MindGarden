@@ -1851,7 +1851,7 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings")
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> createMapping(
-            @RequestBody ConsultantClientMappingCreateRequest request, HttpSession session) {
+            @RequestBody @Valid ConsultantClientMappingCreateRequest request, HttpSession session) {
         log.info("🔧 매칭 생성 시작: 상담사={}, 내담자={}", request.getConsultantId(), request.getClientId());
 
         User currentUser = SessionUtils.getCurrentUser(session);

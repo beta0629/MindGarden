@@ -49,6 +49,16 @@ const DEFAULT_MENU_ITEMS = [
     ]
   },
   {
+    to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS,
+    icon: 'CREDIT_CARD',
+    label: '결제/구독',
+    end: false,
+    children: [
+      { to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS, icon: 'RECEIPT', label: '구독 관리', end: true },
+      { to: ADMIN_ROUTES.BILLING_PAYMENT_METHODS, icon: 'CREDIT_CARD', label: '결제 수단', end: true }
+    ]
+  },
+  {
     to: '/erp/dashboard',
     icon: 'LAYOUT_DASHBOARD',
     label: '운영·재무',

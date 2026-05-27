@@ -492,7 +492,12 @@
     "settings": "설정",
     "notifications": "알림 관리",
     "payments": "결제 관리",
-    "refunds": "환불 관리"
+    "refunds": "환불 관리",
+    "billing": {
+      "group": "결제/구독",
+      "subscriptions": "구독 관리",
+      "paymentMethods": "결제 수단"
+    }
   },
   "gnb": {
     "profile": "프로필",
@@ -3057,5 +3062,74 @@
     "t_2204106a": "보조 색상 HEX 값",
     "t_c0acdcfd": "선택한 파비콘 파일 초기화",
     "t_9b893812": "브랜딩 미리보기"
+  },
+  "billing": {
+    "subscriptions": {
+      "title": "구독 관리",
+      "subtitle": "테넌트 구독 요금제와 결제 주기를 관리합니다.",
+      "empty": {
+        "title": "활성 구독이 없습니다",
+        "description": "요금제를 선택해 첫 구독을 등록하세요."
+      },
+      "card": {
+        "billingCycle": "결제 주기",
+        "amount": "결제 금액",
+        "nextBillingDate": "다음 결제일",
+        "defaultPlanName": "구독",
+        "statusUnknown": "상태 미확인"
+      },
+      "loading": "구독 정보를 불러오는 중입니다..."
+    },
+    "paymentMethods": {
+      "title": "결제 수단",
+      "subtitle": "자동결제(빌링) 수단을 등록·관리합니다.",
+      "empty": {
+        "title": "등록된 결제 수단이 없습니다",
+        "description": "정기 결제를 시작하려면 결제 수단을 등록해 주세요."
+      },
+      "card": {
+        "defaultBadge": "기본",
+        "cardLabel": "카드",
+        "expiryLabel": "만료",
+        "providerLabel": "PG 제공자"
+      },
+      "loading": "결제 수단을 불러오는 중입니다..."
+    },
+    "actions": {
+      "addSubscription": "구독 등록",
+      "addPaymentMethod": "결제 수단 등록",
+      "setDefault": "기본 설정",
+      "delete": "삭제",
+      "cancelSubscription": "구독 취소",
+      "confirm": "확인",
+      "close": "닫기"
+    },
+    "modal": {
+      "addPaymentMethod": {
+        "title": "결제 수단 등록",
+        "description": "PG 등록 화면으로 이동합니다. 카드 정보는 안전하게 암호화되어 저장됩니다."
+      },
+      "addSubscription": {
+        "title": "구독 등록",
+        "description": "요금제를 선택하고 결제 수단을 확정하세요.",
+        "stepPlan": "요금제 선택",
+        "stepPayment": "결제 수단 선택",
+        "stepConfirm": "결제 확인"
+      },
+      "cancelSubscription": {
+        "title": "정말 취소하시겠습니까?",
+        "description": "구독을 취소하면 다음 결제일부터 서비스 이용이 중단됩니다.",
+        "reasonLabel": "취소 사유 (선택)",
+        "refundPolicy": "환불은 별도 어드민 요청을 통해 처리됩니다."
+      },
+      "setDefaultPayment": {
+        "title": "기본 결제 수단 변경",
+        "description": "이 결제 수단을 기본으로 설정하시겠습니까? 기존 기본 결제 수단은 자동으로 해제됩니다."
+      }
+    },
+    "errors": {
+      "paymentFailed": "결제 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+      "loadFailed": "데이터를 불러오는데 실패했습니다."
+    }
   }
 }

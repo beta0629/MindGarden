@@ -2,8 +2,10 @@ package com.coresolution.consultation.controller;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.dto.SmsTemplateAdminItem;
+import com.coresolution.consultation.dto.SmsTemplateDispatchFlagRequest;
 import com.coresolution.consultation.dto.SmsTemplatePreviewRequest;
 import com.coresolution.consultation.dto.SmsTemplatePreviewResponse;
 import com.coresolution.consultation.dto.SmsTemplateUpdateRequest;
@@ -21,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -163,6 +166,74 @@ public class AdminSmsTemplateController extends BaseApiController {
             return notFound("SMS 템플릿을 찾을 수 없습니다: " + key);
         }
         return success(preview.get());
+    }
+
+    /**
+     * 글로벌 자동 SMS 발송 게이트 토글 (옵션 C 1/2).
+     *
+     * <p>운영 결정권자가 어드민 UI 토글로 ON/OFF 한다. {@code system_config} 의
+     * {@code notification.sms.auto-dispatch.enabled} 행이 SSOT 이며,
+     * 자동 트리거 7종 + 자동 배치 8종 모두에 즉시 영향이 미친다. 어드민 수동 발송 /
+     * 인증 OTP 는 본 게이트 비경유 (회귀 없음).
+     *
+     * @param request enabled=true|false
+     * @param session 세션 (audit)
+     * @return 변경 후 글로벌 토글 상태 + 새 effective 컨텍스트
+     */
+    @PatchMapping("/global-dispatch")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateGlobalDispatchFlag(
+            @Valid @RequestBody SmsTemplateDispatchFlagRequest request,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || currentUser.getId() == null) {
+            return unauthorized("로그인이 필요합니다.");
+        }
+        boolean enabled = Boolean.TRUE.equals(request.getEnabled());
+        smsTemplateService.setGlobalAutoDispatchEnabled(enabled, currentUser);
+        boolean newState = smsTemplateService.isGlobalAutoDispatchEnabled();
+        log.info("어드민 SMS 글로벌 게이트 토글: enabled={}, by={}", newState,
+                currentUser.getUserId());
+        return updated(Map.of("globalDispatchEnabled", newState));
+    }
+
+    /**
+     * 종목별 자동 SMS 발송 게이트 토글 (옵션 C 2/2).
+     *
+     * <p>테넌트 override row 의 {@code extra_data.dispatch_enabled} 를 갱신한다.
+     * row 가 없으면 글로벌 row 본문을 복사하여 신설된다 — 어드민 본문 편집과 동일 row.
+     * 글로벌 토글이 OFF 면 본 종목별 토글 값과 무관하게 발송은 차단된다 (글로벌 우선).
+     *
+     * @param key     SMS_TEMPLATE 키 (예: PAYMENT_COMPLETED)
+     * @param request enabled=true|false
+     * @param session 세션 (audit)
+     * @return 갱신된 어드민 행
+     */
+    @PatchMapping("/{key}/dispatch")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateTemplateDispatchFlag(
+            @PathVariable("key") String key,
+            @Valid @RequestBody SmsTemplateDispatchFlagRequest request,
+            HttpSession session) {
+        String tenantId = getTenantOrFail();
+        if (tenantId == null) {
+            return tenantMissing();
+        }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || currentUser.getId() == null) {
+            return unauthorized("로그인이 필요합니다.");
+        }
+        try {
+            boolean enabled = Boolean.TRUE.equals(request.getEnabled());
+            SmsTemplateAdminItem item = smsTemplateService.updateAutoDispatchFlag(
+                    key, enabled, tenantId, currentUser);
+            log.info("어드민 SMS 종목 게이트 토글: key={}, enabled={}, tenant={}, by={}",
+                    key, enabled, tenantId, currentUser.getUserId());
+            return updated(item);
+        } catch (IllegalArgumentException e) {
+            log.warn("SMS 종목 게이트 토글 실패: key={}, err={}", key, e.getMessage());
+            return badRequest(e.getMessage(), ERROR_CODE_TEMPLATE_NOT_FOUND);
+        }
     }
 
     private String getTenantOrFail() {

@@ -9,7 +9,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Heart, MessageCircle, Send } from 'lucide-react';
+import {
+  getAuthorAvatarInitial,
+  getAuthorDisplay
+} from '../../utils/communityAuthorDisplay';
 import './CommunityPostDetail.css';
 
 const MOCK_COMMENTS = [
@@ -19,6 +24,7 @@ const MOCK_COMMENTS = [
 
 const CommunityPostDetail = ({ primaryColor }) => {
   const location = useLocation();
+  const { t } = useTranslation('community');
   const post = location.state?.post;
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post?.likes || 0);
@@ -80,12 +86,12 @@ const CommunityPostDetail = ({ primaryColor }) => {
     <div className="post-detail" style={themeStyle}>
       <div className="post-detail__card">
         <div className="post-detail__header">
-          <div className={`post-detail__avatar${post.isConsultant ? ' post-detail__avatar--consultant' : ''}`}>
-            {post.author?.charAt(0)}
+          <div className={`post-detail__avatar${post.isConsultant ? ' post-detail__avatar--consultant' : ''}${post.authorAnonymized ? ' post-detail__avatar--anonymized' : ''}`}>
+            {getAuthorAvatarInitial(post, t)}
           </div>
           <div className="post-detail__author-info">
-            <div className="post-detail__author">{post.author}</div>
-            {post.specialty && (
+            <div className="post-detail__author">{getAuthorDisplay(post, t)}</div>
+            {post.specialty && !post.authorAnonymized && (
               <div className="post-detail__specialty">{post.specialty}</div>
             )}
           </div>
@@ -123,11 +129,11 @@ const CommunityPostDetail = ({ primaryColor }) => {
                 className="post-detail__comment"
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
-                <div className="post-detail__comment-avatar">
-                  {c.author.charAt(0)}
+                <div className={`post-detail__comment-avatar${c.authorAnonymized ? ' post-detail__comment-avatar--anonymized' : ''}`}>
+                  {getAuthorAvatarInitial(c, t)}
                 </div>
                 <div className="post-detail__comment-body">
-                  <div className="post-detail__comment-author">{c.author}</div>
+                  <div className="post-detail__comment-author">{getAuthorDisplay(c, t)}</div>
                   <div className="post-detail__comment-text">{c.text}</div>
                   <div className="post-detail__comment-time">{c.time}</div>
                 </div>

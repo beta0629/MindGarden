@@ -70,6 +70,7 @@ const SmsTemplateManagementPage = lazy(() => import('./components/admin/sms-temp
 const AdminBillingSubscriptionsPage = lazy(() => import('./components/admin/billing/SubscriptionsPage'));
 const AdminBillingPaymentMethodsPage = lazy(() => import('./components/admin/billing/PaymentMethodsPage'));
 import UnifiedNotification from './components/common/UnifiedNotification';
+import WithdrawalPendingBanner from './components/common/WithdrawalPendingBanner';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
 // IntegrationTest는 현재 사용되지 않음
@@ -386,6 +387,7 @@ function AppContent() {
         <div className="App">
           <AppToast />
           <UnifiedNotification type="toast" position="top-right" />
+          <WithdrawalPendingBanner />
           <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>{t('common.messages.loading')}</div>}>
           <Routes>
             <Route path="/" element={<TabletHomepage />} />

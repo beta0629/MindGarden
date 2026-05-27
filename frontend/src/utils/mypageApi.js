@@ -216,6 +216,43 @@ const mypageApi = {
    */
   getSocialAccounts: async(_userRole, _userId) => {
     return StandardizedApi.get(PROFILE_API.CLIENT.GET_SOCIAL_ACCOUNTS);
+  },
+
+  /**
+   * 자발 회원 탈퇴 신청 — POST /api/v1/mypage/withdrawal/request
+   * USER_LIFECYCLE_TERMINATION_POLICY v1.1 Q3(30일 유예) + Q12-b(본문 삭제 옵션).
+   *
+   * @param {string} password 비밀번호 재확인
+   * @param {string} reason 사유 (선택)
+   * @param {boolean} deleteCommunityBody Q12-b — true 면 본인 게시글/댓글 본문도 함께 삭제
+   * @returns {Promise<any>} 신청 결과 (lifecycleState, withdrawalExpiresAt, graceDays 등)
+   */
+  requestWithdrawal: async(password, reason, deleteCommunityBody) => {
+    return StandardizedApi.post(MYPAGE_API.WITHDRAWAL_REQUEST, {
+      password,
+      reason: reason || null,
+      deleteCommunityBody: Boolean(deleteCommunityBody)
+    });
+  },
+
+  /**
+   * 자발 회원 탈퇴 취소 — POST /api/v1/mypage/withdrawal/cancel
+   * 30일 유예 기간 내에만 호출 가능 (서버에서 409 가드).
+   *
+   * @returns {Promise<any>} 취소 결과 (lifecycleState=ACTIVE 등)
+   */
+  cancelWithdrawal: async() => {
+    return StandardizedApi.post(MYPAGE_API.WITHDRAWAL_CANCEL, {});
+  },
+
+  /**
+   * 자발 회원 탈퇴 현황 조회 — GET /api/v1/mypage/withdrawal/status
+   * 위젯·배너 노출 판단의 SSOT.
+   *
+   * @returns {Promise<any>} { lifecycleState, withdrawalRequestedAt, withdrawalExpiresAt, cancellable }
+   */
+  getWithdrawalStatus: async() => {
+    return StandardizedApi.get(MYPAGE_API.WITHDRAWAL_STATUS);
   }
 };
 

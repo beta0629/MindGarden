@@ -6,13 +6,17 @@ import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.dto.lifecycle.AnonymizeResult;
+import com.coresolution.consultation.dto.lifecycle.DormantUserPiiSnapshot;
 import com.coresolution.consultation.dto.lifecycle.TransitionResult;
 import com.coresolution.consultation.dto.lifecycle.WithdrawalOptions;
 import com.coresolution.consultation.entity.AuditLog;
+import com.coresolution.consultation.entity.DormantUserPiiVault;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.IllegalStateTransitionException;
 import com.coresolution.consultation.repository.AuditLogRepository;
+import com.coresolution.consultation.repository.DormantUserPiiVaultRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.DormantPiiVaultService;
 import com.coresolution.consultation.service.UserAnonymizationService;
 import com.coresolution.consultation.service.UserLifecycleService;
 
@@ -39,6 +43,8 @@ public class UserLifecycleServiceImpl implements UserLifecycleService {
     private final UserRepository userRepository;
     private final AuditLogRepository auditLogRepository;
     private final UserAnonymizationService userAnonymizationService;
+    private final DormantUserPiiVaultRepository dormantUserPiiVaultRepository;
+    private final DormantPiiVaultService dormantPiiVaultService;
 
     @Override
     @Transactional
@@ -149,6 +155,85 @@ public class UserLifecycleServiceImpl implements UserLifecycleService {
         user.setWithdrawalOptionsJson(null);
         userRepository.save(user);
         return result;
+    }
+
+    @Override
+    @Transactional
+    public TransitionResult reactivate(Long userId, String tenantId, Actor actor) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId must not be blank");
+        }
+        if (actor == null) {
+            throw new IllegalArgumentException("actor must not be null");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        if (user.getLifecycleState() == LifecycleState.ACTIVE) {
+            // 이미 ACTIVE — idempotent (vault 행이 잔존하면 함께 정리)
+            dormantUserPiiVaultRepository
+                    .findByUserIdAndTenantId(userId, tenantId)
+                    .ifPresent(vault -> {
+                        vault.setPreNoticeAcknowledgedAt(LocalDateTime.now());
+                        dormantUserPiiVaultRepository.delete(vault);
+                    });
+            return TransitionResult.builder()
+                    .userId(userId)
+                    .fromState(LifecycleState.ACTIVE)
+                    .toState(LifecycleState.ACTIVE)
+                    .transitionedAt(LocalDateTime.now())
+                    .build();
+        }
+
+        if (user.getLifecycleState() != LifecycleState.DORMANT) {
+            throw new IllegalStateTransitionException(
+                    user.getLifecycleState(), LifecycleState.ACTIVE,
+                    "reactivate() requires lifecycleState=DORMANT — actual: "
+                            + user.getLifecycleState());
+        }
+
+        DormantUserPiiVault vault = dormantUserPiiVaultRepository
+                .findByUserIdAndTenantId(userId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "DormantUserPiiVault not found for userId=" + userId
+                                + ", tenantId=" + tenantId));
+
+        DormantUserPiiSnapshot snapshot = dormantPiiVaultService.decrypt(vault.getEncryptedPii());
+        snapshot.applyTo(user);
+
+        LocalDateTime now = LocalDateTime.now();
+        user.setLifecycleState(LifecycleState.ACTIVE);
+        user.setUpdatedAt(now);
+        userRepository.save(user);
+
+        AuditLog auditEntry = AuditLog.builder()
+                .tenantId(user.getTenantId())
+                .actorUserId(actor.getActorUserId())
+                .actorRole(actor.getActorRole())
+                .targetUserId(userId)
+                .action(AuditAction.PII_VAULT_RESTORE)
+                .entityType("USER")
+                .entityId(userId)
+                .build();
+        AuditLog savedAudit = auditLogRepository.save(auditEntry);
+
+        // vault 행 정리 — PII 복원 완료 후에는 더 이상 vault 보관 불요
+        dormantUserPiiVaultRepository.delete(vault);
+
+        log.info("[Lifecycle] reactivate complete: userId={}, tenantId={}, actor={}",
+                userId, tenantId, actor);
+
+        return TransitionResult.builder()
+                .userId(userId)
+                .fromState(LifecycleState.DORMANT)
+                .toState(LifecycleState.ACTIVE)
+                .auditLogId(savedAudit.getId())
+                .transitionedAt(now)
+                .build();
     }
 
     /**

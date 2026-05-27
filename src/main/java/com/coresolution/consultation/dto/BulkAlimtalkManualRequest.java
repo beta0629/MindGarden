@@ -3,7 +3,6 @@ package com.coresolution.consultation.dto;
 import java.util.List;
 import java.util.Map;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -19,6 +18,13 @@ import lombok.Setter;
  * 공통코드 그룹 {@code ALIMTALK_BIZ_TEMPLATE_CODE} 매핑이 필수이며, 매핑 없음 시
  * {@code TEMPLATE_NOT_MAPPED} 로 전체 차단한다(0건 발송, 배치 전체 실패).
  *
+ * <p>2026-05-27 — PHONE 모드 추가:
+ * <ul>
+ *   <li>{@link #userIds} 또는 {@link #phoneNumbers} 둘 중 하나 이상은 반드시 있어야 한다
+ *       (서비스 layer 에서 합산 검증 — 둘 다 비어 있으면 {@code RECIPIENTS_REQUIRED}).</li>
+ *   <li>합산 수신자 수는 50명을 초과할 수 없다.</li>
+ * </ul>
+ *
  * @author MindGarden
  * @since 2026-05-23
  */
@@ -29,9 +35,19 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BulkAlimtalkManualRequest {
 
-    @NotEmpty(message = "수신자 목록은 1명 이상이어야 합니다.")
+    /**
+     * 현재 테넌트 사용자 PK 목록(중복 허용 안 함). {@link #phoneNumbers} 와 합산하여 최대 50명.
+     * 단독으로 비어 있을 수 있다 — 그 경우 {@link #phoneNumbers} 가 1개 이상이어야 한다.
+     */
     @Size(max = 50, message = "한 번에 최대 50명까지 발송할 수 있습니다.")
     private List<Long> userIds;
+
+    /**
+     * PHONE 모드 — 등록되지 않은 임의 휴대전화 번호 목록(2026-05-27 추가).
+     * 각 원소는 한국 휴대전화 번호 형식이어야 하며, 정규화·검증은 서비스 layer 에서 수행한다.
+     */
+    @Size(max = 50, message = "전화번호는 최대 50개까지 허용됩니다.")
+    private List<@Size(max = 20) String> phoneNumbers;
 
     @NotBlank(message = "템플릿 코드는 필수입니다.")
     @Size(max = 100, message = "템플릿 코드는 100자 이하여야 합니다.")

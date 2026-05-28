@@ -84,7 +84,7 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         try {
             // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL GetBranchFinancialBreakdown(?, ?, ?, @p_success, @p_message, @p_breakdown_data)}"),
+                (Connection connection) -> connection.prepareCall("{CALL GetBranchFinancialBreakdown(?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setString(1, tenantId);
                     callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
@@ -127,7 +127,7 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         try {
             // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL GetMonthlyFinancialTrend(?, ?, ?, @p_success, @p_message, @p_trend_data)}"),
+                (Connection connection) -> connection.prepareCall("{CALL GetMonthlyFinancialTrend(?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setString(1, tenantId);
                     callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
@@ -170,7 +170,7 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         try {
             // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL GetCategoryFinancialBreakdown(?, ?, ?, @p_success, @p_message, @p_breakdown_data)}"),
+                (Connection connection) -> connection.prepareCall("{CALL GetCategoryFinancialBreakdown(?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setString(1, tenantId);
                     callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
@@ -280,7 +280,7 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         try {
             // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL GenerateQuarterlyFinancialReport(?, ?, ?, @p_success, @p_message, @p_report_data)}"),
+                (Connection connection) -> connection.prepareCall("{CALL GenerateQuarterlyFinancialReport(?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setInt(1, year);
                     callableStatement.setInt(2, quarter);
@@ -382,7 +382,7 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         try {
             // 표준화된 프로시저는 OUT 파라미터로 결과를 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL CalculateFinancialKPIs(?, ?, ?, @p_success, @p_message, @p_total_revenue, @p_total_expenses, @p_net_profit, @p_total_transactions, @p_profit_margin, @p_avg_transaction_value)}"),
+                (Connection connection) -> connection.prepareCall("{CALL CalculateFinancialKPIs(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setString(1, tenantId);
                     callableStatement.setDate(2, java.sql.Date.valueOf(startDate));

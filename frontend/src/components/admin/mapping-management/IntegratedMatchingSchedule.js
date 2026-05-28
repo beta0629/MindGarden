@@ -37,6 +37,7 @@ import {
   VIEW_FILTER_ALL,
   VIEW_FILTER_NEW_LABEL,
   STATUS_FILTER_OPTIONS,
+  PAYMENT_TIMING_SAME_DAY_CARD,
   canScheduleForMapping,
   isOngoingMapping,
   getMappingDate
@@ -48,11 +49,7 @@ import {
 import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
-import {
-  shouldAutoOpenCheckoutSameDayAfterSchedule,
-  buildSameDayCardCheckoutMapping,
-  resolveMappingCreatedFollowUp
-} from './utils/sameDayCardCheckoutUtils';
+import { resolveMappingCreatedFollowUp } from './utils/sameDayCardCheckoutUtils';
 import { buildMappingPaymentTimingLookup } from '../../schedule/utils/sameDayPendingEventDecorator';
 
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
@@ -401,16 +398,18 @@ const IntegratedMatchingSchedule = () => {
     setPreFilledMapping(null);
   };
 
-  const handleScheduleCreated = (createdSchedule) => {
+  const handleScheduleCreated = () => {
     setRefetchTrigger((t) => t + 1);
     loadMappings();
     setScheduleModalOpen(false);
-    // 옵션 B SAME_DAY_CARD: 일정 등록 직후 CheckoutSameDayModal 자동 진입.
-    // (가예약 등록 → 결제 + 활성화 + 회기 부여를 한 번의 흐름으로 묶음)
-    if (shouldAutoOpenCheckoutSameDayAfterSchedule(preFilledMapping)) {
-      setCheckoutSameDayMapping(
-        buildSameDayCardCheckoutMapping(preFilledMapping, createdSchedule)
-      );
+    // 옵션 B v2.0 Path 3 UX 핫픽스 (2026-05-28 사용자 결재 14:48 KST):
+    //  - 사용자 의도(14:27 KST): "지금 예약만 하는건데 미리 카드로 할건지 현금으로 할건지 선택이 되어야 하나?"
+    //  - 일정 등록 직후 CheckoutSameDayModal 자동 진입을 제거하고, 사이드바 카드의
+    //    "당일 결제 + 활성화" 버튼을 통한 별도 시점 결제로 일원화한다.
+    //  - 추가 진입 경로 없음 (Q3 default 권장안 — 사이드바 단일 경로).
+    //  - 합의서: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN_V2.md §2·§3
+    if (preFilledMapping?.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD) {
+      notificationManager.info(t('admin:integratedSchedule.tentativeReserved.info'));
     }
     setPreFilledMapping(null);
   };

@@ -103,6 +103,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final ConsultantClientMappingHistoryService consultantClientMappingHistoryService;
     private final ObjectMapper sessionHistoryObjectMapper = new ObjectMapper();
 
+    /**
+     * 옵션 B 결제 의도 코드 — 매핑 {@code payment_timing} 컬럼 값.
+     * <ul>
+     *   <li>{@code "ADVANCE"} — 선납 입금 (기본/현행 흐름)</li>
+     *   <li>{@link #PAYMENT_TIMING_SAME_DAY_CARD} — 당일 방문 카드 결제 후 활성화 (옵션 B)</li>
+     *   <li>{@code null} — 레거시 매핑(마이그레이션 V20260606_006 이전). ADVANCE 와 동등 취급.</li>
+     * </ul>
+     * 신규 코드는 새 상수 클래스 분리 시 {@code PaymentTimingConstants} 로 이전될 예정.
+     */
+    private static final String PAYMENT_TIMING_SAME_DAY_CARD = "SAME_DAY_CARD";
+
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
             TenantAccessControlService accessControlService,
@@ -377,14 +388,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
             LocalTime startTime, LocalTime endTime, String title, String description, boolean tentativeBeforeDeposit) {
-        log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}, 가예약={}", consultantId, clientId, date,
+        boolean effectiveTentative = resolveEffectiveTentativeBeforeDeposit(consultantId, clientId,
                 tentativeBeforeDeposit);
+        log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}, 가예약={} (요청={})", consultantId, clientId, date,
+                effectiveTentative, tentativeBeforeDeposit);
 
         if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
         }
 
-        if (tentativeBeforeDeposit) {
+        if (effectiveTentative) {
             if (!validateMappingForTentativeBeforeDepositSchedule(consultantId, clientId)) {
                 throw new RuntimeException(
                         "상담사와 내담자 간 활성 또는 입금 대기 매칭이 없어 가예약을 등록할 수 없습니다.");
@@ -407,7 +420,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType("CONSULTATION");
-        schedule.setStatus(tentativeBeforeDeposit ? ScheduleStatus.TENTATIVE_PENDING_PAYMENT : ScheduleStatus.BOOKED);
+        schedule.setStatus(effectiveTentative ? ScheduleStatus.TENTATIVE_PENDING_PAYMENT : ScheduleStatus.BOOKED);
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             schedule.setTenantId(tenantId);
@@ -416,13 +429,36 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
-        if (!tentativeBeforeDeposit) {
+        if (!effectiveTentative) {
             useSessionForMapping(consultantId, clientId, savedSchedule);
             notifyScheduleCreated(savedSchedule);
         }
 
         log.info("✅ 상담사 스케줄 생성 완료: ID {}", savedSchedule.getId());
         return savedSchedule;
+    }
+
+    /**
+     * 옵션 B SAME_DAY_CARD 자동 강제 분기 — 프론트가 {@code tentativeBeforeDeposit} 플래그 누락 시 fallback.
+     * 매핑이 PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 인 경우 가예약 분기로 자동 진입한다.
+     * 비-SAME_DAY_CARD PENDING_PAYMENT (= ADVANCE 입금 대기) 는 강제 분기하지 않으며 기존 가드로 차단된다.
+     *
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId 내담자 사용자 ID
+     * @param requestedTentative 요청 페이로드의 {@code tentativeBeforeDeposit} 값
+     * @return 실제 적용할 가예약 여부
+     */
+    private boolean resolveEffectiveTentativeBeforeDeposit(Long consultantId, Long clientId,
+            boolean requestedTentative) {
+        if (requestedTentative) {
+            return true;
+        }
+        if (hasPendingPaymentSameDayCardMapping(consultantId, clientId)) {
+            log.info("⚙️ 옵션 B SAME_DAY_CARD 자동 가예약 분기 진입: 상담사 {}, 내담자 {} (요청 tentative=false)",
+                    consultantId, clientId);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -438,14 +474,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-        log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}, 가예약={}",
-                consultantId, clientId, date, consultationType, tenantId, tentativeBeforeDeposit);
+        boolean effectiveTentative = resolveEffectiveTentativeBeforeDeposit(consultantId, clientId,
+                tentativeBeforeDeposit);
+        log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}, 가예약={} (요청={})",
+                consultantId, clientId, date, consultationType, tenantId, effectiveTentative, tentativeBeforeDeposit);
 
         if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
         }
 
-        if (tentativeBeforeDeposit) {
+        if (effectiveTentative) {
             if (!validateMappingForTentativeBeforeDepositSchedule(consultantId, clientId)) {
                 throw new RuntimeException(
                         "상담사와 내담자 간 활성 또는 입금 대기 매칭이 없어 가예약을 등록할 수 없습니다.");
@@ -468,7 +506,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType("CONSULTATION");
-        schedule.setStatus(tentativeBeforeDeposit ? ScheduleStatus.TENTATIVE_PENDING_PAYMENT : ScheduleStatus.BOOKED);
+        schedule.setStatus(effectiveTentative ? ScheduleStatus.TENTATIVE_PENDING_PAYMENT : ScheduleStatus.BOOKED);
         schedule.setConsultationType(consultationType);
         schedule.setBranchCode(null);
 
@@ -483,7 +521,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("✅ 스케줄 저장 완료: id={}, tenantId={}, isDeleted={}",
                 savedSchedule.getId(), savedSchedule.getTenantId(), savedSchedule.getIsDeleted());
 
-        if (!tentativeBeforeDeposit) {
+        if (!effectiveTentative) {
             useSessionForMapping(consultantId, clientId, savedSchedule);
             log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
             notifyScheduleCreated(savedSchedule);
@@ -1226,7 +1264,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 입금 전 가예약: 동일 테넌트에서 상담사·내담자 쌍에 대한 매핑이 {@link MappingStatus#ACTIVE} 인 경우만 통과.
+     * 입금 전 가예약: 동일 테넌트에서 상담사·내담자 쌍에 대한 매핑이 {@link MappingStatus#ACTIVE} 인 경우 통과.
+     * 옵션 B SAME_DAY_CARD 정책: {@link MappingStatus#PENDING_PAYMENT} + {@code paymentTiming=SAME_DAY_CARD}
+     * 매핑은 결제 확정 전이지만 가예약 일정 생성을 허용한다 (결제 확정 시 회기 부여 + TENTATIVE → CONFIRMED 전환).
+     * 비-SAME_DAY_CARD 의 PENDING_PAYMENT (= ADVANCE 입금 대기) 는 기존 정책대로 차단한다.
      * {@code DEPOSIT_PENDING}(승인 대기)은 관리자 승인 전이므로 일정 생성·드롭 경로에서 제외한다.
      *
      * @param consultantId 상담사 사용자 ID
@@ -1237,14 +1278,28 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.debug("🔗 가예약 매칭 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
 
-        List<ConsultantClientMapping> mappings = mappingRepository.findByTenantIdAndStatus(tenantId,
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(tenantId,
                 MappingStatus.ACTIVE);
-        for (ConsultantClientMapping mapping : mappings) {
+        for (ConsultantClientMapping mapping : activeMappings) {
             if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
                 log.debug("가예약 허용 매칭: status=ACTIVE, mappingId={}", mapping.getId());
                 return true;
             }
         }
+
+        // 옵션 B SAME_DAY_CARD: PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑은 가예약 일정 생성을 허용.
+        // 결제 확정(checkoutSameDayCard)이 회기 부여 + TENTATIVE → CONFIRMED 전환을 책임진다.
+        List<ConsultantClientMapping> pendingPaymentMappings = mappingRepository.findByTenantIdAndStatus(tenantId,
+                MappingStatus.PENDING_PAYMENT);
+        for (ConsultantClientMapping mapping : pendingPaymentMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isSameDayCardPaymentTiming(mapping)) {
+                log.debug("가예약 허용 매칭: status=PENDING_PAYMENT, paymentTiming=SAME_DAY_CARD, mappingId={}",
+                        mapping.getId());
+                return true;
+            }
+        }
+
         log.warn("가예약 매칭 검증 실패: tenantId={}, 상담사 {}, 내담자 {}", tenantId, consultantId, clientId);
         return false;
     }
@@ -1256,6 +1311,31 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         return mapping.getConsultant().getId().equals(consultantId)
                 && mapping.getClient().getId().equals(clientId);
+    }
+
+    /**
+     * 옵션 B SAME_DAY_CARD 결제 의도 매핑 여부 — null/대소문자 안전.
+     * 레거시(NULL paymentTiming)는 ADVANCE 동등 취급이므로 false 를 반환한다.
+     */
+    private boolean isSameDayCardPaymentTiming(ConsultantClientMapping mapping) {
+        return mapping != null && PAYMENT_TIMING_SAME_DAY_CARD.equalsIgnoreCase(mapping.getPaymentTiming());
+    }
+
+    /**
+     * 옵션 B SAME_DAY_CARD: 상담사·내담자 쌍에 PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑이 있으면 true.
+     * 일정 생성 API 진입 시 가예약 분기 자동 강제(fallback)에 사용한다.
+     */
+    private boolean hasPendingPaymentSameDayCardMapping(Long consultantId, Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<ConsultantClientMapping> pendingPaymentMappings = mappingRepository.findByTenantIdAndStatus(tenantId,
+                MappingStatus.PENDING_PAYMENT);
+        for (ConsultantClientMapping mapping : pendingPaymentMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isSameDayCardPaymentTiming(mapping)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -1277,7 +1357,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return remainingSessions != null && remainingSessions > 0;
             }
         }
-        
+
+        // 옵션 B SAME_DAY_CARD: PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑은 회기 부여 전이므로 검증 우회.
+        // 결제 확정(checkoutSameDayCard)이 회기 부여 + 즉시 1회 차감을 책임진다.
+        List<ConsultantClientMapping> pendingPaymentMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, ConsultantClientMapping.MappingStatus.PENDING_PAYMENT);
+        for (ConsultantClientMapping mapping : pendingPaymentMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isSameDayCardPaymentTiming(mapping)) {
+                log.debug("회기 검증 우회: status=PENDING_PAYMENT, paymentTiming=SAME_DAY_CARD, mappingId={}",
+                        mapping.getId());
+                return true;
+            }
+        }
+
         log.warn("활성 매칭을 찾을 수 없음: 상담사 {}, 내담자 {}", consultantId, clientId);
         return false;
     }

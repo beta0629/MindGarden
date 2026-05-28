@@ -113,6 +113,16 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String MSG_MAPPING_ALREADY_TERMINATED = "이미 종료된 매칭입니다.";
 
+    /**
+     * 옵션 B v2.0 멱등성 가드 (Q6 Carbon Copy, 2026-05-28).
+     *
+     * <p>{@code AdminServiceImpl.checkoutSameDayCard} 진입 시 매칭 status 가
+     * {@code PENDING_PAYMENT} 가 아니거나 클라이언트 요청 ID 가 5분 이내 재사용된 경우
+     * 사용자에게 노출되는 토스트/응답 메시지.</p>
+     */
+    public static final String MSG_MAPPING_ALREADY_PROCESSED =
+            "이미 처리 중입니다. 새 매칭 카드로 확인하세요.";
+
     public static final String MSG_REFUND_SESSIONS_AT_LEAST_ONE = "환불 회기수는 1 이상이어야 합니다.";
 
     public static final String MSG_REFUND_AMOUNT_CALCULATION_IMPOSSIBLE =

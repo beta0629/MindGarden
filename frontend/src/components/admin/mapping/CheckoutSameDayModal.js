@@ -23,12 +23,34 @@ import './CheckoutSameDayModal.css';
  */
 const PAYMENT_METHOD_OPTIONS = ['CREDIT_CARD', 'DEBIT_CARD', 'OTHER'];
 
+// 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): 백엔드 멱등성 가드 응답 식별자.
+//   AdminServiceImpl.checkoutSameDayCard 가 매칭 status 또는 X-Request-Id 재사용 감지 시 반환.
+const IDEMPOTENCY_ERROR_CODE = 'MAPPING_ALREADY_PROCESSED';
+const HTTP_STATUS_CONFLICT = 409;
+
+/**
+ * RFC4122 v4 형식의 UUID 를 생성한다.
+ * 백엔드는 헤더 누락 시 자동 생성하지만, 클라이언트에서 동일 요청을 재시도하려면 동일 ID 가 필요하다.
+ * 본 구현은 외부 의존성 없이 sufficiently-random 한 ID 를 생성한다.
+ *
+ * @returns {string} UUID
+ */
+const generateRequestId = () => {
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  // Fallback (구형 브라우저). collision risk 는 멱등성 5분 윈도우 안에서 무시할 수준.
+  const rand = () => Math.random().toString(16).slice(2, 10);
+  return `${rand()}-${rand().slice(0, 4)}-${rand().slice(0, 4)}-${rand().slice(0, 4)}-${rand()}${rand().slice(0, 4)}`;
+};
+
 const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompleted }) => {
   const { t } = useTranslation(['admin']);
   const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [sameDaySessionScheduleId, setSameDaySessionScheduleId] = useState('');
+  const [requestId, setRequestId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -39,6 +61,9 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
         ? String(mapping.packagePrice)
         : (mapping.paymentAmount != null ? String(mapping.paymentAmount) : ''));
       setSameDaySessionScheduleId('');
+      // 모달이 열릴 때마다 신규 X-Request-Id 1건 생성 — 사용자 의도적 재시도(닫고 재오픈)는 신규 키.
+      // 한 번 열린 모달 내 동일 결제 요청 재시도는 동일 키 → 백엔드 멱등성 가드 발동.
+      setRequestId(generateRequestId());
       setIsLoading(false);
     }
   }, [isOpen, mapping]);
@@ -87,14 +112,33 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
           ? Number(sameDaySessionScheduleId)
           : null
       };
+      // 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): X-Request-Id 헤더로 백엔드 멱등성 가드와 통합.
+      //   동일 모달 인스턴스 내 재시도(네트워크 끊김 등)는 동일 requestId → 백엔드에서 fast-fail 차단.
       const response = await StandardizedApi.post(
         API_ENDPOINTS.ADMIN.MAPPINGS.CHECKOUT_SAME_DAY(mapping.id),
-        payload
+        payload,
+        { headers: { 'X-Request-Id': requestId } }
       );
       notificationManager.success(t('admin:mapping.checkout.sameDay.success'));
       onCheckoutCompleted?.(response?.data ?? response);
       handleClose();
     } catch (error) {
+      // 옵션 B v2.0 합의서 §6 Q6/Q11 멱등성 가드 응답 처리 (HTTP 409 + MAPPING_ALREADY_PROCESSED).
+      //   사용자가 새 매칭 카드로 결과를 확인하도록 친절한 안내 토스트로 대체한다.
+      const status = error?.response?.status;
+      const code = error?.response?.data?.code || error?.response?.data?.errorCode;
+      if (status === HTTP_STATUS_CONFLICT || code === IDEMPOTENCY_ERROR_CODE) {
+        notificationManager.info(
+          t(
+            'admin:mapping.checkout.sameDay.alreadyProcessed.info',
+            '이미 처리 중입니다. 새 매칭 카드로 확인하세요.'
+          )
+        );
+        // 멱등성 가드 발동 시 모달을 닫아 사용자가 사이드바 카드(상태 갱신본)로 이동하도록 유도한다.
+        onCheckoutCompleted?.(error?.response?.data ?? null);
+        handleClose();
+        return;
+      }
       const message = error?.response?.data?.message
         || error?.message
         || t('admin:mapping.checkout.sameDay.error.generic');

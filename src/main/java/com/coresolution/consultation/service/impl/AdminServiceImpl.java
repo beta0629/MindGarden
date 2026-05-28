@@ -42,6 +42,8 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.exception.AdminDeleteBlockedException;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
+import com.coresolution.consultation.service.AdminRequestIdempotencyService;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
@@ -150,6 +152,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final BatchNotificationDispatchService batchNotificationDispatchService;
     private final RefundAutoCancelNotificationService refundAutoCancelNotificationService;
     private final UserLifecycleService userLifecycleService;
+    private final AdminRequestIdempotencyService adminRequestIdempotencyService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -1294,7 +1297,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     /**
      * REQUIRES_NEW 트랜잭션에서 실행하며, 콜백 진입 시 tenantId를 TenantContextHolder에 설정.
-     * ERP/통계 등에서 getRequiredTenantId() 사용 시 새 트랜잭션에서도 동작하도록 함. 종료 시 clear.
+     * ERP/통계 등에서 getRequiredTenantId() 사용 시 새 트랜잭션에서도 동작하도록 함.
+     *
+     * <p>옵션 B v2.0 합의서 §4 (2026-05-28): 종료 시 무조건 clear 하면 부모 호출 체인 (예:
+     * {@link #checkoutSameDayCard}) 의 다음 단계 ({@code confirmDeposit} → {@code approveMapping})
+     * 에서 {@code getRequiredTenantId()} 호출 시 {@link IllegalStateException} 이 발생해 401 응답으로
+     * 누출되는 결함이 있었다. 진입 직전 ThreadLocal 의 이전 tenantId 를 백업하고 finally 에서
+     * 백업 값을 복원하는 save/restore 패턴으로 교체한다.
      *
      * @param tenantId 콜백 내에서 사용할 테넌트 ID (null이면 설정 생략)
      * @param action 실행할 작업
@@ -1305,6 +1314,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         template.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         try {
             template.executeWithoutResult(status -> {
+                String previousTenantId = TenantContextHolder.peekTenantId();
                 if (tenantId != null && !tenantId.isEmpty()) {
                     TenantContextHolder.setTenantId(tenantId);
                 }
@@ -1316,7 +1326,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     status.setRollbackOnly();
                     throw ex;
                 } finally {
-                    TenantContextHolder.clear();
+                    TenantContextHolder.setTenantIdOrClear(previousTenantId);
                 }
             });
         } catch (RuntimeException e) {
@@ -1517,8 +1527,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
             String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId) {
-        log.info("💳 옵션 B 당일 카드 결제 시작: mappingId={}, method={}, ref={}, amount={}, sameDaySchedule={}",
-                mappingId, paymentMethod, paymentReference, paymentAmount, sameDaySessionScheduleId);
+        return checkoutSameDayCard(mappingId, paymentMethod, paymentReference, paymentAmount,
+                sameDaySessionScheduleId, null);
+    }
+
+    @Override
+    public ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId,
+            String requestId) {
+        log.info("💳 옵션 B 당일 카드 결제 시작: mappingId={}, method={}, ref={}, amount={}, sameDaySchedule={}, requestId={}",
+                mappingId, paymentMethod, paymentReference, paymentAmount, sameDaySessionScheduleId, requestId);
 
         if (mappingId == null) {
             throw new IllegalArgumentException("mappingId는 필수입니다.");
@@ -1537,35 +1555,66 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
 
+        // 옵션 B v2.0 합의서 §4·§6 Q11 멱등성 가드 (A-2-a, 2026-05-28).
+        //   매칭 status 가 PENDING_PAYMENT 가 아니면 (이미 ACTIVE/TERMINATED/SESSIONS_EXHAUSTED 등) 즉시 차단.
+        //   기존 IllegalStateException("이미 승인된 결제입니다") 가드와 함께 이중 안전망을 형성한다.
+        ConsultantClientMapping.MappingStatus currentMappingStatus = mapping.getStatus();
+        if (currentMappingStatus != ConsultantClientMapping.MappingStatus.PENDING_PAYMENT) {
+            log.warn("🛡️ 멱등성 가드 발동 (status): mappingId={}, currentStatus={}, requestId={}",
+                    mappingId, currentMappingStatus, requestId);
+            throw new MappingAlreadyProcessedException(
+                    mappingId, requestId,
+                    MappingAlreadyProcessedException.Reason.STATUS_NOT_PENDING_PAYMENT,
+                    AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_PROCESSED);
+        }
+
         ConsultantClientMapping.PaymentStatus currentPaymentStatus = mapping.getPaymentStatus();
         if (currentPaymentStatus == ConsultantClientMapping.PaymentStatus.APPROVED) {
+            // 보호적 fallback: 매칭 status 가 PENDING_PAYMENT 인데 paymentStatus 만 APPROVED 인 데이터 부정합 방어.
             throw new IllegalStateException(
                     "이미 승인된 결제입니다. mappingId=" + mappingId + ", paymentStatus=" + currentPaymentStatus);
         }
 
-        // Step 1: confirmPayment (paymentStatus → CONFIRMED, status → PAYMENT_CONFIRMED).
-        //   내부에서 ERP RECEIVABLE 거래를 runInNewTransaction(REQUIRES_NEW)로 분리.
-        confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
+        // 옵션 B v2.0 합의서 §4·§6 Q11 멱등성 가드 (A-2-b, 2026-05-28).
+        //   X-Request-Id 헤더 (클라이언트 요청 ID) 5분 윈도우 내 재사용 차단.
+        //   reservation 은 REQUIRES_NEW 트랜잭션에서 commit 되어 부모 rollback 에도 보존된다.
+        com.coresolution.consultation.entity.AdminRequestIdempotency idempotencyReservation =
+                adminRequestIdempotencyService.reserve(
+                        tenantId,
+                        requestId,
+                        com.coresolution.consultation.entity.AdminRequestIdempotency.OPERATION_CHECKOUT_SAME_DAY,
+                        mappingId);
 
-        // Step 2: confirmDeposit (paymentStatus → APPROVED, status → DEPOSIT_PENDING + 회기 부여).
-        //   내부에서 finalizeTentativeBookingsAfterDepositPhase4b()가 TENTATIVE 가예약을 BOOKED 전환 + 회기 1회 차감.
-        ConsultantClientMapping afterDeposit = confirmDeposit(mappingId, paymentReference);
+        try {
+            // Step 1: confirmPayment (paymentStatus → CONFIRMED, status → PAYMENT_CONFIRMED).
+            //   내부에서 ERP RECEIVABLE 거래를 runInNewTransaction(REQUIRES_NEW)로 분리.
+            confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
 
-        // Step 3: 회기 차감 결과에 따른 분기.
-        //   단회기 (totalSessions=1): entity useSession 가드가 이미 SESSIONS_EXHAUSTED로 전이 →
-        //     approveMapping 게이트 (DEPOSIT_PENDING 요구)에 어긋나므로 호출하지 않고 그대로 반환.
-        //   n회 패키지 또는 가예약 없음: status가 여전히 DEPOSIT_PENDING → approveMapping으로 ACTIVE 전이.
-        ConsultantClientMapping.MappingStatus statusAfterDeposit = afterDeposit.getStatus();
-        if (statusAfterDeposit == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
-            log.info("✅ 옵션 B 당일 카드 결제 완료 (단회기 소진): mappingId={}, status={}",
-                    mappingId, statusAfterDeposit);
-            return afterDeposit;
+            // Step 2: confirmDeposit (paymentStatus → APPROVED, status → DEPOSIT_PENDING + 회기 부여).
+            //   내부에서 finalizeTentativeBookingsAfterDepositPhase4b()가 TENTATIVE 가예약을 BOOKED 전환 + 회기 1회 차감.
+            ConsultantClientMapping afterDeposit = confirmDeposit(mappingId, paymentReference);
+
+            // Step 3: 회기 차감 결과에 따른 분기.
+            //   단회기 (totalSessions=1): entity useSession 가드가 이미 SESSIONS_EXHAUSTED로 전이 →
+            //     approveMapping 게이트 (DEPOSIT_PENDING 요구)에 어긋나므로 호출하지 않고 그대로 반환.
+            //   n회 패키지 또는 가예약 없음: status가 여전히 DEPOSIT_PENDING → approveMapping으로 ACTIVE 전이.
+            ConsultantClientMapping.MappingStatus statusAfterDeposit = afterDeposit.getStatus();
+            if (statusAfterDeposit == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+                log.info("✅ 옵션 B 당일 카드 결제 완료 (단회기 소진): mappingId={}, status={}",
+                        mappingId, statusAfterDeposit);
+                adminRequestIdempotencyService.markResult(idempotencyReservation, "SUCCESS");
+                return afterDeposit;
+            }
+
+            ConsultantClientMapping approved = approveMapping(mappingId, "SYSTEM_AUTO_OPTION_B");
+            log.info("✅ 옵션 B 당일 카드 결제 완료: mappingId={}, status={}, remainingSessions={}",
+                    mappingId, approved.getStatus(), approved.getRemainingSessions());
+            adminRequestIdempotencyService.markResult(idempotencyReservation, "SUCCESS");
+            return approved;
+        } catch (RuntimeException ex) {
+            adminRequestIdempotencyService.markResult(idempotencyReservation, "FAILED");
+            throw ex;
         }
-
-        ConsultantClientMapping approved = approveMapping(mappingId, "SYSTEM_AUTO_OPTION_B");
-        log.info("✅ 옵션 B 당일 카드 결제 완료: mappingId={}, status={}, remainingSessions={}",
-                mappingId, approved.getStatus(), approved.getRemainingSessions());
-        return approved;
     }
 
     private void notifyMappingSettlement(ConsultantClientMapping mapping, MappingSettlementScenario scenario) {

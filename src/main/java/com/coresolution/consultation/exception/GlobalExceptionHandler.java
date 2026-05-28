@@ -349,6 +349,52 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 옵션 B (예약 우선 매칭) 당일 카드 결제 멱등성 가드 예외 처리.
+     *
+     * <p>합의서: {@code OPTION_B_RESERVATION_FIRST_PLAN_V2.md} §4·§6 Q6/Q11.
+     * 매칭 status 가 PENDING_PAYMENT 가 아니거나 X-Request-Id 헤더가 재사용된 경우
+     * HTTP 409 Conflict + 정형화된 JSON 본문으로 응답한다.</p>
+     *
+     * <p>응답 본문 스키마:
+     * <pre>{@code
+     * {
+     *   "success": false,
+     *   "code": "MAPPING_ALREADY_PROCESSED",
+     *   "reason": "STATUS_NOT_PENDING_PAYMENT" | "DUPLICATE_REQUEST_ID",
+     *   "mappingId": 123,
+     *   "requestId": "uuid-...",
+     *   "message": "이미 처리 중입니다. 새 매칭 카드로 확인하세요.",
+     *   "errorCode": "MAPPING_ALREADY_PROCESSED",
+     *   "status": 409,
+     *   "timestamp": "..."
+     * }
+     * }</pre></p>
+     *
+     * @since 2026-05-28
+     */
+    @ExceptionHandler(MappingAlreadyProcessedException.class)
+    public ResponseEntity<Map<String, Object>> handleMappingAlreadyProcessed(
+            MappingAlreadyProcessedException e, HttpServletRequest request) {
+        log.info("[MAPPING_ALREADY_PROCESSED] mappingId={} requestId={} reason={} message={} path={}",
+                e.getMappingId(), e.getRequestId(), e.getReason(), e.getMessage(), request.getRequestURI());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", "MAPPING_ALREADY_PROCESSED");
+        body.put("reason", e.getReason() != null ? e.getReason().name() : null);
+        body.put("mappingId", e.getMappingId());
+        body.put("requestId", e.getRequestId());
+        body.put("message", e.getMessage());
+        body.put("errorCode", "MAPPING_ALREADY_PROCESSED");
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
      * 어드민 강제 종료(삭제) 가드가 발동된 경우 처리.
      *
      * <p>의도된 비즈니스 차단 흐름이므로 HTTP {@code 409 Conflict} + 정형화된 JSON 본문으로

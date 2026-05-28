@@ -70,6 +70,24 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_CONSULTANT_FUTURE_SCHEDULES_TRANSFER_FMT =
             "상담사에게 %d 개의 예정된 스케줄이 있습니다. 먼저 다른 상담사로 이전 처리해주세요.";
 
+    // --- 어드민 삭제 가드 (AdminDeleteBlockedException) 사유 코드 ---
+    // 운영 대시보드·프론트엔드가 본 코드로 분기·국제화를 결정한다. 코드 추가 시 본 목록에도 등록할 것.
+
+    /** 내담자: 결제 대기(PENDING_PAYMENT) 매칭이 존재해 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_PENDING_PAYMENT_MAPPING = "PENDING_PAYMENT_MAPPING";
+
+    /** 내담자: 잔여 회기(remainingSessions > 0) 가 있어 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_REMAINING_SESSIONS = "REMAINING_SESSIONS";
+
+    /** 내담자: 예정 스케줄(BOOKED/CONFIRMED) 이 존재해 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_FUTURE_SCHEDULES = "FUTURE_SCHEDULES";
+
+    /** 상담사: 활성 매칭이 존재해 이관 없이 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_CONSULTANT_ACTIVE_MAPPINGS = "CONSULTANT_ACTIVE_MAPPINGS";
+
+    /** 상담사: 예정 스케줄이 존재해 이관 없이 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_CONSULTANT_FUTURE_SCHEDULES = "CONSULTANT_FUTURE_SCHEDULES";
+
     public static final String MSG_DELETE_TARGET_NOT_CONSULTANT = "삭제 대상이 상담사가 아닙니다.";
 
     public static final String MSG_TRANSFER_TARGET_NOT_CONSULTANT = "이전 대상이 상담사가 아닙니다.";

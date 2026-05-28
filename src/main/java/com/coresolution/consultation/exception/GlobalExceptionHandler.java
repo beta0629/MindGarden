@@ -1,6 +1,7 @@
 package com.coresolution.consultation.exception;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -345,6 +346,45 @@ public class GlobalExceptionHandler {
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * 어드민 강제 종료(삭제) 가드가 발동된 경우 처리.
+     *
+     * <p>의도된 비즈니스 차단 흐름이므로 HTTP {@code 409 Conflict} + 정형화된 JSON 본문으로
+     * 응답하고, 로그 레벨은 {@code INFO} 로 기록한다 (시스템 오류 아님).</p>
+     *
+     * <p>응답 본문 스키마:
+     * <pre>{@code
+     * {
+     *   "success": false,
+     *   "code": "PENDING_PAYMENT_MAPPING",
+     *   "message": "내담자에게 N 개의 결제 대기 ...",
+     *   "details": { "pendingMappingCount": N },
+     *   "errorCode": "ADMIN_DELETE_BLOCKED",
+     *   "status": 409,
+     *   "timestamp": "..."
+     * }
+     * }</pre></p>
+     */
+    @ExceptionHandler(AdminDeleteBlockedException.class)
+    public ResponseEntity<Map<String, Object>> handleAdminDeleteBlocked(
+            AdminDeleteBlockedException e, HttpServletRequest request) {
+        log.info("[ADMIN_DELETE_BLOCKED] code={} message={} details={} path={}",
+                e.getCode(), e.getMessage(), e.getDetails(), request.getRequestURI());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", e.getCode());
+        body.put("message", e.getMessage());
+        body.put("details", e.getDetails());
+        body.put("errorCode", "ADMIN_DELETE_BLOCKED");
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     /**

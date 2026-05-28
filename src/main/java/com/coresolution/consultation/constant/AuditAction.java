@@ -35,7 +35,15 @@ public enum AuditAction {
     ADMIN_RESTORE("ADMIN_RESTORE", "enums.AuditAction.ADMIN_RESTORE"),
     /** Phase 2-β — 어드민 강제 종료 7일 윈도우 만료 후 자동 익명화 (DELETED_BY_ADMIN → ANONYMIZED). */
     ADMIN_FORCED_DELETE_ANONYMIZED(
-            "ADMIN_FORCED_DELETE_ANONYMIZED", "enums.AuditAction.ADMIN_FORCED_DELETE_ANONYMIZED");
+            "ADMIN_FORCED_DELETE_ANONYMIZED", "enums.AuditAction.ADMIN_FORCED_DELETE_ANONYMIZED"),
+
+    /** ERP P0-2 — 재무 마감 기간 CLOSED 전이 (FinancialPeriodService.closePeriod). */
+    FINANCIAL_PERIOD_CLOSE(
+            "FINANCIAL_PERIOD_CLOSE", "enums.AuditAction.FINANCIAL_PERIOD_CLOSE"),
+
+    /** ERP P0-2 — 재무 마감 기간 REOPENED 전이 (HQ_ADMIN 재오픈, 사유 ≥20자). */
+    FINANCIAL_PERIOD_REOPEN(
+            "FINANCIAL_PERIOD_REOPEN", "enums.AuditAction.FINANCIAL_PERIOD_REOPEN");
 
     private final String code;
     private final String messageKey;

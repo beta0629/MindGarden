@@ -72,9 +72,11 @@ public class ErpAutomationScheduler {
     }
 
     /**
-     * 정기 일 마감(재무) — 매일 00:10 (일별 통계 00:01 이후)
+     * 정기 일 마감(재무) — 매일 02:00 KST.
+     * 합의서 §2 Q2: 운영 트래픽 회피 위해 02:00~02:30 KST 이동.
+     * 토글: {@code mindgarden.scheduler.financial-close.daily-cron}.
      */
-    @Scheduled(cron = "${scheduler.erp-daily-close.cron:0 10 0 * * *}")
+    @Scheduled(cron = "${mindgarden.scheduler.financial-close.daily-cron:0 0 2 * * *}")
     public void scheduleDailyFinancialClose() {
         LocalDate targetDate = LocalDate.now().minusDays(1);
         runPerTenant("DailyFinancialClose", targetDate.toString(),
@@ -82,9 +84,11 @@ public class ErpAutomationScheduler {
     }
 
     /**
-     * 정기 월 마감(재무) — 매월 1일 00:20
+     * 정기 월 마감(재무) — 매월 1일 02:30 KST.
+     * 합의서 §2 Q2: 일 마감(02:00) 이후 30분 시점.
+     * 토글: {@code mindgarden.scheduler.financial-close.monthly-cron}.
      */
-    @Scheduled(cron = "${scheduler.erp-monthly-close.cron:0 20 0 1 * *}")
+    @Scheduled(cron = "${mindgarden.scheduler.financial-close.monthly-cron:0 30 2 1 * *}")
     public void scheduleMonthlyFinancialClose() {
         YearMonth prevMonth = YearMonth.now().minusMonths(1);
         runPerTenant("MonthlyFinancialClose", prevMonth.toString(),

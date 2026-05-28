@@ -72,4 +72,16 @@ public final class FinancialTransactionConstants {
     public static boolean isRefundSubcategory(String subcategory) {
         return subcategory != null && REFUND_SUBCATEGORIES.contains(subcategory);
     }
+
+    /**
+     * 환불 서브카테고리 SSOT 집합 — JPQL IN 절 등 외부 파라미터로 사용.
+     *
+     * <p>ERP P0-2 결산({@code FinancialPeriodServiceImpl}) 의 부가세 가드 산식에서
+     * REFUND 합을 산출할 때 본 집합을 IN 절 인자로 사용한다.</p>
+     *
+     * @return 환불 서브카테고리 코드 불변 집합
+     */
+    public static java.util.Set<String> getRefundSubcategories() {
+        return REFUND_SUBCATEGORIES;
+    }
 }

@@ -247,6 +247,15 @@ mindgarden:
       enabled: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_ENABLED:true}
       dry-run: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_DRY_RUN:true}
       cron: ${MINDGARDEN_SCHEDULER_DORMANT_PRE_NOTICE_CRON:0 0 9 * * *}
+    # =====================================================
+    # ERP P0-2 PR-B: 재무 마감 (Q1~Q9 default 수용, 합의서 §2 / §4.2)
+    # - dry-run=true 운영 1주 검증 후 별도 결재로 false 전환
+    # - cron 02:00~02:30 KST: 운영 트래픽 회피, blue/green cutover 시간대와 분리
+    # =====================================================
+    financial-close:
+      dry-run: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_DRY_RUN:true}
+      daily-cron: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_DAILY_CRON:0 0 2 * * *}
+      monthly-cron: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_MONTHLY_CRON:0 30 2 1 * *}
 
 # JWT 설정 (프로파일별 설정에서 기본값 제공)
 jwt:

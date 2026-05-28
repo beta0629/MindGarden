@@ -282,6 +282,29 @@ public interface AdminService {
             String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId);
 
     /**
+     * 옵션 B 당일 카드 결제 — 멱등성 가드 (X-Request-Id) 포함 진입점.
+     *
+     * <p>v2.0 합의서 §4·§6 Q11 (2026-05-28): 클라이언트 요청 ID 가 5분 윈도우 내 재사용된 경우
+     * 또는 매칭 status 가 {@code PENDING_PAYMENT} 가 아닌 경우 HTTP 409 응답 (
+     * {@link com.coresolution.consultation.exception.MappingAlreadyProcessedException}) 으로 차단한다.</p>
+     *
+     * <p>{@code requestId} 가 {@code null}/빈 문자열이면 X-Request-Id 가드는 생략하고 매칭 status 가드만 적용한다
+     * (v1.0 호환). 컨트롤러에서 헤더 누락 시 UUID 자동 생성을 권장한다.</p>
+     *
+     * @param mappingId 대상 매핑 ID
+     * @param paymentMethod 결제 방식
+     * @param paymentReference 결제 승인번호
+     * @param paymentAmount 결제 금액
+     * @param sameDaySessionScheduleId 당일 가예약 일정 ID (nullable)
+     * @param requestId 클라이언트 요청 ID (Idempotency Key, nullable — null 이면 가드 생략)
+     * @return 최종 매핑
+     * @since 2026-05-28
+     */
+    ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId,
+            String requestId);
+
+    /**
      * 관리자 거부
      */
     ConsultantClientMapping rejectMapping(Long mappingId, String reason);

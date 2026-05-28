@@ -144,6 +144,7 @@ class AdminServiceImplCheckoutSameDayTest {
     @Mock private BatchNotificationDispatchService batchNotificationDispatchService;
     @Mock private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
     @Mock private UserLifecycleService userLifecycleService;
+    @Mock private com.coresolution.consultation.service.AdminRequestIdempotencyService adminRequestIdempotencyService;
 
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
         @Override
@@ -209,7 +210,8 @@ class AdminServiceImplCheckoutSameDayTest {
                 mappingSettlementNotificationHelper,
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
-                userLifecycleService);
+                userLifecycleService,
+                adminRequestIdempotencyService);
         spyService = Mockito.spy(realService);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

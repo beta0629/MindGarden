@@ -243,4 +243,128 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
         .toBeInTheDocument();
     });
   });
+
+  // 옵션 B v2.0 합의서 §6 Q6/Q11 멱등성 가드 응답 처리 회귀 가드 (2026-05-28).
+  // 매트릭스: docs/project-management/2026-05-28/OPTION_B_V2_TEST_MATRIX.md §9 케이스 60.
+  describe('v2.0 멱등성 가드 응답 처리 (HTTP 409 + MAPPING_ALREADY_PROCESSED)', () => {
+    test('정상 결제 요청 시 X-Request-Id 헤더 동봉 (옵션 B v2.0 §4)', async () => {
+      const onCheckoutCompleted = jest.fn();
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={jest.fn()}
+          mapping={baseMapping}
+          onCheckoutCompleted={onCheckoutCompleted}
+        />
+      );
+      const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+      fireEvent.change(referenceInput, { target: { value: 'AUTH-V2-1' } });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
+      });
+
+      expect(mockStandardizedApi.post).toHaveBeenCalledTimes(1);
+      const [, , options] = mockStandardizedApi.post.mock.calls[0];
+      expect(options).toBeTruthy();
+      expect(options.headers).toBeTruthy();
+      expect(typeof options.headers['X-Request-Id']).toBe('string');
+      expect(options.headers['X-Request-Id'].length).toBeGreaterThan(0);
+    });
+
+    test('백엔드 409 + code=MAPPING_ALREADY_PROCESSED → info 토스트 + 모달 close + 에러 토스트 미발생', async () => {
+      mockStandardizedApi.post.mockRejectedValueOnce({
+        status: 409,
+        message: '이미 처리 중입니다. 새 매칭 카드로 확인하세요.',
+        response: {
+          data: {
+            success: false,
+            code: 'MAPPING_ALREADY_PROCESSED',
+            errorCode: 'MAPPING_ALREADY_PROCESSED',
+            reason: 'STATUS_NOT_PENDING_PAYMENT',
+            mappingId: 1001,
+            message: '이미 처리 중입니다. 새 매칭 카드로 확인하세요.'
+          }
+        }
+      });
+      const onClose = jest.fn();
+      const onCheckoutCompleted = jest.fn();
+
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={onClose}
+          mapping={baseMapping}
+          onCheckoutCompleted={onCheckoutCompleted}
+        />
+      );
+      const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+      fireEvent.change(referenceInput, { target: { value: 'AUTH-DUP' } });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
+      });
+
+      expect(mockNotificationManager.info).toHaveBeenCalledTimes(1);
+      expect(mockNotificationManager.info).toHaveBeenCalledWith(
+        expect.stringMatching(/이미 처리 중입니다/)
+      );
+      expect(mockNotificationManager.error).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onCheckoutCompleted).toHaveBeenCalledTimes(1);
+    });
+
+    test('error.status 가 비어있어도 response.data.code=MAPPING_ALREADY_PROCESSED 면 info 토스트', async () => {
+      mockStandardizedApi.post.mockRejectedValueOnce({
+        message: '이미 처리 중입니다.',
+        response: {
+          data: {
+            code: 'MAPPING_ALREADY_PROCESSED',
+            message: '이미 처리 중입니다. 새 매칭 카드로 확인하세요.'
+          }
+        }
+      });
+      const onClose = jest.fn();
+
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={onClose}
+          mapping={baseMapping}
+          onCheckoutCompleted={jest.fn()}
+        />
+      );
+      const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+      fireEvent.change(referenceInput, { target: { value: 'AUTH-DUP-2' } });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
+      });
+
+      expect(mockNotificationManager.info).toHaveBeenCalledTimes(1);
+      expect(mockNotificationManager.error).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    test('백엔드 500 (멱등성 외 오류) → 일반 에러 토스트 (info 호출 0회)', async () => {
+      mockStandardizedApi.post.mockRejectedValueOnce({
+        status: 500,
+        message: '서버 오류',
+        response: { data: { message: '서버 내부 오류가 발생했습니다.' } }
+      });
+
+      render(
+        <CheckoutSameDayModal isOpen onClose={jest.fn()} mapping={baseMapping} onCheckoutCompleted={jest.fn()} />
+      );
+      const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+      fireEvent.change(referenceInput, { target: { value: 'AUTH-FAIL' } });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
+      });
+
+      expect(mockNotificationManager.error).toHaveBeenCalled();
+      expect(mockNotificationManager.info).not.toHaveBeenCalled();
+    });
+  });
 });

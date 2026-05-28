@@ -187,7 +187,9 @@ class AdminServiceImplCreateMappingSingleSessionGuardTest {
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
                 org.mockito.Mockito.mock(
-                        com.coresolution.consultation.service.UserLifecycleService.class));
+                        com.coresolution.consultation.service.UserLifecycleService.class),
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

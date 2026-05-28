@@ -221,7 +221,9 @@ class AdminServiceImplConfirmDepositApproveTest {
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
                 org.mockito.Mockito.mock(
-                        com.coresolution.consultation.service.UserLifecycleService.class));
+                        com.coresolution.consultation.service.UserLifecycleService.class),
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }

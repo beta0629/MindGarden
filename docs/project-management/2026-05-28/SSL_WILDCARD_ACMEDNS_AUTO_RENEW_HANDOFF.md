@@ -146,3 +146,69 @@
 3. **데이터 저장소**: SQLite vs PostgreSQL
 4. **백업 주기**: 일일 등 주기의 상세화
 5. **모니터링 채널**: 슬랙 워크스페이스 내 특정 채널, 수신 이메일 지정 등
+
+---
+
+## 12. Phase A 실행 결과 (2026-05-28)
+
+### 12-1. 사용자 결재 변수 (확정) + 실측 보정
+| 변수 | 확정/실측 값 | 비고 |
+|---|---|---|
+| 배치 위치 | dev 단독 (`beta0629.cafe24.com`, IP `114.202.247.246`) | §2 (a) — dev 다운 시 30일 갱신 유예 + 운영 영향 0 |
+| acme 서비스 도메인 | `acme.core-solution.co.kr` | — |
+| 데이터 저장소 | SQLite (`/var/lib/acme-dns/acme-dns.db`) | — |
+| 백업 주기 | 매일 02:30 KST, 7일 rolling, `/var/backups/acme-dns/` | systemd timer `acme-dns-backup.timer`, `PRAGMA integrity_check` OK |
+| 모니터링 채널 | 이메일 `beta74@live.co.kr` | `notify-ssl-failure.sh` — Phase A 시점 mail 미설치 → logger fallback. SMTP 또는 msmtp 설정은 Phase D 별도 |
+| **API 포트 변경** | `127.0.0.1:8053` (기본 8080 → 충돌 회피) | mindgarden-dev 가 8080 점유 |
+| **DNS listen 보정** | `114.202.247.246:53` (외부 IP 단독, `0.0.0.0:53` 회피) | Ubuntu 22.04 의 `systemd-resolve` 가 `127.0.0.53:53` 점유 → 0.0.0.0 바인딩 시 충돌. 외부 IP 에만 바인딩으로 회피 |
+| **acme-dns 버전** | v1.0 (joohoi/acme-dns → 현 acme-dns/acme-dns 조직 이전) | v2.x (2.0.0/2.0.1/2.0.2) 는 startup deadlock 으로 동작 불가 (Go 1.25 + sync.Mutex). v1.0 안정. `ACME_DNS_VERSION` 환경변수로 override 가능 |
+
+### 12-2. Phase A 산출물 (브랜치 `feature/acme-dns-phase-a-install`)
+| # | 파일 | 역할 |
+|---|---|---|
+| 1 | `scripts/server-management/ssl/install-acme-dns.sh` | 바이너리·계정·디렉터리·config·systemd 일괄 설치 (dry-run / 멱등) |
+| 2 | `config/systemd/acme-dns.service` | acme-dns systemd 유닛 (CAP_NET_BIND_SERVICE) |
+| 3 | `scripts/server-management/ssl/register-acme-dns-domain.sh` | register API 호출 + 가비아 CNAME 가이드 출력 (dry-run / 멱등) |
+| 4 | `scripts/server-management/ssl/issue-wildcard-ssl-via-acmedns.sh` | certbot dns-acmedns 발급 래퍼 (Phase C 사용) |
+| 5 | `scripts/server-management/ssl/ensure-auto-renewal.sh` (확장) | #5 acme-dns 의존성 점검 섹션 추가 |
+| 6 | `scripts/server-management/ssl/backup-acme-dns-sqlite.sh` | SQLite `.backup` + 7일 rolling + `PRAGMA integrity_check` |
+| 7 | `config/systemd/acme-dns-backup.{service,timer}` | 매일 02:30 자동 백업 |
+| 8 | `scripts/server-management/ssl/notify-ssl-failure.sh` | 발급·갱신 실패 메일 발송 (mail / sendmail fallback) |
+| 9 | dry-run 테스트 | 모든 스크립트 `--dry-run` 지원, `bash -n` 통과 |
+| 10 | `docs/runbooks/SSL_ACME_DNS_GABIA_SETUP.md` | Phase B 사용자 가이드 (가비아 5~10분 등록 절차) |
+
+### 12-3. Phase B 사용자 등록 가이드 (실측 UUID 포함)
+상세: [`docs/runbooks/SSL_ACME_DNS_GABIA_SETUP.md`](../../runbooks/SSL_ACME_DNS_GABIA_SETUP.md)
+
+| 순서 | 가비아 레코드 타입 | 호스트(이름) | 값 | TTL |
+|---|---|---|---|---|
+| 1 | A | `acme` (`acme.core-solution.co.kr`) | `114.202.247.246` | 600 |
+| 2 | CNAME | `_acme-challenge` (`_acme-challenge.core-solution.co.kr`) | `749824da-c3d2-4feb-b57d-b69714dc73c5.acme.core-solution.co.kr.` | 600 |
+| 3 | CNAME | `_acme-challenge.dev` (`_acme-challenge.dev.core-solution.co.kr`) | `273e2713-db44-4e62-a5a8-9eb1fab37f1f.acme.core-solution.co.kr.` | 600 |
+
+> ⚠️ 가비아에 현재 `acme.core-solution.co.kr` 이 다른 IP(`211.37.179.204`) 로 등록되어 있다면 위 1번을 **수정** 합니다.
+
+전파 확인 (5~10분 후):
+```bash
+dig A acme.core-solution.co.kr +short                          # 기대: 114.202.247.246
+dig CNAME _acme-challenge.core-solution.co.kr +short           # 기대: 749824da-c3d2-4feb-b57d-b69714dc73c5.acme.core-solution.co.kr.
+dig CNAME _acme-challenge.dev.core-solution.co.kr +short       # 기대: 273e2713-db44-4e62-a5a8-9eb1fab37f1f.acme.core-solution.co.kr.
+```
+
+### 12-4. dev 서버 실측 검증 결과
+- ✅ acme-dns v1.0 systemd active (`/usr/local/bin/acme-dns`)
+- ✅ DNS listen `114.202.247.246:53` (UDP+TCP), HTTP API `127.0.0.1:8053/health` 200 OK
+- ✅ ufw 53/udp + 53/tcp allow 적용
+- ✅ `/etc/letsencrypt/acmedns.json` 2 도메인 자격증명 저장 (perm=600 root)
+- ✅ `acme-dns-backup.timer` enabled, 다음 트리거 익일 02:30 KST
+- ✅ 첫 백업 실행 + `PRAGMA integrity_check` OK
+- ✅ install 스크립트 재실행 멱등 PASS (계정/디렉터리/설정/서비스 모두 skip)
+- ✅ register 스크립트 재실행 멱등 PASS (기존 자격증명 재사용)
+- ✅ `ensure-auto-renewal.sh` #5 acme-dns 의존성 점검 5/5 PASS
+- ⚠️ `notify-ssl-failure.sh` — mail 미설치 (mailutils/postfix 설치 시 hang) → 현재 logger fallback. **Phase D 에서 msmtp 또는 외부 SMTP relay 설정 분리 진행**
+
+### 12-5. Phase C/D 후속
+- **Phase B (사용자)**: 가비아 A 1건 + CNAME 2건 등록 (위 §12-3 표, 5-10분)
+- **Phase C (코더)**: `issue-wildcard-ssl-via-acmedns.sh core-solution.co.kr` / `dev.core-solution.co.kr` 호출 → nginx ssl_certificate 검증
+  - 사전: dev 서버에 `pip3 install certbot-dns-acmedns` 설치 필요
+- **Phase D (디플로이어)**: `certbot renew --dry-run` 정기 검증 + `notify-ssl-failure.sh` SMTP 연동 + GitHub Actions `ssl-auto-renewal-check.yml` 에 acme-dns health probe 통합

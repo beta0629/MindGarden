@@ -1882,6 +1882,60 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * 옵션 B (예약 우선 매칭) — 결제 전 매핑의 가예약/대기 일정 목록 조회.
+     * <p>
+     * CheckoutSameDayModal 의 일정 선택 드롭다운에서 사용한다.
+     * 응답은 가벼운 평면 Map 리스트로 제공한다 (id, scheduleDate, startTime, endTime, status, sessionSequence, title).
+     *
+     * @param mappingId 대상 매핑 ID
+     * @param session HTTP 세션 (MAPPING_MANAGE 권한 + tenantId 검증)
+     * @return 일정 목록 (date asc, startTime asc)
+     */
+    @GetMapping("/mappings/{mappingId}/pending-schedules")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingSchedulesForMapping(
+            @PathVariable Long mappingId,
+            HttpSession session) {
+        log.info("📋 옵션 B 결제 전 가예약 일정 목록 조회: mappingId={}", mappingId);
+
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "MAPPING_MANAGE", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        }
+
+        // tenantId 컨텍스트 보장: SessionUtils → TenantContextHolder 순서.
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        }
+        if (tenantId != null && !tenantId.isEmpty()) {
+            com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        }
+
+        List<com.coresolution.consultation.entity.Schedule> schedules =
+                adminService.getPendingSchedulesForMapping(mappingId);
+
+        List<Map<String, Object>> items = schedules.stream()
+                .map(s -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", s.getId());
+                    item.put("scheduleDate", s.getDate());
+                    item.put("startTime", s.getStartTime());
+                    item.put("endTime", s.getEndTime());
+                    item.put("status", s.getStatus() != null ? s.getStatus().name() : null);
+                    item.put("sessionSequence", s.getSessionSequence());
+                    item.put("title", s.getTitle());
+                    return item;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("schedules", items);
+        data.put("count", items.size());
+        return success(data);
+    }
+
+    /**
      * 옵션 B (예약 우선 매칭) — 당일 카드 결제 단일 진입점.
      * <p>
      * 합의서: {@code docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md}.

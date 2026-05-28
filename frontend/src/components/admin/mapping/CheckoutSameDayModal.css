@@ -60,6 +60,84 @@
   color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
 }
 
+/* 후속 UX 개선 2026-05-28: 결제 금액 차액·매칭 표시 */
+.mg-v2-checkout-same-day-modal__hint--discount {
+  color: var(--mg-success-700, var(--mg-color-text));
+  font-weight: var(--mg-font-weight-semibold, 600);
+}
+
+.mg-v2-checkout-same-day-modal__hint--surcharge {
+  color: var(--mg-warning-700, var(--mg-color-text));
+  font-weight: var(--mg-font-weight-semibold, 600);
+}
+
+.mg-v2-checkout-same-day-modal__hint--match {
+  color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
+}
+
+.mg-v2-checkout-same-day-modal__hint--error {
+  color: var(--mg-error-700, var(--mg-color-text));
+}
+
+/* 라벨 행: 라벨 + 우측 인라인 액션(자동 재생성 등) */
+.mg-v2-checkout-same-day-modal__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+}
+
+.mg-v2-checkout-same-day-modal__inline-action {
+  background: transparent;
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
+  border-radius: var(--ad-b0kla-radius, 8px);
+  padding: var(--mg-spacing-xxs, 2px) var(--mg-spacing-sm, 8px);
+  font-size: var(--mg-font-size-xs, 12px);
+  color: var(--ad-b0kla-text, var(--mg-color-text));
+  cursor: pointer;
+}
+
+.mg-v2-checkout-same-day-modal__inline-action:hover:not(:disabled) {
+  background: var(--ad-b0kla-bg-soft, var(--mg-color-surface-soft));
+}
+
+.mg-v2-checkout-same-day-modal__inline-action:disabled {
+  cursor: not-allowed;
+  opacity: var(--mg-opacity-disabled, 0.6);
+}
+
+/* 일정 드롭다운 로딩 */
+.mg-v2-checkout-same-day-modal__schedule-loading {
+  padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-md, 12px);
+  border: 1px dashed var(--ad-b0kla-border, var(--mg-color-border));
+  border-radius: var(--ad-b0kla-radius, 8px);
+  font-size: var(--mg-font-size-sm, 13px);
+  color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
+}
+
+/* 결제 완료 success 알림 박스 (모달 내) */
+.mg-v2-checkout-same-day-modal__success {
+  padding: var(--mg-spacing-md, 12px);
+  border-radius: var(--ad-b0kla-radius, 8px);
+  background: var(--mg-success-100);
+  color: var(--mg-success-700);
+  font-size: var(--mg-font-size-sm, 13px);
+  line-height: var(--mg-line-height-md, 1.6);
+}
+
+.mg-v2-checkout-same-day-modal__success-title {
+  font-weight: var(--mg-font-weight-semibold, 600);
+}
+
+.mg-v2-checkout-same-day-modal__success-list {
+  margin: var(--mg-spacing-xs, 4px) 0 0 var(--mg-spacing-md, 12px);
+  padding: 0;
+}
+
+.mg-v2-checkout-same-day-modal__success-list li {
+  margin: 0;
+}
+
 /* P0 핫픽스 2026-05-28: 매핑 정보 누락 시 alert 박스 */
 .mg-v2-checkout-same-day-modal__invalid-alert {
   padding: var(--mg-spacing-md, 12px);

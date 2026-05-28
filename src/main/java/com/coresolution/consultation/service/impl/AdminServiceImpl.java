@@ -5052,6 +5052,42 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return mapping;
     }
 
+    /**
+     * 옵션 B (예약 우선 매칭) — 결제 전 매핑의 가예약/대기 일정 목록 조회.
+     * <p>
+     * CheckoutSameDayModal 의 일정 선택 드롭다운에서 사용한다.
+     * <ul>
+     *   <li>{@link com.coresolution.consultation.constant.ScheduleStatus#TENTATIVE_PENDING_PAYMENT} (사후 결제 가예약)</li>
+     *   <li>{@link com.coresolution.consultation.constant.ScheduleStatus#BOOKED} (이미 예약됨, 회기 차감 미발생 잔여 가능)</li>
+     * </ul>
+     * 두 상태를 함께 반환한다. 테넌트 격리(tenantId) + 매핑 존재 검증을 수행한다.
+     *
+     * @param mappingId 대상 매핑 ID
+     * @return 일정 목록 (date asc, startTime asc). 매핑이 존재하지 않으면 빈 리스트.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.coresolution.consultation.entity.Schedule> getPendingSchedulesForMapping(Long mappingId) {
+        if (mappingId == null) {
+            return java.util.Collections.emptyList();
+        }
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId).orElse(null);
+        if (mapping == null) {
+            return java.util.Collections.emptyList();
+        }
+        Long consultantId = (mapping.getConsultant() != null) ? mapping.getConsultant().getId() : null;
+        Long clientId = (mapping.getClient() != null) ? mapping.getClient().getId() : null;
+        java.util.List<com.coresolution.consultation.constant.ScheduleStatus> statuses = java.util.List.of(
+                com.coresolution.consultation.constant.ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
+                com.coresolution.consultation.constant.ScheduleStatus.BOOKED);
+        return scheduleRepository.findPendingSchedulesForMapping(
+                tenantId, mappingId, consultantId, clientId, statuses);
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

@@ -17,7 +17,9 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 
 jest.mock('react-i18next', () => {
-  const stableT = (key) => key;
+  // 옵션 B v2.0 (2026-05-28): 멱등성 토스트 검증을 위해 fallback(한글) 메시지를 우선 반환.
+  // 다른 expectation 은 키만 사용하므로 fallback 미지정 호출은 키를 그대로 돌려준다.
+  const stableT = (key, fallback) => (fallback != null ? fallback : key);
   return {
     __esModule: true,
     useTranslation: () => ({ t: stableT }),
@@ -203,7 +205,8 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       );
       const alertBox = screen.getByRole('alert');
       expect(alertBox).toBeInTheDocument();
-      expect(alertBox.textContent).toMatch(/admin:mapping\.checkout\.sameDay\.error\.invalidMapping/);
+      // 옵션 B v2.0 (2026-05-28): mock t() 가 fallback 우선이라 한글 메시지가 노출된다.
+      expect(alertBox.textContent).toMatch(/매칭 정보가 누락/);
       // 결제 폼 라디오 미렌더 확인
       expect(screen.queryByDisplayValue('CREDIT_CARD')).toBeNull();
     });

@@ -1008,4 +1008,18 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("consultantId") Long consultantId,
             @Param("clientId") Long clientId,
             @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
+     * 옵션 B R4 — 매핑 ID + 상태 목록으로 활성 (미삭제) 일정 조회.
+     *
+     * <p>합의서: {@code docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md}.
+     * PENDING_PAYMENT 매핑 정리 시 연관된 가예약(TENTATIVE_PENDING_PAYMENT) /
+     * BOOKED 일정을 일괄 CANCELLED로 전이하기 위해 사용.</p>
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.mappingId = :mappingId AND s.status IN :statuses")
+    List<Schedule> findByTenantIdAndMappingIdAndStatusIn(
+            @Param("tenantId") String tenantId,
+            @Param("mappingId") Long mappingId,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
 }

@@ -123,6 +123,7 @@ import WellnessNotificationList from './components/wellness/WellnessNotification
 import WellnessNotificationDetail from './components/wellness/WellnessNotificationDetail';
 import WellnessManagement from './components/admin/WellnessManagement';
 import AdminCommunityModerationQueuePage from './components/admin/AdminCommunityModerationQueuePage';
+import AdminPendingPaymentCleanupPage from './components/admin/mapping/AdminPendingPaymentCleanupPage';
 import AdminContentMasterPage from './components/admin/AdminContentMasterPage';
 import AdminPushMonitoringPlaceholderPage from './components/admin/AdminPushMonitoringPlaceholderPage';
 import AdminMindWeatherObservabilityPage from './components/admin/AdminMindWeatherObservabilityPage';
@@ -656,6 +657,7 @@ function AppContent() {
             {/* 관리자 - 웰니스 관리 */}
             <Route path="/admin/wellness" element={<WellnessManagement />} />
             <Route path={ADMIN_ROUTES.COMMUNITY_MODERATION} element={<AdminCommunityModerationQueuePage />} />
+            <Route path={ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP} element={<AdminPendingPaymentCleanupPage />} />
             <Route path={ADMIN_ROUTES.CONTENT_MASTER} element={<AdminContentMasterPage />} />
             <Route path={ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY} element={<AdminMindWeatherObservabilityPage />} />
             <Route path={ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY} element={<AdminMindGardenObservabilityPage />} />

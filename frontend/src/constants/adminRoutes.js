@@ -27,6 +27,8 @@ export const ADMIN_ROUTES = {
     CLIENT_COMPREHENSIVE: '/admin/client-comprehensive',
     MAPPINGS: '/admin/mappings',
     MAPPING_MANAGEMENT: '/admin/mapping-management',
+    /** 옵션 B R4 — 디러티 PENDING_PAYMENT 매칭 어드민 수동 정리 (2026-05-28). */
+    MAPPINGS_PENDING_PAYMENT_CLEANUP: '/admin/mappings/pending-payment-cleanup',
     INTEGRATED_SCHEDULE: '/admin/integrated-schedule',
     /** 상담일지 조회 */
     CONSULTATION_LOGS: '/admin/consultation-logs',

@@ -1,8 +1,11 @@
 package com.coresolution.consultation.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -135,4 +138,26 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
      */
     @Query(value = "SELECT CONCAT(m.consultant.name, ' - ', m.client.name), m.createdAt FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId ORDER BY m.createdAt DESC LIMIT :limit", nativeQuery = false)
     List<Object[]> findRecentMappings(@Param("tenantId") String tenantId, @Param("limit") int limit);
+
+    /**
+     * 옵션 B R4 — 디러티 PENDING_PAYMENT 매핑 페이지 조회.
+     *
+     * <p>합의서: {@code docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md}.
+     * 어드민이 매칭 생성 후 {@code ageHours} 시간 이상 결제가 들어오지 않은 PENDING_PAYMENT
+     * 매핑을 페이지 단위로 조회한다. tenantId 격리 필수.
+     *
+     * @param tenantId  테넌트 ID (필수)
+     * @param threshold 기준 시각 (LOCAL_DATE_TIME, NOW - ageHours)
+     * @param pageable  페이지·정렬 정보
+     * @return PENDING_PAYMENT + createdAt &lt; threshold 페이지 (consultant/client fetch join)
+     */
+    @Query(value = "SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client "
+            + "WHERE m.tenantId = :tenantId AND m.status = 'PENDING_PAYMENT' AND m.createdAt < :threshold "
+            + "ORDER BY m.createdAt ASC",
+        countQuery = "SELECT COUNT(m) FROM ConsultantClientMapping m "
+                + "WHERE m.tenantId = :tenantId AND m.status = 'PENDING_PAYMENT' AND m.createdAt < :threshold")
+    Page<ConsultantClientMapping> findDirtyPendingPaymentMappings(
+            @Param("tenantId") String tenantId,
+            @Param("threshold") LocalDateTime threshold,
+            Pageable pageable);
 }

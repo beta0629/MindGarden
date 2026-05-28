@@ -62,6 +62,12 @@ const DEFAULT_MENU_ITEMS = [
     ]
   },
   {
+    to: ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP,
+    icon: 'TRASH',
+    label: '디러티 매칭 정리',
+    end: true
+  },
+  {
     to: ADMIN_ROUTES.COMMUNITY_MODERATION,
     icon: 'LAYERS',
     label: '콘텐츠·커뮤니티',

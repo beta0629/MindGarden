@@ -10,7 +10,8 @@ import {
   CheckCircle,
   Search,
   Check,
-  AlertCircle
+  AlertCircle,
+  Wallet
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
@@ -47,6 +48,22 @@ const STEPS_CONFIG = [
   { key: 3, labelKey: 'admin:mappingCreation.step.package', labelFallback: '패키지', icon: Package },
   { key: 4, labelKey: 'admin:mappingCreation.step.paymentLabel', labelFallback: '결제', icon: CreditCard },
   { key: 5, labelKey: 'admin:mappingCreation.step.complete', labelFallback: '완료', icon: CheckCircle }
+];
+
+// 옵션 B 결제 방식 선택 카드 — MAPPING_PAYMENT_TIMING_CARD_SELECT_DESIGN.md §2.1 / §4
+const PAYMENT_TIMING_OPTIONS = [
+  {
+    value: 'ADVANCE',
+    icon: Wallet,
+    labelKey: 'admin:mappingCreation.paymentTiming.advance',
+    descKey: 'admin:mappingCreation.paymentTiming.advanceDesc'
+  },
+  {
+    value: 'SAME_DAY_CARD',
+    icon: CreditCard,
+    labelKey: 'admin:mappingCreation.paymentTiming.sameDayCard',
+    descKey: 'admin:mappingCreation.paymentTiming.sameDayCardDesc'
+  }
 ];
 
 const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
@@ -674,7 +691,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         {step === 4 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
             <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.payment')}</h3>
-            {/* 옵션 B: 결제 방식 선택 (선납 / 사후 카드) — 합의서 §0 Q4 */}
+            {/* 옵션 B: 결제 방식 선택 (선납 / 사후 카드) — 합의서 §0 Q4
+                2026-05-28: 라디오 → 카드형 선택 UI (MAPPING_PAYMENT_TIMING_CARD_SELECT_DESIGN.md) */}
             <fieldset
               className="mg-v2-mapping-creation-modal__payment-timing"
               aria-labelledby="mapping-creation-payment-timing-legend"
@@ -685,32 +703,56 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               >
                 {t('admin:mappingCreation.paymentTiming.title')}
               </legend>
-              <label className="mg-v2-mapping-creation-modal__payment-timing-option">
-                <input
-                  type="radio"
-                  name="mapping-creation-payment-timing"
-                  value="ADVANCE"
-                  checked={paymentInfo.paymentTiming === 'ADVANCE'}
-                  onChange={() => setPaymentInfo(prev => ({ ...prev, paymentTiming: 'ADVANCE' }))}
-                />
-                <span>{t('admin:mappingCreation.paymentTiming.advance')}</span>
-              </label>
-              <label className="mg-v2-mapping-creation-modal__payment-timing-option">
-                <input
-                  type="radio"
-                  name="mapping-creation-payment-timing"
-                  value="SAME_DAY_CARD"
-                  checked={paymentInfo.paymentTiming === 'SAME_DAY_CARD'}
-                  onChange={() => setPaymentInfo(prev => ({ ...prev, paymentTiming: 'SAME_DAY_CARD' }))}
-                />
-                <span>{t('admin:mappingCreation.paymentTiming.sameDayCard')}</span>
-              </label>
-              {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (
-                <p className="mg-v2-mapping-creation-modal__payment-timing-hint">
-                  {t('admin:mappingCreation.paymentTiming.sameDayCardHint')}
-                </p>
-              )}
+              {PAYMENT_TIMING_OPTIONS.map((option) => {
+                const isSelected = paymentInfo.paymentTiming === option.value;
+                const Icon = option.icon;
+                const cardClassName = [
+                  'mg-v2-mapping-creation-modal__payment-timing-card',
+                  isSelected ? 'mg-v2-mapping-creation-modal__payment-timing-card--selected' : ''
+                ].filter(Boolean).join(' ');
+                return (
+                  <label
+                    key={option.value}
+                    className={cardClassName}
+                    data-testid={`payment-timing-card-${option.value}`}
+                  >
+                    <input
+                      type="radio"
+                      name="mapping-creation-payment-timing"
+                      value={option.value}
+                      checked={isSelected}
+                      onChange={() => setPaymentInfo(prev => ({ ...prev, paymentTiming: option.value }))}
+                      className="mg-v2-mapping-creation-modal__payment-timing-card-input"
+                    />
+                    <span className="mg-v2-mapping-creation-modal__payment-timing-card-icon" aria-hidden="true">
+                      <Icon size={20} />
+                    </span>
+                    <span className="mg-v2-mapping-creation-modal__payment-timing-card-content">
+                      <span className="mg-v2-mapping-creation-modal__payment-timing-card-title">
+                        {t(option.labelKey)}
+                      </span>
+                      <span className="mg-v2-mapping-creation-modal__payment-timing-card-desc">
+                        {t(option.descKey)}
+                      </span>
+                    </span>
+                    {isSelected && (
+                      <span
+                        className="mg-v2-mapping-creation-modal__payment-timing-card-check"
+                        aria-hidden="true"
+                        data-testid={`payment-timing-card-check-${option.value}`}
+                      >
+                        <CheckCircle size={18} />
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
             </fieldset>
+            {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (
+              <p className="mg-v2-mapping-creation-modal__payment-timing-hint">
+                {t('admin:mappingCreation.paymentTiming.sameDayCardHint')}
+              </p>
+            )}
             <div className="mg-v2-mapping-creation-modal__summary-bar">
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--person">
                 <User size={16} /> {toDisplayString(selectedConsultant?.name)}

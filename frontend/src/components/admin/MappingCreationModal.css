@@ -657,43 +657,123 @@
   }
 }
 
-/* ===== 옵션 B (예약 우선 매칭) — 결제 방식 라디오 분기 ===== */
+/* ===== 옵션 B (예약 우선 매칭) — 결제 방식 카드형 선택 UI =====
+ * 2026-05-28: 라디오 → 카드형 (MAPPING_PAYMENT_TIMING_CARD_SELECT_DESIGN.md)
+ * - fieldset: grid 컨테이너 (데스크탑 1fr 1fr / 모바일 1fr)
+ * - card: B0KlA 토큰 기반 4-state (Default/Hover/Selected/Focus-Visible)
+ * - native input: sr-only (회귀 보호: getByDisplayValue + 키보드 a11y) */
 .mg-v2-mapping-creation-modal__payment-timing {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-sm, 8px);
-  padding: var(--mg-spacing-md, 12px);
-  margin-bottom: var(--mg-spacing-md, 12px);
-  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
-  border-radius: var(--ad-b0kla-radius, 8px);
-  background: var(--ad-b0kla-bg-soft, var(--mg-color-surface));
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mg-spacing-md, 16px);
+  margin-bottom: var(--mg-spacing-md, 16px);
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
 .mg-v2-mapping-creation-modal__payment-timing-legend {
+  grid-column: 1 / -1;
   font-weight: var(--mg-font-weight-semibold, 600);
   font-size: var(--mg-font-size-sm, 13px);
-  color: var(--ad-b0kla-text-strong, var(--mg-color-text));
-  padding: 0 var(--mg-spacing-xs, 4px);
+  color: var(--ad-b0kla-title-color, var(--mg-color-text));
+  padding: 0;
+  margin-bottom: var(--mg-spacing-xs, 4px);
 }
 
-.mg-v2-mapping-creation-modal__payment-timing-option {
-  display: inline-flex;
-  align-items: center;
+.mg-v2-mapping-creation-modal__payment-timing-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
   gap: var(--mg-spacing-sm, 8px);
+  padding: var(--mg-spacing-md, 16px);
+  min-height: 84px;
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--ad-b0kla-radius, 8px);
+  background: var(--ad-b0kla-card-bg);
   cursor: pointer;
-  font-size: var(--mg-font-size-sm, 13px);
-  color: var(--ad-b0kla-text, var(--mg-color-text));
+  transition: all 0.2s ease;
 }
 
-.mg-v2-mapping-creation-modal__payment-timing-option input[type='radio'] {
-  cursor: pointer;
-  accent-color: var(--ad-b0kla-accent, var(--mg-color-primary));
+.mg-v2-mapping-creation-modal__payment-timing-card:hover {
+  border-color: var(--ad-b0kla-green);
+  box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-card--selected {
+  border: 2px solid var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg);
+  box-shadow: var(--mg-shadow-sm);
+  padding: calc(var(--mg-spacing-md, 16px) - 1px);
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-card-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-card:has(.mg-v2-mapping-creation-modal__payment-timing-card-input:focus-visible) {
+  outline: 2px solid var(--ad-b0kla-green);
+  outline-offset: 2px;
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-card-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ad-b0kla-green);
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 4px);
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-card-title {
+  font-size: var(--mg-font-size-sm, 14px);
+  font-weight: var(--mg-font-weight-semibold, 600);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-card-desc {
+  font-size: var(--mg-font-size-xs, 12px);
+  line-height: 1.4;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-mapping-creation-modal__payment-timing-card-check {
+  position: absolute;
+  top: var(--mg-spacing-sm, 8px);
+  right: var(--mg-spacing-sm, 8px);
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ad-b0kla-green);
+}
+
+@media (max-width: 768px) {
+  .mg-v2-mapping-creation-modal__payment-timing {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mg-v2-mapping-creation-modal__payment-timing-hint {
-  margin: var(--mg-spacing-xs, 4px) 0 0 0;
+  margin: 0 0 var(--mg-spacing-md, 16px) 0;
+  padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-md, 16px);
+  border-left: 3px solid var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg);
+  border-radius: var(--ad-b0kla-radius-sm, 6px);
   font-size: var(--mg-font-size-xs, 12px);
-  color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
+  line-height: 1.4;
+  color: var(--ad-b0kla-text-secondary);
 }
 
 .mg-v2-mapping-creation-modal__completion-notice {

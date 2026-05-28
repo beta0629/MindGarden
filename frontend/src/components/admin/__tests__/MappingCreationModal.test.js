@@ -396,4 +396,72 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(postedBody).toHaveProperty('remainingSessions', 0);
     expect(postedBody).toHaveProperty('totalSessions', 5);
   });
+
+  // 2026-05-28 카드형 결제 방식 선택 UI 회귀 가드
+  // (MAPPING_PAYMENT_TIMING_CARD_SELECT_DESIGN.md)
+  describe('결제 방식 카드형 선택 UI (2026-05-28)', () => {
+    const advanceToStep4 = async () => {
+      await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('상담사A'));
+      await act(async () => {
+        fireEvent.click(screen.getByText('common:action.next'));
+      });
+      await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('내담자A'));
+      await act(async () => {
+        fireEvent.click(screen.getByText('common:action.next'));
+      });
+      await waitFor(() => expect(screen.getByText('표준 패키지')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('표준 패키지'));
+      await act(async () => {
+        fireEvent.click(screen.getByText('common:action.next'));
+      });
+      await waitFor(() =>
+        expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument()
+      );
+    };
+
+    test('카드형 마크업이라도 native <input type="radio" value="SAME_DAY_CARD"> 가 보존되어야 함 (회귀 가드)', async () => {
+      renderModal();
+      await advanceToStep4();
+      // sr-only 처리된 native radio input 이 DOM 에 남아 있어야 한다.
+      const sameDayRadio = screen.getByDisplayValue('SAME_DAY_CARD');
+      const advanceRadio = screen.getByDisplayValue('ADVANCE');
+      expect(sameDayRadio).toBeInTheDocument();
+      expect(advanceRadio).toBeInTheDocument();
+      expect(sameDayRadio.tagName).toBe('INPUT');
+      expect(sameDayRadio.getAttribute('type')).toBe('radio');
+    });
+
+    test('카드 click → paymentTiming state 가 카드 값으로 전환', async () => {
+      renderModal();
+      await advanceToStep4();
+      // 기본 ADVANCE 가 selected
+      const advanceCard = screen.getByTestId('payment-timing-card-ADVANCE');
+      const sameDayCard = screen.getByTestId('payment-timing-card-SAME_DAY_CARD');
+      expect(advanceCard.className).toContain('payment-timing-card--selected');
+      expect(sameDayCard.className).not.toContain('payment-timing-card--selected');
+
+      // SAME_DAY_CARD 카드 click → state 전환
+      fireEvent.click(screen.getByDisplayValue('SAME_DAY_CARD'));
+
+      expect(screen.getByTestId('payment-timing-card-SAME_DAY_CARD').className)
+        .toContain('payment-timing-card--selected');
+      expect(screen.getByTestId('payment-timing-card-ADVANCE').className)
+        .not.toContain('payment-timing-card--selected');
+    });
+
+    test('Selected 카드에 CheckCircle 아이콘 노출 (Default 카드에는 미노출)', async () => {
+      renderModal();
+      await advanceToStep4();
+      // 기본 ADVANCE selected → CheckCircle 표시
+      expect(screen.getByTestId('payment-timing-card-check-ADVANCE')).toBeInTheDocument();
+      expect(screen.queryByTestId('payment-timing-card-check-SAME_DAY_CARD')).toBeNull();
+
+      // SAME_DAY_CARD 선택 시 CheckCircle 이 SAME_DAY_CARD 로 이동
+      fireEvent.click(screen.getByDisplayValue('SAME_DAY_CARD'));
+      expect(screen.getByTestId('payment-timing-card-check-SAME_DAY_CARD')).toBeInTheDocument();
+      expect(screen.queryByTestId('payment-timing-card-check-ADVANCE')).toBeNull();
+    });
+  });
 });

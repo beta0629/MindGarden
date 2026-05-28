@@ -17,7 +17,10 @@ import {
 } from '../constants/integratedScheduleSidebarFilterConstants';
 
 const BTN_SM = 'sm';
-const CANCEL_LINK_TEST_ID = 'mapping-cancel-pending-trigger';
+// R4 v2.0 (디자이너 시안 docs/project-management/2026-05-28/R4_BUTTON_REDESIGN_V2.md, 옵션 A2):
+// 텍스트 링크에서 정식 보조 버튼(풀-width Danger Outline)으로 리디자인.
+// testid 는 RTL 회귀 0 유지를 위해 기존 `mapping-cancel-pending-trigger` 그대로 사용.
+const CANCEL_BUTTON_TEST_ID = 'mapping-cancel-pending-trigger';
 
 const MappingMatchActions = ({
   mapping,
@@ -141,12 +144,12 @@ const MappingMatchActions = ({
       {showCancelPending && (
         <button
           type="button"
-          className="mg-v2-mapping-match-actions__cancel-link"
+          className="mg-v2-mapping-match-actions__cancel-btn"
           onClick={() => onCancelPendingMapping(mapping)}
           disabled={cancelPendingProcessing}
           aria-label={t('admin:mapping.card.actions.cancel')}
           aria-busy={cancelPendingProcessing}
-          data-testid={CANCEL_LINK_TEST_ID}
+          data-testid={CANCEL_BUTTON_TEST_ID}
         >
           {t('admin:mapping.card.actions.cancel')}
         </button>

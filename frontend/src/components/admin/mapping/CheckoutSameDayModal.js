@@ -108,6 +108,29 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
     return null;
   }
 
+  // P0 핫픽스 2026-05-28: 매핑 정보 누락 시 결제 폼 대신 alert 박스를 표시한다.
+  // 신규 매칭 직후 또는 PENDING_PAYMENT 알림 카드에서 누락된 매핑이 전달된 경우 NPE/React #130 회피.
+  if (!mapping?.id || !mapping?.consultantId || !mapping?.packageName) {
+    return (
+      <UnifiedModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={t('admin:mapping.checkout.sameDay.title')}
+        size="small"
+        className="mg-v2-ad-b0kla mg-v2-checkout-same-day-modal mg-v2-checkout-same-day-modal--invalid"
+        showCloseButton
+        backdropClick
+      >
+        <div role="alert" className="mg-v2-checkout-same-day-modal__invalid-alert">
+          {t(
+            'admin:mapping.checkout.sameDay.error.invalidMapping',
+            '매칭 정보가 누락되었습니다 (상담사 또는 패키지). 신규 매칭을 다시 생성한 후 진행해 주세요.'
+          )}
+        </div>
+      </UnifiedModal>
+    );
+  }
+
   return (
     <UnifiedModal
       isOpen={isOpen}
@@ -251,9 +274,14 @@ CheckoutSameDayModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   mapping: PropTypes.shape({
     id: PropTypes.number,
+    consultantId: PropTypes.number,
+    consultantName: PropTypes.string,
+    clientId: PropTypes.number,
+    clientName: PropTypes.string,
     packageName: PropTypes.string,
     packagePrice: PropTypes.number,
-    paymentAmount: PropTypes.number
+    paymentAmount: PropTypes.number,
+    totalSessions: PropTypes.number
   }),
   onCheckoutCompleted: PropTypes.func
 };

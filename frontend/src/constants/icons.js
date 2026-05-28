@@ -155,7 +155,21 @@ import {
   LayoutGrid,
   Grid2X2,
   List,
-  LayoutList
+  LayoutList,
+  // LNB IA 재배치 (2026-05-28, V20260606_008) — designer §1 아이콘 매핑
+  BookUser,
+  Layers,
+  Inbox,
+  Flower2,
+  Send,
+  LineChart,
+  Banknote,
+  CheckSquare,
+  Palette,
+  Sliders,
+  Bot,
+  Tags,
+  FileWarning
 } from 'lucide-react';
 
 /** Icon pixel sizes */
@@ -423,7 +437,22 @@ export const ICONS = {
   LAYOUT_GRID: LayoutGrid,
   GRID_2X2: Grid2X2,
   LIST: List,
-  LAYOUT_LIST: LayoutList
+  LAYOUT_LIST: LayoutList,
+
+  /** LNB IA 재배치 (2026-05-28, V20260606_008) — designer §1 아이콘 매핑 신설 */
+  BOOK_USER: BookUser,
+  LAYERS: Layers,
+  INBOX: Inbox,
+  FLOWER_2: Flower2,
+  SEND: Send,
+  LINE_CHART: LineChart,
+  BANKNOTE: Banknote,
+  CHECK_SQUARE: CheckSquare,
+  PALETTE: Palette,
+  SLIDERS: Sliders,
+  BOT: Bot,
+  TAGS: Tags,
+  FILE_WARNING: FileWarning
 };
 
 /** Resolve icon component by registry key */

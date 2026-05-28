@@ -7,31 +7,56 @@
  */
 
 .mg-v2-nav-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
   min-height: 44px;
-  padding: 12px 14px;
+  padding: var(--mg-spacing-12) 14px;
   background: transparent;
   border: none;
   border-radius: 10px;
   color: var(--mg-layout-sidebar-text, rgba(255, 255, 255, 0.7));
-  font-size: 14px;
+  font-size: var(--font-size-md, 14px);
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 
+/* LNB IA 재배치 (2026-05-28) — designer §3 hover token */
 .mg-v2-nav-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--mg-color-surface-hover);
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* LNB IA 재배치 (2026-05-28) — designer §3 active 상태 + 좌측 4px accent bar
+ * 다크 사이드바 표면 위:
+ *   background = primary-900 (다크 표면 active bg)
+ *   accent bar = primary-500 (4px 좌측 — :before pseudo-element)
+ *   text color = primary-100 (다크 active text)
+ */
 .mg-v2-nav-link--active {
-  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-main));
-  color: var(--mg-white);
+  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-900));
+  color: var(--mg-color-primary-100, var(--mg-white));
+}
+
+.mg-v2-nav-link--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--mg-color-primary-500);
+}
+
+/* LNB IA 재배치 — focus-visible: active 시각 + 2px primary-300 ring (designer §3) */
+.mg-v2-nav-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--mg-color-primary-300);
 }
 
 .mg-v2-nav-link__icon {
@@ -71,18 +96,18 @@
 .mg-v2-nav-link.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
   box-shadow: none;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--mg-color-surface-hover);
   color: rgba(255, 255, 255, 0.9);
 }
 
 .mg-v2-nav-link--active.mg-button.mg-button--outline {
-  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-main));
-  color: var(--mg-white);
+  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-900));
+  color: var(--mg-color-primary-100, var(--mg-white));
 }
 
 .mg-v2-nav-link--active.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-main));
-  color: var(--mg-white);
+  background: var(--mg-layout-sidebar-active-bg, var(--mg-color-primary-900));
+  color: var(--mg-color-primary-100, var(--mg-white));
   transform: none;
   box-shadow: none;
 }

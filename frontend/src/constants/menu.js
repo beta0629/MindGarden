@@ -1,6 +1,15 @@
 /**
- * 메뉴 구조 상수
-/**
+ * 메뉴 구조 상수 — 레거시 Bootstrap Icon 기반
+ *
+ * @deprecated DUP-7 (LNB IA 재배치, 2026-05-28):
+ *   본 파일의 `ADMIN_MENU_ITEMS` / `STAFF_MENU_ITEMS` 는 현 어드민 LNB 구조와 무관한
+ *   레거시(`bi-*` Bootstrap Icon 기반) 상수입니다. 어드민 LNB SSOT 는
+ *   `frontend/src/components/dashboard-v2/constants/menuItems.js` 의
+ *   `DEFAULT_MENU_ITEMS` (API 폴백) 및 `menus` 테이블 (DB SSOT) 입니다.
+ *   본 파일에 의존하는 신규 임포트를 금지합니다. (`CLIENT_MENU_ITEMS`,
+ *   `CONSULTANT_MENU_ITEMS`, `COMMON_MENU_ITEMS`, `ROLES`, `MENU_TYPES` 는
+ *   여전히 일부 도메인에서 사용되어 보존합니다.)
+ *
  * 메인메뉴와 서브메뉴를 명확하게 분리하여 관리
  */
 

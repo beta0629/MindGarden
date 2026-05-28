@@ -74,7 +74,7 @@
 
 .mg-v2-desktop-lnb__group-chevron:hover {
   color: var(--mg-white);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--mg-color-surface-hover);
 }
 
 .mg-v2-desktop-lnb__group-chevron.mg-button.mg-button--outline {
@@ -108,6 +108,7 @@
   display: none;
 }
 
+/* LNB IA 재배치 (2026-05-28) — designer §2: 2차 좌측 패딩 = 1차(12) + 24 = 36 */
 .mg-v2-desktop-lnb__sublist {
   margin: 2px 0 8px 14px;
   padding: 4px 0 0 0;
@@ -116,7 +117,7 @@
   flex-direction: column;
   gap: 2px;
   border-left: 1px solid var(--mg-glass-bg-light);
-  padding-left: 10px;
+  padding-left: calc(var(--mg-spacing-36) - var(--mg-spacing-12) - 14px); /* 36 - 12 - 14(nav-link-pad) = 10px */
 }
 
 .mg-v2-desktop-lnb__sublist .mg-v2-lnb-menu-item .mg-v2-nav-link {

@@ -1697,6 +1697,22 @@
   --mg-color-primary-50: #eff6ff;
   --mg-color-primary-200: #bfdbfe;
   --mg-color-primary-300: #93c5fd;
+  /* LNB IA 재배치 (V20260606_008, 2026-05-28) — designer §3 토큰 매트릭스 alias
+   * 신규 hex 절대 추가 금지 (D11 가드). 기존 SSOT primary 계열 토큰의 alias 로만 정의.
+   * - 100 (light surface tint)  → primary-50 alias  (가장 옅은 표면 tint)
+   * - 500 (accent bar / 좌측 4px) → primary-main alias
+   * - 700 (active text on light) → primary-dark alias
+   * - 900 (active surface on dark) → primary-dark alias (다크 표면)
+   */
+  --mg-color-primary-100: var(--mg-color-primary-50);
+  --mg-color-primary-500: var(--mg-color-primary-main);
+  --mg-color-primary-700: var(--mg-color-primary-dark);
+  --mg-color-primary-900: var(--mg-color-primary-dark);
+  /* LNB hover surface — 다크 사이드바 표면 위 hover 표시 (rgba 정의는 본 SSOT 파일에서만) */
+  --mg-color-surface-hover: rgba(255, 255, 255, 0.08);
+  /* LNB IA 패딩/들여쓰기 SSOT — designer §2 (1차 12px, 2차 36px = 1차 + 24px) */
+  --mg-spacing-12: 12px;
+  --mg-spacing-36: 36px;
   /* D10 §C2 warning amber (Tailwind amber-50/200/600/700) — V2 alert/badge */
   --mg-color-warning-50: #fffbeb;
   --mg-color-warning-200: #fde68a;
@@ -1716,6 +1732,13 @@
   --mg-color-primary-50: #1e3a8a;
   --mg-color-primary-200: #1e40af;
   --mg-color-primary-300: #1d4ed8;
+  /* LNB IA 재배치 — 다크 모드 primary 신규 step alias (alias 의 cascade 로 자동 반전됨) */
+  --mg-color-primary-100: var(--mg-color-primary-200);
+  --mg-color-primary-500: var(--mg-color-primary-main);
+  --mg-color-primary-700: var(--mg-color-primary-light);
+  --mg-color-primary-900: var(--mg-color-primary-dark);
+  /* LNB hover surface (다크 모드) — 사이드바는 항상 다크이지만 명시 정의 */
+  --mg-color-surface-hover: rgba(255, 255, 255, 0.12);
   /* D10 §C2 다크 warning amber (Tailwind amber-900/800 표면 + amber-300/400 텍스트) */
   --mg-color-warning-50: #451a03;
   --mg-color-warning-200: #78350f;

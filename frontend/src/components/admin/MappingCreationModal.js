@@ -67,13 +67,16 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const [responsibilityOptions, setResponsibilityOptions] = useState([]);
   const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
 
+  // P0 핫픽스 2026-05-28 후속 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §H6 CONFIRM):
+  // 첫 mount 시 default 패키지가 truthy 로 설정되어 step 3 "다음" 버튼이 즉시 활성화되는
+  // PR #47 step swap 잔여 결함을 해소. 초기값을 resetModal() (아래) 과 1:1 정합.
   const [paymentInfo, setPaymentInfo] = useState({
-    totalSessions: DEFAULT_MAPPING_CONFIG.TOTAL_SESSIONS,
-    packageName: DEFAULT_MAPPING_CONFIG.PACKAGE_NAME,
-    packagePrice: DEFAULT_MAPPING_CONFIG.PACKAGE_PRICE,
+    totalSessions: 0,
+    packageName: null,
+    packagePrice: 0,
     paymentMethod: 'BANK_TRANSFER',
     paymentReference: '',
-    responsibility: DEFAULT_MAPPING_CONFIG.RESPONSIBILITY,
+    responsibility: '',
     specialConsiderations: '',
     notes: '',
     // 옵션 B (예약 우선 매칭): ADVANCE = 선납 입금(현행) / SAME_DAY_CARD = 사후 카드 결제

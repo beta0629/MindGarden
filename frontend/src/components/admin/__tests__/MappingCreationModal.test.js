@@ -9,6 +9,8 @@
  *  - 패키지 미선택 시 onMappingCreated 미호출, 알림은 error
  *  - 정상 흐름: onMappingCreated 호출 시 consultantId / clientId / packageName / totalSessions /
  *    packagePrice / paymentTiming 이 포함
+ *  - 백엔드 POST body (`mappingData`) 에 `paymentTiming` 필드가 항상 포함
+ *    (P0 핫픽스 2026-05-28 H1 회귀 가드: 누락 시 DB `payment_timing` NULL, 사이드바 분기 깨짐)
  *
  * @author MindGarden
  * @since 2026-05-28
@@ -257,5 +259,76 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
       totalSessions: 5,
       paymentTiming: 'ADVANCE'
     });
+  });
+
+  // P0 핫픽스 2026-05-28 (PAYMENT_TIMING_NULL_DEBUG.md H1) 회귀 가드:
+  // POST `/api/v1/admin/mappings` 페이로드에 `paymentTiming` 키가 항상 포함되어야 한다.
+  // 누락 시 백엔드 Jackson 바인딩이 null 로 처리 → DB payment_timing NULL → 사이드바 SAME_DAY_CARD 분기 깨짐.
+  test('ADVANCE 기본값 → apiPost mappingData 에 paymentTiming: "ADVANCE" 포함', async () => {
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('표준 패키지'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody).toHaveProperty('paymentTiming', 'ADVANCE');
+    expect(postedBody).toHaveProperty('consultantId', 11);
+    expect(postedBody).toHaveProperty('clientId', 22);
+    expect(postedBody).toHaveProperty('packageName', '표준 패키지');
+  });
+
+  test('SAME_DAY_CARD 선택 → apiPost mappingData 에 paymentTiming: "SAME_DAY_CARD" + remainingSessions: 0', async () => {
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('표준 패키지'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    // step 4 진입 후 SAME_DAY_CARD 라디오 선택
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    const sameDayRadio = screen.getByDisplayValue('SAME_DAY_CARD');
+    fireEvent.click(sameDayRadio);
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody).toHaveProperty('paymentTiming', 'SAME_DAY_CARD');
+    // 옵션 B: 사후 카드 결제 시 신규 매칭에 회기 즉시 부여하지 않고 PENDING_PAYMENT 유지
+    expect(postedBody).toHaveProperty('remainingSessions', 0);
+    expect(postedBody).toHaveProperty('totalSessions', 5);
   });
 });

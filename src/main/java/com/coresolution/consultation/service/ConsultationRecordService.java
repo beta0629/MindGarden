@@ -20,6 +20,25 @@ public interface ConsultationRecordService {
      * 상담일지 목록 조회
      */
     Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable);
+
+    /**
+     * 상담일지 목록 조회 (세션 일자 범위 필터 포함).
+     *
+     * <p>어드민 "상담일지 조회" 화면에서 기간 필터를 백엔드로 전달하여
+     * {@code MAX_PAGE_SIZE} 캡으로 인한 과거 데이터 미노출 회귀를 방지한다.
+     * {@code startDate}/{@code endDate} 가 모두 null 이면 기존 동작과 동일하다.</p>
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param clientId 내담자 ID (nullable)
+     * @param startDate 세션 일자 시작 (nullable)
+     * @param endDate 세션 일자 종료 (nullable)
+     * @param pageable 페이징 정보
+     * @return 페이징된 상담일지 목록 (session_date DESC)
+     * @author MindGarden
+     * @since 2026-05-29
+     */
+    Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId,
+        LocalDate startDate, LocalDate endDate, Pageable pageable);
     
     /**
      * 상담일지 상세 조회

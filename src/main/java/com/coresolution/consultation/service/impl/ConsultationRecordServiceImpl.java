@@ -49,20 +49,48 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
-        log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
+        return getConsultationRecords(consultantId, clientId, null, null, pageable);
+    }
+
+    @Override
+    public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId,
+                                                           LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}, 기간: {}~{}",
+                consultantId, clientId, startDate, endDate);
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        boolean hasDateRange = startDate != null && endDate != null;
 
         if (consultantId != null && clientId != null) {
+            if (hasDateRange) {
+                return consultationRecordRepository
+                    .findByTenantIdAndConsultantIdAndClientIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
+                        tenantId, consultantId, clientId, startDate, endDate, pageable);
+            }
             return consultationRecordRepository.findByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(
                 tenantId, consultantId, clientId, pageable);
         } else if (consultantId != null) {
+            if (hasDateRange) {
+                return consultationRecordRepository
+                    .findByTenantIdAndConsultantIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
+                        tenantId, consultantId, startDate, endDate, pageable);
+            }
             return consultationRecordRepository.findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(
                 tenantId, consultantId, pageable);
         } else if (clientId != null) {
+            if (hasDateRange) {
+                return consultationRecordRepository
+                    .findByTenantIdAndClientIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
+                        tenantId, clientId, startDate, endDate, pageable);
+            }
             return consultationRecordRepository.findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(
                 tenantId, clientId, pageable);
         } else {
+            if (hasDateRange) {
+                return consultationRecordRepository
+                    .findByTenantIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
+                        tenantId, startDate, endDate, pageable);
+            }
             return consultationRecordRepository.findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, pageable);
         }
     }

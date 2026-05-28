@@ -41,7 +41,27 @@ const TAB_LABELS = {
   [VIEW_MODE_TABLE]: '테이블'
 };
 const DEFAULT_PAGE = 0;
-const DEFAULT_SIZE = 50;
+// P0 핫픽스 2026-05-29: 백엔드 어드민 상담일지 조회 캡(200)에 맞춰 100 으로 상향.
+// 참고: docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md
+const DEFAULT_SIZE = 100;
+// 진입 시 기본 표시 기간 = "지난 달 1일 ~ 이번 달 말일".
+// 사용자가 startDate/endDate 를 직접 비우면 null 전송 → 백엔드 전체 모드 (페이지네이션).
+const DEFAULT_RANGE_MONTHS_BEFORE = 1;
+
+/**
+ * 기본 기간 (지난 달 1일 ~ 이번 달 말일) 을 ISO yyyy-MM-dd 문자열로 계산.
+ *
+ * @param {Date} [now] 기준 일시 (테스트에서 주입 가능, 기본값: 현재 시각)
+ * @returns {{ startDate: string, endDate: string }}
+ */
+export const computeDefaultDateRange = (now = new Date()) => {
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const start = new Date(year, month - DEFAULT_RANGE_MONTHS_BEFORE, 1);
+  const end = new Date(year, month + 1, 0);
+  const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return { startDate: fmt(start), endDate: fmt(end) };
+};
 
 const ConsultationLogViewPage = () => {
   const { user } = useSession();
@@ -53,8 +73,8 @@ const ConsultationLogViewPage = () => {
   const [loading, setLoading] = useState(true);
   const [consultantId, setConsultantId] = useState(null);
   const [clientId, setClientId] = useState(null);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  const [startDate, setStartDate] = useState(() => computeDefaultDateRange().startDate);
+  const [endDate, setEndDate] = useState(() => computeDefaultDateRange().endDate);
   const [modalRecordId, setModalRecordId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(VIEW_MODE_LIST);
@@ -118,6 +138,10 @@ const ConsultationLogViewPage = () => {
           };
           if (consultantId != null) params.consultantId = consultantId;
           if (clientId != null) params.clientId = clientId;
+          // P0 핫픽스 2026-05-29: 기간 필터를 백엔드로 전달.
+          // (이전: 클라이언트 사이드 필터만 사용 → MAX_PAGE_SIZE=20 캡으로 4월 데이터 미노출)
+          if (startDate) params.startDate = startDate;
+          if (endDate) params.endDate = endDate;
           const response = await StandardizedApi.get(API_ADMIN_CONSULTATION_RECORDS, params);
           const list = Array.isArray(response) ? response : (response?.data ?? []);
           setRecords(Array.isArray(list) ? list : []);
@@ -149,7 +173,7 @@ const ConsultationLogViewPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, user?.name, isAdmin, consultantId, clientId, normalizeConsultantRecords]);
+  }, [user?.id, user?.name, isAdmin, consultantId, clientId, startDate, endDate, normalizeConsultantRecords]);
 
   useEffect(() => {
     loadConsultants();

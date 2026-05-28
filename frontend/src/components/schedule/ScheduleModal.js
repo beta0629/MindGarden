@@ -23,7 +23,8 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards';
 import {
   MAPPING_STATUS_DEPOSIT_PENDING,
-  MAPPING_STATUS_ACTIVE
+  MAPPING_STATUS_ACTIVE,
+  isSameDayCardPending
 } from '../admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
 import { useTranslation } from 'react-i18next';
 
@@ -126,7 +127,15 @@ const ScheduleModalNew = ({
         const st = preFilledMapping.mappingStatus;
         const rem = Number(preFilledMapping.remainingSessions);
         const remOk = Number.isFinite(rem) ? rem : 0;
-        if (st === MAPPING_STATUS_DEPOSIT_PENDING || (st === MAPPING_STATUS_ACTIVE && remOk <= 0)) {
+        // 옵션 B SAME_DAY_CARD: PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑은 결제 확정 전이므로
+        // 가예약(TENTATIVE_PENDING_PAYMENT) 분기로 강제 진입한다. 백엔드 가드도 동일 분기를 허용한다.
+        const sameDayCardPending = isSameDayCardPending({
+            status: st,
+            paymentTiming: preFilledMapping.paymentTiming
+        });
+        if (sameDayCardPending
+                || st === MAPPING_STATUS_DEPOSIT_PENDING
+                || (st === MAPPING_STATUS_ACTIVE && remOk <= 0)) {
             setTentativeBeforeDeposit(true);
         } else {
             setTentativeBeforeDeposit(false);

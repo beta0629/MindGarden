@@ -40,8 +40,9 @@
 - **dev 와일드카드 CNAME**: `_acme-challenge.dev.core-solution.co.kr` → `<uuid2>.acme.core-solution.co.kr`
 - **가비아 등록 레코드 (최초 1회 수동)**:
   1. `acme.core-solution.co.kr` A 레코드 → acme-dns 서버 IP
-  2. `_acme-challenge.core-solution.co.kr` CNAME → `<uuid1>.acme.core-solution.co.kr`
-  3. `_acme-challenge.dev.core-solution.co.kr` CNAME → `<uuid2>.acme.core-solution.co.kr`
+  2. **`acme.core-solution.co.kr` NS 레코드 → `acme.core-solution.co.kr.`** (자기 자신 NS, 위 1번 A 레코드가 글루 역할). **누락 시 Let's Encrypt 가 `_acme-challenge.<domain>` CNAME 을 따라가도 acme-dns zone 의 TXT 레코드를 찾지 못해 `unauthorized: No TXT record found` 로 실패한다 (Phase C 실측 2026-05-28).**
+  3. `_acme-challenge.core-solution.co.kr` CNAME → `<uuid1>.acme.core-solution.co.kr`
+  4. `_acme-challenge.dev.core-solution.co.kr` CNAME → `<uuid2>.acme.core-solution.co.kr`
 
 ## 4. acme-dns 설치 및 설정
 
@@ -118,7 +119,8 @@
 - 단위 테스트(스크립트 dry-run 검증) 작성 및 관련 문서 업데이트
 
 ### Phase B — 사용자 개입 (1회 가비아 작업)
-- `acme.core-solution.co.kr` A 레코드 등록
+- `acme.core-solution.co.kr` A 레코드 등록 (acme-dns 서버 IP)
+- **`acme.core-solution.co.kr` NS 레코드 등록** (값: `acme.core-solution.co.kr.`) — Phase C 실측에서 누락 시 LE 검증 실패 확인됨
 - `_acme-challenge` CNAME 2건 등록
 
 ### Phase C — core-coder 위임 (인증서 마이그레이션)

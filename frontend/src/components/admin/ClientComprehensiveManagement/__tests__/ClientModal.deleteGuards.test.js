@@ -57,4 +57,27 @@ describe('ClientModal 삭제 모달 P1 핫픽스', () => {
     // JSX prefix 의 ⚠️ 가 제거되었으므로 노드 텍스트에 별도 prefix 가 없어야 한다.
     expect(warning.textContent).toBe('admin:clientModal.delete.warning');
   });
+
+  it("type === 'delete' 일 때 SSOT 위반 wrapper 가 더 이상 렌더되지 않는다", () => {
+    // UnifiedModal 본체가 카드/헤더 역할을 하므로 내부 중첩 wrapper
+    // (mg-v2-modal-content, mg-v2-delete-confirmation) 와 중복 제목 <h3> 은
+    // 제거되어야 한다. (이중 박스 회귀 방지)
+    // UnifiedModal 은 ReactDOM.createPortal 로 document.body 에 렌더되므로
+    // container 가 아닌 document.body 를 기준으로 조회한다.
+    render(<ClientModal {...defaultDeleteProps} />);
+    expect(document.body.querySelector('.mg-v2-modal-content')).toBeNull();
+    expect(document.body.querySelector('.mg-v2-delete-confirmation')).toBeNull();
+    expect(document.body.querySelector('.mg-v2-client-delete-modal h3')).toBeNull();
+    expect(document.body.querySelector('.mg-v2-client-delete-modal')).not.toBeNull();
+    expect(document.body.querySelector('.mg-v2-client-delete-modal__info')).not.toBeNull();
+    expect(document.body.querySelector('.mg-v2-client-delete-modal__warning')).not.toBeNull();
+  });
+
+  it("type === 'delete' 일 때 정보 라인이 시맨틱 <dl>/<dt>/<dd> 구조로 렌더된다", () => {
+    render(<ClientModal {...defaultDeleteProps} />);
+    const dl = document.body.querySelector('dl.mg-v2-client-delete-modal__info');
+    expect(dl).not.toBeNull();
+    expect(dl.querySelectorAll('dt')).toHaveLength(3);
+    expect(dl.querySelectorAll('dd')).toHaveLength(3);
+  });
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Users, Calendar } from 'lucide-react';
+import { Users, Calendar, AlertTriangle } from 'lucide-react';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import ProfileImageInput from '../../common/ProfileImageInput';
@@ -421,19 +421,37 @@ const ClientModal = ({
     };
 
     const renderDeleteContent = () => (
-        <div className="mg-v2-modal-content">
-            <div className="mg-v2-delete-confirmation">
-                <h3>{t('admin:clientModal.delete.confirmTitle')}</h3>
-                <p>{t('admin:clientModal.delete.description')}</p>
-                <div className="mg-v2-client-info">
-                    <p><strong>{t('admin:labels.name')}:</strong> <SafeText>{client?.name}</SafeText></p>
-                    <p><strong>{t('admin:labels.email')}:</strong> <SafeText>{client?.email}</SafeText></p>
-                    <p><strong>{t('admin:labels.phone')}:</strong> <SafeText>{client?.phone}</SafeText></p>
+        <div className="mg-v2-client-delete-modal">
+            <p className="mg-v2-client-delete-modal__lead">
+                {t('admin:clientModal.delete.confirmTitle')}
+            </p>
+            <p className="mg-v2-client-delete-modal__description">
+                {t('admin:clientModal.delete.description')}
+            </p>
+            <dl className="mg-v2-client-delete-modal__info">
+                <div className="mg-v2-client-delete-modal__info-row">
+                    <dt className="mg-v2-client-delete-modal__info-term">{t('admin:labels.name')}</dt>
+                    <dd className="mg-v2-client-delete-modal__info-desc"><SafeText>{client?.name}</SafeText></dd>
                 </div>
-                <p className="mg-v2-warning-text">
+                <div className="mg-v2-client-delete-modal__info-row">
+                    <dt className="mg-v2-client-delete-modal__info-term">{t('admin:labels.email')}</dt>
+                    <dd className="mg-v2-client-delete-modal__info-desc"><SafeText>{client?.email}</SafeText></dd>
+                </div>
+                <div className="mg-v2-client-delete-modal__info-row">
+                    <dt className="mg-v2-client-delete-modal__info-term">{t('admin:labels.phone')}</dt>
+                    <dd className="mg-v2-client-delete-modal__info-desc"><SafeText>{client?.phone}</SafeText></dd>
+                </div>
+            </dl>
+            <p className="mg-v2-client-delete-modal__warning">
+                <AlertTriangle
+                    className="mg-v2-client-delete-modal__warning-icon"
+                    size={18}
+                    aria-hidden="true"
+                />
+                <span className="mg-v2-client-delete-modal__warning-text">
                     {t('admin:clientModal.delete.warning')}
-                </p>
-            </div>
+                </span>
+            </p>
         </div>
     );
 
@@ -895,12 +913,15 @@ const ClientModal = ({
 
     if (!type) return null;
 
+    const isDeleteType = type === 'delete';
+
     return (
         <UnifiedModal
             isOpen={!!type}
             onClose={onClose}
             title={getTitle()}
-            size="large"
+            size={isDeleteType ? 'medium' : 'large'}
+            variant={isDeleteType ? 'confirm' : 'default'}
             className="mg-v2-ad-b0kla"
             backdropClick
             showCloseButton
@@ -948,13 +969,17 @@ const ClientModal = ({
                 </>
             }
         >
-            <div className="mg-v2-modal-body">
-                {renderSummaryStrip()}
-                {(type === 'view' || type === 'edit') && client?.id ? (
-                  <PsychClientContextSummaryBlock clientId={client.id} variant="clientModal" />
-                ) : null}
-                {type === 'delete' ? renderDeleteContent() : renderFormContent()}
-            </div>
+            {isDeleteType ? (
+                renderDeleteContent()
+            ) : (
+                <div className="mg-v2-modal-body">
+                    {renderSummaryStrip()}
+                    {(type === 'view' || type === 'edit') && client?.id ? (
+                      <PsychClientContextSummaryBlock clientId={client.id} variant="clientModal" />
+                    ) : null}
+                    {renderFormContent()}
+                </div>
+            )}
         </UnifiedModal>
     );
 };

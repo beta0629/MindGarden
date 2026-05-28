@@ -4,8 +4,14 @@
  * HTML 유효: ul 직계는 li만. 그룹 시 메인 행은 div+NavLink, 서브만 ul > li(LnbMenuItem).
  * 그룹은 아코디언: 기본 접힘, 헤더 클릭 시 해당 그룹만 펼침.
  *
+ * IA 재배치 (V20260606_008, 2026-05-28):
+ *   - 1차 8개 (단독 3 + 그룹 5) — designer §2/§3 정합
+ *   - 활성 항목 좌측 4px accent bar (`--mg-color-primary-500`) — CSS pseudo-element
+ *   - ARIA: role="navigation" + aria-expanded(그룹) + aria-current=page(react-router NavLink 자동)
+ *   - 그룹 토글 키보드: Enter/Space (MGButton 기본 지원)
+ *
  * @author CoreSolution
- * @since 2025-02-22
+ * @since 2025-02-22 (IA 재배치 2026-05-28)
  */
 
 import React, { useState } from 'react';

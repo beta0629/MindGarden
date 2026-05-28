@@ -2545,6 +2545,12 @@
     "checkout": {
       "sameDay": {
         "title": "당일 카드 결제 + 매칭 활성화",
+        "subtitle": {
+          "format": "{{consultant}} → {{client}} · {{package}} ({{sessions}}회)",
+          "noSessions": "{{consultant}} → {{client}} · {{package}}",
+          "noConsultantClient": "{{package}} ({{sessions}}회)"
+        },
+        "session": "회",
         "paymentMethod": {
           "label": "결제 방식",
           "creditCard": "신용카드",
@@ -2553,19 +2559,35 @@
         },
         "paymentReference": {
           "label": "결제 승인번호",
-          "placeholder": "예: APP-20260528-001"
+          "placeholder": "예: APP-20260528-001",
+          "helper": "카드사 실제 승인번호로 변경하세요.",
+          "auto": "자동 생성",
+          "regenerate": "자동 재생성"
         },
         "paymentAmount": {
-          "label": "결제 금액 (원)"
+          "label": "결제 금액 (원)",
+          "listPrice": "패키지 정가: {{price}}원",
+          "discount": "할인 -{{amount}}원",
+          "surcharge": "추가 +{{amount}}원",
+          "match": "정가와 동일"
         },
         "sameDaySession": {
-          "label": "당일 가예약 일정 ID (선택)",
+          "label": "당일 가예약 일정 (선택)",
           "placeholder": "선택사항",
-          "hint": "비워두면 당일 가예약 중 첫 일정이 자동 확정됩니다."
+          "hint": "비워두면 당일 가예약 중 첫 일정이 자동 확정됩니다.",
+          "auto": "비워두면 첫 일정 자동 확정",
+          "optionAuto": "자동 확정 (입력 안 함)",
+          "loading": "가예약 일정 불러오는 중...",
+          "empty": "현재 가예약 일정이 없습니다.",
+          "loadFailed": "가예약 일정 불러오기에 실패했습니다."
         },
         "submit": "당일 결제 + 매칭 활성화",
         "cancel": "취소",
         "success": "당일 카드 결제가 완료되고 매칭이 활성화되었습니다.",
+        "successDetail": {
+          "session": "회기 {{count}}회 차감 / 남은 회기 {{remaining}}회",
+          "firstSchedule": "첫 일정 확정: {{date}} {{time}}"
+        },
         "error": {
           "noMapping": "결제 대상 매칭이 선택되지 않았습니다.",
           "missingMethod": "결제 방식을 선택해주세요.",

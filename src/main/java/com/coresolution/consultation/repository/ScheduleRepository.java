@@ -1008,4 +1008,32 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("consultantId") Long consultantId,
             @Param("clientId") Long clientId,
             @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
+     * 옵션 B (예약 우선 매칭) — 결제 전 매핑의 가예약/대기 일정 목록 조회.
+     * <p>
+     * CheckoutSameDayModal에서 당일 결제 시 자동 확정 대상 가예약을 사용자에게 노출하기 위해 사용한다.
+     * mapping_id 일치 또는 legacy(null mapping_id + 동일 상담사·내담자) 모두 포함하며,
+     * 날짜·시작 시각 오름차순으로 정렬한다.
+     *
+     * @param tenantId 테넌트 ID (테넌트 격리)
+     * @param mappingId 대상 매핑 ID
+     * @param consultantId 매핑의 상담사 ID (legacy 호환)
+     * @param clientId 매핑의 내담자 ID (legacy 호환)
+     * @param statuses 조회 대상 상태 (예: TENTATIVE_PENDING_PAYMENT, BOOKED)
+     * @return 일정 목록 (date asc, startTime asc)
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId "
+            + "AND s.isDeleted = false "
+            + "AND (s.scheduleType = 'CONSULTATION' OR s.scheduleType IS NULL) "
+            + "AND s.status IN :statuses "
+            + "AND (s.mappingId = :mappingId "
+            + "     OR (s.mappingId IS NULL AND s.consultantId = :consultantId AND s.clientId = :clientId)) "
+            + "ORDER BY s.date ASC, s.startTime ASC")
+    List<Schedule> findPendingSchedulesForMapping(
+            @Param("tenantId") String tenantId,
+            @Param("mappingId") Long mappingId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
 }

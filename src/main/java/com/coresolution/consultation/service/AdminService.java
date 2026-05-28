@@ -358,6 +358,17 @@ public interface AdminService {
      */
     ConsultantClientMapping getMappingById(Long mappingId);
 
+    /**
+     * 옵션 B (예약 우선 매칭) — 결제 전 매핑의 가예약/대기 일정 목록 조회.
+     * <p>
+     * CheckoutSameDayModal의 일정 선택 드롭다운에서 사용된다.
+     * 테넌트 격리(tenantId)를 적용하고, mapping_id 일치 또는 legacy(null mapping_id + 동일 상담사·내담자)도 포함한다.
+     *
+     * @param mappingId 대상 매핑 ID
+     * @return TENTATIVE_PENDING_PAYMENT/BOOKED 상태의 일정 목록 (date asc, startTime asc)
+     */
+    List<com.coresolution.consultation.entity.Schedule> getPendingSchedulesForMapping(Long mappingId);
+
     // ==================== 상담사 변경 시스템 ====================
 
     /**

@@ -50,7 +50,9 @@ export const API_ENDPOINTS = {
       PENDING_DEPOSIT: '/api/v1/admin/mappings/pending-deposit',
       SESSIONS_EXHAUSTED: '/api/v1/admin/mappings/sessions-exhausted',
       // 옵션 B (예약 우선 매칭) 당일 카드 결제 단일 진입점 — confirmPayment + confirmDeposit + approveMapping 자동 연속.
-      CHECKOUT_SAME_DAY: (mappingId) => `/api/v1/admin/mappings/${mappingId}/checkout-same-day`
+      CHECKOUT_SAME_DAY: (mappingId) => `/api/v1/admin/mappings/${mappingId}/checkout-same-day`,
+      // 옵션 B — 결제 전 매핑의 가예약/대기 일정 목록 (CheckoutSameDayModal 일정 선택 드롭다운용)
+      PENDING_SCHEDULES: (mappingId) => `/api/v1/admin/mappings/${mappingId}/pending-schedules`
     },
     
     STATISTICS: {

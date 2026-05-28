@@ -5,3 +5,70 @@
   flex-direction: column;
   gap: var(--mg-spacing-8);
 }
+
+/*
+ * R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 매칭 취소 보조 액션.
+ * 디자이너 시안 (R4_DESIGN_HANDOFF_DETAIL.md):
+ *  - 위치: "Checkout Same Day Payment" 버튼 아래 별도 줄 텍스트 링크 (파괴적 액션 오클릭 방지)
+ *  - 색상: --color-danger (default) / --color-danger-hover (hover) / --color-text-secondary (disabled)
+ *  - 반응형: 사이드바 카드 280-320px 폭에서도 줄바꿈 없이 가운데 정렬
+ *
+ * 모든 색·간격은 unified-design-tokens.css 의 SSOT 토큰만 사용 (D11 하드코딩 0).
+ */
+.mg-v2-mapping-match-actions__cancel-link {
+  display: block;
+  width: 100%;
+  margin-top: var(--mg-spacing-8);
+  padding: var(--mg-spacing-4) var(--mg-spacing-8);
+  background: transparent;
+  border: none;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  color: var(--color-danger);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease-in-out;
+}
+
+.mg-v2-mapping-match-actions__cancel-link:hover:not(:disabled),
+.mg-v2-mapping-match-actions__cancel-link:focus-visible:not(:disabled) {
+  color: var(--color-danger-hover);
+  outline: none;
+}
+
+.mg-v2-mapping-match-actions__cancel-link:focus-visible {
+  outline: 2px solid var(--color-danger);
+  outline-offset: 2px;
+  border-radius: var(--mg-radius-4, 4px);
+}
+
+.mg-v2-mapping-match-actions__cancel-link:disabled {
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/*
+ * R4 — 매칭 취소 확인 모달 (UnifiedModal medium + AlertTriangle 아이콘).
+ * Body 는 아이콘 + 메시지 수평 정렬, 모달 액션은 UnifiedModal 의 mg-modal__actions 가 담당.
+ */
+.mg-v2-mapping-cancel-modal__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-12);
+}
+
+.mg-v2-mapping-cancel-modal__icon {
+  flex-shrink: 0;
+  color: var(--color-danger);
+}
+
+.mg-v2-mapping-cancel-modal__message {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}

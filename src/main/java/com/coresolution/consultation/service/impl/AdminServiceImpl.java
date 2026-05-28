@@ -3583,17 +3583,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public void terminateMapping(Long id, String reason) {
         log.info("🔧 매칭 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
         String tenantId = getTenantId();
-        
+
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
-        
+
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         if (mapping.getStatus().name().equals(terminatedStatus)) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
         }
-        
+
+        // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 결제 대기 매칭은 별도 정리 흐름을 탄다.
+        // 합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
+        // 결제가 발생하지 않은 매칭이므로 환불 (sendRefundToErp / 4채널 통지) 트리거를 우회하고,
+        // 연결된 TENTATIVE_PENDING_PAYMENT 가예약과 paymentStatus 만 정리한다.
+        String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
+        if (mapping.getStatus().name().equals(pendingPaymentStatus)) {
+            terminatePendingPaymentMapping(mapping, tenantId, reason, terminatedStatus);
+            return;
+        }
+
         int refundedSessions = mapping.getRemainingSessions();
         long refundAmount = 0;
         if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
@@ -3655,6 +3665,123 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("✅ 매칭 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, refundedSessions, refundAmount, mapping.getConsultant().getName(), mapping.getClient().getName());
+    }
+
+    /**
+     * R4 — 결제 대기(PENDING_PAYMENT) 매칭의 관리자 취소 흐름.
+     *
+     * <p>합의서: {@code docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md}.
+     * 결제 미발생 상태이므로 환불 거래·4채널 통지·회기 보호 트리거는 모두 우회하고,
+     * 다음만 수행한다.</p>
+     * <ol>
+     *   <li>연결된 {@code TENTATIVE_PENDING_PAYMENT} 가예약 일정 {@code CANCELLED} 전이.</li>
+     *   <li>매칭 상태 {@code TERMINATED} + {@code paymentStatus REJECTED} (PENDING → REJECTED).</li>
+     *   <li>매핑 {@code notes} 에 audit 한 줄 누적 (취소 사유 + 취소된 가예약 수).</li>
+     * </ol>
+     *
+     * <p>회기 보호: PENDING_PAYMENT 매칭의 {@code remainingSessions}/{@code usedSessions} 는 모두 0
+     * 이므로 환불할 회기가 없다. {@code usedSessions = totalSessions} 로 채우지 않고 0 으로 둔다
+     * (정합 가설: 사용된 회기 없음, 환불도 없음).</p>
+     *
+     * @param mapping           대상 매핑 (PENDING_PAYMENT, consultant/client 초기화 필수)
+     * @param tenantId          테넌트 ID
+     * @param reason            관리자 취소 사유 (audit 누적 + 스케줄 notes prefix 뒤 사유)
+     * @param terminatedStatus  공통코드에서 조회한 TERMINATED 상태 코드명 (재조회 회피)
+     */
+    private void terminatePendingPaymentMapping(ConsultantClientMapping mapping, String tenantId,
+            String reason, String terminatedStatus) {
+        Long mappingId = mapping.getId();
+        log.info("🧹 R4 결제 대기 매칭 관리자 취소: MappingID={}, paymentTiming={}, 사유={}",
+                mappingId, mapping.getPaymentTiming(), reason);
+
+        int cancelledTentativeCount = cancelTentativePendingPaymentSchedulesForMapping(
+                mapping, tenantId,
+                AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE);
+
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
+        mapping.setTerminatedAt(LocalDateTime.now());
+
+        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+        String pendingCancelNote = String.format(
+                AdminServiceUserFacingMessages.NOTES_PENDING_PAYMENT_CANCEL_LINE_FMT,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST,
+                cancelledTentativeCount);
+        String updatedNotes = currentNotes.isEmpty() ? pendingCancelNote
+                : currentNotes + "\n" + pendingCancelNote;
+        mapping.setNotes(updatedNotes);
+        // 회기 보호 정책: PENDING_PAYMENT 는 결제 전이므로 used/remaining 모두 0 으로 보존.
+        mapping.setRemainingSessions(0);
+        // usedSessions 는 기존 값(통상 0) 유지 — 회기 사용 이력 없음.
+
+        mappingRepository.save(mapping);
+
+        log.info("✅ R4 결제 대기 매칭 취소 완료: MappingID={}, 취소 가예약={}건, 상담사={}, 내담자={}",
+                mappingId,
+                cancelledTentativeCount,
+                mapping.getConsultant() != null ? mapping.getConsultant().getName() : null,
+                mapping.getClient() != null ? mapping.getClient().getName() : null);
+    }
+
+    /**
+     * R4 — 결제 대기 매칭에 연결된 {@code TENTATIVE_PENDING_PAYMENT} 가예약을 일괄 {@code CANCELLED}
+     * 로 전이한다.
+     *
+     * <p>{@link #cancelFutureSchedulesForExhaustedMapping} 가 BOOKED/CONFIRMED 만 다루는 것과
+     * 분리한다 — 환불 자동 취소가 아닌 (결제 자체가 없는) 관리자 취소 경로이므로 사유 코드와
+     * notes prefix 가 다르다. {@code mappingId} 일치 일정만 대상으로 하여 동일 상담사·내담자의
+     * 다른 매칭 가예약은 침범하지 않는다.</p>
+     *
+     * @param mapping  대상 매핑
+     * @param tenantId 테넌트 ID
+     * @param reason   취소 사유 (스케줄 notes 누적용; prefix 뒤에 부착)
+     * @return 취소된 가예약 스케줄 개수 (실패/0건 시 0)
+     */
+    private int cancelTentativePendingPaymentSchedulesForMapping(ConsultantClientMapping mapping,
+            String tenantId, String reason) {
+        if (mapping.getConsultant() == null || mapping.getClient() == null) {
+            log.warn("R4 가예약 자동 취소 skip: consultant/client null MappingID={}", mapping.getId());
+            return 0;
+        }
+        try {
+            List<Schedule> futureSchedules = scheduleRepository
+                    .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                            tenantId,
+                            mapping.getConsultant().getId(),
+                            mapping.getClient().getId(),
+                            LocalDate.now());
+
+            String tentativePending = ScheduleStatus.TENTATIVE_PENDING_PAYMENT.name();
+            String cancelledStatus = getScheduleStatusCode("CANCELLED");
+            Long mappingId = mapping.getId();
+
+            int cancelledCount = 0;
+            for (Schedule schedule : futureSchedules) {
+                if (!schedule.getStatus().name().equals(tentativePending)) {
+                    continue;
+                }
+                // mappingId 가 명시된 가예약만 대상 — 동일 상담사·내담자의 다른 매칭 가예약 보호.
+                if (schedule.getMappingId() == null || !schedule.getMappingId().equals(mappingId)) {
+                    continue;
+                }
+                log.info("🚫 R4 가예약 취소: ScheduleID={}, MappingID={}, 기존상태={}",
+                        schedule.getId(), mappingId, schedule.getStatus());
+                schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
+                String prevNotes = schedule.getNotes() != null ? schedule.getNotes() + "\n" : "";
+                schedule.setNotes(prevNotes
+                        + AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL
+                        + reason);
+                schedule.setUpdatedAt(LocalDateTime.now());
+                scheduleRepository.save(schedule);
+                cancelledCount++;
+            }
+            log.info("📅 R4 가예약 자동 취소: MappingID={}, 취소={}건", mappingId, cancelledCount);
+            return cancelledCount;
+        } catch (Exception e) {
+            log.error("❌ R4 가예약 자동 취소 실패: MappingID={}", mapping.getId(), e);
+            return 0;
+        }
     }
 
     /**

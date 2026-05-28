@@ -11,9 +11,13 @@ import PropTypes from 'prop-types';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
-import { PAYMENT_TIMING_SAME_DAY_CARD } from '../constants/integratedScheduleSidebarFilterConstants';
+import {
+  MAPPING_STATUS_PENDING_PAYMENT,
+  PAYMENT_TIMING_SAME_DAY_CARD
+} from '../constants/integratedScheduleSidebarFilterConstants';
 
 const BTN_SM = 'sm';
+const CANCEL_LINK_TEST_ID = 'mapping-cancel-pending-trigger';
 
 const MappingMatchActions = ({
   mapping,
@@ -21,6 +25,8 @@ const MappingMatchActions = ({
   onDeposit,
   onApprove,
   onCheckoutSameDay,
+  onCancelPendingMapping,
+  cancelPendingProcessing = false,
   disabled = false,
   loading = false,
   buttonClassName = ''
@@ -33,16 +39,19 @@ const MappingMatchActions = ({
   const { status, id, paymentTiming } = mapping;
   const btnExtra = ['mg-v2-mapping-match-actions__btn', buttonClassName].filter(Boolean).join(' ');
 
-  const isSameDayCardPending = status === 'PENDING_PAYMENT'
+  const isSameDayCardPending = status === MAPPING_STATUS_PENDING_PAYMENT
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
   // 옵션 B SAME_DAY_CARD 분기:
   //   - PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제 + 활성화" (CheckoutSameDayModal)
   //   - PENDING_PAYMENT + ADVANCE/null → 기존 "결제 확인" (선납 입금 검증)
   const showCheckoutSameDay = isSameDayCardPending && onCheckoutSameDay;
-  const showPayment = status === 'PENDING_PAYMENT' && !isSameDayCardPending && onPayment;
+  const showPayment = status === MAPPING_STATUS_PENDING_PAYMENT && !isSameDayCardPending && onPayment;
   const showDeposit = status === 'PAYMENT_CONFIRMED' && onDeposit;
   const showApprove = status === 'DEPOSIT_PENDING' && onApprove;
-  if (!showCheckoutSameDay && !showPayment && !showDeposit && !showApprove) {
+  // R4 (옵션 B 디러티 PENDING_PAYMENT 정리): PENDING_PAYMENT 매칭만 관리자 취소 보조 액션 노출.
+  // ACTIVE/TERMINATED/SUSPENDED 등은 기존 종료/일시정지 흐름을 그대로 사용한다.
+  const showCancelPending = status === MAPPING_STATUS_PENDING_PAYMENT && onCancelPendingMapping;
+  if (!showCheckoutSameDay && !showPayment && !showDeposit && !showApprove && !showCancelPending) {
     return null;
   }
 
@@ -129,6 +138,19 @@ const MappingMatchActions = ({
           승인
         </MGButton>
       )}
+      {showCancelPending && (
+        <button
+          type="button"
+          className="mg-v2-mapping-match-actions__cancel-link"
+          onClick={() => onCancelPendingMapping(mapping)}
+          disabled={cancelPendingProcessing}
+          aria-label={t('admin:mapping.card.actions.cancel')}
+          aria-busy={cancelPendingProcessing}
+          data-testid={CANCEL_LINK_TEST_ID}
+        >
+          {t('admin:mapping.card.actions.cancel')}
+        </button>
+      )}
     </div>
   );
 };
@@ -143,6 +165,8 @@ MappingMatchActions.propTypes = {
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
+  onCancelPendingMapping: PropTypes.func,
+  cancelPendingProcessing: PropTypes.bool,
   disabled: PropTypes.bool,
   loading: PropTypes.bool,
   buttonClassName: PropTypes.string
@@ -154,6 +178,8 @@ MappingMatchActions.defaultProps = {
   onDeposit: null,
   onApprove: null,
   onCheckoutSameDay: null,
+  onCancelPendingMapping: null,
+  cancelPendingProcessing: false,
   disabled: false,
   loading: false,
   buttonClassName: ''

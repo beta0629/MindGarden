@@ -1845,7 +1845,13 @@
       "emailLabel": "이메일:",
       "phoneLabel": "전화번호:",
       "warning": "⚠️ 이 작업은 되돌릴 수 없습니다.",
-      "description": "다음 내담자의 정보가 영구적으로 삭제됩니다:"
+      "description": "다음 내담자의 정보가 영구적으로 삭제됩니다:",
+      "blocked": {
+        "pendingPayment": "결제 대기 매칭 {{count}}건이 있어 삭제할 수 없습니다. 매칭관리에서 결제 처리 후 다시 시도해주세요.",
+        "remainingSessions": "남은 회기 {{count}}건이 있어 삭제할 수 없습니다. 회기 소진 또는 환불 처리 후 다시 시도해주세요.",
+        "futureSchedules": "예정 일정 {{count}}건이 있어 삭제할 수 없습니다. 일정 취소 또는 완료 후 다시 시도해주세요.",
+        "fallback": "삭제할 수 없습니다. 관련 데이터를 정리한 후 다시 시도해주세요."
+      }
     },
     "form": {
       "passwordHint": "💡 비밀번호는 정책에 맞는 값으로 자동 채워집니다. 비우면 임시 비밀번호(이메일 안내)로 등록됩니다.",
@@ -2581,14 +2587,12 @@
         }
       }
     },
-    "integrated": {
-      "pendingPayment": {
-        "alert": {
-          "title": "결제 대기 매칭",
-          "count": "결제 대기 매칭이 {{count}}건 있습니다.",
-          "action": "결제 대기 목록 필터",
-          "checkoutSameDay": "당일 결제"
-        }
+    "schedule": {
+      "event": {
+        "sameDayPendingPrefix": "[당일결제] "
+      },
+      "legend": {
+        "sameDayPending": "[당일결제 점선] = 당일 카드 결제 대기 가예약 (결제 후 일반 일정으로 전환)"
       }
     },
     "refund": {

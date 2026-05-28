@@ -47,11 +47,11 @@ import {
 import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
-import { computePendingPaymentAlert } from './utils/pendingPaymentAlertUtils';
 import {
   shouldAutoOpenCheckoutSameDayAfterSchedule,
   buildSameDayCardCheckoutMapping
 } from './utils/sameDayCardCheckoutUtils';
+import { buildMappingPaymentTimingLookup } from '../../schedule/utils/sameDayPendingEventDecorator';
 
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
@@ -394,61 +394,12 @@ const IntegratedMatchingSchedule = () => {
             titleId="integrated-schedule-page-title"
           />
 
-          {/* 옵션 B (예약 우선 매칭) — PENDING_PAYMENT 알림 카드 */}
-          {(() => {
-            const { visible, count: pendingPaymentCount, firstPending } =
-              computePendingPaymentAlert(mappings);
-            if (!visible) {
-              return null;
-            }
-            return (
-              <div
-                className="integrated-schedule__pending-payment-alert"
-                role="status"
-                aria-live="polite"
-                data-testid="integrated-schedule-pending-payment-alert"
-              >
-                <div className="integrated-schedule__pending-payment-alert-text">
-                  <strong className="integrated-schedule__pending-payment-alert-title">
-                    {t('admin:mapping.integrated.pendingPayment.alert.title')}
-                  </strong>
-                  <span className="integrated-schedule__pending-payment-alert-count">
-                    {t('admin:mapping.integrated.pendingPayment.alert.count', { count: pendingPaymentCount })}
-                  </span>
-                </div>
-                <div className="integrated-schedule__pending-payment-alert-actions">
-                  <MGButton
-                    type="button"
-                    variant="secondary"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
-                    onClick={() => setStatusFilter('PENDING_PAYMENT')}
-                    preventDoubleClick={false}
-                  >
-                    {t('admin:mapping.integrated.pendingPayment.alert.action')}
-                  </MGButton>
-                  <MGButton
-                    type="button"
-                    variant="primary"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm' })}
-                    onClick={() => {
-                      // P0 핫픽스 2026-05-28: PENDING_PAYMENT 매핑이라도
-                      // consultantId/packageName 이 누락되면 결제 모달 진입을 차단.
-                      if (!firstPending?.consultantId || !firstPending?.packageName) {
-                        notificationManager.warning('이 매칭은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 매칭을 다시 생성해 주세요.');
-                        return;
-                      }
-                      setCheckoutSameDayMapping(firstPending);
-                    }}
-                    preventDoubleClick={false}
-                  >
-                    {t('admin:mapping.integrated.pendingPayment.alert.checkoutSameDay')}
-                  </MGButton>
-                </div>
-              </div>
-            );
-          })()}
+          {/*
+            옵션 B (예약 우선 매칭) PENDING_PAYMENT 알림 카드는 제거됨 (2026-05-28).
+            - 카운트: 사이드바 statusFilter (`getStatusCount('PENDING_PAYMENT')`) 와 중복.
+            - 필터 단축키: 사이드바 statusFilter 드롭다운으로 동일 액션 가능.
+            - 빠른 결제 진입: 사이드바 카드별 "당일 결제 + 활성화" 버튼이 동일 기능 제공.
+          */}
 
           <div className="integrated-schedule__content">
         <aside
@@ -645,6 +596,19 @@ const IntegratedMatchingSchedule = () => {
           data-layout-context="integrated-schedule"
           data-calendar-skin="integrated"
         >
+          {/* 옵션 B 가예약 시각 구분 범례 — 점선 + warning 토큰 = SAME_DAY_CARD 결제 대기 가예약 */}
+          <p
+            className="integrated-schedule__legend integrated-schedule__legend--same-day"
+            role="note"
+          >
+            <span
+              className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
+              aria-hidden="true"
+            />
+            <span className="integrated-schedule__legend-text">
+              {t('admin:mapping.schedule.legend.sameDayPending')}
+            </span>
+          </p>
           <div className="integrated-schedule__calendar-content">
             <UnifiedScheduleComponent
               userRole={calendarUserRole}
@@ -654,6 +618,7 @@ const IntegratedMatchingSchedule = () => {
               hideScheduleTitle
               integratedMonthEventLayout
               calendarSkin="integrated"
+              mappingPaymentTimingByMappingId={buildMappingPaymentTimingLookup(mappings)}
             />
           </div>
         </main>

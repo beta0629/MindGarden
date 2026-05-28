@@ -427,6 +427,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         schedule.setIsDeleted(false);
 
+        // 옵션 B v2.0 결함 B fix: 가예약 분기 진입 시 mapping_id 명시적 wiring (프론트 캘린더 점선 분기 의존).
+        // 비-가예약 분기는 useSessionForMapping → persistSessionSequenceBeforeDeduction 이 setMappingId 책임.
+        if (effectiveTentative) {
+            Long resolvedMappingId = resolveMappingIdForTentativeBeforeDeposit(consultantId, clientId);
+            schedule.setMappingId(resolvedMappingId);
+        }
+
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
         if (!effectiveTentative) {
@@ -434,7 +441,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             notifyScheduleCreated(savedSchedule);
         }
 
-        log.info("✅ 상담사 스케줄 생성 완료: ID {}", savedSchedule.getId());
+        log.info("✅ 상담사 스케줄 생성 완료: ID {}, mappingId={}", savedSchedule.getId(), savedSchedule.getMappingId());
         return savedSchedule;
     }
 
@@ -513,13 +520,21 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setTenantId(tenantId);
         schedule.setIsDeleted(false);
 
-        log.info("📅 스케줄 엔티티 생성: tenantId={}, isDeleted={}, consultantId={}, clientId={}, date={}",
-                tenantId, schedule.getIsDeleted(), consultantId, clientId, date);
+        // 옵션 B v2.0 결함 B fix: 가예약 분기 진입 시 mapping_id 명시적 wiring (프론트 캘린더 점선 분기 의존).
+        // 비-가예약 분기는 useSessionForMapping → persistSessionSequenceBeforeDeduction 이 setMappingId 책임.
+        if (effectiveTentative) {
+            Long resolvedMappingId = resolveMappingIdForTentativeBeforeDeposit(consultantId, clientId);
+            schedule.setMappingId(resolvedMappingId);
+        }
+
+        log.info("📅 스케줄 엔티티 생성: tenantId={}, isDeleted={}, consultantId={}, clientId={}, date={}, mappingId={}",
+                tenantId, schedule.getIsDeleted(), consultantId, clientId, date, schedule.getMappingId());
 
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
-        log.info("✅ 스케줄 저장 완료: id={}, tenantId={}, isDeleted={}",
-                savedSchedule.getId(), savedSchedule.getTenantId(), savedSchedule.getIsDeleted());
+        log.info("✅ 스케줄 저장 완료: id={}, tenantId={}, isDeleted={}, mappingId={}",
+                savedSchedule.getId(), savedSchedule.getTenantId(), savedSchedule.getIsDeleted(),
+                savedSchedule.getMappingId());
 
         if (!effectiveTentative) {
             useSessionForMapping(consultantId, clientId, savedSchedule);
@@ -527,7 +542,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             notifyScheduleCreated(savedSchedule);
         }
 
-        log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}", savedSchedule.getId(), consultationType);
+        log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}, mappingId={}",
+                savedSchedule.getId(), consultationType, savedSchedule.getMappingId());
         return savedSchedule;
     }
 
@@ -1336,6 +1352,64 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
         }
         return false;
+    }
+
+    /**
+     * 옵션 B v2.0 결함 B fix: 일정 생성 시 매핑 ID resolve.
+     *
+     * <p>{@code createConsultantSchedule} 가 가예약 분기로 진입할 때(tentativeBeforeDeposit=true 또는
+     * {@link #resolveEffectiveTentativeBeforeDeposit} 자동 강제 분기), 일정 엔티티의 {@code mapping_id}
+     * 컬럼을 명시적으로 채워 프론트 캘린더 데코레이터({@code sameDayPendingEventDecorator}) 가
+     * 결제 의도(SAME_DAY_CARD) 기반 점선 분기를 정상 수행하도록 한다.</p>
+     *
+     * <p>resolve 정책 SSOT:
+     * <ol>
+     *   <li>PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑 중 (consultant, client) 일치 1순위</li>
+     *   <li>다수 후보 시 {@code createdAt} 내림차순(가장 최근) 1건 선택</li>
+     *   <li>SAME_DAY_CARD 후보 없으면 ACTIVE 매핑 fallback (validateMappingForTentativeBeforeDepositSchedule
+     *       이 ACTIVE 매핑도 통과시키므로 정합 유지)</li>
+     *   <li>모든 후보 없으면 {@code null} 반환 → 일정 {@code mapping_id} = NULL 보존 (회귀 0)</li>
+     * </ol>
+     * </p>
+     *
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId 내담자 사용자 ID
+     * @return resolve 된 매핑 ID, 매칭 후보 없으면 {@code null}
+     */
+    private Long resolveMappingIdForTentativeBeforeDeposit(Long consultantId, Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+
+        List<ConsultantClientMapping> pendingPaymentMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.PENDING_PAYMENT);
+        ConsultantClientMapping sameDayCandidate = pendingPaymentMappings.stream()
+                .filter(m -> mappingMatchesConsultantClientPair(m, consultantId, clientId))
+                .filter(this::isSameDayCardPaymentTiming)
+                .max(Comparator.comparing(
+                        ConsultantClientMapping::getCreatedAt,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
+                .orElse(null);
+        if (sameDayCandidate != null) {
+            log.debug("🔗 가예약 매핑 ID resolve: status=PENDING_PAYMENT, paymentTiming=SAME_DAY_CARD, mappingId={}",
+                    sameDayCandidate.getId());
+            return sameDayCandidate.getId();
+        }
+
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.ACTIVE);
+        ConsultantClientMapping activeCandidate = activeMappings.stream()
+                .filter(m -> mappingMatchesConsultantClientPair(m, consultantId, clientId))
+                .max(Comparator.comparing(
+                        ConsultantClientMapping::getCreatedAt,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
+                .orElse(null);
+        if (activeCandidate != null) {
+            log.debug("🔗 가예약 매핑 ID resolve: status=ACTIVE fallback, mappingId={}", activeCandidate.getId());
+            return activeCandidate.getId();
+        }
+
+        log.debug("🔗 가예약 매핑 ID resolve 실패 — 후보 없음, consultantId={}, clientId={}",
+                consultantId, clientId);
+        return null;
     }
 
     @Override

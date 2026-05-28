@@ -27,7 +27,9 @@ const MappingScheduleCard = ({
   onDeposit,
   onApprove,
   onCheckoutSameDay,
-  approveProcessing
+  onCancelPendingMapping,
+  approveProcessing,
+  cancelPendingProcessing
 }) => (
   <CardContainer>
     <div className="integrated-schedule__card-body">
@@ -47,7 +49,9 @@ const MappingScheduleCard = ({
       onDeposit={onDeposit}
       onApprove={onApprove}
       onCheckoutSameDay={onCheckoutSameDay}
+      onCancelPendingMapping={onCancelPendingMapping}
       approveProcessing={approveProcessing}
+      cancelPendingProcessing={cancelPendingProcessing}
     />
   </CardContainer>
 );
@@ -68,7 +72,9 @@ MappingScheduleCard.propTypes = {
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
-  approveProcessing: PropTypes.bool
+  onCancelPendingMapping: PropTypes.func,
+  approveProcessing: PropTypes.bool,
+  cancelPendingProcessing: PropTypes.bool
 };
 
 MappingScheduleCard.defaultProps = {
@@ -80,7 +86,9 @@ MappingScheduleCard.defaultProps = {
   onDeposit: null,
   onApprove: null,
   onCheckoutSameDay: null,
-  approveProcessing: false
+  onCancelPendingMapping: null,
+  approveProcessing: false,
+  cancelPendingProcessing: false
 };
 
 export default MappingScheduleCard;

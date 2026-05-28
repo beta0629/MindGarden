@@ -305,6 +305,25 @@ public final class AdminServiceUserFacingMessages {
     public static final String REFUND_AUTO_CANCEL_REASON_CODE = "REFUND_AUTO_CANCEL";
 
     /**
+     * R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 관리자 취소로 TENTATIVE_PENDING_PAYMENT 가예약을
+     * 자동 취소할 때 스케줄 notes 에 누적할 접두.
+     *
+     * <p>합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
+     * REFUND_AUTO_CANCEL 과 구분되도록 별도 prefix/코드를 사용한다(환불 거래·회기 보호 트리거 없음).</p>
+     */
+    public static final String SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL =
+            "[PENDING_PAYMENT_CANCEL 결제 대기 매칭 취소로 인한 가예약 자동 취소] ";
+
+    /** R4 — 결제 대기(PENDING_PAYMENT) 매칭 관리자 취소 시 audit 사유 코드. */
+    public static final String PENDING_PAYMENT_CANCEL_REASON_CODE = "PENDING_PAYMENT_CANCEL";
+
+    /**
+     * R4 — 결제 대기 매칭 관리자 취소 매핑 notes 한 줄 (인자: 일시, 사유, 취소된 가예약 수).
+     */
+    public static final String NOTES_PENDING_PAYMENT_CANCEL_LINE_FMT =
+            "[%s PENDING_PAYMENT 매칭 취소] %s (취소 가예약 %d건)";
+
+    /**
      * Phase 0 (Q3=3A·보조=C) 4채널 의무 알림 제목 (인앱·이메일·푸시·알림톡 공통).
      */
     public static final String REFUND_AUTO_CANCEL_NOTIFICATION_TITLE = "예약 취소 안내 (환불 처리)";

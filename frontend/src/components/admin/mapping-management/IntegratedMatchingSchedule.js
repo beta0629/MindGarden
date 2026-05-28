@@ -20,6 +20,7 @@ import MappingCreationModal from '../MappingCreationModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
 import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
+import MappingCancelModal from './molecules/MappingCancelModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
@@ -102,6 +103,9 @@ const IntegratedMatchingSchedule = () => {
   // 옵션 B (예약 우선 매칭) — 당일 카드 결제 모달 상태
   const [checkoutSameDayMapping, setCheckoutSameDayMapping] = useState(null);
   const [approveProcessing, setApproveProcessing] = useState(false);
+  // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 관리자 취소 확인 모달 대상 + 처리 중 플래그.
+  const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
+  const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
   const sidebarListRef = useRef(null);
 
   // 좌측 사이드바 collapse 상태: localStorage 선호값이 있으면 우선, 없으면 화면 폭 기반 초기값
@@ -339,6 +343,59 @@ const IntegratedMatchingSchedule = () => {
     }
   };
 
+  /**
+   * R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 사이드바 카드 "매칭 취소" 보조 액션.
+   * 합의서/시안: docs/project-management/2026-05-28/R4_*.md.
+   * 1) 카드에서 클릭 → UnifiedModal 확인 모달 오픈 (오클릭 방지).
+   * 2) 모달 confirm → POST /admin/mappings/{id}/terminate (백엔드 PENDING_PAYMENT 분기 처리).
+   * 3) 성공 시 카드 목록 자동 갱신 → TERMINATED 매칭 사이드바에서 사라짐.
+   */
+  const handleRequestCancelPendingMapping = useCallback((mapping) => {
+    if (!mapping?.id) {
+      return;
+    }
+    if (mapping.status !== 'PENDING_PAYMENT') {
+      // 가드: PENDING_PAYMENT 외 상태는 UI 노출되지 않으나 방어적으로 차단.
+      notificationManager.warning('결제 대기 상태의 매칭만 취소할 수 있습니다.');
+      return;
+    }
+    setCancelTargetMapping({
+      id: mapping.id,
+      consultantName: mapping.consultantName,
+      clientName: mapping.clientName,
+      paymentTiming: mapping.paymentTiming ?? null
+    });
+  }, []);
+
+  const handleCancelModalClose = useCallback(() => {
+    if (cancelPendingProcessing) {
+      return;
+    }
+    setCancelTargetMapping(null);
+  }, [cancelPendingProcessing]);
+
+  const handleConfirmCancelPendingMapping = useCallback(async() => {
+    if (!cancelTargetMapping?.id || cancelPendingProcessing) {
+      return;
+    }
+    const mappingId = cancelTargetMapping.id;
+    setCancelPendingProcessing(true);
+    try {
+      await StandardizedApi.post(
+        API_ENDPOINTS.ADMIN.MAPPINGS.TERMINATE(mappingId),
+        { reason: '관리자 취소 — 디러티 PENDING_PAYMENT 정리' }
+      );
+      notificationManager.success('매칭이 취소되었습니다.');
+      setCancelTargetMapping(null);
+      loadMappings();
+    } catch (error) {
+      console.error('매칭 취소 실패:', error);
+      notificationManager.error(error?.message || '매칭 취소에 실패했습니다.');
+    } finally {
+      setCancelPendingProcessing(false);
+    }
+  }, [cancelTargetMapping, cancelPendingProcessing, loadMappings]);
+
   const handleScheduleModalClose = () => {
     setScheduleModalOpen(false);
     setPreFilledMapping(null);
@@ -572,7 +629,12 @@ const IntegratedMatchingSchedule = () => {
                         onDeposit={setDepositModalMapping}
                         onApprove={handleApprove}
                         onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
+                        onCancelPendingMapping={handleRequestCancelPendingMapping}
                         approveProcessing={approveProcessing}
+                        cancelPendingProcessing={
+                          cancelPendingProcessing
+                          && cancelTargetMapping?.id === mapping.id
+                        }
                       />
                     </li>
                   );
@@ -660,6 +722,14 @@ const IntegratedMatchingSchedule = () => {
           onClose={() => setCheckoutSameDayMapping(null)}
           mapping={checkoutSameDayMapping}
           onCheckoutCompleted={handleCheckoutSameDayCompleted}
+        />
+      )}
+      {cancelTargetMapping && (
+        <MappingCancelModal
+          isOpen={!!cancelTargetMapping}
+          onClose={handleCancelModalClose}
+          onConfirm={handleConfirmCancelPendingMapping}
+          processing={cancelPendingProcessing}
         />
       )}
     </div>

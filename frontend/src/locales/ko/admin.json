@@ -2550,7 +2550,17 @@
     },
     "card": {
       "actions": {
-        "checkoutSameDayPayment": "당일 결제 + 활성화"
+        "checkoutSameDayPayment": "당일 결제 + 활성화",
+        "cancel": "매칭 취소"
+      }
+    },
+    "cancel": {
+      "modal": {
+        "title": "매칭을 취소하시겠습니까?",
+        "body": "결제 대기 중인 매칭과 연결된 가예약 일정이 함께 취소됩니다.",
+        "confirmLabel": "매칭 취소",
+        "cancelLabel": "돌아가기",
+        "ariaLabel": "매칭 취소 확인 모달"
       }
     },
     "checkout": {

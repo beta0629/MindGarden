@@ -99,3 +99,50 @@ export function getDefaultBrandingPrimaryHex() {
 export function getDefaultBrandingSecondaryHex() {
   return resolveCssColorVarToHex('--mg-secondary-500', MG_SECONDARY_500_SSR_FALLBACK_HEX);
 }
+
+/**
+ * Canvas 차트(Chart.js 등) 전용 색상 배열을 해석합니다.
+ *
+ * 배경:
+ * - Chart.js 는 backgroundColor / borderColor 문자열을 그대로 Canvas 2D context 의
+ *   ctx.fillStyle 에 대입합니다. Canvas 사양은 'var(--...)' 같은 CSS 변수 표기를
+ *   파싱하지 못하므로(잘못된 색은 무시되고 이전 fillStyle 이 유지됨), SSOT 토큰을
+ *   직접 전달하면 슬라이스가 검정/직전 색으로 렌더되는 P1 시각 결함이 발생합니다.
+ * - 본 함수는 배열 내 'var(--mg-*)' 문자열만 골라 :root cascade(라이트/다크 자동)에
+ *   등록된 토큰 값을 그대로(예: '#3B82F6') 반환합니다. 이는 동일 파일
+ *   AdminDashboardV2.js 막대/라인 차트가 사용 중인 getPropertyValue 패턴과 동일하며,
+ *   다크 모드 cascade 가 자동 적용됩니다 (:root[data-theme="dark"] override).
+ * - 이미 hex/rgb/literal 색은 그대로 통과합니다(신규 hex 0건, SSOT 정합).
+ *
+ * @param {Array<string>} colors 색상 배열 (var(--...) | #hex | 기타 유효 CSS color)
+ * @param {string} [fallback='transparent'] 해석 실패/SSR 시 fallback (CSS color keyword 또는 #RRGGBB)
+ *                                          기본값 'transparent' — Canvas 검정 fallback 회피
+ *                                          + 신규 hex 추가 금지 (D11 가드) 양립.
+ * @returns {Array<string>} 해석된 색상 배열 (입력과 동일 길이)
+ */
+const CSS_VAR_TOKEN_RE = /^var\(\s*(--[a-zA-Z0-9_-]+)\s*\)$/;
+
+export function resolveCssColorTokensArray(colors, fallback = 'transparent') {
+  if (!Array.isArray(colors)) {
+    return colors;
+  }
+  const hasDocument =
+    typeof document !== 'undefined' &&
+    document.documentElement &&
+    typeof getComputedStyle !== 'undefined';
+  const rootStyle = hasDocument ? getComputedStyle(document.documentElement) : null;
+  return colors.map((c) => {
+    if (typeof c !== 'string') {
+      return c;
+    }
+    const match = c.trim().match(CSS_VAR_TOKEN_RE);
+    if (!match) {
+      return c;
+    }
+    if (!rootStyle) {
+      return fallback;
+    }
+    const resolved = rootStyle.getPropertyValue(match[1]).trim();
+    return resolved || fallback;
+  });
+}

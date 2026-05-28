@@ -5,7 +5,7 @@ import { apiGet, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { normalizeVehiclePlateInput, validateEmail, validatePhone } from '../../utils/validationUtils';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
-import { showError, showSuccess } from '../../utils/notification';
+import { showError, showSuccess, showWarning } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -876,6 +876,21 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         handleCloseModal();
                                     }
                                 } catch (error) {
+                                    // 409 Conflict: 비즈니스 가드(결제 대기·잔여 회기·예정 스케줄) 차단.
+                                    // 백엔드가 보낸 한국어 메시지를 그대로 노출하고, 없으면 i18n fallback.
+                                    const status = error?.status ?? error?.response?.status;
+                                    if (modalType === 'delete' && status === 409) {
+                                        const body = error?.response?.data || {};
+                                        const blockedMessage = body.message
+                                            || t('admin:clientModal.delete.blocked.fallback');
+                                        console.warn('⚠️ 내담자 삭제 차단 (409):', {
+                                            code: body.code,
+                                            details: body.details,
+                                            message: blockedMessage
+                                        });
+                                        showWarning(blockedMessage, 6000);
+                                        return;
+                                    }
                                     console.error('❌ 내담자 처리 실패:', error);
                                     const errMsg = `내담자 처리 중 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}`;
                                     showError(errMsg);

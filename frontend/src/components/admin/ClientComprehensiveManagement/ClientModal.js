@@ -376,7 +376,9 @@ const ClientModal = ({
     };
 
     const renderSummaryStrip = () => {
-        if (type === 'create' || !client?.id) {
+        // 삭제 모달은 '누적 지표' 영역이 의미가 없으므로 렌더하지 않는다 (P1 hotfix:
+        // 빈 ContentSection 노출 회귀 차단). view/edit 진입 시에만 KPI 카드를 보여준다.
+        if (type === 'create' || type === 'delete' || !client?.id) {
             return null;
         }
         const persistedGrade = clientSummary?.persistedGrade;
@@ -429,7 +431,7 @@ const ClientModal = ({
                     <p><strong>{t('admin:labels.phone')}:</strong> <SafeText>{client?.phone}</SafeText></p>
                 </div>
                 <p className="mg-v2-warning-text">
-                    ⚠️ {t('admin:clientModal.delete.warning')}
+                    {t('admin:clientModal.delete.warning')}
                 </p>
             </div>
         </div>

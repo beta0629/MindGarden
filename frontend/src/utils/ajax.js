@@ -620,15 +620,27 @@ export const apiDelete = async(endpoint, options = {}) => {
     });
 
     const jsonData = await response.json();
-    
+
     if (!response.ok) {
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {
         return null; // 리다이렉트됨
       }
-      
-      handleError(new Error(AJAX_DELETE_REQUEST_FAILED), response.status);
+
+      // 409 Conflict 등 비즈니스 가드 응답은 본문(message/code/details) 을 호출부가
+      // 사용할 수 있도록 status·response.data 를 부착해서 throw 한다.
+      // 401 은 기존 handleError 의 로그인 리다이렉트 로직을 유지한다.
+      if (response.status === API_STATUS.UNAUTHORIZED) {
+        handleError(new Error(AJAX_DELETE_REQUEST_FAILED), response.status);
+      }
+      const fallbackMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
+        ? jsonData.message
+        : getErrorMessage(response.status);
+      const enriched = new Error(fallbackMessage);
+      enriched.status = response.status;
+      enriched.response = { status: response.status, data: jsonData };
+      throw enriched;
     }
 
     // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출. data가 null/undefined면 전체 객체 반환(성공 여부 판단용)
@@ -639,7 +651,7 @@ export const apiDelete = async(endpoint, options = {}) => {
       }
       return jsonData;
     }
-    
+
     // ApiResponse 래퍼가 없으면 그대로 반환
     return jsonData;
   } catch (error) {

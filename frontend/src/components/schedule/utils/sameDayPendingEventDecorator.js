@@ -1,12 +1,29 @@
 /**
  * 옵션 B (예약 우선 매칭) — 캘린더 이벤트 시각 구분 SSOT.
  *
- * 매핑이 SAME_DAY_CARD 결제 방식이고 일정이 가예약(TENTATIVE_PENDING_PAYMENT) 상태인 경우,
- * 캘린더 이벤트에 별도 클래스(`integrated-schedule__event--same-day-pending`)를 부여하고
- * 제목 앞에 `[당일결제] ` prefix 를 붙인다. 결제 완료 후 BOOKED/CONFIRMED 로 전환되면
- * 자동으로 일반 표기로 복귀한다.
+ * 일정이 가예약(TENTATIVE_PENDING_PAYMENT) 상태이면 캘린더 이벤트에 별도 클래스
+ * (`integrated-schedule__event--same-day-pending`)를 부여하고 제목 앞에 `[당일결제] ` prefix 를 붙인다.
+ * 결제 완료 후 BOOKED/CONFIRMED 로 전환되면 자동으로 일반 표기로 복귀한다.
  *
- * 합의서: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md.
+ * v2.0 (결함 B fix 보강, 2026-05-28):
+ * - 백엔드 `validateMappingForTentativeBeforeDepositSchedule` 정책상
+ *   TENTATIVE_PENDING_PAYMENT 상태는 SAME_DAY_CARD 흐름에서만 생성된다.
+ * - 따라서 status 단독 분기로 점선/prefix 를 적용하며,
+ *   `mapping_id` lookup 이 명시적으로 ADVANCE 를 반환하는 경우만 데이터 이상으로
+ *   간주하여 차단한다 (회귀 0 안전 가드).
+ * - 백엔드 `ScheduleServiceImpl.resolveMappingIdForTentativeBeforeDeposit` 가
+ *   mapping_id 를 정착시키므로 정상 케이스에서는 lookup 이 SAME_DAY_CARD 를 반환한다.
+ *
+ * v2.0 P0 정정 (2026-05-28 15:17 KST 사용자 dev DOM 분석 결과 반영):
+ * - 클래스 부여 (이 데코레이터의 역할) 는 정상이었으나, CSS cascade 에서 outer
+ *   `<a.fc-event>` 점선이 inner `<div.mg-v2-ad-calendar-event--compact>` 자체
+ *   background/border 로 가려져 시각 미노출 회귀가 있었다.
+ * - cascade 보강은 `IntegratedMatchingSchedule.css` 에서 descendant selector
+ *   + `::before` prefix icon + `--mg-color-warning-*` 다크 토큰으로 정착.
+ * - 본 데코레이터는 클래스명 SSOT (`SAME_DAY_PENDING_EVENT_CLASS`) 만 유지하며
+ *   변경 없음 (책임 분리: JS=클래스 부여, CSS=시각 cascade).
+ *
+ * 합의서: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN_V2.md §5.
  *
  * @author MindGarden
  * @since 2026-05-28
@@ -64,6 +81,11 @@ const resolveStatusFromEvent = (event) => {
 /**
  * 단일 이벤트가 옵션 B 당일결제 가예약인지 판별.
  *
+ * v2.0 분기 정책:
+ * - status === TENTATIVE_PENDING_PAYMENT 가 1순위 SSOT (백엔드 정책상 SAME_DAY_CARD 흐름에서만 발생).
+ * - mapping_id 가 있고 lookup 이 ADVANCE 를 명시적으로 반환하는 경우만 false 로 차단 (데이터 이상 안전 가드).
+ * - mapping_id 누락 / lookup 미존재 / lookup 에 매핑 미등록 → status 단독으로 true (결함 B fix 보강).
+ *
  * @param {object} event - FullCalendar event def (className/extendedProps 포함)
  * @param {Map|object} mappingPaymentTimingByMappingId - mappingId → paymentTiming 룩업
  * @returns {boolean}
@@ -74,10 +96,17 @@ export function isSameDayPendingEvent(event, mappingPaymentTimingByMappingId) {
     return false;
   }
   const mappingId = resolveMappingIdFromEvent(event);
-  const timing = resolvePaymentTiming(
-    ensureLookup(mappingPaymentTimingByMappingId),
-    mappingId
-  );
+  if (mappingId == null) {
+    return true;
+  }
+  const lookup = ensureLookup(mappingPaymentTimingByMappingId);
+  if (!lookup) {
+    return true;
+  }
+  const timing = resolvePaymentTiming(lookup, mappingId);
+  if (timing == null) {
+    return true;
+  }
   return timing === SAME_DAY_CARD_TIMING;
 }
 
@@ -96,10 +125,10 @@ export function decorateScheduleEventsForSameDayPending(events, mappingPaymentTi
   if (!Array.isArray(events) || events.length === 0) {
     return Array.isArray(events) ? events : [];
   }
+  // v2.0 (결함 B fix 보강): lookup 비어있어도 status 단독 분기로 데코 가능.
+  // isSameDayPendingEvent 가 TENTATIVE_PENDING_PAYMENT 가 아닐 때 즉시 false 를 반환하므로
+  // 일반 일정만 있는 경우 성능 영향 미미.
   const lookup = ensureLookup(mappingPaymentTimingByMappingId);
-  if (!lookup || lookup.size === 0) {
-    return events;
-  }
   return events.map((event) => {
     if (!isSameDayPendingEvent(event, lookup)) {
       return event;

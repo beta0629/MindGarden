@@ -348,8 +348,11 @@ class AdminServiceImplCheckoutSameDayTest {
     }
 
     @Test
-    @DisplayName("paymentStatus 이미 APPROVED: IllegalStateException")
+    @DisplayName("매핑 status 가 PENDING_PAYMENT 가 아님 (ACTIVE + APPROVED): MappingAlreadyProcessedException")
     void checkoutSameDayCard_alreadyApproved_throwsIllegalStateException() {
+        // 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): status 가드가 paymentStatus 보호 가드보다 먼저 발동.
+        // MappingAlreadyProcessedException 은 IllegalStateException 을 상속하므로 instanceOf 회귀는 보존,
+        // 메시지는 사용자 친화 카피("이미 처리 중입니다.") 로 통일된다.
         ConsultantClientMapping initial = newMapping(
                 MappingStatus.ACTIVE, PaymentStatus.APPROVED, 10, 0, 10);
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
@@ -358,7 +361,8 @@ class AdminServiceImplCheckoutSameDayTest {
         assertThatThrownBy(() -> spyService.checkoutSameDayCard(
                 MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("이미 승인된 결제입니다");
+                .isInstanceOf(com.coresolution.consultation.exception.MappingAlreadyProcessedException.class)
+                .hasMessageContaining("이미 처리 중입니다");
 
         verify(spyService, never()).confirmPayment(anyLong(), anyString(), anyString(), anyLong());
         verify(spyService, never()).confirmDeposit(anyLong(), anyString());

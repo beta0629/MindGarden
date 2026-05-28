@@ -22,6 +22,7 @@ import com.coresolution.consultation.repository.ConsultantSalaryProfileRepositor
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.service.AdminRequestIdempotencyService;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BranchService;
@@ -143,6 +144,7 @@ class AdminServiceImplTerminatePendingPaymentTest {
     @Mock private BatchNotificationDispatchService batchNotificationDispatchService;
     @Mock private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
     @Mock private UserLifecycleService userLifecycleService;
+    @Mock private AdminRequestIdempotencyService adminRequestIdempotencyService;
 
     /** JDBC 없이 REQUIRES_NEW 콜백만 수행 (실패해도 부모 트랜잭션 영향 없도록 모킹) */
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
@@ -208,7 +210,8 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 mappingSettlementNotificationHelper,
                 batchNotificationDispatchService,
                 refundAutoCancelNotificationService,
-                userLifecycleService);
+                userLifecycleService,
+                adminRequestIdempotencyService);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

@@ -5,3 +5,104 @@
   flex-direction: column;
   gap: var(--mg-spacing-8);
 }
+
+/*
+ * R4 v2.0 — 매칭 취소 보조 버튼 (옵션 A2: 풀-width Danger Outline).
+ * 디자이너 시안 (R4_BUTTON_REDESIGN_V2.md):
+ *  - 위치: 메인 버튼("당일 결제 + 활성화") 아래, 풀-width, 메인보다 시각 강도 ↓
+ *  - 높이 38px / 메인과의 gap 12px / 라운드 var(--mg-radius-md)
+ *  - 6 상태 (default/hover/active/focus-visible/disabled/dark) 전부 SSOT 토큰만 사용
+ *  - 기존 옵션 A 텍스트 링크 (.mg-v2-mapping-match-actions__cancel-link) 대체
+ *  - 매칭 노출 매트릭스·testid·aria-label·기능은 동일 (시각만 변경, RTL 회귀 0)
+ *
+ * 모든 색·간격은 unified-design-tokens.css 의 SSOT 토큰만 사용 (D11 하드코딩 0).
+ */
+.mg-v2-mapping-match-actions__cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 38px;
+  margin-top: var(--mg-spacing-12, 0.75rem);
+  padding: 0 var(--mg-spacing-12, 0.75rem);
+  background: transparent;
+  border: 1.5px solid var(--mg-error-500);
+  border-radius: var(--mg-radius-md);
+  color: var(--mg-error-600);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  letter-spacing: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease-in-out,
+              border-color 0.15s ease-in-out,
+              color 0.15s ease-in-out,
+              box-shadow 0.15s ease-in-out;
+}
+
+.mg-v2-mapping-match-actions__cancel-btn:hover:not(:disabled) {
+  background-color: var(--mg-error-500);
+  border-color: var(--mg-error-600);
+  color: var(--color-text-on-danger);
+}
+
+.mg-v2-mapping-match-actions__cancel-btn:active:not(:disabled) {
+  background-color: var(--mg-error-600);
+  border-color: var(--mg-error-700);
+  color: var(--color-text-on-danger);
+}
+
+.mg-v2-mapping-match-actions__cancel-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--mg-error-300);
+}
+
+.mg-v2-mapping-match-actions__cancel-btn:disabled {
+  background: transparent;
+  border-color: var(--mg-gray-300);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/*
+ * 다크 모드 cascade — SSOT 의 dark 정의(--mg-color-error-dark 는 red-300 톤,
+ * --mg-color-error-100 은 red-900 톤) 를 활용한 대비 반전.
+ */
+[data-theme='dark'] .mg-v2-mapping-match-actions__cancel-btn {
+  border-color: var(--mg-color-error-dark);
+  color: var(--mg-color-error-100);
+}
+
+[data-theme='dark'] .mg-v2-mapping-match-actions__cancel-btn:hover:not(:disabled) {
+  background-color: var(--mg-color-error-dark);
+  border-color: var(--mg-color-error-dark);
+  color: var(--color-text-on-danger);
+}
+
+[data-theme='dark'] .mg-v2-mapping-match-actions__cancel-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--mg-error-300);
+}
+
+/*
+ * R4 — 매칭 취소 확인 모달 (UnifiedModal medium + AlertTriangle 아이콘).
+ * Body 는 아이콘 + 메시지 수평 정렬, 모달 액션은 UnifiedModal 의 mg-modal__actions 가 담당.
+ */
+.mg-v2-mapping-cancel-modal__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-12);
+}
+
+.mg-v2-mapping-cancel-modal__icon {
+  flex-shrink: 0;
+  color: var(--color-danger);
+}
+
+.mg-v2-mapping-cancel-modal__message {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}

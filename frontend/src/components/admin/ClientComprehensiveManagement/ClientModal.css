@@ -91,3 +91,91 @@
 .mg-v2-client-modal__notification-channel {
   margin-top: var(--mg-spacing-md, 1rem);
 }
+
+/*
+ * 내담자 삭제 모달 — SSOT 통일 (2026-05-28 P1 핫픽스)
+ *  - UnifiedModal 본체가 카드/헤더 역할을 하므로 내부 중첩 wrapper(mg-v2-modal-content,
+ *    mg-v2-delete-confirmation) 와 중복 제목 <h3> 을 제거하고 단일 평탄 구조로 재구성.
+ *  - 시각 토큰: --mg-warning-100 배경 + --mg-warning-700 텍스트 (R4 핸드오프 정합).
+ *  - 정보 라인: <dl>/<dt>/<dd> 시맨틱 구조 + grid 정렬.
+ */
+.mg-v2-client-delete-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.mg-v2-client-delete-modal__lead {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.mg-v2-client-delete-modal__description {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.mg-v2-client-delete-modal__info {
+  margin: 0;
+  padding: var(--mg-spacing-md, 1rem);
+  border-radius: var(--ad-b0kla-radius, var(--border-radius-md, 8px));
+  background: var(--ad-b0kla-card-bg, var(--mg-bg-secondary, rgba(0, 0, 0, 0.03)));
+  border: 1px solid var(--ad-b0kla-border, var(--color-border, rgba(0, 0, 0, 0.08)));
+  display: grid;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-client-delete-modal__info-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: baseline;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-client-delete-modal__info-term {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.mg-v2-client-delete-modal__info-desc {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  word-break: break-all;
+}
+
+.mg-v2-client-delete-modal__warning {
+  margin: 0;
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  border-radius: var(--ad-b0kla-radius, var(--border-radius-md, 8px));
+  background: var(--mg-warning-100);
+  color: var(--mg-warning-700);
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.mg-v2-client-delete-modal__warning-icon {
+  flex-shrink: 0;
+  color: var(--mg-warning-700);
+}
+
+.mg-v2-client-delete-modal__warning-text {
+  flex: 1;
+}
+
+@media (max-width: 480px) {
+  .mg-v2-client-delete-modal__info-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

@@ -8,6 +8,7 @@
 import {
   canScheduleForMapping,
   isPaymentConfirmed,
+  isSameDayCardPending,
   normalizedRemainingSessions
 } from '../components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
 
@@ -38,6 +39,11 @@ export function assertExternalMappingDropAllowed(mappingPayload) {
       kind: 'invalid_payload',
       userMessage: EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE
     };
+  }
+  // 옵션 B 사후 카드 결제(SAME_DAY_CARD) + PENDING_PAYMENT 는 결제/회기 가드를 건너뛴다.
+  // 드롭 직후 CheckoutSameDayModal 에서 결제 + 활성화 + 회기 부여를 한 번에 처리한다.
+  if (isSameDayCardPending(mappingPayload)) {
+    return { ok: true };
   }
   if (!isPaymentConfirmed(mappingPayload)) {
     return {

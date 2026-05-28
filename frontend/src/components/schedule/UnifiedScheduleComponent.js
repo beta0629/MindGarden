@@ -36,6 +36,7 @@ import {
   parseScheduleSessionCount
 } from '../../constants/schedule';
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
+import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -68,6 +69,11 @@ const isAdminLikeScheduleUserRole = (role) =>
  */
 /** refetchTrigger: 부모에서 변경 시 캘린더 데이터 재로드(통합 스케줄 화면 등) */
 /** onDropFromExternal: (date, mappingPayload) => void — 외부 매칭 카드 드롭 시 호출(통합 스케줄 화면) */
+/**
+ * mappingPaymentTimingByMappingId: Map|object {mappingId → paymentTiming} —
+ * 옵션 B SAME_DAY_CARD 매핑의 가예약 일정에 별도 시각(점선·prefix) 적용을 위한 룩업.
+ * 통합 스케줄 화면 등 매핑 메타를 보유한 부모만 전달한다. 미전달 시 데코레이션 미적용.
+ */
 const UnifiedScheduleComponent = ({
   userRole,
   userId,
@@ -78,7 +84,8 @@ const UnifiedScheduleComponent = ({
   calendarSkin,
   /** 명시 시 우선. 미지정이면 `onDropFromExternal` 존재 여부로 통합 스케줄 잠금 추론 */
   disableCalendarEventDrag: disableCalendarEventDragProp,
-  acceptExternalCalendarDrops: acceptExternalCalendarDropsProp
+  acceptExternalCalendarDrops: acceptExternalCalendarDropsProp,
+  mappingPaymentTimingByMappingId
 }) => {
     const { t } = useTranslation();
     const resolvedDisableCalendarEventDrag =
@@ -1024,7 +1031,7 @@ const UnifiedScheduleComponent = ({
             )}
 
             <ScheduleCalendarView
-                events={events}
+                events={decorateScheduleEventsForSameDayPending(events, mappingPaymentTimingByMappingId)}
                 userRole={userRole}
                 onDateClick={handleDateClick}
                 onEventClick={handleEventClick}
@@ -1129,7 +1136,12 @@ UnifiedScheduleComponent.propTypes = {
   integratedMonthEventLayout: PropTypes.bool,
   calendarSkin: PropTypes.oneOf(['integrated']),
   disableCalendarEventDrag: PropTypes.bool,
-  acceptExternalCalendarDrops: PropTypes.bool
+  acceptExternalCalendarDrops: PropTypes.bool,
+  /** 옵션 B 가예약 시각 구분용 — Map 또는 일반 객체. mappingId(문자열/숫자) → paymentTiming */
+  mappingPaymentTimingByMappingId: PropTypes.oneOfType([
+    PropTypes.instanceOf(Map),
+    PropTypes.object
+  ])
 };
 
 export default UnifiedScheduleComponent;

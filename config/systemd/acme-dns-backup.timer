@@ -1,0 +1,15 @@
+[Unit]
+Description=Run acme-dns SQLite backup daily at 02:30 KST
+Documentation=file:///root/mindGarden/docs/project-management/2026-05-28/SSL_WILDCARD_ACMEDNS_AUTO_RENEW_HANDOFF.md
+
+[Timer]
+# KST 02:30 (서버 timezone 이 KST 일 경우)
+# 서버가 UTC 라면: 17:30 UTC = 02:30 KST. systemd 는 OnCalendar 를 시스템 timezone 으로 해석.
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=60
+Unit=acme-dns-backup.service
+
+[Install]
+WantedBy=timers.target

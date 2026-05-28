@@ -163,7 +163,9 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
                 noopTransactionManager, userIdGenerator, userService,
                 consultantSalaryProfileRepository, scheduleService, professionalProviderTypeService,
                 mappingSettlementNotificationHelper, batchNotificationDispatchService,
-                refundAutoCancelNotificationService, userLifecycleService);
+                refundAutoCancelNotificationService, userLifecycleService,
+                org.mockito.Mockito.mock(
+                        com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

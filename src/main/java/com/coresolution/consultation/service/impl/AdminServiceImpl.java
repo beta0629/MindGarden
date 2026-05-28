@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,7 +40,10 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.exception.AdminDeleteBlockedException;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
+import com.coresolution.consultation.service.AdminRequestIdempotencyService;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
@@ -148,6 +152,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final BatchNotificationDispatchService batchNotificationDispatchService;
     private final RefundAutoCancelNotificationService refundAutoCancelNotificationService;
     private final UserLifecycleService userLifecycleService;
+    private final AdminRequestIdempotencyService adminRequestIdempotencyService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -747,6 +752,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setResponsibility(dto.getResponsibility());
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
+        // 옵션 B 결제 방식 의도(ADVANCE / SAME_DAY_CARD)를 매핑에 보존.
+        // 사이드바 카드 액션 분기와 드래그 허용 여부 결정에 사용된다.
+        // null 은 레거시(ADVANCE 동등) 로 취급하므로 별도 디폴트를 강제하지 않는다.
+        mapping.setPaymentTiming(dto.getPaymentTiming());
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
@@ -1288,7 +1297,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     /**
      * REQUIRES_NEW 트랜잭션에서 실행하며, 콜백 진입 시 tenantId를 TenantContextHolder에 설정.
-     * ERP/통계 등에서 getRequiredTenantId() 사용 시 새 트랜잭션에서도 동작하도록 함. 종료 시 clear.
+     * ERP/통계 등에서 getRequiredTenantId() 사용 시 새 트랜잭션에서도 동작하도록 함.
+     *
+     * <p>옵션 B v2.0 합의서 §4 (2026-05-28): 종료 시 무조건 clear 하면 부모 호출 체인 (예:
+     * {@link #checkoutSameDayCard}) 의 다음 단계 ({@code confirmDeposit} → {@code approveMapping})
+     * 에서 {@code getRequiredTenantId()} 호출 시 {@link IllegalStateException} 이 발생해 401 응답으로
+     * 누출되는 결함이 있었다. 진입 직전 ThreadLocal 의 이전 tenantId 를 백업하고 finally 에서
+     * 백업 값을 복원하는 save/restore 패턴으로 교체한다.
      *
      * @param tenantId 콜백 내에서 사용할 테넌트 ID (null이면 설정 생략)
      * @param action 실행할 작업
@@ -1299,6 +1314,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         template.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         try {
             template.executeWithoutResult(status -> {
+                String previousTenantId = TenantContextHolder.peekTenantId();
                 if (tenantId != null && !tenantId.isEmpty()) {
                     TenantContextHolder.setTenantId(tenantId);
                 }
@@ -1310,7 +1326,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     status.setRollbackOnly();
                     throw ex;
                 } finally {
-                    TenantContextHolder.clear();
+                    TenantContextHolder.setTenantIdOrClear(previousTenantId);
                 }
             });
         } catch (RuntimeException e) {
@@ -1511,8 +1527,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     public ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
             String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId) {
-        log.info("💳 옵션 B 당일 카드 결제 시작: mappingId={}, method={}, ref={}, amount={}, sameDaySchedule={}",
-                mappingId, paymentMethod, paymentReference, paymentAmount, sameDaySessionScheduleId);
+        return checkoutSameDayCard(mappingId, paymentMethod, paymentReference, paymentAmount,
+                sameDaySessionScheduleId, null);
+    }
+
+    @Override
+    public ConsultantClientMapping checkoutSameDayCard(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount, Long sameDaySessionScheduleId,
+            String requestId) {
+        log.info("💳 옵션 B 당일 카드 결제 시작: mappingId={}, method={}, ref={}, amount={}, sameDaySchedule={}, requestId={}",
+                mappingId, paymentMethod, paymentReference, paymentAmount, sameDaySessionScheduleId, requestId);
 
         if (mappingId == null) {
             throw new IllegalArgumentException("mappingId는 필수입니다.");
@@ -1531,35 +1555,66 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
 
+        // 옵션 B v2.0 합의서 §4·§6 Q11 멱등성 가드 (A-2-a, 2026-05-28).
+        //   매칭 status 가 PENDING_PAYMENT 가 아니면 (이미 ACTIVE/TERMINATED/SESSIONS_EXHAUSTED 등) 즉시 차단.
+        //   기존 IllegalStateException("이미 승인된 결제입니다") 가드와 함께 이중 안전망을 형성한다.
+        ConsultantClientMapping.MappingStatus currentMappingStatus = mapping.getStatus();
+        if (currentMappingStatus != ConsultantClientMapping.MappingStatus.PENDING_PAYMENT) {
+            log.warn("🛡️ 멱등성 가드 발동 (status): mappingId={}, currentStatus={}, requestId={}",
+                    mappingId, currentMappingStatus, requestId);
+            throw new MappingAlreadyProcessedException(
+                    mappingId, requestId,
+                    MappingAlreadyProcessedException.Reason.STATUS_NOT_PENDING_PAYMENT,
+                    AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_PROCESSED);
+        }
+
         ConsultantClientMapping.PaymentStatus currentPaymentStatus = mapping.getPaymentStatus();
         if (currentPaymentStatus == ConsultantClientMapping.PaymentStatus.APPROVED) {
+            // 보호적 fallback: 매칭 status 가 PENDING_PAYMENT 인데 paymentStatus 만 APPROVED 인 데이터 부정합 방어.
             throw new IllegalStateException(
                     "이미 승인된 결제입니다. mappingId=" + mappingId + ", paymentStatus=" + currentPaymentStatus);
         }
 
-        // Step 1: confirmPayment (paymentStatus → CONFIRMED, status → PAYMENT_CONFIRMED).
-        //   내부에서 ERP RECEIVABLE 거래를 runInNewTransaction(REQUIRES_NEW)로 분리.
-        confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
+        // 옵션 B v2.0 합의서 §4·§6 Q11 멱등성 가드 (A-2-b, 2026-05-28).
+        //   X-Request-Id 헤더 (클라이언트 요청 ID) 5분 윈도우 내 재사용 차단.
+        //   reservation 은 REQUIRES_NEW 트랜잭션에서 commit 되어 부모 rollback 에도 보존된다.
+        com.coresolution.consultation.entity.AdminRequestIdempotency idempotencyReservation =
+                adminRequestIdempotencyService.reserve(
+                        tenantId,
+                        requestId,
+                        com.coresolution.consultation.entity.AdminRequestIdempotency.OPERATION_CHECKOUT_SAME_DAY,
+                        mappingId);
 
-        // Step 2: confirmDeposit (paymentStatus → APPROVED, status → DEPOSIT_PENDING + 회기 부여).
-        //   내부에서 finalizeTentativeBookingsAfterDepositPhase4b()가 TENTATIVE 가예약을 BOOKED 전환 + 회기 1회 차감.
-        ConsultantClientMapping afterDeposit = confirmDeposit(mappingId, paymentReference);
+        try {
+            // Step 1: confirmPayment (paymentStatus → CONFIRMED, status → PAYMENT_CONFIRMED).
+            //   내부에서 ERP RECEIVABLE 거래를 runInNewTransaction(REQUIRES_NEW)로 분리.
+            confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
 
-        // Step 3: 회기 차감 결과에 따른 분기.
-        //   단회기 (totalSessions=1): entity useSession 가드가 이미 SESSIONS_EXHAUSTED로 전이 →
-        //     approveMapping 게이트 (DEPOSIT_PENDING 요구)에 어긋나므로 호출하지 않고 그대로 반환.
-        //   n회 패키지 또는 가예약 없음: status가 여전히 DEPOSIT_PENDING → approveMapping으로 ACTIVE 전이.
-        ConsultantClientMapping.MappingStatus statusAfterDeposit = afterDeposit.getStatus();
-        if (statusAfterDeposit == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
-            log.info("✅ 옵션 B 당일 카드 결제 완료 (단회기 소진): mappingId={}, status={}",
-                    mappingId, statusAfterDeposit);
-            return afterDeposit;
+            // Step 2: confirmDeposit (paymentStatus → APPROVED, status → DEPOSIT_PENDING + 회기 부여).
+            //   내부에서 finalizeTentativeBookingsAfterDepositPhase4b()가 TENTATIVE 가예약을 BOOKED 전환 + 회기 1회 차감.
+            ConsultantClientMapping afterDeposit = confirmDeposit(mappingId, paymentReference);
+
+            // Step 3: 회기 차감 결과에 따른 분기.
+            //   단회기 (totalSessions=1): entity useSession 가드가 이미 SESSIONS_EXHAUSTED로 전이 →
+            //     approveMapping 게이트 (DEPOSIT_PENDING 요구)에 어긋나므로 호출하지 않고 그대로 반환.
+            //   n회 패키지 또는 가예약 없음: status가 여전히 DEPOSIT_PENDING → approveMapping으로 ACTIVE 전이.
+            ConsultantClientMapping.MappingStatus statusAfterDeposit = afterDeposit.getStatus();
+            if (statusAfterDeposit == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+                log.info("✅ 옵션 B 당일 카드 결제 완료 (단회기 소진): mappingId={}, status={}",
+                        mappingId, statusAfterDeposit);
+                adminRequestIdempotencyService.markResult(idempotencyReservation, "SUCCESS");
+                return afterDeposit;
+            }
+
+            ConsultantClientMapping approved = approveMapping(mappingId, "SYSTEM_AUTO_OPTION_B");
+            log.info("✅ 옵션 B 당일 카드 결제 완료: mappingId={}, status={}, remainingSessions={}",
+                    mappingId, approved.getStatus(), approved.getRemainingSessions());
+            adminRequestIdempotencyService.markResult(idempotencyReservation, "SUCCESS");
+            return approved;
+        } catch (RuntimeException ex) {
+            adminRequestIdempotencyService.markResult(idempotencyReservation, "FAILED");
+            throw ex;
         }
-
-        ConsultantClientMapping approved = approveMapping(mappingId, "SYSTEM_AUTO_OPTION_B");
-        log.info("✅ 옵션 B 당일 카드 결제 완료: mappingId={}, status={}, remainingSessions={}",
-                mappingId, approved.getStatus(), approved.getRemainingSessions());
-        return approved;
     }
 
     private void notifyMappingSettlement(ConsultantClientMapping mapping, MappingSettlementScenario scenario) {
@@ -2994,18 +3049,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         if (!activeMappings.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 활성 매칭이 있습니다. 다른 상담사로 이전이 필요합니다.", activeMappings.size());
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CONSULTANT_ACTIVE_MAPPINGS_TRANSFER_FMT,
-                    activeMappings.size()));
+            Map<String, Object> consultantActiveMappingDetails = new LinkedHashMap<>();
+            consultantActiveMappingDetails.put("activeMappingCount", activeMappings.size());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_CONSULTANT_ACTIVE_MAPPINGS,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CONSULTANT_ACTIVE_MAPPINGS_TRANSFER_FMT,
+                            activeMappings.size()),
+                    consultantActiveMappingDetails);
         }
 
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
 
         if (!futureSchedules.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 예정된 스케줄이 있습니다. 다른 상담사로 이전이 필요합니다.", futureSchedules.size());
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CONSULTANT_FUTURE_SCHEDULES_TRANSFER_FMT,
-                    futureSchedules.size()));
+            Map<String, Object> consultantFutureScheduleDetails = new LinkedHashMap<>();
+            consultantFutureScheduleDetails.put("futureScheduleCount", futureSchedules.size());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_CONSULTANT_FUTURE_SCHEDULES,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CONSULTANT_FUTURE_SCHEDULES_TRANSFER_FMT,
+                            futureSchedules.size()),
+                    consultantFutureScheduleDetails);
         }
 
         // Phase 2-β redirect — 직접 setIsActive(false) 대신 lifecycle 단일 진입점 호출.
@@ -3299,13 +3364,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             int totalRemainingSessions = mappingsWithRemainingSessions.stream()
                     .mapToInt(ConsultantClientMapping::getRemainingSessions)
                     .sum();
-            
-            log.warn("⚠️ 내담자에게 {} 개의 활성 매칭에서 총 {} 회기가 남아있습니다.", 
+
+            log.warn("⚠️ 내담자에게 {} 개의 활성 매칭에서 총 {} 회기가 남아있습니다.",
                     mappingsWithRemainingSessions.size(), totalRemainingSessions);
-            
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CLIENT_ACTIVE_MAPPINGS_REMAINING_SESSIONS_FMT,
-                    mappingsWithRemainingSessions.size(), totalRemainingSessions));
+
+            Map<String, Object> remainingSessionsDetails = new LinkedHashMap<>();
+            remainingSessionsDetails.put("activeMappingCount", mappingsWithRemainingSessions.size());
+            remainingSessionsDetails.put("remainingSessions", totalRemainingSessions);
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_REMAINING_SESSIONS,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CLIENT_ACTIVE_MAPPINGS_REMAINING_SESSIONS_FMT,
+                            mappingsWithRemainingSessions.size(), totalRemainingSessions),
+                    remainingSessionsDetails);
         }
         
         String pendingPaymentStatus = getPaymentStatusCode("PENDING");
@@ -3315,9 +3386,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (!pendingPaymentMappings.isEmpty()) {
             log.warn("⚠️ 내담자에게 {} 개의 결제 대기 중인 매칭이 있습니다.", pendingPaymentMappings.size());
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CLIENT_PENDING_PAYMENT_MAPPINGS_FMT,
-                    pendingPaymentMappings.size()));
+            Map<String, Object> pendingPaymentDetails = new LinkedHashMap<>();
+            pendingPaymentDetails.put("pendingMappingCount", pendingPaymentMappings.size());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_PENDING_PAYMENT_MAPPING,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CLIENT_PENDING_PAYMENT_MAPPINGS_FMT,
+                            pendingPaymentMappings.size()),
+                    pendingPaymentDetails);
         }
         
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
@@ -3331,20 +3407,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (!activeSchedules.isEmpty()) {
             log.warn("⚠️ 내담자에게 {} 개의 예정된 스케줄이 있습니다.", activeSchedules.size());
-            
+
             for (Schedule schedule : activeSchedules) {
                 User consultant = schedule.getConsultantId() != null
                     ? userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null)
                     : null;
-                log.warn("📅 예정 스케줄: ID={}, 날짜={}, 시간={}-{}, 상담사={} (활성:{})", 
+                log.warn("📅 예정 스케줄: ID={}, 날짜={}, 시간={}-{}, 상담사={} (활성:{})",
                     schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(),
                     consultant != null ? consultant.getName() : "알 수 없음",
                     consultant != null ? consultant.getIsActive() : "알 수 없음");
             }
-            
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CLIENT_FUTURE_SCHEDULES_FMT,
-                    activeSchedules.size()));
+
+            Map<String, Object> futureScheduleDetails = new LinkedHashMap<>();
+            futureScheduleDetails.put("futureScheduleCount", activeSchedules.size());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_FUTURE_SCHEDULES,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CLIENT_FUTURE_SCHEDULES_FMT,
+                            activeSchedules.size()),
+                    futureScheduleDetails);
         }
         
         List<Schedule> allFutureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
@@ -3551,17 +3632,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public void terminateMapping(Long id, String reason) {
         log.info("🔧 매칭 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
         String tenantId = getTenantId();
-        
+
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
-        
+
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         if (mapping.getStatus().name().equals(terminatedStatus)) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
         }
-        
+
+        // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 결제 대기 매칭은 별도 정리 흐름을 탄다.
+        // 합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
+        // 결제가 발생하지 않은 매칭이므로 환불 (sendRefundToErp / 4채널 통지) 트리거를 우회하고,
+        // 연결된 TENTATIVE_PENDING_PAYMENT 가예약과 paymentStatus 만 정리한다.
+        String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
+        if (mapping.getStatus().name().equals(pendingPaymentStatus)) {
+            terminatePendingPaymentMapping(mapping, tenantId, reason, terminatedStatus);
+            return;
+        }
+
         int refundedSessions = mapping.getRemainingSessions();
         long refundAmount = 0;
         if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
@@ -3623,6 +3714,123 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("✅ 매칭 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, refundedSessions, refundAmount, mapping.getConsultant().getName(), mapping.getClient().getName());
+    }
+
+    /**
+     * R4 — 결제 대기(PENDING_PAYMENT) 매칭의 관리자 취소 흐름.
+     *
+     * <p>합의서: {@code docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md}.
+     * 결제 미발생 상태이므로 환불 거래·4채널 통지·회기 보호 트리거는 모두 우회하고,
+     * 다음만 수행한다.</p>
+     * <ol>
+     *   <li>연결된 {@code TENTATIVE_PENDING_PAYMENT} 가예약 일정 {@code CANCELLED} 전이.</li>
+     *   <li>매칭 상태 {@code TERMINATED} + {@code paymentStatus REJECTED} (PENDING → REJECTED).</li>
+     *   <li>매핑 {@code notes} 에 audit 한 줄 누적 (취소 사유 + 취소된 가예약 수).</li>
+     * </ol>
+     *
+     * <p>회기 보호: PENDING_PAYMENT 매칭의 {@code remainingSessions}/{@code usedSessions} 는 모두 0
+     * 이므로 환불할 회기가 없다. {@code usedSessions = totalSessions} 로 채우지 않고 0 으로 둔다
+     * (정합 가설: 사용된 회기 없음, 환불도 없음).</p>
+     *
+     * @param mapping           대상 매핑 (PENDING_PAYMENT, consultant/client 초기화 필수)
+     * @param tenantId          테넌트 ID
+     * @param reason            관리자 취소 사유 (audit 누적 + 스케줄 notes prefix 뒤 사유)
+     * @param terminatedStatus  공통코드에서 조회한 TERMINATED 상태 코드명 (재조회 회피)
+     */
+    private void terminatePendingPaymentMapping(ConsultantClientMapping mapping, String tenantId,
+            String reason, String terminatedStatus) {
+        Long mappingId = mapping.getId();
+        log.info("🧹 R4 결제 대기 매칭 관리자 취소: MappingID={}, paymentTiming={}, 사유={}",
+                mappingId, mapping.getPaymentTiming(), reason);
+
+        int cancelledTentativeCount = cancelTentativePendingPaymentSchedulesForMapping(
+                mapping, tenantId,
+                AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE);
+
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
+        mapping.setTerminatedAt(LocalDateTime.now());
+
+        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+        String pendingCancelNote = String.format(
+                AdminServiceUserFacingMessages.NOTES_PENDING_PAYMENT_CANCEL_LINE_FMT,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                reason != null ? reason : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST,
+                cancelledTentativeCount);
+        String updatedNotes = currentNotes.isEmpty() ? pendingCancelNote
+                : currentNotes + "\n" + pendingCancelNote;
+        mapping.setNotes(updatedNotes);
+        // 회기 보호 정책: PENDING_PAYMENT 는 결제 전이므로 used/remaining 모두 0 으로 보존.
+        mapping.setRemainingSessions(0);
+        // usedSessions 는 기존 값(통상 0) 유지 — 회기 사용 이력 없음.
+
+        mappingRepository.save(mapping);
+
+        log.info("✅ R4 결제 대기 매칭 취소 완료: MappingID={}, 취소 가예약={}건, 상담사={}, 내담자={}",
+                mappingId,
+                cancelledTentativeCount,
+                mapping.getConsultant() != null ? mapping.getConsultant().getName() : null,
+                mapping.getClient() != null ? mapping.getClient().getName() : null);
+    }
+
+    /**
+     * R4 — 결제 대기 매칭에 연결된 {@code TENTATIVE_PENDING_PAYMENT} 가예약을 일괄 {@code CANCELLED}
+     * 로 전이한다.
+     *
+     * <p>{@link #cancelFutureSchedulesForExhaustedMapping} 가 BOOKED/CONFIRMED 만 다루는 것과
+     * 분리한다 — 환불 자동 취소가 아닌 (결제 자체가 없는) 관리자 취소 경로이므로 사유 코드와
+     * notes prefix 가 다르다. {@code mappingId} 일치 일정만 대상으로 하여 동일 상담사·내담자의
+     * 다른 매칭 가예약은 침범하지 않는다.</p>
+     *
+     * @param mapping  대상 매핑
+     * @param tenantId 테넌트 ID
+     * @param reason   취소 사유 (스케줄 notes 누적용; prefix 뒤에 부착)
+     * @return 취소된 가예약 스케줄 개수 (실패/0건 시 0)
+     */
+    private int cancelTentativePendingPaymentSchedulesForMapping(ConsultantClientMapping mapping,
+            String tenantId, String reason) {
+        if (mapping.getConsultant() == null || mapping.getClient() == null) {
+            log.warn("R4 가예약 자동 취소 skip: consultant/client null MappingID={}", mapping.getId());
+            return 0;
+        }
+        try {
+            List<Schedule> futureSchedules = scheduleRepository
+                    .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                            tenantId,
+                            mapping.getConsultant().getId(),
+                            mapping.getClient().getId(),
+                            LocalDate.now());
+
+            String tentativePending = ScheduleStatus.TENTATIVE_PENDING_PAYMENT.name();
+            String cancelledStatus = getScheduleStatusCode("CANCELLED");
+            Long mappingId = mapping.getId();
+
+            int cancelledCount = 0;
+            for (Schedule schedule : futureSchedules) {
+                if (!schedule.getStatus().name().equals(tentativePending)) {
+                    continue;
+                }
+                // mappingId 가 명시된 가예약만 대상 — 동일 상담사·내담자의 다른 매칭 가예약 보호.
+                if (schedule.getMappingId() == null || !schedule.getMappingId().equals(mappingId)) {
+                    continue;
+                }
+                log.info("🚫 R4 가예약 취소: ScheduleID={}, MappingID={}, 기존상태={}",
+                        schedule.getId(), mappingId, schedule.getStatus());
+                schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
+                String prevNotes = schedule.getNotes() != null ? schedule.getNotes() + "\n" : "";
+                schedule.setNotes(prevNotes
+                        + AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL
+                        + reason);
+                schedule.setUpdatedAt(LocalDateTime.now());
+                scheduleRepository.save(schedule);
+                cancelledCount++;
+            }
+            log.info("📅 R4 가예약 자동 취소: MappingID={}, 취소={}건", mappingId, cancelledCount);
+            return cancelledCount;
+        } catch (Exception e) {
+            log.error("❌ R4 가예약 자동 취소 실패: MappingID={}", mapping.getId(), e);
+            return 0;
+        }
     }
 
     /**

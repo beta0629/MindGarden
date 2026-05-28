@@ -40,7 +40,7 @@ const getTypeFromParams = (searchParams) => {
 };
 
 const UserManagementPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('admin');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { hasRole } = useSession();
@@ -88,7 +88,7 @@ const UserManagementPage = () => {
                     onClick={() => handleTypeChange(TYPE_CONSULTANT)}
                     preventDoubleClick={false}
                   >
-                    {t('admin.labels.consultant')}
+                    {t('labels.consultant')}
                   </MGButton>
                   {canManageClients && (
                     <MGButton
@@ -105,7 +105,7 @@ const UserManagementPage = () => {
                       onClick={() => handleTypeChange(TYPE_CLIENT)}
                       preventDoubleClick={false}
                     >
-                      {t('admin.labels.client')}
+                      {t('labels.client')}
                     </MGButton>
                   )}
                   <MGButton

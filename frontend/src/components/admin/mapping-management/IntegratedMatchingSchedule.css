@@ -685,38 +685,93 @@
   }
 }
 
-/* ===== 옵션 B (예약 우선 매칭) — PENDING_PAYMENT 알림 카드 ===== */
-.integrated-schedule__pending-payment-alert {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mg-spacing-md, 12px);
-  margin: var(--mg-spacing-md, 12px) 0;
-  padding: var(--mg-spacing-md, 12px) var(--mg-spacing-lg, 16px);
-  border: 1px solid var(--ad-b0kla-warning-border, var(--mg-color-warning-border));
-  border-radius: var(--ad-b0kla-radius, 8px);
-  background: var(--ad-b0kla-warning-bg, var(--mg-color-warning-soft));
-  color: var(--ad-b0kla-text-strong, var(--mg-color-text));
+/* ===== 옵션 B (예약 우선 매칭) — 당일결제 가예약 캘린더 이벤트 시각 구분 ===== */
+/*
+ * SAME_DAY_CARD 매핑의 가예약(TENTATIVE_PENDING_PAYMENT) 일정을 일반 일정과 구분.
+ * 결제 완료 후 BOOKED/CONFIRMED 로 전환되면 자동으로 일반 표기로 복귀.
+ *
+ * v2.0 (결함 B fix 보강, 2026-05-28 15:17 KST 사용자 dev DOM 분석 결과 반영):
+ *  - v1.0 cascade 결함: outer <a.fc-event> 에만 클래스 부여, inner
+ *    <div.mg-v2-ad-calendar-event--compact> 가 자체 background/border 로
+ *    outer 점선을 덮어 사용자 화면에 시각이 안 보임.
+ *  - v2.0 fix:
+ *    (a) inner div 까지 descendant selector 로 cascade
+ *    (b) CSS ::before pseudo-element 로 prefix icon (compact 뷰에서 텍스트
+ *        prefix 미노출 회귀 보강 — `renderEventContent` 가 event.title 대신
+ *        clientName 만 표시하므로 데코레이터 `[당일결제] ` 가 시각적으로 가려짐)
+ *    (c) `--mg-color-warning-bg` / `--mg-color-warning-dark` 다크 cascade
+ *        토큰으로 교체 (`--mg-warning-*` 는 다크 모드 분기 미정의)
+ *  - SSOT 토큰만 사용 (D11 r2Protected ≤14 유지, 신규 hex 0).
+ *
+ * 참조: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN_V2.md §5,
+ *      ScheduleCalendarView.js renderEventContent (inner <div> SSOT).
+ */
+.integrated-schedule__event--same-day-pending,
+.fc-event.integrated-schedule__event--same-day-pending {
+  background: var(--mg-color-warning-bg);
+  color: var(--mg-color-warning-dark);
+  border: 2px dashed var(--mg-color-warning-dark);
+  font-style: italic;
 }
 
-.integrated-schedule__pending-payment-alert-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-xs, 4px);
+/* v2.0 cascade 보강: inner <div.mg-v2-ad-calendar-event> 까지 점선·배경 전파 */
+.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event,
+.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--compact,
+.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month {
+  background-color: var(--mg-color-warning-bg);
+  color: var(--mg-color-warning-dark);
+  border: 2px dashed var(--mg-color-warning-dark);
+  border-left-color: var(--mg-color-warning-dark);
+  font-style: italic;
 }
 
-.integrated-schedule__pending-payment-alert-title {
-  font-weight: var(--mg-font-weight-semibold, 600);
-  font-size: var(--mg-font-size-sm, 13px);
+/* v2.0 cascade 보강: inner 자식 텍스트 spans 색상 정합 */
+.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event__client,
+.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event__time {
+  color: var(--mg-color-warning-dark);
 }
 
-.integrated-schedule__pending-payment-alert-count {
+/*
+ * v2.0 prefix icon: compact 뷰에서 데코레이터 `[당일결제] ` 텍스트 prefix 가
+ * `renderEventContent` 가 event.title 대신 clientName 을 표시하면서 가려지는 회귀를
+ * CSS ::before pseudo-element 로 시각 강조.
+ *
+ * a11y: 시계 이모지는 시각 강조용. 스크린리더 안내는 기존 `aria-label`
+ * (`integratedMonthLabel` 가 `statusKorean` 포함) 에 의존하여 cascade 미변경.
+ */
+.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event::before {
+  content: "🕐";
+  margin-right: 4px;
   font-size: var(--mg-font-size-xs, 12px);
-  color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
+  flex-shrink: 0;
 }
 
-.integrated-schedule__pending-payment-alert-actions {
+.integrated-schedule__event--same-day-pending .fc-event-title,
+.fc-event.integrated-schedule__event--same-day-pending .fc-event-title {
+  color: var(--mg-color-warning-dark);
+  font-style: italic;
+}
+
+/* ===== 옵션 B 가예약 캘린더 범례 ===== */
+.integrated-schedule__legend--same-day {
   display: inline-flex;
+  align-items: center;
   gap: var(--mg-spacing-sm, 8px);
+  margin: 0 0 var(--mg-spacing-sm, 8px) 0;
+  padding: var(--mg-spacing-xs, 4px) var(--mg-spacing-sm, 8px);
+  font-size: var(--mg-font-size-xs, 12px);
+  color: var(--mg-color-warning-dark);
+}
+
+.integrated-schedule__legend-swatch--same-day {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px dashed var(--mg-color-warning-dark);
+  background: var(--mg-color-warning-bg);
+  border-radius: var(--mg-radius-xs, 2px);
+}
+
+.integrated-schedule__legend-text {
+  line-height: 1.3;
 }

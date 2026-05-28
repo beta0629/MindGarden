@@ -71,6 +71,7 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import StandardizedApi from '../../utils/standardizedApi';
 import Chart from '../common/Chart';
 import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STEP_CHART_HEX } from '../../constants/charts';
+import { resolveCssColorTokensArray } from '../../utils/resolveCssColorVarToHex';
 import {
   AdminMetricsVisualization,
   ManualMatchingQueue,
@@ -381,6 +382,24 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       border: border || B0KLA_CHART_BAR_FALLBACK.BORDER
     });
   }, [chartPeriod, lineChartPeriod]);
+
+  /**
+   * 단계별 도넛 차트 색상: B0KLA_STEP_CHART_HEX 의 `var(--*)` 항목을 Canvas 호환 색으로 resolve.
+   *
+   * 배경:
+   *   Chart.js 는 backgroundColor 문자열을 HTML5 Canvas 의 ctx.fillStyle 에 그대로 대입한다.
+   *   Canvas 사양상 `var(--*)` 표기는 파싱되지 않아 잘못된 값은 무시되고 슬라이스가 검정으로
+   *   렌더된다 (어드민 대시보드 5단계 도넛 P1 시각 결함).
+   *
+   * 해결:
+   *   B0KLA_STEP_CHART_HEX 는 SSOT 토큰 참조(charts.js)를 그대로 유지하고, Canvas 전달 직전에
+   *   :root 의 computed style 에서 토큰 값을 읽어 해석한다. 다크 모드 cascade 도 동일 헬퍼가
+   *   자동 처리 (`:root[data-theme="dark"]` override 자동 반영).
+   */
+  const stepChartCanvasColors = useMemo(
+    () => resolveCssColorTokensArray(B0KLA_STEP_CHART_HEX),
+    []
+  );
 
   const loadTodayStats = useCallback(async() => {
     const user = propUser || sessionUser;
@@ -1363,8 +1382,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       datasets: [
                         {
                           data: stepValues,
-                          backgroundColor: B0KLA_STEP_CHART_HEX,
-                          borderColor: B0KLA_STEP_CHART_HEX,
+                          backgroundColor: stepChartCanvasColors,
+                          borderColor: stepChartCanvasColors,
                           borderWidth: 2
                         }
                       ]

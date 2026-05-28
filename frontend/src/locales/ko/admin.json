@@ -1844,8 +1844,14 @@
       "nameLabel": "이름:",
       "emailLabel": "이메일:",
       "phoneLabel": "전화번호:",
-      "warning": "⚠️ 이 작업은 되돌릴 수 없습니다.",
-      "description": "다음 내담자의 정보가 영구적으로 삭제됩니다:"
+      "warning": "이 작업은 되돌릴 수 없습니다.",
+      "description": "다음 내담자의 정보가 영구적으로 삭제됩니다:",
+      "blocked": {
+        "pendingPayment": "결제 대기 매칭 {{count}}건이 있어 삭제할 수 없습니다. 매칭관리에서 결제 처리 후 다시 시도해주세요.",
+        "remainingSessions": "남은 회기 {{count}}건이 있어 삭제할 수 없습니다. 회기 소진 또는 환불 처리 후 다시 시도해주세요.",
+        "futureSchedules": "예정 일정 {{count}}건이 있어 삭제할 수 없습니다. 일정 취소 또는 완료 후 다시 시도해주세요.",
+        "fallback": "삭제할 수 없습니다. 관련 데이터를 정리한 후 다시 시도해주세요."
+      }
     },
     "form": {
       "passwordHint": "💡 비밀번호는 정책에 맞는 값으로 자동 채워집니다. 비우면 임시 비밀번호(이메일 안내)로 등록됩니다.",
@@ -2542,6 +2548,21 @@
         "cancelled": "취소"
       }
     },
+    "card": {
+      "actions": {
+        "checkoutSameDayPayment": "당일 결제 + 활성화",
+        "cancel": "매칭 취소"
+      }
+    },
+    "cancel": {
+      "modal": {
+        "title": "매칭을 취소하시겠습니까?",
+        "body": "결제 대기 중인 매칭과 연결된 가예약 일정이 함께 취소됩니다.",
+        "confirmLabel": "매칭 취소",
+        "cancelLabel": "돌아가기",
+        "ariaLabel": "매칭 취소 확인 모달"
+      }
+    },
     "checkout": {
       "sameDay": {
         "title": "당일 카드 결제 + 매칭 활성화",
@@ -2566,6 +2587,9 @@
         "submit": "당일 결제 + 매칭 활성화",
         "cancel": "취소",
         "success": "당일 카드 결제가 완료되고 매칭이 활성화되었습니다.",
+        "alreadyProcessed": {
+          "info": "이미 처리 중입니다. 새 매칭 카드로 확인하세요."
+        },
         "error": {
           "noMapping": "결제 대상 매칭이 선택되지 않았습니다.",
           "missingMethod": "결제 방식을 선택해주세요.",
@@ -2576,14 +2600,12 @@
         }
       }
     },
-    "integrated": {
-      "pendingPayment": {
-        "alert": {
-          "title": "결제 대기 매칭",
-          "count": "결제 대기 매칭이 {{count}}건 있습니다.",
-          "action": "결제 대기 목록 필터",
-          "checkoutSameDay": "당일 결제"
-        }
+    "schedule": {
+      "event": {
+        "sameDayPendingPrefix": "[당일결제] "
+      },
+      "legend": {
+        "sameDayPending": "[당일결제 점선] = 당일 카드 결제 대기 가예약 (결제 후 일반 일정으로 전환)"
       }
     },
     "refund": {
@@ -2694,6 +2716,9 @@
       "toggleAria": "안내 영역 토글",
       "expandAria": "안내 영역 펼치기",
       "collapseAria": "안내 영역 접기"
+    },
+    "tentativeReserved": {
+      "info": "가예약 일정이 등록되었습니다. 방문 시 사이드바 카드의 「당일 결제 + 활성화」 버튼으로 결제하세요."
     }
   },
   "aiProvider": {

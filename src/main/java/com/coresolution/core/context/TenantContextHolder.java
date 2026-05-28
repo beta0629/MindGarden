@@ -35,6 +35,41 @@ public class TenantContextHolder {
     public static String getTenantId() {
         return TenantContext.getTenantId();
     }
+
+    /**
+     * 현재 ThreadLocal 에 저장된 테넌트 ID 를 변경 없이 조회한다.
+     *
+     * <p>옵션 B v2.0 합의서 §4 (테넌트 propagation save/restore 패턴) 에서 도입.
+     * REQUIRES_NEW 트랜잭션 진입 직전 부모 컨텍스트를 백업할 때 사용한다.
+     *
+     * @return 테넌트 UUID (없으면 {@code null})
+     * @see #setTenantIdOrClear(String)
+     * @since 2026-05-28
+     */
+    public static String peekTenantId() {
+        return TenantContext.getTenantId();
+    }
+
+    /**
+     * 백업해 둔 테넌트 ID 를 ThreadLocal 에 복원한다.
+     *
+     * <p>{@code previousTenantId} 가 {@code null} 또는 빈 문자열이면 ThreadLocal 을 비운다.
+     * 비어 있지 않으면 {@link #setTenantId(String)} 와 동일하게 설정한다.
+     *
+     * <p>옵션 B v2.0 합의서 §4 (테넌트 propagation save/restore 패턴) 에서 도입.
+     *
+     * @param previousTenantId 복원할 테넌트 UUID (없으면 {@code null})
+     * @since 2026-05-28
+     */
+    public static void setTenantIdOrClear(String previousTenantId) {
+        if (previousTenantId != null && !previousTenantId.isEmpty()) {
+            TenantContext.setTenantId(previousTenantId);
+            log.debug("Tenant context restored: {}", previousTenantId);
+        } else {
+            TenantContext.clear();
+            log.debug("Tenant context restored to empty (previous was null)");
+        }
+    }
     
     /**
      * 현재 요청의 지점 ID 조회

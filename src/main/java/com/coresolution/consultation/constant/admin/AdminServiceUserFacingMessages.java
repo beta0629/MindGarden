@@ -70,6 +70,24 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_CONSULTANT_FUTURE_SCHEDULES_TRANSFER_FMT =
             "상담사에게 %d 개의 예정된 스케줄이 있습니다. 먼저 다른 상담사로 이전 처리해주세요.";
 
+    // --- 어드민 삭제 가드 (AdminDeleteBlockedException) 사유 코드 ---
+    // 운영 대시보드·프론트엔드가 본 코드로 분기·국제화를 결정한다. 코드 추가 시 본 목록에도 등록할 것.
+
+    /** 내담자: 결제 대기(PENDING_PAYMENT) 매칭이 존재해 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_PENDING_PAYMENT_MAPPING = "PENDING_PAYMENT_MAPPING";
+
+    /** 내담자: 잔여 회기(remainingSessions > 0) 가 있어 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_REMAINING_SESSIONS = "REMAINING_SESSIONS";
+
+    /** 내담자: 예정 스케줄(BOOKED/CONFIRMED) 이 존재해 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_FUTURE_SCHEDULES = "FUTURE_SCHEDULES";
+
+    /** 상담사: 활성 매칭이 존재해 이관 없이 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_CONSULTANT_ACTIVE_MAPPINGS = "CONSULTANT_ACTIVE_MAPPINGS";
+
+    /** 상담사: 예정 스케줄이 존재해 이관 없이 삭제 차단. */
+    public static final String DELETE_BLOCKED_CODE_CONSULTANT_FUTURE_SCHEDULES = "CONSULTANT_FUTURE_SCHEDULES";
+
     public static final String MSG_DELETE_TARGET_NOT_CONSULTANT = "삭제 대상이 상담사가 아닙니다.";
 
     public static final String MSG_TRANSFER_TARGET_NOT_CONSULTANT = "이전 대상이 상담사가 아닙니다.";
@@ -94,6 +112,16 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_NOT_CLIENT_USER = "내담자가 아닌 사용자입니다.";
 
     public static final String MSG_MAPPING_ALREADY_TERMINATED = "이미 종료된 매칭입니다.";
+
+    /**
+     * 옵션 B v2.0 멱등성 가드 (Q6 Carbon Copy, 2026-05-28).
+     *
+     * <p>{@code AdminServiceImpl.checkoutSameDayCard} 진입 시 매칭 status 가
+     * {@code PENDING_PAYMENT} 가 아니거나 클라이언트 요청 ID 가 5분 이내 재사용된 경우
+     * 사용자에게 노출되는 토스트/응답 메시지.</p>
+     */
+    public static final String MSG_MAPPING_ALREADY_PROCESSED =
+            "이미 처리 중입니다. 새 매칭 카드로 확인하세요.";
 
     public static final String MSG_REFUND_SESSIONS_AT_LEAST_ONE = "환불 회기수는 1 이상이어야 합니다.";
 
@@ -285,6 +313,25 @@ public final class AdminServiceUserFacingMessages {
 
     /** 회기관리 합의서 v2 Q3=3A — 환불 자동 취소 사유 코드(스케줄/매핑 audit 공통). */
     public static final String REFUND_AUTO_CANCEL_REASON_CODE = "REFUND_AUTO_CANCEL";
+
+    /**
+     * R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 관리자 취소로 TENTATIVE_PENDING_PAYMENT 가예약을
+     * 자동 취소할 때 스케줄 notes 에 누적할 접두.
+     *
+     * <p>합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
+     * REFUND_AUTO_CANCEL 과 구분되도록 별도 prefix/코드를 사용한다(환불 거래·회기 보호 트리거 없음).</p>
+     */
+    public static final String SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL =
+            "[PENDING_PAYMENT_CANCEL 결제 대기 매칭 취소로 인한 가예약 자동 취소] ";
+
+    /** R4 — 결제 대기(PENDING_PAYMENT) 매칭 관리자 취소 시 audit 사유 코드. */
+    public static final String PENDING_PAYMENT_CANCEL_REASON_CODE = "PENDING_PAYMENT_CANCEL";
+
+    /**
+     * R4 — 결제 대기 매칭 관리자 취소 매핑 notes 한 줄 (인자: 일시, 사유, 취소된 가예약 수).
+     */
+    public static final String NOTES_PENDING_PAYMENT_CANCEL_LINE_FMT =
+            "[%s PENDING_PAYMENT 매칭 취소] %s (취소 가예약 %d건)";
 
     /**
      * Phase 0 (Q3=3A·보조=C) 4채널 의무 알림 제목 (인앱·이메일·푸시·알림톡 공통).

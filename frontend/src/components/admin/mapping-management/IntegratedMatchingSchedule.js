@@ -20,6 +20,7 @@ import MappingCreationModal from '../MappingCreationModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
 import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
+import MappingCancelModal from './molecules/MappingCancelModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
@@ -36,6 +37,7 @@ import {
   VIEW_FILTER_ALL,
   VIEW_FILTER_NEW_LABEL,
   STATUS_FILTER_OPTIONS,
+  PAYMENT_TIMING_SAME_DAY_CARD,
   canScheduleForMapping,
   isOngoingMapping,
   getMappingDate
@@ -47,7 +49,8 @@ import {
 import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
-import { computePendingPaymentAlert } from './utils/pendingPaymentAlertUtils';
+import { resolveMappingCreatedFollowUp } from './utils/sameDayCardCheckoutUtils';
+import { buildMappingPaymentTimingLookup } from '../../schedule/utils/sameDayPendingEventDecorator';
 
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
@@ -97,6 +100,9 @@ const IntegratedMatchingSchedule = () => {
   // 옵션 B (예약 우선 매칭) — 당일 카드 결제 모달 상태
   const [checkoutSameDayMapping, setCheckoutSameDayMapping] = useState(null);
   const [approveProcessing, setApproveProcessing] = useState(false);
+  // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 관리자 취소 확인 모달 대상 + 처리 중 플래그.
+  const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
+  const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
   const sidebarListRef = useRef(null);
 
   // 좌측 사이드바 collapse 상태: localStorage 선호값이 있으면 우선, 없으면 화면 폭 기반 초기값
@@ -227,13 +233,20 @@ const IntegratedMatchingSchedule = () => {
       }
       return;
     }
+    // 옵션 B: 일정 저장 직후 CheckoutSameDayModal 자동 진입을 위해
+    // 매핑 ID·결제 의도·패키지 정보를 prefill 에 함께 보존한다.
     setPreFilledMapping({
+      mappingId: mappingPayload.mappingId ?? null,
       consultantId: mappingPayload.consultantId,
       clientId: mappingPayload.clientId,
       consultantName: mappingPayload.consultantName || '상담사',
       clientName: mappingPayload.clientName || '내담자',
       mappingStatus: mappingPayload.status,
-      remainingSessions: mappingPayload.remainingSessions
+      remainingSessions: mappingPayload.remainingSessions,
+      paymentTiming: mappingPayload.paymentTiming ?? null,
+      packageName: mappingPayload.packageName ?? null,
+      packagePrice: mappingPayload.packagePrice ?? null,
+      totalSessions: mappingPayload.totalSessions ?? null
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
     setScheduleModalOpen(true);
@@ -242,36 +255,56 @@ const IntegratedMatchingSchedule = () => {
   /** 사이드바 카드 «일정 등록» — 캘린더 드래그 대신 버튼으로만 모달 진입 */
   const handleOpenScheduleFromCard = (mapping) => {
     const mappingPayload = {
+      mappingId: mapping.id,
       consultantId: mapping.consultantId,
       clientId: mapping.clientId,
       consultantName: mapping.consultantName,
       clientName: mapping.clientName,
       status: mapping.status,
-      remainingSessions: mapping.remainingSessions
+      remainingSessions: mapping.remainingSessions,
+      paymentTiming: mapping.paymentTiming ?? null,
+      packageName: mapping.packageName ?? null,
+      packagePrice: mapping.packagePrice ?? null,
+      totalSessions: mapping.totalSessions ?? null
     };
     handleDropFromExternal(new Date(), mappingPayload);
+  };
+
+  /**
+   * 옵션 B SAME_DAY_CARD 사이드바 카드 액션 — "당일 결제 + 활성화" 버튼.
+   * P0 핫픽스 2026-05-28 가드와 동일하게 매핑 정보 누락 시 모달 진입을 차단한다.
+   */
+  const handleOpenCheckoutSameDayFromCard = (mapping) => {
+    if (!mapping?.consultantId || !mapping?.packageName) {
+      notificationManager.warning(
+        '이 매칭은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 매칭을 다시 생성해 주세요.'
+      );
+      return;
+    }
+    setCheckoutSameDayMapping({
+      id: mapping.id,
+      consultantId: mapping.consultantId,
+      consultantName: mapping.consultantName,
+      clientId: mapping.clientId,
+      clientName: mapping.clientName,
+      packageName: mapping.packageName,
+      packagePrice: mapping.packagePrice ?? null,
+      paymentAmount: mapping.paymentAmount ?? null,
+      totalSessions: mapping.totalSessions ?? null
+    });
   };
 
   const handleMappingCreated = (result) => {
     setCreateMappingModalOpen(false);
     loadMappings();
-    // 옵션 B 사후 카드 분기: 생성된 PENDING_PAYMENT 매핑을 받아 CheckoutSameDayModal 자동 오픈.
-    // P0 핫픽스 2026-05-28: 매핑 정보가 누락된 경우 모달 자동 진입을 차단해 NPE/표시 오류를 막는다.
-    if (result && result.paymentTiming === 'SAME_DAY_CARD' && result.mappingId) {
-      if (!result.consultantId || !result.packageName) {
-        notificationManager.error('매칭 정보가 누락되어 결제 모달을 열 수 없습니다.');
-        return;
-      }
-      setCheckoutSameDayMapping({
-        id: result.mappingId,
-        consultantId: result.consultantId,
-        consultantName: result.consultantName,
-        clientId: result.clientId,
-        clientName: result.clientName,
-        packageName: result.packageName,
-        packagePrice: result.packagePrice ?? null,
-        totalSessions: result.totalSessions ?? null
-      });
+    // P0 핫픽스 2026-05-28 (사용자 보고): 옵션 B SAME_DAY_CARD 신규 매칭 생성 직후 CheckoutSameDayModal 자동 오픈 제거.
+    // 사용자 의도: 매칭 생성 → 모달 닫힘 → 사이드바에서 직접 트리거(드래그 → 일정 생성 모달 또는 "당일 결제 + 활성화" 버튼).
+    // PR #50 의 의도된 자동 진입(드래그 → 일정 생성 → handleScheduleCreated → CheckoutSameDayModal) 은 유지된다.
+    const { shouldShowSameDayCardGuidance } = resolveMappingCreatedFollowUp(result);
+    if (shouldShowSameDayCardGuidance) {
+      notificationManager.info(
+        '매칭이 생성되었습니다. 사이드바에서 일정을 예약하거나 「당일 결제 + 활성화」를 진행해 주세요.'
+      );
     }
   };
 
@@ -307,6 +340,59 @@ const IntegratedMatchingSchedule = () => {
     }
   };
 
+  /**
+   * R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 사이드바 카드 "매칭 취소" 보조 액션.
+   * 합의서/시안: docs/project-management/2026-05-28/R4_*.md.
+   * 1) 카드에서 클릭 → UnifiedModal 확인 모달 오픈 (오클릭 방지).
+   * 2) 모달 confirm → POST /admin/mappings/{id}/terminate (백엔드 PENDING_PAYMENT 분기 처리).
+   * 3) 성공 시 카드 목록 자동 갱신 → TERMINATED 매칭 사이드바에서 사라짐.
+   */
+  const handleRequestCancelPendingMapping = useCallback((mapping) => {
+    if (!mapping?.id) {
+      return;
+    }
+    if (mapping.status !== 'PENDING_PAYMENT') {
+      // 가드: PENDING_PAYMENT 외 상태는 UI 노출되지 않으나 방어적으로 차단.
+      notificationManager.warning('결제 대기 상태의 매칭만 취소할 수 있습니다.');
+      return;
+    }
+    setCancelTargetMapping({
+      id: mapping.id,
+      consultantName: mapping.consultantName,
+      clientName: mapping.clientName,
+      paymentTiming: mapping.paymentTiming ?? null
+    });
+  }, []);
+
+  const handleCancelModalClose = useCallback(() => {
+    if (cancelPendingProcessing) {
+      return;
+    }
+    setCancelTargetMapping(null);
+  }, [cancelPendingProcessing]);
+
+  const handleConfirmCancelPendingMapping = useCallback(async() => {
+    if (!cancelTargetMapping?.id || cancelPendingProcessing) {
+      return;
+    }
+    const mappingId = cancelTargetMapping.id;
+    setCancelPendingProcessing(true);
+    try {
+      await StandardizedApi.post(
+        API_ENDPOINTS.ADMIN.MAPPINGS.TERMINATE(mappingId),
+        { reason: '관리자 취소 — 디러티 PENDING_PAYMENT 정리' }
+      );
+      notificationManager.success('매칭이 취소되었습니다.');
+      setCancelTargetMapping(null);
+      loadMappings();
+    } catch (error) {
+      console.error('매칭 취소 실패:', error);
+      notificationManager.error(error?.message || '매칭 취소에 실패했습니다.');
+    } finally {
+      setCancelPendingProcessing(false);
+    }
+  }, [cancelTargetMapping, cancelPendingProcessing, loadMappings]);
+
   const handleScheduleModalClose = () => {
     setScheduleModalOpen(false);
     setPreFilledMapping(null);
@@ -316,6 +402,15 @@ const IntegratedMatchingSchedule = () => {
     setRefetchTrigger((t) => t + 1);
     loadMappings();
     setScheduleModalOpen(false);
+    // 옵션 B v2.0 Path 3 UX 핫픽스 (2026-05-28 사용자 결재 14:48 KST):
+    //  - 사용자 의도(14:27 KST): "지금 예약만 하는건데 미리 카드로 할건지 현금으로 할건지 선택이 되어야 하나?"
+    //  - 일정 등록 직후 CheckoutSameDayModal 자동 진입을 제거하고, 사이드바 카드의
+    //    "당일 결제 + 활성화" 버튼을 통한 별도 시점 결제로 일원화한다.
+    //  - 추가 진입 경로 없음 (Q3 default 권장안 — 사이드바 단일 경로).
+    //  - 합의서: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN_V2.md §2·§3
+    if (preFilledMapping?.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD) {
+      notificationManager.info(t('admin:integratedSchedule.tentativeReserved.info'));
+    }
     setPreFilledMapping(null);
   };
 
@@ -347,61 +442,12 @@ const IntegratedMatchingSchedule = () => {
             titleId="integrated-schedule-page-title"
           />
 
-          {/* 옵션 B (예약 우선 매칭) — PENDING_PAYMENT 알림 카드 */}
-          {(() => {
-            const { visible, count: pendingPaymentCount, firstPending } =
-              computePendingPaymentAlert(mappings);
-            if (!visible) {
-              return null;
-            }
-            return (
-              <div
-                className="integrated-schedule__pending-payment-alert"
-                role="status"
-                aria-live="polite"
-                data-testid="integrated-schedule-pending-payment-alert"
-              >
-                <div className="integrated-schedule__pending-payment-alert-text">
-                  <strong className="integrated-schedule__pending-payment-alert-title">
-                    {t('admin:mapping.integrated.pendingPayment.alert.title')}
-                  </strong>
-                  <span className="integrated-schedule__pending-payment-alert-count">
-                    {t('admin:mapping.integrated.pendingPayment.alert.count', { count: pendingPaymentCount })}
-                  </span>
-                </div>
-                <div className="integrated-schedule__pending-payment-alert-actions">
-                  <MGButton
-                    type="button"
-                    variant="secondary"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
-                    onClick={() => setStatusFilter('PENDING_PAYMENT')}
-                    preventDoubleClick={false}
-                  >
-                    {t('admin:mapping.integrated.pendingPayment.alert.action')}
-                  </MGButton>
-                  <MGButton
-                    type="button"
-                    variant="primary"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm' })}
-                    onClick={() => {
-                      // P0 핫픽스 2026-05-28: PENDING_PAYMENT 매핑이라도
-                      // consultantId/packageName 이 누락되면 결제 모달 진입을 차단.
-                      if (!firstPending?.consultantId || !firstPending?.packageName) {
-                        notificationManager.warning('이 매칭은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 매칭을 다시 생성해 주세요.');
-                        return;
-                      }
-                      setCheckoutSameDayMapping(firstPending);
-                    }}
-                    preventDoubleClick={false}
-                  >
-                    {t('admin:mapping.integrated.pendingPayment.alert.checkoutSameDay')}
-                  </MGButton>
-                </div>
-              </div>
-            );
-          })()}
+          {/*
+            옵션 B (예약 우선 매칭) PENDING_PAYMENT 알림 카드는 제거됨 (2026-05-28).
+            - 카운트: 사이드바 statusFilter (`getStatusCount('PENDING_PAYMENT')`) 와 중복.
+            - 필터 단축키: 사이드바 statusFilter 드롭다운으로 동일 액션 가능.
+            - 빠른 결제 진입: 사이드바 카드별 "당일 결제 + 활성화" 버튼이 동일 기능 제공.
+          */}
 
           <div className="integrated-schedule__content">
         <aside
@@ -544,6 +590,8 @@ const IntegratedMatchingSchedule = () => {
                 }
                 return filteredMappings.map((mapping) => {
                   const scheduleable = canScheduleForMapping(mapping);
+                  // 옵션 B: paymentTiming·packageName·packagePrice·totalSessions 까지 함께 보존하여
+                  // 드래그 → ScheduleModal → CheckoutSameDayModal 자동 진입 흐름에서 prefill 로 사용.
                   const eventData = {
                     id: `mapping-${mapping.id}`,
                     title: mapping.clientName || '내담자',
@@ -554,7 +602,11 @@ const IntegratedMatchingSchedule = () => {
                       consultantName: mapping.consultantName || '상담사',
                       clientName: mapping.clientName || '내담자',
                       status: mapping.status,
-                      remainingSessions: mapping.remainingSessions
+                      remainingSessions: mapping.remainingSessions,
+                      paymentTiming: mapping.paymentTiming ?? null,
+                      packageName: mapping.packageName ?? null,
+                      packagePrice: mapping.packagePrice ?? null,
+                      totalSessions: mapping.totalSessions ?? null
                     }
                   };
                   return (
@@ -575,7 +627,13 @@ const IntegratedMatchingSchedule = () => {
                         onPayment={setPaymentModalMapping}
                         onDeposit={setDepositModalMapping}
                         onApprove={handleApprove}
+                        onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
+                        onCancelPendingMapping={handleRequestCancelPendingMapping}
                         approveProcessing={approveProcessing}
+                        cancelPendingProcessing={
+                          cancelPendingProcessing
+                          && cancelTargetMapping?.id === mapping.id
+                        }
                       />
                     </li>
                   );
@@ -591,6 +649,19 @@ const IntegratedMatchingSchedule = () => {
           data-layout-context="integrated-schedule"
           data-calendar-skin="integrated"
         >
+          {/* 옵션 B 가예약 시각 구분 범례 — 점선 + warning 토큰 = SAME_DAY_CARD 결제 대기 가예약 */}
+          <p
+            className="integrated-schedule__legend integrated-schedule__legend--same-day"
+            role="note"
+          >
+            <span
+              className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
+              aria-hidden="true"
+            />
+            <span className="integrated-schedule__legend-text">
+              {t('admin:mapping.schedule.legend.sameDayPending')}
+            </span>
+          </p>
           <div className="integrated-schedule__calendar-content">
             <UnifiedScheduleComponent
               userRole={calendarUserRole}
@@ -600,6 +671,7 @@ const IntegratedMatchingSchedule = () => {
               hideScheduleTitle
               integratedMonthEventLayout
               calendarSkin="integrated"
+              mappingPaymentTimingByMappingId={buildMappingPaymentTimingLookup(mappings)}
             />
           </div>
         </main>
@@ -649,6 +721,14 @@ const IntegratedMatchingSchedule = () => {
           onClose={() => setCheckoutSameDayMapping(null)}
           mapping={checkoutSameDayMapping}
           onCheckoutCompleted={handleCheckoutSameDayCompleted}
+        />
+      )}
+      {cancelTargetMapping && (
+        <MappingCancelModal
+          isOpen={!!cancelTargetMapping}
+          onClose={handleCancelModalClose}
+          onConfirm={handleConfirmCancelPendingMapping}
+          processing={cancelPendingProcessing}
         />
       )}
     </div>

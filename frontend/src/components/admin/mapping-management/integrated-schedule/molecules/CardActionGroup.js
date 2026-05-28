@@ -18,7 +18,10 @@ const CardActionGroup = ({
   onPayment,
   onDeposit,
   onApprove,
-  approveProcessing
+  onCheckoutSameDay,
+  onCancelPendingMapping,
+  approveProcessing,
+  cancelPendingProcessing
 }) => (
   <CommonCardActionGroup>
     {onScheduleFromCard && (
@@ -46,6 +49,9 @@ const CardActionGroup = ({
       onPayment={onPayment}
       onDeposit={onDeposit}
       onApprove={onApprove}
+      onCheckoutSameDay={onCheckoutSameDay}
+      onCancelPendingMapping={onCancelPendingMapping}
+      cancelPendingProcessing={cancelPendingProcessing}
       disabled={approveProcessing}
       loading={approveProcessing}
     />
@@ -56,12 +62,16 @@ CardActionGroup.propTypes = {
   mapping: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     status: PropTypes.string,
+    paymentTiming: PropTypes.string,
     clientName: PropTypes.string
   }),
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,
-  approveProcessing: PropTypes.bool
+  onCheckoutSameDay: PropTypes.func,
+  onCancelPendingMapping: PropTypes.func,
+  approveProcessing: PropTypes.bool,
+  cancelPendingProcessing: PropTypes.bool
 };
 
 CardActionGroup.defaultProps = {
@@ -70,7 +80,10 @@ CardActionGroup.defaultProps = {
   onPayment: null,
   onDeposit: null,
   onApprove: null,
-  approveProcessing: false
+  onCheckoutSameDay: null,
+  onCancelPendingMapping: null,
+  approveProcessing: false,
+  cancelPendingProcessing: false
 };
 
 export default CardActionGroup;

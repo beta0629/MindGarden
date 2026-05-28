@@ -69,6 +69,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -1055,6 +1056,8 @@ public class AdminController extends BaseApiController {
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());
+                // 옵션 B: 사이드바 카드 액션 분기/드래그 허용 결정에 사용 (ADVANCE / SAME_DAY_CARD / null=레거시).
+                data.put("paymentTiming", mapping.getPaymentTiming());
 
                 Long cid = (Long) data.get("consultantId");
                 Long clid = (Long) data.get("clientId");
@@ -1385,6 +1388,8 @@ public class AdminController extends BaseApiController {
         mappingData.put("packagePrice", mapping.getPackagePrice());
         mappingData.put("assignedAt", mapping.getAssignedAt());
         mappingData.put("createdAt", mapping.getCreatedAt());
+        // 옵션 B: 단건 조회에도 paymentTiming 포함 (ADVANCE / SAME_DAY_CARD / null=레거시).
+        mappingData.put("paymentTiming", mapping.getPaymentTiming());
 
         if (mapping.getConsultant() != null) {
             Map<String, Object> consultantData = new HashMap<>();
@@ -1898,8 +1903,15 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> checkoutSameDay(
             @PathVariable Long mappingId,
             @RequestBody @Valid CheckoutSameDayRequest request,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestIdHeader,
             HttpSession session) {
-        log.info("💳 옵션 B 당일 카드 결제 요청: mappingId={}", mappingId);
+        // 옵션 B v2.0 합의서 §4·§6 Q11 (2026-05-28): X-Request-Id 헤더 누락 시 UUID 자동 생성.
+        //   서버 측에서 멱등성 키를 보장하므로 클라이언트 누락 시에도 단일 요청은 reservation 으로 보호된다.
+        String resolvedRequestId = (requestIdHeader != null && !requestIdHeader.isBlank())
+                ? requestIdHeader.trim()
+                : java.util.UUID.randomUUID().toString();
+        log.info("💳 옵션 B 당일 카드 결제 요청: mappingId={}, requestId={}, headerProvided={}",
+                mappingId, resolvedRequestId, (requestIdHeader != null && !requestIdHeader.isBlank()));
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "MAPPING_MANAGE", dynamicPermissionService);
@@ -1912,7 +1924,8 @@ public class AdminController extends BaseApiController {
                 request.getPaymentMethod(),
                 request.getPaymentReference(),
                 request.getPaymentAmount(),
-                request.getSameDaySessionScheduleId());
+                request.getSameDaySessionScheduleId(),
+                resolvedRequestId);
 
         ConsultantClientMappingResponse response =
                 ConsultantClientMappingResponse.fromEntity(mapping);

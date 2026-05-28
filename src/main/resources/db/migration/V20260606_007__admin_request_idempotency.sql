@@ -1,3 +1,14 @@
+-- ===========================================================================
+-- V20260606_007__admin_request_idempotency.sql
+-- ---------------------------------------------------------------------------
+-- ⚠️ 원본 버전: V20260528_007 (옵션 B v2.0 Path 1 P0 핫픽스)
+-- ⚠️ rename 사유: dev/운영 MySQL flyway_schema_history MAX 버전이 이미
+--                20260606.006 이라 20260528.007 은 out-of-order silently skip.
+--                Flyway 9.22.3 + Spring Boot 3.x out-of-order 기본 동작.
+-- ⚠️ 동일 사이트 선례: V20260510_005, V20260519_001, V20260526_001~003.
+-- ⚠️ SQL 내용은 원본과 100% 동일 — out-of-order 회피 timestamp 리네이밍만.
+-- ⚠️ 진단 보고서: docs/project-management/2026-05-28/OPTION_B_V2_DEV_CHECKOUT_FAILURE_DEBUG.md §3·§4 옵션 B.
+-- ---------------------------------------------------------------------------
 -- =============================================================================
 -- Admin Request Idempotency — 옵션 B v2.0 멱등성 가드 SSOT 테이블
 -- 합의서: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN_V2.md §4·§6 Q11

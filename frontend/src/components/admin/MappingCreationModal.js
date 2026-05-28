@@ -38,10 +38,14 @@ const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-
  * @since 2024-12-19
  * @updated 2025-02-22 - 전면 재구성 (플로우형)
  */
+// P1 핫픽스 2026-05-28 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §H4):
+// PR #47 step swap (step 2=내담자 / step 3=패키지) 의도가 본문 콘텐츠와 canProceed 로직에는
+// 반영됐으나 STEPS_CONFIG 라벨/아이콘은 swap 누락 → 스테퍼 라벨과 본문 step 콘텐츠가 불일치.
+// key=2 ↔ key=3 라벨·아이콘을 swap 하여 스테퍼 표기와 본문 콘텐츠를 정합.
 const STEPS_CONFIG = [
   { key: 1, labelKey: 'admin:mappingCreation.step.consultant', labelFallback: '상담사', icon: User },
-  { key: 2, labelKey: 'admin:mappingCreation.step.package', labelFallback: '패키지', icon: Package },
-  { key: 3, labelKey: 'admin:mappingCreation.step.client', labelFallback: '내담자', icon: UserCircle },
+  { key: 2, labelKey: 'admin:mappingCreation.step.client', labelFallback: '내담자', icon: UserCircle },
+  { key: 3, labelKey: 'admin:mappingCreation.step.package', labelFallback: '패키지', icon: Package },
   { key: 4, labelKey: 'admin:mappingCreation.step.paymentLabel', labelFallback: '결제', icon: CreditCard },
   { key: 5, labelKey: 'admin:mappingCreation.step.complete', labelFallback: '완료', icon: CheckCircle }
 ];

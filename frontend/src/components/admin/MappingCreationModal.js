@@ -315,7 +315,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         paymentAmount: paymentInfo.packagePrice,
         paymentMethod: paymentInfo.paymentMethod,
         paymentReference: paymentInfo.paymentReference,
-        mappingType: 'NEW'
+        mappingType: 'NEW',
+        // P0 핫픽스 2026-05-28 (사용자 보고 + PAYMENT_TIMING_NULL_DEBUG.md H1):
+        // 옵션 B 결제 방식 의도(ADVANCE / SAME_DAY_CARD)를 백엔드에 전달.
+        // 백엔드 ConsultantClientMappingCreateRequest.paymentTiming 으로 바인딩되어
+        // consultant_client_mappings.payment_timing 컬럼에 저장된다.
+        // 이전: 필드 누락 → Jackson null 바인딩 → DB NULL → 사이드바 SAME_DAY_CARD 분기 깨짐.
+        paymentTiming: paymentInfo.paymentTiming
       };
       const response = await apiPost(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, mappingData);
       if (paymentInfo.packageName) {

@@ -296,6 +296,71 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(postedBody).toHaveProperty('packageName', '표준 패키지');
   });
 
+  // P0 후속 회귀 가드 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §G-3):
+  // 신규 mount → step 3 까지 진입한 직후 (apiPost 호출 전) "다음" 버튼은 반드시 disabled.
+  // useState 초기값이 다시 DEFAULT_MAPPING_CONFIG (truthy default) 로 회귀하면 본 테스트가 실패한다.
+  test('useState 초기값 회귀 가드 — 신규 mount 직후 step 3 진입 시 "다음" 버튼 disabled', async () => {
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지')).toBeInTheDocument());
+    // 패키지 클릭 전 시점에서 apiPost 미호출 + "다음" disabled 동시 단언 (DEFAULT_MAPPING_CONFIG 강제 적용 방지).
+    expect(apiPost).not.toHaveBeenCalled();
+    expect(screen.getByText('common:action.next')).toBeDisabled();
+  });
+
+  // P1 후속 가드 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §F-1):
+  // 패키지 카드 클릭 → paymentInfo.{packageName, totalSessions, packagePrice} 갱신 →
+  // canProceed(step=3) true → "다음" 버튼 enabled 로 전환되어야 함.
+  test('step 3 에서 패키지 클릭 후 "다음" 버튼 enabled', async () => {
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지')).toBeInTheDocument());
+    expect(screen.getByText('common:action.next')).toBeDisabled();
+    fireEvent.click(screen.getByText('표준 패키지'));
+    await waitFor(() => expect(screen.getByText('common:action.next')).not.toBeDisabled());
+  });
+
+  // P1 후속 가드 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §F-3 / §H4):
+  // STEPS_CONFIG key=2 라벨 = '내담자', key=3 라벨 = '패키지' 가 본문 step 콘텐츠와 정합.
+  // PR #47 step swap 의도와 일치하도록 라벨/아이콘이 swap 되었음을 보장.
+  test('STEPS_CONFIG 라벨 ↔ 본문 step 콘텐츠 정합 (key=2 내담자, key=3 패키지)', async () => {
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    // step 1 시점: 스테퍼에 key=2 라벨('내담자'), key=3 라벨('패키지') 모두 존재.
+    expect(screen.getAllByText('내담자').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('패키지').length).toBeGreaterThan(0);
+    // step 2 진입 → 본문 selectClient h3 노출 (스테퍼 '내담자' 와 정합).
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.step.selectClient')).toBeInTheDocument());
+    // step 3 진입 → 본문 selectPackage h3 노출 (스테퍼 '패키지' 와 정합).
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.step.selectPackage')).toBeInTheDocument());
+  });
+
   test('SAME_DAY_CARD 선택 → apiPost mappingData 에 paymentTiming: "SAME_DAY_CARD" + remainingSessions: 0', async () => {
     renderModal();
 

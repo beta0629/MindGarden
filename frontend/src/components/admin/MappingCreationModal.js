@@ -151,27 +151,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }
   }, []);
 
+  // P1 핫픽스 2026-05-28 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §F-4):
+  // PR #47 commit 메시지가 "default 자동 선택 제거" 의도를 명시했음에도
+  // localStorage.lastUsedPackage 자동 적용 useEffect 블록이 누락 제거되어
+  // 두 번째 진입 시 default 패키지 재발 (C8 케이스) → 본 커밋으로 정리.
+  // lastUsedPaymentMethod / paymentReference 자동 채움은 결제 step 의 편의 기능이므로 유지.
   useEffect(() => {
     if (isOpen) {
-      const lastPkg = localStorage.getItem('lastUsedPackage');
       const lastMethod = localStorage.getItem('lastUsedPaymentMethod');
-      if (lastPkg) {
-        try {
-          const saved = JSON.parse(lastPkg);
-          const found = packageOptions.find(p => p.label === saved.packageName || p.value === saved.packageName);
-          if (found) {
-            setPaymentInfo(prev => ({
-              ...prev,
-              packageName: found.label,
-              totalSessions: found.sessions || saved.totalSessions,
-              packagePrice: found.price || saved.packagePrice
-            }));
-          }
-        } catch (e) {
-          console.warn('lastUsedPackage parse failed');
-        }
-      }
-        if (lastMethod && paymentMethodOptions.some(m => m.value === lastMethod)) {
+      if (lastMethod && paymentMethodOptions.some(m => m.value === lastMethod)) {
         setPaymentInfo(prev => ({
           ...prev,
           paymentMethod: lastMethod,
@@ -181,7 +169,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         setPaymentInfo(prev => ({ ...prev, paymentReference: generateReferenceNumber(prev.paymentMethod) }));
       }
     }
-  }, [isOpen, packageOptions, paymentMethodOptions]);
+  }, [isOpen, paymentMethodOptions]);
 
   useEffect(() => {
     if (isOpen) {
@@ -331,13 +319,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         paymentTiming: paymentInfo.paymentTiming
       };
       const response = await apiPost(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, mappingData);
-      if (paymentInfo.packageName) {
-        localStorage.setItem('lastUsedPackage', JSON.stringify({
-          packageName: paymentInfo.packageName,
-          totalSessions: paymentInfo.totalSessions,
-          packagePrice: paymentInfo.packagePrice
-        }));
-      }
+      // P1 핫픽스 2026-05-28: lastUsedPackage setItem 제거. 자동 적용 useEffect 와 한 쌍으로
+      // 정리하여 패키지 강제 선택 (default 미사용) 동작을 100% 보장.
       if (paymentInfo.paymentMethod) {
         localStorage.setItem('lastUsedPaymentMethod', paymentInfo.paymentMethod);
       }

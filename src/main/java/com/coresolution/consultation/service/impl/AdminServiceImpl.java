@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +40,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.exception.AdminDeleteBlockedException;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -2994,18 +2996,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         if (!activeMappings.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 활성 매칭이 있습니다. 다른 상담사로 이전이 필요합니다.", activeMappings.size());
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CONSULTANT_ACTIVE_MAPPINGS_TRANSFER_FMT,
-                    activeMappings.size()));
+            Map<String, Object> consultantActiveMappingDetails = new LinkedHashMap<>();
+            consultantActiveMappingDetails.put("activeMappingCount", activeMappings.size());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_CONSULTANT_ACTIVE_MAPPINGS,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CONSULTANT_ACTIVE_MAPPINGS_TRANSFER_FMT,
+                            activeMappings.size()),
+                    consultantActiveMappingDetails);
         }
 
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
 
         if (!futureSchedules.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 예정된 스케줄이 있습니다. 다른 상담사로 이전이 필요합니다.", futureSchedules.size());
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CONSULTANT_FUTURE_SCHEDULES_TRANSFER_FMT,
-                    futureSchedules.size()));
+            Map<String, Object> consultantFutureScheduleDetails = new LinkedHashMap<>();
+            consultantFutureScheduleDetails.put("futureScheduleCount", futureSchedules.size());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_CONSULTANT_FUTURE_SCHEDULES,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CONSULTANT_FUTURE_SCHEDULES_TRANSFER_FMT,
+                            futureSchedules.size()),
+                    consultantFutureScheduleDetails);
         }
 
         // Phase 2-β redirect — 직접 setIsActive(false) 대신 lifecycle 단일 진입점 호출.
@@ -3299,13 +3311,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             int totalRemainingSessions = mappingsWithRemainingSessions.stream()
                     .mapToInt(ConsultantClientMapping::getRemainingSessions)
                     .sum();
-            
-            log.warn("⚠️ 내담자에게 {} 개의 활성 매칭에서 총 {} 회기가 남아있습니다.", 
+
+            log.warn("⚠️ 내담자에게 {} 개의 활성 매칭에서 총 {} 회기가 남아있습니다.",
                     mappingsWithRemainingSessions.size(), totalRemainingSessions);
-            
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CLIENT_ACTIVE_MAPPINGS_REMAINING_SESSIONS_FMT,
-                    mappingsWithRemainingSessions.size(), totalRemainingSessions));
+
+            Map<String, Object> remainingSessionsDetails = new LinkedHashMap<>();
+            remainingSessionsDetails.put("activeMappingCount", mappingsWithRemainingSessions.size());
+            remainingSessionsDetails.put("remainingSessions", totalRemainingSessions);
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_REMAINING_SESSIONS,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CLIENT_ACTIVE_MAPPINGS_REMAINING_SESSIONS_FMT,
+                            mappingsWithRemainingSessions.size(), totalRemainingSessions),
+                    remainingSessionsDetails);
         }
         
         String pendingPaymentStatus = getPaymentStatusCode("PENDING");
@@ -3315,9 +3333,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (!pendingPaymentMappings.isEmpty()) {
             log.warn("⚠️ 내담자에게 {} 개의 결제 대기 중인 매칭이 있습니다.", pendingPaymentMappings.size());
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CLIENT_PENDING_PAYMENT_MAPPINGS_FMT,
-                    pendingPaymentMappings.size()));
+            Map<String, Object> pendingPaymentDetails = new LinkedHashMap<>();
+            pendingPaymentDetails.put("pendingMappingCount", pendingPaymentMappings.size());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_PENDING_PAYMENT_MAPPING,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CLIENT_PENDING_PAYMENT_MAPPINGS_FMT,
+                            pendingPaymentMappings.size()),
+                    pendingPaymentDetails);
         }
         
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
@@ -3331,20 +3354,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (!activeSchedules.isEmpty()) {
             log.warn("⚠️ 내담자에게 {} 개의 예정된 스케줄이 있습니다.", activeSchedules.size());
-            
+
             for (Schedule schedule : activeSchedules) {
                 User consultant = schedule.getConsultantId() != null
                     ? userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId()).orElse(null)
                     : null;
-                log.warn("📅 예정 스케줄: ID={}, 날짜={}, 시간={}-{}, 상담사={} (활성:{})", 
+                log.warn("📅 예정 스케줄: ID={}, 날짜={}, 시간={}-{}, 상담사={} (활성:{})",
                     schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(),
                     consultant != null ? consultant.getName() : "알 수 없음",
                     consultant != null ? consultant.getIsActive() : "알 수 없음");
             }
-            
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_CLIENT_FUTURE_SCHEDULES_FMT,
-                    activeSchedules.size()));
+
+            Map<String, Object> futureScheduleDetails = new LinkedHashMap<>();
+            futureScheduleDetails.put("futureScheduleCount", activeSchedules.size());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_FUTURE_SCHEDULES,
+                    String.format(
+                            AdminServiceUserFacingMessages.MSG_CLIENT_FUTURE_SCHEDULES_FMT,
+                            activeSchedules.size()),
+                    futureScheduleDetails);
         }
         
         List<Schedule> allFutureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());

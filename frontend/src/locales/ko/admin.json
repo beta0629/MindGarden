@@ -2540,6 +2540,11 @@
         "ended": "종료",
         "sessionsExhaustedShort": "회기소진",
         "cancelled": "취소"
+      },
+      "card": {
+        "actions": {
+          "checkoutSameDayPayment": "당일 결제 + 활성화"
+        }
       }
     },
     "checkout": {

@@ -747,6 +747,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setResponsibility(dto.getResponsibility());
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
+        // 옵션 B 결제 방식 의도(ADVANCE / SAME_DAY_CARD)를 매핑에 보존.
+        // 사이드바 카드 액션 분기와 드래그 허용 여부 결정에 사용된다.
+        // null 은 레거시(ADVANCE 동등) 로 취급하므로 별도 디폴트를 강제하지 않는다.
+        mapping.setPaymentTiming(dto.getPaymentTiming());
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 

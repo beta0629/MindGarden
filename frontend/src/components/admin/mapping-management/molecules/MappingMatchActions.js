@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
+import { PAYMENT_TIMING_SAME_DAY_CARD } from '../constants/integratedScheduleSidebarFilterConstants';
 
 const BTN_SM = 'sm';
 
@@ -19,6 +20,7 @@ const MappingMatchActions = ({
   onPayment,
   onDeposit,
   onApprove,
+  onCheckoutSameDay,
   disabled = false,
   loading = false,
   buttonClassName = ''
@@ -28,18 +30,44 @@ const MappingMatchActions = ({
     return null;
   }
 
-  const { status, id } = mapping;
+  const { status, id, paymentTiming } = mapping;
   const btnExtra = ['mg-v2-mapping-match-actions__btn', buttonClassName].filter(Boolean).join(' ');
 
-  const showPayment = status === 'PENDING_PAYMENT' && onPayment;
+  const isSameDayCardPending = status === 'PENDING_PAYMENT'
+    && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
+  // 옵션 B SAME_DAY_CARD 분기:
+  //   - PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제 + 활성화" (CheckoutSameDayModal)
+  //   - PENDING_PAYMENT + ADVANCE/null → 기존 "결제 확인" (선납 입금 검증)
+  const showCheckoutSameDay = isSameDayCardPending && onCheckoutSameDay;
+  const showPayment = status === 'PENDING_PAYMENT' && !isSameDayCardPending && onPayment;
   const showDeposit = status === 'PAYMENT_CONFIRMED' && onDeposit;
   const showApprove = status === 'DEPOSIT_PENDING' && onApprove;
-  if (!showPayment && !showDeposit && !showApprove) {
+  if (!showCheckoutSameDay && !showPayment && !showDeposit && !showApprove) {
     return null;
   }
 
   return (
     <div className="mg-v2-mapping-match-actions" data-testid="mapping-match-actions">
+      {showCheckoutSameDay && (
+        <MGButton
+          type="button"
+          variant="primary"
+          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: BTN_SM,
+            loading: false,
+            className: btnExtra
+          })}
+          loading={false}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => onCheckoutSameDay(mapping)}
+          aria-label={t('admin:mapping.card.actions.checkoutSameDayPayment')}
+          preventDoubleClick={false}
+        >
+          {t('admin:mapping.card.actions.checkoutSameDayPayment')}
+        </MGButton>
+      )}
       {showPayment && (
         <MGButton
           type="button"
@@ -108,11 +136,13 @@ const MappingMatchActions = ({
 MappingMatchActions.propTypes = {
   mapping: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    status: PropTypes.string
+    status: PropTypes.string,
+    paymentTiming: PropTypes.string
   }),
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,
+  onCheckoutSameDay: PropTypes.func,
   disabled: PropTypes.bool,
   loading: PropTypes.bool,
   buttonClassName: PropTypes.string
@@ -123,6 +153,7 @@ MappingMatchActions.defaultProps = {
   onPayment: null,
   onDeposit: null,
   onApprove: null,
+  onCheckoutSameDay: null,
   disabled: false,
   loading: false,
   buttonClassName: ''

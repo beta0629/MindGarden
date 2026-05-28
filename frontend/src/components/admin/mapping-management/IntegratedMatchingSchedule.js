@@ -48,6 +48,10 @@ import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import { computePendingPaymentAlert } from './utils/pendingPaymentAlertUtils';
+import {
+  shouldAutoOpenCheckoutSameDayAfterSchedule,
+  buildSameDayCardCheckoutMapping
+} from './utils/sameDayCardCheckoutUtils';
 
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
@@ -227,13 +231,20 @@ const IntegratedMatchingSchedule = () => {
       }
       return;
     }
+    // 옵션 B: 일정 저장 직후 CheckoutSameDayModal 자동 진입을 위해
+    // 매핑 ID·결제 의도·패키지 정보를 prefill 에 함께 보존한다.
     setPreFilledMapping({
+      mappingId: mappingPayload.mappingId ?? null,
       consultantId: mappingPayload.consultantId,
       clientId: mappingPayload.clientId,
       consultantName: mappingPayload.consultantName || '상담사',
       clientName: mappingPayload.clientName || '내담자',
       mappingStatus: mappingPayload.status,
-      remainingSessions: mappingPayload.remainingSessions
+      remainingSessions: mappingPayload.remainingSessions,
+      paymentTiming: mappingPayload.paymentTiming ?? null,
+      packageName: mappingPayload.packageName ?? null,
+      packagePrice: mappingPayload.packagePrice ?? null,
+      totalSessions: mappingPayload.totalSessions ?? null
     });
     setSelectedDateForModal(date instanceof Date ? date : new Date(date));
     setScheduleModalOpen(true);
@@ -242,14 +253,43 @@ const IntegratedMatchingSchedule = () => {
   /** 사이드바 카드 «일정 등록» — 캘린더 드래그 대신 버튼으로만 모달 진입 */
   const handleOpenScheduleFromCard = (mapping) => {
     const mappingPayload = {
+      mappingId: mapping.id,
       consultantId: mapping.consultantId,
       clientId: mapping.clientId,
       consultantName: mapping.consultantName,
       clientName: mapping.clientName,
       status: mapping.status,
-      remainingSessions: mapping.remainingSessions
+      remainingSessions: mapping.remainingSessions,
+      paymentTiming: mapping.paymentTiming ?? null,
+      packageName: mapping.packageName ?? null,
+      packagePrice: mapping.packagePrice ?? null,
+      totalSessions: mapping.totalSessions ?? null
     };
     handleDropFromExternal(new Date(), mappingPayload);
+  };
+
+  /**
+   * 옵션 B SAME_DAY_CARD 사이드바 카드 액션 — "당일 결제 + 활성화" 버튼.
+   * P0 핫픽스 2026-05-28 가드와 동일하게 매핑 정보 누락 시 모달 진입을 차단한다.
+   */
+  const handleOpenCheckoutSameDayFromCard = (mapping) => {
+    if (!mapping?.consultantId || !mapping?.packageName) {
+      notificationManager.warning(
+        '이 매칭은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 매칭을 다시 생성해 주세요.'
+      );
+      return;
+    }
+    setCheckoutSameDayMapping({
+      id: mapping.id,
+      consultantId: mapping.consultantId,
+      consultantName: mapping.consultantName,
+      clientId: mapping.clientId,
+      clientName: mapping.clientName,
+      packageName: mapping.packageName,
+      packagePrice: mapping.packagePrice ?? null,
+      paymentAmount: mapping.paymentAmount ?? null,
+      totalSessions: mapping.totalSessions ?? null
+    });
   };
 
   const handleMappingCreated = (result) => {
@@ -312,10 +352,17 @@ const IntegratedMatchingSchedule = () => {
     setPreFilledMapping(null);
   };
 
-  const handleScheduleCreated = () => {
+  const handleScheduleCreated = (createdSchedule) => {
     setRefetchTrigger((t) => t + 1);
     loadMappings();
     setScheduleModalOpen(false);
+    // 옵션 B SAME_DAY_CARD: 일정 등록 직후 CheckoutSameDayModal 자동 진입.
+    // (가예약 등록 → 결제 + 활성화 + 회기 부여를 한 번의 흐름으로 묶음)
+    if (shouldAutoOpenCheckoutSameDayAfterSchedule(preFilledMapping)) {
+      setCheckoutSameDayMapping(
+        buildSameDayCardCheckoutMapping(preFilledMapping, createdSchedule)
+      );
+    }
     setPreFilledMapping(null);
   };
 
@@ -544,6 +591,8 @@ const IntegratedMatchingSchedule = () => {
                 }
                 return filteredMappings.map((mapping) => {
                   const scheduleable = canScheduleForMapping(mapping);
+                  // 옵션 B: paymentTiming·packageName·packagePrice·totalSessions 까지 함께 보존하여
+                  // 드래그 → ScheduleModal → CheckoutSameDayModal 자동 진입 흐름에서 prefill 로 사용.
                   const eventData = {
                     id: `mapping-${mapping.id}`,
                     title: mapping.clientName || '내담자',
@@ -554,7 +603,11 @@ const IntegratedMatchingSchedule = () => {
                       consultantName: mapping.consultantName || '상담사',
                       clientName: mapping.clientName || '내담자',
                       status: mapping.status,
-                      remainingSessions: mapping.remainingSessions
+                      remainingSessions: mapping.remainingSessions,
+                      paymentTiming: mapping.paymentTiming ?? null,
+                      packageName: mapping.packageName ?? null,
+                      packagePrice: mapping.packagePrice ?? null,
+                      totalSessions: mapping.totalSessions ?? null
                     }
                   };
                   return (
@@ -575,6 +628,7 @@ const IntegratedMatchingSchedule = () => {
                         onPayment={setPaymentModalMapping}
                         onDeposit={setDepositModalMapping}
                         onApprove={handleApprove}
+                        onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
                         approveProcessing={approveProcessing}
                       />
                     </li>

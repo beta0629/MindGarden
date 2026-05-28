@@ -26,6 +26,7 @@ const MappingScheduleCard = ({
   onPayment,
   onDeposit,
   onApprove,
+  onCheckoutSameDay,
   approveProcessing
 }) => (
   <CardContainer>
@@ -45,6 +46,7 @@ const MappingScheduleCard = ({
       onPayment={onPayment}
       onDeposit={onDeposit}
       onApprove={onApprove}
+      onCheckoutSameDay={onCheckoutSameDay}
       approveProcessing={approveProcessing}
     />
   </CardContainer>
@@ -54,6 +56,7 @@ MappingScheduleCard.propTypes = {
   mapping: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     status: PropTypes.string,
+    paymentTiming: PropTypes.string,
     consultantName: PropTypes.string,
     clientName: PropTypes.string,
     remainingSessions: PropTypes.number
@@ -64,6 +67,7 @@ MappingScheduleCard.propTypes = {
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,
+  onCheckoutSameDay: PropTypes.func,
   approveProcessing: PropTypes.bool
 };
 
@@ -75,6 +79,7 @@ MappingScheduleCard.defaultProps = {
   onPayment: null,
   onDeposit: null,
   onApprove: null,
+  onCheckoutSameDay: null,
   approveProcessing: false
 };
 

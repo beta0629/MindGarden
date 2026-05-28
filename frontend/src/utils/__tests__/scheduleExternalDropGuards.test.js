@@ -76,6 +76,41 @@ describe('scheduleExternalDropGuards', () => {
       });
       expect(r).toEqual({ ok: true });
     });
+
+    // 옵션 B SAME_DAY_CARD 분기 — 결제·회기 가드 우회
+    it('returns ok for PENDING_PAYMENT + SAME_DAY_CARD (옵션 B)', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0
+      });
+      expect(r).toEqual({ ok: true });
+    });
+
+    it('returns payment_not_confirmed for PENDING_PAYMENT + ADVANCE (옵션 B 분기 비대상)', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'ADVANCE',
+        remainingSessions: 5
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('payment_not_confirmed');
+    });
+
+    it('returns payment_not_confirmed for PENDING_PAYMENT + 미지정(레거시)', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'PENDING_PAYMENT',
+        remainingSessions: 5
+      });
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('payment_not_confirmed');
+    });
   });
 
   describe('assertDropDateNotPast', () => {

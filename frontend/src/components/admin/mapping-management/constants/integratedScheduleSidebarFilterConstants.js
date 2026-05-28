@@ -59,6 +59,12 @@ export const MAPPING_STATUS_PENDING_PAYMENT = 'PENDING_PAYMENT';
 /** 백엔드 `ConsultantClientMapping.MappingStatus` — 결제 확인 완료 */
 export const MAPPING_STATUS_PAYMENT_CONFIRMED = 'PAYMENT_CONFIRMED';
 
+/** 백엔드 paymentTiming — 선납 입금 (현행 기본 흐름) */
+export const PAYMENT_TIMING_ADVANCE = 'ADVANCE';
+
+/** 백엔드 paymentTiming — 옵션 B 사후 카드 결제 (당일 방문) */
+export const PAYMENT_TIMING_SAME_DAY_CARD = 'SAME_DAY_CARD';
+
 /**
  * 결제 확인 이후 상태 집합.
  * PENDING_PAYMENT 만 결제 미확인. 그 외(PAYMENT_CONFIRMED, DEPOSIT_PENDING, ACTIVE 등)는 확인 완료 간주.
@@ -106,16 +112,30 @@ export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
 };
 
 /**
+ * 옵션 B 사후 카드 결제(SAME_DAY_CARD) + PENDING_PAYMENT 매핑 여부.
+ *
+ * 옵션 B 흐름은 매핑이 PENDING_PAYMENT 상태로 생성되고, 사용자가 캘린더에 일정을 등록(드래그)
+ * 하면 그 직후 `CheckoutSameDayModal` 로 결제 + 활성화를 한 번에 처리한다. 따라서 일반 가드
+ * (결제 확인 완료 + 회기 1 이상)를 통과하지 않더라도 드래그를 허용해야 한다.
+ *
+ * @param {object} [mapping] - 매칭 DTO
+ * @returns {boolean}
+ */
+export const isSameDayCardPending = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  return mapping.status === MAPPING_STATUS_PENDING_PAYMENT
+    && mapping.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
+};
+
+/**
  * 통합 스케줄 사이드바 «일정 등록» 허용 — remainingSessions 기반 다중 스케줄 허용.
  *
- * 제약조건:
- * 1. 결제 확인(PENDING_PAYMENT 이후)이 완료되어야 함
- * 2. 남은 회기(remainingSessions)가 1 이상이어야 함
- * 3. 확정 예약 또는 가예약 경로 중 하나를 만족
- *
- * 남은 회기가 있는 한 이미 등록된 스케줄이 있어도 추가 스케줄 생성 가능.
- * 모든 회기가 소진(remainingSessions === 0)되면 드래그·등록 차단.
- * 일정 취소 시 remainingSessions가 복원되어 다시 등록 가능.
+ * 분기:
+ * 1. 옵션 B SAME_DAY_CARD + PENDING_PAYMENT 매핑은 가드 건너뛰고 드래그 허용.
+ *    드래그 후 `CheckoutSameDayModal` 자동 진입으로 결제 + 활성화를 처리한다.
+ * 2. 그 외 매핑은 결제 확인 + 남은 회기 + (확정/가예약) 가드를 통과해야 한다.
  *
  * @param {object} [mapping] - 매칭 DTO
  * @returns {boolean}
@@ -123,6 +143,9 @@ export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
 export const canScheduleForMapping = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
+  }
+  if (isSameDayCardPending(mapping)) {
+    return true;
   }
   if (!isPaymentConfirmed(mapping)) {
     return false;

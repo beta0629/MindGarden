@@ -95,6 +95,15 @@ public class ConsultantClientMapping extends BaseEntity {
     @Column(name = "payment_reference", length = 200)
     private String paymentReference; // 결제 참조번호
 
+    /**
+     * 옵션 B 결제 방식 의도. 매핑 생성 시점에 어떤 결제 흐름을 따를지 보존한다.
+     * - ADVANCE: 선납 입금 (현행 기본 흐름)
+     * - SAME_DAY_CARD: 당일 방문 시 카드 결제 + 활성화 (옵션 B)
+     * - NULL: 레거시 매핑 (마이그레이션 V20260606_006 이전 생성). 코드에서는 ADVANCE 와 동등하게 취급.
+     */
+    @Column(name = "payment_timing", length = 32)
+    private String paymentTiming;
+
     @Column(name = "deposit_confirmed")
     private Boolean depositConfirmed = false; // 입금 확인 여부
 

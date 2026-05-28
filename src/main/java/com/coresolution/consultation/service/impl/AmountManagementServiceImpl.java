@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -40,21 +41,24 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     @Transactional(readOnly = true)
     public Long getAccurateTransactionAmount(ConsultantClientMapping mapping) {
         log.info("💰 정확한 거래 금액 결정: MappingID={}", mapping.getId());
-        
-        // 1. packagePrice 우선 (가장 정확한 패키지 가격)
-        if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
+
+        // P1-2 (DB M3, 2026-05-28): package=0|null & payment>0 패턴 8건이 accurateAmount=0
+        // 으로 잘못 보고되던 결함 fix. null/0 동일하게 "유효하지 않음"으로 간주하고
+        // packagePrice 가 양수일 때만 우선, 그 외에는 paymentAmount 가 양수면 fallback.
+        boolean packageValid = mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0;
+        boolean paymentValid = mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0;
+
+        if (packageValid) {
             log.info("✅ PackagePrice 사용: {}원", mapping.getPackagePrice());
             return mapping.getPackagePrice();
         }
-        
-        // 2. paymentAmount 백업 (입금 확인 시 입력된 금액)
-        if (mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0) {
-            log.warn("⚠️ PaymentAmount 사용 (PackagePrice 없음): {}원", mapping.getPaymentAmount());
+
+        if (paymentValid) {
+            log.warn("⚠️ PaymentAmount 사용 (PackagePrice 미설정 또는 0): {}원", mapping.getPaymentAmount());
             return mapping.getPaymentAmount();
         }
-        
-        // 3. 기본값 없음 - 오류
-        log.error("❌ 유효한 금액이 없습니다: PackagePrice={}, PaymentAmount={}", 
+
+        log.error("❌ 유효한 금액이 없습니다: PackagePrice={}, PaymentAmount={}",
             mapping.getPackagePrice(), mapping.getPaymentAmount());
         return null;
     }
@@ -237,12 +241,28 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         // 관련 ERP 거래들의 금액 합계 (표준화 2025-12-06: deprecated 메서드 대체)
         List<FinancialTransaction> relatedTransactions = financialTransactionRepository
             .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING");
-        
-        BigDecimal totalErpAmount = relatedTransactions.stream()
+
+        // P1-2 (인벤토리 §G4, 2026-05-28): 환불 후 amount-info isConsistent 오탐 fix.
+        // 환불은 transaction_type 별도 enum 부재로 EXPENSE + subcategory IN
+        // ('CONSULTATION_REFUND','CONSULTATION_PARTIAL_REFUND') 로 표현 (ERP_AUTOMATION_DB_MEASUREMENT §M4).
+        // erpTotalAmount = SUM(INCOME) - SUM(REFUND EXPENSE) 로 회계 사실과 정합.
+        BigDecimal incomeSum = relatedTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
             .map(FinancialTransaction::getAmount)
+            .filter(java.util.Objects::nonNull)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
+        BigDecimal refundSum = relatedTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> FinancialTransactionConstants.isRefundSubcategory(t.getSubcategory()))
+            .map(FinancialTransaction::getAmount)
+            .filter(java.util.Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalErpAmount = incomeSum.subtract(refundSum);
+
+        amountBreakdown.put("erpIncomeAmount", incomeSum.longValue());
+        amountBreakdown.put("erpRefundAmount", refundSum.longValue());
         amountBreakdown.put("erpTotalAmount", totalErpAmount.longValue());
         
         // 일관성 검사

@@ -4616,7 +4616,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
                         refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
                         refund.put("refundAmount", transaction.getAmount().longValue());
-                        refund.put("terminatedAt", transaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                        refund.put("terminatedAt", transaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                     } else {
                         refund.put("mappingId", transaction.getRelatedEntityId());
                         refund.put("consultantName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
@@ -4624,7 +4624,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         refund.put("packageName", AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN);
                         refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
                         refund.put("refundAmount", transaction.getAmount().longValue());
-                        refund.put("terminatedAt", transaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                        refund.put("terminatedAt", transaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                     }
                     
                     refund.put("refundReason", extractRefundReasonFromDescription(transaction.getDescription()));

@@ -434,6 +434,64 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * ERP 결산 — 마감된 기간(CLOSED 또는 REOPENED) 의 거래 수정·삭제 시도를 차단한다.
+     *
+     * <p>합의서 §2 Q3 / §2 Q6: 일반 ADMIN 은 마감 기간 거래 수정 불가, HQ_ADMIN 이 재오픈 후에만 수정 가능.
+     * HTTP {@code 409 Conflict} + 재오픈 안내 JSON. 의도된 비즈니스 차단이므로 로그 레벨은 {@code INFO}.</p>
+     */
+    @ExceptionHandler(PeriodClosedException.class)
+    public ResponseEntity<Map<String, Object>> handlePeriodClosed(
+            PeriodClosedException e, HttpServletRequest request) {
+        log.info("[PERIOD_CLOSED] periodStart={} periodEnd={} message={} path={}",
+                e.getPeriodStart(), e.getPeriodEnd(), e.getMessage(), request.getRequestURI());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", "PERIOD_CLOSED");
+        body.put("message", e.getMessage());
+        body.put("periodStart", e.getPeriodStart() != null ? e.getPeriodStart().toString() : null);
+        body.put("periodEnd", e.getPeriodEnd() != null ? e.getPeriodEnd().toString() : null);
+        body.put("hint", "HQ_ADMIN 에게 재오픈(REOPEN) 을 요청하세요.");
+        body.put("errorCode", "PERIOD_CLOSED");
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
+     * ERP 결산 — 부가세 누적 차이 감지 시 마감 차단.
+     *
+     * <p>합의서 §2 Q8: {@code tax_amount_sum != 10% × (INCOME − REFUND)} 일 때 throw.
+     * HTTP {@code 422 Unprocessable Entity} + 알림 발송 트리거(필드 {@code notify=true} 포함).
+     * 알림 발송은 본 핸들러가 직접 수행하지 않고, 수신측(어드민 모니터링)이 본 응답을 보고 발송한다.</p>
+     */
+    @ExceptionHandler(TaxIntegrityException.class)
+    public ResponseEntity<Map<String, Object>> handleTaxIntegrity(
+            TaxIntegrityException e, HttpServletRequest request) {
+        log.warn("[TAX_INTEGRITY_FAIL] tenantId={} expected={} actual={} message={} path={}",
+                e.getTenantId(), e.getExpected(), e.getActual(), e.getMessage(), request.getRequestURI());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", "TAX_INTEGRITY_FAIL");
+        body.put("message", e.getMessage());
+        body.put("tenantId", e.getTenantId());
+        body.put("expected", e.getExpected());
+        body.put("actual", e.getActual());
+        body.put("notify", true);
+        body.put("errorCode", "TAX_INTEGRITY_FAIL");
+        body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+    }
+
+    /**
      * 어드민 테스트 발송 도구의 솔라피 실시간 알림톡 템플릿 조회 실패.
      * HTTP 502 Bad Gateway + {@code ALIMTALK_TEMPLATE_FETCH_FAILED} 코드.
      */

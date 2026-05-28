@@ -419,6 +419,75 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
         FinancialTransaction.TransactionType transactionType, String subcategory, LocalDate startDate, LocalDate endDate);
 
     /**
+     * ERP P0-2 결산용 — 거래 유형별 amount 합계 (status 무관, soft delete 만 제외).
+     *
+     * <p>합의서 §4.3: 마감 시 SUM(amount) GROUP BY transaction_type 산식. status 가 PENDING/APPROVED 인
+     * 거래도 마감 합산에 포함된다 (운영 데이터 SSOT). 기존 {@code sumIncomeByDateRange} (status=COMPLETED 만)
+     * 와 의미가 다르므로 별도 쿼리로 분리.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param type 거래 유형 (INCOME/EXPENSE/RECEIVABLES)
+     * @param startDate 시작일 (포함)
+     * @param endDate 종료일 (포함)
+     * @return amount 합 (NULL 안전 — COALESCE)
+     */
+    @Query("SELECT COALESCE(SUM(f.amount), 0) FROM FinancialTransaction f "
+            + "WHERE f.tenantId = :tenantId "
+            + "AND f.transactionType = :type "
+            + "AND f.transactionDate BETWEEN :startDate AND :endDate "
+            + "AND f.isDeleted = false")
+    BigDecimal sumAmountForCloseByType(
+            @Param("tenantId") String tenantId,
+            @Param("type") FinancialTransaction.TransactionType type,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    /**
+     * ERP P0-2 결산용 — INCOME 거래의 부가세(tax_amount) 합 (status 무관).
+     *
+     * <p>합의서 §2 Q8 부가세 가드 비교 대상. EXPENSE 의 매입세액공제는 본 PR 범위 밖.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param startDate 시작일 (포함)
+     * @param endDate 종료일 (포함)
+     * @return INCOME tax_amount 합 (NULL 안전)
+     */
+    @Query("SELECT COALESCE(SUM(f.taxAmount), 0) FROM FinancialTransaction f "
+            + "WHERE f.tenantId = :tenantId "
+            + "AND f.transactionType = 'INCOME' "
+            + "AND f.transactionDate BETWEEN :startDate AND :endDate "
+            + "AND f.isDeleted = false")
+    BigDecimal sumIncomeTaxAmountForClose(
+            @Param("tenantId") String tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    /**
+     * ERP P0-2 결산용 — EXPENSE + 환불 서브카테고리 의 amount 합 (status 무관).
+     *
+     * <p>합의서 §2 Q8: expected_tax = 10% × (INCOME − REFUND) 산식의 REFUND 항.
+     * 환불 서브카테고리: CONSULTATION_REFUND / CONSULTATION_PARTIAL_REFUND / SESSION_REFUND
+     * / PARTIAL_SESSION_REFUND ({@code FinancialTransactionConstants.REFUND_SUBCATEGORIES}).</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param startDate 시작일 (포함)
+     * @param endDate 종료일 (포함)
+     * @param refundSubcategories 환불 서브카테고리 IN 절
+     * @return 환불 amount 합 (NULL 안전)
+     */
+    @Query("SELECT COALESCE(SUM(f.amount), 0) FROM FinancialTransaction f "
+            + "WHERE f.tenantId = :tenantId "
+            + "AND f.transactionType = 'EXPENSE' "
+            + "AND f.subcategory IN :refundSubcategories "
+            + "AND f.transactionDate BETWEEN :startDate AND :endDate "
+            + "AND f.isDeleted = false")
+    BigDecimal sumRefundForClose(
+            @Param("tenantId") String tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("refundSubcategories") Collection<String> refundSubcategories);
+
+    /**
      * D8 dry-run: 레거시 원천이 {@code tax_amount}에만 있는 후보 건수(읽기 전용).
      * <p>
      * 조건: INCOME·비삭제·{@code withholding_tax_amount = 0}·{@code tax_amount &gt; 0}·

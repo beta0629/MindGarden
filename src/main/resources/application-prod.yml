@@ -148,6 +148,13 @@ mindgarden:
       dry-run: ${MINDGARDEN_SCHEDULER_WITHDRAWAL_GRACE_DRY_RUN:true}
     admin-delete-retention:
       dry-run: ${MINDGARDEN_SCHEDULER_ADMIN_DELETE_RETENTION_DRY_RUN:true}
+    # =====================================================
+    # ERP P0-2 PR-B: 재무 마감 dry-run (합의서 §2 Q7).
+    # 운영 1주 검증 동안 dry-run=true 강제 — Slack/이메일 알림 누적 후 차이 0 확인 시
+    # 별도 결재로 hotfix PR 통해 dry-run=false 전환.
+    # =====================================================
+    financial-close:
+      dry-run: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_DRY_RUN:true}
 
 # 프로덕션 환경에서 중복 로그인 방지 활성화
 session:

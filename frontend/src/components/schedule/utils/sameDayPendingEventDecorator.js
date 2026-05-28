@@ -14,6 +14,15 @@
  * - 백엔드 `ScheduleServiceImpl.resolveMappingIdForTentativeBeforeDeposit` 가
  *   mapping_id 를 정착시키므로 정상 케이스에서는 lookup 이 SAME_DAY_CARD 를 반환한다.
  *
+ * v2.0 P0 정정 (2026-05-28 15:17 KST 사용자 dev DOM 분석 결과 반영):
+ * - 클래스 부여 (이 데코레이터의 역할) 는 정상이었으나, CSS cascade 에서 outer
+ *   `<a.fc-event>` 점선이 inner `<div.mg-v2-ad-calendar-event--compact>` 자체
+ *   background/border 로 가려져 시각 미노출 회귀가 있었다.
+ * - cascade 보강은 `IntegratedMatchingSchedule.css` 에서 descendant selector
+ *   + `::before` prefix icon + `--mg-color-warning-*` 다크 토큰으로 정착.
+ * - 본 데코레이터는 클래스명 SSOT (`SAME_DAY_PENDING_EVENT_CLASS`) 만 유지하며
+ *   변경 없음 (책임 분리: JS=클래스 부여, CSS=시각 cascade).
+ *
  * 합의서: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN_V2.md §5.
  *
  * @author MindGarden

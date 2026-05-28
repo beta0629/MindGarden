@@ -3,11 +3,14 @@ import {
   canScheduleForMapping,
   canTentativeBeforeDepositScheduleForMapping,
   isPaymentConfirmed,
+  isSameDayCardPending,
   normalizedRemainingSessions,
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_DEPOSIT_PENDING,
   MAPPING_STATUS_PENDING_PAYMENT,
-  MAPPING_STATUS_PAYMENT_CONFIRMED
+  MAPPING_STATUS_PAYMENT_CONFIRMED,
+  PAYMENT_TIMING_ADVANCE,
+  PAYMENT_TIMING_SAME_DAY_CARD
 } from '../integratedScheduleSidebarFilterConstants';
 
 describe('integratedScheduleSidebarFilterConstants', () => {
@@ -130,6 +133,86 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(canScheduleForMapping(undefined)).toBe(false);
       expect(canScheduleForMapping(null)).toBe(false);
       expect(canScheduleForMapping({})).toBe(false);
+    });
+
+    // 옵션 B SAME_DAY_CARD 분기
+    it('옵션 B SAME_DAY_CARD + PENDING_PAYMENT 이면 결제·회기 가드를 건너뛰고 true', () => {
+      expect(
+        canScheduleForMapping({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+          remainingSessions: 0
+        })
+      ).toBe(true);
+    });
+
+    it('옵션 B SAME_DAY_CARD + ACTIVE + remaining 0 이면 회기 가드로 false (PENDING_PAYMENT 만 우회)', () => {
+      expect(
+        canScheduleForMapping({
+          status: MAPPING_STATUS_ACTIVE,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+          remainingSessions: 0
+        })
+      ).toBe(false);
+    });
+
+    it('옵션 B SAME_DAY_CARD + ACTIVE + remaining 1 이상이면 기본 가드 통과 → true', () => {
+      expect(
+        canScheduleForMapping({
+          status: MAPPING_STATUS_ACTIVE,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+          remainingSessions: 1
+        })
+      ).toBe(true);
+    });
+
+    it('ADVANCE + PENDING_PAYMENT 는 기존과 동일하게 false (옵션 B 분기 비대상)', () => {
+      expect(
+        canScheduleForMapping({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_ADVANCE,
+          remainingSessions: 5
+        })
+      ).toBe(false);
+    });
+  });
+
+  describe('isSameDayCardPending', () => {
+    it('PENDING_PAYMENT + SAME_DAY_CARD 이면 true', () => {
+      expect(
+        isSameDayCardPending({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD
+        })
+      ).toBe(true);
+    });
+
+    it('PENDING_PAYMENT + ADVANCE 면 false', () => {
+      expect(
+        isSameDayCardPending({
+          status: MAPPING_STATUS_PENDING_PAYMENT,
+          paymentTiming: PAYMENT_TIMING_ADVANCE
+        })
+      ).toBe(false);
+    });
+
+    it('PENDING_PAYMENT + paymentTiming 누락이면 false (레거시 ADVANCE 동등)', () => {
+      expect(isSameDayCardPending({ status: MAPPING_STATUS_PENDING_PAYMENT })).toBe(false);
+    });
+
+    it('ACTIVE + SAME_DAY_CARD 이면 false (PENDING_PAYMENT 일 때만 분기)', () => {
+      expect(
+        isSameDayCardPending({
+          status: MAPPING_STATUS_ACTIVE,
+          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD
+        })
+      ).toBe(false);
+    });
+
+    it('mapping 없으면 false', () => {
+      expect(isSameDayCardPending(null)).toBe(false);
+      expect(isSameDayCardPending(undefined)).toBe(false);
+      expect(isSameDayCardPending({})).toBe(false);
     });
   });
 });

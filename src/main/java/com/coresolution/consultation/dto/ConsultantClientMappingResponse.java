@@ -48,6 +48,12 @@ public class ConsultantClientMappingResponse {
     // 매핑 타입
     private String mappingType; // "NEW", "EXTENSION", "TRANSFER"
     private String paymentConfirmationNote;
+
+    /**
+     * 옵션 B 결제 방식 의도 (ADVANCE / SAME_DAY_CARD / null).
+     * 사이드바 카드의 액션 분기와 드래그 허용 여부를 결정하는 데 사용된다.
+     */
+    private String paymentTiming;
     
     /**
      * ConsultantClientMapping 엔티티로부터 변환
@@ -82,6 +88,7 @@ public class ConsultantClientMappingResponse {
             .paymentDate(mapping.getPaymentDate())
             .adminApprovalDate(mapping.getAdminApprovalDate())
             .approvedBy(mapping.getApprovedBy())
+            .paymentTiming(mapping.getPaymentTiming())
             .build();
     }
     

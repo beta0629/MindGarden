@@ -685,38 +685,46 @@
   }
 }
 
-/* ===== 옵션 B (예약 우선 매칭) — PENDING_PAYMENT 알림 카드 ===== */
-.integrated-schedule__pending-payment-alert {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mg-spacing-md, 12px);
-  margin: var(--mg-spacing-md, 12px) 0;
-  padding: var(--mg-spacing-md, 12px) var(--mg-spacing-lg, 16px);
-  border: 1px solid var(--ad-b0kla-warning-border, var(--mg-color-warning-border));
-  border-radius: var(--ad-b0kla-radius, 8px);
-  background: var(--ad-b0kla-warning-bg, var(--mg-color-warning-soft));
-  color: var(--ad-b0kla-text-strong, var(--mg-color-text));
+/* ===== 옵션 B (예약 우선 매칭) — 당일결제 가예약 캘린더 이벤트 시각 구분 ===== */
+/*
+ * SAME_DAY_CARD 매핑의 가예약(TENTATIVE_PENDING_PAYMENT) 일정을 일반 일정과 구분.
+ * 결제 완료 후 BOOKED/CONFIRMED 로 전환되면 자동으로 일반 표기로 복귀.
+ * SSOT 토큰만 사용 (D11 r2Protected ≤14 유지, 신규 hex 0).
+ */
+.integrated-schedule__event--same-day-pending,
+.fc-event.integrated-schedule__event--same-day-pending {
+  background: var(--mg-warning-100);
+  color: var(--mg-warning-700);
+  border: 2px dashed var(--mg-warning-700);
+  font-style: italic;
 }
 
-.integrated-schedule__pending-payment-alert-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-xs, 4px);
+.integrated-schedule__event--same-day-pending .fc-event-title,
+.fc-event.integrated-schedule__event--same-day-pending .fc-event-title {
+  color: var(--mg-warning-700);
+  font-style: italic;
 }
 
-.integrated-schedule__pending-payment-alert-title {
-  font-weight: var(--mg-font-weight-semibold, 600);
-  font-size: var(--mg-font-size-sm, 13px);
-}
-
-.integrated-schedule__pending-payment-alert-count {
-  font-size: var(--mg-font-size-xs, 12px);
-  color: var(--ad-b0kla-text-muted, var(--mg-color-text-muted));
-}
-
-.integrated-schedule__pending-payment-alert-actions {
+/* ===== 옵션 B 가예약 캘린더 범례 ===== */
+.integrated-schedule__legend--same-day {
   display: inline-flex;
+  align-items: center;
   gap: var(--mg-spacing-sm, 8px);
+  margin: 0 0 var(--mg-spacing-sm, 8px) 0;
+  padding: var(--mg-spacing-xs, 4px) var(--mg-spacing-sm, 8px);
+  font-size: var(--mg-font-size-xs, 12px);
+  color: var(--mg-warning-700);
+}
+
+.integrated-schedule__legend-swatch--same-day {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px dashed var(--mg-warning-700);
+  background: var(--mg-warning-100);
+  border-radius: var(--mg-radius-xs, 2px);
+}
+
+.integrated-schedule__legend-text {
+  line-height: 1.3;
 }

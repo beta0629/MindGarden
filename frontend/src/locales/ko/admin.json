@@ -2546,6 +2546,11 @@
         "ended": "종료",
         "sessionsExhaustedShort": "회기소진",
         "cancelled": "취소"
+      },
+      "card": {
+        "actions": {
+          "checkoutSameDayPayment": "당일 결제 + 활성화"
+        }
       }
     },
     "checkout": {
@@ -2582,14 +2587,12 @@
         }
       }
     },
-    "integrated": {
-      "pendingPayment": {
-        "alert": {
-          "title": "결제 대기 매칭",
-          "count": "결제 대기 매칭이 {{count}}건 있습니다.",
-          "action": "결제 대기 목록 필터",
-          "checkoutSameDay": "당일 결제"
-        }
+    "schedule": {
+      "event": {
+        "sameDayPendingPrefix": "[당일결제] "
+      },
+      "legend": {
+        "sameDayPending": "[당일결제 점선] = 당일 카드 결제 대기 가예약 (결제 후 일반 일정으로 전환)"
       }
     },
     "refund": {

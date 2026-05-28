@@ -1,7 +1,7 @@
 # 데이터베이스 마이그레이션 표준
 
-**버전**: 1.0.0  
-**최종 업데이트**: 2025-12-03  
+**버전**: 1.1.0  
+**최종 업데이트**: 2026-05-28 (§"방식 2 의 필수 룰 — out-of-order 함정 회피" 신설 — `OPTION_B_V2_DEV_CHECKOUT_FAILURE_DEBUG.md` §3·§4 옵션 B 반영)  
 **상태**: 공식 표준
 
 ---
@@ -96,6 +96,58 @@ V20251203_010__create_widget_groups_table.sql
 - 날짜별 그룹화가 필요한 경우
 
 **형식**: `V{YYYYMMDD}_{순번}__{설명}.sql`
+
+#### 🚨 방식 2 의 필수 룰 — out-of-order 함정 회피 (2026-05-28 추가)
+
+**룰**: 날짜 형식 신규 마이그는 항상 **develop tip 기준 dev/운영 MySQL `flyway_schema_history` 의 MAX(version) 보다 큰 timestamp** 로 명명한다. 과거 timestamp 로 명명하면 Flyway 가 "낮은 버전 + history 최대보다 이전" 으로 분류해 **silently skip** (`Schema is up to date`) → 마이그 미적용 → 테이블 부재 → 런타임 500 응답이 발생한다.
+
+**메커니즘 요약**:
+- Flyway 9.22.3 + Spring Boot 3.x 환경에서 `spring.flyway.out-of-order=true` 가 application.yml 에 명시되어도 dev/운영 MySQL 의 `flyway_schema_history` 에 더 큰 timestamp row 가 이미 존재하면 신규 마이그가 out-of-order 로 인식되지 않고 즉시 skip 된다.
+- 이는 dev/운영의 운영 정책상 `validate-on-migrate=false` 와 결합되어 **경고도 안 남고 silently skip**.
+- 결과: jar 자체는 정상 부팅, 헬스 통과, 마이그 미적용 — 사용자가 신규 테이블을 사용하는 API 호출 시점에야 `Table 'X' doesn't exist` 500 으로 노출.
+
+**동일 사이트 선례** (모두 timestamp 리네이밍으로 영구 회피):
+- `V20260510_005__repair_users_professional_provider_after_out_of_order.sql`
+- `V20260519_001__salary_calculations_audit_columns_out_of_order.sql`
+- `V20260526_001~003` (`-- 2026-05-22 작성 → DEV DB 최상위(V20260525_001) 초과 + out-of-order 회피 위해 2026-05-26 timestamp 로 리네이밍` 헤더 주석 명시)
+- `V20260606_007__admin_request_idempotency.sql` (옵션 B v2.0 Path 1, 원본 V20260528_007 — debugger 보고서 `OPTION_B_V2_DEV_CHECKOUT_FAILURE_DEBUG.md` §3·§4 옵션 B)
+
+**PR 작성 전 검증 절차 (필수)**:
+
+```bash
+# 1) develop tip 기준 로컬 빌드의 Flyway 상태 확인 (선택)
+./mvnw flyway:info -Dspring.profiles.active=local
+
+# 2) dev/운영 MySQL 의 현재 MAX 버전 직접 조회 (deployer 협조 — read-only)
+ssh root@beta0629.cafe24.com '
+  source /etc/mindgarden/dev.env;
+  mysql -h "$DB_HOST" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e
+    "SELECT MAX(version), MAX(installed_on) FROM flyway_schema_history;"'
+
+# 3) 운영 (반영 직전)
+ssh root@beta74.cafe24.com '
+  source /etc/mindgarden/prod.env;
+  mysql -h "$DB_HOST" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e
+    "SELECT MAX(version), MAX(installed_on) FROM flyway_schema_history;"'
+```
+
+→ 위 결과의 MAX(version) 보다 **큰** timestamp (`YYYYMMDD` 자리)로 신규 파일 명명. 일치/하위 timestamp 는 절대 금지.
+
+**rename 핫픽스 절차** (이미 머지된 신규 마이그가 dev/운영 MAX 보다 낮아 skip 된 경우):
+
+```bash
+# 신규 파일을 dev/운영 MAX 초과 timestamp 로 git mv
+git mv src/main/resources/db/migration/V{기존}__{설명}.sql \
+       src/main/resources/db/migration/V{신규}__{설명}.sql
+
+# 헤더에 rename 사유 주석 추가 (SQL 내용은 100% 동일 — CREATE TABLE IF NOT EXISTS 멱등이라 dev 의 옵션 A 수동 row 와 충돌 0)
+# ⚠️ 원본 버전: V{기존} (... 사유 ...)
+# ⚠️ rename 사유: flyway_schema_history MAX 가 ... 라 out-of-order silently skip
+# ⚠️ 동일 사이트 선례: V20260510_005, V20260519_001, V20260526_001~003, V20260606_007.
+# ⚠️ SQL 내용은 원본과 100% 동일 — out-of-order 회피 timestamp 리네이밍만.
+```
+
+**롤백 영향**: rename 만이므로 SQL 내용 변경 0. dev 에 옵션 A (수동 SQL) 가 선적용된 경우라도 `CREATE TABLE IF NOT EXISTS` 멱등으로 무영향. `flyway_schema_history` 에는 새 row (success=1) 가 추가되고, 옵션 A 의 수동 row 는 그대로 잔존 (version 이 달라서 conflict 없음).
 
 ### 3. 설명 작성 규칙
 
@@ -518,5 +570,5 @@ INSERT INTO common_codes (
 - 백엔드 팀
 - 데이터베이스 팀
 
-**최종 업데이트**: 2025-12-03
+**최종 업데이트**: 2026-05-28 (§2 방식 2 out-of-order 회피 룰 신설)
 

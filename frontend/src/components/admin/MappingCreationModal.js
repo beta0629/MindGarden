@@ -20,7 +20,6 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Avatar from '../common/Avatar';
 import BadgeSelect from '../common/BadgeSelect';
-import { DEFAULT_MAPPING_CONFIG } from '../../constants/mapping';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';

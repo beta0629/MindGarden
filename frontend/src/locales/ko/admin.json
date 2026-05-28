@@ -1985,7 +1985,9 @@
     "paymentTiming": {
       "title": "결제 방식",
       "advance": "선납 입금 (현행 흐름)",
+      "advanceDesc": "매칭 확정 전 입금 확인",
       "sameDayCard": "사후 카드 결제 (당일 방문)",
+      "sameDayCardDesc": "당일 방문 시 카드 결제",
       "sameDayCardHint": "매칭은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 카드 결제 모달에서 결제하면 매칭이 활성화되고 회기 1회가 자동 차감됩니다.",
       "sameDayCardCompletionNotice": "결제 대기 매칭이 생성되었습니다. 곧 열리는 당일 카드 결제 모달에서 결제 정보를 입력해 매칭을 활성화하세요."
     }

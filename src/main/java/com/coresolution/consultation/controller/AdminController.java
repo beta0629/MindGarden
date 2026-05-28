@@ -57,7 +57,9 @@ import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.util.PaginationUtils;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -84,6 +86,18 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AdminController extends BaseApiController {
+
+    /**
+     * 어드민 상담일지 조회 전용 최대 페이지 크기 상수.
+     *
+     * <p>전역 {@link PaginationUtils#MAX_PAGE_SIZE}(20) 캡으로 인해 발생한
+     * "4월 데이터 미노출" P0 인시던트(2026-05-29)를 해소하기 위해 본 엔드포인트
+     * ({@code GET /api/v1/admin/consultation-records})에 한해서만 캡을 200 으로 상향.
+     * 참고: {@code docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md}.</p>
+     *
+     * @since 2026-05-29
+     */
+    private static final int ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE = 200;
 
     private final AdminService adminService;
     private final BranchService branchService;
@@ -3197,16 +3211,34 @@ public class AdminController extends BaseApiController {
 
 
     /**
-     * 관리자용 상담일지 목록 조회
+     * 관리자용 상담일지 목록 조회.
+     *
+     * <p>P0 핫픽스 (2026-05-29): {@code startDate}/{@code endDate} 쿼리 파라미터를 추가하여
+     * 백엔드 단에서 기간 필터를 적용한다. 또한 본 엔드포인트에 한해 페이지 크기 캡을
+     * {@link #ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE}(200) 로 상향하여
+     * {@link PaginationUtils#MAX_PAGE_SIZE}(20) 캡으로 인한 과거 데이터 미노출 회귀를 방지한다.
+     * 참고: {@code docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md}.</p>
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param clientId 내담자 ID (nullable)
+     * @param startDate 세션 일자 시작 (ISO-8601, nullable)
+     * @param endDate 세션 일자 종료 (ISO-8601, nullable)
+     * @param page 페이지 번호 (0-base)
+     * @param size 페이지 크기 (1~200, 초과 시 200 으로 캡)
+     * @param session HTTP 세션 (현재 사용자/테넌트 추출)
+     * @return 페이징된 상담일지 목록
      */
     @GetMapping("/consultation-records")
     public ResponseEntity<Map<String, Object>> getConsultationRecords(
             @RequestParam(required = false) Long consultantId,
             @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
         try {
-            log.info("📝 관리자용 상담일지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
+            log.info("📝 관리자용 상담일지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}, 기간: {}~{}, page={}, size={}",
+                    consultantId, clientId, startDate, endDate, page, size);
 
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
@@ -3230,12 +3262,17 @@ public class AdminController extends BaseApiController {
                 com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
             }
 
-            org.springframework.data.domain.Pageable pageable =
-                    PaginationUtils.createPageable(page, size);
+            int validPage = Math.max(0, page);
+            int validSize = Math.min(Math.max(1, size), ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE);
+            if (size > ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE) {
+                log.warn("⚠️ 어드민 상담일지 조회 페이지 크기 캡 적용: 요청값={}, 제한값={}",
+                        size, validSize);
+            }
+            Pageable pageable = PageRequest.of(validPage, validSize);
 
-            org.springframework.data.domain.Page<com.coresolution.consultation.entity.ConsultationRecord> consultationRecords =
+            Page<ConsultationRecord> consultationRecords =
                     consultationRecordService.getConsultationRecords(consultantId, clientId,
-                            pageable);
+                            startDate, endDate, pageable);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

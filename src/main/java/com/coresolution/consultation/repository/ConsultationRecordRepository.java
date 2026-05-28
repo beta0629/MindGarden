@@ -77,6 +77,35 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      * 테넌트 전체 상담일지 목록 조회 (관리자 상담 이력 전체 조회용)
      */
     Page<ConsultationRecord> findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Pageable pageable);
+
+    // ==================== 🔒 sessionDate BETWEEN 필터링 메서드 (P0 핫픽스 2026-05-29) ====================
+    // 어드민 상담일지 조회 — 기간 필터를 백엔드에서 적용하여
+    // MAX_PAGE_SIZE 캡으로 인한 4월 이전 데이터 미노출 회귀 방지.
+    // 참고: docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md
+
+    /**
+     * 테넌트 전체 상담일지 중 세션 일자 범위로 조회 (tenantId 격리)
+     */
+    Page<ConsultationRecord> findByTenantIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
+        String tenantId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 상담사 ID + 세션 일자 범위로 조회 (tenantId 격리)
+     */
+    Page<ConsultationRecord> findByTenantIdAndConsultantIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
+        String tenantId, Long consultantId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 내담자 ID + 세션 일자 범위로 조회 (tenantId 격리)
+     */
+    Page<ConsultationRecord> findByTenantIdAndClientIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
+        String tenantId, Long clientId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 상담사 ID + 내담자 ID + 세션 일자 범위로 조회 (tenantId 격리)
+     */
+    Page<ConsultationRecord> findByTenantIdAndConsultantIdAndClientIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
+        String tenantId, Long consultantId, Long clientId, LocalDate startDate, LocalDate endDate, Pageable pageable);
     
     /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 상담 기록 노출!

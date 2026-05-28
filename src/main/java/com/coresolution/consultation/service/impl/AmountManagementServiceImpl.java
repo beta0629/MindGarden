@@ -40,21 +40,24 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     @Transactional(readOnly = true)
     public Long getAccurateTransactionAmount(ConsultantClientMapping mapping) {
         log.info("💰 정확한 거래 금액 결정: MappingID={}", mapping.getId());
-        
-        // 1. packagePrice 우선 (가장 정확한 패키지 가격)
-        if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
+
+        // P1-2 (DB M3, 2026-05-28): package=0|null & payment>0 패턴 8건이 accurateAmount=0
+        // 으로 잘못 보고되던 결함 fix. null/0 동일하게 "유효하지 않음"으로 간주하고
+        // packagePrice 가 양수일 때만 우선, 그 외에는 paymentAmount 가 양수면 fallback.
+        boolean packageValid = mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0;
+        boolean paymentValid = mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0;
+
+        if (packageValid) {
             log.info("✅ PackagePrice 사용: {}원", mapping.getPackagePrice());
             return mapping.getPackagePrice();
         }
-        
-        // 2. paymentAmount 백업 (입금 확인 시 입력된 금액)
-        if (mapping.getPaymentAmount() != null && mapping.getPaymentAmount() > 0) {
-            log.warn("⚠️ PaymentAmount 사용 (PackagePrice 없음): {}원", mapping.getPaymentAmount());
+
+        if (paymentValid) {
+            log.warn("⚠️ PaymentAmount 사용 (PackagePrice 미설정 또는 0): {}원", mapping.getPaymentAmount());
             return mapping.getPaymentAmount();
         }
-        
-        // 3. 기본값 없음 - 오류
-        log.error("❌ 유효한 금액이 없습니다: PackagePrice={}, PaymentAmount={}", 
+
+        log.error("❌ 유효한 금액이 없습니다: PackagePrice={}, PaymentAmount={}",
             mapping.getPackagePrice(), mapping.getPaymentAmount());
         return null;
     }

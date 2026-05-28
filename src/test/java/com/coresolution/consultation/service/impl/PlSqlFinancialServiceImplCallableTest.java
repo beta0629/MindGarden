@@ -88,7 +88,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class GetBranchFinancialBreakdownTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL GetBranchFinancialBreakdown(?, ?, ?, @p_success, @p_message, @p_breakdown_data)}";
+                "{CALL GetBranchFinancialBreakdown(?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: tenant + 기간 valid → SSOT 시그니처 + OUT(4-6) 등록")
@@ -132,7 +132,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class GetMonthlyFinancialTrendTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL GetMonthlyFinancialTrend(?, ?, ?, @p_success, @p_message, @p_trend_data)}";
+                "{CALL GetMonthlyFinancialTrend(?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: tenant + 기간 valid → SSOT 시그니처 + OUT(4-6) 등록")
@@ -173,7 +173,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class GetCategoryFinancialBreakdownTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL GetCategoryFinancialBreakdown(?, ?, ?, @p_success, @p_message, @p_breakdown_data)}";
+                "{CALL GetCategoryFinancialBreakdown(?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: tenant + 기간 valid → SSOT 시그니처 + OUT(4-6) 등록")
@@ -214,7 +214,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class GenerateQuarterlyFinancialReportTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL GenerateQuarterlyFinancialReport(?, ?, ?, @p_success, @p_message, @p_report_data)}";
+                "{CALL GenerateQuarterlyFinancialReport(?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: year+quarter+tenant → SSOT 시그니처 + OUT(4-6) 등록")
@@ -258,9 +258,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class CalculateFinancialKPIsTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL CalculateFinancialKPIs(?, ?, ?, @p_success, @p_message, @p_total_revenue,"
-                        + " @p_total_expenses, @p_net_profit, @p_total_transactions, @p_profit_margin,"
-                        + " @p_avg_transaction_value)}";
+                "{CALL CalculateFinancialKPIs(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: tenant + 기간 valid → SSOT 11파라미터 시그니처 + OUT(4-11) 등록")

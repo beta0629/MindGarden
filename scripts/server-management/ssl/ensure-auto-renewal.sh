@@ -2,11 +2,32 @@
 
 # SSL 인증서 자동 갱신 설정 점검 및 수정 스크립트
 # 개발/운영 서버에서 실행
-# 사용법: sudo ./ensure-auto-renewal.sh [dev|prod]
+# 사용법: sudo ./ensure-auto-renewal.sh [dev|prod] [--skip-acmedns] [--dry-run]
+#
+# Phase A (2026-05-28) 추가: acme-dns 의존성 점검 섹션 (#5)
+#   설계서: docs/project-management/2026-05-28/SSL_WILDCARD_ACMEDNS_AUTO_RENEW_HANDOFF.md
+#   - acme-dns systemd active
+#   - 53/UDP listen
+#   - HTTP API /health 200
+#   - /etc/letsencrypt/acmedns.json 존재 + 권한
 
 set -e
 
-MODE="${1:-dev}"
+MODE="dev"
+SKIP_ACMEDNS=0
+DRY_RUN=0
+for arg in "$@"; do
+    case "$arg" in
+        dev|prod) MODE="$arg" ;;
+        --skip-acmedns) SKIP_ACMEDNS=1 ;;
+        --dry-run) DRY_RUN=1 ;;
+        -h|--help) grep '^#' "$0" | head -15; exit 0 ;;
+        *) echo "알 수 없는 옵션: $arg" >&2; exit 2 ;;
+    esac
+done
+
+ACMEDNS_API_BIND="${ACMEDNS_API_BIND:-127.0.0.1:8053}"
+ACMEDNS_CREDENTIALS="${ACMEDNS_CREDENTIALS:-/etc/letsencrypt/acmedns.json}"
 
 echo "=========================================="
 echo "SSL 자동 갱신 설정 점검 ($MODE)"
@@ -44,7 +65,9 @@ echo ""
 
 # 3. Dry-run 갱신 테스트
 echo "3. 갱신 시뮬레이션 (certbot renew --dry-run)"
-if sudo certbot renew --dry-run 2>&1 | tee /tmp/certbot-dryrun.log; then
+if [ "$DRY_RUN" -eq 1 ]; then
+    echo "   [dry-run] certbot renew --dry-run 실행 생략"
+elif sudo certbot renew --dry-run 2>&1 | tee /tmp/certbot-dryrun.log; then
     echo ""
     echo "   ✅ 모든 인증서 갱신 시뮬레이션 성공"
 else
@@ -57,6 +80,73 @@ echo ""
 # 4. 만료 예정 인증서
 echo "4. 만료 30일 이내 인증서"
 sudo certbot certificates 2>/dev/null | grep -A 2 "EXPIRED\|INVALID\|VALID" || echo "   (확인 완료)"
+echo ""
+
+# 5. acme-dns 의존성 점검 (Phase A 2026-05-28 추가)
+echo "5. acme-dns 의존성 점검"
+if [ "$SKIP_ACMEDNS" -eq 1 ]; then
+    echo "   (skip: --skip-acmedns)"
+elif ! command -v systemctl >/dev/null 2>&1; then
+    echo "   (skip: systemctl 미지원 환경)"
+else
+    ACMEDNS_OK=1
+    # 5a) systemd active
+    if systemctl is-active --quiet acme-dns.service 2>/dev/null; then
+        echo "   ✅ acme-dns systemd active"
+    else
+        echo "   ❌ acme-dns systemd 비활성. journalctl -u acme-dns -n 50"
+        ACMEDNS_OK=0
+    fi
+    # 5b) 53/UDP listen
+    if command -v ss >/dev/null 2>&1; then
+        if ss -ulnp 2>/dev/null | grep -q ':53 '; then
+            echo "   ✅ 53/UDP listen 확인"
+        else
+            echo "   ❌ 53/UDP listen 미확인. ss -ulnp | grep :53"
+            ACMEDNS_OK=0
+        fi
+    else
+        echo "   (skip: ss 미설치)"
+    fi
+    # 5c) HTTP API /health
+    if command -v curl >/dev/null 2>&1; then
+        if curl -fsS --max-time 5 "http://${ACMEDNS_API_BIND}/health" >/dev/null 2>&1; then
+            echo "   ✅ HTTP API /health 200 OK (http://${ACMEDNS_API_BIND}/health)"
+        else
+            echo "   ❌ HTTP API /health 실패. curl http://${ACMEDNS_API_BIND}/health"
+            ACMEDNS_OK=0
+        fi
+    fi
+    # 5d) acmedns.json
+    if [ -f "${ACMEDNS_CREDENTIALS}" ]; then
+        PERM=$(stat -c '%a' "${ACMEDNS_CREDENTIALS}" 2>/dev/null || stat -f '%Lp' "${ACMEDNS_CREDENTIALS}" 2>/dev/null || echo "?")
+        OWNER=$(stat -c '%U' "${ACMEDNS_CREDENTIALS}" 2>/dev/null || stat -f '%Su' "${ACMEDNS_CREDENTIALS}" 2>/dev/null || echo "?")
+        if [ "$PERM" = "600" ] && [ "$OWNER" = "root" ]; then
+            echo "   ✅ ${ACMEDNS_CREDENTIALS} 존재 (perm=${PERM}, owner=${OWNER})"
+        else
+            echo "   ⚠️  ${ACMEDNS_CREDENTIALS} 권한/소유자 비정상 (perm=${PERM}, owner=${OWNER}). 권장: 600/root"
+            ACMEDNS_OK=0
+        fi
+    else
+        echo "   ⚠️  ${ACMEDNS_CREDENTIALS} 미존재. register-acme-dns-domain.sh <domain> 으로 생성"
+        ACMEDNS_OK=0
+    fi
+    # 5e) acme-dns-backup.timer
+    if systemctl list-unit-files 2>/dev/null | grep -q 'acme-dns-backup.timer'; then
+        if systemctl is-active --quiet acme-dns-backup.timer 2>/dev/null; then
+            echo "   ✅ acme-dns-backup.timer active"
+        else
+            echo "   ⚠️  acme-dns-backup.timer 비활성. systemctl enable --now acme-dns-backup.timer"
+        fi
+    else
+        echo "   ⚠️  acme-dns-backup.timer 미등록. config/systemd/acme-dns-backup.{service,timer} 설치 필요"
+    fi
+    if [ "$ACMEDNS_OK" -eq 1 ]; then
+        echo "   ✅ acme-dns 의존성 점검 PASS"
+    else
+        echo "   ❌ acme-dns 의존성 점검 FAIL → 위 항목 조치 필요"
+    fi
+fi
 echo ""
 
 echo "=========================================="

@@ -1,0 +1,17 @@
+[Unit]
+Description=acme-dns SQLite backup (daily, 7-day rolling)
+Documentation=file:///root/mindGarden/docs/project-management/2026-05-28/SSL_WILDCARD_ACMEDNS_AUTO_RENEW_HANDOFF.md
+Requires=acme-dns.service
+After=acme-dns.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/local/bin/backup-acme-dns-sqlite.sh --verify
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=acme-dns-backup
+
+[Install]
+WantedBy=multi-user.target

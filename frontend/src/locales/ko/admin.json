@@ -468,6 +468,7 @@
   "lnb": {
     "aiProviderManagement": "AI 프로바이더 관리",
     "dashboard": "대시보드",
+    "integratedSchedule": "통합 스케줄",
     "sessions": "세션 관리",
     "consultations": "상담 관리",
     "clients": "내담자 관리",
@@ -490,9 +491,67 @@
     "statistics": "통계",
     "reports": "리포트",
     "settings": "설정",
-    "notifications": "알림 관리",
     "payments": "결제 관리",
     "refunds": "환불 관리",
+    "notifications": {
+      "group": "알림·메시지",
+      "consultationLogs": "상담일지"
+    },
+    "groups": {
+      "matchingPaymentRefund": "매칭·결제·환불",
+      "userManagement": "사용자 관리",
+      "contentCommunity": "콘텐츠·커뮤니티",
+      "shopReward": "쇼핑·리워드",
+      "operationFinanceErp": "운영·재무 ERP",
+      "systemSettings": "시스템·설정"
+    },
+    "matchingPaymentRefund": {
+      "mapping": "매칭 관리(환불·취소)",
+      "subscriptions": "결제/구독 관리",
+      "paymentMethods": "결제 수단",
+      "pgApproval": "PG 승인(운영)"
+    },
+    "userManagement": {
+      "list": "사용자 목록",
+      "accounts": "계좌 관리",
+      "withdrawalDormant": "탈퇴 대기/휴면"
+    },
+    "contentCommunity": {
+      "communityModeration": "커뮤니티 검수큐",
+      "contentMaster": "심리교육·힐링 마스터",
+      "mindWeatherObservability": "마음 날씨 관측",
+      "mindGardenObservability": "마음 정원 관측",
+      "pushMonitoring": "푸시 설정 모니터링"
+    },
+    "shopReward": {
+      "catalog": "상품(SKU) 관리",
+      "pointPolicies": "리워드 정책",
+      "orders": "온라인 주문"
+    },
+    "operationFinanceErp": {
+      "dashboard": "운영 현황",
+      "purchase": "조달·품목",
+      "financial": "거래·정산",
+      "budget": "예산 관리",
+      "salary": "급여 관리",
+      "approvals": "승인 센터"
+    },
+    "systemSettings": {
+      "tenantProfile": "테넌트 프로필",
+      "branding": "브랜딩",
+      "systemConfig": "시스템 설정",
+      "commonCodes": "공통코드",
+      "tenantCommonCodes": "테넌트 공통코드",
+      "pgConfig": "PG 설정",
+      "aiProvider": "AI 프로바이더",
+      "packagePricing": "패키지 요금 관리",
+      "kakaoAlimtalk": "카카오 알림톡",
+      "tenantSms": "문자 메시지(SMS)",
+      "testNotification": "알림 테스트 발송",
+      "manualNotification": "수동 알림 발송",
+      "smsTemplates": "SMS 템플릿 관리",
+      "compliance": "컴플라이언스"
+    },
     "billing": {
       "group": "결제/구독",
       "subscriptions": "구독 관리",

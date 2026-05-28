@@ -15,24 +15,46 @@ import java.util.Map;
  * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
  */
 public interface AccountingService {
-    
+
     /**
-     * 분개 생성
-     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 분개 생성.
+     * <p>
+     * 응답 직렬화 시 {@link AccountingEntry#getLines()} LAZY 컬렉션 접근으로
+     * {@code LazyInitializationException} 이 발생하지 않도록 트랜잭션 경계 안에서
+     * DTO 로 매핑하여 반환한다. 변경계 GET sweep (PR #19) 과 동일 패턴.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param entry    분개 엔티티 (요청 변환 결과)
+     * @param lines    분개 라인 목록
+     * @return 생성된 분개 상세 DTO (라인 포함)
      */
-    AccountingEntry createJournalEntry(String tenantId, AccountingEntry entry, List<JournalEntryLine> lines);
-    
+    AccountingEntryDetailDto createJournalEntry(String tenantId, AccountingEntry entry,
+            List<JournalEntryLine> lines);
+
     /**
-     * 분개 승인
-     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 분개 승인.
+     * <p>
+     * 응답 직렬화 시 LAZY 회피를 위해 트랜잭션 경계 안에서 DTO 로 매핑한다.
+     *
+     * @param tenantId   테넌트 ID (필수)
+     * @param entryId    분개 ID
+     * @param approverId 승인자 ID (null 허용 — 자동승인)
+     * @param comment    승인 코멘트
+     * @return 승인된 분개 상세 DTO (라인 포함)
      */
-    AccountingEntry approveJournalEntry(String tenantId, Long entryId, Long approverId, String comment);
-    
+    AccountingEntryDetailDto approveJournalEntry(String tenantId, Long entryId, Long approverId,
+            String comment);
+
     /**
-     * 분개 전기 (원장 자동 생성)
-     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 분개 전기 (원장 자동 생성).
+     * <p>
+     * 응답 직렬화 시 LAZY 회피를 위해 트랜잭션 경계 안에서 DTO 로 매핑한다.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param entryId  분개 ID
+     * @return 전기된 분개 상세 DTO (라인 포함)
      */
-    AccountingEntry postJournalEntry(String tenantId, Long entryId);
+    AccountingEntryDetailDto postJournalEntry(String tenantId, Long entryId);
     
     /**
      * 분개 목록 조회.
@@ -64,10 +86,18 @@ public interface AccountingService {
     AccountingEntry createJournalEntryFromTransaction(FinancialTransaction transaction);
     
     /**
-     * 분개 수정 (DRAFT 상태에서만 가능)
-     * 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
+     * 분개 수정 (DRAFT 상태에서만 가능).
+     * <p>
+     * 응답 직렬화 시 LAZY 회피를 위해 트랜잭션 경계 안에서 DTO 로 매핑한다.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param entryId  분개 ID (DRAFT 상태여야 함)
+     * @param entry    수정할 분개 엔티티 (요청 변환 결과)
+     * @param lines    교체할 분개 라인 목록
+     * @return 수정된 분개 상세 DTO (라인 포함)
      */
-    AccountingEntry updateJournalEntry(String tenantId, Long entryId, AccountingEntry entry, List<JournalEntryLine> lines);
+    AccountingEntryDetailDto updateJournalEntry(String tenantId, Long entryId,
+            AccountingEntry entry, List<JournalEntryLine> lines);
 
     /**
      * INCOME 거래 백필: 해당 테넌트의 financial_transactions(INCOME, 미삭제)에 대해 분개가 없으면 생성.

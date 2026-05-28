@@ -63,7 +63,25 @@ public class AccountingServiceImpl implements AccountingService {
 
     @Override
     @Transactional
-    public AccountingEntry createJournalEntry(String tenantId, AccountingEntry entry,
+    public AccountingEntryDetailDto createJournalEntry(String tenantId, AccountingEntry entry,
+            List<JournalEntryLine> lines) {
+        AccountingEntry created = doCreateJournalEntry(tenantId, entry, lines);
+        return mapEntryWithLinesToDto(tenantId, created.getId());
+    }
+
+    /**
+     * 분개 생성 내부 구현 (엔티티 반환).
+     * <p>
+     * 외부 API 응답에는 DTO 가 반환되지만, 동일 트랜잭션 안에서 생성된 엔티티의 ID 를
+     * 즉시 사용해야 하는 내부 호출(예: {@link #createJournalEntryFromTransaction})을 위해
+     * 분리한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param entry    분개 엔티티
+     * @param lines    분개 라인 목록
+     * @return 저장된 분개 엔티티
+     */
+    private AccountingEntry doCreateJournalEntry(String tenantId, AccountingEntry entry,
             List<JournalEntryLine> lines) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
         // 1. 차변/대변 합계 계산
@@ -110,7 +128,16 @@ public class AccountingServiceImpl implements AccountingService {
 
     @Override
     @Transactional
-    public AccountingEntry approveJournalEntry(String tenantId, Long entryId, Long approverId,
+    public AccountingEntryDetailDto approveJournalEntry(String tenantId, Long entryId,
+            Long approverId, String comment) {
+        AccountingEntry approved = doApproveJournalEntry(tenantId, entryId, approverId, comment);
+        return mapEntryWithLinesToDto(tenantId, approved.getId());
+    }
+
+    /**
+     * 분개 승인 내부 구현 (엔티티 반환). 자동 승인·전기 등 내부 호출 경로 보존용.
+     */
+    private AccountingEntry doApproveJournalEntry(String tenantId, Long entryId, Long approverId,
             String comment) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
         AccountingEntry entry = accountingEntryRepository.findByTenantIdAndId(tenantId, entryId)
@@ -140,7 +167,15 @@ public class AccountingServiceImpl implements AccountingService {
 
     @Override
     @Transactional
-    public AccountingEntry postJournalEntry(String tenantId, Long entryId) {
+    public AccountingEntryDetailDto postJournalEntry(String tenantId, Long entryId) {
+        AccountingEntry posted = doPostJournalEntry(tenantId, entryId);
+        return mapEntryWithLinesToDto(tenantId, posted.getId());
+    }
+
+    /**
+     * 분개 전기 내부 구현 (엔티티 반환). 자동 전기 등 내부 호출 경로 보존용.
+     */
+    private AccountingEntry doPostJournalEntry(String tenantId, Long entryId) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
         AccountingEntry entry = accountingEntryRepository.findByTenantIdAndId(tenantId, entryId)
                 .orElseThrow(() -> new IllegalArgumentException("분개를 찾을 수 없습니다: " + entryId));
@@ -474,13 +509,13 @@ public class AccountingServiceImpl implements AccountingService {
                 return null;
             }
 
-            // 3. 분개 저장
-            AccountingEntry saved = createJournalEntry(tenantId, entry, lines);
+            // 3. 분개 저장 (내부 헬퍼 사용 — entity 그대로 받아 자동 승인·전기에 즉시 활용)
+            AccountingEntry saved = doCreateJournalEntry(tenantId, entry, lines);
 
             // 4. 자동 생성 분개: 승인 후 전기하여 원장에 반영 (재무제표 노출을 위해 필수)
             try {
-                approveJournalEntry(tenantId, saved.getId(), null, "자동승인(결제/입금연동)");
-                postJournalEntry(tenantId, saved.getId());
+                doApproveJournalEntry(tenantId, saved.getId(), null, "자동승인(결제/입금연동)");
+                doPostJournalEntry(tenantId, saved.getId());
             } catch (Exception e) {
                 log.error(
                         "분개 전기 실패: 원장 미반영. entryId={}, entryNumber={}, transactionId={}, tenantId={}. "
@@ -766,6 +801,27 @@ public class AccountingServiceImpl implements AccountingService {
     }
 
     /**
+     * 분개 ID 로 lines 까지 함께 로딩한 엔티티를 다시 fetch 하여 상세 DTO 로 매핑.
+     * <p>
+     * 변경계 4 endpoint(create/approve/post/update) 응답 직렬화 시 LAZY 컬렉션
+     * 접근으로 발생하는 {@code LazyInitializationException} 을 회피하기 위해
+     * 동일 트랜잭션 안에서 {@code findByTenantIdAndIdWithLines} (LEFT JOIN FETCH)
+     * 로 재로딩 후 DTO 매핑한다. 직전 GET sweep (PR #19) 과 동일 패턴.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param entryId  분개 ID
+     * @return 라인 포함 상세 DTO
+     * @throws IllegalStateException entry 가 존재하지 않을 때 (write 직후 호출이라 실제로는 발생하지 않음)
+     */
+    private AccountingEntryDetailDto mapEntryWithLinesToDto(String tenantId, Long entryId) {
+        AccountingEntry refreshed = accountingEntryRepository
+                .findByTenantIdAndIdWithLines(tenantId, entryId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "분개 저장 직후 재조회 실패: tenantId=" + tenantId + ", entryId=" + entryId));
+        return AccountingEntryDetailDto.fromEntity(refreshed);
+    }
+
+    /**
      * 분개 번호 생성 (테넌트별 독립 채번) 형식: JE-{tenantId}-{YYYY}-{sequence} 표준 문서:
      * docs/standards/ERP_ADVANCEMENT_STANDARD.md
      */
@@ -782,8 +838,18 @@ public class AccountingServiceImpl implements AccountingService {
 
     @Override
     @Transactional
-    public AccountingEntry updateJournalEntry(String tenantId, Long entryId, AccountingEntry entry,
-            List<JournalEntryLine> lines) {
+    public AccountingEntryDetailDto updateJournalEntry(String tenantId, Long entryId,
+            AccountingEntry entry, List<JournalEntryLine> lines) {
+        AccountingEntry updated = doUpdateJournalEntry(tenantId, entryId, entry, lines);
+        return mapEntryWithLinesToDto(tenantId, updated.getId());
+    }
+
+    /**
+     * 분개 수정 내부 구현 (엔티티 반환). 외부 응답은 DTO 로 노출되지만, 향후 내부 호출 확장
+     * 경로(예: 자동 정정·재계산) 대비로 분리한다.
+     */
+    private AccountingEntry doUpdateJournalEntry(String tenantId, Long entryId,
+            AccountingEntry entry, List<JournalEntryLine> lines) {
         // 0. 테넌트 컨텍스트 검증
         String currentTenantId = TenantContextHolder.getTenantId();
         if (currentTenantId == null || !currentTenantId.equals(tenantId)) {

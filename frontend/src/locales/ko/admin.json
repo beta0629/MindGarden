@@ -2587,6 +2587,9 @@
         "submit": "당일 결제 + 매칭 활성화",
         "cancel": "취소",
         "success": "당일 카드 결제가 완료되고 매칭이 활성화되었습니다.",
+        "alreadyProcessed": {
+          "info": "이미 처리 중입니다. 새 매칭 카드로 확인하세요."
+        },
         "error": {
           "noMapping": "결제 대상 매칭이 선택되지 않았습니다.",
           "missingMethod": "결제 방식을 선택해주세요.",
@@ -2713,6 +2716,9 @@
       "toggleAria": "안내 영역 토글",
       "expandAria": "안내 영역 펼치기",
       "collapseAria": "안내 영역 접기"
+    },
+    "tentativeReserved": {
+      "info": "가예약 일정이 등록되었습니다. 방문 시 사이드바 카드의 「당일 결제 + 활성화」 버튼으로 결제하세요."
     }
   },
   "aiProvider": {

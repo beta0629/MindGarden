@@ -49,7 +49,8 @@ import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import {
   shouldAutoOpenCheckoutSameDayAfterSchedule,
-  buildSameDayCardCheckoutMapping
+  buildSameDayCardCheckoutMapping,
+  resolveMappingCreatedFollowUp
 } from './utils/sameDayCardCheckoutUtils';
 import { buildMappingPaymentTimingLookup } from '../../schedule/utils/sameDayPendingEventDecorator';
 
@@ -295,23 +296,14 @@ const IntegratedMatchingSchedule = () => {
   const handleMappingCreated = (result) => {
     setCreateMappingModalOpen(false);
     loadMappings();
-    // 옵션 B 사후 카드 분기: 생성된 PENDING_PAYMENT 매핑을 받아 CheckoutSameDayModal 자동 오픈.
-    // P0 핫픽스 2026-05-28: 매핑 정보가 누락된 경우 모달 자동 진입을 차단해 NPE/표시 오류를 막는다.
-    if (result && result.paymentTiming === 'SAME_DAY_CARD' && result.mappingId) {
-      if (!result.consultantId || !result.packageName) {
-        notificationManager.error('매칭 정보가 누락되어 결제 모달을 열 수 없습니다.');
-        return;
-      }
-      setCheckoutSameDayMapping({
-        id: result.mappingId,
-        consultantId: result.consultantId,
-        consultantName: result.consultantName,
-        clientId: result.clientId,
-        clientName: result.clientName,
-        packageName: result.packageName,
-        packagePrice: result.packagePrice ?? null,
-        totalSessions: result.totalSessions ?? null
-      });
+    // P0 핫픽스 2026-05-28 (사용자 보고): 옵션 B SAME_DAY_CARD 신규 매칭 생성 직후 CheckoutSameDayModal 자동 오픈 제거.
+    // 사용자 의도: 매칭 생성 → 모달 닫힘 → 사이드바에서 직접 트리거(드래그 → 일정 생성 모달 또는 "당일 결제 + 활성화" 버튼).
+    // PR #50 의 의도된 자동 진입(드래그 → 일정 생성 → handleScheduleCreated → CheckoutSameDayModal) 은 유지된다.
+    const { shouldShowSameDayCardGuidance } = resolveMappingCreatedFollowUp(result);
+    if (shouldShowSameDayCardGuidance) {
+      notificationManager.info(
+        '매칭이 생성되었습니다. 사이드바에서 일정을 예약하거나 「당일 결제 + 활성화」를 진행해 주세요.'
+      );
     }
   };
 

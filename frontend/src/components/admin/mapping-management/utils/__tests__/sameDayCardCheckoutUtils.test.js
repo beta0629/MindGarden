@@ -10,7 +10,8 @@
 
 import {
   shouldAutoOpenCheckoutSameDayAfterSchedule,
-  buildSameDayCardCheckoutMapping
+  buildSameDayCardCheckoutMapping,
+  resolveMappingCreatedFollowUp
 } from '../sameDayCardCheckoutUtils';
 
 describe('shouldAutoOpenCheckoutSameDayAfterSchedule', () => {
@@ -142,5 +143,67 @@ describe('buildSameDayCardCheckoutMapping', () => {
     const result = buildSameDayCardCheckoutMapping(minimalPrefill);
     expect(result.packagePrice).toBeNull();
     expect(result.totalSessions).toBeNull();
+  });
+});
+
+describe('resolveMappingCreatedFollowUp (P0 핫픽스 2026-05-28 회귀 가드)', () => {
+  // 사용자 보고: 매칭 생성 직후 CheckoutSameDayModal 자동 진입을 영구 제거하고
+  // 사이드바 드래그 / "당일 결제 + 활성화" 트리거로 일원화한다.
+  test('SAME_DAY_CARD + mappingId → 자동 모달 진입은 항상 false, 가이드 토스트는 true', () => {
+    const result = resolveMappingCreatedFollowUp({
+      paymentTiming: 'SAME_DAY_CARD',
+      mappingId: 9001,
+      consultantId: 11,
+      packageName: '10회기 패키지'
+    });
+    expect(result).toEqual({
+      shouldOpenCheckoutModal: false,
+      shouldShowSameDayCardGuidance: true
+    });
+  });
+
+  test('ADVANCE 결제 → 자동 모달·가이드 토스트 모두 false', () => {
+    const result = resolveMappingCreatedFollowUp({
+      paymentTiming: 'ADVANCE',
+      mappingId: 9001
+    });
+    expect(result.shouldOpenCheckoutModal).toBe(false);
+    expect(result.shouldShowSameDayCardGuidance).toBe(false);
+  });
+
+  test('SAME_DAY_CARD 이지만 mappingId 누락 → 가이드 토스트도 false (방어)', () => {
+    const result = resolveMappingCreatedFollowUp({
+      paymentTiming: 'SAME_DAY_CARD'
+    });
+    expect(result.shouldShowSameDayCardGuidance).toBe(false);
+    expect(result.shouldOpenCheckoutModal).toBe(false);
+  });
+
+  test('회귀 가드: paymentTiming/mappingId 가 갖춰져도 shouldOpenCheckoutModal 은 절대 true 가 되지 않는다', () => {
+    // 추후 누군가 CheckoutSameDayModal 자동 진입을 다시 부활시키지 못하도록 명시 가드.
+    const result = resolveMappingCreatedFollowUp({
+      paymentTiming: 'SAME_DAY_CARD',
+      mappingId: 9001,
+      consultantId: 11,
+      packageName: '10회기 패키지',
+      packagePrice: 500000,
+      totalSessions: 10
+    });
+    expect(result.shouldOpenCheckoutModal).toBe(false);
+  });
+
+  test('null / undefined / 비객체 → 모두 false (안전)', () => {
+    expect(resolveMappingCreatedFollowUp(null)).toEqual({
+      shouldOpenCheckoutModal: false,
+      shouldShowSameDayCardGuidance: false
+    });
+    expect(resolveMappingCreatedFollowUp(undefined)).toEqual({
+      shouldOpenCheckoutModal: false,
+      shouldShowSameDayCardGuidance: false
+    });
+    expect(resolveMappingCreatedFollowUp('not-object')).toEqual({
+      shouldOpenCheckoutModal: false,
+      shouldShowSameDayCardGuidance: false
+    });
   });
 });

@@ -86,7 +86,9 @@ public class AccountingController extends BaseApiController {
         List<JournalEntryLine> lines = request.getLines().stream()
                 .map(JournalEntryLineRequest::toJournalEntryLine).toList();
 
-        AccountingEntry created = accountingService.createJournalEntry(tenantId, entry, lines);
+        // 응답 직렬화 시 lines LAZY 로 인한 LazyInitializationException 회피 → DTO 반환.
+        AccountingEntryDetailDto created = accountingService.createJournalEntry(tenantId, entry,
+                lines);
         return created(created);
     }
 
@@ -141,7 +143,8 @@ public class AccountingController extends BaseApiController {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("분개 승인 요청: tenantId={}, entryId={}", tenantId, id);
 
-        AccountingEntry approved = accountingService.approveJournalEntry(tenantId, id,
+        // 응답 직렬화 시 LAZY 회피 → DTO 반환.
+        AccountingEntryDetailDto approved = accountingService.approveJournalEntry(tenantId, id,
                 request.getApproverId(), request.getComment());
         return success("분개가 승인되었습니다.", approved);
     }
@@ -160,7 +163,8 @@ public class AccountingController extends BaseApiController {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("분개 전기 요청: tenantId={}, entryId={}", tenantId, id);
 
-        AccountingEntry posted = accountingService.postJournalEntry(tenantId, id);
+        // 응답 직렬화 시 LAZY 회피 → DTO 반환.
+        AccountingEntryDetailDto posted = accountingService.postJournalEntry(tenantId, id);
         return success("분개가 전기되었습니다. 원장이 자동으로 업데이트되었습니다.", posted);
     }
 
@@ -183,7 +187,9 @@ public class AccountingController extends BaseApiController {
         List<JournalEntryLine> lines = request.getLines().stream()
                 .map(JournalEntryLineRequest::toJournalEntryLine).toList();
 
-        AccountingEntry updated = accountingService.updateJournalEntry(tenantId, id, entry, lines);
+        // 응답 직렬화 시 LAZY 회피 → DTO 반환.
+        AccountingEntryDetailDto updated = accountingService.updateJournalEntry(tenantId, id, entry,
+                lines);
         return success("분개가 수정되었습니다.", updated);
     }
 

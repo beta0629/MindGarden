@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import jakarta.persistence.criteria.Predicate;
@@ -16,12 +17,17 @@ import com.coresolution.consultation.dto.FinancialDashboardResponse;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.dto.FinancialTransactionResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.erp.financial.FinancialPeriod;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
+import com.coresolution.consultation.entity.erp.financial.PeriodStatus;
+import com.coresolution.consultation.entity.erp.financial.PeriodType;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.PurchaseRequest;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.PeriodClosedException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialPeriodRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.PurchaseRequestRepository;
@@ -71,6 +77,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final FinancialPeriodRepository financialPeriodRepository;
 
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -181,7 +188,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         FinancialTransaction transaction = financialTransactionRepository
                 .findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
-        
+
+        // ERP P0-2 PR-B (합의서 §2 Q3): 마감된 기간(CLOSED) 의 거래 수정 차단.
+        // REOPENED 상태(HQ_ADMIN 재오픈 후)에서는 ADMIN 도 수정 가능 — 통과.
+        guardPeriodClosed(tenantId, transaction.getTransactionDate());
+
         if (transaction.isApproved()) {
             throw new RuntimeException("승인된 거래는 수정할 수 없습니다.");
         }
@@ -220,11 +231,44 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         FinancialTransaction transaction = financialTransactionRepository
                 .findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
-        
+
+        // ERP P0-2 PR-B (합의서 §2 Q3): 마감된 기간 의 거래 삭제 차단.
+        guardPeriodClosed(tenantId, transaction.getTransactionDate());
+
         transaction.setIsDeleted(true);
         financialTransactionRepository.save(transaction);
         
         log.info("✅ 회계 거래 삭제 완료: ID={}", id);
+    }
+
+    /**
+     * 거래일자가 닫힌(CLOSED) 기간에 속하면 {@link PeriodClosedException} throw.
+     *
+     * <p>합의서 §2 Q3 / Q6: HQ_ADMIN 재오픈 후 (status=REOPENED) 에는 ADMIN 도 수정 가능하므로
+     * REOPENED 는 가드를 통과시킨다. 본 코드베이스의 {@link UserRole} 은 ADMIN 만 존재하며
+     * HQ_ADMIN 은 ADMIN 으로 매핑되므로 {@link UserRole#isAdmin()} 통과 + REOPENED 통과로
+     * 합의서의 "HQ_ADMIN 재오픈 후 수정" 흐름이 성립한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param transactionDate 거래일자
+     */
+    private void guardPeriodClosed(String tenantId, LocalDate transactionDate) {
+        if (tenantId == null || tenantId.isEmpty() || transactionDate == null) {
+            return;
+        }
+        Optional<FinancialPeriod> closed = financialPeriodRepository
+                .findClosedByTenantIdAndDate(tenantId, transactionDate, PeriodType.DAY);
+        if (closed.isEmpty()) {
+            return;
+        }
+        FinancialPeriod period = closed.get();
+        if (period.getStatus() == PeriodStatus.REOPENED) {
+            log.info(
+                "[ErpFinancialClose] REOPENED 기간 거래 수정 통과: tenantId={} period={}~{} transactionDate={}",
+                tenantId, period.getPeriodStart(), period.getPeriodEnd(), transactionDate);
+            return;
+        }
+        throw new PeriodClosedException(period.getPeriodStart(), period.getPeriodEnd());
     }
     
     @Override

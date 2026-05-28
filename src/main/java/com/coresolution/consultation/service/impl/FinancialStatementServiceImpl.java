@@ -2,6 +2,9 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.erp.accounting.Ledger;
+import com.coresolution.consultation.entity.erp.financial.FinancialPeriod;
+import com.coresolution.consultation.entity.erp.financial.PeriodType;
+import com.coresolution.consultation.repository.erp.financial.FinancialPeriodRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
@@ -32,32 +35,66 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
 
     private final LedgerService ledgerService;
     private final CommonCodeService commonCodeService;
-    
+    private final FinancialPeriodRepository financialPeriodRepository;
+
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> generateIncomeStatement(String tenantId, LocalDate startDate, LocalDate endDate) {
         TenantIsolationValidator.requireTenantIdMatch(tenantId);
         log.info("손익계산서 생성: tenantId={}, startDate={}, endDate={}", tenantId, startDate, endDate);
-        
-        // 1. 기간별 원장 조회
-        List<Ledger> ledgers = ledgerService.getLedgersByPeriod(tenantId, startDate, endDate);
-        
-        // 2. 수익 계정 합계 (REVENUE)
-        BigDecimal totalRevenue = ledgers.stream()
-            .filter(l -> isRevenueAccount(l))
-            .map(l -> l.getTotalCredit().subtract(l.getTotalDebit()))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        // 3. 비용 계정 합계 (EXPENSES)
-        BigDecimal totalExpenses = ledgers.stream()
-            .filter(l -> isExpenseAccount(l))
-            .map(l -> l.getTotalDebit().subtract(l.getTotalCredit()))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        // 4. 순이익 계산
+
+        // ERP P0-2 PR-B (합의서 §2 Q5): 닫힌 월 기간(CLOSED/REOPENED) 은 financial_period 스냅샷 사용,
+        // 미마감 월/일 기간은 ledger 라이브 합산. 본 메서드는 IS 기간이 월 단위로 정렬된 경우 (어드민
+        // 결산 화면 일반 흐름) 스냅샷을 우선 적용한다.
+        List<FinancialPeriod> closedMonthlySnapshots = financialPeriodRepository
+                .findClosedByTenantIdAndDateRange(tenantId, startDate, endDate, PeriodType.MONTH);
+
+        BigDecimal snapshotRevenue = BigDecimal.ZERO;
+        BigDecimal snapshotExpenses = BigDecimal.ZERO;
+        // 스냅샷이 커버하는 일자 — 라이브 합산에서 제외하기 위한 윈도우 식별.
+        LocalDate liveStart = startDate;
+        LocalDate liveEnd = endDate;
+        if (!closedMonthlySnapshots.isEmpty()) {
+            for (FinancialPeriod fp : closedMonthlySnapshots) {
+                snapshotRevenue = snapshotRevenue.add(nullToZero(fp.getTotalIncome()));
+                snapshotExpenses = snapshotExpenses.add(nullToZero(fp.getTotalExpense()));
+            }
+            // 합의서 §2 Q5 단순 통합: 닫힌 월의 합 + 미마감 일/월(라이브) 의 합. 본 PR 은 가장
+            // 보편적인 케이스 — 요청 윈도우가 닫힌 월의 합집합 + 직전·당월 미마감 일자 — 를 우선
+            // 지원하고, 비연속 윈도우는 ledger 라이브 합산과 스냅샷이 중복 합산되지 않도록
+            // {@code liveStart} 를 마지막 닫힌 월 다음 달 1일로 시프트한다.
+            FinancialPeriod last = closedMonthlySnapshots.get(closedMonthlySnapshots.size() - 1);
+            LocalDate lastClosedEnd = last.getPeriodEnd();
+            if (lastClosedEnd != null && !lastClosedEnd.isBefore(liveStart) && !lastClosedEnd.isAfter(liveEnd)) {
+                liveStart = lastClosedEnd.plusDays(1);
+            }
+            log.info(
+                "[FinancialStatement][Q5] 스냅샷 적용: tenantId={} closedMonths={} snapshotRevenue={}"
+                + " snapshotExpenses={} liveWindow={}~{}",
+                tenantId, closedMonthlySnapshots.size(), snapshotRevenue, snapshotExpenses,
+                liveStart, liveEnd);
+        }
+
+        BigDecimal liveRevenue = BigDecimal.ZERO;
+        BigDecimal liveExpenses = BigDecimal.ZERO;
+        List<Ledger> ledgers = (liveStart != null && !liveStart.isAfter(liveEnd))
+                ? ledgerService.getLedgersByPeriod(tenantId, liveStart, liveEnd)
+                : java.util.Collections.emptyList();
+        if (!ledgers.isEmpty()) {
+            liveRevenue = ledgers.stream()
+                .filter(this::isRevenueAccount)
+                .map(l -> l.getTotalCredit().subtract(l.getTotalDebit()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            liveExpenses = ledgers.stream()
+                .filter(this::isExpenseAccount)
+                .map(l -> l.getTotalDebit().subtract(l.getTotalCredit()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        BigDecimal totalRevenue = snapshotRevenue.add(liveRevenue);
+        BigDecimal totalExpenses = snapshotExpenses.add(liveExpenses);
         BigDecimal netIncome = totalRevenue.subtract(totalExpenses);
-        
-        // 5. 결과 구성
+
         Map<String, Object> result = new HashMap<>();
         result.put("tenantId", tenantId);
         result.put("startDate", startDate);
@@ -71,11 +108,22 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
             "items", getExpenseItems(ledgers)
         ));
         result.put("netIncome", netIncome);
-        
-        log.info("손익계산서 생성 완료: revenue={}, expenses={}, netIncome={}", 
-            totalRevenue, totalExpenses, netIncome);
-        
+        result.put("snapshotRevenue", snapshotRevenue);
+        result.put("snapshotExpenses", snapshotExpenses);
+        result.put("liveRevenue", liveRevenue);
+        result.put("liveExpenses", liveExpenses);
+        result.put("closedSnapshotCount", closedMonthlySnapshots.size());
+
+        log.info(
+            "손익계산서 생성 완료(스냅샷+라이브): revenue={}, expenses={}, netIncome={},"
+            + " snapshotMonths={}",
+            totalRevenue, totalExpenses, netIncome, closedMonthlySnapshots.size());
+
         return result;
+    }
+
+    private static BigDecimal nullToZero(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
     
     @Override

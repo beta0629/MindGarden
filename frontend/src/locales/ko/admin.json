@@ -3380,5 +3380,72 @@
     "community": {
       "anonymizedAuthorLabel": "[삭제된 사용자]"
     }
+  },
+  "mappings": {
+    "pendingPaymentCleanup": {
+      "title": "디러티 매칭 정리",
+      "description": "결제 미입금 상태(PENDING_PAYMENT)로 일정 시간이 지난 매칭을 수동으로 정리합니다.",
+      "filter": {
+        "title": "경과 시간",
+        "ageHours": {
+          "24": "24시간 이상",
+          "48": "48시간 이상",
+          "72": "72시간 이상"
+        }
+      },
+      "list": {
+        "title": "디러티 매칭 목록"
+      },
+      "columns": {
+        "select": "선택",
+        "mappingId": "매칭 ID",
+        "consultant": "상담사",
+        "client": "내담자",
+        "createdAt": "생성일",
+        "elapsed": "경과 시간",
+        "price": "패키지 금액",
+        "action": "작업"
+      },
+      "actions": {
+        "cleanup": "정리",
+        "bulkCleanup": "선택 {{count}}건 일괄 정리",
+        "selectAll": "전체 선택",
+        "clearAll": "전체 해제"
+      },
+      "pagination": {
+        "summary": "{{page}} / {{totalPages}} 페이지 · 총 {{totalElements}}건",
+        "prev": "이전",
+        "next": "다음"
+      },
+      "emptyState": {
+        "title": "디러티 매칭이 없습니다",
+        "description": "선택한 경과 시간 기준으로 정리 대상 매칭이 없습니다."
+      },
+      "modal": {
+        "titleSingle": "매칭 정리 — #{{mappingId}}",
+        "titleBulk": "매칭 일괄 정리 — {{count}}건",
+        "description": "선택한 매칭을 즉시 종료하고 연관 가예약 일정을 모두 취소합니다. 이 작업은 되돌릴 수 없습니다.",
+        "reason": "정리 사유",
+        "reasonPlaceholder": "예: 카드 결제 미입금 24시간 경과로 직권 정리",
+        "reasonHint": "{{min}}자 이상 {{max}}자 이하로 입력하세요.",
+        "notifyClient": "내담자에게 정리 사실 알림 발송",
+        "confirm": "정리 실행",
+        "cancel": "취소",
+        "error": {
+          "reasonTooShort": "정리 사유는 10자 이상이어야 합니다.",
+          "reasonTooLong": "정리 사유는 500자 이하여야 합니다.",
+          "noSelection": "정리할 매칭을 선택해 주세요.",
+          "noTarget": "정리할 매칭 정보가 없습니다."
+        }
+      },
+      "toast": {
+        "success": "매칭이 정리되었습니다.",
+        "bulkSuccess": "{{count}}건 매칭 정리가 요청되었습니다.",
+        "error": "매칭 정리 처리 중 오류가 발생했습니다."
+      }
+    }
+  },
+  "menu": {
+    "pendingPaymentCleanup": "디러티 매칭 정리"
   }
 }

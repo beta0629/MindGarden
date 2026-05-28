@@ -53,7 +53,13 @@ export const API_ENDPOINTS = {
       CHECKOUT_SAME_DAY: (mappingId) => `/api/v1/admin/mappings/${mappingId}/checkout-same-day`,
       // R4 (옵션 B 디러티 PENDING_PAYMENT 정리): 관리자 매칭 강제 종료. PENDING_PAYMENT 매칭은
       // 환불 우회 + paymentStatus REJECTED + 연결된 TENTATIVE_PENDING_PAYMENT 가예약 자동 취소.
-      TERMINATE: (mappingId) => `/api/v1/admin/mappings/${mappingId}/terminate`
+      TERMINATE: (mappingId) => `/api/v1/admin/mappings/${mappingId}/terminate`,
+      // 옵션 B R4 — 디러티 PENDING_PAYMENT 매핑 어드민 수동 정리 (조회/단건/일괄)
+      PENDING_PAYMENT_DIRTY: '/api/v1/admin/mappings/pending-payment-dirty',
+      CLEANUP_PENDING_PAYMENT: (mappingId) =>
+        `/api/v1/admin/mappings/${mappingId}/cleanup-pending-payment`,
+      PENDING_PAYMENT_DIRTY_BULK_CLEANUP:
+        '/api/v1/admin/mappings/pending-payment-dirty/bulk-cleanup'
     },
     
     STATISTICS: {

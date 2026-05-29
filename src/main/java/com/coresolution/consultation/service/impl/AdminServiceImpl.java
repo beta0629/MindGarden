@@ -112,6 +112,24 @@ import java.util.UUID;
 @Transactional
 public class AdminServiceImpl extends BaseTenantAwareService implements AdminService {
 
+    /**
+     * 환불 이력/통계 조회 대상 financial_transactions.subcategory 값 집합.
+     *
+     * <p>P0 hotfix 2026-05-29 (옵션 A): 기존 코드는 partial 분기에서
+     * "CONSULTATION_PARTIAL_REFUND" 단일 값만 조회하여 "CONSULTATION_REFUND" (전체환불)
+     * 가 어느 분기에도 카운팅되지 않는 결함(H11)을 보유했다. 두 값을 모두 한 번에
+     * 조회하도록 IN 절로 통합. 매핑 단위 dedup 은 {@link #dedupRefundTransactionsByMapping}
+     * 가 수행한다 (CONSULTATION_REFUND 우선, 동일 일자라면 id 가 작은 것 우선).</p>
+     *
+     * <p>디버그 보고서:
+     * docs/project-management/2026-05-29/REFUND_MANAGEMENT_MAY_MISSING_DEBUG.md</p>
+     */
+    private static final java.util.List<String> REFUND_SUBCATEGORIES =
+        java.util.List.of("CONSULTATION_REFUND", "CONSULTATION_PARTIAL_REFUND");
+
+    /** {@link #dedupRefundTransactionsByMapping} 에서 우선순위 비교에 쓰는 전체환불 subcategory 값. */
+    private static final String REFUND_SUBCATEGORY_FULL = "CONSULTATION_REFUND";
+
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
     private final ClientRepository clientRepository;
@@ -4159,10 +4177,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .collect(Collectors.toList());
         
         // 표준화 2025-12-06: 브랜치 코드 필터링 제거 - tenantId만 사용
-        List<FinancialTransaction> partialRefundTransactions = 
-            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
-                FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
-        
+        // P0 hotfix 2026-05-29 (옵션 A): CONSULTATION_REFUND 전체환불도 함께 조회 + mapping_id 단위 dedup.
+        List<FinancialTransaction> allRefundTransactionsRaw =
+            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryInAndTransactionDateBetweenAndIsDeletedFalse(
+                tenantId,
+                FinancialTransaction.TransactionType.EXPENSE,
+                REFUND_SUBCATEGORIES,
+                startDate.toLocalDate(), endDate.toLocalDate());
+        List<FinancialTransaction> partialRefundTransactions =
+            dedupRefundTransactionsByMapping(allRefundTransactionsRaw);
+
         int totalTerminatedRefundCount = terminatedMappings.size();
         int totalTerminatedRefundedSessions = terminatedMappings.stream()
                 .mapToInt(mapping -> mapping.getTotalSessions() - mapping.getUsedSessions())
@@ -4435,10 +4459,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
                 .collect(Collectors.toList());
         
-        List<FinancialTransaction> partialRefundTransactions = 
-            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
-                FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
-        
+        // P0 hotfix 2026-05-29 (옵션 A): CONSULTATION_REFUND 전체환불도 함께 조회 + mapping_id 단위 dedup.
+        List<FinancialTransaction> allRefundTransactionsRaw =
+            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryInAndTransactionDateBetweenAndIsDeletedFalse(
+                tenantId,
+                FinancialTransaction.TransactionType.EXPENSE,
+                REFUND_SUBCATEGORIES,
+                startDate.toLocalDate(), endDate.toLocalDate());
+        List<FinancialTransaction> partialRefundTransactions =
+            dedupRefundTransactionsByMapping(allRefundTransactionsRaw);
+
         List<Map<String, Object>> partialRefundHistory = partialRefundTransactions.stream()
                 .map(transaction -> {
                     Map<String, Object> refund = new HashMap<>();
@@ -4589,13 +4619,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 // 표준화 2025-12-07: 브랜치 개념 제거됨, 필터링 제거
                 .collect(Collectors.toList());
         
-        List<FinancialTransaction> allPartialRefundTransactions = 
-            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
-                FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
-        
-        List<FinancialTransaction> partialRefundTransactions = allPartialRefundTransactions.stream()
-                // 표준화 2025-12-07: 브랜치 개념 제거됨, 필터링 제거
-                .collect(Collectors.toList());
+        // P0 hotfix 2026-05-29 (옵션 A): CONSULTATION_REFUND 전체환불도 함께 조회 + mapping_id 단위 dedup.
+        // 디버그 보고서: docs/project-management/2026-05-29/REFUND_MANAGEMENT_MAY_MISSING_DEBUG.md
+        List<FinancialTransaction> allPartialRefundTransactions =
+            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryInAndTransactionDateBetweenAndIsDeletedFalse(
+                tenantId,
+                FinancialTransaction.TransactionType.EXPENSE,
+                REFUND_SUBCATEGORIES,
+                startDate.toLocalDate(), endDate.toLocalDate());
+
+        List<FinancialTransaction> partialRefundTransactions =
+            dedupRefundTransactionsByMapping(allPartialRefundTransactions);
         
         List<Map<String, Object>> partialRefundHistory = partialRefundTransactions.stream()
                 .map(transaction -> {
@@ -4706,6 +4740,84 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return result;
     }
     
+    /**
+     * mapping_id 단위로 환불 transaction 을 dedup 한다.
+     *
+     * <p>P0 hotfix 2026-05-29 (옵션 A): ERP 상 동일 매핑에 CONSULTATION_REFUND (전체환불) 와
+     * CONSULTATION_PARTIAL_REFUND (부분환불) transaction 이 동시에 기록되는 케이스 (mapping 67/72
+     * 운영 데이터, ERP 디버그 54c74cea M2 중복 분개 이슈와 교차) 가 존재한다. 화면은 mapping 단위
+     * 1건만 표시해야 하므로 다음 우선순위로 1건만 남긴다:
+     * <ol>
+     *   <li>CONSULTATION_REFUND (전체환불) 우선</li>
+     *   <li>동일 subcategory 우선순위라면 transactionDate 가 빠른 (작은) 것 우선</li>
+     *   <li>동일 일자라면 id 가 작은 것 우선</li>
+     * </ol>
+     *
+     * <p>relatedEntityId (mapping_id) 가 null 인 transaction 은 dedup 대상에서 제외하고 원본 그대로
+     * 결과 후미에 보존해 운영 데이터 소실을 방지한다.</p>
+     *
+     * @param transactions IN 절 조회 결과 (CONSULTATION_REFUND + CONSULTATION_PARTIAL_REFUND 혼합 가능)
+     * @return mapping_id 단위 dedup 된 transaction 리스트 (LinkedHashMap 입력 순서 보존)
+     */
+    private List<FinancialTransaction> dedupRefundTransactionsByMapping(
+            List<FinancialTransaction> transactions) {
+        if (transactions == null || transactions.isEmpty()) {
+            return new ArrayList<>();
+        }
+        LinkedHashMap<Long, FinancialTransaction> byMapping = new LinkedHashMap<>();
+        List<FinancialTransaction> noMappingId = new ArrayList<>();
+        for (FinancialTransaction tx : transactions) {
+            Long mappingId = tx.getRelatedEntityId();
+            if (mappingId == null) {
+                noMappingId.add(tx);
+                continue;
+            }
+            FinancialTransaction existing = byMapping.get(mappingId);
+            if (existing == null) {
+                byMapping.put(mappingId, tx);
+                continue;
+            }
+            if (shouldPreferRefundTransaction(tx, existing)) {
+                byMapping.put(mappingId, tx);
+            }
+        }
+        List<FinancialTransaction> result = new ArrayList<>(byMapping.values());
+        result.addAll(noMappingId);
+        return result;
+    }
+
+    /**
+     * 두 환불 transaction 중 후보(candidate) 가 기존(existing) 보다 우선되어야 하는지 판단한다.
+     * 우선순위 규칙은 {@link #dedupRefundTransactionsByMapping} 참고.
+     */
+    private boolean shouldPreferRefundTransaction(FinancialTransaction candidate,
+                                                  FinancialTransaction existing) {
+        boolean candidateIsFull = REFUND_SUBCATEGORY_FULL.equals(candidate.getSubcategory());
+        boolean existingIsFull = REFUND_SUBCATEGORY_FULL.equals(existing.getSubcategory());
+        if (candidateIsFull && !existingIsFull) {
+            return true;
+        }
+        if (!candidateIsFull && existingIsFull) {
+            return false;
+        }
+        // 동일 subcategory 우선순위 → transactionDate 빠른 것 우선
+        LocalDate candidateDate = candidate.getTransactionDate();
+        LocalDate existingDate = existing.getTransactionDate();
+        if (candidateDate != null && existingDate != null && !candidateDate.equals(existingDate)) {
+            return candidateDate.isBefore(existingDate);
+        }
+        // 동일 일자 → id 가 작은 것 우선 (null-safe)
+        Long candidateId = candidate.getId();
+        Long existingId = existing.getId();
+        if (candidateId == null) {
+            return false;
+        }
+        if (existingId == null) {
+            return true;
+        }
+        return candidateId < existingId;
+    }
+
      /**
      * 환불 설명에서 환불 회기수 추출
      */

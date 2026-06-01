@@ -410,6 +410,22 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
      */
     List<FinancialTransaction> findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
         String tenantId, FinancialTransaction.TransactionType transactionType, String subcategory, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 거래 유형, 다중 세부카테고리(IN), 기간으로 조회 (환불 전체+부분 통합용) (tenantId 필터링).
+     *
+     * <p>P0 hotfix 2026-05-29 (옵션 A): 운영 /erp/refund-management 5월 환불 0건 표시 원인이 된
+     * {@code AdminServiceImpl.getRefundHistory/getRefundStatistics} partial 분기 SQL 의
+     * 단일 subcategory 매칭 결함(H11) 을 해소하기 위해 도입. CONSULTATION_REFUND (전체환불) 와
+     * CONSULTATION_PARTIAL_REFUND (부분환불) 를 한 번에 조회해 어느 분기에도 카운팅되지 않는
+     * 누락 케이스를 제거한다. 디버그 보고서:
+     * docs/project-management/2026-05-29/REFUND_MANAGEMENT_MAY_MISSING_DEBUG.md</p>
+     *
+     * @since 2026-05-29 P0 hotfix
+     */
+    List<FinancialTransaction> findByTenantIdAndTransactionTypeAndSubcategoryInAndTransactionDateBetweenAndIsDeletedFalse(
+        String tenantId, FinancialTransaction.TransactionType transactionType,
+        java.util.Collection<String> subcategories, LocalDate startDate, LocalDate endDate);
     
     /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 금융 데이터 노출!

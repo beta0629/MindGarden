@@ -62,6 +62,8 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
+import java.util.Collection;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
@@ -236,10 +238,10 @@ class AdminServiceImplRefundHistoryDateFormatTest {
                 mappingId, transactionDate, "(2)회기 부분 환불 [사유: 단순 변심]");
 
         when(financialTransactionRepository
-                .findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+                .findByTenantIdAndTransactionTypeAndSubcategoryInAndTransactionDateBetweenAndIsDeletedFalse(
                         eq(TEST_TENANT_ID),
                         eq(FinancialTransaction.TransactionType.EXPENSE),
-                        eq("CONSULTATION_PARTIAL_REFUND"),
+                        any(Collection.class),
                         any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(List.of(transaction));
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
@@ -270,10 +272,10 @@ class AdminServiceImplRefundHistoryDateFormatTest {
                 9999L, transactionDate, "(1)회기 부분 환불 [사유: 일정 변경]");
 
         when(financialTransactionRepository
-                .findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+                .findByTenantIdAndTransactionTypeAndSubcategoryInAndTransactionDateBetweenAndIsDeletedFalse(
                         eq(TEST_TENANT_ID),
                         eq(FinancialTransaction.TransactionType.EXPENSE),
-                        eq("CONSULTATION_PARTIAL_REFUND"),
+                        any(Collection.class),
                         any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(List.of(transaction));
         // relatedEntityId 9999 는 존재하지 않는다고 가정 (else 분기 진입)
@@ -307,8 +309,8 @@ class AdminServiceImplRefundHistoryDateFormatTest {
         when(mappingRepository.findByTenantId(eq(TEST_TENANT_ID)))
                 .thenReturn(List.of(mapping));
         when(financialTransactionRepository
-                .findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
-                        anyString(), any(), anyString(),
+                .findByTenantIdAndTransactionTypeAndSubcategoryInAndTransactionDateBetweenAndIsDeletedFalse(
+                        anyString(), any(), any(Collection.class),
                         any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(List.of());
 
@@ -341,10 +343,10 @@ class AdminServiceImplRefundHistoryDateFormatTest {
                 terminatedMappingId, 32L, 42L, terminatedAtFixture);
 
         when(financialTransactionRepository
-                .findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+                .findByTenantIdAndTransactionTypeAndSubcategoryInAndTransactionDateBetweenAndIsDeletedFalse(
                         eq(TEST_TENANT_ID),
                         eq(FinancialTransaction.TransactionType.EXPENSE),
-                        eq("CONSULTATION_PARTIAL_REFUND"),
+                        any(Collection.class),
                         any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(List.of(partialTransaction));
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(partialMappingId)))

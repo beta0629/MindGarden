@@ -243,6 +243,7 @@ BEGIN
         END IF;
         
         IF v_ss_unit_amount IS NOT NULL AND v_ss_unit_amount > 0 THEN
+            -- P0 hotfix V20260607_002: salary_year_month 조건 제거 (mapping 당 평생 1회 정책)
             SELECT COALESCE(SUM(
                 CASE
                     WHEN sp.id IS NOT NULL THEN 0
@@ -256,7 +257,6 @@ BEGIN
               ON sp.tenant_id = p_tenant_id
              AND sp.consultant_id = p_consultant_id
              AND sp.mapping_id = m.id
-             AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
             WHERE m.tenant_id = p_tenant_id
               AND m.consultant_id = p_consultant_id
               AND m.is_deleted = FALSE;

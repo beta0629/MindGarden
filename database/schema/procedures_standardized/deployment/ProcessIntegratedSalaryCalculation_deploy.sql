@@ -314,6 +314,7 @@ BEGIN
                     END IF;
                     
                     IF v_ss_unit_amount IS NOT NULL AND v_ss_unit_amount > 0 THEN
+                        -- P0 hotfix V20260607_002: salary_year_month 조건 제거 (mapping 당 평생 1회 정책)
                         SELECT COALESCE(SUM(
                             CASE
                                 WHEN sp.id IS NOT NULL THEN 0
@@ -327,7 +328,6 @@ BEGIN
                           ON sp.tenant_id = p_tenant_id
                          AND sp.consultant_id = p_consultant_id
                          AND sp.mapping_id = m.id
-                         AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
                         WHERE m.tenant_id = p_tenant_id
                           AND m.consultant_id = p_consultant_id
                           AND m.is_deleted = FALSE;
@@ -451,6 +451,8 @@ BEGIN
                     SET p_erp_sync_id = NULL;
                     
                     IF IFNULL(v_ss_total, 0) > 0 AND p_calculation_id IS NOT NULL AND v_ss_unit_amount > 0 THEN
+                        -- P0 hotfix V20260607_002: salary_year_month 조건 제거 (mapping 당 평생 1회 정책)
+                        -- INSERT 컬럼 salary_year_month 값은 그대로 보존 (감사용 — 어느 월에 지급되었는지 기록).
                         INSERT INTO special_support_monthly_payouts (
                             tenant_id, consultant_id, client_id, mapping_id, salary_year_month, amount, salary_calculation_id, created_at
                         )
@@ -468,7 +470,6 @@ BEGIN
                           ON sp.tenant_id = p_tenant_id
                          AND sp.consultant_id = p_consultant_id
                          AND sp.mapping_id = m.id
-                         AND sp.salary_year_month = DATE_FORMAT(p_period_start, '%Y-%m')
                         WHERE m.tenant_id = p_tenant_id
                           AND m.consultant_id = p_consultant_id
                           AND m.is_deleted = FALSE

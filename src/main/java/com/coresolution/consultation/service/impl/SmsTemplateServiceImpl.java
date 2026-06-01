@@ -47,6 +47,16 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     /** {@code extra_data.variables} 키 (List). */
     static final String EXTRA_KEY_VARIABLES = "variables";
 
+    /**
+     * {@code extra_data.audience} 키 — 수신 대상 분류 (V20260607_004 시드).
+     * 값: {@code CLIENT}/{@code CONSULTANT}/{@code ADMIN}/{@code SYSTEM}.
+     * 어드민 UI Pill 배지 색상 분기 + 향후 발송 정책 필터링용.
+     */
+    static final String EXTRA_KEY_AUDIENCE = "audience";
+
+    /** {@link #EXTRA_KEY_AUDIENCE} 미시드 시 어드민 UI 폴백 값. */
+    static final String AUDIENCE_DEFAULT = "CLIENT";
+
     /** updatedBy 가 비었을 때 사용할 fallback (감사 로그). */
     private static final String DEFAULT_UPDATED_BY = "ADMIN";
 
@@ -385,6 +395,10 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
         Map<String, Object> extras = parseExtraData(core.getExtraData());
         String category = stringValue(extras.get(EXTRA_KEY_CATEGORY));
         List<String> variables = listValue(extras.get(EXTRA_KEY_VARIABLES));
+        String audience = stringValue(extras.get(EXTRA_KEY_AUDIENCE));
+        if (audience == null || audience.isBlank()) {
+            audience = AUDIENCE_DEFAULT;
+        }
 
         boolean hasOverride = tenantOverride != null
                 && Boolean.TRUE.equals(tenantOverride.getIsActive())
@@ -417,6 +431,7 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
                 .globalDispatchEnabled(globalDispatch)
                 .tenantDispatchEnabled(tenantDispatch)
                 .effectiveDispatchEnabled(globalDispatch && tenantDispatch)
+                .audience(audience)
                 .build();
     }
 

@@ -2139,6 +2139,12 @@
       "empty": "등록된 템플릿이 없습니다.",
       "overrideBadge": "테넌트 override"
     },
+    "audience": {
+      "client": "내담자",
+      "consultant": "상담사",
+      "admin": "관리자",
+      "system": "시스템"
+    },
     "editor": {
       "selectPrompt": "왼쪽 목록에서 템플릿을 선택하세요.",
       "globalLabel": "글로벌 본문 (읽기 전용)",

@@ -122,6 +122,69 @@
   border: 1px solid var(--color-border-default);
 }
 
+/* =============================================================================
+ * audience (수신 대상) Pill 배지 — 상담사/내담자 시각 구분 (2026-06-01)
+ * 색상 토큰 SSOT: unified-design-tokens.css 의 info/brand/warning/neutral 스케일.
+ * 디자인 시스템 미배포 신규 토큰 fallback 은 hex 로 명시 (D5 §1 SSOT 가드 통과).
+ * =========================================================================== */
+.mg-admin-sms-template__audience-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid transparent;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.mg-admin-sms-template__audience-badge--lg {
+  font-size: var(--font-size-sm, 0.875rem);
+  padding: var(--spacing-xs) var(--spacing-md);
+}
+
+/* 내담자 — 인디고/블루 (mg-color-info-* cascade) */
+.mg-admin-sms-template__audience-badge--client {
+  background: var(--mg-color-info-100);
+  color: var(--mg-color-info-800);
+  border-color: var(--mg-color-info-100);
+}
+
+/*
+ * 상담사 — 보라(violet) Pill. SSOT 토큰 미시드 (brand-violet 단계 부재) 이므로
+ * 후속 디자이너 위임 전까지 Tailwind violet-100/700/200 hex 사용.
+ * TODO(2026-Q2 D12): unified-design-tokens.css 에 --mg-color-brand-violet-100/700/200 신설.
+ */
+.mg-admin-sms-template__audience-badge--consultant {
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #ddd6fe;
+}
+
+/* 관리자 — 경고/포커스 앰버 (mg-color-warning-* cascade) */
+.mg-admin-sms-template__audience-badge--admin {
+  background: var(--mg-color-warning-100);
+  color: var(--mg-color-warning-700);
+  border-color: var(--mg-color-warning-200);
+}
+
+/* 시스템 — 중립 그레이 (mg-color-bg/border cascade) */
+.mg-admin-sms-template__audience-badge--system {
+  background: var(--mg-color-bg-secondary);
+  color: var(--mg-color-text-secondary);
+  border-color: var(--mg-color-border-default);
+}
+
+.mg-admin-sms-template__editor-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
 .mg-admin-sms-template__editor {
   display: flex;
   flex-direction: column;

@@ -54,11 +54,12 @@ public class CommonCode extends BaseEntity {
      * {@code @Size(max=500)} 을 강제하므로 컬럼 폭을 500으로 확장하여 백엔드 의도와
      * DB 스키마를 일치시킨다.
      *
-     * <p>P0 hotfix 2026-06-01: VARCHAR(100) → VARCHAR(500)
-     * (Flyway V20260607_001 동반 갱신). 다른 코드 그룹의 라벨은 100자 이내이므로
-     * 호환 영향 없음.
+     * <p>P0 hotfix 2026-06-01 1차: VARCHAR(100) → VARCHAR(500) (Flyway V20260607_001).
+     * <p>P0 hotfix 2026-06-01 2차: VARCHAR(500) → VARCHAR(2000) (Flyway V20260607_003,
+     * 솔라피 LMS 표준 한도 한글 1000자의 안전 여유분 2배). 다른 코드 그룹 라벨은 100자
+     * 이내이므로 호환 영향 없음.
      */
-    @Column(name = "code_label", nullable = false, length = 500)
+    @Column(name = "code_label", nullable = false, length = 2000)
     private String codeLabel;
 
     @Column(name = "code_description", length = 500)

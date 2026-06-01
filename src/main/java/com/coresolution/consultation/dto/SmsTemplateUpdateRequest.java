@@ -23,6 +23,6 @@ import lombok.NoArgsConstructor;
 public class SmsTemplateUpdateRequest {
 
     @NotBlank(message = "본문은 필수 입력입니다.")
-    @Size(max = 500, message = "SMS 본문은 최대 500자까지 가능합니다.")
+    @Size(max = 2000, message = "SMS 본문은 최대 2,000자까지 가능합니다.")
     private String content;
 }

@@ -1,0 +1,211 @@
+=== 가비아 DNS 백업 — core-solution.co.kr ===
+
+============================================
+도메인: core-solution.co.kr
+백업 시각: 2026-05-28T16:46:18Z
+============================================
+
+[ SOA ]
+ns.gabia.co.kr. hosting.gabia.com. 2025111811 1800 600 1209600 86400
+
+[ NS ]
+ns.gabia.co.kr.
+ns1.gabia.co.kr.
+ns.gabia.net.
+
+[ ANY 권위 NS 직접 조회 ]
+core-solution.co.kr.	86400	IN	SOA	ns.gabia.co.kr. hosting.gabia.com. 2025111811 1800 600 1209600 86400
+core-solution.co.kr.	86400	IN	NS	ns.gabia.co.kr.
+core-solution.co.kr.	86400	IN	NS	ns1.gabia.co.kr.
+core-solution.co.kr.	86400	IN	NS	ns.gabia.net.
+core-solution.co.kr.	3600	IN	A	211.37.179.204
+
+[ 주요 서브 A/CNAME 일괄 ]
+@.core-solution.co.kr A      
+@.core-solution.co.kr CNAME  
+www.core-solution.co.kr A      211.37.179.204;
+www.core-solution.co.kr CNAME  
+app.core-solution.co.kr A      211.37.179.204;
+app.core-solution.co.kr CNAME  
+api.core-solution.co.kr A      211.37.179.204;
+api.core-solution.co.kr CNAME  
+dev.core-solution.co.kr A      114.202.247.246;
+dev.core-solution.co.kr CNAME  
+acme.core-solution.co.kr A      114.202.247.246;
+acme.core-solution.co.kr CNAME  
+mindgarden.core-solution.co.kr A      211.37.179.204;
+mindgarden.core-solution.co.kr CNAME  
+trinity.core-solution.co.kr A      211.37.179.204;
+trinity.core-solution.co.kr CNAME  
+ops.core-solution.co.kr A      211.37.179.204;
+ops.core-solution.co.kr CNAME  
+apply.core-solution.co.kr A      211.37.179.204;
+apply.core-solution.co.kr CNAME  
+m.core-solution.co.kr A      211.37.179.204;
+m.core-solution.co.kr CNAME  
+garden.core-solution.co.kr A      211.37.179.204;
+garden.core-solution.co.kr CNAME  
+ge.core-solution.co.kr A      211.37.179.204;
+ge.core-solution.co.kr CNAME  
+admin.core-solution.co.kr A      211.37.179.204;
+admin.core-solution.co.kr CNAME  
+portal.core-solution.co.kr A      211.37.179.204;
+portal.core-solution.co.kr CNAME  
+blog.core-solution.co.kr A      211.37.179.204;
+blog.core-solution.co.kr CNAME  
+static.core-solution.co.kr A      211.37.179.204;
+static.core-solution.co.kr CNAME  
+cms.core-solution.co.kr A      211.37.179.204;
+cms.core-solution.co.kr CNAME  
+test.core-solution.co.kr A      211.37.179.204;
+test.core-solution.co.kr CNAME  
+demo.core-solution.co.kr A      211.37.179.204;
+demo.core-solution.co.kr CNAME  
+erp.core-solution.co.kr A      211.37.179.204;
+erp.core-solution.co.kr CNAME  
+shop.core-solution.co.kr A      211.37.179.204;
+shop.core-solution.co.kr CNAME  
+
+[ MX ]
+
+[ TXT @ root ]
+
+============================================
+도메인: e-trinity.co.kr
+백업 시각: 2026-05-28T16:46:19Z
+============================================
+
+[ SOA ]
+ns.gabia.co.kr. hosting.gabia.com. 2025111811 1800 600 1209600 86400
+
+[ NS ]
+ns.gabia.net.
+ns.gabia.co.kr.
+ns1.gabia.co.kr.
+
+[ ANY 권위 NS 직접 조회 ]
+e-trinity.co.kr.	86400	IN	SOA	ns.gabia.co.kr. hosting.gabia.com. 2025111811 1800 600 1209600 86400
+e-trinity.co.kr.	86400	IN	NS	ns.gabia.co.kr.
+e-trinity.co.kr.	86400	IN	NS	ns1.gabia.co.kr.
+e-trinity.co.kr.	86400	IN	NS	ns.gabia.net.
+e-trinity.co.kr.	3600	IN	A	211.37.179.204
+
+[ 주요 서브 A/CNAME 일괄 ]
+@.e-trinity.co.kr    A      
+@.e-trinity.co.kr    CNAME  
+www.e-trinity.co.kr  A      e-trinity.co.kr.;211.37.179.204;
+www.e-trinity.co.kr  CNAME  e-trinity.co.kr.;
+app.e-trinity.co.kr  A      
+app.e-trinity.co.kr  CNAME  
+api.e-trinity.co.kr  A      
+api.e-trinity.co.kr  CNAME  
+dev.e-trinity.co.kr  A      114.202.247.246;
+dev.e-trinity.co.kr  CNAME  
+acme.e-trinity.co.kr A      
+acme.e-trinity.co.kr CNAME  
+mindgarden.e-trinity.co.kr A      
+mindgarden.e-trinity.co.kr CNAME  
+trinity.e-trinity.co.kr A      
+trinity.e-trinity.co.kr CNAME  
+ops.e-trinity.co.kr  A      211.37.179.204;
+ops.e-trinity.co.kr  CNAME  
+apply.e-trinity.co.kr A      211.37.179.204;
+apply.e-trinity.co.kr CNAME  
+m.e-trinity.co.kr    A      
+m.e-trinity.co.kr    CNAME  
+garden.e-trinity.co.kr A      
+garden.e-trinity.co.kr CNAME  
+ge.e-trinity.co.kr   A      
+ge.e-trinity.co.kr   CNAME  
+admin.e-trinity.co.kr A      
+admin.e-trinity.co.kr CNAME  
+portal.e-trinity.co.kr A      
+portal.e-trinity.co.kr CNAME  
+blog.e-trinity.co.kr A      
+blog.e-trinity.co.kr CNAME  
+static.e-trinity.co.kr A      
+static.e-trinity.co.kr CNAME  
+cms.e-trinity.co.kr  A      
+cms.e-trinity.co.kr  CNAME  
+test.e-trinity.co.kr A      
+test.e-trinity.co.kr CNAME  
+demo.e-trinity.co.kr A      
+demo.e-trinity.co.kr CNAME  
+erp.e-trinity.co.kr  A      
+erp.e-trinity.co.kr  CNAME  
+shop.e-trinity.co.kr A      
+shop.e-trinity.co.kr CNAME  
+
+[ MX ]
+
+[ TXT @ root ]
+
+============================================
+도메인: m-garden.co.kr
+백업 시각: 2026-05-28T16:46:50Z
+============================================
+
+[ SOA ]
+ns.gabia.co.kr. hosting.gabia.com. 2025060314 1800 600 1209600 86400
+
+[ NS ]
+ns.gabia.net.
+ns.gabia.co.kr.
+ns1.gabia.co.kr.
+
+[ ANY 권위 NS 직접 조회 ]
+m-garden.co.kr.		86400	IN	SOA	ns.gabia.co.kr. hosting.gabia.com. 2025060314 1800 600 1209600 86400
+m-garden.co.kr.		86400	IN	NS	ns.gabia.co.kr.
+m-garden.co.kr.		86400	IN	NS	ns1.gabia.co.kr.
+m-garden.co.kr.		86400	IN	NS	ns.gabia.net.
+m-garden.co.kr.		3600	IN	A	211.37.179.204
+
+[ 주요 서브 A/CNAME 일괄 ]
+@.m-garden.co.kr     A      
+@.m-garden.co.kr     CNAME  
+www.m-garden.co.kr   A      211.37.179.204;
+www.m-garden.co.kr   CNAME  
+app.m-garden.co.kr   A      
+app.m-garden.co.kr   CNAME  
+api.m-garden.co.kr   A      
+api.m-garden.co.kr   CNAME  
+dev.m-garden.co.kr   A      114.202.247.246;
+dev.m-garden.co.kr   CNAME  
+acme.m-garden.co.kr  A      
+acme.m-garden.co.kr  CNAME  
+mindgarden.m-garden.co.kr A      
+mindgarden.m-garden.co.kr CNAME  
+trinity.m-garden.co.kr A      
+trinity.m-garden.co.kr CNAME  
+ops.m-garden.co.kr   A      
+ops.m-garden.co.kr   CNAME  
+apply.m-garden.co.kr A      
+apply.m-garden.co.kr CNAME  
+m.m-garden.co.kr     A      
+m.m-garden.co.kr     CNAME  
+garden.m-garden.co.kr A      
+garden.m-garden.co.kr CNAME  
+ge.m-garden.co.kr    A      
+ge.m-garden.co.kr    CNAME  
+admin.m-garden.co.kr A      
+admin.m-garden.co.kr CNAME  
+portal.m-garden.co.kr A      
+portal.m-garden.co.kr CNAME  
+blog.m-garden.co.kr  A      
+blog.m-garden.co.kr  CNAME  
+static.m-garden.co.kr A      
+static.m-garden.co.kr CNAME  
+cms.m-garden.co.kr   A      
+cms.m-garden.co.kr   CNAME  
+test.m-garden.co.kr  A      
+test.m-garden.co.kr  CNAME  
+demo.m-garden.co.kr  A      
+demo.m-garden.co.kr  CNAME  
+erp.m-garden.co.kr   A      
+erp.m-garden.co.kr   CNAME  
+shop.m-garden.co.kr  A      
+shop.m-garden.co.kr  CNAME  
+
+[ MX ]
+
+[ TXT @ root ]

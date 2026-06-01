@@ -112,8 +112,10 @@ jest.mock('react-i18next', () => {
     'smsTemplate.list.overrideBadge': '테넌트 override',
     'smsTemplate.audience.client': '내담자',
     'smsTemplate.audience.consultant': '상담사',
+    'smsTemplate.audience.both': '내담자+상담사',
     'smsTemplate.audience.admin': '관리자',
-    'smsTemplate.audience.system': '시스템'
+    'smsTemplate.audience.system': '시스템',
+    'smsTemplate.editor.triggerLabel': '발송 조건'
   };
   const mockT = (key, fallback) => {
     if (Object.prototype.hasOwnProperty.call(mockSeed, key)) {
@@ -148,6 +150,7 @@ const SAMPLE_ITEMS = [
     tenantContent: null,
     tenantOverride: false,
     audience: 'CLIENT',
+    trigger: '결제가 완료되었을 때',
     updatedAt: '2026-05-29T10:00:00'
   },
   {
@@ -159,7 +162,8 @@ const SAMPLE_ITEMS = [
     globalContent: '상담 확정: {{consultantName}}',
     tenantContent: '테넌트 본문',
     tenantOverride: true,
-    audience: 'CONSULTANT',
+    audience: 'BOTH',
+    trigger: '상담 일정이 확정될 때 (예약 확정 직후)',
     updatedAt: '2026-05-29T11:00:00'
   }
 ];
@@ -181,7 +185,7 @@ describe('SmsTemplateManagementPage', () => {
     expect(screen.getByText('테넌트 override')).toBeInTheDocument();
   });
 
-  it('audience Pill 배지가 시드 분류대로 렌더된다 (CLIENT=내담자, CONSULTANT=상담사)', async() => {
+  it('audience Pill 배지가 시드 분류대로 렌더된다 (CLIENT=내담자, BOTH=내담자+상담사)', async() => {
     render(<SmsTemplateManagementPage />);
     await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
 
@@ -189,9 +193,22 @@ describe('SmsTemplateManagementPage', () => {
     expect(clientBadge).toHaveTextContent('내담자');
     expect(clientBadge.className).toContain('mg-admin-sms-template__audience-badge--client');
 
-    const consultantBadge = screen.getByTestId('sms-template-audience-badge-CONSULTATION_CONFIRMED');
-    expect(consultantBadge).toHaveTextContent('상담사');
-    expect(consultantBadge.className).toContain('mg-admin-sms-template__audience-badge--consultant');
+    const bothBadge = screen.getByTestId('sms-template-audience-badge-CONSULTATION_CONFIRMED');
+    expect(bothBadge).toHaveTextContent('내담자+상담사');
+    expect(bothBadge.className).toContain('mg-admin-sms-template__audience-badge--both');
+  });
+
+  it('발송 조건 (trigger) 메타가 리스트 요약 + 디테일 강조 양쪽에 노출된다', async() => {
+    render(<SmsTemplateManagementPage />);
+    await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
+
+    const listTrigger = await screen.findByTestId('sms-template-trigger-summary-PAYMENT_COMPLETED');
+    expect(listTrigger).toHaveTextContent('발송 조건: 결제가 완료되었을 때');
+
+    fireEvent.click(screen.getByTestId('sms-template-item-CONSULTATION_CONFIRMED'));
+    const detailTrigger = await screen.findByTestId('sms-template-trigger-detail-CONSULTATION_CONFIRMED');
+    expect(detailTrigger).toHaveTextContent('발송 조건');
+    expect(detailTrigger).toHaveTextContent('상담 일정이 확정될 때 (예약 확정 직후)');
   });
 
   it('템플릿 선택 시 글로벌 본문 + 변수 입력 폼이 노출된다', async() => {

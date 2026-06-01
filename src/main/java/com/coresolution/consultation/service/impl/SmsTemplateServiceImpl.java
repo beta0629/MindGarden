@@ -49,13 +49,20 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
 
     /**
      * {@code extra_data.audience} 키 — 수신 대상 분류 (V20260607_004 시드).
-     * 값: {@code CLIENT}/{@code CONSULTANT}/{@code ADMIN}/{@code SYSTEM}.
+     * 값: {@code CLIENT}/{@code CONSULTANT}/{@code BOTH}/{@code ADMIN}/{@code SYSTEM}.
      * 어드민 UI Pill 배지 색상 분기 + 향후 발송 정책 필터링용.
+     * V20260607_005 재시드 — BOTH 4종 + ADMIN 1종 분리.
      */
     static final String EXTRA_KEY_AUDIENCE = "audience";
 
     /** {@link #EXTRA_KEY_AUDIENCE} 미시드 시 어드민 UI 폴백 값. */
     static final String AUDIENCE_DEFAULT = "CLIENT";
+
+    /**
+     * {@code extra_data.trigger} 키 — 발송 조건 자연어 (V20260607_005 시드).
+     * 어드민 UI '발송 조건: ...' 강조 노출. 본문만 보고 트리거 헷갈리는 문제 해소.
+     */
+    static final String EXTRA_KEY_TRIGGER = "trigger";
 
     /** updatedBy 가 비었을 때 사용할 fallback (감사 로그). */
     private static final String DEFAULT_UPDATED_BY = "ADMIN";
@@ -399,6 +406,7 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
         if (audience == null || audience.isBlank()) {
             audience = AUDIENCE_DEFAULT;
         }
+        String trigger = stringValue(extras.get(EXTRA_KEY_TRIGGER));
 
         boolean hasOverride = tenantOverride != null
                 && Boolean.TRUE.equals(tenantOverride.getIsActive())
@@ -432,6 +440,7 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
                 .tenantDispatchEnabled(tenantDispatch)
                 .effectiveDispatchEnabled(globalDispatch && tenantDispatch)
                 .audience(audience)
+                .trigger(trigger)
                 .build();
     }
 

@@ -2142,6 +2142,7 @@
     "audience": {
       "client": "내담자",
       "consultant": "상담사",
+      "both": "내담자+상담사",
       "admin": "관리자",
       "system": "시스템"
     },
@@ -2151,7 +2152,8 @@
       "tenantLabel": "테넌트 override 본문",
       "variableHint": "변수 자리표시자 형식: {{변수명}} (알림톡과 동일).",
       "variablesLabel": "변수 입력 (미리보기용)",
-      "previewLabel": "미리보기 결과"
+      "previewLabel": "미리보기 결과",
+      "triggerLabel": "발송 조건"
     },
     "actions": {
       "preview": "미리보기",

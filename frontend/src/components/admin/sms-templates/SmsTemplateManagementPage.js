@@ -48,6 +48,7 @@ const PAGE_TITLE_ID = 'admin-sms-template-title';
 const AUDIENCE_VARIANT = {
   CLIENT: 'client',
   CONSULTANT: 'consultant',
+  BOTH: 'both',
   ADMIN: 'admin',
   SYSTEM: 'system'
 };
@@ -458,6 +459,15 @@ const SmsTemplateManagementPage = () => {
                               {t('smsTemplate.list.overrideBadge')}
                             </span>
                           )}
+                          {item.trigger && (
+                            <span
+                              className="mg-admin-sms-template__item-trigger"
+                              data-testid={`sms-template-trigger-summary-${item.key}`}
+                              title={item.trigger}
+                            >
+                              {t('smsTemplate.editor.triggerLabel')}: {item.trigger}
+                            </span>
+                          )}
                           <span
                             className={`mg-admin-sms-template__dispatch-badge${
                               item.effectiveDispatchEnabled
@@ -528,6 +538,20 @@ const SmsTemplateManagementPage = () => {
                           {t(`smsTemplate.audience.${audienceVariantOf(selectedItem.audience)}`)}
                         </span>
                       </div>
+                      {selectedItem.trigger && (
+                        <div
+                          className="mg-admin-sms-template__trigger-banner"
+                          data-testid={`sms-template-trigger-detail-${selectedItem.key}`}
+                          role="note"
+                        >
+                          <strong className="mg-admin-sms-template__trigger-label">
+                            {t('smsTemplate.editor.triggerLabel')}
+                          </strong>
+                          <span className="mg-admin-sms-template__trigger-value">
+                            {selectedItem.trigger}
+                          </span>
+                        </div>
+                      )}
                       <p className="mg-admin-sms-template__editor-description">
                         {selectedItem.description}
                       </p>

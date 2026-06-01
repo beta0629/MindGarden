@@ -207,6 +207,22 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             orFallback(properties.getContactPhone(),
                 BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE));
 
+        // 테넌트가 본문에 {{scheduleDate}}/{{scheduleTime}} 자리표시자를 추가한 경우 대비
+        // (예: 인천 테넌트의 환영 + 첫 상담 일정 통합 메시지). 매칭 직후 일정이 아직 안 잡힌
+        // 경우 빈 문자열 fallback — 호출자 동작에 영향 없음.
+        scheduleRepository
+            .findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByDateAscStartTimeAsc(tenantId, mappingId)
+            .ifPresent(firstSchedule -> {
+                if (firstSchedule.getDate() != null) {
+                    params.put(BatchNotificationTemplateCodes.VAR_SCHEDULE_DATE,
+                        DATE_FORMATTER.format(firstSchedule.getDate()));
+                }
+                if (firstSchedule.getStartTime() != null) {
+                    params.put(BatchNotificationTemplateCodes.VAR_SCHEDULE_TIME,
+                        TIME_FORMATTER.format(firstSchedule.getStartTime()));
+                }
+            });
+
         return dispatchInternal(tenantId,
             BatchNotificationTemplateCodes.CLIENT_WELCOME_FIRST,
             /* idempotencyTemplateCodes */ null,

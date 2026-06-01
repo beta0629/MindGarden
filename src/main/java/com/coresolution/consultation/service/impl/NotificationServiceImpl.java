@@ -175,12 +175,13 @@ public class NotificationServiceImpl implements NotificationService {
         for (NotificationPhysicalChannel ch : order) {
             if (ch == NotificationPhysicalChannel.KAKAO && phoneNumber != null) {
                 Map<String, String> alimTalkParams = buildAlimTalkParams(notificationType, params);
+                injectRecipientNameIfAbsent(alimTalkParams, user);
                 if (sendKakaoAlimTalk(phoneNumber, notificationType, alimTalkParams)) {
                     log.info("✅ 카카오 알림톡 발송 성공: {}", user.getName());
                     return true;
                 }
             } else if (ch == NotificationPhysicalChannel.SMS && phoneNumber != null) {
-                String smsMessage = buildSmsMessage(notificationType, params);
+                String smsMessage = buildSmsMessage(notificationType, params, user);
                 if (smsMessage == null) {
                     // SMS_TEMPLATE 공통코드 미시드 → 의미 없는 fallback 발송 차단(2026-05-23 라운드).
                     // 알림톡 검수 통과 후 자연 해소되며, 인앱·푸시 채널은 영향 없음.
@@ -369,7 +370,7 @@ public class NotificationServiceImpl implements NotificationService {
      * @param params 변수 치환 인자 (positional, 레거시 호환)
      * @return SMS 본문, 또는 SMS_TEMPLATE 미시드 시 {@code null}
      */
-    private String buildSmsMessage(NotificationType type, String[] params) {
+    private String buildSmsMessage(NotificationType type, String[] params, User recipient) {
         try {
             String tenantId = TenantContextHolder.getTenantId();
 
@@ -385,6 +386,7 @@ public class NotificationServiceImpl implements NotificationService {
             }
 
             Map<String, String> variables = buildSmsTemplateVariables(type, params);
+            injectRecipientNameIfAbsent(variables, recipient);
             Optional<String> rendered = smsTemplateService.renderForType(
                     type.name(), tenantId, variables, params);
             if (rendered.isPresent()) {
@@ -413,6 +415,33 @@ public class NotificationServiceImpl implements NotificationService {
     private Map<String, String> buildSmsTemplateVariables(NotificationType type, String[] params) {
         // 알림톡 변수 매핑과 동일한 named 키를 재사용 — SMS 본문에 {{consultantName}} 등 사용 가능.
         return buildAlimTalkParams(type, params);
+    }
+
+    /**
+     * 수신자 이름을 {@code clientName} 변수로 일괄 주입한다 (없을 때만).
+     *
+     * <p>{@link #buildAlimTalkParams}/{@link #buildSmsTemplateVariables} 의 type 별 매핑이
+     * {@code clientName} 키를 명시적으로 채우지 않는 알림 유형이 다수 있다
+     * (예: CONSULTATION_CONFIRMED · REMINDER · SCHEDULE_CHANGED · PAYMENT_COMPLETED).
+     * 어드민 UI 에서 테넌트 override 본문에 {@code {{clientName}}} 자리표시자가 포함된 경우,
+     * 발송 대상 User 의 이름이 자동으로 채워지도록 한다.</p>
+     *
+     * <p>{@code putIfAbsent} 사용 — DEPOSIT_PENDING_REMINDER 처럼 type 별 매핑이
+     * 이미 다른 의미로 {@code clientName} 을 채우는 경우 (관리자 수신, params[1]=내담자 이름)
+     * 덮어쓰지 않는다.</p>
+     *
+     * @param variables 변수 map (in-place 수정)
+     * @param recipient 발송 대상 User (null 안전)
+     */
+    private void injectRecipientNameIfAbsent(Map<String, String> variables, User recipient) {
+        if (variables == null || recipient == null) {
+            return;
+        }
+        String name = recipient.getName();
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        variables.putIfAbsent("clientName", name);
     }
     
     /**

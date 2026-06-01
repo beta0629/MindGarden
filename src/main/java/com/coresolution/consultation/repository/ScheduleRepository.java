@@ -1022,4 +1022,22 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("tenantId") String tenantId,
             @Param("mappingId") Long mappingId,
             @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
+     * 매핑의 가장 빠른 (date·startTime ASC) 활성 스케줄을 1건 조회.
+     *
+     * <p>{@link com.coresolution.consultation.service.impl.BatchNotificationDispatchServiceImpl}
+     * 의 신규 매칭 환영 SMS (CLIENT_WELCOME_FIRST) 에서 첫 상담 일정을 본문 변수로 채우기 위해
+     * 사용한다 (테넌트가 본문에 {@code {{scheduleDate}}}/{@code {{scheduleTime}}} 자리표시자를
+     * 추가한 경우 대비).</p>
+     *
+     * <p>일정이 아직 안 잡힌 매칭은 {@link java.util.Optional#empty()} 반환 — 호출자가 빈 문자열로
+     * fallback 처리.</p>
+     *
+     * @param tenantId  테넌트
+     * @param mappingId 매핑 ID
+     * @return 가장 빠른 스케줄 (활성 = is_deleted=false) 또는 empty
+     */
+    java.util.Optional<Schedule> findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByDateAscStartTimeAsc(
+            String tenantId, Long mappingId);
 }

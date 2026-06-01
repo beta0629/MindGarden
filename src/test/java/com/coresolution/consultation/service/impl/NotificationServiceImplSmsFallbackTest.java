@@ -143,6 +143,46 @@ class NotificationServiceImplSmsFallbackTest {
             .contains("결제가 완료되었습니다");
     }
 
+    @Test
+    @DisplayName("clientName 일괄 주입 — 본문에 {{clientName}} 자리표시자가 있으면 수신자 이름이 채워진다 (CONSULTATION_CONFIRMED)")
+    void sendConsultationConfirmed_injectsRecipientName() {
+        User user = userWithPhone();
+        ArgumentCaptor<java.util.Map<String, String>> varCaptor =
+            ArgumentCaptor.forClass(java.util.Map.class);
+        when(smsTemplateService.renderForType(
+                eq("CONSULTATION_CONFIRMED"), eq(TENANT_ID), varCaptor.capture(), any()))
+            .thenReturn(java.util.Optional.of("렌더 결과"));
+
+        notificationService.sendConsultationConfirmed(user, "김상담", "2026-06-15", "14:00");
+
+        java.util.Map<String, String> variables = varCaptor.getValue();
+        Assertions.assertThat(variables)
+            .containsEntry("clientName", "client")
+            .containsEntry("consultantName", "김상담")
+            .containsEntry("consultationDate", "2026-06-15")
+            .containsEntry("consultationTime", "14:00");
+    }
+
+    @Test
+    @DisplayName("clientName putIfAbsent — DEPOSIT_PENDING_REMINDER 처럼 type 별 매핑이 이미 clientName 을 채운 경우 덮어쓰지 않는다")
+    void sendDepositPendingReminder_preservesExistingClientName() {
+        User adminUser = userWithPhone();
+        adminUser.setName("운영관리자");
+        ArgumentCaptor<java.util.Map<String, String>> varCaptor =
+            ArgumentCaptor.forClass(java.util.Map.class);
+        when(smsTemplateService.renderForType(
+                eq("DEPOSIT_PENDING_REMINDER"), eq(TENANT_ID), varCaptor.capture(), any()))
+            .thenReturn(java.util.Optional.of("렌더 결과"));
+
+        notificationService.sendDepositPendingReminder(
+            adminUser, 9001L, "내담자홍길동", "김상담", 90_000L, 24L);
+
+        java.util.Map<String, String> variables = varCaptor.getValue();
+        Assertions.assertThat(variables)
+            .containsEntry("clientName", "내담자홍길동")
+            .doesNotContainEntry("clientName", "운영관리자");
+    }
+
     private User userWithPhone() {
         User user = new User();
         user.setId(42L);

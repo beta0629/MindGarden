@@ -41,6 +41,26 @@ const ALLOWED_ROLES = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
 const PAGE_TITLE_ID = 'admin-sms-template-title';
 
 /**
+ * audience (수신 대상) Pill 배지 색상 분기 SSOT.
+ * 백엔드 {@code SmsTemplateAdminItem.audience} 가 null/미시드면 'CLIENT' 폴백 처리.
+ * 색상 토큰은 B0KlA 디자인 시스템과 정합 (info-100/brand-100/neutral-100 cascade).
+ */
+const AUDIENCE_VARIANT = {
+  CLIENT: 'client',
+  CONSULTANT: 'consultant',
+  ADMIN: 'admin',
+  SYSTEM: 'system'
+};
+
+const audienceVariantOf = (audience) => {
+  if (!audience) {
+    return AUDIENCE_VARIANT.CLIENT;
+  }
+  const normalized = String(audience).trim().toUpperCase();
+  return AUDIENCE_VARIANT[normalized] || AUDIENCE_VARIANT.CLIENT;
+};
+
+/**
  * StandardizedApi 응답에서 데이터 본문을 안전하게 추출한다.
  * 응답 형태: { success: true, data: ... } 또는 raw payload.
  *
@@ -427,6 +447,12 @@ const SmsTemplateManagementPage = () => {
                           <span className="mg-admin-sms-template__item-key">
                             {item.key}
                           </span>
+                          <span
+                            className={`mg-admin-sms-template__audience-badge mg-admin-sms-template__audience-badge--${audienceVariantOf(item.audience)}`}
+                            data-testid={`sms-template-audience-badge-${item.key}`}
+                          >
+                            {t(`smsTemplate.audience.${audienceVariantOf(item.audience)}`)}
+                          </span>
                           {item.tenantOverride && (
                             <span className="mg-admin-sms-template__item-badge">
                               {t('smsTemplate.list.overrideBadge')}
@@ -491,9 +517,17 @@ const SmsTemplateManagementPage = () => {
                 {selectedItem && (
                   <>
                     <header className="mg-admin-sms-template__editor-header">
-                      <h3 className="mg-admin-sms-template__editor-title">
-                        {selectedItem.label || selectedItem.key}
-                      </h3>
+                      <div className="mg-admin-sms-template__editor-title-row">
+                        <h3 className="mg-admin-sms-template__editor-title">
+                          {selectedItem.label || selectedItem.key}
+                        </h3>
+                        <span
+                          className={`mg-admin-sms-template__audience-badge mg-admin-sms-template__audience-badge--${audienceVariantOf(selectedItem.audience)} mg-admin-sms-template__audience-badge--lg`}
+                          data-testid={`sms-template-audience-badge-detail-${selectedItem.key}`}
+                        >
+                          {t(`smsTemplate.audience.${audienceVariantOf(selectedItem.audience)}`)}
+                        </span>
+                      </div>
                       <p className="mg-admin-sms-template__editor-description">
                         {selectedItem.description}
                       </p>

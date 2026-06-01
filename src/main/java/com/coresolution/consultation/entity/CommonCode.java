@@ -44,8 +44,22 @@ public class CommonCode extends BaseEntity {
     @Column(name = "code_value", nullable = false, length = 50)
     private String codeValue; // 코드 값 (예: basic_10, card, mental_health)
 
-    @Column(name = "code_label", nullable = false, length = 100)
-    private String codeLabel; // 코드 라벨 (예: 기본 10회기 패키지, 신용카드, 정신건강 상담)
+    /**
+     * 코드 라벨 또는 본문(긴 문자열) 저장 컬럼.
+     *
+     * <p>본래 "코드 라벨"(짧은 표시명) 용도로 도입되었으나,
+     * {@code code_group='SMS_TEMPLATE'} 시드 (V20260529_004) 가 본 컬럼에 SMS 본문을
+     * 저장하면서 100자 이상의 문자열을 요구하게 되었다. 어드민 UI 의
+     * {@link com.coresolution.consultation.dto.SmsTemplateUpdateRequest} 가 이미
+     * {@code @Size(max=500)} 을 강제하므로 컬럼 폭을 500으로 확장하여 백엔드 의도와
+     * DB 스키마를 일치시킨다.
+     *
+     * <p>P0 hotfix 2026-06-01: VARCHAR(100) → VARCHAR(500)
+     * (Flyway V20260607_001 동반 갱신). 다른 코드 그룹의 라벨은 100자 이내이므로
+     * 호환 영향 없음.
+     */
+    @Column(name = "code_label", nullable = false, length = 500)
+    private String codeLabel;
 
     @Column(name = "code_description", length = 500)
     private String codeDescription; // 코드 설명

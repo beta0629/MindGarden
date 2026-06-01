@@ -28,9 +28,15 @@ import lombok.NoArgsConstructor;
  * @param tenantDispatchEnabled     종목별 자동 SMS 발송 게이트 상태 (extra_data.dispatch_enabled —
  *                                  테넌트 override 우선, 없으면 글로벌 row 값)
  * @param effectiveDispatchEnabled  글로벌 AND 종목별 AND 결과 — 실제 발송 여부 (어드민 뱃지)
- * @param audience                  수신 대상 분류 (extra_data.audience) — 'CLIENT'/'CONSULTANT'/'ADMIN'/'SYSTEM'.
+ * @param audience                  수신 대상 분류 (extra_data.audience) —
+ *                                  'CLIENT'/'CONSULTANT'/'BOTH'/'ADMIN'/'SYSTEM'.
  *                                  null/미시드 시 화면에서 'CLIENT' 기본 처리 (Pill 배지 색상 분기용).
- *                                  Flyway V20260607_004 시드 기준 글로벌 15종 모두 'CLIENT'.
+ *                                  Flyway V20260607_005 재시드 — BOTH 4종 (CONSULTATION_CONFIRMED,
+ *                                  CONSULTATION_REMINDER, SCHEDULE_CHANGED, SESSION_ENDING_SOON) +
+ *                                  ADMIN 1종 (DEPOSIT_PENDING_REMINDER) + 나머지 CLIENT 10종.
+ * @param trigger                   발송 조건/트리거 자연어 (extra_data.trigger) — 어드민 UI 에
+ *                                  '발송 조건: ...' 강조 노출. 본문만 보고 트리거 헷갈리는 문제 해소.
+ *                                  null/미시드 시 화면에서 미노출.
  */
 @Data
 @Builder
@@ -51,4 +57,5 @@ public class SmsTemplateAdminItem {
     private boolean tenantDispatchEnabled;
     private boolean effectiveDispatchEnabled;
     private String audience;
+    private String trigger;
 }

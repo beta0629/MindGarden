@@ -106,8 +106,21 @@ jest.mock('../../../../constants/roles', () => ({
 
 // 안정적인 t 함수 — useEffect 의존성 지옥 방지를 위해 모듈 최상위에 1회만 생성.
 // jest.mock factory 안에서는 mock* prefix 가 붙은 변수만 참조 가능 (Jest 호이스팅 룰).
+// 시드 키 → 한글 표시값 매핑을 mock 함수에 직접 반영해 어드민 UI 표시 텍스트 회귀를 잡는다.
 jest.mock('react-i18next', () => {
-  const mockT = (key, fallback) => (typeof fallback === 'string' ? fallback : key);
+  const mockSeed = {
+    'smsTemplate.list.overrideBadge': '테넌트 override',
+    'smsTemplate.audience.client': '내담자',
+    'smsTemplate.audience.consultant': '상담사',
+    'smsTemplate.audience.admin': '관리자',
+    'smsTemplate.audience.system': '시스템'
+  };
+  const mockT = (key, fallback) => {
+    if (Object.prototype.hasOwnProperty.call(mockSeed, key)) {
+      return mockSeed[key];
+    }
+    return typeof fallback === 'string' ? fallback : key;
+  };
   const mockTranslation = { t: mockT };
   return {
     __esModule: true,
@@ -134,6 +147,7 @@ const SAMPLE_ITEMS = [
     globalContent: '결제: {{paymentAmount}}원 / {{consultantName}}',
     tenantContent: null,
     tenantOverride: false,
+    audience: 'CLIENT',
     updatedAt: '2026-05-29T10:00:00'
   },
   {
@@ -145,6 +159,7 @@ const SAMPLE_ITEMS = [
     globalContent: '상담 확정: {{consultantName}}',
     tenantContent: '테넌트 본문',
     tenantOverride: true,
+    audience: 'CONSULTANT',
     updatedAt: '2026-05-29T11:00:00'
   }
 ];
@@ -164,6 +179,19 @@ describe('SmsTemplateManagementPage', () => {
     expect(await screen.findByTestId('sms-template-item-PAYMENT_COMPLETED')).toBeInTheDocument();
     expect(screen.getByTestId('sms-template-item-CONSULTATION_CONFIRMED')).toBeInTheDocument();
     expect(screen.getByText('테넌트 override')).toBeInTheDocument();
+  });
+
+  it('audience Pill 배지가 시드 분류대로 렌더된다 (CLIENT=내담자, CONSULTANT=상담사)', async() => {
+    render(<SmsTemplateManagementPage />);
+    await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
+
+    const clientBadge = await screen.findByTestId('sms-template-audience-badge-PAYMENT_COMPLETED');
+    expect(clientBadge).toHaveTextContent('내담자');
+    expect(clientBadge.className).toContain('mg-admin-sms-template__audience-badge--client');
+
+    const consultantBadge = screen.getByTestId('sms-template-audience-badge-CONSULTATION_CONFIRMED');
+    expect(consultantBadge).toHaveTextContent('상담사');
+    expect(consultantBadge.className).toContain('mg-admin-sms-template__audience-badge--consultant');
   });
 
   it('템플릿 선택 시 글로벌 본문 + 변수 입력 폼이 노출된다', async() => {

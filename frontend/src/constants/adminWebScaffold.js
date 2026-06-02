@@ -6,7 +6,8 @@
  * - PATCH `{COMMUNITY_POSTS_MODERATION_ROOT}/{postId}/moderation` — 본문 `{ status, rejectReason? }`
  * BW-3 콘텐츠 마스터: `AdminPsychoEducationContentController`·`AdminHealingContentCatalogController`
  * — 심리교육 `/api/v1/admin/content/psycho-education`, 힐링 카탈로그 `/api/v1/admin/content/healing-catalog`
- * — 각각 GET 목록·POST·PUT `/{id}`·PATCH `/{id}/visibility` (`isActive`)
+ * — 심리교육: GET 목록·POST·PUT `/{id}`·PATCH `/{id}/visibility` (`{ isActive }`)
+ * — 힐링 카탈로그: GET 목록·POST·PUT `/{id}`·PATCH `/{id}/published` (`{ published }`)
  * BW-6 웰니스 관측: `AdminMindWeatherObservabilityController`·`AdminMindGardenObservabilityController`
  * — `/api/v1/admin/wellness/mind-weather/cards|summary`, `/api/v1/admin/wellness/mind-garden/snapshots|summary` (GET 전용)
  * @see docs/project-management/WEB_ADMIN_APP_SCOPE_AND_CHECKOUT_FEATURES.md
@@ -14,8 +15,11 @@
  * @since 2026-05-14
  */
 
-/** 노출 PATCH 요청 본문 필드명(백엔드 DTO와 동일하게 유지) */
+/** 심리교육 노출 PATCH 요청 본문 필드명(`AdminPsychoEducationContentController`와 동일) */
 export const ADMIN_CONTENT_VISIBILITY_FIELD = 'isActive';
+
+/** 힐링 카탈로그 노출 PATCH 요청 본문 필드명(`PublishedPatchRequest.published`) */
+export const ADMIN_HEALING_PUBLISHED_FIELD = 'published';
 
 /** @type {Readonly<{ COMMUNITY_MODERATION_QUEUE: string, COMMUNITY_POSTS_MODERATION_ROOT: string, ADMIN_CONTENT_PSYCHO_EDUCATION: string, ADMIN_CONTENT_HEALING_CATALOG: string, MIND_WEATHER_CARDS: string, MIND_WEATHER_SUMMARY: string, MIND_GARDEN_SNAPSHOTS: string, MIND_GARDEN_SUMMARY: string }>} */
 export const ADMIN_WEB_SCAFFOLD_API = {
@@ -54,19 +58,30 @@ export function buildHealingCatalogItemPath(contentId) {
 }
 
 /**
+ * 힐링 카탈로그 노출 토글 경로(`AdminHealingContentCatalogController#patchPublished`).
  * @param {string|number} contentId
  * @returns {string}
  */
-export function buildHealingCatalogVisibilityPath(contentId) {
-  return `${buildHealingCatalogItemPath(contentId)}/visibility`;
+export function buildHealingCatalogPublishedPath(contentId) {
+  return `${buildHealingCatalogItemPath(contentId)}/published`;
 }
 
 /**
+ * 심리교육 노출 PATCH 본문 (`{ isActive: boolean }`).
  * @param {boolean} nextActive
  * @returns {Readonly<Record<string, boolean>>}
  */
 export function buildAdminContentVisibilityPatchBody(nextActive) {
   return { [ADMIN_CONTENT_VISIBILITY_FIELD]: Boolean(nextActive) };
+}
+
+/**
+ * 힐링 카탈로그 노출 PATCH 본문 (`{ published: boolean }`).
+ * @param {boolean} nextPublished
+ * @returns {Readonly<Record<string, boolean>>}
+ */
+export function buildHealingCatalogPublishedPatchBody(nextPublished) {
+  return { [ADMIN_HEALING_PUBLISHED_FIELD]: Boolean(nextPublished) };
 }
 
 /**
@@ -176,6 +191,7 @@ export const ADMIN_WEB_SCAFFOLD_COPY = {
   CONTENT_SUCCESS_UPDATED: '콘텐츠를 수정했습니다.',
   CONTENT_SUCCESS_VISIBILITY: '노출 상태를 반영했습니다.',
   CONTENT_VALIDATION_TITLE: '제목을 입력해 주세요.',
+  CONTENT_VALIDATION_CODE: '코드를 입력해 주세요.',
   CONTENT_TABLE_VISIBILITY: '노출',
   CONTENT_TABLE_ACTIONS: '작업',
   CONTENT_ACTION_EDIT: '수정',
@@ -187,10 +203,13 @@ export const ADMIN_WEB_SCAFFOLD_COPY = {
   CONTENT_FORM_LABEL_CATEGORY: '카테고리 코드',
   CONTENT_FORM_LABEL_READ_MINUTES: '예상 읽기(분)',
   CONTENT_FORM_LABEL_DESCRIPTION: '설명',
+  CONTENT_FORM_LABEL_CODE: '코드(고유 식별자)',
   CONTENT_FORM_LABEL_TYPE: '유형(예: ARTICLE, MEDITATION)',
   CONTENT_FORM_LABEL_DURATION: '길이(분)',
   CONTENT_FORM_LABEL_THUMB: '썸네일 URL',
   CONTENT_FORM_LABEL_CONTENT_URL: '콘텐츠 URL',
+  CONTENT_FORM_LABEL_PUBLISHED: '공개(앱 노출)',
+  CONTENT_FORM_LABEL_SORT_ORDER: '정렬 순서(작을수록 위)',
   CONTENT_FORM_SAVE: '저장',
   CONTENT_FORM_CANCEL: '취소',
   CONTENT_RELOAD: '다시 불러오기',

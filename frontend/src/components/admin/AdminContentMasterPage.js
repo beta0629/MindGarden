@@ -22,7 +22,8 @@ import {
   ADMIN_WEB_SCAFFOLD_COPY,
   buildAdminContentVisibilityPatchBody,
   buildHealingCatalogItemPath,
-  buildHealingCatalogVisibilityPath,
+  buildHealingCatalogPublishedPatchBody,
+  buildHealingCatalogPublishedPath,
   buildPsychoEducationContentItemPath,
   buildPsychoEducationContentVisibilityPath,
   normalizeApiListPayload,
@@ -57,14 +58,20 @@ const emptyPsychoForm = () => ({
   readMinutes: String(DEFAULT_READ_MINUTES)
 });
 
+const DEFAULT_HEALING_MEDIA_TYPE = 'ARTICLE';
+const DEFAULT_HEALING_SORT_ORDER = 0;
+
 const emptyHealingForm = () => ({
+  code: '',
   title: '',
   description: '',
   category: '',
-  type: 'ARTICLE',
+  mediaType: DEFAULT_HEALING_MEDIA_TYPE,
   durationMinutes: '',
   thumbnailUrl: '',
-  contentUrl: ''
+  contentUrl: '',
+  published: false,
+  sortOrder: DEFAULT_HEALING_SORT_ORDER
 });
 
 function mapContentRows(list, prefix) {
@@ -112,29 +119,33 @@ function mapPsychoRowToForm(row) {
   };
 }
 
-function healingTypeToString(typeRaw) {
+function healingMediaTypeToString(typeRaw) {
   if (typeof typeRaw === 'string') {
     return typeRaw;
   }
   if (typeRaw && typeof typeRaw === 'object' && typeRaw.name != null) {
     return String(typeRaw.name);
   }
-  return toDisplayString(typeRaw, 'ARTICLE');
+  return toDisplayString(typeRaw, DEFAULT_HEALING_MEDIA_TYPE);
 }
 
 function mapHealingRowToForm(row) {
   if (!row || typeof row !== 'object') {
     return emptyHealingForm();
   }
-  const typeStr = healingTypeToString(row.type);
+  const mediaTypeStr = healingMediaTypeToString(row.mediaType ?? row.type);
+  const sortOrderRaw = row.sortOrder != null ? Number(row.sortOrder) : DEFAULT_HEALING_SORT_ORDER;
   return {
+    code: toDisplayString(row.code, ''),
     title: toDisplayString(row.title, ''),
     description: toDisplayString(row.description, ''),
     category: toDisplayString(row.category, ''),
-    type: typeStr || 'ARTICLE',
+    mediaType: mediaTypeStr || DEFAULT_HEALING_MEDIA_TYPE,
     durationMinutes: row.durationMinutes != null ? String(row.durationMinutes) : '',
     thumbnailUrl: toDisplayString(row.thumbnailUrl, ''),
-    contentUrl: toDisplayString(row.contentUrl, '')
+    contentUrl: toDisplayString(row.contentUrl, ''),
+    published: row.published === true,
+    sortOrder: Number.isFinite(sortOrderRaw) ? sortOrderRaw : DEFAULT_HEALING_SORT_ORDER
   };
 }
 
@@ -249,14 +260,17 @@ const AdminContentMasterPage = () => {
     if (id == null) {
       return;
     }
-    const path = tab === TAB_PSYCHO
-      ? buildPsychoEducationContentVisibilityPath(id)
-      : buildHealingCatalogVisibilityPath(id);
     const current = pickContentMasterRowVisibility(rawRow);
     const next = !current;
+    const path = tab === TAB_PSYCHO
+      ? buildPsychoEducationContentVisibilityPath(id)
+      : buildHealingCatalogPublishedPath(id);
+    const body = tab === TAB_PSYCHO
+      ? buildAdminContentVisibilityPatchBody(next)
+      : buildHealingCatalogPublishedPatchBody(next);
     setTogglingId(id);
     try {
-      await StandardizedApi.patch(path, buildAdminContentVisibilityPatchBody(next));
+      await StandardizedApi.patch(path, body);
       notificationManager.success(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_SUCCESS_VISIBILITY);
       await reloadTab();
     } catch (e) {
@@ -304,6 +318,11 @@ const AdminContentMasterPage = () => {
       return;
     }
 
+    const codeH = toDisplayString(healingForm.code, '').trim();
+    if (!codeH) {
+      notificationManager.show(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_VALIDATION_CODE, 'warning');
+      return;
+    }
     const titleH = toDisplayString(healingForm.title, '').trim();
     if (!titleH) {
       notificationManager.show(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_VALIDATION_TITLE, 'warning');
@@ -311,14 +330,19 @@ const AdminContentMasterPage = () => {
     }
     const durRaw = String(healingForm.durationMinutes ?? '').trim();
     const durParsed = durRaw === '' ? null : Number.parseInt(durRaw, 10);
+    const sortRaw = Number(healingForm.sortOrder);
     const payloadH = {
+      code: codeH,
       title: titleH,
       description: toDisplayString(healingForm.description, '').trim() || null,
       category: toDisplayString(healingForm.category, '').trim() || null,
-      type: toDisplayString(healingForm.type, 'ARTICLE').trim() || 'ARTICLE',
+      mediaType: toDisplayString(healingForm.mediaType, DEFAULT_HEALING_MEDIA_TYPE).trim()
+        || DEFAULT_HEALING_MEDIA_TYPE,
       durationMinutes: durParsed != null && Number.isFinite(durParsed) ? durParsed : null,
       thumbnailUrl: toDisplayString(healingForm.thumbnailUrl, '').trim() || null,
-      contentUrl: toDisplayString(healingForm.contentUrl, '').trim() || null
+      contentUrl: toDisplayString(healingForm.contentUrl, '').trim() || null,
+      published: !!healingForm.published,
+      sortOrder: Number.isFinite(sortRaw) ? sortRaw : DEFAULT_HEALING_SORT_ORDER
     };
     setSaving(true);
     try {
@@ -518,6 +542,20 @@ const AdminContentMasterPage = () => {
   const healingFields = (
     <>
       <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-heal-code`} className="mg-modal__label">
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_CODE}
+        </label>
+        <input
+          id={`${baseId}-heal-code`}
+          className="mg-v2-form-input"
+          maxLength={CATEGORY_INPUT_MAX_LEN}
+          value={healingForm.code}
+          onChange={(ev) => setHealingForm((p) => ({ ...p, code: ev.target.value }))}
+          disabled={saving}
+          autoComplete="off"
+        />
+      </div>
+      <div className="mg-modal__form-group">
         <label htmlFor={`${baseId}-heal-title`} className="mg-modal__label">
           {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_TITLE}
         </label>
@@ -566,8 +604,8 @@ const AdminContentMasterPage = () => {
           id={`${baseId}-heal-type`}
           className="mg-v2-form-input"
           maxLength={CATEGORY_INPUT_MAX_LEN}
-          value={healingForm.type}
-          onChange={(ev) => setHealingForm((p) => ({ ...p, type: ev.target.value }))}
+          value={healingForm.mediaType}
+          onChange={(ev) => setHealingForm((p) => ({ ...p, mediaType: ev.target.value }))}
           disabled={saving}
           autoComplete="off"
         />
@@ -612,6 +650,32 @@ const AdminContentMasterPage = () => {
           onChange={(ev) => setHealingForm((p) => ({ ...p, contentUrl: ev.target.value }))}
           disabled={saving}
           autoComplete="off"
+        />
+      </div>
+      <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-heal-published`} className="mg-modal__label">
+          <input
+            id={`${baseId}-heal-published`}
+            type="checkbox"
+            checked={!!healingForm.published}
+            onChange={(ev) => setHealingForm((p) => ({ ...p, published: ev.target.checked }))}
+            disabled={saving}
+          />
+          {' '}
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
+        </label>
+      </div>
+      <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-heal-sort`} className="mg-modal__label">
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SORT_ORDER}
+        </label>
+        <input
+          id={`${baseId}-heal-sort`}
+          type="number"
+          className="mg-v2-form-input"
+          value={healingForm.sortOrder}
+          onChange={(ev) => setHealingForm((p) => ({ ...p, sortOrder: ev.target.value }))}
+          disabled={saving}
         />
       </div>
     </>

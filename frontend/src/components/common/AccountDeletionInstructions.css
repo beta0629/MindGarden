@@ -1,0 +1,190 @@
+/*
+ * AccountDeletionInstructions 스타일 — PrivacyPolicy/Terms와 동일한 디자인 토큰 사용
+ *
+ * @author CoreSolution
+ * @since 2026-06-02
+ */
+
+.account-deletion-info-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--spacing-md);
+  row-gap: var(--spacing-xs);
+  margin: 0;
+}
+
+.account-deletion-info-grid dt {
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.account-deletion-info-grid dd {
+  margin: 0;
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.account-deletion-method-box {
+  background: var(--ios-bg-primary);
+  border: 1px solid var(--ios-border-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.account-deletion-method-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.account-deletion-method-summary {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+  line-height: 1.6;
+}
+
+.account-deletion-steps {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+}
+
+.account-deletion-steps li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.account-deletion-email-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--spacing-md);
+  row-gap: var(--spacing-sm);
+  margin: var(--spacing-md) 0 0 0;
+}
+
+.account-deletion-email-grid dt {
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.account-deletion-email-grid dd {
+  margin: 0;
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.account-deletion-email-grid dd ul {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+}
+
+.account-deletion-email-address {
+  font-family: var(--mg-font-family-mono, monospace);
+  color: var(--ios-blue-dark);
+  font-weight: var(--font-weight-semibold);
+}
+
+.account-deletion-retention-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-md) 0 0 0;
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  font-size: var(--font-size-sm);
+}
+
+.account-deletion-retention-table th,
+.account-deletion-retention-table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--ios-border-light);
+  vertical-align: top;
+}
+
+.account-deletion-retention-table th {
+  background: var(--ios-bg-secondary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+}
+
+.account-deletion-retention-table td {
+  color: var(--ios-text-secondary);
+}
+
+.account-deletion-retention-table .account-deletion-retention-period {
+  white-space: nowrap;
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+}
+
+.account-deletion-retention-note {
+  margin: var(--spacing-md) 0 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  line-height: 1.6;
+}
+
+.account-deletion-contact-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--spacing-md);
+  row-gap: var(--spacing-sm);
+  margin: 0;
+}
+
+.account-deletion-contact-grid dt {
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.account-deletion-contact-grid dd {
+  margin: 0;
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.account-deletion-related-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin: var(--spacing-sm) 0 0 0;
+}
+
+.account-deletion-related-link {
+  font-size: var(--font-size-sm);
+  color: var(--ios-blue-dark);
+  text-decoration: underline;
+}
+
+.account-deletion-related-link:hover,
+.account-deletion-related-link:focus {
+  color: var(--ios-blue);
+  text-decoration: underline;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 767px) {
+  .account-deletion-info-grid,
+  .account-deletion-email-grid,
+  .account-deletion-contact-grid {
+    grid-template-columns: 1fr;
+    row-gap: var(--spacing-xs);
+  }
+
+  .account-deletion-retention-table th,
+  .account-deletion-retention-table td {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+}

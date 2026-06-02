@@ -413,6 +413,9 @@ const Homepage = () => {
             <Link className="mg-v2-homepage-footer-link" to="/privacy">
               {t('common:homepage.Homepage.t_339679c5')}
             </Link>
+            <Link className="mg-v2-homepage-footer-link" to="/account-deletion">
+              {t('accountDeletion:pageTitle')}
+            </Link>
           </div>
         </footer>
         

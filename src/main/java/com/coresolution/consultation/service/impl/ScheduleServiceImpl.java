@@ -16,8 +16,10 @@ import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.consultation.ConsultationServiceUserFacingMessages;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.Branch;
+import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
@@ -314,6 +316,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             } catch (Exception ex) {
                 log.warn("예약 일정 변경 푸시 실패: scheduleId={}", saved.getId(), ex);
             }
+            // HOTFIX(2026-06-02): schedule 직접 수정(어드민/상담사 일정 시간·날짜 변경) 경로에서도
+            // SCHEDULE_CHANGED 알림톡/SMS/인앱 알림이 발송되도록 NotificationService 트리거 추가.
+            // 기존엔 ConsultationServiceImpl.rescheduleConsultation 경로(/consultations/{id}/reschedule)에서만
+            // 호출되어 어드민이 schedules 시간만 변경하면 클라이언트에게 SMS/알림톡이 도달하지 않는 누락이 있었음.
+            trySendScheduleChangedExternalChannels(saved, previousDate, previousStartTime);
         }
 
         boolean wasOccupyingConsultation = previousStatus != null
@@ -328,7 +335,84 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         return saved;
     }
-    
+
+    /**
+     * 스케줄 슬롯(일자/시간) 변경 시 클라이언트에게 알림톡→SMS→인앱 폴백으로 SCHEDULE_CHANGED 알림 발송 (비차단).
+     *
+     * <p>본 메서드는 어드민/상담사가 schedules 테이블의 일정을 직접 수정한 경우에도
+     * 클라이언트가 알림톡/SMS 로 일정 변경 사실을 받을 수 있도록 추가된 핫픽스이다.
+     * 기존엔 {@code ConsultationServiceImpl.rescheduleConsultation} ({@code PUT /api/v1/consultations/{id}/reschedule})
+     * 경로에서만 호출되어 어드민 schedules UI 의 시간 수정이 누락되었다.</p>
+     *
+     * <p>본 처리 트랜잭션은 롤백하지 않으며, NotificationService 내부에서 다시 알림톡→SMS→인앱 채널 순서로 폴백한다.</p>
+     *
+     * @param saved          저장 완료된 스케줄 (slot 변경 후)
+     * @param previousDate   변경 전 일자
+     * @param previousStart  변경 전 시작 시각
+     */
+    private void trySendScheduleChangedExternalChannels(Schedule saved, LocalDate previousDate, LocalTime previousStart) {
+        if (saved == null || saved.getClientId() == null) {
+            return;
+        }
+        String resolvedTenantId = TenantContextHolder.getTenantId();
+        if (resolvedTenantId == null || resolvedTenantId.isEmpty()) {
+            resolvedTenantId = saved.getTenantId();
+        }
+        if (resolvedTenantId == null || resolvedTenantId.isEmpty()) {
+            log.warn("일정 변경 알림: TenantContext/Schedule.tenantId 모두 비어 있음, 발송 생략 scheduleId={}", saved.getId());
+            return;
+        }
+        try {
+            User client = userRepository.findByTenantIdAndId(resolvedTenantId, saved.getClientId()).orElse(null);
+            if (client == null) {
+                log.warn("일정 변경 알림: 내담자 User 미조회 scheduleId={}, clientId={}", saved.getId(), saved.getClientId());
+                return;
+            }
+            String consultantName = resolveConsultantDisplayNameForScheduleAlimTalk(resolvedTenantId, saved.getConsultantId());
+            String oldSlot = formatScheduleSlot(previousDate, previousStart);
+            String newSlot = formatScheduleSlot(saved.getDate(), saved.getStartTime());
+            notificationService.sendScheduleChanged(client, consultantName, oldSlot, newSlot);
+        } catch (Exception e) {
+            log.warn("일정 변경 알림 발송 실패(본 처리 롤백 없음): scheduleId={}, {}", saved.getId(), e.getMessage());
+        }
+    }
+
+    private String formatScheduleSlot(LocalDate date, LocalTime start) {
+        if (date == null) {
+            return "";
+        }
+        if (start == null) {
+            return date.toString();
+        }
+        return date.toString() + " " + start;
+    }
+
+    private String resolveConsultantDisplayNameForScheduleAlimTalk(String tenantId, Long consultantId) {
+        if (consultantId == null || tenantId == null || tenantId.isEmpty()) {
+            return ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
+        }
+        try {
+            Optional<Consultant> consultantOpt = consultantRepository.findByTenantIdAndId(tenantId, consultantId);
+            if (consultantOpt.isEmpty()) {
+                return ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
+            }
+            Consultant consultant = consultantOpt.get();
+            try {
+                Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(consultant);
+                if (decrypted != null && decrypted.get("name") != null && !decrypted.get("name").isEmpty()) {
+                    return decrypted.get("name");
+                }
+            } catch (Exception e) {
+                log.warn("상담사명 복호화 실패: consultantId={}, {}", consultantId, e.getMessage());
+            }
+            return consultant.getName() != null ? consultant.getName()
+                : ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
+        } catch (Exception e) {
+            log.warn("상담사 표시명 조회 실패: consultantId={}", consultantId, e);
+            return ConsultationServiceUserFacingMessages.DEFAULT_CONSULTANT_DISPLAY_NAME;
+        }
+    }
+
      /**
      * Schedule 필드 복사 (부분 업데이트용)
      */

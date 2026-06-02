@@ -1,7 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './PrivacyPolicy.css';
+import './AccountDeletionInstructions.css';
 import { useTranslation } from 'react-i18next';
 
 const PRIVACY_PAGE_TITLE_ID = 'privacy-policy-page-title';
@@ -180,6 +182,12 @@ export const PrivacyPolicyContent = ({ omitHeading = false }) => {
           <p className="mg-v2-terms-paragraph">
             {t('common:common.PrivacyPolicy.t_acaa73ca')}
           </p>
+        </div>
+
+        <div className="mg-v2-terms-section">
+          <Link className="account-deletion-related-link" to="/account-deletion">
+            {t('accountDeletion:links.viewAccountDeletion')}
+          </Link>
         </div>
 
         <div className="privacy-policy-conclusion-box">

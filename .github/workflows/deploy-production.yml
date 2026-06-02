@@ -1,4 +1,11 @@
 name: 🚀 Core Solution 운영 배포
+
+# 운영 배포 동시 실행 가드: cutover 시퀀스(atomic mv → INCOMING JAR 회수) 중 두 번째 런이 SCP 단계에
+# 도달하면 race condition 발생. cancel-in-progress=false 로 큐잉(2026-06-02 13:42 UTC run 26823743074 재발 방지).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 #
 # 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스 →
 # /etc/nginx/snippets/mindgarden-core-backend-upstream.conf 갱신 → nginx -t && reload → /etc/mindgarden/active-backend 갱신.

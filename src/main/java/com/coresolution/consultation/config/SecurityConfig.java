@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
+import com.coresolution.consultation.config.security.BearerTokenAuthCsrfMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
@@ -89,9 +90,12 @@ public class SecurityConfig {
             // 운영 환경: 보안 강화
             http
                 // CSRF 활성화 (운영 환경에서는 보안 필수)
+                // 단, Bearer 토큰 인증(모바일/SDK)은 OWASP·Spring Security 권고에 따라
+                // stateless 인증이므로 CSRF 면제. 웹 프론트(세션 쿠키)는 그대로 보호.
                 .csrf(csrf -> csrf
                     .csrfTokenRepository(csrfTokenRepository())
                     .ignoringRequestMatchers(
+                        new BearerTokenAuthCsrfMatcher(),
                         new AntPathRequestMatcher("/api/auth/**"),
                         new AntPathRequestMatcher("/api/v1/auth/**"),
                         new AntPathRequestMatcher("/api/admin/mappings/**"),

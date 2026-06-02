@@ -164,6 +164,7 @@ import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 import SessionIdleWarningModal from './components/common/SessionIdleWarningModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
+import AccountDeletionInstructions from './components/common/AccountDeletionInstructions';
 import CounselingCenterLanding from './pages/CounselingCenterLanding';
 import SystemNotifications from './components/notifications/SystemNotifications';
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
@@ -701,6 +702,8 @@ function AppContent() {
             {/* 개인정보 및 약관 관련 라우트 */}
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
+            {/* Google Play 「데이터 보안 → 사용자 데이터 삭제 정책」 준수 — 비로그인 공개 페이지 */}
+            <Route path="/account-deletion" element={<AccountDeletionInstructions />} />
             
             {/* 테넌트 프로필/설정 — 내담자·상담사 접근 불가 (ADMIN/STAFF만) */}
             <Route path="/tenant/profile" element={

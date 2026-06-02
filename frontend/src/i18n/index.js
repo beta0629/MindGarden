@@ -38,6 +38,7 @@ import koSystemConfig from '../locales/ko/systemConfig.json';
 import koSmsTemplate from '../locales/ko/smsTemplate.json';
 import koMypage from '../locales/ko/mypage.json';
 import koCommunity from '../locales/ko/community.json';
+import koAccountDeletion from '../locales/ko/accountDeletion.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -123,7 +124,8 @@ i18n
         systemConfig: koSystemConfig,
         smsTemplate: koSmsTemplate,
         mypage: koMypage,
-        community: koCommunity
+        community: koCommunity,
+        accountDeletion: koAccountDeletion
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
@@ -145,7 +147,8 @@ i18n
       'systemConfig',
       'smsTemplate',
       'mypage',
-      'community'
+      'community',
+      'accountDeletion'
     ],
     interpolation: {
       escapeValue: false

@@ -354,30 +354,26 @@ export function canRegisterStaffOnMobile(storeRole: AppAuthRole | null | undefin
   return isAdminRole(storeRole);
 }
 
-/** 매칭 목록 — ADMIN 또는 JWT MAPPING_VIEW (STAFF 기본) */
+/**
+ * 매칭 목록 — STAFF == ADMIN 동등(1.0.5).
+ * ADMIN/STAFF 둘 다 자동 허용. accessToken 인자는 호환을 위해 유지하지만
+ * JWT permission 의존성은 제거됨(백엔드에서 STAFF 단락 통과로 일관 처리).
+ */
 export function canViewMappingsOnMobile(
   storeRole: AppAuthRole | null | undefined,
-  accessToken: string | null | undefined,
+  _accessToken?: string | null | undefined,
 ): boolean {
-  if (isAdminRole(storeRole)) {
-    return true;
-  }
-  if (isStaffRole(storeRole)) {
-    return hasJwtPermission(accessToken, 'MAPPING_VIEW');
-  }
-  return false;
+  return isAdminRole(storeRole) || isStaffRole(storeRole);
 }
 
-/** 신규 매칭 생성 — ADMIN 또는 JWT MAPPING_MANAGE */
+/**
+ * 신규 매칭 생성·수정 — STAFF == ADMIN 동등(1.0.5).
+ * ADMIN/STAFF 둘 다 자동 허용. accessToken 인자는 호환을 위해 유지하지만
+ * JWT permission 의존성은 제거됨(백엔드에서 STAFF 단락 통과로 일관 처리).
+ */
 export function canManageMappingsOnMobile(
   storeRole: AppAuthRole | null | undefined,
-  accessToken: string | null | undefined,
+  _accessToken?: string | null | undefined,
 ): boolean {
-  if (isAdminRole(storeRole)) {
-    return true;
-  }
-  if (isStaffRole(storeRole)) {
-    return hasJwtPermission(accessToken, 'MAPPING_MANAGE');
-  }
-  return false;
+  return isAdminRole(storeRole) || isStaffRole(storeRole);
 }

@@ -1209,7 +1209,8 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
 
-        if (!currentUser.getRole().isAdmin()) {
+        // STAFF == ADMIN 동등(1.0.5): 매핑 조회는 STAFF 도 허용
+        if (!(currentUser.getRole().isAdmin() || currentUser.getRole().isStaff())) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
 
@@ -2761,7 +2762,8 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
 
-        if (!currentUser.getRole().isAdmin()) {
+        // STAFF == ADMIN 동등(1.0.5): 사용자 목록 조회는 STAFF 도 허용
+        if (!(currentUser.getRole().isAdmin() || currentUser.getRole().isStaff())) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
 
@@ -2843,7 +2845,9 @@ public class AdminController extends BaseApiController {
         log.info("🔧 상담 겸직 플래그 변경: userId={}, counselingEnabled={}", userId, body.isCounselingEnabled());
 
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || !currentUser.getRole().isAdmin()) {
+        // STAFF == ADMIN 동등(1.0.5): 상담 겸직 플래그 변경은 STAFF 도 허용
+        if (currentUser == null
+                || !(currentUser.getRole().isAdmin() || currentUser.getRole().isStaff())) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
 
@@ -3729,7 +3733,8 @@ public class AdminController extends BaseApiController {
             }
 
             com.coresolution.consultation.constant.UserRole userRole = currentUser.getRole();
-            boolean hasAdminRole = userRole != null && userRole.isAdmin();
+            // STAFF == ADMIN 동등(1.0.5): 상담 이력 조회는 STAFF 도 허용
+            boolean hasAdminRole = userRole != null && (userRole.isAdmin() || userRole.isStaff());
             boolean hasPermission =
                     dynamicPermissionService.hasPermission(currentUser, "ADMIN_CONSULTATION_VIEW");
 

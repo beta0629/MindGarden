@@ -136,25 +136,29 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
             Long clientUserId) {
         String packageName = resolvePackageName(mapping);
         String amountLabel = resolveAmountLabel(mapping);
-        String consultantRole = getRoleCode(UserRole.CONSULTANT.name());
         String messageType = getMessageType(MappingSettlementNotificationCopy.MESSAGE_TYPE_PAYMENT);
 
         switch (scenario) {
             case PAYMENT_CONFIRMED -> {
                 String body = String.format(
                         MappingSettlementNotificationCopy.BODY_PAYMENT_CONFIRMED_FMT, packageName, amountLabel);
-                sendToClient(consultantUserId, clientUserId, consultantRole, messageType,
+                // P0 보안·역할 분리(2026-06-03): 결제 금액이 상담사 인앱 메시지함에 노출되지 않도록
+                // 상담사 발화(senderType=CONSULTANT) 대신 시스템 발화(senderType=SYSTEM)로 내담자 단독 수신.
+                sendSystemToClient(consultantUserId, clientUserId, messageType,
                         MappingSettlementNotificationCopy.TITLE_PAYMENT_CONFIRMED, body);
             }
             case DEPOSIT_CONFIRMED -> {
                 String body = String.format(
                         MappingSettlementNotificationCopy.BODY_DEPOSIT_CONFIRMED_FMT, packageName, amountLabel);
-                sendToClient(consultantUserId, clientUserId, consultantRole, messageType,
+                // P0 보안·역할 분리(2026-06-03): 입금 확인 금액 노출도 동일하게 시스템 발화로 처리.
+                sendSystemToClient(consultantUserId, clientUserId, messageType,
                         MappingSettlementNotificationCopy.TITLE_DEPOSIT_CONFIRMED, body);
             }
             case MAPPING_APPROVED -> {
                 String body = String.format(
                         MappingSettlementNotificationCopy.BODY_MAPPING_APPROVED_FMT, packageName);
+                // MAPPING_APPROVED 는 결제 금액 미포함 — 기존 양방향 발화(스레드 가시성) 유지.
+                String consultantRole = getRoleCode(UserRole.CONSULTANT.name());
                 sendToClient(consultantUserId, clientUserId, consultantRole, messageType,
                         MappingSettlementNotificationCopy.TITLE_MAPPING_APPROVED, body);
                 sendToConsultant(consultantUserId, clientUserId, messageType,
@@ -163,6 +167,27 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
             default -> {
             }
         }
+    }
+
+    /**
+     * 내담자 단독 수신용 시스템 발화. 상담사 발화로 저장되지 않으므로 상담사 메시지함·검색에 노출되지 않는다.
+     */
+    private void sendSystemToClient(
+            Long consultantUserId,
+            Long clientUserId,
+            String messageType,
+            String title,
+            String body) {
+        consultationMessageService.sendSystemThreadMessage(
+                consultantUserId,
+                clientUserId,
+                clientUserId,
+                null,
+                title,
+                body,
+                messageType,
+                false,
+                false);
     }
 
     private void sendToClient(

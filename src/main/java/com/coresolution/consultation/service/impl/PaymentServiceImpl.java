@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.PaymentConstants;
-import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.PaymentNotificationCopy;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.dto.PaymentWebhookRequest;
@@ -281,24 +281,26 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     
                     if (!isShopOrderPayment(payment)) {
                         try {
-                            String paymentMessage = String.format("결제가 완료되었습니다.\n" +
-                                "💰 금액: %s원\n" +
-                                "📅 결제일시: %s\n" +
-                                "📝 내용: %s", 
-                                payment.getAmount(), 
-                                LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                            // P0 보안·역할 분리(2026-06-03): 결제 금액이 상담사 인앱 메시지함에 노출되지 않도록
+                            // sendSystemThreadMessage 로 결제자(client) 단독 수신 처리.
+                            String paymentMessage = String.format(
+                                PaymentNotificationCopy.INAPP_BODY_PAYMENT_COMPLETED_FMT,
+                                payment.getAmount(),
+                                LocalDateTime.now().format(
+                                    java.time.format.DateTimeFormatter.ofPattern(
+                                        PaymentNotificationCopy.DATE_TIME_PATTERN)),
                                 payment.getDescription()
                             );
-                            
+
                             Long clientUserId = payment.getPayerId();
                             Long consultantUserId = payment.getRecipientId();
                             if (clientUserId != null && consultantUserId != null) {
-                                consultationMessageService.sendMessage(
+                                consultationMessageService.sendSystemThreadMessage(
                                         consultantUserId,
                                         clientUserId,
+                                        clientUserId,
                                         null,
-                                        getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
-                                        "결제 완료",
+                                        PaymentNotificationCopy.INAPP_TITLE_PAYMENT_COMPLETED,
                                         paymentMessage,
                                         getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
                                         false,
@@ -306,8 +308,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                             } else {
                                 log.warn("결제 완료 인앱 알림 생략: payer/recipient 없음 paymentId={}", paymentId);
                             }
-                            
-                            log.info("🔔 결제 완료 알림 자동 발송: PaymentID={}", paymentId);
+
+                            log.info("🔔 결제 완료 알림 자동 발송(시스템 발화·내담자 단독): PaymentID={}", paymentId);
                         } catch (Exception e) {
                             log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
                         }
@@ -873,18 +875,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .updatedAt(payment.getUpdatedAt())
                 .paymentUrl(paymentUrl)
                 .build();
-    }
-    
-    /**
-     * 공통코드에서 역할 코드 조회
-     */
-    private String getRoleCodeFromCommonCode(String roleName) {
-        try {
-            String codeValue = commonCodeService.getCodeValue("ROLE", roleName);
-            return codeValue != null ? codeValue : roleName;
-        } catch (Exception e) {
-            return roleName;
-        }
     }
     
     /**

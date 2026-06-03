@@ -56,9 +56,9 @@ class MappingSettlementNotificationHelperImplTest {
     private MappingSettlementNotificationHelperImpl helper;
 
     @Test
-    @DisplayName("결제 확인: 내담자 인앱·payment_completed 푸시(상담사 푸시 없음)")
+    @DisplayName("결제 확인: 시스템 발화·내담자 단독 수신(상담사 메시지함·푸시 미노출)")
     void notify_paymentConfirmed_clientOnly() {
-        when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
+        // P0 보안·역할 분리(2026-06-03): 결제 금액 노출 차단 회귀 가드.
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", MappingSettlementNotificationCopy.MESSAGE_TYPE_PAYMENT))
                 .thenReturn("PAYMENT_COMPLETION");
         stubClientAndConsultantUsers();
@@ -67,16 +67,20 @@ class MappingSettlementNotificationHelperImplTest {
 
         helper.notifyAfterMappingSettlement(mapping, TENANT_ID, MappingSettlementScenario.PAYMENT_CONFIRMED);
 
-        verify(consultationMessageService).sendMessage(
+        // 시스템 발화 헬퍼만 호출, receiverUserId 는 client.
+        verify(consultationMessageService).sendSystemThreadMessage(
                 eq(CONSULTANT_ID),
                 eq(CLIENT_ID),
+                eq(CLIENT_ID),
                 eq(null),
-                eq("CONSULTANT"),
                 eq(MappingSettlementNotificationCopy.TITLE_PAYMENT_CONFIRMED),
                 any(),
                 eq("PAYMENT_COMPLETION"),
                 eq(false),
                 eq(false));
+        // 상담사 발화(senderType=CONSULTANT) 로 저장되는 sendMessage 는 절대 호출되지 않아야 함.
+        verify(consultationMessageService, never()).sendMessage(
+                any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(mobilePushDispatchService).dispatchMappingSettlement(
                 eq(TENANT_ID),
                 eq(MAPPING_ID),
@@ -93,9 +97,9 @@ class MappingSettlementNotificationHelperImplTest {
     }
 
     @Test
-    @DisplayName("입금 확인: 내담자 인앱·payment_completed 푸시(상담사 푸시 없음)")
+    @DisplayName("입금 확인: 시스템 발화·내담자 단독 수신(상담사 메시지함·푸시 미노출)")
     void notify_depositConfirmed_clientOnly() {
-        when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
+        // P0 보안·역할 분리(2026-06-03): 입금 금액 노출 차단 회귀 가드.
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", MappingSettlementNotificationCopy.MESSAGE_TYPE_PAYMENT))
                 .thenReturn("PAYMENT_COMPLETION");
         stubClientAndConsultantUsers();
@@ -104,16 +108,18 @@ class MappingSettlementNotificationHelperImplTest {
 
         helper.notifyAfterMappingSettlement(mapping, TENANT_ID, MappingSettlementScenario.DEPOSIT_CONFIRMED);
 
-        verify(consultationMessageService).sendMessage(
+        verify(consultationMessageService).sendSystemThreadMessage(
                 eq(CONSULTANT_ID),
                 eq(CLIENT_ID),
+                eq(CLIENT_ID),
                 eq(null),
-                eq("CONSULTANT"),
                 eq(MappingSettlementNotificationCopy.TITLE_DEPOSIT_CONFIRMED),
                 any(),
                 eq("PAYMENT_COMPLETION"),
                 eq(false),
                 eq(false));
+        verify(consultationMessageService, never()).sendMessage(
+                any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(mobilePushDispatchService).dispatchMappingSettlement(
                 eq(TENANT_ID),
                 eq(MAPPING_ID),
@@ -188,6 +194,8 @@ class MappingSettlementNotificationHelperImplTest {
 
         verify(consultationMessageService, never()).sendMessage(any(), any(), any(), any(), any(), any(), any(), any(),
                 any());
+        verify(consultationMessageService, never()).sendSystemThreadMessage(
+                any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(mobilePushDispatchService, never()).dispatchMappingSettlement(
                 any(), any(), any(), any(), any(Boolean.class), any(), any(), any(), any(), any());
         verify(notificationService, never()).sendPaymentCompleted(any(), any(Long.class), any(), any());

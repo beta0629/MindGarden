@@ -1,0 +1,25 @@
+Audio Asset License Notice
+============================
+
+File: Meditation_Impromptu_03.mp3
+Title: Meditation Impromptu 03
+Composer: Kevin MacLeod
+Source: https://incompetech.com/music/royalty-free/
+License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+License URL: https://creativecommons.org/licenses/by/3.0/
+
+Attribution required: Yes
+Attribution text:
+  "Meditation Impromptu 03 by Kevin MacLeod (incompetech.com),
+   licensed under Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+
+Used by: MindGarden meditation feature (initial demo content,
+         replaceable via admin healing-content master at
+         /admin/content-master).
+
+Notes:
+- This file is hosted as a static asset under /audio/ on
+  https://app.core-solution.co.kr/.
+- Public URL: https://app.core-solution.co.kr/audio/Meditation_Impromptu_03.mp3
+- The attribution above must be displayed wherever this audio is
+  played in production (e.g., meditation track detail screen).

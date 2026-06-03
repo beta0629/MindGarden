@@ -527,14 +527,10 @@ function AppContent() {
             <Route path="/mypage" element={<MypageRedirect />} />
             <Route path="/settings" element={<SettingsRedirect />} />
 
-            <Route
-              path="/consultant/income-report"
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
-                  <Navigate to="/consultant/renewal/dashboard" replace />
-                </ProtectedRoute>
-              )}
-            />
+            {/*
+              보안 라운드 2 (2026-06-03): /consultant/income-report 리다이렉트·컴포넌트(ConsultantIncomeReport)
+              모두 제거. 상담사 채널은 매출/수익 정보 화면을 가지지 않는다.
+            */}
 
             <Route
               path="/consultant/salary-settlement"
@@ -564,7 +560,7 @@ function AppContent() {
               <Route path="consultation-records" element={<ConsultantRecordsRenewal />} />
               <Route path="availability" element={<ConsultantAvailabilityRenewal />} />
               <Route path="salary-settlement" element={<ConsultantSalarySettlement />} />
-              <Route path="income-report" element={<Navigate to="/consultant/renewal/dashboard" replace />} />
+              {/* 보안 라운드 2 (2026-06-03): income-report 서브 라우트 제거. 매출/수익 화면 잔존 금지. */}
               <Route path="community" element={<CommunityFeed primaryColor="var(--mg-consultant-primary)" />} />
               <Route path="community/:postId" element={<CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />} />
             </Route>

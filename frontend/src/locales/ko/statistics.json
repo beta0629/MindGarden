@@ -82,17 +82,6 @@
     "noData": "표시할 통계가 없습니다.",
     "viewMore": "자세히 보기 →"
   },
-  "income": {
-    "totalSessions": "총 상담 건수",
-    "totalIncome": "총 수입",
-    "avgRating": "평균 평점",
-    "chartTitle": "월별 수입 추이",
-    "detailTitle": "상세 내역",
-    "noData": "이번 달 상담 내역이 없습니다",
-    "loadFail": "수입 리포트 로드 실패",
-    "prevMonth": "이전 달",
-    "nextMonth": "다음 달"
-  },
   "branch": {
     "loadFail": "지점 목록 로드 실패"
   },

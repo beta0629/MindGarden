@@ -7,6 +7,7 @@ import com.coresolution.core.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -15,17 +16,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 회기 추가 요청 컨트롤러
- * 
+ * 회기 추가 요청 컨트롤러.
+ *
+ * <p>P1 보안 가드(2026-06-03 라운드 2): 결제 금액·결제 참조 등 금융 정보가 응답에 포함되므로
+ * 상담사(CONSULTANT)·내담자(CLIENT) 호출을 컨트롤러 레벨에서 차단하고 ADMIN/STAFF 전용으로 제한한다.
+ * SecurityConfig 매트릭스에도 {@code /api/v1/admin/session-extensions/**} 가 명시적으로 등록되어
+ * 2중 방어선을 구성한다.
+ *
  * @author MindGarden
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2024-12-19
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/admin/session-extensions") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
+@PreAuthorize(SessionExtensionController.ROLES_MANAGE_EXTENSION)
 public class SessionExtensionController extends BaseApiController {
+
+    /** 회기 추가 요청 접근 허용 역할 — 결제 금액 노출 차단 위해 관리자/스태프로 한정. */
+    static final String ROLES_MANAGE_EXTENSION = "hasAnyRole('ADMIN','STAFF')";
     
     private final SessionExtensionService sessionExtensionService;
     

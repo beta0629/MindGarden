@@ -37,9 +37,14 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
     long countDeletedByTenantId(@Param("tenantId") String tenantId);
     
     /**
-     * 상담사 메시지 목록 조회 (tenantId 필수)
+     * 상담사 메시지 목록 조회 (tenantId 필수).
+     *
+     * <p>P0 보안·역할 분리(2026-06-03): 시스템 발화({@code senderType='SYSTEM'})는
+     * 상담사가 실제 수신자({@code receiverId = consultantId})인 경우에만 노출된다.
+     * 결제 금액 등 내담자 단독 수신 시스템 메시지가 상담사 메시지함에 누출되는 것을 차단.
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.consultantId = :consultantId " +
+           "AND (m.senderType <> 'SYSTEM' OR m.receiverId = :consultantId) " +
            "AND (CAST(:clientId AS long) IS NULL OR m.clientId = :clientId) " +
            "AND (CAST(:status AS string) IS NULL OR m.status = :status) " +
            "AND (CAST(:isRead AS boolean) IS NULL OR m.isRead = :isRead) " +
@@ -151,9 +156,14 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
         @Param("clientId") Long clientId);
     
     /**
-     * 상담사 메시지 검색 (tenantId 필수)
+     * 상담사 메시지 검색 (tenantId 필수).
+     *
+     * <p>P0 보안·역할 분리(2026-06-03): 시스템 발화({@code senderType='SYSTEM'})는
+     * 상담사가 실제 수신자({@code receiverId = consultantId})인 경우에만 노출된다.
+     * 결제 금액 등 내담자 단독 수신 시스템 메시지가 상담사 검색 결과에 누출되는 것을 차단.
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.consultantId = :consultantId " +
+           "AND (m.senderType <> 'SYSTEM' OR m.receiverId = :consultantId) " +
            "AND (m.title LIKE %:keyword% OR m.content LIKE %:keyword%) " +
            "AND (CAST(:messageType AS string) IS NULL OR m.messageType = :messageType) " +
            "AND (CAST(:isImportant AS boolean) IS NULL OR m.isImportant = :isImportant) " +

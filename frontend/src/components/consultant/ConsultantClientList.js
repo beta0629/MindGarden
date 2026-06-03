@@ -86,6 +86,9 @@ const ConsultantClientList = () => {
             
             console.log(`🔄 상태 시뮬레이션 - 인덱스: ${index}, ID: ${item.client.id}, 할당된 상태: ${simulatedStatus}`);
             
+            // 보안 라운드 2 (2026-06-03): 상담사 화면에서는 결제 금액/결제일 등 금융 정보를 다루지 않는다.
+            // 백엔드(AdminController.getClientsByConsultantMapping)에서도 동일 필드를 응답에서 제거하므로
+            // 프런트에서도 매핑 단계에서 제외하여 공격 면적을 축소한다.
             return {
               id: item.mappingId || item.id, // mappingId를 우선 사용하여 고유성 보장
               clientId: item.client.id, // 실제 클라이언트 ID는 별도로 저장
@@ -99,9 +102,7 @@ const ConsultantClientList = () => {
               totalSessions: item.totalSessions,
               usedSessions: item.usedSessions,
               packageName: item.packageName,
-              packagePrice: item.packagePrice,
               paymentStatus: item.paymentStatus,
-              paymentDate: item.paymentDate,
               mappingId: item.id
             };
           }

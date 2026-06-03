@@ -195,7 +195,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     ios: {
       icon: './assets/images/icon.png',
-      supportsTablet: true,
+      supportsTablet: false,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
       infoPlist: {
         /** EAS export compliance 프롬프트 생략 — 표준 면제 암호화만 사용 */
@@ -203,7 +203,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         UIBackgroundModes: ['audio', 'remote-notification'],
         NSCameraUsageDescription:
           'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
-        NSMicrophoneUsageDescription: '음성 메시지를 위해 마이크 접근이 필요합니다.',
         NSCalendarsUsageDescription: '상담 일정을 기기 캘린더에 추가하기 위해 접근이 필요합니다.',
         KAKAO_APP_KEY: resolveKakaoAppKeyForNative(),
         NAVER_CLIENT_ID: resolveNaverClientIdForNative(),

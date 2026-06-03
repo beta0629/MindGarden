@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.WorkflowAutomationCopy;
 import com.coresolution.consultation.entity.ConsultantPerformance;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
@@ -156,16 +157,15 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             .collect(Collectors.toList());
             
             for (Schedule schedule : incompleteSchedules) {
-                // 상담사에게 미완료 알림
-                String alertMessage = String.format("상담 시간이 지났지만 완료 처리되지 않았습니다.\n" +
-                    "📅 일시: %s %s-%s\n" +
-                    "👤 내담자: %s", 
-                    schedule.getDate(), 
-                    schedule.getStartTime(), 
+                // 상담사에게 미완료 알림 (결제·매출 정보 미포함)
+                String alertMessage = String.format(
+                    WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_BODY_FMT,
+                    schedule.getDate(),
+                    schedule.getStartTime(),
                     schedule.getEndTime(),
-                    "내담자"
+                    WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_CLIENT_LABEL
                 );
-                
+
                 try {
                     TenantContextHolder.setTenantId(schedule.getTenantId());
                     consultationMessageService.sendSystemThreadMessage(
@@ -173,7 +173,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                         schedule.getClientId(),
                         schedule.getConsultantId(),
                         null,
-                        "미완료 상담 알림",
+                        WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_TITLE,
                         alertMessage,
                         getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
                         true,
@@ -225,30 +225,30 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     // 상담사별 오늘 성과 조회
                     ConsultantPerformance consultantPerformance = statisticsService.getConsultantPerformance(
                         consultant.getId(), today);
-                    
-                    String summaryMessage = String.format("오늘의 상담 성과 요약\n" +
-                        "📅 날짜: %s\n" +
-                        "✅ 완료된 상담: %d건\n" +
-                        "⭐ 평균 평점: %.1f점\n" +
-                        "💰 총 수익: %s원", 
+
+                    // 보안 라운드 2 (2026-06-03): 상담사 본문에서 매출/수익 라인 제거.
+                    // 매출 정보는 ADMIN/STAFF 가 수신하는 월간 리포트 채널로 일원화한다.
+                    String summaryMessage = String.format(
+                        WorkflowAutomationCopy.DAILY_SUMMARY_BODY_FMT,
                         today,
                         consultantPerformance.getCompletedSchedules(),
-                        consultantPerformance.getAvgRating() != null ? consultantPerformance.getAvgRating().doubleValue() : 0.0,
-                        consultantPerformance.getTotalRevenue()
+                        consultantPerformance.getAvgRating() != null
+                            ? consultantPerformance.getAvgRating().doubleValue()
+                            : 0.0
                     );
-                    
+
                     consultationMessageService.sendMessage(
-                        consultant.getId(), 
-                        null, 
+                        consultant.getId(),
+                        null,
                         null, // consultationId
-                        getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()), 
-                        "일일 성과 요약", 
+                        getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
+                        WorkflowAutomationCopy.DAILY_SUMMARY_TITLE,
                         summaryMessage,
                         getMessageTypeFromCommonCode("DAILY_SUMMARY"),
                         false, // isImportant
                         false  // isUrgent
                     );
-                    
+
                 } catch (Exception e) {
                     log.error("상담사 {} 일일 성과 요약 발송 실패", consultant.getId(), e);
                 }
@@ -289,11 +289,9 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             Map<String, Object> monthlyStats = statisticsService.getMonthlyStatistics(
                 firstDayOfLastMonth, lastDayOfLastMonth, null);
             
-            String reportMessage = String.format("월간 성과 리포트 (%s)\n" +
-                "📅 기간: %s ~ %s\n" +
-                "✅ 총 상담 건수: %d건\n" +
-                "💰 총 수익: %s원\n" +
-                "⭐ 평균 평점: %.1f점", 
+            // 관리자/스태프 채널: 매출 라인 포함 허용 (상담사 채널과 분리)
+            String reportMessage = String.format(
+                WorkflowAutomationCopy.MONTHLY_REPORT_BODY_FMT,
                 lastMonth.format(java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월")),
                 firstDayOfLastMonth,
                 lastDayOfLastMonth,
@@ -311,11 +309,11 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             
             for (User admin : admins) {
                 consultationMessageService.sendMessage(
-                    admin.getId(), 
-                    null, 
+                    admin.getId(),
+                    null,
                     null, // consultationId
-                    getRoleCodeFromCommonCode(UserRole.ADMIN.name()), 
-                    "월간 성과 리포트", 
+                    getRoleCodeFromCommonCode(UserRole.ADMIN.name()),
+                    WorkflowAutomationCopy.MONTHLY_REPORT_TITLE,
                     reportMessage,
                     getMessageTypeFromCommonCode("MONTHLY_REPORT"),
                     true, // isImportant

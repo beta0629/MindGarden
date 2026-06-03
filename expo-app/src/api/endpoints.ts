@@ -9,6 +9,10 @@
 
 export const AUTH_API = {
   LOGIN: '/api/v1/auth/login',
+  /** 중복 로그인 확인 후 기존 세션 종료·재로그인 (웹 duplicateLoginManager 강제로그인 흐름 정합) */
+  CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login',
+  /** 관리자 강제 로그아웃 — 소셜 로그인 중복 세션 정리에도 사용 */
+  FORCE_LOGOUT: '/api/v1/auth/force-logout',
   BRANCH_LOGIN: '/api/auth/branch-login',
   LOGOUT: '/api/v1/auth/logout',
   REFRESH_TOKEN: '/api/v1/auth/refresh-token',

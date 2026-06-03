@@ -41,13 +41,22 @@ import lombok.extern.slf4j.Slf4j;
  * API 설계 문서에 명시된 상담사 관리 API 구현.
  * 클래스 레벨 {@code @RequireBusinessType}은 두지 않음 — Expo 상담사「내담자」등은 테넌트 매핑·권한으로 보호하고 업종과 무관하게 동작해야 함.
  * 상담소 브랜치·카탈로그 성격의 목록 API만 메서드 단위로 CONSULTATION 업종을 요구한다.
+ *
+ * <p>P1 보안 가드(2026-06-03 라운드 3, 마인드가든 1.0 출시 전): 통계 엔드포인트가
+ * 매출 키를 응답에 노출하므로 메서드 단위 {@link PreAuthorize} 가드로 ADMIN/STAFF 만 접근을 허용한다.
+ * SecurityConfig 매트릭스에도 {@code /api/v1/consultants/**} 가 {@code authenticated()} 로 등록되어
+ * 컨트롤러 클래스 레벨 {@code @PreAuthorize("isAuthenticated()")} 와 합쳐 2중 방어선을 구성한다.
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/consultants")
 @CrossOrigin(origins = "*")
+@PreAuthorize("isAuthenticated()")
 public class ConsultantController extends BaseApiController {
-    
+
+    /** 매출·상담 통계 등 ADMIN/STAFF 전용 역할 — CONSULTANT 노출 차단. */
+    static final String ROLES_VIEW_STATISTICS = "hasAnyRole('ADMIN','STAFF')";
+
     @Autowired
     private ConsultantService consultantService;
     
@@ -452,6 +461,7 @@ public class ConsultantController extends BaseApiController {
      * GET /api/v1/consultants/{id}/statistics/consultations?startDate=2024-01-01&endDate=2024-01-31
      */
     @GetMapping("/{id}/statistics/consultations")
+    @PreAuthorize(ROLES_VIEW_STATISTICS)
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultationStatistics(
             @PathVariable Long id,
             @RequestParam LocalDate startDate,
@@ -469,6 +479,7 @@ public class ConsultantController extends BaseApiController {
      * GET /api/v1/consultants/{id}/statistics/revenue?startDate=2024-01-01&endDate=2024-01-31
      */
     @GetMapping("/{id}/statistics/revenue")
+    @PreAuthorize(ROLES_VIEW_STATISTICS)
     public ResponseEntity<ApiResponse<Map<String, Object>>> getRevenueStatistics(
             @PathVariable Long id,
             @RequestParam LocalDate startDate,

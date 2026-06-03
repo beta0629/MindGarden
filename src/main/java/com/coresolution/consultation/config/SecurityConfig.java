@@ -163,6 +163,11 @@ public class SecurityConfig {
                     .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
                     .requestMatchers("/api/v1/schedules/**").authenticated() // 스케줄 API v1은 인증 필요
                     .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요
+                    // 보안 라운드 2 (2026-06-03): 결제 API v1 전체에 명시적 매트릭스 가드 추가.
+                    // 컨트롤러 메서드 @PreAuthorize 와 2중 방어선을 구성한다.
+                    .requestMatchers("/api/v1/payments/**").authenticated()
+                    // 회기 추가/연장 요청 API: 결제 금액·결제 참조가 응답에 포함되므로 매트릭스도 명시적으로 인증 필수.
+                    .requestMatchers("/api/v1/admin/session-extensions/**").authenticated()
                     .requestMatchers("/api/v1/clients/**").authenticated() // 내담자 맥락·프로필 API v1은 인증 필요
                     .requestMatchers("/api/v1/psycho-education/**").authenticated() // 심리 교육 콘텐츠 API는 인증 필요 (내담자 공용)
                     .requestMatchers("/api/v1/mind-weather/**").authenticated() // 마음 날씨(내담자·상담사 역할은 컨트롤러)
@@ -224,6 +229,11 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
                     // 레거시 결제 웹훅 (하위 호환)
                     .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
+                    // 보안 라운드 2 (2026-06-03): 결제 API v1 전체에 명시적 매트릭스 가드 추가.
+                    // 컨트롤러 메서드 @PreAuthorize 와 2중 방어선을 구성한다.
+                    .requestMatchers("/api/v1/payments/**").authenticated()
+                    // 회기 추가/연장 요청 API: 결제 금액·결제 참조가 응답에 포함되므로 매트릭스도 명시적으로 인증 필수.
+                    .requestMatchers("/api/v1/admin/session-extensions/**").authenticated()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
                     .requestMatchers("/api/v1/accounts/integration/**").permitAll()
                     // 공통코드 API는 허용 (온보딩에서 사용)

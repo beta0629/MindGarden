@@ -498,15 +498,14 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
+        User sessionUser = SessionUtils.getCurrentUser(session);
+        if (sessionUser == null) {
             log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다");
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다");
         }
 
-        User fullUser = userService.findByEmail(currentUser.getEmail())
+        final User currentUser = userService.findByEmail(sessionUser.getEmail())
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-        currentUser = fullUser; // Update currentUser with the fully loaded object
 
         log.info("🔍 현재 사용자 정보 - ID: {}, 이메일: {}, 역할: {}, 브랜치코드: {}", currentUser.getId(),
                 currentUser.getEmail(), currentUser.getRole(), currentUser.getBranchCode());
@@ -605,11 +604,15 @@ public class AdminController extends BaseApiController {
                         data.put("usedSessions", mapping.getUsedSessions());
                         data.put("remainingSessions", mapping.getRemainingSessions());
                         data.put("packageName", mapping.getPackageName());
-                        data.put("packagePrice", mapping.getPackagePrice());
                         data.put("paymentStatus", mapping.getPaymentStatus().toString());
-                        data.put("paymentMethod", mapping.getPaymentMethod());
-                        data.put("paymentReference", mapping.getPaymentReference());
-                        data.put("paymentDate", mapping.getPaymentDate());
+                        // 보안 라운드 2 (2026-06-03): 상담사 호출 시 결제 금액·결제일·결제 수단·결제 참조 필드는 응답에서 제외.
+                        // ADMIN/STAFF 호출 시에만 표시한다. UserRole.isProfessionalProvider() == false 인 경우에만 채운다.
+                        if (!isProfessionalProviderCaller(currentUser)) {
+                            data.put("packagePrice", mapping.getPackagePrice());
+                            data.put("paymentMethod", mapping.getPaymentMethod());
+                            data.put("paymentReference", mapping.getPaymentReference());
+                            data.put("paymentDate", mapping.getPaymentDate());
+                        }
                         data.put("mappingId", mapping.getId());
                         data.put("startDate", mapping.getStartDate());
                         data.put("endDate", mapping.getEndDate());
@@ -632,6 +635,22 @@ public class AdminController extends BaseApiController {
         data.put("count", activeMappings.size());
 
         return success(data);
+    }
+
+    /**
+     * 호출자가 상담·놀이·언어 등 전문가 역할인지 판단한다.
+     *
+     * <p>보안 라운드 2 (2026-06-03): 상담사 메시지함·내담자 목록 응답에 결제 금액/결제일 등 금융 정보가
+     * 노출되지 않도록, 응답 빌더에서 본 메서드로 호출자 역할을 확인한 뒤 결제 필드를 마스킹/제거한다.
+     *
+     * @param caller 현재 호출자 User (세션에서 조회)
+     * @return CONSULTANT/PLAY_THERAPIST/SPEECH_THERAPIST 인 경우 true
+     */
+    private boolean isProfessionalProviderCaller(User caller) {
+        if (caller == null || caller.getRole() == null) {
+            return false;
+        }
+        return caller.getRole().isProfessionalProvider();
     }
 
     /**

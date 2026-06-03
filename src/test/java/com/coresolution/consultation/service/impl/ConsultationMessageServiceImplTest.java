@@ -8,7 +8,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.coresolution.consultation.constant.AlertType;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.ConsultationMessage;
 import com.coresolution.consultation.repository.ConsultationMessageRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -17,9 +21,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 /**
  * {@link ConsultationMessageServiceImpl#markAllAsRead(Long)} 단위 검증.
@@ -133,5 +141,93 @@ class ConsultationMessageServiceImplTest {
 
         assertThatThrownBy(() -> service.markAllAsRead(RECEIVER_ID))
             .isInstanceOf(IllegalStateException.class);
+    }
+
+    // =========================================================================
+    // P0 보안·역할 분리(2026-06-03): 결제 금액 노출 차단 회귀 가드
+    // =========================================================================
+
+    private static final Long CONSULTANT_THREAD_ID = 11L;
+    private static final Long CLIENT_THREAD_ID = 22L;
+
+    @Test
+    @DisplayName("sendSystemThreadMessage — senderType=SYSTEM·senderId=0·receiverId=client 로 저장")
+    void sendSystemThreadMessage_savesAsSystemSenderClientReceiver() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        when(consultationMessageRepository.save(any(ConsultationMessage.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.sendSystemThreadMessage(
+                CONSULTANT_THREAD_ID,
+                CLIENT_THREAD_ID,
+                CLIENT_THREAD_ID,
+                null,
+                "결제 완료",
+                "💰 금액: 100000원",
+                "PAYMENT_COMPLETION",
+                false,
+                false);
+
+        ArgumentCaptor<ConsultationMessage> captor = ArgumentCaptor.forClass(ConsultationMessage.class);
+        verify(consultationMessageRepository).save(captor.capture());
+        ConsultationMessage saved = captor.getValue();
+        assertThat(saved.getSenderType()).isEqualTo(AlertType.SYSTEM);
+        assertThat(saved.getSenderId()).isZero();
+        assertThat(saved.getReceiverId()).isEqualTo(CLIENT_THREAD_ID);
+        assertThat(saved.getConsultantId()).isEqualTo(CONSULTANT_THREAD_ID);
+        assertThat(saved.getClientId()).isEqualTo(CLIENT_THREAD_ID);
+        assertThat(saved.getTenantId()).isEqualTo(TENANT_ID);
+        assertThat(saved.getStatus()).isEqualTo("SENT");
+    }
+
+    @Test
+    @DisplayName("sendMessage(senderType=SYSTEM) — sendSystemThreadMessage 로 우회되어 동일하게 저장")
+    void sendMessage_systemSenderType_isRoutedToSystemThreadHelper() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        when(consultationMessageRepository.save(any(ConsultationMessage.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.sendMessage(
+                CONSULTANT_THREAD_ID,
+                CLIENT_THREAD_ID,
+                null,
+                AlertType.SYSTEM,
+                "입금 확인",
+                "패키지: 10회\n금액: 500000원",
+                "PAYMENT_COMPLETION",
+                false,
+                false);
+
+        ArgumentCaptor<ConsultationMessage> captor = ArgumentCaptor.forClass(ConsultationMessage.class);
+        verify(consultationMessageRepository).save(captor.capture());
+        ConsultationMessage saved = captor.getValue();
+        assertThat(saved.getSenderType()).isEqualTo(AlertType.SYSTEM);
+        assertThat(saved.getSenderId()).isZero();
+        assertThat(saved.getReceiverId()).isEqualTo(CLIENT_THREAD_ID);
+        assertThat(saved.getConsultantId()).isEqualTo(CONSULTANT_THREAD_ID);
+    }
+
+    @Test
+    @DisplayName("searchMessages(userType=CONSULTANT) — 상담사 전용 쿼리에 senderType<>'SYSTEM' OR receiverId=consultantId 방어 필터 위임")
+    void searchMessages_consultant_delegatesToConsultantSpecificQuery() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        // 상담사 검색 쿼리(@Query) 에 P0 방어 필터가 적용되어 있어, repository 메서드만 호출되면
+        // SYSTEM 발화·내담자 단독 수신 메시지는 결과에서 제외된다. (필터 JPQL 자체 의미는 통합 테스트 책임)
+        Pageable pageable = Pageable.ofSize(20);
+        Page<ConsultationMessage> emptyPage = new PageImpl<>(List.of());
+        when(consultationMessageRepository
+                .findByTenantIdAndConsultantIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
+                        eq(TENANT_ID), eq(CONSULTANT_THREAD_ID), eq("결제"),
+                        eq(null), eq(null), eq(null), eq(pageable)))
+                .thenReturn(emptyPage);
+
+        Page<ConsultationMessage> result = service.searchMessages(
+                CONSULTANT_THREAD_ID, UserRole.CONSULTANT.name(), "결제", null, null, null, pageable);
+
+        assertThat(result.getContent()).isEmpty();
+        verify(consultationMessageRepository)
+                .findByTenantIdAndConsultantIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
+                        eq(TENANT_ID), eq(CONSULTANT_THREAD_ID), eq("결제"),
+                        eq(null), eq(null), eq(null), eq(pageable));
     }
 }

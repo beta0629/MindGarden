@@ -337,9 +337,10 @@ public class AuthServiceImpl implements AuthService {
                         log.warn("⚠️ 중복 로그인 감지: email={}", email);
                         
                         if (askUserConfirmation) {
-                            // 사용자에게 기존 세션 종료 확인 요청
+                            // 사용자에게 기존 세션 종료 확인 요청 (운영 반영 게이트 §17·§1.3 — 하드코딩 제거)
                             log.info("🔔 사용자에게 기존 세션 종료 확인 요청: email={}", email);
-                            return AuthResponse.duplicateLoginConfirmation("다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?");
+                            return AuthResponse.duplicateLoginConfirmation(
+                                SessionManagementConstants.DUPLICATE_LOGIN_MESSAGE);
                         } else if (SessionManagementConstants.TERMINATE_EXISTING_SESSION) {
                             // 기존 세션들 정리
                             cleanupUserSessions(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);

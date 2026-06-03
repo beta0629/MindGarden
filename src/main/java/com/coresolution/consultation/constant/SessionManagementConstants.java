@@ -113,9 +113,10 @@ public final class SessionManagementConstants {
     // ===== 에러 메시지 상수 =====
     
     /**
-     * 중복 로그인 감지 메시지
+     * 중복 로그인 사용자 확인 프롬프트 메시지
+     * AuthServiceImpl#authenticateWithSession 에서 ask-user-confirmation 활성 시 사용
      */
-    public static final String DUPLICATE_LOGIN_MESSAGE = "이미 다른 곳에서 로그인되어 있습니다. 기존 세션이 종료됩니다.";
+    public static final String DUPLICATE_LOGIN_MESSAGE = "다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?";
     
     /**
      * 세션 만료 메시지

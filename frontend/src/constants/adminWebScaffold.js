@@ -15,7 +15,8 @@
  */
 
 /** 노출 PATCH 요청 본문 필드명(백엔드 DTO와 동일하게 유지) */
-export const ADMIN_CONTENT_VISIBILITY_FIELD = 'isActive';
+// 백엔드 PublishedPatchRequest({ Boolean published }) 와 일치하는 패치 body 키.
+export const ADMIN_CONTENT_VISIBILITY_FIELD = 'published';
 
 /** @type {Readonly<{ COMMUNITY_MODERATION_QUEUE: string, COMMUNITY_POSTS_MODERATION_ROOT: string, ADMIN_CONTENT_PSYCHO_EDUCATION: string, ADMIN_CONTENT_HEALING_CATALOG: string, MIND_WEATHER_CARDS: string, MIND_WEATHER_SUMMARY: string, MIND_GARDEN_SNAPSHOTS: string, MIND_GARDEN_SUMMARY: string }>} */
 export const ADMIN_WEB_SCAFFOLD_API = {
@@ -42,7 +43,8 @@ export function buildPsychoEducationContentItemPath(contentId) {
  * @returns {string}
  */
 export function buildPsychoEducationContentVisibilityPath(contentId) {
-  return `${buildPsychoEducationContentItemPath(contentId)}/visibility`;
+  // 백엔드 AdminPsychoEducationContentController.@PatchMapping("/{id}/published") 와 일치.
+  return `${buildPsychoEducationContentItemPath(contentId)}/published`;
 }
 
 /**
@@ -58,7 +60,17 @@ export function buildHealingCatalogItemPath(contentId) {
  * @returns {string}
  */
 export function buildHealingCatalogVisibilityPath(contentId) {
-  return `${buildHealingCatalogItemPath(contentId)}/visibility`;
+  // 백엔드 AdminHealingContentCatalogController.@PatchMapping("/{id}/published") 와 일치.
+  return `${buildHealingCatalogItemPath(contentId)}/published`;
+}
+
+/**
+ * 힐링 콘텐츠 노출 PATCH 경로. 별칭 — buildHealingCatalogVisibilityPath 와 동일.
+ * @param {string|number} contentId
+ * @returns {string}
+ */
+export function buildHealingCatalogPublishedPath(contentId) {
+  return buildHealingCatalogVisibilityPath(contentId);
 }
 
 /**
@@ -67,6 +79,15 @@ export function buildHealingCatalogVisibilityPath(contentId) {
  */
 export function buildAdminContentVisibilityPatchBody(nextActive) {
   return { [ADMIN_CONTENT_VISIBILITY_FIELD]: Boolean(nextActive) };
+}
+
+/**
+ * 힐링 콘텐츠 노출 PATCH body. PublishedPatchRequest({ Boolean published }) 형태.
+ * @param {boolean} nextPublished
+ * @returns {Readonly<Record<string, boolean>>}
+ */
+export function buildHealingCatalogPublishedPatchBody(nextPublished) {
+  return { published: Boolean(nextPublished) };
 }
 
 /**
@@ -187,10 +208,20 @@ export const ADMIN_WEB_SCAFFOLD_COPY = {
   CONTENT_FORM_LABEL_CATEGORY: '카테고리 코드',
   CONTENT_FORM_LABEL_READ_MINUTES: '예상 읽기(분)',
   CONTENT_FORM_LABEL_DESCRIPTION: '설명',
-  CONTENT_FORM_LABEL_TYPE: '유형(예: ARTICLE, MEDITATION)',
+  CONTENT_FORM_LABEL_CODE: '코드(고유 식별자)',
+  CONTENT_FORM_HINT_AUTO_CODE: '비워두면 제목 기반으로 자동 생성됩니다.',
+  CONTENT_FORM_LABEL_TYPE: '유형',
   CONTENT_FORM_LABEL_DURATION: '길이(분)',
   CONTENT_FORM_LABEL_THUMB: '썸네일 URL',
   CONTENT_FORM_LABEL_CONTENT_URL: '콘텐츠 URL',
+  CONTENT_FORM_LABEL_PUBLISHED: '공개(앱 노출)',
+  CONTENT_FORM_LABEL_SORT_ORDER: '정렬 순서(작을수록 위)',
+  CONTENT_FORM_VALIDATION_BODY: '본문을 입력해 주세요.',
+  CONTENT_QUICK_ADD_TITLE_PLACEHOLDER: '새 콘텐츠 제목을 입력하고 빠른 등록을 누르세요',
+  CONTENT_QUICK_ADD_BUTTON: '빠른 등록',
+  CONTENT_QUICK_ADD_SUCCESS: '초안을 추가했습니다. 필요 시 [수정]에서 상세 입력하세요.',
+  CONTENT_ADVANCED_TOGGLE_SHOW: '고급 옵션 펼치기',
+  CONTENT_ADVANCED_TOGGLE_HIDE: '고급 옵션 접기',
   CONTENT_FORM_SAVE: '저장',
   CONTENT_FORM_CANCEL: '취소',
   CONTENT_RELOAD: '다시 불러오기',

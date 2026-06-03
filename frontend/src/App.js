@@ -650,14 +650,8 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/erp/tax"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <Navigate to="/erp/salary?tab=tax" replace />
-                </ProtectedRoute>
-              }
-            />
+            {/* 단순 리다이렉트는 가드 없이 둠: 목적지(/erp/salary)에서 ADMIN 가드로 차단됨 (e2e-erp-smoke deep link UX 보존) */}
+            <Route path="/erp/tax" element={<Navigate to="/erp/salary?tab=tax" replace />} />
             <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
             <Route path="/consultant/clients" element={<ConsultantClientList />} />
             <Route path="/consultant/client/:id" element={<ConsultantClientList />} />
@@ -979,22 +973,9 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/erp/inventory"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <Navigate to="/erp/items" replace />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/erp/budgets"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <Navigate to="/erp/budget" replace />
-                </ProtectedRoute>
-              }
-            />
+            {/* 단순 리다이렉트는 가드 없이 둠: 목적지에서 ADMIN 가드로 차단됨 (e2e-erp-smoke deep link UX 보존) */}
+            <Route path="/erp/inventory" element={<Navigate to="/erp/items" replace />} />
+            <Route path="/erp/budgets" element={<Navigate to="/erp/budget" replace />} />
             {/* /erp/salary: ADMIN 전용 ERP 화면 — Salary 관리(/admin/salary*)는 별도 어드민 라우트 */}
             <Route
               path="/erp/salary"
@@ -1016,23 +997,9 @@ function AppContent() {
               }
             />
 
-            {/* Admin ERP 라우트 — STAFF_PERMISSION_POLICY_PHASE2: 모든 /admin/erp/* ADMIN 전용 */}
-            <Route
-              path="/admin/erp/dashboard"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <Navigate to="/erp/dashboard" replace />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/erp/purchase"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <Navigate to="/erp/purchase-requests" replace />
-                </ProtectedRoute>
-              }
-            />
+            {/* Admin ERP 라우트 — STAFF_PERMISSION_POLICY_PHASE2: 실제 페이지(/admin/erp/financial, /admin/erp/reports)만 ADMIN 가드, 단순 리다이렉트는 가드 없이 둠(목적지에서 차단) */}
+            <Route path="/admin/erp/dashboard" element={<Navigate to="/erp/dashboard" replace />} />
+            <Route path="/admin/erp/purchase" element={<Navigate to="/erp/purchase-requests" replace />} />
             <Route
               path="/admin/erp/financial"
               element={
@@ -1041,14 +1008,7 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/admin/erp/budget"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <Navigate to="/erp/budget" replace />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/admin/erp/budget" element={<Navigate to="/erp/budget" replace />} />
             <Route
               path="/admin/erp/reports"
               element={

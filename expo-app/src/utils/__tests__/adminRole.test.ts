@@ -127,15 +127,11 @@ describe('adminRole', () => {
     expect(canRegisterStaffOnMobile('staff')).toBe(false);
   });
 
-  it('gates mapping view and manage by JWT permissions', () => {
-    const viewOnly = fakeJwt({ role: 'STAFF', permissions: ['MAPPING_VIEW'] });
-    const manage = fakeJwt({ role: 'STAFF', permissions: ['MAPPING_MANAGE'] });
-    const noMapping = fakeJwt({ role: 'STAFF', permissions: ['CLIENT_MANAGE'] });
+  it('allows mapping view and manage for ADMIN and STAFF (STAFF == ADMIN 1.0.5)', () => {
+    // 정책: ADMIN/STAFF 둘 다 자동 허용 (JWT permission 의존 제거).
     expect(canViewMappingsOnMobile('admin', null)).toBe(true);
-    expect(canViewMappingsOnMobile('staff', viewOnly)).toBe(true);
-    expect(canViewMappingsOnMobile('staff', noMapping)).toBe(false);
+    expect(canViewMappingsOnMobile('staff', null)).toBe(true);
     expect(canManageMappingsOnMobile('admin', null)).toBe(true);
-    expect(canManageMappingsOnMobile('staff', manage)).toBe(true);
-    expect(canManageMappingsOnMobile('staff', viewOnly)).toBe(false);
+    expect(canManageMappingsOnMobile('staff', null)).toBe(true);
   });
 });

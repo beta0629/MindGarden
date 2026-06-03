@@ -691,6 +691,18 @@ public class AuthController extends BaseApiController {
             Map<String, Object> data = new HashMap<>();
             data.put("user", authResponse.getUser());
             data.put("sessionId", sessionId);
+            // 모바일(JWT) 호환: confirm-duplicate-login 응답에 토큰을 포함시켜야 Expo 앱이 인증 완료 분기에 진입한다.
+            // 키 이름은 /login·/refresh 와 동일한 accessToken·refreshToken 으로 통일(웹은 추가 필드를 사용하지 않으므로 회귀 없음).
+            if (StringUtils.hasText(authResponse.getToken())) {
+                data.put("accessToken", authResponse.getToken());
+            } else {
+                log.warn("⚠️ confirm-duplicate-login: accessToken 부재 — 모바일 인증이 실패할 수 있음 (loginPrincipal={})", loginPrincipal);
+            }
+            if (StringUtils.hasText(authResponse.getRefreshToken())) {
+                data.put("refreshToken", authResponse.getRefreshToken());
+            } else {
+                log.warn("⚠️ confirm-duplicate-login: refreshToken 부재 — 모바일 인증이 실패할 수 있음 (loginPrincipal={})", loginPrincipal);
+            }
             
             return success("로그인 성공", data);
         } else {

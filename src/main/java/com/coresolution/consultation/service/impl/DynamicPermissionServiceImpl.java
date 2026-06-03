@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ErpRestrictedPermissions;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Permission;
 import com.coresolution.consultation.entity.RolePermission;
@@ -50,6 +51,13 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                     user.getUserId(), permissionCode);
             return true;
         }
+        // STAFF == ADMIN 동등(1.0.5): ERP 영역 제외 자동 허용
+        if (user.getRole().isStaff()
+                && !ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+            log.debug("STAFF 자동 권한 허용(ERP 제외): userId={}, permission={}",
+                    user.getUserId(), permissionCode);
+            return true;
+        }
 
         return hasPermission(user.getRole().name(), permissionCode);
     }
@@ -63,6 +71,12 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
             if (UserRole.ADMIN.name().equals(roleName)) {
                 log.debug("ADMIN 역할명 자동 권한 허용 (PermissionCheckUtils 정합): permission={}",
                         permissionCode);
+                return true;
+            }
+            // STAFF == ADMIN 동등(1.0.5): ERP 영역 제외 자동 허용
+            if (UserRole.STAFF.name().equals(roleName)
+                    && !ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+                log.debug("STAFF 역할명 자동 권한 허용(ERP 제외): permission={}", permissionCode);
                 return true;
             }
 

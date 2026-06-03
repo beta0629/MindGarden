@@ -324,6 +324,10 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
                 // 표준화 2025-12-05: 표준 관리자 역할만 사용
                 canUpdate = true;
                 reason = "관리자 권한으로 수정 가능합니다";
+            } else if (role.isStaff()) {
+                // STAFF == ADMIN 동등(1.0.5): 매핑 수정은 STAFF 도 허용
+                canUpdate = true;
+                reason = "사무원 권한으로 수정 가능합니다";
             } else if (role.isProfessionalProvider()) {
                 canUpdate = true;
                 reason = "상담사 권한으로 수정 가능합니다";

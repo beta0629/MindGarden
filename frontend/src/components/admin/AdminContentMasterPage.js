@@ -1,5 +1,13 @@
 /**
- * 심리교육·힐링 콘텐츠 마스터 — BW-3 관리자 API 연동(목록·생성·수정·노출 PATCH)
+ * 심리교육·힐링 콘텐츠 마스터 — BW-3 관리자 API 연동(목록·생성·수정·노출 PATCH).
+ *
+ * UX REVAMP (2026-06-03, 사용자 컨펌 main-direct):
+ * - 입력 최소화: code/slug/sortOrder/readMinutes 자동 채움 (contentMasterHelpers)
+ * - mediaType BadgeSelect (4종) + 자유 텍스트 입력 폐지
+ * - 인라인 빠른 추가: 모달 없이 1줄 등록
+ * - 모달 압축: 필수 / 선택 / 고급(접기) 3섹션
+ * - PsychoEducation 누락 필드 (slug, categoryLabel, pages, published, sortOrder) 자동 보완
+ *
  * @author CoreSolution
  * @since 2026-05-14
  */
@@ -32,6 +40,16 @@ import {
 } from '../../constants/adminWebScaffold';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import {
+  CONTENT_MASTER_DEFAULTS,
+  HEALING_MEDIA_TYPE_OPTIONS,
+  estimateReadMinutes,
+  generateHealingCode,
+  generatePsychoSlug,
+  inferMediaType,
+  nextSortOrder,
+  normalizeMediaType
+} from './contentMasterHelpers';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 
@@ -48,18 +66,23 @@ const FORM_TEXTAREA_ROWS = 6;
 const TITLE_INPUT_MAX_LEN = 200;
 const CATEGORY_INPUT_MAX_LEN = 64;
 const URL_INPUT_MAX_LEN = 2000;
-const DEFAULT_READ_MINUTES = 5;
+
+const DEFAULT_READ_MINUTES = CONTENT_MASTER_DEFAULTS.DEFAULT_READ_MINUTES;
+const DEFAULT_HEALING_MEDIA_TYPE = CONTENT_MASTER_DEFAULTS.DEFAULT_HEALING_MEDIA_TYPE;
+const DEFAULT_HEALING_SORT_ORDER = 0;
+const DEFAULT_PSYCHO_CATEGORY = 'general';
+const DEFAULT_PSYCHO_SUMMARY_FALLBACK = '(요약 작성 예정)';
 
 const emptyPsychoForm = () => ({
   title: '',
   summary: '',
   body: '',
   category: '',
-  readMinutes: String(DEFAULT_READ_MINUTES)
+  readMinutes: String(DEFAULT_READ_MINUTES),
+  slug: '',
+  published: false,
+  sortOrder: ''
 });
-
-const DEFAULT_HEALING_MEDIA_TYPE = 'ARTICLE';
-const DEFAULT_HEALING_SORT_ORDER = 0;
 
 const emptyHealingForm = () => ({
   code: '',
@@ -96,6 +119,9 @@ function mapContentRows(list, prefix) {
     if (row.code != null && String(row.code) !== String(title)) {
       metaParts.push(String(row.code));
     }
+    if (row.mediaType != null) {
+      metaParts.push(String(row.mediaType));
+    }
     return {
       __rowKey: row.id != null ? `${prefix}-${String(row.id)}` : `${prefix}-${idx}`,
       colTitle: title != null ? String(title) : '',
@@ -115,7 +141,10 @@ function mapPsychoRowToForm(row) {
     summary: toDisplayString(row.summary ?? row.subtitle, ''),
     body: toDisplayString(row.body ?? row.content ?? row.text, ''),
     category: toDisplayString(row.category, ''),
-    readMinutes: String(row.readMinutes ?? row.estimatedMinutes ?? DEFAULT_READ_MINUTES)
+    readMinutes: String(row.readMinutes ?? row.estimatedMinutes ?? DEFAULT_READ_MINUTES),
+    slug: toDisplayString(row.slug, ''),
+    published: row.published === true,
+    sortOrder: row.sortOrder != null ? String(row.sortOrder) : ''
   };
 }
 
@@ -140,12 +169,71 @@ function mapHealingRowToForm(row) {
     title: toDisplayString(row.title, ''),
     description: toDisplayString(row.description, ''),
     category: toDisplayString(row.category, ''),
-    mediaType: mediaTypeStr || DEFAULT_HEALING_MEDIA_TYPE,
+    mediaType: normalizeMediaType(mediaTypeStr || DEFAULT_HEALING_MEDIA_TYPE),
     durationMinutes: row.durationMinutes != null ? String(row.durationMinutes) : '',
     thumbnailUrl: toDisplayString(row.thumbnailUrl, ''),
     contentUrl: toDisplayString(row.contentUrl, ''),
     published: row.published === true,
     sortOrder: Number.isFinite(sortOrderRaw) ? sortOrderRaw : DEFAULT_HEALING_SORT_ORDER
+  };
+}
+
+function buildPsychoPayload({ form, mode, currentList }) {
+  const title = toDisplayString(form.title, '').trim();
+  const body = toDisplayString(form.body, '').trim();
+  const summaryRaw = toDisplayString(form.summary, '').trim();
+  const categoryRaw = toDisplayString(form.category, '').trim() || DEFAULT_PSYCHO_CATEGORY;
+  const slugFromForm = toDisplayString(form.slug, '').trim();
+  const readParsed = Number.parseInt(String(form.readMinutes).trim(), 10);
+  const readMinutes = Number.isFinite(readParsed) && readParsed >= 0
+    ? readParsed
+    : estimateReadMinutes(body);
+  const sortParsed = Number.parseInt(String(form.sortOrder).trim(), 10);
+  const sortOrder = Number.isFinite(sortParsed)
+    ? sortParsed
+    : (mode === 'create' ? nextSortOrder(currentList) : 0);
+  const summary = summaryRaw || DEFAULT_PSYCHO_SUMMARY_FALLBACK;
+  return {
+    slug: slugFromForm || generatePsychoSlug(title),
+    title,
+    summary,
+    body,
+    category: categoryRaw,
+    categoryLabel: categoryRaw,
+    readMinutes,
+    pages: [
+      {
+        order: 0,
+        title,
+        body
+      }
+    ],
+    published: form.published === true,
+    sortOrder
+  };
+}
+
+function buildHealingPayload({ form, mode, currentList }) {
+  const code = toDisplayString(form.code, '').trim()
+    || (mode === 'create' ? generateHealingCode(toDisplayString(form.title, '')) : '');
+  const title = toDisplayString(form.title, '').trim();
+  const mediaType = normalizeMediaType(form.mediaType);
+  const durRaw = String(form.durationMinutes ?? '').trim();
+  const durParsed = durRaw === '' ? null : Number.parseInt(durRaw, 10);
+  const sortRaw = Number(form.sortOrder);
+  return {
+    code,
+    title,
+    description: toDisplayString(form.description, '').trim() || null,
+    category: toDisplayString(form.category, '').trim() || mediaType.toLowerCase(),
+    mediaType,
+    durationMinutes: durParsed != null && Number.isFinite(durParsed) ? durParsed : null,
+    thumbnailUrl: toDisplayString(form.thumbnailUrl, '').trim() || null,
+    contentUrl: toDisplayString(form.contentUrl, '').trim() || null,
+    published: !!form.published,
+    sortOrder: Number.isFinite(sortRaw)
+      ? sortRaw
+      : (mode === 'create' ? nextSortOrder(currentList) : DEFAULT_HEALING_SORT_ORDER)
   };
 }
 
@@ -163,6 +251,10 @@ const AdminContentMasterPage = () => {
   const [healingForm, setHealingForm] = useState(emptyHealingForm);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [quickAddTitle, setQuickAddTitle] = useState('');
+  const [quickAddMediaType, setQuickAddMediaType] = useState(DEFAULT_HEALING_MEDIA_TYPE);
+  const [quickAddBusy, setQuickAddBusy] = useState(false);
 
   const loadPsycho = useCallback(async() => {
     setLoadingPsycho(true);
@@ -230,6 +322,7 @@ const AdminContentMasterPage = () => {
     setEditingId(null);
     setPsychoForm(emptyPsychoForm());
     setHealingForm(emptyHealingForm());
+    setAdvancedOpen(false);
   }, []);
 
   const openCreateModal = useCallback(() => {
@@ -237,6 +330,7 @@ const AdminContentMasterPage = () => {
     setEditingId(null);
     setPsychoForm(emptyPsychoForm());
     setHealingForm(emptyHealingForm());
+    setAdvancedOpen(false);
     setContentModalOpen(true);
   }, []);
 
@@ -252,6 +346,7 @@ const AdminContentMasterPage = () => {
     } else {
       setHealingForm(mapHealingRowToForm(rawRow));
     }
+    setAdvancedOpen(false);
     setContentModalOpen(true);
   }, [tab]);
 
@@ -284,19 +379,24 @@ const AdminContentMasterPage = () => {
 
   const handleSaveContent = useCallback(async() => {
     if (tab === TAB_PSYCHO) {
-      const title = toDisplayString(psychoForm.title, '').trim();
-      if (!title) {
+      const titleTrim = toDisplayString(psychoForm.title, '').trim();
+      if (!titleTrim) {
         notificationManager.show(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_VALIDATION_TITLE, 'warning');
         return;
       }
-      const readParsed = Number.parseInt(String(psychoForm.readMinutes).trim(), 10);
-      const payload = {
-        title,
-        summary: toDisplayString(psychoForm.summary, '').trim() || null,
-        body: toDisplayString(psychoForm.body, '').trim() || null,
-        category: toDisplayString(psychoForm.category, '').trim() || null,
-        readMinutes: Number.isFinite(readParsed) ? readParsed : DEFAULT_READ_MINUTES
-      };
+      const bodyTrim = toDisplayString(psychoForm.body, '').trim();
+      if (!bodyTrim) {
+        notificationManager.show(
+          ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_VALIDATION_BODY,
+          'warning'
+        );
+        return;
+      }
+      const payload = buildPsychoPayload({
+        form: psychoForm,
+        mode: formMode,
+        currentList: psychoRows
+      });
       setSaving(true);
       try {
         if (formMode === 'create') {
@@ -318,32 +418,20 @@ const AdminContentMasterPage = () => {
       return;
     }
 
-    const codeH = toDisplayString(healingForm.code, '').trim();
-    if (!codeH) {
-      notificationManager.show(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_VALIDATION_CODE, 'warning');
-      return;
-    }
     const titleH = toDisplayString(healingForm.title, '').trim();
     if (!titleH) {
       notificationManager.show(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_VALIDATION_TITLE, 'warning');
       return;
     }
-    const durRaw = String(healingForm.durationMinutes ?? '').trim();
-    const durParsed = durRaw === '' ? null : Number.parseInt(durRaw, 10);
-    const sortRaw = Number(healingForm.sortOrder);
-    const payloadH = {
-      code: codeH,
-      title: titleH,
-      description: toDisplayString(healingForm.description, '').trim() || null,
-      category: toDisplayString(healingForm.category, '').trim() || null,
-      mediaType: toDisplayString(healingForm.mediaType, DEFAULT_HEALING_MEDIA_TYPE).trim()
-        || DEFAULT_HEALING_MEDIA_TYPE,
-      durationMinutes: durParsed != null && Number.isFinite(durParsed) ? durParsed : null,
-      thumbnailUrl: toDisplayString(healingForm.thumbnailUrl, '').trim() || null,
-      contentUrl: toDisplayString(healingForm.contentUrl, '').trim() || null,
-      published: !!healingForm.published,
-      sortOrder: Number.isFinite(sortRaw) ? sortRaw : DEFAULT_HEALING_SORT_ORDER
-    };
+    const payloadH = buildHealingPayload({
+      form: healingForm,
+      mode: formMode,
+      currentList: healingRows
+    });
+    if (!payloadH.code) {
+      notificationManager.show(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_VALIDATION_CODE, 'warning');
+      return;
+    }
     setSaving(true);
     try {
       if (formMode === 'create') {
@@ -365,13 +453,79 @@ const AdminContentMasterPage = () => {
   }, [
     tab,
     psychoForm,
+    psychoRows,
     healingForm,
+    healingRows,
     formMode,
     editingId,
     closeContentModal,
     loadPsycho,
     loadHealing
   ]);
+
+  const handleQuickAdd = useCallback(async() => {
+    const titleTrim = quickAddTitle.trim();
+    if (!titleTrim) {
+      notificationManager.show(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_VALIDATION_TITLE, 'warning');
+      return;
+    }
+    setQuickAddBusy(true);
+    try {
+      if (tab === TAB_PSYCHO) {
+        const payload = buildPsychoPayload({
+          form: {
+            ...emptyPsychoForm(),
+            title: titleTrim,
+            body: DEFAULT_PSYCHO_SUMMARY_FALLBACK,
+            summary: DEFAULT_PSYCHO_SUMMARY_FALLBACK,
+            category: DEFAULT_PSYCHO_CATEGORY,
+            published: false
+          },
+          mode: 'create',
+          currentList: psychoRows
+        });
+        await StandardizedApi.post(ADMIN_WEB_SCAFFOLD_API.ADMIN_CONTENT_PSYCHO_EDUCATION, payload);
+      } else {
+        const inferred = inferMediaType('');
+        const mediaType = normalizeMediaType(quickAddMediaType) || inferred;
+        const payloadH = buildHealingPayload({
+          form: {
+            ...emptyHealingForm(),
+            title: titleTrim,
+            mediaType,
+            category: mediaType.toLowerCase(),
+            published: false
+          },
+          mode: 'create',
+          currentList: healingRows
+        });
+        await StandardizedApi.post(ADMIN_WEB_SCAFFOLD_API.ADMIN_CONTENT_HEALING_CATALOG, payloadH);
+      }
+      notificationManager.success(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_QUICK_ADD_SUCCESS);
+      setQuickAddTitle('');
+      setQuickAddMediaType(DEFAULT_HEALING_MEDIA_TYPE);
+      await reloadTab();
+    } catch (e) {
+      notificationManager.error(
+        e?.message != null ? String(e.message) : ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ERROR_SAVE
+      );
+    } finally {
+      setQuickAddBusy(false);
+    }
+  }, [tab, quickAddTitle, quickAddMediaType, psychoRows, healingRows, reloadTab]);
+
+  const handleHealingContentUrlChange = useCallback((ev) => {
+    const next = ev.target.value;
+    setHealingForm((p) => {
+      const wasAutoType = !p.contentUrl || normalizeMediaType(p.mediaType) === inferMediaType(p.contentUrl);
+      const inferred = inferMediaType(next);
+      return {
+        ...p,
+        contentUrl: next,
+        mediaType: wasAutoType && next ? inferred : p.mediaType
+      };
+    });
+  }, []);
 
   const renderCell = useCallback((columnKey, item) => {
     const raw = item.__raw;
@@ -480,19 +634,7 @@ const AdminContentMasterPage = () => {
           onChange={(ev) => setPsychoForm((p) => ({ ...p, title: ev.target.value }))}
           disabled={saving}
           autoComplete="off"
-        />
-      </div>
-      <div className="mg-modal__form-group">
-        <label htmlFor={`${baseId}-psy-summary`} className="mg-modal__label">
-          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SUMMARY}
-        </label>
-        <textarea
-          id={`${baseId}-psy-summary`}
-          className="mg-v2-form-input"
-          rows={FORM_TEXTAREA_ROWS}
-          value={psychoForm.summary}
-          onChange={(ev) => setPsychoForm((p) => ({ ...p, summary: ev.target.value }))}
-          disabled={saving}
+          aria-required="true"
         />
       </div>
       <div className="mg-modal__form-group">
@@ -505,6 +647,20 @@ const AdminContentMasterPage = () => {
           rows={FORM_TEXTAREA_ROWS}
           value={psychoForm.body}
           onChange={(ev) => setPsychoForm((p) => ({ ...p, body: ev.target.value }))}
+          disabled={saving}
+          aria-required="true"
+        />
+      </div>
+      <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-psy-summary`} className="mg-modal__label">
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SUMMARY}
+        </label>
+        <textarea
+          id={`${baseId}-psy-summary`}
+          className="mg-v2-form-input"
+          rows={FORM_TEXTAREA_ROWS}
+          value={psychoForm.summary}
+          onChange={(ev) => setPsychoForm((p) => ({ ...p, summary: ev.target.value }))}
           disabled={saving}
         />
       </div>
@@ -536,25 +692,56 @@ const AdminContentMasterPage = () => {
           disabled={saving}
         />
       </div>
+      {advancedOpen ? (
+        <>
+          <div className="mg-modal__form-group">
+            <label htmlFor={`${baseId}-psy-slug`} className="mg-modal__label">
+              {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_CODE}
+            </label>
+            <input
+              id={`${baseId}-psy-slug`}
+              className="mg-v2-form-input"
+              value={psychoForm.slug}
+              onChange={(ev) => setPsychoForm((p) => ({ ...p, slug: ev.target.value }))}
+              disabled={saving}
+              autoComplete="off"
+              placeholder={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_HINT_AUTO_CODE}
+            />
+          </div>
+          <div className="mg-modal__form-group">
+            <label htmlFor={`${baseId}-psy-sort`} className="mg-modal__label">
+              {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SORT_ORDER}
+            </label>
+            <input
+              id={`${baseId}-psy-sort`}
+              type="number"
+              className="mg-v2-form-input"
+              value={psychoForm.sortOrder}
+              onChange={(ev) => setPsychoForm((p) => ({ ...p, sortOrder: ev.target.value }))}
+              disabled={saving}
+            />
+          </div>
+          <div className="mg-modal__form-group">
+            <label htmlFor={`${baseId}-psy-published`} className="mg-modal__label">
+              <input
+                id={`${baseId}-psy-published`}
+                type="checkbox"
+                checked={!!psychoForm.published}
+                onChange={(ev) => setPsychoForm((p) => ({ ...p, published: ev.target.checked }))}
+                disabled={saving}
+              />
+              {' '}
+              {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
+            </label>
+          </div>
+        </>
+      ) : null}
     </>
   );
 
+  const healingMediaType = normalizeMediaType(healingForm.mediaType);
   const healingFields = (
     <>
-      <div className="mg-modal__form-group">
-        <label htmlFor={`${baseId}-heal-code`} className="mg-modal__label">
-          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_CODE}
-        </label>
-        <input
-          id={`${baseId}-heal-code`}
-          className="mg-v2-form-input"
-          maxLength={CATEGORY_INPUT_MAX_LEN}
-          value={healingForm.code}
-          onChange={(ev) => setHealingForm((p) => ({ ...p, code: ev.target.value }))}
-          disabled={saving}
-          autoComplete="off"
-        />
-      </div>
       <div className="mg-modal__form-group">
         <label htmlFor={`${baseId}-heal-title`} className="mg-modal__label">
           {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_TITLE}
@@ -567,6 +754,32 @@ const AdminContentMasterPage = () => {
           onChange={(ev) => setHealingForm((p) => ({ ...p, title: ev.target.value }))}
           disabled={saving}
           autoComplete="off"
+          aria-required="true"
+        />
+      </div>
+      <div className="mg-modal__form-group">
+        <span className="mg-modal__label">{ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_TYPE}</span>
+        <BadgeSelect
+          aria-label={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_TYPE}
+          options={HEALING_MEDIA_TYPE_OPTIONS}
+          value={healingMediaType}
+          onChange={(next) => setHealingForm((p) => ({ ...p, mediaType: normalizeMediaType(next) }))}
+          disabled={saving}
+        />
+      </div>
+      <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-heal-curl`} className="mg-modal__label">
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_CONTENT_URL}
+        </label>
+        <input
+          id={`${baseId}-heal-curl`}
+          className="mg-v2-form-input"
+          maxLength={URL_INPUT_MAX_LEN}
+          value={healingForm.contentUrl}
+          onChange={handleHealingContentUrlChange}
+          disabled={saving}
+          autoComplete="off"
+          aria-required={healingMediaType === 'AUDIO' || healingMediaType === 'VIDEO'}
         />
       </div>
       <div className="mg-modal__form-group">
@@ -592,20 +805,6 @@ const AdminContentMasterPage = () => {
           maxLength={CATEGORY_INPUT_MAX_LEN}
           value={healingForm.category}
           onChange={(ev) => setHealingForm((p) => ({ ...p, category: ev.target.value }))}
-          disabled={saving}
-          autoComplete="off"
-        />
-      </div>
-      <div className="mg-modal__form-group">
-        <label htmlFor={`${baseId}-heal-type`} className="mg-modal__label">
-          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_TYPE}
-        </label>
-        <input
-          id={`${baseId}-heal-type`}
-          className="mg-v2-form-input"
-          maxLength={CATEGORY_INPUT_MAX_LEN}
-          value={healingForm.mediaType}
-          onChange={(ev) => setHealingForm((p) => ({ ...p, mediaType: ev.target.value }))}
           disabled={saving}
           autoComplete="off"
         />
@@ -638,47 +837,88 @@ const AdminContentMasterPage = () => {
           autoComplete="off"
         />
       </div>
-      <div className="mg-modal__form-group">
-        <label htmlFor={`${baseId}-heal-curl`} className="mg-modal__label">
-          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_CONTENT_URL}
-        </label>
-        <input
-          id={`${baseId}-heal-curl`}
-          className="mg-v2-form-input"
-          maxLength={URL_INPUT_MAX_LEN}
-          value={healingForm.contentUrl}
-          onChange={(ev) => setHealingForm((p) => ({ ...p, contentUrl: ev.target.value }))}
-          disabled={saving}
-          autoComplete="off"
-        />
-      </div>
-      <div className="mg-modal__form-group">
-        <label htmlFor={`${baseId}-heal-published`} className="mg-modal__label">
-          <input
-            id={`${baseId}-heal-published`}
-            type="checkbox"
-            checked={!!healingForm.published}
-            onChange={(ev) => setHealingForm((p) => ({ ...p, published: ev.target.checked }))}
-            disabled={saving}
-          />
-          {' '}
-          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
-        </label>
-      </div>
-      <div className="mg-modal__form-group">
-        <label htmlFor={`${baseId}-heal-sort`} className="mg-modal__label">
-          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SORT_ORDER}
-        </label>
-        <input
-          id={`${baseId}-heal-sort`}
-          type="number"
-          className="mg-v2-form-input"
-          value={healingForm.sortOrder}
-          onChange={(ev) => setHealingForm((p) => ({ ...p, sortOrder: ev.target.value }))}
-          disabled={saving}
-        />
-      </div>
+      {advancedOpen ? (
+        <>
+          <div className="mg-modal__form-group">
+            <label htmlFor={`${baseId}-heal-code`} className="mg-modal__label">
+              {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_CODE}
+            </label>
+            <input
+              id={`${baseId}-heal-code`}
+              className="mg-v2-form-input"
+              maxLength={CATEGORY_INPUT_MAX_LEN}
+              value={healingForm.code}
+              onChange={(ev) => setHealingForm((p) => ({ ...p, code: ev.target.value }))}
+              disabled={saving}
+              autoComplete="off"
+              placeholder={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_HINT_AUTO_CODE}
+            />
+          </div>
+          <div className="mg-modal__form-group">
+            <label htmlFor={`${baseId}-heal-sort`} className="mg-modal__label">
+              {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SORT_ORDER}
+            </label>
+            <input
+              id={`${baseId}-heal-sort`}
+              type="number"
+              className="mg-v2-form-input"
+              value={healingForm.sortOrder}
+              onChange={(ev) => setHealingForm((p) => ({ ...p, sortOrder: ev.target.value }))}
+              disabled={saving}
+            />
+          </div>
+          <div className="mg-modal__form-group">
+            <label htmlFor={`${baseId}-heal-published`} className="mg-modal__label">
+              <input
+                id={`${baseId}-heal-published`}
+                type="checkbox"
+                checked={!!healingForm.published}
+                onChange={(ev) => setHealingForm((p) => ({ ...p, published: ev.target.checked }))}
+                disabled={saving}
+              />
+              {' '}
+              {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
+            </label>
+          </div>
+        </>
+      ) : null}
     </>
+  );
+
+  const quickAddRow = (
+    <div className="mg-v2-ad-b0kla__quick-add" data-testid="content-master-quick-add">
+      <input
+        type="text"
+        className="mg-v2-form-input"
+        value={quickAddTitle}
+        onChange={(ev) => setQuickAddTitle(ev.target.value)}
+        placeholder={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_QUICK_ADD_TITLE_PLACEHOLDER}
+        maxLength={TITLE_INPUT_MAX_LEN}
+        disabled={quickAddBusy}
+        aria-label={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_QUICK_ADD_TITLE_PLACEHOLDER}
+      />
+      {tab === TAB_HEALING ? (
+        <BadgeSelect
+          aria-label={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_TYPE}
+          options={HEALING_MEDIA_TYPE_OPTIONS}
+          value={quickAddMediaType}
+          onChange={(next) => setQuickAddMediaType(normalizeMediaType(next))}
+          disabled={quickAddBusy}
+        />
+      ) : null}
+      <MGButton
+        type="button"
+        variant="primary"
+        size="small"
+        className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm' })}
+        loading={quickAddBusy}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        disabled={quickAddBusy || !quickAddTitle.trim()}
+        onClick={handleQuickAdd}
+      >
+        {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_QUICK_ADD_BUTTON}
+      </MGButton>
+    </div>
   );
 
   return (
@@ -694,6 +934,9 @@ const AdminContentMasterPage = () => {
             />
             <ContentSection title={ADMIN_WEB_SCAFFOLD_COPY.SECTION_CONTENT_TYPE} noCard>
               <BadgeSelect aria-label="콘텐츠 유형 탭" options={TAB_OPTIONS} value={tab} onChange={setTab} />
+            </ContentSection>
+            <ContentSection title={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_QUICK_ADD_BUTTON} noCard>
+              {quickAddRow}
             </ContentSection>
             <ContentSection title={ADMIN_WEB_SCAFFOLD_COPY.SECTION_MASTER_LIST}>
               {!activeLoading && tableData.length === 0 ? (
@@ -748,6 +991,21 @@ const AdminContentMasterPage = () => {
       >
         <SafeText tag="p" className="mg-modal__hint">{ADMIN_WEB_SCAFFOLD_COPY.MODAL_ADD_CONTENT_BODY}</SafeText>
         {tab === TAB_PSYCHO ? psychoFields : healingFields}
+        <div className="mg-modal__form-group mg-modal__form-group--toggle">
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm' })}
+            disabled={saving}
+            onClick={() => setAdvancedOpen((v) => !v)}
+            aria-expanded={advancedOpen}
+          >
+            {advancedOpen
+              ? ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ADVANCED_TOGGLE_HIDE
+              : ADMIN_WEB_SCAFFOLD_COPY.CONTENT_ADVANCED_TOGGLE_SHOW}
+          </MGButton>
+        </div>
       </UnifiedModal>
     </AdminCommonLayout>
   );

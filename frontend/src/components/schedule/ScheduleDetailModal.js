@@ -14,7 +14,13 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
-import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
+import {
+    CALENDAR_EXTENDED_TYPE_VACATION,
+    SCHEDULE_REMAINING_SESSIONS_FIELD,
+    SCHEDULE_SESSION_SEQUENCE_FIELD,
+    SCHEDULE_TOTAL_SESSIONS_FIELD,
+    parseScheduleSessionCount
+} from '../../constants/schedule';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
 import StatusBadge from '../common/StatusBadge';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
@@ -24,12 +30,118 @@ import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 import { getProfessionalProviderTypeLabel } from '../../constants/professionalProviderRoles';
 import { useTranslation } from 'react-i18next';
 
-/** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
+    /** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
 const SCHEDULE_DETAIL_Z_INDEX_MAIN = 1040;
 const SCHEDULE_DETAIL_Z_INDEX_PARTY_QUICK = 1140;
 const SCHEDULE_DETAIL_Z_INDEX_CONFIRM = 1240;
 /** 요약에서 비어 있음 표시 */
 const SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER = '\u2014';
+
+/** 상담일지 deep link 노출 가능한 상태 코드 (TENTATIVE/CANCELLED 제외) */
+const CONSULTATION_LOG_LINK_VISIBLE_STATUSES = Object.freeze([
+    'BOOKED',
+    'CONFIRMED',
+    'COMPLETED'
+]);
+
+/**
+ * 모달의 회기 라벨(잔여/총) 계산.
+ * - sessionSequence(예약 시점 회차)가 있으면 `total - sequence` 를 우선 사용해 캘린더 라벨과 동일 SSOT.
+ * - 없으면 매핑 단위 remainingSessions 로 fallback.
+ *
+ * @param {object} schedule 모달에 표시중인 schedule 객체
+ * @returns {{ remaining: number|null, total: number|null }}
+ */
+function resolveModalSessionInfo(schedule) {
+    if (!schedule) {
+        return { remaining: null, total: null };
+    }
+    const total = parseScheduleSessionCount(
+        schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.totalSessions
+    );
+    if (total === null || total <= 1) {
+        return { remaining: null, total: null };
+    }
+    const sequence = parseScheduleSessionCount(
+        schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
+    );
+    if (sequence !== null) {
+        const remaining = Math.max(0, Math.min(total, total - sequence));
+        return { remaining, total };
+    }
+    const remaining = parseScheduleSessionCount(
+        schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
+    );
+    if (remaining === null) {
+        return { remaining: null, total };
+    }
+    return { remaining, total };
+}
+
+/**
+ * yyyy-MM-dd 문자열로 정규화 (Date·문자열 모두 허용, 실패 시 null).
+ *
+ * @param {string|Date|undefined} raw
+ * @returns {string|null}
+ */
+function toIsoDateString(raw) {
+    if (!raw) {
+        return null;
+    }
+    if (raw instanceof Date) {
+        if (Number.isNaN(raw.getTime())) {
+            return null;
+        }
+        const y = raw.getFullYear();
+        const m = String(raw.getMonth() + 1).padStart(2, '0');
+        const d = String(raw.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+    if (typeof raw !== 'string') {
+        return null;
+    }
+    const trimmed = raw.trim();
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (!isoMatch) {
+        return null;
+    }
+    const y = isoMatch[1];
+    const m = String(isoMatch[2]).padStart(2, '0');
+    const d = String(isoMatch[3]).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
+ * 상담일지 deep link 가 노출 가능한 일정인지 판정.
+ * - 과거 또는 당일 (date <= today) 일정만 노출 (미래 제외)
+ * - 상태가 BOOKED·CONFIRMED·COMPLETED 인 경우만 (TENTATIVE/CANCELLED 제외)
+ * - 휴가 이벤트는 비활성
+ *
+ * @param {object} schedule
+ * @param {string} statusCode 정규화된 상태 코드
+ * @param {boolean} isVacation 휴가 이벤트 여부
+ * @param {Date} [now]
+ * @returns {boolean}
+ */
+function shouldShowConsultationLogLink(schedule, statusCode, isVacation, now = new Date()) {
+    if (!schedule || isVacation) {
+        return false;
+    }
+    if (!CONSULTATION_LOG_LINK_VISIBLE_STATUSES.includes(statusCode)) {
+        return false;
+    }
+    const sessionDate = toIsoDateString(
+        schedule.sessionDate || schedule.date || schedule.apiDate
+    );
+    if (!sessionDate) {
+        return false;
+    }
+    const todayIso = toIsoDateString(now);
+    if (!todayIso) {
+        return false;
+    }
+    return sessionDate <= todayIso;
+}
 
 /**
  * 스케줄 상세 정보 및 관리 모달
@@ -584,6 +696,37 @@ const ScheduleDetailModal = ({
         onConsultationLogOpen?.(scheduleData);
     };
 
+/**
+     * 상담일지 조회/수정 페이지로 이동 (과거·당일 일정 한정).
+     * 쿼리 파라미터로 scheduleId/date/clientId 를 전달해 자동 필터링.
+     */
+    const handleOpenConsultationLogView = () => {
+        if (!scheduleData?.id) {
+            notificationManager.error(t('schedule:ScheduleDetailModal.t_70e5dfa5'));
+            return;
+        }
+        const data = localScheduleOverride ?? scheduleData;
+        const sessionDate = toIsoDateString(
+            data.sessionDate || data.date || data.apiDate
+        );
+        const params = new URLSearchParams();
+        if (data.id != null) {
+            params.set('scheduleId', String(data.id));
+        }
+        if (sessionDate) {
+            params.set('date', sessionDate);
+        }
+        if (data.clientId != null) {
+            params.set('clientId', String(data.clientId));
+        }
+        const queryString = params.toString();
+        const target = queryString
+            ? `${ADMIN_ROUTES.CONSULTATION_LOGS}?${queryString}`
+            : ADMIN_ROUTES.CONSULTATION_LOGS;
+        onClose();
+        navigate(target);
+    };
+
 
 /**
      * 예약 변경 — 부모에서 재예약 모달 오픈
@@ -610,6 +753,12 @@ const ScheduleDetailModal = ({
     const showNotesTab = !isVacationEvent() && (RoleUtils.isAdmin(user) || RoleUtils.isStaff(user));
     const canPartyQuickSummary = showNotesTab;
     const { parsedClientName, parsedConsultantName } = partyNameParse;
+    const sessionInfo = resolveModalSessionInfo(displayData);
+    const consultationLogLinkVisible = shouldShowConsultationLogLink(
+        displayData,
+        getStatusCodeValue(statusForDisplay),
+        isVacationEvent()
+    ) && !isClient;
 
     const buildPartySummaryRows = (kind) => {
         const dash = SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER;
@@ -882,6 +1031,29 @@ const ScheduleDetailModal = ({
                 className="mg-v2-ad-b0kla"
                 actions={(
                     <div className="schedule-detail-modal__footer-actions mg-v2-ad-b0kla__modal-actions">
+                        {consultationLogLinkVisible && (
+                            <MGButton
+                                type="button"
+                                variant="outline"
+                                className={buildErpMgButtonClassName({
+                                    variant: 'outline',
+                                    size: 'md',
+                                    loading: false,
+                                    className: 'mg-v2-btn--outline schedule-detail-modal__btn--log-link'
+                                })}
+                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                preventDoubleClick={false}
+                                onClick={handleOpenConsultationLogView}
+                                disabled={loading}
+                                aria-label={t(
+                                    'schedule:ScheduleDetailModal.openConsultationLogViewAria',
+                                    { date: toIsoDateString(displayData.sessionDate || displayData.date || displayData.apiDate) || '' }
+                                )}
+                                data-testid="schedule-detail-open-consultation-log"
+                            >
+                                {t('schedule:ScheduleDetailModal.openConsultationLogView')}
+                            </MGButton>
+                        )}
                         {renderMainActions()}
                     </div>
                 )}
@@ -970,6 +1142,24 @@ const ScheduleDetailModal = ({
                                 <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
                             </span>
                         </div>
+                        {!isVacationEvent() && sessionInfo.total !== null && sessionInfo.remaining !== null && (
+                            <div
+                                className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--sessions"
+                                data-testid="schedule-detail-session-info"
+                            >
+                                <span className="schedule-detail-modal__summary-label">
+                                    {t('schedule:ScheduleDetailModal.sessionInfoLabel')}
+                                </span>
+                                <span className="schedule-detail-modal__summary-value">
+                                    <SafeText>
+                                        {t('schedule:ScheduleDetailModal.sessionInfoValue', {
+                                            remaining: sessionInfo.remaining,
+                                            total: sessionInfo.total
+                                        })}
+                                    </SafeText>
+                                </span>
+                            </div>
+                        )}
                         {showNotesTab && (
                             <div className="schedule-detail-modal__summary-item">
                                 <span className="schedule-detail-modal__summary-label">{t('schedule:ScheduleDetailModal.t_e5261918')}</span>
@@ -1086,3 +1276,9 @@ const ScheduleDetailModal = ({
 };
 
 export default ScheduleDetailModal;
+export {
+    resolveModalSessionInfo,
+    shouldShowConsultationLogLink,
+    toIsoDateString,
+    CONSULTATION_LOG_LINK_VISIBLE_STATUSES
+};

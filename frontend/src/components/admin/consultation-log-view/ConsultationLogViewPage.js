@@ -6,7 +6,8 @@
  * @since 2025-03-02
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { useSession } from '../../../contexts/SessionContext';
 import { USER_ROLES } from '../../../constants/roles';
@@ -63,18 +64,85 @@ export const computeDefaultDateRange = (now = new Date()) => {
   return { startDate: fmt(start), endDate: fmt(end) };
 };
 
+/**
+ * URL `?date=yyyy-mm-dd` 등 deep link 쿼리에서 시작·종료 일자를 추출.
+ * 단일 날짜만 있을 때는 startDate=endDate=해당일.
+ *
+ * @param {URLSearchParams|null|undefined} searchParams
+ * @returns {{ startDate: string, endDate: string }|null}
+ */
+export const computeRangeFromQuery = (searchParams) => {
+  if (!searchParams || typeof searchParams.get !== 'function') {
+    return null;
+  }
+  const dateRaw = searchParams.get('date');
+  if (!dateRaw) {
+    return null;
+  }
+  const match = String(dateRaw).trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (!match) {
+    return null;
+  }
+  const iso = `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
+  return { startDate: iso, endDate: iso };
+};
+
+/**
+ * URL 쿼리에서 숫자 ID 파라미터 추출. 정수가 아닌 경우 null.
+ *
+ * @param {URLSearchParams|null|undefined} searchParams
+ * @param {string} key
+ * @returns {number|null}
+ */
+export const parseNumericQueryParam = (searchParams, key) => {
+  if (!searchParams || typeof searchParams.get !== 'function') {
+    return null;
+  }
+  const raw = searchParams.get(key);
+  if (raw === null || raw === undefined || raw === '') {
+    return null;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0) {
+    return null;
+  }
+  return n;
+};
+
 const ConsultationLogViewPage = () => {
   const { user } = useSession();
   const isAdmin = user?.role === USER_ROLES.ADMIN;
+  const [searchParams] = useSearchParams();
+
+  /**
+   * Deep link 쿼리(`?date=...&clientId=...&consultantId=...&scheduleId=...`)를
+   * 페이지 초기 필터로 1회 적용. 이후 사용자가 필터를 변경하면 그대로 유지.
+   */
+  const initialQueryFilter = useMemo(() => {
+    const range = computeRangeFromQuery(searchParams);
+    return {
+      startDate: range?.startDate ?? null,
+      endDate: range?.endDate ?? null,
+      clientId: parseNumericQueryParam(searchParams, 'clientId'),
+      consultantId: parseNumericQueryParam(searchParams, 'consultantId'),
+      scheduleId: parseNumericQueryParam(searchParams, 'scheduleId')
+    };
+  // 초기 마운트 시 1회만 계산 (deep link 의도). 이후 검색 변화 시 사용자 필터 우선.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [consultants, setConsultants] = useState([]);
   const [clients, setClients] = useState([]);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [consultantId, setConsultantId] = useState(null);
-  const [clientId, setClientId] = useState(null);
-  const [startDate, setStartDate] = useState(() => computeDefaultDateRange().startDate);
-  const [endDate, setEndDate] = useState(() => computeDefaultDateRange().endDate);
+  const [consultantId, setConsultantId] = useState(initialQueryFilter.consultantId);
+  const [clientId, setClientId] = useState(initialQueryFilter.clientId);
+  const [startDate, setStartDate] = useState(
+    () => initialQueryFilter.startDate ?? computeDefaultDateRange().startDate
+  );
+  const [endDate, setEndDate] = useState(
+    () => initialQueryFilter.endDate ?? computeDefaultDateRange().endDate
+  );
   const [modalRecordId, setModalRecordId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(VIEW_MODE_LIST);

@@ -2611,6 +2611,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         String consultantProfileImageUrl = null;
         String clientName = "알 수 없음";
         String clientProfileImageUrl = null;
+        Long clientPastSessionCount = null;
         
         log.info("🔍 스케줄 변환 시작: scheduleId={}, consultantId={}, clientId={}", 
                 schedule.getId(), schedule.getConsultantId(), schedule.getClientId());
@@ -2640,6 +2641,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 
                 if (client != null) {
                     clientProfileImageUrl = nullableUserProfileImageUrl(client);
+                    clientPastSessionCount = client.getPastSessionCount();
                     if (client.getIsActive()) {
                         clientName = scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(client);
                     } else {
@@ -2660,7 +2662,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         ScheduleMappingResponseContext mappingContext = ScheduleMappingContextResolver.resolveForScheduleResponse(
                 schedule, tenantId, mappingRepository, mappingLookup);
         
-        return ScheduleResponse.builder()
+        ScheduleResponse response = ScheduleResponse.builder()
             .id(schedule.getId())
             .consultantId(schedule.getConsultantId())
             .consultantName(consultantName)
@@ -2685,6 +2687,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .remainingSessions(mappingContext.getRemainingSessions())
             .sessionSequence(schedule.getSessionSequence())
             .build();
+        response.applyCombinedSessions(
+                clientPastSessionCount,
+                mappingContext.getTotalSessions(),
+                mappingContext.getRemainingSessions(),
+                schedule.getSessionSequence());
+        return response;
     }
 
     private static String nullableUserProfileImageUrl(User user) {

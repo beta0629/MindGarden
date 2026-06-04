@@ -120,7 +120,27 @@ public class User extends BaseEntity {
     
     @Column(name = "total_consultations")
     private Integer totalConsultations = 0;
-    
+
+    /**
+     * 과거 회기수 (외부 상담 이력).
+     *
+     * <p>어드민이 내담자 등록 시 입력하는 외부 상담 기관에서 진행된 회기 수.
+     * 스케줄 상세 모달의 "사용/총" 회기 표시 시 매핑의 {@code usedSessions}/
+     * {@code totalSessions} 와 합산되어 상담사가 전체 회기 흐름을 파악할 수 있도록 한다.</p>
+     *
+     * <p>정책 (Flyway V20260608_001):
+     * <ul>
+     *   <li>NULL 허용 — 신규 내담자(과거 이력 없음) = 합산 시 0 처리</li>
+     *   <li>0 이상 정수만 의미 있음 — DTO {@code @Min(0)} 검증</li>
+     *   <li>매핑 차감/복구 로직과 무관 — 표시 전용</li>
+     * </ul>
+     * </p>
+     *
+     * @since 2026-06-08
+     */
+    @Column(name = "past_session_count")
+    private Long pastSessionCount;
+
     @Column(name = "last_grade_update")
     private LocalDateTime lastGradeUpdate;
     

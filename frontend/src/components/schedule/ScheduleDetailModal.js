@@ -45,37 +45,58 @@ const CONSULTATION_LOG_LINK_VISIBLE_STATUSES = Object.freeze([
 ]);
 
 /**
- * 모달의 회기 라벨(잔여/총) 계산.
- * - sessionSequence(예약 시점 회차)가 있으면 `total - sequence` 를 우선 사용해 캘린더 라벨과 동일 SSOT.
- * - 없으면 매핑 단위 remainingSessions 로 fallback.
+ * 모달의 회기 라벨(사용/총) 계산.
+ *
+ * <p>로직 우선순위:
+ * <ol>
+ *   <li>백엔드 합산값({@code combinedUsedSessions}/{@code combinedTotalSessions}) 이 있으면 SSOT 로 사용.</li>
+ *   <li>없으면 {@code pastSessionCount} + 매핑 단위 사용 회기로 합산. 매핑 단위는
+ *       {@code sessionSequence}(1-based) 우선, 없으면 ({@code totalSessions} - {@code remainingSessions}) fallback.</li>
+ *   <li>{@code pastSessionCount} null/0/음수 → 0 으로 안전 처리 (신규 내담자 정책).</li>
+ *   <li>단회기({@code totalSessions <= 1}) 또는 매핑 정보 부족 시 null 반환 (모달 비표시).</li>
+ * </ol>
  *
  * @param {object} schedule 모달에 표시중인 schedule 객체
- * @returns {{ remaining: number|null, total: number|null }}
+ * @returns {{ used: number|null, total: number|null }}
  */
 function resolveModalSessionInfo(schedule) {
     if (!schedule) {
-        return { remaining: null, total: null };
+        return { used: null, total: null };
+    }
+    const backendCombinedTotal = parseScheduleSessionCount(schedule.combinedTotalSessions);
+    const backendCombinedUsed = parseScheduleSessionCount(schedule.combinedUsedSessions);
+    if (backendCombinedTotal !== null && backendCombinedUsed !== null && backendCombinedTotal > 1) {
+        return {
+            used: Math.max(0, Math.min(backendCombinedTotal, backendCombinedUsed)),
+            total: backendCombinedTotal
+        };
     }
     const total = parseScheduleSessionCount(
         schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.totalSessions
     );
     if (total === null || total <= 1) {
-        return { remaining: null, total: null };
+        return { used: null, total: null };
     }
+    const past = parseScheduleSessionCount(schedule.pastSessionCount);
+    const pastSafe = past !== null && past > 0 ? past : 0;
     const sequence = parseScheduleSessionCount(
         schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
     );
-    if (sequence !== null) {
-        const remaining = Math.max(0, Math.min(total, total - sequence));
-        return { remaining, total };
+    let usedFromMapping = null;
+    if (sequence !== null && sequence > 0) {
+        usedFromMapping = Math.min(sequence, total);
+    } else {
+        const remaining = parseScheduleSessionCount(
+            schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
+        );
+        if (remaining !== null && remaining >= 0 && remaining <= total) {
+            usedFromMapping = total - remaining;
+        }
     }
-    const remaining = parseScheduleSessionCount(
-        schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
-    );
-    if (remaining === null) {
-        return { remaining: null, total };
+    if (usedFromMapping === null) {
+        return { used: null, total: pastSafe + total };
     }
-    return { remaining, total };
+    return { used: pastSafe + usedFromMapping, total: pastSafe + total };
 }
 
 /**
@@ -1142,7 +1163,7 @@ const ScheduleDetailModal = ({
                                 <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
                             </span>
                         </div>
-                        {!isVacationEvent() && sessionInfo.total !== null && sessionInfo.remaining !== null && (
+                        {!isVacationEvent() && sessionInfo.total !== null && sessionInfo.used !== null && (
                             <div
                                 className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--sessions"
                                 data-testid="schedule-detail-session-info"
@@ -1153,7 +1174,7 @@ const ScheduleDetailModal = ({
                                 <span className="schedule-detail-modal__summary-value">
                                     <SafeText>
                                         {t('schedule:ScheduleDetailModal.sessionInfoValue', {
-                                            remaining: sessionInfo.remaining,
+                                            used: sessionInfo.used,
                                             total: sessionInfo.total
                                         })}
                                     </SafeText>

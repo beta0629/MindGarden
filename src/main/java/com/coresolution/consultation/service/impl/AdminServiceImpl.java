@@ -525,6 +525,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             clientUser.setAge(request.getAge());
         }
 
+        // 과거 회기수: NULL = 신규 내담자(외부 이력 없음), 0 이상 정수 = 외부 상담 이력 회기수
+        if (request.getPastSessionCount() != null) {
+            clientUser.setPastSessionCount(request.getPastSessionCount());
+        }
+
         log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}",
                 clientUser.getUserId(), emailPlain, tenantId, clientUser.getIsActive(), clientUser.getRole());
 
@@ -2829,6 +2834,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 상태 반영: request.getStatus()가 null/empty가 아니면 ACTIVE→true, 그 외→false
         if (request.getStatus() != null && !request.getStatus().trim().isEmpty()) {
             clientUser.setIsActive("ACTIVE".equalsIgnoreCase(request.getStatus().trim()));
+        }
+
+        // 과거 회기수: request.pastSessionCount 가 null 이면 변경 없음 (명시적 NULL 화는 별도 정책 합의 필요)
+        if (request.getPastSessionCount() != null) {
+            clientUser.setPastSessionCount(request.getPastSessionCount());
         }
 
         applyManagedUserNotificationPreferenceIfRequested(clientUser, request.getNotificationChannelPreference());

@@ -497,6 +497,9 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("emergencyPhone", client.getEmergencyPhone());
         clientMap.put("consultationPurpose", client.getConsultationPurpose());
         clientMap.put("consultationHistory", client.getConsultationHistory());
+        // 외부(타 기관) 상담 이력 회기수 — NULL=신규 내담자, 0 이상 정수=명시적 회기.
+        // 내담자 어드민 모달·ClientFilters·ClientCard 등에서 합산 표시 시 참조.
+        clientMap.put("pastSessionCount", user != null ? user.getPastSessionCount() : null);
         clientMap.put("role", UserRole.CLIENT.name());
         clientMap.put("isDeleted", client.getIsDeleted());
         clientMap.put("createdAt", client.getCreatedAt());

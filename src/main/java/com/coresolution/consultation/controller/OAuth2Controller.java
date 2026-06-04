@@ -3148,14 +3148,37 @@ public class OAuth2Controller extends BaseApiController {
 
             if (existingUserId == null) {
                 // 신규 사용자 - 회원가입 필요
-                return ResponseEntity.ok(Map.of("success", false, "requiresSignup", true,
-                        "socialUserInfo",
-                        Map.of("email", socialUserInfo.getEmail(), "nickname",
-                                socialUserInfo.getNickname() != null ? socialUserInfo.getNickname()
-                                        : "",
-                                "provider", provider, "socialId",
-                                socialUserInfo.getProviderUserId()),
-                        "message", OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED));
+                // null-safe 응답 빌드 — Map.of 는 null key/value 비허용이므로 카카오·네이버 동의 누락
+                // 사용자(email/socialId 가 null) 케이스에서 NPE 500 으로 미가입 분기 자체가 막혔다.
+                // providerUserId 가 부재하면 모바일 parseSocialUserInfoDraft 가 가입 화면 진입 자체를
+                // 거부하므로 그 케이스는 명시적 에러 응답으로 빠져 사용자에게 다른 메시지를 노출한다.
+                String pid = socialUserInfo.getProviderUserId();
+                if (pid == null || pid.isBlank()) {
+                    log.warn(
+                            "⚠️ social-login: providerUserId 부재 — 가입 분기 진행 불가 (provider={}, email={})",
+                            provider,
+                            socialUserInfo.getEmail() != null ? "<있음>" : "<없음>");
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("success", false);
+                    errorResponse.put("message", OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED);
+                    return ResponseEntity.ok(errorResponse);
+                }
+
+                Map<String, Object> socialUserInfoMap = new HashMap<>();
+                socialUserInfoMap.put("email",
+                        socialUserInfo.getEmail() != null ? socialUserInfo.getEmail() : "");
+                socialUserInfoMap.put("nickname",
+                        socialUserInfo.getNickname() != null ? socialUserInfo.getNickname() : "");
+                socialUserInfoMap.put("provider", provider != null ? provider : "");
+                socialUserInfoMap.put("socialId", pid);
+
+                Map<String, Object> signupRequiredResponse = new HashMap<>();
+                signupRequiredResponse.put("success", false);
+                signupRequiredResponse.put("requiresSignup", true);
+                signupRequiredResponse.put("socialUserInfo", socialUserInfoMap);
+                signupRequiredResponse.put("message", OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED);
+
+                return ResponseEntity.ok(signupRequiredResponse);
             }
 
             // 기존 사용자 로그인

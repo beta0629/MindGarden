@@ -95,7 +95,7 @@ function resolveModalSessionInfo(schedule) {
     }
     const backendCombinedTotal = parseScheduleSessionCount(schedule.combinedTotalSessions);
     const backendCombinedUsed = parseScheduleSessionCount(schedule.combinedUsedSessions);
-    if (backendCombinedTotal !== null && backendCombinedUsed !== null && backendCombinedTotal > 1) {
+    if (backendCombinedTotal !== null && backendCombinedUsed !== null && backendCombinedTotal >= 1) {
         return {
             used: Math.max(0, Math.min(backendCombinedTotal, backendCombinedUsed)),
             total: backendCombinedTotal
@@ -104,7 +104,7 @@ function resolveModalSessionInfo(schedule) {
     const total = parseScheduleSessionCount(
         schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.totalSessions
     );
-    if (total === null || total <= 1) {
+    if (total === null || total < 1) {
         return { used: null, total: null };
     }
     const past = parseScheduleSessionCount(schedule.pastSessionCount);
@@ -123,10 +123,8 @@ function resolveModalSessionInfo(schedule) {
             usedFromMapping = total - remaining;
         }
     }
-    if (usedFromMapping === null) {
-        return { used: null, total: pastSafe + total };
-    }
-    return { used: pastSafe + usedFromMapping, total: pastSafe + total };
+    const usedSafe = usedFromMapping !== null ? usedFromMapping : 0;
+    return { used: pastSafe + usedSafe, total: pastSafe + total };
 }
 
 /**

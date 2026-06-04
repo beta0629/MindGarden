@@ -85,10 +85,15 @@ describe('resolveModalSessionInfo', () => {
     expect(info).toEqual({ used: 11, total: 25 });
   });
 
-  test('totalSessions 가 1 이하면 단회기로 간주하여 null 반환 (라벨 미노출)', () => {
+  test('단회기(total=1) 도 표시 (사용자 요구 "누적과 잔여 둘 다 노출")', () => {
     expect(resolveModalSessionInfo({ totalSessions: 1, remainingSessions: 0, pastSessionCount: 5 }))
-      .toEqual({ used: null, total: null });
+      .toEqual({ used: 6, total: 6 });
+  });
+
+  test('totalSessions 가 0 이하 또는 null 이면 라벨 미노출', () => {
     expect(resolveModalSessionInfo({ totalSessions: 0, remainingSessions: 0 }))
+      .toEqual({ used: null, total: null });
+    expect(resolveModalSessionInfo({ totalSessions: null, pastSessionCount: 5 }))
       .toEqual({ used: null, total: null });
   });
 
@@ -121,12 +126,12 @@ describe('resolveModalSessionInfo', () => {
     expect(info).toEqual({ used: 12, total: 12 });
   });
 
-  test('remainingSessions 도 sequence 도 없으면 used=null, total 만 합산', () => {
+  test('remainingSessions 도 sequence 도 없으면 used=past+0 (안전 fallback)', () => {
     const info = resolveModalSessionInfo({
       totalSessions: 20,
       pastSessionCount: 4
     });
-    expect(info).toEqual({ used: null, total: 24 });
+    expect(info).toEqual({ used: 4, total: 24 });
   });
 });
 

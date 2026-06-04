@@ -155,19 +155,21 @@ public class ScheduleResponse {
     /**
      * 내담자 lifetime 누적 상담 회기수 계산.
      *
-     * <p>{@code lifetimeSessionCount = (pastSessions ?? 0) + (mappingUsedSessionsSum ?? 0)}.
-     * 매핑 단회기/다회기 무관, 모든 일정의 모달에서 "누적 상담 N회" 라벨로 표시.</p>
+     * <p>{@code lifetimeSessionCount = (pastSessions ?? 0) + (currentScheduleCount ?? 0)}.
+     * {@code currentScheduleCount} SSOT = {@code schedules} 테이블의 client_id 별 비삭제 일정 카운트
+     * (= 어드민 내담자 카드 "일정(회기) 건수" 와 동일 정의). 매핑 단회기/다회기 무관, 모든 일정의
+     * 모달에서 "누적 상담 N회" 라벨로 표시.</p>
      *
      * @param pastSessions {@code users.past_session_count}. null 허용.
-     * @param mappingUsedSessionsSum 내담자의 모든 매핑 {@code used_sessions} 합. null 허용.
+     * @param currentScheduleCount {@code schedules.is_deleted = false} 의 내담자별 카운트. null 허용.
      */
-    public void applyClientLifetimeSession(Long pastSessions, Long mappingUsedSessionsSum) {
+    public void applyClientLifetimeSession(Long pastSessions, Long currentScheduleCount) {
         this.pastSessionCount = pastSessions;
         long pastSafe = pastSessions != null && pastSessions > 0L ? pastSessions : 0L;
-        long usedSafe = mappingUsedSessionsSum != null && mappingUsedSessionsSum > 0L
-                ? mappingUsedSessionsSum
+        long currentSafe = currentScheduleCount != null && currentScheduleCount > 0L
+                ? currentScheduleCount
                 : 0L;
-        this.clientLifetimeSessionCount = pastSafe + usedSafe;
+        this.clientLifetimeSessionCount = pastSafe + currentSafe;
     }
 
     /**

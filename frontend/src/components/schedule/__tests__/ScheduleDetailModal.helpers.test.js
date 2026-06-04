@@ -1,32 +1,37 @@
 /**
- * ScheduleDetailModal — 사용/총 회기 표시 + 과거 회기 합산 + 상담일지 deep link 회귀 가드.
+ * ScheduleDetailModal — 회기/누적 라벨 표시 + 상담일지 deep link 회귀 가드.
  *
- * 단위 테스트 매트릭스:
- *  - resolveModalSessionInfo:
- *    · 백엔드 합산값(combinedUsedSessions/combinedTotalSessions)이 있으면 SSOT 로 우선
- *    · sessionSequence 가 있으면 합산 사용 = past + sequence
- *    · sessionSequence 없을 때 매핑 (total - remaining) fallback + past 합산
- *    · pastSessionCount null → 0 으로 안전 처리 (신규 내담자 정책)
- *    · pastSessionCount 5, total 20, sequence 6 → used=11, total=25
- *    · totalSessions 가 null/0/1 이면 표시 안 함 (단회기)
- *    · null/undefined 케이스 정상 처리 (회귀 가드)
- *  - shouldShowConsultationLogLink:
- *    · 과거/당일 + 유효 상태 → true
- *    · 미래·TENTATIVE_PENDING_PAYMENT·CANCELLED·휴가 → false
+ * 사용자 정의 (2026-06-05):
+ *  - 회기 라벨 = 현재 매핑의 raw 사용/총. 과거 회기수 합산 금지.
+ *    · sessionSequence 있으면 used = sequence, total = totalSessions
+ *    · sessionSequence 없으면 used = total - remaining
+ *    · 매핑 NULL → 라벨 미노출
+ *  - 누적 라벨은 별도 resolveModalLifetimeSessionInfo (past + sessionSequence) 가 담당.
  *
  * @author MindGarden
- * @since 2026-06-04
+ * @since 2026-06-05
  */
 
 import {
   resolveModalSessionInfo,
+  resolveModalLifetimeSessionInfo,
   shouldShowConsultationLogLink,
   toIsoDateString,
   CONSULTATION_LOG_LINK_VISIBLE_STATUSES
 } from '../ScheduleDetailModal';
 
-describe('resolveModalSessionInfo', () => {
-  test('백엔드 combinedUsedSessions/combinedTotalSessions 가 있으면 그대로 SSOT', () => {
+describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금지)', () => {
+  test('sessionSequence 가 있으면 used=sequence, total=totalSessions (past 무관)', () => {
+    const info = resolveModalSessionInfo({
+      totalSessions: 10,
+      remainingSessions: 9,
+      sessionSequence: 1,
+      pastSessionCount: 10
+    });
+    expect(info).toEqual({ used: 1, total: 10 });
+  });
+
+  test('백엔드 combinedUsedSessions/combinedTotalSessions 가 있어도 무시 (raw 매핑 SSOT)', () => {
     const info = resolveModalSessionInfo({
       totalSessions: 20,
       remainingSessions: 8,
@@ -35,30 +40,20 @@ describe('resolveModalSessionInfo', () => {
       combinedUsedSessions: 17,
       combinedTotalSessions: 25
     });
-    expect(info).toEqual({ used: 17, total: 25 });
+    expect(info).toEqual({ used: 12, total: 20 });
   });
 
-  test('백엔드 합산값 미존재 + sessionSequence 가 있으면 past + sequence (캘린더 라벨과 동일 SSOT)', () => {
-    const info = resolveModalSessionInfo({
-      totalSessions: 20,
-      remainingSessions: 8,
-      sessionSequence: 5,
-      pastSessionCount: 3
-    });
-    expect(info).toEqual({ used: 8, total: 23 });
-  });
-
-  test('sessionSequence 가 없을 때 매핑 (total - remaining) fallback + past 합산', () => {
+  test('sessionSequence 가 없을 때 매핑 (total - remaining) fallback', () => {
     const info = resolveModalSessionInfo({
       totalSessions: 20,
       remainingSessions: 15,
       sessionSequence: null,
       pastSessionCount: 4
     });
-    expect(info).toEqual({ used: 9, total: 24 });
+    expect(info).toEqual({ used: 5, total: 20 });
   });
 
-  test('pastSessionCount null → 0 으로 안전 처리 (신규 내담자 정책)', () => {
+  test('pastSessionCount null → 무관 (raw 매핑만)', () => {
     const info = resolveModalSessionInfo({
       totalSessions: 20,
       sessionSequence: 5,
@@ -67,30 +62,12 @@ describe('resolveModalSessionInfo', () => {
     expect(info).toEqual({ used: 5, total: 20 });
   });
 
-  test('pastSessionCount 0 도 정상 처리', () => {
-    const info = resolveModalSessionInfo({
-      totalSessions: 10,
-      sessionSequence: 3,
-      pastSessionCount: 0
-    });
-    expect(info).toEqual({ used: 3, total: 10 });
+  test('단회기(total=1) 도 raw 표시', () => {
+    expect(resolveModalSessionInfo({ totalSessions: 1, remainingSessions: 0, sessionSequence: 1, pastSessionCount: 5 }))
+      .toEqual({ used: 1, total: 1 });
   });
 
-  test('pastSessionCount 5, total 20, sequence 6 → used=11, total=25 (사용자 시나리오)', () => {
-    const info = resolveModalSessionInfo({
-      totalSessions: 20,
-      sessionSequence: 6,
-      pastSessionCount: 5
-    });
-    expect(info).toEqual({ used: 11, total: 25 });
-  });
-
-  test('단회기(total=1) 도 표시 (사용자 요구 "누적과 잔여 둘 다 노출")', () => {
-    expect(resolveModalSessionInfo({ totalSessions: 1, remainingSessions: 0, pastSessionCount: 5 }))
-      .toEqual({ used: 6, total: 6 });
-  });
-
-  test('totalSessions 가 0 이하 또는 null 이면 라벨 미노출', () => {
+  test('totalSessions 가 0 이하 또는 null 이면 라벨 미노출 (매핑 없음)', () => {
     expect(resolveModalSessionInfo({ totalSessions: 0, remainingSessions: 0 }))
       .toEqual({ used: null, total: null });
     expect(resolveModalSessionInfo({ totalSessions: null, pastSessionCount: 5 }))
@@ -102,14 +79,6 @@ describe('resolveModalSessionInfo', () => {
     expect(resolveModalSessionInfo(undefined)).toEqual({ used: null, total: null });
   });
 
-  test('used 가 total 을 초과해도 백엔드 합산값 보호: clamp(used, 0, total)', () => {
-    const info = resolveModalSessionInfo({
-      combinedUsedSessions: 999,
-      combinedTotalSessions: 25
-    });
-    expect(info).toEqual({ used: 25, total: 25 });
-  });
-
   test('비정상 음수·문자열 등은 null 처리', () => {
     expect(resolveModalSessionInfo({ totalSessions: -1, remainingSessions: 5 }))
       .toEqual({ used: null, total: null });
@@ -117,21 +86,60 @@ describe('resolveModalSessionInfo', () => {
       .toEqual({ used: null, total: null });
   });
 
-  test('sessionSequence 가 total 을 초과해도 total 로 clamp + past 합산', () => {
+  test('sessionSequence 가 total 을 초과해도 total 로 clamp (past 무관)', () => {
     const info = resolveModalSessionInfo({
       totalSessions: 10,
       sessionSequence: 99,
       pastSessionCount: 2
     });
-    expect(info).toEqual({ used: 12, total: 12 });
+    expect(info).toEqual({ used: 10, total: 10 });
   });
 
-  test('remainingSessions 도 sequence 도 없으면 used=past+0 (안전 fallback)', () => {
+  test('remainingSessions 도 sequence 도 없으면 라벨 미노출', () => {
     const info = resolveModalSessionInfo({
       totalSessions: 20,
       pastSessionCount: 4
     });
-    expect(info).toEqual({ used: 4, total: 24 });
+    expect(info).toEqual({ used: null, total: null });
+  });
+});
+
+describe('resolveModalLifetimeSessionInfo (누적 라벨 = past + sessionSequence)', () => {
+  test('사용자 시나리오 (5/29 일정): past=10, sessionSequence=1 → 과거 10 + 누적 1 = 총 11', () => {
+    const info = resolveModalLifetimeSessionInfo({
+      pastSessionCount: 10,
+      clientLifetimeSessionCount: 11
+    });
+    expect(info).toEqual({ past: 10, current: 1, total: 11 });
+  });
+
+  test('past=0, sessionSequence=3 → 과거 0 + 누적 3 = 총 3', () => {
+    const info = resolveModalLifetimeSessionInfo({
+      pastSessionCount: 0,
+      clientLifetimeSessionCount: 3
+    });
+    expect(info).toEqual({ past: 0, current: 3, total: 3 });
+  });
+
+  test('clientLifetimeSessionCount 없고 past 만 있으면 누적=0, total=past', () => {
+    const info = resolveModalLifetimeSessionInfo({
+      pastSessionCount: 5,
+      clientLifetimeSessionCount: null
+    });
+    expect(info).toEqual({ past: 5, current: 0, total: 5 });
+  });
+
+  test('past=null + lifetime=null → 라벨 미노출 (total=null)', () => {
+    const info = resolveModalLifetimeSessionInfo({
+      pastSessionCount: null,
+      clientLifetimeSessionCount: null
+    });
+    expect(info).toEqual({ past: 0, current: 0, total: null });
+  });
+
+  test('schedule null/undefined → 라벨 미노출', () => {
+    expect(resolveModalLifetimeSessionInfo(null)).toEqual({ past: 0, current: 0, total: null });
+    expect(resolveModalLifetimeSessionInfo(undefined)).toEqual({ past: 0, current: 0, total: null });
   });
 });
 

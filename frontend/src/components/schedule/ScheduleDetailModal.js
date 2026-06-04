@@ -93,38 +93,30 @@ function resolveModalSessionInfo(schedule) {
     if (!schedule) {
         return { used: null, total: null };
     }
-    const backendCombinedTotal = parseScheduleSessionCount(schedule.combinedTotalSessions);
-    const backendCombinedUsed = parseScheduleSessionCount(schedule.combinedUsedSessions);
-    if (backendCombinedTotal !== null && backendCombinedUsed !== null && backendCombinedTotal >= 1) {
-        return {
-            used: Math.max(0, Math.min(backendCombinedTotal, backendCombinedUsed)),
-            total: backendCombinedTotal
-        };
-    }
     const total = parseScheduleSessionCount(
         schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.totalSessions
     );
     if (total === null || total < 1) {
         return { used: null, total: null };
     }
-    const past = parseScheduleSessionCount(schedule.pastSessionCount);
-    const pastSafe = past !== null && past > 0 ? past : 0;
     const sequence = parseScheduleSessionCount(
         schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
     );
-    let usedFromMapping = null;
+    let used = null;
     if (sequence !== null && sequence > 0) {
-        usedFromMapping = Math.min(sequence, total);
+        used = Math.min(sequence, total);
     } else {
         const remaining = parseScheduleSessionCount(
             schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
         );
         if (remaining !== null && remaining >= 0 && remaining <= total) {
-            usedFromMapping = total - remaining;
+            used = total - remaining;
         }
     }
-    const usedSafe = usedFromMapping !== null ? usedFromMapping : 0;
-    return { used: pastSafe + usedSafe, total: pastSafe + total };
+    if (used === null) {
+        return { used: null, total: null };
+    }
+    return { used, total };
 }
 
 /**
@@ -1350,6 +1342,7 @@ const ScheduleDetailModal = ({
 export default ScheduleDetailModal;
 export {
     resolveModalSessionInfo,
+    resolveModalLifetimeSessionInfo,
     shouldShowConsultationLogLink,
     toIsoDateString,
     CONSULTATION_LOG_LINK_VISIBLE_STATUSES

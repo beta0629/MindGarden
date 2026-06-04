@@ -2692,16 +2692,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 mappingContext.getTotalSessions(),
                 mappingContext.getRemainingSessions(),
                 schedule.getSessionSequence());
-        Long clientScheduleCount = null;
-        if (schedule.getClientId() != null && tenantId != null && !tenantId.isEmpty()) {
-            try {
-                clientScheduleCount = scheduleRepository.countByClientId(tenantId, schedule.getClientId());
-            } catch (Exception e) {
-                log.warn("⚠️ 내담자 lifetime 일정 합산 조회 실패: clientId={}, error={}",
-                        schedule.getClientId(), e.getMessage());
-            }
+        // 누적 = 과거 회기수 + 해당 일정의 sessionSequence (1-based). 사용자 정의:
+        // "누적상담 과거 N회 + 누적 M회 = 총 (N+M)회 진행" 의 M 은 그 일정 시점까지의 회차.
+        Long currentSessionSequence = null;
+        Integer sequence = schedule.getSessionSequence();
+        if (sequence != null && sequence > 0) {
+            currentSessionSequence = Long.valueOf(sequence);
         }
-        response.applyClientLifetimeSession(clientPastSessionCount, clientScheduleCount);
+        response.applyClientLifetimeSession(clientPastSessionCount, currentSessionSequence);
         return response;
     }
 

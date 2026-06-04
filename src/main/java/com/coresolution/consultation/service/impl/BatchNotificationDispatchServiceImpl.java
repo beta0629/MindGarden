@@ -430,9 +430,18 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 null, false, null, null, null);
         }
 
-        // ALIMTALK_BIZ_TEMPLATE_CODE 매핑 lookup — 시드 추가 전까지는 null 일 수 있다.
-        String solapiTemplateId = templateMappingResolver
-            .resolveSolapiTemplateId(tenantId, templateCode);
+        // 2026-06-04 — 알림톡 채널 영구 OFF 게이트(notification.batch.alimtalk-enabled).
+        // 매핑 lookup 자체를 skip 해 알림톡 시도를 차단하고, F1 정보성 분기에서 SMS-only 로만 발송한다.
+        // 운영 yml(kakao.alimtalk.enabled) 와 별개로 작동하는 코드 가드 — 환경변수 누락 시에도 알림톡 미발송 보장.
+        String solapiTemplateId = null;
+        if (properties.isAlimtalkEnabled()) {
+            // ALIMTALK_BIZ_TEMPLATE_CODE 매핑 lookup — 시드 추가 전까지는 null 일 수 있다.
+            solapiTemplateId = templateMappingResolver
+                .resolveSolapiTemplateId(tenantId, templateCode);
+        } else {
+            log.debug("알림톡 채널 OFF — 매핑 lookup skip, SMS-only 로 진행: tenantId={}, templateCode={}",
+                tenantId, templateCode);
+        }
 
         boolean alimtalkAttempted = false;
         boolean alimtalkSuccess = false;
@@ -443,7 +452,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             alimtalkResult = dispatchHelper.dispatchAlimtalk(decryptedPhone, solapiTemplateId,
                 alimtalkParams);
             alimtalkSuccess = alimtalkResult.success();
-        } else {
+        } else if (properties.isAlimtalkEnabled()) {
             log.warn("알림톡 매핑 없음: tenantId={}, codeValue={}", tenantId, templateCode);
         }
 

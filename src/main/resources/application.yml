@@ -562,6 +562,17 @@ kakao:
 # 단일 계정 운영자는 SMS_API_KEY/SECRET 만 채워도 알림톡 발송이 가능하다.
 
 # =====================================================
+# 알림 배치/이벤트 발송 토글 (notification.batch.*)
+# - BatchNotificationProperties 바인딩 (com.coresolution.consultation.config)
+# - 2026-06-04: alimtalk-enabled 영구 OFF (사용자 결재 — "알림톡 사용 안 함, SMS 전용")
+#   AlimtalkTemplateMappingResolver 매핑 lookup skip → 알림톡 시도 자체 차단 → SMS 폴백(F1) 만 발송.
+#   환경변수 NOTIFICATION_BATCH_ALIMTALK_ENABLED 로 운영 일시 활성화 가능 (회귀/A-B 테스트 용도).
+# =====================================================
+notification:
+  batch:
+    alimtalk-enabled: ${NOTIFICATION_BATCH_ALIMTALK_ENABLED:false}
+
+# =====================================================
 # 어드민 도구 — SMS·카카오 알림톡 테스트 발송 (2026-05-22)
 # 기획: docs/project-management/2026-05-22/ADMIN_TEST_NOTIFICATION_TOOL_PLAN.md §4.X
 # C5 rate-limit: per-minute=10, per-day=100 (사용자·테넌트당)

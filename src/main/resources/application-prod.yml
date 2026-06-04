@@ -337,13 +337,17 @@ server:
     include-message: never
 
 # 카카오 알림톡 설정 (프로덕션용)
+# 2026-06-04 사용자 결재: 알림톡 채널 영구 OFF 정책으로 enabled 기본 false 로 변경.
+# 운영 환경변수 KAKAO_ALIMTALK_ENABLED=true 로 회귀/일시 활성화 가능.
+# BatchNotificationDispatchServiceImpl 의 notification.batch.alimtalk-enabled (default false)
+# 코드 가드와 병행되어, 둘 중 어느 한 쪽이 OFF 면 알림톡 시도 자체가 차단된다.
 kakao:
   alimtalk:
-    enabled: true  # 운영 환경에서 활성화
-    simulation-mode: false  # 실제 API 호출
+    enabled: ${KAKAO_ALIMTALK_ENABLED:false}  # 2026-06-04 영구 OFF (사용자 결재)
+    simulation-mode: ${KAKAO_ALIMTALK_SIMULATION_MODE:false}  # 실제 API 호출(활성화 시)
     api-key: ${KAKAO_ALIMTALK_API_KEY:}  # 환경 변수에서 가져오기
     sender-key: ${KAKAO_ALIMTALK_SENDER_KEY:}  # 환경 변수에서 가져오기
-    api-url: https://alimtalk-api.bizmsg.kr
+    api-url: ${KAKAO_ALIMTALK_API_URL:https://alimtalk-api.bizmsg.kr}
     # dead config 제거(2026-05-23 라운드) — @Value 바인딩 0건. SMS 폴백은 BatchNotificationDispatchServiceImpl 내부 정책으로 일원화.
     max-retry-count: 3
     timeout-seconds: 30

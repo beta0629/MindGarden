@@ -523,6 +523,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (!effectiveTentative) {
             useSessionForMapping(consultantId, clientId, savedSchedule);
             notifyScheduleCreated(savedSchedule);
+        } else {
+            // 2026-06-04 사용자 정책: 가예약(TENTATIVE_PENDING_PAYMENT)도 등록 즉시 안내 발송.
+            // 현장/당일카드결제 예약이 등록 시점에 SMS 안내를 받지 못하는 누락을 해소한다.
+            // 채널 정책(알림톡 OFF)·CANCELLED 가드는 notifyScheduleCreated → dispatchImmediateReservationNotification 에서 처리.
+            notifyTentativeScheduleCreated(savedSchedule);
         }
 
         log.info("✅ 상담사 스케줄 생성 완료: ID {}, mappingId={}", savedSchedule.getId(), savedSchedule.getMappingId());
@@ -624,6 +629,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             useSessionForMapping(consultantId, clientId, savedSchedule);
             log.info("✅ 회기 사용 처리 완료: consultantId={}, clientId={}", consultantId, clientId);
             notifyScheduleCreated(savedSchedule);
+        } else {
+            // 2026-06-04 사용자 정책: 가예약(TENTATIVE_PENDING_PAYMENT)도 등록 즉시 SMS 안내 발송.
+            notifyTentativeScheduleCreated(savedSchedule);
         }
 
         log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}, mappingId={}",
@@ -767,6 +775,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
+     * 가예약(TENTATIVE_PENDING_PAYMENT) 등록 직후 즉시 SMS 안내 발송 분기.
+     *
+     * <p>2026-06-04 사용자 정책: "현장결제도 예약이 취소된 게 아니면 문자 발송." TENTATIVE 분기는
+     * 회기 차감 전이므로 인앱/푸시 알림(NotificationServiceImpl 경로) 은 호출하지 않고, 외부 채널
+     * (SMS) 만 {@link BatchNotificationDispatchService} 를 통해 멱등 발송한다. CANCELLED 상태는
+     * {@link #dispatchImmediateReservationNotification} 내부 가드에서 차단된다.
+     *
+     * @param schedule 신규 저장된 TENTATIVE_PENDING_PAYMENT 일정
+     */
+    private void notifyTentativeScheduleCreated(Schedule schedule) {
+        dispatchImmediateReservationNotification(schedule);
+    }
+
+    /**
      * 스케줄 등록 직후 첫 상담 안내({@code INITIAL_GUIDE_*}) 발송 분기.
      *
      * <p>트랙 C (NOTIFICATION_BATCH_MESSAGE_DESIGN §12):
@@ -798,19 +820,30 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 스케줄 등록 직후 단발성/D-2 미만 즉시 알림톡 발송 분기.
+     * 스케줄 등록 직후 D-2/D-1/D-0 즉시 SMS 발송 분기.
      *
-     * <p>트랙 A·B (NOTIFICATION_BATCH_MESSAGE_DESIGN P1.2):
+     * <p>2026-06-04 사용자 정책: "스케줄에 등록된 상태면 발송이 되어야 해. D-2, D-1, 당일은 스케줄에
+     * 등록이 되면 바로 발송. 알림톡은 사용 안 함, 현장결제도 예약이 취소된 게 아니면 문자 발송."
+     * 매트릭스:
      * <ul>
-     *   <li>매핑 {@code totalSessions == 1} 단발성 결제 → {@code RESERVATION_IMMEDIATE_SINGLE}.</li>
-     *   <li>등록 시점이 스케줄 일자와 D-2 미만 → {@code RESERVATION_IMMEDIATE_LATE}.</li>
-     *   <li>그 외 (1회기 이상 + D-2 이상) → 배치({@link com.coresolution.consultation.scheduler.ReservationReminderScheduler}) 가 처리하므로 즉시 발송 없음.</li>
+     *   <li>BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 단발성({@code totalSessions == 1}) →
+     *       {@code RESERVATION_IMMEDIATE_SINGLE} (등록일/잔여 회기 무관).</li>
+     *   <li>BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 다회기 + D-2 →
+     *       {@code RESERVATION_REMINDER_D2} (09:00 D-2 배치와 멱등 키 공유 → 중복 차단).</li>
+     *   <li>BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 다회기 + D-1/D-0 →
+     *       {@code RESERVATION_IMMEDIATE_LATE} (예약 임박 본문).</li>
+     *   <li>다회기 + D-3 이상 → 즉시 발송 없음. D-2 09:00 배치
+     *       ({@link com.coresolution.consultation.scheduler.ReservationReminderScheduler}) 가 처리.</li>
+     *   <li>CANCELLED → 발송 안 함 (status 가드).</li>
      * </ul>
+     *
+     * <p>채널 정책: {@code notification.batch.alimtalk-enabled=false} 영구화로 알림톡 매핑 lookup 자체가
+     * skip 되며, SMS-only 폴백 경로(F1)로 발송된다.
      *
      * <p>발송 자체는 {@link BatchNotificationDispatchService} 가 멱등 로그로 중복을 차단하므로,
      * 본 메서드는 사전 분기만 담당한다. 매핑 lookup 실패·기타 예외는 전체 흐름을 막지 않도록 swallow.
      *
-     * @param schedule 신규/입금확정 직후 BOOKED 일정
+     * @param schedule 신규/입금확정 직후 BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 일정
      */
     private void dispatchImmediateReservationNotification(Schedule schedule) {
         try {
@@ -820,7 +853,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return;
             }
             ScheduleStatus status = schedule.getStatus();
-            if (status != ScheduleStatus.BOOKED && status != ScheduleStatus.CONFIRMED) {
+            if (status != ScheduleStatus.BOOKED
+                && status != ScheduleStatus.CONFIRMED
+                && status != ScheduleStatus.TENTATIVE_PENDING_PAYMENT) {
+                // CANCELLED/COMPLETED/IN_PROGRESS 등은 즉시 발송 대상 아님.
                 return;
             }
             String tenantId = TenantContextHolder.getTenantId();
@@ -845,13 +881,19 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), schedule.getDate());
 
             if (total != null && total == 1) {
+                // 단발성 결제 — 등록 시점·D-N 무관 즉시 안내(기존 동작 유지).
                 batchNotificationDispatchService
                     .dispatchReservationImmediateSingle(schedule.getId());
-            } else if (daysUntil < 2) {
+            } else if (daysUntil == 2L) {
+                // D-2 — 09:00 배치와 동일 본문/멱등 키(target_id=scheduleId) → 09:00 배치 중복 자동 차단.
+                batchNotificationDispatchService
+                    .dispatchReservationReminderD2(schedule.getId());
+            } else if (daysUntil < 2L) {
+                // D-1/D-0 — 예약 임박 안내 본문.
                 batchNotificationDispatchService
                     .dispatchReservationImmediateLate(schedule.getId());
             }
-            // 그 외 (1회기 이상 + D-2 이상) → 배치(ReservationReminderScheduler) 가 처리.
+            // 그 외 (다회기 + D-3 이상) → 09:00 D-2 배치(ReservationReminderScheduler) 가 처리.
         } catch (Exception e) {
             log.warn("즉시 발송 분기 실패(무시): scheduleId={}, error={}",
                 schedule != null ? schedule.getId() : null, e.getMessage());

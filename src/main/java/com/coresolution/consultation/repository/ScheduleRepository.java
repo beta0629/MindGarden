@@ -497,16 +497,16 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     /**
      * 특정 일정의 시간 순서상 회차 계산 (sessionSequence NULL fallback).
      *
-     * <p>같은 내담자의 비삭제 일정 중 (sessionDate &lt; targetDate) 이거나
-     * (sessionDate = targetDate AND id &lt;= targetId) 인 일정 카운트 = 해당 일정까지의 누적 회차.
+     * <p>같은 내담자의 비삭제 일정 중 (date &lt; targetDate) 이거나
+     * (date = targetDate AND id &lt;= targetId) 인 일정 카운트 = 해당 일정까지의 누적 회차.
      * 모달 누적 라벨에서 sessionSequence 가 NULL/0 인 레거시 데이터의 fallback 으로 사용.</p>
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.clientId = :clientId AND s.isDeleted = false "
-            + "AND (s.sessionDate < :sessionDate OR (s.sessionDate = :sessionDate AND s.id <= :scheduleId))")
+            + "AND (s.date < :scheduleDate OR (s.date = :scheduleDate AND s.id <= :scheduleId))")
     long countSequenceUpToSchedule(
             @Param("tenantId") String tenantId,
             @Param("clientId") Long clientId,
-            @Param("sessionDate") java.time.LocalDate sessionDate,
+            @Param("scheduleDate") java.time.LocalDate scheduleDate,
             @Param("scheduleId") Long scheduleId);
 
     /**

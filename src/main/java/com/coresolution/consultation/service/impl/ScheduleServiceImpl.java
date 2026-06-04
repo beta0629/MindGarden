@@ -2700,13 +2700,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (sequence != null && sequence > 0) {
             currentSessionSequence = Long.valueOf(sequence);
         } else if (schedule.getClientId() != null && schedule.getId() != null
-                && schedule.getSessionDate() != null
+                && schedule.getDate() != null
                 && tenantId != null && !tenantId.isEmpty()) {
             try {
                 currentSessionSequence = scheduleRepository.countSequenceUpToSchedule(
                         tenantId,
                         schedule.getClientId(),
-                        schedule.getSessionDate(),
+                        schedule.getDate(),
                         schedule.getId());
             } catch (Exception e) {
                 log.warn("⚠️ sessionSequence fallback 조회 실패: clientId={}, scheduleId={}, error={}",

@@ -482,6 +482,15 @@ const UnifiedScheduleComponent = ({
                             [SCHEDULE_SESSION_SEQUENCE_FIELD]: parseScheduleSessionCount(
                                 schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.session_sequence
                             ),
+                            pastSessionCount: parseScheduleSessionCount(
+                                schedule.pastSessionCount ?? schedule.past_session_count
+                            ),
+                            combinedUsedSessions: parseScheduleSessionCount(
+                                schedule.combinedUsedSessions ?? schedule.combined_used_sessions
+                            ),
+                            combinedTotalSessions: parseScheduleSessionCount(
+                                schedule.combinedTotalSessions ?? schedule.combined_total_sessions
+                            ),
                             consultantId: schedule.consultantId,
                             consultantName: schedule.consultantName,
                             consultantPhone: schedule.consultantPhone,
@@ -607,6 +616,15 @@ const UnifiedScheduleComponent = ({
                                 ),
                                 [SCHEDULE_SESSION_SEQUENCE_FIELD]: parseScheduleSessionCount(
                                     schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.session_sequence
+                                ),
+                                pastSessionCount: parseScheduleSessionCount(
+                                    schedule.pastSessionCount ?? schedule.past_session_count
+                                ),
+                                combinedUsedSessions: parseScheduleSessionCount(
+                                    schedule.combinedUsedSessions ?? schedule.combined_used_sessions
+                                ),
+                                combinedTotalSessions: parseScheduleSessionCount(
+                                    schedule.combinedTotalSessions ?? schedule.combined_total_sessions
                                 ),
                                 consultantId: schedule.consultantId,
                                 consultantName: schedule.consultantName,
@@ -887,6 +905,9 @@ const UnifiedScheduleComponent = ({
             [SCHEDULE_SESSION_SEQUENCE_FIELD]: parseScheduleSessionCount(
                 event.extendedProps[SCHEDULE_SESSION_SEQUENCE_FIELD]
             ),
+            pastSessionCount: parseScheduleSessionCount(event.extendedProps.pastSessionCount),
+            combinedUsedSessions: parseScheduleSessionCount(event.extendedProps.combinedUsedSessions),
+            combinedTotalSessions: parseScheduleSessionCount(event.extendedProps.combinedTotalSessions),
             [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD],
             [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
         };

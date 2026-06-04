@@ -2692,6 +2692,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 mappingContext.getTotalSessions(),
                 mappingContext.getRemainingSessions(),
                 schedule.getSessionSequence());
+        Long mappingUsedSessionsSum = null;
+        if (schedule.getClientId() != null && tenantId != null && !tenantId.isEmpty()) {
+            try {
+                mappingUsedSessionsSum = mappingRepository.sumUsedSessionsByClientId(tenantId, schedule.getClientId());
+            } catch (Exception e) {
+                log.warn("⚠️ 내담자 lifetime 회기 합산 조회 실패: clientId={}, error={}",
+                        schedule.getClientId(), e.getMessage());
+            }
+        }
+        response.applyClientLifetimeSession(clientPastSessionCount, mappingUsedSessionsSum);
         return response;
     }
 

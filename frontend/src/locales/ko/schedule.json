@@ -217,6 +217,8 @@
     "t_772af33f": "휴가 사유",
     "sessionInfoLabel": "회기",
     "sessionInfoValue": "사용 {{used}}회 / 총 {{total}}회",
+    "lifetimeSessionInfoLabel": "누적 상담",
+    "lifetimeSessionInfoValue": "과거 {{past}}회 + 누적 {{current}}회 = 총 {{total}}회 진행",
     "sessionInfoUnknown": "회기 정보 없음",
     "openConsultationLogView": "상담일지 보기/수정",
     "openConsultationLogViewAria": "{{date}} 상담일지 조회 페이지로 이동"

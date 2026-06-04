@@ -491,6 +491,9 @@ const UnifiedScheduleComponent = ({
                             combinedTotalSessions: parseScheduleSessionCount(
                                 schedule.combinedTotalSessions ?? schedule.combined_total_sessions
                             ),
+                            clientLifetimeSessionCount: parseScheduleSessionCount(
+                                schedule.clientLifetimeSessionCount ?? schedule.client_lifetime_session_count
+                            ),
                             consultantId: schedule.consultantId,
                             consultantName: schedule.consultantName,
                             consultantPhone: schedule.consultantPhone,
@@ -625,6 +628,9 @@ const UnifiedScheduleComponent = ({
                                 ),
                                 combinedTotalSessions: parseScheduleSessionCount(
                                     schedule.combinedTotalSessions ?? schedule.combined_total_sessions
+                                ),
+                                clientLifetimeSessionCount: parseScheduleSessionCount(
+                                    schedule.clientLifetimeSessionCount ?? schedule.client_lifetime_session_count
                                 ),
                                 consultantId: schedule.consultantId,
                                 consultantName: schedule.consultantName,
@@ -908,6 +914,7 @@ const UnifiedScheduleComponent = ({
             pastSessionCount: parseScheduleSessionCount(event.extendedProps.pastSessionCount),
             combinedUsedSessions: parseScheduleSessionCount(event.extendedProps.combinedUsedSessions),
             combinedTotalSessions: parseScheduleSessionCount(event.extendedProps.combinedTotalSessions),
+            clientLifetimeSessionCount: parseScheduleSessionCount(event.extendedProps.clientLifetimeSessionCount),
             [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD],
             [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
         };

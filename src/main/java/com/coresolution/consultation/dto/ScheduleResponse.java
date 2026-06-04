@@ -123,8 +123,8 @@ public class ScheduleResponse {
      * {@link #sessionSequence} 를 기반으로 {@link #combinedUsedSessions},
      * {@link #combinedTotalSessions} 를 계산해 채운다.
      *
-     * <p>단회기({@code totalSessions <= 1}) 또는 매핑 정보가 없으면 합산 값을 모두 null 로
-     * 둔다 (모달·라벨에서 비표시).</p>
+     * <p>매핑이 없으면({@code totalSessions == null}) 합산 값을 모두 null 로 두고, 그 외에는
+     * 단회기 포함 모든 일정에서 합산 라벨이 표시되도록 한다. 사용자 요구: "누적과 잔여 둘 다 표시".</p>
      *
      * @param pastSessions 외부 이력 회기수 ({@code users.past_session_count}). null 허용.
      * @param totalSessions 일정 시점 매핑 총 회기.
@@ -137,18 +137,15 @@ public class ScheduleResponse {
             Integer remainingSessions,
             Integer sessionSequence) {
         this.pastSessionCount = pastSessions;
-        if (totalSessions == null || totalSessions <= 1) {
+        if (totalSessions == null) {
             this.combinedUsedSessions = null;
             this.combinedTotalSessions = null;
             return;
         }
         long pastSafe = pastSessions != null && pastSessions > 0L ? pastSessions : 0L;
         Long usedFromMapping = resolveUsedFromMapping(totalSessions, remainingSessions, sessionSequence);
-        if (usedFromMapping == null) {
-            this.combinedUsedSessions = null;
-        } else {
-            this.combinedUsedSessions = pastSafe + usedFromMapping;
-        }
+        long usedSafe = usedFromMapping != null ? usedFromMapping : 0L;
+        this.combinedUsedSessions = pastSafe + usedSafe;
         this.combinedTotalSessions = pastSafe + totalSessions.longValue();
     }
 

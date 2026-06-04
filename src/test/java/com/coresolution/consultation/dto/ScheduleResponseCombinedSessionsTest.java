@@ -55,13 +55,13 @@ class ScheduleResponseCombinedSessionsTest {
     }
 
     @Test
-    @DisplayName("단회기(total=1) → 합산 모두 null (모달에서 라벨 미노출)")
-    void singleSession_returnsNullCombinedValues() {
+    @DisplayName("단회기(total=1) 도 합산 표시 (사용자 요구 '누적과 잔여 둘 다 노출')")
+    void singleSession_combinesPastAndUsed() {
         ScheduleResponse response = ScheduleResponse.builder().build();
         response.applyCombinedSessions(5L, 1, 0, 1);
 
-        assertThat(response.getCombinedUsedSessions()).isNull();
-        assertThat(response.getCombinedTotalSessions()).isNull();
+        assertThat(response.getCombinedUsedSessions()).isEqualTo(6L);
+        assertThat(response.getCombinedTotalSessions()).isEqualTo(6L);
     }
 
     @Test
@@ -96,12 +96,12 @@ class ScheduleResponseCombinedSessionsTest {
     }
 
     @Test
-    @DisplayName("sequence·remaining 둘 다 부족 → used=null, total 만 합산")
-    void noSequenceAndNoRemaining_combinedUsedIsNull() {
+    @DisplayName("sequence·remaining 둘 다 부족 → used=past+0 (안전 fallback)")
+    void noSequenceAndNoRemaining_usedFallsBackToPast() {
         ScheduleResponse response = ScheduleResponse.builder().build();
         response.applyCombinedSessions(4L, 20, null, null);
 
-        assertThat(response.getCombinedUsedSessions()).isNull();
+        assertThat(response.getCombinedUsedSessions()).isEqualTo(4L);
         assertThat(response.getCombinedTotalSessions()).isEqualTo(24L);
     }
 

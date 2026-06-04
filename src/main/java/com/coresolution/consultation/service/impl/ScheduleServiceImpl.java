@@ -2694,10 +2694,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getSessionSequence());
         // 누적 = 과거 회기수 + 해당 일정의 sessionSequence (1-based). 사용자 정의:
         // "누적상담 과거 N회 + 누적 M회 = 총 (N+M)회 진행" 의 M 은 그 일정 시점까지의 회차.
+        // sessionSequence 가 NULL/0 인 레거시 데이터는 sessionDate 기준 fallback 으로 누적 계산.
         Long currentSessionSequence = null;
         Integer sequence = schedule.getSessionSequence();
         if (sequence != null && sequence > 0) {
             currentSessionSequence = Long.valueOf(sequence);
+        } else if (schedule.getClientId() != null && schedule.getId() != null
+                && schedule.getSessionDate() != null
+                && tenantId != null && !tenantId.isEmpty()) {
+            try {
+                currentSessionSequence = scheduleRepository.countSequenceUpToSchedule(
+                        tenantId,
+                        schedule.getClientId(),
+                        schedule.getSessionDate(),
+                        schedule.getId());
+            } catch (Exception e) {
+                log.warn("⚠️ sessionSequence fallback 조회 실패: clientId={}, scheduleId={}, error={}",
+                        schedule.getClientId(), schedule.getId(), e.getMessage());
+            }
         }
         response.applyClientLifetimeSession(clientPastSessionCount, currentSessionSequence);
         return response;

@@ -2536,7 +2536,6 @@ textarea.mg-v2-textarea {
   border-style: solid;
   border-width: 2px;
   border-color: transparent;
-  box-shadow: var(--cs-shadow-soft);
   box-sizing: border-box;
 }
 

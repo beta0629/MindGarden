@@ -67,6 +67,21 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     // 내담자 ID로 매칭 조회 (특정 상태 제외, tenantId 필터링)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.client.id = :clientId AND m.status != :status")
     List<ConsultantClientMapping> findByClientIdAndStatusNot(@Param("tenantId") String tenantId, @Param("clientId") Long clientId, @Param("status") ConsultantClientMapping.MappingStatus status);
+
+    /**
+     * 내담자({@code clientId}) 의 모든 매핑(TERMINATED 포함) {@code usedSessions} 합산.
+     *
+     * <p>일정 상세 모달의 "누적 상담 N회" 라벨 SSOT. {@code users.past_session_count} 와 합쳐서
+     * {@code clientLifetimeSessionCount} 산출.</p>
+     *
+     * @param tenantId 멀티테넌트 ID
+     * @param clientId 내담자 ID
+     * @return 매핑 {@code used_sessions} 합. 매핑 없거나 모두 0 이면 0.
+     * @since 2026-06-08
+     */
+    @Query("SELECT COALESCE(SUM(m.usedSessions), 0) FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId AND m.client.id = :clientId")
+    long sumUsedSessionsByClientId(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
     
     // 상담사 ID로 매칭 조회 (문자열 상태로 특정 상태 제외, tenantId 필터링)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status != :status")

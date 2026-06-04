@@ -107,6 +107,18 @@ public class ScheduleResponse {
     private Long combinedTotalSessions;
 
     /**
+     * 내담자 lifetime 누적 상담 회기수 = ({@link #pastSessionCount} ?? 0)
+     * + (해당 내담자의 모든 매핑 {@code usedSessions} 합).
+     *
+     * <p>매핑 단회기/다회기 무관, 모든 일정에서 표시되는 lifetime 합산.
+     * 기존 {@link #combinedUsedSessions}/{@link #combinedTotalSessions} 와 별개로
+     * "누적 상담 N회" 라벨 SSOT 로 사용된다.</p>
+     *
+     * @since 2026-06-08
+     */
+    private Long clientLifetimeSessionCount;
+
+    /**
      * {@link #pastSessionCount}, {@link #totalSessions}, {@link #remainingSessions},
      * {@link #sessionSequence} 를 기반으로 {@link #combinedUsedSessions},
      * {@link #combinedTotalSessions} 를 계산해 채운다.
@@ -138,6 +150,24 @@ public class ScheduleResponse {
             this.combinedUsedSessions = pastSafe + usedFromMapping;
         }
         this.combinedTotalSessions = pastSafe + totalSessions.longValue();
+    }
+
+    /**
+     * 내담자 lifetime 누적 상담 회기수 계산.
+     *
+     * <p>{@code lifetimeSessionCount = (pastSessions ?? 0) + (mappingUsedSessionsSum ?? 0)}.
+     * 매핑 단회기/다회기 무관, 모든 일정의 모달에서 "누적 상담 N회" 라벨로 표시.</p>
+     *
+     * @param pastSessions {@code users.past_session_count}. null 허용.
+     * @param mappingUsedSessionsSum 내담자의 모든 매핑 {@code used_sessions} 합. null 허용.
+     */
+    public void applyClientLifetimeSession(Long pastSessions, Long mappingUsedSessionsSum) {
+        this.pastSessionCount = pastSessions;
+        long pastSafe = pastSessions != null && pastSessions > 0L ? pastSessions : 0L;
+        long usedSafe = mappingUsedSessionsSum != null && mappingUsedSessionsSum > 0L
+                ? mappingUsedSessionsSum
+                : 0L;
+        this.clientLifetimeSessionCount = pastSafe + usedSafe;
     }
 
     /**

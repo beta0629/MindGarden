@@ -59,6 +59,36 @@ const CONSULTATION_LOG_LINK_VISIBLE_STATUSES = Object.freeze([
  * @param {object} schedule 모달에 표시중인 schedule 객체
  * @returns {{ used: number|null, total: number|null }}
  */
+/**
+ * 일정 상세 모달의 "누적 상담" 라벨용 lifetime 합산 정보 산출.
+ *
+ * <p>백엔드 SSOT ({@code clientLifetimeSessionCount}) 가 있으면 우선 사용.
+ * 없으면 ({@code pastSessionCount ?? 0}) 단독 fallback.</p>
+ *
+ * @param {object} schedule
+ * @returns {{ past: number, current: number, total: number|null }}
+ *   past = 외부 과거 회기수 (0 처리), current = lifetime - past, total = 합산 (null = 비표시)
+ */
+function resolveModalLifetimeSessionInfo(schedule) {
+    if (!schedule) {
+        return { past: 0, current: 0, total: null };
+    }
+    const past = parseScheduleSessionCount(schedule.pastSessionCount);
+    const pastSafe = past !== null && past > 0 ? past : 0;
+    const backendLifetime = parseScheduleSessionCount(schedule.clientLifetimeSessionCount);
+    if (backendLifetime !== null && backendLifetime >= 0) {
+        return {
+            past: pastSafe,
+            current: Math.max(0, backendLifetime - pastSafe),
+            total: backendLifetime
+        };
+    }
+    if (pastSafe > 0) {
+        return { past: pastSafe, current: 0, total: pastSafe };
+    }
+    return { past: 0, current: 0, total: null };
+}
+
 function resolveModalSessionInfo(schedule) {
     if (!schedule) {
         return { used: null, total: null };
@@ -775,6 +805,10 @@ const ScheduleDetailModal = ({
     const canPartyQuickSummary = showNotesTab;
     const { parsedClientName, parsedConsultantName } = partyNameParse;
     const sessionInfo = resolveModalSessionInfo(displayData);
+    const lifetimeSessionInfo = resolveModalLifetimeSessionInfo(displayData);
+    const lifetimeSessionPast = lifetimeSessionInfo.past;
+    const lifetimeSessionCurrent = lifetimeSessionInfo.current;
+    const lifetimeSessionTotal = lifetimeSessionInfo.total;
     const consultationLogLinkVisible = shouldShowConsultationLogLink(
         displayData,
         getStatusCodeValue(statusForDisplay),
@@ -1176,6 +1210,25 @@ const ScheduleDetailModal = ({
                                         {t('schedule:ScheduleDetailModal.sessionInfoValue', {
                                             used: sessionInfo.used,
                                             total: sessionInfo.total
+                                        })}
+                                    </SafeText>
+                                </span>
+                            </div>
+                        )}
+                        {!isVacationEvent() && lifetimeSessionTotal !== null && (
+                            <div
+                                className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--lifetime-sessions"
+                                data-testid="schedule-detail-lifetime-session-info"
+                            >
+                                <span className="schedule-detail-modal__summary-label">
+                                    {t('schedule:ScheduleDetailModal.lifetimeSessionInfoLabel')}
+                                </span>
+                                <span className="schedule-detail-modal__summary-value">
+                                    <SafeText>
+                                        {t('schedule:ScheduleDetailModal.lifetimeSessionInfoValue', {
+                                            past: lifetimeSessionPast,
+                                            current: lifetimeSessionCurrent,
+                                            total: lifetimeSessionTotal
                                         })}
                                     </SafeText>
                                 </span>

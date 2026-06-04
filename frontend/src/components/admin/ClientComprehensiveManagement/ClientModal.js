@@ -38,6 +38,37 @@ const CLIENT_MODAL_KPI_LABEL_FALLBACK = {
 const CLIENT_MODAL_KPI_ICON_SIZE = 24;
 
 /**
+ * 어드민 내담자 등록·수정 폼의 "과거 회기수" 입력값을 백엔드 DTO 가 기대하는
+ * 형식(0 이상의 숫자 또는 null)으로 정규화한다.
+ *
+ * <p>HTML &lt;input type="number"&gt; 는 빈 입력시 빈 문자열을 반환하므로,
+ * 그대로 백엔드로 전송하면 Jackson 이 {@code Long} 으로 역직렬화하다 실패한다.
+ * 본 헬퍼는 빈/공백/유효하지 않은 값은 모두 null 로 매핑하고, 음수는 0 으로
+ * 안전 처리한다 (서버측 {@code @Min(0)} 가드와 정합).</p>
+ *
+ * @param {*} raw 입력값 (string | number | null | undefined)
+ * @returns {number|null} 0 이상의 정수 또는 null (외부 이력 없음)
+ */
+function normalizePastSessionCountInput(raw) {
+    if (raw === null || raw === undefined) {
+        return null;
+    }
+    const trimmed = typeof raw === 'string' ? raw.trim() : raw;
+    if (trimmed === '') {
+        return null;
+    }
+    const num = Number(trimmed);
+    if (!Number.isFinite(num)) {
+        return null;
+    }
+    const safeInt = Math.floor(num);
+    if (safeInt < 0) {
+        return 0;
+    }
+    return safeInt;
+}
+
+/**
  * 내담자 모달 컴포넌트
  */
 const ClientModal = ({
@@ -116,7 +147,8 @@ const ClientModal = ({
                 status: ac.status != null ? ac.status : prev.status,
                 profileImageUrl: ac.profileImageUrl != null ? ac.profileImageUrl : prev.profileImageUrl,
                 phone: ac.phone != null ? ac.phone : prev.phone,
-                name: ac.name != null ? ac.name : prev.name
+                name: ac.name != null ? ac.name : prev.name,
+                pastSessionCount: ac.pastSessionCount != null ? ac.pastSessionCount : ''
               }));
             }
           } else {
@@ -352,7 +384,11 @@ const ClientModal = ({
                 return undefined;
             }
         }
-        return onSave(formData);
+        const normalizedPayload = {
+            ...formData,
+            pastSessionCount: normalizePastSessionCountInput(formData.pastSessionCount)
+        };
+        return onSave(normalizedPayload);
     };
 
     const getTitle = () => {
@@ -474,6 +510,10 @@ const ClientModal = ({
             gender: formData.gender || '',
             birthDate: formData.birthDate ?? null,
             age: formData.age != null && formData.age !== '' ? formData.age : null,
+            pastSessionCount:
+                formData.pastSessionCount != null && formData.pastSessionCount !== ''
+                    ? formData.pastSessionCount
+                    : '',
             consultationPurpose: formData.consultationPurpose || '',
             consultationHistory: formData.consultationHistory || '',
             emergencyContact: formData.emergencyContact || '',
@@ -622,6 +662,28 @@ const ClientModal = ({
                         </small>
                     ) : null}
                 </KoreanMobileDuplicateField>
+                <div className="mg-v2-form-group">
+                    <label htmlFor="client-pastSessionCount" className="mg-v2-form-label">
+                        {t('admin:clientModal.form.pastSessionCountLabel')}
+                    </label>
+                    <input
+                        type="number"
+                        id="client-pastSessionCount"
+                        name="pastSessionCount"
+                        value={safeFormData.pastSessionCount}
+                        onChange={handleInputChange}
+                        placeholder={t('admin:clientModal.form.pastSessionCountPlaceholder')}
+                        min={0}
+                        step={1}
+                        inputMode="numeric"
+                        className="mg-v2-form-input"
+                        readOnly={type === 'view'}
+                        autoComplete="off"
+                    />
+                    <small className="mg-v2-form-help">
+                        {t('admin:clientModal.form.pastSessionCountHelp')}
+                    </small>
+                </div>
                 <div className="mg-v2-form-group">
                     <label htmlFor="client-vehiclePlate" className="mg-v2-form-label">{t('admin:clientModal.form.vehiclePlateLabel')}</label>
                     <input
@@ -840,6 +902,28 @@ const ClientModal = ({
                     </div>
                 ) : null}
                 <ContentSection title={t('admin:clientModal.section.consultation')} noCard className="mg-v2-client-modal__subsection">
+                    <div className="mg-v2-form-group">
+                        <label htmlFor="client-pastSessionCount" className="mg-v2-form-label">
+                            {t('admin:clientModal.form.pastSessionCountLabel')}
+                        </label>
+                        <input
+                            type="number"
+                            id="client-pastSessionCount"
+                            name="pastSessionCount"
+                            value={safeFormData.pastSessionCount}
+                            onChange={handleInputChange}
+                            placeholder={t('admin:clientModal.form.pastSessionCountPlaceholder')}
+                            min="0"
+                            step="1"
+                            inputMode="numeric"
+                            className="mg-v2-form-input"
+                            readOnly={type === 'view'}
+                            autoComplete="off"
+                        />
+                        <small className="mg-v2-form-help">
+                            {t('admin:clientModal.form.pastSessionCountHelp')}
+                        </small>
+                    </div>
                     <div className="mg-v2-form-group">
                         <label htmlFor="client-consultationPurpose" className="mg-v2-form-label">{t('admin:clientModal.consultationPurpose')}</label>
                         <textarea

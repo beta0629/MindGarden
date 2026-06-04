@@ -6,6 +6,7 @@ import com.coresolution.consultation.validation.VehiclePlateOptional;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -57,8 +58,19 @@ public class ClientRegistrationRequest {
     @VehiclePlateOptional
     private String vehiclePlate;
     
+    /**
+     * 과거 회기수 (외부 상담 이력, 0 이상 또는 null).
+     *
+     * <p>어드민이 내담자 등록·수정 시 입력. NULL/미입력은 신규 내담자(과거 이력 없음)로 간주.
+     * 스케줄 상세 모달의 "사용/총" 회기 합산 표시에만 사용되며, 매핑 차감 로직과는 무관.</p>
+     *
+     * @since 2026-06-08
+     */
+    @Min(value = 0, message = "과거 회기수는 0 이상이어야 합니다.")
+    private Long pastSessionCount;
+
     private String consultationPurpose;
-    
+
     private String consultationHistory;
     
     private String emergencyContact;

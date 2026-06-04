@@ -117,6 +117,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         consultationHistory: '',
         emergencyContact: '',
         emergencyPhone: '',
+        pastSessionCount: '',
         ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
     });
     useEffect(() => {
@@ -320,6 +321,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             consultationHistory: client.consultationHistory || '',
             emergencyContact: client.emergencyContact || '',
             emergencyPhone: client.emergencyPhone || '',
+            pastSessionCount: client.pastSessionCount != null ? client.pastSessionCount : '',
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -371,6 +373,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             consultationHistory: '',
             emergencyContact: '',
             emergencyPhone: '',
+            pastSessionCount: '',
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -400,6 +403,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             consultationHistory: client.consultationHistory || '',
             emergencyContact: client.emergencyContact || '',
             emergencyPhone: client.emergencyPhone || '',
+            pastSessionCount: client.pastSessionCount != null ? client.pastSessionCount : '',
             ...CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
         setShowModal(true);
@@ -837,6 +841,14 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         && String(dataToUse.notificationChannelPreference).trim() !== '') {
                                         payload.notificationChannelPreference =
                                             String(dataToUse.notificationChannelPreference).trim();
+                                    }
+                                    if (dataToUse.pastSessionCount != null
+                                        && String(dataToUse.pastSessionCount).trim() !== '') {
+                                        const parsedPastSessions = Number.parseInt(
+                                            String(dataToUse.pastSessionCount).trim(), 10);
+                                        if (Number.isFinite(parsedPastSessions) && parsedPastSessions >= 0) {
+                                            payload.pastSessionCount = parsedPastSessions;
+                                        }
                                     }
                                     let response;
                                     if (modalType === 'create') {

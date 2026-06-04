@@ -80,6 +80,84 @@ public class ScheduleResponse {
     private Integer sessionSequence;
 
     /**
+     * 내담자({@code clientId}) 의 외부 과거 회기수 ({@code users.past_session_count}).
+     * NULL = 외부 이력 없음(신규 내담자).
+     *
+     * @since 2026-06-08
+     */
+    private Long pastSessionCount;
+
+    /**
+     * 합산 사용 회기수 = ({@link #pastSessionCount} ?? 0) + (매핑 사용 회기).
+     *
+     * <p>매핑 사용 회기 = {@link #sessionSequence} 우선, 없으면
+     * ({@link #totalSessions} - {@link #remainingSessions}) fallback.
+     * 단회기({@code totalSessions <= 1}) 또는 매핑 정보 부족 시 null. 모달은 null 시 회기 영역 비표시.</p>
+     *
+     * @since 2026-06-08
+     */
+    private Long combinedUsedSessions;
+
+    /**
+     * 합산 총 회기수 = ({@link #pastSessionCount} ?? 0) + {@link #totalSessions}.
+     * 단회기({@code totalSessions <= 1}) 또는 매핑 정보 부족 시 null.
+     *
+     * @since 2026-06-08
+     */
+    private Long combinedTotalSessions;
+
+    /**
+     * {@link #pastSessionCount}, {@link #totalSessions}, {@link #remainingSessions},
+     * {@link #sessionSequence} 를 기반으로 {@link #combinedUsedSessions},
+     * {@link #combinedTotalSessions} 를 계산해 채운다.
+     *
+     * <p>단회기({@code totalSessions <= 1}) 또는 매핑 정보가 없으면 합산 값을 모두 null 로
+     * 둔다 (모달·라벨에서 비표시).</p>
+     *
+     * @param pastSessions 외부 이력 회기수 ({@code users.past_session_count}). null 허용.
+     * @param totalSessions 일정 시점 매핑 총 회기.
+     * @param remainingSessions 현재 매핑 잔여 회기.
+     * @param sessionSequence 예약 시점 회차 (1-based).
+     */
+    public void applyCombinedSessions(
+            Long pastSessions,
+            Integer totalSessions,
+            Integer remainingSessions,
+            Integer sessionSequence) {
+        this.pastSessionCount = pastSessions;
+        if (totalSessions == null || totalSessions <= 1) {
+            this.combinedUsedSessions = null;
+            this.combinedTotalSessions = null;
+            return;
+        }
+        long pastSafe = pastSessions != null && pastSessions > 0L ? pastSessions : 0L;
+        Long usedFromMapping = resolveUsedFromMapping(totalSessions, remainingSessions, sessionSequence);
+        if (usedFromMapping == null) {
+            this.combinedUsedSessions = null;
+        } else {
+            this.combinedUsedSessions = pastSafe + usedFromMapping;
+        }
+        this.combinedTotalSessions = pastSafe + totalSessions.longValue();
+    }
+
+    /**
+     * 매핑 단위 사용 회기수 계산. {@code sessionSequence} 가 있으면 1-based 회차를 사용 회기로
+     * 간주하고, 없으면 ({@code total - remaining}) 으로 fallback. 둘 다 부족하면 null.
+     */
+    private static Long resolveUsedFromMapping(
+            Integer totalSessions,
+            Integer remainingSessions,
+            Integer sessionSequence) {
+        if (sessionSequence != null && sessionSequence > 0) {
+            return Math.min(sessionSequence.longValue(), totalSessions.longValue());
+        }
+        if (remainingSessions != null && remainingSessions >= 0 && remainingSessions <= totalSessions) {
+            return (long) (totalSessions - remainingSessions);
+        }
+        return null;
+    }
+
+    /**
      * Schedule 엔티티를 ScheduleResponse로 변환
      * 상담 유형을 한글로 변환
      */

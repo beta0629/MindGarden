@@ -214,7 +214,12 @@
     "t_9cd38a93": "일정 상세",
     "t_b07dbada": "일정 상세 보기",
     "t_bff20dc3": "이벤트",
-    "t_772af33f": "휴가 사유"
+    "t_772af33f": "휴가 사유",
+    "sessionInfoLabel": "회기",
+    "sessionInfoValue": "잔여 {{remaining}}회 / 총 {{total}}회",
+    "sessionInfoUnknown": "회기 정보 없음",
+    "openConsultationLogView": "상담일지 보기/수정",
+    "openConsultationLogViewAria": "{{date}} 상담일지 조회 페이지로 이동"
   },
   "RescheduleScheduleModal": {
     "t_a1423935": "예약 변경에 실패했습니다."

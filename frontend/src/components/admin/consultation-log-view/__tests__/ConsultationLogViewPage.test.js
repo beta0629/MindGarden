@@ -115,6 +115,11 @@ jest.mock('@fullcalendar/react', () => ({
 jest.mock('@fullcalendar/daygrid', () => ({ __esModule: true, default: {} }));
 jest.mock('@fullcalendar/interaction', () => ({ __esModule: true, default: {} }));
 
+jest.mock('react-router-dom', () => ({
+  __esModule: true,
+  useSearchParams: () => [new URLSearchParams(''), jest.fn()]
+}));
+
 jest.mock('../../../consultant/ConsultationLogModal', () => ({
   __esModule: true,
   default: ({ isOpen }) => (isOpen ? <div data-testid="record-modal" /> : null)

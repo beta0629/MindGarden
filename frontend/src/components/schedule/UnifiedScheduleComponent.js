@@ -878,6 +878,15 @@ const UnifiedScheduleComponent = ({
             apiDate: sessionDateStr || undefined,
             apiStartTime: apiStartHm,
             apiEndTime: apiEndHm,
+            [SCHEDULE_TOTAL_SESSIONS_FIELD]: parseScheduleSessionCount(
+                event.extendedProps[SCHEDULE_TOTAL_SESSIONS_FIELD]
+            ),
+            [SCHEDULE_REMAINING_SESSIONS_FIELD]: parseScheduleSessionCount(
+                event.extendedProps[SCHEDULE_REMAINING_SESSIONS_FIELD]
+            ),
+            [SCHEDULE_SESSION_SEQUENCE_FIELD]: parseScheduleSessionCount(
+                event.extendedProps[SCHEDULE_SESSION_SEQUENCE_FIELD]
+            ),
             [CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD],
             [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]: event.extendedProps[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
         };

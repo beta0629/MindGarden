@@ -26,8 +26,28 @@ import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { setCachedJsessionId, setJsessionId } from '@/utils/sessionCookie';
 import { coerceApiRoleString, mapApiRoleToStoreRole } from '@/utils/adminRole';
 import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
+import {
+  DUPLICATE_LOGIN_FALLBACK_MESSAGE,
+  detectDuplicateLoginConfirmation,
+} from '@/utils/duplicateLoginSignal';
 
 export type SocialAuthProvider = 'KAKAO' | 'NAVER';
+
+/**
+ * 중복 로그인 확인 후 강제 재로그인에 필요한 입력값.
+ * - credentials: 이메일/비밀번호를 그대로 보내 `/confirm-duplicate-login` 호출
+ * - 소셜(KAKAO/NAVER): force-logout 후 동일 accessToken으로 social-login 재호출
+ */
+export type DuplicateLoginRetryContext =
+  | { provider: 'credentials'; email: string; password: string }
+  | {
+      provider: SocialAuthProvider;
+      accessToken: string;
+      userId: string | null;
+      email: string | null;
+      nickname: string | null;
+      profileImage: string | null;
+    };
 
 /** 네이티브 social-login `socialUserInfo` + 가입 화면용 보강 필드 */
 export interface SocialUserInfoDraft {
@@ -135,6 +155,24 @@ export type SocialLoginOutcome =
       provider: SocialAuthProvider;
       message?: string;
     }
+  | {
+      kind: 'requiresDuplicateLoginConfirmation';
+      message: string;
+      retryContext: DuplicateLoginRetryContext;
+    }
+  | { kind: 'error'; message: string };
+
+export type CredentialLoginOutcome =
+  | { kind: 'authenticated'; user: User }
+  | {
+      kind: 'requiresDuplicateLoginConfirmation';
+      message: string;
+      retryContext: DuplicateLoginRetryContext;
+    }
+  | { kind: 'error'; message: string };
+
+export type DuplicateLoginRetryOutcome =
+  | { kind: 'authenticated'; user: User }
   | { kind: 'error'; message: string };
 
 let naverInitialized = false;
@@ -145,6 +183,7 @@ type SocialLoginDebugOutcome =
   | 'authenticated'
   | 'requiresSignup'
   | 'requiresPhoneAccountSelection'
+  | 'requiresDuplicateLoginConfirmation'
   | 'error';
 
 function isSocialLoginDebugLoggingEnabled(): boolean {
@@ -296,7 +335,9 @@ function readOptionalString(v: unknown): string | undefined {
   return undefined;
 }
 
-function readKakaoNestedAccount(profile: Record<string, unknown>): Record<string, unknown> | undefined {
+function readKakaoNestedAccount(
+  profile: Record<string, unknown>,
+): Record<string, unknown> | undefined {
   const ka = profile.kakao_account;
   if (ka && typeof ka === 'object') {
     return ka as Record<string, unknown>;
@@ -317,36 +358,33 @@ function enrichDraftFromKakaoProfile(
 
   const profileEmail =
     readOptionalString(rec.email) ?? (ka ? readOptionalString(ka.email) : undefined);
-  const email =
-    !draft.email?.trim() && profileEmail?.trim() ? profileEmail.trim() : draft.email;
+  const email = !draft.email?.trim() && profileEmail?.trim() ? profileEmail.trim() : draft.email;
 
   const phoneRaw =
     readOptionalString(rec.phoneNumber) ??
     readOptionalString(rec.phone_number) ??
     readOptionalString(rec.phone) ??
     (ka
-      ? readOptionalString(ka.phone_number) ??
+      ? (readOptionalString(ka.phone_number) ??
         readOptionalString(ka.phoneNumber) ??
-        readOptionalString(ka.phone)
+        readOptionalString(ka.phone))
       : undefined);
   const normalizedPhone = normalizeKoreanMobileDigits(phoneRaw);
   const phone = normalizedPhone ?? draft.phone;
 
-  const realName =
-    readOptionalString(rec.name) ?? (ka ? readOptionalString(ka.name) : undefined);
+  const realName = readOptionalString(rec.name) ?? (ka ? readOptionalString(ka.name) : undefined);
 
   let nickname = draft.nickname?.trim() ?? '';
   if (!nickname) {
     nickname =
       readOptionalString(rec.nickname) ??
       readOptionalString(rec.displayName) ??
-      (realName?.trim() ?? '');
+      realName?.trim() ??
+      '';
   }
 
   const initialDisplayName =
-    realName && realName.trim().length >= 2
-      ? realName.trim()
-      : draft.initialDisplayName;
+    realName && realName.trim().length >= 2 ? realName.trim() : draft.initialDisplayName;
 
   return {
     ...draft,
@@ -384,10 +422,7 @@ function enrichDraftFromNaverResponse(
 
   let nickname = draft.nickname?.trim() ?? '';
   if (!nickname) {
-    nickname =
-      readOptionalString(response.nickname) ??
-      readOptionalString(response.name) ??
-      '';
+    nickname = readOptionalString(response.nickname) ?? readOptionalString(response.name) ?? '';
   }
 
   return {
@@ -415,13 +450,41 @@ function parseSocialUserInfoDraft(
   };
 }
 
+function buildSocialRetryContext(
+  provider: SocialAuthProvider,
+  accessToken: string,
+  userId: string | null,
+  email: string | null,
+  nickname: string | null,
+  profileImage: string | null,
+): DuplicateLoginRetryContext {
+  return {
+    provider,
+    accessToken,
+    userId,
+    email,
+    nickname,
+    profileImage,
+  };
+}
+
 function mapNativeSocialResponse(
   response: SocialLoginResponse | undefined,
   provider: SocialAuthProvider,
   profileImageUrl?: string,
+  retryContext?: DuplicateLoginRetryContext,
 ): SocialLoginOutcome {
   if (!response) {
     return { kind: 'error', message: '서버 응답이 없습니다.' };
+  }
+
+  const duplicateSignal = detectDuplicateLoginConfirmation(response);
+  if (duplicateSignal && retryContext) {
+    return {
+      kind: 'requiresDuplicateLoginConfirmation',
+      message: duplicateSignal.message,
+      retryContext,
+    };
   }
 
   if (response.requiresPhoneAccountSelection && response.selectionToken) {
@@ -514,9 +577,14 @@ const initializeNaverSDK = () => {
   const extra = Constants.expoConfig?.extra as
     | { naverClientId?: string; naverClientSecret?: string }
     | undefined;
-  const consumerKey = (extra?.naverClientId ?? process.env.EXPO_PUBLIC_NAVER_CLIENT_ID ?? '').trim();
+  const consumerKey = (
+    extra?.naverClientId ??
+    process.env.EXPO_PUBLIC_NAVER_CLIENT_ID ??
+    ''
+  ).trim();
   const consumerSecret = (
-    extra?.naverClientSecret ?? process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET ??
+    extra?.naverClientSecret ??
+    process.env.EXPO_PUBLIC_NAVER_CLIENT_SECRET ??
     ''
   ).trim();
   const appName = 'MindGardenMobileApp';
@@ -578,23 +646,50 @@ export const AuthService = {
         hasPhone: computeHasPhoneFromKakaoProfile(profile),
       });
 
-      const response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
-        provider: 'KAKAO',
-        accessToken: token.accessToken,
-        userId: profile.id,
-        email: profile.email,
-        nickname: profile.nickname,
-        profileImage: profileImageUrl,
-      });
+      const kakaoRetryContext = buildSocialRetryContext(
+        'KAKAO',
+        token.accessToken,
+        providerUserId,
+        profile.email ?? null,
+        profile.nickname ?? null,
+        profileImageUrl ?? null,
+      );
 
-      const mapped = mapNativeSocialResponse(response, 'KAKAO', profileImageUrl);
+      let response: SocialLoginResponse | undefined;
+      try {
+        response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
+          provider: 'KAKAO',
+          accessToken: token.accessToken,
+          userId: profile.id,
+          email: profile.email,
+          nickname: profile.nickname,
+          profileImage: profileImageUrl,
+        });
+      } catch (apiError: unknown) {
+        const dup = detectDuplicateLoginConfirmation(apiError);
+        if (dup) {
+          return {
+            kind: 'requiresDuplicateLoginConfirmation',
+            message: dup.message,
+            retryContext: kakaoRetryContext,
+          };
+        }
+        throw apiError;
+      }
+
+      if (!response) {
+        return { kind: 'error', message: '서버 응답이 없습니다.' };
+      }
+      const mapped = mapNativeSocialResponse(response, 'KAKAO', profileImageUrl, kakaoRetryContext);
       logSocialLoginDebugResponse(response, mapped);
       if (mapped.kind === 'authenticated') {
+        const accessTokenValue = response.accessToken ?? '';
+        const refreshTokenValue = response.refreshToken ?? '';
         await applyAuthenticatedUser(
           mapped.user,
           {
-            accessToken: response.accessToken as string,
-            refreshToken: response.refreshToken as string,
+            accessToken: accessTokenValue,
+            refreshToken: refreshTokenValue,
           },
           pickSessionIdFromAuthPayload(response),
         );
@@ -685,23 +780,55 @@ export const AuthService = {
         hasPhone: computeHasPhoneFromNaverProfile(naverProfile),
       });
 
-      const response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
-        provider: 'NAVER',
+      const naverRetryContext = buildSocialRetryContext(
+        'NAVER',
         accessToken,
         userId,
         email,
-        nickname: nickname ?? '',
-        profileImage: profileImage ?? '',
-      });
+        nickname,
+        profileImage,
+      );
 
-      const mapped = mapNativeSocialResponse(response, 'NAVER', profileImage ?? undefined);
+      let response: SocialLoginResponse | undefined;
+      try {
+        response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
+          provider: 'NAVER',
+          accessToken,
+          userId,
+          email,
+          nickname: nickname ?? '',
+          profileImage: profileImage ?? '',
+        });
+      } catch (apiError: unknown) {
+        const dup = detectDuplicateLoginConfirmation(apiError);
+        if (dup) {
+          return {
+            kind: 'requiresDuplicateLoginConfirmation',
+            message: dup.message,
+            retryContext: naverRetryContext,
+          };
+        }
+        throw apiError;
+      }
+
+      if (!response) {
+        return { kind: 'error', message: '서버 응답이 없습니다.' };
+      }
+      const mapped = mapNativeSocialResponse(
+        response,
+        'NAVER',
+        profileImage ?? undefined,
+        naverRetryContext,
+      );
       logSocialLoginDebugResponse(response, mapped);
       if (mapped.kind === 'authenticated') {
+        const accessTokenValue = response.accessToken ?? '';
+        const refreshTokenValue = response.refreshToken ?? '';
         await applyAuthenticatedUser(
           mapped.user,
           {
-            accessToken: response.accessToken as string,
-            refreshToken: response.refreshToken as string,
+            accessToken: accessTokenValue,
+            refreshToken: refreshTokenValue,
           },
           pickSessionIdFromAuthPayload(response),
         );
@@ -839,19 +966,103 @@ export const AuthService = {
 
   /**
    * ID/PW 로그인 — Spring `ApiResponse` 래퍼 및 `token`/`accessToken` 필드 호환
+   *
+   * 백엔드가 `duplicate_login_confirmation` 신호를 반환하면
+   * `kind: 'requiresDuplicateLoginConfirmation'` 으로 보고하고,
+   * `AuthService.confirmDuplicateLoginAndRetry(retryContext)` 로 재시도한다.
    */
-  async loginWithCredentials(
-    email: string,
-    password: string,
-  ): Promise<{
-    success: boolean;
-    user?: User;
-    message?: string;
-  }> {
+  async loginWithCredentials(email: string, password: string): Promise<CredentialLoginOutcome> {
+    const retryContext: DuplicateLoginRetryContext = {
+      provider: 'credentials',
+      email,
+      password,
+    };
+
     try {
       const raw = await apiPost<Record<string, unknown>>(AUTH_API.LOGIN, {
         email,
         password,
+      });
+
+      const duplicateSignal = detectDuplicateLoginConfirmation(raw);
+      if (duplicateSignal) {
+        return {
+          kind: 'requiresDuplicateLoginConfirmation',
+          message: duplicateSignal.message,
+          retryContext,
+        };
+      }
+
+      const inner = (unwrapApiResponse<Record<string, unknown>>(raw) ?? raw) as Record<
+        string,
+        unknown
+      >;
+
+      const userRaw = inner.user as SocialLoginApiUser | undefined;
+      const accessToken = (inner.accessToken ?? inner.token) as string | undefined;
+      const refreshToken = inner.refreshToken as string | undefined;
+
+      if (userRaw && accessToken && refreshToken) {
+        const user = mapApiUserToStoreUser(userRaw, accessToken);
+        await applyAuthenticatedUser(
+          user,
+          { accessToken, refreshToken },
+          pickSessionIdFromAuthPayload(raw),
+        );
+        return { kind: 'authenticated', user };
+      }
+
+      const msg =
+        (typeof raw === 'object' && raw !== null && typeof raw.message === 'string'
+          ? raw.message
+          : null) ??
+        (typeof inner.message === 'string' ? inner.message : null) ??
+        '로그인에 실패했습니다.';
+      return { kind: 'error', message: msg };
+    } catch (error: unknown) {
+      const duplicateSignal = detectDuplicateLoginConfirmation(error);
+      if (duplicateSignal) {
+        return {
+          kind: 'requiresDuplicateLoginConfirmation',
+          message: duplicateSignal.message,
+          retryContext,
+        };
+      }
+      return { kind: 'error', message: readSignupErrorMessage(error) };
+    }
+  },
+
+  /**
+   * 중복 로그인 확인 → 기존 세션 종료 + 동일 자격으로 재로그인.
+   *
+   * - credentials: `POST /api/v1/auth/confirm-duplicate-login` (`{ email, password, confirmTerminate: true }`)
+   * - 소셜(KAKAO/NAVER): `force-logout` 으로 기존 세션 정리 후 `social-login` 재호출
+   *
+   * 웹 참조: `frontend/src/utils/duplicateLoginManager.js` 의 `forceLogout` 흐름 정합.
+   */
+  async confirmDuplicateLoginAndRetry(
+    retryContext: DuplicateLoginRetryContext,
+  ): Promise<DuplicateLoginRetryOutcome> {
+    if (retryContext.provider === 'credentials') {
+      return AuthService.confirmDuplicateLoginCredentials(retryContext);
+    }
+    return AuthService.confirmDuplicateLoginSocial(retryContext);
+  },
+
+  /**
+   * 자격증명(이메일·비밀번호) 흐름 재시도.
+   * 백엔드 `/confirm-duplicate-login` 응답은 `ApiResponse` 래퍼 + 평탄화 데이터.
+   */
+  async confirmDuplicateLoginCredentials(retryContext: {
+    provider: 'credentials';
+    email: string;
+    password: string;
+  }): Promise<DuplicateLoginRetryOutcome> {
+    try {
+      const raw = await apiPost<Record<string, unknown>>(AUTH_API.CONFIRM_DUPLICATE_LOGIN, {
+        email: retryContext.email,
+        password: retryContext.password,
+        confirmTerminate: true,
       });
 
       const inner = (unwrapApiResponse<Record<string, unknown>>(raw) ?? raw) as Record<
@@ -870,18 +1081,84 @@ export const AuthService = {
           { accessToken, refreshToken },
           pickSessionIdFromAuthPayload(raw),
         );
-        return { success: true, user };
+        return { kind: 'authenticated', user };
       }
 
-      const msg =
-        (typeof raw === 'object' && raw !== null && typeof raw.message === 'string'
-          ? raw.message
-          : null) ??
-        (typeof inner.message === 'string' ? inner.message : null) ??
-        '로그인에 실패했습니다.';
-      return { success: false, message: msg };
+      // 백엔드가 토큰을 반환하지 않을 수 있어, 동일 자격으로 일반 로그인 재호출하여 세션 보장
+      const followUp = await AuthService.loginWithCredentials(
+        retryContext.email,
+        retryContext.password,
+      );
+      if (followUp.kind === 'authenticated') {
+        return { kind: 'authenticated', user: followUp.user };
+      }
+      const fallbackMessage =
+        followUp.kind === 'error' ? followUp.message : DUPLICATE_LOGIN_FALLBACK_MESSAGE;
+      return { kind: 'error', message: fallbackMessage };
     } catch (error: unknown) {
-      return { success: false, message: readSignupErrorMessage(error) };
+      return { kind: 'error', message: readSignupErrorMessage(error) };
+    }
+  },
+
+  /**
+   * 소셜(KAKAO/NAVER) 흐름 재시도.
+   * 이메일이 있으면 force-logout 으로 기존 세션 정리 후 social-login 재호출.
+   * (백엔드 native social-login 은 모바일 UA 에서 중복 체크를 우회하므로 일반적으로 즉시 성공한다.)
+   */
+  async confirmDuplicateLoginSocial(retryContext: {
+    provider: SocialAuthProvider;
+    accessToken: string;
+    userId: string | null;
+    email: string | null;
+    nickname: string | null;
+    profileImage: string | null;
+  }): Promise<DuplicateLoginRetryOutcome> {
+    if (retryContext.email) {
+      try {
+        await apiPost(AUTH_API.FORCE_LOGOUT, { email: retryContext.email });
+      } catch (e) {
+        // force-logout 실패는 무시 — social-login 재호출로 새 세션이 생성됨
+        if (__DEV__) {
+          console.warn('[AuthService] force-logout 실패 (무시):', e);
+        }
+      }
+    }
+
+    try {
+      const response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
+        provider: retryContext.provider,
+        accessToken: retryContext.accessToken,
+        userId: retryContext.userId,
+        email: retryContext.email,
+        nickname: retryContext.nickname ?? '',
+        profileImage: retryContext.profileImage ?? '',
+      });
+
+      if (
+        response &&
+        response.success &&
+        response.user &&
+        response.accessToken &&
+        response.refreshToken
+      ) {
+        const user = mapApiUserToStoreUser(response.user, response.accessToken);
+        await applyAuthenticatedUser(
+          user,
+          {
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+          },
+          pickSessionIdFromAuthPayload(response),
+        );
+        return { kind: 'authenticated', user };
+      }
+
+      return {
+        kind: 'error',
+        message: response?.message ?? '재로그인에 실패했습니다.',
+      };
+    } catch (error: unknown) {
+      return { kind: 'error', message: readSignupErrorMessage(error) };
     }
   },
 
@@ -928,8 +1205,7 @@ export const AuthService = {
       } else if (typeof inner.token === 'string') {
         accessToken = inner.token;
       }
-      const nextRefresh =
-        typeof inner.refreshToken === 'string' ? inner.refreshToken : undefined;
+      const nextRefresh = typeof inner.refreshToken === 'string' ? inner.refreshToken : undefined;
 
       if (accessToken && nextRefresh) {
         const tokens: Tokens = {

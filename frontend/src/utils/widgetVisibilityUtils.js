@@ -153,6 +153,18 @@ export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
     console.debug(`✅ ADMIN 특권으로 위젯 접근 허용: ${widgetType}, 역할: ${userRole}, 업종: ${businessType || 'N/A'}`);
     return true;
   }
+
+  // STAFF 특권: ERP 위젯만 제외하고 ADMIN과 동일 노출 (STAFF_PERMISSION_POLICY_PHASE2)
+  if (userRole === USER_ROLES.STAFF) {
+    const erpTypes = getErpWidgetTypes() || [];
+    const normalizedTypeLower = widgetType.toLowerCase();
+    if (erpTypes.includes(normalizedTypeLower)) {
+      console.debug(`❌ STAFF는 ERP 위젯 접근 거부: ${widgetType}`);
+      return false;
+    }
+    console.debug(`✅ STAFF 특권으로 위젯 접근 허용 (ERP 제외): ${widgetType}, 업종: ${businessType || 'N/A'}`);
+    return true;
+  }
   
   // 일반 사용자는 업종 정보 필수
   if (!businessType) {
@@ -581,6 +593,11 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
     result.category = 'erp';
     result.allowed = true;
     result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_69f2b706');
+    // STAFF는 ERP 제외 (STAFF_PERMISSION_POLICY_PHASE2)
+    if (userRole === USER_ROLES.STAFF) {
+      result.allowed = false;
+      result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_7bcf83f7');
+    }
   } else if (consultationTypes.includes(normalizedType)) {
     // 상담소 특화 위젯은 업종 검증 필요
     result.category = 'consultation';
@@ -613,9 +630,10 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
   }
   
   // 관리자 권한 확인
+  // STAFF는 ADMIN과 동일 노출(ERP 제외)이므로 관리자 위젯 접근 허용 (STAFF_PERMISSION_POLICY_PHASE2)
   if (result.allowed && isAdminWidget(normalizedType)) {
     result.requiresAdmin = true;
-    if (!isAdminRole(userRole)) {
+    if (!isAdminRole(userRole) && userRole !== USER_ROLES.STAFF) {
       result.allowed = false;
       result.reason = i18n.t('common:utils.widgetVisibilityUtils.t_7bcf83f7');
     }

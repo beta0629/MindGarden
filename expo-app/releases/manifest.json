@@ -1,4 +1,4 @@
 {
-  "androidVersionCode": 5,
-  "lastReleaseNote": "PATCH 1.0.4 — 로그인 401 시 refresh 스킵, v1 refresh-token, maxRedirects:0"
+  "androidVersionCode": 6,
+  "lastReleaseNote": "PATCH 1.0.5 — 중복 로그인 UX UnifiedModal 전환, supportsTablet=false 재빌드(13\" iPad 스크린샷 요구 해제), 백엔드 DUPLICATE_LOGIN_MESSAGE 상수화"
 }

@@ -71,10 +71,12 @@ export const getDynamicDashboardPath = (dashboard) => {
   const type = dashboard.dashboardType?.toLowerCase() || 'default';
   
   // 기존 라우팅과 호환성을 위해 타입별 경로 매핑
+  // STAFF: ERP만 제외하고 ADMIN과 동일 경로 사용 (STAFF_PERMISSION_POLICY_PHASE2)
   const typePathMap = {
     'student': '/academy',
     'teacher': '/academy',
     'admin': '/admin/dashboard',
+    'staff': '/admin/dashboard',
     'client': '/client/dashboard',
     'consultant': '/consultant/dashboard',
     'principal': '/admin/dashboard',
@@ -100,10 +102,12 @@ export const getDashboardComponentName = (dashboardType) => {
   
   const type = dashboardType.toUpperCase();
   
+  // STAFF: ERP 제외 시 ADMIN과 동일 대시보드 컴포넌트 사용 (STAFF_PERMISSION_POLICY_PHASE2)
   const componentMap = {
     'STUDENT': 'AcademyDashboard',
     'TEACHER': 'AcademyDashboard',
     'ADMIN': 'AdminDashboard',
+    'STAFF': 'AdminDashboard',
     'CLIENT': 'ClientDashboard',
     'CONSULTANT': 'CommonDashboard',
     'PRINCIPAL': 'AdminDashboard',
@@ -165,10 +169,12 @@ export const getLegacyDashboardPath = (role) => {
   if (!role) return '/client/dashboard';
   
   const normalizedRole = role.toUpperCase();
+  // STAFF: ERP만 제외 — 대시보드는 ADMIN과 동일 경로 (STAFF_PERMISSION_POLICY_PHASE2)
   const ROLE_DASHBOARD_MAP = {
     'CLIENT': '/client/dashboard',
     'CONSULTANT': '/consultant/dashboard',
     'ADMIN': '/admin/dashboard',
+    'STAFF': '/admin/dashboard',
     'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',
     'BRANCH_MANAGER': '/admin/dashboard',
     'HQ_ADMIN': '/admin/dashboard',

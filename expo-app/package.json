@@ -1,7 +1,7 @@
 {
   "name": "expo-app",
   "main": "expo-router/entry",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "scripts": {
     "prestart": "npm run verify:metro-mmkv",
     "prestart:clean": "npm run verify:metro-mmkv",

@@ -127,15 +127,36 @@ describe('adminRole', () => {
     expect(canRegisterStaffOnMobile('staff')).toBe(false);
   });
 
-  it('gates mapping view and manage by JWT permissions', () => {
-    const viewOnly = fakeJwt({ role: 'STAFF', permissions: ['MAPPING_VIEW'] });
-    const manage = fakeJwt({ role: 'STAFF', permissions: ['MAPPING_MANAGE'] });
-    const noMapping = fakeJwt({ role: 'STAFF', permissions: ['CLIENT_MANAGE'] });
+  it('allows mapping view and manage for ADMIN and STAFF (STAFF == ADMIN 1.0.5)', () => {
+    // 정책: ADMIN/STAFF 둘 다 자동 허용 (JWT permission 의존 제거).
     expect(canViewMappingsOnMobile('admin', null)).toBe(true);
-    expect(canViewMappingsOnMobile('staff', viewOnly)).toBe(true);
-    expect(canViewMappingsOnMobile('staff', noMapping)).toBe(false);
+    expect(canViewMappingsOnMobile('staff', null)).toBe(true);
     expect(canManageMappingsOnMobile('admin', null)).toBe(true);
-    expect(canManageMappingsOnMobile('staff', manage)).toBe(true);
-    expect(canManageMappingsOnMobile('staff', viewOnly)).toBe(false);
+    expect(canManageMappingsOnMobile('staff', null)).toBe(true);
+  });
+
+  it('blocks mapping view and manage for CONSULTANT and CLIENT (회귀)', () => {
+    expect(canViewMappingsOnMobile('consultant', null)).toBe(false);
+    expect(canViewMappingsOnMobile('client', null)).toBe(false);
+    expect(canViewMappingsOnMobile(null, null)).toBe(false);
+    expect(canManageMappingsOnMobile('consultant', null)).toBe(false);
+    expect(canManageMappingsOnMobile('client', null)).toBe(false);
+    expect(canManageMappingsOnMobile(null, null)).toBe(false);
+  });
+
+  it('treats legacy admin tokens (BRANCH_SUPER_ADMIN 등) as admin for mapping', () => {
+    // 레거시 토큰을 mapApiRoleToStoreRole 로 정규화하면 'admin' 으로 매핑되어 mapping 게이트 통과.
+    expect(canViewMappingsOnMobile(mapApiRoleToStoreRole('BRANCH_SUPER_ADMIN'), null)).toBe(true);
+    expect(canViewMappingsOnMobile(mapApiRoleToStoreRole('TENANT_ADMIN'), null)).toBe(true);
+    expect(canManageMappingsOnMobile(mapApiRoleToStoreRole('HQ_ADMIN'), null)).toBe(true);
+  });
+
+  it('treats accessToken arg as optional (signature compat, JWT 의존 제거)', () => {
+    // 1.0.5 이후 accessToken 인자는 호환을 위해 유지되지만 무시된다.
+    const noMappingClaim = fakeJwt({ role: 'STAFF', permissions: ['CLIENT_MANAGE'] });
+    expect(canViewMappingsOnMobile('staff', noMappingClaim)).toBe(true);
+    expect(canManageMappingsOnMobile('staff', noMappingClaim)).toBe(true);
+    expect(canViewMappingsOnMobile('staff')).toBe(true);
+    expect(canManageMappingsOnMobile('staff')).toBe(true);
   });
 });

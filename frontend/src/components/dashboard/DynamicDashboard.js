@@ -277,9 +277,11 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   }
 
   // 🚨 임시 수정: 관리자 계정은 바로 AdminDashboard로 이동 (무한로딩 방지)
+  // STAFF: ERP 제외 동일 노출 — adminRoles에 포함 (STAFF_PERMISSION_POLICY_PHASE2)
   const userRole = currentUser?.role;
-  const adminRoles = [USER_ROLES.ADMIN];
+  const adminRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
   const isAdmin = userRole && adminRoles.includes(userRole);
+  const isStaffOnly = userRole === USER_ROLES.STAFF;
   
   console.log('🔍 관리자 체크:', { userRole, isAdmin, adminRoles });
   
@@ -375,7 +377,8 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   });
 
   // 관리자 역할 확인 (확장된 역할 목록)
-  const tenantAdminRoles = [USER_ROLES.ADMIN];
+  // STAFF: ERP 제외 동일 노출 — tenantAdminRoles에 포함 (STAFF_PERMISSION_POLICY_PHASE2)
+  const tenantAdminRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
   const superAdminRoles = [USER_ROLES.ADMIN];
   const allAdminRoles = [...tenantAdminRoles, ...superAdminRoles];
 
@@ -435,6 +438,10 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   if (isAnyAdmin) {
     console.log('관리자용 위젯 생성 (모든 위젯 포함)');
     effectiveDashboardConfig = createDefaultAdminDashboardConfig(allAdminRoles);
+    // STAFF: ERP 위젯 제외 (STAFF_PERMISSION_POLICY_PHASE2)
+    if (isStaffOnly) {
+      effectiveDashboardConfig = filterOutErpWidgetsFromConfig(effectiveDashboardConfig);
+    }
     shouldUseWidgetDashboard = true;
   } 
   // 비관리자이면서 유효한 위젯 설정이 없는 경우
@@ -450,6 +457,10 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   } else {
     console.log('기존 위젯 설정 사용');
     effectiveDashboardConfig = dashboardConfig; // 원본 대시보드 설정을 사용
+    // STAFF: ERP 위젯 제외 (STAFF_PERMISSION_POLICY_PHASE2)
+    if (isStaffOnly) {
+      effectiveDashboardConfig = filterOutErpWidgetsFromConfig(effectiveDashboardConfig);
+    }
     shouldUseWidgetDashboard = true;
   }
 
@@ -486,7 +497,11 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         위젯수: dashboardConfig.widgets.length,
         위젯목록: dashboardConfig.widgets.map(w => w.type)
       });
-      return <WidgetBasedDashboard dashboardConfig={dashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
+      // STAFF: ERP 위젯 제외 (STAFF_PERMISSION_POLICY_PHASE2)
+      const adminConfigForRender = isStaffOnly
+        ? filterOutErpWidgetsFromConfig(dashboardConfig)
+        : dashboardConfig;
+      return <WidgetBasedDashboard dashboardConfig={adminConfigForRender} dashboard={dashboard} user={currentUser} businessType={businessType} />;
     } else {
       // 관리자용 기본 위젯 템플릿 생성
       const defaultAdminDashboardConfig = {
@@ -1167,6 +1182,36 @@ const createDefaultBusinessTypeDashboardConfig = (businessType) => {
       shadow: 'md'
     }
   };
+};
+
+/**
+ * 대시보드 설정에서 ERP 위젯 타입 제거
+ *
+ * STAFF 권한 정책 Phase 2: STAFF는 ERP 기능만 제외하고 ADMIN과 동일 노출.
+ * `getErpWidgetTypes()`(WidgetRegistry SSOT)를 기준으로 ERP 위젯 타입을
+ * 대시보드 설정의 widgets 배열에서 제거한 사본을 반환한다.
+ *
+ * @param {Object} config 원본 대시보드 설정 ({ widgets, layout, theme, ... })
+ * @returns {Object} ERP 위젯이 제거된 새 대시보드 설정 (참조 안전)
+ */
+const filterOutErpWidgetsFromConfig = (config) => {
+  if (!config || !Array.isArray(config.widgets)) {
+    return config;
+  }
+  const erpTypes = new Set((getErpWidgetTypes() || []).map((t) => String(t).toLowerCase()));
+  if (erpTypes.size === 0) {
+    return config;
+  }
+  const filtered = config.widgets.filter((widget) => {
+    if (!widget || typeof widget.type !== 'string') {
+      return true;
+    }
+    return !erpTypes.has(widget.type.toLowerCase());
+  });
+  if (filtered.length === config.widgets.length) {
+    return config;
+  }
+  return { ...config, widgets: filtered };
 };
 
 // 헬퍼 함수: tenantId에서 businessType 유추

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.util;
 
 import java.util.Map;
+import com.coresolution.consultation.constant.ErpRestrictedPermissions;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -112,10 +113,17 @@ public class PermissionCheckUtils {
         }
         
         // 3. ADMIN 역할은 모든 권한 자동 부여 (테넌트 시스템)
+        // STAFF == ADMIN 동등(1.0.5): ERP 영역 제외 모든 권한 자동 부여
         boolean isAdmin = com.coresolution.consultation.util.AdminRoleUtils.isAdmin(currentUser);
         if (isAdmin) {
-            log.info("✅ ADMIN 역할 자동 권한 부여: 사용자={}, 역할={}, 권한={}", 
+            log.info("✅ ADMIN 역할 자동 권한 부여: 사용자={}, 역할={}, 권한={}",
                     currentUser.getEmail(), currentUser.getRole(), permissionCode);
+            return null; // 권한 체크 성공
+        }
+        if (currentUser.getRole() != null && currentUser.getRole().isStaff()
+                && !ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
+            log.info("✅ STAFF 역할 자동 권한 부여(ERP 제외): 사용자={}, 권한={}",
+                    currentUser.getEmail(), permissionCode);
             return null; // 권한 체크 성공
         }
         

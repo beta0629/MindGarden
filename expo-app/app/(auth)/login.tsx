@@ -25,8 +25,13 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
 import { AppBrandMark } from '@/components/molecules/AppBrandMark';
+import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import { useTenantStore } from '@/stores/useTenantStore';
-import { AuthService, type SocialUserInfoDraft } from '@/services/AuthService';
+import {
+  AuthService,
+  type SocialUserInfoDraft,
+  type DuplicateLoginRetryContext,
+} from '@/services/AuthService';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import {
   OAUTH_KAKAO_BACKGROUND,
@@ -34,6 +39,19 @@ import {
   OAUTH_NAVER_BACKGROUND,
   OAUTH_NAVER_FOREGROUND,
 } from '@/constants/oauthProviderBrand';
+
+const DUPLICATE_LOGIN_MODAL_TITLE = '이미 로그인된 기기가 있습니다';
+const DUPLICATE_LOGIN_FALLBACK_BODY =
+  '다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?';
+const DUPLICATE_LOGIN_CONFIRM_LABEL = '기존 세션 종료하고 로그인';
+const DUPLICATE_LOGIN_CANCEL_LABEL = '취소';
+const DUPLICATE_LOGIN_RETRY_FAILED_FALLBACK =
+  '재로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+
+interface DuplicateLoginPrompt {
+  message: string;
+  retryContext: DuplicateLoginRetryContext;
+}
 
 function isExpoGoApp(): boolean {
   return Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -77,6 +95,10 @@ export default function LoginScreen() {
   const [showCredentials, setShowCredentials] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [duplicateLoginPrompt, setDuplicateLoginPrompt] = useState<DuplicateLoginPrompt | null>(
+    null,
+  );
+  const [isConfirmingDuplicateLogin, setIsConfirmingDuplicateLogin] = useState(false);
 
   const inExpoGo = isExpoGoApp();
 
@@ -107,6 +129,11 @@ export default function LoginScreen() {
             provider: 'KAKAO',
           },
         });
+      } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
+        setDuplicateLoginPrompt({
+          message: result.message,
+          retryContext: result.retryContext,
+        });
       } else {
         setErrorMessage(result.message ?? '카카오 로그인에 실패했습니다.');
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -114,9 +141,7 @@ export default function LoginScreen() {
     } catch (e) {
       console.error('[Login] kakao', e);
       const detail =
-        e instanceof Error && e.message.trim()
-          ? ` (${e.message.trim().slice(0, 100)})`
-          : '';
+        e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
       setErrorMessage(`카카오 로그인 중 오류가 발생했습니다.${detail}`);
     } finally {
       setIsLoading(false);
@@ -147,6 +172,11 @@ export default function LoginScreen() {
             provider: 'NAVER',
           },
         });
+      } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
+        setDuplicateLoginPrompt({
+          message: result.message,
+          retryContext: result.retryContext,
+        });
       } else {
         setErrorMessage(result.message ?? '네이버 로그인에 실패했습니다.');
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -154,9 +184,7 @@ export default function LoginScreen() {
     } catch (e) {
       console.error('[Login] naver', e);
       const detail =
-        e instanceof Error && e.message.trim()
-          ? ` (${e.message.trim().slice(0, 100)})`
-          : '';
+        e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
       setErrorMessage(`네이버 로그인 중 오류가 발생했습니다.${detail}`);
     } finally {
       setIsLoading(false);
@@ -176,9 +204,14 @@ export default function LoginScreen() {
 
     try {
       const result = await AuthService.loginWithCredentials(email.trim(), password);
-      if (result.success) {
+      if (result.kind === 'authenticated') {
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
         await handleLoginSuccess();
+      } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
+        setDuplicateLoginPrompt({
+          message: result.message,
+          retryContext: result.retryContext,
+        });
       } else {
         setErrorMessage(result.message ?? '로그인에 실패했습니다.');
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -190,6 +223,41 @@ export default function LoginScreen() {
       setIsLoading(false);
       setLoadingProvider(null);
     }
+  };
+
+  const handleConfirmDuplicateLogin = async () => {
+    if (!duplicateLoginPrompt) {
+      return;
+    }
+    setIsConfirmingDuplicateLogin(true);
+    setErrorMessage(null);
+    try {
+      const result = await AuthService.confirmDuplicateLoginAndRetry(
+        duplicateLoginPrompt.retryContext,
+      );
+      if (result.kind === 'authenticated') {
+        setDuplicateLoginPrompt(null);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
+        await handleLoginSuccess();
+      } else {
+        setDuplicateLoginPrompt(null);
+        setErrorMessage(result.message ?? DUPLICATE_LOGIN_RETRY_FAILED_FALLBACK);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (e) {
+      console.error('[Login] duplicate-login retry', e);
+      setDuplicateLoginPrompt(null);
+      setErrorMessage(DUPLICATE_LOGIN_RETRY_FAILED_FALLBACK);
+    } finally {
+      setIsConfirmingDuplicateLogin(false);
+    }
+  };
+
+  const handleCancelDuplicateLogin = () => {
+    if (isConfirmingDuplicateLogin) {
+      return;
+    }
+    setDuplicateLoginPrompt(null);
   };
 
   return (
@@ -397,6 +465,39 @@ export default function LoginScreen() {
           </Pressable>
         </Animated.View>
       </ScrollView>
+      <UnifiedModal
+        isOpen={duplicateLoginPrompt != null}
+        onClose={handleCancelDuplicateLogin}
+        title={DUPLICATE_LOGIN_MODAL_TITLE}
+        loading={isConfirmingDuplicateLogin}
+        backdropClick={false}
+        showCloseButton={false}
+        actions={[
+          {
+            label: DUPLICATE_LOGIN_CONFIRM_LABEL,
+            onPress: handleConfirmDuplicateLogin,
+            variant: 'primary',
+            disabled: isConfirmingDuplicateLogin,
+          },
+          {
+            label: DUPLICATE_LOGIN_CANCEL_LABEL,
+            onPress: handleCancelDuplicateLogin,
+            variant: 'secondary',
+            disabled: isConfirmingDuplicateLogin,
+          },
+        ]}
+      >
+        <Text
+          style={{
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.sm,
+            color: theme.colors.textMain,
+            lineHeight: 22,
+          }}
+        >
+          {duplicateLoginPrompt?.message?.trim() || DUPLICATE_LOGIN_FALLBACK_BODY}
+        </Text>
+      </UnifiedModal>
     </KeyboardAvoidingView>
   );
 }

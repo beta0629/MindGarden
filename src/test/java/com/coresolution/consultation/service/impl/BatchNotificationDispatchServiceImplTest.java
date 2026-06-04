@@ -109,6 +109,11 @@ class BatchNotificationDispatchServiceImplTest {
         // SmsTemplateService.renderForType 미스텁 시 정적 본문으로 폴백하도록 한다.
         // 시드 비활성 회귀 시나리오는 별도 테스트에서 false 로 명시 override 한다.
         properties.setSmsStaticFallbackEnabled(true);
+        // 2026-06-04 — 알림톡 게이트 default 는 false (운영 정책). 기존 ALIMTALK_* 테스트는
+        // 알림톡 채널 활성 시나리오를 검증하므로 setUp 단계에서 true 로 override 한다.
+        // 알림톡 OFF 시나리오는 별도 테스트(`dispatch_whenAlimtalkChannelDisabled_*`) 에서
+        // false 로 명시 override 한다.
+        properties.setAlimtalkEnabled(true);
         service = new BatchNotificationDispatchServiceImpl(
             scheduleRepository, mappingRepository, userRepository,
             userPrivacyConsentRepository, sendLogRepository, sendLogger,
@@ -647,6 +652,54 @@ class BatchNotificationDispatchServiceImplTest {
             .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED);
         verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
         verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
+    }
+
+    // ============================================================
+    // 2026-06-04 — 알림톡 채널 영구 OFF 게이트 (notification.batch.alimtalk-enabled=false)
+    //
+    // 사용자 결재: "알림톡은 사용 안 함, 현장결제도 예약이 취소된 게 아니면 문자 발송."
+    // alimtalkEnabled=false 이면 AlimtalkTemplateMappingResolver 매핑 lookup 자체가 skip
+    // 되며, 매핑이 있더라도 알림톡 시도를 차단하고 SMS-only 폴백 경로(F1) 로 발송한다.
+    // ============================================================
+
+    @Test
+    @DisplayName("알림톡 OFF — 매핑 존재해도 알림톡 시도 0건 + SMS-only 발송 (SMS_ONLY_SENT)")
+    void dispatch_whenAlimtalkChannelDisabled_skipsAlimtalkAndSendsSms() {
+        properties.setAlimtalkEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 3);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        // 매핑 resolver 가 valid templateId 를 반환해도 게이트에서 skip 되어 알림톡 호출 0건.
+        givenAlimtalkMappingResolved();
+        givenSmsDispatchSuccess();
+
+        DispatchOutcome outcome = service.dispatchReservationReminderD2(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SMS_ONLY_SENT);
+        assertThat(outcome.channelUsed()).isEqualTo(BatchNotificationTemplateCodes.CHANNEL_SMS);
+        assertThat(outcome.fallbackToSms()).isTrue();
+        verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
+        verify(templateMappingResolver, never())
+            .resolveSolapiTemplateId(anyString(), anyString());
+        verify(dispatchHelper).dispatchSms(eq(PHONE), anyString());
+    }
+
+    @Test
+    @DisplayName("알림톡 OFF — RESERVATION_IMMEDIATE_LATE 도 SMS-only 발송")
+    void dispatch_whenAlimtalkChannelDisabled_immediateLateAlsoSmsOnly() {
+        properties.setAlimtalkEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 1);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenSmsDispatchSuccess();
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SMS_ONLY_SENT);
+        verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
+        verify(dispatchHelper).dispatchSms(eq(PHONE), anyString());
     }
 
     @Test

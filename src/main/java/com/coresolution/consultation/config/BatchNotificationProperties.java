@@ -76,4 +76,22 @@ public class BatchNotificationProperties {
      * @since 2026-05-26 (Phase 2 영구 안전망 hotfix)
      */
     private boolean smsStaticFallbackEnabled = false;
+
+    /**
+     * 배치/이벤트 발송에서 알림톡 채널 사용 여부.
+     *
+     * <p>{@code false} 기본 (2026-06-04 사용자 결재: "알림톡은 사용 안 함, 현장결제도 예약이
+     * 취소된 게 아니면 문자 발송"). 본 토글이 {@code false} 이면 {@code BatchNotificationDispatchServiceImpl}
+     * 가 {@code AlimtalkTemplateMappingResolver} 매핑 조회를 skip 하고 알림톡 시도 자체를 차단한
+     * 채 SMS 폴백 경로(F1) 로만 발송한다.
+     *
+     * <p>운영 yml ({@code application-prod.yml}) 의 {@code kakao.alimtalk.enabled} 게이트와 별개로
+     * 작동하는 코드 가드이다 — 운영 환경 변수 누락 시에도 알림톡 미발송을 보장한다.
+     *
+     * <p>박도영 schedule_id=106 (2026-05-30) 사례처럼 알림톡 매핑 미정착으로 인한
+     * {@code TEMPLATE_NOT_MAPPED} 실패가 SMS 발송을 막던 회귀를 자연 해소한다.
+     *
+     * @since 2026-06-04 (스케줄 등록 즉시 SMS 발송 정책)
+     */
+    private boolean alimtalkEnabled = false;
 }

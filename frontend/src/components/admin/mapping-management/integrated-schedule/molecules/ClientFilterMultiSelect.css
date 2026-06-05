@@ -139,13 +139,14 @@
 
 .mg-client-filter__option {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--mg-spacing-sm, 8px);
   padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-md, 12px);
   cursor: pointer;
   font-size: 0.875rem;
   color: var(--ad-b0kla-title-color);
   transition: background 0.15s ease;
+  min-height: 44px;
 }
 
 .mg-client-filter__option:hover {
@@ -160,6 +161,7 @@
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
+  margin-top: 2px;
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--mg-radius-sm, 4px);
   background: var(--ad-b0kla-card-bg, var(--mg-color-surface));
@@ -186,21 +188,27 @@
 .mg-client-filter__option-text {
   display: flex;
   flex-direction: column;
+  row-gap: 2px;
   min-width: 0;
   flex: 1 1 auto;
+  line-height: 1.35;
 }
 
 .mg-client-filter__option-name {
+  display: block;
   font-weight: 500;
   color: var(--ad-b0kla-title-color);
+  line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .mg-client-filter__option-meta {
+  display: block;
   font-size: 0.75rem;
   color: var(--ad-b0kla-text-secondary, var(--mg-color-text-secondary));
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

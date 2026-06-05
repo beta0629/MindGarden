@@ -4,7 +4,7 @@
 |---|---|
 | 작성일 | 2026-06-05 (KST) |
 | 작성자 | 메인 어시스턴트 (core-planner gemini quota 한도로 대체) |
-| 상태 | 초안 v1.0 — 사용자 결재 대기 |
+| 상태 | **v1.1 결재 완료** — Q1=A · Q2=P2 · Q3=a/b/c/d/e/f · Q4=b · Q5=c (2026-06-05 11:40 KST) |
 | 트리거 | 일정상세 모달 탭 단차 1~5차 fix 누적 → "원천적 개선 필요. 다른 곳에도 동일 문제. 색상 변경 같이 고려" 사용자 결재 |
 | 직전 임시 차단 | main `60c3a1562` (5차 fix `:focus-visible outline:none`) — prod 정착 |
 
@@ -286,5 +286,78 @@ a11y:
 ## §8 마감
 
 본 기획서 v1.0 초안 — 사용자 §6 Q1~Q5 결재 후 Phase 1 designer (또는 메인 직접) 진행. 결재 받기 전까지 코드 변경 없음.
+
+---
+
+## §9 사용자 결재 확정 (v1.1, 2026-06-05 11:40 KST)
+
+| 질문 | 채택 | 의미 |
+|---|---|---|
+| Q1 구조 | **A** (SegmentedTabs / ActionBar 전용 컴포넌트 분리) | MGButton 재활용 중단. 자체 native button + 토큰 SSOT. 1~2주 작업. 재발 방지 최고. |
+| Q2 색상 | **P2** (활성/비활성 동일 톤 명도 차이) | 외곽선 자체를 폐기. 활성=진녹색 fill / 비활성=연녹색 fill. 단차 원천 차단. |
+| Q3 우선순위 | **a · b · c · d · e · f 전부** (g 전체 일괄만 제외) | 일정상세 / ERP / 어드민 대시 / 상담사 / 내담자 / 알림 6 그룹 모두 우선. 알림 / 웰니스 / 기타는 후속. |
+| Q4 마이그 범위 | **b** (Q3 우선순위 + 후속 PR 별도) | Phase 2 가 6 그룹을 다중 PR 또는 PR 내 fixture 분리로 진행. |
+| Q5 진행 방식 | **c** (designer Phase 1 먼저 + 결재 후 coder) | 가장 안전. designer 가 4상태 매트릭스 hex + 토큰 SSOT 확정 후 coder 일괄 위임. |
+
+## §10 Phase 1 Designer 위임 명세 (확정)
+
+### 산출물 경로
+
+`docs/project-management/2026-06-05/MGBUTTON_SSOT_DESIGN_HANDOFF.md`
+
+### 산출물 SPEC
+
+1. **§A 토큰 매트릭스 (light + dark 동시)**
+   - `--mg-segmented-tab-active-bg` / `--mg-segmented-tab-active-text` / `--mg-segmented-tab-active-border`
+   - `--mg-segmented-tab-inactive-bg` / `--mg-segmented-tab-inactive-text` / `--mg-segmented-tab-inactive-border`
+   - `--mg-segmented-tab-hover-bg-active` / `--mg-segmented-tab-hover-bg-inactive`
+   - `--mg-segmented-tab-focus-ring` (inner highlight 색)
+   - `--mg-actionbar-primary-bg` / `--mg-actionbar-primary-text` / `--mg-actionbar-primary-hover` / `--mg-actionbar-primary-active-press`
+   - `--mg-actionbar-outline-*` / `--mg-actionbar-danger-*`
+   - 신설 토큰 12~18종 추정.
+   - 모든 hex 는 B0KlA palette 6종 (`--ad-b0kla-green` 등 D10 P2-c) 와 정합. 새 토큰은 `--mg-*` namespace (글로벌 SSOT).
+
+2. **§B P2 색상 결정**
+   - 활성 탭 fill: B0KlA `--ad-b0kla-green` (#???? 운영 정착 hex 인용)
+   - 비활성 탭 fill: 연녹색 (예: `mix(white, green, 92%)` 또는 신설 `--ad-b0kla-green-50` hex 제안)
+   - 활성/비활성 모두 외곽선 없음 (border-width: 0). track 의 background-color 만 옅은 분리감.
+   - actionBar primary fill / outline fill / danger fill 의 명도 / 채도 매트릭스.
+   - WCAG AA 대비 검증 (활성 텍스트 vs 활성 배경 ≥4.5:1, 비활성 텍스트 vs 비활성 배경 ≥4.5:1).
+
+3. **§C 4상태 매트릭스 (default / hover / focus-visible / active-press)**
+   - 각 상태마다 background / text / border / outline / shadow 매트릭스.
+   - focus-visible 은 **inner highlight 2px** (`box-shadow: inset 0 0 0 2px var(--mg-segmented-tab-focus-ring)`) 로 외곽 단차 0.
+   - hover 는 background 변색만 (transform / shadow 없음).
+   - active-press 는 background 한 단계 더 진하게.
+
+4. **§D 컴포넌트 API (Designer 가 코더에게 제안)**
+   - `<SegmentedTabs items={[{value, label, badge?}]} activeValue onChange ariaLabel />`
+   - `<ActionBar align="end" gap="md"><MGButton variant="primary" />...</ActionBar>` (단순 wrapper) **또는** `<ActionBar items={[{variant, label, onClick, disabled, loading}]} />` 형태 결정.
+   - keyboard nav (좌우 화살표) 명세.
+   - aria-selected / role=tab / role=tablist 마크업.
+
+5. **§E 6 그룹 페이지 시각 회귀 fixture 시안**
+   - 일정상세 모달 / ERP 메뉴(3) / 어드민 대시 / 상담사(3) / 내담자(2) / 알림(2) 각 페이지에서 SegmentedTabs 사용 위치 표시 + before/after 시각 시안 (4상태).
+
+6. **§F 다크모드 + 모바일 + 반응형**
+   - 다크 토큰 (D10 P2-b 답습).
+   - 모바일 (≤768px) 의 segmented tab 가독성.
+
+7. **§G a11y 매트릭스**
+   - 키보드 / 스크린리더 / 색맹 / 고대비 모드 / focus 가시성 (P2 색상 결정 후 inner highlight 충분성 검증).
+
+### 실행
+
+1. 본 메인 어시스턴트 가 `core-designer` (model: `gemini-3.1-pro`, 디자인 배치 권장) Task 위임.
+2. designer 산출물 develop push 후 메인 어시스턴트가 사용자에게 §C 시안 + §B hex 결재 요청.
+3. 사용자 결재 후 Phase 2 core-coder 위임 (Q3 우선순위 6 그룹 + 일정상세 모달 1차).
+
+## §11 Phase 2~4 후속 명세 (요약)
+
+| Phase | 담당 | 산출 | 비고 |
+|---|---|---|---|
+| 2 | core-coder | `SegmentedTabs.jsx` / `SegmentedTabs.css` / `ActionBar.jsx` / `ActionBar.css` 신설 + Q3 6 그룹 마이그레이션 PR | ScheduleB0KlA.css 의 5차 fix override 제거 (SSOT 흡수). Jest snapshot + 단위 테스트. |
+| 3 | core-tester | `MGBUTTON_SSOT_VISUAL_REGRESSION_REPORT.md` | 6 그룹 light/dark/모바일/4상태 매트릭스. HIGH 0, MEDIUM ≤3. |
+| 4 | core-deployer | develop FF → main FF → deploy-frontend-prod | 운영 반영 후 사용자 검수. |
 
 EOF

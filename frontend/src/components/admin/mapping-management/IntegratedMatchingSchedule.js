@@ -924,6 +924,7 @@ const IntegratedMatchingSchedule = () => {
               mappingPaymentTimingByMappingId={buildMappingPaymentTimingLookup(mappings)}
               onMonthChange={handleCalendarMonthChange}
               consultantCounts={consultantCounts}
+              consultantCountsMonth={currentMonth}
               showClientFilter
               clients={clientFilterOptions}
               selectedClientIds={selectedClientIds}

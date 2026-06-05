@@ -547,8 +547,21 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * <p>같은 내담자의 비삭제 일정 중 (date &lt; targetDate) 이거나
      * (date = targetDate AND id &lt;= targetId) 인 일정 카운트 = 해당 일정까지의 누적 회차.
      * 모달 누적 라벨에서 sessionSequence 가 NULL/0 인 레거시 데이터의 fallback 으로 사용.</p>
+     *
+     * <p>2026-06-05 P1 픽스: {@code s.sessionSequence IS NOT NULL} 가드를 추가하여
+     * 취소·환불·가예약(결제 전) 일정을 lifetime count 에서 제외한다.
+     * {@code session_sequence} 는 PR #128 의 패치 7.1/7.3 + 회기 차감 복구 배치로
+     * 회기 차감이 완료된 일정에만 부여되므로, 본 가드가 회기 차감 SSOT 와 일치한다.
+     * (예: CANCELLED + 환불 처리된 일정, TENTATIVE_PENDING_PAYMENT 가예약 등은 제외)</p>
+     *
+     * @param tenantId 멀티테넌트 ID
+     * @param clientId 내담자 ID
+     * @param scheduleDate 기준 일정의 date
+     * @param scheduleId 기준 일정의 id (자기 자신 포함, 1-based 회차)
+     * @return 본 일정 시점까지 회기 차감이 완료된 일정 카운트
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.clientId = :clientId AND s.isDeleted = false "
+            + "AND s.sessionSequence IS NOT NULL "
             + "AND (s.date < :scheduleDate OR (s.date = :scheduleDate AND s.id <= :scheduleId))")
     long countSequenceUpToSchedule(
             @Param("tenantId") String tenantId,

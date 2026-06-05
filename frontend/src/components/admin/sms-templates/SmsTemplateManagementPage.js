@@ -24,6 +24,8 @@ import { ContentArea, ContentHeader } from '../../dashboard-v2/content';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 import { useSession } from '../../../contexts/SessionContext';
 import { USER_ROLES, RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
@@ -696,25 +698,19 @@ const SmsTemplateManagementPage = () => {
         subtitle={t('smsTemplate.modals.saveSubtitle')}
         variant="confirm"
         actions={
-          <>
-            <MGButton
-              type="button"
-              variant="secondary"
-              onClick={() => setSaveModalOpen(false)}
-              disabled={submitting}
-            >
+          <ActionBar align="end" gap="md">
+            <ActionBarButton variant="outline" onClick={() => setSaveModalOpen(false)} disabled={submitting}>
               {t('common:cancel')}
-            </MGButton>
-            <MGButton
-              type="button"
+            </ActionBarButton>
+            <ActionBarButton
               variant="primary"
               onClick={handleSaveConfirm}
               loading={submitting}
               data-testid="sms-template-save-confirm"
             >
               {t('smsTemplate.modals.confirmSave')}
-            </MGButton>
-          </>
+            </ActionBarButton>
+          </ActionBar>
         }
       >
         <div data-testid="sms-template-save-modal-body">
@@ -729,25 +725,19 @@ const SmsTemplateManagementPage = () => {
         subtitle={t('smsTemplate.modals.deleteSubtitle')}
         variant="alert"
         actions={
-          <>
-            <MGButton
-              type="button"
-              variant="secondary"
-              onClick={() => setDeleteModalOpen(false)}
-              disabled={submitting}
-            >
+          <ActionBar align="end" gap="md">
+            <ActionBarButton variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={submitting}>
               {t('common:cancel')}
-            </MGButton>
-            <MGButton
-              type="button"
+            </ActionBarButton>
+            <ActionBarButton
               variant="danger"
               onClick={handleDeleteConfirm}
               loading={submitting}
               data-testid="sms-template-delete-confirm"
             >
               {t('smsTemplate.modals.confirmDelete')}
-            </MGButton>
-          </>
+            </ActionBarButton>
+          </ActionBar>
         }
       >
         <div data-testid="sms-template-delete-modal-body">
@@ -762,25 +752,19 @@ const SmsTemplateManagementPage = () => {
         subtitle={t('smsTemplate.globalDispatch.confirmOn')}
         variant="alert"
         actions={
-          <>
-            <MGButton
-              type="button"
-              variant="secondary"
-              onClick={() => setGlobalEnableModalOpen(false)}
-              disabled={submitting}
-            >
+          <ActionBar align="end" gap="md">
+            <ActionBarButton variant="outline" onClick={() => setGlobalEnableModalOpen(false)} disabled={submitting}>
               {t('common:cancel')}
-            </MGButton>
-            <MGButton
-              type="button"
+            </ActionBarButton>
+            <ActionBarButton
               variant="primary"
               onClick={() => submitGlobalDispatchToggle(true)}
               loading={submitting}
               data-testid="sms-template-global-dispatch-confirm"
             >
               {t('smsTemplate.dispatch.badge.on')}
-            </MGButton>
-          </>
+            </ActionBarButton>
+          </ActionBar>
         }
       >
         <div data-testid="sms-template-global-dispatch-modal-body">

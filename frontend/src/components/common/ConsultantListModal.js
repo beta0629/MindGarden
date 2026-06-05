@@ -4,6 +4,8 @@ import UnifiedModal from './modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from './SafeText';
 import MGButton from './MGButton';
+import ActionBar from './ActionBar';
+import ActionBarButton from './ActionBarButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
 
@@ -23,20 +25,11 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
       backdropClick={true}
       showCloseButton={true}
       actions={
-        <MGButton
-          className={buildErpMgButtonClassName({
-            variant: 'outline',
-            size: 'md',
-            loading: false,
-            className: 'mg-v2-button--ghost'
-          })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={onClose}
-          variant="outline"
-          preventDoubleClick={false}
-        >
-          {t('common.actions.close')}
-        </MGButton>
+        <ActionBar align="end" gap="md">
+          <ActionBarButton variant="outline" onClick={onClose}>
+            {t('common.actions.close')}
+          </ActionBarButton>
+        </ActionBar>
       }
     >
       {consultantList && consultantList.length > 0 ? (

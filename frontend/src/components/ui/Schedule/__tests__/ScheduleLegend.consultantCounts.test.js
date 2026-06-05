@@ -207,4 +207,161 @@ describe('ScheduleLegend — 월별 상담사 COMPLETED 카운트 배지', () =>
     expect(badge).toBeTruthy();
     expect(badge.getAttribute('aria-label')).toBe('홍길동, 이번 달 완료 7회');
   });
+
+  // ─── F4b (R1) ──────────────────────────────────────────────────────
+  test('F4b (R1): 사용자가 명시적으로 접은 적이 있으면 카운트가 도착해도 강제 펼침이 발동하지 않는다', () => {
+    // 사용자가 이전 세션에서 접음 → localStorage = 'true'
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(LEGEND_COLLAPSED_STORAGE_KEY, 'true');
+    }
+    const consultants = buildConsultants({ id: 1, name: 'A' });
+    const consultantCounts = new Map([[1, 3]]);
+
+    const { container } = render(
+      <ScheduleLegend
+        {...baseProps({ consultants, consultantCounts, calendarSkin: 'integrated' })}
+      />
+    );
+
+    const toggle = container.querySelector('.mg-v2-schedule-legend__toggle');
+    expect(toggle).toBeTruthy();
+    // 사용자 선호 존중 — 접힘 유지
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    const body = container.querySelector('.mg-v2-schedule-legend__body');
+    expect(body.hasAttribute('hidden')).toBe(true);
+  });
+
+  // ─── F4c (R1) ──────────────────────────────────────────────────────
+  test('F4c (R1): 사용자가 명시적으로 펼친 적이 있으면 (localStorage=false) 그대로 펼침 유지 + 강제 펼침 idempotent', () => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(LEGEND_COLLAPSED_STORAGE_KEY, 'false');
+    }
+    const consultants = buildConsultants({ id: 1, name: 'A' });
+    const consultantCounts = new Map([[1, 0]]);
+
+    const { container } = render(
+      <ScheduleLegend
+        {...baseProps({ consultants, consultantCounts, calendarSkin: 'integrated' })}
+      />
+    );
+
+    const toggle = container.querySelector('.mg-v2-schedule-legend__toggle');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  // ====================================================================
+  // R4 (2026-06-09) — 상담일지 미작성 섹션 회귀 테스트 (M1~M5)
+  // ====================================================================
+  describe('R4 — missingConsultationLogs prop', () => {
+    // ─── M1 ──────────────────────────────────────────────────────────
+    test('M1: missingConsultationLogs 미전달(null) → 섹션 자체 미노출 (다른 라우트 회귀 0)', () => {
+      const consultants = buildConsultants({ id: 1, name: 'A' });
+      const { container } = render(
+        <ScheduleLegend
+          {...baseProps({ consultants, calendarSkin: 'integrated' })}
+        />
+      );
+      expect(container.querySelector('.mg-v2-legend-missing-logs')).toBeNull();
+    });
+
+    // ─── M2 ──────────────────────────────────────────────────────────
+    test('M2: missingConsultationLogs 빈 배열 → «모두 작성됨» placeholder 노출', () => {
+      const consultants = buildConsultants({ id: 1, name: 'A' });
+      const { container } = render(
+        <ScheduleLegend
+          {...baseProps({
+            consultants,
+            calendarSkin: 'integrated',
+            missingConsultationLogs: []
+          })}
+        />
+      );
+      const section = container.querySelector('.mg-v2-legend-missing-logs');
+      expect(section).toBeTruthy();
+      const empty = container.querySelector('.mg-v2-legend-missing-logs__empty');
+      expect(empty).toBeTruthy();
+      expect(container.querySelectorAll('.mg-v2-legend-missing-date-chip').length).toBe(0);
+    });
+
+    // ─── M3 ──────────────────────────────────────────────────────────
+    test('M3: 다중 항목 + 다중 날짜 → 상담사별 행 + 칩 M/D 포맷 + count 표시', () => {
+      const consultants = buildConsultants({ id: 1, name: 'A' });
+      const missingConsultationLogs = [
+        {
+          consultantId: 3,
+          consultantName: '이혁진',
+          missingDates: ['2026-04-15', '2026-04-22']
+        },
+        {
+          consultantId: 4,
+          consultantName: '김상담',
+          missingDates: ['2026-04-30']
+        }
+      ];
+      const { container } = render(
+        <ScheduleLegend
+          {...baseProps({
+            consultants,
+            calendarSkin: 'integrated',
+            missingConsultationLogs
+          })}
+        />
+      );
+
+      const items = container.querySelectorAll('.mg-v2-legend-missing-logs__item');
+      expect(items.length).toBe(2);
+      const firstName = items[0].querySelector('.mg-v2-legend-missing-logs__name').textContent;
+      expect(firstName).toBe('이혁진');
+      const firstCount = items[0].querySelector('.mg-v2-legend-missing-logs__count').textContent;
+      expect(firstCount).toBe('(2)');
+
+      const chips = container.querySelectorAll('.mg-v2-legend-missing-date-chip');
+      expect(chips.length).toBe(3);
+      // 4/15 → 4/15, 4/22 → 4/22, 4/30 → 4/30
+      const chipTexts = Array.from(chips).map((c) => c.textContent);
+      expect(chipTexts).toEqual(['4/15', '4/22', '4/30']);
+      // title 은 원본 yyyy-mm-dd
+      expect(chips[0].getAttribute('title')).toBe('2026-04-15');
+    });
+
+    // ─── M4 ──────────────────────────────────────────────────────────
+    test('M4: 칩 aria-label 에 "상담일지 미작성" 안내 포함', () => {
+      const consultants = buildConsultants({ id: 1, name: 'A' });
+      const missingConsultationLogs = [
+        { consultantId: 9, consultantName: '미작성상담사', missingDates: ['2026-04-15'] }
+      ];
+      const { container } = render(
+        <ScheduleLegend
+          {...baseProps({
+            consultants,
+            calendarSkin: 'integrated',
+            missingConsultationLogs
+          })}
+        />
+      );
+      const chip = container.querySelector('.mg-v2-legend-missing-date-chip');
+      expect(chip).toBeTruthy();
+      // 모의 t() 가 defaultValue 를 반환 — `${date} 상담일지 미작성` 포함 확인
+      expect(chip.getAttribute('aria-label')).toContain('2026-04-15');
+      expect(chip.getAttribute('aria-label')).toContain('상담일지 미작성');
+    });
+
+    // ─── M5 ──────────────────────────────────────────────────────────
+    test('M5: 통합 스킨이 아니면 missingConsultationLogs 가 있어도 섹션 미노출 (회귀 0)', () => {
+      const consultants = buildConsultants({ id: 1, name: 'A' });
+      const missingConsultationLogs = [
+        { consultantId: 3, consultantName: '상담사', missingDates: ['2026-04-15'] }
+      ];
+      const { container } = render(
+        <ScheduleLegend
+          {...baseProps({
+            consultants,
+            // calendarSkin 미지정 (비통합)
+            missingConsultationLogs
+          })}
+        />
+      );
+      expect(container.querySelector('.mg-v2-legend-missing-logs')).toBeNull();
+    });
+  });
 });

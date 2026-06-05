@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
+import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
@@ -473,6 +474,26 @@ public interface ScheduleService {
      * @since 2026-06-09
      */
     MonthlyConsultantCountsResponse getMonthlyConsultantCompletedCounts(int year, int month);
+
+    /**
+     * 통합 스케줄 — 월별 상담사별 «상담일지 미작성(누락)» 일자 조회.
+     *
+     * <p>같은 테넌트의 해당 월 {@link com.coresolution.consultation.constant.ScheduleStatus#COMPLETED}
+     * 일정 중 {@link com.coresolution.consultation.entity.ConsultationRecord} (비삭제) 가
+     * 존재하지 않는 일정을 상담사별로 그룹화해 반환한다. 누락 0건 상담사는 응답에서 제외한다.</p>
+     *
+     * <p>LEFT JOIN 키: {@code r.consultationId = s.id} (호출 SSOT 검증 결과 — 기존 코드에서
+     * {@code schedule.id} 를 {@code consultationId} 자리로 전달).</p>
+     *
+     * @param year  조회 연도 (1900~9999)
+     * @param month 조회 월 (1~12)
+     * @return 상담사별 누락 일자 응답 DTO
+     * @throws IllegalArgumentException {@code year}/{@code month} 범위 위반 시
+     * @throws IllegalStateException    테넌트 컨텍스트 미설정 시
+     * @author CoreSolution
+     * @since 2026-06-09
+     */
+    MonthlyMissingConsultationLogsResponse getMonthlyMissingConsultationLogs(int year, int month);
 
     /**
      * 스케줄 상태를 한글로 변환

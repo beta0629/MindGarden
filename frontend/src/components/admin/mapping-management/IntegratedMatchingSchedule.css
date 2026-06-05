@@ -775,3 +775,47 @@
 .integrated-schedule__legend-text {
   line-height: 1.3;
 }
+
+/* ====================================================================
+ * R2 상단 영역 압축 — 통합 스케줄 한정 (낮은 해상도 가드)
+ *
+ * 다른 admin 라우트에 영향 0 — 모든 selector 가 `.integrated-schedule` 스코프.
+ * 토큰 SSOT: --mg-spacing-md/sm/xs (unified-design-tokens.css).
+ * 운영 게이트: 신규 hex/px 0, --mg- 토큰만 사용.
+ *
+ * SSOT: docs/project-management/2026-06-05/MGBUTTON_SSOT_DESIGN_HANDOFF.md (R2 압축 합의)
+ * 참조: docs/standards/COMPONENT_STRUCTURE_STANDARD.md §responsive
+ *
+ * @since 2026-06-09
+ * ==================================================================== */
+
+/* B0KlA 셸 패딩 — 1366px 이하에서 spacing-xl(1.5rem) → spacing-md 로 축소.
+   AdminDashboardB0KlA.css L172 의 .mg-v2-ad-b0kla padding-xl 을 통합 한정으로만 override. */
+@media (max-width: 1366px) {
+  .integrated-schedule.mg-v2-ad-b0kla {
+    padding: var(--mg-spacing-md);
+  }
+}
+
+/* ContentHeader subtitle — 1280px 이하에서 숨김.
+   본 페이지 한정 — 다른 라우트 영향 0. */
+.integrated-schedule .mg-v2-content-header__subtitle {
+  /* 기본은 디자인 시스템 룰 그대로 — override 없음 */
+}
+
+@media (max-width: 1280px) {
+  .integrated-schedule .mg-v2-content-header__subtitle {
+    display: none;
+  }
+}
+
+/* ContentArea gap — 본 페이지 한정 default md, 1024px 이하에서 sm 으로 추가 압축. */
+.integrated-schedule .mg-v2-content-area {
+  gap: var(--mg-spacing-md);
+}
+
+@media (max-width: 1024px) {
+  .integrated-schedule .mg-v2-content-area {
+    gap: var(--mg-spacing-sm);
+  }
+}

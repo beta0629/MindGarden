@@ -66,7 +66,12 @@ const ScheduleCalendarView = ({
      * FullCalendar 의 datesSet 콜백 통합 래퍼.
      * - 월/주/일 이동, 뷰 전환 등 가시 범위 변경 시 호출된다.
      * - 통합 스케줄 화면이 월별 상담사 카운트 API 를 재호출하는 트리거로 사용한다.
-     * - (info: { start: Date, end: Date, view: string }) => void
+     * - (info: { start: Date, end: Date, activeStart: Date|undefined, view: string }) => void
+     *
+     * 2026-06-09 R3 (P0) — FullCalendar dayGridMonth 의 `arg.start` 는
+     * 표시 그리드 첫 가시 셀(이전 달 일요일일 수 있음). 실제 활성 월의 1일은
+     * `arg.view.activeStart` 가 SSOT. 부모는 `activeStart` 를 우선 사용해
+     * 「4월 보기에서 month=3 호출」회귀를 차단한다.
      */
     onMonthChange
 }) => {
@@ -441,6 +446,7 @@ const ScheduleCalendarView = ({
                 datesSet={(arg) => onMonthChange?.({
                     start: arg.start,
                     end: arg.end,
+                    activeStart: arg.view?.activeStart,
                     view: arg.view?.type
                 })}
             />

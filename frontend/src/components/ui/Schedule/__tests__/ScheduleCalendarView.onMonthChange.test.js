@@ -2,8 +2,9 @@
  * ScheduleCalendarView — onMonthChange (FullCalendar datesSet pass-through) 단위 테스트.
  *
  * 검증 매트릭스 (F8~F9):
- *  - F8: onMonthChange 전달 + FullCalendar datesSet 트리거 → { start: Date, end: Date, view: 'dayGridMonth' } 호출
- *  - F9: onMonthChange 미전달 시 에러 없이 무시
+ *  - F8: onMonthChange 전달 + FullCalendar datesSet 트리거 → { start: Date, end: Date,
+ *        activeStart: Date, view: 'dayGridMonth' } 호출 (2026-06-09 R3 보강).
+ *  - F9: onMonthChange 미전달 시 에러 없이 무시.
  *
  * 전략: FullCalendar 의 react 컴포넌트를 mock 해 datesSet props 를 직접 캡처/호출한다.
  * (실제 FullCalendar 인스턴스는 jsdom 환경에서 렌더링·라이프사이클 부담이 큼.)
@@ -78,7 +79,7 @@ beforeEach(() => {
 
 describe('ScheduleCalendarView — onMonthChange (datesSet pass-through)', () => {
   // ─── F8 ────────────────────────────────────────────────────────────
-  test('F8: onMonthChange 전달 + FullCalendar datesSet 트리거 → { start, end, view } 호출', () => {
+  test('F8: onMonthChange 전달 + FullCalendar datesSet 트리거 → { start, end, activeStart, view } 호출', () => {
     const onMonthChange = jest.fn();
     render(<ScheduleCalendarView {...baseProps({ onMonthChange })} />);
 
@@ -86,14 +87,18 @@ describe('ScheduleCalendarView — onMonthChange (datesSet pass-through)', () =>
     expect(captured).toBeTruthy();
     expect(typeof captured.datesSet).toBe('function');
 
-    const start = new Date('2026-05-31T00:00:00.000Z');
-    const end = new Date('2026-07-05T00:00:00.000Z');
-    captured.datesSet({ start, end, view: { type: 'dayGridMonth' } });
+    // FullCalendar 실제 동작: April 보기 → start 는 표시 첫 셀(이전 달 일요일).
+    //                          view.activeStart 는 활성 월 1일.
+    const start = new Date('2026-03-29T00:00:00.000Z');
+    const end = new Date('2026-05-10T00:00:00.000Z');
+    const activeStart = new Date('2026-04-01T00:00:00.000Z');
+    captured.datesSet({ start, end, view: { type: 'dayGridMonth', activeStart } });
 
     expect(onMonthChange).toHaveBeenCalledTimes(1);
     expect(onMonthChange).toHaveBeenCalledWith({
       start,
       end,
+      activeStart,
       view: 'dayGridMonth'
     });
   });
@@ -110,7 +115,7 @@ describe('ScheduleCalendarView — onMonthChange (datesSet pass-through)', () =>
       captured.datesSet({
         start: new Date('2026-06-01T00:00:00.000Z'),
         end: new Date('2026-06-30T00:00:00.000Z'),
-        view: { type: 'dayGridMonth' }
+        view: { type: 'dayGridMonth', activeStart: new Date('2026-06-01T00:00:00.000Z') }
       });
     }).not.toThrow();
   });

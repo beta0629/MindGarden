@@ -26,3 +26,69 @@
         gap: var(--mg-spacing-sm, 8px);
     }
 }
+
+/* ====================================================================
+ * R4 (2026-06-09): 상담일지 미작성 섹션 — 통합 스케줄 한정.
+ *
+ * 토큰만 사용 — 신규 hex/px 0. 다크 모드는 토큰 cascade 로 자동 적용.
+ * SSOT: unified-design-tokens.css 의 --mg-status-warning-* / --mg-spacing-* / --mg-radius-*
+ * ==================================================================== */
+
+.mg-v2-legend-missing-logs__items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-sm, 8px);
+}
+
+.mg-v2-legend-missing-logs__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--mg-spacing-xs, 4px) var(--mg-spacing-sm, 8px);
+    font-size: var(--mg-font-size-sm, 13px);
+    line-height: 1.4;
+}
+
+.mg-v2-legend-missing-logs__name {
+    font-weight: 600;
+    color: var(--mg-color-text-main, var(--mg-text-primary));
+}
+
+.mg-v2-legend-missing-logs__count {
+    color: var(--mg-color-text-secondary, var(--mg-text-secondary));
+    font-variant-numeric: tabular-nums;
+}
+
+.mg-v2-legend-missing-logs__dates {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--mg-spacing-xs, 4px);
+    align-items: center;
+}
+
+.mg-v2-legend-missing-date-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--mg-spacing-sm, 8px);
+    height: var(--mg-spacing-xl, 20px);
+    line-height: var(--mg-spacing-xl, 20px);
+    border-radius: var(--mg-radius-pill, 999px);
+    background-color: var(--mg-status-warning-bg, var(--mg-color-warning-bg));
+    color: var(--mg-status-warning-text, var(--mg-color-warning-dark));
+    font-size: var(--mg-font-size-xs, 12px);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.mg-v2-legend-missing-logs__empty {
+    font-size: var(--mg-font-size-sm, 13px);
+    color: var(--mg-color-text-secondary, var(--mg-text-secondary));
+    padding: var(--mg-spacing-xs, 4px) 0;
+}
+
+@media (max-width: 480px) {
+    .mg-v2-legend-missing-logs__dates {
+        width: 100%;
+    }
+}

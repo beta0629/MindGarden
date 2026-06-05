@@ -66,6 +66,13 @@ const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
 const MONTHLY_CONSULTANT_COUNTS_ENDPOINT = '/api/v1/schedules/monthly-consultant-counts';
 
 /**
+ * 월별 상담사 «상담일지 미작성» 일자 API (R4 2026-06-09).
+ * 응답: { success: true, data: { year, month, items: [{ consultantId, consultantName, missingDates: [...] }] } }
+ * 누락 0건 상담사는 응답에서 제외 (백엔드 결정).
+ */
+const MONTHLY_MISSING_CONSULTATION_LOGS_ENDPOINT = '/api/v1/schedules/monthly-missing-consultation-logs';
+
+/**
  * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
  * `MappingCreationModal` 와 동일 SSOT — `/api/v1/admin/clients/with-mapping-info`.
  * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
@@ -75,6 +82,31 @@ const CLIENTS_WITH_MAPPING_INFO_ENDPOINT =
 
 const buildMonthlyCountsCacheKey = (tenantId, year, month) =>
   `${tenantId ?? 'unknown'}:${year}:${month}`;
+
+// 누락 일지 캐시 키 — counts 와 동일 구조. 별도 ref 로 보관(서로 다른 트리거 라이프사이클).
+const buildMissingLogsCacheKey = (tenantId, year, month) =>
+  `${tenantId ?? 'unknown'}:${year}:${month}`;
+
+/**
+ * R4 (2026-06-09): API 응답을 ScheduleLegend `missingConsultationLogs` prop 형식으로 정규화.
+ * 백엔드 SSOT: { items: [{ consultantId, consultantName, missingDates: ['YYYY-MM-DD', ...] }] }.
+ * - 안전 폴백: items 가 배열이 아니면 [].
+ * - missingDates 가 배열이 아니면 [] 로 정규화 (UI render 안정성).
+ */
+const normalizeMissingConsultationLogs = (rawItems) => {
+  if (!Array.isArray(rawItems)) {
+    return [];
+  }
+  return rawItems
+    .filter((item) => item && item.consultantId != null)
+    .map((item) => ({
+      consultantId: item.consultantId,
+      consultantName: typeof item.consultantName === 'string' ? item.consultantName : '',
+      missingDates: Array.isArray(item.missingDates)
+        ? item.missingDates.map((d) => String(d ?? ''))
+        : []
+    }));
+};
 
 const readStoredBoolean = (key) => {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -134,6 +166,12 @@ const IntegratedMatchingSchedule = () => {
   const monthlyCountsCacheRef = useRef(new Map());
   const lastTenantIdRef = useRef(user?.tenantId ?? null);
 
+  // R4: «상담일지 미작성» 일자 — 같은 ${tenantId}:${year}:${month} 키로 별도 캐시.
+  // 형태: Array<{ consultantId, consultantName, missingDates: string[] }>.
+  // null = 아직 첫 응답 미수신 → ScheduleLegend 가 섹션 미노출 (placeholder 회피).
+  const [missingConsultationLogs, setMissingConsultationLogs] = useState(null);
+  const missingLogsCacheRef = useRef(new Map());
+
   // 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터.
   // 빈 배열 = 필터 비활성. UnifiedScheduleComponent 가 events 를 그대로 통과시킨다.
   const [selectedClientIds, setSelectedClientIds] = useState([]);
@@ -142,11 +180,13 @@ const IntegratedMatchingSchedule = () => {
   const [clientFilterLoading, setClientFilterLoading] = useState(false);
   const lastClientFilterTenantRef = useRef(null);
 
-  // tenantId 변경 시 캐시 리셋(다른 테넌트의 카운트가 노출되지 않도록 차단).
+  // tenantId 변경 시 캐시 리셋(다른 테넌트의 카운트·누락 일지가 노출되지 않도록 차단).
   useEffect(() => {
     const tenantId = user?.tenantId ?? null;
     if (lastTenantIdRef.current !== tenantId) {
       monthlyCountsCacheRef.current = new Map();
+      missingLogsCacheRef.current = new Map();
+      setMissingConsultationLogs(null);
       lastTenantIdRef.current = tenantId;
     }
   }, [user?.tenantId]);
@@ -205,15 +245,29 @@ const IntegratedMatchingSchedule = () => {
     };
   }, [user?.tenantId]);
 
-  const handleCalendarMonthChange = useCallback(({ start }) => {
-    if (!(start instanceof Date)) {
+  /**
+   * 2026-06-09 R3 (P0) 픽스 — 4월 보기 시 month=3 호출 회귀 해결.
+   *
+   * SSOT: FullCalendar `view.activeStart` 는 실제 활성 월의 1일 00:00.
+   * `start` 는 표시 그리드의 첫 가시 셀(이전 달 일요일일 수 있음) — month 산출에 부적합.
+   *
+   * 우선순위: `activeStart` (있으면 그대로) → `start` 폴백.
+   * 폴백 경로에서는 표시 가운데(15일) 기준으로 month 산출 (이전 동작 호환).
+   * 활성 월 1일을 사용하므로 mid-of-grid 계산은 더 이상 필요 없다.
+   */
+  const handleCalendarMonthChange = useCallback(({ start, activeStart }) => {
+    let ref = null;
+    if (activeStart instanceof Date) {
+      ref = activeStart;
+    } else if (start instanceof Date) {
+      // 폴백: activeStart 가 없으면 grid 가운데(15일) 기준으로 month 산출.
+      ref = new Date(start.getFullYear(), start.getMonth(), 15);
+    }
+    if (!ref) {
       return;
     }
-    // FullCalendar 의 dayGridMonth start 는 보통 표시 첫 셀(이전 달 말일 포함)이므로
-    // 표시 가운데(15일)를 기준으로 실제 년/월을 산출한다.
-    const mid = new Date(start.getFullYear(), start.getMonth(), 15);
-    const nextYear = mid.getFullYear();
-    const nextMonth = mid.getMonth() + 1;
+    const nextYear = ref.getFullYear();
+    const nextMonth = ref.getMonth() + 1;
     setCurrentYear((prev) => (prev === nextYear ? prev : nextYear));
     setCurrentMonth((prev) => (prev === nextMonth ? prev : nextMonth));
   }, []);
@@ -265,6 +319,52 @@ const IntegratedMatchingSchedule = () => {
     };
 
     loadCounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentYear, currentMonth, user?.tenantId]);
+
+  // R4 (2026-06-09): 월별 상담사 «상담일지 미작성» 일자 fetch + 캐시.
+  // 동일 ${tenantId}:${year}:${month} 키 cache hit → API 호출 회피 (counts 패턴 정합).
+  useEffect(() => {
+    let cancelled = false;
+    const tenantId = user?.tenantId ?? null;
+    const cacheKey = buildMissingLogsCacheKey(tenantId, currentYear, currentMonth);
+    const cached = missingLogsCacheRef.current.get(cacheKey);
+    if (cached) {
+      setMissingConsultationLogs(cached);
+      return undefined;
+    }
+
+    const loadMissingLogs = async() => {
+      try {
+        const response = await StandardizedApi.get(MONTHLY_MISSING_CONSULTATION_LOGS_ENDPOINT, {
+          year: currentYear,
+          month: currentMonth
+        });
+        // StandardizedApi.get 는 ApiResponse 의 data 를 반환.
+        // 백엔드 SSOT: { year, month, items: [{ consultantId, consultantName, missingDates: [...] }] }.
+        // 환경에 따라 success/data 래핑이 그대로 노출되는 경우도 안전하게 처리.
+        let payload = response;
+        if (response && typeof response === 'object' && response.success === true && response.data) {
+          payload = response.data;
+        }
+        const normalized = normalizeMissingConsultationLogs(payload?.items);
+        if (cancelled) {
+          return;
+        }
+        missingLogsCacheRef.current.set(cacheKey, normalized);
+        setMissingConsultationLogs(normalized);
+      } catch (error) {
+        // 조용한 실패: 섹션 자체 미노출 (null 유지). 토스트 미발생 — UI 노이즈 차단.
+        console.warn('월별 상담사 상담일지 누락 일자 로드 실패:', error);
+        if (!cancelled) {
+          setMissingConsultationLogs(null);
+        }
+      }
+    };
+
+    loadMissingLogs();
     return () => {
       cancelled = true;
     };
@@ -808,19 +908,10 @@ const IntegratedMatchingSchedule = () => {
           data-layout-context="integrated-schedule"
           data-calendar-skin="integrated"
         >
-          {/* 옵션 B 가예약 시각 구분 범례 — 점선 + warning 토큰 = SAME_DAY_CARD 결제 대기 가예약 */}
-          <p
-            className="integrated-schedule__legend integrated-schedule__legend--same-day"
-            role="note"
-          >
-            <span
-              className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
-              aria-hidden="true"
-            />
-            <span className="integrated-schedule__legend-text">
-              {t('admin:mapping.schedule.legend.sameDayPending')}
-            </span>
-          </p>
+          {/*
+            R2 (2026-06-09): 가예약 범례를 ScheduleLegend body 로 흡수해 상단 영역 압축.
+            기존 className/i18n 키는 그대로 재사용 → 시각 회귀 0.
+          */}
           <div className="integrated-schedule__calendar-content">
             <UnifiedScheduleComponent
               userRole={calendarUserRole}
@@ -837,6 +928,21 @@ const IntegratedMatchingSchedule = () => {
               clients={clientFilterOptions}
               selectedClientIds={selectedClientIds}
               onClientFilterChange={setSelectedClientIds}
+              missingConsultationLogs={missingConsultationLogs}
+              sameDayPendingLegendContent={(
+                <p
+                  className="integrated-schedule__legend integrated-schedule__legend--same-day"
+                  role="note"
+                >
+                  <span
+                    className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
+                    aria-hidden="true"
+                  />
+                  <span className="integrated-schedule__legend-text">
+                    {t('admin:mapping.schedule.legend.sameDayPending')}
+                  </span>
+                </p>
+              )}
             />
           </div>
         </main>

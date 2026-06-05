@@ -9,8 +9,7 @@ import Badge from '../../common/Badge';
 import './ClientMessageWidget.css';
 import SafeText from '../../common/SafeText';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import MGButton from '../../common/MGButton';
+import ActionBarButton from '../../common/ActionBarButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
@@ -261,20 +260,14 @@ const ClientMessageWidget = ({ widget, user }) => {
       </div>
     ),
     actions: allMessages.length > 0 && (
-      <MGButton
-        className={buildErpMgButtonClassName({
-          variant: 'outline',
-          size: 'md',
-          loading: false,
-          className: 'client-message-view-all-btn'
-        })}
+      <ActionBarButton
         variant="outline"
-        type="button"
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        size="sm"
         onClick={handleViewAllMessages}
+        className="client-message-view-all-btn"
       >
         전체보기
-      </MGButton>
+      </ActionBarButton>
     )
   };
 

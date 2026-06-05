@@ -6,6 +6,8 @@ import { useAlert } from '../../../hooks/useAlert';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 import {
   ONBOARDING_STEPS,
   ONBOARDING_API_ENDPOINTS,
@@ -203,24 +205,18 @@ const AdminOnboarding = () => {
   };
 
   const rejectModalActions = (
-    <>
-      <button
-        type="button"
-        className="mg-v2-btn mg-v2-btn--secondary"
+    <ActionBar align="end" gap="md">
+      <ActionBarButton
+        variant="outline"
         onClick={() => setIsRejectModalOpen(false)}
         disabled={isLoading}
       >
         {t('admin:onboarding.btn.cancel')}
-      </button>
-      <button
-        type="button"
-        className="mg-v2-btn mg-v2-btn--danger"
-        onClick={handleReject}
-        disabled={isLoading}
-      >
+      </ActionBarButton>
+      <ActionBarButton variant="danger" onClick={handleReject} disabled={isLoading}>
         {t('admin:onboarding.btn.confirm')}
-      </button>
-    </>
+      </ActionBarButton>
+    </ActionBar>
   );
 
   return (

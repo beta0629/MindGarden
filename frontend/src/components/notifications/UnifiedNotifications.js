@@ -9,6 +9,8 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import '../../styles/unified-design-tokens.css';
 import { useTranslation } from 'react-i18next';
 
@@ -458,15 +460,11 @@ const UnifiedNotifications = () => {
               : (selectedItem.data.authorName || selectedItem.data.senderName || t('common:notification.unified.adminLabel'))} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
             size="large"
             actions={
-              <MGButton
-                type="button"
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={closeModal}
-              >
-                {t('common.actions.confirm')}
-              </MGButton>
+              <ActionBar align="end" gap="md">
+                <ActionBarButton variant="primary" onClick={closeModal}>
+                  {t('common.actions.confirm')}
+                </ActionBarButton>
+              </ActionBar>
             }
           >
             <div className="mg-flex mg-align-center mg-gap-sm mg-mb-md">

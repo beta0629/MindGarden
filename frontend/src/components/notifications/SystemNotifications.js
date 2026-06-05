@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -245,15 +247,11 @@ const SystemNotifications = () => {
           backdropClick
           showCloseButton
           actions={(
-            <MGButton
-              type="button"
-              variant="primary"
-              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={closeModal}
-            >
-              {t('common.actions.confirm')}
-            </MGButton>
+            <ActionBar align="end" gap="md">
+              <ActionBarButton variant="primary" onClick={closeModal}>
+                {t('common.actions.confirm')}
+              </ActionBarButton>
+            </ActionBar>
           )}
         >
           {selectedNotification && (

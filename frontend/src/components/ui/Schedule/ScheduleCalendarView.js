@@ -61,7 +61,14 @@ const ScheduleCalendarView = ({
     /** 통합 스케줄(사이드바→캘린더)만: 기존 일정 블록 드래그 이동 비활성화, 외부 드롭은 유지 */
     disableCalendarEventDrag = false,
     /** false면 FullCalendar 외부 드롭(사이드바 카드 등) 비활성 */
-    acceptExternalCalendarDrops = true
+    acceptExternalCalendarDrops = true,
+    /**
+     * FullCalendar 의 datesSet 콜백 통합 래퍼.
+     * - 월/주/일 이동, 뷰 전환 등 가시 범위 변경 시 호출된다.
+     * - 통합 스케줄 화면이 월별 상담사 카운트 API 를 재호출하는 트리거로 사용한다.
+     * - (info: { start: Date, end: Date, view: string }) => void
+     */
+    onMonthChange
 }) => {
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
@@ -431,6 +438,11 @@ const ScheduleCalendarView = ({
                 expandRows={true}
                 stickyHeaderDates={true}
                 windowResize={updateCalendarSize}
+                datesSet={(arg) => onMonthChange?.({
+                    start: arg.start,
+                    end: arg.end,
+                    view: arg.view?.type
+                })}
             />
         </div>
     );

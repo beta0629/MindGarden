@@ -3,20 +3,27 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.consultation.ConsultationServiceUserFacingMessages;
+import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
+import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse.ConsultantCount;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.Consultant;
@@ -3081,6 +3088,136 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public String getStatusInKorean(String status) {
         return convertStatusToKorean(status);
+    }
+
+    /**
+     * 통합 스케줄 — 월별 상담사별 COMPLETED 일정 카운트 (활성 상담사 0건 포함).
+     *
+     * <p>SSOT 정합:</p>
+     * <ul>
+     *   <li>완료 상태: {@link ScheduleStatus#COMPLETED} enum 만 전달 (하드코딩 금지).</li>
+     *   <li>활성 상담사 source: {@link ConsultantRepository#findActiveConsultantsByTenantId}
+     *       (CONSULTANT 등 전문가 본체) + {@link UserRepository#findCounselingEnabledAdminsByTenantId}
+     *       (상담 겸직 ADMIN). {@code AdminServiceImpl.mergeConsultantActorsForTenant} 와 동일
+     *       구성으로 어드민 통합 스케줄 셀렉터와 정합.</li>
+     *   <li>표시명: {@link ScheduleListUserFieldsResolver#resolveDisplayNameForScheduleList(User)}.
+     *       User.name 직접 사용 금지(암호화 컬럼).</li>
+     *   <li>N+1 가드: 카운트 결과의 consultantId 중 활성 목록에 없는 id 만 한 번
+     *       {@link UserRepository#findByTenantIdAndIdInAndIsDeletedFalse} 로 batch fetch.</li>
+     * </ul>
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public MonthlyConsultantCountsResponse getMonthlyConsultantCompletedCounts(int year, int month) {
+        if (year < 1900 || year > 9999) {
+            throw new IllegalArgumentException("year 는 1900~9999 범위여야 합니다. year=" + year);
+        }
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException("month 는 1~12 범위여야 합니다. month=" + month);
+        }
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        YearMonth ym = YearMonth.of(year, month);
+        LocalDate startDate = ym.atDay(1);
+        LocalDate endDate = ym.atEndOfMonth();
+
+        log.info("📊 월별 상담사 COMPLETED 카운트 조회: tenantId={}, year={}, month={}, period={}~{}",
+                tenantId, year, month, startDate, endDate);
+
+        List<Object[]> raw = scheduleRepository.countCompletedSchedulesByConsultantInDateRange(
+                tenantId, ScheduleStatus.COMPLETED, startDate, endDate);
+        Map<Long, Long> countByConsultantId = new HashMap<>();
+        for (Object[] row : raw) {
+            if (row == null || row.length < 2 || row[0] == null) {
+                continue;
+            }
+            Long consultantId = ((Number) row[0]).longValue();
+            long count = row[1] == null ? 0L : ((Number) row[1]).longValue();
+            countByConsultantId.put(consultantId, count);
+        }
+
+        List<User> activeConsultants = loadActiveConsultantActors(tenantId);
+        Map<Long, User> userById = new LinkedHashMap<>();
+        for (User user : activeConsultants) {
+            if (user != null && user.getId() != null) {
+                userById.put(user.getId(), user);
+            }
+        }
+
+        Set<Long> missingUserIds = new HashSet<>();
+        for (Long consultantId : countByConsultantId.keySet()) {
+            if (consultantId != null && !userById.containsKey(consultantId)) {
+                missingUserIds.add(consultantId);
+            }
+        }
+        if (!missingUserIds.isEmpty()) {
+            List<User> recovered = userRepository.findByTenantIdAndIdInAndIsDeletedFalse(
+                    tenantId, missingUserIds);
+            for (User user : recovered) {
+                if (user != null && user.getId() != null) {
+                    userById.putIfAbsent(user.getId(), user);
+                }
+            }
+        }
+
+        // 활성 상담사 우선 정렬 → 활성 목록에 없지만 COMPLETED 가 있는 (탈퇴 등) 상담사를 뒤에 추가
+        Map<Long, Boolean> orderedIds = new LinkedHashMap<>();
+        for (Long id : userById.keySet()) {
+            orderedIds.put(id, Boolean.TRUE);
+        }
+        for (Long id : countByConsultantId.keySet()) {
+            if (id != null) {
+                orderedIds.putIfAbsent(id, Boolean.TRUE);
+            }
+        }
+
+        List<ConsultantCount> items = new ArrayList<>(orderedIds.size());
+        for (Long consultantId : orderedIds.keySet()) {
+            User user = userById.get(consultantId);
+            String displayName = user != null
+                    ? scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(user)
+                    : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+            long count = countByConsultantId.getOrDefault(consultantId, 0L);
+            items.add(ConsultantCount.builder()
+                    .consultantId(consultantId)
+                    .consultantName(displayName)
+                    .count(count)
+                    .build());
+        }
+
+        log.info("✅ 월별 상담사 COMPLETED 카운트 응답: tenantId={}, year={}, month={}, items={}",
+                tenantId, year, month, items.size());
+
+        return MonthlyConsultantCountsResponse.builder()
+                .year(year)
+                .month(month)
+                .counts(items)
+                .build();
+    }
+
+    /**
+     * 어드민 통합 스케줄 셀렉터와 정합되는 활성 상담사 actor 목록 빌드.
+     * {@link AdminServiceImpl#mergeConsultantActorsForTenant(String)} 의 활성 필터 버전.
+     *
+     * <p>{@link ConsultantRepository#findActiveConsultantsByTenantId} 는 이미
+     * {@code isActive=true && isDeleted=false} 를 강제하고,
+     * {@link UserRepository#findCounselingEnabledAdminsByTenantId} 는
+     * {@code counselingEnabled && isActive && !isDeleted} 를 강제하므로 추가 필터 불필요.</p>
+     */
+    private List<User> loadActiveConsultantActors(String tenantId) {
+        List<User> out = new ArrayList<>();
+        Set<Long> seen = new HashSet<>();
+        for (Consultant consultant : consultantRepository.findActiveConsultantsByTenantId(tenantId)) {
+            if (consultant != null && consultant.getId() != null && seen.add(consultant.getId())) {
+                out.add(consultant);
+            }
+        }
+        for (User admin : userRepository.findCounselingEnabledAdminsByTenantId(tenantId)) {
+            if (admin != null && admin.getId() != null && seen.add(admin.getId())) {
+                out.add(admin);
+            }
+        }
+        return out;
     }
 
      /**

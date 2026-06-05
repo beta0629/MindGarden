@@ -21,6 +21,7 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
 import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
+import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.exception.ValidationException;
@@ -54,6 +55,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -126,6 +128,34 @@ public class ScheduleController extends BaseApiController {
         if (currentUser != null && currentUser.getId() != null) {
             log.warn("⚠️ 테넌트 컨텍스트 보완 생략(세션/홀더에 tenantId 없음): userId={}", currentUser.getId());
         }
+    }
+
+    /**
+     * 통합 스케줄 — 월별 상담사별 COMPLETED 카운트.
+     *
+     * <p>{@code GET /api/v1/schedules/monthly-consultant-counts?year=YYYY&month=M}.
+     * 어드민 통합 스케줄 페이지의 월 카드에 사용. 같은 테넌트의 활성 상담사를 모두 포함하고
+     * COMPLETED 일정이 없는 상담사도 {@code count: 0} 으로 응답한다. 상한 표기는 프론트 책임.</p>
+     *
+     * <p>가드: {@code @PreAuthorize} (ADMIN/STAFF) + {@code TenantContextHolder#getRequiredTenantId}
+     * 이중 가드. 입력은 {@code year} 1900~9999, {@code month} 1~12 검증.</p>
+     *
+     * @param year  조회 연도 (1900~9999)
+     * @param month 조회 월 (1~12)
+     * @return 표준 {@link ApiResponse} 래퍼 + {@link MonthlyConsultantCountsResponse}
+     * @author CoreSolution
+     * @since 2026-06-09
+     */
+    @GetMapping("/monthly-consultant-counts")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<MonthlyConsultantCountsResponse>> getMonthlyConsultantCompletedCounts(
+            @RequestParam int year,
+            @RequestParam int month) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 월별 상담사 COMPLETED 카운트 요청: tenantId={}, year={}, month={}", tenantId, year, month);
+        MonthlyConsultantCountsResponse response =
+                scheduleService.getMonthlyConsultantCompletedCounts(year, month);
+        return success(response);
     }
 
     /**

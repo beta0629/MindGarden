@@ -576,6 +576,31 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             String tenantId, Long consultantId, Long clientId);
 
     /**
+     * 통합 스케줄 — 월별 상담사별 {@link ScheduleStatus#COMPLETED} 일정 건수 집계.
+     *
+     * <p>{@code /admin/integrated-schedule} 페이지의 월별 카드(상담사별 완료 건수) SSOT.
+     * 인덱스 {@code idx_schedules_tenant_status_date} (V60) 와 정합. 결과는 0건 상담사는
+     * 포함되지 않으므로 호출 측에서 활성 상담사 목록과 합쳐 0건 폴백을 채워야 한다.</p>
+     *
+     * @param tenantId    테넌트 ID
+     * @param status      집계 대상 상태 (운영상 {@link ScheduleStatus#COMPLETED} 만 사용)
+     * @param startDate   시작일(포함)
+     * @param endDate     종료일(포함, 월말일)
+     * @return [0]=consultantId(Long), [1]=count(Long)
+     * @since 2026-06-09
+     */
+    @Query("SELECT s.consultantId, COUNT(s) FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.status = :status AND s.consultantId IS NOT NULL "
+            + "AND s.date BETWEEN :startDate AND :endDate "
+            + "GROUP BY s.consultantId")
+    List<Object[]> countCompletedSchedulesByConsultantInDateRange(
+            @Param("tenantId") String tenantId,
+            @Param("status") ScheduleStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    /**
      * 자동 등급 승급용: 테넌트 내 내담자별 완료된 상담 일정(스케줄) 건수 집계.
      * <p>
      * 정의: {@link com.coresolution.consultation.entity.Schedule} 중 {@code isDeleted == false},

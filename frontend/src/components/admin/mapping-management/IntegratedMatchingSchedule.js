@@ -58,6 +58,16 @@ import { buildMappingPaymentTimingLookup } from '../../schedule/utils/sameDayPen
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
 const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
 
+/**
+ * 월별 상담사 COMPLETED 카운트 API (캘린더 상단 상담사 칩 배지 소스).
+ * 백엔드 위임으로 확정된 엔드포인트 — year/month 쿼리.
+ * 응답: { success: true, data: { year, month, counts: [{ consultantId, consultantName, count }] } }
+ */
+const MONTHLY_CONSULTANT_COUNTS_ENDPOINT = '/api/v1/schedules/monthly-consultant-counts';
+
+const buildMonthlyCountsCacheKey = (tenantId, year, month) =>
+  `${tenantId ?? 'unknown'}:${year}:${month}`;
+
 const readStoredBoolean = (key) => {
   if (typeof window === 'undefined' || !window.localStorage) {
     return null;
@@ -105,6 +115,90 @@ const IntegratedMatchingSchedule = () => {
   const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
   const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
   const sidebarListRef = useRef(null);
+
+  // 월별 상담사 COMPLETED 카운트 — 캘린더 datesSet 콜백에서 갱신.
+  // 초기값은 현재 년/월. 캘린더가 첫 렌더 시 onMonthChange 로 동일 값을 다시 set 해도 동일 키 → 캐시 hit.
+  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth() + 1);
+  const [consultantCounts, setConsultantCounts] = useState(() => new Map());
+
+  // 캐시: `${tenantId}:${year}:${month}` → Map<consultantId, count>
+  const monthlyCountsCacheRef = useRef(new Map());
+  const lastTenantIdRef = useRef(user?.tenantId ?? null);
+
+  // tenantId 변경 시 캐시 리셋(다른 테넌트의 카운트가 노출되지 않도록 차단).
+  useEffect(() => {
+    const tenantId = user?.tenantId ?? null;
+    if (lastTenantIdRef.current !== tenantId) {
+      monthlyCountsCacheRef.current = new Map();
+      lastTenantIdRef.current = tenantId;
+    }
+  }, [user?.tenantId]);
+
+  const handleCalendarMonthChange = useCallback(({ start }) => {
+    if (!(start instanceof Date)) {
+      return;
+    }
+    // FullCalendar 의 dayGridMonth start 는 보통 표시 첫 셀(이전 달 말일 포함)이므로
+    // 표시 가운데(15일)를 기준으로 실제 년/월을 산출한다.
+    const mid = new Date(start.getFullYear(), start.getMonth(), 15);
+    const nextYear = mid.getFullYear();
+    const nextMonth = mid.getMonth() + 1;
+    setCurrentYear((prev) => (prev === nextYear ? prev : nextYear));
+    setCurrentMonth((prev) => (prev === nextMonth ? prev : nextMonth));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const tenantId = user?.tenantId ?? null;
+    const cacheKey = buildMonthlyCountsCacheKey(tenantId, currentYear, currentMonth);
+    const cached = monthlyCountsCacheRef.current.get(cacheKey);
+    if (cached) {
+      setConsultantCounts(cached);
+      return undefined;
+    }
+
+    const loadCounts = async() => {
+      try {
+        const response = await StandardizedApi.get(MONTHLY_CONSULTANT_COUNTS_ENDPOINT, {
+          year: currentYear,
+          month: currentMonth
+        });
+        // StandardizedApi.get 는 ApiResponse 의 data 를 반환.
+        // 백엔드 위임 스키마: { year, month, counts: [{ consultantId, consultantName, count }] }
+        // 일부 환경에서 success/data 래핑을 그대로 받는 경우도 안전하게 처리한다.
+        let payload = response;
+        if (response && typeof response === 'object' && response.success === true && response.data) {
+          payload = response.data;
+        }
+        const rawCounts = Array.isArray(payload?.counts) ? payload.counts : [];
+        const nextMap = new Map();
+        rawCounts.forEach((item) => {
+          if (item && item.consultantId != null) {
+            const numericCount = Number(item.count);
+            nextMap.set(item.consultantId, Number.isFinite(numericCount) ? numericCount : 0);
+          }
+        });
+
+        if (cancelled) {
+          return;
+        }
+        monthlyCountsCacheRef.current.set(cacheKey, nextMap);
+        setConsultantCounts(nextMap);
+      } catch (error) {
+        // 조용한 실패: 배지 미표시. 칩 자체는 정상 노출됨.
+        console.warn('월별 상담사 COMPLETED 카운트 로드 실패:', error);
+        if (!cancelled) {
+          setConsultantCounts(new Map());
+        }
+      }
+    };
+
+    loadCounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentYear, currentMonth, user?.tenantId]);
 
   // 좌측 사이드바 collapse 상태: localStorage 선호값이 있으면 우선, 없으면 화면 폭 기반 초기값
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -667,6 +761,8 @@ const IntegratedMatchingSchedule = () => {
               integratedMonthEventLayout
               calendarSkin="integrated"
               mappingPaymentTimingByMappingId={buildMappingPaymentTimingLookup(mappings)}
+              onMonthChange={handleCalendarMonthChange}
+              consultantCounts={consultantCounts}
             />
           </div>
         </main>

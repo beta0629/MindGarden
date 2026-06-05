@@ -2511,17 +2511,19 @@ textarea.mg-v2-textarea {
   justify-content: center;
 }
 
-/* 탭: 선택/비선택 동일 외곽선 위치. border 는 transparent 로 두고 inset shadow 로 외곽선 표현 →
-   primary(녹색 fill) 와 outline(white fill + 녹색 inner frame) 의 색칠 영역이 정확히 동일한 outer 까지 */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline {
+/* 탭 단차 4차 fix: 두 탭(primary/outline) 모두 완전 동일 box geometry 강제. !important 로
+   unified-design-tokens.css 의 .mg-v2-button-primary { border:none } vs .mg-v2-button-outline { border:2px }
+   불일치 + base MGButton :hover transform/box-shadow 차단. 외곽 = green 2px border, 내부 fill 만 다름. */
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline,
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline.mg-v2-button-outline,
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline.mg-v2-btn--outline {
   font-weight: 600;
-  border-style: solid;
-  border-width: 2px;
-  border-color: transparent;
-  box-shadow: inset 0 0 0 2px var(--ad-b0kla-green);
-  color: var(--ad-b0kla-green);
+  border: 2px solid var(--ad-b0kla-green) !important;
+  box-shadow: none !important;
   background: var(--ad-b0kla-card-bg);
-  box-sizing: border-box;
+  color: var(--ad-b0kla-green);
+  box-sizing: border-box !important;
+  transform: none !important;
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
@@ -2535,12 +2537,11 @@ textarea.mg-v2-textarea {
   z-index: 1;
   background: var(--ad-b0kla-green);
   color: var(--mg-color-text-on-primary, var(--mg-white));
-  border-style: solid;
-  border-width: 2px;
-  /* outline 과 동일 - transparent border + green 색은 background 로만 표현 (외곽 일치) */
-  border-color: transparent;
-  box-shadow: inset 0 0 0 2px var(--ad-b0kla-green);
-  box-sizing: border-box;
+  /* outline 과 완전 동일 외곽: green 2px solid + box-shadow 차단 + transform 차단 (4차 fix) */
+  border: 2px solid var(--ad-b0kla-green) !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  transform: none !important;
 }
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
@@ -2551,9 +2552,9 @@ textarea.mg-v2-textarea {
 
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
 .mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: none;
-  /* base MGButton.css 의 :hover box-shadow (외부 drop-shadow) 가 inset frame 을 덮지 않도록 inset 유지 */
-  box-shadow: inset 0 0 0 2px var(--ad-b0kla-green);
+  transform: none !important;
+  /* base MGButton.css 의 :hover box-shadow / inset shadow 모두 차단 (4차 fix: 외형 변동 0) */
+  box-shadow: none !important;
 }
 
 /* 일정 상세 푸터: __modal-actions 마커는 위 .schedule-detail-modal__footer-actions flex 블록과 동일 규칙으로 병합됨 */

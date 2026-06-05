@@ -115,7 +115,19 @@ const UnifiedScheduleComponent = ({
    */
   selectedClientIds = [],
   /** 통합 스케줄 한정 — 칩-버튼 onChange 콜백. */
-  onClientFilterChange
+  onClientFilterChange,
+  /**
+   * R2 (2026-06-09) — 통합 스케줄 한정 가예약 범례 콘텐츠 (ReactNode).
+   * 전달 시에만 ScheduleLegend 본문(세션 라벨 섹션 다음)에 노출 → 다른 라우트 회귀 0.
+   */
+  sameDayPendingLegendContent = null,
+  /**
+   * R4 (2026-06-09) — 통합 스케줄 한정 «상담일지 미작성» 일자 목록.
+   * 형태: [{ consultantId, consultantName, missingDates: string[] }].
+   * null/undefined : ScheduleLegend 의 미작성 섹션 자체 미노출 (다른 라우트 회귀 0).
+   * 빈 배열 : «모두 작성됨» placeholder 노출.
+   */
+  missingConsultationLogs = null
 }) => {
     const { t } = useTranslation();
     const resolvedDisableCalendarEventDrag =
@@ -1114,6 +1126,8 @@ const UnifiedScheduleComponent = ({
                 getConsultantColor={getConsultantColor}
                 calendarSkin={calendarSkin}
                 consultantCounts={consultantCounts}
+                sameDayPendingLegendContent={sameDayPendingLegendContent}
+                missingConsultationLogs={missingConsultationLogs}
             />
 
             {loading && (
@@ -1254,7 +1268,15 @@ UnifiedScheduleComponent.propTypes = {
     PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   ),
   /** 통합 스케줄 한정 — 칩-버튼 onChange 콜백 */
-  onClientFilterChange: PropTypes.func
+  onClientFilterChange: PropTypes.func,
+  /** R2: 통합 스케줄 한정 — 가예약 범례 ReactNode. 전달 시 ScheduleLegend body 안에 노출. */
+  sameDayPendingLegendContent: PropTypes.node,
+  /** R4: 통합 스케줄 한정 — 상담일지 미작성 일자 목록 (상담사별). null 시 섹션 자체 미노출. */
+  missingConsultationLogs: PropTypes.arrayOf(PropTypes.shape({
+    consultantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    consultantName: PropTypes.string,
+    missingDates: PropTypes.arrayOf(PropTypes.string)
+  }))
 };
 
 export default UnifiedScheduleComponent;

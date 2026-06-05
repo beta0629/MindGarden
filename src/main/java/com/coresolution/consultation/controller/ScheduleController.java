@@ -22,6 +22,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
 import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
+import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.exception.ValidationException;
@@ -155,6 +156,35 @@ public class ScheduleController extends BaseApiController {
         log.info("📊 월별 상담사 COMPLETED 카운트 요청: tenantId={}, year={}, month={}", tenantId, year, month);
         MonthlyConsultantCountsResponse response =
                 scheduleService.getMonthlyConsultantCompletedCounts(year, month);
+        return success(response);
+    }
+
+    /**
+     * 통합 스케줄 — 월별 상담사별 상담일지 미작성(누락) 일자.
+     *
+     * <p>{@code GET /api/v1/schedules/monthly-missing-consultation-logs?year=YYYY&month=M}.
+     * 통합 스케줄 캘린더 범례의 «상담일지 미작성» 섹션 SSOT. 같은 테넌트의 해당 월 COMPLETED
+     * 일정 중 ConsultationRecord (비삭제) 가 존재하지 않는 일정을 상담사별로 그룹화한다.
+     * 누락 0건 상담사는 응답에서 제외 (UI 노이즈 차단).</p>
+     *
+     * <p>가드: {@code @PreAuthorize} (ADMIN/STAFF) + {@code TenantContextHolder#getRequiredTenantId}
+     * 이중 가드. 입력은 {@code year} 1900~9999, {@code month} 1~12 검증.</p>
+     *
+     * @param year  조회 연도 (1900~9999)
+     * @param month 조회 월 (1~12)
+     * @return 표준 {@link ApiResponse} 래퍼 + {@link MonthlyMissingConsultationLogsResponse}
+     * @author CoreSolution
+     * @since 2026-06-09
+     */
+    @GetMapping("/monthly-missing-consultation-logs")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<MonthlyMissingConsultationLogsResponse>> getMonthlyMissingConsultationLogs(
+            @RequestParam int year,
+            @RequestParam int month) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📝 월별 상담사 상담일지 누락 조회: tenantId={}, year={}, month={}", tenantId, year, month);
+        MonthlyMissingConsultationLogsResponse response =
+                scheduleService.getMonthlyMissingConsultationLogs(year, month);
         return success(response);
     }
 

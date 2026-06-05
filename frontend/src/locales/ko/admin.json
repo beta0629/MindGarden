@@ -2677,7 +2677,11 @@
         "sameDayPendingPrefix": "[당일결제] "
       },
       "legend": {
-        "sameDayPending": "[당일결제 점선] = 당일 카드 결제 대기 가예약 (결제 후 일반 일정으로 전환)"
+        "sameDayPending": "[당일결제 점선] = 당일 카드 결제 대기 가예약 (결제 후 일반 일정으로 전환)",
+        "missingConsultationLogs": "상담일지 미작성",
+        "missingConsultationLogsAllDone": "이번 달 모든 일정의 상담일지가 작성되었습니다",
+        "missingConsultationLogsItemAria": "{{name}}, 미작성 {{count}}건",
+        "missingConsultationLogsDateAria": "{{date}} 상담일지 미작성"
       }
     },
     "refund": {

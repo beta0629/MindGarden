@@ -63,6 +63,43 @@ const hasAnyConsultantCount = (consultantCounts) => {
 
 const LEGEND_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.legendCollapsed';
 
+/**
+ * R2 (2026-06-09): 좁은 폭(≤1024px) 통합 스케줄에서 초기 접힘 보장.
+ * 사용자 명시 선호(localStorage) 가 있으면 그대로 우선. media query 미지원 환경
+ * (SSR/jsdom 등)에서는 false 로 떨어져 기존 동작 유지.
+ */
+const LEGEND_AUTO_COLLAPSE_BREAKPOINT_PX = 1024;
+
+const matchesNarrowViewport = () => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+        return false;
+    }
+    try {
+        return window.matchMedia(`(max-width: ${LEGEND_AUTO_COLLAPSE_BREAKPOINT_PX}px)`).matches;
+    } catch (e) {
+        return false;
+    }
+};
+
+/**
+ * R4 (2026-06-09): 누락 일자 칩 라벨 — 'YYYY-MM-DD' → 'M/D'.
+ * 입력 파싱 실패 시 원본 문자열 반환 (안전 폴백 + safeDisplay 룰 정합).
+ */
+const formatToMonthDay = (raw) => {
+    if (raw == null) return '';
+    const str = String(raw).trim();
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(str);
+    if (!match) {
+        return str;
+    }
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (!Number.isFinite(month) || !Number.isFinite(day)) {
+        return str;
+    }
+    return `${month}/${day}`;
+};
+
 const readStoredBoolean = (key) => {
     if (typeof window === 'undefined' || !window.localStorage) return null;
     try {
@@ -103,7 +140,20 @@ const ScheduleLegend = ({
     scheduleStatusOptions,
     getConsultantColor,
     calendarSkin,
-    consultantCounts
+    consultantCounts,
+    /**
+     * R2 (2026-06-09) — 통합 스케줄 한정 가예약 범례 컨텐츠.
+     * 옵션 1 (자유도 + 회귀 0): 부모가 ReactNode 를 전달하면 SESSION_LABELS 섹션 다음에 노출.
+     * 미전달 시 표시하지 않음 — 다른 라우트(상담사 캘린더 등) 회귀 0.
+     */
+    sameDayPendingLegendContent = null,
+    /**
+     * R4 (2026-06-09) — 통합 스케줄 한정 상담일지 미작성(누락) 일자.
+     * 형태: [{ consultantId, consultantName, missingDates: ['YYYY-MM-DD', ...] }].
+     * 빈 배열·undefined 시 «모두 작성됨» placeholder 노출 (통합 스킨 한정).
+     * 다른 라우트(상담사 캘린더 등) 는 부모가 미전달 → 섹션 자체 미노출 → 회귀 0.
+     */
+    missingConsultationLogs = null
 }) => {
     const { t } = useTranslation();
     const isIntegrated = calendarSkin === 'integrated';
@@ -113,11 +163,13 @@ const ScheduleLegend = ({
     // 카운트 데이터가 1건이라도 존재하면 통합 스킨 기본 접힘을 무시하고 강제 펼침.
     const hasCounts = useMemo(() => hasAnyConsultantCount(consultantCounts), [consultantCounts]);
 
-    // 통합 스킨일 때만 사용자 선호 / 기본 접힘 적용
+    // 통합 스킨일 때만 사용자 선호 / 기본 접힘 적용.
+    // 우선순위: localStorage 선호 → 좁은 폭(≤1024px) 자동 접힘 → 기본 접힘(Q2=A).
     const [isCollapsed, setIsCollapsed] = useState(() => {
         if (!isIntegrated) return false;
         const stored = readStoredBoolean(LEGEND_COLLAPSED_STORAGE_KEY);
         if (stored !== null) return stored;
+        if (matchesNarrowViewport()) return true; // R2: 좁은 폭에서 명시 선호 없으면 접힘 보장
         return true; // Q2=A : 기본 접힘
     });
     const userOverrideRef = useRef(readStoredBoolean(LEGEND_COLLAPSED_STORAGE_KEY) !== null);
@@ -129,9 +181,11 @@ const ScheduleLegend = ({
         }
     }, [isIntegrated]);
 
-    // 카운트가 도착하면 사용자 선호와 무관하게 강제 펼침(디자이너 결정).
+    // 카운트가 도착하면 강제 펼침 — 단, 사용자가 명시적으로 토글한 적이 있으면 존중한다.
+    // 2026-06-09 R1: localStorage 에 저장된 선호값이 있으면 mount 시점부터 userOverrideRef=true 로
+    // 초기화되어 강제 펼침이 발동하지 않는다. (handleToggle 도 동일하게 userOverrideRef=true 세팅).
     useEffect(() => {
-        if (hasCounts && isCollapsed) {
+        if (hasCounts && isCollapsed && !userOverrideRef.current) {
             setIsCollapsed(false);
         }
     }, [hasCounts, isCollapsed]);
@@ -216,6 +270,12 @@ const ScheduleLegend = ({
                     </div>
                 </div>
             )}
+            {/* R2: 통합 스케줄 한정 가예약 범례 (옵션 B SAME_DAY_CARD). 부모 전달 시에만 노출 — 회귀 0. */}
+            {sameDayPendingLegendContent && (
+                <div className="mg-v2-legend-section mg-v2-legend-section--same-day-pending">
+                    {sameDayPendingLegendContent}
+                </div>
+            )}
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (
                 <div className="mg-v2-legend-section">
@@ -284,6 +344,69 @@ const ScheduleLegend = ({
                             </div>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {/*
+              R4 (2026-06-09): 통합 스케줄 한정 «상담일지 미작성» 섹션.
+              - missingConsultationLogs === null/undefined : 부모가 전달 안 함 → 섹션 자체 미노출 (다른 라우트 회귀 0)
+              - missingConsultationLogs === []            : 모두 작성됨 placeholder
+              - 그 외                                       : 상담사별 누락 일자 칩 리스트
+            */}
+            {isIntegrated && Array.isArray(missingConsultationLogs) && (
+                <div className="mg-v2-legend-section mg-v2-legend-missing-logs">
+                    <div className="mg-v2-legend-title">
+                        {t('admin:mapping.schedule.legend.missingConsultationLogs')}
+                    </div>
+                    {missingConsultationLogs.length === 0 ? (
+                        <div className="mg-v2-legend-missing-logs__empty">
+                            {t('admin:mapping.schedule.legend.missingConsultationLogsAllDone')}
+                        </div>
+                    ) : (
+                        <div className="mg-v2-legend-missing-logs__items">
+                            {missingConsultationLogs.map((item) => {
+                                const name = toDisplayString(item?.consultantName, '—');
+                                const dates = Array.isArray(item?.missingDates) ? item.missingDates : [];
+                                const itemAria = t('admin:mapping.schedule.legend.missingConsultationLogsItemAria', {
+                                    name,
+                                    count: dates.length,
+                                    defaultValue: `${name}, 미작성 ${dates.length}건`
+                                });
+                                return (
+                                    <div
+                                        key={`missing-${item?.consultantId ?? name}`}
+                                        className="mg-v2-legend-missing-logs__item"
+                                        aria-label={itemAria}
+                                    >
+                                        <span className="mg-v2-legend-missing-logs__name">{name}</span>
+                                        <span className="mg-v2-legend-missing-logs__count">({dates.length})</span>
+                                        <span className="mg-v2-legend-missing-logs__dates">
+                                            {dates.map((date) => {
+                                                const safeDate = toDisplayString(date, '');
+                                                const chipAria = t(
+                                                    'admin:mapping.schedule.legend.missingConsultationLogsDateAria',
+                                                    {
+                                                        date: safeDate,
+                                                        defaultValue: `${safeDate} 상담일지 미작성`
+                                                    }
+                                                );
+                                                return (
+                                                    <span
+                                                        key={`${item?.consultantId}-${safeDate}`}
+                                                        className="mg-v2-legend-missing-date-chip"
+                                                        title={safeDate}
+                                                        aria-label={chipAria}
+                                                    >
+                                                        {formatToMonthDay(safeDate)}
+                                                    </span>
+                                                );
+                                            })}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             )}
         </>

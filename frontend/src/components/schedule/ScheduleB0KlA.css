@@ -66,6 +66,17 @@
   padding-bottom: var(--mg-spacing-sm);
 }
 
+/* R2 상단 영역 압축 — 1280px 이하에서 no-title 헤더의 margin/padding 추가 축소.
+   - 통합 스케줄 한정 시 selector 가 너무 좁아질 수 있어 .mg-v2-ad-b0kla 스코프 유지.
+   - 다른 캘린더 라우트(/schedule 등)는 hideScheduleTitle 미사용 → 영향 0.
+   @since 2026-06-09 */
+@media (max-width: 1280px) {
+  .mg-v2-ad-b0kla .mg-v2-schedule-header--no-title {
+    margin-bottom: var(--mg-spacing-sm);
+    padding-bottom: var(--mg-spacing-xs);
+  }
+}
+
 .mg-v2-ad-b0kla .mg-v2-schedule-header__actions {
   display: flex;
   align-items: center;

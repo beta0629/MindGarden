@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.MappingHistoryEventType;
@@ -24,6 +25,8 @@ import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessag
 import com.coresolution.consultation.constant.consultation.ConsultationServiceUserFacingMessages;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse.ConsultantCount;
+import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
+import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse.ConsultantMissingLogs;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.Consultant;
@@ -3192,6 +3195,101 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .year(year)
                 .month(month)
                 .counts(items)
+                .build();
+    }
+
+    /**
+     * 통합 스케줄 — 월별 상담사별 «상담일지 미작성(누락)» 일자 조회.
+     *
+     * <p>SSOT 정합:</p>
+     * <ul>
+     *   <li>완료 상태: {@link ScheduleStatus#COMPLETED} enum 만 전달 (하드코딩 금지).</li>
+     *   <li>LEFT JOIN 키: {@code r.consultationId = s.id} — 기존 호출부
+     *       ({@code existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId())})
+     *       와 동일 패턴.</li>
+     *   <li>표시명: {@link ScheduleListUserFieldsResolver#resolveDisplayNameForScheduleList(User)}.
+     *       User.name 직접 사용 금지(암호화 컬럼).</li>
+     *   <li>N+1 가드: row 의 consultantId 만 batch fetch
+     *       ({@link UserRepository#findByTenantIdAndIdInAndIsDeletedFalse}).</li>
+     *   <li>같은 상담사·같은 일자 다건 일정이 모두 누락이면 {@link TreeSet} 으로 일자 중복 제거 + 오름차순 보장.</li>
+     *   <li>누락 0건 상담사는 응답에서 제외 (UI 노이즈 차단).</li>
+     * </ul>
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public MonthlyMissingConsultationLogsResponse getMonthlyMissingConsultationLogs(int year, int month) {
+        if (year < 1900 || year > 9999) {
+            throw new IllegalArgumentException("year 는 1900~9999 범위여야 합니다. year=" + year);
+        }
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException("month 는 1~12 범위여야 합니다. month=" + month);
+        }
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        YearMonth ym = YearMonth.of(year, month);
+        LocalDate startDate = ym.atDay(1);
+        LocalDate endDate = ym.atEndOfMonth();
+
+        log.info("📝 월별 상담사 상담일지 누락 일자 조회: tenantId={}, year={}, month={}, period={}~{}",
+                tenantId, year, month, startDate, endDate);
+
+        List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
+                tenantId, ScheduleStatus.COMPLETED, startDate, endDate);
+
+        // 상담사 → 일자 집합 (TreeSet 으로 오름차순·중복 제거 보장).
+        Map<Long, TreeSet<LocalDate>> datesByConsultantId = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                continue;
+            }
+            Long consultantId = ((Number) row[0]).longValue();
+            LocalDate date = (LocalDate) row[1];
+            datesByConsultantId
+                    .computeIfAbsent(consultantId, k -> new TreeSet<>())
+                    .add(date);
+        }
+
+        if (datesByConsultantId.isEmpty()) {
+            log.info("✅ 월별 상담사 상담일지 누락 일자 응답: tenantId={}, year={}, month={}, items=0",
+                    tenantId, year, month);
+            return MonthlyMissingConsultationLogsResponse.builder()
+                    .year(year)
+                    .month(month)
+                    .items(new ArrayList<>())
+                    .build();
+        }
+
+        // 표시명 batch fetch — distinct consultantId 만 1회 조회.
+        List<User> users = userRepository.findByTenantIdAndIdInAndIsDeletedFalse(
+                tenantId, datesByConsultantId.keySet());
+        Map<Long, User> userById = new HashMap<>();
+        for (User user : users) {
+            if (user != null && user.getId() != null) {
+                userById.put(user.getId(), user);
+            }
+        }
+
+        List<ConsultantMissingLogs> items = new ArrayList<>(datesByConsultantId.size());
+        for (Map.Entry<Long, TreeSet<LocalDate>> entry : datesByConsultantId.entrySet()) {
+            Long consultantId = entry.getKey();
+            User user = userById.get(consultantId);
+            String displayName = user != null
+                    ? scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(user)
+                    : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+            items.add(ConsultantMissingLogs.builder()
+                    .consultantId(consultantId)
+                    .consultantName(displayName)
+                    .missingDates(new ArrayList<>(entry.getValue()))
+                    .build());
+        }
+
+        log.info("✅ 월별 상담사 상담일지 누락 일자 응답: tenantId={}, year={}, month={}, items={}",
+                tenantId, year, month, items.size());
+
+        return MonthlyMissingConsultationLogsResponse.builder()
+                .year(year)
+                .month(month)
+                .items(items)
                 .build();
     }
 

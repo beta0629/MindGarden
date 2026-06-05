@@ -1,0 +1,135 @@
+/**
+ * SegmentedTabs SSOT CSS — MGBUTTON_SSOT_DESIGN_HANDOFF.md v1.1
+ *
+ * 채택: Q2=P2 (외곽선 폐기) + D3=#d1fae5 비활성 + D4=inner 2px shadow focus
+ * 모든 토큰은 dashboard-tokens-extension.css §SegmentedTabs SSOT 에 정의.
+ */
+
+.mg-segmented-tabs {
+  display: inline-flex;
+  align-items: stretch;
+  gap: var(--mg-segmented-tab-gap);
+  padding: var(--mg-segmented-tab-gap);
+  background: var(--mg-segmented-track-bg);
+  border-radius: calc(var(--mg-segmented-tab-radius) + 2px);
+  border: 0;
+  box-shadow: none;
+  width: max-content;
+}
+
+.mg-segmented-tabs__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--mg-segmented-tab-min-height);
+  padding: 0 18px;
+  font-family: inherit;
+  font-size: var(--mg-font-size-sm, 14px);
+  font-weight: 600;
+  line-height: 1;
+  border: 0;
+  border-radius: var(--mg-segmented-tab-radius);
+  cursor: pointer;
+  transition: var(--mg-segmented-tab-transition);
+  outline: none;
+  box-shadow: none;
+  transform: none;
+  background-clip: padding-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-segmented-tabs--sm .mg-segmented-tabs__tab {
+  min-height: var(--mg-segmented-tab-min-height-sm);
+  padding: 0 14px;
+  font-size: 13px;
+  border-radius: var(--mg-segmented-tab-radius-sm);
+}
+
+.mg-segmented-tabs__tab--active {
+  background: var(--mg-segmented-tab-active-bg);
+  color: var(--mg-segmented-tab-active-text);
+}
+
+.mg-segmented-tabs__tab--inactive {
+  background: var(--mg-segmented-tab-inactive-bg);
+  color: var(--mg-segmented-tab-inactive-text);
+}
+
+.mg-segmented-tabs__tab--active:hover:not(:disabled) {
+  background: var(--mg-segmented-tab-hover-bg-active);
+}
+
+.mg-segmented-tabs__tab--inactive:hover:not(:disabled) {
+  background: var(--mg-segmented-tab-hover-bg-inactive);
+}
+
+.mg-segmented-tabs__tab--active:active:not(:disabled) {
+  background: var(--mg-segmented-tab-press-bg-active);
+}
+
+.mg-segmented-tabs__tab--inactive:active:not(:disabled) {
+  background: var(--mg-segmented-tab-press-bg-inactive);
+}
+
+.mg-segmented-tabs__tab:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--mg-segmented-tab-focus-ring);
+}
+
+.mg-segmented-tabs__tab--disabled,
+.mg-segmented-tabs__tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mg-segmented-tabs__tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.25);
+  color: inherit;
+}
+
+.mg-segmented-tabs__tab--inactive .mg-segmented-tabs__tab-badge {
+  background: rgba(5, 150, 105, 0.18);
+}
+
+/* ===== 모바일 (≤ 768px) ===== */
+@media (max-width: 768px) {
+  .mg-segmented-tabs {
+    width: 100%;
+  }
+  .mg-segmented-tabs__tab {
+    flex: 1 1 0;
+    min-height: 44px;
+    font-size: 13px;
+    padding: 0 12px;
+  }
+}
+
+/* ===== 고대비 모드 (forced-colors) ===== */
+@media (forced-colors: active) {
+  .mg-segmented-tabs__tab--active {
+    background: SelectedItem;
+    color: SelectedItemText;
+    forced-color-adjust: none;
+  }
+  .mg-segmented-tabs__tab--inactive {
+    background: Canvas;
+    color: CanvasText;
+    border: 2px solid CanvasText;
+  }
+  .mg-segmented-tabs__tab:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}

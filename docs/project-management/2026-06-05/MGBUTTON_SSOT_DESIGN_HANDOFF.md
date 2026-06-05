@@ -370,4 +370,18 @@ inner 2px highlight (`box-shadow: inset 0 0 0 2px focus-ring-color`):
 
 본 디자인 핸드오프 v1.0 — 사용자 D1~D5 결재 후 Phase 2 core-coder (또는 메인 직접) 위임.
 
+---
+
+## §K 사용자 결재 결과 (2026-06-05 KST, v1.1 stamp)
+
+| 변수 | 채택 | 결정 사유 |
+|---|---|---|
+| **D1) danger 액션 fill** | **b) #dc2626 (cs-error-600)** | WCAG AA 6:1 PASS, 디자이너 권고 채택 |
+| **D2) ActionBar API** | **a) 단순 wrapper + Context auto-attr** | MGButton 의 variant prop 재활용, 마이그 마찰 최소 |
+| **D3) SegmentedTabs 비활성 색** | **a) #d1fae5 (cs-success-100)** | 활성 #059669 와 명도 대비 ΔL 0.54, 색맹 대응 |
+| **D4) focus-visible 표현** | **a) inner 2px shadow** | 외곽 단차 0, 5차 fix 의 outline 패턴 영구 폐기 |
+| **D5) Phase 2 진행 방식** | **a) 메인 직접 진행** | core-designer / core-planner gemini 사용량 한도 연속 종료 상황 동일, 1~2일 내 PR 완성 |
+
+→ §A 토큰 21종 + §C 4상태 매트릭스 + §D API 권고 모두 **확정 SSOT**. Phase 2 메인 직접 구현 진행.
+
 EOF

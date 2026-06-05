@@ -23,3 +23,7 @@ export {
 export { default as SafeErrorDisplay } from './SafeErrorDisplay';
 export { default as SafeText } from './SafeText';
 export { default as SafeNumeric } from './SafeNumeric';
+
+/* MGButton SSOT v1.1 (2026-06-05) — SegmentedTabs + ActionBar */
+export { default as SegmentedTabs } from './SegmentedTabs';
+export { default as ActionBar } from './ActionBar';

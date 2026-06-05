@@ -2430,143 +2430,26 @@ textarea.mg-v2-textarea {
   color: var(--mg-color-text-main, var(--mg-text-primary));
 }
 
-/* 일정 상세 — B0KlA 세그먼트(트랙에만 배경·테두리) */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-width: 0;
-  box-sizing: border-box;
-  margin-top: 0;
+/* 일정 상세 — B0KlA 세그먼트 [MGBUTTON SSOT v1.1 (2026-06-05) 마이그]:
+ * 1~5차 fix override 110+ 라인은 SegmentedTabs.css SSOT 가 흡수.
+ * mg-v2-ad-b0kla__segmented-control / __segmented-item 마커 + MGButton tab 패턴 폐기.
+ * 별도 modal 컨테이너 보정만 유지 (트랙 박스 색감은 SSOT 가 결정). */
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs {
+  align-self: stretch;
   margin-bottom: var(--mg-space-3, 0.75rem);
-  padding: 0;
-  background: transparent;
-  border: none;
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track {
-  display: flex !important;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 0;
   width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 4px 0;
-  background: var(--ad-b0kla-green-bg);
-  border-top: 1px solid var(--ad-b0kla-border);
-  border-bottom: 1px solid var(--ad-b0kla-border);
-  border-left: none;
-  border-right: none;
-  border-radius: 0;
 }
 
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button {
-  position: relative;
-  z-index: 0;
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-segmented-tabs {
+  /* SSOT 의 width:max-content 를 모달 안에서는 full-width 로 확장 */
+  width: 100%;
+}
+
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-segmented-tabs .mg-segmented-tabs__tab {
   flex: 1 1 0;
-  min-width: 0;
-  min-height: 44px;
-  max-width: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
 }
 
-/* 세그먼트: 외곽만 radius, 인접 경계는 -2px로 테두리 이중선 제거 */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:first-child {
-  border-top-left-radius: var(--ad-b0kla-radius-sm, 8px);
-  border-bottom-left-radius: var(--ad-b0kla-radius-sm, 8px);
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:last-child {
-  border-top-right-radius: var(--ad-b0kla-radius-sm, 8px);
-  border-bottom-right-radius: var(--ad-b0kla-radius-sm, 8px);
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:first-child:not(:last-child) {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:not(:first-child) {
-  margin-left: -2px;
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:last-child:not(:first-child) {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:not(:first-child):not(:last-child) {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button .mg-button__content {
-  justify-content: center;
-}
-
-/* 탭 단차 4차 fix: 두 탭(primary/outline) 모두 완전 동일 box geometry 강제. !important 로
-   unified-design-tokens.css 의 .mg-v2-button-primary { border:none } vs .mg-v2-button-outline { border:2px }
-   불일치 + base MGButton :hover transform/box-shadow 차단. 외곽 = green 2px border, 내부 fill 만 다름. */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline,
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline.mg-v2-button-outline,
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline.mg-v2-btn--outline {
-  font-weight: 600;
-  border: 2px solid var(--ad-b0kla-green) !important;
-  box-shadow: none !important;
-  background: var(--ad-b0kla-card-bg);
-  color: var(--ad-b0kla-green);
-  box-sizing: border-box !important;
-  transform: none !important;
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--ad-b0kla-green-bg);
-  color: var(--ad-b0kla-green);
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary,
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-button-primary,
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-btn--primary {
-  z-index: 1;
-  background: var(--ad-b0kla-green);
-  color: var(--mg-color-text-on-primary, var(--mg-white));
-  /* outline 과 완전 동일 외곽: green 2px solid + box-shadow 차단 + transform 차단 (4차 fix) */
-  border: 2px solid var(--ad-b0kla-green) !important;
-  box-shadow: none !important;
-  box-sizing: border-box !important;
-  transform: none !important;
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button.mg-button--primary.mg-v2-btn--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--mg-success-700);
-  color: var(--mg-color-text-on-primary, var(--mg-white));
-}
-
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: none !important;
-  /* base MGButton.css 의 :hover box-shadow / inset shadow 모두 차단 (4차 fix: 외형 변동 0) */
-  box-shadow: none !important;
-}
-
-/* 5차 fix: 활성 탭이 :focus-visible 상태일 때 base MGButton.css L22-25 의
-   `outline: 2px solid green; outline-offset: 2px` 가 그려져 외곽이 4px 더 커 보이는 단차 원인.
-   탭(role=tab) 에서는 background/border 색이 이미 활성 상태를 명시하므로 outline 불필요 → 차단. */
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:focus,
-.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:focus-visible {
-  outline: none !important;
-  outline-offset: 0 !important;
-}
-
-/* 일정 상세 푸터: __modal-actions 마커는 위 .schedule-detail-modal__footer-actions flex 블록과 동일 규칙으로 병합됨 */
+/* 일정 상세 푸터: ActionBar wrapper 가 흡수 (mg-actionbar SSOT), __modal-actions 마커 보존 */
 
 /* 입금 확인(adminNote) vs 지속 특이사항 탭 — 상세 탭 안내 */
 .schedule-detail-modal__persist-note-hint {

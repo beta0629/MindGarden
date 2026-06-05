@@ -1514,52 +1514,19 @@
   width: auto;
 }
 
-/* 일정 상세·확인 서브모달: actions 직계 래퍼 — flex로 세로 중앙·동일 min-height(Admin 40px보다 구체적) */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions,
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .mg-v2-ad-b0kla__modal-actions.schedule-detail-modal__footer-actions {
-  display: flex !important;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: stretch;
-  justify-content: flex-end;
-  gap: var(--spacing-md);
-  width: 100%;
-  min-width: 0;
-  align-self: stretch;
-  box-sizing: border-box;
-}
-
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button,
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > button {
-  flex: 1 1 0;
-  min-width: 0;
-  max-width: none;
-  min-height: 44px;
-  align-self: stretch;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button .mg-button__content {
-  justify-content: center;
-}
-
 /*
- * 일정 상세 푸터: mg-v2-btn--primary 의 border:none vs outline 1px 박스 차이 제거,
- * 호버 translateY(-1px) 로 인한 세로 체감 단차 완화(모달 푸터 한정).
+ * v1.4 hotfix (2026-06-05): 일정 상세 푸터 actions 의 alignment/flex/min-height/border
+ * override 5블록 일괄 제거. ActionBar SSOT (frontend/src/components/common/ActionBar.css
+ * 의 .mg-actionbar > .mg-button universal !important 룰) 가 모든 정렬·치수를 결정한다.
+ *
+ * 제거 사유: 본 selector chain (specificity 0,4,1) 가 v1.3 universal (0,2,0) 보다
+ * 강해 SSOT 와 충돌 — 특히 `align-self: stretch` 와 `flex: 1 1 0` 가 outline /
+ * primary / danger variant 간 시각 단차를 유발. v1.3 의 !important 가 height/padding
+ * 은 잡지만 align-self/flex 는 v1.3 에 정의되지 않아 본 override 가 leak 됨.
+ *
+ * 대체: ActionBar.jsx 가 `data-align`·`data-gap` 으로 정렬·gap 을 결정하고,
+ * 자식 MGButton 의 height/padding/border 는 v1.3 universal !important 가 단일 진실.
  */
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button.mg-v2-btn--primary {
-  /* outline 1px와 박스 모델 맞춤(탭 세그먼트 2px는 상단 블록 전용) */
-  border: 1px solid transparent;
-  box-sizing: border-box;
-}
-
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading),
-.mg-modal.mg-v2-ad-b0kla .mg-modal__actions > .schedule-detail-modal__footer-actions > .mg-button:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: none;
-}
 
 /* mg-modal__body 내부 폼·입력 B0KlA */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-v2-input,

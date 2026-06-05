@@ -937,8 +937,15 @@ const ScheduleDetailModal = ({
                     const completedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'COMPLETED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_8d868037'))
                     )?.value || 'COMPLETED';
-                    /** 작성 vs 보기/수정 상호배타: 미작성(null 포함, 보수적) → "작성" 노출 / 작성완료 → 푸터 "보기/수정" 만 노출 (상단 ActionBar 에서 처리). */
-                    const showWriteConsultationLog = hasConsultationRecord !== true;
+                    /**
+                     * CONFIRMED(진행 중) 상태에서는 상담일지 작성 진입을 항상 허용한다.
+                     * - PR #129 가드(`consultationLogLinkVisible`)로 "보기/수정"은 COMPLETED + record 한정이므로
+                     *   본 작성 버튼과의 중복 노출 위험이 없다.
+                     * - record 가 이미 존재하는 경우(데이터 정합 이슈 또는 사전 작성)에도 작성 화면에서
+                     *   기존 record 를 로드해 수정 흐름으로 진입한다.
+                     * - JSX 의 `{showWriteConsultationLog && (...)}` 분기는 향후 추가 가드 여지를 위해 유지한다.
+                     */
+                    const showWriteConsultationLog = true;
                     return (
                         <>
                             {showWriteConsultationLog && (

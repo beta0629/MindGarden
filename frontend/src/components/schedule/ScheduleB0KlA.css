@@ -2557,6 +2557,15 @@ textarea.mg-v2-textarea {
   box-shadow: none !important;
 }
 
+/* 5차 fix: 활성 탭이 :focus-visible 상태일 때 base MGButton.css L22-25 의
+   `outline: 2px solid green; outline-offset: 2px` 가 그려져 외곽이 4px 더 커 보이는 단차 원인.
+   탭(role=tab) 에서는 background/border 색이 이미 활성 상태를 명시하므로 outline 불필요 → 차단. */
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:focus,
+.mg-modal.mg-v2-ad-b0kla .schedule-detail-modal__tabs.mg-v2-ad-b0kla__segmented-control > .schedule-detail-modal__tabs__track > .mg-button:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
 /* 일정 상세 푸터: __modal-actions 마커는 위 .schedule-detail-modal__footer-actions flex 블록과 동일 규칙으로 병합됨 */
 
 /* 입금 확인(adminNote) vs 지속 특이사항 탭 — 상세 탭 안내 */

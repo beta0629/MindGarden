@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedModal from '../../components/common/modals/UnifiedModal';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { useTranslation } from 'react-i18next';
 
@@ -131,35 +131,14 @@ const TimeSelectionModal = ({
             showCloseButton={true}
             className="mg-v2-ad-b0kla"
             actions={
-                <>
-                    <MGButton
-                        variant="secondary"
-                        className={buildErpMgButtonClassName({
-                          variant: 'secondary',
-                          size: 'md',
-                          loading: false,
-                          className: 'mg-btn mg-btn--secondary'
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={onClose}
-                        preventDoubleClick={false}
-                    >
+                <ActionBar align="end" gap="md">
+                    <ActionBarButton variant="outline" onClick={onClose}>
                         {t('common.actions.cancel')}
-                    </MGButton>
-                    <MGButton
-                        variant="primary"
-                        className={buildErpMgButtonClassName({
-                          variant: 'primary',
-                          size: 'md',
-                          loading: false,
-                          className: 'mg-btn mg-btn--primary'
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={handleConfirm}
-                    >
+                    </ActionBarButton>
+                    <ActionBarButton variant="primary" onClick={handleConfirm}>
                         {t('common.actions.confirm')}
-                    </MGButton>
-                </>
+                    </ActionBarButton>
+                </ActionBar>
             }
         >
             {/* 상담 유형 선택 */}

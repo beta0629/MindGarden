@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -228,40 +228,14 @@ const RescheduleScheduleModal = ({
       className="mg-v2-ad-b0kla"
       loading={saving}
       actions={
-        <>
-          <MGButton
-            type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'md',
-              loading: false,
-              className: 'mg-v2-btn--outline'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={onClose}
-            disabled={saving}
-            preventDoubleClick={false}
-          >
+        <ActionBar align="end" gap="md">
+          <ActionBarButton variant="outline" onClick={onClose} disabled={saving}>
             {BTN_CANCEL}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="primary"
-            className={buildErpMgButtonClassName({
-              variant: 'primary',
-              size: 'md',
-              loading: saving,
-              className: 'mg-v2-btn--primary'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={handleSave}
-            disabled={saving}
-            loading={saving}
-          >
+          </ActionBarButton>
+          <ActionBarButton variant="primary" onClick={handleSave} loading={saving}>
             {BTN_SAVE}
-          </MGButton>
-        </>
+          </ActionBarButton>
+        </ActionBar>
       }
     >
       <div className="mg-v2-reschedule-modal mg-v2-ad-b0kla__card mg-v2-ad-modal__section">

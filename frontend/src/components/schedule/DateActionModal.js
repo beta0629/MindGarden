@@ -3,6 +3,8 @@ import { ICONS } from '../../constants/icons';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
@@ -51,18 +53,11 @@ const DateActionModal = ({
       showCloseButton={true}
       className="mg-v2-ad-b0kla"
       actions={
-        <MGButton
-          type="button"
-          variant="outline"
-          size="medium"
-          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={onClose}
-          preventDoubleClick={false}
-        >
-          <XCircleIcon size={20} className="mg-v2-icon-inline" />
-          {t('common.actions.cancel')}
-        </MGButton>
+        <ActionBar align="end" gap="md">
+          <ActionBarButton variant="outline" onClick={onClose}>
+            {t('common.actions.cancel')}
+          </ActionBarButton>
+        </ActionBar>
       }
     >
       <p className="mg-v2-text-secondary mg-v2-mb-lg">원하는 작업을 선택하세요</p>

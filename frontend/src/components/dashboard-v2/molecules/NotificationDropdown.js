@@ -17,6 +17,7 @@ import { getConsultationMessagesListPath } from '../../../utils/consultationMess
 import { toDisplayString, htmlToPlainText } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import SegmentedTabs from '../../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import GnbDropdownPortal from './GnbDropdownPortal';
@@ -327,50 +328,17 @@ const NotificationDropdown = () => {
           )}
         </div>
 
-        <div
+        <SegmentedTabs
+          ariaLabel="알림 유형"
+          items={[
+            { value: TAB_SYSTEM, label: '시스템 공지', id: 'tab-system', ariaControls: 'panel-system' },
+            { value: TAB_MESSAGES, label: t('admin.labels.message'), id: 'tab-messages', ariaControls: 'panel-messages' },
+          ]}
+          activeValue={activeTab}
+          onChange={setActiveTab}
+          size="md"
           className="mg-v2-notification-dropdown__tabs"
-          role="tablist"
-          aria-label="알림 유형"
-        >
-          <MGButton
-            type="button"
-            variant="outline"
-            preventDoubleClick={false}
-            role="tab"
-            id="tab-system"
-            aria-selected={activeTab === TAB_SYSTEM}
-            aria-controls="panel-system"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'md',
-              loading: false,
-              className: `mg-v2-notification-dropdown__tab ${activeTab === TAB_SYSTEM ? 'mg-v2-notification-dropdown__tab--active' : ''}`
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => setActiveTab(TAB_SYSTEM)}
-          >
-            시스템 공지
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="outline"
-            preventDoubleClick={false}
-            role="tab"
-            id="tab-messages"
-            aria-selected={activeTab === TAB_MESSAGES}
-            aria-controls="panel-messages"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'md',
-              loading: false,
-              className: `mg-v2-notification-dropdown__tab ${activeTab === TAB_MESSAGES ? 'mg-v2-notification-dropdown__tab--active' : ''}`
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => setActiveTab(TAB_MESSAGES)}
-          >
-            {t('admin.labels.message')}
-          </MGButton>
-        </div>
+        />
 
         <div
           id="panel-system"

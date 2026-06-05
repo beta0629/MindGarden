@@ -23,6 +23,7 @@ import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
+import SegmentedTabs from '../common/SegmentedTabs';
 import EmptyState from '../common/EmptyState';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
@@ -322,63 +323,18 @@ const TenantProfile = () => {
               />
             </div>
 
-            <div
+            <SegmentedTabs
+              ariaLabel={t('common:tenant.TenantProfile.t_15c8471b')}
+              items={[
+                { value: 'overview', label: t('common:tenant.TenantProfile.t_476966c5') },
+                { value: 'subscription', label: t('common:tenant.TenantProfile.t_3ba22bb7') },
+                { value: 'payment', label: t('common:tenant.TenantProfile.t_bb94631a') },
+              ]}
+              activeValue={activeTab}
+              onChange={setActiveTab}
+              size="md"
               className="mg-v2-ad-b0kla__pill-toggle mg-v2-tenant-profile__pill-toggle"
-              role="tablist"
-              aria-label={t('common:tenant.TenantProfile.t_15c8471b')}
-            >
-              <MGButton
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'overview'}
-                variant="outline"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'md',
-                  loading: false,
-                  className: `mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setActiveTab('overview')}
-                preventDoubleClick={false}
-              >
-                {t('common:tenant.TenantProfile.t_476966c5')}
-              </MGButton>
-              <MGButton
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'subscription'}
-                variant="outline"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'md',
-                  loading: false,
-                  className: `mg-v2-ad-b0kla__pill ${activeTab === 'subscription' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setActiveTab('subscription')}
-                preventDoubleClick={false}
-              >
-                {t('common:tenant.TenantProfile.t_3ba22bb7')}
-              </MGButton>
-              <MGButton
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'payment'}
-                variant="outline"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'md',
-                  loading: false,
-                  className: `mg-v2-ad-b0kla__pill ${activeTab === 'payment' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setActiveTab('payment')}
-                preventDoubleClick={false}
-              >
-                {t('common:tenant.TenantProfile.t_bb94631a')}
-              </MGButton>
-            </div>
+            />
 
             <div
               className="mg-v2-tenant-profile__panel tenant-profile-content"

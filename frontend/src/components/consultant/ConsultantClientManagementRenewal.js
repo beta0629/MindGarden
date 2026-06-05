@@ -17,6 +17,7 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantClientManagementRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
+import SegmentedTabs from '../common/SegmentedTabs';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -155,21 +156,15 @@ const ProfileSheet = ({ client, onClose, onMessage }) => {
           </div>
         </div>
 
-        {/* 탭 */}
-        <div className="cr-profile-tabs" role="tablist">
-          {PROFILE_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              className={`cr-profile-tab ${activeTab === tab.key ? 'cr-profile-tab--active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
-              role="tab"
-              aria-selected={activeTab === tab.key}
-              type="button"
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* 탭 — MGButton SSOT */}
+        <SegmentedTabs
+          ariaLabel="내담자 프로필 탭"
+          items={PROFILE_TABS.map((tab) => ({ value: tab.key, label: tab.label }))}
+          activeValue={activeTab}
+          onChange={setActiveTab}
+          size="sm"
+          className="cr-profile-tabs"
+        />
 
         {/* 탭 콘텐츠 */}
         <div className="cr-profile-tab-content" role="tabpanel">

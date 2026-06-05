@@ -17,6 +17,7 @@ import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ClientConsultationsRenewal.css';
 import { USER_ROLES } from '../../constants/roles';
 import { SCHEDULE_API } from '../../constants/api';
+import SegmentedTabs from '../common/SegmentedTabs';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -248,21 +249,14 @@ const ClientConsultationsRenewal = () => {
 
   return (
     <div className="client-consult">
-      <div className="client-consult__tabs" role="tablist">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            className={`client-consult__tab ${
-              tab === t.key ? 'client-consult__tab--active' : ''
-            }`}
-            role="tab"
-            aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedTabs
+        ariaLabel="상담 탭"
+        items={TABS.map((t) => ({ value: t.key, label: t.label }))}
+        activeValue={tab}
+        onChange={setTab}
+        size="sm"
+        className="client-consult__tabs"
+      />
 
       <div className="client-consult__content" role="tabpanel">
         {tab === 'upcoming' && (

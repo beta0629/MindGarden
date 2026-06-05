@@ -16,6 +16,7 @@ import {
   Headphones, Wind, Moon, TreePine, Brain
 } from 'lucide-react';
 import MiniPlayer from './MiniPlayer';
+import SegmentedTabs from '../common/SegmentedTabs';
 import './MeditationGuide.css';
 
 const CATEGORIES = [
@@ -166,21 +167,15 @@ const MeditationGuide = () => {
         </div>
       </div>
 
-      {/* 카테고리 탭 */}
-      <div className="meditation__categories" role="tablist">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            type="button"
-            role="tab"
-            className={`meditation__category-chip${activeCategory === cat.key ? ' meditation__category-chip--active' : ''}`}
-            onClick={() => setActiveCategory(cat.key)}
-            aria-selected={activeCategory === cat.key}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
+      {/* 카테고리 탭 — MGButton SSOT */}
+      <SegmentedTabs
+        ariaLabel="명상 카테고리"
+        items={CATEGORIES.map((cat) => ({ value: cat.key, label: cat.label }))}
+        activeValue={activeCategory}
+        onChange={setActiveCategory}
+        size="sm"
+        className="meditation__categories"
+      />
 
       {/* 플레이어 (열려있을 때) */}
       {showPlayer && currentTrack && (

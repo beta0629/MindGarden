@@ -12,6 +12,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
+import SegmentedTabs from '../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SystemNotificationListBlock from './organisms/SystemNotificationListBlock';
 import AdminMessageListBlock from './organisms/AdminMessageListBlock';
@@ -52,16 +53,6 @@ const AdminNotificationsPage = () => {
     [setSearchParams]
   );
 
-  const handleTabKeyDown = (e) => {
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      setTab(TAB_SYSTEM);
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      setTab(TAB_MESSAGES);
-    }
-  };
-
   const subtitle = '공지 작성과 메시지 조회를 한 화면에서 관리합니다.';
 
   const headerActions =
@@ -99,58 +90,17 @@ const AdminNotificationsPage = () => {
                 titleId="admin-notifications-page-title"
               />
 
-              <div
+              <SegmentedTabs
+                ariaLabel="알림·메시지 탭"
+                items={[
+                  { value: TAB_SYSTEM, label: '시스템 공지', id: 'admin-tab-system', ariaControls: 'admin-panel-system' },
+                  { value: TAB_MESSAGES, label: t('admin.labels.message'), id: 'admin-tab-messages', ariaControls: 'admin-panel-messages' },
+                ]}
+                activeValue={activeTab}
+                onChange={setTab}
+                size="md"
                 className="mg-v2-ad-b0kla__tabs"
-                role="tablist"
-                aria-label="알림·메시지 탭"
-              >
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  role="tab"
-                  id="admin-tab-system"
-                  aria-selected={activeTab === TAB_SYSTEM}
-                  aria-controls="admin-panel-system"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: `mg-v2-ad-b0kla__tab ${
-                      activeTab === TAB_SYSTEM ? 'mg-v2-ad-b0kla__tab--active' : ''
-                    }`
-                  })}
-                  onClick={() => setTab(TAB_SYSTEM)}
-                  onKeyDown={handleTabKeyDown}
-                  preventDoubleClick={false}
-                  loading={false}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                >
-                  시스템 공지
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  role="tab"
-                  id="admin-tab-messages"
-                  aria-selected={activeTab === TAB_MESSAGES}
-                  aria-controls="admin-panel-messages"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: `mg-v2-ad-b0kla__tab ${
-                      activeTab === TAB_MESSAGES ? 'mg-v2-ad-b0kla__tab--active' : ''
-                    }`
-                  })}
-                  onClick={() => setTab(TAB_MESSAGES)}
-                  onKeyDown={handleTabKeyDown}
-                  preventDoubleClick={false}
-                  loading={false}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                >
-                  {t('admin.labels.message')}
-                </MGButton>
-              </div>
+              />
 
               <section
                 id="admin-panel-system"

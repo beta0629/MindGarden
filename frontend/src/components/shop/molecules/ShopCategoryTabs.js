@@ -1,5 +1,5 @@
 /**
- * ShopCategoryTabs — PLP 카테고리 탭
+ * ShopCategoryTabs — PLP 카테고리 탭 (MGButton SSOT SegmentedTabs 흡수)
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -7,25 +7,20 @@
 
 import React from 'react';
 import { SHOP_CATEGORY_TABS } from '../../../constants/clientShopConstants';
+import SegmentedTabs from '../../common/SegmentedTabs';
 
 /**
  * @param {{ activeKey: string, onChange: (key: string) => void }} props
  */
 const ShopCategoryTabs = ({ activeKey, onChange }) => (
-  <div className="client-shop__tabs" role="tablist" aria-label="상품 카테고리">
-    {SHOP_CATEGORY_TABS.map((tab) => (
-      <button
-        key={tab.key}
-        type="button"
-        role="tab"
-        aria-selected={activeKey === tab.key}
-        className={`client-shop__tab${activeKey === tab.key ? ' client-shop__tab--active' : ''}`}
-        onClick={() => onChange(tab.key)}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
+  <SegmentedTabs
+    ariaLabel="상품 카테고리"
+    items={SHOP_CATEGORY_TABS.map((tab) => ({ value: tab.key, label: tab.label }))}
+    activeValue={activeKey}
+    onChange={onChange}
+    size="sm"
+    className="client-shop__tabs"
+  />
 );
 
 export default ShopCategoryTabs;

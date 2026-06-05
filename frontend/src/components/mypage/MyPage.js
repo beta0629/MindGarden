@@ -37,6 +37,7 @@ import {
   MYPAGE_SOCIAL_LINK_DEFAULT_SUCCESS
 } from '../../constants/mypageUi';
 import MGButton from '../common/MGButton';
+import SegmentedTabs from '../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { formatPhoneNumber } from '../../utils/common';
 import '../../styles/unified-design-tokens.css';
@@ -575,31 +576,19 @@ const MyPage = () => {
         ) : null}
 
         <nav className="mg-mypage__tabs" aria-label="마이페이지 섹션">
-          <ul className="mg-mypage__tab-list mg-v2-ad-b0kla__pill-toggle" role="tablist">
-            {visibleTabs.map((tabKey) => (
-              <li key={tabKey} className="mg-mypage__tab-item">
-                <MGButton
-                  type="button"
-                  role="tab"
-                  id={TAB_IDS[tabKey]}
-                  aria-selected={activeTab === tabKey}
-                  aria-controls={PANEL_IDS[tabKey]}
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: `mg-v2-ad-b0kla__pill${activeTab === tabKey ? ' mg-v2-ad-b0kla__pill--active' : ''}`
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => setTabInUrl(tabKey)}
-                  preventDoubleClick={false}
-                >
-                  {MYPAGE_TAB_LABELS[tabKey]}
-                </MGButton>
-              </li>
-            ))}
-          </ul>
+          <SegmentedTabs
+            ariaLabel="마이페이지 섹션"
+            items={visibleTabs.map((tabKey) => ({
+              value: tabKey,
+              label: MYPAGE_TAB_LABELS[tabKey],
+              id: TAB_IDS[tabKey],
+              ariaControls: PANEL_IDS[tabKey],
+            }))}
+            activeValue={activeTab}
+            onChange={setTabInUrl}
+            size="md"
+            className="mg-mypage__tab-list mg-v2-ad-b0kla__pill-toggle"
+          />
         </nav>
 
         <section className="mg-mypage__main" aria-labelledby={MYPAGE_TITLE_ID}>

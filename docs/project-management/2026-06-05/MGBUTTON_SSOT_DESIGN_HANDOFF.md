@@ -398,4 +398,27 @@ inner 2px highlight (`box-shadow: inset 0 0 0 2px focus-ring-color`):
 
 → §A.2 토큰 + §C.4 명세 v1.2 stamp. ActionBar.css / SegmentedTabs / MGButton 코드는 무변경.
 
+---
+
+## §M v1.3 hotfix 결재 (2026-06-05 KST 15:50)
+
+### 배경 (운영 검수 D9~D10)
+
+v1.2 mint bg 배포 후 사용자 검수:
+- ✅ outline 버튼 시각 인지 가능 (mint fill 보임)
+- ❌ **outline 박스 height/padding 이 primary/danger 와 미세 차이** → 정렬 단차 잔존
+- 원인: MGButton.css 의 variant 별 `padding`/`min-height` 가 ActionBar `min-height` override 만으로는 흡수 안 됨
+
+### 결재
+
+| 변수 | 채택 | 결정 사유 |
+|---|---|---|
+| **D9) 단차 0 보장 방식** | **a) ActionBar.css universal override 강화** | `height/min-height/max-height` 동시 고정 + `padding 0 16px` + `line-height 1` + `box-sizing border-box` + `display/align/justify` 모두 `!important` 로 자식 MGButton 의 size/variant 차이를 원천 흡수. 컴포넌트 재설계 회피. |
+| **D10) 모바일 통일** | **a) sm 토큰 (44px) 자동 적용** | 768px 이하에서 height-sm + padding 0 14px 적용. |
+
+### 효과
+
+- 모든 자식 MGButton (small/medium/large × primary/outline/danger/secondary/ghost) 가 ActionBar 안에서는 **48px 고정 height + 16px 좌우 padding + line-height 1** 로 강제 통일 → 시각 단차 0
+- MGButton.css / SegmentedTabs / 어떤 컴포넌트 코드도 무변경 — ActionBar.css 만 수정 (~30 LOC 추가)
+
 EOF

@@ -35,20 +35,50 @@
   justify-content: space-between;
 }
 
-/* ===== 자식 MGButton SSOT override — variants ===== */
-/* 외형 통일: border 0, box-shadow 0, transform 0, height = min-height. */
+/* ===== 자식 MGButton SSOT override — variants (v1.3 hotfix 강화) =====
+ * 단차 0 보장: height 고정 + box-sizing border-box + padding/line-height 통일.
+ * MGButton.css 의 variant 별 min-height/padding 차이를 흡수.
+ */
 
 .mg-actionbar > .mg-button,
 .mg-actionbar > .mg-button.mg-button--primary,
 .mg-actionbar > .mg-button.mg-button--outline,
 .mg-actionbar > .mg-button.mg-button--danger,
 .mg-actionbar > .mg-button.mg-button--secondary,
-.mg-actionbar > .mg-button.mg-button--ghost {
-  min-height: var(--mg-actionbar-action-min-height);
+.mg-actionbar > .mg-button.mg-button--ghost,
+.mg-actionbar > .mg-button.mg-button--small,
+.mg-actionbar > .mg-button.mg-button--medium,
+.mg-actionbar > .mg-button.mg-button--large {
+  /* v1.3: height 강제 고정 (min/max 모두) — 시각 단차 원천 차단 */
+  height: var(--mg-actionbar-action-min-height) !important;
+  min-height: var(--mg-actionbar-action-min-height) !important;
+  max-height: var(--mg-actionbar-action-min-height) !important;
+  /* v1.3: padding/line-height/box-sizing 통일 */
+  padding: 0 16px !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  /* v1.3: 정렬 강제 (MGButton.css inline-flex 가 ERP 클래스로 덮일 가능성 차단) */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  /* SSOT §B: border 0, box-shadow none, transform none */
   border: 0 !important;
   box-shadow: none !important;
   transform: none !important;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* v1.3 모바일 좁은 화면에서도 변형 padding 통일 */
+@media (max-width: 768px) {
+  .mg-actionbar > .mg-button,
+  .mg-actionbar > .mg-button.mg-button--small,
+  .mg-actionbar > .mg-button.mg-button--medium {
+    height: var(--mg-actionbar-action-min-height-sm) !important;
+    min-height: var(--mg-actionbar-action-min-height-sm) !important;
+    max-height: var(--mg-actionbar-action-min-height-sm) !important;
+    padding: 0 14px !important;
+  }
 }
 
 .mg-actionbar > .mg-button.mg-button--primary,
@@ -103,13 +133,10 @@
   box-shadow: inset 0 0 0 2px var(--mg-actionbar-focus-ring) !important;
 }
 
-/* ===== 모바일 (≤ 768px) ===== */
+/* ===== 모바일 (≤ 768px) — gap 만 (높이/padding 은 universal override 에서 처리) ===== */
 @media (max-width: 768px) {
   .mg-actionbar {
     gap: var(--mg-actionbar-gap-sm);
-  }
-  .mg-actionbar > .mg-button {
-    min-height: var(--mg-actionbar-action-min-height-sm) !important;
   }
 }
 

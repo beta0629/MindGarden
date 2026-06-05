@@ -9,8 +9,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import '../../styles/main.css';
 import SafeText from '../common/SafeText';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBarButton from '../common/ActionBarButton';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -524,40 +523,22 @@ const ScheduleDetailModal = ({
             loading={loading}
             className="mg-v2-ad-b0kla"
             actions={(
-                <div className="schedule-detail-modal__footer-actions">
-                    <MGButton
-                        type="button"
+                <ActionBar align="end" gap="md" className="schedule-detail-modal__footer-actions">
+                    <ActionBarButton
                         variant="outline"
-                        className={buildErpMgButtonClassName({
-                          variant: 'outline',
-                          size: 'md',
-                          loading: false,
-                          className: 'mg-v2-btn--outline'
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
                         onClick={() => setShowCancelConfirm(false)}
                         disabled={loading}
                     >
                         {t('schedule:ScheduleDetailModal.t_cfef357d')}
-                    </MGButton>
-                    <MGButton
-                        type="button"
+                    </ActionBarButton>
+                    <ActionBarButton
                         variant="danger"
-                        className={buildErpMgButtonClassName({
-                          variant: 'danger',
-                          size: 'md',
-                          loading,
-                          className: 'mg-v2-schedule-detail-btn--danger'
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
                         onClick={handleCancelSchedule}
                         loading={loading}
                     >
                         {t('schedule:ScheduleDetailModal.t_dd7bb7ae')}
-                    </MGButton>
-                </div>
+                    </ActionBarButton>
+                </ActionBar>
             )}
         >
             <p>{t('schedule:ScheduleDetailModal.t_e45e3fc9')}</p>
@@ -580,40 +561,22 @@ const ScheduleDetailModal = ({
             loading={loading}
             className="mg-v2-ad-b0kla"
             actions={(
-                <div className="schedule-detail-modal__footer-actions">
-                    <MGButton
-                        type="button"
+                <ActionBar align="end" gap="md" className="schedule-detail-modal__footer-actions">
+                    <ActionBarButton
                         variant="outline"
-                        className={buildErpMgButtonClassName({
-                          variant: 'outline',
-                          size: 'md',
-                          loading: false,
-                          className: 'mg-v2-btn--outline'
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
                         onClick={() => setShowConfirmModal(false)}
                         disabled={loading}
                     >
                         {t('common.actions.cancel')}
-                    </MGButton>
-                    <MGButton
-                        type="button"
+                    </ActionBarButton>
+                    <ActionBarButton
                         variant="primary"
-                        className={buildErpMgButtonClassName({
-                          variant: 'primary',
-                          size: 'md',
-                          loading,
-                          className: 'mg-v2-btn--primary'
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
                         onClick={handleConfirmSchedule}
                         loading={loading}
                     >
                         {t('schedule:ScheduleDetailModal.t_55536106')}
-                    </MGButton>
-                </div>
+                    </ActionBarButton>
+                </ActionBar>
             )}
         >
             <p>{t('schedule:ScheduleDetailModal.t_31b8f8ba')}</p>
@@ -941,55 +904,28 @@ const ScheduleDetailModal = ({
                 {isBookedOrTentativePending() && (
                     <>
                         {canRescheduleByRole && (
-                            <MGButton
-                                type="button"
+                            <ActionBarButton
                                 variant="outline"
-                                className={buildErpMgButtonClassName({
-                                  variant: 'outline',
-                                  size: 'md',
-                                  loading: false,
-                                  className: 'mg-v2-btn--outline'
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
                                 onClick={handleEditSchedule}
                                 disabled={loading}
                             >
                                 {t('schedule:ScheduleDetailModal.t_a8136a0a')}
-                            </MGButton>
+                            </ActionBarButton>
                         )}
-                        <MGButton
-                            type="button"
+                        <ActionBarButton
                             variant="primary"
-                            className={buildErpMgButtonClassName({
-                              variant: 'primary',
-                              size: 'md',
-                              loading: false,
-                              className: 'mg-v2-btn--primary'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            preventDoubleClick={false}
                             onClick={() => setShowConfirmModal(true)}
                             disabled={loading}
                         >
                             {t('schedule:ScheduleDetailModal.t_a64e8746')}
-                        </MGButton>
-                        <MGButton
-                            type="button"
+                        </ActionBarButton>
+                        <ActionBarButton
                             variant="danger"
-                            className={buildErpMgButtonClassName({
-                              variant: 'danger',
-                              size: 'md',
-                              loading: false,
-                              className: 'mg-v2-schedule-detail-btn--danger'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            preventDoubleClick={false}
                             onClick={() => setShowCancelConfirm(true)}
                             disabled={loading}
                         >
                             {t('schedule:ScheduleDetailModal.t_7f40dc74')}
-                        </MGButton>
+                        </ActionBarButton>
                     </>
                 )}
                 {isStatus(resolveStatusForActions(displayData), 'CONFIRMED') && (() => {
@@ -1001,55 +937,28 @@ const ScheduleDetailModal = ({
                     return (
                         <>
                             {showWriteConsultationLog && (
-                            <MGButton
-                                type="button"
-                                variant="outline"
-                                className={buildErpMgButtonClassName({
-                                  variant: 'outline',
-                                  size: 'md',
-                                  loading: false,
-                                  className: 'mg-v2-btn--outline'
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
-                                onClick={handleWriteConsultationLog}
-                                disabled={loading}
-                            >
-                                {t('schedule:ScheduleDetailModal.t_a0658140')}
-                            </MGButton>
+                                <ActionBarButton
+                                    variant="outline"
+                                    onClick={handleWriteConsultationLog}
+                                    disabled={loading}
+                                >
+                                    {t('schedule:ScheduleDetailModal.t_a0658140')}
+                                </ActionBarButton>
                             )}
-                            <MGButton
-                                type="button"
+                            <ActionBarButton
                                 variant="primary"
-                                className={buildErpMgButtonClassName({
-                                  variant: 'primary',
-                                  size: 'md',
-                                  loading: false,
-                                  className: 'mg-v2-btn--primary'
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
                                 onClick={() => handleStatusChange(completedStatus)}
                                 disabled={loading}
                             >
                                 {t('schedule:ScheduleDetailModal.t_a9f9a032')}
-                            </MGButton>
-                            <MGButton
-                                type="button"
+                            </ActionBarButton>
+                            <ActionBarButton
                                 variant="danger"
-                                className={buildErpMgButtonClassName({
-                                  variant: 'danger',
-                                  size: 'md',
-                                  loading: false,
-                                  className: 'mg-v2-schedule-detail-btn--danger'
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
                                 onClick={() => setShowCancelConfirm(true)}
                                 disabled={loading}
                             >
                                 {t('schedule:ScheduleDetailModal.t_7f40dc74')}
-                            </MGButton>
+                            </ActionBarButton>
                         </>
                     );
                 })()}
@@ -1058,22 +967,13 @@ const ScheduleDetailModal = ({
                         opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
                     return (
-                        <MGButton
-                            type="button"
+                        <ActionBarButton
                             variant="outline"
-                            className={buildErpMgButtonClassName({
-                              variant: 'outline',
-                              size: 'md',
-                              loading: false,
-                              className: 'mg-v2-btn--outline'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            preventDoubleClick={false}
                             onClick={() => handleStatusChange(bookedStatus)}
                             disabled={loading}
                         >
                             {t('schedule:ScheduleDetailModal.t_2b4049c1')}
-                        </MGButton>
+                        </ActionBarButton>
                     );
                 })()}
                 {isStatus(resolveStatusForActions(displayData), 'CANCELLED') && (() => {
@@ -1081,22 +981,13 @@ const ScheduleDetailModal = ({
                         opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
                     return (
-                        <MGButton
-                            type="button"
+                        <ActionBarButton
                             variant="outline"
-                            className={buildErpMgButtonClassName({
-                              variant: 'outline',
-                              size: 'md',
-                              loading: false,
-                              className: 'mg-v2-btn--outline'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            preventDoubleClick={false}
                             onClick={() => handleStatusChange(bookedStatus)}
                             disabled={loading}
                         >
                             {t('schedule:ScheduleDetailModal.t_2b4049c1')}
-                        </MGButton>
+                        </ActionBarButton>
                     );
                 })()}
             </>
@@ -1123,17 +1014,9 @@ const ScheduleDetailModal = ({
                         className="schedule-detail-modal__footer-actions mg-v2-ad-b0kla__modal-actions"
                     >
                         {consultationLogLinkVisible && (
-                            <MGButton
-                                type="button"
+                            <ActionBarButton
                                 variant="outline"
-                                className={buildErpMgButtonClassName({
-                                    variant: 'outline',
-                                    size: 'md',
-                                    loading: false,
-                                    className: 'mg-v2-btn--outline schedule-detail-modal__btn--log-link'
-                                })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
+                                className="schedule-detail-modal__btn--log-link"
                                 onClick={handleOpenConsultationLogView}
                                 disabled={loading}
                                 aria-label={t(
@@ -1143,7 +1026,7 @@ const ScheduleDetailModal = ({
                                 data-testid="schedule-detail-open-consultation-log"
                             >
                                 {t('schedule:ScheduleDetailModal.openConsultationLogView')}
-                            </MGButton>
+                            </ActionBarButton>
                         )}
                         {renderMainActions()}
                     </ActionBar>

@@ -97,6 +97,7 @@ public class ScheduleController extends BaseApiController {
     private final com.coresolution.consultation.service.ConsultantDashboardService consultantDashboardService;
     private final com.coresolution.consultation.repository.ClientScheduleNoteRepository clientScheduleNoteRepository;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
+    private final com.coresolution.consultation.repository.ScheduleRepository scheduleRepository;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -1947,6 +1948,30 @@ public class ScheduleController extends BaseApiController {
                 mappingContext.getTotalSessions(),
                 mappingContext.getRemainingSessions(),
                 schedule.getSessionSequence());
+        // 누적 라벨 = past + 해당 일정의 sessionSequence (1-based). NULL/0 일 때는 sessionDate 기준 fallback.
+        Long currentSessionSequence = null;
+        Integer sequence = schedule.getSessionSequence();
+        String effectiveTenantId = TenantContextHolder.getTenantId();
+        if (effectiveTenantId == null || effectiveTenantId.isEmpty()) {
+            effectiveTenantId = schedule.getTenantId();
+        }
+        if (sequence != null && sequence > 0) {
+            currentSessionSequence = Long.valueOf(sequence);
+        } else if (schedule.getClientId() != null && schedule.getId() != null
+                && schedule.getDate() != null
+                && effectiveTenantId != null && !effectiveTenantId.isEmpty()) {
+            try {
+                currentSessionSequence = scheduleRepository.countSequenceUpToSchedule(
+                        effectiveTenantId,
+                        schedule.getClientId(),
+                        schedule.getDate(),
+                        schedule.getId());
+            } catch (Exception e) {
+                log.warn("⚠️ Controller lifetime sequence fallback 실패: scheduleId={}, error={}",
+                        schedule.getId(), e.getMessage());
+            }
+        }
+        response.applyClientLifetimeSession(clientPastSessionCount, currentSessionSequence);
         return response;
     }
 

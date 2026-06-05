@@ -4,8 +4,8 @@ import { apiGet } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import MGButton from '../common/MGButton';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { useTranslation } from 'react-i18next';
 
@@ -166,31 +166,14 @@ const ConsultantVacationModal = ({
             showCloseButton
             loading={loading}
             actions={
-                <>
-                    <MGButton
-                        variant="outline"
-                        size="medium"
-                        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={onClose}
-                        disabled={loading}
-                        preventDoubleClick={false}
-                    >
+                <ActionBar align="end" gap="md">
+                    <ActionBarButton variant="outline" onClick={onClose} disabled={loading}>
                         {t('common.actions.cancel')}
-                    </MGButton>
-                    <MGButton
-                        variant="primary"
-                        size="medium"
-                        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        loading={loading}
-                        preventDoubleClick={false}
-                    >
+                    </ActionBarButton>
+                    <ActionBarButton variant="primary" onClick={handleSubmit} loading={loading}>
                         휴가 등록
-                    </MGButton>
-                </>
+                    </ActionBarButton>
+                </ActionBar>
             }
         >
                 <div className="mg-v2-modal-body">

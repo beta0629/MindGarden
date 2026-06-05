@@ -10,8 +10,8 @@ import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import ScheduleTimeSelectionPanel from './ScheduleTimeSelectionPanel';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -294,37 +294,19 @@ const ScheduleModalNew = ({
     };
 
     const renderActions = () => (
-      <>
+      <ActionBar align="end" gap="md">
         {step > 1 && (
-          <MGButton
-            type="button"
+          <ActionBarButton
             variant="outline"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'md',
-              loading: false,
-              className: 'mg-v2-btn--outline'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            preventDoubleClick={false}
             onClick={handlePrevStep}
             disabled={loading}
           >
             {t('common.actions.prev')}
-          </MGButton>
+          </ActionBarButton>
         )}
         {step < 4 ? (
-          <MGButton
-            type="button"
+          <ActionBarButton
             variant="primary"
-            className={buildErpMgButtonClassName({
-              variant: 'primary',
-              size: 'md',
-              loading: false,
-              className: 'mg-v2-btn--primary'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            preventDoubleClick={false}
             onClick={() => {
               if (step === 1 && selectedConsultant) setStep(2);
               else if (step === 2 && selectedClient) setStep(3);
@@ -337,26 +319,17 @@ const ScheduleModalNew = ({
             }
           >
             다음
-          </MGButton>
+          </ActionBarButton>
         ) : (
-          <MGButton
-            type="button"
+          <ActionBarButton
             variant="primary"
-            className={buildErpMgButtonClassName({
-              variant: 'primary',
-              size: 'md',
-              loading,
-              className: 'mg-v2-btn--primary'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleCreateSchedule}
             loading={loading}
-            preventDoubleClick={false}
           >
             스케줄 생성
-          </MGButton>
+          </ActionBarButton>
         )}
-      </>
+      </ActionBar>
     );
 
     const renderStepper = () => {

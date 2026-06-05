@@ -1,8 +1,8 @@
 import React from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -40,38 +40,17 @@ const SchedulePartyQuickViewModal = ({
       showCloseButton
       zIndex={zIndex}
       actions={(
-        <div className="schedule-party-quick-view__actions">
-          <MGButton
-            type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'md',
-              loading: false,
-              className: 'mg-v2-btn--outline'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            preventDoubleClick={false}
-            onClick={onClose}
-          >
+        <ActionBar align="end" gap="md" className="schedule-party-quick-view__actions">
+          <ActionBarButton variant="outline" onClick={onClose}>
             {t('common.actions.close')}
-          </MGButton>
-          <MGButton
-            type="button"
+          </ActionBarButton>
+          <ActionBarButton
             variant="primary"
-            className={buildErpMgButtonClassName({
-              variant: 'primary',
-              size: 'md',
-              loading: false,
-              className: 'mg-v2-btn--primary'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            preventDoubleClick={false}
             onClick={() => onOpenInUserManagement(userManagementType)}
           >
             사용자 관리에서 열기
-          </MGButton>
-        </div>
+          </ActionBarButton>
+        </ActionBar>
       )}
     >
       <div className="schedule-party-quick-view__body">

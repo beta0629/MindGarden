@@ -271,7 +271,8 @@ const ClientFilterMultiSelect = ({
     const optStr = String(option.id);
     const selected = isSelected(option.id);
     const optionLabel = option.name || option.label || `#${optStr}`;
-    const meta = option.phone || option.email || '';
+    const phone = typeof option.phone === 'string' ? option.phone.trim() : '';
+    const email = typeof option.email === 'string' ? option.email.trim() : '';
     const optionClass = [
       'mg-client-filter__option',
       selected ? 'mg-client-filter__option--selected' : ''
@@ -292,8 +293,11 @@ const ClientFilterMultiSelect = ({
         />
         <div className="mg-client-filter__option-text">
           <span className="mg-client-filter__option-name">{optionLabel}</span>
-          {meta ? (
-            <span className="mg-client-filter__option-meta">{meta}</span>
+          {phone ? (
+            <span className="mg-client-filter__option-meta mg-client-filter__option-meta--phone">{phone}</span>
+          ) : null}
+          {email ? (
+            <span className="mg-client-filter__option-meta mg-client-filter__option-meta--email">{email}</span>
           ) : null}
         </div>
       </li>

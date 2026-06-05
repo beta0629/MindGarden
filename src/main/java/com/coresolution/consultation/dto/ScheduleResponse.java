@@ -152,19 +152,19 @@ public class ScheduleResponse {
     /**
      * 해당 일정 시점의 누적 상담 회기수 계산.
      *
-     * <p>{@code lifetimeSessionCount = (pastSessions ?? 0) + (currentSessionSequence ?? 0)}.
-     * 사용자 정의: "누적 상담 = 과거 N회 + 누적 M회 = 총 (N+M)회 진행" 의 M 은 그 일정의
-     * {@code sessionSequence} (1-based 회차). 예) sessionSequence=1 + past=10 → 누적 11.
-     * 매핑 외 진입(sessionSequence null) 이면 누적은 past 단독.</p>
+     * <p>{@code lifetimeSessionCount = (pastSessions ?? 0) + (lifetimeSequenceCount ?? 0)}.
+     * 사용자 정의 (2026-06-05): "그 일정 시점의 누적 = 클릭 시점까지 그 내담자가 받은 모든
+     * 일정의 카운트". 매핑 경계 무관 (다른 매핑/상품의 일정도 합산). SSOT =
+     * {@code ScheduleRepository.countSequenceUpToSchedule(tenantId, clientId, date, scheduleId)}.</p>
      *
      * @param pastSessions {@code users.past_session_count}. null 허용.
-     * @param currentSessionSequence 해당 일정의 1-based 회차. null/0 → 0 으로 처리.
+     * @param lifetimeSequenceCount 해당 일정 시점까지의 client lifetime 일정 카운트. null/0 → 0 처리.
      */
-    public void applyClientLifetimeSession(Long pastSessions, Long currentSessionSequence) {
+    public void applyClientLifetimeSession(Long pastSessions, Long lifetimeSequenceCount) {
         this.pastSessionCount = pastSessions;
         long pastSafe = pastSessions != null && pastSessions > 0L ? pastSessions : 0L;
-        long currentSafe = currentSessionSequence != null && currentSessionSequence > 0L
-                ? currentSessionSequence
+        long currentSafe = lifetimeSequenceCount != null && lifetimeSequenceCount > 0L
+                ? lifetimeSequenceCount
                 : 0L;
         this.clientLifetimeSessionCount = pastSafe + currentSafe;
     }

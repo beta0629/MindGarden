@@ -1948,30 +1948,28 @@ public class ScheduleController extends BaseApiController {
                 mappingContext.getTotalSessions(),
                 mappingContext.getRemainingSessions(),
                 schedule.getSessionSequence());
-        // 누적 라벨 = past + 해당 일정의 sessionSequence (1-based). NULL/0 일 때는 sessionDate 기준 fallback.
-        Long currentSessionSequence = null;
-        Integer sequence = schedule.getSessionSequence();
+        // 누적 = past + 그 일정 시점까지의 client lifetime 카운트 (사용자 정의 2026-06-05).
+        // 매핑 경계 무관. sessionSequence 가 아닌 client_id 기준 시간 순서 카운트가 SSOT.
+        Long lifetimeSequenceCount = null;
         String effectiveTenantId = TenantContextHolder.getTenantId();
         if (effectiveTenantId == null || effectiveTenantId.isEmpty()) {
             effectiveTenantId = schedule.getTenantId();
         }
-        if (sequence != null && sequence > 0) {
-            currentSessionSequence = Long.valueOf(sequence);
-        } else if (schedule.getClientId() != null && schedule.getId() != null
+        if (schedule.getClientId() != null && schedule.getId() != null
                 && schedule.getDate() != null
                 && effectiveTenantId != null && !effectiveTenantId.isEmpty()) {
             try {
-                currentSessionSequence = scheduleRepository.countSequenceUpToSchedule(
+                lifetimeSequenceCount = scheduleRepository.countSequenceUpToSchedule(
                         effectiveTenantId,
                         schedule.getClientId(),
                         schedule.getDate(),
                         schedule.getId());
             } catch (Exception e) {
-                log.warn("⚠️ Controller lifetime sequence fallback 실패: scheduleId={}, error={}",
+                log.warn("⚠️ Controller lifetime sequence 조회 실패: scheduleId={}, error={}",
                         schedule.getId(), e.getMessage());
             }
         }
-        response.applyClientLifetimeSession(clientPastSessionCount, currentSessionSequence);
+        response.applyClientLifetimeSession(clientPastSessionCount, lifetimeSequenceCount);
         return response;
     }
 

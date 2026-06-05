@@ -2692,41 +2692,31 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 mappingContext.getTotalSessions(),
                 mappingContext.getRemainingSessions(),
                 schedule.getSessionSequence());
-        // 누적 = 과거 회기수 + 해당 일정의 sessionSequence (1-based). 사용자 정의:
-        // "누적상담 과거 N회 + 누적 M회 = 총 (N+M)회 진행" 의 M 은 그 일정 시점까지의 회차.
-        // sessionSequence 가 NULL/0 인 레거시 데이터는 sessionDate 기준 fallback 으로 누적 계산.
-        // 메서드 인자 tenantId 가 NULL/empty 인 경로(레거시 호출) 에서는 schedule 엔티티 자체의
-        // tenantId 컴럼으로 fallback (멀티테넌트 격리 유지).
-        Long currentSessionSequence = null;
-        Integer sequence = schedule.getSessionSequence();
+        // 누적 = 과거 회기수 + 해당 일정 시점까지의 client lifetime 일정 카운트.
+        // 사용자 정의 (2026-06-05): "그 일정 시점의 누적 = 클릭 시점까지 그 내담자가 받은
+        // 모든 일정의 카운트" (매핑 경계 무관). sessionSequence(매핑 내 회차) 는 다른 매핑은
+        // 카운트 못하므로 SSOT 아님.
+        // tenantId 인자 NULL 경로(레거시 호출) 는 schedule 엔티티의 tenantId 로 fallback.
+        Long lifetimeSequenceCount = null;
         String effectiveTenantId = tenantId;
         if (effectiveTenantId == null || effectiveTenantId.isEmpty()) {
             effectiveTenantId = schedule.getTenantId();
         }
-        if (sequence != null && sequence > 0) {
-            currentSessionSequence = Long.valueOf(sequence);
-        } else if (schedule.getClientId() != null && schedule.getId() != null
+        if (schedule.getClientId() != null && schedule.getId() != null
                 && schedule.getDate() != null
                 && effectiveTenantId != null && !effectiveTenantId.isEmpty()) {
             try {
-                currentSessionSequence = scheduleRepository.countSequenceUpToSchedule(
+                lifetimeSequenceCount = scheduleRepository.countSequenceUpToSchedule(
                         effectiveTenantId,
                         schedule.getClientId(),
                         schedule.getDate(),
                         schedule.getId());
-                log.info("🔢 lifetime sequence fallback: scheduleId={}, clientId={}, date={}, tenantId={}, count={}",
-                        schedule.getId(), schedule.getClientId(), schedule.getDate(),
-                        effectiveTenantId, currentSessionSequence);
             } catch (Exception e) {
-                log.warn("⚠️ sessionSequence fallback 조회 실패: clientId={}, scheduleId={}, error={}",
+                log.warn("⚠️ lifetime sequence 조회 실패: clientId={}, scheduleId={}, error={}",
                         schedule.getClientId(), schedule.getId(), e.getMessage());
             }
-        } else {
-            log.info("🔢 lifetime sequence 조건 불만족: scheduleId={}, clientId={}, date={}, tenantId={}, sequence={}",
-                    schedule.getId(), schedule.getClientId(), schedule.getDate(),
-                    effectiveTenantId, sequence);
         }
-        response.applyClientLifetimeSession(clientPastSessionCount, currentSessionSequence);
+        response.applyClientLifetimeSession(clientPastSessionCount, lifetimeSequenceCount);
         return response;
     }
 

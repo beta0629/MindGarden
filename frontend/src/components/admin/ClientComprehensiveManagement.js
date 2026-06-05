@@ -24,6 +24,7 @@ import PasswordResetModal from './PasswordResetModal';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBarButton from '../common/ActionBarButton';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -745,21 +746,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                     subtitle={t('admin:client.subtitle')}
                     titleId={CLIENT_COMP_MGMT_TITLE_ID}
                     actions={
-                        <MGButton
-                            type="button"
+                        <ActionBarButton
                             variant="primary"
-                            preventDoubleClick={false}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            className={buildErpMgButtonClassName({
-                                variant: 'primary',
-                                size: 'md',
-                                loading: false,
-                                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
-                            })}
                             onClick={handleCreateClient}
+                            className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                         >
                             {t('admin:client.action.createNew')}
-                        </MGButton>
+                        </ActionBarButton>
                     }
                 />
             )}

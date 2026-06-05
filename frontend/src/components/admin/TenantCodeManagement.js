@@ -26,6 +26,8 @@ import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import {
     FaBuilding,
@@ -537,29 +539,18 @@ const TenantCodeManagement = () => {
                     backdropClick
                     showCloseButton
                     actions={(
-                        <>
-                            <MGButton
-                                type="button"
-                                variant="outline"
-                                className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                onClick={handleCloseModal}
-                                preventDoubleClick={false}
-                            >
+                        <ActionBar align="end" gap="md">
+                            <ActionBarButton variant="outline" onClick={handleCloseModal}>
                                 {UI_TEXT.BTN_CANCEL}
-                            </MGButton>
-                            <MGButton
-                                type="button"
+                            </ActionBarButton>
+                            <ActionBarButton
                                 variant="primary"
-                                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 onClick={handleSaveCode}
                                 disabled={!formData.codeValue || !formData.codeLabel || !formData.koreanName}
-                                preventDoubleClick={false}
                             >
                                 {editingCode ? UI_TEXT.BTN_EDIT : UI_TEXT.BTN_ADD}
-                            </MGButton>
-                        </>
+                            </ActionBarButton>
+                        </ActionBar>
                     )}
                 >
                     <div className="mg-v2-modal-body">

@@ -11,8 +11,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBarButton from '../common/ActionBarButton';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -333,23 +332,15 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
                 title="심리검사 리포트(AI)"
                 subtitle="TCI/MMPI 업로드 · 처리상태 · 리포트 생성"
                 actions={
-                  <MGButton
-                    type="button"
+                  <ActionBarButton
                     variant="primary"
-                    className={buildErpMgButtonClassName({
-                      variant: 'primary',
-                      size: 'md',
-                      loading,
-                      className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
-                    })}
                     onClick={() => loadStatsAndRecent()}
                     title={t('admin.actions.refresh')}
                     loading={loading}
-                    preventDoubleClick={true}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                   >
                     {t('admin.actions.refresh')}
-                  </MGButton>
+                  </ActionBarButton>
                 }
               />
 

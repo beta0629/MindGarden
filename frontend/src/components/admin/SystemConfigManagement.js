@@ -25,9 +25,9 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
-import MGButton from '../common/MGButton';
 import ChipMultiSelect from '../common/ChipMultiSelect';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -425,23 +425,15 @@ const SystemConfigManagement = () => {
               title={t('systemConfig.pageTitle')}
               subtitle={t('systemConfig.pageSubtitle')}
               actions={
-                <MGButton
-                  type="button"
+                <ActionBarButton
                   variant="primary"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'md',
-                    loading: saving,
-                    className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
-                  })}
                   onClick={handleSave}
-                  disabled={saving}
-                  title={t('systemConfig.action.save')}
                   loading={saving}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  title={t('systemConfig.action.save')}
+                  className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                 >
                   {t('systemConfig.action.save')}
-                </MGButton>
+                </ActionBarButton>
               }
             />
 
@@ -699,31 +691,14 @@ const NotificationSchedulerConfirmModal = ({ t, confirm, saving, onProceed, onCa
       backdropClick={!saving}
       showCloseButton
       actions={
-        <>
-          <MGButton
-            type="button"
-            variant="secondary"
-            size="medium"
-            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={onCancel}
-            disabled={saving}
-          >
+        <ActionBar align="end" gap="md">
+          <ActionBarButton variant="outline" onClick={onCancel} disabled={saving}>
             {t('systemConfig.notificationScheduler.cancel')}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="primary"
-            size="medium"
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: saving })}
-            loading={saving}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={onProceed}
-            preventDoubleClick={false}
-          >
+          </ActionBarButton>
+          <ActionBarButton variant="primary" onClick={onProceed} loading={saving}>
             {t('systemConfig.notificationScheduler.confirm')}
-          </MGButton>
-        </>
+          </ActionBarButton>
+        </ActionBar>
       }
     >
       <p className="mg-v2-info-text">{message}</p>

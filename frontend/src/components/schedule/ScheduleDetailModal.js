@@ -38,10 +38,14 @@ const SCHEDULE_DETAIL_Z_INDEX_CONFIRM = 1240;
 /** 요약에서 비어 있음 표시 */
 const SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER = '\u2014';
 
-/** 상담일지 deep link 노출 가능한 상태 코드 (TENTATIVE/CANCELLED 제외) */
+/**
+ * 상담일지 deep link("보기/수정") 노출 가능한 상태 코드.
+ *
+ * <p>2026-06-05 P1 운영 신고 픽스: 진행 중(CONFIRMED) · 예약(BOOKED) 일정에서 "보기/수정" 이 노출되어
+ * 사용자 의도(작성 버튼만)를 위반함. SSOT 안전망으로 COMPLETED 단일로 제한한다.
+ * 진행 중/예약 단계는 동일 모달의 "상담일지 작성" 버튼 경로만 사용한다.</p>
+ */
 const CONSULTATION_LOG_LINK_VISIBLE_STATUSES = Object.freeze([
-    'BOOKED',
-    'CONFIRMED',
     'COMPLETED'
 ]);
 
@@ -154,9 +158,10 @@ function toIsoDateString(raw) {
 }
 
 /**
- * 상담일지 deep link 가 노출 가능한 일정인지 판정.
+ * 상담일지 deep link("보기/수정") 가 노출 가능한 일정인지 판정.
  * - 과거 또는 당일 (date <= today) 일정만 노출 (미래 제외)
- * - 상태가 BOOKED·CONFIRMED·COMPLETED 인 경우만 (TENTATIVE/CANCELLED 제외)
+ * - 상태가 COMPLETED 인 경우만 (BOOKED·CONFIRMED·TENTATIVE·CANCELLED 모두 제외)
+ *   → 진행 중·예약 일정은 "상담일지 작성" 버튼으로 분기됨
  * - 휴가 이벤트는 비활성
  *
  * @param {object} schedule

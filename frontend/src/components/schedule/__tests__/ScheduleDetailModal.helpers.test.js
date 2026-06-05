@@ -164,17 +164,47 @@ describe('toIsoDateString', () => {
   });
 });
 
-describe('shouldShowConsultationLogLink', () => {
+describe('shouldShowConsultationLogLink (COMPLETED 단일 상태 가드)', () => {
   const today = new Date(2026, 5, 4); // 2026-06-04
 
-  test('과거 + CONFIRMED → true', () => {
+  test('당일 + CONFIRMED → false (진행 중은 "작성" 버튼만 노출)', () => {
     const result = shouldShowConsultationLogLink(
-      { sessionDate: '2026-06-01', id: 1 },
+      { sessionDate: '2026-06-04', id: 1 },
       'CONFIRMED',
       false,
       today
     );
-    expect(result).toBe(true);
+    expect(result).toBe(false);
+  });
+
+  test('당일 + BOOKED → false (회기 차감 전, "작성" 버튼만 노출)', () => {
+    const result = shouldShowConsultationLogLink(
+      { sessionDate: '2026-06-04', id: 1 },
+      'BOOKED',
+      false,
+      today
+    );
+    expect(result).toBe(false);
+  });
+
+  test('과거(어제) + CONFIRMED → false', () => {
+    const result = shouldShowConsultationLogLink(
+      { sessionDate: '2026-06-03', id: 1 },
+      'CONFIRMED',
+      false,
+      today
+    );
+    expect(result).toBe(false);
+  });
+
+  test('과거(어제) + BOOKED → false', () => {
+    const result = shouldShowConsultationLogLink(
+      { sessionDate: '2026-06-03', id: 1 },
+      'BOOKED',
+      false,
+      today
+    );
+    expect(result).toBe(false);
   });
 
   test('당일 + COMPLETED → true', () => {
@@ -187,17 +217,27 @@ describe('shouldShowConsultationLogLink', () => {
     expect(result).toBe(true);
   });
 
-  test('과거 + BOOKED → true', () => {
+  test('과거(어제) + COMPLETED → true', () => {
     const result = shouldShowConsultationLogLink(
-      { sessionDate: '2025-12-25', id: 1 },
-      'BOOKED',
+      { sessionDate: '2026-06-03', id: 1 },
+      'COMPLETED',
       false,
       today
     );
     expect(result).toBe(true);
   });
 
-  test('미래 일정 → false', () => {
+  test('미래(내일) + COMPLETED → false (날짜 가드)', () => {
+    const result = shouldShowConsultationLogLink(
+      { sessionDate: '2026-06-05', id: 1 },
+      'COMPLETED',
+      false,
+      today
+    );
+    expect(result).toBe(false);
+  });
+
+  test('미래(내일) + CONFIRMED → false (운영 신고 핵심 케이스)', () => {
     const result = shouldShowConsultationLogLink(
       { sessionDate: '2026-06-05', id: 1 },
       'CONFIRMED',
@@ -227,7 +267,17 @@ describe('shouldShowConsultationLogLink', () => {
     expect(result).toBe(false);
   });
 
-  test('휴가 이벤트 → false', () => {
+  test('당일 + COMPLETED + isVacation=true → false (휴가 가드 유지)', () => {
+    const result = shouldShowConsultationLogLink(
+      { sessionDate: '2026-06-04', id: 1 },
+      'COMPLETED',
+      true,
+      today
+    );
+    expect(result).toBe(false);
+  });
+
+  test('휴가 이벤트(상태 무관) → false', () => {
     const result = shouldShowConsultationLogLink(
       { sessionDate: '2026-06-01', id: 1 },
       'CONFIRMED',
@@ -240,7 +290,7 @@ describe('shouldShowConsultationLogLink', () => {
   test('sessionDate 없음 → false', () => {
     const result = shouldShowConsultationLogLink(
       { id: 1 },
-      'CONFIRMED',
+      'COMPLETED',
       false,
       today
     );
@@ -248,17 +298,21 @@ describe('shouldShowConsultationLogLink', () => {
   });
 
   test('schedule null → false', () => {
-    expect(shouldShowConsultationLogLink(null, 'CONFIRMED', false, today)).toBe(false);
+    expect(shouldShowConsultationLogLink(null, 'COMPLETED', false, today)).toBe(false);
   });
 });
 
-describe('CONSULTATION_LOG_LINK_VISIBLE_STATUSES', () => {
-  test('BOOKED·CONFIRMED·COMPLETED 만 포함 (TENTATIVE/CANCELLED 제외)', () => {
-    expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).toContain('BOOKED');
-    expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).toContain('CONFIRMED');
+describe('CONSULTATION_LOG_LINK_VISIBLE_STATUSES (COMPLETED 단일)', () => {
+  test('COMPLETED 만 포함 (BOOKED·CONFIRMED·TENTATIVE·CANCELLED 모두 제외)', () => {
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).toContain('COMPLETED');
+    expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('BOOKED');
+    expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('CONFIRMED');
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('TENTATIVE_PENDING_PAYMENT');
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('CANCELLED');
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('VACATION');
+  });
+
+  test('상수 길이는 1 (COMPLETED 단일 SSOT)', () => {
+    expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).toHaveLength(1);
   });
 });

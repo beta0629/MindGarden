@@ -7,6 +7,8 @@ import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import MGCard from '../common/MGCard';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
@@ -451,38 +453,17 @@ const PaymentManagement = () => {
           subtitle="결제 내역 조회, 상태 관리 및 통계"
           titleId={PAYMENT_PAGE_TITLE_ID}
           actions={(
-            <div className="header-actions">
-              <MGButton
-                type="button"
-                variant="success"
-                className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => exportPayments()}
-                preventDoubleClick={false}
-              >
+            <ActionBar align="end" gap="md" className="header-actions">
+              <ActionBarButton variant="outline" onClick={() => exportPayments()}>
                 {t('common:super-admin.PaymentManagement.t_7dcea1f4')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="info"
-                className={buildErpMgButtonClassName({ variant: 'info', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => showPaymentAnalytics()}
-                preventDoubleClick={false}
-              >
+              </ActionBarButton>
+              <ActionBarButton variant="outline" onClick={() => showPaymentAnalytics()}>
                 {t('common:super-admin.PaymentManagement.t_335ea044')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => loadPayments()}
-                preventDoubleClick={false}
-              >
+              </ActionBarButton>
+              <ActionBarButton variant="primary" onClick={() => loadPayments()}>
                 {t('admin.actions.refresh')}
-              </MGButton>
-            </div>
+              </ActionBarButton>
+            </ActionBar>
           )}
         />
 
@@ -592,52 +573,20 @@ const PaymentManagement = () => {
             <div className="bulk-info">
               {selectedPayments.length}건 선택됨
             </div>
-            <div className="bulk-buttons">
-              <MGButton
-                type="button"
-                variant="success"
-                size="small"
-                className={buildErpMgButtonClassName({ variant: 'success', size: 'sm', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => handleBulkAction('approve', selectedPayments)}
-                preventDoubleClick={false}
-              >
+            <ActionBar align="start" gap="sm" className="bulk-buttons">
+              <ActionBarButton variant="primary" size="sm" onClick={() => handleBulkAction('approve', selectedPayments)}>
                 {t('common:super-admin.PaymentManagement.t_a3b01015')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="warning"
-                size="small"
-                className={buildErpMgButtonClassName({ variant: 'warning', size: 'sm', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => handleBulkAction('cancel', selectedPayments)}
-                preventDoubleClick={false}
-              >
+              </ActionBarButton>
+              <ActionBarButton variant="outline" size="sm" onClick={() => handleBulkAction('cancel', selectedPayments)}>
                 {t('common:super-admin.PaymentManagement.t_27fb23da')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="danger"
-                size="small"
-                className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => handleBulkAction('refund', selectedPayments)}
-                preventDoubleClick={false}
-              >
+              </ActionBarButton>
+              <ActionBarButton variant="danger" size="sm" onClick={() => handleBulkAction('refund', selectedPayments)}>
                 {t('common:super-admin.PaymentManagement.t_7e3b3b4f')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="secondary"
-                size="small"
-                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setSelectedPayments([])}
-                preventDoubleClick={false}
-              >
+              </ActionBarButton>
+              <ActionBarButton variant="ghost" size="sm" onClick={() => setSelectedPayments([])}>
                 {t('common:super-admin.PaymentManagement.t_bf3e2aa4')}
-              </MGButton>
-            </div>
+              </ActionBarButton>
+            </ActionBar>
           </div>
         )}
 

@@ -141,12 +141,17 @@
   display: flex;
   align-items: flex-start;
   gap: var(--mg-spacing-sm, 8px);
-  padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-md, 12px);
+  padding: 10px var(--mg-spacing-md, 12px);
   cursor: pointer;
   font-size: 0.875rem;
   color: var(--ad-b0kla-title-color);
   transition: background 0.15s ease;
-  min-height: 44px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-client-filter__option:last-child {
+  border-bottom: none;
 }
 
 .mg-client-filter__option:hover {
@@ -188,7 +193,7 @@
 .mg-client-filter__option-text {
   display: flex;
   flex-direction: column;
-  row-gap: 2px;
+  row-gap: 4px;
   min-width: 0;
   flex: 1 1 auto;
   line-height: 1.35;
@@ -212,6 +217,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* phone — 기본 톤 유지 (식별성 우선) */
+/* email — 보조 정보 톤다운으로 phone 과 시각 분리 (stacked 착시 회피) */
+.mg-client-filter__option-meta--email {
+  font-size: 0.7rem;
+  opacity: 0.75;
 }
 
 .mg-client-filter__empty {

@@ -29,18 +29,23 @@ class ResizeObserverStub {
 }
 global.ResizeObserver = global.ResizeObserver || ResizeObserverStub;
 
-let lastFullCalendarProps = null;
-
-jest.mock('@fullcalendar/react', () => ({
-  __esModule: true,
-  default: (props) => {
-    // jest.mock factory 의 hoisting 으로 외부 let 가 undefined 일 수 있어
-    // globalThis 에 저장한 뒤 test 에서 읽어 안전하게 캡처한다.
-    globalThis.__mockFullCalendarProps = props;
-    const React = require('react');
+// FullCalendar mock — forwardRef 로 ref warning 제거 + props 캡처
+jest.mock('@fullcalendar/react', () => {
+  const React = require('react');
+  const Mock = React.forwardRef((props, ref) => {
+    // props 를 globalThis 배열에 push (jest.mock factory hoisting 제약 우회)
+    if (!globalThis.__FC_PROPS_LOG) globalThis.__FC_PROPS_LOG = [];
+    globalThis.__FC_PROPS_LOG.push(props);
+    if (ref) {
+      const api = { getApi: () => ({ updateSize: () => {} }) };
+      if (typeof ref === 'function') ref(api);
+      else if (typeof ref === 'object') ref.current = api;
+    }
     return React.createElement('div', { 'data-testid': 'fullcalendar-mock' });
-  }
-}));
+  });
+  Mock.displayName = 'FullCalendarMock';
+  return { __esModule: true, default: Mock };
+});
 
 // FullCalendar plugins — 단순 stub
 jest.mock('@fullcalendar/daygrid', () => ({ __esModule: true, default: {} }));
@@ -58,8 +63,17 @@ const baseProps = (overrides = {}) => ({
   ...overrides
 });
 
+const getLastFullCalendarProps = () => {
+  const log = globalThis.__FC_PROPS_LOG || [];
+  // datesSet 함수가 들어있는 마지막 props 반환 (refresh / placeholder render 회피)
+  for (let i = log.length - 1; i >= 0; i--) {
+    if (log[i] && typeof log[i].datesSet === 'function') return log[i];
+  }
+  return log.length > 0 ? log[log.length - 1] : null;
+};
+
 beforeEach(() => {
-  globalThis.__mockFullCalendarProps = null;
+  globalThis.__FC_PROPS_LOG = [];
 });
 
 describe('ScheduleCalendarView — onMonthChange (datesSet pass-through)', () => {
@@ -68,8 +82,8 @@ describe('ScheduleCalendarView — onMonthChange (datesSet pass-through)', () =>
     const onMonthChange = jest.fn();
     render(<ScheduleCalendarView {...baseProps({ onMonthChange })} />);
 
-    const captured = globalThis.__mockFullCalendarProps;
-    expect(captured).not.toBeNull();
+    const captured = getLastFullCalendarProps();
+    expect(captured).toBeTruthy();
     expect(typeof captured.datesSet).toBe('function');
 
     const start = new Date('2026-05-31T00:00:00.000Z');
@@ -88,7 +102,8 @@ describe('ScheduleCalendarView — onMonthChange (datesSet pass-through)', () =>
   test('F9: onMonthChange 미전달 시 에러 없이 무시', () => {
     render(<ScheduleCalendarView {...baseProps()} />);
 
-    const captured = globalThis.__mockFullCalendarProps;
+    const captured = getLastFullCalendarProps();
+    expect(captured).toBeTruthy();
     expect(typeof captured.datesSet).toBe('function');
     // onMonthChange?.() optional chaining 가드 — 호출해도 에러가 발생하면 안 된다
     expect(() => {

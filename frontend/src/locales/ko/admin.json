@@ -2792,6 +2792,15 @@
     },
     "tentativeReserved": {
       "info": "가예약 일정이 등록되었습니다. 방문 시 사이드바 카드의 「당일 결제 + 활성화」 버튼으로 결제하세요."
+    },
+    "filter": {
+      "clientLabel": "내담자 필터",
+      "clientSelected": "내담자 {{count}}명",
+      "clearAll": "초기화",
+      "done": "완료",
+      "searchPlaceholder": "이름·전화 검색",
+      "emptyOptions": "내담자가 없습니다",
+      "ariaLabel": "내담자 필터 — {{count}}명 선택됨"
     }
   },
   "aiProvider": {

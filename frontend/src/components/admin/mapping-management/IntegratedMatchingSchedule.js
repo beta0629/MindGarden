@@ -65,6 +65,14 @@ const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
  */
 const MONTHLY_CONSULTANT_COUNTS_ENDPOINT = '/api/v1/schedules/monthly-consultant-counts';
 
+/**
+ * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
+ * `MappingCreationModal` 와 동일 SSOT — `/api/v1/admin/clients/with-mapping-info`.
+ * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
+ */
+const CLIENTS_WITH_MAPPING_INFO_ENDPOINT =
+  API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO || '/api/v1/admin/clients/with-mapping-info';
+
 const buildMonthlyCountsCacheKey = (tenantId, year, month) =>
   `${tenantId ?? 'unknown'}:${year}:${month}`;
 
@@ -126,6 +134,14 @@ const IntegratedMatchingSchedule = () => {
   const monthlyCountsCacheRef = useRef(new Map());
   const lastTenantIdRef = useRef(user?.tenantId ?? null);
 
+  // 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터.
+  // 빈 배열 = 필터 비활성. UnifiedScheduleComponent 가 events 를 그대로 통과시킨다.
+  const [selectedClientIds, setSelectedClientIds] = useState([]);
+  const [clientFilterOptions, setClientFilterOptions] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [clientFilterLoading, setClientFilterLoading] = useState(false);
+  const lastClientFilterTenantRef = useRef(null);
+
   // tenantId 변경 시 캐시 리셋(다른 테넌트의 카운트가 노출되지 않도록 차단).
   useEffect(() => {
     const tenantId = user?.tenantId ?? null;
@@ -133,6 +149,60 @@ const IntegratedMatchingSchedule = () => {
       monthlyCountsCacheRef.current = new Map();
       lastTenantIdRef.current = tenantId;
     }
+  }, [user?.tenantId]);
+
+  // tenantId 변경 시 내담자 필터 옵션·선택 리셋(다른 테넌트의 내담자가 노출되지 않도록 차단).
+  useEffect(() => {
+    const tenantId = user?.tenantId ?? null;
+    if (lastClientFilterTenantRef.current !== tenantId) {
+      lastClientFilterTenantRef.current = tenantId;
+      setClientFilterOptions([]);
+      setSelectedClientIds([]);
+    }
+  }, [user?.tenantId]);
+
+  // 내담자 필터 옵션 로드 — 마운트 1회 + tenantId 변경 시.
+  // SSOT: MappingCreationModal:259-268 와 동일 엔드포인트.
+  useEffect(() => {
+    let cancelled = false;
+    const loadClientOptions = async() => {
+      try {
+        setClientFilterLoading(true);
+        const response = await StandardizedApi.get(CLIENTS_WITH_MAPPING_INFO_ENDPOINT);
+        let payload = response;
+        if (response && typeof response === 'object' && response.success === true && response.data) {
+          payload = response.data;
+        }
+        const rawClients = Array.isArray(payload?.clients)
+          ? payload.clients
+          : (Array.isArray(payload) ? payload : []);
+        const options = rawClients
+          .filter((c) => c && c.id != null)
+          .map((c) => ({
+            id: c.id,
+            name: typeof c.name === 'string' ? c.name : String(c.name ?? ''),
+            phone: typeof c.phone === 'string' && c.phone !== '-' ? c.phone : '',
+            email: typeof c.email === 'string' ? c.email : ''
+          }))
+          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
+        if (!cancelled) {
+          setClientFilterOptions(options);
+        }
+      } catch (error) {
+        console.warn('내담자 필터 옵션 로드 실패:', error);
+        if (!cancelled) {
+          setClientFilterOptions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setClientFilterLoading(false);
+        }
+      }
+    };
+    loadClientOptions();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.tenantId]);
 
   const handleCalendarMonthChange = useCallback(({ start }) => {
@@ -763,6 +833,10 @@ const IntegratedMatchingSchedule = () => {
               mappingPaymentTimingByMappingId={buildMappingPaymentTimingLookup(mappings)}
               onMonthChange={handleCalendarMonthChange}
               consultantCounts={consultantCounts}
+              showClientFilter
+              clients={clientFilterOptions}
+              selectedClientIds={selectedClientIds}
+              onClientFilterChange={setSelectedClientIds}
             />
           </div>
         </main>

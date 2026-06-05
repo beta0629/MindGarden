@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -37,6 +37,7 @@ import {
 } from '../../constants/schedule';
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
 import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
+import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -96,7 +97,25 @@ const UnifiedScheduleComponent = ({
    * Map<consultantId, count> 또는 동일 구조의 일반 객체.
    * ScheduleLegend 로 전달되어 상담사 칩 옆 배지로 노출된다.
    */
-  consultantCounts
+  consultantCounts,
+  /**
+   * 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터 노출 여부.
+   * `true` 일 때만 ScheduleHeader 에 칩-버튼 + 팝오버 노출.
+   * 다른 캘린더 라우트(`/schedule`, `/admin/schedules` 등)는 미전달(false) → 회귀 0.
+   */
+  showClientFilter = false,
+  /**
+   * 통합 스케줄 한정 — 내담자 옵션 리스트 ({id, name, phone?, email?}[]).
+   * `IntegratedMatchingSchedule` 에서 `/api/v1/admin/clients/with-mapping-info` 1회 호출 + 활성 추출 후 전달.
+   */
+  clients = [],
+  /**
+   * 통합 스케줄 한정 — 선택된 내담자 id 배열.
+   * 빈 배열(0명) = 필터 비활성(모든 events 통과). 그 외에는 events 중 clientId 합집합 통과.
+   */
+  selectedClientIds = [],
+  /** 통합 스케줄 한정 — 칩-버튼 onChange 콜백. */
+  onClientFilterChange
 }) => {
     const { t } = useTranslation();
     const resolvedDisableCalendarEventDrag =
@@ -1053,6 +1072,24 @@ const UnifiedScheduleComponent = ({
         }
     };
 
+    /**
+     * 내담자 다중 필터 — 데코레이션 후 필터.
+     * - selectedClientIds.length === 0 → 필터 비활성, 모든 events 통과 (참조 동일성 유지)
+     * - 그 외 → 공휴일·휴가는 항상 통과 + extendedProps.clientId 가 selectedClientIds 에 포함된 events 통과
+     *
+     * 참고: 통합 스케줄(`showClientFilter` true) 외에는 selectedClientIds 가 항상 빈 배열이므로
+     *       다른 캘린더 라우트는 events 변환이 일어나지 않는다 — 회귀 0.
+     */
+    const decoratedEvents = useMemo(
+        () => decorateScheduleEventsForSameDayPending(events, mappingPaymentTimingByMappingId),
+        [events, mappingPaymentTimingByMappingId]
+    );
+
+    const filteredEvents = useMemo(
+        () => filterScheduleEventsBySelectedClientIds(decoratedEvents, selectedClientIds),
+        [decoratedEvents, selectedClientIds]
+    );
+
     // ========== 렌더링 (Presentational 컴포넌트 사용) ==========
     return (
         <div className="mg-v2-schedule-calendar mg-v2-ad-b0kla">
@@ -1064,6 +1101,10 @@ const UnifiedScheduleComponent = ({
                 onConsultantChange={handleConsultantChange}
                 onRefresh={forceRefresh}
                 hideTitle={hideScheduleTitle}
+                showClientFilter={showClientFilter}
+                clients={clients}
+                selectedClientIds={selectedClientIds}
+                onClientFilterChange={onClientFilterChange}
             />
 
             <ScheduleLegend
@@ -1080,7 +1121,7 @@ const UnifiedScheduleComponent = ({
             )}
 
             <ScheduleCalendarView
-                events={decorateScheduleEventsForSameDayPending(events, mappingPaymentTimingByMappingId)}
+                events={filteredEvents}
                 userRole={userRole}
                 onDateClick={handleDateClick}
                 onEventClick={handleEventClick}
@@ -1198,7 +1239,22 @@ UnifiedScheduleComponent.propTypes = {
   consultantCounts: PropTypes.oneOfType([
     PropTypes.instanceOf(Map),
     PropTypes.object
-  ])
+  ]),
+  /** 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터 노출 여부 */
+  showClientFilter: PropTypes.bool,
+  /** 통합 스케줄 한정 — 내담자 옵션 리스트 */
+  clients: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string,
+    phone: PropTypes.string,
+    email: PropTypes.string
+  })),
+  /** 통합 스케줄 한정 — 선택된 내담자 id 배열 (빈 배열 = 필터 비활성) */
+  selectedClientIds: PropTypes.arrayOf(
+    PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  ),
+  /** 통합 스케줄 한정 — 칩-버튼 onChange 콜백 */
+  onClientFilterChange: PropTypes.func
 };
 
 export default UnifiedScheduleComponent;

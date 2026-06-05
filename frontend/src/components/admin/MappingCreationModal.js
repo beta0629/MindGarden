@@ -19,6 +19,8 @@ import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import Avatar from '../common/Avatar';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -409,64 +411,32 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   };
 
   const renderActions = () => (
-    <div className="mg-modal__actions mg-v2-mapping-creation-modal__actions">
+    <ActionBar align="end" gap="md" className="mg-v2-mapping-creation-modal__actions">
       {step > 1 && step < 5 && (
-        <MGButton
-          type="button"
-          variant="outline"
-          size="medium"
-          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading })}
-          onClick={() => setStep(step - 1)}
-          disabled={loading}
-          preventDoubleClick={false}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-        >
+        <ActionBarButton variant="outline" onClick={() => setStep(step - 1)} disabled={loading}>
           {t('common:action.prev')}
-        </MGButton>
+        </ActionBarButton>
       )}
       {step < 4 && (
-        <MGButton
-          type="button"
+        <ActionBarButton
           variant="primary"
-          size="medium"
-          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
           onClick={() => step <= 3 && setStep(step + 1)}
           disabled={!canProceed()}
-          preventDoubleClick={false}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
           {t('common:action.next')}
-        </MGButton>
+        </ActionBarButton>
       )}
       {step === 4 && (
-        <MGButton
-          type="button"
-          variant="primary"
-          size="medium"
-          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading })}
-          onClick={handleCreateMapping}
-          disabled={loading}
-          loading={loading}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          preventDoubleClick={false}
-        >
+        <ActionBarButton variant="primary" onClick={handleCreateMapping} loading={loading}>
           {t('admin:mappingCreation.createMapping')}
-        </MGButton>
+        </ActionBarButton>
       )}
       {step === 5 && (
-        <MGButton
-          type="button"
-          variant="primary"
-          size="medium"
-          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-          onClick={handleClose}
-          preventDoubleClick={false}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-        >
+        <ActionBarButton variant="primary" onClick={handleClose}>
           {t('admin:actions.done')}
-        </MGButton>
+        </ActionBarButton>
       )}
-    </div>
+    </ActionBar>
   );
 
   const modalContent = (

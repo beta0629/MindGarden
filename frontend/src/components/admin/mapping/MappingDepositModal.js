@@ -5,8 +5,8 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import SafeText from '../../common/SafeText';
 import { apiPost } from '../../../utils/ajax';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 import '../MappingCreationModal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -105,43 +105,22 @@ const MappingDepositModal = ({
             showCloseButton
             loading={isLoading}
             actions={
-                <>
-                    <MGButton
-                        type="button"
-                        variant="secondary"
-                        size="medium"
-                        className={buildErpMgButtonClassName({
-                            variant: 'secondary',
-                            size: 'md',
-                            loading: isLoading
-                        })}
+                <ActionBar align="end" gap="md">
+                    <ActionBarButton
+                        variant="outline"
                         onClick={(e) => {
                             e?.preventDefault();
                             e?.stopPropagation();
                             handleClose();
                         }}
                         disabled={isLoading}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     >
                         {t('admin.actions.cancel')}
-                    </MGButton>
-                    <MGButton
-                        type="button"
-                        variant="primary"
-                        size="medium"
-                        className={buildErpMgButtonClassName({
-                            variant: 'primary',
-                            size: 'md',
-                            loading: isLoading
-                        })}
-                        onClick={handleSubmit}
-                        disabled={isLoading}
-                        loading={isLoading}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    >
+                    </ActionBarButton>
+                    <ActionBarButton variant="primary" onClick={handleSubmit} loading={isLoading}>
                         입금 확인
-                    </MGButton>
-                </>
+                    </ActionBarButton>
+                </ActionBar>
             }
         >
             <div className="mg-v2-mapping-creation-modal-wrapper">

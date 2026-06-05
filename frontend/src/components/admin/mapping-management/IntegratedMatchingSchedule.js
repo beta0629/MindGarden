@@ -25,6 +25,7 @@ import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import ActionBarButton from '../../common/ActionBarButton';
 import MappingScheduleCard from './integrated-schedule/organisms/MappingScheduleCard';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
@@ -415,20 +416,14 @@ const IntegratedMatchingSchedule = () => {
   };
 
   const headerActions = (
-    <MGButton
+    <ActionBarButton
       variant="primary"
-      size="medium"
-      className={buildErpMgButtonClassName({
-        variant: 'primary',
-        className: 'integrated-schedule__btn-new-mapping'
-      })}
-      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       onClick={() => setCreateMappingModalOpen(true)}
       aria-label="신규 매칭 생성"
-      preventDoubleClick={false}
+      className="integrated-schedule__btn-new-mapping"
     >
       신규 매칭
-    </MGButton>
+    </ActionBarButton>
   );
 
   return (

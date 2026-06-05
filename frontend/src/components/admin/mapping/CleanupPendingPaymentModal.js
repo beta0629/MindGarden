@@ -19,9 +19,9 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 import notificationManager from '../../../utils/notification';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -139,31 +139,14 @@ const CleanupPendingPaymentModal = ({
       showCloseButton={!submitting}
       loading={submitting}
       actions={(
-        <>
-          <MGButton
-            type="button"
-            variant="outline"
-            size="medium"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: submitting })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={handleClose}
-            disabled={submitting}
-          >
+        <ActionBar align="end" gap="md">
+          <ActionBarButton variant="outline" onClick={handleClose} disabled={submitting}>
             {t('admin:mappings.pendingPaymentCleanup.modal.cancel')}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="primary"
-            size="medium"
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: submitting })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={handleSubmit}
-            disabled={submitting}
-            loading={submitting}
-          >
+          </ActionBarButton>
+          <ActionBarButton variant="primary" onClick={handleSubmit} loading={submitting}>
             {t('admin:mappings.pendingPaymentCleanup.modal.confirm')}
-          </MGButton>
-        </>
+          </ActionBarButton>
+        </ActionBar>
       )}
     >
       <div className="mg-v2-cleanup-pending-payment-modal__body">

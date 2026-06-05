@@ -8,8 +8,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import MGButton from '../../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import ActionBar from '../../../common/ActionBar';
+import ActionBarButton from '../../../common/ActionBarButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useConfirm } from '../../../../hooks/useConfirm';
@@ -407,18 +407,13 @@ const MappingManagementPage = () => {
           subtitle={t('admin:mapping.page.subtitle')}
           titleId="mapping-management-title"
           actions={
-            <MGButton
-              type="button"
+            <ActionBarButton
               variant="primary"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => setShowCreateModal(true)}
+              className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
             >
               {t('admin:mapping.page.newMapping')}
-            </MGButton>
+            </ActionBarButton>
           }
         />
 
@@ -506,29 +501,19 @@ const MappingManagementPage = () => {
         loading={loading}
         backdropClick={!loading}
         actions={
-          <>
-            <MGButton
-              variant="secondary"
-              className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={handleCloseRefundModal}
-              disabled={loading}
-              preventDoubleClick
-            >
+          <ActionBar align="end" gap="md">
+            <ActionBarButton variant="outline" onClick={handleCloseRefundModal} disabled={loading}>
               {t('admin.actions.cancel')}
-            </MGButton>
-            <MGButton
+            </ActionBarButton>
+            <ActionBarButton
               variant="danger"
-              className={buildErpMgButtonClassName({ variant: 'danger', loading })}
-              loading={loading}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleRefundProcess}
+              loading={loading}
               disabled={!refundReason.trim() || loading}
-              preventDoubleClick={true}
             >
               {t('admin:mapping.page.modal.refundButton')}
-            </MGButton>
-          </>
+            </ActionBarButton>
+          </ActionBar>
         }
       >
         {refundMapping && (

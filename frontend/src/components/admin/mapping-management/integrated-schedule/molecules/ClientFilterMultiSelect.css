@@ -178,8 +178,8 @@
   left: 4px;
   width: 5px;
   height: 9px;
-  border-right: 2px solid var(--mg-white, #fff);
-  border-bottom: 2px solid var(--mg-white, #fff);
+  border-right: 2px solid var(--mg-white);
+  border-bottom: 2px solid var(--mg-white);
   transform: rotate(45deg);
 }
 
@@ -245,13 +245,13 @@
 .mg-client-filter__action--done {
   background: var(--ad-b0kla-green);
   border-color: var(--ad-b0kla-green);
-  color: var(--mg-white, #fff);
+  color: var(--mg-white);
 }
 
 .mg-client-filter__action--done:hover:not(:disabled) {
   background: var(--ad-b0kla-green);
   border-color: var(--ad-b0kla-green);
-  color: var(--mg-white, #fff);
+  color: var(--mg-white);
   opacity: 0.9;
 }
 

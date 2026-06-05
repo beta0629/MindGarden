@@ -165,10 +165,12 @@ const ClientFilterMultiSelect = ({
     const rect = triggerRef.current.getBoundingClientRect();
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : rect.right;
     const minWidth = Math.max(rect.width, 240);
-    const desiredWidth = Math.min(360, Math.max(minWidth, 280));
+    // viewport 안 fit 보장 — 좁은 viewport(태블릿/모니터 zoom)에서도 옵션 텍스트 squash 방지.
+    const maxFitWidth = Math.max(240, viewportWidth - POPOVER_VIEWPORT_MARGIN_PX * 2);
+    const desiredWidth = Math.min(360, Math.max(minWidth, 280), maxFitWidth);
     let left = rect.left;
     if (left + desiredWidth + POPOVER_VIEWPORT_MARGIN_PX > viewportWidth) {
-      left = Math.max(POPOVER_VIEWPORT_MARGIN_PX, rect.right - desiredWidth);
+      left = Math.max(POPOVER_VIEWPORT_MARGIN_PX, viewportWidth - desiredWidth - POPOVER_VIEWPORT_MARGIN_PX);
     }
     const top = rect.bottom + POPOVER_OFFSET_PX;
     setPopoverStyle({
@@ -288,12 +290,12 @@ const ClientFilterMultiSelect = ({
           aria-hidden="true"
           data-checked={selected ? 'true' : 'false'}
         />
-        <span className="mg-client-filter__option-text">
+        <div className="mg-client-filter__option-text">
           <span className="mg-client-filter__option-name">{optionLabel}</span>
           {meta ? (
             <span className="mg-client-filter__option-meta">{meta}</span>
           ) : null}
-        </span>
+        </div>
       </li>
     );
   };

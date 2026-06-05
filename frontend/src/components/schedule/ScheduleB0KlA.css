@@ -2535,7 +2535,8 @@ textarea.mg-v2-textarea {
   color: var(--mg-color-text-on-primary, var(--mg-white));
   border-style: solid;
   border-width: 2px;
-  border-color: transparent;
+  /* outline 탭과 동일 border-color 로 외곽선 위치/두께 일치 (단차 해소) */
+  border-color: var(--ad-b0kla-green);
   box-sizing: border-box;
 }
 

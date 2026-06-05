@@ -184,16 +184,26 @@ const ScheduleLegend = ({
     // 카운트가 도착하면 강제 펼침 — 단, 사용자가 명시적으로 토글한 적이 있으면 존중한다.
     // 2026-06-09 R1: localStorage 에 저장된 선호값이 있으면 mount 시점부터 userOverrideRef=true 로
     // 초기화되어 강제 펼침이 발동하지 않는다. (handleToggle 도 동일하게 userOverrideRef=true 세팅).
+    //
+    // 2026-06-09 P0 hotfix: 의존성 배열에서 `isCollapsed` 제거.
+    // - 이전: [hasCounts, isCollapsed] → 토글로 isCollapsed 가 바뀔 때마다 effect 재실행되며,
+    //   userOverrideRef 가 초기/리마운트 race 로 false 인 순간이 있으면 즉시 강제 펼침 되돌림.
+    // - 변경: [hasCounts] 만 유지 → hasCounts 변경 시에만 한 번 강제 펼침 시도.
+    //   prev 가 이미 false 면 functional updater 가 동일 값 반환 → 불필요 re-render 회피.
     useEffect(() => {
-        if (hasCounts && isCollapsed && !userOverrideRef.current) {
-            setIsCollapsed(false);
+        if (hasCounts && !userOverrideRef.current) {
+            setIsCollapsed((prev) => (prev ? false : prev));
         }
-    }, [hasCounts, isCollapsed]);
+    }, [hasCounts]);
 
+    // 2026-06-09 P0 hotfix: userOverrideRef 세팅을 setState updater 밖으로 분리.
+    // React StrictMode 에서 updater 가 이중 실행될 수 있고, concurrent rendering 시 부수효과 순서가
+    // 보장되지 않는다. ref 는 setState 등록 이전에 동기적으로 true 가 되어야 useEffect 가 어떤 시점에
+    // 재실행되더라도 사용자 명시 토글을 존중한다.
     const handleToggle = useCallback(() => {
+        userOverrideRef.current = true;
         setIsCollapsed((prev) => {
             const next = !prev;
-            userOverrideRef.current = true;
             writeStoredBoolean(LEGEND_COLLAPSED_STORAGE_KEY, next);
             return next;
         });
@@ -435,15 +445,15 @@ const ScheduleLegend = ({
                 aria-controls={bodyId}
                 aria-label={
                     isCollapsed
-                        ? t('integratedSchedule.legend.expandAria')
-                        : t('integratedSchedule.legend.collapseAria')
+                        ? t('admin:integratedSchedule.legend.expandAria')
+                        : t('admin:integratedSchedule.legend.collapseAria')
                 }
             >
                 <span className="mg-v2-schedule-legend__toggle-heading">
-                    {t('integratedSchedule.legend.heading')}
+                    {t('admin:integratedSchedule.legend.heading')}
                 </span>
                 <span className="mg-v2-schedule-legend__toggle-summary">
-                    ({t('integratedSchedule.legend.summary')})
+                    ({t('admin:integratedSchedule.legend.summary')})
                 </span>
                 <ChevronDown
                     size={16}

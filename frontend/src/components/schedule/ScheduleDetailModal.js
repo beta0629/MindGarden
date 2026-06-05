@@ -231,11 +231,47 @@ const ScheduleDetailModal = ({
     const consultantPartyTriggerRef = useRef(null);
     const partyQuickViewRef = useRef(null);
 
+    /** 상담일지 작성 여부 (null=미조회/로딩, true=작성됨, false=미작성).
+     * SSOT 분기 — "상담일지 작성" 과 "상담일지 보기/수정" 버튼 상호배타:
+     *   미작성 → 작성 버튼만 / 작성완료 → 보기/수정 버튼만. */
+    const [hasConsultationRecord, setHasConsultationRecord] = useState(null);
+
     const isClient = RoleUtils.isClient(user);
 
     useEffect(() => {
         partyQuickViewRef.current = partyQuickView;
     }, [partyQuickView]);
+
+    /** 모달 open + scheduleId 변화 시 상담일지 작성 여부 1회 조회.
+     * - `/api/v1/schedules/consultation-records?consultationId={scheduleId}` 의 records[] 길이 > 0 → 작성됨.
+     * - 모달 close 시 null 로 reset → 다음 open 시 재조회 (작성 완료 후 재오픈 즉시 반영).
+     * 실패 시 null 유지 (보수적: 기존 "작성" 버튼 노출 흐름 유지). */
+    useEffect(() => {
+        const scheduleId = scheduleData?.id;
+        if (!isOpen || !scheduleId) {
+            setHasConsultationRecord(null);
+            return undefined;
+        }
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await StandardizedApi.get(
+                    '/api/v1/schedules/consultation-records',
+                    { consultationId: String(scheduleId) }
+                );
+                if (cancelled) return;
+                const records = Array.isArray(res?.records) ? res.records : [];
+                setHasConsultationRecord(records.length > 0);
+            } catch (e) {
+                if (cancelled) return;
+                console.warn('상담일지 작성 여부 조회 실패:', e);
+                setHasConsultationRecord(null);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [isOpen, scheduleData?.id]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -805,7 +841,7 @@ const ScheduleDetailModal = ({
         displayData,
         getStatusCodeValue(statusForDisplay),
         isVacationEvent()
-    ) && !isClient;
+    ) && !isClient && hasConsultationRecord === true;
 
     const buildPartySummaryRows = (kind) => {
         const dash = SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER;
@@ -960,8 +996,11 @@ const ScheduleDetailModal = ({
                     const completedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'COMPLETED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_8d868037'))
                     )?.value || 'COMPLETED';
+                    /** 작성 vs 보기/수정 상호배타: 미작성(null 포함, 보수적) → "작성" 노출 / 작성완료 → 푸터 "보기/수정" 만 노출 (상단 ActionBar 에서 처리). */
+                    const showWriteConsultationLog = hasConsultationRecord !== true;
                     return (
                         <>
+                            {showWriteConsultationLog && (
                             <MGButton
                                 type="button"
                                 variant="outline"
@@ -978,6 +1017,7 @@ const ScheduleDetailModal = ({
                             >
                                 {t('schedule:ScheduleDetailModal.t_a0658140')}
                             </MGButton>
+                            )}
                             <MGButton
                                 type="button"
                                 variant="primary"

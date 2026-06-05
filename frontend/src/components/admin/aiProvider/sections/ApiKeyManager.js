@@ -11,6 +11,8 @@ import React, { useCallback, useState } from 'react';
 import { useConfirm } from '../../../../hooks/useConfirm';
 import { KeyRound, Trash2 } from 'lucide-react';
 import MGButton from '../../../common/MGButton';
+import ActionBar from '../../../common/ActionBar';
+import ActionBarButton from '../../../common/ActionBarButton';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../../utils/safeDisplay';
@@ -161,32 +163,14 @@ const ApiKeyManager = ({
           variant="form"
           loading={saving}
           actions={(
-            <>
-              <MGButton
-                type="button"
-                variant="secondary"
-                size="medium"
-                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
-                onClick={closeModal}
-                disabled={saving}
-                preventDoubleClick={false}
-              >
+            <ActionBar align="end" gap="md">
+              <ActionBarButton variant="outline" onClick={closeModal} disabled={saving}>
                 취소
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="primary"
-                size="medium"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: saving })}
-                onClick={handleSave}
-                disabled={saving}
-                loading={saving}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-              >
+              </ActionBarButton>
+              <ActionBarButton variant="primary" onClick={handleSave} loading={saving}>
                 저장
-              </MGButton>
-            </>
+              </ActionBarButton>
+            </ActionBar>
           )}
         >
           <ApiKeyModalContent

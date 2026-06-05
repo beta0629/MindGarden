@@ -13,11 +13,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
-import {
-  buildErpMgButtonClassName,
-  ERP_MG_BUTTON_LOADING_TEXT
-} from '../../erp/common/erpMgButtonProps';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 
 const ForceAnonymizeUserModal = ({
   isOpen,
@@ -42,36 +39,24 @@ const ForceAnonymizeUserModal = ({
       variant="confirm"
       loading={loading}
       actions={(
-        <>
-          <MGButton
-            type="button"
+        <ActionBar align="end" gap="md">
+          <ActionBarButton
             variant="outline"
-            className={buildErpMgButtonClassName({
-              variant: 'outline', size: 'md', loading
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onClose}
             disabled={loading}
             data-testid="force-anonymize-cancel"
           >
             {t('lifecycle.dormantUsers.forceAnonymizeModal.cancel', '취소')}
-          </MGButton>
-          <MGButton
-            type="button"
+          </ActionBarButton>
+          <ActionBarButton
             variant="danger"
-            className={buildErpMgButtonClassName({
-              variant: 'danger', size: 'md', loading
-            })}
-            loadingText={loading
-              ? t('lifecycle.dormantUsers.forceAnonymizeModal.processing', '익명화 처리 중...')
-              : ERP_MG_BUTTON_LOADING_TEXT}
             onClick={handleConfirm}
-            disabled={loading}
+            loading={loading}
             data-testid="force-anonymize-confirm"
           >
             {t('lifecycle.dormantUsers.forceAnonymizeModal.confirm', '익명화 실행')}
-          </MGButton>
-        </>
+          </ActionBarButton>
+        </ActionBar>
       )}
     >
       <p className="mg-modal__message mg-modal__message--danger">

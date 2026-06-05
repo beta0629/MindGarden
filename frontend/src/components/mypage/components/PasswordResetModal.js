@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AUTH_API } from '../../../constants/api';
 import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 import { useTranslation } from 'react-i18next';
 
 const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
@@ -113,29 +113,19 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
               다음 요청까지 {Math.floor(cooldown / 60)}분 {cooldown % 60}초 남았습니다.
             </p>
           ) : null}
-          <div className="mg-mypage-password-form__actions">
-            <MGButton
-              type="button"
-              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: isLoading })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={onClose}
-              disabled={isLoading}
-              variant="outline"
-              preventDoubleClick={false}
-            >
+          <ActionBar align="end" gap="md" className="mg-mypage-password-form__actions">
+            <ActionBarButton variant="outline" onClick={onClose} disabled={isLoading}>
               {t('common.actions.cancel')}
-            </MGButton>
-            <MGButton
+            </ActionBarButton>
+            <ActionBarButton
               type="submit"
-              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })}
+              variant="primary"
               disabled={isLoading || cooldown > 0 || !email.trim()}
               loading={isLoading}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              variant="primary"
             >
               재설정 이메일 발송
-            </MGButton>
-          </div>
+            </ActionBarButton>
+          </ActionBar>
         </form>
       ) : (
         <div className="mg-mypage-password-reset__success">
@@ -150,28 +140,14 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
             <li>이메일함을 확인해주세요 (스팸함 포함)</li>
             <li>메일의 링크로 새 비밀번호를 설정하세요</li>
           </ol>
-          <div className="mg-mypage-password-form__actions mg-mypage-password-form__actions--center">
-            <MGButton
-              type="button"
-              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={handleRetry}
-              disabled={cooldown > 0}
-              variant="outline"
-              preventDoubleClick={false}
-            >
+          <ActionBar align="center" gap="md" className="mg-mypage-password-form__actions mg-mypage-password-form__actions--center">
+            <ActionBarButton variant="outline" onClick={handleRetry} disabled={cooldown > 0}>
               다시 발송
-            </MGButton>
-            <MGButton
-              type="button"
-              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={onClose}
-              variant="primary"
-            >
+            </ActionBarButton>
+            <ActionBarButton variant="primary" onClick={onClose}>
               {t('common.actions.confirm')}
-            </MGButton>
-          </div>
+            </ActionBarButton>
+          </ActionBar>
           {cooldown > 0 ? (
             <p className="mg-mypage-cooldown">
               다시 발송까지 {Math.floor(cooldown / 60)}분 {cooldown % 60}초 남았습니다.

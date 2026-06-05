@@ -9,6 +9,7 @@ import ContentArea from '../../components/dashboard-v2/content/ContentArea';
 import ContentHeader from '../../components/dashboard-v2/content/ContentHeader';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton';
+import ActionBarButton from '../../components/common/ActionBarButton';
 import SafeText from '../../components/common/SafeText';
 import { buildErpMgButtonClassName } from '../../components/erp/common/erpMgButtonProps';
 import '../../styles/unified-design-tokens.css';
@@ -213,16 +214,10 @@ const ActivityHistory = () => {
   );
 
   const headerActions = (
-    <MGButton
-      variant="outline"
-      type="button"
-      className={buildErpMgButtonClassName({ variant: 'outline', loading: false })}
-      onClick={() => navigate('/client/dashboard')}
-      preventDoubleClick={false}
-    >
+    <ActionBarButton variant="outline" onClick={() => navigate('/client/dashboard')}>
       <i className="bi bi-arrow-left" aria-hidden="true" />
       대시보드로
-    </MGButton>
+    </ActionBarButton>
   );
 
   const pageShell = (body) => (

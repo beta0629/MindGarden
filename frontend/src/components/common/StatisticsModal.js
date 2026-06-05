@@ -20,6 +20,8 @@ import StatisticsGrid from './StatsGrid';
 import UnifiedModal from './modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
+import ActionBar from './ActionBar';
+import ActionBarButton from './ActionBarButton';
 import './StatisticsModal.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
@@ -177,31 +179,15 @@ const StatisticsModal = ({ isOpen, onClose, userRole = USER_ROLES.ADMIN }) => {
       showCloseButton
       loading={loading}
       actions={
-        <>
-          <MGButton
-            type="button"
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={loading}
-            preventDoubleClick={false}
-            loading={loading}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading })}
-          >
+        <ActionBar align="end" gap="md">
+          <ActionBarButton variant="outline" onClick={handleRefresh} loading={loading}>
             <RefreshCw size={16} />
             {t('common.actions.refresh')}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="primary"
-            onClick={onClose}
-            preventDoubleClick={false}
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          >
+          </ActionBarButton>
+          <ActionBarButton variant="primary" onClick={onClose}>
             {t('common.actions.close')}
-          </MGButton>
-        </>
+          </ActionBarButton>
+        </ActionBar>
       }
     >
         <div className="mg-modal-body">

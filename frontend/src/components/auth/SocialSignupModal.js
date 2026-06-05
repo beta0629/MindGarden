@@ -15,6 +15,8 @@ import {
 import notificationManager from '../../utils/notification';
 import PrivacyConsentModal from '../common/PrivacyConsentModal';
 import MGButton from '../common/MGButton';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
@@ -530,29 +532,23 @@ const SocialSignupModal = ({
               </div>
             )}
 
-            <div className="social-signup-modal__actions">
-              <MGButton
-                type="button"
-                variant="secondary"
-                className={`${buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })} social-signup-modal__action-btn`}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
+            <ActionBar align="end" gap="md" className="social-signup-modal__actions">
+              <ActionBarButton
+                variant="outline"
                 onClick={handleDismiss}
+                className="social-signup-modal__action-btn"
               >
                 {t('common.actions.cancel')}
-              </MGButton>
-              <MGButton
-                type="button"
+              </ActionBarButton>
+              <ActionBarButton
                 variant="primary"
-                className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} social-signup-modal__action-btn`}
-                loading={isLoading}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
                 onClick={handleSubmit}
+                loading={isLoading}
+                className="social-signup-modal__action-btn"
               >
                 {socialUser?.needsBranchMapping ? '계정 활성화 완료' : t('auth:SocialSignupModal.t_59e75cc1')}
-              </MGButton>
-            </div>
+              </ActionBarButton>
+            </ActionBar>
           </form>
         </div>
       </UnifiedModal>

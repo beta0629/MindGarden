@@ -153,6 +153,13 @@ mindgarden:
       easypay:
         host-test: ${KICC_EASYPAY_HOST_TEST:testpgapi.easypay.co.kr}
         host-prod: ${KICC_EASYPAY_HOST_PROD:pgapi.easypay.co.kr}
+  # 매핑 회기 차감 누락 보정 배치 (P1 #93 안전망)
+  # 즉시 비활성화: MINDGARDEN_BATCH_SESSION_RECOVERY_ENABLED=false
+  batch:
+    session-recovery:
+      enabled: ${MINDGARDEN_BATCH_SESSION_RECOVERY_ENABLED:true}
+      cron: ${MINDGARDEN_BATCH_SESSION_RECOVERY_CRON:0 0/30 * * * ?}  # 매 30분
+      page-size: ${MINDGARDEN_BATCH_SESSION_RECOVERY_PAGE_SIZE:200}
   mobile:
     push:
       expo:

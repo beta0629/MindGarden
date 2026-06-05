@@ -233,8 +233,10 @@
   --mg-actionbar-primary-text: var(--mg-white);
   --mg-actionbar-primary-hover-bg: var(--cs-success-700);
   --mg-actionbar-primary-press-bg: var(--cs-success-800);
-  --mg-actionbar-outline-bg: var(--mg-white);
-  --mg-actionbar-outline-text: var(--cs-success-600);
+  /* SSOT v1.2 hotfix (2026-06-05): white → cs-success-50 mint
+   * white-on-white 무경계 결함 해소. border:0 SSOT §B 원칙 유지. */
+  --mg-actionbar-outline-bg: var(--cs-success-50);
+  --mg-actionbar-outline-text: var(--cs-success-700);
   --mg-actionbar-outline-hover-bg: var(--cs-success-100);
   --mg-actionbar-outline-press-bg: var(--cs-success-200);
   --mg-actionbar-danger-bg: var(--cs-error-600);

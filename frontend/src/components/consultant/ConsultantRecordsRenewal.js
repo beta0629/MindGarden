@@ -18,6 +18,7 @@ import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import './ConsultantRecordsRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
+import SegmentedTabs from '../common/SegmentedTabs';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -356,30 +357,22 @@ const ConsultantRecordsRenewal = () => {
 
   return (
     <div className="cr-records">
-      {/* 탭 */}
-      <div className="cr-records__tabs" role="tablist">
-        <button
-          className={`cr-records__tab ${activeTab === TABS.PENDING ? 'cr-records__tab--active' : ''}`}
-          onClick={() => setActiveTab(TABS.PENDING)}
-          role="tab"
-          aria-selected={activeTab === TABS.PENDING}
-          type="button"
-        >
-          작성 대기
-          {pendingRecords.length > 0 && (
-            <span className="cr-records__tab-badge">{pendingRecords.length}</span>
-          )}
-        </button>
-        <button
-          className={`cr-records__tab ${activeTab === TABS.COMPLETED ? 'cr-records__tab--active' : ''}`}
-          onClick={() => setActiveTab(TABS.COMPLETED)}
-          role="tab"
-          aria-selected={activeTab === TABS.COMPLETED}
-          type="button"
-        >
-          작성 완료
-        </button>
-      </div>
+      {/* 탭 — MGButton SSOT (badge 포함) */}
+      <SegmentedTabs
+        ariaLabel="기록 탭"
+        items={[
+          {
+            value: TABS.PENDING,
+            label: '작성 대기',
+            badge: pendingRecords.length > 0 ? pendingRecords.length : null,
+          },
+          { value: TABS.COMPLETED, label: '작성 완료' },
+        ]}
+        activeValue={activeTab}
+        onChange={setActiveTab}
+        size="sm"
+        className="cr-records__tabs"
+      />
 
       {/* 날짜 필터 — 완료 탭에서만 */}
       {activeTab === TABS.COMPLETED && (

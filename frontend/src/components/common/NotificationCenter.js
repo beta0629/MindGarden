@@ -13,6 +13,7 @@ import {
   Calendar, CreditCard, MessageCircle, Bell, Heart, Trash2
 } from 'lucide-react';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
+import SegmentedTabs from './SegmentedTabs';
 import './NotificationCenter.css';
 import i18n from '../../i18n';
 import { useTranslation } from 'react-i18next';
@@ -228,21 +229,15 @@ const NotificationCenter = ({
 
   return (
     <div className="mg-notif-center" style={themeStyle}>
-      {/* 필터 칩 */}
-      <div className="mg-notif-center__filters" role="tablist">
-        {FILTER_TYPES.map((filter) => (
-          <button
-            key={filter.key}
-            className={`mg-notif-center__chip ${activeFilter === filter.key ? 'mg-notif-center__chip--active' : ''}`}
-            onClick={() => setActiveFilter(filter.key)}
-            role="tab"
-            aria-selected={activeFilter === filter.key}
-            type="button"
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
+      {/* 필터 칩 — MGButton SSOT */}
+      <SegmentedTabs
+        ariaLabel="알림 필터"
+        items={FILTER_TYPES.map((filter) => ({ value: filter.key, label: filter.label }))}
+        activeValue={activeFilter}
+        onChange={setActiveFilter}
+        size="sm"
+        className="mg-notif-center__filters"
+      />
 
       {/* 알림 리스트 */}
       <div className="mg-notif-center__list">

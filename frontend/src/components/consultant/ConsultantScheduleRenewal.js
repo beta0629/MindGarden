@@ -17,6 +17,7 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
+import SegmentedTabs from '../common/SegmentedTabs';
 import { USER_ROLES } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantScheduleRenewal.css';
@@ -327,27 +328,18 @@ const ConsultantScheduleRenewal = () => {
 
   return (
     <div className="cr-schedule">
-      {/* 뷰 전환 탭 */}
-      <div className="cr-schedule__view-tabs" role="tablist">
-        <button
-          className={`cr-schedule__view-tab ${viewType === VIEW_TYPES.WEEKLY ? 'cr-schedule__view-tab--active' : ''}`}
-          onClick={() => setViewType(VIEW_TYPES.WEEKLY)}
-          role="tab"
-          aria-selected={viewType === VIEW_TYPES.WEEKLY}
-          type="button"
-        >
-          주간
-        </button>
-        <button
-          className={`cr-schedule__view-tab ${viewType === VIEW_TYPES.DAILY ? 'cr-schedule__view-tab--active' : ''}`}
-          onClick={() => setViewType(VIEW_TYPES.DAILY)}
-          role="tab"
-          aria-selected={viewType === VIEW_TYPES.DAILY}
-          type="button"
-        >
-          일간
-        </button>
-      </div>
+      {/* 뷰 전환 탭 — MGButton SSOT */}
+      <SegmentedTabs
+        ariaLabel="일정 뷰 전환"
+        items={[
+          { value: VIEW_TYPES.WEEKLY, label: '주간' },
+          { value: VIEW_TYPES.DAILY, label: '일간' },
+        ]}
+        activeValue={viewType}
+        onChange={setViewType}
+        size="sm"
+        className="cr-schedule__view-tabs"
+      />
 
       {/* 주간 네비게이션 */}
       <div className="cr-schedule__week-header">

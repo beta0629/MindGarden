@@ -23,6 +23,8 @@ import {
 } from '../../constants/schedule';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
 import StatusBadge from '../common/StatusBadge';
+import SegmentedTabs from '../common/SegmentedTabs';
+import ActionBar from '../common/ActionBar';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
 import { ProfileCard } from '../ui/Card/index';
@@ -1075,7 +1077,11 @@ const ScheduleDetailModal = ({
                 closeOnEscape={!partyQuickView}
                 className="mg-v2-ad-b0kla"
                 actions={(
-                    <div className="schedule-detail-modal__footer-actions mg-v2-ad-b0kla__modal-actions">
+                    <ActionBar
+                        align="end"
+                        gap="md"
+                        className="schedule-detail-modal__footer-actions mg-v2-ad-b0kla__modal-actions"
+                    >
                         {consultationLogLinkVisible && (
                             <MGButton
                                 type="button"
@@ -1100,55 +1106,28 @@ const ScheduleDetailModal = ({
                             </MGButton>
                         )}
                         {renderMainActions()}
-                    </div>
+                    </ActionBar>
                 )}
             >
                 {showNotesTab ? (
-                    <div className="schedule-detail-modal__tabs mg-v2-ad-b0kla__segmented-control">
-                        <div
-                            className="schedule-detail-modal__tabs__track"
-                            role="tablist"
-                            aria-label={t('schedule:ScheduleDetailModal.t_b07dbada')}
-                        >
-                            <MGButton
-                                type="button"
-                                variant={activeDetailTab === 'detail' ? 'primary' : 'outline'}
-                                className={`${buildErpMgButtonClassName({
-                                    variant: activeDetailTab === 'detail' ? 'primary' : 'outline',
-                                    size: 'sm',
-                                    loading: false,
-                                    className: activeDetailTab === 'detail' ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
-                                })} mg-v2-ad-b0kla__segmented-item`.trim()}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
-                                onClick={() => setActiveDetailTab('detail')}
-                                aria-selected={activeDetailTab === 'detail'}
-                                role="tab"
-                            >
-                                {t('schedule:ScheduleDetailModal.t_bb446431')}
-                            </MGButton>
-                            <MGButton
-                                type="button"
-                                variant={activeDetailTab === 'notes' ? 'primary' : 'outline'}
-                                className={`${buildErpMgButtonClassName({
-                                    variant: activeDetailTab === 'notes' ? 'primary' : 'outline',
-                                    size: 'sm',
-                                    loading: false,
-                                    className: activeDetailTab === 'notes' ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
-                                })} mg-v2-ad-b0kla__segmented-item`.trim()}
-                                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                preventDoubleClick={false}
-                                onClick={() => setActiveDetailTab('notes')}
-                                aria-selected={activeDetailTab === 'notes'}
-                                role="tab"
-                            >
-                                특이사항
-                                {clientNotesUnresolvedCount > 0
-                                    ? ` (${clientNotesUnresolvedCount})`
-                                    : ''}
-                            </MGButton>
-                        </div>
-                    </div>
+                    <SegmentedTabs
+                        ariaLabel={t('schedule:ScheduleDetailModal.t_b07dbada')}
+                        items={[
+                            {
+                                value: 'detail',
+                                label: t('schedule:ScheduleDetailModal.t_bb446431')
+                            },
+                            {
+                                value: 'notes',
+                                label: '특이사항',
+                                badge: clientNotesUnresolvedCount > 0 ? clientNotesUnresolvedCount : undefined
+                            }
+                        ]}
+                        activeValue={activeDetailTab}
+                        onChange={setActiveDetailTab}
+                        size="sm"
+                        className="schedule-detail-modal__tabs"
+                    />
                 ) : null}
                 {effectiveTab === 'notes' ? (
                     <ScheduleClientNotesSection

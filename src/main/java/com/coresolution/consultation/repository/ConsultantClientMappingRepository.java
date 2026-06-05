@@ -111,6 +111,29 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
         @Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("clientId") Long clientId);
 
     /**
+     * 회기 차감 보정 배치용: 결제 승인된 활성/입금대기 매핑 1건 조회.
+     *
+     * <p>상태가 ACTIVE 또는 DEPOSIT_PENDING 이고 paymentStatus 가 APPROVED 인 매핑만 회기 차감을
+     * 시도할 수 있다. {@code remainingSessions} 가 0 이면 alert 로 분기 (배치 잡).</p>
+     *
+     * @param tenantId     테넌트 ID
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId     내담자 사용자 ID
+     * @return 활성·결제 승인 매핑 (없으면 empty)
+     * @since 2026-06-05
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId "
+            + "  AND m.consultant.id = :consultantId "
+            + "  AND m.client.id = :clientId "
+            + "  AND m.status IN ('ACTIVE', 'DEPOSIT_PENDING') "
+            + "  AND m.paymentStatus = 'APPROVED'")
+    java.util.Optional<ConsultantClientMapping> findActiveByConsultantAndClient(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId);
+
+    /**
      * 테넌트별 ACTIVE·SESSIONS_EXHAUSTED 매칭 일괄 조회 (스케줄 목록 N+1 방지).
      */
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client "

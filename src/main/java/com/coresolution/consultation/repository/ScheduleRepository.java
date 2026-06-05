@@ -169,6 +169,53 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             String tenantId, Long consultantId, Long clientId, ScheduleStatus status);
 
     /**
+     * 회기 차감 누락 보정용: 상담사·내담자 쌍 중 {@code sessionSequence IS NULL}(미차감)이고
+     * 활성 상태(BOOKED/CONFIRMED/IN_PROGRESS/COMPLETED) 인 미삭제 일정 조회.
+     *
+     * <p>매핑 결제 확정 시 즉시 보정 (patch 7.1) 및 어드민 단건 트리거에서 사용.
+     * 멱등성: {@code sessionSequence IS NULL} 가드로 중복 차감 방지.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId 내담자 사용자 ID
+     * @param statuses 처리 대상 상태 목록
+     * @return 미차감 일정 목록
+     * @since 2026-06-05
+     */
+    List<Schedule> findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
+            String tenantId, Long consultantId, Long clientId, Collection<ScheduleStatus> statuses);
+
+    /**
+     * 배치 잡: 전체 테넌트에서 {@code sessionSequence IS NULL} + 처리 대상 상태 + 상담사/내담자
+     * 모두 존재하는 일정 페이지 조회. {@code COMPLETED} 인 경우는 {@link ConsultationRecord}
+     * (consultation_id = schedule_id) 가 존재해야 보정 대상이다. 페이지 크기로 한 사이클 처리량 제한.
+     *
+     * <p>관련 합의: 매핑 회기 차감 누락 P1 — {@code SessionDeductionRecoveryBatch}.</p>
+     *
+     * @param statuses 처리 대상 상태 목록
+     * @param pageable 페이징 (기본 200건)
+     * @return 보정 후보 일정 목록 (tenantId, date, startTime ASC)
+     * @since 2026-06-05
+     */
+    @Query("SELECT s FROM Schedule s "
+            + "WHERE s.isDeleted = false "
+            + "  AND s.sessionSequence IS NULL "
+            + "  AND s.status IN :statuses "
+            + "  AND s.consultantId IS NOT NULL "
+            + "  AND s.clientId IS NOT NULL "
+            + "  AND ("
+            + "       s.status <> com.coresolution.consultation.constant.ScheduleStatus.COMPLETED "
+            + "    OR EXISTS ("
+            + "         SELECT 1 FROM ConsultationRecord r "
+            + "          WHERE r.tenantId = s.tenantId "
+            + "            AND r.consultationId = s.id "
+            + "            AND r.isDeleted = false"
+            + "       )"
+            + "  ) "
+            + "ORDER BY s.tenantId ASC, s.date ASC, s.startTime ASC")
+    List<Schedule> findRecoveryCandidates(@Param("statuses") Collection<ScheduleStatus> statuses, Pageable pageable);
+
+    /**
      * 상담사·내담자별 완료(COMPLETED) 일정 중 가장 최근 상담일(날짜 기준 MAX).
      *
      * @param tenantId 테넌트 ID

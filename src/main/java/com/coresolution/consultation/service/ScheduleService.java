@@ -398,6 +398,55 @@ public interface ScheduleService {
      * @since 2026-05-06
      */
     void finalizeTentativeSchedulesAfterDepositConfirmed(ConsultantClientMapping mapping);
+
+    /**
+     * 회기 차감 누락 보정: 결제 확정 *이전*에 이미 BOOKED/CONFIRMED/IN_PROGRESS/COMPLETED 로
+     * 전환되었지만 {@code session_sequence IS NULL} 인 일정을 보정 차감한다.
+     *
+     * <p>매핑 단건 어드민 트리거(POST /api/v1/admin/maintenance/session-recovery) 와
+     * {@link #finalizeTentativeSchedulesAfterDepositConfirmed} 내부에서 호출된다.
+     * 멱등성은 {@code session_sequence IS NULL} 가드로 보장된다.</p>
+     *
+     * <p>관련 합의: 매핑 회기 차감 누락 P1 — 운영 사례 mapping#93 보정 후 영구 가드.</p>
+     *
+     * @param mapping 보정 대상 매핑 (consultant·client·tenantId·id 필수)
+     * @return 실제 보정된 일정 수
+     * @author CoreSolution
+     * @since 2026-06-05
+     */
+    int recoverMissedSessionDeductionsForMapping(ConsultantClientMapping mapping);
+
+    /**
+     * 회기 차감 보정 1건: 매핑 id 와 일정을 받아 멱등 차감을 수행한다.
+     *
+     * <p>{@code SessionDeductionRecoveryBatch} 가 일정 단위로 호출한다.
+     * 매핑 status 가드 위반·잔여 회기 부족 시 {@link IllegalStateException} 을 던지며
+     * 호출자가 alert 분기 처리한다.</p>
+     *
+     * @param tenantId         테넌트 ID
+     * @param mappingId        대상 매핑 ID
+     * @param consultantUserId 상담사 사용자 ID
+     * @param clientUserId     내담자 사용자 ID
+     * @param schedule         차감 대상 일정 (sessionSequence IS NULL 인 일정)
+     * @author CoreSolution
+     * @since 2026-06-05
+     */
+    void useSessionForSpecificMapping(String tenantId, Long mappingId, Long consultantUserId,
+            Long clientUserId, Schedule schedule);
+
+    /**
+     * 일정 완료(COMPLETED) 전환 *직전* 멱등 회기 차감 시도.
+     *
+     * <p>패치 7.3: {@code ConsultationServiceImpl.syncScheduleStatus} 와
+     * {@link #autoCompleteExpiredSchedules} 가 일정을 COMPLETED 로 마킹하기 전에 호출한다.
+     * 이미 {@code sessionSequence} 가 있으면 no-op. 매핑이 활성·결제 승인이 아니면 silent skip
+     * (배치 잡이 다음 사이클에 alert 적재).</p>
+     *
+     * @param schedule 완료 직전 일정
+     * @author CoreSolution
+     * @since 2026-06-05
+     */
+    void deductSessionAtCompletionIfNeeded(Schedule schedule);
     
     /**
      * 특정 스케줄이 시간이 지났는지 확인

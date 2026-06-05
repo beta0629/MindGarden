@@ -704,14 +704,18 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         Long consultantUserId = mapping.getConsultant().getId();
         Long clientUserId = mapping.getClient().getId();
-        List<Schedule> tentatives = scheduleRepository
+        List<Schedule> tentativesRaw = scheduleRepository
                 .findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
                         tenantId, consultantUserId, clientUserId, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
-        if (tentatives.isEmpty()) {
+        if (tentativesRaw.isEmpty()) {
             log.debug("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 일정 없음, mappingId={}",
                     mapping.getId());
+            // 가예약이 없어도 누락 일정 보정은 필요 (mapping#93 시나리오).
+            recoverMissedSessionDeductionsInternal(tenantId, mapping.getId(), consultantUserId, clientUserId);
             return;
         }
+        // immutable list 방어: production 에서는 보통 ArrayList 지만 List.of 가 전달될 수 있어 복사.
+        List<Schedule> tentatives = new ArrayList<>(tentativesRaw);
         tentatives.sort(Comparator.comparing(Schedule::getDate).thenComparing(Schedule::getStartTime));
         log.info("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 {}건 확정 처리, mappingId={}",
                 tentatives.size(), mapping.getId());
@@ -721,6 +725,68 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             useSessionForSpecificMapping(tenantId, mapping.getId(), consultantUserId, clientUserId, booked);
             notifyTentativeScheduleBookedAfterDeposit(booked, tenantId);
         }
+
+        // 패치 7.1: 결제 확정 *이전*에 이미 BOOKED/CONFIRMED/IN_PROGRESS/COMPLETED 로 전환된
+        // session_sequence IS NULL 인 일정도 보정 차감 (mapping#93 운영 사례 대응).
+        // 멱등성: session_sequence IS NULL 가드. COMPLETED 일정은 status 유지·매핑/회차만 채움.
+        recoverMissedSessionDeductionsInternal(tenantId, mapping.getId(), consultantUserId, clientUserId);
+    }
+
+    @Override
+    public int recoverMissedSessionDeductionsForMapping(ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getId() == null) {
+            return 0;
+        }
+        if (mapping.getConsultant() == null || mapping.getClient() == null) {
+            log.warn("session deduction recovery: consultant/client 없음, mappingId={}", mapping.getId());
+            return 0;
+        }
+        String tenantId = mapping.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = TenantContextHolder.getRequiredTenantId();
+        }
+        return recoverMissedSessionDeductionsInternal(tenantId, mapping.getId(),
+                mapping.getConsultant().getId(), mapping.getClient().getId());
+    }
+
+    /**
+     * 패치 7.1 본문: 보정 차감 루프. {@link #finalizeTentativeSchedulesAfterDepositConfirmed} 와
+     * {@link #recoverMissedSessionDeductionsForMapping}(어드민 단건 트리거) 공통 사용.
+     *
+     * @return 보정된(차감 성공) 일정 수
+     */
+    private int recoverMissedSessionDeductionsInternal(String tenantId, Long mappingId,
+            Long consultantUserId, Long clientUserId) {
+        List<Schedule> queried = scheduleRepository
+                .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
+                        tenantId, consultantUserId, clientUserId,
+                        List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED,
+                                ScheduleStatus.IN_PROGRESS, ScheduleStatus.COMPLETED));
+        if (queried.isEmpty()) {
+            return 0;
+        }
+        // immutable list 방어: production 에서는 보통 ArrayList 지만 List.of 가 전달될 수 있어 복사.
+        List<Schedule> missed = new ArrayList<>(queried);
+        missed.sort(Comparator.comparing(Schedule::getDate).thenComparing(Schedule::getStartTime));
+        int recovered = 0;
+        for (Schedule s : missed) {
+            try {
+                useSessionForSpecificMapping(tenantId, mappingId, consultantUserId, clientUserId, s);
+                recovered++;
+                log.info("session deduction recovery: scheduleId={}, mappingId={}, manual_recovery=patch7.1",
+                        s.getId(), mappingId);
+            } catch (IllegalStateException ex) {
+                log.warn("session deduction recovery skipped: scheduleId={}, mappingId={}, reason={}",
+                        s.getId(), mappingId, ex.getMessage());
+                // 회기 부족·매핑 status 가드 등 → 배치 잡이 다음 사이클에 alert 로그
+            } catch (RuntimeException ex) {
+                log.error("session deduction recovery error: scheduleId={}, mappingId={}, reason={}",
+                        s.getId(), mappingId, ex.getMessage(), ex);
+            }
+        }
+        log.info("session deduction recovery summary: mappingId={}, candidates={}, recovered={}",
+                mappingId, missed.size(), recovered);
+        return recovered;
     }
 
     /**
@@ -946,9 +1012,18 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     /**
      * 지정 매핑 ID에 대해 회기 1회 사용 및 동기화 ({@link #useSessionForMapping} 내부와 동일 처리).
      * 입금 확인 직후 매핑이 DEPOSIT_PENDING인 경우에도 허용한다.
+     *
+     * <p>2026-06-05: 회기 차감 누락 보정 P1 — {@code SessionDeductionRecoveryBatch} 및 어드민
+     * 트리거에서 호출 가능하도록 public + 인터페이스 노출.</p>
      */
-    private void useSessionForSpecificMapping(String tenantId, Long mappingId, Long consultantUserId,
+    @Override
+    public void useSessionForSpecificMapping(String tenantId, Long mappingId, Long consultantUserId,
             Long clientUserId, Schedule scheduleForSequence) {
+        if (scheduleForSequence != null && scheduleForSequence.getSessionSequence() != null) {
+            log.debug("회기 이미 차감됨(idempotent skip): scheduleId={}, mappingId={}, sequence={}",
+                    scheduleForSequence.getId(), mappingId, scheduleForSequence.getSessionSequence());
+            return;
+        }
         log.debug("매핑 단건 회기 사용: mappingId={}, 상담사 {}, 내담자 {}", mappingId, consultantUserId, clientUserId);
         ConsultantClientMapping freshMapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
@@ -965,6 +1040,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             throw new IllegalStateException(
                     "가예약 확정 시 회기 차감은 활성·입금대기 매핑에서만 가능합니다. mappingId="
                             + mappingId + ", status=" + mappingStatus);
+        }
+        Integer remaining = freshMapping.getRemainingSessions();
+        if (remaining == null || remaining <= 0) {
+            throw new IllegalStateException(
+                    "사용 가능한 회기가 없습니다. mappingId=" + mappingId + ", remaining=" + remaining);
         }
         log.info("매핑 회기 차감: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}",
                 freshMapping.getId(), freshMapping.getTotalSessions(),
@@ -2184,6 +2264,37 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
     }
 
+    /**
+     * 패치 7.3: 일정 COMPLETED 전환 직전 멱등 회기 차감.
+     *
+     * <p>{@code syncScheduleStatus}·{@link #autoCompleteExpiredSchedules} 가 호출.
+     * 매핑이 활성·결제 승인이 아닌 경우 {@link IllegalStateException} 을 던지지 않고 silent skip
+     * (배치 잡의 다음 사이클이 정상 처리하므로 부모 트랜잭션을 막을 필요 없음).</p>
+     */
+    @Override
+    public void deductSessionAtCompletionIfNeeded(Schedule schedule) {
+        if (schedule == null || schedule.getId() == null) {
+            return;
+        }
+        if (!isConsultationScheduleForSessionDeduction(schedule)) {
+            return;
+        }
+        if (schedule.getSessionSequence() != null) {
+            return;
+        }
+        try {
+            useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
+        } catch (IllegalStateException ex) {
+            log.warn("session deduction at completion skipped: scheduleId={}, reason={}",
+                    schedule.getId(), ex.getMessage());
+        } catch (RuntimeException ex) {
+            // useSessionForMapping 은 내부에서 RuntimeException 으로 래핑한다.
+            // 본 시점에 부모 트랜잭션(상담 완료·자동 완료)을 막지 않기 위해 swallow + 로그.
+            log.warn("session deduction at completion failed (will be retried by batch): scheduleId={}, reason={}",
+                    schedule.getId(), ex.getMessage());
+        }
+    }
+
     private void persistSessionSequenceBeforeDeduction(Schedule schedule, ConsultantClientMapping mapping) {
         if (schedule == null || schedule.getId() == null || mapping == null) {
             return;
@@ -2830,6 +2941,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
                         boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
                         if (hasRecord) {
+                            // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
+                            deductSessionAtCompletionIfNeeded(latestSchedule);
                             latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                             latestSchedule.setUpdatedAt(LocalDateTime.now());
                             scheduleRepository.save(latestSchedule);
@@ -2860,6 +2973,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
                         boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
                         if (hasRecord) {
+                            // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
+                            deductSessionAtCompletionIfNeeded(latestSchedule);
                             latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                             latestSchedule.setUpdatedAt(LocalDateTime.now());
                             scheduleRepository.save(latestSchedule);
@@ -2885,6 +3000,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
                         boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
                         if (hasRecord) {
+                            // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
+                            deductSessionAtCompletionIfNeeded(latestSchedule);
                             latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                             latestSchedule.setUpdatedAt(LocalDateTime.now());
                             scheduleRepository.save(latestSchedule);
@@ -2912,6 +3029,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     if (latestSchedule != null && ScheduleStatus.IN_PROGRESS.equals(latestSchedule.getStatus())) {
                         boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, latestSchedule.getId());
                         if (hasRecord) {
+                            // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
+                            deductSessionAtCompletionIfNeeded(latestSchedule);
                             latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                             latestSchedule.setUpdatedAt(LocalDateTime.now());
                             scheduleRepository.save(latestSchedule);

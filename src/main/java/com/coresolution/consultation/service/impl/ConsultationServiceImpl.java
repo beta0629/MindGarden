@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -103,7 +104,14 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Autowired
     private UserPersonalDataCacheService userPersonalDataCacheService;
-    
+
+    /**
+     * 패치 7.3: 상담 완료 시 회기 차감 보정용. lazy lookup 대신 표준 주입.
+     * 순환 의존 방지를 위해 setter 사용은 생략하고 일반 필드 주입(@Autowired) 적용.
+     */
+    @Autowired
+    private ScheduleService scheduleService;
+
     @PersistenceContext
     private EntityManager entityManager;
     
@@ -2653,6 +2661,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             for (com.coresolution.consultation.entity.Schedule schedule : schedules) {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 if (!ScheduleStatus.COMPLETED.equals(schedule.getStatus())) {
+                    // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
+                    scheduleService.deductSessionAtCompletionIfNeeded(schedule);
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(java.time.LocalDateTime.now());

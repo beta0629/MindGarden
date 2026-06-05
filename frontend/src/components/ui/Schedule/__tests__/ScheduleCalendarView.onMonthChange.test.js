@@ -3,7 +3,8 @@
  *
  * 검증 매트릭스 (F8~F9):
  *  - F8: onMonthChange 전달 + FullCalendar datesSet 트리거 → { start: Date, end: Date,
- *        activeStart: Date, view: 'dayGridMonth' } 호출 (2026-06-09 R3 보강).
+ *        activeStart: Date, currentStart: Date, view: 'dayGridMonth' } 호출
+ *        (2026-06-XX R4 SSOT 정정 — view.currentStart 가 활성 월 1일).
  *  - F9: onMonthChange 미전달 시 에러 없이 무시.
  *
  * 전략: FullCalendar 의 react 컴포넌트를 mock 해 datesSet props 를 직접 캡처/호출한다.
@@ -79,7 +80,7 @@ beforeEach(() => {
 
 describe('ScheduleCalendarView — onMonthChange (datesSet pass-through)', () => {
   // ─── F8 ────────────────────────────────────────────────────────────
-  test('F8: onMonthChange 전달 + FullCalendar datesSet 트리거 → { start, end, activeStart, view } 호출', () => {
+  test('F8: onMonthChange 전달 + FullCalendar datesSet 트리거 → { start, end, activeStart, currentStart, view } 호출', () => {
     const onMonthChange = jest.fn();
     render(<ScheduleCalendarView {...baseProps({ onMonthChange })} />);
 
@@ -87,18 +88,26 @@ describe('ScheduleCalendarView — onMonthChange (datesSet pass-through)', () =>
     expect(captured).toBeTruthy();
     expect(typeof captured.datesSet).toBe('function');
 
-    // FullCalendar 실제 동작: April 보기 → start 는 표시 첫 셀(이전 달 일요일).
-    //                          view.activeStart 는 활성 월 1일.
+    // FullCalendar v6 실제 동작: April 보기 →
+    //   - arg.start         = 표시 첫 셀(이전 달 일요일) = 2026-03-29
+    //   - view.activeStart  = 동일 (그리드 첫 가시일)    = 2026-03-29
+    //   - view.currentStart = 활성 월 1일 (SSOT)         = 2026-04-01
     const start = new Date('2026-03-29T00:00:00.000Z');
     const end = new Date('2026-05-10T00:00:00.000Z');
-    const activeStart = new Date('2026-04-01T00:00:00.000Z');
-    captured.datesSet({ start, end, view: { type: 'dayGridMonth', activeStart } });
+    const activeStart = new Date('2026-03-29T00:00:00.000Z');
+    const currentStart = new Date('2026-04-01T00:00:00.000Z');
+    captured.datesSet({
+      start,
+      end,
+      view: { type: 'dayGridMonth', activeStart, currentStart }
+    });
 
     expect(onMonthChange).toHaveBeenCalledTimes(1);
     expect(onMonthChange).toHaveBeenCalledWith({
       start,
       end,
       activeStart,
+      currentStart,
       view: 'dayGridMonth'
     });
   });

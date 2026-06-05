@@ -246,26 +246,27 @@ const IntegratedMatchingSchedule = () => {
   }, [user?.tenantId]);
 
   /**
-   * 2026-06-09 R3 (P0) 픽스 — 4월 보기 시 month=3 호출 회귀 해결.
+   * 2026-06-XX R4 (P0) — 4월 보기에서 month=3 호출 회귀 해결.
    *
-   * SSOT: FullCalendar `view.activeStart` 는 실제 활성 월의 1일 00:00.
-   * `start` 는 표시 그리드의 첫 가시 셀(이전 달 일요일일 수 있음) — month 산출에 부적합.
+   * SSOT (FullCalendar v6 공식 문서): view.currentStart = 활성 월의 1일 00:00.
+   * view.activeStart 는 표시 그리드 첫 가시일이며 month view 에서는 보통
+   * 이전 달의 일요일이 들어온다. PR #135 R3 의 가정 「activeStart = 활성 월 1일」
+   * 은 잘못된 가정으로, 4월 보기에서 activeStart=2026-03-29 → month=3 API
+   * 호출 회귀를 유발했다.
    *
-   * 우선순위: `activeStart` (있으면 그대로) → `start` 폴백.
-   * 폴백 경로에서는 표시 가운데(15일) 기준으로 month 산출 (이전 동작 호환).
-   * 활성 월 1일을 사용하므로 mid-of-grid 계산은 더 이상 필요 없다.
+   * 우선순위: currentStart(SSOT) → activeStart(이전 달 보정 후 폴백) → start(mid-15 폴백).
    */
-  const handleCalendarMonthChange = useCallback(({ start, activeStart }) => {
+  const handleCalendarMonthChange = useCallback(({ start, activeStart, currentStart }) => {
     let ref = null;
-    if (activeStart instanceof Date) {
-      ref = activeStart;
+    if (currentStart instanceof Date) {
+      ref = currentStart;
+    } else if (activeStart instanceof Date) {
+      const probe = new Date(activeStart.getFullYear(), activeStart.getMonth(), activeStart.getDate() + 7);
+      ref = new Date(probe.getFullYear(), probe.getMonth(), 1);
     } else if (start instanceof Date) {
-      // 폴백: activeStart 가 없으면 grid 가운데(15일) 기준으로 month 산출.
       ref = new Date(start.getFullYear(), start.getMonth(), 15);
     }
-    if (!ref) {
-      return;
-    }
+    if (!ref) return;
     const nextYear = ref.getFullYear();
     const nextMonth = ref.getMonth() + 1;
     setCurrentYear((prev) => (prev === nextYear ? prev : nextYear));

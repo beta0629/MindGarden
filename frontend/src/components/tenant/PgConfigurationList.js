@@ -14,6 +14,8 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
 import MGButton from '../common/MGButton';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -199,17 +201,12 @@ const PgConfigurationList = () => {
               subtitle="결제 게이트웨이 설정을 조회·등록·관리합니다."
               titleId="pg-config-list-title"
               actions={
-                <MGButton
-                  type="button"
+                <ActionBarButton
                   variant="primary"
-                  size="medium"
-                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => navigate('/tenant/pg-configurations/new')}
-                  preventDoubleClick={false}
                 >
                   {t('common:tenant.PgConfigurationList.t_61ce87de')}
-                </MGButton>
+                </ActionBarButton>
               }
             />
 
@@ -448,30 +445,18 @@ const PgConfigurationList = () => {
           backdropClick={!loading}
           loading={loading}
           actions={
-            <>
-              <MGButton
-                type="button"
-                variant="secondary"
-                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            <ActionBar align="end" gap="md">
+              <ActionBarButton
+                variant="outline"
                 onClick={() => setShowDeleteModal(false)}
                 disabled={loading}
-                preventDoubleClick={false}
               >
                 {t('admin.actions.cancel')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="danger"
-                className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: loading })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={handleDelete}
-                disabled={loading}
-                preventDoubleClick={false}
-              >
+              </ActionBarButton>
+              <ActionBarButton variant="danger" onClick={handleDelete} disabled={loading}>
                 {t('admin.actions.delete')}
-              </MGButton>
-            </>
+              </ActionBarButton>
+            </ActionBar>
           }
         >
           {selectedConfig && (

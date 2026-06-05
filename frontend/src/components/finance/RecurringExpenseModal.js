@@ -7,6 +7,8 @@ import { useConfirm } from '../../hooks/useConfirm';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
 
@@ -403,39 +405,22 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                             loading={loading}
                             zIndex={1050}
                             actions={
-                                <>
-                                    <MGButton
-                                        type="button"
-                                        className={buildErpMgButtonClassName({
-                                            variant: 'secondary',
-                                            size: 'md',
-                                            loading: false,
-                                            className: 'mg-v2-button--secondary'
-                                        })}
-                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                <ActionBar align="end" gap="md">
+                                    <ActionBarButton
+                                        variant="outline"
                                         onClick={() => setShowForm(false)}
                                         disabled={loading}
-                                        variant="secondary"
-                                        preventDoubleClick={false}
                                     >
                                         {t('common.actions.cancel')}
-                                    </MGButton>
-                                    <MGButton
-                                        type="button"
-                                        className={buildErpMgButtonClassName({
-                                            variant: 'primary',
-                                            size: 'md',
-                                            loading
-                                        })}
-                                        onClick={handleSaveExpense}
-                                        disabled={loading}
-                                        loading={loading}
-                                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                                    </ActionBarButton>
+                                    <ActionBarButton
                                         variant="primary"
+                                        onClick={handleSaveExpense}
+                                        loading={loading}
                                     >
                                         {t('common.actions.save')}
-                                    </MGButton>
-                                </>
+                                    </ActionBarButton>
+                                </ActionBar>
                             }
                         >
                                     <div className="mg-v2-form-group">

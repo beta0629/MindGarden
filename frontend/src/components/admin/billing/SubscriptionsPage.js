@@ -31,6 +31,8 @@ import { ContentArea, ContentHeader, ContentSection } from '../../dashboard-v2/c
 import EmptyState from '../../common/EmptyState';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
@@ -184,22 +186,13 @@ const SubscriptionsPage = () => {
               title={pageTitle}
               subtitle={pageSubtitle}
               actions={(
-                <MGButton
-                  type="button"
+                <ActionBarButton
                   variant="primary"
-                  size="medium"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'md',
-                    loading: false
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={handleOpenAdd}
                   data-testid="admin-billing-add-subscription"
-                  preventDoubleClick={false}
                 >
                   {addLabel}
-                </MGButton>
+                </ActionBarButton>
               )}
             />
 
@@ -336,43 +329,24 @@ const SubscriptionsPage = () => {
           showCloseButton
           loading={submitting}
           actions={(
-            <>
-              <MGButton
-                type="button"
+            <ActionBar align="end" gap="md">
+              <ActionBarButton
                 variant="outline"
-                size="medium"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'md',
-                  loading: false
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleCloseCancel}
                 disabled={submitting}
                 data-testid="admin-billing-cancel-subscription-close"
-                preventDoubleClick={false}
               >
                 {t('admin:billing.actions.close')}
-              </MGButton>
-              <MGButton
-                type="button"
+              </ActionBarButton>
+              <ActionBarButton
                 variant="danger"
-                size="medium"
-                className={buildErpMgButtonClassName({
-                  variant: 'danger',
-                  size: 'md',
-                  loading: submitting
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleConfirmCancel}
-                disabled={submitting}
                 loading={submitting}
                 data-testid="admin-billing-cancel-subscription-confirm"
-                preventDoubleClick={false}
               >
                 {t('admin:billing.actions.confirm')}
-              </MGButton>
-            </>
+              </ActionBarButton>
+            </ActionBar>
           )}
         >
           <form noValidate>

@@ -10,8 +10,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminCommonLayout from '../../../layout/AdminCommonLayout';
-import MGButton from '../../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import ActionBar from '../../../common/ActionBar';
+import ActionBarButton from '../../../common/ActionBarButton';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -175,19 +175,13 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
             title={pageTitle}
             subtitle={LABELS.PAGE_SUBTITLE}
             actions={
-              <MGButton
-                type="button"
+              <ActionBarButton
                 variant="outline"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  loading: false,
-                  className: 'mg-v2-package-header-btn--secondary'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={goToList}
+                className="mg-v2-package-header-btn--secondary"
               >
                 {LABELS.LIST_BACK}
-              </MGButton>
+              </ActionBarButton>
             }
           />
 
@@ -274,37 +268,14 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                   <option value="N">{LABELS.ACTIVE_NO}</option>
                 </select>
               </div>
-              <div className="mg-v2-package-pricing__form-actions">
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    loading: false,
-                    className: 'mg-v2-package-header-btn--secondary'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={goToList}
-                  disabled={submitLoading}
-                >
+              <ActionBar align="end" gap="md" className="mg-v2-package-pricing__form-actions">
+                <ActionBarButton variant="outline" onClick={goToList} disabled={submitLoading}>
                   {LABELS.LIST_BACK}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="primary"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    loading: submitLoading,
-                    className: 'mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary'
-                  })}
-                  onClick={handleSubmit}
-                  loading={submitLoading}
-                  preventDoubleClick={true}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                >
+                </ActionBarButton>
+                <ActionBarButton variant="primary" onClick={handleSubmit} loading={submitLoading}>
                   {LABELS.SAVE}
-                </MGButton>
-              </div>
+                </ActionBarButton>
+              </ActionBar>
             </div>
           </section>
         </ContentArea>

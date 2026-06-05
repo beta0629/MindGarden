@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import CardContainer from '../common/CardContainer';
 import MGButton from '../common/MGButton';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
 import {
   buildErpMgButtonClassName,
   ERP_MG_BUTTON_LOADING_TEXT,
@@ -264,33 +266,14 @@ const AdminApprovalDashboard = () => {
               />
             </div>
 
-            <div className="approval-request-actions">
-              <MGButton
-                variant={mapErpVariantToMg('secondary')}
-                size={mapErpSizeToMg('md')}
-                className={buildErpMgButtonClassName({
-                  variant: 'secondary',
-                  loading: false,
-                  className: 'approval-request-approve-btn'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-                onClick={() => setShowApprovalModal(false)}
-              >
+            <ActionBar align="end" gap="md" className="approval-request-actions">
+              <ActionBarButton variant="outline" onClick={() => setShowApprovalModal(false)}>
                 {t('common.actions.cancel')}
-              </MGButton>
-              <MGButton
-                variant={mapErpVariantToMg('success')}
-                size={mapErpSizeToMg('md')}
-                className={buildErpMgButtonClassName({ variant: 'success', loading: processing })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-                onClick={submitApproval}
-                loading={processing}
-              >
+              </ActionBarButton>
+              <ActionBarButton variant="primary" onClick={submitApproval} loading={processing}>
                 {t('erp:AdminApprovalDashboard.t_49a2435b')}
-              </MGButton>
-            </div>
+              </ActionBarButton>
+            </ActionBar>
           </div>
         )}
       </UnifiedModal>
@@ -328,34 +311,19 @@ const AdminApprovalDashboard = () => {
               />
             </div>
 
-            <div className="approval-request-actions">
-              <MGButton
-                variant={mapErpVariantToMg('secondary')}
-                size={mapErpSizeToMg('md')}
-                className={buildErpMgButtonClassName({
-                  variant: 'secondary',
-                  loading: false,
-                  className: 'approval-request-approve-btn'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-                onClick={() => setShowRejectionModal(false)}
-              >
+            <ActionBar align="end" gap="md" className="approval-request-actions">
+              <ActionBarButton variant="outline" onClick={() => setShowRejectionModal(false)}>
                 {t('common.actions.cancel')}
-              </MGButton>
-              <MGButton
-                variant={mapErpVariantToMg('danger')}
-                size={mapErpSizeToMg('md')}
-                className={buildErpMgButtonClassName({ variant: 'danger', loading: processing })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
+              </ActionBarButton>
+              <ActionBarButton
+                variant="danger"
                 onClick={submitRejection}
                 loading={processing}
                 disabled={!comment.trim()}
               >
                 {t('erp:AdminApprovalDashboard.t_9aa55896')}
-              </MGButton>
-            </div>
+              </ActionBarButton>
+            </ActionBar>
           </div>
         )}
       </UnifiedModal>

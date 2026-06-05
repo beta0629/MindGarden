@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
+import SegmentedTabs from '../../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
 import '../../dashboard-v2/content/ContentHeader.css';
 import ErpPageShell from '../shell/ErpPageShell';
@@ -89,35 +90,28 @@ const ApprovalHubLayout = ({
     </div>
   );
 
+  const handleApprovalModeChange = (next) => {
+    if (next === 'admin') {
+      goAdmin();
+    } else if (next === 'super') {
+      goSuper();
+    }
+  };
+
   const tabsSlot = showModeSwitcher ? (
     <div className="approval-hub-mode-wrap">
       <div className="mg-v2-financial-refund-hub">
-        <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label="승인 구역 전환">
-          <MGButton
-            type="button"
-            variant="outline"
-            role="tab"
-            aria-selected={isAdminActive}
-            className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${isAdminActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={goAdmin}
-            preventDoubleClick={false}
-          >
-            일반 승인
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="outline"
-            role="tab"
-            aria-selected={isSuperActive}
-            className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${isSuperActive ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={goSuper}
-            preventDoubleClick={false}
-          >
-            상위 승인
-          </MGButton>
-        </div>
+        <SegmentedTabs
+          ariaLabel="승인 구역 전환"
+          items={[
+            { value: 'admin', label: '일반 승인' },
+            { value: 'super', label: '상위 승인' },
+          ]}
+          activeValue={isSuperActive ? 'super' : 'admin'}
+          onChange={handleApprovalModeChange}
+          size="sm"
+          className="mg-v2-ad-b0kla__pill-toggle"
+        />
       </div>
     </div>
   ) : null;

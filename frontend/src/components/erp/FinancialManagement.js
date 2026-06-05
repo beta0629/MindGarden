@@ -8,6 +8,7 @@ import notificationManager from '../../utils/notification';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import MGButton from '../common/MGButton';
+import SegmentedTabs from '../common/SegmentedTabs';
 import { useTranslation } from 'react-i18next';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
 import {
@@ -1241,44 +1242,18 @@ const FinancialManagement = () => {
               tabsSlot={
                 <div className="mg-v2-financial-page-hub-tabs">
                   <FinancialRefundHubTabs />
-                  <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label={t('erp:finance.management.viewTabs.ariaLabel')}>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      role="tab"
-                      aria-selected={activeTab === 'transactions'}
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'transactions' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                      onClick={() => setActiveTab('transactions')}
-                      preventDoubleClick={false}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    >
-                      {t('erp:finance.management.viewTabs.transactions')}
-                    </MGButton>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      role="tab"
-                      aria-selected={activeTab === 'calendar'}
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'calendar' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                      onClick={() => setActiveTab('calendar')}
-                      preventDoubleClick={false}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    >
-                      {t('erp:finance.management.viewTabs.calendar')}
-                    </MGButton>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      role="tab"
-                      aria-selected={activeTab === 'dashboard'}
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'dashboard' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                      onClick={() => setActiveTab('dashboard')}
-                      preventDoubleClick={false}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    >
-                      {t('erp:finance.management.viewTabs.dashboard')}
-                    </MGButton>
-                  </div>
+                  <SegmentedTabs
+                    ariaLabel={t('erp:finance.management.viewTabs.ariaLabel')}
+                    items={[
+                      { value: 'transactions', label: t('erp:finance.management.viewTabs.transactions') },
+                      { value: 'calendar', label: t('erp:finance.management.viewTabs.calendar') },
+                      { value: 'dashboard', label: t('erp:finance.management.viewTabs.dashboard') },
+                    ]}
+                    activeValue={activeTab}
+                    onChange={setActiveTab}
+                    size="sm"
+                    className="mg-v2-ad-b0kla__pill-toggle"
+                  />
                 </div>
               }
               filterSlot={

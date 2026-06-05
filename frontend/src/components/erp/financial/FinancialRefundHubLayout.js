@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../common/erpMgButtonProps';
+import SegmentedTabs from '../../common/SegmentedTabs';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../ErpCommon.css';
 
@@ -19,42 +18,32 @@ export const FinancialRefundHubTabs = () => {
   const isFinancial = pathname === ERP_FINANCIAL_HUB_PATH;
   const isRefund = pathname === ERP_REFUND_HUB_PATH;
 
-  const goFinancial = useCallback(() => {
-    navigate(ERP_FINANCIAL_HUB_PATH);
-  }, [navigate]);
+  const handleHubChange = useCallback(
+    (next) => {
+      if (next === 'financial') {
+        navigate(ERP_FINANCIAL_HUB_PATH);
+      } else if (next === 'refund') {
+        navigate(ERP_REFUND_HUB_PATH);
+      }
+    },
+    [navigate]
+  );
 
-  const goRefund = useCallback(() => {
-    navigate(ERP_REFUND_HUB_PATH);
-  }, [navigate]);
+  const activeValue = isRefund ? 'refund' : isFinancial ? 'financial' : 'financial';
 
   return (
     <div className="mg-v2-financial-refund-hub" aria-label="재무·환불 허브">
-      <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist">
-        <MGButton
-          type="button"
-          variant="outline"
-          role="tab"
-          aria-selected={isFinancial}
-          className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${isFinancial ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={goFinancial}
-          preventDoubleClick={false}
-        >
-          일상 거래
-        </MGButton>
-        <MGButton
-          type="button"
-          variant="outline"
-          role="tab"
-          aria-selected={isRefund}
-          className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${isRefund ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={goRefund}
-          preventDoubleClick={false}
-        >
-          환불·정산
-        </MGButton>
-      </div>
+      <SegmentedTabs
+        ariaLabel="재무·환불 허브"
+        items={[
+          { value: 'financial', label: '일상 거래' },
+          { value: 'refund', label: '환불·정산' },
+        ]}
+        activeValue={activeValue}
+        onChange={handleHubChange}
+        size="sm"
+        className="mg-v2-ad-b0kla__pill-toggle"
+      />
     </div>
   );
 };

@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, BarChart3, CheckCircle2, CalendarRange } fro
 import { ContentArea, ContentHeader, ContentKpiRow, ContentSection } from '../dashboard-v2/content';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import SegmentedTabs from '../common/SegmentedTabs';
 import Chart from '../common/Chart';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { CHART_TYPES, CHART_HEIGHTS, B0KLA_CHART_BAR_FALLBACK } from '../../constants/charts';
@@ -228,35 +229,17 @@ const ConsultantSessionKpiPage = () => {
     !loading && !error && !hasBuckets && totalNum > 0;
 
   const segmentedTrack = (
-    <div
-      className="consultant-session-kpi__segmented mg-v2-ad-b0kla__segmented-control"
-      role="tablist"
-      aria-label={S.GRANULARITY_ARIA}
-    >
-      <div className="consultant-session-kpi__segmented-track">
-        {[GRANULARITY.DAY, GRANULARITY.WEEK, GRANULARITY.MONTH].map((g) => (
-          <MGButton
-            key={g}
-            type="button"
-            variant={granularity === g ? 'primary' : 'outline'}
-            className={`${buildErpMgButtonClassName({
-              variant: granularity === g ? 'primary' : 'outline',
-              size: 'sm',
-              loading: false,
-              className:
-                granularity === g ? 'mg-v2-btn--primary' : 'mg-v2-btn--outline'
-            })} mg-v2-ad-b0kla__segmented-item`.trim()}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            preventDoubleClick={false}
-            onClick={() => setGranularity(g)}
-            aria-selected={granularity === g}
-            role="tab"
-          >
-            {granularityLabel(g)}
-          </MGButton>
-        ))}
-      </div>
-    </div>
+    <SegmentedTabs
+      ariaLabel={S.GRANULARITY_ARIA}
+      items={[GRANULARITY.DAY, GRANULARITY.WEEK, GRANULARITY.MONTH].map((g) => ({
+        value: g,
+        label: granularityLabel(g),
+      }))}
+      activeValue={granularity}
+      onChange={setGranularity}
+      size="sm"
+      className="consultant-session-kpi__segmented"
+    />
   );
 
   const periodNav = (

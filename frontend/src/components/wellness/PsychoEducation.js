@@ -13,6 +13,7 @@ import {
   BookOpen, Bookmark, Check, X, ChevronLeft, ChevronRight,
   Shield, Brain, Users, Heart, Sparkles
 } from 'lucide-react';
+import SegmentedTabs from '../common/SegmentedTabs';
 import './PsychoEducation.css';
 import { useTranslation } from 'react-i18next';
 
@@ -148,21 +149,15 @@ const PsychoEducation = () => {
         </div>
       </div>
 
-      {/* 카테고리 */}
-      <div className="psycho-edu__categories" role="tablist">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            type="button"
-            role="tab"
-            className={`psycho-edu__category-chip${activeCategory === cat.key ? ' psycho-edu__category-chip--active' : ''}`}
-            onClick={() => setActiveCategory(cat.key)}
-            aria-selected={activeCategory === cat.key}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
+      {/* 카테고리 — MGButton SSOT */}
+      <SegmentedTabs
+        ariaLabel="심리 교육 카테고리"
+        items={CATEGORIES.map((cat) => ({ value: cat.key, label: cat.label }))}
+        activeValue={activeCategory}
+        onChange={setActiveCategory}
+        size="sm"
+        className="psycho-edu__categories"
+      />
 
       {/* 카드 리스트 */}
       {filteredArticles.length > 0 ? (

@@ -43,6 +43,7 @@ import SalaryExportModal from '../common/SalaryExportModal';
 import SalaryPrintComponent from '../common/SalaryPrintComponent';
 import SalaryConfigModal from './SalaryConfigModal';
 import MGButton from '../common/MGButton';
+import SegmentedTabs from '../common/SegmentedTabs';
 import ConsultantCard from '../ui/Card/ConsultantCard';
 import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
 import { getStatusLabel } from '../../utils/colorUtils';
@@ -633,51 +634,17 @@ const SalaryManagement = () => {
               }
               tabsSlot={
                 <div className="mg-v2-ad-b0kla__section salary-management__tabs-wrap">
-                  {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- W3C 탭 패턴상 tablist는 div 컨테이너 사용 */}
-                  <div className="mg-tabs" role="tablist" aria-label={t('erp:SalaryManagement.t_eeb28eec')}>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      role="tab"
-                      aria-selected={activeTab === TAB_PROFILES}
-                      aria-controls="salary-profile-panel"
-                      id="tab-profiles"
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-tab ${activeTab === TAB_PROFILES ? 'mg-tab-active' : ''}`}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => setActiveTabAndUrl(TAB_PROFILES)}
-                      preventDoubleClick={false}
-                    >
-                      {t('erp:SalaryManagement.t_053a17e1')}
-                    </MGButton>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      role="tab"
-                      aria-selected={activeTab === TAB_CALC}
-                      aria-controls="salary-calc-panel"
-                      id="tab-calculations"
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-tab ${activeTab === TAB_CALC ? 'mg-tab-active' : ''}`}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => setActiveTabAndUrl(TAB_CALC)}
-                      preventDoubleClick={false}
-                    >
-                      {t('erp:SalaryManagement.t_b2e25782')}
-                    </MGButton>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      role="tab"
-                      aria-selected={activeTab === TAB_TAX}
-                      aria-controls="salary-tax-panel"
-                      id="tab-tax"
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-tab ${activeTab === TAB_TAX ? 'mg-tab-active' : ''}`}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => setActiveTabAndUrl(TAB_TAX)}
-                      preventDoubleClick={false}
-                    >
-                      {t('erp:SalaryManagement.t_780e38c6')}
-                    </MGButton>
-                  </div>
+                  <SegmentedTabs
+                    ariaLabel={t('erp:SalaryManagement.t_eeb28eec')}
+                    items={[
+                      { value: TAB_PROFILES, label: t('erp:SalaryManagement.t_053a17e1'), ariaControls: 'salary-profile-panel', id: 'tab-profiles' },
+                      { value: TAB_CALC, label: t('erp:SalaryManagement.t_b2e25782'), ariaControls: 'salary-calc-panel', id: 'tab-calculations' },
+                      { value: TAB_TAX, label: t('erp:SalaryManagement.t_780e38c6'), ariaControls: 'salary-tax-panel', id: 'tab-tax' },
+                    ]}
+                    activeValue={activeTab}
+                    onChange={setActiveTabAndUrl}
+                    size="sm"
+                  />
                 </div>
               }
               mainAriaLabel="급여·세금 관리 콘텐츠"

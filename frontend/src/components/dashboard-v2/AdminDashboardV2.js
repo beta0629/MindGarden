@@ -97,6 +97,7 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { toSafeNumber, toDisplayString } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
+import SegmentedTabs from '../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Icon from '../ui/Icon/Icon';
 import '../../styles/main.css';
@@ -1493,59 +1494,18 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             )}
           </div>
           <div className="mg-v2-ad-b0kla__integrated-data-view-toggle">
-            <div className="mg-v2-ad-b0kla__pill-toggle" role="tablist" aria-label={t('common:dashboard-v2.AdminDashboardV2.t_207726af')}>
-              <MGButton
-                type="button"
-                role="tab"
-                aria-selected={integratedDataView === 'table'}
-                aria-label={t('common:dashboard-v2.AdminDashboardV2.t_7489fc34')}
-                className={buildErpMgButtonClassName({
-                  variant: 'primary',
-                  size: 'md',
-                  loading: false,
-                  className: `mg-v2-ad-b0kla__pill ${integratedDataView === 'table' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setIntegratedDataView('table')}
-                preventDoubleClick={false}
-              >
-                {t('common:dashboard-v2.AdminDashboardV2.t_fac1ca9e')}
-              </MGButton>
-              <MGButton
-                type="button"
-                role="tab"
-                aria-selected={integratedDataView === 'graph'}
-                aria-label={t('common:dashboard-v2.AdminDashboardV2.t_2b8a0c37')}
-                className={buildErpMgButtonClassName({
-                  variant: 'primary',
-                  size: 'md',
-                  loading: false,
-                  className: `mg-v2-ad-b0kla__pill ${integratedDataView === 'graph' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setIntegratedDataView('graph')}
-                preventDoubleClick={false}
-              >
-                {t('common:dashboard-v2.AdminDashboardV2.t_dde8c315')}
-              </MGButton>
-              <MGButton
-                type="button"
-                role="tab"
-                aria-selected={integratedDataView === 'progress'}
-                aria-label={t('common:dashboard-v2.AdminDashboardV2.t_df669265')}
-                className={buildErpMgButtonClassName({
-                  variant: 'primary',
-                  size: 'md',
-                  loading: false,
-                  className: `mg-v2-ad-b0kla__pill ${integratedDataView === 'progress' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setIntegratedDataView('progress')}
-                preventDoubleClick={false}
-              >
-                {t('common:dashboard-v2.AdminDashboardV2.t_24f72a6f')}
-              </MGButton>
-            </div>
+            <SegmentedTabs
+              ariaLabel={t('common:dashboard-v2.AdminDashboardV2.t_207726af')}
+              items={[
+                { value: 'table', label: t('common:dashboard-v2.AdminDashboardV2.t_fac1ca9e') },
+                { value: 'graph', label: t('common:dashboard-v2.AdminDashboardV2.t_dde8c315') },
+                { value: 'progress', label: t('common:dashboard-v2.AdminDashboardV2.t_24f72a6f') },
+              ]}
+              activeValue={integratedDataView}
+              onChange={setIntegratedDataView}
+              size="md"
+              className="mg-v2-ad-b0kla__pill-toggle"
+            />
           </div>
           <div className="mg-v2-ad-b0kla__integrated-data-wrap">
             {consultantIntegratedData.length > 0 ? (

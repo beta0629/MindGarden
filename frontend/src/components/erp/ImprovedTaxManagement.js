@@ -23,6 +23,7 @@ import './ImprovedTaxManagement.css';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import MGButton from '../common/MGButton';
+import SegmentedTabs from '../common/SegmentedTabs';
 import ErpPageShell from './shell/ErpPageShell';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import {
@@ -365,52 +366,19 @@ const ImprovedTaxManagement = () => {
             </>
           }
           tabsSlot={
-            <div className="mg-v2-ad-b0kla__pill-group" role="tablist">
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'overview' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => setActiveTab('overview')}
-                preventDoubleClick={false}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              >
-                {t('erp:ImprovedTaxManagement.t_476966c5')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'calculations' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => setActiveTab('calculations')}
-                preventDoubleClick={false}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              >
-                {t('erp:ImprovedTaxManagement.t_6df7a2a5')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'reports' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => setActiveTab('reports')}
-                preventDoubleClick={false}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              >
-                {t('erp:ImprovedTaxManagement.t_891e4acc')}
-              </MGButton>
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-ad-b0kla__pill ${activeTab === 'settings' ? 'mg-v2-ad-b0kla__pill--active' : ''}`}
-                onClick={() => setActiveTab('settings')}
-                preventDoubleClick={false}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              >
-                {t('erp:ImprovedTaxManagement.t_c14a567e')}
-              </MGButton>
-            </div>
+            <SegmentedTabs
+              ariaLabel={t('erp:ImprovedTaxManagement.t_476966c5')}
+              items={[
+                { value: 'overview', label: t('erp:ImprovedTaxManagement.t_476966c5') },
+                { value: 'calculations', label: t('erp:ImprovedTaxManagement.t_6df7a2a5') },
+                { value: 'reports', label: t('erp:ImprovedTaxManagement.t_891e4acc') },
+                { value: 'settings', label: t('erp:ImprovedTaxManagement.t_c14a567e') },
+              ]}
+              activeValue={activeTab}
+              onChange={setActiveTab}
+              size="sm"
+              className="mg-v2-ad-b0kla__pill-group"
+            />
           }
         >
           <div className="im-tax-mgmt__shell-body" aria-busy={loading}>

@@ -85,7 +85,18 @@ const UnifiedScheduleComponent = ({
   /** 명시 시 우선. 미지정이면 `onDropFromExternal` 존재 여부로 통합 스케줄 잠금 추론 */
   disableCalendarEventDrag: disableCalendarEventDragProp,
   acceptExternalCalendarDrops: acceptExternalCalendarDropsProp,
-  mappingPaymentTimingByMappingId
+  mappingPaymentTimingByMappingId,
+  /**
+   * FullCalendar datesSet pass-through.
+   * 통합 스케줄 화면이 월별 상담사 COMPLETED 카운트 API 트리거로 사용한다.
+   */
+  onMonthChange,
+  /**
+   * 월별 상담사 COMPLETED 카운트.
+   * Map<consultantId, count> 또는 동일 구조의 일반 객체.
+   * ScheduleLegend 로 전달되어 상담사 칩 옆 배지로 노출된다.
+   */
+  consultantCounts
 }) => {
     const { t } = useTranslation();
     const resolvedDisableCalendarEventDrag =
@@ -1061,6 +1072,7 @@ const UnifiedScheduleComponent = ({
                 scheduleStatusOptions={scheduleStatusOptions}
                 getConsultantColor={getConsultantColor}
                 calendarSkin={calendarSkin}
+                consultantCounts={consultantCounts}
             />
 
             {loading && (
@@ -1078,6 +1090,7 @@ const UnifiedScheduleComponent = ({
                 calendarSkin={calendarSkin}
                 disableCalendarEventDrag={resolvedDisableCalendarEventDrag}
                 acceptExternalCalendarDrops={resolvedAcceptExternalCalendarDrops}
+                onMonthChange={onMonthChange}
             />
 
             {/* 모달들 */}
@@ -1176,6 +1189,13 @@ UnifiedScheduleComponent.propTypes = {
   acceptExternalCalendarDrops: PropTypes.bool,
   /** 옵션 B 가예약 시각 구분용 — Map 또는 일반 객체. mappingId(문자열/숫자) → paymentTiming */
   mappingPaymentTimingByMappingId: PropTypes.oneOfType([
+    PropTypes.instanceOf(Map),
+    PropTypes.object
+  ]),
+  /** FullCalendar 가시 범위 변경 콜백 (월별 통계 API 트리거 등) */
+  onMonthChange: PropTypes.func,
+  /** 월별 상담사 COMPLETED 카운트 — Map<consultantId, number> 또는 동등 객체 */
+  consultantCounts: PropTypes.oneOfType([
     PropTypes.instanceOf(Map),
     PropTypes.object
   ])

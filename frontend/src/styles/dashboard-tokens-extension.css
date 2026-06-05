@@ -263,6 +263,12 @@
   --mg-actionbar-outline-hover-bg: var(--cs-success-900, #064e3b);
   --mg-actionbar-danger-bg: var(--cs-error-500);
   --mg-actionbar-danger-hover-bg: var(--cs-error-600);
+
+  /* RemainingSessionsBadge / 월별 COMPLETED 카운트 배지 — 다크 모드 가독성 확보
+   * (밝은 모드 토큰: --mg-badge-count-bg/--mg-badge-count-text 위 :root 정의 참고)
+   */
+  --mg-badge-count-bg: var(--mg-primary-900);
+  --mg-badge-count-text: var(--mg-primary-200);
 }
 
 

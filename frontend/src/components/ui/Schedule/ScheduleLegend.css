@@ -1,0 +1,28 @@
+/**
+ * ScheduleLegend - 월별 상담사 COMPLETED 카운트 배지·반응형 (추가 룰)
+ *
+ * 통합 스케줄(/admin/integrated-schedule) 캘린더 상단 범례의
+ * 상담사 칩 옆에 노출되는 카운트 배지 + 카운트 모드에서 다중 줄 wrap 처리.
+ *
+ * - 기존 mg-v2-consultant-legend 의 flex-wrap·gap 은 unified-design-tokens.css §Legend 에서 선언.
+ * - 본 파일은 카운트 배지 전용 modifier 와 카운트 모드 전용 spacing override 만 담당한다.
+ * - 하드코딩 금지 — 모든 색·간격은 디자인 토큰 사용.
+ */
+
+.mg-v2-legend-count-badge {
+    margin-left: var(--mg-spacing-6, 6px);
+    vertical-align: middle;
+}
+
+/* 카운트 모드: 활성 상담사 전원을 노출하므로 wrap·gap 을 디자이너 권장 값으로 재정의. */
+.mg-v2-consultant-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--mg-spacing-12, 12px);
+}
+
+@media (max-width: 767px) {
+    .mg-v2-consultant-legend {
+        gap: var(--mg-spacing-sm, 8px);
+    }
+}

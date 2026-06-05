@@ -2787,7 +2787,8 @@
       "summary": "공휴일 · 회기 표기 · 상담사",
       "toggleAria": "안내 영역 토글",
       "expandAria": "안내 영역 펼치기",
-      "collapseAria": "안내 영역 접기"
+      "collapseAria": "안내 영역 접기",
+      "consultantCompletedAria": "{{name}}, 이번 달 완료 {{count}}회"
     },
     "tentativeReserved": {
       "info": "가예약 일정이 등록되었습니다. 방문 시 사이드바 카드의 「당일 결제 + 활성화」 버튼으로 결제하세요."

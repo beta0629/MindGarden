@@ -9,3 +9,15 @@
   background-color: var(--mg-badge-count-bg);
   color: var(--mg-badge-count-text);
 }
+
+/* 카운트 0 — 비활성 톤 (월별 COMPLETED 0건 상담사 등) */
+.mg-v2-count-badge--zero {
+  background-color: var(--mg-gray-100);
+  color: var(--mg-gray-500);
+}
+
+[data-theme="dark"] .mg-v2-count-badge--zero,
+.mg-dark .mg-v2-count-badge--zero {
+  background-color: var(--mg-gray-800);
+  color: var(--mg-gray-400);
+}

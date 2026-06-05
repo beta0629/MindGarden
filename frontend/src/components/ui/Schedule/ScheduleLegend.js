@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import RemainingSessionsBadge from '../../common/RemainingSessionsBadge';
 import {
     KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER,
     KR_PUBLIC_HOLIDAY_LEGEND_LABEL,
@@ -12,6 +13,53 @@ import {
     SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE
 } from '../../../constants/schedule';
 import { useTranslation } from 'react-i18next';
+import './ScheduleLegend.css';
+
+/** "99+" 표기 상한 — count 가 이 값을 초과하면 ariaLabel/title 에는 절대값을 노출한다. */
+const CONSULTANT_COUNT_MAX_DISPLAY = 99;
+
+/**
+ * consultantCounts 가 Map 또는 일반 객체 둘 다 허용되도록 통일된 lookup 헬퍼.
+ */
+const lookupCount = (consultantCounts, consultantId) => {
+    if (!consultantCounts || consultantId == null) {
+        return undefined;
+    }
+    if (consultantCounts instanceof Map) {
+        if (consultantCounts.has(consultantId)) {
+            return consultantCounts.get(consultantId);
+        }
+        // id 가 number/string 불일치할 수 있으므로 보조 lookup.
+        const stringId = String(consultantId);
+        if (consultantCounts.has(stringId)) {
+            return consultantCounts.get(stringId);
+        }
+        return undefined;
+    }
+    if (typeof consultantCounts === 'object') {
+        if (Object.prototype.hasOwnProperty.call(consultantCounts, consultantId)) {
+            return consultantCounts[consultantId];
+        }
+        const stringId = String(consultantId);
+        if (Object.prototype.hasOwnProperty.call(consultantCounts, stringId)) {
+            return consultantCounts[stringId];
+        }
+    }
+    return undefined;
+};
+
+const hasAnyConsultantCount = (consultantCounts) => {
+    if (!consultantCounts) {
+        return false;
+    }
+    if (consultantCounts instanceof Map) {
+        return consultantCounts.size > 0;
+    }
+    if (typeof consultantCounts === 'object') {
+        return Object.keys(consultantCounts).length > 0;
+    }
+    return false;
+};
 
 const LEGEND_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.legendCollapsed';
 
@@ -54,12 +102,16 @@ const ScheduleLegend = ({
     events,
     scheduleStatusOptions,
     getConsultantColor,
-    calendarSkin
+    calendarSkin,
+    consultantCounts
 }) => {
     const { t } = useTranslation();
     const isIntegrated = calendarSkin === 'integrated';
     const reactId = useId();
     const bodyId = `mg-v2-schedule-legend-body-${reactId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
+
+    // 카운트 데이터가 1건이라도 존재하면 통합 스킨 기본 접힘을 무시하고 강제 펼침.
+    const hasCounts = useMemo(() => hasAnyConsultantCount(consultantCounts), [consultantCounts]);
 
     // 통합 스킨일 때만 사용자 선호 / 기본 접힘 적용
     const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -77,6 +129,13 @@ const ScheduleLegend = ({
         }
     }, [isIntegrated]);
 
+    // 카운트가 도착하면 사용자 선호와 무관하게 강제 펼침(디자이너 결정).
+    useEffect(() => {
+        if (hasCounts && isCollapsed) {
+            setIsCollapsed(false);
+        }
+    }, [hasCounts, isCollapsed]);
+
     const handleToggle = useCallback(() => {
         setIsCollapsed((prev) => {
             const next = !prev;
@@ -86,13 +145,28 @@ const ScheduleLegend = ({
         });
     }, []);
 
-    // 실제 스케줄이 있는 상담사만 필터링 (최대 5명까지만 표시)
-    const activeConsultants = consultants
-        .filter(consultant =>
-            consultant.isActive !== false &&
-            events.some(event => event.extendedProps?.consultantId === consultant.id)
-        )
-        .slice(0, 5);
+    // 활성 상담사 필터링.
+    //  - 카운트 모드(월별 COMPLETED 카운트 보유) : 카운트가 있는 모든 활성 상담사 노출(0건 포함).
+    //    slice(0, 5) 상한 해제 — flex-wrap 으로 다중 줄 처리.
+    //  - 비카운트 모드(기존 동작) : 이벤트가 있는 활성 상담사 최대 5명.
+    const activeConsultants = useMemo(() => {
+        const safeConsultants = Array.isArray(consultants) ? consultants : [];
+        if (hasCounts) {
+            return safeConsultants.filter((consultant) => {
+                if (consultant.isActive === false) {
+                    return false;
+                }
+                const count = lookupCount(consultantCounts, consultant.id);
+                return count !== undefined && count !== null;
+            });
+        }
+        return safeConsultants
+            .filter((consultant) =>
+                consultant.isActive !== false
+                && events.some((event) => event.extendedProps?.consultantId === consultant.id)
+            )
+            .slice(0, 5);
+    }, [consultants, events, consultantCounts, hasCounts]);
 
     // 주요 상태만 필터링 (확인됨, 결제확인, 완료, 취소됨 등)
     const mainStatuses = scheduleStatusOptions?.filter(option =>
@@ -147,16 +221,48 @@ const ScheduleLegend = ({
                 <div className="mg-v2-legend-section">
                     <div className="mg-v2-legend-title">{t('common.labels.consultant')}</div>
                     <div className="mg-v2-legend-items mg-v2-consultant-legend">
-                        {activeConsultants.map((consultant, index) => (
-                            <div key={`consultant-${consultant.id}-${index}`} className="mg-v2-legend-item">
-                                <span
-                                    className="mg-v2-legend-color"
-                                    style={{ '--legend-color': getConsultantColor(consultant.id) }}
-                                 />
-                                <span className="mg-v2-legend-text">{toDisplayString(consultant.name, '—')}</span>
-                            </div>
-                        ))}
-                        {consultants.length > 5 && (
+                        {activeConsultants.map((consultant, index) => {
+                            const consultantName = toDisplayString(consultant.name, '—');
+                            const rawCount = lookupCount(consultantCounts, consultant.id);
+                            const hasCount = rawCount !== undefined && rawCount !== null;
+                            const numericCount = hasCount ? Number(rawCount) : null;
+                            const isZeroCount = hasCount && numericCount === 0;
+                            const isOverflow = hasCount && Number.isFinite(numericCount)
+                                && numericCount > CONSULTANT_COUNT_MAX_DISPLAY;
+                            const displayCount = isOverflow
+                                ? `${CONSULTANT_COUNT_MAX_DISPLAY}+`
+                                : numericCount;
+                            const badgeClassName = `mg-v2-legend-count-badge${isZeroCount ? ' mg-v2-count-badge--zero' : ''}`;
+                            const badgeAriaLabel = hasCount
+                                ? t(
+                                    'admin:integratedSchedule.legend.consultantCompletedAria',
+                                    {
+                                        name: consultantName,
+                                        count: numericCount,
+                                        defaultValue: `${consultantName}, 이번 달 완료 ${numericCount}회`
+                                    }
+                                )
+                                : undefined;
+                            const badgeTitle = isOverflow ? `${numericCount}회` : undefined;
+                            return (
+                                <div key={`consultant-${consultant.id}-${index}`} className="mg-v2-legend-item">
+                                    <span
+                                        className="mg-v2-legend-color"
+                                        style={{ '--legend-color': getConsultantColor(consultant.id) }}
+                                    />
+                                    <span className="mg-v2-legend-text">{consultantName}</span>
+                                    {hasCount && (
+                                        <RemainingSessionsBadge
+                                            count={displayCount}
+                                            className={badgeClassName}
+                                            ariaLabel={badgeAriaLabel}
+                                            title={badgeTitle}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {!hasCounts && consultants.length > 5 && (
                             <span className="mg-v2-legend-more">외 {consultants.length - 5}명</span>
                         )}
                     </div>

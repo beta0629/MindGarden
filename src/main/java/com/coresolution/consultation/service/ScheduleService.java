@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.ConsultationType;
+import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
@@ -455,6 +456,24 @@ public interface ScheduleService {
 
     // ==================== 한글 변환 메서드 ====================
     
+    /**
+     * 통합 스케줄 — 월별 상담사별 {@link com.coresolution.consultation.constant.ScheduleStatus#COMPLETED}
+     * 카운트 조회.
+     *
+     * <p>응답은 같은 테넌트의 활성 상담사(상담사 SSOT + 상담 겸직 관리자 활성)를 모두
+     * 포함하며 COMPLETED 일정이 없는 상담사도 {@code count: 0} 으로 채워진다.
+     * 상한 표기는 프론트 책임 — 절대값을 그대로 반환한다.</p>
+     *
+     * @param year  조회 연도 (1900~9999)
+     * @param month 조회 월 (1~12)
+     * @return 월 카드용 응답 DTO
+     * @throws IllegalArgumentException {@code year}/{@code month} 범위 위반 시
+     * @throws IllegalStateException    테넌트 컨텍스트 미설정 시
+     * @author CoreSolution
+     * @since 2026-06-09
+     */
+    MonthlyConsultantCountsResponse getMonthlyConsultantCompletedCounts(int year, int month);
+
     /**
      * 스케줄 상태를 한글로 변환
      */

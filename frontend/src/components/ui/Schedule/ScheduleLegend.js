@@ -153,7 +153,13 @@ const ScheduleLegend = ({
      * 빈 배열·undefined 시 «모두 작성됨» placeholder 노출 (통합 스킨 한정).
      * 다른 라우트(상담사 캘린더 등) 는 부모가 미전달 → 섹션 자체 미노출 → 회귀 0.
      */
-    missingConsultationLogs = null
+    missingConsultationLogs = null,
+    /**
+     * R5 (2026-06-10) — 상담사 카운트 배지가 어느 월(N월) 의 COMPLETED 인지 라벨에 명시.
+     * number (1-12) 또는 null/undefined. 미지정 시 기존 「상담사」 라벨 유지(회귀 0).
+     * hasCounts 가 false 면 라벨 분기에 영향이 없으므로 month 만 전달돼도 안전.
+     */
+    consultantCountsMonth = null
 }) => {
     const { t } = useTranslation();
     const isIntegrated = calendarSkin === 'integrated';
@@ -289,7 +295,14 @@ const ScheduleLegend = ({
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (
                 <div className="mg-v2-legend-section">
-                    <div className="mg-v2-legend-title">{t('common.labels.consultant')}</div>
+                    <div className="mg-v2-legend-title">
+                        {hasCounts && Number.isFinite(consultantCountsMonth)
+                            ? t('admin:integratedSchedule.legend.consultantMonthlyCompleted', {
+                                month: consultantCountsMonth,
+                                defaultValue: `상담사 · ${consultantCountsMonth}월 완료`
+                            })
+                            : t('common.labels.consultant')}
+                    </div>
                     <div className="mg-v2-legend-items mg-v2-consultant-legend">
                         {activeConsultants.map((consultant, index) => {
                             const consultantName = toDisplayString(consultant.name, '—');

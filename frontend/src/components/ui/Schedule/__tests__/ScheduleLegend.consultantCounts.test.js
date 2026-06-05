@@ -208,6 +208,74 @@ describe('ScheduleLegend — 월별 상담사 COMPLETED 카운트 배지', () =>
     expect(badge.getAttribute('aria-label')).toBe('홍길동, 이번 달 완료 7회');
   });
 
+  // ─── F5d (R5) ──────────────────────────────────────────────────────
+  test('F5d (R5): consultantCountsMonth + hasCounts → 「상담사 · N월 완료」 라벨 노출', () => {
+    const consultants = buildConsultants({ id: 1, name: '김선희' });
+    const consultantCounts = new Map([[1, 39]]);
+
+    const { container } = render(
+      <ScheduleLegend
+        {...baseProps({
+          consultants,
+          consultantCounts,
+          consultantCountsMonth: 5,
+          calendarSkin: 'integrated'
+        })}
+      />
+    );
+
+    const titles = Array.from(container.querySelectorAll('.mg-v2-legend-title'))
+      .map((el) => el.textContent);
+    expect(titles).toContain('상담사 · 5월 완료');
+    expect(titles).not.toContain('common.labels.consultant');
+  });
+
+  // ─── F5e (R5) ──────────────────────────────────────────────────────
+  test('F5e (R5): consultantCountsMonth=null + hasCounts=true → 기존 「상담사」 라벨 fallback', () => {
+    const consultants = buildConsultants({ id: 1, name: '김선희' });
+    const consultantCounts = new Map([[1, 39]]);
+
+    const { container } = render(
+      <ScheduleLegend
+        {...baseProps({
+          consultants,
+          consultantCounts,
+          consultantCountsMonth: null,
+          calendarSkin: 'integrated'
+        })}
+      />
+    );
+
+    const titles = Array.from(container.querySelectorAll('.mg-v2-legend-title'))
+      .map((el) => el.textContent);
+    // 모의 t() 가 defaultValue 미사용 시 key 그대로 반환 → 「common.labels.consultant」
+    expect(titles).toContain('common.labels.consultant');
+    expect(titles.some((t) => t.includes('월 완료'))).toBe(false);
+  });
+
+  // ─── F5f (R5) ──────────────────────────────────────────────────────
+  test('F5f (R5): consultantCountsMonth 만 있고 hasCounts=false → 「상담사」 라벨 유지 (회귀 0)', () => {
+    // events 기반 fallback 모드 — 카운트 데이터 없음
+    const consultants = buildConsultants({ id: 1, name: '김선희' });
+    const events = [buildEvent(1)];
+
+    const { container } = render(
+      <ScheduleLegend
+        {...baseProps({
+          consultants,
+          events,
+          consultantCountsMonth: 5,
+          calendarSkin: 'integrated'
+        })}
+      />
+    );
+
+    const titles = Array.from(container.querySelectorAll('.mg-v2-legend-title'))
+      .map((el) => el.textContent);
+    expect(titles).toContain('common.labels.consultant');
+    expect(titles.some((t) => t.includes('월 완료'))).toBe(false);
+  });
+
   // ─── F4b (R1) ──────────────────────────────────────────────────────
   test('F4b (R1): 사용자가 명시적으로 접은 적이 있으면 카운트가 도착해도 강제 펼침이 발동하지 않는다', () => {
     // 사용자가 이전 세션에서 접음 → localStorage = 'true'

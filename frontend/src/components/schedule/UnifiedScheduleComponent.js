@@ -99,6 +99,11 @@ const UnifiedScheduleComponent = ({
    */
   consultantCounts,
   /**
+   * R5 (2026-06-10) — 상담사 카운트 배지가 어느 월의 COMPLETED 인지 라벨에 명시(N월 완료).
+   * number (1-12) 또는 null/undefined. ScheduleLegend 로 그대로 전달.
+   */
+  consultantCountsMonth = null,
+  /**
    * 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터 노출 여부.
    * `true` 일 때만 ScheduleHeader 에 칩-버튼 + 팝오버 노출.
    * 다른 캘린더 라우트(`/schedule`, `/admin/schedules` 등)는 미전달(false) → 회귀 0.
@@ -1126,6 +1131,7 @@ const UnifiedScheduleComponent = ({
                 getConsultantColor={getConsultantColor}
                 calendarSkin={calendarSkin}
                 consultantCounts={consultantCounts}
+                consultantCountsMonth={consultantCountsMonth}
                 sameDayPendingLegendContent={sameDayPendingLegendContent}
                 missingConsultationLogs={missingConsultationLogs}
             />
@@ -1254,6 +1260,8 @@ UnifiedScheduleComponent.propTypes = {
     PropTypes.instanceOf(Map),
     PropTypes.object
   ]),
+  /** R5: 상담사 카운트 배지의 month 컨텍스트 (1-12). null/undefined 시 라벨 「상담사」 그대로 */
+  consultantCountsMonth: PropTypes.number,
   /** 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터 노출 여부 */
   showClientFilter: PropTypes.bool,
   /** 통합 스케줄 한정 — 내담자 옵션 리스트 */

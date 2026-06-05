@@ -20,7 +20,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './ActionBarButton.css';
 
-const ActionBarButton = React.forwardRef(function ActionBarButton(
+const ActionBarButton = React.forwardRef((
     {
         children,
         variant = 'primary',
@@ -36,7 +36,7 @@ const ActionBarButton = React.forwardRef(function ActionBarButton(
         'data-testid': dataTestId,
     },
     ref
-) {
+) => {
     const isDisabled = disabled || loading;
     const classes = [
         'mg-action-btn',
@@ -65,6 +65,8 @@ const ActionBarButton = React.forwardRef(function ActionBarButton(
         </button>
     );
 });
+
+ActionBarButton.displayName = 'ActionBarButton';
 
 ActionBarButton.propTypes = {
     children: PropTypes.node.isRequired,

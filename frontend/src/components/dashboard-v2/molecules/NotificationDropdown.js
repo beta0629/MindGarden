@@ -19,6 +19,8 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import SegmentedTabs from '../../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import ActionBar from '../../common/ActionBar';
+import ActionBarButton from '../../common/ActionBarButton';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './NotificationDropdown.css';
@@ -497,16 +499,11 @@ const NotificationDropdown = () => {
           )} · ${formatDateTime(selectedItem.data?.publishedAt || selectedItem.data?.createdAt)}`}
           size="large"
           actions={
-            <MGButton
-              type="button"
-              variant="primary"
-              preventDoubleClick={false}
-              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={closeDetailModal}
-            >
-              {t('common.actions.confirm')}
-            </MGButton>
+            <ActionBar align="end" gap="md">
+              <ActionBarButton variant="primary" onClick={closeDetailModal}>
+                {t('common.actions.confirm')}
+              </ActionBarButton>
+            </ActionBar>
           }
         >
           <div className="mg-v2-notification-modal-content">

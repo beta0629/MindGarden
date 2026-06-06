@@ -4,6 +4,19 @@
  * <p>핵심: 트리거는 항상 단일 라인 (다중 칩 wrap 금지) — 상단 영역 height 증가 0 보장.
  * 색·패딩·반경은 ScheduleHeader 의 `mg-v2-schedule-header__select` 와 시각 통일.</p>
  *
+ * <p>2026-06-06 P0 — Patch A (paint containment).
+ * 일부 사용자 환경(GPU compositor 잔상) 에서 검색어 변경 시 옵션 텍스트가
+ * 이중 그려지는 시각적 잔상이 보고됨. PR #137/#139 의 JSX/CSS 시각 분리는
+ * 정상이지만, popover portal + box-shadow + search input cursor blink 의
+ * paint region 이 옵션 영역으로 누수되는 GPU 합성 결함을 차단.</p>
+ *
+ * <ul>
+ *   <li>contain: layout paint → popover/listbox 가 자기 영역 밖으로 paint 누수 차단</li>
+ *   <li>isolation: isolate → 새 stacking context (외부 mix-blend/filter 영향 차단)</li>
+ *   <li>min-height: 56px → 옵션 1건일 때도 listbox height 고정 (footer race 차단)</li>
+ *   <li>transform: translateZ(0) → 각 옵션을 자기 자신 composite layer 로 승격</li>
+ * </ul>
+ *
  * @author Core Solution
  * @since 2026-06-09
  */
@@ -103,6 +116,9 @@
   box-shadow: var(--cs-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
   overflow: hidden;
   box-sizing: border-box;
+  /* 2026-06-06 P0 Patch A: paint region 누수 + 외부 stacking context 영향 차단 */
+  contain: layout paint;
+  isolation: isolate;
 }
 
 .mg-client-filter__popover-header {
@@ -135,6 +151,9 @@
   max-height: 320px;
   overflow-y: auto;
   background: var(--ad-b0kla-bg);
+  /* 2026-06-06 P0 Patch A: listbox 자체 paint 차단 + 옵션 1건일 때 footer race 차단 */
+  contain: layout paint;
+  min-height: 56px;
 }
 
 .mg-client-filter__option {
@@ -148,6 +167,8 @@
   transition: background 0.15s ease;
   min-height: 48px;
   border-bottom: 1px solid var(--ad-b0kla-border);
+  /* 2026-06-06 P0 Patch A: 각 옵션을 자기 자신 composite layer 로 승격 (잔상 차단) */
+  transform: translateZ(0);
 }
 
 .mg-client-filter__option:last-child {

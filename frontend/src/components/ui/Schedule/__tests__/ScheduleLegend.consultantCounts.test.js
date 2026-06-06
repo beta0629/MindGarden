@@ -88,7 +88,7 @@ describe('ScheduleLegend — 월별 상담사 COMPLETED 카운트 배지', () =>
   });
 
   // ─── F2 ────────────────────────────────────────────────────────────
-  test('F2: count > 99 → "99+" 표시 + title="120회"', () => {
+  test('F2: count > 99 → 정확한 카운트 노출 (P1 2026-06-06: 99+ 폐지)', () => {
     const consultants = buildConsultants({ id: 1, name: '다건상담사' });
     const consultantCounts = new Map([[1, 120]]);
 
@@ -100,8 +100,9 @@ describe('ScheduleLegend — 월별 상담사 COMPLETED 카운트 배지', () =>
 
     const badge = container.querySelector('.mg-v2-legend-count-badge');
     expect(badge).toBeTruthy();
-    expect(badge.textContent).toBe('99+');
-    expect(badge.getAttribute('title')).toBe('120회');
+    expect(badge.textContent).toBe('120');
+    // P1: 별도 title attribute 노출 없음 — aria-label 이 정확 카운트 포함.
+    expect(badge.hasAttribute('title')).toBe(false);
   });
 
   // ─── F3 ────────────────────────────────────────────────────────────

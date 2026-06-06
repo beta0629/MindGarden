@@ -20,8 +20,15 @@ import { useTranslation } from 'react-i18next';
 import RemainingSessionsBadge from '../../common/RemainingSessionsBadge';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
-/** "99+" 표기 상한 — count 가 이 값을 초과하면 ariaLabel/title 에는 절대값을 노출. */
-export const CONSULTANT_COUNT_MAX_DISPLAY = 99;
+/**
+ * P1 (2026-06-06) — 카운트 축약 정책 폐지.
+ *
+ * 이전: `99+` 같은 축약 표기로 ariaLabel/title 에 절대값을 별도 노출.
+ * 변경: 사용자 요구에 따라 **항상 정확한 카운트**를 그대로 노출한다.
+ * 호환: 외부에서 import 가능했으므로 export 는 유지하되 `Infinity` 로 의미를 무력화.
+ *       (이 상수는 deprecated — 신규 코드에서는 직접 참조하지 말 것.)
+ */
+export const CONSULTANT_COUNT_MAX_DISPLAY = Infinity;
 
 /**
  * consultantCounts 가 Map 또는 일반 객체 둘 다 허용되도록 통일된 lookup 헬퍼.
@@ -129,11 +136,12 @@ const ConsultantCountsBadgeList = ({
                     const hasCount = rawCount !== undefined && rawCount !== null;
                     const numericCount = hasCount ? Number(rawCount) : null;
                     const isZeroCount = hasCount && numericCount === 0;
-                    const isOverflow = hasCount && Number.isFinite(numericCount)
-                        && numericCount > CONSULTANT_COUNT_MAX_DISPLAY;
-                    const displayCount = isOverflow
-                        ? `${CONSULTANT_COUNT_MAX_DISPLAY}+`
-                        : numericCount;
+                    /*
+                     * P1 (2026-06-06) — 99+ 축약 폐지. 항상 정확한 카운트를 노출.
+                     * Number 가 아니거나 NaN 인 경우엔 안전하게 그대로 numericCount(NaN→배지 비노출은 호출자 책임)를
+                     * 사용한다. RemainingSessionsBadge 의 min-width 가 3-4자리도 시각적으로 깨지지 않는지 확인됨.
+                     */
+                    const displayCount = numericCount;
                     const badgeClassName = `mg-v2-legend-count-badge${isZeroCount ? ' mg-v2-count-badge--zero' : ''}`;
                     const ariaKey = mode === 'cumulative'
                         ? 'admin:integratedSchedule.legend.consultantCumulativeCompletedAria'
@@ -148,7 +156,8 @@ const ConsultantCountsBadgeList = ({
                             defaultValue: ariaDefault
                         })
                         : undefined;
-                    const badgeTitle = isOverflow ? `${numericCount}회` : undefined;
+                    /* P1: 99+ 폐지에 따라 별도 title 노출 불필요 — aria-label 이 정확한 카운트 포함. */
+                    const badgeTitle = undefined;
                     return (
                         <div
                             key={`consultant-${consultant.id}-${index}`}

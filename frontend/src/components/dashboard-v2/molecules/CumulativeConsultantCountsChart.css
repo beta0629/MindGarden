@@ -1,0 +1,112 @@
+/**
+ * CumulativeConsultantCountsChart 스타일.
+ *
+ * P1 (2026-06-06) — 어드민 대시보드 §「상담사 별 통합데이터」 §A 누적 상담 건수 가로 막대.
+ * 색·간격·폰트는 디자인 토큰 (`--ad-b0kla-*`, `--mg-*`) 만 사용 — D11 하드코딩 게이트 준수.
+ *
+ * 그리드 구조:
+ *   [rank | name | progress track (1fr) | value]
+ *
+ * 칩 색은 `--cumulative-fill-color` 인라인 변수로 주입 (`getConsultantColor(id)` 결과).
+ * 토큰 폴백은 `--ad-b0kla-green` (통합 진행률 막대와 동일 톤).
+ */
+
+.mg-v2-cumulative-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-cumulative-chart__title {
+  margin: 0;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--ad-b0kla-text-primary, var(--mg-text-primary));
+}
+
+.mg-v2-cumulative-chart__empty {
+  margin: 0;
+  padding: var(--mg-spacing-md, 1rem) 0;
+  text-align: center;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}
+
+.mg-v2-cumulative-chart__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mg-v2-cumulative-chart__row {
+  display: grid;
+  grid-template-columns: auto minmax(80px, 1fr) minmax(0, 2fr) auto;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 0.75rem);
+  padding: var(--mg-spacing-xs, 0.25rem) 0;
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.mg-v2-cumulative-chart__row:last-child {
+  border-bottom: none;
+}
+
+.mg-v2-cumulative-chart__rank {
+  min-width: 36px;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-cumulative-chart__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-cumulative-chart__track {
+  position: relative;
+  min-width: 0;
+  height: 18px;
+  background: var(--ad-b0kla-bg);
+  border-radius: var(--mg-radius-sm, 6px);
+  overflow: hidden;
+}
+
+.mg-v2-cumulative-chart__fill {
+  height: 100%;
+  border-radius: var(--mg-radius-sm, 6px);
+  background: var(--cumulative-fill-color, var(--ad-b0kla-green));
+  transition: width 0.3s ease;
+}
+
+.mg-v2-cumulative-chart__fill--zero {
+  background: var(--ad-b0kla-border);
+  opacity: 0.6;
+}
+
+.mg-v2-cumulative-chart__value {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) {
+  .mg-v2-cumulative-chart__row {
+    grid-template-columns: auto minmax(60px, 1fr) minmax(0, 1.5fr) auto;
+    gap: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
+  }
+
+  .mg-v2-cumulative-chart__track {
+    height: 14px;
+  }
+}

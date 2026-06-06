@@ -626,6 +626,8 @@
     "recentActivityEmpty": "최근 활동 내역이 없습니다.",
     "consultationStats": {
       "cumulativeTitle": "누적 상담 건수",
+      "cumulativeEmpty": "누적 데이터가 없습니다",
+      "cumulativeRowAria": "{{name}} 누적 {{count}}회",
       "monthlyTitle": "월별 상담 건수",
       "missingLogsTitle": "상담일지 누락",
       "missingLogsAllDone": "지난 일정의 모든 상담일지가 작성되었습니다"

@@ -7,7 +7,7 @@
  * 검증 매트릭스:
  *  - C1: 활성 상담사 + counts Map → 모든 활성 상담사 노출 + 배지 표시
  *  - C2: 0건 상담사 → mg-v2-count-badge--zero 톤다운 클래스 적용
- *  - C3: count > 99 → "99+" 표시 + title 에 절대값
+ *  - C3: count > 99 → **정확한 카운트** 노출 (P1 2026-06-06: 99+ 폐지)
  *  - C4: mode='cumulative' → 라벨 「상담사 · 누적 완료」
  *  - C5: mode='monthly' + consultantCountsMonth=5 → 라벨 「상담사 · 5월 완료」
  *  - C6: mode='monthly' + consultantCountsMonth=null → 「상담사」 fallback
@@ -97,7 +97,7 @@ describe('ConsultantCountsBadgeList', () => {
   });
 
   // ─── C3 ──────────────────────────────────────────────────────────
-  test('C3: count > 99 → "99+" 표시 + title 에 절대값', () => {
+  test('C3: count > 99 → 정확한 카운트 그대로 노출 (P1: 99+ 폐지)', () => {
     const consultants = buildConsultants({ id: 1, name: 'Many' });
     const consultantCounts = new Map([[1, 150]]);
 
@@ -108,8 +108,39 @@ describe('ConsultantCountsBadgeList', () => {
     );
 
     const badge = container.querySelector('.mg-v2-legend-count-badge');
-    expect(badge.textContent).toBe('99+');
-    expect(badge.getAttribute('title')).toBe('150회');
+    expect(badge.textContent).toBe('150');
+    // P1: title attribute 노출 없음 (aria-label 이 정확한 카운트 포함).
+    expect(badge.hasAttribute('title')).toBe(false);
+  });
+
+  // ─── C3-2 ────────────────────────────────────────────────────────
+  test('C3-2: count === 99 (경계) → 정확히 「99」 노출', () => {
+    const consultants = buildConsultants({ id: 1, name: 'Edge' });
+    const consultantCounts = new Map([[1, 99]]);
+
+    const { container } = render(
+      <ConsultantCountsBadgeList
+        {...baseProps({ consultants, consultantCounts })}
+      />
+    );
+
+    const badge = container.querySelector('.mg-v2-legend-count-badge');
+    expect(badge.textContent).toBe('99');
+  });
+
+  // ─── C3-3 ────────────────────────────────────────────────────────
+  test('C3-3: count === 1234 (4자리) → 정확한 카운트 노출 (시각 깨짐 가드)', () => {
+    const consultants = buildConsultants({ id: 1, name: 'Huge' });
+    const consultantCounts = new Map([[1, 1234]]);
+
+    const { container } = render(
+      <ConsultantCountsBadgeList
+        {...baseProps({ consultants, consultantCounts })}
+      />
+    );
+
+    const badge = container.querySelector('.mg-v2-legend-count-badge');
+    expect(badge.textContent).toBe('1234');
   });
 
   // ─── C4 ──────────────────────────────────────────────────────────

@@ -75,6 +75,8 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { getConsultantColor } from '../../utils/consultantColor';
 import ConsultantCountsBadgeList from '../ui/Schedule/ConsultantCountsBadgeList';
 import MissingConsultationLogsList from '../ui/Schedule/MissingConsultationLogsList';
+import CumulativeConsultantCountsChart from './molecules/CumulativeConsultantCountsChart';
+import './molecules/CumulativeConsultantCountsChart.css';
 import Chart from '../common/Chart';
 import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STEP_CHART_HEX } from '../../constants/charts';
 import { resolveCssColorTokensArray } from '../../utils/resolveCssColorVarToHex';
@@ -1531,7 +1533,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               ]}
               activeValue={integratedDataView}
               onChange={setIntegratedDataView}
-              size="md"
+              size="sm"
               className="mg-v2-ad-b0kla__pill-toggle"
             />
           </div>
@@ -1677,8 +1679,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           </div>
 
           {/*
-            R6 (2026-06-06) Phase 3-B — §A 누적 상담 건수 (집계 기간 = '전체' 일 때만 노출).
-            ConsultantCountsBadgeList 재사용 (mode='cumulative'). 토큰만 사용, 하드코딩 0.
+            P1 (2026-06-06) — §A 누적 상담 건수 (집계 기간 = '전체' 일 때만 노출).
+            CumulativeConsultantCountsChart: 가로 막대 그래프 + 정확한 카운트(99+ 축약 없음).
+            상담사 명단은 통합데이터 rows 에서 가져오고, count 는 useCumulativeConsultantCounts 훅 결과 사용.
           */}
           {integratedDataPeriodType === 'all' && consultantIntegratedData.length > 0 && (
             <section
@@ -1692,7 +1695,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   defaultValue: '누적 상담 건수'
                 })}
               </h4>
-              <ConsultantCountsBadgeList
+              <CumulativeConsultantCountsChart
                 consultants={consultantIntegratedData
                   .filter((row) => row.consultantId != null)
                   .map((row) => ({
@@ -1702,9 +1705,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   }))}
                 getConsultantColor={getConsultantColor}
                 consultantCounts={cumulativeConsultantCounts}
-                mode="cumulative"
+                sectionClassName="mg-v2-cumulative-chart mg-v2-ad-b0kla__cumulative-chart"
                 titleClassName="sr-only"
-                itemsClassName="mg-v2-legend-items mg-v2-consultant-legend mg-v2-ad-b0kla__cumulative-items"
+                maskName={(name) => maskEncryptedDisplay(name, '상담사')}
               />
             </section>
           )}

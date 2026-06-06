@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.ConsultationType;
+import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleResponse;
@@ -474,6 +475,27 @@ public interface ScheduleService {
      * @since 2026-06-09
      */
     MonthlyConsultantCountsResponse getMonthlyConsultantCompletedCounts(int year, int month);
+
+    /**
+     * 통합 스케줄 — 상담사별 «누적» COMPLETED 카운트 (전체 기간).
+     *
+     * <p><b>R6 (2026-06-06)</b> — 어드민 대시보드 「상담사 별 통합데이터」 카드의
+     * «누적 상담 건수» 섹션 SSOT. 기존 {@code consultation-completion} API 의
+     * {@code totalCount}(status 무관) 와 의미 불일치 — q3-a 결정으로 {@code schedules}
+     * SSOT 로 통일.</p>
+     *
+     * <p>응답은 같은 테넌트의 활성 상담사(상담사 SSOT + 상담 겸직 관리자 활성) 모두를
+     * 포함하며 COMPLETED 일정이 없는 상담사도 {@code count: 0} 으로 채워진다.
+     * 정렬: count DESC, consultantName ASC (대시보드 ranking 정합). 상한 표기는
+     * 프론트 책임 — 절대값을 그대로 반환한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @return 누적 카운트 응답 DTO
+     * @throws IllegalArgumentException {@code tenantId} 가 비어있을 때
+     * @author CoreSolution
+     * @since 2026-06-06
+     */
+    CumulativeConsultantCountsResponse getCumulativeConsultantCompletedCounts(String tenantId);
 
     /**
      * 통합 스케줄 — 월별 상담사별 «상담일지 미작성(누락)» 일자 조회.

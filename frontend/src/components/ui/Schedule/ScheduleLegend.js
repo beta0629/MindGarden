@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
-import RemainingSessionsBadge from '../../common/RemainingSessionsBadge';
 import {
     KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER,
     KR_PUBLIC_HOLIDAY_LEGEND_LABEL,
@@ -13,53 +12,12 @@ import {
     SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE
 } from '../../../constants/schedule';
 import { useTranslation } from 'react-i18next';
+import ConsultantCountsBadgeList, {
+    hasAnyConsultantCount,
+    lookupCount
+} from './ConsultantCountsBadgeList';
+import MissingConsultationLogsList from './MissingConsultationLogsList';
 import './ScheduleLegend.css';
-
-/** "99+" 표기 상한 — count 가 이 값을 초과하면 ariaLabel/title 에는 절대값을 노출한다. */
-const CONSULTANT_COUNT_MAX_DISPLAY = 99;
-
-/**
- * consultantCounts 가 Map 또는 일반 객체 둘 다 허용되도록 통일된 lookup 헬퍼.
- */
-const lookupCount = (consultantCounts, consultantId) => {
-    if (!consultantCounts || consultantId == null) {
-        return undefined;
-    }
-    if (consultantCounts instanceof Map) {
-        if (consultantCounts.has(consultantId)) {
-            return consultantCounts.get(consultantId);
-        }
-        // id 가 number/string 불일치할 수 있으므로 보조 lookup.
-        const stringId = String(consultantId);
-        if (consultantCounts.has(stringId)) {
-            return consultantCounts.get(stringId);
-        }
-        return undefined;
-    }
-    if (typeof consultantCounts === 'object') {
-        if (Object.prototype.hasOwnProperty.call(consultantCounts, consultantId)) {
-            return consultantCounts[consultantId];
-        }
-        const stringId = String(consultantId);
-        if (Object.prototype.hasOwnProperty.call(consultantCounts, stringId)) {
-            return consultantCounts[stringId];
-        }
-    }
-    return undefined;
-};
-
-const hasAnyConsultantCount = (consultantCounts) => {
-    if (!consultantCounts) {
-        return false;
-    }
-    if (consultantCounts instanceof Map) {
-        return consultantCounts.size > 0;
-    }
-    if (typeof consultantCounts === 'object') {
-        return Object.keys(consultantCounts).length > 0;
-    }
-    return false;
-};
 
 const LEGEND_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.legendCollapsed';
 
@@ -79,25 +37,6 @@ const matchesNarrowViewport = () => {
     } catch (e) {
         return false;
     }
-};
-
-/**
- * R4 (2026-06-09): 누락 일자 칩 라벨 — 'YYYY-MM-DD' → 'M/D'.
- * 입력 파싱 실패 시 원본 문자열 반환 (안전 폴백 + safeDisplay 룰 정합).
- */
-const formatToMonthDay = (raw) => {
-    if (raw == null) return '';
-    const str = String(raw).trim();
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(str);
-    if (!match) {
-        return str;
-    }
-    const month = Number(match[2]);
-    const day = Number(match[3]);
-    if (!Number.isFinite(month) || !Number.isFinite(day)) {
-        return str;
-    }
-    return `${month}/${day}`;
 };
 
 const readStoredBoolean = (key) => {
@@ -295,60 +234,38 @@ const ScheduleLegend = ({
             {/* 상담사가 있을 때만 표시 */}
             {activeConsultants.length > 0 && (
                 <div className="mg-v2-legend-section">
-                    <div className="mg-v2-legend-title">
-                        {hasCounts && Number.isFinite(consultantCountsMonth)
-                            ? t('admin:integratedSchedule.legend.consultantMonthlyCompleted', {
-                                month: consultantCountsMonth,
-                                defaultValue: `상담사 · ${consultantCountsMonth}월 완료`
-                            })
-                            : t('common.labels.consultant')}
-                    </div>
-                    <div className="mg-v2-legend-items mg-v2-consultant-legend">
-                        {activeConsultants.map((consultant, index) => {
-                            const consultantName = toDisplayString(consultant.name, '—');
-                            const rawCount = lookupCount(consultantCounts, consultant.id);
-                            const hasCount = rawCount !== undefined && rawCount !== null;
-                            const numericCount = hasCount ? Number(rawCount) : null;
-                            const isZeroCount = hasCount && numericCount === 0;
-                            const isOverflow = hasCount && Number.isFinite(numericCount)
-                                && numericCount > CONSULTANT_COUNT_MAX_DISPLAY;
-                            const displayCount = isOverflow
-                                ? `${CONSULTANT_COUNT_MAX_DISPLAY}+`
-                                : numericCount;
-                            const badgeClassName = `mg-v2-legend-count-badge${isZeroCount ? ' mg-v2-count-badge--zero' : ''}`;
-                            const badgeAriaLabel = hasCount
-                                ? t(
-                                    'admin:integratedSchedule.legend.consultantCompletedAria',
-                                    {
-                                        name: consultantName,
-                                        count: numericCount,
-                                        defaultValue: `${consultantName}, 이번 달 완료 ${numericCount}회`
-                                    }
-                                )
-                                : undefined;
-                            const badgeTitle = isOverflow ? `${numericCount}회` : undefined;
-                            return (
-                                <div key={`consultant-${consultant.id}-${index}`} className="mg-v2-legend-item">
-                                    <span
-                                        className="mg-v2-legend-color"
-                                        style={{ '--legend-color': getConsultantColor(consultant.id) }}
-                                    />
-                                    <span className="mg-v2-legend-text">{consultantName}</span>
-                                    {hasCount && (
-                                        <RemainingSessionsBadge
-                                            count={displayCount}
-                                            className={badgeClassName}
-                                            ariaLabel={badgeAriaLabel}
-                                            title={badgeTitle}
+                    {hasCounts ? (
+                        <ConsultantCountsBadgeList
+                            consultants={activeConsultants}
+                            getConsultantColor={getConsultantColor}
+                            consultantCounts={consultantCounts}
+                            consultantCountsMonth={consultantCountsMonth}
+                            mode="monthly"
+                        />
+                    ) : (
+                        <>
+                            <div className="mg-v2-legend-title">{t('common.labels.consultant')}</div>
+                            <div className="mg-v2-legend-items mg-v2-consultant-legend">
+                                {activeConsultants.map((consultant, index) => (
+                                    <div
+                                        key={`consultant-${consultant.id}-${index}`}
+                                        className="mg-v2-legend-item"
+                                    >
+                                        <span
+                                            className="mg-v2-legend-color"
+                                            style={{ '--legend-color': getConsultantColor(consultant.id) }}
                                         />
-                                    )}
-                                </div>
-                            );
-                        })}
-                        {!hasCounts && consultants.length > 5 && (
-                            <span className="mg-v2-legend-more">외 {consultants.length - 5}명</span>
-                        )}
-                    </div>
+                                        <span className="mg-v2-legend-text">
+                                            {toDisplayString(consultant.name, '—')}
+                                        </span>
+                                    </div>
+                                ))}
+                                {consultants.length > 5 && (
+                                    <span className="mg-v2-legend-more">외 {consultants.length - 5}명</span>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
@@ -375,62 +292,13 @@ const ScheduleLegend = ({
               - missingConsultationLogs === null/undefined : 부모가 전달 안 함 → 섹션 자체 미노출 (다른 라우트 회귀 0)
               - missingConsultationLogs === []            : 모두 작성됨 placeholder
               - 그 외                                       : 상담사별 누락 일자 칩 리스트
+              실제 렌더는 MissingConsultationLogsList 공통 컴포넌트가 담당 — 마크업·a11y 동일.
             */}
-            {isIntegrated && Array.isArray(missingConsultationLogs) && (
-                <div className="mg-v2-legend-section mg-v2-legend-missing-logs">
-                    <div className="mg-v2-legend-title">
-                        {t('admin:mapping.schedule.legend.missingConsultationLogs')}
-                    </div>
-                    {missingConsultationLogs.length === 0 ? (
-                        <div className="mg-v2-legend-missing-logs__empty">
-                            {t('admin:mapping.schedule.legend.missingConsultationLogsAllDone')}
-                        </div>
-                    ) : (
-                        <div className="mg-v2-legend-missing-logs__items">
-                            {missingConsultationLogs.map((item) => {
-                                const name = toDisplayString(item?.consultantName, '—');
-                                const dates = Array.isArray(item?.missingDates) ? item.missingDates : [];
-                                const itemAria = t('admin:mapping.schedule.legend.missingConsultationLogsItemAria', {
-                                    name,
-                                    count: dates.length,
-                                    defaultValue: `${name}, 미작성 ${dates.length}건`
-                                });
-                                return (
-                                    <div
-                                        key={`missing-${item?.consultantId ?? name}`}
-                                        className="mg-v2-legend-missing-logs__item"
-                                        aria-label={itemAria}
-                                    >
-                                        <span className="mg-v2-legend-missing-logs__name">{name}</span>
-                                        <span className="mg-v2-legend-missing-logs__count">({dates.length})</span>
-                                        <span className="mg-v2-legend-missing-logs__dates">
-                                            {dates.map((date) => {
-                                                const safeDate = toDisplayString(date, '');
-                                                const chipAria = t(
-                                                    'admin:mapping.schedule.legend.missingConsultationLogsDateAria',
-                                                    {
-                                                        date: safeDate,
-                                                        defaultValue: `${safeDate} 상담일지 미작성`
-                                                    }
-                                                );
-                                                return (
-                                                    <span
-                                                        key={`${item?.consultantId}-${safeDate}`}
-                                                        className="mg-v2-legend-missing-date-chip"
-                                                        title={safeDate}
-                                                        aria-label={chipAria}
-                                                    >
-                                                        {formatToMonthDay(safeDate)}
-                                                    </span>
-                                                );
-                                            })}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
+            {isIntegrated && (
+                <MissingConsultationLogsList
+                    items={missingConsultationLogs}
+                    variant="integrated"
+                />
             )}
         </>
     );

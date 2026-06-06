@@ -21,6 +21,7 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
 import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
+import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
@@ -156,6 +157,36 @@ public class ScheduleController extends BaseApiController {
         log.info("📊 월별 상담사 COMPLETED 카운트 요청: tenantId={}, year={}, month={}", tenantId, year, month);
         MonthlyConsultantCountsResponse response =
                 scheduleService.getMonthlyConsultantCompletedCounts(year, month);
+        return success(response);
+    }
+
+    /**
+     * 통합 스케줄 — 상담사별 누적 COMPLETED 카운트 (전체 기간).
+     *
+     * <p>{@code GET /api/v1/schedules/cumulative-consultant-counts}.
+     * 어드민 대시보드 「상담사 별 통합데이터」 카드의 «누적 상담 건수» 섹션 SSOT.
+     * 같은 테넌트의 활성 상담사를 모두 포함하고 COMPLETED 일정이 없는 상담사도
+     * {@code count: 0} 으로 응답한다(0건 톤다운 시각화 지원). 정렬은 count DESC,
+     * consultantName ASC. 상한 표기는 프론트 책임.</p>
+     *
+     * <p><b>R6 (2026-06-06)</b> — 기존 {@code consultation-completion} API 의
+     * {@code totalCount} (status 무관) 와 의미 불일치로 신규 분리 (q3-a 결정,
+     * {@code schedules} SSOT 통일).</p>
+     *
+     * <p>가드: {@code @PreAuthorize} (ADMIN/STAFF) + {@code TenantContextHolder#getRequiredTenantId}
+     * 이중 가드.</p>
+     *
+     * @return 표준 {@link ApiResponse} 래퍼 + {@link CumulativeConsultantCountsResponse}
+     * @author CoreSolution
+     * @since 2026-06-06
+     */
+    @GetMapping("/cumulative-consultant-counts")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<CumulativeConsultantCountsResponse>> getCumulativeConsultantCompletedCounts() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 누적 상담사 COMPLETED 카운트 요청: tenantId={}", tenantId);
+        CumulativeConsultantCountsResponse response =
+                scheduleService.getCumulativeConsultantCompletedCounts(tenantId);
         return success(response);
     }
 

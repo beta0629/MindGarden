@@ -13,6 +13,8 @@ import { Draggable } from '@fullcalendar/interaction';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { useSession } from '../../../contexts/SessionContext';
+import useMonthlyConsultantCounts from '../../../hooks/useMonthlyConsultantCounts';
+import useMissingConsultationLogs from '../../../hooks/useMissingConsultationLogs';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
 import ScheduleModal from '../../schedule/ScheduleModal';
@@ -59,54 +61,12 @@ const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
 const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
 
 /**
- * 월별 상담사 COMPLETED 카운트 API (캘린더 상단 상담사 칩 배지 소스).
- * 백엔드 위임으로 확정된 엔드포인트 — year/month 쿼리.
- * 응답: { success: true, data: { year, month, counts: [{ consultantId, consultantName, count }] } }
- */
-const MONTHLY_CONSULTANT_COUNTS_ENDPOINT = '/api/v1/schedules/monthly-consultant-counts';
-
-/**
- * 월별 상담사 «상담일지 미작성» 일자 API (R4 2026-06-09).
- * 응답: { success: true, data: { year, month, items: [{ consultantId, consultantName, missingDates: [...] }] } }
- * 누락 0건 상담사는 응답에서 제외 (백엔드 결정).
- */
-const MONTHLY_MISSING_CONSULTATION_LOGS_ENDPOINT = '/api/v1/schedules/monthly-missing-consultation-logs';
-
-/**
  * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
  * `MappingCreationModal` 와 동일 SSOT — `/api/v1/admin/clients/with-mapping-info`.
  * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
  */
 const CLIENTS_WITH_MAPPING_INFO_ENDPOINT =
   API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO || '/api/v1/admin/clients/with-mapping-info';
-
-const buildMonthlyCountsCacheKey = (tenantId, year, month) =>
-  `${tenantId ?? 'unknown'}:${year}:${month}`;
-
-// 누락 일지 캐시 키 — counts 와 동일 구조. 별도 ref 로 보관(서로 다른 트리거 라이프사이클).
-const buildMissingLogsCacheKey = (tenantId, year, month) =>
-  `${tenantId ?? 'unknown'}:${year}:${month}`;
-
-/**
- * R4 (2026-06-09): API 응답을 ScheduleLegend `missingConsultationLogs` prop 형식으로 정규화.
- * 백엔드 SSOT: { items: [{ consultantId, consultantName, missingDates: ['YYYY-MM-DD', ...] }] }.
- * - 안전 폴백: items 가 배열이 아니면 [].
- * - missingDates 가 배열이 아니면 [] 로 정규화 (UI render 안정성).
- */
-const normalizeMissingConsultationLogs = (rawItems) => {
-  if (!Array.isArray(rawItems)) {
-    return [];
-  }
-  return rawItems
-    .filter((item) => item && item.consultantId != null)
-    .map((item) => ({
-      consultantId: item.consultantId,
-      consultantName: typeof item.consultantName === 'string' ? item.consultantName : '',
-      missingDates: Array.isArray(item.missingDates)
-        ? item.missingDates.map((d) => String(d ?? ''))
-        : []
-    }));
-};
 
 const readStoredBoolean = (key) => {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -160,17 +120,11 @@ const IntegratedMatchingSchedule = () => {
   // 초기값은 현재 년/월. 캘린더가 첫 렌더 시 onMonthChange 로 동일 값을 다시 set 해도 동일 키 → 캐시 hit.
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth() + 1);
-  const [consultantCounts, setConsultantCounts] = useState(() => new Map());
 
-  // 캐시: `${tenantId}:${year}:${month}` → Map<consultantId, count>
-  const monthlyCountsCacheRef = useRef(new Map());
-  const lastTenantIdRef = useRef(user?.tenantId ?? null);
-
-  // R4: «상담일지 미작성» 일자 — 같은 ${tenantId}:${year}:${month} 키로 별도 캐시.
-  // 형태: Array<{ consultantId, consultantName, missingDates: string[] }>.
-  // null = 아직 첫 응답 미수신 → ScheduleLegend 가 섹션 미노출 (placeholder 회피).
-  const [missingConsultationLogs, setMissingConsultationLogs] = useState(null);
-  const missingLogsCacheRef = useRef(new Map());
+  // R6 (2026-06-06) Phase 3-B: 월별 카운트·누락 일지 fetch+캐시는 공통 hook 으로 위임.
+  // 컴포넌트 스코프 useRef 캐시 + tenantId 리셋 + cancelled race 패턴은 hook 내부에 동일하게 보존.
+  const { counts: consultantCounts } = useMonthlyConsultantCounts(currentYear, currentMonth);
+  const { items: missingConsultationLogs } = useMissingConsultationLogs(currentYear, currentMonth);
 
   // 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터.
   // 빈 배열 = 필터 비활성. UnifiedScheduleComponent 가 events 를 그대로 통과시킨다.
@@ -179,17 +133,6 @@ const IntegratedMatchingSchedule = () => {
   // eslint-disable-next-line no-unused-vars
   const [clientFilterLoading, setClientFilterLoading] = useState(false);
   const lastClientFilterTenantRef = useRef(null);
-
-  // tenantId 변경 시 캐시 리셋(다른 테넌트의 카운트·누락 일지가 노출되지 않도록 차단).
-  useEffect(() => {
-    const tenantId = user?.tenantId ?? null;
-    if (lastTenantIdRef.current !== tenantId) {
-      monthlyCountsCacheRef.current = new Map();
-      missingLogsCacheRef.current = new Map();
-      setMissingConsultationLogs(null);
-      lastTenantIdRef.current = tenantId;
-    }
-  }, [user?.tenantId]);
 
   // tenantId 변경 시 내담자 필터 옵션·선택 리셋(다른 테넌트의 내담자가 노출되지 않도록 차단).
   useEffect(() => {
@@ -272,104 +215,6 @@ const IntegratedMatchingSchedule = () => {
     setCurrentYear((prev) => (prev === nextYear ? prev : nextYear));
     setCurrentMonth((prev) => (prev === nextMonth ? prev : nextMonth));
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const tenantId = user?.tenantId ?? null;
-    const cacheKey = buildMonthlyCountsCacheKey(tenantId, currentYear, currentMonth);
-    const cached = monthlyCountsCacheRef.current.get(cacheKey);
-    if (cached) {
-      setConsultantCounts(cached);
-      return undefined;
-    }
-
-    const loadCounts = async() => {
-      try {
-        const response = await StandardizedApi.get(MONTHLY_CONSULTANT_COUNTS_ENDPOINT, {
-          year: currentYear,
-          month: currentMonth
-        });
-        // StandardizedApi.get 는 ApiResponse 의 data 를 반환.
-        // 백엔드 위임 스키마: { year, month, counts: [{ consultantId, consultantName, count }] }
-        // 일부 환경에서 success/data 래핑을 그대로 받는 경우도 안전하게 처리한다.
-        let payload = response;
-        if (response && typeof response === 'object' && response.success === true && response.data) {
-          payload = response.data;
-        }
-        const rawCounts = Array.isArray(payload?.counts) ? payload.counts : [];
-        const nextMap = new Map();
-        rawCounts.forEach((item) => {
-          if (item && item.consultantId != null) {
-            const numericCount = Number(item.count);
-            nextMap.set(item.consultantId, Number.isFinite(numericCount) ? numericCount : 0);
-          }
-        });
-
-        if (cancelled) {
-          return;
-        }
-        monthlyCountsCacheRef.current.set(cacheKey, nextMap);
-        setConsultantCounts(nextMap);
-      } catch (error) {
-        // 조용한 실패: 배지 미표시. 칩 자체는 정상 노출됨.
-        console.warn('월별 상담사 COMPLETED 카운트 로드 실패:', error);
-        if (!cancelled) {
-          setConsultantCounts(new Map());
-        }
-      }
-    };
-
-    loadCounts();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentYear, currentMonth, user?.tenantId]);
-
-  // R4 (2026-06-09): 월별 상담사 «상담일지 미작성» 일자 fetch + 캐시.
-  // 동일 ${tenantId}:${year}:${month} 키 cache hit → API 호출 회피 (counts 패턴 정합).
-  useEffect(() => {
-    let cancelled = false;
-    const tenantId = user?.tenantId ?? null;
-    const cacheKey = buildMissingLogsCacheKey(tenantId, currentYear, currentMonth);
-    const cached = missingLogsCacheRef.current.get(cacheKey);
-    if (cached) {
-      setMissingConsultationLogs(cached);
-      return undefined;
-    }
-
-    const loadMissingLogs = async() => {
-      try {
-        const response = await StandardizedApi.get(MONTHLY_MISSING_CONSULTATION_LOGS_ENDPOINT, {
-          year: currentYear,
-          month: currentMonth
-        });
-        // StandardizedApi.get 는 ApiResponse 의 data 를 반환.
-        // 백엔드 SSOT: { year, month, items: [{ consultantId, consultantName, missingDates: [...] }] }.
-        // 환경에 따라 success/data 래핑이 그대로 노출되는 경우도 안전하게 처리.
-        let payload = response;
-        if (response && typeof response === 'object' && response.success === true && response.data) {
-          payload = response.data;
-        }
-        const normalized = normalizeMissingConsultationLogs(payload?.items);
-        if (cancelled) {
-          return;
-        }
-        missingLogsCacheRef.current.set(cacheKey, normalized);
-        setMissingConsultationLogs(normalized);
-      } catch (error) {
-        // 조용한 실패: 섹션 자체 미노출 (null 유지). 토스트 미발생 — UI 노이즈 차단.
-        console.warn('월별 상담사 상담일지 누락 일자 로드 실패:', error);
-        if (!cancelled) {
-          setMissingConsultationLogs(null);
-        }
-      }
-    };
-
-    loadMissingLogs();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentYear, currentMonth, user?.tenantId]);
 
   // 좌측 사이드바 collapse 상태: localStorage 선호값이 있으면 우선, 없으면 화면 폭 기반 초기값
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {

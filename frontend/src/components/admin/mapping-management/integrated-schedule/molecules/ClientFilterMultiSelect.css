@@ -183,6 +183,27 @@
   background: var(--ad-b0kla-green-bg, var(--mg-color-primary-50));
 }
 
+/*
+ * 2026-06-06 P0 Patch B (Hotfix to Patch A regression):
+ *
+ * <p>전역 `frontend/src/styles/06-components/_dropdowns.css` (L23-39) 의
+ * `[role="listbox"] > * { position: fixed; }` 규칙이 본 컴포넌트의 모든 옵션 li 에
+ * 적용되는데, Patch A 가 listbox 에 추가한 `contain: layout paint` 가 CSS Containment
+ * 명세상 listbox 를 fixed 후손의 containing block 으로 승격시키면서, `top/left: auto`
+ * 인 형제 fixed 들이 모두 listbox content-box top-left 로 collapse 되어
+ * 검색 결과 2건 이상 시 동일 좌표에 겹쳐 그려지는 layout 결함이 발생함.</p>
+ *
+ * <p>대응: 본 컴포넌트의 옵션·empty 노드에서만 `position: relative` 로 복귀시켜
+ * 정상 block flow 로 column stack 보장. 전역 규칙은 다른 컴포넌트에서 그대로 유지.</p>
+ *
+ * debugger 분석 ID 994252f3-9e04-455c-9d5d-ca44b9600f97 (H11-E 확정)
+ */
+.mg-client-filter__option,
+.mg-client-filter__empty {
+  position: relative;
+  z-index: auto;
+}
+
 .mg-client-filter__option-checkbox {
   flex: 0 0 auto;
   width: 16px;

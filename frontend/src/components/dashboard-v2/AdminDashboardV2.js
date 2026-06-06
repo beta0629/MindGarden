@@ -17,6 +17,9 @@ import {
   normalizeLnbTree
 } from '../../utils/lnbMenuUtils';
 import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
+import useMonthlyConsultantCounts from '../../hooks/useMonthlyConsultantCounts';
+import useMissingConsultationLogs from '../../hooks/useMissingConsultationLogs';
+import useCumulativeConsultantCounts from '../../hooks/useCumulativeConsultantCounts';
 import { useNavigate } from 'react-router-dom';
 import { AdminMgmtNavCard, AdminMgmtActionCard } from './molecules/AdminMgmtGridCard';
 import notificationManager from '../../utils/notification';
@@ -69,6 +72,9 @@ import MappingDepositModal from '../admin/mapping/MappingDepositModal';
 import AdminDashboardMonitoring from '../admin/AdminDashboard/AdminDashboardMonitoring';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import StandardizedApi from '../../utils/standardizedApi';
+import { getConsultantColor } from '../../utils/consultantColor';
+import ConsultantCountsBadgeList from '../ui/Schedule/ConsultantCountsBadgeList';
+import MissingConsultationLogsList from '../ui/Schedule/MissingConsultationLogsList';
 import Chart from '../common/Chart';
 import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STEP_CHART_HEX } from '../../constants/charts';
 import { resolveCssColorTokensArray } from '../../utils/resolveCssColorVarToHex';
@@ -360,6 +366,28 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [integratedDataRankUpSet, setIntegratedDataRankUpSet] = useState(() => new Set());
   const [integratedDataRankDownSet, setIntegratedDataRankDownSet] = useState(() => new Set());
   const previousRankByConsultantIdRef = useRef(new Map());
+
+  /**
+   * R6 (2026-06-06) Phase 3-B — 「상담사 별 통합데이터」 카드 확장.
+   * - §A 누적: 집계 기간이 '전체' 일 때만 노출 (전체 기간 SSOT — useCumulativeConsultantCounts)
+   * - §B 월별: 집계 기간이 '월별' 일 때만 노출 (integratedDataYear/Month — 사용자 선택 월)
+   * - §C 누락: 모든 탭에서 항상 노출, 현재 연/월 기준
+   *
+   * 캐시·tenantId 리셋·cancelled race 패턴은 hook 내부에서 보존.
+   */
+  const currentDateForMissingLogsRef = useRef(new Date());
+  const currentYearForMissingLogs = currentDateForMissingLogsRef.current.getFullYear();
+  const currentMonthForMissingLogs = currentDateForMissingLogsRef.current.getMonth() + 1;
+  const { counts: cumulativeConsultantCounts } = useCumulativeConsultantCounts();
+  const { counts: monthlyConsultantCountsForCard } = useMonthlyConsultantCounts(
+    integratedDataPeriodType === 'month' ? integratedDataYear : null,
+    integratedDataPeriodType === 'month' ? integratedDataMonth : null
+  );
+  const { items: missingConsultationLogsForCard } = useMissingConsultationLogs(
+    currentYearForMissingLogs,
+    currentMonthForMissingLogs
+  );
+
   const [searchValue, setSearchValue] = useState('');
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
   /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
@@ -1647,6 +1675,97 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               </p>
             )}
           </div>
+
+          {/*
+            R6 (2026-06-06) Phase 3-B — §A 누적 상담 건수 (집계 기간 = '전체' 일 때만 노출).
+            ConsultantCountsBadgeList 재사용 (mode='cumulative'). 토큰만 사용, 하드코딩 0.
+          */}
+          {integratedDataPeriodType === 'all' && consultantIntegratedData.length > 0 && (
+            <section
+              className="mg-v2-ad-b0kla__cumulative-section"
+              aria-label={t('admin:dashboard.consultationStats.cumulativeTitle', {
+                defaultValue: '누적 상담 건수'
+              })}
+            >
+              <h4 className="mg-v2-ad-b0kla__cumulative-title">
+                {t('admin:dashboard.consultationStats.cumulativeTitle', {
+                  defaultValue: '누적 상담 건수'
+                })}
+              </h4>
+              <ConsultantCountsBadgeList
+                consultants={consultantIntegratedData
+                  .filter((row) => row.consultantId != null)
+                  .map((row) => ({
+                    id: row.consultantId,
+                    name: row.consultantName,
+                    isActive: true
+                  }))}
+                getConsultantColor={getConsultantColor}
+                consultantCounts={cumulativeConsultantCounts}
+                mode="cumulative"
+                titleClassName="sr-only"
+                itemsClassName="mg-v2-legend-items mg-v2-consultant-legend mg-v2-ad-b0kla__cumulative-items"
+              />
+            </section>
+          )}
+
+          {/*
+            R6 (2026-06-06) Phase 3-B — §B 월별 상담 건수 (집계 기간 = '월별' 일 때만 노출).
+            integratedDataYear/Month 기준 — 사용자가 선택한 월. ConsultantCountsBadgeList 재사용.
+          */}
+          {integratedDataPeriodType === 'month' && consultantIntegratedData.length > 0 && (
+            <section
+              className="mg-v2-ad-b0kla__monthly-counts-section"
+              aria-label={t('admin:dashboard.consultationStats.monthlyTitle', {
+                defaultValue: '월별 상담 건수'
+              })}
+            >
+              <h4 className="mg-v2-ad-b0kla__monthly-counts-title">
+                {t('admin:dashboard.consultationStats.monthlyTitle', {
+                  defaultValue: '월별 상담 건수'
+                })}
+              </h4>
+              <ConsultantCountsBadgeList
+                consultants={consultantIntegratedData
+                  .filter((row) => row.consultantId != null)
+                  .map((row) => ({
+                    id: row.consultantId,
+                    name: row.consultantName,
+                    isActive: true
+                  }))}
+                getConsultantColor={getConsultantColor}
+                consultantCounts={monthlyConsultantCountsForCard}
+                consultantCountsMonth={integratedDataMonth}
+                mode="monthly"
+                titleClassName="sr-only"
+                itemsClassName="mg-v2-legend-items mg-v2-consultant-legend mg-v2-ad-b0kla__monthly-counts-items"
+              />
+            </section>
+          )}
+
+          {/*
+            R6 (2026-06-06) Phase 3-B — §C 상담일지 누락 (모든 탭 — 항상 노출).
+            currentYear/Month 기준. items === null (첫 응답 미수신) 시 컴포넌트가 자동 숨김.
+            MissingConsultationLogsList variant='dashboard' — 「지난 일정의 모든 상담일지가 작성되었습니다」 placeholder.
+          */}
+          <section
+            className="mg-v2-ad-b0kla__missing-logs-section"
+            aria-label={t('admin:dashboard.consultationStats.missingLogsTitle', {
+              defaultValue: '상담일지 누락'
+            })}
+          >
+            <h4 className="mg-v2-ad-b0kla__missing-logs-title">
+              {t('admin:dashboard.consultationStats.missingLogsTitle', {
+                defaultValue: '상담일지 누락'
+              })}
+            </h4>
+            <MissingConsultationLogsList
+              items={missingConsultationLogsForCard}
+              variant="dashboard"
+              sectionClassName="mg-v2-ad-b0kla__missing-logs-body mg-v2-legend-missing-logs"
+              showTitle={false}
+            />
+          </section>
         </div>
       </div>
 

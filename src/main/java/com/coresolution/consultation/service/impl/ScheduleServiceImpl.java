@@ -11,6 +11,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +25,7 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.consultation.ConsultationServiceUserFacingMessages;
+import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse.ConsultantCount;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
@@ -3210,6 +3212,105 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return MonthlyConsultantCountsResponse.builder()
                 .year(year)
                 .month(month)
+                .counts(items)
+                .build();
+    }
+
+    /**
+     * 통합 스케줄 — 상담사별 누적 COMPLETED 카운트 (전체 기간, 활성 상담사 0건 포함).
+     *
+     * <p><b>R6 (2026-06-06)</b> — 어드민 대시보드 「상담사 별 통합데이터」 카드의
+     * «누적 상담 건수» 섹션 SSOT.</p>
+     *
+     * <p>SSOT 정합:</p>
+     * <ul>
+     *   <li>완료 상태: {@link ScheduleStatus#COMPLETED} enum 만 전달 (하드코딩 금지).</li>
+     *   <li>활성 상담사 source: {@link #loadActiveConsultantActors(String)} — 월별 카운트와
+     *       동일 머지 규칙(Consultant + counseling-enabled ADMIN).</li>
+     *   <li>표시명: {@link ScheduleListUserFieldsResolver#resolveDisplayNameForScheduleList(User)}.
+     *       User.name 직접 사용 금지(암호화 컬럼).</li>
+     *   <li>N+1 가드: 카운트 결과의 consultantId 중 활성 목록에 없는 id 만 한 번
+     *       {@link UserRepository#findByTenantIdAndIdInAndIsDeletedFalse} 로 batch fetch.</li>
+     *   <li>정렬: count DESC, consultantName ASC (대시보드 ranking 정합).</li>
+     * </ul>
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public CumulativeConsultantCountsResponse getCumulativeConsultantCompletedCounts(String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalArgumentException("tenantId 는 필수입니다.");
+        }
+
+        log.info("📊 누적 상담사 COMPLETED 카운트 조회: tenantId={}", tenantId);
+
+        List<Object[]> raw = scheduleRepository.countCompletedSchedulesByConsultantCumulative(
+                tenantId, ScheduleStatus.COMPLETED);
+        Map<Long, Long> countByConsultantId = new HashMap<>();
+        for (Object[] row : raw) {
+            if (row == null || row.length < 2 || row[0] == null) {
+                continue;
+            }
+            Long consultantId = ((Number) row[0]).longValue();
+            long count = row[1] == null ? 0L : ((Number) row[1]).longValue();
+            countByConsultantId.put(consultantId, count);
+        }
+
+        List<User> activeConsultants = loadActiveConsultantActors(tenantId);
+        Map<Long, User> userById = new LinkedHashMap<>();
+        for (User user : activeConsultants) {
+            if (user != null && user.getId() != null) {
+                userById.put(user.getId(), user);
+            }
+        }
+
+        Set<Long> missingUserIds = new HashSet<>();
+        for (Long consultantId : countByConsultantId.keySet()) {
+            if (consultantId != null && !userById.containsKey(consultantId)) {
+                missingUserIds.add(consultantId);
+            }
+        }
+        if (!missingUserIds.isEmpty()) {
+            List<User> recovered = userRepository.findByTenantIdAndIdInAndIsDeletedFalse(
+                    tenantId, missingUserIds);
+            for (User user : recovered) {
+                if (user != null && user.getId() != null) {
+                    userById.putIfAbsent(user.getId(), user);
+                }
+            }
+        }
+
+        // 활성 상담사 + 카운트 있는 (탈퇴 포함) 상담사 ID 합집합.
+        Set<Long> allIds = new LinkedHashSet<>(userById.keySet());
+        for (Long id : countByConsultantId.keySet()) {
+            if (id != null) {
+                allIds.add(id);
+            }
+        }
+
+        List<ConsultantCount> items = new ArrayList<>(allIds.size());
+        for (Long consultantId : allIds) {
+            User user = userById.get(consultantId);
+            String displayName = user != null
+                    ? scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(user)
+                    : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
+            long count = countByConsultantId.getOrDefault(consultantId, 0L);
+            items.add(ConsultantCount.builder()
+                    .consultantId(consultantId)
+                    .consultantName(displayName)
+                    .count(count)
+                    .build());
+        }
+
+        // 정렬: count DESC, consultantName ASC. null-safe 비교 (표시명은 폴백 보장으로 항상 not-null).
+        items.sort(
+                Comparator
+                        .comparingLong(ConsultantCount::getCount).reversed()
+                        .thenComparing(ConsultantCount::getConsultantName,
+                                Comparator.nullsLast(Comparator.naturalOrder())));
+
+        log.info("✅ 누적 상담사 COMPLETED 카운트 응답: tenantId={}, items={}", tenantId, items.size());
+
+        return CumulativeConsultantCountsResponse.builder()
                 .counts(items)
                 .build();
     }

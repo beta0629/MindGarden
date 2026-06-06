@@ -624,6 +624,12 @@
     "systemOverviewSubtitle": "전체 시스템 현황 요약",
     "recentActivity": "최근 활동",
     "recentActivityEmpty": "최근 활동 내역이 없습니다.",
+    "consultationStats": {
+      "cumulativeTitle": "누적 상담 건수",
+      "monthlyTitle": "월별 상담 건수",
+      "missingLogsTitle": "상담일지 누락",
+      "missingLogsAllDone": "지난 일정의 모든 상담일지가 작성되었습니다"
+    },
     "formModal": {
       "createTitle": "대시보드 생성",
       "editTitle": "대시보드 편집",
@@ -2793,7 +2799,9 @@
       "expandAria": "안내 영역 펼치기",
       "collapseAria": "안내 영역 접기",
       "consultantCompletedAria": "{{name}}, 이번 달 완료 {{count}}회",
-      "consultantMonthlyCompleted": "상담사 · {{month}}월 완료"
+      "consultantMonthlyCompleted": "상담사 · {{month}}월 완료",
+      "consultantCumulativeCompleted": "상담사 · 누적 완료",
+      "consultantCumulativeCompletedAria": "{{name}}, 누적 완료 {{count}}회"
     },
     "tentativeReserved": {
       "info": "가예약 일정이 등록되었습니다. 방문 시 사이드바 카드의 「당일 결제 + 활성화」 버튼으로 결제하세요."

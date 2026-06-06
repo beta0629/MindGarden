@@ -601,6 +601,38 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("endDate") LocalDate endDate);
 
     /**
+     * 통합 스케줄 — 상담사별 «누적» COMPLETED 카운트 (전체 기간, 테넌트 격리).
+     *
+     * <p><b>R6 (2026-06-06)</b> — 어드민 대시보드 「상담사 별 통합데이터」 카드의
+     * «누적 상담 건수» 섹션 SSOT. {@link #countCompletedSchedulesByConsultantInDateRange}
+     * 의 날짜 범위 제거 버전이며, 같은 인덱스 {@code idx_schedules_tenant_status_date}
+     * (V60) 의 prefix 부분(테넌트·상태)만 사용한다.</p>
+     *
+     * <p><b>도메인 정합</b>: 기존 {@code consultation-completion} API 의
+     * {@code totalCount} 는 status 무관(BOOKED/CONFIRMED 포함)이라 「누적 완료」 의미와
+     * 불일치한다 (q3-a 결정). 본 메서드는 {@link ScheduleStatus#COMPLETED} 만 카운트해
+     * {@code schedules} SSOT 로 통일한다.</p>
+     *
+     * <p>결과는 0건 상담사는 포함되지 않으므로 호출 측에서 활성 상담사 목록과 합쳐
+     * 0건 폴백을 채워야 한다(0건 톤다운 시각화 지원).</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param status   집계 대상 상태 (운영상 {@link ScheduleStatus#COMPLETED} 만 사용)
+     * @return [0]=consultantId(Long), [1]=count(Long)
+     * @author CoreSolution
+     * @since 2026-06-06
+     */
+    @Query("SELECT s.consultantId, COUNT(s) FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId "
+            + "  AND s.isDeleted = false "
+            + "  AND s.status = :status "
+            + "  AND s.consultantId IS NOT NULL "
+            + "GROUP BY s.consultantId")
+    List<Object[]> countCompletedSchedulesByConsultantCumulative(
+            @Param("tenantId") String tenantId,
+            @Param("status") ScheduleStatus status);
+
+    /**
      * 통합 스케줄 — 월별 상담사별 «상담일지 미작성(누락)» 일정 조회.
      *
      * <p>{@code /admin/integrated-schedule} 캘린더 범례의 «상담일지 누락» 섹션 SSOT.

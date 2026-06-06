@@ -604,9 +604,18 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 통합 스케줄 — 월별 상담사별 «상담일지 미작성(누락)» 일정 조회.
      *
      * <p>{@code /admin/integrated-schedule} 캘린더 범례의 «상담일지 누락» 섹션 SSOT.
-     * 같은 테넌트의 {@link ScheduleStatus#COMPLETED} 일정 중 {@link
-     * com.coresolution.consultation.entity.ConsultationRecord} (비삭제) 가 존재하지
-     * 않는 일정을 LEFT JOIN ... IS NULL 패턴으로 추출한다.</p>
+     * 같은 테넌트의 «지난 일정»({@code s.date < :today}) 중 상태가 {@code statuses}
+     * 에 속하고 {@link com.coresolution.consultation.entity.ConsultationRecord}
+     * (비삭제) 가 존재하지 않는 일정을 LEFT JOIN ... IS NULL 패턴으로 추출한다.</p>
+     *
+     * <p><b>R5 (2026-06-06) — 도메인 SSOT 정합</b>: 본래 단일 {@code status =
+     * COMPLETED} 필터였으나, {@link
+     * com.coresolution.consultation.service.ScheduleAutoCompleteService} (L140)
+     * 가 「지난 일정 + 상담일지 미작성」 케이스의 COMPLETED 승격을 의도적으로 보류하고
+     * BOOKED/CONFIRMED 를 유지한다. 따라서 missing log 응답은 status ∈ {COMPLETED,
+     * CONFIRMED, BOOKED} 모두 포함해야 한다. 또한 «오늘/미래» 일정은 누락 평가 대상이
+     * 아니므로 {@code s.date < :today} 컷이 필수다. (debugger 분석 ID
+     * {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
      *
      * <p><b>LEFT JOIN 키 결정 (2026-06-09)</b>: {@code r.consultationId = s.id}.
      * 호출 SSOT 검증:
@@ -622,9 +631,10 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 양쪽 모두 {@code tenantId} 필터로 강제한다.</p>
      *
      * @param tenantId  테넌트 ID
-     * @param status    집계 대상 상태 (운영상 {@link ScheduleStatus#COMPLETED} 만 사용)
+     * @param statuses  집계 대상 상태 집합 (운영상 {@code COMPLETED + CONFIRMED + BOOKED})
      * @param startDate 시작일(포함)
      * @param endDate   종료일(포함, 월말일)
+     * @param today     오늘 일자 — {@code s.date < today} 컷. 호출부에서 SSOT 시계 주입.
      * @return [0]=consultantId(Long), [1]=date(LocalDate). 상담사 → 일자 오름차순.
      * @author CoreSolution
      * @since 2026-06-09
@@ -636,16 +646,18 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + " AND r.tenantId = s.tenantId "
             + "WHERE s.tenantId = :tenantId "
             + "  AND s.isDeleted = false "
-            + "  AND s.status = :status "
+            + "  AND s.status IN :statuses "
             + "  AND s.consultantId IS NOT NULL "
             + "  AND s.date BETWEEN :startDate AND :endDate "
+            + "  AND s.date < :today "
             + "  AND r.id IS NULL "
             + "ORDER BY s.consultantId ASC, s.date ASC")
     List<Object[]> findMissingConsultationLogScheduleRowsInDateRange(
             @Param("tenantId") String tenantId,
-            @Param("status") ScheduleStatus status,
+            @Param("statuses") Collection<ScheduleStatus> statuses,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
+            @Param("endDate") LocalDate endDate,
+            @Param("today") LocalDate today);
 
     /**
      * 자동 등급 승급용: 테넌트 내 내담자별 완료된 상담 일정(스케줄) 건수 집계.

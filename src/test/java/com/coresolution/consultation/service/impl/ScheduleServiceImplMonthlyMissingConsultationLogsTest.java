@@ -41,13 +41,17 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.DashboardIntegrationService;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -66,7 +70,8 @@ import org.mockito.quality.Strictness;
  *   <li>S4: 누락 0건 → items: [] 빈 배열, batch fetch 호출 안 함</li>
  *   <li>S5: 다중 상담사 + 다중 일자 → 그룹화 정합 + 일자 오름차순 + 중복 제거</li>
  *   <li>S6: User 가 isDeleted/완전 삭제 → 표시명 DISPLAY_NAME_UNKNOWN</li>
- *   <li>S7: Repository 가 ScheduleStatus.COMPLETED enum + 월말 경계로 호출되는지 verify</li>
+ *   <li>S7: Repository 가 status 집합 {COMPLETED, CONFIRMED, BOOKED} + 월말 경계 + today
+ *       파라미터로 호출되는지 verify (R5 도메인 SSOT 회귀 가드).</li>
  *   <li>S8: 동일 consultantId 가 row 에 중복으로 와도 missingDates 는 unique 보장</li>
  * </ul>
  *
@@ -173,8 +178,8 @@ class ScheduleServiceImplMonthlyMissingConsultationLogsTest {
     @DisplayName("S4: 누락 0건 → items: [] 빈 배열, User batch fetch 호출 안 함")
     void s4_noMissing_emptyItems() {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
-                eq(TENANT_ID), eq(ScheduleStatus.COMPLETED),
-                any(LocalDate.class), any(LocalDate.class)))
+                eq(TENANT_ID), anyCollection(),
+                any(LocalDate.class), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Collections.emptyList());
 
         MonthlyMissingConsultationLogsResponse response =
@@ -193,8 +198,8 @@ class ScheduleServiceImplMonthlyMissingConsultationLogsTest {
     @DisplayName("S5: 다중 상담사 + 다중 일자 → 그룹화 정합 + missingDates 오름차순 정렬")
     void s5_multipleConsultants_groupedAndSorted() {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
-                eq(TENANT_ID), eq(ScheduleStatus.COMPLETED),
-                any(LocalDate.class), any(LocalDate.class)))
+                eq(TENANT_ID), anyCollection(),
+                any(LocalDate.class), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Arrays.asList(
                         new Object[]{3L, LocalDate.of(2026, 4, 22)},
                         new Object[]{3L, LocalDate.of(2026, 4, 15)},
@@ -221,8 +226,8 @@ class ScheduleServiceImplMonthlyMissingConsultationLogsTest {
     @DisplayName("S6: User 완전 삭제 → 표시명 DISPLAY_NAME_UNKNOWN")
     void s6_missingUser_fallbackUnknown() {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
-                eq(TENANT_ID), eq(ScheduleStatus.COMPLETED),
-                any(LocalDate.class), any(LocalDate.class)))
+                eq(TENANT_ID), anyCollection(),
+                any(LocalDate.class), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Collections.singletonList(
                         new Object[]{777L, LocalDate.of(2026, 4, 5)}));
         // batch fetch 가 빈 결과 — 사용자 자체가 isDeleted=true 또는 완전 삭제
@@ -242,20 +247,37 @@ class ScheduleServiceImplMonthlyMissingConsultationLogsTest {
     // ─── S7 ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("S7: Repository 가 ScheduleStatus.COMPLETED + 월말 경계(2026-04-30) 로 호출")
+    @DisplayName("S7: Repository 가 {COMPLETED, CONFIRMED, BOOKED} + 월말 경계 + today (호출 시점 today) 로 호출 — R5 도메인 SSOT 회귀")
     void s7_verifyRepositoryArguments() {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
-                eq(TENANT_ID), eq(ScheduleStatus.COMPLETED),
-                any(LocalDate.class), any(LocalDate.class)))
+                eq(TENANT_ID), anyCollection(),
+                any(LocalDate.class), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Collections.emptyList());
 
+        LocalDate beforeCall = LocalDate.now();
         scheduleService.getMonthlyMissingConsultationLogs(2026, 4);
+        LocalDate afterCall = LocalDate.now();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<ScheduleStatus>> statusesCaptor =
+                ArgumentCaptor.forClass(Collection.class);
+        ArgumentCaptor<LocalDate> todayCaptor = ArgumentCaptor.forClass(LocalDate.class);
 
         verify(scheduleRepository, times(1)).findMissingConsultationLogScheduleRowsInDateRange(
                 eq(TENANT_ID),
-                eq(ScheduleStatus.COMPLETED),
+                statusesCaptor.capture(),
                 eq(LocalDate.of(2026, 4, 1)),
-                eq(LocalDate.of(2026, 4, 30)));
+                eq(LocalDate.of(2026, 4, 30)),
+                todayCaptor.capture());
+
+        Set<ScheduleStatus> expectedStatuses =
+                EnumSet.of(ScheduleStatus.COMPLETED, ScheduleStatus.CONFIRMED, ScheduleStatus.BOOKED);
+        assertThat(statusesCaptor.getValue())
+                .as("R5 SSOT: missing log 응답 대상 status 는 COMPLETED + CONFIRMED + BOOKED 모두 포함")
+                .containsExactlyInAnyOrderElementsOf(expectedStatuses);
+        assertThat(todayCaptor.getValue())
+                .as("today 는 LocalDate.now() SSOT 패턴 — 호출 시점 today 와 동일해야 함")
+                .isBetween(beforeCall, afterCall);
     }
 
     // ─── S8 ──────────────────────────────────────────────────────────────
@@ -264,8 +286,8 @@ class ScheduleServiceImplMonthlyMissingConsultationLogsTest {
     @DisplayName("S8: 동일 consultantId+date 가 row 중복으로 와도 missingDates 는 unique 보장")
     void s8_duplicateRows_uniqueDates() {
         when(scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
-                eq(TENANT_ID), eq(ScheduleStatus.COMPLETED),
-                any(LocalDate.class), any(LocalDate.class)))
+                eq(TENANT_ID), anyCollection(),
+                any(LocalDate.class), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Arrays.asList(
                         new Object[]{3L, LocalDate.of(2026, 4, 15)},
                         new Object[]{3L, LocalDate.of(2026, 4, 15)},

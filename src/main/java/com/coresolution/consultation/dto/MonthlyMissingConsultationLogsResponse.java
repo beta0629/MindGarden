@@ -12,10 +12,17 @@ import lombok.Setter;
  * 통합 스케줄 — 월별 상담사별 상담일지 미작성(누락) 일자 응답.
  *
  * <p>{@code /admin/integrated-schedule} 캘린더 상단 범례에서 사용. 같은 테넌트에서
- * 해당 월의 {@link com.coresolution.consultation.constant.ScheduleStatus#COMPLETED}
- * 일정 중 {@link com.coresolution.consultation.entity.ConsultationRecord} 가 작성되지
+ * 해당 월의 «지난 일정» ({@code date < today}) 중 상태가
+ * {@code {COMPLETED, CONFIRMED, BOOKED}} 에 속하고
+ * {@link com.coresolution.consultation.entity.ConsultationRecord} 가 작성되지
  * 않은 (LEFT JOIN ... IS NULL) 일정을 상담사별로 그룹화한다. 누락 0건 상담사는
  * 응답에서 제외한다 (UI 노이즈 차단).</p>
+ *
+ * <p><b>R5 (2026-06-06) — 도메인 SSOT 정정</b>: 본래 «{@code status = COMPLETED} 만»
+ * 이었으나, {@link com.coresolution.consultation.service.ScheduleAutoCompleteService}
+ * 가 「지난 일정 + 일지 미작성」 케이스의 COMPLETED 자동 승격을 의도적으로 보류하고
+ * CONFIRMED/BOOKED 를 유지한다. 따라서 누락 응답은 세 상태 모두를 포함해야 한다.
+ * (debugger 분석 ID {@code 265d0db3-c75c-4f01-954d-7ec7720994b0})</p>
  *
  * <p>LEFT JOIN 키 결정: {@code r.consultationId = s.id}. 호출 SSOT 검증:
  * {@code ScheduleServiceImpl#L267, L1324, L2949, L2981, L3008, L3037} + {@code

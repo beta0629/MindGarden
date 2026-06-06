@@ -7,6 +7,7 @@ import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -125,6 +126,21 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 신규 코드는 새 상수 클래스 분리 시 {@code PaymentTimingConstants} 로 이전될 예정.
      */
     private static final String PAYMENT_TIMING_SAME_DAY_CARD = "SAME_DAY_CARD";
+
+    /**
+     * R5 (2026-06-06) — «상담일지 미작성(누락)» 응답 대상 상태 집합 SSOT.
+     *
+     * <p><b>도메인 정합</b>: {@link
+     * com.coresolution.consultation.service.ScheduleAutoCompleteService}
+     * (L140 부근) 은 「지난 일정 + 상담일지 미작성」 일정의 COMPLETED 자동 승격을
+     * 의도적으로 보류하고 CONFIRMED/BOOKED 를 유지한다. 따라서 missing log 응답은
+     * COMPLETED 만으로 충분하지 않고 status ∈ {COMPLETED, CONFIRMED, BOOKED} 모두
+     * 포함해야 한다.</p>
+     *
+     * <p>(debugger 분석 ID {@code 265d0db3-c75c-4f01-954d-7ec7720994b0} — G2 확정)</p>
+     */
+    private static final Set<ScheduleStatus> MISSING_LOG_TARGET_STATUSES =
+            EnumSet.of(ScheduleStatus.COMPLETED, ScheduleStatus.CONFIRMED, ScheduleStatus.BOOKED);
 
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -3203,7 +3219,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      *
      * <p>SSOT 정합:</p>
      * <ul>
-     *   <li>완료 상태: {@link ScheduleStatus#COMPLETED} enum 만 전달 (하드코딩 금지).</li>
+     *   <li>대상 상태 집합: {@link #MISSING_LOG_TARGET_STATUSES} (R5, 2026-06-06).
+     *       COMPLETED + CONFIRMED + BOOKED. {@code ScheduleAutoCompleteService}
+     *       가 「지난 일정 + 일지 미작성」 케이스의 COMPLETED 승격을 보류하므로
+     *       CONFIRMED/BOOKED 도 누락 대상에 포함된다 (하드코딩 금지, enum 직접 비교).</li>
+     *   <li>오늘/미래 컷: Repository 쿼리에 {@code s.date < :today} 추가. 오늘 일정은
+     *       아직 «수업 후 작성» 기회가 있으므로 누락으로 보지 않는다.</li>
      *   <li>LEFT JOIN 키: {@code r.consultationId = s.id} — 기존 호출부
      *       ({@code existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId())})
      *       와 동일 패턴.</li>
@@ -3229,12 +3250,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         YearMonth ym = YearMonth.of(year, month);
         LocalDate startDate = ym.atDay(1);
         LocalDate endDate = ym.atEndOfMonth();
+        // 기존 ScheduleServiceImpl 의 시계 처리 패턴(LocalDate.now() 직접 호출)과 동일.
+        // Clock 주입 SSOT 가 본 클래스에 아직 도입되지 않았다 — ScheduleAutoCompleteService
+        // (L73~74) 도 동일하게 LocalDateTime.now().toLocalDate() 를 사용한다.
+        LocalDate today = LocalDate.now();
 
-        log.info("📝 월별 상담사 상담일지 누락 일자 조회: tenantId={}, year={}, month={}, period={}~{}",
-                tenantId, year, month, startDate, endDate);
+        log.info("📝 월별 상담사 상담일지 누락 일자 조회: tenantId={}, year={}, month={}, period={}~{}, today={}, statuses={}",
+                tenantId, year, month, startDate, endDate, today, MISSING_LOG_TARGET_STATUSES);
 
         List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
-                tenantId, ScheduleStatus.COMPLETED, startDate, endDate);
+                tenantId, MISSING_LOG_TARGET_STATUSES, startDate, endDate, today);
 
         // 상담사 → 일자 집합 (TreeSet 으로 오름차순·중복 제거 보장).
         Map<Long, TreeSet<LocalDate>> datesByConsultantId = new LinkedHashMap<>();

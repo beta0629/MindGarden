@@ -204,27 +204,39 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommunityModerationQueueItemResponse> moderationQueue(User admin, Pageable pageable) {
+    public List<CommunityModerationQueueItemResponse> moderationQueue(
+            User admin,
+            CommunityModerationStatus status,
+            Pageable pageable) {
         requireAdmin(admin);
         String tenantId = requireTenantId(admin);
-        List<CommunityPost> pending = communityPostRepository.findModerationQueue(
-                tenantId, CommunityModerationStatus.PENDING, pageable);
-        List<CommunityModerationQueueItemResponse> out = new ArrayList<>();
-        for (CommunityPost p : pending) {
-            out.add(CommunityModerationQueueItemResponse.builder()
-                    .id(p.getId())
-                    .postKind(p.getPostKind())
-                    .moderationStatus(p.getModerationStatus())
-                    .title(p.getTitle())
-                    .bodyPreview(bodyPreview(p.getBody()))
-                    .authorUserId(p.getAuthor().getId())
-                    .authorDisplay(displayForUser(p.getAuthor(), p.isAnonymous()))
-                    .anonymous(p.isAnonymous())
-                    .specialty(p.getSpecialty())
-                    .createdAt(fmt(p.getCreatedAt()))
-                    .build());
+        List<CommunityPost> rows;
+        if (status == null) {
+            rows = communityPostRepository.findModerationQueueAllStatuses(
+                    tenantId, CommunityModerationStatus.PENDING, pageable);
+        } else {
+            rows = communityPostRepository.findModerationQueue(tenantId, status, pageable);
+        }
+        List<CommunityModerationQueueItemResponse> out = new ArrayList<>(rows.size());
+        for (CommunityPost p : rows) {
+            out.add(toQueueItemResponse(p));
         }
         return out;
+    }
+
+    private CommunityModerationQueueItemResponse toQueueItemResponse(CommunityPost p) {
+        return CommunityModerationQueueItemResponse.builder()
+                .id(p.getId())
+                .postKind(p.getPostKind())
+                .moderationStatus(p.getModerationStatus())
+                .title(p.getTitle())
+                .bodyPreview(bodyPreview(p.getBody()))
+                .authorUserId(p.getAuthor().getId())
+                .authorDisplay(displayForUser(p.getAuthor(), p.isAnonymous()))
+                .anonymous(p.isAnonymous())
+                .specialty(p.getSpecialty())
+                .createdAt(fmt(p.getCreatedAt()))
+                .build();
     }
 
     @Override

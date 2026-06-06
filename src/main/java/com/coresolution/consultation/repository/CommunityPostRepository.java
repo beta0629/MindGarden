@@ -68,4 +68,29 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, Lo
             @Param("tenantId") String tenantId,
             @Param("status") CommunityModerationStatus status,
             Pageable pageable);
+
+    /**
+     * 검수 큐 전체 상태 조회 (PENDING / APPROVED / REJECTED) — 어드민 통합 필터용.
+     *
+     * <p>정렬: PENDING(검수 대기) 항상 상단 → 그 외는 {@code moderatedAt DESC}.
+     * {@code moderatedAt} 이 NULL 인 행(검수 안 한 글)은 {@code createdAt DESC} 로 대체된다.
+     * 운영자가 우선순위가 높은 「검수 대기」 를 먼저 보고 처리한 글은 최근순으로 확인할 수 있도록 한다.</p>
+     *
+     * @param tenantId      테넌트 식별자
+     * @param pendingStatus 상단 고정 비교용 enum 값 (호출 측에서 {@link CommunityModerationStatus#PENDING} 전달)
+     * @param pageable      페이지
+     * @return 검수 큐 전체 (상태 무관)
+     */
+    @Query("""
+        SELECT DISTINCT p FROM CommunityPost p
+        JOIN FETCH p.author
+        WHERE p.tenantId = :tenantId AND p.isDeleted = false
+        ORDER BY
+            CASE WHEN p.moderationStatus = :pendingStatus THEN 0 ELSE 1 END ASC,
+            COALESCE(p.moderatedAt, p.createdAt) DESC
+        """)
+    List<CommunityPost> findModerationQueueAllStatuses(
+            @Param("tenantId") String tenantId,
+            @Param("pendingStatus") CommunityModerationStatus pendingStatus,
+            Pageable pageable);
 }

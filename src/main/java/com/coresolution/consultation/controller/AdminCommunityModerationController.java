@@ -1,6 +1,8 @@
 package com.coresolution.consultation.controller;
 
 import java.util.List;
+import java.util.Locale;
+import com.coresolution.consultation.constant.CommunityModerationStatus;
 import com.coresolution.consultation.dto.community.CommunityModerationPatchRequest;
 import com.coresolution.consultation.dto.community.CommunityModerationQueueItemResponse;
 import com.coresolution.consultation.entity.User;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -39,22 +42,59 @@ public class AdminCommunityModerationController extends BaseApiController {
     private final CommunityService communityService;
 
     /**
-     * 검수 대기 목록.
+     * 검수 큐 목록 — 상태 필터 지원.
+     *
+     * <p>{@code status} 가 비어 있거나 {@code ALL} 이면 전체(PENDING + APPROVED + REJECTED)를 반환한다.
+     * 그 외 값은 {@link CommunityModerationStatus} 와 매칭되어야 하며(대소문자 무시), 매칭되지 않으면 400.</p>
      *
      * @param session  세션
+     * @param status   조회 상태 필터 ({@code null} / {@code ""} / {@code ALL} = 전체, PENDING / APPROVED / REJECTED)
      * @param pageable 페이지
-     * @return 대기 항목
+     * @return 검수 큐 항목
      */
     @GetMapping("/moderation-queue")
     public ResponseEntity<ApiResponse<List<CommunityModerationQueueItemResponse>>> moderationQueue(
             HttpSession session,
+            @RequestParam(value = "status", required = false) String status,
             @PageableDefault(size = 100) Pageable pageable) {
         User admin = requireAdminWithTenant(session);
+        CommunityModerationStatus parsed = parseModerationStatusOrNull(status);
         try {
             TenantContextHolder.setTenantId(admin.getTenantId().trim());
-            return success(communityService.moderationQueue(admin, pageable));
+            return success(communityService.moderationQueue(admin, parsed, pageable));
         } finally {
             TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * {@code status} 쿼리 파라미터 파싱.
+     *
+     * <ul>
+     *     <li>{@code null} / 빈 문자열 / {@code "ALL"} → {@code null} (전체)</li>
+     *     <li>대소문자 무시하여 {@link CommunityModerationStatus} 와 매칭</li>
+     *     <li>매칭 실패 시 {@link IllegalArgumentException} → 글로벌 핸들러가 HTTP 400 으로 변환</li>
+     * </ul>
+     *
+     * @param raw 원본 쿼리 파라미터
+     * @return 매칭 enum 또는 {@code null}
+     */
+    private static CommunityModerationStatus parseModerationStatusOrNull(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        String upper = trimmed.toUpperCase(Locale.ROOT);
+        if ("ALL".equals(upper)) {
+            return null;
+        }
+        try {
+            return CommunityModerationStatus.valueOf(upper);
+        } catch (IllegalArgumentException ignore) {
+            throw new IllegalArgumentException("지원하지 않는 status 값입니다: " + raw);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import java.util.List;
+import com.coresolution.consultation.constant.CommunityModerationStatus;
 import com.coresolution.consultation.dto.community.CommunityCommentCreateRequest;
 import com.coresolution.consultation.dto.community.CommunityCommentResponse;
 import com.coresolution.consultation.dto.community.CommunityModerationPatchRequest;
@@ -55,7 +56,21 @@ public interface CommunityService {
 
     void report(User reporter, Long postId, CommunityReportCreateRequest request);
 
-    List<CommunityModerationQueueItemResponse> moderationQueue(User admin, Pageable pageable);
+    /**
+     * 어드민 커뮤니티 검수 큐 조회 (상태 필터 지원).
+     *
+     * <p>{@code status} 가 {@code null} 이면 PENDING / APPROVED / REJECTED 전체를 반환한다.
+     * 전체 조회 시 PENDING 항목이 항상 상단에 정렬되어 운영자가 검수 대기 글을 먼저 처리할 수 있도록 한다.</p>
+     *
+     * @param admin    관리자 사용자 (역할/테넌트 검증)
+     * @param status   조회 상태 필터. {@code null} 이면 전체 (PENDING + APPROVED + REJECTED)
+     * @param pageable 페이지
+     * @return 검수 큐 항목 목록
+     */
+    List<CommunityModerationQueueItemResponse> moderationQueue(
+            User admin,
+            CommunityModerationStatus status,
+            Pageable pageable);
 
     void moderatePost(User admin, Long postId, CommunityModerationPatchRequest request);
 }

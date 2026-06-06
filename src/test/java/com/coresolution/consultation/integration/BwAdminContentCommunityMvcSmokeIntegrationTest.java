@@ -2,6 +2,7 @@ package com.coresolution.consultation.integration;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import com.coresolution.consultation.constant.CommunityModerationStatus;
 import com.coresolution.consultation.constant.HealingContentMediaType;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
@@ -139,10 +141,10 @@ class BwAdminContentCommunityMvcSmokeIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/community/moderation-queue — 관리자 세션 있으면 200")
+    @DisplayName("GET /api/v1/admin/community/moderation-queue — status 없으면 200, status=null 로 전체 조회 위임")
     @WithMockUser(roles = {"ADMIN"})
     void moderationQueue_returns200() throws Exception {
-        when(communityService.moderationQueue(any(User.class), any()))
+        when(communityService.moderationQueue(any(User.class), isNull(), any()))
                 .thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/api/v1/admin/community/moderation-queue")
@@ -151,7 +153,36 @@ class BwAdminContentCommunityMvcSmokeIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(communityService).moderationQueue(any(User.class), any());
+        verify(communityService).moderationQueue(any(User.class), isNull(), any());
+    }
+
+    @Test
+    @DisplayName("GET /moderation-queue?status=APPROVED — 서비스에 APPROVED enum 으로 위임")
+    @WithMockUser(roles = {"ADMIN"})
+    void moderationQueue_whenStatusApproved_delegatesApproved() throws Exception {
+        when(communityService.moderationQueue(any(User.class), eq(CommunityModerationStatus.APPROVED), any()))
+                .thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/admin/community/moderation-queue")
+                        .param("status", "APPROVED")
+                        .sessionAttr(SessionConstants.USER_OBJECT, adminSessionUser())
+                        .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(communityService)
+                .moderationQueue(any(User.class), eq(CommunityModerationStatus.APPROVED), any());
+    }
+
+    @Test
+    @DisplayName("GET /moderation-queue?status=garbage — 400 BAD_REQUEST")
+    @WithMockUser(roles = {"ADMIN"})
+    void moderationQueue_whenStatusInvalid_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/community/moderation-queue")
+                        .param("status", "garbage")
+                        .sessionAttr(SessionConstants.USER_OBJECT, adminSessionUser())
+                        .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

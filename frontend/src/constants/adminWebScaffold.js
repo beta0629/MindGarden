@@ -3,7 +3,8 @@
  * BW-4 커뮤니티 검수 (`AdminCommunityModerationController` 베이스 `/api/v1/admin/community`)
  * - GET `{COMMUNITY_MODERATION_QUEUE}` — 목록, 선택 쿼리 `status`(PENDING|APPROVED|REJECTED)
  * - GET `{COMMUNITY_MODERATION_QUEUE}/{id}` — 큐 단건 상세
- * - PATCH `{COMMUNITY_POSTS_MODERATION_ROOT}/{postId}/moderation` — 본문 `{ status, rejectReason? }`
+ * - PATCH `{COMMUNITY_POSTS_MODERATION_ROOT}/{postId}/moderation` — 본문 `{ decision, reasonCode?, note? }`
+ *   (BE `CommunityModerationPatchRequest` 신규 계약. legacy `{ status, rejectReason }` 는 BE 가 400 으로 차단)
  * BW-3 콘텐츠 마스터: `AdminPsychoEducationContentController`·`AdminHealingContentCatalogController`
  * — 심리교육 `/api/v1/admin/content/psycho-education`, 힐링 카탈로그 `/api/v1/admin/content/healing-catalog`
  * — 각각 GET 목록·POST·PUT `/{id}`·PATCH `/{id}/visibility` (`isActive`)
@@ -346,19 +347,49 @@ export function pickCommunityRowContent(row) {
 }
 
 /**
- * BW-4 PATCH 본문 (status + 선택 반려 사유)
- * @param {'approve'|'reject'} action
- * @param {string} [rejectReason]
- * @returns {{ status: string, rejectReason?: string }}
+ * 어드민 커뮤니티 모더레이션 PATCH 요청 본문 생성기.
+ *
+ * BE DTO 계약: `CommunityModerationPatchRequest`
+ *  - decision   : 'APPROVE' | 'REJECT'        (필수, `@NotNull`)
+ *  - reasonCode : string                       (REJECT 시 권장, BE 검증에 따라)
+ *  - note       : string                       (선택, 운영자 메모)
+ *
+ * legacy 호출부 호환:
+ *  - 1번째 인자: 'approve'|'reject'|'APPROVE'|'REJECT'|'APPROVED'|'REJECTED' 모두 흡수
+ *  - 2번째 인자: 문자열(legacy `rejectReason`) 이면 `reasonCode` 로 매핑, 객체면 그대로 사용
+ *
+ * @param {'APPROVE'|'REJECT'|'APPROVED'|'REJECTED'|'approve'|'reject'} decision
+ * @param {string|{ reasonCode?: string, note?: string }} [options]
+ * @returns {{ decision: 'APPROVE'|'REJECT', reasonCode?: string, note?: string }}
  */
-export function buildCommunityModerationPatchBody(action, rejectReason) {
-  const reason = rejectReason != null ? String(rejectReason).trim() : '';
-  if (action === 'approve') {
-    return { status: COMMUNITY_MODERATION_STATUS.APPROVED };
+export function buildCommunityModerationPatchBody(decision, options) {
+  const normalized = String(decision == null ? '' : decision).toUpperCase();
+  let decisionEnum = null;
+  if (normalized === 'APPROVE' || normalized === 'APPROVED') {
+    decisionEnum = 'APPROVE';
+  } else if (normalized === 'REJECT' || normalized === 'REJECTED') {
+    decisionEnum = 'REJECT';
   }
-  const body = { status: COMMUNITY_MODERATION_STATUS.REJECTED };
-  if (reason !== '') {
-    body.rejectReason = reason;
+  if (!decisionEnum) {
+    throw new Error(`[buildCommunityModerationPatchBody] invalid decision: ${decision}`);
+  }
+
+  const opts = typeof options === 'string'
+    ? { reasonCode: options }
+    : (options && typeof options === 'object' ? options : {});
+
+  const body = { decision: decisionEnum };
+  if (opts.reasonCode != null) {
+    const code = String(opts.reasonCode).trim();
+    if (code !== '') {
+      body.reasonCode = code;
+    }
+  }
+  if (opts.note != null) {
+    const note = String(opts.note).trim();
+    if (note !== '') {
+      body.note = note;
+    }
   }
   return body;
 }

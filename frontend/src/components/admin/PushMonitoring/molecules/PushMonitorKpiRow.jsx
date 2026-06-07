@@ -30,7 +30,7 @@ const formatPercent = (ratio) => {
   return `${pct}%`;
 };
 
-const PushMonitorKpiRow = ({ kpi, channelBreakdown, loading }) => {
+const PushMonitorKpiRow = ({ kpi = null, channelBreakdown = null, loading = false }) => {
   const queueValue = safeNumber(kpi?.recentFiveMinuteCount);
   const pendingValue = safeNumber(kpi?.pendingCount);
   const successValue = safeNumber(kpi?.successCount);
@@ -129,12 +129,6 @@ PushMonitorKpiRow.propTypes = {
     ratio: PropTypes.number
   })),
   loading: PropTypes.bool
-};
-
-PushMonitorKpiRow.defaultProps = {
-  kpi: null,
-  channelBreakdown: null,
-  loading: false
 };
 
 export default PushMonitorKpiRow;

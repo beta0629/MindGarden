@@ -13,7 +13,7 @@ import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import PushMonitorTenantSnapshotTable from '../molecules/PushMonitorTenantSnapshotTable';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 
-const PushMonitorSnapshotSection = ({ snapshot }) => (
+const PushMonitorSnapshotSection = ({ snapshot = null }) => (
   <ContentSection title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SNAPSHOT_TITLE}>
     <PushMonitorTenantSnapshotTable snapshot={snapshot} />
   </ContentSection>
@@ -21,10 +21,6 @@ const PushMonitorSnapshotSection = ({ snapshot }) => (
 
 PushMonitorSnapshotSection.propTypes = {
   snapshot: PropTypes.object
-};
-
-PushMonitorSnapshotSection.defaultProps = {
-  snapshot: null
 };
 
 export default PushMonitorSnapshotSection;

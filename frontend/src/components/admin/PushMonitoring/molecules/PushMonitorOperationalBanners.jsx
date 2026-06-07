@@ -30,7 +30,7 @@ const formatCount = (value) => {
 
 const PushMonitorOperationalBanners = ({
   alimtalkRouteEnabled,
-  channelBreakdown
+  channelBreakdown = null
 }) => {
   const showAlimtalkOff = !alimtalkRouteEnabled;
   const channelEntry = (key) => {
@@ -86,10 +86,6 @@ PushMonitorOperationalBanners.propTypes = {
     channel: PropTypes.string,
     totalCount: PropTypes.number
   }))
-};
-
-PushMonitorOperationalBanners.defaultProps = {
-  channelBreakdown: null
 };
 
 export default PushMonitorOperationalBanners;

@@ -1,7 +1,37 @@
 package com.coresolution.consultation.controller;
 
+import java.util.List;
+import java.util.UUID;
+
+import com.coresolution.consultation.dto.PushMonitoringChannelFilter;
+import com.coresolution.consultation.dto.PushMonitoringRange;
+import com.coresolution.consultation.dto.PushMonitoringResendResponse;
+import com.coresolution.consultation.dto.PushMonitoringSnapshotResponse;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.AdminPushMonitoringService;
+import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
+import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,199 +40,180 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.coresolution.consultation.constant.SessionConstants;
-import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.dto.PushMonitoringChannelFilter;
-import com.coresolution.consultation.dto.PushMonitoringFailureItem;
-import com.coresolution.consultation.dto.PushMonitoringRange;
-import com.coresolution.consultation.dto.PushMonitoringSnapshotResponse;
-import com.coresolution.consultation.dto.TestNotificationResponse;
-import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.exception.GlobalExceptionHandler;
-import com.coresolution.consultation.service.AdminPushMonitoringService;
-import com.coresolution.core.context.TenantContextHolder;
-
-import java.time.LocalDateTime;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
 /**
- * BW-1 Phase 3 — {@link AdminPushMonitoringController} 회귀 가드.
+ * BW-1 「푸시 설정 모니터링」 컨트롤러 MockMvc 테스트.
  *
- * <p>Standalone MockMvc 로 컨트롤러 계층 핵심을 검증한다(파싱·라우팅·400/401, 서비스 위임).
+ * <p>스냅샷 GET 의 query parsing / 권한·테넌트 가드 / 재발송 source 분기 / ApiResponse 래핑을
+ * 검증한다.
  *
- * @author MindGarden core-coder
+ * @author MindGarden
  * @since 2026-06-07
  */
-@ExtendWith(MockitoExtension.class)
-@DisplayName("BW-1 어드민 푸시 모니터링 API 회귀")
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
+@AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
+@DisplayName("AdminPushMonitoringController API")
 class AdminPushMonitoringControllerTest {
 
-    private static final String TENANT = "tenant-bw1-push";
+    private static final String TEST_TENANT_ID = UUID.randomUUID().toString();
+    private static final Long TEST_USER_ID = 901L;
 
-    @Mock
-    private AdminPushMonitoringService service;
-
-    @InjectMocks
-    private AdminPushMonitoringController controller;
-
+    @Autowired
     private MockMvc mockMvc;
 
+    @MockBean
+    private AdminPushMonitoringService adminPushMonitoringService;
+
     @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(controller)
-            .setControllerAdvice(new GlobalExceptionHandler())
-            .build();
-        TenantContextHolder.setTenantId(TENANT);
+    void setTenantContext() {
+        TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 
     @AfterEach
-    void tearDown() {
+    void clearTenantContext() {
         TenantContextHolder.clear();
     }
 
-    private MockHttpSession sessionWithAdmin() {
-        User u = new User();
-        u.setId(8001L);
-        u.setUserId("admin-bw1");
-        u.setEmail("admin-bw1@test.com");
-        u.setName("BW1 Admin");
-        u.setTenantId(TENANT);
-        u.setRole(UserRole.ADMIN);
-        MockHttpSession session = new MockHttpSession();
-        session.setAttribute(SessionConstants.USER_OBJECT, u);
-        session.setAttribute(SessionConstants.TENANT_ID, TENANT);
-        return session;
-    }
-
-    private static PushMonitoringSnapshotResponse stubSnapshot() {
-        return PushMonitoringSnapshotResponse.builder()
-            .generatedAt(LocalDateTime.now())
+    @Test
+    @DisplayName("GET /snapshot — 기본 파라미터 (range=D7, channel=ALL) 호출 200")
+    @WithMockUser(roles = {"ADMIN"})
+    void snapshotDefaultParams() throws Exception {
+        PushMonitoringSnapshotResponse stub = PushMonitoringSnapshotResponse.builder()
             .range(PushMonitoringRange.D7)
             .channel(PushMonitoringChannelFilter.ALL)
-            .pushAutoTrackingAvailable(false)
-            .costAvailable(false)
+            .failures(List.of())
+            .failuresTotal(0L)
             .build();
-    }
+        when(adminPushMonitoringService.loadSnapshot(eq(TEST_TENANT_ID),
+            eq(PushMonitoringRange.D7),
+            eq(PushMonitoringChannelFilter.ALL),
+            anyInt())).thenReturn(stub);
 
-    @Test
-    @DisplayName("T1: GET /snapshot 기본값 → 200, range=D7/channel=ALL 위임")
-    void snapshotDefaultsToD7AndAll() throws Exception {
-        when(service.buildSnapshot(eq(TENANT), eq(PushMonitoringRange.D7),
-            eq(PushMonitoringChannelFilter.ALL))).thenReturn(stubSnapshot());
-
-        mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot")
-                .session(sessionWithAdmin()))
+        mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.pushAutoTrackingAvailable").value(false))
-            .andExpect(jsonPath("$.data.costAvailable").value(false));
-
-        verify(service).buildSnapshot(TENANT, PushMonitoringRange.D7,
-            PushMonitoringChannelFilter.ALL);
+            .andExpect(jsonPath("$.data.range").value("D7"))
+            .andExpect(jsonPath("$.data.channel").value("ALL"));
     }
 
     @Test
-    @DisplayName("T2: GET /snapshot?range=H24&channel=ALIMTALK → 200")
-    void snapshotParsesRangeAndChannel() throws Exception {
-        when(service.buildSnapshot(eq(TENANT), eq(PushMonitoringRange.H24),
-            eq(PushMonitoringChannelFilter.ALIMTALK))).thenReturn(stubSnapshot());
+    @DisplayName("GET /snapshot — range=H24 채널=PUSH 200")
+    @WithMockUser(roles = {"STAFF"})
+    void snapshotChannelPush() throws Exception {
+        PushMonitoringSnapshotResponse stub = PushMonitoringSnapshotResponse.builder()
+            .range(PushMonitoringRange.H24)
+            .channel(PushMonitoringChannelFilter.PUSH)
+            .failures(List.of())
+            .failuresTotal(0L)
+            .build();
+        when(adminPushMonitoringService.loadSnapshot(eq(TEST_TENANT_ID),
+            eq(PushMonitoringRange.H24),
+            eq(PushMonitoringChannelFilter.PUSH),
+            anyInt())).thenReturn(stub);
 
         mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot")
                 .param("range", "H24")
-                .param("channel", "ALIMTALK")
-                .session(sessionWithAdmin()))
-            .andExpect(status().isOk());
-
-        verify(service).buildSnapshot(TENANT, PushMonitoringRange.H24,
-            PushMonitoringChannelFilter.ALIMTALK);
-    }
-
-    @Test
-    @DisplayName("T3: GET /snapshot?range=GARBAGE → 400 INVALID_REQUEST")
-    void snapshotRejectsInvalidRange() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot")
-                .param("range", "GARBAGE")
-                .session(sessionWithAdmin()))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.errorCode").value(
-                AdminPushMonitoringController.ERROR_CODE_INVALID_REQUEST));
-
-        verify(service, never()).buildSnapshot(any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("T4: GET /snapshot?channel=GARBAGE → 400 INVALID_REQUEST")
-    void snapshotRejectsInvalidChannel() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot")
-                .param("channel", "GARBAGE")
-                .session(sessionWithAdmin()))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.success").value(false));
-
-        verify(service, never()).buildSnapshot(any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("T5: GET /snapshot tenant 미설정 → 400 TENANT_CONTEXT_MISSING")
-    void snapshotRejectsMissingTenant() throws Exception {
-        TenantContextHolder.clear();
-
-        mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot")
-                .session(sessionWithAdmin()))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.errorCode").value(
-                AdminPushMonitoringController.ERROR_CODE_TENANT_CONTEXT_MISSING));
-    }
-
-    @Test
-    @DisplayName("T6: POST /resend/{id}?source=BATCH → 200, 서비스 호출")
-    void resendDelegatesBatch() throws Exception {
-        when(service.resend(eq(TENANT), any(User.class), eq(123L),
-            eq(PushMonitoringFailureItem.Source.BATCH)))
-            .thenReturn(TestNotificationResponse.builder().success(true).build());
-
-        mockMvc.perform(post("/api/v1/admin/notifications/monitoring/resend/{id}", 123L)
-                .param("source", "BATCH")
-                .session(sessionWithAdmin()))
+                .param("channel", "PUSH"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.success").value(true));
-
-        verify(service).resend(eq(TENANT), any(User.class), eq(123L),
-            eq(PushMonitoringFailureItem.Source.BATCH));
+            .andExpect(jsonPath("$.data.channel").value("PUSH"));
     }
 
     @Test
-    @DisplayName("T7: POST /resend/{id} source 잘못됨 → 400")
-    void resendRejectsInvalidSource() throws Exception {
-        mockMvc.perform(post("/api/v1/admin/notifications/monitoring/resend/{id}", 123L)
-                .param("source", "WTF")
-                .session(sessionWithAdmin()))
-            .andExpect(status().isBadRequest());
-
-        verify(service, never()).resend(any(), any(), any(), any());
+    @DisplayName("GET /snapshot — 잘못된 range 값은 400 RANGE_INVALID")
+    @WithMockUser(roles = {"ADMIN"})
+    void snapshotInvalidRange() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot")
+                .param("range", "BOGUS"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("RANGE_INVALID"));
+        verify(adminPushMonitoringService, never())
+            .loadSnapshot(anyString(), any(), any(), anyInt());
     }
 
     @Test
-    @DisplayName("T8: POST /resend 세션 없음 → 401")
-    void resendRequiresSession() throws Exception {
-        mockMvc.perform(post("/api/v1/admin/notifications/monitoring/resend/{id}", 123L)
-                .param("source", "BATCH"))
-            .andExpect(status().isUnauthorized());
-
-        verify(service, never()).resend(any(), any(), any(), any());
+    @DisplayName("GET /snapshot — 잘못된 channel 값은 400 CHANNEL_INVALID")
+    @WithMockUser(roles = {"ADMIN"})
+    void snapshotInvalidChannel() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot")
+                .param("channel", "FAX"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("CHANNEL_INVALID"));
     }
 
+    @Test
+    @DisplayName("POST /resend — ADMIN_TEST source 성공 200")
+    @WithMockUser(roles = {"ADMIN"})
+    void resendAdminTestSuccess() throws Exception {
+        when(adminPushMonitoringService.resendFailure(eq(TEST_TENANT_ID), any(User.class),
+                eq(123L), eq("ADMIN_TEST"), any()))
+            .thenReturn(PushMonitoringResendResponse.builder()
+                .success(true)
+                .resentLogId(123L)
+                .build());
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(currentUser());
+            mockMvc.perform(post("/api/v1/admin/notifications/monitoring/resend/123")
+                    .param("source", "ADMIN_TEST"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.success").value(true))
+                .andExpect(jsonPath("$.data.resentLogId").value(123));
+        }
+    }
+
+    @Test
+    @DisplayName("POST /resend — BATCH source 는 200 + body success=false")
+    @WithMockUser(roles = {"STAFF"})
+    void resendBatchSourceBlockedAtBody() throws Exception {
+        when(adminPushMonitoringService.resendFailure(eq(TEST_TENANT_ID), any(User.class),
+                eq(456L), eq("BATCH"), any()))
+            .thenReturn(PushMonitoringResendResponse.builder()
+                .success(false)
+                .errorCode("BATCH_RESEND_NOT_SUPPORTED")
+                .errorMessage("BATCH 발송 행 재발송은 후속 PR 에서 제공됩니다.")
+                .build());
+
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(currentUser());
+            mockMvc.perform(post("/api/v1/admin/notifications/monitoring/resend/456")
+                    .param("source", "BATCH"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.success").value(false))
+                .andExpect(jsonPath("$.data.errorCode").value("BATCH_RESEND_NOT_SUPPORTED"));
+        }
+    }
+
+    @Test
+    @DisplayName("POST /resend — 세션 사용자 없음 401")
+    @WithMockUser(roles = {"ADMIN"})
+    void resendUnauthorized() throws Exception {
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
+                .thenReturn(null);
+            mockMvc.perform(post("/api/v1/admin/notifications/monitoring/resend/789")
+                    .param("source", "ADMIN_TEST"))
+                .andExpect(status().isUnauthorized());
+        }
+        verify(adminPushMonitoringService, never())
+            .resendFailure(anyString(), any(), anyLong(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("GET /snapshot — 테넌트 컨텍스트 없음 시 400 TENANT_CONTEXT_MISSING")
+    @WithMockUser(roles = {"ADMIN"})
+    void snapshotMissingTenant() throws Exception {
+        TenantContextHolder.clear();
+        mockMvc.perform(get("/api/v1/admin/notifications/monitoring/snapshot"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("TENANT_CONTEXT_MISSING"));
+    }
+
+    private User currentUser() {
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", TEST_USER_ID);
+        return user;
+    }
 }

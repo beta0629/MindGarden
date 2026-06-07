@@ -44,7 +44,7 @@ const formatDateAria = (iso) => {
   return String(iso);
 };
 
-const PushMonitorTrendChart = ({ points, channel }) => {
+const PushMonitorTrendChart = ({ points = [], channel = PUSH_MONITORING_CHANNEL.ALL }) => {
   const safePoints = useMemo(() => {
     if (!Array.isArray(points)) {
       return [];
@@ -162,11 +162,6 @@ PushMonitorTrendChart.propTypes = {
     pendingCount: PropTypes.number
   })),
   channel: PropTypes.string
-};
-
-PushMonitorTrendChart.defaultProps = {
-  points: [],
-  channel: PUSH_MONITORING_CHANNEL.ALL
 };
 
 export default PushMonitorTrendChart;

@@ -12,7 +12,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './PushMonitorMaskedRecipient.css';
 
-const PushMonitorMaskedRecipient = ({ value, ariaLabel }) => {
+const PushMonitorMaskedRecipient = ({ value = '', ariaLabel }) => {
   const display = typeof value === 'string' && value.length > 0 ? value : '—';
   return (
     <span
@@ -28,11 +28,6 @@ const PushMonitorMaskedRecipient = ({ value, ariaLabel }) => {
 PushMonitorMaskedRecipient.propTypes = {
   value: PropTypes.string,
   ariaLabel: PropTypes.string
-};
-
-PushMonitorMaskedRecipient.defaultProps = {
-  value: '',
-  ariaLabel: undefined
 };
 
 export default PushMonitorMaskedRecipient;

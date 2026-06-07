@@ -14,7 +14,7 @@ import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import PushMonitorOperationalBanners from '../molecules/PushMonitorOperationalBanners';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 
-const PushMonitorOperationalSection = ({ alimtalkRouteEnabled, channelBreakdown }) => (
+const PushMonitorOperationalSection = ({ alimtalkRouteEnabled, channelBreakdown = null }) => (
   <ContentSection title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_OPERATIONAL_TITLE}>
     <PushMonitorOperationalBanners
       alimtalkRouteEnabled={alimtalkRouteEnabled}
@@ -26,10 +26,6 @@ const PushMonitorOperationalSection = ({ alimtalkRouteEnabled, channelBreakdown 
 PushMonitorOperationalSection.propTypes = {
   alimtalkRouteEnabled: PropTypes.bool.isRequired,
   channelBreakdown: PropTypes.array
-};
-
-PushMonitorOperationalSection.defaultProps = {
-  channelBreakdown: null
 };
 
 export default PushMonitorOperationalSection;

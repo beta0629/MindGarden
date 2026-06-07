@@ -20,9 +20,9 @@ const STYLE_VARIANTS = Object.freeze({
 
 const PushMonitorStatusPill = ({
   active,
-  styleVariant,
-  labelOn,
-  labelOff,
+  styleVariant = STYLE_VARIANTS.ON_OFF,
+  labelOn = null,
+  labelOff = null,
   ariaLabel
 }) => {
   const pillClass = [
@@ -55,13 +55,6 @@ PushMonitorStatusPill.propTypes = {
   labelOn: PropTypes.string,
   labelOff: PropTypes.string,
   ariaLabel: PropTypes.string
-};
-
-PushMonitorStatusPill.defaultProps = {
-  styleVariant: STYLE_VARIANTS.ON_OFF,
-  labelOn: null,
-  labelOff: null,
-  ariaLabel: undefined
 };
 
 export default PushMonitorStatusPill;

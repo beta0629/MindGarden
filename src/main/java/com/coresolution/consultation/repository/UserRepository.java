@@ -34,6 +34,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.id = :id")
     Optional<User> findByTenantIdAndIdIgnoringDeleted(@Param("tenantId") String tenantId, @Param("id") Long id);
+
+    /**
+     * Apple Sign in with Apple {@code sub} 식별자로 사용자 조회.
+     *
+     * <p>Apple App Store 4.8 (T1) 대응 — Apple identityToken 의 {@code sub} 는 전역·영구 식별자.
+     * Flyway {@code V20260607_009} 가 추가한 {@code users.apple_sub} UNIQUE 컬럼을 사용한다.
+     * 삭제·휴면 사용자도 포함하여 동일 Apple 계정 재가입 시 자동 재활성화/오류 처리할 수 있도록
+     * {@code is_deleted} 필터는 의도적으로 적용하지 않는다 — 호출자(AppleSignInService) 가
+     * lifecycle 단계별로 분기한다.</p>
+     *
+     * @param appleSub Apple identityToken {@code sub} (영구 식별자)
+     * @return 사용자 Optional
+     */
+    @Query("SELECT u FROM User u WHERE u.appleSub = :appleSub")
+    Optional<User> findByAppleSub(@Param("appleSub") String appleSub);
     
     /**
      * 테넌트별 사용자 ID 로 활성-유사 사용자 조회.

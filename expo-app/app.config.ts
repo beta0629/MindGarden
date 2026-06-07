@@ -173,6 +173,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         appName: 'MindGardenMobileApp',
       },
     ],
+    /**
+     * Sign in with Apple (App Store 4.8 T1) — iOS 13+ 네이티브 시트.
+     * Apple Developer Console 의 capability 와 entitlement 는 Expo Apple Authentication 플러그인이
+     * EAS 빌드 시점에 자동 주입한다 (`com.apple.developer.applesignin` = ["Default"]).
+     */
+    'expo-apple-authentication',
     withAndroidKakaoMaven,
   ];
 
@@ -197,6 +203,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       icon: './assets/images/icon.png',
       supportsTablet: false,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
+      /** Apple App Store Guideline 4.8 — Sign in with Apple 활성화 (capability + entitlement). */
+      usesAppleSignIn: true,
+      entitlements: {
+        'com.apple.developer.applesignin': ['Default'],
+      },
       infoPlist: {
         /** EAS export compliance 프롬프트 생략 — 표준 면제 암호화만 사용 */
         ITSAppUsesNonExemptEncryption: false,

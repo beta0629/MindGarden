@@ -24,6 +24,10 @@ export const AUTH_API = {
   OAUTH_ACCOUNT_SELECTION_COMPLETE: '/api/v1/auth/oauth2/complete-account-selection',
   KAKAO_AUTHORIZE: '/api/auth/oauth2/kakao/authorize',
   NAVER_AUTHORIZE: '/api/auth/oauth2/naver/authorize',
+  /** Sign in with Apple (App Store 4.8 T1). 모바일은 native `signInAsync()` → identityToken POST. */
+  APPLE_LOGIN: '/api/v1/auth/oauth/apple/login',
+  /** Apple 웹 콜백(authorization_code 교환) — 모바일은 사용하지 않음 */
+  APPLE_CALLBACK: '/api/v1/auth/oauth/apple/callback',
   SMS_SEND: '/api/auth/sms/send',
   SMS_VERIFY: '/api/auth/sms/verify',
   SMS_LOGIN: '/api/auth/sms-login',

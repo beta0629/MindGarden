@@ -531,6 +531,25 @@ ops:
 
 # 이메일 설정은 프로파일별 설정 파일에서 관리
 
+# =====================================================
+# Sign in with Apple (SIWA) — Apple App Store 4.8 (Login Services) 대응 T1
+# - AppleOAuth2Properties (com.coresolution.consultation.config) 바인딩
+# - 5종 운영 env 는 운영 GitHub Actions secret 및 backend .env.prod 동일 키로 주입한다.
+# - placeholder 만 커밋: 실제 키는 절대 커밋 금지. EAS Secret · GitHub Encrypted Secrets 사용.
+# - 디자이너 핸드오프: docs/project-management/2026-06-04/APPLE_T1_SIWA_DESIGN_HANDOFF.md
+# =====================================================
+apple:
+  client-id: ${APPLE_CLIENT_ID:}
+  team-id: ${APPLE_TEAM_ID:}
+  key-id: ${APPLE_KEY_ID:}
+  private-key: ${APPLE_PRIVATE_KEY:}
+  redirect-uri: ${APPLE_REDIRECT_URI:}
+  jwks-uri: ${APPLE_JWKS_URI:https://appleid.apple.com/auth/keys}
+  issuer: ${APPLE_ISSUER:https://appleid.apple.com}
+  token-uri: ${APPLE_TOKEN_URI:https://appleid.apple.com/auth/token}
+  jwks-cache-ttl-seconds: ${APPLE_JWKS_CACHE_TTL_SECONDS:3600}
+  client-secret-ttl-seconds: ${APPLE_CLIENT_SECRET_TTL_SECONDS:5184000}
+
 # 카카오 알림톡 설정
 # [2026-05-22] dev/prod 베이스 ENV 매핑 추가 (P0 핫픽스 — SOLAPI_NOTIFICATION_MISS_DEBUG.md §4)
 # - 자바 측 키: KakaoSolapiCredentialResolver(@Value 'kakao.alimtalk.solapi.*'),

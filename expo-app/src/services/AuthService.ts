@@ -16,6 +16,12 @@ import { NativeModules, Platform } from 'react-native';
 import { apiPost } from '../api/client';
 import { AUTH_API } from '../api/endpoints';
 import { unwrapApiResponse } from '../api/unwrapApiResponse';
+import { postAppleLogin } from '../api/auth/appleAuth';
+import {
+  APPLE_SIGN_IN_CANCELLED,
+  isAppleSignInAvailable,
+  performAppleNativeSignIn,
+} from './auth/appleSignIn';
 import type { User, Tokens } from '../stores/useAuthStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
@@ -31,7 +37,7 @@ import {
   detectDuplicateLoginConfirmation,
 } from '@/utils/duplicateLoginSignal';
 
-export type SocialAuthProvider = 'KAKAO' | 'NAVER';
+export type SocialAuthProvider = 'KAKAO' | 'NAVER' | 'APPLE';
 
 /**
  * 중복 로그인 확인 후 강제 재로그인에 필요한 입력값.
@@ -851,11 +857,107 @@ export const AuthService = {
   },
 
   /**
+   * Sign in with Apple — Apple App Store Guideline 4.8 (T1).
+   * iOS 13+ 네이티브 시트 → identityToken → BE 검증 → JWT 발급 흐름.
+   * Android·Expo Go·iOS 13 미만에서는 호출하지 않는다.
+   */
+  async loginWithApple(): Promise<SocialLoginOutcome> {
+    try {
+      const available = await isAppleSignInAvailable();
+      if (!available) {
+        return {
+          kind: 'error',
+          message: 'Apple 로그인은 iOS 13 이상에서만 사용할 수 있습니다.',
+        };
+      }
+
+      const native = await performAppleNativeSignIn();
+
+      logSocialLoginDebugRequest({
+        provider: 'APPLE',
+        providerUserId: native.user,
+        hasEmail: Boolean(native.email),
+        hasNickname: false,
+        hasProfileImage: false,
+        hasPhone: false,
+      });
+
+      const response = await postAppleLogin({
+        identityToken: native.identityToken,
+        authorizationCode: native.authorizationCode || undefined,
+        nonce: native.nonce,
+        givenName: native.givenName || undefined,
+        familyName: native.familyName || undefined,
+        email: native.email || undefined,
+      });
+
+      if (!response) {
+        return { kind: 'error', message: '서버 응답이 없습니다.' };
+      }
+
+      if (response.requiresSignup) {
+        const social = response.socialUserInfo;
+        const providerUserId =
+          (social?.providerUserId && String(social.providerUserId)) || native.user;
+        const draft: SocialUserInfoDraft = {
+          provider: 'APPLE',
+          providerUserId,
+          email: (social?.email || native.email || '').trim(),
+          nickname: (social?.nickname || '').trim(),
+          profileImageUrl: social?.profileImageUrl ?? undefined,
+          realName: (social?.name || [native.givenName, native.familyName].filter(Boolean).join(' ')).trim() || undefined,
+          initialDisplayName: (social?.nickname || social?.name || '').trim() || undefined,
+        };
+        return { kind: 'requiresSignup', socialUserInfo: draft, provider: 'APPLE' };
+      }
+
+      if (response.success && response.user && response.accessToken && response.refreshToken) {
+        const apiUser = {
+          id: response.user.id,
+          email: response.user.email,
+          name: response.user.name ?? '',
+          nickname: response.user.nickname ?? '',
+          role: response.user.role,
+          profileImageUrl: response.user.profileImageUrl,
+          tenantId: response.user.tenantId,
+        };
+        const user = mapApiUserToStoreUser(apiUser, response.accessToken);
+        await applyAuthenticatedUser(
+          user,
+          {
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+          },
+          pickSessionIdFromAuthPayload(response),
+        );
+        logSocialLoginDebugResponse(
+          response as unknown as SocialLoginResponse,
+          { kind: 'authenticated', user },
+        );
+        return { kind: 'authenticated', user };
+      }
+
+      return { kind: 'error', message: response.message ?? 'Apple 로그인에 실패했습니다.' };
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Apple 로그인 중 오류가 발생했습니다.';
+      if (message.includes(APPLE_SIGN_IN_CANCELLED)) {
+        return { kind: 'error', message: 'Apple 로그인이 취소되었습니다.' };
+      }
+      logAuthError('Apple 로그인 에러', error);
+      return { kind: 'error', message };
+    }
+  },
+
+  /**
    * 가입 완료 후 동일 제공자로 social-login 재호출 (스펙 SNS_SIMPLE_SIGNUP_SPEC 4.1)
    */
   async loginWithProviderAfterSignup(provider: SocialAuthProvider): Promise<SocialLoginOutcome> {
     if (provider === 'KAKAO') {
       return AuthService.loginWithKakao();
+    }
+    if (provider === 'APPLE') {
+      return AuthService.loginWithApple();
     }
     return AuthService.loginWithNaver();
   },

@@ -289,6 +289,10 @@
   --oauth-google-bg: var(--mg-white);
   --oauth-google-bg-hover: var(--mg-gray-100);
   --oauth-google-border: var(--mg-border-color, var(--mg-color-border-main));
+  /* Apple HIG: 검정 배경(#000) + 흰색 로고/텍스트. 브랜드 고정색 — 저장소 하드코딩 검사 예외. */
+  --oauth-apple-bg: #000000;
+  --oauth-apple-bg-hover: #1a1a1a;
+  --oauth-apple-text: #ffffff;
 }
 
 .mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-kakao {
@@ -372,6 +376,35 @@
   color: rgba(0, 0, 0, 0.85) !important;
   border-color: var(--oauth-google-border) !important;
   opacity: 0.65;
+}
+
+/* Apple Sign In 버튼 — Apple HIG 공식 가이드라인(검정 배경 + 흰색 로고/텍스트). */
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-apple {
+  background-color: var(--oauth-apple-bg);
+  color: var(--oauth-apple-text);
+  border-color: var(--oauth-apple-bg);
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-apple:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--oauth-apple-bg-hover);
+  color: var(--oauth-apple-text);
+  border-color: var(--oauth-apple-bg-hover);
+  box-shadow: var(--cs-shadow-soft, 0 4px 12px rgba(0, 0, 0, 0.18));
+  transform: translateY(-1px);
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-v2-button-apple:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--oauth-apple-bg-hover);
+  transform: translateY(0);
+  box-shadow: var(--cs-shadow-xs, 0 1px 4px rgba(0, 0, 0, 0.16));
+}
+
+.mg-v2-login-social .mg-button.mg-button--outline.mg-button--disabled.mg-v2-button-apple,
+.mg-v2-login-social .mg-button.mg-button--outline.mg-button--loading.mg-v2-button-apple {
+  background-color: var(--oauth-apple-bg) !important;
+  color: var(--oauth-apple-text) !important;
+  border-color: var(--oauth-apple-bg) !important;
+  opacity: 0.55;
 }
 
 /* 링크 영역 */

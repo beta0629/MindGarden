@@ -29,6 +29,7 @@ import {
 } from '@/api/hooks/useWellness';
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { CitationBlock } from '@/components/molecules/CitationBlock';
 import { type PsychoPage } from '@/constants/psychoEducationData';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -313,6 +314,11 @@ export default function PsychoEducationDetail() {
           ))}
         </View>
 
+        {/* 출처(Citation) — Apple T3 */}
+        <View style={styles.citationWrap}>
+          <CitationBlock testID="psycho-education-citation" source={article.source} />
+        </View>
+
         {/* 완료 표시 */}
         {isCompleted && (
           <Animated.View entering={FadeIn.duration(300)} style={styles.completedBadge}>
@@ -368,6 +374,10 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
+  },
+  citationWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   completedBadge: {
     flexDirection: 'row',

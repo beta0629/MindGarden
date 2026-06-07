@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.dto.PsychoEducationArticleResponse;
 import com.coresolution.consultation.dto.PsychoEducationArticleResponse.Page;
+import com.coresolution.consultation.dto.SourceCitation;
 import com.coresolution.consultation.entity.PsychoEducationArticle;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.PsychoEducationArticleRepository;
@@ -76,8 +77,19 @@ public class PsychoEducationServiceImpl implements PsychoEducationService {
             row.getCategory(),
             row.getCategoryLabel(),
             row.getReadMinutes(),
-            pages
+            pages,
+            buildSource(row)
         );
+    }
+
+    private static SourceCitation buildSource(PsychoEducationArticle row) {
+        SourceCitation source = new SourceCitation(
+            row.getSourceLabel(),
+            row.getSourceUrl(),
+            row.getSourceAuthor(),
+            row.getSourcePublishedYear()
+        );
+        return source.isEmpty() ? null : source;
     }
 
     private static List<Page> parsePages(JsonNode node) {

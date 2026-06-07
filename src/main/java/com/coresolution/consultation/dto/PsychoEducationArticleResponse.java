@@ -1,5 +1,6 @@
 package com.coresolution.consultation.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
 /**
@@ -27,6 +28,7 @@ import java.util.List;
  * @author MindGarden
  * @since 2026-05-13
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record PsychoEducationArticleResponse(
         Long id,
         String title,
@@ -35,7 +37,8 @@ public record PsychoEducationArticleResponse(
         String category,
         String categoryLabel,
         int readMinutes,
-        List<Page> pages
+        List<Page> pages,
+        SourceCitation source
 ) {
 
     /**

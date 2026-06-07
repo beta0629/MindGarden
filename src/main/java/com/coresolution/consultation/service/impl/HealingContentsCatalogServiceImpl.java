@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import com.coresolution.consultation.constant.HealingContentMediaType;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.HealingContentItemResponse;
+import com.coresolution.consultation.dto.SourceCitation;
 import com.coresolution.consultation.entity.DailyHealingContent;
 import com.coresolution.consultation.entity.HealingContentCatalogItem;
 import com.coresolution.consultation.repository.DailyHealingContentRepository;
@@ -68,6 +69,7 @@ public class HealingContentsCatalogServiceImpl implements HealingContentsCatalog
             .thumbnailUrl(row.getThumbnailUrl())
             .contentUrl(row.getContentUrl())
             .durationMinutes(row.getDurationMinutes())
+            .source(buildCatalogSource(row))
             .build();
     }
 
@@ -80,7 +82,20 @@ public class HealingContentsCatalogServiceImpl implements HealingContentsCatalog
             .description(truncatePlainText(row.getContent()))
             .category(category)
             .type(type)
+            .source(buildDailySource(row))
             .build();
+    }
+
+    private static SourceCitation buildCatalogSource(HealingContentCatalogItem row) {
+        SourceCitation source = new SourceCitation(
+            row.getSourceLabel(), row.getSourceUrl(), row.getSourceAuthor(), row.getSourcePublishedYear());
+        return source.isEmpty() ? null : source;
+    }
+
+    private static SourceCitation buildDailySource(DailyHealingContent row) {
+        SourceCitation source = new SourceCitation(
+            row.getSourceLabel(), row.getSourceUrl(), row.getSourceAuthor(), row.getSourcePublishedYear());
+        return source.isEmpty() ? null : source;
     }
 
     private static HealingContentMediaType mapCategoryToType(String category) {

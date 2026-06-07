@@ -45,6 +45,8 @@ import {
   useUpdateAssessmentShare,
 } from '@/api/hooks/useSelfAssessment';
 import { ASSESSMENTS, SEVERITY_COLORS } from '@/constants/assessmentQuestions';
+import { ASSESSMENT_CITATIONS } from '@/constants/assessmentCitations';
+import { CitationBlock } from '@/components/molecules/CitationBlock';
 import {
   WELLNESS_ASSESSMENT_REFERENCE_FOOTER_KO,
   WELLNESS_NON_MEDICAL_DISCLAIMER_KO,
@@ -529,6 +531,24 @@ export default function AssessmentResult() {
             {WELLNESS_ASSESSMENT_REFERENCE_FOOTER_KO}
           </Text>
         </View>
+
+        {/* 원저작자 정보(표준 인용) — Apple T3 Citation */}
+        {(() => {
+          const citation = ASSESSMENT_CITATIONS[result.type];
+          if (!citation) return null;
+          return (
+            <CitationBlock
+              testID="assessment-result-citation"
+              title="원저작자 정보"
+              source={{
+                label: `${citation.title} · ${citation.journal}`,
+                author: citation.authors,
+                publishedYear: citation.year,
+                url: citation.url,
+              }}
+            />
+          );
+        })()}
 
         {/* 버튼 그룹 */}
         <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.buttonGroup}>

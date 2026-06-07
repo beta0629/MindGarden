@@ -22,6 +22,8 @@ import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { useSubmitAssessment } from '@/api/hooks/useSelfAssessment';
 import { ASSESSMENTS, OPTION_LABELS, type AssessmentType } from '@/constants/assessmentQuestions';
+import { ASSESSMENT_CITATIONS } from '@/constants/assessmentCitations';
+import { CitationBlock } from '@/components/molecules/CitationBlock';
 import { WELLNESS_NON_MEDICAL_DISCLAIMER_KO } from '@/constants/wellnessComplianceCopy';
 
 export default function AssessmentTake() {
@@ -77,6 +79,7 @@ export default function AssessmentTake() {
   const currentAnswer = answers[currentIdx] ?? -1;
   const isAnswered = currentAnswer >= 0;
   const allAnswered = answers.every((a) => a >= 0);
+  const standardCitation = ASSESSMENT_CITATIONS[assessmentType];
 
   const selectOption = (score: number) => {
     if (Platform.OS !== 'web') {
@@ -226,6 +229,20 @@ export default function AssessmentTake() {
             );
           })}
         </View>
+
+        {/* 원저작자 정보(표준 인용) — Apple T3 Citation */}
+        {standardCitation ? (
+          <CitationBlock
+            testID="assessment-take-citation"
+            title="원저작자 정보"
+            source={{
+              label: `${standardCitation.title} · ${standardCitation.journal}`,
+              author: standardCitation.authors,
+              publishedYear: standardCitation.year,
+              url: standardCitation.url,
+            }}
+          />
+        ) : null}
 
         {/* 공유 토글 (마지막 문항에서만 표시) */}
         {isLastQuestion && (

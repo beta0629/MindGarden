@@ -20,6 +20,17 @@ export interface PsychoPage {
   readonly body: string;
 }
 
+/**
+ * Apple Guideline 1.4.1 (Plan A · T3) 출처 표기 — 4 필드 단일 출처.
+ * 어드민 입력·서버 응답과 동일 스키마(`SourceCitation`)로 정렬.
+ */
+export interface PsychoArticleSource {
+  readonly label?: string;
+  readonly url?: string;
+  readonly author?: string;
+  readonly publishedYear?: number;
+}
+
 export interface PsychoArticle {
   readonly id: number;
   readonly category: PsychoCategory;
@@ -29,7 +40,38 @@ export interface PsychoArticle {
   readonly readMinutes: number;
   readonly pages: readonly PsychoPage[];
   readonly gradientColors: readonly [string, string];
+  readonly source?: PsychoArticleSource;
 }
+
+/** 권장 표준 출처 — 핸드오프 §9.1 매핑 */
+const SOURCE_WHO_STRESS: PsychoArticleSource = {
+  label: 'Doing What Matters in Times of Stress: An Illustrated Guide',
+  url: 'https://www.who.int/publications/i/item/9789240003927',
+  author: 'World Health Organization',
+  publishedYear: 2020,
+};
+const SOURCE_APA_DEPRESSION: PsychoArticleSource = {
+  label: 'Clinical Practice Guideline for the Treatment of Depression',
+  url: 'https://www.apa.org/depression-guideline',
+  author: 'American Psychological Association',
+  publishedYear: 2019,
+};
+const SOURCE_DBT_LINEHAN: PsychoArticleSource = {
+  label: 'DBT Skills Training Manual (2nd ed.)',
+  author: 'Linehan, M. M.',
+  publishedYear: 2014,
+};
+const SOURCE_NVC_ROSENBERG: PsychoArticleSource = {
+  label: 'Nonviolent Communication: A Language of Life (3rd ed.)',
+  author: 'Rosenberg, M. B.',
+  publishedYear: 2015,
+};
+const SOURCE_APA_MINDFULNESS: PsychoArticleSource = {
+  label: 'What are the benefits of mindfulness?',
+  url: 'https://www.apa.org/monitor/2012/07-08/ce-corner',
+  author: 'American Psychological Association · Davis & Hayes',
+  publishedYear: 2012,
+};
 
 export const PSYCHO_CATEGORIES: readonly {
   key: PsychoCategory | 'bookmarks';
@@ -83,6 +125,7 @@ export const MOCK_PSYCHO_ARTICLES: PsychoArticle[] = [
         body: '하루 5분, 아침과 저녁에 꾸준히 연습하면 불안 수준이 크게 낮아질 수 있습니다. 오늘부터 시작해보세요!',
       },
     ],
+    source: SOURCE_WHO_STRESS,
   },
   {
     id: 2,
@@ -110,6 +153,7 @@ export const MOCK_PSYCHO_ARTICLES: PsychoArticle[] = [
         body: '냄새 2가지를 맡고, 맛 1가지를 느낍니다. 감각에 집중하면 불안은 미래의 걱정에서 현재로 앵커링됩니다.',
       },
     ],
+    source: SOURCE_DBT_LINEHAN,
   },
   {
     id: 3,
@@ -133,6 +177,7 @@ export const MOCK_PSYCHO_ARTICLES: PsychoArticle[] = [
         body: '그 생각의 근거와 반증을 모두 찾아보고, 더 균형 잡힌 대안적 생각을 만들어봅니다.',
       },
     ],
+    source: SOURCE_APA_DEPRESSION,
   },
   {
     id: 4,
@@ -160,6 +205,7 @@ export const MOCK_PSYCHO_ARTICLES: PsychoArticle[] = [
         body: '느낌이 곧 사실이라 생각하고, "~해야 한다"에 집착하는 패턴을 인식해보세요.',
       },
     ],
+    source: SOURCE_APA_DEPRESSION,
   },
   {
     id: 5,
@@ -187,6 +233,7 @@ export const MOCK_PSYCHO_ARTICLES: PsychoArticle[] = [
         body: '구체적인 행동을 요청합니다. "다음에는 늦을 것 같으면 미리 연락해줄 수 있어?"',
       },
     ],
+    source: SOURCE_NVC_ROSENBERG,
   },
   {
     id: 6,
@@ -233,6 +280,7 @@ export const MOCK_PSYCHO_ARTICLES: PsychoArticle[] = [
         body: '친한 친구에게 하듯 나에게 말합니다. 비판의 근거를 객관적으로 검증해봅니다.',
       },
     ],
+    source: SOURCE_APA_MINDFULNESS,
   },
   {
     id: 8,

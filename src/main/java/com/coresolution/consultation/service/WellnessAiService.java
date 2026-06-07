@@ -482,18 +482,45 @@ public class WellnessAiService {
 
     /**
      * 힐링 컨텐츠 DTO.
+     *
+     * <p>Apple 1.4.1 — 의료/건강 콘텐츠는 출처를 함께 노출한다(있을 때).
+     * AI 생성 컨텐츠는 출처가 비어 있을 수 있으며, 클라이언트는 `aiGenerated` 플래그로
+     * "AI 생성" 배지를 표시한다.</p>
      */
     public static class HealingContent {
         private final String title;
         private final String content;
         private final String category;
         private final String emoji;
+        private final String sourceLabel;
+        private final String sourceUrl;
+        private final String sourceAuthor;
+        private final Integer sourcePublishedYear;
+        private final boolean aiGenerated;
 
         public HealingContent(String title, String content, String category, String emoji) {
+            this(title, content, category, emoji, null, null, null, null, true);
+        }
+
+        public HealingContent(
+                String title,
+                String content,
+                String category,
+                String emoji,
+                String sourceLabel,
+                String sourceUrl,
+                String sourceAuthor,
+                Integer sourcePublishedYear,
+                boolean aiGenerated) {
             this.title = title;
             this.content = content;
             this.category = category;
             this.emoji = emoji;
+            this.sourceLabel = sourceLabel;
+            this.sourceUrl = sourceUrl;
+            this.sourceAuthor = sourceAuthor;
+            this.sourcePublishedYear = sourcePublishedYear;
+            this.aiGenerated = aiGenerated;
         }
 
         public String getTitle() {
@@ -510,6 +537,26 @@ public class WellnessAiService {
 
         public String getEmoji() {
             return emoji;
+        }
+
+        public String getSourceLabel() {
+            return sourceLabel;
+        }
+
+        public String getSourceUrl() {
+            return sourceUrl;
+        }
+
+        public String getSourceAuthor() {
+            return sourceAuthor;
+        }
+
+        public Integer getSourcePublishedYear() {
+            return sourcePublishedYear;
+        }
+
+        public boolean isAiGenerated() {
+            return aiGenerated;
         }
     }
 }

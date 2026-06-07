@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import MiniPlayer from './MiniPlayer';
 import SegmentedTabs from '../common/SegmentedTabs';
+import CitationBlock from '../common/CitationBlock';
 import './MeditationGuide.css';
 
 const CATEGORIES = [
@@ -28,17 +29,30 @@ const CATEGORIES = [
   { key: 'favorites', label: '즐겨찾기', icon: Heart }
 ];
 
+const SOURCE_WHO_BREATHING = {
+  label: 'WHO Doing What Matters in Times of Stress (illustrated guide)',
+  url: 'https://www.who.int/publications/i/item/9789240003927',
+  author: 'World Health Organization',
+  publishedYear: 2020
+};
+const SOURCE_APA_MINDFULNESS = {
+  label: 'What are the benefits of mindfulness? (APA review)',
+  url: 'https://www.apa.org/monitor/2012/07-08/ce-corner',
+  author: 'American Psychological Association · Davis & Hayes',
+  publishedYear: 2012
+};
+
 const MOCK_TRACKS = [
-  { id: 1, title: '깊은 호흡 명상', category: 'breathing', categoryLabel: '호흡', duration: 600 },
-  { id: 2, title: '4-7-8 호흡법', category: 'breathing', categoryLabel: '호흡', duration: 480 },
-  { id: 3, title: '바디 스캔 마음챙김', category: 'mindfulness', categoryLabel: '마음챙김', duration: 900 },
-  { id: 4, title: '지금 이 순간에 집중하기', category: 'mindfulness', categoryLabel: '마음챙김', duration: 720 },
+  { id: 1, title: '깊은 호흡 명상', category: 'breathing', categoryLabel: '호흡', duration: 600, source: SOURCE_WHO_BREATHING },
+  { id: 2, title: '4-7-8 호흡법', category: 'breathing', categoryLabel: '호흡', duration: 480, source: SOURCE_WHO_BREATHING },
+  { id: 3, title: '바디 스캔 마음챙김', category: 'mindfulness', categoryLabel: '마음챙김', duration: 900, source: SOURCE_APA_MINDFULNESS },
+  { id: 4, title: '지금 이 순간에 집중하기', category: 'mindfulness', categoryLabel: '마음챙김', duration: 720, source: SOURCE_APA_MINDFULNESS },
   { id: 5, title: '수면 유도 명상', category: 'sleep', categoryLabel: '수면', duration: 1200 },
   { id: 6, title: '잠들기 전 이완', category: 'sleep', categoryLabel: '수면', duration: 1800 },
   { id: 7, title: '빗소리 자연 명상', category: 'nature', categoryLabel: '자연소리', duration: 1500 },
   { id: 8, title: '파도 소리', category: 'nature', categoryLabel: '자연소리', duration: 1200 },
   { id: 9, title: '새벽 숲 소리', category: 'nature', categoryLabel: '자연소리', duration: 900 },
-  { id: 10, title: '아침 호흡 루틴', category: 'breathing', categoryLabel: '호흡', duration: 300 }
+  { id: 10, title: '아침 호흡 루틴', category: 'breathing', categoryLabel: '호흡', duration: 300, source: SOURCE_WHO_BREATHING }
 ];
 
 const formatTime = (seconds) => {
@@ -223,6 +237,11 @@ const MeditationGuide = () => {
               <SkipForward size={18} />
             </button>
           </div>
+          <CitationBlock
+            source={currentTrack.source}
+            testId="meditation-citation"
+            className="meditation__citation"
+          />
         </div>
       )}
 

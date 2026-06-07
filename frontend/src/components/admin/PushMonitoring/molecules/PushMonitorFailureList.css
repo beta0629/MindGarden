@@ -189,7 +189,7 @@
 
 .mg-push-monitor__failure-list__modal-confirm {
   background: var(--ad-b0kla-blue, var(--mg-color-primary-main));
-  color: var(--mg-color-on-primary, #fff);
+  color: var(--mg-white);
   border: 1px solid var(--ad-b0kla-blue, var(--mg-color-primary-main));
 }
 

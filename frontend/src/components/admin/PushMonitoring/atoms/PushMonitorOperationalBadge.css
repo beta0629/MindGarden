@@ -18,13 +18,13 @@
 }
 
 .mg-push-monitor__operational-banner--warning {
-  background: var(--ad-b0kla-orange-bg, rgba(239, 137, 76, 0.08));
+  background: var(--ad-b0kla-orange-bg);
   border-left-color: var(--ad-b0kla-orange, var(--cs-orange-400));
   color: var(--ad-b0kla-text-primary, var(--mg-color-text-main));
 }
 
 .mg-push-monitor__operational-banner--info {
-  background: var(--ad-b0kla-blue-bg, rgba(58, 102, 219, 0.08));
+  background: var(--ad-b0kla-blue-bg);
   border-left-color: var(--ad-b0kla-blue, var(--mg-color-primary-main));
   color: var(--ad-b0kla-text-primary, var(--mg-color-text-main));
 }

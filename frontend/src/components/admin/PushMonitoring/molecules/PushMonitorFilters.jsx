@@ -46,7 +46,6 @@ const PushMonitorFilters = ({
   return (
     <section
       className="mg-push-monitor__filters"
-      role="region"
       aria-label={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_LABEL}
       data-testid="push-monitor-filters"
     >

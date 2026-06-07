@@ -20,7 +20,7 @@
 }
 
 .mg-push-monitor__status-pill--on {
-  background: var(--ad-b0kla-green-bg, rgba(16, 122, 90, 0.08));
+  background: var(--ad-b0kla-green-bg);
   color: var(--ad-b0kla-green, var(--mg-color-success-main));
 }
 

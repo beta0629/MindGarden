@@ -1,0 +1,63 @@
+/**
+ * PushMonitorTenantSnapshotTable 스타일.
+ *
+ * @since 2026-06-07
+ */
+
+.mg-push-monitor__snapshot-table {
+  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  overflow: hidden;
+}
+
+.mg-push-monitor__snapshot-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  align-items: center;
+  gap: var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  border-bottom: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+}
+
+.mg-push-monitor__snapshot-row:last-child {
+  border-bottom: none;
+}
+
+.mg-push-monitor__snapshot-row__label {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}
+
+.mg-push-monitor__snapshot-row__value {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  text-align: right;
+}
+
+.mg-push-monitor__snapshot-row__numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-push-monitor__snapshot-row__toggles {
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-push-monitor__snapshot-table__empty {
+  padding: var(--mg-spacing-md, 1rem);
+  text-align: center;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}
+
+@media (max-width: 767px) {
+  .mg-push-monitor__snapshot-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--mg-spacing-xs, 0.25rem);
+  }
+
+  .mg-push-monitor__snapshot-row__value {
+    text-align: left;
+  }
+}

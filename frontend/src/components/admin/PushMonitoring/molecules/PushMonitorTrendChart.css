@@ -1,0 +1,87 @@
+/**
+ * PushMonitorTrendChart 스타일.
+ *
+ * 외부 차트 라이브러리 미도입 — CSS Grid + flex column-reverse stacked bar.
+ *
+ * @since 2026-06-07
+ */
+
+.mg-push-monitor__trend-chart {
+  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
+  padding: var(--mg-spacing-md, 1rem);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+}
+
+.mg-push-monitor__trend-chart__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(20px, 1fr);
+  gap: var(--mg-spacing-xs, 0.25rem);
+  align-items: end;
+  height: 220px;
+}
+
+.mg-push-monitor__trend-chart__day {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  height: 100%;
+  cursor: default;
+}
+
+.mg-push-monitor__trend-chart__bar {
+  display: flex;
+  flex-direction: column-reverse;
+  height: var(--mg-trend-bar-height, 0%);
+  min-height: 2px;
+  background: transparent;
+  border-radius: var(--mg-radius-sm, 6px);
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.mg-push-monitor__trend-chart__segment {
+  display: block;
+  width: 100%;
+}
+
+.mg-push-monitor__trend-chart__segment--alimtalk {
+  background: var(--ad-b0kla-blue, var(--mg-color-primary-main));
+}
+
+.mg-push-monitor__trend-chart__segment--sms {
+  background: var(--ad-b0kla-green, var(--mg-color-success-main));
+}
+
+.mg-push-monitor__trend-chart__segment--push {
+  background: var(--ad-b0kla-orange, var(--cs-orange-400));
+}
+
+.mg-push-monitor__trend-chart__segment--dimmed {
+  opacity: 0.35;
+}
+
+.mg-push-monitor__trend-chart__date {
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 1279px) {
+  .mg-push-monitor__trend-chart__list {
+    height: 180px;
+  }
+}
+
+@media (max-width: 767px) {
+  .mg-push-monitor__trend-chart__list {
+    height: 160px;
+  }
+}

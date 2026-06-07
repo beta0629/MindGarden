@@ -1,0 +1,49 @@
+/**
+ * PushMonitorRefreshIndicator 스타일.
+ *
+ * BW-1 「푸시 설정 모니터링」 폴링 상태 표시. 색·간격은 디자인 토큰만 사용.
+ *
+ * @since 2026-06-07
+ */
+
+.mg-push-monitor__refresh-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  white-space: nowrap;
+}
+
+.mg-push-monitor__refresh-indicator__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  flex-shrink: 0;
+}
+
+.mg-push-monitor__refresh-indicator__dot--active {
+  background: var(--ad-b0kla-blue, var(--mg-color-primary-main));
+  animation: mg-push-monitor-pulse 1.5s ease-in-out infinite;
+}
+
+.mg-push-monitor__refresh-indicator__dot--error {
+  background: var(--ad-b0kla-danger, var(--mg-color-error-main));
+  animation: none;
+}
+
+.mg-push-monitor__refresh-indicator__text {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes mg-push-monitor-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-push-monitor__refresh-indicator__dot--active {
+    animation: none;
+  }
+}

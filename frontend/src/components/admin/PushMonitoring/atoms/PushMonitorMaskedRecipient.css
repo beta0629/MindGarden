@@ -1,0 +1,17 @@
+/**
+ * PushMonitorMaskedRecipient 스타일.
+ *
+ * PII 가드 — `user-select: none` 으로 마스킹 우회 복사를 차단.
+ *
+ * @since 2026-06-07
+ */
+
+.mg-push-monitor__masked-recipient {
+  font-family: var(--mg-font-family-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  user-select: none;
+  -webkit-user-select: none;
+  letter-spacing: 0.01em;
+}

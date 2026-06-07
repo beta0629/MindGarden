@@ -125,7 +125,9 @@ import WellnessManagement from './components/admin/WellnessManagement';
 import AdminCommunityModerationQueuePage from './components/admin/AdminCommunityModerationQueuePage';
 import AdminPendingPaymentCleanupPage from './components/admin/mapping/AdminPendingPaymentCleanupPage';
 import AdminContentMasterPage from './components/admin/AdminContentMasterPage';
-import AdminPushMonitoringPlaceholderPage from './components/admin/AdminPushMonitoringPlaceholderPage';
+// BW-1 Phase 3 (2026-06-07): placeholder → 본 데이터 페이지 라우트 import 교체.
+// placeholder 파일은 후속 회수 PR 에서 정리 (롤백 안전성 가드).
+import AdminPushMonitoringPage from './components/admin/PushMonitoring/AdminPushMonitoringPage';
 import AdminMindWeatherObservabilityPage from './components/admin/AdminMindWeatherObservabilityPage';
 import AdminMindGardenObservabilityPage from './components/admin/AdminMindGardenObservabilityPage';
 import AdminShopCatalogSkusPage from './components/admin/AdminShopCatalogSkusPage';
@@ -689,7 +691,7 @@ function AppContent() {
             <Route path={ADMIN_ROUTES.CONTENT_MASTER} element={<AdminContentMasterPage />} />
             <Route path={ADMIN_ROUTES.MIND_WEATHER_OBSERVABILITY} element={<AdminMindWeatherObservabilityPage />} />
             <Route path={ADMIN_ROUTES.MIND_GARDEN_OBSERVABILITY} element={<AdminMindGardenObservabilityPage />} />
-            <Route path={ADMIN_ROUTES.PUSH_MONITORING} element={<AdminPushMonitoringPlaceholderPage />} />
+            <Route path={ADMIN_ROUTES.PUSH_MONITORING} element={<AdminPushMonitoringPage />} />
             <Route path={`${ADMIN_ROUTES.SHOP_CATALOG_SKUS}/new`} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>

@@ -120,6 +120,83 @@ public interface NotificationBatchSendLogRepository
         @Param("to") LocalDateTime to);
 
     /**
+     * BW-1 「푸시 설정 모니터링」 KPI: 채널 미확정({@code channel_used='PENDING'}) 누적 카운트.
+     *
+     * <p>발송 직전 INSERT 후 외부 호출 결과 UPDATE 가 누락된 행. 본 카운트는 윈도(range) 무관
+     * 현재 시점 기준이며 KPI #1 카드 subtitle 「PENDING N건」 에 노출된다(D2).
+     *
+     * @param tenantId 테넌트 ID
+     * @return PENDING 행 수
+     * @since 2026-06-07
+     */
+    @Query("SELECT COUNT(l) FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.channelUsed = 'PENDING' "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    long countPendingByTenantId(@Param("tenantId") String tenantId);
+
+    /**
+     * BW-1: 윈도 발송 이력 조회 (tenantId + sentAt 범위 + (선택)채널 필터).
+     *
+     * <p>{@code channelUsed} 가 null 이면 PENDING 포함 모든 채널을 반환한다. 운영자가 채널
+     * 필터를 적용하면 본 메서드의 호출자({@code AdminPushMonitoringServiceImpl}) 가
+     * {@code channelUsed} 를 전달한다.
+     *
+     * @param tenantId    테넌트 ID
+     * @param from        시작 시각 inclusive
+     * @param to          종료 시각 inclusive
+     * @param channelUsed channel_used 필터 (null = 전체)
+     * @return 발송 시각 내림차순 목록
+     * @since 2026-06-07
+     */
+    @Query("SELECT l FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.sentAt BETWEEN :from AND :to "
+            + "AND (:channelUsed IS NULL OR l.channelUsed = :channelUsed) "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL) "
+            + "ORDER BY l.sentAt DESC")
+    List<NotificationBatchSendLog> findWindowByTenantAndChannel(
+        @Param("tenantId") String tenantId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to,
+        @Param("channelUsed") String channelUsed);
+
+    /**
+     * BW-1: 윈도 카운트 (tenantId + sentAt 범위).
+     *
+     * <p>최근 5분 발송량 KPI 계산용 — {@code from} 에 {@code now - 5min} 을 전달한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param from     시작 시각 inclusive
+     * @param to       종료 시각 inclusive
+     * @return 행 수
+     * @since 2026-06-07
+     */
+    @Query("SELECT COUNT(l) FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.sentAt BETWEEN :from AND :to "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    long countWindowByTenant(
+        @Param("tenantId") String tenantId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to);
+
+    /**
+     * BW-1: 단건 조회(테넌트 격리).
+     *
+     * @param id       row PK
+     * @param tenantId 테넌트 ID
+     * @return Optional
+     * @since 2026-06-07
+     */
+    @Query("SELECT l FROM NotificationBatchSendLog l "
+            + "WHERE l.id = :id AND l.tenantId = :tenantId "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    Optional<NotificationBatchSendLog> findByIdAndTenantId(
+        @Param("id") Long id,
+        @Param("tenantId") String tenantId);
+
+    /**
      * 보관기간 초과 row 일괄 삭제 (시스템 잡 전용 — tenant 무관 전역).
      *
      * <p>네이티브 SQL {@code LIMIT} 으로 1회 호출당 삭제량을 제한해 락 시간을 짧게 유지한다.

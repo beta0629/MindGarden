@@ -1,0 +1,42 @@
+/**
+ * AdminPushMonitoringPage 페이지 wrapper 스타일.
+ *
+ * 디자인 토큰만 사용. 핸드오프 §5.1 `mg-push-monitor` BEM root.
+ *
+ * @since 2026-06-07
+ */
+
+.mg-push-monitor {
+  background: var(--mg-color-background-main, #f7f7f9);
+}
+
+.mg-push-monitor__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, 1rem);
+  padding-top: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-push-monitor__error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-md, 1rem);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  background: var(--ad-b0kla-orange-bg, rgba(239, 137, 76, 0.08));
+  border-left: 4px solid var(--ad-b0kla-danger, var(--mg-color-error-main));
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.mg-push-monitor__error-banner__retry {
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--ad-b0kla-danger, var(--mg-color-error-main));
+  border: 1px solid var(--ad-b0kla-danger, var(--mg-color-error-main));
+  border-radius: var(--mg-radius-sm, 6px);
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-weight: 600;
+  cursor: pointer;
+}

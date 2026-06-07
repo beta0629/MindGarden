@@ -2,6 +2,7 @@ package com.coresolution.consultation.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.dto.TestNotificationChannel;
 import com.coresolution.consultation.entity.AdminTestNotificationLog;
 import org.springframework.data.domain.Page;
@@ -121,6 +122,64 @@ public interface AdminTestNotificationLogRepository
         @Param("channel") TestNotificationChannel channel,
         @Param("success") Boolean success,
         Pageable pageable);
+
+    /**
+     * BW-1 「푸시 설정 모니터링」 윈도 이력 조회 (tenantId + sentAt 범위 + (선택)채널 필터).
+     *
+     * <p>{@code channel} 이 null 이면 모든 채널을 반환한다. 본 메서드는 어드민 수동 발송 (PUSH 포함)
+     * 모집단 산정에 사용된다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param from     시작 시각 inclusive
+     * @param to       종료 시각 inclusive
+     * @param channel  채널 필터 (null = 전체)
+     * @return 발송 시각 내림차순 목록
+     * @since 2026-06-07
+     */
+    @Query("SELECT l FROM AdminTestNotificationLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.sentAt BETWEEN :from AND :to "
+            + "AND (:channel IS NULL OR l.channel = :channel) "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL) "
+            + "ORDER BY l.sentAt DESC")
+    List<AdminTestNotificationLog> findWindowByTenantAndChannel(
+        @Param("tenantId") String tenantId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to,
+        @Param("channel") TestNotificationChannel channel);
+
+    /**
+     * BW-1: 윈도 카운트.
+     *
+     * @param tenantId 테넌트 ID
+     * @param from     시작 시각 inclusive
+     * @param to       종료 시각 inclusive
+     * @return 행 수
+     * @since 2026-06-07
+     */
+    @Query("SELECT COUNT(l) FROM AdminTestNotificationLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.sentAt BETWEEN :from AND :to "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    long countWindowByTenant(
+        @Param("tenantId") String tenantId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to);
+
+    /**
+     * BW-1: 단건 조회(테넌트 격리).
+     *
+     * @param id       row PK
+     * @param tenantId 테넌트 ID
+     * @return Optional
+     * @since 2026-06-07
+     */
+    @Query("SELECT l FROM AdminTestNotificationLog l "
+            + "WHERE l.id = :id AND l.tenantId = :tenantId "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    Optional<AdminTestNotificationLog> findByIdAndTenantId(
+        @Param("id") Long id,
+        @Param("tenantId") String tenantId);
 
     /**
      * 보관기간 초과 row 일괄 삭제 (시스템 잡 전용 — tenant 무관 전역).

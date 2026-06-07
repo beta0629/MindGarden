@@ -1,0 +1,26 @@
+/**
+ * PushMonitorKpiRow 스타일.
+ *
+ * 디자인 토큰만 사용. 1×4 / 2×2 / 1×4 stacked grid.
+ *
+ * @since 2026-06-07
+ */
+
+.mg-push-monitor__kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+@media (max-width: 1279px) {
+  .mg-push-monitor__kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .mg-push-monitor__kpi-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--mg-spacing-sm, 0.5rem);
+  }
+}

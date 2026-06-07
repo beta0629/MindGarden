@@ -1,0 +1,96 @@
+/**
+ * PushMonitorKpiCard 스타일.
+ *
+ * 디자인 토큰만 사용. 좌측 4px 세로 악센트 바 — variant 별 색 토큰.
+ *
+ * @since 2026-06-07
+ */
+
+.mg-push-monitor__kpi-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  padding: var(--mg-spacing-lg, 1.5rem);
+  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+  border-radius: var(--ad-b0kla-radius, 24px);
+  box-shadow: var(--ad-b0kla-shadow, 0 2px 6px rgba(15, 23, 42, 0.04));
+  overflow: hidden;
+  min-height: 116px;
+  transition: box-shadow 0.2s ease;
+}
+
+.mg-push-monitor__kpi-card:hover {
+  box-shadow: var(--ad-b0kla-shadow-hover, 0 4px 12px rgba(15, 23, 42, 0.08));
+}
+
+.mg-push-monitor__kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--mg-push-monitor-kpi-accent, var(--ad-b0kla-blue));
+  border-radius: 2px;
+}
+
+.mg-push-monitor__kpi-card--queue {
+  --mg-push-monitor-kpi-accent: var(--ad-b0kla-blue, var(--mg-color-primary-main));
+}
+
+.mg-push-monitor__kpi-card--success {
+  --mg-push-monitor-kpi-accent: var(--ad-b0kla-green, var(--mg-color-success-main));
+}
+
+.mg-push-monitor__kpi-card--failure {
+  --mg-push-monitor-kpi-accent: var(--ad-b0kla-danger, var(--mg-color-error-main));
+}
+
+.mg-push-monitor__kpi-card--skip {
+  --mg-push-monitor-kpi-accent: var(--ad-b0kla-orange, var(--cs-orange-400));
+}
+
+.mg-push-monitor__kpi-card__label {
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}
+
+.mg-push-monitor__kpi-card__value {
+  font-size: var(--mg-font-size-xxl, 1.5rem);
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-push-monitor__kpi-card__subtitle {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}
+
+.mg-push-monitor__kpi-card__distribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}
+
+.mg-push-monitor__kpi-card__distribution-item {
+  white-space: nowrap;
+}
+
+.mg-push-monitor__kpi-card--loading .mg-push-monitor__kpi-card__value {
+  opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+  .mg-push-monitor__kpi-card {
+    padding: var(--mg-spacing-md, 1rem);
+    min-height: 92px;
+  }
+}

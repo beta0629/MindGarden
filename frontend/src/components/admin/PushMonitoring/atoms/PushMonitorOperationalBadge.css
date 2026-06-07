@@ -1,0 +1,53 @@
+/**
+ * PushMonitorOperationalBadge 스타일.
+ *
+ * 디자인 토큰만 사용. 핸드오프 §5.1 `mg-push-monitor__operational-banner` BEM.
+ *
+ * @since 2026-06-07
+ */
+
+.mg-push-monitor__operational-banner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  padding: var(--mg-spacing-md, 1rem);
+  border-radius: var(--ad-b0kla-radius-sm, 12px);
+  border-left-width: 4px;
+  border-left-style: solid;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+}
+
+.mg-push-monitor__operational-banner--warning {
+  background: var(--ad-b0kla-orange-bg, rgba(239, 137, 76, 0.08));
+  border-left-color: var(--ad-b0kla-orange, var(--cs-orange-400));
+  color: var(--ad-b0kla-text-primary, var(--mg-color-text-main));
+}
+
+.mg-push-monitor__operational-banner--info {
+  background: var(--ad-b0kla-blue-bg, rgba(58, 102, 219, 0.08));
+  border-left-color: var(--ad-b0kla-blue, var(--mg-color-primary-main));
+  color: var(--ad-b0kla-text-primary, var(--mg-color-text-main));
+}
+
+.mg-push-monitor__operational-banner__title {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+}
+
+.mg-push-monitor__operational-banner__desc {
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  line-height: 1.5;
+}
+
+.mg-push-monitor__operational-banner__code {
+  display: inline-block;
+  margin-left: var(--mg-spacing-xs, 0.25rem);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--ad-b0kla-bg, var(--mg-color-background-main));
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-family: var(--mg-font-family-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+}

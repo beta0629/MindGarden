@@ -53,4 +53,19 @@ public class SelfAssessmentTemplate extends BaseEntity {
 
     @Column(name = "is_active", nullable = false)
     private boolean active;
+
+    /**
+     * Apple 1.4.1 — 자가검사 표준 척도 원저작 인용(표시용).
+     */
+    @Column(name = "source_label", length = 200)
+    private String sourceLabel;
+
+    @Column(name = "source_url", length = 500)
+    private String sourceUrl;
+
+    @Column(name = "source_author", length = 200)
+    private String sourceAuthor;
+
+    @Column(name = "source_published_year")
+    private Integer sourcePublishedYear;
 }

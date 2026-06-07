@@ -66,12 +66,20 @@ public class HealingContentServiceImpl implements HealingContentService {
                 DailyHealingContent content = dailyContent.get();
                 log.info("💚 DB에서 힐링 컨텐츠 조회 성공 - 역할: {}, 카테고리: {}, 제목: {}", 
                     userRole, category, content.getTitle());
-                
+
+                // Apple 1.4.1 — DB 등록 컨텐츠는 출처 4 필드를 그대로 노출, AI 생성 여부는 false 로 표기.
+                boolean hasSource = StringUtils.hasText(content.getSourceLabel())
+                    || StringUtils.hasText(content.getSourceUrl());
                 return new HealingContent(
                     content.getTitle(),
                     content.getContent(),
                     content.getCategory(),
-                    content.getEmoji()
+                    content.getEmoji(),
+                    content.getSourceLabel(),
+                    content.getSourceUrl(),
+                    content.getSourceAuthor(),
+                    content.getSourcePublishedYear(),
+                    !hasSource
                 );
             }
             

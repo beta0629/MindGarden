@@ -46,10 +46,26 @@ public class HealingContentCatalogAdminServiceImpl implements HealingContentCata
                 row.getMediaType(),
                 row.isPublished(),
                 row.getSortOrder(),
-                row.getUpdatedAt()
+                row.getUpdatedAt(),
+                hasSource(row)
             ));
         }
         return out;
+    }
+
+    private static boolean hasSource(HealingContentCatalogItem row) {
+        return StringUtils.hasText(row.getSourceLabel())
+            || StringUtils.hasText(row.getSourceUrl())
+            || StringUtils.hasText(row.getSourceAuthor())
+            || row.getSourcePublishedYear() != null;
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     @Override
@@ -158,6 +174,10 @@ public class HealingContentCatalogAdminServiceImpl implements HealingContentCata
         row.setDurationMinutes(request.durationMinutes());
         row.setPublished(request.published());
         row.setSortOrder(request.sortOrder());
+        row.setSourceLabel(trimToNull(request.sourceLabel()));
+        row.setSourceUrl(trimToNull(request.sourceUrl()));
+        row.setSourceAuthor(trimToNull(request.sourceAuthor()));
+        row.setSourcePublishedYear(request.sourcePublishedYear());
     }
 
     private static HealingContentCatalogAdminDetail toDetail(HealingContentCatalogItem row) {
@@ -172,7 +192,11 @@ public class HealingContentCatalogAdminServiceImpl implements HealingContentCata
             row.getMediaType(),
             row.getThumbnailUrl(),
             row.getContentUrl(),
-            row.getDurationMinutes()
+            row.getDurationMinutes(),
+            row.getSourceLabel(),
+            row.getSourceUrl(),
+            row.getSourceAuthor(),
+            row.getSourcePublishedYear()
         );
     }
 }

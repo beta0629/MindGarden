@@ -12,6 +12,17 @@ import { colors } from '@/theme/tokens';
 
 export type MeditationCategory = 'all' | 'breathing' | 'mindfulness' | 'sleep' | 'nature';
 
+/**
+ * Apple Guideline 1.4.1 (Plan A · T3) 출처 표기 — 4 필드 단일 출처.
+ * 어드민 입력·서버 응답과 동일 스키마(`SourceCitation`)로 정렬.
+ */
+export interface MeditationTrackSource {
+  readonly label?: string;
+  readonly url?: string;
+  readonly author?: string;
+  readonly publishedYear?: number;
+}
+
 export interface MeditationTrack {
   readonly id: number;
   readonly title: string;
@@ -22,7 +33,21 @@ export interface MeditationTrack {
   readonly gradientColors: readonly [string, string];
   /** 트랙별 스트림(HTTPS URL 또는 Metro `require()` 자산 번호). 없으면 폴백 규칙 적용 */
   readonly audioUri?: string | number;
+  readonly source?: MeditationTrackSource;
 }
+
+const MEDITATION_SOURCE_WHO_BREATHING: MeditationTrackSource = {
+  label: 'Doing What Matters in Times of Stress: An Illustrated Guide',
+  url: 'https://www.who.int/publications/i/item/9789240003927',
+  author: 'World Health Organization',
+  publishedYear: 2020,
+};
+const MEDITATION_SOURCE_APA_MINDFULNESS: MeditationTrackSource = {
+  label: 'What are the benefits of mindfulness?',
+  url: 'https://www.apa.org/monitor/2012/07-08/ce-corner',
+  author: 'American Psychological Association · Davis & Hayes',
+  publishedYear: 2012,
+};
 
 /**
  * 선택적 원격 데모 스트림(자사·라이선스 확보 URL만). 비어 있으면 외부 CDN을 쓰지 않는다.
@@ -71,6 +96,7 @@ export const MOCK_MEDITATION_TRACKS: MeditationTrack[] = [
     categoryLabel: '호흡',
     durationSeconds: 600,
     gradientColors: MEDITATION_GRADIENT_MAP.breathing,
+    source: MEDITATION_SOURCE_WHO_BREATHING,
   },
   {
     id: 2,
@@ -80,6 +106,7 @@ export const MOCK_MEDITATION_TRACKS: MeditationTrack[] = [
     categoryLabel: '호흡',
     durationSeconds: 480,
     gradientColors: MEDITATION_GRADIENT_MAP.breathing,
+    source: MEDITATION_SOURCE_WHO_BREATHING,
   },
   {
     id: 3,
@@ -89,6 +116,7 @@ export const MOCK_MEDITATION_TRACKS: MeditationTrack[] = [
     categoryLabel: '호흡',
     durationSeconds: 300,
     gradientColors: MEDITATION_GRADIENT_MAP.breathing,
+    source: MEDITATION_SOURCE_WHO_BREATHING,
   },
   {
     id: 4,
@@ -98,6 +126,7 @@ export const MOCK_MEDITATION_TRACKS: MeditationTrack[] = [
     categoryLabel: '마음챙김',
     durationSeconds: 900,
     gradientColors: MEDITATION_GRADIENT_MAP.mindfulness,
+    source: MEDITATION_SOURCE_APA_MINDFULNESS,
   },
   {
     id: 5,
@@ -107,6 +136,7 @@ export const MOCK_MEDITATION_TRACKS: MeditationTrack[] = [
     categoryLabel: '마음챙김',
     durationSeconds: 720,
     gradientColors: MEDITATION_GRADIENT_MAP.mindfulness,
+    source: MEDITATION_SOURCE_APA_MINDFULNESS,
   },
   {
     id: 6,
@@ -116,6 +146,7 @@ export const MOCK_MEDITATION_TRACKS: MeditationTrack[] = [
     categoryLabel: '마음챙김',
     durationSeconds: 600,
     gradientColors: MEDITATION_GRADIENT_MAP.mindfulness,
+    source: MEDITATION_SOURCE_APA_MINDFULNESS,
   },
   {
     id: 7,
@@ -170,6 +201,7 @@ export const MOCK_MEDITATION_TRACKS: MeditationTrack[] = [
     categoryLabel: '호흡',
     durationSeconds: 360,
     gradientColors: MEDITATION_GRADIENT_MAP.breathing,
+    source: MEDITATION_SOURCE_WHO_BREATHING,
   },
 ] as const;
 

@@ -28,12 +28,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { CloudSun, Mic, Sparkles, TrendingUp } from 'lucide-react-native';
+import { AlertTriangle, CloudSun, Mic, Sparkles, TrendingUp } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { MindWeatherCard } from '@/components/molecules/MindWeatherCard';
+import { CitationBlock } from '@/components/molecules/CitationBlock';
 import { MindWeatherShareSheet } from '@/components/organisms/MindWeatherShareSheet';
 import {
   useAnalyzeMindWeather,
@@ -56,6 +57,11 @@ import {
   MIND_WEATHER_DISCLAIMER_KO,
   MIND_WEATHER_SHARE_COPY_KO,
 } from '@/constants/wellnessComplianceCopy';
+import {
+  MIND_WEATHER_AI_BANNER_BODY_KO,
+  MIND_WEATHER_AI_BANNER_TITLE_KO,
+  MIND_WEATHER_METHODOLOGY_KO,
+} from '@/constants/assessmentCitations';
 import { detectTrendingKeyword } from '@/services/mindWeatherService';
 import type { MindWeatherCard as MindWeatherCardData } from '@/services/mindWeatherService';
 
@@ -277,6 +283,63 @@ export default function ClientMindWeatherIndex() {
             </Text>
           </Animated.View>
 
+          {/* AI 생성·진단 아님 정적 배너 — Apple T3 DoD 4 */}
+          <Animated.View
+            entering={FadeInDown.delay(40).springify()}
+            style={[
+              styles.aiBanner,
+              {
+                backgroundColor: theme.colors.warning + '1A',
+                borderColor: theme.colors.warning + '66',
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+            accessibilityRole="alert"
+            accessibilityLabel={`${MIND_WEATHER_AI_BANNER_TITLE_KO}. ${MIND_WEATHER_AI_BANNER_BODY_KO}`}
+            testID="mind-weather-ai-banner"
+          >
+            <View style={styles.aiBannerHeader}>
+              <AlertTriangle size={16} color={theme.colors.warning} />
+              <Text
+                style={{
+                  fontFamily: theme.fontFamily.semibold,
+                  fontSize: theme.fontSize.sm,
+                  color: theme.colors.textMain,
+                  marginLeft: 6,
+                }}
+              >
+                {MIND_WEATHER_AI_BANNER_TITLE_KO}
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize.xs,
+                color: theme.colors.textSecondary,
+                marginTop: 6,
+                lineHeight: 18,
+              }}
+            >
+              {MIND_WEATHER_AI_BANNER_BODY_KO}
+            </Text>
+            <Text
+              style={{
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize['2xs'],
+                color: theme.colors.textTertiary,
+                marginTop: 6,
+                lineHeight: 16,
+              }}
+            >
+              {`사용 모델: ${MIND_WEATHER_METHODOLOGY_KO.modelName}`}
+            </Text>
+            <CitationBlock
+              testID="mind-weather-methodology-citation"
+              title="가이드라인 출처"
+              source={MIND_WEATHER_METHODOLOGY_KO.guidelineSource}
+            />
+          </Animated.View>
+
           {trending ? (
             <Animated.View
               entering={FadeInDown.delay(80).springify()}
@@ -495,6 +558,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderWidth: 1,
     marginBottom: 12,
+  },
+  aiBanner: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  aiBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   inputCard: {
     padding: 16,

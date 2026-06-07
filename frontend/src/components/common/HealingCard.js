@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Sparkles } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { normalizeApiObjectPayload } from '../../utils/apiResponseNormalize';
+import { sanitizeHealingHtml } from '../../utils/safeHtml';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import UnifiedLoading from './UnifiedLoading';
+import CitationBlock from './CitationBlock';
 import './HealingCard.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +59,11 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
             setLoading(false);
         }
     };
+
+    const safeContentHtml = useMemo(() => {
+        const raw = healingData?.content || '마음의 평화를 찾는 하루가 되시길 바랍니다. 💚';
+        return sanitizeHealingHtml(raw);
+    }, [healingData?.content]);
 
     const handleRefresh = async() => {
         try {
@@ -131,6 +139,16 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
         );
     }
 
+    const citationSource = healingData
+        ? {
+            label: healingData.sourceLabel,
+            url: healingData.sourceUrl,
+            author: healingData.sourceAuthor,
+            publishedYear: healingData.sourcePublishedYear
+        }
+        : null;
+    const showAiBadge = !!healingData && healingData.aiGenerated !== false;
+
     return (
         <div className="healing-card-wrapper">
             <div className="mg-card">
@@ -159,11 +177,20 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
                 </div>
 
                 <div className="mg-card__content">
-                    <div 
+                    {showAiBadge && (
+                        <div
+                            className="healing-ai-badge"
+                            data-testid="healing-ai-badge"
+                            aria-label="AI 생성 콘텐츠"
+                        >
+                            <Sparkles size={14} aria-hidden="true" />
+                            <span>AI 생성 · 의학적 진단 아님</span>
+                        </div>
+                    )}
+                    <div
                         className="healing-content"
-                        dangerouslySetInnerHTML={{
-                            __html: healingData?.content || '마음의 평화를 찾는 하루가 되시길 바랍니다. 💚'
-                        }}
+                        data-testid="healing-content-html"
+                        dangerouslySetInnerHTML={{ __html: safeContentHtml }}
                     />
                     {healingData?.category && (
                         <div className="healing-category">
@@ -176,6 +203,7 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
                             </span>
                         </div>
                     )}
+                    <CitationBlock source={citationSource} testId="healing-card-citation" />
                 </div>
             </div>
         </div>

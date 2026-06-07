@@ -59,4 +59,19 @@ public class HealingContentCatalogItem extends BaseEntity {
 
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
+
+    /**
+     * Apple 1.4.1 — 의료/건강 콘텐츠 출처 라벨(표시용).
+     */
+    @Column(name = "source_label", length = 200)
+    private String sourceLabel;
+
+    @Column(name = "source_url", length = 500)
+    private String sourceUrl;
+
+    @Column(name = "source_author", length = 200)
+    private String sourceAuthor;
+
+    @Column(name = "source_published_year")
+    private Integer sourcePublishedYear;
 }

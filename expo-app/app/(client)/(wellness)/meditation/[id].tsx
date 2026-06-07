@@ -19,6 +19,7 @@ import { fontSize as fontSizeTokens } from '@/theme/typography';
 import { useMeditationPlaybackControls } from '@/contexts/MeditationPlaybackContext';
 import { useMeditationStore } from '@/stores/useMeditationStore';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { CitationBlock } from '@/components/molecules/CitationBlock';
 import { useMeditationTrackById } from '@/api/hooks/useMeditations';
 import { formatPlayerTime } from '@/constants/meditationData';
 
@@ -346,6 +347,9 @@ export default function MeditationPlayer() {
                 </Text>
               </Animated.View>
             )}
+
+            {/* 출처(Citation) — Apple T3 */}
+            <CitationBlock testID="meditation-citation" source={track.source} />
           </Animated.View>
         </SafeAreaView>
       </LinearGradient>

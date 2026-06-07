@@ -56,6 +56,13 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 const TAB_PSYCHO = 'PSYCHO';
 const TAB_HEALING = 'HEALING';
 
+const SOURCE_LABEL_MAX_LEN = 200;
+const SOURCE_URL_MAX_LEN = 500;
+const SOURCE_AUTHOR_MAX_LEN = 200;
+const SOURCE_YEAR_MIN = 1900;
+const SOURCE_YEAR_MAX = 2100;
+const SOURCE_URL_PATTERN = /^(https?:\/\/[^\s]+|doi\.org\/.+)$/i;
+
 const TAB_OPTIONS = [
   { value: TAB_PSYCHO, label: '심리교육' },
   { value: TAB_HEALING, label: '힐링 콘텐츠' }
@@ -81,7 +88,11 @@ const emptyPsychoForm = () => ({
   readMinutes: String(DEFAULT_READ_MINUTES),
   slug: '',
   published: false,
-  sortOrder: ''
+  sortOrder: '',
+  sourceLabel: '',
+  sourceUrl: '',
+  sourceAuthor: '',
+  sourcePublishedYear: ''
 });
 
 const emptyHealingForm = () => ({
@@ -94,8 +105,58 @@ const emptyHealingForm = () => ({
   thumbnailUrl: '',
   contentUrl: '',
   published: false,
-  sortOrder: DEFAULT_HEALING_SORT_ORDER
+  sortOrder: DEFAULT_HEALING_SORT_ORDER,
+  sourceLabel: '',
+  sourceUrl: '',
+  sourceAuthor: '',
+  sourcePublishedYear: ''
 });
+
+function pickSourceFromRow(row) {
+  if (!row || typeof row !== 'object') {
+    return { sourceLabel: '', sourceUrl: '', sourceAuthor: '', sourcePublishedYear: '' };
+  }
+  const yearRaw = row.sourcePublishedYear ?? row.source_published_year ?? null;
+  return {
+    sourceLabel: toDisplayString(row.sourceLabel ?? row.source_label, ''),
+    sourceUrl: toDisplayString(row.sourceUrl ?? row.source_url, ''),
+    sourceAuthor: toDisplayString(row.sourceAuthor ?? row.source_author, ''),
+    sourcePublishedYear: yearRaw != null && yearRaw !== '' ? String(yearRaw) : ''
+  };
+}
+
+function buildSourcePayload(form) {
+  const sourceLabel = toDisplayString(form.sourceLabel, '').trim();
+  const sourceUrl = toDisplayString(form.sourceUrl, '').trim();
+  const sourceAuthor = toDisplayString(form.sourceAuthor, '').trim();
+  const yearStr = String(form.sourcePublishedYear ?? '').trim();
+  const yearParsed = yearStr === '' ? null : Number.parseInt(yearStr, 10);
+  return {
+    sourceLabel: sourceLabel || null,
+    sourceUrl: sourceUrl || null,
+    sourceAuthor: sourceAuthor || null,
+    sourcePublishedYear: Number.isFinite(yearParsed) ? yearParsed : null
+  };
+}
+
+function validateSourceForm(form) {
+  const url = toDisplayString(form.sourceUrl, '').trim();
+  if (url && !SOURCE_URL_PATTERN.test(url)) {
+    return ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_VALIDATION_SOURCE_URL;
+  }
+  const yearStr = String(form.sourcePublishedYear ?? '').trim();
+  if (yearStr) {
+    const yearParsed = Number.parseInt(yearStr, 10);
+    if (
+      !Number.isFinite(yearParsed) ||
+      yearParsed < SOURCE_YEAR_MIN ||
+      yearParsed > SOURCE_YEAR_MAX
+    ) {
+      return ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_VALIDATION_SOURCE_YEAR;
+    }
+  }
+  return null;
+}
 
 function mapContentRows(list, prefix) {
   const arr = Array.isArray(list) ? list : [];
@@ -144,7 +205,8 @@ function mapPsychoRowToForm(row) {
     readMinutes: String(row.readMinutes ?? row.estimatedMinutes ?? DEFAULT_READ_MINUTES),
     slug: toDisplayString(row.slug, ''),
     published: row.published === true,
-    sortOrder: row.sortOrder != null ? String(row.sortOrder) : ''
+    sortOrder: row.sortOrder != null ? String(row.sortOrder) : '',
+    ...pickSourceFromRow(row)
   };
 }
 
@@ -174,7 +236,8 @@ function mapHealingRowToForm(row) {
     thumbnailUrl: toDisplayString(row.thumbnailUrl, ''),
     contentUrl: toDisplayString(row.contentUrl, ''),
     published: row.published === true,
-    sortOrder: Number.isFinite(sortOrderRaw) ? sortOrderRaw : DEFAULT_HEALING_SORT_ORDER
+    sortOrder: Number.isFinite(sortOrderRaw) ? sortOrderRaw : DEFAULT_HEALING_SORT_ORDER,
+    ...pickSourceFromRow(row)
   };
 }
 
@@ -209,7 +272,8 @@ function buildPsychoPayload({ form, mode, currentList }) {
       }
     ],
     published: form.published === true,
-    sortOrder
+    sortOrder,
+    ...buildSourcePayload(form)
   };
 }
 
@@ -233,7 +297,8 @@ function buildHealingPayload({ form, mode, currentList }) {
     published: !!form.published,
     sortOrder: Number.isFinite(sortRaw)
       ? sortRaw
-      : (mode === 'create' ? nextSortOrder(currentList) : DEFAULT_HEALING_SORT_ORDER)
+      : (mode === 'create' ? nextSortOrder(currentList) : DEFAULT_HEALING_SORT_ORDER),
+    ...buildSourcePayload(form)
   };
 }
 
@@ -392,6 +457,11 @@ const AdminContentMasterPage = () => {
         );
         return;
       }
+      const sourceErrorPsy = validateSourceForm(psychoForm);
+      if (sourceErrorPsy) {
+        notificationManager.show(sourceErrorPsy, 'warning');
+        return;
+      }
       const payload = buildPsychoPayload({
         form: psychoForm,
         mode: formMode,
@@ -421,6 +491,11 @@ const AdminContentMasterPage = () => {
     const titleH = toDisplayString(healingForm.title, '').trim();
     if (!titleH) {
       notificationManager.show(ADMIN_WEB_SCAFFOLD_COPY.CONTENT_VALIDATION_TITLE, 'warning');
+      return;
+    }
+    const sourceErrorHeal = validateSourceForm(healingForm);
+    if (sourceErrorHeal) {
+      notificationManager.show(sourceErrorHeal, 'warning');
       return;
     }
     const payloadH = buildHealingPayload({
@@ -620,6 +695,81 @@ const AdminContentMasterPage = () => {
     ? ADMIN_WEB_SCAFFOLD_COPY.MODAL_ADD_CONTENT_TITLE
     : ADMIN_WEB_SCAFFOLD_COPY.MODAL_EDIT_CONTENT_TITLE;
 
+  const renderSourceFields = (prefix, form, setter) => (
+    <section
+      className="mg-modal__form-section"
+      aria-label={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_SECTION_SOURCE}
+      data-testid={`content-master-source-${prefix}`}
+    >
+      <SafeText tag="h3" className="mg-modal__section-title">
+        {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_SECTION_SOURCE}
+      </SafeText>
+      <SafeText tag="p" className="mg-modal__hint">
+        {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_HINT_SOURCE}
+      </SafeText>
+      <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-${prefix}-src-label`} className="mg-modal__label">
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SOURCE_LABEL}
+        </label>
+        <input
+          id={`${baseId}-${prefix}-src-label`}
+          className="mg-v2-form-input"
+          maxLength={SOURCE_LABEL_MAX_LEN}
+          value={form.sourceLabel}
+          onChange={(ev) => setter((p) => ({ ...p, sourceLabel: ev.target.value }))}
+          disabled={saving}
+          autoComplete="off"
+        />
+      </div>
+      <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-${prefix}-src-url`} className="mg-modal__label">
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SOURCE_URL}
+        </label>
+        <input
+          id={`${baseId}-${prefix}-src-url`}
+          className="mg-v2-form-input"
+          type="url"
+          maxLength={SOURCE_URL_MAX_LEN}
+          value={form.sourceUrl}
+          onChange={(ev) => setter((p) => ({ ...p, sourceUrl: ev.target.value }))}
+          disabled={saving}
+          autoComplete="off"
+          inputMode="url"
+        />
+      </div>
+      <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-${prefix}-src-author`} className="mg-modal__label">
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SOURCE_AUTHOR}
+        </label>
+        <input
+          id={`${baseId}-${prefix}-src-author`}
+          className="mg-v2-form-input"
+          maxLength={SOURCE_AUTHOR_MAX_LEN}
+          value={form.sourceAuthor}
+          onChange={(ev) => setter((p) => ({ ...p, sourceAuthor: ev.target.value }))}
+          disabled={saving}
+          autoComplete="off"
+        />
+      </div>
+      <div className="mg-modal__form-group">
+        <label htmlFor={`${baseId}-${prefix}-src-year`} className="mg-modal__label">
+          {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_SOURCE_YEAR}
+        </label>
+        <input
+          id={`${baseId}-${prefix}-src-year`}
+          className="mg-v2-form-input"
+          type="number"
+          min={SOURCE_YEAR_MIN}
+          max={SOURCE_YEAR_MAX}
+          value={form.sourcePublishedYear}
+          onChange={(ev) => setter((p) => ({ ...p, sourcePublishedYear: ev.target.value }))}
+          disabled={saving}
+          inputMode="numeric"
+        />
+      </div>
+    </section>
+  );
+
   const psychoFields = (
     <>
       <div className="mg-modal__form-group">
@@ -736,6 +886,7 @@ const AdminContentMasterPage = () => {
           </div>
         </>
       ) : null}
+      {renderSourceFields('psy', psychoForm, setPsychoForm)}
     </>
   );
 
@@ -882,6 +1033,7 @@ const AdminContentMasterPage = () => {
           </div>
         </>
       ) : null}
+      {renderSourceFields('heal', healingForm, setHealingForm)}
     </>
   );
 

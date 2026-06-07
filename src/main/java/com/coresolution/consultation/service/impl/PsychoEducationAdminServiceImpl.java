@@ -50,10 +50,18 @@ public class PsychoEducationAdminServiceImpl implements PsychoEducationAdminServ
                 row.getCategory(),
                 row.isPublished(),
                 row.getSortOrder(),
-                row.getUpdatedAt()
+                row.getUpdatedAt(),
+                hasSource(row)
             ));
         }
         return out;
+    }
+
+    private static boolean hasSource(PsychoEducationArticle row) {
+        return StringUtils.hasText(row.getSourceLabel())
+            || StringUtils.hasText(row.getSourceUrl())
+            || StringUtils.hasText(row.getSourceAuthor())
+            || row.getSourcePublishedYear() != null;
     }
 
     @Override
@@ -155,6 +163,18 @@ public class PsychoEducationAdminServiceImpl implements PsychoEducationAdminServ
         row.setPagesJson(toPagesJson(request.pages()));
         row.setPublished(request.published());
         row.setSortOrder(request.sortOrder());
+        row.setSourceLabel(trimToNull(request.sourceLabel()));
+        row.setSourceUrl(trimToNull(request.sourceUrl()));
+        row.setSourceAuthor(trimToNull(request.sourceAuthor()));
+        row.setSourcePublishedYear(request.sourcePublishedYear());
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private JsonNode toPagesJson(List<PsychoEducationArticleResponse.Page> pages) {
@@ -180,7 +200,11 @@ public class PsychoEducationAdminServiceImpl implements PsychoEducationAdminServ
             row.getCategory(),
             row.getCategoryLabel(),
             row.getReadMinutes(),
-            toPages(row.getPagesJson())
+            toPages(row.getPagesJson()),
+            row.getSourceLabel(),
+            row.getSourceUrl(),
+            row.getSourceAuthor(),
+            row.getSourcePublishedYear()
         );
     }
 

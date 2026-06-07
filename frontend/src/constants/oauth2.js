@@ -55,6 +55,22 @@ export const FACEBOOK_OAUTH2_CONFIG = {
   state: 'facebook_login'
 };
 
+/**
+ * Sign in with Apple (SIWA) — Apple App Store 4.8 (T1) 대응.
+ * Apple JS SDK 가 native-like 시트를 표시하고 identityToken·authorization code 를 반환한다.
+ */
+export const APPLE_OAUTH2_CONFIG = {
+  clientId: ENV.APPLE.CLIENT_ID,
+  redirectUri: ENV.APPLE.REDIRECT_URI,
+  /** Apple JS SDK CDN — Apple HIG 권장 공식 자산. */
+  sdkUrl: 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js',
+  scope: 'name email',
+  responseType: 'code id_token',
+  responseMode: 'form_post',
+  usePopup: true,
+  state: 'apple_login'
+};
+
 // OAuth2 공통 설정
 export const OAUTH2_COMMON = {
   stateLength: 32,
@@ -73,6 +89,8 @@ export const getOAuth2Config = (provider) => {
       return GOOGLE_OAUTH2_CONFIG;
     case 'FACEBOOK':
       return FACEBOOK_OAUTH2_CONFIG;
+    case 'APPLE':
+      return APPLE_OAUTH2_CONFIG;
     default:
       throw new Error(`지원하지 않는 OAuth2 제공자: ${provider}`);
   }
@@ -90,6 +108,7 @@ export default {
   NAVER_OAUTH2_CONFIG,
   GOOGLE_OAUTH2_CONFIG,
   FACEBOOK_OAUTH2_CONFIG,
+  APPLE_OAUTH2_CONFIG,
   OAUTH2_COMMON,
   getOAuth2Config
 };

@@ -225,7 +225,19 @@ public class User extends BaseEntity {
      */
     @Column(name = "social_provider_user_id", length = 100)
     private String socialProviderUserId;
-    
+
+    /**
+     * Sign in with Apple (SIWA) subject identifier — Apple identityToken {@code sub} 의 영구 식별자.
+     *
+     * <p>Apple App Store 4.8 (T1) 대응. {@link #socialProvider}/{@link #socialProviderUserId} 는
+     * 다중 소셜 제공자 공통 컬럼이지만, Apple sub 는 UNIQUE 조회 성능과 멱등 가입 보장을
+     * 위해 별도 컬럼으로 보강한다. Flyway {@code V20260607_009} 가 NULLABLE UNIQUE 로 추가.</p>
+     *
+     * @since 2026-06-07
+     */
+    @Column(name = "apple_sub", length = 64, unique = true)
+    private String appleSub;
+
     /**
      * 소셜 계정 연동 시간
      */

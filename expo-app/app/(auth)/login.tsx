@@ -34,11 +34,14 @@ import {
 } from '@/services/AuthService';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import {
+  OAUTH_APPLE_BACKGROUND,
+  OAUTH_APPLE_FOREGROUND,
   OAUTH_KAKAO_BACKGROUND,
   OAUTH_KAKAO_FOREGROUND,
   OAUTH_NAVER_BACKGROUND,
   OAUTH_NAVER_FOREGROUND,
 } from '@/constants/oauthProviderBrand';
+import { isAppleSignInAvailableSync } from '@/services/auth/appleSignIn';
 
 const DUPLICATE_LOGIN_MODAL_TITLE = '이미 로그인된 기기가 있습니다';
 const DUPLICATE_LOGIN_FALLBACK_BODY =
@@ -143,6 +146,52 @@ export default function LoginScreen() {
       const detail =
         e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
       setErrorMessage(`카카오 로그인 중 오류가 발생했습니다.${detail}`);
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    setIsLoading(true);
+    setLoadingProvider('apple');
+    setErrorMessage(null);
+
+    try {
+      const result = await AuthService.loginWithApple();
+      if (result.kind === 'authenticated') {
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
+        await handleLoginSuccess();
+      } else if (result.kind === 'requiresSignup') {
+        router.push({
+          pathname: '/(auth)/social-signup',
+          params: socialSignupRouteParams(result.socialUserInfo),
+        });
+      } else if (result.kind === 'requiresPhoneAccountSelection') {
+        router.push({
+          pathname: '/(auth)/oauth-account-selection',
+          params: {
+            selectionToken: result.selectionToken,
+            provider: 'APPLE',
+          },
+        });
+      } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
+        setDuplicateLoginPrompt({
+          message: result.message,
+          retryContext: result.retryContext,
+        });
+      } else {
+        // 사용자가 시트를 닫은 경우는 토스트만 띄우지 않는다.
+        if (!/취소/.test(result.message ?? '')) {
+          setErrorMessage(result.message ?? 'Apple 로그인에 실패했습니다.');
+          await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      }
+    } catch (e) {
+      console.error('[Login] apple', e);
+      const detail =
+        e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
+      setErrorMessage(`Apple 로그인 중 오류가 발생했습니다.${detail}`);
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -365,6 +414,31 @@ export default function LoginScreen() {
                 </Text>
               )}
             </Pressable>
+
+            {/* Apple Sign In — iOS 전용 가시. Apple App Store 4.8 (T1) 대응. */}
+            {isAppleSignInAvailableSync() && (
+              <Pressable
+                style={[
+                  styles.socialButton,
+                  {
+                    backgroundColor: OAUTH_APPLE_BACKGROUND,
+                    opacity: inExpoGo ? 0.45 : 1,
+                  },
+                ]}
+                onPress={handleAppleLogin}
+                disabled={isLoading || inExpoGo}
+                accessibilityLabel="Apple로 계속하기"
+                accessibilityRole="button"
+              >
+                {loadingProvider === 'apple' ? (
+                  <ActivityIndicator color={OAUTH_APPLE_FOREGROUND} />
+                ) : (
+                  <Text style={[styles.socialButtonText, { color: OAUTH_APPLE_FOREGROUND }]}>
+                    Apple로 계속하기
+                  </Text>
+                )}
+              </Pressable>
+            )}
 
             {Boolean(errorMessage) && (
               <Animated.View entering={FadeIn.duration(300)} style={styles.errorContainer}>

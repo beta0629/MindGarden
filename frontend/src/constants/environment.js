@@ -112,6 +112,18 @@ const ENV = {
     CLIENT_ID: oauthPublicFromEnv('REACT_APP_FACEBOOK_CLIENT_ID', DEV_OAUTH_ID_PLACEHOLDER),
     REDIRECT_URI: process.env.REACT_APP_FACEBOOK_REDIRECT_URI
       || `${getBaseUrl()}/api/v1/auth/facebook/callback`
+  },
+
+  /**
+   * Sign in with Apple (SIWA) — Apple App Store 4.8 (T1).
+   *
+   * - CLIENT_ID: Apple Service ID (Apple Developer Console). 운영 시 REACT_APP_APPLE_CLIENT_ID 주입.
+   * - REDIRECT_URI: Apple Service ID 에 등록한 Return URL — Apple JS SDK 가 검증한다.
+   */
+  APPLE: {
+    CLIENT_ID: oauthPublicFromEnv('REACT_APP_APPLE_CLIENT_ID', DEV_OAUTH_ID_PLACEHOLDER),
+    REDIRECT_URI: process.env.REACT_APP_APPLE_REDIRECT_URI
+      || `${getBaseUrl()}/api/v1/auth/oauth/apple/callback`
   }
 };
 

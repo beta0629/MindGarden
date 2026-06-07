@@ -20,15 +20,17 @@ import {
 } from '../../../../api/admin/pushMonitoringApi';
 import './PushMonitorFilters.css';
 
+const DEFAULT_INTERVAL_MS = 60000;
+
 const PushMonitorFilters = ({
   range,
   channel,
   onRangeChange,
   onChannelChange,
-  lastRefreshedAtIso,
-  intervalMs,
-  isPolling,
-  hasError
+  lastRefreshedAtIso = null,
+  intervalMs = DEFAULT_INTERVAL_MS,
+  isPolling = false,
+  hasError = false
 }) => {
   const rangeItems = useMemo(() => ([
     { value: PUSH_MONITORING_RANGE.H24, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_24H },
@@ -84,13 +86,6 @@ PushMonitorFilters.propTypes = {
   intervalMs: PropTypes.number,
   isPolling: PropTypes.bool,
   hasError: PropTypes.bool
-};
-
-PushMonitorFilters.defaultProps = {
-  lastRefreshedAtIso: null,
-  intervalMs: 60000,
-  isPolling: false,
-  hasError: false
 };
 
 export default PushMonitorFilters;

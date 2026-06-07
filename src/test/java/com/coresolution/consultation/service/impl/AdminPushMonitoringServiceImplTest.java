@@ -1,30 +1,33 @@
 package com.coresolution.consultation.service.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
-
-import com.coresolution.consultation.config.BatchNotificationProperties;
-import com.coresolution.consultation.config.ExpoPushProperties;
-import com.coresolution.consultation.dto.PushMonitoringChannelFilter;
-import com.coresolution.consultation.dto.PushMonitoringRange;
-import com.coresolution.consultation.dto.PushMonitoringSnapshotResponse;
-import com.coresolution.consultation.dto.TestNotificationChannel;
-import com.coresolution.consultation.entity.NotificationBatchSendLog;
-import com.coresolution.consultation.entity.AdminTestNotificationLog;
-import com.coresolution.consultation.integration.solapi.KakaoSolapiCredentialResolver;
-import com.coresolution.consultation.repository.AdminTestNotificationLogRepository;
-import com.coresolution.consultation.repository.CommonCodeRepository;
-import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
-import com.coresolution.consultation.service.AdminTestNotificationService;
-
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.coresolution.consultation.config.BatchNotificationProperties;
+import com.coresolution.consultation.config.ExpoPushProperties;
+import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
+import com.coresolution.consultation.constant.PushMonitoringErrorCodes;
+import com.coresolution.consultation.dto.PushMonitoringChannelBreakdown;
+import com.coresolution.consultation.dto.PushMonitoringChannelFilter;
+import com.coresolution.consultation.dto.PushMonitoringFailureItem;
+import com.coresolution.consultation.dto.PushMonitoringKpiSummary;
+import com.coresolution.consultation.dto.PushMonitoringRange;
+import com.coresolution.consultation.dto.PushMonitoringResendResponse;
+import com.coresolution.consultation.dto.PushMonitoringSnapshotResponse;
+import com.coresolution.consultation.dto.PushMonitoringTenantSnapshot;
+import com.coresolution.consultation.dto.TestNotificationChannel;
+import com.coresolution.consultation.dto.TestNotificationRecipientMode;
+import com.coresolution.consultation.entity.AdminTestNotificationLog;
+import com.coresolution.consultation.entity.NotificationBatchSendLog;
+import com.coresolution.consultation.entity.TenantKakaoAlimtalkSettings;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.AdminTestNotificationLogRepository;
+import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
+import com.coresolution.consultation.repository.TenantKakaoAlimtalkSettingsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,40 +39,46 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 /**
- * {@link AdminPushMonitoringServiceImpl#buildSnapshot} 단위 테스트.
+ * {@link AdminPushMonitoringServiceImpl} 단위 테스트.
  *
- * <p>핵심 검증:
- *  - 4분류(외부발송 실패 / 사전검증 skip / 정책 skip / PENDING) 가 KPI 에 정확히 합산.
- *  - 채널 분포 ratio 가 윈도 성공 기준으로 계산.
- *  - 운영 토글이 응답에 노출.
- *  - PUSH 자동 추적 미지원 플래그.
+ * <p>BW-1 「푸시 설정 모니터링」 KPI 4분류 / 채널 분포 / 추이 / 스냅샷 / 실패 사례 / 재발송
+ * 가드를 검증한다. 의존성은 모두 Mockito mock — 실 DB 의존성 없이 분류 로직 SSOT 만 검증.
  *
- * @author MindGarden core-coder
+ * @author MindGarden
  * @since 2026-06-07
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("AdminPushMonitoringServiceImpl 단위 테스트")
 class AdminPushMonitoringServiceImplTest {
 
-    private static final String TENANT = "tenant-A";
+    private static final String TENANT_ID = "tenant-bw1";
 
     @Mock
     private NotificationBatchSendLogRepository batchLogRepository;
-
     @Mock
     private AdminTestNotificationLogRepository adminTestLogRepository;
-
+    @Mock
+    private TenantKakaoAlimtalkSettingsRepository alimtalkSettingsRepository;
     @Mock
     private CommonCodeRepository commonCodeRepository;
-
     @Mock
-    private KakaoSolapiCredentialResolver solapiCredentialResolver;
+    private AdminTestNotificationRateLimiter rateLimiter;
 
-    @Mock
-    private AdminTestNotificationService testNotificationService;
-
-    private BatchNotificationProperties batchProperties;
+    private BatchNotificationProperties batchNotificationProperties;
     private ExpoPushProperties expoPushProperties;
 
     @InjectMocks
@@ -77,172 +86,308 @@ class AdminPushMonitoringServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        batchProperties = new BatchNotificationProperties();
-        batchProperties.setAlimtalkEnabled(false);
+        batchNotificationProperties = new BatchNotificationProperties();
         expoPushProperties = new ExpoPushProperties();
-        expoPushProperties.setAccessToken("test-token");
-
-        ReflectionTestUtils.setField(service, "batchProperties", batchProperties);
+        ReflectionTestUtils.setField(service, "batchNotificationProperties", batchNotificationProperties);
         ReflectionTestUtils.setField(service, "expoPushProperties", expoPushProperties);
-        ReflectionTestUtils.setField(service, "kakaoAlimtalkEnabled", false);
+        ReflectionTestUtils.setField(service, "kakaoAlimtalkEnabledGlobal", true);
+        ReflectionTestUtils.setField(service, "notificationEnabledGlobal", true);
 
-        when(commonCodeRepository.countByCodeGroup(eq("ALIMTALK_BIZ_TEMPLATE_CODE")))
-            .thenReturn(12L);
-        when(commonCodeRepository.findTenantCodeByGroupAndValue(anyString(), anyString(),
-            anyString())).thenReturn(java.util.Optional.empty());
-        when(commonCodeRepository.findCoreCodeByGroupAndValue(anyString(), anyString()))
+        lenient().when(alimtalkSettingsRepository.findByTenantIdAndIsDeletedFalse(anyString()))
             .thenReturn(java.util.Optional.empty());
-        when(solapiCredentialResolver.hasDefaultCredentials()).thenReturn(true);
-        when(solapiCredentialResolver.hasDefaultPfId()).thenReturn(false);
+        lenient().when(commonCodeRepository
+            .findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(anyString(), anyString()))
+            .thenReturn(Collections.emptyList());
+        lenient().when(batchLogRepository.countWindowByTenant(anyString(), any(), any()))
+            .thenReturn(0L);
+        lenient().when(batchLogRepository.countPendingByTenantId(anyString())).thenReturn(0L);
+        lenient().when(batchLogRepository.findWindowByTenantAndChannel(
+            anyString(), any(), any(), any())).thenReturn(Collections.emptyList());
+        lenient().when(adminTestLogRepository.findWindowByTenantAndChannel(
+            anyString(), any(), any(), any())).thenReturn(Collections.emptyList());
     }
 
     @Test
-    @DisplayName("KPI 합산 — 외부발송 실패 / 검증 skip / 정책 skip / PENDING / 성공 모두 분리")
-    void kpiAggregatesFourCategories() {
+    @DisplayName("KPI — 외부 실패 / 검증 skip / 정책 skip / 성공 분류 정확도")
+    void kpiCategorizesAllFourBuckets() {
         LocalDateTime now = LocalDateTime.now();
-        NotificationBatchSendLog success = batchLog(true, "ALIMTALK", null, now);
-        NotificationBatchSendLog external = batchLog(false, "SMS", "SEND_FAILED",
-            now.minusMinutes(2));
-        NotificationBatchSendLog validation = batchLog(false, "ALIMTALK", "RECIPIENT_PHONE_MISSING",
-            now.minusMinutes(3));
-        NotificationBatchSendLog policy = batchLog(false, "ALIMTALK", "TEMPLATE_NOT_MAPPED",
-            now.minusMinutes(4));
-        NotificationBatchSendLog pending = batchLog(false, "PENDING", null,
-            now.minusMinutes(5));
+        List<NotificationBatchSendLog> batchRows = Arrays.asList(
+            batch(now, true, null, "ALIMTALK"),
+            batch(now, false, BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED, "SMS"),
+            batch(now, false, BatchNotificationTemplateCodes.ERROR_CODE_RECIPIENT_PHONE_MISSING, "ALIMTALK"),
+            batch(now, false, BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED, "ALIMTALK"),
+            batch(now, false, "PARSE_ERROR", "SMS"),
+            batch(now, false, BatchNotificationTemplateCodes.ERROR_CODE_MARKETING_NO_FALLBACK, "ALIMTALK")
+        );
+        when(batchLogRepository.findWindowByTenantAndChannel(eq(TENANT_ID), any(), any(), any()))
+            .thenReturn(batchRows);
+        when(batchLogRepository.countWindowByTenant(eq(TENANT_ID), any(), any())).thenReturn(2L);
+        when(batchLogRepository.countPendingByTenantId(TENANT_ID)).thenReturn(3L);
 
-        when(batchLogRepository.findWindowByTenantAndChannel(eq(TENANT), any(), any(), any()))
-            .thenReturn(List.of(success, external, validation, policy, pending));
-        when(adminTestLogRepository.findWindowByTenantAndChannel(eq(TENANT), any(), any(), any()))
-            .thenReturn(Collections.emptyList());
-        when(batchLogRepository.countPendingByTenantId(TENANT)).thenReturn(7L);
-        when(batchLogRepository.countWindowByTenant(eq(TENANT), any(), any())).thenReturn(3L);
-        when(adminTestLogRepository.countWindowByTenant(eq(TENANT), any(), any())).thenReturn(0L);
+        PushMonitoringSnapshotResponse response = service.loadSnapshot(
+            TENANT_ID, PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL, 20);
 
-        PushMonitoringSnapshotResponse response = service.buildSnapshot(TENANT,
-            PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL);
+        PushMonitoringKpiSummary kpi = response.getKpi();
+        assertThat(kpi.getRecentFiveMinuteCount()).isEqualTo(2L);
+        assertThat(kpi.getPendingCount()).isEqualTo(3L);
+        assertThat(kpi.getSuccessCount()).isEqualTo(1L);
+        assertThat(kpi.getExternalFailureCount()).isEqualTo(2L);
+        assertThat(kpi.getValidationSkipCount()).isEqualTo(1L);
+        assertThat(kpi.getPolicySkipCount()).isEqualTo(2L);
+        assertThat(kpi.getSkipTotalCount()).isEqualTo(3L);
+        assertThat(kpi.getFailureRate()).isCloseTo(2.0d / 3.0d, within(0.0005d));
+    }
 
-        assertThat(response.getKpi().getRecentFiveMinuteCount()).isEqualTo(3L);
-        assertThat(response.getKpi().getPendingCount()).isEqualTo(7L);
+    @Test
+    @DisplayName("PUSH 채널 필터 — batch 조회는 skip 되고 admin-test PUSH 만 모집단으로 산정")
+    void pushChannelFilterSkipsBatchQuery() {
+        LocalDateTime now = LocalDateTime.now();
+        when(adminTestLogRepository.findWindowByTenantAndChannel(eq(TENANT_ID), any(), any(),
+            eq(TestNotificationChannel.PUSH)))
+            .thenReturn(List.of(adminTest(now, true, null, TestNotificationChannel.PUSH)));
+
+        PushMonitoringSnapshotResponse response = service.loadSnapshot(
+            TENANT_ID, PushMonitoringRange.H24, PushMonitoringChannelFilter.PUSH, 20);
+
+        verify(batchLogRepository, never()).findWindowByTenantAndChannel(
+            anyString(), any(), any(), any());
         assertThat(response.getKpi().getSuccessCount()).isEqualTo(1L);
-        assertThat(response.getKpi().getExternalFailureCount()).isEqualTo(1L);
-        assertThat(response.getKpi().getValidationSkipCount()).isEqualTo(1L);
-        assertThat(response.getKpi().getPolicySkipCount()).isEqualTo(1L);
-        assertThat(response.getKpi().getSkipTotalCount()).isEqualTo(2L);
-        // failureRate = external / (success + external) = 1 / (1+1) = 0.5
-        assertThat(response.getKpi().getFailureRate()).isEqualTo(0.5d);
+        PushMonitoringChannelBreakdown push = response.getChannelBreakdown().stream()
+            .filter(c -> "PUSH".equals(c.getChannel())).findFirst().orElseThrow();
+        assertThat(push.getSuccessCount()).isEqualTo(1L);
     }
 
     @Test
-    @DisplayName("운영 토글 — alimtalkEnabled=false 가 운영 OFF 로 노출")
-    void operationalToggleFromProperties() {
-        when(batchLogRepository.findWindowByTenantAndChannel(eq(TENANT), any(), any(), any()))
-            .thenReturn(Collections.emptyList());
-        when(adminTestLogRepository.findWindowByTenantAndChannel(eq(TENANT), any(), any(), any()))
-            .thenReturn(Collections.emptyList());
-        when(batchLogRepository.countPendingByTenantId(TENANT)).thenReturn(0L);
-        when(batchLogRepository.countWindowByTenant(eq(TENANT), any(), any())).thenReturn(0L);
-        when(adminTestLogRepository.countWindowByTenant(eq(TENANT), any(), any())).thenReturn(0L);
+    @DisplayName("스냅샷 — TenantKakaoAlimtalkSettings 미존재 + 운영 토글 OFF 시 모두 false 응답")
+    void tenantSnapshotDefaultsWhenSettingsMissing() {
+        ReflectionTestUtils.setField(service, "kakaoAlimtalkEnabledGlobal", false);
+        batchNotificationProperties.setAlimtalkEnabled(false);
+        ReflectionTestUtils.setField(service, "notificationEnabledGlobal", false);
+        expoPushProperties.setAccessToken("");
 
-        PushMonitoringSnapshotResponse response = service.buildSnapshot(TENANT,
-            PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL);
+        PushMonitoringSnapshotResponse response = service.loadSnapshot(
+            TENANT_ID, PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL, 20);
 
-        assertThat(response.getTenantSnapshot().isAlimtalkEnabled()).isFalse();
-        assertThat(response.getTenantSnapshot().isKakaoApiKeyRegistered()).isTrue();
-        assertThat(response.getTenantSnapshot().isExpoPushAccessTokenRegistered()).isTrue();
-        assertThat(response.getOperationalToggle()).isNotNull();
-        assertThat(response.getOperationalToggle().isAlimtalk()).isFalse();
-        assertThat(response.getOperationalToggle().isPush()).isTrue();
+        PushMonitoringTenantSnapshot snapshot = response.getTenantSnapshot();
+        assertThat(snapshot.isAlimtalkEnabled()).isFalse();
+        assertThat(snapshot.isKakaoApiKeyRegistered()).isFalse();
+        assertThat(snapshot.isExpoPushAccessTokenRegistered()).isFalse();
+        assertThat(snapshot.getOperationalToggle().isAlimtalk()).isFalse();
+        assertThat(snapshot.getOperationalToggle().isSms()).isFalse();
+        assertThat(snapshot.getOperationalToggle().isPush()).isFalse();
     }
 
     @Test
-    @DisplayName("PUSH 자동 추적 미지원 플래그가 false 로 응답에 포함")
-    void pushAutoTrackingFlag() {
-        when(batchLogRepository.findWindowByTenantAndChannel(eq(TENANT), any(), any(), any()))
-            .thenReturn(Collections.emptyList());
-        when(adminTestLogRepository.findWindowByTenantAndChannel(eq(TENANT), any(), any(), any()))
-            .thenReturn(Collections.emptyList());
-        when(batchLogRepository.countPendingByTenantId(TENANT)).thenReturn(0L);
-        when(batchLogRepository.countWindowByTenant(eq(TENANT), any(), any())).thenReturn(0L);
-        when(adminTestLogRepository.countWindowByTenant(eq(TENANT), any(), any())).thenReturn(0L);
+    @DisplayName("스냅샷 — 알림톡 설정·Expo 토큰 등록 시 운영 토글 ON")
+    void tenantSnapshotReflectsActiveSettings() {
+        TenantKakaoAlimtalkSettings settings = new TenantKakaoAlimtalkSettings();
+        settings.setAlimtalkEnabled(true);
+        settings.setKakaoApiKeyRef("key-ref");
+        settings.setKakaoSenderKeyRef("sender-ref");
+        settings.setTemplateConsultationConfirmed("T1");
+        settings.setTemplateConsultationReminder("T2");
+        settings.setTemplateConsultationCancelled("T3");
+        when(alimtalkSettingsRepository.findByTenantIdAndIsDeletedFalse(TENANT_ID))
+            .thenReturn(java.util.Optional.of(settings));
+        expoPushProperties.setAccessToken("expo-access");
+        batchNotificationProperties.setAlimtalkEnabled(true);
 
-        PushMonitoringSnapshotResponse response = service.buildSnapshot(TENANT,
-            PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL);
+        PushMonitoringSnapshotResponse response = service.loadSnapshot(
+            TENANT_ID, PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL, 20);
 
-        assertThat(response.isPushAutoTrackingAvailable()).isFalse();
-        assertThat(response.isCostAvailable()).isFalse();
+        PushMonitoringTenantSnapshot snap = response.getTenantSnapshot();
+        assertThat(snap.isAlimtalkEnabled()).isTrue();
+        assertThat(snap.isKakaoApiKeyRegistered()).isTrue();
+        assertThat(snap.isKakaoSenderKeyRegistered()).isTrue();
+        assertThat(snap.getTemplateMapping().getFilled()).isEqualTo(3);
+        assertThat(snap.getTemplateMapping().getTotal())
+            .isEqualTo(AdminPushMonitoringServiceImpl.TEMPLATE_MAPPING_TOTAL_SLOTS);
+        assertThat(snap.isExpoPushAccessTokenRegistered()).isTrue();
+        assertThat(snap.getOperationalToggle().isAlimtalk()).isTrue();
+        assertThat(snap.getOperationalToggle().isPush()).isTrue();
     }
 
     @Test
-    @DisplayName("실패 사례 prefix — 카테고리별 한국어 prefix 가 errorMessage 에 포함")
-    void failurePrefix() {
+    @DisplayName("실패 사례 — BATCH source 는 retryable=false 고정, ADMIN_TEST 외부실패만 retryable=true")
+    void failureRetryableMatrix() {
         LocalDateTime now = LocalDateTime.now();
-        NotificationBatchSendLog log = NotificationBatchSendLog.builder()
-            .templateCode("RESERVATION_REMINDER_D2")
-            .targetType("SCHEDULE")
-            .targetId(1L)
-            .recipientUserId(99L)
-            .recipientPhoneMasked("010-***-1234")
-            .channelUsed("ALIMTALK")
-            .fallbackToSms(false)
-            .success(false)
-            .errorCode("SEND_FAILED")
-            .errorMessage("SOLAPI 4001")
-            .sentAt(now)
-            .build();
-        log.setId(42L);
-        log.setTenantId(TENANT);
+        when(batchLogRepository.findWindowByTenantAndChannel(eq(TENANT_ID), any(), any(), any()))
+            .thenReturn(List.of(batch(now, false,
+                BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED, "SMS")));
+        when(adminTestLogRepository.findWindowByTenantAndChannel(eq(TENANT_ID), any(), any(), any()))
+            .thenReturn(List.of(
+                adminTest(now, false, BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED,
+                    TestNotificationChannel.SMS),
+                adminTest(now, false, BatchNotificationTemplateCodes.ERROR_CODE_RECIPIENT_PHONE_MISSING,
+                    TestNotificationChannel.ALIMTALK)
+            ));
 
-        when(batchLogRepository.findWindowByTenantAndChannel(eq(TENANT), any(), any(), any()))
-            .thenReturn(List.of(log));
-        when(adminTestLogRepository.findWindowByTenantAndChannel(eq(TENANT), any(), any(), any()))
-            .thenReturn(Collections.emptyList());
-        when(batchLogRepository.countPendingByTenantId(TENANT)).thenReturn(0L);
-        when(batchLogRepository.countWindowByTenant(eq(TENANT), any(), any())).thenReturn(0L);
-        when(adminTestLogRepository.countWindowByTenant(eq(TENANT), any(), any())).thenReturn(0L);
+        PushMonitoringSnapshotResponse response = service.loadSnapshot(
+            TENANT_ID, PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL, 20);
 
-        PushMonitoringSnapshotResponse response = service.buildSnapshot(TENANT,
-            PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL);
-
-        assertThat(response.getFailures()).hasSize(1);
-        assertThat(response.getFailures().get(0).getErrorMessage())
-            .startsWith(AdminPushMonitoringServiceImpl.FAILURE_PREFIX_EXTERNAL);
-        assertThat(response.getFailures().get(0).isRetryable()).isTrue();
-        assertThat(response.getFailuresTotal()).isEqualTo(1L);
+        List<PushMonitoringFailureItem> failures = response.getFailures();
+        assertThat(failures).hasSize(3);
+        PushMonitoringFailureItem batch = failures.stream()
+            .filter(f -> "BATCH".equals(f.getSource())).findFirst().orElseThrow();
+        assertThat(batch.isRetryable()).isFalse();
+        assertThat(batch.getErrorCategory())
+            .isEqualTo(PushMonitoringErrorCodes.CATEGORY_EXTERNAL_FAILURE);
+        PushMonitoringFailureItem retryable = failures.stream()
+            .filter(f -> "ADMIN_TEST".equals(f.getSource())
+                && PushMonitoringErrorCodes.CATEGORY_EXTERNAL_FAILURE
+                    .equals(f.getErrorCategory()))
+            .findFirst().orElseThrow();
+        assertThat(retryable.isRetryable()).isTrue();
+        PushMonitoringFailureItem skip = failures.stream()
+            .filter(f -> "ADMIN_TEST".equals(f.getSource())
+                && PushMonitoringErrorCodes.CATEGORY_VALIDATION_SKIP
+                    .equals(f.getErrorCategory()))
+            .findFirst().orElseThrow();
+        assertThat(skip.isRetryable()).isFalse();
     }
 
-    private static NotificationBatchSendLog batchLog(boolean success, String channel,
-            String errorCode, LocalDateTime sentAt) {
-        NotificationBatchSendLog log = NotificationBatchSendLog.builder()
-            .templateCode("X")
-            .targetType("SCHEDULE")
+    @Test
+    @DisplayName("재발송 — BATCH source 는 후속 PR 안내로 차단")
+    void resendBatchSourceBlocked() {
+        PushMonitoringResendResponse response = service.resendFailure(
+            TENANT_ID, dummyUser(), 1L, "BATCH", null);
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getErrorCode())
+            .isEqualTo(AdminPushMonitoringServiceImpl.ERROR_CODE_BATCH_RESEND_NOT_SUPPORTED);
+        verify(rateLimiter, never()).tryAcquire(anyString(), anyLong());
+    }
+
+    @Test
+    @DisplayName("재발송 — 잘못된 source 는 RESEND_SOURCE_INVALID")
+    void resendInvalidSource() {
+        PushMonitoringResendResponse response = service.resendFailure(
+            TENANT_ID, dummyUser(), 1L, "BOGUS", null);
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getErrorCode())
+            .isEqualTo(AdminPushMonitoringServiceImpl.ERROR_CODE_RESEND_SOURCE_INVALID);
+    }
+
+    @Test
+    @DisplayName("재발송 — ADMIN_TEST + EXTERNAL_FAILURE + rate-limit 통과 시 성공")
+    void resendAdminTestSuccess() {
+        AdminTestNotificationLog row = adminTest(LocalDateTime.now(), false,
+            BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED, TestNotificationChannel.SMS);
+        ReflectionTestUtils.setField(row, "id", 9001L);
+        when(adminTestLogRepository.findByIdAndTenantId(9001L, TENANT_ID))
+            .thenReturn(java.util.Optional.of(row));
+        when(rateLimiter.tryAcquire(eq(TENANT_ID), anyLong()))
+            .thenReturn(AdminTestNotificationRateLimiter.Decision.allowed(9, 99));
+
+        PushMonitoringResendResponse response = service.resendFailure(
+            TENANT_ID, dummyUser(), 9001L, "ADMIN_TEST", "수동 재시도");
+
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.getResentLogId()).isEqualTo(9001L);
+        verify(rateLimiter, times(1)).recordAttempt(eq(TENANT_ID), anyLong());
+    }
+
+    @Test
+    @DisplayName("재발송 — ADMIN_TEST + 검증 skip 행은 RESEND_NOT_RETRYABLE")
+    void resendNotRetryable() {
+        AdminTestNotificationLog row = adminTest(LocalDateTime.now(), false,
+            BatchNotificationTemplateCodes.ERROR_CODE_RECIPIENT_PHONE_MISSING,
+            TestNotificationChannel.SMS);
+        ReflectionTestUtils.setField(row, "id", 9002L);
+        when(adminTestLogRepository.findByIdAndTenantId(9002L, TENANT_ID))
+            .thenReturn(java.util.Optional.of(row));
+
+        PushMonitoringResendResponse response = service.resendFailure(
+            TENANT_ID, dummyUser(), 9002L, "ADMIN_TEST", null);
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getErrorCode())
+            .isEqualTo(AdminPushMonitoringServiceImpl.ERROR_CODE_RESEND_NOT_RETRYABLE);
+    }
+
+    @Test
+    @DisplayName("재발송 — rate-limit 초과 시 RESEND_RATE_LIMITED")
+    void resendRateLimited() {
+        AdminTestNotificationLog row = adminTest(LocalDateTime.now(), false,
+            BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED, TestNotificationChannel.SMS);
+        ReflectionTestUtils.setField(row, "id", 9003L);
+        when(adminTestLogRepository.findByIdAndTenantId(9003L, TENANT_ID))
+            .thenReturn(java.util.Optional.of(row));
+        when(rateLimiter.tryAcquire(eq(TENANT_ID), anyLong()))
+            .thenReturn(AdminTestNotificationRateLimiter.Decision
+                .exceeded("PER_MINUTE", 0, 50, 60L));
+
+        PushMonitoringResendResponse response = service.resendFailure(
+            TENANT_ID, dummyUser(), 9003L, "ADMIN_TEST", null);
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getErrorCode())
+            .isEqualTo(AdminPushMonitoringServiceImpl.ERROR_CODE_RESEND_RATE_LIMITED);
+        verify(rateLimiter, never()).recordAttempt(anyString(), anyLong());
+    }
+
+    @Test
+    @DisplayName("일별 추이 — 윈도 범위의 모든 일자가 0 카운트로라도 list 에 포함된다")
+    void trendIncludesAllWindowDays() {
+        LocalDateTime now = LocalDateTime.now().withHour(12).withMinute(0).withSecond(0).withNano(0);
+        when(batchLogRepository.findWindowByTenantAndChannel(eq(TENANT_ID), any(), any(), any()))
+            .thenReturn(List.of(batch(now.minusDays(1L), true, null, "ALIMTALK")));
+
+        PushMonitoringSnapshotResponse response = service.loadSnapshot(
+            TENANT_ID, PushMonitoringRange.D7, PushMonitoringChannelFilter.ALL, 20);
+
+        assertThat(response.getTrendPoints()).hasSizeGreaterThanOrEqualTo(7);
+        long alimtalkSum = response.getTrendPoints().stream()
+            .mapToLong(p -> p.getAlimtalkCount()).sum();
+        assertThat(alimtalkSum).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("RECENT_QUEUE_WINDOW 노출 — 5분 윈도")
+    void recentQueueWindowExposes5Minutes() {
+        assertThat(AdminPushMonitoringServiceImpl.getRecentQueueWindow())
+            .isEqualTo(Duration.ofMinutes(5L));
+    }
+
+    private NotificationBatchSendLog batch(LocalDateTime sentAt, boolean success,
+            String errorCode, String channelUsed) {
+        NotificationBatchSendLog row = NotificationBatchSendLog.builder()
+            .templateCode("RESERVATION_REMINDER_D2")
+            .targetType(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE)
             .targetId(1L)
             .recipientUserId(2L)
-            .recipientPhoneMasked("010-***-0000")
-            .channelUsed(channel)
+            .recipientPhoneMasked("010-***-1234")
+            .channelUsed(channelUsed)
             .fallbackToSms(false)
             .success(success)
             .errorCode(errorCode)
-            .errorMessage(errorCode == null ? null : "msg")
+            .errorMessage(success ? null : "발송 실패: " + errorCode)
             .sentAt(sentAt)
             .build();
-        log.setTenantId(TENANT);
-        return log;
+        ReflectionTestUtils.setField(row, "tenantId", TENANT_ID);
+        return row;
     }
 
-    @SuppressWarnings("unused")
-    private static AdminTestNotificationLog testLog(boolean success, TestNotificationChannel ch,
-            String errorCode, LocalDateTime at) {
-        AdminTestNotificationLog log = AdminTestNotificationLog.builder()
-            .sentByUserId(1L)
-            .sentByUsername("u")
-            .sentAt(at)
-            .recipientPhoneMasked("010-***-1234")
-            .channel(ch)
-            .reason("test")
+    private AdminTestNotificationLog adminTest(LocalDateTime sentAt, boolean success,
+            String errorCode, TestNotificationChannel channel) {
+        AdminTestNotificationLog row = AdminTestNotificationLog.builder()
+            .sentByUserId(7L)
+            .sentByUsername("admin")
+            .sentAt(sentAt)
+            .recipientMode(TestNotificationRecipientMode.USER)
+            .recipientUserId(8L)
+            .recipientPhoneMasked("010-***-5678")
+            .channel(channel)
+            .templateCode(channel == TestNotificationChannel.ALIMTALK ? "ALIMTALK_T1" : null)
+            .reason("재시도 테스트")
             .success(success)
             .errorCode(errorCode)
+            .errorMessage(success ? null : "발송 실패: " + errorCode)
             .build();
-        log.setTenantId(TENANT);
-        return log;
+        ReflectionTestUtils.setField(row, "tenantId", TENANT_ID);
+        return row;
+    }
+
+    private User dummyUser() {
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", 7L);
+        return user;
     }
 }

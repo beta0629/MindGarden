@@ -13,6 +13,9 @@ import PropTypes from 'prop-types';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 import './PushMonitorRefreshIndicator.css';
 
+const DEFAULT_INTERVAL_MS = 60000;
+const MS_PER_SECOND = 1000;
+
 const formatTime = (iso) => {
   if (!iso) {
     return '';
@@ -32,10 +35,10 @@ const formatTime = (iso) => {
 };
 
 const PushMonitorRefreshIndicator = ({
-  lastRefreshedAtIso,
-  intervalMs,
-  isPolling,
-  hasError
+  lastRefreshedAtIso = null,
+  intervalMs = DEFAULT_INTERVAL_MS,
+  isPolling = false,
+  hasError = false
 }) => {
   const dotClass = [
     'mg-push-monitor__refresh-indicator__dot',
@@ -43,7 +46,7 @@ const PushMonitorRefreshIndicator = ({
     hasError ? 'mg-push-monitor__refresh-indicator__dot--error' : ''
   ].filter(Boolean).join(' ');
 
-  const intervalSec = Math.max(1, Math.round((intervalMs || 60000) / 1000));
+  const intervalSec = Math.max(1, Math.round((intervalMs || DEFAULT_INTERVAL_MS) / MS_PER_SECOND));
   const formatted = formatTime(lastRefreshedAtIso);
   let liveText;
   if (hasError) {
@@ -73,13 +76,6 @@ PushMonitorRefreshIndicator.propTypes = {
   intervalMs: PropTypes.number,
   isPolling: PropTypes.bool,
   hasError: PropTypes.bool
-};
-
-PushMonitorRefreshIndicator.defaultProps = {
-  lastRefreshedAtIso: null,
-  intervalMs: 60000,
-  isPolling: false,
-  hasError: false
 };
 
 export default PushMonitorRefreshIndicator;

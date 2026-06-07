@@ -13,7 +13,12 @@ import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import PushMonitorFailureList from '../molecules/PushMonitorFailureList';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 
-const PushMonitorFailureSection = ({ entries, totalCount, onResend, isResending }) => (
+const PushMonitorFailureSection = ({
+  entries = [],
+  totalCount = 0,
+  onResend,
+  isResending = false
+}) => (
   <ContentSection title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_FAILURES_TITLE}>
     <PushMonitorFailureList
       entries={entries}
@@ -29,12 +34,6 @@ PushMonitorFailureSection.propTypes = {
   totalCount: PropTypes.number,
   onResend: PropTypes.func.isRequired,
   isResending: PropTypes.bool
-};
-
-PushMonitorFailureSection.defaultProps = {
-  entries: [],
-  totalCount: 0,
-  isResending: false
 };
 
 export default PushMonitorFailureSection;

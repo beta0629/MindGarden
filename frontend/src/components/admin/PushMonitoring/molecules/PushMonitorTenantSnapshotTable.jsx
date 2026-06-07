@@ -27,7 +27,7 @@ const formatTemplateFraction = (filled, total) => {
   return `${f.toLocaleString('ko-KR')}${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TEMPLATE_FRACTION_SEPARATOR}${t.toLocaleString('ko-KR')}`;
 };
 
-const PushMonitorTenantSnapshotTable = ({ snapshot }) => {
+const PushMonitorTenantSnapshotTable = ({ snapshot = null }) => {
   const empty = !snapshot;
   const alimtalk = !!snapshot?.alimtalkEnabled;
   const apiKey = !!snapshot?.kakaoApiKeyRegistered;
@@ -104,7 +104,7 @@ const registeredLabel = (active) => (active
   ? ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SNAPSHOT_VALUE_REGISTERED
   : ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SNAPSHOT_VALUE_UNREGISTERED);
 
-const SnapshotRow = ({ label, children }) => (
+const SnapshotRow = ({ label, children = null }) => (
   <div className="mg-push-monitor__snapshot-row" role="row">
     <span className="mg-push-monitor__snapshot-row__label" role="cell">{label}</span>
     <span className="mg-push-monitor__snapshot-row__value" role="cell">{children}</span>
@@ -114,10 +114,6 @@ const SnapshotRow = ({ label, children }) => (
 SnapshotRow.propTypes = {
   label: PropTypes.string.isRequired,
   children: PropTypes.node
-};
-
-SnapshotRow.defaultProps = {
-  children: null
 };
 
 PushMonitorTenantSnapshotTable.propTypes = {
@@ -137,10 +133,6 @@ PushMonitorTenantSnapshotTable.propTypes = {
       push: PropTypes.bool
     })
   })
-};
-
-PushMonitorTenantSnapshotTable.defaultProps = {
-  snapshot: null
 };
 
 export default PushMonitorTenantSnapshotTable;

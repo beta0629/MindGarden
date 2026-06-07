@@ -14,7 +14,7 @@ import ContentSection from '../../../dashboard-v2/content/ContentSection';
 import PushMonitorTrendChart from '../molecules/PushMonitorTrendChart';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 
-const PushMonitorTrendSection = ({ points, channel }) => (
+const PushMonitorTrendSection = ({ points = [], channel = 'ALL' }) => (
   <ContentSection title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TREND_TITLE}>
     <PushMonitorTrendChart points={points} channel={channel} />
   </ContentSection>
@@ -23,11 +23,6 @@ const PushMonitorTrendSection = ({ points, channel }) => (
 PushMonitorTrendSection.propTypes = {
   points: PropTypes.array,
   channel: PropTypes.string
-};
-
-PushMonitorTrendSection.defaultProps = {
-  points: [],
-  channel: 'ALL'
 };
 
 export default PushMonitorTrendSection;

@@ -22,7 +22,7 @@ const PushMonitorOperationalBadge = ({
   tone,
   title,
   description,
-  code
+  code = null
 }) => {
   const className = [
     'mg-push-monitor__operational-banner',
@@ -47,10 +47,6 @@ PushMonitorOperationalBadge.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   code: PropTypes.string
-};
-
-PushMonitorOperationalBadge.defaultProps = {
-  code: null
 };
 
 export default PushMonitorOperationalBadge;

@@ -35,12 +35,12 @@ const formatValue = (value) => {
 const PushMonitorKpiCard = ({
   variant,
   label,
-  value,
-  unit,
-  subtitle,
-  distribution,
-  ariaLabel,
-  loading
+  value = 0,
+  unit = '',
+  subtitle = '',
+  distribution = null,
+  ariaLabel = '',
+  loading = false
 }) => {
   const className = [
     'mg-push-monitor__kpi-card',
@@ -91,15 +91,6 @@ PushMonitorKpiCard.propTypes = {
   })),
   ariaLabel: PropTypes.string,
   loading: PropTypes.bool
-};
-
-PushMonitorKpiCard.defaultProps = {
-  value: 0,
-  unit: '',
-  subtitle: '',
-  distribution: null,
-  ariaLabel: '',
-  loading: false
 };
 
 export default PushMonitorKpiCard;

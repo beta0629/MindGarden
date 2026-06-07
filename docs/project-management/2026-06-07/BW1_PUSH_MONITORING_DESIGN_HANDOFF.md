@@ -785,7 +785,105 @@ PUSH_MONITOR_ERROR_BANNER             = '데이터 로드에 실패했습니다.
 | 차트 라이브러리 | **외부 미도입**. CSS-driven stacked bar (`mg-v2-cumulative-chart` 패턴 답습) |
 | core-coder 추가 주의점 | (1) placeholder 파일 삭제 X — 라우터 import 만 교체 (2) `usePushMonitoringPolling` 단일 진입 (3) `unified-design-tokens.css` 수정 금지 (4) 한국어 리터럴 0 (5) D11 하드코딩 게이트 0 위반 (6) `recipient_phone_masked` 그대로 노출 (7) `UnifiedModal` 재사용 (8) recharts 등 외부 차트 라이브러리 추가 금지 |
 
-## 부록 B. 인용 문서
+## 부록 B. As-Built 정렬 (2026-06-07 추가)
+
+> 본 핸드오프는 원래 `PushMonitoring*` 접두 / `push-monitoring/` (kebab) 디렉토리 기준으로 설계되었으나, core-coder 의 구현 단계에서 가독성·실파일명 일관성(`AdminPushMonitoringPage.jsx` 와의 통일)을 위해 다음과 같이 정렬되었습니다. **설계 의도(11개 섹션 / 5·6·4·1 트리 / BEM root `mg-push-monitor` / 토큰 0 신설)는 100% 보존**됩니다.
+
+### B.1 디렉토리 정렬
+
+| 항목 | 핸드오프 원안 | As-Built |
+|------|---------------|----------|
+| 루트 디렉토리 | `frontend/src/components/admin/push-monitoring/` (kebab) | `frontend/src/components/admin/PushMonitoring/` (Pascal — 어드민 하위 다른 모듈 컨벤션과 동일) |
+| 페이지 파일 | `AdminPushMonitoringPage.js` | `AdminPushMonitoringPage.jsx` (`.jsx` 일관) |
+
+### B.2 컴포넌트 네이밍 정렬
+
+| 핸드오프 원안 | 계층(원안) | As-Built | 계층(As-Built) | 비고 |
+|---------------|------------|----------|----------------|------|
+| `PushMonitoringRefreshIndicator` | atom | `PushMonitorRefreshIndicator` | atom | 접두 단축 (`Push Monitoring` → `PushMonitor`) |
+| `PushMonitoringTrendBar` | atom | — | (`PushMonitorTrendChart` 내부 inline 으로 흡수) | CSS-driven 막대가 너무 가벼워 분리 비용 > 이득 |
+| `StatusToggleBadge` | atom | `PushMonitorStatusPill` | atom | 접두 통일 + `Pill` 형상 명시 |
+| `PushMonitoringFailureMessage` | atom | — | (`PushMonitorFailureList` row 내부 inline) | 단일 호출 지점 — 분리 보류 |
+| `PushMonitoringResendButton` | atom | — | (`PushMonitorFailureList` 내부 inline) | UnifiedModal trigger 가 단순해 분리 보류 |
+| — | — | `PushMonitorKpiCard` | atom (격하) | 원안 molecule → 단일 카드는 atom 분류가 더 적합 |
+| — | — | `PushMonitorOperationalBadge` | atom (신규) | 「알림톡 운영 OFF」 등 배지 표시 전용 |
+| — | — | `PushMonitorMaskedRecipient` | atom (신규) | `recipient_phone_masked` 노출 + ARIA 라벨 캡슐화 (D7 가드 강화) |
+| `PushMonitoringFilters` | molecule | `PushMonitorFilters` | molecule | 접두 단축 |
+| `PushMonitoringKpiCard` | molecule | (atom 으로 격하 — 위 참조) | atom | — |
+| `PushMonitoringOperationalBanner` | molecule | `PushMonitorOperationalBanners` | molecule | warning + info 두 배너를 한 컴포넌트에서 처리(복수형) |
+| `PushMonitoringCostPlaceholderCard` | molecule | (`PushMonitorOperationalSection` 내부 흡수) | — | OperationalSection organism 이 banner + 비용 placeholder 를 모두 관장 |
+| `PushMonitoringSnapshotRow` | molecule | (`PushMonitorTenantSnapshotTable` 내부 inline) | — | 행 분리가 props 복잡도만 키워 inline 유지 |
+| `PushMonitoringFailureRow` | molecule | (`PushMonitorFailureList` 내부 inline) | — | 동 |
+| `PushMonitoringKpiRow` | organism | `PushMonitorKpiRow` | molecule (격하) | 단순 grid wrapper — molecule 분류가 더 적합 |
+| `PushMonitoringTrendChart` | organism | `PushMonitorTrendChart` | molecule (격하) | 시각 단위 1개 — molecule |
+| `PushMonitoringSnapshotTable` | organism | `PushMonitorTenantSnapshotTable` | molecule (격하) | 동 |
+| `PushMonitoringFailureList` | organism | `PushMonitorFailureList` | molecule (격하) | 동 |
+| — | — | `PushMonitorOperationalSection` | organism (신규) | 운영 상태 ContentSection wrapper — 배너 + 비용 placeholder + (옵션) PUSH 갭 가드 |
+| — | — | `PushMonitorTrendSection` | organism (신규) | 추이 ContentSection wrapper |
+| — | — | `PushMonitorSnapshotSection` | organism (신규) | 스냅샷 ContentSection wrapper |
+| — | — | `PushMonitorFailureSection` | organism (신규) | 실패 사례 ContentSection wrapper + 페이지네이션 + UnifiedModal trigger |
+| `AdminPushMonitoringPage` | page | `AdminPushMonitoringPage` (동) | page | — |
+
+### B.3 As-Built 트리 (정렬판)
+
+```
+AdminPushMonitoringPage  (page)
+└─ AdminCommonLayout  (template, 기존)
+   └─ ContentArea  (organism, 기존 dashboard-v2/content)
+      ├─ ContentHeader  (organism, 기존)
+      ├─ PushMonitorFilters  (molecule, 신규)
+      │   ├─ SegmentedTabs ×2  (range / channel — 기존 common/SegmentedTabs 재사용)
+      │   └─ PushMonitorRefreshIndicator  (atom, 신규)
+      ├─ PushMonitorKpiRow  (molecule, 신규)
+      │   └─ PushMonitorKpiCard ×4  (atom, 신규 — variants: queue / success / failure / skip)
+      ├─ PushMonitorOperationalSection  (organism, 신규)
+      │   ├─ PushMonitorOperationalBanners  (molecule, 신규 — warning + info 동시)
+      │   │   └─ PushMonitorOperationalBadge  (atom, 신규)
+      │   └─ (비용 placeholder card — section 내부 inline)
+      ├─ PushMonitorTrendSection  (organism, 신규)
+      │   └─ PushMonitorTrendChart  (molecule, 신규 — CSS-driven stacked bar)
+      ├─ PushMonitorSnapshotSection  (organism, 신규)
+      │   └─ PushMonitorTenantSnapshotTable  (molecule, 신규)
+      │       └─ PushMonitorStatusPill  (atom, 신규 — ON/OFF/✓/✗)
+      └─ PushMonitorFailureSection  (organism, 신규)
+          └─ PushMonitorFailureList  (molecule, 신규)
+              ├─ PushMonitorMaskedRecipient  (atom, 신규 — D7 PII 가드 캡슐화)
+              └─ (재발송 버튼·error 메시지 — row 내부 inline)
+```
+
+### B.4 As-Built 합산 개수
+
+| 계층 | 신규 개수 | 파일 목록 |
+|------|-----------|-----------|
+| atoms | **6** | `PushMonitorKpiCard`, `PushMonitorMaskedRecipient`, `PushMonitorOperationalBadge`, `PushMonitorRefreshIndicator`, `PushMonitorStatusPill`, (`PushMonitorTrendBar` 흡수) |
+| molecules | **6** | `PushMonitorFailureList`, `PushMonitorFilters`, `PushMonitorKpiRow`, `PushMonitorOperationalBanners`, `PushMonitorTenantSnapshotTable`, `PushMonitorTrendChart` |
+| organisms | **4** | `PushMonitorOperationalSection`, `PushMonitorTrendSection`, `PushMonitorSnapshotSection`, `PushMonitorFailureSection` |
+| pages | **1** | `AdminPushMonitoringPage.jsx` |
+| **합계** | **17** | (원안 17개와 동일 — 분류만 재배치) |
+
+### B.5 BEM root 유지 — `mg-push-monitor`
+
+핸드오프 §5.1 의 모든 BEM 클래스는 그대로 사용되었습니다. CSS 토큰 신설 **0개** (§5.2 가드 유지). 페이지 wrapper 는 `className="mg-v2-ad-b0kla mg-push-monitor"` 로 B0KlA 시각 언어를 상속합니다(`AdminPushMonitoringPage.jsx` L100).
+
+### B.6 디자인 가드 (§10) 적용 결과
+
+| 가드 | As-Built 상태 |
+|------|---------------|
+| 알림톡 운영 OFF 배너 | ✅ `PushMonitorOperationalSection` → `PushMonitorOperationalBanners --warning` (BE `alimtalkEnabled=false` 시 조건 노출) |
+| PUSH 자동 결과 추적 갭 | ✅ `PushMonitorOperationalBanners --info` 상시 표시 |
+| 비용 placeholder | ✅ `PushMonitorOperationalSection` 내부 inline 카드 (점선 border, 채널별 발송 건수만) |
+| 본인 테넌트 한정 | ✅ BE `AdminPushMonitoringController` 가 SecurityContext 기준 단일 테넌트 응답 — selector 없음 |
+| PII 마스킹 | ✅ `PushMonitorMaskedRecipient` atom 으로 캡슐화 (BE `recipient_phone_masked` 그대로 통과, 재마스킹 X) |
+
+### B.7 마이그/후속 정리 권장
+
+- `PushMonitorOperationalSection` 내부 inline 비용 카드 → 단가 등록 시점에 `PushMonitorCostCard` 별도 molecule 로 추출 (예산 게이지 추가 시점).
+- `PushMonitorOperationalBanners` 가 banner 종류가 3+ 로 늘면 `OperationalBanner` 단일 molecule 로 분해 + Section 에서 배열 매핑.
+- 어드민 다른 모니터링 페이지(`AdminMindGardenObservabilityPage` 등)에 동일 패턴 도입 시 `PushMonitorOperationalSection` 을 `MonitoringStatusBannerSection` 으로 일반화 회수 (core-component-manager 평가).
+
+---
+
+## 부록 C. 인용 문서
 
 - `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md` — 위임 순서·테스터 게이트
 - `docs/design-system/PENCIL_DESIGN_GUIDE.md` — 펜슬 단일 소스·B0KlA 팔레트·반응형

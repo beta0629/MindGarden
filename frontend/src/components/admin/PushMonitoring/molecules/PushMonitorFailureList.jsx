@@ -62,7 +62,12 @@ const categoryLabel = (category) => {
   }
 };
 
-const PushMonitorFailureList = ({ entries, totalCount, onResend, isResending }) => {
+const PushMonitorFailureList = ({
+  entries = [],
+  totalCount = 0,
+  onResend,
+  isResending = false
+}) => {
   const [page, setPage] = useState(0);
   const [pendingTarget, setPendingTarget] = useState(null);
 
@@ -239,12 +244,6 @@ PushMonitorFailureList.propTypes = {
   totalCount: PropTypes.number,
   onResend: PropTypes.func.isRequired,
   isResending: PropTypes.bool
-};
-
-PushMonitorFailureList.defaultProps = {
-  entries: [],
-  totalCount: 0,
-  isResending: false
 };
 
 export default PushMonitorFailureList;

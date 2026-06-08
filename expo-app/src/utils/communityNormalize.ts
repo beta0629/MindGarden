@@ -53,10 +53,17 @@ function normalizePost(raw: unknown, index: number): CommunityPost | null {
   const tab = normalizeTab(o.tab ?? o.category ?? o.type);
   const effectiveTab: CommunityTab = tab === 'all' ? 'reviews' : tab;
 
+  const authorUserIdRaw = o.authorUserId ?? o.authorId ?? o.writerId;
+  const authorUserId =
+    typeof authorUserIdRaw === 'number' && Number.isFinite(authorUserIdRaw) && authorUserIdRaw > 0
+      ? authorUserIdRaw
+      : undefined;
+
   return {
     id,
     tab: effectiveTab,
     author: toDisplayString(o.author ?? o.writerName, '익명'),
+    authorUserId,
     specialty: toDisplayString(o.specialty ?? o.speciality, ''),
     title: title || toDisplayString(body, '게시글').slice(0, 80),
     body: body || title,

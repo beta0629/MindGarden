@@ -50,4 +50,25 @@ public class CommunityComment extends BaseEntity {
     /** 작성자 익명화 시각 — null 이면 미익명. */
     @Column(name = "author_anonymized_at")
     private java.time.LocalDateTime authorAnonymizedAt;
+
+    /** Apple T2 1.2 — 댓글 숨김 시각(어드민 또는 자동 격리). */
+    @Column(name = "hidden_at")
+    private java.time.LocalDateTime hiddenAt;
+
+    /** Apple T2 1.2 — 댓글 숨김 처리자. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hidden_by_user_id")
+    private User hiddenBy;
+
+    /** Apple T2 1.2 — 댓글 숨김 사유 메모. */
+    @Column(name = "hidden_reason", length = 200)
+    private String hiddenReason;
+
+    /** Apple T2 1.2 — 댓글 자동 모더레이션(금칙어 등) 매칭 여부. */
+    @Column(name = "auto_moderated", nullable = false)
+    private boolean autoModerated;
+
+    /** Apple T2 1.2 — 댓글 자동 필터 코드. */
+    @Column(name = "auto_moderated_reason_code", length = 64)
+    private String autoModeratedReasonCode;
 }

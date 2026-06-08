@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +11,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.CommunityModerationStatus;
 import com.coresolution.consultation.constant.CommunityPostKind;
+import com.coresolution.consultation.constant.CommunityReportPriority;
+import com.coresolution.consultation.constant.CommunityReportResolutionAction;
+import com.coresolution.consultation.constant.CommunityReportStatus;
 import com.coresolution.consultation.dto.community.CommunityCommentCreateRequest;
 import com.coresolution.consultation.dto.community.CommunityCommentResponse;
 import com.coresolution.consultation.dto.community.CommunityModerationPatchRequest;
@@ -18,6 +22,8 @@ import com.coresolution.consultation.dto.community.CommunityPostCreateRequest;
 import com.coresolution.consultation.dto.community.CommunityPostFeedItemResponse;
 import com.coresolution.consultation.dto.community.CommunityPostUpdateRequest;
 import com.coresolution.consultation.dto.community.CommunityReportCreateRequest;
+import com.coresolution.consultation.dto.community.CommunityReportQueueItemResponse;
+import com.coresolution.consultation.dto.community.CommunityReportResolutionRequest;
 import com.coresolution.consultation.entity.CommunityComment;
 import com.coresolution.consultation.entity.CommunityPost;
 import com.coresolution.consultation.entity.CommunityPostLike;
@@ -29,8 +35,11 @@ import com.coresolution.consultation.repository.CommunityPostLikeRepository;
 import com.coresolution.consultation.repository.CommunityPostRepository;
 import com.coresolution.consultation.repository.CommunityReportRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.CommunityContentFilterService;
 import com.coresolution.consultation.service.CommunityService;
+import com.coresolution.consultation.service.CommunityUserBlockService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -42,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author MindGarden
  * @since 2026-05-15
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -50,18 +60,30 @@ public class CommunityServiceImpl implements CommunityService {
     private static final DateTimeFormatter ISO_DT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     private static final int BODY_PREVIEW_MAX = 240;
 
+    /**
+     * Apple T2 (1.2 UGC) — 동일 콘텐츠 자동 격리 임계치.
+     *
+     * <p>같은 게시물·댓글에 대해 활성 신고가 {@value} 건 이상 누적되면 즉시 {@code hidden_at}
+     * 을 설정하고 마지막 신고를 {@link CommunityReportPriority#AUTO_QUARANTINE} 으로 마킹한다.
+     * Apple 1.2 의 24h SLA 가드와 함께 자동 보호선을 형성한다.</p>
+     */
+    static final int AUTO_QUARANTINE_THRESHOLD = 3;
+
     private final CommunityPostRepository communityPostRepository;
     private final CommunityCommentRepository communityCommentRepository;
     private final CommunityPostLikeRepository communityPostLikeRepository;
     private final CommunityReportRepository communityReportRepository;
     private final UserRepository userRepository;
+    private final CommunityUserBlockService communityUserBlockService;
+    private final CommunityContentFilterService communityContentFilterService;
 
     @Override
     @Transactional(readOnly = true)
     public List<CommunityPostFeedItemResponse> listApprovedFeed(User reader, String tab, Pageable pageable) {
         String tenantId = requireTenantId(reader);
-        List<CommunityPost> posts = loadApprovedPosts(tenantId, tab, pageable);
-        return mapPostsToFeed(tenantId, posts);
+        List<Long> blockedIds = communityUserBlockService.findBlockedUserIds(reader);
+        List<CommunityPost> posts = loadApprovedPosts(tenantId, tab, blockedIds, pageable);
+        return mapPostsToFeed(tenantId, posts, blockedIds);
     }
 
     @Override
@@ -69,8 +91,8 @@ public class CommunityServiceImpl implements CommunityService {
     public CommunityPostFeedItemResponse getPost(User reader, Long postId) {
         String tenantId = requireTenantId(reader);
         CommunityPost post = requireReadablePost(tenantId, postId, reader);
-        List<CommunityComment> comments = communityCommentRepository
-                .findByTenantIdAndPost_IdInAndIsDeletedFalseOrderByCreatedAtAsc(tenantId, List.of(post.getId()));
+        List<Long> blockedIds = communityUserBlockService.findBlockedUserIds(reader);
+        List<CommunityComment> comments = loadVisibleComments(tenantId, List.of(post.getId()), blockedIds);
         long likes = communityPostLikeRepository.countByTenantIdAndPost_IdAndIsDeletedFalse(tenantId, post.getId());
         return toFeedItem(post, comments, likes);
     }
@@ -79,16 +101,26 @@ public class CommunityServiceImpl implements CommunityService {
     public CommunityPostFeedItemResponse createPost(User author, CommunityPostCreateRequest request) {
         String tenantId = requireTenantId(author);
         validateKindForRole(author, request.getPostKind());
+        String title = request.getTitle().trim();
+        String body = request.getBody().trim();
+        CommunityContentFilterService.FilterResult filter = communityContentFilterService.inspect(title + "\n" + body);
+        boolean autoModerated = filter.matched();
+        if (autoModerated) {
+            log.warn("[CommunityService] createPost auto-moderation triggered — user={} reason={}",
+                    author.getId(), filter.reasonCode());
+        }
         User authorRef = userRepository.getReferenceById(author.getId());
         CommunityPost post = CommunityPost.builder()
                 .tenantId(tenantId)
                 .author(authorRef)
                 .postKind(request.getPostKind())
-                .title(request.getTitle().trim())
-                .body(request.getBody().trim())
+                .title(title)
+                .body(body)
                 .specialty(trimToNull(request.getSpecialty()))
                 .anonymous(request.isAnonymous())
                 .moderationStatus(CommunityModerationStatus.PENDING)
+                .autoModerated(autoModerated)
+                .autoModeratedReasonCode(autoModerated ? filter.reasonCode() : null)
                 .isDeleted(false)
                 .build();
         CommunityPost saved = communityPostRepository.save(post);
@@ -125,14 +157,26 @@ public class CommunityServiceImpl implements CommunityService {
     public CommunityCommentResponse addComment(User author, Long postId, CommunityCommentCreateRequest request) {
         String tenantId = requireTenantId(author);
         CommunityPost post = requireApprovedPost(tenantId, postId);
+        String body = request.getBody().trim();
+        CommunityContentFilterService.FilterResult filter = communityContentFilterService.inspect(body);
+        boolean autoModerated = filter.matched();
+        LocalDateTime now = LocalDateTime.now();
         User authorRef = userRepository.getReferenceById(author.getId());
         CommunityComment comment = CommunityComment.builder()
                 .tenantId(tenantId)
                 .post(post)
                 .author(authorRef)
-                .body(request.getBody().trim())
+                .body(body)
+                .autoModerated(autoModerated)
+                .autoModeratedReasonCode(autoModerated ? filter.reasonCode() : null)
+                .hiddenAt(autoModerated ? now : null)
+                .hiddenReason(autoModerated ? ("AUTO:" + filter.reasonCode()) : null)
                 .isDeleted(false)
                 .build();
+        if (autoModerated) {
+            log.warn("[CommunityService] addComment auto-moderation triggered — user={} reason={}",
+                    author.getId(), filter.reasonCode());
+        }
         CommunityComment saved = communityCommentRepository.save(comment);
         return toCommentResponse(saved);
     }
@@ -189,6 +233,11 @@ public class CommunityServiceImpl implements CommunityService {
                 throw new AccessDeniedException("해당 게시글의 댓글이 아닙니다.");
             }
         }
+        Long commentIdForLookup = targetComment != null ? targetComment.getId() : null;
+        if (communityReportRepository.existsActiveByReporter(
+                tenantId, reporter.getId(), postId, commentIdForLookup)) {
+            throw new AccessDeniedException("이미 신고하신 콘텐츠입니다.");
+        }
         User reporterRef = userRepository.getReferenceById(reporter.getId());
         CommunityReport report = CommunityReport.builder()
                 .tenantId(tenantId)
@@ -197,9 +246,52 @@ public class CommunityServiceImpl implements CommunityService {
                 .comment(targetComment)
                 .reasonCode(request.getReasonCode().name())
                 .detailMessage(trimToNull(request.getDetailMessage()))
+                .status(CommunityReportStatus.OPEN)
+                .priority(CommunityReportPriority.NORMAL)
                 .isDeleted(false)
                 .build();
-        communityReportRepository.save(report);
+        CommunityReport saved = communityReportRepository.save(report);
+        triggerAutoQuarantineIfNeeded(tenantId, post, targetComment, saved);
+    }
+
+    /**
+     * Apple T2 1.2 — 동일 콘텐츠 3건 누적 신고 자동 격리.
+     *
+     * <p>임계치 도달 시 콘텐츠의 {@code hidden_at} 을 즉시 설정하고 마지막 신고를
+     * {@link CommunityReportPriority#AUTO_QUARANTINE} 으로 마킹한다. 어드민이 24h SLA 내에 처리해야 한다.</p>
+     */
+    private void triggerAutoQuarantineIfNeeded(
+            String tenantId,
+            CommunityPost post,
+            CommunityComment targetComment,
+            CommunityReport latestReport) {
+        boolean isCommentReport = targetComment != null;
+        long activeCount = isCommentReport
+                ? communityReportRepository.countActiveByComment(tenantId, targetComment.getId())
+                : communityReportRepository.countActiveByPost(tenantId, post.getId());
+        if (activeCount < AUTO_QUARANTINE_THRESHOLD) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        latestReport.setPriority(CommunityReportPriority.AUTO_QUARANTINE);
+        communityReportRepository.save(latestReport);
+        if (isCommentReport) {
+            if (targetComment.getHiddenAt() == null) {
+                targetComment.setHiddenAt(now);
+                targetComment.setHiddenReason("AUTO:THREE_REPORTS");
+                communityCommentRepository.save(targetComment);
+                log.warn("[CommunityService] auto-quarantine triggered for comment id={} count={}",
+                        targetComment.getId(), activeCount);
+            }
+        } else {
+            if (post.getHiddenAt() == null) {
+                post.setHiddenAt(now);
+                post.setHiddenReason("AUTO:THREE_REPORTS");
+                communityPostRepository.save(post);
+                log.warn("[CommunityService] auto-quarantine triggered for post id={} count={}",
+                        post.getId(), activeCount);
+            }
+        }
     }
 
     @Override
@@ -266,13 +358,15 @@ public class CommunityServiceImpl implements CommunityService {
         communityPostRepository.save(post);
     }
 
-    private List<CommunityPostFeedItemResponse> mapPostsToFeed(String tenantId, List<CommunityPost> posts) {
+    private List<CommunityPostFeedItemResponse> mapPostsToFeed(
+            String tenantId,
+            List<CommunityPost> posts,
+            List<Long> blockedUserIds) {
         if (posts.isEmpty()) {
             return Collections.emptyList();
         }
         List<Long> ids = posts.stream().map(CommunityPost::getId).collect(Collectors.toList());
-        List<CommunityComment> allComments = communityCommentRepository
-                .findByTenantIdAndPost_IdInAndIsDeletedFalseOrderByCreatedAtAsc(tenantId, ids);
+        List<CommunityComment> allComments = loadVisibleComments(tenantId, ids, blockedUserIds);
         Map<Long, List<CommunityComment>> byPost = new LinkedHashMap<>();
         for (Long id : ids) {
             byPost.put(id, new ArrayList<>());
@@ -288,17 +382,35 @@ public class CommunityServiceImpl implements CommunityService {
         return out;
     }
 
-    private List<CommunityPost> loadApprovedPosts(String tenantId, String tab, Pageable pageable) {
+    private List<CommunityComment> loadVisibleComments(
+            String tenantId,
+            List<Long> postIds,
+            List<Long> blockedUserIds) {
+        boolean applyBlock = blockedUserIds != null && !blockedUserIds.isEmpty();
+        List<Long> ids = applyBlock ? blockedUserIds : List.of(-1L);
+        return communityCommentRepository.findVisibleByPostIds(tenantId, postIds, ids, applyBlock);
+    }
+
+    private List<CommunityPost> loadApprovedPosts(
+            String tenantId,
+            String tab,
+            List<Long> blockedUserIds,
+            Pageable pageable) {
+        boolean applyBlock = blockedUserIds != null && !blockedUserIds.isEmpty();
+        List<Long> ids = applyBlock ? blockedUserIds : List.of(-1L);
         String t = tab == null ? "all" : tab.trim().toLowerCase();
         if ("reviews".equals(t)) {
             return communityPostRepository.findFeedApprovedByKind(
-                    tenantId, CommunityModerationStatus.APPROVED, CommunityPostKind.CLIENT_REVIEW, pageable);
+                    tenantId, CommunityModerationStatus.APPROVED, CommunityPostKind.CLIENT_REVIEW,
+                    ids, applyBlock, pageable);
         }
         if ("columns".equals(t)) {
             return communityPostRepository.findFeedApprovedByKind(
-                    tenantId, CommunityModerationStatus.APPROVED, CommunityPostKind.CONSULTANT_COLUMN, pageable);
+                    tenantId, CommunityModerationStatus.APPROVED, CommunityPostKind.CONSULTANT_COLUMN,
+                    ids, applyBlock, pageable);
         }
-        return communityPostRepository.findFeedApprovedAll(tenantId, CommunityModerationStatus.APPROVED, pageable);
+        return communityPostRepository.findFeedApprovedAll(
+                tenantId, CommunityModerationStatus.APPROVED, ids, applyBlock, pageable);
     }
 
     private CommunityPost requireReadablePost(String tenantId, Long postId, User reader) {
@@ -430,5 +542,167 @@ public class CommunityServiceImpl implements CommunityService {
             return t;
         }
         return t.substring(0, BODY_PREVIEW_MAX) + "…";
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommunityReportQueueItemResponse> listReportQueue(
+            User admin,
+            CommunityReportStatus status,
+            Pageable pageable) {
+        requireAdmin(admin);
+        String tenantId = requireTenantId(admin);
+        List<CommunityReport> rows = communityReportRepository.findAdminQueue(tenantId, status, pageable);
+        List<CommunityReportQueueItemResponse> out = new ArrayList<>(rows.size());
+        for (CommunityReport r : rows) {
+            out.add(toReportQueueItem(r));
+        }
+        return out;
+    }
+
+    @Override
+    public void resolveReport(User admin, Long reportId, CommunityReportResolutionRequest request) {
+        requireAdmin(admin);
+        String tenantId = requireTenantId(admin);
+        CommunityReport report = communityReportRepository.findById(reportId)
+                .orElseThrow(() -> new EntityNotFoundException("신고를 찾을 수 없습니다."));
+        if (!Objects.equals(report.getTenantId(), tenantId)) {
+            throw new AccessDeniedException("다른 테넌트의 신고는 처리할 수 없습니다.");
+        }
+        if (report.getStatus() == CommunityReportStatus.RESOLVED
+                || report.getStatus() == CommunityReportStatus.REJECTED) {
+            throw new AccessDeniedException("이미 처리된 신고입니다.");
+        }
+        CommunityReportStatus targetStatus = request.getStatus();
+        if (targetStatus != CommunityReportStatus.RESOLVED
+                && targetStatus != CommunityReportStatus.REJECTED) {
+            throw new AccessDeniedException("status 는 RESOLVED 또는 REJECTED 만 허용됩니다.");
+        }
+        CommunityReportResolutionAction action = request.getAction();
+        if (targetStatus == CommunityReportStatus.REJECTED) {
+            action = CommunityReportResolutionAction.NONE;
+        } else if (action == null || action == CommunityReportResolutionAction.NONE) {
+            throw new AccessDeniedException("RESOLVED 처리에는 액션이 필요합니다.");
+        }
+        report.setStatus(targetStatus);
+        report.setResolutionAction(action);
+        report.setResolvedAt(LocalDateTime.now());
+        report.setResolvedByAdmin(userRepository.getReferenceById(admin.getId()));
+        communityReportRepository.save(report);
+        applyResolutionAction(tenantId, report, action, trimToNull(request.getNote()), admin);
+    }
+
+    private void applyResolutionAction(
+            String tenantId,
+            CommunityReport report,
+            CommunityReportResolutionAction action,
+            String note,
+            User admin) {
+        switch (action) {
+            case HIDE_CONTENT -> {
+                if (report.getComment() != null) {
+                    hideCommentEntity(report.getComment(), admin, note, true);
+                } else {
+                    hidePostEntity(report.getPost(), admin, note, true);
+                }
+            }
+            case DELETE_CONTENT -> {
+                if (report.getComment() != null) {
+                    report.getComment().delete();
+                    communityCommentRepository.save(report.getComment());
+                } else {
+                    report.getPost().delete();
+                    communityPostRepository.save(report.getPost());
+                }
+            }
+            case SUSPEND_USER, BAN_USER -> log.info(
+                "[CommunityService] resolution action {} requested for report id={} — user account "
+                + "actions will be applied by UserAccountService in follow-up",
+                action, report.getId());
+            case NONE -> {
+                // 기각(REJECTED) 처리이거나 액션 없음 — 별도 조치 없음.
+            }
+        }
+    }
+
+    @Override
+    public void hidePost(User admin, Long postId, String reason, boolean hide) {
+        requireAdmin(admin);
+        String tenantId = requireTenantId(admin);
+        CommunityPost post = communityPostRepository
+                .findByTenantIdAndIdAndIsDeletedFalse(tenantId, postId)
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+        hidePostEntity(post, admin, reason, hide);
+    }
+
+    @Override
+    public void hideComment(User admin, Long commentId, String reason, boolean hide) {
+        requireAdmin(admin);
+        String tenantId = requireTenantId(admin);
+        CommunityComment comment = communityCommentRepository
+                .findByTenantIdAndIdAndIsDeletedFalse(tenantId, commentId)
+                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
+        hideCommentEntity(comment, admin, reason, hide);
+    }
+
+    private void hidePostEntity(CommunityPost post, User admin, String reason, boolean hide) {
+        if (hide) {
+            post.setHiddenAt(LocalDateTime.now());
+            post.setHiddenBy(userRepository.getReferenceById(admin.getId()));
+            post.setHiddenReason(trimToNull(reason));
+        } else {
+            post.setHiddenAt(null);
+            post.setHiddenBy(null);
+            post.setHiddenReason(null);
+        }
+        communityPostRepository.save(post);
+    }
+
+    private void hideCommentEntity(CommunityComment comment, User admin, String reason, boolean hide) {
+        if (hide) {
+            comment.setHiddenAt(LocalDateTime.now());
+            comment.setHiddenBy(userRepository.getReferenceById(admin.getId()));
+            comment.setHiddenReason(trimToNull(reason));
+        } else {
+            comment.setHiddenAt(null);
+            comment.setHiddenBy(null);
+            comment.setHiddenReason(null);
+        }
+        communityCommentRepository.save(comment);
+    }
+
+    private CommunityReportQueueItemResponse toReportQueueItem(CommunityReport r) {
+        CommunityPost post = r.getPost();
+        CommunityComment comment = r.getComment();
+        long minutesSince = 0L;
+        if (r.getCreatedAt() != null) {
+            minutesSince = java.time.Duration.between(r.getCreatedAt(), LocalDateTime.now()).toMinutes();
+            if (minutesSince < 0L) {
+                minutesSince = 0L;
+            }
+        }
+        User resolvedAdmin = r.getResolvedByAdmin();
+        return CommunityReportQueueItemResponse.builder()
+                .id(r.getId())
+                .status(r.getStatus())
+                .priority(r.getPriority())
+                .reasonCode(r.getReasonCode())
+                .detailMessage(r.getDetailMessage())
+                .reporterDisplay(displayForUser(r.getReporter(), false))
+                .reporterUserId(r.getReporter().getId())
+                .postId(post.getId())
+                .postAuthorDisplay(displayForUser(post.getAuthor(), post.isAnonymous()))
+                .postAuthorUserId(post.getAuthor().getId())
+                .postTitle(post.getTitle())
+                .postBodyPreview(bodyPreview(post.getBody()))
+                .commentId(comment != null ? comment.getId() : null)
+                .commentBodyPreview(comment != null ? bodyPreview(comment.getBody()) : null)
+                .postHidden(post.getHiddenAt() != null)
+                .createdAt(fmt(r.getCreatedAt()))
+                .minutesSinceCreated(minutesSince)
+                .resolvedAt(fmt(r.getResolvedAt()))
+                .resolvedByDisplay(resolvedAdmin != null ? displayForUser(resolvedAdmin, false) : null)
+                .resolutionAction(r.getResolutionAction())
+                .build();
     }
 }

@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Heart, MessageCircle, MoreHorizontal, Plus,
-  Users, Flag
+  Users, Flag, Ban
 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { useAlert } from '../../hooks/useAlert';
@@ -22,6 +22,8 @@ import {
   getAuthorAvatarInitial,
   getAuthorDisplay
 } from '../../utils/communityAuthorDisplay';
+import ReportModal from './ReportModal';
+import BlockConfirmModal from './BlockConfirmModal';
 import './CommunityFeed.css';
 
 const TABS = [
@@ -88,6 +90,8 @@ const CommunityFeed = ({ primaryColor }) => {
   const [newTitle, setNewTitle] = useState('');
   const [newBody, setNewBody] = useState('');
   const [reportPostId, setReportPostId] = useState(null);
+  const [reportTarget, setReportTarget] = useState(null);
+  const [blockTarget, setBlockTarget] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -143,12 +147,23 @@ const CommunityFeed = ({ primaryColor }) => {
     showToast({ message: '글이 게시되었습니다.', type: 'success' });
   };
 
-  const handleReport = async(postId) => {
+  const handleReport = (post) => {
     setReportPostId(null);
-    await alert({
-      variant: 'success',
-      messageKey: 'modal.community.report.success.message'
-    });
+    setReportTarget({ postId: post.id });
+  };
+
+  const handleBlock = (post) => {
+    setReportPostId(null);
+    const authorId = post.authorUserId || post.authorId;
+    if (!authorId) {
+      showToast({ type: 'warning', message: '익명 게시글은 차단할 수 없습니다.' });
+      return;
+    }
+    setBlockTarget({ userId: authorId, displayName: getAuthorDisplay(post, t) });
+  };
+
+  const handleBlocked = (blockedUserId) => {
+    setPosts((prev) => prev.filter((p) => (p.authorUserId || p.authorId) !== blockedUserId));
   };
 
   const openPostDetail = (post) => {
@@ -233,11 +248,24 @@ const CommunityFeed = ({ primaryColor }) => {
                           className="community__report-item"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleReport(post.id);
+                            handleReport(post);
                           }}
+                          data-testid={`community-feed-report-${post.id}`}
                         >
                           <Flag size={14} className="community__report-item-icon" />
-                          신고
+                          신고하기
+                        </button>
+                        <button
+                          type="button"
+                          className="community__report-item"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleBlock(post);
+                          }}
+                          data-testid={`community-feed-block-${post.id}`}
+                        >
+                          <Ban size={14} className="community__report-item-icon" />
+                          사용자 차단
                         </button>
                       </div>
                     )}
@@ -348,6 +376,22 @@ const CommunityFeed = ({ primaryColor }) => {
             </button>
           </div>
         </>
+      )}
+      {reportTarget && (
+        <ReportModal
+          isOpen
+          postId={reportTarget.postId}
+          onClose={() => setReportTarget(null)}
+        />
+      )}
+      {blockTarget && (
+        <BlockConfirmModal
+          isOpen
+          userId={blockTarget.userId}
+          displayName={blockTarget.displayName}
+          onClose={() => setBlockTarget(null)}
+          onBlocked={handleBlocked}
+        />
       )}
       <AlertModal />
     </div>

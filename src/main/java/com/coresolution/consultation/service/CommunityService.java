@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import java.util.List;
 import com.coresolution.consultation.constant.CommunityModerationStatus;
+import com.coresolution.consultation.constant.CommunityReportStatus;
 import com.coresolution.consultation.dto.community.CommunityCommentCreateRequest;
 import com.coresolution.consultation.dto.community.CommunityCommentResponse;
 import com.coresolution.consultation.dto.community.CommunityModerationPatchRequest;
@@ -10,6 +11,8 @@ import com.coresolution.consultation.dto.community.CommunityPostCreateRequest;
 import com.coresolution.consultation.dto.community.CommunityPostFeedItemResponse;
 import com.coresolution.consultation.dto.community.CommunityPostUpdateRequest;
 import com.coresolution.consultation.dto.community.CommunityReportCreateRequest;
+import com.coresolution.consultation.dto.community.CommunityReportQueueItemResponse;
+import com.coresolution.consultation.dto.community.CommunityReportResolutionRequest;
 import com.coresolution.consultation.entity.User;
 import org.springframework.data.domain.Pageable;
 
@@ -73,4 +76,46 @@ public interface CommunityService {
             Pageable pageable);
 
     void moderatePost(User admin, Long postId, CommunityModerationPatchRequest request);
+
+    /**
+     * Apple T2 (1.2 UGC) — 어드민 신고 처리 큐 조회.
+     *
+     * @param admin    관리자
+     * @param status   상태 필터(null 이면 전체)
+     * @param pageable 페이지
+     * @return 신고 큐 항목 목록(OPEN/UNDER_REVIEW 우선)
+     */
+    List<CommunityReportQueueItemResponse> listReportQueue(
+            User admin,
+            CommunityReportStatus status,
+            Pageable pageable);
+
+    /**
+     * Apple T2 (1.2 UGC) — 신고 처리 (RESOLVED/REJECTED).
+     *
+     * @param admin    관리자
+     * @param reportId 신고 row id
+     * @param request  처리 결정
+     */
+    void resolveReport(User admin, Long reportId, CommunityReportResolutionRequest request);
+
+    /**
+     * Apple T2 (1.2 UGC) — 게시물 숨김/복원 (어드민).
+     *
+     * @param admin   관리자
+     * @param postId  게시글 id
+     * @param reason  숨김 사유(복원 시 무시)
+     * @param hide    true=숨김, false=복원
+     */
+    void hidePost(User admin, Long postId, String reason, boolean hide);
+
+    /**
+     * Apple T2 (1.2 UGC) — 댓글 숨김/복원 (어드민).
+     *
+     * @param admin     관리자
+     * @param commentId 댓글 id
+     * @param reason    숨김 사유(복원 시 무시)
+     * @param hide      true=숨김, false=복원
+     */
+    void hideComment(User admin, Long commentId, String reason, boolean hide);
 }

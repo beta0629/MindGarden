@@ -30,6 +30,7 @@ export interface CommunityPost {
   readonly id: number;
   readonly tab: CommunityTab;
   readonly author: string;
+  readonly authorUserId?: number;
   readonly specialty: string;
   readonly title: string;
   readonly body: string;

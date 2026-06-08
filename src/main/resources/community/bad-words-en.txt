@@ -1,0 +1,30 @@
+# Apple T2 (1.2 UGC) — 영어 자동 필터 사전
+# - 작성: 2026-06-07
+# - 정책: 영어 욕설/혐오/성적/폭력 표현 단순 사전 매칭(소문자 정규화 후 비교).
+# - 한 줄당 한 단어. 주석은 # 으로 시작.
+
+# === Profanity ===
+fuck
+fucking
+shit
+asshole
+bastard
+bitch
+dick
+piss
+
+# === Slurs / hate ===
+nigger
+faggot
+
+# === Sexual ===
+porn
+sex
+sexual
+xxx
+
+# === Violence ===
+kill
+murder
+suicide
+selfharm

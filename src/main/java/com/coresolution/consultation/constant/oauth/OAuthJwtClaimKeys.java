@@ -20,6 +20,12 @@ public final class OAuthJwtClaimKeys {
     public static final String SNS_PHONE = "snsPhone";
     public static final String SNS_PROFILE_IMAGE_URL = "snsProfileImageUrl";
 
+    /** Apple SIWA 휴대폰 매칭 흐름용 — OTP 발송 시 발급된 DB row 의 식별자(otp_id). */
+    public static final String OTP_ID = "otpId";
+
+    /** Apple SIWA 휴대폰 매칭 흐름용 — 정규화 phone 의 SHA-256 해시(소문자 hex). */
+    public static final String PHONE_HASH = "phoneHash";
+
     private OAuthJwtClaimKeys() {
     }
 }

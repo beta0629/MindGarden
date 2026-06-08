@@ -23,8 +23,33 @@ public class AppleSignInResponse {
     /** 인증 결과 (true = 로그인 성공 또는 가입 필요 신호 정상 반환, false = 검증 실패). */
     private boolean success;
 
-    /** 신규 사용자 분기 (true 면 클라이언트가 social-signup 화면으로 이동). */
+    /**
+     * @deprecated 2026-06-08 — Apple SIWA 흐름 재정렬 후 사용하지 않는다. 휴대폰 매칭으로 통일됐기 때문에
+     * 클라이언트는 {@link #requiresPhoneVerification} 를 참고해야 한다. 기존 클라이언트 호환을 위해 필드는 유지.
+     */
+    @Deprecated
     private boolean requiresSignup;
+
+    /**
+     * Apple SIWA 휴대폰 매칭 1단계 신호. apple_sub 매칭 사용자가 없을 때 true.
+     * 이 경우 클라이언트는 phone 입력 화면으로 이동, OTP send/verify 를 호출한다.
+     */
+    private boolean requiresPhoneVerification;
+
+    /**
+     * {@link #requiresPhoneVerification} 가 true 일 때 함께 발급되는 단기 JWT.
+     * verify 단계에서 함께 전송한다.
+     */
+    private String phoneVerificationToken;
+
+    /**
+     * 휴대폰 인증 성공 후 phone 매칭 결과 후보가 2명+ (역할 혼재) 일 때 true.
+     * 클라이언트는 기존 OAuth 계정 선택 화면(`oauth-account-selection`) 으로 라우팅한다.
+     */
+    private boolean requiresPhoneAccountSelection;
+
+    /** {@link #requiresPhoneAccountSelection} 가 true 일 때 함께 발급되는 기존 OAuth 계정 선택 토큰. */
+    private String phoneAccountSelectionToken;
 
     /** 사용자 알림용 메시지. */
     private String message;

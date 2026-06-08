@@ -1,7 +1,11 @@
 package com.coresolution.consultation.controller;
 
+import com.coresolution.consultation.dto.auth.ApplePhoneSendRequest;
+import com.coresolution.consultation.dto.auth.ApplePhoneSendResponse;
+import com.coresolution.consultation.dto.auth.ApplePhoneVerifyRequest;
 import com.coresolution.consultation.dto.auth.AppleSignInRequest;
 import com.coresolution.consultation.dto.auth.AppleSignInResponse;
+import com.coresolution.consultation.service.ApplePhoneVerificationService;
 import com.coresolution.consultation.service.AppleSignInService;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -23,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  *   <li>{@code POST /api/v1/auth/oauth/apple/login} — Native iOS / 웹 (identityToken 우선)</li>
  *   <li>{@code POST /api/v1/auth/oauth/apple/callback} — 웹 서버 콜백 (authorizationCode 우선)</li>
+ *   <li>{@code POST /api/v1/auth/oauth/apple/phone/send} — apple_sub 매칭 실패 시 휴대폰 인증 OTP 발송</li>
+ *   <li>{@code POST /api/v1/auth/oauth/apple/phone/verify} — OTP 검증 + 휴대폰 매칭 + JWT 발급</li>
  * </ul>
  *
  * <p>두 경로 모두 {@code /api/v1/auth/**} 매처에 의해 permitAll 처리되며,
@@ -38,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AppleSignInController extends BaseApiController {
 
     private final AppleSignInService appleSignInService;
+    private final ApplePhoneVerificationService applePhoneVerificationService;
 
     /**
      * Apple identityToken 기반 로그인/가입.
@@ -54,9 +61,7 @@ public class AppleSignInController extends BaseApiController {
             request.getEmail() != null);
         AppleSignInResponse response = appleSignInService.signIn(request);
         if (response.isSuccess()) {
-            return success(response.isRequiresSignup()
-                ? "Apple 신규 가입 정보 prefill"
-                : (response.getMessage() != null ? response.getMessage() : "Apple 로그인 성공"), response);
+            return success(response.getMessage() != null ? response.getMessage() : "Apple 로그인 성공", response);
         }
         return success(response.getMessage() != null ? response.getMessage() : "Apple 로그인 실패", response);
     }
@@ -77,5 +82,48 @@ public class AppleSignInController extends BaseApiController {
             return success(response.getMessage() != null ? response.getMessage() : "Apple 콜백 처리 성공", response);
         }
         return success(response.getMessage() != null ? response.getMessage() : "Apple 콜백 처리 실패", response);
+    }
+
+    /**
+     * Apple SIWA 휴대폰 매칭 흐름 — OTP 발송.
+     *
+     * <p>{@code /api/v1/auth/oauth/apple/login} 응답으로 받은 {@code phoneVerificationToken} 과
+     * 사용자가 입력한 휴대폰 번호로 OTP 를 발송한다. 응답에는 verify 시 함께 보낼 {@code otpChallengeToken} 이 포함된다.</p>
+     *
+     * @param request {@code phoneVerificationToken + phoneNumber}
+     * @return 발송 결과 + challenge 토큰
+     */
+    @PostMapping("/phone/send")
+    public ResponseEntity<ApiResponse<ApplePhoneSendResponse>> sendPhoneOtp(
+            @Valid @RequestBody ApplePhoneSendRequest request) {
+        log.info("Apple SIWA OTP 발송 요청 수신: hasPhoneVerificationToken={}, hasPhoneNumber={}",
+            request.getPhoneVerificationToken() != null,
+            request.getPhoneNumber() != null);
+        ApplePhoneSendResponse response = applePhoneVerificationService.sendOtp(request);
+        return success(response.getMessage() != null ? response.getMessage() : "Apple SIWA OTP 처리", response);
+    }
+
+    /**
+     * Apple SIWA 휴대폰 매칭 흐름 — OTP 검증 + 휴대폰 매칭 + JWT 발급.
+     *
+     * <p>휴대폰 매칭 결과에 따라:
+     * <ul>
+     *   <li>매칭 1명/없음 → {@code success=true} + accessToken/refreshToken + user (정상 로그인)</li>
+     *   <li>매칭 N명(역할 혼재) → {@code requiresPhoneAccountSelection=true} + 기존 OAuth 계정 선택 토큰</li>
+     * </ul>
+     * </p>
+     *
+     * @param request {@code phoneVerificationToken + otpChallengeToken + code}
+     * @return AppleSignInResponse (정상 로그인 응답 또는 selection 분기)
+     */
+    @PostMapping("/phone/verify")
+    public ResponseEntity<ApiResponse<AppleSignInResponse>> verifyPhoneOtp(
+            @Valid @RequestBody ApplePhoneVerifyRequest request) {
+        log.info("Apple SIWA OTP 검증 요청 수신: hasPhoneVerificationToken={}, hasOtpChallengeToken={}, hasCode={}",
+            request.getPhoneVerificationToken() != null,
+            request.getOtpChallengeToken() != null,
+            request.getCode() != null);
+        AppleSignInResponse response = applePhoneVerificationService.verifyOtp(request);
+        return success(response.getMessage() != null ? response.getMessage() : "Apple SIWA 휴대폰 인증 처리", response);
     }
 }

@@ -1,8 +1,8 @@
 package com.coresolution.consultation.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Sign in with Apple (SIWA) OAuth2 자격증명 프로퍼티.
@@ -29,7 +29,7 @@ import lombok.Data;
  * @since 2026-06-07
  */
 @Data
-@Component
+@NoArgsConstructor
 @ConfigurationProperties(prefix = "apple")
 public class AppleOAuth2Properties {
 

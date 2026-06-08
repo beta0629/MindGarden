@@ -83,6 +83,7 @@ import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
+import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.consultation.util.RrnValidationUtil;
 import com.coresolution.consultation.util.VehiclePlateText;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -249,9 +250,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             consultant.setRole(registrationRole);
             consultant.setProfessionalProviderTypeCode(professionalProviderTypeCode);
-            if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
-                consultant.setProfileImageUrl(request.getProfileImageUrl().trim());
-            }
+            applyProfileImageUrlIfPresent(consultant, request.getProfileImageUrl());
             if (consultant instanceof Consultant) {
                 Consultant c = (Consultant) consultant;
                 c.setCertification(request.getQualifications());
@@ -337,9 +336,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (request.getWorkHistory() != null && !request.getWorkHistory().trim().isEmpty()) {
                 consultant.setWorkHistory(request.getWorkHistory().trim());
             }
-            if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
-                consultant.setProfileImageUrl(request.getProfileImageUrl().trim());
-            }
+            applyProfileImageUrlIfPresent(consultant, request.getProfileImageUrl());
             if (request.getGrade() != null && !request.getGrade().trim().isEmpty()) {
                 consultant.setGrade(request.getGrade().trim());
             }
@@ -505,9 +502,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .build();
 
         clientUser.setTenantId(tenantId);
-        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
-            clientUser.setProfileImageUrl(request.getProfileImageUrl().trim());
-        }
+        applyProfileImageUrlIfPresent(clientUser, request.getProfileImageUrl());
         applyRrnAndAddressToUser(clientUser, request.getRrnFirst6(), request.getRrnLast1(),
                 request.getAddress(), request.getAddressDetail(), request.getPostalCode());
 
@@ -653,9 +648,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .branchCode(null)
                 .build();
         staffUser.setTenantId(tenantId);
-        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
-            staffUser.setProfileImageUrl(request.getProfileImageUrl().trim());
-        }
+        applyProfileImageUrlIfPresent(staffUser, request.getProfileImageUrl());
         applyRrnAndAddressToUser(staffUser, request.getRrnFirst6(), request.getRrnLast1(),
                 request.getAddress(), request.getAddressDetail(), request.getPostalCode());
 
@@ -2659,9 +2652,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (request.getSpecialization() != null) {
             consultant.setSpecialization(request.getSpecialization());
         }
-        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
-            consultant.setProfileImageUrl(request.getProfileImageUrl().trim());
-        }
+        applyProfileImageUrlIfPresent(consultant, request.getProfileImageUrl());
 
         boolean consultantPasswordChange = request.getPassword() != null && !request.getPassword().trim().isEmpty();
         if (consultantPasswordChange) {
@@ -2800,9 +2791,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             clientUser.setPhone(encryptionUtil.safeEncrypt(request.getPhone()));
         }
-        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().trim().isEmpty()) {
-            clientUser.setProfileImageUrl(request.getProfileImageUrl().trim());
-        }
+        applyProfileImageUrlIfPresent(clientUser, request.getProfileImageUrl());
         if (request.getNotes() != null) {
             clientUser.setNotes(request.getNotes().trim().isEmpty() ? null : request.getNotes().trim());
         }
@@ -7161,6 +7150,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * @param postalCode    우편번호
      * @throws IllegalArgumentException 주민번호 형식 오류 시
      */
+    /**
+     * 어드민 등록·수정 요청에서 받은 {@code profileImageUrl} 을 base64 가드와 trim 처리 후 user 에 적용한다.
+     *
+     * <p>2026-06-08 — {@code users.profile_image_url} 컬럼에 base64 dataURI 가 저장돼 응답 본문이 폭증하는
+     * 회귀를 차단하기 위해 6 군데의 동일 패턴을 본 헬퍼로 통합한다. null·blank 는 무시한다.</p>
+     *
+     * @param user 대상 User 엔티티(null 이면 무시)
+     * @param rawProfileImageUrl request DTO 의 profile image URL 원본
+     */
+    private void applyProfileImageUrlIfPresent(User user, String rawProfileImageUrl) {
+        if (user == null || rawProfileImageUrl == null) {
+            return;
+        }
+        String trimmed = rawProfileImageUrl.trim();
+        if (trimmed.isEmpty()) {
+            return;
+        }
+        ProfileImageUrlGuard.validateInbound(trimmed);
+        user.setProfileImageUrl(trimmed);
+    }
+
     private void applyRrnAndAddressToUser(User user, String rrnFirst6, String rrnLast1,
             String address, String addressDetail, String postalCode) {
         if (user == null) {

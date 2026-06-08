@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MyPageService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -148,10 +149,10 @@ public class MyPageServiceImpl implements MyPageService {
                 .postalCode(mpPostalCode)
                 .address(mpAddress)
                 .addressDetail(mpAddressDetail)
-                .profileImage(finalProfileImageUrl)
+                .profileImage(ProfileImageUrlGuard.sanitizeOutbound(finalProfileImageUrl))
                 .profileImageType(profileImageType)
                 .socialProvider(socialProvider)
-                .socialProfileImage(socialProfileImage)
+                .socialProfileImage(ProfileImageUrlGuard.sanitizeOutbound(socialProfileImage))
                 .role(user.getRole().getValue())
                 .grade(user.getGrade())
                 .experiencePoints(user.getExperiencePoints())
@@ -221,12 +222,11 @@ public class MyPageServiceImpl implements MyPageService {
         }
         
         if (request.getProfileImage() != null) {
-            log.info("🖼️ 프로필 이미지 업데이트: userId={}, imageType={}, imageLength={}", 
-                userId, 
-                request.getProfileImage().startsWith("data:") ? "base64" : "url",
+            // 2026-06-08: base64 dataURI 거부 (회귀 가드). 별도 파일 업로드 API 로 분리.
+            ProfileImageUrlGuard.validateInbound(request.getProfileImage());
+            log.info("🖼️ 프로필 이미지 업데이트: userId={}, imageLength={}",
+                userId,
                 request.getProfileImage().length());
-            
-            // Base64 이미지 저장 (TEXT 컬럼으로 저장 가능)
             user.setProfileImageUrl(request.getProfileImage());
         }
 
@@ -325,12 +325,15 @@ public class MyPageServiceImpl implements MyPageService {
     @Override
     public String uploadProfileImage(Long userId, String imageUrl) {
         log.info("🔧 프로필 이미지 업로드: {}", userId);
-        
+
+        // 2026-06-08: base64 dataURI 거부 (회귀 가드). 별도 파일 업로드 API 로 분리.
+        ProfileImageUrlGuard.validateInbound(imageUrl);
+
         User user = requireUserInCurrentTenant(userId);
 
         user.setProfileImageUrl(imageUrl);
         userRepository.save(user);
-        
+
         return imageUrl;
     }
 

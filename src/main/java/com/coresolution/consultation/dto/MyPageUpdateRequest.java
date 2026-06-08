@@ -1,5 +1,7 @@
 package com.coresolution.consultation.dto;
 
+import com.coresolution.consultation.util.ProfileImageUrlGuard;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +24,15 @@ public class MyPageUpdateRequest {
     private String nickname;
     private String phone;
     private String gender;
+
+    /**
+     * 프로필 이미지 URL. base64 dataURI 는 허용하지 않으며
+     * (저장 시 {@code users.profile_image_url} 컬럼이 폭증해 API 응답 회귀 유발),
+     * 별도 파일 업로드 API 로 분리한다.
+     *
+     * @see ProfileImageUrlGuard
+     */
+    @Size(max = ProfileImageUrlGuard.MAX_URL_LENGTH, message = "프로필 이미지 URL 이 너무 깁니다.")
     private String profileImage;
 
     // 주소 업데이트용 필드 (user_addresses 테이블과 매핑)

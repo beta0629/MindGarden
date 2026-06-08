@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -90,5 +93,60 @@ class AppleOAuth2ContextLoadTest {
         assertThat(generator).isNotNull();
         assertThat(verifier).isNotNull();
         assertThat(client).isNotNull();
+    }
+
+    /**
+     * Apple T1 P0 hotfix #2 회귀 게이트.
+     *
+     * <p>{@link AppleIdTokenVerifier} 는 Spring 주입용·테스트 주입용 두 개의 public 생성자를 가진다.
+     * Spring 4.3+ 단일 생성자 자동 주입 정책에 따라 어느 한 쪽에 {@code @Autowired} 를 명시하지
+     * 않으면 fallback 으로 default constructor 를 탐색하다 {@link NoSuchMethodException} 으로 부팅이
+     * 실패한다 (PR #150 hotfix #1 머지 후에도 dev/prod 동일 실패 재현).</p>
+     *
+     * <p>{@code @Bean} 메서드는 시그니처에서 생성자를 명시 호출하므로 Spring 의 생성자 선택 로직을
+     * <em>우회</em> 한다. 본 회귀를 정확히 적발하려면 클래스 자체를 bean definition 으로 등록해
+     * {@code AutowiredAnnotationBeanPostProcessor} 가 생성자 후보를 결정하도록 해야 한다.
+     * Spring 5+ 의 {@link Import @Import} 는 일반 {@code @Component} 클래스도 import 대상으로 받아
+     * 동일 경로로 등록한다.</p>
+     */
+    @Test
+    @DisplayName("AppleIdTokenVerifier 가 Spring 생성자 선택 정책으로 부팅된다 (P0 hotfix #2 회귀 게이트)")
+    void appleIdTokenVerifierBootsUnderSpringConstructorSelection() {
+        new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(PropertyPlaceholderAutoConfiguration.class))
+            .withUserConfiguration(AppleOAuth2Config.class, AppleBeansImportConfiguration.class)
+            .withPropertyValues(BLANK_FALLBACK_PROPS)
+            .run(context -> {
+                // hasNotFailed() 가 P0 hotfix #2 회귀 게이트의 핵심. Spring 생성자 선택 실패 시
+                // 컨텍스트가 NoSuchMethodException 으로 startupFailure 를 기록한다.
+                assertThat(context).hasNotFailed();
+                assertThat(context).hasSingleBean(AppleIdTokenVerifier.class);
+                assertThat(context).hasSingleBean(AppleClientSecretGenerator.class);
+                assertThat(context).hasSingleBean(AppleOAuth2Client.class);
+
+                AppleIdTokenVerifier verifier = context.getBean(AppleIdTokenVerifier.class);
+                assertThat(verifier).isNotNull();
+            });
+    }
+
+    /**
+     * Apple 통합 빈 3종을 클래스 import 로 등록한다.
+     *
+     * <p>{@code @Bean} 팩토리 메서드는 명시적 {@code new} 호출이라 Spring 의 다중 생성자 선택을
+     * 우회한다. 본 회귀 게이트는 그 우회를 의도적으로 피해야 하므로 {@link Import} 로 클래스
+     * 자체를 bean definition 에 올린다. 등록된 클래스는 {@code AutowiredAnnotationBeanPostProcessor}
+     * 가 생성자 후보를 평가해 인스턴스화하므로, {@code @Autowired} 누락이 발생하면 동일 실패가
+     * 본 테스트에서 즉시 재현된다.</p>
+     *
+     * <p>{@link RestTemplate} 은 본 슬라이스에 자동 등록되지 않으므로 명시 {@code @Bean} 으로 보조한다.</p>
+     */
+    @Configuration
+    @Import({ AppleIdTokenVerifier.class, AppleClientSecretGenerator.class, AppleOAuth2Client.class })
+    static class AppleBeansImportConfiguration {
+
+        @Bean
+        RestTemplate appleOAuth2RestTemplate() {
+            return new RestTemplate();
+        }
     }
 }

@@ -18,6 +18,7 @@ import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.security.access.AccessDeniedException;
@@ -138,9 +139,11 @@ public class UserProfileServiceImpl implements UserProfileService {
             }
             
             if (request.getProfileImageUrl() != null) {
-                log.info("🖼️ 프로필 이미지 업데이트: userId={}, imageType={}, imageLength={}", 
-                    userId, 
-                    request.getProfileImageUrl().startsWith("data:") ? "base64" : "url",
+                // 2026-06-09: base64 dataURI 거부 (회귀 가드, PR #159 보완).
+                // MyPageServiceImpl#updateMyPageInfo 와 동일 정책 — 별도 파일 업로드 API 로 분리.
+                ProfileImageUrlGuard.validateInbound(request.getProfileImageUrl());
+                log.info("🖼️ 프로필 이미지 업데이트: userId={}, imageLength={}",
+                    userId,
                     request.getProfileImageUrl().length());
                 user.setProfileImageUrl(request.getProfileImageUrl());
                 log.info("✅ 프로필 이미지 저장 완료: userId={}", userId);
@@ -188,6 +191,11 @@ public class UserProfileServiceImpl implements UserProfileService {
             
             return buildUserProfileResponse(user);
             
+        } catch (IllegalArgumentException | AccessDeniedException e) {
+            // 2026-06-09: 가드(ProfileImageUrlGuard 등) 및 권한 예외는 GlobalExceptionHandler 에서
+            // 각각 400/403 으로 매핑되도록 그대로 전파한다 (RuntimeException 으로 감싸지 않음).
+            log.warn("유저 프로필 업데이트 거부: userId={}, error={}", userId, e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.error("유저 프로필 업데이트 중 오류 발생: userId={}, error={}", userId, e.getMessage(), e);
             throw new RuntimeException(UserProfileServiceUserFacingMessages.MSG_PROFILE_UPDATE_ERROR_PREFIX + e.getMessage(), e);
@@ -631,7 +639,8 @@ public class UserProfileServiceImpl implements UserProfileService {
             .professionalProviderTypeCode(user.getProfessionalProviderTypeCode())
             .experiencePoints(user.getExperiencePoints())
             .totalConsultations(user.getTotalConsultations())
-            .profileImageUrl(user.getProfileImageUrl())
+            // 2026-06-09: 응답 가드 (PR #159 보완) — 손상 row(base64) 가 이미 DB 에 있을 때 응답에서 자른다.
+            .profileImageUrl(ProfileImageUrlGuard.sanitizeOutbound(user.getProfileImageUrl()))
             .profileImageType(profileImageType)
             .memo(user.getMemo())
             .preferredCounselingArea(preferredCounselingArea)

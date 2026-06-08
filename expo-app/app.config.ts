@@ -86,6 +86,15 @@ function warnIfSocialLoginEnvMissingForEasBuild(): void {
 }
 
 /**
+ * EAS project UUID 단일 해석. `extra.eas.projectId` 와 `updates.url` 양쪽이 같은 값을 사용한다.
+ * 우선순위: `EAS_PROJECT_ID` → `EXPO_PUBLIC_EAS_PROJECT_ID` → 빈 문자열.
+ * 빈 문자열이면 `updates.url` 은 미설정으로 처리해 EAS 가 빌드 시 에러로 알리도록 한다.
+ */
+function resolveEasProjectId(): string {
+  return (process.env.EAS_PROJECT_ID ?? process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? '').trim();
+}
+
+/**
  * Metro가 아닌 릴리스/프리뷰 APK·AAB에서 `getApiBaseUrl()`이 개발(또는 스테이징) API를 쓰도록 주입.
  * 우선순위: `EXPO_PUBLIC_API_BASE_URL` → `APP_ENV === development` 이면 dev 기본 호스트.
  */
@@ -103,6 +112,12 @@ function resolveApiBaseUrlExtra(): string | undefined {
 export default ({ config }: ConfigContext): ExpoConfig => {
   warnIfSocialLoginEnvMissingForEasBuild();
   const apiBaseUrl = resolveApiBaseUrlExtra();
+  const easProjectId = resolveEasProjectId();
+  /**
+   * OTA(`eas update`) endpoint — projectId 미주입 시 url 자체를 빼야 expo-updates 가
+   * 정상적으로 비활성화 폴백(빌드 단계에서 경고)을 한다. 하드코딩 금지.
+   */
+  const updatesUrl = easProjectId ? `https://u.expo.dev/${easProjectId}` : undefined;
   /**
    * 실제 안드로이드 폰에 올리는 릴리스 APK는 Metro 없이 내장 번들로만 기동해야 한다.
    * `expo-dev-client`가 있으면 개발 서버 URL 입력 화면에서 멈추는 경우가 많아,
@@ -199,6 +214,26 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       /** 스플래시도 아이콘과 동일 톤 */
       backgroundColor: '#000000',
     },
+    /**
+     * OTA 호환 단위 — 같은 `appVersion`(`package.json` `version`)을 가진 빌드끼리만 업데이트 공유.
+     * native 변경 시 `version` 을 올리면 자동으로 OTA 호환 cut 이 생긴다.
+     */
+    runtimeVersion: {
+      policy: 'appVersion',
+    },
+    ...(updatesUrl
+      ? {
+          updates: {
+            /** EAS Update endpoint — `extra.eas.projectId` 와 동일 UUID 사용 */
+            url: updatesUrl,
+            enabled: true,
+            /** cold start 시 자동 체크. 추가 UI 없이도 다음 부팅에 반영 */
+            checkAutomatically: 'ON_LOAD',
+            /** 첫 부팅 지연 방지 — 캐시된 번들 즉시 실행, 새 번들은 백그라운드 다운로드 */
+            fallbackToCacheTimeout: 0,
+          },
+        }
+      : {}),
     ios: {
       icon: './assets/images/icon.png',
       supportsTablet: false,
@@ -246,11 +281,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         /**
          * EAS project UUID — 저장소에 실제 ID를 커밋하지 않는다.
          * 로컬·CI: `EAS_PROJECT_ID` 또는 `EXPO_PUBLIC_EAS_PROJECT_ID` env 로 주입.
+         * `updates.url` 과 동일 UUID 를 사용해 OTA endpoint 와 일치시킨다.
          */
-        projectId:
-          process.env.EAS_PROJECT_ID ??
-          process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
-          'YOUR_EAS_PROJECT_ID',
+        projectId: easProjectId || 'YOUR_EAS_PROJECT_ID',
       },
       ...(apiBaseUrl ? { apiBaseUrl } : {}),
       /** EAS/로컬 빌드 시 env 주입 — 소스에 PG 키 평문 커밋 금지 */

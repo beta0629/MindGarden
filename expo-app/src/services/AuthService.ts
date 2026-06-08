@@ -16,7 +16,18 @@ import { NativeModules, Platform } from 'react-native';
 import { apiPost } from '../api/client';
 import { AUTH_API } from '../api/endpoints';
 import { unwrapApiResponse } from '../api/unwrapApiResponse';
-import { postAppleLogin } from '../api/auth/appleAuth';
+import {
+  postAppleLogin,
+  postAppleSendPhoneOtp,
+  postAppleVerifyPhoneOtp,
+  type AppleAuthLoginResponse,
+  type ApplePhoneSendResponse,
+} from '../api/auth/appleAuth';
+import {
+  mapAppleLoginResponseRaw,
+  mapApplePhoneSendResponse,
+  type AppleNativePrefill,
+} from './auth/applePhoneVerificationMapper';
 import {
   APPLE_SIGN_IN_CANCELLED,
   isAppleSignInAvailable,
@@ -152,6 +163,18 @@ interface OAuthAccountSelectionCompleteData {
   tenantId?: string;
 }
 
+/** Apple SIWA 휴대폰 인증 단계로 진입해야 할 때 social user 정보 prefill 용 */
+export interface AppleSocialUserPrefill {
+  /** Apple identityToken `sub` */
+  providerUserId: string;
+  /** Apple 직접 제공 email (private relay 가능) */
+  email: string;
+  /** Apple 전체 이름 (`given + family` 또는 BE 가 정리한 값) */
+  name: string;
+  /** Apple Private Email Relay 여부 — UI 안내용 (true 면 "@privaterelay.appleid.com") */
+  isPrivateRelay?: boolean;
+}
+
 export type SocialLoginOutcome =
   | { kind: 'authenticated'; user: User }
   | { kind: 'requiresSignup'; socialUserInfo: SocialUserInfoDraft; provider: SocialAuthProvider }
@@ -162,9 +185,46 @@ export type SocialLoginOutcome =
       message?: string;
     }
   | {
+      /**
+       * Apple SIWA 휴대폰 매칭 1단계 — apple_sub 매칭 사용자가 없을 때.
+       * 클라이언트는 `phoneVerificationToken` 을 들고 `/(auth)/apple-phone-link` 로 라우팅한다.
+       */
+      kind: 'requiresApplePhoneVerification';
+      phoneVerificationToken: string;
+      socialUserInfo: AppleSocialUserPrefill;
+    }
+  | {
       kind: 'requiresDuplicateLoginConfirmation';
       message: string;
       retryContext: DuplicateLoginRetryContext;
+    }
+  | { kind: 'error'; message: string };
+
+/** Apple SIWA OTP 발송 결과. */
+export type ApplePhoneSendOutcome =
+  | {
+      kind: 'sent';
+      otpChallengeToken: string;
+      /** OTP 만료 시간(초) — 없으면 기본 180s 가정 */
+      expiresInSeconds?: number;
+    }
+  | {
+      /** 쿨다운(1분 이내 재발송) 또는 일일 한도 초과 */
+      kind: 'cooldown';
+      message: string;
+      /** 재발송까지 남은 시간(초). 한도 초과면 undefined */
+      retryAfterSeconds?: number;
+    }
+  | { kind: 'error'; message: string };
+
+/** Apple SIWA OTP 검증 결과. */
+export type ApplePhoneVerifyOutcome =
+  | { kind: 'authenticated'; user: User }
+  | {
+      kind: 'requiresPhoneAccountSelection';
+      selectionToken: string;
+      provider: SocialAuthProvider;
+      message?: string;
     }
   | { kind: 'error'; message: string };
 
@@ -189,6 +249,7 @@ type SocialLoginDebugOutcome =
   | 'authenticated'
   | 'requiresSignup'
   | 'requiresPhoneAccountSelection'
+  | 'requiresApplePhoneVerification'
   | 'requiresDuplicateLoginConfirmation'
   | 'error';
 
@@ -472,6 +533,39 @@ function buildSocialRetryContext(
     nickname,
     profileImage,
   };
+}
+
+/**
+ * Apple SIWA `/login` 또는 `/phone/verify` 응답을 클라이언트 outcome 으로 매핑한다.
+ *
+ * <p>응답 매핑 자체는 {@link mapAppleLoginResponseRaw} 에 위임하고, 본 함수는
+ * `mapApiUserToStoreUser` 등 클라이언트 상태 의존 변환만 추가한다.</p>
+ */
+function mapAppleLoginResponse(
+  response: AppleAuthLoginResponse,
+  native?: AppleNativePrefill | null,
+): SocialLoginOutcome {
+  const mapped = mapAppleLoginResponseRaw(response, native);
+  if (mapped.kind === 'requiresApplePhoneVerification') {
+    return {
+      kind: 'requiresApplePhoneVerification',
+      phoneVerificationToken: mapped.phoneVerificationToken,
+      socialUserInfo: mapped.socialUserInfo,
+    };
+  }
+  if (mapped.kind === 'requiresPhoneAccountSelection') {
+    return {
+      kind: 'requiresPhoneAccountSelection',
+      selectionToken: mapped.selectionToken,
+      provider: 'APPLE',
+      message: mapped.message,
+    };
+  }
+  if (mapped.kind === 'authenticated') {
+    const user = mapApiUserToStoreUser(mapped.apiUser, mapped.accessToken);
+    return { kind: 'authenticated', user };
+  }
+  return { kind: 'error', message: mapped.message };
 }
 
 function mapNativeSocialResponse(
@@ -895,49 +989,19 @@ export const AuthService = {
         return { kind: 'error', message: '서버 응답이 없습니다.' };
       }
 
-      if (response.requiresSignup) {
-        const social = response.socialUserInfo;
-        const providerUserId =
-          (social?.providerUserId && String(social.providerUserId)) || native.user;
-        const draft: SocialUserInfoDraft = {
-          provider: 'APPLE',
-          providerUserId,
-          email: (social?.email || native.email || '').trim(),
-          nickname: (social?.nickname || '').trim(),
-          profileImageUrl: social?.profileImageUrl ?? undefined,
-          realName: (social?.name || [native.givenName, native.familyName].filter(Boolean).join(' ')).trim() || undefined,
-          initialDisplayName: (social?.nickname || social?.name || '').trim() || undefined,
-        };
-        return { kind: 'requiresSignup', socialUserInfo: draft, provider: 'APPLE' };
-      }
-
-      if (response.success && response.user && response.accessToken && response.refreshToken) {
-        const apiUser = {
-          id: response.user.id,
-          email: response.user.email,
-          name: response.user.name ?? '',
-          nickname: response.user.nickname ?? '',
-          role: response.user.role,
-          profileImageUrl: response.user.profileImageUrl,
-          tenantId: response.user.tenantId,
-        };
-        const user = mapApiUserToStoreUser(apiUser, response.accessToken);
+      const outcome = mapAppleLoginResponse(response, native);
+      logSocialLoginDebugResponse(response as unknown as SocialLoginResponse, outcome);
+      if (outcome.kind === 'authenticated' && response.accessToken && response.refreshToken) {
         await applyAuthenticatedUser(
-          user,
+          outcome.user,
           {
             accessToken: response.accessToken,
             refreshToken: response.refreshToken,
           },
           pickSessionIdFromAuthPayload(response),
         );
-        logSocialLoginDebugResponse(
-          response as unknown as SocialLoginResponse,
-          { kind: 'authenticated', user },
-        );
-        return { kind: 'authenticated', user };
       }
-
-      return { kind: 'error', message: response.message ?? 'Apple 로그인에 실패했습니다.' };
+      return outcome;
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : 'Apple 로그인 중 오류가 발생했습니다.';
@@ -947,6 +1011,119 @@ export const AuthService = {
       logAuthError('Apple 로그인 에러', error);
       return { kind: 'error', message };
     }
+  },
+
+  /**
+   * Apple SIWA 휴대폰 매칭 — OTP 발송 (`/api/v1/auth/oauth/apple/phone/send`).
+   *
+   * <p>입력한 휴대폰 번호로 6자리 OTP 를 발송한다. BE 응답 분기:
+   *  - 정상 발송 → `kind: 'sent'` + `otpChallengeToken` + `expiresInSeconds`
+   *  - 쿨다운(1분) 위반 → `kind: 'cooldown'` + `retryAfterSeconds`
+   *  - 일 5회 한도 초과 / SMS 실패 → `kind: 'cooldown'` (안내 메시지) 또는 `kind: 'error'`
+   * </p>
+   *
+   * @param phoneVerificationToken `/login` 응답으로 받은 단기 JWT
+   * @param phoneNumber 사용자 입력 휴대폰 번호 (raw 그대로 — BE 에서 정규화)
+   */
+  async sendApplePhoneOtp(
+    phoneVerificationToken: string,
+    phoneNumber: string,
+  ): Promise<ApplePhoneSendOutcome> {
+    if (!phoneVerificationToken?.trim()) {
+      return {
+        kind: 'error',
+        message: 'phoneVerificationToken 이 없습니다. 다시 로그인해 주세요.',
+      };
+    }
+    if (!phoneNumber?.trim()) {
+      return { kind: 'error', message: '휴대폰 번호를 입력해 주세요.' };
+    }
+
+    let response: ApplePhoneSendResponse | undefined;
+    try {
+      response = await postAppleSendPhoneOtp({
+        phoneVerificationToken,
+        phoneNumber,
+      });
+    } catch (err: unknown) {
+      return { kind: 'error', message: readSignupErrorMessage(err) };
+    }
+
+    return mapApplePhoneSendResponse(response);
+  },
+
+  /**
+   * Apple SIWA 휴대폰 매칭 — OTP 검증 + 매칭/로그인 (`/api/v1/auth/oauth/apple/phone/verify`).
+   *
+   * <p>BE 응답 분기:
+   *  - 정상 로그인(단수 매칭 또는 신규 가입) → 토큰 저장 + `kind: 'authenticated'`
+   *  - 매칭 후보 2명+(역할 혼재) → `kind: 'requiresPhoneAccountSelection'` (기존 `oauth-account-selection` 화면 재사용)
+   *  - 코드 불일치/만료/시도초과 → `kind: 'error'`
+   * </p>
+   *
+   * @param phoneVerificationToken `/login` 응답으로 받은 단기 JWT
+   * @param otpChallengeToken `/phone/send` 응답으로 받은 challenge 토큰
+   * @param code 사용자 입력 6자리
+   */
+  async verifyApplePhoneOtp(
+    phoneVerificationToken: string,
+    otpChallengeToken: string,
+    code: string,
+  ): Promise<ApplePhoneVerifyOutcome> {
+    if (!phoneVerificationToken?.trim()) {
+      return {
+        kind: 'error',
+        message: 'phoneVerificationToken 이 없습니다. 다시 로그인해 주세요.',
+      };
+    }
+    if (!otpChallengeToken?.trim()) {
+      return { kind: 'error', message: '인증번호를 다시 받아 주세요.' };
+    }
+    if (!/^\d{6}$/.test(code)) {
+      return { kind: 'error', message: '인증번호 6자리를 입력해 주세요.' };
+    }
+
+    let response: AppleAuthLoginResponse | undefined;
+    try {
+      response = await postAppleVerifyPhoneOtp({
+        phoneVerificationToken,
+        otpChallengeToken,
+        code,
+      });
+    } catch (err: unknown) {
+      return { kind: 'error', message: readSignupErrorMessage(err) };
+    }
+
+    if (!response) {
+      return { kind: 'error', message: '서버 응답이 없습니다.' };
+    }
+
+    const outcome = mapAppleLoginResponse(response);
+
+    if (outcome.kind === 'authenticated' && response.accessToken && response.refreshToken) {
+      await applyAuthenticatedUser(
+        outcome.user,
+        {
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+        },
+        pickSessionIdFromAuthPayload(response),
+      );
+      return { kind: 'authenticated', user: outcome.user };
+    }
+
+    if (outcome.kind === 'requiresPhoneAccountSelection') {
+      return outcome;
+    }
+
+    if (outcome.kind === 'error') {
+      return outcome;
+    }
+
+    return {
+      kind: 'error',
+      message: response.message ?? '인증번호 확인에 실패했습니다.',
+    };
   },
 
   /**

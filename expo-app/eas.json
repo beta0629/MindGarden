@@ -7,6 +7,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "ios": {
         "simulator": true
       },
@@ -18,6 +19,7 @@
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "ios": {
         "simulator": false
       },
@@ -30,6 +32,7 @@
     "internal-dev": {
       "developmentClient": false,
       "distribution": "internal",
+      "channel": "internal-dev",
       "ios": {
         "simulator": false
       },
@@ -46,6 +49,7 @@
     },
     "production": {
       "autoIncrement": true,
+      "channel": "production",
       "env": {
         "APP_ENV": "production",
         "EXPO_PUBLIC_API_BASE_URL": "https://app.core-solution.co.kr",
@@ -65,6 +69,20 @@
         "serviceAccountKeyPath": "./google-services-key.json",
         "track": "internal"
       }
+    }
+  },
+  "update": {
+    "production": {
+      "channel": "production"
+    },
+    "preview": {
+      "channel": "preview"
+    },
+    "internal-dev": {
+      "channel": "internal-dev"
+    },
+    "development": {
+      "channel": "development"
     }
   }
 }

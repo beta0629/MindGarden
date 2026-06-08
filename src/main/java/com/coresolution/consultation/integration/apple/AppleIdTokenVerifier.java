@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.coresolution.consultation.config.AppleOAuth2Properties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,6 +59,16 @@ public class AppleIdTokenVerifier {
     private final HttpClient httpClient;
     private final AtomicReference<JwkCacheEntry> jwkCache = new AtomicReference<>();
 
+    /**
+     * Spring 주입용 주 생성자.
+     *
+     * <p>Spring 4.3+ 는 단일 생성자에 한해 자동 주입을 적용한다. 본 클래스는
+     * 테스트 주입용 보조 생성자가 함께 존재하므로 {@code @Autowired} 를 명시해
+     * Spring 이 모호성 없이 본 생성자를 선택하도록 한다. 누락 시 fallback 으로
+     * default constructor 를 탐색하다 {@link NoSuchMethodException} 으로 부팅
+     * 자체가 실패한다 (Apple T1 P0 hotfix #2 회귀 사례).</p>
+     */
+    @Autowired
     public AppleIdTokenVerifier(AppleOAuth2Properties properties) {
         this(properties, new ObjectMapper(), HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(JWKS_FETCH_TIMEOUT_SECONDS))

@@ -5,19 +5,17 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.auth.ApplePhoneVerificationClaims;
 import com.coresolution.consultation.dto.auth.AppleSignInRequest;
 import com.coresolution.consultation.dto.auth.AppleSignInResponse;
 import com.coresolution.consultation.dto.auth.AppleSocialUserInfo;
 import com.coresolution.consultation.dto.auth.AppleUserSummary;
-import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.integration.apple.AppleIdTokenVerifier;
 import com.coresolution.consultation.integration.apple.AppleIdTokenVerifier.AppleIdTokenVerificationException;
 import com.coresolution.consultation.integration.apple.AppleOAuth2Client;
 import com.coresolution.consultation.integration.apple.AppleOAuth2Client.AppleOAuth2ClientException;
-import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AppleSignInService;
@@ -25,7 +23,6 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -38,13 +35,16 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Apple App Store 4.8 (Login Services) 대응 — T1 트랙. 디자이너 핸드오프
  * {@code docs/project-management/2026-06-04/APPLE_T1_SIWA_DESIGN_HANDOFF.md} 와 정합한다.</p>
  *
- * <p>분기 정책:
+ * <p>분기 정책 (2026-06-08 재정렬):
  * <ol>
  *   <li>{@code apple_sub} 일치 사용자 존재 → JWT 발급 (기존 로그인)</li>
- *   <li>{@code apple_sub} 없음 + Apple email 로 테넌트 내 기존 사용자 발견 → {@code apple_sub} 연결 후 JWT 발급</li>
- *   <li>{@code apple_sub} 없음 + 매칭 사용자 없음 → 신규 사용자 생성 ({@code role=CLIENT}, 현재 tenant)</li>
+ *   <li>{@code apple_sub} 없음 → {@code requiresPhoneVerification=true} + {@code phoneVerificationToken} 응답
+ *       (휴대폰 입력 단계 진입 — 다른 소셜로 가입된 user 라도 휴대폰이 일치할 때만 자동 매칭)</li>
  * </ol>
  * </p>
+ *
+ * <p>이전 흐름의 (b) email 매칭 분기는 <b>제거</b>됐다. 사용자 결정 — 카카오·네이버·이메일로 가입된
+ * user 가 Apple SIWA 로 자동 매칭되는 것은 본인 의사가 아닐 수 있어, 휴대폰 번호를 SSOT 로 한다.</p>
  *
  * <p>Apple Private Relay (`@privaterelay.appleid.com`) 이메일은 정식 이메일로 저장한다 — 디자이너 §4.2.</p>
  *
@@ -62,20 +62,12 @@ public class AppleSignInServiceImpl implements AppleSignInService {
     /** Apple Private Relay 이메일 도메인. */
     private static final String APPLE_PRIVATE_RELAY_DOMAIN = "privaterelay.appleid.com";
 
-    /** Apple 소셜 사용자 userId 접두어 — 기존 SOCIAL_ 패턴과 정합 ({@code apple_<sub16자>}). */
-    private static final String APPLE_USER_ID_PREFIX = "apple_";
-
-    /** Apple sub 의 일부만 userId 에 사용 (50자 컬럼 한계 + 가독성). */
-    private static final int APPLE_USER_ID_SUB_LENGTH = 16;
-
     private final AppleIdTokenVerifier idTokenVerifier;
     private final AppleOAuth2Client oauthClient;
     private final UserRepository userRepository;
-    private final ClientRepository clientRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final JwtService jwtService;
     private final PersonalDataEncryptionUtil encryptionUtil;
-    private final PasswordService passwordService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -184,6 +176,7 @@ public class AppleSignInServiceImpl implements AppleSignInService {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private AppleSignInResponse resolveAndIssue(Map<String, Object> claims, AppleSignInRequest request) {
         String sub = asString(claims.get("sub"));
         if (!StringUtils.hasText(sub)) {
@@ -193,7 +186,7 @@ public class AppleSignInServiceImpl implements AppleSignInService {
         String email = StringUtils.hasText(request.getEmail()) ? request.getEmail() : claimEmail;
         String normalizedEmail = SocialProvider.normalizeEmail(email);
 
-        // 1) apple_sub 기존 사용자
+        // 1) apple_sub 일치 사용자 → 즉시 로그인 (기존 흐름 동일)
         Optional<User> existingBySub = userRepository.findByAppleSub(sub);
         if (existingBySub.isPresent()) {
             User user = existingBySub.get();
@@ -201,32 +194,10 @@ public class AppleSignInServiceImpl implements AppleSignInService {
             return issueTokens(user, "기존 Apple 사용자 로그인");
         }
 
-        // 2) 동일 테넌트·이메일로 기존 사용자가 있다면 apple_sub 연결
+        // 2) 매칭 없음 → 휴대폰 인증 단계 진입 (이전 email 매칭 분기는 제거됨 — 사용자 결정 2026-06-08)
         String tenantId = TenantContextHolder.getTenantId();
-        if (StringUtils.hasText(tenantId) && StringUtils.hasText(normalizedEmail)) {
-            Optional<User> existingByEmail = findActiveByTenantAndEmail(tenantId, normalizedEmail);
-            if (existingByEmail.isPresent()) {
-                User user = existingByEmail.get();
-                user.setAppleSub(sub);
-                if (!StringUtils.hasText(user.getSocialProvider())) {
-                    user.setSocialProvider(APPLE_PROVIDER);
-                }
-                if (!StringUtils.hasText(user.getSocialProviderUserId())) {
-                    user.setSocialProviderUserId(sub);
-                }
-                if (user.getSocialLinkedAt() == null) {
-                    user.setSocialLinkedAt(LocalDateTime.now());
-                }
-                user.setIsSocialAccount(Boolean.TRUE);
-                userRepository.saveAndFlush(user);
-                updateAppleSocialLink(user, sub, request);
-                return issueTokens(user, "기존 사용자 Apple 연동 완료");
-            }
-        }
-
-        // 3) 신규 가입 분기
         if (!StringUtils.hasText(tenantId)) {
-            // 멀티테넌트 컨텍스트 없이는 신규 가입을 만들 수 없음 → 클라이언트가 social-signup 화면으로 분기하도록 신호
+            // 멀티테넌트 컨텍스트 없이는 휴대폰 인증 토큰을 발급할 수 없음.
             return AppleSignInResponse.builder()
                 .success(true)
                 .requiresSignup(true)
@@ -234,70 +205,34 @@ public class AppleSignInServiceImpl implements AppleSignInService {
                 .socialUserInfo(buildSocialUserInfo(sub, normalizedEmail, request))
                 .build();
         }
-        User created = createNewAppleUser(sub, normalizedEmail, request, tenantId);
-        return issueTokens(created, "Apple 신규 가입 및 로그인 성공");
+        return buildPhoneVerificationResponse(sub, normalizedEmail, tenantId, request);
     }
 
-    private Optional<User> findActiveByTenantAndEmail(String tenantId, String normalizedEmail) {
-        Optional<User> direct = userRepository.findByEmailAndTenantId(normalizedEmail, tenantId);
-        if (direct.isPresent()) {
-            return direct;
-        }
-        // 암호화 저장된 이메일과 비교 — safeEncrypt 결과는 결정적이지 않을 수 있어 직접 매칭은 불가.
-        // 향후 정규화 컬럼이 도입되기 전까지는 평문 비교만 수행한다.
-        return Optional.empty();
-    }
-
-    private User createNewAppleUser(String sub, String normalizedEmail, AppleSignInRequest request,
-                                    String tenantId) {
+    /**
+     * apple_sub 매칭 사용자가 없을 때 휴대폰 입력 단계로 진입시키는 응답을 만든다.
+     *
+     * <p>클라이언트는 응답의 {@code requiresPhoneVerification=true} 와 {@code phoneVerificationToken} 을
+     * 받으면 휴대폰 입력 화면으로 이동, OTP send/verify endpoint 를 호출한다.</p>
+     */
+    private AppleSignInResponse buildPhoneVerificationResponse(String sub, String normalizedEmail,
+                                                               String tenantId, AppleSignInRequest request) {
         String name = composeName(request);
-        String suffix = sub.length() > APPLE_USER_ID_SUB_LENGTH
-            ? sub.substring(0, APPLE_USER_ID_SUB_LENGTH)
-            : sub;
-        String userId = APPLE_USER_ID_PREFIX + suffix.toLowerCase(Locale.ROOT);
-
-        String emailForStorage = StringUtils.hasText(normalizedEmail) ? normalizedEmail : (userId + "@apple.local");
-        String temporaryPassword = "APPLE_" + System.currentTimeMillis();
-
-        User user = User.builder()
-            .userId(userId)
-            .password(passwordService.encodeSecret(temporaryPassword))
-            .name(encryptionUtil.safeEncrypt(name))
-            .email(encryptionUtil.safeEncrypt(emailForStorage))
-            .role(UserRole.CLIENT)
-            .isSocialAccount(Boolean.TRUE)
-            .socialProvider(APPLE_PROVIDER)
-            .socialProviderUserId(sub)
-            .appleSub(sub)
-            .socialLinkedAt(LocalDateTime.now())
-            .build();
-        user.setTenantId(tenantId);
-        User saved = userRepository.saveAndFlush(user);
-
-        Client client = Client.builder()
-            .id(saved.getId())
+        ApplePhoneVerificationClaims claims = ApplePhoneVerificationClaims.builder()
             .tenantId(tenantId)
-            .name(saved.getName())
-            .email(saved.getEmail())
-            .isDeleted(false)
-            .build();
-        clientRepository.saveAndFlush(client);
-
-        UserSocialAccount socialAccount = UserSocialAccount.builder()
-            .user(saved)
             .provider(APPLE_PROVIDER)
             .providerUserId(sub)
-            .providerEmail(StringUtils.hasText(normalizedEmail) ? normalizedEmail : null)
-            .providerName(name)
-            .isPrimary(Boolean.TRUE)
-            .isVerified(Boolean.TRUE)
-            .isActive(Boolean.TRUE)
-            .verificationDate(LocalDateTime.now())
-            .verificationMethod(APPLE_PROVIDER)
+            .email(normalizedEmail)
+            .name(name)
+            .nickname(name)
             .build();
-        socialAccount.setTenantId(tenantId);
-        userSocialAccountRepository.save(socialAccount);
-        return saved;
+        String token = jwtService.generateApplePhoneVerificationToken(claims);
+        return AppleSignInResponse.builder()
+            .success(true)
+            .requiresPhoneVerification(true)
+            .phoneVerificationToken(token)
+            .message("Apple 인증 완료. 휴대폰 인증을 진행해 주세요.")
+            .socialUserInfo(buildSocialUserInfo(sub, normalizedEmail, request))
+            .build();
     }
 
     private void updateAppleSocialLink(User user, String sub, AppleSignInRequest request) {
@@ -342,6 +277,7 @@ public class AppleSignInServiceImpl implements AppleSignInService {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private AppleSignInResponse issueTokens(User user, String message) {
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
@@ -400,6 +336,7 @@ public class AppleSignInServiceImpl implements AppleSignInService {
         return value == null ? null : value.toString();
     }
 
+    @SuppressWarnings("deprecation")
     private static AppleSignInResponse failure(String message) {
         return AppleSignInResponse.builder()
             .success(false)

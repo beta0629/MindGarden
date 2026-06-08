@@ -212,8 +212,12 @@ public class AppleIdTokenVerifier {
         if (iss == null || !iss.equals(properties.getIssuer())) {
             throw new AppleIdTokenVerificationException("issuer 불일치: " + iss);
         }
-        if (!matchesAudience(payload.get("aud"), properties.getClientId())) {
-            throw new AppleIdTokenVerificationException("audience 불일치");
+        List<String> allowedAudiences = properties.getResolvedAllowedAudiences();
+        Object audClaim = payload.get("aud");
+        if (!matchesAnyAudience(audClaim, allowedAudiences)) {
+            String maskedAud = maskAudience(audClaim);
+            throw new AppleIdTokenVerificationException(
+                "audience 불일치 (tokenAud=" + maskedAud + ", allowed=" + allowedAudiences.size() + ")");
         }
         long exp = asLong(payload.get("exp"));
         long nowSeconds = Instant.now().getEpochSecond();
@@ -228,21 +232,57 @@ public class AppleIdTokenVerifier {
         }
     }
 
-    private boolean matchesAudience(Object aud, String expected) {
-        if (expected == null || expected.isBlank()) {
+    /**
+     * 토큰의 {@code aud} claim 이 허용 audience List 중 하나라도 매칭되면 true.
+     *
+     * <p>Apple identityToken 의 {@code aud} 는 RFC 7519 §4.1.3 에 따라
+     * 단일 String 또는 String 배열 모두 허용된다. iOS 네이티브 SIWA 는 Bundle ID 를,
+     * 웹/Service ID 흐름은 Service ID 를 single-string aud 로 발급하므로
+     * 두 클라이언트가 공존하는 환경(앱·웹 동시 운영)에서는 multi-aud 허용이 필수다 (P0 hotfix 2026-06-08).</p>
+     *
+     * @param aud           identityToken payload 의 {@code aud} claim
+     * @param allowedAudiences 허용 audience List ({@link AppleOAuth2Properties#getResolvedAllowedAudiences()})
+     * @return 어느 하나라도 매칭되면 true. 허용 List 가 비어 있으면 항상 false (모든 audience reject)
+     */
+    private boolean matchesAnyAudience(Object aud, List<String> allowedAudiences) {
+        if (allowedAudiences == null || allowedAudiences.isEmpty()) {
             return false;
         }
         if (aud instanceof String single) {
-            return expected.equals(single);
+            return allowedAudiences.contains(single);
         }
         if (aud instanceof List<?> list) {
             for (Object item : list) {
-                if (item instanceof String s && expected.equals(s)) {
+                if (item instanceof String s && allowedAudiences.contains(s)) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * audience 값을 로그·예외 메시지에 노출하기 전에 마스킹한다.
+     *
+     * <p>aud 자체는 PII 가 아니지만(공개 Bundle ID/Service ID), 운영 로그에 원문으로 누적되면
+     * 외부 공격자가 reverse-engineering 으로 합법적 aud 값을 학습해 forge 시도를 줄일 수 있으므로
+     * 앞 6자 + {@code ***} 형태로 축약한다.</p>
+     *
+     * @param aud {@code aud} claim (String 또는 List)
+     * @return 마스킹된 짧은 문자열 (null 안전)
+     */
+    private static String maskAudience(Object aud) {
+        if (aud == null) {
+            return "null";
+        }
+        if (aud instanceof List<?> list) {
+            return "[size=" + list.size() + "]";
+        }
+        String value = aud.toString();
+        if (value.length() <= 6) {
+            return "***";
+        }
+        return value.substring(0, 6) + "***";
     }
 
     private Map<String, Object> parseJsonSegment(String segment) {

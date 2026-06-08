@@ -67,7 +67,18 @@ jobs:
   deploy:
     name: 🏗️ 빌드 및 배포
     runs-on: ubuntu-latest
-    
+    # Apple SIWA 환경변수 6종 — 운영 배포 SSH 스크립트가 /etc/mindgarden/prod.env 에 주입할 때 사용 (P0 hotfix 2026-06-08)
+    # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1
+    # 실제 런타임 주입은 서버 systemd EnvironmentFile=/etc/mindgarden/prod.env 가 담당하나,
+    # 워크플로 env 로 매핑해 두어야 후속 SSH 스크립트(prod.env 갱신·검증)에서 즉시 참조 가능.
+    env:
+      APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
+      APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
+      APPLE_REDIRECT_URI: ${{ secrets.APPLE_REDIRECT_URI }}
+      APPLE_ALLOWED_AUDIENCES: ${{ secrets.APPLE_ALLOWED_AUDIENCES }}
+
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
       if: github.event_name == 'workflow_dispatch'
@@ -570,6 +581,9 @@ jobs:
         port: 22
         timeout: 120s
         command_timeout: 20m
+        # appleboy/ssh-action envs: 워크플로 환경변수를 SSH 세션으로 export (P0 hotfix 2026-06-08).
+        # 실제 prod.env 갱신은 운영자 1회 작업(가이드 §1.1)이며, 본 매핑은 후속 자동화·진단 스크립트용.
+        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES
         script: |
           cd /var/www/mindgarden
           

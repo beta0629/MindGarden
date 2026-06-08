@@ -23,6 +23,24 @@ KAKAO_CLIENT_SECRET=
 NAVER_CLIENT_ID=
 NAVER_CLIENT_SECRET=
 
+# Sign in with Apple (SIWA) — Apple App Store 4.8 (Login Services) T1
+# 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1
+# - APPLE_CLIENT_ID         : Apple Service ID (예: co.kr.coresolution.app.signin) — identityToken aud 기본값
+# - APPLE_TEAM_ID           : Apple Developer Team ID (10자리)
+# - APPLE_KEY_ID            : Sign in with Apple Key ID (10자리)
+# - APPLE_PRIVATE_KEY       : .p8 PEM 전체 (BEGIN/END PRIVATE KEY 포함, 멀티라인)
+# - APPLE_REDIRECT_URI      : Service ID 등록 Return URL
+# - APPLE_ALLOWED_AUDIENCES : aud 검증 허용 List (콤마 구분).
+#                             iOS 네이티브 SIWA 는 Bundle ID(com.mindgarden.MindGardenMobile),
+#                             웹/Service ID 는 Service ID(co.kr.coresolution.app.signin) 로 aud 발급 →
+#                             둘 모두 등록해야 앱·웹 동시 로그인 동작 (P0 hotfix 2026-06-08).
+APPLE_CLIENT_ID=
+APPLE_TEAM_ID=
+APPLE_KEY_ID=
+APPLE_PRIVATE_KEY=
+APPLE_REDIRECT_URI=
+APPLE_ALLOWED_AUDIENCES=
+
 JWT_SECRET=
 PERSONAL_DATA_ENCRYPTION_KEY=
 PERSONAL_DATA_ENCRYPTION_IV=

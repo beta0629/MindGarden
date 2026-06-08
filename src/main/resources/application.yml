@@ -544,6 +544,10 @@ apple:
   key-id: ${APPLE_KEY_ID:}
   private-key: ${APPLE_PRIVATE_KEY:}
   redirect-uri: ${APPLE_REDIRECT_URI:}
+  # identityToken aud 검증 허용 List (콤마 구분). iOS 네이티브 SIWA 는 Bundle ID(예: com.mindgarden.MindGardenMobile),
+  # 웹/Service ID 는 Service ID(예: co.kr.coresolution.app.signin) 로 aud 가 발급되므로 두 값 모두 등록 필수.
+  # 미지정 시 client-id 단일값 fallback (P0 hotfix 2026-06-08 — iPhone 로그인 검증 실패 대응).
+  allowed-audiences: ${APPLE_ALLOWED_AUDIENCES:}
   jwks-uri: ${APPLE_JWKS_URI:https://appleid.apple.com/auth/keys}
   issuer: ${APPLE_ISSUER:https://appleid.apple.com}
   token-uri: ${APPLE_TOKEN_URI:https://appleid.apple.com/auth/token}

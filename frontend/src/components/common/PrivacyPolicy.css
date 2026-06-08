@@ -177,7 +177,7 @@
  */
 .privacy-policy-warning-box {
   background: var(--mg-color-warning-bg);
-  border: 1px solid var(--mg-custom-ffeaa7, #ffeaa7);
+  border: 1px solid var(--mg-warning-100);
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
@@ -192,8 +192,8 @@
 }
 
 .privacy-policy-conclusion-box {
-  background: var(--mg-custom-e8f4fd, #e8f4fd);
-  border: 1px solid var(--mg-custom-bee5eb, #bee5eb);
+  background: var(--mg-info-50);
+  border: 1px solid var(--mg-info-200);
   border-radius: 8px;
   padding: 20px;
   text-align: center;
@@ -202,5 +202,5 @@
 .privacy-policy-conclusion-text {
   margin: 0;
   font-size: var(--font-size-sm);
-  color: var(--mg-custom-0c5460, #0c5460);
+  color: var(--mg-color-info-800);
 }

@@ -252,22 +252,22 @@ select option,
   z-index: var(--z-sticky);
 }
 
-/* 다크 모드 지원 */
+/* 다크 모드 지원 — `--ios-*-dark` 토큰은 unified-design-tokens.css D11 hotfix 블록 SSOT */
 @media (prefers-color-scheme: dark) {
   .mg-dropdown__trigger {
-    background: var(--ios-bg-secondary-dark, #2c2c2e);
-    border-color: var(--ios-border-dark, #38383a);
+    background: var(--ios-bg-secondary-dark);
+    border-color: var(--ios-border-dark);
     color: var(--ios-text-primary-dark, var(--mg-white));
   }
   
   .mg-dropdown__trigger:hover {
-    background: var(--ios-bg-tertiary-dark, #3a3a3c);
-    border-color: var(--ios-border-hover-dark, #48484a);
+    background: var(--ios-bg-tertiary-dark);
+    border-color: var(--ios-border-hover-dark);
   }
   
   .mg-dropdown__menu {
-    background: var(--ios-bg-primary-dark, #1c1c1e);
-    border-color: var(--ios-border-dark, #38383a);
+    background: var(--ios-bg-primary-dark);
+    border-color: var(--ios-border-dark);
   }
   
   .mg-dropdown__item {
@@ -275,6 +275,6 @@ select option,
   }
   
   .mg-dropdown__item:hover {
-    background: var(--ios-bg-secondary-dark, #2c2c2e);
+    background: var(--ios-bg-secondary-dark);
   }
 }

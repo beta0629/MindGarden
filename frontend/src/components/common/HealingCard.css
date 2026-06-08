@@ -15,8 +15,8 @@
     gap: var(--mg-spacing-xs);
     margin-bottom: var(--mg-spacing-sm);
     padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
-    background-color: var(--mg-color-info-100, #dbeafe);
-    color: var(--mg-color-info-800, #1e40af);
+    background-color: var(--mg-color-info-100);
+    color: var(--mg-color-info-800);
     border-radius: var(--mg-radius-full);
     font-size: 12px;
     font-weight: 600;

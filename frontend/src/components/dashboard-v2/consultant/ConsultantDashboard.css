@@ -543,7 +543,7 @@
 .mg-v2-quick-action-bar__title svg {
   width: 18px;
   height: 18px;
-  color: var(--mg-color-accent-main, #8B7355);
+  color: var(--mg-color-accent-main);
 }
 
 .mg-v2-quick-action-bar__actions {
@@ -736,7 +736,7 @@
 }
 
 .mg-v2-badge--high {
-  background: #fd7e14;
+  background: var(--mg-orange-500);
   color: var(--mg-white, var(--mg-white));
 }
 

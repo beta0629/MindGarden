@@ -38,3 +38,18 @@ export function resolveProfileGetEndpoint(appRole: AppAuthRole, userId: number):
   }
   return PROFILE_API.CLIENT_PROFILE;
 }
+
+/**
+ * 프로필 GET 응답에서 휴대폰 번호 원본 자리(11자리 또는 하이픈 포함)를 추출.
+ * 응답 키 호환: `phone`, `phoneNumber`, `mobile`. 없으면 null.
+ *
+ * 표시 시에는 PII 정책상 maskKoreanMobileForDisplay 등으로 반드시 마스킹.
+ */
+export function extractPhoneFromProfileResponse(raw: unknown): string | null {
+  const data = unwrapApiResponse<Record<string, unknown>>(raw);
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+  const candidate = data.phone ?? data.phoneNumber ?? data.mobile;
+  return typeof candidate === 'string' && candidate.trim() !== '' ? candidate : null;
+}

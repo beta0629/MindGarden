@@ -9,6 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { apiGet } from '../client';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
+  extractPhoneFromProfileResponse,
   extractProfileImageUrlFromPutResponse,
   resolveProfileGetEndpoint,
   resolveProfileImageExtractRole,
@@ -32,9 +33,17 @@ export function useProfileRemoteSync() {
           if (cancelled) {
             return;
           }
+          const patch: Partial<{ profileImageUrl: string; phone: string }> = {};
           const url = extractProfileImageUrlFromPutResponse(extractRole, raw);
           if (url && url !== user.profileImageUrl) {
-            updateUser({ profileImageUrl: url });
+            patch.profileImageUrl = url;
+          }
+          const phone = extractPhoneFromProfileResponse(raw);
+          if (phone && phone !== user.phone) {
+            patch.phone = phone;
+          }
+          if (Object.keys(patch).length > 0) {
+            updateUser(patch);
           }
         } catch {
           // 베스트 에포트 동기화
@@ -43,6 +52,6 @@ export function useProfileRemoteSync() {
       return () => {
         cancelled = true;
       };
-    }, [user?.id, user?.role, user?.profileImageUrl, updateUser]),
+    }, [user?.id, user?.role, user?.profileImageUrl, user?.phone, updateUser]),
   );
 }

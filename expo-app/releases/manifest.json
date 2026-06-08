@@ -1,4 +1,4 @@
 {
-  "androidVersionCode": 6,
-  "lastReleaseNote": "PATCH 1.0.5 — 중복 로그인 UX UnifiedModal 전환, supportsTablet=false 재빌드(13\" iPad 스크린샷 요구 해제), 백엔드 DUPLICATE_LOGIN_MESSAGE 상수화"
+  "androidVersionCode": 7,
+  "lastReleaseNote": "PATCH 1.0.6 — Apple Plan A 완결(T1 SIWA + T2 UGC 안전 8종 + T3 의료 출처) + 네이버 로그인 마이페이지 휴대전화 마스킹 표시. EAS Build 9 후속 TestFlight + Android AAB 캡처용."
 }

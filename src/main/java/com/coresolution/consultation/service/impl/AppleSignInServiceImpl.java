@@ -88,12 +88,70 @@ public class AppleSignInServiceImpl implements AppleSignInService {
                 request.getIdentityToken(), request.getNonce());
             return resolveAndIssue(claims, request);
         } catch (AppleIdTokenVerificationException e) {
-            log.warn("Apple identityToken 검증 실패: {}", e.getMessage());
+            // PII 우려 0 — aud/iss/kid 는 모두 공개 메타데이터(Apple JWT 헤더·Service ID·Bundle ID).
+            // sub/email 은 PII 라 절대 노출 금지. 본 hotfix(P0 2026-06-08) 의 핵심 진단 단서이므로
+            // 운영에서 H1(aud 불일치 — 다중 audience 미허용) vs 그 외 사유를 즉시 구분하기 위해 추가.
+            String tokenAud = safeExtractClaim(request.getIdentityToken(), "aud");
+            String tokenIss = safeExtractClaim(request.getIdentityToken(), "iss");
+            String tokenKid = safeExtractHeader(request.getIdentityToken(), "kid");
+            log.warn("Apple SIWA 검증 실패: cause={}, tokenAud={}, tokenIss={}, tokenKid={}",
+                e.getMessage(), tokenAud, tokenIss, tokenKid);
             return failure("Apple 로그인 검증에 실패했습니다.");
         } catch (Exception e) {
             log.error("Apple 로그인 처리 중 오류", e);
             return failure("Apple 로그인 처리 중 오류가 발생했습니다.");
         }
+    }
+
+    /**
+     * 검증 실패 진단 로그 전용 — JWT payload 의 단일 claim 값을 best-effort 추출한다.
+     *
+     * <p>{@link AppleIdTokenVerifier} 가 예외를 던졌을 때 검증 자체는 실패했지만 토큰 형식/Base64URL
+     * 구조는 보통 정상이므로, payload 디코딩만으로 aud/iss 를 안전하게 꺼내 진단 로그에 남긴다.
+     * 어떤 사유로든 파싱이 실패하면 {@code "(unparseable)"} 을 반환해 catch 블록 자체가
+     * 또다시 예외를 던지지 않도록 한다.</p>
+     *
+     * @param identityToken Apple ID token (압축된 JWT)
+     * @param claim         추출할 payload claim 키
+     * @return 추출된 String 표현 또는 {@code "(unparseable)"} (실패 시)
+     */
+    private String safeExtractClaim(String identityToken, String claim) {
+        try {
+            String[] parts = identityToken.split("\\.");
+            if (parts.length < 2) return "(unparseable)";
+            byte[] decoded = java.util.Base64.getUrlDecoder().decode(padBase64Url(parts[1]));
+            Map<?, ?> payload = new com.fasterxml.jackson.databind.ObjectMapper()
+                .readValue(decoded, Map.class);
+            Object val = payload.get(claim);
+            return val == null ? "(absent)" : val.toString();
+        } catch (Exception ignored) {
+            return "(unparseable)";
+        }
+    }
+
+    /**
+     * 검증 실패 진단 로그 전용 — JWT header 의 단일 claim 값을 best-effort 추출한다.
+     *
+     * @see #safeExtractClaim(String, String)
+     */
+    private String safeExtractHeader(String identityToken, String headerKey) {
+        try {
+            String[] parts = identityToken.split("\\.");
+            if (parts.length < 1) return "(unparseable)";
+            byte[] decoded = java.util.Base64.getUrlDecoder().decode(padBase64Url(parts[0]));
+            Map<?, ?> header = new com.fasterxml.jackson.databind.ObjectMapper()
+                .readValue(decoded, Map.class);
+            Object val = header.get(headerKey);
+            return val == null ? "(absent)" : val.toString();
+        } catch (Exception ignored) {
+            return "(unparseable)";
+        }
+    }
+
+    private static String padBase64Url(String input) {
+        int mod = input.length() % 4;
+        if (mod == 0) return input;
+        return input + "====".substring(mod);
     }
 
     @Override

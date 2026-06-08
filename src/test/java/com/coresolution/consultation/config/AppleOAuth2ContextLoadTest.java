@@ -129,6 +129,81 @@ class AppleOAuth2ContextLoadTest {
             });
     }
 
+    // ==========================================================================================
+    // P0 hotfix 2026-06-08 — allowed-audiences 바인딩·fallback 회귀 게이트
+    //
+    // 배경: iOS 네이티브 SIWA aud=Bundle ID 를 허용하기 위해 AppleOAuth2Properties 에
+    //       allowedAudiences List<String> 필드를 도입했다. Spring Boot 의 콤마 구분 자동 바인딩이
+    //       동작하지 않으면 운영에서 multi-audience 가 무력화되어 H1 P0 가 재발한다.
+    // ==========================================================================================
+
+    @Test
+    @DisplayName("[P0 hotfix] apple.allowed-audiences 콤마 구분 List 가 정상 바인딩된다")
+    void allowedAudiencesBindsAsCommaSeparatedList() {
+        new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(PropertyPlaceholderAutoConfiguration.class))
+            .withUserConfiguration(AppleOAuth2Config.class)
+            .withPropertyValues(
+                "apple.client-id=co.kr.coresolution.app.signin",
+                "apple.allowed-audiences=foo,bar,baz")
+            .run(context -> {
+                assertThat(context).hasNotFailed();
+                AppleOAuth2Properties properties = context.getBean(AppleOAuth2Properties.class);
+                assertThat(properties.getAllowedAudiences()).containsExactly("foo", "bar", "baz");
+            });
+    }
+
+    @Test
+    @DisplayName("[P0 hotfix] allowed-audiences 가 비어 있으면 clientId 단일값으로 fallback")
+    void resolvedAllowedAudiencesFallsBackToClientIdWhenEmpty() {
+        new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(PropertyPlaceholderAutoConfiguration.class))
+            .withUserConfiguration(AppleOAuth2Config.class)
+            .withPropertyValues(
+                "apple.client-id=co.kr.coresolution.app.signin",
+                "apple.allowed-audiences=")
+            .run(context -> {
+                assertThat(context).hasNotFailed();
+                AppleOAuth2Properties properties = context.getBean(AppleOAuth2Properties.class);
+                // allowedAudiences 자체는 비었어도 resolved 는 clientId 단일값으로 fallback
+                assertThat(properties.getResolvedAllowedAudiences())
+                    .containsExactly("co.kr.coresolution.app.signin");
+            });
+    }
+
+    @Test
+    @DisplayName("[P0 hotfix] allowed-audiences 에 clientId 가 자동 포함되어 중복 제거된다")
+    void resolvedAllowedAudiencesMergesClientIdAndDeduplicates() {
+        new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(PropertyPlaceholderAutoConfiguration.class))
+            .withUserConfiguration(AppleOAuth2Config.class)
+            .withPropertyValues(
+                "apple.client-id=co.kr.coresolution.app.signin",
+                "apple.allowed-audiences=co.kr.coresolution.app.signin,com.mindgarden.MindGardenMobile")
+            .run(context -> {
+                assertThat(context).hasNotFailed();
+                AppleOAuth2Properties properties = context.getBean(AppleOAuth2Properties.class);
+                assertThat(properties.getResolvedAllowedAudiences())
+                    .containsExactly("co.kr.coresolution.app.signin", "com.mindgarden.MindGardenMobile");
+            });
+    }
+
+    @Test
+    @DisplayName("[P0 hotfix] clientId·allowed-audiences 모두 비어 있으면 빈 List 반환 (전체 reject)")
+    void resolvedAllowedAudiencesReturnsEmptyWhenAllBlank() {
+        new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(PropertyPlaceholderAutoConfiguration.class))
+            .withUserConfiguration(AppleOAuth2Config.class)
+            .withPropertyValues(
+                "apple.client-id=",
+                "apple.allowed-audiences=")
+            .run(context -> {
+                assertThat(context).hasNotFailed();
+                AppleOAuth2Properties properties = context.getBean(AppleOAuth2Properties.class);
+                assertThat(properties.getResolvedAllowedAudiences()).isEmpty();
+            });
+    }
+
     /**
      * Apple 통합 빈 3종을 클래스 import 로 등록한다.
      *

@@ -1,6 +1,6 @@
-# Apple T1 SIWA — 운영 env 주입 가이드 (5종)
+# Apple T1 SIWA — 운영 env 주입 가이드 (6종)
 
-> **작성일**: 2026-06-07
+> **작성일**: 2026-06-07 (2026-06-08 갱신: `APPLE_ALLOWED_AUDIENCES` 추가 — P0 hotfix)
 > **트랙**: T1 (Sign in with Apple) — Apple App Store 4.8 (Login Services)
 > **선행 문서**: `docs/project-management/2026-06-04/APPLE_T1_SIWA_DESIGN_HANDOFF.md`,
 > `docs/project-management/APPLE_REJECTION_PLAN_A_ORCHESTRATION_2026_06_04.md`
@@ -8,16 +8,22 @@
 
 ## 0. TL;DR
 
-Apple Sign in with Apple 의 **백엔드 5종 운영 env** 를 다음 두 위치에 주입한다.
+Apple Sign in with Apple 의 **백엔드 6종 운영 env** 를 다음 두 위치에 주입한다.
 실제 값은 절대 저장소에 커밋하지 않는다 (`.env.example`, `application.yml` 은 placeholder 만 보관).
 
 | Env Key | 위치 | 의미 |
 |---|---|---|
-| `APPLE_CLIENT_ID`     | Service ID (예: `co.kr.coresolution.app.signin`) | identityToken `aud` 검증 기준 |
-| `APPLE_TEAM_ID`       | Apple Developer Team ID (10자리) | client_secret JWT `iss` |
-| `APPLE_KEY_ID`        | Sign in with Apple Key ID (10자리) | client_secret JWT header `kid` |
-| `APPLE_PRIVATE_KEY`   | .p8 PEM 파일 내용 (멀티라인) | client_secret JWT ES256 서명용 |
-| `APPLE_REDIRECT_URI`  | Service ID 에 등록한 Return URL (예: `https://api.core-solution.co.kr/oauth/apple/callback`) | `/auth/token` 호출의 redirect_uri |
+| `APPLE_CLIENT_ID`         | Service ID (예: `co.kr.coresolution.app.signin`) | identityToken `aud` 검증의 fallback 단일값 |
+| `APPLE_TEAM_ID`           | Apple Developer Team ID (10자리) | client_secret JWT `iss` |
+| `APPLE_KEY_ID`            | Sign in with Apple Key ID (10자리) | client_secret JWT header `kid` |
+| `APPLE_PRIVATE_KEY`       | .p8 PEM 파일 내용 (멀티라인) | client_secret JWT ES256 서명용 |
+| `APPLE_REDIRECT_URI`      | Service ID 에 등록한 Return URL (예: `https://api.core-solution.co.kr/oauth/apple/callback`) | `/auth/token` 호출의 redirect_uri |
+| `APPLE_ALLOWED_AUDIENCES` | identityToken `aud` 허용 List (콤마 구분) — Service ID + Bundle ID | iOS 네이티브 SIWA 는 Bundle ID(`com.mindgarden.MindGardenMobile`), 웹/Service ID 는 Service ID(`co.kr.coresolution.app.signin`) 로 발급 → **둘 모두 등록 필수** (P0 hotfix 2026-06-08) |
+
+> **2026-06-08 P0 hotfix 배경**: iOS 네이티브 SIWA(`expo-apple-authentication`) identityToken 의 `aud` 는
+> Apple 이 자동으로 디바이스의 **Bundle ID** 로 박아 발급하므로, 백엔드가 Service ID 단일값으로만 검증하면
+> 모든 네이티브 토큰이 `audience 불일치` 로 reject 된다. `APPLE_ALLOWED_AUDIENCES` 미설정 시
+> 백엔드는 `APPLE_CLIENT_ID` 단일값 fallback 으로 동작(이전 동작 100% 보존).
 
 > Apple Developer Console 의 등록 절차는 `APPLE_DEVELOPER_CONSOLE_SETUP_GUIDE.md` 를 참조.
 
@@ -34,7 +40,7 @@ Apple Sign in with Apple 의 **백엔드 5종 운영 env** 를 다음 두 위치
 scp ~/Downloads/AuthKey_XXXXXXXXXX.p8 deployer@<운영-서버>:/opt/coresolution/secrets/apple-siwa.p8
 ssh deployer@<운영-서버> 'chmod 600 /opt/coresolution/secrets/apple-siwa.p8'
 
-# 2) .env.prod 에 5종 env 추가 (heredoc 으로 PEM 인라인 — Spring `${APPLE_PRIVATE_KEY:}` 가 멀티라인 OK)
+# 2) .env.prod 에 6종 env 추가 (heredoc 으로 PEM 인라인 — Spring `${APPLE_PRIVATE_KEY:}` 가 멀티라인 OK)
 ssh deployer@<운영-서버> bash <<'EOF'
 sudo -u coresolution tee -a /opt/coresolution/.env.prod >/dev/null <<EOENV
 APPLE_CLIENT_ID=co.kr.coresolution.app.signin
@@ -42,6 +48,9 @@ APPLE_TEAM_ID=ABCDEFGHIJ
 APPLE_KEY_ID=KEYIDABCDE
 APPLE_REDIRECT_URI=https://api.core-solution.co.kr/api/v1/auth/oauth/apple/callback
 APPLE_PRIVATE_KEY="$(cat /opt/coresolution/secrets/apple-siwa.p8)"
+# 2026-06-08 P0 hotfix — 콤마 구분 (Service ID + iOS Bundle ID).
+# 이 값이 빠지면 iPhone 앱(네이티브 SIWA) 토큰이 모두 reject 된다.
+APPLE_ALLOWED_AUDIENCES=co.kr.coresolution.app.signin,com.mindgarden.MindGardenMobile
 EOENV
 sudo chown coresolution:coresolution /opt/coresolution/.env.prod
 sudo chmod 600 /opt/coresolution/.env.prod
@@ -58,7 +67,7 @@ ssh deployer@<운영-서버> 'sudo systemctl restart coresolution-backend'
 
 CI 단계에서 `mvn test` 가 통합 테스트(Apple 라이브 호출 없음)만 실행하므로 **CI 단계에는 주입 불필요**.
 운영 반영 워크플로(`deploy-production.yml`)가 .env.prod 파일을 새로 덮어쓰는 패턴이라면
-다음 5종 Secret 을 GitHub 저장소 Settings → Secrets → Actions 에 추가 후 워크플로 step 에 매핑한다.
+다음 6종 Secret 을 GitHub 저장소 Settings → Secrets → Actions 에 추가 후 워크플로 step 에 매핑한다.
 
 GitHub UI: <https://github.com/coresolution-co/mindGarden/settings/secrets/actions>
 
@@ -68,28 +77,32 @@ APPLE_TEAM_ID            = (Apple Developer Team ID 10자리)
 APPLE_KEY_ID             = (SIWA Key ID 10자리)
 APPLE_PRIVATE_KEY        = (.p8 PEM 전체 — 헤더/푸터 포함 멀티라인 그대로 붙여넣기)
 APPLE_REDIRECT_URI       = https://api.core-solution.co.kr/api/v1/auth/oauth/apple/callback
+APPLE_ALLOWED_AUDIENCES  = co.kr.coresolution.app.signin,com.mindgarden.MindGardenMobile
 ```
 
 `gh` CLI 로 일괄 등록 (로컬 셸에서, gh 인증·write:secrets 권한 필요):
 
 ```bash
-gh secret set APPLE_CLIENT_ID    --repo coresolution-co/mindGarden --body "co.kr.coresolution.app.signin"
-gh secret set APPLE_TEAM_ID      --repo coresolution-co/mindGarden --body "ABCDEFGHIJ"
-gh secret set APPLE_KEY_ID       --repo coresolution-co/mindGarden --body "KEYIDABCDE"
-gh secret set APPLE_REDIRECT_URI --repo coresolution-co/mindGarden --body "https://api.core-solution.co.kr/api/v1/auth/oauth/apple/callback"
+gh secret set APPLE_CLIENT_ID         --repo coresolution-co/mindGarden --body "co.kr.coresolution.app.signin"
+gh secret set APPLE_TEAM_ID           --repo coresolution-co/mindGarden --body "ABCDEFGHIJ"
+gh secret set APPLE_KEY_ID            --repo coresolution-co/mindGarden --body "KEYIDABCDE"
+gh secret set APPLE_REDIRECT_URI      --repo coresolution-co/mindGarden --body "https://api.core-solution.co.kr/api/v1/auth/oauth/apple/callback"
 # PEM 은 파일 입력으로 — 줄바꿈 보존
-gh secret set APPLE_PRIVATE_KEY  --repo coresolution-co/mindGarden < ~/Downloads/AuthKey_XXXXXXXXXX.p8
+gh secret set APPLE_PRIVATE_KEY       --repo coresolution-co/mindGarden < ~/Downloads/AuthKey_XXXXXXXXXX.p8
+# P0 hotfix 2026-06-08 — Service ID + iOS Bundle ID 콤마 구분
+gh secret set APPLE_ALLOWED_AUDIENCES --repo coresolution-co/mindGarden --body "co.kr.coresolution.app.signin,com.mindgarden.MindGardenMobile"
 ```
 
-> 워크플로에서 사용 시:
+> 워크플로에서 사용 시 (`deploy-production.yml`, `deploy-backend-dev.yml` 의 `jobs.<id>.env` 블록에 이미 매핑됨):
 >
 > ```yaml
 > env:
->   APPLE_CLIENT_ID:    ${{ secrets.APPLE_CLIENT_ID }}
->   APPLE_TEAM_ID:      ${{ secrets.APPLE_TEAM_ID }}
->   APPLE_KEY_ID:       ${{ secrets.APPLE_KEY_ID }}
->   APPLE_PRIVATE_KEY:  ${{ secrets.APPLE_PRIVATE_KEY }}
->   APPLE_REDIRECT_URI: ${{ secrets.APPLE_REDIRECT_URI }}
+>   APPLE_CLIENT_ID:         ${{ secrets.APPLE_CLIENT_ID }}
+>   APPLE_TEAM_ID:           ${{ secrets.APPLE_TEAM_ID }}
+>   APPLE_KEY_ID:            ${{ secrets.APPLE_KEY_ID }}
+>   APPLE_PRIVATE_KEY:       ${{ secrets.APPLE_PRIVATE_KEY }}
+>   APPLE_REDIRECT_URI:      ${{ secrets.APPLE_REDIRECT_URI }}
+>   APPLE_ALLOWED_AUDIENCES: ${{ secrets.APPLE_ALLOWED_AUDIENCES }}
 > ```
 
 ### 1.3 프론트엔드 (웹) — 공개 키 2종
@@ -140,3 +153,4 @@ curl -sS https://api.core-solution.co.kr/api/v1/auth/oauth/apple/login \
 | 일자 | 변경 |
 |---|---|
 | 2026-06-07 | 초기 작성 — Apple T1 운영 env 5종 주입 가이드 |
+| 2026-06-08 | P0 hotfix — `APPLE_ALLOWED_AUDIENCES` 추가 (6종). iOS 네이티브 SIWA `aud=Bundle ID` 허용 미설정으로 iPhone 로그인 검증 실패 대응. `AppleIdTokenVerifier.matchesAnyAudience` + `AppleOAuth2Properties#getResolvedAllowedAudiences` 도입. |

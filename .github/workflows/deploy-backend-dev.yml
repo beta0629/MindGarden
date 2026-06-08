@@ -489,6 +489,125 @@ jobs:
             exit 1
           fi
           
+    # ============================================================================
+    # [P0 hotfix 2026-06-08] Apple SIWA env 자동 주입 + 검증 (개발)
+    # GitHub Secrets(APPLE_*) → /etc/mindgarden/dev.env 멱등 갱신 + 단일 unit 재시작 + env 검증.
+    # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1 (자동화 완료).
+    # 운영(deploy-production.yml) 의 동일 step 과 패턴 일치 — dev 는 단일 systemd unit.
+    # ============================================================================
+    - name: 🍎 Apple SIWA env 자동 주입 + 검증
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        # appleboy/ssh-action envs: 워크플로 env(=GitHub Secrets) 를 SSH 세션으로 export
+        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES
+        script: |
+          # set -e 비활성 — env 주입 실패가 전체 배포 실패로 전파되지 않도록
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          UNIT=mindgarden-dev.service
+          APPLE_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES"
+          
+          # 0) 사전 검증 — 6종 모두 있는지
+          MISSING_SECRET=0
+          for k in $APPLE_KEYS; do
+            eval "v=\${$k}"
+            if [ -z "$v" ]; then
+              MISSING_SECRET=$((MISSING_SECRET+1))
+            fi
+          done
+          if [ "$MISSING_SECRET" -gt 0 ]; then
+            echo "::notice title=Apple SIWA env skip::GitHub Secrets 의 APPLE_* 6종 중 $MISSING_SECRET 개가 비어 있어 dev.env 갱신을 skip 합니다. https://github.com/${{ github.repository }}/settings/secrets/actions 확인 필요."
+            exit 0
+          fi
+          
+          # 1) 파일 존재 보장 + 백업
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+          
+          # 2) 멱등 KEY="VALUE" 갱신 (운영 워크플로와 동일 로직)
+          update_env() {
+            local key="$1"
+            local value="$2"
+            local escaped_value
+            escaped_value=$(printf '%s' "$value" | sed -e 's/[\\&|]/\\&/g')
+            if sudo grep -qE "^[[:space:]]*${key}=" "$DEV_ENV_FILE" 2>/dev/null; then
+              sudo sed -i "s|^[[:space:]]*${key}=.*|${key}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+            else
+              printf '%s="%s"\n' "$key" "$value" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+            fi
+          }
+          
+          echo "🔐 dev.env Apple SIWA 6종 멱등 갱신 시작"
+          update_env APPLE_CLIENT_ID         "$APPLE_CLIENT_ID"
+          update_env APPLE_TEAM_ID           "$APPLE_TEAM_ID"
+          update_env APPLE_KEY_ID            "$APPLE_KEY_ID"
+          update_env APPLE_REDIRECT_URI      "$APPLE_REDIRECT_URI"
+          update_env APPLE_ALLOWED_AUDIENCES "$APPLE_ALLOWED_AUDIENCES"
+          # PEM 은 systemd EnvironmentFile 호환 위해 한 줄로 (Spring 측에서 \s+ 제거 후 base64 디코드)
+          PEM_ONELINE=$(printf '%s' "$APPLE_PRIVATE_KEY" | tr -d '\n\r')
+          update_env APPLE_PRIVATE_KEY "$PEM_ONELINE"
+          
+          # 3) 권한 보호
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+          
+          # 4) 값 노출 없이 길이만 표시
+          echo "✅ dev.env Apple SIWA 6종 갱신 완료 — 길이만 표시:"
+          sudo grep -E "^APPLE_" "$DEV_ENV_FILE" \
+            | awk -F= '{key=$1; rest=substr($0, length(key)+2); gsub(/^"|"$/, "", rest); printf "   %s = (%d chars)\n", key, length(rest)}'
+          
+          # 5) systemd daemon-reload + 단일 unit 재시작
+          sudo systemctl daemon-reload
+          echo "🔄 ${UNIT} 재시작"
+          sudo systemctl restart "$UNIT" || echo "::warning::${UNIT} 재시작 실패 (계속 진행)"
+          
+          # 6) 헬스 확인 (15초 대기)
+          sleep 15
+          DEV_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8080/actuator/health 2>/dev/null || echo "000")
+          echo "🏥 헬스: dev(8080)=$DEV_HEALTH"
+          if [ "$DEV_HEALTH" != "200" ]; then
+            echo "::warning title=BE 헬스 비정상::15초 후에도 8080 이 200 이 아닙니다. 후속 '🏥 개발 서버 헬스체크' step 에서 재대기·재검증 합니다."
+          fi
+          
+          # 7) 프로세스 env 검증 — 단일 unit PID 의 /proc/PID/environ
+          PID=$(systemctl show -p MainPID --value "$UNIT" 2>/dev/null)
+          if [ -z "$PID" ] || [ "$PID" = "0" ]; then
+            echo "::warning::${UNIT} MainPID 조회 실패 (PID='$PID') — 프로세스 env 검증 skip"
+            exit 0
+          fi
+          echo "🔍 unit=${UNIT} / PID=${PID} 프로세스 env APPLE_* 확인"
+          MISSING_ENV=0
+          for k in $APPLE_KEYS; do
+            len=$(sudo cat "/proc/$PID/environ" 2>/dev/null | tr '\0' '\n' | awk -F= -v K="$k" 'BEGIN{ found=0 } $1==K { v=substr($0, length(K)+2); print length(v); found=1; exit } END { if (!found) print "" }')
+            if [ -z "$len" ] || [ "$len" = "0" ]; then
+              echo "   ❌ ${k} = MISSING (빈 값 또는 환경 미주입)"
+              MISSING_ENV=$((MISSING_ENV+1))
+            else
+              echo "   ✅ ${k} = ($len chars)"
+            fi
+          done
+          if [ "$MISSING_ENV" -gt 0 ]; then
+            echo "::error title=APPLE_* 프로세스 env 누락::APPLE_* 6종 중 $MISSING_ENV 개가 ${UNIT} (PID=$PID) 프로세스 환경에 없습니다. dev.env 형식·따옴표·systemd EnvironmentFile 경로(또는 start.sh set -a/source 패턴) 확인 필요."
+          else
+            echo "🎉 ${UNIT} 에 APPLE_* 6종 모두 주입 완료"
+          fi
+    # ============================================================================
+    # [/P0 hotfix 2026-06-08]
+    # ============================================================================
+          
     - name: 🏥 개발 서버 헬스체크
       uses: appleboy/ssh-action@master
       with:

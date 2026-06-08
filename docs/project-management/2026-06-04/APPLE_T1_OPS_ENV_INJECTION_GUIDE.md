@@ -31,6 +31,15 @@ Apple Sign in with Apple 의 **백엔드 6종 운영 env** 를 다음 두 위치
 
 ### 1.1 백엔드 운영 서버 (`.env.prod` 또는 systemd EnvironmentFile)
 
+> **2026-06-08 자동화 완료 (P0 hotfix)**: 본 §1.1 의 **수동 SSH 작업은 더 이상 필수가 아닙니다.**
+> `.github/workflows/deploy-production.yml` 의 `🍎 Apple SIWA env 자동 주입 + 검증` step 과
+> `.github/workflows/deploy-backend-dev.yml` 의 동일 step 이 배포 시 GitHub Secrets 의 APPLE_* 6종을
+> 운영의 `/etc/mindgarden/prod-from-dev.env`·개발의 `/etc/mindgarden/dev.env` 에 **멱등** 갱신하고
+> 양쪽 BG 슬롯(운영) 또는 단일 unit(개발)을 자동 재시작 + 프로세스 env 검증(`/proc/PID/environ`)까지 수행합니다.
+> 워크플로가 머지되면 다음 배포(push 또는 workflow_dispatch)부터 자동 반영되며 **사용자 SSH 작업 0회** 입니다.
+> 본 절차는 **비상시(워크플로 외 즉시 갱신 필요)** 의 fallback 으로만 사용하세요.
+> 자동화 step 의 동작 요약: ① Secrets 6종 사전 검증(누락 시 notice 후 skip) → ② 멱등 sed/append → ③ root:root 0600 권한 → ④ 길이만 로그(값 노출 금지) → ⑤ daemon-reload + restart → ⑥ 15초 후 actuator/health → ⑦ /proc/PID/environ 검증(누락 시 error annotation, 배포는 성공).
+
 운영 백엔드는 SSH 배포(`/.github/workflows/deploy-backend-dev.yml`, `deploy-production.yml`) 후
 `/opt/coresolution/.env.prod` (혹은 systemd unit 의 `EnvironmentFile=`) 에서 환경 변수를 읽는다.
 다음 명령을 운영 서버에서 1회만 실행 (관리자 권한 필요):
@@ -154,3 +163,4 @@ curl -sS https://api.core-solution.co.kr/api/v1/auth/oauth/apple/login \
 |---|---|
 | 2026-06-07 | 초기 작성 — Apple T1 운영 env 5종 주입 가이드 |
 | 2026-06-08 | P0 hotfix — `APPLE_ALLOWED_AUDIENCES` 추가 (6종). iOS 네이티브 SIWA `aud=Bundle ID` 허용 미설정으로 iPhone 로그인 검증 실패 대응. `AppleIdTokenVerifier.matchesAnyAudience` + `AppleOAuth2Properties#getResolvedAllowedAudiences` 도입. |
+| 2026-06-08 | P0 hotfix — 워크플로 자동 prod.env/dev.env 주입 step 추가 (`🍎 Apple SIWA env 자동 주입 + 검증`). 운영(`/etc/mindgarden/prod-from-dev.env` + blue/green 양쪽 재시작) · 개발(`/etc/mindgarden/dev.env` + 단일 unit 재시작) 멱등 갱신 + `/proc/PID/environ` 검증. §1.1 수동 SSH 절차는 비상용으로 격하. |

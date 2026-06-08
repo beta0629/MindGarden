@@ -35,7 +35,9 @@ export default function OauthAccountSelectionScreen() {
   const selectionToken = useMemo(() => firstParam(params.selectionToken), [params.selectionToken]);
   const providerLabel = useMemo(() => {
     const p = firstParam(params.provider).toUpperCase();
-    return p === 'NAVER' ? '네이버' : '카카오';
+    if (p === 'NAVER') return '네이버';
+    if (p === 'APPLE') return 'Apple';
+    return '카카오';
   }, [params.provider]);
 
   const [loading, setLoading] = useState(true);

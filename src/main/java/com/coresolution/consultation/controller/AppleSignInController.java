@@ -60,6 +60,32 @@ public class AppleSignInController extends BaseApiController {
             request.getNonce() != null,
             request.getEmail() != null);
         AppleSignInResponse response = appleSignInService.signIn(request);
+        // TODO(diagnostic) Apple SIWA v1.0.6 호환 진단 완료 후 제거 — 응답 메타 INFO 로그 (PII 없음)
+        log.info("Apple SIWA 응답 메타: APPLE_SIWA_RESPONSE_META success={}, requiresSignup={}, "
+                + "requiresPhoneVerification={}, requiresPhoneAccountSelection={}, "
+                + "hasAccessToken={}, accessTokenLen={}, hasRefreshToken={}, refreshTokenLen={}, "
+                + "hasPhoneVerificationToken={}, phoneVerificationTokenLen={}, "
+                + "hasPhoneAccountSelectionToken={}, phoneAccountSelectionTokenLen={}, "
+                + "hasUser={}, userId={}, userRole={}, hasTenantId={}, "
+                + "hasSocialUserInfo={}, messageLen={}",
+            response.isSuccess(),
+            response.isRequiresSignup(),
+            response.isRequiresPhoneVerification(),
+            response.isRequiresPhoneAccountSelection(),
+            response.getAccessToken() != null,
+            response.getAccessToken() != null ? response.getAccessToken().length() : 0,
+            response.getRefreshToken() != null,
+            response.getRefreshToken() != null ? response.getRefreshToken().length() : 0,
+            response.getPhoneVerificationToken() != null,
+            response.getPhoneVerificationToken() != null ? response.getPhoneVerificationToken().length() : 0,
+            response.getPhoneAccountSelectionToken() != null,
+            response.getPhoneAccountSelectionToken() != null ? response.getPhoneAccountSelectionToken().length() : 0,
+            response.getUser() != null,
+            response.getUser() != null ? response.getUser().getId() : null,
+            response.getUser() != null ? response.getUser().getRole() : null,
+            response.getUser() != null && response.getUser().getTenantId() != null,
+            response.getSocialUserInfo() != null,
+            response.getMessage() != null ? response.getMessage().length() : 0);
         if (response.isSuccess()) {
             return success(response.getMessage() != null ? response.getMessage() : "Apple 로그인 성공", response);
         }

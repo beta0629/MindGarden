@@ -35,18 +35,28 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Apple App Store 4.8 (Login Services) 대응 — T1 트랙. 디자이너 핸드오프
  * {@code docs/project-management/2026-06-04/APPLE_T1_SIWA_DESIGN_HANDOFF.md} 와 정합한다.</p>
  *
- * <p>분기 정책 (2026-06-08 재정렬):
+ * <p>분기 정책 (2026-06-08 P0 hotfix — email fallback 임시 복원):
  * <ol>
  *   <li>{@code apple_sub} 일치 사용자 존재 → JWT 발급 (기존 로그인)</li>
- *   <li>{@code apple_sub} 없음 → {@code requiresPhoneVerification=true} + {@code phoneVerificationToken} 응답
- *       (휴대폰 입력 단계 진입 — 다른 소셜로 가입된 user 라도 휴대폰이 일치할 때만 자동 매칭)</li>
+ *   <li><b>(임시 fallback)</b> {@code apple_sub} 미매칭 + 동일 테넌트·이메일 매칭 → {@code apple_sub} 연결
+ *       후 JWT 발급 (Private Relay 이메일 제외). App v1.0.6 구버전은 새 응답 필드를 모르므로
+ *       기존 사용자는 이 분기에서 즉시 로그인된다. App v1.0.7 운영 반영 완료 후 제거 예정.</li>
+ *   <li>{@code apple_sub}·email 모두 매칭 실패 → {@code requiresPhoneVerification=true} +
+ *       {@code phoneVerificationToken} 응답 (휴대폰 입력 단계 진입 — 신버전 App 만 처리).</li>
  * </ol>
  * </p>
  *
- * <p>이전 흐름의 (b) email 매칭 분기는 <b>제거</b>됐다. 사용자 결정 — 카카오·네이버·이메일로 가입된
- * user 가 Apple SIWA 로 자동 매칭되는 것은 본인 의사가 아닐 수 있어, 휴대폰 번호를 SSOT 로 한다.</p>
+ * <p><b>임시 fallback 배경 (P0):</b> PR #158 운영 반영 직후 구버전 App(v1.0.6)이 새
+ * {@code requiresPhoneVerification} 필드를 모른 채 {@code success=true && accessToken=null}
+ * 만 보고 에러 분기로 떨어져 "Apple 로그인 실패" UX 가 발생. App OTA 인프라 부재로 즉시
+ * 신버전 반영이 불가하여, BE 에서 이메일 매칭 분기를 임시로 부활시켜 P0 회복. 신규 사용자
+ * (apple_sub·email 둘 다 미매칭)는 그대로 휴대폰 인증 단계로 진입한다.</p>
  *
- * <p>Apple Private Relay (`@privaterelay.appleid.com`) 이메일은 정식 이메일로 저장한다 — 디자이너 §4.2.</p>
+ * <p>Apple Private Relay (`@privaterelay.appleid.com`) 이메일은 fallback 매칭에서 제외된다 —
+ * 가상 이메일이라 잘못 매칭될 위험. (저장 시에는 정식 이메일로 저장 — 디자이너 §4.2.)</p>
+ *
+ * <p>TODO(P1) App 신버전 v1.0.7 운영 반영 완료 후 본 fallback 분기 제거 — 사용자 결정 2026-06-08.
+ * 추적 grep 키워드: {@code APPLE_SIWA_EMAIL_FALLBACK}.</p>
  *
  * @author MindGarden
  * @since 2026-06-07
@@ -194,8 +204,19 @@ public class AppleSignInServiceImpl implements AppleSignInService {
             return issueTokens(user, "기존 Apple 사용자 로그인");
         }
 
-        // 2) 매칭 없음 → 휴대폰 인증 단계 진입 (이전 email 매칭 분기는 제거됨 — 사용자 결정 2026-06-08)
         String tenantId = TenantContextHolder.getTenantId();
+
+        // 2) 임시 fallback (APPLE_SIWA_EMAIL_FALLBACK) — apple_sub 미매칭 + 동일 테넌트·이메일 매칭 → apple_sub 연결 후 로그인.
+        // TODO(P1) App 신버전 v1.0.7 운영 반영 완료 후 본 fallback 분기 제거 — 사용자 결정 2026-06-08.
+        // 배경: PR #158 운영 반영 직후 구버전 App(v1.0.6)이 새 requiresPhoneVerification 필드를 모른 채
+        //       success=true && accessToken=null 응답을 에러로 처리 → "Apple 로그인 실패" UX.
+        //       App OTA 인프라 부재로 즉시 신버전 반영이 불가하여 BE 에서 임시 복원.
+        AppleSignInResponse fallback = tryEmailFallbackLogin(sub, normalizedEmail, tenantId, request);
+        if (fallback != null) {
+            return fallback;
+        }
+
+        // 3) 매칭 실패 → 휴대폰 인증 단계 진입 (신버전 App 만 처리)
         if (!StringUtils.hasText(tenantId)) {
             // 멀티테넌트 컨텍스트 없이는 휴대폰 인증 토큰을 발급할 수 없음.
             return AppleSignInResponse.builder()
@@ -206,6 +227,65 @@ public class AppleSignInServiceImpl implements AppleSignInService {
                 .build();
         }
         return buildPhoneVerificationResponse(sub, normalizedEmail, tenantId, request);
+    }
+
+    /**
+     * 임시 fallback (APPLE_SIWA_EMAIL_FALLBACK) — apple_sub 미매칭 + 동일 테넌트·이메일 매칭 시 apple_sub 를
+     * 연결하고 JWT 를 발급한다. 매칭 실패 시 {@code null} 을 반환해 호출부가 다음 분기(휴대폰 인증)로 진행하도록 한다.
+     *
+     * <p>Private Relay 이메일(`@privaterelay.appleid.com`)은 Apple 의 가상 이메일이라 잘못된 user 매칭
+     * 위험이 있어 fallback 에서 제외한다. 테넌트 컨텍스트나 이메일이 비어 있는 경우도 스킵한다.</p>
+     *
+     * <p><b>임시 분기 — App v1.0.7 운영 반영 완료 후 제거.</b> 추적 grep 키워드:
+     * {@code APPLE_SIWA_EMAIL_FALLBACK}.</p>
+     *
+     * @param sub             Apple identityToken 의 sub
+     * @param normalizedEmail 정규화된 이메일 (null/blank 허용)
+     * @param tenantId        현재 테넌트 ID (null/blank 허용)
+     * @param request         원본 요청 (provider name 갱신용)
+     * @return 매칭 hit 시 로그인 응답, 매칭 실패·스킵 조건 시 {@code null}
+     */
+    private AppleSignInResponse tryEmailFallbackLogin(String sub, String normalizedEmail,
+                                                     String tenantId, AppleSignInRequest request) {
+        if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(normalizedEmail)) {
+            return null;
+        }
+        if (isPrivateRelayEmail(normalizedEmail)) {
+            log.info("Apple SIWA email fallback 스킵: Private Relay 이메일 (tenantId={})", tenantId);
+            return null;
+        }
+        Optional<User> existingByEmail = userRepository.findByEmailAndTenantId(normalizedEmail, tenantId);
+        if (existingByEmail.isEmpty()) {
+            return null;
+        }
+        User user = existingByEmail.get();
+        linkAppleSubToExistingUser(user, sub);
+        userRepository.saveAndFlush(user);
+        updateAppleSocialLink(user, sub, request);
+        // APPLE_SIWA_EMAIL_FALLBACK — 임시 분기 hit 시점·빈도 추적용 WARN. PII(이메일·sub) 미포함.
+        log.warn("APPLE_SIWA_EMAIL_FALLBACK: 임시 fallback - Apple SIWA 이메일 매칭으로 user matched"
+                + " (App v1.0.7+ 운영 반영 완료 후 제거 예정) userId={}, tenantId={}",
+            user.getId(), user.getTenantId());
+        return issueTokens(user, "기존 사용자 Apple 연동 완료");
+    }
+
+    /**
+     * 이메일 매칭으로 찾은 기존 user 에 apple_sub 를 연결한다. 이미 채워진 social 메타데이터는 보존한다.
+     *
+     * <p>임시 fallback 전용 헬퍼 — {@link #tryEmailFallbackLogin}.</p>
+     */
+    private void linkAppleSubToExistingUser(User user, String sub) {
+        user.setAppleSub(sub);
+        if (!StringUtils.hasText(user.getSocialProvider())) {
+            user.setSocialProvider(APPLE_PROVIDER);
+        }
+        if (!StringUtils.hasText(user.getSocialProviderUserId())) {
+            user.setSocialProviderUserId(sub);
+        }
+        if (user.getSocialLinkedAt() == null) {
+            user.setSocialLinkedAt(LocalDateTime.now());
+        }
+        user.setIsSocialAccount(Boolean.TRUE);
     }
 
     /**

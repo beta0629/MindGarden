@@ -34,22 +34,24 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * {@link AppleSignInServiceImpl} 신규 분기(2026-06-08 재정렬) 테스트.
+ * {@link AppleSignInServiceImpl} 분기 테스트 (2026-06-08 P0 hotfix — email fallback 임시 복원 포함).
  *
  * <p>분기 정책:
  * <ol>
  *   <li>apple_sub 매칭 → 즉시 JWT 발급 (기존 동일)</li>
- *   <li>apple_sub 없음 + 테넌트 컨텍스트 존재 → {@code requiresPhoneVerification=true} + {@code phoneVerificationToken}</li>
- *   <li>apple_sub 없음 + 테넌트 컨텍스트 부재 → {@code requiresSignup=true} (deprecated 호환)</li>
+ *   <li><b>(임시 fallback)</b> apple_sub 미매칭 + 동일 테넌트·이메일 매칭 → apple_sub 연결 후 JWT 발급
+ *       (Private Relay 이메일 제외). App v1.0.7 운영 반영 완료 후 제거 예정.</li>
+ *   <li>apple_sub·email 매칭 실패 + 테넌트 컨텍스트 존재 → {@code requiresPhoneVerification=true}
+ *       + {@code phoneVerificationToken}</li>
+ *   <li>apple_sub·email 매칭 실패 + 테넌트 컨텍스트 부재 → {@code requiresSignup=true} (deprecated 호환)</li>
  * </ol>
  * </p>
  *
- * <p>이전 (b) email 매칭 분기는 제거됐다 — 사용자 결정 2026-06-08. 휴대폰 매칭 검증은
- * {@link ApplePhoneVerificationServiceImplTest} 가 담당한다.</p>
+ * <p>휴대폰 매칭 검증은 {@code ApplePhoneVerificationServiceImplTest} 가 담당한다.</p>
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("AppleSignInServiceImpl 신규 분기 (2026-06-08 재정렬)")
+@DisplayName("AppleSignInServiceImpl 분기 (2026-06-08 P0 hotfix — email fallback 임시 복원)")
 class AppleSignInServiceImplTest {
 
     private static final String APPLE_SUB = "001234.deadbeefcafebabe.0000";
@@ -132,10 +134,12 @@ class AppleSignInServiceImplTest {
     }
 
     @Test
-    @DisplayName("2) apple_sub 매칭 실패 + 테넌트 존재 → requiresPhoneVerification=true 응답")
-    void signIn_noAppleSubMatch_returnsPhoneVerification() {
+    @DisplayName("2) apple_sub 미매칭 + email 매칭도 실패 + 테넌트 존재 → requiresPhoneVerification=true 응답")
+    void signIn_noAppleSubMatch_noEmailMatch_returnsPhoneVerification() {
         when(idTokenVerifier.verify(anyString(), anyString())).thenReturn(claims(APPLE_EMAIL));
         when(userRepository.findByAppleSub(APPLE_SUB)).thenReturn(Optional.empty());
+        // email fallback 도 실패 (해당 테넌트에 같은 이메일 user 없음)
+        when(userRepository.findByEmailAndTenantId(APPLE_EMAIL, TENANT_ID)).thenReturn(Optional.empty());
 
         AppleSignInResponse response = service.signIn(request());
 
@@ -146,15 +150,13 @@ class AppleSignInServiceImplTest {
         assertThat(response.getRefreshToken()).isNull();
         assertThat(response.getSocialUserInfo()).isNotNull();
         assertThat(response.getSocialUserInfo().getProviderUserId()).isEqualTo(APPLE_SUB);
-        // 회귀 가드: email 매칭 시도가 없어야 한다.
-        verify(userRepository, never()).findByEmailAndTenantId(anyString(), anyString());
-        // 회귀 가드: 신규 사용자 자동 생성이 없어야 한다.
+        // 회귀 가드: 임시 fallback 분기에서 email 매칭은 시도하지만 hit 가 없으므로 saveAndFlush 호출 없음.
         verify(userRepository, never()).saveAndFlush(any());
     }
 
     @Test
     @SuppressWarnings("deprecation")
-    @DisplayName("3) apple_sub 매칭 실패 + 테넌트 부재 → requiresSignup=true (deprecated 호환)")
+    @DisplayName("3) apple_sub 미매칭 + 테넌트 부재 → requiresSignup=true (deprecated 호환, email fallback 스킵)")
     void signIn_noAppleSubMatch_noTenant_returnsRequiresSignup() {
         TenantContextHolder.clear();
         when(idTokenVerifier.verify(anyString(), anyString())).thenReturn(claims(APPLE_EMAIL));
@@ -167,6 +169,57 @@ class AppleSignInServiceImplTest {
         assertThat(response.isRequiresPhoneVerification()).isFalse();
         assertThat(response.getSocialUserInfo()).isNotNull();
         assertThat(response.getSocialUserInfo().getProviderUserId()).isEqualTo(APPLE_SUB);
+        // 회귀 가드: 테넌트 부재 시 email fallback 은 스킵되어 findByEmailAndTenantId 호출 없음.
+        verify(userRepository, never()).findByEmailAndTenantId(anyString(), anyString());
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("7) [P0 hotfix fallback] apple_sub 미매칭 + email 매칭 → 임시 fallback 으로 자동 로그인 + apple_sub 연결")
+    void signIn_appleSubMiss_emailHit_returnsTokensViaFallback() {
+        User existingByEmail = User.builder()
+            .userId("existing_kakao_user")
+            .email(APPLE_EMAIL)
+            .name("홍길동")
+            .role(UserRole.CLIENT)
+            .build();
+        existingByEmail.setId(202L);
+        existingByEmail.setTenantId(TENANT_ID);
+
+        when(idTokenVerifier.verify(anyString(), anyString())).thenReturn(claims(APPLE_EMAIL));
+        when(userRepository.findByAppleSub(APPLE_SUB)).thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndTenantId(APPLE_EMAIL, TENANT_ID))
+            .thenReturn(Optional.of(existingByEmail));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppleSignInResponse response = service.signIn(request());
+
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.isRequiresPhoneVerification()).isFalse();
+        assertThat(response.getAccessToken()).isEqualTo("access-jwt");
+        assertThat(response.getRefreshToken()).isEqualTo("refresh-jwt");
+        assertThat(response.getUser()).isNotNull();
+        assertThat(response.getUser().getId()).isEqualTo(202L);
+        // apple_sub 연결 확인
+        assertThat(existingByEmail.getAppleSub()).isEqualTo(APPLE_SUB);
+        assertThat(existingByEmail.getIsSocialAccount()).isTrue();
+    }
+
+    @Test
+    @DisplayName("8) [P0 hotfix fallback] apple_sub 미매칭 + Private Relay 이메일 → fallback 스킵 + requiresPhoneVerification")
+    void signIn_appleSubMiss_privateRelayEmail_skipsFallback() {
+        when(idTokenVerifier.verify(anyString(), anyString()))
+            .thenReturn(claims("anonymous-xyz@privaterelay.appleid.com"));
+        when(userRepository.findByAppleSub(APPLE_SUB)).thenReturn(Optional.empty());
+
+        AppleSignInResponse response = service.signIn(request());
+
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.isRequiresPhoneVerification()).isTrue();
+        assertThat(response.getPhoneVerificationToken()).isEqualTo("phone-verification-jwt");
+        assertThat(response.getAccessToken()).isNull();
+        // 회귀 가드: Private Relay 이메일은 fallback 매칭 자체를 시도하지 않아야 한다.
+        verify(userRepository, never()).findByEmailAndTenantId(anyString(), anyString());
         verify(userRepository, never()).saveAndFlush(any());
     }
 

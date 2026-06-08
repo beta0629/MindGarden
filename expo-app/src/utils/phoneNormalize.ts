@@ -39,3 +39,34 @@ export function normalizeKoreanMobileDigits(input: string | null | undefined): s
 function isKoreanMobile11(d: string): boolean {
   return /^01[016789]\d{8}$/.test(d);
 }
+
+/**
+ * 휴대폰 번호를 가운데 4자리만 마스킹한 표시 형식(`010-****-1234`)으로 반환.
+ * 정규화 실패 시 원본 문자열 또는 undefined.
+ *
+ * - PII 정책: 가운데 4자리는 항상 `****` 처리
+ * - 한국 휴대폰 11자리만 정식 포맷, 그 외는 best-effort
+ */
+export function maskKoreanMobileForDisplay(
+  input: string | null | undefined,
+): string | undefined {
+  if (input == null) return undefined;
+  const trimmed = String(input).trim();
+  if (!trimmed) return undefined;
+
+  const normalized = normalizeKoreanMobileDigits(trimmed);
+  if (normalized && normalized.length === 11) {
+    const head = normalized.slice(0, 3);
+    const tail = normalized.slice(-4);
+    return `${head}-****-${tail}`;
+  }
+
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length >= 8) {
+    const tail = digits.slice(-4);
+    const head = digits.slice(0, 3);
+    return `${head}-****-${tail}`;
+  }
+
+  return undefined;
+}

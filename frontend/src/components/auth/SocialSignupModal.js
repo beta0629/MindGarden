@@ -437,7 +437,7 @@ const SocialSignupModal = ({
             {!socialUser?.needsBranchMapping && (
               <div className="mg-v2-form-group">
                 <label htmlFor="socialPhone" className="mg-v2-label">
-                  휴대폰 번호 (선택)
+                  {t('auth:SocialSignupModal.phoneLabel')}
                 </label>
                 <input
                   type="tel"
@@ -449,14 +449,18 @@ const SocialSignupModal = ({
                   maxLength="13"
                   placeholder="010-0000-0000"
                   autoComplete="tel"
+                  aria-describedby="social-signup-phone-help"
                 />
                 {errors.phone && (
                   <span className="social-signup-modal__error-text">
                     {toDisplayString(errors.phone)}
                   </span>
                 )}
-                <span className="mg-v2-form-help">
-                  입력 시 11자리 휴대폰 번호 형식이어야 합니다. 비워 두면 가입 시 수집하지 않습니다.
+                <span
+                  id="social-signup-phone-help"
+                  className="mg-v2-form-help"
+                >
+                  {t('auth:SocialSignupModal.phoneUsageHint')}
                 </span>
               </div>
             )}

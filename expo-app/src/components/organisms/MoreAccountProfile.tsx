@@ -25,6 +25,7 @@ import { Avatar } from '@/components/atoms/Avatar';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { AuthService } from '@/services/AuthService';
 import { toDisplayString } from '@/utils/safeDisplay';
+import { maskKoreanMobileForDisplay } from '@/utils/phoneNormalize';
 import { useProfileImageUpload } from '@/api/hooks/useProfileImageUpload';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
 
@@ -74,6 +75,8 @@ export function MoreAccountProfile({
     user?.tenantId != null && String(user.tenantId).trim() !== ''
       ? `테넌트: ${toDisplayString(user.tenantId)}`
       : undefined;
+  const phoneMasked = maskKoreanMobileForDisplay(user?.phone);
+  const phoneLine = phoneMasked ? `휴대전화: ${phoneMasked}` : undefined;
 
   const appVersion = Constants.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '—';
 
@@ -290,6 +293,21 @@ export function MoreAccountProfile({
                   numberOfLines={2}
                 >
                   {tenantLine}
+                </Text>
+              ) : null}
+              {phoneLine ? (
+                <Text
+                  testID="more-profile-phone"
+                  accessibilityLabel={`휴대전화 ${phoneMasked}`}
+                  style={{
+                    color: theme.colors.textTertiary,
+                    fontFamily: theme.fontFamily.regular,
+                    fontSize: theme.fontSize.xs,
+                    marginTop: 4,
+                  }}
+                  numberOfLines={1}
+                >
+                  {phoneLine}
                 </Text>
               ) : null}
             </View>

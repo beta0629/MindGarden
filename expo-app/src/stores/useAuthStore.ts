@@ -29,6 +29,11 @@ export interface User {
   role: AppAuthRole;
   profileImageUrl?: string;
   tenantId?: string;
+  /**
+   * 휴대폰 번호(원본 자리, 정규화된 11자리 또는 하이픈 포함).
+   * 표시 시에는 PII 정책상 반드시 maskKoreanMobileForDisplay 등으로 마스킹.
+   */
+  phone?: string;
 }
 
 export interface Tokens {

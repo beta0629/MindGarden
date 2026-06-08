@@ -137,7 +137,7 @@ export default function LoginScreen() {
           message: result.message,
           retryContext: result.retryContext,
         });
-      } else {
+      } else if (result.kind === 'error') {
         setErrorMessage(result.message ?? '카카오 로그인에 실패했습니다.');
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
@@ -175,6 +175,17 @@ export default function LoginScreen() {
             provider: 'APPLE',
           },
         });
+      } else if (result.kind === 'requiresApplePhoneVerification') {
+        // expo-router typed routes 가 새 라우트(`apple-phone-link`)를 generated 하기 전까지
+        // unknown → Href 로 캐스팅한다. prebuild/restart 후 자동 해소.
+        router.push({
+          pathname: '/(auth)/apple-phone-link',
+          params: {
+            phoneVerificationToken: result.phoneVerificationToken,
+            email: result.socialUserInfo.email ?? '',
+            name: result.socialUserInfo.name ?? '',
+          },
+        } as unknown as Href);
       } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
         setDuplicateLoginPrompt({
           message: result.message,
@@ -226,7 +237,7 @@ export default function LoginScreen() {
           message: result.message,
           retryContext: result.retryContext,
         });
-      } else {
+      } else if (result.kind === 'error') {
         setErrorMessage(result.message ?? '네이버 로그인에 실패했습니다.');
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }

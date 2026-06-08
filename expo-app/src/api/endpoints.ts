@@ -28,6 +28,18 @@ export const AUTH_API = {
   APPLE_LOGIN: '/api/v1/auth/oauth/apple/login',
   /** Apple 웹 콜백(authorization_code 교환) — 모바일은 사용하지 않음 */
   APPLE_CALLBACK: '/api/v1/auth/oauth/apple/callback',
+  /**
+   * Apple SIWA 휴대폰 매칭 — OTP 발송.
+   * `/login` 응답의 `phoneVerificationToken` + 사용자 입력 휴대폰 번호 → 6자리 OTP 발송.
+   * 응답에 verify 시 함께 보낼 `otpChallengeToken` 포함.
+   */
+  APPLE_PHONE_SEND: '/api/v1/auth/oauth/apple/phone/send',
+  /**
+   * Apple SIWA 휴대폰 매칭 — OTP 검증.
+   * `phoneVerificationToken + otpChallengeToken + code(6자리)` 로 매칭/로그인.
+   * 응답은 `AppleSignInResponse` 동일 형식(정상 로그인 / phoneAccountSelection / 실패).
+   */
+  APPLE_PHONE_VERIFY: '/api/v1/auth/oauth/apple/phone/verify',
   SMS_SEND: '/api/auth/sms/send',
   SMS_VERIFY: '/api/auth/sms/verify',
   SMS_LOGIN: '/api/auth/sms-login',

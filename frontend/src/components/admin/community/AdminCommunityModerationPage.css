@@ -65,7 +65,7 @@
 
 .admin-cm__filter--active {
   background: var(--mg-color-primary-500, var(--primary-500));
-  color: var(--mg-color-text-on-primary, var(--text-on-primary, #fff));
+  color: var(--mg-color-text-on-primary);
   border-color: var(--mg-color-primary-500, var(--primary-500));
 }
 

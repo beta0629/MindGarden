@@ -14,8 +14,8 @@
 .mg-citation {
   margin-top: var(--mg-spacing-md);
   padding: var(--mg-spacing-md);
-  background-color: var(--mg-color-surface-main, #f5f3ef);
-  border: 1px solid var(--mg-color-border-main, #d4cfc8);
+  background-color: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-radius-md);
   font-size: 13px;
   line-height: 1.5;
@@ -25,27 +25,27 @@
   margin: 0 0 var(--mg-spacing-sm) 0;
   font-size: 12px;
   font-weight: 600;
-  color: var(--mg-color-text-secondary, #5c6b61);
+  color: var(--mg-color-text-secondary);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .mg-citation__label {
   margin: 0 0 var(--mg-spacing-xs) 0;
-  color: var(--mg-color-text-primary, #1a1f1c);
+  color: var(--mg-color-text-main);
   font-weight: 500;
 }
 
 .mg-citation__meta {
   margin: 0 0 var(--mg-spacing-xs) 0;
-  color: var(--mg-color-text-secondary, #5c6b61);
+  color: var(--mg-color-text-secondary);
 }
 
 .mg-citation__link {
   display: inline-flex;
   align-items: center;
   gap: var(--mg-spacing-xs);
-  color: var(--mg-color-info, #3b82f6);
+  color: var(--mg-color-info);
   text-decoration: underline;
   word-break: break-all;
 }
@@ -53,7 +53,7 @@
 .mg-citation__link:hover,
 .mg-citation__link:focus {
   text-decoration: none;
-  outline: 2px solid var(--mg-color-info, #3b82f6);
+  outline: 2px solid var(--mg-color-info);
   outline-offset: 2px;
   border-radius: var(--mg-radius-sm);
 }

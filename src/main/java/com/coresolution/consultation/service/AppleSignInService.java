@@ -10,13 +10,15 @@ import com.coresolution.consultation.dto.auth.AppleSignInResponse;
  * ({@link OAuth2Service})과 별도 파이프라인으로, identityToken 우선 검증 (native iOS)
  * 또는 authorization_code 콜백 (웹) 양쪽을 지원한다.</p>
  *
- * <p>분기 책임:
+ * <p>분기 책임 (2026-06-08 재정렬):
  * <ul>
- *   <li>{@code apple_sub} 기존 사용자 → JWT 발급 + lifecycle 검사</li>
- *   <li>{@code apple_sub} 신규 + email 기존 사용자 → {@code apple_sub} 연결 후 JWT 발급</li>
- *   <li>{@code apple_sub} 신규 + email 신규 → 신규 사용자 생성 ({@code role=CLIENT}, {@code tenant_id=현재 컨텍스트})</li>
+ *   <li>{@code apple_sub} 일치 사용자 → JWT 발급 (기존 로그인)</li>
+ *   <li>매칭 없음 → {@code requiresPhoneVerification=true} + {@code phoneVerificationToken} 응답</li>
  * </ul>
  * </p>
+ *
+ * <p>휴대폰 매칭으로 통일 — 카카오·네이버로 가입된 user 라도 휴대폰이 일치할 때만 자동 매칭한다.
+ * 기존 (b) email 매칭 분기는 제거됐다.</p>
  *
  * @author MindGarden
  * @since 2026-06-07

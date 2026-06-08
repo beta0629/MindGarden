@@ -12,6 +12,8 @@ import com.coresolution.consultation.constant.oauth.OAuthJwtClaimKeys;
 import com.coresolution.consultation.constant.oauth.OAuthJwtClaimValues;
 import com.coresolution.consultation.dto.OAuthPhoneAccountSelectionClaims;
 import com.coresolution.consultation.dto.SocialUserInfo;
+import com.coresolution.consultation.dto.auth.ApplePhoneOtpChallengeClaims;
+import com.coresolution.consultation.dto.auth.ApplePhoneVerificationClaims;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -47,6 +49,14 @@ public class JwtService {
     /** OAuth 전화 계정 선택용 단기 JWT TTL (밀리초). 기본 10분. */
     @Value("${jwt.oauth-phone-account-selection-ttl-ms:600000}")
     private long oauthPhoneAccountSelectionTtlMs;
+
+    /** Apple SIWA 휴대폰 인증 단기 JWT TTL (밀리초). 기본 10분. */
+    @Value("${jwt.apple-phone-verification-ttl-ms:600000}")
+    private long applePhoneVerificationTtlMs;
+
+    /** Apple SIWA OTP challenge 단기 JWT TTL (밀리초). 기본 5분 — OTP 만료(3분) + 시계 오차 여유. */
+    @Value("${jwt.apple-phone-otp-challenge-ttl-ms:300000}")
+    private long applePhoneOtpChallengeTtlMs;
     
     /**
      * 사용자 이메일로부터 JWT 토큰 생성 (기본 메서드 - 하위 호환성 유지)
@@ -528,6 +538,141 @@ public class JwtService {
             .snsNickname(claims.get(OAuthJwtClaimKeys.SNS_NICKNAME, String.class))
             .snsPhone(claims.get(OAuthJwtClaimKeys.SNS_PHONE, String.class))
             .snsProfileImageUrl(claims.get(OAuthJwtClaimKeys.SNS_PROFILE_IMAGE_URL, String.class))
+            .build();
+    }
+
+    /**
+     * Apple SIWA 휴대폰 매칭 흐름 1단계 — apple_sub 인증 직후 발급되는 단기 JWT.
+     *
+     * <p>클라이언트는 이 토큰을 가지고 phone 입력 화면으로 이동, OTP send/verify 호출 시 함께 전송한다.
+     * 토큰에는 Apple 첫 로그인이 제공한 email/name 을 박아둬, 신규 가입 분기에서 prefill 로 활용한다.</p>
+     *
+     * @param claims 발급할 클레임(provider 는 항상 APPLE)
+     * @return 서명된 JWT
+     */
+    public String generateApplePhoneVerificationToken(ApplePhoneVerificationClaims claims) {
+        if (claims == null || claims.getTenantId() == null || claims.getProviderUserId() == null) {
+            throw new IllegalArgumentException("ApplePhoneVerificationClaims tenantId/providerUserId required");
+        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(OAuthJwtClaimKeys.PURPOSE, OAuthJwtClaimValues.PURPOSE_APPLE_PHONE_VERIFICATION);
+        payload.put(OAuthJwtClaimKeys.TENANT_ID, claims.getTenantId());
+        payload.put(OAuthJwtClaimKeys.PROVIDER, claims.getProvider());
+        payload.put(OAuthJwtClaimKeys.PROVIDER_USER_ID, claims.getProviderUserId());
+        if (claims.getEmail() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_EMAIL, claims.getEmail());
+        }
+        if (claims.getName() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_NAME, claims.getName());
+        }
+        if (claims.getNickname() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_NICKNAME, claims.getNickname());
+        }
+        return buildToken(payload, "apple-phone-verification", applePhoneVerificationTtlMs);
+    }
+
+    /**
+     * Apple SIWA 휴대폰 인증 토큰 파싱 + purpose 검증.
+     *
+     * @param token JWT 문자열
+     * @return 클레임 DTO
+     * @throws IllegalArgumentException purpose 불일치 / 필수 클레임 누락 / 만료
+     */
+    public ApplePhoneVerificationClaims parseApplePhoneVerificationToken(String token) {
+        Claims claims = extractAllClaims(token);
+        String purpose = claims.get(OAuthJwtClaimKeys.PURPOSE, String.class);
+        if (!OAuthJwtClaimValues.PURPOSE_APPLE_PHONE_VERIFICATION.equals(purpose)) {
+            throw new IllegalArgumentException("Invalid Apple phone verification token purpose");
+        }
+        String tenantId = claims.get(OAuthJwtClaimKeys.TENANT_ID, String.class);
+        String provider = claims.get(OAuthJwtClaimKeys.PROVIDER, String.class);
+        String providerUserId = claims.get(OAuthJwtClaimKeys.PROVIDER_USER_ID, String.class);
+        if (tenantId == null || tenantId.isBlank()
+                || provider == null || provider.isBlank()
+                || providerUserId == null || providerUserId.isBlank()) {
+            throw new IllegalArgumentException("Missing required Apple phone verification claims");
+        }
+        return ApplePhoneVerificationClaims.builder()
+            .tenantId(tenantId)
+            .provider(provider)
+            .providerUserId(providerUserId)
+            .email(claims.get(OAuthJwtClaimKeys.SNS_EMAIL, String.class))
+            .name(claims.get(OAuthJwtClaimKeys.SNS_NAME, String.class))
+            .nickname(claims.get(OAuthJwtClaimKeys.SNS_NICKNAME, String.class))
+            .build();
+    }
+
+    /**
+     * Apple SIWA 휴대폰 매칭 흐름 2단계 — OTP 발송 시 발행되는 challenge 토큰.
+     *
+     * <p>(phone_hash, otp_id) 를 묶어 다른 phone 으로의 verify 우회를 차단한다.
+     * verify 호출 시 phoneVerificationToken + 본 토큰 + code 3 가지를 모두 일치 검증한다.</p>
+     *
+     * @param claims OTP challenge 클레임
+     * @return 서명된 JWT
+     */
+    public String generateApplePhoneOtpChallengeToken(ApplePhoneOtpChallengeClaims claims) {
+        if (claims == null || claims.getTenantId() == null || claims.getProviderUserId() == null
+                || claims.getPhoneHash() == null || claims.getOtpId() == null) {
+            throw new IllegalArgumentException("ApplePhoneOtpChallengeClaims required fields missing");
+        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(OAuthJwtClaimKeys.PURPOSE, OAuthJwtClaimValues.PURPOSE_APPLE_PHONE_OTP_CHALLENGE);
+        payload.put(OAuthJwtClaimKeys.TENANT_ID, claims.getTenantId());
+        payload.put(OAuthJwtClaimKeys.PROVIDER, claims.getProvider());
+        payload.put(OAuthJwtClaimKeys.PROVIDER_USER_ID, claims.getProviderUserId());
+        payload.put(OAuthJwtClaimKeys.PHONE_HASH, claims.getPhoneHash());
+        if (claims.getNormalizedPhone() != null) {
+            // 정규화 phone (digits) 은 optional — 채우면 user 매칭이 hash 비교 없이 즉시 가능. 없으면 hash 매칭.
+            payload.put(OAuthJwtClaimKeys.SNS_PHONE, claims.getNormalizedPhone());
+        }
+        payload.put(OAuthJwtClaimKeys.OTP_ID, claims.getOtpId());
+        return buildToken(payload, "apple-phone-otp-challenge", applePhoneOtpChallengeTtlMs);
+    }
+
+    /**
+     * Apple SIWA OTP challenge 토큰 파싱 + purpose 검증.
+     *
+     * @param token JWT 문자열
+     * @return 클레임 DTO
+     * @throws IllegalArgumentException purpose 불일치 / 필수 클레임 누락 / 만료
+     */
+    public ApplePhoneOtpChallengeClaims parseApplePhoneOtpChallengeToken(String token) {
+        Claims claims = extractAllClaims(token);
+        String purpose = claims.get(OAuthJwtClaimKeys.PURPOSE, String.class);
+        if (!OAuthJwtClaimValues.PURPOSE_APPLE_PHONE_OTP_CHALLENGE.equals(purpose)) {
+            throw new IllegalArgumentException("Invalid Apple OTP challenge token purpose");
+        }
+        String tenantId = claims.get(OAuthJwtClaimKeys.TENANT_ID, String.class);
+        String provider = claims.get(OAuthJwtClaimKeys.PROVIDER, String.class);
+        String providerUserId = claims.get(OAuthJwtClaimKeys.PROVIDER_USER_ID, String.class);
+        String phoneHash = claims.get(OAuthJwtClaimKeys.PHONE_HASH, String.class);
+        String normalizedPhone = claims.get(OAuthJwtClaimKeys.SNS_PHONE, String.class);
+        Object otpIdRaw = claims.get(OAuthJwtClaimKeys.OTP_ID);
+        Long otpId = null;
+        if (otpIdRaw instanceof Number) {
+            otpId = ((Number) otpIdRaw).longValue();
+        } else if (otpIdRaw != null) {
+            try {
+                otpId = Long.parseLong(otpIdRaw.toString());
+            } catch (NumberFormatException ignored) {
+                otpId = null;
+            }
+        }
+        if (tenantId == null || tenantId.isBlank()
+                || provider == null || provider.isBlank()
+                || providerUserId == null || providerUserId.isBlank()
+                || phoneHash == null || phoneHash.isBlank()
+                || otpId == null) {
+            throw new IllegalArgumentException("Missing required Apple OTP challenge claims");
+        }
+        return ApplePhoneOtpChallengeClaims.builder()
+            .tenantId(tenantId)
+            .provider(provider)
+            .providerUserId(providerUserId)
+            .phoneHash(phoneHash)
+            .normalizedPhone(normalizedPhone)
+            .otpId(otpId)
             .build();
     }
 

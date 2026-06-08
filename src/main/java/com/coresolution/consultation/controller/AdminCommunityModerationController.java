@@ -3,8 +3,11 @@ package com.coresolution.consultation.controller;
 import java.util.List;
 import java.util.Locale;
 import com.coresolution.consultation.constant.CommunityModerationStatus;
+import com.coresolution.consultation.constant.CommunityReportStatus;
 import com.coresolution.consultation.dto.community.CommunityModerationPatchRequest;
 import com.coresolution.consultation.dto.community.CommunityModerationQueueItemResponse;
+import com.coresolution.consultation.dto.community.CommunityReportQueueItemResponse;
+import com.coresolution.consultation.dto.community.CommunityReportResolutionRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.CommunityService;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -118,6 +121,162 @@ public class AdminCommunityModerationController extends BaseApiController {
             return updated("검수 처리되었습니다.", null);
         } finally {
             TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * Apple T2 (1.2 UGC) — 어드민 신고 처리 큐 목록.
+     *
+     * @param session  세션
+     * @param status   상태 필터 (null/ALL/OPEN/UNDER_REVIEW/RESOLVED/REJECTED)
+     * @param pageable 페이지
+     * @return 신고 큐 항목
+     */
+    @GetMapping("/reports")
+    public ResponseEntity<ApiResponse<List<CommunityReportQueueItemResponse>>> reportQueue(
+            HttpSession session,
+            @RequestParam(value = "status", required = false) String status,
+            @PageableDefault(size = 50) Pageable pageable) {
+        User admin = requireAdminWithTenant(session);
+        CommunityReportStatus parsed = parseReportStatusOrNull(status);
+        try {
+            TenantContextHolder.setTenantId(admin.getTenantId().trim());
+            return success(communityService.listReportQueue(admin, parsed, pageable));
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * Apple T2 (1.2 UGC) — 신고 처리 (RESOLVED/REJECTED + 액션 적용).
+     *
+     * @param session  세션
+     * @param reportId 신고 row id
+     * @param request  처리 결정
+     * @return 빈 성공
+     */
+    @PatchMapping("/reports/{reportId}")
+    public ResponseEntity<ApiResponse<Void>> resolveReport(
+            HttpSession session,
+            @PathVariable("reportId") Long reportId,
+            @Valid @RequestBody CommunityReportResolutionRequest request) {
+        User admin = requireAdminWithTenant(session);
+        try {
+            TenantContextHolder.setTenantId(admin.getTenantId().trim());
+            communityService.resolveReport(admin, reportId, request);
+            return updated("신고가 처리되었습니다.", null);
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * Apple T2 (1.2 UGC) — 게시글 숨김 처리.
+     *
+     * @param session 세션
+     * @param postId  게시글 id
+     * @param reason  숨김 사유 메모(선택)
+     * @return 빈 성공
+     */
+    @PatchMapping("/posts/{postId}/hide")
+    public ResponseEntity<ApiResponse<Void>> hidePost(
+            HttpSession session,
+            @PathVariable("postId") Long postId,
+            @RequestParam(value = "reason", required = false) String reason) {
+        User admin = requireAdminWithTenant(session);
+        try {
+            TenantContextHolder.setTenantId(admin.getTenantId().trim());
+            communityService.hidePost(admin, postId, reason, true);
+            return updated("게시글이 숨김 처리되었습니다.", null);
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * Apple T2 (1.2 UGC) — 게시글 숨김 복원.
+     *
+     * @param session 세션
+     * @param postId  게시글 id
+     * @return 빈 성공
+     */
+    @PatchMapping("/posts/{postId}/unhide")
+    public ResponseEntity<ApiResponse<Void>> unhidePost(
+            HttpSession session,
+            @PathVariable("postId") Long postId) {
+        User admin = requireAdminWithTenant(session);
+        try {
+            TenantContextHolder.setTenantId(admin.getTenantId().trim());
+            communityService.hidePost(admin, postId, null, false);
+            return updated("게시글 숨김이 해제되었습니다.", null);
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * Apple T2 (1.2 UGC) — 댓글 숨김 처리.
+     *
+     * @param session   세션
+     * @param commentId 댓글 id
+     * @param reason    숨김 사유 메모(선택)
+     * @return 빈 성공
+     */
+    @PatchMapping("/comments/{commentId}/hide")
+    public ResponseEntity<ApiResponse<Void>> hideComment(
+            HttpSession session,
+            @PathVariable("commentId") Long commentId,
+            @RequestParam(value = "reason", required = false) String reason) {
+        User admin = requireAdminWithTenant(session);
+        try {
+            TenantContextHolder.setTenantId(admin.getTenantId().trim());
+            communityService.hideComment(admin, commentId, reason, true);
+            return updated("댓글이 숨김 처리되었습니다.", null);
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * Apple T2 (1.2 UGC) — 댓글 숨김 복원.
+     *
+     * @param session   세션
+     * @param commentId 댓글 id
+     * @return 빈 성공
+     */
+    @PatchMapping("/comments/{commentId}/unhide")
+    public ResponseEntity<ApiResponse<Void>> unhideComment(
+            HttpSession session,
+            @PathVariable("commentId") Long commentId) {
+        User admin = requireAdminWithTenant(session);
+        try {
+            TenantContextHolder.setTenantId(admin.getTenantId().trim());
+            communityService.hideComment(admin, commentId, null, false);
+            return updated("댓글 숨김이 해제되었습니다.", null);
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * 신고 큐 상태 파라미터 파싱 (ALL/null = 전체).
+     */
+    private static CommunityReportStatus parseReportStatusOrNull(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        String upper = trimmed.toUpperCase(Locale.ROOT);
+        if ("ALL".equals(upper)) {
+            return null;
+        }
+        try {
+            return CommunityReportStatus.valueOf(upper);
+        } catch (IllegalArgumentException ignore) {
+            throw new IllegalArgumentException("지원하지 않는 status 값입니다: " + raw);
         }
     }
 

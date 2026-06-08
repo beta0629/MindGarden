@@ -19,7 +19,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { ArrowLeft, Heart, MessageCircle, Send, User } from 'lucide-react-native';
+import { ArrowLeft, Ban, Flag, Heart, MessageCircle, MoreVertical, Send, User } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
 import { EmptyState } from '@/components/atoms/EmptyState';
@@ -31,6 +31,9 @@ import {
   deleteRemoteCommunityLike,
 } from '@/services/communityApi';
 import { COMMUNITY_DEMO_LABELS, type CommunityComment } from '@/constants/communityData';
+import { ReportBottomSheet } from '@/components/community/ReportBottomSheet';
+import { BlockConfirmSheet } from '@/components/community/BlockConfirmSheet';
+import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 
 export default function ClientCommunityDetail() {
   const theme = useTheme();
@@ -52,6 +55,9 @@ export default function ClientCommunityDetail() {
   const post = useCommunityPostById(postId);
   const [commentText, setCommentText] = useState('');
   const inputRef = useRef<TextInput>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
 
   const handleBack = () => {
     if (Platform.OS !== 'web') {
@@ -351,8 +357,77 @@ export default function ClientCommunityDetail() {
         >
           게시글
         </Text>
-        <View style={styles.backBtn} />
+        <Pressable
+          onPress={() => setMoreOpen(true)}
+          hitSlop={16}
+          style={styles.backBtn}
+          accessibilityLabel="더보기"
+          accessibilityRole="button"
+          testID="community-detail-more"
+        >
+          <MoreVertical size={22} color={theme.colors.textMain} />
+        </Pressable>
       </Animated.View>
+
+      <UnifiedModal
+        isOpen={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title="더보기"
+      >
+        <View style={{ gap: 8 }}>
+          <Pressable
+            onPress={() => {
+              setMoreOpen(false);
+              setReportOpen(true);
+            }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingVertical: 14,
+            }}
+            accessibilityRole="button"
+            testID="community-detail-more-report"
+          >
+            <Flag size={18} color={theme.colors.warning} />
+            <Text style={{ color: theme.colors.textMain, fontSize: 16 }}>
+              게시글 신고하기
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              setMoreOpen(false);
+              setBlockOpen(true);
+            }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingVertical: 14,
+            }}
+            accessibilityRole="button"
+            testID="community-detail-more-block"
+          >
+            <Ban size={18} color={theme.colors.error} />
+            <Text style={{ color: theme.colors.textMain, fontSize: 16 }}>
+              사용자 차단하기
+            </Text>
+          </Pressable>
+        </View>
+      </UnifiedModal>
+
+      <ReportBottomSheet
+        isOpen={reportOpen}
+        postId={postId}
+        onClose={() => setReportOpen(false)}
+      />
+
+      <BlockConfirmSheet
+        isOpen={blockOpen}
+        userId={post?.authorUserId ?? null}
+        displayName={post?.author}
+        onClose={() => setBlockOpen(false)}
+      />
 
       <KeyboardAvoidingView
         style={styles.flex}

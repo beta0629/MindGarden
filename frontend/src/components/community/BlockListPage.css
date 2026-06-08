@@ -1,0 +1,90 @@
+/**
+ * Apple T2 (1.2 UGC) — BlockListPage 스타일.
+ * 디자인 토큰만 사용. 인라인 스타일·#hex 금지.
+ *
+ * @author MindGarden
+ * @since 2026-06-07
+ */
+
+.block-list-page {
+  display: grid;
+  gap: var(--mg-spacing-md, 16px);
+  padding: var(--mg-spacing-md, 16px);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.block-list-page__header {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 12px);
+}
+
+.block-list-page__title {
+  font-size: var(--mg-font-size-xl, 20px);
+  font-weight: var(--mg-font-weight-semibold, 600);
+  color: var(--mg-color-text-main, var(--text-main));
+  margin: 0;
+}
+
+.block-list-page__loading,
+.block-list-page__empty {
+  text-align: center;
+  padding: var(--mg-spacing-xl, 24px);
+  color: var(--mg-color-text-tertiary, var(--text-tertiary));
+}
+
+.block-list-page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--mg-spacing-xs, 8px);
+}
+
+.block-list-page__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mg-spacing-md, 16px);
+  background: var(--mg-color-surface, var(--surface));
+  border: 1px solid var(--mg-color-border-subtle, var(--border-subtle));
+  border-radius: var(--mg-radius-md, 8px);
+}
+
+.block-list-page__info {
+  display: grid;
+  gap: var(--mg-spacing-2xs, 4px);
+}
+
+.block-list-page__name {
+  font-size: var(--mg-font-size-base, 16px);
+  font-weight: var(--mg-font-weight-semibold, 600);
+  color: var(--mg-color-text-main, var(--text-main));
+}
+
+.block-list-page__date {
+  font-size: var(--mg-font-size-xs, 12px);
+  color: var(--mg-color-text-tertiary, var(--text-tertiary));
+}
+
+.block-list-page__unblock {
+  padding: var(--mg-spacing-xs, 8px) var(--mg-spacing-md, 16px);
+  border: 1px solid var(--mg-color-border-default, var(--border-default));
+  border-radius: var(--mg-radius-sm, 6px);
+  background: var(--mg-color-surface, var(--surface));
+  color: var(--mg-color-primary-500, var(--primary-500));
+  font-size: var(--mg-font-size-sm, 14px);
+  font-weight: var(--mg-font-weight-medium, 500);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.block-list-page__unblock:hover:not(:disabled) {
+  background: var(--mg-color-bg-subtle, var(--bg-subtle));
+}
+
+.block-list-page__unblock:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

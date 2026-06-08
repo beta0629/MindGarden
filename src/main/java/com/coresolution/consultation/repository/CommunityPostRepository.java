@@ -32,16 +32,33 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, Lo
      */
     List<CommunityPost> findByAuthor_Id(Long authorUserId);
 
+    /**
+     * 승인 피드(전체) — Apple T2 (1.2 UGC) 차단/숨김 필터 포함.
+     *
+     * <p>{@code blockedUserIds} 가 비어 있으면 차단 필터를 우회한다 (JPQL 빈 IN 절 회피).
+     * 숨김({@code hiddenAt IS NOT NULL}) 게시물은 사용자 피드에 노출되지 않는다.</p>
+     *
+     * @param tenantId        테넌트 ID
+     * @param status          {@link CommunityModerationStatus#APPROVED}
+     * @param blockedUserIds  차단 사용자 ID 목록 (비어 있으면 필터 우회)
+     * @param applyBlock      true 면 차단 필터 적용, false 면 우회 (호출 측에서 제어)
+     * @param pageable        페이지
+     * @return 승인 + 미숨김 + 차단되지 않은 게시물 목록
+     */
     @Query("""
         SELECT DISTINCT p FROM CommunityPost p
         JOIN FETCH p.author
         WHERE p.tenantId = :tenantId AND p.isDeleted = false
         AND p.moderationStatus = :status
+        AND p.hiddenAt IS NULL
+        AND (:applyBlock = false OR p.author.id NOT IN :blockedUserIds)
         ORDER BY p.createdAt DESC
         """)
     List<CommunityPost> findFeedApprovedAll(
             @Param("tenantId") String tenantId,
             @Param("status") CommunityModerationStatus status,
+            @Param("blockedUserIds") List<Long> blockedUserIds,
+            @Param("applyBlock") boolean applyBlock,
             Pageable pageable);
 
     @Query("""
@@ -49,12 +66,16 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, Lo
         JOIN FETCH p.author
         WHERE p.tenantId = :tenantId AND p.isDeleted = false
         AND p.moderationStatus = :status AND p.postKind = :kind
+        AND p.hiddenAt IS NULL
+        AND (:applyBlock = false OR p.author.id NOT IN :blockedUserIds)
         ORDER BY p.createdAt DESC
         """)
     List<CommunityPost> findFeedApprovedByKind(
             @Param("tenantId") String tenantId,
             @Param("status") CommunityModerationStatus status,
             @Param("kind") CommunityPostKind kind,
+            @Param("blockedUserIds") List<Long> blockedUserIds,
+            @Param("applyBlock") boolean applyBlock,
             Pageable pageable);
 
     @Query("""

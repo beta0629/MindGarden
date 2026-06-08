@@ -297,6 +297,11 @@ export const COMMUNITY_API = {
     `/api/v1/community/${encodeURIComponent(String(postId))}/likes`,
   reports: (postId: string | number) =>
     `/api/v1/community/${encodeURIComponent(String(postId))}/reports`,
+  /** Apple T2 1.2 UGC 차단 — POST/DELETE */
+  blockUser: (userId: string | number) =>
+    `/api/v1/community/users/${encodeURIComponent(String(userId))}/block`,
+  /** Apple T2 1.2 UGC 차단 목록 — GET */
+  BLOCKED_USERS: '/api/v1/community/users/blocked',
 } as const;
 
 /**

@@ -18,13 +18,27 @@ import type { CommunityComment, CommunityPost, CommunityTab } from '@/constants/
 /** Spring `CommunityPostKind` (Jackson enum 이름) */
 export type CommunityPostKindDto = 'CLIENT_REVIEW' | 'CONSULTANT_COLUMN';
 
-/** Spring `CommunityReportReasonCode` */
+/**
+ * Spring `CommunityReportReasonCode` — Apple T2 1.2 UGC 8종 사유.
+ * 핸드오프 §3.3, 백엔드 enum 정합.
+ */
 export type CommunityReportReasonCodeDto =
   | 'SPAM'
   | 'HARASSMENT'
+  | 'ABUSIVE_LANGUAGE'
+  | 'OBSCENE'
+  | 'VIOLENCE'
   | 'MISINFORMATION'
   | 'COPYRIGHT'
   | 'OTHER';
+
+/** `CommunityUserBlockResponse` — 차단 목록 항목 */
+export interface CommunityUserBlockResponseDto {
+  id: number;
+  blockedUserId: number;
+  blockedDisplayName?: string;
+  blockedAt: string;
+}
 
 /** `CommunityPostCreateRequest` — 필드명 camelCase */
 export interface CommunityPostCreateRequestDto {
@@ -124,4 +138,29 @@ export async function createRemoteCommunityReport(
   body: CommunityReportCreateRequestDto,
 ): Promise<void> {
   await apiPost<unknown>(COMMUNITY_API.reports(postId), body);
+}
+
+/** Apple T2 1.2 — 사용자 차단 */
+export async function blockRemoteCommunityUser(
+  userId: number,
+  reason?: string,
+): Promise<void> {
+  await apiPost<unknown>(COMMUNITY_API.blockUser(userId), reason ? { reason } : {});
+}
+
+/** Apple T2 1.2 — 차단 해제 */
+export async function unblockRemoteCommunityUser(userId: number): Promise<void> {
+  await apiDelete<unknown>(COMMUNITY_API.blockUser(userId));
+}
+
+/** Apple T2 1.2 — 차단 사용자 목록 */
+export async function fetchRemoteCommunityBlockedUsers(): Promise<
+  CommunityUserBlockResponseDto[]
+> {
+  const raw = await apiGet<unknown>(COMMUNITY_API.BLOCKED_USERS);
+  const data = unwrapApiResponse<unknown>(raw) ?? raw;
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data as CommunityUserBlockResponseDto[];
 }

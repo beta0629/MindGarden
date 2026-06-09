@@ -78,6 +78,11 @@ export interface SocialLoginButtonProps {
   readonly enableHaptics?: boolean;
   /** 그림자(elevation) 적용 여부 — Apple 검정/Google 흰 배경에서는 과한 그림자 자제 */
   readonly elevated?: boolean;
+  /**
+   * 접근성 보조 설명 — 비활성 상태/임시 안내(예: "Google 로그인은 곧 사용 가능합니다") 등
+   * VoiceOver / TalkBack 에 추가 컨텍스트를 제공한다.
+   */
+  readonly accessibilityHint?: string;
 }
 
 /**
@@ -97,6 +102,7 @@ export function SocialLoginButton({
   style,
   enableHaptics = true,
   elevated = true,
+  accessibilityHint,
 }: SocialLoginButtonProps) {
   const config = getSocialLoginVariantConfig(variant);
   const scale = useRef(new Animated.Value(1)).current;
@@ -195,6 +201,7 @@ export function SocialLoginButton({
         onPressOut={handlePressOut}
         disabled={disabled || loading}
         accessibilityLabel={config.accessibilityLabel}
+        accessibilityHint={accessibilityHint}
         accessibilityRole="button"
         accessibilityState={{ disabled: disabled || loading, busy: loading }}
         testID={`social-login-button-${variant}`}

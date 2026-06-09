@@ -1,68 +1,46 @@
 /**
- * 로그인 화면 헤더 — 그라데이션 나비 로고 + 2단 한글 타이포.
+ * 마인드가든 브랜드 타이틀 블록 (1단 제목 + 1줄 부제) — V2 B2 Breathing Circle 안에 위치.
  *
- * 정보 위계(사용자 지적 2026-06-10 — 중복 제거 패턴 A):
- *  - 로고 PNG: 나비 그래픽만 (텍스트 없음, 자산 자체 검증 완료)
- *  - 타이틀: "마인드가든" (Bold, 2xl)
- *  - 서브타이틀: "심리상담센터" (Medium, sm, textSecondary)
- *  - (제거됨) 영문 워드마크 "MIND GARDEN" — 동일 정보 중복
- *  - (제거됨) tenantName "마인드가든 심리상담센터" — 동일 정보 중복
+ * <p>SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md
+ *  - §A.2 정보 위계 — "한 번만 말하기" (V1 4중 텍스트 폐기)
+ *  - §I.5 카피 ("마인드가든" Bold 22dp + "마음을 돌보는 시간" Regular 14dp)
+ *  - §M.1.4 모션 타임라인 (400ms 타이틀 / 600ms 부제, Reduce Motion fade only)</p>
  *
- * 한국 사용자 대상이므로 한글 우선·위계 명확 (제목 > 부제 2레벨).
- *
- * 모션 구성:
- *  - 로고: fade-in (scale 0.96→1.0, 500ms, delay 200ms) → breathing 1.00↔1.02 (5s ∞)
- *  - 타이틀/서브타이틀: fade-in + translateY 6→0 (100ms stagger)
- *
- * 본 컴포넌트는 §6 분기 로직을 자체 가지지 않고 {@link LoginAnimationConfig}만 받아 동작한다.
- *
- * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md §1.1 / §3 / §4.
+ * <p>본 컴포넌트는 Breathing Circle 내부의 정중앙 텍스트만 책임진다. "심리상담센터" /
+ * "MIND GARDEN" / TenantName 4중 표시 코드는 V2 에서 절대 제거 (§H1).</p>
  *
  * @author MindGarden
  * @since 2026-06-10
  */
-import { useEffect, useMemo, useRef } from 'react';
-import {
-  Animated,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme';
 import { fontFamily, fontSize } from '@/theme/typography';
-import { BreathingButterflyLogo } from '@/components/molecules/BreathingButterflyLogo';
 import {
   LOGIN_EASING,
-  LOGO_TO_TITLE_GAP,
   SUBTITLE_FADE_IN_DELAY_MS,
   TITLE_FADE_IN_DELAY_MS,
   TITLE_FADE_IN_DURATION_MS,
   TITLE_INITIAL_TRANSLATE_Y,
   TITLE_TO_SUBTITLE_GAP,
-  resolveLogoSizeForWidth,
   type LoginAnimationConfig,
-} from './loginAnimationConstants';
+} from '@/components/organisms/login/loginAnimationConstants';
 
-/** Dynamic Type 대응 cap — 타이포가 깨지지 않게 1.4 ~ 1.6 사이 */
-const LOGO_SECTION_MAX_FONT_SIZE_MULTIPLIER = 1.6;
+const MAX_FONT_SIZE_MULTIPLIER = 1.6;
 
+/** V2 §I.5 / §A.2 — 1단 제목. 사용자 SSOT 결정으로 변경 금지. */
 const TITLE_TEXT = '마인드가든';
-const SUBTITLE_TEXT = '심리상담센터';
+/** V2 §I.5 / §N.3 채택 — 부제 1줄. */
+const SUBTITLE_TEXT = '마음을 돌보는 시간';
 
-export interface LogoSectionProps {
+export interface BrandTitleBlockProps {
   readonly config: LoginAnimationConfig;
   readonly style?: StyleProp<ViewStyle>;
-  /** 시뮬레이터 시연/시각 회귀용 testID */
   readonly testID?: string;
 }
 
-export function LogoSection({ config, style, testID }: LogoSectionProps) {
+export function BrandTitleBlock({ config, style, testID }: BrandTitleBlockProps) {
   const theme = useTheme();
-  const { width: windowWidth } = useWindowDimensions();
-  const logoSize = useMemo(() => resolveLogoSizeForWidth(windowWidth), [windowWidth]);
-
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleTranslateY = useRef(new Animated.Value(TITLE_INITIAL_TRANSLATE_Y)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
@@ -75,7 +53,7 @@ export function LogoSection({ config, style, testID }: LogoSectionProps) {
     titleOpacity.setValue(0);
     subtitleOpacity.setValue(0);
 
-    const textAnims: Animated.CompositeAnimation[] = [
+    const anims: Animated.CompositeAnimation[] = [
       Animated.timing(titleOpacity, {
         toValue: 1,
         duration: TITLE_FADE_IN_DURATION_MS,
@@ -93,7 +71,7 @@ export function LogoSection({ config, style, testID }: LogoSectionProps) {
     ];
 
     if (config.titleTranslateOnFadeIn) {
-      textAnims.push(
+      anims.push(
         Animated.timing(titleTranslateY, {
           toValue: 0,
           duration: TITLE_FADE_IN_DURATION_MS,
@@ -111,7 +89,11 @@ export function LogoSection({ config, style, testID }: LogoSectionProps) {
       );
     }
 
-    Animated.parallel(textAnims).start();
+    const composite = Animated.parallel(anims);
+    composite.start();
+    return () => {
+      composite.stop();
+    };
   }, [
     config.titleTranslateOnFadeIn,
     subtitleOpacity,
@@ -124,18 +106,11 @@ export function LogoSection({ config, style, testID }: LogoSectionProps) {
     <View
       style={[styles.root, style]}
       accessibilityRole="header"
-      accessibilityLabel={`${TITLE_TEXT} ${SUBTITLE_TEXT}`}
-      testID={testID ?? 'login-logo-section'}
+      accessibilityLabel={`${TITLE_TEXT}, ${SUBTITLE_TEXT}`}
+      testID={testID ?? 'brand-title-block'}
     >
-      <BreathingButterflyLogo
-        config={config}
-        size={logoSize}
-        style={{ marginBottom: LOGO_TO_TITLE_GAP }}
-        testID="login-butterfly-logo"
-      />
-
       <Animated.Text
-        maxFontSizeMultiplier={LOGO_SECTION_MAX_FONT_SIZE_MULTIPLIER}
+        maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
         allowFontScaling
         style={[
           styles.title,
@@ -149,9 +124,8 @@ export function LogoSection({ config, style, testID }: LogoSectionProps) {
       >
         {TITLE_TEXT}
       </Animated.Text>
-
       <Animated.Text
-        maxFontSizeMultiplier={LOGO_SECTION_MAX_FONT_SIZE_MULTIPLIER}
+        maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
         allowFontScaling
         style={[
           styles.subtitle,
@@ -171,17 +145,18 @@ export function LogoSection({ config, style, testID }: LogoSectionProps) {
 const styles = StyleSheet.create({
   root: {
     alignItems: 'center',
-    alignSelf: 'stretch',
   },
   title: {
     fontFamily: fontFamily.bold,
-    fontSize: fontSize['2xl'],
+    fontSize: 22,
+    lineHeight: 28,
     textAlign: 'center',
     includeFontPadding: false,
   },
   subtitle: {
-    fontFamily: fontFamily.medium,
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.sm,
+    lineHeight: 20,
     textAlign: 'center',
     includeFontPadding: false,
   },

@@ -1,4 +1,16 @@
-# Expo App 로그인 화면 리디자인 스펙 (Login Screen Redesign Spec)
+> **⚠️ ARCHIVED — V2 로 대체 (2026-06-10)**
+>
+> 본 V1 스펙은 사용자 비판 ("디자인 다시 해 원래 이게 아니잖어") 으로 폐기되었다.
+> **새 단일 소스 = `EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md`**.
+>
+> V2 §H 표가 V1 의 잘못된 부분을 1:1 로 정정한다 (정보 4중 반복 / 분할 정렬 / 로고 비대 / 회원가입 링크 / 코어솔루션 카드 등).
+> 본 V1 문서는 **참조·이력 보존용으로만** 남기며 신규 작업·코더 위임에 사용하지 않는다.
+>
+> 이력 비교는 V2 §K 와 §H 참조.
+
+---
+
+# Expo App 로그인 화면 리디자인 스펙 (Login Screen Redesign Spec) — V1 (ARCHIVED)
 
 **작성일**: 2026-06-09  
 **작성자(역할)**: core-designer  

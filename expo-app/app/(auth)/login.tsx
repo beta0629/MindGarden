@@ -1,40 +1,59 @@
 /**
- * 소셜 로그인 화면 — MindGardenLoginPage 컨테이너.
+ * 로그인 화면 — V2 B2 Breathing Circle 컨테이너 (MindGardenLoginPage).
  *
- * 본 페이지는 UI 분리·모션 합산만 담당하고 비즈니스 로직(`AuthService.loginWith*`)은
- * 그대로 호출한다. UI 구조는 다음 4개 모듈로 분리:
- *   - {@link AnimatedPastelBackground} — 흐르는 파스텔 그라데이션
- *   - {@link LogoSection} — 그라데이션 나비 로고 + 2단 한글 타이포(타이틀/서브타이틀)
- *   - {@link LoginButtonsSection} — 카카오/네이버/Apple stagger + 자격증명 폼
- *   - {@link SocialLoginButton} — Atom (molecules 위치)
+ * <p>본 페이지는 UI 합성·인증 결과 라우팅·상태 모달만 담당하고 비즈니스 로직
+ * (`AuthService.loginWith*`) 은 그대로 호출한다. UI 구조는 다음 모듈로 분리:</p>
  *
- * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md.
+ *  - {@link AnimatedPastelBackground} — 흐르는 파스텔 그라데이션 (배경)
+ *  - {@link BreathingCircle} — 280dp Orb (호흡) + 80dp 나비 + 1단 한글 타이포 + 부제 1줄
+ *  - {@link LoginButtonsSection} — 카카오 / 네이버 / Google / Apple stagger + Sheet 트리거
+ *  - {@link CredentialSheet} — Bottom Sheet (이메일·휴대폰 + 비밀번호)
+ *  - {@link FooterLinks} — 비밀번호 찾기 · 다른 기관으로 변경 (회원가입 링크 V2 제거)
  *
- * Reduce Motion 분기는 {@link resolveLoginAnimationConfig} 단일 진입점만 사용한다.
+ * <p>SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md
+ *  - §A 정보 위계 / §B 트리거 + Bottom Sheet
+ *  - §I.4 G-1 expo-auth-session
+ *  - §K 출시 게이트 13 항목
+ *  - §M.1 B2 Breathing Circle 풀 시안</p>
+ *
+ * <p>Reduce Motion 분기는 {@link resolveLoginAnimationConfig} 단일 진입점만 사용한다 (§G.4).</p>
  *
  * @author MindGarden
- * @since 2026-05-12
+ * @since 2026-05-12 (V1) / 2026-06-10 (V2)
  */
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useTheme } from '@/theme';
-import { fontFamily, fontSize as fontSizeTokens } from '@/theme/typography';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import {
   AuthService,
   type SocialUserInfoDraft,
   type DuplicateLoginRetryContext,
 } from '@/services/AuthService';
+import { useGoogleAuthRequest } from '@/services/auth/googleSignIn';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import { isAppleSignInAvailableSync } from '@/services/auth/appleSignIn';
 import { sanitizeSocialIdentityString } from '@/utils/socialIdentitySanitize';
 import { AnimatedPastelBackground } from '@/components/organisms/login/AnimatedPastelBackground';
-import { LogoSection } from '@/components/organisms/login/LogoSection';
-import { LoginButtonsSection } from '@/components/organisms/login/LoginButtonsSection';
+import { BreathingCircle } from '@/components/organisms/login/BreathingCircle';
+import {
+  LoginButtonsSection,
+  type LoginProvider,
+} from '@/components/organisms/login/LoginButtonsSection';
+import { CredentialSheet } from '@/components/organisms/login/CredentialSheet';
+import { FooterLinks } from '@/components/molecules/login/FooterLinks';
 import { useReduceMotion } from '@/hooks/useReduceMotion';
 import {
   CONTENT_HORIZONTAL_PADDING_MOBILE,
@@ -43,7 +62,9 @@ import {
   CONTENT_VERTICAL_PADDING,
   HEADER_TO_BUTTONS_GAP,
   LAYOUT_TABLET_DEVICE_WIDTH,
+  resolveLogoSizeForWidth,
   resolveLoginAnimationConfig,
+  resolveOrbSizeForWidth,
   type LoginAnimationConfig,
 } from '@/components/organisms/login/loginAnimationConstants';
 
@@ -54,7 +75,6 @@ const DUPLICATE_LOGIN_CONFIRM_LABEL = '기존 세션 종료하고 로그인';
 const DUPLICATE_LOGIN_CANCEL_LABEL = '취소';
 const DUPLICATE_LOGIN_RETRY_FAILED_FALLBACK =
   '재로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
-const CHANGE_TENANT_LABEL = '다른 기관으로 변경';
 const EXPO_GO_BANNER_TITLE = 'Expo Go로 열려 있어요';
 const EXPO_GO_BANNER_BODY =
   '카카오·네이버는 네이티브 모듈이라 Expo Go에서는 사용할 수 없습니다. 시뮬레이터/폰 홈의 MindGarden 앱을 실행하거나, 터미널에서 npx expo run:ios 후 그 앱으로 접속해 주세요. 이메일 로그인은 가능합니다.';
@@ -113,12 +133,18 @@ export default function MindGardenLoginPage() {
   );
 
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState<'kakao' | 'naver' | 'apple' | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<LoginProvider | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [credentialSheetOpen, setCredentialSheetOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [duplicateLoginPrompt, setDuplicateLoginPrompt] = useState<DuplicateLoginPrompt | null>(
     null,
   );
   const [isConfirmingDuplicateLogin, setIsConfirmingDuplicateLogin] = useState(false);
+
+  // Google OAuth (G-1 expo-auth-session) — 컴포넌트 mount 시 request 초기화
+  const { promptAsync: promptGoogleAsync, isReady: googleReady } = useGoogleAuthRequest();
 
   const inExpoGo = isExpoGoApp();
   const isTablet = windowWidth >= LAYOUT_TABLET_DEVICE_WIDTH;
@@ -126,10 +152,12 @@ export default function MindGardenLoginPage() {
     ? CONTENT_HORIZONTAL_PADDING_TABLET
     : CONTENT_HORIZONTAL_PADDING_MOBILE;
   const appleAvailable = isAppleSignInAvailableSync();
+  const orbSize = useMemo(() => resolveOrbSizeForWidth(windowWidth), [windowWidth]);
+  const butterflySize = useMemo(() => resolveLogoSizeForWidth(windowWidth), [windowWidth]);
 
-  const handleLoginSuccess = async () => {
+  const handleLoginSuccess = useCallback(async () => {
     await navigateAfterAuthenticated();
-  };
+  }, []);
 
   const handleKakaoLogin = async () => {
     setIsLoading(true);
@@ -178,6 +206,134 @@ export default function MindGardenLoginPage() {
       const detail =
         e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
       setErrorMessage(`카카오 로그인 중 오류가 발생했습니다.${detail}`);
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleNaverLogin = async () => {
+    setIsLoading(true);
+    setLoadingProvider('naver');
+    setErrorMessage(null);
+
+    try {
+      const result = await AuthService.loginWithNaver();
+      if (result.kind === 'authenticated') {
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
+        await handleLoginSuccess();
+      } else if (result.kind === 'requiresSignup') {
+        router.push({
+          pathname: '/(auth)/social-signup',
+          params: socialSignupRouteParams(result.socialUserInfo),
+        });
+      } else if (result.kind === 'requiresPhoneAccountSelection') {
+        router.push({
+          pathname: '/(auth)/oauth-account-selection',
+          params: {
+            selectionToken: result.selectionToken,
+            provider: 'NAVER',
+          },
+        });
+      } else if (result.kind === 'requiresOAuthPhoneVerification') {
+        router.push({
+          pathname: '/(auth)/oauth-phone-link',
+          params: {
+            provider: result.provider,
+            phoneVerificationToken: result.phoneVerificationToken,
+            email: result.socialUserInfo.email ?? '',
+            name: result.socialUserInfo.name ?? '',
+          },
+        } as unknown as Href);
+      } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
+        setDuplicateLoginPrompt({
+          message: result.message,
+          retryContext: result.retryContext,
+        });
+      } else if (result.kind === 'error') {
+        setErrorMessage(result.message ?? '네이버 로그인에 실패했습니다.');
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (e) {
+      console.error('[Login] naver', e);
+      const detail =
+        e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
+      setErrorMessage(`네이버 로그인 중 오류가 발생했습니다.${detail}`);
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    if (!googleReady) {
+      setErrorMessage('Google 로그인 모듈이 아직 준비 중입니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+    setIsLoading(true);
+    setLoadingProvider('google');
+    setErrorMessage(null);
+
+    try {
+      const promptResult = await promptGoogleAsync();
+      if (promptResult.kind === 'cancel' || promptResult.kind === 'dismiss') {
+        return;
+      }
+      if (promptResult.kind === 'notConfigured') {
+        setErrorMessage(promptResult.message);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      if (promptResult.kind === 'error') {
+        setErrorMessage(promptResult.message);
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+
+      const result = await AuthService.loginWithGoogle(
+        promptResult.result.accessToken,
+        promptResult.result.idToken,
+      );
+      if (result.kind === 'authenticated') {
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
+        await handleLoginSuccess();
+      } else if (result.kind === 'requiresSignup') {
+        router.push({
+          pathname: '/(auth)/social-signup',
+          params: socialSignupRouteParams(result.socialUserInfo),
+        });
+      } else if (result.kind === 'requiresPhoneAccountSelection') {
+        router.push({
+          pathname: '/(auth)/oauth-account-selection',
+          params: {
+            selectionToken: result.selectionToken,
+            provider: 'GOOGLE',
+          },
+        });
+      } else if (result.kind === 'requiresOAuthPhoneVerification') {
+        router.push({
+          pathname: '/(auth)/oauth-phone-link',
+          params: {
+            provider: result.provider,
+            phoneVerificationToken: result.phoneVerificationToken,
+            email: result.socialUserInfo.email ?? '',
+            name: result.socialUserInfo.name ?? '',
+          },
+        } as unknown as Href);
+      } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
+        setDuplicateLoginPrompt({
+          message: result.message,
+          retryContext: result.retryContext,
+        });
+      } else if (result.kind === 'error') {
+        setErrorMessage(result.message ?? 'Google 로그인에 실패했습니다.');
+        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (e) {
+      console.error('[Login] google', e);
+      const detail =
+        e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
+      setErrorMessage(`Google 로그인 중 오류가 발생했습니다.${detail}`);
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -248,53 +404,34 @@ export default function MindGardenLoginPage() {
     }
   };
 
-  const handleNaverLogin = async () => {
+  const handleCredentialLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('이메일/휴대폰 번호와 비밀번호를 입력해주세요.');
+      return;
+    }
+
     setIsLoading(true);
-    setLoadingProvider('naver');
+    setLoadingProvider('credentials');
     setErrorMessage(null);
 
     try {
-      const result = await AuthService.loginWithNaver();
+      const result = await AuthService.loginWithCredentials(email.trim(), password);
       if (result.kind === 'authenticated') {
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
+        setCredentialSheetOpen(false);
         await handleLoginSuccess();
-      } else if (result.kind === 'requiresSignup') {
-        router.push({
-          pathname: '/(auth)/social-signup',
-          params: socialSignupRouteParams(result.socialUserInfo),
-        });
-      } else if (result.kind === 'requiresPhoneAccountSelection') {
-        router.push({
-          pathname: '/(auth)/oauth-account-selection',
-          params: {
-            selectionToken: result.selectionToken,
-            provider: 'NAVER',
-          },
-        });
-      } else if (result.kind === 'requiresOAuthPhoneVerification') {
-        router.push({
-          pathname: '/(auth)/oauth-phone-link',
-          params: {
-            provider: result.provider,
-            phoneVerificationToken: result.phoneVerificationToken,
-            email: result.socialUserInfo.email ?? '',
-            name: result.socialUserInfo.name ?? '',
-          },
-        } as unknown as Href);
       } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
         setDuplicateLoginPrompt({
           message: result.message,
           retryContext: result.retryContext,
         });
-      } else if (result.kind === 'error') {
-        setErrorMessage(result.message ?? '네이버 로그인에 실패했습니다.');
+      } else {
+        setErrorMessage(result.message ?? '로그인에 실패했습니다.');
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (e) {
-      console.error('[Login] naver', e);
-      const detail =
-        e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
-      setErrorMessage(`네이버 로그인 중 오류가 발생했습니다.${detail}`);
+      console.error('[Login] credential', e);
+      setErrorMessage('로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -336,6 +473,23 @@ export default function MindGardenLoginPage() {
     setDuplicateLoginPrompt(null);
   };
 
+  const handleCredentialTriggerPress = useCallback(() => {
+    setCredentialSheetOpen((v) => !v);
+  }, []);
+
+  const handleCredentialSheetClose = useCallback(() => {
+    setCredentialSheetOpen(false);
+  }, []);
+
+  const handleChangeTenantPress = useCallback(() => {
+    router.replace('/(auth)/tenant-select' as Href);
+  }, []);
+
+  const handleForgotPasswordPress = useCallback(() => {
+    // FooterLinks 의 비밀번호 찾기 — `Linking.openURL` 은 자체 처리 (`FooterLinks` 호출).
+    // 본 함수는 추가 분기 없이 FooterLinks 가 직접 webBaseUrl + /forgot-password 를 연다.
+  }, []);
+
   const expoGoBanner = inExpoGo ? (
     <View
       style={[
@@ -376,54 +530,68 @@ export default function MindGardenLoginPage() {
     <View style={styles.root}>
       <AnimatedPastelBackground config={config} />
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <ScrollView
+        <KeyboardAvoidingView
           style={styles.flex}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingHorizontal: contentHorizontalPadding },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View
-            style={[
-              styles.contentInner,
-              isTablet ? { maxWidth: CONTENT_MAX_WIDTH_TABLET, alignSelf: 'center' } : null,
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingHorizontal: contentHorizontalPadding },
             ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <LogoSection config={config} />
-
-            <View style={{ height: HEADER_TO_BUTTONS_GAP }} />
-
-            <LoginButtonsSection
-              config={config}
-              showAppleButton={appleAvailable}
-              socialLoginUnavailable={inExpoGo}
-              unavailableBanner={expoGoBanner}
-              isLoading={isLoading}
-              loadingProvider={loadingProvider}
-              errorMessage={errorMessage}
-              onKakaoPress={handleKakaoLogin}
-              onNaverPress={handleNaverLogin}
-              onApplePress={handleAppleLogin}
-            />
-
-            <Pressable
-              style={styles.changeTenantButton}
-              onPress={() => router.replace('/(auth)/tenant-select' as Href)}
-              accessibilityLabel={CHANGE_TENANT_LABEL}
-              accessibilityRole="button"
+            <View
+              style={[
+                styles.contentInner,
+                isTablet ? { maxWidth: CONTENT_MAX_WIDTH_TABLET, alignSelf: 'center' } : null,
+              ]}
             >
-              <Text
-                maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-                style={[styles.changeTenantText, { color: theme.colors.textTertiary }]}
-              >
-                {CHANGE_TENANT_LABEL}
-              </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
+              <View style={styles.heroBlock}>
+                <BreathingCircle config={config} size={orbSize} butterflySize={butterflySize} />
+              </View>
+
+              <View style={{ height: HEADER_TO_BUTTONS_GAP }} />
+
+              <LoginButtonsSection
+                config={config}
+                showAppleButton={appleAvailable}
+                socialLoginUnavailable={inExpoGo}
+                unavailableBanner={expoGoBanner}
+                isLoading={isLoading}
+                loadingProvider={loadingProvider}
+                errorMessage={errorMessage}
+                onKakaoPress={handleKakaoLogin}
+                onNaverPress={handleNaverLogin}
+                onGooglePress={handleGoogleLogin}
+                onApplePress={handleAppleLogin}
+                credentialSheetExpanded={credentialSheetOpen}
+                onCredentialSheetTriggerPress={handleCredentialTriggerPress}
+              />
+
+              <View style={styles.footerSpacer} />
+
+              <FooterLinks
+                onForgotPasswordPress={handleForgotPasswordPress}
+                onChangeTenantPress={handleChangeTenantPress}
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <CredentialSheet
+        isOpen={credentialSheetOpen}
+        onClose={handleCredentialSheetClose}
+        email={email}
+        onEmailChange={setEmail}
+        password={password}
+        onPasswordChange={setPassword}
+        onSubmit={handleCredentialLogin}
+        submitting={loadingProvider === 'credentials'}
+        disabled={isLoading && loadingProvider !== 'credentials'}
+      />
 
       <UnifiedModal
         isOpen={duplicateLoginPrompt != null}
@@ -481,19 +649,17 @@ const styles = StyleSheet.create({
   contentInner: {
     alignSelf: 'stretch',
   },
+  heroBlock: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   expoGoBanner: {
     marginBottom: 20,
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
   },
-  changeTenantButton: {
-    alignItems: 'center',
-    marginTop: 24,
-    paddingVertical: 12,
-  },
-  changeTenantText: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSizeTokens.sm,
+  footerSpacer: {
+    height: 24,
   },
 });

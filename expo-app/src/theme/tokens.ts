@@ -92,6 +92,14 @@ const COMMON_COLORS = {
    * SSOT: 스펙 §1.3 LinearGradient `colors[2]`.
    */
   loginBgBridge: '#F4F1EA',
+  /**
+   * V2 §M.1 B2 Breathing Circle — radial gradient orb (호흡 원).
+   * 중심 → 외곽 페이드아웃 3 stop. 외부 알파 0 으로 부드러운 halo.
+   * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md §M.1.3.
+   */
+  loginOrbCore: '#FFFFFF',
+  loginOrbMid: '#F5F0E8',
+  loginOrbEdge: '#E0DACF',
 } as const;
 
 /** 그레이 스케일 (토큰화) */

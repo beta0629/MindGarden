@@ -1,13 +1,17 @@
 /**
- * SNS 로그인 버튼 stagger 영역 + 구분선 + 인증 보조 링크.
+ * SNS 로그인 버튼 stagger 영역 + 트리거 — V2 B2 Breathing Circle 아래 노출.
  *
- * 사용자 결정 2026-06-10 §AQ-3: 이메일/비밀번호 토글 + 자격증명 폼은 본 화면에서 완전 제거.
- * (이메일 로그인이 필요한 사용자는 하단 "회원가입" 링크에서 웹으로 이동해 진행)
+ * <p>V1 의 "구분선 + 토글 + 인라인 폼 + 회원가입 링크" 구성을 모두 폐기 (§H6 / §H8 / §A.5)하고
+ * V2 §A.4 4 provider (카카오/네이버/Google/Apple) + §B 트리거만 유지.
+ * 이메일/휴대폰 로그인은 부모(`login.tsx`) 가 `CredentialSheet` 로 표시.</p>
  *
- * 본 컴포넌트는 비즈니스 로직(`handleKakaoLogin` 등)을 직접 호출하지 않고 props 로 받는다.
- * UI 분기·등장 모션·pointerEvents 가드만 담당한다.
- *
- * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md §3 / §10.
+ * <p>SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md
+ *  - §A.4 4 provider 균등 노출
+ *  - §A.5 회원가입 링크 제거
+ *  - §A.6 이메일 폼 트리거 진입
+ *  - §A.7 보조 링크 2개만 (FooterLinks 컴포넌트)
+ *  - §D.1 stagger 120ms 4 provider
+ *  - §F.1 묶음 중앙 정렬</p>
  *
  * @author MindGarden
  * @since 2026-06-10
@@ -15,10 +19,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
-  Linking,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -29,9 +30,9 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/theme';
 import { colors as themeColors } from '@/theme/tokens';
-import { fontFamily, fontSize, textStyles } from '@/theme/typography';
-import { getWebBaseUrl } from '@/config/webBaseUrl';
+import { fontFamily, fontSize } from '@/theme/typography';
 import { SocialLoginButton } from '@/components/molecules/SocialLoginButton';
+import { CredentialSheetTrigger } from '@/components/atoms/CredentialSheetTrigger';
 import {
   BUTTON_BORDER_RADIUS,
   BUTTON_FADE_IN_DURATION_MS,
@@ -43,43 +44,45 @@ import {
   type LoginAnimationConfig,
 } from './loginAnimationConstants';
 
-const LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER = 1.6;
-/**
- * 구분선·링크 라벨 — 웹 frontend (`UnifiedLogin.js` + `auth.json`) 카피와 통일
- * (사용자 결정 2026-06-10 §AE / §AJ).
- */
-const DIVIDER_LABEL = '또는 다음으로 로그인';
-const SIGNUP_LINK_LABEL = '회원가입';
-const FORGOT_PASSWORD_LINK_LABEL = '비밀번호 찾기';
-/**
- * 웹 frontend 경로 — `UnifiedLogin.js` 의 `/register`, `/forgot-password` 와 동일.
- * expo-app 에는 일반 회원가입/비밀번호 찾기 화면이 없으므로 외부 브라우저로 웹 페이지를 연다.
- */
-const WEB_REGISTER_PATH = '/register';
-const WEB_FORGOT_PASSWORD_PATH = '/forgot-password';
-const EXTERNAL_LINK_OPEN_ERROR = '웹 페이지를 열 수 없습니다. 잠시 후 다시 시도해주세요.';
+const MAX_FONT_SIZE_MULTIPLIER = 1.6;
 
-/** Apple 네이티브 버튼 css cornerRadius — 다른 버튼과 동일한 12px (스펙 §10.5) */
+/** Apple 네이티브 버튼 css cornerRadius — 다른 버튼과 동일 (V2 §F.1) */
 const APPLE_NATIVE_BUTTON_CORNER_RADIUS = BUTTON_BORDER_RADIUS;
+
+/**
+ * 4 provider 등장 인덱스 (V2 §A.4 / §I.4):
+ *  0 = kakao, 1 = naver, 2 = google, 3 = apple (iOS only)
+ */
+const KAKAO_INDEX = 0;
+const NAVER_INDEX = 1;
+const GOOGLE_INDEX = 2;
+const APPLE_INDEX = 3;
+
+export type LoginProvider = 'kakao' | 'naver' | 'google' | 'apple' | 'credentials';
 
 export interface LoginButtonsSectionProps {
   readonly config: LoginAnimationConfig;
   /** Apple 네이티브 버튼 사용 가능 여부 (iOS 13+) */
   readonly showAppleButton: boolean;
-  /** SNS 모듈을 사용할 수 없는 환경(Expo Go 등) — 카카오·네이버 시각적으로 흐리게 */
+  /** SNS 모듈을 사용할 수 없는 환경(Expo Go 등) — 카카오/네이버/Google 시각적으로 흐리게 */
   readonly socialLoginUnavailable: boolean;
   /** Expo Go 환경 등에서 사용자에게 보여줄 안내 배너(있으면 SNS 버튼 위) */
   readonly unavailableBanner?: ReactNode;
   /** 일반 로딩 상태 — 전체 버튼 disabled */
   readonly isLoading: boolean;
   /** 현재 로딩 중인 provider — 해당 버튼만 ActivityIndicator */
-  readonly loadingProvider: 'kakao' | 'naver' | 'apple' | null;
+  readonly loadingProvider: LoginProvider | null;
   /** 에러 메시지 (null 이면 비표시) */
   readonly errorMessage: string | null;
 
   readonly onKakaoPress: () => void;
   readonly onNaverPress: () => void;
+  readonly onGooglePress: () => void;
   readonly onApplePress: () => void;
+
+  /** 트리거 (이메일/휴대폰 Sheet 열기) — Sheet 열림 상태 */
+  readonly credentialSheetExpanded: boolean;
+  readonly onCredentialSheetTriggerPress: () => void;
 
   readonly style?: StyleProp<ViewStyle>;
   readonly testID?: string;
@@ -96,7 +99,10 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
     errorMessage,
     onKakaoPress,
     onNaverPress,
+    onGooglePress,
     onApplePress,
+    credentialSheetExpanded,
+    onCredentialSheetTriggerPress,
     style,
     testID,
   } = props;
@@ -107,22 +113,34 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
   const kakaoTranslate = useRef(new Animated.Value(BUTTON_INITIAL_TRANSLATE_Y)).current;
   const naverOpacity = useRef(new Animated.Value(0)).current;
   const naverTranslate = useRef(new Animated.Value(BUTTON_INITIAL_TRANSLATE_Y)).current;
+  const googleOpacity = useRef(new Animated.Value(0)).current;
+  const googleTranslate = useRef(new Animated.Value(BUTTON_INITIAL_TRANSLATE_Y)).current;
   const appleOpacity = useRef(new Animated.Value(0)).current;
   const appleTranslate = useRef(new Animated.Value(BUTTON_INITIAL_TRANSLATE_Y)).current;
+  const triggerOpacity = useRef(new Animated.Value(0)).current;
   const [pointerEventsEnabled, setPointerEventsEnabled] = useState(false);
 
   useEffect(() => {
     const initialTranslate = config.buttonTranslateOnFadeIn ? BUTTON_INITIAL_TRANSLATE_Y : 0;
-    [kakaoOpacity, naverOpacity, appleOpacity].forEach((v) => v.setValue(0));
-    [kakaoTranslate, naverTranslate, appleTranslate].forEach((v) => v.setValue(initialTranslate));
+    [kakaoOpacity, naverOpacity, googleOpacity, appleOpacity, triggerOpacity].forEach((v) =>
+      v.setValue(0),
+    );
+    [kakaoTranslate, naverTranslate, googleTranslate, appleTranslate].forEach((v) =>
+      v.setValue(initialTranslate),
+    );
     setPointerEventsEnabled(false);
 
     const items: { opacity: Animated.Value; translate: Animated.Value; index: number }[] = [
-      { opacity: kakaoOpacity, translate: kakaoTranslate, index: 0 },
-      { opacity: naverOpacity, translate: naverTranslate, index: 1 },
+      { opacity: kakaoOpacity, translate: kakaoTranslate, index: KAKAO_INDEX },
+      { opacity: naverOpacity, translate: naverTranslate, index: NAVER_INDEX },
+      { opacity: googleOpacity, translate: googleTranslate, index: GOOGLE_INDEX },
     ];
     if (showAppleButton) {
-      items.push({ opacity: appleOpacity, translate: appleTranslate, index: 2 });
+      items.push({
+        opacity: appleOpacity,
+        translate: appleTranslate,
+        index: APPLE_INDEX,
+      });
     }
 
     const anims: Animated.CompositeAnimation[] = [];
@@ -149,7 +167,22 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
         );
       }
     });
-    Animated.parallel(anims).start();
+
+    // 트리거는 마지막 SNS 등장 후 fade-in
+    const lastIndex = showAppleButton ? APPLE_INDEX : GOOGLE_INDEX;
+    const triggerDelay = computeButtonFadeInDelayMs(lastIndex, config) + BUTTON_FADE_IN_DURATION_MS;
+    anims.push(
+      Animated.timing(triggerOpacity, {
+        toValue: 1,
+        duration: BUTTON_FADE_IN_DURATION_MS,
+        easing: LOGIN_EASING.fade,
+        delay: triggerDelay,
+        useNativeDriver: true,
+      }),
+    );
+
+    const composite = Animated.parallel(anims);
+    composite.start();
 
     const enableTimer = setTimeout(() => {
       setPointerEventsEnabled(true);
@@ -157,58 +190,35 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
 
     return () => {
       clearTimeout(enableTimer);
-      anims.forEach((a) => a.stop());
+      composite.stop();
     };
   }, [
     appleOpacity,
     appleTranslate,
     config,
+    googleOpacity,
+    googleTranslate,
     kakaoOpacity,
     kakaoTranslate,
     naverOpacity,
     naverTranslate,
     showAppleButton,
+    triggerOpacity,
   ]);
 
-  const openExternalAuthLink = useCallback((path: string) => {
-    const url = `${getWebBaseUrl()}${path}`;
-    Linking.openURL(url).catch(() => {
-      Alert.alert(EXTERNAL_LINK_OPEN_ERROR);
-    });
-  }, []);
-
-  const handleSignupPress = useCallback(() => {
-    Haptics.selectionAsync().catch(() => {
+  const handleApplePressWrap = useCallback(() => {
+    if (isLoading || socialLoginUnavailable) {
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
       /* noop */
     });
-    openExternalAuthLink(WEB_REGISTER_PATH);
-  }, [openExternalAuthLink]);
-
-  const handleForgotPasswordPress = useCallback(() => {
-    Haptics.selectionAsync().catch(() => {
-      /* noop */
-    });
-    openExternalAuthLink(WEB_FORGOT_PASSWORD_PATH);
-  }, [openExternalAuthLink]);
+    onApplePress();
+  }, [isLoading, onApplePress, socialLoginUnavailable]);
 
   return (
     <View style={[styles.root, style]} testID={testID ?? 'login-buttons-section'}>
       {unavailableBanner}
-
-      {/*
-        구분선 — 웹 frontend (`UnifiedLogin.js` 의 `.mg-v2-divider`) 와 동일하게 SNS 버튼 그룹 위에 배치.
-        expo-app 에는 자체 이메일 로그인 폼이 없으므로 사실상 SNS 영역 헤더 역할.
-      */}
-      <View style={styles.dividerRow}>
-        <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
-        <Text
-          maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
-          style={[styles.dividerText, { color: theme.colors.textTertiary }]}
-        >
-          {DIVIDER_LABEL}
-        </Text>
-        <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
-      </View>
 
       <Animated.View
         style={{
@@ -248,6 +258,25 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
         />
       </Animated.View>
 
+      <View style={{ height: BUTTON_GAP }} />
+
+      <Animated.View
+        style={{
+          opacity: googleOpacity,
+          transform: [{ translateY: googleTranslate }],
+        }}
+        pointerEvents={pointerEventsEnabled ? 'auto' : 'none'}
+      >
+        <SocialLoginButton
+          variant="google"
+          onPress={onGooglePress}
+          loading={loadingProvider === 'google'}
+          disabled={isLoading}
+          reduceMotion={config.reduceMotion}
+          pointerEventsDisabled={!pointerEventsEnabled}
+        />
+      </Animated.View>
+
       {showAppleButton && (
         <>
           <View style={{ height: BUTTON_GAP }} />
@@ -262,25 +291,15 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
             {/*
               Apple 네이티브 버튼 — `AppleAuthenticationButton` 은 Apple HIG 자산·다국어·다크모드를
               자동 적용한다. `Type.CONTINUE` 사용 시 디바이스 locale 한국어에서 "Apple로 계속하기"
-              자동 렌더 (영문 locale 시 "Continue with Apple"). 외부에서 locale·카피·폰트·내부 정렬을
-              조정할 수 없으므로 height·width·cornerRadius 만 다른 버튼과 통일한다 (SDK 한계 — §AQ-2).
-              한국어 카피를 강제로 보고 싶으면 시뮬레이터/디바이스 시스템 언어를 한국어로 설정해야 한다.
-              SocialLoginButton 의 `variant="apple"` 는 SIWA 가 비활성/미지원일 때만 사용.
+              자동 렌더 (영문 locale 시 "Continue with Apple" — V2 §H5 SDK 한계 명시).
+              fallback `SocialLoginButton variant="apple"` 은 SIWA 비활성/미지원 단말에서만 사용.
             */}
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
               buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
               cornerRadius={APPLE_NATIVE_BUTTON_CORNER_RADIUS}
               style={styles.appleButton}
-              onPress={() => {
-                if (isLoading || socialLoginUnavailable) {
-                  return;
-                }
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
-                  /* noop */
-                });
-                onApplePress();
-              }}
+              onPress={handleApplePressWrap}
             />
             {loadingProvider === 'apple' && (
               <View
@@ -300,7 +319,7 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
       {Boolean(errorMessage) && (
         <View style={styles.errorContainer} accessibilityLiveRegion="polite">
           <Text
-            maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
+            maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
             style={[styles.errorText, { color: theme.colors.error }]}
           >
             {errorMessage}
@@ -308,47 +327,16 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
         </View>
       )}
 
-      {/*
-        하단 인증 링크 — 웹 frontend (`UnifiedLogin.js` 의 `.mg-v2-login-links`) 와 동일 구조.
-        expo-app 에 일반 회원가입/비밀번호 찾기 화면이 없으므로 `Linking.openURL` 로
-        웹 `${webBaseUrl}/register`, `${webBaseUrl}/forgot-password` 를 외부 브라우저에서 연다.
-        토글/자격증명 폼이 제거되어(§AQ-3) 본 영역이 첫 진입 시 자연스럽게 보인다(§AQ-4).
-      */}
-      <View style={styles.authLinksRow} testID="login-auth-links">
-        <Pressable
-          onPress={handleSignupPress}
-          accessibilityLabel={SIGNUP_LINK_LABEL}
-          accessibilityRole="link"
-          hitSlop={8}
-          testID="login-link-signup"
-        >
-          <Text
-            maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
-            style={[styles.authLinkText, { color: theme.colors.textSecondary }]}
-          >
-            {SIGNUP_LINK_LABEL}
-          </Text>
-        </Pressable>
-        <View
-          style={[styles.authLinkSeparator, { backgroundColor: theme.colors.divider }]}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
+      <Animated.View
+        style={{ opacity: triggerOpacity }}
+        pointerEvents={pointerEventsEnabled ? 'auto' : 'none'}
+      >
+        <CredentialSheetTrigger
+          expanded={credentialSheetExpanded}
+          onPress={onCredentialSheetTriggerPress}
+          disabled={isLoading}
         />
-        <Pressable
-          onPress={handleForgotPasswordPress}
-          accessibilityLabel={FORGOT_PASSWORD_LINK_LABEL}
-          accessibilityRole="link"
-          hitSlop={8}
-          testID="login-link-forgot-password"
-        >
-          <Text
-            maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
-            style={[styles.authLinkText, { color: theme.colors.textSecondary }]}
-          >
-            {FORGOT_PASSWORD_LINK_LABEL}
-          </Text>
-        </Pressable>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -374,32 +362,5 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     textAlign: 'center',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    ...textStyles.dividerCaption,
-    marginHorizontal: 12,
-  },
-  authLinksRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 20,
-  },
-  authLinkText: {
-    ...textStyles.authLink,
-  },
-  authLinkSeparator: {
-    width: 1,
-    height: 12,
   },
 });

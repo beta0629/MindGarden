@@ -75,6 +75,23 @@ const COMMON_COLORS = {
    * 보더 색은 `warning`과 동일 역할로 `theme.colors.warning` 사용.
    */
   scheduleCardInProgressBackground: '#FAF3E8',
+  /**
+   * 로그인 화면 파스텔 배경 stop — warm 톤 (옐로우 35%, #FFF6E8).
+   * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md §1.2.
+   * 웹 대응 토큰: `--mg-login-bg-warm` (frontend/src/styles/unified-design-tokens.css).
+   */
+  loginBgWarm: '#FFF6E8',
+  /**
+   * 로그인 화면 파스텔 배경 stop — cool 톤 (틸 25%, #EFF3F0).
+   * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md §1.2.
+   * 웹 대응 토큰: `--mg-login-bg-cool`.
+   */
+  loginBgCool: '#EFF3F0',
+  /**
+   * 로그인 화면 파스텔 배경 stop — 중간 중성 (#F4F1EA, warm↔cool 브리지).
+   * SSOT: 스펙 §1.3 LinearGradient `colors[2]`.
+   */
+  loginBgBridge: '#F4F1EA',
 } as const;
 
 /** 그레이 스케일 (토큰화) */

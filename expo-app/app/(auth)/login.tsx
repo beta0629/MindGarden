@@ -1,30 +1,38 @@
 /**
- * 소셜 로그인 화면
- * 카카오·네이버 로그인 + ID/PW 접힘 영역
+ * 소셜 로그인 화면 — MindGardenLoginPage 컨테이너.
+ *
+ * 본 페이지는 UI 분리·모션 합산만 담당하고 비즈니스 로직(`AuthService.loginWith*`)은
+ * 그대로 호출한다. UI 구조는 다음 4개 모듈로 분리:
+ *   - {@link AnimatedPastelBackground} — 흐르는 파스텔 그라데이션
+ *   - {@link LogoSection} — 그라데이션 나비 로고 + 타이포 4종
+ *   - {@link LoginButtonsSection} — 카카오/네이버/Apple stagger + 자격증명 폼
+ *   - {@link SocialLoginButton} — Atom (molecules 위치)
+ *
+ * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md.
+ *
+ * Reduce Motion 분기는 {@link resolveLoginAnimationConfig} 단일 진입점만 사용한다.
  *
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
+  AccessibilityInfo,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeIn, FadeInDown, SlideInDown } from 'react-native-reanimated';
-import { ChevronDown, ChevronUp, Mail, Lock } from 'lucide-react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useTheme } from '@/theme';
-import { fontSize as fontSizeTokens } from '@/theme/typography';
-import { AppBrandMark } from '@/components/molecules/AppBrandMark';
+import { fontFamily, fontSize as fontSizeTokens } from '@/theme/typography';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import { useTenantStore } from '@/stores/useTenantStore';
 import {
@@ -33,16 +41,21 @@ import {
   type DuplicateLoginRetryContext,
 } from '@/services/AuthService';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
-import {
-  OAUTH_APPLE_BACKGROUND,
-  OAUTH_APPLE_FOREGROUND,
-  OAUTH_KAKAO_BACKGROUND,
-  OAUTH_KAKAO_FOREGROUND,
-  OAUTH_NAVER_BACKGROUND,
-  OAUTH_NAVER_FOREGROUND,
-} from '@/constants/oauthProviderBrand';
 import { isAppleSignInAvailableSync } from '@/services/auth/appleSignIn';
 import { sanitizeSocialIdentityString } from '@/utils/socialIdentitySanitize';
+import { AnimatedPastelBackground } from '@/components/organisms/login/AnimatedPastelBackground';
+import { LogoSection } from '@/components/organisms/login/LogoSection';
+import { LoginButtonsSection } from '@/components/organisms/login/LoginButtonsSection';
+import {
+  CONTENT_HORIZONTAL_PADDING_MOBILE,
+  CONTENT_HORIZONTAL_PADDING_TABLET,
+  CONTENT_MAX_WIDTH_TABLET,
+  CONTENT_VERTICAL_PADDING,
+  HEADER_TO_BUTTONS_GAP,
+  LAYOUT_TABLET_DEVICE_WIDTH,
+  resolveLoginAnimationConfig,
+  type LoginAnimationConfig,
+} from '@/components/organisms/login/loginAnimationConstants';
 
 const DUPLICATE_LOGIN_MODAL_TITLE = '이미 로그인된 기기가 있습니다';
 const DUPLICATE_LOGIN_FALLBACK_BODY =
@@ -51,6 +64,11 @@ const DUPLICATE_LOGIN_CONFIRM_LABEL = '기존 세션 종료하고 로그인';
 const DUPLICATE_LOGIN_CANCEL_LABEL = '취소';
 const DUPLICATE_LOGIN_RETRY_FAILED_FALLBACK =
   '재로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+const CHANGE_TENANT_LABEL = '다른 기관으로 변경';
+const EXPO_GO_BANNER_TITLE = 'Expo Go로 열려 있어요';
+const EXPO_GO_BANNER_BODY =
+  '카카오·네이버는 네이티브 모듈이라 Expo Go에서는 사용할 수 없습니다. 시뮬레이터/폰 홈의 MindGarden 앱을 실행하거나, 터미널에서 npx expo run:ios 후 그 앱으로 접속해 주세요. 이메일 로그인은 가능합니다.';
+const MAX_FONT_SIZE_MULTIPLIER = 1.6;
 
 interface DuplicateLoginPrompt {
   message: string;
@@ -95,12 +113,48 @@ function socialSignupRouteParams(info: SocialUserInfoDraft) {
   };
 }
 
-export default function LoginScreen() {
+/**
+ * AccessibilityInfo.isReduceMotionEnabled 의 초기값 + 변경 리스너를 단일 hook 으로 통합.
+ * 스펙 §10.3 — 진입 시 호출 + `reduceMotionChanged` 등록.
+ */
+function useReduceMotion(): boolean {
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (mounted) {
+          setReduceMotion(enabled);
+        }
+      })
+      .catch(() => {
+        /* noop */
+      });
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (enabled: boolean) => {
+      setReduceMotion(enabled);
+    });
+    return () => {
+      mounted = false;
+      sub.remove();
+    };
+  }, []);
+  return reduceMotion;
+}
+
+export default function MindGardenLoginPage() {
   const theme = useTheme();
   const { tenantName } = useTenantStore();
+  const { width: windowWidth } = useWindowDimensions();
+  const reduceMotion = useReduceMotion();
+  const config: LoginAnimationConfig = useMemo(
+    () => resolveLoginAnimationConfig(reduceMotion),
+    [reduceMotion],
+  );
 
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<
+    'kakao' | 'naver' | 'apple' | 'credentials' | null
+  >(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCredentials, setShowCredentials] = useState(false);
   const [email, setEmail] = useState('');
@@ -111,6 +165,11 @@ export default function LoginScreen() {
   const [isConfirmingDuplicateLogin, setIsConfirmingDuplicateLogin] = useState(false);
 
   const inExpoGo = isExpoGoApp();
+  const isTablet = windowWidth >= LAYOUT_TABLET_DEVICE_WIDTH;
+  const contentHorizontalPadding = isTablet
+    ? CONTENT_HORIZONTAL_PADDING_TABLET
+    : CONTENT_HORIZONTAL_PADDING_MOBILE;
+  const appleAvailable = isAppleSignInAvailableSync();
 
   const handleLoginSuccess = async () => {
     await navigateAfterAuthenticated();
@@ -193,8 +252,6 @@ export default function LoginScreen() {
           },
         });
       } else if (result.kind === 'requiresApplePhoneVerification') {
-        // expo-router typed routes 가 새 라우트(`apple-phone-link`)를 generated 하기 전까지
-        // unknown → Href 로 캐스팅한다. prebuild/restart 후 자동 해소.
         router.push({
           pathname: '/(auth)/apple-phone-link',
           params: {
@@ -219,7 +276,6 @@ export default function LoginScreen() {
           retryContext: result.retryContext,
         });
       } else if (result.kind === 'error') {
-        // 사용자가 시트를 닫은 경우는 토스트만 띄우지 않는다.
         if (!/취소/.test(result.message ?? '')) {
           setErrorMessage(result.message ?? 'Apple 로그인에 실패했습니다.');
           await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -357,236 +413,106 @@ export default function LoginScreen() {
     setDuplicateLoginPrompt(null);
   };
 
-  return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.colors.bgMain }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  const expoGoBanner = inExpoGo ? (
+    <View
+      style={[
+        styles.expoGoBanner,
+        {
+          backgroundColor: theme.colors.primaryLight + '35',
+          borderColor: theme.colors.primary,
+        },
+      ]}
+      accessibilityRole="alert"
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <Text
+        maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+        style={{
+          fontFamily: theme.fontFamily.semibold,
+          fontSize: theme.fontSize.sm,
+          color: theme.colors.textMain,
+          marginBottom: 6,
+        }}
       >
-        <Animated.View entering={FadeIn.duration(600)} style={styles.content}>
-          <View style={styles.header}>
-            <Animated.View entering={FadeInDown.delay(100).duration(500)}>
-              <AppBrandMark variant="hero" style={{ marginBottom: theme.spacing.sm }} />
-            </Animated.View>
-            {Boolean(tenantName) && (
-              <Animated.Text
-                entering={FadeInDown.delay(200).duration(500)}
-                style={[styles.tenantName, { color: theme.colors.textSecondary }]}
-              >
-                {tenantName}
-              </Animated.Text>
-            )}
-          </View>
+        {EXPO_GO_BANNER_TITLE}
+      </Text>
+      <Text
+        maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+        style={{
+          fontFamily: theme.fontFamily.regular,
+          fontSize: theme.fontSize.xs,
+          color: theme.colors.textSecondary,
+          lineHeight: 18,
+        }}
+      >
+        {EXPO_GO_BANNER_BODY}
+      </Text>
+    </View>
+  ) : null;
 
-          {inExpoGo && (
+  return (
+    <View style={styles.root}>
+      <AnimatedPastelBackground config={config} />
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingHorizontal: contentHorizontalPadding },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             <View
               style={[
-                styles.expoGoBanner,
-                {
-                  backgroundColor: theme.colors.primaryLight + '35',
-                  borderColor: theme.colors.primary,
-                },
+                styles.contentInner,
+                isTablet ? { maxWidth: CONTENT_MAX_WIDTH_TABLET, alignSelf: 'center' } : null,
               ]}
-              accessibilityRole="alert"
             >
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.semibold,
-                  fontSize: theme.fontSize.sm,
-                  color: theme.colors.textMain,
-                  marginBottom: 6,
-                }}
-              >
-                Expo Go로 열려 있어요
-              </Text>
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.regular,
-                  fontSize: theme.fontSize.xs,
-                  color: theme.colors.textSecondary,
-                  lineHeight: 18,
-                }}
-              >
-                카카오·네이버는 네이티브 모듈이라 Expo Go에서는 사용할 수 없습니다. 시뮬레이터/폰
-                홈의 MindGarden 앱을 실행하거나, 터미널에서 npx expo run:ios 후 그 앱으로 접속해
-                주세요. 이메일 로그인은 가능합니다.
-              </Text>
-            </View>
-          )}
+              <LogoSection config={config} tenantName={tenantName ?? undefined} />
 
-          <Animated.View entering={SlideInDown.delay(300).duration(500)} style={styles.buttonGroup}>
-            <Pressable
-              style={[
-                styles.socialButton,
-                {
-                  backgroundColor: OAUTH_KAKAO_BACKGROUND,
-                  opacity: inExpoGo ? 0.45 : 1,
-                },
-              ]}
-              onPress={handleKakaoLogin}
-              disabled={isLoading || inExpoGo}
-              accessibilityLabel="카카오로 로그인"
-              accessibilityRole="button"
-            >
-              {loadingProvider === 'kakao' ? (
-                <ActivityIndicator color={OAUTH_KAKAO_FOREGROUND} />
-              ) : (
-                <Text style={[styles.socialButtonText, { color: OAUTH_KAKAO_FOREGROUND }]}>
-                  카카오로 로그인
-                </Text>
-              )}
-            </Pressable>
+              <View style={{ height: HEADER_TO_BUTTONS_GAP }} />
 
-            <Pressable
-              style={[
-                styles.socialButton,
-                {
-                  backgroundColor: OAUTH_NAVER_BACKGROUND,
-                  opacity: inExpoGo ? 0.45 : 1,
-                },
-              ]}
-              onPress={handleNaverLogin}
-              disabled={isLoading || inExpoGo}
-              accessibilityLabel="네이버로 로그인"
-              accessibilityRole="button"
-            >
-              {loadingProvider === 'naver' ? (
-                <ActivityIndicator color={OAUTH_NAVER_FOREGROUND} />
-              ) : (
-                <Text style={[styles.socialButtonText, { color: OAUTH_NAVER_FOREGROUND }]}>
-                  네이버로 로그인
-                </Text>
-              )}
-            </Pressable>
+              <LoginButtonsSection
+                config={config}
+                showAppleButton={appleAvailable}
+                socialLoginUnavailable={inExpoGo}
+                unavailableBanner={expoGoBanner}
+                isLoading={isLoading}
+                loadingProvider={loadingProvider}
+                errorMessage={errorMessage}
+                onKakaoPress={handleKakaoLogin}
+                onNaverPress={handleNaverLogin}
+                onApplePress={handleAppleLogin}
+                showCredentials={showCredentials}
+                onToggleCredentials={() => setShowCredentials((v) => !v)}
+                email={email}
+                onEmailChange={setEmail}
+                password={password}
+                onPasswordChange={setPassword}
+                onSubmitCredentials={handleCredentialLogin}
+              />
 
-            {/* Apple Sign In — iOS 전용 가시. Apple App Store 4.8 (T1) 대응. */}
-            {isAppleSignInAvailableSync() && (
               <Pressable
-                style={[
-                  styles.socialButton,
-                  {
-                    backgroundColor: OAUTH_APPLE_BACKGROUND,
-                    opacity: inExpoGo ? 0.45 : 1,
-                  },
-                ]}
-                onPress={handleAppleLogin}
-                disabled={isLoading || inExpoGo}
-                accessibilityLabel="Apple로 계속하기"
+                style={styles.changeTenantButton}
+                onPress={() => router.replace('/(auth)/tenant-select' as Href)}
+                accessibilityLabel={CHANGE_TENANT_LABEL}
                 accessibilityRole="button"
               >
-                {loadingProvider === 'apple' ? (
-                  <ActivityIndicator color={OAUTH_APPLE_FOREGROUND} />
-                ) : (
-                  <Text style={[styles.socialButtonText, { color: OAUTH_APPLE_FOREGROUND }]}>
-                    Apple로 계속하기
-                  </Text>
-                )}
-              </Pressable>
-            )}
-
-            {Boolean(errorMessage) && (
-              <Animated.View entering={FadeIn.duration(300)} style={styles.errorContainer}>
-                <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                  {errorMessage}
-                </Text>
-              </Animated.View>
-            )}
-
-            <View style={styles.dividerRow}>
-              <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
-              <Text style={[styles.dividerText, { color: theme.colors.textTertiary }]}>또는</Text>
-              <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
-            </View>
-
-            <Pressable
-              style={[styles.toggleButton, { borderColor: theme.colors.border }]}
-              onPress={() => {
-                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                setShowCredentials(!showCredentials);
-              }}
-              accessibilityLabel="다른 방법으로 로그인"
-              accessibilityRole="button"
-            >
-              <Text style={[styles.toggleButtonText, { color: theme.colors.textSecondary }]}>
-                다른 방법으로 로그인
-              </Text>
-              {showCredentials ? (
-                <ChevronUp size={18} color={theme.colors.textTertiary} />
-              ) : (
-                <ChevronDown size={18} color={theme.colors.textTertiary} />
-              )}
-            </Pressable>
-
-            {showCredentials && (
-              <Animated.View entering={FadeInDown.duration(300)} style={styles.credentialForm}>
-                <View style={[styles.inputContainer, { borderColor: theme.colors.border }]}>
-                  <Mail size={18} color={theme.colors.textTertiary} />
-                  <TextInput
-                    style={[styles.input, { color: theme.colors.textMain }]}
-                    placeholder="이메일 또는 휴대폰 번호"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="default"
-                    accessibilityLabel="이메일 또는 휴대폰 번호 입력"
-                  />
-                </View>
-                <View style={[styles.inputContainer, { borderColor: theme.colors.border }]}>
-                  <Lock size={18} color={theme.colors.textTertiary} />
-                  <TextInput
-                    style={[styles.input, { color: theme.colors.textMain }]}
-                    placeholder="비밀번호"
-                    placeholderTextColor={theme.colors.textTertiary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    textContentType="password"
-                    returnKeyType="go"
-                    onSubmitEditing={handleCredentialLogin}
-                    accessibilityLabel="비밀번호 입력"
-                  />
-                </View>
-                <Pressable
-                  style={[styles.credentialLoginButton, { backgroundColor: theme.colors.primary }]}
-                  onPress={handleCredentialLogin}
-                  disabled={isLoading}
-                  accessibilityLabel="로그인"
-                  accessibilityRole="button"
+                <Text
+                  maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+                  style={[styles.changeTenantText, { color: theme.colors.textTertiary }]}
                 >
-                  {loadingProvider === 'credentials' ? (
-                    <ActivityIndicator color={theme.colors.textOnPrimary} />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.credentialLoginButtonText,
-                        { color: theme.colors.textOnPrimary },
-                      ]}
-                    >
-                      로그인
-                    </Text>
-                  )}
-                </Pressable>
-              </Animated.View>
-            )}
-          </Animated.View>
+                  {CHANGE_TENANT_LABEL}
+                </Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
 
-          <Pressable
-            style={styles.changeTenantButton}
-            onPress={() => router.replace('/(auth)/tenant-select' as Href)}
-            accessibilityLabel="기관 변경"
-            accessibilityRole="button"
-          >
-            <Text style={[styles.changeTenantText, { color: theme.colors.textTertiary }]}>
-              다른 기관으로 변경
-            </Text>
-          </Pressable>
-        </Animated.View>
-      </ScrollView>
       <UnifiedModal
         isOpen={duplicateLoginPrompt != null}
         onClose={handleCancelDuplicateLogin}
@@ -610,6 +536,7 @@ export default function LoginScreen() {
         ]}
       >
         <Text
+          maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
           style={{
             fontFamily: theme.fontFamily.regular,
             fontSize: theme.fontSize.sm,
@@ -620,29 +547,27 @@ export default function LoginScreen() {
           {duplicateLoginPrompt?.message?.trim() || DUPLICATE_LOGIN_FALLBACK_BODY}
         </Text>
       </UnifiedModal>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  flex: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
+    paddingVertical: CONTENT_VERTICAL_PADDING,
   },
-  content: {
-    paddingHorizontal: 24,
-    paddingVertical: 40,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  tenantName: {
-    fontSize: fontSizeTokens.base,
-    fontWeight: '500',
+  contentInner: {
+    alignSelf: 'stretch',
   },
   expoGoBanner: {
     marginBottom: 20,
@@ -650,88 +575,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  buttonGroup: {
-    gap: 12,
-  },
-  socialButton: {
-    borderRadius: 12,
-    paddingVertical: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-  },
-  socialButtonText: {
-    fontSize: fontSizeTokens.base,
-    fontWeight: '600',
-  },
-  errorContainer: {
-    paddingVertical: 8,
-  },
-  errorText: {
-    fontSize: fontSizeTokens.sm,
-    textAlign: 'center',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 8,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    fontSize: fontSizeTokens.xs,
-  },
-  toggleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
-    gap: 6,
-  },
-  toggleButtonText: {
-    fontSize: fontSizeTokens.sm,
-    fontWeight: '500',
-  },
-  credentialForm: {
-    gap: 12,
-    paddingTop: 4,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: fontSizeTokens.base,
-  },
-  credentialLoginButton: {
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  credentialLoginButtonText: {
-    fontSize: fontSizeTokens.base,
-    fontWeight: '600',
-  },
   changeTenantButton: {
     alignItems: 'center',
     marginTop: 24,
     paddingVertical: 12,
   },
   changeTenantText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSizeTokens.sm,
-    fontWeight: '400',
   },
 });

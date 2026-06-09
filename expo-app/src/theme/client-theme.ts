@@ -33,6 +33,12 @@ export interface AppThemeColors {
   readonly modalBackdrop: string;
   readonly modalLoadingOverlay: string;
   readonly scheduleCardInProgressBackground: string;
+  /** 로그인 화면 파스텔 배경 — warm stop (#FFF6E8) */
+  readonly loginBgWarm: string;
+  /** 로그인 화면 파스텔 배경 — cool stop (#EFF3F0) */
+  readonly loginBgCool: string;
+  /** 로그인 화면 파스텔 배경 — 중간 중성 (#F4F1EA) */
+  readonly loginBgBridge: string;
   readonly gray: typeof colors.gray;
 }
 

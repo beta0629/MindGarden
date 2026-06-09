@@ -1,4 +1,4 @@
 {
-  "androidVersionCode": 7,
-  "lastReleaseNote": "PATCH 1.0.6 — Apple Plan A 완결(T1 SIWA + T2 UGC 안전 8종 + T3 의료 출처) + 네이버 로그인 마이페이지 휴대전화 마스킹 표시. EAS Build 9 후속 TestFlight + Android AAB 캡처용."
+  "androidVersionCode": 8,
+  "lastReleaseNote": "PATCH 1.0.7 — 로그인 화면 리디자인. 파스텔 그라데이션 + 그라데이션 나비 로고 + 카카오/네이버/Apple stagger 등장 + Reduce Motion 분기 + WCAG AA 대비. SSOT: EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md."
 }

@@ -12,7 +12,7 @@
  * @since 2026-05-13
  */
 import { useCallback, useMemo, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -35,6 +35,7 @@ import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { MindWeatherCard } from '@/components/molecules/MindWeatherCard';
 import { CitationBlock } from '@/components/molecules/CitationBlock';
+import { AccountMismatchHint } from '@/components/molecules/AccountMismatchHint';
 import { MindWeatherShareSheet } from '@/components/organisms/MindWeatherShareSheet';
 import {
   useAnalyzeMindWeather,
@@ -42,6 +43,7 @@ import {
   useShareMindWeatherCard,
   useUnshareMindWeatherCard,
 } from '@/api/hooks/useMindWeather';
+import { useHasActiveConsultantMapping } from '@/api/hooks/useConsultantMapping';
 import {
   CLIENT_MIND_WEATHER_LIST_API_FAILED,
   CLIENT_MIND_WEATHER_SETUP_NO_TENANT,
@@ -69,10 +71,14 @@ const RECENT_TREND_WINDOW = 5;
 
 export default function ClientMindWeatherIndex() {
   const theme = useTheme();
+  const router = useRouter();
   const [draft, setDraft] = useState('');
   const [shareTargetId, setShareTargetId] = useState<string | null>(null);
 
   const list = useMindWeatherList();
+  const consultantMapping = useHasActiveConsultantMapping();
+  const hasActiveMapping = consultantMapping.hasActiveMapping;
+  const isShareDisabled = !hasActiveMapping;
   const analyzeMutation = useAnalyzeMindWeather();
   const showListSkeleton =
     list.blockReason === 'auth_loading' ||
@@ -142,6 +148,30 @@ export default function ClientMindWeatherIndex() {
   const shareTargetCard = useMemo(
     () => cards.find((c) => c.id === shareTargetId) ?? null,
     [cards, shareTargetId],
+  );
+
+  const handlePressShareCard = useCallback(
+    (cardId: string) => {
+      if (isShareDisabled) {
+        if (Platform.OS !== 'web') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+        Alert.alert(
+          '상담사 매칭 필요',
+          '상담사 매칭이 완료된 뒤 공유할 수 있어요.',
+          [
+            { text: '닫기', style: 'cancel' },
+            {
+              text: '상담 신청하러 가기',
+              onPress: () => router.push('/(client)/(booking)'),
+            },
+          ],
+        );
+        return;
+      }
+      setShareTargetId(cardId);
+    },
+    [isShareDisabled],
   );
 
   const handleSubmitShare = async (consent: { summary: boolean; original: boolean }) => {
@@ -501,19 +531,26 @@ export default function ClientMindWeatherIndex() {
                 ))}
               </View>
             ) : cards.length === 0 ? (
-              <EmptyState
-                icon={<CloudSun size={32} color={theme.colors.textTertiary} />}
-                title="아직 분석한 카드가 없어요"
-                description="오늘 하루를 짧게 적어보면 마음 날씨를 만들어 드려요."
-              />
+              <>
+                <EmptyState
+                  icon={<CloudSun size={32} color={theme.colors.textTertiary} />}
+                  title="아직 분석한 카드가 없어요"
+                  description="오늘 하루를 짧게 적어보면 마음 날씨를 만들어 드려요."
+                />
+                <AccountMismatchHint
+                  onPressOpenAccount={() => router.push('/(client)/(more)')}
+                  style={styles.accountHint}
+                />
+              </>
             ) : (
               cards.map((card, index) => (
                 <MindWeatherCard
                   key={card.id}
                   card={card}
                   index={index}
-                  onPressShare={() => setShareTargetId(card.id)}
+                  onPressShare={() => handlePressShareCard(card.id)}
                   onPressUnshare={() => handleRequestUnshare(card)}
+                  isShareDisabled={isShareDisabled}
                   busy={
                     (shareMutation.isPending && shareTargetId === card.id) ||
                     (unshareMutation.isPending && unshareMutation.variables === card.id)
@@ -603,4 +640,7 @@ const styles = StyleSheet.create({
   listSection: { marginTop: 4 },
   loadingWrap: { gap: 12 },
   bottomSpacer: { height: 32 },
+  accountHint: {
+    marginHorizontal: 0,
+  },
 });

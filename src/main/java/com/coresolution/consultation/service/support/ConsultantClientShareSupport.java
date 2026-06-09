@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.coresolution.consultation.constant.MindWeatherConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.NoActiveConsultantMappingException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
@@ -57,7 +58,29 @@ public class ConsultantClientShareSupport {
         return active.orElseGet(() -> mappings.stream()
             .map(ConsultantClientMapping::getConsultant)
             .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("담당 상담사를 찾을 수 없습니다. consultantId를 지정해 주세요.")));
+            .orElseThrow(() -> new NoActiveConsultantMappingException(
+                "매칭된 담당 상담사가 없습니다. 먼저 상담을 신청해 주세요.")));
+    }
+
+    /**
+     * 내담자에게 공유 가능한 매핑 (ACTIVE 또는 SESSIONS_EXHAUSTED) 이 1건 이상 있는지 여부.
+     *
+     * <p>{@link #resolveTargetConsultant} 가 예외를 던지지 않고 단순 boolean 으로 사전 가드 가능하게 한다.
+     * 무드 저널 best-effort 푸시 분기에서 활용.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param client 내담자
+     * @return 공유 가능한 매핑 존재 여부
+     */
+    public boolean hasShareableMapping(String tenantId, User client) {
+        if (client == null || client.getId() == null) {
+            return false;
+        }
+        List<ConsultantClientMapping> mappings = consultantClientMappingRepository.findByClientIdAndStatusNot(
+            tenantId, client.getId(), ConsultantClientMapping.MappingStatus.INACTIVE);
+        return mappings.stream().anyMatch(m ->
+            m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE
+                || m.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
     }
 
     /**

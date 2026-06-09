@@ -356,6 +356,19 @@ export const TENANT_COMPONENT_API = {
 } as const;
 
 /**
+ * 내담자 본인의 활성 상담사 매핑 — 마음 날씨·무드 저널 공유 사전 가드용.
+ *
+ * <p>{@link SHOP_API#CONSULTANT_MAPPINGS} 와 달리 CLIENT_SHOP 컴포넌트 활성화에
+ * 의존하지 않고 모든 테넌트에서 동작한다.</p>
+ *
+ * @since 2026-06-09
+ */
+export const CLIENT_CONSULTANT_MAPPING_API = {
+  /** GET — `{ hasActiveMapping: boolean, mappings: ConsultantMappingSummary[] }` */
+  ACTIVE: '/api/v1/clients/me/consultant-mappings/active',
+} as const;
+
+/**
  * Phase 4-A 「마음 날씨」 — `CONSULTANT_CLIENT_APP_PLAN.md` Phase 4 A절.
  * - 텍스트(또는 후속 음성/STT) → 감정 키워드·한 줄 요약 분석 (참고용·진단 아님)
  * - 상담사 옵트인 공유는 카드별 토글 엔드포인트로 분리
@@ -410,4 +423,5 @@ export const API_ENDPOINTS = {
   ADMIN_MOBILE: ADMIN_MOBILE_API,
   SHOP: SHOP_API,
   TENANT_COMPONENT: TENANT_COMPONENT_API,
+  CLIENT_CONSULTANT_MAPPING: CLIENT_CONSULTANT_MAPPING_API,
 } as const;

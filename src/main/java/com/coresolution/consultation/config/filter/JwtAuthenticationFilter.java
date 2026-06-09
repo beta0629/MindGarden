@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
@@ -107,6 +108,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         } catch (Exception e) {
                             log.warn("JWT 토큰에서 사용자 조회 실패: userId={}, error={}", userId,
                                     e.getMessage());
+                        }
+
+                        // USER_LIFECYCLE_TERMINATION_POLICY §3.6 — 매 요청마다 lifecycle_state 게이트 (P1)
+                        // 발급된 access JWT TTL 1시간 동안 lifecycle 전이가 일어나도 다음 요청부터 즉시 차단.
+                        // SecurityContext 미설정 → 후속 보호 엔드포인트가 401/403 반환.
+                        if (user != null) {
+                            LifecycleState lifecycleState = user.getLifecycleState();
+                            if (lifecycleState == null
+                                    || !LifecycleState.ACTIVE_LIKE_STATES.contains(lifecycleState)
+                                    || Boolean.FALSE.equals(user.getIsActive())) {
+                                log.warn(
+                                        "Inactive user request rejected: path={}, userId={}, lifecycleState={}, isActive={}",
+                                        requestPath, user.getId(), lifecycleState, user.getIsActive());
+                                filterChain.doFilter(request, response);
+                                return;
+                            }
                         }
 
                         Collection<GrantedAuthority> authorities;

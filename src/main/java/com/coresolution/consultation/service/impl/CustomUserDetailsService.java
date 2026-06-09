@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.CustomUserDetails;
@@ -42,6 +43,16 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getUserId(), user.getEmail(), user.getTenantId(), user.getRole(), 
                 user.getIsActive(), user.getPassword() != null ? user.getPassword().substring(0, 20) + "..." : "null");
             
+            // USER_LIFECYCLE_TERMINATION_POLICY §3.6 — lifecycle_state 게이트 (P1)
+            // ACTIVE_LIKE_STATES 가 아닌 모든 상태(ANONYMIZED·DELETED_BY_ADMIN·HARD_DELETED 등)는 차단.
+            // 거부 메시지에 lifecycle 값 노출 금지 (보안 — 기존 비활성 메시지로 통일).
+            LifecycleState lifecycleState = user.getLifecycleState();
+            if (lifecycleState == null || !LifecycleState.ACTIVE_LIKE_STATES.contains(lifecycleState)) {
+                log.warn("❌ 비활성 lifecycle_state 사용자 로그인 시도: email={}, lifecycleState={}",
+                    email, lifecycleState);
+                throw new UsernameNotFoundException("비활성화된 사용자입니다: " + email);
+            }
+
             // 사용자가 비활성화된 경우 예외 발생
             if (!user.getIsActive()) {
                 log.warn("❌ 비활성화된 사용자 로그인 시도: email={}", email);

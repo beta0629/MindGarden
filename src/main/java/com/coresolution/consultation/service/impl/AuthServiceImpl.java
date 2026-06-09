@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.constant.EmailConstants;
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.dto.EmailResponse;
@@ -203,7 +204,16 @@ public class AuthServiceImpl implements AuthService {
                     throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: userId=" + userId + " (tenantId 없음)");
                 }
             }
-            
+
+            // USER_LIFECYCLE_TERMINATION_POLICY §3.6 — refresh 시 lifecycle_state 게이트 (P1)
+            // ANONYMIZED / DELETED_BY_ADMIN / HARD_DELETED 등 비활성 상태의 refresh 차단.
+            // 거부 메시지는 lifecycle 값 노출 금지 (보안 — 단일 사유로 통일).
+            LifecycleState lifecycleState = user.getLifecycleState();
+            if (lifecycleState == null || !LifecycleState.ACTIVE_LIKE_STATES.contains(lifecycleState)) {
+                log.warn("Refresh denied: userId={}, lifecycleState={}", user.getId(), lifecycleState);
+                return AuthResponse.failure("계정이 비활성 상태입니다.");
+            }
+
             // 리프레시 토큰 유효성 검사
             UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
             if (!jwtService.isTokenValid(refreshToken, userDetails)) {

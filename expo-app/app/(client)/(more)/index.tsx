@@ -19,6 +19,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
+import { CurrentAccountBanner } from '@/components/molecules/CurrentAccountBanner';
 import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -79,6 +80,7 @@ export default function ClientMore() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <CurrentAccountBanner email={user?.email} userId={user?.id} />
         <ProfileCard name={profileName} subtitle={profileSubtitle} />
 
         <View style={styles.sectionContainer}>

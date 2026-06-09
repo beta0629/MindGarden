@@ -12,7 +12,7 @@
  * @since 2026-05-13
  */
 import { useCallback, useMemo, useState } from 'react';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -35,6 +35,7 @@ import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { MindWeatherCard } from '@/components/molecules/MindWeatherCard';
 import { CitationBlock } from '@/components/molecules/CitationBlock';
+import { AccountMismatchHint } from '@/components/molecules/AccountMismatchHint';
 import { MindWeatherShareSheet } from '@/components/organisms/MindWeatherShareSheet';
 import {
   useAnalyzeMindWeather,
@@ -70,6 +71,7 @@ const RECENT_TREND_WINDOW = 5;
 
 export default function ClientMindWeatherIndex() {
   const theme = useTheme();
+  const router = useRouter();
   const [draft, setDraft] = useState('');
   const [shareTargetId, setShareTargetId] = useState<string | null>(null);
 
@@ -529,11 +531,17 @@ export default function ClientMindWeatherIndex() {
                 ))}
               </View>
             ) : cards.length === 0 ? (
-              <EmptyState
-                icon={<CloudSun size={32} color={theme.colors.textTertiary} />}
-                title="아직 분석한 카드가 없어요"
-                description="오늘 하루를 짧게 적어보면 마음 날씨를 만들어 드려요."
-              />
+              <>
+                <EmptyState
+                  icon={<CloudSun size={32} color={theme.colors.textTertiary} />}
+                  title="아직 분석한 카드가 없어요"
+                  description="오늘 하루를 짧게 적어보면 마음 날씨를 만들어 드려요."
+                />
+                <AccountMismatchHint
+                  onPressOpenAccount={() => router.push('/(client)/(more)')}
+                  style={styles.accountHint}
+                />
+              </>
             ) : (
               cards.map((card, index) => (
                 <MindWeatherCard
@@ -632,4 +640,7 @@ const styles = StyleSheet.create({
   listSection: { marginTop: 4 },
   loadingWrap: { gap: 12 },
   bottomSpacer: { height: 32 },
+  accountHint: {
+    marginHorizontal: 0,
+  },
 });

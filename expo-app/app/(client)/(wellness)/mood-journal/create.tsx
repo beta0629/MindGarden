@@ -43,6 +43,7 @@ import {
   useMoodJournalDetail,
   useUpdateMoodJournal,
 } from '@/api/hooks/useMoodJournal';
+import { useHasActiveConsultantMapping } from '@/api/hooks/useConsultantMapping';
 import { MOOD_EMOJIS, EMOTION_TAGS, type EmotionTag } from '@/constants/moodConstants';
 
 const EMOJI_BUTTON_SIZE = 56;
@@ -129,6 +130,8 @@ export default function MoodJournalCreate() {
 
   const createMutation = useCreateMoodJournal();
   const updateMutation = useUpdateMoodJournal();
+  const consultantMapping = useHasActiveConsultantMapping();
+  const hasActiveMapping = consultantMapping.hasActiveMapping;
 
   useEffect(() => {
     if (!existing) return;
@@ -137,6 +140,12 @@ export default function MoodJournalCreate() {
     setMemo(existing.memo);
     setShareWithConsultant(existing.sharedWithConsultant);
   }, [existing]);
+
+  useEffect(() => {
+    if (!hasActiveMapping && shareWithConsultant) {
+      setShareWithConsultant(false);
+    }
+  }, [hasActiveMapping, shareWithConsultant]);
 
   const hapticFeedback = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -163,7 +172,7 @@ export default function MoodJournalCreate() {
         moodValue: selectedMood,
         tags: selectedTags,
         memo,
-        sharedWithConsultant: shareWithConsultant,
+        sharedWithConsultant: hasActiveMapping ? shareWithConsultant : false,
       };
       if (isEdit) {
         await updateMutation.mutateAsync(payload);
@@ -380,7 +389,7 @@ export default function MoodJournalCreate() {
                 style={{
                   fontFamily: theme.fontFamily.semibold,
                   fontSize: theme.fontSize.sm,
-                  color: theme.colors.textMain,
+                  color: hasActiveMapping ? theme.colors.textMain : theme.colors.textTertiary,
                 }}
               >
                 상담사에게 공유
@@ -393,18 +402,31 @@ export default function MoodJournalCreate() {
                   marginTop: 2,
                 }}
               >
-                담당 상담사가 기록을 확인할 수 있어요
+                {hasActiveMapping
+                  ? '담당 상담사가 기록을 확인할 수 있어요'
+                  : '상담사 매칭 후 이용 가능해요'}
               </Text>
             </View>
             <Switch
-              value={shareWithConsultant}
+              value={hasActiveMapping ? shareWithConsultant : false}
               onValueChange={setShareWithConsultant}
+              disabled={!hasActiveMapping}
               trackColor={{
                 false: theme.colors.gray[300],
                 true: theme.colors.primaryLight,
               }}
-              thumbColor={shareWithConsultant ? theme.colors.primary : theme.colors.surface}
-              accessibilityLabel="상담사 공유 토글"
+              thumbColor={
+                hasActiveMapping && shareWithConsultant
+                  ? theme.colors.primary
+                  : theme.colors.surface
+              }
+              accessibilityLabel={
+                hasActiveMapping
+                  ? '상담사 공유 토글'
+                  : '상담사 공유 토글 (상담사 매칭 후 이용 가능)'
+              }
+              accessibilityState={{ disabled: !hasActiveMapping }}
+              testID="mood-journal-share-toggle"
             />
           </Animated.View>
 

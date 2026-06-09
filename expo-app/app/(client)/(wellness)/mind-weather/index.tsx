@@ -12,7 +12,7 @@
  * @since 2026-05-13
  */
 import { useCallback, useMemo, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -42,6 +42,7 @@ import {
   useShareMindWeatherCard,
   useUnshareMindWeatherCard,
 } from '@/api/hooks/useMindWeather';
+import { useHasActiveConsultantMapping } from '@/api/hooks/useConsultantMapping';
 import {
   CLIENT_MIND_WEATHER_LIST_API_FAILED,
   CLIENT_MIND_WEATHER_SETUP_NO_TENANT,
@@ -73,6 +74,9 @@ export default function ClientMindWeatherIndex() {
   const [shareTargetId, setShareTargetId] = useState<string | null>(null);
 
   const list = useMindWeatherList();
+  const consultantMapping = useHasActiveConsultantMapping();
+  const hasActiveMapping = consultantMapping.hasActiveMapping;
+  const isShareDisabled = !hasActiveMapping;
   const analyzeMutation = useAnalyzeMindWeather();
   const showListSkeleton =
     list.blockReason === 'auth_loading' ||
@@ -142,6 +146,30 @@ export default function ClientMindWeatherIndex() {
   const shareTargetCard = useMemo(
     () => cards.find((c) => c.id === shareTargetId) ?? null,
     [cards, shareTargetId],
+  );
+
+  const handlePressShareCard = useCallback(
+    (cardId: string) => {
+      if (isShareDisabled) {
+        if (Platform.OS !== 'web') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+        Alert.alert(
+          '상담사 매칭 필요',
+          '상담사 매칭이 완료된 뒤 공유할 수 있어요.',
+          [
+            { text: '닫기', style: 'cancel' },
+            {
+              text: '상담 신청하러 가기',
+              onPress: () => router.push('/(client)/(booking)'),
+            },
+          ],
+        );
+        return;
+      }
+      setShareTargetId(cardId);
+    },
+    [isShareDisabled],
   );
 
   const handleSubmitShare = async (consent: { summary: boolean; original: boolean }) => {
@@ -512,8 +540,9 @@ export default function ClientMindWeatherIndex() {
                   key={card.id}
                   card={card}
                   index={index}
-                  onPressShare={() => setShareTargetId(card.id)}
+                  onPressShare={() => handlePressShareCard(card.id)}
                   onPressUnshare={() => handleRequestUnshare(card)}
+                  isShareDisabled={isShareDisabled}
                   busy={
                     (shareMutation.isPending && shareTargetId === card.id) ||
                     (unshareMutation.isPending && unshareMutation.variables === card.id)

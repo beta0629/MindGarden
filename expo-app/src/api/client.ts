@@ -23,6 +23,7 @@ import {
 import { useAuthStore } from '../stores/useAuthStore';
 import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
+import { buildApiClientError } from './apiClientError';
 import { AUTH_API } from './endpoints';
 
 const API_TIMEOUT = 30000;
@@ -134,10 +135,7 @@ apiClient.interceptors.response.use(
     };
 
     if (error.response?.status === 401 && shouldSkipTokenRefreshOn401(originalRequest)) {
-      const status = 401;
-      const message =
-        (error.response?.data as { message?: string })?.message ?? getErrorMessage(status);
-      return Promise.reject({ status, message, originalError: error });
+      return Promise.reject(buildApiClientError(401, error.response?.data, error));
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -203,27 +201,9 @@ apiClient.interceptors.response.use(
     }
 
     const status = error.response?.status ?? 0;
-    const message =
-      (error.response?.data as { message?: string })?.message ?? getErrorMessage(status);
-
-    return Promise.reject({ status, message, originalError: error });
+    return Promise.reject(buildApiClientError(status, error.response?.data, error));
   },
 );
-
-function getErrorMessage(status: number): string {
-  switch (status) {
-    case 401:
-      return '인증이 필요합니다.';
-    case 403:
-      return '접근 권한이 없습니다.';
-    case 404:
-      return '요청한 리소스를 찾을 수 없습니다.';
-    case 500:
-      return '서버 오류가 발생했습니다.';
-    default:
-      return '네트워크 연결을 확인해주세요.';
-  }
-}
 
 export const apiGet = async <T = unknown>(
   endpoint: string,

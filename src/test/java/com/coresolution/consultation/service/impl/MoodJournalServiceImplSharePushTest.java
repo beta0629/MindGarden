@@ -77,6 +77,7 @@ class MoodJournalServiceImplSharePushTest {
         when(moodJournalEntryRepository.findByTenantClientAndDate(TENANT, 10L, day))
             .thenReturn(Optional.of(entity));
         when(userRepository.findByTenantIdAndId(TENANT, 10L)).thenReturn(Optional.of(client));
+        when(consultantClientShareSupport.hasShareableMapping(TENANT, client)).thenReturn(true);
         when(consultantClientShareSupport.resolveTargetConsultant(TENANT, client, null))
             .thenReturn(consultant);
         when(consultantClientShareSupport.resolveClientDisplayName(client)).thenReturn("김내담");

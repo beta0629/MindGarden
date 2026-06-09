@@ -16,8 +16,17 @@ spring:
     restart:
       enabled: false
   autoconfigure:
+    # CI/local mvn test 에서 외부 의존성(Redis, Mail) 로 인한 ApplicationContext 부팅 hang 차단.
+    # - DevToolsDataSourceAutoConfiguration: DataSource 단일 후보 깨짐 방지(JpaConfiguration 빈 미등록)
+    # - RedisAutoConfiguration / RedisRepositoriesAutoConfiguration: localhost:6379 미기동 환경에서
+    #   Lettuce ConnectionFactory eager init 시 수십초 대기 → 다중 SpringBootTest fork 누적으로 CI hang
+    # - MailSenderAutoConfiguration: SMTP host 미설정 환경에서 JavaMailSenderImpl 빈 등록 후 트랜스포트
+    #   호출 시 ConnectException → 단위 부팅 시간 증가. test 에서는 email.block-all-outbound 로 충분.
     exclude:
       - org.springframework.boot.devtools.autoconfigure.DevToolsDataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
   datasource:
     # 빈 문자열로 설정된 SPRING_DATASOURCE_URL 이 기본값을 덮어써 풀 미생성·JPA 비활성화되는 것을 피함.
     # MySQL 등으로 덮어쓸 때는 IDE/CLI에서 --spring.datasource.url=... 만 사용 (빈 env 금지).

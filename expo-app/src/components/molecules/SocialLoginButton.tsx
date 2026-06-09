@@ -28,12 +28,13 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors as themeColors } from '@/theme/tokens';
-import { fontFamily, fontSize } from '@/theme/typography';
+import { textStyles } from '@/theme/typography';
 import {
   BUTTON_BORDER_RADIUS,
   BUTTON_BRAND_ICON_SIZE,
   BUTTON_HEIGHT,
-  BUTTON_ICON_TEXT_GAP,
+  BUTTON_HORIZONTAL_PADDING,
+  BUTTON_LOGO_TEXT_GAP,
   BUTTON_PRESSED_OPACITY_REDUCED,
   BUTTON_PRESSED_SCALE,
   BUTTON_PRESS_IN_DURATION_MS,
@@ -201,15 +202,19 @@ export function SocialLoginButton({
           <ActivityIndicator color={buttonForegroundColor} />
         ) : (
           <View style={styles.contentRow}>
-            <BrandSymbol variant={variant} color={buttonForegroundColor} />
-            <Text
-              maxFontSizeMultiplier={SOCIAL_LOGIN_MAX_FONT_SIZE_MULTIPLIER}
-              style={[styles.label, { color: buttonForegroundColor }]}
-              numberOfLines={1}
-              allowFontScaling
-            >
-              {config.label}
-            </Text>
+            <View style={styles.logoSection}>
+              <BrandSymbol variant={variant} color={buttonForegroundColor} />
+            </View>
+            <View style={styles.textSection}>
+              <Text
+                maxFontSizeMultiplier={SOCIAL_LOGIN_MAX_FONT_SIZE_MULTIPLIER}
+                style={[styles.label, { color: buttonForegroundColor }]}
+                numberOfLines={1}
+                allowFontScaling
+              >
+                {config.label}
+              </Text>
+            </View>
           </View>
         )}
       </Pressable>
@@ -236,28 +241,46 @@ function BrandSymbol({ variant, color }: { variant: SocialLoginVariant; color: s
   return <AppleBrandIcon size={BUTTON_BRAND_ICON_SIZE} color={color} />;
 }
 
+/**
+ * 분할 정렬 + 좌우 패딩 + 웹 정합 로고 사이즈 (사용자 결정 2026-06-10 §AA / §AQ-1 / §AU).
+ *
+ *  - 버튼 좌우 내부 패딩 `BUTTON_HORIZONTAL_PADDING`(20dp) — 로고가 끝에 붙지 않도록 안쪽에 배치.
+ *  - 로고 영역: 폭 `BUTTON_BRAND_ICON_SIZE`(18dp, 웹 정합) — 좌측 정렬.
+ *  - 로고↔텍스트 간격 `BUTTON_LOGO_TEXT_GAP`(12dp).
+ *  - 텍스트 영역: `flex:1`, 좌측 정렬, 우측 `paddingRight = BUTTON_BRAND_ICON_SIZE + BUTTON_LOGO_TEXT_GAP`
+ *    로 시각 중심 정렬 (좌·우 미러링) — 카카오·네이버 텍스트가 동일 X 위치에서 시작.
+ *
+ * 폰트는 `textStyles.button` 토큰 (fontSize 16 / semibold / lineHeight 22 / letterSpacing -0.2).
+ */
 const styles = StyleSheet.create({
   shadowWrap: {
     borderRadius: BUTTON_BORDER_RADIUS,
   },
   pressable: {
     borderRadius: BUTTON_BORDER_RADIUS,
-    minHeight: BUTTON_HEIGHT,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: BUTTON_HEIGHT,
+    paddingHorizontal: BUTTON_HORIZONTAL_PADDING,
     overflow: 'hidden',
   },
   contentRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  logoSection: {
+    width: BUTTON_BRAND_ICON_SIZE,
+    height: BUTTON_BRAND_ICON_SIZE,
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: BUTTON_ICON_TEXT_GAP,
+  },
+  textSection: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingLeft: BUTTON_LOGO_TEXT_GAP,
+    paddingRight: BUTTON_BRAND_ICON_SIZE + BUTTON_LOGO_TEXT_GAP,
   },
   label: {
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.base,
-    textAlign: 'center',
+    ...textStyles.button,
+    textAlign: 'left',
   },
 });

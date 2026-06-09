@@ -131,13 +131,24 @@ export const BUTTON_HEIGHT = 56;
 export const BUTTON_BORDER_RADIUS = 12;
 /** 버튼 그룹 간격 */
 export const BUTTON_GAP = 12;
-/** 브랜드 심볼 ↔ 라벨 텍스트 간격 (스펙 §G / 추가 자산 §C·§H) */
-export const BUTTON_ICON_TEXT_GAP = 12;
 /**
- * 브랜드 심볼 외곽 박스 크기 (스펙 §H: 24×24dp — 모든 provider 통일).
- * 박스 내부 시각 무게는 각 BrandIcon 의 `viewBox` 패딩으로 보정한다.
+ * 브랜드 심볼 크기 (사용자 결정 2026-06-10 §AU — 웹 정합 18dp).
+ * 웹 `frontend/src/components/auth/UnifiedLogin.js` 의 SNS SVG (`width="18" height="18"`) 와
+ * 정확히 동일 사이즈. Apple 네이티브 버튼의 시각 무게에 맞춤. 카카오톡 워드마크는
+ * 단순 말풍선(`KakaoBrandIcon`)으로 교체해 18dp 에서 인지성 유지.
  */
-export const BUTTON_BRAND_ICON_SIZE = 24;
+export const BUTTON_BRAND_ICON_SIZE = 18;
+/**
+ * SocialLoginButton 좌우 내부 패딩 (사용자 결정 2026-06-10 §AQ-1).
+ * 로고가 버튼 좌측 끝에 너무 가까이 붙는 문제 해소. 좌측 20dp 안쪽에 로고 시작.
+ */
+export const BUTTON_HORIZONTAL_PADDING = 20;
+/**
+ * 로고↔텍스트 간격 (사용자 결정 2026-06-10 §AA 분할 정렬용).
+ * 텍스트는 `paddingLeft: BUTTON_LOGO_TEXT_GAP` 으로 로고와 간격을 두고 시작하며,
+ * 우측은 `paddingRight: BUTTON_BRAND_ICON_SIZE + BUTTON_LOGO_TEXT_GAP` 로 시각 중심 정렬.
+ */
+export const BUTTON_LOGO_TEXT_GAP = 12;
 
 /** 콘텐츠 좌우 padding — 모바일 */
 export const CONTENT_HORIZONTAL_PADDING_MOBILE = 24;

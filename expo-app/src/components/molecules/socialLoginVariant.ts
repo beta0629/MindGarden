@@ -25,23 +25,32 @@ export interface SocialLoginVariantConfig {
   readonly foregroundColor: string;
 }
 
-/** 카카오/네이버/Apple 별 라벨·a11y·브랜드 색 — 스펙 §10.5 카피 고정. */
+/**
+ * 카카오/네이버/Apple 별 라벨·a11y·브랜드 색 — 웹 frontend (`UnifiedLogin.js` + `auth.json`) 카피와
+ * 동일하게 통일 (사용자 결정 2026-06-10).
+ *
+ *  - 카카오: 웹 i18n key `auth:unifiedLogin.socialLogin.kakao` → "카카오 로그인"
+ *  - 네이버: 웹 i18n key `auth:unifiedLogin.socialLogin.naver` → "네이버 로그인"
+ *  - Apple: 웹 i18n key `auth:unifiedLogin.socialLogin.apple` → "Apple로 계속하기"
+ *    (Apple 네이티브 버튼은 `AppleAuthenticationButtonType.CONTINUE` 사용 시
+ *     디바이스 locale 한국어에서 동일 카피 자동 렌더 — 본 fallback 변형은 SIWA 미지원 시만 노출)
+ */
 const SOCIAL_LOGIN_VARIANT_MAP: Record<SocialLoginVariant, SocialLoginVariantConfig> = {
   kakao: {
-    label: '카카오로 시작하기',
-    accessibilityLabel: '카카오로 시작하기',
+    label: '카카오 로그인',
+    accessibilityLabel: '카카오 로그인',
     backgroundColor: OAUTH_KAKAO_BACKGROUND,
     foregroundColor: OAUTH_KAKAO_FOREGROUND,
   },
   naver: {
-    label: '네이버로 시작하기',
-    accessibilityLabel: '네이버로 시작하기',
+    label: '네이버 로그인',
+    accessibilityLabel: '네이버 로그인',
     backgroundColor: OAUTH_NAVER_BACKGROUND,
     foregroundColor: OAUTH_NAVER_FOREGROUND,
   },
   apple: {
-    label: 'Sign in with Apple',
-    accessibilityLabel: 'Sign in with Apple',
+    label: 'Apple로 계속하기',
+    accessibilityLabel: 'Apple로 계속하기',
     backgroundColor: OAUTH_APPLE_BACKGROUND,
     foregroundColor: OAUTH_APPLE_FOREGROUND,
   },

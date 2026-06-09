@@ -1,5 +1,8 @@
 /**
- * SNS 로그인 버튼 stagger 영역 + Divider + 이메일 토글 + 자격증명 폼.
+ * SNS 로그인 버튼 stagger 영역 + 구분선 + 인증 보조 링크.
+ *
+ * 사용자 결정 2026-06-10 §AQ-3: 이메일/비밀번호 토글 + 자격증명 폼은 본 화면에서 완전 제거.
+ * (이메일 로그인이 필요한 사용자는 하단 "회원가입" 링크에서 웹으로 이동해 진행)
  *
  * 본 컴포넌트는 비즈니스 로직(`handleKakaoLogin` 등)을 직접 호출하지 않고 props 로 받는다.
  * UI 분기·등장 모션·pointerEvents 가드만 담당한다.
@@ -9,25 +12,25 @@
  * @author MindGarden
  * @since 2026-06-10
  */
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
+  Linking,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
-  type GestureResponderEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Haptics from 'expo-haptics';
-import { ChevronDown, ChevronUp, Lock, Mail } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { colors as themeColors } from '@/theme/tokens';
-import { fontFamily, fontSize } from '@/theme/typography';
+import { fontFamily, fontSize, textStyles } from '@/theme/typography';
+import { getWebBaseUrl } from '@/config/webBaseUrl';
 import { SocialLoginButton } from '@/components/molecules/SocialLoginButton';
 import {
   BUTTON_BORDER_RADIUS,
@@ -41,11 +44,20 @@ import {
 } from './loginAnimationConstants';
 
 const LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER = 1.6;
-const DIVIDER_LABEL = '또는';
-const TOGGLE_EXPAND_LABEL = '다른 방법으로 로그인';
-const EMAIL_PLACEHOLDER = '이메일 또는 휴대폰 번호';
-const PASSWORD_PLACEHOLDER = '비밀번호';
-const CREDENTIAL_SUBMIT_LABEL = '로그인';
+/**
+ * 구분선·링크 라벨 — 웹 frontend (`UnifiedLogin.js` + `auth.json`) 카피와 통일
+ * (사용자 결정 2026-06-10 §AE / §AJ).
+ */
+const DIVIDER_LABEL = '또는 다음으로 로그인';
+const SIGNUP_LINK_LABEL = '회원가입';
+const FORGOT_PASSWORD_LINK_LABEL = '비밀번호 찾기';
+/**
+ * 웹 frontend 경로 — `UnifiedLogin.js` 의 `/register`, `/forgot-password` 와 동일.
+ * expo-app 에는 일반 회원가입/비밀번호 찾기 화면이 없으므로 외부 브라우저로 웹 페이지를 연다.
+ */
+const WEB_REGISTER_PATH = '/register';
+const WEB_FORGOT_PASSWORD_PATH = '/forgot-password';
+const EXTERNAL_LINK_OPEN_ERROR = '웹 페이지를 열 수 없습니다. 잠시 후 다시 시도해주세요.';
 
 /** Apple 네이티브 버튼 css cornerRadius — 다른 버튼과 동일한 12px (스펙 §10.5) */
 const APPLE_NATIVE_BUTTON_CORNER_RADIUS = BUTTON_BORDER_RADIUS;
@@ -61,22 +73,13 @@ export interface LoginButtonsSectionProps {
   /** 일반 로딩 상태 — 전체 버튼 disabled */
   readonly isLoading: boolean;
   /** 현재 로딩 중인 provider — 해당 버튼만 ActivityIndicator */
-  readonly loadingProvider: 'kakao' | 'naver' | 'apple' | 'credentials' | null;
+  readonly loadingProvider: 'kakao' | 'naver' | 'apple' | null;
   /** 에러 메시지 (null 이면 비표시) */
   readonly errorMessage: string | null;
 
   readonly onKakaoPress: () => void;
   readonly onNaverPress: () => void;
   readonly onApplePress: () => void;
-
-  /** 이메일/PW 폼 제어 */
-  readonly showCredentials: boolean;
-  readonly onToggleCredentials: () => void;
-  readonly email: string;
-  readonly onEmailChange: (value: string) => void;
-  readonly password: string;
-  readonly onPasswordChange: (value: string) => void;
-  readonly onSubmitCredentials: () => void;
 
   readonly style?: StyleProp<ViewStyle>;
   readonly testID?: string;
@@ -94,13 +97,6 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
     onKakaoPress,
     onNaverPress,
     onApplePress,
-    showCredentials,
-    onToggleCredentials,
-    email,
-    onEmailChange,
-    password,
-    onPasswordChange,
-    onSubmitCredentials,
     style,
     testID,
   } = props;
@@ -174,16 +170,45 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
     showAppleButton,
   ]);
 
-  const handleTogglePress = (_e: GestureResponderEvent) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
+  const openExternalAuthLink = useCallback((path: string) => {
+    const url = `${getWebBaseUrl()}${path}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert(EXTERNAL_LINK_OPEN_ERROR);
+    });
+  }, []);
+
+  const handleSignupPress = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {
       /* noop */
     });
-    onToggleCredentials();
-  };
+    openExternalAuthLink(WEB_REGISTER_PATH);
+  }, [openExternalAuthLink]);
+
+  const handleForgotPasswordPress = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {
+      /* noop */
+    });
+    openExternalAuthLink(WEB_FORGOT_PASSWORD_PATH);
+  }, [openExternalAuthLink]);
 
   return (
     <View style={[styles.root, style]} testID={testID ?? 'login-buttons-section'}>
       {unavailableBanner}
+
+      {/*
+        구분선 — 웹 frontend (`UnifiedLogin.js` 의 `.mg-v2-divider`) 와 동일하게 SNS 버튼 그룹 위에 배치.
+        expo-app 에는 자체 이메일 로그인 폼이 없으므로 사실상 SNS 영역 헤더 역할.
+      */}
+      <View style={styles.dividerRow}>
+        <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
+        <Text
+          maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
+          style={[styles.dividerText, { color: theme.colors.textTertiary }]}
+        >
+          {DIVIDER_LABEL}
+        </Text>
+        <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
+      </View>
 
       <Animated.View
         style={{
@@ -236,10 +261,14 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
           >
             {/*
               Apple 네이티브 버튼 — `AppleAuthenticationButton` 은 Apple HIG 자산·다국어·다크모드를
-              자동 적용한다. SocialLoginButton 의 `variant="apple"` 는 SIWA 가 비활성/미지원일 때만 사용.
+              자동 적용한다. `Type.CONTINUE` 사용 시 디바이스 locale 한국어에서 "Apple로 계속하기"
+              자동 렌더 (영문 locale 시 "Continue with Apple"). 외부에서 locale·카피·폰트·내부 정렬을
+              조정할 수 없으므로 height·width·cornerRadius 만 다른 버튼과 통일한다 (SDK 한계 — §AQ-2).
+              한국어 카피를 강제로 보고 싶으면 시뮬레이터/디바이스 시스템 언어를 한국어로 설정해야 한다.
+              SocialLoginButton 의 `variant="apple"` 는 SIWA 가 비활성/미지원일 때만 사용.
             */}
             <AppleAuthentication.AppleAuthenticationButton
-              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
               buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
               cornerRadius={APPLE_NATIVE_BUTTON_CORNER_RADIUS}
               style={styles.appleButton}
@@ -279,90 +308,47 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
         </View>
       )}
 
-      <View style={styles.dividerRow}>
-        <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
-        <Text
-          maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
-          style={[styles.dividerText, { color: theme.colors.textTertiary }]}
+      {/*
+        하단 인증 링크 — 웹 frontend (`UnifiedLogin.js` 의 `.mg-v2-login-links`) 와 동일 구조.
+        expo-app 에 일반 회원가입/비밀번호 찾기 화면이 없으므로 `Linking.openURL` 로
+        웹 `${webBaseUrl}/register`, `${webBaseUrl}/forgot-password` 를 외부 브라우저에서 연다.
+        토글/자격증명 폼이 제거되어(§AQ-3) 본 영역이 첫 진입 시 자연스럽게 보인다(§AQ-4).
+      */}
+      <View style={styles.authLinksRow} testID="login-auth-links">
+        <Pressable
+          onPress={handleSignupPress}
+          accessibilityLabel={SIGNUP_LINK_LABEL}
+          accessibilityRole="link"
+          hitSlop={8}
+          testID="login-link-signup"
         >
-          {DIVIDER_LABEL}
-        </Text>
-        <View style={[styles.dividerLine, { backgroundColor: theme.colors.divider }]} />
-      </View>
-
-      <Pressable
-        style={[styles.toggleButton, { borderColor: theme.colors.border }]}
-        onPress={handleTogglePress}
-        accessibilityLabel={TOGGLE_EXPAND_LABEL}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: showCredentials }}
-        testID="login-toggle-credentials"
-      >
-        <Text
-          maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
-          style={[styles.toggleButtonText, { color: theme.colors.textSecondary }]}
-        >
-          {TOGGLE_EXPAND_LABEL}
-        </Text>
-        {showCredentials ? (
-          <ChevronUp size={18} color={theme.colors.textTertiary} />
-        ) : (
-          <ChevronDown size={18} color={theme.colors.textTertiary} />
-        )}
-      </Pressable>
-
-      {showCredentials && (
-        <View style={styles.credentialForm}>
-          <View style={[styles.inputContainer, { borderColor: theme.colors.border }]}>
-            <Mail size={18} color={theme.colors.textTertiary} />
-            <TextInput
-              style={[styles.input, { color: theme.colors.textMain }]}
-              placeholder={EMAIL_PLACEHOLDER}
-              placeholderTextColor={theme.colors.textTertiary}
-              value={email}
-              onChangeText={onEmailChange}
-              autoCapitalize="none"
-              keyboardType="default"
-              accessibilityLabel={EMAIL_PLACEHOLDER}
-              maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
-            />
-          </View>
-          <View style={[styles.inputContainer, { borderColor: theme.colors.border }]}>
-            <Lock size={18} color={theme.colors.textTertiary} />
-            <TextInput
-              style={[styles.input, { color: theme.colors.textMain }]}
-              placeholder={PASSWORD_PLACEHOLDER}
-              placeholderTextColor={theme.colors.textTertiary}
-              value={password}
-              onChangeText={onPasswordChange}
-              secureTextEntry
-              textContentType="password"
-              returnKeyType="go"
-              onSubmitEditing={onSubmitCredentials}
-              accessibilityLabel={PASSWORD_PLACEHOLDER}
-              maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
-            />
-          </View>
-          <Pressable
-            style={[styles.credentialLoginButton, { backgroundColor: theme.colors.primary }]}
-            onPress={onSubmitCredentials}
-            disabled={isLoading}
-            accessibilityLabel={CREDENTIAL_SUBMIT_LABEL}
-            accessibilityRole="button"
+          <Text
+            maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
+            style={[styles.authLinkText, { color: theme.colors.textSecondary }]}
           >
-            {loadingProvider === 'credentials' ? (
-              <ActivityIndicator color={theme.colors.textOnPrimary} />
-            ) : (
-              <Text
-                maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
-                style={[styles.credentialLoginButtonText, { color: theme.colors.textOnPrimary }]}
-              >
-                {CREDENTIAL_SUBMIT_LABEL}
-              </Text>
-            )}
-          </Pressable>
-        </View>
-      )}
+            {SIGNUP_LINK_LABEL}
+          </Text>
+        </Pressable>
+        <View
+          style={[styles.authLinkSeparator, { backgroundColor: theme.colors.divider }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+        <Pressable
+          onPress={handleForgotPasswordPress}
+          accessibilityLabel={FORGOT_PASSWORD_LINK_LABEL}
+          accessibilityRole="link"
+          hitSlop={8}
+          testID="login-link-forgot-password"
+        >
+          <Text
+            maxFontSizeMultiplier={LOGIN_BUTTONS_MAX_FONT_SIZE_MULTIPLIER}
+            style={[styles.authLinkText, { color: theme.colors.textSecondary }]}
+          >
+            {FORGOT_PASSWORD_LINK_LABEL}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -392,57 +378,28 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 12,
+    marginBottom: 16,
   },
   dividerLine: {
     flex: 1,
     height: 1,
   },
   dividerText: {
+    ...textStyles.dividerCaption,
     marginHorizontal: 12,
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.xs,
   },
-  toggleButton: {
+  authLinksRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderRadius: BUTTON_BORDER_RADIUS,
-    paddingVertical: 14,
-    gap: 6,
+    gap: 16,
+    marginTop: 20,
   },
-  toggleButtonText: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.sm,
+  authLinkText: {
+    ...textStyles.authLink,
   },
-  credentialForm: {
-    gap: 12,
-    paddingTop: 12,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: BUTTON_BORDER_RADIUS,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
-  },
-  input: {
-    flex: 1,
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.base,
-  },
-  credentialLoginButton: {
-    borderRadius: BUTTON_BORDER_RADIUS,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  credentialLoginButtonText: {
-    fontFamily: fontFamily.semibold,
-    fontSize: fontSize.base,
+  authLinkSeparator: {
+    width: 1,
+    height: 12,
   },
 });

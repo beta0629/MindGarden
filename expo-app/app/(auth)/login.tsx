@@ -16,16 +16,7 @@
  * @since 2026-05-12
  */
 import { useMemo, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -122,13 +113,8 @@ export default function MindGardenLoginPage() {
   );
 
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState<
-    'kakao' | 'naver' | 'apple' | 'credentials' | null
-  >(null);
+  const [loadingProvider, setLoadingProvider] = useState<'kakao' | 'naver' | 'apple' | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showCredentials, setShowCredentials] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [duplicateLoginPrompt, setDuplicateLoginPrompt] = useState<DuplicateLoginPrompt | null>(
     null,
   );
@@ -315,39 +301,6 @@ export default function MindGardenLoginPage() {
     }
   };
 
-  const handleCredentialLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage('이메일과 비밀번호를 입력해주세요.');
-      return;
-    }
-
-    setIsLoading(true);
-    setLoadingProvider('credentials');
-    setErrorMessage(null);
-
-    try {
-      const result = await AuthService.loginWithCredentials(email.trim(), password);
-      if (result.kind === 'authenticated') {
-        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
-        await handleLoginSuccess();
-      } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
-        setDuplicateLoginPrompt({
-          message: result.message,
-          retryContext: result.retryContext,
-        });
-      } else {
-        setErrorMessage(result.message ?? '로그인에 실패했습니다.');
-        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    } catch (e) {
-      console.error('[Login] credential', e);
-      setErrorMessage('로그인 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-      setLoadingProvider(null);
-    }
-  };
-
   const handleConfirmDuplicateLogin = async () => {
     if (!duplicateLoginPrompt) {
       return;
@@ -423,64 +376,53 @@ export default function MindGardenLoginPage() {
     <View style={styles.root}>
       <AnimatedPastelBackground config={config} />
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <KeyboardAvoidingView
+        <ScrollView
           style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: contentHorizontalPadding },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <ScrollView
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingHorizontal: contentHorizontalPadding },
+          <View
+            style={[
+              styles.contentInner,
+              isTablet ? { maxWidth: CONTENT_MAX_WIDTH_TABLET, alignSelf: 'center' } : null,
             ]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
           >
-            <View
-              style={[
-                styles.contentInner,
-                isTablet ? { maxWidth: CONTENT_MAX_WIDTH_TABLET, alignSelf: 'center' } : null,
-              ]}
+            <LogoSection config={config} />
+
+            <View style={{ height: HEADER_TO_BUTTONS_GAP }} />
+
+            <LoginButtonsSection
+              config={config}
+              showAppleButton={appleAvailable}
+              socialLoginUnavailable={inExpoGo}
+              unavailableBanner={expoGoBanner}
+              isLoading={isLoading}
+              loadingProvider={loadingProvider}
+              errorMessage={errorMessage}
+              onKakaoPress={handleKakaoLogin}
+              onNaverPress={handleNaverLogin}
+              onApplePress={handleAppleLogin}
+            />
+
+            <Pressable
+              style={styles.changeTenantButton}
+              onPress={() => router.replace('/(auth)/tenant-select' as Href)}
+              accessibilityLabel={CHANGE_TENANT_LABEL}
+              accessibilityRole="button"
             >
-              <LogoSection config={config} />
-
-              <View style={{ height: HEADER_TO_BUTTONS_GAP }} />
-
-              <LoginButtonsSection
-                config={config}
-                showAppleButton={appleAvailable}
-                socialLoginUnavailable={inExpoGo}
-                unavailableBanner={expoGoBanner}
-                isLoading={isLoading}
-                loadingProvider={loadingProvider}
-                errorMessage={errorMessage}
-                onKakaoPress={handleKakaoLogin}
-                onNaverPress={handleNaverLogin}
-                onApplePress={handleAppleLogin}
-                showCredentials={showCredentials}
-                onToggleCredentials={() => setShowCredentials((v) => !v)}
-                email={email}
-                onEmailChange={setEmail}
-                password={password}
-                onPasswordChange={setPassword}
-                onSubmitCredentials={handleCredentialLogin}
-              />
-
-              <Pressable
-                style={styles.changeTenantButton}
-                onPress={() => router.replace('/(auth)/tenant-select' as Href)}
-                accessibilityLabel={CHANGE_TENANT_LABEL}
-                accessibilityRole="button"
+              <Text
+                maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+                style={[styles.changeTenantText, { color: theme.colors.textTertiary }]}
               >
-                <Text
-                  maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-                  style={[styles.changeTenantText, { color: theme.colors.textTertiary }]}
-                >
-                  {CHANGE_TENANT_LABEL}
-                </Text>
-              </Pressable>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+                {CHANGE_TENANT_LABEL}
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
       </SafeAreaView>
 
       <UnifiedModal

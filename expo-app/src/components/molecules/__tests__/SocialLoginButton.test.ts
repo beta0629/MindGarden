@@ -22,27 +22,27 @@ import {
   type SocialLoginVariant,
 } from '@/components/molecules/socialLoginVariant';
 
-describe('getSocialLoginVariantConfig — 카피·a11y·브랜드 색', () => {
-  test('kakao: 카피 "카카오로 시작하기", 노란 배경, 어두운 텍스트 (스펙 §10.5 / §1.2)', () => {
+describe('getSocialLoginVariantConfig — 카피·a11y·브랜드 색 (웹 톤 정합)', () => {
+  test('kakao: 카피 "카카오 로그인" (웹 i18n key auth:unifiedLogin.socialLogin.kakao), 노란 배경, 어두운 텍스트', () => {
     const cfg = getSocialLoginVariantConfig('kakao');
-    expect(cfg.label).toBe('카카오로 시작하기');
-    expect(cfg.accessibilityLabel).toBe('카카오로 시작하기');
+    expect(cfg.label).toBe('카카오 로그인');
+    expect(cfg.accessibilityLabel).toBe('카카오 로그인');
     expect(cfg.backgroundColor).toBe(OAUTH_KAKAO_BACKGROUND);
     expect(cfg.foregroundColor).toBe(OAUTH_KAKAO_FOREGROUND);
   });
 
-  test('naver: 카피 "네이버로 시작하기", 녹색 배경, 흰 텍스트', () => {
+  test('naver: 카피 "네이버 로그인" (웹 i18n key auth:unifiedLogin.socialLogin.naver), 녹색 배경, 흰 텍스트', () => {
     const cfg = getSocialLoginVariantConfig('naver');
-    expect(cfg.label).toBe('네이버로 시작하기');
-    expect(cfg.accessibilityLabel).toBe('네이버로 시작하기');
+    expect(cfg.label).toBe('네이버 로그인');
+    expect(cfg.accessibilityLabel).toBe('네이버 로그인');
     expect(cfg.backgroundColor).toBe(OAUTH_NAVER_BACKGROUND);
     expect(cfg.foregroundColor).toBe(OAUTH_NAVER_FOREGROUND);
   });
 
-  test('apple: 영문 고정 카피 "Sign in with Apple", 검정 배경, 흰 텍스트 (Apple HIG)', () => {
+  test('apple: 카피 "Apple로 계속하기" (웹 i18n key auth:unifiedLogin.socialLogin.apple), 검정 배경, 흰 텍스트', () => {
     const cfg = getSocialLoginVariantConfig('apple');
-    expect(cfg.label).toBe('Sign in with Apple');
-    expect(cfg.accessibilityLabel).toBe('Sign in with Apple');
+    expect(cfg.label).toBe('Apple로 계속하기');
+    expect(cfg.accessibilityLabel).toBe('Apple로 계속하기');
     expect(cfg.backgroundColor).toBe(OAUTH_APPLE_BACKGROUND);
     expect(cfg.foregroundColor).toBe(OAUTH_APPLE_FOREGROUND);
   });

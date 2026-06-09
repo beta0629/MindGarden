@@ -7,6 +7,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import SocialSignupModal from './SocialSignupModal';
 import AccountIntegrationModal from './AccountIntegrationModal';
+import OAuthPhoneVerificationModal from './OAuthPhoneVerificationModal';
 import TenantSelection from './TenantSelection';
 import { toDisplayString } from '../../utils/safeDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -56,6 +57,9 @@ const OAuth2Callback = () => {
   const [showTenantSelection, setShowTenantSelection] = useState(false);
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [socialUserData, setSocialUserData] = useState(null);
+  // ⛳ Phase 3C: provider-agnostic OAuth 휴대폰 매칭(OTP) 모달 — 신규 분기 (회피 라인 무수정)
+  const [showOAuthPhoneVerificationModal, setShowOAuthPhoneVerificationModal] = useState(false);
+  const [oauthPhoneVerificationPayload, setOAuthPhoneVerificationPayload] = useState(null);
 
   const handlePhoneAccountSelectionConfirm = async() => {
     if (!phoneSelectionToken || !phoneSelectedUserId || !phoneSelectionTenantId) {
@@ -176,6 +180,30 @@ const OAuth2Callback = () => {
           setError('OAuth2 제공자 정보를 찾을 수 없습니다.');
           notificationManager.show('OAuth2 제공자 정보를 찾을 수 없습니다.', 'error');
           setTimeout(() => navigate('/login'), 3000);
+          return;
+        }
+
+        // ⛳ Phase 3C: provider-agnostic OAuth 휴대폰 매칭(OTP) 분기 (회피 라인 무수정)
+        // BE 콜백이 requiresOAuthPhoneVerification=true 를 내려주면 신규 모달로 분기한다.
+        // (Apple 흐름은 BE 가 hook 분기를 명시적으로 차단 — 본 분기 진입 없음)
+        const requiresOAuthPhoneVerificationFlag = searchParams.get(
+          'requiresOAuthPhoneVerification'
+        );
+        const oauthPhoneVerificationToken = searchParams.get('phoneVerificationToken');
+        if (
+          requiresOAuthPhoneVerificationFlag === 'true' &&
+          oauthPhoneVerificationToken
+        ) {
+          console.log('📲 OAuth 휴대폰 매칭 필요 — OAuthPhoneVerificationModal 진입');
+          setOAuthPhoneVerificationPayload({
+            provider,
+            phoneVerificationToken: oauthPhoneVerificationToken,
+            name,
+            nickname,
+            email
+          });
+          setShowOAuthPhoneVerificationModal(true);
+          setIsProcessing(false);
           return;
         }
 
@@ -598,6 +626,81 @@ const OAuth2Callback = () => {
           })}
         </div>
       </UnifiedModal>
+    );
+  }
+
+  // ⛳ Phase 3C: provider-agnostic OAuth 휴대폰 매칭(OTP) 모달 — 회피 라인 무수정
+  if (showOAuthPhoneVerificationModal && oauthPhoneVerificationPayload) {
+    return (
+      <OAuthPhoneVerificationModal
+        isOpen
+        onClose={() => {
+          setShowOAuthPhoneVerificationModal(false);
+          setOAuthPhoneVerificationPayload(null);
+          navigate('/login');
+        }}
+        socialUser={oauthPhoneVerificationPayload}
+        onVerifiedSingle={async ({
+          accessToken,
+          refreshToken,
+          matchedAccount,
+          provider: matchedProvider
+        }) => {
+          const userInfo = {
+            id: matchedAccount?.userId,
+            tenantId: matchedAccount?.tenantId,
+            role: matchedAccount?.role,
+            provider: matchedProvider
+          };
+          await testLogin(userInfo, {
+            accessToken,
+            refreshToken: refreshToken || accessToken
+          });
+          setShowOAuthPhoneVerificationModal(false);
+          setOAuthPhoneVerificationPayload(null);
+          notificationManager.show(
+            toDisplayString(
+              OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT,
+              OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT
+            ),
+            'success'
+          );
+          await redirectToDynamicDashboard(
+            { success: true, user: userInfo, currentTenantRole: null },
+            navigate
+          );
+        }}
+        onRequiresAccountSelection={({
+          phoneAccountSelectionToken,
+          provider: matchedProvider
+        }) => {
+          // 다중 매칭 → 기존 OAuth 계정 선택 라우팅 (sessionStorage 로 토큰 전달)
+          try {
+            sessionStorage.setItem(
+              'oauth_phone_selection_token',
+              phoneAccountSelectionToken
+            );
+            sessionStorage.setItem(
+              'oauth_phone_selection_provider',
+              matchedProvider
+            );
+          } catch (storageErr) {
+            console.error('sessionStorage 저장 실패:', storageErr);
+          }
+          setShowOAuthPhoneVerificationModal(false);
+          setOAuthPhoneVerificationPayload(null);
+          navigate('/oauth-account-selection');
+        }}
+        onTokenExpired={() => {
+          setShowOAuthPhoneVerificationModal(false);
+          setOAuthPhoneVerificationPayload(null);
+          notificationManager.show(
+            '인증 세션이 만료되었습니다. 다시 로그인해 주세요.',
+            'error'
+          );
+          navigate('/login');
+        }}
+      />
     );
   }
 

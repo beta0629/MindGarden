@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.OAuthPhoneVerificationContext;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -86,6 +87,7 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
     @AfterEach
     void clearTenantContext() {
         TenantContextHolder.clear();
+        OAuthPhoneVerificationContext.clear();
     }
 
     @Test
@@ -486,6 +488,116 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
         SocialUserInfo info = SocialUserInfo.builder().phone("   ").build();
         info.normalizeData();
         assertThat(info.getPhone()).isNull();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Phase 3A-2: OAuth 휴대폰 SSOT 정책 — createUserFromSocial phone 저장 분기
+    // ─────────────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("createUserFromSocial: OAuthPhoneVerificationContext 설정 시 verifiedPhone 우선 저장 "
+        + "(OAuth 응답 phone 미신뢰)")
+    void createUserFromSocial_otpContextSet_usesVerifiedPhone() {
+        OAuthPhoneVerificationContext.setVerifiedPhone("01099998888");
+
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("provider-otp-1")
+            .email("otp@user.com")
+            .name("otp-name")
+            .phone("01011112222")
+            .build();
+
+        when(encryptionUtil.safeEncrypt(any())).thenAnswer(inv -> "ENC(" + inv.getArgument(0) + ")");
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User saved = inv.getArgument(0);
+            saved.setId(9201L);
+            return saved;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Long userId = oauth2Service.createUserFromSocial(socialUserInfo);
+
+        assertThat(userId).isEqualTo(9201L);
+        verify(encryptionUtil).safeEncrypt(eq("01099998888"));
+        verify(encryptionUtil, never()).safeEncrypt(eq("01011112222"));
+    }
+
+    @Test
+    @DisplayName("createUserFromSocial: OAuthPhoneVerificationContext 미설정 + SocialUserInfo phone 있음 → "
+        + "기존 동작(OAuth 응답 phone) 보존 (Apple legacy 호환)")
+    void createUserFromSocial_noOtpContext_fallsBackToSocialPhone_legacyApple() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("provider-legacy-1")
+            .email("legacy@user.com")
+            .name("legacy-name")
+            .phone("01033334444")
+            .build();
+
+        when(encryptionUtil.safeEncrypt(any())).thenAnswer(inv -> "ENC(" + inv.getArgument(0) + ")");
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User saved = inv.getArgument(0);
+            saved.setId(9202L);
+            return saved;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Long userId = oauth2Service.createUserFromSocial(socialUserInfo);
+
+        assertThat(userId).isEqualTo(9202L);
+        verify(encryptionUtil).safeEncrypt(eq("01033334444"));
+    }
+
+    @Test
+    @DisplayName("createUserFromSocial: OAuthPhoneVerificationContext + SocialUserInfo 둘 다 비어 있으면 "
+        + "phone 컬럼은 null 로 저장 (안전한 기본 동작)")
+    void createUserFromSocial_noPhoneAtAll_savesNullPhone() {
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("provider-no-phone-1")
+            .email("nophone@user.com")
+            .name("nophone-name")
+            .phone(null)
+            .build();
+
+        when(encryptionUtil.safeEncrypt(any())).thenAnswer(inv -> "ENC(" + inv.getArgument(0) + ")");
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User saved = inv.getArgument(0);
+            saved.setId(9203L);
+            return saved;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Long userId = oauth2Service.createUserFromSocial(socialUserInfo);
+
+        assertThat(userId).isEqualTo(9203L);
+        org.mockito.ArgumentCaptor<User> userCaptor = org.mockito.ArgumentCaptor.forClass(User.class);
+        verify(userRepository).saveAndFlush(userCaptor.capture());
+        assertThat(userCaptor.getValue().getPhone()).isNull();
+    }
+
+    @Test
+    @DisplayName("createUserFromSocial: OAuthPhoneVerificationContext 빈 문자열은 fallback 트리거")
+    void createUserFromSocial_otpContextBlank_fallsBackToSocialPhone() {
+        OAuthPhoneVerificationContext.setVerifiedPhone("   ");
+
+        SocialUserInfo socialUserInfo = SocialUserInfo.builder()
+            .providerUserId("provider-blank-ctx-1")
+            .email("blank@user.com")
+            .name("blank-name")
+            .phone("01055556666")
+            .build();
+
+        when(encryptionUtil.safeEncrypt(any())).thenAnswer(inv -> "ENC(" + inv.getArgument(0) + ")");
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User saved = inv.getArgument(0);
+            saved.setId(9204L);
+            return saved;
+        });
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Long userId = oauth2Service.createUserFromSocial(socialUserInfo);
+
+        assertThat(userId).isEqualTo(9204L);
+        verify(encryptionUtil).safeEncrypt(eq("01055556666"));
     }
 
     private static class TestOAuth2Service extends AbstractOAuth2Service {

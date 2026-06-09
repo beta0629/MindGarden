@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.RefreshTokenRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MultiTenantUserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -93,7 +94,7 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         }
         
         log.info("✅ 사용자가 접근 가능한 테넌트 목록: userId={}, email={}, tenantCount={}", 
-            userId, user.getEmail(), tenants.size());
+            userId, EmailLogMasking.maskForLog(user.getEmail()), tenants.size());
         return tenants;
     }
     
@@ -122,14 +123,14 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
     @Transactional(readOnly = true)
     public boolean hasAccessToTenantByEmail(String email, String tenantId) {
         if (email == null || email.trim().isEmpty() || tenantId == null || tenantId.trim().isEmpty()) {
-            log.warn("이메일 또는 테넌트 ID가 비어있어 권한 확인 불가: email={}, tenantId={}", email, tenantId);
+            log.warn("이메일 또는 테넌트 ID가 비어있어 권한 확인 불가: email={}, tenantId={}", EmailLogMasking.maskForLog(email), tenantId);
             return false;
         }
         
         // 특정 테넌트의 해당 이메일 사용자만 조회
         java.util.Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email.trim().toLowerCase());
         if (userOpt.isEmpty()) {
-            log.debug("해당 테넌트에 사용자를 찾을 수 없음: email={}, tenantId={}", email, tenantId);
+            log.debug("해당 테넌트에 사용자를 찾을 수 없음: email={}, tenantId={}", EmailLogMasking.maskForLog(email), tenantId);
             return false;
         }
         
@@ -146,7 +147,7 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         }
         
         log.info("테넌트 접근 권한 확인 (단일 테넌트 이메일 기반): email={}, tenantId={}, hasAccess={}", 
-            email, tenantId, hasAccess);
+            EmailLogMasking.maskForLog(email), tenantId, hasAccess);
         return hasAccess;
     }
     
@@ -154,22 +155,22 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
     @Transactional(readOnly = true)
     public List<Tenant> getAccessibleTenantsByEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
-            log.warn("이메일이 비어있어 테넌트 목록 조회 불가: email={}", email);
+            log.warn("이메일이 비어있어 테넌트 목록 조회 불가: email={}", EmailLogMasking.maskForLog(email));
             return new ArrayList<>();
         }
         
-        log.debug("이메일로 접근 가능한 테넌트 목록 조회: email={}", email);
+        log.debug("이메일로 접근 가능한 테넌트 목록 조회: email={}", EmailLogMasking.maskForLog(email));
         
         String currentTenantId = TenantContextHolder.getTenantId();
         if (currentTenantId == null || currentTenantId.trim().isEmpty()) {
-            log.warn("현재 테넌트 컨텍스트가 없어 조회 불가: email={}", email);
+            log.warn("현재 테넌트 컨텍스트가 없어 조회 불가: email={}", EmailLogMasking.maskForLog(email));
             return new ArrayList<>();
         }
         
         // 현재 테넌트의 해당 이메일 사용자만 조회
         java.util.Optional<User> userOpt = userRepository.findByTenantIdAndEmail(currentTenantId, email.trim().toLowerCase());
         if (userOpt.isEmpty()) {
-            log.debug("해당 테넌트에 사용자를 찾을 수 없음: email={}, tenantId={}", email, currentTenantId);
+            log.debug("해당 테넌트에 사용자를 찾을 수 없음: email={}, tenantId={}", EmailLogMasking.maskForLog(email), currentTenantId);
             return new ArrayList<>();
         }
         
@@ -193,7 +194,7 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         }
         
         log.info("✅ 이메일로 접근 가능한 테넌트 목록 (단일 테넌트 기준): email={}, tenantCount={}", 
-            email, tenants.size());
+            EmailLogMasking.maskForLog(email), tenants.size());
         return tenants;
     }
     

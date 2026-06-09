@@ -3,6 +3,7 @@ package com.coresolution.consultation.service;
 import com.coresolution.consultation.dto.OAuthExistingUserResolution;
 import com.coresolution.consultation.dto.SocialLoginResponse;
 import com.coresolution.consultation.dto.SocialUserInfo;
+import com.coresolution.consultation.entity.auth.OAuthProvider;
 
 /**
  * 통합 OAuth2 서비스 인터페이스
@@ -94,4 +95,24 @@ public interface OAuth2Service {
      * @param socialUserInfo 소셜 사용자 정보
      */
     void linkSocialAccountToUser(Long userId, SocialUserInfo socialUserInfo);
+
+    /**
+     * OAuth 콜백 후 휴대폰 OTP 매칭을 강제할지 여부.
+     *
+     * <p>provider-agnostic 휴대폰 매칭 SSOT 정책 (2026-06-09):
+     * <ul>
+     *   <li>{@code true} → OAuth 콜백 후 클라이언트가
+     *       {@code /api/v1/auth/oauth/phone/{send,verify}} 흐름으로 진입해야 한다 (신규 가입자 + 휴대폰 변경 시).</li>
+     *   <li>{@code false} → 기존 흐름(이메일/sub 매칭) 유지.</li>
+     * </ul>
+     * 본 hook 의 호출 측 통합(콜백 분기 삽입) 은 후속 Phase 3C 에서 수행한다.
+     * 본 PR (Phase 3A) 는 인터페이스 노출만 담당한다.</p>
+     *
+     * @param oauthProvider 현재 처리 중인 provider
+     * @param socialUserInfo 콜백 결과 사용자 정보
+     * @return OTP 강제 여부
+     */
+    default boolean requiresPhoneOtp(OAuthProvider oauthProvider, SocialUserInfo socialUserInfo) {
+        return false;
+    }
 }

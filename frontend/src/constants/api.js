@@ -60,7 +60,18 @@ export const AUTH_API = {
   /** PasswordManagementController — 세션 사용자 비밀번호 변경 */
   PASSWORD_CHANGE: '/api/v1/auth/password/change',
   /** PasswordManagementController — 재설정 이메일 요청 */
-  PASSWORD_RESET_REQUEST: '/api/v1/auth/password/reset/request'
+  PASSWORD_RESET_REQUEST: '/api/v1/auth/password/reset/request',
+
+  /**
+   * provider-agnostic OAuth 휴대폰 매칭(OTP) — Phase 3A `OAuthPhoneController`.
+   * 본인 인증용 OTP 발송 (oauthProvider + phoneVerificationToken + phone).
+   */
+  OAUTH_PHONE_SEND: '/api/v1/auth/oauth/phone/send',
+  /**
+   * provider-agnostic OAuth 휴대폰 매칭(OTP) — OTP 검증 + 매칭/로그인.
+   * (oauthProvider + phoneVerificationToken + challengeToken + otpCode).
+   */
+  OAUTH_PHONE_VERIFY: '/api/v1/auth/oauth/phone/verify'
 };
 
 // 권한 관련 API (표준 경로: /api/v1/permissions)

@@ -10,6 +10,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -172,10 +173,10 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                 // userRepository에서 다시 조회하여 최신 정보 가져오기
                                 // TenantContextFilter가 먼저 실행되어 Holder에 tenant가 있으면 PK-only 조회를 피한다.
                                 User user = reloadUserFromRepository(sessionUser.getId(), sessionUser);
-                                log.info("🍎 iOS - userRepository(테넌트 스코프) 조회 결과: user={}", user != null ? "존재 (userId=" + user.getId() + ", email=" + user.getEmail() + ")" : "null");
+                                log.info("🍎 iOS - userRepository(테넌트 스코프) 조회 결과: user={}", user != null ? "존재 (userId=" + user.getId() + ", email=" + EmailLogMasking.maskForLog(user.getEmail()) + ")" : "null");
                                 
                                 if (user != null) {
-                                    log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", user.getId(), user.getEmail());
+                                    log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
                                     // SecurityContext에 직접 사용자 정보 설정
                                     Authentication authentication = createAuthentication(user);
                                     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -244,7 +245,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 log.info("🍎 iOS - 세션 속성 목록 (sessionId={}): {}", session.getId(), attributes.toString());
                 
                 user = SessionUtils.getCurrentUser(session);
-                log.info("🔍 세션에서 사용자 조회: {}", user != null ? user.getEmail() : "null");
+                log.info("🔍 세션에서 사용자 조회: {}", user != null ? EmailLogMasking.maskForLog(user.getEmail()) : "null");
                 
                 // iOS 디버깅: 세션에 사용자 정보가 없으면 경고
                 if (user == null && jsessionIdFromCookie != null) {
@@ -260,7 +261,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                 User dbUser = reloadUserFromRepository(
                                         userSession.getUser().getId(), userSession.getUser());
                                 if (dbUser != null) {
-                                    log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", dbUser.getId(), dbUser.getEmail());
+                                    log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", dbUser.getId(), EmailLogMasking.maskForLog(dbUser.getEmail()));
                                     // SecurityContext에 직접 사용자 정보 설정
                                     Authentication authentication = createAuthentication(dbUser);
                                     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -290,7 +291,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 // 스케줄 관련 요청에 대한 특별 로깅
                 if (requestPath.contains("/schedules")) {
                     log.info("🔍 스케줄 요청 감지: path={}, method={}, user={}", 
-                        requestPath, request.getMethod(), user != null ? user.getEmail() : "null");
+                        requestPath, request.getMethod(), user != null ? EmailLogMasking.maskForLog(user.getEmail()) : "null");
                 }
                 
                 // 세션이 있으면 사용자 정보를 세션에서 가져오고, 없으면 SecurityContext에서 가져옴
@@ -308,7 +309,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                         TenantContextHolder.setTenantId(user.getTenantId());
                         log.debug("✅ TenantContextHolder에 tenantId 설정: {}", user.getTenantId());
                     } else {
-                        log.warn("⚠️ 사용자 tenantId가 없음: userId={}, email={}", user.getId(), user.getEmail());
+                        log.warn("⚠️ 사용자 tenantId가 없음: userId={}, email={}", user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
                     }
                     
                     // 세션에 SecurityContext 저장 (명시적으로)
@@ -325,7 +326,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                         log.info("🔍 세션 만료 시간 설정: {}초", SessionConstants.SESSION_TIMEOUT_SECONDS);
                     }
                     
-                    log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}, tenantId={}", user.getEmail(), user.getRole(), user.getTenantId());
+                    log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}, tenantId={}", EmailLogMasking.maskForLog(user.getEmail()), user.getRole(), user.getTenantId());
                     
                     // SecurityContext 확인
                     Authentication authAfter = SecurityContextHolder.getContext().getAuthentication();

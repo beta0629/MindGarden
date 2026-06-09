@@ -45,6 +45,7 @@ import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
@@ -160,7 +161,7 @@ public class AdminController extends BaseApiController {
 
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ [보안 오류] tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             log.error("❌ User 객체의 tenantId: {}", currentUser.getTenantId());
             log.error("❌ TenantContextHolder의 tenantId: {}",
                     com.coresolution.core.context.TenantContextHolder.getTenantId());
@@ -242,7 +243,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -354,7 +355,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -395,7 +396,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -460,7 +461,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -508,7 +509,7 @@ public class AdminController extends BaseApiController {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         log.info("🔍 현재 사용자 정보 - ID: {}, 이메일: {}, 역할: {}, 브랜치코드: {}", currentUser.getId(),
-                currentUser.getEmail(), currentUser.getRole(), currentUser.getBranchCode());
+                EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole(), currentUser.getBranchCode());
 
         String currentBranchCode = currentUser.getBranchCode();
         if (currentBranchCode != null) {
@@ -1011,7 +1012,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -1689,7 +1690,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -1736,7 +1737,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -1767,7 +1768,7 @@ public class AdminController extends BaseApiController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<User>> registerStaff(
             @RequestBody StaffRegistrationRequest request, HttpSession session) {
-        log.info("🔧 스태프 등록: {}", request.getEmail());
+        log.info("🔧 스태프 등록: {}", EmailLogMasking.maskForLog(request.getEmail()));
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "USER_MANAGE", dynamicPermissionService);
@@ -1799,7 +1800,7 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkEmailDuplicate(
             @RequestParam String email,
             HttpSession session) {
-        log.info("🔍 이메일 중복 확인 요청: email={}", email);
+        log.info("🔍 이메일 중복 확인 요청: email={}", EmailLogMasking.maskForLog(email));
         
         String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
         if (tenantId == null) {
@@ -1824,7 +1825,7 @@ public class AdminController extends BaseApiController {
         result.put("available", !isDuplicate);
         result.put("message", isDuplicate ? "이미 사용 중인 이메일입니다." : "사용 가능한 이메일입니다.");
         
-        log.info("✅ 이메일 중복 확인 완료: email={}, isDuplicate={}, tenantId={}", email, isDuplicate, tenantId);
+        log.info("✅ 이메일 중복 확인 완료: email={}, isDuplicate={}, tenantId={}", EmailLogMasking.maskForLog(email), isDuplicate, tenantId);
         
         return success(result);
     }
@@ -2165,7 +2166,7 @@ public class AdminController extends BaseApiController {
         log.info("🔧 매칭 삭제: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
-        log.info("📋 현재 사용자: {}, Role: {}", currentUser != null ? currentUser.getEmail() : "null",
+        log.info("📋 현재 사용자: {}, Role: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null",
                 currentUser != null ? currentUser.getRole() : "null");
 
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
@@ -2575,7 +2576,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -3047,7 +3048,7 @@ public class AdminController extends BaseApiController {
             }
 
             com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
-            log.info("👤 현재 사용자: 이메일={}, 역할={}, tenantId={}", currentUser.getEmail(),
+            log.info("👤 현재 사용자: 이메일={}, 역할={}, tenantId={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     currentUser.getRole(), tenantId);
 
             LocalDate parsedStart = null;
@@ -3491,7 +3492,7 @@ public class AdminController extends BaseApiController {
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}, 역할: {}", currentUser.getId(),
-                    currentUser.getEmail(), currentUser.getRole());
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
             String errorMessage = String.format("테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
                     currentUser.getId(), currentUser.getRole());
             throw new IllegalArgumentException(errorMessage);
@@ -3749,7 +3750,7 @@ public class AdminController extends BaseApiController {
             String tenantId = SessionUtils.getTenantId(session);
             if (tenantId == null || tenantId.isEmpty()) {
                 log.error("❌ 상담 이력 조회 실패: tenantId가 필수입니다. 사용자 ID: {}, 이메일: {}", currentUser.getId(),
-                        currentUser.getEmail());
+                        EmailLogMasking.maskForLog(currentUser.getEmail()));
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("success", false, "message", "테넌트 정보가 없습니다. 관리자에게 문의하세요."));
             }

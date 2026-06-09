@@ -40,6 +40,21 @@ export const AUTH_API = {
    * 응답은 `AppleSignInResponse` 동일 형식(정상 로그인 / phoneAccountSelection / 실패).
    */
   APPLE_PHONE_VERIFY: '/api/v1/auth/oauth/apple/phone/verify',
+  /**
+   * provider-agnostic OAuth 휴대폰 매칭 — OTP 발송 (Apple/Google/Kakao/Naver 4종 공통).
+   * Body: `{ oauthProvider, phoneVerificationToken, phone }`.
+   * 응답: `ApiResponse<OAuthPhoneSendResponse>` (challengeToken + expiresInSeconds + maskedPhone 등).
+   * BE: `OAuthPhoneController#sendOtp` (Phase 3A — Spring Security permitAll `/api/v1/auth/**` 매처 재사용).
+   */
+  OAUTH_PHONE_SEND: '/api/v1/auth/oauth/phone/send',
+  /**
+   * provider-agnostic OAuth 휴대폰 매칭 — OTP 검증 + 매칭/로그인.
+   * Body: `{ oauthProvider, phoneVerificationToken, challengeToken, otpCode(6자리) }`.
+   * 응답: `ApiResponse<OAuthPhoneVerifyResponse>` (matchedAccount + accessToken/refreshToken,
+   * 또는 requiresPhoneAccountSelection + phoneAccountSelectionToken, 또는 실패 code).
+   * BE: `OAuthPhoneController#verifyOtp`.
+   */
+  OAUTH_PHONE_VERIFY: '/api/v1/auth/oauth/phone/verify',
   SMS_SEND: '/api/auth/sms/send',
   SMS_VERIFY: '/api/auth/sms/verify',
   SMS_LOGIN: '/api/auth/sms-login',

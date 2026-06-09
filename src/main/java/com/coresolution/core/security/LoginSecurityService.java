@@ -1,5 +1,6 @@
 package com.coresolution.core.security;
 
+import com.coresolution.consultation.util.EmailLogMasking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,7 +53,7 @@ public class LoginSecurityService {
         redisTemplate.opsForValue().set(key, attempts, lockoutDurationMinutes, TimeUnit.MINUTES);
         
         log.warn("⚠️ 로그인 실패 기록: email={}, attempts={}/{}", 
-            email, attempts, maxLoginAttempts);
+            EmailLogMasking.maskForLog(email), attempts, maxLoginAttempts);
         
         // 최대 시도 횟수 초과 시 계정 잠금
         if (attempts >= maxLoginAttempts) {
@@ -70,7 +71,7 @@ public class LoginSecurityService {
         redisTemplate.delete(attemptKey);
         redisTemplate.delete(lockKey);
         
-        log.info("✅ 로그인 성공: email={}, 실패 횟수 초기화", email);
+        log.info("✅ 로그인 성공: email={}, 실패 횟수 초기화", EmailLogMasking.maskForLog(email));
     }
     
     /**
@@ -87,7 +88,7 @@ public class LoginSecurityService {
             TimeUnit.MINUTES
         );
         
-        log.error("🔒 계정 잠금: email={}, duration={}분", email, lockoutDurationMinutes);
+        log.error("🔒 계정 잠금: email={}, duration={}분", EmailLogMasking.maskForLog(email), lockoutDurationMinutes);
     }
     
     /**
@@ -100,7 +101,7 @@ public class LoginSecurityService {
         redisTemplate.delete(attemptKey);
         redisTemplate.delete(lockKey);
         
-        log.info("🔓 계정 잠금 해제: email={}", email);
+        log.info("🔓 계정 잠금 해제: email={}", EmailLogMasking.maskForLog(email));
     }
     
     /**

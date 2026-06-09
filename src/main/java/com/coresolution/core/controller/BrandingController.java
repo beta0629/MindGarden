@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.http.HttpSession;
 
@@ -57,7 +58,7 @@ public class BrandingController extends BaseApiController {
         
         if (tenantId == null || tenantId.isEmpty()) {
             log.error("사용자에게 tenantId가 없습니다: userId={}, email={}", 
-                currentUser.getId(), currentUser.getEmail());
+                currentUser.getId(), EmailLogMasking.maskForLog(currentUser.getEmail()));
             throw new IllegalStateException("테넌트 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.");
         }
         

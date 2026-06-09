@@ -23,6 +23,18 @@ public final class OAuthJwtClaimValues {
      */
     public static final String PURPOSE_APPLE_PHONE_OTP_CHALLENGE = "APPLE_PHONE_OTP_CHALLENGE";
 
+    /**
+     * provider-agnostic OAuth 휴대폰 매칭 흐름 1단계 — OAuth 콜백 직후 발급되는 단기 JWT 의 purpose.
+     * 4 종 provider(Apple/Google/Kakao/Naver) 가 공통으로 사용. Apple 전용
+     * {@link #PURPOSE_APPLE_PHONE_VERIFICATION} 는 alias 로 유지된다(FE PR #161 호환).
+     */
+    public static final String PURPOSE_OAUTH_PHONE_VERIFICATION = "OAUTH_PHONE_VERIFICATION";
+
+    /**
+     * provider-agnostic OAuth 휴대폰 매칭 흐름 2단계 — OTP 발송 시 발급되는 challenge 토큰의 purpose.
+     */
+    public static final String PURPOSE_OAUTH_PHONE_OTP_CHALLENGE = "OAUTH_PHONE_OTP_CHALLENGE";
+
     private OAuthJwtClaimValues() {
     }
 }

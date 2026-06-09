@@ -19,6 +19,7 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.TenantKakaoAlimtalkSettingsService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
@@ -487,7 +488,7 @@ public class NotificationServiceImpl implements NotificationService {
      */
     private boolean sendEmail(String email, String subject, String message) {
         try {
-            log.info("📧 이메일 발송: {}", email);
+            log.info("📧 이메일 발송: {}", EmailLogMasking.maskForLog(email));
             
             // EmailService를 통한 이메일 발송
             EmailRequest emailRequest = EmailRequest.builder()

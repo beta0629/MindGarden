@@ -5,6 +5,7 @@ import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -76,7 +77,7 @@ public class ClientSocialAccountController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("접근 권한이 없습니다.");
         }
         
-        log.info("✅ 사용자 인증 확인: userId={}, email={}", currentUser.getId(), currentUser.getEmail());
+        log.info("✅ 사용자 인증 확인: userId={}, email={}", currentUser.getId(), EmailLogMasking.maskForLog(currentUser.getEmail()));
 
         String action = (String) request.get("action");
         String provider = (String) request.get("provider");

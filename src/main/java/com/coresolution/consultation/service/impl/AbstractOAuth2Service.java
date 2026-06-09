@@ -24,6 +24,7 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.OAuthPhoneVerificationContext;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.SocialLoginUserIdDerivation;
 import com.coresolution.consultation.util.SocialProvider;
@@ -532,6 +533,13 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         if (!StringUtils.hasText(normalizedLoginEmail)) {
             throw new IllegalStateException("소셜 사용자 이메일이 비어 있어 저장할 수 없습니다.");
         }
+        // 2026-06-09 OAuth 휴대폰 SSOT 정책: 본인 검증 없이 OAuth 응답 phone 을 그대로 저장하지 않는다.
+        // OAuthPhoneVerificationContext 가 설정되어 있으면(OTP 검증 완료) 그 값을 사용,
+        // 없으면 SocialUserInfo.phone(레거시 Apple legacy 등 호환 경로)을 사용한다.
+        String resolvedPhone = OAuthPhoneVerificationContext.getVerifiedPhone();
+        if (!StringUtils.hasText(resolvedPhone)) {
+            resolvedPhone = socialUserInfo.getPhone();
+        }
         // 표준화 원칙: users 선저장/flush 후 clients 저장 (FK 정합성 보장)
         // 소셜 전용 더미 비밀번호 — 정책 없이 BCrypt만 적용
         User user = User.builder()
@@ -539,7 +547,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                 .password(passwordService.encodeSecret(generateTemporaryPassword()))
                 .name(encryptionUtil.safeEncrypt(socialUserInfo.getName()))
                 .email(encryptionUtil.safeEncrypt(normalizedLoginEmail))
-                .phone(socialUserInfo.getPhone() != null ? encryptionUtil.safeEncrypt(socialUserInfo.getPhone()) : null)
+                .phone(StringUtils.hasText(resolvedPhone) ? encryptionUtil.safeEncrypt(resolvedPhone) : null)
                 .role(UserRole.CLIENT)
                 .branchCode(null)
                 .build();

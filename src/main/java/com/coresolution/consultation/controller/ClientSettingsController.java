@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -64,7 +65,7 @@ public class ClientSettingsController extends BaseApiController {
             "sessionDuration", user.getPreferredSessionDuration() != null ? user.getPreferredSessionDuration() : 50
         ));
         
-        log.info("✅ 클라이언트 설정 조회 성공 - 사용자: {}", userEmail);
+        log.info("✅ 클라이언트 설정 조회 성공 - 사용자: {}", EmailLogMasking.maskForLog(userEmail));
         return success(settings);
     }
     
@@ -113,7 +114,7 @@ public class ClientSettingsController extends BaseApiController {
         // 사용자 정보 저장
         User updatedUser = userService.save(user);
         
-        log.info("✅ 클라이언트 설정 저장 성공 - 사용자: {}", userEmail);
+        log.info("✅ 클라이언트 설정 저장 성공 - 사용자: {}", EmailLogMasking.maskForLog(userEmail));
         
         Map<String, Object> data = new HashMap<>();
         data.put("userId", updatedUser.getId());

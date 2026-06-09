@@ -199,13 +199,28 @@ https://mindgarden.core-solution.co.kr/ 또는 https://mindgarden.dev.core-solut
 
 ### 3.3 본 PR 의 코드 보강 (캡처 가능성 강화)
 
-본 응답과 동시 머지된 풀스택 보강 (브랜치 `feat/naver-login-mobile-usage-evidence`):
+#### 3.3.1 기존 PR — `feat/naver-login-mobile-usage-evidence` (그대로 유효)
+
+> 본 PR 변경은 **그대로 유효**합니다. 캡처 #1 (회원가입 휴대폰 입력) · 캡처 #2 (마이페이지 휴대폰 표시) 의 근거 자료로 계속 사용합니다. mobile scope 미사용으로 정책이 바뀌어도 휴대폰 입력 UI·마이페이지 휴대폰 표시 자체는 OTP 본인 검증 흐름에서 그대로 활용되기 때문입니다.
 
 | 변경 | 위치 | 효과 |
 |---|---|---|
 | Expo 마이페이지 휴대폰 표시 | `expo-app/src/components/organisms/MoreAccountProfile.tsx` | 캡처 #2 (iOS) 가능 — 마스킹 PII 정책 준수 |
 | Expo 마스킹 유틸 | `expo-app/src/utils/phoneNormalize.ts` | `010-****-1234` 표시, 23 테스트 케이스 |
 | Web 회원가입 라벨 강화 | `frontend/src/components/auth/SocialSignupModal.js` | 캡처 #1 (Web) — 라벨 "휴대폰 번호" + 활용 명시 도움말 |
+
+#### 3.3.2 추가 PR (예정) — "OAuth 휴대폰 매칭 SSOT 일원화 (사용자 입력 + SMS OTP)"
+
+> 신규 핸드오프 문서: [`../2026-06-09/OAUTH_PHONE_SSOT_OTP_UNIFICATION_HANDOFF.md`](../2026-06-09/OAUTH_PHONE_SSOT_OTP_UNIFICATION_HANDOFF.md)
+
+| 변경 | 효과 |
+|---|---|
+| Apple SIWA P1 OTP 인프라 → provider-agnostic 일반화 | 모든 OAuth provider 재사용 가능한 OTP 본인 검증 흐름 확립 |
+| Naver mobile 코드 전체 제거 (scope·DTO·매칭·저장) | mobile 권한 미요청 상태로 콘솔 "사용 API" 체크 해제 가능 |
+| Kakao/Google OAuth 콜백에 OTP hook 삽입 | 동일 OTP 본인 검증 흐름 일관 적용 |
+| Expo `oauth-phone-link.tsx` · Web `OAuthPhoneVerificationModal.js` 신규 | OAuth 후 휴대폰 입력 + OTP 화면 (provider-agnostic) |
+
+본 추가 PR 머지 후 §4 "사용 API" 항목이 **유지 → 해제**로 바뀌고, §1.3 후속 트랙에 따라 Naver 콘솔 mobile 체크 해제 후 재검수를 신청합니다.
 
 ---
 
@@ -223,8 +238,10 @@ https://mindgarden.core-solution.co.kr/ 또는 https://mindgarden.dev.core-solut
   - 캡처 #4: 어드민 알림톡/SMS 발송 모니터링 (1매 이상)
   - 캡처 #5 (선택): 사용자 알림 수신 화면 (1매)
 - [ ] **파일 첨부 #4** (선택): 푸터 사업자 정보 캡처 §2.3
-- [ ] **사용 API**: 휴대전화번호 체크박스 **유지** (해제 안 함)
+- [ ] **사용 API**: 휴대전화번호 체크박스 **해제** (OTP 본인 검증으로 대체) — 재검수 신청 전 Naver Developer Center → 내 애플리케이션 → MindGarden → "사용 API" 항목에서 휴대전화번호 체크 해제 (정책 변경 §0)
 - [ ] **테스트 계정**: 본 문서 §6 — 기존 신청서와 동일
+
+> **첨부 #3 (휴대폰 활용처 캡처) 유지 사유**: 캡처가 첨부되어 있으면 검수원이 "MindGarden 은 휴대폰을 실제로 활용하지만 mobile scope 권한은 사용자 입력 + OTP 본인 검증으로 대체했다"고 이해할 수 있어 안전 마진 역할을 합니다. 첨부 자체가 mobile 권한 사용을 의미하지 않으므로 그대로 첨부합니다.
 
 ---
 
@@ -258,6 +275,9 @@ https://mindgarden.core-solution.co.kr/ 또는 https://mindgarden.dev.core-solut
 
 본 응답 이후 추가 권장 작업:
 
+- **OAuth 휴대폰 매칭 SSOT 일원화 PR**: [`../2026-06-09/OAUTH_PHONE_SSOT_OTP_UNIFICATION_HANDOFF.md`](../2026-06-09/OAUTH_PHONE_SSOT_OTP_UNIFICATION_HANDOFF.md) 참조. Apple SIWA P1 OTP 인프라를 provider-agnostic 으로 일반화하고 Naver mobile 코드 (scope · DTO `mobile` 필드 · 응답 파싱 · User 매칭/저장) 를 전체 제거. Kakao/Google 동일 OTP hook 삽입.
+- **Naver mobile scope 미사용 재검수 (별도 트랙)**: 위 PR 머지 + 운영 반영 완료 후, 운영자가 Naver Developer Center 에서 mobile 체크 해제 → §4 체크리스트 따라 재검수 신청. 본 문서 §0 갱신본 + 사업자등록증 + 캡처 #1~5 그대로 첨부 (안전 마진).
+- **향후 mobile scope 재요청 의사 없음**: OTP SSOT 정책 안정성을 위해 mobile scope 재요청은 계획하지 않습니다. 향후 OAuth 응답 휴대폰이 필요한 신규 요구가 발생하면 별도 의사결정 문서로 정책 변경을 다시 검토합니다.
 - **약관·개인정보 처리방침 점검**: 휴대전화번호 수집·이용·보관·파기 명시 확인
 - **Apple App Store 1.2 (UGC) 연계**: 커뮤니티 신고/차단 기능 PR #152 머지 완료 → ASC 메타데이터 변경 + 빌드 9 업로드 + Apple Review Reply (별도 트랙)
 - **Apple Plan A T1 (SIWA) env 주입**: `docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md` 참조
@@ -269,3 +289,4 @@ https://mindgarden.core-solution.co.kr/ 또는 https://mindgarden.dev.core-solut
 | 일자 | 변경 | 작성자 |
 |---|---|---|
 | 2026-06-08 | 초안 작성 — 거부 사유 3종 매핑 + 캡처 가이드 + 운영자 체크리스트 + 코드 보강 PR 연계 | MindGarden 운영팀 |
+| 2026-06-09 | §0 결정 분기 (A)→(C) 변경, §3.3·§4·§7 OTP 일원화 정책 반영 | core-planner 위임 |

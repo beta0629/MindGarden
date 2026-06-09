@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -98,7 +99,7 @@ public class AcademyRegistrationController extends BaseApiController {
             @Valid @RequestBody RegisterRequest request,
             @RequestParam(required = false) String tenantId,
             HttpSession session) {
-        log.info("테넌트별 회원가입 요청: email={}, tenantId={}", request.getEmail(), tenantId);
+        log.info("테넌트별 회원가입 요청: email={}, tenantId={}", EmailLogMasking.maskForLog(request.getEmail()), tenantId);
         
         // 테넌트 ID 확인
         String currentTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
@@ -179,7 +180,7 @@ public class AcademyRegistrationController extends BaseApiController {
         User registeredUser = userService.registerUser(user);
         
         log.info("테넌트별 회원가입 완료: userId={}, tenantId={}, email={}", 
-            registeredUser.getId(), currentTenantId, registeredUser.getEmail());
+            registeredUser.getId(), currentTenantId, EmailLogMasking.maskForLog(registeredUser.getEmail()));
         
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("userId", registeredUser.getId());
@@ -214,7 +215,7 @@ public class AcademyRegistrationController extends BaseApiController {
             @RequestParam(required = false) String tenantId,
             HttpSession session) {
         log.info("테넌트별 SNS 회원가입 요청: email={}, provider={}, tenantId={}", 
-                request.getEmail(), request.getProvider(), tenantId);
+                EmailLogMasking.maskForLog(request.getEmail()), request.getProvider(), tenantId);
         
         // 테넌트 ID 확인
         String currentTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
@@ -307,7 +308,7 @@ public class AcademyRegistrationController extends BaseApiController {
             }
             
         log.info("테넌트별 SNS 회원가입 완료: userId={}, tenantId={}, email={}", 
-            registeredUser.getId(), currentTenantId, registeredUser.getEmail());
+            registeredUser.getId(), currentTenantId, EmailLogMasking.maskForLog(registeredUser.getEmail()));
         
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("userId", registeredUser.getId());

@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserIdGenerator;
+import com.coresolution.consultation.util.EmailLogMasking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class UserIdGeneratorImpl implements UserIdGenerator {
     public String generateUniqueUserId(String email, String tenantId) {
         // 입력 검증
         if (!StringUtils.hasText(email)) {
-            log.error("❌ 이메일이 없습니다. email={}", email);
+            log.error("❌ 이메일이 없습니다. email={}", EmailLogMasking.maskForLog(email));
             throw new IllegalArgumentException("이메일은 필수입니다.");
         }
         
@@ -53,7 +54,7 @@ public class UserIdGeneratorImpl implements UserIdGenerator {
         // 기본값이 비어있으면 "user" 사용
         if (!StringUtils.hasText(base)) {
             base = "user";
-            log.warn("⚠️ 이메일 로컬 파트가 비어있어 기본값 'user' 사용: email={}", normalizedEmail);
+            log.warn("⚠️ 이메일 로컬 파트가 비어있어 기본값 'user' 사용: email={}", EmailLogMasking.maskForLog(normalizedEmail));
         }
         
         // 소문자로 변환
@@ -68,7 +69,7 @@ public class UserIdGeneratorImpl implements UserIdGenerator {
         }
         
         log.info("✅ 전역 사용자 ID 생성 완료: email={}, tenantId={}, userId={}", 
-                normalizedEmail, tenantId, candidate);
+                EmailLogMasking.maskForLog(normalizedEmail), tenantId, candidate);
         
         return candidate;
     }

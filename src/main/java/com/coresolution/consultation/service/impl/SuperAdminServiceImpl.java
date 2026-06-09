@@ -10,6 +10,7 @@ import com.coresolution.consultation.dto.SuperAdminCreateRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SuperAdminService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -44,7 +45,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     @Override
     @Transactional
     public User createSuperAdmin(SuperAdminCreateRequest request, User currentUser) {
-        log.info("수퍼어드민 계정 생성 시작: {}", request.getEmail());
+        log.info("수퍼어드민 계정 생성 시작: {}", EmailLogMasking.maskForLog(request.getEmail()));
         
         try {
             // 사용자 정보 암호화
@@ -78,12 +79,12 @@ public class SuperAdminServiceImpl implements SuperAdminService {
             User savedSuperAdmin = userRepository.save(superAdmin);
             
             log.info("수퍼어드민 계정 생성 완료: ID={}, Email={}", 
-                savedSuperAdmin.getId(), savedSuperAdmin.getEmail());
+                savedSuperAdmin.getId(), EmailLogMasking.maskForLog(savedSuperAdmin.getEmail()));
             
             return savedSuperAdmin;
             
         } catch (Exception e) {
-            log.error("수퍼어드민 계정 생성 실패: {}", request.getEmail(), e);
+            log.error("수퍼어드민 계정 생성 실패: {}", EmailLogMasking.maskForLog(request.getEmail()), e);
             throw new RuntimeException("수퍼어드민 계정 생성에 실패했습니다.", e);
         }
     }

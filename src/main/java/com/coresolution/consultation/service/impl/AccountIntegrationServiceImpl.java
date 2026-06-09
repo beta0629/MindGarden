@@ -24,6 +24,7 @@ import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
@@ -111,7 +112,8 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             String tenantId = TenantContextHolder.getRequiredTenantId();
             String normalizedProvider = SocialProvider.normalize(request.getProvider());
             log.info("계정 통합 시작: existingEmail={}, socialEmail={}, provider={}", 
-                    request.getExistingEmail(), request.getSocialEmail(), normalizedProvider);
+                    EmailLogMasking.maskForLog(request.getExistingEmail()),
+                    EmailLogMasking.maskForLog(request.getSocialEmail()), normalizedProvider);
 
             if (normalizedProvider == null) {
                 return AccountIntegrationResponse.failure(
@@ -231,7 +233,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
         Object lock = emailSendLocksByNormalizedEmail.computeIfAbsent(normalized, k -> new Object());
         synchronized (lock) {
             try {
-                log.info("이메일 인증 코드 발송: email={}", normalized);
+                log.info("이메일 인증 코드 발송: email={}", EmailLogMasking.maskForLog(normalized));
 
                 int cooldownSec = mindgardenSecurityProperties.getAccountIntegration().getEmailVerificationCooldownSeconds();
                 int dailyLimit = mindgardenSecurityProperties.getAccountIntegration().getEmailVerificationDailyLimit();
@@ -244,7 +246,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
                     if (elapsedSec < cooldownSec) {
                         long retryAfter = cooldownSec - elapsedSec;
                         log.warn("이메일 인증 코드 발송 쿨다운: email={}, elapsedSec={}, cooldownSec={}",
-                            normalized, elapsedSec, cooldownSec);
+                            EmailLogMasking.maskForLog(normalized), elapsedSec, cooldownSec);
                         return EmailVerificationSendOutcome.cooldown(retryAfter);
                     }
                 }
@@ -253,7 +255,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
                     ? entry.dailyCount() : 0;
                 if (todayCount >= dailyLimit) {
                     log.warn("이메일 인증 코드 일일 발송 상한 초과: email={}, todayCount={}, dailyLimit={}",
-                        normalized, todayCount, dailyLimit);
+                        EmailLogMasking.maskForLog(normalized), todayCount, dailyLimit);
                     return EmailVerificationSendOutcome.dailyLimit();
                 }
 
@@ -264,15 +266,15 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
                 try {
                     sendEmailVerificationCodeEmail(normalized, code);
                     emailSendThrottleByNormalizedEmail.put(normalized, entry.afterSuccessfulSend(today));
-                    log.info("이메일 인증 코드 생성 및 발송 성공: email={}, expiryTime={}", normalized, expiryTime);
+                    log.info("이메일 인증 코드 생성 및 발송 성공: email={}, expiryTime={}", EmailLogMasking.maskForLog(normalized), expiryTime);
                     return EmailVerificationSendOutcome.success();
                 } catch (Exception emailException) {
                     log.error("이메일 인증 코드 이메일 발송 실패: email={}, error={}",
-                        normalized, emailException.getMessage(), emailException);
+                        EmailLogMasking.maskForLog(normalized), emailException.getMessage(), emailException);
                     return EmailVerificationSendOutcome.emailSendFailed();
                 }
             } catch (Exception e) {
-                log.error("이메일 인증 코드 발송 실패: email={}", normalized, e);
+                log.error("이메일 인증 코드 발송 실패: email={}", EmailLogMasking.maskForLog(normalized), e);
                 return EmailVerificationSendOutcome.emailSendFailed();
             }
         }
@@ -282,32 +284,32 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     public boolean verifyEmailCode(String email, String code) {
         try {
             String normalized = normalizeEmail(email);
-            log.info("이메일 인증 코드 검증: email={}, code={}", normalized, code);
+            log.info("이메일 인증 코드 검증: email={}, code={}", EmailLogMasking.maskForLog(normalized), code);
 
             EmailVerificationCode storedCode = emailVerificationCodes.get(normalized);
             if (storedCode == null) {
-                log.warn("인증 코드를 찾을 수 없음: email={}", normalized);
+                log.warn("인증 코드를 찾을 수 없음: email={}", EmailLogMasking.maskForLog(normalized));
                 return false;
             }
 
             if (!storedCode.isValid()) {
-                log.warn("인증 코드가 만료됨: email={}", normalized);
+                log.warn("인증 코드가 만료됨: email={}", EmailLogMasking.maskForLog(normalized));
                 emailVerificationCodes.remove(normalized);
                 return false;
             }
 
             boolean isValid = storedCode.getCode().equals(code);
             if (isValid) {
-                log.info("이메일 인증 성공: email={}", normalized);
+                log.info("이메일 인증 성공: email={}", EmailLogMasking.maskForLog(normalized));
             } else {
                 log.warn("이메일 인증 실패: email={}, 입력코드={}, 저장코드={}",
-                    normalized, code, storedCode.getCode());
+                    EmailLogMasking.maskForLog(normalized), code, storedCode.getCode());
             }
 
             return isValid;
 
         } catch (Exception e) {
-            log.error("이메일 인증 코드 검증 실패: email={}", email, e);
+            log.error("이메일 인증 코드 검증 실패: email={}", EmailLogMasking.maskForLog(email), e);
             return false;
         }
     }
@@ -363,7 +365,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     public AccountIntegrationResponse checkIntegrationStatus(String email) {
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            log.info("계정 통합 상태 확인: email={}", email);
+            log.info("계정 통합 상태 확인: email={}", EmailLogMasking.maskForLog(email));
             
             Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email);
             if (userOpt.isEmpty()) {
@@ -416,7 +418,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
                 .build();
             
         } catch (Exception e) {
-            log.error("계정 통합 상태 확인 실패: email={}", email, e);
+            log.error("계정 통합 상태 확인 실패: email={}", EmailLogMasking.maskForLog(email), e);
             return AccountIntegrationResponse.failure(
                 "계정 통합 상태 확인 중 오류가 발생했습니다: " + e.getMessage(),
                 AccountIntegrationResponse.IntegrationStatus.INTEGRATION_FAILED
@@ -446,7 +448,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
      */
     private void sendEmailVerificationCodeEmail(String email, String code) {
         try {
-            log.info("이메일 인증 코드 이메일 발송: email={}", email);
+            log.info("이메일 인증 코드 이메일 발송: email={}", EmailLogMasking.maskForLog(email));
             
             // 이메일 템플릿 변수 설정 (키는 {{}} 없이 변수 이름만 사용)
             Map<String, Object> variables = new HashMap<>();
@@ -466,16 +468,16 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             );
             
             if (response.isSuccess()) {
-                log.info("이메일 인증 코드 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
+                log.info("이메일 인증 코드 이메일 발송 성공: email={}, emailId={}", EmailLogMasking.maskForLog(email), response.getEmailId());
             } else {
-                log.error("이메일 인증 코드 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+                log.error("이메일 인증 코드 이메일 발송 실패: email={}, error={}", EmailLogMasking.maskForLog(email), response.getErrorMessage());
                 throw new RuntimeException("이메일 발송 실패: " + (response.getErrorMessage() != null ? response.getErrorMessage() : "알 수 없는 오류"));
             }
 
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            log.error("이메일 인증 코드 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
+            log.error("이메일 인증 코드 이메일 발송 중 오류: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage(), e);
             throw new RuntimeException("이메일 발송 중 오류: " + e.getMessage(), e);
         }
     }
@@ -485,7 +487,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
      */
     private void sendAccountIntegrationSuccessEmail(String email, String name, String provider) {
         try {
-            log.info("계정 통합 완료 이메일 발송: email={}, provider={}", email, provider);
+            log.info("계정 통합 완료 이메일 발송: email={}, provider={}", EmailLogMasking.maskForLog(email), provider);
             
             // 이메일 템플릿 변수 설정
             Map<String, Object> variables = new HashMap<>();
@@ -506,13 +508,13 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             );
             
             if (response.isSuccess()) {
-                log.info("계정 통합 완료 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
+                log.info("계정 통합 완료 이메일 발송 성공: email={}, emailId={}", EmailLogMasking.maskForLog(email), response.getEmailId());
             } else {
-                log.error("계정 통합 완료 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+                log.error("계정 통합 완료 이메일 발송 실패: email={}, error={}", EmailLogMasking.maskForLog(email), response.getErrorMessage());
             }
             
         } catch (Exception e) {
-            log.error("계정 통합 완료 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
+            log.error("계정 통합 완료 이메일 발송 중 오류: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage(), e);
         }
     }
 }

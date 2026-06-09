@@ -18,6 +18,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -480,10 +481,10 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             
             if (success) {
                 log.info("✅ 입금 확인 이메일 발송 성공: requestId={}, email={}", 
-                        request.getId(), requester.getEmail());
+                        request.getId(), EmailLogMasking.maskForLog(requester.getEmail()));
             } else {
                 log.warn("⚠️ 입금 확인 이메일 발송 실패: requestId={}, email={}", 
-                        request.getId(), requester.getEmail());
+                        request.getId(), EmailLogMasking.maskForLog(requester.getEmail()));
             }
             
         } catch (Exception e) {

@@ -6,6 +6,7 @@ module.exports = {
     '<rootDir>/src/services/auth/__tests__',
     '<rootDir>/src/services/__tests__',
     '<rootDir>/src/stores/__tests__',
+    '<rootDir>/src/api/auth/__tests__',
   ],
   testMatch: ['**/*.test.ts'],
   transform: {

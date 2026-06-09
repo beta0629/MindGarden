@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.Map;
 import com.coresolution.consultation.dto.SocialUserInfo;
+import com.coresolution.consultation.entity.auth.OAuthProvider;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
@@ -73,6 +74,15 @@ public class GoogleOAuth2ServiceImpl extends AbstractOAuth2Service {
     @Override
     public String getProviderName() {
         return "GOOGLE";
+    }
+
+    /**
+     * Google OAuth 콜백 후 휴대폰 OTP 매칭을 강제한다. provider-agnostic OAuth 휴대폰 SSOT 정책(2026-06-09).
+     * 콜백 분기 통합은 Phase 3C 에서 수행.
+     */
+    @Override
+    public boolean requiresPhoneOtp(OAuthProvider oauthProvider, SocialUserInfo socialUserInfo) {
+        return true;
     }
 
     @Override

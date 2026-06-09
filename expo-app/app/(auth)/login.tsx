@@ -139,6 +139,16 @@ export default function LoginScreen() {
             provider: 'KAKAO',
           },
         });
+      } else if (result.kind === 'requiresOAuthPhoneVerification') {
+        router.push({
+          pathname: '/(auth)/oauth-phone-link',
+          params: {
+            provider: result.provider,
+            phoneVerificationToken: result.phoneVerificationToken,
+            email: result.socialUserInfo.email ?? '',
+            name: result.socialUserInfo.name ?? '',
+          },
+        } as unknown as Href);
       } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
         setDuplicateLoginPrompt({
           message: result.message,
@@ -193,12 +203,22 @@ export default function LoginScreen() {
             name: result.socialUserInfo.name ?? '',
           },
         } as unknown as Href);
+      } else if (result.kind === 'requiresOAuthPhoneVerification') {
+        router.push({
+          pathname: '/(auth)/oauth-phone-link',
+          params: {
+            provider: result.provider,
+            phoneVerificationToken: result.phoneVerificationToken,
+            email: result.socialUserInfo.email ?? '',
+            name: result.socialUserInfo.name ?? '',
+          },
+        } as unknown as Href);
       } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
         setDuplicateLoginPrompt({
           message: result.message,
           retryContext: result.retryContext,
         });
-      } else {
+      } else if (result.kind === 'error') {
         // 사용자가 시트를 닫은 경우는 토스트만 띄우지 않는다.
         if (!/취소/.test(result.message ?? '')) {
           setErrorMessage(result.message ?? 'Apple 로그인에 실패했습니다.');
@@ -239,6 +259,16 @@ export default function LoginScreen() {
             provider: 'NAVER',
           },
         });
+      } else if (result.kind === 'requiresOAuthPhoneVerification') {
+        router.push({
+          pathname: '/(auth)/oauth-phone-link',
+          params: {
+            provider: result.provider,
+            phoneVerificationToken: result.phoneVerificationToken,
+            email: result.socialUserInfo.email ?? '',
+            name: result.socialUserInfo.name ?? '',
+          },
+        } as unknown as Href);
       } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
         setDuplicateLoginPrompt({
           message: result.message,

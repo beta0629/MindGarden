@@ -29,6 +29,19 @@ import {
   type AppleNativePrefill,
 } from './auth/applePhoneVerificationMapper';
 import {
+  postOAuthSendPhoneOtp,
+  postOAuthVerifyPhoneOtp,
+  type OAuthPhoneProvider,
+  type OAuthPhoneSendResponse,
+  type OAuthPhoneVerifyResponse,
+} from '../api/auth/oauthAuth';
+import {
+  mapOAuthPhoneSendResponse,
+  mapOAuthPhoneVerifyResponse,
+  type OAuthPhoneSendMapped,
+  type OAuthPhoneVerifyMapped,
+} from './auth/oauthPhoneVerificationMapper';
+import {
   APPLE_SIGN_IN_CANCELLED,
   isAppleSignInAvailable,
   performAppleNativeSignIn,
@@ -121,6 +134,14 @@ interface SocialLoginResponse {
   sessionId?: string;
   requiresSignup?: boolean;
   requiresPhoneAccountSelection?: boolean;
+  /**
+   * provider-agnostic OAuth 휴대폰 매칭 신호 — Kakao/Naver/Google 응답에서 true 면
+   * 신규 OAuth 휴대폰 입력 화면(`oauth-phone-link`)으로 라우팅.
+   * (Apple SIWA `requiresPhoneVerification` 와 별개)
+   */
+  requiresOAuthPhoneVerification?: boolean;
+  /** {@link #requiresOAuthPhoneVerification}=true 일 때 함께 발급되는 단기 JWT(10분 만료). */
+  phoneVerificationToken?: string;
   /** 네이티브 social-login 분기 — JWT `phoneAccountSelectionToken` 대신 `selectionToken` */
   selectionToken?: string;
   socialUserInfo?: {
@@ -176,6 +197,23 @@ export interface AppleSocialUserPrefill {
   isPrivateRelay?: boolean;
 }
 
+/**
+ * provider-agnostic OAuth 휴대폰 인증 단계로 진입해야 할 때 social user 정보 prefill 용.
+ *
+ * <p>{@link AppleSocialUserPrefill} 의 일반화 버전. 신규 `oauth-phone-link.tsx` 화면이
+ * Apple/Google/Kakao/Naver 4 종 provider 공통으로 받는 진입 데이터.</p>
+ */
+export interface OAuthSocialUserPrefill {
+  /** provider 측 sub (식별자) — 화면 prefill 표시에는 사용하지 않음. */
+  providerUserId: string;
+  /** provider 가 제공한 이메일 (선택). */
+  email: string;
+  /** provider 가 제공한 이름 (선택, Kakao 는 null 가능 — 화면이 행을 숨김). */
+  name: string;
+  /** Apple Private Email Relay 여부 — APPLE 에서만 의미 있음. */
+  isPrivateRelay?: boolean;
+}
+
 export type SocialLoginOutcome =
   | { kind: 'authenticated'; user: User }
   | { kind: 'requiresSignup'; socialUserInfo: SocialUserInfoDraft; provider: SocialAuthProvider }
@@ -193,6 +231,18 @@ export type SocialLoginOutcome =
       kind: 'requiresApplePhoneVerification';
       phoneVerificationToken: string;
       socialUserInfo: AppleSocialUserPrefill;
+    }
+  | {
+      /**
+       * provider-agnostic OAuth 휴대폰 매칭 1단계 — Apple/Google/Kakao/Naver 공통.
+       * 클라이언트는 `phoneVerificationToken` 을 들고 `/(auth)/oauth-phone-link?provider=...`
+       * 로 라우팅한다. Apple 회피·Kakao null 이름 PR 회귀를 막기 위해 기존 Apple kind 와
+       * 분리해 신규 kind 를 추가한다.
+       */
+      kind: 'requiresOAuthPhoneVerification';
+      phoneVerificationToken: string;
+      provider: SocialAuthProvider;
+      socialUserInfo: OAuthSocialUserPrefill;
     }
   | {
       kind: 'requiresDuplicateLoginConfirmation';
@@ -229,6 +279,40 @@ export type ApplePhoneVerifyOutcome =
     }
   | { kind: 'error'; message: string };
 
+/** provider-agnostic OAuth OTP 발송 결과 — Apple/Google/Kakao/Naver 공통. */
+export type OAuthPhoneSendOutcome =
+  | {
+      kind: 'sent';
+      challengeToken: string;
+      expiresInSeconds?: number;
+      resendCooldownSeconds?: number;
+      maskedPhone?: string;
+    }
+  | {
+      kind: 'cooldown';
+      message: string;
+      retryAfterSeconds?: number;
+      code?: string;
+    }
+  | { kind: 'error'; message: string; code?: string };
+
+/** provider-agnostic OAuth OTP 검증 결과. */
+export type OAuthPhoneVerifyOutcome =
+  | { kind: 'authenticated'; user: User }
+  | {
+      kind: 'requiresPhoneAccountSelection';
+      selectionToken: string;
+      /**
+       * provider 식별자 — Apple/Google/Kakao/Naver 4 종.
+       * 기존 {@link SocialLoginOutcome} 의 `requiresPhoneAccountSelection` 가 사용하는
+       * {@link SocialAuthProvider} 는 GOOGLE 을 포함하지 않으므로 본 outcome 에서는
+       * OAuth 전용 enum 을 사용한다.
+       */
+      provider: OAuthPhoneProvider;
+      message?: string;
+    }
+  | { kind: 'error'; message: string; code?: string };
+
 export type CredentialLoginOutcome =
   | { kind: 'authenticated'; user: User }
   | {
@@ -251,6 +335,7 @@ type SocialLoginDebugOutcome =
   | 'requiresSignup'
   | 'requiresPhoneAccountSelection'
   | 'requiresApplePhoneVerification'
+  | 'requiresOAuthPhoneVerification'
   | 'requiresDuplicateLoginConfirmation'
   | 'error';
 
@@ -592,6 +677,24 @@ function mapNativeSocialResponse(
       kind: 'requiresDuplicateLoginConfirmation',
       message: duplicateSignal.message,
       retryContext,
+    };
+  }
+
+  // provider-agnostic OAuth 휴대폰 매칭 1단계 — Kakao/Naver/Google 응답이
+  // `requiresOAuthPhoneVerification=true` + `phoneVerificationToken` 을 내려주면
+  // 신규 `/(auth)/oauth-phone-link?provider=...` 화면으로 라우팅한다.
+  // (BE Phase 3A 일반화 — Apple `requiresApplePhoneVerification` 분기와 별개)
+  if (response.requiresOAuthPhoneVerification && response.phoneVerificationToken) {
+    return {
+      kind: 'requiresOAuthPhoneVerification',
+      phoneVerificationToken: response.phoneVerificationToken,
+      provider,
+      socialUserInfo: {
+        providerUserId: response.socialUserInfo?.socialId ?? '',
+        email: response.socialUserInfo?.email ?? '',
+        name: response.socialUserInfo?.nickname ?? '',
+        isPrivateRelay: false,
+      },
     };
   }
 
@@ -1132,6 +1235,156 @@ export const AuthService = {
       kind: 'error',
       message: response.message ?? '인증번호 확인에 실패했습니다.',
     };
+  },
+
+  /**
+   * provider-agnostic OAuth 휴대폰 매칭 — OTP 발송 ({@code POST /api/v1/auth/oauth/phone/send}).
+   *
+   * <p>BE Phase 3A 일반화 엔드포인트. Apple/Google/Kakao/Naver 4 종 provider 가 동일 스키마로
+   * 호출한다. {@link sendApplePhoneOtp} 와는 별도로 신규 메서드로 분리하여 Apple 회피·Kakao
+   * null 이름 PR 회귀 위험을 차단한다.</p>
+   *
+   * @param provider OAuth provider 식별자 (APPLE/GOOGLE/KAKAO/NAVER)
+   * @param phoneVerificationToken `/login` (또는 OAuth 콜백) 응답으로 받은 단기 JWT
+   * @param phone 사용자 입력 휴대폰 번호 (raw 그대로 — BE 에서 정규화)
+   */
+  async sendOAuthPhoneOtp(
+    provider: OAuthPhoneProvider,
+    phoneVerificationToken: string,
+    phone: string,
+  ): Promise<OAuthPhoneSendOutcome> {
+    if (!provider) {
+      return { kind: 'error', message: 'OAuth provider 가 없습니다.' };
+    }
+    if (!phoneVerificationToken?.trim()) {
+      return {
+        kind: 'error',
+        message: '인증 세션이 만료되었습니다. 로그인 화면에서 다시 시도해 주세요.',
+      };
+    }
+    if (!phone?.trim()) {
+      return { kind: 'error', message: '휴대폰 번호를 입력해 주세요.' };
+    }
+
+    let response: OAuthPhoneSendResponse | undefined;
+    try {
+      response = await postOAuthSendPhoneOtp({
+        oauthProvider: provider,
+        phoneVerificationToken,
+        phone,
+      });
+    } catch (err: unknown) {
+      return { kind: 'error', message: readSignupErrorMessage(err) };
+    }
+
+    const mapped: OAuthPhoneSendMapped = mapOAuthPhoneSendResponse(response);
+    if (mapped.kind === 'sent') {
+      return {
+        kind: 'sent',
+        challengeToken: mapped.challengeToken,
+        expiresInSeconds: mapped.expiresInSeconds,
+        resendCooldownSeconds: mapped.resendCooldownSeconds,
+        maskedPhone: mapped.maskedPhone,
+      };
+    }
+    if (mapped.kind === 'cooldown') {
+      return {
+        kind: 'cooldown',
+        message: mapped.message,
+        retryAfterSeconds: mapped.retryAfterSeconds,
+        code: mapped.code,
+      };
+    }
+    return { kind: 'error', message: mapped.message, code: mapped.code };
+  },
+
+  /**
+   * provider-agnostic OAuth 휴대폰 매칭 — OTP 검증 + 매칭/로그인
+   * ({@code POST /api/v1/auth/oauth/phone/verify}).
+   *
+   * <p>BE 응답 분기:
+   *  - 정상 로그인(단수 매칭) → 토큰 저장 + {@code kind: 'authenticated'}
+   *  - 매칭 후보 2명+(역할 혼재) → {@code kind: 'requiresPhoneAccountSelection'}
+   *    (기존 {@code /(auth)/oauth-account-selection} 화면 재사용)
+   *  - 코드 불일치/만료/시도초과/세션만료 → {@code kind: 'error'} + {@code code}
+   * </p>
+   *
+   * <p>BE 응답의 {@code matchedAccount} 는 {@code userId/tenantId/role} 만 포함하므로,
+   * email·name 은 빈 문자열로 두고 후속 화면(navigateAfterAuthenticated 등)이 프로필을
+   * 별도 fetch 한다. UserRole 매핑은 {@link mapApiRoleToStoreRole} 재사용.</p>
+   *
+   * @param provider OAuth provider 식별자 (APPLE/GOOGLE/KAKAO/NAVER)
+   * @param phoneVerificationToken `/login` 응답으로 받은 단기 JWT
+   * @param challengeToken {@code /phone/send} 응답으로 받은 challenge 토큰
+   * @param otpCode 사용자 입력 6자리
+   */
+  async verifyOAuthPhoneOtp(
+    provider: OAuthPhoneProvider,
+    phoneVerificationToken: string,
+    challengeToken: string,
+    otpCode: string,
+  ): Promise<OAuthPhoneVerifyOutcome> {
+    if (!provider) {
+      return { kind: 'error', message: 'OAuth provider 가 없습니다.' };
+    }
+    if (!phoneVerificationToken?.trim()) {
+      return {
+        kind: 'error',
+        message: '인증 세션이 만료되었습니다. 로그인 화면에서 다시 시도해 주세요.',
+      };
+    }
+    if (!challengeToken?.trim()) {
+      return { kind: 'error', message: '인증번호를 다시 받아 주세요.' };
+    }
+    if (!/^\d{6}$/.test(otpCode)) {
+      return { kind: 'error', message: '인증번호 6자리를 입력해 주세요.' };
+    }
+
+    let response: OAuthPhoneVerifyResponse | undefined;
+    try {
+      response = await postOAuthVerifyPhoneOtp({
+        oauthProvider: provider,
+        phoneVerificationToken,
+        challengeToken,
+        otpCode,
+      });
+    } catch (err: unknown) {
+      return { kind: 'error', message: readSignupErrorMessage(err) };
+    }
+
+    const mapped: OAuthPhoneVerifyMapped = mapOAuthPhoneVerifyResponse(response, provider);
+
+    if (mapped.kind === 'authenticated') {
+      const role = mapApiRoleToStoreRole(mapped.matchedAccount.role);
+      const user: User = {
+        id: mapped.matchedAccount.userId,
+        email: '',
+        name: '',
+        nickname: '',
+        role,
+        tenantId: mapped.matchedAccount.tenantId ?? useTenantStore.getState().tenantId ?? undefined,
+      };
+      await applyAuthenticatedUser(
+        user,
+        {
+          accessToken: mapped.accessToken,
+          refreshToken: mapped.refreshToken,
+        },
+        pickSessionIdFromAuthPayload(response),
+      );
+      return { kind: 'authenticated', user };
+    }
+
+    if (mapped.kind === 'requiresPhoneAccountSelection') {
+      return {
+        kind: 'requiresPhoneAccountSelection',
+        selectionToken: mapped.selectionToken,
+        provider: mapped.provider,
+        message: mapped.message,
+      };
+    }
+
+    return { kind: 'error', message: mapped.message, code: mapped.code };
   },
 
   /**

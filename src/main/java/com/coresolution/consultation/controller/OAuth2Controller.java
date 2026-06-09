@@ -24,7 +24,9 @@ import com.coresolution.consultation.dto.OAuthExistingUserResolution;
 import com.coresolution.consultation.dto.OAuthPhoneAccountSelectionClaims;
 import com.coresolution.consultation.dto.SocialLoginResponse;
 import com.coresolution.consultation.dto.SocialUserInfo;
+import com.coresolution.consultation.dto.auth.OAuthPhoneVerificationClaims;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.auth.OAuthProvider;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.OAuth2Service;
@@ -87,7 +89,7 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:}}")
     private String naverRedirectUri;
 
-    @Value("${spring.security.oauth2.client.registration.naver.scope:name,email,mobile}")
+    @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
     private String naverScope;
 
     @Value("${spring.security.oauth2.client.callback.kakao-path:/api/auth/kakao/callback}")
@@ -207,6 +209,146 @@ public class OAuth2Controller extends BaseApiController {
             + URLEncoder.encode(selectionTenantId, StandardCharsets.UTF_8);
         String location = frontendUrl + "/auth/oauth2/callback?" + q;
         logOAuthRedirectLocationSummary("OAuth phone account selection", location);
+        return ResponseEntity.status(302).header("Location", location).build();
+    }
+
+    /**
+     * provider-agnostic OAuth 휴대폰 OTP 단계 진입 여부 판정.
+     *
+     * <p>2026-06-09 OAuth 휴대폰 SSOT 정책: OAuth 콜백 후 provider sub·전화·이메일·user_id 매칭이 모두 실패한
+     * 신규 가입 분기에서, {@link OAuth2Service#requiresPhoneOtp(OAuthProvider, SocialUserInfo)} 가
+     * {@code true} 인 provider 만 OTP 흐름으로 분기시킨다.</p>
+     *
+     * <p>Apple 흐름은 본 분기에 진입하지 않는다 — Apple 은 별도 컨트롤러
+     * ({@code AppleSignInController}) 와 {@code ApplePhoneVerificationService} alias 라우팅을 유지해
+     * FE PR #161 회귀를 방지한다. {@link OAuth2Controller} 는 Apple 콜백 자체를 처리하지 않지만, 향후 Apple
+     * provider 가 본 컨트롤러로 유입될 가능성을 대비해 명시적으로 차단한다.</p>
+     *
+     * @param oauth2Service provider 별 OAuth2Service
+     * @param socialUserInfo 정규화된 소셜 사용자 정보
+     * @return OTP 단계로 분기해야 하면 true
+     */
+    boolean shouldEnterOAuthPhoneOtpFlow(OAuth2Service oauth2Service,
+            SocialUserInfo socialUserInfo) {
+        if (oauth2Service == null || socialUserInfo == null) {
+            return false;
+        }
+        String providerName = oauth2Service.getProviderName();
+        OAuthProvider oauthProvider;
+        try {
+            oauthProvider = OAuthProvider.fromString(providerName);
+        } catch (IllegalArgumentException e) {
+            log.warn("OAuth phone OTP 분기: 알 수 없는 provider — hook 미진입: provider={}", providerName);
+            return false;
+        }
+        if (oauthProvider == OAuthProvider.APPLE) {
+            return false;
+        }
+        try {
+            return oauth2Service.requiresPhoneOtp(oauthProvider, socialUserInfo);
+        } catch (Exception e) {
+            log.warn("OAuth phone OTP 분기 hook 호출 실패 — false 처리: provider={}, cause={}",
+                providerName, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * provider-agnostic OAuth 휴대폰 OTP 단계 진입용 1단계 JWT 발급. tenantId 가 비어 있으면 null 반환.
+     *
+     * @param oauthProvider 발급 대상 provider
+     * @param socialUserInfo 정규화된 소셜 사용자 정보(prefill 용)
+     * @param tenantId 발급 시점 테넌트 ID(필수)
+     * @return 발급된 단기 JWT 또는 null
+     */
+    String issueOAuthPhoneVerificationToken(OAuthProvider oauthProvider,
+            SocialUserInfo socialUserInfo, String tenantId) {
+        if (oauthProvider == null || socialUserInfo == null
+                || tenantId == null || tenantId.isBlank()) {
+            return null;
+        }
+        try {
+            return jwtService.generateOAuthPhoneVerificationToken(
+                OAuthPhoneVerificationClaims.builder()
+                    .tenantId(tenantId)
+                    .oauthProvider(oauthProvider)
+                    .providerUserId(socialUserInfo.getProviderUserId())
+                    .email(socialUserInfo.getEmail())
+                    .name(socialUserInfo.getName())
+                    .nickname(socialUserInfo.getNickname())
+                    .build());
+        } catch (IllegalArgumentException e) {
+            log.warn("OAuth phone verification token 발급 실패: provider={}, cause={}",
+                oauthProvider, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * OAuth 콜백에서 신규 가입 분기 직전, OTP 단계 진입용 FE 리다이렉트 응답을 생성한다.
+     *
+     * <p>리다이렉트 URL 형식:
+     * {@code {frontendUrl}/auth/oauth-phone-link?success=true&oauthPhoneVerification=required
+     * &phoneVerificationToken=...&provider=...&tenantId=...}</p>
+     *
+     * <p>토큰 발급에 실패하면 기존 OAuth 에러 흐름과 동일하게 {@code /login?error=...} 로 fallback 한다.</p>
+     *
+     * @param request HTTP 요청
+     * @param session HTTP 세션
+     * @param state OAuth state
+     * @param providerUpper provider 대문자 문자열(KAKAO/NAVER/GOOGLE)
+     * @param socialUserInfo 정규화된 소셜 사용자 정보
+     * @return 302 redirect 응답
+     */
+    private ResponseEntity<?> redirectOAuthPhoneVerification(HttpServletRequest request,
+            HttpSession session, String state, String providerUpper, SocialUserInfo socialUserInfo) {
+        String verificationTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (verificationTenantId == null || verificationTenantId.isBlank()) {
+            verificationTenantId = resolveTenantIdForRedirect(session, state);
+        }
+        String redirectTenantId = resolveTenantIdForRedirect(session, state);
+        if (redirectTenantId == null || redirectTenantId.isBlank()) {
+            redirectTenantId = verificationTenantId;
+        }
+        String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+        if (verificationTenantId == null || verificationTenantId.isBlank()) {
+            return ResponseEntity.status(302)
+                .header("Location",
+                    frontendUrl + "/login?error="
+                        + URLEncoder.encode(OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
+                            StandardCharsets.UTF_8)
+                        + "&provider=" + URLEncoder.encode(providerUpper, StandardCharsets.UTF_8))
+                .build();
+        }
+        OAuthProvider oauthProvider;
+        try {
+            oauthProvider = OAuthProvider.fromString(providerUpper);
+        } catch (IllegalArgumentException e) {
+            log.warn("OAuth phone verification redirect: 알 수 없는 provider={}", providerUpper);
+            return ResponseEntity.status(302)
+                .header("Location",
+                    frontendUrl + "/login?error="
+                        + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR,
+                            StandardCharsets.UTF_8)
+                        + "&provider=" + URLEncoder.encode(providerUpper, StandardCharsets.UTF_8))
+                .build();
+        }
+        String token = issueOAuthPhoneVerificationToken(oauthProvider, socialUserInfo, verificationTenantId);
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.status(302)
+                .header("Location",
+                    frontendUrl + "/login?error="
+                        + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR,
+                            StandardCharsets.UTF_8)
+                        + "&provider=" + URLEncoder.encode(providerUpper, StandardCharsets.UTF_8))
+                .build();
+        }
+        String q = "success=true&oauthPhoneVerification=required&phoneVerificationToken="
+            + URLEncoder.encode(token, StandardCharsets.UTF_8) + "&provider="
+            + URLEncoder.encode(providerUpper, StandardCharsets.UTF_8) + "&tenantId="
+            + URLEncoder.encode(verificationTenantId, StandardCharsets.UTF_8);
+        String location = frontendUrl + "/auth/oauth-phone-link?" + q;
+        logOAuthRedirectLocationSummary("OAuth phone verification", location);
         return ResponseEntity.status(302).header("Location", location).build();
     }
 
@@ -1690,6 +1832,9 @@ public class OAuth2Controller extends BaseApiController {
                             response = SocialLoginResponse.builder().success(false)
                                     .message(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND).build();
                         }
+                    } else if (shouldEnterOAuthPhoneOtpFlow(naverService, socialUserInfo)) {
+                        return redirectOAuthPhoneVerification(request, session, state, "NAVER",
+                            socialUserInfo);
                     } else {
                         response = SocialLoginResponse.builder().success(true).requiresSignup(true)
                                 .socialUserInfo(socialUserInfo).build();
@@ -1786,6 +1931,9 @@ public class OAuth2Controller extends BaseApiController {
                                 response = SocialLoginResponse.builder().success(false)
                                         .message(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND).build();
                             }
+                        } else if (shouldEnterOAuthPhoneOtpFlow(naverService, socialUserInfo)) {
+                            return redirectOAuthPhoneVerification(request, session, state, "NAVER",
+                                socialUserInfo);
                         } else {
                             response = SocialLoginResponse.builder().success(true)
                                     .requiresSignup(true).socialUserInfo(socialUserInfo).build();
@@ -2481,6 +2629,10 @@ public class OAuth2Controller extends BaseApiController {
                                 OAuth2UserFacingMessages.ERR_SOCIAL_ALREADY_LINKED_TO_OTHER_ACCOUNT)).build();
                     }
                     response = buildSocialLoginResponseForMyPageOAuthLink(sessionUser, socialUserInfo);
+                } else if (existingUserId == null
+                        && shouldEnterOAuthPhoneOtpFlow(kakaoService, socialUserInfo)) {
+                    return redirectOAuthPhoneVerification(request, session, state, "KAKAO",
+                        socialUserInfo);
                 } else if (existingUserId == null) {
                     response =
                             SocialLoginResponse.builder().success(false).message(OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED)
@@ -3144,6 +3296,25 @@ public class OAuth2Controller extends BaseApiController {
             Long existingUserId = resolution.getExistingUserId();
             if (existingUserId != null) {
                 linkSocialAccountSafely(oauth2Service, existingUserId, socialUserInfo);
+            }
+
+            if (existingUserId == null && shouldEnterOAuthPhoneOtpFlow(oauth2Service, socialUserInfo)) {
+                OAuthProvider oauthProvider = OAuthProvider.fromString(oauth2Service.getProviderName());
+                String phoneVerificationToken = issueOAuthPhoneVerificationToken(oauthProvider,
+                    socialUserInfo, tenantIdForNative);
+                if (phoneVerificationToken != null && !phoneVerificationToken.isBlank()) {
+                    Map<String, Object> otpResponse = new HashMap<>();
+                    otpResponse.put("success", true);
+                    otpResponse.put("requiresOAuthPhoneVerification", true);
+                    otpResponse.put("phoneVerificationToken", phoneVerificationToken);
+                    otpResponse.put("provider", provider);
+                    otpResponse.put("tenantId", tenantIdForNative);
+                    otpResponse.put("message", OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED);
+                    return ResponseEntity.ok(otpResponse);
+                }
+                log.warn(
+                    "social-login: OAuth phone verification token 발급 실패 — requiresSignup fallback (provider={})",
+                    provider);
             }
 
             if (existingUserId == null) {

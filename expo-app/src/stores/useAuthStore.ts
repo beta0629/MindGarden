@@ -13,6 +13,7 @@ import { resolveStoreRoleFromAccessToken } from '@/utils/adminRole';
 import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
 import { syncTenantStoreFromAccessToken } from '@/utils/tenantJwtSync';
 import { clearJsessionId, hydrateJsessionCacheFromSecureStore } from '@/utils/sessionCookie';
+import { buildLoginSuccessToastPayload } from '@/utils/currentAccountDisplay';
 
 const SECURE_KEY_ACCESS_TOKEN = 'mg_access_token';
 const SECURE_KEY_REFRESH_TOKEN = 'mg_refresh_token';
@@ -178,6 +179,19 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
           _hasHydrated: true,
         });
+        /**
+         * 로그인 직후 1회만 노출(여러 계정 보유 시 동기화 오해 방지).
+         * token refresh 경로(`updateTokens`)에서는 호출하지 않는다.
+         * 컴포넌트→스토어 순환 import 방지를 위해 동적 import 사용.
+         */
+        try {
+          const { showInAppToast } = await import('../components/organisms/InAppNotificationToast');
+          showInAppToast(buildLoginSuccessToastPayload(syncedUser));
+        } catch (toastError) {
+          const message = toastError instanceof Error ? toastError.message : String(toastError);
+          // eslint-disable-next-line no-console -- 토스트 모듈 로드 실패 진단(비치명)
+          console.warn('[Auth] login toast failed', message);
+        }
       },
 
       logout: async () => {

@@ -21,6 +21,7 @@ import { useTheme } from '@/theme';
 import { fontSize as fontSizeTokens } from '@/theme/typography';
 import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { LineTrendChart } from '@/components/molecules/LineTrendChart';
+import { AccountMismatchHint } from '@/components/molecules/AccountMismatchHint';
 import { useMoodJournals, useMoodStats } from '@/api/hooks/useMoodJournal';
 import {
   WEEKDAYS,
@@ -69,6 +70,18 @@ export default function MoodJournalIndex() {
   const { data: entries } = useMoodJournals(monthKey);
   const { data: stats } = useMoodStats(statPeriod);
   const calDays = useMemo(() => getCalendarDays(calYear, calMonth), [calYear, calMonth]);
+  /**
+   * 캘린더 월 + 추이 기간 모두 0건일 때만 계정 안내 노출 (오해 방지가 필요한 시점).
+   * `entries`/`stats` 가 아직 로딩 중(undefined)이면 노출하지 않는다.
+   */
+  const hasNoMoodData = useMemo(() => {
+    if (entries === undefined || stats === undefined) {
+      return false;
+    }
+    const entriesEmpty = Object.keys(entries ?? {}).length === 0;
+    const statsEmpty = (stats ?? []).every((s) => s.value === 0);
+    return entriesEmpty && statsEmpty;
+  }, [entries, stats]);
 
   const hapticFeedback = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -298,6 +311,13 @@ export default function MoodJournalIndex() {
           </Pressable>
         </Animated.View>
 
+        {hasNoMoodData ? (
+          <AccountMismatchHint
+            onPressOpenAccount={() => router.push('/(client)/(more)')}
+            style={styles.accountHint}
+          />
+        ) : null}
+
         {/* 감정 추이 차트 */}
         <Animated.View
           entering={FadeInDown.delay(300).springify()}
@@ -430,4 +450,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   bottomSpacer: { height: 32 },
+  accountHint: {
+    marginHorizontal: 0,
+  },
 });

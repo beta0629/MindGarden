@@ -267,7 +267,12 @@ public class User extends BaseEntity {
     @Builder.Default
     private Boolean isPasswordChanged = true; // 기본값은 true (기존 사용자는 이미 비밀번호 변경 완료)
     
-    @Column(name = "profile_image_url", columnDefinition = "LONGTEXT")
+    /**
+     * 프로필 이미지 URL — base64 dataURI 금지, 절대/상대 URL 만 저장.
+     * 컬럼 폭 500 자 제한 (V20260609_002 Flyway 마이그레이션으로 longtext → varchar(500) 축소).
+     * 운영 DB 사전 검증: CHAR_LENGTH > 500 인 row 0건 (2026-06-09 운영 스캔).
+     */
+    @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
     
     @Column(name = "memo", columnDefinition = "TEXT")

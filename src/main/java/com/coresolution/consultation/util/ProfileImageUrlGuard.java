@@ -32,8 +32,12 @@ public final class ProfileImageUrlGuard {
     public static final String MSG_TOO_LONG =
         "프로필 이미지 URL 이 너무 깁니다.";
 
-    /** 허용 URL 최대 길이 (bytes 가 아니라 char 수). users.profile_image_url longtext 컬럼에 길게 들어가지 않도록 강제. */
-    public static final int MAX_URL_LENGTH = 2048;
+    /**
+     * 허용 URL 최대 길이 (bytes 가 아니라 char 수).
+     * V20260609_002 Flyway 마이그레이션으로 {@code users.profile_image_url} 컬럼을 longtext → varchar(500) 으로
+     * 축소했기 때문에, 입력 가드도 동일 한도(500) 로 정렬해 DB 인서트 실패 전에 400 으로 거부한다.
+     */
+    public static final int MAX_URL_LENGTH = 500;
 
     /** 응답 가드 임계치 — 이 길이를 초과하면 응답에서는 null 로 치환해 폭증을 막는다. */
     public static final int OUTBOUND_WARN_THRESHOLD = 50_000;

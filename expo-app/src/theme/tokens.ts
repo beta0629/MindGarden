@@ -75,6 +75,31 @@ const COMMON_COLORS = {
    * 보더 색은 `warning`과 동일 역할로 `theme.colors.warning` 사용.
    */
   scheduleCardInProgressBackground: '#FAF3E8',
+  /**
+   * 로그인 화면 파스텔 배경 stop — warm 톤 (옐로우 35%, #FFF6E8).
+   * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md §1.2.
+   * 웹 대응 토큰: `--mg-login-bg-warm` (frontend/src/styles/unified-design-tokens.css).
+   */
+  loginBgWarm: '#FFF6E8',
+  /**
+   * 로그인 화면 파스텔 배경 stop — cool 톤 (틸 25%, #EFF3F0).
+   * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md §1.2.
+   * 웹 대응 토큰: `--mg-login-bg-cool`.
+   */
+  loginBgCool: '#EFF3F0',
+  /**
+   * 로그인 화면 파스텔 배경 stop — 중간 중성 (#F4F1EA, warm↔cool 브리지).
+   * SSOT: 스펙 §1.3 LinearGradient `colors[2]`.
+   */
+  loginBgBridge: '#F4F1EA',
+  /**
+   * V2 §M.1 B2 Breathing Circle — radial gradient orb (호흡 원).
+   * 중심 → 외곽 페이드아웃 3 stop. 외부 알파 0 으로 부드러운 halo.
+   * SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md §M.1.3.
+   */
+  loginOrbCore: '#FFFFFF',
+  loginOrbMid: '#F5F0E8',
+  loginOrbEdge: '#E0DACF',
 } as const;
 
 /** 그레이 스케일 (토큰화) */

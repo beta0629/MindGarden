@@ -299,6 +299,21 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       kakaoNativeAppKey: resolveKakaoAppKeyForNative(),
       /** EXPO_PUBLIC_SOCIAL_LOGIN_DEBUG=1 이면 릴리스·프리뷰에서도 AuthService 소셜 로그인 구조화 진단 로그가 켜집니다(adb logcat / Metro에서 `[AuthService][social-login]` 필터). */
       socialLoginDebug: process.env.EXPO_PUBLIC_SOCIAL_LOGIN_DEBUG === '1',
+      /**
+       * Google OAuth 2.0 Client IDs — `expo-auth-session/providers/google` 가 platform 별로 분기.
+       * <p>저장소에 평문 커밋 금지. EAS 시크릿 또는 로컬 `.env` 로 주입한다.
+       *  - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`     : OAuth 2.0 Web Client (FE 검증·Expo Proxy 폴백)
+       *  - `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`     : OAuth 2.0 iOS Client (Bundle ID `com.mindgarden.MindGardenMobile`)
+       *  - `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` : OAuth 2.0 Android Client (Package `com.mindgardenmobile`)</p>
+       *
+       * <p>키가 모두 비어 있으면 `useGoogleAuthRequest()` 가 `notConfigured` 분기로 빠져
+       * 사용자에게 "Google 로그인 설정이 누락되어 있습니다" 메시지를 노출하므로 빌드는 계속 진행한다.</p>
+       */
+      googleClientId: {
+        web: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
+        ios: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '',
+        android: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '',
+      },
     },
   };
 };

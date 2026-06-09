@@ -69,10 +69,33 @@ export const textStyles = {
     fontSize: fontSize.sm,
     lineHeight: fontSize.sm * lineHeight.tight,
   },
+  /**
+   * SNS 로그인·CTA 버튼 텍스트 — 카카오/네이버/Apple 통일 (사용자 결정 2026-06-10).
+   * fontSize 16 / semibold / lineHeight 22 / letterSpacing -0.2 (한글 자간).
+   */
   button: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.base,
-    lineHeight: fontSize.base * lineHeight.tight,
+    lineHeight: 22,
+    letterSpacing: -0.2,
+  },
+  /**
+   * SNS 영역 구분선 가운데 라벨 ("또는 다음으로 로그인") — 웹 톤 정합.
+   * 폰트 사이즈 13 (sm 14 와 caption xs 12 의 중간 — 시각 위계 유지)·옅은 회색은 컴포넌트가 결정.
+   */
+  dividerCaption: {
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  /**
+   * 인증 화면 하단 링크 ("회원가입" / "비밀번호 찾기") — 웹 톤 정합.
+   * fontSize 14 / medium / lineHeight 20.
+   */
+  authLink: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.sm,
+    lineHeight: 20,
   },
 } as const;
 

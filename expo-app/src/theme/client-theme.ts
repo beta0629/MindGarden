@@ -33,6 +33,18 @@ export interface AppThemeColors {
   readonly modalBackdrop: string;
   readonly modalLoadingOverlay: string;
   readonly scheduleCardInProgressBackground: string;
+  /** 로그인 화면 파스텔 배경 — warm stop (#FFF6E8) */
+  readonly loginBgWarm: string;
+  /** 로그인 화면 파스텔 배경 — cool stop (#EFF3F0) */
+  readonly loginBgCool: string;
+  /** 로그인 화면 파스텔 배경 — 중간 중성 (#F4F1EA) */
+  readonly loginBgBridge: string;
+  /** V2 §M.1 B2 Breathing Circle — orb radial gradient 중심 (#FFFFFF) */
+  readonly loginOrbCore: string;
+  /** V2 §M.1 B2 Breathing Circle — orb radial gradient 중간 (#F5F0E8) */
+  readonly loginOrbMid: string;
+  /** V2 §M.1 B2 Breathing Circle — orb radial gradient 외곽 (#E0DACF, halo 페이드아웃) */
+  readonly loginOrbEdge: string;
   readonly gray: typeof colors.gray;
 }
 

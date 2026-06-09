@@ -16,6 +16,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import java.util.List;
 import java.util.ArrayList;
@@ -90,10 +91,10 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public AuthResponse authenticate(String email, String password) {
-        log.info("🔐 JWT 토큰 기반 로그인 시도: email={}", email);
+        log.info("🔐 JWT 토큰 기반 로그인 시도: email={}", EmailLogMasking.maskForLog(email));
         try {
             // Spring Security 인증
-            log.debug("🔐 Spring Security 인증 시작: email={}", email);
+            log.debug("🔐 Spring Security 인증 시작: email={}", EmailLogMasking.maskForLog(email));
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
             );
@@ -106,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
                 
                 // 임시 비밀번호로 로그인 차단 (isPasswordChanged = false인 경우)
                 if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
-                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: loginPrincipal={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", email, user.getId());
+                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: loginPrincipal={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", EmailLogMasking.maskForLog(email), user.getId());
                     return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
                 }
                 
@@ -155,7 +156,7 @@ public class AuthServiceImpl implements AuthService {
                         .accessibleTenants(accessibleTenants)
                         .responseType("tenant_selection_required");
                     
-                    log.info("✅ 멀티 테넌트 사용자 로그인: email={}, tenantCount={}", email, accessibleTenants.size());
+                    log.info("✅ 멀티 테넌트 사용자 로그인: email={}, tenantCount={}", EmailLogMasking.maskForLog(email), accessibleTenants.size());
                 } else {
                     log.info("✅ JWT 토큰 기반 로그인 성공: userId={}, tenantId={}, branchId={}", 
                         user.getId(), user.getTenantId(), 
@@ -285,7 +286,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse authenticateWithSession(String email, String password, String sessionId, String clientIp, String userAgent) {
         try {
-            log.info("🔐 세션 기반 로그인 시도: email={}, sessionId={}", email, sessionId);
+            log.info("🔐 세션 기반 로그인 시도: email={}, sessionId={}", EmailLogMasking.maskForLog(email), sessionId);
             
             // 먼저 중복 세션 정리 (같은 sessionId를 가진 중복 세션 삭제)
             log.info("🧹 중복 세션 정리 시작: sessionId={}", sessionId);
@@ -305,7 +306,7 @@ public class AuthServiceImpl implements AuthService {
             }
             
             // Spring Security 인증
-            log.info("🔐 Spring Security 인증 시도 시작: email={}", email);
+            log.info("🔐 Spring Security 인증 시도 시작: email={}", EmailLogMasking.maskForLog(email));
             Authentication authentication = null;
             try {
                 authentication = authenticationManager.authenticate(
@@ -313,48 +314,48 @@ public class AuthServiceImpl implements AuthService {
                 );
                 log.info("🔐 Spring Security 인증 완료: authenticated={}", authentication != null && authentication.isAuthenticated());
             } catch (Exception e) {
-                log.error("❌ Spring Security 인증 실패: email={}, error={}, class={}", email, e.getMessage(), e.getClass().getName(), e);
+                log.error("❌ Spring Security 인증 실패: email={}, error={}, class={}", EmailLogMasking.maskForLog(email), e.getMessage(), e.getClass().getName(), e);
                 throw e;
             }
             
             if (authentication != null && authentication.isAuthenticated()) {
-                log.info("🔐 Spring Security 인증 성공: email={}", email);
+                log.info("🔐 Spring Security 인증 성공: email={}", EmailLogMasking.maskForLog(email));
                 
                 // 사용자 정보 조회
-                log.info("👤 사용자 정보 조회 시작: loginPrincipal={}", email);
+                log.info("👤 사용자 정보 조회 시작: loginPrincipal={}", EmailLogMasking.maskForLog(email));
                 User user = userService.findByLoginPrincipal(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
                 
                 log.info("👤 사용자 정보 조회 완료: userId={}, email={}, tenantId={}, role={}", 
-                    user.getId(), user.getEmail(), user.getTenantId(), user.getRole());
+                    user.getId(), EmailLogMasking.maskForLog(user.getEmail()), user.getTenantId(), user.getRole());
                 
                 // 임시 비밀번호로 로그인 차단 (isPasswordChanged = false인 경우)
                 if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
-                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: email={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", email, user.getId());
+                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: email={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", EmailLogMasking.maskForLog(email), user.getId());
                     return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
                 }
                 
                 // 입점사(코어솔루션 테넌트)만 접근 가능 - Trinity 회사 직원(ADMIN/OPS 역할) 제외
-                log.info("🔍 테넌트 접근 검증 시작: email={}, tenantId={}", email, user.getTenantId());
+                log.info("🔍 테넌트 접근 검증 시작: email={}, tenantId={}", EmailLogMasking.maskForLog(email), user.getTenantId());
                 validateCoreSolutionTenantAccess(user);
-                log.info("✅ 테넌트 접근 검증 완료: email={}", email);
+                log.info("✅ 테넌트 접근 검증 완료: email={}", EmailLogMasking.maskForLog(email));
                 
                 // 중복 로그인 체크 (설정에 따라 활성화/비활성화)
                 if (duplicateLoginCheckEnabled) {
                     boolean hasDuplicateLogin = checkDuplicateLogin(user);
                     
                     if (hasDuplicateLogin) {
-                        log.warn("⚠️ 중복 로그인 감지: email={}", email);
+                        log.warn("⚠️ 중복 로그인 감지: email={}", EmailLogMasking.maskForLog(email));
                         
                         if (askUserConfirmation) {
                             // 사용자에게 기존 세션 종료 확인 요청 (운영 반영 게이트 §17·§1.3 — 하드코딩 제거)
-                            log.info("🔔 사용자에게 기존 세션 종료 확인 요청: email={}", email);
+                            log.info("🔔 사용자에게 기존 세션 종료 확인 요청: email={}", EmailLogMasking.maskForLog(email));
                             return AuthResponse.duplicateLoginConfirmation(
                                 SessionManagementConstants.DUPLICATE_LOGIN_MESSAGE);
                         } else if (SessionManagementConstants.TERMINATE_EXISTING_SESSION) {
                             // 기존 세션들 정리
                             cleanupUserSessions(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
-                            log.info("🔄 기존 세션 정리 완료: email={}", email);
+                            log.info("🔄 기존 세션 정리 완료: email={}", EmailLogMasking.maskForLog(email));
                         }
                     }
                 } else {
@@ -394,10 +395,10 @@ public class AuthServiceImpl implements AuthService {
                         .accessibleTenants(accessibleTenants)
                         .responseType("tenant_selection_required");
                     
-                    log.info("✅ 멀티 테넌트 사용자 로그인: email={}, tenantCount={}", email, accessibleTenants.size());
+                    log.info("✅ 멀티 테넌트 사용자 로그인: email={}, tenantCount={}", EmailLogMasking.maskForLog(email), accessibleTenants.size());
                 } else {
                     log.info("✅ 세션 기반 로그인 성공: email={}, sessionId={}", 
-                        email, sessionId);
+                        EmailLogMasking.maskForLog(email), sessionId);
                 }
                 
                 return responseBuilder.build();
@@ -406,21 +407,21 @@ public class AuthServiceImpl implements AuthService {
                 return AuthResponse.failure("인증에 실패했습니다.");
             }
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            log.warn("❌ 인증 실패 (자격 증명 오류): email={}", email);
+            log.warn("❌ 인증 실패 (자격 증명 오류): email={}", EmailLogMasking.maskForLog(email));
             return AuthResponse.failure("아이디 또는 비밀번호가 올바르지 않습니다.");
         } catch (org.springframework.security.core.userdetails.UsernameNotFoundException e) {
-            log.warn("❌ 사용자를 찾을 수 없음: email={}, error={}", email, e.getMessage());
+            log.warn("❌ 사용자를 찾을 수 없음: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage());
             return AuthResponse.failure("아이디 또는 비밀번호가 올바르지 않습니다.");
         } catch (IllegalArgumentException e) {
-            log.error("❌ 잘못된 인수: email={}, error={}", email, e.getMessage());
+            log.error("❌ 잘못된 인수: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage());
             // IllegalArgumentException은 그대로 전달하여 GlobalExceptionHandler에서 400으로 처리되도록 함
             throw e;
         } catch (RuntimeException e) {
-            log.error("❌ 런타임 오류: email={}, error={}", email, e.getMessage(), e);
+            log.error("❌ 런타임 오류: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage(), e);
             // RuntimeException도 그대로 전달
             throw e;
         } catch (Exception e) {
-            log.error("❌ 세션 기반 로그인 실패: email={}, error={}, class={}", email, e.getMessage(), e.getClass().getName(), e);
+            log.error("❌ 세션 기반 로그인 실패: email={}, error={}, class={}", EmailLogMasking.maskForLog(email), e.getMessage(), e.getClass().getName(), e);
             
             // 자격 증명 실패인 경우 사용자 친화적인 메시지 반환
             if (e.getMessage() != null && e.getMessage().contains("자격 증명에 실패하였습니다")) {
@@ -479,7 +480,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void forgotPassword(String email) {
         try {
-            log.info("비밀번호 재설정 요청: email={}", email);
+            log.info("비밀번호 재설정 요청: email={}", EmailLogMasking.maskForLog(email));
             
             // 사용자 존재 확인
             User user = userService.findByEmail(email)
@@ -491,10 +492,10 @@ public class AuthServiceImpl implements AuthService {
             // 비밀번호 재설정 이메일 발송
             sendPasswordResetEmail(email, user.getName(), resetToken);
             
-            log.info("비밀번호 재설정 이메일 발송 완료: email={}", email);
+            log.info("비밀번호 재설정 이메일 발송 완료: email={}", EmailLogMasking.maskForLog(email));
             
         } catch (Exception e) {
-            log.error("비밀번호 재설정 이메일 발송 실패: email={}, error={}", email, e.getMessage(), e);
+            log.error("비밀번호 재설정 이메일 발송 실패: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage(), e);
         }
     }
     
@@ -522,7 +523,7 @@ public class AuthServiceImpl implements AuthService {
             // 비밀번호 재설정 완료 이메일 발송
             sendPasswordResetSuccessEmail(email, user.getName());
             
-            log.info("비밀번호 재설정 완료: email={}", email);
+            log.info("비밀번호 재설정 완료: email={}", EmailLogMasking.maskForLog(email));
             
         } catch (Exception e) {
             log.error("비밀번호 재설정 실패: token={}, error={}", token, e.getMessage(), e);
@@ -540,7 +541,7 @@ public class AuthServiceImpl implements AuthService {
      */
     private void validateCoreSolutionTenantAccess(User user) {
         log.debug("🔍 입점사 접근 검증 시작: email={}, role={}, tenantId={}", 
-            user.getEmail(), user.getRole(), user.getTenantId());
+            EmailLogMasking.maskForLog(user.getEmail()), user.getRole(), user.getTenantId());
         
         // tenant_id가 NULL이거나 비어있는 경우 Trinity 직원으로 간주
         // tenant_id가 있는 경우는 테넌트 관리자로 간주하여 허용
@@ -562,7 +563,7 @@ public class AuthServiceImpl implements AuthService {
                 
                 if (hasAdminOrOpsRole) {
                     log.warn("❌ 메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
-                        user.getEmail(), user.getRole());
+                        EmailLogMasking.maskForLog(user.getEmail()), user.getRole());
                     throw new IllegalArgumentException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
                 }
             } else {
@@ -570,16 +571,16 @@ public class AuthServiceImpl implements AuthService {
                 log.debug("🔍 SecurityContext에 인증 정보 없음, User 엔티티의 role로 확인: role={}", user.getRole());
                 if (user.getRole() != null && (user.getRole().name().equals("ADMIN") || user.getRole().name().equals("OPS"))) {
                     log.warn("❌ 메인 웹앱 로그인 거부: Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. email={}, role={}", 
-                        user.getEmail(), user.getRole());
+                        EmailLogMasking.maskForLog(user.getEmail()), user.getRole());
                     throw new IllegalArgumentException("Trinity 회사 직원은 입점사 전용 시스템에 접근할 수 없습니다. Ops Portal(ops.e-trinity.co.kr)을 사용해주세요.");
                 }
             }
         } else {
             // tenant_id가 있는 경우 테넌트 관리자로 간주하여 허용
-            log.debug("✅ 테넌트 관리자 접근 허용: email={}, tenantId={}", user.getEmail(), user.getTenantId());
+            log.debug("✅ 테넌트 관리자 접근 허용: email={}, tenantId={}", EmailLogMasking.maskForLog(user.getEmail()), user.getTenantId());
         }
         
-        log.debug("✅ 입점사 접근 허용: email={}, tenantId={}", user.getEmail(), user.getTenantId());
+        log.debug("✅ 입점사 접근 허용: email={}, tenantId={}", EmailLogMasking.maskForLog(user.getEmail()), user.getTenantId());
     }
     
     /**
@@ -705,14 +706,14 @@ public class AuthServiceImpl implements AuthService {
      */
     private void sendPasswordResetEmail(String email, String name, String resetToken) {
         try {
-            log.info("비밀번호 재설정 이메일 발송: email={}", email);
+            log.info("비밀번호 재설정 이메일 발송: email={}", EmailLogMasking.maskForLog(email));
             
             // EmailUtil을 사용하여 이메일 발송
             String resetLink = "https://mindgarden.com/reset-password?token=" + resetToken;
             com.coresolution.core.util.EmailUtil.sendPasswordResetEmail(emailService, email, name, resetLink);
             
         } catch (Exception e) {
-            log.error("비밀번호 재설정 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
+            log.error("비밀번호 재설정 이메일 발송 중 오류: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage(), e);
         }
     }
     
@@ -721,14 +722,14 @@ public class AuthServiceImpl implements AuthService {
      */
     private void sendPasswordResetSuccessEmail(String email, String name) {
         try {
-            log.info("비밀번호 재설정 완료 이메일 발송: email={}", email);
+            log.info("비밀번호 재설정 완료 이메일 발송: email={}", EmailLogMasking.maskForLog(email));
             
             // EmailUtil을 사용하여 이메일 발송
             String message = "비밀번호가 성공적으로 변경되었습니다.";
             com.coresolution.core.util.EmailUtil.sendSystemNotificationEmail(emailService, email, name, message);
             
         } catch (Exception e) {
-            log.error("비밀번호 재설정 완료 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
+            log.error("비밀번호 재설정 완료 이메일 발송 중 오류: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage(), e);
         }
     }
 }

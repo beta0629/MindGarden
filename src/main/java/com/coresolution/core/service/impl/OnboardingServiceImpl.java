@@ -14,6 +14,7 @@ import com.coresolution.consultation.support.TenantOnboardingSalaryAndFinancialS
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
@@ -109,7 +110,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             RiskLevel riskLevel, String checklistJson, String businessType) {
 
         log.info("온보딩 요청 생성: tenantId={}, tenantName={}, requestedBy={}", tenantId, tenantName,
-                requestedBy);
+                EmailLogMasking.maskForLog(requestedBy));
 
         RiskLevel defaultRiskLevel = getDefaultRiskLevel();
         RiskLevel finalRiskLevel = riskLevel != null ? riskLevel : defaultRiskLevel;
@@ -430,7 +431,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         if (status == OnboardingStatus.APPROVED) {
-            log.info("테넌트 생성 진행: requestedBy={}, tenantName={}", request.getRequestedBy(),
+            log.info("테넌트 생성 진행: requestedBy={}, tenantName={}", EmailLogMasking.maskForLog(request.getRequestedBy()),
                     request.getTenantName());
 
             String tenantIdValue = request.getTenantId();
@@ -462,7 +463,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
                         tenantRepository.save(deletedTenant);
 
-                        log.info("삭제된 테넌트 복구: tenantId={}, email={}, name={}", tenantIdValue, email,
+                        log.info("삭제된 테넌트 복구: tenantId={}, email={}, name={}", tenantIdValue, EmailLogMasking.maskForLog(email),
                                 deletedTenant.getName());
                     }
                 }
@@ -958,14 +959,14 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional(readOnly = true)
     public List<OnboardingRequest> findByEmail(String email) {
-        log.debug("이메일로 온보딩 요청 조회: email={}", email);
+        log.debug("이메일로 온보딩 요청 조회: email={}", EmailLogMasking.maskForLog(email));
         return repository.findByRequestedByAndIsDeletedFalseOrderByCreatedAtDesc(email);
     }
 
     @Override
     @Transactional(readOnly = true)
     public OnboardingRequest findByIdAndEmail(Long id, String email) {
-        log.debug("ID와 이메일로 온보딩 요청 조회: id={}, email={}", id, email);
+        log.debug("ID와 이메일로 온보딩 요청 조회: id={}, email={}", id, EmailLogMasking.maskForLog(email));
         OnboardingRequest request = repository.findByIdAndRequestedByAndIsDeletedFalse(id, email);
         if (request == null) {
             throw new IllegalArgumentException(
@@ -977,10 +978,10 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional(readOnly = true)
     public OnboardingService.EmailDuplicateCheckResult checkEmailDuplicate(String email) {
-        log.info("이메일 중복 확인 (온보딩 요청 단계): email={}", email);
+        log.info("이메일 중복 확인 (온보딩 요청 단계): email={}", EmailLogMasking.maskForLog(email));
 
         if (email == null || email.trim().isEmpty()) {
-            log.warn("이메일이 비어있음: email={}", email);
+            log.warn("이메일이 비어있음: email={}", EmailLogMasking.maskForLog(email));
             return new OnboardingService.EmailDuplicateCheckResult(false, true, "이메일을 입력해주세요.",
                     null);
         }
@@ -990,7 +991,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         List<OnboardingRequest> pendingRequests =
                 repository.findPendingByRequestedByIgnoreCase(normalizedEmail);
         log.info("대기 중인 온보딩 요청 확인: pendingCount={}, email={}", pendingRequests.size(),
-                normalizedEmail);
+                EmailLogMasking.maskForLog(normalizedEmail));
 
         if (!pendingRequests.isEmpty()) {
             OnboardingRequest latestRequest = pendingRequests.get(0);
@@ -1014,14 +1015,14 @@ public class OnboardingServiceImpl implements OnboardingService {
                 statusName = status.name();
             }
 
-            log.info("이메일 중복: 대기 중인 온보딩 요청 존재 - email={}, status={}, message={}", normalizedEmail,
+            log.info("이메일 중복: 대기 중인 온보딩 요청 존재 - email={}, status={}, message={}", EmailLogMasking.maskForLog(normalizedEmail),
                     status, statusMessage);
 
             return new OnboardingService.EmailDuplicateCheckResult(true, false, statusMessage,
                     statusName);
         }
 
-        log.info("이메일 사용 가능 (온보딩 요청 단계): email={}", normalizedEmail);
+        log.info("이메일 사용 가능 (온보딩 요청 단계): email={}", EmailLogMasking.maskForLog(normalizedEmail));
         return new OnboardingService.EmailDuplicateCheckResult(false, true, "사용 가능한 이메일입니다.", null);
     }
 
@@ -1037,7 +1038,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Deprecated
     @Transactional(readOnly = true)
     private boolean isEmailDuplicateForTenantCreation(String email) {
-        log.info("테넌트 생성 시점 이메일 중복 확인 (deprecated): email={}", email);
+        log.info("테넌트 생성 시점 이메일 중복 확인 (deprecated): email={}", EmailLogMasking.maskForLog(email));
         log.info("멀티 테넌트 지원으로 인해 이메일 중복 체크 불필요 - 항상 false 반환");
         return false; // 멀티 테넌트 지원으로 항상 false 반환
     }
@@ -3013,7 +3014,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         try {
             String contactEmail = request.getRequestedBy(); // requestedBy가 이메일 주소
             log.info("온보딩 승인 완료 이메일 발송 시작: requestId={}, tenantId={}, contactEmail={}",
-                    request.getId(), tenantId, contactEmail);
+                    request.getId(), tenantId, EmailLogMasking.maskForLog(contactEmail));
 
             if (contactEmail == null || contactEmail.trim().isEmpty()) {
                 log.warn("연락처 이메일이 없어 이메일 발송을 건너뜁니다: requestId={}", request.getId());

@@ -7,6 +7,7 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.repository.RoleTemplateRepository;
@@ -62,7 +63,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         log.info("  - tenantId: {}", tenantId);
         log.info("  - tenantName: {}", tenantName);
         log.info("  - businessType: {}", businessType);
-        log.info("  - contactEmail: {}", contactEmail);
+        log.info("  - contactEmail: {}", EmailLogMasking.maskForLog(contactEmail));
         log.info("  - subdomain: {}", subdomain);
         log.info("  - approvedBy: {}", approvedBy);
         log.info(OnboardingConstants.LOG_SEPARATOR);
@@ -453,11 +454,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         try {
             createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash,
                     approvedBy, businessType);
-            log.info("✅ Step 3 성공: 관리자 계정 생성 완료 - tenantId={}, email={}", tenantId, contactEmail);
+            log.info("✅ Step 3 성공: 관리자 계정 생성 완료 - tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(contactEmail));
             return StepResult.success(OnboardingConstants.MSG_ADMIN_CREATE_COMPLETE);
         } catch (Exception e) {
             log.error("❌ Step 3 예외: 관리자 계정 생성 중 오류 발생 - tenantId={}, email={}, error={}", tenantId,
-                    contactEmail, e.getMessage(), e);
+                    EmailLogMasking.maskForLog(contactEmail), e.getMessage(), e);
             return StepResult
                     .failure(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": " + e.getMessage());
         }
@@ -614,7 +615,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         decisionNote != null ? (decisionNote.length() > 100
                                 ? decisionNote.substring(0, 100) + "..."
                                 : decisionNote) : "null");
-                log.info("  [7] contactEmail: {}", contactEmail);
+                log.info("  [7] contactEmail: {}", EmailLogMasking.maskForLog(contactEmail));
                 log.info("  [8] adminPasswordHash: {}",
                         adminPasswordHash != null ? (adminPasswordHash.length() > 20
                                 ? adminPasswordHash.substring(0, 20) + "..."
@@ -643,7 +644,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.info("  - tenantId: {}", tenantId);
                 log.info("  - tenantName: {}", tenantName);
                 log.info("  - businessType: {}", businessType);
-                log.info("  - contactEmail: {}", contactEmail);
+                log.info("  - contactEmail: {}", EmailLogMasking.maskForLog(contactEmail));
                 log.info("  - subdomain: {}", subdomain);
                 log.info("  - approvedBy: {}", approvedBy);
                 log.info("==========================================");
@@ -787,7 +788,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     log.error("  - tenantId: {}", tenantId);
                     log.error("  - tenantName: {}", tenantName);
                     log.error("  - businessType: {}", businessType);
-                    log.error("  - contactEmail: {}", contactEmail);
+                    log.error("  - contactEmail: {}", EmailLogMasking.maskForLog(contactEmail));
                     log.error("  - subdomain: {}", subdomain);
                     log.error("  - approvedBy: {}", approvedBy);
                     log.error("  - success: {}", success);
@@ -1118,7 +1119,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             userPk = null;
         }
         if (userPk == null) {
-            log.error("원장 역할 할당: 관리자 users 행 없음 tenantId={}, email={}", tenantId, email);
+            log.error("원장 역할 할당: 관리자 users 행 없음 tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(email));
             throw new RuntimeException(OnboardingConstants.MSG_ADMIN_DIRECTOR_ROLE_ASSIGNMENT_FAILED
                     + " (관리자 사용자 없음)");
         }
@@ -1179,7 +1180,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      */
     private void createAdminAccountDirectly(String tenantId, String contactEmail, String tenantName,
             String adminPasswordHash, String approvedBy, String businessType) {
-        log.info("관리자 계정 직접 생성 시작: tenantId={}, email={}", tenantId, contactEmail);
+        log.info("관리자 계정 직접 생성 시작: tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(contactEmail));
 
         // 이미 존재하는지 확인
         Integer existingCount = null;
@@ -1189,16 +1190,16 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     Integer.class, tenantId, contactEmail.toLowerCase().trim());
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
             log.warn("관리자 계정 존재 확인 쿼리 결과 없음 (0으로 처리): tenantId={}, email={}", tenantId,
-                    contactEmail);
+                    EmailLogMasking.maskForLog(contactEmail));
             existingCount = 0;
         } catch (Exception e) {
-            log.error("관리자 계정 존재 확인 실패: tenantId={}, email={}, error={}", tenantId, contactEmail,
+            log.error("관리자 계정 존재 확인 실패: tenantId={}, email={}, error={}", tenantId, EmailLogMasking.maskForLog(contactEmail),
                     e.getMessage(), e);
             throw e; // 예외를 다시 throw하여 상위에서 처리
         }
 
         if (existingCount != null && existingCount > 0) {
-            log.info("관리자 계정이 이미 존재합니다: {}", contactEmail);
+            log.info("관리자 계정이 이미 존재합니다: {}", EmailLogMasking.maskForLog(contactEmail));
             ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
             return;
         }
@@ -1251,7 +1252,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         } catch (org.springframework.dao.DuplicateKeyException e) {
             // 중복 키 오류 발생 시 (다른 프로세스에서 동시에 생성한 경우)
             log.warn("관리자 계정 생성 중 중복 키 오류 (다른 프로세스에서 이미 생성되었을 수 있음): userId={}, email={}", userId,
-                    email);
+                    EmailLogMasking.maskForLog(email));
             // 이미 존재하는지 다시 확인
             Integer finalCount = null;
             try {
@@ -1261,12 +1262,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             } catch (org.springframework.dao.EmptyResultDataAccessException ex) {
                 finalCount = 0; // 결과 없음
             } catch (Exception ex) {
-                log.error("관리자 계정 재확인 실패: tenantId={}, email={}, error={}", tenantId, email,
+                log.error("관리자 계정 재확인 실패: tenantId={}, email={}, error={}", tenantId, EmailLogMasking.maskForLog(email),
                         ex.getMessage(), ex);
                 finalCount = 0; // 오류 시 0으로 처리
             }
             if (finalCount != null && finalCount > 0) {
-                log.info("관리자 계정이 이미 존재합니다 (중복 키 오류 후 확인): {}", email);
+                log.info("관리자 계정이 이미 존재합니다 (중복 키 오류 후 확인): {}", EmailLogMasking.maskForLog(email));
                 ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
                 return;
             }
@@ -1274,7 +1275,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         }
 
         ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
-        log.info("관리자 계정 생성 완료: email={}, tenantId={}", email, tenantId);
+        log.info("관리자 계정 생성 완료: email={}, tenantId={}", EmailLogMasking.maskForLog(email), tenantId);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.coresolution.core.service.impl;
 import com.coresolution.core.context.TenantContextHolder;
 
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.dto.ErdValidationReport;
 import com.coresolution.core.service.ErdValidationReportService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -134,7 +135,7 @@ public class ErdValidationReportServiceImpl implements ErdValidationReportServic
 
     @Override
     public boolean sendReportByEmail(ErdValidationReport report, String recipientEmail) {
-        log.info("검증 리포트 이메일 발송: recipientEmail={}", recipientEmail);
+        log.info("검증 리포트 이메일 발송: recipientEmail={}", EmailLogMasking.maskForLog(recipientEmail));
 
         // TODO: 이메일 발송 구현 (EmailService 사용)
         log.warn("검증 리포트 이메일 발송 기능은 아직 구현되지 않았습니다.");

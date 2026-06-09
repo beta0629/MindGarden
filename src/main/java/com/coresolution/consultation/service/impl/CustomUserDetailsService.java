@@ -5,6 +5,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.CustomUserDetails;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,15 +33,15 @@ public class CustomUserDetailsService implements UserDetailsService {
     
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        log.info("🔍 CustomUserDetailsService.loadUserByUsername 호출: email={}", email);
+        log.info("🔍 CustomUserDetailsService.loadUserByUsername 호출: email={}", EmailLogMasking.maskForLog(email));
         
         try {
-            log.info("🔍 사용자 조회 시작: loginPrincipal={}", email);
+            log.info("🔍 사용자 조회 시작: loginPrincipal={}", EmailLogMasking.maskForLog(email));
             User user = userService.findByLoginPrincipal(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
             
             log.info("✅ 사용자 조회 성공: userId={}, email={}, tenantId={}, role={}, isActive={}, passwordHash={}", 
-                user.getUserId(), user.getEmail(), user.getTenantId(), user.getRole(), 
+                user.getUserId(), EmailLogMasking.maskForLog(user.getEmail()), user.getTenantId(), user.getRole(), 
                 user.getIsActive(), user.getPassword() != null ? user.getPassword().substring(0, 20) + "..." : "null");
             
             // USER_LIFECYCLE_TERMINATION_POLICY §3.6 — lifecycle_state 게이트 (P1)
@@ -49,13 +50,13 @@ public class CustomUserDetailsService implements UserDetailsService {
             LifecycleState lifecycleState = user.getLifecycleState();
             if (lifecycleState == null || !LifecycleState.ACTIVE_LIKE_STATES.contains(lifecycleState)) {
                 log.warn("❌ 비활성 lifecycle_state 사용자 로그인 시도: email={}, lifecycleState={}",
-                    email, lifecycleState);
+                    EmailLogMasking.maskForLog(email), lifecycleState);
                 throw new UsernameNotFoundException("비활성화된 사용자입니다: " + email);
             }
 
             // 사용자가 비활성화된 경우 예외 발생
             if (!user.getIsActive()) {
-                log.warn("❌ 비활성화된 사용자 로그인 시도: email={}", email);
+                log.warn("❌ 비활성화된 사용자 로그인 시도: email={}", EmailLogMasking.maskForLog(email));
                 throw new UsernameNotFoundException("비활성화된 사용자입니다: " + email);
             }
             
@@ -84,11 +85,11 @@ public class CustomUserDetailsService implements UserDetailsService {
             
             return userDetails;
         } catch (UsernameNotFoundException e) {
-            log.error("❌ loadUserByUsername 실패: email={}, error={}", email, e.getMessage());
+            log.error("❌ loadUserByUsername 실패: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage());
             throw e;
         } catch (Exception e) {
             log.error("❌ loadUserByUsername 예외 발생: email={}, error={}, class={}", 
-                email, e.getMessage(), e.getClass().getName(), e);
+                EmailLogMasking.maskForLog(email), e.getMessage(), e.getClass().getName(), e);
             throw new UsernameNotFoundException("사용자 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
     }

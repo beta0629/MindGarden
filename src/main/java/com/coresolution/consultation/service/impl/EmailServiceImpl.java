@@ -24,6 +24,7 @@ import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.salaryexport.SalaryCalculationStatementRows;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.entity.CommonCode;
@@ -83,7 +84,7 @@ public class EmailServiceImpl implements EmailService {
     
     @Override
     public EmailResponse sendEmail(EmailRequest request) {
-        log.info("이메일 발송 요청: to={}, subject={}", request.getToEmail(), request.getSubject());
+        log.info("이메일 발송 요청: to={}, subject={}", EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
         
         try {
             // 이메일 유효성 검사
@@ -91,7 +92,7 @@ public class EmailServiceImpl implements EmailService {
             
             // 이메일 발송 제한 확인
             if (!checkEmailLimit(request.getToEmail())) {
-                log.warn("이메일 발송 제한 초과: {}", request.getToEmail());
+                log.warn("이메일 발송 제한 초과: {}", EmailLogMasking.maskForLog(request.getToEmail()));
                 return createErrorResponse(request, EmailConstants.ERROR_EMAIL_RATE_LIMIT_EXCEEDED);
             }
             
@@ -111,7 +112,7 @@ public class EmailServiceImpl implements EmailService {
             return response;
             
         } catch (Exception e) {
-            log.error("이메일 발송 실패: to={}, error={}", request.getToEmail(), e.getMessage(), e);
+            log.error("이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(request.getToEmail()), e.getMessage(), e);
             return createErrorResponse(request, EmailConstants.ERROR_EMAIL_SEND_FAILED);
         }
     }
@@ -127,7 +128,7 @@ public class EmailServiceImpl implements EmailService {
                 EmailResponse response = sendEmail(request);
                 responses.add(response);
             } catch (Exception e) {
-                log.error("다중 이메일 발송 중 오류: to={}, error={}", request.getToEmail(), e.getMessage(), e);
+                log.error("다중 이메일 발송 중 오류: to={}, error={}", EmailLogMasking.maskForLog(request.getToEmail()), e.getMessage(), e);
                 responses.add(createErrorResponse(request, EmailConstants.ERROR_EMAIL_SEND_FAILED));
             }
         }
@@ -140,7 +141,7 @@ public class EmailServiceImpl implements EmailService {
     
     @Override
     public EmailResponse sendTemplateEmail(String templateType, String toEmail, String toName, Map<String, Object> originalVariables) {
-        log.info("템플릿 이메일 발송 요청: templateType={}, to={}", templateType, toEmail);
+        log.info("템플릿 이메일 발송 요청: templateType={}, to={}", templateType, EmailLogMasking.maskForLog(toEmail));
         
         try {
             // 템플릿 로드
@@ -198,14 +199,14 @@ public class EmailServiceImpl implements EmailService {
             
         } catch (Exception e) {
             log.error("템플릿 이메일 발송 실패: templateType={}, to={}, error={}", 
-                    templateType, toEmail, e.getMessage(), e);
+                    templateType, EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return createErrorResponse(null, EmailConstants.ERROR_EMAIL_SEND_FAILED);
         }
     }
     
     @Override
     public EmailResponse scheduleEmail(EmailRequest request, long delayMillis) {
-        log.info("예약 이메일 발송 요청: to={}, delay={}ms", request.getToEmail(), delayMillis);
+        log.info("예약 이메일 발송 요청: to={}, delay={}ms", EmailLogMasking.maskForLog(request.getToEmail()), delayMillis);
         
         try {
             // 이메일 ID 생성
@@ -240,7 +241,7 @@ public class EmailServiceImpl implements EmailService {
             return response;
             
         } catch (Exception e) {
-            log.error("예약 이메일 등록 실패: to={}, error={}", request.getToEmail(), e.getMessage(), e);
+            log.error("예약 이메일 등록 실패: to={}, error={}", EmailLogMasking.maskForLog(request.getToEmail()), e.getMessage(), e);
             return createErrorResponse(request, EmailConstants.ERROR_EMAIL_SEND_FAILED);
         }
     }
@@ -265,7 +266,7 @@ public class EmailServiceImpl implements EmailService {
     
     @Override
     public List<EmailResponse> getEmailHistory(String toEmail, int limit) {
-        log.info("이메일 발송 이력 조회: to={}, limit={}", toEmail, limit);
+        log.info("이메일 발송 이력 조회: to={}, limit={}", EmailLogMasking.maskForLog(toEmail), limit);
         
         return emailStatusMap.values().stream()
                 .filter(response -> response.getToEmail().equals(toEmail))
@@ -467,14 +468,14 @@ public class EmailServiceImpl implements EmailService {
                 String email = extractEmailFromExtraData(extra);
                 if (StringUtils.hasText(email) && toEmail.equalsIgnoreCase(email.trim())) {
                     log.warn("⚠️ 레거시 지점 이메일 수신자 차단: tenantId={}, codeValue={}, to={}",
-                            tenantId, code.getCodeValue(), toEmail);
+                            tenantId, code.getCodeValue(), EmailLogMasking.maskForLog(toEmail));
                     return true;
                 }
             }
             return false;
         } catch (Exception e) {
             // 차단 로직이 실패해도 이메일 시스템 전체를 막지 않도록 "차단하지 않음"으로 폴백
-            log.warn("레거시 지점 이메일 차단 검사 실패(무시): to={}", toEmail, e);
+            log.warn("레거시 지점 이메일 차단 검사 실패(무시): to={}", EmailLogMasking.maskForLog(toEmail), e);
             return false;
         }
     }
@@ -566,7 +567,7 @@ public class EmailServiceImpl implements EmailService {
             javaMailSender.send(mimeMessage);
             
             log.info("이메일 발송 성공: emailId={}, to={}, subject={}", 
-                emailId, request.getToEmail(), request.getSubject());
+                emailId, EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
             
             return EmailResponse.builder()
                     .emailId(emailId)
@@ -582,7 +583,7 @@ public class EmailServiceImpl implements EmailService {
             
         } catch (MessagingException e) {
             log.error("이메일 발송 실패 (MessagingException): emailId={}, to={}, error={}", 
-                emailId, request.getToEmail(), e.getMessage(), e);
+                emailId, EmailLogMasking.maskForLog(request.getToEmail()), e.getMessage(), e);
             
             return EmailResponse.builder()
                     .emailId(emailId)
@@ -597,7 +598,7 @@ public class EmailServiceImpl implements EmailService {
                     
         } catch (Exception e) {
             log.error("이메일 발송 실패 (Exception): emailId={}, to={}, error={}", 
-                emailId, request.getToEmail(), e.getMessage(), e);
+                emailId, EmailLogMasking.maskForLog(request.getToEmail()), e.getMessage(), e);
             
             return EmailResponse.builder()
                     .emailId(emailId)
@@ -1133,12 +1134,12 @@ public class EmailServiceImpl implements EmailService {
             String period, Map<String, Object> salaryData,
             byte[] attachment, String attachmentFilename) {
         try {
-            log.info("급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            log.info("급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
             EmailRequest request = buildSalaryCalculationEmailRequest(
                     toEmail, consultantName, period, salaryData, attachment, attachmentFilename);
             return sendEmail(request);
         } catch (Exception e) {
-            log.error("급여 계산서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            log.error("급여 계산서 이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return createErrorResponse(
                     EmailRequest.builder()
                             .toEmail(toEmail)
@@ -1202,7 +1203,7 @@ public class EmailServiceImpl implements EmailService {
     public boolean sendSalaryApprovalEmail(String toEmail, String consultantName, 
                                          String period, String approvedAmount) {
         try {
-            log.info("급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            log.info("급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
             
             Map<String, Object> variables = enrichTemplateVariables(new java.util.HashMap<>());
             String subject = String.format("[{{companyName}}] %s 급여 승인 완료 - %s", consultantName, period);
@@ -1227,7 +1228,7 @@ public class EmailServiceImpl implements EmailService {
             return response.isSuccess();
             
         } catch (Exception e) {
-            log.error("급여 승인 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            log.error("급여 승인 이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return false;
         }
     }
@@ -1236,7 +1237,7 @@ public class EmailServiceImpl implements EmailService {
     public boolean sendSalaryPaymentEmail(String toEmail, String consultantName, 
                                         String period, String paidAmount, String payDate) {
         try {
-            log.info("급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            log.info("급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
             
             Map<String, Object> variables = enrichTemplateVariables(new java.util.HashMap<>());
             String subject = String.format("[{{companyName}}] %s 급여 지급 완료 - %s", consultantName, period);
@@ -1262,7 +1263,7 @@ public class EmailServiceImpl implements EmailService {
             return response.isSuccess();
             
         } catch (Exception e) {
-            log.error("급여 지급 완료 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            log.error("급여 지급 완료 이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return false;
         }
     }
@@ -1272,7 +1273,7 @@ public class EmailServiceImpl implements EmailService {
                                     String period, Map<String, Object> taxData, 
                                     String attachmentPath) {
         try {
-            log.info("세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            log.info("세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
             
             Map<String, Object> variables = enrichTemplateVariables(taxData);
             String subject = String.format("[{{companyName}}] %s 세금 내역서 - %s", consultantName, period);
@@ -1298,7 +1299,7 @@ public class EmailServiceImpl implements EmailService {
             return response.isSuccess();
             
         } catch (Exception e) {
-            log.error("세금 내역서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            log.error("세금 내역서 이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return false;
         }
     }
@@ -1343,14 +1344,14 @@ public class EmailServiceImpl implements EmailService {
                     .build();
             EmailResponse response = sendEmail(request);
             if (response != null && response.isSuccess()) {
-                log.info("✅ 환불 자동 취소 이메일 발송 성공: to={}, count={}", toEmail, safeCount);
+                log.info("✅ 환불 자동 취소 이메일 발송 성공: to={}, count={}", EmailLogMasking.maskForLog(toEmail), safeCount);
                 return true;
             }
             log.warn("⚠️ 환불 자동 취소 이메일 발송 실패: to={}, message={}",
-                    toEmail, response != null ? response.getMessage() : "no-response");
+                    EmailLogMasking.maskForLog(toEmail), response != null ? response.getMessage() : "no-response");
             return false;
         } catch (Exception e) {
-            log.error("❌ 환불 자동 취소 이메일 발송 중 오류: to={}", toEmail, e);
+            log.error("❌ 환불 자동 취소 이메일 발송 중 오류: to={}", EmailLogMasking.maskForLog(toEmail), e);
             return false;
         }
     }

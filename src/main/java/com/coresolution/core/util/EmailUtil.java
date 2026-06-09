@@ -5,6 +5,7 @@ import java.util.Map;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -62,22 +63,24 @@ public class EmailUtil {
                 return createErrorResponse("이메일 주소가 없습니다.");
             }
 
-            log.info("{} 이메일 발송 시작: toEmail={}, toName={}, templateType={}", context, toEmail, toName,
-                    templateType);
+            log.info("{} 이메일 발송 시작: toEmail={}, toName={}, templateType={}", context,
+                    EmailLogMasking.maskForLog(toEmail), toName, templateType);
 
             EmailResponse response = emailService.sendTemplateEmail(templateType, toEmail, toName, variables);
 
             if (response.isSuccess()) {
-                log.info("{} 이메일 발송 성공: toEmail={}, emailId={}", context, toEmail, response.getEmailId());
+                log.info("{} 이메일 발송 성공: toEmail={}, emailId={}", context,
+                        EmailLogMasking.maskForLog(toEmail), response.getEmailId());
             } else {
-                log.error("{} 이메일 발송 실패: toEmail={}, error={}", context, toEmail,
-                        response.getErrorMessage());
+                log.error("{} 이메일 발송 실패: toEmail={}, error={}", context,
+                        EmailLogMasking.maskForLog(toEmail), response.getErrorMessage());
             }
 
             return response;
 
         } catch (Exception e) {
-            log.error("{} 이메일 발송 중 오류: toEmail={}, error={}", context, toEmail, e.getMessage(), e);
+            log.error("{} 이메일 발송 중 오류: toEmail={}, error={}", context,
+                    EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return createErrorResponse("이메일 발송 중 오류 발생: " + e.getMessage());
         }
     }

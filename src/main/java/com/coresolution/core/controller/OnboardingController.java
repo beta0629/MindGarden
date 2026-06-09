@@ -7,6 +7,7 @@ import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.dto.OnboardingCaptchaSiteKeyResponse;
 import com.coresolution.core.controller.dto.OnboardingCreateRequest;
@@ -104,7 +105,7 @@ public class OnboardingController extends BaseApiController {
 
         List<User> users = userRepository.findAllByEmail(normalizedEmail);
         if (users == null || users.isEmpty()) {
-            log.debug("사용자를 찾을 수 없음 - 새로운 테넌트 등록 가능: email={}", normalizedEmail);
+            log.debug("사용자를 찾을 수 없음 - 새로운 테넌트 등록 가능: email={}", EmailLogMasking.maskForLog(normalizedEmail));
             return;
         }
 
@@ -121,13 +122,13 @@ public class OnboardingController extends BaseApiController {
                     .map(User::getTenantId).filter(id -> id != null && !id.trim().isEmpty())
                     .distinct().toList();
 
-            log.warn("온보딩 접근 거부: 이미 테넌트에 속한 사용자 - email={}, tenantIds={}", normalizedEmail,
+            log.warn("온보딩 접근 거부: 이미 테넌트에 속한 사용자 - email={}, tenantIds={}", EmailLogMasking.maskForLog(normalizedEmail),
                     tenantIds);
             throw new AccessDeniedException(
                     "이미 테넌트에 속한 사용자는 온보딩에 접근할 수 없습니다. 기존 테넌트 관리 페이지를 사용해주세요.");
         }
 
-        log.debug("온보딩 접근 허용: 새로운 테넌트 등록 가능 - email={}", normalizedEmail);
+        log.debug("온보딩 접근 허용: 새로운 테넌트 등록 가능 - email={}", EmailLogMasking.maskForLog(normalizedEmail));
     }
 
     /**
@@ -220,7 +221,8 @@ public class OnboardingController extends BaseApiController {
         verifyOnboardingCaptchaIfRequired(payload, httpRequest);
         log.info(
                 "온보딩 요청 생성: tenantId={}, tenantName={}, requestedBy={}, businessType={}, hasAdminPassword={}",
-                payload.tenantId(), payload.tenantName(), payload.requestedBy(),
+                payload.tenantId(), payload.tenantName(),
+                EmailLogMasking.maskForLog(payload.requestedBy()),
                 payload.businessType(),
                 payload.adminPassword() != null && !payload.adminPassword().isEmpty());
 
@@ -233,7 +235,7 @@ public class OnboardingController extends BaseApiController {
             }
             if (payload.requestedBy().length() > 64) {
                 log.warn("요청자 이메일 길이 초과: length={}, email={}", payload.requestedBy().length(),
-                        payload.requestedBy());
+                        EmailLogMasking.maskForLog(payload.requestedBy()));
                 throw new IllegalArgumentException("요청자 이메일이 너무 깁니다. (최대 64자)");
             }
             if (payload.riskLevel() == null) {
@@ -361,11 +363,11 @@ public class OnboardingController extends BaseApiController {
     public ResponseEntity<ApiResponse<List<OnboardingRequest>>> getPublicRequests(
             @RequestParam String email, HttpSession session) {
         validateOnboardingAccess(session);
-        log.debug("공개 온보딩 요청 조회: email={}", email);
+        log.debug("공개 온보딩 요청 조회: email={}", EmailLogMasking.maskForLog(email));
 
         List<OnboardingRequest> requests = onboardingService.findByEmail(email);
 
-        log.debug("✅ 공개 온보딩 요청 조회 완료: email={}, count={}", email, requests.size());
+        log.debug("✅ 공개 온보딩 요청 조회 완료: email={}, count={}", EmailLogMasking.maskForLog(email), requests.size());
         return success(requests);
     }
 
@@ -377,7 +379,7 @@ public class OnboardingController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkEmailDuplicate(
             @RequestParam String email, HttpSession session) {
         validateOnboardingAccess(session);
-        log.debug("이메일 중복 확인 요청: email={}", email);
+        log.debug("이메일 중복 확인 요청: email={}", EmailLogMasking.maskForLog(email));
 
         OnboardingService.EmailDuplicateCheckResult result =
                 onboardingService.checkEmailDuplicate(email);
@@ -387,7 +389,7 @@ public class OnboardingController extends BaseApiController {
                 result.message() != null ? result.message() : "", "status",
                 result.status() != null ? result.status() : "");
 
-        log.debug("이메일 중복 확인 결과: email={}, isDuplicate={}, message={}", email, result.isDuplicate(),
+        log.debug("이메일 중복 확인 결과: email={}, isDuplicate={}, message={}", EmailLogMasking.maskForLog(email), result.isDuplicate(),
                 result.message());
 
         return success(response);
@@ -433,7 +435,7 @@ public class OnboardingController extends BaseApiController {
     public ResponseEntity<ApiResponse<OnboardingRequest>> getPublicRequest(
             @PathVariable Long id, @RequestParam String email, HttpSession session) {
         validateOnboardingAccess(session);
-        log.debug("공개 온보딩 요청 상세 조회: id={}, email={}", id, email);
+        log.debug("공개 온보딩 요청 상세 조회: id={}, email={}", id, EmailLogMasking.maskForLog(email));
 
         OnboardingRequest request = onboardingService.findByIdAndEmail(id, email);
 

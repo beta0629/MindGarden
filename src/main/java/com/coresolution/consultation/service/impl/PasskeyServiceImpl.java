@@ -6,6 +6,7 @@ import com.coresolution.consultation.repository.UserPasskeyRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.PasskeyService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.webauthn4j.util.Base64UrlUtil;
 import lombok.RequiredArgsConstructor;
@@ -197,7 +198,7 @@ public class PasskeyServiceImpl implements PasskeyService {
     
     @Override
     public Map<String, Object> startAuthentication(String email) {
-        log.info("Passkey 인증 시작: email={}", email);
+        log.info("Passkey 인증 시작: email={}", EmailLogMasking.maskForLog(email));
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
         User user = userRepository.findByTenantIdAndEmail(tenantId, email)
@@ -248,7 +249,7 @@ public class PasskeyServiceImpl implements PasskeyService {
     @Override
     @Transactional
     public Map<String, Object> finishAuthentication(String email, Map<String, Object> credential, String challengeKey) {
-        log.info("Passkey 인증 완료: email={}", email);
+        log.info("Passkey 인증 완료: email={}", EmailLogMasking.maskForLog(email));
         
         // 챌린지 검증
         ChallengeData challengeData = challengeStore.get(challengeKey);

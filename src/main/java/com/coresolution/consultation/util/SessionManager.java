@@ -70,7 +70,7 @@ public class SessionManager {
             // 세션 타임아웃 설정
             session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
 
-            log.info("로그인 세션 생성 완료: userId={}, email={}", user.getId(), user.getEmail());
+            log.info("로그인 세션 생성 완료: userId={}, email={}", user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
 
         } catch (Exception e) {
             log.error("로그인 세션 생성 실패: {}", e.getMessage(), e);

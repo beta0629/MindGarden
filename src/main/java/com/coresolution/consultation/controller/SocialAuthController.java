@@ -6,6 +6,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.SessionManager;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.security.PasswordService;
@@ -50,7 +51,7 @@ public class SocialAuthController {
             @RequestBody SocialSignupRequest request,
             @RequestParam(required = false) String tenantId,
             HttpSession session) {
-        log.info("소셜 회원가입 요청: email={}, tenantId={}", request.getEmail(), tenantId);
+        log.info("소셜 회원가입 요청: email={}, tenantId={}", EmailLogMasking.maskForLog(request.getEmail()), tenantId);
         
         try {
             // 서브도메인에서 추출한 tenantId가 있으면 TenantContext에 설정

@@ -16,6 +16,7 @@ import com.coresolution.consultation.dto.EmailAttachmentPart;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -44,7 +45,7 @@ public class MockEmailServiceImpl implements EmailService {
     
     @Override
     public EmailResponse sendEmail(EmailRequest request) {
-        log.info("Mock 이메일 발송 요청: to={}, subject={}", request.getToEmail(), request.getSubject());
+        log.info("Mock 이메일 발송 요청: to={}, subject={}", EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
         
         try {
             // 이메일 유효성 검사
@@ -52,7 +53,7 @@ public class MockEmailServiceImpl implements EmailService {
             
             // 이메일 발송 제한 확인
             if (!checkEmailLimit(request.getToEmail())) {
-                log.warn("이메일 발송 제한 초과: {}", request.getToEmail());
+                log.warn("이메일 발송 제한 초과: {}", EmailLogMasking.maskForLog(request.getToEmail()));
                 return createErrorResponse(request, EmailConstants.ERROR_EMAIL_RATE_LIMIT_EXCEEDED);
             }
             
@@ -72,7 +73,7 @@ public class MockEmailServiceImpl implements EmailService {
             return response;
             
         } catch (Exception e) {
-            log.error("Mock 이메일 발송 실패: to={}, error={}", request.getToEmail(), e.getMessage(), e);
+            log.error("Mock 이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(request.getToEmail()), e.getMessage(), e);
             return createErrorResponse(request, EmailConstants.ERROR_EMAIL_SEND_FAILED);
         }
     }
@@ -88,7 +89,7 @@ public class MockEmailServiceImpl implements EmailService {
                 EmailResponse response = sendEmail(request);
                 responses.add(response);
             } catch (Exception e) {
-                log.error("Mock 다중 이메일 발송 중 오류: to={}, error={}", request.getToEmail(), e.getMessage(), e);
+                log.error("Mock 다중 이메일 발송 중 오류: to={}, error={}", EmailLogMasking.maskForLog(request.getToEmail()), e.getMessage(), e);
                 responses.add(createErrorResponse(request, EmailConstants.ERROR_EMAIL_SEND_FAILED));
             }
         }
@@ -101,7 +102,7 @@ public class MockEmailServiceImpl implements EmailService {
     
     @Override
     public EmailResponse sendTemplateEmail(String templateType, String toEmail, String toName, Map<String, Object> variables) {
-        log.info("Mock 템플릿 이메일 발송 요청: templateType={}, to={}", templateType, toEmail);
+        log.info("Mock 템플릿 이메일 발송 요청: templateType={}, to={}", templateType, EmailLogMasking.maskForLog(toEmail));
         
         try {
             // 템플릿 로드
@@ -132,14 +133,14 @@ public class MockEmailServiceImpl implements EmailService {
             
         } catch (Exception e) {
             log.error("Mock 템플릿 이메일 발송 실패: templateType={}, to={}, error={}", 
-                    templateType, toEmail, e.getMessage(), e);
+                    templateType, EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return createErrorResponse(null, EmailConstants.ERROR_EMAIL_SEND_FAILED);
         }
     }
     
     @Override
     public EmailResponse scheduleEmail(EmailRequest request, long delayMillis) {
-        log.info("Mock 예약 이메일 발송 요청: to={}, delay={}ms", request.getToEmail(), delayMillis);
+        log.info("Mock 예약 이메일 발송 요청: to={}, delay={}ms", EmailLogMasking.maskForLog(request.getToEmail()), delayMillis);
         
         try {
             // 이메일 ID 생성
@@ -174,7 +175,7 @@ public class MockEmailServiceImpl implements EmailService {
             return response;
             
         } catch (Exception e) {
-            log.error("Mock 예약 이메일 등록 실패: to={}, error={}", request.getToEmail(), e.getMessage(), e);
+            log.error("Mock 예약 이메일 등록 실패: to={}, error={}", EmailLogMasking.maskForLog(request.getToEmail()), e.getMessage(), e);
             return createErrorResponse(request, EmailConstants.ERROR_EMAIL_SEND_FAILED);
         }
     }
@@ -316,7 +317,7 @@ public class MockEmailServiceImpl implements EmailService {
     
     @Override
     public List<EmailResponse> getEmailHistory(String toEmail, int limit) {
-        log.info("Mock 이메일 발송 이력 조회: to={}, limit={}", toEmail, limit);
+        log.info("Mock 이메일 발송 이력 조회: to={}, limit={}", EmailLogMasking.maskForLog(toEmail), limit);
         
         return emailStatusMap.values().stream()
                 .filter(response -> response.getToEmail().equals(toEmail))
@@ -371,7 +372,7 @@ public class MockEmailServiceImpl implements EmailService {
     public EmailResponse sendSalaryCalculationEmailWithResponse(String toEmail, String consultantName,
             String period, Map<String, Object> salaryData,
             byte[] attachment, String attachmentFilename) {
-        log.info("Mock 급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+        log.info("Mock 급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
         String subject = String.format("[mindgarden] %s 급여 계산서 - %s", consultantName, period);
         String content = "Mock 급여 계산서 이메일 내용";
         EmailRequest.EmailRequestBuilder builder = EmailRequest.builder()
@@ -403,7 +404,7 @@ public class MockEmailServiceImpl implements EmailService {
     public boolean sendSalaryApprovalEmail(String toEmail, String consultantName, 
                                          String period, String approvedAmount) {
         try {
-            log.info("Mock 급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            log.info("Mock 급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
             
             String subject = String.format("[mindgarden] %s 급여 승인 완료 - %s", consultantName, period);
             String content = "Mock 급여 승인 이메일 내용";
@@ -421,7 +422,7 @@ public class MockEmailServiceImpl implements EmailService {
             return response.isSuccess();
             
         } catch (Exception e) {
-            log.error("Mock 급여 승인 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            log.error("Mock 급여 승인 이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return false;
         }
     }
@@ -430,7 +431,7 @@ public class MockEmailServiceImpl implements EmailService {
     public boolean sendSalaryPaymentEmail(String toEmail, String consultantName, 
                                         String period, String paidAmount, String payDate) {
         try {
-            log.info("Mock 급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            log.info("Mock 급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
             
             String subject = String.format("[mindgarden] %s 급여 지급 완료 - %s", consultantName, period);
             String content = "Mock 급여 지급 완료 이메일 내용";
@@ -448,7 +449,7 @@ public class MockEmailServiceImpl implements EmailService {
             return response.isSuccess();
             
         } catch (Exception e) {
-            log.error("Mock 급여 지급 완료 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            log.error("Mock 급여 지급 완료 이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return false;
         }
     }
@@ -458,7 +459,7 @@ public class MockEmailServiceImpl implements EmailService {
                                     String period, Map<String, Object> taxData, 
                                     String attachmentPath) {
         try {
-            log.info("Mock 세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            log.info("Mock 세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
             
             String subject = String.format("[mindgarden] %s 세금 내역서 - %s", consultantName, period);
             String content = "Mock 세금 내역서 이메일 내용";
@@ -476,7 +477,7 @@ public class MockEmailServiceImpl implements EmailService {
             return response.isSuccess();
             
         } catch (Exception e) {
-            log.error("Mock 세금 내역서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            log.error("Mock 세금 내역서 이메일 발송 실패: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
             return false;
         }
     }
@@ -495,7 +496,7 @@ public class MockEmailServiceImpl implements EmailService {
     @Override
     public boolean sendAutoCancelNotification(String toEmail, int cancelCount, String mypageUrl) {
         log.info("Mock 환불 자동 취소 이메일 발송: to={}, cancelCount={}, mypageUrl={}",
-                toEmail, cancelCount, mypageUrl);
+                EmailLogMasking.maskForLog(toEmail), cancelCount, mypageUrl);
         return toEmail != null && !toEmail.isBlank();
     }
     
@@ -528,7 +529,7 @@ public class MockEmailServiceImpl implements EmailService {
             Thread.sleep(100);
             
             log.info("Mock 이메일 발송 시뮬레이션: emailId={}, to={}, subject={}, success={}", 
-                emailId, request.getToEmail(), request.getSubject(), success);
+                emailId, EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject(), success);
             
             EmailResponse response = EmailResponse.builder()
                     .emailId(emailId)

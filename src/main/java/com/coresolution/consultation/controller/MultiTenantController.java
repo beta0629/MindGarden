@@ -6,6 +6,7 @@ import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.MultiTenantUserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -126,11 +127,11 @@ public class MultiTenantController extends BaseApiController {
         
         boolean hasAccess = multiTenantUserService.hasAccessToTenantByEmail(userEmail, tenantId);
         if (!hasAccess) {
-            log.warn("테넌트 접근 권한 없음: email={}, tenantId={}", userEmail, tenantId);
+            log.warn("테넌트 접근 권한 없음: email={}, tenantId={}", EmailLogMasking.maskForLog(userEmail), tenantId);
             throw new org.springframework.security.access.AccessDeniedException("해당 테넌트에 접근할 수 없습니다. 로그인 이메일(" + userEmail + ")로 해당 테넌트에 접근 권한이 없습니다.");
         }
         
-        log.info("✅ 테넌트 접근 권한 확인 완료: email={}, tenantId={}", userEmail, tenantId);
+        log.info("✅ 테넌트 접근 권한 확인 완료: email={}, tenantId={}", EmailLogMasking.maskForLog(userEmail), tenantId);
         
         // 세션에 테넌트 ID 저장
         session.setAttribute("tenantId", tenantId);

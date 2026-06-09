@@ -78,6 +78,7 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.TaxCalculationUtil;
@@ -196,18 +197,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 1. 테넌트별 고유한 userId 자동 생성 (표준화 2025-12-08)
         String userId = userIdGenerator.generateUniqueUserId(email, tenantId);
         log.info("✅ 테넌트별 상담사 사용자 ID 자동 생성 완료: email={}, tenantId={}, userId={}", 
-                email, tenantId, userId);
+                EmailLogMasking.maskForLog(email), tenantId, userId);
         
         // 2. 비밀번호 처리: 사용자가 입력한 비밀번호가 있으면 사용, 없으면 임시 비밀번호 자동 생성
         String password;
         boolean isTempPassword = false;
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             password = request.getPassword().trim();
-            log.info("✅ 사용자 입력 비밀번호 사용: email={}", email);
+            log.info("✅ 사용자 입력 비밀번호 사용: email={}", EmailLogMasking.maskForLog(email));
         } else {
             password = generateTempPassword();
             isTempPassword = true;
-            log.info("✅ 상담사 임시 비밀번호 자동 생성 완료: email={}", email);
+            log.info("✅ 상담사 임시 비밀번호 자동 생성 완료: email={}", EmailLogMasking.maskForLog(email));
         }
         
         // 3. 이름 자동 생성 (이메일 로컬 파트 또는 기본값 사용) (표준화 2025-12-08)
@@ -292,15 +293,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             // 임시 비밀번호인 경우 이메일로 비밀번호 변경 링크 발송
             if (isTempPassword) {
                 try {
-                    log.info("📧 임시 비밀번호로 재활성화된 상담사에게 비밀번호 변경 링크 이메일 발송: email={}", email);
+                    log.info("📧 임시 비밀번호로 재활성화된 상담사에게 비밀번호 변경 링크 이메일 발송: email={}", EmailLogMasking.maskForLog(email));
                     boolean emailSent = passwordResetService.sendPasswordResetEmail(email);
                     if (emailSent) {
-                        log.info("✅ 비밀번호 변경 링크 이메일 발송 완료: email={}", email);
+                        log.info("✅ 비밀번호 변경 링크 이메일 발송 완료: email={}", EmailLogMasking.maskForLog(email));
                     } else {
-                        log.warn("⚠️ 비밀번호 변경 링크 이메일 발송 실패: email={}", email);
+                        log.warn("⚠️ 비밀번호 변경 링크 이메일 발송 실패: email={}", EmailLogMasking.maskForLog(email));
                     }
                 } catch (Exception e) {
-                    log.error("❌ 비밀번호 변경 링크 이메일 발송 중 오류: email={}", email, e);
+                    log.error("❌ 비밀번호 변경 링크 이메일 발송 중 오류: email={}", EmailLogMasking.maskForLog(email), e);
                     // 이메일 발송 실패해도 등록은 계속 진행
                 }
             }
@@ -373,15 +374,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             // 임시 비밀번호인 경우 이메일로 비밀번호 변경 링크 발송
             if (isTempPassword) {
                 try {
-                    log.info("📧 임시 비밀번호로 등록된 상담사에게 비밀번호 변경 링크 이메일 발송: email={}", email);
+                    log.info("📧 임시 비밀번호로 등록된 상담사에게 비밀번호 변경 링크 이메일 발송: email={}", EmailLogMasking.maskForLog(email));
                     boolean emailSent = passwordResetService.sendPasswordResetEmail(email);
                     if (emailSent) {
-                        log.info("✅ 비밀번호 변경 링크 이메일 발송 완료: email={}", email);
+                        log.info("✅ 비밀번호 변경 링크 이메일 발송 완료: email={}", EmailLogMasking.maskForLog(email));
                     } else {
-                        log.warn("⚠️ 비밀번호 변경 링크 이메일 발송 실패: email={}", email);
+                        log.warn("⚠️ 비밀번호 변경 링크 이메일 발송 실패: email={}", EmailLogMasking.maskForLog(email));
                     }
                 } catch (Exception e) {
-                    log.error("❌ 비밀번호 변경 링크 이메일 발송 중 오류: email={}", email, e);
+                    log.error("❌ 비밀번호 변경 링크 이메일 발송 중 오류: email={}", EmailLogMasking.maskForLog(email), e);
                     // 이메일 발송 실패해도 등록은 계속 진행
                 }
             }
@@ -526,7 +527,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         log.info("🔧 내담자 등록 - User 엔티티 정보: userId={}, email={}, tenantId={}, isActive={}, role={}",
-                clientUser.getUserId(), emailPlain, tenantId, clientUser.getIsActive(), clientUser.getRole());
+                clientUser.getUserId(), EmailLogMasking.maskForLog(emailPlain), tenantId, clientUser.getIsActive(), clientUser.getRole());
 
         User savedUser = userRepository.saveAndFlush(clientUser);
         validateClientUserTenantIntegrity(savedUser, tenantId);
@@ -600,7 +601,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         String userId = userIdGenerator.generateUniqueUserId(email, tenantId);
-        log.info("스태프 사용자 ID 자동 생성: email={}, tenantId={}, userId={}", email, tenantId, userId);
+        log.info("스태프 사용자 ID 자동 생성: email={}, tenantId={}, userId={}", EmailLogMasking.maskForLog(email), tenantId, userId);
 
         String password;
         boolean isTempPassword = false;
@@ -2421,7 +2422,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         for (User user : clientUsers) {
             log.info("👤 내담자 원본 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}, 역할: {}", 
-                user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getIsActive(), user.getIsDeleted(), user.getRole());
+                user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), user.getPhone(), user.getIsActive(), user.getIsDeleted(), user.getRole());
         }
         
         clientUsers = clientUsers.stream()
@@ -2436,7 +2437,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔍 전체 사용자 중 CLIENT 역할 - 총 {}명 (삭제 포함)", allClientUsers.size());
         for (User user : allClientUsers) {
             log.info("👤 전체 내담자 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}", 
-                user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getIsActive(), user.getIsDeleted());
+                user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), user.getPhone(), user.getIsActive(), user.getIsDeleted());
         }
         
         return clientUsers.stream()
@@ -2462,7 +2463,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 client.setUpdatedAt(user.getUpdatedAt());
                 
                 log.info("👤 내담자 최종 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 삭제상태: {}", 
-                    user.getId(), user.getName(), user.getEmail(), phone, user.getIsDeleted());
+                    user.getId(), user.getName(), EmailLogMasking.maskForLog(user.getEmail()), phone, user.getIsDeleted());
                 
                 return client;
             })
@@ -7096,12 +7097,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantEmail(String consultantEmail) {
-        log.info("🔍 상담사 이메일로 매칭 조회 - 이메일: {}", consultantEmail);
+        log.info("🔍 상담사 이메일로 매칭 조회 - 이메일: {}", EmailLogMasking.maskForLog(consultantEmail));
         String tenantId = getTenantId();
         
         Optional<User> consultantOpt = userRepository.findByTenantIdAndEmail(tenantId, consultantEmail);
         if (consultantOpt.isEmpty()) {
-            log.warn("❌ 상담사를 찾을 수 없습니다 - 이메일: {}", consultantEmail);
+            log.warn("❌ 상담사를 찾을 수 없습니다 - 이메일: {}", EmailLogMasking.maskForLog(consultantEmail));
             return new ArrayList<>();
         }
         

@@ -8,6 +8,7 @@ import com.coresolution.consultation.service.PasswordConfigService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.PasswordValidationService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.http.ResponseEntity;
@@ -203,7 +204,7 @@ public class PasswordManagementController {
     public ResponseEntity<Map<String, Object>> requestPasswordReset(@RequestBody Map<String, String> request) {
         try {
             String email = request.get("email");
-            log.info("📧 비밀번호 재설정 이메일 발송 요청: email={}", email);
+            log.info("📧 비밀번호 재설정 이메일 발송 요청: email={}", EmailLogMasking.maskForLog(email));
             
             // 이메일 설정 조회
             Map<String, Object> emailConfig = passwordConfigService.getEmailConfig();
@@ -213,13 +214,13 @@ public class PasswordManagementController {
             boolean emailSent = passwordResetService.sendPasswordResetEmail(email);
             
             if (emailSent) {
-                log.info("✅ 비밀번호 재설정 이메일 발송 성공: email={}", email);
+                log.info("✅ 비밀번호 재설정 이메일 발송 성공: email={}", EmailLogMasking.maskForLog(email));
                 return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "비밀번호 재설정 이메일이 발송되었습니다."
                 ));
             } else {
-                log.warn("⚠️ 비밀번호 재설정 이메일 발송 실패: email={}", email);
+                log.warn("⚠️ 비밀번호 재설정 이메일 발송 실패: email={}", EmailLogMasking.maskForLog(email));
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "비밀번호 재설정 이메일 발송에 실패했습니다."

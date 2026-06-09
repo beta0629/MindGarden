@@ -78,4 +78,21 @@ module.exports = defineConfig([
       'no-console': 'off',
     },
   },
+  {
+    name: 'mindgarden/design-token-sources',
+    /**
+     * 디자인 토큰을 정의하는 SSOT 파일은 hex literal 사용이 허용된다.
+     * - `src/theme/tokens.ts` : Expo 앱 색상 토큰
+     * - `src/theme/tokensAppConfig.cjs` : Node 측 splash·notification 동기화
+     * - `src/constants/oauthProviderBrand.ts` : OAuth 사업자 브랜드 색상
+     */
+    files: [
+      'src/theme/tokens.ts',
+      'src/theme/tokensAppConfig.cjs',
+      'src/constants/oauthProviderBrand.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': 'off',
+    },
+  },
 ]);

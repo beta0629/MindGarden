@@ -62,7 +62,14 @@ import {
   detectDuplicateLoginConfirmation,
 } from '@/utils/duplicateLoginSignal';
 
-export type SocialAuthProvider = 'KAKAO' | 'NAVER' | 'APPLE';
+/**
+ * 클라이언트가 사용하는 4 종 OAuth provider — Apple/Google/Kakao/Naver.
+ *
+ * <p>BE `/api/v1/auth/social-login` 은 provider 문자열 (대문자) 을 그대로 받아
+ * `OAuth2FactoryService` 가 적절한 service impl 로 분기한다. Google 은 `GoogleOAuth2ServiceImpl`
+ * 의 `requiresPhoneOtp=true` 정책에 따라 휴대폰 OTP 매칭(provider-agnostic) 으로 진입한다.</p>
+ */
+export type SocialAuthProvider = 'KAKAO' | 'NAVER' | 'APPLE' | 'GOOGLE';
 
 /**
  * 중복 로그인 확인 후 강제 재로그인에 필요한 입력값.
@@ -534,10 +541,7 @@ function enrichDraftFromKakaoProfile(
   let nickname = draftNickname;
   if (!nickname) {
     nickname =
-      readOptionalString(rec.nickname) ??
-      readOptionalString(rec.displayName) ??
-      realName ??
-      '';
+      readOptionalString(rec.nickname) ?? readOptionalString(rec.displayName) ?? realName ?? '';
   }
 
   const initialDisplayName =
@@ -1388,7 +1392,91 @@ export const AuthService = {
   },
 
   /**
-   * 가입 완료 후 동일 제공자로 social-login 재호출 (스펙 SNS_SIMPLE_SIGNUP_SPEC 4.1)
+   * Google 로그인 — `expo-auth-session/providers/google` (G-1) 결과를 BE 와 매칭.
+   *
+   * <p>흐름: 호출자(login.tsx) 가 `useGoogleAuthRequest().promptAsync()` 로 Google access_token 을
+   * 받은 뒤, 본 메서드를 호출. BE `/api/v1/auth/social-login` 이 `accessToken` 으로
+   * `GoogleOAuth2ServiceImpl.getUserInfo()` 호출 → `requiresOAuthPhoneVerification` (정책상 항상 true)
+   * 또는 기존 매칭 사용자 즉시 로그인.</p>
+   *
+   * @param accessToken Google OAuth access_token (`auth.accessToken`)
+   * @param idToken     OpenID Connect id_token — 현재 BE 는 미사용. 향후 호환 위해 받아만 둠.
+   */
+  async loginWithGoogle(accessToken: string, idToken?: string): Promise<SocialLoginOutcome> {
+    if (!accessToken?.trim()) {
+      return { kind: 'error', message: 'Google 로그인 토큰이 비어 있습니다.' };
+    }
+
+    try {
+      const googleRetryContext = buildSocialRetryContext(
+        'GOOGLE',
+        accessToken,
+        null,
+        null,
+        null,
+        null,
+      );
+
+      logSocialLoginDebugRequest({
+        provider: 'GOOGLE',
+        providerUserId: '',
+        hasEmail: false,
+        hasNickname: false,
+        hasProfileImage: false,
+        hasPhone: false,
+      });
+
+      let response: SocialLoginResponse | undefined;
+      try {
+        response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
+          provider: 'GOOGLE',
+          accessToken,
+          // BE 는 userId/email/nickname/profileImage 가 비면 `getUserInfo(accessToken)` 으로 보강한다.
+          ...(idToken?.trim() ? { idToken } : {}),
+        });
+      } catch (apiError: unknown) {
+        const dup = detectDuplicateLoginConfirmation(apiError);
+        if (dup) {
+          return {
+            kind: 'requiresDuplicateLoginConfirmation',
+            message: dup.message,
+            retryContext: googleRetryContext,
+          };
+        }
+        throw apiError;
+      }
+
+      if (!response) {
+        return { kind: 'error', message: '서버 응답이 없습니다.' };
+      }
+      const mapped = mapNativeSocialResponse(response, 'GOOGLE', undefined, googleRetryContext);
+      logSocialLoginDebugResponse(response, mapped);
+      if (mapped.kind === 'authenticated') {
+        const accessTokenValue = response.accessToken ?? '';
+        const refreshTokenValue = response.refreshToken ?? '';
+        await applyAuthenticatedUser(
+          mapped.user,
+          {
+            accessToken: accessTokenValue,
+            refreshToken: refreshTokenValue,
+          },
+          pickSessionIdFromAuthPayload(response),
+        );
+        return { kind: 'authenticated', user: mapped.user };
+      }
+      return mapped;
+    } catch (error: unknown) {
+      logAuthError('Google 로그인 에러', error);
+      const message =
+        error instanceof Error ? error.message : 'Google 로그인 중 오류가 발생했습니다.';
+      return { kind: 'error', message };
+    }
+  },
+
+  /**
+   * 가입 완료 후 동일 제공자로 social-login 재호출 (스펙 SNS_SIMPLE_SIGNUP_SPEC 4.1).
+   * Google 은 OAuth access_token 이 1회용이므로 본 헬퍼에서 재호출하지 않고 호출자가
+   * 다시 `useGoogleAuthRequest().promptAsync()` 를 트리거해야 한다 — 명시적 에러로 보고.
    */
   async loginWithProviderAfterSignup(provider: SocialAuthProvider): Promise<SocialLoginOutcome> {
     if (provider === 'KAKAO') {
@@ -1396,6 +1484,13 @@ export const AuthService = {
     }
     if (provider === 'APPLE') {
       return AuthService.loginWithApple();
+    }
+    if (provider === 'GOOGLE') {
+      return {
+        kind: 'error',
+        message:
+          'Google 로그인을 다시 시도해 주세요. (가입 완료 후 동일 토큰 재사용 불가 — 1회용 OAuth access_token)',
+      };
     }
     return AuthService.loginWithNaver();
   },

@@ -19036,3 +19036,32 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
   --mg-color-accent-main: #A89078;
 }
 
+/* ========================================
+   2026 Q2 로그인 리디자인 — 파스텔 배경 stop 토큰
+   SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260609.md §1.2 / §1.3
+   배경: Expo 로그인 화면 리디자인에 사용하는 파스텔 그라데이션 stops를
+        웹·앱 토큰 일관성(사용자 결정 §14 #3)에 따라 양쪽에 동시 등록.
+        Expo 측 매핑: `expo-app/src/theme/tokens.ts` COMMON_COLORS.loginBgWarm /
+        loginBgCool / loginBgBridge.
+   값 근거: 스펙 §1.2 색상 표.
+   ======================================== */
+
+:root {
+  /** warm 톤 stop — 옐로우 35% (#FFF6E8) */
+  --mg-login-bg-warm: #FFF6E8;
+  /** cool 톤 stop — 틸 25% (#EFF3F0) */
+  --mg-login-bg-cool: #EFF3F0;
+  /** warm/cool 사이 중성 브리지 (#F4F1EA) — LinearGradient stop[2] */
+  --mg-login-bg-bridge: #F4F1EA;
+  /** 베이스 — 메인 배경과 동일 (#FAF9F7) alias, 폴백용 명시 */
+  --mg-login-bg-base: var(--mg-color-background-main, #FAF9F7);
+}
+
+:root[data-theme="dark"] {
+  /* 다크 모드 분기는 본 워크 제외 (스펙 §8 다크 미지원). 어두운 톤 stop 은 후속 워크. */
+  --mg-login-bg-warm: #2A2418;
+  --mg-login-bg-cool: #1F2A24;
+  --mg-login-bg-bridge: #1F1B16;
+  --mg-login-bg-base: var(--mg-color-background-main, #1a1a1a);
+}
+

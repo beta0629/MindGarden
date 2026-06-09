@@ -42,6 +42,7 @@ import {
   OAUTH_NAVER_FOREGROUND,
 } from '@/constants/oauthProviderBrand';
 import { isAppleSignInAvailableSync } from '@/services/auth/appleSignIn';
+import { sanitizeSocialIdentityString } from '@/utils/socialIdentitySanitize';
 
 const DUPLICATE_LOGIN_MODAL_TITLE = '이미 로그인된 기기가 있습니다';
 const DUPLICATE_LOGIN_FALLBACK_BODY =
@@ -71,16 +72,22 @@ async function safeNotificationAsync(
   }
 }
 
+/**
+ * 라우트 파라미터로 전달하기 전에 SNS 프로필 필드를 안전 문자열로 정리한다.
+ *
+ * <p>SDK·BE 직렬화 사고로 들어온 "null"/"undefined" 리터럴을 빈 문자열로 치환하여,
+ * 가입 화면 입력값에 그대로 노출되지 않도록 한다.</p>
+ */
 function socialSignupRouteParams(info: SocialUserInfoDraft) {
   const base = {
     provider: info.provider,
-    email: info.email,
-    nickname: info.nickname,
-    socialId: info.providerUserId,
-    profileImageUrl: info.profileImageUrl ?? '',
+    email: sanitizeSocialIdentityString(info.email),
+    nickname: sanitizeSocialIdentityString(info.nickname),
+    socialId: sanitizeSocialIdentityString(info.providerUserId),
+    profileImageUrl: sanitizeSocialIdentityString(info.profileImageUrl ?? ''),
   };
-  const phone = info.phone?.trim();
-  const initialDisplayName = info.initialDisplayName?.trim();
+  const phone = sanitizeSocialIdentityString(info.phone);
+  const initialDisplayName = sanitizeSocialIdentityString(info.initialDisplayName);
   return {
     ...base,
     ...(phone ? { phone } : {}),

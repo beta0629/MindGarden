@@ -104,17 +104,21 @@ public class SocialUserInfo {
     private Long tokenExpiresIn;
     
     /**
-     * 소셜 계정 정보를 표준화된 형태로 변환
+     * 소셜 계정 정보를 표준화된 형태로 변환.
+     *
+     * <p>SDK·외부 API가 nickname/name 을 미제공할 때 일부 직렬화 경로에서 {@code "null"}·{@code "undefined"}
+     * 문자열로 들어오는 사고를 방지하기 위해 해당 문자열은 빈 값으로 정리한다(P1: 간편가입 화면 표시명에 "null" 노출 차단).</p>
      */
     public void normalizeData() {
         // 이메일 미제공 시 가짜 주소를 넣지 않음 — OAuth 매칭·가입 분기에서 실제 이메일·전화만 사용
-        
-        // 이름이 없는 경우 닉네임으로 대체
+
+        this.name = sanitizeIdentityString(this.name);
+        this.nickname = sanitizeIdentityString(this.nickname);
+
         if ((this.name == null || this.name.trim().isEmpty()) && this.nickname != null) {
             this.name = this.nickname;
         }
-        
-        // 닉네임이 없는 경우 이름으로 대체
+
         if ((this.nickname == null || this.nickname.trim().isEmpty()) && this.name != null) {
             this.nickname = this.name;
         }
@@ -148,7 +152,28 @@ public class SocialUserInfo {
 
         this.provider = SocialProvider.normalize(this.provider);
     }
-    
+
+    /**
+     * 이름/닉네임 같은 표시 문자열에서 SDK·BE 직렬화 사고로 들어온 {@code "null"}·{@code "undefined"} 리터럴을 제거한다.
+     *
+     * @param raw 원본 문자열 (null 허용)
+     * @return 정리된 문자열 (의미 없는 값은 null)
+     */
+    private static String sanitizeIdentityString(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        if ("null".equals(lower) || "undefined".equals(lower)) {
+            return null;
+        }
+        return trimmed;
+    }
+
     /**
      * 생년월일을 LocalDate로 변환
      */

@@ -492,6 +492,35 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 내담자 본인 콘텐츠를 상담사에게 공유하려 할 때 활성 매핑이 없는 경우.
+     *
+     * <p>FE 는 사전 조회 (`GET /api/v1/clients/me/consultant-mappings/active`) 로 차단하지만,
+     * 매핑이 동시 INACTIVE 로 바뀌는 등 경계 케이스에서 BE 가 본 예외를 던진다.
+     * HTTP {@code 400 Bad Request} + JSON 본문 {@code { success, code, message }} 로 응답.</p>
+     *
+     * @since 2026-06-09
+     */
+    @ExceptionHandler(NoActiveConsultantMappingException.class)
+    public ResponseEntity<Map<String, Object>> handleNoActiveConsultantMapping(
+            NoActiveConsultantMappingException e, HttpServletRequest request) {
+        log.info("[NO_ACTIVE_CONSULTANT_MAPPING] message={} path={}",
+            e.getMessage(), request.getRequestURI());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", e.getErrorCode());
+        body.put("message", e.getMessage() != null ? e.getMessage()
+            : "매칭된 담당 상담사가 없습니다. 먼저 상담을 신청해 주세요.");
+        body.put("errorCode", e.getErrorCode());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
      * 어드민 테스트 발송 도구의 솔라피 실시간 알림톡 템플릿 조회 실패.
      * HTTP 502 Bad Gateway + {@code ALIMTALK_TEMPLATE_FETCH_FAILED} 코드.
      */

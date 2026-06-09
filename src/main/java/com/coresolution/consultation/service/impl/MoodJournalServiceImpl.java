@@ -16,6 +16,7 @@ import com.coresolution.consultation.dto.moodjournal.MoodStatRowResponse;
 import com.coresolution.consultation.entity.MoodJournalEntry;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.NoActiveConsultantMappingException;
 import com.coresolution.consultation.repository.MoodJournalEntryRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchService;
@@ -23,6 +24,7 @@ import com.coresolution.consultation.service.MoodJournalService;
 import com.coresolution.consultation.service.support.ConsultantClientShareSupport;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author MindGarden
  * @since 2026-05-14
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -84,8 +87,8 @@ public class MoodJournalServiceImpl implements MoodJournalService {
         boolean wasShared = entity.isSharedWithConsultant();
         applyPayload(entity, request);
         moodJournalEntryRepository.save(entity);
-        maybeDispatchSharePush(tenantId, client, entity, wasShared);
-        return toResponse(entity);
+        boolean sharePending = maybeDispatchSharePush(tenantId, client, entity, wasShared);
+        return toResponse(entity, sharePending);
     }
 
     @Override
@@ -99,8 +102,8 @@ public class MoodJournalServiceImpl implements MoodJournalService {
         boolean wasShared = entity.isSharedWithConsultant();
         applyPayload(entity, request);
         moodJournalEntryRepository.save(entity);
-        maybeDispatchSharePush(tenantId, client, entity, wasShared);
-        return toResponse(entity);
+        boolean sharePending = maybeDispatchSharePush(tenantId, client, entity, wasShared);
+        return toResponse(entity, sharePending);
     }
 
     @Override
@@ -159,29 +162,59 @@ public class MoodJournalServiceImpl implements MoodJournalService {
             .toList();
     }
 
-    private void maybeDispatchSharePush(
+    /**
+     * 무드 저널 공유 푸시 best-effort 발송.
+     *
+     * <p>일기 저장은 항상 성공해야 하므로 푸시 발송은 별도 try/catch 로 격리한다.
+     * 활성 매핑 부재·푸시 인프라 오류 등 어떤 사유로 실패하더라도 트랜잭션을 롤백하지 않는다.</p>
+     *
+     * @return 사용자가 공유를 의도했지만 푸시가 skip / 실패한 경우 {@code true}.
+     *         정상 발송 또는 공유 의도가 없는 경우 {@code false}.
+     */
+    private boolean maybeDispatchSharePush(
             String tenantId,
             User client,
             MoodJournalEntry entity,
             boolean wasShared) {
-        if (wasShared || !entity.isSharedWithConsultant()) {
-            return;
+        if (!entity.isSharedWithConsultant()) {
+            return false;
         }
-        User managedClient = userRepository.findByTenantIdAndId(tenantId, client.getId())
-            .orElse(client);
-        User targetConsultant = consultantClientShareSupport.resolveTargetConsultant(
-            tenantId, managedClient, null);
-        consultantClientShareSupport.assertConsultantMappedToClient(
-            tenantId, targetConsultant, managedClient);
-        String clientName = consultantClientShareSupport.resolveClientDisplayName(managedClient);
-        mobilePushDispatchService.dispatchMoodJournalShared(
-            tenantId,
-            managedClient.getId(),
-            targetConsultant.getId(),
-            clientName,
-            entity.getJournalDate().toString(),
-            entity.getEmoji(),
-            entity.getMemo());
+        if (wasShared) {
+            return false;
+        }
+        Long journalId = entity.getId();
+        Long userId = client != null ? client.getId() : null;
+        try {
+            User managedClient = userRepository.findByTenantIdAndId(tenantId, client.getId())
+                .orElse(client);
+            if (!consultantClientShareSupport.hasShareableMapping(tenantId, managedClient)) {
+                log.warn("[MOOD_JOURNAL_SHARE_SKIP] no_active_mapping userId={} journalId={}",
+                    userId, journalId);
+                return true;
+            }
+            User targetConsultant = consultantClientShareSupport.resolveTargetConsultant(
+                tenantId, managedClient, null);
+            consultantClientShareSupport.assertConsultantMappedToClient(
+                tenantId, targetConsultant, managedClient);
+            String clientName = consultantClientShareSupport.resolveClientDisplayName(managedClient);
+            mobilePushDispatchService.dispatchMoodJournalShared(
+                tenantId,
+                managedClient.getId(),
+                targetConsultant.getId(),
+                clientName,
+                entity.getJournalDate().toString(),
+                entity.getEmoji(),
+                entity.getMemo());
+            return false;
+        } catch (NoActiveConsultantMappingException e) {
+            log.warn("[MOOD_JOURNAL_SHARE_SKIP] no_active_mapping userId={} journalId={} message={}",
+                userId, journalId, e.getMessage());
+            return true;
+        } catch (Exception e) {
+            log.warn("[MOOD_JOURNAL_PUSH_FAIL] best_effort userId={} journalId={} message={}",
+                userId, journalId, e.getMessage());
+            return true;
+        }
     }
 
     private MoodJournalInboxItemResponse toInboxItem(String tenantId, MoodJournalEntry e) {
@@ -276,6 +309,10 @@ public class MoodJournalServiceImpl implements MoodJournalService {
     }
 
     private MoodJournalEntryResponse toResponse(MoodJournalEntry e) {
+        return toResponse(e, false);
+    }
+
+    private MoodJournalEntryResponse toResponse(MoodJournalEntry e, boolean consultantSharePending) {
         String emoji = e.getEmoji();
         if (emoji == null || emoji.isBlank()) {
             emoji = MoodJournalConstants.emojiForMoodValue(e.getMoodValue());
@@ -288,6 +325,7 @@ public class MoodJournalServiceImpl implements MoodJournalService {
             .tags(tags)
             .memo(e.getMemo())
             .sharedWithConsultant(e.isSharedWithConsultant())
+            .consultantSharePending(consultantSharePending)
             .createdAt(formatOffset(e.getCreatedAt()))
             .build();
     }

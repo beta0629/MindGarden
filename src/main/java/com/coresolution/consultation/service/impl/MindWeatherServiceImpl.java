@@ -15,6 +15,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.MindWeatherCard;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.NoActiveConsultantMappingException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.MindWeatherCardRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -202,7 +203,8 @@ public class MindWeatherServiceImpl implements MindWeatherService {
         return active.orElseGet(() -> mappings.stream()
             .map(ConsultantClientMapping::getConsultant)
             .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("담당 상담사를 찾을 수 없습니다. consultantId를 지정해 주세요.")));
+            .orElseThrow(() -> new NoActiveConsultantMappingException(
+                "매칭된 담당 상담사가 없습니다. 먼저 상담을 신청해 주세요.")));
     }
 
     private void assertConsultantMappedToClient(String tenantId, User consultant, User clientUser) {

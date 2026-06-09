@@ -30,6 +30,13 @@ interface MindWeatherCardProps {
   readonly onPressShare?: () => void;
   readonly onPressUnshare?: () => void;
   readonly busy?: boolean;
+  /**
+   * 활성 상담사 매핑이 없어 공유가 불가능한 경우 시각적으로 disabled 톤 처리.
+   * 탭 자체는 가능하며 부모가 안내 모달을 띄운다.
+   *
+   * @since 2026-06-09
+   */
+  readonly isShareDisabled?: boolean;
 }
 
 export function MindWeatherCard({
@@ -38,6 +45,7 @@ export function MindWeatherCard({
   onPressShare,
   onPressUnshare,
   busy = false,
+  isShareDisabled = false,
 }: MindWeatherCardProps) {
   const theme = useTheme();
   const sharedSummary = Boolean(card.share?.summary);
@@ -189,11 +197,17 @@ export function MindWeatherCard({
                 {
                   backgroundColor: theme.colors.primary,
                   borderRadius: theme.borderRadius.lg,
-                  opacity: busy ? 0.6 : pressed ? 0.85 : 1,
+                  opacity: busy ? 0.6 : isShareDisabled ? 0.5 : pressed ? 0.85 : 1,
                 },
               ]}
-              accessibilityLabel={MIND_WEATHER_SHARE_COPY_KO.ctaShare}
+              accessibilityLabel={
+                isShareDisabled
+                  ? `${MIND_WEATHER_SHARE_COPY_KO.ctaShare} (상담사 매칭 후 이용 가능)`
+                  : MIND_WEATHER_SHARE_COPY_KO.ctaShare
+              }
               accessibilityRole="button"
+              accessibilityState={{ disabled: isShareDisabled }}
+              testID="mind-weather-card-share-button"
             >
               <Share2 size={16} color={theme.colors.textOnPrimary} />
               <Text

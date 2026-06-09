@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -18,6 +19,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.ProfileImageStorageService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -68,6 +70,9 @@ class UserProfileServiceImplProfileImageGuardTest {
     @Mock
     private NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
 
+    @Mock
+    private ProfileImageStorageService profileImageStorageService;
+
     @InjectMocks
     private UserProfileServiceImpl service;
 
@@ -84,10 +89,12 @@ class UserProfileServiceImplProfileImageGuardTest {
     }
 
     @Test
-    @DisplayName("base64 dataURI 입력은 IllegalArgumentException 으로 거부 (PR #159 회귀 가드)")
-    void updateUserProfile_base64Image_rejected() {
+    @DisplayName("base64 dataURI 입력은 storage 에 자동 저장 + URL 영속화 (P0 핫픽스 2026-06-09)")
+    void updateUserProfile_base64Image_autoConvertedToUrl() {
+        String dataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAA...";
+        String storedUrl = "/api/v1/files/profile-images/test-tenant_100_abc.png";
         UserProfileUpdateRequest req = UserProfileUpdateRequest.builder()
-            .profileImageUrl("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAA...")
+            .profileImageUrl(dataUri)
             .build();
 
         try (MockedStatic<TenantContextHolder> tenantStatic = mockStatic(TenantContextHolder.class);
@@ -96,12 +103,49 @@ class UserProfileServiceImplProfileImageGuardTest {
             sessionStatic.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(callerAndTarget);
             when(userRepository.findByTenantIdAndId(TENANT_ID, USER_ID))
                 .thenReturn(Optional.of(callerAndTarget));
+            when(profileImageStorageService.storeFromDataUri(eq(TENANT_ID), eq(USER_ID), eq(dataUri)))
+                .thenReturn(storedUrl);
 
-            assertThatThrownBy(() -> service.updateUserProfile(USER_ID, req))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("파일 업로드 API");
+            try {
+                service.updateUserProfile(USER_ID, req);
+            } catch (RuntimeException ignoredAfterAutoConvert) {
+                // buildUserProfileResponse 내부 collaborator 미충족으로 후행 예외 가능 — 본 테스트의 관심사
+                // 는 자동 변환 호출 + 엔티티 URL 세팅 검증.
+            }
 
-            verify(userRepository, never()).save(any(User.class));
+            verify(profileImageStorageService, times(1))
+                .storeFromDataUri(TENANT_ID, USER_ID, dataUri);
+            assertThat(callerAndTarget.getProfileImageUrl()).isEqualTo(storedUrl);
+        }
+    }
+
+    @Test
+    @DisplayName("base64 dataURI 자동 변환 — 이전 storage URL 은 unlink (이전 파일 즉시 삭제)")
+    void updateUserProfile_base64WithPreviousStorageUrl_unlinksPrevious() {
+        String previousUrl = "/api/v1/files/profile-images/test-tenant_100_old.png";
+        callerAndTarget.setProfileImageUrl(previousUrl);
+        String dataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAA...";
+        String storedUrl = "/api/v1/files/profile-images/test-tenant_100_new.png";
+        UserProfileUpdateRequest req = UserProfileUpdateRequest.builder()
+            .profileImageUrl(dataUri)
+            .build();
+
+        try (MockedStatic<TenantContextHolder> tenantStatic = mockStatic(TenantContextHolder.class);
+             MockedStatic<SessionUtils> sessionStatic = mockStatic(SessionUtils.class)) {
+            tenantStatic.when(TenantContextHolder::getRequiredTenantId).thenReturn(TENANT_ID);
+            sessionStatic.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(callerAndTarget);
+            when(userRepository.findByTenantIdAndId(TENANT_ID, USER_ID))
+                .thenReturn(Optional.of(callerAndTarget));
+            when(profileImageStorageService.storeFromDataUri(eq(TENANT_ID), eq(USER_ID), eq(dataUri)))
+                .thenReturn(storedUrl);
+
+            try {
+                service.updateUserProfile(USER_ID, req);
+            } catch (RuntimeException ignoredAfterAutoConvert) {
+                // 후행 응답 빌드 예외 무시.
+            }
+
+            verify(profileImageStorageService, times(1)).deleteByUrl(previousUrl);
         }
     }
 

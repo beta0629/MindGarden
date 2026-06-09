@@ -9,8 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -37,6 +40,14 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 public class ProfileImageStorageServiceImpl implements ProfileImageStorageService {
+
+    /**
+     * base64 dataURI prefix 정규식. P0 핫픽스 — 2026-06-09.
+     * 그룹 1: MIME subtype ({@code jpeg|jpg|png|webp}). 정규화 후 MIME 검증과 매핑한다.
+     */
+    private static final Pattern DATA_URI_PATTERN = Pattern.compile(
+        "^data:image/(jpeg|jpg|png|webp);base64,(.+)$",
+        Pattern.DOTALL);
 
     private final String baseDir;
 
@@ -77,6 +88,78 @@ public class ProfileImageStorageServiceImpl implements ProfileImageStorageServic
         String url = ProfileImageStorageConstants.URL_PREFIX + savedFileName;
         log.info("profile image 저장: tenantId={}, userId={}, url={}, size={}",
             tenantId, userId, url, file.getSize());
+        return url;
+    }
+
+    @Override
+    public String storeFromDataUri(String tenantId, Long userId, String dataUri) {
+        if (dataUri == null) {
+            return null;
+        }
+        String trimmed = dataUri.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId 가 비어 있습니다.");
+        }
+        if (userId == null || userId <= 0L) {
+            throw new IllegalArgumentException("userId 가 유효하지 않습니다.");
+        }
+
+        Matcher matcher = DATA_URI_PATTERN.matcher(trimmed);
+        if (!matcher.matches()) {
+            log.warn("profile image base64 dataURI 형식 거부: tenantId={}, userId={}, length={}",
+                tenantId, userId, trimmed.length());
+            throw new IllegalArgumentException(ProfileImageStorageConstants.MSG_UNSUPPORTED_MIME);
+        }
+
+        String mimeSubtype = matcher.group(1).toLowerCase(Locale.ROOT);
+        String base64Payload = matcher.group(2);
+        String mime = "image/" + ("jpg".equals(mimeSubtype) ? "jpeg" : mimeSubtype);
+        if (!ProfileImageStorageConstants.ALLOWED_MIME_TYPES.contains(mime)) {
+            throw new IllegalArgumentException(ProfileImageStorageConstants.MSG_UNSUPPORTED_MIME);
+        }
+
+        byte[] decoded;
+        try {
+            decoded = Base64.getDecoder().decode(base64Payload);
+        } catch (IllegalArgumentException e) {
+            log.warn("profile image base64 디코드 실패: tenantId={}, userId={}", tenantId, userId);
+            throw new IllegalArgumentException(ProfileImageStorageConstants.MSG_UNSUPPORTED_MIME);
+        }
+        if (decoded.length == 0) {
+            throw new IllegalArgumentException(ProfileImageStorageConstants.MSG_FILE_REQUIRED);
+        }
+        if (decoded.length > ProfileImageStorageConstants.MAX_FILE_SIZE_BYTES) {
+            throw new IllegalArgumentException(ProfileImageStorageConstants.MSG_FILE_TOO_LARGE);
+        }
+        if (!matchesMagicBytes(headOf(decoded), mime)) {
+            throw new IllegalArgumentException(ProfileImageStorageConstants.MSG_MAGIC_BYTES_MISMATCH);
+        }
+
+        String extension = mimeToDefaultExtension(mime);
+        String savedFileName = tenantId + "_" + userId + "_" + UUID.randomUUID() + "." + extension;
+        Path uploadBase = uploadBasePath();
+        try {
+            if (!Files.exists(uploadBase)) {
+                Files.createDirectories(uploadBase);
+            }
+            Path target = uploadBase.resolve(savedFileName).normalize();
+            if (!target.startsWith(uploadBase)) {
+                log.warn("profile image dataURI 저장 경로가 허용 범위를 벗어남: tenantId={}, userId={}",
+                    tenantId, userId);
+                throw new IllegalArgumentException(ProfileImageStorageConstants.MSG_INVALID_FILE_NAME);
+            }
+            Files.write(target, decoded);
+        } catch (IOException e) {
+            log.error("profile image dataURI 저장 실패: tenantId={}, userId={}", tenantId, userId, e);
+            throw new UncheckedIOException(ProfileImageStorageConstants.MSG_STORAGE_FAILED, e);
+        }
+
+        String url = ProfileImageStorageConstants.URL_PREFIX + savedFileName;
+        log.info("profile image dataURI 자동 변환 저장: tenantId={}, userId={}, url={}, size={}",
+            tenantId, userId, url, decoded.length);
         return url;
     }
 
@@ -195,6 +278,19 @@ public class ProfileImageStorageServiceImpl implements ProfileImageStorageServic
             return null;
         }
         return fileName.substring(dot + 1).toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * byte[] 의 head(최대 12 바이트) 를 안전하게 추출한다. dataURI 디코드 결과 매직바이트 검증에 사용.
+     */
+    private static byte[] headOf(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return new byte[0];
+        }
+        int len = Math.min(bytes.length, 12);
+        byte[] head = new byte[len];
+        System.arraycopy(bytes, 0, head, 0, len);
+        return head;
     }
 
     private static byte[] readMagicBytes(MultipartFile file) throws IOException {

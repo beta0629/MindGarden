@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ProfileImageStorageConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.MyPageResponse;
 import com.coresolution.consultation.dto.MyPageUpdateRequest;
@@ -10,6 +11,7 @@ import com.coresolution.consultation.entity.UserAddress;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MyPageService;
+import com.coresolution.consultation.service.ProfileImageStorageService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
@@ -30,6 +32,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserAddressRepository userAddressRepository;
     private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
+    private final ProfileImageStorageService profileImageStorageService;
 
     /**
      * 현재 테넌트 컨텍스트와 PK로 사용자를 조회합니다.
@@ -221,13 +224,30 @@ public class MyPageServiceImpl implements MyPageService {
             }
         }
         
-        if (request.getProfileImage() != null) {
-            // 2026-06-08: base64 dataURI 거부 (회귀 가드). 별도 파일 업로드 API 로 분리.
-            ProfileImageUrlGuard.validateInbound(request.getProfileImage());
-            log.info("🖼️ 프로필 이미지 업데이트: userId={}, imageLength={}",
-                userId,
-                request.getProfileImage().length());
-            user.setProfileImageUrl(request.getProfileImage());
+        if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
+            // 2026-06-09 P0 핫픽스: v1.0.6 expo-app · 미리로드 web 사용자가 여전히 base64 dataURI 를
+            // 전송하는 회귀를 후방 호환으로 흡수한다. dataURI 면 storage 에 저장한 뒤 URL 만 세팅한다.
+            String input = request.getProfileImage();
+            String finalUrl;
+            if (input.startsWith("data:image/")) {
+                finalUrl = profileImageStorageService.storeFromDataUri(
+                    user.getTenantId(), user.getId(), input);
+                log.info("프로필 이미지 base64 → 파일 자동 변환 완료 (userId={}, url={})",
+                    userId, finalUrl);
+                String previousUrl = user.getProfileImageUrl();
+                if (previousUrl != null
+                    && previousUrl.startsWith(ProfileImageStorageConstants.URL_PREFIX)
+                    && !previousUrl.equals(finalUrl)) {
+                    profileImageStorageService.deleteByUrl(previousUrl);
+                }
+            } else {
+                // URL 입력은 기존 가드 그대로 통과.
+                ProfileImageUrlGuard.validateInbound(input);
+                finalUrl = input;
+            }
+            log.info("🖼️ 프로필 이미지 업데이트: userId={}, finalUrlLength={}",
+                userId, finalUrl != null ? finalUrl.length() : 0);
+            user.setProfileImageUrl(finalUrl);
         }
 
         if (request.getNotificationChannelPreference() != null

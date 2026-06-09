@@ -846,6 +846,21 @@ public class UserProfileServiceImpl implements UserProfileService {
     
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public String updateProfileImageUrl(Long userId, String url) {
+        // 2026-06-09: P0 영구 대책 Phase 2 — POST /api/v1/users/profile/{userId}/image 가 storage 저장
+        // 직후 호출. 권한 검증은 controller 가 1차로 수행하고, 동일 정책을 service 에서 재확인한다.
+        assertUserProfileTenantScopedAccess(userId, true);
+        ProfileImageUrlGuard.validateInbound(url);
+        User user = requireUserInCurrentTenant(userId);
+        user.setProfileImageUrl(url);
+        userRepository.save(user);
+        log.info("프로필 이미지 URL 영속화 완료: userId={}, urlLength={}",
+            userId, url != null ? url.length() : 0);
+        return user.getProfileImageUrl();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> applyForConsultant(Long userId, ConsultantApplicationRequest request) {
         Map<String, Object> result = new HashMap<>();
         

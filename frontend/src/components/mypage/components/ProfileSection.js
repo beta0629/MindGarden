@@ -131,6 +131,9 @@ const ProfileSection = ({
     }
   };
 
+  // P0 영구 대책 Phase 2 (2026-06-09):
+  // ProfileImageUpload 가 multipart 업로드를 직접 수행한 뒤 서버 URL 을 전달한다.
+  // 따라서 본 핸들러는 더 이상 dataURI 분기·자동 PUT 트리거를 갖지 않는다.
   const handleImageChange = (newImage) => {
     if (newImage === null) {
       const imageToSet = '/default-avatar.svg';
@@ -147,31 +150,19 @@ const ProfileSection = ({
           profileImageType: imageTypeToSet
         }));
       }
-    } else {
-      onFormDataChange((prev) => ({
+      return;
+    }
+    onFormDataChange((prev) => ({
+      ...prev,
+      profileImage: newImage,
+      profileImageType: 'USER_PROFILE'
+    }));
+    if (onUserChange) {
+      onUserChange((prev) => ({
         ...prev,
         profileImage: newImage,
         profileImageType: 'USER_PROFILE'
       }));
-      if (onUserChange) {
-        onUserChange((prev) => ({
-          ...prev,
-          profileImage: newImage,
-          profileImageType: 'USER_PROFILE'
-        }));
-      }
-    }
-
-    if (newImage && newImage.startsWith('data:image/')) {
-      setTimeout(() => {
-        if (onSave) {
-          onSave(null, {
-            ...formData,
-            profileImage: newImage,
-            profileImageType: 'USER_PROFILE'
-          });
-        }
-      }, 0);
     }
   };
 
@@ -246,6 +237,7 @@ const ProfileSection = ({
           <div className="mg-mypage__card-divider" aria-hidden="true" />
           <div className="mg-mypage__profile-image-block">
             <ProfileImageUpload
+              userId={displayUser?.id || user?.id || formData.userPk || formData.id}
               profileImage={formData.profileImage}
               profileImageType={formData.profileImageType}
               socialProvider={formData.socialProvider}

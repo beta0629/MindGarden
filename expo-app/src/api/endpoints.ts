@@ -60,6 +60,12 @@ export const USER_API = {
 export const PROFILE_API = {
   CLIENT_PROFILE: '/api/v1/clients/profile',
   userProfile: (userId: string | number) => `/api/v1/users/profile/${userId}`,
+  /**
+   * 프로필 이미지 multipart 업로드 (P0 영구 대책 Phase 2 — 2026-06-09).
+   * BE: ProfileImageUploadController#uploadProfileImage.
+   * 본인 또는 admin 만 허용. 사이즈 5MB · MIME jpeg/png/webp.
+   */
+  uploadProfileImage: (userId: string | number) => `/api/v1/users/profile/${userId}/image`,
 } as const;
 
 export const DASHBOARD_API = {

@@ -81,6 +81,30 @@ const isSocialSignupSuccess = (payload) => {
   return payload.userId != null && Boolean(payload.email);
 };
 
+/**
+ * 소셜 SDK·BE 응답에서 들어온 표시명/닉네임 후보를 안전 문자열로 정리한다.
+ *
+ * SDK/BE 직렬화 사고로 들어온 "null"/"undefined" 리터럴은 미입력으로 간주하여
+ * 간편가입 입력 필드에 그대로 노출되는 사고를 차단한다.
+ *
+ * @param {unknown} raw 원본 값
+ * @returns {string} 사용 가능한 문자열 (없으면 빈 문자열)
+ */
+const sanitizeSocialIdentityString = (raw) => {
+  if (typeof raw !== 'string') {
+    return '';
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return '';
+  }
+  const lower = trimmed.toLowerCase();
+  if (lower === 'null' || lower === 'undefined') {
+    return '';
+  }
+  return trimmed;
+};
+
 const SocialSignupModal = ({
   isOpen,
   onClose,
@@ -106,10 +130,13 @@ const SocialSignupModal = ({
 
   useEffect(() => {
     if (socialUser && isOpen) {
+      const safeName = sanitizeSocialIdentityString(socialUser.name);
+      const safeNickname = sanitizeSocialIdentityString(socialUser.nickname);
+      const safeEmail = sanitizeSocialIdentityString(socialUser.email);
       setFormData((prev) => ({
         ...prev,
-        email: socialUser.email || '',
-        displayName: (socialUser.name || socialUser.nickname || '').trim(),
+        email: safeEmail,
+        displayName: safeName || safeNickname,
         phone: ''
       }));
     }
@@ -224,19 +251,21 @@ const SocialSignupModal = ({
     setErrors({});
 
     try {
+      const safeSocialName = sanitizeSocialIdentityString(socialUser.name);
+      const safeSocialNickname = sanitizeSocialIdentityString(socialUser.nickname);
       const displayName =
-        (formData.displayName || '').trim() ||
-        (socialUser.name || '').trim() ||
-        (socialUser.nickname || '').trim();
+        sanitizeSocialIdentityString(formData.displayName) ||
+        safeSocialName ||
+        safeSocialNickname;
       const phoneDigits = normalizeKoreanMobileDigits(formData.phone);
 
       const signupData = {
         provider: socialUser.provider,
         providerUserId: socialUser.providerUserId,
-        providerUsername: displayName || socialUser.name || socialUser.nickname,
+        providerUsername: displayName || safeSocialName || safeSocialNickname,
         email: formData.email,
-        name: displayName || socialUser.name || socialUser.nickname,
-        nickname: displayName || socialUser.nickname || socialUser.name,
+        name: displayName || safeSocialName || safeSocialNickname,
+        nickname: displayName || safeSocialNickname || safeSocialName,
         ...(phoneDigits ? { phone: phoneDigits } : {}),
         providerProfileImage: socialUser.profileImageUrl,
         branchCode: '',

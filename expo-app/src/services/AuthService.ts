@@ -43,6 +43,7 @@ import { syncTenantFromAccessToken } from '@/utils/syncTenantFromAccessToken';
 import { setCachedJsessionId, setJsessionId } from '@/utils/sessionCookie';
 import { coerceApiRoleString, mapApiRoleToStoreRole } from '@/utils/adminRole';
 import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
+import { readSocialIdentityOptional } from '@/utils/socialIdentitySanitize';
 import {
   DUPLICATE_LOGIN_FALLBACK_MESSAGE,
   detectDuplicateLoginConfirmation,
@@ -394,12 +395,15 @@ function mapApiUserToStoreUser(raw: SocialLoginApiUser, accessToken?: string): U
   };
 }
 
+/**
+ * 객체 필드에서 사용 가능한 문자열만 추출한다.
+ *
+ * <p>SNS SDK·서버 응답에서 닉네임·이메일 등이 null로 와도, 일부 경로에서
+ * "null"/"undefined" 문자열로 직렬화되어 가입 화면에 그대로 노출되는 사고를 방지한다.
+ * 공백, "null", "undefined"(대소문자 무관)는 모두 미입력으로 간주한다.</p>
+ */
 function readOptionalString(v: unknown): string | undefined {
-  if (typeof v === 'string') {
-    const t = v.trim();
-    return t.length ? t : undefined;
-  }
-  return undefined;
+  return readSocialIdentityOptional(v);
 }
 
 function readKakaoNestedAccount(
@@ -441,24 +445,27 @@ function enrichDraftFromKakaoProfile(
 
   const realName = readOptionalString(rec.name) ?? (ka ? readOptionalString(ka.name) : undefined);
 
-  let nickname = draft.nickname?.trim() ?? '';
+  const draftNickname = readOptionalString(draft.nickname) ?? '';
+  let nickname = draftNickname;
   if (!nickname) {
     nickname =
       readOptionalString(rec.nickname) ??
       readOptionalString(rec.displayName) ??
-      realName?.trim() ??
+      realName ??
       '';
   }
 
   const initialDisplayName =
-    realName && realName.trim().length >= 2 ? realName.trim() : draft.initialDisplayName;
+    realName && realName.length >= 2
+      ? realName
+      : (readOptionalString(draft.initialDisplayName) ?? undefined);
 
   return {
     ...draft,
     email,
-    nickname: nickname || draft.nickname,
+    nickname,
     phone,
-    realName: realName ?? draft.realName,
+    realName: realName ?? readOptionalString(draft.realName),
     initialDisplayName,
   };
 }
@@ -487,7 +494,8 @@ function enrichDraftFromNaverResponse(
     if (pe) email = pe;
   }
 
-  let nickname = draft.nickname?.trim() ?? '';
+  const draftNickname = readOptionalString(draft.nickname) ?? '';
+  let nickname = draftNickname;
   if (!nickname) {
     nickname = readOptionalString(response.nickname) ?? readOptionalString(response.name) ?? '';
   }
@@ -495,7 +503,7 @@ function enrichDraftFromNaverResponse(
   return {
     ...draft,
     email,
-    nickname: nickname || draft.nickname,
+    nickname,
     phone,
   };
 }
@@ -509,11 +517,11 @@ function parseSocialUserInfoDraft(
   const pid = info.socialId ?? (info as { providerUserId?: string }).providerUserId;
   if (!pid) return null;
   return {
-    email: info.email ?? '',
-    nickname: info.nickname ?? '',
+    email: readOptionalString(info.email) ?? '',
+    nickname: readOptionalString(info.nickname) ?? '',
     provider,
     providerUserId: String(pid),
-    profileImageUrl,
+    profileImageUrl: readOptionalString(profileImageUrl),
   };
 }
 

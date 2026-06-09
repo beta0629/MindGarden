@@ -607,7 +607,101 @@ jobs:
     # ============================================================================
     # [/P0 hotfix 2026-06-08]
     # ============================================================================
-          
+
+    # ============================================================================
+    # [P0 후속 강화 2026-06-09] Profile Image Upload Dir env 자동 주입 + 검증 (개발)
+    # 가이드: docs/project-management/2026-06-09/PROFILE_IMAGE_UPLOAD_OPS_GUIDE.md §5
+    # Secret: PROFILE_IMAGE_UPLOAD_DIR (비밀 아님; 미등록 시 default 적용 + notice)
+    # 운영(deploy-production.yml) 의 동일 step 과 패턴 일치 — dev 는 단일 systemd unit.
+    # ============================================================================
+    - name: 🖼️ Profile Image Upload env 자동 주입 + 검증
+      uses: appleboy/ssh-action@master
+      env:
+        PROFILE_IMAGE_UPLOAD_DIR: ${{ secrets.PROFILE_IMAGE_UPLOAD_DIR }}
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: PROFILE_IMAGE_UPLOAD_DIR
+        script: |
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          UNIT=mindgarden-dev.service
+          KEY=PROFILE_IMAGE_UPLOAD_DIR
+          DEFAULT_VALUE="/var/mindgarden/uploads/profile-images/"
+
+          VALUE="${PROFILE_IMAGE_UPLOAD_DIR}"
+          if [ -z "$VALUE" ]; then
+            echo "::notice title=${KEY} secret missing::GitHub Secret ${KEY} 미설정 → default(${DEFAULT_VALUE}) 적용. 등록 권장: gh secret set ${KEY} --repo ${{ github.repository }} --body \"${DEFAULT_VALUE}\""
+            VALUE="$DEFAULT_VALUE"
+          fi
+
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+
+          CURRENT_VALUE=$(sudo grep -E "^[[:space:]]*${KEY}=" "$DEV_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+
+          if [ "$CURRENT_VALUE" = "$VALUE" ]; then
+            echo "✅ ${KEY} 변경 없음 (${VALUE}) — env 갱신·재시작 생략 (no-op)"
+            sudo mkdir -p "$VALUE"
+            if id mindgarden >/dev/null 2>&1; then
+              sudo chown -R mindgarden:mindgarden "$VALUE" 2>/dev/null || true
+            fi
+            sudo chmod 755 "$VALUE"
+            exit 0
+          fi
+
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          escaped_value=$(printf '%s' "$VALUE" | sed -e 's/[\\&|]/\\&/g')
+          if sudo grep -qE "^[[:space:]]*${KEY}=" "$DEV_ENV_FILE" 2>/dev/null; then
+            sudo sed -i "s|^[[:space:]]*${KEY}=.*|${KEY}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+          else
+            printf '%s="%s"\n' "$KEY" "$VALUE" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+          fi
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+          echo "✅ ${KEY}=\"${VALUE}\" 갱신 완료 (was: '${CURRENT_VALUE}')"
+
+          sudo mkdir -p "$VALUE"
+          if id mindgarden >/dev/null 2>&1; then
+            sudo chown -R mindgarden:mindgarden "$VALUE" 2>/dev/null || true
+          fi
+          sudo chmod 755 "$VALUE"
+          echo "✅ 업로드 디렉터리 보장: $VALUE"
+
+          sudo systemctl daemon-reload
+          echo "🔄 ${UNIT} 재시작 (${KEY} 변경)"
+          sudo systemctl restart "$UNIT" || echo "::warning::${UNIT} 재시작 실패 (계속 진행)"
+
+          sleep 15
+          DEV_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8080/actuator/health 2>/dev/null || echo "000")
+          echo "🏥 헬스: dev(8080)=$DEV_HEALTH"
+
+          PID=$(systemctl show -p MainPID --value "$UNIT" 2>/dev/null)
+          if [ -z "$PID" ] || [ "$PID" = "0" ]; then
+            echo "::warning::${UNIT} MainPID 조회 실패 (PID='$PID') — 프로세스 env 검증 skip"
+            exit 0
+          fi
+          ACTUAL=$(sudo cat "/proc/$PID/environ" 2>/dev/null | tr '\0' '\n' | awk -F= -v K="$KEY" '$1==K { v=substr($0, length(K)+2); print v; exit }')
+          if [ "$ACTUAL" = "$VALUE" ]; then
+            echo "🎉 ${UNIT} PID=${PID} 프로세스 env ${KEY}=${ACTUAL} 검증 완료"
+          else
+            echo "::error title=${KEY} 프로세스 env 불일치::기대=\"${VALUE}\" 실제=\"${ACTUAL}\". dev.env 형식·systemd EnvironmentFile/start.sh source 패턴 확인 필요."
+          fi
+    # ============================================================================
+    # [/P0 후속 강화 2026-06-09]
+    # ============================================================================
+
     - name: 🏥 개발 서버 헬스체크
       uses: appleboy/ssh-action@master
       with:

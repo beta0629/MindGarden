@@ -73,6 +73,25 @@ public class SocialLoginResponse {
      * {@link #requiresPhoneAccountSelection} 일 때만 설정. 완료 API·미리보기에 사용.
      */
     private String phoneAccountSelectionToken;
+
+    /**
+     * provider-agnostic OAuth 휴대폰 OTP 단계 진입 여부.
+     *
+     * <p>2026-06-09 OAuth 휴대폰 SSOT 정책: OAuth 콜백 시 provider sub·전화·이메일·user_id 매칭이 모두 실패하고
+     * {@code oauth2Service.requiresPhoneOtp(...)} 가 {@code true} 인 경우에 본 플래그를 {@code true} 로
+     * 설정한다. 클라이언트는 {@link #phoneVerificationToken} 을 가지고 OTP 입력 화면
+     * ({@code /api/v1/auth/oauth/phone/{send,verify}}) 으로 dispatch 한다.</p>
+     *
+     * <p>Apple 흐름은 본 플래그를 사용하지 않는다 — 기존 {@code ApplePhoneVerificationService} alias 라우팅 유지.</p>
+     */
+    @lombok.Builder.Default
+    private boolean requiresOAuthPhoneVerification = false;
+
+    /**
+     * {@link #requiresOAuthPhoneVerification} 일 때만 설정. OAuth 콜백 직후 발급되는 단기 JWT
+     * ({@link com.coresolution.consultation.service.JwtService#generateOAuthPhoneVerificationToken}).
+     */
+    private String phoneVerificationToken;
     
     /**
      * 사용자 정보 DTO

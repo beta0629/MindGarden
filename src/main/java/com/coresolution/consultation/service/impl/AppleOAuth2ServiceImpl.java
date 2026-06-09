@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.Map;
 import com.coresolution.consultation.dto.SocialUserInfo;
+import com.coresolution.consultation.entity.auth.OAuthProvider;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
@@ -73,6 +74,16 @@ public class AppleOAuth2ServiceImpl extends AbstractOAuth2Service {
                 clientSecret != null ? (clientSecret.length() > 5 ? clientSecret.substring(0, 5) + "..." : "***") : "null",
                 clientSecret != null ? clientSecret.length() : 0,
                 redirectUri);
+    }
+
+    /**
+     * Apple OAuth 콜백 후 휴대폰 OTP 매칭을 강제한다. Apple SIWA P1 (PR #158) 흐름 정합.
+     * 콜백 분기 통합은 Phase 3C 에서 수행. 본 PR 의 Apple 전용 alias endpoint
+     * ({@code /api/v1/auth/oauth/apple/phone/*}) 는 기존 ApplePhoneVerificationService 로 라우팅된다.
+     */
+    @Override
+    public boolean requiresPhoneOtp(OAuthProvider oauthProvider, SocialUserInfo socialUserInfo) {
+        return true;
     }
 
     @Override

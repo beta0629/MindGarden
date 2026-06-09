@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.Map;
 import com.coresolution.consultation.dto.SocialUserInfo;
+import com.coresolution.consultation.entity.auth.OAuthProvider;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
@@ -75,6 +76,17 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
         return "NAVER";
     }
 
+    /**
+     * Naver OAuth 콜백 후 휴대폰 OTP 매칭을 강제한다.
+     *
+     * <p>2026-06-09 검수 거부 대응 (docs/project-management/2026-06-08/NAVER_LOGIN_REVIEW_REJECTION_RESPONSE_2026_06_05.md):
+     * 네이버 휴대폰 scope 미사용 + 사용자 입력 + SMS OTP 본인 검증 정책. 콜백 분기 통합은 Phase 3C 에서 수행.</p>
+     */
+    @Override
+    public boolean requiresPhoneOtp(OAuthProvider oauthProvider, SocialUserInfo socialUserInfo) {
+        return true;
+    }
+
     @Override
     public SocialUserInfo getUserInfo(String accessToken) {
         try {
@@ -108,6 +120,10 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
     protected SocialUserInfo convertToSocialUserInfo(Map<String, Object> rawUserInfo) {
         Map<String, Object> response = (Map<String, Object>) rawUserInfo.get("response");
         
+        // 2026-06-09 (docs/project-management/2026-06-08/NAVER_LOGIN_REVIEW_REJECTION_RESPONSE_2026_06_05.md,
+        // docs/project-management/2026-06-09/OAUTH_PHONE_SSOT_OTP_UNIFICATION_HANDOFF.md):
+        // 네이버 휴대폰 scope 미사용 정책으로 phone 매핑 제거. 휴대폰 본인 검증은
+        // /api/v1/auth/oauth/phone/{send,verify} OTP 흐름으로 일원화한다.
         return SocialUserInfo.builder()
             .providerUserId((String) response.get("id"))
             .email((String) response.get("email"))
@@ -116,7 +132,6 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             .profileImageUrl((String) response.get("profile_image"))
             .gender((String) response.get("gender"))
             .birthday((String) response.get("birthday"))
-            .phone((String) response.get("mobile"))
             .ageRange((String) response.get("age"))
             .build();
     }

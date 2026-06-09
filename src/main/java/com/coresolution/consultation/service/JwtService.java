@@ -14,6 +14,9 @@ import com.coresolution.consultation.dto.OAuthPhoneAccountSelectionClaims;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.dto.auth.ApplePhoneOtpChallengeClaims;
 import com.coresolution.consultation.dto.auth.ApplePhoneVerificationClaims;
+import com.coresolution.consultation.dto.auth.OAuthPhoneOtpChallengeClaims;
+import com.coresolution.consultation.dto.auth.OAuthPhoneVerificationClaims;
+import com.coresolution.consultation.entity.auth.OAuthProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -669,6 +672,162 @@ public class JwtService {
         return ApplePhoneOtpChallengeClaims.builder()
             .tenantId(tenantId)
             .provider(provider)
+            .providerUserId(providerUserId)
+            .phoneHash(phoneHash)
+            .normalizedPhone(normalizedPhone)
+            .otpId(otpId)
+            .build();
+    }
+
+    /**
+     * provider-agnostic OAuth 휴대폰 매칭 흐름 1단계 — OAuth 콜백 직후 발급되는 단기 JWT.
+     *
+     * <p>Apple/Google/Kakao/Naver 4 종 provider 가 공통으로 사용. 기존 Apple 전용
+     * {@link #generateApplePhoneVerificationToken(ApplePhoneVerificationClaims)} 는
+     * alias 로 유지되며, 신규 코드는 본 메서드를 사용한다.</p>
+     *
+     * @param claims 발급할 클레임
+     * @return 서명된 JWT
+     */
+    public String generateOAuthPhoneVerificationToken(OAuthPhoneVerificationClaims claims) {
+        if (claims == null || claims.getTenantId() == null || claims.getProviderUserId() == null
+                || claims.getOauthProvider() == null) {
+            throw new IllegalArgumentException("OAuthPhoneVerificationClaims required fields missing");
+        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(OAuthJwtClaimKeys.PURPOSE, OAuthJwtClaimValues.PURPOSE_OAUTH_PHONE_VERIFICATION);
+        payload.put(OAuthJwtClaimKeys.TENANT_ID, claims.getTenantId());
+        payload.put(OAuthJwtClaimKeys.PROVIDER, claims.getOauthProvider().name());
+        payload.put(OAuthJwtClaimKeys.PROVIDER_USER_ID, claims.getProviderUserId());
+        if (claims.getEmail() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_EMAIL, claims.getEmail());
+        }
+        if (claims.getName() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_NAME, claims.getName());
+        }
+        if (claims.getNickname() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_NICKNAME, claims.getNickname());
+        }
+        return buildToken(payload, "oauth-phone-verification", applePhoneVerificationTtlMs);
+    }
+
+    /**
+     * OAuth 휴대폰 인증 토큰 파싱 + purpose 검증.
+     *
+     * <p>신규 {@code OAUTH_PHONE_VERIFICATION} purpose 우선 인정.
+     * 호환을 위해 기존 {@code APPLE_PHONE_VERIFICATION} purpose 도 허용(deprecated alias) —
+     * 이 경우 provider 는 {@link OAuthProvider#APPLE} 로 보정한다.</p>
+     *
+     * @param token JWT 문자열
+     * @return 클레임 DTO
+     * @throws IllegalArgumentException purpose 불일치 / 필수 클레임 누락 / 만료
+     */
+    public OAuthPhoneVerificationClaims parseOAuthPhoneVerificationToken(String token) {
+        Claims claims = extractAllClaims(token);
+        String purpose = claims.get(OAuthJwtClaimKeys.PURPOSE, String.class);
+        if (!OAuthJwtClaimValues.PURPOSE_OAUTH_PHONE_VERIFICATION.equals(purpose)
+                && !OAuthJwtClaimValues.PURPOSE_APPLE_PHONE_VERIFICATION.equals(purpose)) {
+            throw new IllegalArgumentException("Invalid OAuth phone verification token purpose");
+        }
+        String tenantId = claims.get(OAuthJwtClaimKeys.TENANT_ID, String.class);
+        String provider = claims.get(OAuthJwtClaimKeys.PROVIDER, String.class);
+        String providerUserId = claims.get(OAuthJwtClaimKeys.PROVIDER_USER_ID, String.class);
+        if (tenantId == null || tenantId.isBlank()
+                || provider == null || provider.isBlank()
+                || providerUserId == null || providerUserId.isBlank()) {
+            throw new IllegalArgumentException("Missing required OAuth phone verification claims");
+        }
+        OAuthProvider oauthProvider;
+        try {
+            oauthProvider = OAuthProvider.fromString(provider);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unsupported OAuth provider in phone verification token: " + provider, e);
+        }
+        return OAuthPhoneVerificationClaims.builder()
+            .tenantId(tenantId)
+            .oauthProvider(oauthProvider)
+            .providerUserId(providerUserId)
+            .email(claims.get(OAuthJwtClaimKeys.SNS_EMAIL, String.class))
+            .name(claims.get(OAuthJwtClaimKeys.SNS_NAME, String.class))
+            .nickname(claims.get(OAuthJwtClaimKeys.SNS_NICKNAME, String.class))
+            .build();
+    }
+
+    /**
+     * provider-agnostic OAuth 휴대폰 매칭 흐름 2단계 — OTP 발송 시 발행되는 challenge 토큰.
+     *
+     * <p>(phone_hash, otp_id) 를 묶어 다른 phone 으로의 verify 우회를 차단한다.</p>
+     *
+     * @param claims OTP challenge 클레임
+     * @return 서명된 JWT
+     */
+    public String generateOAuthPhoneOtpChallengeToken(OAuthPhoneOtpChallengeClaims claims) {
+        if (claims == null || claims.getTenantId() == null || claims.getProviderUserId() == null
+                || claims.getOauthProvider() == null
+                || claims.getPhoneHash() == null || claims.getOtpId() == null) {
+            throw new IllegalArgumentException("OAuthPhoneOtpChallengeClaims required fields missing");
+        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(OAuthJwtClaimKeys.PURPOSE, OAuthJwtClaimValues.PURPOSE_OAUTH_PHONE_OTP_CHALLENGE);
+        payload.put(OAuthJwtClaimKeys.TENANT_ID, claims.getTenantId());
+        payload.put(OAuthJwtClaimKeys.PROVIDER, claims.getOauthProvider().name());
+        payload.put(OAuthJwtClaimKeys.PROVIDER_USER_ID, claims.getProviderUserId());
+        payload.put(OAuthJwtClaimKeys.PHONE_HASH, claims.getPhoneHash());
+        if (claims.getNormalizedPhone() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_PHONE, claims.getNormalizedPhone());
+        }
+        payload.put(OAuthJwtClaimKeys.OTP_ID, claims.getOtpId());
+        return buildToken(payload, "oauth-phone-otp-challenge", applePhoneOtpChallengeTtlMs);
+    }
+
+    /**
+     * OAuth OTP challenge 토큰 파싱 + purpose 검증.
+     *
+     * <p>{@code OAUTH_PHONE_OTP_CHALLENGE} purpose 우선. {@code APPLE_PHONE_OTP_CHALLENGE} purpose 는
+     * 호환을 위해 허용(deprecated alias).</p>
+     *
+     * @param token JWT 문자열
+     * @return 클레임 DTO
+     */
+    public OAuthPhoneOtpChallengeClaims parseOAuthPhoneOtpChallengeToken(String token) {
+        Claims claims = extractAllClaims(token);
+        String purpose = claims.get(OAuthJwtClaimKeys.PURPOSE, String.class);
+        if (!OAuthJwtClaimValues.PURPOSE_OAUTH_PHONE_OTP_CHALLENGE.equals(purpose)
+                && !OAuthJwtClaimValues.PURPOSE_APPLE_PHONE_OTP_CHALLENGE.equals(purpose)) {
+            throw new IllegalArgumentException("Invalid OAuth OTP challenge token purpose");
+        }
+        String tenantId = claims.get(OAuthJwtClaimKeys.TENANT_ID, String.class);
+        String provider = claims.get(OAuthJwtClaimKeys.PROVIDER, String.class);
+        String providerUserId = claims.get(OAuthJwtClaimKeys.PROVIDER_USER_ID, String.class);
+        String phoneHash = claims.get(OAuthJwtClaimKeys.PHONE_HASH, String.class);
+        String normalizedPhone = claims.get(OAuthJwtClaimKeys.SNS_PHONE, String.class);
+        Object otpIdRaw = claims.get(OAuthJwtClaimKeys.OTP_ID);
+        Long otpId = null;
+        if (otpIdRaw instanceof Number) {
+            otpId = ((Number) otpIdRaw).longValue();
+        } else if (otpIdRaw != null) {
+            try {
+                otpId = Long.parseLong(otpIdRaw.toString());
+            } catch (NumberFormatException ignored) {
+                otpId = null;
+            }
+        }
+        if (tenantId == null || tenantId.isBlank()
+                || provider == null || provider.isBlank()
+                || providerUserId == null || providerUserId.isBlank()
+                || phoneHash == null || phoneHash.isBlank()
+                || otpId == null) {
+            throw new IllegalArgumentException("Missing required OAuth OTP challenge claims");
+        }
+        OAuthProvider oauthProvider;
+        try {
+            oauthProvider = OAuthProvider.fromString(provider);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unsupported OAuth provider in OTP challenge token: " + provider, e);
+        }
+        return OAuthPhoneOtpChallengeClaims.builder()
+            .tenantId(tenantId)
+            .oauthProvider(oauthProvider)
             .providerUserId(providerUserId)
             .phoneHash(phoneHash)
             .normalizedPhone(normalizedPhone)

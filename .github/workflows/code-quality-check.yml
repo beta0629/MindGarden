@@ -8,45 +8,48 @@ on:
   workflow_dispatch:
 
 jobs:
-  code-quality:
-    name: 📊 코드 품질 검사
+  # 정적 검사(Checkstyle, SpotBugs, 하드코딩, 프론트 검증) 전용 job.
+  # 빠른 피드백을 위해 분리(이전: 모든 검사 + 테스트가 하나의 job).
+  static-checks:
+    name: 📊 정적 검사
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15
+
     steps:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
-      
+
     - name: ☕ Java 17 설정
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        
+
     - name: 📦 Node.js 20 설정
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
-        
+
     - name: 🔧 Maven 캐시 설정
       uses: actions/cache@v3
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
-        
+
     - name: 🔍 Checkstyle 검사
       run: |
         # 레거시 대량 위반으로 전체 게이트로 쓰면 job이 항상 실패함. 별도 에픽에서 정리 후 || true 제거 예정.
         mvn checkstyle:check || true
         echo "Checkstyle 검사 완료"
-        
+
     - name: 🐛 SpotBugs 검사
       run: |
         mvn spotbugs:check || true
         echo "SpotBugs 검사 완료"
-        
+
     - name: 🔍 하드코딩 검사
       run: |
         node scripts/design-system/css-tools/check-hardcoding-enhanced.js || exit 1
@@ -60,14 +63,110 @@ jobs:
     - name: 🔗 ERP 정적 검증 (Navigate + LNB 메뉴 동기화)
       run: cd frontend && npm run verify:erp || exit 1
 
-    - name: 🧪 테스트 실행
-      # 79+ SpringBootTest fork 가 각자 새 JVM 으로 부팅하면 CI hang 가 발생할 수 있어
-      # step 수준 timeout 으로 명시적 실패 처리(2시간 default 대신 30분). 본 hotfix 와
-      # 영구 수정(단위/통합 분리) 진행 사이의 보호 장치.
-      timeout-minutes: 30
+  # 단위 테스트 전용 job. surefire 가 *IntegrationTest.java 를 제외하고 빠르게(수 분) 실행한다.
+  # 영구 수정(Stage 2): pom.xml maven-surefire-plugin 의 excludes 가 *IntegrationTest.java 차단.
+  unit-tests:
+    name: 🧪 단위 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: static-checks  # 정적 검사 통과 시에만 테스트 실행(자원 절약)
+
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: ☕ Java 17 설정
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: 🔧 Maven 캐시 설정
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: 🧪 단위 테스트 실행
       run: |
-        # 로컬/PR에서도 동일하게 mvn test 통과를 권장합니다.
+        # surefire 가 자동으로 *IntegrationTest.java 를 제외하므로 mvn test 로 단위만 실행.
         mvn test -Dspring.profiles.active=test --batch-mode -Dstyle.color=never
+
+    - name: 📤 단위 테스트 리포트 업로드
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-test-reports
+        path: target/surefire-reports/
+        if-no-files-found: warn
+        retention-days: 30
+
+  # 통합 테스트 전용 job. failsafe 가 *IntegrationTest.java 만 실행한다.
+  # 영구 수정(Stage 2-3): maven-failsafe-plugin 가 integration-test/verify phase 에 바인딩.
+  # reuseForks=true + AbstractIntegrationTest 베이스(Stage 4) 로 ApplicationContext 캐시 적중.
+  integration-tests:
+    name: 🧪 통합 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: static-checks  # 정적 검사 통과 시에만 통합 테스트 실행(자원 절약)
+
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: ☕ Java 17 설정
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: 🔧 Maven 캐시 설정
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: 🧪 통합 테스트 실행
+      run: |
+        # failsafe 가 *IntegrationTest.java 만 실행. surefire 단위 테스트는 -DskipTests 로 생략하지 않고,
+        # -Dtest='_NoUnitTests_' + -Dsurefire.failIfNoSpecifiedTests=false 로 surefire 만 우회한다
+        # (skipTests 는 failsafe 까지 스킵함). spring-boot:repackage 는 repackage 비활성으로 시간 절약.
+        mvn verify \
+            -Dtest='_NoUnitTests_' \
+            -Dsurefire.failIfNoSpecifiedTests=false \
+            -Dspring-boot.repackage.skip=true \
+            -Dspring.profiles.active=test \
+            --batch-mode -Dstyle.color=never
+
+    - name: 📤 통합 테스트 리포트 업로드
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-reports
+        path: target/failsafe-reports/
+        if-no-files-found: warn
+        retention-days: 30
+
+  # 코드 품질 메트릭/리포트(보조). 정적 검사 + 단위 테스트 후 실행.
+  metrics-and-reports:
+    name: 📊 메트릭·리포트
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [static-checks, unit-tests]
+    if: always()  # 단위 테스트 실패해도 리포트 수집
+
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: 📦 Node.js 20 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
 
     - name: 📊 코드 품질 메트릭 수집
       run: |
@@ -78,7 +177,7 @@ jobs:
       run: |
         # 부가 리포트: 실패해도 본 검사(job)는 계속합니다.
         node scripts/development/code-quality/generate-code-quality-report.js || true
-        
+
     - name: 📤 리포트 업로드
       uses: actions/upload-artifact@v4
       if: always()

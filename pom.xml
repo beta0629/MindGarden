@@ -424,12 +424,10 @@
                  surefire 의 단위 테스트와 분리되어 CI step 도 별도 job 으로 split (Stage 3).
                  lifecycle 기본 바인딩(integration-test, verify phase) 을 그대로 사용한다.
 
-                 reuseForks=false: H2 in-memory DB 가 `DB_CLOSE_DELAY=-1` 로 JVM 생명주기 동안 유지되는데,
-                 하나의 JVM 에서 시그니처 다른 Spring ApplicationContext 가 순차로 부팅하면 첫 컨텍스트의
-                 Hibernate `ddl-auto: update` 가 H2 에 일부 테이블/컬럼만 만들고 두 번째 컨텍스트가 `create index
-                 on consultants (grade)` 등 후속 DDL 을 시도할 때 컬럼이 없어 schema 충돌이 발생한다.
-                 fork 분리로 JVM 별 새 H2 인스턴스를 보장한다(Stage 4 베이스의 캐시 효과는 같은 클래스의
-                 다중 @Test 메서드 내부에서만 살아남음 → 후속 Stage 5 에서 per-context H2 URL 분리 검토). -->
+                 reuseForks=true: Spring TestContext 캐시 적중률 극대화. 동일 시그니처(설정 classes,
+                 profiles, properties, customizers) 컨텍스트끼리 재사용으로 부팅 비용이 1회로 감소.
+                 H2 in-memory schema 충돌은 `application-test.yml` 의 `${random.uuid}` 가 부여한
+                 컨텍스트별 unique URL 로 격리됨(Stage 5 영구 수정). -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -438,7 +436,7 @@
                         <include>**/*IntegrationTest.java</include>
                     </includes>
                     <forkCount>1</forkCount>
-                    <reuseForks>false</reuseForks>
+                    <reuseForks>true</reuseForks>
                     <!-- 통합 테스트는 heap 더 크게(JPA/Hibernate Lazy load + Hikari 풀 + Spring Security
                          FilterChain 등). MaxMetaspaceSize 도 통합 컨텍스트 다양성 대비 1g. -->
                     <argLine>-Xmx3g -Xms1g -XX:MaxMetaspaceSize=1g -XX:+ExitOnOutOfMemoryError</argLine>

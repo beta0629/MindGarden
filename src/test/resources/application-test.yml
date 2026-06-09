@@ -32,7 +32,15 @@ spring:
     # MySQL 등으로 덮어쓸 때는 IDE/CLI에서 --spring.datasource.url=... 만 사용 (빈 env 금지).
     # NON_KEYWORDS: H2 2.x 에서 MONTH/YEAR 등이 예약어(예: erp_budgets.month)로 DDL 실패 방지
     # implicit-strategy: H2는 인덱스 이름이 스키마 전역 유일(MySQL은 테이블별 동일 이름 허용) → 테스트 전용 네이밍
-    url: jdbc:h2:mem:mindgarden_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=MONTH,YEAR
+    #
+    # **${random.uuid}** (영구 수정 Stage 5): failsafe `reuseForks=true` 단일 JVM 에서 다중 Spring
+    # ApplicationContext 가 순차 부팅할 때 컨텍스트별로 별도 H2 in-memory 인스턴스를 보장한다.
+    # Spring properties 는 컨텍스트 부팅 시 1회 resolve 되므로 같은 시그니처(컨텍스트 캐시 적중)는
+    # 동일 URL 을 공유하고, 다른 시그니처는 신규 random URL → 신규 H2 DB → schema 충돌 차단.
+    # 이전 단일 `mindgarden_test` 명에서는 첫 컨텍스트의 ddl-auto:update 가 만든 schema 가 다른
+    # 시그니처의 후속 컨텍스트 schema migration 과 충돌(예: `create index on consultants (grade)` →
+    # `Column "grade" not found`)하여 컨텍스트 부팅 실패가 연쇄적으로 발생했음.
+    url: jdbc:h2:mem:mindgarden_test_${random.uuid};MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=MONTH,YEAR
     username: sa
     password: ""
     driver-class-name: org.h2.Driver

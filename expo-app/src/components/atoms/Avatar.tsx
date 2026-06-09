@@ -4,6 +4,11 @@
  * API 호스트의 보호된 이미지 URL은 별도 HTTP 요청이므로 Axios 인터셉터가 적용되지 않음.
  * 동일 API 오리진이면 Bearer·테넌트 헤더를 expo-image source에 포함한다.
  *
+ * P0 핫픽스 (2026-06-09): BE 가 DB 에 저장하는 프로필 이미지 URL 은 상대 path
+ * (`/api/v1/files/profile-images/...`) 이다. React Native 의 `expo-image` 는
+ * origin 이 없는 상대 path 를 자동으로 보강하지 않으므로, 본 atom 에서
+ * `getApiBaseUrl()` 을 prefix 하여 절대 URL 로 정규화한다.
+ *
  * @author MindGarden
  * @since 2026-05-12
  */
@@ -13,6 +18,7 @@ import { Image } from 'expo-image';
 import { User } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { getApiBaseUrl } from '@/config/apiBaseUrl';
+import { resolveAvatarSourceUri } from '@/utils/resolveAvatarSourceUri';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 
@@ -68,11 +74,11 @@ export function Avatar({ uri, name, size = 'md', style }: AvatarProps) {
     if (!uri || imageLoadFailed) {
       return null;
     }
-    const u = String(uri).trim();
-    if (!u) {
+    const resolved = resolveAvatarSourceUri(uri, getApiBaseUrl());
+    if (!resolved) {
       return null;
     }
-    const needAuthHeaders = isSameOriginAsApi(u) && !!accessToken;
+    const needAuthHeaders = isSameOriginAsApi(resolved) && !!accessToken;
     if (needAuthHeaders) {
       const headers: Record<string, string> = {
         Authorization: `Bearer ${accessToken}`,
@@ -80,9 +86,9 @@ export function Avatar({ uri, name, size = 'md', style }: AvatarProps) {
       if (tenantId) {
         headers['X-Tenant-Id'] = tenantId;
       }
-      return { uri: u, headers };
+      return { uri: resolved, headers };
     }
-    return { uri: u };
+    return { uri: resolved };
   }, [uri, accessToken, tenantId, imageLoadFailed]);
 
   if (imageSource) {

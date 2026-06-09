@@ -27,6 +27,7 @@
  * @since 2026-06-10
  */
 import { useMemo } from 'react';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -97,29 +98,102 @@ export function resolveGoogleClientIdConfig(): GoogleClientIdConfig | null {
 }
 
 /**
+ * 현재 플랫폼에서 Google OAuth 가 사용 가능한 client id 가 주입되어 있는지 판별한다.
+ *
+ * <p>P0 핫픽스 (2026-06-10) — `Google.useAuthRequest` 는 render 중 platform 별 client id
+ * 가 비어 있거나 placeholder 형태("...placeholder...", "0.apps.googleusercontent.com" 등)이면
+ * **컴포넌트 mount 시점에 throw** 한다(`Client Id property iosClientId must be defined...`).
+ * 훅을 안전하게 호출하려면 호출자(컴포넌트)가 본 함수의 반환값으로 mount 자체를
+ * 가드해야 한다. 호출자는 비활성 분기로 다른 SocialLoginButton 만 렌더한다.</p>
+ *
+ * <p>placeholder 판별: 빈 문자열, `placeholder` 로 시작, `your_` 로 시작 (대소문자 무시) 케이스.</p>
+ */
+export function isGoogleConfiguredForPlatform(): boolean {
+  const clientIds = resolveGoogleClientIdConfig();
+  if (clientIds === null) {
+    return false;
+  }
+  const platformClientId =
+    Platform.OS === 'ios'
+      ? clientIds.iosClientId
+      : Platform.OS === 'android'
+        ? clientIds.androidClientId
+        : clientIds.webClientId;
+  return isUsableGoogleClientId(platformClientId);
+}
+
+/**
+ * client id 문자열이 실제 OAuth Client 형태인지 검증.
+ * placeholder·빈 값·"your_..." 템플릿 값은 모두 미구성으로 본다.
+ */
+function isUsableGoogleClientId(value: string | undefined | null): boolean {
+  if (!value) {
+    return false;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized.length === 0) {
+    return false;
+  }
+  if (normalized.startsWith('placeholder')) {
+    return false;
+  }
+  if (normalized.startsWith('your_')) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Google OAuth Request 훅 + 프롬프트 함수를 반환한다.
  *
  * <p>호출자 컴포넌트가 React 함수 컴포넌트여야 한다 (훅 규칙). expo-auth-session 의
  * `useAuthRequest` 자체가 훅이므로 비훅 코드에서는 호출 불가. 호출자는 반환된
  * `promptAsync` 만 onPress 콜백 안에서 호출한다.</p>
  *
+ * <p>**P0 핫픽스 (2026-06-10)**: 본 훅은 **현재 플랫폼 client id 가 구성된 경우에만**
+ * 호출해야 한다(`isGoogleConfiguredForPlatform() === true`). 미구성 상태에서 호출하면
+ * `Google.useAuthRequest` 가 mount 시점에 throw 하여 앱이 fatal 화면으로 빠진다.</p>
+ *
  * <p>응답 매핑은 호출자 — `AuthService.loginWithGoogle(token, idToken)` 으로 BE 검증.</p>
  *
  * @param scopes 요청 scope (기본 `openid profile email`)
  */
+/**
+ * `Google.useAuthRequest` 가 render 중 platform 별 client id 누락 시 throw 하므로,
+ * 환경 미구성 단계에서도 훅이 안전하게 호출되도록 placeholder 를 주입한다.
+ *
+ * <p>`promptAsync` 가 실제 호출 전에 `platformClientId` 검증으로 `notConfigured` outcome 을
+ * 반환하므로 실제 OAuth 요청은 발생하지 않는다.</p>
+ */
+const GOOGLE_PLACEHOLDER_CLIENT_ID = '0.apps.googleusercontent.com';
+
 export function useGoogleAuthRequest(scopes: readonly string[] = ['openid', 'profile', 'email']) {
   const clientIds = useMemo(() => resolveGoogleClientIdConfig(), []);
+  const platformClientId =
+    Platform.OS === 'ios'
+      ? clientIds?.iosClientId
+      : Platform.OS === 'android'
+        ? clientIds?.androidClientId
+        : clientIds?.webClientId;
+  const safeIds = useMemo(
+    () => ({
+      webClientId: clientIds?.webClientId ?? GOOGLE_PLACEHOLDER_CLIENT_ID,
+      iosClientId: clientIds?.iosClientId ?? GOOGLE_PLACEHOLDER_CLIENT_ID,
+      androidClientId: clientIds?.androidClientId ?? GOOGLE_PLACEHOLDER_CLIENT_ID,
+    }),
+    [clientIds],
+  );
   const [request, response, promptAsyncRaw] = Google.useAuthRequest({
-    webClientId: clientIds?.webClientId,
-    iosClientId: clientIds?.iosClientId,
-    androidClientId: clientIds?.androidClientId,
+    webClientId: safeIds.webClientId,
+    iosClientId: safeIds.iosClientId,
+    androidClientId: safeIds.androidClientId,
     scopes: [...scopes],
   });
 
-  const isReady = Boolean(clientIds && request);
+  const isReady = Boolean(isUsableGoogleClientId(platformClientId) && request);
 
   const promptAsync = async (options?: AuthRequestPromptOptions): Promise<GoogleSignInOutcome> => {
-    if (!clientIds) {
+    if (!isUsableGoogleClientId(platformClientId)) {
       return {
         kind: 'notConfigured',
         message:

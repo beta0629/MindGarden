@@ -32,7 +32,9 @@ import { useTheme } from '@/theme';
 import { colors as themeColors } from '@/theme/tokens';
 import { fontFamily, fontSize } from '@/theme/typography';
 import { SocialLoginButton } from '@/components/molecules/SocialLoginButton';
+import { GoogleLoginButtonContainer } from '@/components/organisms/login/GoogleLoginButtonContainer';
 import { CredentialSheetTrigger } from '@/components/atoms/CredentialSheetTrigger';
+import type { GoogleSignInOutcome } from '@/services/auth/googleSignIn';
 import {
   BUTTON_BORDER_RADIUS,
   BUTTON_FADE_IN_DURATION_MS,
@@ -77,7 +79,16 @@ export interface LoginButtonsSectionProps {
 
   readonly onKakaoPress: () => void;
   readonly onNaverPress: () => void;
-  readonly onGooglePress: () => void;
+  /**
+   * Google 로그인 진입 직전 — 부모가 isLoading=true / loadingProvider='google' 처리.
+   *
+   * <p>P0 핫픽스 (2026-06-10): `useGoogleAuthRequest` 가 미구성 환경에서 mount throw 를
+   * 일으키지 않도록 Google 버튼은 {@link GoogleLoginButtonContainer} 내부에서 훅을 가드된
+   * 분기로만 호출한다. 부모는 onGooglePress 대신 시작/결과 콜백 2개만 받는다.</p>
+   */
+  readonly onGoogleSignInStart: () => void;
+  /** Google OAuth 결과(또는 미구성 안내) — 부모가 BE 호출·라우팅·에러 처리 */
+  readonly onGoogleAuthOutcome: (outcome: GoogleSignInOutcome) => void;
   readonly onApplePress: () => void;
 
   /** 트리거 (이메일/휴대폰 Sheet 열기) — Sheet 열림 상태 */
@@ -99,7 +110,8 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
     errorMessage,
     onKakaoPress,
     onNaverPress,
-    onGooglePress,
+    onGoogleSignInStart,
+    onGoogleAuthOutcome,
     onApplePress,
     credentialSheetExpanded,
     onCredentialSheetTriggerPress,
@@ -267,9 +279,9 @@ export function LoginButtonsSection(props: LoginButtonsSectionProps) {
         }}
         pointerEvents={pointerEventsEnabled ? 'auto' : 'none'}
       >
-        <SocialLoginButton
-          variant="google"
-          onPress={onGooglePress}
+        <GoogleLoginButtonContainer
+          onSignInStart={onGoogleSignInStart}
+          onAuthOutcome={onGoogleAuthOutcome}
           loading={loadingProvider === 'google'}
           disabled={isLoading}
           reduceMotion={config.reduceMotion}

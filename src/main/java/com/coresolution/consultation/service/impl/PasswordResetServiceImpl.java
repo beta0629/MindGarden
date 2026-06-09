@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     public boolean sendPasswordResetEmail(String email) {
         try {
-            log.info("🔑 비밀번호 재설정 이메일 발송 요청: {}", email);
+            log.info("🔑 비밀번호 재설정 이메일 발송 요청: {}", EmailLogMasking.maskForLog(email));
             
             // tenantId 추출 (서브도메인에서 자동 추출됨)
             String tenantId = TenantContextHolder.getTenantId();
@@ -56,12 +57,12 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 return true;
             }
             
-            log.info("✅ tenantId 추출 성공: tenantId={}, email={}", tenantId, email);
+            log.info("✅ tenantId 추출 성공: tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(email));
             
             // 사용자 확인 (tenantId 필터링)
             Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email);
             if (userOpt.isEmpty()) {
-                log.warn("❌ 존재하지 않는 이메일: {}", email);
+                log.warn("❌ 존재하지 않는 이메일: {}", EmailLogMasking.maskForLog(email));
                 // 보안상 이유로 성공으로 응답 (이메일 존재 여부를 알려주지 않음)
                 return true;
             }
@@ -70,7 +71,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             
             // 사용자가 비활성화된 경우
             if (user.getIsActive() != null && !user.getIsActive()) {
-                log.warn("❌ 비활성화된 사용자: {}", email);
+                log.warn("❌ 비활성화된 사용자: {}", EmailLogMasking.maskForLog(email));
                 return true; // 보안상 성공으로 응답
             }
             
@@ -113,10 +114,10 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             
             if (emailSent && emailResponse != null) {
                 log.info("✅ 비밀번호 재설정 이메일 발송 완료: email={}, emailId={}, status={}", 
-                    email, emailResponse.getEmailId(), emailResponse.getStatus());
+                    EmailLogMasking.maskForLog(email), emailResponse.getEmailId(), emailResponse.getStatus());
             } else {
                 log.error("❌ 비밀번호 재설정 이메일 발송 실패: email={}, emailId={}, status={}, errorCode={}, errorMessage={}", 
-                    email, 
+                    EmailLogMasking.maskForLog(email), 
                     emailResponse != null ? emailResponse.getEmailId() : "null",
                     emailResponse != null ? emailResponse.getStatus() : "null",
                     emailResponse != null ? emailResponse.getErrorCode() : "null",
@@ -128,7 +129,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             return true;
             
         } catch (Exception e) {
-            log.error("❌ 비밀번호 재설정 이메일 발송 중 오류: {}", email, e);
+            log.error("❌ 비밀번호 재설정 이메일 발송 중 오류: {}", EmailLogMasking.maskForLog(email), e);
             return false;
         }
     }
@@ -197,7 +198,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             // 사용자 조회
             User user = resetToken.getUser();
             if (user.getIsActive() != null && !user.getIsActive()) {
-                log.warn("❌ 비활성화된 사용자의 비밀번호 재설정 시도: {}", user.getEmail());
+                log.warn("❌ 비활성화된 사용자의 비밀번호 재설정 시도: {}", EmailLogMasking.maskForLog(user.getEmail()));
                 return false;
             }
             
@@ -211,7 +212,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             // 해당 사용자의 다른 모든 토큰도 사용됨으로 표시
             tokenRepository.markAllTokensAsUsedByTenantIdAndUserId(tenantId, user.getId(), LocalDateTime.now());
             
-            log.info("✅ 비밀번호 재설정 완료: {}", user.getEmail());
+            log.info("✅ 비밀번호 재설정 완료: {}", EmailLogMasking.maskForLog(user.getEmail()));
             
             // 비밀번호 변경 알림 (선택사항)
             try {
@@ -228,7 +229,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 
                 emailService.sendEmail(emailRequest);
             } catch (Exception e) {
-                log.warn("비밀번호 변경 알림 발송 실패 (비밀번호는 정상적으로 변경됨): {}", user.getEmail(), e);
+                log.warn("비밀번호 변경 알림 발송 실패 (비밀번호는 정상적으로 변경됨): {}", EmailLogMasking.maskForLog(user.getEmail()), e);
             }
             
             return true;

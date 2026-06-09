@@ -9,6 +9,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.SuperAdminService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -62,7 +63,7 @@ public class SuperAdminController extends BaseApiController {
         // 현재 사용자가 관리자인지 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null || !currentUser.getRole().isAdmin()) {
-            log.warn("수퍼어드민 계정 생성 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
+            log.warn("수퍼어드민 계정 생성 권한 없음: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
             throw new RuntimeException("관리자 권한이 필요합니다.");
         }
         
@@ -98,7 +99,7 @@ public class SuperAdminController extends BaseApiController {
         // 수퍼어드민 계정 생성 (현재 사용자의 지점코드 전달)
         User superAdmin = superAdminService.createSuperAdmin(request, currentUser);
         
-        log.info("수퍼어드민 계정 생성 완료: {}", superAdmin.getEmail());
+        log.info("수퍼어드민 계정 생성 완료: {}", EmailLogMasking.maskForLog(superAdmin.getEmail()));
         
         Map<String, Object> data = new HashMap<>();
         data.put("id", superAdmin.getId());
@@ -167,7 +168,7 @@ public class SuperAdminController extends BaseApiController {
             throw new RuntimeException("관리자 권한이 필요합니다.");
         }
         
-        log.info("재무 대시보드 데이터 조회 요청: {}", currentUser.getEmail());
+        log.info("재무 대시보드 데이터 조회 요청: {}", EmailLogMasking.maskForLog(currentUser.getEmail()));
         
         // 실제 재무 데이터 조회 로직 구현
         Map<String, Object> financeData = new HashMap<>();

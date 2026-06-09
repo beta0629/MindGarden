@@ -4,6 +4,7 @@ import java.io.IOException;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.core.annotation.Order;
@@ -378,7 +379,7 @@ public class TenantContextFilter implements Filter {
                     }
                 }
                 log.warn("⚠️ User 엔티티에 tenantId가 없습니다: userId={}, role={}, email={}",
-                        user.getId(), user.getRole(), user.getEmail());
+                        user.getId(), user.getRole(), EmailLogMasking.maskForLog(user.getEmail()));
             } else {
                 log.debug("세션에 User 정보가 없습니다.");
             }

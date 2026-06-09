@@ -24,6 +24,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.springframework.beans.factory.annotation.Value;
@@ -94,7 +95,7 @@ public class TestDataController {
             
             User savedAdmin = userRepository.save(adminUser);
             result.put("admin", savedAdmin);
-            log.info("✅ 어드민 생성 완료: {}", savedAdmin.getEmail());
+            log.info("✅ 어드민 생성 완료: {}", EmailLogMasking.maskForLog(savedAdmin.getEmail()));
 
             ConsultantRegistrationRequest consultantDto = ConsultantRegistrationRequest.builder()
                     .userId("consultant1@mindgarden.com")
@@ -113,7 +114,7 @@ public class TestDataController {
 
             User consultant = adminService.registerConsultant(consultantDto);
             result.put("consultant", consultant);
-            log.info("✅ 상담사 생성 완료: {}", consultant.getEmail());
+            log.info("✅ 상담사 생성 완료: {}", EmailLogMasking.maskForLog(consultant.getEmail()));
 
             ClientRegistrationRequest clientDto = ClientRegistrationRequest.builder()
                     .userId("client1@example.com")
@@ -182,7 +183,7 @@ public class TestDataController {
         
         try {
             User consultant = adminService.registerConsultant(request);
-            log.info("✅ 추가 상담사 등록 완료: {}", consultant.getEmail());
+            log.info("✅ 추가 상담사 등록 완료: {}", EmailLogMasking.maskForLog(consultant.getEmail()));
             
             return ResponseEntity.ok(consultant);
         } catch (Exception e) {
@@ -633,7 +634,7 @@ public class TestDataController {
         }
 
         try {
-            log.info("🗑️ 테스트 사용자 삭제: {}", email);
+            log.info("🗑️ 테스트 사용자 삭제: {}", EmailLogMasking.maskForLog(email));
 
             // 멀티 테넌트 사용자 고려하여 조회
             List<User> users = userRepository.findAllByEmail(email);
@@ -653,7 +654,7 @@ public class TestDataController {
             
             userRepository.save(user);
             
-            log.info("✅ 테스트 사용자 삭제 완료: {}", email);
+            log.info("✅ 테스트 사용자 삭제 완료: {}", EmailLogMasking.maskForLog(email));
 
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -688,7 +689,7 @@ public class TestDataController {
         }
 
         try {
-            log.info("🔑 비밀번호 검증 테스트: email={}", email);
+            log.info("🔑 비밀번호 검증 테스트: email={}", EmailLogMasking.maskForLog(email));
 
             // Tenant ID 체크 우회 (개발 환경 전용)
             com.coresolution.core.context.TenantContext.setBypassTenantFilter(true);
@@ -716,7 +717,7 @@ public class TestDataController {
                 boolean matches = passwordService.matches(password, storedHash);
                 
                 log.info("🔑 비밀번호 검증 결과: email={}, matches={}, hashPrefix={}", 
-                    email, matches, storedHash.substring(0, Math.min(20, storedHash.length())));
+                    EmailLogMasking.maskForLog(email), matches, storedHash.substring(0, Math.min(20, storedHash.length())));
                 
                 return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -755,7 +756,7 @@ public class TestDataController {
         }
 
         try {
-            log.info("🔑 테스트 사용자 비밀번호 재설정: {}", email);
+            log.info("🔑 테스트 사용자 비밀번호 재설정: {}", EmailLogMasking.maskForLog(email));
 
             // Tenant ID 체크 우회 (개발 환경 전용)
             com.coresolution.core.context.TenantContext.setBypassTenantFilter(true);
@@ -785,7 +786,7 @@ public class TestDataController {
                 
                 User updatedUser = userRepository.save(user);
                 
-                log.info("✅ 테스트 사용자 비밀번호 재설정 완료: {}", email);
+                log.info("✅ 테스트 사용자 비밀번호 재설정 완료: {}", EmailLogMasking.maskForLog(email));
 
                 return ResponseEntity.ok(Map.of(
                     "success", true,

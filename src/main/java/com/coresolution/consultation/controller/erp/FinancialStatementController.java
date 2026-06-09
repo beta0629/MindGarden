@@ -6,6 +6,7 @@ import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
@@ -44,14 +45,14 @@ public class FinancialStatementController extends BaseApiController {
 
         // 관리자 역할이면 항상 허용 (모든 환경)
         if (currentUser.getRole() != null && currentUser.getRole().isAdmin()) {
-            log.debug("관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", currentUser.getEmail(),
+            log.debug("관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     currentUser.getRole());
             return null; // 권한 있음
         }
 
         // 동적 권한 체크 (ERP_ACCESS 권한 필요)
         if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
-            log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(),
+            log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     currentUser.getRole());
             return ResponseEntity.status(403)
                     .body(Map.of("success", false, "message",

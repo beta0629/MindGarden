@@ -38,6 +38,7 @@ import com.coresolution.consultation.service.erp.financial.FinancialTransactionS
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -438,7 +439,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     @Override
     public FinancialTransactionResponse approveTransaction(Long id, String comment, User approver) {
-        log.info("✅ 회계 거래 승인: ID={}, 승인자={}", id, approver.getEmail());
+        log.info("✅ 회계 거래 승인: ID={}, 승인자={}", id, EmailLogMasking.maskForLog(approver.getEmail()));
         
         if (!approver.getRole().isAdmin()) {
             throw new RuntimeException("거래 승인 권한이 없습니다.");
@@ -462,7 +463,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     
     @Override
     public FinancialTransactionResponse rejectTransaction(Long id, String comment, User approver) {
-        log.info("❌ 회계 거래 거부: ID={}, 거부자={}", id, approver.getEmail());
+        log.info("❌ 회계 거래 거부: ID={}, 거부자={}", id, EmailLogMasking.maskForLog(approver.getEmail()));
         
         if (!approver.getRole().isAdmin()) {
             throw new RuntimeException("거래 거부 권한이 없습니다.");

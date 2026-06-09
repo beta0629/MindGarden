@@ -14,6 +14,7 @@ import com.coresolution.core.util.EmailUtil;
 import com.coresolution.consultation.service.UserAddressService;
 import com.coresolution.consultation.service.PasswordValidationService;
 import com.coresolution.consultation.service.UserProfileService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.http.ResponseEntity;
@@ -114,7 +115,7 @@ public class AdminUserController {
                 
                 // 디버깅을 위한 로깅
                 log.info("👤 사용자 정보 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 역할: '{}', 주소: '{}'", 
-                    user.getId(), name, email, phone, user.getRole(), addressInfo.get("address"));
+                    user.getId(), name, EmailLogMasking.maskForLog(email), phone, user.getRole(), addressInfo.get("address"));
                 
                 userList.add(userInfo);
             }
@@ -700,13 +701,13 @@ public class AdminUserController {
     @SuppressWarnings("unused")
     private void sendSystemNotificationEmail(String toEmail, String toName, String message) {
         try {
-            log.info("시스템 알림 이메일 발송: to={}, message={}", toEmail, message);
+            log.info("시스템 알림 이메일 발송: to={}, message={}", EmailLogMasking.maskForLog(toEmail), message);
             
             // EmailUtil을 사용하여 이메일 발송
             EmailUtil.sendSystemNotificationEmail(emailService, toEmail, toName, message);
             
         } catch (Exception e) {
-            log.error("시스템 알림 이메일 발송 중 오류: to={}, error={}", toEmail, e.getMessage(), e);
+            log.error("시스템 알림 이메일 발송 중 오류: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
         }
     }
     

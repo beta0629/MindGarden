@@ -25,6 +25,7 @@ import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.AdminRoleUtils;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -80,7 +81,7 @@ public class ErpController extends BaseApiController {
                 .acceptsProfiles(org.springframework.core.env.Profiles.of("local"))
                 || environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev")))) {
             if (currentUser.getRole() != null && currentUser.getRole().isAdmin()) {
-                log.debug("로컬 개발 모드: 관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", currentUser.getEmail(),
+                log.debug("로컬 개발 모드: 관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                         currentUser.getRole());
                 return null; // 권한 있음
             }
@@ -88,7 +89,7 @@ public class ErpController extends BaseApiController {
 
         // 표준화 원칙: 데이터베이스 기반 권한 체크 (ERP_ACCESS 권한 필요)
         if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
-            log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(),
+            log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     currentUser.getRole());
             return ResponseEntity.status(403)
                     .body(Map.of("success", false, "message",
@@ -284,7 +285,7 @@ public class ErpController extends BaseApiController {
             // 표준화 원칙: AdminRoleUtils 사용
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
-                log.warn("아이템 생성 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
+                log.warn("아이템 생성 권한 없음: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -326,7 +327,7 @@ public class ErpController extends BaseApiController {
             // 표준화 원칙: AdminRoleUtils 사용
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
-                log.warn("아이템 수정 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
+                log.warn("아이템 수정 권한 없음: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -383,7 +384,7 @@ public class ErpController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
                 log.warn("아이템 삭제 권한 없음: 관리자만 가능, user={}",
-                        currentUser != null ? currentUser.getEmail() : "null");
+                        currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("success", false, "message", "아이템 삭제는 테넌트 관리자(ADMIN)만 할 수 있습니다."));
             }
@@ -424,7 +425,7 @@ public class ErpController extends BaseApiController {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
                 log.warn("아이템 재고 업데이트 권한 없음: {}",
-                        currentUser != null ? currentUser.getEmail() : "null");
+                        currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
@@ -1408,7 +1409,7 @@ public class ErpController extends BaseApiController {
                 tenantId = currentUser.getTenantId();
             }
             if (tenantId == null || tenantId.isEmpty()) {
-                log.error("❌ 테넌트 정보를 찾을 수 없습니다: 사용자={}, userId={}", currentUser.getEmail(),
+                log.error("❌ 테넌트 정보를 찾을 수 없습니다: 사용자={}, userId={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                         currentUser.getId());
                 return ResponseEntity.status(400).body(
                         Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다. 관리자에게 문의하세요."));
@@ -1433,7 +1434,7 @@ public class ErpController extends BaseApiController {
                 log.info("✅ 세션에 테넌트 ID 저장: tenantId={}", tenantId);
             }
 
-            log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", currentUser.getEmail(), tenantId);
+            log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", EmailLogMasking.maskForLog(currentUser.getEmail()), tenantId);
 
             // 테넌트 컨텍스트 설정 (서비스에서 getRequiredTenantId() 사용)
             TenantContextHolder.setTenantId(tenantId);
@@ -1902,7 +1903,7 @@ public class ErpController extends BaseApiController {
                 request.setBranchCode(null); // branchCode 무시
             }
 
-            log.info("수입/지출 거래 등록 요청: 사용자={}, tenantId={}, 거래={}", currentUser.getEmail(), tenantId,
+            log.info("수입/지출 거래 등록 요청: 사용자={}, tenantId={}, 거래={}", EmailLogMasking.maskForLog(currentUser.getEmail()), tenantId,
                     request);
 
             FinancialTransactionResponse response =
@@ -2000,7 +2001,7 @@ public class ErpController extends BaseApiController {
                 request.setBranchCode(null);
             }
 
-            log.info("수입/지출 거래 수정 요청: 사용자={}, tenantId={}, id={}", currentUser.getEmail(),
+            log.info("수입/지출 거래 수정 요청: 사용자={}, tenantId={}, id={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     tenantId, id);
 
             FinancialTransactionResponse response =
@@ -2231,13 +2232,13 @@ public class ErpController extends BaseApiController {
 
             // 재무 거래 삭제: 테넌트 관리자(ADMIN)만. 별도 role_permissions 코드(FINANCIAL_TRANSACTION_DELETE)는 사용하지 않음.
             if (!AdminRoleUtils.isAdmin(currentUser)) {
-                log.warn("재무 거래 삭제 거부: 관리자만 가능, user={}, role={}", currentUser.getEmail(),
+                log.warn("재무 거래 삭제 거부: 관리자만 가능, user={}, role={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                         currentUser.getRole());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false,
                         "message", "재무 거래는 테넌트 관리자(ADMIN)만 삭제할 수 있습니다."));
             }
 
-            log.info("재무 거래 삭제 허용: user={}, role={}", currentUser.getEmail(),
+            log.info("재무 거래 삭제 허용: user={}, role={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     currentUser.getRole());
 
             financialTransactionService.deleteTransaction(id, currentUser);

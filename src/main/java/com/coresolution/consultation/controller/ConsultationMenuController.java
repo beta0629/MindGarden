@@ -6,6 +6,7 @@ import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.MenuService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -99,7 +100,7 @@ public class ConsultationMenuController extends BaseApiController {
         permissions.put("totalPermissions", userPermissions.size());
         
         log.info("✅ 사용자 권한 정보 조회 성공 - 사용자: {}, 권한 수: {}", 
-                currentUser.getEmail(), userPermissions.size());
+                EmailLogMasking.maskForLog(currentUser.getEmail()), userPermissions.size());
         
         return success("사용자 권한 정보 조회 성공", permissions);
     }

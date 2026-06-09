@@ -102,7 +102,7 @@ public class PermissionCheckUtils {
         
         User currentUser = checkAuthentication(session);
         log.info("🔍 현재 사용자: email={}, role={}, id={}", 
-                currentUser.getEmail(), currentUser.getRole(), currentUser.getId());
+                EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole(), currentUser.getId());
         
         // 2. Spring Security 컨텍스트에 인증 정보 설정
         if (currentUser != null) {
@@ -117,13 +117,13 @@ public class PermissionCheckUtils {
         boolean isAdmin = com.coresolution.consultation.util.AdminRoleUtils.isAdmin(currentUser);
         if (isAdmin) {
             log.info("✅ ADMIN 역할 자동 권한 부여: 사용자={}, 역할={}, 권한={}",
-                    currentUser.getEmail(), currentUser.getRole(), permissionCode);
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole(), permissionCode);
             return null; // 권한 체크 성공
         }
         if (currentUser.getRole() != null && currentUser.getRole().isStaff()
                 && !ErpRestrictedPermissions.isErpRestricted(permissionCode)) {
             log.info("✅ STAFF 역할 자동 권한 부여(ERP 제외): 사용자={}, 권한={}",
-                    currentUser.getEmail(), permissionCode);
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), permissionCode);
             return null; // 권한 체크 성공
         }
         
@@ -134,14 +134,14 @@ public class PermissionCheckUtils {
         
         if (!hasPermission) {
             log.warn("❌ 권한 없음: 사용자={}, 역할={}, 필요한권한={}", 
-                    currentUser.getEmail(), currentUser.getRole(), permissionCode);
+                    EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole(), permissionCode);
             return ResponseEntity.status(403).body(Map.of(
                 "success", false,
                 "message", getPermissionErrorMessage(permissionCode)
             ));
         }
         
-        log.info("✅ 권한 체크 통과: 사용자={}, 권한={}", currentUser.getEmail(), permissionCode);
+        log.info("✅ 권한 체크 통과: 사용자={}, 권한={}", EmailLogMasking.maskForLog(currentUser.getEmail()), permissionCode);
         return null; // 권한 체크 성공
     }
     

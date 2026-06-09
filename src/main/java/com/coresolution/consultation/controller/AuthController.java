@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -140,7 +141,7 @@ public class AuthController extends BaseApiController {
         log.info("🔍 /api/auth/current-user API 호출 시작");
         
         User sessionUser = SessionUtils.getCurrentUser(session);
-        log.info("🔍 세션 사용자 조회 결과: {}", sessionUser != null ? sessionUser.getEmail() : "null");
+        log.info("🔍 세션 사용자 조회 결과: {}", sessionUser != null ? EmailLogMasking.maskForLog(sessionUser.getEmail()) : "null");
         
         // JWT 인증 사용자 확인 (Trinity, Ops Portal 등)
         User currentUser = null;
@@ -193,7 +194,7 @@ public class AuthController extends BaseApiController {
             user = currentUser;
         }
         log.info("🔍 사용자 정보 조회 완료: email={}, role={}, branchCode={}", 
-                user.getEmail(), user.getRole(), user.getBranchCode());
+                EmailLogMasking.maskForLog(user.getEmail()), user.getRole(), user.getBranchCode());
         
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", user.getId());
@@ -328,7 +329,7 @@ public class AuthController extends BaseApiController {
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Map<String, Object>>> register(@RequestBody RegisterRequest request) {
-        log.info("📥 공개 회원가입 요청: email={}", request.getEmail());
+        log.info("📥 공개 회원가입 요청: email={}", EmailLogMasking.maskForLog(request.getEmail()));
 
         if (!StringUtils.hasText(request.getEmail()) ||
             !StringUtils.hasText(request.getPassword()) ||
@@ -574,7 +575,7 @@ public class AuthController extends BaseApiController {
             return success(emptySessionInfo);
         }
         
-        log.debug("세션 정보 조회: userId={}, email={}", user.getId(), user.getEmail());
+        log.debug("세션 정보 조회: userId={}, email={}", user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
         Map<String, Object> sessionInfo = new HashMap<>();
         sessionInfo.put("id", user.getId());
         sessionInfo.put("email", user.getEmail());
@@ -731,7 +732,7 @@ public class AuthController extends BaseApiController {
         // 사용자 세션 강제 종료
         authService.cleanupUserSessions(targetUser, "ADMIN_FORCE");
         
-        log.info("🔓 강제 로그아웃 완료: email={}", targetEmail);
+        log.info("🔓 강제 로그아웃 완료: email={}", EmailLogMasking.maskForLog(targetEmail));
         
         return success("강제 로그아웃이 완료되었습니다.", null);
     }
@@ -1908,7 +1909,7 @@ public class AuthController extends BaseApiController {
         } else {
             // 표준화 2025-12-06: tenantId가 없을 경우 경고 로그 및 기본값 사용
             // deprecated 메서드 사용 대신 경고 후 기본값 반환
-            log.warn("⚠️ tenantId가 없어 사용자 ID 중복 검사를 건너뜁니다. email={}, candidate={}", email, candidate);
+            log.warn("⚠️ tenantId가 없어 사용자 ID 중복 검사를 건너뜁니다. email={}, candidate={}", EmailLogMasking.maskForLog(email), candidate);
             // tenantId가 없으면 중복 검사 없이 기본값 반환 (보안상 위험하지만 레거시 호환)
         }
         return candidate;

@@ -18,6 +18,7 @@ import com.coresolution.core.service.TenantPgConfigurationHistoryService;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -144,7 +145,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             TenantPgConfigurationRequest request, 
             String requestedBy) {
         log.info("테넌트 PG 설정 생성: tenantId={}, pgProvider={}, requestedBy={}", 
-                tenantId, request.getPgProvider(), requestedBy);
+                tenantId, request.getPgProvider(), EmailLogMasking.maskForLog(requestedBy));
         
         validateConfigurationRequest(request);
         
@@ -905,7 +906,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             
             emailService.sendEmail(emailRequest);
             log.info("승인 알림 발송 완료: tenantId={}, email={}", 
-                    configuration.getTenantId(), tenant.getContactEmail());
+                    configuration.getTenantId(), EmailLogMasking.maskForLog(tenant.getContactEmail()));
             
         } catch (Exception e) {
             log.error("승인 알림 발송 실패: {}", e.getMessage(), e);
@@ -950,7 +951,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             
             emailService.sendEmail(emailRequest);
             log.info("거부 알림 발송 완료: tenantId={}, email={}", 
-                    configuration.getTenantId(), tenant.getContactEmail());
+                    configuration.getTenantId(), EmailLogMasking.maskForLog(tenant.getContactEmail()));
             
         } catch (Exception e) {
             log.error("거부 알림 발송 실패: {}", e.getMessage(), e);

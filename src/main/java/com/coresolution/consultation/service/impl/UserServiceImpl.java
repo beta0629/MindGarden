@@ -22,6 +22,7 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
@@ -966,7 +967,7 @@ public class UserServiceImpl implements UserService {
             LocalDateTime.now());
 
         log.info("비밀번호 변경 완료: email={}, userId={}",
-            user.getEmail(), userId);
+            EmailLogMasking.maskForLog(user.getEmail()), userId);
     }
     
     @Override
@@ -987,7 +988,7 @@ public class UserServiceImpl implements UserService {
             String message = String.format("임시 비밀번호가 발급되었습니다. 임시 비밀번호: %s\n로그인 후 반드시 비밀번호를 변경해주세요.", tempPassword);
             com.coresolution.core.util.EmailUtil.sendSystemNotificationEmail(emailService, user.getEmail(), user.getName(), message);
         } catch (Exception e) {
-            log.error("임시 비밀번호 이메일 발송 실패: {}, error: {}", user.getEmail(), e.getMessage());
+            log.error("임시 비밀번호 이메일 발송 실패: {}, error: {}", EmailLogMasking.maskForLog(user.getEmail()), e.getMessage());
         }
     }
     
@@ -1173,7 +1174,7 @@ public class UserServiceImpl implements UserService {
             LocalDateTime.now());
 
         log.info("비밀번호 변경 완료: email={}, userId={}",
-            user.getEmail(), userId);
+            EmailLogMasking.maskForLog(user.getEmail()), userId);
     }
     
     @Override

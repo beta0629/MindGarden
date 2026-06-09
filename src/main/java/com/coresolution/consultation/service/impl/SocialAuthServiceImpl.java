@@ -23,6 +23,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.SocialLoginUserIdDerivation;
 import com.coresolution.consultation.util.SocialProvider;
@@ -115,13 +116,13 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .build();
         }
         String normalizedProvider = SocialProvider.normalize(request.getProvider());
-        log.info("소셜 회원가입 시작: email={}, provider={}", normalizedEmail, normalizedProvider);
+        log.info("소셜 회원가입 시작: email={}, provider={}", EmailLogMasking.maskForLog(normalizedEmail), normalizedProvider);
         String tenantId = TenantContextHolder.getRequiredTenantId();
 
         if (userRepository.existsByTenantIdAndEmail(tenantId, normalizedEmail)) {
             Optional<User> existingOpt = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
             if (existingOpt.isEmpty()) {
-                log.warn("이메일 존재 플래그와 조회 결과 불일치: tenantId={}, email={}", tenantId, normalizedEmail);
+                log.warn("이메일 존재 플래그와 조회 결과 불일치: tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(normalizedEmail));
                 return SocialSignupResponse.builder()
                     .success(false)
                     .message("이미 가입된 이메일입니다.")
@@ -129,7 +130,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             }
             User existing = existingOpt.get();
             if (!qualifiesForIncompleteSocialLink(existing)) {
-                log.warn("이미 가입된 이메일(완료된 계정): {}", normalizedEmail);
+                log.warn("이미 가입된 이메일(완료된 계정): {}", EmailLogMasking.maskForLog(normalizedEmail));
                 return SocialSignupResponse.builder()
                     .success(false)
                     .message("이미 가입된 이메일입니다.")
@@ -161,7 +162,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             
         // 개인정보 동의 검증
         if (!request.isPrivacyConsent()) {
-            log.warn("개인정보 처리방침 동의 필요: email={}", normalizedEmail);
+            log.warn("개인정보 처리방침 동의 필요: email={}", EmailLogMasking.maskForLog(normalizedEmail));
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("개인정보 처리방침에 동의해주세요.")
@@ -169,7 +170,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         }
             
         if (!request.isTermsConsent()) {
-            log.warn("이용약관 동의 필요: email={}", normalizedEmail);
+            log.warn("이용약관 동의 필요: email={}", EmailLogMasking.maskForLog(normalizedEmail));
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("이용약관에 동의해주세요.")
@@ -233,7 +234,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         user.setTenantId(tenantId);
             
         log.info("User 엔티티 생성 완료: email={}, name={}, phone={}, branchCode={}, branch={}", 
-            user.getEmail(), request.getName(), request.getPhone(), 
+            EmailLogMasking.maskForLog(user.getEmail()), request.getName(), request.getPhone(), 
             user.getBranchCode(), branch != null ? branch.getId() : "null");
             
         log.info("User 엔티티 저장 시작");
@@ -296,7 +297,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             log.info("소셜 회원가입 완료 (소셜 계정 정보 없음, 세션 생성 대기): userId={}", client.getId());
         }
             
-        log.info("소셜 회원가입 성공: userId={}, email={}", client.getId(), client.getEmail());
+        log.info("소셜 회원가입 성공: userId={}, email={}", client.getId(), EmailLogMasking.maskForLog(client.getEmail()));
 
         return buildPostSocialSignupSuccessResponse(client,
             "🎉 소셜 계정으로 간편 회원가입이 완료되었습니다! 이제 다시 로그인해주세요.");
@@ -335,14 +336,14 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         }
 
         if (!request.isPrivacyConsent()) {
-            log.warn("개인정보 처리방침 동의 필요(미완성 연동): email={}", normalizedEmail);
+            log.warn("개인정보 처리방침 동의 필요(미완성 연동): email={}", EmailLogMasking.maskForLog(normalizedEmail));
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("개인정보 처리방침에 동의해주세요.")
                 .build();
         }
         if (!request.isTermsConsent()) {
-            log.warn("이용약관 동의 필요(미완성 연동): email={}", normalizedEmail);
+            log.warn("이용약관 동의 필요(미완성 연동): email={}", EmailLogMasking.maskForLog(normalizedEmail));
             return SocialSignupResponse.builder()
                 .success(false)
                 .message("이용약관에 동의해주세요.")
@@ -359,14 +360,14 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         String normalizedPhoneDigits = normalizeRequestPhoneDigitsOrNull(request);
 
         if (!StringUtils.hasText(normalizedProvider)) {
-            log.warn("소셜 제공자 누락(미완성 연동): email={}", normalizedEmail);
+            log.warn("소셜 제공자 누락(미완성 연동): email={}", EmailLogMasking.maskForLog(normalizedEmail));
             return SocialSignupResponse.builder()
                 .success(false)
                 .message(MSG_SOCIAL_PROVIDER_REQUIRED_FOR_LINK)
                 .build();
         }
         if (!StringUtils.hasText(request.getProviderUserId())) {
-            log.warn("소셜 providerUserId 누락(미완성 연동): email={}", normalizedEmail);
+            log.warn("소셜 providerUserId 누락(미완성 연동): email={}", EmailLogMasking.maskForLog(normalizedEmail));
             return SocialSignupResponse.builder()
                 .success(false)
                 .message(MSG_SOCIAL_PROVIDER_USER_ID_REQUIRED)
@@ -442,7 +443,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             ? MSG_SOCIAL_ALREADY_LINKED_SAME_USER
             : MSG_SOCIAL_LINK_COMPLETED;
         log.info("미완성 소셜 연동 완료: userPk={}, email={}, idempotent={}",
-            existing.getId(), normalizedEmail, alreadyLinkedSameUser);
+            existing.getId(), EmailLogMasking.maskForLog(normalizedEmail), alreadyLinkedSameUser);
 
         return buildPostSocialSignupSuccessResponse(client, message);
     }

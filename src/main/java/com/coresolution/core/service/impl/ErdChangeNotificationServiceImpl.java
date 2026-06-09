@@ -5,6 +5,7 @@ import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.ErdChangeNotificationService;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -154,7 +155,7 @@ public class ErdChangeNotificationServiceImpl implements ErdChangeNotificationSe
                 .build();
 
         emailService.sendEmail(emailRequest);
-        log.info("✅ ERD 변경 알림 발송 완료: tenantId={}, email={}", tenantId, toEmail);
+        log.info("✅ ERD 변경 알림 발송 완료: tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(toEmail));
     }
 
     /**
@@ -177,7 +178,7 @@ public class ErdChangeNotificationServiceImpl implements ErdChangeNotificationSe
                 .build();
 
         emailService.sendEmail(emailRequest);
-        log.info("✅ 스키마 변경 알림 발송 완료: tenantId={}, email={}", tenantId, toEmail);
+        log.info("✅ 스키마 변경 알림 발송 완료: tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(toEmail));
     }
 
     /**

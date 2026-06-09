@@ -4,6 +4,7 @@ import com.coresolution.consultation.dto.AccountIntegrationRequest;
 import com.coresolution.consultation.dto.AccountIntegrationResponse;
 import com.coresolution.consultation.dto.EmailVerificationSendOutcome;
 import com.coresolution.consultation.service.AccountIntegrationService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class AccountIntegrationController {
     @PostMapping("/send-verification-code")
     public ResponseEntity<AccountIntegrationResponse> sendVerificationCode(@RequestParam String email) {
         try {
-            log.info("이메일 인증 코드 발송 요청: email={}", email);
+            log.info("이메일 인증 코드 발송 요청: email={}", EmailLogMasking.maskForLog(email));
 
             EmailVerificationSendOutcome outcome = accountIntegrationService.sendEmailVerificationCode(email);
 
@@ -86,7 +87,7 @@ public class AccountIntegrationController {
             @RequestParam String email, 
             @RequestParam String code) {
         try {
-            log.info("이메일 인증 코드 검증 요청: email={}", email);
+            log.info("이메일 인증 코드 검증 요청: email={}", EmailLogMasking.maskForLog(email));
             
             boolean isValid = accountIntegrationService.verifyEmailCode(email, code);
             
@@ -118,7 +119,7 @@ public class AccountIntegrationController {
     public ResponseEntity<AccountIntegrationResponse> integrateAccounts(@RequestBody AccountIntegrationRequest request) {
         try {
             log.info("계정 통합 요청: existingEmail={}, provider={}", 
-                    request.getExistingEmail(), request.getProvider());
+                    EmailLogMasking.maskForLog(request.getExistingEmail()), request.getProvider());
             
             AccountIntegrationResponse response = accountIntegrationService.integrateAccountsByEmail(request);
             
@@ -143,7 +144,7 @@ public class AccountIntegrationController {
     @GetMapping("/status")
     public ResponseEntity<AccountIntegrationResponse> checkIntegrationStatus(@RequestParam String email) {
         try {
-            log.info("계정 통합 상태 확인 요청: email={}", email);
+            log.info("계정 통합 상태 확인 요청: email={}", EmailLogMasking.maskForLog(email));
             
             AccountIntegrationResponse response = accountIntegrationService.checkIntegrationStatus(email);
             

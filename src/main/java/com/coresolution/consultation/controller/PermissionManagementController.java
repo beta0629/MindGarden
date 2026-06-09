@@ -9,6 +9,7 @@ import com.coresolution.consultation.entity.Permission;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PermissionRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -51,7 +52,7 @@ public class PermissionManagementController extends BaseApiController {
         log.info("🔍 세션 ID: {}", session.getId());
         
         User currentUser = SessionUtils.getCurrentUser(session);
-        log.info("🔍 세션에서 가져온 사용자: {}", currentUser != null ? currentUser.getEmail() : "null");
+        log.info("🔍 세션에서 가져온 사용자: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
         
         if (currentUser == null) {
             log.warn("⚠️ 세션에 사용자 정보가 없습니다");
@@ -212,7 +213,7 @@ public class PermissionManagementController extends BaseApiController {
             throw new RuntimeException("로그인이 필요합니다.");
         }
 
-        log.info("🔍 현재 사용자: {} ({})", currentUser.getEmail(), currentUser.getRole());
+        log.info("🔍 현재 사용자: {} ({})", EmailLogMasking.maskForLog(currentUser.getEmail()), currentUser.getRole());
 
         // 관리자 역할 확인 (표준화 2025-12-05: enum 활용)
         UserRole currentUserRole = currentUser.getRole();
@@ -286,7 +287,7 @@ public class PermissionManagementController extends BaseApiController {
         
         // 관리자 역할 확인 (표준화 2025-12-05: enum 활용)
         UserRole currentUserRole = currentUser.getRole();
-        log.info("🔍 권한 저장 요청: 사용자 역할={}, 이메일={}", currentUserRole, currentUser.getEmail());
+        log.info("🔍 권한 저장 요청: 사용자 역할={}, 이메일={}", currentUserRole, EmailLogMasking.maskForLog(currentUser.getEmail()));
         
         boolean isAdmin = currentUserRole.isAdmin();
         

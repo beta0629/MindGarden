@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +42,7 @@ public class PasswordResetController {
     public ResponseEntity<Map<String, Object>> sendResetEmail(
             @Valid @RequestBody SendResetEmailRequest request) {
         
-        log.info("🔑 비밀번호 재설정 이메일 발송 API 호출: {}", request.getEmail());
+        log.info("🔑 비밀번호 재설정 이메일 발송 API 호출: {}", EmailLogMasking.maskForLog(request.getEmail()));
         
         Map<String, Object> response = new HashMap<>();
         

@@ -45,10 +45,6 @@ export const TITLE_FADE_IN_DELAY_MS = 400;
 export const TITLE_FADE_IN_DURATION_MS = 500;
 /** 서브타이틀("심리상담센터") fade-in 지연 */
 export const SUBTITLE_FADE_IN_DELAY_MS = 500;
-/** 워드마크("MIND GARDEN") fade-in 지연 */
-export const WORDMARK_FADE_IN_DELAY_MS = 600;
-/** TenantName fade-in 지연 (조건부) */
-export const TENANT_FADE_IN_DELAY_MS = 700;
 
 /** 첫 SNS 버튼(카카오) 등장 시작 시점 */
 export const BUTTONS_FADE_IN_START_DELAY_MS = 800;
@@ -126,19 +122,22 @@ export const LAYOUT_TABLET_DEVICE_WIDTH = 744;
 export const LOGO_TO_TITLE_GAP = 20;
 /** 타이틀 → 서브타이틀 gap */
 export const TITLE_TO_SUBTITLE_GAP = 6;
-/** 서브타이틀 → 워드마크 gap */
-export const SUBTITLE_TO_WORDMARK_GAP = 4;
-/** 워드마크 → tenant 이름 gap */
-export const WORDMARK_TO_TENANT_GAP = 16;
 /** 헤더(로고/타이틀) → 버튼 그룹 gap */
 export const HEADER_TO_BUTTONS_GAP = 40;
 
-/** 버튼 높이 (최소 터치 44 + 여유) */
-export const BUTTON_HEIGHT = 52;
+/** 버튼 높이 (스펙 §H: 56dp — 모든 provider 통일) */
+export const BUTTON_HEIGHT = 56;
 /** 버튼 border radius */
 export const BUTTON_BORDER_RADIUS = 12;
 /** 버튼 그룹 간격 */
 export const BUTTON_GAP = 12;
+/** 브랜드 심볼 ↔ 라벨 텍스트 간격 (스펙 §G / 추가 자산 §C·§H) */
+export const BUTTON_ICON_TEXT_GAP = 12;
+/**
+ * 브랜드 심볼 외곽 박스 크기 (스펙 §H: 24×24dp — 모든 provider 통일).
+ * 박스 내부 시각 무게는 각 BrandIcon 의 `viewBox` 패딩으로 보정한다.
+ */
+export const BUTTON_BRAND_ICON_SIZE = 24;
 
 /** 콘텐츠 좌우 padding — 모바일 */
 export const CONTENT_HORIZONTAL_PADDING_MOBILE = 24;
@@ -148,9 +147,6 @@ export const CONTENT_HORIZONTAL_PADDING_TABLET = 32;
 export const CONTENT_VERTICAL_PADDING = 40;
 /** iPad 콘텐츠 max width (가로 늘어남 방지) */
 export const CONTENT_MAX_WIDTH_TABLET = 440;
-
-/** 워드마크 자간 (px) — Pretendard SemiBold + 12pt + tracking 2 */
-export const WORDMARK_LETTER_SPACING = 2;
 
 /* ========================================================================
  *  §4.5 Background Gradient (LinearGradient stops)

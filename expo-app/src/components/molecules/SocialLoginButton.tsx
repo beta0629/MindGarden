@@ -31,7 +31,9 @@ import { colors as themeColors } from '@/theme/tokens';
 import { fontFamily, fontSize } from '@/theme/typography';
 import {
   BUTTON_BORDER_RADIUS,
+  BUTTON_BRAND_ICON_SIZE,
   BUTTON_HEIGHT,
+  BUTTON_ICON_TEXT_GAP,
   BUTTON_PRESSED_OPACITY_REDUCED,
   BUTTON_PRESSED_SCALE,
   BUTTON_PRESS_IN_DURATION_MS,
@@ -42,6 +44,7 @@ import {
   getSocialLoginVariantConfig,
   type SocialLoginVariant,
 } from '@/components/molecules/socialLoginVariant';
+import { AppleBrandIcon, KakaoBrandIcon, NaverBrandIcon } from '@/components/atoms/SocialBrandIcon';
 
 export type { SocialLoginVariant };
 export { getSocialLoginVariantConfig };
@@ -198,6 +201,7 @@ export function SocialLoginButton({
           <ActivityIndicator color={buttonForegroundColor} />
         ) : (
           <View style={styles.contentRow}>
+            <BrandSymbol variant={variant} color={buttonForegroundColor} />
             <Text
               maxFontSizeMultiplier={SOCIAL_LOGIN_MAX_FONT_SIZE_MULTIPLIER}
               style={[styles.label, { color: buttonForegroundColor }]}
@@ -211,6 +215,25 @@ export function SocialLoginButton({
       </Pressable>
     </Animated.View>
   );
+}
+
+/**
+ * variant 별 브랜드 심볼 렌더.
+ *  - kakao: 어두운 말풍선 (#3C1E1E)
+ *  - naver: 흰색 N (#FFFFFF)
+ *  - apple: 흰색 사과 (#FFFFFF) — fallback 버튼 한정. 정식 SIWA 는 네이티브 컴포넌트 사용.
+ *
+ * 각 심볼은 `buttonForegroundColor` 를 따라가지 않고 브랜드 가이드 색을 유지한다
+ * (foreground 가 우연히 같지만 다크 모드 등 변경 시에도 절대 변하지 않아야 함).
+ */
+function BrandSymbol({ variant, color }: { variant: SocialLoginVariant; color: string }) {
+  if (variant === 'kakao') {
+    return <KakaoBrandIcon size={BUTTON_BRAND_ICON_SIZE} color={color} />;
+  }
+  if (variant === 'naver') {
+    return <NaverBrandIcon size={BUTTON_BRAND_ICON_SIZE} color={color} />;
+  }
+  return <AppleBrandIcon size={BUTTON_BRAND_ICON_SIZE} color={color} />;
 }
 
 const styles = StyleSheet.create({
@@ -230,6 +253,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: BUTTON_ICON_TEXT_GAP,
   },
   label: {
     fontFamily: fontFamily.semibold,

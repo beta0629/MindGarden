@@ -4,7 +4,7 @@
  * 본 페이지는 UI 분리·모션 합산만 담당하고 비즈니스 로직(`AuthService.loginWith*`)은
  * 그대로 호출한다. UI 구조는 다음 4개 모듈로 분리:
  *   - {@link AnimatedPastelBackground} — 흐르는 파스텔 그라데이션
- *   - {@link LogoSection} — 그라데이션 나비 로고 + 타이포 4종
+ *   - {@link LogoSection} — 그라데이션 나비 로고 + 2단 한글 타이포(타이틀/서브타이틀)
  *   - {@link LoginButtonsSection} — 카카오/네이버/Apple stagger + 자격증명 폼
  *   - {@link SocialLoginButton} — Atom (molecules 위치)
  *
@@ -15,9 +15,8 @@
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  AccessibilityInfo,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -34,7 +33,6 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useTheme } from '@/theme';
 import { fontFamily, fontSize as fontSizeTokens } from '@/theme/typography';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
-import { useTenantStore } from '@/stores/useTenantStore';
 import {
   AuthService,
   type SocialUserInfoDraft,
@@ -46,6 +44,7 @@ import { sanitizeSocialIdentityString } from '@/utils/socialIdentitySanitize';
 import { AnimatedPastelBackground } from '@/components/organisms/login/AnimatedPastelBackground';
 import { LogoSection } from '@/components/organisms/login/LogoSection';
 import { LoginButtonsSection } from '@/components/organisms/login/LoginButtonsSection';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import {
   CONTENT_HORIZONTAL_PADDING_MOBILE,
   CONTENT_HORIZONTAL_PADDING_TABLET,
@@ -113,37 +112,8 @@ function socialSignupRouteParams(info: SocialUserInfoDraft) {
   };
 }
 
-/**
- * AccessibilityInfo.isReduceMotionEnabled 의 초기값 + 변경 리스너를 단일 hook 으로 통합.
- * 스펙 §10.3 — 진입 시 호출 + `reduceMotionChanged` 등록.
- */
-function useReduceMotion(): boolean {
-  const [reduceMotion, setReduceMotion] = useState(false);
-  useEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((enabled) => {
-        if (mounted) {
-          setReduceMotion(enabled);
-        }
-      })
-      .catch(() => {
-        /* noop */
-      });
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (enabled: boolean) => {
-      setReduceMotion(enabled);
-    });
-    return () => {
-      mounted = false;
-      sub.remove();
-    };
-  }, []);
-  return reduceMotion;
-}
-
 export default function MindGardenLoginPage() {
   const theme = useTheme();
-  const { tenantName } = useTenantStore();
   const { width: windowWidth } = useWindowDimensions();
   const reduceMotion = useReduceMotion();
   const config: LoginAnimationConfig = useMemo(
@@ -471,7 +441,7 @@ export default function MindGardenLoginPage() {
                 isTablet ? { maxWidth: CONTENT_MAX_WIDTH_TABLET, alignSelf: 'center' } : null,
               ]}
             >
-              <LogoSection config={config} tenantName={tenantName ?? undefined} />
+              <LogoSection config={config} />
 
               <View style={{ height: HEADER_TO_BUTTONS_GAP }} />
 

@@ -33,7 +33,10 @@
         <maven.compiler.fork>false</maven.compiler.fork>
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
         <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
-        <maven.compiler.verbose>true</maven.compiler.verbose>
+        <!-- verbose=true 는 CI 콘솔에 매 클래스 [loading …] 로그 수만 줄을 출력해 GitHub Actions 로그
+             버퍼·렌더링 지연이 누적되며 「테스트 실행」 step 가 hang 처럼 보이는 원인 중 하나.
+             경고/Deprecation 은 별도 옵션으로 유지하고 verbose 만 끈다. -->
+        <maven.compiler.verbose>false</maven.compiler.verbose>
         <!-- 인코딩 설정 (한글 깨짐 방지) -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -402,6 +405,13 @@
                     <forkCount>1</forkCount>
                     <!-- false: SpringBootTest·Mockito 인라인 mock 재사용 시 Metaspace/NoClassDefFound 방지 -->
                     <reuseForks>false</reuseForks>
+                    <!-- 79+ SpringBootTest fork 가 각자 새 JVM 으로 부팅하므로 명시적 heap·metaspace 가 없으면
+                         CI(2 vCPU/7 GB) 에서 동시 GC/OOM·hang 누적 → 16 분 timeout. argLine 으로 상한 고정. -->
+                    <argLine>-Xmx2g -Xms512m -XX:MaxMetaspaceSize=512m -XX:+ExitOnOutOfMemoryError</argLine>
+                    <!-- 단일 fork 당 최대 15 분. 무한 hang 을 detect 하고 명시적 실패 처리. -->
+                    <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
+                    <!-- shutdown hook 미실행 시 강제 종료 시간. -->
+                    <forkedProcessExitTimeoutInSeconds>30</forkedProcessExitTimeoutInSeconds>
                     <!-- 로컬 MySQL·Flyway 정상 스키마가 필요한 JUnit 5 @Tag("local-mysql") 전용 (기본 CI/클린 머신에서 제외) -->
                     <excludedGroups>local-mysql</excludedGroups>
                 </configuration>

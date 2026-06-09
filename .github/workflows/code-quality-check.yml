@@ -61,9 +61,13 @@ jobs:
       run: cd frontend && npm run verify:erp || exit 1
 
     - name: 🧪 테스트 실행
+      # 79+ SpringBootTest fork 가 각자 새 JVM 으로 부팅하면 CI hang 가 발생할 수 있어
+      # step 수준 timeout 으로 명시적 실패 처리(2시간 default 대신 30분). 본 hotfix 와
+      # 영구 수정(단위/통합 분리) 진행 사이의 보호 장치.
+      timeout-minutes: 30
       run: |
         # 로컬/PR에서도 동일하게 mvn test 통과를 권장합니다.
-        mvn test -Dspring.profiles.active=test
+        mvn test -Dspring.profiles.active=test --batch-mode -Dstyle.color=never
 
     - name: 📊 코드 품질 메트릭 수집
       run: |

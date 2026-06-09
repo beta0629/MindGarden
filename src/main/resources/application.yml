@@ -91,6 +91,16 @@ spring:
         await-termination: true
         await-termination-period: 25s  # lifecycle timeout-per-shutdown-phase(30s) 이하
 
+  # Multipart 업로드 설정 (프로필 이미지 등 multipart 업로드 endpoint 용)
+  # 2026-06-09: P0 영구 대책 Phase 2 — profile-image multipart endpoint 신설.
+  # max-file-size=5MB · max-request-size=6MB (multipart overhead 여유분 포함).
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 6MB
+      file-size-threshold: 0
+
   # Thymeleaf 설정
   thymeleaf:
     cache: false
@@ -147,6 +157,13 @@ spring:
 # MindGarden 공개 API·계정 연동 보안(이메일 발송 쿨다운·일일 상한, IP 레이트리밋 등)
 # 프로파일별로 mindgarden.security.* 를 오버라이드할 수 있습니다.
 mindgarden:
+  # 사용자 프로필 이미지 업로드 (P0 영구 대책 Phase 2 — 2026-06-09).
+  # 운영(blue/green 공용): /var/mindgarden/uploads/profile-images/ (절대경로 필수).
+  # 개발 기본값: ./uploads/profile-images/ (서비스 워킹디렉터리 기준 상대경로).
+  # 환경변수 PROFILE_IMAGE_UPLOAD_DIR 로 오버라이드.
+  upload:
+    profile-image:
+      base-dir: ${PROFILE_IMAGE_UPLOAD_DIR:./uploads/profile-images/}
   # KICC 이지페이 온라인 API 호스트 기본값(테넌트 settings_json 으로 오버라이드 가능). 비밀 아님.
   pg:
     kicc:

@@ -64,4 +64,17 @@ public interface UserProfileService {
      * @return 신청 결과
      */
     Map<String, Object> applyForConsultant(Long userId, ConsultantApplicationRequest request);
+
+    /**
+     * 프로필 이미지 URL 만 영속화한다. {@link com.coresolution.consultation.util.ProfileImageUrlGuard}
+     * 입력 가드를 재실행해 base64 dataURI · 길이 초과를 차단한다.
+     *
+     * <p>P0 영구 대책 Phase 2 — 2026-06-09. 신설된 {@code POST /api/v1/users/profile/{userId}/image}
+     * 가 storage 에 파일을 저장한 직후 호출한다.</p>
+     *
+     * @param userId 대상 사용자 PK
+     * @param url    {@code /api/v1/files/profile-images/{file}} 형태 또는 외부 URL
+     * @return 업데이트된 URL (가드 통과한 값)
+     */
+    String updateProfileImageUrl(Long userId, String url);
 }

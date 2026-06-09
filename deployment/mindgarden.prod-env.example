@@ -62,6 +62,13 @@ SMS_API_KEY=
 SMS_API_SECRET=
 SMS_SENDER_NUMBER=
 
+# 사용자 프로필 이미지 업로드 디렉터리 (P0 영구 대책 Phase 2 — 2026-06-09).
+# blue/green 두 인스턴스가 공용으로 읽고 써야 하므로 절대경로 + 공용 폴더 필수.
+# 권장: /var/mindgarden/uploads/profile-images/  (소유자: 서비스 계정, mode 755)
+# 디렉터리 생성·권한·nginx client_max_body_size 설정은 다음 가이드 참고:
+#   docs/project-management/2026-06-09/PROFILE_IMAGE_UPLOAD_OPS_GUIDE.md
+PROFILE_IMAGE_UPLOAD_DIR=/var/mindgarden/uploads/profile-images/
+
 # 블루그린(듀얼 systemd) 사용 시: 포트는 각 유닛의 Environment=SERVER_PORT 로만 두고, 여기서는 비워 두는 것을 권장.
 # 단일 mindgarden.service 만 쓸 때만 필요 시 설정.
 SERVER_PORT=

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -181,6 +182,44 @@ class UserProfileServiceImplProfileImageGuardTest {
             }).doesNotThrowAnyException();
 
             guardStatic.verify(() -> ProfileImageUrlGuard.validateInbound(anyString()), never());
+        }
+    }
+
+    @Test
+    @DisplayName("updateProfileImageUrl: 정상 URL 은 가드 통과 후 영속화 (P0 영구 대책 Phase 2)")
+    void updateProfileImageUrl_normalUrl_persisted() {
+        String normalUrl = "/api/v1/files/profile-images/test-tenant_100_abc.png";
+
+        try (MockedStatic<TenantContextHolder> tenantStatic = mockStatic(TenantContextHolder.class);
+             MockedStatic<SessionUtils> sessionStatic = mockStatic(SessionUtils.class)) {
+            tenantStatic.when(TenantContextHolder::getRequiredTenantId).thenReturn(TENANT_ID);
+            sessionStatic.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(callerAndTarget);
+            when(userRepository.findByTenantIdAndId(TENANT_ID, USER_ID))
+                .thenReturn(Optional.of(callerAndTarget));
+            when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            String result = service.updateProfileImageUrl(USER_ID, normalUrl);
+
+            assertThat(result).isEqualTo(normalUrl);
+            verify(userRepository, times(1)).save(any(User.class));
+        }
+    }
+
+    @Test
+    @DisplayName("updateProfileImageUrl: base64 dataURI 는 IllegalArgumentException 으로 거부 (회귀 가드)")
+    void updateProfileImageUrl_base64_rejected() {
+        String base64 = "data:image/png;base64,iVBORw0KGgoAAAANSU...";
+
+        try (MockedStatic<TenantContextHolder> tenantStatic = mockStatic(TenantContextHolder.class);
+             MockedStatic<SessionUtils> sessionStatic = mockStatic(SessionUtils.class)) {
+            tenantStatic.when(TenantContextHolder::getRequiredTenantId).thenReturn(TENANT_ID);
+            sessionStatic.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(callerAndTarget);
+
+            assertThatThrownBy(() -> service.updateProfileImageUrl(USER_ID, base64))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("파일 업로드 API");
+
+            verify(userRepository, never()).save(any(User.class));
         }
     }
 }

@@ -29,12 +29,13 @@ import { maskKoreanMobileForDisplay } from '@/utils/phoneNormalize';
 import { useProfileImageUpload } from '@/api/hooks/useProfileImageUpload';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
 
+// P0 영구 대책 Phase 2 (2026-06-09): base64 옵션 제거 — multipart 업로드는 file URI 만 사용.
 const PROFILE_IMAGE_PICK_OPTIONS: ImagePickerOptions = {
   mediaTypes: ['images'],
   allowsEditing: true,
   aspect: [1, 1],
   quality: 0.75,
-  base64: true,
+  base64: false,
 };
 
 const NATIVE_IMAGE_PICKER_MISSING_HINT =
@@ -123,17 +124,22 @@ export function MoreAccountProfile({
             return;
           }
           const asset = result.assets[0];
-          if (!asset.base64) {
-            Alert.alert('오류', '이미지 데이터를 읽을 수 없습니다.');
+          if (!asset.uri) {
+            Alert.alert('오류', '이미지 파일을 읽을 수 없습니다.');
             return;
           }
-          const mime = asset.mimeType ?? 'image/jpeg';
-          const dataUri = `data:${mime};base64,${asset.base64}`;
-          uploadProfileImage(dataUri, {
-            onError: (e) => {
-              Alert.alert('업로드 실패', getMutationErrorMessage(e));
+          uploadProfileImage(
+            {
+              uri: asset.uri,
+              mimeType: asset.mimeType,
+              fileName: asset.fileName,
             },
-          });
+            {
+              onError: (e) => {
+                Alert.alert('업로드 실패', getMutationErrorMessage(e));
+              },
+            },
+          );
           return;
         }
 
@@ -147,17 +153,22 @@ export function MoreAccountProfile({
           return;
         }
         const asset = shot.assets[0];
-        if (!asset.base64) {
-          Alert.alert('오류', '이미지 데이터를 읽을 수 없습니다.');
+        if (!asset.uri) {
+          Alert.alert('오류', '이미지 파일을 읽을 수 없습니다.');
           return;
         }
-        const mime = asset.mimeType ?? 'image/jpeg';
-        const dataUri = `data:${mime};base64,${asset.base64}`;
-        uploadProfileImage(dataUri, {
-          onError: (e) => {
-            Alert.alert('업로드 실패', getMutationErrorMessage(e));
+        uploadProfileImage(
+          {
+            uri: asset.uri,
+            mimeType: asset.mimeType,
+            fileName: asset.fileName,
           },
-        });
+          {
+            onError: (e) => {
+              Alert.alert('업로드 실패', getMutationErrorMessage(e));
+            },
+          },
+        );
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes('ExponentImagePicker') || msg.includes('native module')) {

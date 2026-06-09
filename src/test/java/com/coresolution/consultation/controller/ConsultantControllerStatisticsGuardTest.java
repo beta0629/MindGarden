@@ -8,27 +8,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.coresolution.consultation.exception.GlobalExceptionHandler;
 import com.coresolution.consultation.service.ConsultantService;
+import com.coresolution.integrationtest.consultant.ConsultantStatisticsGuardTestApp;
 import java.time.LocalDate;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,7 +36,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * @author MindGarden
  * @since 2026-06-03
  */
-@SpringBootTest(classes = ConsultantControllerStatisticsGuardTest.TestApp.class)
+@SpringBootTest(classes = ConsultantStatisticsGuardTestApp.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @DisplayName("ConsultantController — 통계 엔드포인트 역할 가드")
@@ -142,19 +133,4 @@ class ConsultantControllerStatisticsGuardTest {
         }
     }
 
-    /**
-     * ConsultantController slice 부트스트랩 — DB/Flyway/Redis 자동 설정을 제외하고 메서드 보안만 활성화한다.
-     */
-    @Configuration
-    @EnableAutoConfiguration(exclude = {
-            DataSourceAutoConfiguration.class,
-            HibernateJpaAutoConfiguration.class,
-            FlywayAutoConfiguration.class,
-            RedisAutoConfiguration.class,
-            RedisRepositoriesAutoConfiguration.class
-    })
-    @EnableMethodSecurity(prePostEnabled = true)
-    @Import({ConsultantController.class, GlobalExceptionHandler.class})
-    static class TestApp {
-    }
 }

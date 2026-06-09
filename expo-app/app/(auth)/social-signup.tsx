@@ -28,10 +28,20 @@ import {
 } from '@/services/AuthService';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import { normalizeKoreanMobileDigits } from '@/utils/phoneNormalize';
+import { sanitizeSocialIdentityString } from '@/utils/socialIdentitySanitize';
 
+/**
+ * 라우터 파라미터를 안전하게 추출한다.
+ *
+ * <p>SNS SDK·BE 응답에서 닉네임·이름이 null/undefined일 때 일부 직렬화 경로(객체→URLSearchParams 등)에서
+ * "null"/"undefined" 문자열로 변환되어 화면에 그대로 노출되는 사고를 차단한다.</p>
+ *
+ * @param v 라우터에서 받은 단일 값 또는 배열
+ * @returns 사용 가능한 문자열(없으면 빈 문자열)
+ */
 function firstParam(v: string | string[] | undefined): string {
-  if (Array.isArray(v)) return v[0] ?? '';
-  return v ?? '';
+  const raw = Array.isArray(v) ? (v[0] ?? '') : (v ?? '');
+  return sanitizeSocialIdentityString(raw);
 }
 
 function webOriginFromApiBase(): string {
@@ -59,13 +69,13 @@ function normalizePhoneDigits(input: string): string {
   return input.replace(/\D/g, '');
 }
 
-/** 표시명: SDK 닉네임·이메일 로컬파트로 최소 길이 보장 */
+/** 표시명: SDK 닉네임·이메일 로컬파트로 최소 길이 보장. "null"/"undefined" 문자열은 빈 값으로 간주한다. */
 function defaultDisplayName(email: string, nickname: string): string {
-  const nick = nickname.trim();
+  const nick = sanitizeSocialIdentityString(nickname);
   if (nick.length >= 2) return nick;
-  const local = email.split('@')[0]?.trim() ?? '';
+  const local = sanitizeSocialIdentityString(email.split('@')[0] ?? '');
   if (local.length >= 2) return local;
-  return nick || local || '회원';
+  return nick || local || '';
 }
 
 const SOCIAL_SIGNUP_STACK_LOG_MAX = 800;

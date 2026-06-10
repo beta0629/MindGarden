@@ -13,9 +13,11 @@
   gap: var(--mg-spacing-16, 1rem);
 }
 
+/* P1 컴팩트화 (2026-06-10): 그리드 좌우 패딩 12-16px — 카드와 컨테이너 사이 호흡 확보 */
 .mg-v2-list-block__grid--small {
   grid-template-columns: 1fr;
   gap: var(--mg-spacing-12, 0.75rem);
+  padding-inline: var(--mg-spacing-12, 0.75rem);
 }
 
 @media (min-width: 600px) {
@@ -36,15 +38,25 @@
   }
 }
 
-/* 터치 타겟 44px 이상 유지 (카드 전체가 클릭 영역이므로 min-height 보장) */
+/* 터치 타겟 44px 이상 유지 (카드 전체가 클릭 영역이므로 min-height 보장)
+ * P1 컴팩트화 (2026-06-10): 카드 자체 height 는 콘텐츠 자동(200-240px 목표). max-content 강제 X
+ */
 .mg-v2-list-block__grid--small .mg-v2-profile-card,
 .mg-v2-list-block__grid--small .mg-v2-profile-card--compact {
   min-height: 44px;
+  height: auto;
 }
 
 /* compact 카드가 너무 좁아져 배지 오버플로우 나지 않도록 최소 폭 */
 .mg-v2-list-block__grid--small .mg-v2-profile-card--compact {
   min-width: 140px;
+}
+
+/* 모바일(<600px): 그리드 좌우 패딩 약간 감소(공간 협소) */
+@media (max-width: 599px) {
+  .mg-v2-list-block__grid--small {
+    padding-inline: var(--mg-spacing-8, 0.5rem);
+  }
 }
 
 /* ----- 리스트(테이블) 뷰 ----- */

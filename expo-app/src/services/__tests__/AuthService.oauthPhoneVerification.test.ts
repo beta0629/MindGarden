@@ -37,6 +37,28 @@ jest.mock('@react-native-seoul/kakao-login', () => ({
   getProfile: jest.fn(),
 }));
 
+// `@react-native-google-signin/google-signin` 은 ESM 으로 publish 되어 jest 가 transform 하지 못한다.
+// AuthService 가 import 만 해도 module load 시점에 SyntaxError 가 나므로, 본 suite 의 OAuth 휴대폰
+// 흐름은 GOOGLE 도구 미사용 → SDK 호출이 발생하지 않아 stub mock 으로 충분하다.
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  __esModule: true,
+  GoogleSignin: {
+    configure: jest.fn(),
+    signIn: jest.fn(),
+    getTokens: jest.fn(),
+    hasPlayServices: jest.fn(),
+    signOut: jest.fn(),
+  },
+  statusCodes: {
+    SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    PLAY_SERVICES_NOT_AVAILABLE: 'PLAY_SERVICES_NOT_AVAILABLE',
+  },
+  isSuccessResponse: jest.fn(),
+  isCancelledResponse: jest.fn(),
+  isErrorWithCode: jest.fn(),
+}));
+
 jest.mock('@react-native-seoul/naver-login', () => ({
   __esModule: true,
   default: {

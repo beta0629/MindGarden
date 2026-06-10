@@ -82,9 +82,9 @@ export interface LoginButtonsSectionProps {
   /**
    * Google 로그인 진입 직전 — 부모가 isLoading=true / loadingProvider='google' 처리.
    *
-   * <p>P0 핫픽스 (2026-06-10): `useGoogleAuthRequest` 가 미구성 환경에서 mount throw 를
-   * 일으키지 않도록 Google 버튼은 {@link GoogleLoginButtonContainer} 내부에서 훅을 가드된
-   * 분기로만 호출한다. 부모는 onGooglePress 대신 시작/결과 콜백 2개만 받는다.</p>
+   * <p>**Build #16 (2026-06-10) — Native SDK 마이그레이션**: Google 버튼은
+   * {@link GoogleLoginButtonContainer} 내부에서 `signInWithGoogle()` 를 직접 호출하고 outcome
+   * 을 부모로 전달한다. Native SDK 는 mount throw 가 없으므로 훅 가드는 환경 변수 게이트로만 단순화.</p>
    */
   readonly onGoogleSignInStart: () => void;
   /** Google OAuth 결과(또는 미구성 안내) — 부모가 BE 호출·라우팅·에러 처리 */

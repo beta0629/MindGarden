@@ -42,7 +42,7 @@ import {
   type SocialUserInfoDraft,
   type DuplicateLoginRetryContext,
 } from '@/services/AuthService';
-import { useGoogleAuthRequest } from '@/services/auth/googleSignIn';
+import type { GoogleSignInOutcome } from '@/services/auth/googleSignIn';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import { isAppleSignInAvailableSync } from '@/services/auth/appleSignIn';
 import { sanitizeSocialIdentityString } from '@/utils/socialIdentitySanitize';
@@ -142,9 +142,6 @@ export default function MindGardenLoginPage() {
     null,
   );
   const [isConfirmingDuplicateLogin, setIsConfirmingDuplicateLogin] = useState(false);
-
-  // Google OAuth (G-1 expo-auth-session) — 컴포넌트 mount 시 request 초기화
-  const { promptAsync: promptGoogleAsync, isReady: googleReady } = useGoogleAuthRequest();
 
   const inExpoGo = isExpoGoApp();
   const isTablet = windowWidth >= LAYOUT_TABLET_DEVICE_WIDTH;
@@ -265,80 +262,90 @@ export default function MindGardenLoginPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    if (!googleReady) {
-      setErrorMessage('Google 로그인 모듈이 아직 준비 중입니다. 잠시 후 다시 시도해 주세요.');
-      return;
-    }
+  /**
+   * Google OAuth 진입 직전 — 다른 provider 와 동일한 isLoading 상태 셋업.
+   *
+   * <p>P0 핫픽스 (2026-06-10): `useGoogleAuthRequest` 의 mount throw 를 피하기 위해
+   * Google 훅 호출은 {@link GoogleLoginButtonContainer} 내부로 격리했다. 본 핸들러는
+   * 컨테이너 Active 분기가 `promptAsync` 호출 직전에 호출한다. Disabled 분기에서는
+   * Alert 만 띄우고 본 핸들러를 호출하지 않으므로 isLoading 도 변하지 않는다.</p>
+   */
+  const handleGoogleSignInStart = useCallback(() => {
     setIsLoading(true);
     setLoadingProvider('google');
     setErrorMessage(null);
+  }, []);
 
-    try {
-      const promptResult = await promptGoogleAsync();
-      if (promptResult.kind === 'cancel' || promptResult.kind === 'dismiss') {
-        return;
-      }
-      if (promptResult.kind === 'notConfigured') {
-        setErrorMessage(promptResult.message);
-        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
-        return;
-      }
-      if (promptResult.kind === 'error') {
-        setErrorMessage(promptResult.message);
-        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
-        return;
-      }
+  /**
+   * Google OAuth 결과(또는 미구성 안내)를 받아 BE 인증·라우팅·에러 처리한다.
+   *
+   * <p>{@link GoogleLoginButtonContainer} 의 Active 분기가 `promptAsync` 결과를 그대로 넘긴다.
+   * cancel/dismiss 는 무음 종료, notConfigured/error 는 에러 메시지 노출, success 는
+   * `AuthService.loginWithGoogle` 호출 후 결과별 라우팅.</p>
+   */
+  const handleGoogleAuthOutcome = useCallback(
+    async (outcome: GoogleSignInOutcome) => {
+      try {
+        if (outcome.kind === 'cancel' || outcome.kind === 'dismiss') {
+          return;
+        }
+        if (outcome.kind === 'notConfigured' || outcome.kind === 'error') {
+          setErrorMessage(outcome.message);
+          await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+          return;
+        }
 
-      const result = await AuthService.loginWithGoogle(
-        promptResult.result.accessToken,
-        promptResult.result.idToken,
-      );
-      if (result.kind === 'authenticated') {
-        await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
-        await handleLoginSuccess();
-      } else if (result.kind === 'requiresSignup') {
-        router.push({
-          pathname: '/(auth)/social-signup',
-          params: socialSignupRouteParams(result.socialUserInfo),
-        });
-      } else if (result.kind === 'requiresPhoneAccountSelection') {
-        router.push({
-          pathname: '/(auth)/oauth-account-selection',
-          params: {
-            selectionToken: result.selectionToken,
-            provider: 'GOOGLE',
-          },
-        });
-      } else if (result.kind === 'requiresOAuthPhoneVerification') {
-        router.push({
-          pathname: '/(auth)/oauth-phone-link',
-          params: {
-            provider: result.provider,
-            phoneVerificationToken: result.phoneVerificationToken,
-            email: result.socialUserInfo.email ?? '',
-            name: result.socialUserInfo.name ?? '',
-          },
-        } as unknown as Href);
-      } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
-        setDuplicateLoginPrompt({
-          message: result.message,
-          retryContext: result.retryContext,
-        });
-      } else if (result.kind === 'error') {
-        setErrorMessage(result.message ?? 'Google 로그인에 실패했습니다.');
-        await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+        const result = await AuthService.loginWithGoogle(
+          outcome.result.accessToken,
+          outcome.result.idToken,
+        );
+        if (result.kind === 'authenticated') {
+          await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
+          await handleLoginSuccess();
+        } else if (result.kind === 'requiresSignup') {
+          router.push({
+            pathname: '/(auth)/social-signup',
+            params: socialSignupRouteParams(result.socialUserInfo),
+          });
+        } else if (result.kind === 'requiresPhoneAccountSelection') {
+          router.push({
+            pathname: '/(auth)/oauth-account-selection',
+            params: {
+              selectionToken: result.selectionToken,
+              provider: 'GOOGLE',
+            },
+          });
+        } else if (result.kind === 'requiresOAuthPhoneVerification') {
+          router.push({
+            pathname: '/(auth)/oauth-phone-link',
+            params: {
+              provider: result.provider,
+              phoneVerificationToken: result.phoneVerificationToken,
+              email: result.socialUserInfo.email ?? '',
+              name: result.socialUserInfo.name ?? '',
+            },
+          } as unknown as Href);
+        } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
+          setDuplicateLoginPrompt({
+            message: result.message,
+            retryContext: result.retryContext,
+          });
+        } else if (result.kind === 'error') {
+          setErrorMessage(result.message ?? 'Google 로그인에 실패했습니다.');
+          await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      } catch (e) {
+        console.error('[Login] google', e);
+        const detail =
+          e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
+        setErrorMessage(`Google 로그인 중 오류가 발생했습니다.${detail}`);
+      } finally {
+        setIsLoading(false);
+        setLoadingProvider(null);
       }
-    } catch (e) {
-      console.error('[Login] google', e);
-      const detail =
-        e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
-      setErrorMessage(`Google 로그인 중 오류가 발생했습니다.${detail}`);
-    } finally {
-      setIsLoading(false);
-      setLoadingProvider(null);
-    }
-  };
+    },
+    [handleLoginSuccess],
+  );
 
   const handleAppleLogin = async () => {
     setIsLoading(true);
@@ -564,7 +571,8 @@ export default function MindGardenLoginPage() {
                 errorMessage={errorMessage}
                 onKakaoPress={handleKakaoLogin}
                 onNaverPress={handleNaverLogin}
-                onGooglePress={handleGoogleLogin}
+                onGoogleSignInStart={handleGoogleSignInStart}
+                onGoogleAuthOutcome={handleGoogleAuthOutcome}
                 onApplePress={handleAppleLogin}
                 credentialSheetExpanded={credentialSheetOpen}
                 onCredentialSheetTriggerPress={handleCredentialTriggerPress}

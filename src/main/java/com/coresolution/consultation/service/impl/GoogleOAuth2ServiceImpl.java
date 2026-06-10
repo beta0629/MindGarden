@@ -36,6 +36,14 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class GoogleOAuth2ServiceImpl extends AbstractOAuth2Service {
 
+    /**
+     * Google `tokeninfo` 엔드포인트 — OpenID Connect ID Token 검증 + claims 추출.
+     *
+     * <p>응답에는 `sub`(provider user id), `email`, `email_verified`, `name`, `given_name`,
+     * `family_name`, `picture` 등이 포함된다. {@link #getUserInfoFromIdToken(String)} 가 사용한다.</p>
+     */
+    private static final String GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo";
+
     private final RestTemplate restTemplate;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id:${GOOGLE_CLIENT_ID:dummy}}")
@@ -149,6 +157,101 @@ public class GoogleOAuth2ServiceImpl extends AbstractOAuth2Service {
             log.error("Google 사용자 정보 조회 실패", e);
             throw new RuntimeException("Google 사용자 정보를 가져올 수 없습니다.", e);
         }
+    }
+
+    /**
+     * Google OpenID Connect ID Token 만으로 사용자 정보를 조회한다.
+     *
+     * <p>**P0 2026-06-10** — Expo TestFlight 빌드 `1.0.7 (14)` 에서 `expo-auth-session/providers/google`
+     * 응답이 `accessToken` 을 누락하고 `idToken` 만 포함하는 케이스를 관찰. 본 메서드는 그 폴백
+     * 경로다. Google `tokeninfo` 엔드포인트 (`GET https://oauth2.googleapis.com/tokeninfo?id_token=...`)
+     * 는 ID Token 의 서명·만료·issuer·audience(client_id) 등을 검증한 뒤 claims 를 JSON 으로 반환하므로
+     * 별도 JWKS 검증 코드 없이도 안전하다.</p>
+     *
+     * <p>응답 예시:
+     * <pre>{@code
+     * {
+     *   "iss": "https://accounts.google.com",
+     *   "azp": "<client_id>",
+     *   "aud": "<client_id>",
+     *   "sub": "123456789",
+     *   "email": "user@example.com",
+     *   "email_verified": "true",
+     *   "name": "Hong Gildong",
+     *   "given_name": "Gildong",
+     *   "family_name": "Hong",
+     *   "picture": "https://lh3.googleusercontent.com/...",
+     *   "locale": "ko",
+     *   "iat": "...",
+     *   "exp": "..."
+     * }
+     * }</pre>
+     * </p>
+     *
+     * @param idToken Google OpenID Connect ID Token (JWT)
+     * @return Google `tokeninfo` claims 로부터 변환된 SocialUserInfo
+     * @throws RuntimeException 토큰이 유효하지 않거나 네트워크 오류 시
+     */
+    public SocialUserInfo getUserInfoFromIdToken(String idToken) {
+        if (idToken == null || idToken.isBlank()) {
+            throw new IllegalArgumentException("Google idToken 이 비어 있습니다.");
+        }
+        try {
+            String url = GOOGLE_TOKENINFO_URL + "?id_token=" + idToken;
+
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                (Class<Map<String, Object>>) (Class<?>) Map.class
+            );
+
+            Map<String, Object> claims = response.getBody();
+            if (claims == null || claims.isEmpty()) {
+                throw new RuntimeException("Google ID Token claims 응답이 비어 있습니다.");
+            }
+            if (claims.get("sub") == null) {
+                throw new RuntimeException("Google ID Token 검증 실패: sub claim 없음.");
+            }
+
+            return convertIdTokenClaimsToSocialUserInfo(claims);
+
+        } catch (Exception e) {
+            log.error("Google ID Token 사용자 정보 조회 실패", e);
+            throw new RuntimeException("Google ID Token 으로 사용자 정보를 가져올 수 없습니다.", e);
+        }
+    }
+
+    /**
+     * Google `tokeninfo` claims 를 표준 {@link SocialUserInfo} 로 변환한다.
+     *
+     * <p>{@link #convertToSocialUserInfo(Map)} 가 `userinfo` API 응답을 처리하는 것과 달리,
+     * ID Token claims 는 `id` 대신 `sub` 키를 쓰며 사진 키는 `picture` 로 동일하다. name 누락 시
+     * `given_name`+`family_name` 조합 폴백은 동일하다.</p>
+     */
+    private SocialUserInfo convertIdTokenClaimsToSocialUserInfo(Map<String, Object> claims) {
+        String providerUserId = claims.get("sub") != null ? claims.get("sub").toString() : null;
+        String email = (String) claims.get("email");
+        String name = (String) claims.get("name");
+        String givenName = (String) claims.get("given_name");
+        String familyName = (String) claims.get("family_name");
+        String picture = (String) claims.get("picture");
+
+        if (name == null || name.trim().isEmpty()) {
+            if (givenName != null || familyName != null) {
+                name = (givenName != null ? givenName : "") + " " + (familyName != null ? familyName : "");
+                name = name.trim();
+            }
+        }
+
+        return SocialUserInfo.builder()
+            .providerUserId(providerUserId)
+            .email(email)
+            .name(name)
+            .nickname(givenName != null ? givenName : name)
+            .profileImageUrl(picture)
+            .build();
     }
     
     @Override

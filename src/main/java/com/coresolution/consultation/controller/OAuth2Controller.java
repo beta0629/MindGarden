@@ -3225,7 +3225,13 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
-     * 네이티브 SDK 로그인 (모바일 앱 전용) Deep Link 없이 accessToken으로 직접 로그인
+     * 네이티브 SDK 로그인 (모바일 앱 전용) Deep Link 없이 accessToken으로 직접 로그인.
+     *
+     * <p>**P0 2026-06-10**: Google (Expo `expo-auth-session/providers/google`) 응답이 iOS 일부
+     * 빌드에서 `accessToken` 없이 `idToken` 만 전달하는 케이스를 발견. 본 메서드는
+     * `provider=GOOGLE` 이고 `accessToken` 이 비고 `idToken` 이 있을 때
+     * {@link com.coresolution.consultation.service.impl.GoogleOAuth2ServiceImpl#getUserInfoFromIdToken(String)}
+     * 폴백 경로를 사용한다. Kakao/Naver/Apple 은 기존과 동일하게 accessToken 필수.</p>
      */
     @PostMapping("/social-login")
     public ResponseEntity<Map<String, Object>> socialLoginWithAccessToken(
@@ -3234,6 +3240,7 @@ public class OAuth2Controller extends BaseApiController {
         try {
             String provider = (String) requestBody.get("provider");
             String accessToken = (String) requestBody.get("accessToken");
+            String idToken = (String) requestBody.get("idToken");
 
             // userId는 Long 또는 String으로 올 수 있으므로 안전하게 처리
             String userIdStr = null;
@@ -3252,10 +3259,23 @@ public class OAuth2Controller extends BaseApiController {
             String nickname = (String) requestBody.get("nickname");
             String profileImage = (String) requestBody.get("profileImage");
 
-            log.info("네이티브 SDK 로그인 요청: provider={}, userId={}, email={}", provider, userIdStr,
-                    email);
+            log.info("네이티브 SDK 로그인 요청: provider={}, userId={}, email={}, hasAccessToken={}, hasIdToken={}",
+                    provider, userIdStr, email,
+                    accessToken != null && !accessToken.isBlank(),
+                    idToken != null && !idToken.isBlank());
 
-            if (provider == null || accessToken == null) {
+            if (provider == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message",
+                                OAuth2UserFacingMessages.MSG_PROVIDER_AND_ACCESS_TOKEN_REQUIRED));
+            }
+
+            // Google idToken-only 폴백 외에는 기존과 동일하게 accessToken 필수.
+            boolean hasAccessToken = accessToken != null && !accessToken.isBlank();
+            boolean hasIdToken = idToken != null && !idToken.isBlank();
+            boolean isGoogleIdTokenFallback = "GOOGLE".equalsIgnoreCase(provider)
+                    && !hasAccessToken && hasIdToken;
+            if (!hasAccessToken && !isGoogleIdTokenFallback) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("success", false, "message",
                                 OAuth2UserFacingMessages.MSG_PROVIDER_AND_ACCESS_TOKEN_REQUIRED));
@@ -3269,10 +3289,18 @@ public class OAuth2Controller extends BaseApiController {
                                 OAuth2UserFacingMessages.MSG_UNSUPPORTED_SOCIAL_PLATFORM));
             }
 
-            // accessToken으로 사용자 정보 조회
-            SocialUserInfo socialUserInfo = oauth2Service.getUserInfo(accessToken);
+            // accessToken 우선, 없으면 Google idToken 폴백으로 사용자 정보 조회.
+            SocialUserInfo socialUserInfo;
+            if (isGoogleIdTokenFallback
+                    && oauth2Service instanceof com.coresolution.consultation.service.impl.GoogleOAuth2ServiceImpl googleService) {
+                log.info("Google idToken-only 폴백으로 사용자 정보 조회 (accessToken 부재)");
+                socialUserInfo = googleService.getUserInfoFromIdToken(idToken);
+            } else {
+                socialUserInfo = oauth2Service.getUserInfo(accessToken);
+            }
             socialUserInfo.setProvider(provider);
-            socialUserInfo.setAccessToken(accessToken);
+            // SocialAccount 연동 시 빈 accessToken 저장을 막기 위해 실제 보유 토큰만 세팅.
+            socialUserInfo.setAccessToken(hasAccessToken ? accessToken : idToken);
             socialUserInfo.normalizeData();
 
             String tenantIdForNative =

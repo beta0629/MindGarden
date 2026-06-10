@@ -1,0 +1,42 @@
+=== G-A / G-B / G-C 검증 증거 (P0 Google Auth iOS Fatal 핫픽스, 2026-06-10) ===
+
+[G-A] iOS Simulator 부팅 검증 — PASS
+  - 시뮬레이터: iPhone 17 Pro (UDID 8F453B01-0A79-47BB-BAF8-A20BD96C0102)
+  - 부팅 시각: 2026-06-10 09:03 KST
+  - 화면 진입: 정상 (Breathing Circle + 4 SNS 버튼 + 이메일 폼 트리거)
+  - Fatal "Something went wrong" / Red Box: 0
+  - 캡처:
+    /Users/mind/mindGarden/expo-app/docs/screenshots/login-v2-hotfix-20260610/S1-hotfix-boot.png
+    /Users/mind/mindGarden/expo-app/docs/screenshots/login-v2-hotfix-20260610/S2-hotfix-buttons.png
+  - 비고: S3 (Google 탭 시 Alert) / S4 (이메일 폼 진입) 은 simctl io 가 tap 미지원이라
+          프로그래밍 캡처 불가. 대신 G-C 번들 grep 으로 Alert 카피 / Disabled 분기 코드
+          포함 확인.
+
+[G-B] Metro / Xcode 로그 throw 0 확인 — PASS
+  - Metro 풀 번들 로그: 5041 modules bundled in 1224ms
+  - 키워드 카운트:
+      "Client Id property" / "must be defined to use Google auth": 0
+      "useAuthRequest" throw stack: 0
+      ERROR-level entries: 0 (WARN expo-background-fetch deprecation 만, 무관)
+  - 비교: 핫픽스 전 동일 시뮬레이터 부팅 시 정확한 stack trace 재현:
+      ERROR [Error: Client Id property `iosClientId` must be defined to use Google auth on this platform.]
+        useGoogleAuthRequest (googleSignIn.ts:112:68)
+        MindGardenLoginPage (login.tsx:147:88)
+
+[G-C] 4 provider 마운트 검증 — PASS
+  - 시각: Kakao / Naver / Google (Disabled 분기) / Apple Continue 모두 노출
+  - 번들 내 새 코드 키워드 (proof 새 번들 로드 후 grep):
+   1 Google 로그인 준비 중
+   6 GoogleLoginButtonActive
+  13 GoogleLoginButtonContainer
+   6 GoogleLoginButtonDisabled
+   7 isGoogleConfiguredForPlatform
+   3 곧 사용 가능
+
+[정적 검증]
+  - tsc --noEmit: 0 error
+  - jest (전체): 512 tests passed (사전 존재 2 suite setup-error는 본 핫픽스 무관)
+  - jest (신규 googleSignIn.test): 16/16 passed
+  - eslint: 0 error, 0 warning (영향 파일 6개)
+  - verify:metro-mmkv: all cases passed
+  - verify:bundle:ci: PASS (Exported /tmp/mg-expo-ci-web)

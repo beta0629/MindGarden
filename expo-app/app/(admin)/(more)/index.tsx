@@ -18,6 +18,7 @@ import { useTenantStore } from '@/stores/useTenantStore';
 import { isAdminRole } from '@/utils/adminRole';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { ADMIN_MOBILE_MORE_COPY } from '@/constants/adminMobileScreensCopy';
+import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
 
 export default function AdminMoreScreen() {
   const theme = useTheme();
@@ -26,6 +27,8 @@ export default function AdminMoreScreen() {
   const role = useAuthStore((s) => s.role);
   const tenantName = useTenantStore((s) => s.tenantName);
   const showCommunityReview = isAdminRole(role);
+  // P1 핫픽스 (2026-06-10): 더보기 첫 진입에서도 BE 프로필 이미지 동기화
+  useProfileRemoteSync();
 
   const profileName = toDisplayString(user?.name ?? user?.nickname, '관리자');
   const profileSubtitle = toDisplayString(tenantName ?? user?.email, '테넌트 관리');
@@ -69,7 +72,11 @@ export default function AdminMoreScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <ProfileCard name={profileName} subtitle={profileSubtitle} />
+        <ProfileCard
+          name={profileName}
+          subtitle={profileSubtitle}
+          imageUri={user?.profileImageUrl}
+        />
 
         <View style={styles.section}>
           <Text

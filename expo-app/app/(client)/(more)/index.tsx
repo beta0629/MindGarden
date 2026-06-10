@@ -29,11 +29,14 @@ import {
   isClientShopMoreMenuVisible,
 } from '@/constants/clientShopConstants';
 import { useTenantComponentFlags } from '@/hooks/useTenantComponentFlags';
+import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
 
 export default function ClientMore() {
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  // P1 핫픽스 (2026-06-10): 더보기 첫 진입에서도 BE 프로필 이미지 동기화 (프로필 화면 미진입 시 placeholder 회귀 방지)
+  useProfileRemoteSync();
   const profileName = toDisplayString(user?.nickname?.trim() || user?.name, '내담자');
   const profileSubtitle = toDisplayString(user?.email, '마음 돌봄');
   const { clientShopEnabled } = useTenantComponentFlags();
@@ -81,7 +84,11 @@ export default function ClientMore() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <CurrentAccountBanner email={user?.email} userId={user?.id} />
-        <ProfileCard name={profileName} subtitle={profileSubtitle} />
+        <ProfileCard
+          name={profileName}
+          subtitle={profileSubtitle}
+          imageUri={user?.profileImageUrl}
+        />
 
         <View style={styles.sectionContainer}>
           <Text

@@ -31,11 +31,14 @@ import { toDisplayString } from '@/utils/safeDisplay';
 import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalarySettlementCopy';
 import { CONSULTANT_SESSION_KPI_COPY } from '@/constants/consultantSessionKpiCopy';
 import { CONSULTANT_MOOD_JOURNAL_INBOX_COPY } from '@/constants/consultantMoodJournalInboxCopy';
+import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
 
 export default function ConsultantMore() {
   const theme = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  // P1 핫픽스 (2026-06-10): 더보기 첫 진입에서도 BE 프로필 이미지 동기화
+  useProfileRemoteSync();
   const profileName = toDisplayString(user?.nickname?.trim() || user?.name, '선생');
   const profileSubtitle = toDisplayString(user?.email, '전문 상담');
   const showSalarySettlementMenu = Boolean(user?.id);
@@ -81,7 +84,11 @@ export default function ConsultantMore() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <ProfileCard name={profileName} subtitle={profileSubtitle} />
+        <ProfileCard
+          name={profileName}
+          subtitle={profileSubtitle}
+          imageUri={user?.profileImageUrl}
+        />
 
         <View style={styles.sectionContainer}>
           <Text

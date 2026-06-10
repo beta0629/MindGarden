@@ -124,15 +124,20 @@ export const LOGIN_EASING = {
  * ====================================================================== */
 
 /**
- * 마인드가든 나비 로고 사이즈 (V2 §E.1) — 280dp Orb 안에 80dp 나비.
- *  - 베이스 80dp (V1 140dp → V2 80dp, "비대 해소").
- *  - Orb 안에 들어가므로 작아도 시각 무게 충분.
+ * 마인드가든 나비 로고 사이즈 — V2 §E.1 (96/80/120) 정정 (2026-06-10 사용자 시각 피드백).
+ *
+ *  - 베타 빌드 #14 캡처에서 "Orb 대비 로고가 작아 보임" 피드백 → 핸드오프 §E.1 96/80/120
+ *    대비 약 +44~50% 확대로 정정한다.
+ *  - 280dp Orb 안에 120dp 나비 → 약 43% 비율 (Orb 보다 작음 보장, 시각 무게 충분).
+ *  - SE 240dp Orb / 태블릿 320dp Orb 도 동일 ~43% 비율 유지.
+ *
+ *  V1 140dp ("비대") → V2 §E.1 96dp ("작아 보임") → 정정 120dp (균형).
  */
-export const LOGO_SIZE_BASE = 80;
-/** 로고 최소 크기 (iPhone SE 등 좁은 화면) */
-export const LOGO_SIZE_MIN = 72;
-/** 로고 최대 크기 (iPad 등) */
-export const LOGO_SIZE_MAX = 96;
+export const LOGO_SIZE_BASE = 120;
+/** 로고 최소 크기 (iPhone SE 등 좁은 화면, ORB_SIZE_MIN 240dp 대비 ~43%) */
+export const LOGO_SIZE_MIN = 104;
+/** 로고 최대 크기 (iPad 등, ORB_SIZE_MAX 320dp 대비 ~44%) */
+export const LOGO_SIZE_MAX = 140;
 
 /**
  * V2 §M.1.2 Breathing Circle Orb 사이즈.

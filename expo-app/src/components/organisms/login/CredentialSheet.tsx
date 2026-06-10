@@ -5,10 +5,13 @@
  * `@gorhom/bottom-sheet` v5 가 이미 `expo-app/package.json` 에 설치되어 있어 라이브러리를 활용한다 (§I.7).</p>
  *
  * <p>SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md
- *  - §B.2 ASCII wireframe (handle / title / 입력 2 / CTA / 비밀번호 찾기 inline)
+ *  - §B.2 ASCII wireframe (handle / title / 입력 2 / CTA)
  *  - §C.5 Primary CTA (`consultant.primary` 56dp 14dp radius SemiBold 16)
  *  - §D.3 Bottom Sheet 모션 (240ms 슬라이드 업, backdrop 0.18, Reduce Motion 시 fade only)
  *  - §G.1 a11y / §G.3 KeyboardAvoidingView</p>
+ *
+ * <p>2026-06-10 정정: 사용자 정책상 비밀번호 찾기 기능이 앱에 없으므로 V2 핸드오프 §B.2 의
+ * inline "비밀번호 찾기" 링크를 제거한다. FooterLinks 의 동일 링크도 직전 핫픽스에서 제거 완료.</p>
  *
  * @author MindGarden
  * @since 2026-06-10
@@ -16,8 +19,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -34,7 +35,6 @@ import * as Haptics from 'expo-haptics';
 import { Lock, Mail } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { fontFamily, fontSize, textStyles } from '@/theme/typography';
-import { getWebBaseUrl } from '@/config/webBaseUrl';
 import {
   BUTTON_BORDER_RADIUS,
   BUTTON_HEIGHT,
@@ -46,9 +46,6 @@ const SHEET_TITLE = '이미 가입한 이메일·휴대폰으로 로그인';
 const EMAIL_PLACEHOLDER = '이메일 또는 휴대폰 번호';
 const PASSWORD_PLACEHOLDER = '비밀번호';
 const SUBMIT_LABEL = '로그인';
-const FORGOT_PASSWORD_LABEL = '비밀번호 찾기';
-const WEB_FORGOT_PASSWORD_PATH = '/forgot-password';
-const EXTERNAL_LINK_OPEN_ERROR = '웹 페이지를 열 수 없습니다. 잠시 후 다시 시도해주세요.';
 
 /** §D.3 Backdrop opacity — `rgba(0,0,0,0.18)` (차분, blur 없음) */
 const BACKDROP_OPACITY = 0.18;
@@ -109,16 +106,6 @@ export function CredentialSheet(props: CredentialSheetProps) {
     });
     onSubmit();
   }, [onSubmit]);
-
-  const handleForgotPasswordPress = useCallback(() => {
-    Haptics.selectionAsync().catch(() => {
-      /* noop */
-    });
-    const url = `${getWebBaseUrl()}${WEB_FORGOT_PASSWORD_PATH}`;
-    Linking.openURL(url).catch(() => {
-      Alert.alert(EXTERNAL_LINK_OPEN_ERROR);
-    });
-  }, []);
 
   const renderBackdrop = useCallback(
     (backdropProps: BottomSheetBackdropProps) => (
@@ -240,22 +227,6 @@ export function CredentialSheet(props: CredentialSheetProps) {
             </Text>
           )}
         </Pressable>
-
-        <Pressable
-          onPress={handleForgotPasswordPress}
-          style={styles.forgotPasswordWrap}
-          accessibilityRole="link"
-          accessibilityLabel={FORGOT_PASSWORD_LABEL}
-          hitSlop={8}
-          testID="login-credential-forgot-password"
-        >
-          <Text
-            maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-            style={[styles.forgotPasswordLabel, { color: theme.colors.textSecondary }]}
-          >
-            {FORGOT_PASSWORD_LABEL}
-          </Text>
-        </Pressable>
       </BottomSheetView>
     </BottomSheet>
   );
@@ -300,15 +271,5 @@ const styles = StyleSheet.create({
   submitLabel: {
     ...textStyles.button,
     textAlign: 'center',
-  },
-  forgotPasswordWrap: {
-    alignSelf: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  forgotPasswordLabel: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.sm,
-    lineHeight: 20,
   },
 });

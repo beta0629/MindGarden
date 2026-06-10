@@ -41,35 +41,35 @@ jest.mock('react-native', () => ({
   },
 }));
 
-describe('resolveLogoSizeForWidth — V2 §E.1 나비 사이즈 (80dp / 72dp / 96dp)', () => {
-  test('iPhone SE (320pt) → LOGO_SIZE_MIN(72)', () => {
+describe('resolveLogoSizeForWidth — V2 §E.1 정정 나비 사이즈 (120dp / 104dp / 140dp)', () => {
+  test('iPhone SE (320pt) → LOGO_SIZE_MIN(104)', () => {
     expect(resolveLogoSizeForWidth(320)).toBe(LOGO_SIZE_MIN);
-    expect(LOGO_SIZE_MIN).toBe(72);
+    expect(LOGO_SIZE_MIN).toBe(104);
   });
 
-  test('iPhone SE 3rd (374pt: 임계 직전) → LOGO_SIZE_MIN(72)', () => {
+  test('iPhone SE 3rd (374pt: 임계 직전) → LOGO_SIZE_MIN(104)', () => {
     expect(resolveLogoSizeForWidth(LAYOUT_SMALL_DEVICE_WIDTH - 1)).toBe(LOGO_SIZE_MIN);
   });
 
-  test('iPhone SE 3rd (375pt: 임계점) → LOGO_SIZE_BASE(80)', () => {
+  test('iPhone SE 3rd (375pt: 임계점) → LOGO_SIZE_BASE(120)', () => {
     expect(resolveLogoSizeForWidth(LAYOUT_SMALL_DEVICE_WIDTH)).toBe(LOGO_SIZE_BASE);
-    expect(LOGO_SIZE_BASE).toBe(80);
+    expect(LOGO_SIZE_BASE).toBe(120);
   });
 
-  test('iPhone 14 Pro (393pt) → LOGO_SIZE_BASE(80)', () => {
+  test('iPhone 14 Pro (393pt) → LOGO_SIZE_BASE(120)', () => {
     expect(resolveLogoSizeForWidth(393)).toBe(LOGO_SIZE_BASE);
   });
 
-  test('iPhone 14 Pro Max (430pt) → LOGO_SIZE_BASE(80)', () => {
+  test('iPhone 14 Pro Max (430pt) → LOGO_SIZE_BASE(120)', () => {
     expect(resolveLogoSizeForWidth(430)).toBe(LOGO_SIZE_BASE);
   });
 
-  test('iPad mini (744pt: 임계점) → LOGO_SIZE_MAX(96)', () => {
+  test('iPad mini (744pt: 임계점) → LOGO_SIZE_MAX(140)', () => {
     expect(resolveLogoSizeForWidth(LAYOUT_TABLET_DEVICE_WIDTH)).toBe(LOGO_SIZE_MAX);
-    expect(LOGO_SIZE_MAX).toBe(96);
+    expect(LOGO_SIZE_MAX).toBe(140);
   });
 
-  test('iPad Pro 12.9 (1024pt) → LOGO_SIZE_MAX(96)', () => {
+  test('iPad Pro 12.9 (1024pt) → LOGO_SIZE_MAX(140)', () => {
     expect(resolveLogoSizeForWidth(1024)).toBe(LOGO_SIZE_MAX);
   });
 
@@ -78,6 +78,12 @@ describe('resolveLogoSizeForWidth — V2 §E.1 나비 사이즈 (80dp / 72dp / 9
     expect(resolveLogoSizeForWidth(-100)).toBe(LOGO_SIZE_BASE);
     expect(resolveLogoSizeForWidth(Number.NaN)).toBe(LOGO_SIZE_BASE);
     expect(resolveLogoSizeForWidth(Number.POSITIVE_INFINITY)).toBe(LOGO_SIZE_BASE);
+  });
+
+  test('로고 사이즈가 ORB 사이즈를 넘지 않음 (Orb 안에 자연스럽게 들어감)', () => {
+    expect(LOGO_SIZE_MIN).toBeLessThan(ORB_SIZE_MIN);
+    expect(LOGO_SIZE_BASE).toBeLessThan(ORB_SIZE_BASE);
+    expect(LOGO_SIZE_MAX).toBeLessThan(ORB_SIZE_MAX);
   });
 });
 

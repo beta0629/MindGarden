@@ -3,6 +3,8 @@ package com.coresolution.consultation.service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.dto.SocialLoginResponse;
+import com.coresolution.consultation.service.impl.AppleOAuth2ServiceImpl;
+import com.coresolution.consultation.service.impl.GoogleOAuth2ServiceImpl;
 import com.coresolution.consultation.service.impl.KakaoOAuth2ServiceImpl;
 import com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,23 +34,43 @@ public class OAuth2FactoryService {
     @Autowired
     private NaverOAuth2ServiceImpl naverOAuth2Service;
 
+    @Autowired
+    private GoogleOAuth2ServiceImpl googleOAuth2Service;
+
+    @Autowired
+    private AppleOAuth2ServiceImpl appleOAuth2Service;
+
     /**
-     * 애플리케이션 시작 시 OAuth2 서비스 자동 등록
+     * 애플리케이션 시작 시 OAuth2 서비스 자동 등록.
+     *
+     * <p>**P0 2026-06-10 회귀 수정**: Google/Apple 구현체가 본 메서드에 등록되지 않아
+     * `getOAuth2Service("GOOGLE")` 호출 시 "지원하지 않는 OAuth2 제공자입니다: GOOGLE" 예외가
+     * 발생하던 이슈를 차단한다. iPhone TestFlight 빌드 1.0.7(16) cold start 시 Google
+     * OAuth flow + PKCE exchange + BE 호출까지 성공해도 dispatch 단계에서 실패. Apple도 동일
+     * 누락이라 함께 등록한다. (회귀 방지: {@code OAuth2FactoryServiceProviderRegistrationTest})</p>
      */
     @PostConstruct
     public void initializeOAuth2Services() {
-        // 카카오 OAuth2 서비스 등록
         if (kakaoOAuth2Service != null) {
             registerOAuth2Service(kakaoOAuth2Service);
             log.info("카카오 OAuth2 서비스 자동 등록 완료");
         }
-        
-        // 네이버 OAuth2 서비스 등록
+
         if (naverOAuth2Service != null) {
             registerOAuth2Service(naverOAuth2Service);
             log.info("네이버 OAuth2 서비스 자동 등록 완료");
         }
-        
+
+        if (googleOAuth2Service != null) {
+            registerOAuth2Service(googleOAuth2Service);
+            log.info("구글 OAuth2 서비스 자동 등록 완료");
+        }
+
+        if (appleOAuth2Service != null) {
+            registerOAuth2Service(appleOAuth2Service);
+            log.info("애플 OAuth2 서비스 자동 등록 완료");
+        }
+
         log.info("등록된 OAuth2 서비스: {}", getSupportedProviders());
     }
 
@@ -140,6 +162,8 @@ public class OAuth2FactoryService {
         status.put("totalServices", oauth2Services.size());
         status.put("isKakaoSupported", isProviderSupported("KAKAO"));
         status.put("isNaverSupported", isProviderSupported("NAVER"));
+        status.put("isGoogleSupported", isProviderSupported("GOOGLE"));
+        status.put("isAppleSupported", isProviderSupported("APPLE"));
         return status;
     }
 }

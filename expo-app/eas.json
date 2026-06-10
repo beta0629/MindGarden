@@ -66,8 +66,9 @@
         "appleTeamId": "65M2946S2L"
       },
       "android": {
-        "serviceAccountKeyPath": "./google-services-key.json",
-        "track": "internal"
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft"
       }
     }
   }

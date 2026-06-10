@@ -134,6 +134,39 @@ describe('resolveGoogleClientIdConfig — env > extra 우선순위', () => {
     setExtra({ ios: REAL_IOS_CLIENT_ID });
     expect(resolveGoogleClientIdConfig()?.iosClientId).toBe(REAL_IOS_CLIENT_ID);
   });
+
+  /**
+   * P0 (2026-06-10) — TestFlight 1.0.7 (#16) + OTA group `608da58e` 회복 케이스.
+   *
+   * <p>OTA `eas update` 가 `--environment production` 없이 발행되어 manifest 의
+   * `extra.googleClientId = { ios:"", web:"", android:"" }` 빈 값으로 publish 되어도,
+   * 빌드 시점에 metro 가 inline 한 `process.env.EXPO_PUBLIC_GOOGLE_*` 가 살아 있으면
+   * env 폴백으로 회복되어 `isGoogleConfiguredForPlatform()` 이 true 가 되도록 보장.</p>
+   *
+   * <p>app.config.ts 의 `resolveExtraGoogleClientId()` 가 빈 값을 omit 하므로 OTA 정상 발행
+   * 시 manifest 에 빈 객체가 publish 되지 않는다 — 회귀 보호.</p>
+   */
+  test('OTA env 누락 시나리오: extra 가 빈 값이어도 env 폴백으로 회복', () => {
+    process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = REAL_IOS_CLIENT_ID;
+    process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID = REAL_ANDROID_CLIENT_ID;
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = REAL_WEB_CLIENT_ID;
+    setExtra({ ios: '', android: '', web: '' });
+    const result = resolveGoogleClientIdConfig();
+    expect(result?.iosClientId).toBe(REAL_IOS_CLIENT_ID);
+    expect(result?.androidClientId).toBe(REAL_ANDROID_CLIENT_ID);
+    expect(result?.webClientId).toBe(REAL_WEB_CLIENT_ID);
+  });
+
+  test('extra.googleClientId 자체가 undefined 여도 안전 (manifest omit 케이스)', () => {
+    process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = REAL_IOS_CLIENT_ID;
+    (Constants as unknown as MutableConstants).expoConfig.extra = {};
+    expect(resolveGoogleClientIdConfig()?.iosClientId).toBe(REAL_IOS_CLIENT_ID);
+  });
+
+  test('OTA 사고 시나리오 그대로: extra 빈 + env 모두 비면 null (회귀 보호)', () => {
+    setExtra({ ios: '', android: '', web: '' });
+    expect(resolveGoogleClientIdConfig()).toBeNull();
+  });
 });
 
 describe('isGoogleConfiguredForPlatform — P0 핫픽스 mount 가드 sentinel', () => {
@@ -411,9 +444,7 @@ describe('formatGoogleAuthDiagnostics — 사용자 메시지 직렬화', () => 
       authenticationKeys: ['accessToken', 'idToken'],
       hasUrl: true,
     });
-    expect(formatted).toBe(
-      'type=success,params=[code,state],auth=[accessToken,idToken],url=true',
-    );
+    expect(formatted).toBe('type=success,params=[code,state],auth=[accessToken,idToken],url=true');
   });
 
   test('빈 키 셋은 ∅ 로 표기 (root cause 케이스)', () => {
@@ -439,8 +470,7 @@ describe('formatGoogleAuthDiagnostics — 사용자 메시지 직렬화', () => 
 });
 
 describe('exchangeGooglePkceCode — P0 (2026-06-10) PKCE auth-code flow 토큰 교환', () => {
-  const REAL_IOS_CLIENT_ID_FOR_PKCE =
-    '1234567890-pkceios.apps.googleusercontent.com';
+  const REAL_IOS_CLIENT_ID_FOR_PKCE = '1234567890-pkceios.apps.googleusercontent.com';
   const REDIRECT_URI = 'com.googleusercontent.apps.1234567890-pkceios:/oauthredirect';
   const CODE_VERIFIER = 'sample-code-verifier-43chars-min-length-required';
   const AUTH_CODE = '4/0AY0e-g6sample-auth-code';

@@ -175,6 +175,19 @@ public final class AdminServiceUserFacingMessages {
     /** 스태프 등록 시 이름 미입력·이메일 로컬 파트 비어 있을 때 기본 표시명 */
     public static final String DEFAULT_STAFF_DISPLAY_NAME = "사무원";
 
+    /** 스태프 강제 종료 — 대상 사용자 없음. */
+    public static final String MSG_STAFF_NOT_FOUND = "스태프를 찾을 수 없습니다.";
+
+    /** 스태프 강제 종료 — 대상 사용자가 STAFF/ADMIN 이 아님. */
+    public static final String MSG_CANNOT_DELETE_NON_STAFF = "스태프(사무원) 또는 관리자만 삭제할 수 있습니다.";
+
+    /** 스태프 강제 종료 — 자기 자신 삭제 차단. */
+    public static final String MSG_CANNOT_DELETE_SELF = "자기 자신은 삭제할 수 없습니다.";
+
+    /** 스태프 강제 종료 — 테넌트 내 마지막 활성 관리자(ADMIN) 삭제 차단. */
+    public static final String MSG_CANNOT_DELETE_LAST_ADMIN =
+            "테넌트의 마지막 활성 관리자(ADMIN)는 삭제할 수 없습니다.";
+
     public static final String MSG_TENANT_ID_REQUIRED_IN_CONTEXT =
             "현재 컨텍스트에 테넌트 ID가 설정되어 있지 않습니다.";
 

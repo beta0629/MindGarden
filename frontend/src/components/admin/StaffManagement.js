@@ -66,6 +66,7 @@ const API_USER_MANAGEMENT = '/api/v1/admin/user-management';
 const API_ROLES = '/api/v1/admin/user-management/roles';
 const API_STAFF_REGISTER = '/api/v1/admin/staff';
 const basicProfileEndpoint = (userId) => `/api/v1/admin/user-management/${userId}/basic-profile`;
+const staffDeleteEndpoint = (userId) => `/api/v1/admin/staff/${userId}`;
 const ROLE_STAFF = USER_ROLES.STAFF;
 const ROLE_ADMIN = USER_ROLES.ADMIN;
 const adminUserDetailPath = (userId) => `/api/v1/admin/users/${userId}`;
@@ -168,7 +169,8 @@ AddStaffModalContent.propTypes = {
 };
 
 const StaffManagement = ({ embedded = false }) => {
-  const { hasRole } = useSession();
+  const { hasRole, user: sessionUser } = useSession();
+  const sessionUserId = sessionUser?.id ?? null;
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -196,11 +198,13 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
   const staffEditPhoneBaselineRef = useRef('');
-  const [viewMode, setViewMode] = useState('largeCard'); // 'largeCard' | 'smallCard' | 'list'
+  // PR #200·#202 컴팩트 패턴: 기본 작은 카드 그리드 (200-240px height, multi-column)
+  const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list'
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });
   const [staffEditForm, setStaffEditForm] = useState({ name: '', email: '', phone: '' });
   const [staffEditSubmitting, setStaffEditSubmitting] = useState(false);
+  const [staffDeleteModal, setStaffDeleteModal] = useState({ open: false, staff: null, submitting: false });
   const [userPermissions, setUserPermissions] = useState([]);
   const [counselingDetail, setCounselingDetail] = useState({
     loading: false,
@@ -634,6 +638,35 @@ const StaffManagement = ({ embedded = false }) => {
     }
   }, [roleChangeModal, selectedNewRole, handleCloseRoleChange, loadUsers, roleOf]);
 
+  const openStaffDelete = useCallback((staff) => {
+    if (!staff?.id) return;
+    setStaffDeleteModal({ open: true, staff, submitting: false });
+  }, []);
+
+  const closeStaffDelete = useCallback(() => {
+    setStaffDeleteModal({ open: false, staff: null, submitting: false });
+  }, []);
+
+  const handleConfirmStaffDelete = useCallback(async() => {
+    const target = staffDeleteModal.staff;
+    if (!target?.id) return;
+    setStaffDeleteModal((prev) => ({ ...prev, submitting: true }));
+    try {
+      const response = await StandardizedApi.delete(staffDeleteEndpoint(target.id));
+      if (response && response.success !== false) {
+        showSuccess(response.message || STAFF_MGMT_MSG.TOAST_STAFF_DELETED);
+        closeStaffDelete();
+        await loadUsers();
+      } else {
+        throw new Error(response?.message || STAFF_MGMT_MSG.ERR_DELETE_FAILED);
+      }
+    } catch (err) {
+      console.error('스태프 삭제 실패:', err);
+      showError(err.message || err.response?.data?.message || STAFF_MGMT_MSG.ERR_DELETE_PROCESS);
+      setStaffDeleteModal((prev) => ({ ...prev, submitting: false }));
+    }
+  }, [staffDeleteModal.staff, closeStaffDelete, loadUsers]);
+
   const handleStaffEditSubmit = useCallback(async() => {
     const { staff } = staffEditModal;
     if (!staff?.id) return;
@@ -677,17 +710,20 @@ const StaffManagement = ({ embedded = false }) => {
   }, [staffEditModal, staffEditForm, closeStaffEdit, loadUsers, staffPhoneCheckStatus]);
 
   const renderStaffActionBar = useCallback(
-    (staff, { compact = false } = {}) => {
+    (staff, { compact = false, table = false } = {}) => {
       const stop = (e) => {
         e.stopPropagation();
       };
       const wrapClass = [
         'mg-v2-profile-card__actions',
         'mg-v2-client-actions',
-        compact && 'mg-v2-client-actions--compact'
+        compact && 'mg-v2-client-actions--compact',
+        table && 'mg-v2-client-actions--table'
       ]
         .filter(Boolean)
         .join(' ');
+      const isSelf = sessionUserId != null && staff?.id != null
+        && Number(sessionUserId) === Number(staff.id);
       return (
         <div
           className={wrapClass}
@@ -726,10 +762,22 @@ const StaffManagement = ({ embedded = false }) => {
           >
             {STAFF_MGMT_BUTTON.ROLE_CHANGE}
           </MGButton>
+          <MGButton
+            type="button"
+            variant="danger"
+            size="small"
+            className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+            onClick={() => openStaffDelete(staff)}
+            disabled={isSelf}
+            title={isSelf ? '자기 자신은 삭제할 수 없습니다.' : undefined}
+            preventDoubleClick={false}
+          >
+            {STAFF_MGMT_BUTTON.DELETE}
+          </MGButton>
         </div>
       );
     },
-    [openStaffDetail, openStaffEdit, handleOpenRoleChange]
+    [openStaffDetail, openStaffEdit, handleOpenRoleChange, openStaffDelete, sessionUserId]
   );
 
   const handleSearch = useCallback((term) => {
@@ -1111,6 +1159,53 @@ const StaffManagement = ({ embedded = false }) => {
           placeholder={STAFF_MGMT_PLACEHOLDER.EDIT_PHONE_CLEAR}
           autoComplete="tel"
         />
+      </UnifiedModal>
+
+      <UnifiedModal
+        isOpen={staffDeleteModal.open}
+        onClose={closeStaffDelete}
+        title={STAFF_MGMT_MODAL.DELETE_TITLE}
+        subtitle={STAFF_MGMT_MODAL.DELETE_SUBTITLE}
+        size="small"
+        variant="form"
+        loading={staffDeleteModal.submitting}
+        actions={
+          <>
+            <MGButton
+              type="button"
+              variant="secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+              onClick={closeStaffDelete}
+              disabled={staffDeleteModal.submitting}
+              preventDoubleClick={false}
+            >
+              {STAFF_MGMT_BUTTON.CANCEL}
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="danger"
+              className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: staffDeleteModal.submitting })}
+              onClick={handleConfirmStaffDelete}
+              disabled={staffDeleteModal.submitting}
+              loading={staffDeleteModal.submitting}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick={false}
+            >
+              {STAFF_MGMT_MODAL.DELETE_BUTTON}
+            </MGButton>
+          </>
+        }
+      >
+        <div className="mg-modal__form-group">
+          <p>
+            {STAFF_MGMT_MODAL.DELETE_CONFIRM_FMT.replace(
+              '{name}',
+              staffDeleteModal.staff
+                ? toDisplayString(maskEncryptedDisplay(staffDeleteModal.staff.name, STAFF_MGMT_MASK.NAME))
+                : ''
+            )}
+          </p>
+        </div>
       </UnifiedModal>
 
       <UnifiedModal

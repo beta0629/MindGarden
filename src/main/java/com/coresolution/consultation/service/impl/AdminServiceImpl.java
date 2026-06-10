@@ -3499,6 +3499,59 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
+     * 스태프(STAFF) / 관리자(ADMIN) 강제 종료 — Phase 2-β redirect.
+     *
+     * <p>가드:
+     * <ol>
+     *   <li>대상 user 존재 + 동일 테넌트.</li>
+     *   <li>대상 role 이 STAFF 또는 ADMIN.</li>
+     *   <li>자기 자신(adminUserId == id) 삭제 차단.</li>
+     *   <li>대상이 ADMIN 이면 테넌트의 활성(isActive=true, isDeleted=false) ADMIN 수가 1 이하인 경우 차단
+     *       (마지막 ADMIN 삭제 방지).</li>
+     * </ol>
+     * 가드 통과 후 UserLifecycleService.transitionTo(DELETED_BY_ADMIN) 단일 진입점으로 위임.</p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteStaff(Long id, Long adminUserId, String adminRoleCode, String reason) {
+        log.info("🗑️ 스태프 강제 종료 처리 시작 (Q5 7일 보존 윈도우): ID={}, adminUserId={}, reason={}",
+                id, adminUserId, reason);
+
+        if (adminUserId != null && adminUserId.equals(id)) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_CANNOT_DELETE_SELF);
+        }
+
+        String tenantId = getTenantId();
+        User staff = userRepository.findByTenantIdAndId(tenantId, id)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_STAFF_NOT_FOUND));
+
+        UserRole targetRole = staff.getRole();
+        if (targetRole != UserRole.STAFF && targetRole != UserRole.ADMIN) {
+            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_CANNOT_DELETE_NON_STAFF);
+        }
+
+        // 마지막 활성 ADMIN 가드: 대상이 ADMIN 인 경우 테넌트 내 활성 ADMIN 1명 이상 잔존 보장.
+        if (targetRole == UserRole.ADMIN) {
+            long activeAdmins = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(
+                    tenantId, UserRole.ADMIN);
+            if (activeAdmins <= 1) {
+                throw new IllegalStateException(
+                        AdminServiceUserFacingMessages.MSG_CANNOT_DELETE_LAST_ADMIN);
+            }
+        }
+
+        // Phase 2-β redirect — UserLifecycleService 단일 진입점.
+        // (a) 전이 그래프 가드, (b) deleted_at + deleted_by_admin_id stamp,
+        // (c) audit_logs (ADMIN_FORCED_DELETE) 기록을 단일 트랜잭션으로 수행.
+        Actor actor = resolveAdminActor(adminUserId, adminRoleCode);
+        String resolvedReason = resolveAdminReason(reason, "ADMIN_FORCED_DELETE_STAFF");
+        userLifecycleService.transitionTo(id, LifecycleState.DELETED_BY_ADMIN, actor, resolvedReason);
+
+        log.info("✅ 스태프 강제 종료 완료 (DELETED_BY_ADMIN, 7일 윈도우 진입): ID={}, role={}, name={}",
+                id, targetRole, staff.getName());
+    }
+
+    /**
      * 어드민 actor 빌드 헬퍼 — adminUserId/roleCode null/blank 가드 + Actor.user 생성.
      *
      * <p>USER_LIFECYCLE_TERMINATION_POLICY §8 — 어드민 강제 종료/되돌리기 시 actor.actorUserId

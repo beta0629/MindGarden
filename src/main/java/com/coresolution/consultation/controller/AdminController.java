@@ -1793,6 +1793,30 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * 스태프(STAFF) / 관리자(ADMIN) 강제 종료 — DELETED_BY_ADMIN 7일 보존 윈도우 진입.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5. 안전 가드:
+     * 자기 자신 삭제 불가 + 테넌트 마지막 활성 ADMIN 삭제 불가.</p>
+     */
+    @DeleteMapping("/staff/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteStaff(
+            @PathVariable Long id,
+            @RequestParam(name = "reason", required = false) String reason,
+            HttpSession session) {
+        log.info("🔧 스태프 강제 종료: ID={}, reason={}", id, reason);
+        User currentAdmin = SessionUtils.getCurrentUser(session);
+        if (currentAdmin == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+        Long adminUserId = currentAdmin.getId();
+        String adminRole = currentAdmin.getRole() != null
+                ? currentAdmin.getRole().name() : UserRole.ADMIN.name();
+        adminService.deleteStaff(id, adminUserId, adminRole, reason);
+        return deleted("스태프가 성공적으로 삭제되었습니다 (7일 내 되돌리기 가능)");
+    }
+
+    /**
      * 이메일 중복 확인 (내담자/상담사 등록용)
      * GET /api/v1/admin/duplicate-check/email?email={email}
      */

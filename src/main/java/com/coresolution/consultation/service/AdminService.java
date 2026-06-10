@@ -162,6 +162,20 @@ public interface AdminService {
     Map<String, Object> checkClientDeletionStatus(Long clientId);
 
     /**
+     * 스태프(사무원/관리자) 강제 종료 — DELETED_BY_ADMIN 7일 보존 윈도우 진입.
+     *
+     * <p>USER_LIFECYCLE_TERMINATION_POLICY §0.1 Q5. 본 메서드는 STAFF·ADMIN role 사용자만
+     * 삭제 가능하며, 자기 자신·테넌트 마지막 활성 ADMIN 삭제를 가드한다.
+     * UserLifecycleService 단일 진입점으로 위임한다.</p>
+     *
+     * @param id            대상 스태프/관리자 users.id
+     * @param adminUserId   강제 종료를 수행한 어드민 users.id (감사 추적 필수)
+     * @param adminRoleCode 어드민 행위자 role 코드 (예: ADMIN / HQ_ADMIN)
+     * @param reason        강제 종료 사유 (audit_logs / destruction_logs 적재, 필수)
+     */
+    void deleteStaff(Long id, Long adminUserId, String adminRoleCode, String reason);
+
+    /**
      * 매칭 삭제
      */
     void deleteMapping(Long id);

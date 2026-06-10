@@ -31,7 +31,7 @@ export const NAVER_OAUTH2_CONFIG = {
   state: 'naver_login'
 };
 
-// 구글 OAuth2 설정
+// 구글 OAuth2 설정 (레거시 redirect 흐름 — 호환성 유지용)
 export const GOOGLE_OAUTH2_CONFIG = {
   clientId: ENV.GOOGLE.CLIENT_ID,
   redirectUri: ENV.GOOGLE.REDIRECT_URI,
@@ -42,6 +42,60 @@ export const GOOGLE_OAUTH2_CONFIG = {
   responseType: 'code',
   state: 'google_login'
 };
+
+/**
+ * Google Identity Services(GIS) Web Client ID — `@react-oauth/google` Provider 에 주입.
+ *
+ * <p>**프로덕션 빌드**: 반드시 `REACT_APP_GOOGLE_CLIENT_ID` (또는 별칭
+ * `REACT_APP_GOOGLE_WEB_CLIENT_ID`) 를 GitHub Actions secret 으로 주입해야 한다.
+ * 미주입 시 빈 문자열을 반환하므로 `<GoogleOAuthProvider>` 가 마운트되지 않고
+ * `GoogleLoginButton` 도 비활성 분기로 빠진다(레거시 redirect 흐름 폴백 가능).</p>
+ *
+ * <p>웹 OAuth Consent 화면에 등록해야 할 Authorized JavaScript origins:
+ * <ul>
+ *   <li>{@code https://app.core-solution.co.kr}</li>
+ *   <li>{@code https://dev.app.core-solution.co.kr}</li>
+ *   <li>{@code https://*.core-solution.co.kr} (테넌트 서브도메인)</li>
+ *   <li>{@code http://localhost:3000} (로컬 개발)</li>
+ * </ul></p>
+ *
+ * <p>두 키를 모두 지원하는 이유: 모바일 앱은 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` 명명을
+ * 사용하고, 운영 GitHub secret 은 동일 값을 두 별칭에 매핑할 수 있도록 가드.</p>
+ */
+const resolveGoogleWebClientId = () => {
+  const fromEnv = (
+    process.env.REACT_APP_GOOGLE_CLIENT_ID
+    || process.env.REACT_APP_GOOGLE_WEB_CLIENT_ID
+    || ''
+  );
+  return String(fromEnv).trim();
+};
+
+export const GOOGLE_WEB_CLIENT_ID = resolveGoogleWebClientId();
+
+/**
+ * Google 웹 로그인이 활성화되었는지(=client id 가 주입되었는지) 여부.
+ *
+ * <p>버튼 표시 가드 + 폴백 로직에서 사용한다. placeholder 값(`local-dev-set-...`,
+ * `your_...`)은 모두 비활성으로 본다.</p>
+ */
+export const isGoogleWebClientIdConfigured = (() => {
+  const id = GOOGLE_WEB_CLIENT_ID;
+  if (!id) {
+    return false;
+  }
+  const lower = id.toLowerCase();
+  if (lower.startsWith('your_')) {
+    return false;
+  }
+  if (lower.startsWith('local-dev-set-')) {
+    return false;
+  }
+  if (lower.startsWith('placeholder')) {
+    return false;
+  }
+  return true;
+})();
 
 // 페이스북 OAuth2 설정
 export const FACEBOOK_OAUTH2_CONFIG = {

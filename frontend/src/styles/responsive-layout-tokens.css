@@ -38,6 +38,16 @@
   --mg-layout-page-padding-2k: 32px;
   --mg-layout-page-padding-4k: 40px;
 
+  /* 페이지 가로 패딩(좌·우 전용) — LNB 우측 콘텐츠 영역 좌우 여백 SSOT
+   * (P1 정정 2026-06-10): 관리자 V2 페이지 전체 좌측 여백 부족 해소.
+   * 세로 패딩은 --mg-layout-page-padding 그대로 사용한다. */
+  --mg-layout-page-padding-x-mobile: 16px;
+  --mg-layout-page-padding-x-tablet: 24px;
+  --mg-layout-page-padding-x-desktop: 32px;
+  --mg-layout-page-padding-x-fhd: 40px;
+  --mg-layout-page-padding-x-2k: 48px;
+  --mg-layout-page-padding-x-4k: 56px;
+
   /* ===== 섹션 패딩 ===== */
   --mg-layout-section-padding-mobile: 16px;
   --mg-layout-section-padding-tablet: 20px;
@@ -75,6 +85,7 @@
 
   /* ===== 기본값 (모바일 우선) ===== */
   --mg-layout-page-padding: var(--mg-layout-page-padding-mobile);
+  --mg-layout-page-padding-x: var(--mg-layout-page-padding-x-mobile);
   --mg-layout-section-padding: var(--mg-layout-section-padding-mobile);
   --mg-layout-gap: var(--mg-layout-gap-mobile);
   --mg-layout-grid-gap: var(--mg-layout-grid-gap-mobile);
@@ -85,6 +96,7 @@
 @media (min-width: 768px) {
   :root {
     --mg-layout-page-padding: var(--mg-layout-page-padding-tablet);
+    --mg-layout-page-padding-x: var(--mg-layout-page-padding-x-tablet);
     --mg-layout-section-padding: var(--mg-layout-section-padding-tablet);
     --mg-layout-gap: var(--mg-layout-gap-tablet);
     --mg-layout-grid-gap: var(--mg-layout-grid-gap-tablet);
@@ -96,6 +108,7 @@
 @media (min-width: 1280px) {
   :root {
     --mg-layout-page-padding: var(--mg-layout-page-padding-desktop);
+    --mg-layout-page-padding-x: var(--mg-layout-page-padding-x-desktop);
     --mg-layout-section-padding: var(--mg-layout-section-padding-desktop);
     --mg-layout-gap: var(--mg-layout-gap-desktop);
     --mg-layout-grid-gap: var(--mg-layout-grid-gap-desktop);
@@ -107,6 +120,7 @@
 @media (min-width: 1920px) {
   :root {
     --mg-layout-page-padding: var(--mg-layout-page-padding-fhd);
+    --mg-layout-page-padding-x: var(--mg-layout-page-padding-x-fhd);
     --mg-layout-section-padding: var(--mg-layout-section-padding-fhd);
     --mg-layout-gap: var(--mg-layout-gap-fhd);
     --mg-layout-grid-gap: var(--mg-layout-grid-gap-fhd);
@@ -118,6 +132,7 @@
 @media (min-width: 2560px) {
   :root {
     --mg-layout-page-padding: var(--mg-layout-page-padding-2k);
+    --mg-layout-page-padding-x: var(--mg-layout-page-padding-x-2k);
     --mg-layout-section-padding: var(--mg-layout-section-padding-2k);
     --mg-layout-gap: var(--mg-layout-gap-2k);
     --mg-layout-grid-gap: var(--mg-layout-grid-gap-2k);
@@ -129,6 +144,7 @@
 @media (min-width: 3840px) {
   :root {
     --mg-layout-page-padding: var(--mg-layout-page-padding-4k);
+    --mg-layout-page-padding-x: var(--mg-layout-page-padding-x-4k);
     --mg-layout-section-padding: var(--mg-layout-section-padding-4k);
     --mg-layout-gap: var(--mg-layout-gap-4k);
     --mg-layout-grid-gap: var(--mg-layout-grid-gap-4k);

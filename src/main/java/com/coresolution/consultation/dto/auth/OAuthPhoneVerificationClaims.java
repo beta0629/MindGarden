@@ -37,4 +37,12 @@ public class OAuthPhoneVerificationClaims {
 
     /** 표시용 닉네임(없으면 name 과 동일). */
     String nickname;
+
+    /**
+     * provider 가 첫 로그인에 제공한 프로필 이미지 URL.
+     *
+     * <p>2026-06-10 P1: Google/Kakao/Naver/Apple 4종 모두 신규 가입 시 users.profile_image_url 백필
+     * 가능하도록 prefill 클레임으로 토큰에 박는다. 누락 허용(null).</p>
+     */
+    String profileImageUrl;
 }

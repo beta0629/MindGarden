@@ -276,6 +276,7 @@ public class OAuth2Controller extends BaseApiController {
                     .email(socialUserInfo.getEmail())
                     .name(socialUserInfo.getName())
                     .nickname(socialUserInfo.getNickname())
+                    .profileImageUrl(socialUserInfo.getProfileImageUrl())
                     .build());
         } catch (IllegalArgumentException e) {
             log.warn("OAuth phone verification token 발급 실패: provider={}, cause={}",

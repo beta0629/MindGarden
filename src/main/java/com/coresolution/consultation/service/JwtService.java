@@ -708,6 +708,9 @@ public class JwtService {
         if (claims.getNickname() != null) {
             payload.put(OAuthJwtClaimKeys.SNS_NICKNAME, claims.getNickname());
         }
+        if (claims.getProfileImageUrl() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_PROFILE_IMAGE_URL, claims.getProfileImageUrl());
+        }
         return buildToken(payload, "oauth-phone-verification", applePhoneVerificationTtlMs);
     }
 
@@ -750,6 +753,7 @@ public class JwtService {
             .email(claims.get(OAuthJwtClaimKeys.SNS_EMAIL, String.class))
             .name(claims.get(OAuthJwtClaimKeys.SNS_NAME, String.class))
             .nickname(claims.get(OAuthJwtClaimKeys.SNS_NICKNAME, String.class))
+            .profileImageUrl(claims.get(OAuthJwtClaimKeys.SNS_PROFILE_IMAGE_URL, String.class))
             .build();
     }
 

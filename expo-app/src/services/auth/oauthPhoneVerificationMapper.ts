@@ -47,6 +47,15 @@ export type OAuthPhoneVerifyMapped =
         userId: number;
         tenantId?: string;
         role?: string;
+        /**
+         * 2026-06-10 P1: OTP 직후 홈/프로필 화면 빈값 노출 차단. BE 가 user 표시 필드를 동봉하면
+         * 그대로 useAuthStore 에 채워 별도 `/users/me` fetch 없이도 정상 표시한다.
+         */
+        name?: string;
+        email?: string;
+        nickname?: string;
+        phone?: string;
+        profileImageUrl?: string;
       };
     }
   | {
@@ -145,6 +154,11 @@ export function mapOAuthPhoneVerifyResponse(
         userId: matched.userId,
         tenantId: matched.tenantId ?? undefined,
         role: matched.role ?? undefined,
+        name: matched.name ?? undefined,
+        email: matched.email ?? undefined,
+        nickname: matched.nickname ?? undefined,
+        phone: matched.phone ?? undefined,
+        profileImageUrl: matched.profileImageUrl ?? undefined,
       },
     };
   }

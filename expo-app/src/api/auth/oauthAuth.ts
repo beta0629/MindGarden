@@ -65,6 +65,19 @@ export interface OAuthPhoneMatchedAccount {
   tenantId?: string;
   /** UserRole.name() (CLIENT / CONSULTANT / ADMIN ...). */
   role?: string;
+  /**
+   * 사용자 표시 이름 (복호화 평문, PII). 2026-06-10 P1: OTP 직후 홈 화면 prefix·프로필 화면 이름
+   * 빈값 노출을 차단하기 위해 BE 가 응답에 동봉한다. FE 는 표시 시 별도 마스킹 불필요.
+   */
+  name?: string;
+  /** 사용자 이메일 (복호화 평문, PII). 없으면 undefined. */
+  email?: string;
+  /** 사용자 닉네임 — 보통 name 과 동일하거나 짧은 표시명. */
+  nickname?: string;
+  /** 사용자 휴대폰 (11자리 digits 평문, PII). FE 표시 시 maskKoreanMobileForDisplay 등으로 마스킹. */
+  phone?: string;
+  /** 사용자 프로필 이미지 URL (절대/상대). 없으면 undefined. */
+  profileImageUrl?: string;
 }
 
 /** OAuth 휴대폰 OTP 검증 응답 — BE {@code OAuthPhoneVerifyResponse} 와 1:1. */

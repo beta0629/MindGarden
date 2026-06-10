@@ -138,6 +138,40 @@ describe('mapOAuthPhoneVerifyResponse — /phone/verify 응답 매핑', () => {
     expect(result.matchedAccount.userId).toBe(42);
     expect(result.matchedAccount.tenantId).toBe('tenant-a');
     expect(result.matchedAccount.role).toBe('CLIENT');
+    expect(result.matchedAccount.name).toBeUndefined();
+    expect(result.matchedAccount.email).toBeUndefined();
+    expect(result.matchedAccount.phone).toBeUndefined();
+    expect(result.matchedAccount.profileImageUrl).toBeUndefined();
+  });
+
+  test('[P1] 단일 매칭 정상 로그인 — BE 가 user 표시 필드 동봉 → matchedAccount 에 모두 전파', () => {
+    const response: OAuthPhoneVerifyResponse = {
+      success: true,
+      accessToken: 'at-002',
+      refreshToken: 'rt-002',
+      matchedAccount: {
+        userId: 77,
+        tenantId: 'tenant-incheon-counseling-001',
+        role: 'CLIENT',
+        name: '홍길동',
+        email: 'gildong@example.com',
+        nickname: '길동',
+        phone: '01012345678',
+        profileImageUrl: 'https://lh3.googleusercontent.com/a-/picture',
+      },
+    };
+
+    const result = mapOAuthPhoneVerifyResponse(response, 'GOOGLE');
+
+    expect(result.kind).toBe('authenticated');
+    if (result.kind !== 'authenticated') return;
+    expect(result.matchedAccount.name).toBe('홍길동');
+    expect(result.matchedAccount.email).toBe('gildong@example.com');
+    expect(result.matchedAccount.nickname).toBe('길동');
+    expect(result.matchedAccount.phone).toBe('01012345678');
+    expect(result.matchedAccount.profileImageUrl).toBe(
+      'https://lh3.googleusercontent.com/a-/picture',
+    );
   });
 
   test('다중 매칭: requiresPhoneAccountSelection=true + phoneAccountSelectionToken → 후보 선택 분기', () => {

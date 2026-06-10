@@ -12,6 +12,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Check, CheckCheck, MessageCircle } from 'lucide-react';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import { useToast } from '../../contexts/ToastContext';
+import Avatar from './Avatar';
 import './ChatScreen.css';
 import { USER_ROLES } from '../../constants/roles';
 
@@ -243,13 +244,12 @@ const ChatScreen = ({
       {/* 상대 프로필 헤더 */}
       {partnerName && (
         <div className="mg-chat__partner-header">
-          {partnerAvatar ? (
-            <img src={partnerAvatar} alt={partnerName} className="mg-chat__partner-avatar" />
-          ) : (
-            <span className="mg-chat__partner-avatar mg-chat__partner-avatar--placeholder">
-              {partnerName.charAt(0)}
-            </span>
-          )}
+          <Avatar
+            profileImageUrl={partnerAvatar}
+            displayName={partnerName}
+            className="mg-chat__partner-avatar"
+            alt={partnerName}
+          />
           <div className="mg-chat__partner-info">
             <h2 className="mg-chat__partner-name">{partnerName}</h2>
             {partnerRole && <span className="mg-chat__partner-role">{partnerRole}</span>}

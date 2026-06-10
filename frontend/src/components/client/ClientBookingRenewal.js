@@ -11,11 +11,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, Star, Check, Calendar, Search
+  Star, Check, Calendar, Search
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
+import Avatar from '../common/Avatar';
 import './ClientBookingRenewal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -227,11 +228,11 @@ const ClientBookingRenewal = () => {
               >
                 <div className="client-booking__consultant-top">
                   <div className="client-booking__consultant-avatar">
-                    {c.profileImageUrl ? (
-                      <img src={c.profileImageUrl} alt={c.name || '상담사'} />
-                    ) : (
-                      <User size={24} aria-hidden />
-                    )}
+                    <Avatar
+                      profileImageUrl={c.profileImageUrl}
+                      displayName={c.name || c.consultantName || '상담사'}
+                      alt={c.name || '상담사'}
+                    />
                   </div>
                   <div className="client-booking__consultant-info">
                     <h3 className="client-booking__consultant-name">

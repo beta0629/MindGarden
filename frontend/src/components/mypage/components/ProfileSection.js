@@ -7,6 +7,7 @@ import { sessionManager } from '../../../utils/sessionManager';
 import notificationManager from '../../../utils/notification';
 import { ROLE_DISPLAY_LABELS } from '../../../constants/mypageUi';
 import MGButton from '../../common/MGButton';
+import Avatar from '../../common/Avatar';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { isLikelyNumericPrimaryKey } from '../../../utils/mypageProfilePayload';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +31,13 @@ const maskPhone = (phone) => {
   return `010-****-${tail}`;
 };
 
+/**
+ * 표시용 프로필 이미지 URL 결정 — 정규화·fallback 은 공통 Avatar 가
+ * 책임지므로 여기서는 후보값(절대/상대 path 또는 null)만 추려 반환한다.
+ *
+ * @param {Object} fd formData
+ * @returns {string|null}
+ */
 const getProfileAvatarSrc = (fd) => {
   if (fd.profileImage && fd.profileImageType === 'USER_PROFILE') {
     return fd.profileImage;
@@ -40,7 +48,7 @@ const getProfileAvatarSrc = (fd) => {
   if (fd.profileImage && typeof fd.profileImage === 'string' && fd.profileImage.startsWith('http')) {
     return fd.profileImage;
   }
-  return '/default-avatar.svg';
+  return null;
 };
 
 const ProfileSection = ({
@@ -215,15 +223,11 @@ const ProfileSection = ({
         <div className="mg-mypage__card-body">
           <div className="mg-mypage__profile-header">
             <div className="mg-mypage__avatar-wrap">
-              <img
+              <Avatar
+                profileImageUrl={getProfileAvatarSrc(formData)}
+                displayName={displayName}
                 className="mg-mypage__avatar"
-                src={getProfileAvatarSrc(formData)}
-                alt=""
-                width={96}
-                height={96}
-                onError={(ev) => {
-                  ev.target.src = '/default-avatar.svg';
-                }}
+                size={96}
               />
             </div>
             <div className="mg-mypage__profile-summary">

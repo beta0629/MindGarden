@@ -57,6 +57,12 @@ export const AUTH_API = {
   // OAuth2 인증 URL 생성
   KAKAO_AUTHORIZE: '/api/v1/auth/oauth2/kakao/authorize',
   NAVER_AUTHORIZE: '/api/v1/auth/oauth2/naver/authorize',
+  /**
+   * Google OAuth2 server-side auth-code 흐름 — `OAuth2Controller#googleAuthorize`.
+   * BE 가 apex 콜백(`/api/v1/auth/google/callback`) 과 state(base64url(tenantId)+nonce) 를
+   * 포함한 authorize URL 을 반환한다. 카카오/네이버와 동일 패턴(2026-06-10 A-2 마이그레이션).
+   */
+  GOOGLE_AUTHORIZE: '/api/v1/auth/oauth2/google/authorize',
   
   // 중복 로그인 확인
   CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login',

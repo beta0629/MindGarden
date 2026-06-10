@@ -1,161 +1,135 @@
 /**
- * Google OAuth — `expo-auth-session/providers/google` 네이티브 OAuth 헬퍼 (G-1 경로).
+ * Google 로그인 — `@react-native-google-signin/google-signin` Native SDK 래퍼.
  *
- * <p>SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md §I.4 G-1.
- * App Store 4.5.4 정책 안전(in-app browser ASWebAuthenticationSession / Custom Tabs 자동),
- * PKCE 자동, OS 표준 브라우저 위임. WebView in-app browser 폴백(G-2) 은 정책 위반 위험으로 사용 안 함.</p>
+ * <p>**Build #16 (2026-06-10) — Native SDK 마이그레이션 (P0)**: 기존
+ * `expo-auth-session/providers/google` (`useAuthRequest` + PKCE auth-code flow + `exchangeCodeAsync`)
+ * 흐름은 Android Google Client 정책상 Custom URI scheme redirect 가 차단되어
+ * (`400 invalid_request: Custom URI scheme is not enabled for your Android client`) 로그인이
+ * 실패한다. 본 모듈은 Native SDK 로 전면 교체된다:</p>
+ *
+ *  - iOS: iosClientId + URL scheme (Expo plugin 자동 주입) → SDK 가 Safari View Controller 호출
+ *  - Android: SHA-1 + Package name + Web Client ID 검증 (Google Sign-In SDK 표준)
+ *  - 토큰: `signIn()` 응답에 `idToken`, `serverAuthCode` 포함 / `getTokens()` 로 accessToken
  *
  * <p>흐름:
- *  1) `expo-web-browser.maybeCompleteAuthSession()` 모듈 로드 시 호출 (deep link 복귀 처리)
- *  2) `Google.useAuthRequest({ webClientId / iosClientId / androidClientId })` 로 `request` 생성
- *  3) `request.promptAsync()` → ASWebAuthenticationSession (iOS) / Custom Tabs (Android)
- *  4) 응답 type:
- *     - `success` → `authentication.accessToken` + `authentication.idToken`
- *     - `cancel`  → 사용자 취소 (에러 아님)
- *     - `dismiss` → 시스템 dismiss
- *     - `error`   → OAuth provider 에러
+ *  1) {@link ensureGoogleSignInConfigured} 가 첫 호출 시 1회만 `GoogleSignin.configure()` 호출
+ *  2) {@link signInWithGoogle} →
+ *     - Android: `hasPlayServices({ showPlayServicesUpdateDialog: true })`
+ *     - 모든 플랫폼: `GoogleSignin.signIn()`
+ *     - 토큰 부족 시 `GoogleSignin.getTokens()` 로 보강
+ *     - 응답 매핑: success / cancelled / inProgress / playServicesNotAvailable / error
+ *  3) 호출자(`AuthService.loginWithGoogle`) 가 BE `/api/v1/auth/social-login` 호출
  *
- * 클라이언트 ID 우선순위 (env 우선, 없으면 `app.config.ts.extra` 폴백):
- *  - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` / `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` / `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`
- *  - 누락 시 `Constants.expoConfig.extra.googleClientId` (web/ios/android 객체)
- *  - 모두 없으면 `null` 반환 → AuthService 가 `error` outcome 으로 분기
+ * <p>BE 는 idToken 우선 검증(`GoogleOAuth2ServiceImpl.getUserInfoFromIdToken`) 이 표준이고,
+ * accessToken 도 함께 보내면 `userinfo` 보강에 활용된다.</p>
  *
- * 본 모듈은 React 훅 (`useGoogleAuthRequest`) 만 export 한다 — `expo-auth-session/providers/google`
- * 의 `useAuthRequest` 가 훅이라 비훅 함수에서 호출할 수 없다.
+ * <p>SSOT:
+ *  - docs/project-management/2026-06-10/GOOGLE_ANDROID_OAUTH_SETUP.md
+ *  - https://react-native-google-signin.github.io/docs/api</p>
  *
  * @author MindGarden
  * @since 2026-06-10
  */
-import { useMemo } from 'react';
-import { Platform } from 'react-native';
-import Constants from 'expo-constants';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 import {
-  exchangeCodeAsync,
-  type AccessTokenRequestConfig,
-  type AuthRequestPromptOptions,
-  type AuthSessionResult,
-  type DiscoveryDocument,
-  type TokenResponse,
-} from 'expo-auth-session';
-
-// 모듈 로드 시 1회 — Expo dev client / production 모두에서 OAuth 콜백 자동 처리.
-WebBrowser.maybeCompleteAuthSession();
+  GoogleSignin,
+  isCancelledResponse,
+  isErrorWithCode,
+  isSuccessResponse,
+  statusCodes,
+  type User,
+} from '@react-native-google-signin/google-signin';
+import Constants from 'expo-constants';
 
 /**
- * Google OAuth2 PKCE 토큰 교환 엔드포인트.
- *
- * <p>`expo-auth-session/providers/google` 기본 `useAuthRequest` 가 PKCE auth-code flow 를
- * 선택하면, 응답에 `code` 만 포함되고 토큰은 직접 오지 않는다. `exchangeCodeAsync` 가 본
- * endpoint 를 호출해 `code + code_verifier` 를 `access_token + id_token` 으로 교환한다.</p>
- *
- * <p>iOS native client 는 `client_secret` 없이 PKCE 만으로 동작한다(Section 8.1 of
- * RFC 8252). Web client 도 동일 endpoint 를 사용한다.</p>
- *
- * @see https://developers.google.com/identity/protocols/oauth2/native-app#step-2-exchange-authorization-code-for-refresh-and-access-tokens
+ * Google Sign-In Native SDK 가 반환하는 사용자 식별 정보 — 호출자(AuthService) 의 social-login
+ * 페이로드 보강용. BE 가 idToken 으로 자체 검증하므로 본 객체는 표시·진단 목적.
  */
-const GOOGLE_TOKEN_DISCOVERY: Pick<DiscoveryDocument, 'tokenEndpoint'> = {
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-};
-
-export interface GoogleClientIdConfig {
-  readonly webClientId?: string;
-  readonly iosClientId?: string;
-  readonly androidClientId?: string;
+export interface GoogleNativeUserInfo {
+  /** Google 사용자 고유 ID (SDK 의 `user.id`) — `providerUserId` 로 사용 가능 */
+  readonly id: string;
+  /** 사용자 이메일 (SDK 가 제공 시) */
+  readonly email: string;
+  /** 표시 이름 (`given + family` 또는 SDK 의 `name`) */
+  readonly name: string;
+  /** 프로필 이미지 URL (SDK 가 제공 시) */
+  readonly photoUrl?: string;
+  /** Google `given_name` / `family_name` 분리 노출 (가입 화면 prefill 용) */
+  readonly givenName?: string;
+  readonly familyName?: string;
 }
 
-/**
- * `expo-auth-session/providers/google` 의 success response 핵심 필드.
- *
- * <p>P0 2026-06-10 수정: 일부 iOS 네이티브 빌드(TestFlight 1.0.7 #14)에서 응답이
- * `authentication.accessToken` 없이 `idToken` 만 포함하거나, 토큰이 `result.params.access_token` /
- * `result.params.id_token` 으로만 전달되는 케이스를 관찰. 따라서 **두 토큰 모두 optional**
- * 로 정의하고, 호출자(`AuthService.loginWithGoogle`) 가 "둘 중 최소 하나"를 검증한다.
- * BE 는 accessToken 우선이고, accessToken 부재 시 idToken 으로 폴백한다.</p>
- */
-export interface GoogleAuthResult {
-  /** Google `access_token` — BE 가 `userinfo` API 호출에 사용 (선택). */
-  readonly accessToken?: string;
-  /** Google `id_token` (OpenID Connect) — BE 가 `tokeninfo` 검증·claims 추출에 사용 (선택). */
-  readonly idToken?: string;
-  /** OAuth scope 문자열 (공백 구분) */
-  readonly scope?: string;
-}
-
-/** Google OAuth 프롬프트 결과 outcome — BE 호출 직전 단계. */
+/** Google Sign-In 호출 결과 outcome — UI/AuthService 가 분기에 사용. */
 export type GoogleSignInOutcome =
-  | { readonly kind: 'success'; readonly result: GoogleAuthResult }
+  | { readonly kind: 'success'; readonly result: GoogleNativeAuthResult }
   | { readonly kind: 'cancel' }
   | { readonly kind: 'dismiss' }
   | { readonly kind: 'error'; readonly message: string }
   | { readonly kind: 'notConfigured'; readonly message: string };
 
-/**
- * `expo-config.extra.googleClientId` 에 객체로 주입된 클라이언트 ID 를 정규화한다.
- *
- * <p>app.config.ts 가 다음 형태로 주입:
- * <pre>{@code extra: { googleClientId: { web: '...', ios: '...', android: '...' } }}</pre>
- * </p>
- */
-function readClientIdsFromExtra(): GoogleClientIdConfig {
-  const extra = Constants.expoConfig?.extra as
-    | { googleClientId?: { web?: string; ios?: string; android?: string } }
-    | undefined;
-  const cfg = extra?.googleClientId ?? {};
-  return {
-    webClientId: cfg.web?.trim() || undefined,
-    iosClientId: cfg.ios?.trim() || undefined,
-    androidClientId: cfg.android?.trim() || undefined,
-  };
+/** Native SDK 가 반환한 토큰 + 사용자 정보 (성공 분기). */
+export interface GoogleNativeAuthResult {
+  /** OpenID Connect id_token — BE 검증 1순위 (필수). */
+  readonly idToken: string;
+  /** Google access_token (`getTokens()` 보강) — BE userinfo 보강용 (선택). */
+  readonly accessToken: string | null;
+  /** offlineAccess 옵션 사용 시 server auth code (현재 흐름 미사용 — null). */
+  readonly serverAuthCode: string | null;
+  /** Google Sign-In SDK 사용자 정보. */
+  readonly user: GoogleNativeUserInfo;
 }
 
 /**
- * Google 클라이언트 ID 를 우선순위 순으로 해석한다.
- * env > extra. 모든 환경이 비면 `null` 반환.
+ * `@react-native-google-signin/google-signin` Native SDK 가 사용 가능한 환경인지 확인.
+ *
+ * <p>Native SDK 는 Web Client ID(`webClientId`) 가 있어야 idToken audience 를 알 수 있고
+ * BE 검증 흐름이 성립한다 (`GoogleOAuth2ServiceImpl#allowedAudiences`). iOS 는 추가로
+ * `iosClientId` 가 필요하지만 Expo plugin 의 `iosUrlScheme` 자동 등록으로도 동작한다 —
+ * 본 함수는 가장 강한 게이트인 Web Client ID 만 검사한다.</p>
+ *
+ * <p>env 우선이고, 누락 시 `app.config.ts` 의 `extra.googleClientId` 폴백.</p>
+ */
+export function isGoogleNativeConfigured(): boolean {
+  const ids = resolveGoogleClientIdConfig();
+  if (!ids) {
+    return false;
+  }
+  return isUsableGoogleClientId(ids.webClientId);
+}
+
+/** 기존 호출자 호환 alias — Native SDK 마이그레이션 이후 의미는 {@link isGoogleNativeConfigured}. */
+export function isGoogleConfiguredForPlatform(): boolean {
+  return isGoogleNativeConfigured();
+}
+
+export interface GoogleClientIdConfig {
+  readonly webClientId?: string;
+  readonly iosClientId?: string;
+}
+
+/**
+ * `Constants.expoConfig.extra.googleClientId` 폴백 해석 — `app.config.ts` 가 OTA 발행 시 빈
+ * 값을 omit 하므로, env 우선 + extra 폴백 순서로 재구성한다.
  */
 export function resolveGoogleClientIdConfig(): GoogleClientIdConfig | null {
-  const fromExtra = readClientIdsFromExtra();
+  const extra = Constants.expoConfig?.extra as
+    | { googleClientId?: { web?: string; ios?: string; android?: string } }
+    | undefined;
+  const fromExtra = extra?.googleClientId ?? {};
   const merged: GoogleClientIdConfig = {
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() || fromExtra.webClientId,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() || fromExtra.iosClientId,
-    androidClientId:
-      process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID?.trim() || fromExtra.androidClientId,
+    webClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() || fromExtra.web?.trim() || undefined,
+    iosClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() || fromExtra.ios?.trim() || undefined,
   };
-  if (!merged.webClientId && !merged.iosClientId && !merged.androidClientId) {
+  if (!merged.webClientId && !merged.iosClientId) {
     return null;
   }
   return merged;
 }
 
 /**
- * 현재 플랫폼에서 Google OAuth 가 사용 가능한 client id 가 주입되어 있는지 판별한다.
- *
- * <p>P0 핫픽스 (2026-06-10) — `Google.useAuthRequest` 는 render 중 platform 별 client id
- * 가 비어 있거나 placeholder 형태("...placeholder...", "0.apps.googleusercontent.com" 등)이면
- * **컴포넌트 mount 시점에 throw** 한다(`Client Id property iosClientId must be defined...`).
- * 훅을 안전하게 호출하려면 호출자(컴포넌트)가 본 함수의 반환값으로 mount 자체를
- * 가드해야 한다. 호출자는 비활성 분기로 다른 SocialLoginButton 만 렌더한다.</p>
- *
- * <p>placeholder 판별: 빈 문자열, `placeholder` 로 시작, `your_` 로 시작 (대소문자 무시) 케이스.</p>
- */
-export function isGoogleConfiguredForPlatform(): boolean {
-  const clientIds = resolveGoogleClientIdConfig();
-  if (clientIds === null) {
-    return false;
-  }
-  const platformClientId =
-    Platform.OS === 'ios'
-      ? clientIds.iosClientId
-      : Platform.OS === 'android'
-        ? clientIds.androidClientId
-        : clientIds.webClientId;
-  return isUsableGoogleClientId(platformClientId);
-}
-
-/**
  * client id 문자열이 실제 OAuth Client 형태인지 검증.
- * placeholder·빈 값·"your_..." 템플릿 값은 모두 미구성으로 본다.
+ * placeholder·빈 값·`your_...` 템플릿 값은 모두 미구성으로 본다.
  */
 function isUsableGoogleClientId(value: string | undefined | null): boolean {
   if (!value) {
@@ -175,334 +149,211 @@ function isUsableGoogleClientId(value: string | undefined | null): boolean {
 }
 
 /**
- * Google OAuth Request 훅 + 프롬프트 함수를 반환한다.
+ * Native SDK 1회 초기화 가드 — `GoogleSignin.configure()` 는 sync 이고 동일 옵션으로 여러 번
+ * 호출해도 안전하지만, 호출 횟수를 줄이기 위해 모듈 단일 boolean 으로 가드한다.
  *
- * <p>호출자 컴포넌트가 React 함수 컴포넌트여야 한다 (훅 규칙). expo-auth-session 의
- * `useAuthRequest` 자체가 훅이므로 비훅 코드에서는 호출 불가. 호출자는 반환된
- * `promptAsync` 만 onPress 콜백 안에서 호출한다.</p>
- *
- * <p>**P0 핫픽스 (2026-06-10)**: 본 훅은 **현재 플랫폼 client id 가 구성된 경우에만**
- * 호출해야 한다(`isGoogleConfiguredForPlatform() === true`). 미구성 상태에서 호출하면
- * `Google.useAuthRequest` 가 mount 시점에 throw 하여 앱이 fatal 화면으로 빠진다.</p>
- *
- * <p>응답 매핑은 호출자 — `AuthService.loginWithGoogle(token, idToken)` 으로 BE 검증.</p>
- *
- * @param scopes 요청 scope (기본 `openid profile email`)
+ * <p>Native 모듈이 미연결(Expo Go) 환경에서는 `configure()` 호출 시 throw. 호출자가 try/catch
+ * 로 감싸 friendly 에러 outcome 으로 변환한다.</p>
  */
-/**
- * `Google.useAuthRequest` 가 render 중 platform 별 client id 누락 시 throw 하므로,
- * 환경 미구성 단계에서도 훅이 안전하게 호출되도록 placeholder 를 주입한다.
- *
- * <p>`promptAsync` 가 실제 호출 전에 `platformClientId` 검증으로 `notConfigured` outcome 을
- * 반환하므로 실제 OAuth 요청은 발생하지 않는다.</p>
- */
-const GOOGLE_PLACEHOLDER_CLIENT_ID = '0.apps.googleusercontent.com';
+let configured = false;
 
-/**
- * `Google.useAuthRequest` success 응답에서 `accessToken` / `idToken` 을 회복력 있게 추출한다.
- *
- * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (14)` 에서 Google 로그인 시 빨간 오류
- * "Google 로그인 응답에서 accessToken 을 찾을 수 없습니다" 가 노출되어 로그인이 차단되었다.
- * 원인: iOS 네이티브 빌드(implicit/PKCE 자동)에서 `result.authentication` 이 일부 케이스에
- * `null` 이거나 `accessToken` 키가 비고 토큰이 `result.params.{access_token,id_token}` 으로
- * 전달된다. 또 iOS 네이티브 ID Token Only 플로우는 `idToken` 만 반환할 수 있다.</p>
- *
- * <p>본 헬퍼는 두 위치(`authentication.*` / `params.*`)를 모두 확인하여 가능한 토큰을 모두
- * 반환한다. 호출자는 둘 중 최소 하나가 있으면 BE 로 전송하고, BE 는 accessToken 우선·
- * idToken 폴백(`GoogleOAuth2ServiceImpl.getUserInfoFromIdToken`) 으로 사용자 정보를 조회한다.</p>
- *
- * <p>본 함수는 React 훅이 아니며 외부에서 직접 호출하지 않는다(테스트 목적 export). 호환을
- * 위해 반환 객체의 `accessToken`/`idToken` 모두 `undefined` 가능.</p>
- */
-export function extractGoogleAuthTokens(result: AuthSessionResult): GoogleAuthResult {
-  if (result.type !== 'success') {
-    return {};
+export function ensureGoogleSignInConfigured(): void {
+  if (configured) {
+    return;
   }
-  const auth = result.authentication ?? undefined;
-  const params = (result.params ?? {}) as Record<string, string | undefined>;
-  const accessToken = pickNonEmptyString(auth?.accessToken, params.access_token);
-  const idToken = pickNonEmptyString(auth?.idToken, params.id_token);
-  const scope = pickNonEmptyString(auth?.scope, params.scope);
-  const extracted: { -readonly [K in keyof GoogleAuthResult]?: GoogleAuthResult[K] } = {};
-  if (accessToken) {
-    extracted.accessToken = accessToken;
+  const ids = resolveGoogleClientIdConfig();
+  if (!ids || !isUsableGoogleClientId(ids.webClientId)) {
+    throw new Error('Google Sign-In webClientId 가 구성되지 않았습니다.');
   }
-  if (idToken) {
-    extracted.idToken = idToken;
-  }
-  if (scope) {
-    extracted.scope = scope;
-  }
-  return extracted;
-}
-
-/** 빈 문자열·`undefined`·`null` 을 모두 미설정으로 본 뒤 trim 한 첫 번째 유효 값을 반환. */
-function pickNonEmptyString(
-  ...candidates: readonly (string | undefined | null)[]
-): string | undefined {
-  for (const candidate of candidates) {
-    if (typeof candidate !== 'string') {
-      continue;
-    }
-    const trimmed = candidate.trim();
-    if (trimmed.length > 0) {
-      return trimmed;
-    }
-  }
-  return undefined;
+  GoogleSignin.configure({
+    webClientId: ids.webClientId!,
+    ...(ids.iosClientId ? { iosClientId: ids.iosClientId } : {}),
+    offlineAccess: false,
+    scopes: ['openid', 'email', 'profile'],
+  });
+  configured = true;
 }
 
 /**
- * `AuthRequest` 인스턴스에서 PKCE token exchange 에 필요한 최소 필드를 안전하게 추출한다.
+ * 테스트 전용 — `configured` 캐시를 리셋한다. 운영 코드에서는 호출하지 않는다.
  *
- * <p>테스트에서 `Google.useAuthRequest` 가 `null` 을 반환하거나, 실 호출에서 codeVerifier 가
- * 미설정된 케이스(implicit flow 강제) 도 방어한다.</p>
+ * <p>jest 가 모듈 캐시를 공유하므로 mock 변경 시 본 함수로 명시 리셋이 필요.</p>
  */
-export interface GooglePkceRequestSnapshot {
-  readonly clientId: string;
-  readonly redirectUri: string;
-  readonly codeVerifier: string;
+export function __resetGoogleSignInConfiguredForTests(): void {
+  configured = false;
 }
 
-function readPkceRequestSnapshot(request: unknown): GooglePkceRequestSnapshot | null {
-  if (!request || typeof request !== 'object') {
-    return null;
+/** Native SDK 의 `User` 응답을 SocialLoginButton·BE 페이로드 친화적인 형태로 정규화. */
+function mapNativeUser(user: User['user']): GoogleNativeUserInfo {
+  const givenName = readNonEmpty(user.givenName);
+  const familyName = readNonEmpty(user.familyName);
+  const composed = [givenName, familyName].filter(Boolean).join(' ').trim();
+  const name = readNonEmpty(user.name) ?? (composed.length > 0 ? composed : '');
+  return {
+    id: user.id,
+    email: readNonEmpty(user.email) ?? '',
+    name,
+    ...(readNonEmpty(user.photo) ? { photoUrl: user.photo as string } : {}),
+    ...(givenName ? { givenName } : {}),
+    ...(familyName ? { familyName } : {}),
+  };
+}
+
+function readNonEmpty(v: string | null | undefined): string | undefined {
+  if (typeof v !== 'string') {
+    return undefined;
   }
-  const rec = request as Record<string, unknown>;
-  const clientId = pickNonEmptyString(typeof rec.clientId === 'string' ? rec.clientId : undefined);
-  const redirectUri = pickNonEmptyString(
-    typeof rec.redirectUri === 'string' ? rec.redirectUri : undefined,
-  );
-  const codeVerifier = pickNonEmptyString(
-    typeof rec.codeVerifier === 'string' ? rec.codeVerifier : undefined,
-  );
-  if (!clientId || !redirectUri || !codeVerifier) {
-    return null;
-  }
-  return { clientId, redirectUri, codeVerifier };
+  const trimmed = v.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 /**
- * PKCE auth-code flow 응답을 `code + code_verifier` → `access_token + id_token` 으로 교환한다.
- *
- * <p>**P0 (2026-06-10) — TestFlight `1.0.7 (16)`**: `expo-auth-session/providers/google` 의
- * `useAuthRequest` 가 자동으로 PKCE auth-code flow 를 선택했는데, 이전 핫픽스는 토큰만 찾고
- * `code → token` 교환 단계를 수행하지 않아 빈 토큰으로 실패했다. 본 함수가 `exchangeCodeAsync`
- * (`POST https://oauth2.googleapis.com/token`) 를 호출하여 토큰을 회복한다.</p>
+ * Google Sign-In Native SDK 호출 — UI 가 onPress 콜백에서 직접 호출.
  *
  * <p>흐름:
- *  1. `result.type === 'success'` 이고 `result.params.code` 가 존재해야 한다.
- *  2. `request.codeVerifier` / `request.clientId` / `request.redirectUri` 가 모두 존재해야 한다.
- *  3. `exchangeCodeAsync({ code, clientId, redirectUri, extraParams: { code_verifier } },
- *     { tokenEndpoint })` 호출.
- *  4. 응답의 `accessToken` / `idToken` / `scope` 를 normalize 하여 반환.</p>
+ *  1. {@link ensureGoogleSignInConfigured} (env / extra 미구성 시 `notConfigured` outcome)
+ *  2. (Android) `hasPlayServices({ showPlayServicesUpdateDialog: true })`
+ *  3. `GoogleSignin.signIn()` — discriminated union 응답
+ *  4. idToken 미수신이면 `GoogleSignin.getTokens()` 로 보강
+ *  5. accessToken 만 별도 보강 (idToken 만 있어도 BE 검증 가능)</p>
  *
- * <p>본 함수는 promptAsync 흐름에서만 호출되며, 토큰 값은 로그·반환 메시지에 포함하지 않는다.</p>
- *
- * @param result    `useAuthRequest` 의 success 응답
- * @param request   동일 훅이 반환한 `AuthRequest` 인스턴스 (codeVerifier 등 보유)
- * @returns 교환된 토큰 또는 null(필수 필드 누락 시); 네트워크/서버 오류는 throw.
+ * <p>토큰 값은 진단 로그에 절대 포함하지 않는다 (보안). 키 존재 여부만 console.log.</p>
  */
-export async function exchangeGooglePkceCode(
-  result: AuthSessionResult,
-  request: unknown,
-): Promise<GoogleAuthResult | null> {
-  if (result.type !== 'success') {
-    return null;
+export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
+  try {
+    ensureGoogleSignInConfigured();
+  } catch {
+    return {
+      kind: 'notConfigured',
+      message:
+        'Google 로그인 설정이 누락되어 있습니다. 관리자에게 문의해 주세요. (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID)',
+    };
   }
-  const params = (result.params ?? {}) as Record<string, string | undefined>;
-  const code = pickNonEmptyString(params.code);
-  if (!code) {
-    return null;
+
+  try {
+    if (typeof GoogleSignin.hasPlayServices === 'function') {
+      try {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      } catch (playServicesError: unknown) {
+        const message = humanizePlayServicesError(playServicesError);
+        return { kind: 'error', message };
+      }
+    }
+
+    const response = await GoogleSignin.signIn();
+    if (isCancelledResponse(response)) {
+      return { kind: 'cancel' };
+    }
+    if (!isSuccessResponse(response)) {
+      // discriminated union 의 다른 type (예: noSavedCredentialFound) — 인터랙티브 signIn 흐름에서는
+      // 거의 발생하지 않지만 방어적으로 dismiss 로 매핑.
+      return { kind: 'dismiss' };
+    }
+
+    const data = response.data;
+    let idToken = readNonEmpty(data.idToken);
+    let accessToken: string | null = null;
+
+    if (!idToken || typeof GoogleSignin.getTokens === 'function') {
+      try {
+        const tokens = await GoogleSignin.getTokens();
+        idToken = idToken ?? readNonEmpty(tokens.idToken);
+        const ax = readNonEmpty(tokens.accessToken);
+        accessToken = ax ?? null;
+      } catch (tokensError: unknown) {
+        // accessToken 보강 실패는 치명적이지 않다 — idToken 만으로도 BE 검증 가능.
+        const message = tokensError instanceof Error ? tokensError.message : String(tokensError);
+        // eslint-disable-next-line no-console -- Native SDK 진단(토큰 값 미포함)
+        console.log('[GoogleSignIn][diagnose] getTokens failed (idToken only fallback)', message);
+      }
+    }
+
+    if (!idToken) {
+      return {
+        kind: 'error',
+        message: 'Google 로그인 응답에서 idToken 을 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      };
+    }
+
+    const user = mapNativeUser(data.user);
+    // eslint-disable-next-line no-console -- Native SDK 진단(토큰 값 미포함, 키 존재 여부만 노출)
+    console.log(
+      '[GoogleSignIn][diagnose] signIn ok',
+      `tokens=[${[idToken ? 'id' : null, accessToken ? 'access' : null]
+        .filter(Boolean)
+        .join(',')}],userKnown=${Boolean(user.id)}`,
+    );
+
+    return {
+      kind: 'success',
+      result: {
+        idToken,
+        accessToken,
+        serverAuthCode: readNonEmpty(data.serverAuthCode) ?? null,
+        user,
+      },
+    };
+  } catch (error: unknown) {
+    return mapSignInError(error);
   }
-  const snapshot = readPkceRequestSnapshot(request);
-  if (!snapshot) {
-    return null;
-  }
-  const config: AccessTokenRequestConfig = {
-    clientId: snapshot.clientId,
-    redirectUri: snapshot.redirectUri,
-    code,
-    extraParams: { code_verifier: snapshot.codeVerifier },
-  };
-  const tokenResponse: TokenResponse = await exchangeCodeAsync(config, GOOGLE_TOKEN_DISCOVERY);
-  return {
-    ...(tokenResponse.accessToken ? { accessToken: tokenResponse.accessToken } : {}),
-    ...(tokenResponse.idToken ? { idToken: tokenResponse.idToken } : {}),
-    ...(tokenResponse.scope ? { scope: tokenResponse.scope } : {}),
-  };
 }
 
 /**
- * Google OAuth 응답을 진단용으로 요약한다 — 토큰 값은 절대 포함하지 않는다.
+ * `GoogleSignin.signIn` / `getTokens` 가 throw 한 에러를 사용자 친화 메시지로 변환.
  *
- * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (#15)` 에서 토큰 미수신(빈 응답) 케이스가 보고되어
- * 어떤 응답 타입(`success` / `dismiss` / `cancel` / `error`) 인지 + `result.params` /
- * `result.authentication` 의 키 셋·`result.url` 존재 여부를 production 빌드에서도 확인할 수
- * 있도록 구조화한다. 호출자가 사용자 메시지·console·Sentry 모두에 이 메타를 노출.</p>
- *
- * <p>토큰·코드·idToken 등 민감 값은 키 존재 여부만 보고하고 값 자체는 포함하지 않는다.</p>
+ * <p>SDK 의 `statusCodes` 와 `isErrorWithCode` 헬퍼를 사용해 정형화된 에러 코드를 분류한다.
+ * 사용자가 볼 메시지에는 토큰·이메일·SDK 내부 디테일을 포함하지 않는다.</p>
  */
-export interface GoogleAuthResultDiagnostics {
-  /** `result.type` — `success` / `cancel` / `dismiss` / `error` */
-  readonly type: AuthSessionResult['type'];
-  /** `result.params` 의 키 목록 (값 미포함). 비어 있으면 빈 배열. */
-  readonly paramKeys: readonly string[];
-  /** `result.authentication` 의 키 목록 (값 미포함). null/undefined 면 빈 배열. */
-  readonly authenticationKeys: readonly string[];
-  /** `result.url` (콜백 URL) 이 존재하는지 — 값 자체는 포함하지 않는다. */
-  readonly hasUrl: boolean;
-  /** `error` 응답일 때만 OAuth provider 가 보낸 단순 에러 코드. */
-  readonly errorCode?: string;
-}
-
-export function diagnoseGoogleAuthResult(result: AuthSessionResult): GoogleAuthResultDiagnostics {
-  const params = (result as { params?: Record<string, unknown> | null }).params ?? null;
-  const auth = (result as { authentication?: Record<string, unknown> | null }).authentication ?? null;
-  const url = (result as { url?: string | null }).url ?? null;
-  const errorCode = (result as { errorCode?: string | null }).errorCode ?? undefined;
-  return {
-    type: result.type,
-    paramKeys: params ? Object.keys(params) : [],
-    authenticationKeys: auth ? Object.keys(auth) : [],
-    hasUrl: typeof url === 'string' && url.length > 0,
-    ...(errorCode ? { errorCode } : {}),
-  };
-}
-
-/**
- * 진단 메타를 사람이 읽기 쉬운 한 줄 문자열로 직렬화한다 (사용자 친화 에러 메시지에 포함).
- *
- * <p>예: `type=success,params=[code,state],auth=[],url=true` — 토큰 값은 절대 포함하지 않는다.</p>
- */
-export function formatGoogleAuthDiagnostics(diag: GoogleAuthResultDiagnostics): string {
-  const params = diag.paramKeys.length > 0 ? `[${diag.paramKeys.join(',')}]` : '∅';
-  const auth = diag.authenticationKeys.length > 0 ? `[${diag.authenticationKeys.join(',')}]` : '∅';
-  const errorCode = diag.errorCode ? `,errorCode=${diag.errorCode}` : '';
-  return `type=${diag.type},params=${params},auth=${auth},url=${diag.hasUrl}${errorCode}`;
-}
-
-export function useGoogleAuthRequest(scopes: readonly string[] = ['openid', 'profile', 'email']) {
-  const clientIds = useMemo(() => resolveGoogleClientIdConfig(), []);
-  const platformClientId =
-    Platform.OS === 'ios'
-      ? clientIds?.iosClientId
-      : Platform.OS === 'android'
-        ? clientIds?.androidClientId
-        : clientIds?.webClientId;
-  const safeIds = useMemo(
-    () => ({
-      webClientId: clientIds?.webClientId ?? GOOGLE_PLACEHOLDER_CLIENT_ID,
-      iosClientId: clientIds?.iosClientId ?? GOOGLE_PLACEHOLDER_CLIENT_ID,
-      androidClientId: clientIds?.androidClientId ?? GOOGLE_PLACEHOLDER_CLIENT_ID,
-    }),
-    [clientIds],
-  );
-  const [request, response, promptAsyncRaw] = Google.useAuthRequest({
-    webClientId: safeIds.webClientId,
-    iosClientId: safeIds.iosClientId,
-    androidClientId: safeIds.androidClientId,
-    scopes: [...scopes],
-  });
-
-  const isReady = Boolean(isUsableGoogleClientId(platformClientId) && request);
-
-  const promptAsync = async (options?: AuthRequestPromptOptions): Promise<GoogleSignInOutcome> => {
-    if (!isUsableGoogleClientId(platformClientId)) {
+function mapSignInError(error: unknown): GoogleSignInOutcome {
+  if (isErrorWithCode(error)) {
+    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      return { kind: 'cancel' };
+    }
+    if (error.code === statusCodes.IN_PROGRESS) {
       return {
-        kind: 'notConfigured',
-        message:
-          'Google 로그인 설정이 누락되어 있습니다. 관리자에게 문의해 주세요. (expo extra 또는 EXPO_PUBLIC_GOOGLE_*_CLIENT_ID)',
+        kind: 'error',
+        message: 'Google 로그인이 이미 진행 중입니다. 잠시 후 다시 시도해 주세요.',
       };
     }
-    if (!request) {
-      return {
-        kind: 'notConfigured',
-        message: 'Google 로그인 모듈을 초기화할 수 없습니다. 잠시 후 다시 시도해 주세요.',
-      };
-    }
-    try {
-      const result = await promptAsyncRaw(options);
-      const diagnostics = diagnoseGoogleAuthResult(result);
-      // production 빌드에서도 logcat / Xcode console 에 노출 — 토큰 값은 포함하지 않는다.
-      // P0 (2026-06-10): TestFlight #15 에서 토큰 미수신 root-cause 식별을 위한 진단 로그.
-      console.log(
-        '[GoogleSignIn][diagnose] promptAsync result',
-        formatGoogleAuthDiagnostics(diagnostics),
-      );
-      if (result.type === 'success') {
-        let extracted = extractGoogleAuthTokens(result);
-        // PKCE auth-code flow (Google native client 기본) — `code` 만 도착하고 토큰은 별도
-        // exchange 가 필요하다. P0 (2026-06-10) TestFlight #16 에서 본 분기 누락으로 토큰
-        // 추출 실패가 발생하여 본 처리 추가.
-        const params = (result.params ?? {}) as Record<string, string | undefined>;
-        const hasAuthCode = typeof params.code === 'string' && params.code.trim().length > 0;
-        if (!extracted.accessToken && !extracted.idToken && hasAuthCode) {
-          try {
-            const exchanged = await exchangeGooglePkceCode(result, request);
-            if (exchanged && (exchanged.accessToken || exchanged.idToken)) {
-              extracted = exchanged;
-              // 토큰 값은 절대 미포함 — 분기 진입 여부와 결과 키 셋만 노출.
-              console.log(
-                '[GoogleSignIn][diagnose] PKCE exchange ok',
-                `tokens=[${[
-                  exchanged.accessToken ? 'access' : null,
-                  exchanged.idToken ? 'id' : null,
-                ]
-                  .filter(Boolean)
-                  .join(',')}]`,
-              );
-            } else {
-              console.log(
-                '[GoogleSignIn][diagnose] PKCE exchange skipped (missing request fields)',
-                formatGoogleAuthDiagnostics(diagnostics),
-              );
-            }
-          } catch (exchangeError) {
-            const exchangeMessage =
-              exchangeError instanceof Error
-                ? exchangeError.message
-                : 'Google 토큰 교환에 실패했습니다.';
-            console.log('[GoogleSignIn][diagnose] PKCE exchange failed', exchangeMessage);
-            return {
-              kind: 'error',
-              message:
-                'Google 로그인 토큰 교환에 실패했습니다. 잠시 후 다시 시도해 주세요. ' +
-                `(diag: ${formatGoogleAuthDiagnostics(diagnostics)}; exchange=${exchangeMessage})`,
-            };
-          }
-        }
-        if (!extracted.accessToken && !extracted.idToken) {
-          return {
-            kind: 'error',
-            message:
-              'Google 로그인 응답에서 토큰을 찾을 수 없습니다. 잠시 후 다시 시도해 주세요. ' +
-              `(diag: ${formatGoogleAuthDiagnostics(diagnostics)})`,
-          };
-        }
-        return {
-          kind: 'success',
-          result: extracted,
-        };
-      }
-      if (result.type === 'cancel') {
-        return { kind: 'cancel' };
-      }
-      if (result.type === 'dismiss') {
-        return { kind: 'dismiss' };
-      }
-      const errMsg = result.type === 'error' ? result.error?.message : undefined;
+    if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
       return {
         kind: 'error',
         message:
-          (errMsg ?? 'Google 로그인에 실패했습니다.') +
-          ` (diag: ${formatGoogleAuthDiagnostics(diagnostics)})`,
+          'Google Play Services 가 사용 불가하거나 업데이트가 필요합니다. 기기 설정에서 Play 서비스를 업데이트해 주세요.',
       };
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Google 로그인 중 오류가 발생했습니다.';
-      return { kind: 'error', message };
     }
-  };
+    return {
+      kind: 'error',
+      message: `Google 로그인에 실패했습니다. (${String(error.code)})`,
+    };
+  }
+  const message = error instanceof Error ? error.message : 'Google 로그인 중 오류가 발생했습니다.';
+  return { kind: 'error', message };
+}
 
-  return { request, response, promptAsync, isReady, clientIds };
+function humanizePlayServicesError(error: unknown): string {
+  if (isErrorWithCode(error) && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+    return 'Google Play Services 가 사용 불가하거나 업데이트가 필요합니다. 기기 설정에서 Play 서비스를 업데이트해 주세요.';
+  }
+  if (error instanceof Error) {
+    return `Google Play Services 확인에 실패했습니다. (${error.message})`;
+  }
+  return 'Google Play Services 확인에 실패했습니다.';
+}
+
+/**
+ * 로그인 종료(또는 진단 시) Native SDK 세션 정리. AuthService 의 logout 흐름이 호출.
+ *
+ * <p>Expo Go 등 Native 모듈 미연결 환경에서는 throw 가능 — 호출자가 swallow.</p>
+ */
+export async function signOutFromGoogle(): Promise<void> {
+  try {
+    ensureGoogleSignInConfigured();
+    await GoogleSignin.signOut();
+  } catch (e) {
+    // 로그아웃 실패는 사용자 경험에 영향이 거의 없다 — 진단 로그만 남기고 throw 하지 않는다.
+    const message = e instanceof Error ? e.message : String(e);
+    // eslint-disable-next-line no-console -- Native SDK 진단(세션 정리 실패는 fatal 이 아님)
+    console.log('[GoogleSignIn][diagnose] signOut skipped', message);
+  }
 }

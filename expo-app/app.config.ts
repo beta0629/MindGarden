@@ -187,19 +187,24 @@ function resolveApiBaseUrlExtra(): string | undefined {
 /**
  * Google iOS OAuth Client ID 를 reversed URL scheme 형태로 변환.
  *
- * <p>standalone iOS 빌드(EAS) 에서 `expo-auth-session/providers/google` 가 iOS native
- * client id 를 사용할 때 redirect URI 를 `com.googleusercontent.apps.<reversed>:/oauthredirect`
- * 로 자동 생성한다. 앱이 이 URL scheme 을 처리할 수 있어야 ASWebAuthenticationSession 의
- * OAuth 콜백이 앱으로 라우팅되어 토큰이 전달된다(미등록 시 콜백이 빈 응답으로 dismiss).</p>
+ * <p>**P0 (2026-06-10 — Native SDK 마이그레이션)**: `@react-native-google-signin/google-signin`
+ * Expo plugin 의 `iosUrlScheme` 옵션 (Native SDK 가 iOS 콜백에 사용) 으로 전달한다. Plugin 이
+ * Info.plist 의 `CFBundleURLTypes` 에 자동 등록하므로 본 파일에서는 별도로 등록하지 않는다.</p>
  *
- * <p>형식: `<id>.apps.googleusercontent.com` → `com.googleusercontent.apps.<id>`.
- * 환경변수 `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` 가 비거나 형식이 다르면 `undefined` 반환 →
- * `CFBundleURLTypes` 에 항목을 추가하지 않아 기존 동작(미등록) 유지.</p>
+ * <p>우선순위:
+ *  1. `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME` env (사용자 직접 지정)
+ *  2. `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` 에서 reversed scheme 파생 (`<id>.apps.googleusercontent.com` → `com.googleusercontent.apps.<id>`).</p>
+ *
+ * <p>둘 다 비면 `undefined` 반환 → plugin 미설정 (Native SDK iOS 콜백 미동작).</p>
  *
  * @author MindGarden
  * @since 2026-06-10
  */
 function resolveGoogleIosReversedClientId(): string | undefined {
+  const explicit = process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME?.trim();
+  if (explicit) {
+    return explicit;
+  }
   const candidate = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
   if (!candidate) {
     return undefined;
@@ -216,15 +221,16 @@ function resolveGoogleIosReversedClientId(): string | undefined {
 }
 
 /**
- * Android applicationId (= `android.package`). expo-auth-session/providers/google 의 Android
- * native client id 흐름이 redirect URI 를 `${Application.applicationId}:/oauthredirect`
- * (= `com.mindgardenmobile:/oauthredirect`) 로 자동 생성한다.
+ * Android applicationId (= `android.package`).
  *
  * <p>iOS 의 `bundleIdentifier`(`com.mindgarden.MindGardenMobile`) 와 의도적으로 다른 값
  * (`com.mindgardenmobile`) 을 유지한다 — Google Play 등록명·Maestro flow·install 스크립트
  * (scripts/install-android-release-apk.js, .maestro/flows/*.yaml) 가 모두 이 패키지명에 묶여
  * 있어 변경 시 마이그레이션 비용이 크다. Google Cloud Console Android OAuth Client 의
  * Package name 도 이 값과 일치해야 한다 (사용자 액션).</p>
+ *
+ * <p>**Build #16 (2026-06-10)**: Native SDK 마이그레이션 후에도 SHA-1 + Package name 정합이
+ * 필요하므로 본 값이 Google Cloud Console Android Client 와 동일해야 한다.</p>
  *
  * @author MindGarden
  * @since 2026-06-10
@@ -323,6 +329,33 @@ export default ({ config }: ConfigContext): ExpoConfig => {
      * EAS 빌드 시점에 자동 주입한다 (`com.apple.developer.applesignin` = ["Default"]).
      */
     'expo-apple-authentication',
+    /**
+     * Google Sign-In Native SDK — `@react-native-google-signin/google-signin` (Build #16, 2026-06-10).
+     *
+     * <p>**P0 마이그레이션**: 기존 `expo-auth-session/providers/google` 의 Custom URI scheme redirect
+     * 가 Google Android Client 정책상 차단(`400 invalid_request: Custom URI scheme is not enabled
+     * for your Android client`)되어 Native SDK 로 전면 교체. Native SDK 는:</p>
+     *
+     *  - iOS: iosClientId + URL scheme (plugin 이 Info.plist 자동 주입) 으로 SDK 직접 호출
+     *  - Android: SHA-1 + Package name + Web Client ID 검증 (Custom URI scheme 미사용)
+     *  - 토큰: `signIn()` → `idToken/serverAuthCode` 직접 반환, `getTokens()` 로 accessToken 취득
+     *
+     * <p>Plugin 의 `iosUrlScheme` 은 iOS reversed client ID 형식 (`com.googleusercontent.apps.<id>`)
+     * 이며 Info.plist 의 `CFBundleURLTypes` 에 자동 등록된다. 본 파일에서는 별도로 추가하지 않는다.
+     * env 미주입 시 plugin 자체를 omit 해 빌드 실패를 막는다.</p>
+     *
+     * <p>SHA-1 등록은 사용자 액션 — `docs/project-management/2026-06-10/GOOGLE_ANDROID_OAUTH_SETUP.md`</p>
+     */
+    ...(googleIosReversedClientId
+      ? ([
+          [
+            '@react-native-google-signin/google-signin',
+            {
+              iosUrlScheme: googleIosReversedClientId,
+            },
+          ],
+        ] as const)
+      : []),
     withAndroidKakaoMaven,
   ];
 
@@ -384,26 +417,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         NAVER_CLIENT_SECRET: resolveNaverClientSecretForNative(),
         NAVER_APP_NAME: 'MindGardenMobileApp',
         /**
-         * Google OAuth iOS callback URL schemes — `expo-auth-session/providers/google` 의
-         * iOS native client id 흐름은 redirect URI 를 `com.googleusercontent.apps.<reversed>:/oauthredirect`
-         * 로 자동 생성한다. 미등록 시 ASWebAuthenticationSession 콜백이 앱으로 라우팅되지 않아
-         * `params`/`authentication` 모두 비어 있는 응답이 반환되어 토큰을 추출할 수 없다.
-         *
-         * <p>P0 (2026-06-10): TestFlight `1.0.7 (#15)` 에서 "Google 로그인 응답에서 토큰을 찾을
-         * 수 없습니다" 오류로 로그인 차단 → Info.plist 미등록이 root cause.</p>
-         *
-         * <p>`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` 미주입 시 항목 미추가(기존 동작 유지). 앱 자체
-         * deep-link scheme(`mindgarden`) 은 Expo prebuild 가 별도 entry 로 자동 등록한다.</p>
+         * Google OAuth iOS URL scheme 은 `@react-native-google-signin/google-signin` Expo plugin
+         * 이 `CFBundleURLTypes` 에 자동 주입한다 (build #16 — 2026-06-10 Native SDK 마이그레이션).
+         * 본 파일에서는 별도 등록하지 않으며, plugin 의 `iosUrlScheme` 옵션이 단일 진입점이다.
          */
-        ...(googleIosReversedClientId
-          ? {
-              CFBundleURLTypes: [
-                {
-                  CFBundleURLSchemes: [googleIosReversedClientId],
-                },
-              ],
-            }
-          : {}),
       },
     },
     android: {
@@ -417,24 +434,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       edgeToEdgeEnabled: true,
       versionCode: releaseManifest.androidVersionCode,
       /**
-       * Android Google OAuth callback intent-filter — iOS `CFBundleURLTypes` 와 동일 계열의 P0 fix.
+       * Google Android OAuth callback intent-filter — Native SDK 마이그레이션(2026-06-10) 후 미사용.
        *
-       * <p>**P0 (2026-06-10)** — `expo-auth-session/providers/google` 의 Android native 흐름은
-       * redirect URI 를 `${Application.applicationId}:/oauthredirect`
-       * (= `com.mindgardenmobile:/oauthredirect`) 로 자동 생성한다
-       * (`node_modules/expo-auth-session/src/providers/Google.ts` L227).</p>
+       * <p>**Build #16 (2026-06-10)**: `@react-native-google-signin/google-signin` Native SDK 는
+       * Custom URI scheme deep-link 콜백을 사용하지 않고 SDK 가 직접 토큰을 반환한다. Google
+       * Android Client 가 2022 년 이후 `400 invalid_request: Custom URI scheme is not enabled
+       * for your Android client` 로 차단해 `expo-auth-session/providers/google` 흐름이 실패한
+       * 것이 마이그레이션의 root cause.</p>
        *
-       * <p>안드로이드 Chrome Custom Tabs 흐름은 콜백을 ActivityResult 가 아닌
-       * `Linking.addEventListener('url', ...)` 폴리필
-       * (`node_modules/expo-web-browser/src/WebBrowser.ts` `_waitForRedirectAsync`) 로 받는다.
-       * 따라서 이 deep-link 스킴이 AndroidManifest 의 intent-filter 로 등록되어 있지 않으면
-       * 콜백 URL 이 앱으로 라우팅되지 않고 Custom Tab 만 닫히면서 토큰이 누락된다 — iOS 의
-       * `params=empty,auth=empty` (#15) 케이스의 Android 대응.</p>
-       *
-       * <p>앱 자체 deep-link(`mindgarden://`) 는 `scheme: 'mindgarden'` 으로 Expo prebuild 가
-       * 별도 entry 로 자동 등록하므로 본 항목은 Google OAuth 콜백 전용 추가 등록이다.
-       * `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` 미주입 환경에서도 등록을 유지해 사용자가 EAS env
-       * 만 추가해도 다음 빌드부터 동작하도록 한다(scheme 등록은 빈 intent 일 뿐 부작용 없음).</p>
+       * <p>본 intent-filter 는 의도적으로 유지한다 — 다른 deep-link 진입점이 본 scheme
+       * (`com.mindgardenmobile://`) 을 사용 중일 가능성이 있고, 빈 intent 등록은 부작용이 없다.
+       * Native SDK 자체는 본 항목을 참조하지 않는다.</p>
        *
        * <p>SHA-1 fingerprint·Package name 등록은 Google Cloud Console 사용자 액션 — 본 파일과 무관.
        * 가이드: docs/project-management/2026-06-10/GOOGLE_ANDROID_OAUTH_SETUP.md</p>
@@ -443,12 +453,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           action: 'VIEW',
           autoVerify: false,
-          /**
-           * scheme 만 등록 — `com.mindgardenmobile:/oauthredirect` 은 opaque URI
-           * (scheme:path, `//` 없음) 형태라 host 가 없고 path 매칭이 부적합하다.
-           * expo-web-browser 폴리필이 콜백 URL 전체를 prefix 비교
-           * (`event.url.startsWith(returnUrl)`) 하므로 본 filter 는 라우팅 게이트 역할만 한다.
-           */
           data: [
             {
               scheme: ANDROID_PACKAGE_ID,
@@ -491,20 +495,24 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       /** EXPO_PUBLIC_SOCIAL_LOGIN_DEBUG=1 이면 릴리스·프리뷰에서도 AuthService 소셜 로그인 구조화 진단 로그가 켜집니다(adb logcat / Metro에서 `[AuthService][social-login]` 필터). */
       socialLoginDebug: process.env.EXPO_PUBLIC_SOCIAL_LOGIN_DEBUG === '1',
       /**
-       * Google OAuth 2.0 Client IDs — `expo-auth-session/providers/google` 가 platform 별로 분기.
-       * <p>저장소에 평문 커밋 금지. EAS 시크릿 또는 로컬 `.env` 로 주입한다.
-       *  - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`     : OAuth 2.0 Web Client (FE 검증·Expo Proxy 폴백)
+       * Google OAuth 2.0 Client IDs — `@react-native-google-signin/google-signin` Native SDK
+       * (Build #16, 2026-06-10) 가 다음을 사용:
+       *  - `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`     : OAuth 2.0 Web Client (idToken `aud` 검증 + BE allowedAudiences)
        *  - `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`     : OAuth 2.0 iOS Client (Bundle ID `com.mindgarden.MindGardenMobile`)
-       *  - `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` : OAuth 2.0 Android Client (Package `com.mindgardenmobile`)</p>
+       *  - `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` : OAuth 2.0 Android Client (Package `com.mindgardenmobile` + SHA-1)
        *
-       * <p>키가 모두 비어 있으면 `useGoogleAuthRequest()` 가 `notConfigured` 분기로 빠져
-       * 사용자에게 "Google 로그인 설정이 누락되어 있습니다" 메시지를 노출하므로 빌드는 계속 진행한다.</p>
+       * <p>저장소에 평문 커밋 금지. EAS 시크릿 또는 로컬 `.env` 로 주입한다.</p>
        *
-       * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (16)` + OTA group `608da58e` 에서 빈 값이 publish 되어
-       * `isGoogleConfigured=false` 가 됨. Root cause: `eas update` 명령 `--environment production` 누락.
-       * 본 정의는 빈 값이면 항목 자체를 omit 하여 `Constants.expoConfig.extra.googleClientId` 가
-       * `undefined` 가 되도록 하고, `googleSignIn.resolveGoogleClientIdConfig()` 가
-       * `process.env` (metro inline) 로 폴백할 수 있게 한다.</p>
+       * <p>Native SDK 는 webClientId 가 필수 (idToken audience). iosClientId 는 plugin 의
+       * `iosUrlScheme` 이 함께 등록되어야 iOS Safari View Controller 콜백이 동작한다. Android 는
+       * Google Cloud Console 의 SHA-1 + Package name 정합 (Cloud Console 사용자 액션) 만으로 동작 —
+       * `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` 자체는 SDK 가 직접 사용하지 않지만 BE
+       * `allowedAudiences` 에 포함되어 idToken `aud` 검증에 사용된다.</p>
+       *
+       * <p>**Build #16 (2026-06-10)** — Native SDK 마이그레이션. 기존 OTA 빈 값 회귀 보호 그대로
+       * 유지: 빈 값이면 항목 자체를 omit 하여 `Constants.expoConfig.extra.googleClientId` 가
+       * `undefined` 가 되고, `googleSignIn.resolveGoogleClientIdConfig()` 가
+       * `process.env` (metro inline) 로 폴백한다.</p>
        */
       ...(extraGoogleClientId ? { googleClientId: extraGoogleClientId } : {}),
     },

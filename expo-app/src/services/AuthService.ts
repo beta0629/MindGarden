@@ -46,6 +46,7 @@ import {
   isAppleSignInAvailable,
   performAppleNativeSignIn,
 } from './auth/appleSignIn';
+import { signInWithGoogle, signOutFromGoogle, type GoogleSignInOutcome } from './auth/googleSignIn';
 import type { User, Tokens } from '../stores/useAuthStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
@@ -1397,28 +1398,51 @@ export const AuthService = {
   },
 
   /**
-   * Google 로그인 — `expo-auth-session/providers/google` (G-1) 결과를 BE 와 매칭.
+   * Google 로그인 — `@react-native-google-signin/google-signin` Native SDK (Build #16, 2026-06-10).
    *
-   * <p>흐름: 호출자(login.tsx) 가 `useGoogleAuthRequest().promptAsync()` 로 Google access_token /
-   * id_token 을 받은 뒤, 본 메서드를 호출. BE `/api/v1/auth/social-login` 이 다음 우선순위로 분기:
-   *  - accessToken 이 있으면 `GoogleOAuth2ServiceImpl.getUserInfo(accessToken)` (Google userinfo API)
-   *  - accessToken 이 없고 idToken 만 있으면 `getUserInfoFromIdToken(idToken)` (Google tokeninfo API)
-   * 그 결과로 `requiresOAuthPhoneVerification` (정책상 항상 true) 또는 기존 매칭 사용자 즉시 로그인.</p>
+   * <p>**Native SDK 마이그레이션 (P0)**: 기존 `expo-auth-session/providers/google` 의 Custom URI
+   * scheme redirect 흐름이 Google Android Client 정책상 차단되어 (
+   * `400 invalid_request: Custom URI scheme is not enabled for your Android client`)
+   * 본 메서드는 SDK 가 직접 토큰을 반환하는 흐름으로 교체된다.</p>
    *
-   * <p>**P0 2026-06-10**: TestFlight `1.0.7 (14)` 에서 iOS 네이티브 응답이 `accessToken` 을
-   * 누락하고 `idToken` 만 전달하는 케이스를 관찰하여, accessToken 부재 시 idToken 만으로도
-   * 로그인이 진행되도록 방어한다. 둘 다 비어 있을 때만 사용자 친화 에러를 반환.</p>
+   * <p>흐름:
+   *  1. {@link signInWithGoogle} 호출 → SDK 가 idToken / serverAuthCode 직접 반환
+   *  2. accessToken 부족 시 SDK 가 `getTokens()` 로 보강
+   *  3. BE `/api/v1/auth/social-login` 호출 (idToken 우선, accessToken 동봉)
+   *  4. 응답을 `mapNativeSocialResponse` 로 분기 (인증 / 가입 / OAuth 휴대폰 매칭 등)</p>
    *
-   * @param accessToken Google OAuth access_token (`auth.accessToken` 또는 `params.access_token`) — 선택
-   * @param idToken     OpenID Connect id_token (`auth.idToken` 또는 `params.id_token`) — 선택
+   * <p>BE `GoogleOAuth2ServiceImpl` 은 idToken `aud` 를 `allowedAudiences` (`webClientId` /
+   * `iosClientId` / `androidClientId`) 로 검증하고, accessToken 이 함께 오면 `userinfo` API 로
+   * 추가 보강한다 (#197 fix).</p>
+   *
+   * @param overrideOutcome 테스트·재시도 분기에서 외부 outcome 을 직접 주입할 때 사용 (옵션).
    */
-  async loginWithGoogle(accessToken?: string, idToken?: string): Promise<SocialLoginOutcome> {
+  async loginWithGoogle(overrideOutcome?: GoogleSignInOutcome): Promise<SocialLoginOutcome> {
+    let outcome = overrideOutcome;
+    if (!outcome) {
+      try {
+        outcome = await signInWithGoogle();
+      } catch (e: unknown) {
+        logAuthError('Google 로그인 에러', e);
+        const message = e instanceof Error ? e.message : 'Google 로그인 중 오류가 발생했습니다.';
+        return { kind: 'error', message };
+      }
+    }
+
+    if (outcome.kind === 'cancel' || outcome.kind === 'dismiss') {
+      return { kind: 'error', message: 'Google 로그인이 취소되었습니다.' };
+    }
+    if (outcome.kind === 'error' || outcome.kind === 'notConfigured') {
+      return { kind: 'error', message: outcome.message };
+    }
+
+    const { idToken, accessToken, user: googleUser } = outcome.result;
+    const trimmedIdToken = idToken.trim();
     const trimmedAccessToken = accessToken?.trim() ?? '';
-    const trimmedIdToken = idToken?.trim() ?? '';
-    if (!trimmedAccessToken && !trimmedIdToken) {
+    if (!trimmedIdToken) {
       return {
         kind: 'error',
-        message: 'Google 로그인 응답에서 토큰을 찾을 수 없습니다. 잠시 후 다시 시도해 주세요.',
+        message: 'Google 로그인 응답에서 idToken 을 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
       };
     }
 
@@ -1426,30 +1450,41 @@ export const AuthService = {
       const googleRetryContext = buildSocialRetryContext(
         'GOOGLE',
         trimmedAccessToken || trimmedIdToken,
-        null,
-        null,
-        null,
-        null,
+        googleUser.id || null,
+        googleUser.email || null,
+        googleUser.name || null,
+        googleUser.photoUrl ?? null,
       );
 
       logSocialLoginDebugRequest({
         provider: 'GOOGLE',
-        providerUserId: '',
-        hasEmail: false,
-        hasNickname: false,
-        hasProfileImage: false,
+        providerUserId: googleUser.id ?? '',
+        hasEmail: Boolean(googleUser.email),
+        hasNickname: Boolean(googleUser.name),
+        hasProfileImage: Boolean(googleUser.photoUrl),
         hasPhone: false,
       });
 
       let response: SocialLoginResponse | undefined;
       try {
-        // BE 는 accessToken 우선이고, 없으면 idToken 으로 `tokeninfo` 검증 후 사용자 정보를 보강한다.
-        const requestBody: Record<string, unknown> = { provider: 'GOOGLE' };
+        const requestBody: Record<string, unknown> = {
+          provider: 'GOOGLE',
+          idToken: trimmedIdToken,
+        };
         if (trimmedAccessToken) {
           requestBody.accessToken = trimmedAccessToken;
         }
-        if (trimmedIdToken) {
-          requestBody.idToken = trimmedIdToken;
+        if (googleUser.id) {
+          requestBody.userId = googleUser.id;
+        }
+        if (googleUser.email) {
+          requestBody.email = googleUser.email;
+        }
+        if (googleUser.name) {
+          requestBody.nickname = googleUser.name;
+        }
+        if (googleUser.photoUrl) {
+          requestBody.profileImage = googleUser.photoUrl;
         }
         response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, requestBody);
       } catch (apiError: unknown) {
@@ -1467,7 +1502,12 @@ export const AuthService = {
       if (!response) {
         return { kind: 'error', message: '서버 응답이 없습니다.' };
       }
-      const mapped = mapNativeSocialResponse(response, 'GOOGLE', undefined, googleRetryContext);
+      const mapped = mapNativeSocialResponse(
+        response,
+        'GOOGLE',
+        googleUser.photoUrl,
+        googleRetryContext,
+      );
       logSocialLoginDebugResponse(response, mapped);
       if (mapped.kind === 'authenticated') {
         const accessTokenValue = response.accessToken ?? '';
@@ -1493,8 +1533,11 @@ export const AuthService = {
 
   /**
    * 가입 완료 후 동일 제공자로 social-login 재호출 (스펙 SNS_SIMPLE_SIGNUP_SPEC 4.1).
-   * Google 은 OAuth access_token 이 1회용이므로 본 헬퍼에서 재호출하지 않고 호출자가
-   * 다시 `useGoogleAuthRequest().promptAsync()` 를 트리거해야 한다 — 명시적 에러로 보고.
+   *
+   * <p>Build #16 (2026-06-10) 마이그레이션 후 Google 도 Native SDK `signInWithGoogle()` 로
+   * 새 idToken 을 받아 social-login 을 재시도한다. SDK 의 idToken 은 1회용이지만, 사용자가 동의
+   * 한 후 즉시 재호출 시 SDK 가 캐시된 사용자로 무프롬프트 처리하는 경우가 있어 카카오·네이버와
+   * 동일한 흐름이 가능하다.</p>
    */
   async loginWithProviderAfterSignup(provider: SocialAuthProvider): Promise<SocialLoginOutcome> {
     if (provider === 'KAKAO') {
@@ -1504,11 +1547,7 @@ export const AuthService = {
       return AuthService.loginWithApple();
     }
     if (provider === 'GOOGLE') {
-      return {
-        kind: 'error',
-        message:
-          'Google 로그인을 다시 시도해 주세요. (가입 완료 후 동일 토큰 재사용 불가 — 1회용 OAuth access_token)',
-      };
+      return AuthService.loginWithGoogle();
     }
     return AuthService.loginWithNaver();
   },
@@ -1816,14 +1855,18 @@ export const AuthService = {
   },
 
   /**
-   * 로그아웃 — SDK 로그아웃 + 로컬 토큰 삭제 + 서버 로그아웃
+   * 로그아웃 — SDK 로그아웃 + 로컬 토큰 삭제 + 서버 로그아웃.
+   *
+   * <p>Build #16 (2026-06-10) 마이그레이션: GOOGLE provider 도 Native SDK 세션을 정리한다.</p>
    */
-  async logout(provider?: 'KAKAO' | 'NAVER'): Promise<void> {
+  async logout(provider?: 'KAKAO' | 'NAVER' | 'GOOGLE'): Promise<void> {
     try {
       if (provider === 'KAKAO' && isKakaoNativeLinked()) {
         await kakaoSDKLogout();
       } else if (provider === 'NAVER' && isNaverNativeLinked()) {
         await NaverLogin.logout();
+      } else if (provider === 'GOOGLE') {
+        await signOutFromGoogle();
       }
 
       await apiPost(AUTH_API.LOGOUT).catch(() => {

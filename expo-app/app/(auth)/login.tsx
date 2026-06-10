@@ -265,10 +265,10 @@ export default function MindGardenLoginPage() {
   /**
    * Google OAuth 진입 직전 — 다른 provider 와 동일한 isLoading 상태 셋업.
    *
-   * <p>P0 핫픽스 (2026-06-10): `useGoogleAuthRequest` 의 mount throw 를 피하기 위해
-   * Google 훅 호출은 {@link GoogleLoginButtonContainer} 내부로 격리했다. 본 핸들러는
-   * 컨테이너 Active 분기가 `promptAsync` 호출 직전에 호출한다. Disabled 분기에서는
-   * Alert 만 띄우고 본 핸들러를 호출하지 않으므로 isLoading 도 변하지 않는다.</p>
+   * <p>**Build #16 (2026-06-10) — Native SDK 마이그레이션**: Google 호출은
+   * {@link GoogleLoginButtonContainer} 가 `signInWithGoogle()` 를 직접 호출한다. 본 핸들러는
+   * 컨테이너 Active 분기가 SDK 호출 직전에 호출한다. Disabled 분기에서는 Alert 만 띄우고 본
+   * 핸들러를 호출하지 않으므로 isLoading 도 변하지 않는다.</p>
    */
   const handleGoogleSignInStart = useCallback(() => {
     setIsLoading(true);
@@ -279,9 +279,10 @@ export default function MindGardenLoginPage() {
   /**
    * Google OAuth 결과(또는 미구성 안내)를 받아 BE 인증·라우팅·에러 처리한다.
    *
-   * <p>{@link GoogleLoginButtonContainer} 의 Active 분기가 `promptAsync` 결과를 그대로 넘긴다.
-   * cancel/dismiss 는 무음 종료, notConfigured/error 는 에러 메시지 노출, success 는
-   * `AuthService.loginWithGoogle` 호출 후 결과별 라우팅.</p>
+   * <p>**Build #16 (2026-06-10) — Native SDK 마이그레이션**: {@link GoogleLoginButtonContainer}
+   * 의 Active 분기가 Native SDK 의 outcome 을 그대로 넘긴다. cancel/dismiss 는 무음 종료,
+   * notConfigured/error 는 에러 메시지 노출, success 는 `AuthService.loginWithGoogle(outcome)`
+   * 호출 후 결과별 라우팅.</p>
    */
   const handleGoogleAuthOutcome = useCallback(
     async (outcome: GoogleSignInOutcome) => {
@@ -295,10 +296,7 @@ export default function MindGardenLoginPage() {
           return;
         }
 
-        const result = await AuthService.loginWithGoogle(
-          outcome.result.accessToken,
-          outcome.result.idToken,
-        );
+        const result = await AuthService.loginWithGoogle(outcome);
         if (result.kind === 'authenticated') {
           await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
           await handleLoginSuccess();

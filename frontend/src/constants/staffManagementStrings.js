@@ -55,7 +55,10 @@ export const STAFF_MGMT_MSG = {
   ERR_ADDRESS_API: '주소 검색 서비스를 불러올 수 없습니다.',
   ERR_LOAD_ADMIN_COUNSELING: '관리자 상담 겸직 정보를 불러오지 못했습니다.',
   ERR_SAVE_ADMIN_COUNSELING: '상담 겸직 설정을 저장하지 못했습니다.',
-  TOAST_ADMIN_COUNSELING_SAVED: '상담 겸직 설정이 저장되었습니다.'
+  TOAST_ADMIN_COUNSELING_SAVED: '상담 겸직 설정이 저장되었습니다.',
+  TOAST_STAFF_DELETED: '스태프가 삭제되었습니다. (7일 내 되돌리기 가능)',
+  ERR_DELETE_FAILED: '스태프 삭제에 실패했습니다.',
+  ERR_DELETE_PROCESS: '스태프 삭제 중 오류가 발생했습니다.'
 };
 
 export const STAFF_MGMT_PAGE = {
@@ -79,6 +82,7 @@ export const STAFF_MGMT_BUTTON = {
   DETAIL: '상세',
   EDIT: '수정',
   ROLE_CHANGE: '역할 변경',
+  DELETE: '삭제',
   CLOSE: '닫기',
   CANCEL: '취소',
   SAVE: '저장',
@@ -116,7 +120,11 @@ export const STAFF_MGMT_MODAL = {
   CREATE_SUBTITLE: '내담자·상담사와 동일한 양식으로 사무원(스태프) 계정을 생성합니다.',
   LOADING_USERS: '사용자 목록 불러오는 중...',
   LABEL_NEW_ROLE: '새 역할',
-  ROLE_SELECT_PLACEHOLDER: '역할 선택'
+  ROLE_SELECT_PLACEHOLDER: '역할 선택',
+  DELETE_TITLE: '스태프 삭제 확인',
+  DELETE_SUBTITLE: '삭제 후 7일 이내에 되돌릴 수 있습니다. 그 이후에는 자동으로 익명화 처리됩니다.',
+  DELETE_CONFIRM_FMT: '정말 [{name}] 스태프를 삭제하시겠습니까?',
+  DELETE_BUTTON: '삭제하기'
 };
 
 export const STAFF_MGMT_FORM_LABEL = {

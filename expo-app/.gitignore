@@ -34,6 +34,12 @@ yarn-error.*
 # Firebase Android (FCM) — Firebase Console에서 다운로드, 로컬만 보관
 google-services.json
 
+# Google Play Service Account JSON (EAS Submit → Play Console internal track)
+# Google Cloud Console > IAM > Service Accounts 에서 발급한 JSON 키.
+# 절대 commit 금지. 자세한 셋업은 docs/project-management/2026-06-10/ANDROID_EAS_SUBMIT_AUTOMATION_SETUP.md
+google-play-service-account*.json
+google-services-key*.json
+
 # local env (비밀·키는 커밋 금지 — 템플릿은 .env.example)
 .env
 .env.local

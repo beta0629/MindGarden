@@ -100,6 +100,11 @@ deployment/*template*
 **/credentials/
 **/auth-keys/
 
+# EAS Submit — Google Play Service Account JSON (절대 commit 금지)
+# 셋업: docs/project-management/2026-06-10/ANDROID_EAS_SUBMIT_AUTOMATION_SETUP.md
+**/google-play-service-account*.json
+**/google-services-key*.json
+
 # Database
 *.db
 *.sqlite

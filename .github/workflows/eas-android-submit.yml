@@ -1,0 +1,165 @@
+name: 📱 EAS Android — Build & Auto-Submit (Play internal)
+
+# 셋업 문서: docs/project-management/2026-06-10/ANDROID_EAS_SUBMIT_AUTOMATION_SETUP.md
+#
+# 트리거: 수동 (workflow_dispatch). 자동 푸시 트리거는 EAS 빌드 쿼터 보호를 위해 비활성화.
+# 필요 Secrets:
+#   - EXPO_TOKEN                                : Expo access token (https://expo.dev/accounts/<acct>/settings/access-tokens)
+#   - EAS_GOOGLE_SERVICE_ACCOUNT_KEY_BASE64     : base64 로 인코딩된 Google Play Service Account JSON
+#                                                 (Step 1~2 에서 발급, `base64 -i key.json -o out.b64` 한 줄)
+#
+# 동작:
+#   1. base64 Secret → expo-app/google-play-service-account.json 디코드
+#   2. submit-only 모드 (기본): 기존 EAS 빌드 ID 를 input 으로 받아 `eas submit`
+#      build-and-submit 모드 : 신규 EAS 빌드를 트리거하고 `--auto-submit`
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '실행 모드 (submit-only | build-and-submit)'
+        required: true
+        default: 'submit-only'
+        type: choice
+        options:
+          - submit-only
+          - build-and-submit
+      profile:
+        description: 'EAS profile (production / internal-dev)'
+        required: true
+        default: 'production'
+        type: string
+      build-id:
+        description: '(submit-only 모드) 기존 EAS Android 빌드 ID (예: c385acca-48a7-...)'
+        required: false
+        type: string
+      track:
+        description: 'Play Console track (internal / alpha / beta / production) — eas.json 값 override (optional)'
+        required: false
+        default: ''
+        type: string
+
+concurrency:
+  group: eas-android-submit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    name: 🚀 Android Build/Submit (${{ github.event.inputs.mode }} / ${{ github.event.inputs.profile }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    defaults:
+      run:
+        working-directory: expo-app
+
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: da41eca0-daad-4825-baf7-16cd3c71e6cd
+      EXPO_PUBLIC_EAS_PROJECT_ID: da41eca0-daad-4825-baf7-16cd3c71e6cd
+
+    steps:
+      - name: 📥 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 🔐 사전 점검 — 필수 Secret
+        run: |
+          missing=()
+          if [ -z "${EXPO_TOKEN:-}" ]; then missing+=("EXPO_TOKEN"); fi
+          if [ -z "${{ secrets.EAS_GOOGLE_SERVICE_ACCOUNT_KEY_BASE64 }}" ]; then missing+=("EAS_GOOGLE_SERVICE_ACCOUNT_KEY_BASE64"); fi
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::필수 GitHub Secret 누락: ${missing[*]}"
+            echo "::error::셋업 가이드: docs/project-management/2026-06-10/ANDROID_EAS_SUBMIT_AUTOMATION_SETUP.md"
+            exit 1
+          fi
+          echo "✅ 필수 Secret 확인 완료"
+
+      - name: 📦 Node.js 20 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: expo-app/package-lock.json
+
+      - name: 📦 의존성 설치 (eas-cli 사용을 위한 최소 설치)
+        run: |
+          npm ci --no-audit --no-fund
+
+      - name: 🔑 Service Account JSON 디코드
+        env:
+          SA_B64: ${{ secrets.EAS_GOOGLE_SERVICE_ACCOUNT_KEY_BASE64 }}
+        run: |
+          echo "$SA_B64" | base64 -d > google-play-service-account.json
+          # 형식 검증 (jq 가능 시)
+          if command -v jq >/dev/null 2>&1; then
+            jq -e '.type == "service_account" and .private_key' google-play-service-account.json >/dev/null \
+              || { echo "::error::Service Account JSON 형식 오류 (type/private_key 누락)"; exit 1; }
+          fi
+          # 안전: 권한 600
+          chmod 600 google-play-service-account.json
+          echo "✅ google-play-service-account.json 생성 완료 ($(wc -c < google-play-service-account.json) bytes)"
+
+      - name: 🔧 eas-cli 버전 확인
+        run: npx --yes eas-cli --version
+
+      - name: 🚀 (build-and-submit) EAS Build + Auto-Submit
+        if: github.event.inputs.mode == 'build-and-submit'
+        run: |
+          set -euo pipefail
+          PROFILE="${{ github.event.inputs.profile }}"
+          echo "▶ npx eas build --platform android --profile $PROFILE --non-interactive --auto-submit"
+          npx --yes eas-cli build \
+            --platform android \
+            --profile "$PROFILE" \
+            --non-interactive \
+            --auto-submit \
+            --no-wait \
+            | tee build-log.txt
+          echo "## EAS Build & Submit (auto)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 60 build-log.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 🚀 (submit-only) EAS Submit 기존 빌드
+        if: github.event.inputs.mode == 'submit-only'
+        run: |
+          set -euo pipefail
+          PROFILE="${{ github.event.inputs.profile }}"
+          BUILD_ID="${{ github.event.inputs.build-id }}"
+          if [ -z "$BUILD_ID" ]; then
+            echo "::error::submit-only 모드에는 build-id 입력값이 필수입니다."
+            exit 1
+          fi
+          echo "▶ npx eas submit --platform android --profile $PROFILE --id $BUILD_ID --non-interactive"
+          npx --yes eas-cli submit \
+            --platform android \
+            --profile "$PROFILE" \
+            --id "$BUILD_ID" \
+            --non-interactive \
+            | tee submit-log.txt
+          echo "## EAS Submit (existing build)" >> $GITHUB_STEP_SUMMARY
+          echo "- profile: \`$PROFILE\`" >> $GITHUB_STEP_SUMMARY
+          echo "- build-id: \`$BUILD_ID\`" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 60 submit-log.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 🧹 Service Account JSON 안전 삭제
+        if: always()
+        run: |
+          if [ -f google-play-service-account.json ]; then
+            shred -uvz google-play-service-account.json 2>/dev/null || rm -f google-play-service-account.json
+            echo "✅ google-play-service-account.json 삭제 완료"
+          fi
+
+      - name: 📋 후속 액션
+        if: success()
+        run: |
+          {
+            echo ""
+            echo "### ✅ 다음 액션"
+            echo ""
+            echo "1. https://play.google.com/console/ 접속 → 마인드가든 앱 → **테스트 → 내부 테스트** track 에서 신규 빌드 확인"
+            echo "2. \`releaseStatus: draft\` 로 업로드됨 → Play Console 에서 검토 후 **출시** 클릭"
+            echo "3. 안정화 후 \`expo-app/eas.json\` → \`releaseStatus\` 를 \`completed\` 로 변경하면 자동 publish"
+          } >> $GITHUB_STEP_SUMMARY

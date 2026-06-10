@@ -272,11 +272,14 @@
   transform: translateY(-1px);
 }
 
-/* 작은 카드용 compact 모드 (mg-v2-list-block__grid--small 내 사용) */
+/* 작은 카드용 compact 모드 (mg-v2-list-block__grid--small 내 사용)
+ * P1 컴팩트화 (2026-06-10): 콘텐츠 패딩 16-20px, 콘텐츠 기반 자동 높이 200-240px 목표
+ */
 .mg-v2-profile-card--compact {
-  padding: var(--mg-spacing-12, 0.75rem);
+  padding: var(--mg-spacing-16, 1rem) var(--mg-spacing-16, 1rem) var(--mg-spacing-12, 0.75rem);
   gap: var(--mg-spacing-8, 0.5rem);
   min-width: 0;
+  /* 콘텐츠 기반 자동 높이 (공통 .mg-v2-profile-card 의 padding-lg/gap-md 오버라이드) */
 }
 
 /* compact: 헤더 줄바꿈 허용, 배지를 두 번째 줄로 내려도 됨 */
@@ -331,8 +334,14 @@
   padding: 2px 6px;
 }
 
-/* compact: 본문·footer는 숨김 유지, 헤더 아래 인라인 작업만 표시 */
+/* compact: 본문·footer는 숨김 유지, 헤더 아래 인라인 작업만 표시
+ * P1 컴팩트화 (2026-06-10): 한 줄 그룹 정렬, 위험 액션(삭제) 우측 분리
+ */
 .mg-v2-profile-card__inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-6, 0.375rem);
   width: 100%;
   min-width: 0;
   margin-top: var(--mg-spacing-8, 0.5rem);
@@ -340,14 +349,38 @@
   border-top: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
 }
 
+/* compact 액션 그룹: 가로 정렬 + 일반 액션(상세보기/수정/비번초기화) 좌측, 위험 액션(삭제) 우측 분리 */
 .mg-v2-client-actions--compact.mg-v2-profile-card__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-start;
-  gap: var(--mg-spacing-4, 0.25rem);
+  gap: var(--mg-spacing-6, 0.375rem);
+  width: 100%;
+}
+
+.mg-v2-client-actions--compact.mg-v2-profile-card__actions > .mg-button--danger {
+  margin-left: auto;
 }
 
 .mg-v2-profile-card__inline-actions .mg-button {
-  padding: 0.35rem 0.5rem;
-  font-size: 11px;
+  flex: 0 0 auto;
+  padding: var(--mg-spacing-6, 0.375rem) var(--mg-spacing-10, 0.625rem);
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  white-space: nowrap;
+}
+
+/* compact 모바일 (≤480px): 작은 폭에서 액션 컬럼 스택, 삭제는 마지막 줄 우측 */
+@media (max-width: 480px) {
+  .mg-v2-profile-card--compact .mg-v2-profile-card__inline-actions .mg-button {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .mg-v2-client-actions--compact.mg-v2-profile-card__actions > .mg-button--danger {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
 }
 
 .mg-v2-client-actions--table.mg-v2-profile-card__actions {

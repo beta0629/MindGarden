@@ -31,9 +31,12 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
-import { OAUTH2_LOGIN_UI } from '../../constants/oauth2';
+import { OAUTH2_LOGIN_UI, isGoogleWebClientIdConfigured } from '../../constants/oauth2';
 import { requestAppleSignIn } from '../../services/oauth2/appleOAuth2Service';
 import { signInWithApple } from '../../api/auth/appleAuthApi';
+import { requestGoogleSocialLogin } from '../../services/oauth2/googleWebOAuth2Service';
+import GoogleLoginButton from './GoogleLoginButton';
+import OAuthPhoneVerificationModal from './OAuthPhoneVerificationModal';
 import { setLoginSession } from '../../utils/session';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import MGButton from '../common/MGButton';
@@ -105,6 +108,9 @@ const UnifiedLogin = () => {
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [tempPassword, setTempPassword] = useState(''); // 임시 비밀번호 저장 (비밀번호 변경 모달에 전달)
+  // GIS 웹 흐름 OAuth 휴대폰 매칭(OTP) 모달 — `OAuthPhoneVerificationModal` 표시 여부와 BE payload 보관.
+  const [showOAuthPhoneVerificationModal, setShowOAuthPhoneVerificationModal] = useState(false);
+  const [oauthPhoneVerificationPayload, setOAuthPhoneVerificationPayload] = useState(null);
   const sessionCheckedRef = useRef(false); // 세션 체크 완료 여부 (ref 사용으로 리렌더링 방지)
 
   // 툴팁 상태
@@ -679,6 +685,11 @@ const UnifiedLogin = () => {
     }
   };
 
+  /**
+   * 레거시 Google 로그인 — `GOOGLE_WEB_CLIENT_ID` 가 미주입된 환경에서만 fallback 으로 사용한다.
+   * GIS Provider 마운트 시(`isGoogleWebClientIdConfigured === true`)에는
+   * {@link handleGoogleWebSuccess} 가 처리하므로 본 핸들러는 호출되지 않는다.
+   */
   const handleGoogleLogin = async() => {
     try {
       await googleLogin();
@@ -686,6 +697,92 @@ const UnifiedLogin = () => {
       console.error('구글 로그인 오류:', error);
       showTooltip(t('auth:unifiedLogin.socialLogin.googleFailed'), 'error');
     }
+  };
+
+  /**
+   * GIS implicit 흐름에서 access_token 을 받은 직후 BE `/social-login` 으로 매칭 요청.
+   * BE 응답을 분기 처리한다(authenticated / requiresOAuthPhoneVerification /
+   * requiresPhoneAccountSelection / requiresSignup / error).
+   */
+  const handleGoogleWebSuccess = async({ accessToken, idToken }) => {
+    setIsLoading(true);
+    try {
+      const outcome = await requestGoogleSocialLogin({ accessToken, idToken });
+      console.log('🔐 Google 웹 로그인 outcome:', outcome.kind);
+
+      if (outcome.kind === 'authenticated') {
+        setLoginSession(outcome.user, {
+          accessToken: outcome.accessToken,
+          refreshToken: outcome.refreshToken
+        });
+        sessionStorage.setItem('justLoggedIn', 'true');
+        showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
+        await checkSession(true);
+        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+        await redirectToDynamicDashboard({ user: outcome.user }, navigate);
+        return;
+      }
+
+      if (outcome.kind === 'requiresOAuthPhoneVerification') {
+        setOAuthPhoneVerificationPayload({
+          provider: 'GOOGLE',
+          phoneVerificationToken: outcome.phoneVerificationToken,
+          email: outcome.socialUserInfo?.email || null,
+          name: outcome.socialUserInfo?.name || null,
+          nickname: outcome.socialUserInfo?.nickname || null
+        });
+        setShowOAuthPhoneVerificationModal(true);
+        setIsLoading(false);
+        return;
+      }
+
+      if (outcome.kind === 'requiresPhoneAccountSelection') {
+        try {
+          sessionStorage.setItem('oauth_phone_selection_token', outcome.selectionToken);
+          sessionStorage.setItem('oauth_phone_selection_provider', 'GOOGLE');
+        } catch (storageErr) {
+          console.error('sessionStorage 저장 실패:', storageErr);
+        }
+        navigate('/oauth-account-selection');
+        return;
+      }
+
+      if (outcome.kind === 'requiresSignup') {
+        const tenantId = sessionStorage.getItem('subdomain_tenant_id');
+        notificationManager.show(OAUTH_SIGNUP_REQUIRED_PROMPT, 'info');
+        setSocialUserInfo({
+          provider: 'GOOGLE',
+          providerUserId: outcome.socialUserInfo.providerUserId,
+          email: outcome.socialUserInfo.email,
+          name: outcome.socialUserInfo.name,
+          nickname: outcome.socialUserInfo.nickname,
+          profileImageUrl: outcome.socialUserInfo.profileImageUrl,
+          tenantId: tenantId || null
+        });
+        setShowSocialSignupModal(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // error 분기.
+      const message = outcome.message || t('auth:unifiedLogin.socialLogin.googleFailed');
+      showTooltip(message, 'error');
+    } catch (error) {
+      console.error('Google 웹 로그인 처리 오류:', error);
+      showTooltip(t('auth:unifiedLogin.socialLogin.googleFailed'), 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleWebError = (message) => {
+    console.error('Google 웹 로그인 오류:', message);
+    // 사용자가 popup 을 닫은 경우(`popup_closed_by_user`)는 무시한다.
+    const lower = String(message || '').toLowerCase();
+    if (lower.includes('popup_closed') || lower.includes('user_cancelled')) {
+      return;
+    }
+    showTooltip(t('auth:unifiedLogin.socialLogin.googleFailed'), 'error');
   };
 
   // Apple Sign In (SIWA) — Apple App Store 4.8 T1 대응.
@@ -971,30 +1068,44 @@ const UnifiedLogin = () => {
                   {t('auth:unifiedLogin.socialLogin.naver')}
                 </MGButton>
 
-                {oauth2Config?.google && (
-                  <MGButton
-                    type="button"
-                    variant="outline"
-                    onClick={handleGoogleLogin}
-                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-google`}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    preventDoubleClick={false}
-                  >
-                    <svg 
-                      width="18" 
-                      height="18" 
-                      viewBox="0 0 18 18" 
-                      fill="none" 
-                      xmlns="http://www.w3.org/2000/svg"
+                {/*
+                  Google 로그인 — `REACT_APP_GOOGLE_CLIENT_ID` 주입 시 GIS popup 흐름,
+                  미주입 시 BE 의 OAuth2 Config(oauth2Config?.google) 가 활성이면
+                  레거시 redirect 흐름으로 폴백한다(코드 동일 SVG).
+                */}
+                {isGoogleWebClientIdConfigured ? (
+                  <GoogleLoginButton
+                    onSuccess={handleGoogleWebSuccess}
+                    onError={handleGoogleWebError}
+                    disabled={isLoading}
+                    label={t('auth:unifiedLogin.socialLogin.google')}
+                  />
+                ) : (
+                  oauth2Config?.google && (
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      onClick={handleGoogleLogin}
+                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-google`}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      preventDoubleClick={false}
                     >
-                      {/* Google 공식 다색 로고 자산 — 브랜드 가이드 고정 색상 유지(CI 스캔 예외) */}
-                      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
-                      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
-                      <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" fill="#FBBC05"/>
-                      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-                    </svg>
-                    {t('auth:unifiedLogin.socialLogin.google')}
-                  </MGButton>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 18 18"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        {/* Google 공식 다색 로고 자산 — 브랜드 가이드 고정 색상 유지(CI 스캔 예외) */}
+                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
+                        <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853" />
+                        <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" fill="#FBBC05" />
+                        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335" />
+                      </svg>
+                      {t('auth:unifiedLogin.socialLogin.google')}
+                    </MGButton>
+                  )
                 )}
 
                 {/* Apple Sign In — Apple HIG (검정 배경 + 흰색 로고/텍스트). App Store 4.8 T1 대응. */}
@@ -1087,6 +1198,55 @@ const UnifiedLogin = () => {
             );
             setShowSocialSignupModal(false);
             navigate('/login');
+          }}
+        />
+      )}
+
+      {/* GIS 웹 흐름 OAuth 휴대폰 매칭 모달 — Google 로그인 1차 응답이 OTP 매칭을 요구할 때 */}
+      {showOAuthPhoneVerificationModal && oauthPhoneVerificationPayload && (
+        <OAuthPhoneVerificationModal
+          isOpen={showOAuthPhoneVerificationModal}
+          onClose={() => {
+            setShowOAuthPhoneVerificationModal(false);
+            setOAuthPhoneVerificationPayload(null);
+          }}
+          socialUser={oauthPhoneVerificationPayload}
+          onVerifiedSingle={async({ accessToken, refreshToken, matchedAccount, provider: matchedProvider }) => {
+            const userInfo = {
+              id: matchedAccount?.userId,
+              tenantId: matchedAccount?.tenantId,
+              role: matchedAccount?.role,
+              provider: matchedProvider
+            };
+            setLoginSession(userInfo, {
+              accessToken,
+              refreshToken: refreshToken || accessToken
+            });
+            sessionStorage.setItem('justLoggedIn', 'true');
+            setShowOAuthPhoneVerificationModal(false);
+            setOAuthPhoneVerificationPayload(null);
+            await checkSession(true);
+            const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+            await redirectToDynamicDashboard({ user: userInfo }, navigate);
+          }}
+          onRequiresAccountSelection={({ phoneAccountSelectionToken, provider: matchedProvider }) => {
+            try {
+              sessionStorage.setItem('oauth_phone_selection_token', phoneAccountSelectionToken);
+              sessionStorage.setItem('oauth_phone_selection_provider', matchedProvider);
+            } catch (storageErr) {
+              console.error('sessionStorage 저장 실패:', storageErr);
+            }
+            setShowOAuthPhoneVerificationModal(false);
+            setOAuthPhoneVerificationPayload(null);
+            navigate('/oauth-account-selection');
+          }}
+          onTokenExpired={() => {
+            setShowOAuthPhoneVerificationModal(false);
+            setOAuthPhoneVerificationPayload(null);
+            notificationManager.show(
+              t('auth:unifiedLogin.msg.oauthSessionExpired', '인증 세션이 만료되었습니다. 다시 로그인해 주세요.'),
+              'error'
+            );
           }}
         />
       )}

@@ -32,7 +32,11 @@ jobs:
           cd frontend
           npm ci
 
+      # REACT_APP_GOOGLE_CLIENT_ID: GIS(@react-oauth/google) 웹 OAuth Client ID (개발).
+      # 미설정 시 빈 문자열로 빌드되며 GIS Provider 미마운트 → 레거시 redirect 흐름으로 폴백.
       - name: 🏗️ 프론트엔드 빌드
+        env:
+          REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
         run: |
           cd frontend
           npm run build:ci

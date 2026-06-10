@@ -33,6 +33,15 @@ export const AUTH_API = {
   NAVER_OAUTH: '/api/v1/auth/oauth2/naver',
   GOOGLE_OAUTH: '/api/v1/auth/oauth2/google',
   FACEBOOK_OAUTH: '/api/v1/auth/oauth2/facebook',
+
+  /**
+   * 네이티브 SDK 소셜 로그인 (`OAuth2Controller#socialLoginWithAccessToken`).
+   *
+   * <p>BE 가 `accessToken` (필수, 단 GOOGLE 만 `idToken` 폴백 허용) 으로 OAuth provider
+   * userinfo 를 직접 조회·검증한 뒤 JWT 를 발급한다. 모바일 앱(expo-app) 에서 사용하던
+   * 엔드포인트를 웹의 `@react-oauth/google` 흐름에서도 재사용한다.</p>
+   */
+  SOCIAL_LOGIN: '/api/v1/auth/social-login',
   
   // 소셜 간편 회원가입
   SOCIAL_SIGNUP: '/api/v1/auth/social/signup',

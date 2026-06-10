@@ -61,9 +61,13 @@ jobs:
           npm ci
 
       # REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN: Secret 미설정 시 빈 문자열 — 미설정 시 프론트는 origin 기본값 사용
+      # REACT_APP_GOOGLE_CLIENT_ID: GIS(@react-oauth/google) 웹 OAuth Client ID (운영). 미설정 시
+      #   GOOGLE_WEB_CLIENT_ID 가 빈 문자열이 되어 GIS Provider 가 마운트되지 않고
+      #   레거시 redirect 흐름으로 폴백된다(기존 oauth2Config?.google 검사 활용).
       - name: 🏗️ 프론트엔드 빌드 (운영)
         env:
           REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN: ${{ secrets.REACT_APP_PG_WEBHOOK_PUBLIC_ORIGIN }}
+          REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
         run: |
           cd frontend
           npm run build:ci

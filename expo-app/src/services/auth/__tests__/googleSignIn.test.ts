@@ -16,11 +16,13 @@ import Constants from 'expo-constants';
 
 import {
   diagnoseGoogleAuthResult,
+  exchangeGooglePkceCode,
   extractGoogleAuthTokens,
   formatGoogleAuthDiagnostics,
   isGoogleConfiguredForPlatform,
   resolveGoogleClientIdConfig,
 } from '../googleSignIn';
+import { exchangeCodeAsync } from 'expo-auth-session';
 import type { AuthSessionResult } from 'expo-auth-session';
 
 // `Platform.OS` 를 테스트 사이에 mutable 하게 바꾸기 위해 jest.mock factory 내부에 상태를 둔다.
@@ -44,6 +46,18 @@ jest.mock('expo-web-browser', () => ({
 jest.mock('expo-auth-session/providers/google', () => ({
   useAuthRequest: jest.fn(() => [null, null, jest.fn()]),
 }));
+
+// `expo-auth-session` 본체는 ESM 으로 publish 되어 Jest 가 transform 하지 않는다.
+// `requireActual` 을 호출하면 `Unexpected token 'export'` 가 발생하므로, 사용하는 export 만
+// 명시적으로 정의한 stub 으로 대체한다. exchangeCodeAsync 만 jest.fn 으로 두고 시나리오별로
+// mockImplementation 한다. AccessTokenRequestConfig / TokenResponse / DiscoveryDocument 등
+// 타입 export 는 런타임에는 필요하지 않다.
+jest.mock('expo-auth-session', () => ({
+  __esModule: true,
+  exchangeCodeAsync: jest.fn(),
+}));
+
+const exchangeCodeAsyncMock = exchangeCodeAsync as unknown as jest.Mock;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
@@ -421,5 +435,145 @@ describe('formatGoogleAuthDiagnostics — 사용자 메시지 직렬화', () => 
       errorCode: 'access_denied',
     });
     expect(formatted).toBe('type=error,params=[error],auth=∅,url=false,errorCode=access_denied');
+  });
+});
+
+describe('exchangeGooglePkceCode — P0 (2026-06-10) PKCE auth-code flow 토큰 교환', () => {
+  const REAL_IOS_CLIENT_ID_FOR_PKCE =
+    '1234567890-pkceios.apps.googleusercontent.com';
+  const REDIRECT_URI = 'com.googleusercontent.apps.1234567890-pkceios:/oauthredirect';
+  const CODE_VERIFIER = 'sample-code-verifier-43chars-min-length-required';
+  const AUTH_CODE = '4/0AY0e-g6sample-auth-code';
+  const SAMPLE_ACCESS_TOKEN = 'ya29.PKCEExchangedAccessToken';
+  const SAMPLE_ID_TOKEN = 'eyJhbGciOiJSUzI1NiJ9.PKCEExchangedIdToken.sig';
+
+  beforeEach(() => {
+    exchangeCodeAsyncMock.mockReset();
+  });
+
+  function successWithCode(extra?: Record<string, string>): AuthSessionResult {
+    return {
+      type: 'success',
+      authentication: null,
+      params: { code: AUTH_CODE, state: 'sample-state', ...(extra ?? {}) },
+      errorCode: null,
+      error: null,
+      url: 'com.googleusercontent.apps.1234567890-pkceios:/oauthredirect?code=...',
+    } as unknown as AuthSessionResult;
+  }
+
+  function pkceRequestSnapshot(): {
+    clientId: string;
+    redirectUri: string;
+    codeVerifier: string;
+  } {
+    return {
+      clientId: REAL_IOS_CLIENT_ID_FOR_PKCE,
+      redirectUri: REDIRECT_URI,
+      codeVerifier: CODE_VERIFIER,
+    };
+  }
+
+  test('PKCE code 응답 + request 완비 → exchangeCodeAsync 호출 후 access/id 토큰 반환', async () => {
+    exchangeCodeAsyncMock.mockResolvedValueOnce({
+      accessToken: SAMPLE_ACCESS_TOKEN,
+      idToken: SAMPLE_ID_TOKEN,
+      scope: 'openid profile email',
+    });
+
+    const result = await exchangeGooglePkceCode(successWithCode(), pkceRequestSnapshot());
+
+    expect(result).toEqual({
+      accessToken: SAMPLE_ACCESS_TOKEN,
+      idToken: SAMPLE_ID_TOKEN,
+      scope: 'openid profile email',
+    });
+    expect(exchangeCodeAsyncMock).toHaveBeenCalledTimes(1);
+    const [config, discovery] = exchangeCodeAsyncMock.mock.calls[0];
+    expect(config).toMatchObject({
+      clientId: REAL_IOS_CLIENT_ID_FOR_PKCE,
+      redirectUri: REDIRECT_URI,
+      code: AUTH_CODE,
+      extraParams: { code_verifier: CODE_VERIFIER },
+    });
+    expect(discovery).toEqual({ tokenEndpoint: 'https://oauth2.googleapis.com/token' });
+  });
+
+  test('exchangeCodeAsync 응답에 idToken 만 있어도 idToken 반환 (accessToken 미포함)', async () => {
+    exchangeCodeAsyncMock.mockResolvedValueOnce({
+      accessToken: '',
+      idToken: SAMPLE_ID_TOKEN,
+    });
+
+    const result = await exchangeGooglePkceCode(successWithCode(), pkceRequestSnapshot());
+
+    expect(result).toEqual({ idToken: SAMPLE_ID_TOKEN });
+  });
+
+  test('result.type !== success → null 반환 (exchangeCodeAsync 호출 안 함)', async () => {
+    const result = await exchangeGooglePkceCode(
+      { type: 'cancel' } as unknown as AuthSessionResult,
+      pkceRequestSnapshot(),
+    );
+    expect(result).toBeNull();
+    expect(exchangeCodeAsyncMock).not.toHaveBeenCalled();
+  });
+
+  test('params.code 가 없으면 null 반환 (implicit/error 케이스)', async () => {
+    const result = await exchangeGooglePkceCode(
+      {
+        type: 'success',
+        authentication: null,
+        params: { state: 'no-code' },
+        errorCode: null,
+        error: null,
+        url: 'redir',
+      } as unknown as AuthSessionResult,
+      pkceRequestSnapshot(),
+    );
+    expect(result).toBeNull();
+    expect(exchangeCodeAsyncMock).not.toHaveBeenCalled();
+  });
+
+  test('codeVerifier 누락 → null 반환 (snapshot 부적합)', async () => {
+    const result = await exchangeGooglePkceCode(successWithCode(), {
+      clientId: REAL_IOS_CLIENT_ID_FOR_PKCE,
+      redirectUri: REDIRECT_URI,
+      codeVerifier: '',
+    });
+    expect(result).toBeNull();
+    expect(exchangeCodeAsyncMock).not.toHaveBeenCalled();
+  });
+
+  test('request 가 null/undefined → null 반환', async () => {
+    expect(await exchangeGooglePkceCode(successWithCode(), null)).toBeNull();
+    expect(await exchangeGooglePkceCode(successWithCode(), undefined)).toBeNull();
+    expect(exchangeCodeAsyncMock).not.toHaveBeenCalled();
+  });
+
+  test('exchangeCodeAsync 가 throw → 호출자에게 그대로 propagate (호출자가 사용자 메시지 처리)', async () => {
+    exchangeCodeAsyncMock.mockRejectedValueOnce(new Error('invalid_grant'));
+
+    await expect(exchangeGooglePkceCode(successWithCode(), pkceRequestSnapshot())).rejects.toThrow(
+      /invalid_grant/,
+    );
+  });
+
+  test('clientId / redirectUri 도 누락이면 null (방어)', async () => {
+    expect(
+      await exchangeGooglePkceCode(successWithCode(), {
+        clientId: '',
+        redirectUri: REDIRECT_URI,
+        codeVerifier: CODE_VERIFIER,
+      }),
+    ).toBeNull();
+    expect(
+      await exchangeGooglePkceCode(successWithCode(), {
+        clientId: REAL_IOS_CLIENT_ID_FOR_PKCE,
+        redirectUri: '',
+        codeVerifier: CODE_VERIFIER,
+      }),
+    ).toBeNull();
+    expect(exchangeCodeAsyncMock).not.toHaveBeenCalled();
   });
 });

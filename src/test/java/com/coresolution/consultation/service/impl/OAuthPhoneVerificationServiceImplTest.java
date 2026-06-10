@@ -99,13 +99,19 @@ class OAuthPhoneVerificationServiceImplTest {
     }
 
     private OAuthPhoneVerificationClaims verificationClaims(OAuthProvider provider) {
+        return verificationClaims(provider, "홍 길동", "https://lh3.googleusercontent.com/a-/AOh14sample");
+    }
+
+    private OAuthPhoneVerificationClaims verificationClaims(OAuthProvider provider, String name,
+            String profileImageUrl) {
         return OAuthPhoneVerificationClaims.builder()
             .tenantId(TENANT_ID)
             .oauthProvider(provider)
             .providerUserId(PROVIDER_USER_ID)
             .email("user@example.com")
-            .name("홍 길동")
-            .nickname("홍 길동")
+            .name(name)
+            .nickname(name)
+            .profileImageUrl(profileImageUrl)
             .build();
     }
 
@@ -276,7 +282,99 @@ class OAuthPhoneVerificationServiceImplTest {
         assertThat(resp.getRefreshToken()).isEqualTo("oauth-refresh-jwt");
         assertThat(resp.getMatchedAccount()).isNotNull();
         assertThat(resp.getMatchedAccount().getUserId()).isEqualTo(501L);
+        // 2026-06-10 P1: 응답 user 표시 필드(name/email/phone) 보강 — FE 빈값 표시 차단.
+        assertThat(resp.getMatchedAccount().getName()).isEqualTo("홍길동");
+        assertThat(resp.getMatchedAccount().getEmail()).isEqualTo("a@x.com");
+        assertThat(resp.getMatchedAccount().getPhone()).isEqualTo(PHONE_NORMALIZED);
         assertThat(matchedUser.getAppleSub()).isEqualTo(PROVIDER_USER_ID);
+    }
+
+    @Test
+    @DisplayName("[verify][P1] GOOGLE 매칭 1명·name·profileImage 비어 있음 → claims 값으로 백필 (어드민 사전 등록 사용자)")
+    void verifyOtp_google_match1_backfillsNameAndProfileImage() {
+        long otpId = 261L;
+        when(jwtService.parseOAuthPhoneVerificationToken(anyString()))
+            .thenReturn(verificationClaims(OAuthProvider.GOOGLE, "구글 홍길동",
+                "https://lh3.googleusercontent.com/a-/picture"));
+        when(jwtService.parseOAuthPhoneOtpChallengeToken(anyString()))
+            .thenReturn(challengeClaims(OAuthProvider.GOOGLE, otpId));
+        PhoneOtpAttempt row = savedRow(OAuthProvider.GOOGLE, otpId, LocalDateTime.now(), 0,
+            PhoneOtpAttempt.STATUS_PENDING);
+        when(phoneOtpAttemptRepository.findByIdAndTenantIdAndStatus(otpId, TENANT_ID,
+            PhoneOtpAttempt.STATUS_PENDING)).thenReturn(Optional.of(row));
+        when(passwordEncoder.matches(OTP_CODE, "ENC(code)")).thenReturn(true);
+
+        User matchedUser = User.builder()
+            .userId("client_admin_registered")
+            .email("a@x.com")
+            .phone(PHONE_NORMALIZED)
+            .role(UserRole.CLIENT)
+            .build();
+        matchedUser.setId(551L);
+        matchedUser.setTenantId(TENANT_ID);
+        matchedUser.setIsActive(Boolean.TRUE);
+        when(userRepository.findByTenantId(TENANT_ID)).thenReturn(List.of(matchedUser));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OAuthPhoneVerifyResponse resp = service.verifyOtp(OAuthPhoneVerifyRequest.builder()
+            .oauthProvider(OAuthProvider.GOOGLE)
+            .phoneVerificationToken("pv-jwt")
+            .challengeToken("oc-jwt")
+            .otpCode(OTP_CODE)
+            .build());
+
+        assertThat(resp.isSuccess()).isTrue();
+        assertThat(matchedUser.getName()).isEqualTo("구글 홍길동");
+        assertThat(matchedUser.getProfileImageUrl()).isEqualTo("https://lh3.googleusercontent.com/a-/picture");
+        assertThat(matchedUser.getSocialProvider()).isEqualTo("GOOGLE");
+        assertThat(matchedUser.getSocialProviderUserId()).isEqualTo(PROVIDER_USER_ID);
+        // 2026-06-10 P1: 응답 user 표시 필드 — 백필된 name/profileImageUrl 이 응답에도 반영.
+        assertThat(resp.getMatchedAccount().getName()).isEqualTo("구글 홍길동");
+        assertThat(resp.getMatchedAccount().getProfileImageUrl())
+            .isEqualTo("https://lh3.googleusercontent.com/a-/picture");
+        assertThat(resp.getMatchedAccount().getPhone()).isEqualTo(PHONE_NORMALIZED);
+        assertThat(resp.getMatchedAccount().getEmail()).isEqualTo("a@x.com");
+    }
+
+    @Test
+    @DisplayName("[verify][P1] GOOGLE 매칭 1명·user.name 이 이미 있음 → 백필 안 함 (사용자 수정값 보존)")
+    void verifyOtp_google_match1_preservesExistingName() {
+        long otpId = 262L;
+        when(jwtService.parseOAuthPhoneVerificationToken(anyString()))
+            .thenReturn(verificationClaims(OAuthProvider.GOOGLE, "구글 새이름",
+                "https://lh3.googleusercontent.com/a-/new"));
+        when(jwtService.parseOAuthPhoneOtpChallengeToken(anyString()))
+            .thenReturn(challengeClaims(OAuthProvider.GOOGLE, otpId));
+        PhoneOtpAttempt row = savedRow(OAuthProvider.GOOGLE, otpId, LocalDateTime.now(), 0,
+            PhoneOtpAttempt.STATUS_PENDING);
+        when(phoneOtpAttemptRepository.findByIdAndTenantIdAndStatus(otpId, TENANT_ID,
+            PhoneOtpAttempt.STATUS_PENDING)).thenReturn(Optional.of(row));
+        when(passwordEncoder.matches(OTP_CODE, "ENC(code)")).thenReturn(true);
+
+        User matchedUser = User.builder()
+            .userId("client_with_name")
+            .email("a@x.com")
+            .name("기존이름")
+            .phone(PHONE_NORMALIZED)
+            .profileImageUrl("/uploads/custom-avatar.png")
+            .role(UserRole.CLIENT)
+            .build();
+        matchedUser.setId(552L);
+        matchedUser.setTenantId(TENANT_ID);
+        matchedUser.setIsActive(Boolean.TRUE);
+        when(userRepository.findByTenantId(TENANT_ID)).thenReturn(List.of(matchedUser));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OAuthPhoneVerifyResponse resp = service.verifyOtp(OAuthPhoneVerifyRequest.builder()
+            .oauthProvider(OAuthProvider.GOOGLE)
+            .phoneVerificationToken("pv-jwt")
+            .challengeToken("oc-jwt")
+            .otpCode(OTP_CODE)
+            .build());
+
+        assertThat(resp.isSuccess()).isTrue();
+        assertThat(matchedUser.getName()).isEqualTo("기존이름");
+        assertThat(matchedUser.getProfileImageUrl()).isEqualTo("/uploads/custom-avatar.png");
     }
 
     @Test
@@ -310,6 +408,64 @@ class OAuthPhoneVerificationServiceImplTest {
         assertThat(resp.getAccessToken()).isEqualTo("oauth-access-jwt");
         assertThat(resp.getMatchedAccount()).isNotNull();
         assertThat(resp.getMatchedAccount().getRole()).isEqualTo("CLIENT");
+    }
+
+    @Test
+    @DisplayName("[verify][P1] GOOGLE 매칭 0 → 신규 가입 시 name·profileImage·phone(암호화) 저장 + Client phone 동기화")
+    void verifyOtp_google_match0_createsNewUserWithFullProfile() {
+        long otpId = 271L;
+        when(jwtService.parseOAuthPhoneVerificationToken(anyString()))
+            .thenReturn(verificationClaims(OAuthProvider.GOOGLE, "구글 홍길동",
+                "https://lh3.googleusercontent.com/a-/signup"));
+        when(jwtService.parseOAuthPhoneOtpChallengeToken(anyString()))
+            .thenReturn(challengeClaims(OAuthProvider.GOOGLE, otpId));
+        PhoneOtpAttempt row = savedRow(OAuthProvider.GOOGLE, otpId, LocalDateTime.now(), 0,
+            PhoneOtpAttempt.STATUS_PENDING);
+        when(phoneOtpAttemptRepository.findByIdAndTenantIdAndStatus(otpId, TENANT_ID,
+            PhoneOtpAttempt.STATUS_PENDING)).thenReturn(Optional.of(row));
+        when(passwordEncoder.matches(OTP_CODE, "ENC(code)")).thenReturn(true);
+        when(userRepository.findByTenantId(TENANT_ID)).thenReturn(List.of());
+
+        java.util.concurrent.atomic.AtomicReference<User> savedUserRef = new java.util.concurrent.atomic.AtomicReference<>();
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(611L);
+            savedUserRef.set(u);
+            return u;
+        });
+        java.util.concurrent.atomic.AtomicReference<Client> savedClientRef = new java.util.concurrent.atomic.AtomicReference<>();
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> {
+            Client c = inv.getArgument(0);
+            savedClientRef.set(c);
+            return c;
+        });
+
+        OAuthPhoneVerifyResponse resp = service.verifyOtp(OAuthPhoneVerifyRequest.builder()
+            .oauthProvider(OAuthProvider.GOOGLE)
+            .phoneVerificationToken("pv-jwt")
+            .challengeToken("oc-jwt")
+            .otpCode(OTP_CODE)
+            .build());
+
+        assertThat(resp.isSuccess()).isTrue();
+        User savedUser = savedUserRef.get();
+        assertThat(savedUser).isNotNull();
+        assertThat(savedUser.getName()).isEqualTo("구글 홍길동");
+        assertThat(savedUser.getProfileImageUrl()).isEqualTo("https://lh3.googleusercontent.com/a-/signup");
+        assertThat(savedUser.getPhone()).isEqualTo(PHONE_NORMALIZED);
+        assertThat(savedUser.getSocialProvider()).isEqualTo("GOOGLE");
+        assertThat(savedUser.getSocialProviderUserId()).isEqualTo(PROVIDER_USER_ID);
+
+        Client savedClient = savedClientRef.get();
+        assertThat(savedClient).isNotNull();
+        assertThat(savedClient.getPhone()).isEqualTo(PHONE_NORMALIZED);
+        // 2026-06-10 P1: 응답 DTO 도 신규 가입 user 표시 필드를 모두 동봉.
+        assertThat(resp.getMatchedAccount()).isNotNull();
+        assertThat(resp.getMatchedAccount().getName()).isEqualTo("구글 홍길동");
+        assertThat(resp.getMatchedAccount().getProfileImageUrl())
+            .isEqualTo("https://lh3.googleusercontent.com/a-/signup");
+        assertThat(resp.getMatchedAccount().getPhone()).isEqualTo(PHONE_NORMALIZED);
+        assertThat(resp.getMatchedAccount().getEmail()).isEqualTo("user@example.com");
     }
 
     @Test

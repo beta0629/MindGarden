@@ -1313,9 +1313,11 @@ export const AuthService = {
    *  - 코드 불일치/만료/시도초과/세션만료 → {@code kind: 'error'} + {@code code}
    * </p>
    *
-   * <p>BE 응답의 {@code matchedAccount} 는 {@code userId/tenantId/role} 만 포함하므로,
-   * email·name 은 빈 문자열로 두고 후속 화면(navigateAfterAuthenticated 등)이 프로필을
-   * 별도 fetch 한다. UserRole 매핑은 {@link mapApiRoleToStoreRole} 재사용.</p>
+   * <p>**2026-06-10 P1 수정**: BE 응답의 {@code matchedAccount} 가 {@code userId/tenantId/role}
+   * 외에 {@code name/email/nickname/phone/profileImageUrl} 까지 동봉하도록 보강되어
+   * (BE {@code OAuthPhoneVerifyResponse.MatchedAccount}), OTP 직후 홈 화면 "님, 안녕하세요"
+   * 빈 prefix 및 프로필 화면 "내담자 ㆍ ㅡ" 빈 이름 노출이 사라진다. 응답에 표시 필드가 없을
+   * 때만(과거 BE 호환) 빈 문자열 fallback. UserRole 매핑은 {@link mapApiRoleToStoreRole} 재사용.</p>
    *
    * @param provider OAuth provider 식별자 (APPLE/GOOGLE/KAKAO/NAVER)
    * @param phoneVerificationToken `/login` 응답으로 받은 단기 JWT
@@ -1360,13 +1362,16 @@ export const AuthService = {
 
     if (mapped.kind === 'authenticated') {
       const role = mapApiRoleToStoreRole(mapped.matchedAccount.role);
+      const matched = mapped.matchedAccount;
       const user: User = {
-        id: mapped.matchedAccount.userId,
-        email: '',
-        name: '',
-        nickname: '',
+        id: matched.userId,
+        email: matched.email ?? '',
+        name: matched.name ?? '',
+        nickname: matched.nickname ?? matched.name ?? '',
         role,
-        tenantId: mapped.matchedAccount.tenantId ?? useTenantStore.getState().tenantId ?? undefined,
+        tenantId: matched.tenantId ?? useTenantStore.getState().tenantId ?? undefined,
+        ...(matched.phone ? { phone: matched.phone } : {}),
+        ...(matched.profileImageUrl ? { profileImageUrl: matched.profileImageUrl } : {}),
       };
       await applyAuthenticatedUser(
         user,

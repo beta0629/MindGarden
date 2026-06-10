@@ -301,19 +301,24 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
         row.setVerifiedAt(LocalDateTime.now());
         phoneOtpAttemptRepository.save(row);
 
-        return resolveAfterOtpVerified(phoneVerificationClaims, row);
+        return resolveAfterOtpVerified(phoneVerificationClaims, challengeClaims, row);
     }
 
     /**
      * OTP 검증 성공 후 휴대폰 매칭 + JWT 발급 (또는 계정 선택 토큰 발급, 또는 신규 가입).
+     *
+     * <p>2026-06-10 P1: 신규 가입·기존 사용자 연결 모두에서 OAuth 프로필(name/profileImageUrl) 및
+     * 검증된 phone 을 user 엔티티에 백필하기 위해 {@code challengeClaims.normalizedPhone} 을 함께 전달한다.</p>
      */
     private OAuthPhoneVerifyResponse resolveAfterOtpVerified(OAuthPhoneVerificationClaims claims,
+                                                             OAuthPhoneOtpChallengeClaims challengeClaims,
                                                              PhoneOtpAttempt row) {
         String tenantId = claims.getTenantId();
         String previousTenantId = TenantContextHolder.peekTenantId();
         try {
             TenantContext.setTenantId(tenantId);
-            return resolveAndIssueJwt(tenantId, claims, row.getPhoneHash());
+            return resolveAndIssueJwt(tenantId, claims, row.getPhoneHash(),
+                challengeClaims.getNormalizedPhone());
         } finally {
             TenantContextHolder.setTenantIdOrClear(previousTenantId);
         }
@@ -321,7 +326,8 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
 
     private OAuthPhoneVerifyResponse resolveAndIssueJwt(String tenantId,
                                                         OAuthPhoneVerificationClaims claims,
-                                                        String phoneHash) {
+                                                        String phoneHash,
+                                                        String verifiedNormalizedPhone) {
         OAuthProvider provider = claims.getOauthProvider();
         String providerName = provider.name();
         String providerUserId = claims.getProviderUserId();
@@ -331,7 +337,7 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             tenantId, providerName, providerUserId, candidates.size());
 
         if (candidates.isEmpty()) {
-            User created = createNewOAuthUser(tenantId, claims);
+            User created = createNewOAuthUser(tenantId, claims, verifiedNormalizedPhone);
             return issueTokens(created, "휴대폰 인증 완료 — 신규 가입");
         }
         if (candidates.size() == 1) {
@@ -443,7 +449,11 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
 
     /**
      * 기존 user 에 OAuth 계정 연결. provider 별 필드(apple_sub / social_provider*) 갱신
-     * + user_social_accounts row 보장.
+     * + user_social_accounts row 보장 + OAuth 프로필(name/profileImageUrl) 백필.
+     *
+     * <p>2026-06-10 P1: 어드민 사전 등록(휴대폰만 입력)으로 user.name 이 비어 있는 사용자가 OAuth 첫
+     * 로그인 시 OTP 매칭으로 본 메서드에 진입할 때, OAuth provider 가 제공한 name/profileImageUrl 을
+     * user 엔티티에 백필한다. 기존 값이 있으면 덮어쓰지 않는다 (사용자가 직접 수정한 값을 보존).</p>
      */
     private void linkSocialAccount(User user, OAuthPhoneVerificationClaims claims, String tenantId) {
         OAuthProvider provider = claims.getOauthProvider();
@@ -460,6 +470,12 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             user.setSocialProviderUserId(providerUserId);
             user.setIsSocialAccount(Boolean.TRUE);
             user.setSocialLinkedAt(LocalDateTime.now());
+            userDirty = true;
+        }
+        if (backfillUserNameFromClaims(user, claims)) {
+            userDirty = true;
+        }
+        if (backfillUserProfileImageFromClaims(user, claims)) {
             userDirty = true;
         }
         if (userDirty) {
@@ -493,8 +509,13 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
 
     /**
      * 매칭 0 분기: 신규 사용자 생성 (role=CLIENT) — provider 별 default 값으로 가입.
+     *
+     * <p>2026-06-10 P1: provider 가 제공한 프로필 이미지(claims.profileImageUrl) 및 OTP 로 본인검증
+     * 완료된 휴대폰(verifiedNormalizedPhone) 도 함께 user 엔티티에 저장한다. 프로필 이미지는 평문 URL,
+     * 휴대폰은 PII 표준대로 암호화한다. {@code verifiedNormalizedPhone} 이 비어 있으면 phone 미저장.</p>
      */
-    private User createNewOAuthUser(String tenantId, OAuthPhoneVerificationClaims claims) {
+    private User createNewOAuthUser(String tenantId, OAuthPhoneVerificationClaims claims,
+                                    String verifiedNormalizedPhone) {
         OAuthProvider provider = claims.getOauthProvider();
         String providerName = provider.name();
         String providerUserId = claims.getProviderUserId();
@@ -520,6 +541,12 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             .socialProvider(providerName)
             .socialProviderUserId(providerUserId)
             .socialLinkedAt(LocalDateTime.now());
+        if (StringUtils.hasText(claims.getProfileImageUrl())) {
+            builder.profileImageUrl(claims.getProfileImageUrl());
+        }
+        if (StringUtils.hasText(verifiedNormalizedPhone)) {
+            builder.phone(encryptionUtil.safeEncrypt(verifiedNormalizedPhone));
+        }
         if (provider == OAuthProvider.APPLE) {
             builder.appleSub(providerUserId);
         }
@@ -527,11 +554,14 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
         user.setTenantId(tenantId);
         User saved = userRepository.saveAndFlush(user);
 
+        String encryptedClientPhone = StringUtils.hasText(verifiedNormalizedPhone)
+            ? encryptionUtil.safeEncrypt(verifiedNormalizedPhone) : null;
         Client client = Client.builder()
             .id(saved.getId())
             .tenantId(tenantId)
             .name(saved.getName())
             .email(saved.getEmail())
+            .phone(encryptedClientPhone)
             .isDeleted(false)
             .build();
         clientRepository.saveAndFlush(client);
@@ -542,6 +572,8 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             .providerUserId(providerUserId)
             .providerEmail(StringUtils.hasText(claims.getEmail()) ? claims.getEmail() : null)
             .providerName(name)
+            .providerProfileImage(StringUtils.hasText(claims.getProfileImageUrl())
+                ? claims.getProfileImageUrl() : null)
             .isPrimary(Boolean.TRUE)
             .isVerified(Boolean.TRUE)
             .isActive(Boolean.TRUE)
@@ -551,6 +583,55 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
         socialAccount.setTenantId(tenantId);
         userSocialAccountRepository.save(socialAccount);
         return saved;
+    }
+
+    /**
+     * user.name 이 비어 있고 OAuth provider 가 name 을 제공한 경우에만 백필. 기존 값은 보존한다.
+     *
+     * <p>{@link PersonalDataEncryptionUtil#safeDecrypt(String)} 로 복호화한 평문이 빈 문자열·공백·null
+     * 이면 비어 있는 것으로 본다. 백필 시 동일 유틸로 재암호화하여 PII 저장 정책을 유지한다.</p>
+     *
+     * @return 실제로 user.name 을 수정했으면 true
+     */
+    private boolean backfillUserNameFromClaims(User user, OAuthPhoneVerificationClaims claims) {
+        if (user == null || claims == null) {
+            return false;
+        }
+        String claimName = claims.getName();
+        if (!StringUtils.hasText(claimName)) {
+            return false;
+        }
+        String currentDecrypted;
+        try {
+            currentDecrypted = encryptionUtil.safeDecrypt(user.getName());
+        } catch (Exception e) {
+            currentDecrypted = user.getName();
+        }
+        if (StringUtils.hasText(currentDecrypted)) {
+            return false;
+        }
+        user.setName(encryptionUtil.safeEncrypt(claimName.trim()));
+        return true;
+    }
+
+    /**
+     * user.profileImageUrl 이 비어 있고 OAuth provider 가 사진 URL 을 제공한 경우에만 백필.
+     *
+     * @return 실제로 user.profileImageUrl 을 수정했으면 true
+     */
+    private boolean backfillUserProfileImageFromClaims(User user, OAuthPhoneVerificationClaims claims) {
+        if (user == null || claims == null) {
+            return false;
+        }
+        String claimUrl = claims.getProfileImageUrl();
+        if (!StringUtils.hasText(claimUrl)) {
+            return false;
+        }
+        if (StringUtils.hasText(user.getProfileImageUrl())) {
+            return false;
+        }
+        user.setProfileImageUrl(claimUrl.trim());
+        return true;
     }
 
     private OAuthPhoneVerifyResponse issueTokens(User user, String message) {
@@ -563,12 +644,49 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             .message(message)
             .accessToken(accessToken)
             .refreshToken(refreshToken)
-            .matchedAccount(OAuthPhoneVerifyResponse.MatchedAccount.builder()
-                .userId(user.getId())
-                .tenantId(user.getTenantId())
-                .role(user.getRole() != null ? user.getRole().name() : null)
-                .build())
+            .matchedAccount(buildMatchedAccount(user))
             .build();
+    }
+
+    /**
+     * OTP 검증 직후 FE 홈/프로필 화면 표시용 user 요약을 구성한다. PII(name/email/phone) 는 복호화
+     * 평문으로 내려 보내며, 표시 시 마스킹 책임은 FE 가 진다 (디자이너 산출물 §3.5 동의).
+     */
+    private OAuthPhoneVerifyResponse.MatchedAccount buildMatchedAccount(User user) {
+        String decryptedName = decryptForResponseSafe(user.getName());
+        String decryptedEmail = decryptForResponseSafe(user.getEmail());
+        String decryptedPhone = decryptForResponseSafe(user.getPhone());
+        String decryptedNickname = decryptForResponseSafe(user.getNickname());
+        if (!StringUtils.hasText(decryptedNickname) && StringUtils.hasText(decryptedName)) {
+            decryptedNickname = decryptedName;
+        }
+        return OAuthPhoneVerifyResponse.MatchedAccount.builder()
+            .userId(user.getId())
+            .tenantId(user.getTenantId())
+            .role(user.getRole() != null ? user.getRole().name() : null)
+            .name(decryptedName)
+            .email(decryptedEmail)
+            .nickname(decryptedNickname)
+            .phone(decryptedPhone)
+            .profileImageUrl(user.getProfileImageUrl())
+            .build();
+    }
+
+    /**
+     * 응답 직렬화 직전 PII 컬럼을 안전하게 복호화한다. 키 없음·평문 mixed 케이스 모두 평문을 반환하며,
+     * 실패 시 빈 문자열이 아닌 null 을 반환해 응답 표시 측이 fallback 으로 분기하도록 한다.
+     */
+    private String decryptForResponseSafe(String encryptedOrPlain) {
+        if (!StringUtils.hasText(encryptedOrPlain)) {
+            return null;
+        }
+        try {
+            String plain = encryptionUtil.safeDecrypt(encryptedOrPlain);
+            return StringUtils.hasText(plain) ? plain : null;
+        } catch (Exception e) {
+            log.warn("OAuth verify response 복호화 실패 — 원본 미반영: cause={}", e.getMessage());
+            return null;
+        }
     }
 
     private static OAuthPhoneSendResponse sendFailure(String message, String code) {

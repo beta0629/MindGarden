@@ -31,10 +31,33 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import type { AuthRequestPromptOptions, AuthSessionResult } from 'expo-auth-session';
+import {
+  exchangeCodeAsync,
+  type AccessTokenRequestConfig,
+  type AuthRequestPromptOptions,
+  type AuthSessionResult,
+  type DiscoveryDocument,
+  type TokenResponse,
+} from 'expo-auth-session';
 
 // 모듈 로드 시 1회 — Expo dev client / production 모두에서 OAuth 콜백 자동 처리.
 WebBrowser.maybeCompleteAuthSession();
+
+/**
+ * Google OAuth2 PKCE 토큰 교환 엔드포인트.
+ *
+ * <p>`expo-auth-session/providers/google` 기본 `useAuthRequest` 가 PKCE auth-code flow 를
+ * 선택하면, 응답에 `code` 만 포함되고 토큰은 직접 오지 않는다. `exchangeCodeAsync` 가 본
+ * endpoint 를 호출해 `code + code_verifier` 를 `access_token + id_token` 으로 교환한다.</p>
+ *
+ * <p>iOS native client 는 `client_secret` 없이 PKCE 만으로 동작한다(Section 8.1 of
+ * RFC 8252). Web client 도 동일 endpoint 를 사용한다.</p>
+ *
+ * @see https://developers.google.com/identity/protocols/oauth2/native-app#step-2-exchange-authorization-code-for-refresh-and-access-tokens
+ */
+const GOOGLE_TOKEN_DISCOVERY: Pick<DiscoveryDocument, 'tokenEndpoint'> = {
+  tokenEndpoint: 'https://oauth2.googleapis.com/token',
+};
 
 export interface GoogleClientIdConfig {
   readonly webClientId?: string;
@@ -230,6 +253,87 @@ function pickNonEmptyString(
 }
 
 /**
+ * `AuthRequest` 인스턴스에서 PKCE token exchange 에 필요한 최소 필드를 안전하게 추출한다.
+ *
+ * <p>테스트에서 `Google.useAuthRequest` 가 `null` 을 반환하거나, 실 호출에서 codeVerifier 가
+ * 미설정된 케이스(implicit flow 강제) 도 방어한다.</p>
+ */
+export interface GooglePkceRequestSnapshot {
+  readonly clientId: string;
+  readonly redirectUri: string;
+  readonly codeVerifier: string;
+}
+
+function readPkceRequestSnapshot(request: unknown): GooglePkceRequestSnapshot | null {
+  if (!request || typeof request !== 'object') {
+    return null;
+  }
+  const rec = request as Record<string, unknown>;
+  const clientId = pickNonEmptyString(typeof rec.clientId === 'string' ? rec.clientId : undefined);
+  const redirectUri = pickNonEmptyString(
+    typeof rec.redirectUri === 'string' ? rec.redirectUri : undefined,
+  );
+  const codeVerifier = pickNonEmptyString(
+    typeof rec.codeVerifier === 'string' ? rec.codeVerifier : undefined,
+  );
+  if (!clientId || !redirectUri || !codeVerifier) {
+    return null;
+  }
+  return { clientId, redirectUri, codeVerifier };
+}
+
+/**
+ * PKCE auth-code flow 응답을 `code + code_verifier` → `access_token + id_token` 으로 교환한다.
+ *
+ * <p>**P0 (2026-06-10) — TestFlight `1.0.7 (16)`**: `expo-auth-session/providers/google` 의
+ * `useAuthRequest` 가 자동으로 PKCE auth-code flow 를 선택했는데, 이전 핫픽스는 토큰만 찾고
+ * `code → token` 교환 단계를 수행하지 않아 빈 토큰으로 실패했다. 본 함수가 `exchangeCodeAsync`
+ * (`POST https://oauth2.googleapis.com/token`) 를 호출하여 토큰을 회복한다.</p>
+ *
+ * <p>흐름:
+ *  1. `result.type === 'success'` 이고 `result.params.code` 가 존재해야 한다.
+ *  2. `request.codeVerifier` / `request.clientId` / `request.redirectUri` 가 모두 존재해야 한다.
+ *  3. `exchangeCodeAsync({ code, clientId, redirectUri, extraParams: { code_verifier } },
+ *     { tokenEndpoint })` 호출.
+ *  4. 응답의 `accessToken` / `idToken` / `scope` 를 normalize 하여 반환.</p>
+ *
+ * <p>본 함수는 promptAsync 흐름에서만 호출되며, 토큰 값은 로그·반환 메시지에 포함하지 않는다.</p>
+ *
+ * @param result    `useAuthRequest` 의 success 응답
+ * @param request   동일 훅이 반환한 `AuthRequest` 인스턴스 (codeVerifier 등 보유)
+ * @returns 교환된 토큰 또는 null(필수 필드 누락 시); 네트워크/서버 오류는 throw.
+ */
+export async function exchangeGooglePkceCode(
+  result: AuthSessionResult,
+  request: unknown,
+): Promise<GoogleAuthResult | null> {
+  if (result.type !== 'success') {
+    return null;
+  }
+  const params = (result.params ?? {}) as Record<string, string | undefined>;
+  const code = pickNonEmptyString(params.code);
+  if (!code) {
+    return null;
+  }
+  const snapshot = readPkceRequestSnapshot(request);
+  if (!snapshot) {
+    return null;
+  }
+  const config: AccessTokenRequestConfig = {
+    clientId: snapshot.clientId,
+    redirectUri: snapshot.redirectUri,
+    code,
+    extraParams: { code_verifier: snapshot.codeVerifier },
+  };
+  const tokenResponse: TokenResponse = await exchangeCodeAsync(config, GOOGLE_TOKEN_DISCOVERY);
+  return {
+    ...(tokenResponse.accessToken ? { accessToken: tokenResponse.accessToken } : {}),
+    ...(tokenResponse.idToken ? { idToken: tokenResponse.idToken } : {}),
+    ...(tokenResponse.scope ? { scope: tokenResponse.scope } : {}),
+  };
+}
+
+/**
  * Google OAuth 응답을 진단용으로 요약한다 — 토큰 값은 절대 포함하지 않는다.
  *
  * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (#15)` 에서 토큰 미수신(빈 응답) 케이스가 보고되어
@@ -327,7 +431,47 @@ export function useGoogleAuthRequest(scopes: readonly string[] = ['openid', 'pro
         formatGoogleAuthDiagnostics(diagnostics),
       );
       if (result.type === 'success') {
-        const extracted = extractGoogleAuthTokens(result);
+        let extracted = extractGoogleAuthTokens(result);
+        // PKCE auth-code flow (Google native client 기본) — `code` 만 도착하고 토큰은 별도
+        // exchange 가 필요하다. P0 (2026-06-10) TestFlight #16 에서 본 분기 누락으로 토큰
+        // 추출 실패가 발생하여 본 처리 추가.
+        const params = (result.params ?? {}) as Record<string, string | undefined>;
+        const hasAuthCode = typeof params.code === 'string' && params.code.trim().length > 0;
+        if (!extracted.accessToken && !extracted.idToken && hasAuthCode) {
+          try {
+            const exchanged = await exchangeGooglePkceCode(result, request);
+            if (exchanged && (exchanged.accessToken || exchanged.idToken)) {
+              extracted = exchanged;
+              // 토큰 값은 절대 미포함 — 분기 진입 여부와 결과 키 셋만 노출.
+              console.log(
+                '[GoogleSignIn][diagnose] PKCE exchange ok',
+                `tokens=[${[
+                  exchanged.accessToken ? 'access' : null,
+                  exchanged.idToken ? 'id' : null,
+                ]
+                  .filter(Boolean)
+                  .join(',')}]`,
+              );
+            } else {
+              console.log(
+                '[GoogleSignIn][diagnose] PKCE exchange skipped (missing request fields)',
+                formatGoogleAuthDiagnostics(diagnostics),
+              );
+            }
+          } catch (exchangeError) {
+            const exchangeMessage =
+              exchangeError instanceof Error
+                ? exchangeError.message
+                : 'Google 토큰 교환에 실패했습니다.';
+            console.log('[GoogleSignIn][diagnose] PKCE exchange failed', exchangeMessage);
+            return {
+              kind: 'error',
+              message:
+                'Google 로그인 토큰 교환에 실패했습니다. 잠시 후 다시 시도해 주세요. ' +
+                `(diag: ${formatGoogleAuthDiagnostics(diagnostics)}; exchange=${exchangeMessage})`,
+            };
+          }
+        }
         if (!extracted.accessToken && !extracted.idToken) {
           return {
             kind: 'error',

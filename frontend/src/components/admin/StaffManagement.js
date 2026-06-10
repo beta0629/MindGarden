@@ -198,7 +198,7 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
   const staffEditPhoneBaselineRef = useRef('');
-  // PR #200·#202 컴팩트 패턴: 기본 작은 카드 그리드 (200-240px height, multi-column)
+  // PR #200·#202 컴팩트 패턴: 기본 작은 카드 그리드 (mg-v2-list-block__grid--small + ProfileCard variant=compact)
   const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list'
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });

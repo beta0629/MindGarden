@@ -353,6 +353,102 @@ class MobilePushDispatchServiceImplTest {
     }
 
     @Test
+    @DisplayName("P0 격리 디펜스 — postExpoBatch message.data 에 토큰별 recipientUserId 동봉")
+    void postExpoBatch_includesRecipientUserIdPerToken() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        // 동일 디바이스에 두 사용자(이전·현재) 토큰이 active=true 로 남아 있는 격리 무력화 상황을 모사.
+        // dispatchBookingReminder 는 단일 fanout 으로 양쪽 user 토큰을 한 배치에 묶는다.
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[recipient-client]");
+        clientToken.setUserId(77L);
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[recipient-consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L, 88L)))).thenReturn(List.of(clientToken, consultantToken));
+
+        when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_REMINDER),
+                eq("50"), anyString())).thenReturn(true);
+
+        ArgumentCaptor<org.springframework.http.HttpEntity<?>> entityCaptor =
+                ArgumentCaptor.forClass(org.springframework.http.HttpEntity.class);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), entityCaptor.capture(),
+                eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"},{\"status\":\"ok\"}]}");
+
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 6, 11));
+        schedule.setStartTime(LocalTime.of(10, 0));
+        schedule.setEndTime(LocalTime.of(11, 0));
+
+        mobilePushDispatchService.dispatchBookingReminder("tenant-a", schedule, "내일 상담 예약이 있습니다.", "D1");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> messages =
+                (List<Map<String, Object>>) entityCaptor.getValue().getBody();
+        assertThat(messages).isNotNull().hasSize(2);
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> clientData = (Map<String, String>) messages.get(0).get("data");
+        @SuppressWarnings("unchecked")
+        Map<String, String> consultantData = (Map<String, String>) messages.get(1).get("data");
+        assertThat(clientData).containsEntry("recipientUserId", "77");
+        assertThat(consultantData).containsEntry("recipientUserId", "88");
+    }
+
+    @Test
+    @DisplayName("P0 격리 디펜스 — postAdminAnnouncementToExpo message.data 에 recipientUserId 동봉")
+    void postAdminAnnouncement_includesRecipientUserIdPerToken() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setSystemEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(77L)))
+                .thenReturn(Optional.of(settings));
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[admin-recipient]");
+        token.setUserId(77L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(77L)))).thenReturn(List.of(token));
+
+        when(mobilePushDispatchDedupService.tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT),
+                eq("77"), eq("p0-bucket"))).thenReturn(true);
+
+        ArgumentCaptor<org.springframework.http.HttpEntity<?>> entityCaptor =
+                ArgumentCaptor.forClass(org.springframework.http.HttpEntity.class);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), entityCaptor.capture(),
+                eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\",\"id\":\"receipt-77\"}]}");
+
+        mobilePushDispatchService.dispatchAdminAnnouncement(
+                "tenant-a", List.of(77L), "공지", "운영 점검 안내", "p0-bucket");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> messages =
+                (List<Map<String, Object>>) entityCaptor.getValue().getBody();
+        assertThat(messages).isNotNull().hasSize(1);
+        @SuppressWarnings("unchecked")
+        Map<String, String> data = (Map<String, String>) messages.get(0).get("data");
+        assertThat(data).containsEntry("recipientUserId", "77");
+    }
+
+    @Test
     @DisplayName("dispatchBookingConfirmed: 본문에 일시·상담사명 포함")
     void dispatchBookingConfirmed_enrichedBody() {
         when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");

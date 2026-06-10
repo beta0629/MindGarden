@@ -31,7 +31,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import type { AuthRequestPromptOptions } from 'expo-auth-session';
+import type { AuthRequestPromptOptions, AuthSessionResult } from 'expo-auth-session';
 
 // 모듈 로드 시 1회 — Expo dev client / production 모두에서 OAuth 콜백 자동 처리.
 WebBrowser.maybeCompleteAuthSession();
@@ -42,11 +42,19 @@ export interface GoogleClientIdConfig {
   readonly androidClientId?: string;
 }
 
-/** `expo-auth-session/providers/google` 의 success response 핵심 필드. */
+/**
+ * `expo-auth-session/providers/google` 의 success response 핵심 필드.
+ *
+ * <p>P0 2026-06-10 수정: 일부 iOS 네이티브 빌드(TestFlight 1.0.7 #14)에서 응답이
+ * `authentication.accessToken` 없이 `idToken` 만 포함하거나, 토큰이 `result.params.access_token` /
+ * `result.params.id_token` 으로만 전달되는 케이스를 관찰. 따라서 **두 토큰 모두 optional**
+ * 로 정의하고, 호출자(`AuthService.loginWithGoogle`) 가 "둘 중 최소 하나"를 검증한다.
+ * BE 는 accessToken 우선이고, accessToken 부재 시 idToken 으로 폴백한다.</p>
+ */
 export interface GoogleAuthResult {
-  /** Google `access_token` — BE 가 `userinfo` API 호출 또는 `id_token` 검증에 사용 */
-  readonly accessToken: string;
-  /** Google `id_token` (OpenID Connect) — BE 가 `kid` 검증으로 사용 */
+  /** Google `access_token` — BE 가 `userinfo` API 호출에 사용 (선택). */
+  readonly accessToken?: string;
+  /** Google `id_token` (OpenID Connect) — BE 가 `tokeninfo` 검증·claims 추출에 사용 (선택). */
   readonly idToken?: string;
   /** OAuth scope 문자열 (공백 구분) */
   readonly scope?: string;
@@ -167,6 +175,60 @@ function isUsableGoogleClientId(value: string | undefined | null): boolean {
  */
 const GOOGLE_PLACEHOLDER_CLIENT_ID = '0.apps.googleusercontent.com';
 
+/**
+ * `Google.useAuthRequest` success 응답에서 `accessToken` / `idToken` 을 회복력 있게 추출한다.
+ *
+ * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (14)` 에서 Google 로그인 시 빨간 오류
+ * "Google 로그인 응답에서 accessToken 을 찾을 수 없습니다" 가 노출되어 로그인이 차단되었다.
+ * 원인: iOS 네이티브 빌드(implicit/PKCE 자동)에서 `result.authentication` 이 일부 케이스에
+ * `null` 이거나 `accessToken` 키가 비고 토큰이 `result.params.{access_token,id_token}` 으로
+ * 전달된다. 또 iOS 네이티브 ID Token Only 플로우는 `idToken` 만 반환할 수 있다.</p>
+ *
+ * <p>본 헬퍼는 두 위치(`authentication.*` / `params.*`)를 모두 확인하여 가능한 토큰을 모두
+ * 반환한다. 호출자는 둘 중 최소 하나가 있으면 BE 로 전송하고, BE 는 accessToken 우선·
+ * idToken 폴백(`GoogleOAuth2ServiceImpl.getUserInfoFromIdToken`) 으로 사용자 정보를 조회한다.</p>
+ *
+ * <p>본 함수는 React 훅이 아니며 외부에서 직접 호출하지 않는다(테스트 목적 export). 호환을
+ * 위해 반환 객체의 `accessToken`/`idToken` 모두 `undefined` 가능.</p>
+ */
+export function extractGoogleAuthTokens(result: AuthSessionResult): GoogleAuthResult {
+  if (result.type !== 'success') {
+    return {};
+  }
+  const auth = result.authentication ?? undefined;
+  const params = (result.params ?? {}) as Record<string, string | undefined>;
+  const accessToken = pickNonEmptyString(auth?.accessToken, params.access_token);
+  const idToken = pickNonEmptyString(auth?.idToken, params.id_token);
+  const scope = pickNonEmptyString(auth?.scope, params.scope);
+  const extracted: { -readonly [K in keyof GoogleAuthResult]?: GoogleAuthResult[K] } = {};
+  if (accessToken) {
+    extracted.accessToken = accessToken;
+  }
+  if (idToken) {
+    extracted.idToken = idToken;
+  }
+  if (scope) {
+    extracted.scope = scope;
+  }
+  return extracted;
+}
+
+/** 빈 문자열·`undefined`·`null` 을 모두 미설정으로 본 뒤 trim 한 첫 번째 유효 값을 반환. */
+function pickNonEmptyString(
+  ...candidates: readonly (string | undefined | null)[]
+): string | undefined {
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') {
+      continue;
+    }
+    const trimmed = candidate.trim();
+    if (trimmed.length > 0) {
+      return trimmed;
+    }
+  }
+  return undefined;
+}
+
 export function useGoogleAuthRequest(scopes: readonly string[] = ['openid', 'profile', 'email']) {
   const clientIds = useMemo(() => resolveGoogleClientIdConfig(), []);
   const platformClientId =
@@ -209,20 +271,16 @@ export function useGoogleAuthRequest(scopes: readonly string[] = ['openid', 'pro
     try {
       const result = await promptAsyncRaw(options);
       if (result.type === 'success') {
-        const auth = result.authentication;
-        if (!auth?.accessToken) {
+        const extracted = extractGoogleAuthTokens(result);
+        if (!extracted.accessToken && !extracted.idToken) {
           return {
             kind: 'error',
-            message: 'Google 로그인 응답에서 accessToken 을 찾을 수 없습니다.',
+            message: 'Google 로그인 응답에서 토큰을 찾을 수 없습니다. 잠시 후 다시 시도해 주세요.',
           };
         }
         return {
           kind: 'success',
-          result: {
-            accessToken: auth.accessToken,
-            idToken: auth.idToken ?? undefined,
-            scope: auth.scope ?? undefined,
-          },
+          result: extracted,
         };
       }
       if (result.type === 'cancel') {

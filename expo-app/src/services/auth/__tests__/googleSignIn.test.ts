@@ -14,7 +14,12 @@
 
 import Constants from 'expo-constants';
 
-import { isGoogleConfiguredForPlatform, resolveGoogleClientIdConfig } from '../googleSignIn';
+import {
+  extractGoogleAuthTokens,
+  isGoogleConfiguredForPlatform,
+  resolveGoogleClientIdConfig,
+} from '../googleSignIn';
+import type { AuthSessionResult } from 'expo-auth-session';
 
 // `Platform.OS` 를 테스트 사이에 mutable 하게 바꾸기 위해 jest.mock factory 내부에 상태를 둔다.
 // 외부 선언(const/let/var) 으로 둘 경우 jest.mock 호이스트로 인한 TDZ 또는 undefined 캡처가 발생한다.
@@ -192,5 +197,116 @@ describe('isGoogleConfiguredForPlatform — P0 핫픽스 mount 가드 sentinel',
     platformRef.OS = 'web';
     setExtra({ web: REAL_WEB_CLIENT_ID });
     expect(isGoogleConfiguredForPlatform()).toBe(true);
+  });
+});
+
+describe('extractGoogleAuthTokens — P0 (2026-06-10) 토큰 추출 폴백', () => {
+  const SAMPLE_ACCESS_TOKEN = 'ya29.SampleAccessToken_abcdefghij';
+  const SAMPLE_ID_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.SampleIdToken.signature';
+  const SAMPLE_SCOPE = 'openid profile email';
+
+  function successWithAuthentication(authentication: {
+    accessToken?: string;
+    idToken?: string;
+    scope?: string;
+  }): AuthSessionResult {
+    return {
+      type: 'success',
+      authentication: authentication as unknown as AuthSessionResult extends {
+        authentication: infer A;
+      }
+        ? A
+        : never,
+      params: {},
+      errorCode: null,
+      error: null,
+      url: 'https://auth.expo.io/redirect',
+    } as unknown as AuthSessionResult;
+  }
+
+  function successWithParams(params: Record<string, string>): AuthSessionResult {
+    return {
+      type: 'success',
+      authentication: null,
+      params,
+      errorCode: null,
+      error: null,
+      url: 'https://auth.expo.io/redirect',
+    } as unknown as AuthSessionResult;
+  }
+
+  test('authentication.accessToken + idToken 둘 다 있으면 모두 반환', () => {
+    const result = extractGoogleAuthTokens(
+      successWithAuthentication({
+        accessToken: SAMPLE_ACCESS_TOKEN,
+        idToken: SAMPLE_ID_TOKEN,
+        scope: SAMPLE_SCOPE,
+      }),
+    );
+    expect(result.accessToken).toBe(SAMPLE_ACCESS_TOKEN);
+    expect(result.idToken).toBe(SAMPLE_ID_TOKEN);
+    expect(result.scope).toBe(SAMPLE_SCOPE);
+  });
+
+  test('authentication.idToken 만 있고 accessToken 이 없으면 idToken 만 반환 (P0 핵심)', () => {
+    const result = extractGoogleAuthTokens(successWithAuthentication({ idToken: SAMPLE_ID_TOKEN }));
+    expect(result.accessToken).toBeUndefined();
+    expect(result.idToken).toBe(SAMPLE_ID_TOKEN);
+  });
+
+  test('authentication 이 null 이고 params.access_token 만 있어도 accessToken 추출', () => {
+    const result = extractGoogleAuthTokens(
+      successWithParams({ access_token: SAMPLE_ACCESS_TOKEN }),
+    );
+    expect(result.accessToken).toBe(SAMPLE_ACCESS_TOKEN);
+    expect(result.idToken).toBeUndefined();
+  });
+
+  test('authentication 이 null 이고 params.id_token 만 있으면 idToken 만 추출 (P0 핵심)', () => {
+    const result = extractGoogleAuthTokens(successWithParams({ id_token: SAMPLE_ID_TOKEN }));
+    expect(result.accessToken).toBeUndefined();
+    expect(result.idToken).toBe(SAMPLE_ID_TOKEN);
+  });
+
+  test('authentication 과 params 가 모두 있으면 authentication 우선', () => {
+    const result = extractGoogleAuthTokens({
+      type: 'success',
+      authentication: { accessToken: SAMPLE_ACCESS_TOKEN } as never,
+      params: { access_token: 'different-token', id_token: SAMPLE_ID_TOKEN } as Record<
+        string,
+        string
+      >,
+      errorCode: null,
+      error: null,
+      url: 'https://auth.expo.io/redirect',
+    } as unknown as AuthSessionResult);
+    expect(result.accessToken).toBe(SAMPLE_ACCESS_TOKEN);
+    expect(result.idToken).toBe(SAMPLE_ID_TOKEN);
+  });
+
+  test('빈 문자열·공백 토큰은 미추출', () => {
+    const result = extractGoogleAuthTokens(
+      successWithAuthentication({ accessToken: '   ', idToken: '' }),
+    );
+    expect(result.accessToken).toBeUndefined();
+    expect(result.idToken).toBeUndefined();
+  });
+
+  test('success 가 아닌 결과(cancel/dismiss/error)는 빈 객체 반환', () => {
+    const cancelResult = extractGoogleAuthTokens({
+      type: 'cancel',
+    } as unknown as AuthSessionResult);
+    expect(cancelResult).toEqual({});
+
+    const errorResult = extractGoogleAuthTokens({
+      type: 'error',
+      error: new Error('OAuth failed'),
+    } as unknown as AuthSessionResult);
+    expect(errorResult).toEqual({});
+  });
+
+  test('토큰이 둘 다 없으면 빈 객체 반환 (호출자가 사용자 메시지 분기)', () => {
+    const result = extractGoogleAuthTokens(successWithAuthentication({}));
+    expect(result).toEqual({});
   });
 });

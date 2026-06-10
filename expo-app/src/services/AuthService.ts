@@ -1394,23 +1394,33 @@ export const AuthService = {
   /**
    * Google 로그인 — `expo-auth-session/providers/google` (G-1) 결과를 BE 와 매칭.
    *
-   * <p>흐름: 호출자(login.tsx) 가 `useGoogleAuthRequest().promptAsync()` 로 Google access_token 을
-   * 받은 뒤, 본 메서드를 호출. BE `/api/v1/auth/social-login` 이 `accessToken` 으로
-   * `GoogleOAuth2ServiceImpl.getUserInfo()` 호출 → `requiresOAuthPhoneVerification` (정책상 항상 true)
-   * 또는 기존 매칭 사용자 즉시 로그인.</p>
+   * <p>흐름: 호출자(login.tsx) 가 `useGoogleAuthRequest().promptAsync()` 로 Google access_token /
+   * id_token 을 받은 뒤, 본 메서드를 호출. BE `/api/v1/auth/social-login` 이 다음 우선순위로 분기:
+   *  - accessToken 이 있으면 `GoogleOAuth2ServiceImpl.getUserInfo(accessToken)` (Google userinfo API)
+   *  - accessToken 이 없고 idToken 만 있으면 `getUserInfoFromIdToken(idToken)` (Google tokeninfo API)
+   * 그 결과로 `requiresOAuthPhoneVerification` (정책상 항상 true) 또는 기존 매칭 사용자 즉시 로그인.</p>
    *
-   * @param accessToken Google OAuth access_token (`auth.accessToken`)
-   * @param idToken     OpenID Connect id_token — 현재 BE 는 미사용. 향후 호환 위해 받아만 둠.
+   * <p>**P0 2026-06-10**: TestFlight `1.0.7 (14)` 에서 iOS 네이티브 응답이 `accessToken` 을
+   * 누락하고 `idToken` 만 전달하는 케이스를 관찰하여, accessToken 부재 시 idToken 만으로도
+   * 로그인이 진행되도록 방어한다. 둘 다 비어 있을 때만 사용자 친화 에러를 반환.</p>
+   *
+   * @param accessToken Google OAuth access_token (`auth.accessToken` 또는 `params.access_token`) — 선택
+   * @param idToken     OpenID Connect id_token (`auth.idToken` 또는 `params.id_token`) — 선택
    */
-  async loginWithGoogle(accessToken: string, idToken?: string): Promise<SocialLoginOutcome> {
-    if (!accessToken?.trim()) {
-      return { kind: 'error', message: 'Google 로그인 토큰이 비어 있습니다.' };
+  async loginWithGoogle(accessToken?: string, idToken?: string): Promise<SocialLoginOutcome> {
+    const trimmedAccessToken = accessToken?.trim() ?? '';
+    const trimmedIdToken = idToken?.trim() ?? '';
+    if (!trimmedAccessToken && !trimmedIdToken) {
+      return {
+        kind: 'error',
+        message: 'Google 로그인 응답에서 토큰을 찾을 수 없습니다. 잠시 후 다시 시도해 주세요.',
+      };
     }
 
     try {
       const googleRetryContext = buildSocialRetryContext(
         'GOOGLE',
-        accessToken,
+        trimmedAccessToken || trimmedIdToken,
         null,
         null,
         null,
@@ -1428,12 +1438,15 @@ export const AuthService = {
 
       let response: SocialLoginResponse | undefined;
       try {
-        response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
-          provider: 'GOOGLE',
-          accessToken,
-          // BE 는 userId/email/nickname/profileImage 가 비면 `getUserInfo(accessToken)` 으로 보강한다.
-          ...(idToken?.trim() ? { idToken } : {}),
-        });
+        // BE 는 accessToken 우선이고, 없으면 idToken 으로 `tokeninfo` 검증 후 사용자 정보를 보강한다.
+        const requestBody: Record<string, unknown> = { provider: 'GOOGLE' };
+        if (trimmedAccessToken) {
+          requestBody.accessToken = trimmedAccessToken;
+        }
+        if (trimmedIdToken) {
+          requestBody.idToken = trimmedIdToken;
+        }
+        response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, requestBody);
       } catch (apiError: unknown) {
         const dup = detectDuplicateLoginConfirmation(apiError);
         if (dup) {

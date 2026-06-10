@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell } from 'lucide-react';
+import Avatar from '../common/Avatar';
 import './AppTopBar.css';
 import { useTranslation } from 'react-i18next';
 
@@ -81,15 +82,12 @@ const AppTopBar = ({
         )}
         {showProfile && (
           <button className="mg-top-bar__profile" aria-label={t('common.labels.profile')} type="button">
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt={t('common.labels.profile')}
-                className="mg-top-bar__avatar"
-              />
-            ) : (
-              <span className="mg-top-bar__avatar mg-top-bar__avatar--placeholder" />
-            )}
+            <Avatar
+              profileImageUrl={profileImage}
+              displayName=""
+              className="mg-top-bar__avatar"
+              alt={t('common.labels.profile')}
+            />
           </button>
         )}
       </div>

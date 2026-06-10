@@ -4,6 +4,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../utils/notification';
 import StandardizedApi from '../../../utils/standardizedApi';
+import resolveAvatarSourceUri from '../../../utils/resolveAvatarSourceUri';
 import { useTranslation } from 'react-i18next';
 
 // P0 영구 대책 Phase 2 (2026-06-09): base64 dataURI → multipart 업로드 endpoint 로 전환.
@@ -32,16 +33,18 @@ const ProfileImageUpload = ({
   const [isUploading, setIsUploading] = useState(false);
 
   const getProfileImageUrl = useCallback(() => {
+    let raw = null;
     if (profileImage && profileImageType === 'USER_PROFILE') {
-      return profileImage;
+      raw = profileImage;
+    } else if (socialProfileImage && profileImageType === 'SOCIAL_IMAGE') {
+      raw = socialProfileImage;
+    } else if (profileImage && typeof profileImage === 'string' && profileImage.startsWith('http')) {
+      raw = profileImage;
     }
-    if (socialProfileImage && profileImageType === 'SOCIAL_IMAGE') {
-      return socialProfileImage;
+    if (!raw) {
+      return '/default-avatar.svg';
     }
-    if (profileImage && typeof profileImage === 'string' && profileImage.startsWith('http')) {
-      return profileImage;
-    }
-    return '/default-avatar.svg';
+    return resolveAvatarSourceUri(raw) ?? '/default-avatar.svg';
   }, [profileImage, profileImageType, socialProfileImage, forceUpdate]);
 
   const getProfileImageTypeText = () => {

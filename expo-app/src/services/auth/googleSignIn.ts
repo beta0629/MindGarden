@@ -229,6 +229,55 @@ function pickNonEmptyString(
   return undefined;
 }
 
+/**
+ * Google OAuth 응답을 진단용으로 요약한다 — 토큰 값은 절대 포함하지 않는다.
+ *
+ * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (#15)` 에서 토큰 미수신(빈 응답) 케이스가 보고되어
+ * 어떤 응답 타입(`success` / `dismiss` / `cancel` / `error`) 인지 + `result.params` /
+ * `result.authentication` 의 키 셋·`result.url` 존재 여부를 production 빌드에서도 확인할 수
+ * 있도록 구조화한다. 호출자가 사용자 메시지·console·Sentry 모두에 이 메타를 노출.</p>
+ *
+ * <p>토큰·코드·idToken 등 민감 값은 키 존재 여부만 보고하고 값 자체는 포함하지 않는다.</p>
+ */
+export interface GoogleAuthResultDiagnostics {
+  /** `result.type` — `success` / `cancel` / `dismiss` / `error` */
+  readonly type: AuthSessionResult['type'];
+  /** `result.params` 의 키 목록 (값 미포함). 비어 있으면 빈 배열. */
+  readonly paramKeys: readonly string[];
+  /** `result.authentication` 의 키 목록 (값 미포함). null/undefined 면 빈 배열. */
+  readonly authenticationKeys: readonly string[];
+  /** `result.url` (콜백 URL) 이 존재하는지 — 값 자체는 포함하지 않는다. */
+  readonly hasUrl: boolean;
+  /** `error` 응답일 때만 OAuth provider 가 보낸 단순 에러 코드. */
+  readonly errorCode?: string;
+}
+
+export function diagnoseGoogleAuthResult(result: AuthSessionResult): GoogleAuthResultDiagnostics {
+  const params = (result as { params?: Record<string, unknown> | null }).params ?? null;
+  const auth = (result as { authentication?: Record<string, unknown> | null }).authentication ?? null;
+  const url = (result as { url?: string | null }).url ?? null;
+  const errorCode = (result as { errorCode?: string | null }).errorCode ?? undefined;
+  return {
+    type: result.type,
+    paramKeys: params ? Object.keys(params) : [],
+    authenticationKeys: auth ? Object.keys(auth) : [],
+    hasUrl: typeof url === 'string' && url.length > 0,
+    ...(errorCode ? { errorCode } : {}),
+  };
+}
+
+/**
+ * 진단 메타를 사람이 읽기 쉬운 한 줄 문자열로 직렬화한다 (사용자 친화 에러 메시지에 포함).
+ *
+ * <p>예: `type=success,params=[code,state],auth=[],url=true` — 토큰 값은 절대 포함하지 않는다.</p>
+ */
+export function formatGoogleAuthDiagnostics(diag: GoogleAuthResultDiagnostics): string {
+  const params = diag.paramKeys.length > 0 ? `[${diag.paramKeys.join(',')}]` : '∅';
+  const auth = diag.authenticationKeys.length > 0 ? `[${diag.authenticationKeys.join(',')}]` : '∅';
+  const errorCode = diag.errorCode ? `,errorCode=${diag.errorCode}` : '';
+  return `type=${diag.type},params=${params},auth=${auth},url=${diag.hasUrl}${errorCode}`;
+}
+
 export function useGoogleAuthRequest(scopes: readonly string[] = ['openid', 'profile', 'email']) {
   const clientIds = useMemo(() => resolveGoogleClientIdConfig(), []);
   const platformClientId =
@@ -270,12 +319,21 @@ export function useGoogleAuthRequest(scopes: readonly string[] = ['openid', 'pro
     }
     try {
       const result = await promptAsyncRaw(options);
+      const diagnostics = diagnoseGoogleAuthResult(result);
+      // production 빌드에서도 logcat / Xcode console 에 노출 — 토큰 값은 포함하지 않는다.
+      // P0 (2026-06-10): TestFlight #15 에서 토큰 미수신 root-cause 식별을 위한 진단 로그.
+      console.log(
+        '[GoogleSignIn][diagnose] promptAsync result',
+        formatGoogleAuthDiagnostics(diagnostics),
+      );
       if (result.type === 'success') {
         const extracted = extractGoogleAuthTokens(result);
         if (!extracted.accessToken && !extracted.idToken) {
           return {
             kind: 'error',
-            message: 'Google 로그인 응답에서 토큰을 찾을 수 없습니다. 잠시 후 다시 시도해 주세요.',
+            message:
+              'Google 로그인 응답에서 토큰을 찾을 수 없습니다. 잠시 후 다시 시도해 주세요. ' +
+              `(diag: ${formatGoogleAuthDiagnostics(diagnostics)})`,
           };
         }
         return {
@@ -290,7 +348,12 @@ export function useGoogleAuthRequest(scopes: readonly string[] = ['openid', 'pro
         return { kind: 'dismiss' };
       }
       const errMsg = result.type === 'error' ? result.error?.message : undefined;
-      return { kind: 'error', message: errMsg ?? 'Google 로그인에 실패했습니다.' };
+      return {
+        kind: 'error',
+        message:
+          (errMsg ?? 'Google 로그인에 실패했습니다.') +
+          ` (diag: ${formatGoogleAuthDiagnostics(diagnostics)})`,
+      };
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Google 로그인 중 오류가 발생했습니다.';
       return { kind: 'error', message };

@@ -109,10 +109,62 @@ function resolveApiBaseUrlExtra(): string | undefined {
   return undefined;
 }
 
+/**
+ * Google iOS OAuth Client ID 를 reversed URL scheme 형태로 변환.
+ *
+ * <p>standalone iOS 빌드(EAS) 에서 `expo-auth-session/providers/google` 가 iOS native
+ * client id 를 사용할 때 redirect URI 를 `com.googleusercontent.apps.<reversed>:/oauthredirect`
+ * 로 자동 생성한다. 앱이 이 URL scheme 을 처리할 수 있어야 ASWebAuthenticationSession 의
+ * OAuth 콜백이 앱으로 라우팅되어 토큰이 전달된다(미등록 시 콜백이 빈 응답으로 dismiss).</p>
+ *
+ * <p>형식: `<id>.apps.googleusercontent.com` → `com.googleusercontent.apps.<id>`.
+ * 환경변수 `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` 가 비거나 형식이 다르면 `undefined` 반환 →
+ * `CFBundleURLTypes` 에 항목을 추가하지 않아 기존 동작(미등록) 유지.</p>
+ *
+ * @author MindGarden
+ * @since 2026-06-10
+ */
+function resolveGoogleIosReversedClientId(): string | undefined {
+  const candidate = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+  if (!candidate) {
+    return undefined;
+  }
+  const SUFFIX = '.apps.googleusercontent.com';
+  if (!candidate.toLowerCase().endsWith(SUFFIX)) {
+    return undefined;
+  }
+  const id = candidate.slice(0, candidate.length - SUFFIX.length).trim();
+  if (!id) {
+    return undefined;
+  }
+  return `com.googleusercontent.apps.${id}`;
+}
+
+/**
+ * Android applicationId (= `android.package`). expo-auth-session/providers/google 의 Android
+ * native client id 흐름이 redirect URI 를 `${Application.applicationId}:/oauthredirect`
+ * (= `com.mindgardenmobile:/oauthredirect`) 로 자동 생성한다.
+ *
+ * <p>iOS 의 `bundleIdentifier`(`com.mindgarden.MindGardenMobile`) 와 의도적으로 다른 값
+ * (`com.mindgardenmobile`) 을 유지한다 — Google Play 등록명·Maestro flow·install 스크립트
+ * (scripts/install-android-release-apk.js, .maestro/flows/*.yaml) 가 모두 이 패키지명에 묶여
+ * 있어 변경 시 마이그레이션 비용이 크다. Google Cloud Console Android OAuth Client 의
+ * Package name 도 이 값과 일치해야 한다 (사용자 액션).</p>
+ *
+ * @author MindGarden
+ * @since 2026-06-10
+ */
+const ANDROID_PACKAGE_ID = 'com.mindgardenmobile';
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   warnIfSocialLoginEnvMissingForEasBuild();
   const apiBaseUrl = resolveApiBaseUrlExtra();
   const easProjectId = resolveEasProjectId();
+  /**
+   * Google OAuth (iOS standalone) 콜백 URL scheme — env 누락 시 항목 미추가.
+   * P0 (2026-06-10): TestFlight 1.0.7 (#15) 에서 토큰 미수신 → Info.plist 미등록이 원인.
+   */
+  const googleIosReversedClientId = resolveGoogleIosReversedClientId();
   /**
    * OTA(`eas update`) endpoint — projectId 미주입 시 url 자체를 빼야 expo-updates 가
    * 정상적으로 비활성화 폴백(빌드 단계에서 경고)을 한다. 하드코딩 금지.
@@ -254,6 +306,27 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         NAVER_CLIENT_ID: resolveNaverClientIdForNative(),
         NAVER_CLIENT_SECRET: resolveNaverClientSecretForNative(),
         NAVER_APP_NAME: 'MindGardenMobileApp',
+        /**
+         * Google OAuth iOS callback URL schemes — `expo-auth-session/providers/google` 의
+         * iOS native client id 흐름은 redirect URI 를 `com.googleusercontent.apps.<reversed>:/oauthredirect`
+         * 로 자동 생성한다. 미등록 시 ASWebAuthenticationSession 콜백이 앱으로 라우팅되지 않아
+         * `params`/`authentication` 모두 비어 있는 응답이 반환되어 토큰을 추출할 수 없다.
+         *
+         * <p>P0 (2026-06-10): TestFlight `1.0.7 (#15)` 에서 "Google 로그인 응답에서 토큰을 찾을
+         * 수 없습니다" 오류로 로그인 차단 → Info.plist 미등록이 root cause.</p>
+         *
+         * <p>`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` 미주입 시 항목 미추가(기존 동작 유지). 앱 자체
+         * deep-link scheme(`mindgarden`) 은 Expo prebuild 가 별도 entry 로 자동 등록한다.</p>
+         */
+        ...(googleIosReversedClientId
+          ? {
+              CFBundleURLTypes: [
+                {
+                  CFBundleURLSchemes: [googleIosReversedClientId],
+                },
+              ],
+            }
+          : {}),
       },
     },
     android: {
@@ -262,10 +335,51 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         /** 나비 로고와 동일한 검정 배경(Adaptive Icon 마스크 외곽) */
         backgroundColor: '#000000',
       },
-      package: 'com.mindgardenmobile',
+      package: ANDROID_PACKAGE_ID,
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
       edgeToEdgeEnabled: true,
       versionCode: releaseManifest.androidVersionCode,
+      /**
+       * Android Google OAuth callback intent-filter — iOS `CFBundleURLTypes` 와 동일 계열의 P0 fix.
+       *
+       * <p>**P0 (2026-06-10)** — `expo-auth-session/providers/google` 의 Android native 흐름은
+       * redirect URI 를 `${Application.applicationId}:/oauthredirect`
+       * (= `com.mindgardenmobile:/oauthredirect`) 로 자동 생성한다
+       * (`node_modules/expo-auth-session/src/providers/Google.ts` L227).</p>
+       *
+       * <p>안드로이드 Chrome Custom Tabs 흐름은 콜백을 ActivityResult 가 아닌
+       * `Linking.addEventListener('url', ...)` 폴리필
+       * (`node_modules/expo-web-browser/src/WebBrowser.ts` `_waitForRedirectAsync`) 로 받는다.
+       * 따라서 이 deep-link 스킴이 AndroidManifest 의 intent-filter 로 등록되어 있지 않으면
+       * 콜백 URL 이 앱으로 라우팅되지 않고 Custom Tab 만 닫히면서 토큰이 누락된다 — iOS 의
+       * `params=empty,auth=empty` (#15) 케이스의 Android 대응.</p>
+       *
+       * <p>앱 자체 deep-link(`mindgarden://`) 는 `scheme: 'mindgarden'` 으로 Expo prebuild 가
+       * 별도 entry 로 자동 등록하므로 본 항목은 Google OAuth 콜백 전용 추가 등록이다.
+       * `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` 미주입 환경에서도 등록을 유지해 사용자가 EAS env
+       * 만 추가해도 다음 빌드부터 동작하도록 한다(scheme 등록은 빈 intent 일 뿐 부작용 없음).</p>
+       *
+       * <p>SHA-1 fingerprint·Package name 등록은 Google Cloud Console 사용자 액션 — 본 파일과 무관.
+       * 가이드: docs/project-management/2026-06-10/GOOGLE_ANDROID_OAUTH_SETUP.md</p>
+       */
+      intentFilters: [
+        {
+          action: 'VIEW',
+          autoVerify: false,
+          /**
+           * scheme 만 등록 — `com.mindgardenmobile:/oauthredirect` 은 opaque URI
+           * (scheme:path, `//` 없음) 형태라 host 가 없고 path 매칭이 부적합하다.
+           * expo-web-browser 폴리필이 콜백 URL 전체를 prefix 비교
+           * (`event.url.startsWith(returnUrl)`) 하므로 본 filter 는 라우팅 게이트 역할만 한다.
+           */
+          data: [
+            {
+              scheme: ANDROID_PACKAGE_ID,
+            },
+          ],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+      ],
     },
     web: {
       bundler: 'metro',

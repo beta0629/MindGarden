@@ -15,7 +15,9 @@
 import Constants from 'expo-constants';
 
 import {
+  diagnoseGoogleAuthResult,
   extractGoogleAuthTokens,
+  formatGoogleAuthDiagnostics,
   isGoogleConfiguredForPlatform,
   resolveGoogleClientIdConfig,
 } from '../googleSignIn';
@@ -308,5 +310,116 @@ describe('extractGoogleAuthTokens — P0 (2026-06-10) 토큰 추출 폴백', () 
   test('토큰이 둘 다 없으면 빈 객체 반환 (호출자가 사용자 메시지 분기)', () => {
     const result = extractGoogleAuthTokens(successWithAuthentication({}));
     expect(result).toEqual({});
+  });
+});
+
+describe('diagnoseGoogleAuthResult — P0 (2026-06-10) 응답 진단', () => {
+  test('success + authentication.{accessToken,idToken,scope} → 키 셋 반환', () => {
+    const diag = diagnoseGoogleAuthResult({
+      type: 'success',
+      authentication: {
+        accessToken: 'redacted',
+        idToken: 'redacted',
+        scope: 'openid email',
+      },
+      params: { code: 'redacted', state: 'redacted' },
+      errorCode: null,
+      error: null,
+      url: 'https://auth.expo.io/redirect',
+    } as unknown as AuthSessionResult);
+    expect(diag.type).toBe('success');
+    expect([...diag.paramKeys].sort()).toEqual(['code', 'state']);
+    expect([...diag.authenticationKeys].sort()).toEqual(['accessToken', 'idToken', 'scope']);
+    expect(diag.hasUrl).toBe(true);
+    expect(diag.errorCode).toBeUndefined();
+  });
+
+  test('success + 빈 params + null authentication → 빈 키 셋 (root cause 케이스)', () => {
+    const diag = diagnoseGoogleAuthResult({
+      type: 'success',
+      authentication: null,
+      params: {},
+      errorCode: null,
+      error: null,
+      url: undefined,
+    } as unknown as AuthSessionResult);
+    expect(diag.type).toBe('success');
+    expect(diag.paramKeys).toEqual([]);
+    expect(diag.authenticationKeys).toEqual([]);
+    expect(diag.hasUrl).toBe(false);
+  });
+
+  test('error 응답이면 errorCode 를 함께 반환', () => {
+    const diag = diagnoseGoogleAuthResult({
+      type: 'error',
+      authentication: null,
+      params: { error: 'access_denied' },
+      errorCode: 'access_denied',
+      error: new Error('User denied access'),
+      url: null,
+    } as unknown as AuthSessionResult);
+    expect(diag.type).toBe('error');
+    expect(diag.errorCode).toBe('access_denied');
+    expect(diag.paramKeys).toEqual(['error']);
+  });
+
+  test('cancel 응답: 빈 키 셋 + url 없음', () => {
+    const diag = diagnoseGoogleAuthResult({
+      type: 'cancel',
+    } as unknown as AuthSessionResult);
+    expect(diag.type).toBe('cancel');
+    expect(diag.paramKeys).toEqual([]);
+    expect(diag.authenticationKeys).toEqual([]);
+    expect(diag.hasUrl).toBe(false);
+  });
+
+  test('토큰 값 자체는 절대 진단 결과에 포함되지 않음 (보안)', () => {
+    const diag = diagnoseGoogleAuthResult({
+      type: 'success',
+      authentication: { accessToken: 'TOP_SECRET_ACCESS', idToken: 'TOP_SECRET_ID' },
+      params: { access_token: 'TOP_SECRET_PARAM' },
+      errorCode: null,
+      error: null,
+      url: 'https://auth.expo.io/redirect',
+    } as unknown as AuthSessionResult);
+    const serialized = JSON.stringify(diag);
+    expect(serialized).not.toContain('TOP_SECRET_ACCESS');
+    expect(serialized).not.toContain('TOP_SECRET_ID');
+    expect(serialized).not.toContain('TOP_SECRET_PARAM');
+  });
+});
+
+describe('formatGoogleAuthDiagnostics — 사용자 메시지 직렬화', () => {
+  test('키 모두 있을 때 사람이 읽기 쉬운 한 줄 반환', () => {
+    const formatted = formatGoogleAuthDiagnostics({
+      type: 'success',
+      paramKeys: ['code', 'state'],
+      authenticationKeys: ['accessToken', 'idToken'],
+      hasUrl: true,
+    });
+    expect(formatted).toBe(
+      'type=success,params=[code,state],auth=[accessToken,idToken],url=true',
+    );
+  });
+
+  test('빈 키 셋은 ∅ 로 표기 (root cause 케이스)', () => {
+    const formatted = formatGoogleAuthDiagnostics({
+      type: 'success',
+      paramKeys: [],
+      authenticationKeys: [],
+      hasUrl: false,
+    });
+    expect(formatted).toBe('type=success,params=∅,auth=∅,url=false');
+  });
+
+  test('errorCode 가 있으면 끝에 추가', () => {
+    const formatted = formatGoogleAuthDiagnostics({
+      type: 'error',
+      paramKeys: ['error'],
+      authenticationKeys: [],
+      hasUrl: false,
+      errorCode: 'access_denied',
+    });
+    expect(formatted).toBe('type=error,params=[error],auth=∅,url=false,errorCode=access_denied');
   });
 });

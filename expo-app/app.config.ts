@@ -86,6 +86,81 @@ function warnIfSocialLoginEnvMissingForEasBuild(): void {
 }
 
 /**
+ * `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` 가 EAS Build / Update 시점에 모두 비어 있으면 경고한다.
+ *
+ * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (16)` + OTA group `608da58e` 에서
+ * `extra.googleClientId = { ios:"", web:"", android:"" }` 로 publish 되어 Google 로그인 버튼이
+ * Disabled 상태가 됨. Root cause: `eas update` 명령에 `--environment production` 플래그가 빠져
+ * EAS Project Environment Variables 가 inject 되지 않은 채로 `app.config.ts` 가 평가됨.</p>
+ *
+ * <p>본 함수는 EAS Build / Update 시점에 한해 누락 키 목록을 stderr 에 명시한다. CI 로그를
+ * 보고 사용자가 즉시 인지할 수 있도록 한 줄 안내(`--environment production` 사용)을 함께 출력.</p>
+ *
+ * @author MindGarden
+ * @since 2026-06-10
+ */
+function warnIfGoogleClientIdMissingForEasContext(): void {
+  const isEasBuild = process.env.EAS_BUILD === 'true';
+  const isEasUpdate = process.env.EAS_UPDATE === 'true' || process.env.EAS_NO_VCS === '1';
+  if (!isEasBuild && !isEasUpdate) {
+    return;
+  }
+  const missing: string[] = [];
+  if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim()) {
+    missing.push('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
+  }
+  if (!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim()) {
+    missing.push('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID');
+  }
+  if (!process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID?.trim()) {
+    missing.push('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID');
+  }
+  if (missing.length === 0) {
+    return;
+  }
+  const ctx = isEasBuild ? 'EAS Build' : 'EAS Update';
+  console.warn(
+    `[app.config] ${ctx}: Google OAuth env 누락 → ${missing.join(', ')}. ` +
+      'EAS env (production environment) 에 등록되어 있어도 OTA(eas update) 명령에 ' +
+      '`--environment production` 가 없으면 inject 되지 않아 manifest 가 빈 값으로 publish 됩니다. ' +
+      '`npx eas update --environment production --branch production --channel production ...` 로 발행하세요.',
+  );
+}
+
+/**
+ * `extra.googleClientId` 객체를 생성한다. 빈 값일 때는 키를 omit 하여 manifest 가
+ * `{ web:"", ios:"", android:"" }` 로 publish 되는 사고를 막는다.
+ *
+ * <p>OTA 발행 시점에 EAS env 가 inject 되지 않아도, 키 자체가 manifest 에 없으면
+ * `Constants.expoConfig.extra.googleClientId` 는 `undefined` 가 되어
+ * `googleSignIn.resolveGoogleClientIdConfig()` 가 `process.env` (metro 가 빌드 시점에 inline)
+ * 만 보는 분기로 안전하게 폴백한다.</p>
+ *
+ * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (16)` 에서 `isGoogleConfigured=false` 회복 핵심 fix.</p>
+ *
+ * @author MindGarden
+ * @since 2026-06-10
+ */
+function resolveExtraGoogleClientId():
+  | { web?: string; ios?: string; android?: string }
+  | undefined {
+  const web = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim();
+  const ios = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+  const android = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID?.trim();
+  const entry: { web?: string; ios?: string; android?: string } = {};
+  if (web) {
+    entry.web = web;
+  }
+  if (ios) {
+    entry.ios = ios;
+  }
+  if (android) {
+    entry.android = android;
+  }
+  return Object.keys(entry).length > 0 ? entry : undefined;
+}
+
+/**
  * EAS project UUID 단일 해석. `extra.eas.projectId` 와 `updates.url` 양쪽이 같은 값을 사용한다.
  * 우선순위: `EAS_PROJECT_ID` → `EXPO_PUBLIC_EAS_PROJECT_ID` → 빈 문자열.
  * 빈 문자열이면 `updates.url` 은 미설정으로 처리해 EAS 가 빌드 시 에러로 알리도록 한다.
@@ -158,8 +233,10 @@ const ANDROID_PACKAGE_ID = 'com.mindgardenmobile';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   warnIfSocialLoginEnvMissingForEasBuild();
+  warnIfGoogleClientIdMissingForEasContext();
   const apiBaseUrl = resolveApiBaseUrlExtra();
   const easProjectId = resolveEasProjectId();
+  const extraGoogleClientId = resolveExtraGoogleClientId();
   /**
    * Google OAuth (iOS standalone) 콜백 URL scheme — env 누락 시 항목 미추가.
    * P0 (2026-06-10): TestFlight 1.0.7 (#15) 에서 토큰 미수신 → Info.plist 미등록이 원인.
@@ -422,12 +499,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
        *
        * <p>키가 모두 비어 있으면 `useGoogleAuthRequest()` 가 `notConfigured` 분기로 빠져
        * 사용자에게 "Google 로그인 설정이 누락되어 있습니다" 메시지를 노출하므로 빌드는 계속 진행한다.</p>
+       *
+       * <p>**P0 (2026-06-10)** — TestFlight `1.0.7 (16)` + OTA group `608da58e` 에서 빈 값이 publish 되어
+       * `isGoogleConfigured=false` 가 됨. Root cause: `eas update` 명령 `--environment production` 누락.
+       * 본 정의는 빈 값이면 항목 자체를 omit 하여 `Constants.expoConfig.extra.googleClientId` 가
+       * `undefined` 가 되도록 하고, `googleSignIn.resolveGoogleClientIdConfig()` 가
+       * `process.env` (metro inline) 로 폴백할 수 있게 한다.</p>
        */
-      googleClientId: {
-        web: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
-        ios: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '',
-        android: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '',
-      },
+      ...(extraGoogleClientId ? { googleClientId: extraGoogleClientId } : {}),
     },
   };
 };

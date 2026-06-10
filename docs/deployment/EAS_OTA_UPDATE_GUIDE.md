@@ -53,14 +53,30 @@ git log v1.0.7..HEAD --name-only -- expo-app/ \
   || echo "✅ JS-only 변경 — OTA 가능"
 
 # 3) OTA publish (production 채널)
+#
+# ⚠️ `--environment production` 필수.
+# EAS CLI v16+ 는 `eas update` 시 `--environment` 가 없으면 EAS Project Environment Variables 를
+# inject 하지 않는다. 그 결과 `app.config.ts` 가 빈 `process.env` 로 평가되어
+# `extra.googleClientId = { ios:"", web:"", android:"" }` 등 빈 값으로 manifest 가 publish 되고,
+# 사용자 앱에서 `isGoogleConfigured=false` ("Google 로그인 준비 중" Disabled) 가 된다.
+# P0 (2026-06-10) — TestFlight 1.0.7 (#16) + OTA group `608da58e` 에서 실제 발생.
 npx eas update \
+  --environment production \
   --branch production \
   --channel production \
   --message "<이슈/PR 번호와 한 줄 요약>"
 
 # 예시
-npx eas update --branch production --channel production \
+npx eas update --environment production --branch production --channel production \
   --message "fix(p1): 결제 성공 후 상세 페이지로 라우팅 오류 수정 (#172)"
+```
+
+검증:
+
+```bash
+# publish 직후 새 update id 의 manifest 에 EXPO_PUBLIC_GOOGLE_*_CLIENT_ID 가 살아 있는지 확인
+npx eas update:view <publish-id> --json | jq '.manifest.extra.googleClientId'
+# → { "web": "...", "ios": "...", "android": "..." } 모두 채워져 있어야 한다 (빈 값 금지).
 ```
 
 `eas update` 가 완료되면 production 채널의 **모든 v1.0.7+ 빌드**가 다음 cold start 에서 새 번들을 자동 다운로드한다 (현재 설정: `checkAutomatically: "ON_LOAD"`, `fallbackToCacheTimeout: 0` — 첫 부팅은 캐시 즉시 실행 후 새 번들 백그라운드 다운로드 → 다음 부팅에 적용).
@@ -127,6 +143,7 @@ PR 머지 후 / 새 EAS Build 직전:
 | `runtimeVersion` 변경 후 OTA push | 모든 기존 빌드가 update 못 받음 | runtime cut 은 EAS Build 와 함께만 |
 | 채널 오타 (`prod` vs `production`) | publish 됐지만 사용자 단말이 못 가져감 | `eas.json` 의 channel 값 그대로 사용 |
 | EAS_PROJECT_ID env 누락 | `updates.url` 미설정 → OTA 비활성 | EAS Build 프로필 `env` 또는 EAS Secret 에 항상 주입 |
+| `eas update` 시 `--environment production` 누락 | EAS Project Environment Variables 미주입 → `process.env.EXPO_PUBLIC_*` 빈 값 → `extra.googleClientId` 빈 객체로 publish → Google 로그인 Disabled | §4 의 명령 그대로 사용 (`--environment production` 필수). 발행 후 §4 검증 step 으로 manifest 의 `extra.googleClientId` 가 채워져 있는지 확인 |
 
 ## 10. 참고
 

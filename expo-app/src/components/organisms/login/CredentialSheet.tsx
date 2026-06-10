@@ -39,6 +39,7 @@ import {
   BUTTON_BORDER_RADIUS,
   BUTTON_HEIGHT,
 } from '@/components/organisms/login/loginAnimationConstants';
+import { LETTERBOX_CONTENT_MAX_WIDTH } from '@/theme/letterbox';
 
 const MAX_FONT_SIZE_MULTIPLIER = 1.6;
 
@@ -239,6 +240,15 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 24,
     gap: 12,
+    /**
+     * iPad letterbox 대응 (Build 1.0.9, Apple G4) — BottomSheet 자체는 풀폭으로 떠 있지만
+     * 시트 카드 내부 콘텐츠는 letterbox 컬럼과 동일한 max 폭으로 가두어 시각 일관성 유지.
+     * iPhone 에서는 화면 폭이 maxWidth 보다 작으므로 영향 없음.
+     * SSOT: P3-D 디자인 스펙 §4 #16 (바텀시트 카드 maxWidth).
+     */
+    maxWidth: LETTERBOX_CONTENT_MAX_WIDTH,
+    width: '100%',
+    alignSelf: 'center',
   },
   title: {
     fontFamily: fontFamily.semibold,

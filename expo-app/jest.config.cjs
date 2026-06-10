@@ -9,6 +9,7 @@ module.exports = {
     '<rootDir>/src/api/auth/__tests__',
     '<rootDir>/src/components/molecules/__tests__',
     '<rootDir>/src/components/organisms/login/__tests__',
+    '<rootDir>/src/theme/__tests__',
   ],
   testMatch: ['**/*.test.ts'],
   transform: {

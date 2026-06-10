@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { X } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { LETTERBOX_CONTENT_MAX_WIDTH } from '@/theme/letterbox';
 
 export type UnifiedModalAction = {
   readonly label: string;
@@ -206,6 +207,15 @@ const styles = StyleSheet.create({
   card: {
     overflow: 'hidden',
     maxHeight: '85%',
+    /**
+     * iPad letterbox 대응 — Modal 백드롭이 풀스크린이라 카드가 풀폭으로 늘어나는 것을 방지.
+     * 임계 너비(744pt) 이상에서도 콘텐츠 컬럼과 동일한 max 폭으로 카드를 가운데에 안착시킨다.
+     * iPhone 에서는 paddingHorizontal:24 (backdrop) 가 우선되어 maxWidth 제약이 영향 없음.
+     * SSOT: P3-D 디자인 스펙 §4 #15 (UnifiedModal 카드 maxWidth).
+     */
+    maxWidth: LETTERBOX_CONTENT_MAX_WIDTH,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',

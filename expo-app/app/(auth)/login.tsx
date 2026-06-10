@@ -58,7 +58,6 @@ import { useReduceMotion } from '@/hooks/useReduceMotion';
 import {
   CONTENT_HORIZONTAL_PADDING_MOBILE,
   CONTENT_HORIZONTAL_PADDING_TABLET,
-  CONTENT_MAX_WIDTH_TABLET,
   CONTENT_VERTICAL_PADDING,
   HEADER_TO_BUTTONS_GAP,
   LAYOUT_TABLET_DEVICE_WIDTH,
@@ -542,12 +541,7 @@ export default function MindGardenLoginPage() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View
-              style={[
-                styles.contentInner,
-                isTablet ? { maxWidth: CONTENT_MAX_WIDTH_TABLET, alignSelf: 'center' } : null,
-              ]}
-            >
+            <View style={styles.contentInner}>
               <View style={styles.heroBlock}>
                 <BreathingCircle config={config} size={orbSize} butterflySize={butterflySize} />
               </View>

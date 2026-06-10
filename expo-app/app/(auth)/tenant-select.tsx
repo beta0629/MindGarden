@@ -44,7 +44,6 @@ import { AnimatedPastelBackground } from '../../src/components/organisms/login/A
 import {
   CONTENT_HORIZONTAL_PADDING_MOBILE,
   CONTENT_HORIZONTAL_PADDING_TABLET,
-  CONTENT_MAX_WIDTH_TABLET,
   LAYOUT_TABLET_DEVICE_WIDTH,
   LOGO_SIZE_MIN,
   TITLE_FADE_IN_DELAY_MS,
@@ -344,15 +343,7 @@ export default function TenantSelectScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <Animated.View
           entering={FadeIn.duration(600)}
-          style={[
-            styles.content,
-            {
-              paddingHorizontal: contentHorizontalPadding,
-              maxWidth: isTablet ? CONTENT_MAX_WIDTH_TABLET : undefined,
-              alignSelf: isTablet ? 'center' : 'stretch',
-              width: isTablet ? '100%' : undefined,
-            },
-          ]}
+          style={[styles.content, { paddingHorizontal: contentHorizontalPadding }]}
         >
           <View style={styles.header}>
             <BreathingButterflyLogo

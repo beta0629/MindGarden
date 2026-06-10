@@ -58,6 +58,9 @@ public interface MobilePushTokenRepository extends JpaRepository<MobilePushToken
      * 동일 토큰 해시가 사용자별로 별도 행(active=true)으로 존재할 수 있다. 본 메서드는 현재 사용자({@code currentUserId})
      * 를 제외한 동일 해시 행을 active=false 로 일괄 갱신한다.</p>
      *
+     * <p>P0 (2026-06-10): 소프트 삭제(is_deleted=true) 행은 이미 비활성 상태이므로 격리 대상에서 제외하여
+     * 불필요한 UPDATE·updatedAt 갱신을 막는다(다른 워커가 추적하는 soft-delete 시각 보존).</p>
+     *
      * @param tenantId 테넌트 ID
      * @param tokenSha256 토큰 SHA-256 hex
      * @param currentUserId 보존할 현재 사용자 PK
@@ -67,7 +70,8 @@ public interface MobilePushTokenRepository extends JpaRepository<MobilePushToken
     @Modifying
     @Query("UPDATE MobilePushToken t SET t.active = false, t.updatedAt = :now "
             + "WHERE t.tenantId = :tenantId AND t.tokenSha256 = :tokenSha256 "
-            + "AND t.userId <> :currentUserId AND t.active = true")
+            + "AND t.userId <> :currentUserId AND t.active = true "
+            + "AND t.isDeleted = false")
     int deactivateOtherUsersWithSameTokenHash(
             @Param("tenantId") String tenantId,
             @Param("tokenSha256") String tokenSha256,

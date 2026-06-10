@@ -850,6 +850,13 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             Map<String, String> expoData = new LinkedHashMap<>(data);
             expoData.putIfAbsent("type", canonicalType);
             expoData.putIfAbsent("tenantId", tenantId);
+            // P0 (2026-06-10) — 사용자 격리 디펜스: 토큰 단위로 결정된 수신자 userId 를 페이로드에
+            // 동봉해 앱 측 핸들러가 currentUser != recipient 인 경우 표시·라우팅을 드롭한다.
+            // 디바이스에 잔류한 이전 사용자 토큰이 D-1 격리 무력화 상태에서도 알림을 받지 않도록
+            // 차단하는 마지막 방어선.
+            if (token.getUserId() != null) {
+                expoData.put("recipientUserId", String.valueOf(token.getUserId()));
+            }
             msg.put("data", expoData);
             messages.add(msg);
         }
@@ -1058,6 +1065,13 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             Map<String, String> expoData = new LinkedHashMap<>(data);
             expoData.putIfAbsent("type", MobilePushCanonicalTypes.ADMIN_ANNOUNCEMENT);
             expoData.putIfAbsent("tenantId", tenantId);
+            // P0 (2026-06-10) — 사용자 격리 디펜스: 토큰 단위로 결정된 수신자 userId 동봉.
+            // admin announcement 도 동일하게 앱 측 핸들러가 currentUser != recipient 인 경우
+            // 표시·라우팅을 드롭하도록 한다.
+            Long recipientUserId = token.getUserId() != null ? token.getUserId() : userId;
+            if (recipientUserId != null) {
+                expoData.put("recipientUserId", String.valueOf(recipientUserId));
+            }
             msg.put("data", expoData);
             messages.add(msg);
         }

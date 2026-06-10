@@ -54,6 +54,43 @@ function invalidateNotificationInbox(): void {
     });
 }
 
+/**
+ * P0 (2026-06-10) — 푸시 사용자 격리 디펜스.
+ * 백엔드 {@code postExpoBatch} 가 토큰 단위로 동봉한 {@code data.recipientUserId} 를
+ * 현재 로그인 사용자 PK 와 대조하여 mismatch 면 표시·라우팅·invalidate 를 모두 드롭한다.
+ * 디바이스에 잔류한 이전 사용자 토큰으로 전송된 알림이 다음 사용자에게 보이는
+ * 격리 위반(D-1 무력화)을 막는 마지막 방어선.
+ *
+ * <p>recipientUserId 가 없는 레거시 페이로드는 통과시켜 기존 동작과 호환을 유지한다.</p>
+ *
+ * @returns true → drop, false → 계속 처리
+ */
+function shouldDropForRecipientMismatch(data: Record<string, unknown> | null | undefined): boolean {
+  if (!data) {
+    return false;
+  }
+  const raw = data['recipientUserId'];
+  if (raw === undefined || raw === null || raw === '') {
+    return false;
+  }
+  const payloadUserId = Number(raw);
+  if (!Number.isFinite(payloadUserId) || payloadUserId <= 0) {
+    return false;
+  }
+  const currentUserId = useAuthStore.getState().user?.id;
+  if (!currentUserId) {
+    return false;
+  }
+  if (currentUserId === payloadUserId) {
+    return false;
+  }
+  console.warn('[NotificationService] recipient mismatch — drop', {
+    currentUserId,
+    payloadUserId,
+  });
+  return true;
+}
+
 /** logcat·adb 추적용 — 토큰 원문·길이 노출 금지 */
 function maskPushTokenForLog(token: string): string {
   const t = token.trim();
@@ -121,7 +158,18 @@ function navigateToSystemNotifications(role: AppAuthRole): void {
  */
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
-    const type = notification.request.content.data?.type as string | undefined;
+    const data = notification.request.content.data as Record<string, unknown> | null | undefined;
+    // P0 디펜스: 수신자 불일치는 OS 표시(사운드·배지 포함) 도 모두 차단.
+    if (shouldDropForRecipientMismatch(data)) {
+      return {
+        shouldShowAlert: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+        shouldShowBanner: false,
+        shouldShowList: false,
+      };
+    }
+    const type = data?.type as string | undefined;
     if (type) {
       const scenario = getScenarioByType(type);
       const category = scenario?.settingsCategory ?? 'system';
@@ -325,7 +373,14 @@ export const NotificationService = {
   setupForegroundHandler(): Notifications.EventSubscription {
     return Notifications.addNotificationReceivedListener((notification) => {
       const { title, body, data } = notification.request.content;
-      const type = data?.type as string | undefined;
+      const typedData = data as Record<string, unknown> | null | undefined;
+
+      // P0 디펜스: 수신자 불일치는 표시·invalidate 모두 차단(다른 사용자 알림 누수 방지).
+      if (shouldDropForRecipientMismatch(typedData)) {
+        return;
+      }
+
+      const type = typedData?.type as string | undefined;
 
       invalidateNotificationInbox();
 
@@ -369,7 +424,14 @@ export const NotificationService = {
   setupResponseHandler(): Notifications.EventSubscription {
     return Notifications.addNotificationResponseReceivedListener((response) => {
       const { data } = response.notification.request.content;
-      const type = data?.type as string | undefined;
+      const typedData = data as Record<string, unknown> | null | undefined;
+
+      // P0 디펜스: 수신자 불일치는 라우팅·invalidate 모두 차단.
+      if (shouldDropForRecipientMismatch(typedData)) {
+        return;
+      }
+
+      const type = typedData?.type as string | undefined;
       const role = useAuthStore.getState().role;
 
       invalidateNotificationInbox();

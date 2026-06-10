@@ -47,6 +47,12 @@ const ORB_CORE_ALPHA = 0.85;
 /** Orb 중간 (radial 50%) 알파 (`#F5F0E8` 0.55) */
 const ORB_MID_ALPHA = 0.55;
 
+/**
+ * Fade-in 애니메이션이 미완료된 채로 캡처/렌더돼도 Orb 가 보이도록 보장하는 안전 마진(ms).
+ * 정상 종료(delay + duration)보다 충분히 크게 잡아 정상 모션을 방해하지 않는다.
+ */
+const FADE_IN_SAFETY_MARGIN_MS = 500;
+
 export interface BreathingCircleProps {
   readonly config: LoginAnimationConfig;
   /** Orb 변(square) 픽셀 크기 — 호출자가 화면별로 결정 (`resolveOrbSizeForWidth`). */
@@ -85,15 +91,27 @@ export function BreathingCircle({
   testID,
 }: BreathingCircleProps) {
   const theme = useTheme();
-  const opacity = useRef(new Animated.Value(0)).current;
-  const enterScale = useRef(new Animated.Value(LOGO_INITIAL_SCALE)).current;
+  /**
+   * 초기값 = 최종 가시 상태(opacity 1, scale 1).
+   * - 페이드인 분기일 때만 useEffect 내부에서 0 으로 리셋 후 애니메이션.
+   * - 어떤 경로로든 mount 후 즉시 캡처되더라도 Orb · 나비 · 타이포가 보여야 한다 (2026-06-10 P0 정정).
+   */
+  const opacity = useRef(new Animated.Value(1)).current;
+  const enterScale = useRef(new Animated.Value(LOGO_FINAL_SCALE)).current;
   const breathingScale = useRef(new Animated.Value(LOGO_BREATHING_MIN_SCALE)).current;
   const breathingOpacity = useRef(new Animated.Value(LOGO_BREATHING_OPACITY_MAX)).current;
 
   useEffect(() => {
-    const initialScale = config.logoScaleOnFadeIn ? LOGO_INITIAL_SCALE : LOGO_FINAL_SCALE;
-    enterScale.setValue(initialScale);
+    if (!config.logoScaleOnFadeIn) {
+      // Reduce Motion — 애니메이션 없이 즉시 최종 가시
+      opacity.setValue(1);
+      enterScale.setValue(LOGO_FINAL_SCALE);
+      return undefined;
+    }
+
+    // 페이드인 시작 상태로 리셋 후 애니메이션
     opacity.setValue(0);
+    enterScale.setValue(LOGO_INITIAL_SCALE);
 
     const fadeInAnims: Animated.CompositeAnimation[] = [
       Animated.timing(opacity, {
@@ -103,22 +121,35 @@ export function BreathingCircle({
         delay: LOGO_FADE_IN_DELAY_MS,
         useNativeDriver: true,
       }),
+      Animated.timing(enterScale, {
+        toValue: LOGO_FINAL_SCALE,
+        duration: LOGO_FADE_IN_DURATION_MS,
+        easing: LOGIN_EASING.fade,
+        delay: LOGO_FADE_IN_DELAY_MS,
+        useNativeDriver: true,
+      }),
     ];
-    if (config.logoScaleOnFadeIn) {
-      fadeInAnims.push(
-        Animated.timing(enterScale, {
-          toValue: LOGO_FINAL_SCALE,
-          duration: LOGO_FADE_IN_DURATION_MS,
-          easing: LOGIN_EASING.fade,
-          delay: LOGO_FADE_IN_DELAY_MS,
-          useNativeDriver: true,
-        }),
-      );
-    }
     const composite = Animated.parallel(fadeInAnims);
-    composite.start();
+    composite.start(({ finished }) => {
+      // 콜백이 비정상 종료를 보고하면 최종 상태로 스냅
+      if (!finished) {
+        opacity.setValue(1);
+        enterScale.setValue(LOGO_FINAL_SCALE);
+      }
+    });
+
+    // 콜백 누락 / 네이티브 드라이버 race 대비 안전 타이머 (가시성 게이트)
+    const fallbackTimer = setTimeout(
+      () => {
+        opacity.setValue(1);
+        enterScale.setValue(LOGO_FINAL_SCALE);
+      },
+      LOGO_FADE_IN_DELAY_MS + LOGO_FADE_IN_DURATION_MS + FADE_IN_SAFETY_MARGIN_MS,
+    );
+
     return () => {
       composite.stop();
+      clearTimeout(fallbackTimer);
     };
   }, [config.logoScaleOnFadeIn, enterScale, opacity]);
 

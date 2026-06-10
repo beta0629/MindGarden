@@ -16,13 +16,19 @@ import Constants from 'expo-constants';
 
 import { isGoogleConfiguredForPlatform, resolveGoogleClientIdConfig } from '../googleSignIn';
 
-// `Platform.OS` 를 테스트 사이에 mutable 하게 바꾸기 위한 ref. jest.mock factory 는 hoist 되지만
-// factory 실행은 require 시점이라 const 초기화 후이므로 안전하다.
-const platformRef: { OS: 'ios' | 'android' | 'web' } = { OS: 'ios' };
+// `Platform.OS` 를 테스트 사이에 mutable 하게 바꾸기 위해 jest.mock factory 내부에 상태를 둔다.
+// 외부 선언(const/let/var) 으로 둘 경우 jest.mock 호이스트로 인한 TDZ 또는 undefined 캡처가 발생한다.
+// factory 안에서 만든 객체를 그대로 Platform 으로 노출하면, 테스트가 `platformRef.OS = ...` 로
+// 바꿔도 동일 참조가 유지된다.
+jest.mock('react-native', () => {
+  const state: { OS: 'ios' | 'android' | 'web' } = { OS: 'ios' };
+  return { Platform: state };
+});
 
-jest.mock('react-native', () => ({
-  Platform: platformRef,
-}));
+// Platform mock 의 내부 상태에 대한 참조 — factory 가 만든 동일 객체를 그대로 받아 mutation 가능.
+const platformRef = (
+  jest.requireMock('react-native') as { Platform: { OS: 'ios' | 'android' | 'web' } }
+).Platform;
 
 jest.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: jest.fn(),

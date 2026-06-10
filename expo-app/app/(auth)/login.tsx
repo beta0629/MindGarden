@@ -8,7 +8,7 @@
  *  - {@link BreathingCircle} — 280dp Orb (호흡) + 80dp 나비 + 1단 한글 타이포 + 부제 1줄
  *  - {@link LoginButtonsSection} — 카카오 / 네이버 / Google / Apple stagger + Sheet 트리거
  *  - {@link CredentialSheet} — Bottom Sheet (이메일·휴대폰 + 비밀번호)
- *  - {@link FooterLinks} — 비밀번호 찾기 · 다른 기관으로 변경 (회원가입 링크 V2 제거)
+ *  - {@link FooterLinks} — 다른 기관으로 변경 (V2 회원가입 + 2026-06-10 비밀번호 찾기 링크 제거)
  *
  * <p>SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md
  *  - §A 정보 위계 / §B 트리거 + Bottom Sheet
@@ -492,11 +492,6 @@ export default function MindGardenLoginPage() {
     router.replace('/(auth)/tenant-select' as Href);
   }, []);
 
-  const handleForgotPasswordPress = useCallback(() => {
-    // FooterLinks 의 비밀번호 찾기 — `Linking.openURL` 은 자체 처리 (`FooterLinks` 호출).
-    // 본 함수는 추가 분기 없이 FooterLinks 가 직접 webBaseUrl + /forgot-password 를 연다.
-  }, []);
-
   const expoGoBanner = inExpoGo ? (
     <View
       style={[
@@ -580,10 +575,7 @@ export default function MindGardenLoginPage() {
 
               <View style={styles.footerSpacer} />
 
-              <FooterLinks
-                onForgotPasswordPress={handleForgotPasswordPress}
-                onChangeTenantPress={handleChangeTenantPress}
-              />
+              <FooterLinks onChangeTenantPress={handleChangeTenantPress} />
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

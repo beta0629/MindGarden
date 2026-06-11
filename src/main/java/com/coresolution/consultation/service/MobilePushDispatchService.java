@@ -251,11 +251,17 @@ public interface MobilePushDispatchService {
      * <p>Expo access token 미설정·활성 토큰 없음·HTTP 실패는 모두 {@code false} 를 반환하며,
      * 호출자(SSOT) 가 SMS 폴백으로 진행한다.</p>
      *
+     * <p>2026-06-11 PR #224 후속 (보안 강화): {@code body} 는 평문 OTP 를 포함하지 않으며,
+     * push data 페이로드의 {@code otpToken} 으로 {@code /api/v1/auth/otp/current} 1회 조회 후
+     * 인증 화면에서 표시한다.</p>
+     *
      * @param tenantId   테넌트 ID (필수)
      * @param userId     수신 사용자 PK (필수)
      * @param title      푸시 제목 (예: "[MindGarden] 인증번호")
-     * @param body       푸시 본문 (예: "인증번호: 123456 (5분 내 입력)")
+     * @param body       푸시 본문 (예: "인증번호가 발송되었습니다. 앱에서 확인하세요.") — 평문 OTP 금지
      * @param purposeCode {@link com.coresolution.consultation.constant.OtpPurpose#getCode()} 값
+     * @param otpToken   {@link com.coresolution.consultation.service.OtpCurrentTokenService} 발급 토큰
+     *                   (push data 의 {@code otpToken} 키로 동봉; null 또는 blank 면 토큰 미동봉)
      * @return Expo 발송 시도가 1개 이상의 활성 토큰에 대해 성공했으면 {@code true}, 그 외 {@code false}
      */
     boolean dispatchAuthenticationOtp(
@@ -263,5 +269,29 @@ public interface MobilePushDispatchService {
             Long userId,
             String title,
             String body,
-            String purposeCode);
+            String purposeCode,
+            String otpToken);
+
+    /**
+     * 후방 호환 alias — {@code otpToken} 없이 호출. 기존 호출자(테스트 mocks 등) 가 시그니처를
+     * 변경하지 않아도 컴파일 가능하도록 default 메서드로 제공한다.
+     *
+     * @param tenantId    테넌트 ID
+     * @param userId      수신 사용자 PK
+     * @param title       푸시 제목
+     * @param body        푸시 본문 (평문 OTP 금지)
+     * @param purposeCode OTP purpose 코드
+     * @return 발송 성공 여부
+     * @deprecated 보안 강화 정책상 {@link #dispatchAuthenticationOtp(String, Long, String, String, String, String)}
+     *             를 호출해 {@code otpToken} 을 함께 전달해야 한다.
+     */
+    @Deprecated
+    default boolean dispatchAuthenticationOtp(
+            String tenantId,
+            Long userId,
+            String title,
+            String body,
+            String purposeCode) {
+        return dispatchAuthenticationOtp(tenantId, userId, title, body, purposeCode, null);
+    }
 }

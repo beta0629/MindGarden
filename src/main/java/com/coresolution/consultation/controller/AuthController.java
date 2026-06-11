@@ -12,6 +12,7 @@ import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.dto.BranchLoginRequest;
 import com.coresolution.consultation.dto.BranchLoginResponse;
 import com.coresolution.consultation.dto.RegisterRequest;
+import com.coresolution.consultation.dto.SelectAccountRequest;
 import com.coresolution.consultation.dto.UserDto;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.User;
@@ -791,12 +792,40 @@ public class AuthController extends BaseApiController {
             clientIp, 
             userAgent
         );
-        log.info("🔐 authenticateWithSession 호출 완료: success={}", authResponse.isSuccess());
-        
+        log.info("🔐 authenticateWithSession 호출 완료: success={}, multipleAccounts={}",
+            authResponse.isSuccess(), authResponse.isMultipleAccounts());
+
+        // P1 다중 매치 분기 — `multipleAccounts: true` 면 계정 선택 화면 응답을 우선 반환한다.
+        // (silent first 차단: 비밀번호 검증을 모두 통과한 후보 2명 이상)
+        if (authResponse.isMultipleAccounts()) {
+            log.warn("⚠️ 휴대폰 로그인 다중 매치 → 계정 선택 화면 응답: candidateCount={}",
+                authResponse.getCandidates() != null ? authResponse.getCandidates().size() : 0);
+            Map<String, Object> data = new HashMap<>();
+            data.put("multipleAccounts", true);
+            data.put("responseType",
+                com.coresolution.consultation.service.impl.AuthServiceImpl.MULTIPLE_ACCOUNTS_RESPONSE_TYPE);
+            data.put("candidates", authResponse.getCandidates());
+            data.put("selectionToken", authResponse.getSelectionToken());
+            data.put("message", authResponse.getMessage());
+            ApiResponse<Map<String, Object>> apiResponse = ApiResponse.<Map<String, Object>>builder()
+                .success(false)
+                .message(authResponse.getMessage())
+                .data(data)
+                .build();
+            return ResponseEntity.ok(apiResponse);
+        }
+
         if (authResponse.isSuccess()) {
-            // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장
-            // userService.findByLoginPrincipal: 이메일·휴대폰·암호화 저장 이메일 대응
-            User sessionUser = userService.findByLoginPrincipal(loginPrincipal).orElse(null);
+            // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장.
+            // P1 silent first 차단(2026-06-11): authResponse.userResponse 의 userId 로 PK 조회.
+            // 휴대폰 다중 후보 + 비밀번호 1개 일치 시 finalizeAuthenticatedSession 가 이미 정확한 user 를
+            // 결정한 상태이므로, 여기서 다시 findByLoginPrincipal(.findFirst()) 로 조회하면 silent first 가 부활한다.
+            Long resolvedUserId = authResponse.getUserResponse() != null
+                ? authResponse.getUserResponse().getId()
+                : (authResponse.getUser() != null ? authResponse.getUser().getId() : null);
+            User sessionUser = resolvedUserId != null
+                ? userService.findById(resolvedUserId).orElse(null)
+                : userService.findByLoginPrincipal(loginPrincipal).orElse(null);
             if (sessionUser == null) {
                 throw new RuntimeException("사용자를 찾을 수 없습니다.");
             }
@@ -987,8 +1016,135 @@ public class AuthController extends BaseApiController {
                 .build());
         }
     }
-    
-    
+
+    /**
+     * 일반 로그인(전화 + 비밀번호) 다중 매치 시 사용자가 선택한 계정으로 로그인 완료.
+     *
+     * <p>사전 조건: {@code POST /api/v1/auth/login} 응답이 {@code multipleAccounts=true} 이고,
+     * 본 요청은 응답으로 받은 {@code selectionToken} 과 사용자가 선택한 {@code selectedUserId}
+     * 를 함께 전송한다(P1 silent first 차단).</p>
+     *
+     * <p>실패 분기:</p>
+     * <ul>
+     *   <li>토큰 만료/위조 → 401</li>
+     *   <li>토큰의 {@code allowedUserIds} 외 userId → 403</li>
+     *   <li>토큰 재사용 → 401 (1회 사용 정책)</li>
+     *   <li>중복 로그인 확인 필요 → 400 ({@code duplicate_login_confirmation})</li>
+     * </ul>
+     *
+     * @param requestBody {@code selectionToken} + {@code selectedUserId}
+     * @param session     HTTP 세션
+     * @param httpRequest 클라이언트 IP·User-Agent 추출용
+     * @return 정상 로그인 시 {@code accessToken}/{@code refreshToken}/{@code user} 포함 응답
+     * @since 2026-06-11
+     */
+    @PostMapping("/select-account")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> selectAccount(
+            @RequestBody SelectAccountRequest requestBody,
+            HttpSession session,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
+        if (requestBody == null || !StringUtils.hasText(requestBody.getSelectionToken())
+                || requestBody.getSelectedUserId() == null) {
+            throw new IllegalArgumentException("계정 선택 정보가 누락되었습니다.");
+        }
+
+        String clientIp = getClientIpAddress(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+        String sessionId = session.getId();
+
+        AuthResponse authResponse = authService.selectAccount(
+            requestBody.getSelectionToken(),
+            requestBody.getSelectedUserId(),
+            sessionId,
+            clientIp,
+            userAgent);
+
+        if (authResponse.isRequiresConfirmation()) {
+            log.info("🔔 계정 선택 후 중복 로그인 확인 요청: userId={}", requestBody.getSelectedUserId());
+            Map<String, Object> data = new HashMap<>();
+            data.put("message", authResponse.getMessage());
+            data.put("requiresConfirmation", true);
+            data.put("responseType", "duplicate_login_confirmation");
+            ApiResponse<Map<String, Object>> response = ApiResponse.<Map<String, Object>>builder()
+                .success(false)
+                .message(authResponse.getMessage())
+                .data(data)
+                .build();
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        if (!authResponse.isSuccess()) {
+            String msg = authResponse.getMessage() != null
+                ? authResponse.getMessage()
+                : "계정 선택에 실패했습니다.";
+            org.springframework.http.HttpStatus status = pickSelectAccountFailureStatus(msg);
+            return ResponseEntity.status(status)
+                .body(ApiResponse.<Map<String, Object>>builder()
+                    .success(false)
+                    .message(msg)
+                    .data(null)
+                    .build());
+        }
+
+        // 정상 로그인 흐름 — `/login` 성공 분기와 동일한 세션·JWT 처리.
+        User sessionUser = userService.findById(requestBody.getSelectedUserId()).orElse(null);
+        if (sessionUser == null) {
+            throw new RuntimeException("사용자를 찾을 수 없습니다.");
+        }
+
+        SessionUtils.setCurrentUser(session, sessionUser);
+        try {
+            userPersonalDataCacheService.decryptAndCacheUserPersonalData(sessionUser);
+        } catch (Exception e) {
+            log.warn("⚠️ 사용자 개인정보 캐시 저장 실패 (계속 진행): userId={}", sessionUser.getId(), e);
+        }
+        session.setAttribute(SessionConstants.SESSION_ID, sessionId);
+        if (sessionUser.getTenantId() != null) {
+            session.setAttribute(SessionConstants.TENANT_ID, sessionUser.getTenantId());
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", authResponse.getMessage());
+        response.put("user", authResponse.getUser());
+        response.put("sessionId", sessionId);
+        response.put("requiresPasswordChange", authResponse.isRequiresPasswordChange());
+
+        // 모바일/Expo 호환을 위해 JWT 쌍 발급 — `/login` 성공 분기와 동일.
+        try {
+            List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(sessionUser);
+            String accessToken = jwtService.generateToken(sessionUser, permissions);
+            String refreshToken = jwtService.generateRefreshToken(sessionUser);
+            try {
+                refreshTokenService.createRefreshToken(sessionUser, refreshToken, null);
+            } catch (Exception e) {
+                log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
+            }
+            response.put("accessToken", accessToken);
+            response.put("refreshToken", refreshToken);
+        } catch (Exception e) {
+            log.warn("⚠️ 계정 선택 후 JWT 발급 실패: {}", e.getMessage());
+        }
+
+        log.info("✅ 계정 선택 완료 → 로그인 성공: userId={}", sessionUser.getId());
+        return success(response);
+    }
+
+    /**
+     * 계정 선택 실패 메시지 별 HTTP 상태 매핑.
+     *
+     * <ul>
+     *   <li>"허용되지 않습니다." → 403 (후보 외 userId)</li>
+     *   <li>그 외 (만료/위조/재사용/사용자 미존재) → 401</li>
+     * </ul>
+     */
+    private org.springframework.http.HttpStatus pickSelectAccountFailureStatus(String message) {
+        if (message != null && message.contains("허용되지 않")) {
+            return org.springframework.http.HttpStatus.FORBIDDEN;
+        }
+        return org.springframework.http.HttpStatus.UNAUTHORIZED;
+    }
+
+
     /**
      * SMS 인증 코드 전송.
      *
@@ -1009,7 +1165,8 @@ public class AuthController extends BaseApiController {
     @PostMapping("/sms/send")
     public ResponseEntity<ApiResponse<Map<String, Object>>> sendSmsCode(
             @RequestBody Map<String, String> request,
-            HttpSession session) {
+            HttpSession session,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
         String phoneNumber = request.get("phoneNumber");
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
         OtpPurpose purpose = resolveOtpPurpose(request.get("purpose"));
@@ -1020,9 +1177,10 @@ public class AuthController extends BaseApiController {
 
         Long sessionUserId = resolveSessionUserId(session);
         String tenantId = TenantContextHolder.getTenantId();
+        String clientIp = httpRequest != null ? getClientIpAddress(httpRequest) : null;
 
         OtpDeliveryResult result = otpDeliveryService.deliver(
-                tenantId, sessionUserId, normalizedPhone, verificationCode, purpose);
+                tenantId, sessionUserId, normalizedPhone, verificationCode, purpose, clientIp);
         if (result.getChannel() == OtpDeliveryChannel.FAILED) {
             log.error("OTP 발송 실패: phone={} reason={}", normalizedPhone, result.getFailureReason());
             throw new RuntimeException("인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
@@ -1031,6 +1189,61 @@ public class AuthController extends BaseApiController {
         Map<String, Object> data = new HashMap<>();
         data.put("message", buildDeliveryMessage(result.getChannel()));
         data.put("deliveryChannel", result.getChannel().name());
+        return success(data);
+    }
+
+    /**
+     * Push 발송된 OTP 의 1회 조회 endpoint (2026-06-11 PR #224 후속).
+     *
+     * <p>{@code /api/v1/auth/sms/send} 가 push 채널로 발송되면 push body 에는 평문 OTP 가 포함되지
+     * 않고 data 페이로드의 {@code otpToken} 으로만 전달된다. expo-app 알림 핸들러는 사용자가 앱을 열어
+     * 인증 화면에 진입한 후 본 endpoint 를 호출해 OTP 6자리를 1회 조회한다.</p>
+     *
+     * <p>보안 정책:
+     * <ul>
+     *   <li>인증된 세션 사용자만 호출 가능 (HttpSession 의 currentUser 필수).</li>
+     *   <li>OtpToken 은 발급 당시 userId 와 일치해야 OTP 반환 — 다른 사용자가 토큰을 가로채도 무용.</li>
+     *   <li>TTL 5분, 단일 사용 — 한 번 조회되면 즉시 invalidate.</li>
+     *   <li>실패는 항상 404 로 통일 (존재 여부 oracle 방지).</li>
+     * </ul></p>
+     *
+     * @param otpToken push data 페이로드의 {@code otpToken}
+     * @param session  HTTP 세션 (인증 사용자 조회)
+     * @return 6자리 OTP {@code otp} 또는 404
+     */
+    @GetMapping("/otp/current")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCurrentOtp(
+            @RequestParam("otpToken") String otpToken,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || currentUser.getId() == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                            .success(false)
+                            .message("인증이 필요합니다.")
+                            .data(null)
+                            .build());
+        }
+        if (otpToken == null || otpToken.isBlank()) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                            .success(false)
+                            .message("OTP 를 조회할 수 없습니다.")
+                            .data(null)
+                            .build());
+        }
+        String otp = otpDeliveryService.fetchCurrentOtp(otpToken.trim(), currentUser.getId());
+        if (otp == null) {
+            log.info("/otp/current 조회 실패(만료/불일치/소비됨) userId={}", currentUser.getId());
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                            .success(false)
+                            .message("OTP 를 조회할 수 없습니다.")
+                            .data(null)
+                            .build());
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("otp", otp);
         return success(data);
     }
 

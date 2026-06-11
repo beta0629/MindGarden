@@ -39,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * ERP 영역 STAFF 차단 절대 회귀 방어 테스트 (1.0.5).
@@ -104,6 +105,9 @@ class ErpStaffStillForbiddenTest {
     @AfterEach
     void tearDown() {
         sessionUtilsStatic.close();
+        // PermissionCheckUtils.checkPermission(SalaryBatchController 경로 등)이 SecurityContextHolder에
+        // staff(id=500L) Authentication을 주입하므로 다음 테스트로 leak되지 않도록 명시 초기화한다.
+        SecurityContextHolder.clearContext();
     }
 
     @Test

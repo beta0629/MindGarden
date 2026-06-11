@@ -744,6 +744,17 @@ export const authAPI = {
   refreshToken: (data) => apiPost(AUTH_API.REFRESH_TOKEN, data),
   getCurrentUser: () => apiGet(AUTH_API.GET_CURRENT_USER),
   confirmDuplicateLogin: (data) => apiPost(AUTH_API.CONFIRM_DUPLICATE_LOGIN, data),
+
+  /**
+   * 일반 로그인 다중 매치 시 사용자가 선택한 계정으로 로그인 완료.
+   *
+   * <p>P1 silent first 차단(2026-06-11) — `multipleAccounts: true` 응답 후 호출. 토큰
+   * 만료/위조/후보 외 userId/재사용 시 BE 가 4xx 응답을 반환하므로 호출자는 메시지를 그대로 노출.</p>
+   *
+   * @param {{selectionToken: string, selectedUserId: number}} data
+   * @returns {Promise<Object>} ApiResponse 래퍼 그대로 반환
+   */
+  selectAccount: (data) => apiPost(AUTH_API.SELECT_ACCOUNT, data),
   
   // 대시보드 관련 API
   getClientConsultations: (userId) => apiGet(`${CONSULTATION_API.GET_CONSULTATIONS}/client/${userId}`),

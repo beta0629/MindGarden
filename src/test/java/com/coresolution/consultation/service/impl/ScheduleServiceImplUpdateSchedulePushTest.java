@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * {@link ScheduleServiceImpl#updateSchedule} 일정 변경 시 모바일 푸시 연동 검증.
@@ -56,11 +57,16 @@ class ScheduleServiceImplUpdateSchedulePushTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        // 선행 테스트(예: ErpStaffStillForbiddenTest의 PermissionCheckUtils 경로)가
+        // SecurityContext에 Authentication을 주입한 채로 종료되면 SessionUtils.getCurrentUserId()가
+        // 누설된 actor PK를 반환해 dispatchBookingRescheduled actorUserId 검증이 깨진다. 방어적으로 초기화한다.
+        SecurityContextHolder.clearContext();
     }
 
     @AfterEach
     void tearDown() {
         TenantContextHolder.clear();
+        SecurityContextHolder.clearContext();
     }
 
     @Test

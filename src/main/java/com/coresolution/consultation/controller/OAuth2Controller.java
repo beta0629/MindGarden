@@ -36,6 +36,8 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -76,6 +78,28 @@ public class OAuth2Controller extends BaseApiController {
     private final org.springframework.core.env.Environment environment;
     /** Apple SIWA 서버 사이드 auth-code 흐름(2026-06-11 PR — Google PR #204 패턴 정합) 전용. */
     private final com.coresolution.consultation.service.AppleSignInService appleSignInService;
+    /**
+     * OAuth 콜백 진단 메트릭 발행 (P3 enhancement, 2026-06-11):
+     * tenant_id 미해결 분기 진입 시 provider/reason 태그로 카운트한다. Prometheus 알람·대시보드에서
+     * 봇 스캐닝과 실제 회귀를 분리하기 위한 지표.
+     */
+    private final MeterRegistry meterRegistry;
+
+    /**
+     * OAuth 콜백 tenant 미해결 분기 카운터 이름 (P3 진단). 태그: provider, reason.
+     * 권장 알람: 5분 합계 ≥ 50 또는 reason=state_decode_failed 이 reason=state_missing 의
+     * 30% 초과 시 회귀 의심.
+     */
+    private static final String METRIC_OAUTH2_CALLBACK_TENANT_UNRESOLVED =
+            "oauth2_callback_tenant_unresolved_total";
+
+    /** {@link #METRIC_OAUTH2_CALLBACK_TENANT_UNRESOLVED} reason 태그 값: state 자체가 없거나 dot 없음. */
+    static final String OAUTH2_TENANT_UNRESOLVED_REASON_STATE_MISSING = "state_missing";
+    /** {@link #METRIC_OAUTH2_CALLBACK_TENANT_UNRESOLVED} reason 태그 값: state 가 dot 포함이지만 tenant 디코드 실패. */
+    static final String OAUTH2_TENANT_UNRESOLVED_REASON_STATE_DECODE_FAILED = "state_decode_failed";
+    /** {@link #METRIC_OAUTH2_CALLBACK_TENANT_UNRESOLVED} reason 태그 값: state 없음 + 세션 fallback 도 없음. */
+    static final String OAUTH2_TENANT_UNRESOLVED_REASON_SESSION_ONLY_PATH_MISSING =
+            "session_only_path_missing";
 
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:cbb457cfb5f9351fd495be4af2b11a34}}")
     private String kakaoClientId;
@@ -964,6 +988,73 @@ public class OAuth2Controller extends BaseApiController {
         long dotCount = hostOnly.chars().filter(c -> c == '.').count();
         return dotCount >= 2 || hostOnly.endsWith(".localhost") || hostOnly.endsWith(".127.0.0.1")
                 || (hostOnly.contains("localhost") && hostOnly.contains("."));
+    }
+
+    /**
+     * 세션 ID 진단 마스킹 (개인정보·세션 하이재킹 방지). 첫 6자만 노출하고 나머지는 {@code "..."} 로 대체.
+     *
+     * @param sessionId nullable 세션 ID
+     * @return 마스킹 문자열 또는 {@code "<no-session>"}
+     */
+    static String maskSessionIdForLog(String sessionId) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            return "<no-session>";
+        }
+        if (sessionId.length() <= 6) {
+            return sessionId + "...";
+        }
+        return sessionId.substring(0, 6) + "...";
+    }
+
+    /**
+     * tenant 미해결 분기 진입 사유를 분류한다 (P3 진단).
+     *
+     * <ul>
+     *   <li>{@link #OAUTH2_TENANT_UNRESOLVED_REASON_STATE_MISSING}: state 가 null/empty/dot 미포함.</li>
+     *   <li>{@link #OAUTH2_TENANT_UNRESOLVED_REASON_STATE_DECODE_FAILED}: dot 은 있으나 tenant 디코드 실패.</li>
+     *   <li>{@link #OAUTH2_TENANT_UNRESOLVED_REASON_SESSION_ONLY_PATH_MISSING}: state==null + 세션 fallback 도 없음.</li>
+     * </ul>
+     *
+     * @param normalizedState {@link #normalizeOAuth2StateQueryValue(String)} 적용된 state
+     * @param parsed {@link #parseCompositeOAuthState(String)} 결과
+     * @param sessionFallbackPresent 세션의 oauth2 state attribute 존재 여부
+     * @return reason 태그 값
+     */
+    static String classifyOAuth2TenantUnresolvedReason(String normalizedState,
+            OAuthCompositeState parsed, boolean sessionFallbackPresent) {
+        if (normalizedState == null || normalizedState.isEmpty()) {
+            if (!sessionFallbackPresent) {
+                return OAUTH2_TENANT_UNRESOLVED_REASON_SESSION_ONLY_PATH_MISSING;
+            }
+            return OAUTH2_TENANT_UNRESOLVED_REASON_STATE_MISSING;
+        }
+        if (!normalizedState.contains(".")) {
+            return OAUTH2_TENANT_UNRESOLVED_REASON_STATE_MISSING;
+        }
+        if (parsed != null && parsed.tenantId == null) {
+            return OAUTH2_TENANT_UNRESOLVED_REASON_STATE_DECODE_FAILED;
+        }
+        return OAUTH2_TENANT_UNRESOLVED_REASON_STATE_MISSING;
+    }
+
+    /**
+     * {@link #METRIC_OAUTH2_CALLBACK_TENANT_UNRESOLVED} 카운터 1 증가.
+     *
+     * @param provider {@code GOOGLE} 또는 {@code APPLE} (그 외 콜백에 확장 가능)
+     * @param reason {@link #classifyOAuth2TenantUnresolvedReason} 결과
+     */
+    private void incrementOAuth2TenantUnresolvedCounter(String provider, String reason) {
+        try {
+            Counter.builder(METRIC_OAUTH2_CALLBACK_TENANT_UNRESOLVED)
+                    .description("OAuth2 콜백에서 tenant_id 가 해결되지 않은 횟수 (provider/reason 태그)")
+                    .tag("provider", provider)
+                    .tag("reason", reason)
+                    .register(meterRegistry)
+                    .increment();
+        } catch (Exception e) {
+            log.warn("OAuth2 tenant unresolved counter increment 실패: provider={}, reason={}, err={}",
+                    provider, reason, e.getMessage());
+        }
     }
 
     /**
@@ -3568,7 +3659,20 @@ public class OAuth2Controller extends BaseApiController {
                             "Google OAuth2 콜백 - 세션에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                             sessionTenantId);
                 } else {
-                    log.error("❌ Google OAuth2 콜백 - tenant_id 를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
+                    boolean savedStatePresent = savedState != null;
+                    String unresolvedReason = classifyOAuth2TenantUnresolvedReason(
+                            normalizedGoogleState, googleComposite, savedStatePresent);
+                    incrementOAuth2TenantUnresolvedCounter("GOOGLE", unresolvedReason);
+                    log.warn(
+                            "⚠️ Google OAuth2 콜백 - tenant_id 를 찾을 수 없습니다 (사용자에게 MSG_TENANT_NOT_REGISTERED redirect): "
+                                    + "reason={}, stateLen={}, stateEncodedPrefix={}, savedStatePresent={}, "
+                                    + "hostSuggestsSubdomain={}, sessionIdMasked={}",
+                            unresolvedReason,
+                            normalizedGoogleState != null ? normalizedGoogleState.length() : 0,
+                            oauth2StateEncodedSegmentPrefixForLog(normalizedGoogleState),
+                            Boolean.valueOf(savedStatePresent),
+                            Boolean.valueOf(callbackHostSuggestsSubdomain(request)),
+                            maskSessionIdForLog(session != null ? session.getId() : null));
                     String redirectTenantId = resolveTenantIdForRedirect(session, state);
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     return ResponseEntity.status(302)
@@ -4101,7 +4205,20 @@ public class OAuth2Controller extends BaseApiController {
                             "Apple OAuth2 콜백 - 세션에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
                             sessionTenantId);
                 } else {
-                    log.error("❌ Apple OAuth2 콜백 - tenant_id 를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
+                    boolean savedStatePresent = savedState != null;
+                    String unresolvedReason = classifyOAuth2TenantUnresolvedReason(
+                            normalizedAppleState, appleComposite, savedStatePresent);
+                    incrementOAuth2TenantUnresolvedCounter("APPLE", unresolvedReason);
+                    log.warn(
+                            "⚠️ Apple OAuth2 콜백 - tenant_id 를 찾을 수 없습니다 (사용자에게 MSG_TENANT_NOT_REGISTERED redirect): "
+                                    + "reason={}, stateLen={}, stateEncodedPrefix={}, savedStatePresent={}, "
+                                    + "hostSuggestsSubdomain={}, sessionIdMasked={}",
+                            unresolvedReason,
+                            normalizedAppleState != null ? normalizedAppleState.length() : 0,
+                            oauth2StateEncodedSegmentPrefixForLog(normalizedAppleState),
+                            Boolean.valueOf(savedStatePresent),
+                            Boolean.valueOf(callbackHostSuggestsSubdomain(request)),
+                            maskSessionIdForLog(session != null ? session.getId() : null));
                     String redirectTenantId = resolveTenantIdForRedirect(session, state);
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
                     return ResponseEntity.status(302)

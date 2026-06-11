@@ -34,6 +34,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -48,7 +49,7 @@ import org.springframework.security.access.AccessDeniedException;
  * @author CoreSolution
  * @since 2026-06-06
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("AdminLifecycleDormantUsersController — 어드민 휴면 사용자 모니터링 4 API")
 class AdminLifecycleDormantUsersControllerTest {
 

@@ -47,6 +47,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -66,7 +67,7 @@ import org.springframework.security.access.AccessDeniedException;
  * @author MindGarden
  * @since 2026-06-03
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("AdminController — STAFF == ADMIN 매핑/사용자 권한")
 class AdminControllerStaffMappingTest {
 

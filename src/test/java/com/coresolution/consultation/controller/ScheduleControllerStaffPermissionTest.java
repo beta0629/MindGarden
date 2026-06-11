@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -48,7 +49,7 @@ import org.springframework.security.access.AccessDeniedException;
  * @author MindGarden
  * @since 2026-06-03
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("ScheduleController — STAFF == ADMIN 권한 분기")
 class ScheduleControllerStaffPermissionTest {
 

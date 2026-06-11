@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { apiGet } from '../../utils/ajax';
+import { getConsultationMessagesList } from '../../utils/consultationMessagesApi';
 import { normalizeApiListPayload, normalizeApiObjectPayload } from '../../utils/apiResponseNormalize';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -100,12 +101,13 @@ const ClientMessageSection = ({ userId }) => {
     try {
       setLoading(true);
       
-      // 1. 상담사 메시지 로드
-      const messagesResponse = await apiGet(`/api/v1/consultation-messages/client/${userId}`, {
-        page: 0,
-        size: 10,
-        sort: 'createdAt,desc'
-      });
+      // 1. 상담사 메시지 로드 (B6 묶음 A 2026-06-12: dedup wrapper 사용)
+      // 내담자 전용 섹션 — role 을 USER_ROLES.CLIENT 로 명시해 wrapper path 가
+      // /api/v1/consultation-messages/client/{userId} 로 결정되도록 한다.
+      const messagesResponse = await getConsultationMessagesList(
+        { id: userId, role: USER_ROLES.CLIENT },
+        { page: 0, size: 10, sort: 'createdAt,desc' }
+      );
 
       const messagesList = normalizeApiListPayload(messagesResponse);
       let consultantMessages = [];

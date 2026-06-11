@@ -7,11 +7,11 @@ import {
   API_STATUS,
   API_ERROR_MESSAGES
 } from '../constants/api';
-import { SESSION_VERIFY_FETCH_RETRY_DELAYS_MS } from '../constants/session';
 import csrfTokenManager from './csrfTokenManager';
 import { getDefaultApiHeaders } from './apiHeaders';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
+import { sessionManager } from './sessionManager';
 import {
   AJAX_PARSE_RESPONSE_FAILED,
   AJAX_TENANT_INFO_MISSING_RELOGIN,
@@ -82,54 +82,29 @@ const checkSessionAndRedirect = async(response) => {
       console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
       return false;
     }
-    
-    const verifyUrl = `${getApiBaseUrl()}/api/v1/auth/current-user`;
-    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    let lastVerifyError;
 
-    for (let attempt = 0; attempt <= SESSION_VERIFY_FETCH_RETRY_DELAYS_MS.length; attempt += 1) {
-      if (attempt > 0) {
-        await sleep(SESSION_VERIFY_FETCH_RETRY_DELAYS_MS[attempt - 1]);
+    // P0 hotfix 2026-06-12 (B6 묶음 A): 동시 다발 401/403 으로 인한 current-user verify
+    // 중복 fetch 제거. sessionManager.checkSession(true) 는 in-flight promise dedup 을 보장하며,
+    // 401 시 비공개 페이지에서 자체적으로 redirectToLoginPageOnce 호출. 5xx / 일시적
+    // 네트워크 오류 시에는 기존 사용자 정보를 보존하고 true 를 반환해 redirect 없이
+    // 호출부(apiGet/apiPost 등) 가 자체 분기(403 throw 등) 를 그대로 유지하도록 한다.
+    let sessionValid;
+    try {
+      sessionValid = await sessionManager.checkSession(true);
+    } catch (sessionError) {
+      if (!isTransientNetworkError(sessionError)) {
+        console.warn('🔐 세션 재확인 중 비네트워크 오류:', sessionError);
       }
-      try {
-        const sessionResponse = await fetch(verifyUrl, {
-          credentials: 'include',
-          method: 'GET',
-          mode: 'cors',
-          headers: getDefaultHeaders()
-        });
-        if (sessionResponse.ok) {
-          console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
-          return false;
-        }
-        const verifyStatus = sessionResponse.status;
-        if (verifyStatus >= 500) {
-          console.warn('🔐 세션 재확인 current-user 서버 오류:', verifyStatus);
-          notifyTransientNetworkIssue();
-          return false;
-        }
-        if (verifyStatus === 401) {
-          console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-          redirectToLoginPageOnce();
-          return true;
-        }
-        console.log('🔐 세션 재확인 실패(리다이렉트 없음):', verifyStatus);
-        return false;
-      } catch (sessionError) {
-        lastVerifyError = sessionError;
-        if (!isTransientNetworkError(sessionError)) {
-          console.warn('🔐 세션 재확인 중 비네트워크 오류:', sessionError);
-          notifyTransientNetworkIssue();
-          return false;
-        }
-        if (attempt >= SESSION_VERIFY_FETCH_RETRY_DELAYS_MS.length) {
-          break;
-        }
-      }
+      notifyTransientNetworkIssue();
+      return false;
     }
-    console.warn('🔐 세션 재확인 fetch 네트워크 실패(재시도 소진):', lastVerifyError);
-    notifyTransientNetworkIssue();
-    return false;
+
+    if (sessionValid) {
+      console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
+      return false;
+    }
+    console.log('🔐 세션 없음 - sessionManager 가 로그인 리다이렉트 처리');
+    return true;
   }
   
   // 500 오류는 서버 오류이므로 세션 체크하지 않음

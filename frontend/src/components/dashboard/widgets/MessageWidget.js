@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
+import { getConsultationMessagesList } from '../../../utils/consultationMessagesApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import './Widget.css';
 import SafeText from '../../common/SafeText';
@@ -49,7 +50,12 @@ const MessageWidget = ({ widget, user }) => {
         sort: 'createdAt,desc'
       };
 
-      const response = await apiGet(url, params);
+      // B6 묶음 A 2026-06-12: dataSource.url 이 상담 메시지 목록 엔드포인트면 dedup wrapper 경유.
+      // 그 외(범용 위젯) 는 기존 apiGet 그대로 사용.
+      const isConsultationMessagesUrl = typeof url === 'string' && url.startsWith('/api/v1/consultation-messages/');
+      const response = isConsultationMessagesUrl && user
+        ? await getConsultationMessagesList(user, params)
+        : await apiGet(url, params);
 
       if (response && response.success) {
         const messageList = response.data?.messages || response.messages || [];

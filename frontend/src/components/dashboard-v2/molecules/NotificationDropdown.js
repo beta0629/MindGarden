@@ -13,7 +13,7 @@ import { NavIcon, NotificationBadge } from '../atoms';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useSession } from '../../../contexts/SessionContext';
 import StandardizedApi from '../../../utils/standardizedApi';
-import { getConsultationMessagesListPath } from '../../../utils/consultationMessagesApi';
+import { getConsultationMessagesList, getConsultationMessagesListPath } from '../../../utils/consultationMessagesApi';
 import { toDisplayString, htmlToPlainText } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
@@ -129,7 +129,9 @@ const NotificationDropdown = () => {
     }
     try {
       setLoadingMessages(true);
-      const response = await StandardizedApi.get(endpoint, { page: 0, size: LIST_SIZE });
+      // B6 묶음 A 2026-06-12: dedup wrapper 사용 — NotificationContext.loadNotifications 와 동일
+      // 시점에 호출되어도 in-flight Promise 공유로 단일 요청.
+      const response = await getConsultationMessagesList(user, { page: 0, size: LIST_SIZE });
       const data = response?.data || response;
       const list = data?.messages || data?.content || (Array.isArray(data) ? data : []);
       const arr = Array.isArray(list) ? list : [];

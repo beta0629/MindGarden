@@ -1036,6 +1036,95 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         return results;
     }
 
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public boolean dispatchAuthenticationOtp(
+            String tenantId,
+            Long userId,
+            String title,
+            String body,
+            String purposeCode) {
+        if (userId == null) {
+            return false;
+        }
+        String tid = requireTenantId(tenantId, null);
+        if (tid == null) {
+            log.warn("OTP push 발송 생략: tenantId 없음 userId={}", userId);
+            return false;
+        }
+        if (expoPushProperties.getAccessToken() == null || expoPushProperties.getAccessToken().isBlank()) {
+            log.warn("OTP push 발송 생략: Expo access token 미설정 tenantId={} userId={}", tid, userId);
+            return false;
+        }
+        List<MobilePushToken> tokens = mobilePushTokenRepository
+                .findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(tid, List.of(userId));
+        if (tokens.isEmpty()) {
+            log.info("OTP push 발송 skip: 활성 토큰 없음 tenantId={} userId={}", tid, userId);
+            return false;
+        }
+        String safeTitle = truncate(
+                title != null && !title.isBlank() ? title : "인증번호",
+                MobilePushDispatchConstants.TITLE_MAX_LENGTH);
+        String safeBody = truncate(
+                body != null && !body.isBlank() ? body : safeTitle,
+                MobilePushDispatchConstants.BODY_MAX_LENGTH);
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("type", MobilePushCanonicalTypes.OTP_DELIVERY);
+        data.put("tenantId", tid);
+        data.put("purpose", purposeCode != null && !purposeCode.isBlank() ? purposeCode.trim() : "generic");
+        data.put("title", safeTitle);
+        sanitizeDataStrings(data);
+
+        List<Map<String, Object>> messages = new ArrayList<>();
+        for (MobilePushToken token : tokens) {
+            Map<String, Object> msg = new LinkedHashMap<>();
+            msg.put("to", token.getPushToken());
+            msg.put("title", safeTitle);
+            msg.put("body", safeBody);
+            msg.put("sound", "default");
+            Map<String, String> expoData = new LinkedHashMap<>(data);
+            if (token.getUserId() != null) {
+                expoData.put("recipientUserId", String.valueOf(token.getUserId()));
+            }
+            msg.put("data", expoData);
+            messages.add(msg);
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(expoPushProperties.getAccessToken().trim());
+        HttpEntity<List<Map<String, Object>>> entity = new HttpEntity<>(messages, headers);
+        try {
+            String responseBody = restTemplate.postForObject(
+                    expoPushProperties.getApiUrl(), entity, String.class);
+            if (responseBody == null || responseBody.isBlank()) {
+                log.warn("OTP push 응답 본문 비어 있음 tenantId={} userId={}", tid, userId);
+                return false;
+            }
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode dataArray = root.get("data");
+            if (dataArray == null || !dataArray.isArray() || dataArray.isEmpty()) {
+                log.warn("OTP push 응답 형식 비정상 tenantId={} userId={}", tid, userId);
+                return false;
+            }
+            handleExpoTickets(tid, tokens, dataArray);
+            for (int i = 0; i < dataArray.size(); i++) {
+                if ("ok".equals(dataArray.get(i).path("status").asText(""))) {
+                    log.info("OTP push 발송 성공 tenantId={} userId={} purpose={} tickets={}",
+                            tid, userId, purposeCode, dataArray.size());
+                    return true;
+                }
+            }
+            log.warn("OTP push 발송 실패: 모든 ticket error tenantId={} userId={}", tid, userId);
+            return false;
+        } catch (RestClientException ex) {
+            log.error("OTP push HTTP 실패 tenantId={} userId={} message={}", tid, userId, ex.getMessage());
+            return false;
+        } catch (Exception ex) {
+            log.error("OTP push 처리 실패 tenantId={} userId={}", tid, userId, ex);
+            return false;
+        }
+    }
+
     /**
      * 단일 사용자에게 admin announcement Expo POST 1회 수행. 사용자 보유 토큰이 다수일 수 있으므로
      * Expo 배치 messages 로 묶어 1회 POST 한다(여전히 사용자 단위 결과 1행 보존).

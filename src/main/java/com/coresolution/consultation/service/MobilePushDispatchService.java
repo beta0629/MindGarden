@@ -231,4 +231,37 @@ public interface MobilePushDispatchService {
             String title,
             String body,
             String dedupeBucket);
+
+    /**
+     * 인증 OTP push 발송(2026-06-11) — push-first OTP 정책 전용 SSOT 경로.
+     *
+     * <p>{@link com.coresolution.consultation.service.OtpDeliveryService} 에서만 호출되며,
+     * 본 메서드는 다음 모두를 우회한다.
+     * <ul>
+     *   <li>{@link com.coresolution.consultation.constant.MobilePushAllowedEvents} 화이트리스트
+     *       — OTP 는 보안 인증 의무 통지에 해당.</li>
+     *   <li>{@code MobilePushSettings} 카테고리 게이트 — 사용자가 일반 알림을 끄더라도 본인 인증
+     *       OTP 는 본인이 직접 요청한 발송이므로 게이트 우회.</li>
+     *   <li>{@code MobilePushDispatchDedupService} 멱등 청구 — OTP 코드 자체가 5분 TTL · 단일 사용으로
+     *       이미 dedup 보장. 동일 사용자가 재발송 요청 시 새 코드를 즉시 전달해야 하므로 1분 버킷도 부적합.</li>
+     *   <li>{@code MobilePushInboxPersister} 알림센터 적재 — 보안상 OTP 코드는 인박스 히스토리에
+     *       남기지 않는다(앱 잠금 해제 후에만 노출).</li>
+     * </ul></p>
+     *
+     * <p>Expo access token 미설정·활성 토큰 없음·HTTP 실패는 모두 {@code false} 를 반환하며,
+     * 호출자(SSOT) 가 SMS 폴백으로 진행한다.</p>
+     *
+     * @param tenantId   테넌트 ID (필수)
+     * @param userId     수신 사용자 PK (필수)
+     * @param title      푸시 제목 (예: "[MindGarden] 인증번호")
+     * @param body       푸시 본문 (예: "인증번호: 123456 (5분 내 입력)")
+     * @param purposeCode {@link com.coresolution.consultation.constant.OtpPurpose#getCode()} 값
+     * @return Expo 발송 시도가 1개 이상의 활성 토큰에 대해 성공했으면 {@code true}, 그 외 {@code false}
+     */
+    boolean dispatchAuthenticationOtp(
+            String tenantId,
+            Long userId,
+            String title,
+            String body,
+            String purposeCode);
 }

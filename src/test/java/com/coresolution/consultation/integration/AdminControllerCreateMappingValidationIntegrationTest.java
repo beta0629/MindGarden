@@ -51,7 +51,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("AdminController createMapping @Valid 통합 테스트")
 class AdminControllerCreateMappingValidationIntegrationTest {
 
-    private static final String TEST_TENANT_ID = "tenant-test-" + java.util.UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 4자 = 36자.
+    private static final String TEST_TENANT_ID = "acm-"
+            + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 32);
+
+    @org.junit.jupiter.api.AfterEach
+    void clearTenantContext() {
+        com.coresolution.core.context.TenantContextHolder.clear();
+    }
 
     @Autowired
     private MockMvc mockMvc;

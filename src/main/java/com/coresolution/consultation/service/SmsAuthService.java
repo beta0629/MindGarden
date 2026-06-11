@@ -6,6 +6,7 @@ import com.coresolution.consultation.config.SmsProperties;
 import com.coresolution.consultation.dto.TenantSmsEffectiveCredentials;
 import com.coresolution.consultation.service.sms.SmsProvider;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -37,20 +38,20 @@ public class SmsAuthService {
      */
     public String sendVerificationCode(String phoneNumber) {
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
-        log.info("📱 SMS 인증번호 발송 요청 - 전화번호: {}, SMS 활성화: {}, 테스트 모드: {}", 
-                normalizedPhone, isEffectiveSmsEnabled(), smsProperties.isTestMode());
-        
+        log.info("📱 SMS 인증번호 발송 요청 - 전화번호: {}, SMS 활성화: {}, 테스트 모드: {}",
+                PhoneLogMasking.maskForLog(normalizedPhone), isEffectiveSmsEnabled(), smsProperties.isTestMode());
+
         if (!isEffectiveSmsEnabled()) {
             log.warn("⚠️ SMS 인증이 비활성화되어 있습니다. 설정을 확인해주세요.");
             return null;
         }
-        
+
         String verificationCode;
-        
+
         if (smsProperties.isTestMode()) {
-            // 테스트 모드: 고정 인증번호 사용 (비용 절약)
+            // 테스트 모드: 고정 인증번호 사용 (비용 절약). B4 hotfix: 평문 OTP 로그 금지.
             verificationCode = smsProperties.getMockVerificationCode();
-            log.info("🧪 테스트 모드: 고정 인증번호 사용 - {}", verificationCode);
+            log.info("🧪 테스트 모드: 고정 인증번호 발송");
         } else {
             // 실제 모드: 랜덤 인증번호 생성 및 실제 SMS 발송
             verificationCode = generateVerificationCode();
@@ -76,9 +77,8 @@ public class SmsAuthService {
      */
     public boolean verifyCode(String phoneNumber, String inputCode, String sentCode) {
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
-        log.info("🔍 SMS 인증번호 검증 - 전화번호: {}, 입력: {}, 발송: {}", 
-                normalizedPhone, inputCode, sentCode);
-        
+        log.info("🔍 SMS 인증번호 검증 요청: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
+
         if (inputCode == null || sentCode == null) {
             log.warn("⚠️ 인증번호가 null입니다.");
             return false;
@@ -133,8 +133,9 @@ public class SmsAuthService {
             return false;
         }
         if (smsProperties.isTestMode()) {
+            // B4 hotfix: 본문 평문 로그 금지 (OTP 가 포함될 수 있음). 길이만 기록.
             log.info("🧪 SMS 테스트 모드: 알림 메시지 발송 시뮬레이션");
-            log.info("📱 발송 메시지: {}", message);
+            log.info("📱 발송 메시지(테스트): bodyLength={}", message != null ? message.length() : 0);
             return true;
         }
         return sendViaConfiguredProvider(phoneNumber, message);

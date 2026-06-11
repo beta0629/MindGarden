@@ -36,6 +36,7 @@ import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
@@ -1292,8 +1293,8 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("휴대폰 번호와 인증 코드를 입력해주세요.");
         }
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
-        log.info("SMS 인증 코드 검증 요청: {} - {}", normalizedPhone, verificationCode);
-        
+        log.info("SMS 인증 코드 검증 요청: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
+
         if (!verificationCode.matches("^[0-9]{6}$")) {
             throw new IllegalArgumentException("6자리 인증 코드를 입력해주세요.");
         }
@@ -1302,13 +1303,13 @@ public class AuthController extends BaseApiController {
         boolean isValid = smsOtpVerificationService.verifyAndConsume(normalizedPhone, verificationCode);
 
         if (isValid) {
-            log.info("SMS 인증 성공: {}", normalizedPhone);
+            log.info("SMS 인증 성공: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
             Map<String, Object> data = new HashMap<>();
             data.put("message", "인증이 완료되었습니다.");
             data.put("phoneNumber", normalizedPhone);
             return success(data);
         } else {
-            log.warn("SMS 인증 실패: {} - {}", normalizedPhone, verificationCode);
+            log.warn("SMS 인증 실패: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
             throw new IllegalArgumentException("인증 코드가 올바르지 않습니다.");
         }
     }

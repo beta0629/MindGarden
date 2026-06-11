@@ -3,6 +3,8 @@ package com.coresolution.consultation.service.sms.impl;
 import com.coresolution.consultation.dto.TenantSmsEffectiveCredentials;
 import com.coresolution.consultation.service.TenantSmsSettingsService;
 import com.coresolution.consultation.service.sms.SmsProvider;
+import com.coresolution.consultation.service.sms.SmsResponseBodyMasker;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,29 +46,26 @@ public class NhnSmsProvider implements SmsProvider {
     
     @Override
     public boolean sendSms(String phoneNumber, String message) {
-        log.info("📤 NHN Cloud SMS 발송 시작: phoneNumber={}", phoneNumber);
-        
+        log.info("📤 NHN Cloud SMS 발송 시작: phoneNumber={}", PhoneLogMasking.maskForLog(phoneNumber));
+
         TenantSmsEffectiveCredentials creds = tenantSmsSettingsService.getEffectiveCredentials(
             TenantContextHolder.getTenantId());
-        
+
         if (!isConfigured(creds)) {
             log.error("❌ NHN Cloud SMS 설정이 완료되지 않았습니다.");
             return false;
         }
-        
+
         try {
-            // 전화번호 형식 검증 및 정규화
             String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
             if (normalizedPhoneNumber == null) {
-                log.error("❌ 잘못된 전화번호 형식: {}", phoneNumber);
+                log.error("❌ 잘못된 전화번호 형식: {}", PhoneLogMasking.maskForLog(phoneNumber));
                 return false;
             }
-            
-            // API URL 구성
+
             String serviceId = creds.apiKey(); // NHN에서는 serviceId를 apiKey로 사용
             String url = String.format(NHN_SMS_API_URL, serviceId);
-            
-            // 요청 본문 구성
+
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("type", "SMS");
             requestBody.put("contentType", "COMM");
@@ -74,25 +73,26 @@ public class NhnSmsProvider implements SmsProvider {
             requestBody.put("from", creds.senderNumber());
             requestBody.put("content", message);
             requestBody.put("messages", List.of(Map.of("to", normalizedPhoneNumber)));
-            
-            // HTTP 헤더 구성
+
             HttpHeaders headers = createHeaders(url, "POST", creds);
-            
-            // HTTP 요청 발송
+
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
             @SuppressWarnings("unchecked")
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
-            
-            // 응답 처리
+
             if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("✅ NHN Cloud SMS 발송 성공: phoneNumber={}", normalizedPhoneNumber);
+                log.info("✅ NHN Cloud SMS 발송 성공: phoneNumber={}",
+                    PhoneLogMasking.maskForLog(normalizedPhoneNumber));
                 return true;
             } else {
-                log.error("❌ NHN Cloud SMS 발송 실패: status={}, response={}", 
-                    response.getStatusCode(), response.getBody());
+                // B4 hotfix: 응답 본문 echo 시 phone/email/secret/OTP 마스킹 (PR #227 SSOT 정합)
+                String maskedBody = SmsResponseBodyMasker.mask(
+                    response.getBody() == null ? "" : response.getBody().toString());
+                log.error("❌ NHN Cloud SMS 발송 실패: status={}, response={}",
+                    response.getStatusCode(), maskedBody);
                 return false;
             }
-            
+
         } catch (Exception e) {
             log.error("❌ NHN Cloud SMS 발송 중 오류 발생: {}", e.getMessage(), e);
             return false;

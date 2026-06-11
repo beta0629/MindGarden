@@ -70,7 +70,10 @@ describe('appleOAuth2Service', () => {
     expect(initOpts.nonce).toEqual(expect.any(String));
     expect(initOpts.state).toEqual(expect.any(String));
     expect(initOpts.nonce.length).toBeGreaterThanOrEqual(32);
-    expect(initOpts.usePopup).toBe(true);
+    // 2026-06-11 Google PR #204 패턴 정합 — server-side auth-code 흐름으로 전환되어
+    // 웹은 더 이상 popup 을 사용하지 않는다 (멀티테넌트 와일드카드에서 거절 회귀 방지).
+    // 본 함수 자체는 모바일 webview fallback 호환을 위해 유지되며 usePopup=false 로 init.
+    expect(initOpts.usePopup).toBe(false);
 
     expect(payload.identityToken).toBe('id-token-xyz');
     expect(payload.authorizationCode).toBe('auth-code-xyz');

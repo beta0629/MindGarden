@@ -38,6 +38,7 @@ import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -73,6 +74,8 @@ public class OAuth2Controller extends BaseApiController {
     private final UserSessionService userSessionService;
     private final com.coresolution.core.repository.TenantRepository tenantRepository;
     private final org.springframework.core.env.Environment environment;
+    /** Apple SIWA 서버 사이드 auth-code 흐름(2026-06-11 PR — Google PR #204 패턴 정합) 전용. */
+    private final com.coresolution.consultation.service.AppleSignInService appleSignInService;
 
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:cbb457cfb5f9351fd495be4af2b11a34}}")
     private String kakaoClientId;
@@ -116,6 +119,25 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.callback.google-path:/api/v1/auth/google/callback}")
     private String googleCallbackPath;
 
+    // === Apple Web (server-side auth-code, Google PR #204 패턴) ===
+    // Apple JS SDK `usePopup=true` 가 강제하는 `response_mode=web_message` 가 멀티테넌트
+    // 와일드카드(`*.core-solution.co.kr`) 환경에서 popup parent origin 과 redirect_uri origin
+    // 동일성 강제로 거절된다. 카카오/네이버/구글과 동일한 server-side auth-code 흐름으로
+    // 통합한다. redirect_uri 1개를 apex 호스트(예: `https://core-solution.co.kr/api/v1/auth/apple/callback`)
+    // 에 등록하고 테넌트는 state 에 base64 로 인코딩한다.
+
+    @Value("${apple.client-id:${APPLE_CLIENT_ID:}}")
+    private String appleClientId;
+
+    @Value("${apple.redirect-uri:${APPLE_REDIRECT_URI:}}")
+    private String appleRedirectUri;
+
+    @Value("${apple.scope:name email}")
+    private String appleScope;
+
+    @Value("${spring.security.oauth2.client.callback.apple-path:/api/v1/auth/apple/callback}")
+    private String appleCallbackPath;
+
     // NOTE: 도메인 하드코딩 금지. 값은 환경변수/프로퍼티로만 주입 (없으면 요청 기반으로 동적 추론)
     @Value("${spring.security.oauth2.domain.naver-callback-domain:${NAVER_CALLBACK_DOMAIN:}}")
     private String naverCallbackDomain;
@@ -139,6 +161,9 @@ public class OAuth2Controller extends BaseApiController {
 
     /** Google authorize에서 설정, 콜백에서 1회 소비. */
     private static final String SESSION_ATTR_OAUTH2_GOOGLE_MODE = "oauth2_google_mode";
+
+    /** Apple SIWA server-side auth-code authorize 단계에서 설정, 콜백에서 1회 소비. */
+    private static final String SESSION_ATTR_OAUTH2_APPLE_MODE = "oauth2_apple_mode";
 
     private static final String OAUTH2_MODE_LINK = "link";
 
@@ -1424,6 +1449,190 @@ public class OAuth2Controller extends BaseApiController {
             return requestScheme + "://" + mainDomain + portSuffix + googleCallbackPath;
         } catch (Exception e) {
             log.error("Google OAuth2 - redirect_uri 동적 생성 실패", e);
+            return "";
+        }
+    }
+
+    /**
+     * Apple Sign in with Apple (SIWA) server-side auth-code 흐름의 authorize URL 생성.
+     * Google PR #204 패턴 100% 정합 — state 에 {@code base64url(tenantId)+nonce} 를 인코딩하고
+     * redirect_uri 는 apex 호스트로 변환하여 Apple Service ID 에 등록된 단일 Return URL 과 일치시킨다.
+     *
+     * <p>Apple JS SDK 의 {@code usePopup=true} 흐름은 멀티테넌트 와일드카드(`*.core-solution.co.kr`)
+     * 환경에서 popup parent origin 과 redirect_uri origin 동일성 강제로 거절된다(빨간 배너).
+     * Google 과 동일하게 BE 가 authorize URL 을 생성하고 FE 는 full redirect 한다.</p>
+     *
+     * <p>Apple 은 와일드카드 도메인을 미지원하므로 Service ID 의 Domains/Return URLs 는
+     * apex({@code core-solution.co.kr}) 1개만 등록하며, 테넌트는 state 의 base64 prefix
+     * 로 복원되어 콜백에서 {@link com.coresolution.core.context.TenantContextHolder} 에 설정된다.</p>
+     *
+     * @param mode    {@code login} 또는 {@code link}
+     * @param client  {@code mobile} 시 향후 Redis 저장 분기 (현재는 미사용 — Google 패턴 정합)
+     * @param request HTTP 요청 (서브도메인·proxy 헤더 분석)
+     * @param session HTTP 세션 (state·tenantId 저장)
+     * @return {@code authUrl}, {@code provider}, {@code state} 를 포함한 ApiResponse
+     */
+    @GetMapping("/oauth2/apple/authorize")
+    public ResponseEntity<?> appleAuthorize(@RequestParam(required = false) String mode,
+            @RequestParam(required = false) String client, HttpServletRequest request,
+            HttpSession session) {
+        try {
+            String tenantId = extractTenantIdFromSubdomain(request);
+            if ((tenantId == null || tenantId.isEmpty()) && session != null) {
+                tenantId = (String) session.getAttribute("tenantId");
+                if (tenantId == null || tenantId.isEmpty()) {
+                    tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                }
+            }
+
+            if (tenantId == null || tenantId.isEmpty()) {
+                boolean isLocalProfile = isLocalProfile();
+                String host = request.getHeader("Host");
+                if (host == null || host.isEmpty()) {
+                    host = request.getHeader("X-Forwarded-Host");
+                }
+                boolean isLocalhost = host != null
+                        && (host.contains("localhost") || host.contains("127.0.0.1"));
+
+                if (isLocalProfile && isLocalhost && localDefaultTenantId != null
+                        && !localDefaultTenantId.isEmpty()) {
+                    tenantId = localDefaultTenantId;
+                    log.info("Apple OAuth2 - 로컬 프로파일 감지, 기본 테넌트 사용: tenantId={}", tenantId);
+                } else if (isLocalProfile && isLocalhost) {
+                    log.warn("로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
+                    return badRequest(OAuth2UserFacingMessages.MSG_TENANT_INFO_MISSING_LOCAL,
+                            "TENANT_REQUIRED");
+                } else {
+                    return badRequest(OAuth2UserFacingMessages.MSG_TENANT_INFO_MISSING_SUBDOMAIN,
+                            "TENANT_REQUIRED");
+                }
+            }
+
+            // state 생성: base64url(tenantId) + "." + UUID nonce — 카카오/네이버/구글 공통 형식.
+            String state = UUID.randomUUID().toString();
+            String nonce = UUID.randomUUID().toString();
+            if (tenantId != null && !tenantId.isEmpty()) {
+                String encodedTenantId = java.util.Base64.getUrlEncoder().withoutPadding()
+                        .encodeToString(tenantId.getBytes(StandardCharsets.UTF_8));
+                state = encodedTenantId + "." + state;
+                log.info("Apple OAuth2 - state에 tenantId 인코딩: tenantId={}, encodedStateLen={}",
+                        tenantId, state.length());
+                if (session != null) {
+                    session.setAttribute("oauth2_tenant_id", tenantId);
+                }
+            }
+
+            if (session != null) {
+                session.setAttribute("oauth2_apple_state", state);
+                session.setAttribute("oauth2_apple_nonce", nonce);
+                storeOAuth2AuthorizeMode(session, mode, SESSION_ATTR_OAUTH2_APPLE_MODE);
+            }
+
+            if ("mobile".equals(client)) {
+                log.info("Apple OAuth2 - 모바일 클라이언트 감지 (web 흐름 비대상): state={}", state);
+            }
+
+            String callbackUrl = buildAppleCallbackUrl(request);
+            if (callbackUrl == null || callbackUrl.isEmpty()) {
+                callbackUrl = appleRedirectUri;
+                log.warn("Apple OAuth2 - 동적 redirect_uri 생성 실패, 설정값 사용: {}", callbackUrl);
+            }
+
+            if (appleClientId == null || appleClientId.isEmpty()) {
+                log.error("Apple OAuth2 - APPLE_CLIENT_ID(Service ID) 가 주입되지 않았습니다.");
+                return badRequest(OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED,
+                        "APPLE_CLIENT_ID_MISSING");
+            }
+
+            // Apple authorize endpoint — response_mode=form_post 로 콜백 시 POST 본문에 code/state 가 전달된다.
+            String authUrl = "https://appleid.apple.com/auth/authorize?"
+                    + "client_id=" + URLEncoder.encode(appleClientId, StandardCharsets.UTF_8)
+                    + "&redirect_uri="
+                    + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8)
+                    + "&response_type=code"
+                    + "&response_mode=form_post"
+                    + "&scope="
+                    + URLEncoder.encode(appleScope, StandardCharsets.UTF_8).replace("+", "%20")
+                    + "&state="
+                    + URLEncoder.encode(state, StandardCharsets.UTF_8).replace("+", "%20")
+                    + "&nonce="
+                    + URLEncoder.encode(nonce, StandardCharsets.UTF_8).replace("+", "%20");
+
+            log.info("Apple OAuth2 인증 URL 생성: redirect_uri={}, stateLen={}, nonceLen={}",
+                    callbackUrl, state.length(), nonce.length());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("authUrl", authUrl);
+            data.put("provider", "APPLE");
+            data.put("state", state);
+            data.put("nonce", nonce);
+
+            return success(data);
+        } catch (Exception e) {
+            log.error("Apple OAuth2 인증 URL 생성 실패", e);
+            throw new RuntimeException(String.format(
+                    OAuth2UserFacingMessages.MSG_APPLE_OAUTH_AUTH_URL_FAILED_FMT, e.getMessage()));
+        }
+    }
+
+    /**
+     * Apple OAuth2 콜백 URL 동적 생성 — {@link #buildGoogleCallbackUrl(HttpServletRequest)}
+     * 와 동일한 mainDomain 변환 로직을 사용한다.
+     *
+     * <p>운영(prod): 테넌트 서브도메인(`mindgarden.core-solution.co.kr`) → apex
+     * (`core-solution.co.kr`) 로 변환하여 Apple Service ID Return URLs 와 일치시킨다.
+     * 개발(dev) 도 동일 패턴으로 동작한다.</p>
+     *
+     * @param request 현재 요청 (proxy 헤더 분석에 사용)
+     * @return apex 기반 redirect_uri 또는 빈 문자열(추론 실패)
+     */
+    private String buildAppleCallbackUrl(HttpServletRequest request) {
+        try {
+            String requestScheme = resolveExternalScheme(request);
+
+            String requestHost = request.getHeader("X-Forwarded-Host");
+            if (requestHost == null || requestHost.isEmpty()) {
+                requestHost = request.getHeader("Host");
+            }
+
+            if (requestHost != null && requestHost.contains("localhost")
+                    && !requestHost.contains(":8080")) {
+                requestHost = request.getServerName() + ":" + request.getServerPort();
+            } else if (requestHost == null || requestHost.isEmpty()) {
+                requestHost = request.getServerName() + ":" + request.getServerPort();
+            }
+
+            if (requestHost == null || requestHost.isEmpty()) {
+                return "";
+            }
+
+            String hostWithoutPort = requestHost.split(":")[0];
+            String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
+
+            String portSuffix = "";
+            if (requestHost.contains(":")) {
+                String port = requestHost.split(":")[1];
+                if (!port.equals("80") && !port.equals("443")) {
+                    portSuffix = ":" + port;
+                }
+            } else {
+                String forwardedPort = request.getHeader("X-Forwarded-Port");
+                if (forwardedPort != null && !forwardedPort.isEmpty()) {
+                    int port = Integer.parseInt(forwardedPort);
+                    if (port != 80 && port != 443) {
+                        portSuffix = ":" + port;
+                    }
+                } else {
+                    int port = request.getServerPort();
+                    if (port != 80 && port != 443) {
+                        portSuffix = ":" + port;
+                    }
+                }
+            }
+
+            return requestScheme + "://" + mainDomain + portSuffix + appleCallbackPath;
+        } catch (Exception e) {
+            log.error("Apple OAuth2 - redirect_uri 동적 생성 실패", e);
             return "";
         }
     }
@@ -3647,6 +3856,342 @@ public class OAuth2Controller extends BaseApiController {
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                     + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=GOOGLE")
+                    .build();
+        }
+    }
+
+    /**
+     * Apple Sign in with Apple (SIWA) server-side auth-code 콜백 — Google PR #204 패턴 정합.
+     *
+     * <p>Apple authorize 응답은 {@code response_mode=form_post} 로 발송되어 콜백에 form-urlencoded
+     * POST 본문(`code`, `state`, 옵션 `id_token`, 첫 가입 시 `user` JSON)으로 전달된다.
+     * 본 메서드는 state 검증·tenant 컨텍스트 복원·{@link com.coresolution.consultation.service.AppleSignInService#callback}
+     * 호출 후 테넌트 SPA 의 {@code /auth/oauth2/callback} 으로 302 redirect 한다.</p>
+     *
+     * <p>기존 {@code POST /api/v1/auth/oauth/apple/callback} (JSON, 모바일 호환) 은 그대로 유지하고
+     * 본 신규 경로(`/api/v1/auth/apple/callback`, form-urlencoded)는 별도 분리해 회귀 0 을 보장한다.</p>
+     *
+     * @param code     Apple authorization code
+     * @param state    base64url(tenantId)+nonce 복합 state
+     * @param idToken  Apple identityToken (선택 — 검증은 service 가 직접 token 교환 결과로 수행)
+     * @param userJson 첫 가입 시 Apple 이 제공하는 {@code {"name":{"firstName":...,"lastName":...},"email":...}} JSON
+     * @param error    Apple 이 동의 거절·오류 시 전달하는 사유
+     * @param mode     {@code login} 또는 {@code link} (콜백 분기용 — 현재 구현은 login 만)
+     * @param request  HTTP 요청
+     * @param session  HTTP 세션
+     * @return SPA 로의 302 redirect (success/error/signup 분기)
+     */
+    @PostMapping(value = "/apple/callback", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<?> appleCallback(@RequestParam(required = false) String code,
+            @RequestParam(required = false) String state,
+            @RequestParam(name = "id_token", required = false) String idToken,
+            @RequestParam(name = "user", required = false) String userJson,
+            @RequestParam(required = false) String error,
+            @RequestParam(required = false) String mode,
+            HttpServletRequest request, HttpSession session) {
+
+        if (error != null) {
+            log.warn("Apple OAuth2 콜백 - Apple 이 error 를 전달: {}", error);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302)
+                    .header("Location", frontendUrl + "/login?error="
+                            + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=APPLE")
+                    .build();
+        }
+
+        if (code == null || code.isBlank()) {
+            log.warn("Apple OAuth2 콜백에서 인증 코드가 없습니다. error={}, stateLen={}",
+                    error, state != null ? state.length() : 0);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_NO_AUTH_CODE,
+                            StandardCharsets.UTF_8)
+                    + "&provider=APPLE")
+                    .build();
+        }
+
+        String savedState = session != null ? (String) session.getAttribute("oauth2_apple_state") : null;
+        String normalizedAppleState = normalizeOAuth2StateQueryValue(state);
+        OAuthCompositeState appleComposite = parseCompositeOAuthState(normalizedAppleState);
+        String stateBasedTenantId = appleComposite.tenantId;
+        log.info("Apple OAuth2 콜백 - state 검증: savedStatePresent={}, stateLen={}, sessionId={}",
+                Boolean.valueOf(savedState != null),
+                normalizedAppleState != null ? normalizedAppleState.length() : 0,
+                session != null ? session.getId() : "<no-session>");
+
+        if (!prefixedOAuthSavedStateMatches(savedState, normalizedAppleState, appleComposite)) {
+            if (session != null) {
+                session.removeAttribute("oauth2_apple_state");
+                session.removeAttribute("oauth2_apple_nonce");
+            }
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                    + URLEncoder.encode(
+                            OAuth2UserFacingMessages.ERR_LOGIN_SECURITY_VERIFICATION_FAILED,
+                            StandardCharsets.UTF_8)
+                    + "&provider=APPLE")
+                    .build();
+        }
+
+        String savedNonce = null;
+        if (session != null) {
+            if (savedState != null) {
+                session.removeAttribute("oauth2_apple_state");
+            }
+            savedNonce = (String) session.getAttribute("oauth2_apple_nonce");
+            if (savedNonce != null) {
+                session.removeAttribute("oauth2_apple_nonce");
+            }
+        }
+
+        try {
+            String callbackTenantId = extractTenantIdFromSubdomain(request);
+            if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(stateBasedTenantId);
+                log.info(
+                        "Apple OAuth2 콜백 - state 기반 tenant_id 를 TenantContextHolder 에 설정: tenantId={}",
+                        stateBasedTenantId);
+            } else if (callbackTenantId != null && !callbackTenantId.isEmpty()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(callbackTenantId);
+                log.info(
+                        "Apple OAuth2 콜백 - 서브도메인에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
+                        callbackTenantId);
+            } else {
+                String sessionTenantId = session != null ? (String) session.getAttribute("tenantId") : null;
+                if ((sessionTenantId == null || sessionTenantId.isEmpty()) && session != null) {
+                    sessionTenantId = (String) session.getAttribute("oauth2_tenant_id");
+                }
+                if (sessionTenantId != null && !sessionTenantId.isEmpty()) {
+                    com.coresolution.core.context.TenantContextHolder.setTenantId(sessionTenantId);
+                    log.info(
+                            "Apple OAuth2 콜백 - 세션에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
+                            sessionTenantId);
+                } else {
+                    log.error("❌ Apple OAuth2 콜백 - tenant_id 를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(
+                                                    OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=APPLE")
+                            .build();
+                }
+            }
+
+            String finalTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (finalTenantId == null || finalTenantId.isEmpty()) {
+                log.error("❌ Apple OAuth2 콜백 - TenantContextHolder 에 tenant_id 가 설정되지 않았습니다.");
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                return ResponseEntity.status(302)
+                        .header("Location",
+                                frontendUrl + "/login?error="
+                                        + URLEncoder.encode(
+                                                OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
+                                                StandardCharsets.UTF_8)
+                                        + "&provider=APPLE")
+                        .build();
+            }
+
+            String actualRedirectUri = buildAppleCallbackUrl(request);
+            if (actualRedirectUri == null || actualRedirectUri.isEmpty()) {
+                actualRedirectUri = appleRedirectUri;
+            }
+            if (actualRedirectUri == null || actualRedirectUri.isEmpty()) {
+                log.error("Apple OAuth2 콜백 - redirect_uri 결정 실패");
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                        + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR,
+                                StandardCharsets.UTF_8)
+                        + "&provider=APPLE")
+                        .build();
+            }
+
+            // Apple 첫 가입 시 user JSON 에 이름이 포함된다 — 콜백 1회성. AppleSignInRequest 로 승계.
+            String givenName = null;
+            String familyName = null;
+            String emailFromUserJson = null;
+            if (userJson != null && !userJson.isBlank()) {
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper =
+                            new com.fasterxml.jackson.databind.ObjectMapper();
+                    com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(userJson);
+                    com.fasterxml.jackson.databind.JsonNode nameNode = root.get("name");
+                    if (nameNode != null) {
+                        com.fasterxml.jackson.databind.JsonNode firstNode = nameNode.get("firstName");
+                        com.fasterxml.jackson.databind.JsonNode lastNode = nameNode.get("lastName");
+                        if (firstNode != null && !firstNode.isNull()) {
+                            givenName = firstNode.asText();
+                        }
+                        if (lastNode != null && !lastNode.isNull()) {
+                            familyName = lastNode.asText();
+                        }
+                    }
+                    com.fasterxml.jackson.databind.JsonNode emailNode = root.get("email");
+                    if (emailNode != null && !emailNode.isNull()) {
+                        emailFromUserJson = emailNode.asText();
+                    }
+                } catch (Exception parseEx) {
+                    log.warn("Apple OAuth2 콜백 - user JSON 파싱 실패 (무시하고 진행): {}",
+                            parseEx.getMessage());
+                }
+            }
+
+            com.coresolution.consultation.dto.auth.AppleSignInRequest appleRequest =
+                    com.coresolution.consultation.dto.auth.AppleSignInRequest.builder()
+                            .authorizationCode(code)
+                            .identityToken(idToken)
+                            .nonce(savedNonce)
+                            .givenName(givenName)
+                            .familyName(familyName)
+                            .email(emailFromUserJson)
+                            .build();
+
+            com.coresolution.consultation.dto.auth.AppleSignInResponse response =
+                    appleSignInService.callback(appleRequest, actualRedirectUri);
+
+            if (response == null || !response.isSuccess()) {
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                String errorMessage = response != null && response.getMessage() != null
+                        ? response.getMessage()
+                        : OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED;
+                return ResponseEntity.status(302)
+                        .header("Location",
+                                frontendUrl + "/login?error="
+                                        + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8)
+                                        + "&provider=APPLE")
+                        .build();
+            }
+
+            // 휴대폰 인증 분기 (apple_sub 미매칭 + 신규 사용자) — 기존 phone-link 페이지로 redirect.
+            if (response.isRequiresPhoneVerification()) {
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                if (redirectTenantId == null || redirectTenantId.isBlank()) {
+                    redirectTenantId = finalTenantId;
+                }
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                String token = response.getPhoneVerificationToken();
+                if (token == null || token.isBlank()) {
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(
+                                                    OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR,
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=APPLE")
+                            .build();
+                }
+                String q = "success=true&oauthPhoneVerification=required&phoneVerificationToken="
+                        + URLEncoder.encode(token, StandardCharsets.UTF_8) + "&provider=APPLE&tenantId="
+                        + URLEncoder.encode(finalTenantId, StandardCharsets.UTF_8);
+                String location = frontendUrl + "/auth/oauth-phone-link?" + q;
+                logOAuthRedirectLocationSummary("Apple phone verification", location);
+                return ResponseEntity.status(302).header("Location", location).build();
+            }
+
+            // 신규 가입 분기 (apple_sub·email 모두 미매칭 + 테넌트 미선택) — signup-required 화면으로 redirect.
+            if (response.isRequiresSignup()) {
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                if (redirectTenantId == null || redirectTenantId.isBlank()) {
+                    redirectTenantId = finalTenantId;
+                }
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                com.coresolution.consultation.dto.auth.AppleSocialUserInfo socialInfo =
+                        response.getSocialUserInfo();
+                String email = socialInfo != null && socialInfo.getEmail() != null
+                        ? socialInfo.getEmail()
+                        : "";
+                String name = socialInfo != null && socialInfo.getName() != null
+                        ? socialInfo.getName()
+                        : "";
+                String nickname = socialInfo != null && socialInfo.getNickname() != null
+                        ? socialInfo.getNickname()
+                        : "";
+                String providerUserIdForSignup = socialInfo != null
+                        && socialInfo.getProviderUserId() != null
+                                ? socialInfo.getProviderUserId()
+                                : "";
+                String signupUrl = frontendUrl + "/login?signup=required&provider=apple"
+                        + "&tenantId=" + URLEncoder.encode(finalTenantId, StandardCharsets.UTF_8)
+                        + "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
+                        + "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8)
+                        + "&nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8)
+                        + "&providerUserId="
+                        + URLEncoder.encode(providerUserIdForSignup, StandardCharsets.UTF_8);
+                return ResponseEntity.status(302).header("Location", signupUrl).build();
+            }
+
+            // 정상 로그인 — JWT 발급 후 SPA `/auth/oauth2/callback` 으로 redirect.
+            com.coresolution.consultation.dto.auth.AppleUserSummary user = response.getUser();
+            if (user == null || user.getId() == null) {
+                log.error("Apple OAuth2 콜백 - user 가 null 입니다. requiresSignup={}, requiresPhoneVerification={}",
+                        response.isRequiresSignup(), response.isRequiresPhoneVerification());
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                return ResponseEntity.status(302)
+                        .header("Location",
+                                frontendUrl + "/login?error="
+                                        + URLEncoder.encode(
+                                                OAuth2UserFacingMessages.MSG_USER_INFO_UNAVAILABLE,
+                                                StandardCharsets.UTF_8)
+                                        + "&provider=APPLE")
+                        .build();
+            }
+
+            // 세션 사용자 적용 — Google 콜백과 동일 패턴.
+            HttpSession sessionForLogin = session;
+            if (sessionForLogin != null) {
+                SessionUtils.clearSession(sessionForLogin);
+            }
+            sessionForLogin = request.getSession(true);
+
+            String redirectTenantId = finalTenantId;
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+
+            // SPA 콜백 쿼리 — 액세스/리프레시 토큰을 그대로 전달 (Google 패턴과 정합).
+            // user.getId() 는 Long, providerUserId 는 SocialUserInfo 에서 받아 옴.
+            String providerUserIdForCallback = response.getSocialUserInfo() != null
+                    ? response.getSocialUserInfo().getProviderUserId()
+                    : "";
+            String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
+                    + "success=true&provider=APPLE"
+                    + "&accessToken="
+                    + URLEncoder.encode(response.getAccessToken() != null ? response.getAccessToken() : "",
+                            StandardCharsets.UTF_8)
+                    + "&refreshToken="
+                    + URLEncoder.encode(response.getRefreshToken() != null ? response.getRefreshToken() : "",
+                            StandardCharsets.UTF_8)
+                    + "&tenantId=" + URLEncoder.encode(redirectTenantId, StandardCharsets.UTF_8)
+                    + "&providerUserId="
+                    + URLEncoder.encode(providerUserIdForCallback != null ? providerUserIdForCallback : "",
+                            StandardCharsets.UTF_8)
+                    + "&userId=" + URLEncoder.encode(String.valueOf(user.getId()), StandardCharsets.UTF_8);
+
+            String sessionId = sessionForLogin.getId();
+            String cookieValue = String.format(
+                    "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
+                    sessionId, SessionConstants.SESSION_TIMEOUT_SECONDS);
+
+            log.info("Apple OAuth2 로그인 성공: userId={}, role={}", user.getId(), user.getRole());
+            logOAuthRedirectLocationSummary("Apple 웹 OAuth", redirectUrl);
+            return ResponseEntity.status(302).header("Location", redirectUrl)
+                    .header("Set-Cookie", cookieValue).build();
+        } catch (Exception e) {
+            log.error("Apple OAuth2 콜백 처리 실패: {}", e.getMessage(), e);
+            String errorMessage = e.getMessage() != null ? e.getMessage()
+                    : OAuth2UserFacingMessages.ERR_LOGIN_PROCESS_FAILED;
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                    + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=APPLE")
                     .build();
         }
     }

@@ -64,6 +64,8 @@ class OAuth2ControllerOAuthPhoneOtpFlowTest {
     private com.coresolution.core.repository.TenantRepository tenantRepository;
     @Mock
     private org.springframework.core.env.Environment environment;
+    @Mock
+    private com.coresolution.consultation.service.AppleSignInService appleSignInService;
 
     @InjectMocks
     private OAuth2Controller controller;

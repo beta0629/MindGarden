@@ -24,7 +24,12 @@ public final class OAuth2UserFacingMessages {
     public static final String MSG_GOOGLE_OAUTH_AUTH_URL_FAILED_FMT =
             "Google OAuth2 인증 URL 생성에 실패했습니다: %s";
 
+    public static final String MSG_APPLE_OAUTH_AUTH_URL_FAILED_FMT =
+            "Apple OAuth2 인증 URL 생성에 실패했습니다: %s";
+
     public static final String MSG_GOOGLE_ACCOUNT_LOGGED_IN = "Google 계정으로 로그인되었습니다.";
+
+    public static final String MSG_APPLE_ACCOUNT_LOGGED_IN = "Apple 계정으로 로그인되었습니다.";
 
     public static final String ERR_LOGIN_NO_AUTH_CODE = "인증코드없음";
 

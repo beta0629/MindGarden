@@ -14,6 +14,7 @@ import javax.crypto.spec.SecretKeySpec;
 import com.coresolution.consultation.dto.SmsGatewaySendResult;
 import com.coresolution.consultation.service.SmsGatewayService;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
@@ -78,6 +79,15 @@ public class SmsGatewayServiceImpl implements SmsGatewayService {
     @Value("${sms.gateway.ncp.sender-number:${NCP_SMS_SENDER_NUMBER:}}")
     private String ncpSenderNumber;
 
+    /**
+     * Spring DI 운영용 생성자. {@code @Autowired} 명시 — 다중 생성자(아래 테스트 전용 패키지 가시성
+     * 생성자) 존재 시 Spring 이 단일 생성자 자동 선택을 하지 않고 default constructor 로 fallback
+     * 시도하다 {@link NoSuchMethodException} 으로 ApplicationContext 로딩이 실패한다(2026-06-12
+     * PR sequential 4차 후 cascade fail 회귀 차단).
+     *
+     * @param environment Spring Environment
+     */
+    @Autowired
     public SmsGatewayServiceImpl(Environment environment) {
         this(environment, buildDefaultRestTemplate());
     }

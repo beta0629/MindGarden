@@ -80,6 +80,57 @@ describe('PhoneChangeModal', () => {
     expect(notificationManager.show).toHaveBeenCalledWith('인증 코드가 전송되었습니다.', 'info');
   });
 
+  it('SMS_SEND 응답 deliveryChannel=PUSH → 푸시 안내 메시지 노출', async() => {
+    StandardizedApi.post.mockResolvedValueOnce({ success: true, deliveryChannel: 'PUSH' });
+    renderOpen();
+
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText('새 휴대전화 번호'), '01055556666');
+    await userEvent.click(within(dialog).getByRole('button', { name: '인증번호 발송' }));
+
+    await screen.findByLabelText('인증 코드 (6자리)');
+    expect(notificationManager.show).toHaveBeenCalledWith(
+      '앱 푸시 알림으로 인증번호가 발송되었습니다. 앱에서 확인해 주세요.',
+      'info'
+    );
+    // step 2 subtitle 가 푸시 안내로 분기되는지 검증
+    expect(screen.getByText('앱 푸시 알림으로 전송된 6자리 코드를 입력하세요.')).toBeInTheDocument();
+  });
+
+  it('SMS_SEND 응답 deliveryChannel=SMS → SMS 안내 메시지 노출', async() => {
+    StandardizedApi.post.mockResolvedValueOnce({ success: true, deliveryChannel: 'SMS' });
+    renderOpen();
+
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText('새 휴대전화 번호'), '01055557777');
+    await userEvent.click(within(dialog).getByRole('button', { name: '인증번호 발송' }));
+
+    await screen.findByLabelText('인증 코드 (6자리)');
+    expect(notificationManager.show).toHaveBeenCalledWith(
+      'SMS로 인증번호가 발송되었습니다.',
+      'info'
+    );
+  });
+
+  it('SMS_SEND 요청 본문에 purpose=PHONE_CHANGE 가 포함된다', async() => {
+    StandardizedApi.post.mockResolvedValueOnce({ success: true, deliveryChannel: 'SMS' });
+    renderOpen();
+
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText('새 휴대전화 번호'), '01099998888');
+    await userEvent.click(within(dialog).getByRole('button', { name: '인증번호 발송' }));
+
+    await waitFor(() => {
+      expect(StandardizedApi.post).toHaveBeenCalledWith(
+        AUTH_API.SMS_SEND,
+        expect.objectContaining({
+          phoneNumber: '01099998888',
+          purpose: 'PHONE_CHANGE'
+        })
+      );
+    });
+  });
+
   it('OTP 입력 후 "변경 완료" 클릭 → CHANGE_PHONE 호출 + 성공 토스트 + onSuccess/onClose 콜백', async() => {
     StandardizedApi.post
       .mockResolvedValueOnce({ success: true }) // SMS_SEND

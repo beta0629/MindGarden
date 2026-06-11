@@ -48,6 +48,21 @@ public final class MobilePushCanonicalTypes {
     public static final String ADMIN_ANNOUNCEMENT = "admin_announcement";
 
     /**
+     * 인증 OTP 푸시 발송(2026-06-11) — 휴대전화 변경·로그인 등 SMS OTP 흐름의 push-first 우선 경로.
+     *
+     * <p>마이페이지 휴대전화 변경 등 OTP 발송 시 사용자가 expo-app 활성 push token 을 보유하고 있으면
+     * 본 canonical type 으로 푸시를 우선 시도하고, push token 부재·발송 실패 시 SMS 게이트웨이로 폴백한다.
+     * 채널 중복 발송을 방지하기 위해 push 성공 시 SMS 는 발송하지 않으며, 발송 결정은
+     * {@link com.coresolution.consultation.service.OtpDeliveryService} 단일 SSOT 가 담당한다.</p>
+     *
+     * <p>본 푸시는 보안 인증 의무 통지에 해당하여 사용자 카테고리(MobilePushSettings) 와
+     * {@link MobilePushAllowedEvents} 화이트리스트를 우회한다(전용 dispatch 경로
+     * {@code MobilePushDispatchService.dispatchAuthenticationOtp(...)} 만 사용).
+     * 멱등 dedup 도 OTP 코드 TTL(5분) · 단일 사용 정책으로 자체 보장되므로 별도 dedup 청구는 하지 않는다.</p>
+     */
+    public static final String OTP_DELIVERY = "otp_delivery";
+
+    /**
      * 부분 환불 / 강제 종료로 회기 소진(remaining&lt;=0) 시 자동 일괄 취소된 미래 예약 통지(2026-05-26 Phase 0).
      *
      * <p>회기관리 운영 정책 합의서 v2 Q3=3A (자동 일괄 취소) + Q3 보조=C (4채널 의무 통지) 결정에 따라

@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * {@link PlSqlFinancialServiceImpl} 5개 재무 프로시저 호출 메서드가
@@ -39,6 +40,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 class PlSqlFinancialServiceImplCallableTest {
 
     private static final String UT_TENANT = "ut-tenant-plsql-financial";
+    private static final String UT_SCHEMA = "core_solution";
     private static final LocalDate START_DATE = LocalDate.of(2026, 5, 1);
     private static final LocalDate END_DATE = LocalDate.of(2026, 5, 31);
 
@@ -56,6 +58,8 @@ class PlSqlFinancialServiceImplCallableTest {
     @BeforeEach
     void setUp() {
         service = new PlSqlFinancialServiceImpl(jdbcTemplate);
+        // P0 hotfix 2026-06-11: catalog 명시 SSOT(@Value("${...}")) — 단위 테스트 환경에서 명시 주입
+        ReflectionTestUtils.setField(service, "dbSchemaName", UT_SCHEMA);
     }
 
     @AfterEach
@@ -88,7 +92,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class GetBranchFinancialBreakdownTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL GetBranchFinancialBreakdown(?, ?, ?, ?, ?, ?)}";
+                "{CALL " + UT_SCHEMA + ".GetBranchFinancialBreakdown(?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: tenant + 기간 valid → SSOT 시그니처 + OUT(4-6) 등록")
@@ -132,7 +136,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class GetMonthlyFinancialTrendTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL GetMonthlyFinancialTrend(?, ?, ?, ?, ?, ?)}";
+                "{CALL " + UT_SCHEMA + ".GetMonthlyFinancialTrend(?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: tenant + 기간 valid → SSOT 시그니처 + OUT(4-6) 등록")
@@ -173,7 +177,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class GetCategoryFinancialBreakdownTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL GetCategoryFinancialBreakdown(?, ?, ?, ?, ?, ?)}";
+                "{CALL " + UT_SCHEMA + ".GetCategoryFinancialBreakdown(?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: tenant + 기간 valid → SSOT 시그니처 + OUT(4-6) 등록")
@@ -214,7 +218,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class GenerateQuarterlyFinancialReportTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL GenerateQuarterlyFinancialReport(?, ?, ?, ?, ?, ?)}";
+                "{CALL " + UT_SCHEMA + ".GenerateQuarterlyFinancialReport(?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: year+quarter+tenant → SSOT 시그니처 + OUT(4-6) 등록")
@@ -258,7 +262,7 @@ class PlSqlFinancialServiceImplCallableTest {
     class CalculateFinancialKPIsTests {
 
         private static final String EXPECTED_CALL =
-                "{CALL CalculateFinancialKPIs(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+                "{CALL " + UT_SCHEMA + ".CalculateFinancialKPIs(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
         @Test
         @DisplayName("정상: tenant + 기간 valid → SSOT 11파라미터 시그니처 + OUT(4-11) 등록")

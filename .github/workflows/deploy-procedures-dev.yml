@@ -49,6 +49,14 @@ jobs:
         [ -n "${{ secrets.DEV_DB_PASSWORD }}" ] || fail "DEV_DB_PASSWORD 가 비어 있습니다. 개발 DB 비밀번호를 Secrets에 등록하세요."
         [ -n "${{ secrets.DEV_DB_NAME }}" ] || fail "DEV_DB_NAME 가 비어 있습니다. 개발 DB 스키마명을 Secrets에 등록하세요."
 
+        # 운영 P0 hotfix 2026-06-11 — mind_garden 재적재 차단
+        # 동일 표준 프로시저가 mind_garden 에 적재되면 운영·개발 모두 동명 메타 충돌이 발생한다.
+        case "${{ secrets.DEV_DB_NAME }}" in
+          mind_garden|mind_garden_legacy_*)
+            fail "DEV_DB_NAME='${{ secrets.DEV_DB_NAME }}' 는 차단되었습니다. 표준 프로시저는 core_solution 스키마에만 적재합니다. docs/운영반영/MIND_GARDEN_LEGACY_CLEANUP_GUIDE.md 참고"
+            ;;
+        esac
+
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         echo "${{ secrets.DEV_SERVER_SSH_KEY }}" > ~/.ssh/dev_procedures_ci_key

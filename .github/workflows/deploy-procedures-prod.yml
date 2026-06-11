@@ -43,6 +43,14 @@ jobs:
         [ -n "${{ secrets.DEV_DB_USER }}" ] || fail "DEV_DB_USER 시크릿이 비어 있습니다."
         [ -n "${{ secrets.DEV_DB_NAME }}" ] || fail "DEV_DB_NAME 시크릿이 비어 있습니다."
 
+        # 운영 P0 hotfix 2026-06-11 — mind_garden 재적재 차단
+        # 표준 프로시저 SSOT 는 core_solution 만 허용. 잔존 mind_garden 정리는 별도 수동 절차.
+        case "${{ secrets.DEV_DB_NAME }}" in
+          mind_garden|mind_garden_legacy_*)
+            fail "DEV_DB_NAME='${{ secrets.DEV_DB_NAME }}' 는 차단되었습니다. 표준 프로시저는 core_solution 스키마에만 적재합니다. docs/운영반영/MIND_GARDEN_LEGACY_CLEANUP_GUIDE.md 참고"
+            ;;
+        esac
+
         if [ -z "${{ secrets.DEV_SERVER_SSH_KEY }}" ] && [ -z "${{ secrets.PRODUCTION_SSH_KEY }}" ]; then
           fail "DEV_SERVER_SSH_KEY 또는 PRODUCTION_SSH_KEY 중 하나는 필수입니다."
         fi

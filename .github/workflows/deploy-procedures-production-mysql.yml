@@ -66,6 +66,18 @@ jobs:
             echo "::error::동일 이름을 쓰는 다른 워크플로: fix-production-db.yml — 이미 있다면 값이 비었는지 확인하세요."
             exit 1
           fi
+          # 운영 P0 hotfix 2026-06-11 — mind_garden 재적재 차단
+          # 운영 표준 프로시저 SSOT 는 core_solution 만 허용. mind_garden 잔존은 별도 수동 정리.
+          PROD_DB_NAME_RESOLVED="${{ secrets.PRODUCTION_DB_NAME }}"
+          PROD_DB_NAME_RESOLVED="${PROD_DB_NAME_RESOLVED:-core_solution}"
+          case "$PROD_DB_NAME_RESOLVED" in
+            mind_garden|mind_garden_legacy_*)
+              echo "::error::PRODUCTION_DB_NAME='$PROD_DB_NAME_RESOLVED' 는 차단되었습니다. 표준 프로시저는 core_solution 스키마에만 적재합니다."
+              echo "::error::동명 프로시저 메타 충돌(SimpleJdbcCallOperations.metaData) 로 운영 일별 통계 배치(00:00·00:05) 가 100% 실패합니다."
+              echo "::error::mind_garden 잔존 객체 정리 절차: docs/운영반영/MIND_GARDEN_LEGACY_CLEANUP_GUIDE.md"
+              exit 1
+              ;;
+          esac
 
       - name: known_hosts 추가 (PRODUCTION_HOST)
         run: |

@@ -34,12 +34,20 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * SimpleJdbcCall 스키마 명시용 SSOT.
-     * spring.datasource.url 의 ${DB_NAME} 과 동일 SSOT 를 상속하여 다중 스키마(core_solution + mind_garden)
+     * SimpleJdbcCall 카탈로그·스키마 명시용 SSOT.
+     * <p>
+     * spring.datasource.url 의 ${DB_NAME} 과 동일 SSOT 를 상속하여 다중 DB(core_solution + mind_garden)
      * 동명 프로시저 메타 충돌(SimpleJdbcCallOperations.metaData() 시그니처 모호)을 차단한다.
+     * </p>
+     * <p>
+     * MySQL JDBC 모델에서는 <b>catalog = DB명, schema = null</b> 이므로 catalog 명시가 P0 핵심이다.
+     * (운영 매일 00:00·00:05 통계 배치 실패 — mind_garden 잔존 동명 프로시저가 catalog 미지정 시
+     * INFORMATION_SCHEMA.ROUTINES 다중 매칭을 일으켜 SimpleJdbcCall 메타 추출이 실패함.)
+     * schema 도 유지하여 향후 PostgreSQL 등 schema 기반 DB 호환을 보장한다.
+     * </p>
      */
     @Value("${spring.datasource.schema-name:${DB_NAME:core_solution}}")
-    private String dbSchemaName;
+    private String dbSchemaName = "core_solution";
 
     /**
      * 일별 통계 업데이트 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
@@ -63,7 +71,10 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             jdbcTemplate.execute("SET character_set_results = utf8mb4");
 
             SimpleJdbcCall jdbcCall =
-                    new SimpleJdbcCall(dataSource).withProcedureName("UpdateDailyStatistics")
+                    new SimpleJdbcCall(dataSource)
+                            .withCatalogName(dbSchemaName)
+                            .withSchemaName(dbSchemaName)
+                            .withProcedureName("UpdateDailyStatistics")
                             .declareParameters(new SqlParameter("p_tenant_id", Types.VARCHAR),
                                     new SqlParameter("p_stat_date", Types.DATE),
                                     new SqlParameter("p_updated_by", Types.VARCHAR),
@@ -107,7 +118,9 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             log.debug("🔍 PL/SQL 프로시저 호출 시도: {}", procedureName);
 
             SimpleJdbcCall jdbcCall =
-                    new SimpleJdbcCall(dataSource).withSchemaName(dbSchemaName)
+                    new SimpleJdbcCall(dataSource)
+                            .withCatalogName(dbSchemaName)
+                            .withSchemaName(dbSchemaName)
                             .withProcedureName(procedureName)
                             .declareParameters(new SqlParameter("p_stat_date", Types.DATE));
 
@@ -145,7 +158,10 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
 
         try {
             SimpleJdbcCall jdbcCall =
-                    new SimpleJdbcCall(dataSource).withProcedureName("UpdateConsultantPerformance")
+                    new SimpleJdbcCall(dataSource)
+                            .withCatalogName(dbSchemaName)
+                            .withSchemaName(dbSchemaName)
+                            .withProcedureName("UpdateConsultantPerformance")
                             .declareParameters(new SqlParameter("p_consultant_id", Types.BIGINT),
                                     new SqlParameter("p_performance_date", Types.DATE),
                                     new SqlParameter("p_tenant_id", Types.VARCHAR),
@@ -181,6 +197,7 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
 
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
+                    .withCatalogName(dbSchemaName)
                     .withSchemaName(dbSchemaName)
                     .withProcedureName("UpdateAllConsultantPerformance")
                     .declareParameters(new SqlParameter("p_performance_date", Types.DATE));
@@ -210,7 +227,9 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
 
         try {
             SimpleJdbcCall jdbcCall =
-                    new SimpleJdbcCall(dataSource).withSchemaName(dbSchemaName)
+                    new SimpleJdbcCall(dataSource)
+                            .withCatalogName(dbSchemaName)
+                            .withSchemaName(dbSchemaName)
                             .withProcedureName("DailyPerformanceMonitoring")
                             .declareParameters(new SqlParameter("p_tenant_id", Types.VARCHAR),
                                     new SqlParameter("p_monitoring_date", Types.DATE),

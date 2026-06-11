@@ -63,7 +63,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("AdminController /consultation-records — 기간 필터 & 200 캡 (P0 핫픽스 2026-05-29)")
 class AdminControllerConsultationRecordsDateRangeIntegrationTest {
 
-    private static final String TEST_TENANT_ID = "tenant-records-" + UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 4자 = 36자.
+    private static final String TEST_TENANT_ID = "acr-"
+            + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
 
     @Autowired
     private MockMvc mockMvc;

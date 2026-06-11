@@ -424,8 +424,10 @@
                  surefire 의 단위 테스트와 분리되어 CI step 도 별도 job 으로 split (Stage 3).
                  lifecycle 기본 바인딩(integration-test, verify phase) 을 그대로 사용한다.
 
-                 reuseForks=true: Spring TestContext 캐시 적중률 극대화. 동일 시그니처(설정 classes,
-                 profiles, properties, customizers) 컨텍스트끼리 재사용으로 부팅 비용이 1회로 감소.
+                 forkCount=2 + reuseForks=false (2026-06-12 CI heap OOM 회귀 방지): 과거 단일 fork
+                 reuseForks=true 에서 Spring ApplicationContext 캐시 누적으로 244 통합 테스트 중
+                 OOM(Java heap space) → fork 비정상 종료(Exit Code 3) 회귀가 발생.
+                 각 테스트 클래스마다 새 JVM 으로 heap 누적을 차단하는 대신 컨텍스트 캐시 적중률은 일부 손실됨.
                  H2 in-memory schema 충돌은 `application-test.yml` 의 `${random.uuid}` 가 부여한
                  컨텍스트별 unique URL 로 격리됨(Stage 5 영구 수정). -->
             <plugin>
@@ -435,11 +437,19 @@
                     <includes>
                         <include>**/*IntegrationTest.java</include>
                     </includes>
-                    <forkCount>1</forkCount>
-                    <reuseForks>true</reuseForks>
+                    <!-- CI runner(GitHub Actions ubuntu-latest, 7GB RAM) JVM heap OOM 회귀 방지(2026-06-12).
+                         과거 reuseForks=true + -Xmx3g 단일 fork 환경에서 244 통합 테스트 누적 ApplicationContext
+                         캐시가 누적되어 OutOfMemoryError(Java heap space) → SurefireBooterForkException
+                         (Process Exit Code: 3) 로 fork 채널이 비정상 종료되었다.
+                         조치: forkCount=2 + reuseForks=false 로 각 테스트 클래스마다 새 JVM 을 띄워 heap 누적을
+                         차단하고, fork 별 heap 한도를 3g 로 유지(총 6g, runner 7GB 한도 내 1g 안전 마진).
+                         Spring TestContext 캐시 적중률은 일부 손실되지만 CI 시간 < OOM 회귀 비용. -->
+                    <forkCount>2</forkCount>
+                    <reuseForks>false</reuseForks>
                     <!-- 통합 테스트는 heap 더 크게(JPA/Hibernate Lazy load + Hikari 풀 + Spring Security
-                         FilterChain 등). MaxMetaspaceSize 도 통합 컨텍스트 다양성 대비 1g. -->
-                    <argLine>-Xmx3g -Xms1g -XX:MaxMetaspaceSize=1g -XX:+ExitOnOutOfMemoryError</argLine>
+                         FilterChain 등). MaxMetaspaceSize 도 통합 컨텍스트 다양성 대비 1g.
+                         ExitOnOutOfMemoryError 는 OOM 시 heap dump/잔여 정리 기회를 박탈하므로 의도적으로 제외. -->
+                    <argLine>-Xmx3g -Xms512m -XX:MaxMetaspaceSize=1g</argLine>
                     <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
                     <forkedProcessExitTimeoutInSeconds>30</forkedProcessExitTimeoutInSeconds>
                     <excludedGroups>local-mysql</excludedGroups>

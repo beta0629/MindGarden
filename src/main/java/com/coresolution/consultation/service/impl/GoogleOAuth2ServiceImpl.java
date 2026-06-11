@@ -95,19 +95,39 @@ public class GoogleOAuth2ServiceImpl extends AbstractOAuth2Service {
 
     @Override
     public String getAccessToken(String code) {
+        return getAccessToken(code, redirectUri);
+    }
+
+    /**
+     * Google authorization code → access_token 교환. server-side auth-code 흐름(웹) 에서
+     * 콜백이 동적으로 결정한 redirect_uri 와 BE 토큰 교환을 일치시키기 위해 오버로드를 제공한다.
+     *
+     * <p>kakao/naver 의 동등 헬퍼와 동일 시그니처를 유지하여 호출 측(`OAuth2Controller#googleCallback`)
+     * 에서 provider 분기 없이 같은 패턴으로 사용할 수 있게 한다.</p>
+     *
+     * @param code Google authorization code
+     * @param redirectUriOverride authorize 단계에서 사용한 redirect_uri (null/blank 이면 기본값 fallback)
+     * @return access_token
+     * @throws RuntimeException Google token endpoint 응답 실패 시
+     */
+    public String getAccessToken(String code, String redirectUriOverride) {
+        String redirectUriToUse =
+                (redirectUriOverride != null && !redirectUriOverride.isEmpty())
+                        ? redirectUriOverride
+                        : this.redirectUri;
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            
+
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("code", code);
             params.add("client_id", clientId);
             params.add("client_secret", clientSecret);
-            params.add("redirect_uri", redirectUri);
+            params.add("redirect_uri", redirectUriToUse);
             params.add("grant_type", "authorization_code");
-            
+
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
-            
+
             @SuppressWarnings("unchecked")
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 "https://oauth2.googleapis.com/token",
@@ -115,17 +135,94 @@ public class GoogleOAuth2ServiceImpl extends AbstractOAuth2Service {
                 entity,
                 (Class<Map<String, Object>>) (Class<?>) Map.class
             );
-            
+
             Map<String, Object> tokenResponse = response.getBody();
             if (tokenResponse == null || !tokenResponse.containsKey("access_token")) {
                 throw new RuntimeException("Google 액세스 토큰을 가져올 수 없습니다.");
             }
-            
+
             return (String) tokenResponse.get("access_token");
-            
+
         } catch (Exception e) {
-            log.error("Google 액세스 토큰 획득 실패", e);
+            log.error("Google 액세스 토큰 획득 실패: redirectUri={}", redirectUriToUse, e);
             throw new RuntimeException("Google 액세스 토큰을 가져올 수 없습니다.", e);
+        }
+    }
+
+    /**
+     * Google token endpoint 응답에서 id_token(있는 경우) 까지 함께 추출한다.
+     *
+     * <p>Apex 콜백 + state 복원 흐름에서 BE 가 access_token 으로 userinfo 를 조회하지만, 일부
+     * 환경(서비스 계정 prefetch 등) 에서 id_token 을 함께 활용해야 하는 경우를 대비한다.
+     * 본 메서드는 스코프에 {@code openid} 가 포함된 경우에만 id_token 이 함께 응답된다.</p>
+     *
+     * @param code Google authorization code
+     * @param redirectUriOverride authorize 단계에서 사용한 redirect_uri
+     * @return access_token / id_token 쌍 (id_token 은 null 가능)
+     */
+    public GoogleTokenPair exchangeCodeForTokens(String code, String redirectUriOverride) {
+        String redirectUriToUse =
+                (redirectUriOverride != null && !redirectUriOverride.isEmpty())
+                        ? redirectUriOverride
+                        : this.redirectUri;
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add("code", code);
+            params.add("client_id", clientId);
+            params.add("client_secret", clientSecret);
+            params.add("redirect_uri", redirectUriToUse);
+            params.add("grant_type", "authorization_code");
+
+            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
+
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                "https://oauth2.googleapis.com/token",
+                HttpMethod.POST,
+                entity,
+                (Class<Map<String, Object>>) (Class<?>) Map.class
+            );
+
+            Map<String, Object> tokenResponse = response.getBody();
+            if (tokenResponse == null || !tokenResponse.containsKey("access_token")) {
+                throw new RuntimeException("Google 액세스 토큰을 가져올 수 없습니다.");
+            }
+
+            String accessToken = (String) tokenResponse.get("access_token");
+            String idToken = tokenResponse.get("id_token") != null
+                    ? (String) tokenResponse.get("id_token")
+                    : null;
+            return new GoogleTokenPair(accessToken, idToken);
+
+        } catch (Exception e) {
+            log.error("Google 토큰 교환 실패: redirectUri={}", redirectUriToUse, e);
+            throw new RuntimeException("Google 토큰 교환에 실패했습니다.", e);
+        }
+    }
+
+    /**
+     * Google token 응답의 access_token / id_token 쌍.
+     *
+     * <p>access_token 은 항상 존재하며, id_token 은 scope 에 {@code openid} 가 포함된 경우에만 채워진다.</p>
+     */
+    public static final class GoogleTokenPair {
+        private final String accessToken;
+        private final String idToken;
+
+        public GoogleTokenPair(String accessToken, String idToken) {
+            this.accessToken = accessToken;
+            this.idToken = idToken;
+        }
+
+        public String getAccessToken() {
+            return accessToken;
+        }
+
+        public String getIdToken() {
+            return idToken;
         }
     }
 

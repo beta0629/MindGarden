@@ -73,7 +73,8 @@ export const getOAuth2Config = () => {
 };
 
 /**
- * 랜덤 state 생성
+ * 랜덤 state 생성 — 페이스북 implicit 흐름 등에서 사용. 카카오/네이버/구글의 server-side
+ * auth-code 흐름은 BE 가 state 를 생성·반환하므로 본 함수는 호출하지 않는다.
  */
 const generateRandomState = (length = 32) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -82,31 +83,6 @@ const generateRandomState = (length = 32) => {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
-};
-
-/**
- * PKCE code verifier 생성
- */
-const generateCodeVerifier = (length = 128) => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
-/**
- * PKCE code challenge 생성 (SHA256)
- */
-const generateCodeChallenge = async(verifier) => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
 };
 
 /**
@@ -284,33 +260,94 @@ export const naverLogin = async() => {
 };
 
 /**
- * 구글 로그인
+ * 구글 로그인 — server-side auth-code 흐름 (A-2, 2026-06-10).
+ *
+ * <p>카카오·네이버와 100% 동일 패턴. BE `/api/v1/auth/oauth2/google/authorize` 가
+ * apex 메인 도메인 기반 redirect_uri 와 `state=base64url(tenantId)+nonce` 를 포함한
+ * authorize URL 을 반환하면, 본 함수는 SPA 를 그 URL 로 전체 redirect 한다.
+ * Google 동의 후 BE `/api/v1/auth/google/callback` 이 토큰 교환·매칭·JWT 발급을
+ * 수행하고 테넌트 서브도메인의 `/auth/oauth2/callback` 으로 redirect 한다.</p>
+ *
+ * <p>이전 implicit/PKCE 흐름은 멀티테넌트 와일드카드 환경에서 Google 의 JavaScript
+ * origin 와일드카드 미지원으로 `origin_mismatch` 가 발생하여 폐기됐다.</p>
  */
-export const googleLogin = () => {
+export const googleLogin = async() => {
   try {
-    // 직접 GOOGLE_OAUTH2_CONFIG 사용
-    const config = GOOGLE_OAUTH2_CONFIG;
-    const state = generateRandomState();
-    const codeVerifier = generateCodeVerifier();
-    
-    sessionStorage.set('pkce_code_verifier', codeVerifier);
-    sessionStorage.set('oauth_state', state);
-    
-    const params = new URLSearchParams({
-      client_id: config.clientId,
-      redirect_uri: config.redirectUri,
-      response_type: config.responseType,
-      state: state,
-      scope: config.scope,
-      code_challenge: codeVerifier, // PKCE 지원
-      code_challenge_method: 'plain'
+    console.log('=== 구글 로그인 시작 ===');
+
+    // 서브도메인 확인 (로컬 환경에서는 스킵) — 카카오/네이버 동일 가드.
+    const host = window.location.hostname;
+    const isLocalEnv = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocalEnv) {
+      const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+      const hostParts = host.split('.');
+      const firstLabel = hostParts[0];
+      const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+
+      if (!hasSubdomain) {
+        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+        console.error('⚠️ 서브도메인 없음:', friendlyMessage);
+        notificationManager.show(friendlyMessage, 'error');
+        throw new Error(i18n.t('common:utils.socialLogin.t_11aa9c1b'));
+      }
+    }
+
+    // 백엔드의 인증 URL 생성 엔드포인트 호출.
+    // OAuth 인가 API 는 세션 쿠키(JSESSIONID) 가 필요하므로 cross-origin fetch 시 credentials 필수.
+    const response = await fetch(`${API_BASE_URL}${AUTH_API.GOOGLE_AUTHORIZE}`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' }
     });
-    
-    console.log('구글 OAuth2 인증 URL 생성:', `${config.authUrl}?${params.toString()}`);
-    window.location.href = `${config.authUrl}?${params.toString()}`;
+
+    if (!response.ok) {
+      let errorMessage = i18n.t('common:utils.socialLogin.t_712c6d0b');
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+          if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704'))
+              || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+          }
+        } else if (errorData.data && errorData.data.message) {
+          errorMessage = errorData.data.message;
+          if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704'))
+              || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+          }
+        }
+      } catch (parseError) {
+        console.error('구글 로그인 오류:', parseError);
+      }
+      notificationManager.show(errorMessage, 'error');
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
+    }
+
+    const data = await response.json();
+    console.log('백엔드에서 받은 구글 인증 URL:', data);
+
+    // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl.
+    const authUrl = (data.data && data.data.authUrl) || data.authUrl;
+    const state = (data.data && data.data.state) || data.state;
+
+    if (data.success && authUrl) {
+      // 백엔드에서 이미 state 를 포함한 URL 을 반환하므로, 프론트엔드에서 추가하지 않음.
+      // 백엔드에서 반환한 state 를 sessionStorage 에 저장 (콜백 검증·디버깅용).
+      if (state) {
+        sessionStorage.set('oauth_state', state);
+      }
+
+      console.log('최종 구글 OAuth2 인증 URL 길이:', authUrl.length);
+      console.log('=== 구글 로그인 완료 ===');
+
+      window.location.href = authUrl;
+    } else {
+      console.error('백엔드 응답 데이터 구조 오류:', data);
+      throw new Error(i18n.t('common:utils.socialLogin.t_25681767'));
+    }
   } catch (error) {
     console.error('구글 로그인 오류:', error);
-    notificationManager.show(i18n.t('common:utils.socialLogin.t_712c6d0b'), 'info');
+    notificationManager.show(i18n.t('common:utils.socialLogin.t_712c6d0b'), 'error');
   }
 };
 

@@ -1,21 +1,25 @@
 /**
- * GoogleLoginButton — `@react-oauth/google` mock 기반 단위 테스트.
+ * GoogleLoginButton — server-side auth-code (A-2) 흐름 단위 테스트.
  *
- * `useGoogleLogin` 의 success/error 콜백을 모사하여 onSuccess/onError prop 으로 흘러가는지,
- * implicit 흐름 응답에서 accessToken 추출이 정확한지 검증한다.
+ * <p>2026-06-10 P0 마이그레이션으로 implicit popup 흐름이 폐기되고, BE 가 반환한
+ * authorize URL 로 전체 페이지 redirect 하는 흐름으로 전환됐다. 본 테스트는
+ * `googleLogin` 유틸을 mock 하여 버튼 클릭 시 BE redirect 가 시작되는지, 가드 분기
+ * 와 에러 콜백 동작을 검증한다.</p>
  *
  * @author MindGarden
  * @since 2026-06-10
  */
 
 import React from 'react';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 
-const mockUseGoogleLogin = jest.fn();
+const mockGoogleLogin = jest.fn();
 
-jest.mock('@react-oauth/google', () => ({
+jest.mock('../../../utils/socialLogin', () => ({
   __esModule: true,
-  useGoogleLogin: (config) => mockUseGoogleLogin(config)
+  googleLogin: (...args) => mockGoogleLogin(...args),
+  kakaoLogin: jest.fn(),
+  naverLogin: jest.fn()
 }));
 
 jest.mock('../../../constants/oauth2', () => ({
@@ -27,78 +31,72 @@ jest.mock('../../../constants/oauth2', () => ({
 
 const GoogleLoginButton = require('../GoogleLoginButton').default;
 
-describe('GoogleLoginButton', () => {
+describe('GoogleLoginButton — server-side auth-code 흐름', () => {
   beforeEach(() => {
-    mockUseGoogleLogin.mockReset();
+    mockGoogleLogin.mockReset();
   });
 
-  test('onSuccess 콜백이 access_token 을 추출하여 prop 으로 전달한다.', () => {
-    let capturedConfig;
-    mockUseGoogleLogin.mockImplementation((config) => {
-      capturedConfig = config;
-      return jest.fn();
-    });
+  test('버튼 클릭 시 googleLogin() 으로 server-side authorize redirect 가 시작된다.', async () => {
+    mockGoogleLogin.mockResolvedValueOnce(undefined);
 
-    const onSuccess = jest.fn();
-    render(<GoogleLoginButton onSuccess={onSuccess} onError={jest.fn()} />);
-
-    expect(capturedConfig).toBeDefined();
-    expect(capturedConfig.flow).toBe('implicit');
-
-    capturedConfig.onSuccess({
-      access_token: '  ya29.access  ',
-      scope: 'openid email profile',
-      token_type: 'Bearer',
-      expires_in: 3599
-    });
-
-    expect(onSuccess).toHaveBeenCalledWith({
-      accessToken: 'ya29.access',
-      idToken: null,
-      scope: 'openid email profile'
-    });
-  });
-
-  test('access_token 이 비어 있으면 onError 로 사용자 친화 메시지가 전달된다.', () => {
-    let capturedConfig;
-    mockUseGoogleLogin.mockImplementation((config) => {
-      capturedConfig = config;
-      return jest.fn();
-    });
-
-    const onSuccess = jest.fn();
-    const onError = jest.fn();
-    render(<GoogleLoginButton onSuccess={onSuccess} onError={onError} />);
-
-    capturedConfig.onSuccess({ access_token: '   ' });
-
-    expect(onSuccess).not.toHaveBeenCalled();
-    expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError.mock.calls[0][0]).toMatch(/토큰을 찾을 수 없습니다/);
-  });
-
-  test('GIS onError 호출 시 description 이 onError prop 으로 전달된다.', () => {
-    let capturedConfig;
-    mockUseGoogleLogin.mockImplementation((config) => {
-      capturedConfig = config;
-      return jest.fn();
-    });
-
-    const onError = jest.fn();
-    render(<GoogleLoginButton onSuccess={jest.fn()} onError={onError} />);
-
-    capturedConfig.onError({ error: 'access_denied', error_description: '사용자 거부' });
-    expect(onError).toHaveBeenCalledWith('사용자 거부');
-  });
-
-  test('버튼 클릭 시 useGoogleLogin trigger 가 호출된다.', () => {
-    const triggerMock = jest.fn();
-    mockUseGoogleLogin.mockReturnValueOnce(triggerMock);
-
-    render(<GoogleLoginButton onSuccess={jest.fn()} onError={jest.fn()} label="Google로 로그인" />);
+    render(<GoogleLoginButton onError={jest.fn()} label="Google로 로그인" />);
 
     const button = screen.getByRole('button', { name: /Google로 로그인/ });
     fireEvent.click(button);
-    expect(triggerMock).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => {
+      expect(mockGoogleLogin).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('googleLogin() 호출이 실패하면 onError prop 으로 사용자 친화 메시지가 전달된다.', async () => {
+    mockGoogleLogin.mockRejectedValueOnce(new Error('서브도메인이 필요합니다.'));
+
+    const onError = jest.fn();
+    render(<GoogleLoginButton onError={onError} />);
+
+    fireEvent.click(screen.getByRole('button'));
+
+    await waitFor(() => {
+      expect(onError).toHaveBeenCalledWith('서브도메인이 필요합니다.');
+    });
+    expect(mockGoogleLogin).toHaveBeenCalledTimes(1);
+  });
+
+  test('disabled prop 이 true 이면 클릭해도 redirect 가 시작되지 않는다.', async () => {
+    render(<GoogleLoginButton onError={jest.fn()} disabled />);
+
+    const button = screen.getByRole('button');
+    fireEvent.click(button);
+
+    expect(mockGoogleLogin).not.toHaveBeenCalled();
+  });
+
+  test('연속 클릭 시 redirect 시작 직후 추가 호출은 무시된다 (이중 호출 가드).', async () => {
+    let resolveLogin;
+    mockGoogleLogin.mockImplementationOnce(
+      () => new Promise((resolve) => {
+        resolveLogin = resolve;
+      })
+    );
+
+    render(<GoogleLoginButton onError={jest.fn()} label="Google로 계속" />);
+
+    const button = screen.getByRole('button', { name: /Google로 계속/ });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(mockGoogleLogin).toHaveBeenCalledTimes(1);
+    });
+
+    if (resolveLogin) {
+      resolveLogin();
+    }
   });
 });
+
+// 참고: client id 미주입 가드(`isGoogleWebClientIdConfigured === false`) 테스트는
+// jest.resetModules + doMock 조합 시 React 인스턴스 분리로 hooks 호출이 깨지므로,
+// 가드 분기 검증은 별도 격리 환경(`__tests__/GoogleLoginButton.guard.test.js`) 에서 수행한다.

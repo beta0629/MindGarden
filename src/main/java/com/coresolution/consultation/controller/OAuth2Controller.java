@@ -98,6 +98,24 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.callback.naver-path:/api/auth/naver/callback}")
     private String naverCallbackPath;
 
+    // === Google Web (server-side auth-code) ===
+    // 멀티테넌트 와일드카드(`*.core-solution.co.kr`) 환경에서 Google OAuth 가 JavaScript origin
+    // 와일드카드를 미지원하므로(`origin_mismatch`), 카카오/네이버와 동일한 server-side auth-code
+    // 흐름으로 통합한다. redirect_uri 1개를 apex 호스트(예: `https://core-solution.co.kr/api/v1/auth/google/callback`)
+    // 에 등록하고 테넌트는 state 에 base64 로 인코딩한다.
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id:${GOOGLE_CLIENT_ID:}}")
+    private String googleClientId;
+
+    @Value("${spring.security.oauth2.client.registration.google.redirect-uri:${GOOGLE_REDIRECT_URI:}}")
+    private String googleRedirectUri;
+
+    @Value("${spring.security.oauth2.client.registration.google.scope:openid email profile}")
+    private String googleScope;
+
+    @Value("${spring.security.oauth2.client.callback.google-path:/api/v1/auth/google/callback}")
+    private String googleCallbackPath;
+
     // NOTE: 도메인 하드코딩 금지. 값은 환경변수/프로퍼티로만 주입 (없으면 요청 기반으로 동적 추론)
     @Value("${spring.security.oauth2.domain.naver-callback-domain:${NAVER_CALLBACK_DOMAIN:}}")
     private String naverCallbackDomain;
@@ -118,6 +136,9 @@ public class OAuth2Controller extends BaseApiController {
 
     /** 카카오 authorize에서 설정, 콜백에서 1회 소비. */
     private static final String SESSION_ATTR_OAUTH2_KAKAO_MODE = "oauth2_kakao_mode";
+
+    /** Google authorize에서 설정, 콜백에서 1회 소비. */
+    private static final String SESSION_ATTR_OAUTH2_GOOGLE_MODE = "oauth2_google_mode";
 
     private static final String OAUTH2_MODE_LINK = "link";
 
@@ -1226,6 +1247,184 @@ public class OAuth2Controller extends BaseApiController {
             log.error("카카오 OAuth2 인증 URL 생성 실패", e);
             throw new RuntimeException(String.format(
                     OAuth2UserFacingMessages.MSG_KAKAO_OAUTH_AUTH_URL_FAILED_FMT, e.getMessage()));
+        }
+    }
+
+    /**
+     * Google OAuth2 server-side auth-code 흐름의 authorize URL 생성. 카카오/네이버와 동일한
+     * 패턴으로 state 에 base64url(tenantId) 를 인코딩하고 redirect_uri 는 apex 호스트로 변환하여
+     * 메인 도메인 1개에 등록된 redirect_uri 와 일치시킨다.
+     *
+     * <p>Google Cloud Console Web Client 는 JavaScript origins 와 redirect URIs 모두에서
+     * 와일드카드를 지원하지 않으므로(`origin_mismatch`), redirect_uri 는 apex 1개만 등록한다.
+     * 테넌트는 state 의 base64 prefix 로 복원되며, 콜백 단계에서 TenantContextHolder 에 설정된다.</p>
+     *
+     * @param mode {@code login} 또는 {@code link}
+     * @param client {@code mobile} 시 Redis 에 클라이언트 정보 저장 (콜백 분기용)
+     * @return {@code authUrl}, {@code provider}, {@code state} 를 포함한 ApiResponse
+     */
+    @GetMapping("/oauth2/google/authorize")
+    public ResponseEntity<?> googleAuthorize(@RequestParam(required = false) String mode,
+            @RequestParam(required = false) String client, HttpServletRequest request,
+            HttpSession session) {
+        try {
+            // 서브도메인에서 tenant_id 추출 (state 생성 전에 추출)
+            String tenantId = extractTenantIdFromSubdomain(request);
+            if ((tenantId == null || tenantId.isEmpty()) && session != null) {
+                tenantId = (String) session.getAttribute("tenantId");
+                if (tenantId == null || tenantId.isEmpty()) {
+                    tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                }
+            }
+
+            // 로컬 프로파일에서만 기본 테넌트 사용 (개발/운영 환경에서는 서브도메인 필수)
+            if (tenantId == null || tenantId.isEmpty()) {
+                boolean isLocalProfile = isLocalProfile();
+                String host = request.getHeader("Host");
+                if (host == null || host.isEmpty()) {
+                    host = request.getHeader("X-Forwarded-Host");
+                }
+                boolean isLocalhost = host != null
+                        && (host.contains("localhost") || host.contains("127.0.0.1"));
+
+                if (isLocalProfile && isLocalhost && localDefaultTenantId != null
+                        && !localDefaultTenantId.isEmpty()) {
+                    tenantId = localDefaultTenantId;
+                    log.info("Google OAuth2 - 로컬 프로파일 감지, 기본 테넌트 사용: tenantId={}", tenantId);
+                } else if (isLocalProfile && isLocalhost) {
+                    log.warn("로컬 환경에서 테넌트 정보가 없습니다. local.default-tenant-id 또는 LOCAL_DEFAULT_TENANT_ID 환경 변수를 설정해주세요.");
+                    return badRequest(OAuth2UserFacingMessages.MSG_TENANT_INFO_MISSING_LOCAL,
+                            "TENANT_REQUIRED");
+                } else {
+                    return badRequest(OAuth2UserFacingMessages.MSG_TENANT_INFO_MISSING_SUBDOMAIN,
+                            "TENANT_REQUIRED");
+                }
+            }
+
+            // state 생성: base64url(tenantId) + "." + UUID nonce — 카카오/네이버 공통 형식
+            String state = UUID.randomUUID().toString();
+            if (tenantId != null && !tenantId.isEmpty()) {
+                String encodedTenantId = java.util.Base64.getUrlEncoder().withoutPadding()
+                        .encodeToString(tenantId.getBytes(StandardCharsets.UTF_8));
+                state = encodedTenantId + "." + state;
+                log.info("Google OAuth2 - state에 tenantId 인코딩: tenantId={}, encodedStateLen={}",
+                        tenantId, state.length());
+                if (session != null) {
+                    session.setAttribute("oauth2_tenant_id", tenantId);
+                }
+            }
+
+            if (session != null) {
+                session.setAttribute("oauth2_google_state", state);
+                storeOAuth2AuthorizeMode(session, mode, SESSION_ATTR_OAUTH2_GOOGLE_MODE);
+            }
+
+            if ("mobile".equals(client)) {
+                log.info("Google OAuth2 - 모바일 클라이언트 감지 (Redis 저장 보류): state={}", state);
+            }
+
+            // 콜백 URL 동적 생성: 서브도메인을 apex 메인 도메인으로 변환 (Google Cloud Console
+            // 의 Authorized redirect URIs 와 일치시키기 위함). 카카오/네이버와 동일한 변환 로직.
+            String callbackUrl = buildGoogleCallbackUrl(request);
+
+            if (callbackUrl == null || callbackUrl.isEmpty()) {
+                callbackUrl = googleRedirectUri;
+                log.warn("Google OAuth2 - 동적 redirect_uri 생성 실패, 설정값 사용: {}", callbackUrl);
+            }
+
+            if (googleClientId == null || googleClientId.isEmpty()) {
+                log.error("Google OAuth2 - GOOGLE_CLIENT_ID 가 주입되지 않았습니다.");
+                return badRequest(OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED,
+                        "GOOGLE_CLIENT_ID_MISSING");
+            }
+
+            String authUrl = "https://accounts.google.com/o/oauth2/v2/auth?"
+                    + "client_id=" + googleClientId
+                    + "&redirect_uri="
+                    + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8)
+                    + "&response_type=code"
+                    + "&scope="
+                    + URLEncoder.encode(googleScope, StandardCharsets.UTF_8).replace("+", "%20")
+                    + "&access_type=online"
+                    + "&prompt=select_account"
+                    + "&include_granted_scopes=true"
+                    + "&state="
+                    + URLEncoder.encode(state, StandardCharsets.UTF_8).replace("+", "%20");
+
+            log.info("Google OAuth2 인증 URL 생성: redirect_uri={}, stateLen={}",
+                    callbackUrl, state.length());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("authUrl", authUrl);
+            data.put("provider", "GOOGLE");
+            data.put("state", state);
+
+            return success(data);
+        } catch (Exception e) {
+            log.error("Google OAuth2 인증 URL 생성 실패", e);
+            throw new RuntimeException(String.format(
+                    OAuth2UserFacingMessages.MSG_GOOGLE_OAUTH_AUTH_URL_FAILED_FMT, e.getMessage()));
+        }
+    }
+
+    /**
+     * Google OAuth2 콜백 URL 동적 생성 — 카카오/네이버와 동일한 mainDomain 변환 로직을 사용한다.
+     *
+     * <p>운영(prod): 테넌트 서브도메인(`mindgarden.core-solution.co.kr`) → apex
+     * (`core-solution.co.kr`) 로 변환하여 Google Cloud Console 에 등록된 단일 redirect_uri 와
+     * 일치시킨다. 로컬·개발(localhost / dev.core-solution.co.kr) 도 동일 패턴으로 동작한다.</p>
+     *
+     * @param request 현재 요청 (proxy 헤더 분석에 사용)
+     * @return apex 기반 redirect_uri 또는 빈 문자열(추론 실패)
+     */
+    private String buildGoogleCallbackUrl(HttpServletRequest request) {
+        try {
+            String requestScheme = resolveExternalScheme(request);
+
+            String requestHost = request.getHeader("X-Forwarded-Host");
+            if (requestHost == null || requestHost.isEmpty()) {
+                requestHost = request.getHeader("Host");
+            }
+
+            if (requestHost != null && requestHost.contains("localhost")
+                    && !requestHost.contains(":8080")) {
+                requestHost = request.getServerName() + ":" + request.getServerPort();
+            } else if (requestHost == null || requestHost.isEmpty()) {
+                requestHost = request.getServerName() + ":" + request.getServerPort();
+            }
+
+            if (requestHost == null || requestHost.isEmpty()) {
+                return "";
+            }
+
+            String hostWithoutPort = requestHost.split(":")[0];
+            String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
+
+            String portSuffix = "";
+            if (requestHost.contains(":")) {
+                String port = requestHost.split(":")[1];
+                if (!port.equals("80") && !port.equals("443")) {
+                    portSuffix = ":" + port;
+                }
+            } else {
+                String forwardedPort = request.getHeader("X-Forwarded-Port");
+                if (forwardedPort != null && !forwardedPort.isEmpty()) {
+                    int port = Integer.parseInt(forwardedPort);
+                    if (port != 80 && port != 443) {
+                        portSuffix = ":" + port;
+                    }
+                } else {
+                    int port = request.getServerPort();
+                    if (port != 80 && port != 443) {
+                        portSuffix = ":" + port;
+                    }
+                }
+            }
+
+            return requestScheme + "://" + mainDomain + portSuffix + googleCallbackPath;
+        } catch (Exception e) {
+            log.error("Google OAuth2 - redirect_uri 동적 생성 실패", e);
+            return "";
         }
     }
 
@@ -2984,6 +3183,470 @@ public class OAuth2Controller extends BaseApiController {
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
                     + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=KAKAO")
+                    .build();
+        }
+    }
+
+    /**
+     * Google OAuth2 server-side auth-code 콜백.
+     *
+     * <p>흐름:
+     * <ol>
+     *   <li>{@code code} + {@code state} 수신 (Google 동의 후 redirect)</li>
+     *   <li>state 의 base64url prefix 에서 tenantId 복원 → {@code TenantContextHolder} 설정</li>
+     *   <li>{@code code} 를 Google token endpoint 와 교환하여 access_token (옵션 id_token) 획득</li>
+     *   <li>access_token 으로 사용자 정보 조회 → 휴대폰 OTP 매칭/계정 선택/회원가입 분기</li>
+     *   <li>JWT 발급 후 테넌트 서브도메인의 {@code /auth/oauth2/callback} 으로 redirect</li>
+     * </ol></p>
+     *
+     * <p>카카오/네이버와 100% 동일 패턴이며, BE 가 Google 의 토큰 교환·사용자 조회·매칭 로직을
+     * 모두 처리한다(`GoogleOAuth2ServiceImpl#getAccessToken(code, redirectUri)` /
+     * `#getUserInfo(accessToken)`).</p>
+     */
+    @GetMapping("/google/callback")
+    public ResponseEntity<?> googleCallback(@RequestParam(required = false) String code,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String error,
+            @RequestParam(required = false) String mode,
+            HttpServletRequest request, HttpSession session) {
+
+        if (error != null) {
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302)
+                    .header("Location", frontendUrl + "/login?error="
+                            + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=GOOGLE")
+                    .build();
+        }
+
+        if (code == null) {
+            log.warn("Google OAuth2 콜백에서 인증 코드가 없습니다. error={}, stateLen={}",
+                    error, state != null ? state.length() : 0);
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                    + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_NO_AUTH_CODE,
+                            StandardCharsets.UTF_8)
+                    + "&provider=GOOGLE")
+                    .build();
+        }
+
+        String savedState = (String) session.getAttribute("oauth2_google_state");
+        String normalizedGoogleState = normalizeOAuth2StateQueryValue(state);
+        OAuthCompositeState googleComposite = parseCompositeOAuthState(normalizedGoogleState);
+        String stateBasedTenantId = googleComposite.tenantId;
+        log.info("Google OAuth2 콜백 - state 검증: savedStatePresent={}, stateLen={}, sessionId={}",
+                Boolean.valueOf(savedState != null),
+                normalizedGoogleState != null ? normalizedGoogleState.length() : 0,
+                session.getId());
+
+        if (!prefixedOAuthSavedStateMatches(savedState, normalizedGoogleState, googleComposite)) {
+            session.removeAttribute("oauth2_google_state");
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                    + URLEncoder.encode(
+                            OAuth2UserFacingMessages.ERR_LOGIN_SECURITY_VERIFICATION_FAILED,
+                            StandardCharsets.UTF_8)
+                    + "&provider=GOOGLE")
+                    .build();
+        }
+
+        if (savedState != null) {
+            session.removeAttribute("oauth2_google_state");
+        }
+
+        try {
+            String callbackTenantId = extractTenantIdFromSubdomain(request);
+            if (stateBasedTenantId != null && !stateBasedTenantId.isEmpty()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(stateBasedTenantId);
+                log.info(
+                        "Google OAuth2 콜백 - state 기반 tenant_id 를 TenantContextHolder 에 설정: tenantId={}",
+                        stateBasedTenantId);
+            } else if (callbackTenantId != null && !callbackTenantId.isEmpty()) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(callbackTenantId);
+                log.info(
+                        "Google OAuth2 콜백 - 서브도메인에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
+                        callbackTenantId);
+            } else {
+                String sessionTenantId = (String) session.getAttribute("tenantId");
+                if (sessionTenantId == null || sessionTenantId.isEmpty()) {
+                    sessionTenantId = (String) session.getAttribute("oauth2_tenant_id");
+                }
+                if (sessionTenantId != null && !sessionTenantId.isEmpty()) {
+                    com.coresolution.core.context.TenantContextHolder.setTenantId(sessionTenantId);
+                    log.info(
+                            "Google OAuth2 콜백 - 세션에서 tenant_id 추출 및 TenantContextHolder 설정: tenantId={}",
+                            sessionTenantId);
+                } else {
+                    log.error("❌ Google OAuth2 콜백 - tenant_id 를 찾을 수 없습니다. 테넌트 등록이 필요합니다.");
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(
+                                                    OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=GOOGLE")
+                            .build();
+                }
+            }
+
+            String finalTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (finalTenantId == null || finalTenantId.isEmpty()) {
+                log.error("❌ Google OAuth2 콜백 - TenantContextHolder 에 tenant_id 가 설정되지 않았습니다.");
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                return ResponseEntity.status(302)
+                        .header("Location",
+                                frontendUrl + "/login?error="
+                                        + URLEncoder.encode(
+                                                OAuth2UserFacingMessages.MSG_TENANT_NOT_REGISTERED,
+                                                StandardCharsets.UTF_8)
+                                        + "&provider=GOOGLE")
+                        .build();
+            }
+
+            // authorize 시 사용한 redirect_uri 와 동일한 값으로 토큰 교환 — apex 메인 도메인.
+            String actualRedirectUri = buildGoogleCallbackUrl(request);
+            if (actualRedirectUri == null || actualRedirectUri.isEmpty()) {
+                actualRedirectUri = googleRedirectUri;
+            }
+            if (actualRedirectUri == null || actualRedirectUri.isEmpty()) {
+                log.error("Google OAuth2 콜백 - redirect_uri 결정 실패");
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                        + URLEncoder.encode(OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR,
+                                StandardCharsets.UTF_8)
+                        + "&provider=GOOGLE")
+                        .build();
+            }
+
+            OAuth2Service googleService = oauth2FactoryService.getOAuth2Service("GOOGLE");
+            SocialLoginResponse response;
+            if (googleService instanceof com.coresolution.consultation.service.impl.GoogleOAuth2ServiceImpl googleServiceImpl) {
+                String accessToken = googleServiceImpl.getAccessToken(code, actualRedirectUri);
+                com.coresolution.consultation.dto.SocialUserInfo socialUserInfo =
+                        googleServiceImpl.getUserInfo(accessToken);
+                socialUserInfo.setProvider("GOOGLE");
+                socialUserInfo.setAccessToken(accessToken);
+                socialUserInfo.normalizeData();
+
+                final boolean isGoogleOAuthAccountLinkMode =
+                        isOAuth2CallbackLinkMode(session, mode, SESSION_ATTR_OAUTH2_GOOGLE_MODE);
+                Long existingUserId = null;
+                try {
+                    OAuthExistingUserResolution resolution =
+                            googleService.resolveExistingUserForSocialLinkOrLogin(socialUserInfo,
+                                    isGoogleOAuthAccountLinkMode);
+                    if (resolution.isRequiresPhoneAccountSelection()
+                            && !isGoogleOAuthAccountLinkMode) {
+                        return redirectOAuthPhoneAccountSelection(request, session, state, "GOOGLE",
+                                socialUserInfo, resolution);
+                    }
+                    existingUserId = resolution.getExistingUserId();
+                } catch (Exception e) {
+                    log.warn("⚠️ Google 기존 사용자 조회 실패: {}", e.getMessage());
+                }
+                if (existingUserId != null && !isGoogleOAuthAccountLinkMode) {
+                    linkSocialAccountSafely(googleService, existingUserId, socialUserInfo);
+                }
+
+                if (isGoogleOAuthAccountLinkMode) {
+                    User sessionUser = SessionUtils.getCurrentUser(session);
+                    if (sessionUser == null) {
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(
+                                request, session, state, null);
+                        return ResponseEntity.status(302)
+                                .header("Location",
+                                        buildMypageOAuthLinkLocation(frontendUrl, false, "GOOGLE",
+                                                OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED))
+                                .build();
+                    }
+                    if (existingUserId != null && !existingUserId.equals(sessionUser.getId())) {
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(
+                                request, session, state, sessionUser);
+                        return ResponseEntity.status(302).header("Location",
+                                buildMypageOAuthLinkLocation(frontendUrl, false, "GOOGLE",
+                                        OAuth2UserFacingMessages.ERR_SOCIAL_ALREADY_LINKED_TO_OTHER_ACCOUNT))
+                                .build();
+                    }
+                    response = buildSocialLoginResponseForMyPageOAuthLink(sessionUser,
+                            socialUserInfo);
+                } else if (existingUserId == null
+                        && shouldEnterOAuthPhoneOtpFlow(googleService, socialUserInfo)) {
+                    return redirectOAuthPhoneVerification(request, session, state, "GOOGLE",
+                            socialUserInfo);
+                } else if (existingUserId == null) {
+                    response = SocialLoginResponse.builder().success(false)
+                            .message(OAuth2UserFacingMessages.MSG_SIGNUP_REQUIRED)
+                            .requiresSignup(true).socialUserInfo(socialUserInfo).build();
+                } else {
+                    User user = loadUserByTenantScopedId(existingUserId, session, state)
+                            .orElseThrow(() -> new RuntimeException(
+                                    OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
+
+                    java.util.List<String> permissions;
+                    try {
+                        permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
+                    } catch (Exception e) {
+                        log.warn("⚠️ 권한 조회 실패 (빈 리스트 반환): userId={}, 오류={}", user.getId(),
+                                e.getMessage());
+                        permissions = new java.util.ArrayList<>();
+                    }
+                    String jwtToken = jwtService.generateToken(user, permissions);
+                    String refreshToken = jwtService.generateRefreshToken(user);
+
+                    String finalProfileImageUrl = user.getProfileImageUrl() != null
+                            && !user.getProfileImageUrl().trim().isEmpty()
+                                    ? user.getProfileImageUrl()
+                                    : (socialUserInfo.getProfileImageUrl() != null
+                                            && !socialUserInfo.getProfileImageUrl().trim().isEmpty()
+                                                    ? socialUserInfo.getProfileImageUrl()
+                                                    : "/default-avatar.svg");
+
+                    response = SocialLoginResponse.builder().success(true)
+                            .message(OAuth2UserFacingMessages.MSG_GOOGLE_ACCOUNT_LOGGED_IN)
+                            .accessToken(jwtToken).refreshToken(refreshToken)
+                            .userInfo(SocialLoginResponse.UserInfo.builder().id(user.getId())
+                                    .email(user.getEmail()).name(user.getName())
+                                    .nickname(user.getNickname()).role(user.getRole().getValue())
+                                    .profileImageUrl(finalProfileImageUrl)
+                                    .providerUserId(socialUserInfo.getProviderUserId()).build())
+                            .build();
+                }
+            } else {
+                try {
+                    response = oauth2FactoryService.authenticateWithProvider("GOOGLE", code);
+                } catch (Exception e) {
+                    log.error("Google OAuth2 인증 처리 중 오류 발생", e);
+                    try {
+                        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                    } catch (Exception txException) {
+                        log.debug("트랜잭션 상태 확인 실패 (이미 롤백되었거나 트랜잭션이 없는 경우): {}",
+                                txException.getMessage());
+                    }
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                    String errorMessage = e.getMessage() != null ? e.getMessage()
+                            : OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED;
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(errorMessage,
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=GOOGLE")
+                            .build();
+                }
+            }
+
+            if (response.isRequiresPhoneAccountSelection()) {
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                if (tenantId == null || tenantId.isBlank()) {
+                    tenantId = redirectTenantId;
+                }
+                String tok = response.getPhoneAccountSelectionToken();
+                if (tok == null || tok.isBlank()) {
+                    return ResponseEntity.status(302).header("Location",
+                            frontendUrl + "/login?error="
+                                    + URLEncoder.encode(
+                                            OAuth2UserFacingMessages.ERR_LOGIN_SYSTEM_ERROR,
+                                            StandardCharsets.UTF_8)
+                                    + "&provider=GOOGLE")
+                            .build();
+                }
+                String q = "success=true&accountSelection=required&selectionToken="
+                        + URLEncoder.encode(tok, StandardCharsets.UTF_8) + "&provider=GOOGLE&tenantId="
+                        + URLEncoder.encode(tenantId != null ? tenantId : "", StandardCharsets.UTF_8);
+                return ResponseEntity.status(302)
+                        .header("Location", frontendUrl + "/auth/oauth2/callback?" + q)
+                        .build();
+            }
+
+            if (response.isSuccess()) {
+                SocialLoginResponse.UserInfo userInfo = response.getUserInfo();
+                if (userInfo == null) {
+                    log.error("Google OAuth2 - userInfo가 null 입니다. requiresSignup={}",
+                            response.isRequiresSignup());
+                    String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                    return ResponseEntity.status(302)
+                            .header("Location",
+                                    frontendUrl + "/login?error="
+                                            + URLEncoder.encode(
+                                                    OAuth2UserFacingMessages.MSG_USER_INFO_UNAVAILABLE,
+                                                    StandardCharsets.UTF_8)
+                                            + "&provider=GOOGLE")
+                            .build();
+                }
+
+                String effectiveMode =
+                        consumeOAuth2EffectiveMode(session, mode, SESSION_ATTR_OAUTH2_GOOGLE_MODE);
+                if (OAUTH2_MODE_LINK.equals(effectiveMode)) {
+                    User currentUser = SessionUtils.getCurrentUser(session);
+                    if (currentUser == null) {
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(
+                                request, session, state, null);
+                        return ResponseEntity.status(302)
+                                .header("Location",
+                                        buildMypageOAuthLinkLocation(frontendUrl, false, "GOOGLE",
+                                                OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED))
+                                .build();
+                    }
+                    try {
+                        SocialUserInfo socialUserInfo = new SocialUserInfo();
+                        String googleProviderUserId =
+                                resolveOAuthProviderUserIdForLink(response, userInfo);
+                        if (googleProviderUserId == null || googleProviderUserId.isEmpty()) {
+                            log.error("Google 계정 연동 실패: SNS provider 사용자 ID 없음");
+                            String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(
+                                    request, session, state, currentUser);
+                            return ResponseEntity.status(302)
+                                    .header("Location",
+                                            buildMypageOAuthLinkLocation(frontendUrl, false, "GOOGLE",
+                                                    OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED))
+                                    .build();
+                        }
+                        socialUserInfo.setProviderUserId(googleProviderUserId);
+                        socialUserInfo.setEmail(userInfo.getEmail());
+                        socialUserInfo.setName(userInfo.getName());
+                        socialUserInfo.setNickname(userInfo.getNickname());
+                        socialUserInfo.setProfileImageUrl(userInfo.getProfileImageUrl());
+                        socialUserInfo.setProvider("GOOGLE");
+
+                        OAuth2Service oauth2Service =
+                                oauth2FactoryService.getOAuth2Service("GOOGLE");
+                        oauth2Service.linkSocialAccountToUser(currentUser.getId(), socialUserInfo);
+                        log.info("Google 계정 연동 성공: 기존 사용자 userId={}, googleProviderUserId={}",
+                                currentUser.getId(), googleProviderUserId);
+
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(
+                                request, session, state, currentUser);
+                        return ResponseEntity.status(302)
+                                .header("Location",
+                                        buildMypageOAuthLinkLocation(frontendUrl, true, "GOOGLE",
+                                                OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_COMPLETE))
+                                .build();
+                    } catch (Exception e) {
+                        log.error("Google 계정 연동 실패", e);
+                        String frontendUrl = getTenantAwareFrontendBaseUrlForSnsLinkRedirect(
+                                request, session, state, currentUser);
+                        return ResponseEntity.status(302)
+                                .header("Location",
+                                        buildMypageOAuthLinkLocation(frontendUrl, false, "GOOGLE",
+                                                OAuth2UserFacingMessages.ERR_ACCOUNT_LINK_FAILED))
+                                .build();
+                    }
+                } else {
+                    SessionUtils.clearSession(session);
+                    session = request.getSession(true);
+
+                    User user = loadUserByTenantScopedId(userInfo.getId(), session, state)
+                            .orElseThrow(() -> new RuntimeException(
+                                    OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
+                    SessionUtils.setCurrentUser(session, user);
+                    setSpringSecurityAuthentication(user);
+                    session.setAttribute("SPRING_SECURITY_CONTEXT",
+                            SecurityContextHolder.getContext());
+                    session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
+
+                    log.info("Google OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}",
+                            user.getId(), user.getRole(),
+                            profileImageUrlLogSummary(user.getProfileImageUrl()));
+
+                    String tenantId = user.getTenantId();
+                    if (tenantId == null || tenantId.isEmpty()) {
+                        tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                        if (tenantId == null || tenantId.isEmpty()) {
+                            tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                            if (tenantId == null || tenantId.isEmpty()) {
+                                tenantId = (String) session.getAttribute("tenantId");
+                            }
+                        }
+                    }
+                    String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
+                    String providerUserIdForCallback = userInfo.getProviderUserId();
+                    String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
+                            + buildOAuthWebCallbackQueryString(user, "GOOGLE", tenantId,
+                                    providerUserIdForCallback);
+
+                    String sessionId = session.getId();
+                    String cookieValue = String.format(
+                            "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
+                            sessionId, SessionConstants.SESSION_TIMEOUT_SECONDS);
+
+                    logOAuthRedirectLocationSummary("Google 웹 OAuth", redirectUrl);
+                    return ResponseEntity.status(302).header("Location", redirectUrl)
+                            .header("Set-Cookie", cookieValue).build();
+                }
+            } else if (response.isRequiresSignup()) {
+                log.info("Google OAuth2 간편 회원가입 필요: providerUserId={}",
+                        response.getSocialUserInfo() != null
+                                ? response.getSocialUserInfo().getProviderUserId()
+                                : null);
+
+                String tenantId = (String) session.getAttribute("oauth2_tenant_id");
+                if (tenantId != null && !tenantId.isEmpty()) {
+                    session.removeAttribute("oauth2_tenant_id");
+                }
+                if (tenantId == null || tenantId.isEmpty()) {
+                    tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+                }
+
+                String email = response.getSocialUserInfo() != null
+                        ? response.getSocialUserInfo().getEmail()
+                        : "";
+                String name = response.getSocialUserInfo() != null
+                        ? response.getSocialUserInfo().getName()
+                        : "";
+                String nickname = response.getSocialUserInfo() != null
+                        ? response.getSocialUserInfo().getNickname()
+                        : "";
+                String providerUserIdForSignup = response.getSocialUserInfo() != null
+                        && response.getSocialUserInfo().getProviderUserId() != null
+                                ? response.getSocialUserInfo().getProviderUserId()
+                                : "";
+
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                if (redirectTenantId == null || redirectTenantId.isEmpty()) {
+                    redirectTenantId = tenantId;
+                }
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                String signupUrl = frontendUrl + "/login?" + "signup=required" + "&provider=google"
+                        + (tenantId != null && !tenantId.isEmpty()
+                                ? "&tenantId="
+                                        + URLEncoder.encode(tenantId, StandardCharsets.UTF_8)
+                                : "")
+                        + "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
+                        + "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8)
+                        + "&nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8)
+                        + "&providerUserId="
+                        + URLEncoder.encode(providerUserIdForSignup, StandardCharsets.UTF_8);
+
+                return ResponseEntity.status(302).header("Location", signupUrl).build();
+            } else {
+                String redirectTenantId = resolveTenantIdForRedirect(session, state);
+                String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+                return ResponseEntity.status(302)
+                        .header("Location",
+                                frontendUrl + "/login?error="
+                                        + URLEncoder.encode(response.getMessage(),
+                                                StandardCharsets.UTF_8)
+                                        + "&provider=GOOGLE")
+                        .build();
+            }
+        } catch (Exception e) {
+            log.error("Google OAuth2 콜백 처리 실패: {}", e.getMessage(), e);
+            String errorMessage = e.getMessage() != null ? e.getMessage()
+                    : OAuth2UserFacingMessages.ERR_LOGIN_PROCESS_FAILED;
+            String redirectTenantId = resolveTenantIdForRedirect(session, state);
+            String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
+            return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
+                    + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8) + "&provider=GOOGLE")
                     .build();
         }
     }

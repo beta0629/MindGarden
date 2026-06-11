@@ -129,6 +129,13 @@ for FILE in $STAGED_FILES; do
         continue
     fi
 
+    # Web SSOT·브랜드 자산 전용 파일: Google Brand Guidelines 4색 다색 로고 픽토그램은
+    # 디자인 토큰으로 치환할 수 없는 자산 자체이므로 단일 파일에서만 HEX 정의 허용.
+    if [[ "$FILE" == "frontend/src/components/auth/GoogleBrandLogo.js" ]]; then
+        log_info "Web 브랜드 자산 SSOT: 스캔 생략 — $FILE"
+        continue
+    fi
+
     log_info "검사 중: $FILE"
     
     FILE_VIOLATIONS=0

@@ -23,6 +23,23 @@ KAKAO_CLIENT_SECRET=
 NAVER_CLIENT_ID=
 NAVER_CLIENT_SECRET=
 
+# Google Web (server-side auth-code) — A-2 마이그레이션 (2026-06-10)
+# - Google Cloud Console: https://console.cloud.google.com/apis/credentials → OAuth 2.0 Client IDs (Web)
+# - Authorized JavaScript origins: 테넌트 서브도메인 + apex(둘 다 필요).
+#   예: https://core-solution.co.kr, https://mindgarden.core-solution.co.kr,
+#       https://dev.core-solution.co.kr, https://mindgarden.dev.core-solution.co.kr,
+#       http://localhost:3000
+# - Authorized redirect URIs: apex 1개만 등록(테넌트는 state base64 로 복원).
+#   예: https://core-solution.co.kr/api/v1/auth/google/callback,
+#       https://dev.core-solution.co.kr/api/v1/auth/google/callback,
+#       http://localhost:8080/api/v1/auth/google/callback
+# - GOOGLE_CLIENT_ID:    Web Client ID (FE 의 REACT_APP_GOOGLE_CLIENT_ID 와 동일 값 권장)
+# - GOOGLE_CLIENT_SECRET: Web Client Secret — BE 토큰 교환 전용(절대 FE 노출 금지)
+# - GOOGLE_REDIRECT_URI:  apex 콜백 URL — 운영은 https://core-solution.co.kr/api/v1/auth/google/callback
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=
+
 # Sign in with Apple (SIWA) — Apple App Store 4.8 (Login Services) T1
 # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1
 # - APPLE_CLIENT_ID         : Apple Service ID (예: co.kr.coresolution.app.signin) — identityToken aud 기본값

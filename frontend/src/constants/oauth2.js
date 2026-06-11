@@ -44,19 +44,27 @@ export const GOOGLE_OAUTH2_CONFIG = {
 };
 
 /**
- * Google Identity Services(GIS) Web Client ID — `@react-oauth/google` Provider 에 주입.
+ * Google Identity Services(GIS) Web Client ID — server-side auth-code (A-2) 흐름의
+ * authorize URL 생성에 사용한다. 카카오/네이버와 100% 동일 패턴: 사용자가 BE 의
+ * {@code /api/v1/auth/oauth2/google/authorize} 를 호출하여 Google 동의 화면 URL 을 받고,
+ * Google → BE apex 콜백(`/api/v1/auth/google/callback`) 으로 redirect 된다.
  *
  * <p>**프로덕션 빌드**: 반드시 `REACT_APP_GOOGLE_CLIENT_ID` (또는 별칭
  * `REACT_APP_GOOGLE_WEB_CLIENT_ID`) 를 GitHub Actions secret 으로 주입해야 한다.
- * 미주입 시 빈 문자열을 반환하므로 `<GoogleOAuthProvider>` 가 마운트되지 않고
- * `GoogleLoginButton` 도 비활성 분기로 빠진다(레거시 redirect 흐름 폴백 가능).</p>
+ * 미주입 시 GoogleLoginButton 은 비활성 분기로 빠진다.</p>
  *
- * <p>웹 OAuth Consent 화면에 등록해야 할 Authorized JavaScript origins:
+ * <p>**Google Cloud Console 등록 (2026-06-10 A-2 마이그레이션)**:
  * <ul>
- *   <li>{@code https://app.core-solution.co.kr}</li>
- *   <li>{@code https://dev.app.core-solution.co.kr}</li>
- *   <li>{@code https://*.core-solution.co.kr} (테넌트 서브도메인)</li>
- *   <li>{@code http://localhost:3000} (로컬 개발)</li>
+ *   <li>Authorized JavaScript origins: 테넌트 서브도메인과 apex 모두 등록.
+ *       예) {@code https://core-solution.co.kr}, {@code https://mindgarden.core-solution.co.kr},
+ *           {@code https://dev.core-solution.co.kr}, {@code https://mindgarden.dev.core-solution.co.kr},
+ *           {@code http://localhost:3000}.
+ *       Google 은 {@code https://*.core-solution.co.kr} 와일드카드를 지원하지 않으므로
+ *       각 호스트를 명시 등록한다(`origin_mismatch` 차단).</li>
+ *   <li>Authorized redirect URIs: apex 1개만 등록한다(테넌트는 state base64 로 복원).
+ *       예) {@code https://core-solution.co.kr/api/v1/auth/google/callback},
+ *           {@code https://dev.core-solution.co.kr/api/v1/auth/google/callback},
+ *           {@code http://localhost:8080/api/v1/auth/google/callback}.</li>
  * </ul></p>
  *
  * <p>두 키를 모두 지원하는 이유: 모바일 앱은 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` 명명을

@@ -83,26 +83,39 @@ export const getMenuByCode = async(menuCode) => {
     }
 };
 
+// P0 hotfix 2026-06-12: 동시 LNB fetch dedup — 마이페이지/대시보드 등 여러 화면이 거의 동시에 호출해도 실제 요청은 1회.
+let inflightLnbPromise = null;
+
 /**
  * LNB 메뉴 트리 조회 (역할·권한 필터, 메인/서브)
  * 백엔드 미기동(ERR_NETWORK) 시 콘솔 에러 대신 경고만 출력, 호출부에서 폴백 메뉴 사용.
+ * 동시 호출 시 in-flight promise 를 공유해 중복 네트워크 요청을 막는다.
+ *
  * @returns {Promise<{ data?: Array }>} ApiResponse 형태. data가 메뉴 트리(children 포함)
  */
 export const getLnbMenus = async() => {
-    try {
-        const response = await axios.get(`${getMenuApi()}/lnb`, {
-            withCredentials: true
-        });
-        return response.data;
-    } catch (error) {
-        const isNetworkError = error?.code === 'ERR_NETWORK' || (error?.message && String(error.message).includes('Network Error'));
-        if (isNetworkError) {
-            console.warn('LNB: 백엔드 연결 불가, 기본 메뉴를 사용합니다.');
-        } else {
-            console.error('LNB 메뉴 조회 실패:', error);
-        }
-        throw error;
+    if (inflightLnbPromise) {
+        return inflightLnbPromise;
     }
+    inflightLnbPromise = (async() => {
+        try {
+            const response = await axios.get(`${getMenuApi()}/lnb`, {
+                withCredentials: true
+            });
+            return response.data;
+        } catch (error) {
+            const isNetworkError = error?.code === 'ERR_NETWORK' || (error?.message && String(error.message).includes('Network Error'));
+            if (isNetworkError) {
+                console.warn('LNB: 백엔드 연결 불가, 기본 메뉴를 사용합니다.');
+            } else {
+                console.error('LNB 메뉴 조회 실패:', error);
+            }
+            throw error;
+        }
+    })().finally(() => {
+        inflightLnbPromise = null;
+    });
+    return inflightLnbPromise;
 };
 
 /**

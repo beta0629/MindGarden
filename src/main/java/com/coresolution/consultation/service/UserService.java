@@ -53,6 +53,18 @@ public interface UserService extends BaseService<User, Long> {
      * @return 사용자
      */
     Optional<User> findByLoginPrincipal(String loginPrincipal);
+
+    /**
+     * 로그인 식별자에 매칭되는 현재 테넌트 내 모든 사용자(다중 매치 분기용).
+     *
+     * <p>이메일은 테넌트 내 unique 이므로 0~1 명, 휴대폰은 잠재적으로 동일 번호·다른 역할의
+     * 다중 row 가 존재할 수 있다(P1 보안 이슈: silent {@code findFirst()} 차단용).</p>
+     *
+     * @param loginPrincipal 정규화된 이메일 또는 한국 휴대폰 숫자열
+     * @return 일치 사용자 목록(없으면 빈 목록)
+     * @since 2026-06-11
+     */
+    List<User> findAllByLoginPrincipal(String loginPrincipal);
     
     /**
      * 전화번호로 사용자 조회

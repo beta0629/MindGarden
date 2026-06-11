@@ -63,6 +63,7 @@ import {
   DUPLICATE_LOGIN_FALLBACK_MESSAGE,
   detectDuplicateLoginConfirmation,
 } from '@/utils/duplicateLoginSignal';
+import { detectPasswordLoginMultipleAccounts } from '@/utils/passwordLoginMultiAccountSignal';
 
 /**
  * 클라이언트가 사용하는 4 종 OAuth provider — Apple/Google/Kakao/Naver.
@@ -322,12 +323,38 @@ export type OAuthPhoneVerifyOutcome =
     }
   | { kind: 'error'; message: string; code?: string };
 
+/**
+ * 일반 로그인(전화 + 비밀번호) 다중 매치 시 노출할 후보 카드.
+ *
+ * <p>BE `AccountCandidate` 와 정합. P1 silent first 차단(2026-06-11) 흐름의 두 번째 단계에서 사용한다.</p>
+ */
+export interface PasswordLoginAccountCandidate {
+  userId: number;
+  role?: string | null;
+  roleDisplayLabel?: string | null;
+  dashboardGuide?: string | null;
+  optionLabel?: string | null;
+  maskedEmail?: string | null;
+  branchName?: string | null;
+}
+
 export type CredentialLoginOutcome =
   | { kind: 'authenticated'; user: User }
   | {
       kind: 'requiresDuplicateLoginConfirmation';
       message: string;
       retryContext: DuplicateLoginRetryContext;
+    }
+  | {
+      /**
+       * 휴대폰 + 비밀번호가 2명 이상 사용자에게 일치 — 계정 선택 화면으로 라우팅.
+       *
+       * @since 2026-06-11
+       */
+      kind: 'requiresAccountSelection';
+      selectionToken: string;
+      candidates: PasswordLoginAccountCandidate[];
+      message?: string;
     }
   | { kind: 'error'; message: string };
 
@@ -1658,6 +1685,63 @@ export const AuthService = {
   },
 
   /**
+   * 일반 로그인(전화 + 비밀번호) 다중 매치 시 계정 선택 완료.
+   *
+   * <p>P1 silent first 차단(2026-06-11). {@code loginWithCredentials} 응답이
+   * {@code requiresAccountSelection} 일 때 호출. 토큰 만료/위조/후보 외 userId/재사용 시 BE 가
+   * 4xx 응답을 반환하므로 호출자는 메시지를 그대로 노출한다.</p>
+   *
+   * @param selectionToken `/login` 응답으로 받은 5분 TTL 단기 JWT
+   * @param selectedUserId 사용자가 선택한 계정 PK (응답 후보 목록에 포함돼 있어야 함)
+   */
+  async completePasswordLoginAccountSelection(
+    selectionToken: string,
+    selectedUserId: number,
+  ): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
+    try {
+      const raw = (await apiPost<Record<string, unknown>>(AUTH_API.SELECT_ACCOUNT, {
+        selectionToken,
+        selectedUserId,
+      })) as Record<string, unknown>;
+
+      if (raw && raw.success === false) {
+        return {
+          ok: false,
+          message: String(raw.message ?? '계정 선택에 실패했습니다.'),
+        };
+      }
+
+      const inner = (unwrapApiResponse<Record<string, unknown>>(raw) ?? raw) as Record<
+        string,
+        unknown
+      >;
+
+      const userRaw = inner.user as SocialLoginApiUser | undefined;
+      const accessToken = (inner.accessToken ?? inner.token) as string | undefined;
+      const refreshToken = inner.refreshToken as string | undefined;
+
+      if (!userRaw || !accessToken || !refreshToken) {
+        return {
+          ok: false,
+          message:
+            (typeof inner.message === 'string' && inner.message)
+            || '로그인 토큰을 받지 못했습니다.',
+        };
+      }
+
+      const user = mapApiUserToStoreUser(userRaw, accessToken);
+      await applyAuthenticatedUser(
+        user,
+        { accessToken, refreshToken },
+        pickSessionIdFromAuthPayload(raw),
+      );
+      return { ok: true, user };
+    } catch (err: unknown) {
+      return { ok: false, message: readSignupErrorMessage(err) };
+    }
+  },
+
+  /**
    * ID/PW 로그인 — Spring `ApiResponse` 래퍼 및 `token`/`accessToken` 필드 호환
    *
    * 백엔드가 `duplicate_login_confirmation` 신호를 반환하면
@@ -1683,6 +1767,16 @@ export const AuthService = {
           kind: 'requiresDuplicateLoginConfirmation',
           message: duplicateSignal.message,
           retryContext,
+        };
+      }
+
+      const multiAccountSignal = detectPasswordLoginMultipleAccounts(raw);
+      if (multiAccountSignal) {
+        return {
+          kind: 'requiresAccountSelection',
+          selectionToken: multiAccountSignal.selectionToken,
+          candidates: multiAccountSignal.candidates,
+          message: multiAccountSignal.message,
         };
       }
 

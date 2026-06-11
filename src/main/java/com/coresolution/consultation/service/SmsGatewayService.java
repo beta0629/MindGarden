@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.dto.SmsGatewaySendResult;
+
 /**
  * SMS 게이트웨이 발송 SSOT.
  *
@@ -19,19 +21,42 @@ package com.coresolution.consultation.service;
  *       SMS stub 의 영향을 받지 않으며, 데스크탑 사용자만 stub 채널을 통과한다.</li>
  * </ul></p>
  *
+ * <p>2026-06-11 PR #224 후속 (NCP SENS 정식 호출):
+ * <ul>
+ *   <li>{@link #sendDetailed(String, String)} — NCP SENS HTTP statusCode/Message 를 포함한 정식 결과.</li>
+ *   <li>{@link #send(String, String)} — 호환용 boolean wrapper(기존 호출자 회귀 차단).</li>
+ *   <li>운영 NCP SENS 4종 env({@code NCP_ACCESS_KEY}/{@code NCP_SECRET_KEY}/{@code NCP_SMS_SERVICE_ID}/
+ *       {@code NCP_SMS_SENDER_NUMBER}) 모두 설정 시 정식 호출, 일부 누락 시 stub 모드 유지.</li>
+ * </ul></p>
+ *
  * @author MindGarden
  * @since 2026-06-11
  */
 public interface SmsGatewayService {
 
     /**
-     * 단일 수신자에게 SMS 본문 발송 시도.
+     * 단일 수신자에게 SMS 본문 발송 시도(호환 boolean wrapper).
      *
      * @param normalizedPhone 정규화된 한국 휴대전화 숫자열 (예: {@code 01012345678})
      * @param messageBody     발송할 본문 (운영자가 보낸 사람 prefix 를 별도 부착)
      * @return 게이트웨이 또는 stub 발송 성공이면 {@code true}, 실패면 {@code false}
      */
-    boolean send(String normalizedPhone, String messageBody);
+    default boolean send(String normalizedPhone, String messageBody) {
+        return sendDetailed(normalizedPhone, messageBody).isOk();
+    }
+
+    /**
+     * 단일 수신자에게 SMS 본문 발송 시도(정식 결과 반환).
+     *
+     * <p>호출자(예: {@link OtpDeliveryService}) 는 본 결과의 {@code gatewayStatusCode} 를
+     * {@link com.coresolution.consultation.entity.AuditLog} metadata 의 {@code gateway_response_code}
+     * 키에 적재해 운영 진단·BI 통계 SSOT 로 활용한다.</p>
+     *
+     * @param normalizedPhone 정규화된 한국 휴대전화 숫자열 (예: {@code 01012345678})
+     * @param messageBody     발송할 본문 (운영자가 보낸 사람 prefix 를 별도 부착)
+     * @return 정식 결과 — ok/statusCode/message
+     */
+    SmsGatewaySendResult sendDetailed(String normalizedPhone, String messageBody);
 
     /**
      * 본 구현체가 실제 외부 게이트웨이를 호출하지 않고 시뮬레이션만 수행 중인지 여부.

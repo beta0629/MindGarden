@@ -26,6 +26,13 @@ on:
         default: "main"
         type: string
 
+# CI Java timezone 표준화 (A3, 2026-06-12): GitHub Actions runner JVM (gradle bootJar) 을 KST 로 고정.
+# hotfix-4 [a73567ad] §A-3 의 pom.xml surefire/failsafe argLine 패턴을 워크플로 레벨로 확장.
+# JAVA_TOOL_OPTIONS 는 빌드 단계의 모든 JVM 호출에 자동 적용되며,
+# 운영 ops-backend systemd 런타임 timezone 은 별도 — C4 에서 통합 예정.
+env:
+  JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR"
+
 jobs:
   deploy-ops-backend-prod:
     name: 🏗️ Ops 백엔드 Gradle 빌드 및 운영 배포

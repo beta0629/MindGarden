@@ -120,7 +120,6 @@ const AccountSelectionModal = ({
 
       <ul
         className="mg-v2-form-section"
-        role="list"
         aria-label={OAUTH_ACCOUNT_SELECTION_STRINGS.MODAL_TITLE}
         data-testid="account-selection-candidate-list"
       >

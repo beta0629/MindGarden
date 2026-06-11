@@ -71,7 +71,7 @@ class OtpDeliveryServiceImplTest {
     private static final Long USER_ID = 42L;
     private static final String PHONE = "01012345678";
     private static final String CODE = "123456";
-    private static final String IP = "203.0.113.55";
+    private static final String IP = "127.0.0.1";
 
     @Test
     @DisplayName("push 성공 시 채널=PUSH, SMS 호출 없음, push body 에 평문 OTP 미포함, data 에 otpToken 동봉")

@@ -57,19 +57,24 @@ export const GOOGLE_OAUTH2_CONFIG = {
  * 미주입 시 동일한 server-side 흐름으로 redirect 하는 폴백 `MGButton` 으로 렌더된다.
  * 두 분기 모두 동일한 BE authorize 엔드포인트를 호출한다.</p>
  *
- * <p>**Google Cloud Console 등록 (2026-06-10 A-2 마이그레이션)**:
+ * <p>**Google Cloud Console 등록 정책 (A-2, 2026-06-11 정정)**:
  * <ul>
- *   <li>Authorized JavaScript origins: 테넌트 서브도메인과 apex 모두 등록.
- *       예) {@code https://core-solution.co.kr}, {@code https://mindgarden.core-solution.co.kr},
- *           {@code https://dev.core-solution.co.kr}, {@code https://mindgarden.dev.core-solution.co.kr},
- *           {@code http://localhost:3000}.
- *       Google 은 {@code https://*.core-solution.co.kr} 와일드카드를 지원하지 않으므로
- *       각 호스트를 명시 등록한다(`origin_mismatch` 차단).</li>
- *   <li>Authorized redirect URIs: apex 1개만 등록한다(테넌트는 state base64 로 복원).
- *       예) {@code https://core-solution.co.kr/api/v1/auth/google/callback},
- *           {@code https://dev.core-solution.co.kr/api/v1/auth/google/callback},
- *           {@code http://localhost:8080/api/v1/auth/google/callback}.</li>
- * </ul></p>
+ *   <li>Authorized redirect URIs (필수): apex 2개만 등록한다. 테넌트는 BE 가 state 의
+ *       base64url prefix 로 복원한다(카카오/네이버/Apple 100% 동일 패턴).
+ *       <ul>
+ *         <li>{@code https://core-solution.co.kr/api/v1/auth/google/callback}</li>
+ *         <li>{@code https://dev.core-solution.co.kr/api/v1/auth/google/callback}</li>
+ *       </ul>
+ *       Google 은 와일드카드({@code https://*.core-solution.co.kr}) 를 지원하지 않으며,
+ *       BE 가 모든 테넌트 콜백을 apex 로 정규화({@code OAuth2Controller#buildGoogleCallbackUrl})
+ *       하므로 서브도메인별 redirect URI 를 등록할 필요가 없다.</li>
+ *   <li>Authorized JavaScript origins (사실상 불필요): 본 흐름은 GIS popup/IFrame 을 사용하지
+ *       않고 전체 페이지 redirect 로 BE authorize URL 에 진입하므로 origin 등록은 필요하지 않다.
+ *       Google 의 {@code GoogleOAuthProvider} 가 동적으로 로드되더라도 토큰 발급은 BE 서버 측에서
+ *       이루어지기 때문. 로컬 디버깅 편의가 필요하면 {@code http://localhost:3000} 만 추가한다
+ *       (운영/개발 호스트 등록 불필요).</li>
+ * </ul>
+ * 상세 가이드: {@code docs/운영반영/WEB_GOOGLE_OAUTH_A2_MIGRATION_GUIDE.md}.</p>
  *
  * <p>두 키를 모두 지원하는 이유: 모바일 앱은 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` 명명을
  * 사용하고, 운영 GitHub secret 은 동일 값을 두 별칭에 매핑할 수 있도록 가드.</p>

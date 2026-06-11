@@ -11,6 +11,7 @@ import java.util.function.Function;
 import com.coresolution.consultation.constant.oauth.OAuthJwtClaimKeys;
 import com.coresolution.consultation.constant.oauth.OAuthJwtClaimValues;
 import com.coresolution.consultation.dto.OAuthPhoneAccountSelectionClaims;
+import com.coresolution.consultation.dto.PasswordLoginAccountSelectionClaims;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.dto.auth.ApplePhoneOtpChallengeClaims;
 import com.coresolution.consultation.dto.auth.ApplePhoneVerificationClaims;
@@ -52,6 +53,13 @@ public class JwtService {
     /** OAuth 전화 계정 선택용 단기 JWT TTL (밀리초). 기본 10분. */
     @Value("${jwt.oauth-phone-account-selection-ttl-ms:600000}")
     private long oauthPhoneAccountSelectionTtlMs;
+
+    /**
+     * 일반 로그인(전화 + 비밀번호) 다중 매치 계정 선택용 단기 JWT TTL (밀리초). 기본 5분 — 로그인 후 빠른 응답
+     * 시퀀스 가정. P1 silent first 차단(2026-06-11).
+     */
+    @Value("${jwt.password-login-account-selection-ttl-ms:300000}")
+    private long passwordLoginAccountSelectionTtlMs;
 
     /** Apple SIWA 휴대폰 인증 단기 JWT TTL (밀리초). 기본 10분. */
     @Value("${jwt.apple-phone-verification-ttl-ms:600000}")
@@ -541,6 +549,57 @@ public class JwtService {
             .snsNickname(claims.get(OAuthJwtClaimKeys.SNS_NICKNAME, String.class))
             .snsPhone(claims.get(OAuthJwtClaimKeys.SNS_PHONE, String.class))
             .snsProfileImageUrl(claims.get(OAuthJwtClaimKeys.SNS_PROFILE_IMAGE_URL, String.class))
+            .build();
+    }
+
+    /**
+     * 일반 로그인(전화 + 비밀번호) 다중 매치 시 발급하는 단기 계정 선택 JWT.
+     *
+     * <p>OAuth {@link #generateOAuthPhoneAccountSelectionToken} 패턴을 미러링한 비-OAuth 변형 — SNS
+     * 액세스 토큰·이메일·이름 등은 포함하지 않는다(보안 — 노출 최소화). P1 silent first 차단(2026-06-11).</p>
+     *
+     * @param tenantId        테넌트 ID
+     * @param allowedUserIds  선택 허용 사용자 PK 목록(휴대폰 + 비밀번호 모두 일치한 사용자만)
+     * @return 서명된 5분 TTL JWT
+     */
+    public String generatePasswordLoginAccountSelectionToken(String tenantId, List<Long> allowedUserIds) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId is required for password-login selection token");
+        }
+        if (allowedUserIds == null || allowedUserIds.isEmpty()) {
+            throw new IllegalArgumentException("allowedUserIds is required for password-login selection token");
+        }
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(OAuthJwtClaimKeys.PURPOSE, OAuthJwtClaimValues.PURPOSE_PASSWORD_LOGIN_ACCOUNT_SELECTION);
+        claims.put(OAuthJwtClaimKeys.TENANT_ID, tenantId);
+        claims.put(OAuthJwtClaimKeys.ALLOWED_USER_IDS, allowedUserIds);
+        return buildToken(claims, "password-login-account-selection", passwordLoginAccountSelectionTtlMs);
+    }
+
+    /**
+     * 일반 로그인 다중 매치 계정 선택 JWT 파싱 및 purpose 검증.
+     *
+     * @param jwtToken JWT 문자열
+     * @return 클레임 DTO ({@code tenantId}, {@code allowedUserIds})
+     * @throws IllegalArgumentException purpose 불일치·필수 클레임 누락
+     */
+    public PasswordLoginAccountSelectionClaims parsePasswordLoginAccountSelectionToken(String jwtToken) {
+        Claims claims = extractAllClaims(jwtToken);
+        String purpose = claims.get(OAuthJwtClaimKeys.PURPOSE, String.class);
+        if (!OAuthJwtClaimValues.PURPOSE_PASSWORD_LOGIN_ACCOUNT_SELECTION.equals(purpose)) {
+            throw new IllegalArgumentException("Invalid password-login selection token purpose");
+        }
+        String tenantId = claims.get(OAuthJwtClaimKeys.TENANT_ID, String.class);
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("Missing tenantId in password-login selection token");
+        }
+        List<Long> allowed = readLongIdList(claims.get(OAuthJwtClaimKeys.ALLOWED_USER_IDS));
+        if (allowed == null || allowed.isEmpty()) {
+            throw new IllegalArgumentException("allowedUserIds missing in password-login selection token");
+        }
+        return PasswordLoginAccountSelectionClaims.builder()
+            .tenantId(tenantId)
+            .allowedUserIds(allowed)
             .build();
     }
 

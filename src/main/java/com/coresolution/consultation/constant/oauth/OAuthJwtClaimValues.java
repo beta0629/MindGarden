@@ -35,6 +35,16 @@ public final class OAuthJwtClaimValues {
      */
     public static final String PURPOSE_OAUTH_PHONE_OTP_CHALLENGE = "OAUTH_PHONE_OTP_CHALLENGE";
 
+    /**
+     * 일반 로그인(전화 + 비밀번호) 다중 매치 시 발급되는 5분 TTL 단기 JWT 의 purpose.
+     *
+     * <p>OAuth {@link #PURPOSE_OAUTH_PHONE_ACCOUNT_SELECTION} 와 패턴은 동일하나, SNS 액세스 토큰·이메일·이름
+     * 등 OAuth 전용 클레임은 보유하지 않는다(보안 — 노출 최소화).</p>
+     *
+     * @since 2026-06-11 — P1 silent first 차단
+     */
+    public static final String PURPOSE_PASSWORD_LOGIN_ACCOUNT_SELECTION = "PASSWORD_LOGIN_ACCOUNT_SELECTION";
+
     private OAuthJwtClaimValues() {
     }
 }

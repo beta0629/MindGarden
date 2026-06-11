@@ -19,7 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
@@ -138,31 +139,47 @@ class SecurityConfigCorsCallbackTest {
 
     /**
      * 회귀 검증용 더미 컨트롤러. 컨트롤러 도달 여부보다는 {@link CorsFilter} 의 거부/통과만이 본 테스트의 관심사다.
+     *
+     * <p><strong>중요:</strong> {@code @RestController} 를 의도적으로 사용하지 않는다.
+     * {@code @RestController} 는 메타 어노테이션 {@code @Controller} → {@code @Component} 를 통해
+     * Spring 컴포넌트 스캔에 포함되어, {@code @SpringBootTest} 가 ApplicationContext 를 부팅할 때
+     * 운영 컨트롤러(예: {@code AppleSignInController}) 와 {@code RequestMappingHandlerMapping} 에서
+     * ambiguous mapping 충돌을 일으킨다 (PR #215 회귀).</p>
+     *
+     * <p>대신 {@code @RequestMapping("")} (메타에 {@code @Component} 없음) 만 사용해
+     * {@link org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
+     * #isHandler(Class)} 의 매핑 인식은 유지하면서 컴포넌트 스캔에서는 제외시킨다.
+     * 메서드 단위 응답 직렬화는 {@link ResponseBody} 로 보존한다.</p>
      */
-    @RestController
+    @RequestMapping("")
     static class DummyController {
 
         @PostMapping("/api/v1/auth/apple/callback")
+        @ResponseBody
         String appleCallbackPost() {
             return "{\"ok\":true}";
         }
 
         @GetMapping("/api/v1/auth/google/callback")
+        @ResponseBody
         String googleCallbackGet() {
             return "{\"ok\":true}";
         }
 
         @PostMapping("/api/v1/auth/oauth2/callback")
+        @ResponseBody
         String frontendOauth2Callback() {
             return "{\"ok\":true}";
         }
 
         @PostMapping("/api/v1/auth/oauth/apple/callback")
+        @ResponseBody
         String appleOauthCallbackPost() {
             return "{\"ok\":true}";
         }
 
         @PostMapping("/api/v1/admin/users")
+        @ResponseBody
         String adminUsersPost() {
             return "{\"ok\":true}";
         }

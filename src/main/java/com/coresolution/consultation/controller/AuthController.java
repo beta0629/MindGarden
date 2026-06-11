@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.AuthRequest;
 import com.coresolution.consultation.dto.AuthResponse;
@@ -25,6 +24,7 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
@@ -84,14 +84,11 @@ public class AuthController extends BaseApiController {
     private final org.springframework.core.env.Environment environment;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final SmsOtpVerificationService smsOtpVerificationService;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
     private String localDefaultTenantId;
-    
-    // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
-    private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
-    private final Map<String, Long> verificationTimes = new ConcurrentHashMap<>();
 
     /**
      * 테넌트 스코프 사용자 조회용 tenantId를 홀더 → 인증 응답(userResponse, user DTO) 순으로 해석한다.
@@ -1007,15 +1004,11 @@ public class AuthController extends BaseApiController {
         boolean smsSent = sendSmsMessage(normalizedPhone, verificationCode);
         
         if (smsSent) {
-            // 2. 메모리에 인증 코드 저장 (5분 만료)
-            // Redis 연동 비활성화 - 메모리 저장 사용
-            log.info("메모리에 인증 코드 저장: {} -> {} (5분 만료)", normalizedPhone, verificationCode);
-            
-            // 메모리 저장 로직 구현 (ConcurrentHashMap 사용)
-            verificationCodes.put(normalizedPhone, verificationCode);
-            verificationTimes.put(normalizedPhone, System.currentTimeMillis());
-            log.info("메모리에 인증 코드 저장 완료: {} -> {} (5분 만료)", normalizedPhone, verificationCode);
-            
+            // SSOT 저장소(SmsOtpVerificationService) 에 위임 — 5분 TTL · 단일 사용 정책.
+            // 마이페이지 휴대전화 변경(Phase A) 등 동일 OTP 저장 재사용을 위해 Spring Bean 으로 추출.
+            smsOtpVerificationService.storeCode(normalizedPhone, verificationCode);
+            log.info("SMS 인증 코드 저장 완료: {} (5분 TTL)", normalizedPhone);
+
             log.info("SMS 발송 성공: {}", normalizedPhone);
         } else {
             log.error("SMS 발송 실패: {}", normalizedPhone);
@@ -1047,64 +1040,10 @@ public class AuthController extends BaseApiController {
         if (!verificationCode.matches("^[0-9]{6}$")) {
             throw new IllegalArgumentException("6자리 인증 코드를 입력해주세요.");
         }
-        
-        // 실제 SMS 인증 코드 검증 로직
-        boolean isValid = false;
-        
-        // 메모리에서 인증 코드 조회
-        String storedCode = null;
-        log.info("메모리에서 인증 코드 조회: {}", normalizedPhone);
-        
-        // 메모리 저장소에서 조회 로직 구현
-        storedCode = verificationCodes.get(normalizedPhone);
-        if (storedCode != null) {
-            // 만료 시간 확인 (5분)
-            Long storedTime = verificationTimes.get(normalizedPhone);
-            if (storedTime != null) {
-                long currentTime = System.currentTimeMillis();
-                long timeDiff = currentTime - storedTime;
-                long fiveMinutesInMillis = 5 * 60 * 1000; // 5분을 밀리초로 변환
-                
-                if (timeDiff > fiveMinutesInMillis) {
-                    // 만료된 경우 메모리에서 제거
-                    verificationCodes.remove(normalizedPhone);
-                    verificationTimes.remove(normalizedPhone);
-                    storedCode = null;
-                    log.info("메모리에서 만료된 인증 코드 제거: {}", normalizedPhone);
-                } else {
-                    log.info("메모리에서 인증 코드 조회 성공: {} -> {}", normalizedPhone, storedCode);
-                }
-            } else {
-                storedCode = null;
-                log.warn("메모리에서 인증 코드 시간 정보 없음: {}", normalizedPhone);
-            }
-        } else {
-            log.info("메모리에서 인증 코드 없음: {}", normalizedPhone);
-        }
-        
-        if (verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$")) {
-            if (storedCode != null) {
-                isValid = storedCode.equals(verificationCode);
-                log.info("메모리에서 인증 코드 검증: {} -> {}", normalizedPhone, isValid);
-            } else {
-                // 메모리에 코드가 없는 경우 테스트용으로 성공 처리
-                isValid = true;
-                log.info("메모리에 코드 없음 - 테스트용 인증 성공: {}", normalizedPhone);
-            }
-            
-            if (isValid) {
-                // 인증 성공 시 메모리에서 코드 삭제
-                verificationCodes.remove(normalizedPhone);
-                verificationTimes.remove(normalizedPhone);
-                log.info("메모리에서 인증 코드 삭제 완료: {}", normalizedPhone);
-                log.info("SMS 인증 코드 검증 성공: {}", normalizedPhone);
-            } else {
-                log.warn("SMS 인증 코드 불일치: {}", normalizedPhone);
-            }
-        } else {
-            log.warn("SMS 인증 코드 형식 오류: {}", normalizedPhone);
-        }
-        
+
+        // SSOT 검증 — 5분 TTL · 단일 사용. 일치하면 저장소에서 자동 제거.
+        boolean isValid = smsOtpVerificationService.verifyAndConsume(normalizedPhone, verificationCode);
+
         if (isValid) {
             log.info("SMS 인증 성공: {}", normalizedPhone);
             Map<String, Object> data = new HashMap<>();

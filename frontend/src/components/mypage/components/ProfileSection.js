@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import ProfileImageUpload from './ProfileImageUpload';
 import NotificationChannelPreferenceSection from './NotificationChannelPreferenceSection';
 import AddressInput from './AddressInput';
+import PhoneChangeModal from './PhoneChangeModal';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { sessionManager } from '../../../utils/sessionManager';
 import notificationManager from '../../../utils/notification';
@@ -58,12 +59,31 @@ const ProfileSection = ({
   onFormDataChange,
   onUserChange,
   onSave,
+  onReloadProfile,
   formatPhoneNumber
 }) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [genderOptions, setGenderOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
+  const [isPhoneChangeOpen, setIsPhoneChangeOpen] = useState(false);
+
+  const openPhoneChangeModal = useCallback(() => setIsPhoneChangeOpen(true), []);
+  const closePhoneChangeModal = useCallback(() => setIsPhoneChangeOpen(false), []);
+  const handlePhoneChangeSuccess = useCallback(
+    (response) => {
+      if (response && response.phone) {
+        onFormDataChange?.((prev) => ({
+          ...prev,
+          phone: response.phone
+        }));
+      }
+      if (typeof onReloadProfile === 'function') {
+        onReloadProfile();
+      }
+    },
+    [onFormDataChange, onReloadProfile]
+  );
 
   const role = displayUser?.role;
   const roleLabel = role ? ROLE_DISPLAY_LABELS[role] || role : '—';
@@ -337,11 +357,10 @@ const ProfileSection = ({
                   type="button"
                   className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() =>
-                    notificationManager.show('휴대전화 변경은 보안 절차 준비 중입니다.', 'info')
-                  }
+                  onClick={openPhoneChangeModal}
                   variant="outline"
                   preventDoubleClick={false}
+                  aria-label="휴대전화 번호 변경"
                 >
                   변경
                 </MGButton>
@@ -424,6 +443,12 @@ const ProfileSection = ({
           ) : null}
         </form>
       </article>
+
+      <PhoneChangeModal
+        isOpen={isPhoneChangeOpen}
+        onClose={closePhoneChangeModal}
+        onSuccess={handlePhoneChangeSuccess}
+      />
     </>
   );
 };

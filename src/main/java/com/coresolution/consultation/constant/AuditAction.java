@@ -43,7 +43,14 @@ public enum AuditAction {
 
     /** ERP P0-2 — 재무 마감 기간 REOPENED 전이 (HQ_ADMIN 재오픈, 사유 ≥20자). */
     FINANCIAL_PERIOD_REOPEN(
-            "FINANCIAL_PERIOD_REOPEN", "enums.AuditAction.FINANCIAL_PERIOD_REOPEN");
+            "FINANCIAL_PERIOD_REOPEN", "enums.AuditAction.FINANCIAL_PERIOD_REOPEN"),
+
+    /**
+     * 마이페이지 휴대전화 변경(Phase A) — 본인이 SMS OTP 검증을 거쳐 휴대전화 번호를 변경한 시점.
+     * before/after 는 마스킹 처리(예: {@code 010-****-5678}) 후 metadata 에 기록한다.
+     */
+    USER_PHONE_CHANGE(
+            "USER_PHONE_CHANGE", "enums.AuditAction.USER_PHONE_CHANGE");
 
     private final String code;
     private final String messageKey;

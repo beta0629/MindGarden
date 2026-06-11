@@ -98,7 +98,16 @@ export const AUTH_API = {
    * provider-agnostic OAuth 휴대폰 매칭(OTP) — OTP 검증 + 매칭/로그인.
    * (oauthProvider + phoneVerificationToken + challengeToken + otpCode).
    */
-  OAUTH_PHONE_VERIFY: '/api/v1/auth/oauth/phone/verify'
+  OAUTH_PHONE_VERIFY: '/api/v1/auth/oauth/phone/verify',
+
+  /**
+   * 휴대폰 SMS 인증 코드 전송 — AuthController#sendSmsCode (5분 TTL · 단일 사용 OTP).
+   * 마이페이지 휴대전화 변경(Phase A) 흐름에서 본 엔드포인트로 OTP 를 발송한 뒤
+   * {@code MYPAGE_API.CHANGE_PHONE} 에 동일 번호+코드로 검증·교체 요청을 보낸다.
+   */
+  SMS_SEND: '/api/v1/auth/sms/send',
+  /** 휴대폰 SMS 인증 코드 검증 — AuthController#verifySmsCode (일반 로그인·테블릿 흐름에서 사용). */
+  SMS_VERIFY: '/api/v1/auth/sms/verify'
 };
 
 // 권한 관련 API (표준 경로: /api/v1/permissions)
@@ -153,7 +162,14 @@ export const MYPAGE_API = {
   // 자발 회원 탈퇴 — USER_LIFECYCLE_TERMINATION_POLICY §2.3 자발 경로
   WITHDRAWAL_REQUEST: '/api/v1/mypage/withdrawal/request',
   WITHDRAWAL_CANCEL: '/api/v1/mypage/withdrawal/cancel',
-  WITHDRAWAL_STATUS: '/api/v1/mypage/withdrawal/status'
+  WITHDRAWAL_STATUS: '/api/v1/mypage/withdrawal/status',
+
+  /**
+   * 휴대전화 변경(Phase A) — SMS OTP 검증 + tenant 내 unique + AuditLog 적재.
+   * 본 엔드포인트 호출 전 {@code AUTH_API.SMS_SEND} 로 새 번호에 OTP 를 발송해 둔다.
+   * 본문: {@code { newPhoneNumber, verificationCode }}.
+   */
+  CHANGE_PHONE: '/api/v1/clients/profile/phone/change'
 };
 
 // 역할별 프로필 API (표준화 2025-12-05: /api/v1/ 경로 적용)

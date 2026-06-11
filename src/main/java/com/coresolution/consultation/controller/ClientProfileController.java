@@ -1,6 +1,7 @@
 package com.coresolution.consultation.controller;
 
 import java.util.List;
+import com.coresolution.consultation.dto.MyPagePhoneChangeRequest;
 import com.coresolution.consultation.dto.MyPageResponse;
 import com.coresolution.consultation.dto.MyPageUpdateRequest;
 import com.coresolution.consultation.dto.ProfileImageInfo;
@@ -12,6 +13,7 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -70,6 +72,35 @@ public class ClientProfileController extends BaseApiController {
             log.error("❌ 클라이언트 프로필 수정 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    /**
+     * 마이페이지 휴대전화 변경(Phase A) — SMS OTP 검증 + 정규화 + tenant 내 unique 가드 + AuditLog.
+     *
+     * <p>흐름:
+     * <ol>
+     *   <li>FE 가 {@code POST /api/v1/auth/sms/send} 로 새 휴대폰 번호 OTP 발송 요청</li>
+     *   <li>사용자가 입력한 6자리 코드와 새 번호를 본 엔드포인트로 전송</li>
+     *   <li>BE 가 OTP 단일 사용·5분 TTL · tenant 내 중복 · 정규화 검증 후 암호화 저장</li>
+     * </ol></p>
+     *
+     * @param session HTTP 세션 (본인 식별)
+     * @param request 새 휴대폰 번호 + 6자리 OTP
+     * @return 갱신된 마이페이지 응답 (성공 시 200)
+     */
+    @PostMapping("/phone/change")
+    public ResponseEntity<MyPageResponse> changePhone(
+            HttpSession session,
+            @Valid @RequestBody MyPagePhoneChangeRequest request) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            log.error("❌ 로그인된 사용자 정보가 없습니다 (phone/change)");
+            return ResponseEntity.status(401).build();
+        }
+
+        log.info("🔧 마이페이지 휴대전화 변경 요청: userId={}", currentUser.getId());
+        MyPageResponse response = myPageService.changePhone(currentUser.getId(), request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/password")

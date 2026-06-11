@@ -33,8 +33,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { appleLogin, googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import {
   OAUTH2_LOGIN_UI,
-  isGoogleWebClientIdConfigured,
-  isAppleWebServiceIdConfigured
+  isGoogleWebClientIdConfigured
 } from '../../constants/oauth2';
 import { requestGoogleSocialLogin } from '../../services/oauth2/googleWebOAuth2Service';
 import GoogleLoginButton from './GoogleLoginButton';
@@ -1036,14 +1035,16 @@ const UnifiedLogin = () => {
                 </MGButton>
 
                 {/*
-                  Google 로그인 — `REACT_APP_GOOGLE_CLIENT_ID` 주입 시 GIS popup 흐름,
-                  미주입 시 BE 의 OAuth2 Config(oauth2Config?.google) 가 활성이면
-                  레거시 redirect 흐름으로 폴백한다(코드 동일 SVG).
-                */}
-                {/*
-                  server-side auth-code (A-2) 전환 후 onSuccess 는 호출되지 않는다 — BE 가
-                  `/api/v1/auth/google/callback` 에서 직접 매칭/JWT 발급 후 SPA `/auth/oauth2/callback`
-                  으로 redirect 하기 때문. onError 만 redirect 시작 실패(서브도메인 누락 등) 처리에 사용.
+                  Google 로그인 — server-side auth-code 흐름 (PR #211, 2026-06-11).
+                  BE 가 `/api/v1/auth/oauth2/google/authorize` 에서 client_id 와 authorize URL 을
+                  생성하므로 FE 의 `REACT_APP_GOOGLE_CLIENT_ID` 주입 여부와 무관하게 버튼을 노출한다.
+
+                  - `isGoogleWebClientIdConfigured === true`: GIS 로고 자산을 포함한
+                    `GoogleLoginButton` (server-side 흐름으로 redirect; onSuccess 호출되지 않음 —
+                    BE 가 `/api/v1/auth/google/callback` → `/auth/oauth2/callback` 처리).
+                  - `isGoogleWebClientIdConfigured === false`: 동일한 server-side 흐름으로 redirect
+                    하는 폴백 `MGButton`. 가드를 제거한 이유는 PR #211 server-side 전환 후
+                    FE client_id 미주입 운영 빌드에서도 버튼을 정상 노출해야 하기 때문.
                 */}
                 {isGoogleWebClientIdConfigured ? (
                   <GoogleLoginButton
@@ -1052,54 +1053,53 @@ const UnifiedLogin = () => {
                     label={t('auth:unifiedLogin.socialLogin.google')}
                   />
                 ) : (
-                  oauth2Config?.google && (
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      onClick={handleGoogleLogin}
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-google`}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      preventDoubleClick={false}
-                    >
-                      <GoogleBrandLogo />
-                      {t('auth:unifiedLogin.socialLogin.google')}
-                    </MGButton>
-                  )
-                )}
-
-                {/*
-                  Apple Sign In — Apple HIG (검정 배경 + 흰색 로고/텍스트). App Store 4.8 T1 대응.
-                  `REACT_APP_APPLE_CLIENT_ID` 가 주입된 빌드(=`isAppleWebServiceIdConfigured`)에서만
-                  버튼을 렌더한다. 미주입 시 Apple JS SDK 호출이 `invalid_client` 로 실패하므로
-                  버튼 자체를 숨겨 사용자 노출을 차단한다(Google 가드와 동일 정책).
-                */}
-                {isAppleWebServiceIdConfigured && (
                   <MGButton
                     type="button"
                     variant="outline"
-                    onClick={handleAppleLogin}
-                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-apple`}
+                    onClick={handleGoogleLogin}
+                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-google`}
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
-                    aria-label={t('auth:unifiedLogin.socialLogin.apple', 'Apple로 계속하기')}
                   >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                    >
-                      {/* Apple 공식 로고 path — Apple HIG 자산 (브랜드 색상은 CSS 토큰으로 처리). */}
-                      <path
-                        d="M17.05 12.04c-.03-3 2.45-4.44 2.56-4.51-1.4-2.04-3.57-2.32-4.34-2.36-1.85-.19-3.6 1.09-4.54 1.09-.94 0-2.39-1.06-3.92-1.04-2.02.03-3.88 1.17-4.92 2.97-2.1 3.64-.54 9.03 1.5 11.99 1 1.46 2.19 3.1 3.75 3.04 1.5-.06 2.07-.97 3.89-.97s2.32.97 3.91.94c1.61-.03 2.63-1.48 3.61-2.95 1.14-1.68 1.6-3.31 1.63-3.39-.04-.02-3.13-1.2-3.13-4.81zM14.05 3.21c.82-1 1.38-2.38 1.23-3.76-1.18.05-2.62.79-3.47 1.78-.76.88-1.43 2.3-1.25 3.65 1.32.1 2.66-.67 3.49-1.67z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    {t('auth:unifiedLogin.socialLogin.apple', 'Apple로 계속하기')}
+                    <GoogleBrandLogo />
+                    {t('auth:unifiedLogin.socialLogin.google')}
                   </MGButton>
                 )}
+
+                {/*
+                  Apple Sign In — server-side auth-code 흐름 (PR #211, 2026-06-11).
+                  BE `/api/v1/auth/oauth2/apple/authorize` 가 client_id·Service ID·JWT 서명까지
+                  처리하므로 FE `REACT_APP_APPLE_CLIENT_ID` 주입 여부와 무관하게 버튼을 노출한다.
+
+                  이전 Apple JS SDK (`appleid.auth.js`) 흐름은 멀티테넌트 와일드카드에서 거절되어
+                  폐기됐고, 그에 맞춰 `isAppleWebServiceIdConfigured` 가드도 함께 제거했다.
+                  Apple HIG 자산(검정 배경 + 흰색 로고/텍스트) 및 App Store 4.8 T1 대응 유지.
+                */}
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  onClick={handleAppleLogin}
+                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })} mg-v2-button-social mg-v2-button-apple`}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  preventDoubleClick={false}
+                  aria-label={t('auth:unifiedLogin.socialLogin.apple', 'Apple로 계속하기')}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    {/* Apple 공식 로고 path — Apple HIG 자산 (브랜드 색상은 CSS 토큰으로 처리). */}
+                    <path
+                      d="M17.05 12.04c-.03-3 2.45-4.44 2.56-4.51-1.4-2.04-3.57-2.32-4.34-2.36-1.85-.19-3.6 1.09-4.54 1.09-.94 0-2.39-1.06-3.92-1.04-2.02.03-3.88 1.17-4.92 2.97-2.1 3.64-.54 9.03 1.5 11.99 1 1.46 2.19 3.1 3.75 3.04 1.5-.06 2.07-.97 3.89-.97s2.32.97 3.91.94c1.61-.03 2.63-1.48 3.61-2.95 1.14-1.68 1.6-3.31 1.63-3.39-.04-.02-3.13-1.2-3.13-4.81zM14.05 3.21c.82-1 1.38-2.38 1.23-3.76-1.18.05-2.62.79-3.47 1.78-.76.88-1.43 2.3-1.25 3.65 1.32.1 2.66-.67 3.49-1.67z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  {t('auth:unifiedLogin.socialLogin.apple', 'Apple로 계속하기')}
+                </MGButton>
               </div>
             </div>
 

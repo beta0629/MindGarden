@@ -44,14 +44,18 @@ export const GOOGLE_OAUTH2_CONFIG = {
 };
 
 /**
- * Google Identity Services(GIS) Web Client ID — server-side auth-code (A-2) 흐름의
- * authorize URL 생성에 사용한다. 카카오/네이버와 100% 동일 패턴: 사용자가 BE 의
- * {@code /api/v1/auth/oauth2/google/authorize} 를 호출하여 Google 동의 화면 URL 을 받고,
- * Google → BE apex 콜백(`/api/v1/auth/google/callback`) 으로 redirect 된다.
+ * Google Identity Services(GIS) Web Client ID — `GoogleLoginButton` 의 GIS 자산 변형 분기에서만
+ * 참조된다. server-side auth-code 흐름(PR #211, 2026-06-11) 에서는 BE 가 client_id 를 보관하므로
+ * FE 의 본 값은 인증에 사용되지 않으며, UI 분기(=GIS 로고 컴포넌트 vs 일반 MGButton)만 결정한다.
  *
- * <p>**프로덕션 빌드**: 반드시 `REACT_APP_GOOGLE_CLIENT_ID` (또는 별칭
- * `REACT_APP_GOOGLE_WEB_CLIENT_ID`) 를 GitHub Actions secret 으로 주입해야 한다.
- * 미주입 시 GoogleLoginButton 은 비활성 분기로 빠진다.</p>
+ * <p>운영 로그인 페이지의 Google 버튼은 본 값 주입 여부와 무관하게 항상 노출된다
+ * (UnifiedLogin §Google 가드 참조). 카카오/네이버와 100% 동일 패턴: 사용자가 BE
+ * {@code /api/v1/auth/oauth2/google/authorize} 를 호출하여 동의 화면 URL 을 받고,
+ * Google → BE apex 콜백({@code /api/v1/auth/google/callback}) 으로 redirect 된다.</p>
+ *
+ * <p>**프로덕션 빌드**: 본 값이 주입되면 GIS 로고 자산을 포함한 `GoogleLoginButton` 으로,
+ * 미주입 시 동일한 server-side 흐름으로 redirect 하는 폴백 `MGButton` 으로 렌더된다.
+ * 두 분기 모두 동일한 BE authorize 엔드포인트를 호출한다.</p>
  *
  * <p>**Google Cloud Console 등록 (2026-06-10 A-2 마이그레이션)**:
  * <ul>
@@ -82,10 +86,12 @@ const resolveGoogleWebClientId = () => {
 export const GOOGLE_WEB_CLIENT_ID = resolveGoogleWebClientId();
 
 /**
- * Google 웹 로그인이 활성화되었는지(=client id 가 주입되었는지) 여부.
+ * Google 웹 client id 가 주입되었는지 여부 — `GoogleLoginButton` 의 GIS 로고 자산 분기 선택용.
  *
- * <p>버튼 표시 가드 + 폴백 로직에서 사용한다. placeholder 값(`local-dev-set-...`,
- * `your_...`)은 모두 비활성으로 본다.</p>
+ * <p>**버튼 노출 가드가 아님** (PR #211 server-side flow 전환 이후). 운영 환경에서 본 값이
+ * 비어 있어도 Google 버튼은 항상 노출되며, BE 가 authorize URL 을 생성한다. 본 값은 단지
+ * UI 분기(=GIS 로고 vs 폴백 MGButton)에만 사용된다. placeholder(`local-dev-set-...`,
+ * `your_...`, `placeholder*`) 는 모두 비활성으로 본다.</p>
  */
 export const isGoogleWebClientIdConfigured = (() => {
   const id = GOOGLE_WEB_CLIENT_ID;
@@ -118,12 +124,16 @@ export const FACEBOOK_OAUTH2_CONFIG = {
 };
 
 /**
- * Sign in with Apple (SIWA) Web Service ID — Apple Developer Console 에서 등록한
- * Service ID (예: {@code co.kr.coresolution.app.signin}). 운영 빌드 시
- * {@code REACT_APP_APPLE_CLIENT_ID} 를 GitHub Actions secret 으로 주입한다.
+ * Sign in with Apple (SIWA) Web Service ID — 레거시 Apple JS SDK (`appleid.auth.js`) 의
+ * `clientId` 파라미터 호환용. PR #211 server-side auth-code 전환 이후 웹 흐름에서는
+ * **사용되지 않으며**, BE `/api/v1/auth/oauth2/apple/authorize` 가 Service ID 와 JWT
+ * 서명까지 모두 처리한다.
  *
- * <p>Apple JS SDK ({@code appleid.auth.js}) 의 {@code clientId} 파라미터로 사용된다.
- * 모바일 앱은 Bundle ID 를 사용하므로 본 상수와 무관하다.</p>
+ * <p>본 상수는 모바일 webview fallback 또는 향후 JS SDK 재도입 시 참조 가능하도록 유지된다.
+ * 운영 빌드 시 {@code REACT_APP_APPLE_CLIENT_ID} 주입 여부와 무관하게 Apple 로그인 버튼은
+ * 항상 노출된다(UnifiedLogin §Apple 가드 제거 — PR #211 hotfix).</p>
+ *
+ * <p>모바일 앱(iOS native SIWA) 은 Bundle ID 를 사용하므로 본 상수와 무관하다.</p>
  *
  * <p>**Apple Developer Console 등록 가이드**:
  * <ul>
@@ -148,10 +158,13 @@ const resolveAppleWebServiceId = () => {
 export const APPLE_WEB_SERVICE_ID = resolveAppleWebServiceId();
 
 /**
- * Apple 웹 로그인이 활성화되었는지(=Service ID 가 주입되었는지) 여부.
+ * Apple Service ID 가 주입되었는지 여부 — 레거시 호환 / 진단용.
  *
- * <p>Apple 버튼 표시 가드에서 사용한다. placeholder 값(`local-dev-set-...`,
- * `your_...`, `placeholder*`)은 모두 비활성으로 본다(Google 가드와 동일 정책).</p>
+ * <p>**더 이상 Apple 버튼 표시 가드로 사용하지 않는다** (PR #211 server-side flow 전환).
+ * BE 가 Service ID·client_secret JWT·redirect_uri 를 모두 보관하므로 FE 주입 여부와
+ * 무관하게 Apple 버튼은 항상 노출된다. 본 플래그는 모바일 webview fallback 진단이나
+ * 향후 JS SDK 재도입을 위해 export 만 유지한다. placeholder(`local-dev-set-...`,
+ * `your_...`, `placeholder*`) 는 모두 비활성으로 본다(Google 와 동일 정책).</p>
  */
 export const isAppleWebServiceIdConfigured = (() => {
   const id = APPLE_WEB_SERVICE_ID;

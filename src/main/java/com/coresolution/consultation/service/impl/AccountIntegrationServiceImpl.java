@@ -284,7 +284,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     public boolean verifyEmailCode(String email, String code) {
         try {
             String normalized = normalizeEmail(email);
-            log.info("이메일 인증 코드 검증: email={}, code={}", EmailLogMasking.maskForLog(normalized), code);
+            log.info("이메일 인증 코드 검증: email={}", EmailLogMasking.maskForLog(normalized));
 
             EmailVerificationCode storedCode = emailVerificationCodes.get(normalized);
             if (storedCode == null) {
@@ -302,8 +302,8 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             if (isValid) {
                 log.info("이메일 인증 성공: email={}", EmailLogMasking.maskForLog(normalized));
             } else {
-                log.warn("이메일 인증 실패: email={}, 입력코드={}, 저장코드={}",
-                    EmailLogMasking.maskForLog(normalized), code, storedCode.getCode());
+                // B4 hotfix: 입력·저장 OTP 평문 로그 금지. 마스킹 email 만 기록.
+                log.warn("이메일 인증 실패: email={}", EmailLogMasking.maskForLog(normalized));
             }
 
             return isValid;

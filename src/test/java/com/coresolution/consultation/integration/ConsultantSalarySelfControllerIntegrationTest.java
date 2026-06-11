@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import com.coresolution.consultation.entity.SalaryCalculation.SalaryStatus;
 import com.coresolution.consultation.entity.SalaryProfile;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.SalaryManagementService;
+import com.coresolution.core.context.TenantContextHolder;
 
 /**
  * {@link com.coresolution.consultation.controller.ConsultantSalarySelfController} 통합 테스트.
@@ -42,13 +44,20 @@ import com.coresolution.consultation.service.SalaryManagementService;
 @DisplayName("ConsultantSalarySelfController API 통합 테스트")
 class ConsultantSalarySelfControllerIntegrationTest {
 
-    private static final String TENANT = "tenant-self-salary-" + java.util.UUID.randomUUID();
+    // AuditableTenantBase.tenantId @Column(length=36) 제한 — 36자 이하 (prefix 5 + UUID-no-dash 31 = 36).
+    private static final String TENANT =
+            "test-" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 31);
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
     private SalaryManagementService salaryManagementService;
+
+    @AfterEach
+    void clearTenantContext() {
+        TenantContextHolder.clear();
+    }
 
     private User consultant(long id) {
         User u = new User();

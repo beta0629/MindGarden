@@ -38,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>M2: ConsultationRecord 가 존재(consultationId = schedule.id) 하면 제외</li>
  *   <li>M3: ConsultationRecord 가 isDeleted=true 면 «미작성» 으로 포함</li>
  *   <li>M4: 비대상 상태 일정 제외 (CANCELLED, IN_PROGRESS, VACATION)</li>
- *   <li>M5: isDeleted=true 일정·consultantId IS NULL 일정 제외</li>
+ *   <li>M5: isDeleted=true 일정 제외 (consultantId IS NULL 분기는 엔티티 {@code @NotNull} 로 JPA save 차단되어 본 테스트 경로에서 재현 불가 — SQL 필터의 IS NULL 분기는 회귀 가드로 잔존)</li>
  *   <li>M6: BETWEEN startDate AND endDate 양 끝 포함, 직전일/직후일 제외, 정렬</li>
  *   <li>F1: 「과거 + CONFIRMED + 일지 미작성」 → 응답 포함 (R5 회귀 가드)</li>
  *   <li>F2: 「과거 + BOOKED + 일지 미작성」 → 응답 포함 (R5 회귀 가드)</li>
@@ -177,15 +177,13 @@ class ScheduleRepositoryMonthlyMissingConsultationLogsTest {
     // ─── M5 ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("M5: isDeleted=true 일정·consultantId IS NULL 일정 제외")
-    void m5_deletedAndNullConsultant_excluded() {
+    @DisplayName("M5: isDeleted=true 일정 제외 (consultantId IS NULL 은 엔티티 @NotNull 로 차단)")
+    void m5_deletedExcluded() {
         String tenantId = UUID.randomUUID().toString();
         Long consultantA = randomId();
 
         saveSchedule(tenantId, consultantA, LocalDate.of(2026, 4, 5),
                 ScheduleStatus.COMPLETED, true);
-        saveSchedule(tenantId, null, LocalDate.of(2026, 4, 6),
-                ScheduleStatus.COMPLETED, false);
         Schedule active = saveCompleted(tenantId, consultantA, LocalDate.of(2026, 4, 7));
 
         List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(

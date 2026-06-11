@@ -7,6 +7,7 @@
 import { Redirect, Stack, type Href } from 'expo-router';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isStaffRole } from '@/utils/adminRole';
+import { ContentLetterbox } from '@/components/app-chrome/ContentLetterbox';
 
 export default function AdminReviewLayout() {
   const role = useAuthStore((s) => s.role);
@@ -16,9 +17,11 @@ export default function AdminReviewLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="[id]" />
-    </Stack>
+    <ContentLetterbox>
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="[id]" />
+      </Stack>
+    </ContentLetterbox>
   );
 }

@@ -398,7 +398,23 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       : {}),
     ios: {
       icon: './assets/images/icon.png',
-      supportsTablet: false,
+      /**
+       * Apple G4 (iPad 화면 미최적화) 재제출 대응 — A-축약 옵션 (Build 1.0.9, 2026-06-10).
+       *
+       * <p>설계 SSOT: P3-D 디자인 스펙(transcript 386990fa-9897-408e-b9c2-9dbfd3bc1260).
+       * iPad에서도 iPhone 비율의 콘텐츠를 그대로 유지(가운데 정렬 + 좌우 letterbox)하며,
+       * split view / slide over / 가로 회전을 모두 차단해 단일 portrait 케이스만 다룬다.
+       * 콘텐츠 가운데 정렬은 `<ContentLetterbox>` 컴포넌트가 담당.</p>
+       *
+       * - supportsTablet: true            — App Store Connect 에 iPad 빌드로도 노출
+       * - requireFullScreen: true         — Multitasking(Split View / Slide Over) 차단
+       *   → Info.plist `UIRequiresFullScreen=YES` 로 매핑됨
+       * - UISupportedInterfaceOrientations(~ipad) — portrait 만 허용 (Apple 표준 키).
+       *   `ExpoConfig.ios.supportedInterfaceOrientations` 는 SDK 타입에 미존재하므로
+       *   루트 `orientation: 'portrait'` 와 함께 infoPlist 표준 키로 명시한다.
+       */
+      supportsTablet: true,
+      requireFullScreen: true,
       bundleIdentifier: 'com.mindgarden.MindGardenMobile',
       /** Apple App Store Guideline 4.8 — Sign in with Apple 활성화 (capability + entitlement). */
       usesAppleSignIn: true,
@@ -409,6 +425,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         /** EAS export compliance 프롬프트 생략 — 표준 면제 암호화만 사용 */
         ITSAppUsesNonExemptEncryption: false,
         UIBackgroundModes: ['audio', 'remote-notification'],
+        /**
+         * Apple G4 (iPad 화면 미최적화) 대응 — iPhone·iPad 모두 portrait only.
+         * iPad 키는 `~ipad` 변형으로 명시 (Apple HIG / Xcode 표준 패턴).
+         * 가로 회전 차단 → letterbox 가로 케이스를 원천 제거해 G4 재거절 리스크 회피.
+         */
+        UISupportedInterfaceOrientations: ['UIInterfaceOrientationPortrait'],
+        'UISupportedInterfaceOrientations~ipad': ['UIInterfaceOrientationPortrait'],
         NSCameraUsageDescription:
           'QR 코드 스캔과 프로필 사진 촬영을 위해 카메라 접근이 필요합니다.',
         NSCalendarsUsageDescription: '상담 일정을 기기 캘린더에 추가하기 위해 접근이 필요합니다.',

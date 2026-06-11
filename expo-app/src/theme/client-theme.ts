@@ -45,6 +45,16 @@ export interface AppThemeColors {
   readonly loginOrbMid: string;
   /** V2 §M.1 B2 Breathing Circle — orb radial gradient 외곽 (#E0DACF, halo 페이드아웃) */
   readonly loginOrbEdge: string;
+  /**
+   * iPad letterbox 풀폭 배경 (Apple G4 대응, Build 1.0.9).
+   * 기본값은 `bgMain` 과 동일하지만 letterbox 면 단독 조정 여지를 위해 별도 키 유지.
+   */
+  readonly letterboxBg: string;
+  /**
+   * iPad letterbox 콘텐츠 컬럼 좌·우 1px 보더 색.
+   * 기본값은 `divider` 와 동일.
+   */
+  readonly letterboxBorder: string;
   readonly gray: typeof colors.gray;
 }
 

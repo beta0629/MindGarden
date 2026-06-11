@@ -100,6 +100,18 @@ const COMMON_COLORS = {
   loginOrbCore: '#FFFFFF',
   loginOrbMid: '#F5F0E8',
   loginOrbEdge: '#E0DACF',
+  /**
+   * iPad letterbox — 콘텐츠 컬럼 좌·우 여백 풀폭 배경 (Apple G4 대응, Build 1.0.9).
+   * 초기값은 `bgMain`(`#FAF9F7`) 과 동일하지만 별도 키로 분리 — 향후 다크 모드 / 12.9" 한정
+   * 그라데이션 시 단독 조정 가능.
+   * SSOT: P3-D 디자인 스펙(transcript 386990fa-9897-408e-b9c2-9dbfd3bc1260) §3.2.
+   */
+  letterboxBg: '#FAF9F7',
+  /**
+   * iPad letterbox — 콘텐츠 컬럼 좌·우 1px 보더 색 (letterbox 면 ↔ 콘텐츠 시각 분리).
+   * 초기값은 `divider`(`#E8E4DE`) 과 동일하지만 별도 키로 분리 — 향후 다크 / 명도 대비 조정 시 분리 가능.
+   */
+  letterboxBorder: '#E8E4DE',
 } as const;
 
 /** 그레이 스케일 (토큰화) */

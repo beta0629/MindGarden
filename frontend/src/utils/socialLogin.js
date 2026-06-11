@@ -352,6 +352,99 @@ export const googleLogin = async() => {
 };
 
 /**
+ * Apple Sign in with Apple (SIWA) — server-side auth-code 흐름 (2026-06-11, Google PR #204 패턴).
+ *
+ * <p>카카오·네이버·Google 와 100% 동일 패턴. BE `/api/v1/auth/oauth2/apple/authorize` 가
+ * apex 메인 도메인 기반 redirect_uri 와 `state=base64url(tenantId)+nonce` 를 포함한
+ * authorize URL 을 반환하면, 본 함수는 SPA 를 그 URL 로 전체 redirect 한다.
+ * Apple 동의 후 BE `/api/v1/auth/apple/callback` (form-urlencoded POST) 이 토큰 교환·
+ * identityToken 검증·매칭·JWT 발급을 수행하고 테넌트 서브도메인의
+ * `/auth/oauth2/callback` 으로 redirect 한다.</p>
+ *
+ * <p>이전 Apple JS SDK `usePopup=true` 흐름(`requestAppleSignIn`)은 멀티테넌트
+ * 와일드카드 환경에서 popup parent origin 과 redirect_uri origin 동일성 강제로
+ * "오류로 인해 요청을 완료할 수 없습니다" 빨간 배너로 거절되어 폐기됐다.</p>
+ */
+export const appleLogin = async() => {
+  try {
+    console.log('=== Apple 로그인 시작 ===');
+
+    // 서브도메인 확인 (로컬 환경에서는 스킵) — 카카오/네이버/Google 동일 가드.
+    const host = window.location.hostname;
+    const isLocalEnv = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocalEnv) {
+      const defaultSubdomains = ['dev', 'app', 'api', 'staging', 'www'];
+      const hostParts = host.split('.');
+      const firstLabel = hostParts[0];
+      const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
+
+      if (!hasSubdomain) {
+        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+        console.error('⚠️ 서브도메인 없음:', friendlyMessage);
+        notificationManager.show(friendlyMessage, 'error');
+        throw new Error(i18n.t('common:utils.socialLogin.t_11aa9c1b'));
+      }
+    }
+
+    // 백엔드의 인증 URL 생성 엔드포인트 호출.
+    // OAuth 인가 API 는 세션 쿠키(JSESSIONID) 가 필요하므로 cross-origin fetch 시 credentials 필수.
+    const response = await fetch(`${API_BASE_URL}${AUTH_API.APPLE_AUTHORIZE}`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' }
+    });
+
+    if (!response.ok) {
+      let errorMessage = i18n.t('common:utils.socialLogin.t_712c6d0b');
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+          if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704'))
+              || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+          }
+        } else if (errorData.data && errorData.data.message) {
+          errorMessage = errorData.data.message;
+          if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704'))
+              || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+          }
+        }
+      } catch (parseError) {
+        console.error('Apple 로그인 오류:', parseError);
+      }
+      notificationManager.show(errorMessage, 'error');
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage}`);
+    }
+
+    const data = await response.json();
+    console.log('백엔드에서 받은 Apple 인증 URL:', data);
+
+    const authUrl = (data.data && data.data.authUrl) || data.authUrl;
+    const state = (data.data && data.data.state) || data.state;
+
+    if (data.success && authUrl) {
+      // 백엔드에서 이미 state 를 포함한 URL 을 반환하므로, 프론트엔드에서 추가하지 않음.
+      // 백엔드에서 반환한 state 를 sessionStorage 에 저장 (콜백 검증·디버깅용).
+      if (state) {
+        sessionStorage.set('oauth_state', state);
+      }
+
+      console.log('최종 Apple OAuth2 인증 URL 길이:', authUrl.length);
+      console.log('=== Apple 로그인 완료 ===');
+
+      window.location.href = authUrl;
+    } else {
+      console.error('백엔드 응답 데이터 구조 오류:', data);
+      throw new Error(i18n.t('common:utils.socialLogin.t_25681767'));
+    }
+  } catch (error) {
+    console.error('Apple 로그인 오류:', error);
+    notificationManager.show(i18n.t('common:utils.socialLogin.t_712c6d0b'), 'error');
+  }
+};
+
+/**
  * 페이스북 로그인
  */
 export const facebookLogin = () => {
@@ -514,6 +607,7 @@ export default {
   kakaoLogin,
   naverLogin,
   googleLogin,
+  appleLogin,
   facebookLogin,
   handleOAuthCallback,
   socialLogout,

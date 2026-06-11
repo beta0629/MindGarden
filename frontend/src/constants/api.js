@@ -63,6 +63,18 @@ export const AUTH_API = {
    * 포함한 authorize URL 을 반환한다. 카카오/네이버와 동일 패턴(2026-06-10 A-2 마이그레이션).
    */
   GOOGLE_AUTHORIZE: '/api/v1/auth/oauth2/google/authorize',
+
+  /**
+   * Apple Sign in with Apple (SIWA) server-side auth-code 흐름 — `OAuth2Controller#appleAuthorize`.
+   * BE 가 apex 콜백(`/api/v1/auth/apple/callback`) 과 state(base64url(tenantId)+nonce) 를
+   * 포함한 authorize URL 을 반환한다. Google PR #204 패턴 100% 정합 (2026-06-11).
+   *
+   * <p>멀티테넌트 와일드카드(`*.core-solution.co.kr`) 환경에서 Apple JS SDK
+   * `usePopup=true` 가 강제하는 `response_mode=web_message` 가 popup parent origin 과
+   * redirect_uri origin 동일성 강제로 거절(빨간 배너)되어, 카카오/네이버/구글과 동일한
+   * server-side 흐름으로 통합한다.</p>
+   */
+  APPLE_AUTHORIZE: '/api/v1/auth/oauth2/apple/authorize',
   
   // 중복 로그인 확인
   CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login',

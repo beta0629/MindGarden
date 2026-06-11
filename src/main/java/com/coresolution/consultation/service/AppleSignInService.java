@@ -42,4 +42,19 @@ public interface AppleSignInService {
      * @return 로그인 결과
      */
     AppleSignInResponse callback(AppleSignInRequest request);
+
+    /**
+     * Apple 웹 server-side auth-code 흐름 — {@link #callback(AppleSignInRequest)} 와 동일하나
+     * 호출자가 동적으로 결정한 {@code redirect_uri} 를 Apple {@code /auth/token} 호출에 전달한다.
+     *
+     * <p>멀티테넌트 와일드카드 환경에서 Apple authorize 단계와 token 교환 단계의 redirect_uri 가
+     * 정확히 일치해야 한다. Google PR #204 server-side 패턴과 정합. {@code redirectUriOverride}
+     * 가 null/blank 면 {@link com.coresolution.consultation.config.AppleOAuth2Properties} 의
+     * 설정값으로 폴백한다.</p>
+     *
+     * @param request              Apple SIWA 요청 본문 (authorizationCode 필수)
+     * @param redirectUriOverride  authorize 단계와 동일한 redirect_uri (apex 호스트, 동적 추론)
+     * @return 로그인 결과
+     */
+    AppleSignInResponse callback(AppleSignInRequest request, String redirectUriOverride);
 }

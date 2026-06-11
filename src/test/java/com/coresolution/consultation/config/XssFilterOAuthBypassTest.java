@@ -111,6 +111,46 @@ class XssFilterOAuthBypassTest {
     }
 
     @Test
+    @DisplayName("Apple 콜백 경로 (apple/callback) 도 sanitize 우회 — server-side auth-code (Google PR #204 패턴)")
+    void appleServerSideCallback_bypassesSanitize() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST",
+                "/api/v1/auth/apple/callback");
+        request.setRequestURI("/api/v1/auth/apple/callback");
+        String rawCode = "c1.0.adk/with/slash";
+        request.setParameter("code", rawCode);
+        request.setParameter("state", "tenant.nonce-value");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        ArgumentCaptor<ServletRequest> captor = ArgumentCaptor.forClass(ServletRequest.class);
+        verify(chain).doFilter(captor.capture(), any());
+        ServletRequest delivered = captor.getValue();
+        assertThat(delivered).isNotInstanceOf(XssFilter.XssRequestWrapper.class);
+        assertThat(delivered.getParameter("code")).isEqualTo(rawCode);
+        assertThat(delivered.getParameter("code")).doesNotContain("&#x2F;");
+    }
+
+    @Test
+    @DisplayName("Apple authorize 경로 (oauth2/apple/authorize) 도 sanitize 우회")
+    void appleAuthorize_bypassesSanitize() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET",
+                "/api/v1/auth/oauth2/apple/authorize");
+        request.setRequestURI("/api/v1/auth/oauth2/apple/authorize");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        ArgumentCaptor<ServletRequest> captor = ArgumentCaptor.forClass(ServletRequest.class);
+        verify(chain).doFilter(captor.capture(), any());
+        assertThat(captor.getValue()).isNotInstanceOf(XssFilter.XssRequestWrapper.class);
+    }
+
+    @Test
     @DisplayName("Google authorize 경로도 sanitize 우회 (state 보존)")
     void googleAuthorize_bypassesSanitize() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET",

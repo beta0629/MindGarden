@@ -29,6 +29,7 @@ import org.mockito.quality.Strictness;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -259,5 +260,51 @@ class AppleSignInServiceImplTest {
 
         assertThat(response.getSocialUserInfo()).isNotNull();
         assertThat(response.getSocialUserInfo().isPrivateRelayEmail()).isTrue();
+    }
+
+    @Test
+    @DisplayName("9) [server-side auth-code] callback(request, redirectUriOverride) 가 동적 redirect_uri 를 AppleOAuth2Client 에 전달")
+    void callback_withRedirectUriOverride_propagatesToOAuthClient() {
+        String dynamicRedirectUri = "https://core-solution.co.kr/api/v1/auth/apple/callback";
+        Map<String, Object> tokenResponse = new HashMap<>();
+        tokenResponse.put("id_token", "eyJ.fake.token");
+        when(oauthClient.exchangeAuthorizationCode(eq("apple-auth-code"), eq(dynamicRedirectUri)))
+            .thenReturn(tokenResponse);
+        when(idTokenVerifier.verify(anyString(), anyString())).thenReturn(claims(APPLE_EMAIL));
+        when(userRepository.findByAppleSub(APPLE_SUB)).thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndTenantId(APPLE_EMAIL, TENANT_ID)).thenReturn(Optional.empty());
+
+        AppleSignInRequest callbackRequest = AppleSignInRequest.builder()
+            .authorizationCode("apple-auth-code")
+            .nonce("nonce-server-side")
+            .build();
+
+        AppleSignInResponse response = service.callback(callbackRequest, dynamicRedirectUri);
+
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.isRequiresPhoneVerification()).isTrue();
+        verify(oauthClient).exchangeAuthorizationCode("apple-auth-code", dynamicRedirectUri);
+    }
+
+    @Test
+    @DisplayName("10) [회귀 0] 기존 callback(request) 는 redirectUriOverride=null 로 위임")
+    void callback_legacy_passesNullOverrideToClient() {
+        Map<String, Object> tokenResponse = new HashMap<>();
+        tokenResponse.put("id_token", "eyJ.fake.token");
+        when(oauthClient.exchangeAuthorizationCode(eq("apple-auth-code"), eq(null)))
+            .thenReturn(tokenResponse);
+        when(idTokenVerifier.verify(anyString(), anyString())).thenReturn(claims(APPLE_EMAIL));
+        when(userRepository.findByAppleSub(APPLE_SUB)).thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndTenantId(APPLE_EMAIL, TENANT_ID)).thenReturn(Optional.empty());
+
+        AppleSignInRequest callbackRequest = AppleSignInRequest.builder()
+            .authorizationCode("apple-auth-code")
+            .nonce("nonce-legacy")
+            .build();
+
+        AppleSignInResponse response = service.callback(callbackRequest);
+
+        assertThat(response.isSuccess()).isTrue();
+        verify(oauthClient).exchangeAuthorizationCode("apple-auth-code", null);
     }
 }

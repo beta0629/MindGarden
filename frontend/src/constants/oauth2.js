@@ -172,23 +172,27 @@ export const isAppleWebServiceIdConfigured = (() => {
 })();
 
 /**
- * Sign in with Apple (SIWA) — Apple App Store 4.8 (T1) 대응.
- * Apple JS SDK 가 native-like 시트를 표시하고 identityToken·authorization code 를 반환한다.
+ * Sign in with Apple (SIWA) — server-side auth-code 흐름 (2026-06-11, Google PR #204 패턴).
+ *
+ * <p>웹 흐름은 BE `/api/v1/auth/oauth2/apple/authorize` 가 authorize URL 을 생성하여
+ * 이 상수 없이도 동작한다. 본 상수는 모바일 webview fallback / 기존 native iOS 흐름
+ * (`POST /api/v1/auth/oauth/apple/login`) 호환을 위해 유지된다.</p>
+ *
+ * <p><b>scope=name email</b>: Apple 의 server-side `response_mode=form_post` 흐름에서는
+ * 사용자 이름이 form 본문 `user` JSON 으로 정상 전달되므로 `name` 을 함께 요청한다.
+ * 이전 `usePopup=true` + `web_message` 흐름은 멀티테넌트 와일드카드에서 거절되어 폐기됐다.</p>
  */
 export const APPLE_OAUTH2_CONFIG = {
   clientId: ENV.APPLE.CLIENT_ID,
   redirectUri: ENV.APPLE.REDIRECT_URI,
-  /** Apple JS SDK CDN — Apple HIG 권장 공식 자산. */
+  /** Apple JS SDK CDN — Apple HIG 권장 공식 자산 (모바일 fallback 용). */
   sdkUrl: 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js',
-  // Apple JS SDK 는 usePopup=true 일 때 response_mode 를 web_message 로 강제한다.
-  // web_message 에서는 사용자 이름을 postMessage 로 전달할 수 없으므로
-  // scope=name 을 함께 요청하면 Apple 동의 화면이 사전 검증에서 거절(빨간 배너).
-  // → email scope 만 요청하고, 사용자 표시 이름은 SocialSignupModal 에서 입력받는다.
-  // 참고: docs/project-management/2026-06-04/APPLE_T1_SIWA_DESIGN_HANDOFF.md, SIWA 디버거 보고서.
-  scope: 'email',
+  // server-side 흐름은 form_post 로 사용자 이름이 정상 전달되므로 scope=name email 복구.
+  scope: 'name email',
   responseType: 'code id_token',
   responseMode: 'form_post',
-  usePopup: true,
+  // 웹은 더 이상 popup 을 사용하지 않는다 (server-side auth-code 흐름).
+  usePopup: false,
   state: 'apple_login'
 };
 

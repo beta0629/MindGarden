@@ -159,12 +159,18 @@ public class AppleSignInServiceImpl implements AppleSignInService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AppleSignInResponse callback(AppleSignInRequest request) {
+        return callback(request, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AppleSignInResponse callback(AppleSignInRequest request, String redirectUriOverride) {
         if (request == null || !StringUtils.hasText(request.getAuthorizationCode())) {
             return failure("authorizationCode 가 비어 있습니다.");
         }
         try {
             Map<String, Object> tokenResponse = oauthClient.exchangeAuthorizationCode(
-                request.getAuthorizationCode());
+                request.getAuthorizationCode(), redirectUriOverride);
             Object idTokenObj = tokenResponse.get("id_token");
             if (!(idTokenObj instanceof String idToken) || idToken.isBlank()) {
                 return failure("Apple /auth/token 응답에 id_token 이 없습니다.");

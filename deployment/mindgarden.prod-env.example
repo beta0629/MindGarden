@@ -46,7 +46,12 @@ GOOGLE_REDIRECT_URI=
 # - APPLE_TEAM_ID           : Apple Developer Team ID (10자리)
 # - APPLE_KEY_ID            : Sign in with Apple Key ID (10자리)
 # - APPLE_PRIVATE_KEY       : .p8 PEM 전체 (BEGIN/END PRIVATE KEY 포함, 멀티라인)
-# - APPLE_REDIRECT_URI      : Service ID 등록 Return URL
+# - APPLE_REDIRECT_URI      : Service ID 등록 Return URL — apex 1개만 등록(테넌트는 state base64 로 복원).
+#                             server-side auth-code 흐름(Google PR #204 패턴 정합, 2026-06-11)으로
+#                             멀티테넌트 와일드카드 환경에서도 단일 콜백으로 모든 테넌트가 동작한다.
+#                             예: https://core-solution.co.kr/api/v1/auth/apple/callback
+#                                 https://dev.core-solution.co.kr/api/v1/auth/apple/callback
+#                             Apple Service ID 의 Return URLs 에 동일 값 등록 필수 (와일드카드 미지원).
 # - APPLE_ALLOWED_AUDIENCES : aud 검증 허용 List (콤마 구분).
 #                             iOS 네이티브 SIWA 는 Bundle ID(com.mindgarden.MindGardenMobile),
 #                             웹/Service ID 는 Service ID(co.kr.coresolution.app.signin) 로 aud 발급 →

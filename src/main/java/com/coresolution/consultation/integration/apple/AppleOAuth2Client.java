@@ -51,11 +51,34 @@ public class AppleOAuth2Client {
      * @return token endpoint 응답 본문 (access_token, refresh_token, id_token, expires_in, token_type 등)
      */
     public Map<String, Object> exchangeAuthorizationCode(String authorizationCode) {
+        return exchangeAuthorizationCode(authorizationCode, null);
+    }
+
+    /**
+     * authorization_code → access_token + refresh_token + id_token 교환 — server-side
+     * auth-code 흐름에서 호출자가 동적으로 결정한 {@code redirect_uri} 를 사용한다.
+     *
+     * <p>멀티테넌트 와일드카드 환경에서 Apple 의 {@code /auth/token} 은 authorize 단계에서
+     * 보낸 {@code redirect_uri} 와 정확히 일치해야 하므로(Google PR #204 server-side 패턴
+     * 정합), 컨트롤러가 요청의 Host 기반으로 동적으로 생성한 apex 콜백 URL 을 그대로 전달한다.
+     * {@code redirectUriOverride} 가 비어 있으면 {@link AppleOAuth2Properties#getRedirectUri()}
+     * 설정값으로 폴백한다(기존 호환).</p>
+     *
+     * @param authorizationCode    Apple 웹 콜백에서 받은 code
+     * @param redirectUriOverride  authorize 단계와 동일한 redirect_uri (apex 호스트, 동적 추론).
+     *                             {@code null}/blank 시 properties 의 redirect-uri 사용.
+     * @return token endpoint 응답 본문 (access_token, refresh_token, id_token, expires_in, token_type 등)
+     */
+    public Map<String, Object> exchangeAuthorizationCode(String authorizationCode,
+            String redirectUriOverride) {
         MultiValueMap<String, String> body = baseBody();
         body.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
         body.add("code", authorizationCode);
-        if (properties.getRedirectUri() != null && !properties.getRedirectUri().isBlank()) {
-            body.add("redirect_uri", properties.getRedirectUri());
+        String resolvedRedirectUri = (redirectUriOverride != null && !redirectUriOverride.isBlank())
+            ? redirectUriOverride
+            : properties.getRedirectUri();
+        if (resolvedRedirectUri != null && !resolvedRedirectUri.isBlank()) {
+            body.add("redirect_uri", resolvedRedirectUri);
         }
         return post(body);
     }

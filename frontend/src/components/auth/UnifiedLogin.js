@@ -30,14 +30,12 @@ import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
-import { googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
+import { appleLogin, googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import {
   OAUTH2_LOGIN_UI,
   isGoogleWebClientIdConfigured,
   isAppleWebServiceIdConfigured
 } from '../../constants/oauth2';
-import { requestAppleSignIn } from '../../services/oauth2/appleOAuth2Service';
-import { signInWithApple } from '../../api/auth/appleAuthApi';
 import { requestGoogleSocialLogin } from '../../services/oauth2/googleWebOAuth2Service';
 import GoogleLoginButton from './GoogleLoginButton';
 import GoogleBrandLogo from './GoogleBrandLogo';
@@ -790,63 +788,25 @@ const UnifiedLogin = () => {
     showTooltip(t('auth:unifiedLogin.socialLogin.googleFailed'), 'error');
   };
 
-  // Apple Sign In (SIWA) — Apple App Store 4.8 T1 대응.
-  // 1) Apple JS SDK 팝업으로 identityToken 발급 → 2) 백엔드로 검증 위임 →
-  // 3) 신규/기존 분기 (신규는 SocialSignupModal, 기존은 세션 설정 + 대시보드 이동)
+  /**
+   * Apple Sign in with Apple (SIWA) — server-side auth-code 흐름 (2026-06-11, Google PR #204 패턴).
+   *
+   * <p>handleGoogleLogin 100% mirror — `appleLogin()` 가 BE `/api/v1/auth/oauth2/apple/authorize`
+   * 로부터 authorize URL 을 받아 SPA 를 full redirect 한다. Apple → BE apex 콜백
+   * (`/api/v1/auth/apple/callback`, form-urlencoded POST) → 테넌트 SPA `/auth/oauth2/callback`
+   * 로 302 redirect.</p>
+   *
+   * <p>이전 `usePopup=true` + `requestAppleSignIn()` + `signInWithApple()` 흐름은 멀티테넌트
+   * 와일드카드 환경에서 popup parent origin 과 redirect_uri origin 동일성 강제로 거절
+   * (빨간 배너)되어 폐기. 모바일 native SIWA 는 별도 경로(`/api/v1/auth/oauth/apple/login`)
+   * 를 그대로 사용하므로 회귀 0.</p>
+   */
   const handleAppleLogin = async() => {
     try {
-      setIsLoading(true);
-      const applePayload = await requestAppleSignIn();
-      if (!applePayload.identityToken) {
-        showTooltip(t('auth:unifiedLogin.socialLogin.appleFailed'), 'error');
-        setIsLoading(false);
-        return;
-      }
-      const response = await signInWithApple(applePayload);
-      const responseData = response && (response.data || response);
-      const succeeded = response && (response.success === true || responseData?.success === true);
-      if (!succeeded) {
-        const message = (responseData && responseData.message) || response?.message;
-        showTooltip(message || t('auth:unifiedLogin.socialLogin.appleFailed'), 'error');
-        setIsLoading(false);
-        return;
-      }
-      if (responseData?.requiresSignup) {
-        const socialInfo = responseData.socialUserInfo || {};
-        setSocialUserInfo({
-          provider: 'APPLE',
-          providerUserId: socialInfo.providerUserId || null,
-          email: socialInfo.email || applePayload.email || null,
-          name: socialInfo.name
-            || [applePayload.givenName, applePayload.familyName].filter(Boolean).join(' ')
-            || (applePayload.email ? applePayload.email.split('@')[0] : null),
-          nickname: socialInfo.nickname || null,
-          profileImageUrl: socialInfo.profileImageUrl || null,
-          tenantId: socialInfo.tenantId || null,
-          isPrivateRelay: Boolean(socialInfo.isPrivateRelay)
-        });
-        setShowSocialSignupModal(true);
-        setIsLoading(false);
-        return;
-      }
-      if (responseData?.accessToken && responseData?.user) {
-        setLoginSession(responseData.user, {
-          accessToken: responseData.accessToken,
-          refreshToken: responseData.refreshToken
-        });
-      }
-      sessionStorage.setItem('justLoggedIn', 'true');
-      showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
-      const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-      await redirectToDynamicDashboard({ user: responseData.user }, navigate);
+      await appleLogin();
     } catch (error) {
       console.error('Apple 로그인 오류:', error);
-      const aborted = error?.message && /popup_closed|user_cancelled|popup.*closed/i.test(error.message);
-      if (!aborted) {
-        showTooltip(t('auth:unifiedLogin.socialLogin.appleFailed'), 'error');
-      }
-    } finally {
-      setIsLoading(false);
+      showTooltip(t('auth:unifiedLogin.socialLogin.appleFailed'), 'error');
     }
   };
 

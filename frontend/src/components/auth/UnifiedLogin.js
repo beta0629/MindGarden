@@ -817,7 +817,9 @@ const UnifiedLogin = () => {
           provider: 'APPLE',
           providerUserId: socialInfo.providerUserId || null,
           email: socialInfo.email || applePayload.email || null,
-          name: socialInfo.name || [applePayload.givenName, applePayload.familyName].filter(Boolean).join(' ') || null,
+          name: socialInfo.name
+            || [applePayload.givenName, applePayload.familyName].filter(Boolean).join(' ')
+            || (applePayload.email ? applePayload.email.split('@')[0] : null),
           nickname: socialInfo.nickname || null,
           profileImageUrl: socialInfo.profileImageUrl || null,
           tenantId: socialInfo.tenantId || null,

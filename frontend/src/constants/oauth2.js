@@ -180,7 +180,12 @@ export const APPLE_OAUTH2_CONFIG = {
   redirectUri: ENV.APPLE.REDIRECT_URI,
   /** Apple JS SDK CDN — Apple HIG 권장 공식 자산. */
   sdkUrl: 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js',
-  scope: 'name email',
+  // Apple JS SDK 는 usePopup=true 일 때 response_mode 를 web_message 로 강제한다.
+  // web_message 에서는 사용자 이름을 postMessage 로 전달할 수 없으므로
+  // scope=name 을 함께 요청하면 Apple 동의 화면이 사전 검증에서 거절(빨간 배너).
+  // → email scope 만 요청하고, 사용자 표시 이름은 SocialSignupModal 에서 입력받는다.
+  // 참고: docs/project-management/2026-06-04/APPLE_T1_SIWA_DESIGN_HANDOFF.md, SIWA 디버거 보고서.
+  scope: 'email',
   responseType: 'code id_token',
   responseMode: 'form_post',
   usePopup: true,

@@ -608,6 +608,7 @@ const MyPage = () => {
                   onFormDataChange={setFormData}
                   onUserChange={setUser}
                   onSave={handleSubmit}
+                  onReloadProfile={loadUserInfo}
                   formatPhoneNumber={formatPhoneNumber}
                 />
               </div>

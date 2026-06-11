@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.dto.MyPagePhoneChangeRequest;
 import com.coresolution.consultation.dto.MyPageResponse;
 import com.coresolution.consultation.dto.MyPageUpdateRequest;
 
@@ -22,6 +23,23 @@ public interface MyPageService {
      * 마이페이지 정보 수정
      */
     MyPageResponse updateMyPageInfo(Long userId, MyPageUpdateRequest request);
+
+    /**
+     * 휴대전화 변경(Phase A) — SMS OTP 검증 + 정규화 + tenant 내 중복 검사 + AuditLog 적재.
+     *
+     * <p>요청 본문의 {@code verificationCode} 는 {@code /api/v1/auth/sms/send} 발송 후 5분 이내
+     * 발급된 단일 사용 코드여야 한다. 검증 성공 시 OTP 는 즉시 폐기되며, 새 번호는
+     * {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeAndValidateKoreanMobileForSms(String)}
+     * 결과로 정규화된 뒤 암호화 저장된다.</p>
+     *
+     * @param userId  본인 PK (세션 기준)
+     * @param request 새 휴대전화 번호 + OTP 코드
+     * @return 갱신된 마이페이지 응답
+     * @throws IllegalArgumentException 형식 위반·OTP 불일치·만료·tenant 내 중복(409 의미상 동일하지만
+     *         기존 회원가입·관리자 생성 흐름과 동일하게 {@code GlobalExceptionHandler} 를 통해
+     *         {@code 400 Bad Request + DUPLICATE_PHONE 메시지} 로 매핑된다).
+     */
+    MyPageResponse changePhone(Long userId, MyPagePhoneChangeRequest request);
 
     /**
      * 프로필 이미지 업로드

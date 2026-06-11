@@ -2,17 +2,24 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.AuditAction;
+import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.ProfileImageStorageConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.MyPagePhoneChangeRequest;
 import com.coresolution.consultation.dto.MyPageResponse;
 import com.coresolution.consultation.dto.MyPageUpdateRequest;
+import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserAddress;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.service.MyPageService;
 import com.coresolution.consultation.service.ProfileImageStorageService;
+import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.core.context.TenantContextHolder;
@@ -33,6 +40,8 @@ public class MyPageServiceImpl implements MyPageService {
     private final UserAddressRepository userAddressRepository;
     private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
     private final ProfileImageStorageService profileImageStorageService;
+    private final SmsOtpVerificationService smsOtpVerificationService;
+    private final AuditLogService auditLogService;
 
     /**
      * 현재 테넌트 컨텍스트와 PK로 사용자를 조회합니다.
@@ -311,6 +320,132 @@ public class MyPageServiceImpl implements MyPageService {
         log.info("마이페이지 정보 수정 완료: userId={}", userId);
         
         return getMyPageInfo(userId);
+    }
+
+    /**
+     * 마이페이지 휴대전화 변경(Phase A) 본 구현.
+     *
+     * <p>흐름:
+     * <ol>
+     *   <li>본인 조회(테넌트 격리)</li>
+     *   <li>{@link LoginIdentifierUtils#normalizeAndValidateKoreanMobileForSms(String)} 로 정규화 + 형식 검증</li>
+     *   <li>{@link SmsOtpVerificationService#verifyAndConsume(String, String)} 으로 OTP 단일 사용 검증</li>
+     *   <li>{@link UserService#existsPhoneDuplicate(String, String, Long)} 로 tenant 내 중복 검사 (본인 제외)</li>
+     *   <li>암호화 저장 + AuditLog ({@link AuditAction#USER_PHONE_CHANGE}) 기록</li>
+     * </ol></p>
+     */
+    @Override
+    public MyPageResponse changePhone(Long userId, MyPagePhoneChangeRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("요청 본문이 비어 있습니다.");
+        }
+
+        // 1. 본인 조회 (테넌트 격리)
+        User user = requireUserInCurrentTenant(userId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+
+        // 2. 정규화 + 형식 검증 — 잘못된 형식이면 IllegalArgumentException → 400
+        String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(
+                request.getNewPhoneNumber());
+
+        // 3. OTP 검증 — 발송 시 정규화된 번호와 동일 키로 조회. 5분 만료·단일 사용 정책.
+        boolean otpValid = smsOtpVerificationService.verifyAndConsume(
+                normalizedPhone, request.getVerificationCode());
+        if (!otpValid) {
+            log.warn("마이페이지 휴대전화 변경 OTP 검증 실패: userId={}, phone={}", userId, normalizedPhone);
+            throw new IllegalArgumentException("인증 코드가 올바르지 않거나 만료되었습니다. 다시 받아 주세요.");
+        }
+
+        // 4. tenant 내 중복 검사 (본인 제외) — 같은 테넌트에 동일 번호 가진 다른 사용자가 있으면 차단.
+        boolean duplicate = userService.existsPhoneDuplicate(normalizedPhone, tenantId, userId);
+        if (duplicate) {
+            log.warn("마이페이지 휴대전화 변경 중복 차단: userId={}, phone={}", userId, normalizedPhone);
+            throw new IllegalArgumentException(ClientRegistrationConstants.MSG_DUPLICATE_PHONE);
+        }
+
+        // 5. 기존(before) 마스킹 — AuditLog metadata 에 PII 평문이 들어가지 않도록 마스킹만 기록.
+        String beforeMaskedPhone = maskPhoneDigits(safeDecryptPhone(user));
+
+        // 6. 새 번호 암호화·저장
+        String encryptedNewPhone;
+        try {
+            encryptedNewPhone = encryptionUtil.encrypt(normalizedPhone);
+        } catch (Exception e) {
+            log.error("새 휴대전화 번호 암호화 실패: userId={}, error={}", userId, e.getMessage());
+            throw new IllegalStateException("휴대전화 번호 저장에 실패했습니다.");
+        }
+        user.setPhone(encryptedNewPhone);
+        userRepository.save(user);
+
+        // 7. AuditLog 기록 — actor=본인, target=본인, action=USER_PHONE_CHANGE, metadata=마스킹된 before/after.
+        String afterMaskedPhone = maskPhoneDigits(normalizedPhone);
+        try {
+            AuditLog logEntry = AuditLog.builder()
+                    .tenantId(tenantId)
+                    .actorUserId(userId)
+                    .actorRole(user.getRole() != null ? user.getRole().getValue() : null)
+                    .targetUserId(userId)
+                    .action(AuditAction.USER_PHONE_CHANGE)
+                    .entityType("USER")
+                    .entityId(userId)
+                    .metadataJson(buildPhoneChangeMetadataJson(beforeMaskedPhone, afterMaskedPhone))
+                    .build();
+            auditLogService.record(logEntry);
+        } catch (Exception e) {
+            log.warn("USER_PHONE_CHANGE AuditLog 기록 실패(휴대전화 변경은 성공): userId={}, error={}",
+                    userId, e.getMessage());
+        }
+
+        log.info("마이페이지 휴대전화 변경 완료: userId={}, before={}, after={}",
+                userId, beforeMaskedPhone, afterMaskedPhone);
+
+        return getMyPageInfo(userId);
+    }
+
+    /**
+     * 저장된 암호문 phone 을 복호화한다. 평문이면 그대로 반환. 실패 시 null.
+     */
+    private String safeDecryptPhone(User user) {
+        if (user == null || user.getPhone() == null || user.getPhone().isBlank()) {
+            return null;
+        }
+        try {
+            return encryptionUtil.decrypt(user.getPhone());
+        } catch (Exception e) {
+            log.debug("기존 휴대전화 복호화 스킵 — 평문 가능성 또는 키 불일치: userId={}", user.getId());
+            return user.getPhone();
+        }
+    }
+
+    /**
+     * 휴대전화 번호 끝 4자리만 노출하는 마스킹. AuditLog metadata 및 로그에 안전하게 기록하기 위한 헬퍼.
+     *
+     * @param raw 원본(정규화 전·후 모두 허용). null/짧으면 {@code null} 반환.
+     * @return 마스킹된 문자열 (예: {@code 010-****-5678}) 또는 null
+     */
+    private String maskPhoneDigits(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String digits = raw.replaceAll("\\D", "");
+        if (digits.length() < 8) {
+            return null;
+        }
+        String head = digits.substring(0, Math.min(3, digits.length()));
+        String tail = digits.substring(digits.length() - 4);
+        return head + "-****-" + tail;
+    }
+
+    /**
+     * AuditLog metadata JSON 본문 생성. 정적 키 ({@code before}, {@code after}, {@code phase}) 만 포함하므로
+     * 외부 JSON 라이브러리 의존 없이 안전하게 직렬화한다.
+     */
+    private String buildPhoneChangeMetadataJson(String beforeMasked, String afterMasked) {
+        return "{\"phase\":\"A\",\"before\":"
+                + (beforeMasked == null ? "null" : "\"" + beforeMasked + "\"")
+                + ",\"after\":"
+                + (afterMasked == null ? "null" : "\"" + afterMasked + "\"")
+                + "}";
     }
 
     /**

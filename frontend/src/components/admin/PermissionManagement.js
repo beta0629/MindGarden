@@ -12,7 +12,7 @@ import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
+// B6 묶음 B 2026-06-12: API_AUTH_CURRENT_USER 제거 — useSession().user 직접 사용으로 dedup
 const API_PERMISSIONS_MANAGEABLE = '/api/v1/permissions/manageable';
 const API_PERMISSIONS_MY_PERMISSIONS = '/api/v1/permissions/my-permissions';
 const API_PERMISSIONS_ROLE_PERMISSIONS = '/api/v1/permissions/role-permissions';
@@ -155,7 +155,9 @@ const PermissionManagement = () => {
         'CONSULTANT': t('admin:role.consultant'),
         'CLIENT': t('admin:role.client')
     };
-    const { checkSession } = useSession();
+    // B6 묶음 B 2026-06-12: useSession().user 직접 사용 — fetchUserInfo() 중복 fetch 제거.
+    // checkSession 은 권한 저장 후 본인 role 변경 시 sessionManager dedup 통해 재조회.
+    const { user: sessionUser, checkSession } = useSession();
     const [userPermissions, setUserPermissions] = useState([]);
     const [currentUserRole, setCurrentUserRole] = useState(null);
     const [selectedRole, setSelectedRole] = useState(USER_ROLES.ADMIN);
@@ -163,25 +165,6 @@ const PermissionManagement = () => {
     const [saveLoading, setSaveLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [allPermissions, setAllPermissions] = useState([]); // DB에서 로드한 모든 권한
-
-    const fetchUserInfo = async() => {
-        try {
-            const response = await fetch(API_AUTH_CURRENT_USER, {
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                return data;
-            } else {
-                console.error('사용자 정보 조회 실패:', response.status);
-                return null;
-            }
-        } catch (error) {
-            console.error('사용자 정보 조회 실패:', error);
-            return null;
-        }
-    };
 
     const loadAllPermissions = useCallback(async() => {
         try {
@@ -217,16 +200,16 @@ const PermissionManagement = () => {
             if (data.success && data.data && data.data.permissions) {
                 setUserPermissions(data.data.permissions);
                 console.log('✅ 사용자 권한 로드 완료:', data.data.permissions.length, '개');
-                
-                // 현재 사용자의 역할 가져오기
-                const userInfo = await fetchUserInfo();
-                if (userInfo && userInfo.role) {
-                    setCurrentUserRole(userInfo.role);
+
+                // B6 묶음 B 2026-06-12: useSession().user 직접 사용 — current-user 별도 fetch 제거.
+                // sessionUser 가 아직 로드되지 않은 경우 useEffect 가 user 변경 후 재호출한다.
+                if (sessionUser && sessionUser.role) {
+                    setCurrentUserRole(sessionUser.role);
                     // 사용자 역할에 따라 기본 선택 역할 설정
-                    if (userInfo.role === USER_ROLES.ADMIN) {
+                    if (sessionUser.role === USER_ROLES.ADMIN) {
                         setSelectedRole(USER_ROLES.ADMIN);
                     } else {
-                        setSelectedRole(userInfo.role); // 다른 역할은 자신의 역할만 관리 가능
+                        setSelectedRole(sessionUser.role); // 다른 역할은 자신의 역할만 관리 가능
                     }
                 }
             } else {
@@ -237,7 +220,7 @@ const PermissionManagement = () => {
             console.error('❌ 권한 로드 실패:', error);
             setMessage(t('admin:permission.error.load'));
         }
-    }, [t]);
+    }, [t, sessionUser]);
 
     const loadRolePermissions = useCallback(async() => {
         try {

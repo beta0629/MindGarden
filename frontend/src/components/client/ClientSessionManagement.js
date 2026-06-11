@@ -25,9 +25,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
-
-
+// B6 묶음 B 2026-06-12: API_AUTH_CURRENT_USER 제거 — useSession().user 직접 사용으로 dedup
 const MAPPINGS_FETCH_ERROR_TEXT = '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 
 const CLIENT_SESSION_MGMT_TITLE_ID = 'client-session-management-title';
@@ -35,7 +33,9 @@ const CLIENT_SESSION_MGMT_TITLE_ID = 'client-session-management-title';
 const ClientSessionManagement = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useSession();
+  // B6 묶음 B 2026-06-12: useSession().user 직접 사용 — current-user 별도 fetch 제거.
+  // hasCheckedSession 가드를 통해 세션 확인 완료 전 호출을 막아 빈 데이터 표시를 방지한다.
+  const { user, hasCheckedSession } = useSession();
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,8 +43,12 @@ const ClientSessionManagement = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (!hasCheckedSession) {
+      return;
+    }
     loadSessionData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCheckedSession, user?.id]);
 
   const loadSessionData = async(opts = {}) => {
     const fromErrorRetry = opts.fromErrorRetry === true;
@@ -56,12 +60,12 @@ const ClientSessionManagement = () => {
       }
       setError(null);
 
-      const userResponse = await apiGet(API_AUTH_CURRENT_USER);
-      if (!userResponse || !userResponse.id) {
+      // Context user 사용 — 별도 /api/v1/auth/current-user 호출 없음.
+      if (!user || !user.id) {
         throw new Error(i18n.t('error:client.ClientSessionManagement.t_5271ee34'));
       }
 
-      const userId = userResponse.id;
+      const userId = user.id;
       // 표준화 2025-12-08: /api/v1/admin 경로로 통일
       const mappingsResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
       if (isApiGetNullFailure(mappingsResponse)) {

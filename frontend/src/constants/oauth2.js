@@ -118,6 +118,60 @@ export const FACEBOOK_OAUTH2_CONFIG = {
 };
 
 /**
+ * Sign in with Apple (SIWA) Web Service ID — Apple Developer Console 에서 등록한
+ * Service ID (예: {@code co.kr.coresolution.app.signin}). 운영 빌드 시
+ * {@code REACT_APP_APPLE_CLIENT_ID} 를 GitHub Actions secret 으로 주입한다.
+ *
+ * <p>Apple JS SDK ({@code appleid.auth.js}) 의 {@code clientId} 파라미터로 사용된다.
+ * 모바일 앱은 Bundle ID 를 사용하므로 본 상수와 무관하다.</p>
+ *
+ * <p>**Apple Developer Console 등록 가이드**:
+ * <ul>
+ *   <li>Service ID 생성: {@code co.kr.coresolution.app.signin}
+ *       (또는 운영 정책상 결정한 reverse-DNS 형식).</li>
+ *   <li>Web Domains: 테넌트 서브도메인과 apex 모두 등록.
+ *       예) {@code core-solution.co.kr}, {@code app.core-solution.co.kr},
+ *           {@code mindgarden.core-solution.co.kr},
+ *           {@code dev.core-solution.co.kr},
+ *           {@code mindgarden.dev.core-solution.co.kr}.
+ *       Apple 은 와일드카드를 지원하지 않으므로 각 호스트를 명시 등록한다.</li>
+ *   <li>DNS Verification 파일 호스팅 후 Apple Developer Console 에서 검증.</li>
+ *   <li>Return URLs: apex 1개 등록(테넌트 식별은 state base64 로 복원 — 카카오/네이버 동일 패턴).
+ *       예) {@code https://core-solution.co.kr/api/v1/auth/oauth/apple/callback}.</li>
+ * </ul></p>
+ */
+const resolveAppleWebServiceId = () => {
+  const fromEnv = process.env.REACT_APP_APPLE_CLIENT_ID || '';
+  return String(fromEnv).trim();
+};
+
+export const APPLE_WEB_SERVICE_ID = resolveAppleWebServiceId();
+
+/**
+ * Apple 웹 로그인이 활성화되었는지(=Service ID 가 주입되었는지) 여부.
+ *
+ * <p>Apple 버튼 표시 가드에서 사용한다. placeholder 값(`local-dev-set-...`,
+ * `your_...`, `placeholder*`)은 모두 비활성으로 본다(Google 가드와 동일 정책).</p>
+ */
+export const isAppleWebServiceIdConfigured = (() => {
+  const id = APPLE_WEB_SERVICE_ID;
+  if (!id) {
+    return false;
+  }
+  const lower = id.toLowerCase();
+  if (lower.startsWith('your_')) {
+    return false;
+  }
+  if (lower.startsWith('local-dev-set-')) {
+    return false;
+  }
+  if (lower.startsWith('placeholder')) {
+    return false;
+  }
+  return true;
+})();
+
+/**
  * Sign in with Apple (SIWA) — Apple App Store 4.8 (T1) 대응.
  * Apple JS SDK 가 native-like 시트를 표시하고 identityToken·authorization code 를 반환한다.
  */

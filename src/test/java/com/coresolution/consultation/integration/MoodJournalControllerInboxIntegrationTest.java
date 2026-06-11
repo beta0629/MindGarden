@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.moodjournal.MoodJournalInboxItemResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.MoodJournalService;
+import com.coresolution.core.context.TenantContextHolder;
 
 /**
  * {@link com.coresolution.consultation.controller.MoodJournalController} 상담사 수신함 JSON 계약 검증.
@@ -37,13 +39,20 @@ import com.coresolution.consultation.service.MoodJournalService;
 @DisplayName("MoodJournalController inbox API 통합 테스트")
 class MoodJournalControllerInboxIntegrationTest {
 
-    private static final String TENANT = "tenant-mj-inbox-" + java.util.UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 4자 = 36자.
+    private static final String TENANT = "mji-"
+            + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 32);
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
     private MoodJournalService moodJournalService;
+
+    @AfterEach
+    void clearTenantContext() {
+        TenantContextHolder.clear();
+    }
 
     private User consultant(long id) {
         User u = new User();

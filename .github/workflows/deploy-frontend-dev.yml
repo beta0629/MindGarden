@@ -34,9 +34,16 @@ jobs:
 
       # REACT_APP_GOOGLE_CLIENT_ID: GIS(@react-oauth/google) 웹 OAuth Client ID (개발).
       # 미설정 시 빈 문자열로 빌드되며 GIS Provider 미마운트 → 레거시 redirect 흐름으로 폴백.
+      # REACT_APP_APPLE_CLIENT_ID: Apple Developer Console Service ID (개발). 미설정 시
+      #   APPLE_WEB_SERVICE_ID 가 빈 문자열이 되어 isAppleWebServiceIdConfigured=false →
+      #   UnifiedLogin 의 Apple 버튼이 렌더되지 않는다(App Store 4.8 T1 정책 준수).
+      # REACT_APP_APPLE_REDIRECT_URI: Apple Service ID 에 등록한 Return URL. 미설정 시
+      #   getBaseUrl() 기반 기본값(`{origin}/api/v1/auth/oauth/apple/callback`) 사용.
       - name: 🏗️ 프론트엔드 빌드
         env:
           REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
+          REACT_APP_APPLE_CLIENT_ID: ${{ secrets.REACT_APP_APPLE_CLIENT_ID }}
+          REACT_APP_APPLE_REDIRECT_URI: ${{ secrets.REACT_APP_APPLE_REDIRECT_URI }}
         run: |
           cd frontend
           npm run build:ci

@@ -6,6 +6,7 @@ import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.ProfileImageStorageConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.MyPageEmailChangeRequest;
 import com.coresolution.consultation.dto.MyPagePhoneChangeRequest;
 import com.coresolution.consultation.dto.MyPageResponse;
 import com.coresolution.consultation.dto.MyPageUpdateRequest;
@@ -15,10 +16,13 @@ import com.coresolution.consultation.entity.UserAddress;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.service.EmailOtpVerificationService;
 import com.coresolution.consultation.service.MyPageService;
 import com.coresolution.consultation.service.ProfileImageStorageService;
+import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
@@ -41,7 +45,13 @@ public class MyPageServiceImpl implements MyPageService {
     private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
     private final ProfileImageStorageService profileImageStorageService;
     private final SmsOtpVerificationService smsOtpVerificationService;
+    private final EmailOtpVerificationService emailOtpVerificationService;
+    private final RefreshTokenService refreshTokenService;
     private final AuditLogService auditLogService;
+
+    /** 이메일 형식 정규식 — Bean Validation 의 {@code @Email} 외 서비스 레이어 2차 가드. */
+    private static final java.util.regex.Pattern EMAIL_FORMAT_PATTERN =
+            java.util.regex.Pattern.compile("^[\\w.!#$%&'*+/=?`{|}~^-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+$");
 
     /**
      * 현재 테넌트 컨텍스트와 PK로 사용자를 조회합니다.
@@ -400,6 +410,117 @@ public class MyPageServiceImpl implements MyPageService {
                 userId, beforeMaskedPhone, afterMaskedPhone);
 
         return getMyPageInfo(userId);
+    }
+
+    /**
+     * 마이페이지 이메일 변경(Phase B) 본 구현.
+     *
+     * <p>흐름:
+     * <ol>
+     *   <li>본인 조회(테넌트 격리)</li>
+     *   <li>새 이메일 정규화({@code trim().toLowerCase()}) + 형식 검증</li>
+     *   <li>{@link EmailOtpVerificationService#verifyAndConsume(String, String)} 로 OTP 단일
+     *       사용 검증</li>
+     *   <li>{@link UserRepository#existsByTenantIdAndEmailAndIdNot(String, String, Long)} 로
+     *       tenant 내 중복 검사 (본인 제외)</li>
+     *   <li>새 이메일 저장 + AuditLog ({@link AuditAction#USER_EMAIL_CHANGE}) 기록</li>
+     *   <li>{@link RefreshTokenService#revokeAllUserTokens(Long)} 호출 — JWT 강제 만료</li>
+     * </ol></p>
+     *
+     * <p>HTTP 세션 무효화·SecurityContext clear 는 호출 컨트롤러(ClientProfileController)
+     * 가 책임진다 — 트랜잭션 종료와 별개로 즉시 401 을 강제하기 위함.</p>
+     */
+    @Override
+    public MyPageResponse changeEmail(Long userId, MyPageEmailChangeRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("요청 본문이 비어 있습니다.");
+        }
+
+        User user = requireUserInCurrentTenant(userId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+
+        String rawEmail = request.getNewEmail() == null ? null : request.getNewEmail().trim();
+        if (rawEmail == null || rawEmail.isEmpty()) {
+            throw new IllegalArgumentException("새 이메일을 입력해주세요.");
+        }
+        String normalizedEmail = rawEmail.toLowerCase();
+        if (!EMAIL_FORMAT_PATTERN.matcher(normalizedEmail).matches()) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
+
+        boolean otpValid = emailOtpVerificationService.verifyAndConsume(
+                normalizedEmail, request.getVerificationCode());
+        if (!otpValid) {
+            log.warn("마이페이지 이메일 변경 OTP 검증 실패: userId={}, email={}",
+                    userId, EmailLogMasking.maskForLog(normalizedEmail));
+            throw new IllegalArgumentException("인증 코드가 올바르지 않거나 만료되었습니다. 다시 받아 주세요.");
+        }
+
+        boolean duplicate = userRepository.existsByTenantIdAndEmailAndIdNot(
+                tenantId, normalizedEmail, userId);
+        if (duplicate) {
+            log.warn("마이페이지 이메일 변경 중복 차단: userId={}, email={}",
+                    userId, EmailLogMasking.maskForLog(normalizedEmail));
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+
+        String beforeMaskedEmail = EmailLogMasking.maskForLog(user.getEmail());
+
+        user.setEmail(normalizedEmail);
+        userRepository.save(user);
+
+        String afterMaskedEmail = EmailLogMasking.maskForLog(normalizedEmail);
+        try {
+            AuditLog logEntry = AuditLog.builder()
+                    .tenantId(tenantId)
+                    .actorUserId(userId)
+                    .actorRole(user.getRole() != null ? user.getRole().getValue() : null)
+                    .targetUserId(userId)
+                    .action(AuditAction.USER_EMAIL_CHANGE)
+                    .entityType("USER")
+                    .entityId(userId)
+                    .metadataJson(buildEmailChangeMetadataJson(beforeMaskedEmail, afterMaskedEmail))
+                    .build();
+            auditLogService.record(logEntry);
+        } catch (Exception e) {
+            log.warn("USER_EMAIL_CHANGE AuditLog 기록 실패(이메일 변경은 성공): userId={}, error={}",
+                    userId, e.getMessage());
+        }
+
+        try {
+            refreshTokenService.revokeAllUserTokens(userId);
+        } catch (Exception e) {
+            log.warn("이메일 변경 후 refresh token 회수 실패(변경은 성공): userId={}, error={}",
+                    userId, e.getMessage());
+        }
+
+        log.info("마이페이지 이메일 변경 완료: userId={}, before={}, after={}",
+                userId, beforeMaskedEmail, afterMaskedEmail);
+
+        return getMyPageInfo(userId);
+    }
+
+    /**
+     * AuditLog metadata JSON 본문 생성 — 이메일 변경(Phase B). 정적 키 ({@code before},
+     * {@code after}, {@code phase}) 만 포함하므로 외부 JSON 라이브러리 의존 없이 안전하게
+     * 직렬화한다.
+     */
+    private String buildEmailChangeMetadataJson(String beforeMasked, String afterMasked) {
+        return "{\"phase\":\"B\",\"before\":"
+                + (beforeMasked == null ? "null" : "\"" + escapeJson(beforeMasked) + "\"")
+                + ",\"after\":"
+                + (afterMasked == null ? "null" : "\"" + escapeJson(afterMasked) + "\"")
+                + "}";
+    }
+
+    /**
+     * 마스킹된 이메일은 ASCII 만 포함하지만, 안전을 위해 {@code "}·{@code \\} 만 최소 이스케이프한다.
+     */
+    private String escapeJson(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     /**

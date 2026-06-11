@@ -178,7 +178,21 @@ export const MYPAGE_API = {
    * 본 엔드포인트 호출 전 {@code AUTH_API.SMS_SEND} 로 새 번호에 OTP 를 발송해 둔다.
    * 본문: {@code { newPhoneNumber, verificationCode }}.
    */
-  CHANGE_PHONE: '/api/v1/clients/profile/phone/change'
+  CHANGE_PHONE: '/api/v1/clients/profile/phone/change',
+
+  /**
+   * 이메일 변경(Phase B) 1단계 — 새 이메일로 6자리 OTP 발송.
+   * 본문: {@code { email }}.
+   */
+  EMAIL_SEND: '/api/v1/clients/profile/email/send-otp',
+
+  /**
+   * 이메일 변경(Phase B) 2단계 — OTP 검증 + tenant 내 unique + AuditLog + JWT/세션 강제 만료.
+   * 본문: {@code { newEmail, verificationCode }}.
+   * 성공 시 서버가 HttpSession + SecurityContext + refresh token 을 모두 무효화하므로
+   * 클라이언트는 즉시 로그아웃·로그인 화면 리다이렉트를 수행해야 한다.
+   */
+  CHANGE_EMAIL: '/api/v1/clients/profile/email/change'
 };
 
 // 역할별 프로필 API (표준화 2025-12-05: /api/v1/ 경로 적용)

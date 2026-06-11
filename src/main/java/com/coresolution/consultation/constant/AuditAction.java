@@ -53,6 +53,15 @@ public enum AuditAction {
             "USER_PHONE_CHANGE", "enums.AuditAction.USER_PHONE_CHANGE"),
 
     /**
+     * 마이페이지 이메일 변경(Phase B) — 본인이 이메일 OTP 검증을 거쳐 사용자 키(이메일)를
+     * 변경한 시점. 변경 직후 모든 활성 세션·refresh token 은 강제 무효화된다. before/after 는
+     * {@link com.coresolution.consultation.util.EmailLogMasking#maskForLog(String)} 결과로
+     * 마스킹 처리 (예: {@code j***@g***.com}) 후 metadata 에 기록한다.
+     */
+    USER_EMAIL_CHANGE(
+            "USER_EMAIL_CHANGE", "enums.AuditAction.USER_EMAIL_CHANGE"),
+
+    /**
      * OTP 발송 — 휴대전화 OTP 코드 발송 시점(push-first → SMS 폴백). 2026-06-11 PR #224 후속 도입.
      *
      * <p>metadata 적재 필드(SSOT):</p>

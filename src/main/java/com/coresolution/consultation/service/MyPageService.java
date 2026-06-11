@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.dto.MyPageEmailChangeRequest;
 import com.coresolution.consultation.dto.MyPagePhoneChangeRequest;
 import com.coresolution.consultation.dto.MyPageResponse;
 import com.coresolution.consultation.dto.MyPageUpdateRequest;
@@ -40,6 +41,31 @@ public interface MyPageService {
      *         {@code 400 Bad Request + DUPLICATE_PHONE 메시지} 로 매핑된다).
      */
     MyPageResponse changePhone(Long userId, MyPagePhoneChangeRequest request);
+
+    /**
+     * 이메일 변경(Phase B) — 이메일 OTP 검증 + 정규화 + tenant 내 중복 검사 + AuditLog 적재 +
+     * 세션/refresh token 강제 무효화.
+     *
+     * <p>요청 본문의 {@code verificationCode} 는 {@code POST /api/v1/clients/profile/email/send-otp}
+     * 발송 후 5분 이내 발급된 단일 사용 코드여야 한다. 검증 성공 시 OTP 는 즉시 폐기되며,
+     * 새 이메일은 {@code trim().toLowerCase()} 정규화된 형태로 저장된다.</p>
+     *
+     * <p><strong>보안 — 사용자 키 변경:</strong> 이메일은 JWT 의 {@code sub} 클레임 및 일부
+     * 로그인 경로의 식별자로 사용되므로, 변경 직후 본 메서드는
+     * {@link com.coresolution.consultation.service.RefreshTokenService#revokeAllUserTokens(Long)}
+     * 으로 모든 refresh token 을 회수한다. 호출 컨트롤러는 추가로 {@code HttpSession#invalidate()}
+     * 및 {@code SecurityContextHolder#clearContext()} 를 실행하여 재로그인을 강제한다.</p>
+     *
+     * <p><strong>가드:</strong> 본 메서드 외부 (특히 {@code UserServiceImpl#partialUpdate},
+     * 관리자 변경 흐름) 에서 raw {@code user.setEmail(...)} 호출은 차단된다 (Phase B 보안 결함
+     * 동봉 수정).</p>
+     *
+     * @param userId  본인 PK (세션 기준)
+     * @param request 새 이메일 + 6자리 OTP 코드
+     * @return 갱신된 마이페이지 응답
+     * @throws IllegalArgumentException 형식 위반·OTP 불일치·만료·tenant 내 중복
+     */
+    MyPageResponse changeEmail(Long userId, MyPageEmailChangeRequest request);
 
     /**
      * 프로필 이미지 업로드

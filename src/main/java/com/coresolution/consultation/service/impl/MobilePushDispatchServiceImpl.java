@@ -1043,7 +1043,8 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             Long userId,
             String title,
             String body,
-            String purposeCode) {
+            String purposeCode,
+            String otpToken) {
         if (userId == null) {
             return false;
         }
@@ -1073,6 +1074,11 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         data.put("tenantId", tid);
         data.put("purpose", purposeCode != null && !purposeCode.isBlank() ? purposeCode.trim() : "generic");
         data.put("title", safeTitle);
+        // 보안 강화 (2026-06-11 PR #224 후속): push body 평문 OTP 제거 + data.otpToken 으로
+        // 1회 조회(/api/v1/auth/otp/current) 토큰만 동봉. blank/null 이면 토큰 미동봉.
+        if (otpToken != null && !otpToken.isBlank()) {
+            data.put("otpToken", otpToken.trim());
+        }
         sanitizeDataStrings(data);
 
         List<Map<String, Object>> messages = new ArrayList<>();

@@ -1009,7 +1009,8 @@ public class AuthController extends BaseApiController {
     @PostMapping("/sms/send")
     public ResponseEntity<ApiResponse<Map<String, Object>>> sendSmsCode(
             @RequestBody Map<String, String> request,
-            HttpSession session) {
+            HttpSession session,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
         String phoneNumber = request.get("phoneNumber");
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
         OtpPurpose purpose = resolveOtpPurpose(request.get("purpose"));
@@ -1020,9 +1021,10 @@ public class AuthController extends BaseApiController {
 
         Long sessionUserId = resolveSessionUserId(session);
         String tenantId = TenantContextHolder.getTenantId();
+        String clientIp = httpRequest != null ? getClientIpAddress(httpRequest) : null;
 
         OtpDeliveryResult result = otpDeliveryService.deliver(
-                tenantId, sessionUserId, normalizedPhone, verificationCode, purpose);
+                tenantId, sessionUserId, normalizedPhone, verificationCode, purpose, clientIp);
         if (result.getChannel() == OtpDeliveryChannel.FAILED) {
             log.error("OTP 발송 실패: phone={} reason={}", normalizedPhone, result.getFailureReason());
             throw new RuntimeException("인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
@@ -1031,6 +1033,61 @@ public class AuthController extends BaseApiController {
         Map<String, Object> data = new HashMap<>();
         data.put("message", buildDeliveryMessage(result.getChannel()));
         data.put("deliveryChannel", result.getChannel().name());
+        return success(data);
+    }
+
+    /**
+     * Push 발송된 OTP 의 1회 조회 endpoint (2026-06-11 PR #224 후속).
+     *
+     * <p>{@code /api/v1/auth/sms/send} 가 push 채널로 발송되면 push body 에는 평문 OTP 가 포함되지
+     * 않고 data 페이로드의 {@code otpToken} 으로만 전달된다. expo-app 알림 핸들러는 사용자가 앱을 열어
+     * 인증 화면에 진입한 후 본 endpoint 를 호출해 OTP 6자리를 1회 조회한다.</p>
+     *
+     * <p>보안 정책:
+     * <ul>
+     *   <li>인증된 세션 사용자만 호출 가능 (HttpSession 의 currentUser 필수).</li>
+     *   <li>OtpToken 은 발급 당시 userId 와 일치해야 OTP 반환 — 다른 사용자가 토큰을 가로채도 무용.</li>
+     *   <li>TTL 5분, 단일 사용 — 한 번 조회되면 즉시 invalidate.</li>
+     *   <li>실패는 항상 404 로 통일 (존재 여부 oracle 방지).</li>
+     * </ul></p>
+     *
+     * @param otpToken push data 페이로드의 {@code otpToken}
+     * @param session  HTTP 세션 (인증 사용자 조회)
+     * @return 6자리 OTP {@code otp} 또는 404
+     */
+    @GetMapping("/otp/current")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCurrentOtp(
+            @RequestParam("otpToken") String otpToken,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || currentUser.getId() == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                            .success(false)
+                            .message("인증이 필요합니다.")
+                            .data(null)
+                            .build());
+        }
+        if (otpToken == null || otpToken.isBlank()) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                            .success(false)
+                            .message("OTP 를 조회할 수 없습니다.")
+                            .data(null)
+                            .build());
+        }
+        String otp = otpDeliveryService.fetchCurrentOtp(otpToken.trim(), currentUser.getId());
+        if (otp == null) {
+            log.info("/otp/current 조회 실패(만료/불일치/소비됨) userId={}", currentUser.getId());
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                            .success(false)
+                            .message("OTP 를 조회할 수 없습니다.")
+                            .data(null)
+                            .build());
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("otp", otp);
         return success(data);
     }
 

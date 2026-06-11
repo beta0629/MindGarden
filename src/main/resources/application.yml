@@ -489,6 +489,19 @@ sms:
     # solapi 전용 옵션(보통 기본값 사용)
     solapi:
       api-base-url: ${SOLAPI_API_BASE_URL:https://api.solapi.com}
+  # =====================================================
+  # [2026-06-11 PR #224 후속] SmsGatewayService SSOT 의 NCP SENS 정식 호출용 4종 키.
+  # - SmsGatewayServiceImpl#isStubMode() 가 4종 모두 채워졌을 때만 false → 정식 발송 경로 진입.
+  # - 일부 누락 시 stub 모드 유지(개발/테스트 안전). 운영 profile 에서는 ERROR 로그.
+  # - 운영 GitHub Secrets 4종 등록 + 워크플로 자동 주입은 별도 step 에서 처리.
+  # - 가이드: docs/운영반영/SMS_GATEWAY_NCP_SENS_SETUP_GUIDE.md
+  # =====================================================
+  gateway:
+    ncp:
+      access-key: ${NCP_ACCESS_KEY:}
+      secret-key: ${NCP_SECRET_KEY:}
+      service-id: ${NCP_SMS_SERVICE_ID:}
+      sender-number: ${NCP_SMS_SENDER_NUMBER:}
 
 # OpenAI API 설정 (프로파일별 설정에서 기본값 제공)
 openai:

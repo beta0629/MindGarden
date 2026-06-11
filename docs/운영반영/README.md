@@ -11,6 +11,7 @@
 
 - **[POST_2026_06_11_DEPLOYMENT_OPERATIONS_GUIDE.md](./POST_2026_06_11_DEPLOYMENT_OPERATIONS_GUIDE.md)** — 2026-06-11 PR #213·#214·#215·#216·#217·#218·#219 배포 후 자정 모니터링·P1 데이터 보정·Secrets 등록·Prometheus 알람 통합 가이드
 - **[MIND_GARDEN_LEGACY_CLEANUP_GUIDE.md](./MIND_GARDEN_LEGACY_CLEANUP_GUIDE.md)** — mind_garden 스키마 잔존 객체 DROP/RENAME 절차 (운영 DBA 수동)
+- **[WEB_GOOGLE_OAUTH_A2_MIGRATION_GUIDE.md](./WEB_GOOGLE_OAUTH_A2_MIGRATION_GUIDE.md)** — Web Google A-2 server-side auth-code 흐름 운영자 Console 등록 정책 (apex 단일 redirect URI, JavaScript origins 불필요)
 
 ## 회의·의견서 목록
 

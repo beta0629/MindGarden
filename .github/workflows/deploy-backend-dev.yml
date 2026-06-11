@@ -69,6 +69,12 @@ jobs:
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
+      # OAuth 4종 표준화 (옵션 B′, 2026-06-11): 외부 OAuth Console 등록 콜백 URL 목록.
+      # 콤마 구분, 각 환경별 apex 콜백을 모두 포함. 미주입 시 BE 검증 graceful skip.
+      KAKAO_REGISTERED_URLS: ${{ secrets.KAKAO_REGISTERED_URLS }}
+      NAVER_REGISTERED_URLS: ${{ secrets.NAVER_REGISTERED_URLS }}
+      GOOGLE_REGISTERED_URLS: ${{ secrets.GOOGLE_REGISTERED_URLS }}
+      APPLE_REGISTERED_URLS: ${{ secrets.APPLE_REGISTERED_URLS }}
 
     steps:
     - name: 📥 코드 체크아웃
@@ -303,7 +309,8 @@ jobs:
         # appleboy/ssh-action envs: 워크플로 환경변수를 SSH 세션으로 export (P0 hotfix 2026-06-08).
         # 실제 dev.env 갱신은 운영자 1회 작업(가이드 §1.1)이며, 본 매핑은 후속 자동화·진단 스크립트용.
         # GOOGLE_* 3종은 P0 hotfix 2026-06-11 추가 — 후속 자동 주입 step 이 같은 패턴으로 사용.
-        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI
+        # *_REGISTERED_URLS 4종은 OAuth 4종 표준화 (옵션 B′) 추가 — 후속 자동 주입 step 이 동일 패턴으로 사용.
+        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS
         script: |
           cd /var/www/mindgarden-dev
           
@@ -727,6 +734,102 @@ jobs:
           fi
     # ============================================================================
     # [/P0 hotfix 2026-06-11]
+    # ============================================================================
+
+    # ============================================================================
+    # [OAuth 4종 표준화 옵션 B′, 2026-06-11] *_REGISTERED_URLS env 자동 주입 + 검증 (개발)
+    # GitHub Secrets(KAKAO/NAVER/GOOGLE/APPLE_REGISTERED_URLS) → /etc/mindgarden/dev.env 멱등 갱신.
+    # OAuth2Controller#assertRegisteredCallbackUrl 가 동적 redirect_uri 와 일치 여부 검증·로깅.
+    # 미주입 시 BE 검증 graceful skip — 기존 4종 callback 동작은 그대로 유지.
+    # 운영(deploy-production.yml) 의 동일 step 과 패턴 일치 — dev 는 단일 systemd unit.
+    # ============================================================================
+    - name: 🔗 OAuth 4종 REGISTERED_URLS env 자동 주입 + 검증
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS
+        script: |
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          UNIT=mindgarden-dev.service
+          REGISTERED_KEYS="KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS"
+
+          # 0) 사전 검증 — 4종 중 비어있는 것 카운트 (전체 비면 step 종료, 일부면 채워진 것만 갱신)
+          MISSING_SECRET=0
+          for k in $REGISTERED_KEYS; do
+            eval "v=\${$k}"
+            if [ -z "$v" ]; then
+              MISSING_SECRET=$((MISSING_SECRET+1))
+            fi
+          done
+          if [ "$MISSING_SECRET" -ge 4 ]; then
+            echo "::notice title=*_REGISTERED_URLS env skip::GitHub Secrets 의 4종 *_REGISTERED_URLS 가 모두 비어 있어 dev.env 갱신을 skip 합니다. BE 검증은 graceful skip 으로 기존 동작 유지. 등록 권장: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 0
+          fi
+          if [ "$MISSING_SECRET" -gt 0 ]; then
+            echo "::notice title=*_REGISTERED_URLS partial::4종 중 $MISSING_SECRET 개가 비어 있어 빈 키는 graceful skip 됩니다 (BE 검증도 skip). 채워진 키만 dev.env 에 반영합니다."
+          fi
+
+          # 1) 파일 존재 보장 + 백업
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          # 2) 멱등 KEY="VALUE" 갱신 (운영 워크플로와 동일 로직)
+          update_env() {
+            local key="$1"
+            local value="$2"
+            local escaped_value
+            escaped_value=$(printf '%s' "$value" | sed -e 's/[\\&|]/\\&/g')
+            if sudo grep -qE "^[[:space:]]*${key}=" "$DEV_ENV_FILE" 2>/dev/null; then
+              sudo sed -i "s|^[[:space:]]*${key}=.*|${key}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+            else
+              printf '%s="%s"\n' "$key" "$value" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+            fi
+          }
+
+          echo "🔐 dev.env *_REGISTERED_URLS 4종 멱등 갱신 시작 (빈 값은 skip)"
+          for k in $REGISTERED_KEYS; do
+            eval "v=\${$k}"
+            if [ -n "$v" ]; then
+              update_env "$k" "$v"
+            fi
+          done
+
+          # 3) 권한 보호
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+
+          # 4) 값 노출 없이 길이만 표시 (콜백 URL 은 비밀이 아니지만 일관 표시)
+          echo "✅ dev.env *_REGISTERED_URLS 갱신 완료 — 길이만 표시:"
+          sudo grep -E "^(KAKAO|NAVER|GOOGLE|APPLE)_REGISTERED_URLS=" "$DEV_ENV_FILE" \
+            | awk -F= '{key=$1; rest=substr($0, length(key)+2); gsub(/^"|"$/, "", rest); printf "   %s = (%d chars)\n", key, length(rest)}'
+
+          # 5) systemd daemon-reload + 단일 unit 재시작
+          sudo systemctl daemon-reload
+          echo "🔄 ${UNIT} 재시작"
+          sudo systemctl restart "$UNIT" || echo "::warning::${UNIT} 재시작 실패 (계속 진행)"
+
+          # 6) 헬스 확인 (15초 대기)
+          sleep 15
+          DEV_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8080/actuator/health 2>/dev/null || echo "000")
+          echo "🏥 헬스: dev(8080)=$DEV_HEALTH"
+          if [ "$DEV_HEALTH" != "200" ]; then
+            echo "::warning title=BE 헬스 비정상::15초 후에도 8080 이 200 이 아닙니다. 후속 헬스체크 step 에서 재대기·재검증 합니다."
+          fi
+    # ============================================================================
+    # [/OAuth 4종 표준화 옵션 B′, 2026-06-11]
     # ============================================================================
 
     # ============================================================================

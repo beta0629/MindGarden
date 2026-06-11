@@ -153,6 +153,22 @@ spring:
   #           scope:
   #             - basic
   #           client-name: Instagram
+  # ────────────────────────────────────────────────────────────────────────────
+  # OAuth 4종(Naver/Kakao/Google/Apple) registered-urls 검증 (옵션 B′, 2026-06-11)
+  # ────────────────────────────────────────────────────────────────────────────
+  # 외부 OAuth Console 에 등록된 콜백 URL 목록을 콤마 구분으로 주입한다.
+  # OAuth2Controller#assertRegisteredCallbackUrl 가 동적으로 계산한 redirect_uri
+  # 와의 일치 여부를 로깅해 운영 환경 콜백 매핑 누락을 조기에 발견한다.
+  # 값 미주입(빈 문자열) 시 검증을 graceful skip 해 기존 동작을 유지한다.
+  # 환경별 실제 값은 systemd EnvironmentFile (예 /etc/mindgarden/mindgarden.env)
+  # 또는 GitHub Actions secrets 로만 주입 — 저장소에는 도메인 하드코딩 금지.
+  security:
+    oauth2:
+      domain:
+        naver-registered-urls: ${NAVER_REGISTERED_URLS:}
+        kakao-registered-urls: ${KAKAO_REGISTERED_URLS:}
+        google-registered-urls: ${GOOGLE_REGISTERED_URLS:}
+        apple-registered-urls: ${APPLE_REGISTERED_URLS:}
 
 # MindGarden 공개 API·계정 연동 보안(이메일 발송 쿨다운·일일 상한, IP 레이트리밋 등)
 # 프로파일별로 mindgarden.security.* 를 오버라이드할 수 있습니다.

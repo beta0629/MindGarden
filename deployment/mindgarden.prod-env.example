@@ -23,6 +23,30 @@ KAKAO_CLIENT_SECRET=
 NAVER_CLIENT_ID=
 NAVER_CLIENT_SECRET=
 
+# ────────────────────────────────────────────────────────────────────────────
+# OAuth 4종(Kakao/Naver/Google/Apple) 등록된 callback URL 검증 (옵션 B′, 2026-06-11)
+# ────────────────────────────────────────────────────────────────────────────
+# 각 OAuth Console (Kakao Developers / Naver Developers / Google Cloud Console /
+# Apple Developer) 에 등록한 콜백 URL 목록을 콤마 구분으로 주입한다.
+# OAuth2Controller#assertRegisteredCallbackUrl 가 동적으로 계산한 redirect_uri
+# 와의 일치 여부를 로깅해 운영 환경 콜백 매핑 누락을 조기에 발견한다.
+# 값 미주입(빈 문자열) 시 검증을 graceful skip 해 기존 동작을 유지한다.
+#
+# 운영(core-solution.co.kr) + 개발(dev.core-solution.co.kr) apex 콜백 1개씩 등록:
+# - Kakao/Naver: legacy path `/api/auth/{provider}/callback`
+#   (Kakao Developers / Naver Developers Console 등록값과 정확히 일치해야 함)
+# - Google/Apple: 표준 path `/api/v1/auth/{provider}/callback`
+#   (Google Cloud Console Authorized redirect URIs / Apple Service ID Return URLs 등록값)
+#
+# KAKAO_REGISTERED_URLS=https://core-solution.co.kr/api/auth/kakao/callback,https://dev.core-solution.co.kr/api/auth/kakao/callback
+# NAVER_REGISTERED_URLS=https://core-solution.co.kr/api/auth/naver/callback,https://dev.core-solution.co.kr/api/auth/naver/callback
+# GOOGLE_REGISTERED_URLS=https://core-solution.co.kr/api/v1/auth/google/callback,https://dev.core-solution.co.kr/api/v1/auth/google/callback
+# APPLE_REGISTERED_URLS=https://core-solution.co.kr/api/v1/auth/apple/callback,https://dev.core-solution.co.kr/api/v1/auth/apple/callback
+KAKAO_REGISTERED_URLS=
+NAVER_REGISTERED_URLS=
+GOOGLE_REGISTERED_URLS=
+APPLE_REGISTERED_URLS=
+
 # Google Web (server-side auth-code) — A-2 마이그레이션 (2026-06-10)
 # - Google Cloud Console: https://console.cloud.google.com/apis/credentials → OAuth 2.0 Client IDs (Web)
 # - Authorized JavaScript origins: 테넌트 서브도메인 + apex(둘 다 필요).

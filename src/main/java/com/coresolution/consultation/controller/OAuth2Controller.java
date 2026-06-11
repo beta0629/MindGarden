@@ -146,6 +146,19 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.domain.naver-registered-urls:${NAVER_REGISTERED_URLS:}}")
     private String naverRegisteredUrls;
 
+    // OAuth 4종 표준화 (옵션 B′, 2026-06-11): Kakao/Google/Apple 도 Naver 와 동일한 registered-urls
+    // 검증 패턴을 적용한다. 외부 OAuth Console 에 등록된 콜백 URL 과 BE 가 동적으로 계산한
+    // redirect_uri 의 일치 여부를 가시화해 운영 환경별 콜백 매핑 누락을 조기에 발견한다.
+    // 모든 키는 미주입(빈 문자열) 시 graceful skip — 기존 4종 callback 동작은 그대로 유지된다.
+    @Value("${spring.security.oauth2.domain.kakao-registered-urls:${KAKAO_REGISTERED_URLS:}}")
+    private String kakaoRegisteredUrls;
+
+    @Value("${spring.security.oauth2.domain.google-registered-urls:${GOOGLE_REGISTERED_URLS:}}")
+    private String googleRegisteredUrls;
+
+    @Value("${spring.security.oauth2.domain.apple-registered-urls:${APPLE_REGISTERED_URLS:}}")
+    private String appleRegisteredUrls;
+
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
 
@@ -174,6 +187,68 @@ public class OAuth2Controller extends BaseApiController {
     @PostConstruct
     public void init() {
         log.info("🔧 OAuth2Controller 초기화 - frontendBaseUrl: {}", frontendBaseUrl);
+    }
+
+    /**
+     * 콤마 구분된 등록 URL 문자열을 정규화된 {@link List} 로 파싱한다.
+     *
+     * <p>OAuth 4종(Naver/Kakao/Google/Apple) 의 {@code *_REGISTERED_URLS} 환경변수는 콤마 구분
+     * 형식으로 주입된다. 본 helper 는 split 후 trim·빈 항목 제거를 거쳐 비교 가능한 리스트로
+     * 변환한다. 입력이 null·빈 문자열이면 빈 리스트를 반환한다(graceful skip).</p>
+     *
+     * @param registeredUrls 콤마 구분 URL 목록 (env 미주입 시 빈 문자열)
+     * @return 정규화된 URL 리스트 (등록 없음 시 빈 리스트)
+     */
+    private List<String> parseRegisteredCallbackUrls(String registeredUrls) {
+        if (registeredUrls == null || registeredUrls.isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        return Arrays.stream(registeredUrls.split(","))
+                .map(String::trim)
+                .filter(url -> !url.isEmpty())
+                .toList();
+    }
+
+    /**
+     * 동적으로 계산한 OAuth callback {@code redirect_uri} 가 환경변수 {@code *_REGISTERED_URLS} 에
+     * 등록된 URL 목록에 포함되는지 검증/로깅한다.
+     *
+     * <p>4종 provider(Naver/Kakao/Google/Apple) 의 콜백 핸들러 시작 부분에서 동일 패턴으로 호출해
+     * 외부 OAuth Console 등록값과 BE 가 동적으로 계산한 redirect_uri 의 일치 여부를 가시화한다.
+     * registered-urls 가 비어 있으면(env 미주입) 검증을 skip 해 graceful fallback 으로 기존 동작을
+     * 유지한다 — 본 helper 는 흐름을 차단하지 않고 경고 로그만 남긴다.</p>
+     *
+     * <p>옵션 B′ (2026-06-11): callback path 단일화 없이 dual-mount({@code /api/auth/}, {@code /api/v1/auth/})
+     * 를 그대로 유지하면서 외부 Console 등록값과의 정합성을 4종 모두 동일 패턴으로 검증한다.</p>
+     *
+     * @param redirectUri    BE 가 동적으로 계산한 redirect_uri (절대 URL)
+     * @param registeredUrls 콤마 구분된 등록 URL 목록 (env 미주입 시 빈 문자열)
+     * @param providerName   로그 식별용 provider 이름 (NAVER/KAKAO/GOOGLE/APPLE)
+     * @return registeredUrls 가 비어 있거나 redirectUri 가 목록에 포함되면 true, 아니면 false
+     */
+    boolean assertRegisteredCallbackUrl(String redirectUri, String registeredUrls,
+            String providerName) {
+        if (registeredUrls == null || registeredUrls.isBlank()) {
+            log.debug("{} OAuth callback - registered-urls 미주입, redirect_uri 검증 skip: {}",
+                    providerName, redirectUri);
+            return true;
+        }
+        if (redirectUri == null || redirectUri.isBlank()) {
+            log.warn("⚠️ {} OAuth callback - redirect_uri 가 비어 있어 registered-urls 검증 불가",
+                    providerName);
+            return false;
+        }
+        List<String> registeredList = parseRegisteredCallbackUrls(registeredUrls);
+        boolean matched = registeredList.contains(redirectUri);
+        if (matched) {
+            log.info("{} OAuth callback - redirect_uri 가 registered-urls 목록에 포함됨: {}",
+                    providerName, redirectUri);
+        } else {
+            log.warn(
+                    "⚠️ {} OAuth callback - redirect_uri 가 registered-urls 목록에 없음. 외부 Console 등록값과 불일치 가능성. redirect_uri={}, registered={}",
+                    providerName, redirectUri, registeredList);
+        }
+        return matched;
     }
 
     /**
@@ -2090,8 +2165,9 @@ public class OAuth2Controller extends BaseApiController {
                             savedRedirectUri, callbackRedirectUri, session.getId());
 
                     // 네이버 개발자 센터에 등록된 URL 목록 (설정 파일에서 읽어옴)
-                    List<String> registeredUrls = Arrays.stream(naverRegisteredUrls.split(","))
-                            .map(String::trim).filter(url -> !url.isEmpty()).toList();
+                    // OAuth 4종 표준화(옵션 B′): 동일 헬퍼로 검증 로깅 우선 수행 (흐름 차단 없음)
+                    assertRegisteredCallbackUrl(callbackRedirectUri, naverRegisteredUrls, "NAVER");
+                    List<String> registeredUrls = parseRegisteredCallbackUrls(naverRegisteredUrls);
                     log.debug("네이버 등록된 URL 목록: {}", registeredUrls);
 
                     if (savedRedirectUri != null && !savedRedirectUri.isEmpty()) {
@@ -2984,6 +3060,10 @@ public class OAuth2Controller extends BaseApiController {
                         .build();
             }
 
+            // OAuth 4종 표준화(옵션 B′, 2026-06-11): KAKAO_REGISTERED_URLS 와 동적 redirect_uri 정합성 검증.
+            // env 미주입 시 graceful skip 으로 기존 동작 유지.
+            assertRegisteredCallbackUrl(actualRedirectUri, kakaoRegisteredUrls, "KAKAO");
+
             // redirectUri를 전달하여 인증 처리
             OAuth2Service kakaoService = oauth2FactoryService.getOAuth2Service("KAKAO");
             SocialLoginResponse response;
@@ -3533,6 +3613,10 @@ public class OAuth2Controller extends BaseApiController {
                         .build();
             }
 
+            // OAuth 4종 표준화(옵션 B′, 2026-06-11): GOOGLE_REGISTERED_URLS 와 동적 redirect_uri 정합성 검증.
+            // env 미주입 시 graceful skip 으로 기존 동작 유지.
+            assertRegisteredCallbackUrl(actualRedirectUri, googleRegisteredUrls, "GOOGLE");
+
             OAuth2Service googleService = oauth2FactoryService.getOAuth2Service("GOOGLE");
             SocialLoginResponse response;
             if (googleService instanceof com.coresolution.consultation.service.impl.GoogleOAuth2ServiceImpl googleServiceImpl) {
@@ -4060,6 +4144,10 @@ public class OAuth2Controller extends BaseApiController {
                         + "&provider=APPLE")
                         .build();
             }
+
+            // OAuth 4종 표준화(옵션 B′, 2026-06-11): APPLE_REGISTERED_URLS 와 동적 redirect_uri 정합성 검증.
+            // env 미주입 시 graceful skip 으로 기존 동작 유지.
+            assertRegisteredCallbackUrl(actualRedirectUri, appleRegisteredUrls, "APPLE");
 
             // Apple 첫 가입 시 user JSON 에 이름이 포함된다 — 콜백 1회성. AppleSignInRequest 로 승계.
             String givenName = null;

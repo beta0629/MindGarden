@@ -135,7 +135,35 @@ public interface UserRepository extends BaseRepository<User, Long> {
             + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
             + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
     boolean existsByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
-    
+
+    /**
+     * 본인 PK 를 제외한 tenant 내 이메일 중복 여부.
+     *
+     * <p>마이페이지 이메일 변경(Phase B) 흐름에서 사용한다. {@link #existsByTenantIdAndEmail}
+     * 과 동일한 lifecycle 필터(ACTIVE/SUSPENDED/WITHDRAWAL_PENDING/DORMANT)를 적용하되,
+     * 본인 PK({@code excludeUserId}) 는 결과에서 제외해 "동일 이메일 재입력" 을 no-op 으로
+     * 허용하기 위함이다. 익명화된 행(ANONYMIZED, HARD_DELETED, DELETED_BY_ADMIN) 은
+     * 검색에서 제외되어 같은 tenant 내 재가입을 보장한다.</p>
+     *
+     * @param tenantId      tenant 식별자
+     * @param email         정규화된 이메일({@code trim().toLowerCase()})
+     * @param excludeUserId 검사에서 제외할 사용자 PK (본인)
+     * @return 본인을 제외하고 동일 이메일을 사용 중인 활성-유사 사용자가 존재하면 true
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
+            + "WHERE u.tenantId = :tenantId AND u.email = :email "
+            + "AND u.id <> :excludeUserId "
+            + "AND u.isDeleted = false "
+            + "AND u.lifecycleState IN "
+            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
+            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
+            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
+            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
+    boolean existsByTenantIdAndEmailAndIdNot(
+            @Param("tenantId") String tenantId,
+            @Param("email") String email,
+            @Param("excludeUserId") Long excludeUserId);
+
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 ID 중복 검사!
      * 표준화 2025-12-08: username -> userId

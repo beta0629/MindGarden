@@ -3,9 +3,9 @@ import ProfileImageUpload from './ProfileImageUpload';
 import NotificationChannelPreferenceSection from './NotificationChannelPreferenceSection';
 import AddressInput from './AddressInput';
 import PhoneChangeModal from './PhoneChangeModal';
+import EmailChangeModal from './EmailChangeModal';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { sessionManager } from '../../../utils/sessionManager';
-import notificationManager from '../../../utils/notification';
 import { ROLE_DISPLAY_LABELS } from '../../../constants/mypageUi';
 import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
@@ -67,6 +67,7 @@ const ProfileSection = ({
   const [genderOptions, setGenderOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [isPhoneChangeOpen, setIsPhoneChangeOpen] = useState(false);
+  const [isEmailChangeOpen, setIsEmailChangeOpen] = useState(false);
 
   const openPhoneChangeModal = useCallback(() => setIsPhoneChangeOpen(true), []);
   const closePhoneChangeModal = useCallback(() => setIsPhoneChangeOpen(false), []);
@@ -84,6 +85,21 @@ const ProfileSection = ({
     },
     [onFormDataChange, onReloadProfile]
   );
+
+  const openEmailChangeModal = useCallback(() => setIsEmailChangeOpen(true), []);
+  const closeEmailChangeModal = useCallback(() => setIsEmailChangeOpen(false), []);
+  // Phase B 보안 요건: 이메일은 사용자 키이므로 변경 직후 서버가 세션·JWT 를 모두 무효화한다.
+  // FE 도 즉시 로그아웃 후 /login 으로 강제 이동하여 토큰 재사용을 차단한다.
+  const handleEmailChangeSuccess = useCallback(async () => {
+    try {
+      await sessionManager.logout();
+    } catch (logoutError) {
+      console.warn('이메일 변경 후 로그아웃 처리 중 오류 — 안전 리다이렉트로 진행:', logoutError);
+    }
+    if (typeof window !== 'undefined') {
+      window.location.assign('/login');
+    }
+  }, []);
 
   const role = displayUser?.role;
   const roleLabel = role ? ROLE_DISPLAY_LABELS[role] || role : '—';
@@ -334,11 +350,10 @@ const ProfileSection = ({
                   type="button"
                   className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() =>
-                    notificationManager.show('이메일 변경은 보안 절차 준비 중입니다.', 'info')
-                  }
+                  onClick={openEmailChangeModal}
                   variant="outline"
                   preventDoubleClick={false}
+                  aria-label="이메일 변경"
                 >
                   변경
                 </MGButton>
@@ -448,6 +463,12 @@ const ProfileSection = ({
         isOpen={isPhoneChangeOpen}
         onClose={closePhoneChangeModal}
         onSuccess={handlePhoneChangeSuccess}
+      />
+
+      <EmailChangeModal
+        isOpen={isEmailChangeOpen}
+        onClose={closeEmailChangeModal}
+        onSuccess={handleEmailChangeSuccess}
       />
     </>
   );

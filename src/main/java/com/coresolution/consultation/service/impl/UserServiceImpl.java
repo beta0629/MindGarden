@@ -173,7 +173,18 @@ public class UserServiceImpl implements UserService {
             existingUser.setName(updateData.getName());
         }
         if (updateData.getEmail() != null) {
-            existingUser.setEmail(updateData.getEmail());
+            // Phase B 보안 결함 동봉 수정 (2026-06-11):
+            // 이메일은 사용자 키이므로 OTP 검증·AuditLog·JWT 회수가 동반된 전용 흐름
+            // (MyPageServiceImpl#changeEmail) 외에서는 raw setEmail 을 차단한다.
+            // 동일 값(정규화 후 일치)을 다시 보낸 경우만 no-op 으로 허용한다.
+            String incomingEmail = updateData.getEmail() == null ? null : updateData.getEmail().trim().toLowerCase();
+            String currentEmail = existingUser.getEmail() == null ? null : existingUser.getEmail().trim().toLowerCase();
+            boolean attemptingChange = incomingEmail != null && !incomingEmail.isEmpty()
+                    && (currentEmail == null || !incomingEmail.equals(currentEmail));
+            if (attemptingChange) {
+                throw new IllegalStateException(
+                        "이메일 변경은 마이페이지 이메일 변경 흐름(MyPageService#changeEmail)을 사용해야 합니다.");
+            }
         }
         if (updateData.getPhone() != null) {
             existingUser.setPhone(updateData.getPhone());

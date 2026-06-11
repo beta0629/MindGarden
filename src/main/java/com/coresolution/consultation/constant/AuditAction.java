@@ -50,7 +50,16 @@ public enum AuditAction {
      * before/after 는 마스킹 처리(예: {@code 010-****-5678}) 후 metadata 에 기록한다.
      */
     USER_PHONE_CHANGE(
-            "USER_PHONE_CHANGE", "enums.AuditAction.USER_PHONE_CHANGE");
+            "USER_PHONE_CHANGE", "enums.AuditAction.USER_PHONE_CHANGE"),
+
+    /**
+     * 마이페이지 이메일 변경(Phase B) — 본인이 이메일 OTP 검증을 거쳐 사용자 키(이메일)를
+     * 변경한 시점. 변경 직후 모든 활성 세션·refresh token 은 강제 무효화된다. before/after 는
+     * {@link com.coresolution.consultation.util.EmailLogMasking#maskForLog(String)} 결과로
+     * 마스킹 처리 (예: {@code j***@g***.com}) 후 metadata 에 기록한다.
+     */
+    USER_EMAIL_CHANGE(
+            "USER_EMAIL_CHANGE", "enums.AuditAction.USER_EMAIL_CHANGE");
 
     private final String code;
     private final String messageKey;

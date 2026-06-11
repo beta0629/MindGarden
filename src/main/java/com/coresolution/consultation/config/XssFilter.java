@@ -27,6 +27,31 @@ import lombok.extern.slf4j.Slf4j;
 @Order(2)
 public class XssFilter implements Filter {
 
+    /**
+     * OAuth 콜백/authorize 경로에서는 {@link XssRequestWrapper} 적용을 건너뛴다.
+     *
+     * <p>이유: {@link #sanitizeXss(String)} 의 HTML 엔티티 이스케이프가
+     * Google authorization code (예: {@code 4/0Adk...}) 의 슬래시(/) 를
+     * {@code &#x2F;} 로 치환하면 Google {@code /token} 이
+     * {@code "Malformed auth code."} 로 거부한다.
+     * (디버거 9067073e 확정 — PR #204 server-side auth-code 흐름 도입 이후 회귀)</p>
+     *
+     * <p>XSS 본질 가드(스크립트/이벤트 핸들러 등 정규식 차단)는 다른 모든 경로에서 그대로 유지된다.
+     * OAuth provider 가 응답하는 {@code code} / {@code state} 는 본질적으로 사용자 입력이 아니며
+     * 후속 처리(컨트롤러)에서 검증·소비된다.</p>
+     *
+     * <p>매칭 예:
+     * <ul>
+     *   <li>{@code /api/v1/auth/google/callback}, {@code /api/auth/google/callback}</li>
+     *   <li>{@code /api/v1/auth/kakao/callback}, {@code /api/v1/auth/naver/callback}</li>
+     *   <li>{@code /api/v1/auth/oauth/apple/callback}</li>
+     *   <li>{@code /api/v1/auth/oauth2/google/authorize} 등 각 provider authorize</li>
+     *   <li>{@code /api/v1/auth/oauth2/callback} (프론트 공통 콜백)</li>
+     * </ul></p>
+     */
+    private static final Pattern OAUTH_BYPASS_PATH_PATTERN =
+            Pattern.compile("^/api/(v1/)?auth/.*/(callback|authorize)$");
+
     // XSS 공격 패턴
     private static final Pattern[] XSS_PATTERNS = {
         Pattern.compile("<script[^>]*>.*?</script>", Pattern.CASE_INSENSITIVE),
@@ -61,12 +86,24 @@ public class XssFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        
+
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        
+        String requestUri = httpRequest.getRequestURI();
+
+        // OAuth 콜백/authorize 경로는 sanitize 우회 (OAUTH_BYPASS_PATH_PATTERN JavaDoc 참고).
+        // Google authorization code 의 슬래시(/) 가 &#x2F; 로 변형되어
+        // "Malformed auth code." 로 거부되던 P0 회귀 방지.
+        if (requestUri != null && OAUTH_BYPASS_PATH_PATTERN.matcher(requestUri).matches()) {
+            if (log.isDebugEnabled()) {
+                log.debug("XSS 필터 우회 - OAuth 콜백/authorize 경로: {}", requestUri);
+            }
+            chain.doFilter(request, response);
+            return;
+        }
+
         // XSS 필터링된 요청 래퍼 생성
         XssRequestWrapper wrappedRequest = new XssRequestWrapper(httpRequest);
-        
+
         chain.doFilter(wrappedRequest, response);
     }
 

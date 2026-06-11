@@ -1302,4 +1302,87 @@ class MobilePushDispatchServiceImplTest {
                 anyString(), anyList());
         verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
     }
+
+    @Test
+    @DisplayName("dispatchAuthenticationOtp — 활성 토큰 + Expo ok ticket → true, dedup·카테고리 게이트 우회")
+    void dispatchAuthenticationOtp_success_returnsTrue_andSkipsDedupCategoryGates() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[otp-ok]");
+        token.setUserId(42L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(42L)))).thenReturn(List.of(token));
+
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\",\"id\":\"r-otp\"}]}");
+
+        boolean sent = mobilePushDispatchService.dispatchAuthenticationOtp(
+                "tenant-a", 42L, "[MindGarden] 인증번호", "인증번호: 123456 (5분 내 입력)", "phone_change");
+
+        assertThat(sent).isTrue();
+        // OTP 는 카테고리·dedup·인박스 모두 우회해야 한다.
+        verify(mobilePushSettingsRepository, never()).findByTenantIdAndUserIdAndIsDeletedFalse(anyString(), any());
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(mobilePushInboxPersister, never()).persistForRecipient(
+                anyString(), any(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("dispatchAuthenticationOtp — Expo access token 미설정 → false, 토큰 조회·POST 없음")
+    void dispatchAuthenticationOtp_whenAccessTokenMissing_returnsFalse() {
+        when(expoPushProperties.getAccessToken()).thenReturn("");
+
+        boolean sent = mobilePushDispatchService.dispatchAuthenticationOtp(
+                "tenant-a", 42L, "title", "body", "phone_change");
+
+        assertThat(sent).isFalse();
+        verify(mobilePushTokenRepository, never()).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                anyString(), anyList());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("dispatchAuthenticationOtp — 활성 토큰 없음 → false, Expo POST 없음")
+    void dispatchAuthenticationOtp_whenNoActiveToken_returnsFalse() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(99L)))).thenReturn(List.of());
+
+        boolean sent = mobilePushDispatchService.dispatchAuthenticationOtp(
+                "tenant-a", 99L, "title", "body", "phone_change");
+
+        assertThat(sent).isFalse();
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("dispatchAuthenticationOtp — payload data.type = otp_delivery + purpose 포함")
+    void dispatchAuthenticationOtp_payloadIncludesOtpType_andPurpose() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushToken token = new MobilePushToken();
+        token.setPushToken("ExponentPushToken[otp-payload]");
+        token.setUserId(7L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(7L)))).thenReturn(List.of(token));
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\",\"id\":\"r1\"}]}");
+
+        mobilePushDispatchService.dispatchAuthenticationOtp(
+                "tenant-a", 7L, "[MindGarden] 인증번호", "인증번호: 987654 (5분 내 입력)", "phone_change");
+
+        ArgumentCaptor<org.springframework.http.HttpEntity> entityCaptor =
+                ArgumentCaptor.forClass(org.springframework.http.HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), entityCaptor.capture(), eq(String.class));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> messages = (List<Map<String, Object>>) entityCaptor.getValue().getBody();
+        assertThat(messages).hasSize(1);
+        @SuppressWarnings("unchecked")
+        Map<String, String> dataPayload = (Map<String, String>) messages.get(0).get("data");
+        assertThat(dataPayload).containsEntry("type", MobilePushCanonicalTypes.OTP_DELIVERY);
+        assertThat(dataPayload).containsEntry("purpose", "phone_change");
+    }
 }

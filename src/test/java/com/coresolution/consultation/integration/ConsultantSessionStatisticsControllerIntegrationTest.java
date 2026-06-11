@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import com.coresolution.consultation.dto.response.ConsultantSessionStatisticsBuc
 import com.coresolution.consultation.dto.response.ConsultantSessionStatisticsResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ConsultantCompletedSessionStatisticsService;
+import com.coresolution.core.context.TenantContextHolder;
 
 /**
  * {@link com.coresolution.consultation.controller.ConsultantSessionStatisticsController} 통합 테스트.
@@ -37,13 +39,20 @@ import com.coresolution.consultation.service.ConsultantCompletedSessionStatistic
 @DisplayName("ConsultantSessionStatisticsController API 통합 테스트")
 class ConsultantSessionStatisticsControllerIntegrationTest {
 
-    private static final String TENANT = "tenant-session-stat-" + java.util.UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 5자 = 32+5=37 → 31자만 잘라 합계 36자.
+    private static final String TENANT = "stat-"
+            + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 31);
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
     private ConsultantCompletedSessionStatisticsService consultantCompletedSessionStatisticsService;
+
+    @AfterEach
+    void clearTenantContext() {
+        TenantContextHolder.clear();
+    }
 
     private User consultant(long id) {
         User u = new User();

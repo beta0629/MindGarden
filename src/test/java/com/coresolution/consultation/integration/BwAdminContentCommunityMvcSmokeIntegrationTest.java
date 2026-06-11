@@ -54,7 +54,9 @@ import org.springframework.transaction.annotation.Transactional;
 @DisplayName("BW-3/4/5 어드민·명상 API MockMvc 스모크")
 class BwAdminContentCommunityMvcSmokeIntegrationTest {
 
-    private static final String TEST_TENANT_ID = "tenant-bw-smoke-" + UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 4자 = 36자.
+    private static final String TEST_TENANT_ID = "bws-"
+            + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
 
     @Autowired
     private MockMvc mockMvc;

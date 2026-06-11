@@ -29,8 +29,20 @@ const ERROR_PHONE_INVALID = '올바른 휴대전화 번호를 입력해주세요
 const ERROR_OTP_REQUIRED = '6자리 인증 코드를 입력해주세요.';
 const ERROR_OTP_INVALID = '6자리 숫자 코드를 입력해주세요.';
 const ERROR_GENERIC = '휴대전화 변경에 실패했습니다.';
-const MSG_SMS_SENT = '인증 코드가 전송되었습니다.';
+const MSG_OTP_SENT_PUSH = '앱 푸시 알림으로 인증번호가 발송되었습니다. 앱에서 확인해 주세요.';
+const MSG_OTP_SENT_SMS = 'SMS로 인증번호가 발송되었습니다.';
+const MSG_OTP_SENT_DEFAULT = '인증 코드가 전송되었습니다.';
 const MSG_CHANGED = '휴대전화가 변경되었습니다.';
+
+const DELIVERY_CHANNEL_PUSH = 'PUSH';
+const DELIVERY_CHANNEL_SMS = 'SMS';
+const DELIVERY_CHANNEL_SMS_STUB = 'SMS_STUB';
+
+const buildOtpSentMessage = (channel) => {
+  if (channel === DELIVERY_CHANNEL_PUSH) return MSG_OTP_SENT_PUSH;
+  if (channel === DELIVERY_CHANNEL_SMS || channel === DELIVERY_CHANNEL_SMS_STUB) return MSG_OTP_SENT_SMS;
+  return MSG_OTP_SENT_DEFAULT;
+};
 
 const sanitizeDigits = (raw) => (raw || '').replace(/\D/g, '');
 
@@ -50,6 +62,7 @@ const PhoneChangeModal = ({ isOpen, onClose, onSuccess }) => {
   const [submitError, setSubmitError] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryChannel, setDeliveryChannel] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +76,7 @@ const PhoneChangeModal = ({ isOpen, onClose, onSuccess }) => {
     setSubmitError('');
     setIsSending(false);
     setIsSubmitting(false);
+    setDeliveryChannel(null);
     return undefined;
   }, [isOpen]);
 
@@ -95,10 +109,14 @@ const PhoneChangeModal = ({ isOpen, onClose, onSuccess }) => {
     setSubmitError('');
     try {
       const response = await StandardizedApi.post(AUTH_API.SMS_SEND, {
-        phoneNumber: phoneDigits
+        phoneNumber: phoneDigits,
+        purpose: 'PHONE_CHANGE'
       });
       if (response && response.success !== false) {
-        notificationManager.show(MSG_SMS_SENT, 'info');
+        const channel = response?.deliveryChannel || null;
+        const sentMessage = buildOtpSentMessage(channel);
+        setDeliveryChannel(channel);
+        notificationManager.show(sentMessage, 'info');
         setStep('otp');
         setOtpInput('');
       } else {
@@ -163,7 +181,11 @@ const PhoneChangeModal = ({ isOpen, onClose, onSuccess }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="휴대전화 변경"
-      subtitle={step === 'phone' ? '새 휴대폰 번호로 6자리 인증 코드를 보내드립니다.' : '문자로 전송된 6자리 코드를 입력하세요.'}
+      subtitle={step === 'phone'
+        ? '새 휴대폰 번호로 6자리 인증 코드를 보내드립니다.'
+        : (deliveryChannel === DELIVERY_CHANNEL_PUSH
+            ? '앱 푸시 알림으로 전송된 6자리 코드를 입력하세요.'
+            : '문자로 전송된 6자리 코드를 입력하세요.')}
       size="medium"
       loading={isSending || isSubmitting}
     >

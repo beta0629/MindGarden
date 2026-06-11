@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +46,7 @@ import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -60,7 +62,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @DisplayName("SalaryManagementController API 통합 테스트")
 class SalaryManagementControllerIntegrationTest {
 
-    private static final String TENANT_A = "tenant-a-" + java.util.UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 4자 = 36자.
+    private static final String TENANT_A = "sma-"
+            + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 32);
 
     @Autowired
     private MockMvc mockMvc;
@@ -112,6 +116,11 @@ class SalaryManagementControllerIntegrationTest {
                 .thenReturn(true);
         when(commonCodeService.getActiveCommonCodesByGroup("ROLE"))
                 .thenReturn(adminRoleCodeList());
+    }
+
+    @AfterEach
+    void clearTenantContext() {
+        TenantContextHolder.clear();
     }
 
     private List<CommonCode> adminRoleCodeList() {

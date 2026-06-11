@@ -62,16 +62,19 @@ class NotificationBatchSendLogPushMonitoringTest {
     void countWindowByTenant_filtersByWindow() {
         String tenantId = UUID.randomUUID().toString();
         LocalDateTime now = LocalDateTime.now();
+        // 윈도 상한은 now 자체와 동일한 sentAt(=now) 이 BETWEEN 경계에서 누락되지 않도록
+        // 1분 padding. (CI Linux nano 정밀도 ↔ JDBC/H2 binding 의 boundary rounding 회피)
+        LocalDateTime windowEnd = now.plusMinutes(1L);
 
         repository.save(buildLog(tenantId,
             BatchNotificationTemplateCodes.CHANNEL_ALIMTALK, now, true, null, 1L));
         repository.save(buildLog(tenantId,
             BatchNotificationTemplateCodes.CHANNEL_SMS, now.minusMinutes(2L), true, null, 2L));
-        // 윈도 외
+        // 윈도 외 (now-2h 는 from=now-5min 보다 과거 → 제외)
         repository.save(buildLog(tenantId,
             BatchNotificationTemplateCodes.CHANNEL_SMS, now.minusHours(2L), true, null, 3L));
 
-        long count = repository.countWindowByTenant(tenantId, now.minusMinutes(5L), now);
+        long count = repository.countWindowByTenant(tenantId, now.minusMinutes(5L), windowEnd);
         assertThat(count).isEqualTo(2L);
     }
 
@@ -80,6 +83,9 @@ class NotificationBatchSendLogPushMonitoringTest {
     void findWindowByTenantAndChannel_filtersChannel() {
         String tenantId = UUID.randomUUID().toString();
         LocalDateTime now = LocalDateTime.now();
+        // 윈도 상한은 now 자체와 동일한 sentAt(=now) 이 BETWEEN 경계에서 누락되지 않도록
+        // 1분 padding. (CI Linux nano 정밀도 ↔ JDBC/H2 binding 의 boundary rounding 회피)
+        LocalDateTime windowEnd = now.plusMinutes(1L);
 
         repository.save(buildLog(tenantId,
             BatchNotificationTemplateCodes.CHANNEL_ALIMTALK, now, true, null, 1L));
@@ -89,11 +95,11 @@ class NotificationBatchSendLogPushMonitoringTest {
         repository.save(buildLog(tenantId, "PENDING", now.minusMinutes(2L), false, null, 3L));
 
         List<NotificationBatchSendLog> all = repository.findWindowByTenantAndChannel(
-            tenantId, now.minusHours(1L), now, null);
+            tenantId, now.minusHours(1L), windowEnd, null);
         assertThat(all).hasSize(3);
 
         List<NotificationBatchSendLog> alimtalk = repository.findWindowByTenantAndChannel(
-            tenantId, now.minusHours(1L), now,
+            tenantId, now.minusHours(1L), windowEnd,
             BatchNotificationTemplateCodes.CHANNEL_ALIMTALK);
         assertThat(alimtalk).hasSize(1);
         assertThat(alimtalk.get(0).getChannelUsed())

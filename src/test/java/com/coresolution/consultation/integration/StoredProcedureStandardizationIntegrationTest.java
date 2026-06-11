@@ -126,7 +126,8 @@ public class StoredProcedureStandardizationIntegrationTest {
         // Then
         assertThat(result).isNotNull();
         // SUCCESS 또는 ERROR 메시지 확인 (실제 데이터에 따라 달라질 수 있음)
-        assertThat(result).matches("^(SUCCESS|ERROR):.*");
+        // (?s) DOTALL: H2 multi-line ERROR 메시지 ('Database "..." not found;\n call ...') 매칭 보장.
+        assertThat(result).matches("(?s)^(SUCCESS|ERROR):.*");
         
         // tenant_id가 올바르게 전달되었는지 확인
         // TenantContextHolder에서 자동으로 가져옴
@@ -312,7 +313,9 @@ public class StoredProcedureStandardizationIntegrationTest {
         // Then
         assertThat(result).isNotNull();
         // 표준화된 프로시저는 SUCCESS 또는 ERROR로 시작
-        assertThat(result).matches("^(SUCCESS|ERROR):.*");
+        // (?s) DOTALL: H2 multi-line ERROR 메시지 ('Database "..." not found;\n call ...') 매칭 보장.
+        // PR #217 catalog 명시 후 H2 에서 ERROR 메시지가 멀티라인으로 반환되어 기존 regex 가 실패함.
+        assertThat(result).matches("(?s)^(SUCCESS|ERROR):.*");
         
         // p_success와 p_message가 올바르게 반환되는지 확인
     }

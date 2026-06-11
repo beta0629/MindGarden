@@ -409,8 +409,13 @@
                          Metaspace 부족 시 argLine 의 MaxMetaspaceSize 상한이 보호. -->
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
-                    <!-- 단위 테스트 전용 JVM 옵션(heap + metaspace 상한). -->
-                    <argLine>-Xmx2g -Xms512m -XX:MaxMetaspaceSize=512m -XX:+ExitOnOutOfMemoryError</argLine>
+                    <!-- 단위 테스트 전용 JVM 옵션(heap + metaspace 상한).
+                         CI runner JVM 기본 timezone(UTC) 과 운영 KST 의 차이로 인해 Schedule/LocalDate
+                         경계 검증 테스트가 9F (균일 -1일) 로 회귀하는 사례를 차단하기 위해
+                         JVM 시작 시점에 KST/ko_KR 로 고정한다. TimeZoneConfig 는 @PostConstruct 에서
+                         재설정하지만, Hikari 풀 오픈/HikariConfig 가 기본 TZ 를 캐시한 이후라 늦다.
+                         (디버거 보고 §A 참조) -->
+                    <argLine>-Xmx2g -Xms512m -XX:MaxMetaspaceSize=512m -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR</argLine>
                     <!-- 단일 fork 당 최대 15 분. 무한 hang 을 detect 하고 명시적 실패 처리. -->
                     <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
                     <!-- shutdown hook 미실행 시 강제 종료 시간. -->
@@ -438,8 +443,9 @@
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
                     <!-- 통합 테스트는 heap 더 크게(JPA/Hibernate Lazy load + Hikari 풀 + Spring Security
-                         FilterChain 등). MaxMetaspaceSize 도 통합 컨텍스트 다양성 대비 1g. -->
-                    <argLine>-Xmx3g -Xms1g -XX:MaxMetaspaceSize=1g -XX:+ExitOnOutOfMemoryError</argLine>
+                         FilterChain 등). MaxMetaspaceSize 도 통합 컨텍스트 다양성 대비 1g.
+                         user.timezone/locale 고정 사유는 surefire argLine 주석 참조. -->
+                    <argLine>-Xmx3g -Xms1g -XX:MaxMetaspaceSize=1g -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR</argLine>
                     <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
                     <forkedProcessExitTimeoutInSeconds>30</forkedProcessExitTimeoutInSeconds>
                     <excludedGroups>local-mysql</excludedGroups>

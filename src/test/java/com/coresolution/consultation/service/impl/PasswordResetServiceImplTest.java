@@ -42,7 +42,8 @@ import static org.mockito.Mockito.when;
 @DisplayName("PasswordResetServiceImpl 비밀번호 재설정")
 class PasswordResetServiceImplTest {
 
-    private static final String TENANT = "tenant-pwreset-" + UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 4자 = 36자.
+    private static final String TENANT = "tpr-" + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
     private static final String TOKEN = "abcdefgh-reset-token";
     private static final String PLAIN_NEW = "new-plain-password";
 

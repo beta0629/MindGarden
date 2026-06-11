@@ -36,7 +36,8 @@ import static org.mockito.Mockito.when;
 @DisplayName("UserServiceImpl 전화 중복·excludeUserId")
 class UserServiceImplPhoneDuplicateTest {
 
-    private static final String TENANT = "tenant-phone-dup-" + UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 4자 = 36자.
+    private static final String TENANT = "tpd-" + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
 
     @Mock
     private UserRepository userRepository;

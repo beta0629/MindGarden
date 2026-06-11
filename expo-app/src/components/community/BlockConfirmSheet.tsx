@@ -1,8 +1,8 @@
 /**
- * Apple T2 (1.2 UGC) — 사용자 차단 확인 시트 (Expo).
+ * Apple G1.2 UGC (P2-C) — 사용자 차단 확인 시트 (Expo).
  *
- * <p>디자이너 핸드오프 §5.1 — 차단 효과 안내 + 취소/차단 액션. 차단은 단방향. 차단 사실은
- * 상대방에게 알리지 않는다. 차단 호출은 `blockRemoteCommunityUser` 를 사용한다.</p>
+ * <p>디자이너 시안 §C — 타이틀 "이 사용자를 차단할까요?" 로 통일, 본문 강조구간 semibold 처리.
+ * 차단은 단방향이며 차단 사실은 상대방에게 알리지 않는다.</p>
  *
  * @author MindGarden
  * @since 2026-06-07
@@ -27,11 +27,24 @@ export type BlockConfirmSheetProps = {
   readonly onBlocked?: (userId: number) => void;
 };
 
-const EFFECTS = [
-  '이 사용자의 게시글과 댓글이 보이지 않습니다.',
-  '마이페이지 > 차단 목록에서 언제든지 해제할 수 있습니다.',
-  '차단 사실은 상대방에게 알려지지 않습니다.',
-] as const;
+const BLOCK_CONFIRM_TITLE = '이 사용자를 차단할까요?';
+
+interface EffectLineSegment {
+  readonly text: string;
+  readonly emphasize?: boolean;
+}
+
+/**
+ * 차단 효과 안내 — semibold 강조 구간을 세그먼트로 분리한다 (디자이너 시안 §C.4).
+ */
+const EFFECT_LINES: ReadonlyArray<ReadonlyArray<EffectLineSegment>> = [
+  [{ text: '이 사용자의 게시글과 댓글이 보이지 않습니다.' }],
+  [
+    { text: '마이페이지 > 차단 목록', emphasize: true },
+    { text: '에서 언제든지 해제할 수 있습니다.' },
+  ],
+  [{ text: '차단 사실은 상대방에게 알려지지 않습니다.' }],
+];
 
 export function BlockConfirmSheet({
   isOpen,
@@ -76,7 +89,11 @@ export function BlockConfirmSheet({
     }
   };
 
-  const title = `${displayName?.trim() || '사용자'}을(를) 차단하시겠습니까?`;
+  // 디자이너 시안 §C.1 — displayName 유무와 무관하게 통일 카피.
+  const title = BLOCK_CONFIRM_TITLE;
+  const accessibilityLabel = displayName?.trim()
+    ? `${displayName.trim()} 차단 확인 — ${title}`
+    : title;
 
   return (
     <UnifiedModal
@@ -99,12 +116,26 @@ export function BlockConfirmSheet({
         },
       ]}
     >
-      <View style={styles.body}>
-        {EFFECTS.map((effect) => (
-          <View key={effect} style={styles.effectRow}>
+      <View style={styles.body} accessibilityLabel={accessibilityLabel}>
+        {EFFECT_LINES.map((segments, idx) => (
+          <View key={`block-effect-${idx}`} style={styles.effectRow}>
             <View style={[styles.bullet, { backgroundColor: theme.colors.primary }]} />
             <Text style={[styles.effectLabel, { color: theme.colors.textSecondary }]}>
-              {effect}
+              {segments.map((segment, segIdx) => (
+                <Text
+                  key={`block-effect-seg-${idx}-${segIdx}`}
+                  style={
+                    segment.emphasize
+                      ? {
+                          color: theme.colors.textMain,
+                          fontFamily: theme.fontFamily.semibold,
+                        }
+                      : undefined
+                  }
+                >
+                  {segment.text}
+                </Text>
+              ))}
             </Text>
           </View>
         ))}

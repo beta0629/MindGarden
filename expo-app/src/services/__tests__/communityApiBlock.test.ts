@@ -71,19 +71,31 @@ describe('communityApi — Apple T2 1.2 UGC 차단·신고 헬퍼', () => {
     expect(result).toEqual([]);
   });
 
-  test('createRemoteCommunityReport: 신규 사유 8종 중 ABUSIVE_LANGUAGE 전송', async () => {
+  test('createRemoteCommunityReport: P2-C 5종 — SELF_HARM 전송', async () => {
     apiClient.apiPost.mockResolvedValueOnce({});
     await createRemoteCommunityReport(5001, {
-      reasonCode: 'ABUSIVE_LANGUAGE',
-      detailMessage: '욕설',
+      reasonCode: 'SELF_HARM',
+      detailMessage: '자해 조장',
       commentId: 9001,
     });
     expect(apiClient.apiPost).toHaveBeenCalledWith(
       '/api/v1/community/5001/reports',
       expect.objectContaining({
-        reasonCode: 'ABUSIVE_LANGUAGE',
+        reasonCode: 'SELF_HARM',
         commentId: 9001,
       }),
+    );
+  });
+
+  test('createRemoteCommunityReport: 레거시 코드(ABUSIVE_LANGUAGE)도 타입상 허용', async () => {
+    apiClient.apiPost.mockResolvedValueOnce({});
+    await createRemoteCommunityReport(5001, {
+      reasonCode: 'ABUSIVE_LANGUAGE',
+      detailMessage: '욕설',
+    });
+    expect(apiClient.apiPost).toHaveBeenCalledWith(
+      '/api/v1/community/5001/reports',
+      expect.objectContaining({ reasonCode: 'ABUSIVE_LANGUAGE' }),
     );
   });
 });

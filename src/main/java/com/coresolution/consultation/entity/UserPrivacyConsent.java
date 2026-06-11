@@ -47,7 +47,16 @@ public class UserPrivacyConsent {
     
     @Column(name = "marketing_consent")
     private Boolean marketingConsent;
-    
+
+    /**
+     * Apple G1.2 UGC (P2-C) — 동의 시점의 EULA 버전 문자열.
+     *
+     * <p>{@code null} 또는 현재 시행 버전(예: {@code "1.0.0"})과 일치하지 않으면
+     * 부팅 시 재동의 게이트가 발동한다.</p>
+     */
+    @Column(name = "terms_version", length = 32)
+    private String termsVersion;
+
     @Column(name = "consent_date", nullable = false)
     private LocalDateTime consentDate;
     

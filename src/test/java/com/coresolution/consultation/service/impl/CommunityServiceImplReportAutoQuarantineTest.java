@@ -156,6 +156,50 @@ class CommunityServiceImplReportAutoQuarantineTest {
     }
 
     @Test
+    @DisplayName("P2-C — 레거시 ABUSIVE_LANGUAGE 신고는 HARASSMENT 로 정규화되어 저장")
+    void legacyReason_normalizedToApproved() {
+        when(communityPostRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_ID, POST_ID))
+                .thenReturn(Optional.of(approvedPost));
+        when(communityReportRepository.existsActiveByReporter(
+                eq(TENANT_ID), eq(REPORTER_ID), eq(POST_ID), eq(null))).thenReturn(false);
+        when(userRepository.getReferenceById(REPORTER_ID)).thenReturn(reporter);
+        when(communityReportRepository.countActiveByPost(TENANT_ID, POST_ID)).thenReturn(1L);
+        when(communityReportRepository.save(any(CommunityReport.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        CommunityReportCreateRequest req = new CommunityReportCreateRequest();
+        req.setReasonCode(CommunityReportReasonCode.ABUSIVE_LANGUAGE);
+
+        service.report(reporter, POST_ID, req);
+
+        ArgumentCaptor<CommunityReport> captor = ArgumentCaptor.forClass(CommunityReport.class);
+        verify(communityReportRepository).save(captor.capture());
+        assertThat(captor.getValue().getReasonCode()).isEqualTo("HARASSMENT");
+    }
+
+    @Test
+    @DisplayName("P2-C — SELF_HARM 신고는 SELF_HARM 그대로 저장")
+    void selfHarmReason_persistedAsIs() {
+        when(communityPostRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_ID, POST_ID))
+                .thenReturn(Optional.of(approvedPost));
+        when(communityReportRepository.existsActiveByReporter(
+                eq(TENANT_ID), eq(REPORTER_ID), eq(POST_ID), eq(null))).thenReturn(false);
+        when(userRepository.getReferenceById(REPORTER_ID)).thenReturn(reporter);
+        when(communityReportRepository.countActiveByPost(TENANT_ID, POST_ID)).thenReturn(1L);
+        when(communityReportRepository.save(any(CommunityReport.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        CommunityReportCreateRequest req = new CommunityReportCreateRequest();
+        req.setReasonCode(CommunityReportReasonCode.SELF_HARM);
+
+        service.report(reporter, POST_ID, req);
+
+        ArgumentCaptor<CommunityReport> captor = ArgumentCaptor.forClass(CommunityReport.class);
+        verify(communityReportRepository).save(captor.capture());
+        assertThat(captor.getValue().getReasonCode()).isEqualTo("SELF_HARM");
+    }
+
+    @Test
     @DisplayName("중복 신고 — 동일 사용자가 같은 게시물 재신고 시 AccessDenied")
     void duplicateReport_throwsAccessDenied() {
         when(communityPostRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_ID, POST_ID))

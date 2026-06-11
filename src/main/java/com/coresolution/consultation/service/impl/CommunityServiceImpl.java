@@ -239,12 +239,14 @@ public class CommunityServiceImpl implements CommunityService {
             throw new AccessDeniedException("이미 신고하신 콘텐츠입니다.");
         }
         User reporterRef = userRepository.getReferenceById(reporter.getId());
+        // P2-C (Apple G1.2) — 레거시 8종 코드가 들어와도 5종으로 정규화한다.
+        String approvedReasonCode = request.getReasonCode().toApprovedReasonCode().name();
         CommunityReport report = CommunityReport.builder()
                 .tenantId(tenantId)
                 .reporter(reporterRef)
                 .post(post)
                 .comment(targetComment)
-                .reasonCode(request.getReasonCode().name())
+                .reasonCode(approvedReasonCode)
                 .detailMessage(trimToNull(request.getDetailMessage()))
                 .status(CommunityReportStatus.OPEN)
                 .priority(CommunityReportPriority.NORMAL)

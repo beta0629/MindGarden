@@ -8,6 +8,9 @@ import lombok.Data;
 /**
  * 게시글·댓글 신고 요청.
  *
+ * <p>P2-C (Apple G1.2 UGC) — 5종 사유만 허용. 레거시 8종 코드는
+ * {@link CommunityReportReasonCode#toApprovedReasonCode()} 로 서비스 레벨에서 매핑된다.</p>
+ *
  * @author MindGarden
  * @since 2026-05-15
  */

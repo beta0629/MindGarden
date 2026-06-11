@@ -69,6 +69,8 @@ export const USER_API = {
   GET_PROFILE: '/api/users/profile',
   UPDATE_PROFILE: '/api/users/profile',
   UPLOAD_PROFILE_IMAGE: '/api/users/profile/image',
+  /** Apple G1.2 UGC (P2-C) — 현재 사용자 EULA 동의 상태 조회·저장 */
+  EULA_CONSENT: '/api/v1/users/me/eula-consent',
 } as const;
 
 /** 웹 mypageProfilePayload와 동일 — 내담자 마이페이지·상담사 사용자 프로필 */

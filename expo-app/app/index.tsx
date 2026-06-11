@@ -13,15 +13,22 @@ import { useTheme } from '../src/theme';
 import { AppBrandMark } from '../src/components/molecules/AppBrandMark';
 import { useTenantStore } from '../src/stores/useTenantStore';
 import { useAuthStore } from '../src/stores/useAuthStore';
+import { useEulaGateOnBoot } from '../src/hooks/useEulaGateOnBoot';
 
 export default function AppEntry() {
   const theme = useTheme();
   const { tenantCode } = useTenantStore();
-  const { isAuthenticated, isLoading, role, restoreTokens } = useAuthStore();
+  const { isAuthenticated, isLoading, role, restoreTokens, user } = useAuthStore();
 
   useEffect(() => {
     restoreTokens();
   }, [restoreTokens]);
+
+  // Apple G1.2 UGC (P2-C) — 인증된 사용자는 EULA 동의 여부를 캐시→BE 순으로 확인.
+  const eulaGate = useEulaGateOnBoot({
+    userId: user?.id,
+    isAuthenticated,
+  });
 
   if (isLoading) {
     return (
@@ -40,6 +47,21 @@ export default function AppEntry() {
 
   if (!isAuthenticated) {
     return <Redirect href={'/(auth)/login' as Href} />;
+  }
+
+  if (eulaGate.status === 'checking') {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.bgMain }]}>
+        <Animated.View entering={FadeIn.duration(400)}>
+          <AppBrandMark variant="splash" style={{ marginBottom: theme.spacing.lg }} />
+        </Animated.View>
+        <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
+      </View>
+    );
+  }
+
+  if (eulaGate.status === 'requires-consent') {
+    return <Redirect href={'/(auth)/eula-consent' as Href} />;
   }
 
   if (role === 'admin' || role === 'staff') {

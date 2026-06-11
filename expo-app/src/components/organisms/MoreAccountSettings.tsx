@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
-import { Bell, ChevronLeft, Info } from 'lucide-react-native';
+import { Bell, ChevronLeft, Info, ShieldOff } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
@@ -17,11 +17,17 @@ import { toDisplayString } from '@/utils/safeDisplay';
 export interface MoreAccountSettingsProps {
   readonly notificationSettingsHref: Href;
   readonly profileHref: Href;
+  /**
+   * Apple G1.2 UGC (P2-C) — 차단된 사용자 목록 진입. 제공되지 않으면 행을 노출하지 않는다
+   * (어드민/상담사 등 비-내담자 역할에서는 비활성).
+   */
+  readonly blockedUsersHref?: Href;
 }
 
 export function MoreAccountSettings({
   notificationSettingsHref,
   profileHref,
+  blockedUsersHref,
 }: MoreAccountSettingsProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -156,6 +162,35 @@ export function MoreAccountSettings({
             </Text>
             <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
           </Pressable>
+          {blockedUsersHref ? (
+            <>
+              <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
+              <Pressable
+                onPress={() => router.push(blockedUsersHref)}
+                style={({ pressed }) => [
+                  styles.menuRow,
+                  { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="차단된 사용자 목록으로 이동"
+                testID="more-account-settings-blocked-users"
+              >
+                <ShieldOff size={20} color={theme.colors.textSecondary} />
+                <Text
+                  style={{
+                    flex: 1,
+                    marginLeft: 12,
+                    color: theme.colors.textMain,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.base,
+                  }}
+                >
+                  차단된 사용자
+                </Text>
+                <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
+              </Pressable>
+            </>
+          ) : null}
         </View>
 
         <Text

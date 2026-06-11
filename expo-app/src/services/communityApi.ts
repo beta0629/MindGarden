@@ -19,18 +19,22 @@ import type { CommunityComment, CommunityPost, CommunityTab } from '@/constants/
 export type CommunityPostKindDto = 'CLIENT_REVIEW' | 'CONSULTANT_COLUMN';
 
 /**
- * Spring `CommunityReportReasonCode` — Apple T2 1.2 UGC 8종 사유.
- * 핸드오프 §3.3, 백엔드 enum 정합.
+ * Spring `CommunityReportReasonCode` — Apple G1.2 UGC P2-C 5종 + 레거시 4종 호환.
+ *
+ * <p>FE 는 새 신고에서 5종({@code OBSCENE}/{@code HARASSMENT}/{@code SPAM}/{@code SELF_HARM}/{@code OTHER})
+ * 만 사용한다. 레거시 4종({@code ABUSIVE_LANGUAGE}/{@code VIOLENCE}/{@code MISINFORMATION}/{@code COPYRIGHT})
+ * 은 기존 데이터 직렬화 호환을 위해 타입에만 남기고 UI 에서는 노출하지 않는다.</p>
  */
 export type CommunityReportReasonCodeDto =
-  | 'SPAM'
-  | 'HARASSMENT'
-  | 'ABUSIVE_LANGUAGE'
   | 'OBSCENE'
+  | 'HARASSMENT'
+  | 'SPAM'
+  | 'SELF_HARM'
+  | 'OTHER'
+  | 'ABUSIVE_LANGUAGE'
   | 'VIOLENCE'
   | 'MISINFORMATION'
-  | 'COPYRIGHT'
-  | 'OTHER';
+  | 'COPYRIGHT';
 
 /** `CommunityUserBlockResponse` — 차단 목록 항목 */
 export interface CommunityUserBlockResponseDto {

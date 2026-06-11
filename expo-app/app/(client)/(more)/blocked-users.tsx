@@ -1,13 +1,14 @@
 /**
- * Apple T2 (1.2 UGC) — 내담자 차단 목록 화면 (Expo).
+ * Apple G1.2 UGC (P2-C) — 내담자 차단 목록 화면 (Expo).
  *
- * <p>디자이너 핸드오프 §5.2 — 차단한 사용자 목록과 해제. `GET /api/v1/community/users/blocked`
- * 에서 응답을 받고, 항목별 해제 버튼은 `DELETE /api/v1/community/users/{userId}/block` 을 호출한다.</p>
+ * <p>디자이너 시안 §D 그대로 구현 — Avatar(40×40) molecule + Outline 톤 해제 버튼 +
+ * EmptyState(아이콘+카피) + 푸터 24h 캡션. `GET/POST/DELETE /api/v1/community/users/blocked|/{id}/block`
+ * 와 1:1 매핑.</p>
  *
  * @author MindGarden
  * @since 2026-06-07
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -15,17 +16,39 @@ import {
   StyleSheet,
   Text,
   View,
+  type ListRenderItemInfo,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, UserX } from 'lucide-react-native';
 
-import { useTheme } from '@/theme';
+import { UserAvatar } from '@/components/molecules/UserAvatar';
+import { UGC_REVIEW_SLA_COPY } from '@/constants/eulaTerms';
 import {
   fetchRemoteCommunityBlockedUsers,
   unblockRemoteCommunityUser,
   type CommunityUserBlockResponseDto,
 } from '@/services/communityApi';
+import { useTheme } from '@/theme';
+
+const AVATAR_SIZE = 40;
+const UNBLOCK_BUTTON_HEIGHT = 36;
+const EMPTY_ICON_SIZE = 56;
+
+/**
+ * `YYYY-MM-DDThh:mm:ss[.ms]` → `YYYY.MM.DD 차단` 자연어 포맷.
+ */
+function formatBlockedAt(isoDate?: string): string {
+  if (!isoDate) {
+    return '';
+  }
+  const dateOnly = isoDate.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+    return isoDate;
+  }
+  const [y, m, d] = dateOnly.split('-');
+  return `${y}.${m}.${d} 차단`;
+}
 
 export default function ClientBlockedUsersScreen() {
   const theme = useTheme();
@@ -71,6 +94,114 @@ export default function ClientBlockedUsersScreen() {
     }
   }, [unblockingId]);
 
+  const renderItem = useCallback(
+    ({ item }: ListRenderItemInfo<CommunityUserBlockResponseDto>) => {
+      const isUnblocking = unblockingId === item.blockedUserId;
+      return (
+        <View
+          style={[
+            styles.row,
+            {
+              backgroundColor: theme.colors.surface,
+              borderRadius: theme.borderRadius.md,
+            },
+          ]}
+          testID={`block-list-item-${item.blockedUserId}`}
+        >
+          <UserAvatar
+            displayName={item.blockedDisplayName}
+            size={AVATAR_SIZE}
+            testID={`block-list-avatar-${item.blockedUserId}`}
+          />
+          <View style={styles.rowInfo}>
+            <Text
+              style={[
+                styles.rowName,
+                {
+                  color: theme.colors.textMain,
+                  fontFamily: theme.fontFamily.semibold,
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {item.blockedDisplayName ?? '사용자'}
+            </Text>
+            <Text style={[styles.rowDate, { color: theme.colors.textTertiary }]}>
+              {formatBlockedAt(item.blockedAt)}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => handleUnblock(item.blockedUserId)}
+            disabled={isUnblocking}
+            style={({ pressed }) => [
+              styles.unblockButton,
+              {
+                borderColor: theme.colors.gray[300],
+                borderRadius: theme.borderRadius.md,
+                backgroundColor: isUnblocking
+                  ? theme.colors.gray[100]
+                  : pressed
+                    ? theme.colors.gray[100]
+                    : theme.colors.surface,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.blockedDisplayName ?? '사용자'} 차단 해제`}
+            testID={`block-list-unblock-${item.blockedUserId}`}
+          >
+            <Text
+              style={[
+                styles.unblockLabel,
+                {
+                  color: isUnblocking ? theme.colors.textTertiary : theme.colors.textMain,
+                  fontFamily: theme.fontFamily.medium,
+                },
+              ]}
+            >
+              {isUnblocking ? '해제 중...' : '해제'}
+            </Text>
+          </Pressable>
+        </View>
+      );
+    },
+    [handleUnblock, theme, unblockingId],
+  );
+
+  const keyExtractor = useCallback(
+    (item: CommunityUserBlockResponseDto) => `block-${item.blockedUserId}`,
+    [],
+  );
+
+  const listEmptyComponent = useMemo(
+    () => (
+      <View style={styles.emptyWrap} testID="block-list-empty">
+        <UserX size={EMPTY_ICON_SIZE} color={theme.colors.gray[300]} />
+        <Text
+          style={[
+            styles.emptyTitle,
+            {
+              color: theme.colors.textMain,
+              fontFamily: theme.fontFamily.semibold,
+            },
+            theme.textStyles.h3,
+          ]}
+        >
+          차단한 사용자가 없습니다
+        </Text>
+        <Text
+          style={[
+            styles.emptyBody,
+            { color: theme.colors.textSecondary },
+            theme.textStyles.bodySmall,
+          ]}
+        >
+          {'불편한 사용자를 차단하면 여기에\n모아 관리할 수 있어요.'}
+        </Text>
+      </View>
+    ),
+    [theme],
+  );
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.bgMain }]}
@@ -114,57 +245,26 @@ export default function ClientBlockedUsersScreen() {
             style={styles.loading}
             accessibilityLabel="차단 목록 불러오는 중"
           />
-        ) : items.length === 0 ? (
-          <Text style={[styles.empty, { color: theme.colors.textTertiary }]}>
-            차단한 사용자가 없습니다.
-          </Text>
         ) : (
           <FlatList
             data={items}
-            keyExtractor={(item) => `block-${item.blockedUserId}`}
-            renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.row,
-                  {
-                    borderBottomColor: theme.colors.divider,
-                    backgroundColor: theme.colors.surface,
-                  },
-                ]}
-                testID={`block-list-item-${item.blockedUserId}`}
-              >
-                <View style={styles.rowInfo}>
-                  <Text style={[styles.rowName, { color: theme.colors.textMain }]}>
-                    {item.blockedDisplayName ?? '사용자'}
-                  </Text>
-                  <Text style={[styles.rowDate, { color: theme.colors.textTertiary }]}>
-                    {(item.blockedAt ?? '').slice(0, 10)}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => handleUnblock(item.blockedUserId)}
-                  disabled={unblockingId === item.blockedUserId}
-                  style={[
-                    styles.unblockButton,
-                    {
-                      backgroundColor:
-                        unblockingId === item.blockedUserId
-                          ? theme.colors.gray[100]
-                          : theme.colors.primaryLight,
-                    },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${item.blockedDisplayName ?? '사용자'} 차단 해제`}
-                  testID={`block-list-unblock-${item.blockedUserId}`}
-                >
-                  <Text style={[styles.unblockLabel, { color: theme.colors.textOnPrimary }]}>
-                    {unblockingId === item.blockedUserId ? '해제 중...' : '해제'}
-                  </Text>
-                </Pressable>
-              </View>
-            )}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            ListEmptyComponent={listEmptyComponent}
+            contentContainerStyle={items.length === 0 ? styles.emptyContainer : undefined}
           />
         )}
+
+        <Text
+          style={[
+            styles.footerCaption,
+            { color: theme.colors.textTertiary },
+            theme.textStyles.caption,
+          ]}
+          testID="block-list-footer-caption"
+        >
+          {UGC_REVIEW_SLA_COPY.blockedListFooter}
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -197,22 +297,35 @@ const styles = StyleSheet.create({
   loading: {
     marginTop: 32,
   },
-  empty: {
-    fontSize: 14,
+  emptyContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  emptyWrap: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 48,
+    gap: 8,
+  },
+  emptyTitle: {
+    marginTop: 16,
     textAlign: 'center',
-    marginTop: 32,
+  },
+  emptyBody: {
+    marginTop: 4,
+    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderRadius: 8,
     marginBottom: 8,
+    gap: 12,
+    minHeight: 64,
   },
   rowInfo: {
+    flex: 1,
     flexShrink: 1,
   },
   rowName: {
@@ -223,12 +336,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   unblockButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    height: UNBLOCK_BUTTON_HEIGHT,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    minWidth: 64,
   },
   unblockLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  footerCaption: {
+    marginTop: 12,
+    marginBottom: 12,
+    textAlign: 'center',
   },
 });

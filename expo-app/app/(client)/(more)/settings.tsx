@@ -11,6 +11,7 @@ export default function ClientSettings() {
     <MoreAccountSettings
       notificationSettingsHref="/(client)/(more)/notification-settings"
       profileHref="/(client)/(more)/profile"
+      blockedUsersHref="/(client)/(more)/blocked-users"
     />
   );
 }

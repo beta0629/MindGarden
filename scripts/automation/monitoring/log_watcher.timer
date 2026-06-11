@@ -1,0 +1,14 @@
+[Unit]
+Description=Run MindGarden BE log_watcher every 5 minutes
+Documentation=https://github.com/beta0629/MindGarden/blob/develop/docs/%EC%9A%B4%EC%98%81%EB%B0%98%EC%98%81/LOG_WATCHER_DISCORD_ALERT_SETUP_GUIDE.md
+
+[Timer]
+# 부팅 후 2분 뒤 1회, 이후 마지막 실행 종료 시점 기준 5분마다 실행.
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=log_watcher.service
+AccuracySec=15s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

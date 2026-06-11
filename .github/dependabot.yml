@@ -1,0 +1,68 @@
+# Dependabot 설정 — AI 모니터링 Phase 1 (Zero-Cost)
+# 참고: docs/project-management/2026-06-11/AI_MONITORING_ROADMAP.md §6 Phase 1 — P1-5
+#
+# - GitHub 무료 기능: 카드 등록 불필요
+# - 백엔드(Maven), 프론트엔드(npm), Expo(npm), GitHub Actions 4개 영역 정기 업데이트 PR 생성
+# - 무리한 PR 폭증 방지: open-pull-requests-limit 5 + Asia/Seoul 09:00 일괄
+# - 리뷰는 Bugbot 정책(docs/standards/CURSOR_BUGBOT_POLICY.md) 적용
+version: 2
+updates:
+  # 백엔드 Java/Spring (pom.xml)
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "auto-merge-candidate"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # 프론트엔드 React (frontend/package.json)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # Expo 앱 (expo-app/package.json)
+  - package-ecosystem: "npm"
+    directory: "/expo-app"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "expo-app"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # GitHub Actions 워크플로 의존성 (actions/checkout 등)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "github-actions"
+      - "dependencies"
+    commit-message:
+      prefix: "chore(actions)"
+      include: "scope"

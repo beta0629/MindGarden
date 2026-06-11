@@ -59,61 +59,53 @@ const AdminCommonLayout = ({
 
   const getDefaultMenu = () => (userRole === USER_ROLES.CONSULTANT ? CONSULTANT_MENU_ITEMS : userRole === USER_ROLES.CLIENT ? CLIENT_MENU_ITEMS : DEFAULT_MENU_ITEMS);
 
-  const [lnbMenuItems, setLnbMenuItems] = useState(null);
+  // P0 hotfix 2026-06-12: LNB API 호출과 메뉴 변형 분리 — 컴포넌트 플래그 비동기 로딩으로 인한
+  // /api/v1/menus/lnb 중복 호출 제거. fetch 는 userRole 변경 시에만, 변형은 useMemo 로 계산.
+  const [lnbRawTree, setLnbRawTree] = useState(null);
   const { adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled } = useTenantComponentFlags({
     enabled: Boolean(user)
   });
 
   useEffect(() => {
     let cancelled = false;
-    const fallback = getDefaultMenu();
     getLnbMenus()
       .then((res) => {
         if (cancelled) return;
         const tree = getLnbTreeFromResponse(res);
-        if (tree && tree.length > 0) {
-          let normalized = mergeSupplementalAdminLnbItems(normalizeLnbTree(tree, { userRole }));
-          if (userRole === USER_ROLES.CLIENT) {
-            normalized = mergeClientShopLnbItems(normalized, {
-              clientShopEnabled,
-              clientRewardEnabled
-            });
-          } else {
-            normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled, userRole });
-            normalized = mergeBillingAdminLnbItems(normalized, { userRole });
-          }
-          setLnbMenuItems(normalized);
-        } else {
-          setLnbMenuItems(
-            userRole === USER_ROLES.CLIENT
-              ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-              : mergeBillingAdminLnbItems(
-                mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
-                { userRole }
-              )
-          );
-        }
+        setLnbRawTree(tree && tree.length > 0 ? tree : []);
       })
       .catch(() => {
         if (!cancelled) {
-          setLnbMenuItems(
-            userRole === USER_ROLES.CLIENT
-              ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-              : mergeBillingAdminLnbItems(
-                mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
-                { userRole }
-              )
-          );
+          setLnbRawTree([]);
         }
       });
     return () => { cancelled = true; };
-  }, [userRole, adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled]);
+  }, [userRole]);
 
-  const menuItems = lnbMenuItems !== null
-    ? lnbMenuItems
-    : (userRole === USER_ROLES.CLIENT
-      ? mergeClientShopLnbItems(getDefaultMenu(), { clientShopEnabled, clientRewardEnabled })
-      : getDefaultMenu());
+  const menuItems = useMemo(() => {
+    const fallback = getDefaultMenu();
+    if (lnbRawTree && lnbRawTree.length > 0) {
+      let normalized = mergeSupplementalAdminLnbItems(normalizeLnbTree(lnbRawTree, { userRole }));
+      if (userRole === USER_ROLES.CLIENT) {
+        normalized = mergeClientShopLnbItems(normalized, { clientShopEnabled, clientRewardEnabled });
+      } else {
+        normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled, userRole });
+        normalized = mergeBillingAdminLnbItems(normalized, { userRole });
+      }
+      return normalized;
+    }
+    if (lnbRawTree === null) {
+      return userRole === USER_ROLES.CLIENT
+        ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
+        : fallback;
+    }
+    return userRole === USER_ROLES.CLIENT
+      ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
+      : mergeBillingAdminLnbItems(
+        mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
+        { userRole }
+      );
+  }, [lnbRawTree, userRole, adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled]);
 
   const navigateQuickActionsFromLnb = useMemo(
     () => deriveGnbQuickNavigateActionsFromLnb(menuItems),

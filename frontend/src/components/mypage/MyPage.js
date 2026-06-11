@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
@@ -109,29 +109,29 @@ const MyPage = () => {
 
   const visibleTabs = MYPAGE_TAB_ORDER.filter((key) => MYPAGE_TAB_SET.has(key));
 
+  // P0 hotfix 2026-06-12: SessionContext.user 우선 사용. sessionManager.checkSession(true) 호출 회피.
+  // 마이페이지 진입 시 loadUserInfo / loadSocialAccounts / loadWithdrawalStatus 가 동시에 호출되어
+  // resolveMypageSessionUser → checkSession(true) 가 중복 발생, current-user 호출이 N배 증폭되던 문제 차단.
+  // sessionManager 자체에도 in-flight dedup 이 추가되었으므로 안전망은 이중.
   const resolveMypageSessionUser = useCallback(async() => {
-    let resolved = sessionManager.getUser() || sessionUser;
-    if (resolved) {
-      return resolved;
-    }
-    await sessionManager.checkSession(true);
-    resolved = sessionManager.getUser() || sessionUser;
+    let resolved = sessionUser || sessionManager.getUser();
     if (resolved) {
       return resolved;
     }
     const raw = localStorage.getItem('userInfo');
-    if (!raw) {
-      return null;
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.id != null) {
-        return parsed;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && parsed.id != null) {
+          return parsed;
+        }
+      } catch (parseError) {
+        console.error('userInfo 파싱 오류:', parseError);
       }
-    } catch (parseError) {
-      console.error('userInfo 파싱 오류:', parseError);
     }
-    return null;
+    await sessionManager.checkSession(true);
+    resolved = sessionManager.getUser() || sessionUser;
+    return resolved || null;
   }, [sessionUser]);
 
   const setTabInUrl = useCallback(
@@ -249,11 +249,18 @@ const MyPage = () => {
     loadSocialAccounts();
   }, [loadUserInfo, loadSocialAccounts]);
 
+  // P0 hotfix 2026-06-12: 탭 복귀 시 loadUserInfo 자동 재호출은 30초 쿨다운 적용 (current-user 폭증 차단)
+  const lastVisibilityLoadAtRef = useRef(0);
   useEffect(() => {
+    const VISIBILITY_RELOAD_COOLDOWN_MS = 30 * 1000;
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        loadUserInfo();
+      if (document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      if (now - lastVisibilityLoadAtRef.current < VISIBILITY_RELOAD_COOLDOWN_MS) {
+        return;
       }
+      lastVisibilityLoadAtRef.current = now;
+      loadUserInfo();
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);

@@ -414,6 +414,26 @@ public class SecurityConfig {
         log.info("🌐 CORS MaxAge: {} 초", maxAge);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        // OAuth callback (Apple form_post 등) 전용 CORS 우회.
+        // - Apple SIWA 는 동의 후 https://appleid.apple.com 에서 form_post 로 콜백을 보내며,
+        //   Safari 는 Origin: null 로 보낸다. 기본 /** 화이트리스트는 이 origin 들을 허용하지 않으므로
+        //   Spring DefaultCorsProcessor 가 403 + "Invalid CORS request" 본문으로 거부 → 컨트롤러 도달 불가.
+        // - 본 정책은 Apple 등 콜백 path 에 한해 origin 검증을 우회하고 credentials/cookie 동봉을 막는다.
+        // - 구체 path 를 먼저 등록해야 UrlBasedCorsConfigurationSource 매치 우선순위가 안전하다.
+        CorsConfiguration callbackConfig = new CorsConfiguration();
+        callbackConfig.setAllowedOriginPatterns(Arrays.asList("*"));
+        callbackConfig.setAllowedMethods(Arrays.asList("GET", "POST", "OPTIONS"));
+        callbackConfig.setAllowedHeaders(Arrays.asList("*"));
+        callbackConfig.setAllowCredentials(false);
+        callbackConfig.setMaxAge(0L);
+
+        source.registerCorsConfiguration("/api/v1/auth/*/callback", callbackConfig);
+        source.registerCorsConfiguration("/api/auth/*/callback", callbackConfig);
+        source.registerCorsConfiguration("/api/v1/auth/oauth/*/callback", callbackConfig);
+        source.registerCorsConfiguration("/api/v1/auth/oauth2/callback", callbackConfig);
+        log.info("✅ OAuth callback CORS 우회 등록: /api/(v1/)?auth/*/callback, /api/v1/auth/oauth(2)?/callback");
+
         source.registerCorsConfiguration("/**", configuration);
         log.info("✅ CORS 설정 완료: 모든 경로(/**)에 적용됨");
         

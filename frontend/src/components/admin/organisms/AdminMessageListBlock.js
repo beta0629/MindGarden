@@ -7,6 +7,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
+import { getConsultationMessagesList } from '../../../utils/consultationMessagesApi';
+import { useSession } from '../../../contexts/SessionContext';
 import notificationManager from '../../../utils/notification';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
@@ -35,6 +37,8 @@ const MESSAGE_TYPES = {
 
 const AdminMessageListBlock = () => {
   const { t } = useTranslation();
+  // B6 묶음 A 2026-06-12: useSession user 기반 dedup wrapper 사용 (이전: path 직접 호출)
+  const { user } = useSession();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -45,9 +49,11 @@ const AdminMessageListBlock = () => {
   const loadMessages = useCallback(async() => {
     try {
       setLoading(true);
-      const response = await StandardizedApi.get(
-        `/api/v1/consultation-messages/all?view=${ADMIN_MESSAGE_INBOX_VIEW.ADMIN_OPS}`
-      );
+      // ADMIN role user 의 path 는 /api/v1/consultation-messages/all 로 결정된다.
+      // view=admin_ops 는 params 로 분리해 dedup 키에 포함시킨다.
+      const response = await getConsultationMessagesList(user, {
+        view: ADMIN_MESSAGE_INBOX_VIEW.ADMIN_OPS
+      });
       const raw = response?.content ?? response?.messages ?? response?.data ?? response;
       const list = Array.isArray(raw) ? raw : [];
       setMessages(filterAdminMessagesForOpsInbox(list));
@@ -58,11 +64,14 @@ const AdminMessageListBlock = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
+    if (!user) {
+      return;
+    }
     loadMessages();
-  }, [loadMessages]);
+  }, [loadMessages, user]);
 
   const filteredMessages = (Array.isArray(messages) ? messages : []).filter((message) => {
     const matchesSearch =

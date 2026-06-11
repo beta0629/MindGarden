@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { apiGet } from '../../../utils/ajax';
+import { getConsultationMessagesList } from '../../../utils/consultationMessagesApi';
 import Badge from '../../common/Badge';
 import './ClientMessageWidget.css';
 import SafeText from '../../common/SafeText';
@@ -22,7 +23,15 @@ const ClientMessageWidget = ({ widget, user }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // 데이터 소스 설정 (내담자 전용)
+  // B6 묶음 A 2026-06-12: useWidget fetcher 로 dedup wrapper 주입 — NotificationContext /
+  // ClientMessageSection 등이 동시에 같은 endpoint 를 호출해도 단일 fetch 로 합쳐진다.
+  // useWidget 내부는 fetcher(url, params) 시그니처를 호출하므로 url 은 무시하고 wrapper 로 위임.
+  const consultationMessagesFetcher = useCallback(
+    (_url, params) => getConsultationMessagesList(user, params),
+    [user]
+  );
+
+  // 데이터 소스 설정 (내담자 전용) — fetcher 는 useWidget 이 dataSource.fetcher 로 받는다.
   const getDataSourceConfig = () => ({
     type: 'api',
     cache: true,
@@ -32,7 +41,8 @@ const ClientMessageWidget = ({ widget, user }) => {
       page: 0,
       size: 10,
       sort: 'createdAt,desc'
-    }
+    },
+    fetcher: consultationMessagesFetcher
   });
 
   // 위젯 설정에 데이터 소스 동적 설정

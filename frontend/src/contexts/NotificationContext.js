@@ -3,7 +3,7 @@ import { CONSTANTS } from '../constants/magicNumbers';
 import { useSession } from './SessionContext';
 import { apiGet, apiPost } from '../utils/ajax';
 import StandardizedApi from '../utils/standardizedApi';
-import { getConsultationMessagesListPath } from '../utils/consultationMessagesApi';
+import { getConsultationMessagesList, getConsultationMessagesListPath } from '../utils/consultationMessagesApi';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -171,7 +171,9 @@ export const NotificationProvider = ({ children }) => {
         setNotifications([]);
         return;
       }
-      const response = await apiGet(path, { page: 0, size: 50 });
+      // B6 묶음 A 2026-06-12: getConsultationMessagesList dedup wrapper 로 통일.
+      // NotificationDropdown / UnifiedNotifications / 위젯 등이 동시 mount 해도 단일 fetch 로 합쳐진다.
+      const response = await getConsultationMessagesList(user, { page: 0, size: 50 });
       // apiGet은 data만 반환. 목록은 response 자체가 배열이거나 response.messages/content 등
       const list = Array.isArray(response) ? response : (response?.messages ?? response?.content ?? response?.data ?? []);
       const unreadMessages = (Array.isArray(list) ? list : [])

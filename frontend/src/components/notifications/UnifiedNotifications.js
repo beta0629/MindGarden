@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
-import { getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
+import { getConsultationMessagesList, getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -80,7 +80,8 @@ const UnifiedNotifications = () => {
         return;
       }
       console.log('🔍 메시지 로드 - 사용자 역할:', user.role, 'ID:', user.id, '경로:', basePath);
-      const response = await apiGet(basePath, { page: 0, size: 50 });
+      // B6 묶음 A 2026-06-12: dedup wrapper 사용 — Context/Dropdown 과 동시 호출 시 단일 fetch.
+      const response = await getConsultationMessagesList(user, { page: 0, size: 50 });
 
       if (response) {
         // 백엔드 응답이 { messages: [...] } 형태일 수 있음

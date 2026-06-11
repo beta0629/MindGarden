@@ -25,6 +25,10 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.constant.OtpDeliveryChannel;
+import com.coresolution.consultation.constant.OtpPurpose;
+import com.coresolution.consultation.dto.OtpDeliveryResult;
+import com.coresolution.consultation.service.OtpDeliveryService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
@@ -86,6 +90,7 @@ public class AuthController extends BaseApiController {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final SmsOtpVerificationService smsOtpVerificationService;
+    private final OtpDeliveryService otpDeliveryService;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
@@ -1141,43 +1146,82 @@ public class AuthController extends BaseApiController {
 
 
     /**
-     * SMS 인증 코드 전송
+     * SMS 인증 코드 전송.
+     *
+     * <p>2026-06-11 정책 (운영 회귀 + push-first SSOT 통합):
+     * <ol>
+     *   <li>{@link OtpDeliveryService} 가 push-first → SMS 폴백 분기를 수행한다.</li>
+     *   <li>응답 body 의 {@code deliveryChannel} 로 FE 는 안내 메시지를 분기한다(앱 푸시 vs SMS).</li>
+     *   <li>이전 구현이 응답에 {@code verificationCode} 평문을 포함하던 P0 보안 결함을 제거한다
+     *       (자동화 도구·로그·proxy 캐시 누출 차단).</li>
+     *   <li>로그인 사용자가 호출하면 세션의 userId·tenantId 로 push 후보를 결정하고,
+     *       비로그인(회원가입 등) 흐름은 자동으로 SMS 폴백으로 진입한다.</li>
+     * </ol></p>
+     *
+     * @param request {@code phoneNumber} (+ 선택 {@code purpose})
+     * @param session HTTP 세션 (로그인 사용자 식별용)
+     * @return {@code deliveryChannel}, {@code message} 키를 포함한 결과 본문
      */
     @PostMapping("/sms/send")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> sendSmsCode(@RequestBody Map<String, String> request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> sendSmsCode(
+            @RequestBody Map<String, String> request,
+            HttpSession session) {
         String phoneNumber = request.get("phoneNumber");
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
-        log.info("SMS 인증 코드 전송 요청: {}", normalizedPhone);
-        
-        // 실제 SMS 발송 서비스 연동
-        String verificationCode = String.format("%06d", (int)(Math.random() * 1000000));
-        
-        // 실제 SMS 서비스 연동 구현
-        log.info("SMS 발송 시뮬레이션: {} -> 인증코드: {}", normalizedPhone, verificationCode);
-        
-        // SMS 서비스 연동 로직
-        // 1. SMS 서비스 API 호출 (실제 구현)
-        boolean smsSent = sendSmsMessage(normalizedPhone, verificationCode);
-        
-        if (smsSent) {
-            // SSOT 저장소(SmsOtpVerificationService) 에 위임 — 5분 TTL · 단일 사용 정책.
-            // 마이페이지 휴대전화 변경(Phase A) 등 동일 OTP 저장 재사용을 위해 Spring Bean 으로 추출.
-            smsOtpVerificationService.storeCode(normalizedPhone, verificationCode);
-            log.info("SMS 인증 코드 저장 완료: {} (5분 TTL)", normalizedPhone);
+        OtpPurpose purpose = resolveOtpPurpose(request.get("purpose"));
+        log.info("OTP 인증 코드 전송 요청: phone={} purpose={}", normalizedPhone, purpose.getCode());
 
-            log.info("SMS 발송 성공: {}", normalizedPhone);
-        } else {
-            log.error("SMS 발송 실패: {}", normalizedPhone);
-            throw new RuntimeException("SMS 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        String verificationCode = String.format("%06d", (int) (Math.random() * 1000000));
+        smsOtpVerificationService.storeCode(normalizedPhone, verificationCode);
+
+        Long sessionUserId = resolveSessionUserId(session);
+        String tenantId = TenantContextHolder.getTenantId();
+
+        OtpDeliveryResult result = otpDeliveryService.deliver(
+                tenantId, sessionUserId, normalizedPhone, verificationCode, purpose);
+        if (result.getChannel() == OtpDeliveryChannel.FAILED) {
+            log.error("OTP 발송 실패: phone={} reason={}", normalizedPhone, result.getFailureReason());
+            throw new RuntimeException("인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
-        
-        log.info("SMS 인증 코드 생성: {} (테스트용)", verificationCode);
-        
+
         Map<String, Object> data = new HashMap<>();
-        data.put("message", "인증 코드가 전송되었습니다.");
-        data.put("verificationCode", verificationCode); // 테스트용으로 코드 반환
-        
+        data.put("message", buildDeliveryMessage(result.getChannel()));
+        data.put("deliveryChannel", result.getChannel().name());
         return success(data);
+    }
+
+    private Long resolveSessionUserId(HttpSession session) {
+        if (session == null) {
+            return null;
+        }
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            return currentUser != null ? currentUser.getId() : null;
+        } catch (Exception ex) {
+            log.debug("OTP push-first: 세션 사용자 조회 실패(비로그인 흐름으로 가정) — {}", ex.getMessage());
+            return null;
+        }
+    }
+
+    private OtpPurpose resolveOtpPurpose(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return OtpPurpose.GENERIC;
+        }
+        String upper = raw.trim().toUpperCase();
+        for (OtpPurpose p : OtpPurpose.values()) {
+            if (p.name().equals(upper)) {
+                return p;
+            }
+        }
+        return OtpPurpose.GENERIC;
+    }
+
+    private String buildDeliveryMessage(OtpDeliveryChannel channel) {
+        return switch (channel) {
+            case PUSH -> "앱 푸시 알림으로 인증번호를 발송했습니다.";
+            case SMS, SMS_STUB -> "SMS로 인증번호를 발송했습니다.";
+            case FAILED -> "인증번호 발송에 실패했습니다.";
+        };
     }
     
     /**

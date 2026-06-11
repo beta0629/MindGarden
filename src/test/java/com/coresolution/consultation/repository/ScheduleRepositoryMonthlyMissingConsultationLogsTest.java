@@ -38,7 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>M2: ConsultationRecord 가 존재(consultationId = schedule.id) 하면 제외</li>
  *   <li>M3: ConsultationRecord 가 isDeleted=true 면 «미작성» 으로 포함</li>
  *   <li>M4: 비대상 상태 일정 제외 (CANCELLED, IN_PROGRESS, VACATION)</li>
- *   <li>M5: isDeleted=true 일정·consultantId IS NULL 일정 제외</li>
+ *   <li>M5: isDeleted=true 일정 제외 (consultantId IS NULL 은 DB NOT NULL +
+ *       Bean Validation 으로 운영·테스트 모두 영속 불가 — JPQL 의
+ *       {@code s.consultantId IS NOT NULL} 는 방어적 filter)</li>
  *   <li>M6: BETWEEN startDate AND endDate 양 끝 포함, 직전일/직후일 제외, 정렬</li>
  *   <li>F1: 「과거 + CONFIRMED + 일지 미작성」 → 응답 포함 (R5 회귀 가드)</li>
  *   <li>F2: 「과거 + BOOKED + 일지 미작성」 → 응답 포함 (R5 회귀 가드)</li>
@@ -177,15 +179,18 @@ class ScheduleRepositoryMonthlyMissingConsultationLogsTest {
     // ─── M5 ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("M5: isDeleted=true 일정·consultantId IS NULL 일정 제외")
-    void m5_deletedAndNullConsultant_excluded() {
+    @DisplayName("M5: isDeleted=true 일정 제외 (consultantId IS NULL 은 schema NOT NULL 로 영속 불가 — JPQL filter 는 방어적)")
+    void m5_deletedSchedule_excluded() {
         String tenantId = UUID.randomUUID().toString();
         Long consultantA = randomId();
 
+        // isDeleted=true: 결과 제외 대상.
         saveSchedule(tenantId, consultantA, LocalDate.of(2026, 4, 5),
                 ScheduleStatus.COMPLETED, true);
-        saveSchedule(tenantId, null, LocalDate.of(2026, 4, 6),
-                ScheduleStatus.COMPLETED, false);
+        // consultantId IS NULL 케이스는 영속 불가 (Schedule.consultantId @NotNull +
+        // schedules.consultant_id NOT NULL). JPQL 의 {@code s.consultantId IS NOT NULL}
+        // 은 historical/마이그레이션 데이터에 대한 방어적 filter — 운영·테스트 환경
+        // 모두 schema 가 NULL 을 차단하므로 본 테스트에서 직접 케이스를 만들 수 없다.
         Schedule active = saveCompleted(tenantId, consultantA, LocalDate.of(2026, 4, 7));
 
         List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(

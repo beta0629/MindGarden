@@ -55,7 +55,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("MyPageServiceImpl 휴대전화 변경(Phase A)")
 class MyPageServiceImplPhoneChangeTest {
 
-    private static final String TENANT = "tenant-phone-" + UUID.randomUUID();
+    // tenant_id 컬럼 길이(36) 한도. UUID(no-dash) 32자 + prefix 4자 = 36자.
+    private static final String TENANT = "tph-" + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
     private static final Long USER_ID = 42L;
     private static final String OTP = "123456";
     private static final String NORMALIZED_PHONE = "01012345678";

@@ -8,10 +8,6 @@
  */
 import { Buffer } from 'buffer';
 
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
-
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -40,6 +36,10 @@ import { ApiEnvironmentBanner } from '../src/components/atoms/ApiEnvironmentBann
 import { ForceUpdateGate } from '../src/components/organisms/ForceUpdateGate';
 import { useTenantStore } from '../src/stores/useTenantStore';
 import { useResolveTenantIdForApi } from '../src/utils/resolveTenantIdForApi';
+
+if (typeof globalThis.Buffer === 'undefined') {
+  globalThis.Buffer = Buffer;
+}
 
 const PUSH_TOKEN_REGISTER_DEBOUNCE_MS = 500;
 
@@ -172,6 +172,10 @@ export default function RootLayout() {
                 <Stack.Screen name="(admin)" />
                 <Stack.Screen name="(consultant)" />
                 <Stack.Screen name="(client)" />
+                <Stack.Screen
+                  name="(otp)"
+                  options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
                 <Stack.Screen name="+not-found" />
               </Stack>
               <OfflineBanner />

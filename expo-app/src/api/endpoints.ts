@@ -67,6 +67,14 @@ export const AUTH_API = {
   SMS_SEND: '/api/auth/sms/send',
   SMS_VERIFY: '/api/auth/sms/verify',
   SMS_LOGIN: '/api/auth/sms-login',
+  /**
+   * Push-first OTP 1회 조회 (Spring `AuthController#getCurrentOtp`, PR #224 후속).
+   *
+   * <p>{@code dispatchAuthenticationOtp} push 페이로드의 {@code data.otpToken} 을 쿼리
+   * 파라미터로 전달해 6자리 OTP 를 1회 조회한다. TTL 5분·단일 사용·세션 사용자 일치 시에만
+   * 200 OK + {@code { otp }} 반환, 그 외 404. 평문 OTP 는 절대 로그·UI 외부에 노출 금지.</p>
+   */
+  OTP_CURRENT: '/api/v1/auth/otp/current',
 } as const;
 
 export const TENANT_API = {
@@ -111,8 +119,7 @@ export const SCHEDULE_API = {
 
 /** 공통코드 — ScheduleModal 상담유형·시간(분) 피커 */
 export const COMMON_CODE_API = {
-  group: (codeGroup: string) =>
-    `/api/v1/common-codes/groups/${encodeURIComponent(codeGroup)}`,
+  group: (codeGroup: string) => `/api/v1/common-codes/groups/${encodeURIComponent(codeGroup)}`,
 } as const;
 
 export const MESSAGE_API = {
@@ -255,10 +262,7 @@ export const ADMIN_MOBILE_API = {
   consultantConsultationRecords: (consultantId: string | number) =>
     `/api/v1/admin/consultant-records/${encodeURIComponent(String(consultantId))}/consultation-records`,
   /** Spring `ConsultantRecordsController` — 상담일지 상세(읽기 전용) */
-  consultantConsultationRecordDetail: (
-    consultantId: string | number,
-    recordId: string | number,
-  ) =>
+  consultantConsultationRecordDetail: (consultantId: string | number, recordId: string | number) =>
     `/api/v1/admin/consultant-records/${encodeURIComponent(String(consultantId))}/consultation-records/${encodeURIComponent(String(recordId))}`,
   MIND_WEATHER_CARDS: '/api/v1/admin/wellness/mind-weather/cards',
   MIND_WEATHER_SUMMARY: '/api/v1/admin/wellness/mind-weather/summary',

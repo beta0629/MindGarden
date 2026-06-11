@@ -2,11 +2,17 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.SessionManagementConstants;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.oauth.OAuthAccountSelectionUserFacingStrings;
+import com.coresolution.consultation.dto.AccountCandidate;
 import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.dto.EmailResponse;
+import com.coresolution.consultation.dto.PasswordLoginAccountSelectionClaims;
 import com.coresolution.consultation.dto.UserDto;
 import com.coresolution.consultation.dto.UserResponse;
 import com.coresolution.consultation.entity.User;
@@ -17,6 +23,8 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import java.util.List;
 import java.util.ArrayList;
@@ -30,6 +38,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Collection;
@@ -80,7 +89,24 @@ public class AuthServiceImpl implements AuthService {
     
     @Autowired
     private com.coresolution.core.repository.TenantRoleRepository tenantRoleRepository;
-    
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private PersonalDataEncryptionUtil encryptionUtil;
+
+    /**
+     * 다중 매치 계정 선택 토큰 1회 사용 추적용 in-memory 저장소.
+     *
+     * <p>키: 토큰 문자열, 값: 만료 epoch ms. {@code selectAccount} 호출 시 토큰을 컨슘 처리하여 재사용을
+     * 차단한다(P1 — 1회 사용 정책). 운영 멀티 인스턴스 환경에서는 Redis 기반 store 로 교체 가능.</p>
+     */
+    private final Map<String, Long> consumedSelectionTokens = new ConcurrentHashMap<>();
+
+    /** 다중 매치 응답 타입 식별자 — FE 가 모달/화면 전환 트리거 약속 값. */
+    public static final String MULTIPLE_ACCOUNTS_RESPONSE_TYPE = "multiple_accounts_selection_required";
+
     // 개발 환경에서 중복 로그인 체크 비활성화 설정
     @Value("${session.duplicate-login-check.enabled:true}")
     private boolean duplicateLoginCheckEnabled;
@@ -304,7 +330,17 @@ public class AuthServiceImpl implements AuthService {
                 log.error("❌ 중복 세션 정리 실패: sessionId={}, error={}", sessionId, e.getMessage(), e);
                 System.out.println("❌ 중복 세션 정리 실패: sessionId=" + sessionId + ", error=" + e.getMessage());
             }
-            
+
+            // P1 silent first 차단 — 휴대폰 로그인 다중 매치 preflight.
+            //  - 이메일 또는 후보 0/1 명: null 반환 → Spring Security 표준 흐름.
+            //  - 후보 2명 이상 + 비밀번호 1개 일치: 단일 사용자로 정상 로그인 응답.
+            //  - 후보 2명 이상 + 비밀번호 2개 이상 일치: 다중 매치 응답(계정 선택).
+            AuthResponse multiMatchResponse = handlePhonePasswordMultiMatch(email, password,
+                sessionId, clientIp, userAgent);
+            if (multiMatchResponse != null) {
+                return multiMatchResponse;
+            }
+
             // Spring Security 인증
             log.info("🔐 Spring Security 인증 시도 시작: email={}", EmailLogMasking.maskForLog(email));
             Authentication authentication = null;
@@ -317,92 +353,20 @@ public class AuthServiceImpl implements AuthService {
                 log.error("❌ Spring Security 인증 실패: email={}, error={}, class={}", EmailLogMasking.maskForLog(email), e.getMessage(), e.getClass().getName(), e);
                 throw e;
             }
-            
+
             if (authentication != null && authentication.isAuthenticated()) {
                 log.info("🔐 Spring Security 인증 성공: email={}", EmailLogMasking.maskForLog(email));
-                
-                // 사용자 정보 조회
+
+                // 사용자 정보 조회 — 휴대폰 다중 매치는 preflight 에서 이미 분기됨.
                 log.info("👤 사용자 정보 조회 시작: loginPrincipal={}", EmailLogMasking.maskForLog(email));
                 User user = userService.findByLoginPrincipal(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
-                
-                log.info("👤 사용자 정보 조회 완료: userId={}, email={}, tenantId={}, role={}", 
+
+                log.info("👤 사용자 정보 조회 완료: userId={}, email={}, tenantId={}, role={}",
                     user.getId(), EmailLogMasking.maskForLog(user.getEmail()), user.getTenantId(), user.getRole());
-                
-                // 임시 비밀번호로 로그인 차단 (isPasswordChanged = false인 경우)
-                if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
-                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: email={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", EmailLogMasking.maskForLog(email), user.getId());
-                    return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
-                }
-                
-                // 입점사(코어솔루션 테넌트)만 접근 가능 - Trinity 회사 직원(ADMIN/OPS 역할) 제외
-                log.info("🔍 테넌트 접근 검증 시작: email={}, tenantId={}", EmailLogMasking.maskForLog(email), user.getTenantId());
-                validateCoreSolutionTenantAccess(user);
-                log.info("✅ 테넌트 접근 검증 완료: email={}", EmailLogMasking.maskForLog(email));
-                
-                // 중복 로그인 체크 (설정에 따라 활성화/비활성화)
-                if (duplicateLoginCheckEnabled) {
-                    boolean hasDuplicateLogin = checkDuplicateLogin(user);
-                    
-                    if (hasDuplicateLogin) {
-                        log.warn("⚠️ 중복 로그인 감지: email={}", EmailLogMasking.maskForLog(email));
-                        
-                        if (askUserConfirmation) {
-                            // 사용자에게 기존 세션 종료 확인 요청 (운영 반영 게이트 §17·§1.3 — 하드코딩 제거)
-                            log.info("🔔 사용자에게 기존 세션 종료 확인 요청: email={}", EmailLogMasking.maskForLog(email));
-                            return AuthResponse.duplicateLoginConfirmation(
-                                SessionManagementConstants.DUPLICATE_LOGIN_MESSAGE);
-                        } else if (SessionManagementConstants.TERMINATE_EXISTING_SESSION) {
-                            // 기존 세션들 정리
-                            cleanupUserSessions(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
-                            log.info("🔄 기존 세션 정리 완료: email={}", EmailLogMasking.maskForLog(email));
-                        }
-                    }
-                } else {
-                    log.info("🔧 개발 환경: 중복 로그인 체크 비활성화됨");
-                }
-                
-                // 새 세션 생성 (중복 로그인 체크 후)
-                userSessionService.createSession(user, sessionId, clientIp, userAgent, 
-                    SessionManagementConstants.LOGIN_TYPE_NORMAL, null);
-                
-                // 마지막 로그인 시간 업데이트
-                userService.updateLastLoginTime(user.getId());
-                
-                // UserResponse 변환 (표준화된 DTO)
-                UserResponse userResponse = convertToUserResponse(user);
-                
-                // 멀티 테넌트 사용자 확인
-                List<AuthResponse.TenantInfo> accessibleTenants = checkMultiTenantUser(email);
-                
-                // 하위 호환성을 위해 UserDto도 생성
-                UserDto userDto = userResponse != null ? convertToUserDtoFromResponse(userResponse) : null;
-                
-                AuthResponse.AuthResponseBuilder responseBuilder = AuthResponse.builder()
-                    .success(true)
-                    .message("로그인 성공")
-                    .token(null)
-                    .refreshToken(null)
-                    .userResponse(userResponse)
-                    .user(userDto) // 하위 호환성
-                    .requiresPasswordChange(false); // 임시 비밀번호는 로그인 차단되므로 false
-                
-                if (accessibleTenants != null && !accessibleTenants.isEmpty()) {
-                    // 멀티 테넌트 사용자인 경우 테넌트 선택 필요
-                    responseBuilder
-                        .isMultiTenant(true)
-                        .requiresTenantSelection(true)
-                        .accessibleTenants(accessibleTenants)
-                        .responseType("tenant_selection_required");
-                    
-                    log.info("✅ 멀티 테넌트 사용자 로그인: email={}, tenantCount={}", EmailLogMasking.maskForLog(email), accessibleTenants.size());
-                } else {
-                    log.info("✅ 세션 기반 로그인 성공: email={}, sessionId={}", 
-                        EmailLogMasking.maskForLog(email), sessionId);
-                }
-                
-                return responseBuilder.build();
-                
+
+                return finalizeAuthenticatedSession(user, sessionId, clientIp, userAgent);
+
             } else {
                 return AuthResponse.failure("인증에 실패했습니다.");
             }
@@ -731,5 +695,343 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             log.error("비밀번호 재설정 완료 이메일 발송 중 오류: email={}, error={}", EmailLogMasking.maskForLog(email), e.getMessage(), e);
         }
+    }
+
+    // ==================== P1 다중 매치 헬퍼 (silent first 차단) ====================
+
+    /**
+     * 휴대폰 로그인 다중 매치 preflight.
+     *
+     * <p>이메일 로그인 또는 후보 0/1 명 휴대폰 로그인은 {@code null} 을 반환하여 Spring Security 표준
+     * 흐름으로 위임한다. 후보 2명 이상은 모든 후보의 비밀번호를 검증하여 분기한다.</p>
+     *
+     * <p>비밀번호 검증은 모든 후보에 대해 수행하여 응답 분기 전 timing 차이를 줄인다(timing attack
+     * 방어). BadCredentials 분기는 동일 메시지로 통일하여 후보 노출을 차단한다.</p>
+     *
+     * @return 다중 매치/비번 불일치/단일 매치 응답, null = preflight 비대상
+     */
+    private AuthResponse handlePhonePasswordMultiMatch(String loginPrincipal, String password,
+            String sessionId, String clientIp, String userAgent) {
+        if (loginPrincipal == null || loginPrincipal.isEmpty()) {
+            return null;
+        }
+        if (LoginIdentifierUtils.looksLikeEmail(loginPrincipal)) {
+            return null;
+        }
+
+        List<User> candidates;
+        try {
+            candidates = userService.findAllByLoginPrincipal(loginPrincipal);
+        } catch (Exception e) {
+            log.warn("⚠️ 다중 매치 preflight 후보 조회 실패 (Spring Security 흐름으로 위임): {}",
+                e.getMessage());
+            return null;
+        }
+
+        if (candidates == null || candidates.size() < 2) {
+            return null;
+        }
+
+        log.info("🔍 휴대폰 로그인 다중 후보 감지: count={}", candidates.size());
+        List<User> matched = new ArrayList<>();
+        for (User candidate : candidates) {
+            if (candidate.getPassword() == null || candidate.getPassword().isBlank()) {
+                continue;
+            }
+            try {
+                if (passwordEncoder.matches(password, candidate.getPassword())) {
+                    matched.add(candidate);
+                }
+            } catch (Exception e) {
+                log.debug("후보 비밀번호 비교 스킵: userId={}, err={}", candidate.getId(), e.getMessage());
+            }
+        }
+
+        if (matched.isEmpty()) {
+            log.warn("❌ 휴대폰 다중 매치 후보 비밀번호 모두 불일치: count={}", candidates.size());
+            return AuthResponse.failure("아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
+
+        if (matched.size() == 1) {
+            User user = matched.get(0);
+            log.info("✅ 휴대폰 다중 후보 단일 매치 → 단일 사용자로 정상 로그인: userId={}", user.getId());
+            return finalizeAuthenticatedSession(user, sessionId, clientIp, userAgent);
+        }
+
+        log.warn("⚠️ 휴대폰 다중 매치 + 비밀번호 2개 이상 일치 → 계정 선택 분기: matchedCount={}",
+            matched.size());
+        return buildPasswordLoginMultiAccountResponse(matched);
+    }
+
+    /**
+     * 다중 매치 응답 본문 구성. 5분 TTL 단기 JWT + 본인 식별 최소 정보를 담은 카드 목록.
+     */
+    private AuthResponse buildPasswordLoginMultiAccountResponse(List<User> matched) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ 다중 매치 응답 생성 실패: tenantId 없음");
+            return AuthResponse.failure("로그인 처리 중 오류가 발생했습니다.");
+        }
+        List<Long> userIds = matched.stream().map(User::getId).collect(Collectors.toList());
+        String selectionToken;
+        try {
+            selectionToken = jwtService.generatePasswordLoginAccountSelectionToken(tenantId, userIds);
+        } catch (Exception e) {
+            log.error("❌ 계정 선택 JWT 발급 실패: {}", e.getMessage(), e);
+            return AuthResponse.failure("로그인 처리 중 오류가 발생했습니다.");
+        }
+
+        List<AccountCandidate> candidatesDto = matched.stream()
+            .map(this::toAccountCandidate)
+            .collect(Collectors.toList());
+
+        return AuthResponse.builder()
+            .success(false)
+            .message("동일한 휴대폰으로 등록된 계정이 여러 개입니다. 연결할 계정을 선택해주세요.")
+            .responseType(MULTIPLE_ACCOUNTS_RESPONSE_TYPE)
+            .multipleAccounts(true)
+            .candidates(candidatesDto)
+            .selectionToken(selectionToken)
+            .build();
+    }
+
+    /**
+     * {@link User} 를 후보 카드용 {@link AccountCandidate} 로 변환.
+     *
+     * <p>이메일 마스킹(예: {@code a***@example.com}), 브랜치명 best-effort 노출. 가입일·권한 상세 등은
+     * 보안 표준상 제외(SECURITY_STANDARD.md).</p>
+     */
+    private AccountCandidate toAccountCandidate(User user) {
+        UserRole role = user.getRole();
+        return AccountCandidate.builder()
+            .userId(user.getId())
+            .role(role != null ? role.name() : null)
+            .roleDisplayLabel(OAuthAccountSelectionUserFacingStrings.roleDisplayLabel(role))
+            .dashboardGuide(OAuthAccountSelectionUserFacingStrings.dashboardGuideForRole(role))
+            .optionLabel(buildOptionLabel(user))
+            .maskedEmail(deriveMaskedEmail(user))
+            .branchName(deriveBranchName(user))
+            .build();
+    }
+
+    /**
+     * 후보 카드 식별용 라벨 — OAuth 와 동일 문구 규약(role 별 포맷).
+     */
+    private String buildOptionLabel(User user) {
+        if (user == null || user.getId() == null) {
+            return "";
+        }
+        UserRole role = user.getRole();
+        if (role == null) {
+            return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_OTHER_FMT, "USER",
+                user.getId());
+        }
+        switch (role) {
+            case CONSULTANT:
+            case PLAY_THERAPIST:
+            case SPEECH_THERAPIST:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_CONSULTANT_FMT,
+                    user.getId());
+            case CLIENT:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_CLIENT_FMT,
+                    user.getId());
+            case ADMIN:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_ADMIN_FMT,
+                    user.getId());
+            case STAFF:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_STAFF_FMT,
+                    user.getId());
+            default:
+                return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_OTHER_FMT,
+                    role.name(), user.getId());
+        }
+    }
+
+    /**
+     * 사용자 이메일을 복호화 후 마스킹된 형태로 반환. 실패/빈값이면 null.
+     */
+    private String deriveMaskedEmail(User user) {
+        if (user == null) {
+            return null;
+        }
+        String enc = user.getEmail();
+        if (enc == null || enc.isBlank()) {
+            return null;
+        }
+        String plain;
+        try {
+            plain = encryptionUtil != null ? encryptionUtil.safeDecrypt(enc) : enc;
+        } catch (Exception ex) {
+            log.debug("이메일 복호화 실패 (raw 사용): userId={}", user.getId());
+            plain = enc;
+        }
+        if (plain == null || plain.isBlank()) {
+            return null;
+        }
+        return EmailLogMasking.maskForLog(plain);
+    }
+
+    /**
+     * 사용자 브랜치명 best-effort 추출. lazy proxy 등 예외 시 null.
+     */
+    private String deriveBranchName(User user) {
+        if (user == null) {
+            return null;
+        }
+        try {
+            if (user.getBranch() != null) {
+                return user.getBranch().getBranchName();
+            }
+        } catch (Exception ignored) {
+            // proxy / lazy load 실패 — best-effort 라 무시
+        }
+        return null;
+    }
+
+    /**
+     * 인증 완료된 사용자에 대해 세션 생성·중복 로그인 처리·임시 비밀번호 차단 등 후속 절차를 수행.
+     *
+     * <p>호출자는 본 메서드 진입 시 비밀번호 검증이 끝났음을 보장해야 한다. 다중 매치 단일 사용자
+     * 분기에서는 {@code passwordEncoder.matches} 로, 표준 흐름에서는
+     * {@code AuthenticationManager.authenticate} 로 검증된 사용자 entity 를 전달한다.</p>
+     */
+    private AuthResponse finalizeAuthenticatedSession(User user, String sessionId, String clientIp,
+            String userAgent) {
+        if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
+            log.warn("❌ 임시 비밀번호로 로그인 시도 차단: userId={}", user.getId());
+            return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
+        }
+
+        validateCoreSolutionTenantAccess(user);
+
+        if (duplicateLoginCheckEnabled) {
+            boolean hasDuplicateLogin = checkDuplicateLogin(user);
+            if (hasDuplicateLogin) {
+                log.warn("⚠️ 중복 로그인 감지: userId={}", user.getId());
+                if (askUserConfirmation) {
+                    log.info("🔔 사용자에게 기존 세션 종료 확인 요청: userId={}", user.getId());
+                    return AuthResponse.duplicateLoginConfirmation(
+                        SessionManagementConstants.DUPLICATE_LOGIN_MESSAGE);
+                } else if (SessionManagementConstants.TERMINATE_EXISTING_SESSION) {
+                    cleanupUserSessions(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
+                    log.info("🔄 기존 세션 정리 완료: userId={}", user.getId());
+                }
+            }
+        } else {
+            log.info("🔧 개발 환경: 중복 로그인 체크 비활성화됨");
+        }
+
+        userSessionService.createSession(user, sessionId, clientIp, userAgent,
+            SessionManagementConstants.LOGIN_TYPE_NORMAL, null);
+
+        userService.updateLastLoginTime(user.getId());
+
+        UserResponse userResponse = convertToUserResponse(user);
+
+        List<AuthResponse.TenantInfo> accessibleTenants = checkMultiTenantUser(user.getEmail());
+
+        UserDto userDto = userResponse != null ? convertToUserDtoFromResponse(userResponse) : null;
+
+        AuthResponse.AuthResponseBuilder responseBuilder = AuthResponse.builder()
+            .success(true)
+            .message("로그인 성공")
+            .token(null)
+            .refreshToken(null)
+            .userResponse(userResponse)
+            .user(userDto)
+            .requiresPasswordChange(false);
+
+        if (accessibleTenants != null && !accessibleTenants.isEmpty()) {
+            responseBuilder
+                .isMultiTenant(true)
+                .requiresTenantSelection(true)
+                .accessibleTenants(accessibleTenants)
+                .responseType("tenant_selection_required");
+            log.info("✅ 멀티 테넌트 사용자 로그인: userId={}, tenantCount={}",
+                user.getId(), accessibleTenants.size());
+        } else {
+            log.info("✅ 세션 기반 로그인 성공: userId={}, sessionId={}", user.getId(), sessionId);
+        }
+
+        return responseBuilder.build();
+    }
+
+    @Override
+    public AuthResponse selectAccount(String selectionToken, Long selectedUserId, String sessionId,
+            String clientIp, String userAgent) {
+        if (selectionToken == null || selectionToken.isBlank() || selectedUserId == null) {
+            return AuthResponse.failure("선택 정보가 유효하지 않습니다.");
+        }
+
+        evictExpiredConsumedSelectionTokens();
+        if (isPasswordLoginSelectionTokenConsumed(selectionToken)) {
+            log.warn("❌ 계정 선택 토큰 재사용 시도");
+            return AuthResponse.failure("이미 사용된 선택 정보입니다. 다시 로그인해주세요.");
+        }
+
+        PasswordLoginAccountSelectionClaims claims;
+        try {
+            claims = jwtService.parsePasswordLoginAccountSelectionToken(selectionToken);
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            log.warn("❌ 계정 선택 토큰 만료");
+            return AuthResponse.failure("선택 정보가 만료되었습니다. 다시 로그인해주세요.");
+        } catch (Exception e) {
+            log.warn("❌ 계정 선택 토큰 파싱 실패: {}", e.getMessage());
+            return AuthResponse.failure("선택 정보가 유효하지 않습니다.");
+        }
+
+        String currentTenant = TenantContextHolder.getTenantId();
+        if (currentTenant == null || currentTenant.isEmpty()
+                || !currentTenant.equals(claims.getTenantId())) {
+            log.warn("❌ 계정 선택 테넌트 불일치: ctx={}, claim={}",
+                currentTenant, claims.getTenantId());
+            return AuthResponse.failure("테넌트 정보가 일치하지 않습니다.");
+        }
+
+        if (claims.getAllowedUserIds() == null
+                || !claims.getAllowedUserIds().contains(selectedUserId)) {
+            log.warn("❌ 계정 선택: 허용 목록 밖 userId={} (allowed={})",
+                selectedUserId, claims.getAllowedUserIds());
+            return AuthResponse.failure("선택한 계정은 이 로그인에 허용되지 않습니다.");
+        }
+
+        User user;
+        try {
+            user = userService.findById(selectedUserId).orElse(null);
+        } catch (Exception e) {
+            log.error("❌ 계정 선택 사용자 조회 실패: {}", e.getMessage(), e);
+            return AuthResponse.failure("로그인 처리 중 오류가 발생했습니다.");
+        }
+        if (user == null || user.getTenantId() == null
+                || !user.getTenantId().equals(claims.getTenantId())) {
+            log.warn("❌ 계정 선택 사용자 미존재 또는 테넌트 불일치: userId={}", selectedUserId);
+            return AuthResponse.failure("사용자를 찾을 수 없습니다.");
+        }
+
+        long expiresAtMs = System.currentTimeMillis() + 5L * 60L * 1000L;
+        markPasswordLoginSelectionTokenConsumed(selectionToken, expiresAtMs);
+
+        return finalizeAuthenticatedSession(user, sessionId, clientIp, userAgent);
+    }
+
+    private boolean isPasswordLoginSelectionTokenConsumed(String token) {
+        Long expiresAtMs = consumedSelectionTokens.get(token);
+        if (expiresAtMs == null) {
+            return false;
+        }
+        if (System.currentTimeMillis() >= expiresAtMs) {
+            consumedSelectionTokens.remove(token);
+            return false;
+        }
+        return true;
+    }
+
+    private void markPasswordLoginSelectionTokenConsumed(String token, long expiresAtMs) {
+        consumedSelectionTokens.put(token, expiresAtMs);
+    }
+
+    private void evictExpiredConsumedSelectionTokens() {
+        long now = System.currentTimeMillis();
+        consumedSelectionTokens.entrySet().removeIf(e -> e.getValue() <= now);
     }
 }

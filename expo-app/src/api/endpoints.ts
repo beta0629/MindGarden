@@ -22,6 +22,15 @@ export const AUTH_API = {
   SOCIAL_SIGNUP: '/api/v1/auth/social/signup',
   OAUTH_ACCOUNT_SELECTION_PREVIEW: '/api/v1/auth/oauth2/account-selection-preview',
   OAUTH_ACCOUNT_SELECTION_COMPLETE: '/api/v1/auth/oauth2/complete-account-selection',
+  /**
+   * 일반 로그인(전화 + 비밀번호) 다중 매치 시 계정 선택 완료 — P1 silent first 차단(2026-06-11).
+   *
+   * <p>BE `AuthController#selectAccount`. {@code POST /api/v1/auth/login} 응답이
+   * {@code multipleAccounts: true} 일 때, 응답 {@code selectionToken} + 사용자가 선택한
+   * {@code selectedUserId} 를 함께 전송한다. 1회 사용 정책 — 토큰 만료/위조/후보 외 userId/재사용은
+   * 4xx 응답으로 차단된다.</p>
+   */
+  SELECT_ACCOUNT: '/api/v1/auth/select-account',
   KAKAO_AUTHORIZE: '/api/auth/oauth2/kakao/authorize',
   NAVER_AUTHORIZE: '/api/auth/oauth2/naver/authorize',
   /** Sign in with Apple (App Store 4.8 T1). 모바일은 native `signInAsync()` → identityToken POST. */

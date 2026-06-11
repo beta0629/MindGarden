@@ -451,6 +451,25 @@ public class UserServiceImpl implements UserService {
         return findByNormalizedPhoneInTenant(loginPrincipal, TenantContextHolder.getRequiredTenantId());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> findAllByLoginPrincipal(String loginPrincipal) {
+        if (loginPrincipal == null || loginPrincipal.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (LoginIdentifierUtils.looksLikeEmail(loginPrincipal)) {
+            return findByEmail(loginPrincipal)
+                .map(Collections::singletonList)
+                .orElseGet(Collections::emptyList);
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("findAllByLoginPrincipal: tenantId 없음 — 휴대폰 다중 매치 조회 스킵");
+            return Collections.emptyList();
+        }
+        return findAllUsersMatchingNormalizedPhoneInTenant(loginPrincipal, tenantId);
+    }
+
     /**
      * 테넌트 내 사용자 전화번호를 복호화·정규화하여 일치하는 모든 행(DB 암호화 저장 대응).
      */

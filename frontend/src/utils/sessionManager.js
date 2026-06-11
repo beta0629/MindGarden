@@ -39,6 +39,8 @@ class SessionManager {
     this.isProfileEditing = false; // 프로필 수정 중 플래그
     this.isFormSubmitting = false; // 폼 제출 중 플래그
     this.formSubmitCount = 0; // 폼 제출 카운터
+    // 동시 호출(force 포함) 중복 fetch 방지: 진행 중 promise 공유 (P0 hotfix 2026-06-12)
+    this.inflightCheckPromise = null;
 
     // localStorage에서 사용자 정보 복원
     this.restoreUserFromStorage();
@@ -130,6 +132,29 @@ class SessionManager {
       return this.user !== null;
     }
 
+    // P0 hotfix 2026-06-12: force=true 동시 호출 시에도 진행 중 promise 공유 (current-user 9회 중복 호출 제거)
+    // SessionProvider mount / MyPage loadUserInfo+loadSocialAccounts+loadWithdrawalStatus / ProfileSection /
+    // UnifiedHeader / SessionIdleWarning 등이 force=true 로 동시에 호출해도 실제 fetch 는 1회로 합쳐짐.
+    if (this.inflightCheckPromise) {
+      console.log('🔄 세션 체크 dedup (진행 중 promise 공유)');
+      return this.inflightCheckPromise;
+    }
+
+    this.inflightCheckPromise = this._performCheckSession(now);
+    try {
+      return await this.inflightCheckPromise;
+    } finally {
+      this.inflightCheckPromise = null;
+    }
+  }
+
+  /**
+   * 실제 current-user / session-info 호출 본문. 동시 force 호출 dedup 은 {@link checkSession} 에서 처리한다.
+   *
+   * @param {number} now 호출 시각(ms epoch)
+   * @returns {Promise<boolean>} 세션 유효 여부
+   */
+  async _performCheckSession(now) {
     this.checkInProgress = true;
     this.isLoading = true;
     this.notifyListeners(); // 로딩 시작 알림

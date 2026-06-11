@@ -75,6 +75,13 @@ jobs:
       NAVER_REGISTERED_URLS: ${{ secrets.NAVER_REGISTERED_URLS }}
       GOOGLE_REGISTERED_URLS: ${{ secrets.GOOGLE_REGISTERED_URLS }}
       APPLE_REGISTERED_URLS: ${{ secrets.APPLE_REGISTERED_URLS }}
+      # NCP SENS SMS 게이트웨이 4종 — PR #224 후속 (2026-06-11): SmsGatewayServiceImpl 정식 호출용.
+      # 4종 모두 채워졌을 때만 isStubMode()=false 로 NCP SENS POST 진입. 일부 누락 시 stub 모드 유지.
+      # 가이드: docs/운영반영/SMS_GATEWAY_NCP_SENS_SETUP_GUIDE.md
+      NCP_ACCESS_KEY: ${{ secrets.NCP_ACCESS_KEY }}
+      NCP_SECRET_KEY: ${{ secrets.NCP_SECRET_KEY }}
+      NCP_SMS_SERVICE_ID: ${{ secrets.NCP_SMS_SERVICE_ID }}
+      NCP_SMS_SENDER_NUMBER: ${{ secrets.NCP_SMS_SENDER_NUMBER }}
 
     steps:
     - name: 📥 코드 체크아웃
@@ -767,6 +774,90 @@ jobs:
     # ============================================================================
 
     # ============================================================================
+    # [PR #224 후속 2026-06-11] NCP SENS env 자동 주입 + 검증 (개발)
+    # GitHub Secrets(NCP_*) → /etc/mindgarden/dev.env 멱등 갱신 + 마커 작성 (통합 restart step 이 일괄 반영).
+    # 배경: PR #224 (SmsGatewayService SSOT 추출) 후속으로 NCP SENS SignatureV2 정식 호출이 도입됨.
+    #       SmsGatewayServiceImpl#isStubMode() 가 4종 모두 채워졌을 때만 false 로 전환되어 dev POST 진입.
+    #       4종 누락 시 stub 모드로 동작(안전 fallback).
+    # Secret: NCP_ACCESS_KEY / NCP_SECRET_KEY / NCP_SMS_SERVICE_ID / NCP_SMS_SENDER_NUMBER
+    # 가이드: docs/운영반영/SMS_GATEWAY_NCP_SENS_SETUP_GUIDE.md
+    # ============================================================================
+    - name: 📱 NCP SENS SMS env 자동 주입 + 검증
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: NCP_ACCESS_KEY,NCP_SECRET_KEY,NCP_SMS_SERVICE_ID,NCP_SMS_SENDER_NUMBER
+        script: |
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          UNIT=mindgarden-dev.service
+          NCP_KEYS="NCP_ACCESS_KEY NCP_SECRET_KEY NCP_SMS_SERVICE_ID NCP_SMS_SENDER_NUMBER"
+
+          # 0) 사전 검증 — 4종 모두 있는지 (없으면 skip, secret 미등록 가능성)
+          MISSING_SECRET=0
+          for k in $NCP_KEYS; do
+            eval "v=\${$k}"
+            if [ -z "$v" ]; then
+              MISSING_SECRET=$((MISSING_SECRET+1))
+            fi
+          done
+          if [ "$MISSING_SECRET" -gt 0 ]; then
+            echo "::notice title=NCP SENS env skip::GitHub Secrets 의 NCP_* 4종 중 $MISSING_SECRET 개가 비어 있어 dev.env 갱신을 skip 합니다. SMS 는 stub 모드로 동작합니다. 등록 가이드: docs/운영반영/SMS_GATEWAY_NCP_SENS_SETUP_GUIDE.md / https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 0
+          fi
+
+          # 1) 파일 존재 보장 + 백업
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          # 2) 멱등 KEY="VALUE" 갱신
+          update_env() {
+            local key="$1"
+            local value="$2"
+            local escaped_value
+            escaped_value=$(printf '%s' "$value" | sed -e 's/[\\&|]/\\&/g')
+            if sudo grep -qE "^[[:space:]]*${key}=" "$DEV_ENV_FILE" 2>/dev/null; then
+              sudo sed -i "s|^[[:space:]]*${key}=.*|${key}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+            else
+              printf '%s="%s"\n' "$key" "$value" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+            fi
+          }
+
+          echo "🔐 dev.env NCP SENS 4종 멱등 갱신 시작"
+          update_env NCP_ACCESS_KEY        "$NCP_ACCESS_KEY"
+          update_env NCP_SECRET_KEY        "$NCP_SECRET_KEY"
+          update_env NCP_SMS_SERVICE_ID    "$NCP_SMS_SERVICE_ID"
+          update_env NCP_SMS_SENDER_NUMBER "$NCP_SMS_SENDER_NUMBER"
+
+          # 3) 권한 보호
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+
+          # 4) 값 노출 없이 길이만 표시 (Secret 보안)
+          echo "✅ dev.env NCP SENS 4종 갱신 완료 — 길이만 표시:"
+          sudo grep -E "^NCP_" "$DEV_ENV_FILE" \
+            | awk -F= '{key=$1; rest=substr($0, length(key)+2); gsub(/^"|"$/, "", rest); printf "   %s = (%d chars)\n", key, length(rest)}'
+
+          # 5) 변경 마커 작성 — 통합 restart step 이 1회만 systemctl restart 수행 (P2 transient 502 차단).
+          sudo touch /tmp/mindgarden-dev-env-pending-restart
+          echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart (통합 restart step 에서 NCP_* 일괄 반영)"
+    # ============================================================================
+    # [/PR #224 후속 2026-06-11]
+    # ============================================================================
+
+    # ============================================================================
     # [P0 후속 강화 2026-06-09] Profile Image Upload Dir env 자동 주입 + 검증 (개발)
     # 가이드: docs/project-management/2026-06-09/PROFILE_IMAGE_UPLOAD_OPS_GUIDE.md §5
     # Secret: PROFILE_IMAGE_UPLOAD_DIR (비밀 아님; 미등록 시 default 적용 + notice)
@@ -910,13 +1001,13 @@ jobs:
 
           # 통합 PID env 검증 — dev.env 에 정의된 키들만 /proc/PID/environ 으로 확인.
           # 각 env step 의 7번 PID 검증을 본 step 으로 이관 (restart 미적용 상태 검증 회피).
-          echo "::group::🔍 통합 PID env 검증 (APPLE_/GOOGLE_/REGISTERED_URLS/PROFILE_IMAGE)"
+          echo "::group::🔍 통합 PID env 검증 (APPLE_/GOOGLE_/REGISTERED_URLS/PROFILE_IMAGE/NCP_)"
           PID=$(systemctl show -p MainPID --value "$UNIT" 2>/dev/null)
           if [ -z "$PID" ] || [ "$PID" = "0" ]; then
             echo "::warning::${UNIT} MainPID 조회 실패 (PID='$PID') — 프로세스 env 검증 skip"
           else
             echo "🔍 unit=${UNIT} / PID=${PID} 프로세스 env 일괄 확인"
-            ALL_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS PROFILE_IMAGE_UPLOAD_DIR"
+            ALL_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS PROFILE_IMAGE_UPLOAD_DIR NCP_ACCESS_KEY NCP_SECRET_KEY NCP_SMS_SERVICE_ID NCP_SMS_SENDER_NUMBER"
             MISSING_ENV=0
             CHECKED=0
             for k in $ALL_KEYS; do

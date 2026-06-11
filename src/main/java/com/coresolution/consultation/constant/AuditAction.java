@@ -59,7 +59,24 @@ public enum AuditAction {
      * 마스킹 처리 (예: {@code j***@g***.com}) 후 metadata 에 기록한다.
      */
     USER_EMAIL_CHANGE(
-            "USER_EMAIL_CHANGE", "enums.AuditAction.USER_EMAIL_CHANGE");
+            "USER_EMAIL_CHANGE", "enums.AuditAction.USER_EMAIL_CHANGE"),
+
+    /**
+     * OTP 발송 — 휴대전화 OTP 코드 발송 시점(push-first → SMS 폴백). 2026-06-11 PR #224 후속 도입.
+     *
+     * <p>metadata 적재 필드(SSOT):</p>
+     * <ul>
+     *   <li>{@code delivery_channel} — PUSH / SMS / SMS_STUB / FAILED ({@link OtpDeliveryChannel})</li>
+     *   <li>{@code purpose}          — LOGIN_VERIFICATION / PHONE_CHANGE / SIGNUP_VERIFICATION / GENERIC</li>
+     *   <li>{@code masked_target}    — 010-****-5678 형태로 마스킹된 수신 번호</li>
+     *   <li>{@code gateway_response_code} — SMS 게이트웨이 응답 코드(NCP SENS "202" 등, push 채널은 "push")</li>
+     *   <li>{@code ip_address}       — 호출자 IP (AuditLog.ipAddress 컬럼과 중복 적재 — 운영 BI 편의)</li>
+     *   <li>{@code fallback_reason}  — push 폴백 사유(no_user_context/push_dispatch_failed_or_no_token 등)</li>
+     * </ul>
+     *
+     * <p>보안: OTP 코드 평문은 절대 metadata 에 적재하지 않는다.</p>
+     */
+    OTP_SENT("OTP_SENT", "enums.AuditAction.OTP_SENT");
 
     private final String code;
     private final String messageKey;

@@ -147,6 +147,45 @@ class UserServiceImplLoginLookupTenantScopeTest {
     }
 
     @Test
+    @DisplayName("findAllByLoginPrincipal: 휴대폰 다중 매치 — 동일 번호 모든 사용자 반환(silent first 차단)")
+    void findAllByLoginPrincipal_phone_returnsAllMatches() {
+        User a = baseUser("ua", "a@test.com");
+        a.setTenantId(TENANT_A);
+        a.setPhone("enc-1");
+        User b = baseUser("ub", "b@test.com");
+        b.setTenantId(TENANT_A);
+        b.setPhone("enc-2");
+        when(userRepository.findByTenantId(TENANT_A)).thenReturn(List.of(a, b));
+        when(encryptionUtil.safeDecrypt("enc-1")).thenReturn("010-1111-2222");
+        when(encryptionUtil.safeDecrypt("enc-2")).thenReturn("01011112222");
+
+        List<User> result = userService.findAllByLoginPrincipal("01011112222");
+
+        assertThat(result).hasSize(2).contains(a, b);
+    }
+
+    @Test
+    @DisplayName("findAllByLoginPrincipal: 이메일 형태는 0~1명 반환 (테넌트 unique)")
+    void findAllByLoginPrincipal_email_returnsZeroOrOne() {
+        User u = baseUser("ue", "e@test.com");
+        u.setTenantId(TENANT_A);
+        when(userRepository.findByTenantIdAndEmail(TENANT_A, "e@test.com"))
+            .thenReturn(Optional.of(u));
+
+        List<User> result = userService.findAllByLoginPrincipal("E@Test.com");
+
+        assertThat(result).containsExactly(u);
+    }
+
+    @Test
+    @DisplayName("findAllByLoginPrincipal: 휴대폰인데 tenant 없으면 빈 목록(silent enumeration 차단)")
+    void findAllByLoginPrincipal_phone_noTenant_returnsEmpty() {
+        TenantContextHolder.clear();
+        assertThat(userService.findAllByLoginPrincipal("01000000000")).isEmpty();
+        verify(userRepository, never()).findByTenantId(anyString());
+    }
+
+    @Test
     @DisplayName("findByPhone: tenantId 없으면 전역 조회 금지·빈 결과")
     void findByPhone_noTenant_returnsEmpty() {
         TenantContextHolder.clear();

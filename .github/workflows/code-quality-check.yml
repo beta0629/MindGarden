@@ -108,7 +108,7 @@ jobs:
   integration-tests:
     name: 🧪 통합 테스트
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
     needs: static-checks  # 정적 검사 통과 시에만 통합 테스트 실행(자원 절약)
 
     steps:

@@ -27,6 +27,15 @@ export const AUTH_API = {
   LOGOUT: '/api/v1/auth/logout',
   REFRESH_TOKEN: '/api/v1/auth/refresh',
   GET_CURRENT_USER: '/api/v1/auth/current-user',
+
+  /**
+   * 일반 로그인(전화 + 비밀번호) 다중 매치 시 계정 선택 완료 — P1 silent first 차단(2026-06-11).
+   *
+   * <p>BE `AuthController#selectAccount`. {@code POST /api/v1/auth/login} 응답이
+   * {@code multipleAccounts: true} 일 때, 응답으로 받은 5분 TTL {@code selectionToken} 과 사용자가
+   * 선택한 {@code selectedUserId} 를 함께 전송한다. 1회 사용 정책.</p>
+   */
+  SELECT_ACCOUNT: '/api/v1/auth/select-account',
   
   // 소셜 로그인
   KAKAO_OAUTH: '/api/v1/auth/oauth2/kakao',

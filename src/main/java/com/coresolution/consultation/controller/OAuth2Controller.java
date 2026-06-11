@@ -3861,6 +3861,50 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
+     * Apple SIWA 콜백의 GET fallback 핸들러 — P0 hotfix (2026-06-11).
+     *
+     * <p>Apple authorize 는 {@code response_mode=form_post} 으로 form-urlencoded POST 를 보내는 것이
+     * 정상 흐름이지만, 재로그인/즉시 통과 케이스에서 Apple 이 {@code response_mode} 를 무시하고
+     * {@code code}+{@code state} 만 query string 에 담아 GET redirect 로 보내는 동작이 알려져 있다.
+     * 또한 Cloudflare apex → app 301 redirect 가 form_post POST 를 GET 으로 변환하는 시나리오도 있다.</p>
+     *
+     * <p>본 핸들러는 GET 요청을 그대로 {@link #appleCallback} POST 핸들러에 위임해 동일한
+     * state 검증·tenant 복원·{@code AppleSignInService#callback} 흐름을 1회만 정의해 두어 회귀 0 을 보장한다.
+     * 이는 Google {@code @GetMapping("/google/callback")} 과 100% 동일 패턴이다.</p>
+     *
+     * @param code              Apple authorization code (선택)
+     * @param state             base64url(tenantId)+nonce 복합 state (선택)
+     * @param idToken           Apple identityToken (선택)
+     * @param userJson          첫 가입 시 Apple 이 제공하는 user JSON (GET 흐름에서는 보통 없음)
+     * @param error             Apple 이 동의 거절·오류 시 전달하는 사유 (선택)
+     * @param errorDescription  Apple/Cloudflare 가 추가로 전달하는 사유 설명 (선택, 로깅 용)
+     * @param mode              {@code login} 또는 {@code link} (선택)
+     * @param request           HTTP 요청
+     * @param session           HTTP 세션
+     * @return POST 핸들러 위임 결과 (302 redirect)
+     */
+    @GetMapping("/apple/callback")
+    public ResponseEntity<?> appleCallbackGet(@RequestParam(required = false) String code,
+            @RequestParam(required = false) String state,
+            @RequestParam(name = "id_token", required = false) String idToken,
+            @RequestParam(name = "user", required = false) String userJson,
+            @RequestParam(required = false) String error,
+            @RequestParam(name = "error_description", required = false) String errorDescription,
+            @RequestParam(required = false) String mode,
+            HttpServletRequest request, HttpSession session) {
+
+        log.info("Apple OAuth2 콜백 - GET fallback 수신: hasCode={}, hasState={}, hasIdToken={}, "
+                + "hasUserJson={}, hasError={}, errorDescriptionLen={}",
+                code != null, state != null, idToken != null,
+                userJson != null, error != null,
+                errorDescription != null ? errorDescription.length() : 0);
+
+        // 처리 로직 단일화 — POST 핸들러에 위임. user JSON 은 form_post 흐름에서만 전달되므로
+        // GET 에서는 보통 null. error_description 은 로깅용으로만 사용 (POST 시그니처와 정합).
+        return appleCallback(code, state, idToken, userJson, error, mode, request, session);
+    }
+
+    /**
      * Apple Sign in with Apple (SIWA) server-side auth-code 콜백 — Google PR #204 패턴 정합.
      *
      * <p>Apple authorize 응답은 {@code response_mode=form_post} 로 발송되어 콜백에 form-urlencoded
@@ -3870,6 +3914,9 @@ public class OAuth2Controller extends BaseApiController {
      *
      * <p>기존 {@code POST /api/v1/auth/oauth/apple/callback} (JSON, 모바일 호환) 은 그대로 유지하고
      * 본 신규 경로(`/api/v1/auth/apple/callback`, form-urlencoded)는 별도 분리해 회귀 0 을 보장한다.</p>
+     *
+     * <p>2026-06-11: GET fallback 매핑 {@link #appleCallbackGet} 추가 — Apple 이 재로그인 시
+     * {@code response_mode=form_post} 를 무시하고 query string GET redirect 로 보내는 케이스(405 hotfix).</p>
      *
      * @param code     Apple authorization code
      * @param state    base64url(tenantId)+nonce 복합 state

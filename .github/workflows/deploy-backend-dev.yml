@@ -49,6 +49,15 @@ concurrency:
   group: dev-backend-deploy-${{ github.repository }}
   cancel-in-progress: false
 
+# CI Java timezone 표준화 (A3, 2026-06-12): GitHub Actions runner JVM 을 KST 로 고정.
+# hotfix-4 [a73567ad] §A-3 의 pom.xml surefire/failsafe argLine 패턴을 워크플로 레벨로 확장.
+# JAVA_TOOL_OPTIONS 는 mvn clean package 등 모든 JVM 호출에 자동 적용되며,
+# 후속 C4 (운영 BE Dockerfile/systemd JAVA_TOOL_OPTIONS) 와 일관성을 유지한다.
+# 본 env 는 GitHub Actions runner 빌드 단계에만 적용되며, 운영/개발 서버 systemd 런타임에는 영향 없음
+# (서버 런타임 timezone 은 EnvironmentFile / TimeZoneConfig 가 담당, C4 에서 통합 예정).
+env:
+  JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR"
+
 jobs:
   deploy-backend:
     name: 🏗️ 코어솔루션 백엔드 빌드 및 배포

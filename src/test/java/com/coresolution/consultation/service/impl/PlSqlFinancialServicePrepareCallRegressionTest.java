@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * 운영 §M8 회귀 가드: PR-E hotfix
@@ -49,6 +50,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 class PlSqlFinancialServicePrepareCallRegressionTest {
 
     private static final String UT_TENANT = "ut-tenant-plsql-fin-regression";
+    private static final String UT_SCHEMA = "core_solution";
     private static final LocalDate START_DATE = LocalDate.of(2026, 5, 1);
     private static final LocalDate END_DATE = LocalDate.of(2026, 5, 31);
 
@@ -68,6 +70,8 @@ class PlSqlFinancialServicePrepareCallRegressionTest {
     @BeforeEach
     void setUp() {
         service = new PlSqlFinancialServiceImpl(jdbcTemplate);
+        // P0 hotfix 2026-06-11: catalog 명시 SSOT 주입 (운영 mind_garden 충돌 차단)
+        ReflectionTestUtils.setField(service, "dbSchemaName", UT_SCHEMA);
         TenantContextHolder.setTenantId(UT_TENANT);
         capturedPrepareCallSqls.clear();
     }
@@ -102,6 +106,10 @@ class PlSqlFinancialServicePrepareCallRegressionTest {
         assertThat(placeholderCount)
                 .as("prepareCall SQL 의 ? placeholder 개수는 IN+OUT 합과 일치해야 함 (SSOT 프로시저 시그니처)")
                 .isEqualTo(expectedPlaceholderCount);
+        // P0 hotfix 2026-06-11: catalog 명시 회귀 가드 — mind_garden 잔존 동명 프로시저 충돌 차단
+        assertThat(sql)
+                .as("prepareCall SQL 은 dbSchemaName 카탈로그를 명시해야 함 (운영 P0 회귀 방지)")
+                .contains(UT_SCHEMA + ".");
     }
 
     @Test

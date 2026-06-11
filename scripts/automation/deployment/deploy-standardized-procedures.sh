@@ -69,6 +69,22 @@ if [ -z "$DB_PASS" ]; then
     fail "DB 비밀번호가 설정되지 않았습니다."
 fi
 
+# 운영 P0 hotfix 2026-06-11 — mind_garden 재적재 차단 (SSOT 가드)
+# 배경: core_solution / mind_garden 양쪽에 동명 프로시저가 적재되면
+#   SimpleJdbcCallOperations.metaData() 가 INFORMATION_SCHEMA.ROUTINES 다중 매칭으로
+#   시그니처를 결정하지 못해 일별 통계 배치(00:00·00:05) 가 100% 실패한다.
+# 정책: 표준 프로시저 SSOT 스키마는 core_solution 만 허용한다. mind_garden 잔존 객체는
+#   docs/운영반영/MIND_GARDEN_LEGACY_CLEANUP_GUIDE.md 절차에 따라 별도 수동 정리한다.
+# 회피 우회: 환경변수 ALLOW_MIND_GARDEN_REDEPLOY=true 를 명시(긴급 검수용)할 때만 통과.
+case "${DB_NAME}" in
+    mind_garden|mind_garden_legacy_*)
+        if [ "${ALLOW_MIND_GARDEN_REDEPLOY:-false}" != "true" ]; then
+            fail "표준 프로시저는 '${DB_NAME}' 스키마에 재적재할 수 없습니다 (P0 충돌 차단). 운영 SSOT 는 core_solution 만 허용합니다. 정리 가이드: docs/운영반영/MIND_GARDEN_LEGACY_CLEANUP_GUIDE.md"
+        fi
+        echo "::warning::ALLOW_MIND_GARDEN_REDEPLOY=true 우회로 '${DB_NAME}' 적재를 강제 진행합니다. 운영 검수자 확인이 필요합니다."
+        ;;
+esac
+
 echo ""
 
 # 배포할 프로시저 목록

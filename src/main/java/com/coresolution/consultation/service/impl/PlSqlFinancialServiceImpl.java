@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.service.PlSqlFinancialService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,23 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
-    
+
     private final JdbcTemplate jdbcTemplate;
+
+    /**
+     * procedure CALL 카탈로그 명시용 SSOT.
+     * <p>
+     * spring.datasource.url 의 ${DB_NAME} 과 동일 SSOT 를 상속하여 다중 DB(core_solution + mind_garden)
+     * 동명 프로시저 메타 충돌을 차단한다. MySQL JDBC 모델은 catalog = DB명이므로
+     * {@code "{CALL " + dbSchemaName + ".XXX(...)}"} 형태로 prepareCall SQL 에 명시한다.
+     * </p>
+     * <p>
+     * 운영 매일 04:00 P1-A 회귀(Connection is read-only) 와 동시 발생한 mind_garden 잔존
+     * 동명 프로시저 catalog 모호 문제를 함께 차단한다. (디버거 보고서 §3.1)
+     * </p>
+     */
+    @Value("${spring.datasource.schema-name:${DB_NAME:core_solution}}")
+    private String dbSchemaName = "core_solution";
     
     @Override
     @Transactional(readOnly = true)
@@ -73,18 +89,25 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         }
     }
     
+    /**
+     * 표준화 2026-06-11 운영 P1-A hotfix: procedure 본문이 INSERT/UPDATE 를 수행하는
+     * MODIFIES SQL DATA characteristic 을 가지므로 readOnly 트랜잭션과 충돌
+     * ("Connection is read-only. Queries leading to data modification are not allowed").
+     * Catalog 명시(dbSchemaName) 로 mind_garden 잔존 동명 프로시저 충돌도 차단.
+     */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Map<String, Object> getBranchFinancialBreakdown(LocalDate startDate, LocalDate endDate) {
         log.info("🏢 지점별 재무 상세 조회: {} ~ {}", startDate, endDate);
-        
-        // 테넌트 ID 가져오기
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        
+
         try {
             // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
+            // catalog 명시로 다중 DB(core_solution + mind_garden) 동명 프로시저 모호 차단
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL GetBranchFinancialBreakdown(?, ?, ?, ?, ?, ?)}"),
+                (Connection connection) -> connection.prepareCall(
+                    "{CALL " + dbSchemaName + ".GetBranchFinancialBreakdown(?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setString(1, tenantId);
                     callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
@@ -116,18 +139,21 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         }
     }
     
+    /**
+     * 표준화 2026-06-11 운영 P1-A hotfix: 동일 사유로 readOnly 제거 + catalog 명시.
+     */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Map<String, Object> getMonthlyFinancialTrend(LocalDate startDate, LocalDate endDate) {
         log.info("📈 월별 재무 추이 분석: {} ~ {}", startDate, endDate);
-        
-        // 테넌트 ID 가져오기
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        
+
         try {
             // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL GetMonthlyFinancialTrend(?, ?, ?, ?, ?, ?)}"),
+                (Connection connection) -> connection.prepareCall(
+                    "{CALL " + dbSchemaName + ".GetMonthlyFinancialTrend(?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setString(1, tenantId);
                     callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
@@ -159,18 +185,21 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         }
     }
     
+    /**
+     * 표준화 2026-06-11 운영 P1-A hotfix: 동일 사유로 readOnly 제거 + catalog 명시.
+     */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Map<String, Object> getCategoryFinancialBreakdown(LocalDate startDate, LocalDate endDate) {
         log.info("📊 카테고리별 재무 분석: {} ~ {}", startDate, endDate);
-        
-        // 테넌트 ID 가져오기
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        
+
         try {
             // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL GetCategoryFinancialBreakdown(?, ?, ?, ?, ?, ?)}"),
+                (Connection connection) -> connection.prepareCall(
+                    "{CALL " + dbSchemaName + ".GetCategoryFinancialBreakdown(?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setString(1, tenantId);
                     callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
@@ -269,18 +298,21 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         }
     }
     
+    /**
+     * 표준화 2026-06-11 운영 P1-A hotfix: 동일 사유로 readOnly 제거 + catalog 명시.
+     */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Map<String, Object> generateQuarterlyFinancialReport(int year, int quarter, String branchCode) {
         log.info("📊 분기별 재무 보고서 생성: {}-Q{}, 지점={}", year, quarter, branchCode);
-        
-        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        
+
         try {
             // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL GenerateQuarterlyFinancialReport(?, ?, ?, ?, ?, ?)}"),
+                (Connection connection) -> connection.prepareCall(
+                    "{CALL " + dbSchemaName + ".GenerateQuarterlyFinancialReport(?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setInt(1, year);
                     callableStatement.setInt(2, quarter);
@@ -371,18 +403,21 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         }
     }
     
+    /**
+     * 표준화 2026-06-11 운영 P1-A hotfix: 동일 사유로 readOnly 제거 + catalog 명시.
+     */
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Map<String, Object> calculateFinancialKPIs(LocalDate startDate, LocalDate endDate, String branchCode) {
         log.info("📊 재무 성과 지표 계산: {} ~ {}, 지점={}", startDate, endDate, branchCode);
-        
-        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        
+
         try {
             // 표준화된 프로시저는 OUT 파라미터로 결과를 반환하므로 CallableStatement 사용
             return jdbcTemplate.execute(
-                (Connection connection) -> connection.prepareCall("{CALL CalculateFinancialKPIs(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"),
+                (Connection connection) -> connection.prepareCall(
+                    "{CALL " + dbSchemaName + ".CalculateFinancialKPIs(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
                     callableStatement.setString(1, tenantId);
                     callableStatement.setDate(2, java.sql.Date.valueOf(startDate));

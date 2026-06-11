@@ -81,7 +81,37 @@ public class AuthResponse {
      * 비밀번호 변경 필요 여부 (임시 비밀번호로 로그인한 경우)
      */
     private boolean requiresPasswordChange;
-    
+
+    /**
+     * 일반 로그인(전화 + 비밀번호) 다중 매치 — P1 silent first 차단 분기.
+     *
+     * <p>{@code true} 인 경우 {@link #candidates} 와 {@link #selectionToken} 이 함께 채워지며 FE 는 계정
+     * 선택 모달/화면을 노출한 뒤 {@code POST /api/v1/auth/select-account} 로 선택 완료를 요청한다.</p>
+     *
+     * @since 2026-06-11
+     */
+    private boolean multipleAccounts;
+
+    /**
+     * 다중 매치 시 노출할 후보 목록(본인 식별 최소 정보).
+     *
+     * <p>전화 + 비밀번호 검증을 모두 통과한 사용자만 포함된다(timing attack 방어).
+     * {@link #multipleAccounts} 가 false 일 때는 항상 null.</p>
+     *
+     * @since 2026-06-11
+     */
+    private List<AccountCandidate> candidates;
+
+    /**
+     * 다중 매치 계정 선택용 단기 JWT.
+     *
+     * <p>{@code POST /api/v1/auth/select-account} 호출 시 본 토큰과 사용자가 선택한 {@code userId}
+     * 를 함께 전송한다. 5분 TTL · 1회 사용.</p>
+     *
+     * @since 2026-06-11
+     */
+    private String selectionToken;
+
     /**
      * 테넌트 정보 DTO
      */

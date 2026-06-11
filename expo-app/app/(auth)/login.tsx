@@ -425,6 +425,16 @@ export default function MindGardenLoginPage() {
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Success);
         setCredentialSheetOpen(false);
         await handleLoginSuccess();
+      } else if (result.kind === 'requiresAccountSelection') {
+        // P1 silent first 차단(2026-06-11) — 휴대폰 + 비밀번호가 2명 이상에게 일치 → 계정 선택 화면.
+        setCredentialSheetOpen(false);
+        router.push({
+          pathname: '/(auth)/account-selection',
+          params: {
+            selectionToken: result.selectionToken,
+            candidates: JSON.stringify(result.candidates),
+          },
+        } as unknown as Href);
       } else if (result.kind === 'requiresDuplicateLoginConfirmation') {
         setDuplicateLoginPrompt({
           message: result.message,

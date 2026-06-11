@@ -39,6 +39,7 @@ import { requestGoogleSocialLogin } from '../../services/oauth2/googleWebOAuth2S
 import GoogleLoginButton from './GoogleLoginButton';
 import GoogleBrandLogo from './GoogleBrandLogo';
 import OAuthPhoneVerificationModal from './OAuthPhoneVerificationModal';
+import AccountSelectionModal from './AccountSelectionModal';
 import { setLoginSession } from '../../utils/session';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import MGButton from '../common/MGButton';
@@ -113,6 +114,12 @@ const UnifiedLogin = () => {
   // GIS 웹 흐름 OAuth 휴대폰 매칭(OTP) 모달 — `OAuthPhoneVerificationModal` 표시 여부와 BE payload 보관.
   const [showOAuthPhoneVerificationModal, setShowOAuthPhoneVerificationModal] = useState(false);
   const [oauthPhoneVerificationPayload, setOAuthPhoneVerificationPayload] = useState(null);
+  // P1 silent first 차단(2026-06-11) — 일반 로그인 다중 매치 시 계정 선택 모달 상태.
+  const [accountSelectionModal, setAccountSelectionModal] = useState({
+    isOpen: false,
+    candidates: [],
+    selectionToken: null
+  });
   const sessionCheckedRef = useRef(false); // 세션 체크 완료 여부 (ref 사용으로 리렌더링 방지)
 
   // 툴팁 상태
@@ -550,6 +557,25 @@ const UnifiedLogin = () => {
 
       // ApiResponse 래퍼 처리: result.data 또는 result 직접 사용
       const loginData = result.data || result;
+
+      // P1 다중 매치 분기 — 휴대폰 + 비밀번호가 2개 이상 사용자에게 일치할 때 계정 선택 모달.
+      // (silent first 차단: 비밀번호 검증을 모두 통과한 후보만 노출.)
+      const multipleAccounts =
+        loginData.multipleAccounts || result.data?.multipleAccounts || result.multipleAccounts;
+      const candidatesPayload =
+        loginData.candidates || result.data?.candidates || result.candidates;
+      const selectionTokenPayload =
+        loginData.selectionToken || result.data?.selectionToken || result.selectionToken;
+      if (multipleAccounts && Array.isArray(candidatesPayload) && candidatesPayload.length > 1
+          && selectionTokenPayload) {
+        setIsLoading(false);
+        setAccountSelectionModal({
+          isOpen: true,
+          candidates: candidatesPayload,
+          selectionToken: selectionTokenPayload
+        });
+        return;
+      }
 
       // 중복 로그인 확인 요청 체크 (성공 체크보다 먼저)
       if (loginData.requiresConfirmation || result.data?.requiresConfirmation || result.requiresConfirmation) {
@@ -1164,6 +1190,42 @@ const UnifiedLogin = () => {
             );
             setShowSocialSignupModal(false);
             navigate('/login');
+          }}
+        />
+      )}
+
+      {/* P1 일반 로그인 다중 매치 — 휴대폰+비번이 2명 이상에게 일치할 때 계정 선택 모달 */}
+      {accountSelectionModal.isOpen && (
+        <AccountSelectionModal
+          isOpen={accountSelectionModal.isOpen}
+          onClose={() => setAccountSelectionModal({ isOpen: false, candidates: [], selectionToken: null })}
+          candidates={accountSelectionModal.candidates}
+          selectionToken={accountSelectionModal.selectionToken}
+          onSelected={async({ response }) => {
+            const data = response?.data || response || {};
+            const userObj = data?.user || data?.userResponse || data;
+            if (userObj && userObj.id) {
+              sessionManager.setUser(userObj, { sessionId: data.sessionId });
+            }
+            sessionStorage.setItem('justLoggedIn', 'true');
+            await checkSession(true);
+            setAccountSelectionModal({ isOpen: false, candidates: [], selectionToken: null });
+            const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+            await redirectToDynamicDashboard({ user: userObj }, navigate);
+          }}
+          onRequiresConfirmation={() => {
+            setAccountSelectionModal({ isOpen: false, candidates: [], selectionToken: null });
+            notificationManager.show(
+              t('auth:unifiedLogin.msg.duplicateLoginPrompt',
+                '다른 기기에서 이미 로그인 중입니다. 다시 시도해주세요.'),
+              'warning'
+            );
+          }}
+          onError={({ message }) => {
+            // 토큰 만료/위조/후보 외 userId/재사용 — 모달 내부에서 메시지 노출, 추가로 토스트.
+            if (message) {
+              notificationManager.show(message, 'error');
+            }
           }}
         />
       )}

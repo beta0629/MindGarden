@@ -30,6 +30,11 @@ import { resolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { useNotificationSettingsStore } from '../stores/useNotificationSettingsStore';
 import { getScenarioByType } from '../constants/pushScenarios';
 import { resolvePushNavigationRoute } from '../utils/pushNavigation';
+import {
+  buildOtpRouteHref,
+  isOtpDeliveryPushData,
+  maskOtpTokenForLog,
+} from '../utils/pushOtpRouting';
 import { showInAppToast } from '../components/organisms/InAppNotificationToast';
 import { stripHtmlToPlainText } from '../utils/safeDisplay';
 import {
@@ -47,11 +52,9 @@ import { requestOsNotificationPermission } from '@/utils/notificationPermissionF
  */
 function invalidateNotificationInbox(): void {
   // QueryClient hydrate 전이거나 일시 오류여도 알림 라우팅 흐름을 막지 않도록 swallow.
-  queryClient
-    .invalidateQueries({ queryKey: NOTIFICATION_QUERY_KEYS.all })
-    .catch(() => {
-      /* noop */
-    });
+  queryClient.invalidateQueries({ queryKey: NOTIFICATION_QUERY_KEYS.all }).catch(() => {
+    /* noop */
+  });
 }
 
 /**
@@ -151,6 +154,33 @@ function navigateToSystemNotifications(role: AppAuthRole): void {
 }
 
 /**
+ * OTP 푸시(`data.type === 'otp_delivery'`) 수신 시 `/(otp)/current` 라우트로 이동.
+ *
+ * <p>일반 12종(P1–P12) 라우팅과 분리된 별도 경로 — 역할·카테고리 설정과 무관하게
+ * 모든 인증 사용자에게 1회 OTP 표시 화면을 띄운다. 평문 OTP 는 페이로드에 없으므로
+ * 화면 진입 후 {@code GET /api/v1/auth/otp/current} 로만 조회한다.</p>
+ *
+ * @param data push payload {@code data} (otpToken·purpose 포함 가능)
+ * @returns 라우팅 시도 여부 (탐지·이동 모두 실패 시 false → 일반 흐름 폴백)
+ */
+function navigateToOtpDelivery(data: Record<string, unknown> | null | undefined): boolean {
+  if (!isOtpDeliveryPushData(data)) {
+    return false;
+  }
+  const href = buildOtpRouteHref(data);
+  console.warn('[NotificationService] otp_delivery → route /(otp)/current', {
+    purpose: href.params.purpose,
+    otpToken: maskOtpTokenForLog(href.params.otpToken ?? null),
+  });
+  try {
+    router.push(href as unknown as Href);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 포그라운드 알림 핸들러:
  * 설정 카테고리 off면 OS 표시·사운드 억제.
  * on이면 OS 배너·리스트 없이 사운드·뱃지만 — 본문은 `setupForegroundHandler` 인앱 토스트.
@@ -167,6 +197,16 @@ Notifications.setNotificationHandler({
         shouldSetBadge: false,
         shouldShowBanner: false,
         shouldShowList: false,
+      };
+    }
+    // OTP 푸시(보안 의무 통지)는 사용자 카테고리 설정과 무관하게 항상 사운드·배지·배너 표시.
+    if (isOtpDeliveryPushData(data)) {
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
       };
     }
     const type = data?.type as string | undefined;
@@ -380,6 +420,20 @@ export const NotificationService = {
         return;
       }
 
+      // OTP 푸시: 카테고리 우회, 토스트 탭 → /(otp)/current.
+      if (isOtpDeliveryPushData(typedData)) {
+        invalidateNotificationInbox();
+        showInAppToast({
+          id: generateToastId(),
+          title: stripHtmlToPlainText(title ?? '인증번호'),
+          body: stripHtmlToPlainText(body ?? '앱에서 인증번호를 확인하세요.'),
+          onPress: () => {
+            navigateToOtpDelivery(typedData);
+          },
+        });
+        return;
+      }
+
       const type = typedData?.type as string | undefined;
 
       invalidateNotificationInbox();
@@ -429,6 +483,14 @@ export const NotificationService = {
       // P0 디펜스: 수신자 불일치는 라우팅·invalidate 모두 차단.
       if (shouldDropForRecipientMismatch(typedData)) {
         return;
+      }
+
+      // OTP 푸시: 역할·카테고리 무관 — 백그라운드/종료 상태에서 탭 시 /(otp)/current 로 직행.
+      if (isOtpDeliveryPushData(typedData)) {
+        invalidateNotificationInbox();
+        if (navigateToOtpDelivery(typedData)) {
+          return;
+        }
       }
 
       const type = typedData?.type as string | undefined;

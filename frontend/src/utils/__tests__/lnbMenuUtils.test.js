@@ -12,7 +12,7 @@
 
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { LEGACY_USER_ROLES, USER_ROLES } from '../../constants/roles';
-import { mergeShopAdminLnbItems } from '../lnbMenuUtils';
+import { filterBranchAdminLnbItems, mergeShopAdminLnbItems } from '../lnbMenuUtils';
 
 const SHOP_ADMIN_GROUP_LABEL = '쇼핑·리워드';
 
@@ -194,5 +194,126 @@ describe('mergeShopAdminLnbItems', () => {
       expect(mergeShopAdminLnbItems(null, { userRole: USER_ROLES.ADMIN })).toBeNull();
       expect(mergeShopAdminLnbItems(undefined, { userRole: USER_ROLES.ADMIN })).toBeUndefined();
     });
+  });
+});
+
+/**
+ * filterBranchAdminLnbItems 단위 테스트
+ *
+ * 역할 SSOT 정리 PR-5 (2026-06-12): 사용자가 결정한 「Branch 시스템 사용 중단」 정책에 따라,
+ * BE LNB seed 변경 없이 FE 측에서 Branch(/admin/branches, /admin/branch-*) 경로를 가진
+ * 모든 메뉴 항목을 LNB 트리에서 제거한다.
+ */
+describe('filterBranchAdminLnbItems', () => {
+  test('루트 Branch 메뉴 항목 제거', () => {
+    const items = [
+      { to: ADMIN_ROUTES.DASHBOARD, label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      { to: '/admin/branches', label: '지점 관리', icon: 'BUILDING', end: true },
+      { to: ADMIN_ROUTES.USER_MANAGEMENT, label: '사용자 관리', icon: 'USERS', end: true }
+    ];
+
+    const result = filterBranchAdminLnbItems(items);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((it) => it.to)).toEqual([
+      ADMIN_ROUTES.DASHBOARD,
+      ADMIN_ROUTES.USER_MANAGEMENT
+    ]);
+  });
+
+  test('자식 항목 중 Branch 경로만 제거되고 그룹은 유지', () => {
+    const items = [
+      {
+        to: '#',
+        label: '본사 관리',
+        icon: 'BUILDING',
+        end: false,
+        children: [
+          { to: '/admin/branches', label: '지점 목록', icon: 'LIST', end: true },
+          { to: '/admin/branch-create', label: '지점 생성', icon: 'PLUS', end: true },
+          { to: '/admin/branch-managers', label: '지점장 관리', icon: 'USER_COG', end: true },
+          { to: '/admin/hq-settings', label: '본사 설정', icon: 'COG', end: true }
+        ]
+      }
+    ];
+
+    const result = filterBranchAdminLnbItems(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].children).toHaveLength(1);
+    expect(result[0].children[0].to).toBe('/admin/hq-settings');
+  });
+
+  test('자식이 모두 Branch 경로이면 부모도 제거', () => {
+    const items = [
+      { to: ADMIN_ROUTES.DASHBOARD, label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      {
+        to: '/admin/branches',
+        label: '지점 관리',
+        icon: 'BUILDING',
+        end: false,
+        children: [
+          { to: '/admin/branches', label: '지점 목록', icon: 'LIST', end: true },
+          { to: '/admin/branch-status', label: '지점 상태', icon: 'ACTIVITY', end: true }
+        ]
+      }
+    ];
+
+    const result = filterBranchAdminLnbItems(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].to).toBe(ADMIN_ROUTES.DASHBOARD);
+  });
+
+  test('Branch 경로가 없으면 트리를 변형하지 않음 (멱등성·no-op)', () => {
+    const items = [
+      { to: ADMIN_ROUTES.DASHBOARD, label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      {
+        to: ADMIN_ROUTES.USER_MANAGEMENT,
+        label: '사용자 관리',
+        icon: 'USERS',
+        end: false,
+        children: [
+          { to: ADMIN_ROUTES.USER_MANAGEMENT, label: '사용자 목록', icon: 'USER', end: true }
+        ]
+      }
+    ];
+
+    const result = filterBranchAdminLnbItems(items);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].to).toBe(ADMIN_ROUTES.DASHBOARD);
+    expect(result[1].to).toBe(ADMIN_ROUTES.USER_MANAGEMENT);
+    expect(result[1].children).toHaveLength(1);
+  });
+
+  test('items 가 배열이 아니면 그대로 반환', () => {
+    expect(filterBranchAdminLnbItems(null)).toBeNull();
+    expect(filterBranchAdminLnbItems(undefined)).toBeUndefined();
+  });
+
+  test('Branch 경로 prefix 매칭 — /admin/branches/123 도 제거', () => {
+    const items = [
+      { to: '/admin/branches/123', label: '지점 상세', icon: 'BUILDING', end: true },
+      { to: '/admin/branch-consultants/456', label: '지점 상담사 상세', icon: 'USER', end: true },
+      { to: '/admin/dashboard', label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true }
+    ];
+
+    const result = filterBranchAdminLnbItems(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].to).toBe('/admin/dashboard');
+  });
+
+  test('/admin/branding 등 Branch prefix 가 아닌 유사 경로는 보존', () => {
+    const items = [
+      { to: '/admin/branding', label: '브랜딩', icon: 'PALETTE', end: true },
+      { to: '/admin/branches', label: '지점 관리', icon: 'BUILDING', end: true }
+    ];
+
+    const result = filterBranchAdminLnbItems(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].to).toBe('/admin/branding');
   });
 });

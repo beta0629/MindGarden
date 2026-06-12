@@ -22,6 +22,7 @@ import { getLnbMenus } from '../../utils/menuApi';
 import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import {
   deriveGnbQuickNavigateActionsFromLnb,
+  filterBranchAdminLnbItems,
   getLnbTreeFromResponse,
   mergeBillingAdminLnbItems,
   mergeClientShopLnbItems,
@@ -92,19 +93,19 @@ const AdminCommonLayout = ({
         normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled, userRole });
         normalized = mergeBillingAdminLnbItems(normalized, { userRole });
       }
-      return normalized;
+      return filterBranchAdminLnbItems(normalized);
     }
     if (lnbRawTree === null) {
       return userRole === USER_ROLES.CLIENT
         ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-        : fallback;
+        : filterBranchAdminLnbItems(fallback);
     }
     return userRole === USER_ROLES.CLIENT
       ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-      : mergeBillingAdminLnbItems(
+      : filterBranchAdminLnbItems(mergeBillingAdminLnbItems(
         mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
         { userRole }
-      );
+      ));
   }, [lnbRawTree, userRole, adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled]);
 
   const navigateQuickActionsFromLnb = useMemo(

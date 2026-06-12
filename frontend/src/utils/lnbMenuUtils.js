@@ -226,6 +226,83 @@ export function mergeShopAdminLnbItems(items, options = {}) {
   ];
 }
 
+const BRANCH_LNB_PATH_PREFIXES = [
+  '/admin/branches',
+  '/admin/branch-create',
+  '/admin/branch-hierarchy',
+  '/admin/branch-managers',
+  '/admin/branch-status',
+  '/admin/branch-consultants'
+];
+
+/**
+ * @param {string|undefined|null} path
+ * @returns {boolean}
+ */
+function isBranchAdminLnbPath(path) {
+  if (typeof path !== 'string' || !path.startsWith('/')) {
+    return false;
+  }
+  const normalized = path.split('?')[0];
+  for (const prefix of BRANCH_LNB_PATH_PREFIXES) {
+    if (normalized === prefix || normalized.startsWith(`${prefix}/`)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * DB LNB에서 Branch(지점) 관련 어드민 메뉴 항목을 제거.
+ *
+ * 역할 SSOT 정리 PR-5 (2026-06-12): 사용자가 결정한 「Branch 시스템 사용 중단」을
+ * 반영하여, BE LNB seed (Flyway) 변경 없이 FE 측에서 Branch 메뉴 시드를 차단한다.
+ *
+ * - 부모 항목(예: 「지점 관리」)이 Branch 경로이면 노드 전체를 제거.
+ * - 자식 항목들 중 일부가 Branch 경로이면 해당 자식만 제거하고 나머지는 보존.
+ * - 자식 제거 후 children 이 비고 부모 to 도 Branch 경로면 부모도 제거.
+ *
+ * BE seed 변경(PR-6/7)이 배포되기 전에도 운영 FE에서 Branch 메뉴가 노출되지
+ * 않도록 한다. BE seed 가 정리된 뒤에도 본 함수는 안전망(no-op)으로 유지한다.
+ *
+ * @param {Array<{ to?: string, label?: string, icon?: string, end?: boolean, children?: Array }>} items
+ * @returns {typeof items}
+ */
+export function filterBranchAdminLnbItems(items) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+
+  const filterNode = (item) => {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+    if (Array.isArray(item.children) && item.children.length > 0) {
+      const children = item.children
+        .map(filterNode)
+        .filter(Boolean);
+      if (children.length === 0) {
+        if (isBranchAdminLnbPath(item.to)) {
+          return null;
+        }
+        return {
+          to: item.to,
+          label: item.label,
+          icon: item.icon,
+          end: item.end
+        };
+      }
+      return { ...item, children };
+    }
+    if (isBranchAdminLnbPath(item.to)) {
+      return null;
+    }
+    return item;
+  };
+
+  return items.map(filterNode).filter(Boolean);
+}
+
 /**
  * DB LNB에 어드민 「결제/구독」 그룹이 없을 때 폴백 보강.
  *

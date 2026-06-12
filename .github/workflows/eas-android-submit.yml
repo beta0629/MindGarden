@@ -75,7 +75,7 @@ jobs:
           echo "✅ 필수 Secret 확인 완료"
 
       - name: 📦 Node.js 20 설정
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'

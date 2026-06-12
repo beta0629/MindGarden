@@ -50,7 +50,7 @@ jobs:
           ref: ${{ steps.guard.outputs.deploy_ref }}
 
       - name: 📦 Node.js 18 설정
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "18"
           cache: "npm"

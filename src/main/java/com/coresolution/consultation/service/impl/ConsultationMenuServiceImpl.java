@@ -268,8 +268,6 @@ public class ConsultationMenuServiceImpl implements com.coresolution.consultatio
                 menuGroups.add("ADMIN_MENU");
                 break;
             case CONSULTANT:
-            case PLAY_THERAPIST:
-            case SPEECH_THERAPIST:
                 menuGroups.add("CONSULTANT_MENU");
                 break;
             case CLIENT:

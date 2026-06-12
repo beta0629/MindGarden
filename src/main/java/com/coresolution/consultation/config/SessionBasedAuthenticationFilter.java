@@ -428,8 +428,6 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 }
                 break;
             case CONSULTANT:
-            case PLAY_THERAPIST:
-            case SPEECH_THERAPIST:
                 authorities.add(new SimpleGrantedAuthority("ROLE_CONSULTANT"));
                 break;
             case CLIENT:

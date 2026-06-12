@@ -7056,8 +7056,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             case ADMIN:
                 return "Director";
             case CONSULTANT:
-            case PLAY_THERAPIST:
-            case SPEECH_THERAPIST:
                 return "Counselor";
             case CLIENT:
                 return "Client";

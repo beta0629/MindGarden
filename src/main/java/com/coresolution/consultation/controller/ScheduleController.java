@@ -2094,10 +2094,6 @@ public class ScheduleController extends BaseApiController {
         switch (role) {
             case CONSULTANT:
                 return ProfessionalProviderTypeConstants.DEFAULT_TYPE_CODE_VALUE;
-            case PLAY_THERAPIST:
-                return ProfessionalProviderTypeConstants.LEGACY_PLAY_TYPE_CODE_VALUE;
-            case SPEECH_THERAPIST:
-                return ProfessionalProviderTypeConstants.LEGACY_SPEECH_TYPE_CODE_VALUE;
             default:
                 return null;
         }

@@ -117,8 +117,6 @@ public class UserRoleQueryService {
             case ADMIN:
                 return "관리자";
             case CONSULTANT:
-            case PLAY_THERAPIST:
-            case SPEECH_THERAPIST:
                 return userRole.getDisplayName();
             case STAFF:
                 return "사무원";

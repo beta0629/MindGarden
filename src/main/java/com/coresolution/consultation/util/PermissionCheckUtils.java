@@ -192,8 +192,6 @@ public class PermissionCheckUtils {
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
                 break;
             case CONSULTANT:
-            case PLAY_THERAPIST:
-            case SPEECH_THERAPIST:
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CONSULTANT"));
                 break;
             case CLIENT:

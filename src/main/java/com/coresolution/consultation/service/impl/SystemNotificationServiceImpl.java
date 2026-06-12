@@ -39,12 +39,11 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         List<String> targetTypes = new ArrayList<>();
         targetTypes.add("ALL"); // 전체 공지는 모두 포함
         
-        // 표준화 2025-12-05: enum 활용
+        // 2026-06 4종 SSOT: 전문가 세부 분류(놀이·언어)는 enum 이 아니라
+        // users.professional_provider_type_code 컬럼으로 표현됨. targetType 은 CONSULTANT 단일.
         UserRole role = UserRole.fromString(userRole);
         if (role != null && role.isProfessionalProvider()) {
             targetTypes.add(UserRole.CONSULTANT.name());
-            targetTypes.add(UserRole.PLAY_THERAPIST.name());
-            targetTypes.add(UserRole.SPEECH_THERAPIST.name());
         } else if (role == UserRole.CLIENT) {
             targetTypes.add(UserRole.CLIENT.name());
         }

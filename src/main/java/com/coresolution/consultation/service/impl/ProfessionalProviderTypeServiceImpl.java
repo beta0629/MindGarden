@@ -50,7 +50,7 @@ public class ProfessionalProviderTypeServiceImpl implements ProfessionalProvider
         if (legacyRoleField != null && !legacyRoleField.trim().isEmpty()) {
             UserRole legacy = UserRole.fromString(legacyRoleField.trim());
             if (legacy.isProfessionalProvider()) {
-                String typeCode = mapLegacyRoleToPreferredTypeCode(legacy);
+                String typeCode = mapLegacyRoleToPreferredTypeCode();
                 Optional<CommonCode> rowOpt = findActiveTypeRow(tenantId, typeCode);
                 if (rowOpt.isPresent()) {
                     UserRole authorityRole = parseSystemAuthorityRole(rowOpt.get().getExtraData());
@@ -67,13 +67,12 @@ public class ProfessionalProviderTypeServiceImpl implements ProfessionalProvider
         return new ResolvedProfessionalRegistration(def.getCodeValue(), authorityRole);
     }
 
-    private String mapLegacyRoleToPreferredTypeCode(UserRole legacy) {
-        if (legacy == UserRole.PLAY_THERAPIST) {
-            return ProfessionalProviderTypeConstants.LEGACY_PLAY_TYPE_CODE_VALUE;
-        }
-        if (legacy == UserRole.SPEECH_THERAPIST) {
-            return ProfessionalProviderTypeConstants.LEGACY_SPEECH_TYPE_CODE_VALUE;
-        }
+    private String mapLegacyRoleToPreferredTypeCode() {
+        // 2026-06 4종 SSOT: PLAY_THERAPIST/SPEECH_THERAPIST enum 제거.
+        // legacy role 문자열로 PLAY/SPEECH 가 들어오면 fromString() 에서 CONSULTANT 로 매핑되므로
+        // 본 메서드 진입 시점에는 항상 CONSULTANT(또는 isProfessionalProvider) 만 들어온다.
+        // 세부 specialization(놀이·언어)은 요청 시 professionalTypeCode 파라미터로 명시되며,
+        // 미명시 시 테넌트 기본값(DEFAULT_TYPE_CODE_VALUE)을 사용한다.
         return ProfessionalProviderTypeConstants.DEFAULT_TYPE_CODE_VALUE;
     }
 

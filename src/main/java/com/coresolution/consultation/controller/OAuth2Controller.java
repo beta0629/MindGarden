@@ -304,8 +304,6 @@ public class OAuth2Controller extends BaseApiController {
         }
         switch (user.getRole()) {
             case CONSULTANT:
-            case PLAY_THERAPIST:
-            case SPEECH_THERAPIST:
                 return String.format(OAuthAccountSelectionUserFacingStrings.OPTION_CONSULTANT_FMT,
                     user.getId());
             case CLIENT:

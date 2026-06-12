@@ -592,6 +592,13 @@ jobs:
     # 운영 담당: /etc/mindgarden/prod.env 에 SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음) — deployment/mindgarden.prod-env.example 과 동일.
     - name: 🔄 블루그린 백엔드·Nginx 적용
       uses: appleboy/ssh-action@master
+      env:
+        # B8 hotfix (2026-06-12): script: | 블록에 ${{ }} expression 이 1개라도 있으면
+        # GitHub Actions parser 가 블록 전체를 expression interpolation input 으로 평가하여
+        # max expression length 21000 자 제한이 적용된다. 본 SSH 스크립트가 400+ 줄이라
+        # 21000 초과 → "Invalid workflow file" 오류 발생. step env 로 옮겨 script 안
+        # ${{ }} 를 0 개로 만들어 21000 제한을 회피한다.
+        BACKEND_CHANGED: ${{ steps.changed-files.outputs.backend_changed }}
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -604,7 +611,8 @@ jobs:
         # GOOGLE_* 3종은 P0 hotfix 2026-06-11 추가 — 후속 자동 주입 step 이 같은 패턴으로 사용.
         # *_REGISTERED_URLS 4종은 OAuth 4종 표준화 (옵션 B′) 추가 — 후속 자동 주입 step 이 동일 패턴으로 사용.
         # PRODUCTION_DB_PASSWORD 는 B8 (P0 보안, 2026-06-12) 저장소 평문 비밀번호 제거에 따른 mysql 비밀번호 주입용.
-        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,PRODUCTION_DB_PASSWORD
+        # BACKEND_CHANGED 는 B8 hotfix (2026-06-12, max expression length 21000 회피) — step env 로 주입.
+        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,PRODUCTION_DB_PASSWORD,BACKEND_CHANGED
         script: |
           cd /var/www/mindgarden
           
@@ -623,7 +631,9 @@ jobs:
             fi
           fi
           
-          BACKEND_CHANGED="${{ steps.changed-files.outputs.backend_changed }}"
+          # B8 hotfix (2026-06-12): BACKEND_CHANGED 는 step env 로 주입 (max expression length 21000 회피).
+          # ssh-action envs 옵션이 SSH 세션에 export 하므로 그대로 사용.
+          BACKEND_CHANGED="${BACKEND_CHANGED:-false}"
           ACTIVE_FILE=/etc/mindgarden/active-backend
           UPSTREAM_SNIP=/etc/nginx/snippets/mindgarden-core-backend-upstream.conf
           # systemd 유닛명은 deployment/systemd/mindgarden-core-{blue,green}.service.example 과 동일

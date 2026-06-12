@@ -5,12 +5,14 @@ import com.coresolution.core.dto.BrandingInfo;
 import com.coresolution.core.dto.BrandingUpdateRequest;
 import com.coresolution.core.service.BrandingService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -69,15 +71,27 @@ public class BrandingController extends BaseApiController {
     }
     
     /**
-     * 특정 테넌트의 브랜딩 정보 조회 (관리자용)
+     * 특정 테넌트의 브랜딩 정보 조회 (관리자용).
+     *
+     * <p>2026-06 4종 SSOT (PR-2/9): 권한을 ADMIN 단일로 단순화하고,
+     * {@link TenantContextHolder} 자체 검증으로 다른 테넌트 침범을 차단한다.
+     * Ops Portal 분리 권장 (HQ_MASTER 17건 별도 후속 PR — ops-portal-migration).</p>
      */
     @GetMapping("/{tenantId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('HQ_ADMIN')")
-    @Operation(summary = "특정 테넌트 브랜딩 정보 조회", description = "관리자가 특정 테넌트의 브랜딩 정보를 조회합니다")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "특정 테넌트 브랜딩 정보 조회 (Ops Portal 분리 권장 — 본 PR 안전망)",
+            description = "관리자가 특정 테넌트의 브랜딩 정보를 조회합니다. ADMIN 권한 + 자기 테넌트 한정.")
     public ResponseEntity<ApiResponse<BrandingInfo>> getBrandingInfoByTenantId(
             @Parameter(description = "테넌트 ID") @PathVariable String tenantId) {
+        String currentTenantId = TenantContextHolder.getRequiredTenantId();
+        if (!currentTenantId.equals(tenantId)) {
+            log.warn("[BRANDING] 다른 테넌트 접근 차단 (조회): current={}, requested={}",
+                    LogSanitizer.forLog(currentTenantId), LogSanitizer.forLog(tenantId));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("다른 테넌트 접근 권한 없음"));
+        }
         log.info("특정 테넌트 브랜딩 정보 조회 요청: tenantId={}", tenantId);
-        
+
         BrandingInfo brandingInfo = brandingService.getBrandingInfo(tenantId);
         return success(brandingInfo);
     }
@@ -86,7 +100,7 @@ public class BrandingController extends BaseApiController {
      * 브랜딩 정보 업데이트 (로고 제외)
      */
     @PutMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('BRANCH_ADMIN') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     @Operation(summary = "브랜딩 정보 업데이트", description = "테넌트의 브랜딩 정보를 업데이트합니다 (로고 제외)")
     public ResponseEntity<ApiResponse<BrandingInfo>> updateBrandingInfo(
             @Parameter(description = "브랜딩 정보 업데이트 요청") @Valid @RequestBody BrandingUpdateRequest request) {
@@ -101,7 +115,7 @@ public class BrandingController extends BaseApiController {
      * 로고 업로드
      */
     @PostMapping(value = "/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN') or hasRole('BRANCH_ADMIN') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     @Operation(summary = "로고 업로드", description = "테넌트의 로고를 업로드합니다")
     public ResponseEntity<ApiResponse<BrandingInfo>> uploadLogo(
             @Parameter(description = "로고 이미지 파일 (PNG, JPG, SVG, 최대 5MB)")
@@ -115,33 +129,57 @@ public class BrandingController extends BaseApiController {
     }
     
     /**
-     * 특정 테넌트의 로고 업로드 (관리자용)
+     * 특정 테넌트의 로고 업로드 (관리자용).
+     *
+     * <p>2026-06 4종 SSOT (PR-2/9): 권한을 ADMIN 단일로 단순화하고,
+     * {@link TenantContextHolder} 자체 검증으로 다른 테넌트 침범을 차단한다.
+     * Ops Portal 분리 권장 (HQ_MASTER 17건 별도 후속 PR — ops-portal-migration).</p>
      */
     @PostMapping(value = "/{tenantId}/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('HQ_ADMIN')")
-    @Operation(summary = "특정 테넌트 로고 업로드", description = "관리자가 특정 테넌트의 로고를 업로드합니다")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "특정 테넌트 로고 업로드 (Ops Portal 분리 권장 — 본 PR 안전망)",
+            description = "관리자가 특정 테넌트의 로고를 업로드합니다. ADMIN 권한 + 자기 테넌트 한정.")
     public ResponseEntity<ApiResponse<BrandingInfo>> uploadLogoForTenant(
             @Parameter(description = "테넌트 ID") @PathVariable String tenantId,
             @Parameter(description = "로고 이미지 파일 (PNG, JPG, SVG, 최대 5MB)")
             @RequestParam("logo") MultipartFile logoFile) {
-        log.info("특정 테넌트 로고 업로드 요청: tenantId={}, fileName={}, size={}", 
+        String currentTenantId = TenantContextHolder.getRequiredTenantId();
+        if (!currentTenantId.equals(tenantId)) {
+            log.warn("[BRANDING] 다른 테넌트 접근 차단 (로고 업로드): current={}, requested={}",
+                    LogSanitizer.forLog(currentTenantId), LogSanitizer.forLog(tenantId));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("다른 테넌트 접근 권한 없음"));
+        }
+        log.info("특정 테넌트 로고 업로드 요청: tenantId={}, fileName={}, size={}",
             tenantId, logoFile.getOriginalFilename(), logoFile.getSize());
-        
+
         BrandingInfo updatedBranding = brandingService.uploadLogo(tenantId, logoFile);
         return success("로고가 업로드되었습니다.", updatedBranding);
     }
     
     /**
-     * 특정 테넌트의 브랜딩 정보 업데이트 (관리자용)
+     * 특정 테넌트의 브랜딩 정보 업데이트 (관리자용).
+     *
+     * <p>2026-06 4종 SSOT (PR-2/9): 권한을 ADMIN 단일로 단순화하고,
+     * {@link TenantContextHolder} 자체 검증으로 다른 테넌트 침범을 차단한다.
+     * Ops Portal 분리 권장 (HQ_MASTER 17건 별도 후속 PR — ops-portal-migration).</p>
      */
     @PutMapping("/{tenantId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('HQ_ADMIN')")
-    @Operation(summary = "특정 테넌트 브랜딩 정보 업데이트", description = "관리자가 특정 테넌트의 브랜딩 정보를 업데이트합니다")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "특정 테넌트 브랜딩 정보 업데이트 (Ops Portal 분리 권장 — 본 PR 안전망)",
+            description = "관리자가 특정 테넌트의 브랜딩 정보를 업데이트합니다. ADMIN 권한 + 자기 테넌트 한정.")
     public ResponseEntity<ApiResponse<BrandingInfo>> updateBrandingInfoForTenant(
             @Parameter(description = "테넌트 ID") @PathVariable String tenantId,
             @Parameter(description = "브랜딩 정보 업데이트 요청") @Valid @RequestBody BrandingUpdateRequest request) {
+        String currentTenantId = TenantContextHolder.getRequiredTenantId();
+        if (!currentTenantId.equals(tenantId)) {
+            log.warn("[BRANDING] 다른 테넌트 접근 차단 (정보 업데이트): current={}, requested={}",
+                    LogSanitizer.forLog(currentTenantId), LogSanitizer.forLog(tenantId));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("다른 테넌트 접근 권한 없음"));
+        }
         log.info("특정 테넌트 브랜딩 정보 업데이트 요청: tenantId={}, request={}", tenantId, request);
-        
+
         BrandingInfo updatedBranding = brandingService.updateBrandingInfo(tenantId, request);
         return updated(updatedBranding);
     }

@@ -31,11 +31,15 @@ import org.springframework.web.bind.annotation.RestController;
  *       Body: {@code {"mappingId": 93}} 또는 {@code {"all": true}}.</li>
  * </ul>
  *
- * <p>권한: ADMIN / SUPER_ADMIN / HQ_ADMIN / BRANCH_SUPER_ADMIN.
+ * <p>권한: 2026-06 4종 SSOT (PR-2/9) 후 {@code ADMIN} 단일.
+ * 회기 차감 보정은 위험도가 높아 STAFF 는 제외한다. 레거시 SUPER_ADMIN /
+ * HQ_ADMIN / BRANCH_SUPER_ADMIN 은 {@link com.coresolution.consultation.constant.UserRole#fromString}
+ * 에서 ADMIN 으로 매핑되므로 호환된다.
  * 멀티테넌트: 어드민 토큰의 tenantId 기준으로 매핑 조회.</p>
  *
  * @author CoreSolution
  * @since 2026-06-05
+ * @updated 2026-06 - 4종 SSOT 적용 (PR-2/9)
  */
 @Slf4j
 @RestController
@@ -55,7 +59,7 @@ public class AdminMaintenanceController extends BaseApiController {
      * @return 처리 결과 (processed / skipped / alerted)
      */
     @PostMapping("/session-recovery")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'HQ_ADMIN', 'BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> recoverSessionDeductions(@RequestBody SessionRecoveryRequest request) {
         if (request == null
                 || ((request.getMappingId() == null) && !Boolean.TRUE.equals(request.getAll()))) {

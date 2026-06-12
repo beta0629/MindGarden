@@ -25,6 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/super-admin/tenants/{tenantId}/components")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+// TODO(PR-2/9 SSOT): SUPER_ADMIN 가드는 코어솔루션 본사(공급사) 권한.
+// Ops Portal 분리 별도 후속 PR (ops-portal-migration) 에서 처리.
+// 본 PR 에서는 변경 안 함 (회귀 위험 최소화).
 @PreAuthorize("hasRole('SUPER_ADMIN')")
 public class SuperAdminTenantComponentController extends BaseApiController {
 

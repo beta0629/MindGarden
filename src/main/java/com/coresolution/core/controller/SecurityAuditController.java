@@ -22,7 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 보안 감사 로그 API 컨트롤러
  * 테넌트별 보안 감사 로그 및 통계 제공
- * 
+ *
+ * <p><b>Ops Portal 분리 권장 (PR-2/9 SSOT):</b>
+ * 본 컨트롤러의 {@code HQ_MASTER} 가드는 코어솔루션 본사(공급사) 권한이며,
+ * 별도 후속 PR ({@code ops-portal-migration}) 에서 운영 포털로 분리 예정.
+ * 본 PR 에서는 변경 안 함 (회귀 위험 최소화).</p>
+ *
  * @author CoreSolution
  * @version 1.0.0
  * @since 2025-12-02

@@ -183,8 +183,11 @@ describe('hasRole / hasAnyRole', () => {
   });
 });
 
+/* eslint-disable import/no-named-as-default-member */
 describe('RoleUtils 디폴트 export', () => {
   test('주요 헬퍼와 상수를 모두 노출한다', () => {
+    // 디폴트 export 가 named export 와 동일한 멤버를 노출하는지 확인하는 게이트.
+    // 의도적으로 디폴트 객체에서 멤버를 꺼내 비교하므로 import/no-named-as-default-member 룰을 비활성화한다.
     expect(RoleUtils.ROLE_ADMIN).toBe('ADMIN');
     expect(RoleUtils.ROLE_STAFF).toBe('STAFF');
     expect(RoleUtils.ROLE_CONSULTANT).toBe('CONSULTANT');
@@ -199,3 +202,4 @@ describe('RoleUtils 디폴트 export', () => {
     expect(typeof RoleUtils.hasAnyRole).toBe('function');
   });
 });
+/* eslint-enable import/no-named-as-default-member */

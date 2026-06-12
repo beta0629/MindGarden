@@ -5,30 +5,32 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 사용자 역할 enum
+ * 사용자 역할 enum (4종 SSOT).
  *
- * 2025-02: ADMIN, STAFF, CONSULTANT, CLIENT 4개로 단순화.
- * 2026-05: 상담 외 전문가(놀이치료·언어치료) 역할 추가. 동일 전문가 권한 묶음은 {@link #isProfessionalProvider()}.
- * 레거시 역할(PRINCIPAL, TENANT_ADMIN, PARENT 등)은 fromString()에서 표준 역할로 매핑.
+ * <p>2025-02: ADMIN, STAFF, CONSULTANT, CLIENT 4개로 단순화.</p>
+ * <p>2026-05: 상담 외 전문가(놀이치료·언어치료) 역할을 별도 enum 으로 추가했었음(PLAY_THERAPIST, SPEECH_THERAPIST).</p>
+ * <p>2026-06: <b>4종 SSOT 재정립</b>. 전문가의 세부 분류(놀이·언어 등)는 enum 이 아니라
+ * {@code users.professional_provider_type_code} 컬럼(공통코드 {@code PROFESSIONAL_PROVIDER_TYPE})으로
+ * 표현한다. 따라서 enum 은 다시 4종(ADMIN/STAFF/CONSULTANT/CLIENT) 으로 축소되었으며,
+ * 레거시 PLAY_THERAPIST/SPEECH_THERAPIST 문자열은 {@link #fromString(String)} → {@link #mapLegacyRole(String)}
+ * 경로에서 {@link #CONSULTANT} 로 매핑되어 호환된다. (세부 specialization 은 별도 컬럼 조회)</p>
+ *
+ * <p>레거시 역할(PRINCIPAL, TENANT_ADMIN, PARENT, HQ_*, BRANCH_* 등) 역시 {@link #fromString(String)}
+ * 에서 표준 4종 중 하나로 매핑된다.</p>
  *
  * @author MindGarden
- * @version 2.0.0
+ * @version 3.0.0
  * @since 2024-12-19
  * @updated 2025-02 - 4역할만 사용 (ADMIN, STAFF, CONSULTANT, CLIENT)
  * @updated 2026-05 - PLAY_THERAPIST, SPEECH_THERAPIST 추가
+ * @updated 2026-06 - PLAY/SPEECH enum 제거, professional_provider_type_code 컬럼으로 specialization 흡수 (4종 SSOT 복귀)
  */
 public enum UserRole {
     /** 테넌트 관리자 (원장/사장 등, ERP 포함 전체 권한) */
     ADMIN("관리자"),
 
-    /** 전문가 (상담사/강사 등) */
+    /** 전문가 (상담사/놀이치료/언어치료 등 모든 현장 전문가 — 세부 분류는 users.professional_provider_type_code) */
     CONSULTANT("상담사"),
-
-    /** 전문가 (놀이치료) */
-    PLAY_THERAPIST("놀이치료 선생님"),
-
-    /** 전문가 (언어치료) */
-    SPEECH_THERAPIST("언어치료 선생님"),
 
     /** 고객 (내담자/학생 등) */
     CLIENT("내담자"),
@@ -60,10 +62,13 @@ public enum UserRole {
     /**
      * 상담·놀이·언어 등 현장 전문가(스케줄·매핑·상담사 메뉴 권한 묶음).
      *
+     * <p>2026-06 4종 SSOT 후: CONSULTANT 단일 비교. 세부 분류(놀이·언어)는
+     * {@code users.professional_provider_type_code} 로 구분한다.</p>
+     *
      * @return 전문 제공자 역할이면 true
      */
     public boolean isProfessionalProvider() {
-        return this == CONSULTANT || this == PLAY_THERAPIST || this == SPEECH_THERAPIST;
+        return this == CONSULTANT;
     }
 
     /**
@@ -94,16 +99,18 @@ public enum UserRole {
     }
 
     public static UserRole[] getConsultantRoles() {
-        return new UserRole[]{CONSULTANT, PLAY_THERAPIST, SPEECH_THERAPIST};
+        return new UserRole[]{CONSULTANT};
     }
 
     /**
      * 스케줄·매핑 등에서 상담사로 취급하는 역할 목록 (불변).
      *
+     * <p>2026-06 4종 SSOT 후: CONSULTANT 단일 항목. 세부 분류는 별도 컬럼(specialization) 사용.</p>
+     *
      * @return 전문 제공자 역할 목록
      */
     public static List<UserRole> getProfessionalProviderRoles() {
-        return Collections.unmodifiableList(Arrays.asList(CONSULTANT, PLAY_THERAPIST, SPEECH_THERAPIST));
+        return Collections.unmodifiableList(Arrays.asList(CONSULTANT));
     }
 
     public static UserRole[] getClientRoles() {
@@ -118,7 +125,8 @@ public enum UserRole {
 
     /**
      * 문자열로부터 UserRole 변환.
-     * 레거시 역할(PRINCIPAL, TENANT_ADMIN, PARENT, HQ_*, BRANCH_* 등)은 ADMIN 또는 STAFF로 매핑.
+     * 레거시 역할(PRINCIPAL, TENANT_ADMIN, PARENT, HQ_*, BRANCH_*, PLAY_THERAPIST, SPEECH_THERAPIST 등)은
+     * 4종(ADMIN/STAFF/CONSULTANT/CLIENT) 중 하나로 매핑된다.
      */
     public static UserRole fromString(String role) {
         if (role == null || role.trim().isEmpty()) {
@@ -138,7 +146,11 @@ public enum UserRole {
     }
 
     /**
-     * 레거시 역할을 4역할로 매핑
+     * 레거시 역할을 4역할로 매핑.
+     *
+     * <p>2026-06 4종 SSOT 후: PLAY_THERAPIST/SPEECH_THERAPIST 도 CONSULTANT 로 매핑된다.
+     * 호출자는 세부 specialization(놀이·언어 등) 이 필요하면
+     * {@code users.professional_provider_type_code} 를 별도로 조회한다.</p>
      */
     private static UserRole mapLegacyRole(String legacyRole) {
         switch (legacyRole) {
@@ -161,6 +173,10 @@ public enum UserRole {
                 return ADMIN;
 
             case "COUNSELOR":
+            case "PLAY_THERAPIST":
+            case "SPEECH_THERAPIST":
+            case "놀이치료선생님":
+            case "언어치료선생님":
                 return CONSULTANT;
 
             case "USER":

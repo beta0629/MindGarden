@@ -645,7 +645,8 @@ public class AdminController extends BaseApiController {
      * 노출되지 않도록, 응답 빌더에서 본 메서드로 호출자 역할을 확인한 뒤 결제 필드를 마스킹/제거한다.
      *
      * @param caller 현재 호출자 User (세션에서 조회)
-     * @return CONSULTANT/PLAY_THERAPIST/SPEECH_THERAPIST 인 경우 true
+     * @return CONSULTANT (4종 SSOT 후 전문가 단일 role) 인 경우 true.
+     *         세부 specialization(놀이·언어 등) 은 users.professional_provider_type_code 로 표현됨.
      */
     private boolean isProfessionalProviderCaller(User caller) {
         if (caller == null || caller.getRole() == null) {
@@ -2986,10 +2987,6 @@ public class AdminController extends BaseApiController {
                 return "Client";
             case CONSULTANT:
                 return "Consultant";
-            case PLAY_THERAPIST:
-                return "PlayTherapist";
-            case SPEECH_THERAPIST:
-                return "SpeechTherapist";
             case ADMIN:
                 return "Admin";
             case STAFF:

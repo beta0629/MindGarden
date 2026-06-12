@@ -92,21 +92,10 @@ class MobilePushInboxPersisterTest {
                 .isEqualTo(MobilePushNotificationCategory.SCHEDULE.name());
     }
 
-    @Test
-    @DisplayName("전문가(놀이치료) 역할도 targetType=CONSULTANT (SystemNotificationServiceImpl 매핑 정합)")
-    void playTherapistMapsToConsultantTarget() {
-        User therapist = new User();
-        therapist.setId(89L);
-        therapist.setRole(UserRole.PLAY_THERAPIST);
-        when(userRepository.findByTenantIdAndId(eq(TENANT_ID), eq(89L))).thenReturn(Optional.of(therapist));
-
-        mobilePushInboxPersister.persistForRecipient(
-                TENANT_ID, 89L, MobilePushCanonicalTypes.BOOKING_REMINDER, "리마인더", "내일 상담 예약");
-
-        ArgumentCaptor<SystemNotification> captor = ArgumentCaptor.forClass(SystemNotification.class);
-        verify(systemNotificationRepository).save(captor.capture());
-        assertThat(captor.getValue().getTargetType()).isEqualTo(UserRole.CONSULTANT.name());
-    }
+    // 2026-06 4종 SSOT: PLAY_THERAPIST/SPEECH_THERAPIST enum 제거. 전문가 세부 분류는
+    // users.professional_provider_type_code 컬럼으로 표현되며 role 은 CONSULTANT 단일이다.
+    // 기존 "playTherapistMapsToConsultantTarget" 테스트는 enum 자체가 사라져 의미가 없어졌으므로 제거.
+    // CONSULTANT 매핑은 위 persistsConsultantScheduleNotification 에서 검증된다.
 
     @Test
     @DisplayName("ADMIN 사용자 → targetType=ALL (알림센터는 ALL 공지만 노출되므로)")

@@ -419,10 +419,7 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
         if (role == null) return 999;
         switch (role) {
             case ADMIN: return 1;
-            case CONSULTANT:
-            case PLAY_THERAPIST:
-            case SPEECH_THERAPIST:
-                return 2;
+            case CONSULTANT: return 2;
             case STAFF: return 3;
             case CLIENT: return 4;
             default: return 999;

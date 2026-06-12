@@ -257,14 +257,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS));
                 break;
             case CONSULTANT:
-            case PLAY_THERAPIST:
-            case SPEECH_THERAPIST:
                 authorities.add(new SimpleGrantedAuthority(
                         SecurityRoleConstants.ROLE_PREFIX + user.getRole().name()));
-                if (user.getRole() != UserRole.CONSULTANT) {
-                    authorities.add(new SimpleGrantedAuthority(
-                            SecurityRoleConstants.ROLE_PREFIX + UserRole.CONSULTANT.name()));
-                }
                 break;
             case CLIENT:
                 authorities.add(new SimpleGrantedAuthority(

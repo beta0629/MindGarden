@@ -227,7 +227,10 @@ public class AdminUserLifecycleController extends BaseApiController {
         }
     }
 
-    /** 역할 필터 문자열 → enum 매핑. CLIENT / CONSULTANT / PLAY_THERAPIST / SPEECH_THERAPIST / STAFF / ADMIN 만 허용. */
+    /** 역할 필터 문자열 → enum 매핑. 4종 SSOT: CLIENT / CONSULTANT / STAFF / ADMIN 만 허용.
+     *  (PLAY/SPEECH 등 레거시 입력은 {@code UserRole.fromString()} 에서 CONSULTANT 로 매핑되지만,
+     *  본 메서드는 strict valueOf() 사용으로 null 반환한다.)
+     */
     static UserRole parseRoleFilter(String code) {
         if (code == null || code.isBlank()) {
             return null;

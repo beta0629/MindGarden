@@ -1,7 +1,7 @@
 # MindGarden 표준 문서
 
-**버전**: 1.0.1  
-**최종 업데이트**: 2026-05-13  
+**버전**: 1.0.2  
+**최종 업데이트**: 2026-06-13  
 **상태**: 공식 표준
 
 - **간단 표준 요약(핵심 4개 등)**: [STANDARDS_SUMMARY.md](./STANDARDS_SUMMARY.md)
@@ -24,6 +24,24 @@ MindGarden 프로젝트의 **핵심 표준 문서**입니다.
 - ✅ 테넌트 삭제 정책
 
 **적용 범위**: 전체 시스템
+
+---
+
+### 1-1. [역할(Role) 표준 — 4종 SSOT](./ROLE_STANDARD.md) 🆕
+**우선순위**: ⭐⭐⭐⭐⭐ (최우선)
+
+Role SSOT 9-PR 시리즈(2026-06) 결과 정착한 **4종 SSOT(ADMIN/STAFF/CONSULTANT/CLIENT)** 표준 문서입니다.
+
+**주요 내용**:
+- ✅ 4종 SSOT 정의 (ADMIN/STAFF/CONSULTANT/CLIENT) — 권한·책임·경계
+- ✅ `@PreAuthorize` 패턴 (`hasRole`/`hasAnyRole`) + 테넌트 자체 가드 병행
+- ✅ FE `RoleUtils` 사용 가이드 (`frontend/src/utils/RoleUtils.js` 인용)
+- ✅ `mapLegacyRole` 호환 규칙 (BRANCH_*/HQ_*/SUPER_*/PLAY_*/SPEECH_* → 4종 매핑)
+- ✅ 전문가 subtype(`PROFESSIONAL_PROVIDER_TYPE`) 은 enum 이 아니라 `users.professional_provider_type_code` 컬럼으로
+- ✅ 신규 권한 추가 절차 (PR 게이트 + 표준 준수)
+- ❌ `BRANCH_*`, `HQ_*`, `TENANT_ADMIN`, `PLAY_THERAPIST` 등 레거시 enum/문자열 직접 비교·생성·저장 금지
+
+**적용 범위**: BE `@PreAuthorize`, FE 위젯·메뉴 가드, DB `users.role`, Flyway, PL/SQL CASE
 
 ---
 
@@ -76,6 +94,24 @@ RESTful API 설계 및 구현 표준입니다.
 - ✅ 롤백 계획
 
 **적용 범위**: 기존 코드 마이그레이션
+
+---
+
+### 4-1. [Branch 시스템 사용 중단(Deprecation) 가이드](./BRANCH_DEPRECATION.md) 🆕
+**우선순위**: ⭐⭐⭐⭐⭐ (최우선)
+
+Role SSOT 9-PR 시리즈(PR-1~7) 결과 — **Branch(지점) 시스템 사용 중단** 공식 가이드입니다.
+
+**주요 내용**:
+- ✅ PR-1~8 변경 요약 (BE 클래스 `@Deprecated` + `@ConditionalOnProperty` / FE UI 차단 / DB ARCHIVE + RENAME)
+- ✅ `branches_archive_20260612` / `branches_dropped_20260612` 회수 절차
+- ✅ Flyway `V20260612_002__branches_archive_and_fk_drop.sql` 자식 11개 FK DROP 인벤토리
+- ✅ 향후 컬럼/테이블 DROP 절차 (1-2주 모니터링 후)
+- ✅ Rollback 가이드 (RENAME 복원, FK 복원 DDL, 게이트 토글)
+- ❌ 신규 코드의 Branch 클래스/`branchId`/`branchCode` 직접 사용 금지
+- ❌ 새 자식 테이블에 `branch_id` 컬럼·FK 추가 금지
+
+**적용 범위**: BE Branch 클래스 19개, FE `/admin/branches` 라우트, DB `branches*` 테이블
 
 ---
 
@@ -1017,6 +1053,7 @@ Ops Portal 시스템의 표준화 가이드입니다. 도메인/포트 설정, C
 ### 변경 이력
 | 날짜 | 버전 | 변경 내용 | 작성자 |
 |------|------|----------|--------|
+| 2026-06-13 | 1.0.2 | Role SSOT 4종 표준(§1-1) + Branch 사용 중단 가이드(§4-1) 추가 — Role SSOT 9-PR 시리즈 PR-9/9 결과 반영 | 아키텍처 팀 |
 | 2026-05-13 | 1.0.1 | Expo 네이티브 앱 하드코딩·색상 표준 문서 추가 및 목록 반영 | 아키텍처 팀 |
 | 2025-12-03 | 1.1.0 | 추가 표준 문서 작성 (프론트엔드, 보안, 암호화, 공통처리, 코드스타일, API오류, 배포, 성능, API문서화) | 아키텍처 팀 |
 | 2025-12-02 | 1.0.0 | 초기 표준 문서 작성 | 아키텍처 팀 |
@@ -1029,5 +1066,5 @@ Ops Portal 시스템의 표준화 가이드입니다. 도메인/포트 설정, C
 - 프로젝트 관리자
 - 아키텍처 팀
 
-**최종 업데이트**: 2026-05-13
+**최종 업데이트**: 2026-06-13
 

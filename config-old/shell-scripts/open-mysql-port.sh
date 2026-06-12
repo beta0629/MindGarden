@@ -31,13 +31,21 @@ sudo netstat -tlnp | grep 3306 || echo "netstat으로 확인 불가"
 sudo ss -tlnp | grep 3306 || echo "ss로 확인 불가"
 
 # 7. MySQL 사용자 권한 설정
+# B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 제거 — 환경변수 주입 필수.
+# config-old/ 는 deprecated 스크립트 보관소이지만, 평문 비밀번호는 회전 차단 요인이므로 정리한다.
+# 실행 시 PRODUCTION_DB_PASSWORD 또는 DB_PASSWORD 환경변수를 export 해야 한다.
 echo "👤 MySQL 사용자 권한 설정..."
-mysql -u root -p -e "
-CREATE USER IF NOT EXISTS 'mindgarden'@'%' IDENTIFIED BY 'mindgarden2025';
-GRANT ALL PRIVILEGES ON mind_garden.* TO 'mindgarden'@'%';
-FLUSH PRIVILEGES;
-SELECT 'MySQL 사용자 설정 완료' as status;
-" 2>/dev/null || echo "MySQL 사용자 설정 건너뜀 (수동으로 해야 함)"
+DB_PASSWORD_VALUE="${PRODUCTION_DB_PASSWORD:-${DB_PASSWORD:-}}"
+if [ -z "$DB_PASSWORD_VALUE" ]; then
+    echo "::warning::PRODUCTION_DB_PASSWORD 또는 DB_PASSWORD 환경변수가 비어 있어 MySQL 사용자 설정을 건너뜁니다."
+else
+    mysql -u root -p -e "
+    CREATE USER IF NOT EXISTS 'mindgarden'@'%' IDENTIFIED BY '${DB_PASSWORD_VALUE}';
+    GRANT ALL PRIVILEGES ON mind_garden.* TO 'mindgarden'@'%';
+    FLUSH PRIVILEGES;
+    SELECT 'MySQL 사용자 설정 완료' as status;
+    " 2>/dev/null || echo "MySQL 사용자 설정 건너뜀 (수동으로 해야 함)"
+fi
 
 echo "✅ MySQL 3306 포트 열기 완료!"
 echo "🔗 이제 211.37.179.204:3306으로 접속 가능합니다."

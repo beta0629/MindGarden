@@ -3,7 +3,11 @@
 # DELIMITER 문제 해결을 위한 별도 배포 스크립트
 
 DB_USER="${DB_USER:-mindgarden}"
-DB_PASS="${DB_PASS:-mindgarden2025}"
+# B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 제거 — 환경변수 주입 필수.
+# - GitHub Actions: 워크플로 env 로 PRODUCTION_DB_PASSWORD 주입 (deploy-production.yml 참조)
+# - 운영 SSH 직접 실행: source /etc/mindgarden/prod.env 또는 DB_PASS/DB_PASSWORD/PRODUCTION_DB_PASSWORD 환경변수 export
+DB_PASS="${DB_PASS:-${PRODUCTION_DB_PASSWORD:-${DB_PASSWORD:-}}}"
+: "${DB_PASS:?DB_PASS, PRODUCTION_DB_PASSWORD, 또는 DB_PASSWORD 환경변수가 필요합니다. /etc/mindgarden/prod.env 를 source 하거나 GitHub Secrets PRODUCTION_DB_PASSWORD 를 워크플로 env 로 주입하세요.}"
 DB_NAME="${DB_NAME:-core_solution}"
 SQL_FILE="${1:-/tmp/mapping_update_procedures_mysql.sql}"
 

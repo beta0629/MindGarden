@@ -11,11 +11,21 @@ echo "========================================"
 PROD_SERVER="beta74.cafe24.com"
 SSH_USER="root"
 
+# B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 제거 — 환경변수 주입 필수.
+# - 운영 SSH 실행 전 다음 중 하나로 비밀번호를 주입합니다.
+#   1) source /etc/mindgarden/prod.env (DB_PASSWORD 등)
+#   2) export PRODUCTION_DB_PASSWORD=...
+#   3) export DB_PASSWORD=...
+# quoted heredoc 안에서 원격 평가되므로, ssh 명령 인자 prefix 로 원격 env 에 주입한다.
+DB_PASSWORD_VALUE="${PRODUCTION_DB_PASSWORD:-${DB_PASSWORD:-}}"
+: "${DB_PASSWORD_VALUE:?DB_PASSWORD 또는 PRODUCTION_DB_PASSWORD 환경변수가 필요합니다. /etc/mindgarden/prod.env 를 source 하거나 GitHub Secrets PRODUCTION_DB_PASSWORD 를 export 하세요.}"
+
 echo ""
 echo "1. 운영 서버 접속 및 권한 확인..."
 
 # 운영 서버에서 설정 파일 읽어서 DB 정보 추출 및 권한 확인
-ssh ${SSH_USER}@${PROD_SERVER} << 'EOF'
+# B8: bash -s 의 prefix 로 DB_PASSWORD_REMOTE 환경변수를 원격 셸에 주입 (heredoc 은 원격에서 평가).
+ssh ${SSH_USER}@${PROD_SERVER} "DB_PASSWORD_REMOTE=$(printf '%q' "$DB_PASSWORD_VALUE") bash -s" << 'EOF'
 # 설정 파일 경로 찾기
 CONFIG_FILE=""
 POSSIBLE_PATHS=(
@@ -47,10 +57,15 @@ else
 fi
 
 # DB 정보 (application-prod.yml의 기본값 사용)
-# 명시적으로 기본값 사용 (환경변수가 이미 설정되어 있어도 무시)
+# B8 (P0 보안, 2026-06-12): 평문 비밀번호 제거 — DB_PASSWORD_REMOTE 는 ssh 명령 prefix 로 주입됨.
 DB_USER="mindgarden"
-DB_PASS="mindgarden2025"
+DB_PASS="$DB_PASSWORD_REMOTE"
 DB_NAME="core_solution"
+
+if [ -z "$DB_PASS" ]; then
+    echo "❌ DB_PASSWORD_REMOTE 가 비어 있습니다. 호출자가 PRODUCTION_DB_PASSWORD 또는 DB_PASSWORD 를 주입했는지 확인하세요."
+    exit 1
+fi
 
 echo "📋 DB 정보:"
 echo "   - 사용자: $DB_USER"

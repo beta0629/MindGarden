@@ -10,7 +10,7 @@
 > - **v2 (2026-06-12 새벽)**: 신규 6종(A4·B5·B6·B7·C6·C7) 추가 + Phase 재분배 (38 → 44개). 상세 diff는 §부록 B 참조.
 > - **v3 (2026-06-12 오전)**: E1/E2 폐기, E1'(솔라피 SSOT 정착 검증)·E1''(솔라피 환경변수 표준화 검증) 신설 — PR #227 NCP SENS 직접 구현 폐기 + PR #260 솔라피 단일 SSOT 통합 완료 반영. 외부 액션 7건 → 6건 (NCP SENS 폐기). 상세 diff는 §부록 C 참조. PR [#271](https://github.com/beta0629/MindGarden/pull/271).
 > - **v4 (2026-06-12 오후)**: C8/C9 신설 — GitHub Actions 큐 정체 대응 (self-hosted runner PoC + CI 모니터링 알람). 외부 액션 6건 → 7건 (C8 billing/quota 점검 +1). 총 항목 44 → 46. PR [#272](https://github.com/beta0629/MindGarden/pull/272).
-> - **v5 (2026-06-12 오후)**: **B8 신설 — 운영 시크릿 평문 노출 정리 (P0 보안)**. 2026-06-12 KST S2 운영 DB 조회 워커가 systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 의 운영 DB 비밀번호 (`mindgarden2025`) 평문 노출 확인. GitHub Secrets / Vault 이관 + 시크릿 회전 정책. 외부 액션 7건 → 8건 (B8 운영 SSH +1). 총 항목 46 → 47.
+> - **v5 (2026-06-12 오후)**: **B8 신설 — 운영 시크릿 평문 노출 정리 (P0 보안)**. 2026-06-12 KST S2 운영 DB 조회 워커가 systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 의 운영 DB 비밀번호 (`<REDACTED-pre-B8-rotation>`) 평문 노출 확인. GitHub Secrets / Vault 이관 + 시크릿 회전 정책. 외부 액션 7건 → 8건 (B8 운영 SSH +1). 총 항목 46 → 47.
 
 ---
 
@@ -56,7 +56,7 @@
 
 | 약식 ID | 출처 | 유형 | 표준화 항목 | 인용 위치 |
 |---|---|---|---|---|
-| [s2-2026-06-12] | S2 운영 DB read-only 조회 워커 보고 (2026-06-12 12:17 KST) | 운영 보안 | B8 (운영 시크릿 평문 노출 정리) | systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 내 운영 DB 비밀번호 (`mindgarden2025`) 평문 노출 + IAM 분리 미흡 |
+| [s2-2026-06-12] | S2 운영 DB read-only 조회 워커 보고 (2026-06-12 12:17 KST) | 운영 보안 | B8 (운영 시크릿 평문 노출 정리) | systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 내 운영 DB 비밀번호 (`<REDACTED-pre-B8-rotation>`) 평문 노출 + IAM 분리 미흡 |
 
 ---
 
@@ -92,7 +92,7 @@
 | **B5** | **다중 생성자 `@Autowired` 명시 정책** — Spring Bean 다중 생성자(production + 테스트 RestTemplate 주입 등)에 production 생성자 `@Autowired` 명시 필수. 코드 표준 문서화 + SpotBugs/Checkstyle 검출 룰 검토 | [8f8c4fb4] PR #227 cascade | **P1** | core-coder + generalPurpose(문서) | M | PR #227 머지 |
 | **B6** | **FE 중복 API 호출 dedup 표준 (sessionManager in-flight promise)** — `/auth/current-user` 9회 중복(4.5초 누적), `consultation-messages/all` 2회, `menus/lnb` 2회 → in-flight promise dedup 패턴 명문화 + admin/dashboard·/erp/*·/admin/integrated-schedule 등 다른 화면 스캔 + `SessionContext`+`useSession()` 우선 사용(Direct fetch 금지) | [2f1ae89f] PR #231 mypage | **P1** | explore (스캔) + core-coder (필요 시 hotfix) | M | PR #231 머지 |
 | **B7** | **BE `/api/v1/auth/current-user` 응답 시간 최적화** — 실측 256~1025ms → 100ms 이내 목표. DB 인덱스 점검 + AuditLog 비동기 처리 + 외부 호출 최소화 | [2f1ae89f] PR #231 후속 | **P1** | core-debugger → core-coder | M | B6 진단 결과 반영 |
-| **B8** | **운영 시크릿 평문 노출 정리** — systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 의 운영 DB 비밀번호 (`mindgarden2025`) 평문 노출 발견 (2026-06-12 KST S2 운영 DB 조회). GitHub Secrets / 운영 `.env` (chmod 600) / Vault 등 보안 저장소로 이관. 시크릿 회전 정책 + IAM 분리 검토 | [s2-2026-06-12] | **P0** | core-deployer (운영 SSH) + generalPurpose(문서) | M | 운영 SSH 접근 + 시크릿 회전 다운타임 |
+| **B8** | **운영 시크릿 평문 노출 정리** — systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 의 운영 DB 비밀번호 (`<REDACTED-pre-B8-rotation>`) 평문 노출 발견 (2026-06-12 KST S2 운영 DB 조회). GitHub Secrets / 운영 `.env` (chmod 600) / Vault 등 보안 저장소로 이관. 시크릿 회전 정책 + IAM 분리 검토 | [s2-2026-06-12] | **P0** | core-deployer (운영 SSH) + generalPurpose(문서) | M | 운영 SSH 접근 + 시크릿 회전 다운타임 |
 
 ---
 

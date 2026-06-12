@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
 import BadgeSelect from '../../common/BadgeSelect';
-import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../../constants/consultationLogAutosaveConstants';
+import { CONSULTATION_LOG_TEXTAREA_MAX_LENGTH } from '../../../constants/consultationLogAutosaveConstants';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -45,7 +45,7 @@ const ConsultationLogFormPanel = ({
             name="clientCondition"
             value={formData.clientCondition}
             onChange={handleInputChange}
-            maxLength={CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH}
+            maxLength={CONSULTATION_LOG_TEXTAREA_MAX_LENGTH}
             placeholder={t('common:consultant.ConsultationLogFormPanel.t_005dc7d0')}
             className={[
               'mg-v2-input',
@@ -65,6 +65,7 @@ const ConsultationLogFormPanel = ({
             name="mainIssues"
             value={formData.mainIssues}
             onChange={handleInputChange}
+            maxLength={CONSULTATION_LOG_TEXTAREA_MAX_LENGTH}
             placeholder={t('common:consultant.ConsultationLogFormPanel.t_334286d2')}
             className={[
               'mg-v2-input',
@@ -83,6 +84,7 @@ const ConsultationLogFormPanel = ({
             name="interventionMethods"
             value={formData.interventionMethods}
             onChange={handleInputChange}
+            maxLength={CONSULTATION_LOG_TEXTAREA_MAX_LENGTH}
             placeholder={t('common:consultant.ConsultationLogFormPanel.t_0f043ff9')}
             className={[
               'mg-v2-input',
@@ -101,6 +103,7 @@ const ConsultationLogFormPanel = ({
             name="clientResponse"
             value={formData.clientResponse}
             onChange={handleInputChange}
+            maxLength={CONSULTATION_LOG_TEXTAREA_MAX_LENGTH}
             placeholder={t('common:consultant.ConsultationLogFormPanel.t_7feaaf9f')}
             className={[
               'mg-v2-input',
@@ -247,6 +250,7 @@ const ConsultationLogFormPanel = ({
           name="progressEvaluation"
           value={formData.progressEvaluation}
           onChange={handleInputChange}
+          maxLength={CONSULTATION_LOG_TEXTAREA_MAX_LENGTH}
           placeholder={t('common:consultant.ConsultationLogFormPanel.t_139e8e66')}
           className={[
             'mg-v2-input',

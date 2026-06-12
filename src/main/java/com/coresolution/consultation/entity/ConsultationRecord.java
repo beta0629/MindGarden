@@ -53,19 +53,19 @@ public class ConsultationRecord extends BaseEntity {
     @Column(name = "session_number")
     private Integer sessionNumber; // 상담 세션 번호
     
-    @Size(max = 2000, message = "내담자 상태는 2000자 이하여야 합니다.")
+    @Size(max = 4000, message = "내담자 상태는 4000자 이하여야 합니다.")
     @Column(name = "client_condition", columnDefinition = "TEXT")
     private String clientCondition; // 내담자 현재 상태
     
-    @Size(max = 1000, message = "주요 이슈는 1000자 이하여야 합니다.")
+    @Size(max = 4000, message = "주요 이슈는 4000자 이하여야 합니다.")
     @Column(name = "main_issues", columnDefinition = "TEXT")
     private String mainIssues; // 주요 상담 이슈
     
-    @Size(max = 1000, message = "개입 방법은 1000자 이하여야 합니다.")
+    @Size(max = 4000, message = "개입 방법은 4000자 이하여야 합니다.")
     @Column(name = "intervention_methods", columnDefinition = "TEXT")
     private String interventionMethods; // 상담 개입 방법
     
-    @Size(max = 1000, message = "내담자 반응은 1000자 이하여야 합니다.")
+    @Size(max = 4000, message = "내담자 반응은 4000자 이하여야 합니다.")
     @Column(name = "client_response", columnDefinition = "TEXT")
     private String clientResponse; // 내담자 반응 및 변화
     
@@ -92,7 +92,7 @@ public class ConsultationRecord extends BaseEntity {
     @Column(name = "emergency_response_plan", columnDefinition = "TEXT")
     private String emergencyResponsePlan; // 긴급 대응 계획
     
-    @Size(max = 1000, message = "진행도 평가는 1000자 이하여야 합니다.")
+    @Size(max = 4000, message = "진행도 평가는 4000자 이하여야 합니다.")
     @Column(name = "progress_evaluation", columnDefinition = "TEXT")
     private String progressEvaluation; // 진행도 평가
     

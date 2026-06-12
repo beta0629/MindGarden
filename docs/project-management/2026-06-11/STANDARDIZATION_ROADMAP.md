@@ -1,11 +1,15 @@
 # 2026-06-11 표준화 로드맵 (Standardization Roadmap)
 
-> **버전**: v2 (2026-06-12 새벽 PR 시리즈 반영)
+> **버전**: v4 (2026-06-12 KST, 오후 추가 — GitHub Actions 큐 정체 대응)
 > **작성자**: core-planner (오케스트레이터)
-> **작성일**: 2026-06-11 (v1) → 2026-06-12 (v2 업데이트)
+> **작성일**: 2026-06-11 (v1) → 2026-06-12 (v2 → v3 → v4)
 > **목적**: 본일 세션에서 디버거·코더·explore 보고서에 누적 언급된 "후속 표준화" 항목을 카테고리별로 정리하고, 우선순위·위임 대상·Phase를 명확히 분배하여 운영 반영 안정성·admin override 0 정책·보안 강화를 체계적으로 진행하기 위한 단일 진입 문서.
 > **범위**: 코드 변경 금지 — 본 문서는 docs 작성 + 위임 계획만 다룬다. 실제 실행은 분배실행 표대로 각 서브에이전트에 위임한다.
-> **v2 변경 요약**: 신규 6종 항목(A4·B5·B6·B7·C6·C7) 추가 + Phase 재분배 (38 → 44개). 상세 diff는 §부록 B 참조.
+> **변경 이력**:
+> - v1 (2026-06-11): 38개 항목 — 본일 세션 누적 표준화 항목 정리.
+> - v2 (2026-06-12 새벽): 신규 6종(A4·B5·B6·B7·C6·C7) 추가 + Phase 재분배 (38 → 44개). 상세 diff는 §부록 B 참조.
+> - v3 (2026-06-12 오전): E1/E2 폐기, E1'/E1'' 신설 — 솔라피 SSOT 정착 반영, 외부 액션 7건 → 6건 (NCP SENS 폐기). PR [#271](https://github.com/beta0629/MindGarden/pull/271) 에서 별도 반영.
+> - v4 (2026-06-12 오후): C8/C9 신설 — GitHub Actions 큐 정체 대응 (self-hosted runner PoC + CI 모니터링 알람). 외부 액션 7건 (C8 billing/quota 점검 +1). 총 항목 44 → 46.
 
 ---
 
@@ -32,6 +36,13 @@
 | [c842ab14] | [#233](https://github.com/beta0629/MindGarden/pull/233) | CI 인프라 | C7 (CI workflow timeout) | `code-quality-check.yml` 30m hard timeout cancel |
 | [8f8c4fb4] | [#227 cascade fix](https://github.com/beta0629/MindGarden/pull/227) | hotfix | B5 (다중 생성자 `@Autowired`) | `SmsGatewayServiceImpl` `NoSuchMethodException: <init>()` cascade |
 | [2f1ae89f] | [#231](https://github.com/beta0629/MindGarden/pull/231) | 진단·hotfix | B6/B7 (FE dedup + BE 응답 최적화) | mypage `/auth/current-user` 9회 중복(4.5초), BE 256~1025ms |
+
+### 0.3 v4 추가 (Session 2026-06-12 오후 — CI 큐 정체)
+
+| 약식 ID | PR/이슈 | 유형 | 표준화 항목 | 인용 위치 |
+|---|---|---|---|---|
+| [ci-queue-2026-06-12] | `code-quality-check.yml` 큐 정체 (5 run 16~33분 queued, 2026-06-12 09:30 KST) | CI 인프라 | C8 (self-hosted runner PoC) / C9 (CI 큐 모니터링 알람) | GitHub Actions queued 한도 / 동시 실행 제한 / 조직 quota 초과 가능성 |
+| [#260](https://github.com/beta0629/MindGarden/pull/260) | sequential 5차 머지 + admin override 우회 | hotfix | C8/C9 배경 | SMS 운영 시급 머지 게이트 진입 차단됨 → admin override 우회 처리 (운영 안전을 위한 1회성 결정) |
 
 ---
 
@@ -81,6 +92,8 @@
 | C5 | 워크플로 systemctl restart 통합 — dev(PR #219) 패턴을 prod에도 적용 (현재 prod는 blue/green 분리) | (세션 누적) | P3 | core-deployer | L | 운영 영향 평가 |
 | **C6** | **CI runner JVM heap + fork 표준** — `pom.xml` failsafe `forkCount=2 reuseForks=false -Xmx3g -Xms512m` 패턴 명문화. surefire 등 다른 plugin 에도 검토. 244 IT 누적 OOM 회귀 차단 | [af5a3633] PR #232 | **P1** | core-coder | M | PR #232 머지 |
 | **C7** | **CI workflow timeout 표준** — 통합 테스트 50분, 단위 테스트 20분, 정적 검사 15분 명문화. `code-quality-check.yml`의 30m 한계 회귀 차단 | [c842ab14] PR #233 | **P2** | core-deployer | S | PR #233 머지 |
+| **C8** | **GitHub Actions self-hosted runner 도입 검토** — 2026-06-12 KST `code-quality-check.yml` 큐 정체 (5 run 16~33분 queued) 대응. PoC 환경 구성(개발 서버 또는 별도 VM) + `runs-on: [self-hosted, linux, x64]` 등록 검토 + 보안 정책(시크릿 노출, isolation, runner 격리) + 비용/성능 비교(GitHub-hosted vs self-hosted) + Rollback 절차(self-hosted 장애 시 GitHub-hosted fallback) | [ci-queue-2026-06-12] / [#260](https://github.com/beta0629/MindGarden/pull/260) | **P2** | core-deployer (PoC) + core-tester (성능 측정) + **사용자(외부, billing/quota 점검)** | L | GitHub Actions billing/quota 점검 (사용자) + 인프라(VM) |
+| **C9** | **CI 큐 모니터링 알람** — 큐 정체 조기 감지로 admin override 의존 최소화. GitHub Actions queued job 시간 모니터링 메트릭 + 임계치(예: 10분 queued) 초과 시 Discord 알람 + `gh run list --jq` 기반 정기 점검 스크립트(cron 또는 systemd timer) | [ci-queue-2026-06-12] | **P1** | core-deployer + Prometheus | M | 없음 |
 
 ---
 
@@ -176,9 +189,11 @@
 | **B6** | FE 중복 API 호출 dedup 표준 (sessionManager in-flight promise) | explore (스캔) + core-coder (필요 시 hotfix) |
 | **B7** | BE `/auth/current-user` 응답 시간 최적화 (100ms 이내 목표) | core-debugger → core-coder |
 | **C6** | CI runner JVM heap + fork 표준 (failsafe `forkCount=2 reuseForks=false -Xmx3g`) | core-coder |
+| **C9** | CI 큐 모니터링 알람 (queued 10분 초과 시 Discord 알람 + 정기 점검 스크립트) | core-deployer + Prometheus |
 
-**Phase 1 항목 수**: **16개** (코드 11 + 외부 3 + 문서 2)
+**Phase 1 항목 수**: **17개** (코드 11 + 외부 3 + 문서 2 + 인프라 1)
 **v2 추가**: A4, B5, B6, B7, C6 (5개)
+**v4 추가**: C9 (1개)
 
 ---
 
@@ -204,9 +219,11 @@
 | I1 | 운영 DB 잔여 base64 row 스캔 | shell → core-coder |
 | I3 | mind_garden 레거시 schema DROP | **사용자(DBA)** |
 | **C7** | CI workflow timeout 표준 (IT 50m / 단위 20m / 정적 15m 명문화) | core-deployer |
+| **C8** | GitHub Actions self-hosted runner 도입 검토 (PoC + 보안 정책 + 비용/성능 비교 + rollback) | core-deployer + core-tester + **사용자(billing/quota)** |
 
-**Phase 2 항목 수**: **18개** (코드 11 + 외부 4 + 인프라 3)
+**Phase 2 항목 수**: **19개** (코드 11 + 외부 5 + 인프라 3)
 **v2 추가**: C7 (1개)
+**v4 추가**: C8 (1개)
 
 ---
 
@@ -229,14 +246,16 @@
 
 ---
 
-### Phase 합계 (v2)
+### Phase 합계 (v4)
 
-| Phase | v1 항목 수 | v2 항목 수 | 변동 |
-|---|---|---|---|
-| Phase 1 | 11 | **16** | +5 (A4·B5·B6·B7·C6) |
-| Phase 2 | 17 | **18** | +1 (C7) |
-| Phase 3 | 9 | 9 | — |
-| **총합** | **38** | **44** | **+6** |
+| Phase | v1 | v2 | v3 | v4 | v3→v4 변동 |
+|---|---|---|---|---|---|
+| Phase 1 | 11 | 16 | 16 | **17** | +1 (C9) |
+| Phase 2 | 17 | 18 | 18 | **19** | +1 (C8) |
+| Phase 3 | 9 | 9 | 9 | 9 | — |
+| **총합** | **38** | **44** | **44** | **46** | **+2** |
+
+> **참고**: v3는 카테고리 E 내부 재구성(E1/E2 폐기, E1'/E1'' 신설)으로 항목 수 증감 없이 44개 유지. v4는 인프라 카테고리 C에 C8/C9 추가로 +2.
 
 ---
 
@@ -288,6 +307,9 @@
 | **G2** | SMS gateway stub mode ERROR 알람 | E1 완료 후 — Phase 1 |
 | **G4** | AuditLog 활동 모니터링 대시보드 | USER_PHONE_CHANGE/EMAIL_CHANGE/OTP_SENT — Phase 2 |
 | **I3** | `mind_garden` 레거시 schema DBA 수동 DROP | PR #217 차단 후 — Phase 2 |
+| **C8** | GitHub Actions billing/quota 점검 (self-hosted runner PoC 선행) | 2026-06-12 KST 큐 정체 대응 — Phase 2 (v4 신설) |
+
+> **사용자 외부 액션 합계 (v4)**: 7건 (v2 = 7 → v3 = 6(NCP SENS 폐기) → v4 = 7(C8 +1))
 
 ---
 
@@ -309,6 +331,14 @@
 - **C6/C7 인프라 변경은 다른 PR sequential 머지와 충돌 없음** — `pom.xml`(C6) 및 `.github/workflows/*.yml`(C7)만 건드리므로 main sequential 머지 워커와 코드 영역 충돌 가능성 낮음. 다만 **CI 실행 중 머지 시 일시적 빌드 큐 적체** 가능 → 머지 타이밍 조율(머지 직후 또는 머지 사이 갭).
 - **B6 SessionContext + useSession() 전환**은 다수 컴포넌트 영향 → **explore 결과 기반 우선순위 화면 5개 선정 → 단계적 hotfix**(빅뱅 금지).
 - **B7 BE 최적화는 AuditLog 비동기 처리** 도입 시 누락 가능성 → `@Async` 또는 별도 큐 도입 시 **실패 폴백·재시도 정책**을 core-debugger 진단 단계에서 함께 정리.
+
+### 5.3 v4 추가 항목 (CI 큐 정체 대응)
+
+- **CI 큐 정체 → admin override 의존 → "admin override 0" 정책 약화 가능성** — 2026-06-12 KST `code-quality-check.yml` 큐 정체로 PR #260 SMS 운영 시급 머지 게이트 진입 차단됨. 운영 안전을 위한 1회성 admin override 우회 처리는 불가피했으나, **반복 발생 시 정책 약화·우회 상시화 위험**. C9 (CI 큐 모니터링 알람)로 조기 감지 + C8 (self-hosted runner PoC)로 근본 해결 병행 필요.
+- **C8 self-hosted runner 도입의 보안 리스크** — 시크릿 노출(repo-level secrets가 self-hosted runner 머신에 그대로 노출), runner isolation 부재, 레거시 빌드 산출물·캐시 leak 가능성. PoC 단계에서 **fork PR 차단 / 시크릿 minimal scope / runner 격리(컨테이너·VM)** 정책을 GitHub-hosted 대비 명확히 정의하지 않으면 운영 보안 약화. PoC 시작 전 **`docs/standards/CI_RUNNER_SECURITY_STANDARD.md`** 등 별도 표준 문서 신설 검토.
+- **C8 운영 부담** — self-hosted runner 머신 유지보수(OS 패치, runner 버전 업데이트, 디스크/메모리 모니터링) 운영 부담 증가. PoC 결과로 **GitHub-hosted 대비 비용/성능 우위가 명확하지 않으면 도입 보류** 결정 가능. Rollback 절차(`runs-on: ubuntu-latest` 복귀)를 PoC 시작 시점에 함께 준비.
+- **C9 알람 노이즈** — 큐 정체 임계치(예: 10분)가 너무 낮으면 일상적 큐 대기·일시적 quota 변동에 알람 폭주 → 알람 피로도 누적 → 진짜 정체 무시. 임계치는 **운영 데이터 수집(1주) 후 조정** 권장.
+- **C8 외부 의존(billing/quota 점검)** — GitHub Actions 조직 quota·billing 한도는 **사용자 외부 액션**으로만 확인 가능. PoC 시작 전 사용자 점검 결과(현재 사용량·상한·다음 결제 주기) 회수 후 self-hosted 도입 정당성 평가 필요. 단순 quota 상향으로 해결되면 self-hosted PoC는 **선택적 진행**.
 
 ---
 

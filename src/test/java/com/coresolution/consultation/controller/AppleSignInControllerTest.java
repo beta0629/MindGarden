@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.when;
  * <p>Apple App Store 4.8 (T1) — `/login`, `/callback` 두 엔드포인트가
  * 서비스 응답을 ApiResponse 래퍼로 정확히 전달하는지 검증한다.</p>
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("AppleSignInController")
 class AppleSignInControllerTest {
 

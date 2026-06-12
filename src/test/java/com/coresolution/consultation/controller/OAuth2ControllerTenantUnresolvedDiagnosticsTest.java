@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.mockito.quality.Strictness;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -55,7 +56,7 @@ import static org.mockito.Mockito.when;
  * @author MindGarden
  * @since 2026-06-11
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("OAuth2Controller — tenant_id 결락 분기 P3 진단 (Counter + WARN 로그)")
 class OAuth2ControllerTenantUnresolvedDiagnosticsTest {

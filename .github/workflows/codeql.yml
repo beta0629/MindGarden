@@ -53,7 +53,7 @@ jobs:
           restore-keys: ${{ runner.os }}-codeql-m2
 
       - name: 🔍 CodeQL 초기화
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           queries: security-extended
@@ -65,6 +65,6 @@ jobs:
           mvn -B -DskipTests -Dspring-boot.repackage.skip=true compile
 
       - name: 🧪 CodeQL 분석 실행
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"

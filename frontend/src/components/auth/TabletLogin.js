@@ -8,7 +8,6 @@ import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
 import DuplicateLoginModal from '../common/DuplicateLoginModal';
 import { authAPI, testLogin } from '../../utils/ajax';
-import { API_BASE_URL } from '../../constants/api';
 import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallback } from '../../utils/socialLogin';
 // import { setLoginSession, redirectToDashboard, logSessionInfo } from '../../utils/session'; // 제거됨
 import { sessionManager } from '../../utils/sessionManager';
@@ -134,34 +133,30 @@ const TabletLogin = () => {
 
     const checkExistingSession = async() => {
       try {
-        // ajax.js의 checkSessionAndRedirect를 우회하여 직접 세션 체크
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
-          credentials: 'include',
-          method: 'GET'
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.user) {
-            console.log('✅ 기존 세션 발견, 대시보드로 리다이렉트:', result.user.role);
-            
-            // sessionManager에 사용자 정보 설정
-            sessionManager.setUser(result.user, {
-              accessToken: result.accessToken || 'existing_session_token',
-              refreshToken: result.refreshToken || 'existing_session_refresh_token'
-            });
-            // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
-            await checkSession(true);
-
-            // 동적 대시보드 라우팅
-            const authResponse = {
-              user: result.user,
-              currentTenantRole: result.currentTenantRole || null
-            };
-            await redirectToDynamicDashboard(authResponse, navigate);
-          }
+        // B6 묶음 B 2026-06-12: 직접 fetch 제거 → sessionManager.checkSession(true) 사용.
+        // sessionManager 내부 dedup + setUser 가 통합 처리되며, 이 시점의 user 와 currentTenantRole 로
+        // 동적 대시보드 라우팅을 그대로 유지한다. 401 은 sessionManager 가 비공개 페이지에서만 redirect
+        // 처리하므로 /login (공개 페이지) 에서는 조용히 false 반환 → 로그인 페이지 유지.
+        const isLoggedIn = await sessionManager.checkSession(true);
+        if (!isLoggedIn) {
+          return;
         }
-        // 401 등은 조용히 처리 (로그인 페이지 유지)
+        const existingUser = sessionManager.getUser();
+        if (!existingUser) {
+          return;
+        }
+        console.log('✅ 기존 세션 발견, 대시보드로 리다이렉트:', existingUser.role);
+
+        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록).
+        // sessionManager 내부 dedup 으로 추가 fetch 발생하지 않는다.
+        await checkSession(true);
+
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: existingUser,
+          currentTenantRole: sessionManager.getCurrentTenantRole()
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
       } catch (error) {
         // 네트워크 오류 등은 무시
       }

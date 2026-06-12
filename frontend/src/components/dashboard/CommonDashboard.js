@@ -4,7 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
-import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
+import { DASHBOARD_API } from '../../constants/api';
 import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
 import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
@@ -522,48 +522,32 @@ const CommonDashboard = ({ user: propUser }) => {
             console.log('👤 sessionUser:', sessionUser);
             console.log('👤 sessionManager 사용자:', currentUser);
             
-            if (window.delayedSessionCheckExecuted) {
-              console.log('🔄 지연된 세션 확인 이미 실행됨, 스킵');
-              return;
-            }
-            
-            window.delayedSessionCheckExecuted = true;
-            
-           setTimeout(async() => {
-             try {
-               console.log('🔄 지연된 세션 확인 시작...');
-               
-               const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
-                 credentials: 'include',
-                 method: 'GET',
-                 headers: {
-                   'Content-Type': 'application/json'
-                 }
-               });
-               
-               console.log('🔍 지연된 세션 확인 응답:', response.status, response.statusText);
-               
-               if (response.ok) {
-                 const result = await response.json();
-                 console.log('📋 지연된 세션 확인 응답 데이터:', result);
-                 
-                 if ((result.success && result.user) || (result.role && result.name)) {
-                   const userData = result.success ? result.user : result;
-                   console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', userData);
-                   
-                   setUser(userData);
-                   console.log('✅ 사용자 정보 설정 완료, 페이지 리로드 없이 계속 진행');
-                   return;
-                 }
-               }
-               
-               console.log('❌ 지연된 세션 확인 실패, 로그인 페이지로 이동');
-               navigate('/login', { replace: true });
-             } catch (error) {
-               console.log('❌ 지연된 세션 확인 오류, 로그인 페이지로 이동:', error);
-               navigate('/login', { replace: true });
-             }
-           }, 1000);
+            // B6 묶음 B 2026-06-12: window.delayedSessionCheckExecuted 글로벌 가드 제거 →
+            // sessionManager.checkSession(true) 자체 in-flight Promise dedup 으로 대체.
+            // 직접 fetch 도 제거 — sessionManager 가 current-user 호출·setUser·redirect 통합 관리.
+            setTimeout(async() => {
+              try {
+                console.log('🔄 지연된 세션 확인 시작...');
+                const isLoggedIn = await sessionManager.checkSession(true);
+                console.log('🔍 지연된 세션 확인 결과:', isLoggedIn);
+
+                if (isLoggedIn) {
+                  const sessionUserData = sessionManager.getUser();
+                  if (sessionUserData) {
+                    console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', sessionUserData);
+                    setUser(sessionUserData);
+                    console.log('✅ 사용자 정보 설정 완료, 페이지 리로드 없이 계속 진행');
+                    return;
+                  }
+                }
+
+                console.log('❌ 지연된 세션 확인 실패, 로그인 페이지로 이동');
+                navigate('/login', { replace: true });
+              } catch (error) {
+                console.log('❌ 지연된 세션 확인 오류, 로그인 페이지로 이동:', error);
+                navigate('/login', { replace: true });
+              }
+            }, 1000);
             return;
           }
         }

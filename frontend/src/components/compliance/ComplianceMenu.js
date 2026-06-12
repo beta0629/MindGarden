@@ -95,7 +95,7 @@ function ComplianceMenuInfoSection() {
               privacy@mindgarden.co.kr
             </p>
             <p>
-              <strong>{t('common:compliance.ComplianceMenu.t_ca3404dd')}</strong> 02-1234-5678
+              <strong>{t('common:compliance.ComplianceMenu.t_ca3404dd')}</strong> 032-724-8501
             </p>
             <p>
               <strong>{t('common:compliance.ComplianceMenu.t_069db422')}</strong> {t('common:compliance.ComplianceMenu.t_c9092377')}

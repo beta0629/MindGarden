@@ -254,7 +254,7 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
                 ),
                 "contactInfo", Map.of(
                     "privacyOfficer", "privacy@mindgarden.com",
-                    "phone", "02-1234-5678"
+                    "phone", "032-724-8501"
                 ),
                 "lastUpdated", user.getUpdatedAt()
             );

@@ -58,35 +58,33 @@ BEGIN
         FROM users 
         WHERE id = p_user_id;
         
-        -- 4. 역할별 권한 레벨 설정
+        -- 4. 역할별 권한 레벨 설정 (SSOT 4종: ADMIN/STAFF/CONSULTANT/CLIENT)
+        --    레거시 role(HQ_*/BRANCH_*/PRINCIPAL/OWNER 등) 은 V20260612_001 마이그에서
+        --    ADMIN 으로 정규화되므로 본 CASE 에서 분기 불필요.
         CASE p_user_role
-            WHEN 'HQ_MASTER' THEN SET v_user_role_level = 100;
-            WHEN 'SUPER_HQ_ADMIN' THEN SET v_user_role_level = 90;
-            WHEN 'HQ_ADMIN' THEN SET v_user_role_level = 80;
             WHEN 'ADMIN' THEN SET v_user_role_level = 70;
-            WHEN 'BRANCH_SUPER_ADMIN' THEN SET v_user_role_level = 60;
-            WHEN 'BRANCH_ADMIN' THEN SET v_user_role_level = 50;
-            WHEN 'BRANCH_MANAGER' THEN SET v_user_role_level = 40;
+            WHEN 'STAFF' THEN SET v_user_role_level = 40;
             WHEN 'CONSULTANT' THEN SET v_user_role_level = 30;
             WHEN 'CLIENT' THEN SET v_user_role_level = 20;
             ELSE SET v_user_role_level = 0;
         END CASE;
         
-        -- 5. 권한 확인 로직
+        -- 5. 권한 확인 로직 (SSOT 4종 기준)
         IF v_user_role_level >= 70 THEN
-            -- 본사 관리자 이상: 모든 매핑 수정 가능
+            -- ADMIN: 모든 매핑 수정 가능
             SET p_can_update = TRUE;
-            SET p_reason = '본사 관리자 권한으로 수정 가능합니다';
+            SET p_reason = '관리자 권한으로 수정 가능합니다';
         ELSEIF v_user_role_level >= 50 AND v_mapping_branch_code = v_user_branch_code THEN
-            -- 지점 관리자: 자신의 지점 매핑만 수정 가능
+            -- 지점 관리자 경로 (레거시) — SSOT 4종에는 50~69 레벨이 없음.
+            -- branch_code 자체는 PR-7 별도 정리 범위라 dead path 로 유지 (분기 미트리거).
             SET p_can_update = TRUE;
             SET p_reason = '지점 관리자 권한으로 수정 가능합니다';
         ELSEIF v_user_role_level >= 30 AND p_user_id = v_mapping_consultant_id THEN
-            -- 상담사: 자신의 매핑만 수정 가능
+            -- CONSULTANT: 자신의 매핑만 수정 가능
             SET p_can_update = TRUE;
             SET p_reason = '상담사 권한으로 수정 가능합니다';
         ELSEIF v_user_role_level >= 20 AND p_user_id = v_mapping_client_id THEN
-            -- 내담자: 자신의 매핑만 수정 가능
+            -- CLIENT: 자신의 매핑만 수정 가능
             SET p_can_update = TRUE;
             SET p_reason = '내담자 권한으로 수정 가능합니다';
         ELSE

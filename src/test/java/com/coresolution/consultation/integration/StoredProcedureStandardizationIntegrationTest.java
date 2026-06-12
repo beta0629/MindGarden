@@ -42,11 +42,12 @@ import static org.assertj.core.api.Assertions.assertThat;
     // Ops Portal 관리자 설정 (테스트용)
     "ops.admin.username=test-admin@mindgarden.com",
     "ops.admin.password=test-password-123",
-    "ops.admin.role=HQ_ADMIN",
+    // 2026-06-12 (PR-8/9 role SSOT): HQ_ADMIN → ADMIN (UserRole 4종 정착)
+    "ops.admin.role=ADMIN",
     // 환경 변수 매핑
     "OPS_ADMIN_USERNAME=test-admin@mindgarden.com",
     "OPS_ADMIN_PASSWORD=test-password-123",
-    "OPS_ADMIN_ROLE=HQ_ADMIN"
+    "OPS_ADMIN_ROLE=ADMIN"
 })
 @Transactional
 @DisplayName("표준화된 프로시저 통합 테스트")

@@ -93,6 +93,9 @@ jobs:
       # NCP SENS 4종 환경변수 폐기 (2026-06-12 SSOT 통합).
       # SmsGatewayServiceImpl → SolapiSmsProvider 단일 통합. 솔라피 자격 증명은
       # scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
+      # B8 (P0 보안, 2026-06-12): 운영 DB 비밀번호 회전 대비 — 저장소 평문 비밀번호 제거.
+      # 본 env 매핑이 후속 SSH 스크립트(블루그린·프로시저 배포)에서 $PRODUCTION_DB_PASSWORD 로 노출된다.
+      PRODUCTION_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
 
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
@@ -600,7 +603,8 @@ jobs:
         # 실제 prod.env 갱신은 운영자 1회 작업(가이드 §1.1)이며, 본 매핑은 후속 자동화·진단 스크립트용.
         # GOOGLE_* 3종은 P0 hotfix 2026-06-11 추가 — 후속 자동 주입 step 이 같은 패턴으로 사용.
         # *_REGISTERED_URLS 4종은 OAuth 4종 표준화 (옵션 B′) 추가 — 후속 자동 주입 step 이 동일 패턴으로 사용.
-        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS
+        # PRODUCTION_DB_PASSWORD 는 B8 (P0 보안, 2026-06-12) 저장소 평문 비밀번호 제거에 따른 mysql 비밀번호 주입용.
+        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,PRODUCTION_DB_PASSWORD
         script: |
           cd /var/www/mindgarden
           
@@ -826,13 +830,20 @@ jobs:
           echo "ℹ️ Actions > 'Fix Production Database' 워크플로우 사용"
           
           # 메시지 관리 권한 확인 (SQL 파일 업로드는 주석 처리됨)
+          # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 환경변수 치환
+          # PRODUCTION_DB_PASSWORD 가 비어 있으면 mysql 호출은 건너뛰어 silent fail 방지
           echo "🔧 메시지 관리 권한 확인 시작..."
-          EXISTING_COUNT=$(mysql -u mindgarden -p'mindgarden2025' mind_garden -N -e "SELECT COUNT(*) FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;" 2>/dev/null || echo "0")
+          if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
+            echo "::warning::PRODUCTION_DB_PASSWORD 가 비어 있음 — 메시지 관리 권한 확인 스킵"
+            EXISTING_COUNT=0
+          else
+            EXISTING_COUNT=$(mysql -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "SELECT COUNT(*) FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;" 2>/dev/null || echo "0")
+          fi
           
           if [ "$EXISTING_COUNT" -eq "0" ]; then
             echo "⚠️ 메시지 권한이 없음 - 수동으로 SQL 실행 필요"
             echo "⚠️ 운영 서버 SSH 접속 후 SQL 실행:"
-            echo "   mysql -u mindgarden -p'mindgarden2025' mind_garden < /path/to/sql/add_message_management_permissions_force.sql"
+            echo "   mysql -u mindgarden -p\"\$DB_PASSWORD\" mind_garden < /path/to/sql/add_message_management_permissions_force.sql"
           else
             echo "✅ 메시지 관리 권한이 이미 존재함 (${EXISTING_COUNT}개)"
           fi
@@ -849,14 +860,21 @@ jobs:
           fi
           if [ -n "$MAPPING_SQL" ]; then
             echo "📋 매핑 수정 프로시저 파일: $MAPPING_SQL"
-            echo "📋 프로시저 배포 실행 (DROP+CREATE, root 우선)..."
-            sudo mysql -h localhost -u root -pmindgarden2025 mind_garden < "$MAPPING_SQL" 2>&1 | tee /tmp/procedure_deploy.log
-            DEPLOY_RESULT=${PIPESTATUS[0]}
-            if [ "$DEPLOY_RESULT" -ne 0 ]; then
-              echo "⚠️ root 적용 실패(DEPLOY_RESULT=$DEPLOY_RESULT) — DB 계정으로 재시도..."
-              mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < "$MAPPING_SQL" 2>&1 | tee /tmp/procedure_deploy_retry.log
+            # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 치환
+            # root 우선 시도 → 실패 시 mindgarden DB 사용자로 재시도. 둘 다 PRODUCTION_DB_PASSWORD 사용 (현 운영 정책 동일 비밀번호).
+            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
+              echo "::warning::PRODUCTION_DB_PASSWORD 가 비어 있음 — 매핑 수정 프로시저 배포 스킵"
+              DEPLOY_RESULT=1
+            else
+              echo "📋 프로시저 배포 실행 (DROP+CREATE, root 우선)..."
+              sudo mysql -h localhost -u root -p"$PRODUCTION_DB_PASSWORD" mind_garden < "$MAPPING_SQL" 2>&1 | tee /tmp/procedure_deploy.log
               DEPLOY_RESULT=${PIPESTATUS[0]}
-              rm -f /tmp/procedure_deploy_retry.log
+              if [ "$DEPLOY_RESULT" -ne 0 ]; then
+                echo "⚠️ root 적용 실패(DEPLOY_RESULT=$DEPLOY_RESULT) — DB 계정으로 재시도..."
+                mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden < "$MAPPING_SQL" 2>&1 | tee /tmp/procedure_deploy_retry.log
+                DEPLOY_RESULT=${PIPESTATUS[0]}
+                rm -f /tmp/procedure_deploy_retry.log
+              fi
             fi
             if [ "$DEPLOY_RESULT" -eq 0 ]; then
               echo "✅ 매핑 수정 프로시저 배포 완료"
@@ -867,7 +885,10 @@ jobs:
             fi
             rm -f /tmp/procedure_deploy.log
             echo "📋 최종 프로시저 확인:"
-            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden -e "
+            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
+              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — 프로시저 조회 스킵"
+            else
+            mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -e "
             SELECT 
                 ROUTINE_NAME,
                 CREATED,
@@ -881,22 +902,28 @@ jobs:
             AND ROUTINE_TYPE = 'PROCEDURE' 
             AND ROUTINE_NAME = 'UpdateMappingInfo';
             " 2>/dev/null || true
+            fi
             rm -f /tmp/mapping_update_procedures_mysql_no_delimiter.sql /tmp/mapping_update_procedures_mysql.sql
           else
             echo "⚠️ 매핑 수정 프로시저 파일을 찾을 수 없습니다 (/tmp/mapping_update_procedures_mysql_no_delimiter.sql 또는 .sql)"
           fi
           
           # 매핑 프로시저 (운영용) 배포
+          # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 치환
           echo "🔧 매핑 프로시저 (운영용) 배포 시작..."
           if [ -f /tmp/production_mapping_procedures.sql ]; then
             echo "📋 매핑 프로시저 (운영용) 파일 확인됨"
-            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/production_mapping_procedures.sql 2>&1 | tee /tmp/production_mapping_proc.log || true
-            
-            if [ ${PIPESTATUS[0]} -eq 0 ]; then
-              echo "✅ 매핑 프로시저 (운영용) 배포 완료"
+            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
+              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — 매핑 프로시저 (운영용) 배포 스킵"
             else
-              echo "⚠️ 매핑 프로시저 (운영용) 배포 중 오류 발생 (계속 진행)"
-              cat /tmp/production_mapping_proc.log | tail -20 || true
+              mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden < /tmp/production_mapping_procedures.sql 2>&1 | tee /tmp/production_mapping_proc.log || true
+              
+              if [ ${PIPESTATUS[0]} -eq 0 ]; then
+                echo "✅ 매핑 프로시저 (운영용) 배포 완료"
+              else
+                echo "⚠️ 매핑 프로시저 (운영용) 배포 중 오류 발생 (계속 진행)"
+                cat /tmp/production_mapping_proc.log | tail -20 || true
+              fi
             fi
             rm -f /tmp/production_mapping_procedures.sql /tmp/production_mapping_proc.log
           else
@@ -904,16 +931,21 @@ jobs:
           fi
           
           # 업무 시간 프로시저 배포
+          # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 치환
           echo "🔧 업무 시간 프로시저 배포 시작..."
           if [ -f /tmp/business_time_procedures_final.sql ]; then
             echo "📋 업무 시간 프로시저 파일 확인됨"
-            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/business_time_procedures_final.sql 2>&1 | tee /tmp/business_time_proc.log || true
-            
-            if [ ${PIPESTATUS[0]} -eq 0 ]; then
-              echo "✅ 업무 시간 프로시저 배포 완료"
+            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
+              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — 업무 시간 프로시저 배포 스킵"
             else
-              echo "⚠️ 업무 시간 프로시저 배포 중 오류 발생 (계속 진행)"
-              cat /tmp/business_time_proc.log | tail -20 || true
+              mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden < /tmp/business_time_procedures_final.sql 2>&1 | tee /tmp/business_time_proc.log || true
+              
+              if [ ${PIPESTATUS[0]} -eq 0 ]; then
+                echo "✅ 업무 시간 프로시저 배포 완료"
+              else
+                echo "⚠️ 업무 시간 프로시저 배포 중 오류 발생 (계속 진행)"
+                cat /tmp/business_time_proc.log | tail -20 || true
+              fi
             fi
             rm -f /tmp/business_time_procedures_final.sql /tmp/business_time_proc.log
           else
@@ -921,15 +953,17 @@ jobs:
           fi
           
           # PL/SQL 프로시저 등록
+          # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 환경변수 치환
+          # mysql 비밀번호는 따옴표 처리로 특수문자 안전
           echo "🔧 PL/SQL 프로시저 등록 시작..."
           if [ -f /tmp/production_all_missing_procedures.sql ]; then
             # 파일 내용 확인
             echo "📋 파일 내용 확인:"
             head -5 /tmp/production_all_missing_procedures.sql
-            # 환경변수 명시적 설정
+            # 환경변수 명시적 설정 (DB_PASSWORD 는 워크플로 env 의 PRODUCTION_DB_PASSWORD 로부터 주입)
             export DB_HOST="localhost"
             export DB_USERNAME="mindgarden"
-            export DB_PASSWORD="mindgarden2025"
+            export DB_PASSWORD="${PRODUCTION_DB_PASSWORD:-}"
             export DB_NAME="mind_garden"
             
             echo "📋 MySQL 연결 정보 확인..."
@@ -937,19 +971,22 @@ jobs:
             echo "DB_USERNAME: $DB_USERNAME"
             echo "DB_NAME: $DB_NAME"
             
-            # MySQL 연결 테스트
-            mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD -e "SELECT 1;" $DB_NAME
+            if [ -z "$DB_PASSWORD" ]; then
+              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — PL/SQL 프로시저 등록 스킵"
+            else
+            # MySQL 연결 테스트 (따옴표로 특수문자 안전)
+            mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1;" "$DB_NAME"
             
             if [ $? -eq 0 ]; then
               echo "✅ MySQL 연결 성공 - 프로시저 등록 시작"
-              mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME < /tmp/production_all_missing_procedures.sql
+              mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" < /tmp/production_all_missing_procedures.sql
               
               if [ $? -eq 0 ]; then
                 echo "✅ 모든 누락된 PL/SQL 프로시저 등록 완료"
                 
                 # 등록된 프로시저 확인
                 echo "📋 등록된 프로시저 목록:"
-                mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "
+                mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "
                 SELECT ROUTINE_NAME, CREATED 
                 FROM information_schema.ROUTINES 
                 WHERE ROUTINE_SCHEMA = DATABASE() 
@@ -962,6 +999,7 @@ jobs:
               fi
             else
               echo "❌ MySQL 연결 실패 - 프로시저 등록 건너뜀"
+            fi
             fi
             
             rm -f /tmp/production_all_missing_procedures.sql

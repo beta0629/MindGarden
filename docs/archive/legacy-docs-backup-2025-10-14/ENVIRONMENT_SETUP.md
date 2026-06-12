@@ -51,7 +51,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/mind_garden?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
     username: mindgarden
-    password: mindgarden2025
+    password: <REDACTED-pre-B8-rotation>
     driver-class-name: com.mysql.cj.jdbc.Driver
   
   jpa:
@@ -150,7 +150,7 @@ CREATE DATABASE mind_garden
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 보안을 위한 전용 사용자 생성 (권장)
-CREATE USER IF NOT EXISTS 'mindgarden'@'localhost' IDENTIFIED BY 'mindgarden2025';
+CREATE USER IF NOT EXISTS 'mindgarden'@'localhost' IDENTIFIED BY '<REDACTED-pre-B8-rotation>';
 GRANT ALL PRIVILEGES ON mind_garden.* TO 'mindgarden'@'localhost';
 FLUSH PRIVILEGES;
 
@@ -389,7 +389,7 @@ brew services start mysql
 # 데이터베이스 및 사용자 생성
 mysql -u root -p
 CREATE DATABASE mind_garden CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'mindgarden'@'localhost' IDENTIFIED BY 'mindgarden2025';
+CREATE USER 'mindgarden'@'localhost' IDENTIFIED BY '<REDACTED-pre-B8-rotation>';
 GRANT ALL PRIVILEGES ON mind_garden.* TO 'mindgarden'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
@@ -410,7 +410,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 curl http://localhost:8080/api/v1/auth/health
 
 # 데이터베이스 테이블 생성 확인
-mysql -u mindgarden -p'mindgarden2025' -e "USE mind_garden; SHOW TABLES;"
+mysql -u mindgarden -p'<REDACTED-pre-B8-rotation>' -e "USE mind_garden; SHOW TABLES;"
 ```
 
 ### **4단계: 회원가입/로그인 테스트**

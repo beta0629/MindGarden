@@ -14,6 +14,11 @@ SSH_USER="beta74"
 # SQL 파일 경로
 SQL_FILE="sql/add_message_management_permissions.sql"
 
+# B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 제거 — 환경변수 주입 필수.
+# - 운영 SSH 실행 전 PRODUCTION_DB_PASSWORD 또는 DB_PASSWORD 환경변수를 export 하세요.
+DB_PASSWORD_VALUE="${PRODUCTION_DB_PASSWORD:-${DB_PASSWORD:-}}"
+: "${DB_PASSWORD_VALUE:?DB_PASSWORD 또는 PRODUCTION_DB_PASSWORD 환경변수가 필요합니다. /etc/mindgarden/prod.env 를 source 하거나 GitHub Secrets PRODUCTION_DB_PASSWORD 를 export 하세요.}"
+
 # 현재 날짜/시간
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
@@ -36,17 +41,24 @@ echo "✅ SQL 파일 복사 완료"
 
 echo ""
 echo "3. 운영 서버에서 SQL 실행..."
-ssh ${SSH_USER}@${PROD_SERVER} << 'EOF'
+# B8: bash -s 의 prefix 로 DB_PASSWORD_REMOTE 환경변수를 원격 셸에 주입 (heredoc 은 원격에서 평가).
+ssh ${SSH_USER}@${PROD_SERVER} "DB_PASSWORD_REMOTE=$(printf '%q' "$DB_PASSWORD_VALUE") bash -s" << 'EOF'
 cd /tmp
 echo ""
 echo "운영 데이터베이스에 메시지 관리 권한 추가 중..."
-mysql -u mindgarden -p'mindgarden2025' mind_garden < add_message_management_permissions_*.sql
+
+if [ -z "$DB_PASSWORD_REMOTE" ]; then
+    echo "❌ DB_PASSWORD_REMOTE 가 비어 있습니다. 호출자가 PRODUCTION_DB_PASSWORD 또는 DB_PASSWORD 를 주입했는지 확인하세요."
+    exit 1
+fi
+
+mysql -u mindgarden -p"$DB_PASSWORD_REMOTE" mind_garden < add_message_management_permissions_*.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ 권한 추가 완료"
     echo ""
     echo "4. 권한 확인..."
-    mysql -u mindgarden -p'mindgarden2025' mind_garden -e "SELECT role_name, permission_code FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;"
+    mysql -u mindgarden -p"$DB_PASSWORD_REMOTE" mind_garden -e "SELECT role_name, permission_code FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;"
     
     echo ""
     echo "5. 임시 SQL 파일 삭제..."

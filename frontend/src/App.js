@@ -75,6 +75,7 @@ import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
 // IntegrationTest는 현재 사용되지 않음
 import AccountManagement from './components/admin/AccountManagement';
+import BranchDeprecationNotice from './components/admin/BranchDeprecationNotice';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ComplianceMenu from './components/compliance/ComplianceMenu';
@@ -1023,10 +1024,13 @@ function AppContent() {
               }
             />
             
-            {/* 관리자 추가 메뉴 (준비중) */}
-            <Route path="/admin/branches" element={
-              <ComingSoon title={t('common:misc.App.t_e86e2d3d')} description={t('common:misc.App.t_4faaeca4')} />
-            } />
+            {/*
+              Branch(지점) 시스템 사용 중단 안내 (역할 SSOT 정리 PR-5/9, 2026-06-12).
+              옵션 A(점진적): 라우팅·페이지 자체는 남기되, 사용 중단 배너만 노출하여
+              운영자가 더 이상 신규 지점·지점장을 등록하지 않도록 유도한다.
+              BE seed(Flyway) Branch 메뉴 제거는 PR-6/7 별도 진행.
+            */}
+            <Route path="/admin/branches" element={<BranchDeprecationNotice />} />
             <Route path="/admin/branch-create" element={<Navigate to="/admin/branches" replace />} />
             <Route path="/admin/branch-hierarchy" element={<Navigate to="/admin/branches" replace />} />
             <Route path="/admin/branch-managers" element={<Navigate to="/admin/branches" replace />} />

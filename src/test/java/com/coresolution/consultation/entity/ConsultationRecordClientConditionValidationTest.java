@@ -16,17 +16,22 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * {@link ConsultationRecord#getClientCondition()} Bean Validation ({@code @Size(max = 2000)}) 회귀 테스트.
+ * {@link ConsultationRecord#getClientCondition()} 외 상담일지 모달 "큰 본문" textarea 5개의
+ * Bean Validation ({@code @Size(max = 4000)}) 회귀 테스트.
+ *
+ * <p>2026-06-12 — 상담일지 모달 textarea 최대 글자수 2000 → 4000 확장에 따라 boundary 갱신.
+ * 적용 필드: {@code clientCondition}, {@code mainIssues}, {@code interventionMethods},
+ * {@code clientResponse}, {@code progressEvaluation}.
  *
  * @author CoreSolution
  * @since 2026-05-10
  */
-@DisplayName("ConsultationRecord clientCondition Bean Validation")
+@DisplayName("ConsultationRecord 상담일지 모달 본문 textarea Bean Validation")
 class ConsultationRecordClientConditionValidationTest {
 
-    private static final int CLIENT_CONDITION_MAX_LENGTH = 2000;
+    private static final int CLIENT_CONDITION_MAX_LENGTH = 4000;
 
-    private static final String EXPECTED_CLIENT_CONDITION_VIOLATION_MESSAGE = "내담자 상태는 2000자 이하여야 합니다.";
+    private static final String EXPECTED_CLIENT_CONDITION_VIOLATION_MESSAGE = "내담자 상태는 4000자 이하여야 합니다.";
 
     private static ValidatorFactory factory;
 
@@ -59,7 +64,7 @@ class ConsultationRecordClientConditionValidationTest {
     }
 
     @Test
-    @DisplayName("clientCondition 2000자이면 통과")
+    @DisplayName("clientCondition 4000자이면 통과")
     void clientConditionExactlyMaxLength_valid() {
         ConsultationRecord consultationRecord = minimalValidRecord();
         consultationRecord.setClientCondition(repeatChar('a', CLIENT_CONDITION_MAX_LENGTH));
@@ -70,7 +75,7 @@ class ConsultationRecordClientConditionValidationTest {
     }
 
     @Test
-    @DisplayName("clientCondition 2001자이면 위반 메시지에 2000 또는 한글 안내 포함")
+    @DisplayName("clientCondition 4001자이면 위반 메시지에 4000 또는 한글 안내 포함")
     void clientConditionOneOverMaxLength_violationMessage() {
         ConsultationRecord consultationRecord = minimalValidRecord();
         consultationRecord.setClientCondition(repeatChar('b', CLIENT_CONDITION_MAX_LENGTH + 1));
@@ -85,6 +90,59 @@ class ConsultationRecordClientConditionValidationTest {
         assertThat(messages)
                 .isNotEmpty()
                 .anyMatch(msg ->
-                        msg.contains("2000") || EXPECTED_CLIENT_CONDITION_VIOLATION_MESSAGE.equals(msg));
+                        msg.contains("4000") || EXPECTED_CLIENT_CONDITION_VIOLATION_MESSAGE.equals(msg));
+    }
+
+    @Test
+    @DisplayName("mainIssues 4000자이면 통과, 4001자이면 위반")
+    void mainIssuesBoundary() {
+        ConsultationRecord ok = minimalValidRecord();
+        ok.setMainIssues(repeatChar('a', CLIENT_CONDITION_MAX_LENGTH));
+        assertThat(validator.validate(ok)).isEmpty();
+
+        ConsultationRecord over = minimalValidRecord();
+        over.setMainIssues(repeatChar('b', CLIENT_CONDITION_MAX_LENGTH + 1));
+        Set<ConstraintViolation<ConsultationRecord>> v = validator.validate(over);
+        assertThat(v)
+                .anyMatch(violation -> "mainIssues".equals(violation.getPropertyPath().toString()));
+    }
+
+    @Test
+    @DisplayName("interventionMethods 4000자이면 통과, 4001자이면 위반")
+    void interventionMethodsBoundary() {
+        ConsultationRecord ok = minimalValidRecord();
+        ok.setInterventionMethods(repeatChar('a', CLIENT_CONDITION_MAX_LENGTH));
+        assertThat(validator.validate(ok)).isEmpty();
+
+        ConsultationRecord over = minimalValidRecord();
+        over.setInterventionMethods(repeatChar('b', CLIENT_CONDITION_MAX_LENGTH + 1));
+        assertThat(validator.validate(over))
+                .anyMatch(violation -> "interventionMethods".equals(violation.getPropertyPath().toString()));
+    }
+
+    @Test
+    @DisplayName("clientResponse 4000자이면 통과, 4001자이면 위반")
+    void clientResponseBoundary() {
+        ConsultationRecord ok = minimalValidRecord();
+        ok.setClientResponse(repeatChar('a', CLIENT_CONDITION_MAX_LENGTH));
+        assertThat(validator.validate(ok)).isEmpty();
+
+        ConsultationRecord over = minimalValidRecord();
+        over.setClientResponse(repeatChar('b', CLIENT_CONDITION_MAX_LENGTH + 1));
+        assertThat(validator.validate(over))
+                .anyMatch(violation -> "clientResponse".equals(violation.getPropertyPath().toString()));
+    }
+
+    @Test
+    @DisplayName("progressEvaluation 4000자이면 통과, 4001자이면 위반")
+    void progressEvaluationBoundary() {
+        ConsultationRecord ok = minimalValidRecord();
+        ok.setProgressEvaluation(repeatChar('a', CLIENT_CONDITION_MAX_LENGTH));
+        assertThat(validator.validate(ok)).isEmpty();
+
+        ConsultationRecord over = minimalValidRecord();
+        over.setProgressEvaluation(repeatChar('b', CLIENT_CONDITION_MAX_LENGTH + 1));
+        assertThat(validator.validate(over))
+                .anyMatch(violation -> "progressEvaluation".equals(violation.getPropertyPath().toString()));
     }
 }

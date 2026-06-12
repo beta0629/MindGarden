@@ -155,11 +155,13 @@ public class SuperAdminBypassTest {
      * 테스트 4: 슈퍼 어드민 역할 확인
      */
     @Test
-    @DisplayName("HQ_MASTER와 SUPER_HQ_ADMIN 역할이 슈퍼 어드민으로 인식되어야 함")
+    @DisplayName("ADMIN 역할이 슈퍼 어드민으로 인식되어야 함 (레거시 HQ_*/SUPER_*/BRANCH_* 흡수)")
     public void testSuperAdminRoles() {
         // Given: 슈퍼 어드민 역할들
+        // 2026-06-12 (PR-8/9 role SSOT): UserRole 4종 SSOT 정착 — HQ_MASTER, SUPER_HQ_ADMIN, BRANCH_*,
+        // SUPER_ADMIN 등 레거시 어드민 계열은 모두 ADMIN 단일로 흡수됨(mapLegacyRole 호환 매핑).
         UserRole[] superAdminRoles = {
-            UserRole.ADMIN // 표준화 2025-12-05: HQ_MASTER, SUPER_HQ_ADMIN → ADMIN으로 통합
+            UserRole.ADMIN
         };
         
         // When & Then: 각 역할이 슈퍼 어드민인지 확인
@@ -237,7 +239,8 @@ public class SuperAdminBypassTest {
      * 슈퍼 어드민 역할 확인 헬퍼 메서드
      */
     private boolean isSuperAdminRole(UserRole role) {
-        // 표준화 2025-12-05: HQ_MASTER, SUPER_HQ_ADMIN → ADMIN으로 통합
+        // 2026-06-12 (PR-8/9 role SSOT): HQ_MASTER, SUPER_HQ_ADMIN, BRANCH_* 등 어드민 계열은
+        // UserRole.mapLegacyRole 에서 ADMIN 단일로 매핑된다(역호환). 비교는 ADMIN 만 사용.
         return role == UserRole.ADMIN;
     }
 }

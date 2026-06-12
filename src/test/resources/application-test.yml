@@ -126,4 +126,6 @@ ops:
   admin:
     username: "test-admin@mindgarden.com"
     password: "test-password-123"
-    role: "HQ_ADMIN"
+    # 2026-06-12 (PR-8/9 role SSOT): HQ_ADMIN → ADMIN (4종 SSOT 정착).
+    # 운영 application.yml 기본값은 별도 PR 에서 ENV 주입으로 정리.
+    role: "ADMIN"

@@ -187,3 +187,50 @@ jobs:
         if-no-files-found: warn
         retention-days: 30
 
+  # AI 모니터링 Phase 1 — CI 실패 시 Discord webhook 알람
+  # Secret 미등록 시 알람 skip (개발자 자기 사용·외부 fork PR 등 webhook 부재 시나리오 보호)
+  # 참고: docs/project-management/2026-06-11/AI_MONITORING_ROADMAP.md §6 Phase 1
+  notify-discord-on-failure:
+    name: 🚨 Discord 실패 알람
+    needs: [static-checks, unit-tests, integration-tests, metrics-and-reports]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚨 Discord 알람 발송
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "⚠️ DISCORD_WEBHOOK_URL Secret 미등록 — 알람 skip"
+            exit 0
+          fi
+          WORKFLOW_NAME="${{ github.workflow }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          BRANCH="${{ github.ref_name }}"
+          ACTOR="${{ github.actor }}"
+          SHA="${{ github.sha }}"
+          SHORT_SHA="${SHA:0:7}"
+          TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          PAYLOAD=$(jq -nc \
+            --arg title "❌ CI/배포 실패: $WORKFLOW_NAME" \
+            --arg branch "$BRANCH" \
+            --arg actor "$ACTOR" \
+            --arg sha "$SHORT_SHA" \
+            --arg run_url "$RUN_URL" \
+            --arg ts "$TIMESTAMP" \
+            '{embeds: [{
+              title: $title,
+              color: 15158332,
+              fields: [
+                {name: "브랜치", value: ("`" + $branch + "`"), inline: true},
+                {name: "Actor", value: $actor, inline: true},
+                {name: "SHA", value: ("`" + $sha + "`"), inline: true},
+                {name: "Run URL", value: $run_url}
+              ],
+              timestamp: $ts
+            }]}')
+
+          curl -fsS -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" || echo "⚠️ Discord 발송 실패 (재시도 안 함, 본 알람만 skip)"

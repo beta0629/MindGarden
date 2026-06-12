@@ -5,6 +5,7 @@ import com.coresolution.core.dto.BrandingInfo;
 import com.coresolution.core.dto.BrandingUpdateRequest;
 import com.coresolution.core.service.BrandingService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -85,7 +86,7 @@ public class BrandingController extends BaseApiController {
         String currentTenantId = TenantContextHolder.getRequiredTenantId();
         if (!currentTenantId.equals(tenantId)) {
             log.warn("[BRANDING] 다른 테넌트 접근 차단 (조회): current={}, requested={}",
-                    currentTenantId, tenantId);
+                    LogSanitizer.forLog(currentTenantId), LogSanitizer.forLog(tenantId));
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("다른 테넌트 접근 권한 없음"));
         }
@@ -145,7 +146,7 @@ public class BrandingController extends BaseApiController {
         String currentTenantId = TenantContextHolder.getRequiredTenantId();
         if (!currentTenantId.equals(tenantId)) {
             log.warn("[BRANDING] 다른 테넌트 접근 차단 (로고 업로드): current={}, requested={}",
-                    currentTenantId, tenantId);
+                    LogSanitizer.forLog(currentTenantId), LogSanitizer.forLog(tenantId));
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("다른 테넌트 접근 권한 없음"));
         }
@@ -173,7 +174,7 @@ public class BrandingController extends BaseApiController {
         String currentTenantId = TenantContextHolder.getRequiredTenantId();
         if (!currentTenantId.equals(tenantId)) {
             log.warn("[BRANDING] 다른 테넌트 접근 차단 (정보 업데이트): current={}, requested={}",
-                    currentTenantId, tenantId);
+                    LogSanitizer.forLog(currentTenantId), LogSanitizer.forLog(tenantId));
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("다른 테넌트 접근 권한 없음"));
         }

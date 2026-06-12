@@ -30,11 +30,16 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <p>합의서: {@code docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md}.
  * 어드민이 매칭 생성 후 일정 시간(기본 24h) 이상 결제가 들어오지 않은 PENDING_PAYMENT
- * 매핑을 조회·단건 정리·일괄 정리할 수 있도록 지원하는 3종 API 를 제공한다. 권한은
- * ADMIN / SUPER_ADMIN / HQ_ADMIN / BRANCH_SUPER_ADMIN 으로 제한된다.</p>
+ * 매핑을 조회·단건 정리·일괄 정리할 수 있도록 지원하는 3종 API 를 제공한다.</p>
+ *
+ * <p>2026-06 4종 SSOT (PR-2/9): 권한을 {@code ADMIN} 단일로 단순화한다.
+ * 매핑 상태 변경은 위험도가 높아 STAFF 는 제외한다. 레거시 SUPER_ADMIN /
+ * HQ_ADMIN / BRANCH_SUPER_ADMIN 은 {@link com.coresolution.consultation.constant.UserRole#fromString}
+ * 에서 ADMIN 으로 매핑되므로 호환된다.</p>
  *
  * @author MindGarden
  * @since 2026-05-28
+ * @updated 2026-06 - 4종 SSOT 적용 (PR-2/9)
  */
 @Slf4j
 @RestController
@@ -53,7 +58,7 @@ public class AdminMappingCleanupController extends BaseApiController {
      * @param size     페이지 크기 (1~100)
      */
     @GetMapping("/mappings/pending-payment-dirty")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'HQ_ADMIN', 'BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PendingPaymentDirtyMappingPage>> getDirtyPendingPaymentMappings(
             @RequestParam(name = "ageHours", required = false, defaultValue = "24") long ageHours,
             @RequestParam(name = "page", required = false, defaultValue = "0") int page,
@@ -70,7 +75,7 @@ public class AdminMappingCleanupController extends BaseApiController {
      * <p>PENDING_PAYMENT 외 상태인 매핑은 409 (Conflict) 를 반환한다.</p>
      */
     @PostMapping("/mappings/{mappingId}/cleanup-pending-payment")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'HQ_ADMIN', 'BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PendingPaymentCleanupResult>> cleanupPendingPaymentMapping(
             @PathVariable Long mappingId,
             @RequestBody @Valid PendingPaymentCleanupRequest request,
@@ -93,7 +98,7 @@ public class AdminMappingCleanupController extends BaseApiController {
      * 디러티 PENDING_PAYMENT 매핑 일괄 수동 정리 (최대 50건).
      */
     @PostMapping("/mappings/pending-payment-dirty/bulk-cleanup")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'HQ_ADMIN', 'BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PendingPaymentCleanupResult>> bulkCleanupPendingPaymentMappings(
             @RequestBody @Valid PendingPaymentBulkCleanupRequest request,
             HttpSession session) {

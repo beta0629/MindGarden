@@ -143,6 +143,11 @@ environment:
 # 운영 systemd drop-in 으로 환경 변수 명시 설정 누락 시에도 안전하도록 prod 프로파일에서 강제.
 # D+7 결재 통과 시 본 블록 제거(또는 false 로 전환) 후 별도 hotfix PR 로 dry-run=false 전환.
 mindgarden:
+  # PR-3/9 (2026-06-12): Branch 시스템 deprecation 게이트(빈 등록).
+  # 운영 환경 기본값은 true(현행 활성화 유지) — 운영 사용자 영향 0(branches 데이터만 존재) 확인.
+  # 실제 false 전환은 PR-6/PR-7 시점에 의존성 옵셔널화·DB 컬럼/FK 제거와 함께 진행한다.
+  branch:
+    enabled: ${MINDGARDEN_BRANCH_ENABLED:true}
   scheduler:
     withdrawal-grace:
       dry-run: ${MINDGARDEN_SCHEDULER_WITHDRAWAL_GRACE_DRY_RUN:true}

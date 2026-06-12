@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.coresolution.core.security.PasswordService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
  * 지점별 계정 생성 유틸리티
  * 작성일: 2025-09-23
  * 설명: 각 지점에 지점수퍼 관리자, 상담사, 내담자 계정을 생성
+ *
+ * @deprecated 2026-06-12 (PR-3/9): Branch 시스템 사용 중단. PR-6/PR-7 에서 제거 예정.
+ *             {@code mindgarden.branch.enabled=false} 설정 시 빈 등록이 비활성화됩니다.
  */
+@Deprecated(since = "2026-06-12", forRemoval = true)
 @Component
+@ConditionalOnProperty(name = "mindgarden.branch.enabled", havingValue = "true", matchIfMissing = true)
 public class BranchAccountCreator {
 
     @Autowired

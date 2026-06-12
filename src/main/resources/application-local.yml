@@ -282,3 +282,9 @@ logging:
     console: UTF-8
   file:
     charset: UTF-8
+
+# PR-3/9 (2026-06-12): Branch 시스템 deprecation 게이트(빈 등록).
+# 로컬 환경 기본값은 true(현행 활성화 유지).
+mindgarden:
+  branch:
+    enabled: ${MINDGARDEN_BRANCH_ENABLED:true}

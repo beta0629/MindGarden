@@ -120,3 +120,9 @@ kakao:
 notification:
   batch:
     reservation-reminder-enabled: ${NOTIFICATION_BATCH_RESERVATION_REMINDER_ENABLED:false}
+
+# PR-3/9 (2026-06-12): Branch 시스템 deprecation 게이트(빈 등록).
+# dev 환경 기본값은 true(현행 활성화 유지). PR-6/PR-7 시점에 의존성 옵셔널화 후 false 전환 검토.
+mindgarden:
+  branch:
+    enabled: ${MINDGARDEN_BRANCH_ENABLED:true}

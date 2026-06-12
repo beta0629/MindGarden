@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.User;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -16,11 +17,13 @@ import org.springframework.stereotype.Repository;
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-09-12
+ *
+ * @deprecated 2026-06-12 (PR-3/9): Branch 시스템 사용 중단. PR-6/PR-7 에서 DB 컬럼/FK 와 함께 제거 예정.
+ *             {@code mindgarden.branch.enabled=false} 설정 시 빈 등록이 비활성화됩니다.
  */
+@Deprecated(since = "2026-06-12", forRemoval = true)
 @Repository
-/**
- * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
- */
+@ConditionalOnProperty(name = "mindgarden.branch.enabled", havingValue = "true", matchIfMissing = true)
 public interface BranchRepository extends BaseRepository<Branch, Long> {
     
     // === 기본 조회 메서드 ===

@@ -7,7 +7,10 @@ package com.coresolution.consultation.enums;
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-09-18
+ *
+ * @deprecated 2026-06-12 (PR-3/9): Branch 시스템 사용 중단. PR-6/PR-7 에서 제거 예정.
  */
+@Deprecated(since = "2026-06-12", forRemoval = true)
 public enum BranchCode {
     
     /**

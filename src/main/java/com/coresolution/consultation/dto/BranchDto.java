@@ -13,14 +13,14 @@ import lombok.NoArgsConstructor;
 /**
  * 지점 정보 DTO
  * 
- * @deprecated Use BranchResponse, BranchCreateRequest, BranchUpdateRequest instead. 
- * This class will be removed in version 2.0.0
- * 
+ * @deprecated 2026-06-12 (PR-3/9): Branch 시스템 사용 중단. PR-6/PR-7 에서 제거 예정.
+ *             Use BranchResponse, BranchCreateRequest, BranchUpdateRequest instead.
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-01-17
  */
-@Deprecated
+@Deprecated(since = "2026-06-12", forRemoval = true)
 @Data
 @Builder
 @NoArgsConstructor

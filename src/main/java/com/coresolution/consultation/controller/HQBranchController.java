@@ -11,6 +11,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,12 +30,17 @@ import lombok.extern.slf4j.Slf4j;
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-01-17
+ *
+ * @deprecated 2026-06-12 (PR-3/9): Branch 시스템 사용 중단. PR-6/PR-7 에서 제거 예정.
+ *             {@code mindgarden.branch.enabled=false} 설정 시 빈 등록(엔드포인트 매핑)이 비활성화됩니다.
  */
+@Deprecated(since = "2026-06-12", forRemoval = true)
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/hq") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@ConditionalOnProperty(name = "mindgarden.branch.enabled", havingValue = "true", matchIfMissing = true)
 public class HQBranchController extends BaseApiController {
 
     private final BranchService branchService;

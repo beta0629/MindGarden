@@ -16,7 +16,11 @@ import org.springframework.data.domain.Pageable;
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-09-12
+ *
+ * @deprecated 2026-06-12 (PR-3/9): Branch 시스템 사용 중단. PR-6/PR-7 에서 제거 예정.
+ *             구현체는 {@code mindgarden.branch.enabled=false} 설정 시 빈 등록이 비활성화됩니다.
  */
+@Deprecated(since = "2026-06-12", forRemoval = true)
 public interface BranchService extends BaseService<Branch, Long> {
     
     // === 기본 CRUD 메서드 ===

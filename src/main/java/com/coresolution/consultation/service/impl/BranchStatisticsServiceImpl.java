@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchStatisticsService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,11 +31,16 @@ import lombok.extern.slf4j.Slf4j;
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-09-16
+ *
+ * @deprecated 2026-06-12 (PR-3/9): Branch 시스템 사용 중단. PR-6/PR-7 에서 제거 예정.
+ *             {@code mindgarden.branch.enabled=false} 설정 시 빈 등록이 비활성화됩니다.
  */
+@Deprecated(since = "2026-06-12", forRemoval = true)
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@ConditionalOnProperty(name = "mindgarden.branch.enabled", havingValue = "true", matchIfMissing = true)
 public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     
     private final BranchRepository branchRepository;

@@ -102,12 +102,12 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
     hasData,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user),
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user),
     cache: true
   });
 
   // 권한 확인: 관리자와 상담사만 접근 가능
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user)) {
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user)) {
     return null;
   }
 

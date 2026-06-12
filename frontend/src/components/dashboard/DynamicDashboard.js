@@ -23,7 +23,7 @@ import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import notificationManager from '../../utils/notification';
-import { USER_ROLES } from '../../constants/roles';
+import { USER_ROLES, RoleUtils } from '../../constants/roles';
 import DashboardGrid from '../layout/DashboardGrid';
 import { 
   getWidgetComponent,
@@ -1241,8 +1241,8 @@ const extractBusinessTypeFromUser = (user) => {
     if (user.tenantId.includes('erp')) return 'ERP';
   }
   
-  // 역할 기반 추정
-  if (user.role === USER_ROLES.CONSULTANT || user.role === USER_ROLES.CLIENT) return 'CONSULTATION';
+  // 역할 기반 추정 (4종 SSOT 헬퍼 사용)
+  if (RoleUtils.isConsultant(user) || RoleUtils.isClient(user)) return 'CONSULTATION';
   if (user.role === 'TEACHER' || user.role === 'STUDENT') return 'ACADEMY';
   
   return 'CONSULTATION'; // 기본값

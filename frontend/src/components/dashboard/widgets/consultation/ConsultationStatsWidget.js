@@ -56,11 +56,11 @@ const ConsultationStatsWidget = ({ widget, user }) => {
   };
 
   const { data, loading, error, hasData, refresh } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user),
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user),
     cache: true
   });
 
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user)) {
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user)) {
     return null;
   }
 

@@ -30,7 +30,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import './ScheduleList.css';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 
@@ -379,8 +379,8 @@ const ScheduleList = ({
         </div>
         
         <div className="schedule-controls">
-          {/* 상담사 선택 (어드민/수퍼어드민만) */}
-          {(userRole === USER_ROLES.ADMIN || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN) && (
+          {/* 상담사 선택 (4종 SSOT: ADMIN — 레거시 BRANCH_SUPER_ADMIN 도 매핑됨) */}
+          {mapLegacyRole(userRole) === USER_ROLES.ADMIN && (
             <CustomSelect
               value={selectedConsultantId}
               onChange={(value) => setSelectedConsultantId(value)}

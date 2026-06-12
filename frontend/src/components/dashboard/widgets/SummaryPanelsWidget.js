@@ -53,7 +53,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
         url: SCHEDULE_API.SCHEDULES,
         params: { ...baseConfig.params, userRole: USER_ROLES.CONSULTANT }
       };
-    } else if (RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) {
+    } else if (RoleUtils.isAdmin(user)) {
       return {
         ...baseConfig,
         url: API_SCHEDULES_ADMIN_STATISTICS,
@@ -82,13 +82,13 @@ const SummaryPanelsWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user),
+    immediate: RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user),
     cache: true,
     retryCount: 3
   });
 
-  // 상담사, 관리자, HQ_MASTER만 표시
-  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && !RoleUtils.isAdmin(user)) {
+  // 4종 SSOT: ADMIN(레거시 HQ_MASTER 포함) 또는 CONSULTANT 만 표시
+  if (!RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user)) {
     return null;
   }
 

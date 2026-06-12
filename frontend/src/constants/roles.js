@@ -69,37 +69,116 @@ export const getAdminRoles = () => ADMIN_ROLES;
 /** 표준 역할 4개 배열 (드롭다운/목록용) */
 export const ROLES_LIST = [USER_ROLES.ADMIN, USER_ROLES.STAFF, USER_ROLES.CONSULTANT, USER_ROLES.CLIENT];
 
-/** 역할 체크 유틸리티 */
+/**
+ * 레거시 → 4종 SSOT 매핑 테이블.
+ * PR-4/9 (refactor/role-ssot-fe-permission) 기준.
+ *
+ * - 관리자 계열 → ADMIN
+ * - 전문가 세부 유형(PLAY_THERAPIST/SPEECH_THERAPIST/ROLE_CONSULTANT) → CONSULTANT
+ * - ROLE_CLIENT → CLIENT
+ */
+const LEGACY_ROLE_TO_SSOT = Object.freeze({
+  [LEGACY_USER_ROLES.SUPER_ADMIN]: USER_ROLES.ADMIN,
+  [LEGACY_USER_ROLES.HQ_ADMIN]: USER_ROLES.ADMIN,
+  [LEGACY_USER_ROLES.HQ_MASTER]: USER_ROLES.ADMIN,
+  [LEGACY_USER_ROLES.SUPER_HQ_ADMIN]: USER_ROLES.ADMIN,
+  [LEGACY_USER_ROLES.BRANCH_ADMIN]: USER_ROLES.ADMIN,
+  [LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN]: USER_ROLES.ADMIN,
+  [LEGACY_USER_ROLES.TENANT_ADMIN]: USER_ROLES.ADMIN,
+  [LEGACY_USER_ROLES.PRINCIPAL]: USER_ROLES.ADMIN,
+  [LEGACY_USER_ROLES.OWNER]: USER_ROLES.ADMIN,
+  [USER_ROLES.PLAY_THERAPIST]: USER_ROLES.CONSULTANT,
+  [USER_ROLES.SPEECH_THERAPIST]: USER_ROLES.CONSULTANT,
+  [LEGACY_USER_ROLES.ROLE_CONSULTANT]: USER_ROLES.CONSULTANT,
+  [LEGACY_USER_ROLES.ROLE_CLIENT]: USER_ROLES.CLIENT
+});
+
+const SSOT_ROLES = [USER_ROLES.ADMIN, USER_ROLES.STAFF, USER_ROLES.CONSULTANT, USER_ROLES.CLIENT];
+
+/**
+ * 레거시 역할 문자열을 4종 SSOT 역할로 매핑.
+ *
+ * @param {string|null|undefined} role
+ * @returns {string|null}
+ */
+export const mapLegacyRole = (role) => {
+  if (role == null) {
+    return null;
+  }
+  const normalized = String(role).trim();
+  if (normalized.length === 0) {
+    return null;
+  }
+  if (SSOT_ROLES.includes(normalized)) {
+    return normalized;
+  }
+  return LEGACY_ROLE_TO_SSOT[normalized] || null;
+};
+
+/**
+ * user.role 을 4종 SSOT 역할로 정규화한 값을 반환한다.
+ *
+ * @param {{ role?: string|null }|null|undefined} user
+ * @returns {string|null}
+ */
+const getNormalizedRole = (user) => {
+  if (!user || typeof user !== 'object') {
+    return null;
+  }
+  return mapLegacyRole(user.role);
+};
+
+/** 역할 체크 유틸리티 (4종 SSOT 기준). */
 export const RoleUtils = {
-  /** 서버에서 받은 role 기준 관리자 여부 */
-  isAdmin: (user) => user?.role === SERVER_ADMIN_ROLE,
+  /** 서버에서 받은 role 기준 관리자 여부 (레거시 관리자 문자열도 매핑) */
+  isAdmin: (user) => getNormalizedRole(user) === USER_ROLES.ADMIN,
 
   /**
-   * @deprecated 브랜치 개념 제거. ADMIN_ROLES 사용 권장
+   * @deprecated 브랜치 개념 제거. isAdmin 사용
    */
-  isBranchAdmin: (user) => user?.role && ADMIN_ROLES.includes(user.role),
+  isBranchAdmin: (user) => getNormalizedRole(user) === USER_ROLES.ADMIN,
 
-  isConsultant: (user) => {
-    const r = user?.role;
-    return !!r && (
-      r === USER_ROLES.CONSULTANT ||
-      r === USER_ROLES.PLAY_THERAPIST ||
-      r === USER_ROLES.SPEECH_THERAPIST
-    );
+  /** 상담사 여부 (전문가 세부 유형 포함, 레거시 ROLE_CONSULTANT 도 true) */
+  isConsultant: (user) => getNormalizedRole(user) === USER_ROLES.CONSULTANT,
+  isClient: (user) => getNormalizedRole(user) === USER_ROLES.CLIENT,
+  isStaff: (user) => getNormalizedRole(user) === USER_ROLES.STAFF,
+
+  /**
+   * 전문가 제공자 여부.
+   * isConsultant 와 동일 정의(CONSULTANT 본인). subtype 분기는 별도로 처리.
+   */
+  isProfessionalProvider: (user) => getNormalizedRole(user) === USER_ROLES.CONSULTANT,
+
+  /**
+   * 입력 role 값을 4종 SSOT 로 매핑.
+   * @param {string|null|undefined} role
+   * @returns {string|null}
+   */
+  mapLegacyRole,
+
+  /** 정규화된 역할과 비교 (대상 역할이 레거시면 자동 매핑). */
+  hasRole: (user, role) => {
+    const normalizedUser = getNormalizedRole(user);
+    const normalizedTarget = mapLegacyRole(role);
+    return !!normalizedUser && normalizedUser === normalizedTarget;
   },
-  isClient: (user) => !!user?.role && user.role === USER_ROLES.CLIENT,
-  isStaff: (user) => !!user?.role && user.role === USER_ROLES.STAFF,
 
-  /** 서버에서 받은 role과 비교 */
-  hasRole: (user, role) => !!user?.role && user.role === role,
-
-  /** 서버에서 받은 role이 목록에 포함되는지 */
-  hasAnyRole: (user, roles) => !!user?.role && Array.isArray(roles) && roles.includes(user.role),
+  /** 정규화된 역할이 목록에 포함되는지 (목록 내 레거시 값도 자동 매핑). */
+  hasAnyRole: (user, roles) => {
+    if (!Array.isArray(roles) || roles.length === 0) {
+      return false;
+    }
+    const normalizedUser = getNormalizedRole(user);
+    if (!normalizedUser) {
+      return false;
+    }
+    return roles.some((r) => mapLegacyRole(r) === normalizedUser);
+  },
 
   /** @deprecated 4역할 단순화. isAdmin 사용 */
-  isBranchSuperAdmin: (user) => !!user?.role && user.role === USER_ROLES.ADMIN,
+  isBranchSuperAdmin: (user) => getNormalizedRole(user) === USER_ROLES.ADMIN,
   /** @deprecated 4역할 단순화. isAdmin 사용 */
-  isBranchManager: (user) => !!user?.role && user.role === USER_ROLES.ADMIN
+  isBranchManager: (user) => getNormalizedRole(user) === USER_ROLES.ADMIN
 };
 
 export default USER_ROLES;

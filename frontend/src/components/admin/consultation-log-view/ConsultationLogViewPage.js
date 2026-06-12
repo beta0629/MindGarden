@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { useSession } from '../../../contexts/SessionContext';
-import { USER_ROLES } from '../../../constants/roles';
+import { RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
@@ -111,7 +111,7 @@ export const parseNumericQueryParam = (searchParams, key) => {
 
 const ConsultationLogViewPage = () => {
   const { user } = useSession();
-  const isAdmin = user?.role === USER_ROLES.ADMIN;
+  const isAdmin = RoleUtils.isAdmin(user);
   const [searchParams] = useSearchParams();
 
   /**

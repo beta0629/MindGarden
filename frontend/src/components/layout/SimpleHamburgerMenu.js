@@ -7,7 +7,7 @@ import { fetchUserPermissions } from '../../utils/permissionUtils';
 import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { USER_ROLES } from '../../constants/roles';
+import { RoleUtils } from '../../constants/roles';
 import './SimpleHamburgerMenu.css';
 import { useTranslation } from 'react-i18next';
 
@@ -66,8 +66,8 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           'CONSULTANT_MENU': ['CONSULTATION_RECORD_VIEW', 'SCHEDULE_MANAGE']
         };
         
-        // 관리자 여부: 서버에서 받은 role 기준 (동적 권한)
-        const isAdmin = user?.role === USER_ROLES.ADMIN;
+        // 관리자 여부: 4종 SSOT 기준 (레거시 관리자 문자열도 매핑됨)
+        const isAdmin = RoleUtils.isAdmin(user);
         
         console.log('🔍 사용자 역할 및 권한 체크:', {
           role: user?.role,

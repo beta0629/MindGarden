@@ -16,7 +16,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import BaseWidget from '../BaseWidget';
-import { RoleUtils, LEGACY_USER_ROLES } from '../../../../constants/roles';
+import { RoleUtils } from '../../../../constants/roles';
 import {
   DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
   FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL,
@@ -87,8 +87,8 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     };
   }, []);
 
-  // 관리자/상담사만 사용 가능
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER)) {
+  // 관리자/상담사만 사용 가능 (4종 SSOT: ADMIN/CONSULTANT — 레거시 HQ_MASTER 도 ADMIN 매핑됨)
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user)) {
     return null;
   }
 

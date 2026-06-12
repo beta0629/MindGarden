@@ -22,7 +22,7 @@ import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
 } from '../../../utils/krPublicHolidays';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import './ScheduleCalendarView.css';
 
 const KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-holiday-badge';
@@ -31,18 +31,18 @@ const SUBSTITUTE_EVE_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--kr-substitute-eve'
 const WEEKEND_SAT_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sat';
 const WEEKEND_SUN_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sun';
 
-/** 통합 스케줄 외부 카드 드롭 등 «신규 생성» UX — 관리자형만 */
-const SCHEDULE_DROP_ADMIN_ROLES = new Set([
-    USER_ROLES.ADMIN,
-    USER_ROLES.STAFF,
-    LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN
-]);
-
-const isScheduleDropAdminRole = (role) => !!role && SCHEDULE_DROP_ADMIN_ROLES.has(role);
+/**
+ * 통합 스케줄 외부 카드 드롭 등 «신규 생성» UX — 관리자형(4종 SSOT ADMIN/STAFF)만.
+ * 레거시 BRANCH_SUPER_ADMIN 은 ADMIN 으로 자동 매핑된다.
+ */
+const isScheduleDropAdminRole = (role) => {
+    const normalized = mapLegacyRole(role);
+    return normalized === USER_ROLES.ADMIN || normalized === USER_ROLES.STAFF;
+};
 
 /** 기존 일정 드래그 이동·변경 — 상담사 또는 관리자형 */
 const isScheduleCalendarEditableRole = (role) =>
-    role === USER_ROLES.CONSULTANT || isScheduleDropAdminRole(role);
+    mapLegacyRole(role) === USER_ROLES.CONSULTANT || isScheduleDropAdminRole(role);
 
 /**
  * 스케줄 캘린더 뷰 컴포넌트 (Presentational)

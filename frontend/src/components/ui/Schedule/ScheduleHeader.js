@@ -10,7 +10,7 @@ import { Calendar, RefreshCw } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { useTranslation } from 'react-i18next';
 import ClientFilterMultiSelect from '../../admin/mapping-management/integrated-schedule/molecules/ClientFilterMultiSelect';
 
@@ -32,10 +32,10 @@ const ScheduleHeader = ({
     ? 'mg-v2-schedule-header mg-v2-schedule-header--no-title'
     : 'mg-v2-schedule-header';
 
-  const isAdminLikeRole =
-    userRole === USER_ROLES.ADMIN
-    || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN
-    || userRole === USER_ROLES.STAFF;
+  // 4종 SSOT: ADMIN(레거시 BRANCH_SUPER_ADMIN 포함) 또는 STAFF
+  const normalizedRole = mapLegacyRole(userRole);
+  const isAdminRole = normalizedRole === USER_ROLES.ADMIN;
+  const isAdminLikeRole = isAdminRole || normalizedRole === USER_ROLES.STAFF;
 
   const clientFilterTriggerLabel = t(
     'integratedSchedule.filter.clientLabel',
@@ -66,7 +66,7 @@ const ScheduleHeader = ({
         </div>
       )}
       <div className="mg-v2-schedule-header__actions">
-        {(userRole === USER_ROLES.ADMIN || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN) && (
+        {isAdminRole && (
           <select
             value={selectedConsultantId}
             onChange={onConsultantChange}

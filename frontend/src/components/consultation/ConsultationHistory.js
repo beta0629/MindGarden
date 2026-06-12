@@ -7,7 +7,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { DASHBOARD_API } from '../../constants/api';
-import { USER_ROLES } from '../../constants/roles';
+import { USER_ROLES, RoleUtils } from '../../constants/roles';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
@@ -87,17 +87,17 @@ const ConsultationHistory = () => {
 
       // 사용자 역할에 따라 다른 API 호출 (표준화 2025-12-05: 상수 활용)
       let response;
-      if (user.role === USER_ROLES.CLIENT) {
+      if (RoleUtils.isClient(user)) {
         response = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
           userId: user.id,
           userRole: USER_ROLES.CLIENT
         });
-      } else if (user.role === USER_ROLES.CONSULTANT) {
+      } else if (RoleUtils.isConsultant(user)) {
         response = await apiGet(DASHBOARD_API.CONSULTANT_SCHEDULES, {
           userId: user.id,
           userRole: USER_ROLES.CONSULTANT
         });
-      } else if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF) {
+      } else if (RoleUtils.isAdmin(user) || RoleUtils.isStaff(user)) {
         response = await apiGet(DASHBOARD_API.ADMIN_STATS, {
           userRole: USER_ROLES.ADMIN
         });
@@ -153,9 +153,9 @@ const ConsultationHistory = () => {
   };
 
   const getConsultationTitle = (consultation) => {
-    if (user.role === USER_ROLES.CLIENT) {
+    if (RoleUtils.isClient(user)) {
       return `${consultation.consultantName} 상담사와의 상담`;
-    } else if (user.role === USER_ROLES.CONSULTANT) {
+    } else if (RoleUtils.isConsultant(user)) {
       return `${consultation.clientName}과의 상담`;
     } else {
       return `${consultation.consultantName} - ${consultation.clientName} 상담`;

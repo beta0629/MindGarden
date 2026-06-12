@@ -8,7 +8,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
-import { USER_ROLES } from '../../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -223,10 +223,12 @@ const PermissionManagement = () => {
                 if (userInfo && userInfo.role) {
                     setCurrentUserRole(userInfo.role);
                     // 사용자 역할에 따라 기본 선택 역할 설정
-                    if (userInfo.role === USER_ROLES.ADMIN) {
+                    // 4종 SSOT: ADMIN(레거시 관리자 매핑 포함)이면 전체 관리, 아니면 본인 역할만
+                    const normalized = mapLegacyRole(userInfo.role);
+                    if (normalized === USER_ROLES.ADMIN) {
                         setSelectedRole(USER_ROLES.ADMIN);
                     } else {
-                        setSelectedRole(userInfo.role); // 다른 역할은 자신의 역할만 관리 가능
+                        setSelectedRole(userInfo.role);
                     }
                 }
             } else {
@@ -339,8 +341,9 @@ const PermissionManagement = () => {
         return userPermissions.includes(permissionCode);
     };
 
-    const canManagePermissions = currentUserRole === USER_ROLES.ADMIN;
-    const isTopAdmin = currentUserRole === USER_ROLES.ADMIN;
+    // 4종 SSOT: ADMIN(레거시 관리자 매핑 포함)만 권한 관리 가능
+    const canManagePermissions = mapLegacyRole(currentUserRole) === USER_ROLES.ADMIN;
+    const isTopAdmin = canManagePermissions;
 
     console.log('🔍 PermissionManagement 권한 체크:', {
         userPermissions,

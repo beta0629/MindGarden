@@ -20,7 +20,7 @@ import {
   ADMIN_SHOP_POINT_POLICY_FIELD_LABELS,
   ADMIN_SHOP_POINT_POLICY_KEYS
 } from '../../constants/adminShopPointPolicies';
-import { USER_ROLES } from '../../constants/roles';
+import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -96,7 +96,7 @@ const AdminShopPointPoliciesPage = () => {
   const navigate = useNavigate();
   const baseId = useId();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
-  const allowed = user && (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF);
+  const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

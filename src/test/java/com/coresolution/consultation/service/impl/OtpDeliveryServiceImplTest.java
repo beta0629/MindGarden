@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
  *   <li>push 채널 성공 시 OtpCurrentTokenService.issue 로 발급된 토큰이 dispatchAuthenticationOtp 로 전달된다.</li>
  *   <li>모든 발송 결과(PUSH/SMS/SMS_STUB/FAILED) 는 AuditLog OTP_SENT 1행으로 적재되며
  *       metadata 에 delivery_channel/purpose/masked_target/gateway_response_code/ip_address 가 포함된다.</li>
- *   <li>NCP SENS 정식 응답 코드(예: "202") 가 metadata.gateway_response_code 로 적재된다.</li>
+ *   <li>솔라피 게이트웨이 응답 코드(예: "ok") 가 metadata.gateway_response_code 로 적재된다 (2026-06-12 SSOT 통합).</li>
  *   <li>fetchCurrentOtp 는 OtpCurrentTokenService.fetchAndConsume 로 위임된다.</li>
  * </ol></p>
  *
@@ -107,14 +107,14 @@ class OtpDeliveryServiceImplTest {
     }
 
     @Test
-    @DisplayName("push 실패 → SMS 폴백 성공 시 NCP SENS 응답 코드(\"202\")가 AuditLog 에 적재")
+    @DisplayName("push 실패 → SMS 폴백 성공 시 솔라피 응답 코드(\"ok\")가 AuditLog 에 적재")
     void deliver_whenSmsFallback_recordsGatewayResponseCode() {
         when(otpCurrentTokenService.issue(eq(USER_ID), eq(CODE))).thenReturn("token-xyz");
         when(mobilePushDispatchService.dispatchAuthenticationOtp(
                 anyString(), any(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(false);
         when(smsGatewayService.sendDetailed(eq(PHONE), anyString()))
-                .thenReturn(SmsGatewaySendResult.success("202", "accepted"));
+                .thenReturn(SmsGatewaySendResult.success("ok", "solapi accepted"));
         when(smsGatewayService.isStubMode()).thenReturn(false);
 
         OtpDeliveryResult result = sut.deliver(
@@ -127,7 +127,7 @@ class OtpDeliveryServiceImplTest {
         AuditLog audit = captureAuditLog();
         assertThat(audit.getMetadataJson())
                 .contains("\"delivery_channel\":\"SMS\"")
-                .contains("\"gateway_response_code\":\"202\"")
+                .contains("\"gateway_response_code\":\"ok\"")
                 .contains("\"fallback_reason\":\"push_dispatch_failed_or_no_token\"");
     }
 
@@ -161,7 +161,7 @@ class OtpDeliveryServiceImplTest {
                 anyString(), any(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(false);
         when(smsGatewayService.sendDetailed(eq(PHONE), anyString()))
-                .thenReturn(SmsGatewaySendResult.failure("500", "server error"));
+                .thenReturn(SmsGatewaySendResult.failure("failure", "Solapi 500: server error"));
 
         OtpDeliveryResult result = sut.deliver(
                 TENANT_ID, USER_ID, PHONE, CODE, OtpPurpose.PHONE_CHANGE, IP);
@@ -171,14 +171,14 @@ class OtpDeliveryServiceImplTest {
         AuditLog audit = captureAuditLog();
         assertThat(audit.getMetadataJson())
                 .contains("\"delivery_channel\":\"FAILED\"")
-                .contains("\"gateway_response_code\":\"500\"");
+                .contains("\"gateway_response_code\":\"failure\"");
     }
 
     @Test
     @DisplayName("userId 없음(비로그인) → push skip + SMS 발송 + AuditLog actorUserId=null/ANONYMOUS")
     void deliver_whenNoUser_skipsPush_andSendsSms_andAuditAnonymous() {
         when(smsGatewayService.sendDetailed(eq(PHONE), anyString()))
-                .thenReturn(SmsGatewaySendResult.success("202", "accepted"));
+                .thenReturn(SmsGatewaySendResult.success("ok", "solapi accepted"));
         when(smsGatewayService.isStubMode()).thenReturn(false);
 
         OtpDeliveryResult result = sut.deliver(

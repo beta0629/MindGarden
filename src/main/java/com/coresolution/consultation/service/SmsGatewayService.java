@@ -7,26 +7,16 @@ import com.coresolution.consultation.dto.SmsGatewaySendResult;
  *
  * <p>기존 {@code AuthController.sendSmsMessage} 인라인 호출(시뮬레이션 모드 고정)을
  * Spring Bean 으로 추출하여 {@link OtpDeliveryService} 및 향후 다른 SMS 발송 경로가 동일 SSOT 를
- * 사용하도록 한다. 운영 게이트웨이(NCP SENS · Aligo · Gabia 등) 정식 연동 시 본 인터페이스의
- * 구현체만 교체하면 된다.</p>
+ * 사용하도록 한다. 본 서비스는 {@link com.coresolution.consultation.service.sms.impl.SolapiSmsProvider}
+ * 를 단일 진입점으로 삼아 외부 SMS 게이트웨이를 호출한다.</p>
  *
- * <p>2026-06-11 회귀 진단:
+ * <p>2026-06-12 SSOT 통합 (PR #227 NCP SENS 폐기 + NHN Provider 제거):
  * <ul>
- *   <li>기존 {@code AuthController.sendSmsMessage} 는 실제 게이트웨이 호출이 모두 주석 처리되어
- *       있어 운영 환경에서도 단 한 건의 실제 SMS 가 발송된 적이 없다(stub 성공만 반환).</li>
- *   <li>본 인터페이스의 기본 구현은 동일하게 stub 이지만,
- *       <strong>운영 profile 에서 명시적 WARN 로그</strong> + {@link #isStubMode()}
- *       플래그 노출로 호출자가 응답 채널을 정확히 표기할 수 있도록 한다.</li>
- *   <li>회귀 방어: {@link OtpDeliveryService} 가 push-first 분기를 우선 시도하므로 expo-app 사용자는
- *       SMS stub 의 영향을 받지 않으며, 데스크탑 사용자만 stub 채널을 통과한다.</li>
- * </ul></p>
- *
- * <p>2026-06-11 PR #224 후속 (NCP SENS 정식 호출):
- * <ul>
- *   <li>{@link #sendDetailed(String, String)} — NCP SENS HTTP statusCode/Message 를 포함한 정식 결과.</li>
+ *   <li>이전 NCP SENS 직접 구현 제거 — 운영 통합된 솔라피 인프라 단일화.</li>
+ *   <li>다중 어댑터(SmsProvider 우회 라우팅) 제거 — 솔라피 단일 호출 경로.</li>
+ *   <li>{@link #sendDetailed(String, String)} — 솔라피 응답 코드/메시지를 포함한 정식 결과.</li>
  *   <li>{@link #send(String, String)} — 호환용 boolean wrapper(기존 호출자 회귀 차단).</li>
- *   <li>운영 NCP SENS 4종 env({@code NCP_ACCESS_KEY}/{@code NCP_SECRET_KEY}/{@code NCP_SMS_SERVICE_ID}/
- *       {@code NCP_SMS_SENDER_NUMBER}) 모두 설정 시 정식 호출, 일부 누락 시 stub 모드 유지.</li>
+ *   <li>솔라피 자격 증명 미설정 시 stub 모드 유지(운영 profile 에서는 ERROR 로그).</li>
  * </ul></p>
  *
  * @author MindGarden

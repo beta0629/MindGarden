@@ -4,16 +4,19 @@ import lombok.Builder;
 import lombok.Value;
 
 /**
- * SMS 게이트웨이 발송 결과 — NCP SENS 정식 호출의 응답 코드/메시지를 호출자(OtpDeliveryService) 에
- * 노출하기 위한 SSOT.
+ * SMS 게이트웨이 발송 결과 — 솔라피(Solapi) 단일 SSOT 의 응답 코드/메시지를
+ * 호출자({@link com.coresolution.consultation.service.OtpDeliveryService}) 에 노출하는 DTO.
  *
- * <p>2026-06-11 PR #224 후속 — NCP SENS SignatureV2 정식 호출 도입과 함께 추가. 호출자는 본 결과의
- * {@code gatewayStatusCode} 를 {@link com.coresolution.consultation.entity.AuditLog}
+ * <p>호출자는 본 결과의 {@code gatewayStatusCode} 를 {@link com.coresolution.consultation.entity.AuditLog}
  * metadata 의 {@code gateway_response_code} 키로 적재해 운영 진단·BI 통계에서 동일 SSOT 값을 사용한다.</p>
  *
  * <p>채널 표기는 {@link com.coresolution.consultation.constant.OtpDeliveryChannel} 가 담당하며,
  * 본 결과는 게이트웨이 호출 자체의 성공/실패와 코드만 표현한다(stub 모드 여부는
  * {@link com.coresolution.consultation.service.SmsGatewayService#isStubMode()} 가 별도 신호).</p>
+ *
+ * <p>2026-06-12 SSOT 통합: 이전 NCP SENS HTTP statusCode("202") 매핑을 솔라피 단일 게이트웨이 응답으로
+ * 대체했다. 새 매핑 — 성공: {@code "ok"}, 실패: {@code "failure"}, stub: {@code "stub"},
+ * 입력 오류: {@code "invalid_input"}.</p>
  *
  * @author MindGarden
  * @since 2026-06-11
@@ -26,8 +29,8 @@ public class SmsGatewaySendResult {
     boolean ok;
 
     /**
-     * 게이트웨이가 반환한 상태 코드 문자열 — NCP SENS 의 경우 {@code "202"} 가 정상.
-     * stub 모드는 {@code "stub"} 로 표기하고, 호출 실패(예외)는 {@code "exception"} 으로 표기한다.
+     * 게이트웨이가 반환한 상태 코드 문자열 — 솔라피의 경우 정상은 {@code "ok"}, 실패는 {@code "failure"},
+     * stub 모드는 {@code "stub"}, 입력 검증 실패는 {@code "invalid_input"} 으로 표기한다.
      * AuditLog metadata 의 {@code gateway_response_code} 키에 적재된다.
      */
     String gatewayStatusCode;
@@ -41,7 +44,7 @@ public class SmsGatewaySendResult {
     /**
      * 성공 결과 헬퍼.
      *
-     * @param statusCode 게이트웨이 status 코드 (예: "202")
+     * @param statusCode 게이트웨이 status 코드 (예: "ok")
      * @param message    statusMessage (null 가능)
      * @return ok=true 결과
      */
@@ -56,7 +59,7 @@ public class SmsGatewaySendResult {
     /**
      * 실패 결과 헬퍼.
      *
-     * @param statusCode 게이트웨이 status 코드 (예: "401", "500", "exception")
+     * @param statusCode 게이트웨이 status 코드 (예: "failure", "invalid_input")
      * @param message    실패 사유
      * @return ok=false 결과
      */
@@ -73,7 +76,7 @@ public class SmsGatewaySendResult {
         return SmsGatewaySendResult.builder()
                 .ok(true)
                 .gatewayStatusCode("stub")
-                .gatewayMessage("NCP SENS env not configured")
+                .gatewayMessage("Solapi credentials not configured")
                 .build();
     }
 }

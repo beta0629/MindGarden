@@ -1,8 +1,8 @@
 # 2026-06-11 표준화 로드맵 (Standardization Roadmap)
 
-> **버전**: v4 (2026-06-12 KST, 오후 추가 — GitHub Actions 큐 정체 대응 + 솔라피 SSOT 정착)
+> **버전**: v5 (2026-06-12 KST, 오후 추가 — 운영 시크릿 평문 노출 정리 + GitHub Actions 큐 정체 + 솔라피 SSOT)
 > **작성자**: core-planner (오케스트레이터)
-> **작성일**: 2026-06-11 (v1) → 2026-06-12 (v2 → v3 → v4)
+> **작성일**: 2026-06-11 (v1) → 2026-06-12 (v2 → v3 → v4 → v5)
 > **목적**: 본일 세션에서 디버거·코더·explore 보고서에 누적 언급된 "후속 표준화" 항목을 카테고리별로 정리하고, 우선순위·위임 대상·Phase를 명확히 분배하여 운영 반영 안정성·admin override 0 정책·보안 강화를 체계적으로 진행하기 위한 단일 진입 문서.
 > **범위**: 코드 변경 금지 — 본 문서는 docs 작성 + 위임 계획만 다룬다. 실제 실행은 분배실행 표대로 각 서브에이전트에 위임한다.
 > **변경 이력**:
@@ -10,6 +10,7 @@
 > - **v2 (2026-06-12 새벽)**: 신규 6종(A4·B5·B6·B7·C6·C7) 추가 + Phase 재분배 (38 → 44개). 상세 diff는 §부록 B 참조.
 > - **v3 (2026-06-12 오전)**: E1/E2 폐기, E1'(솔라피 SSOT 정착 검증)·E1''(솔라피 환경변수 표준화 검증) 신설 — PR #227 NCP SENS 직접 구현 폐기 + PR #260 솔라피 단일 SSOT 통합 완료 반영. 외부 액션 7건 → 6건 (NCP SENS 폐기). 상세 diff는 §부록 C 참조. PR [#271](https://github.com/beta0629/MindGarden/pull/271).
 > - **v4 (2026-06-12 오후)**: C8/C9 신설 — GitHub Actions 큐 정체 대응 (self-hosted runner PoC + CI 모니터링 알람). 외부 액션 6건 → 7건 (C8 billing/quota 점검 +1). 총 항목 44 → 46. PR [#272](https://github.com/beta0629/MindGarden/pull/272).
+> - **v5 (2026-06-12 오후)**: **B8 신설 — 운영 시크릿 평문 노출 정리 (P0 보안)**. 2026-06-12 KST S2 운영 DB 조회 워커가 systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 의 운영 DB 비밀번호 (`mindgarden2025`) 평문 노출 확인. GitHub Secrets / Vault 이관 + 시크릿 회전 정책. 외부 액션 7건 → 8건 (B8 운영 SSH +1). 총 항목 46 → 47.
 
 ---
 
@@ -51,6 +52,12 @@
 | [ci-queue-2026-06-12] | `code-quality-check.yml` 큐 정체 (5 run 16~33분 queued, 2026-06-12 09:30 KST) | CI 인프라 | C8 (self-hosted runner PoC) / C9 (CI 큐 모니터링 알람) | GitHub Actions queued 한도 / 동시 실행 제한 / 조직 quota 초과 가능성 |
 | [#260](https://github.com/beta0629/MindGarden/pull/260) | sequential 5차 머지 + admin override 우회 | hotfix | C8/C9 배경 | SMS 운영 시급 머지 게이트 진입 차단됨 → admin override 우회 처리 (운영 안전을 위한 1회성 결정) |
 
+### 0.5 v5 추가 (Session 2026-06-12 오후 — 운영 시크릿 평문 노출)
+
+| 약식 ID | 출처 | 유형 | 표준화 항목 | 인용 위치 |
+|---|---|---|---|---|
+| [s2-2026-06-12] | S2 운영 DB read-only 조회 워커 보고 (2026-06-12 12:17 KST) | 운영 보안 | B8 (운영 시크릿 평문 노출 정리) | systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 내 운영 DB 비밀번호 (`mindgarden2025`) 평문 노출 + IAM 분리 미흡 |
+
 ---
 
 ## 1. 카테고리별 항목 매트릭스
@@ -85,6 +92,7 @@
 | **B5** | **다중 생성자 `@Autowired` 명시 정책** — Spring Bean 다중 생성자(production + 테스트 RestTemplate 주입 등)에 production 생성자 `@Autowired` 명시 필수. 코드 표준 문서화 + SpotBugs/Checkstyle 검출 룰 검토 | [8f8c4fb4] PR #227 cascade | **P1** | core-coder + generalPurpose(문서) | M | PR #227 머지 |
 | **B6** | **FE 중복 API 호출 dedup 표준 (sessionManager in-flight promise)** — `/auth/current-user` 9회 중복(4.5초 누적), `consultation-messages/all` 2회, `menus/lnb` 2회 → in-flight promise dedup 패턴 명문화 + admin/dashboard·/erp/*·/admin/integrated-schedule 등 다른 화면 스캔 + `SessionContext`+`useSession()` 우선 사용(Direct fetch 금지) | [2f1ae89f] PR #231 mypage | **P1** | explore (스캔) + core-coder (필요 시 hotfix) | M | PR #231 머지 |
 | **B7** | **BE `/api/v1/auth/current-user` 응답 시간 최적화** — 실측 256~1025ms → 100ms 이내 목표. DB 인덱스 점검 + AuditLog 비동기 처리 + 외부 호출 최소화 | [2f1ae89f] PR #231 후속 | **P1** | core-debugger → core-coder | M | B6 진단 결과 반영 |
+| **B8** | **운영 시크릿 평문 노출 정리** — systemd unit (`/etc/systemd/system/mindgarden-core-*.service`) 의 운영 DB 비밀번호 (`mindgarden2025`) 평문 노출 발견 (2026-06-12 KST S2 운영 DB 조회). GitHub Secrets / 운영 `.env` (chmod 600) / Vault 등 보안 저장소로 이관. 시크릿 회전 정책 + IAM 분리 검토 | [s2-2026-06-12] | **P0** | core-deployer (운영 SSH) + generalPurpose(문서) | M | 운영 SSH 접근 + 시크릿 회전 다운타임 |
 
 ---
 
@@ -208,11 +216,13 @@
 | **B7** | BE `/auth/current-user` 응답 시간 최적화 (100ms 이내 목표) | core-debugger → core-coder |
 | **C6** | CI runner JVM heap + fork 표준 (failsafe `forkCount=2 reuseForks=false -Xmx3g`) | core-coder |
 | **C9** | CI 큐 모니터링 알람 (queued 10분 초과 시 Discord 알람 + 정기 점검 스크립트) | core-deployer + Prometheus |
+| **B8** | 운영 시크릿 평문 노출 정리 (systemd → GitHub Secrets/Vault, 시크릿 회전 정책) | core-deployer + generalPurpose(문서) |
 
-**Phase 1 항목 수**: **18개** (코드 12 + 외부 1 + 문서 1 + 검증/CI 4)
+**Phase 1 항목 수**: **19개** (코드 12 + 외부 1 + 문서 1 + 검증/CI 4 + 보안/외부 1)
 **v2 추가**: A4, B5, B6, B7, C6 (5개)
 **v3 변화**: ~~E1 (-1)~~ 폐기 + **E1' / E1'' (+2)** 신설 = 16 → 17
-**v4 추가**: C9 (1개) = 17 → **18**
+**v4 추가**: C9 (1개) = 17 → 18
+**v5 추가**: B8 (1개) = 18 → **19**
 
 ---
 
@@ -266,18 +276,19 @@
 
 ---
 
-### Phase 합계 (v4)
+### Phase 합계 (v5)
 
-| Phase | v1 | v2 | v3 | v4 | v3→v4 변동 |
-|---|---|---|---|---|---|
-| Phase 1 | 11 | 16 | **17** | **18** | +1 (C9) |
-| Phase 2 | 17 | 18 | **17** | **18** | +1 (C8) |
-| Phase 3 | 9 | 9 | 9 | 9 | — |
-| **총합** | **38** | **44** | **44** | **46** | **+2** |
+| Phase | v1 | v2 | v3 | v4 | v5 | v4→v5 변동 |
+|---|---|---|---|---|---|---|
+| Phase 1 | 11 | 16 | **17** | **18** | **19** | +1 (B8) |
+| Phase 2 | 17 | 18 | **17** | **18** | 18 | — |
+| Phase 3 | 9 | 9 | 9 | 9 | 9 | — |
+| **총합** | **38** | **44** | **44** | **46** | **47** | **+1** |
 
 > **참고**:
 > - **v2 → v3**: 카테고리 E 내부 재구성 — E1/E2 폐기(-2) + E1'/E1'' 신설(+2). Phase 1 은 E1 폐기·E1'/E1'' 신설로 +1, Phase 2 는 E2 폐기로 -1. 총 항목 수 44개 유지(±0).
 > - **v3 → v4**: 인프라 카테고리 C 에 C8/C9 신설(+2). Phase 1 은 C9 +1, Phase 2 는 C8 +1. 총 항목 수 44 → 46.
+> - **v4 → v5**: 운영 보안 카테고리 B 에 B8 신설(+1). Phase 1 +1. 총 항목 수 46 → 47. 외부 액션 7건 → 8건 (B8 운영 SSH +1).
 > - 폐기된 E1·E2 는 본문에서 ~~취소선~~ 으로 명시하여 이력 추적 가능.
 
 ---
@@ -336,8 +347,9 @@
 | **G4** | AuditLog 활동 모니터링 대시보드 | USER_PHONE_CHANGE/EMAIL_CHANGE/OTP_SENT — Phase 2 |
 | **I3** | `mind_garden` 레거시 schema DBA 수동 DROP | PR #217 차단 후 — Phase 2 |
 | **C8** | GitHub Actions billing/quota 점검 (self-hosted runner PoC 선행) | 2026-06-12 KST 큐 정체 대응 — Phase 2 (v4 신설) |
+| **B8** | 운영 SSH 접근 + 시크릿 회전 다운타임 승인 | systemd 평문 비밀번호 제거 — Phase 1 (v5 신설) |
 
-> **사용자 외부 액션 합계 (v4)**: 7건 (v2 = 7 → v3 = 6(NCP SENS 폐기) → v4 = 7(C8 +1))
+> **사용자 외부 액션 합계 (v5)**: 8건 (v2 = 7 → v3 = 6(NCP SENS 폐기) → v4 = 7(C8 +1) → v5 = 8(B8 +1))
 
 > **별도 deployer 위임 (PR #260 머지 후속)**: GitHub Secrets `NCP_ACCESS_KEY` / `NCP_SECRET_KEY` / `NCP_SMS_SERVICE_ID` / `NCP_SMS_SENDER_NUMBER` **4종 제거** (보안 — 미사용 시크릿 잔존 정리). E1'' 검증과 별개로 처리.
 
@@ -379,6 +391,18 @@
 - **C8 운영 부담** — self-hosted runner 머신 유지보수(OS 패치, runner 버전 업데이트, 디스크/메모리 모니터링) 운영 부담 증가. PoC 결과로 **GitHub-hosted 대비 비용/성능 우위가 명확하지 않으면 도입 보류** 결정 가능. Rollback 절차(`runs-on: ubuntu-latest` 복귀)를 PoC 시작 시점에 함께 준비.
 - **C9 알람 노이즈** — 큐 정체 임계치(예: 10분)가 너무 낮으면 일상적 큐 대기·일시적 quota 변동에 알람 폭주 → 알람 피로도 누적 → 진짜 정체 무시. 임계치는 **운영 데이터 수집(1주) 후 조정** 권장.
 - **C8 외부 의존(billing/quota 점검)** — GitHub Actions 조직 quota·billing 한도는 **사용자 외부 액션**으로만 확인 가능. PoC 시작 전 사용자 점검 결과(현재 사용량·상한·다음 결제 주기) 회수 후 self-hosted 도입 정당성 평가 필요. 단순 quota 상향으로 해결되면 self-hosted PoC는 **선택적 진행**.
+
+### 5.5 v5 추가 항목 (운영 시크릿 평문 노출)
+
+- **B8 P0 리스크 — 시크릿 회전 다운타임**: GitHub Secrets / Vault 이관 시 운영 BE 재시작 필요. systemd unit 환경변수 교체 + DB 사용자 비밀번호 회전 동시 진행 권장 — 다운타임 5–15분.
+- **B8 의존성**: 운영 SSH 접근 권한 (사용자 외부 액션). 코어솔루션 본사 = 시스템 제작 회사 권한이므로 운영 환경 접근 가능.
+- **B8 후속 절차**:
+  1. 운영 DB 사용자 비밀번호 회전 (`ALTER USER ... IDENTIFIED BY ...`)
+  2. GitHub Secrets `PROD_DB_PASSWORD` 신규 등록
+  3. `.github/workflows/deploy-production.yml` env 매핑 추가
+  4. systemd unit `EnvironmentFile=/etc/mindgarden/prod.env` 패턴 적용
+  5. 기존 평문 비밀번호 제거 + `systemctl daemon-reload` + `systemctl restart`
+  6. 헬스체크 + 로그인 검증
 
 ---
 

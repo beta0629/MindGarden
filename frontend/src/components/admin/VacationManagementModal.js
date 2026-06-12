@@ -13,7 +13,7 @@ import CustomSelect from '../common/CustomSelect';
 import BadgeSelect from '../common/BadgeSelect';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -236,10 +236,13 @@ const VacationManagementModal = ({
         }
     }, [selectedConsultantId]);
 
-    // 권한 확인 (관리자 또는 상담사)
-    console.log('🏖️ 권한 확인:', { userRole, isAdmin: userRole === USER_ROLES.ADMIN, isSuperAdmin: userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN, isConsultant: userRole === USER_ROLES.CONSULTANT });
-    
-    if (userRole !== USER_ROLES.ADMIN && userRole !== LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN && userRole !== USER_ROLES.CONSULTANT) {
+    // 권한 확인 (4종 SSOT: ADMIN — 레거시 BRANCH_SUPER_ADMIN 매핑됨 — 또는 CONSULTANT)
+    const normalizedUserRole = mapLegacyRole(userRole);
+    const isAdminLikeRole = normalizedUserRole === USER_ROLES.ADMIN;
+    const isConsultantRole = normalizedUserRole === USER_ROLES.CONSULTANT;
+    console.log('🏖️ 권한 확인:', { userRole, normalizedUserRole, isAdmin: isAdminLikeRole, isConsultant: isConsultantRole });
+
+    if (!isAdminLikeRole && !isConsultantRole) {
         console.log('🏖️ 권한 없음 - 모달 렌더링하지 않음');
         return null;
     }

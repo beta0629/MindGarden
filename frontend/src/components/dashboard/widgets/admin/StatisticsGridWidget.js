@@ -18,7 +18,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 
 import BaseWidget from '../BaseWidget';
 import SafeText from '../../../common/SafeText';
-import { RoleUtils, LEGACY_USER_ROLES } from '../../../../constants/roles';
+import { RoleUtils } from '../../../../constants/roles';
 import { formatCurrency } from '../../../../utils/formatUtils';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import './StatisticsGridWidget.css';
@@ -105,13 +105,13 @@ const StatisticsGridWidget = ({ widget, user }) => {
     isEmpty,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER),
+    immediate: RoleUtils.isAdmin(user),
     cache: true,
     retryCount: 3
   });
 
-  // 관리자만 표시
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER)) {
+  // 관리자만 표시 (4종 SSOT: ADMIN — 레거시 HQ_MASTER 도 매핑됨)
+  if (!RoleUtils.isAdmin(user)) {
     return null;
   }
   

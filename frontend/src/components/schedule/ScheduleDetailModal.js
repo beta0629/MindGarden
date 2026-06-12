@@ -3,7 +3,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
-import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -791,7 +791,7 @@ const ScheduleDetailModal = ({
         onClose();
     };
 
-    const canRescheduleByRole = user?.role === USER_ROLES.ADMIN || user?.role === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN;
+    const canRescheduleByRole = RoleUtils.isAdmin(user);
 
     if (!isOpen) return null;
 

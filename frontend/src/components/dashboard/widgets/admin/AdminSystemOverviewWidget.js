@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import StatCard from '../../../ui/Card/StatCard';
-import { RoleUtils, LEGACY_USER_ROLES } from '../../../../constants/roles';
+import { RoleUtils } from '../../../../constants/roles';
 import './AdminSystemOverviewWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
@@ -31,8 +31,8 @@ const API_ADMIN_STATISTICS_MAPPINGS = '/api/v1/admin/statistics/mappings';
 const AdminSystemOverviewWidget = ({ widget, user }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isAllowedForWidget =
-    RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, LEGACY_USER_ROLES.HQ_MASTER);
+  // 4종 SSOT: ADMIN — 레거시 HQ_MASTER 도 isAdmin 으로 매핑됨
+  const isAllowedForWidget = RoleUtils.isAdmin(user);
 
   // 다중 API 엔드포인트를 위한 데이터 소스 설정
   const getDataSourceConfig = () => {

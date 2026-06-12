@@ -2,7 +2,7 @@
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import Avatar from '../../common/Avatar';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
+import { RoleUtils } from '../../../constants/roles';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -40,8 +40,7 @@ const AdminDashboardHeader = ({
                             안녕하세요, {currentUser?.name || '관리자'}님
                         </h2>
                         <p className="mg-v2-admin-dashboard-role">
-                            {currentUser?.role === USER_ROLES.ADMIN ? '시스템 관리자' :
-                             currentUser?.role === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN ? '지점 관리자' : '관리자'}
+                            {RoleUtils.isAdmin(currentUser) ? '관리자' : '사용자'}
                         </p>
                         {currentUser?.branchName && (
                             <p className="mg-v2-admin-dashboard-branch">

@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
-import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../../constants/roles';
+import { RoleUtils, USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { getStatusLabel } from '../../../utils/colorUtils';
 import { RECENT_ACTIVITIES_CSS } from '../../../constants/css';
 import './RecentActivitiesWidget.css';
@@ -47,7 +47,8 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       }
     };
     
-    switch (user.role) {
+    // 4종 SSOT 정규화 후 분기 (레거시 BRANCH_SUPER_ADMIN/HQ_MASTER 는 ADMIN 매핑)
+    switch (mapLegacyRole(user.role)) {
       case USER_ROLES.CLIENT:
         return {
           ...baseConfig,
@@ -61,8 +62,6 @@ const RecentActivitiesWidget = ({ widget, user }) => {
           transform: (data) => transformConsultantActivities(data)
         };
       case USER_ROLES.ADMIN:
-      case LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN:
-      case LEGACY_USER_ROLES.HQ_MASTER:
         return {
           ...baseConfig,
           url: API_SCHEDULES_ADMIN_STATISTICS,

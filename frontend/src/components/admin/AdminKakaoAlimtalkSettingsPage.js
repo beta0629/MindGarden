@@ -15,7 +15,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
 import { API } from '../../constants/api';
-import { USER_ROLES } from '../../constants/roles';
+import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -89,7 +89,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
   const [form, setForm] = useState(buildInitialForm);
   const [tenantIdLine, setTenantIdLine] = useState('');
 
-  const allowed = user && (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF);
+  const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
   const loadSettings = useCallback(async() => {
     setLoadError(null);

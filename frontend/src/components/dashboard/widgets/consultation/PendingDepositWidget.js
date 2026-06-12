@@ -95,16 +95,12 @@ const PendingDepositWidget = ({ widget, user }) => {
     hasData,
     refresh
   } = useWidget(widgetWithDataSource, user, {
-    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user),
+    immediate: RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user),
     cache: true
   });
 
-  // 권한 확인: 관리자와 상담사만 접근 가능
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user)) {
-    return null;
-  }
-
-  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user)) {
+  // 권한 확인: 4종 SSOT 의 ADMIN 또는 CONSULTANT 만 접근 가능
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user)) {
     return null;
   }
 

@@ -980,8 +980,8 @@ const CommonDashboard = ({ user: propUser }) => {
           </div>
         )}
         
-        {/* 요약 패널 섹션 (상담사/관리자 전용) - 위젯으로 업그레이드 */}
-        {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) && (
+        {/* 요약 패널 섹션 (상담사/관리자 전용) - 위젯으로 업그레이드 (4종 SSOT) */}
+        {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user)) && (
           <SummaryPanelsWidget 
             widget={{ 
               id: 'summary-panels-widget',
@@ -998,7 +998,7 @@ const CommonDashboard = ({ user: propUser }) => {
         )}
 
         {/* 기존 SummaryPanels (비교용 - 개발 후 제거) */}
-        {process.env.NODE_ENV === 'development' && (RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.isAdmin(user)) && (
+        {process.env.NODE_ENV === 'development' && (RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user)) && (
           <div className="dev-placeholder">
             <small>기존 SummaryPanels (비교용)</small>
             <SummaryPanels 

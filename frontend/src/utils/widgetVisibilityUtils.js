@@ -21,7 +21,7 @@ import {
 
 import { apiGet } from './ajax';
 import { sessionManager } from './sessionManager';
-import { USER_ROLES } from '../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../constants/roles';
 import i18n from '../i18n';
 
 /**
@@ -148,14 +148,17 @@ export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
     return false;
   }
   
+  // 4종 SSOT 정규화 (레거시 관리자 문자열도 ADMIN 으로 매핑)
+  const normalizedRole = mapLegacyRole(userRole);
+
   // ⭐ 관리자 특권: 업종 정보 없어도 모든 위젯 접근 가능 (최우선)
-  if (userRole === USER_ROLES.ADMIN) {
+  if (normalizedRole === USER_ROLES.ADMIN) {
     console.debug(`✅ ADMIN 특권으로 위젯 접근 허용: ${widgetType}, 역할: ${userRole}, 업종: ${businessType || 'N/A'}`);
     return true;
   }
 
   // STAFF 특권: ERP 위젯만 제외하고 ADMIN과 동일 노출 (STAFF_PERMISSION_POLICY_PHASE2)
-  if (userRole === USER_ROLES.STAFF) {
+  if (normalizedRole === USER_ROLES.STAFF) {
     const erpTypes = getErpWidgetTypes() || [];
     const normalizedTypeLower = widgetType.toLowerCase();
     if (erpTypes.includes(normalizedTypeLower)) {
@@ -181,9 +184,9 @@ export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
     return false;
   }
   
-  // 관리자 위젯은 추가 역할 검증 (2단계에서 공통코드로 개선 예정)
+  // 관리자 위젯은 추가 역할 검증 (4종 SSOT 정규화 결과 사용)
   if (isAdminWidget(normalizedType)) {
-    const hasAdminRole = (userRole === USER_ROLES.ADMIN); // 1단계 임시
+    const hasAdminRole = normalizedRole === USER_ROLES.ADMIN;
     if (!hasAdminRole) {
       console.debug(`관리자 위젯 접근 거부: ${widgetType}, 역할: ${userRole}`);
       return false;

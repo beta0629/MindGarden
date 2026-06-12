@@ -31,7 +31,7 @@ import {
 } from '../../constants/adminShopCatalog';
 import { listAdminShopCatalogSkuPriceHistory } from '../../services/adminShopCatalogService';
 import { formatShopDateTime, formatShopMoney } from '../../utils/clientShopFormat';
-import { USER_ROLES } from '../../constants/roles';
+import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -60,7 +60,7 @@ const AdminShopCatalogSkusPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
-  const allowed = user && (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF);
+  const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);

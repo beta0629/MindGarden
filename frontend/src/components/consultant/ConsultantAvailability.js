@@ -15,7 +15,7 @@ import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { RoleUtils } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -254,7 +254,8 @@ const ConsultantAvailability = () => {
   }
 
   const userRole = user?.role;
-  const hasPermission = userRole === USER_ROLES.CONSULTANT || userRole === USER_ROLES.ADMIN || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN;
+  // 4종 SSOT: CONSULTANT 또는 ADMIN(레거시 BRANCH_SUPER_ADMIN 포함)
+  const hasPermission = RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user);
 
   const headerActions = (
     <>

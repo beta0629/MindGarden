@@ -44,7 +44,7 @@ import {
   isShopCatalogPlaceholderUrl
 } from '../../utils/shopCatalogThumbnail';
 import notificationManager from '../../utils/notification';
-import { USER_ROLES } from '../../constants/roles';
+import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -59,7 +59,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
   const baseId = useId();
   const isNew = isNewProp === true;
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
-  const allowed = user && (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.STAFF);
+  const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
   const [loading, setLoading] = useState(!isNew);
   const [form, setForm] = useState(emptyAdminShopCatalogForm);

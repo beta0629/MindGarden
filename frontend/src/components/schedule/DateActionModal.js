@@ -6,7 +6,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import ActionBar from '../common/ActionBar';
 import ActionBarButton from '../common/ActionBarButton';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 
 const XCircleIcon = ICONS.X_CIRCLE;
@@ -40,8 +40,8 @@ const DateActionModal = ({
     });
   };
 
-  const canManageSchedule =
-    userRole === USER_ROLES.ADMIN || userRole === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN;
+  // 4종 SSOT: ADMIN(레거시 BRANCH_SUPER_ADMIN 포함)
+  const canManageSchedule = mapLegacyRole(userRole) === USER_ROLES.ADMIN;
 
   return (
     <UnifiedModal

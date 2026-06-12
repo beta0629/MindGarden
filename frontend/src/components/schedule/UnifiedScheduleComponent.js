@@ -38,7 +38,7 @@ import {
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
 import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
 import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import { useTranslation } from 'react-i18next';
@@ -47,9 +47,14 @@ import { useTranslation } from 'react-i18next';
 const API_SCHEDULES_ADMIN = '/api/v1/schedules/admin';
 
 
-/** 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약 */
-const isAdminLikeScheduleUserRole = (role) =>
-  role === USER_ROLES.ADMIN || role === LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN || role === USER_ROLES.STAFF;
+/**
+ * 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약.
+ * 4종 SSOT: ADMIN(레거시 BRANCH_SUPER_ADMIN 포함) 또는 STAFF.
+ */
+const isAdminLikeScheduleUserRole = (role) => {
+  const normalized = mapLegacyRole(role);
+  return normalized === USER_ROLES.ADMIN || normalized === USER_ROLES.STAFF;
+};
 
 /**
  * 스케줄 관리 컨테이너 컴포넌트

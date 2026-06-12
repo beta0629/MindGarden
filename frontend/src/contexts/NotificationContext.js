@@ -4,7 +4,7 @@ import { useSession } from './SessionContext';
 import { apiGet, apiPost } from '../utils/ajax';
 import StandardizedApi from '../utils/standardizedApi';
 import { getConsultationMessagesListPath } from '../utils/consultationMessagesApi';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../constants/roles';
+import { USER_ROLES, RoleUtils } from '../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_SYSTEM_NOTIFICATIONS_READ_ALL = '/api/v1/system-notifications/read-all';
@@ -83,13 +83,13 @@ export const NotificationProvider = ({ children }) => {
     }
 
     try {
-      // 역할에 따라 userType 결정
+      // 역할에 따라 userType 결정 (4종 SSOT 기준, 레거시 ROLE_CONSULTANT/ROLE_CLIENT/SUPER_* 자동 매핑)
       let userType = USER_ROLES.CLIENT; // 기본값
-      if (user.role === USER_ROLES.CONSULTANT || user.role === LEGACY_USER_ROLES.ROLE_CONSULTANT) {
+      if (RoleUtils.isConsultant(user)) {
         userType = USER_ROLES.CONSULTANT;
-      } else if (user.role === USER_ROLES.CLIENT || user.role === LEGACY_USER_ROLES.ROLE_CLIENT) {
+      } else if (RoleUtils.isClient(user)) {
         userType = USER_ROLES.CLIENT;
-      } else if (user.role && (user.role.includes(USER_ROLES.ADMIN) || user.role.includes('SUPER'))) {
+      } else if (RoleUtils.isAdmin(user)) {
         userType = USER_ROLES.ADMIN;
       }
       

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { WELCOME_SECTION_CSS } from '../../constants/css';
 import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
-import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
+import { RoleUtils, USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import WeatherCard from './WeatherCard';
 import { getStatusLabel } from '../../utils/colorUtils';
 import Avatar from '../common/Avatar';
@@ -32,14 +32,13 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
       return DASHBOARD_MESSAGES.WELCOME.DEFAULT;
     }
     
-    switch (user.role) {
+    // 4종 SSOT 정규화 후 분기 (레거시 BRANCH_SUPER_ADMIN/HQ_MASTER 는 ADMIN 매핑)
+    switch (mapLegacyRole(user.role)) {
       case USER_ROLES.CLIENT:
         return DASHBOARD_MESSAGES.WELCOME.CLIENT;
       case USER_ROLES.CONSULTANT:
         return DASHBOARD_MESSAGES.WELCOME.CONSULTANT;
       case USER_ROLES.ADMIN:
-      case LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN:
-      case LEGACY_USER_ROLES.HQ_MASTER:
         return DASHBOARD_MESSAGES.WELCOME.ADMIN;
       default:
         console.log('⚠️ 알 수 없는 role:', user.role);

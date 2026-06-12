@@ -20,7 +20,7 @@ import {
 } from '../../constants/loginDisplay';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
-import { USER_ROLES } from '../../constants/roles';
+import { RoleUtils } from '../../constants/roles';
 import './MobileLogin.css';
 
 const TENANT_ID_KEY = 'mg_tenant_id';
@@ -84,9 +84,9 @@ const MobileLogin = () => {
       if (response.ok && data.success) {
         await checkSession();
         const user = sessionManager.getUser();
-        if (user?.role === USER_ROLES.CONSULTANT) {
+        if (RoleUtils.isConsultant(user)) {
           navigate('/consultant/dashboard', { replace: true });
-        } else if (user?.role === USER_ROLES.CLIENT) {
+        } else if (RoleUtils.isClient(user)) {
           navigate('/client/dashboard', { replace: true });
         } else {
           navigate('/dashboard', { replace: true });

@@ -96,6 +96,10 @@ jobs:
       # B8 (P0 보안, 2026-06-12): 운영 DB 비밀번호 회전 대비 — 저장소 평문 비밀번호 제거.
       # 본 env 매핑이 후속 SSH 스크립트(블루그린·프로시저 배포)에서 $PRODUCTION_DB_PASSWORD 로 노출된다.
       PRODUCTION_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+      # B-3 (P0 보안, 2026-06-13): JWT_SECRET 회귀 방지 — 운영 unit Environment= 평문 placeholder
+      # 가 다시 들어와도 BE JwtSecretValidator 가드(부트 fail-fast)와 본 workflow sync 가
+      # prod-from-dev.env 를 강 키로 동기화한다. PR #299 의 DB_PRESERVE_KEYS 가드 동일 패턴.
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
@@ -1711,6 +1715,151 @@ jobs:
           fi
     # ============================================================================
     # [/P0 후속 강화 2026-06-09]
+    # ============================================================================
+
+    # ============================================================================
+    # [B-3 P0 보안 2026-06-13] JWT_SECRET env 자동 주입 + 검증 (운영)
+    # 배경: 운영 unit Environment= 평문 placeholder(`JWT_SECRET=changeme` 등) 회귀 방지.
+    #       Apple/Google/URLs/PROFILE_IMAGE_UPLOAD_DIR sync step 과 동일 패턴.
+    # 가드:
+    #   - JwtSecretValidator (com.coresolution.core.security) 가 BE 부트 시 길이/약 단어 검증.
+    #   - 본 step 은 prod-from-dev.env 의 JWT_SECRET 을 GitHub Secret 으로 멱등 동기화.
+    #   - PR #296/#299 의 DB_PRESERVE_KEYS 가드와 동일하게 8키 보존 + DB 키 fail-fast.
+    # Secret 미등록 시 ::notice 후 skip — 운영 회전이 끝나지 않은 단계에서 batch fail 방지.
+    # ============================================================================
+    - name: 🔐 JWT_SECRET env 자동 주입 + 검증
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: JWT_SECRET
+        script: |
+          PROD_ENV_FILE=/etc/mindgarden/prod-from-dev.env
+          ACTIVE_FILE=/etc/mindgarden/active-backend
+          UNIT_BLUE=mindgarden-core-blue.service
+          UNIT_GREEN=mindgarden-core-green.service
+          KEY=JWT_SECRET
+
+          if [ -z "${JWT_SECRET:-}" ]; then
+            echo "::notice title=JWT_SECRET secret missing::GitHub Secret JWT_SECRET 미등록 — prod.env 갱신 skip. 강 키 회전 후 'gh secret set JWT_SECRET --repo ${{ github.repository }} --body \"$(openssl rand -hex 64)\"' 로 등록."
+            exit 0
+          fi
+
+          if [ ! -f "$PROD_ENV_FILE" ]; then
+            echo "::warning title=prod-from-dev.env 누락::$PROD_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$PROD_ENV_FILE"
+            sudo chmod 600 "$PROD_ENV_FILE"
+            sudo chown root:root "$PROD_ENV_FILE"
+          fi
+
+          CURRENT_VALUE=$(sudo grep -E "^[[:space:]]*${KEY}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+
+          if [ "$CURRENT_VALUE" = "$JWT_SECRET" ]; then
+            echo "✅ ${KEY} 변경 없음 (길이 ${#CURRENT_VALUE}자) — env 갱신·재시작 생략 (no-op)"
+            exit 0
+          fi
+
+          BACKUP_FILE="${PROD_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$PROD_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          # === [P0 재발 방지 가드 — DB_* 키 PRESERVE] ===
+          # PR #296/#299 가드와 동일 set — JWT_SECRET sync 가 DB 키를 건드리지 않더라도
+          # 만일의 사고 대비 기존 DB 키 값을 임시 파일에 보존한다.
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME DB_PASSWORD DB_PORT DB_DRIVER_CLASS_NAME DB_URL DB_SCHEMA"
+          DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
+          rm -f "$DB_PRESERVED_FILE"
+          for _pkey in $DB_PRESERVE_KEYS; do
+            _existing=$(sudo grep -E "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -n "$_existing" ]; then
+              printf '%s\n' "$_existing" >> "$DB_PRESERVED_FILE"
+            fi
+          done
+
+          # 멱등 KEY="VALUE" 갱신 (Apple/Google/URLs/PROFILE step 과 동일 로직)
+          escaped_value=$(printf '%s' "$JWT_SECRET" | sed -e 's/[\\&|]/\\&/g')
+          if sudo grep -qE "^[[:space:]]*${KEY}=" "$PROD_ENV_FILE" 2>/dev/null; then
+            sudo sed -i "s|^[[:space:]]*${KEY}=.*|${KEY}=\"${escaped_value}\"|" "$PROD_ENV_FILE"
+          else
+            printf '%s="%s"\n' "$KEY" "$JWT_SECRET" | sudo tee -a "$PROD_ENV_FILE" >/dev/null
+          fi
+          sudo chmod 600 "$PROD_ENV_FILE"
+          sudo chown root:root "$PROD_ENV_FILE"
+          echo "✅ ${KEY} 갱신 완료 — 길이만 표시: (${#JWT_SECRET} chars)"
+
+          # === [P0 재발 방지 가드 — DB_* 키 RESTORE + FAIL-FAST] ===
+          if [ -f "$DB_PRESERVED_FILE" ]; then
+            while IFS= read -r _preserved; do
+              _pkey=$(printf '%s' "$_preserved" | cut -d'=' -f1 | tr -d '[:space:]')
+              if [ -n "$_pkey" ] && ! sudo grep -qE "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null; then
+                echo "::warning title=DB 키 복원::${_pkey} 가 갱신 도중 사라져 PRESERVED 값으로 복원합니다."
+                printf '%s\n' "$_preserved" | sudo tee -a "$PROD_ENV_FILE" >/dev/null
+              fi
+            done < "$DB_PRESERVED_FILE"
+            rm -f "$DB_PRESERVED_FILE"
+          fi
+          DB_REQUIRED_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_MISSING_KEYS=""
+          DB_EMPTY_KEYS=""
+          for _dkey in $DB_REQUIRED_KEYS; do
+            _line=$(sudo grep -E "^[[:space:]]*${_dkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -z "$_line" ]; then
+              DB_MISSING_KEYS="$DB_MISSING_KEYS $_dkey"
+            else
+              _val=$(printf '%s' "$_line" | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+              if [ -z "$_val" ]; then
+                DB_EMPTY_KEYS="$DB_EMPTY_KEYS $_dkey"
+              fi
+            fi
+          done
+          if [ -n "$DB_MISSING_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 누락::다음 키가 ${PROD_ENV_FILE} 에 없습니다 -$DB_MISSING_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          if [ -n "$DB_EMPTY_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 빈 값::다음 키 값이 비어 있습니다 -$DB_EMPTY_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          echo "✅ prod-from-dev.env DB 키 검증 PASS (DB_HOST/DB_NAME/DB_USERNAME)"
+
+          sudo systemctl daemon-reload
+          echo "🔄 ${UNIT_BLUE} + ${UNIT_GREEN} 재시작 (${KEY} 변경)"
+          sudo systemctl restart "$UNIT_BLUE" || echo "::warning::${UNIT_BLUE} 재시작 실패 (계속 진행)"
+          sudo systemctl restart "$UNIT_GREEN" || echo "::warning::${UNIT_GREEN} 재시작 실패 (계속 진행)"
+
+          sleep 15
+          BLUE_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8080/actuator/health 2>/dev/null || echo "000")
+          GREEN_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8081/actuator/health 2>/dev/null || echo "000")
+          echo "🏥 헬스: blue(8080)=$BLUE_HEALTH / green(8081)=$GREEN_HEALTH"
+          if [ "$BLUE_HEALTH" != "200" ] && [ "$GREEN_HEALTH" != "200" ]; then
+            echo "::warning title=BE 헬스 양쪽 비정상::JWT_SECRET 갱신 후 15초 헬스 양쪽 비정상 — JwtSecretValidator FATAL 가능성. journalctl 로 확인 권장."
+          fi
+
+          # 프로세스 env 검증 (값 노출 금지 — 길이만)
+          ACTIVE=$(sudo cat "$ACTIVE_FILE" 2>/dev/null | tr -d '[:space:]' | awk '{print tolower($0)}')
+          if [ -z "$ACTIVE" ]; then
+            echo "::warning::${ACTIVE_FILE} 비어 있음 — 프로세스 env 검증 skip"
+            exit 0
+          fi
+          ACTIVE_UNIT="mindgarden-core-${ACTIVE}.service"
+          PID=$(systemctl show -p MainPID --value "$ACTIVE_UNIT" 2>/dev/null)
+          if [ -z "$PID" ] || [ "$PID" = "0" ]; then
+            echo "::warning::${ACTIVE_UNIT} MainPID 조회 실패 (PID='$PID') — 프로세스 env 검증 skip"
+            exit 0
+          fi
+          ACTUAL_LEN=$(sudo cat "/proc/$PID/environ" 2>/dev/null | tr '\0' '\n' | awk -F= -v K="$KEY" '$1==K { v=substr($0, length(K)+2); print length(v); exit }')
+          if [ -z "$ACTUAL_LEN" ] || [ "$ACTUAL_LEN" = "0" ]; then
+            echo "::error title=${KEY} 프로세스 env 누락::${ACTIVE_UNIT} (PID=$PID) 프로세스 환경에 ${KEY} 가 없습니다. prod-from-dev.env 형식·EnvironmentFile drop-in 경로 확인 필요."
+          else
+            echo "🎉 active(${ACTIVE_UNIT}) PID=${PID} 프로세스 env ${KEY} 검증 완료 (${ACTUAL_LEN} chars)"
+          fi
+    # ============================================================================
+    # [/B-3 P0 보안 2026-06-13]
     # ============================================================================
 
     - name: 🏥 헬스체크

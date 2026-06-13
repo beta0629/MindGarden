@@ -87,6 +87,14 @@ APPLE_PRIVATE_KEY=
 APPLE_REDIRECT_URI=
 APPLE_ALLOWED_AUDIENCES=
 
+# JWT_SECRET 강 키 (B-3 P0 보안, 2026-06-13):
+# - 운영 회귀 방지 가드 (com.coresolution.core.security.JwtSecretValidator) 가 부트 시
+#   length ≥ 64, hex/base64 형태, 약 단어(local/dev/development/secret-key/changeme/
+#   test/example/mindgarden/coresolution) 미포함을 강제하고 위반 시 IllegalStateException
+#   으로 부트 중단한다.
+# - 생성 권장: openssl rand -hex 64  (또는 openssl rand -base64 48)
+# - 회전 절차: docs/운영반영/JWT_SECRET_P0_HANDOFF_20260613.md
+# - 저장소·문서에는 절대 placeholder/약 단어(`changeme`, `secret-key` 등) 두지 말 것.
 JWT_SECRET=
 PERSONAL_DATA_ENCRYPTION_KEY=
 PERSONAL_DATA_ENCRYPTION_IV=

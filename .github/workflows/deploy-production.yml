@@ -1073,7 +1073,10 @@ jobs:
           # systemd unit Environment="DB_HOST=localhost" fallback 으로 자가 복구됨.
           # 본 step 의 update_env 가 다른 키만 건드리더라도, 만일의 사고 대비
           # 기존 DB 키 값을 사용자 홈 임시 파일에 보존한다. (sudo 없이 read 가능)
-          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          # PR #296 가드 보호 키 set: prod-from-dev.env 의 application-prod.yml fallback 없는
+          # 핵심 DB 키 8종 (DB env SSOT 사전 점검 docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md 부록 D.4).
+          # 4 step (Apple/Google/URLs/PROFILE_IMAGE_UPLOAD_DIR sync) 에서 동일 set 유지.
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME DB_PASSWORD DB_PORT DB_DRIVER_CLASS_NAME DB_URL DB_SCHEMA"
           DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
           rm -f "$DB_PRESERVED_FILE"
           for _pkey in $DB_PRESERVE_KEYS; do
@@ -1260,7 +1263,10 @@ jobs:
           # DB_HOST/DB_NAME/DB_USERNAME 키 0건 상태로 덮어써져 양 슬롯 boot loop.
           # 본 step 의 update_env 가 다른 키만 건드리더라도, 만일의 사고 대비
           # 기존 DB 키 값을 사용자 홈 임시 파일에 보존한다. (sudo 없이 read 가능)
-          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          # PR #296 가드 보호 키 set: prod-from-dev.env 의 application-prod.yml fallback 없는
+          # 핵심 DB 키 8종 (DB env SSOT 사전 점검 docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md 부록 D.4).
+          # 4 step (Apple/Google/URLs/PROFILE_IMAGE_UPLOAD_DIR sync) 에서 동일 set 유지.
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME DB_PASSWORD DB_PORT DB_DRIVER_CLASS_NAME DB_URL DB_SCHEMA"
           DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
           rm -f "$DB_PRESERVED_FILE"
           for _pkey in $DB_PRESERVE_KEYS; do
@@ -1447,7 +1453,10 @@ jobs:
           # DB_HOST/DB_NAME/DB_USERNAME 키 0건 상태로 덮어써져 양 슬롯 boot loop.
           # 본 step 의 update_env 가 다른 키만 건드리더라도, 만일의 사고 대비
           # 기존 DB 키 값을 사용자 홈 임시 파일에 보존한다. (sudo 없이 read 가능)
-          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          # PR #296 가드 보호 키 set: prod-from-dev.env 의 application-prod.yml fallback 없는
+          # 핵심 DB 키 8종 (DB env SSOT 사전 점검 docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md 부록 D.4).
+          # 4 step (Apple/Google/URLs/PROFILE_IMAGE_UPLOAD_DIR sync) 에서 동일 set 유지.
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME DB_PASSWORD DB_PORT DB_DRIVER_CLASS_NAME DB_URL DB_SCHEMA"
           DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
           rm -f "$DB_PRESERVED_FILE"
           for _pkey in $DB_PRESERVE_KEYS; do
@@ -1606,7 +1615,10 @@ jobs:
           # DB_HOST/DB_NAME/DB_USERNAME 키 0건 상태로 덮어써져 양 슬롯 boot loop.
           # 본 step 은 PROFILE_IMAGE_UPLOAD_DIR 단일 키만 다루지만, 만일의 사고
           # 대비 기존 DB 키 값을 사용자 홈 임시 파일에 보존한다.
-          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          # PR #296 가드 보호 키 set: prod-from-dev.env 의 application-prod.yml fallback 없는
+          # 핵심 DB 키 8종 (DB env SSOT 사전 점검 docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md 부록 D.4).
+          # 4 step (Apple/Google/URLs/PROFILE_IMAGE_UPLOAD_DIR sync) 에서 동일 set 유지.
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME DB_PASSWORD DB_PORT DB_DRIVER_CLASS_NAME DB_URL DB_SCHEMA"
           DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
           rm -f "$DB_PRESERVED_FILE"
           for _pkey in $DB_PRESERVE_KEYS; do

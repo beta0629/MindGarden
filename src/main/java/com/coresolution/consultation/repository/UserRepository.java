@@ -1010,16 +1010,18 @@ public interface UserRepository extends BaseRepository<User, Long> {
     
     /**
      * 지점과 역할로 사용자 조회 (tenantId 필터링)
+     * 2026-06-13: User.branch ManyToOne 매핑 제거에 따라 Long branchId 기반으로 전환 (PR-7 회귀 차단).
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
-    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch, @Param("role") UserRole role);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.role = :role AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, @Param("role") UserRole role);
 
     /**
      * 지점·역할 다중(전문가 등) 조회 (tenantId 필터링)
+     * 2026-06-13: User.branch ManyToOne 매핑 제거에 따라 Long branchId 기반으로 전환.
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.role IN :roles AND u.isDeleted = false ORDER BY u.userId")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.role IN :roles AND u.isDeleted = false ORDER BY u.userId")
     List<User> findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId,
-            @Param("branch") com.coresolution.consultation.entity.Branch branch,
+            @Param("branchId") Long branchId,
             @Param("roles") Collection<UserRole> roles);
 
     /**
@@ -1039,7 +1041,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 지점별 전문가 등 역할 수 (복수 역할)
      */
-    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.role IN :roles AND u.isDeleted = false")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.role IN :roles AND u.isDeleted = false")
     long countByTenantIdAndBranchIdAndRolesInAndIsDeletedFalse(@Param("tenantId") String tenantId,
             @Param("branchId") Long branchId,
             @Param("roles") Collection<UserRole> roles);
@@ -1063,23 +1065,24 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 표준화 2025-12-08: username -> userId
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.userId")
-    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUserIdDeprecated(com.coresolution.consultation.entity.Branch branch, UserRole role);
+    @Query("SELECT u FROM User u WHERE u.branchId = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUserIdDeprecated(Long branchId, UserRole role);
     
     /**
      * 지점으로 사용자 조회 (tenantId 필터링)
      * 표준화 2025-12-08: username -> userId
+     * 2026-06-13: User.branch ManyToOne 매핑 제거에 따라 Long branchId 기반으로 전환.
      */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.isDeleted = false ORDER BY u.userId")
-    List<User> findByBranchAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndIsDeletedFalseOrderByUserId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      * 표준화 2025-12-08: username -> userId
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.isDeleted = false ORDER BY u.userId")
-    List<User> findByBranchAndIsDeletedFalseOrderByUserIdDeprecated(com.coresolution.consultation.entity.Branch branch);
+    @Query("SELECT u FROM User u WHERE u.branchId = ?1 AND u.isDeleted = false ORDER BY u.userId")
+    List<User> findByBranchAndIsDeletedFalseOrderByUserIdDeprecated(Long branchId);
     
     /**
      * 테넌트별 사용자 수 조회 (브랜치 개념 제거)
@@ -1097,14 +1100,14 @@ public interface UserRepository extends BaseRepository<User, Long> {
      *             대신 {@link #countUsersByTenantId(String)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT u.branch.id, u.branch.branchName, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName ORDER BY u.branch.branchName")
+    @Query("SELECT u.branchId, NULL, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.branchId ORDER BY u.branchId")
     List<Object[]> countUsersByBranch(@Param("tenantId") String tenantId);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u.branch.id, u.branch.branchName, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName ORDER BY u.branch.branchName")
+    @Query("SELECT u.branchId, NULL, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branchId ORDER BY u.branchId")
     List<Object[]> countUsersByBranchDeprecated();
     
     /**
@@ -1123,14 +1126,14 @@ public interface UserRepository extends BaseRepository<User, Long> {
      *             대신 {@link #findAllUsersByTenantId(String)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch IS NULL AND u.isDeleted = false ORDER BY u.userId")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchId IS NULL AND u.isDeleted = false ORDER BY u.userId")
     List<User> findUsersWithoutBranch(@Param("tenantId") String tenantId);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branch IS NULL AND u.isDeleted = false ORDER BY u.userId")
+    @Query("SELECT u FROM User u WHERE u.branchId IS NULL AND u.isDeleted = false ORDER BY u.userId")
     List<User> findUsersWithoutBranchDeprecated();
     
     /**
@@ -1149,14 +1152,14 @@ public interface UserRepository extends BaseRepository<User, Long> {
      *             대신 {@link #countUsersByRole(String)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT u.branch.id, u.branch.branchName, u.role, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName, u.role ORDER BY u.branch.branchName, u.role")
+    @Query("SELECT u.branchId, NULL, u.role, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.branchId, u.role ORDER BY u.branchId, u.role")
     List<Object[]> countUsersByBranchAndRole(@Param("tenantId") String tenantId);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT u.branch.id, u.branch.branchName, u.role, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName, u.role ORDER BY u.branch.branchName, u.role")
+    @Query("SELECT u.branchId, NULL, u.role, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branchId, u.role ORDER BY u.branchId, u.role")
     List<Object[]> countUsersByBranchAndRoleDeprecated();
     
     /**
@@ -1325,14 +1328,14 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 지점별 사용자 수 조회 (tenantId 필터링)
      */
-    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isDeleted = false")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.isDeleted = false")
     long countByBranchIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.isDeleted = false")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.branchId = ?1 AND u.isDeleted = false")
     long countByBranchIdAndIsDeletedFalseDeprecated(Long branchId);
     
     /**
@@ -1345,14 +1348,14 @@ public interface UserRepository extends BaseRepository<User, Long> {
      *             대신 테넌트별 활성 사용자 수를 조회하는 메서드를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isActive = true AND u.isDeleted = false")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.isActive = true AND u.isDeleted = false")
     long countByBranchIdAndIsActiveTrueAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.isActive = true AND u.isDeleted = false")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.branchId = ?1 AND u.isActive = true AND u.isDeleted = false")
     long countByBranchIdAndIsActiveTrueAndIsDeletedFalseDeprecated(Long branchId);
     
     /**
@@ -1365,14 +1368,14 @@ public interface UserRepository extends BaseRepository<User, Long> {
      *             대신 테넌트별 역할별 사용자 수를 조회하는 메서드를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.role = :role AND u.isDeleted = false")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.role = :role AND u.isDeleted = false")
     long countByBranchIdAndRoleAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, @Param("role") UserRole role);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
     @Deprecated
-    @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.role = ?2 AND u.isDeleted = false")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.branchId = ?1 AND u.role = ?2 AND u.isDeleted = false")
     long countByBranchIdAndRoleAndIsDeletedFalseDeprecated(Long branchId, UserRole role);
     
     // === 통계 대시보드용 메서드 ===
@@ -1481,7 +1484,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
          // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
      }     */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.isDeleted = false")
     List<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
@@ -1496,7 +1499,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
      *             대신 {@link #findAllByTenantId(String, Pageable)}를 사용하세요.
      */
     @Deprecated
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchId = :branchId AND u.isDeleted = false")
     Page<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
 
     /**

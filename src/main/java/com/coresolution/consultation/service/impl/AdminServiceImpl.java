@@ -498,7 +498,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .role(UserRole.CLIENT)
                 .isActive(isActive)
                 .isPasswordChanged(!isTempPassword)
-                .branch(null)
+                .branchId(null)
                 .branchCode(null)
                 .build();
 
@@ -645,7 +645,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .role(UserRole.STAFF)
                 .isActive(true)
                 .isPasswordChanged(!isTempPassword)
-                .branch(null)
+                .branchId(null)
                 .branchCode(null)
                 .build();
         staffUser.setTenantId(tenantId);
@@ -5798,7 +5798,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<User> consultants;
             try {
                 Branch branch = branchService.getBranchByCode(branchCode);
-                consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(tenantId, branch,
+                consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(tenantId, branch.getId(),
                         UserRole.getProfessionalProviderRoles());
                 consultants = consultants.stream()
                     .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
@@ -6642,7 +6642,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 try {
                     Branch branch = branchService.getBranchByCode(branchCode);
                     activeConsultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(tenantId,
-                            branch, UserRole.getProfessionalProviderRoles());
+                            branch.getId(), UserRole.getProfessionalProviderRoles());
                     activeConsultants = activeConsultants.stream()
                         .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                         .collect(Collectors.toList());

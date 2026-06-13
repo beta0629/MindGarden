@@ -3491,11 +3491,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new ArrayList<>();
             }
-            Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
+            branchRepository.findByTenantIdAndId(tenantId, branchId)
                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
-            
+
             List<User> consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(
-                tenantId, branch, UserRole.getProfessionalProviderRoles());
+                tenantId, branchId, UserRole.getProfessionalProviderRoles());
             if (consultants.isEmpty()) {
                 log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
                 return new ArrayList<>();
@@ -3532,7 +3532,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
-            if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+            if (consultant.getBranchId() == null || !consultant.getBranchId().equals(branchId)) {
                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
             }
             
@@ -3605,11 +3605,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new HashMap<>();
             }
-            Branch branch = branchRepository.findByTenantIdAndId(tenantId, branchId)
+            branchRepository.findByTenantIdAndId(tenantId, branchId)
                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
-            
+
             List<User> consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(
-                tenantId, branch, UserRole.getProfessionalProviderRoles());
+                tenantId, branchId, UserRole.getProfessionalProviderRoles());
             
             Map<String, Object> status = new HashMap<>();
             status.put("branchId", branchId);
@@ -3654,7 +3654,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 User consultant = userRepository.findByTenantIdAndId(tenantId, schedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + schedule.getConsultantId()));
                 
-                if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                if (consultant.getBranchId() == null || !consultant.getBranchId().equals(branchId)) {
                     throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + schedule.getConsultantId() + ", branchId=" + branchId);
                 }
             }
@@ -3687,7 +3687,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 User consultant = userRepository.findByTenantIdAndId(tenantId, existingSchedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + existingSchedule.getConsultantId()));
                 
-                if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                if (consultant.getBranchId() == null || !consultant.getBranchId().equals(branchId)) {
                     throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + existingSchedule.getConsultantId() + ", branchId=" + branchId);
                 }
             }
@@ -3720,7 +3720,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 User consultant = userRepository.findByTenantIdAndId(tenantId, existingSchedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + existingSchedule.getConsultantId()));
                 
-                if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                if (consultant.getBranchId() == null || !consultant.getBranchId().equals(branchId)) {
                     throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + existingSchedule.getConsultantId() + ", branchId=" + branchId);
                 }
             }
@@ -3748,7 +3748,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
-            if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+            if (consultant.getBranchId() == null || !consultant.getBranchId().equals(branchId)) {
                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
             }
             
@@ -3784,7 +3784,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
-            if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+            if (consultant.getBranchId() == null || !consultant.getBranchId().equals(branchId)) {
                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
             }
             

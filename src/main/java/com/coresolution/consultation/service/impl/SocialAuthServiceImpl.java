@@ -228,7 +228,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .phone(phone)
                 .role(UserRole.CLIENT)
                 .branchCode(validatedBranchCode) // 지점코드 (테넌트 시스템에서는 NULL)
-                .branch(branch) // 지점 객체 (테넌트 시스템에서는 NULL)
+                .branchId(branch != null ? branch.getId() : null) // 2026-06-13: ManyToOne 매핑 제거 — Long 만 보유
                 .profileImageUrl(request.getProviderProfileImage()) // 소셜 계정 프로필 이미지 설정
                 .build();
         user.setTenantId(tenantId);
@@ -240,7 +240,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         log.info("User 엔티티 저장 시작");
         user = userRepository.saveAndFlush(user);
         log.info("User 엔티티 저장 완료: userId={}, branchId={}, branchCode={}", 
-            user.getId(), user.getBranch() != null ? user.getBranch().getId() : "null", user.getBranchCode());
+            user.getId(), user.getBranchId() != null ? user.getBranchId() : "null", user.getBranchCode());
             
         // Client 엔티티 생성 (User ID를 외래키로 사용)
         log.info("Client 엔티티 생성 시작");

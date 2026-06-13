@@ -138,7 +138,7 @@ class UnifiedLoginIntegrationTest {
         testUser1.setName("테스트 사용자 1");
         testUser1.setRole(UserRole.CONSULTANT);
         testUser1.setTenantId(tenantId1);
-        testUser1.setBranch(testBranch1);
+        testUser1.setBranchId(testBranch1.getId());
         testUser1.setIsActive(true);
         testUser1 = userRepository.save(testUser1);
         
@@ -151,7 +151,7 @@ class UnifiedLoginIntegrationTest {
         testUser2.setName("테스트 사용자 2");
         testUser2.setRole(UserRole.CLIENT);
         testUser2.setTenantId(tenantId2);
-        testUser2.setBranch(testBranch2);
+        testUser2.setBranchId(testBranch2.getId());
         testUser2.setIsActive(true);
         testUser2 = userRepository.save(testUser2);
 

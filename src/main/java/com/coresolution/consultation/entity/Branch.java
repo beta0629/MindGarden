@@ -275,19 +275,12 @@ public class Branch extends BaseEntity {
     private String websiteUrl;
     
     
-     /**
-     * 지점 소속 상담사들
+    /**
+     * 2026-06-13: User.branch ManyToOne 매핑 제거 (PR-A, PR-7 회귀 차단) 에 따라
+     * Branch ↔ User OneToMany 역방향 컬렉션도 제거되었습니다.
+     * 지점 소속 사용자 조회는 {@code UserRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId}
+     * (branchId Long 파라미터) 등 단순 쿼리로 대체합니다.
      */
-    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<User> consultants;
-    
-     /**
-     * 지점 소속 내담자들
-     */
-    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<User> clients;
     
     
      /**

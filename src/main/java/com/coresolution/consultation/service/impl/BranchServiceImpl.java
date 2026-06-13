@@ -437,7 +437,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             throw new ValidationException("지점의 상담사 수용 인원을 초과했습니다.");
         }
         
-        consultant.setBranch(branch);
+        consultant.setBranchId(branch.getId());
         userRepository.save(consultant);
         
         log.info("상담사 지점 할당 완료: 지점={}, 상담사={}", 
@@ -456,7 +456,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             throw new ValidationException("지점의 내담자 수용 인원을 초과했습니다.");
         }
         
-        client.setBranch(branch);
+        client.setBranchId(branch.getId());
         userRepository.save(client);
         
         log.info("내담자 지점 할당 완료: 지점={}, 내담자={}", 
@@ -470,12 +470,12 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         User user = findUserByCurrentTenant(userId)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
         
-        String branchName = user.getBranch() != null ? user.getBranch().getBranchName() : "없음";
-        user.setBranch(null);
+        Long previousBranchId = user.getBranchId();
+        user.setBranchId(null);
         userRepository.save(user);
         
-        log.info("사용자 지점 제거 완료: 사용자={}, 이전 지점={}", 
-                user.getUserId(), branchName);
+        log.info("사용자 지점 제거 완료: 사용자={}, 이전 지점 ID={}", 
+                user.getUserId(), previousBranchId);
     }
     
     @Override
@@ -488,7 +488,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         Branch fromBranch = findActiveByIdOrThrow(fromBranchId);
         Branch toBranch = findActiveByIdOrThrow(toBranchId);
         
-        if (user.getBranch() == null || !user.getBranch().getId().equals(fromBranchId)) {
+        if (user.getBranchId() == null || !user.getBranchId().equals(fromBranchId)) {
             throw new ValidationException("사용자가 해당 지점에 소속되어 있지 않습니다.");
         }
         
@@ -498,7 +498,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             throw new ValidationException("목표 지점의 내담자 수용 인원을 초과했습니다.");
         }
         
-        user.setBranch(toBranch);
+        user.setBranchId(toBranch.getId());
         userRepository.save(user);
         
         log.info("사용자 지점 이동 완료: 사용자={}, {} -> {}", 
@@ -513,9 +513,9 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
         }
-        Branch branch = findActiveByIdOrThrow(branchId);
+        findActiveByIdOrThrow(branchId);
         return userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(
-                tenantId, branch, UserRole.getProfessionalProviderRoles());
+                tenantId, branchId, UserRole.getProfessionalProviderRoles());
     }
     
     @Override
@@ -526,9 +526,9 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
         }
-        Branch branch = findActiveByIdOrThrow(branchId);
+        findActiveByIdOrThrow(branchId);
         return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUserId(
-                tenantId, branch, UserRole.CLIENT);
+                tenantId, branchId, UserRole.CLIENT);
     }
     
     

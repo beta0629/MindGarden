@@ -220,7 +220,11 @@ export const RATING_API = {
     `/api/v1/ratings/consultant/${consultantId}/stats`,
   clientRatableSchedules: (clientId: string | number) =>
     `/api/v1/ratings/client/${clientId}/ratable-schedules`,
-  SUBMIT_RATING: '/api/v1/ratings',
+  /**
+   * Spring `ConsultantRatingController#createRating` — POST `/api/v1/ratings/create`
+   * 2026-06-13 hotfix: BE는 `/create` suffix만 제공 (`/api/v1/ratings` 직호출 시 405/404 → 제출 실패)
+   */
+  SUBMIT_RATING: '/api/v1/ratings/create',
 } as const;
 
 /** 내담자 회기·결제는 웹과 동일하게 매칭(ConsultantClientMapping) API를 사용한다 */

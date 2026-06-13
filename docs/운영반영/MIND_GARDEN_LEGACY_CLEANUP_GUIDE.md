@@ -144,9 +144,32 @@ gzip "$BACKUP_DIR"/mind_garden_legacy_full_*.sql
 
 ## 4. 정리 옵션
 
+### 4.0 옵션 A 진행 기록 — 2026-06-14 Flyway migration 적용 (PR-C)
+
+> **상태**: V20260614_001 Flyway migration 으로 채택·적용. 대상 4종은 DROP + `OBSOLETE_<원이름>_20260614` stub CREATE 패턴(§4.1.2 우회) 으로 정리.
+
+| 항목 | 값 |
+|---|---|
+| Migration 파일 | `src/main/resources/db/migration/V20260614_001__rename_mind_garden_legacy_procedures.sql` |
+| PR | `fix(db): PR-C mind_garden 잔존 PROC 4종 OBSOLETE RENAME (multiple signatures 회귀 차단)` |
+| 적용 일자 | 2026-06-14 (Flyway migration baseline; 운영 적용은 PR-A 와 동시 배포) |
+| 적용 방법 | MySQL 8 `RENAME PROCEDURE` 미지원 → **§4.1.2 DROP + stub CREATE** 패턴 |
+| 접미사 형식 | `OBSOLETE_<원이름>_20260614` (선행 underscore 없음; 본 가이드 §4.1 의 `_OBSOLETE_..._20260611` 초기 안에서 일자·접미사 정리) |
+| 정리 대상 4종 | `UpdateDailyStatistics`, `UpdateAllBranchDailyStatistics`, `UpdateConsultantPerformance`, `DailyPerformanceMonitoring` |
+| 정리 외 1종 | `UpdateAllConsultantPerformance` — V20260606_009 에서 이미 DROP 완료 (재처리 불필요) |
+| 재무 PROC 5종 | (§4.1 본문에 후보로 명시한 `GetBranchFinancialBreakdown` 외 4종) 운영 SSH 점검 결과 `mind_garden` 측 잔존 0건 — 본 PR 범위 밖 |
+| stub 동작 | 호출 시 `SIGNAL SQLSTATE '45000'` 으로 차단 + SSOT 안내 메시지 (모니터링 마커) |
+| 완전 DROP 일정 | **금지** 표시. 1주 모니터링 후 별도 PR `V20260621_001` 에서 stub 완전 DROP 예정 (§4.3 옵션 C) |
+| 사전 가드 | `CREATE SCHEMA IF NOT EXISTS mind_garden` — H2(MODE=MySQL) 통합 테스트 호환 (V20260606_009 동일 패턴) |
+| 표준 참조 | `docs/standards/DATABASE_MIGRATION_STANDARD.md`, `docs/운영반영/CRON_SQL_ERROR_TRIAGE_20260614.md` §6 PR-C, `docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md` |
+
+> 본 §4.0 항목은 PR-C 머지 후 사실 상태를 반영. **운영 검수 회의에서 추가 PROC 가 발견되면 별도 마이그 PR 로 추가**한다 (본 마이그 수정 금지 — 멱등 보존).
+
 ### 4.1 옵션 A — RENAME (권장, 즉시 롤백 가능)
 
 MySQL 은 `RENAME DATABASE` 가 deprecated 되어 직접 지원하지 않지만, 새 스키마 생성 후 객체별 RENAME 으로 동등 효과를 낼 수 있다. 본 가이드에서는 **단순화·검수 편의를 위해 "스키마는 그대로 두되, 동명 프로시저만 OBSOLETE 접미사로 RENAME"** 하는 1단계 옵션을 권장한다.
+
+> **2026-06-14 갱신**: MySQL 8 은 `RENAME PROCEDURE` 구문을 지원하지 않는 것으로 확정 (§4.1 의 RENAME 예시는 보존 — 가이드 의도 기록용). 운영 적용은 §4.1.2 패턴으로 V20260614_001 Flyway 마이그가 수행 (위 §4.0).
 
 ```sql
 -- 4.1.1 mind_garden 의 동명 프로시저를 OBSOLETE 접미사로 변경
@@ -178,16 +201,34 @@ ORDER BY ROUTINE_NAME;
 
 > MySQL 8 에서 `RENAME PROCEDURE` 가 동작하지 않는 환경(서버 권한 / 버전 이슈) 이면, **4.1.2 DROP+CREATE 우회 절차**를 사용한다.
 
-#### 4.1.2 RENAME 미지원 시 DROP + 백업본에서 OBSOLETE 이름으로 재생성
+#### 4.1.2 RENAME 미지원 시 DROP + OBSOLETE stub CREATE (V20260614_001 채택 패턴)
+
+> **2026-06-14 갱신**: MySQL 8 의 `RENAME PROCEDURE` 미지원이 확정됨에 따라 본 PR-C 가 채택한 패턴.
+
+원본 본문을 보존하지 않고 **SIGNAL stub** 으로 치환한다. 이유:
+
+- mind_garden 측 PROC 원본 본문은 이미 deprecated · core_solution SSOT 에 대체본 존재 → 보존 가치 없음.
+- stub 는 (a) 호출 시 차단(SIGNAL SQLSTATE '45000'), (b) 정리 마커(접미사 일자) 로만 동작 → 1주 모니터링 후 §4.3 옵션 C 로 완전 DROP.
+- 본문 보존이 필요한 경우(타 PROC 정리 시) `mysqldump --routines` 백업(§3) 으로부터 복원 가능.
 
 ```sql
-USE mind_garden;
--- 1) 백업 SQL 에서 해당 프로시저 본문 추출 (mysqldump 결과의 CREATE PROCEDURE 블록)
--- 2) 본문에 접미사 적용 후 재생성, 원본 DROP
--- (운영 DBA 가 수기로 진행. 본 가이드는 명령만 예시)
+-- 본 패턴은 V20260614_001 Flyway 마이그가 자동 수행 (운영 DBA 수기 실행 불필요).
+-- 마이그 본문 예시 (4종 동일 패턴, 1종만 발췌):
 
-DROP PROCEDURE IF EXISTS UpdateDailyStatistics;
--- ... 백업본에서 추출한 CREATE PROCEDURE _OBSOLETE_UpdateDailyStatistics_20260611 ... 실행
+CREATE SCHEMA IF NOT EXISTS mind_garden;  -- H2(MODE=MySQL) 호환
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS mind_garden.OBSOLETE_UpdateDailyStatistics_20260614$$
+CREATE PROCEDURE mind_garden.OBSOLETE_UpdateDailyStatistics_20260614()
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'OBSOLETE 20260614: mind_garden.UpdateDailyStatistics 사용 중지. SSOT 는 core_solution.UpdateDailyStatistics.';
+END$$
+
+DROP PROCEDURE IF EXISTS mind_garden.UpdateDailyStatistics$$
+
+DELIMITER ;
 ```
 
 ### 4.2 옵션 B — 스키마 전체 RENAME (강하게 보류, 운영 검수 후만)
@@ -320,14 +361,15 @@ mysql -u root -p < /backup/mind_garden_cleanup_<DATE>/mind_garden_legacy_full_*.
 
 ## 7. 체크리스트 (운영 DBA / 검수자용)
 
-- [ ] 2.1 mind_garden 잔존 객체 목록 캡처 (스크린샷 / SQL 결과 저장)
-- [ ] 2.2 외부 참조 점검 4쿼리 모두 0행 확인
-- [ ] 2.3 백엔드 설정·환경변수에 `mind_garden` 참조 0건
-- [ ] 3 백업 완료 + 무결성 확인 + 보관 위치 기록
-- [ ] 4.1 옵션 A 실행 (RENAME → OBSOLETE 접미사)
-- [ ] 5 사후 검증 SQL 3건 + 애플리케이션 트리거 1건 통과
-- [ ] **1주일 모니터링 윈도우** 동안 일별 배치 7일 연속 성공
-- [ ] 4.3 옵션 C 완전 DROP (모니터링 통과 후)
+- [x] 2.1 mind_garden 잔존 객체 목록 캡처 — deployer fb010938 점검 결과 4종 식별 (`UpdateDailyStatistics`, `UpdateAllBranchDailyStatistics`, `UpdateConsultantPerformance`, `DailyPerformanceMonitoring`)
+- [ ] 2.2 외부 참조 점검 4쿼리 모두 0행 확인 (PR-C 머지 전 운영 SSH 재실측)
+- [ ] 2.3 백엔드 설정·환경변수에 `mind_garden` 참조 0건 (`DB_ENV_SSOT_PRECHECK_20260613.md` 인용)
+- [ ] 3 백업 완료 + 무결성 확인 + 보관 위치 기록 (PR-A + PR-C 동시 배포 직전)
+- [x] 4.1 옵션 A 실행 — Flyway V20260614_001 으로 자동화 (§4.0 참조). 4종 DROP + `OBSOLETE_*_20260614` stub CREATE 패턴 (§4.1.2)
+- [ ] 5 사후 검증 SQL 3건 + 애플리케이션 트리거 1건 통과 (PR-A 와 동시 배포 + cron 정상화 검증)
+- [ ] 5일치 백필 (06-09 ~ 06-13): `daily_statistics`, `consultant_performance` 4일치 + 06-09 추가 1일치 트리거 호출
+- [ ] **1주일 모니터링 윈도우** 동안 일별 배치 7일 연속 성공 (`erp_sync_logs.status=COMPLETED`)
+- [ ] 4.3 옵션 C 완전 DROP — 별도 PR `V20260621_001` 로 stub 4종 DROP (모니터링 통과 후, 본 PR 범위 밖)
 - [ ] 정리 완료 기록을 `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md` 에 반영
 
 ---

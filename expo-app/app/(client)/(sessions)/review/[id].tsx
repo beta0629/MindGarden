@@ -28,6 +28,7 @@ import { Chip } from '@/components/atoms/Chip';
 import { RatingStars } from '@/components/molecules/RatingStars';
 import { useConsultationDetail } from '@/api/hooks/useConsultations';
 import { useCreateRating } from '@/api/hooks/useRatings';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { maskEncryptedDisplay, resolveProfileImageUrlForNative } from '@/utils/displayString';
 
 const REVIEW_TAGS = [
@@ -48,6 +49,8 @@ export default function ClientSessionReview() {
 
   const { data: detail } = useConsultationDetail(id);
   const createRating = useCreateRating();
+  const currentUser = useAuthStore((s) => s.user);
+  const clientId = currentUser?.id;
 
   const consultantLabel = maskEncryptedDisplay(detail?.consultantName, '상담사');
   const consultantAvatarUri = resolveProfileImageUrlForNative(detail?.consultantProfileImageUrl);
@@ -71,6 +74,10 @@ export default function ClientSessionReview() {
       return;
     }
     if (!detail) return;
+    if (clientId == null) {
+      Alert.alert('오류', '로그인 정보가 만료되었습니다. 다시 로그인해주세요.');
+      return;
+    }
 
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -80,8 +87,9 @@ export default function ClientSessionReview() {
       await createRating.mutateAsync({
         scheduleId: detail.id,
         consultantId: detail.consultantId,
-        rating,
-        tags: selectedTags,
+        clientId,
+        heartScore: rating,
+        ratingTags: selectedTags,
         comment: comment.trim() || undefined,
       });
       Alert.alert('감사합니다', '평가가 제출되었습니다.', [

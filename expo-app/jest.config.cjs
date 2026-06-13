@@ -7,6 +7,7 @@ module.exports = {
     '<rootDir>/src/services/__tests__',
     '<rootDir>/src/stores/__tests__',
     '<rootDir>/src/api/auth/__tests__',
+    '<rootDir>/src/api/hooks/__tests__',
     '<rootDir>/src/components/molecules/__tests__',
     '<rootDir>/src/components/organisms/login/__tests__',
   ],

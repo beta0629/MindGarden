@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 인증 서비스 인터페이스
@@ -13,9 +14,25 @@ import com.coresolution.consultation.entity.User;
 public interface AuthService {
     
     /**
-     * 사용자 인증 (로그인)
+     * 사용자 인증 (로그인) — 기본 시그니처(HTTP 컨텍스트 없음).
+     *
+     * <p>refresh_token_store 메타데이터(device_id, ip_address, user_agent)는 NULL 로 저장된다.
+     * 운영 컨트롤러 경로에서는 {@link #authenticate(String, String, HttpServletRequest)} 를 사용한다.</p>
      */
-    AuthResponse authenticate(String email, String password);
+    default AuthResponse authenticate(String email, String password) {
+        return authenticate(email, password, null);
+    }
+
+    /**
+     * 사용자 인증 (로그인) — HTTP 요청 메타데이터를 refresh_token_store 에 함께 기록.
+     *
+     * @param email    로그인 식별자
+     * @param password 비밀번호
+     * @param request  HTTP 요청 (X-Forwarded-For, User-Agent, X-Device-Id 추출용; null 허용)
+     * @return 인증 응답
+     * @since 2026-06-13
+     */
+    AuthResponse authenticate(String email, String password, HttpServletRequest request);
     
     /**
      * 세션 기반 로그인 (중복로그인 방지 포함)
@@ -44,9 +61,24 @@ public interface AuthService {
             String clientIp, String userAgent);
 
     /**
-     * 토큰 갱신
+     * 토큰 갱신 — 기본 시그니처(HTTP 컨텍스트 없음).
+     *
+     * <p>refresh_token_store 메타데이터(device_id, ip_address, user_agent)는 NULL 로 저장된다.
+     * 운영 컨트롤러 경로에서는 {@link #refreshToken(String, HttpServletRequest)} 를 사용한다.</p>
      */
-    AuthResponse refreshToken(String refreshToken);
+    default AuthResponse refreshToken(String refreshToken) {
+        return refreshToken(refreshToken, null);
+    }
+
+    /**
+     * 토큰 갱신 — HTTP 요청 메타데이터를 refresh_token_store 에 함께 기록.
+     *
+     * @param refreshToken 리프레시 토큰 JWT
+     * @param request      HTTP 요청 (X-Forwarded-For, User-Agent, X-Device-Id 추출용; null 허용)
+     * @return 인증 응답
+     * @since 2026-06-13
+     */
+    AuthResponse refreshToken(String refreshToken, HttpServletRequest request);
     
     /**
      * 로그아웃

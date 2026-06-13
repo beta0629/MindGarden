@@ -26,6 +26,7 @@ import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,7 +117,7 @@ public class AuthServiceImpl implements AuthService {
     private boolean askUserConfirmation;
     
     @Override
-    public AuthResponse authenticate(String email, String password) {
+    public AuthResponse authenticate(String email, String password, HttpServletRequest request) {
         log.info("🔐 JWT 토큰 기반 로그인 시도: email={}", EmailLogMasking.maskForLog(email));
         try {
             // Spring Security 인증
@@ -146,9 +147,10 @@ public class AuthServiceImpl implements AuthService {
                 // 표준화 2025-12-08: username = userId이므로 refreshToken도 userId 사용, User 객체로 생성하여 tenantId, email 포함
                 String refreshToken = jwtService.generateRefreshToken(user);
                 
-                // Phase 3: Refresh Token 저장 (HttpServletRequest는 null로 전달, 추후 Controller에서 전달)
+                // Phase 3: Refresh Token 저장 — P0-3 hotfix 로 HttpServletRequest 전달.
+                // device_id / ip_address / user_agent 메타데이터를 NOT NULL 로 기록한다.
                 try {
-                    refreshTokenService.createRefreshToken(user, refreshToken, null);
+                    refreshTokenService.createRefreshToken(user, refreshToken, request);
                 } catch (Exception e) {
                     log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
                 }
@@ -202,7 +204,7 @@ public class AuthServiceImpl implements AuthService {
     }
     
     @Override
-    public AuthResponse refreshToken(String refreshToken) {
+    public AuthResponse refreshToken(String refreshToken, HttpServletRequest request) {
         try {
             // 리프레시 토큰에서 사용자 ID 추출 (표준화 2025-12-08: username = userId)
             String userId = jwtService.extractUsername(refreshToken);
@@ -278,8 +280,8 @@ public class AuthServiceImpl implements AuthService {
                 // 2. tokenId를 포함한 refreshToken JWT 생성 (표준화 2025-12-08: User 객체 사용하여 tenantId, email 포함)
                 newRefreshToken = jwtService.generateRefreshToken(user, newTokenId);
                 
-                // 3. refreshToken 해시 생성 및 DB 저장
-                refreshTokenService.createRefreshToken(user, newRefreshToken, null);
+                // 3. refreshToken 해시 생성 및 DB 저장 — P0-3 hotfix 로 HttpServletRequest 전달.
+                refreshTokenService.createRefreshToken(user, newRefreshToken, request);
                 
                 log.info("✅ 새 Refresh Token 생성 완료: tokenId={}", newTokenId);
             } catch (Exception e) {
@@ -416,8 +418,27 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean checkDuplicateLogin(User user) {
         try {
+            // 1) HTTP 세션 — 웹(JSESSIONID) 흐름
             long activeSessionCount = userSessionService.getActiveSessionCount(user);
-            return activeSessionCount > 0;
+            if (activeSessionCount > 0) {
+                return true;
+            }
+
+            // 2) refresh_token_store — 모바일(JWT) 흐름 (silent skip 정책: 활성 토큰 존재만 감지)
+            //    user_sessions row 가 없는 모바일 환경에서도 중복 로그인 모달이 표시되도록 한다.
+            //    실제 revoke 는 confirmDuplicateLogin 분기에서도 하지 않으며(silent skip),
+            //    장기 PR 에서 디바이스 단위 정리 정책으로 분리한다.
+            long activeRefreshTokenCount;
+            if (user.getTenantId() != null && !user.getTenantId().trim().isEmpty()) {
+                activeRefreshTokenCount = refreshTokenService
+                    .findActiveTokensByUserIdAndTenantId(user.getId(), user.getTenantId())
+                    .size();
+            } else {
+                activeRefreshTokenCount = refreshTokenService
+                    .findActiveTokensByUserId(user.getId())
+                    .size();
+            }
+            return activeRefreshTokenCount > 0;
         } catch (Exception e) {
             log.error("❌ 중복 로그인 체크 실패: userId={}, error={}", user.getId(), e.getMessage(), e);
             return false;

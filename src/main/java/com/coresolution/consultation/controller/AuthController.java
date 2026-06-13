@@ -532,7 +532,8 @@ public class AuthController extends BaseApiController {
      */
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<Map<String, Object>>> refreshJwtWithRefreshToken(
-            @RequestBody(required = false) Map<String, String> request) {
+            @RequestBody(required = false) Map<String, String> request,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
         String rt = request != null ? request.get("refreshToken") : null;
         if (!StringUtils.hasText(rt)) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
@@ -542,7 +543,8 @@ public class AuthController extends BaseApiController {
                     .data(null)
                     .build());
         }
-        AuthResponse authResponse = authService.refreshToken(rt.trim());
+        // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
+        AuthResponse authResponse = authService.refreshToken(rt.trim(), httpRequest);
         if (!authResponse.isSuccess()) {
             String msg = authResponse.getMessage() != null ? authResponse.getMessage() : "토큰 갱신에 실패했습니다.";
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
@@ -692,18 +694,42 @@ public class AuthController extends BaseApiController {
             SessionUtils.setCurrentUser(session, sessionUser);
             
             log.info("✅ 중복 로그인 확인 후 로그인 성공: {}", loginPrincipal);
+
+            // P0-2 hotfix — 일반 /login 패턴 미러: stateless 클라이언트(Expo)에 JWT 쌍을 항상 내려준다.
+            // AuthServiceImpl.authenticateWithSession 은 token/refreshToken 을 null 로 두므로
+            // 컨트롤러 레벨에서 별도로 발급한다(없으면 Expo 가드 실패 → 무한 재시도 루프).
+            // silent skip 정책: 기존 refresh_token_store row 는 revoke 하지 않고 신규만 발급.
+            String issuedAccessToken = null;
+            String issuedRefreshToken = null;
+            try {
+                List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(sessionUser);
+                issuedAccessToken = jwtService.generateToken(sessionUser, permissions);
+                issuedRefreshToken = jwtService.generateRefreshToken(sessionUser);
+                try {
+                    // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
+                    refreshTokenService.createRefreshToken(sessionUser, issuedRefreshToken, httpRequest);
+                } catch (Exception e) {
+                    log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ confirm-duplicate-login JWT 발급 실패 (모바일 인증 실패 가능): {}", e.getMessage());
+            }
             
             Map<String, Object> data = new HashMap<>();
             data.put("user", authResponse.getUser());
             data.put("sessionId", sessionId);
             // 모바일(JWT) 호환: confirm-duplicate-login 응답에 토큰을 포함시켜야 Expo 앱이 인증 완료 분기에 진입한다.
             // 키 이름은 /login·/refresh 와 동일한 accessToken·refreshToken 으로 통일(웹은 추가 필드를 사용하지 않으므로 회귀 없음).
-            if (StringUtils.hasText(authResponse.getToken())) {
+            if (StringUtils.hasText(issuedAccessToken)) {
+                data.put("accessToken", issuedAccessToken);
+            } else if (StringUtils.hasText(authResponse.getToken())) {
                 data.put("accessToken", authResponse.getToken());
             } else {
                 log.warn("⚠️ confirm-duplicate-login: accessToken 부재 — 모바일 인증이 실패할 수 있음 (loginPrincipal={})", loginPrincipal);
             }
-            if (StringUtils.hasText(authResponse.getRefreshToken())) {
+            if (StringUtils.hasText(issuedRefreshToken)) {
+                data.put("refreshToken", issuedRefreshToken);
+            } else if (StringUtils.hasText(authResponse.getRefreshToken())) {
                 data.put("refreshToken", authResponse.getRefreshToken());
             } else {
                 log.warn("⚠️ confirm-duplicate-login: refreshToken 부재 — 모바일 인증이 실패할 수 있음 (loginPrincipal={})", loginPrincipal);
@@ -966,7 +992,8 @@ public class AuthController extends BaseApiController {
                 String accessToken = jwtService.generateToken(sessionUser, permissions);
                 String refreshToken = jwtService.generateRefreshToken(sessionUser);
                 try {
-                    refreshTokenService.createRefreshToken(sessionUser, refreshToken, null);
+                    // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
+                    refreshTokenService.createRefreshToken(sessionUser, refreshToken, httpRequest);
                 } catch (Exception e) {
                     log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
                 }
@@ -1116,7 +1143,8 @@ public class AuthController extends BaseApiController {
             String accessToken = jwtService.generateToken(sessionUser, permissions);
             String refreshToken = jwtService.generateRefreshToken(sessionUser);
             try {
-                refreshTokenService.createRefreshToken(sessionUser, refreshToken, null);
+                // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
+                refreshTokenService.createRefreshToken(sessionUser, refreshToken, httpRequest);
             } catch (Exception e) {
                 log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
             }

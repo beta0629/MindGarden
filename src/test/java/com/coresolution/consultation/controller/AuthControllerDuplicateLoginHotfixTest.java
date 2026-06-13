@@ -36,6 +36,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.constant.TestDocumentationIps;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -116,9 +117,11 @@ class AuthControllerDuplicateLoginHotfixTest {
         when(session.getId()).thenReturn(SESSION_ID);
         lenient().when(httpRequest.getHeader("User-Agent"))
             .thenReturn("MindGardenMobile/1.0 (iPhone; iOS 17)");
-        lenient().when(httpRequest.getHeader("X-Forwarded-For")).thenReturn("203.0.113.10");
+        lenient().when(httpRequest.getHeader("X-Forwarded-For"))
+            .thenReturn(TestDocumentationIps.DOC_NET_3_DEVICE_PRIMARY);
         lenient().when(httpRequest.getHeader("X-Device-Id")).thenReturn("device-uuid-1");
-        lenient().when(httpRequest.getRemoteAddr()).thenReturn("203.0.113.10");
+        lenient().when(httpRequest.getRemoteAddr())
+            .thenReturn(TestDocumentationIps.DOC_NET_3_DEVICE_PRIMARY);
         lenient().when(dynamicPermissionService.getUserPermissionsAsStringList(any(User.class)))
             .thenReturn(List.of("READ", "WRITE"));
         lenient().when(jwtService.generateToken(any(User.class), any())).thenReturn(ISSUED_ACCESS_TOKEN);

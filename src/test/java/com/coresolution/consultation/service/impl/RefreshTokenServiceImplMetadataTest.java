@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.coresolution.consultation.entity.RefreshToken;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.RefreshTokenRepository;
+import com.coresolution.core.constant.TestDocumentationIps;
 import com.coresolution.core.security.PasswordService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ class RefreshTokenServiceImplMetadataTest {
     private static final Long USER_ID = 99L;
     private static final String TENANT_ID = "tenant-meta";
     private static final String REFRESH_TOKEN = "refresh.jwt.token";
-    private static final String FORWARDED_IP = "203.0.113.42";
+    private static final String FORWARDED_IP = TestDocumentationIps.DOC_NET_3_DEVICE_SECONDARY;
     private static final String DEVICE_ID = "expo-device-abc-123";
     private static final String USER_AGENT_MOBILE = "MindGardenMobile/1.2.3 (Pixel 7; Android 14)";
 
@@ -109,7 +110,7 @@ class RefreshTokenServiceImplMetadataTest {
     void webUserAgentDoesNotPopulateDeviceId() {
         when(passwordService.encodeSecret(REFRESH_TOKEN)).thenReturn("hash-value");
         when(httpRequest.getHeader("X-Forwarded-For")).thenReturn(null);
-        when(httpRequest.getHeader("X-Real-IP")).thenReturn("198.51.100.7");
+        when(httpRequest.getHeader("X-Real-IP")).thenReturn(TestDocumentationIps.DOC_NET_2_PROXY_HOP);
         when(httpRequest.getHeader("User-Agent"))
             .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120");
         when(refreshTokenRepository.save(any(RefreshToken.class)))
@@ -124,7 +125,7 @@ class RefreshTokenServiceImplMetadataTest {
         RefreshToken saved = captor.getValue();
         assertThat(saved.getIpAddress())
             .as("X-Forwarded-For 부재 시 X-Real-IP 가 사용되어야 함")
-            .isEqualTo("198.51.100.7");
+            .isEqualTo(TestDocumentationIps.DOC_NET_2_PROXY_HOP);
         assertThat(saved.getUserAgent()).startsWith("Mozilla/5.0");
         assertThat(saved.getDeviceId())
             .as("웹 User-Agent 는 device_id 가 NULL — 모바일 흐름에만 채워짐")

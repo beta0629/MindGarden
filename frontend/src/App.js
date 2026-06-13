@@ -39,6 +39,7 @@ import AdminSchedulesPage from './components/schedule/AdminSchedulesPage';
 import UnifiedModalTest from './components/test/UnifiedModalTest';
 import UnifiedLoadingTest from './components/test/UnifiedLoadingTest';
 import UnifiedLoading from './components/common/UnifiedLoading';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import UserManagementPage from './components/admin/UserManagementPage';
 import SessionManagement from './components/admin/SessionManagement';
@@ -1083,21 +1084,24 @@ function AppContent() {
 }
 
 // 최상위 App 컴포넌트 (ThemeProvider + SessionProvider + NotificationProvider 제공)
+// ErrorBoundary 를 최상위에 두어 Provider/Router 트리 어디에서 던져진 에러도 폴백 UI 로 흡수한다.
 function App() {
   return (
-    <ThemeProvider>
-      <SessionProvider>
-        <TenantComponentFlagsProvider>
-          <NotificationProvider>
-            <ToastProvider>
-              <Router>
-                <AppContent />
-              </Router>
-            </ToastProvider>
-          </NotificationProvider>
-        </TenantComponentFlagsProvider>
-      </SessionProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <SessionProvider>
+          <TenantComponentFlagsProvider>
+            <NotificationProvider>
+              <ToastProvider>
+                <Router>
+                  <AppContent />
+                </Router>
+              </ToastProvider>
+            </NotificationProvider>
+          </TenantComponentFlagsProvider>
+        </SessionProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

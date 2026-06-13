@@ -46,17 +46,20 @@ import static org.mockito.Mockito.when;
  * <p>커버 영역:
  * <ul>
  *   <li>다중 테넌트 순회 — 테넌트별 독립 처리, 한 테넌트 실패가 다른 테넌트에 전파되지 않음.</li>
- *   <li>단발성(=총 1회기) 매핑 skip — D-2 배치에서 제외.</li>
- *   <li>매핑 없음 / 잔여 0 skip.</li>
+ *   <li>{@code shouldSendForSchedule} 발송 자격 판정 (P0 hotfix 회귀 보호 4종 케이스).</li>
  *   <li>발송/skip/failed 카운트 집계 → SchedulerExecutionLogService 위임.</li>
  * </ul>
+ *
+ * <p>P0 hotfix (2026-06-13): 회기 차감 정책 SSOT 는 (A) 예약(BOOKED) 시점 차감이므로
+ * {@code remaining < 1} 잔여 가드는 모순이며 제거됨. SESSIONS_EXHAUSTED 매핑의 미래 BOOKED
+ * schedule 도 D-2 안내 대상으로 정상 dispatch 되어야 한다.
  *
  * @author MindGarden
  * @since 2026-05-23
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("D-2 안내 스케줄러 — 다중 테넌트 + 단발성 패키지 필터")
+@DisplayName("D-2 안내 스케줄러 — 다중 테넌트 + 단발성 필터 + 회기 차감 SSOT(A) 정합")
 class ReservationReminderSchedulerTest {
 
     private static final String TENANT_A = "tenant-a";
@@ -144,19 +147,70 @@ class ReservationReminderSchedulerTest {
         verify(dispatchService).dispatchReservationReminderD2(102L);
     }
 
-    @Test
-    @DisplayName("매핑 없음 / 잔여 0 — dispatch 호출되지 않음")
-    void runDailyReminder_skipsNoMappingOrZeroRemaining() {
-        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
-        Schedule noMapping = buildSchedule(101L, TENANT_A, 5001L, 6001L);
-        Schedule exhausted = buildSchedule(102L, TENANT_A, 5002L, 6002L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
-            .thenReturn(List.of(noMapping, exhausted));
+    // ------------------------------------------------------------------
+    // shouldSendForSchedule — P0 hotfix 회귀 보호 4종 (2026-06-13)
+    //   case1: ACTIVE  + remaining=2          → dispatch ✓
+    //   case2: EXHAUST + remaining=0 (total=2)→ dispatch ✓  (핫픽스 핵심)
+    //   case3: ACTIVE  + total=1              → skip       (단발성 정책 유지)
+    //   case4: 매핑 없음                       → skip       (이상 데이터 차단)
+    // ------------------------------------------------------------------
 
+    @Test
+    @DisplayName("case1 — ACTIVE 매핑 + remaining=2 → dispatch (회귀 보호)")
+    void shouldSend_case1_activeWithRemaining_dispatches() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+            .thenReturn(List.of(schedule));
+        givenMapping(TENANT_A, 5001L, 6001L, 10, 2, MappingStatus.ACTIVE);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationReminderD2(101L);
+    }
+
+    @Test
+    @DisplayName("case2 — SESSIONS_EXHAUSTED + remaining=0 + total=2 → dispatch (P0 hotfix 핵심)")
+    void shouldSend_case2_exhaustedWithZeroRemaining_dispatches() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+            .thenReturn(List.of(schedule));
+        // 회기 차감 정책 SSOT (A): 미래 BOOKED schedule 의 회기는 이미 used 에 카운트되어
+        // remaining=0 + SESSIONS_EXHAUSTED 가 정상 상태. D-2 안내는 발송되어야 한다.
+        givenMapping(TENANT_A, 5001L, 6001L, 2, 0, MappingStatus.SESSIONS_EXHAUSTED);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationReminderD2(101L);
+    }
+
+    @Test
+    @DisplayName("case3 — ACTIVE 매핑 + total=1 (단발성) → skip (회귀 보호)")
+    void shouldSend_case3_singlePackage_skips() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+            .thenReturn(List.of(schedule));
+        givenMapping(TENANT_A, 5001L, 6001L, 1, 1, MappingStatus.ACTIVE);
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService, never()).dispatchReservationReminderD2(any());
+    }
+
+    @Test
+    @DisplayName("case4 — 매핑 없음 → skip (이상 데이터 차단)")
+    void shouldSend_case4_noMapping_skips() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+            .thenReturn(List.of(schedule));
         when(mappingRepository
             .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(TENANT_A, 5001L, 6001L))
             .thenReturn(Optional.empty());
-        givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 0);
 
         scheduler.runDailyReminder();
 
@@ -297,13 +351,18 @@ class ReservationReminderSchedulerTest {
 
     private void givenEligibleMapping(String tenantId, Long consultantId, Long clientId,
             int total, int remaining) {
+        givenMapping(tenantId, consultantId, clientId, total, remaining, MappingStatus.ACTIVE);
+    }
+
+    private void givenMapping(String tenantId, Long consultantId, Long clientId,
+            int total, int remaining, MappingStatus status) {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
             .consultant(buildUser(consultantId))
             .client(buildUser(clientId))
             .totalSessions(total)
             .remainingSessions(remaining)
             .usedSessions(total - remaining)
-            .status(MappingStatus.ACTIVE)
+            .status(status)
             .build();
         mapping.setId(consultantId * 1000 + clientId);
         mapping.setTenantId(tenantId);

@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_SELF;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,23 +25,30 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * 운영 P0 hotfix 2026-06-11 회귀 가드: {@link PlSqlStatisticsServiceImpl} 의 5개 SimpleJdbcCall
- * 호출이 모두 {@code .withCatalogName(dbSchemaName)} 와 {@code .withSchemaName(dbSchemaName)} 를
- * 명시하여 다중 DB(core_solution + mind_garden) 동명 프로시저 메타 충돌을 차단하는지 검증한다.
+ * 운영 P0 hotfix 2026-06-14 회귀 가드: {@link PlSqlStatisticsServiceImpl} 의 5개 SimpleJdbcCall
+ * 호출이 모두 {@code .withCatalogName(dbSchemaName)} 만 명시하고
+ * {@code .withSchemaName(...)} 은 호출하지 않는지 검증한다.
  *
- * <p><b>회귀 방지 대상</b>: 2026-06-06 ~ 2026-06-11 운영 매일 00:00·00:05 통계 배치 실패
- * ({@code UpdateAllBranchDailyStatistics}, {@code DailyPerformanceMonitoring} —
- * {@code SimpleJdbcCallOperations.metaData() 시그니처 모호}).
+ * <p><b>회귀 방지 대상</b>: 2026-06-11 ~ 2026-06-14 운영 매일 00:01·00:03·00:05 통계 배치 실패
+ * (cron 3종: {@code UpdateAllBranchDailyStatistics}, {@code UpdateAllConsultantPerformance},
+ * {@code DailyPerformanceMonitoring}). 06-11 PR #217 의 {@code .withCatalogName(dbSchemaName)}
+ * 추가가 05-26 hotfix 의 {@code .withSchemaName(dbSchemaName)} 잔존과 결합해 Spring
+ * {@code CallMetaDataContext.createCallString()} 이
+ * {@code {call core_solution.core_solution.<PROC>(?)}} 3단계 prefix SQL 을 생성 → MySQL bad SQL
+ * grammar.
+ *
+ * <p>본 회귀 가드는 hotfix 이후로도 어떤 PR 이든 {@code .withSchemaName(...)} 을 다시 추가하면
+ * 즉시 빌드 실패하도록 보장한다.
  *
  * <p>Mockito {@code mockConstruction} 으로 {@code SimpleJdbcCall} 생성을 가로채고
- * 체인 호출({@code withCatalogName}, {@code withSchemaName}, {@code withProcedureName})
- * 인자를 verify 한다.
+ * 체인 호출({@code withCatalogName}, {@code withProcedureName}) 인자를 verify 하며,
+ * {@code withSchemaName} 은 {@code never()} 로 호출되지 않음을 검증한다.
  *
  * @author MindGarden
  * @since 2026-06-11
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PlSqlStatisticsServiceImpl SimpleJdbcCall.withCatalogName/withSchemaName(dbSchemaName) 명시 회귀 가드")
+@DisplayName("PlSqlStatisticsServiceImpl SimpleJdbcCall.withCatalogName(dbSchemaName) 명시 + withSchemaName 미사용 회귀 가드")
 class PlSqlStatisticsServiceImplCatalogTest {
 
     private static final String UT_TENANT = "ut-tenant-plsql-statistics-catalog";
@@ -77,8 +85,8 @@ class PlSqlStatisticsServiceImplCatalogTest {
     }
 
     @Test
-    @DisplayName("updateDailyStatistics: withCatalogName + withSchemaName + withProcedureName(UpdateDailyStatistics)")
-    void updateDailyStatistics_specifiesCatalogAndSchema() {
+    @DisplayName("updateDailyStatistics: withCatalogName 명시 + withSchemaName 미호출 (3단계 prefix 회귀 차단)")
+    void updateDailyStatistics_specifiesCatalogOnly() {
         TenantContextHolder.setTenantId(UT_TENANT);
         Map<String, Object> executeResult = new HashMap<>();
         executeResult.put("p_success", Boolean.TRUE);
@@ -90,15 +98,15 @@ class PlSqlStatisticsServiceImplCatalogTest {
             assertThat(mocked.constructed()).hasSize(1);
             SimpleJdbcCall constructed = mocked.constructed().get(0);
             verify(constructed).withCatalogName(UT_SCHEMA);
-            verify(constructed).withSchemaName(UT_SCHEMA);
+            verify(constructed, never()).withSchemaName(any());
             verify(constructed).withProcedureName("UpdateDailyStatistics");
             assertThat(result).startsWith("SUCCESS");
         }
     }
 
     @Test
-    @DisplayName("updateAllBranchDailyStatistics: withCatalogName + withSchemaName + withProcedureName(UpdateAllBranchDailyStatistics) ★ P0 핵심")
-    void updateAllBranchDailyStatistics_specifiesCatalogAndSchema() {
+    @DisplayName("updateAllBranchDailyStatistics: withCatalogName 명시 + withSchemaName 미호출 ★ P0 핵심")
+    void updateAllBranchDailyStatistics_specifiesCatalogOnly() {
         // isProcedureAvailable 는 별도 jdbcTemplate.queryForObject 호출 → mock true 반환
         when(jdbcTemplate.queryForObject(any(String.class), any(Class.class))).thenReturn(3);
 
@@ -108,15 +116,15 @@ class PlSqlStatisticsServiceImplCatalogTest {
             assertThat(mocked.constructed()).hasSize(1);
             SimpleJdbcCall constructed = mocked.constructed().get(0);
             verify(constructed).withCatalogName(UT_SCHEMA);
-            verify(constructed).withSchemaName(UT_SCHEMA);
+            verify(constructed, never()).withSchemaName(any());
             verify(constructed).withProcedureName("UpdateAllBranchDailyStatistics");
             assertThat(result).startsWith("SUCCESS");
         }
     }
 
     @Test
-    @DisplayName("updateConsultantPerformance: withCatalogName + withSchemaName + withProcedureName(UpdateConsultantPerformance)")
-    void updateConsultantPerformance_specifiesCatalogAndSchema() {
+    @DisplayName("updateConsultantPerformance: withCatalogName 명시 + withSchemaName 미호출")
+    void updateConsultantPerformance_specifiesCatalogOnly() {
         TenantContextHolder.setTenantId(UT_TENANT);
         Map<String, Object> executeResult = new HashMap<>();
         executeResult.put("p_success", Boolean.TRUE);
@@ -128,30 +136,30 @@ class PlSqlStatisticsServiceImplCatalogTest {
             assertThat(mocked.constructed()).hasSize(1);
             SimpleJdbcCall constructed = mocked.constructed().get(0);
             verify(constructed).withCatalogName(UT_SCHEMA);
-            verify(constructed).withSchemaName(UT_SCHEMA);
+            verify(constructed, never()).withSchemaName(any());
             verify(constructed).withProcedureName("UpdateConsultantPerformance");
             assertThat(result).startsWith("SUCCESS");
         }
     }
 
     @Test
-    @DisplayName("updateAllConsultantPerformance: withCatalogName + withSchemaName + withProcedureName(UpdateAllConsultantPerformance)")
-    void updateAllConsultantPerformance_specifiesCatalogAndSchema() {
+    @DisplayName("updateAllConsultantPerformance: withCatalogName 명시 + withSchemaName 미호출")
+    void updateAllConsultantPerformance_specifiesCatalogOnly() {
         try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(new HashMap<>())) {
             String result = service.updateAllConsultantPerformance(STAT_DATE);
 
             assertThat(mocked.constructed()).hasSize(1);
             SimpleJdbcCall constructed = mocked.constructed().get(0);
             verify(constructed).withCatalogName(UT_SCHEMA);
-            verify(constructed).withSchemaName(UT_SCHEMA);
+            verify(constructed, never()).withSchemaName(any());
             verify(constructed).withProcedureName("UpdateAllConsultantPerformance");
             assertThat(result).startsWith("SUCCESS");
         }
     }
 
     @Test
-    @DisplayName("performDailyPerformanceMonitoring: withCatalogName + withSchemaName + withProcedureName(DailyPerformanceMonitoring) ★ P0 핵심")
-    void performDailyPerformanceMonitoring_specifiesCatalogAndSchema() {
+    @DisplayName("performDailyPerformanceMonitoring: withCatalogName 명시 + withSchemaName 미호출 ★ P0 핵심")
+    void performDailyPerformanceMonitoring_specifiesCatalogOnly() {
         TenantContextHolder.setTenantId(UT_TENANT);
         Map<String, Object> executeResult = new HashMap<>();
         executeResult.put("p_alert_count", Integer.valueOf(7));
@@ -164,7 +172,7 @@ class PlSqlStatisticsServiceImplCatalogTest {
             assertThat(mocked.constructed()).hasSize(1);
             SimpleJdbcCall constructed = mocked.constructed().get(0);
             verify(constructed).withCatalogName(UT_SCHEMA);
-            verify(constructed).withSchemaName(UT_SCHEMA);
+            verify(constructed, never()).withSchemaName(any());
             verify(constructed).withProcedureName("DailyPerformanceMonitoring");
             assertThat(alertCount).isEqualTo(7);
         }

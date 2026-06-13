@@ -511,7 +511,15 @@ public class AuthController extends BaseApiController {
             }
             // 세션 기반 로그아웃 (중복로그인 방지 포함)
             authService.logoutSession(sessionId);
-            
+
+            // P1 hotfix (2026-06-13) — 정상 logout 경로도 SSOT 인 cleanupUserSessions 를 거쳐
+            // user_sessions + refresh_token_store 를 함께 비활성화한다. (PR #295 비대칭 회귀 해소)
+            // checkDuplicateLogin 은 user_sessions OR refresh_token_store 둘 다 검사하므로
+            // refresh_token 잔존 시 재로그인 즉시 "다른 곳에서 로그인" 모달이 잔존한다.
+            if (logoutUser != null) {
+                authService.cleanupUserSessions(logoutUser, SessionManagementConstants.END_REASON_LOGOUT);
+            }
+
             // HTTP 세션 정리
             SessionUtils.clearSession(session);
             

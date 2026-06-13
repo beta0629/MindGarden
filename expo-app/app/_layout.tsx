@@ -8,9 +8,8 @@
  */
 import { Buffer } from 'buffer';
 
-if (typeof globalThis.Buffer === 'undefined') {
-  globalThis.Buffer = Buffer;
-}
+// i18n SSOT — bootstrapI18n() 부수효과로 i18next 를 1회 초기화한다 (A8 P0).
+import '@/i18n';
 
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -40,6 +39,10 @@ import { ApiEnvironmentBanner } from '../src/components/atoms/ApiEnvironmentBann
 import { ForceUpdateGate } from '../src/components/organisms/ForceUpdateGate';
 import { useTenantStore } from '../src/stores/useTenantStore';
 import { useResolveTenantIdForApi } from '../src/utils/resolveTenantIdForApi';
+
+if (typeof globalThis.Buffer === 'undefined') {
+  globalThis.Buffer = Buffer;
+}
 
 const PUSH_TOKEN_REGISTER_DEBOUNCE_MS = 500;
 

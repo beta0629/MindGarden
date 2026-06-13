@@ -1,0 +1,49 @@
+{
+  "common": {
+    "errors": {
+      "unknown": "An unexpected error occurred. Please try again later.",
+      "network": "Please check your network connection.",
+      "retry": "Retry",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "close": "Close"
+    },
+    "actions": {
+      "ok": "OK",
+      "back": "Back",
+      "next": "Next",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit"
+    }
+  },
+  "auth": {
+    "login": {
+      "duplicate": {
+        "modalTitle": "Already signed in on another device",
+        "fallbackBody": "You are already signed in elsewhere. End the existing session and sign in here?",
+        "confirmLabel": "End existing session & sign in",
+        "cancelLabel": "Cancel",
+        "retryFailedFallback": "Re-login failed. Please try again later."
+      },
+      "expoGo": {
+        "title": "Opened in Expo Go",
+        "body": "Kakao / Naver are native modules and are unavailable in Expo Go. Launch the MindGarden app installed on your simulator/phone, or run `npx expo run:ios` and use that app. Email login still works."
+      },
+      "errors": {
+        "kakao": "Kakao sign-in failed.",
+        "kakaoGeneric": "An error occurred during Kakao sign-in.",
+        "naver": "Naver sign-in failed.",
+        "naverGeneric": "An error occurred during Naver sign-in.",
+        "google": "Google sign-in failed.",
+        "googleGeneric": "An error occurred during Google sign-in.",
+        "apple": "Apple sign-in failed.",
+        "appleGeneric": "An error occurred during Apple sign-in.",
+        "credentialEmpty": "Please enter your email/phone number and password.",
+        "credential": "Sign-in failed.",
+        "credentialGeneric": "An error occurred during sign-in."
+      },
+      "appleCancelMarker": "cancel"
+    }
+  }
+}

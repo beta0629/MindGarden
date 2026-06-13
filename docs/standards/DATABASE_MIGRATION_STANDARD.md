@@ -125,7 +125,12 @@ ssh root@beta0629.cafe24.com '
     "SELECT MAX(version), MAX(installed_on) FROM flyway_schema_history;"'
 
 # 3) 운영 (반영 직전)
+# SSOT: /etc/mindgarden/prod-from-dev.env (DB_HOST/DB_NAME/DB_USERNAME 등 62키)
+#      + /etc/mindgarden/prod.env (DB_PASSWORD 등 비밀번호 5키, 보조)
+# 두 파일은 키 set 이 완전 분리되어 있어 순서대로 source 한다.
+# 참고: docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md §1·§2·§3
 ssh root@beta74.cafe24.com '
+  source /etc/mindgarden/prod-from-dev.env;
   source /etc/mindgarden/prod.env;
   mysql -h "$DB_HOST" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e
     "SELECT MAX(version), MAX(installed_on) FROM flyway_schema_history;"'

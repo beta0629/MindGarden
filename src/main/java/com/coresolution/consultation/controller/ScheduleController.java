@@ -85,6 +85,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/schedules")  // 표준화 2025-12-06: API 경로 표준화
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 메서드 본문 inline ADMIN/STAFF/CONSULTANT 체크는 그대로 우선 적용.
 public class ScheduleController extends BaseApiController {
 
     private final ScheduleService scheduleService;

@@ -34,17 +34,25 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * SimpleJdbcCall 카탈로그·스키마 명시용 SSOT.
+     * SimpleJdbcCall 카탈로그(=DB명) 명시용 SSOT.
      * <p>
      * spring.datasource.url 의 ${DB_NAME} 과 동일 SSOT 를 상속하여 다중 DB(core_solution + mind_garden)
      * 동명 프로시저 메타 충돌(SimpleJdbcCallOperations.metaData() 시그니처 모호)을 차단한다.
      * </p>
      * <p>
-     * MySQL JDBC 모델에서는 <b>catalog = DB명, schema = null</b> 이므로 catalog 명시가 P0 핵심이다.
-     * (운영 매일 00:00·00:05 통계 배치 실패 — mind_garden 잔존 동명 프로시저가 catalog 미지정 시
-     * INFORMATION_SCHEMA.ROUTINES 다중 매칭을 일으켜 SimpleJdbcCall 메타 추출이 실패함.)
-     * schema 도 유지하여 향후 PostgreSQL 등 schema 기반 DB 호환을 보장한다.
+     * MySQL JDBC 모델에서는 <b>catalog = DB명, schema = null</b> 이다. 따라서 catalog 만 명시하고
+     * schema 는 명시하지 않는다. catalog 와 schema 를 동시에 명시하면 Spring
+     * {@code CallMetaDataContext.createCallString()} 이 {@code {call <catalog>.<schema>.<proc>(?)}}
+     * 형태의 3단계 prefix SQL 을 생성해 MySQL 이 SQL 문법 오류로 거부한다.
      * </p>
+     * <p>
+     * 운영 P0 회귀 (2026-06-11 ~ 2026-06-14) 핵심: 06-11 catalog 추가 + 05-26 잔존 schema 가
+     * 결합해 {@code {call core_solution.core_solution.<PROC>(?)}} 가 생성되어 자정 배치 3종 실패.
+     * 본 핫픽스에서 schema 호출을 제거하고 catalog 만 유지한다. (회귀 가드는
+     * {@code PlSqlStatisticsServiceImplCatalogTest} 에서 schema 호출이 발생하지 않는지 검증한다.)
+     * </p>
+     *
+     * @see <code>docs/운영반영/CRON_SQL_ERROR_TRIAGE_20260614.md</code>
      */
     @Value("${spring.datasource.schema-name:${DB_NAME:core_solution}}")
     private String dbSchemaName = "core_solution";
@@ -73,7 +81,6 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             SimpleJdbcCall jdbcCall =
                     new SimpleJdbcCall(dataSource)
                             .withCatalogName(dbSchemaName)
-                            .withSchemaName(dbSchemaName)
                             .withProcedureName("UpdateDailyStatistics")
                             .declareParameters(new SqlParameter("p_tenant_id", Types.VARCHAR),
                                     new SqlParameter("p_stat_date", Types.DATE),
@@ -120,7 +127,6 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             SimpleJdbcCall jdbcCall =
                     new SimpleJdbcCall(dataSource)
                             .withCatalogName(dbSchemaName)
-                            .withSchemaName(dbSchemaName)
                             .withProcedureName(procedureName)
                             .declareParameters(new SqlParameter("p_stat_date", Types.DATE));
 
@@ -160,7 +166,6 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             SimpleJdbcCall jdbcCall =
                     new SimpleJdbcCall(dataSource)
                             .withCatalogName(dbSchemaName)
-                            .withSchemaName(dbSchemaName)
                             .withProcedureName("UpdateConsultantPerformance")
                             .declareParameters(new SqlParameter("p_consultant_id", Types.BIGINT),
                                     new SqlParameter("p_performance_date", Types.DATE),
@@ -198,7 +203,6 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
                     .withCatalogName(dbSchemaName)
-                    .withSchemaName(dbSchemaName)
                     .withProcedureName("UpdateAllConsultantPerformance")
                     .declareParameters(new SqlParameter("p_performance_date", Types.DATE));
 
@@ -229,7 +233,6 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             SimpleJdbcCall jdbcCall =
                     new SimpleJdbcCall(dataSource)
                             .withCatalogName(dbSchemaName)
-                            .withSchemaName(dbSchemaName)
                             .withProcedureName("DailyPerformanceMonitoring")
                             .declareParameters(new SqlParameter("p_tenant_id", Types.VARCHAR),
                                     new SqlParameter("p_monitoring_date", Types.DATE),

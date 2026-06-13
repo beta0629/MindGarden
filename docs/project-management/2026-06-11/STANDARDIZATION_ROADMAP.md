@@ -400,9 +400,15 @@
   1. 운영 DB 사용자 비밀번호 회전 (`ALTER USER ... IDENTIFIED BY ...`)
   2. GitHub Secrets `PROD_DB_PASSWORD` 신규 등록
   3. `.github/workflows/deploy-production.yml` env 매핑 추가
-  4. systemd unit `EnvironmentFile=/etc/mindgarden/prod.env` 패턴 적용
-  5. 기존 평문 비밀번호 제거 + `systemctl daemon-reload` + `systemctl restart`
-  6. 헬스체크 + 로그인 검증
+  4. systemd unit `EnvironmentFile=` 패턴 적용 — **SSOT 는
+     `/etc/mindgarden/prod-from-dev.env` (62키, DB_HOST/DB_NAME/DB_USERNAME 포함)** 이며,
+     `/etc/mindgarden/prod.env` (DB_PASSWORD 등 5키) 는 비밀번호 보조 파일로 함께 로드된다.
+     두 파일은 키 set 이 완전 분리되어 있어 순서 충돌이 없다. (산출물
+     `docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md` §1·§2·§3 참조)
+  5. systemd unit `Environment=` 의 평문 키 15개 제거 — `deploy-production.yml`
+     `🔒 systemd unit SSOT 통합` step 이 매 배포마다 멱등 정리. (산출물 §4.3·§4.4·§6 안3)
+  6. 기존 평문 비밀번호 제거 + `systemctl daemon-reload` + `systemctl restart`
+  7. 헬스체크 + 로그인 검증
 
 ---
 

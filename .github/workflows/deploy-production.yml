@@ -1018,6 +1018,144 @@ jobs:
           fi
           
     # ============================================================================
+    # [P0 SSOT 통합 2026-06-13] systemd unit Environment= 평문 정리 + drop-in 검증
+    # 사전 점검 산출물: docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md §3·§4·§6
+    # 정당화 근거: docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md §17
+    #              (운영 반영 전 하드코딩 게이트 — secret 평문 unit 노출 위배)
+    #
+    # 문제 (산출물 §4.3·§4.4):
+    # - unit Environment= 15개 키 (DB_*, JWT_SECRET, PERSONAL_DATA_ENCRYPTION_*,
+    #   FRONTEND_BASE_URL, SERVER_BASE_URL, SESSION_COOKIE_DOMAIN, KAKAO/NAVER 6종)
+    #   가 prod-from-dev.env (SSOT) 의 동일 키를 덮어쓰는 충돌.
+    # - workflow 가 prod-from-dev.env 의 KAKAO/NAVER/JWT/PII 키를 갱신해도
+    #   운영 실효 값은 변하지 않음 (systemd Environment= 우선순위 규칙).
+    #
+    # 해결 (산출물 §6 안3):
+    # - unit 의 Environment= 15개 키 제거 → SSOT 를 prod-from-dev.env 로 일원화.
+    # - 90-envfile.conf drop-in 은 prod-from-dev.env 로드 책임 (의도 유지·검증).
+    # - 멱등: 이미 정리된 상태면 sha256 동일 → 백업 미생성·재시작 skip (no-op).
+    # ============================================================================
+    - name: 🔒 systemd unit SSOT 통합 — Environment= 평문 정리 + drop-in 검증
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        script: |
+          # set -e 비활성: cleanup 실패가 배포 전체를 차단하지 않도록 (배포 자체는 이전 step 에서 성공)
+          set -uo pipefail
+
+          UNIT_BLUE_FILE=/etc/systemd/system/mindgarden-core-blue.service
+          UNIT_GREEN_FILE=/etc/systemd/system/mindgarden-core-green.service
+          DROPIN_BLUE_DIR=/etc/systemd/system/mindgarden-core-blue.service.d
+          DROPIN_GREEN_DIR=/etc/systemd/system/mindgarden-core-green.service.d
+
+          # 제거 대상: 사전 점검 산출물 §4.3·§4.4 의 prod-from-dev.env 와 충돌하는 15개 키.
+          # DB_PORT 도 포함(unit 에 평문 3306 존재 — §4.3). 본 set 은 prod-from-dev.env 가 SSOT 로
+          # 책임지는 키이므로 unit 평문은 제거해야 한다.
+          REMOVE_KEYS="DB_HOST DB_PORT DB_NAME DB_USERNAME JWT_SECRET PERSONAL_DATA_ENCRYPTION_KEY PERSONAL_DATA_ENCRYPTION_IV FRONTEND_BASE_URL SERVER_BASE_URL SESSION_COOKIE_DOMAIN KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET KAKAO_REDIRECT_URI NAVER_CLIENT_ID NAVER_CLIENT_SECRET NAVER_REDIRECT_URI"
+
+          CHANGED=0
+
+          cleanup_unit() {
+            local f="$1"
+            if [ ! -f "$f" ]; then
+              echo "⏭️ $f 부재 — skip"
+              return 0
+            fi
+            local pre_sha post_sha backup
+            pre_sha=$(sudo sha256sum "$f" | awk '{print $1}')
+            # 변경 발생 여부를 먼저 확인 (dry-run): 정리 대상 키가 1건이라도 있는지
+            local match_count=0
+            for k in $REMOVE_KEYS; do
+              local c
+              c=$(sudo grep -cE "^[[:space:]]*Environment=${k}=" "$f" 2>/dev/null || echo 0)
+              match_count=$((match_count + c))
+            done
+            if [ "$match_count" -eq 0 ]; then
+              echo "✅ $f Environment= 평문 키 0건 (이미 SSOT 정리됨, no-op)"
+              return 0
+            fi
+            # 변경 발생 — 백업 후 실제 sed
+            backup="${f}.bak.$(date +%Y%m%d_%H%M%S)"
+            sudo cp -p "$f" "$backup"
+            for k in $REMOVE_KEYS; do
+              sudo sed -i -E "/^[[:space:]]*Environment=${k}=/d" "$f"
+            done
+            post_sha=$(sudo sha256sum "$f" | awk '{print $1}')
+            if [ "$pre_sha" = "$post_sha" ]; then
+              # 사전 카운트와 sha 결과 불일치 — 사용자에게 알림 + 백업 제거
+              echo "::warning::$f sed 후 sha 불변 — 매칭 룰 점검 필요 (match=$match_count)"
+              sudo rm -f "$backup"
+              return 0
+            fi
+            echo "🔒 $f 평문 Environment= $match_count 건 정리 완료 → 백업: $backup"
+            CHANGED=1
+          }
+
+          # drop-in 검증 — prod-from-dev.env 로드 책임 유지 + 평문 Environment= 잔존 0건
+          verify_dropin_envfile() {
+            local dir="$1"
+            local f="${dir}/90-envfile.conf"
+            if [ ! -f "$f" ]; then
+              echo "::warning title=drop-in 부재::${f} 부재 — prod-from-dev.env (SSOT) 로드 책임 누락 가능성. systemctl cat 으로 확인 권장."
+              return 0
+            fi
+            # drop-in 안의 평문 Environment= 행 검출 (있으면 경고 — drop-in 은 EnvironmentFile= 만 두는 정책)
+            local plaintext_lines
+            plaintext_lines=$(sudo grep -cE "^[[:space:]]*Environment=" "$f" 2>/dev/null || echo 0)
+            if [ "$plaintext_lines" -gt 0 ]; then
+              echo "::error title=drop-in 평문 Environment= 검출::${f} 안에 평문 Environment= ${plaintext_lines} 건 — SSOT 위배. drop-in 은 EnvironmentFile= 만 두는 정책."
+            fi
+            # EnvironmentFile=/etc/mindgarden/prod-from-dev.env 가 있는지 확인 (본래 역할)
+            if ! sudo grep -qE "^[[:space:]]*EnvironmentFile=/etc/mindgarden/prod-from-dev\.env" "$f" 2>/dev/null; then
+              echo "::warning title=drop-in 로드 누락::${f} 에 EnvironmentFile=/etc/mindgarden/prod-from-dev.env 가 없습니다. SSOT 적재가 누락될 수 있습니다."
+            else
+              echo "✅ ${f} prod-from-dev.env (SSOT) 로드 책임 확인"
+            fi
+          }
+
+          cleanup_unit "$UNIT_BLUE_FILE"
+          cleanup_unit "$UNIT_GREEN_FILE"
+          verify_dropin_envfile "$DROPIN_BLUE_DIR"
+          verify_dropin_envfile "$DROPIN_GREEN_DIR"
+
+          if [ "$CHANGED" -eq 0 ]; then
+            echo "✅ systemd unit SSOT 통합: no-op (이미 정리 완료 상태) — daemon-reload·restart 모두 skip"
+            exit 0
+          fi
+
+          # 변경 발생 시에만 daemon-reload + 양쪽 슬롯 재시작 (후속 env 주입 step 도 daemon-reload·restart 수행하므로 본 step 1회로 충분)
+          sudo systemctl daemon-reload
+          echo "🔄 mindgarden-core-blue.service + mindgarden-core-green.service 재시작 (SSOT 통합 적용)"
+          sudo systemctl restart mindgarden-core-blue.service || echo "::warning::blue 재시작 실패 (계속 진행)"
+          sudo systemctl restart mindgarden-core-green.service || echo "::warning::green 재시작 실패 (계속 진행)"
+
+          # 사후 검증 — 양쪽 헬스 + Environment= 평문 0건
+          sleep 15
+          BLUE_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8080/actuator/health 2>/dev/null || echo "000")
+          GREEN_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8081/actuator/health 2>/dev/null || echo "000")
+          echo "🏥 헬스: blue(8080)=$BLUE_HEALTH / green(8081)=$GREEN_HEALTH"
+          if [ "$BLUE_HEALTH" != "200" ] && [ "$GREEN_HEALTH" != "200" ]; then
+            echo "::warning title=BE 헬스 양쪽 비정상::15초 후에도 8080/8081 모두 200 이 아닙니다. 후속 헬스체크 step 에서 재검증 합니다."
+          fi
+
+          # 사후 검증 — Environment= 평문 키 잔존 0건
+          LEAK_COUNT=0
+          for k in $REMOVE_KEYS; do
+            c=$(sudo grep -cE "^[[:space:]]*Environment=${k}=" "$UNIT_BLUE_FILE" "$UNIT_GREEN_FILE" 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
+            LEAK_COUNT=$((LEAK_COUNT + c))
+          done
+          if [ "$LEAK_COUNT" -gt 0 ]; then
+            echo "::error title=systemd unit 평문 Environment= 누수::정리 후에도 ${LEAK_COUNT} 건 잔존 — 수동 점검 필요."
+          else
+            echo "🎉 systemd unit Environment= 평문 정리 완료 (양쪽 슬롯, 15개 키 잔존 0건)"
+          fi
+
+    # ============================================================================
     # [P0 hotfix 2026-06-08] Apple SIWA env 자동 주입 + 검증 (운영)
     # GitHub Secrets(APPLE_*) → /etc/mindgarden/prod-from-dev.env 멱등 갱신 + 양쪽 BG 슬롯 재시작 + env 검증.
     # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1 (자동화 완료).
@@ -1054,7 +1192,30 @@ jobs:
             echo "::notice title=Apple SIWA env skip::GitHub Secrets 의 APPLE_* 6종 중 $MISSING_SECRET 개가 비어 있어 prod.env 갱신을 skip 합니다. https://github.com/${{ github.repository }}/settings/secrets/actions 확인 필요."
             exit 0
           fi
-          
+
+          # === [멱등 사전 검사 2026-06-13] ===
+          # 사전 점검 산출물 §2 — 오늘 prod-from-dev.env 백업 24회 누적, workflow 비-멱등 정황.
+          # 신규 값이 현재 파일과 모두 동일하면 백업·갱신·daemon-reload·재시작·검증 모두 skip.
+          # PEM 은 줄바꿈 제거 후 비교 (실제 sed 도 동일 변환).
+          if [ -f "$PROD_ENV_FILE" ]; then
+            NEED_UPDATE=0
+            for k in $APPLE_KEYS; do
+              eval "_new=\${$k}"
+              if [ "$k" = "APPLE_PRIVATE_KEY" ]; then
+                _new=$(printf '%s' "$_new" | tr -d '\n\r')
+              fi
+              _cur=$(sudo grep -E "^[[:space:]]*${k}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+              if [ "$_new" != "$_cur" ]; then
+                NEED_UPDATE=1
+                break
+              fi
+            done
+            if [ "$NEED_UPDATE" -eq 0 ]; then
+              echo "✅ Apple SIWA 6종 모두 prod-from-dev.env 와 동일 — 백업·갱신·재시작·검증 skip (멱등 no-op)"
+              exit 0
+            fi
+          fi
+
           # 1) 파일 존재 보장 (최초 환경 대비) + 백업
           if [ ! -f "$PROD_ENV_FILE" ]; then
             echo "::warning title=prod-from-dev.env 누락::$PROD_ENV_FILE 가 없어 신규 생성합니다. systemd EnvironmentFile 경로(/etc/mindgarden/active-backend drop-in) 와 일치하는지 확인 필요."
@@ -1242,7 +1403,25 @@ jobs:
             echo "::notice title=Google OAuth env skip::GitHub Secrets 의 GOOGLE_* 3종 중 $MISSING_SECRET 개가 비어 있어 prod.env 갱신을 skip 합니다. https://github.com/${{ github.repository }}/settings/secrets/actions 확인 필요."
             exit 0
           fi
-          
+
+          # === [멱등 사전 검사 2026-06-13] ===
+          # 신규 값이 현재 파일과 모두 동일하면 백업·갱신·daemon-reload·재시작·검증 모두 skip.
+          if [ -f "$PROD_ENV_FILE" ]; then
+            NEED_UPDATE=0
+            for k in $GOOGLE_KEYS; do
+              eval "_new=\${$k}"
+              _cur=$(sudo grep -E "^[[:space:]]*${k}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+              if [ "$_new" != "$_cur" ]; then
+                NEED_UPDATE=1
+                break
+              fi
+            done
+            if [ "$NEED_UPDATE" -eq 0 ]; then
+              echo "✅ Google OAuth 3종 모두 prod-from-dev.env 와 동일 — 백업·갱신·재시작·검증 skip (멱등 no-op)"
+              exit 0
+            fi
+          fi
+
           # 1) 파일 존재 보장 (최초 환경 대비) + 백업
           if [ ! -f "$PROD_ENV_FILE" ]; then
             echo "::warning title=prod-from-dev.env 누락::$PROD_ENV_FILE 가 없어 신규 생성합니다. systemd EnvironmentFile 경로(/etc/mindgarden/active-backend drop-in) 와 일치하는지 확인 필요."
@@ -1428,6 +1607,27 @@ jobs:
           fi
           if [ "$MISSING_SECRET" -gt 0 ]; then
             echo "::notice title=*_REGISTERED_URLS partial::4종 중 $MISSING_SECRET 개가 비어 있어 빈 키는 graceful skip 됩니다 (BE 검증도 skip). 채워진 키만 prod.env 에 반영합니다."
+          fi
+
+          # === [멱등 사전 검사 2026-06-13] ===
+          # 채워진 키(non-empty)만 비교. 모두 동일하면 백업·갱신·재시작·검증 모두 skip.
+          if [ -f "$PROD_ENV_FILE" ]; then
+            NEED_UPDATE=0
+            for k in $REGISTERED_KEYS; do
+              eval "_new=\${$k}"
+              if [ -z "$_new" ]; then
+                continue
+              fi
+              _cur=$(sudo grep -E "^[[:space:]]*${k}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+              if [ "$_new" != "$_cur" ]; then
+                NEED_UPDATE=1
+                break
+              fi
+            done
+            if [ "$NEED_UPDATE" -eq 0 ]; then
+              echo "✅ *_REGISTERED_URLS (채워진 키만) 모두 prod-from-dev.env 와 동일 — 백업·갱신·재시작·검증 skip (멱등 no-op)"
+              exit 0
+            fi
           fi
 
           # 1) 파일 존재 보장 + 백업

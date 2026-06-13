@@ -1066,7 +1066,23 @@ jobs:
           BACKUP_FILE="${PROD_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
           sudo cp -p "$PROD_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
           echo "📦 백업: $BACKUP_FILE"
-          
+
+          # === [P0 재발 방지 가드 — DB_* 키 PRESERVE] ===
+          # 2026-06-13 운영 BE boot loop 회귀: prod-from-dev.env 가
+          # DB_HOST/DB_NAME/DB_USERNAME 키 0건 상태로 덮어써져 양 슬롯 boot loop.
+          # systemd unit Environment="DB_HOST=localhost" fallback 으로 자가 복구됨.
+          # 본 step 의 update_env 가 다른 키만 건드리더라도, 만일의 사고 대비
+          # 기존 DB 키 값을 사용자 홈 임시 파일에 보존한다. (sudo 없이 read 가능)
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
+          rm -f "$DB_PRESERVED_FILE"
+          for _pkey in $DB_PRESERVE_KEYS; do
+            _existing=$(sudo grep -E "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -n "$_existing" ]; then
+              printf '%s\n' "$_existing" >> "$DB_PRESERVED_FILE"
+            fi
+          done
+
           # 2) 멱등 KEY="VALUE" 갱신 (있으면 sed 교체, 없으면 append)
           #    sed delimiter 는 | 사용 (URL/PEM 의 / 충돌 회피). replacement 안의 &/|/\ 만 escape.
           #    값은 항상 " 로 감싸 — bash systemd EnvironmentFile 양쪽 모두 인용된 멀티문자열 안전.
@@ -1096,7 +1112,44 @@ jobs:
           # 3) 권한 보호 (root:root 0600)
           sudo chmod 600 "$PROD_ENV_FILE"
           sudo chown root:root "$PROD_ENV_FILE"
-          
+
+          # === [P0 재발 방지 가드 — DB_* 키 RESTORE + FAIL-FAST] ===
+          # 갱신 직후 보존했던 DB_* 키가 사라졌으면 PRESERVED 값으로 복원하고,
+          # 그래도 누락/빈값이면 deploy 중단 (exit 1) — 운영 BE boot loop 회귀 차단.
+          if [ -f "$DB_PRESERVED_FILE" ]; then
+            while IFS= read -r _preserved; do
+              _pkey=$(printf '%s' "$_preserved" | cut -d'=' -f1 | tr -d '[:space:]')
+              if [ -n "$_pkey" ] && ! sudo grep -qE "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null; then
+                echo "::warning title=DB 키 복원::${_pkey} 가 갱신 도중 사라져 PRESERVED 값으로 복원합니다."
+                printf '%s\n' "$_preserved" | sudo tee -a "$PROD_ENV_FILE" >/dev/null
+              fi
+            done < "$DB_PRESERVED_FILE"
+            rm -f "$DB_PRESERVED_FILE"
+          fi
+          DB_REQUIRED_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_MISSING_KEYS=""
+          DB_EMPTY_KEYS=""
+          for _dkey in $DB_REQUIRED_KEYS; do
+            _line=$(sudo grep -E "^[[:space:]]*${_dkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -z "$_line" ]; then
+              DB_MISSING_KEYS="$DB_MISSING_KEYS $_dkey"
+            else
+              _val=$(printf '%s' "$_line" | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+              if [ -z "$_val" ]; then
+                DB_EMPTY_KEYS="$DB_EMPTY_KEYS $_dkey"
+              fi
+            fi
+          done
+          if [ -n "$DB_MISSING_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 누락::다음 키가 ${PROD_ENV_FILE} 에 없습니다 -$DB_MISSING_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          if [ -n "$DB_EMPTY_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 빈 값::다음 키 값이 비어 있습니다 -$DB_EMPTY_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          echo "✅ prod-from-dev.env DB 키 검증 PASS (DB_HOST/DB_NAME/DB_USERNAME)"
+
           # 4) 값 노출 없이 길이만 확인 (Secret 보안 — 절대 echo 금지)
           echo "✅ prod.env Apple SIWA 6종 갱신 완료 — 길이만 표시:"
           sudo grep -E "^APPLE_" "$PROD_ENV_FILE" \
@@ -1201,7 +1254,22 @@ jobs:
           BACKUP_FILE="${PROD_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
           sudo cp -p "$PROD_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
           echo "📦 백업: $BACKUP_FILE"
-          
+
+          # === [P0 재발 방지 가드 — DB_* 키 PRESERVE] ===
+          # 2026-06-13 운영 BE boot loop 회귀: prod-from-dev.env 가
+          # DB_HOST/DB_NAME/DB_USERNAME 키 0건 상태로 덮어써져 양 슬롯 boot loop.
+          # 본 step 의 update_env 가 다른 키만 건드리더라도, 만일의 사고 대비
+          # 기존 DB 키 값을 사용자 홈 임시 파일에 보존한다. (sudo 없이 read 가능)
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
+          rm -f "$DB_PRESERVED_FILE"
+          for _pkey in $DB_PRESERVE_KEYS; do
+            _existing=$(sudo grep -E "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -n "$_existing" ]; then
+              printf '%s\n' "$_existing" >> "$DB_PRESERVED_FILE"
+            fi
+          done
+
           # 2) 멱등 KEY="VALUE" 갱신 (Apple step 과 동일 로직 — sed delimiter | 로 URL 의 / 충돌 회피)
           update_env() {
             local key="$1"
@@ -1223,7 +1291,44 @@ jobs:
           # 3) 권한 보호 (root:root 0600)
           sudo chmod 600 "$PROD_ENV_FILE"
           sudo chown root:root "$PROD_ENV_FILE"
-          
+
+          # === [P0 재발 방지 가드 — DB_* 키 RESTORE + FAIL-FAST] ===
+          # 갱신 직후 보존했던 DB_* 키가 사라졌으면 PRESERVED 값으로 복원하고,
+          # 그래도 누락/빈값이면 deploy 중단 (exit 1) — 운영 BE boot loop 회귀 차단.
+          if [ -f "$DB_PRESERVED_FILE" ]; then
+            while IFS= read -r _preserved; do
+              _pkey=$(printf '%s' "$_preserved" | cut -d'=' -f1 | tr -d '[:space:]')
+              if [ -n "$_pkey" ] && ! sudo grep -qE "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null; then
+                echo "::warning title=DB 키 복원::${_pkey} 가 갱신 도중 사라져 PRESERVED 값으로 복원합니다."
+                printf '%s\n' "$_preserved" | sudo tee -a "$PROD_ENV_FILE" >/dev/null
+              fi
+            done < "$DB_PRESERVED_FILE"
+            rm -f "$DB_PRESERVED_FILE"
+          fi
+          DB_REQUIRED_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_MISSING_KEYS=""
+          DB_EMPTY_KEYS=""
+          for _dkey in $DB_REQUIRED_KEYS; do
+            _line=$(sudo grep -E "^[[:space:]]*${_dkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -z "$_line" ]; then
+              DB_MISSING_KEYS="$DB_MISSING_KEYS $_dkey"
+            else
+              _val=$(printf '%s' "$_line" | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+              if [ -z "$_val" ]; then
+                DB_EMPTY_KEYS="$DB_EMPTY_KEYS $_dkey"
+              fi
+            fi
+          done
+          if [ -n "$DB_MISSING_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 누락::다음 키가 ${PROD_ENV_FILE} 에 없습니다 -$DB_MISSING_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          if [ -n "$DB_EMPTY_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 빈 값::다음 키 값이 비어 있습니다 -$DB_EMPTY_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          echo "✅ prod-from-dev.env DB 키 검증 PASS (DB_HOST/DB_NAME/DB_USERNAME)"
+
           # 4) 값 노출 없이 길이만 확인 (Secret 보안 — 절대 echo 금지)
           echo "✅ prod.env Google OAuth 3종 갱신 완료 — 길이만 표시:"
           sudo grep -E "^GOOGLE_" "$PROD_ENV_FILE" \
@@ -1337,6 +1442,21 @@ jobs:
           sudo cp -p "$PROD_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
           echo "📦 백업: $BACKUP_FILE"
 
+          # === [P0 재발 방지 가드 — DB_* 키 PRESERVE] ===
+          # 2026-06-13 운영 BE boot loop 회귀: prod-from-dev.env 가
+          # DB_HOST/DB_NAME/DB_USERNAME 키 0건 상태로 덮어써져 양 슬롯 boot loop.
+          # 본 step 의 update_env 가 다른 키만 건드리더라도, 만일의 사고 대비
+          # 기존 DB 키 값을 사용자 홈 임시 파일에 보존한다. (sudo 없이 read 가능)
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
+          rm -f "$DB_PRESERVED_FILE"
+          for _pkey in $DB_PRESERVE_KEYS; do
+            _existing=$(sudo grep -E "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -n "$_existing" ]; then
+              printf '%s\n' "$_existing" >> "$DB_PRESERVED_FILE"
+            fi
+          done
+
           # 2) 멱등 KEY="VALUE" 갱신 (Google/Apple step 과 동일 로직)
           update_env() {
             local key="$1"
@@ -1361,6 +1481,43 @@ jobs:
           # 3) 권한 보호 (root:root 0600)
           sudo chmod 600 "$PROD_ENV_FILE"
           sudo chown root:root "$PROD_ENV_FILE"
+
+          # === [P0 재발 방지 가드 — DB_* 키 RESTORE + FAIL-FAST] ===
+          # 갱신 직후 보존했던 DB_* 키가 사라졌으면 PRESERVED 값으로 복원하고,
+          # 그래도 누락/빈값이면 deploy 중단 (exit 1) — 운영 BE boot loop 회귀 차단.
+          if [ -f "$DB_PRESERVED_FILE" ]; then
+            while IFS= read -r _preserved; do
+              _pkey=$(printf '%s' "$_preserved" | cut -d'=' -f1 | tr -d '[:space:]')
+              if [ -n "$_pkey" ] && ! sudo grep -qE "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null; then
+                echo "::warning title=DB 키 복원::${_pkey} 가 갱신 도중 사라져 PRESERVED 값으로 복원합니다."
+                printf '%s\n' "$_preserved" | sudo tee -a "$PROD_ENV_FILE" >/dev/null
+              fi
+            done < "$DB_PRESERVED_FILE"
+            rm -f "$DB_PRESERVED_FILE"
+          fi
+          DB_REQUIRED_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_MISSING_KEYS=""
+          DB_EMPTY_KEYS=""
+          for _dkey in $DB_REQUIRED_KEYS; do
+            _line=$(sudo grep -E "^[[:space:]]*${_dkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -z "$_line" ]; then
+              DB_MISSING_KEYS="$DB_MISSING_KEYS $_dkey"
+            else
+              _val=$(printf '%s' "$_line" | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+              if [ -z "$_val" ]; then
+                DB_EMPTY_KEYS="$DB_EMPTY_KEYS $_dkey"
+              fi
+            fi
+          done
+          if [ -n "$DB_MISSING_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 누락::다음 키가 ${PROD_ENV_FILE} 에 없습니다 -$DB_MISSING_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          if [ -n "$DB_EMPTY_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 빈 값::다음 키 값이 비어 있습니다 -$DB_EMPTY_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          echo "✅ prod-from-dev.env DB 키 검증 PASS (DB_HOST/DB_NAME/DB_USERNAME)"
 
           # 4) 값 노출 없이 길이만 표시 (콜백 URL 은 비밀이 아니지만 일관 표시)
           echo "✅ prod.env *_REGISTERED_URLS 갱신 완료 — 길이만 표시:"
@@ -1444,6 +1601,21 @@ jobs:
           sudo cp -p "$PROD_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
           echo "📦 백업: $BACKUP_FILE"
 
+          # === [P0 재발 방지 가드 — DB_* 키 PRESERVE] ===
+          # 2026-06-13 운영 BE boot loop 회귀: prod-from-dev.env 가
+          # DB_HOST/DB_NAME/DB_USERNAME 키 0건 상태로 덮어써져 양 슬롯 boot loop.
+          # 본 step 은 PROFILE_IMAGE_UPLOAD_DIR 단일 키만 다루지만, 만일의 사고
+          # 대비 기존 DB 키 값을 사용자 홈 임시 파일에 보존한다.
+          DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
+          rm -f "$DB_PRESERVED_FILE"
+          for _pkey in $DB_PRESERVE_KEYS; do
+            _existing=$(sudo grep -E "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -n "$_existing" ]; then
+              printf '%s\n' "$_existing" >> "$DB_PRESERVED_FILE"
+            fi
+          done
+
           escaped_value=$(printf '%s' "$VALUE" | sed -e 's/[\\&|]/\\&/g')
           if sudo grep -qE "^[[:space:]]*${KEY}=" "$PROD_ENV_FILE" 2>/dev/null; then
             sudo sed -i "s|^[[:space:]]*${KEY}=.*|${KEY}=\"${escaped_value}\"|" "$PROD_ENV_FILE"
@@ -1453,6 +1625,43 @@ jobs:
           sudo chmod 600 "$PROD_ENV_FILE"
           sudo chown root:root "$PROD_ENV_FILE"
           echo "✅ ${KEY}=\"${VALUE}\" 갱신 완료 (was: '${CURRENT_VALUE}')"
+
+          # === [P0 재발 방지 가드 — DB_* 키 RESTORE + FAIL-FAST] ===
+          # 갱신 직후 보존했던 DB_* 키가 사라졌으면 PRESERVED 값으로 복원하고,
+          # 그래도 누락/빈값이면 deploy 중단 (exit 1) — 운영 BE boot loop 회귀 차단.
+          if [ -f "$DB_PRESERVED_FILE" ]; then
+            while IFS= read -r _preserved; do
+              _pkey=$(printf '%s' "$_preserved" | cut -d'=' -f1 | tr -d '[:space:]')
+              if [ -n "$_pkey" ] && ! sudo grep -qE "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null; then
+                echo "::warning title=DB 키 복원::${_pkey} 가 갱신 도중 사라져 PRESERVED 값으로 복원합니다."
+                printf '%s\n' "$_preserved" | sudo tee -a "$PROD_ENV_FILE" >/dev/null
+              fi
+            done < "$DB_PRESERVED_FILE"
+            rm -f "$DB_PRESERVED_FILE"
+          fi
+          DB_REQUIRED_KEYS="DB_HOST DB_NAME DB_USERNAME"
+          DB_MISSING_KEYS=""
+          DB_EMPTY_KEYS=""
+          for _dkey in $DB_REQUIRED_KEYS; do
+            _line=$(sudo grep -E "^[[:space:]]*${_dkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+            if [ -z "$_line" ]; then
+              DB_MISSING_KEYS="$DB_MISSING_KEYS $_dkey"
+            else
+              _val=$(printf '%s' "$_line" | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+              if [ -z "$_val" ]; then
+                DB_EMPTY_KEYS="$DB_EMPTY_KEYS $_dkey"
+              fi
+            fi
+          done
+          if [ -n "$DB_MISSING_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 누락::다음 키가 ${PROD_ENV_FILE} 에 없습니다 -$DB_MISSING_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          if [ -n "$DB_EMPTY_KEYS" ]; then
+            echo "::error title=prod-from-dev.env DB 키 빈 값::다음 키 값이 비어 있습니다 -$DB_EMPTY_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+            exit 1
+          fi
+          echo "✅ prod-from-dev.env DB 키 검증 PASS (DB_HOST/DB_NAME/DB_USERNAME)"
 
           sudo mkdir -p "$VALUE"
           if id mindgarden >/dev/null 2>&1; then

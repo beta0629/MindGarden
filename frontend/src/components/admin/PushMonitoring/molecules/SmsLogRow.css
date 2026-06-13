@@ -1,0 +1,79 @@
+/**
+ * SmsLogRow 스타일.
+ *
+ * 디자인 토큰만 사용. 6컬럼 grid (시각 / 채널 / 템플릿 / 대상자 / 상태 / 오류).
+ *
+ * @since 2026-06-13
+ */
+
+.mg-sms-log-row {
+  display: grid;
+  grid-template-columns:
+    minmax(96px, 0.8fr)
+    minmax(72px, 0.6fr)
+    minmax(140px, 1.2fr)
+    minmax(120px, 1fr)
+    minmax(64px, 0.5fr)
+    minmax(160px, 2fr);
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  border-bottom: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--ad-b0kla-text, var(--mg-color-text-main));
+}
+
+.mg-sms-log-row:last-child {
+  border-bottom: none;
+}
+
+.mg-sms-log-row__time {
+  font-variant-numeric: tabular-nums;
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}
+
+.mg-sms-log-row__template {
+  font-family: var(--mg-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  color: var(--ad-b0kla-text, var(--mg-color-text-main));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-sms-log-row__recipient {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mg-sms-log-row__recipient-name {
+  font-weight: 600;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-sms-log-row__error {
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+  .mg-sms-log-row {
+    grid-template-columns:
+      minmax(80px, 0.7fr)
+      minmax(60px, 0.5fr)
+      minmax(120px, 1.4fr)
+      minmax(60px, 0.5fr);
+  }
+  .mg-sms-log-row__recipient,
+  .mg-sms-log-row__error {
+    grid-column: 1 / -1;
+  }
+}

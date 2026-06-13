@@ -32,6 +32,7 @@ import PushMonitorTrendSection from './organisms/PushMonitorTrendSection';
 import PushMonitorSnapshotSection from './organisms/PushMonitorSnapshotSection';
 import PushMonitorFailureSection from './organisms/PushMonitorFailureSection';
 import PushMonitorOperationalSection from './organisms/PushMonitorOperationalSection';
+import SmsLogCard from './organisms/SmsLogCard';
 import usePushMonitoringSnapshot from '../../../hooks/usePushMonitoringSnapshot';
 import notificationManager from '../../../utils/notification';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../constants/adminWebScaffold';
@@ -132,6 +133,7 @@ const AdminPushMonitoringPage = () => {
               <PushMonitorSnapshotSection
                 snapshot={snapshot?.tenantSnapshot || null}
               />
+              <SmsLogCard />
               <PushMonitorFailureSection
                 entries={snapshot?.failures || []}
                 totalCount={snapshot?.failuresTotal || 0}

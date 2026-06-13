@@ -1,0 +1,35 @@
+/**
+ * SmsLogStatusBadge 스타일.
+ *
+ * 디자인 토큰만 사용 — 성공(green)/실패(orange-red)/대기(neutral).
+ *
+ * @since 2026-06-13
+ */
+
+.mg-sms-log-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 2px var(--mg-spacing-sm, 0.5rem);
+  border-radius: var(--mg-radius-full, 999px);
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.mg-sms-log-status-badge--success {
+  background: var(--ad-b0kla-green-bg);
+  color: var(--ad-b0kla-green, var(--mg-color-success-main));
+}
+
+.mg-sms-log-status-badge--failure {
+  background: var(--ad-b0kla-orange-bg);
+  color: var(--ad-b0kla-danger, var(--mg-color-error-main));
+}
+
+.mg-sms-log-status-badge--pending {
+  background: var(--ad-b0kla-bg, var(--mg-color-background-main));
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}

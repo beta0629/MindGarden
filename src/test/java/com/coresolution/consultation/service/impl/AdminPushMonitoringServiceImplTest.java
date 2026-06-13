@@ -18,6 +18,7 @@ import com.coresolution.consultation.dto.PushMonitoringRange;
 import com.coresolution.consultation.dto.PushMonitoringResendResponse;
 import com.coresolution.consultation.dto.PushMonitoringSnapshotResponse;
 import com.coresolution.consultation.dto.PushMonitoringTenantSnapshot;
+import com.coresolution.consultation.dto.SmsLogItem;
 import com.coresolution.consultation.dto.TestNotificationChannel;
 import com.coresolution.consultation.dto.TestNotificationRecipientMode;
 import com.coresolution.consultation.entity.AdminTestNotificationLog;
@@ -28,6 +29,7 @@ import com.coresolution.consultation.repository.AdminTestNotificationLogReposito
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import com.coresolution.consultation.repository.TenantKakaoAlimtalkSettingsRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,6 +54,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.ArgumentCaptor;
 
 /**
  * {@link AdminPushMonitoringServiceImpl} 단위 테스트.
@@ -77,6 +82,8 @@ class AdminPushMonitoringServiceImplTest {
     private CommonCodeRepository commonCodeRepository;
     @Mock
     private AdminTestNotificationRateLimiter rateLimiter;
+    @Mock
+    private UserRepository userRepository;
 
     private BatchNotificationProperties batchNotificationProperties;
     private ExpoPushProperties expoPushProperties;
@@ -344,6 +351,107 @@ class AdminPushMonitoringServiceImplTest {
     void recentQueueWindowExposes5Minutes() {
         assertThat(AdminPushMonitoringServiceImpl.getRecentQueueWindow())
             .isEqualTo(Duration.ofMinutes(5L));
+    }
+
+    @Test
+    @DisplayName("loadRecentSmsLogs — 채널 IN(SMS, ALIMTALK) + createdAt DESC + limit 적용")
+    void recentSmsLogsAppliesChannelAndSort() {
+        NotificationBatchSendLog row = batch(LocalDateTime.now(), true, null, "SMS");
+        ReflectionTestUtils.setField(row, "id", 4001L);
+        ReflectionTestUtils.setField(row, "createdAt", LocalDateTime.now());
+        when(batchLogRepository.findRecentByTenantAndChannels(eq(TENANT_ID), any(), any()))
+            .thenReturn(List.of(row));
+        when(userRepository.findAllById(any())).thenReturn(List.of());
+
+        List<SmsLogItem> items = service.loadRecentSmsLogs(TENANT_ID, 20);
+
+        ArgumentCaptor<java.util.Collection<String>> channels =
+            ArgumentCaptor.forClass(java.util.Collection.class);
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(batchLogRepository).findRecentByTenantAndChannels(
+            eq(TENANT_ID), channels.capture(), pageableCaptor.capture());
+        assertThat(channels.getValue())
+            .containsExactlyInAnyOrder(
+                BatchNotificationTemplateCodes.CHANNEL_SMS,
+                BatchNotificationTemplateCodes.CHANNEL_ALIMTALK);
+        Pageable captured = pageableCaptor.getValue();
+        assertThat(captured.getPageSize()).isEqualTo(20);
+        Sort.Order order = captured.getSort().getOrderFor("createdAt");
+        assertThat(order).isNotNull();
+        assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+        assertThat(items).hasSize(1);
+        assertThat(items.get(0).getChannelUsed()).isEqualTo("SMS");
+        assertThat(items.get(0).getRecipientPhone()).isEqualTo("010-***-1234");
+    }
+
+    @Test
+    @DisplayName("loadRecentSmsLogs — limit 0/음수는 기본 20, 100 초과는 100 으로 clamp")
+    void recentSmsLogsClampsLimit() {
+        when(batchLogRepository.findRecentByTenantAndChannels(eq(TENANT_ID), any(), any()))
+            .thenReturn(List.of());
+
+        service.loadRecentSmsLogs(TENANT_ID, 0);
+        service.loadRecentSmsLogs(TENANT_ID, -5);
+        service.loadRecentSmsLogs(TENANT_ID, 999);
+        service.loadRecentSmsLogs(TENANT_ID, 50);
+
+        ArgumentCaptor<Pageable> pageables = ArgumentCaptor.forClass(Pageable.class);
+        verify(batchLogRepository, times(4)).findRecentByTenantAndChannels(
+            eq(TENANT_ID), any(), pageables.capture());
+        List<Pageable> captured = pageables.getAllValues();
+        assertThat(captured.get(0).getPageSize())
+            .isEqualTo(AdminPushMonitoringServiceImpl.RECENT_SMS_LOGS_DEFAULT_LIMIT);
+        assertThat(captured.get(1).getPageSize())
+            .isEqualTo(AdminPushMonitoringServiceImpl.RECENT_SMS_LOGS_DEFAULT_LIMIT);
+        assertThat(captured.get(2).getPageSize())
+            .isEqualTo(AdminPushMonitoringServiceImpl.RECENT_SMS_LOGS_MAX_LIMIT);
+        assertThat(captured.get(3).getPageSize()).isEqualTo(50);
+    }
+
+    @Test
+    @DisplayName("loadRecentSmsLogs — recipientName 매핑(테넌트 격리: 다른 테넌트 사용자 무시)")
+    void recentSmsLogsMapsRecipientNameWithTenantGuard() {
+        NotificationBatchSendLog selfTenantRow = batch(LocalDateTime.now(), true, null, "SMS");
+        ReflectionTestUtils.setField(selfTenantRow, "id", 4101L);
+        ReflectionTestUtils.setField(selfTenantRow, "recipientUserId", 100L);
+        NotificationBatchSendLog foreignRow = batch(LocalDateTime.now(), true, null, "ALIMTALK");
+        ReflectionTestUtils.setField(foreignRow, "id", 4102L);
+        ReflectionTestUtils.setField(foreignRow, "recipientUserId", 200L);
+        when(batchLogRepository.findRecentByTenantAndChannels(eq(TENANT_ID), any(), any()))
+            .thenReturn(List.of(selfTenantRow, foreignRow));
+        User self = new User();
+        ReflectionTestUtils.setField(self, "id", 100L);
+        ReflectionTestUtils.setField(self, "tenantId", TENANT_ID);
+        ReflectionTestUtils.setField(self, "name", "홍길동");
+        User foreign = new User();
+        ReflectionTestUtils.setField(foreign, "id", 200L);
+        ReflectionTestUtils.setField(foreign, "tenantId", "other-tenant");
+        ReflectionTestUtils.setField(foreign, "name", "타테넌트사용자");
+        when(userRepository.findAllById(any())).thenReturn(List.of(self, foreign));
+
+        List<SmsLogItem> items = service.loadRecentSmsLogs(TENANT_ID, 20);
+
+        assertThat(items).hasSize(2);
+        SmsLogItem selfItem = items.stream()
+            .filter(i -> Long.valueOf(100L).equals(i.getRecipientUserId()))
+            .findFirst().orElseThrow();
+        SmsLogItem foreignItem = items.stream()
+            .filter(i -> Long.valueOf(200L).equals(i.getRecipientUserId()))
+            .findFirst().orElseThrow();
+        assertThat(selfItem.getRecipientName()).isEqualTo("홍길동");
+        assertThat(foreignItem.getRecipientName()).isNull();
+    }
+
+    @Test
+    @DisplayName("loadRecentSmsLogs — 결과 0건이면 users 조회 skip + 빈 list")
+    void recentSmsLogsEmptyShortCircuits() {
+        when(batchLogRepository.findRecentByTenantAndChannels(eq(TENANT_ID), any(), any()))
+            .thenReturn(List.of());
+
+        List<SmsLogItem> items = service.loadRecentSmsLogs(TENANT_ID, 20);
+
+        assertThat(items).isEmpty();
+        verify(userRepository, never()).findAllById(any());
     }
 
     private NotificationBatchSendLog batch(LocalDateTime sentAt, boolean success,

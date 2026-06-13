@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.NotificationBatchSendLog;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -195,6 +196,31 @@ public interface NotificationBatchSendLogRepository
     Optional<NotificationBatchSendLog> findByIdAndTenantId(
         @Param("id") Long id,
         @Param("tenantId") String tenantId);
+
+    /**
+     * 어드민 모니터링: 특정 채널 묶음(SMS/알림톡 등) 의 최근 발송 이력 N건.
+     *
+     * <p>「푸시 설정 모니터링」 페이지의 「최근 SMS/알림톡 발송」 카드 전용 — 성공·실패 무관
+     * 최신 발송 N건을 {@code created_at} 내림차순으로 반환한다.
+     *
+     * <p>{@code channels} 가 비어 있으면 빈 list 를 반환한다(NPE/전체 스캔 방지).
+     * 호출자는 PENDING/PUSH 채널을 제외한 의도된 채널 코드만 전달해야 한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param channels {@code channel_used} 필터 묶음 (예: SMS, ALIMTALK)
+     * @param pageable 페이지·정렬·limit (보통 {@code PageRequest.of(0, limit, Sort.by("createdAt").descending())})
+     * @return 생성 시각 내림차순 로그
+     * @since 2026-06-13
+     */
+    @Query("SELECT l FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.channelUsed IN :channels "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL) "
+            + "ORDER BY l.createdAt DESC")
+    List<NotificationBatchSendLog> findRecentByTenantAndChannels(
+        @Param("tenantId") String tenantId,
+        @Param("channels") Collection<String> channels,
+        Pageable pageable);
 
     /**
      * 보관기간 초과 row 일괄 삭제 (시스템 잡 전용 — tenant 무관 전역).

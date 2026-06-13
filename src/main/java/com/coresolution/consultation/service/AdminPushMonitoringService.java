@@ -1,9 +1,11 @@
 package com.coresolution.consultation.service;
 
+import java.util.List;
 import com.coresolution.consultation.dto.PushMonitoringChannelFilter;
 import com.coresolution.consultation.dto.PushMonitoringRange;
 import com.coresolution.consultation.dto.PushMonitoringResendResponse;
 import com.coresolution.consultation.dto.PushMonitoringSnapshotResponse;
+import com.coresolution.consultation.dto.SmsLogItem;
 import com.coresolution.consultation.entity.User;
 
 /**
@@ -53,4 +55,19 @@ public interface AdminPushMonitoringService {
         Long logId,
         String source,
         String reason);
+
+    /**
+     * 최근 SMS/알림톡 발송 이력 N행 조회 (모니터링 카드 전용).
+     *
+     * <p>{@code notification_batch_send_log} 에서 채널 {@code SMS}/{@code ALIMTALK} 만 필터링하여
+     * {@code created_at} 내림차순으로 반환한다. 성공·실패 무관 운영 가시성용.
+     *
+     * <p>수신자 이름은 {@code users.name} 을 1회 in-쿼리로 묶어 N+1 을 방지한다.
+     *
+     * @param tenantId 테넌트 ID (필수)
+     * @param limit    최대 반환 행 수 (1 이상, 호출자가 clamp 하여 전달)
+     * @return 최근 발송 행 list (없으면 빈 list)
+     * @since 2026-06-13
+     */
+    List<SmsLogItem> loadRecentSmsLogs(String tenantId, int limit);
 }

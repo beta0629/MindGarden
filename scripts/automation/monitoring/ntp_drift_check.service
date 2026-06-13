@@ -1,0 +1,29 @@
+[Unit]
+Description=MindGarden NTP drift watcher (Discord alert)
+Documentation=https://github.com/beta0629/MindGarden/blob/develop/docs/%EC%9A%B4%EC%98%81%EB%B0%98%EC%98%81/NTP_DRIFT_DISCORD_ALERT_SETUP_GUIDE.md
+After=network-online.target time-sync.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# DISCORD_WEBHOOK_URL 등 비밀값은 EnvironmentFile 로 주입한다 (코드 하드코딩 금지).
+# /etc/mindgarden/ntp_drift.env (또는 log_watcher.env 와 공용) 파일을 chmod 640 + root:mindgarden 으로 보호.
+EnvironmentFile=-/etc/mindgarden/ntp_drift.env
+EnvironmentFile=-/etc/mindgarden/log_watcher.env
+# 시스템 명령(timedatectl / chronyc) 만 사용하므로 root 가 아닌 mindgarden 으로 실행 가능.
+User=mindgarden
+Group=mindgarden
+ExecStart=/opt/mindgarden/scripts/automation/monitoring/ntp_drift_check.sh
+
+SuccessExitStatus=0
+TimeoutStartSec=60
+
+# 보안 강화 (선택)
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mindgarden /tmp
+
+[Install]
+WantedBy=multi-user.target

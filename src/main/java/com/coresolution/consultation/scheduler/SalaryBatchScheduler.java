@@ -9,9 +9,11 @@ import java.util.UUID;
 import com.coresolution.consultation.service.SalaryBatchService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.TenantService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -34,12 +36,19 @@ import lombok.extern.slf4j.Slf4j;
     matchIfMissing = true
 )
 public class SalaryBatchScheduler {
-    
+
+    private static final String SCHEDULER_NAME = "SalaryBatch";
+
     private final SalaryBatchService salaryBatchService;
     private final SalaryScheduleService salaryScheduleService;
     private final TenantService tenantService;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
+    /**
+     * Discord 알람 컴포넌트 (선택 의존성).
+     * {@code monitoring.discord.webhook-url} 미설정 시 graceful skip.
+     */
+    private final ObjectProvider<SchedulerFailureNotifier> failureNotifierProvider;
     
     /**
      * 매월 기산일에 급여 배치 자동 실행 (표준화 적용)
@@ -143,7 +152,8 @@ public class SalaryBatchScheduler {
                     );
                     
                     failureCount++;
-                    
+                    notifyFailureSafely("MonthlySalaryBatch", tenantId, e);
+
                 } finally {
                     // 테넌트 컨텍스트 정리
                     TenantContextHolder.clear();
@@ -187,6 +197,7 @@ public class SalaryBatchScheduler {
                 0,
                 e.getMessage()
             );
+            notifyFailureSafely("SchedulerEntry", null, e);
         }
     }
     
@@ -254,6 +265,22 @@ public class SalaryBatchScheduler {
         } catch (Exception e) {
             log.error("❌ [SalaryBatchMonitor] 모니터링 실패: executionId={}, error={}", 
                 executionId, e.getMessage(), e);
+            notifyFailureSafely("MonitorBatchStatus", null, e);
+        }
+    }
+
+    /**
+     * Discord 알람을 안전하게 발송한다. (실패해도 본 BE 흐름 차단 금지)
+     */
+    private void notifyFailureSafely(String stepName, String tenantId, Throwable error) {
+        try {
+            SchedulerFailureNotifier notifier = failureNotifierProvider.getIfAvailable();
+            if (notifier != null) {
+                notifier.notifyFailure(SCHEDULER_NAME, stepName, tenantId, error);
+            }
+        } catch (Exception alertEx) {
+            log.warn("[SalaryBatch] 실패 알람 발송 자체 실패: step={}, tenantId={}, error={}",
+                stepName, tenantId, alertEx.getMessage());
         }
     }
 }

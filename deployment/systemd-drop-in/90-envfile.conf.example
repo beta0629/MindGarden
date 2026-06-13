@@ -1,0 +1,25 @@
+# MindGarden Core 운영 systemd drop-in — EnvironmentFile (DEPRECATED 예시)
+#
+# ============================================================================
+# DEPRECATED — 신규 호스트에는 적용하지 말 것.
+# ============================================================================
+# 본 drop-in 은 PR #300 SSOT 정책 (docs/standards/DB_ENV_SSOT_POLICY.md v1.0.0, 2026-06-13)
+# 에 따라 /etc/mindgarden/prod.env 단일 EnvironmentFile 로 통합되었다.
+#   - 운영 실측 (2026-06-13) 의 prod-from-dev.env (60 키) 는 PR-3 / PR-4 cutover 로
+#     prod.env 에 머지되며, 머지 후 본 drop-in (90-envfile.conf) 은 다음 절차로 제거한다.
+#       sudo rm /etc/systemd/system/mindgarden-core-blue.service.d/90-envfile.conf
+#       sudo rm /etc/systemd/system/mindgarden-core-green.service.d/90-envfile.conf
+#       sudo systemctl daemon-reload
+#       sudo systemctl restart mindgarden-core-blue.service mindgarden-core-green.service
+#   - cutover 절차·검증·롤백은 docs/standards/DB_ENV_SSOT_POLICY.md §2 (PR-4) 와
+#     docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md 를 따른다.
+#
+# 신규 호스트는 본 파일을 설치하지 말고, deployment/systemd/mindgarden-core-{blue,green}.service.example
+# 의 EnvironmentFile=/etc/mindgarden/prod.env 단일 패턴만 사용한다.
+#
+# 평문 secret 금지: 본 drop-in 의 [Service] 섹션에 Environment= 라인을 두지 말 것
+#   (DB_ENV_SSOT_POLICY.md §3).
+#
+# (참고용) 폐기 전 형태 — 신규 적용 금지:
+# [Service]
+# EnvironmentFile=/etc/mindgarden/prod-from-dev.env

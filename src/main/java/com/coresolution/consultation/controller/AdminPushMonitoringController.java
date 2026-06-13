@@ -1,10 +1,12 @@
 package com.coresolution.consultation.controller;
 
+import java.util.List;
 import com.coresolution.consultation.dto.PushMonitoringChannelFilter;
 import com.coresolution.consultation.dto.PushMonitoringRange;
 import com.coresolution.consultation.dto.PushMonitoringResendRequest;
 import com.coresolution.consultation.dto.PushMonitoringResendResponse;
 import com.coresolution.consultation.dto.PushMonitoringSnapshotResponse;
+import com.coresolution.consultation.dto.SmsLogItem;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.AdminPushMonitoringService;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -59,6 +61,12 @@ public class AdminPushMonitoringController extends BaseApiController {
 
     /** 실패 사례 응답 최대 limit (운영 안전망). */
     static final int MAX_FAILURES_LIMIT = 200;
+
+    /** 최근 SMS/알림톡 카드 기본 limit. */
+    static final int DEFAULT_SMS_LOGS_LIMIT = 20;
+
+    /** 최근 SMS/알림톡 카드 최대 limit (운영 안전망). */
+    static final int MAX_SMS_LOGS_LIMIT = 100;
 
     private final AdminPushMonitoringService pushMonitoringService;
 
@@ -129,11 +137,39 @@ public class AdminPushMonitoringController extends BaseApiController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    /**
+     * 최근 SMS/알림톡 발송 이력 N행.
+     *
+     * <p>「푸시 설정 모니터링」 페이지의 「최근 SMS/알림톡 발송」 카드 전용. 본인 테넌트 한정.
+     *
+     * @param limit 최대 반환 행 수 (기본 20, 최대 100)
+     * @return 최근 발송 이력 list
+     */
+    @GetMapping("/sms-logs")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<?> getRecentSmsLogs(
+            @RequestParam(value = "limit", required = false) Integer limit) {
+        String tenantId = getTenantOrFail();
+        if (tenantId == null) {
+            return tenantMissing();
+        }
+        int safeLimit = clampSmsLogsLimit(limit);
+        List<SmsLogItem> items = pushMonitoringService.loadRecentSmsLogs(tenantId, safeLimit);
+        return success(items);
+    }
+
     private int clampFailuresLimit(Integer requested) {
         if (requested == null || requested <= 0) {
             return DEFAULT_FAILURES_LIMIT;
         }
         return Math.min(requested, MAX_FAILURES_LIMIT);
+    }
+
+    private int clampSmsLogsLimit(Integer requested) {
+        if (requested == null || requested <= 0) {
+            return DEFAULT_SMS_LOGS_LIMIT;
+        }
+        return Math.min(requested, MAX_SMS_LOGS_LIMIT);
     }
 
     private String getTenantOrFail() {

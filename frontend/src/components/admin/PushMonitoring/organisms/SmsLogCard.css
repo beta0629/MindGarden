@@ -1,0 +1,78 @@
+/**
+ * SmsLogCard 스타일.
+ *
+ * 디자인 토큰만 사용. 헤더 + 행 list 의 6컬럼 grid 를 동일하게 맞춘다.
+ *
+ * @since 2026-06-13
+ */
+
+.mg-sms-log-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mg-sms-log-card__header {
+  display: grid;
+  grid-template-columns:
+    minmax(96px, 0.8fr)
+    minmax(72px, 0.6fr)
+    minmax(140px, 1.2fr)
+    minmax(120px, 1fr)
+    minmax(64px, 0.5fr)
+    minmax(160px, 2fr);
+  gap: var(--mg-spacing-sm, 0.5rem);
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  background: var(--ad-b0kla-bg, var(--mg-color-background-main));
+  border-bottom: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+  letter-spacing: 0.02em;
+}
+
+.mg-sms-log-card__rows {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mg-sms-log-card__loading,
+.mg-sms-log-card__error,
+.mg-sms-log-card__empty {
+  padding: var(--mg-spacing-md, 1rem);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--ad-b0kla-text-secondary, var(--mg-text-secondary));
+}
+
+.mg-sms-log-card__error {
+  color: var(--ad-b0kla-danger, var(--mg-color-error-main));
+  background: var(--ad-b0kla-orange-bg);
+  border-left: 4px solid var(--ad-b0kla-danger, var(--mg-color-error-main));
+}
+
+.mg-sms-log-card__refresh {
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border));
+  border-radius: var(--mg-radius-sm, 6px);
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mg-sms-log-card__refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1024px) {
+  .mg-sms-log-card__header {
+    grid-template-columns:
+      minmax(80px, 0.7fr)
+      minmax(60px, 0.5fr)
+      minmax(120px, 1.4fr)
+      minmax(60px, 0.5fr);
+  }
+}

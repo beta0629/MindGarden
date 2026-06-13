@@ -6,12 +6,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.coresolution.consultation.config.BatchNotificationProperties;
 import com.coresolution.consultation.config.ExpoPushProperties;
@@ -26,6 +31,7 @@ import com.coresolution.consultation.dto.PushMonitoringRange;
 import com.coresolution.consultation.dto.PushMonitoringResendResponse;
 import com.coresolution.consultation.dto.PushMonitoringSnapshotResponse;
 import com.coresolution.consultation.dto.PushMonitoringTenantSnapshot;
+import com.coresolution.consultation.dto.SmsLogItem;
 import com.coresolution.consultation.dto.TestNotificationChannel;
 import com.coresolution.consultation.entity.AdminTestNotificationLog;
 import com.coresolution.consultation.entity.NotificationBatchSendLog;
@@ -35,10 +41,14 @@ import com.coresolution.consultation.repository.AdminTestNotificationLogReposito
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import com.coresolution.consultation.repository.TenantKakaoAlimtalkSettingsRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminPushMonitoringService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,6 +107,21 @@ public class AdminPushMonitoringServiceImpl implements AdminPushMonitoringServic
     /** 재발송 사전 차단 — 재시도 불가 카테고리(검증/정책 skip / PENDING / 성공). */
     static final String ERROR_CODE_RESEND_NOT_RETRYABLE = "RESEND_NOT_RETRYABLE";
 
+    /** 최근 SMS/알림톡 카드 기본 limit. */
+    static final int RECENT_SMS_LOGS_DEFAULT_LIMIT = 20;
+
+    /** 최근 SMS/알림톡 카드 최대 limit (운영 안전망). */
+    static final int RECENT_SMS_LOGS_MAX_LIMIT = 100;
+
+    /**
+     * 최근 SMS/알림톡 카드 채널 필터.
+     *
+     * <p>PENDING/PUSH 는 의도적으로 제외한다 — 운영자는 결과가 확정된 SMS/알림톡만 본다.
+     */
+    static final List<String> RECENT_SMS_LOGS_CHANNELS = List.of(
+        BatchNotificationTemplateCodes.CHANNEL_SMS,
+        BatchNotificationTemplateCodes.CHANNEL_ALIMTALK);
+
     private final NotificationBatchSendLogRepository batchLogRepository;
     private final AdminTestNotificationLogRepository adminTestLogRepository;
     private final TenantKakaoAlimtalkSettingsRepository alimtalkSettingsRepository;
@@ -104,6 +129,7 @@ public class AdminPushMonitoringServiceImpl implements AdminPushMonitoringServic
     private final BatchNotificationProperties batchNotificationProperties;
     private final ExpoPushProperties expoPushProperties;
     private final AdminTestNotificationRateLimiter rateLimiter;
+    private final UserRepository userRepository;
 
     /**
      * {@code kakao.alimtalk.enabled} (운영 환경변수 기반 글로벌 토글). 미설정 시 false.
@@ -239,6 +265,83 @@ public class AdminPushMonitoringServiceImpl implements AdminPushMonitoringServic
             .success(true)
             .resentLogId(logId)
             .build();
+    }
+
+    @Override
+    public List<SmsLogItem> loadRecentSmsLogs(String tenantId, int limit) {
+        Objects.requireNonNull(tenantId, "tenantId");
+        int safeLimit = clampSmsLogsLimit(limit);
+        Pageable pageable = PageRequest.of(0, safeLimit,
+            Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<NotificationBatchSendLog> rows = batchLogRepository.findRecentByTenantAndChannels(
+            tenantId, RECENT_SMS_LOGS_CHANNELS, pageable);
+        if (rows.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<Long, String> nameByUserId = loadRecipientNames(tenantId, rows);
+        List<SmsLogItem> result = new ArrayList<>(rows.size());
+        for (NotificationBatchSendLog row : rows) {
+            result.add(SmsLogItem.builder()
+                .id(row.getId())
+                .templateCode(row.getTemplateCode())
+                .channelUsed(row.getChannelUsed())
+                .targetType(row.getTargetType())
+                .targetId(row.getTargetId())
+                .recipientUserId(row.getRecipientUserId())
+                .recipientName(nameByUserId.get(row.getRecipientUserId()))
+                .recipientPhone(row.getRecipientPhoneMasked())
+                .successFlag(row.getSuccess())
+                .errorCode(row.getErrorCode())
+                .errorMessage(row.getErrorMessage())
+                .createdAt(row.getCreatedAt())
+                .build());
+        }
+        return result;
+    }
+
+    /**
+     * limit 안전 범위로 clamp — 0/음수 → 기본 20, 100 초과 → 100.
+     *
+     * @param requested 요청 limit
+     * @return 안전 limit
+     */
+    int clampSmsLogsLimit(int requested) {
+        if (requested <= 0) {
+            return RECENT_SMS_LOGS_DEFAULT_LIMIT;
+        }
+        return Math.min(requested, RECENT_SMS_LOGS_MAX_LIMIT);
+    }
+
+    /**
+     * 수신자 이름 일괄 조회 (N+1 방지).
+     *
+     * <p>{@code rows} 의 {@code recipient_user_id} 중복 제거 후 1회 in-쿼리. 테넌트 격리는
+     * {@link User#getTenantId()} 비교로 한 번 더 가드한다(타 테넌트 이름 노출 방지).
+     *
+     * @param tenantId 테넌트 ID
+     * @param rows     로그 행 list
+     * @return userId → name 매핑(없으면 빈 map)
+     */
+    Map<Long, String> loadRecipientNames(String tenantId, List<NotificationBatchSendLog> rows) {
+        Set<Long> userIds = rows.stream()
+            .map(NotificationBatchSendLog::getRecipientUserId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(HashSet::new));
+        if (userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Iterable<User> users = userRepository.findAllById(userIds);
+        Map<Long, String> nameByUserId = new HashMap<>();
+        for (User user : users) {
+            if (user == null || user.getId() == null) {
+                continue;
+            }
+            if (!tenantId.equals(user.getTenantId())) {
+                continue;
+            }
+            nameByUserId.put(user.getId(), user.getName());
+        }
+        return nameByUserId;
     }
 
     /**

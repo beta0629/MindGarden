@@ -18,7 +18,11 @@ import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ConsultationCard } from '@/components/molecules/ConsultationCard';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
-import { matchesClientSessionsTab, useClientConsultations } from '@/api/hooks/useConsultations';
+import {
+  matchesClientSessionsTab,
+  sortClientSessions,
+  useClientConsultations,
+} from '@/api/hooks/useConsultations';
 import type { Schedule } from '@/api/hooks/useSchedules';
 
 type TabKey = 'SCHEDULED' | 'COMPLETED';
@@ -48,7 +52,8 @@ export default function ClientSessions() {
 
   const consultations = useMemo(() => {
     const rows = data?.pages.flatMap((p) => p.items) ?? [];
-    return rows.filter((s) => matchesClientSessionsTab(s, activeTab));
+    const filtered = rows.filter((s) => matchesClientSessionsTab(s, activeTab));
+    return sortClientSessions(filtered, activeTab);
   }, [data?.pages, activeTab]);
 
   const handleTabChange = (tab: TabKey) => {

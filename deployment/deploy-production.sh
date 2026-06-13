@@ -75,35 +75,37 @@ export FRONTEND_BASE_URL=https://mindgarden.core-solution.co.kr
 # export SESSION_COOKIE_DOMAIN=core-solution.co.kr
 
 export DB_USERNAME=mindgarden_prod
-export DB_PASSWORD=changeme
-# openssl rand -base64 64 | tr -d '\n'
-export JWT_SECRET=changeme
-export PERSONAL_DATA_ENCRYPTION_KEY=changeme
-export PERSONAL_DATA_ENCRYPTION_IV=changeme
+# 모든 시크릿/키는 운영 호스트에서만 강 값으로 채운다 — 저장소·문서에 placeholder 값(예: changeme) 금지.
+# JwtSecretValidator (com.coresolution.core.security) 가 부트 시 약 단어/짧은 길이 키를 FAIL-FAST 차단한다.
+export DB_PASSWORD=<set-strong-db-password>
+# 강 JWT 키: openssl rand -hex 64 (또는 openssl rand -base64 48). 최소 64자 + 약 단어 미포함.
+export JWT_SECRET=<set-strong-jwt-secret>
+export PERSONAL_DATA_ENCRYPTION_KEY=<set-strong-personal-data-key>
+export PERSONAL_DATA_ENCRYPTION_IV=<set-strong-personal-data-iv>
 
 # OAuth2 (콘솔 값, 저장소 커밋 금지)
-export KAKAO_CLIENT_ID=changeme
-export KAKAO_CLIENT_SECRET=changeme
-export NAVER_CLIENT_ID=changeme
-export NAVER_CLIENT_SECRET=changeme
+export KAKAO_CLIENT_ID=<set-from-console>
+export KAKAO_CLIENT_SECRET=<set-from-console>
+export NAVER_CLIENT_ID=<set-from-console>
+export NAVER_CLIENT_SECRET=<set-from-console>
 
 # 이메일
-export SMTP_USERNAME=changeme
-export SMTP_PASSWORD=changeme
+export SMTP_USERNAME=<set-from-smtp-provider>
+export SMTP_PASSWORD=<set-from-smtp-provider>
 
 # 결제 시스템
-export PAYMENT_TOSS_SECRET_KEY=your_toss_secret
-export PAYMENT_IAMPORT_API_KEY=your_iamport_key
-export PAYMENT_IAMPORT_API_SECRET=your_iamport_secret
+export PAYMENT_TOSS_SECRET_KEY=<set-from-toss-console>
+export PAYMENT_IAMPORT_API_KEY=<set-from-iamport-console>
+export PAYMENT_IAMPORT_API_SECRET=<set-from-iamport-console>
 
 # 카카오 알림톡
-export KAKAO_ALIMTALK_API_KEY=your_alimtalk_key
-export KAKAO_ALIMTALK_SENDER_KEY=your_sender_key
+export KAKAO_ALIMTALK_API_KEY=<set-from-kakao-biz-console>
+export KAKAO_ALIMTALK_SENDER_KEY=<set-from-kakao-biz-console>
 
 # SMS 설정
-export SMS_API_KEY=your_sms_key
-export SMS_API_SECRET=your_sms_secret
-export SMS_SENDER_NUMBER=your_phone_number
+export SMS_API_KEY=<set-from-sms-provider>
+export SMS_API_SECRET=<set-from-sms-provider>
+export SMS_SENDER_NUMBER=<set-registered-sender-number>
 
 EOF
 

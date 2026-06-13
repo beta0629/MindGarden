@@ -33,8 +33,13 @@ import lombok.extern.slf4j.Slf4j;
  * 예약 D-2 안내 일괄 발송 스케줄러.
  *
  * <p>매일 09:00 KST 에 활성 테넌트를 순회하며 {@code today + N일} ({@code N=2} 기본) 에 예약된
- * BOOKED/CONFIRMED 일정 중 client 잔여 회기가 1회 이상이고 단발성 결제(=총 1회기 패키지) 가
- * 아닌 schedule 을 D-2 안내({@code RESERVATION_REMINDER_D2}) 대상으로 위임한다.
+ * BOOKED/CONFIRMED 일정 중 단발성 결제(=총 1회기 패키지) 가 아닌 schedule 을
+ * D-2 안내({@code RESERVATION_REMINDER_D2}) 대상으로 위임한다.
+ *
+ * <p>회기 차감 정책 SSOT 는 (A) 예약(BOOKED) 시점 차감이므로 미래 BOOKED schedule 의 회기는
+ * 이미 {@code used_sessions} 에 카운트되어 있어, D-2 발송 자격은 BOOKED 자체로 충족된다.
+ * 따라서 {@code remaining < 1} 잔여 가드는 적용하지 않으며 SESSIONS_EXHAUSTED 매핑의
+ * 미래 BOOKED schedule 도 정상 안내한다.
  *
  * <p>단발성 결제(={@code totalSessions == 1})는 스케줄 등록 즉시 발송 경로
  * ({@code RESERVATION_IMMEDIATE_SINGLE}) 에서 처리하므로 D-2 배치에서는 제외한다.
@@ -215,7 +220,22 @@ public class ReservationReminderScheduler {
     }
 
     /**
-     * D-2 발송 대상 여부 판정 — 매핑 잔여 1회기 이상 + 단발성(=총 1회기) 제외.
+     * D-2 발송 대상 여부 판정.
+     *
+     * <p>회기 차감 정책 SSOT 는 (A) 예약(BOOKED) 시점 차감 — 미래 BOOKED schedule 의 회기는
+     * 이미 {@code used_sessions} 에 카운트되어 있으므로 D-2 발송 자격은 BOOKED 자체로 충족된다.
+     * 따라서 {@code remaining < 1} 가드는 (C) 완료 시점 차감 정책을 가정한 모순 가드이며,
+     * SESSIONS_EXHAUSTED 매핑의 미래 BOOKED schedule 안내가 잘못 누락되는 원인이었다.
+     *
+     * <p>단발성 결제({@code total == 1})는 {@code RESERVATION_IMMEDIATE_SINGLE} 즉시 채널로
+     * 분리 처리되므로 D-2 배치에서 제외한다. 매핑 미존재(이상 데이터)도 차단한다.
+     *
+     * <p>관련 SSOT (참조 — 본 메서드에서 변경하지 않음):
+     * <ul>
+     *   <li>{@code ScheduleServiceImpl.createConsultantSchedule} — BOOKED 진입 시 {@code useSessionForMapping} 즉시 호출</li>
+     *   <li>{@code ConsultantClientMapping.useSession} — remaining-- / used++ / remaining=0 시 {@code SESSIONS_EXHAUSTED} 자동 전환</li>
+     *   <li>{@code cancelSchedule} — 취소 시 {@code restoreSession} 으로 복원</li>
+     * </ul>
      *
      * @param tenantId 테넌트 ID
      * @param schedule 일정
@@ -231,15 +251,9 @@ public class ReservationReminderScheduler {
         }
         ConsultantClientMapping mapping = opt.get();
         Integer total = mapping.getTotalSessions();
-        Integer remaining = mapping.getRemainingSessions();
         if (total != null && total == 1) {
             log.debug("D-2 skip — 단발성 결제(총 1회기): scheduleId={}, mappingId={}",
                 schedule.getId(), mapping.getId());
-            return false;
-        }
-        if (remaining == null || remaining < 1) {
-            log.debug("D-2 skip — 잔여 회기 부족: scheduleId={}, remaining={}",
-                schedule.getId(), remaining);
             return false;
         }
         return true;

@@ -452,6 +452,12 @@ public class AuthServiceImpl implements AuthService {
             
             int cleanedCount = userSessionService.deactivateAllUserSessions(user, reason);
             
+            // P1 hotfix (2026-06-13) — refresh_token_store 도 함께 revoke (모바일 JWT 흐름 정합).
+            // PR #293 silent skip 정책의 비대칭 회귀 해소: checkDuplicateLogin 은 user_sessions OR
+            // refresh_token_store 둘 다 검사하지만 cleanupUserSessions 는 user_sessions 만 deactivate
+            // 하던 결과 모달 "기존 세션 종료" 가 실효 없고 60초 폴링이 강제 로그아웃 알림을 띄움.
+            refreshTokenService.revokeAllUserTokens(user.getId());
+            
             log.info("✅ 사용자 세션 정리 완료: userId={}, cleanedCount={}", user.getId(), cleanedCount);
             
         } catch (Exception e) {

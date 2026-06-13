@@ -22,24 +22,18 @@ import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { toClientConsultantMessagingRole } from '@/utils/adminRole';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import {
-  isUnreadMessageForReceiver,
   parseMessageIsRead,
   parseUnreadMessageCountPayload,
 } from '@/utils/consultationMessageUnread';
 import { resolveClientScheduleUserId } from '@/utils/resolveClientScheduleUserId';
+import {
+  buildConversationsFromRows,
+  type Conversation,
+  type ConsultationMessageRow,
+} from '@/utils/conversationListBuilder';
 
-export interface Conversation {
-  /** 스레드 식별자 = 상대방 사용자 ID(내담자: 상담사 ID / 상담사: 내담자 ID) */
-  id: number;
-  partnerId: number;
-  partnerName: string;
-  partnerProfileImageUrl?: string;
-  lastMessage: string;
-  lastMessageAt: string;
-  unreadCount: number;
-  /** 수신·미읽음 메시지 id — 미리보기 시 일괄 읽음 처리용 */
-  unreadMessageIds: number[];
-}
+export type { Conversation, ConsultationMessageRow };
+export { buildConversationsFromRows };
 
 export interface Message {
   id: number;
@@ -52,26 +46,6 @@ export interface Message {
   isRead: boolean;
   isMine: boolean;
   status: 'SENT' | 'DELIVERED' | 'READ' | 'FAILED';
-}
-
-/** 백엔드 ConsultationMessage 목록 행(부분 필드) */
-export interface ConsultationMessageRow {
-  id?: unknown;
-  title?: unknown;
-  content?: unknown;
-  senderType?: unknown;
-  senderId?: unknown;
-  receiverId?: unknown;
-  clientId?: unknown;
-  consultantId?: unknown;
-  clientName?: unknown;
-  messageType?: unknown;
-  status?: unknown;
-  isRead?: unknown;
-  readAt?: unknown;
-  repliedAt?: unknown;
-  sentAt?: unknown;
-  createdAt?: unknown;
 }
 
 interface ConsultationMessagesPage {
@@ -87,8 +61,6 @@ interface SendMessageParams {
 }
 
 const PAGE_SIZE = 30;
-const CLIENT_PARTNER_LABEL = '상담사';
-const DEFAULT_PARTNER_NAME = '내담자';
 
 const MESSAGE_QUERY_KEYS = {
   all: ['messages'],
@@ -146,123 +118,6 @@ function rowToMessage(row: ConsultationMessageRow, partnerId: number, selfId: nu
     isMine,
     status: normalizeBubbleStatus(row.status, isRead),
   };
-}
-
-/** 내담자 목록에서 스레드 키 = 상담사 사용자 ID */
-function consultantPartnerId(row: ConsultationMessageRow): number {
-  const cid = toSafeNumber(row.consultantId, 0);
-  if (cid > 0) {
-    return cid;
-  }
-  const st = String(row.senderType ?? '').toUpperCase();
-  if (st === 'CONSULTANT') {
-    return toSafeNumber(row.senderId, 0);
-  }
-  return toSafeNumber(row.receiverId, 0);
-}
-
-/**
- * 목록 API에서 받은 메시지 행을 상대방 단위 대화 목록으로 집계한다.
- *
- * @param rows 메시지 행(시간 내림차순 권장)
- * @param role 현재 사용자 역할
- * @param selfId 현재 사용자 ID
- * @param searchQuery 이름·미리보기 필터(소문자 비교)
- */
-export function buildConversationsFromRows(
-  rows: ConsultationMessageRow[],
-  role: 'client' | 'consultant',
-  selfId: number,
-  searchQuery: string,
-): Conversation[] {
-  const q = searchQuery.trim().toLowerCase();
-  const byPartner = new Map<
-    number,
-    {
-      partnerName: string;
-      lastMessage: string;
-      lastMessageAt: string;
-      unread: number;
-      unreadMessageIds: number[];
-    }
-  >();
-
-  for (const row of rows) {
-    const partnerId =
-      role === 'consultant' ? toSafeNumber(row.clientId, 0) : consultantPartnerId(row);
-    if (partnerId <= 0) {
-      continue;
-    }
-
-    let partnerName =
-      role === 'consultant'
-        ? toDisplayString(row.clientName, DEFAULT_PARTNER_NAME)
-        : CLIENT_PARTNER_LABEL;
-
-    if (role === 'consultant' && partnerName === DEFAULT_PARTNER_NAME) {
-      partnerName = toDisplayString(row.clientName, DEFAULT_PARTNER_NAME);
-    }
-
-    const sentRaw = row.sentAt ?? row.createdAt;
-    const lastAt = typeof sentRaw === 'string' ? sentRaw : toDisplayString(sentRaw, '');
-    const preview = toDisplayString(row.content, toDisplayString(row.title, ''));
-
-    const receiverId = toSafeNumber(row.receiverId, 0);
-    const unreadInc = isUnreadMessageForReceiver(row.isRead, receiverId, selfId) ? 1 : 0;
-    const messageId = toSafeNumber(row.id, 0);
-
-    const existing = byPartner.get(partnerId);
-    if (!existing) {
-      byPartner.set(partnerId, {
-        partnerName,
-        lastMessage: preview,
-        lastMessageAt: lastAt,
-        unread: unreadInc,
-        unreadMessageIds: unreadInc > 0 && messageId > 0 ? [messageId] : [],
-      });
-    } else {
-      existing.unread += unreadInc;
-      if (unreadInc > 0 && messageId > 0 && !existing.unreadMessageIds.includes(messageId)) {
-        existing.unreadMessageIds.push(messageId);
-      }
-      const prevTime = new Date(existing.lastMessageAt).getTime();
-      const curTime = new Date(lastAt).getTime();
-      if (!Number.isNaN(curTime) && (Number.isNaN(prevTime) || curTime >= prevTime)) {
-        existing.lastMessageAt = lastAt;
-        existing.lastMessage = preview;
-        if (role === 'consultant' && partnerName !== DEFAULT_PARTNER_NAME) {
-          existing.partnerName = partnerName;
-        }
-      }
-    }
-  }
-
-  const list: Conversation[] = [];
-  byPartner.forEach((v, partnerId) => {
-    if (q !== '') {
-      const hay = `${v.partnerName} ${v.lastMessage}`.toLowerCase();
-      if (!hay.includes(q)) {
-        return;
-      }
-    }
-    list.push({
-      id: partnerId,
-      partnerId,
-      partnerName: v.partnerName,
-      lastMessage: v.lastMessage,
-      lastMessageAt: v.lastMessageAt,
-      unreadCount: v.unread,
-      unreadMessageIds: v.unreadMessageIds,
-    });
-  });
-
-  list.sort((a, b) => {
-    const ta = new Date(a.lastMessageAt).getTime();
-    const tb = new Date(b.lastMessageAt).getTime();
-    return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
-  });
-
-  return list;
 }
 
 async function fetchConsultationMessagesPage(

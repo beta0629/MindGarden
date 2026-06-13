@@ -15,6 +15,7 @@ MindGarden 프로젝트의 포괄적인 보안 표준입니다.
 - [보안 인증 표준](./SECURITY_AUTHENTICATION_STANDARD.md) - JWT, 인증 관련
 - [암호화 처리 표준](./ENCRYPTION_STANDARD.md) - 암호화 관련
 - [API 설계 표준](./API_DESIGN_STANDARD.md) - API 보안 관련
+- [DB / 운영 환경변수 SSOT 정책](./DB_ENV_SSOT_POLICY.md) - 운영 SSOT, systemd 평문 secret 금지
 
 ### 구현 위치
 - **보안 설정**: `src/main/java/com/coresolution/consultation/config/SecurityConfig.java`
@@ -47,7 +48,10 @@ MindGarden 프로젝트의 포괄적인 보안 표준입니다.
 - ✅ 환경 변수로 비밀키 관리
 - ✅ `.env` 파일은 `.gitignore`에 포함
 - ✅ 운영/개발 환경 분리
+- ✅ **운영 SSOT 단일화**: `/etc/mindgarden/prod.env` (perm `600`, owner `root:root`) — systemd `EnvironmentFile=` 로만 주입 ([`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) §1)
+- ✅ **systemd unit 평문 secret 금지**: `*.service` / `*.service.d/*.conf` 의 `Environment=` 라인에 secret 평문 기재 금지. 비-secret 운영 상수(예: `SERVER_PORT`)만 인라인 허용 ([`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) §3)
 - ❌ 코드 내 비밀키 하드코딩 금지
+- ❌ unit `Environment=JWT_SECRET=...` 등 평문 secret 인라인 금지
 
 ### 3. 보안 감사 필수
 ```

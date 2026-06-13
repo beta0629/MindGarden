@@ -61,11 +61,13 @@ public class SocialAuthController {
             }
             
             // 세션에서 현재 사용자의 지점 정보 가져오기 (관리자가 등록하는 경우)
+            // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchCode 컬럼 직접 사용.
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser != null && currentUser.getBranch() != null) {
+            if (currentUser != null && currentUser.getBranchCode() != null
+                    && !currentUser.getBranchCode().trim().isEmpty()) {
                 // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
                 if (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty()) {
-                    request.setBranchCode(currentUser.getBranch().getBranchCode());
+                    request.setBranchCode(currentUser.getBranchCode());
                     log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
                 }
             }

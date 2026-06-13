@@ -255,7 +255,8 @@ public class AuthController extends BaseApiController {
         }
         
         // 지점 정보 추가 (공통코드 기반)
-        userInfo.put("branchId", user.getBranch() != null ? user.getBranch().getId() : null);
+        // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼 직접 사용.
+        userInfo.put("branchId", user.getBranchId());
         userInfo.put("branchCode", user.getBranchCode());
         userInfo.put("needsBranchMapping", user.getBranchCode() == null);
         
@@ -399,8 +400,9 @@ public class AuthController extends BaseApiController {
         user.setIsSocialAccount(false);
 
         if (StringUtils.hasText(request.getBranchCode())) {
+            // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼만 저장.
             Branch branch = branchService.getBranchByCode(request.getBranchCode().trim());
-            user.setBranch(branch);
+            user.setBranchId(branch.getId());
             user.setBranchCode(branch.getBranchCode());
         }
 
@@ -1635,9 +1637,10 @@ public class AuthController extends BaseApiController {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
             // 지점 권한 검사
+            // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchCode 컬럼 직접 비교.
             if (request.getLoginType() == BranchLoginRequest.LoginType.BRANCH) {
                 // 지점 로그인인 경우, 사용자가 해당 지점에 소속되어 있는지 확인
-                if (user.getBranch() == null || !user.getBranch().getBranchCode().equals(request.getBranchCode())) {
+                if (user.getBranchCode() == null || !user.getBranchCode().equals(request.getBranchCode())) {
                     throw new IllegalArgumentException("해당 지점에 소속되지 않은 사용자입니다.");
                 }
             } else if (request.getLoginType() == BranchLoginRequest.LoginType.HEADQUARTERS) {
@@ -1668,6 +1671,15 @@ public class AuthController extends BaseApiController {
                 loginPrincipal, request.getBranchCode(), request.getLoginType());
             
             // 응답 데이터 구성
+            // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchService 로 보강 조회(DTO 기반).
+            com.coresolution.consultation.dto.BranchResponse userBranchResponse = null;
+            if (user.getBranchId() != null) {
+                try {
+                    userBranchResponse = branchService.getBranchResponse(user.getBranchId());
+                } catch (Exception ex) {
+                    log.debug("지점 정보 조회 실패(graceful): branchId={}, error={}", user.getBranchId(), ex.getMessage());
+                }
+            }
             BranchLoginResponse.UserInfo userInfo = BranchLoginResponse.UserInfo.builder()
                 .id(user.getId())
                 .userId(user.getUserId())
@@ -1675,29 +1687,29 @@ public class AuthController extends BaseApiController {
                 .name(user.getName())
                 .role(user.getRole())
                 .roleDescription(user.getRole().getDisplayName())
-                .branchId(user.getBranch() != null ? user.getBranch().getId() : null)
-                .branchName(user.getBranch() != null ? user.getBranch().getBranchName() : null)
-                .branchCode(user.getBranch() != null ? user.getBranch().getBranchCode() : null)
+                .branchId(user.getBranchId())
+                .branchName(userBranchResponse != null ? userBranchResponse.getBranchName() : null)
+                .branchCode(user.getBranchCode())
                 .tenantId(user.getTenantId())
                 .build();
             
             BranchLoginResponse.BranchInfo branchInfo = null;
-            if (user.getBranch() != null) {
+            if (userBranchResponse != null) {
                 try {
-                    var branchStats = branchService.getBranchStatistics(user.getBranch().getId());
+                    var branchStats = branchService.getBranchStatistics(userBranchResponse.getId());
                     branchInfo = BranchLoginResponse.BranchInfo.builder()
-                        .id(user.getBranch().getId())
-                        .branchCode(user.getBranch().getBranchCode())
-                        .branchName(user.getBranch().getBranchName())
-                        .branchType(user.getBranch().getBranchType().name())
-                        .branchStatus(user.getBranch().getBranchStatus().name())
-                        .fullAddress(user.getBranch().getFullAddress())
-                        .phoneNumber(user.getBranch().getPhoneNumber())
-                        .managerName(user.getBranch().getManager() != null ? user.getBranch().getManager().getUserId() : null)
+                        .id(userBranchResponse.getId())
+                        .branchCode(userBranchResponse.getBranchCode())
+                        .branchName(userBranchResponse.getBranchName())
+                        .branchType(userBranchResponse.getBranchType() != null ? userBranchResponse.getBranchType().name() : null)
+                        .branchStatus(userBranchResponse.getBranchStatus() != null ? userBranchResponse.getBranchStatus().name() : null)
+                        .fullAddress(userBranchResponse.getFullAddress())
+                        .phoneNumber(userBranchResponse.getPhoneNumber())
+                        .managerName(userBranchResponse.getManagerName())
                         .consultantCount((Integer) branchStats.get("consultantCount"))
                         .clientCount((Integer) branchStats.get("clientCount"))
-                        .maxConsultants(user.getBranch().getMaxConsultants())
-                        .maxClients(user.getBranch().getMaxClients())
+                        .maxConsultants(userBranchResponse.getMaxConsultants())
+                        .maxClients(userBranchResponse.getMaxClients())
                         .build();
                 } catch (Exception e) {
                     log.warn("지점 통계 조회 실패: {}", e.getMessage());
@@ -1841,7 +1853,8 @@ public class AuthController extends BaseApiController {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
             // 사용자가 해당 지점에 소속되어 있는지 확인
-            if (user.getBranch() == null || !user.getBranch().getBranchCode().equals(branchCode)) {
+            // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchCode 컬럼 직접 비교.
+            if (user.getBranchCode() == null || !user.getBranchCode().equals(branchCode)) {
                 throw new IllegalArgumentException("해당 지점에 소속되지 않은 사용자입니다.");
             }
             if (user.getTenantId() == null || user.getTenantId().isEmpty()) {
@@ -1870,9 +1883,22 @@ public class AuthController extends BaseApiController {
             userInfo.put("name", user.getName());
             userInfo.put("role", user.getRole());
             userInfo.put("roleDescription", user.getRole().getDisplayName());
-            userInfo.put("branchId", user.getBranch().getId());
-            userInfo.put("branchName", user.getBranch().getBranchName());
-            userInfo.put("branchCode", user.getBranch().getBranchCode());
+            // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId/branchCode 컬럼 직접 사용.
+            userInfo.put("branchId", user.getBranchId());
+            String branchNameForInfo = null;
+            if (user.getBranchId() != null) {
+                try {
+                    com.coresolution.consultation.dto.BranchResponse loaded =
+                        branchService.getBranchResponse(user.getBranchId());
+                    if (loaded != null) {
+                        branchNameForInfo = loaded.getBranchName();
+                    }
+                } catch (Exception ex) {
+                    log.debug("지점명 조회 실패(graceful): branchId={}, error={}", user.getBranchId(), ex.getMessage());
+                }
+            }
+            userInfo.put("branchName", branchNameForInfo);
+            userInfo.put("branchCode", user.getBranchCode());
             userInfo.put("tenantId", user.getTenantId());
             
             Map<String, Object> data = new HashMap<>();

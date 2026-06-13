@@ -2397,7 +2397,8 @@ public class OAuth2Controller extends BaseApiController {
                                                     ? existingUser.getRole().name()
                                                     : null)
                                             .profileImageUrl(existingUser.getProfileImageUrl())
-                                            .branch(existingUser.getBranch())
+                                            // PR-A(2026-06-13): User.branch @ManyToOne 제거. 항상 null.
+                                            .branch(null)
                                             .branchCode(existingUser.getBranchCode())
                                             .providerUserId(socialUserInfo.getProviderUserId())
                                             .build())
@@ -2496,7 +2497,8 @@ public class OAuth2Controller extends BaseApiController {
                                                         ? existingUser.getRole().name()
                                                         : null)
                                                 .profileImageUrl(existingUser.getProfileImageUrl())
-                                                .branch(existingUser.getBranch())
+                                                // PR-A(2026-06-13): User.branch @ManyToOne 제거. 항상 null.
+                                                .branch(null)
                                                 .branchCode(existingUser.getBranchCode())
                                                 .providerUserId(socialUserInfo.getProviderUserId())
                                                 .build())

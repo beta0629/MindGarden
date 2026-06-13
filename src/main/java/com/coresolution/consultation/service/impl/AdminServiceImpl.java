@@ -489,6 +489,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         // User 엔티티 생성
         // 사용자 입력 비밀번호는 정책 적용, 임시 자동 생성은 정책 미적용
+        // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼만 사용.
         User clientUser = User.builder()
                 .userId(userId)
                 .email(encryptedEmail)
@@ -498,7 +499,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .role(UserRole.CLIENT)
                 .isActive(isActive)
                 .isPasswordChanged(!isTempPassword)
-                .branch(null)
+                .branchId(null)
                 .branchCode(null)
                 .build();
 
@@ -636,6 +637,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             encryptedPhone = encryptionUtil.safeEncrypt(normalizedPhoneDigits);
         }
 
+        // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼만 사용.
         User staffUser = User.builder()
                 .userId(userId)
                 .email(encryptedEmail)
@@ -645,7 +647,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .role(UserRole.STAFF)
                 .isActive(true)
                 .isPasswordChanged(!isTempPassword)
-                .branch(null)
+                .branchId(null)
                 .branchCode(null)
                 .build();
         staffUser.setTenantId(tenantId);
@@ -5798,7 +5800,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<User> consultants;
             try {
                 Branch branch = branchService.getBranchByCode(branchCode);
-                consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(tenantId, branch,
+                // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 직접 사용.
+                consultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(tenantId, branch.getId(),
                         UserRole.getProfessionalProviderRoles());
                 consultants = consultants.stream()
                     .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
@@ -6641,8 +6644,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             } else {
                 try {
                     Branch branch = branchService.getBranchByCode(branchCode);
+                    // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 직접 사용.
                     activeConsultants = userRepository.findByBranchAndRolesInAndIsDeletedFalseOrderByUserId(tenantId,
-                            branch, UserRole.getProfessionalProviderRoles());
+                            branch.getId(), UserRole.getProfessionalProviderRoles());
                     activeConsultants = activeConsultants.stream()
                         .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                         .collect(Collectors.toList());

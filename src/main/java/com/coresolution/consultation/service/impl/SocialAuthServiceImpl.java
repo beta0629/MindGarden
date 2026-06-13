@@ -15,7 +15,6 @@ import org.springframework.util.StringUtils;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.SocialSignupRequest;
 import com.coresolution.consultation.dto.SocialSignupResponse;
-import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
@@ -201,7 +200,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         String userId = generateUserIdFromEmail(normalizedEmail);
             
         // 지점 정보 검증 (레거시 시스템, 테넌트 시스템에서는 불필요)
-        Branch branch = null;
+        // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼만 유지.
         String validatedBranchCode = null;
         /*
         validatedBranchCode = request.getBranchCode();
@@ -228,19 +227,18 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .phone(phone)
                 .role(UserRole.CLIENT)
                 .branchCode(validatedBranchCode) // 지점코드 (테넌트 시스템에서는 NULL)
-                .branch(branch) // 지점 객체 (테넌트 시스템에서는 NULL)
                 .profileImageUrl(request.getProviderProfileImage()) // 소셜 계정 프로필 이미지 설정
                 .build();
         user.setTenantId(tenantId);
             
-        log.info("User 엔티티 생성 완료: email={}, name={}, phone={}, branchCode={}, branch={}", 
+        log.info("User 엔티티 생성 완료: email={}, name={}, phone={}, branchCode={}", 
             EmailLogMasking.maskForLog(user.getEmail()), request.getName(), request.getPhone(), 
-            user.getBranchCode(), branch != null ? branch.getId() : "null");
+            user.getBranchCode());
             
         log.info("User 엔티티 저장 시작");
         user = userRepository.saveAndFlush(user);
         log.info("User 엔티티 저장 완료: userId={}, branchId={}, branchCode={}", 
-            user.getId(), user.getBranch() != null ? user.getBranch().getId() : "null", user.getBranchCode());
+            user.getId(), user.getBranchId(), user.getBranchCode());
             
         // Client 엔티티 생성 (User ID를 외래키로 사용)
         log.info("Client 엔티티 생성 시작");

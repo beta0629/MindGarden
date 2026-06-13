@@ -162,6 +162,7 @@ public class AcademyRegistrationController extends BaseApiController {
             user.setIsSocialAccount(false);
             
             // 브랜치 설정 (있는 경우)
+            // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼만 저장.
             if (StringUtils.hasText(request.getBranchCode())) {
                 try {
                     Branch branch = branchService.getBranchByCode(request.getBranchCode().trim());
@@ -169,7 +170,7 @@ public class AcademyRegistrationController extends BaseApiController {
                     if (!currentTenantId.equals(branch.getTenantId())) {
                         throw new IllegalArgumentException("해당 테넌트의 브랜치가 아닙니다.");
                     }
-                    user.setBranch(branch);
+                    user.setBranchId(branch.getId());
                     user.setBranchCode(branch.getBranchCode());
                 } catch (Exception e) {
                     log.warn("브랜치 설정 실패: branchCode={}, error={}", request.getBranchCode(), e.getMessage());
@@ -271,6 +272,7 @@ public class AcademyRegistrationController extends BaseApiController {
             }
             
             // 브랜치 설정 (있는 경우)
+            // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼만 저장.
             if (StringUtils.hasText(request.getBranchCode())) {
                 try {
                     Branch branch = branchService.getBranchByCode(request.getBranchCode().trim());
@@ -278,7 +280,7 @@ public class AcademyRegistrationController extends BaseApiController {
                     if (!currentTenantId.equals(branch.getTenantId())) {
                         throw new IllegalArgumentException("해당 테넌트의 브랜치가 아닙니다.");
                     }
-                    user.setBranch(branch);
+                    user.setBranchId(branch.getId());
                     user.setBranchCode(branch.getBranchCode());
                 } catch (Exception e) {
                     log.warn("브랜치 설정 실패: branchCode={}, error={}", request.getBranchCode(), e.getMessage());

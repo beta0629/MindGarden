@@ -106,10 +106,11 @@ public class JwtService {
         }
         
         // Phase 3: 지점 정보 추가
-        if (user.getBranch() != null && user.getBranch().getId() != null) {
-            claims.put("branchId", user.getBranch().getId());
-        } else if (user.getBranchCode() != null) {
-            // branch 엔티티가 로드되지 않은 경우 branchCode 사용
+        // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼 직접 사용.
+        if (user.getBranchId() != null) {
+            claims.put("branchId", user.getBranchId());
+        }
+        if (user.getBranchCode() != null) {
             claims.put("branchCode", user.getBranchCode());
         }
         

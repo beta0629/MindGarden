@@ -351,11 +351,13 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         log.info("📊 연도별 재무 보고서 생성: {}, 지점={}", year, branchCode);
         
         try {
-            // 프로시저 의존성 제거 - 직접 SQL 쿼리 사용
+            // PR-A(2026-06-13): branches 테이블 ARCHIVE 후 직접 FROM branches 제거.
+            // financial_transactions 단일 테이블 + branch_code 그룹핑 + tenantId 격리로 전환.
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             String sql = """
                 SELECT 
                     ? AS report_year,
-                    COALESCE(b.branch_code, 'ALL') AS branch_code,
+                    COALESCE(ft.branch_code, 'ALL') AS branch_code,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS total_revenue,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS total_expenses,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
@@ -363,19 +365,17 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                     COUNT(ft.id) AS total_transactions,
                     COUNT(DISTINCT MONTH(ft.transaction_date)) AS active_months,
                     COUNT(DISTINCT ft.branch_code) AS active_branches
-                FROM branches b
-                LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch_code
-                    AND YEAR(ft.transaction_date) = ?
-                    AND ft.is_deleted = FALSE
-                WHERE b.is_deleted = FALSE 
-                AND b.branch_status = 'ACTIVE'
-                AND (? IS NULL OR b.branch_code = ?)
-                GROUP BY b.branch_code
+                FROM financial_transactions ft
+                WHERE ft.tenant_id = ?
+                  AND YEAR(ft.transaction_date) = ?
+                  AND ft.is_deleted = FALSE
+                  AND (? IS NULL OR ft.branch_code = ?)
+                GROUP BY ft.branch_code
                 ORDER BY total_revenue DESC
                 """;
             
             List<Map<String, Object>> reportData = jdbcTemplate.query(sql,
-                new Object[]{year, year, branchCode, branchCode},
+                new Object[]{year, tenantId, year, branchCode, branchCode},
                 (rs, rowNum) -> {
                     Map<String, Object> report = new HashMap<>();
                     report.put("reportYear", rs.getInt("report_year"));
@@ -460,34 +460,36 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     
     /**
      * 지점별 재무 상세 데이터 조회 (내부 메서드)
+     * PR-A(2026-06-13): branches 테이블 ARCHIVE 후 FROM branches 제거.
+     * financial_transactions.branch_code 기반 그룹핑 + tenantId 격리로 전환.
+     * branch_name 컬럼은 더 이상 채울 수 없어 branchCode 와 동일값으로 반환.
      */
     private List<Map<String, Object>> getBranchFinancialBreakdownData(LocalDate startDate, LocalDate endDate) {
-        // branches 테이블에서 지점 데이터 조회하도록 수정
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         String sql = """
             SELECT 
-                b.branch_code,
-                b.branch_name,
+                ft.branch_code,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS revenue,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS expenses,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
                          SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS net_profit,
                 COUNT(ft.id) AS transaction_count
-            FROM branches b
-            LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch_code
-                AND ft.transaction_date BETWEEN ? AND ?
-                AND ft.is_deleted = FALSE
-            WHERE b.is_deleted = FALSE 
-            AND b.branch_status = 'ACTIVE'
-            GROUP BY b.branch_code, b.branch_name
+            FROM financial_transactions ft
+            WHERE ft.tenant_id = ?
+              AND ft.transaction_date BETWEEN ? AND ?
+              AND ft.is_deleted = FALSE
+              AND ft.branch_code IS NOT NULL
+            GROUP BY ft.branch_code
             ORDER BY revenue DESC
             """;
         
         return jdbcTemplate.query(sql,
-            new Object[]{startDate, endDate},
+            new Object[]{tenantId, startDate, endDate},
             (rs, rowNum) -> {
                 Map<String, Object> branch = new HashMap<>();
-                branch.put("branchCode", rs.getString("branch_code"));
-                branch.put("branchName", rs.getString("branch_name"));
+                String branchCode = rs.getString("branch_code");
+                branch.put("branchCode", branchCode);
+                branch.put("branchName", branchCode);
                 branch.put("revenue", rs.getLong("revenue"));
                 branch.put("expenses", rs.getLong("expenses"));
                 branch.put("netProfit", rs.getLong("net_profit"));

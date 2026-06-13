@@ -276,18 +276,13 @@ public class Branch extends BaseEntity {
     
     
      /**
-     * 지점 소속 상담사들
+     * 지점 소속 상담사들 / 내담자들 — 양방향 매핑.
+     *
+     * <p>PR-A(2026-06-13): User.branch @ManyToOne 매핑 제거에 따라 {@code mappedBy = "branch"} 가
+     * 가리킬 inverse property 가 사라져 양방향 컬렉션을 제거. Branch 엔티티가 사용 중단(PR-3) 된
+     * 시점에서 본 컬렉션 또한 실코드 호출처가 없었고, 필요 시 UserRepository 의 branchId 기반
+     * 조회 메서드를 이용한다.</p>
      */
-    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<User> consultants;
-    
-     /**
-     * 지점 소속 내담자들
-     */
-    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<User> clients;
     
     
      /**

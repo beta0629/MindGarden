@@ -135,17 +135,19 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
     
     /**
      * 지점별 상담사 수 조회
+     * PR-A(2026-06-13): User.branch @ManyToOne 제거 후 branchId 비교로 전환.
      */
     @Query("SELECT b.id, b.branchName, COUNT(u) FROM Branch b " +
-           "LEFT JOIN User u ON u.branch = b AND u.isDeleted = false AND u.role = 'CONSULTANT' " +
+           "LEFT JOIN User u ON u.branchId = b.id AND u.isDeleted = false AND u.role = 'CONSULTANT' " +
            "WHERE b.isDeleted = false GROUP BY b.id, b.branchName ORDER BY b.branchName")
     List<Object[]> countConsultantsByBranch();
     
     /**
      * 지점별 내담자 수 조회
+     * PR-A(2026-06-13): User.branch @ManyToOne 제거 후 branchId 비교로 전환.
      */
     @Query("SELECT b.id, b.branchName, COUNT(u) FROM Branch b " +
-           "LEFT JOIN User u ON u.branch = b AND u.isDeleted = false AND u.role = 'CLIENT' " +
+           "LEFT JOIN User u ON u.branchId = b.id AND u.isDeleted = false AND u.role = 'CLIENT' " +
            "WHERE b.isDeleted = false GROUP BY b.id, b.branchName ORDER BY b.branchName")
     List<Object[]> countClientsByBranch();
     
@@ -196,11 +198,11 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
      * 최대 수용 인원을 초과한 지점들 조회
      */
     @Query("SELECT b FROM Branch b WHERE b.isDeleted = false AND " +
-           "(SELECT COUNT(u) FROM User u WHERE u.branch = b AND u.role = 'CONSULTANT' AND u.isDeleted = false) > b.maxConsultants")
+           "(SELECT COUNT(u) FROM User u WHERE u.branchId = b.id AND u.role = 'CONSULTANT' AND u.isDeleted = false) > b.maxConsultants")
     List<Branch> findBranchesExceedingConsultantLimit();
     
     @Query("SELECT b FROM Branch b WHERE b.isDeleted = false AND " +
-           "(SELECT COUNT(u) FROM User u WHERE u.branch = b AND u.role = 'CLIENT' AND u.isDeleted = false) > b.maxClients")
+           "(SELECT COUNT(u) FROM User u WHERE u.branchId = b.id AND u.role = 'CLIENT' AND u.isDeleted = false) > b.maxClients")
     List<Branch> findBranchesExceedingClientLimit();
     
     // === BaseRepository 메서드 오버라이드 ===

@@ -186,7 +186,7 @@ public class AuthServiceImpl implements AuthService {
                 } else {
                     log.info("✅ JWT 토큰 기반 로그인 성공: userId={}, tenantId={}, branchId={}", 
                         user.getId(), user.getTenantId(), 
-                        user.getBranch() != null ? user.getBranch().getId() : null);
+                        user.getBranchId());
                 }
                 
                 return responseBuilder.build();
@@ -294,7 +294,7 @@ public class AuthServiceImpl implements AuthService {
             
             log.info("✅ JWT 토큰 갱신 성공: userId={}, tenantId={}, branchId={}", 
                 user.getId(), user.getTenantId(), 
-                user.getBranch() != null ? user.getBranch().getId() : null);
+                user.getBranchId());
             
             return AuthResponse.success("토큰 갱신 성공", newToken, newRefreshToken, userResponse);
         } catch (Exception e) {
@@ -870,19 +870,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 사용자 브랜치명 best-effort 추출. lazy proxy 등 예외 시 null.
+     * 사용자 브랜치명 best-effort 추출.
+     * PR-A(2026-06-13): User.branch @ManyToOne 매핑 제거 후 branchName 직접 조회 불가.
+     * 브랜치 개념 제거(2025-12-07) 기조에 따라 항상 null 반환. AccountCandidate 의 brandName 필드는
+     * legacy UI 호환을 위해 유지하되 값은 채우지 않는다.
      */
     private String deriveBranchName(User user) {
-        if (user == null) {
-            return null;
-        }
-        try {
-            if (user.getBranch() != null) {
-                return user.getBranch().getBranchName();
-            }
-        } catch (Exception ignored) {
-            // proxy / lazy load 실패 — best-effort 라 무시
-        }
         return null;
     }
 

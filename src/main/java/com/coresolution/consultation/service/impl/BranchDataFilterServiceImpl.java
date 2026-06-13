@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.service.BranchDataFilterService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BranchDataFilterServiceImpl implements BranchDataFilterService {
     
     private final CommonCodeService commonCodeService;
+    private final BranchRepository branchRepository;
     
     
     @Override
@@ -207,11 +209,17 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
     
     @Override
     public Branch getUserBranch(User user) {
-        if (user == null) {
+        if (user == null || user.getBranchId() == null) {
             return null;
         }
         
-        return user.getBranch();
+        // PR-A(2026-06-13): User.branch @ManyToOne 제거 후 BranchRepository 직접 조회.
+        // 본 서비스는 @Deprecated(since=2026-06-12, forRemoval=true) — PR-6/7 에서 함께 제거 예정.
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return branchRepository.findById(user.getBranchId()).orElse(null);
+        }
+        return branchRepository.findByTenantIdAndId(tenantId, user.getBranchId()).orElse(null);
     }
     
     @Override

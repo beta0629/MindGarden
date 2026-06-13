@@ -968,10 +968,10 @@ public class UserServiceImpl implements UserService {
             user.setBranchCode(null);
         }
         // 지점 정보는 tenantId 기반으로만 관리
-        if (user.getBranch() != null) {
-            // Branch 엔티티는 유지하되, branchCode는 무시
-            log.info("사용자 등록 시 지점 할당: userId={}, branchId={}, branchName={}", 
-                user.getId(), user.getBranch().getId(), user.getBranch().getBranchName());
+        // PR-A(2026-06-13): User.branch @ManyToOne 제거. branchId Long 컬럼만 사용.
+        if (user.getBranchId() != null) {
+            log.info("사용자 등록 시 지점 할당: userId={}, branchId={}", 
+                user.getId(), user.getBranchId());
         } else {
             log.debug("사용자 등록 시 지점 정보 없음: userId={}", user.getId());
         }

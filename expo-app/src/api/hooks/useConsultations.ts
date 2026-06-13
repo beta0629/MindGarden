@@ -24,6 +24,11 @@ import {
   consultationTypeToKorean,
   resolveClientNameForScheduleRow,
 } from '@/utils/scheduleDisplayLabels';
+import {
+  matchesClientSessionsTab as sharedMatchesClientSessionsTab,
+  sortClientSessions as sharedSortClientSessions,
+  type ClientSessionsTab,
+} from '@/utils/clientSessionsSort';
 import type { Schedule, ScheduleDetail } from './useSchedules';
 
 type ConsultationStatus = 'SCHEDULED' | 'BOOKED' | 'COMPLETED' | 'ALL';
@@ -52,16 +57,12 @@ const CONSULTATION_QUERY_KEYS = {
 
 const PAGE_SIZE = 20;
 
-/** 내 상담 화면 탭 — `Schedule` 카드 상태 기준 */
-export function matchesClientSessionsTab(
-  schedule: Schedule,
-  tab: 'SCHEDULED' | 'COMPLETED',
-): boolean {
-  if (tab === 'COMPLETED') {
-    return schedule.status === 'COMPLETED';
-  }
-  return schedule.status !== 'COMPLETED' && schedule.status !== 'CANCELLED';
-}
+/** 내 상담 화면 탭 매칭 — `@/utils/clientSessionsSort` 재노출 (기존 import 호환) */
+export const matchesClientSessionsTab = sharedMatchesClientSessionsTab;
+
+/** 내 상담 탭별 정렬 — `@/utils/clientSessionsSort` 재노출 (기존 import 호환) */
+export const sortClientSessions = sharedSortClientSessions;
+export type { ClientSessionsTab };
 
 type CardScheduleStatus = Schedule['status'];
 
@@ -252,10 +253,6 @@ export interface UpcomingConsultation extends Schedule {
   daysUntil: number;
 }
 
-function scheduleSortKey(s: Schedule): string {
-  return `${s.date}T${(s.startTime ?? '00:00').slice(0, 5)}:00`;
-}
-
 export function useUpcomingConsultation(clientId?: number | string) {
   const { effectiveUserId, queryEnabled } = useClientScheduleApiContext(clientId);
   const clientIdNum = effectiveUserId ?? -1;
@@ -272,9 +269,10 @@ export function useUpcomingConsultation(clientId?: number | string) {
       const { content } = parseSpringPagePayload(raw);
       const fallbackCid = effectiveUserId ?? 0;
       const schedules = content.map((r) => mapClientScheduleRow(r, fallbackCid));
-      const upcoming = schedules
-        .filter((s) => s.status !== 'COMPLETED' && s.status !== 'CANCELLED')
-        .sort((a, b) => scheduleSortKey(a).localeCompare(scheduleSortKey(b)))[0];
+      const upcoming = sharedSortClientSessions(
+        schedules.filter((s) => s.status !== 'COMPLETED' && s.status !== 'CANCELLED'),
+        'SCHEDULED',
+      )[0];
       if (upcoming == null) {
         return null;
       }

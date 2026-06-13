@@ -69,7 +69,9 @@ import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -2587,7 +2589,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             schedulePage = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId, pageable);
         } else if (matchesClientScheduleRole(userRole)) {
             log.info("👤 내담자 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
-            schedulePage = scheduleRepository.findByTenantIdAndClientId(tenantId, userId, pageable);
+            // UX: 내담자 "내 상담 → 완료" 탭은 최근 상담이 위에 오도록 date·startTime DESC 로 결정적 페이징한다.
+            // FE 가 status 별로 한 번 더 정렬하므로 예정 탭(가까운 일정 우선)도 동일 페이지 데이터로 안전하게 표현 가능.
+            Pageable clientPageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Order.desc("date"), Sort.Order.desc("startTime"), Sort.Order.desc("id"))
+            );
+            schedulePage = scheduleRepository.findByTenantIdAndClientId(tenantId, userId, clientPageable);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }

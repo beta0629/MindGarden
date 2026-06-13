@@ -105,11 +105,11 @@ public class JwtService {
             claims.put("tenantId", user.getTenantId());
         }
         
-        // Phase 3: 지점 정보 추가
-        if (user.getBranch() != null && user.getBranch().getId() != null) {
-            claims.put("branchId", user.getBranch().getId());
-        } else if (user.getBranchCode() != null) {
-            // branch 엔티티가 로드되지 않은 경우 branchCode 사용
+        // Phase 3: 지점 정보 추가 (branches 매핑 제거됨, 2026-06-13 — Long 값만 저장)
+        if (user.getBranchId() != null) {
+            claims.put("branchId", user.getBranchId());
+        }
+        if (user.getBranchCode() != null) {
             claims.put("branchCode", user.getBranchCode());
         }
         

@@ -58,7 +58,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             .tokenId(tokenId)
             .userId(user.getId())
             .tenantId(user.getTenantId())
-            .branchId(user.getBranch() != null ? user.getBranch().getId() : null)
+            .branchId(user.getBranchId())
             .deviceId(extractDeviceId(request))
             .ipAddress(ipAddress)
             .userAgent(userAgent)

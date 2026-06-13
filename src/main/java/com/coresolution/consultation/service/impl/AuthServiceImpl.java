@@ -185,8 +185,7 @@ public class AuthServiceImpl implements AuthService {
                     log.info("✅ 멀티 테넌트 사용자 로그인: email={}, tenantCount={}", EmailLogMasking.maskForLog(email), accessibleTenants.size());
                 } else {
                     log.info("✅ JWT 토큰 기반 로그인 성공: userId={}, tenantId={}, branchId={}", 
-                        user.getId(), user.getTenantId(), 
-                        user.getBranch() != null ? user.getBranch().getId() : null);
+                        user.getId(), user.getTenantId(), user.getBranchId());
                 }
                 
                 return responseBuilder.build();
@@ -293,8 +292,7 @@ public class AuthServiceImpl implements AuthService {
             UserResponse userResponse = convertToUserResponse(user);
             
             log.info("✅ JWT 토큰 갱신 성공: userId={}, tenantId={}, branchId={}", 
-                user.getId(), user.getTenantId(), 
-                user.getBranch() != null ? user.getBranch().getId() : null);
+                user.getId(), user.getTenantId(), user.getBranchId());
             
             return AuthResponse.success("토큰 갱신 성공", newToken, newRefreshToken, userResponse);
         } catch (Exception e) {
@@ -870,19 +868,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 사용자 브랜치명 best-effort 추출. lazy proxy 등 예외 시 null.
+     * 사용자 브랜치명 best-effort 추출.
+     * 브랜치 개념은 deprecated 되어 항상 null 을 반환합니다 (PR-7 회귀 차단, 2026-06-13).
+     * tenant_name 이 필요하면 호출처에서 별도로 조회하세요.
      */
     private String deriveBranchName(User user) {
-        if (user == null) {
-            return null;
-        }
-        try {
-            if (user.getBranch() != null) {
-                return user.getBranch().getBranchName();
-            }
-        } catch (Exception ignored) {
-            // proxy / lazy load 실패 — best-effort 라 무시
-        }
         return null;
     }
 

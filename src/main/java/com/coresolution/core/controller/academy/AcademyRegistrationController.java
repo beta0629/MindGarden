@@ -169,7 +169,7 @@ public class AcademyRegistrationController extends BaseApiController {
                     if (!currentTenantId.equals(branch.getTenantId())) {
                         throw new IllegalArgumentException("해당 테넌트의 브랜치가 아닙니다.");
                     }
-                    user.setBranch(branch);
+                    user.setBranchId(branch.getId());
                     user.setBranchCode(branch.getBranchCode());
                 } catch (Exception e) {
                     log.warn("브랜치 설정 실패: branchCode={}, error={}", request.getBranchCode(), e.getMessage());
@@ -278,7 +278,7 @@ public class AcademyRegistrationController extends BaseApiController {
                     if (!currentTenantId.equals(branch.getTenantId())) {
                         throw new IllegalArgumentException("해당 테넌트의 브랜치가 아닙니다.");
                     }
-                    user.setBranch(branch);
+                    user.setBranchId(branch.getId());
                     user.setBranchCode(branch.getBranchCode());
                 } catch (Exception e) {
                     log.warn("브랜치 설정 실패: branchCode={}, error={}", request.getBranchCode(), e.getMessage());

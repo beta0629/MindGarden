@@ -65,12 +65,10 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         
         // 이메일만으로 다른 테넌트의 권한을 부여하는 보안 취약점 제거
         // 단일 사용자 엔티티의 권한만 반환하도록 축소
-        // 1. User의 Branch를 통해 현재 테넌트 조회
-        if (user.getBranch() != null && user.getBranch().getTenantId() != null) {
-            tenantIds.add(user.getBranch().getTenantId());
-        }
+        // 2026-06-13: User.branch ManyToOne 매핑 제거 — Branch 기반 tenantId 추적 경로 폐기.
+        //             tenant 추적은 User.tenantId + RefreshToken 만 사용한다 (PR-7 회귀 차단).
         
-        // 2. User의 tenantId (BaseEntity에서 상속)
+        // 1. User의 tenantId (BaseEntity에서 상속)
         if (user.getTenantId() != null && !user.getTenantId().trim().isEmpty()) {
             tenantIds.add(user.getTenantId());
         }
@@ -139,12 +137,8 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
             return false;
         }
         
-        boolean hasAccess = false;
-        if (user.getTenantId() != null && user.getTenantId().equals(tenantId)) {
-            hasAccess = true;
-        } else if (user.getBranch() != null && user.getBranch().getTenantId() != null && user.getBranch().getTenantId().equals(tenantId)) {
-            hasAccess = true;
-        }
+        // 2026-06-13: Branch.tenantId 경유 검증 제거 — User.tenantId 만 사용 (PR-7 회귀 차단).
+        boolean hasAccess = user.getTenantId() != null && user.getTenantId().equals(tenantId);
         
         log.info("테넌트 접근 권한 확인 (단일 테넌트 이메일 기반): email={}, tenantId={}, hasAccess={}", 
             EmailLogMasking.maskForLog(email), tenantId, hasAccess);
@@ -179,10 +173,8 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
             return new ArrayList<>();
         }
         
+        // 2026-06-13: Branch 기반 tenantId 추적 제거 — User.tenantId 만 사용.
         Set<String> tenantIds = new HashSet<>();
-        if (user.getBranch() != null && user.getBranch().getTenantId() != null) {
-            tenantIds.add(user.getBranch().getTenantId());
-        }
         if (user.getTenantId() != null && !user.getTenantId().trim().isEmpty()) {
             tenantIds.add(user.getTenantId());
         }
@@ -201,11 +193,7 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
     @Override
     @Transactional(readOnly = true)
     public Tenant getCurrentTenant(User user) {
-        if (user.getBranch() != null && user.getBranch().getTenantId() != null) {
-            return tenantRepository.findByTenantIdAndIsDeletedFalse(user.getBranch().getTenantId())
-                .orElse(null);
-        }
-        
+        // 2026-06-13: Branch.tenantId 경유 조회 제거 — User.tenantId 만 사용.
         if (user.getTenantId() != null) {
             return tenantRepository.findByTenantIdAndIsDeletedFalse(user.getTenantId())
                 .orElse(null);

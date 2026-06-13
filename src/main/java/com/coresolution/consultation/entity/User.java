@@ -307,13 +307,13 @@ public class User extends BaseEntity {
     /**
      * @Deprecated - 🚨 레거시 호환: 브랜치 개념 제거됨 (2025-12-07)
      * 브랜치 개념은 테넌트 기반으로 대체되었습니다.
-     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
+     * 운영 DB users.branch_id 컬럼은 보존하지만, ManyToOne 매핑은 제거되었습니다 (2026-06-13).
+     * branches 테이블 RENAME(PR-7, V20260612_002) 회귀 방지를 위해 단순 Long 값만 보유합니다.
      * 새로운 코드에서는 사용하지 마세요. tenantId만 사용하세요.
      */
     @Deprecated
-    @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @jakarta.persistence.JoinColumn(name = "branch_id")
-    private Branch branch;
+    @Column(name = "branch_id")
+    private Long branchId;
     
     /**
      * 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지

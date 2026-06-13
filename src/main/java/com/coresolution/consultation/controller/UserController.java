@@ -444,10 +444,11 @@ public class UserController extends BaseApiController {
         }
         
         // 세션에서 현재 사용자의 지점 정보 가져오기 (관리자가 등록하는 경우)
-        if (currentUser != null && currentUser.getBranch() != null) {
-            // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
+        // 2026-06-13: User.branch ManyToOne 매핑 제거 — User.branchCode 컬럼 직접 사용 (PR-7 회귀 차단).
+        if (currentUser != null && currentUser.getBranchCode() != null && !currentUser.getBranchCode().isBlank()) {
+            // 관리자가 지점코드를 가지고 있으면 자동으로 지점코드 설정
             if (user.getBranchCode() == null || user.getBranchCode().trim().isEmpty()) {
-                user.setBranchCode(currentUser.getBranch().getBranchCode());
+                user.setBranchCode(currentUser.getBranchCode());
                 log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", user.getBranchCode());
             }
         }

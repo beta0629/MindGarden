@@ -207,11 +207,15 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
     
     @Override
     public Branch getUserBranch(User user) {
-        if (user == null) {
+        // 2026-06-13: User.branch ManyToOne 매핑 제거 — branchId 만 보유하므로 stub Branch 반환.
+        // 본 서비스는 @Deprecated(forRemoval = true) 이며, branches 테이블 직접 조회는 차단되었습니다.
+        if (user == null || user.getBranchId() == null) {
             return null;
         }
-        
-        return user.getBranch();
+        Branch stub = new Branch();
+        stub.setId(user.getBranchId());
+        stub.setBranchCode(user.getBranchCode());
+        return stub;
     }
     
     @Override

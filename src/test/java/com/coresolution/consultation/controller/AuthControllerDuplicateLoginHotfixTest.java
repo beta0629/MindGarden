@@ -59,7 +59,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
- * AuthController 중복 로그인 hotfix 통합 테스트 (silent skip A1).
+ * AuthController 중복 로그인 hotfix 통합 테스트.
  *
  * <p>시나리오:
  * <ul>
@@ -204,8 +204,8 @@ class AuthControllerDuplicateLoginHotfixTest {
     }
 
     @Test
-    @DisplayName("U5 통합 — confirmTerminate=true 라도 refresh_token_store revoke 호출 0회 (silent skip 정책)")
-    void confirmDuplicateLogin_silentSkipDoesNotRevokeRefreshTokens() {
+    @DisplayName("U5 통합 — confirmTerminate=true 시 컨트롤러는 authService.cleanupUserSessions 에 위임 (refresh_token revoke 는 서비스 책임)")
+    void confirmDuplicateLogin_delegatesCleanupToAuthService() {
         AuthResponse serviceResponse = AuthResponse.builder()
             .success(true)
             .message("로그인 성공")
@@ -223,9 +223,10 @@ class AuthControllerDuplicateLoginHotfixTest {
 
         authController.confirmDuplicateLogin(request, session, httpRequest);
 
+        // 컨트롤러는 RefreshTokenService 를 직접 호출하지 않고 authService.cleanupUserSessions 에 위임한다.
+        // 실제 refresh_token revoke 는 AuthServiceImplDuplicateLoginHotfixTest 의 U5 단위 테스트에서 검증.
         verify(refreshTokenService, never()).revokeAllUserTokens(anyLong());
         verify(refreshTokenService, never()).revokeRefreshToken(anyString());
-        // user_sessions 정리는 호출되어야 함 (안전한 부수 효과)
         verify(authService).cleanupUserSessions(any(User.class), eq("USER_CONFIRMED_TERMINATE"));
     }
 

@@ -291,6 +291,20 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Phase1 B7: JPQL projection 단건 조회로 멀티테넌트 격리 + N+1 회피.</p>
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<String> getBranchNameByCode(String tenantId, String branchCode) {
+        if (tenantId == null || tenantId.isEmpty() || branchCode == null || branchCode.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        return branchRepository.findBranchNameByTenantIdAndBranchCode(tenantId, branchCode);
+    }
     
     @Override
     @Transactional(readOnly = true)

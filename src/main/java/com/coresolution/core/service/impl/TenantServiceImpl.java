@@ -8,8 +8,11 @@ import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.BrandingService;
 import com.coresolution.core.service.TenantService;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +32,26 @@ public class TenantServiceImpl implements TenantService {
     
     private final TenantRepository tenantRepository;
     private final BrandingService brandingService;
-    
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Phase1 B7: Caffeine {@code tenantById} 캐시 적용 (TTL 10분).
+     * {@code unless} 로 빈 결과(=Optional.empty)는 캐시하지 않아 신규 테넌트 활성화 직후 stale 회피.</p>
+     */
+    @Override
+    @Cacheable(value = "tenantById",
+            key = "#tenantId",
+            condition = "#tenantId != null && !#tenantId.isEmpty()",
+            unless = "#result == null")
+    public Optional<Tenant> getTenantById(String tenantId) {
+        log.debug("테넌트 단건 조회 (캐시 미스): tenantId={}", tenantId);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return Optional.empty();
+        }
+        return tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
+    }
+
     /**
      * 테넌트의 업종 타입 조회
      * @param tenantId 테넌트 ID
@@ -38,8 +60,8 @@ public class TenantServiceImpl implements TenantService {
     @Override
     public String getBusinessType(String tenantId) {
         log.debug("테넌트 업종 타입 조회: tenantId={}", tenantId);
-        
-        return tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId)
+
+        return getTenantById(tenantId)
                 .map(Tenant::getBusinessType)
                 .orElseThrow(() -> {
                     log.warn("테넌트를 찾을 수 없습니다: tenantId={}", tenantId);
@@ -100,8 +122,9 @@ public class TenantServiceImpl implements TenantService {
      */
     @Override
     @Transactional
+    @CacheEvict(value = "tenantById", key = "#tenantId")
     public TenantNameUpdateResponse updateTenantDisplayName(String tenantId, TenantNameUpdateRequest request) {
-        log.info("테넌트 표시명 변경 처리: tenantId={}", tenantId);
+        log.info("테넌트 표시명 변경 처리 (캐시 evict: tenantById/{}): tenantId={}", tenantId, tenantId);
 
         Tenant tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId)
                 .orElseThrow(() -> new EntityNotFoundException(TenantDisplayNameMessages.TENANT_NOT_FOUND));

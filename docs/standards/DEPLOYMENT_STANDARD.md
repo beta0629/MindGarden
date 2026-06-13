@@ -13,7 +13,9 @@ GitHub Actions를 통한 자동 배포 프로세스를 정의합니다.
 
 ### 참조 문서
 - **[운영 Go-Live 종합 체크리스트](../운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** — 도메인·서브도메인·TLS·보안·전 에이전트 합의 (배포 직전 필수)
+- **[DB / 운영 환경변수 SSOT 정책](./DB_ENV_SSOT_POLICY.md)** — 운영 SSOT = `/etc/mindgarden/prod.env` 단일 (점검 문서 부록 D.4 안1)
 - [보안 표준](./SECURITY_STANDARD.md)
+- [환경 변수 관리 표준](./ENVIRONMENT_VARIABLE_STANDARD.md)
 - [백엔드 코딩 표준](./BACKEND_CODING_STANDARD.md)
 - [프론트엔드 개발 표준](./FRONTEND_DEVELOPMENT_STANDARD.md)
 
@@ -224,14 +226,20 @@ PERSONAL_DATA_ENCRYPTION_KEY=<암호화 키>
 PERSONAL_DATA_ENCRYPTION_IV=<IV>
 ```
 
-#### 운영 서버 (systemd 서비스 파일)
+#### 운영 서버 (`/etc/mindgarden/prod.env` SSOT — perm `600`, owner `root:root`)
+
+운영 SSOT는 **`/etc/mindgarden/prod.env` 단일 파일**이며, systemd unit 의 `EnvironmentFile=` 로만 주입한다 ([`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) §1).
+
 ```ini
+# /etc/systemd/system/mindgarden-core-blue.service (저장소 정본 = deployment/systemd/*.example)
 [Service]
-Environment="DB_HOST=beta74.cafe24.com"
-Environment="DB_PORT=3306"
-Environment="DB_NAME=core_solution"
-Environment="JWT_SECRET=<운영 비밀키>"
+EnvironmentFile=/etc/mindgarden/prod.env
+Environment=SERVER_PORT=8080  # 슬롯 분리용 비-secret 상수만 인라인 허용
 ```
+
+**unit `Environment=` 평문 secret 금지**: `JWT_SECRET`, OAuth client secret, PII 암호화 키 등 모든 secret은 `EnvironmentFile=/etc/mindgarden/prod.env` 를 통해서만 주입한다 ([`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) §3).
+
+> **과도기 주의 (2026-06-13 기준)**: 운영 호스트에는 `/etc/mindgarden/prod-from-dev.env` 가 drop-in `90-envfile.conf` 로 추가 주입되고 있으나, 이는 폐기 예정이다 (점검 문서 부록 D.4 안1, [`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) §2 PR-3/PR-4 chain). 신규 키는 모두 `prod.env` 에 추가한다.
 
 ---
 

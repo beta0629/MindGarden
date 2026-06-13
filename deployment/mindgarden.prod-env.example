@@ -1,6 +1,8 @@
-# MindGarden systemd EnvironmentFile= 예시
-# 복사: sudo cp mindgarden.prod-env.example /etc/mindgarden/mindgarden.env && sudo chmod 600 ...
-# 서비스: EnvironmentFile=-/etc/mindgarden/mindgarden.env
+# MindGarden systemd EnvironmentFile= 예시 — 운영 SSOT
+# 운영 SSOT: /etc/mindgarden/prod.env  (perm 600, owner root:root)
+#   docs/standards/DB_ENV_SSOT_POLICY.md §1, deployment/systemd/mindgarden-core-{blue,green}.service.example 참조
+# 복사: sudo cp mindgarden.prod-env.example /etc/mindgarden/prod.env && sudo chmod 600 /etc/mindgarden/prod.env
+# 서비스: EnvironmentFile=/etc/mindgarden/prod.env  (mindgarden-core-{blue,green}.service)
 #
 # OAuth: NAVER_REDIRECT_URI 미지정 시 server.base-url 사용. 네이버·카카오 콘솔 Callback과 동일 호스트 필수.
 #   운영 권장: OAUTH2_BASE_URL=https://core-solution.co.kr , SERVER_BASE_URL=https://core-solution.co.kr

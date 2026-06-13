@@ -12,13 +12,17 @@ MindGarden 프로젝트의 환경 변수 관리 표준입니다.
 환경 변수 네이밍, 보안 관리, 문서화 규칙을 정의합니다.
 
 ### 참조 문서
+- **[DB / 운영 환경변수 SSOT 정책](./DB_ENV_SSOT_POLICY.md)** — 운영 SSOT = `/etc/mindgarden/prod.env` 단일 + unit 평문 secret 금지
 - [시스템 명칭 통일 표준](./SYSTEM_NAMING_STANDARD.md)
 - [보안 표준](./SECURITY_STANDARD.md)
 - [암호화 처리 표준](./ENCRYPTION_STANDARD.md)
+- [배포 표준](./DEPLOYMENT_STANDARD.md)
 
 ### 구현 위치
 - **환경 변수 파일**: `.env.local`, `.env.example`
 - **설정 파일**: `application.yml`, `application-local.yml`, `application-prod.yml`
+- **운영 호스트 SSOT**: `/etc/mindgarden/prod.env` (perm `600`, owner `root:root`) — systemd `EnvironmentFile=` 로만 주입 ([`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md))
+- **개발 호스트 SSOT**: `/etc/mindgarden/dev.env`
 
 ---
 
@@ -233,14 +237,16 @@ application-*.yml
 ### 3. 환경 변수 암호화
 
 #### 운영 환경
-- 환경 변수는 서버 환경 변수로 관리
-- 시스템 환경 변수 사용 권장
-- 비밀번호 관리 도구 사용 권장 (Vault, AWS Secrets Manager 등)
+- **SSOT 단일화**: `/etc/mindgarden/prod.env` (perm `600`, owner `root:root`) 단일 파일로 관리. 자세한 정책·폐기 일정은 [`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) 참조.
+- **systemd 주입**: `EnvironmentFile=/etc/mindgarden/prod.env` 로만 주입. unit 의 `Environment=` 라인에 secret 평문 기재 금지 ([`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) §3).
+- **비-secret 상수 예외**: `SERVER_PORT` 등 슬롯 분리용 비-secret 상수만 unit 인라인 허용.
+- 비밀번호 관리 도구 사용 권장 (Vault, AWS Secrets Manager 등) — 후속 단계 검토.
 
 #### 개발 환경
 - `.env.local` 파일 사용 (Git 커밋 금지)
 - 각 개발자가 로컬에서 관리
 - 예시 파일 (`.env.example`) 제공
+- 개발 서버 SSOT: `/etc/mindgarden/dev.env` (단일 파일)
 
 ---
 

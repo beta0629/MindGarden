@@ -14,6 +14,9 @@
 @import './00-core/_variables.css';
 @import './00-core/_component-variables.css';
 
+/* ===== 1-3. 디자인 v2 토큰 SSOT (Calm Forest, mg-v2-* prefix) ===== */
+@import './tokens/design-v2-tokens.css';
+
 /* ===== 2. Z-Index 레이어 시스템 ===== */
 @import './01-settings/_z-index.css';
 

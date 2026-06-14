@@ -75,6 +75,15 @@ jobs:
       NAVER_REGISTERED_URLS: ${{ secrets.NAVER_REGISTERED_URLS }}
       GOOGLE_REGISTERED_URLS: ${{ secrets.GOOGLE_REGISTERED_URLS }}
       APPLE_REGISTERED_URLS: ${{ secrets.APPLE_REGISTERED_URLS }}
+      # PII KEY/IV 회전 SSOT (선행 PR-1, 2026-06-14):
+      # PII KEY/IV 회전 설계 (docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md, PR #335) 후속.
+      # PersonalDataEncryptionKeyProvider 가 다중 키/IV 로테이션을 위해 읽는 환경변수 4종을
+      # /etc/mindgarden/dev.env 로 멱등 동기화한다 (운영 deploy-production.yml 과 동일 set).
+      # 누락 허용 — Phase 1 진입 전까지 BE 기동 영향 최소화.
+      PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID: ${{ secrets.PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID }}
+      PERSONAL_DATA_ENCRYPTION_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
+      PERSONAL_DATA_ENCRYPTION_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
+      MINDGARDEN_DORMANT_PII_ENC_KEY: ${{ secrets.MINDGARDEN_DORMANT_PII_ENC_KEY }}
       # NCP SENS 4종 환경변수 폐기 (2026-06-12 SSOT 통합).
       # SmsGatewayServiceImpl → SolapiSmsProvider 단일 통합. 솔라피 자격 증명은
       # scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
@@ -767,6 +776,98 @@ jobs:
           echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart (통합 restart step 에서 *_REGISTERED_URLS 일괄 반영)"
     # ============================================================================
     # [/OAuth 4종 표준화 옵션 B′, 2026-06-11]
+    # ============================================================================
+
+    # ============================================================================
+    # [PII 회전 선행 PR-1 SSOT 2026-06-14] PII KEY/IV 회전 env 자동 주입 + 검증 (개발)
+    # GitHub Secrets(PERSONAL_DATA_ENCRYPTION_*, MINDGARDEN_DORMANT_PII_ENC_KEY) →
+    # /etc/mindgarden/dev.env 멱등 갱신.
+    # 배경: PII KEY/IV 회전 재암호화 마이그 설계 (PR #335,
+    #       docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md) Phase 0~4 진입 전 차단 해제용.
+    #       PersonalDataEncryptionKeyProvider 다중 키 로테이션 환경변수 4종을 dev/운영 동일 set 으로 동기화.
+    # 운영(deploy-production.yml) 의 동일 step 과 패턴 일치 — dev 는 단일 systemd unit + 통합 restart step 사용.
+    # 정책: 4종 모두 비면 step skip, 일부만 채워져도 채워진 키만 graceful 반영 (기존 BE Converter 동작 영향 최소화).
+    # ============================================================================
+    - name: 🔑 PII KEY/IV 회전 env 자동 주입 + 검증
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID,PERSONAL_DATA_ENCRYPTION_KEYS,PERSONAL_DATA_ENCRYPTION_IVS,MINDGARDEN_DORMANT_PII_ENC_KEY
+        script: |
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          UNIT=mindgarden-dev.service
+          PII_KEYS="PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS MINDGARDEN_DORMANT_PII_ENC_KEY"
+          N_KEYS=4
+
+          # 0) 사전 검증 — 4종 중 비어있는 것 카운트 (전체 비면 step 종료, 일부면 채워진 것만 갱신)
+          MISSING_SECRET=0
+          for k in $PII_KEYS; do
+            eval "v=\${$k}"
+            if [ -z "$v" ]; then
+              MISSING_SECRET=$((MISSING_SECRET+1))
+            fi
+          done
+          if [ "$MISSING_SECRET" -ge "$N_KEYS" ]; then
+            echo "::notice title=PII KEY/IV env skip::GitHub Secrets 의 PII 회전 4종이 모두 비어 있어 dev.env 갱신을 skip 합니다. BE 는 기존 단일 키(PERSONAL_DATA_ENCRYPTION_KEY/IV) 또는 dev fallback 으로 기동. Phase 1 진입 전 등록 권장: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 0
+          fi
+          if [ "$MISSING_SECRET" -gt 0 ]; then
+            echo "::notice title=PII KEY/IV partial::4종 중 $MISSING_SECRET 개가 비어 있어 빈 키는 graceful skip 됩니다. 채워진 키만 dev.env 에 반영합니다."
+          fi
+
+          # 1) 파일 존재 보장 + 백업
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          # 2) 멱등 KEY="VALUE" 갱신 (운영 워크플로 / 다른 dev sync step 과 동일 로직)
+          update_env() {
+            local key="$1"
+            local value="$2"
+            local escaped_value
+            escaped_value=$(printf '%s' "$value" | sed -e 's/[\\&|]/\\&/g')
+            if sudo grep -qE "^[[:space:]]*${key}=" "$DEV_ENV_FILE" 2>/dev/null; then
+              sudo sed -i "s|^[[:space:]]*${key}=.*|${key}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+            else
+              printf '%s="%s"\n' "$key" "$value" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+            fi
+          }
+
+          echo "🔐 dev.env PII KEY/IV 회전 4종 멱등 갱신 시작 (빈 값은 skip)"
+          for k in $PII_KEYS; do
+            eval "v=\${$k}"
+            if [ -n "$v" ]; then
+              update_env "$k" "$v"
+            fi
+          done
+
+          # 3) 권한 보호
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+
+          # 4) 값 노출 없이 길이만 표시 (실 키/IV 는 절대 echo 금지)
+          echo "✅ dev.env PII KEY/IV 회전 갱신 완료 — 길이만 표시:"
+          sudo grep -E "^(PERSONAL_DATA_ENCRYPTION_|MINDGARDEN_DORMANT_PII_ENC_KEY)" "$DEV_ENV_FILE" \
+            | awk -F= '{key=$1; rest=substr($0, length(key)+2); gsub(/^"|"$/, "", rest); printf "   %s = (%d chars)\n", key, length(rest)}'
+
+          # 5) 변경 마커 작성 — 통합 restart step 이 1회만 systemctl restart 수행 (P2 transient 502 차단).
+          # 자세한 배경은 Apple SIWA env step 참고. PII 4종 PID env 검증은 통합 restart step 으로 이관.
+          sudo touch /tmp/mindgarden-dev-env-pending-restart
+          echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart (통합 restart step 에서 PII KEY/IV 4종 일괄 반영·검증)"
+    # ============================================================================
+    # [/PII 회전 선행 PR-1 SSOT 2026-06-14]
     # ============================================================================
 
     # ============================================================================

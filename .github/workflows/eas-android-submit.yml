@@ -60,7 +60,7 @@ jobs:
 
     steps:
       - name: 📥 코드 체크아웃
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🔐 사전 점검 — 필수 Secret
         run: |

@@ -7,6 +7,7 @@ import java.util.Map;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
@@ -25,10 +26,25 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Transactional
 public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultationRecordAlertService {
-    
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
-    
+
+    /**
+     * SimpleJdbcCall 카탈로그(=DB명) 명시용 SSOT.
+     *
+     * <p>{@code spring.datasource.url} 의 {@code ${DB_NAME}} 과 동일 SSOT 를 상속하여
+     * 다중 DB(core_solution + mind_garden) 동명 프로시저 메타 충돌
+     * ({@code SimpleJdbcCallOperations#metaData()} 시그니처 모호)을 차단한다.</p>
+     *
+     * <p>MySQL JDBC 모델에서는 catalog = DB명, schema = null. 따라서 catalog 만 명시하고
+     * schema 는 명시하지 않는다. (PR-A hotfix, 2026-06-14)</p>
+     *
+     * @see com.coresolution.consultation.service.impl.PlSqlStatisticsServiceImpl
+     */
+    @Value("${spring.datasource.schema-name:${DB_NAME:core_solution}}")
+    private String dbSchemaName = "core_solution";
+
     /**
      * 상담일지 미작성 확인
      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
@@ -47,6 +63,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withCatalogName(dbSchemaName)
                 .withProcedureName("CheckMissingConsultationRecords");
             
             // 표준화 2025-12-06: branchCode 대신 tenantId 사용 (프로시저가 p_tenant_id를 받도록 수정되었다고 가정)
@@ -98,6 +115,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withCatalogName(dbSchemaName)
                 .withProcedureName("GetMissingConsultationRecordAlerts");
             
             // 표준화 2025-12-06: branchCode 대신 tenantId 사용 (프로시저가 p_tenant_id를 받도록 수정되었다고 가정)
@@ -140,6 +158,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withCatalogName(dbSchemaName)
                 .withProcedureName("ResolveConsultationRecordAlert");
             
             MapSqlParameterSource params = new MapSqlParameterSource()
@@ -179,6 +198,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withCatalogName(dbSchemaName)
                 .withProcedureName("GetConsultationRecordMissingStatistics");
             
             // 표준화된 프로시저는 p_tenant_id와 p_check_date만 받음 (단일 날짜)
@@ -227,6 +247,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withCatalogName(dbSchemaName)
                 .withProcedureName("AutoCreateMissingConsultationRecordAlerts");
             
             MapSqlParameterSource params = new MapSqlParameterSource()

@@ -8,9 +8,9 @@ const appCfgColors = require('./src/theme/tokensAppConfig.cjs') as {
 };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const withAndroidKakaoMaven = require('./plugins/withAndroidKakaoMaven');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const pkg = require('./package.json') as { version: string };
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 const releaseManifest = require('./releases/manifest.json') as {
   androidVersionCode: number;
 };
@@ -299,6 +299,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ],
     'expo-font',
     'expo-splash-screen',
+    /**
+     * expo-localization — 디바이스 로케일·타임존 감지를 위한 네이티브 모듈.
+     *
+     * <p>i18n SSOT(`src/i18n/index.ts`) 의 `getLocales()` / `getCalendars()` 호출 대상.
+     * Build native module 등록만 담당 (런타임 권한 없음).</p>
+     *
+     * @since 2026-06-14 (A8 — expo-app i18n 정책 P0)
+     */
+    'expo-localization',
     [
       'expo-calendar',
       {

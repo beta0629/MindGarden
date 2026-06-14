@@ -35,6 +35,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme';
 import { UnifiedModal } from '@/components/common/modals/UnifiedModal';
 import {
@@ -68,16 +69,32 @@ import {
   type LoginAnimationConfig,
 } from '@/components/organisms/login/loginAnimationConstants';
 
-const DUPLICATE_LOGIN_MODAL_TITLE = '이미 로그인된 기기가 있습니다';
-const DUPLICATE_LOGIN_FALLBACK_BODY =
-  '다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?';
-const DUPLICATE_LOGIN_CONFIRM_LABEL = '기존 세션 종료하고 로그인';
-const DUPLICATE_LOGIN_CANCEL_LABEL = '취소';
-const DUPLICATE_LOGIN_RETRY_FAILED_FALLBACK =
-  '재로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
-const EXPO_GO_BANNER_TITLE = 'Expo Go로 열려 있어요';
-const EXPO_GO_BANNER_BODY =
-  '카카오·네이버는 네이티브 모듈이라 Expo Go에서는 사용할 수 없습니다. 시뮬레이터/폰 홈의 MindGarden 앱을 실행하거나, 터미널에서 npx expo run:ios 후 그 앱으로 접속해 주세요. 이메일 로그인은 가능합니다.';
+/**
+ * 본 화면의 사용자 가시 메시지는 모두 i18n SSOT(`src/i18n/translations/<lang>.json`) 에서 조회한다.
+ * 신규 한국어 인라인 문자열을 추가하지 않는다 — 정책: `docs/standards/EXPO_APP_I18N_POLICY.md`.
+ */
+const I18N_KEYS = Object.freeze({
+  DUPLICATE_MODAL_TITLE: 'auth.login.duplicate.modalTitle',
+  DUPLICATE_FALLBACK_BODY: 'auth.login.duplicate.fallbackBody',
+  DUPLICATE_CONFIRM_LABEL: 'auth.login.duplicate.confirmLabel',
+  DUPLICATE_CANCEL_LABEL: 'auth.login.duplicate.cancelLabel',
+  DUPLICATE_RETRY_FAILED_FALLBACK: 'auth.login.duplicate.retryFailedFallback',
+  EXPO_GO_TITLE: 'auth.login.expoGo.title',
+  EXPO_GO_BODY: 'auth.login.expoGo.body',
+  ERROR_KAKAO: 'auth.login.errors.kakao',
+  ERROR_KAKAO_GENERIC: 'auth.login.errors.kakaoGeneric',
+  ERROR_NAVER: 'auth.login.errors.naver',
+  ERROR_NAVER_GENERIC: 'auth.login.errors.naverGeneric',
+  ERROR_GOOGLE: 'auth.login.errors.google',
+  ERROR_GOOGLE_GENERIC: 'auth.login.errors.googleGeneric',
+  ERROR_APPLE: 'auth.login.errors.apple',
+  ERROR_APPLE_GENERIC: 'auth.login.errors.appleGeneric',
+  ERROR_CREDENTIAL_EMPTY: 'auth.login.errors.credentialEmpty',
+  ERROR_CREDENTIAL: 'auth.login.errors.credential',
+  ERROR_CREDENTIAL_GENERIC: 'auth.login.errors.credentialGeneric',
+  APPLE_CANCEL_MARKER: 'auth.login.appleCancelMarker',
+} as const);
+
 const MAX_FONT_SIZE_MULTIPLIER = 1.6;
 
 interface DuplicateLoginPrompt {
@@ -125,6 +142,7 @@ function socialSignupRouteParams(info: SocialUserInfoDraft) {
 
 export default function MindGardenLoginPage() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { width: windowWidth } = useWindowDimensions();
   const reduceMotion = useReduceMotion();
   const config: LoginAnimationConfig = useMemo(
@@ -195,14 +213,14 @@ export default function MindGardenLoginPage() {
           retryContext: result.retryContext,
         });
       } else if (result.kind === 'error') {
-        setErrorMessage(result.message ?? '카카오 로그인에 실패했습니다.');
+        setErrorMessage(result.message ?? t(I18N_KEYS.ERROR_KAKAO));
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (e) {
       console.error('[Login] kakao', e);
       const detail =
         e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
-      setErrorMessage(`카카오 로그인 중 오류가 발생했습니다.${detail}`);
+      setErrorMessage(`${t(I18N_KEYS.ERROR_KAKAO_GENERIC)}${detail}`);
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -248,14 +266,14 @@ export default function MindGardenLoginPage() {
           retryContext: result.retryContext,
         });
       } else if (result.kind === 'error') {
-        setErrorMessage(result.message ?? '네이버 로그인에 실패했습니다.');
+        setErrorMessage(result.message ?? t(I18N_KEYS.ERROR_NAVER));
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (e) {
       console.error('[Login] naver', e);
       const detail =
         e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
-      setErrorMessage(`네이버 로그인 중 오류가 발생했습니다.${detail}`);
+      setErrorMessage(`${t(I18N_KEYS.ERROR_NAVER_GENERIC)}${detail}`);
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -329,20 +347,20 @@ export default function MindGardenLoginPage() {
             retryContext: result.retryContext,
           });
         } else if (result.kind === 'error') {
-          setErrorMessage(result.message ?? 'Google 로그인에 실패했습니다.');
+          setErrorMessage(result.message ?? t(I18N_KEYS.ERROR_GOOGLE));
           await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
         }
       } catch (e) {
         console.error('[Login] google', e);
         const detail =
           e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
-        setErrorMessage(`Google 로그인 중 오류가 발생했습니다.${detail}`);
+        setErrorMessage(`${t(I18N_KEYS.ERROR_GOOGLE_GENERIC)}${detail}`);
       } finally {
         setIsLoading(false);
         setLoadingProvider(null);
       }
     },
-    [handleLoginSuccess],
+    [handleLoginSuccess, t],
   );
 
   const handleAppleLogin = async () => {
@@ -393,8 +411,10 @@ export default function MindGardenLoginPage() {
           retryContext: result.retryContext,
         });
       } else if (result.kind === 'error') {
-        if (!/취소/.test(result.message ?? '')) {
-          setErrorMessage(result.message ?? 'Apple 로그인에 실패했습니다.');
+        // BE 메시지에 "취소" 단어가 포함되면 사용자 의도적 취소로 간주(사용자 가시 UI 아님 — i18n 대상 외).
+        const cancelMarker = /취소/;
+        if (!cancelMarker.test(result.message ?? '')) {
+          setErrorMessage(result.message ?? t(I18N_KEYS.ERROR_APPLE));
           await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
         }
       }
@@ -402,7 +422,7 @@ export default function MindGardenLoginPage() {
       console.error('[Login] apple', e);
       const detail =
         e instanceof Error && e.message.trim() ? ` (${e.message.trim().slice(0, 100)})` : '';
-      setErrorMessage(`Apple 로그인 중 오류가 발생했습니다.${detail}`);
+      setErrorMessage(`${t(I18N_KEYS.ERROR_APPLE_GENERIC)}${detail}`);
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -411,7 +431,7 @@ export default function MindGardenLoginPage() {
 
   const handleCredentialLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      setErrorMessage('이메일/휴대폰 번호와 비밀번호를 입력해주세요.');
+      setErrorMessage(t(I18N_KEYS.ERROR_CREDENTIAL_EMPTY));
       return;
     }
 
@@ -441,12 +461,12 @@ export default function MindGardenLoginPage() {
           retryContext: result.retryContext,
         });
       } else {
-        setErrorMessage(result.message ?? '로그인에 실패했습니다.');
+        setErrorMessage(result.message ?? t(I18N_KEYS.ERROR_CREDENTIAL));
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (e) {
       console.error('[Login] credential', e);
-      setErrorMessage('로그인 중 오류가 발생했습니다.');
+      setErrorMessage(t(I18N_KEYS.ERROR_CREDENTIAL_GENERIC));
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -469,13 +489,13 @@ export default function MindGardenLoginPage() {
         await handleLoginSuccess();
       } else {
         setDuplicateLoginPrompt(null);
-        setErrorMessage(result.message ?? DUPLICATE_LOGIN_RETRY_FAILED_FALLBACK);
+        setErrorMessage(result.message ?? t(I18N_KEYS.DUPLICATE_RETRY_FAILED_FALLBACK));
         await safeNotificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (e) {
       console.error('[Login] duplicate-login retry', e);
       setDuplicateLoginPrompt(null);
-      setErrorMessage(DUPLICATE_LOGIN_RETRY_FAILED_FALLBACK);
+      setErrorMessage(t(I18N_KEYS.DUPLICATE_RETRY_FAILED_FALLBACK));
     } finally {
       setIsConfirmingDuplicateLogin(false);
     }
@@ -520,7 +540,7 @@ export default function MindGardenLoginPage() {
           marginBottom: 6,
         }}
       >
-        {EXPO_GO_BANNER_TITLE}
+        {t(I18N_KEYS.EXPO_GO_TITLE)}
       </Text>
       <Text
         maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
@@ -531,7 +551,7 @@ export default function MindGardenLoginPage() {
           lineHeight: 18,
         }}
       >
-        {EXPO_GO_BANNER_BODY}
+        {t(I18N_KEYS.EXPO_GO_BODY)}
       </Text>
     </View>
   ) : null;
@@ -604,19 +624,19 @@ export default function MindGardenLoginPage() {
       <UnifiedModal
         isOpen={duplicateLoginPrompt != null}
         onClose={handleCancelDuplicateLogin}
-        title={DUPLICATE_LOGIN_MODAL_TITLE}
+        title={t(I18N_KEYS.DUPLICATE_MODAL_TITLE)}
         loading={isConfirmingDuplicateLogin}
         backdropClick={false}
         showCloseButton={false}
         actions={[
           {
-            label: DUPLICATE_LOGIN_CONFIRM_LABEL,
+            label: t(I18N_KEYS.DUPLICATE_CONFIRM_LABEL),
             onPress: handleConfirmDuplicateLogin,
             variant: 'primary',
             disabled: isConfirmingDuplicateLogin,
           },
           {
-            label: DUPLICATE_LOGIN_CANCEL_LABEL,
+            label: t(I18N_KEYS.DUPLICATE_CANCEL_LABEL),
             onPress: handleCancelDuplicateLogin,
             variant: 'secondary',
             disabled: isConfirmingDuplicateLogin,
@@ -632,7 +652,7 @@ export default function MindGardenLoginPage() {
             lineHeight: 22,
           }}
         >
-          {duplicateLoginPrompt?.message?.trim() || DUPLICATE_LOGIN_FALLBACK_BODY}
+          {duplicateLoginPrompt?.message?.trim() || t(I18N_KEYS.DUPLICATE_FALLBACK_BODY)}
         </Text>
       </UnifiedModal>
     </View>

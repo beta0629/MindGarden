@@ -1,0 +1,49 @@
+{
+  "common": {
+    "errors": {
+      "unknown": "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+      "network": "네트워크 연결을 확인해주세요.",
+      "retry": "다시 시도",
+      "cancel": "취소",
+      "confirm": "확인",
+      "close": "닫기"
+    },
+    "actions": {
+      "ok": "확인",
+      "back": "뒤로",
+      "next": "다음",
+      "save": "저장",
+      "delete": "삭제",
+      "edit": "수정"
+    }
+  },
+  "auth": {
+    "login": {
+      "duplicate": {
+        "modalTitle": "이미 로그인된 기기가 있습니다",
+        "fallbackBody": "다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?",
+        "confirmLabel": "기존 세션 종료하고 로그인",
+        "cancelLabel": "취소",
+        "retryFailedFallback": "재로그인에 실패했습니다. 잠시 후 다시 시도해 주세요."
+      },
+      "expoGo": {
+        "title": "Expo Go로 열려 있어요",
+        "body": "카카오·네이버는 네이티브 모듈이라 Expo Go에서는 사용할 수 없습니다. 시뮬레이터/폰 홈의 MindGarden 앱을 실행하거나, 터미널에서 npx expo run:ios 후 그 앱으로 접속해 주세요. 이메일 로그인은 가능합니다."
+      },
+      "errors": {
+        "kakao": "카카오 로그인에 실패했습니다.",
+        "kakaoGeneric": "카카오 로그인 중 오류가 발생했습니다.",
+        "naver": "네이버 로그인에 실패했습니다.",
+        "naverGeneric": "네이버 로그인 중 오류가 발생했습니다.",
+        "google": "Google 로그인에 실패했습니다.",
+        "googleGeneric": "Google 로그인 중 오류가 발생했습니다.",
+        "apple": "Apple 로그인에 실패했습니다.",
+        "appleGeneric": "Apple 로그인 중 오류가 발생했습니다.",
+        "credentialEmpty": "이메일/휴대폰 번호와 비밀번호를 입력해주세요.",
+        "credential": "로그인에 실패했습니다.",
+        "credentialGeneric": "로그인 중 오류가 발생했습니다."
+      },
+      "appleCancelMarker": "취소"
+    }
+  }
+}

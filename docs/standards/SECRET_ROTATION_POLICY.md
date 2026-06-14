@@ -1,9 +1,10 @@
 # Secret 회전 정책
 
-**버전**: 1.2.0
+**버전**: 1.3.0
 **최종 업데이트**: 2026-06-14
 **상태**: 공식 표준 (P0 표준 5종 묶음)
-**변경 요지 (v1.2.0)**: DB_PASSWORD 자동 회전 워크플로(`rotate-db-password.yml`) 신설에 따라 §3.3 을 수동 절차에서 자동화 절차 + DBA 협업 절차로 전면 개정. PR #331 health 게이트 패턴(연속 5회 UP + grace 120s + deploy run watch) 동일 적용.
+**변경 요지 (v1.3.0)**: PII KEY/IV 회전 선행 PR-1 (운영 SSOT 4라인 자동 주입) 합류. §3.4 를 (a) 별도 설계서(`PII_KEY_ROTATION_REENCRYPTION_DESIGN.md` v1.0.0) SSOT 로 위임, (b) 운영 SSOT 4라인 (`PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID` / `_KEYS` / `_IVS` / `MINDGARDEN_DORMANT_PII_ENC_KEY`) 명시, (c) 자동화 워크플로 등록 로드맵 (PR-1 / PR-2 / Phase 1 / Phase 2~4) 예고로 전면 갱신.
+**이전 변경 (v1.2.0)**: DB_PASSWORD 자동 회전 워크플로(`rotate-db-password.yml`) 신설에 따라 §3.3 을 수동 절차에서 자동화 절차 + DBA 협업 절차로 전면 개정. PR #331 health 게이트 패턴(연속 5회 UP + grace 120s + deploy run watch) 동일 적용.
 **이전 변경 (v1.1.0)**: JWT_SECRET 자동 회전 워크플로(`rotate-jwt-secret.yml`) 신설에 따른 자동화 절차·강도 정책 SSOT·이력 SSOT 분리 보완. JWT_SECRET P0 사고(2026-06-13) 후속.
 
 ## 1. 정책 개요
@@ -164,23 +165,53 @@ gh workflow run rotate-db-password.yml \
 - 회전 직후 cutover 원자성이 핵심 (prod.env 갱신 → BE 재기동 → health 게이트 통과 전까지 단일 트랜잭션처럼 처리)
 - prod 환경 confirm 3단계 (`ROTATE` + `PROD_ROTATE` + `DBA_APPROVED`) 우회 금지
 
-### 3.4 PII KEY / IV — 자동화 범위 외
+### 3.4 PII KEY / IV — 재암호화 동반 회전 (별도 설계서)
 
-> **회전 시 기존 데이터 재암호화 마이그레이션이 필요**하므로 본 정책의 자동 회전 대상이 아니다. 별도 설계서 작성 후 진행한다.
+> **회전 시 기존 데이터 재암호화 마이그레이션이 필요**하므로 본 정책의 자동 회전(§3.1) 1차 범위 밖이다. 회전 절차는 별도 설계서가 SSOT 다.
+>
+> **설계서**: [`PII_KEY_ROTATION_REENCRYPTION_DESIGN.md`](./PII_KEY_ROTATION_REENCRYPTION_DESIGN.md) v1.0.0 — 옵션 B (Dual-Read + 백그라운드 배치, 무중단) 채택. Phase 0 ~ Phase 4 절차 + 롤백 + 휴면 vault 별도 트랙 명시.
+
+#### 운영 SSOT 4라인 (회전 자동화 대응)
+
+`deployment/mindgarden.prod-env.example` 와 `/etc/mindgarden/prod.env` 에 다음 4라인을 SSOT 로 보유한다 (값은 운영 secret — 본 문서·PR 본문에 평문 노출 절대 금지).
+
+| 환경변수 | 매핑 (Spring property) | 용도 |
+|---|---|---|
+| `PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID` | `encryption.personal-data.active-key-id` | 활성 keyId (예: `v1`, `v2`) |
+| `PERSONAL_DATA_ENCRYPTION_KEYS` | `encryption.personal-data.key-versions` | 다중 키 CSV (`keyId:base64key,...`) |
+| `PERSONAL_DATA_ENCRYPTION_IVS` | `encryption.personal-data.iv-versions` | 다중 IV CSV (`keyId:base64iv,...`) |
+| `MINDGARDEN_DORMANT_PII_ENC_KEY` | `mindgarden.lifecycle.dormant-pii-encryption-key` | 휴면 vault 단일 키 (AES/GCM, 회전 인프라는 Phase 5+ 후속) |
+
+근거: `src/main/java/com/coresolution/consultation/util/PersonalDataEncryptionKeyProvider.java`, `src/main/resources/application.yml` 257-258 / 312-324.
+
+legacy 단일 키 (`PERSONAL_DATA_ENCRYPTION_KEY` / `_IV`) 는 다중 키 미설정 시 fallback 하위 호환용이며, 다중 키 운영 진입 후 placeholder 화 권장.
+
+#### 자동화 워크플로 등록
+
+| PR | 범위 | 상태 |
+|---|---|---|
+| **선행 PR-1** (본 PR, 2026-06-14) | `deploy-production.yml` 에 위 4종 sync step 자동 주입 (composite `sync-prod-env-key` 재사용, `skip_when=any_missing`) + `mindgarden.prod-env.example` 4라인 명시 | ✅ |
+| **선행 PR-2** (별도, 예정) | `.github/actions/sync-prod-env-key/action.yml` 의 PRESERVE 가드에 `PII_PRESERVE_KEYS` 추가 (다른 step 의 sed 갱신이 PII 라인을 침범하지 않도록 보호) | ☐ |
+| **Phase 1** (별도, 예정) | `PersonalDataKeyRotationService` 확장 (users 7컬럼·clients 7컬럼·진행률 테이블·청크) — 설계서 §3.2 | ☐ |
+| **Phase 2~4** (별도, 예정) | `rotate-pii-key.yml` 워크플로 신설 (5 step `workflow_dispatch` 독립 트리거) — 설계서 §4 | ☐ |
 
 #### 사전 설계 필수 항목
 
 1. 이중 키(`PERSONAL_DATA_ENCRYPTION_KEYS=v2:...,v1:...`) 운영 — 신규 키 도입 직후에도 기존 row 복호화 보장
-2. `BaseEntity` 또는 PII 컬럼별로 **암호화 키 버전 식별자**(`enc_key_version` 등) 보유 여부 확인
-3. 재암호화 배치 잡 설계 — 트랜잭션 단위, 청크 크기, 실패 시 롤백 시나리오, 운영 부하
-4. PII_IV 회전은 IV 재생성 + 재암호화가 동반된다 — `PII_KEY` 회전보다 비용이 크다
+2. PII 컬럼별 암호화 메커니즘 — `PersonalDataEncryptionUtil` 의 `{keyId}::cipher` 포맷 + dual-read 가 이미 구현 (설계서 §1.1.1, §1.5)
+3. 재암호화 배치 잡 설계 — 트랜잭션 단위, 청크 크기, 실패 시 롤백 시나리오, 운영 부하 (설계서 §3.2~§3.3)
+4. PII_IV 회전은 IV 재생성 + 재암호화가 동반된다 — `PII_KEY` 회전보다 비용이 크다 (IV 단독 회전 금지 — §7)
+5. 휴면 vault 는 알고리즘·키 SSOT·테이블 구조 모두 상이 (AES/GCM·random nonce·단일 키) — 별도 트랙 (설계서 §1.3, §6 합의 1)
 
-#### 실행 절차 (요약, 별도 설계서 작성 후 진행)
+#### 실행 절차 (요약, 설계서 §3 SSOT)
 
-1. 신규 키 생성 → `PERSONAL_DATA_ENCRYPTION_KEYS=vNEW:...,vCURRENT:...` 로 등록 (병존)
-2. 재암호화 배치 실행 (운영 트래픽 영향 최소화 시간대)
-3. 검증 후 `vNEW` 를 current 로 승격, 기존 키는 180일 보존 후 폐기
-4. 휴면 PII (`MINDGARDEN_DORMANT_PII_ENC_KEY`) 도 동일 절차 동시 진행
+1. **Phase 0**: 운영 dump 백업 + 신규 키 생성 + `PERSONAL_DATA_ENCRYPTION_KEYS=vNEW:...,vCURRENT:...` 로 등록 (병존, dual-read 만 가능)
+2. **Phase 1**: 재암호화 인프라 코드 배포 (`PersonalDataKeyRotationService` 확장, 진행률 테이블, admin endpoint)
+3. **Phase 2**: 23:00~06:00 KST 시간대에 chunk 단위 백그라운드 재암호화 실행 (운영 트래픽 영향 최소화)
+4. **Phase 3**: 잔여 row 0 검증 + 샘플 1000건 복호화 무사고 (설계서 §3.4)
+5. **Phase 4**: `vNEW` 를 active 로 승격 + 옛 keyId entry 7일 grace 후 제거 (단축 금지)
+
+> 휴면 PII (`MINDGARDEN_DORMANT_PII_ENC_KEY`) 회전은 본 절차 범위 외 — 알고리즘·인프라 상이로 별도 설계 후속 (설계서 §1.3, §6 합의 1).
 
 ## 4. 비상 회전 (P0 노출 시 즉시 절차)
 

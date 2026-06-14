@@ -98,8 +98,38 @@ APPLE_ALLOWED_AUDIENCES=
 # - 회전 절차: docs/운영반영/JWT_SECRET_P0_HANDOFF_20260613.md
 # - 저장소·문서에는 절대 placeholder/약 단어(`changeme`, `secret-key` 등) 두지 말 것.
 JWT_SECRET=
+
+# === PII 암호화 다중 키 SSOT (회전 자동화 대응, 2026-06-14) ===
+# PR #335 설계서: docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md
+# PR-1 (선행): 운영 SSOT 4라인 명시 + workflow 자동 주입 (본 파일 + .github/workflows/deploy-production.yml).
+# PR-2 (선행): composite action `.github/actions/sync-prod-env-key` PRESERVE 가드 확장.
+# Phase 1+ (회전 인프라): 별도 PR.
+#
+# 매핑 (PersonalDataEncryptionKeyProvider, src/main/resources/application.yml 312-324):
+# - PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID → encryption.personal-data.active-key-id (활성 keyId, 예: v1)
+# - PERSONAL_DATA_ENCRYPTION_KEYS         → encryption.personal-data.key-versions (CSV: keyId:base64key,...)
+# - PERSONAL_DATA_ENCRYPTION_IVS          → encryption.personal-data.iv-versions  (CSV: keyId:base64iv,...)
+# - PERSONAL_DATA_ENCRYPTION_KEY / _IV    → encryption.personal-data.{key,iv} (legacy 단일, 하위 호환)
+#
+# 회전 시 다중 키 등록 후 활성 키 전환:
+# - 신규 키 도입 단계: PERSONAL_DATA_ENCRYPTION_KEYS=v2:<new>,v1:<old> + _IVS=v2:<newIV>,v1:<oldIV>
+#                      (ACTIVE_KEY_ID 는 v1 유지 → dual-read 만 가능)
+# - 활성 전환 단계  : PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID=v2 (신규 INSERT 가 v2 사용)
+# - 폐기 단계       : 재암호화 마이그 + 검증 통과 후 v1 entry 제거
+# 절대 금지: 키/IV 평문을 본 저장소·문서·PR 본문에 노출. 운영 secret 은 GitHub Secrets + /etc/mindgarden/prod.env 에서만 보유.
+PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID=
+PERSONAL_DATA_ENCRYPTION_KEYS=
+PERSONAL_DATA_ENCRYPTION_IVS=
+# legacy 단일 키 (다중 키 미설정 시 fallback). 회전 완료 후 placeholder 화 권장.
 PERSONAL_DATA_ENCRYPTION_KEY=
 PERSONAL_DATA_ENCRYPTION_IV=
+
+# === 휴면 PII vault SSOT (2026-06-14) ===
+# 매핑: dormant-pii-encryption-key → application.yml 258
+# 알고리즘: AES/GCM/NoPadding (메인 PII 와 별개), Base64(32 bytes) 단일 키.
+# 회전 인프라: 미구현 (Phase 5+ 후속). 본 라인은 운영 secret 영구 보존을 위한 SSOT 명시.
+MINDGARDEN_DORMANT_PII_ENC_KEY=
+
 PSYCH_DOC_KEY_B64=
 
 SMTP_HOST=

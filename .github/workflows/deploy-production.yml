@@ -100,6 +100,16 @@ jobs:
       # 가 다시 들어와도 BE JwtSecretValidator 가드(부트 fail-fast)와 본 workflow sync 가
       # prod-from-dev.env 를 강 키로 동기화한다. PR #299 의 DB_PRESERVE_KEYS 가드 동일 패턴.
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      # PII 회전 선행 PR-1 (2026-06-14): PII 다중 키 SSOT 4종 자동 주입.
+      # 설계서: docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md §3.1
+      # 매핑: PersonalDataEncryptionKeyProvider (src/main/java/.../consultation/util/) +
+      #       application.yml 257-258 (DORMANT) / 312-324 (메인 다중 키).
+      # 회전 시점에는 GitHub Secrets 만 갱신하면 본 step 이 prod-from-dev.env 까지 멱등 동기화한다.
+      # PR-2 (별도): composite action `.github/actions/sync-prod-env-key` PRESERVE 가드 확장.
+      PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID: ${{ secrets.PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID }}
+      PERSONAL_DATA_ENCRYPTION_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
+      PERSONAL_DATA_ENCRYPTION_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
+      MINDGARDEN_DORMANT_PII_ENC_KEY: ${{ secrets.MINDGARDEN_DORMANT_PII_ENC_KEY }}
 
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
@@ -1154,6 +1164,77 @@ jobs:
         noop_compare: 'true'
     # ============================================================================
     # [/B-3 P0 보안 2026-06-13]
+    # ============================================================================
+
+    # ============================================================================
+    # [PII 회전 선행 PR-1, 2026-06-14] PII 다중 키 SSOT 3종 자동 주입 + 검증 (운영)
+    # 설계서: docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md §3.1.1
+    # 정책: docs/standards/SECRET_ROTATION_POLICY.md v1.2.0 §3.4
+    #
+    # 대상 키 (3종, 일관성 batch — any_missing):
+    #   - PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID  : 활성 keyId (예: v1)
+    #   - PERSONAL_DATA_ENCRYPTION_KEYS           : 다중 키 CSV (`keyId:base64key,...`)
+    #   - PERSONAL_DATA_ENCRYPTION_IVS            : 다중 IV  CSV (`keyId:base64iv,...`)
+    #
+    # 매핑 SSOT:
+    #   src/main/java/com/coresolution/consultation/util/PersonalDataEncryptionKeyProvider.java
+    #   src/main/resources/application.yml 312-324
+    #
+    # 회전 운영 절차:
+    #   1) GH Secrets 갱신 (신규 keyId 추가, CSV 병존) — 본 step 이 prod-from-dev.env 멱등 동기화
+    #   2) BE 양 슬롯 재시작 후 dual-read 검증 (신·구 keyId row 모두 복호화)
+    #   3) ACTIVE_KEY_ID 전환 (재배포)
+    #   4) 재암호화 배치 (Phase 1+ 별도 PR)
+    #   5) grace 7일 후 옛 keyId entry 제거
+    #
+    # Skip 정책: any_missing — 3종은 일관성 있게 함께 변경되어야 한다 (1종만 갱신 시 부트 실패 위험).
+    #            등록 안 된 단계 (회전 전) 에는 ::notice 로 graceful skip.
+    # legacy `PERSONAL_DATA_ENCRYPTION_KEY` / `_IV` 단일 키는 본 step 범위 외 — 다중 키 등록 후 폐기 예정.
+    # PRESERVE 가드: 본 PR 범위 외. 별도 PR-2 (composite action) 에서 PII_PRESERVE_KEYS 추가 예정.
+    # ============================================================================
+    - name: 🔑 PII 다중 키 env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'PII Multi-Key (ACTIVE_KEY_ID/KEYS/IVS)'
+        keys: 'PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        # 3종 일관성 batch: 1종이라도 비어 있으면 회전 중간 상태 위험 → graceful skip
+        skip_when: 'any_missing'
+    # ============================================================================
+    # [/PII 회전 선행 PR-1, 2026-06-14] PII 다중 키
+    # ============================================================================
+
+    # ============================================================================
+    # [PII 회전 선행 PR-1, 2026-06-14] 휴면 PII vault 키 SSOT 1종 자동 주입 + 검증 (운영)
+    # 설계서: docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md §1.3, §3.1.1
+    # 정책: docs/standards/SECRET_ROTATION_POLICY.md v1.2.0 §3.4
+    #
+    # 대상 키 (1종):
+    #   - MINDGARDEN_DORMANT_PII_ENC_KEY : 휴면 PII vault 단일 키 (Base64 32 bytes, AES/GCM)
+    #
+    # 매핑 SSOT:
+    #   src/main/java/com/coresolution/consultation/service/impl/DormantPiiVaultServiceImpl.java
+    #   src/main/resources/application.yml 257-258 (mindgarden.lifecycle.dormant-pii-encryption-key)
+    #
+    # 비고: 휴면 vault 회전 인프라 미구현 (Phase 5+ 후속) — 본 step 은 운영 secret 영구 보존을 위한
+    #       SSOT 동기화 + 회귀 방지 (운영자가 prod.env 수동 편집 시 누락 위험 차단).
+    # noop_compare=true: 동일 키 무변경 배포에서 재시작 생략 (배포 비용 최소화, JWT_SECRET 패턴 동일).
+    # ============================================================================
+    - name: 🛌 DORMANT PII vault env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'DORMANT PII vault'
+        keys: 'MINDGARDEN_DORMANT_PII_ENC_KEY'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        # 동일 키 무변경 배포 시 재시작 생략 (단일 키 + JWT_SECRET 동일 패턴)
+        noop_compare: 'true'
+    # ============================================================================
+    # [/PII 회전 선행 PR-1, 2026-06-14] DORMANT PII vault
     # ============================================================================
 
     - name: 🏥 헬스체크

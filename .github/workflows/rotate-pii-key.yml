@@ -1,0 +1,787 @@
+name: 🔁 PII KEY 회전 배치 (정책 §3.4 Phase 2)
+
+# ============================================================================
+# PII KEY/IV 회전 배치 자동화 워크플로 (회전 자동화 Phase 2)
+#
+# 정책 SSOT:  docs/standards/SECRET_ROTATION_POLICY.md §3.4
+# 설계 SSOT:  docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md §3.2 / §3.3
+# 운영 SSOT:  docs/operations/pii-rotation-runbook.md
+# 회전 이력:  docs/operations/secret-rotation-history.md
+# 동일 패턴: .github/workflows/rotate-jwt-secret.yml (PR #326 + PR #331 health 게이트)
+#            .github/workflows/rotate-db-password.yml (PR #333)
+#
+# Phase 1 (인프라) 와의 분리:
+#   - Phase 1 (PR #344): PiiKeyRotationAdminController + PersonalDataKeyRotationService
+#     + pii_reencryption_progress Flyway. 본 워크플로가 호출할 admin endpoint 4종 제공.
+#   - Phase 2 (본 PR):    위 endpoint 를 호출하는 배치 워크플로. KEY 자체 회전은 수동
+#     (PERSONAL_DATA_ENCRYPTION_KEYS=vNEW:...,vCURRENT:... CSV append) → 본 워크플로는
+#     기존 row 를 신 키로 재암호화 (chunk 진행) + 잔여 SQL 검증 + 폐기 가이드만 수행.
+#
+# 트리거: workflow_dispatch (수동만). paths/push 트리거 절대 금지.
+#
+# Phase 전환 (input.phase):
+#   - phase1-verify  : BE health + admin endpoint 가용성 사전 확인 (state mutation 0)
+#   - phase2-batch   : POST /start → GET /progress polling (chunk 재암호화 실행)
+#   - phase3-verify  : 잔여 SQL 검증 (수동 SQL 명세만 출력 — DBA 책임 실행)
+#   - phase4-finalize: 회전 이력 PR 자동 생성 + 구 키 폐기 체크리스트 출력 (CSV 변경 X)
+#   - batch-status   : 외부 호출 없이 /progress 만 polling (관찰 전용)
+#
+# 보안 원칙 (정책 §3 + §11 준수):
+#   1. admin JWT 토큰 평문 출력 절대 금지 — ::add-mask:: 즉시 마스킹, Authorization 헤더만 사용
+#   2. permissions 최소화 — contents/pull-requests/actions:write
+#   3. prod 환경은 confirm=ROTATE + confirm_prod=PROD_ROTATE + confirm_dba=DBA_APPROVED 3단계
+#   4. GitHub expression 직접 보간 금지 — env 매핑 후 셸 변수 사용 (injection 차단)
+#   5. concurrency 그룹은 환경·테이블·페이즈별 직렬화
+#   6. dry_run 기본 true — 실수로 운영 row UPDATE 실행 차단
+#   7. PII 응답 평문 PII 노출 0 — Phase 1 DTO 가드 + 응답 sed 마스킹 보호
+#
+# 사전 가드:
+#   - PR #344 머지 후 endpoint 가 활성화되면 본 워크플로가 정상 동작.
+#     머지 전 실행 시 phase1-verify 가 admin endpoint 404 로 즉시 fail.
+#   - accounts/branches 회전은 `pii-rotation.allow-plaintext-encryption=true` BE 설정 사전 확인
+#   - dormant 회전은 DormantPiiVaultService 다중 키 SSOT 가용성 사전 확인
+#
+# 절대 금지:
+#   - 실제 PII 평문 노출 (응답·로그·요약)
+#   - admin JWT 토큰 평문 출력
+#   - GH Secrets 자동 수정 (PERSONAL_DATA_ENCRYPTION_KEYS CSV 는 수동만)
+#   - prod 회전 시 confirm 3단계 우회
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '회전 대상 환경 (dev 우선 dry-run 권장)'
+        required: true
+        type: choice
+        default: 'dev'
+        options:
+          - dev
+          - staging
+          - prod
+      phase:
+        description: '실행 페이즈 (phase1-verify → phase2-batch → batch-status → phase3-verify → phase4-finalize 순차)'
+        required: true
+        type: choice
+        default: 'phase1-verify'
+        options:
+          - phase1-verify
+          - phase2-batch
+          - batch-status
+          - phase3-verify
+          - phase4-finalize
+      table:
+        description: '회전 대상 테이블 (users / clients / accounts / branches / dormant / ALL)'
+        required: true
+        type: choice
+        default: 'users'
+        options:
+          - users
+          - clients
+          - accounts
+          - branches
+          - dormant
+          - ALL
+      confirm:
+        description: '회전 확인 입력 — 정확히 "ROTATE" 만 진행 (phase2/phase3/phase4 필수)'
+        required: false
+        type: string
+        default: ''
+      confirm_prod:
+        description: '운영(prod) 회전 시 추가 확인 — 정확히 "PROD_ROTATE" (dev/staging 시 무시)'
+        required: false
+        type: string
+        default: ''
+      confirm_dba:
+        description: 'DBA 사후 검증 책임 확인 — 정확히 "DBA_APPROVED" (phase2/phase3/phase4 필수)'
+        required: false
+        type: string
+        default: ''
+      target_key_id:
+        description: '회전 목표 키 ID (예: v2). PERSONAL_DATA_ENCRYPTION_KEYS CSV 의 신규 키와 일치해야 함'
+        required: true
+        type: string
+        default: 'v2'
+      chunk_size:
+        description: 'chunk 크기 (50~500 권장, default 100). MIN_CHUNK_SIZE=1, MAX_CHUNK_SIZE=1000'
+        required: true
+        type: string
+        default: '100'
+      dry_run:
+        description: 'dry-run 여부 — true: BE 호출 없이 입력·게이트 검증만, false: 실제 회전 실행'
+        required: true
+        type: choice
+        default: 'true'
+        options:
+          - 'true'
+          - 'false'
+      trigger_reason:
+        description: '회전 트리거 사유 (정기 / 비상 / 점검 / 재시도)'
+        required: true
+        type: choice
+        default: '정기'
+        options:
+          - 정기
+          - 비상
+          - 점검
+          - 재시도
+
+# 동시 회전 직렬화 — 환경·테이블별 (페이즈는 동일 환경·테이블의 직렬 실행이 안전)
+concurrency:
+  group: rotate-pii-key-${{ inputs.environment }}-${{ inputs.table }}
+  cancel-in-progress: false
+
+# 최소 권한 — secret 쓰기 권한 없음 (PII KEY CSV 갱신은 수동만)
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  rotate:
+    name: 🔁 PII 회전 — ${{ inputs.environment }} / ${{ inputs.table }} / ${{ inputs.phase }}
+    runs-on: ubuntu-latest
+    # batch polling 최악 6시간 (대규모 데이터 대비, 정책 §3.4 권고)
+    timeout-minutes: 360
+    env:
+      ROTATION_ENV: ${{ inputs.environment }}
+      ROTATION_PHASE: ${{ inputs.phase }}
+      ROTATION_TABLE: ${{ inputs.table }}
+      ROTATION_CONFIRM: ${{ inputs.confirm }}
+      ROTATION_CONFIRM_PROD: ${{ inputs.confirm_prod }}
+      ROTATION_CONFIRM_DBA: ${{ inputs.confirm_dba }}
+      ROTATION_TARGET_KEY: ${{ inputs.target_key_id }}
+      ROTATION_CHUNK_SIZE: ${{ inputs.chunk_size }}
+      ROTATION_DRY_RUN: ${{ inputs.dry_run }}
+      ROTATION_REASON: ${{ inputs.trigger_reason }}
+    steps:
+      # ---------------------------------------------------------------------
+      # 0) 입력 검증 — phase 별 confirm 요구 / table 매핑 / chunk_size 범위
+      #    GitHub expression 직접 보간 대신 env 매핑을 통해 injection 차단.
+      # ---------------------------------------------------------------------
+      - name: ✅ 입력 검증 + 페이즈별 confirm 요구
+        id: validate
+        run: |
+          set -euo pipefail
+
+          # phase 별 confirm 필수 여부
+          REQUIRE_CONFIRM="false"
+          case "${ROTATION_PHASE}" in
+            phase2-batch|phase3-verify|phase4-finalize)
+              REQUIRE_CONFIRM="true"
+              ;;
+            phase1-verify|batch-status)
+              REQUIRE_CONFIRM="false"
+              ;;
+            *)
+              echo "::error title=unknown phase::ROTATION_PHASE='${ROTATION_PHASE}'"
+              exit 1
+              ;;
+          esac
+
+          if [ "${REQUIRE_CONFIRM}" = "true" ]; then
+            if [ "${ROTATION_CONFIRM}" != "ROTATE" ]; then
+              echo "::error title=confirm 미입력::phase='${ROTATION_PHASE}' 는 confirm='ROTATE' 입력 필수."
+              exit 1
+            fi
+            if [ "${ROTATION_CONFIRM_DBA}" != "DBA_APPROVED" ]; then
+              echo "::error title=DBA 사후 검증 미확인::confirm_dba='DBA_APPROVED' 입력 필수 (정책 §3.4 / runbook §4)."
+              exit 1
+            fi
+            if [ "${ROTATION_ENV}" = "prod" ]; then
+              if [ "${ROTATION_CONFIRM_PROD}" != "PROD_ROTATE" ]; then
+                echo "::error title=prod 추가 confirm 미입력::운영(prod) 회전은 confirm_prod='PROD_ROTATE' 추가 입력 필수."
+                exit 1
+              fi
+              # prod + 실제 회전 (dry_run=false) 조합은 추가 사유 명시 요구
+              if [ "${ROTATION_DRY_RUN}" = "false" ]; then
+                echo "::notice title=prod 실제 회전 confirm::환경=prod + dry_run=false + ROTATE + PROD_ROTATE + DBA_APPROVED 4단계 통과 — 실제 row UPDATE 가 실행됩니다."
+              fi
+            fi
+          fi
+
+          # table 검증
+          case "${ROTATION_TABLE}" in
+            users|clients|accounts|branches|dormant|ALL) ;;
+            *)
+              echo "::error title=unknown table::ROTATION_TABLE='${ROTATION_TABLE}'"
+              exit 1
+              ;;
+          esac
+
+          # admin endpoint 가 받는 실제 테이블명으로 매핑 (dormant → dormant_user_pii_vault)
+          if [ "${ROTATION_TABLE}" = "ALL" ]; then
+            EFFECTIVE_TABLES="users clients accounts branches dormant_user_pii_vault"
+          elif [ "${ROTATION_TABLE}" = "dormant" ]; then
+            EFFECTIVE_TABLES="dormant_user_pii_vault"
+          else
+            EFFECTIVE_TABLES="${ROTATION_TABLE}"
+          fi
+
+          # chunk_size 숫자·범위 검증 (1~1000, 권장 50~500)
+          if ! printf '%s' "${ROTATION_CHUNK_SIZE}" | grep -qE '^[0-9]+$'; then
+            echo "::error title=chunk_size 형식 오류::숫자만 허용 (입력='${ROTATION_CHUNK_SIZE}')"
+            exit 1
+          fi
+          CS="${ROTATION_CHUNK_SIZE}"
+          if [ "$CS" -lt 1 ] || [ "$CS" -gt 1000 ]; then
+            echo "::error title=chunk_size 범위 위반::MIN_CHUNK_SIZE=1, MAX_CHUNK_SIZE=1000 (입력=${CS})"
+            exit 1
+          fi
+          if [ "$CS" -lt 50 ] || [ "$CS" -gt 500 ]; then
+            echo "::warning title=chunk_size 권장 범위 외::권장 50~500 (입력=${CS})"
+          fi
+
+          # target_key_id 형식 (영숫자 + 하이픈만 — CSV key id 표준)
+          if ! printf '%s' "${ROTATION_TARGET_KEY}" | grep -qE '^[A-Za-z0-9_.-]{1,32}$'; then
+            echo "::error title=target_key_id 형식 오류::영숫자/._- 1~32자만 허용 (입력은 비공개)"
+            exit 1
+          fi
+
+          # 환경별 BE base URL 결정
+          case "${ROTATION_ENV}" in
+            dev)     BE_BASE_URL="https://mindgarden.dev.core-solution.co.kr" ;;
+            prod)    BE_BASE_URL="https://mindgarden.core-solution.co.kr" ;;
+            staging) BE_BASE_URL="" ;;
+            *)       echo "::error::unknown env"; exit 1 ;;
+          esac
+
+          if [ "${ROTATION_ENV}" = "staging" ]; then
+            echo "::warning title=staging 미지원::staging BE 가 미배포 — phase 별 실제 호출 모두 skip."
+          fi
+
+          {
+            echo "be_base_url=${BE_BASE_URL}"
+            echo "effective_tables=${EFFECTIVE_TABLES}"
+            echo "require_confirm=${REQUIRE_CONFIRM}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "✅ 입력 검증 통과 — env=${ROTATION_ENV} phase=${ROTATION_PHASE} table=${ROTATION_TABLE} effective='${EFFECTIVE_TABLES}' targetKey=*** chunk=${CS} dry_run=${ROTATION_DRY_RUN}"
+
+      - name: 📥 체크아웃 (이력 PR / 워크플로 메타용)
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 1
+
+      # ---------------------------------------------------------------------
+      # 1) admin JWT 토큰 로드 + 즉시 마스킹
+      #    secrets.PII_ROTATION_ADMIN_TOKEN — HQ_MASTER 권한 사용자가 발급한 짧은 만료 JWT.
+      #    발급 가이드: docs/operations/pii-rotation-runbook.md §5
+      # ---------------------------------------------------------------------
+      - name: 🔐 admin JWT 토큰 로드 + 마스킹
+        id: token
+        if: steps.validate.outputs.be_base_url != ''
+        env:
+          ADMIN_TOKEN: ${{ secrets.PII_ROTATION_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ADMIN_TOKEN:-}" ]; then
+            if [ "${ROTATION_DRY_RUN}" = "true" ] && [ "${ROTATION_PHASE}" = "phase1-verify" ]; then
+              echo "::warning title=admin 토큰 미설정::secrets.PII_ROTATION_ADMIN_TOKEN 미설정 — phase1-verify dry-run 은 health 만 검사하고 endpoint 호출은 skip."
+              echo "token_available=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error title=admin 토큰 미설정::secrets.PII_ROTATION_ADMIN_TOKEN 미등록. runbook §5 발급 가이드 참조."
+            exit 1
+          fi
+          echo "::add-mask::${ADMIN_TOKEN}"
+
+          # JWT 형식 sanity (header.payload.signature) + 길이만 노출
+          TOKEN_LEN=${#ADMIN_TOKEN}
+          DOT_COUNT=$(printf '%s' "$ADMIN_TOKEN" | tr -cd '.' | wc -c | tr -d ' ')
+          if [ "$DOT_COUNT" != "2" ]; then
+            echo "::error title=토큰 형식 오류::JWT 형식 (header.payload.signature) 아님 (dots=$DOT_COUNT)"
+            exit 1
+          fi
+          if [ "$TOKEN_LEN" -lt 100 ]; then
+            echo "::error title=토큰 길이 부족::JWT 길이 ${TOKEN_LEN}자 — HQ_MASTER JWT 는 보통 300자 이상"
+            exit 1
+          fi
+          echo "✅ admin JWT 토큰 로드 완료 (len=${TOKEN_LEN}, dots=${DOT_COUNT})"
+          echo "token_available=true" >> "$GITHUB_OUTPUT"
+
+      # ---------------------------------------------------------------------
+      # 2) Phase 1 verify — BE health + admin endpoint 가용성 검증
+      #    PR #331 health 게이트 패턴 동일 적용 (grace 120s + 연속 5회 200/UP).
+      #    이후 admin endpoint 가용성 (HTTP 200/401/403 = endpoint 존재, 404 = 미배포).
+      # ---------------------------------------------------------------------
+      - name: 🏥 BE health 게이트 (grace 120s + 연속 5회 UP)
+        if: |
+          steps.validate.outputs.be_base_url != '' &&
+          (inputs.phase == 'phase1-verify' || inputs.phase == 'phase2-batch')
+        env:
+          BE_BASE_URL: ${{ steps.validate.outputs.be_base_url }}
+        run: |
+          set -euo pipefail
+          HEALTH_URL="${BE_BASE_URL}/actuator/health"
+
+          # phase1-verify 단독은 짧은 검증창 (1분), phase2-batch 직전은 표준 게이트
+          if [ "${ROTATION_PHASE}" = "phase1-verify" ]; then
+            GRACE_SEC=0
+            POLL_MAX=8
+            POLL_INTERVAL=8
+            REQUIRED_UP=2
+          else
+            GRACE_SEC=120
+            POLL_MAX=30
+            POLL_INTERVAL=15
+            REQUIRED_UP=5
+          fi
+
+          if [ "$GRACE_SEC" -gt 0 ]; then
+            echo "🕒 초기 grace ${GRACE_SEC}s 대기"
+            sleep "${GRACE_SEC}"
+          fi
+
+          echo "🏥 polling: ${HEALTH_URL} (max ${POLL_MAX} × ${POLL_INTERVAL}s, 연속 ${REQUIRED_UP}회 UP 필요)"
+          CONSECUTIVE_UP=0
+          PASS=0
+          for i in $(seq 1 "${POLL_MAX}"); do
+            CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 10 "${HEALTH_URL}" || echo "000")
+            STATUS=$(grep -oE '"status"[[:space:]]*:[[:space:]]*"[A-Z]+"' /tmp/health.json 2>/dev/null | head -n1 | sed -E 's/.*"([A-Z]+)".*/\1/' || echo "")
+            if [ "${CODE}" = "200" ] && [ "${STATUS}" = "UP" ]; then
+              CONSECUTIVE_UP=$((CONSECUTIVE_UP + 1))
+              echo "  [${i}/${POLL_MAX}] http=${CODE} status=${STATUS} — 연속 UP ${CONSECUTIVE_UP}/${REQUIRED_UP}"
+              if [ "${CONSECUTIVE_UP}" -ge "${REQUIRED_UP}" ]; then
+                PASS=1
+                break
+              fi
+            else
+              if [ "${CONSECUTIVE_UP}" -gt 0 ]; then
+                echo "  [${i}/${POLL_MAX}] http=${CODE} status=${STATUS:-?} — 카운터 리셋 (${CONSECUTIVE_UP} → 0)"
+              else
+                echo "  [${i}/${POLL_MAX}] http=${CODE} status=${STATUS:-?} — 대기"
+              fi
+              CONSECUTIVE_UP=0
+            fi
+            sleep "${POLL_INTERVAL}"
+          done
+
+          if [ "${PASS}" != "1" ]; then
+            echo "::error title=헬스 게이트 실패::${POLL_MAX}회 polling 동안 연속 ${REQUIRED_UP}회 UP 미달성. 회전 중단."
+            exit 1
+          fi
+          echo "🎉 헬스 게이트 통과: 연속 ${REQUIRED_UP}회 200/UP"
+
+      - name: 🔎 admin endpoint 가용성 검증 (Phase 1 verify)
+        if: |
+          inputs.phase == 'phase1-verify' &&
+          steps.validate.outputs.be_base_url != '' &&
+          steps.token.outputs.token_available == 'true'
+        env:
+          BE_BASE_URL: ${{ steps.validate.outputs.be_base_url }}
+          ADMIN_TOKEN: ${{ secrets.PII_ROTATION_ADMIN_TOKEN }}
+          EFFECTIVE_TABLES: ${{ steps.validate.outputs.effective_tables }}
+        run: |
+          set -euo pipefail
+          # 첫 번째 effective table 로 가용성 확인 (state mutation 0 — GET 만 사용)
+          FIRST_TABLE=$(printf '%s' "${EFFECTIVE_TABLES}" | awk '{print $1}')
+          URL="${BE_BASE_URL}/api/v1/admin/pii-rotation/progress?table=${FIRST_TABLE}&target_key_id=${ROTATION_TARGET_KEY}"
+          echo "🔎 GET /progress 가용성 검증 (table=${FIRST_TABLE})"
+
+          CODE=$(curl -s -o /tmp/progress.json -w "%{http_code}" --max-time 30 \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            -H "Accept: application/json" \
+            "${URL}" || echo "000")
+
+          case "${CODE}" in
+            200)
+              echo "✅ admin endpoint 가용 (HTTP 200) — 회전 준비 완료"
+              # 응답 sanity (PII 누출 0 검증)
+              if grep -qiE '"(email|phone|name|address|rrn|account|encrypted_pii)"[[:space:]]*:[[:space:]]*"[^"]+"' /tmp/progress.json 2>/dev/null; then
+                echo "::error title=PII 응답 누출 의심::/progress 응답에 PII 추정 필드가 포함되어 있습니다. 운영 즉시 중단."
+                exit 1
+              fi
+              ;;
+            401|403)
+              echo "::error title=admin 토큰 권한 부족::HTTP ${CODE} — JWT 가 HQ_MASTER 권한 없음/만료. runbook §5 재발급."
+              exit 1
+              ;;
+            404)
+              echo "::error title=admin endpoint 미배포::HTTP 404 — PR #344 (Phase 1 인프라) 머지·배포 후 재시도."
+              exit 1
+              ;;
+            *)
+              echo "::error title=admin endpoint 비정상::HTTP ${CODE} (table=${FIRST_TABLE})"
+              exit 1
+              ;;
+          esac
+
+      # ---------------------------------------------------------------------
+      # 3) Phase 2 batch — POST /start → GET /progress polling
+      #    dry_run=true 시 endpoint 호출 없이 호출 계획만 출력.
+      #    실제 호출은 effective_tables 를 순차 처리 (ALL 시 5종 직렬).
+      # ---------------------------------------------------------------------
+      - name: 🚀 Phase 2 batch — POST /start + polling
+        id: batch
+        if: inputs.phase == 'phase2-batch' && steps.validate.outputs.be_base_url != ''
+        env:
+          BE_BASE_URL: ${{ steps.validate.outputs.be_base_url }}
+          ADMIN_TOKEN: ${{ secrets.PII_ROTATION_ADMIN_TOKEN }}
+          EFFECTIVE_TABLES: ${{ steps.validate.outputs.effective_tables }}
+        run: |
+          set -euo pipefail
+
+          # polling 파라미터 (정책 §3.4 — 대규모 데이터 대비 6시간)
+          POLL_INTERVAL_SEC=60
+          POLL_MAX_MINUTES=350
+          POLL_MAX_ITERATIONS=$(( POLL_MAX_MINUTES * 60 / POLL_INTERVAL_SEC ))
+
+          if [ "${ROTATION_DRY_RUN}" = "true" ]; then
+            echo "🧪 dry-run 모드 — 실제 endpoint 호출 없이 호출 계획만 출력"
+            for _t in ${EFFECTIVE_TABLES}; do
+              echo "  - POST ${BE_BASE_URL}/api/v1/admin/pii-rotation/start?table=${_t}&target_key_id=*** &chunk_size=${ROTATION_CHUNK_SIZE}"
+              echo "  - GET  ${BE_BASE_URL}/api/v1/admin/pii-rotation/progress?table=${_t}&target_key_id=***  (polling ${POLL_INTERVAL_SEC}s × max ${POLL_MAX_ITERATIONS})"
+            done
+            {
+              echo "result=DRY_RUN"
+              echo "tables_processed=${EFFECTIVE_TABLES}"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          ANY_FAILED=0
+          PROCESSED=""
+
+          for TABLE in ${EFFECTIVE_TABLES}; do
+            echo "::group::🔁 ${TABLE} 회전 시작"
+            START_URL="${BE_BASE_URL}/api/v1/admin/pii-rotation/start?table=${TABLE}&target_key_id=${ROTATION_TARGET_KEY}&chunk_size=${ROTATION_CHUNK_SIZE}"
+
+            # 1) POST /start — 초기 chunk 실행 (서비스가 동기 chunk 회전 → 결과 집계 반환)
+            START_HTTP=$(curl -s -o /tmp/start.json -w "%{http_code}" --max-time 600 \
+              -X POST \
+              -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+              -H "Accept: application/json" \
+              -H "Content-Length: 0" \
+              "${START_URL}" || echo "000")
+
+            if [ "${START_HTTP}" != "200" ]; then
+              echo "::error title=${TABLE} start 실패::HTTP ${START_HTTP}"
+              cat /tmp/start.json 2>/dev/null | head -c 4096 || true
+              ANY_FAILED=1
+              echo "::endgroup::"
+              continue
+            fi
+
+            # PII 누출 가드 (start 응답)
+            if grep -qiE '"(email|phone|address|rrn|account_number|account_holder|encrypted_pii)"[[:space:]]*:[[:space:]]*"[^"]+"' /tmp/start.json 2>/dev/null; then
+              echo "::error title=PII 응답 누출 의심::${TABLE} /start 응답에 PII 추정 필드 — 운영 중단."
+              exit 1
+            fi
+
+            ROWS_SCANNED=$(grep -oE '"rowsScanned"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/start.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            ROWS_ROTATED=$(grep -oE '"rowsRotated"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/start.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            CHUNKS_DONE=$(grep -oE '"chunksDone"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/start.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            CHUNKS_FAILED=$(grep -oE '"chunksFailed"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/start.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            echo "✅ start 호출 완료 — table=${TABLE} rowsScanned=${ROWS_SCANNED} rowsRotated=${ROWS_ROTATED} chunksDone=${CHUNKS_DONE} chunksFailed=${CHUNKS_FAILED}"
+
+            # 2) GET /progress polling — 최대 6시간 (정책 §3.4)
+            PROGRESS_URL="${BE_BASE_URL}/api/v1/admin/pii-rotation/progress?table=${TABLE}&target_key_id=${ROTATION_TARGET_KEY}"
+            TABLE_DONE=0
+            for i in $(seq 1 "${POLL_MAX_ITERATIONS}"); do
+              PROG_HTTP=$(curl -s -o /tmp/progress.json -w "%{http_code}" --max-time 30 \
+                -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+                -H "Accept: application/json" \
+                "${PROGRESS_URL}" || echo "000")
+              if [ "${PROG_HTTP}" != "200" ]; then
+                echo "  [poll ${i}] HTTP ${PROG_HTTP} — 30s 후 재시도"
+                sleep "${POLL_INTERVAL_SEC}"
+                continue
+              fi
+              # PII 누출 가드 (progress 응답)
+              if grep -qiE '"(email|phone|address|rrn|account_number|account_holder|encrypted_pii)"[[:space:]]*:[[:space:]]*"[^"]+"' /tmp/progress.json 2>/dev/null; then
+                echo "::error title=PII 응답 누출 의심::${TABLE} /progress 응답 — 운영 중단."
+                exit 1
+              fi
+              TOTAL=$(grep -oE '"totalChunks"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+              P_DONE=$(grep -oE '"done"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+              P_INP=$(grep -oE '"inProgress"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+              P_PEND=$(grep -oE '"pending"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+              P_FAIL=$(grep -oE '"failed"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+              P_SKIP=$(grep -oE '"skipped"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+
+              echo "  [poll ${i}/${POLL_MAX_ITERATIONS}] table=${TABLE} total=${TOTAL} done=${P_DONE} inProgress=${P_INP} pending=${P_PEND} failed=${P_FAIL} skipped=${P_SKIP}"
+
+              # 종료 조건: pending=0 AND inProgress=0 AND total>0 (또는 total=0 → skipped/no-op)
+              if [ "${TOTAL}" = "0" ]; then
+                echo "  [poll ${i}] total=0 — ${TABLE} 회전 대상 없음 (no-op)"
+                TABLE_DONE=1
+                break
+              fi
+              if [ "${P_PEND}" = "0" ] && [ "${P_INP}" = "0" ]; then
+                if [ "${P_FAIL}" != "0" ]; then
+                  echo "::warning title=${TABLE} FAILED chunk 존재::failed=${P_FAIL} — phase2 재실행 (resume) 또는 runbook §6 trouble-shooting 참조"
+                  ANY_FAILED=1
+                fi
+                TABLE_DONE=1
+                break
+              fi
+              sleep "${POLL_INTERVAL_SEC}"
+            done
+
+            if [ "${TABLE_DONE}" != "1" ]; then
+              echo "::error title=${TABLE} polling timeout::${POLL_MAX_MINUTES}분 내 종료 미감지 — runbook §6 trouble-shooting"
+              ANY_FAILED=1
+            fi
+
+            PROCESSED="${PROCESSED} ${TABLE}"
+            echo "::endgroup::"
+          done
+
+          if [ "${ANY_FAILED}" = "1" ]; then
+            {
+              echo "result=FAILED"
+              echo "tables_processed=${PROCESSED}"
+            } >> "$GITHUB_OUTPUT"
+            echo "::error title=일부 테이블 회전 실패::PROCESSED=${PROCESSED}. runbook §6 trouble-shooting 절차 진행."
+            exit 1
+          fi
+
+          {
+            echo "result=DONE"
+            echo "tables_processed=${PROCESSED}"
+          } >> "$GITHUB_OUTPUT"
+          echo "🎉 phase2-batch 완료 — 처리 테이블=${PROCESSED}"
+
+      # ---------------------------------------------------------------------
+      # 4) batch-status — 외부 호출 없이 /progress 만 1회 polling (관찰 전용)
+      # ---------------------------------------------------------------------
+      - name: 📊 batch-status — /progress 1회 조회 (관찰 전용)
+        if: inputs.phase == 'batch-status' && steps.validate.outputs.be_base_url != ''
+        env:
+          BE_BASE_URL: ${{ steps.validate.outputs.be_base_url }}
+          ADMIN_TOKEN: ${{ secrets.PII_ROTATION_ADMIN_TOKEN }}
+          EFFECTIVE_TABLES: ${{ steps.validate.outputs.effective_tables }}
+        run: |
+          set -euo pipefail
+          for TABLE in ${EFFECTIVE_TABLES}; do
+            URL="${BE_BASE_URL}/api/v1/admin/pii-rotation/progress?table=${TABLE}&target_key_id=${ROTATION_TARGET_KEY}"
+            CODE=$(curl -s -o /tmp/progress.json -w "%{http_code}" --max-time 30 \
+              -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+              -H "Accept: application/json" \
+              "${URL}" || echo "000")
+            if [ "${CODE}" != "200" ]; then
+              echo "::warning title=${TABLE} /progress 실패::HTTP ${CODE}"
+              continue
+            fi
+            TOTAL=$(grep -oE '"totalChunks"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            DONE_C=$(grep -oE '"done"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            INP=$(grep -oE '"inProgress"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            PEND=$(grep -oE '"pending"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            FAIL=$(grep -oE '"failed"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            SKIP=$(grep -oE '"skipped"[[:space:]]*:[[:space:]]*[0-9]+' /tmp/progress.json | head -n1 | grep -oE '[0-9]+' || echo "0")
+            echo "📊 ${TABLE} — total=${TOTAL} done=${DONE_C} inProgress=${INP} pending=${PEND} failed=${FAIL} skipped=${SKIP}"
+          done
+
+      # ---------------------------------------------------------------------
+      # 5) Phase 3 verify — 잔여 SQL 명세 출력 (실행은 DBA 책임)
+      #    워크플로는 SQL 자동 실행하지 않는다 (운영 DB 접근권한 격리 원칙).
+      #    DBA 가 readonly 계정으로 수동 실행하고 결과를 PR 코멘트로 보고.
+      # ---------------------------------------------------------------------
+      - name: 🔍 Phase 3 verify — 잔여 SQL 명세 출력
+        if: inputs.phase == 'phase3-verify'
+        env:
+          EFFECTIVE_TABLES: ${{ steps.validate.outputs.effective_tables }}
+        run: |
+          set -euo pipefail
+          echo "## 🔍 Phase 3 사후 검증 SQL (DBA 수동 실행)"
+          echo ""
+          echo "회전 후 신 키(target_key_id)로 재암호화되지 않은 row 가 잔존하는지 검증한다."
+          echo "PII 평문 SELECT 금지 — 키 prefix 만 비교."
+          echo ""
+          for TABLE in ${EFFECTIVE_TABLES}; do
+            case "${TABLE}" in
+              users)
+                COLS="email name nickname phone gender address rrn_encrypted"
+                ;;
+              clients)
+                COLS="name email phone gender address emergency_contact emergency_phone"
+                ;;
+              accounts)
+                COLS="account_number account_holder"
+                ;;
+              branches)
+                COLS="phone_number fax_number email address"
+                ;;
+              dormant_user_pii_vault)
+                COLS="encrypted_pii"
+                ;;
+              *) COLS="" ;;
+            esac
+            echo "### ${TABLE}"
+            echo ""
+            echo "\`\`\`sql"
+            for COL in ${COLS}; do
+              # 신 키 prefix '<target_key_id>::' 로 시작하지 않는 row 카운트 (잔여=0 이 목표)
+              echo "SELECT '${COL}' AS col, COUNT(*) AS not_rotated"
+              echo "FROM ${TABLE}"
+              echo "WHERE ${COL} IS NOT NULL"
+              echo "  AND ${COL} <> ''"
+              echo "  AND ${COL} NOT LIKE '${ROTATION_TARGET_KEY}::%';"
+            done
+            echo "\`\`\`"
+            echo ""
+          done
+
+          # 샘플 1000건 복호화 검증은 별도 stat endpoint 또는 admin 호출로 권장 (runbook §3.3)
+          echo "### 샘플 복호화 검증"
+          echo ""
+          echo "- 잔여 0 확인 후, GET /api/v1/admin/pii-rotation/progress 의 done 카운트와 위 SQL 의 NULL/빈 값 제외 row 수가 일치하는지 교차 검증."
+          echo "- 평문 PII 노출 0 — 위 SQL 은 col 값 자체를 SELECT 하지 않으며 prefix 만 LIKE 비교한다."
+          echo "- 자세한 절차: \`docs/operations/pii-rotation-runbook.md\` §6"
+
+      # ---------------------------------------------------------------------
+      # 6) Phase 4 finalize — 회전 이력 PR 자동 생성 + 구 키 폐기 체크리스트
+      #    PERSONAL_DATA_ENCRYPTION_KEYS CSV 자동 수정 금지 — 운영팀 수동 단계만 안내.
+      # ---------------------------------------------------------------------
+      - name: 📝 Phase 4 finalize — 회전 이력 append + PR 생성
+        if: inputs.phase == 'phase4-finalize'
+        env:
+          GH_TOKEN: ${{ secrets.ROTATION_SECRETS_PAT }}
+          RUN_ID: ${{ github.run_id }}
+          REPO_FULL: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          EFFECTIVE_TABLES: ${{ steps.validate.outputs.effective_tables }}
+        run: |
+          set -euo pipefail
+          HISTORY_FILE="docs/operations/secret-rotation-history.md"
+          if [ ! -f "$HISTORY_FILE" ]; then
+            echo "::warning title=이력 파일 미존재::${HISTORY_FILE} 가 develop 에 없습니다. 이력 PR 생성 skip."
+            exit 0
+          fi
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning title=PAT 미설정::secrets.ROTATION_SECRETS_PAT 미설정 — 이력 PR 생성 skip (이력 행만 출력)."
+          fi
+
+          BRANCH="chore/secret-rotation/pii-${ROTATION_ENV}-${ROTATION_TABLE}-${RUN_ID}"
+          KST_NOW=$(TZ=Asia/Seoul date +'%Y-%m-%d %H:%M')
+          RUN_URL="https://github.com/${REPO_FULL}/actions/runs/${RUN_ID}"
+
+          # PII 회전 이력 행 (PII 평문 절대 미기재 — 테이블·키 ID·트리거만)
+          NEW_ROW="| ${KST_NOW} | \`PII_KEY\` (${ROTATION_TABLE}) | \`${ROTATION_ENV}\` | ${ROTATION_REASON} | [${RUN_ID}](${RUN_URL}) | ${ACTOR} | target_key_id=\`${ROTATION_TARGET_KEY}\`, tables=${EFFECTIVE_TABLES// /, }. 정책 §3.4 Phase 2 자동 배치. dry_run=${ROTATION_DRY_RUN}. PII 평문 0건. |"
+          export NEW_ROW HISTORY_FILE
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "## 회전 이력 행 (수동 append 필요)"
+            echo "${NEW_ROW}"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+
+          python3 - <<'PYEOF'
+          import os, re
+          path = os.environ['HISTORY_FILE']
+          row = os.environ['NEW_ROW']
+          with open(path, 'r', encoding='utf-8') as f:
+              lines = f.readlines()
+          last_table_idx = -1
+          for i, line in enumerate(lines):
+              s = line.strip()
+              if s.startswith('|') and not re.match(r'^\|[\s\-:|]+\|$', s):
+                  last_table_idx = i
+          if last_table_idx == -1:
+              raise SystemExit('이력 표를 찾지 못했습니다.')
+          lines.insert(last_table_idx + 1, row + '\n')
+          with open(path, 'w', encoding='utf-8') as f:
+              f.writelines(lines)
+          print(f'append 위치: line {last_table_idx + 2}')
+          PYEOF
+
+          if git diff --quiet -- "$HISTORY_FILE"; then
+            echo "::warning title=이력 파일 변경 없음::이력 행이 추가되지 않았습니다."
+            exit 0
+          fi
+          git add "$HISTORY_FILE"
+          git commit -m "chore(security): PII_KEY 회전 이력 append (${ROTATION_ENV}, ${ROTATION_TABLE}, run ${RUN_ID})"
+          git push -u origin "$BRANCH"
+
+          PR_BODY_FILE=$(mktemp)
+          cat > "$PR_BODY_FILE" <<EOF
+          ## 자동 생성 PR — PII_KEY 회전 이력 (Phase 2 자동 배치)
+
+          본 PR 은 \`rotate-pii-key.yml\` 워크플로가 자동 생성합니다.
+
+          - **환경**: \`${ROTATION_ENV}\`
+          - **테이블**: \`${ROTATION_TABLE}\` (effective: ${EFFECTIVE_TABLES})
+          - **목표 키 ID**: \`${ROTATION_TARGET_KEY}\`
+          - **트리거**: ${ROTATION_REASON}
+          - **Run**: [${RUN_ID}](${RUN_URL})
+          - **dry_run**: \`${ROTATION_DRY_RUN}\`
+
+          ### 사후 수동 검증 체크리스트 (정책 §3.4 + runbook §6)
+          - [x] Phase 2 batch 종료 (pending=0, inProgress=0)
+          - [x] Phase 3 잔여 SQL 검증 (DBA 수동) — not_rotated=0 확인
+          - [ ] 샘플 1000건 신 키 복호화 검증 통과 (PII 평문 노출 0)
+          - [ ] 24h 모니터링 — 5xx 에러율 정상
+          - [ ] (Phase 4 수동) \`PERSONAL_DATA_ENCRYPTION_KEYS\` CSV 에서 구 키 ID 제거 PR 생성
+          - [ ] 구 키 180일 보존 (휴면 PII 복호화 호환) 후 폐기 (정책 §6)
+
+          정책: \`docs/standards/SECRET_ROTATION_POLICY.md\` §3.4
+          Runbook: \`docs/operations/pii-rotation-runbook.md\`
+          EOF
+
+          gh pr create \
+            --base develop \
+            --head "$BRANCH" \
+            --title "chore(security): PII_KEY 회전 이력 (${ROTATION_ENV}, ${ROTATION_TABLE}, run ${RUN_ID})" \
+            --body-file "$PR_BODY_FILE"
+
+      - name: 🪪 Phase 4 finalize — 구 키 폐기 체크리스트 출력
+        if: inputs.phase == 'phase4-finalize'
+        run: |
+          set -euo pipefail
+          {
+            echo "## 🪪 Phase 4 구 키 폐기 가이드 (수동 단계)"
+            echo ""
+            echo "본 워크플로는 \`PERSONAL_DATA_ENCRYPTION_KEYS\` CSV 를 자동 수정하지 않는다 (운영 보안 원칙)."
+            echo "운영팀이 아래 절차를 수동으로 진행한다."
+            echo ""
+            echo "### 단계"
+            echo "1. 24h 모니터링 GREEN 확인 (에러율 / 알람 / 복호화 실패 row 0)"
+            echo "2. \`docs/standards/SECRET_ROTATION_POLICY.md\` §6 — KEY/IV 는 **180일 보존** 후 폐기 (휴면 PII 복호화 호환)"
+            echo "3. 180일 경과 후 — GH Secrets \`PERSONAL_DATA_ENCRYPTION_KEYS\` 에서 구 키 entry 제거"
+            echo "4. \`MINDGARDEN_DORMANT_PII_ENC_KEY\` 도 동일 절차 (다중 키 SSOT)"
+            echo "5. 구 키 제거 후 BE 재배포 → \`/actuator/health\` UP + 휴면 사용자 1건 unmask sanity"
+            echo "6. \`docs/operations/secret-rotation-history.md\` 에 폐기 행 추가 PR"
+            echo ""
+            echo "절대 금지: 180일 이전 강제 폐기, 자동화 PR, admin override 우회"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ---------------------------------------------------------------------
+      # 7) 결과 요약 (Job Summary)
+      # ---------------------------------------------------------------------
+      - name: 📋 회전 결과 요약 (job summary)
+        if: always()
+        env:
+          BE_BASE_URL: ${{ steps.validate.outputs.be_base_url }}
+          EFFECTIVE_TABLES: ${{ steps.validate.outputs.effective_tables }}
+          BATCH_RESULT: ${{ steps.batch.outputs.result }}
+          BATCH_PROCESSED: ${{ steps.batch.outputs.tables_processed }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          {
+            echo "## PII_KEY 회전 — Phase 2 배치 결과"
+            echo ""
+            echo "- 환경: \`${ROTATION_ENV}\`"
+            echo "- 페이즈: \`${ROTATION_PHASE}\`"
+            echo "- 테이블 (input): \`${ROTATION_TABLE}\`"
+            echo "- 테이블 (effective): \`${EFFECTIVE_TABLES:-N/A}\`"
+            echo "- 목표 키 ID: \`${ROTATION_TARGET_KEY}\`"
+            echo "- chunk 크기: \`${ROTATION_CHUNK_SIZE}\`"
+            echo "- dry_run: \`${ROTATION_DRY_RUN}\`"
+            echo "- 트리거: \`${ROTATION_REASON}\`"
+            echo "- BE base URL: \`${BE_BASE_URL:-N/A}\`"
+            echo "- batch 결과: \`${BATCH_RESULT:-N/A}\`"
+            echo "- batch 처리 테이블: \`${BATCH_PROCESSED:-N/A}\`"
+            echo "- Run: \`${RUN_ID}\`"
+            echo ""
+            echo "정책: \`docs/standards/SECRET_ROTATION_POLICY.md\` §3.4"
+            echo "설계: \`docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md\` §3.2"
+            echo "Runbook: \`docs/operations/pii-rotation-runbook.md\`"
+            echo "Dry-run 가이드: \`docs/operations/pii-rotation-dry-run-guide.md\`"
+          } >> "$GITHUB_STEP_SUMMARY"

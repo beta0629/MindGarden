@@ -1,0 +1,149 @@
+/**
+ * ErrorBoundary 폴백 화면 스타일
+ *
+ * 디자인 메모:
+ *  - 디자인 v2 도입 전 "임시" 폴백 UI 다. mindgarden 디자인 토큰(--mg-*)만 사용한다.
+ *  - 운영 반영 하드코딩 게이트(docs/standards/COMMON_MODULES_USAGE_GUIDE.md 및 운영 체크리스트)
+ *    준수: hex/rgb/rgba 직접 사용 금지, 폴백 hex 도 두지 않는다.
+ *  - 풀스크린 오버레이로 동작하며, 라우터·세션·테마가 깨진 상황에서도 단독으로 렌더 가능해야 한다.
+ *
+ * @author MindGarden
+ * @since 2026-06-14
+ */
+
+.mg-error-boundary {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-lg);
+  background: var(--mg-color-background-main);
+  color: var(--mg-color-text-main);
+  font-family: var(--mg-font-family-body);
+  z-index: 9999;
+  overflow: auto;
+}
+
+.mg-error-boundary__card {
+  width: 100%;
+  max-width: 480px;
+  padding: var(--mg-spacing-xl) var(--mg-spacing-lg);
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-md);
+  text-align: center;
+}
+
+.mg-error-boundary__icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--mg-spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mg-color-error-50);
+  color: var(--mg-color-error-dark);
+  border-radius: var(--mg-radius-full);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mg-error-boundary__title {
+  margin: 0 0 var(--mg-spacing-sm);
+  font-size: var(--mg-font-size-xl);
+  font-weight: 700;
+  color: var(--mg-color-text-main);
+  line-height: 1.4;
+}
+
+.mg-error-boundary__description {
+  margin: 0 0 var(--mg-spacing-lg);
+  font-size: var(--mg-font-size-base);
+  color: var(--mg-color-text-secondary);
+  line-height: 1.6;
+}
+
+.mg-error-boundary__actions {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mg-error-boundary__btn {
+  min-width: 120px;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-md);
+  font-size: var(--mg-font-size-base);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.mg-error-boundary__btn:hover {
+  filter: brightness(0.96);
+}
+
+.mg-error-boundary__btn:active {
+  transform: translateY(1px);
+}
+
+.mg-error-boundary__btn:focus-visible {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: 2px;
+}
+
+.mg-error-boundary__btn--primary {
+  background: var(--mg-color-primary-main);
+  color: var(--mg-color-text-on-primary);
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-error-boundary__btn--secondary {
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-main);
+  border-color: var(--mg-color-border-main);
+}
+
+.mg-error-boundary__details {
+  margin-top: var(--mg-spacing-lg);
+  text-align: left;
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-error-boundary__details > summary {
+  cursor: pointer;
+  padding: var(--mg-spacing-xs) 0;
+  user-select: none;
+}
+
+.mg-error-boundary__stack {
+  margin: var(--mg-spacing-sm) 0 0;
+  padding: var(--mg-spacing-sm);
+  max-height: 240px;
+  overflow: auto;
+  background: var(--mg-color-background-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-sm);
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  .mg-error-boundary__card {
+    padding: var(--mg-spacing-lg) var(--mg-spacing-md);
+  }
+  .mg-error-boundary__btn {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}

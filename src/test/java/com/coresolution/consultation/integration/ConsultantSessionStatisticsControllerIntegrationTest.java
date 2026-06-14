@@ -26,6 +26,7 @@ import com.coresolution.consultation.dto.response.ConsultantSessionStatisticsRes
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ConsultantCompletedSessionStatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.integrationtest.support.WithMockConsultantSecurityContext;
 
 /**
  * {@link com.coresolution.consultation.controller.ConsultantSessionStatisticsController} 통합 테스트.
@@ -36,6 +37,7 @@ import com.coresolution.core.context.TenantContextHolder;
 @SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
+@WithMockConsultantSecurityContext
 @DisplayName("ConsultantSessionStatisticsController API 통합 테스트")
 class ConsultantSessionStatisticsControllerIntegrationTest {
 

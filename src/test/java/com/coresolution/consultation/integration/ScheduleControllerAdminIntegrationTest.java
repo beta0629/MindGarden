@@ -17,6 +17,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientScheduleNoteRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Transactional
+@WithMockAdminSecurityContext
 @DisplayName("ScheduleController 관리자 스케줄 조회 API")
 class ScheduleControllerAdminIntegrationTest {
 

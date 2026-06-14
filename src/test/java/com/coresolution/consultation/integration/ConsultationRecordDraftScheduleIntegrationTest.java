@@ -17,6 +17,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.integrationtest.support.WithMockConsultantSecurityContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Transactional
+@WithMockConsultantSecurityContext
 @DisplayName("ScheduleController 상담일지 서버 초안 API")
 class ConsultationRecordDraftScheduleIntegrationTest {
 
@@ -130,9 +132,20 @@ class ConsultationRecordDraftScheduleIntegrationTest {
                 .andExpect(jsonPath("$.message", containsString("테넌트")));
     }
 
+    /**
+     * <p>B6 (2026-06-14) 이후: ScheduleController 가 {@code X-Tenant-Id} 헤더 직파싱을 제거하고
+     * {@link com.coresolution.core.filter.TenantContextFilter} 단일 SSOT 로 위임한다.
+     * MockMvc 는 {@code addFilters=false} 라 필터 체인이 동작하지 않으므로,
+     * 사용자 세션에도 tenantId 가 없으면 컨트롤러가 즉시 400 으로 거부한다.
+     * 이는 cross-tenant 접근을 더 이른 단계에서 차단하므로 보안적으로 더 강한 동작이다.</p>
+     *
+     * <p>PR-3d (2026-06-14, B8): {@link WithMockConsultantSecurityContext} 로
+     * {@code @PreAuthorize("isAuthenticated()")} 를 통과시키되, 컨트롤러의 tenant 가드
+     * 회귀(400) 동작을 그대로 검증한다.</p>
+     */
     @Test
-    @DisplayName("GET 초안 — 사용자 tenant 없이 잘못된 X-Tenant-Id만 있으면 타 테넌트 스케줄 조회 불가(404 ENTITY_NOT_FOUND)")
-    void getDraft_wrongTenantHeader_only_noUserTenant_returns404() throws Exception {
+    @DisplayName("GET 초안 — 사용자 tenant 없이 잘못된 X-Tenant-Id만 있으면 cross-tenant 차단(400 BAD_REQUEST)")
+    void getDraft_wrongTenantHeader_only_noUserTenant_isRejected() throws Exception {
         String realTenant = UUID.randomUUID().toString();
         String wrongHeaderTenant = UUID.randomUUID().toString();
 
@@ -162,9 +175,9 @@ class ConsultationRecordDraftScheduleIntegrationTest {
                         .header("X-Tenant-Id", wrongHeaderTenant)
                         .sessionAttr(SessionConstants.USER_OBJECT, consultant)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.errorCode").value("ENTITY_NOT_FOUND"));
+                .andExpect(jsonPath("$.message", containsString("테넌트")));
     }
 
     @Test

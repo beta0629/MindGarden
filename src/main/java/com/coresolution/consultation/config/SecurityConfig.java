@@ -120,9 +120,21 @@ public class SecurityConfig {
                 )
                 
                 // API 엔드포인트별 권한 설정
+                // PR-3d (2026-06-14): anyRequest().authenticated() 전환 — Public 화이트리스트 외 전부 인증 필수.
+                // 기존 명시적 .authenticated() 매처는 컨트롤러별 명세를 보존하기 위해 유지(2중 방어선).
                 .authorizeHttpRequests(authz -> authz
                     // CORS preflight 요청 허용 (모든 환경)
                     .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                    // 시스템·관측성 공개 엔드포인트 (PR-3d 추가)
+                    .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                    .requestMatchers("/actuator/info").permitAll()
+                    .requestMatchers("/error").permitAll()
+                    // OpenAPI / Swagger UI (선택, 운영 노출 정책에 따라 비활성 가능)
+                    .requestMatchers("/v3/api-docs", "/v3/api-docs/**").permitAll()
+                    .requestMatchers("/swagger-ui", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
+                    // 시스템 헬스 엔드포인트(레거시 /api/v1/health 컨트롤러)
+                    .requestMatchers("/api/v1/health", "/api/v1/health/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
                     // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
@@ -134,7 +146,7 @@ public class SecurityConfig {
                         "/api/v1/ops/plans/code/**",          // plan_code로 요금제 조회 (공개)
                         "/api/v1/ops/plans/*"                 // plan_id로 요금제 조회 (공개, 단 DELETE 제외)
                     ).permitAll()
-                    // 인증 API는 허용
+                    // 인증 API는 허용 (로그인/회원가입/소셜 callback/SMS OTP 등)
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     // 포트원 등 PG 웹훅 (서명 검증, 인증 없음)
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
@@ -153,43 +165,39 @@ public class SecurityConfig {
                     .requestMatchers("/api/admin/css-themes/**").permitAll()
                     .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
                     .requestMatchers("/register", "/tablet/register", "/auth/register").permitAll() // 회원가입 페이지는 공개
-                    .requestMatchers("/api/system-notifications/**").authenticated() // 시스템 알림 API는 인증 필요
-                    .requestMatchers("/api/consultation-messages/**").authenticated() // 상담 메시지 API는 인증 필요
-                    .requestMatchers("/api/client/**").authenticated() // 클라이언트 API는 인증 필요
-                    .requestMatchers("/api/admin/**").authenticated() // 관리자 API는 인증 필요
-                    .requestMatchers("/api/v1/admin/**").authenticated() // 관리자 API v1은 인증 필요
-                    .requestMatchers("/api/erp/**").authenticated() // ERP API는 인증 필요
-                    .requestMatchers("/api/v1/erp/**").authenticated() // ERP API v1은 인증 필요
-                    .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
-                    .requestMatchers("/api/v1/schedules/**").authenticated() // 스케줄 API v1은 인증 필요
-                    .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요
+                    // BW-1 mobile: 버전 검사는 로그인 전 공개
+                    .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
+                    // Ops Portal 인증 API는 허용
+                    .requestMatchers("/api/v1/ops/auth/**").permitAll()
+                    // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
+                    .requestMatchers("/api/system-notifications/**").authenticated()
+                    .requestMatchers("/api/consultation-messages/**").authenticated()
+                    .requestMatchers("/api/client/**").authenticated()
+                    .requestMatchers("/api/admin/**").authenticated()
+                    .requestMatchers("/api/v1/admin/**").authenticated()
+                    .requestMatchers("/api/erp/**").authenticated()
+                    .requestMatchers("/api/v1/erp/**").authenticated()
+                    .requestMatchers("/api/schedules/**").authenticated()
+                    .requestMatchers("/api/v1/schedules/**").authenticated()
+                    .requestMatchers("/api/payments/**").authenticated()
                     // 보안 라운드 2 (2026-06-03): 결제 API v1 전체에 명시적 매트릭스 가드 추가.
-                    // 컨트롤러 메서드 @PreAuthorize 와 2중 방어선을 구성한다.
                     .requestMatchers("/api/v1/payments/**").authenticated()
                     // 회기 추가/연장 요청 API: 결제 금액·결제 참조가 응답에 포함되므로 매트릭스도 명시적으로 인증 필수.
                     .requestMatchers("/api/v1/admin/session-extensions/**").authenticated()
-                    .requestMatchers("/api/v1/clients/**").authenticated() // 내담자 맥락·프로필 API v1은 인증 필요
-                    .requestMatchers("/api/v1/psycho-education/**").authenticated() // 심리 교육 콘텐츠 API는 인증 필요 (내담자 공용)
-                    .requestMatchers("/api/v1/mind-weather/**").authenticated() // 마음 날씨(내담자·상담사 역할은 컨트롤러)
-                    // BW-2 mood & self-assessment
+                    .requestMatchers("/api/v1/clients/**").authenticated()
+                    .requestMatchers("/api/v1/psycho-education/**").authenticated()
+                    .requestMatchers("/api/v1/mind-weather/**").authenticated()
                     .requestMatchers("/api/v1/mood-journals/**").authenticated()
                     .requestMatchers("/api/v1/self-assessments/**").authenticated()
-                    // BW-4 community
                     .requestMatchers("/api/v1/community/**").authenticated()
-                    // BW-1 mobile: 버전 검사는 로그인 전 공개
-                    .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
-                    // BW-1 mobile push API
                     .requestMatchers("/api/v1/mobile/**").authenticated()
-                    .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
-                    .requestMatchers("/api/v1/consultants/**").authenticated() // 상담사 API v1은 인증 필요
-                    // Expo 웰니스 힐링 콘텐츠 목록 (내담자 세션·테넌트 검증은 컨트롤러)
+                    .requestMatchers("/api/consultant/**").authenticated()
+                    .requestMatchers("/api/v1/consultants/**").authenticated()
                     .requestMatchers("/api/v1/healing-contents/**").authenticated()
-                    // BW-5 meditations alias
                     .requestMatchers("/api/v1/meditations/**").authenticated()
-                    // Ops Portal API는 인증 필요 (공개 엔드포인트 제외)
-                    .requestMatchers("/api/v1/ops/auth/**").permitAll() // Ops Portal 인증 API는 허용
-                    .requestMatchers("/api/v1/ops/**").authenticated() // 나머지 Ops Portal API는 인증 필요
-                    .anyRequest().permitAll() // 나머지는 허용
+                    .requestMatchers("/api/v1/ops/**").authenticated()
+                    // PR-3d: 매트릭스 미정의 경로는 모두 인증 필수 (B8 보안 회귀 차단)
+                    .anyRequest().authenticated()
                 )
                 // 인증/권한 오류 처리 핸들러 설정
                 .exceptionHandling(ex -> ex
@@ -207,10 +215,21 @@ public class SecurityConfig {
                     .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
                 )
                 
-                // 개발 환경: CORS preflight 요청 포함하여 대부분 허용
+                // PR-3d (2026-06-14): dev 프로파일도 anyRequest().authenticated() 로 통일.
+                // 운영과 dev 가 동일한 보안 매트릭스를 사용해야 회귀(개발에서만 통과) 차단이 쉽다.
                 .authorizeHttpRequests(authz -> authz
                     // CORS preflight 요청 허용
                     .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                    // 시스템·관측성 공개 엔드포인트 (PR-3d 추가)
+                    .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                    .requestMatchers("/actuator/info").permitAll()
+                    .requestMatchers("/error").permitAll()
+                    // OpenAPI / Swagger UI
+                    .requestMatchers("/v3/api-docs", "/v3/api-docs/**").permitAll()
+                    .requestMatchers("/swagger-ui", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
+                    // 시스템 헬스 엔드포인트
+                    .requestMatchers("/api/v1/health", "/api/v1/health/**").permitAll()
                     // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 공개 엔드포인트: Ops Portal 온보딩 API (OnboardingController가 두 경로 모두 매핑)
@@ -229,47 +248,37 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
                     // 레거시 결제 웹훅 (하위 호환)
                     .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
-                    // 보안 라운드 2 (2026-06-03): 결제 API v1 전체에 명시적 매트릭스 가드 추가.
-                    // 컨트롤러 메서드 @PreAuthorize 와 2중 방어선을 구성한다.
-                    .requestMatchers("/api/v1/payments/**").authenticated()
-                    // 회기 추가/연장 요청 API: 결제 금액·결제 참조가 응답에 포함되므로 매트릭스도 명시적으로 인증 필수.
-                    .requestMatchers("/api/v1/admin/session-extensions/**").authenticated()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
                     .requestMatchers("/api/v1/accounts/integration/**").permitAll()
                     // 공통코드 API는 허용 (온보딩에서 사용)
                     .requestMatchers("/api/v1/common-codes/**").permitAll()
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)
-                    // 표준화 원칙: 온보딩 프로세스는 로그인 전 접근이 필요하므로 공개 API로 설정
                     .requestMatchers("/api/v1/business-categories/**").permitAll()
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
                     // CSS 테마 API는 허용
                     .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
-                    .requestMatchers("/api/v1/clients/**").authenticated() // 내담자 맥락·프로필 API v1은 인증 필요
-                    // BW-3 admin content (dev: 전역 permitAll 전에 명시적 인증)
-                    .requestMatchers("/api/v1/admin/content/**").authenticated() // BW-3 admin content
-                    // BW-6 mind weather & mind garden admin observability (read-only)
-                    .requestMatchers("/api/v1/admin/wellness/mind-weather/**").authenticated() // BW-6
-                    .requestMatchers("/api/v1/admin/wellness/mind-garden/**").authenticated() // BW-6
-                    .requestMatchers("/api/v1/healing-contents/**").authenticated() // Expo 힐링 콘텐츠 목록
-                    // BW-5 meditations alias
-                    .requestMatchers("/api/v1/meditations/**").authenticated()
-                    .requestMatchers("/api/v1/psycho-education/**").authenticated() // Expo 심리 교육 콘텐츠 (내담자 공용)
-                    .requestMatchers("/api/v1/mind-weather/**").authenticated() // Expo 마음 날씨
-                    // BW-2 mood & self-assessment
-                    .requestMatchers("/api/v1/mood-journals/**").authenticated()
-                    .requestMatchers("/api/v1/self-assessments/**").authenticated()
-                    // BW-4 community
-                    .requestMatchers("/api/v1/community/**").authenticated()
                     // BW-1 mobile: 버전 검사는 로그인 전 공개
                     .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
-                    // BW-1 mobile push API
+                    // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
+                    .requestMatchers("/api/v1/payments/**").authenticated()
+                    .requestMatchers("/api/v1/admin/session-extensions/**").authenticated()
+                    .requestMatchers("/api/v1/clients/**").authenticated()
+                    .requestMatchers("/api/v1/admin/content/**").authenticated() // BW-3 admin content
+                    .requestMatchers("/api/v1/admin/wellness/mind-weather/**").authenticated() // BW-6
+                    .requestMatchers("/api/v1/admin/wellness/mind-garden/**").authenticated() // BW-6
+                    .requestMatchers("/api/v1/healing-contents/**").authenticated()
+                    .requestMatchers("/api/v1/meditations/**").authenticated()
+                    .requestMatchers("/api/v1/psycho-education/**").authenticated()
+                    .requestMatchers("/api/v1/mind-weather/**").authenticated()
+                    .requestMatchers("/api/v1/mood-journals/**").authenticated()
+                    .requestMatchers("/api/v1/self-assessments/**").authenticated()
+                    .requestMatchers("/api/v1/community/**").authenticated()
                     .requestMatchers("/api/v1/mobile/**").authenticated()
-                    // 상담사 API(운영 프로파일과 동일하게 세션·토큰 필요)
                     .requestMatchers("/api/consultant/**").authenticated()
                     .requestMatchers("/api/v1/consultants/**").authenticated()
-                    // 나머지 Ops Portal API는 인증 필요
                     .requestMatchers("/api/v1/ops/**").authenticated()
-                    .anyRequest().permitAll() // 나머지는 허용
+                    // PR-3d: 매트릭스 미정의 경로는 모두 인증 필수 (운영·개발 동일 정책)
+                    .anyRequest().authenticated()
                 )
                 // 인증/권한 오류 처리 핸들러 설정
                 .exceptionHandling(ex -> ex

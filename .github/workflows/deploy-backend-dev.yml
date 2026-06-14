@@ -1022,12 +1022,14 @@ jobs:
               exit 1
             fi
             echo "📋 clients.phone COLUMN_TYPE=${COL_TYPE}"
-            if echo "$COL_TYPE" | grep -qi 'varchar(500)'; then
-              echo "✅ clients.phone varchar(500) 확인"
+            # PR-4 (V20260614_002__normalize_pii_columns_to_512.sql) 머지 후 표준: VARCHAR(512).
+            # PII_PROTECTION_STANDARD.md §6 — PII 컬럼 length >= 512 강제.
+            if echo "$COL_TYPE" | grep -qi 'varchar(512)'; then
+              echo "✅ clients.phone varchar(512) 확인 (PII_PROTECTION_STANDARD §6 정합)"
               exit 0
             fi
-            echo "❌ clients.phone이 varchar(500)이 아닙니다 (현재: ${COL_TYPE})."
-            echo "   조치: Flyway 실패 시 flyway repair 후 재배포, 또는 V20260330_001 마이그레이션 DDL 수동 적용."
+            echo "❌ clients.phone이 varchar(512)이 아닙니다 (현재: ${COL_TYPE})."
+            echo "   조치: Flyway 실패 시 flyway repair 후 재배포, 또는 V20260614_002 마이그레이션 DDL 수동 적용."
             exit 1
           fi
           echo "⚠️ mysql 클라이언트 없음 — journalctl로 Flyway·기동 로그 대체 검증"

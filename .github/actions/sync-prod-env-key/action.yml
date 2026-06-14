@@ -1,13 +1,24 @@
 name: 'Sync prod-from-dev.env Key Set'
-description: 'GitHub Secrets → /etc/mindgarden/prod-from-dev.env 멱등 sync + DB_PRESERVE_KEYS 가드 (PR #296/#299/#301 통합)'
+description: 'GitHub Secrets → /etc/mindgarden/prod-from-dev.env 멱등 sync + PRESERVE_KEYS 가드 (DB 8키 + PII/DORMANT 4키, PR #296/#299/#301/#303/PR-2 통합)'
 
 # ============================================================================
 # secrets-sync composite action (PR #302, 2026-06-13)
 # Apple/Google/REGISTERED_URLS/PROFILE_IMAGE/JWT_SECRET 5 step 의 동일 PRESERVE/RESTORE/FAIL-FAST
 # 가드 + sed 멱등 갱신 로직을 단일 액션으로 통합.
 #
+# PII 회전 선행 PR-2 (2026-06-14): PRESERVE 가드 set 을 DB 8키 + PII/DORMANT 4키 = 12종 으로 확장.
+# 다른 sync step 갱신 도중 PII 키 라인이 사라지는 회귀 차단 (PR #299 DB_PRESERVE_KEYS 동일 패턴).
+# 신규 보존 키 4종:
+#   - PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID
+#   - PERSONAL_DATA_ENCRYPTION_KEYS
+#   - PERSONAL_DATA_ENCRYPTION_IVS
+#   - MINDGARDEN_DORMANT_PII_ENC_KEY
+# DB FAIL-FAST 검증 (DB_HOST/DB_NAME/DB_USERNAME) 은 그대로 유지 — PII 키는 누락 허용
+# (Phase 0~4 진입 전 BE 기동 영향 최소화). 회전이 끝난 뒤 보존 가드가 회귀 차단을 담당한다.
+#
 # 참조: docs/standards/DB_ENV_SSOT_POLICY.md §2 (PR-2),
-#       docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md §6, 부록 D.4
+#       docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md §6, 부록 D.4,
+#       docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md (PR #335)
 # ============================================================================
 
 inputs:
@@ -237,16 +248,26 @@ runs:
           sudo cp -p "$PROD_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
           echo "📦 백업: $BACKUP_FILE"
 
-          # === [P0 재발 방지 가드 — DB_* 키 PRESERVE] ===
+          # === [P0 재발 방지 가드 — DB_* / PII_* / DORMANT 키 PRESERVE] ===
           # 2026-06-13 운영 BE boot loop 회귀: prod-from-dev.env 가
           # DB_HOST/DB_NAME/DB_USERNAME 키 0건 상태로 덮어써져 양 슬롯 boot loop.
           # PR #296 가드 보호 키 set: prod-from-dev.env 의 application-prod.yml fallback 없는
           # 핵심 DB 키 8종 (DB env SSOT 사전 점검 docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md 부록 D.4).
           # 5 step (Apple/Google/REGISTERED_URLS/PROFILE_IMAGE/JWT_SECRET sync) 에서 동일 set 유지.
+          #
+          # PII 회전 선행 PR-2 (2026-06-14): DB 8키 + PII/DORMANT 4키 = 12종 으로 확장.
+          # 다른 sync step 갱신 도중 PII 키 라인이 사라지는 회귀 차단 — Phase 0~4 회전 시점에서
+          # PERSONAL_DATA_ENCRYPTION_KEYS/IVS 누락 시 재암호화 결과가 lost 될 수 있어 동일 PRESERVE
+          # 가드 보호 대상에 편입. 단, 누락 허용 (DB FAIL-FAST 와 달리 PII 는 빈 값 허용) 으로
+          # Phase 1 진입 전 BE 기동 영향 최소화. 회전이 끝난 뒤 보존 가드가 회귀 차단을 담당한다.
           DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME DB_PASSWORD DB_PORT DB_DRIVER_CLASS_NAME DB_URL DB_SCHEMA"
+          PII_PRESERVE_KEYS="PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS MINDGARDEN_DORMANT_PII_ENC_KEY"
+          PRESERVE_KEYS="$DB_PRESERVE_KEYS $PII_PRESERVE_KEYS"
+          # 변수명은 기존 운영 가드 추적성을 위해 DB_PRESERVED_FILE 유지 (DB+PII 통합 보존 파일).
           DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
           rm -f "$DB_PRESERVED_FILE"
-          for _pkey in $DB_PRESERVE_KEYS; do
+          echo "🛡️ PRESERVE 가드 보호 키 set (12종): DB(8) + PII/DORMANT(4)"
+          for _pkey in $PRESERVE_KEYS; do
             _existing=$(sudo grep -E "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
             if [ -n "$_existing" ]; then
               printf '%s\n' "$_existing" >> "$DB_PRESERVED_FILE"
@@ -279,14 +300,16 @@ runs:
           sudo chmod 600 "$PROD_ENV_FILE"
           sudo chown root:root "$PROD_ENV_FILE"
 
-          # === [P0 재발 방지 가드 — DB_* 키 RESTORE + FAIL-FAST] ===
-          # 갱신 직후 보존했던 DB_* 키가 사라졌으면 PRESERVED 값으로 복원하고,
-          # 그래도 누락/빈값이면 deploy 중단 (exit 1) — 운영 BE boot loop 회귀 차단.
+          # === [P0 재발 방지 가드 — DB_* / PII_* / DORMANT 키 RESTORE + DB FAIL-FAST] ===
+          # 갱신 직후 보존했던 DB/PII/DORMANT 키가 사라졌으면 PRESERVED 값으로 복원하고,
+          # DB 핵심 키(DB_HOST/DB_NAME/DB_USERNAME)가 누락/빈값이면 deploy 중단 (exit 1) — 운영 BE boot loop 회귀 차단.
+          # PII 키는 누락 허용 — Phase 0~4 진입 전 부분 등록 단계에서 BE 기동 영향 최소화.
           if [ -f "$DB_PRESERVED_FILE" ]; then
             while IFS= read -r _preserved; do
               _pkey=$(printf '%s' "$_preserved" | cut -d'=' -f1 | tr -d '[:space:]')
               if [ -n "$_pkey" ] && ! sudo grep -qE "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null; then
-                echo "::warning title=DB 키 복원::${_pkey} 가 갱신 도중 사라져 PRESERVED 값으로 복원합니다."
+                # DB/PII 어느 쪽이든 동일 PRESERVED 파일에 기록되어 있으므로 복원 메시지는 통합.
+                echo "::warning title=PRESERVE 키 복원::${_pkey} 가 갱신 도중 사라져 PRESERVED 값으로 복원합니다."
                 printf '%s\n' "$_preserved" | sudo tee -a "$PROD_ENV_FILE" >/dev/null
               fi
             done < "$DB_PRESERVED_FILE"

@@ -32,6 +32,7 @@
 | 평문 prefix | `prefix=abcd` (앞 4자만, 정말 필요한 경우에 한정) |
 | 관련 사고 문서 | 상대 경로 마크다운 링크 |
 | 외부 콘솔 | 콘솔명 + 회전 시각 |
+| 2026-06-14 18:14 | `JWT_SECRET` | `dev` | 재시도 | [27494295730](https://github.com/beta0629/MindGarden/actions/runs/27494295730) | beta0629 | len=128 hex, sha256=ad7b3541 (구 키 N/A — 평문 미보유). 정책 §3 자동 회전. |
 
 ---
 

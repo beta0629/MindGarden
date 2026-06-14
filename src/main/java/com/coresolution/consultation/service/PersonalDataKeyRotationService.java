@@ -3,10 +3,12 @@ package com.coresolution.consultation.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +101,36 @@ public class PersonalDataKeyRotationService {
     /** dormant_user_pii_vault 테이블의 단일 컬럼. */
     public static final String DORMANT_VAULT_TABLE = "dormant_user_pii_vault";
     public static final String DORMANT_VAULT_COLUMN = "encrypted_pii";
+
+    /**
+     * SQL injection 방어 — 회전 대상 테이블 화이트리스트.
+     *
+     * <p>SQL 식별자(테이블명) 동적 합성 시 본 set 에 포함된 값만 허용된다.
+     * CodeQL Java 의 sql-injection sanitizer 휴리스틱이 {@link Set#contains(Object)}
+     * 검증을 명시적 sanitizer 로 인식하도록 화이트리스트를 별도 상수로 분리하였다.</p>
+     */
+    public static final Set<String> ALLOWED_TABLES = Set.of(
+        "users", "clients", "accounts", "branches", DORMANT_VAULT_TABLE
+    );
+
+    /**
+     * SQL injection 방어 — 회전 대상 컬럼 화이트리스트.
+     *
+     * <p>모든 회전 대상 PII 컬럼 + {@code id} 의 union. SQL 식별자(컬럼명) 동적 합성 시
+     * 본 set 포함 여부를 검증한 값만 사용한다.</p>
+     */
+    public static final Set<String> ALLOWED_COLUMNS;
+
+    static {
+        Set<String> cols = new HashSet<>();
+        cols.add("id");
+        cols.addAll(USERS_PII_COLUMNS);
+        cols.addAll(CLIENTS_PII_COLUMNS);
+        cols.addAll(ACCOUNTS_PII_COLUMNS);
+        cols.addAll(BRANCHES_PII_COLUMNS);
+        cols.add(DORMANT_VAULT_COLUMN);
+        ALLOWED_COLUMNS = Collections.unmodifiableSet(cols);
+    }
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -526,7 +558,7 @@ public class PersonalDataKeyRotationService {
     private List<Map<String, Object>> fetchChunk(String tableName, List<String> piiColumns,
                                                   long afterId, int chunkSize) {
         String columnsCsv = renderColumnsCsv(piiColumns);
-        String sql = "SELECT id, " + columnsCsv + " FROM " + quoteIdentifier(tableName)
+        String sql = "SELECT id, " + columnsCsv + " FROM " + quoteTable(tableName)
             + " WHERE id > ? ORDER BY id ASC LIMIT ?";
         return jdbcTemplate.queryForList(sql, afterId, chunkSize);
     }
@@ -534,7 +566,7 @@ public class PersonalDataKeyRotationService {
     private List<Map<String, Object>> fetchChunkByRange(String tableName, List<String> piiColumns,
                                                          long startId, long endId) {
         String columnsCsv = renderColumnsCsv(piiColumns);
-        String sql = "SELECT id, " + columnsCsv + " FROM " + quoteIdentifier(tableName)
+        String sql = "SELECT id, " + columnsCsv + " FROM " + quoteTable(tableName)
             + " WHERE id BETWEEN ? AND ? ORDER BY id ASC";
         return jdbcTemplate.queryForList(sql, startId, endId);
     }
@@ -573,7 +605,7 @@ public class PersonalDataKeyRotationService {
             return;
         }
         StringBuilder sql = new StringBuilder("UPDATE ")
-            .append(quoteIdentifier(tableName))
+            .append(quoteTable(tableName))
             .append(" SET ");
         List<Object> args = new ArrayList<>(updates.size() + 1);
         boolean first = true;
@@ -581,7 +613,7 @@ public class PersonalDataKeyRotationService {
             if (!first) {
                 sql.append(", ");
             }
-            sql.append(quoteIdentifier(entry.getKey())).append(" = ?");
+            sql.append(quoteColumn(entry.getKey())).append(" = ?");
             args.add(entry.getValue());
             first = false;
         }
@@ -591,17 +623,37 @@ public class PersonalDataKeyRotationService {
     }
 
     private String renderColumnsCsv(List<String> columns) {
-        return columns.stream().map(this::quoteIdentifier).collect(Collectors.joining(", "));
+        return columns.stream().map(this::quoteColumn).collect(Collectors.joining(", "));
     }
 
     /**
-     * MySQL identifier quoting — 사전 검증된 컬럼명/테이블명만 사용한다.
+     * MySQL 테이블 식별자 quoting — {@link #ALLOWED_TABLES} 화이트리스트에 포함된 값만 허용한다.
      *
-     * <p>입력은 {@link #validateTableName(String)} / {@link #validateColumns(List)} 로 사전
-     * 검증되며 영숫자·언더스코어만 허용된다. 따라서 SQL injection 위험 없음.</p>
+     * <p>SQL 식별자 동적 합성에 사용. CodeQL sql-injection sanitizer 휴리스틱이 명시적
+     * {@link Set#contains(Object)} 검증을 인식하도록 본 메서드에서 한 번 더 가드한다
+     * ({@link #validateTableName(String)} 가 이미 호출되었더라도 다중 가드).</p>
+     *
+     * @throws IllegalArgumentException 화이트리스트 외 식별자
      */
-    private String quoteIdentifier(String identifier) {
-        return "`" + identifier + "`";
+    private String quoteTable(String tableName) {
+        if (tableName == null || !ALLOWED_TABLES.contains(tableName)) {
+            throw new IllegalArgumentException(
+                "disallowed table identifier: " + LogSanitizer.forLog(tableName));
+        }
+        return "`" + tableName + "`";
+    }
+
+    /**
+     * MySQL 컬럼 식별자 quoting — {@link #ALLOWED_COLUMNS} 화이트리스트에 포함된 값만 허용한다.
+     *
+     * @throws IllegalArgumentException 화이트리스트 외 식별자
+     */
+    private String quoteColumn(String columnName) {
+        if (columnName == null || !ALLOWED_COLUMNS.contains(columnName)) {
+            throw new IllegalArgumentException(
+                "disallowed column identifier: " + LogSanitizer.forLog(columnName));
+        }
+        return "`" + columnName + "`";
     }
 
     // ----------------------------------------------------------------
@@ -630,8 +682,11 @@ public class PersonalDataKeyRotationService {
     // ----------------------------------------------------------------
 
     private void validateTableName(String tableName) {
-        if (tableName == null || !tableName.matches("[A-Za-z_][A-Za-z0-9_]*")) {
-            throw new IllegalArgumentException("invalid table name: " + LogSanitizer.forLog(tableName));
+        if (tableName == null
+                || !tableName.matches("[A-Za-z_][A-Za-z0-9_]*")
+                || !ALLOWED_TABLES.contains(tableName)) {
+            throw new IllegalArgumentException(
+                "invalid or disallowed table name: " + LogSanitizer.forLog(tableName));
         }
     }
 
@@ -640,8 +695,11 @@ public class PersonalDataKeyRotationService {
             throw new IllegalArgumentException("piiColumns must not be empty");
         }
         for (String col : columns) {
-            if (col == null || !col.matches("[A-Za-z_][A-Za-z0-9_]*")) {
-                throw new IllegalArgumentException("invalid column name: " + LogSanitizer.forLog(col));
+            if (col == null
+                    || !col.matches("[A-Za-z_][A-Za-z0-9_]*")
+                    || !ALLOWED_COLUMNS.contains(col)) {
+                throw new IllegalArgumentException(
+                    "invalid or disallowed column name: " + LogSanitizer.forLog(col));
             }
         }
     }

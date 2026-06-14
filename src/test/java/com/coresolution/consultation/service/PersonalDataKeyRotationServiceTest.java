@@ -224,6 +224,26 @@ class PersonalDataKeyRotationServiceTest {
             assertThatThrownBy(() -> service.rotateUserPersonalData(1001, ACTIVE_KEY))
                 .isInstanceOf(IllegalArgumentException.class);
         }
+
+        @Test
+        @DisplayName("화이트리스트 외 테이블명은 IllegalArgumentException — SQL injection 방어")
+        void rotateTableChunked_disallowedTable_throws() {
+            assertThatThrownBy(() -> service.rotateTableChunked(
+                "evil_table", PersonalDataKeyRotationService.USERS_PII_COLUMNS,
+                100, ACTIVE_KEY, false))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("disallowed");
+        }
+
+        @Test
+        @DisplayName("화이트리스트 외 컬럼명은 IllegalArgumentException — SQL injection 방어")
+        void rotateTableChunked_disallowedColumn_throws() {
+            assertThatThrownBy(() -> service.rotateTableChunked(
+                "users", List.of("evil_column"),
+                100, ACTIVE_KEY, false))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("disallowed");
+        }
     }
 
     @Nested

@@ -326,77 +326,120 @@ openssl rand -hex 16
 - [ ] `PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID` 환경변수 주입 확인
 - [ ] `PERSONAL_DATA_ENCRYPTION_KEYS` / `_IVS` CSV 에 신규 keyId 포함 확인
 
-### 3.2 Phase 1 — 회전 인프라 확장 (코드 PR, 별도 진행)
+### 3.2 Phase 1 — 회전 인프라 확장 (코드 PR — 본 §은 Phase 1 PR 머지로 구현 완료, 본 문서 정합 갱신)
 
-본 PR 범위 외이며, 다음 작업의 명세만 정의한다.
+> **상태**: Phase 1 PR (`feat(security): PII KEY 회전 Phase 1 — 회전 인프라 확장`) 으로 본 §의 모든 항목이 구현되었다. 실행은 Phase 2 PR 의 별도 트리거로 진행한다.
 
-#### 3.2.1 `PersonalDataKeyRotationService` 확장
+#### 3.2.1 `PersonalDataKeyRotationService` 확장 (구현 완료)
 
-현재 (`src/main/java/com/coresolution/consultation/service/PersonalDataKeyRotationService.java`):
+대상 파일: `src/main/java/com/coresolution/consultation/service/PersonalDataKeyRotationService.java`
 
-- `rotateUserPersonalData()` — `findAll()` 전수 단일 트랜잭션, 5컬럼만
-
-확장 내용:
-
-| 항목 | 현재 | 확장 후 |
+| 항목 | 현재 | 확장 후 (Phase 1 머지) |
 |---|---|---|
-| users 회전 컬럼 | `name`, `nickname`, `phone`, `gender`, `address` (5개) | + `email`, `rrn_encrypted` (총 **7개**) |
-| 조회 방식 | `findAll()` 한 번에 로드 | `Pageable` chunk (예: 100 row × N 트랜잭션) |
-| 진행률 추적 | 없음 | `pii_reencryption_progress` 테이블 |
-| 재시작 | 불가 | chunk 단위 재시작 가능 |
-| 트리거 | 없음 | admin endpoint (POST) 또는 `@Scheduled` (옵션) |
+| 처리 모델 | `findAll()` 전수 단일 트랜잭션 (JPA 변환기 경유) | `JdbcTemplate` 기반 chunk SELECT/UPDATE — JPA 변환기 우회로 ciphertext 직접 다룸 |
+| users 회전 컬럼 (7개) | `name`, `nickname`, `phone`, `gender`, `address` | + `email`, `rrn_encrypted` (`USERS_PII_COLUMNS` 상수) |
+| chunk size | — | 1 ~ 1000 (`MIN_CHUNK_SIZE` / `MAX_CHUNK_SIZE`), default 100 (`DEFAULT_CHUNK_SIZE`) |
+| 트랜잭션 경계 | 단일 트랜잭션 | chunk 1개 = 트랜잭션 1개 (`TransactionTemplate.execute`) |
+| 재시작 | 불가 | `pii_reencryption_progress` 의 마지막 DONE chunk_end_id 부터 재개 |
+| 실패 chunk | rollback 후 흐름 종료 | 해당 chunk 만 `FAILED` 마킹, 다음 chunk 계속 진행 → `resumeFailedChunks(...)` 로 재시도 |
+| 평문 백필 게이트 | — | `pii-rotation.allow-plaintext-encryption` (default `false`) — accounts/branches 회전은 본 플래그가 true 일 때만 활성 |
+| 테이블 부재 가드 | — | `INFORMATION_SCHEMA.TABLES` 사전 조회 — 미존재 시 즉시 SKIPPED 결과 반환 (예: `branches` 가 V20260612_002 로 archive 됨) |
 
-#### 3.2.2 `clients` 회전 메서드 신설
+핵심 메서드 시그니처 (Phase 1 PR 확정):
 
-신규 메서드: `rotateClientPersonalData()`
+```java
+public PiiRotationResult rotateUserPersonalData(int chunkSize, String targetKeyId);
+public PiiRotationResult rotateClientPersonalData(int chunkSize, String targetKeyId);
+public PiiRotationResult rotateAccountPersonalData(int chunkSize, String targetKeyId);
+public PiiRotationResult rotateBranchPersonalData(int chunkSize, String targetKeyId);
+public PiiRotationResult rotateDormantPiiVault(int chunkSize, String targetKeyId);
 
-회전 대상 컬럼 (`clients` 7컬럼):
+public Map<Status, Long> aggregateProgress(String tableName, String targetKeyId);
+public PiiRotationResult resumeFailedChunks(String tableName, List<String> piiColumns, String targetKeyId);
+public int cancelPendingChunks(String tableName, String targetKeyId);
+```
+
+`PiiRotationResult` 는 평문 / 암호문 PII 를 절대 포함하지 않는다 — `tableName`, chunk 카운트, row 카운트, `activeKeyId` / `targetKeyId` 만 노출.
+
+#### 3.2.2 `clients` 회전 메서드 (구현 완료)
+
+신규 메서드: `rotateClientPersonalData(int chunkSize, String targetKeyId)`
+
+회전 대상 컬럼 7개 (`CLIENTS_PII_COLUMNS` 상수):
 
 - users 카피본: `name`, `email`, `phone`, `gender`, `address`
 - clients 자체: `emergency_contact`, `emergency_phone`
 
 **users → clients 동기성 보장**:
 
-`PersonalDataEncryptionKeyProvider` 의 IV 결정성 (keyId 당 IV 1개 고정, §1.1.2) 에 의존한다:
+`PersonalDataEncryptionKeyProvider` 의 IV 결정성 (keyId 당 IV 1개 고정, §1.1.2) 에 의해 같은 keyId + 같은 평문은 항상 같은 ciphertext 를 생성한다. clients 컬럼은 직접 ciphertext 를 다시 fallback 복호화 → 활성 키 재암호화 (`PersonalDataEncryptionUtil.ensureActiveKeyEncryption`) 하므로, users 회전과 같은 결과 ciphertext 가 산출된다. emergency_contact / emergency_phone 은 clients 자체 평문이므로 독립 회전된다.
 
-- 같은 keyId + 같은 평문 → 같은 ciphertext
-- 따라서 users 행을 회전시켜 새 ciphertext 를 얻고, clients 의 대응 5컬럼을 **users 의 평문을 복호화 후 재암호화**하면 동일 ciphertext 가 생성된다 (또는 users 의 ciphertext 를 직접 카피해도 결과 동일).
+#### 3.2.2-A `accounts` / `branches` 평문 PII 백필 (구현 완료)
 
-다만 emergency_contact / emergency_phone 은 clients 자체 평문이므로 독립 회전 필요.
+§6 합의 2 (사용자 결정: 본 회전 포함) 반영.
 
-#### 3.2.3 청크 / 페이징 / 진행률 테이블
+- `rotateAccountPersonalData(...)` — `account_number`, `account_holder` (2컬럼)
+- `rotateBranchPersonalData(...)` — `phone_number`, `fax_number`, `email`, `address` (4컬럼)
 
-신규 Flyway 마이그 (예: `V<YYYYMMDD>_xxx__create_pii_reencryption_progress.sql`):
+두 메서드 모두 `pii-rotation.allow-plaintext-encryption=true` 일 때만 회전 수행. 본 플래그가 `false` 인 동안에는 `IllegalArgumentException` 없이 빈 결과 (`chunksProcessed=0, rowsRotated=0`) 를 반환하며 회전을 SKIP 한다. 이유: Phase 1 시점 `Account` / `Branch` 엔티티에 PII `@Convert` 가 미적용이므로, 데이터만 ciphertext 로 갱신되면 read 경로가 깨진다. Phase 2 PR 에서 entity 변환기를 적용한 뒤 본 플래그를 활성화한다.
+
+`branches` 는 V20260612_002 로 `branches_dropped_20260612` 로 archive 되었다. 본 메서드는 `INFORMATION_SCHEMA` 조회로 테이블 부재를 사전 검출해 SKIPPED 결과로 반환하며, archive 테이블을 회전하려면 `branches_dropped_20260612` 를 명시 호출하면 된다.
+
+#### 3.2.2-B `dormant_user_pii_vault` 별도 회전 메서드 (구현 완료, scan-only)
+
+§6 합의 1 (사용자 결정: 메인 + 휴면 모두) 반영.
+
+- `rotateDormantPiiVault(int chunkSize, String targetKeyId)` — Phase 1 인프라에서는 chunk scan + `SKIPPED` 마킹만 수행한다.
+- 휴면 vault 는 AES-GCM + 단일 키 SSOT (`MINDGARDEN_DORMANT_PII_ENC_KEY`) 를 사용하며 메인 PII 의 다중 키 인프라와 호환되지 않는다. Phase 2 PR 에서 휴면 vault 다중 키 SSOT 가 추가되면 본 메서드를 활성 회전으로 전환한다.
+
+#### 3.2.3 청크 / 페이징 / 진행률 테이블 (구현 완료)
+
+Flyway 마이그: `src/main/resources/db/migration/V20260615_001__pii_reencryption_progress.sql`
 
 ```sql
--- 진행률 추적 테이블 (스키마 초안 — 실제 마이그는 Phase 1 PR)
 CREATE TABLE IF NOT EXISTS pii_reencryption_progress (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    target_table VARCHAR(64) NOT NULL,           -- 'users' | 'clients'
-    target_key_id VARCHAR(32) NOT NULL,          -- 회전 목표 keyId (예: 'v2')
-    chunk_no INT NOT NULL,                       -- chunk 일련번호 (0..N)
-    id_range_start BIGINT NOT NULL,              -- target 테이블 PK 시작 (포함)
-    id_range_end BIGINT NOT NULL,                -- target 테이블 PK 끝 (포함)
-    row_count INT NOT NULL DEFAULT 0,            -- 본 chunk 처리 row 수
-    status VARCHAR(16) NOT NULL DEFAULT 'PENDING', -- PENDING | RUNNING | DONE | FAILED
-    started_at DATETIME(6) NULL,
-    completed_at DATETIME(6) NULL,
-    error_message VARCHAR(1000) NULL,
-    UNIQUE KEY uk_progress_table_key_chunk (target_table, target_key_id, chunk_no)
-);
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  table_name VARCHAR(64) NOT NULL,
+  chunk_no INT NOT NULL,
+  chunk_start_id BIGINT NULL,
+  chunk_end_id BIGINT NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+  rows_total INT NULL,
+  rows_done INT NULL,
+  error_message TEXT NULL,
+  started_at DATETIME NULL,
+  finished_at DATETIME NULL,
+  active_key_id VARCHAR(16) NOT NULL,
+  target_key_id VARCHAR(16) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_table_chunk_target (table_name, chunk_no, target_key_id),
+  KEY idx_pii_progress_status (status, table_name),
+  KEY idx_pii_progress_target_key (target_key_id, table_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-> 실제 컬럼 길이·인덱스·tenantId 컬럼 보유 여부 등은 Phase 1 PR 에서 `BaseEntity` 패턴 점검 후 확정.
+`status` enum: `PENDING / IN_PROGRESS / DONE / FAILED / SKIPPED` (기존 초안의 `RUNNING` → `IN_PROGRESS` 로 정리, `SKIPPED` 신규 추가). 본 테이블은 평문/암호문 PII 를 절대 보관하지 않으며 chunk 메타·키 ID 스냅샷·sanitize 된 에러 요약만 기록한다.
 
-#### 3.2.4 트리거 경로
+#### 3.2.4 트리거 경로 — Admin Endpoint (구현 완료)
 
-권장: admin endpoint 1건 (`POST /api/v1/ops/pii-rotation/start`) + 옵션 `@Scheduled` (사용 안 함, 기본 비활성).
+대상 파일: `src/main/java/com/coresolution/core/controller/PiiKeyRotationAdminController.java`
 
-- 인증: 운영팀 슈퍼관리자 (`SUPER_ADMIN`)
-- 입력: `targetTable=users|clients`, `chunkSize` (default 100), `dryRun` (boolean)
-- 응답: 회전 시작 jobId + 진행률 조회 URL
+| 메서드 | 경로 | 입력 | 응답 |
+|---|---|---|---|
+| `POST` | `/api/v1/admin/pii-rotation/start` | `table`, `target_key_id`, `chunk_size` (default 100) | `PiiRotationResult` |
+| `GET` | `/api/v1/admin/pii-rotation/progress` | `table`, `target_key_id` | `PiiRotationProgressResponse` (chunk 상태별 카운트) |
+| `POST` | `/api/v1/admin/pii-rotation/resume` | `table`, `target_key_id` | `PiiRotationResult` (FAILED chunk 만 재실행) |
+| `POST` | `/api/v1/admin/pii-rotation/cancel` | `table`, `target_key_id` | `{ table, target_key_id, cancelled_chunks }` |
+
+권한 가드: 컨트롤러 클래스에 `@PreAuthorize("hasRole('HQ_MASTER')")` 부착. 모든 응답은 평문/암호문 PII 를 절대 포함하지 않는다 (단위 테스트에서 정규식 가드로 회귀 차단).
 
 > admin override 강제 회전 / grace 무시는 **금지**. 본 endpoint 는 chunk 단위 진행만 트리거하며, 옛 keyId 폐기는 워크플로 별도 phase (§3.5) 에서만 수행한다.
+
+#### 3.2.5 단위 테스트 (구현 완료)
+
+- `src/test/java/com/coresolution/consultation/service/PersonalDataKeyRotationServiceTest.java` — 14 케이스 (chunk 회전·idempotency·실패 chunk 격리·targetKey 검증·평문 게이트·테이블 부재·재시도·취소·집계).
+- `src/test/java/com/coresolution/core/controller/PiiKeyRotationAdminControllerTest.java` — 8 케이스 (4 endpoints + `@PreAuthorize` reflection 검증 + 평문 PII 응답 비포함 정규식).
 
 ### 3.3 Phase 2 — 배치 재암호화 실행
 
@@ -658,3 +701,4 @@ GROUP BY target_table, target_key_id, status;
 | 일자(KST) | 버전 | 변경 | 작성 |
 |---|---|---|---|
 | 2026-06-14 | v1.0.0 (초안) | 설계서 신설 — §1 현황 사실관계 (1·2차 explore), §2 전략 비교, §3 옵션 B 상세 (Phase 0~4), §4 워크플로 골격, §5 위험·롤백, §6 9개 합의 항목, §7 일정 | MindGarden |
+| 2026-06-15 | v1.1.0 | Phase 1 PR (회전 인프라 확장) 머지에 맞춰 §3.2 동기 갱신 — 구현 완료된 메서드 시그니처·진행률 테이블 schema 확정·admin endpoint 명세 추가, status enum 정리 (`RUNNING` → `IN_PROGRESS` + `SKIPPED` 신규), §3.2.2-A (accounts/branches 백필) / §3.2.2-B (dormant scan-only) / §3.2.5 (단위 테스트) 추가 | MindGarden |

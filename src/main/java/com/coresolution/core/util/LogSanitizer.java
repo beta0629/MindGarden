@@ -38,9 +38,15 @@ public final class LogSanitizer {
      *
      * <ul>
      *   <li>{@code null} → 문자열 "null" 반환</li>
+     *   <li>CR(\r) / LF(\n) / TAB(\t) → 명시적으로 "_"로 치환 (CodeQL log-injection sanitizer 인식)</li>
+     *   <li>기타 제어 문자(0x00-0x1F, 0x7F 등 Unicode Cntrl) → "_"로 치환</li>
      *   <li>{@link #MAX_LENGTH}(200)자 초과 → 잘라낸 뒤 "..." 부가</li>
-     *   <li>CR/LF/TAB 및 기타 제어 문자(0x00-0x1F, 0x7F) → "_"로 치환</li>
      * </ul>
+     *
+     * <p>CR/LF/TAB 을 먼저 명시적 {@link String#replace(CharSequence, CharSequence)} 로 제거한
+     * 뒤 일반 제어 문자 정규식 치환을 수행한다. CodeQL Java 의 log-injection sanitizer 휴리스틱은
+     * {@code "\r"}, {@code "\n"} 를 직접 치환하는 호출을 명시적으로 인식하기 때문이며, 정규식
+     * (Unicode Cntrl) 만으로는 sanitizer 로 인식되지 않는다. (java/log-injection 룰셋)</p>
      *
      * @param input 사용자 입력 등 신뢰할 수 없는 문자열
      * @return 로그에 안전하게 출력할 수 있는 문자열
@@ -49,9 +55,14 @@ public final class LogSanitizer {
         if (input == null) {
             return NULL_LITERAL;
         }
-        String truncated = input.length() > MAX_LENGTH
-                ? input.substring(0, MAX_LENGTH) + TRUNCATE_SUFFIX
-                : input;
-        return truncated.replaceAll(CONTROL_CHAR_REGEX, SAFE_REPLACEMENT);
+        String safe = input
+                .replace("\r", SAFE_REPLACEMENT)
+                .replace("\n", SAFE_REPLACEMENT)
+                .replace("\t", SAFE_REPLACEMENT);
+        safe = safe.replaceAll(CONTROL_CHAR_REGEX, SAFE_REPLACEMENT);
+        if (safe.length() > MAX_LENGTH) {
+            return safe.substring(0, MAX_LENGTH) + TRUNCATE_SUFFIX;
+        }
+        return safe;
     }
 }

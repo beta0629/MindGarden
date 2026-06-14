@@ -1,0 +1,132 @@
+/**
+ * PublicFooter CSS — mg-v2-* 토큰 한정
+ * @author MindGarden
+ * @since 2026-06-15
+ */
+
+.mg-v2-public-footer {
+  background-color: var(--mg-v2-color-primary-dark);
+  color: var(--mg-v2-color-text-inverse);
+  padding-top: var(--mg-v2-space-12);
+}
+
+.mg-v2-public-footer__inner {
+  max-width: var(--mg-v2-grid-max-width);
+  margin: 0 auto;
+  padding: 0 var(--mg-v2-space-6);
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--mg-v2-space-8);
+}
+
+/* Brand */
+.mg-v2-public-footer__logo {
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: var(--mg-v2-space-3);
+}
+
+.mg-v2-public-footer__logo-text {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-h4);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-inverse);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
+}
+
+.mg-v2-public-footer__tagline {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-neutral-400);
+  line-height: var(--mg-v2-font-line-height-body);
+  max-width: 320px;
+}
+
+/* Links */
+.mg-v2-public-footer__links-title {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-sm);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-neutral-400);
+  text-transform: uppercase;
+  letter-spacing: var(--mg-v2-font-letter-spacing-wider);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.mg-v2-public-footer__links nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-public-footer__link {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-neutral-300);
+  text-decoration: none;
+  transition: var(--mg-v2-transition-fast);
+  padding: var(--mg-v2-space-1) 0;
+}
+
+.mg-v2-public-footer__link:hover {
+  color: var(--mg-v2-color-text-inverse);
+}
+
+.mg-v2-public-footer__link:focus-visible {
+  outline: 2px solid var(--mg-v2-color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--mg-v2-radius-sm);
+}
+
+/* Contact */
+.mg-v2-public-footer__address {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-style: normal;
+  color: var(--mg-v2-color-neutral-300);
+  line-height: var(--mg-v2-font-line-height-body);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+}
+
+.mg-v2-public-footer__email-link {
+  color: var(--mg-v2-color-accent-light);
+  text-decoration: none;
+  transition: var(--mg-v2-transition-fast);
+}
+
+.mg-v2-public-footer__email-link:hover {
+  color: var(--mg-v2-color-text-inverse);
+  text-decoration: underline;
+}
+
+.mg-v2-public-footer__email-link:focus-visible {
+  outline: 2px solid var(--mg-v2-color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--mg-v2-radius-sm);
+}
+
+/* Bottom */
+.mg-v2-public-footer__bottom {
+  max-width: var(--mg-v2-grid-max-width);
+  margin: 0 auto;
+  padding: var(--mg-v2-space-6);
+  margin-top: var(--mg-v2-space-8);
+  border-top: var(--mg-v2-border-elevation-2, 1px solid var(--mg-v2-color-border-light));
+}
+
+.mg-v2-public-footer__copyright {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-neutral-500);
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mg-v2-public-footer__inner {
+    grid-template-columns: 1fr;
+    gap: var(--mg-v2-space-8);
+  }
+}

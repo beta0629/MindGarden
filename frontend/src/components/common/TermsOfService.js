@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
+import PublicLayout from '../public/layouts/PublicLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './PrivacyPolicy.css';
 
@@ -240,12 +240,12 @@ export const TermsOfServiceContent = ({ omitHeading = false }) => {
 const TermsOfService = () => {
   const { t } = useTranslation('common');
   return (
-    <AdminCommonLayout title={t('terms.pageTitle')}>
+    <PublicLayout>
       <ContentArea ariaLabel={t('terms.pageTitle')}>
         <ContentHeader title={t('terms.pageTitle')} titleId={TERMS_PAGE_TITLE_ID} />
         <TermsOfServiceContent omitHeading />
       </ContentArea>
-    </AdminCommonLayout>
+    </PublicLayout>
   );
 };
 

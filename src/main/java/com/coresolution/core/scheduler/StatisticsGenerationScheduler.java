@@ -1,6 +1,7 @@
 package com.coresolution.core.scheduler;
 
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
@@ -8,6 +9,7 @@ import com.coresolution.core.service.statistics.StatisticsMetadataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,11 +39,18 @@ import java.util.stream.Collectors;
     matchIfMissing = true
 )
 public class StatisticsGenerationScheduler {
-    
+
+    private static final String SCHEDULER_NAME = "StatisticsGeneration";
+
     private final StatisticsMetadataService statisticsMetadataService;
     private final TenantRepository tenantRepository;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
+    /**
+     * Discord 알람 컴포넌트 (선택 의존성).
+     * {@code monitoring.discord.webhook-url} 미설정 시 graceful skip.
+     */
+    private final ObjectProvider<SchedulerFailureNotifier> failureNotifierProvider;
     
     @Value("${scheduler.statistics-generation.cron:0 1 0 * * *}")
     private String cronExpression;
@@ -104,6 +113,7 @@ public class StatisticsGenerationScheduler {
                         executionId, tenantId, "StatisticsGeneration", "FAILED", e.getMessage()
                     );
                     failureCount++;
+                    notifyFailureSafely("DailyStatistics", tenantId, e);
                 } finally {
                     TenantContextHolder.clear();
                 }
@@ -132,6 +142,7 @@ public class StatisticsGenerationScheduler {
             alertService.sendFailureAlert(
                 "StatisticsGeneration", executionId, failureCount, e.getMessage()
             );
+            notifyFailureSafely("SchedulerEntry", null, e);
         }
     }
     
@@ -168,11 +179,27 @@ public class StatisticsGenerationScheduler {
                 statisticsMetadataService.generateDailyStatistics(tenantId, today);
             } catch (Exception e) {
                 log.warn("실시간 통계 캐시 갱신 실패: tenantId={}", tenantId, e);
+                notifyFailureSafely("RealtimeStatisticsRefresh", tenantId, e);
                 } finally {
                     TenantContextHolder.clear();
                 }
         }
         
         log.debug("🔄 [StatisticsGeneration] 실시간 통계 캐시 갱신 완료");
+    }
+
+    /**
+     * Discord 알람을 안전하게 발송한다. (실패해도 본 BE 흐름 차단 금지)
+     */
+    private void notifyFailureSafely(String stepName, String tenantId, Throwable error) {
+        try {
+            SchedulerFailureNotifier notifier = failureNotifierProvider.getIfAvailable();
+            if (notifier != null) {
+                notifier.notifyFailure(SCHEDULER_NAME, stepName, tenantId, error);
+            }
+        } catch (Exception alertEx) {
+            log.warn("[StatisticsGeneration] 실패 알람 발송 자체 실패: step={}, tenantId={}, error={}",
+                stepName, tenantId, alertEx.getMessage());
+        }
     }
 }

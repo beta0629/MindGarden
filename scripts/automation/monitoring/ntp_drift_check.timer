@@ -1,0 +1,14 @@
+[Unit]
+Description=Run MindGarden NTP drift check every hour
+Documentation=https://github.com/beta0629/MindGarden/blob/develop/docs/%EC%9A%B4%EC%98%81%EB%B0%98%EC%98%81/NTP_DRIFT_DISCORD_ALERT_SETUP_GUIDE.md
+
+[Timer]
+# 부팅 후 5분 뒤 1회, 이후 매 시각 정각 (Persistent=true 로 시스템 다운 시간 보정).
+OnBootSec=5min
+OnCalendar=hourly
+Unit=ntp_drift_check.service
+AccuracySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

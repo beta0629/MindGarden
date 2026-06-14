@@ -242,6 +242,14 @@ oauth2:
 frontend:
   base-url: ${FRONTEND_BASE_URL:}
 
+# AI 모니터링 Phase 1 — Discord webhook (Zero-Cost, $0)
+# 미설정(빈 값) 시 SchedulerFailureNotifier 빈 자체가 등록되지 않아 graceful skip(no-op).
+# 평문 webhook URL 커밋 금지 — 운영 systemd drop-in 또는 prod.env 로만 주입.
+# 참고: docs/운영반영/DISCORD_WEBHOOK_AND_AI_MONITORING_GUIDE.md
+monitoring:
+  discord:
+    webhook-url: ${DISCORD_WEBHOOK_URL:}
+
 # 로깅 설정 (프로덕션용, Spring Boot 표준 logging.*)
 logging:
   level:

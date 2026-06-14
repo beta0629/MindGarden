@@ -1,10 +1,12 @@
 package com.coresolution.consultation.scheduler;
 
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -36,6 +38,11 @@ public class SessionCleanupScheduler {
     private final UserSessionService userSessionService;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
+    /**
+     * Discord 알람 컴포넌트 (선택 의존성).
+     * {@code monitoring.discord.webhook-url} 미설정 시 graceful skip.
+     */
+    private final ObjectProvider<SchedulerFailureNotifier> failureNotifierProvider;
     
     /**
      * 만료된 세션 정리 (5분마다 실행, 전역 1회 실행)
@@ -86,6 +93,7 @@ public class SessionCleanupScheduler {
             alertService.sendFailureAlert(
                 SCHEDULER_NAME, executionId, 1, e.getMessage()
             );
+            notifyFailureSafely("CleanupExpiredSessions", null, e);
         }
     }
     
@@ -111,6 +119,22 @@ public class SessionCleanupScheduler {
             }
         } catch (Exception e) {
             log.error("❌ 세션 통계 조회 실패: error={}", e.getMessage(), e);
+            notifyFailureSafely("LogSessionStatistics", null, e);
+        }
+    }
+
+    /**
+     * Discord 알람을 안전하게 발송한다. (실패해도 본 BE 흐름 차단 금지)
+     */
+    private void notifyFailureSafely(String stepName, String tenantId, Throwable error) {
+        try {
+            SchedulerFailureNotifier notifier = failureNotifierProvider.getIfAvailable();
+            if (notifier != null) {
+                notifier.notifyFailure(SCHEDULER_NAME, stepName, tenantId, error);
+            }
+        } catch (Exception alertEx) {
+            log.warn("[SessionCleanup] 실패 알람 발송 자체 실패: step={}, tenantId={}, error={}",
+                stepName, tenantId, alertEx.getMessage());
         }
     }
 }

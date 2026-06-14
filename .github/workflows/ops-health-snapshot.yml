@@ -8,8 +8,10 @@ name: 🩺 운영 코어·OPS 헬스 스냅샷
 on:
   workflow_dispatch:
   schedule:
-    # UTC 하루 2회 (필요 시 cron 조정)
-    - cron: '0 0,12 * * *'
+    # 5분 간격 헬스 폴링 (운영 헬스 DOWN 알람용). 외부 uptime monitor (UptimeRobot/BetterStack) 가
+    # 등록되어 있으면 본 cron 빈도를 다시 줄여(예: 0 0,12 * * *) GitHub Actions 무료 한도와 충돌하지
+    # 않게 한다. 자세한 권고: docs/운영반영/UPTIME_MONITOR_RECOMMENDATION.md
+    - cron: '*/5 * * * *'
 
 concurrency:
   group: ops-health-snapshot
@@ -77,3 +79,60 @@ jobs:
             fi
             chmod +x "$SNAPSHOT_SH" 2>/dev/null || true
             bash "$SNAPSHOT_SH"
+
+      # 헬스 응답 분기 — 200 OK 가 아니거나 actuator body 의 status:DOWN 이면 다음 step 에서 Discord 발사.
+      # 정상 응답 시 본 step 도 success → Discord step 은 if 조건으로 skip 됨 (5분 cron 노이즈 방지).
+      - name: 운영 헬스 응답 확인 (DOWN 분기)
+        id: health_check
+        continue-on-error: true
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 30s
+          script: |
+            set -u
+            HEALTH_URL="${MG_HEALTH_URL:-http://127.0.0.1:8080/actuator/health}"
+            HTTP_CODE=$(curl -sS -o /tmp/mg-health-body.txt -w '%{http_code}' \
+              --connect-timeout 10 "$HEALTH_URL" 2>/dev/null || echo "000")
+            echo "HEALTH_HTTP_CODE=${HTTP_CODE}"
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "::warning::헬스 HTTP 비정상 ($HTTP_CODE)"
+              exit 1
+            fi
+            BODY=$(cat /tmp/mg-health-body.txt 2>/dev/null || echo "")
+            if echo "$BODY" | grep -qiE '"status"[[:space:]]*:[[:space:]]*"DOWN"'; then
+              echo "::warning::헬스 body 가 DOWN — $BODY"
+              exit 2
+            fi
+            echo "헬스 OK"
+
+      # secrets 직접 if 비교는 GitHub Actions 에서 평가되지 않으므로 env 로 받고 step 안에서 -z 검사.
+      - name: Discord 알람 발사 (헬스 DOWN/비정상만)
+        if: ${{ steps.health_check.outcome == 'failure' }}
+        env:
+          DISCORD_OPS_WEBHOOK_URL: ${{ secrets.DISCORD_OPS_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -u
+          if [ -z "${DISCORD_OPS_WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_OPS_WEBHOOK_URL secret 미설정 — Discord 발송 skip (워크플로는 정상 종료)"
+            exit 0
+          fi
+          CONTENT=$(printf '🚨 [Ops] 운영 헬스 응답 비정상 — run #%s\n• run: %s\n• workflow: %s\n• branch: %s' \
+            "${GITHUB_RUN_ID}" "${RUN_URL}" "${GITHUB_WORKFLOW}" "${GITHUB_REF_NAME}")
+          PAYLOAD=$(jq -nc --arg content "$CONTENT" '{content: $content}')
+          HTTP_CODE=$(curl -fsS -o /tmp/discord-curl.out -w '%{http_code}' \
+            -X POST "$DISCORD_OPS_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD" 2>/dev/null || echo "000")
+          if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
+            echo "Discord 발송 OK (HTTP $HTTP_CODE)"
+          else
+            echo "Discord 발송 실패 (HTTP $HTTP_CODE)"
+            cat /tmp/discord-curl.out 2>/dev/null || true
+            # 알람 실패가 본 워크플로의 다른 step 결과를 가리지 않도록 exit 0
+            exit 0
+          fi

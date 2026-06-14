@@ -1,9 +1,10 @@
 # Secret 회전 정책
 
-**버전**: 1.1.0
+**버전**: 1.2.0
 **최종 업데이트**: 2026-06-14
 **상태**: 공식 표준 (P0 표준 5종 묶음)
-**변경 요지 (v1.1.0)**: JWT_SECRET 자동 회전 워크플로(`rotate-jwt-secret.yml`) 신설에 따른 자동화 절차·강도 정책 SSOT·이력 SSOT 분리 보완. JWT_SECRET P0 사고(2026-06-13) 후속.
+**변경 요지 (v1.2.0)**: DB_PASSWORD 자동 회전 워크플로(`rotate-db-password.yml`) 신설에 따라 §3.3 을 수동 절차에서 자동화 절차 + DBA 협업 절차로 전면 개정. PR #331 health 게이트 패턴(연속 5회 UP + grace 120s + deploy run watch) 동일 적용.
+**이전 변경 (v1.1.0)**: JWT_SECRET 자동 회전 워크플로(`rotate-jwt-secret.yml`) 신설에 따른 자동화 절차·강도 정책 SSOT·이력 SSOT 분리 보완. JWT_SECRET P0 사고(2026-06-13) 후속.
 
 ## 1. 정책 개요
 
@@ -93,16 +94,75 @@ GitHub `secrets:write` 권한은 GITHUB_TOKEN 으로는 부여되지 않는다. 
 
 후속 PR에서 외부 콘솔 회전 후 GH Secrets 동기 단계를 자동화한다(예: `rotate-social-secrets.yml`).
 
-### 3.3 DB_PASSWORD — 수동 + DBA 협업
+### 3.3 DB_PASSWORD — 자동 회전 (워크플로 신설) + DBA 협업
 
-1. DBA가 RDB에서 `ALTER USER` 로 신규 비밀번호 적용 (계정별 분리 회전)
-2. GH Secrets `PRODUCTION_DB_PASSWORD` / `PRODUCTION_DB_READONLY_PASSWORD` / `PRODUCTION_DB_PROCEDURE_PASSWORD` 갱신
-3. 운영 배포 워크플로 재실행
-4. `/etc/mindgarden/prod-from-dev.env` 의 `DB_PASSWORD` 가 새 값으로 갱신되었는지 길이로 확인 ([`sync-prod-env-key/action.yml`](../../.github/actions/sync-prod-env-key/action.yml) `DB_PRESERVE_KEYS` 가드 §8 절차)
-5. Flyway / 프로시저 배포가 새 패스워드로 정상 통과하는지 확인
-6. **구 패스워드는 24시간 grace 후 DB에서 명시적 거절**
+워크플로: [`.github/workflows/rotate-db-password.yml`](../../.github/workflows/rotate-db-password.yml)
 
-후속 PR에서 DBA 협업 단계까지 포함한 `rotate-db-password.yml` 신설(별도 설계).
+| Phase | 단계 | 자동/수동 |
+|---|---|---|
+| 0 | **DBA 협업 사전 통지** — 24h 사전 통지 후 `confirm_dba=DBA_APPROVED` 입력 | 수동 |
+| 1 | **신규 패스워드 생성** (`openssl rand -base64 48` + 위험 문자 strip, 36자 고정) | 워크플로 자동 |
+| 2 | **강도 검증** (길이 ≥ 24, 영문 대/소문자·숫자 3종 혼합, 위험 문자 차단) | 워크플로 자동 |
+| 3 | **SSH 로 운영 MySQL `ALTER USER ... IDENTIFIED BY ...` 실행** (계정별 분리) | 워크플로 자동 (prod 만) |
+| 4 | **신 패스워드로 `SELECT 1` 라이브 검증** (mysql `--defaults-extra-file` stdin 인증) | 워크플로 자동 |
+| 5 | **(mindgarden 회전 시) `/etc/mindgarden/prod.env` `DB_PASSWORD` 동기 갱신** (PR #303 PRESERVE/RESTORE 가드 인라인) | 워크플로 자동 |
+| 6 | **GH Environment Secret 갱신** (`PRODUCTION_DB_PASSWORD` / `_READONLY_PASSWORD` / `_PROCEDURE_PASSWORD`) | 워크플로 자동 (PAT 필요) |
+| 7 | **(mindgarden) BE blue/green 재기동** (`deploy-production.yml` dispatch + `gh run watch --exit-status`) | 워크플로 자동 |
+| 8 | **(mindgarden) `/actuator/health` 연속 5회 UP polling** (grace 120s + 15s × 30회, PR #331 패턴) | 워크플로 자동 |
+| 9 | **회전 이력 자동 append + PR 생성** (`docs/operations/secret-rotation-history.md`) | 워크플로 자동 |
+| 10 | **사후 검증** (§5 체크리스트 + DBA 모니터링 도구 동작) | 수동 (`core-tester`) |
+| 11 | **24h grace 후 구 패스워드 명시적 거절** (DBA 운영) | 수동 |
+
+> readonly/procedure 회전은 BE 미사용이므로 step 5·7·8 모두 skip 한다.
+> SYSTEM_USER + ALL PRIVILEGES 권한 보유 `mindgarden_procedure` 는 패스워드만 회전하며 GRANT 절을 절대 포함하지 않는다.
+
+#### 워크플로 트리거
+
+```bash
+# dev 환경 정기 회전 (readonly 사용자)
+gh workflow run rotate-db-password.yml \
+  -f environment=dev \
+  -f user=mindgarden_readonly \
+  -f confirm=ROTATE \
+  -f confirm_dba=DBA_APPROVED \
+  -f trigger_reason=정기
+
+# prod 환경 정기 회전 (mindgarden 메인, confirm 3단계)
+gh workflow run rotate-db-password.yml \
+  -f environment=prod \
+  -f user=mindgarden \
+  -f confirm=ROTATE \
+  -f confirm_prod=PROD_ROTATE \
+  -f confirm_dba=DBA_APPROVED \
+  -f trigger_reason=정기
+```
+
+운영(`prod`) 회전은 반드시 `dev` 회전이 24시간 무사고 통과한 뒤에만 실행한다.
+3종 사용자 동시 회전이 필요하면 `user=ALL` 을 사용하되, mindgarden 단독 회전을 권장한다 (BE 영향 격리).
+
+#### DBA 협업 절차
+
+1. **T-24h**: DBA·운영팀 슬랙(`#dba`/`#oncall`) 에 회전 시각·대상 사용자·트리거 사유 공유
+2. **T-1h**: DBA 가 백업 (`mysqldump`) + 현재 패스워드 vault 백업 완료 확인
+3. **T+0**: 운영팀이 `confirm_dba=DBA_APPROVED` 입력 후 워크플로 트리거
+4. **T+회전 종료**: DBA 사후 검증
+   - DB 가 새 패스워드로 정상 UP
+   - 라이브 `SELECT 1` 1회 수동 로그인 (mindgarden 메인)
+   - 모니터링 도구 (readonly) / 프로시저 배포 도구 (procedure) 동작 확인
+5. **T+24h**: 구 패스워드 명시적 거절 확인 (필요 시 `ALTER USER` 재확인)
+
+#### 사전 조건
+
+- `secrets.ROTATION_SECRETS_PAT` — `secrets:write`, `actions:write`, `contents:write`, `pull-requests:write` (§3.1 PAT 공유)
+- `secrets.PRODUCTION_HOST` / `PRODUCTION_USER` / `PRODUCTION_SSH_KEY` — `deploy-production.yml` 과 동일 set 재사용 (별도 PROD_SSH_* 등록 불필요)
+- 운영 DB 는 socket peer-auth (`sudo mysql`) 로 root 접속 가능해야 한다 (워크플로는 root 패스워드를 모름 — `--defaults-extra-file` stdin 인증).
+
+#### 핵심 안전 원칙 (절대 금지)
+
+- ALTER USER 의 `IDENTIFIED BY` 절 외 `GRANT` / `REVOKE` / `WITH SYSTEM_USER` 등 권한 변경 절대 포함 금지
+- 구 패스워드 평문 자동 백업 금지 — DBA · 운영팀 vault 백업이 사전 조건
+- 회전 직후 cutover 원자성이 핵심 (prod.env 갱신 → BE 재기동 → health 게이트 통과 전까지 단일 트랜잭션처럼 처리)
+- prod 환경 confirm 3단계 (`ROTATE` + `PROD_ROTATE` + `DBA_APPROVED`) 우회 금지
 
 ### 3.4 PII KEY / IV — 자동화 범위 외
 
@@ -196,6 +256,7 @@ GitHub `secrets:write` 권한은 GITHUB_TOKEN 으로는 부여되지 않는다. 
 - 운영 시간대(09:00 ~ 22:00 KST) JWT/PII 회전 강행 금지 — 23:00 ~ 06:00 권장
 - 회전 워크플로의 PAT 권한을 `admin` 으로 부여 금지 — 정확히 `secrets:write`, `actions:write`, `contents:write`, `pull-requests:write` 만
 - 본 정책 신설/개정 PR 자체에서 회전을 즉시 실행 금지 (워크플로 신설만, 실제 회전은 별도 트리거)
+- DB 회전 시 `ALTER USER` 의 `IDENTIFIED BY` 절 외 `GRANT` / `REVOKE` / `WITH SYSTEM_USER` 등 권한 변경 절대 포함 금지 (`mindgarden_procedure` 의 SYSTEM_USER + ALL PRIVILEGES 보존)
 
 ## 8. 권한 / 책임자
 
@@ -230,6 +291,9 @@ GitHub `secrets:write` 권한은 GITHUB_TOKEN 으로는 부여되지 않는다. 
 - [`PII_PROTECTION_STANDARD.md`](./PII_PROTECTION_STANDARD.md) — 다중 키 + AttributeConverter
 - [`JwtSecretValidator.java`](../../src/main/java/com/coresolution/core/security/JwtSecretValidator.java) — JWT_SECRET 강도 SSOT
 - [`.github/actions/sync-prod-env-key/action.yml`](../../.github/actions/sync-prod-env-key/action.yml) — composite action (DB_PRESERVE_KEYS 가드 포함)
+- [`.github/workflows/rotate-jwt-secret.yml`](../../.github/workflows/rotate-jwt-secret.yml) — JWT_SECRET 자동 회전 (PR #326 + PR #331)
+- [`.github/workflows/rotate-social-secrets.yml`](../../.github/workflows/rotate-social-secrets.yml) — KAKAO/NAVER 자동 회전 (PR #327 + PR #331)
+- [`.github/workflows/rotate-db-password.yml`](../../.github/workflows/rotate-db-password.yml) — DB_PASSWORD 자동 회전 (회전 자동화 후속 2, PR #331 health 게이트 패턴)
 - [`JWT_SECRET_P0_HANDOFF_20260613.md`](../운영반영/JWT_SECRET_P0_HANDOFF_20260613.md) — 본 자동화의 직접 동기 P0 사고
 
 ## 변경 이력
@@ -238,3 +302,4 @@ GitHub `secrets:write` 권한은 GITHUB_TOKEN 으로는 부여되지 않는다. 
 |---|---|---|---|
 | 2026-06-14 | 1.0.0 | 정책 신설 (PR #309 — P0 표준 5종 묶음) | MindGarden |
 | 2026-06-14 | 1.1.0 | JWT_SECRET 자동 회전 워크플로(`rotate-jwt-secret.yml`) 신설, 자동화 절차·강도 SSOT(`JwtSecretValidator`)·이력 SSOT(`secret-rotation-history.md`) 분리 보완 | MindGarden |
+| 2026-06-14 | 1.2.0 | DB_PASSWORD 자동 회전 워크플로(`rotate-db-password.yml`) 신설. §3.3 을 자동화 절차 + DBA 협업 절차(24h 사전 통지·`confirm_dba=DBA_APPROVED`)로 전면 개정. PR #331 health 게이트 패턴 동일 적용. | MindGarden |

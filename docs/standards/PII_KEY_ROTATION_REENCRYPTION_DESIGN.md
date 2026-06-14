@@ -490,7 +490,7 @@ GROUP BY target_table, target_key_id, status;
 
 #### 3.5.3 회전 이력 append
 
-- 대상: `docs/operations/secret-rotation-history.md` (SECRET_ROTATION_POLICY.md §9 SSOT)
+- 대상: `docs/operations/secret-rotation-history.md` (SECRET_ROTATION_POLICY.md §10 SSOT)
 - 포맷 동일: `| 시점(KST) | 시크릿명 | 환경 | 트리거 | Run ID | 책임자 | 비고 |`
 - 시크릿명 컬럼: `PERSONAL_DATA_ENCRYPTION_KEYS` + `_IVS` + `_ACTIVE_KEY_ID` (3행 또는 1행 통합 — Phase 4 PR 에서 합의)
 

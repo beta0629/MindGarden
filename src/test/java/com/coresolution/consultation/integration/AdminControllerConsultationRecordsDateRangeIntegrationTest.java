@@ -10,6 +10,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,6 +61,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Transactional
+@WithMockAdminSecurityContext
 @DisplayName("AdminController /consultation-records — 기간 필터 & 200 캡 (P0 핫픽스 2026-05-29)")
 class AdminControllerConsultationRecordsDateRangeIntegrationTest {
 

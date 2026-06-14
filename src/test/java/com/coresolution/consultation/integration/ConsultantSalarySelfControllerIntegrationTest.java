@@ -31,6 +31,7 @@ import com.coresolution.consultation.entity.SalaryProfile;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.integrationtest.support.WithMockConsultantSecurityContext;
 
 /**
  * {@link com.coresolution.consultation.controller.ConsultantSalarySelfController} 통합 테스트.
@@ -41,6 +42,7 @@ import com.coresolution.core.context.TenantContextHolder;
 @SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
+@WithMockConsultantSecurityContext
 @DisplayName("ConsultantSalarySelfController API 통합 테스트")
 class ConsultantSalarySelfControllerIntegrationTest {
 

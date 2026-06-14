@@ -7,6 +7,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * GET /api/v1/admin/duplicate-check/phone MockMvc 스모크.
  *
+ * <p>PR-3d (B8) — {@link WithMockAdminSecurityContext} 로 SecurityContext 주입.</p>
+ *
  * @author CoreSolution
  * @since 2026-04-23
  */
@@ -35,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Transactional
+@WithMockAdminSecurityContext
 @DisplayName("AdminController 휴대폰 중복 확인")
 class AdminControllerDuplicateCheckPhoneIntegrationTest {
 

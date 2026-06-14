@@ -47,6 +47,7 @@ import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.integrationtest.support.WithMockConsultantSecurityContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -661,6 +662,7 @@ class SalaryManagementControllerIntegrationTest {
 
         @Test
         @DisplayName("I-ME-02: 내담자 역할 → 403")
+        @WithMockConsultantSecurityContext
         void clientRole_returns403() throws Exception {
             User client = new User();
             client.setId(9L);
@@ -679,6 +681,7 @@ class SalaryManagementControllerIntegrationTest {
 
         @Test
         @DisplayName("I-ME-03: 상담사·목록 200 및 data 배열")
+        @WithMockConsultantSecurityContext
         void consultant_returns200WithDataArray() throws Exception {
             User cRef = new User();
             cRef.setId(2L);

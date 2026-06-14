@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -112,6 +113,7 @@ public class PersonalDataKeyRotationService {
      */
     private final boolean allowPlaintextEncryption;
 
+    @Autowired
     public PersonalDataKeyRotationService(
             JdbcTemplate jdbcTemplate,
             PlatformTransactionManager transactionManager,
@@ -127,6 +129,10 @@ public class PersonalDataKeyRotationService {
 
     /**
      * 단위 테스트 용 — {@link TransactionTemplate} 을 직접 주입한다.
+     *
+     * <p>Spring 4.3+ 부터 다중 생성자가 있으면 어느 것을 inject 할지 모호해지므로,
+     * 위 운영 생성자에 {@link Autowired} 를 명시했다. 이 생성자는 package-private 으로
+     * Spring DI 대상이 아니며, 단위 테스트에서만 직접 호출된다.</p>
      */
     PersonalDataKeyRotationService(
             JdbcTemplate jdbcTemplate,

@@ -9,6 +9,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Transactional
+@WithMockAdminSecurityContext
 @DisplayName("AdminController 입금확인/승인 API 통합 테스트")
 class AdminControllerConfirmDepositApproveIntegrationTest {
 

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Tag(name = "Consultant session statistics", description = "상담사 본인 완료 회기 통계")
+@PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 본인(self) 접근만 가능하도록 메서드 본문에서 인증 사용자 검증.
 public class ConsultantSessionStatisticsController extends BaseApiController {
 
     private final ConsultantCompletedSessionStatisticsService consultantCompletedSessionStatisticsService;

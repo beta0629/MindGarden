@@ -13,6 +13,7 @@ import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @ConditionalOnProperty(name = "mindgarden.branch.enabled", havingValue = "true", matchIfMissing = true)
+@PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 메서드 본문 inline HQ 권한 체크는 그대로 우선 적용.
 public class HQBranchController extends BaseApiController {
 
     private final BranchService branchService;

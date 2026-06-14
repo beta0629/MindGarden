@@ -11,6 +11,7 @@ import com.coresolution.core.util.PaginationUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/ratings") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 메서드 본문 inline 권한 체크는 그대로 우선 적용.
 public class ConsultantRatingController extends BaseApiController {
 
     private final ConsultantRatingService ratingService;

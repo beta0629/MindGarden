@@ -67,7 +67,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +84,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/schedules")  // 표준화 2025-12-06: API 경로 표준화
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 메서드 본문 inline ADMIN/STAFF/CONSULTANT 체크는 그대로 우선 적용.
 public class ScheduleController extends BaseApiController {
 
     private final ScheduleService scheduleService;
@@ -1119,21 +1119,22 @@ public class ScheduleController extends BaseApiController {
      * 상담일지 서버 초안 조회 (자동저장용, 확정 consultation_records 와 분리).
      * GET /api/v1/schedules/consultation-records/draft?consultationId=schedule-30&amp;consultantId=41
      *
+     * <p>B6 (2026-06-14): {@code X-Tenant-Id} 헤더 직파싱 제거. tenantId 추출은
+     * {@link com.coresolution.core.filter.TenantContextFilter} 단일 SSOT 에 위임하고,
+     * 세션 보완은 {@link #ensureTenantContextFromSession(HttpSession)} 으로 처리한다.</p>
+     *
      * @param consultationId 상담(스케줄) ID 또는 schedule- 접두 형식
      * @param consultantId 상담사 ID
      * @param session HTTP 세션
-     * @param request HTTP 요청 (X-Tenant-Id 보완용)
      * @return 초안 또는 hasDraft=false
      */
     @GetMapping("/consultation-records/draft")
     public ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> getConsultationRecordDraft(
             @RequestParam String consultationId,
             @RequestParam Long consultantId,
-            HttpSession session,
-            HttpServletRequest request) {
+            HttpSession session) {
 
         ensureTenantContextFromSession(session);
-        supplementTenantIdFromHeader(request);
         String tenantIdVal = TenantContextHolder.getTenantId();
         if (tenantIdVal == null || tenantIdVal.isEmpty()) {
             log.warn("테넌트 정보 없음 - 상담일지 초안 조회 거부");
@@ -1156,11 +1157,14 @@ public class ScheduleController extends BaseApiController {
      * 상담일지 서버 초안 저장(upsert).
      * PUT /api/v1/schedules/consultation-records/draft?consultationId=schedule-30&amp;consultantId=41
      *
+     * <p>B6 (2026-06-14): {@code X-Tenant-Id} 헤더 직파싱 제거. tenantId 추출은
+     * {@link com.coresolution.core.filter.TenantContextFilter} 단일 SSOT 에 위임하고,
+     * 세션 보완은 {@link #ensureTenantContextFromSession(HttpSession)} 으로 처리한다.</p>
+     *
      * @param consultationId 상담(스케줄) ID 또는 schedule- 접두 형식
      * @param consultantId 상담사 ID
      * @param body 저장 본문
      * @param session HTTP 세션
-     * @param request HTTP 요청
      * @return 저장된 초안
      */
     @PutMapping("/consultation-records/draft")
@@ -1168,11 +1172,9 @@ public class ScheduleController extends BaseApiController {
             @RequestParam String consultationId,
             @RequestParam Long consultantId,
             @RequestBody ConsultationRecordDraftSaveRequest body,
-            HttpSession session,
-            HttpServletRequest request) {
+            HttpSession session) {
 
         ensureTenantContextFromSession(session);
-        supplementTenantIdFromHeader(request);
         String tenantIdVal = TenantContextHolder.getTenantId();
         if (tenantIdVal == null || tenantIdVal.isEmpty()) {
             log.warn("테넌트 정보 없음 - 상담일지 초안 저장 거부");
@@ -1192,19 +1194,6 @@ public class ScheduleController extends BaseApiController {
                 body != null ? body.getPayloadJson() : null,
                 body != null ? body.getExpectedVersion() : null);
         return updated("상담일지 초안이 저장되었습니다.", saved);
-    }
-
-    private void supplementTenantIdFromHeader(HttpServletRequest request) {
-        if (TenantContextHolder.getTenantId() != null && !TenantContextHolder.getTenantId().isEmpty()) {
-            return;
-        }
-        if (request == null) {
-            return;
-        }
-        String headerTenant = request.getHeader("X-Tenant-Id");
-        if (headerTenant != null && !headerTenant.isEmpty()) {
-            TenantContextHolder.setTenantId(headerTenant);
-        }
     }
 
     private void assertConsultationDraftAccess(User currentUser, Long consultantId) {

@@ -11,7 +11,6 @@ import com.coresolution.core.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,44 +42,38 @@ public class TenantCommonCodeController {
     private final TenantCommonCodeService tenantCommonCodeService;
 
     /**
-     * tenantId 추출 헬퍼 메서드
-     * 우선순위: 1. TenantContextHolder, 2. 헤더, 3. 세션
+     * tenantId 추출 헬퍼 메서드.
+     *
+     * <p>우선순위: 1) {@link TenantContextHolder} (필터에서 헤더·서브도메인·세션 통합 해석),
+     * 2) {@link SessionUtils#getTenantId(HttpSession)} 안전망.
+     * 컨트롤러 단의 {@code X-Tenant-Id} 직파싱은 {@link com.coresolution.core.filter.TenantContextFilter}
+     * 와 중복되며 CodeQL Tainted Header 경고 대상이므로 제거한다 (B6, 2026-06-14).
+     *
+     * @param session HTTP 세션 (TenantContext 미설정 시 보조 폴백)
+     * @return tenantId 또는 {@code null}
      */
-    private String extractTenantId(HttpServletRequest request, HttpSession session) {
-        // 1. TenantContextHolder에서 조회 (TenantContextFilter에서 설정됨)
+    private String extractTenantId(HttpSession session) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && !tenantId.isEmpty()) {
             log.debug("✅ Tenant ID from TenantContextHolder: {}", tenantId);
             return tenantId;
         }
-        
-        // 2. HTTP 헤더에서 조회
-        tenantId = request.getHeader("X-Tenant-Id");
-        if (tenantId != null && !tenantId.isEmpty()) {
-            log.debug("✅ Tenant ID from Header: {}", tenantId);
-            return tenantId;
-        }
-        
-        // 3. 세션에서 조회
+
         tenantId = SessionUtils.getTenantId(session);
         if (tenantId != null && !tenantId.isEmpty()) {
             log.debug("✅ Tenant ID from Session: {}", tenantId);
             return tenantId;
         }
-        
-        log.warn("⚠️ Tenant ID를 찾을 수 없습니다. TenantContext={}, Header={}, Session={}", 
-                TenantContextHolder.getTenantId(),
-                request.getHeader("X-Tenant-Id"),
-                SessionUtils.getTenantId(session));
+
+        log.warn("⚠️ Tenant ID를 찾을 수 없습니다. TenantContext=null, Session=null");
         return null;
     }
 
     @GetMapping("/groups")
     @Operation(summary = "테넌트 공통코드 그룹 목록 조회", description = "테넌트가 관리 가능한 공통코드 그룹 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<List<CodeGroupMetadata>>> getTenantCodeGroups(
-            HttpServletRequest request,
             HttpSession session) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -94,12 +87,11 @@ public class TenantCommonCodeController {
     @GetMapping("/groups/{codeGroup}")
     @Operation(summary = "특정 그룹의 테넌트 공통코드 조회", description = "특정 코드 그룹에 속한 테넌트 공통코드 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<List<CommonCodeResponse>>> getTenantCodesByGroup(
-        HttpServletRequest request,
         HttpSession session,
         @Parameter(description = "코드 그룹명 (예: CONSULTATION_PACKAGE)") 
         @PathVariable String codeGroup
     ) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -113,11 +105,10 @@ public class TenantCommonCodeController {
     @PostMapping
     @Operation(summary = "테넌트 공통코드 생성", description = "새로운 테넌트 공통코드를 생성합니다.")
     public ResponseEntity<ApiResponse<CommonCodeResponse>> createTenantCode(
-        HttpServletRequest request,
         HttpSession session,
         @RequestBody CommonCodeCreateRequest createRequest
     ) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -137,12 +128,11 @@ public class TenantCommonCodeController {
     @PutMapping("/{codeId}")
     @Operation(summary = "테넌트 공통코드 수정", description = "기존 테넌트 공통코드를 수정합니다.")
     public ResponseEntity<ApiResponse<CommonCodeResponse>> updateTenantCode(
-        HttpServletRequest request,
         HttpSession session,
         @Parameter(description = "코드 ID") @PathVariable Long codeId,
         @RequestBody CommonCodeUpdateRequest updateRequest
     ) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -162,11 +152,10 @@ public class TenantCommonCodeController {
     @DeleteMapping("/{codeId}")
     @Operation(summary = "테넌트 공통코드 삭제", description = "테넌트 공통코드를 삭제합니다 (소프트 삭제).")
     public ResponseEntity<ApiResponse<Void>> deleteTenantCode(
-        HttpServletRequest request,
         HttpSession session,
         @Parameter(description = "코드 ID") @PathVariable Long codeId
     ) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -186,12 +175,11 @@ public class TenantCommonCodeController {
     @PatchMapping("/{codeId}/active")
     @Operation(summary = "테넌트 공통코드 활성화/비활성화", description = "테넌트 공통코드의 활성 상태를 변경합니다.")
     public ResponseEntity<ApiResponse<CommonCodeResponse>> toggleTenantCodeActive(
-        HttpServletRequest request,
         HttpSession session,
         @Parameter(description = "코드 ID") @PathVariable Long codeId,
         @RequestBody Map<String, Boolean> requestBody
     ) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -217,12 +205,11 @@ public class TenantCommonCodeController {
     @PatchMapping("/{codeId}/order")
     @Operation(summary = "테넌트 공통코드 정렬 순서 변경", description = "테넌트 공통코드의 정렬 순서를 변경합니다.")
     public ResponseEntity<ApiResponse<CommonCodeResponse>> updateTenantCodeOrder(
-        HttpServletRequest request,
         HttpSession session,
         @Parameter(description = "코드 ID") @PathVariable Long codeId,
         @RequestBody Map<String, Integer> requestBody
     ) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -248,11 +235,10 @@ public class TenantCommonCodeController {
     @PostMapping("/consultation-packages")
     @Operation(summary = "상담 패키지 생성", description = "금액 정보를 포함한 상담 패키지를 생성합니다.")
     public ResponseEntity<ApiResponse<CommonCodeResponse>> createConsultationPackage(
-        HttpServletRequest request,
         HttpSession session,
         @RequestBody Map<String, Object> requestBody
     ) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -280,11 +266,10 @@ public class TenantCommonCodeController {
     @PostMapping("/assessment-types")
     @Operation(summary = "평가 유형 생성", description = "금액 정보를 포함한 평가 유형을 생성합니다.")
     public ResponseEntity<ApiResponse<CommonCodeResponse>> createAssessmentType(
-        HttpServletRequest request,
         HttpSession session,
         @RequestBody Map<String, Object> requestBody
     ) {
-        String tenantId = extractTenantId(request, session);
+        String tenantId = extractTenantId(session);
         
         if (tenantId == null || tenantId.isEmpty()) {
             return ResponseEntity.badRequest()

@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 
@@ -32,6 +33,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/erp/accounting/ledgers")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 메서드 본문 inline ERP 권한 체크는 그대로 우선 적용.
 public class LedgerController extends BaseApiController {
     
     private final LedgerService ledgerService;

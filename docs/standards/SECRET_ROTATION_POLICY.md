@@ -167,6 +167,8 @@ gh workflow run rotate-db-password.yml \
 ### 3.4 PII KEY / IV — 자동화 범위 외
 
 > **회전 시 기존 데이터 재암호화 마이그레이션이 필요**하므로 본 정책의 자동 회전 대상이 아니다. 별도 설계서 작성 후 진행한다.
+>
+> 설계 SSOT: [`PII_KEY_ROTATION_REENCRYPTION_DESIGN.md`](./PII_KEY_ROTATION_REENCRYPTION_DESIGN.md) (PR #335)
 
 #### 사전 설계 필수 항목
 
@@ -181,6 +183,26 @@ gh workflow run rotate-db-password.yml \
 2. 재암호화 배치 실행 (운영 트래픽 영향 최소화 시간대)
 3. 검증 후 `vNEW` 를 current 로 승격, 기존 키는 180일 보존 후 폐기
 4. 휴면 PII (`MINDGARDEN_DORMANT_PII_ENC_KEY`) 도 동일 절차 동시 진행
+
+#### PRESERVE / FAIL-FAST 가드 (선행 PR-2 — 2026-06-14)
+
+PII 회전 본 작업(Phase 1+) 진입 이전 단계에서, 일반 `deploy-production.yml` 의 secrets-sync step 이 PII 키 4종을 덮어쓰지 않도록 [`.github/actions/sync-prod-env-key/action.yml`](../../.github/actions/sync-prod-env-key/action.yml) 에 가드를 보강한다.
+
+| 키 | 가드 종류 | FAIL-FAST 시 동작 |
+|---|---|---|
+| `PERSONAL_DATA_ACTIVE_KEY_ID` | PRESERVE + RESTORE + FAIL-FAST | 누락/빈값 시 deploy 중단 (`exit 1`) |
+| `PERSONAL_DATA_ENCRYPTION_KEYS` | PRESERVE + RESTORE + FAIL-FAST | 누락/빈값 시 deploy 중단 |
+| `PERSONAL_DATA_ENCRYPTION_IVS` | PRESERVE + RESTORE + FAIL-FAST | 누락/빈값 시 deploy 중단 |
+| `MINDGARDEN_DORMANT_PII_ENC_KEY` | PRESERVE + RESTORE + warning | 누락/빈값 시 `::warning` (휴면 row 부재 환경 허용) |
+
+동작:
+
+1. **PRESERVE**: secrets-sync step 시작 시 `prod-from-dev.env` 의 PII 키 4종 기존 값을 임시 파일에 보존
+2. **sed 갱신**: 동일 step 의 sync 대상 키만 멱등 갱신 (PII 키는 sync 대상에 포함되지 않음)
+3. **RESTORE**: sed 직후 PII 키가 사라졌으면 PRESERVED 값으로 복원 (`::warning title=PII 키 복원`)
+4. **FAIL-FAST**: 핵심 3종이 여전히 누락/빈값이면 `::error title=… PII 키 누락` 발생 후 `exit 1` — 운영 BE boot loop 사전 차단
+
+회전 워크플로(별도)는 `gh secret set --env <env>` 만 사용하고 prod.env 직접 변경은 하지 않으므로, 본 가드는 일반 deploy 경로의 회귀 차단용이다. 실제 PII KEY/IV 회전 시에는 별도 설계서(PR #335) 의 Phase 1+ 절차를 따른다.
 
 ## 4. 비상 회전 (P0 노출 시 즉시 절차)
 
@@ -223,6 +245,7 @@ gh workflow run rotate-db-password.yml \
 
 - [ ] blue / green 슬롯 양쪽이 동일한 새 키로 기동되었음 (8080/8081 모두 200)
 - [ ] `/etc/mindgarden/prod-from-dev.env` 의 `DB_PRESERVE_KEYS` 가드가 회전 도중에 트립되지 않았음
+- [ ] (PII 회전 시) `/etc/mindgarden/prod-from-dev.env` 의 `PII_PRESERVE_KEYS` 가드가 회전 도중에 트립되지 않았음 (§3.4)
 - [ ] Sentry / Datadog 알람 5분 내 신규 critical 없음
 
 ## 6. 롤백 절차
@@ -290,7 +313,7 @@ gh workflow run rotate-db-password.yml \
 - [`SECURITY_AUTHENTICATION_STANDARD.md`](./SECURITY_AUTHENTICATION_STANDARD.md) — JWT 표준
 - [`PII_PROTECTION_STANDARD.md`](./PII_PROTECTION_STANDARD.md) — 다중 키 + AttributeConverter
 - [`JwtSecretValidator.java`](../../src/main/java/com/coresolution/core/security/JwtSecretValidator.java) — JWT_SECRET 강도 SSOT
-- [`.github/actions/sync-prod-env-key/action.yml`](../../.github/actions/sync-prod-env-key/action.yml) — composite action (DB_PRESERVE_KEYS 가드 포함)
+- [`.github/actions/sync-prod-env-key/action.yml`](../../.github/actions/sync-prod-env-key/action.yml) — composite action (DB_PRESERVE_KEYS 8종 + PII_PRESERVE_KEYS 4종 가드 포함, PR #335 / PII 회전 선행 PR-2)
 - [`.github/workflows/rotate-jwt-secret.yml`](../../.github/workflows/rotate-jwt-secret.yml) — JWT_SECRET 자동 회전 (PR #326 + PR #331)
 - [`.github/workflows/rotate-social-secrets.yml`](../../.github/workflows/rotate-social-secrets.yml) — KAKAO/NAVER 자동 회전 (PR #327 + PR #331)
 - [`.github/workflows/rotate-db-password.yml`](../../.github/workflows/rotate-db-password.yml) — DB_PASSWORD 자동 회전 (회전 자동화 후속 2, PR #331 health 게이트 패턴)
@@ -303,3 +326,4 @@ gh workflow run rotate-db-password.yml \
 | 2026-06-14 | 1.0.0 | 정책 신설 (PR #309 — P0 표준 5종 묶음) | MindGarden |
 | 2026-06-14 | 1.1.0 | JWT_SECRET 자동 회전 워크플로(`rotate-jwt-secret.yml`) 신설, 자동화 절차·강도 SSOT(`JwtSecretValidator`)·이력 SSOT(`secret-rotation-history.md`) 분리 보완 | MindGarden |
 | 2026-06-14 | 1.2.0 | DB_PASSWORD 자동 회전 워크플로(`rotate-db-password.yml`) 신설. §3.3 을 자동화 절차 + DBA 협업 절차(24h 사전 통지·`confirm_dba=DBA_APPROVED`)로 전면 개정. PR #331 health 게이트 패턴 동일 적용. | MindGarden |
+| 2026-06-14 | 1.3.0 | §3.4 PRESERVE/FAIL-FAST 가드 절 신설. composite action `sync-prod-env-key/action.yml` 의 PRESERVE 키 set 을 DB 8종 + PII 4종(`PERSONAL_DATA_ACTIVE_KEY_ID`/`PERSONAL_DATA_ENCRYPTION_KEYS`/`PERSONAL_DATA_ENCRYPTION_IVS`/`MINDGARDEN_DORMANT_PII_ENC_KEY`) 으로 확장 (PII 회전 선행 PR-2, PR #335 설계서 연계). §5 사후 검증에 `PII_PRESERVE_KEYS` 항목 추가. | MindGarden |

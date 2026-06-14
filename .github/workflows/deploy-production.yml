@@ -135,7 +135,7 @@ jobs:
         fi
 
     - name: 📥 코드 체크아웃
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'main') || github.sha }}
         # push 시 전체 히스토리(0): github.event.before..sha diff 에 필요. 숫자 0 은 &&/|| 에서 falsy 이므로 문자열 사용.

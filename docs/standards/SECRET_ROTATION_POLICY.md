@@ -1,16 +1,17 @@
 # Secret 회전 정책
 
-**버전**: 1.2.0
-**최종 업데이트**: 2026-06-14
+**버전**: 1.3.0
+**최종 업데이트**: 2026-06-15
 **상태**: 공식 표준 (P0 표준 5종 묶음)
-**변경 요지 (v1.2.0)**: DB_PASSWORD 자동 회전 워크플로(`rotate-db-password.yml`) 신설에 따라 §3.3 을 수동 절차에서 자동화 절차 + DBA 협업 절차로 전면 개정. PR #331 health 게이트 패턴(연속 5회 UP + grace 120s + deploy run watch) 동일 적용.
+**변경 요지 (v1.3.0)**: 회전 자동화 v2 — `ROTATION_SECRETS_PAT` 만료 알림(`check-pat-expiry.yml`) + 분기 자동 회전 트리거(`quarterly-secret-rotation-trigger.yml`) + prod Environment protection 가이드(`docs/operations/prod-environment-protection.md`) 신설. §8 "자동화" 신설로 SSOT 분리, 후속 §9~§12 재번호.
+**이전 변경 (v1.2.0)**: DB_PASSWORD 자동 회전 워크플로(`rotate-db-password.yml`) 신설에 따라 §3.3 을 수동 절차에서 자동화 절차 + DBA 협업 절차로 전면 개정. PR #331 health 게이트 패턴(연속 5회 UP + grace 120s + deploy run watch) 동일 적용.
 **이전 변경 (v1.1.0)**: JWT_SECRET 자동 회전 워크플로(`rotate-jwt-secret.yml`) 신설에 따른 자동화 절차·강도 정책 SSOT·이력 SSOT 분리 보완. JWT_SECRET P0 사고(2026-06-13) 후속.
 
 ## 1. 정책 개요
 
 운영(`production`) 의 모든 secret 은 **정기 회전** 한다. 회전 주기·승인 경로·롤백 절차를 표준화하여 회귀·평문 노출·미회전 누적을 차단한다.
 
-**자동화 1차 범위 (v1.1.0)**: `JWT_SECRET` 1종에 대해 `rotate-jwt-secret.yml` 워크플로를 신설한다(§3.1). 그 외 secret(KAKAO/NAVER, DB_PASSWORD, OAuth)은 후속 PR에서 점진 자동화하며, `PII_KEY`/`PII_IV` 는 **재암호화 마이그레이션이 필요하므로 자동화 범위 외**(§3.4 별도 절차).
+**자동화 범위 (v1.3.0 시점)**: `JWT_SECRET`(§3.1) / `KAKAO_CLIENT_SECRET`·`NAVER_CLIENT_SECRET`(§3.2) / `DB_PASSWORD`(§3.3) 회전 워크플로 신설 완료. 회전 인프라(만료 알림·분기 자동 트리거·prod Environment 보호)는 §8 자동화 섹션 단일 SSOT 로 관리한다. `PII_KEY`/`PII_IV` 는 **재암호화 마이그레이션이 필요하므로 자동화 범위 외**(§3.4 별도 절차).
 
 ## 2. 회전 대상·주기
 
@@ -258,7 +259,91 @@ gh workflow run rotate-db-password.yml \
 - 본 정책 신설/개정 PR 자체에서 회전을 즉시 실행 금지 (워크플로 신설만, 실제 회전은 별도 트리거)
 - DB 회전 시 `ALTER USER` 의 `IDENTIFIED BY` 절 외 `GRANT` / `REVOKE` / `WITH SYSTEM_USER` 등 권한 변경 절대 포함 금지 (`mindgarden_procedure` 의 SYSTEM_USER + ALL PRIVILEGES 보존)
 
-## 8. 권한 / 책임자
+## 8. 자동화 (Automation)
+
+본 정책의 자동화 인프라(워크플로 + GH Variable + Environment protection) SSOT 를 단일 섹션으로 통합한다.
+회전 자동화 v2 (PR — 본 문서 신설) 부터 운영팀 수동 디스패치 부담을 줄이고, 만료·분기 일정을 표준 트리거로 운영한다.
+
+### 8.1 만료 알림 워크플로
+
+워크플로: [`.github/workflows/check-pat-expiry.yml`](../../.github/workflows/check-pat-expiry.yml)
+
+| 항목 | 값 |
+|---|---|
+| 트리거 | `schedule` cron `0 0 * * MON` (매주 월요일 09:00 KST = UTC 00:00) + `workflow_dispatch` |
+| 만료일 SSOT | GH Repository Variable `ROTATION_SECRETS_PAT_EXPIRES_AT` (YYYY-MM-DD UTC, 수동 등록) |
+| 임계치 | D > 30 = `ok` (요약만) / D ≤ 30 = `warning` (Discord) / D ≤ 7 = `critical` (Discord + Issue) / D < 0 = `expired` (Discord + Issue) |
+| 알림 채널 | `secrets.DISCORD_WEBHOOK_URL` (미등록 시 알림 skip) + GitHub Issue (`security`/`secret-rotation`/`pat-expiry` 라벨) |
+| 보안 | PAT 값 자체 노출 0 — 만료일 메타만 출력 |
+
+#### GH Variable 등록 (1회)
+
+```bash
+# PAT 발급 시 부여받은 만료일을 YYYY-MM-DD 로 입력 (예: 2026-09-13)
+gh variable set ROTATION_SECRETS_PAT_EXPIRES_AT --body '2026-09-13'
+
+# PAT 회전 시 변수 갱신
+gh variable set ROTATION_SECRETS_PAT_EXPIRES_AT --body '2026-12-12'
+```
+
+GH Variable 미등록 시 워크플로는 `::warning` 만 출력하고 정상 종료한다 (실패 처리하지 않음).
+
+### 8.2 분기 자동 회전 트리거
+
+워크플로: [`.github/workflows/quarterly-secret-rotation-trigger.yml`](../../.github/workflows/quarterly-secret-rotation-trigger.yml)
+
+| 항목 | 값 |
+|---|---|
+| 트리거 | `schedule` cron `0 17 1 1,4,7,10 *` (분기 첫째날 02:00 KST = 전일 17:00 UTC) + `workflow_dispatch` |
+| 사전 가드 | `if: github.repository == 'beta0629/MindGarden'` (다른 fork 차단) + `concurrency: quarterly-secret-rotation` + 내부 분기 월(1/4/7/10) 검증 + `dry_run` / `override_quarter_gate` 입력 |
+| 자동 회전 대상 | (1) `JWT_SECRET` dev (30분 안정 대기 후 prod 권고 issue 발행) — `rotate-jwt-secret.yml` dispatch / (2) `DB_PASSWORD` `mindgarden_readonly` dev — `rotate-db-password.yml` dispatch |
+| 권고 issue 대상 | `JWT_SECRET` prod / `DB_PASSWORD` `mindgarden` prod / `KAKAO_CLIENT_SECRET` + `NAVER_CLIENT_SECRET` (외부 콘솔 의존) / `PERSONAL_DATA_ENCRYPTION_KEY` (자동화 범위 외, §3.4) |
+| 사후 처리 | `recommend-manual-rotations` job 이 권고 issue (`security`/`secret-rotation`/`quarterly-rotation` 라벨) 자동 생성 + `notify-discord` job 이 분기 트리거 결과 요약 Discord 알림 |
+
+#### 회전 대상 매트릭스
+
+| Secret | 자동 회전 환경 | 수동 처리 환경 | 자동화 비고 |
+|---|---|---|---|
+| `JWT_SECRET` | `dev` (분기 1회) | `prod` (24h 무사고 후 운영팀 수동 트리거) | `confirm_prod=PROD_ROTATE` 우회 금지 |
+| `DB_PASSWORD` `mindgarden_readonly` | `dev` (분기 1회) | `prod` (DBA `confirm_dba=DBA_APPROVED`) | BE 영향 없음 |
+| `DB_PASSWORD` `mindgarden` | (없음) | `dev`/`prod` 모두 운영팀+DBA 수동 | BE blue/green 재기동 동반 |
+| `DB_PASSWORD` `mindgarden_procedure` | (없음) | `dev`/`prod` 운영팀+DBA 수동 | SYSTEM_USER 권한 보존 |
+| `KAKAO_CLIENT_SECRET` / `NAVER_CLIENT_SECRET` | (없음) | 외부 콘솔 발급 후 워크플로 dispatch | API 미공개로 자동화 불가 |
+| `PERSONAL_DATA_ENCRYPTION_KEY` | (없음, disabled) | 별도 설계서 후 진행 | 재암호화 마이그레이션 필요 (§3.4) |
+
+#### 사전 조건
+
+- `secrets.ROTATION_SECRETS_PAT` (§3.1 PAT 공유) — 미설정 시 분기 자동 회전 차단 (`::error`)
+- `secrets.DISCORD_WEBHOOK_URL` (선택) — 미등록 시 Discord 알림만 skip (자동 회전은 정상 진행)
+
+### 8.3 prod Environment protection
+
+가이드: [`docs/operations/prod-environment-protection.md`](../operations/prod-environment-protection.md)
+
+| 항목 | 값 |
+|---|---|
+| 적용 대상 | GitHub Environment `prod` |
+| Required reviewers | 운영팀 2명 (셀프 승인 차단) |
+| Wait timer | 0분 (필요 시 5분 강화) |
+| Deployment branches | `main` 만 허용 |
+| Admin bypass | OFF (정책 §7 admin override 강제 금지와 정합) |
+| 적용 시점 | 본 정책 신설 PR 머지 후 운영자가 1회 적용 — **자동 적용 금지** (정책 §7) |
+
+> 회전 워크플로의 prod 분기에 `environment: prod` 키워드를 명시 추가하는 후속 PR 에서 본 보호 규칙이 자동 적용되도록 진화시킨다. 현재는 `confirm` 입력 3단계로 1차 차단.
+
+### 8.4 자동화 SSOT 인덱스
+
+| 자동화 자원 | SSOT 경로 |
+|---|---|
+| 만료 알림 | `.github/workflows/check-pat-expiry.yml` |
+| 분기 자동 회전 트리거 | `.github/workflows/quarterly-secret-rotation-trigger.yml` |
+| PAT 만료일 변수 | GH Repository Variable `ROTATION_SECRETS_PAT_EXPIRES_AT` |
+| Discord webhook | `secrets.DISCORD_WEBHOOK_URL` |
+| 회전 PAT | `secrets.ROTATION_SECRETS_PAT` |
+| prod Environment 보호 가이드 | `docs/operations/prod-environment-protection.md` |
+| 회전 이력 (자동 append) | `docs/operations/secret-rotation-history.md` |
+
+## 9. 권한 / 책임자
 
 | 역할 | 책임 |
 |---|---|
@@ -267,7 +352,7 @@ gh workflow run rotate-db-password.yml \
 | **개발팀** | 부트 가드 / 워크플로 검증 코드 유지보수, 재암호화 마이그레이션 설계 |
 | **DBA** | DB_PASSWORD 계정별 회전 실행, 롤백 시 신속 패스워드 복구 |
 
-## 9. 회전 이력
+## 10. 회전 이력
 
 본 정책 문서의 v1.0.0 §6 의 placeholder 표를 SSOT 분리하여 다음 위치로 이전한다.
 
@@ -278,11 +363,11 @@ gh workflow run rotate-db-password.yml \
 - **자동 append**: `rotate-jwt-secret.yml` 등 회전 워크플로가 성공 시 본 파일에 신규 행을 추가하고 PR을 생성한다
 - **시크릿 값 평문 금지**: 비고 열에는 길이·sha256 앞 8자·앞 4자 prefix 까지만
 
-## 10. 위반 시 처리
+## 11. 위반 시 처리
 
 본 정책 위반(회전 누락, 약한 키 등록, 평문 노출)은 [`SECURITY_STANDARD.md`](./SECURITY_STANDARD.md) §보안 사고 처리 절차를 따른다. 자동 회전 워크플로의 `JwtSecretValidator` 정책 위반 secret 은 부트 가드에서 차단되어 운영 반영이 불가능하다 — 정책 자체가 SSOT.
 
-## 11. 참조
+## 12. 참조
 
 - [`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) — env 파일 SSOT
 - [`SYSTEMD_FALLBACK_DB_ENV_POLICY.md`](./SYSTEMD_FALLBACK_DB_ENV_POLICY.md) — unit 평문 금지
@@ -294,6 +379,9 @@ gh workflow run rotate-db-password.yml \
 - [`.github/workflows/rotate-jwt-secret.yml`](../../.github/workflows/rotate-jwt-secret.yml) — JWT_SECRET 자동 회전 (PR #326 + PR #331)
 - [`.github/workflows/rotate-social-secrets.yml`](../../.github/workflows/rotate-social-secrets.yml) — KAKAO/NAVER 자동 회전 (PR #327 + PR #331)
 - [`.github/workflows/rotate-db-password.yml`](../../.github/workflows/rotate-db-password.yml) — DB_PASSWORD 자동 회전 (회전 자동화 후속 2, PR #331 health 게이트 패턴)
+- [`.github/workflows/check-pat-expiry.yml`](../../.github/workflows/check-pat-expiry.yml) — `ROTATION_SECRETS_PAT` 만료 알림 (회전 자동화 v2, §8.1)
+- [`.github/workflows/quarterly-secret-rotation-trigger.yml`](../../.github/workflows/quarterly-secret-rotation-trigger.yml) — 분기 자동 회전 트리거 (회전 자동화 v2, §8.2)
+- [`docs/operations/prod-environment-protection.md`](../operations/prod-environment-protection.md) — prod Environment protection 가이드 (회전 자동화 v2, §8.3)
 - [`JWT_SECRET_P0_HANDOFF_20260613.md`](../운영반영/JWT_SECRET_P0_HANDOFF_20260613.md) — 본 자동화의 직접 동기 P0 사고
 
 ## 변경 이력
@@ -303,3 +391,4 @@ gh workflow run rotate-db-password.yml \
 | 2026-06-14 | 1.0.0 | 정책 신설 (PR #309 — P0 표준 5종 묶음) | MindGarden |
 | 2026-06-14 | 1.1.0 | JWT_SECRET 자동 회전 워크플로(`rotate-jwt-secret.yml`) 신설, 자동화 절차·강도 SSOT(`JwtSecretValidator`)·이력 SSOT(`secret-rotation-history.md`) 분리 보완 | MindGarden |
 | 2026-06-14 | 1.2.0 | DB_PASSWORD 자동 회전 워크플로(`rotate-db-password.yml`) 신설. §3.3 을 자동화 절차 + DBA 협업 절차(24h 사전 통지·`confirm_dba=DBA_APPROVED`)로 전면 개정. PR #331 health 게이트 패턴 동일 적용. | MindGarden |
+| 2026-06-15 | 1.3.0 | 회전 자동화 v2 — `ROTATION_SECRETS_PAT` 만료 알림(`check-pat-expiry.yml`, D-30/D-7/expired) + 분기 자동 회전 트리거(`quarterly-secret-rotation-trigger.yml`, cron `0 17 1 1,4,7,10 *`) + prod Environment protection 가이드(`docs/operations/prod-environment-protection.md`) 신설. §8 "자동화" 섹션 신설 (8.1 만료 알림 / 8.2 분기 자동 회전 / 8.3 prod 보호 / 8.4 SSOT 인덱스), 후속 §9~§12 재번호. | MindGarden |

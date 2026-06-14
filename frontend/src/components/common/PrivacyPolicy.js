@@ -170,7 +170,7 @@ export const PrivacyPolicyContent = ({ omitHeading = false }) => {
               <strong>{t('common:common.PrivacyPolicy.t_286de003')}</strong> privacy@mindgarden.co.kr
             </p>
             <p className="mg-v2-m-0">
-              <strong>{t('common:common.PrivacyPolicy.t_ca3404dd')}</strong> 02-1234-5678
+              <strong>{t('common:common.PrivacyPolicy.t_ca3404dd')}</strong> 032-724-8501
             </p>
           </div>
         </div>

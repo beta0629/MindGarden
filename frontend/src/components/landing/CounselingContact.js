@@ -110,7 +110,7 @@ const CounselingContact = () => {
             <div className="mg-card mg-card--glass mg-card--padding-large">
               <h3>연락처 정보</h3>
               <div className="counseling-contact__info-item">
-                <strong>전화:</strong> 02-1234-5678
+                <strong>전화:</strong> 032-724-8501
               </div>
               <div className="counseling-contact__info-item">
                 <strong>이메일:</strong> info@mindgarden.com
@@ -119,7 +119,7 @@ const CounselingContact = () => {
                 <strong>운영시간:</strong> 평일 9:00 - 18:00
               </div>
               <div className="counseling-contact__info-item">
-                <strong>위치:</strong> 서울시 강남구 테헤란로 123
+                <strong>위치:</strong> 인천광역시 연수구 해돋이로120번길 23 2층 204호
               </div>
             </div>
           </div>

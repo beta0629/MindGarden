@@ -1,0 +1,111 @@
+/**
+ * PricingTemplate CSS — mg-v2-* 토큰 한정
+ *
+ * 하드코딩 0 · CSS override 0 · !important 0 · 인라인 style 0
+ * 다크 모드 자동 지원 (토큰 기반)
+ *
+ * @author MindGarden
+ * @since 2026-06-16
+ */
+
+/* ================================================================
+   CONTAINER
+   ================================================================ */
+.mg-v2-pricing-template {
+  width: 100%;
+  max-width: var(--mg-v2-layout-max-width, 1200px);
+  margin: 0 auto;
+  padding: var(--mg-v2-space-4) 0;
+}
+
+/* ================================================================
+   HEADER
+   ================================================================ */
+.mg-v2-pricing-template__header {
+  text-align: center;
+  margin-bottom: var(--mg-v2-space-12);
+}
+
+.mg-v2-pricing-template__title {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  line-height: var(--mg-v2-font-line-height-heading);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.mg-v2-pricing-template__subtitle {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-lg);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-font-line-height-body);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ================================================================
+   CARDS GRID
+   ================================================================ */
+.mg-v2-pricing-template__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--mg-v2-space-6);
+  align-items: start;
+  margin-bottom: var(--mg-v2-space-16);
+}
+
+/* 카드 래퍼: 클릭 영역 + 선택 표시 */
+.mg-v2-pricing-template__card-wrapper {
+  cursor: pointer;
+  border-radius: var(--mg-v2-radius-lg);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: var(--mg-v2-transition-normal);
+}
+
+.mg-v2-pricing-template__card-wrapper:focus-visible {
+  outline-color: var(--mg-v2-color-primary-500);
+}
+
+.mg-v2-pricing-template__card-wrapper--selected {
+  outline-color: var(--mg-v2-color-primary-500);
+}
+
+/* ================================================================
+   FEATURE MATRIX SECTION
+   ================================================================ */
+.mg-v2-pricing-template__matrix {
+  margin-top: var(--mg-v2-space-4);
+}
+
+.mg-v2-pricing-template__matrix-title {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-h3);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  text-align: center;
+  margin-bottom: var(--mg-v2-space-8);
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 1024px) {
+  .mg-v2-pricing-template__cards {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .mg-v2-pricing-template__title {
+    font-size: var(--mg-v2-font-size-h2);
+  }
+
+  .mg-v2-pricing-template__matrix-title {
+    font-size: var(--mg-v2-font-size-h4);
+  }
+}

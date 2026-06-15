@@ -858,9 +858,11 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         try {
             log.debug("API 권한 체크: 역할={}, API 경로={}", roleName, apiPath);
 
-            // HQ_MASTER는 모든 API 접근 가능
+            // API_ACCESS_ALL 권한 보유 시 모든 API 접근 가능
+            // (ops-portal-migration Phase 4: 레거시 HQ_MASTER 주석 정리.
+            // 실제 분기는 권한 코드 기반이며, role_permissions 테이블 seed 로 부여한다.)
             if (hasPermission(roleName, "API_ACCESS_ALL")) {
-                log.debug("HQ_MASTER 권한 확인: 모든 API 접근 가능");
+                log.debug("API_ACCESS_ALL 권한 보유: 모든 API 접근 가능 — role={}", roleName);
                 return true;
             }
 

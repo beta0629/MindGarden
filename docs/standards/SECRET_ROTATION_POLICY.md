@@ -175,7 +175,7 @@ gh workflow run rotate-db-password.yml \
 | 구성 요소 | 역할 | SSOT |
 |---|---|---|
 | `PersonalDataKeyRotationService` | chunk 단위 SELECT/UPDATE 재암호화 (JdbcTemplate + TransactionTemplate) | `src/main/java/com/coresolution/consultation/service/PersonalDataKeyRotationService.java` (PR #344) |
-| `PiiKeyRotationAdminController` | `HQ_MASTER` 전용 admin endpoint 4종 (start/progress/resume/cancel) | `src/main/java/com/coresolution/core/controller/PiiKeyRotationAdminController.java` (PR #344) |
+| `PiiKeyRotationAdminController` | `ADMIN` 전용 admin endpoint 4종 (start/progress/resume/cancel) — 레거시 `HQ_MASTER` 매핑 통합 (`docs/standards/ROLE_STANDARD.md` §3.1·§5.1 SSOT) | `src/main/java/com/coresolution/core/controller/PiiKeyRotationAdminController.java` (PR #344, hotfix) |
 | `pii_reencryption_progress` 테이블 | chunk 진행률 SSOT (status 5종, UNIQUE 키) | Flyway `V20260615_001__pii_reencryption_progress.sql` (PR #344) |
 | `rotate-pii-key.yml` 워크플로 | Phase 1~4 dispatch + polling + 이력 PR | `.github/workflows/rotate-pii-key.yml` (본 PR) |
 | 운영 Runbook | Phase 별 절차 + admin JWT 발급 + trouble-shooting | `docs/operations/pii-rotation-runbook.md` (본 PR) |
@@ -195,7 +195,7 @@ gh workflow run rotate-db-password.yml \
 
 1. **다중 키 등록**: `PERSONAL_DATA_ENCRYPTION_KEYS=vNEW:...,vCURRENT:...` GH Secrets 갱신 + deploy 재실행 (수동, runbook §3.2)
 2. **활성 키 ID 갱신**: `PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID=vNEW` 갱신 + BE 재기동 + `/actuator/health` UP 확인
-3. **admin JWT 발급**: HQ_MASTER 계정으로 JWT 발급 → `secrets.PII_ROTATION_ADMIN_TOKEN` 등록 (runbook §5, 1주일 이하 만료)
+3. **admin JWT 발급**: ADMIN 계정으로 JWT 발급 → `secrets.PII_ROTATION_ADMIN_TOKEN` 등록 (runbook §5, 1주일 이하 만료) — 레거시 HQ_MASTER 계정도 ROLE_STANDARD §5.1 매핑으로 ADMIN 인식
 4. **BE 설정 사전 확인**:
    - `pii-rotation.allow-plaintext-encryption=true` (accounts/branches 회전 시 — Phase 1 default false)
    - `DormantPiiVaultService` 다중 키 SSOT 가용 여부 (dormant 회전 시)

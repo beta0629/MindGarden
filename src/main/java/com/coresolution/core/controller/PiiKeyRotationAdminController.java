@@ -26,7 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * PII KEY/IV 회전 어드민 엔드포인트.
  *
- * <p>운영팀 슈퍼관리자 ({@code HQ_MASTER}) 만 호출 가능. 본 컨트롤러는 회전 메타·진행률만
+ * <p>운영팀 슈퍼관리자 ({@code ADMIN}) 만 호출 가능 (레거시 {@code HQ_MASTER} 매핑 통합 —
+ * {@code docs/standards/ROLE_STANDARD.md} §3.1·§5.1 SSOT). 본 컨트롤러는 회전 메타·진행률만
  * 노출하며, 응답에 평문 / 암호문 PII 를 포함하지 않는다.</p>
  *
  * <h3>엔드포인트</h3>
@@ -50,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/admin/pii-rotation")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('HQ_MASTER')")
+@PreAuthorize("hasRole('ADMIN')")
 public class PiiKeyRotationAdminController extends BaseApiController {
 
     private final PersonalDataKeyRotationService rotationService;

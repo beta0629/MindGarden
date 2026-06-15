@@ -30,7 +30,7 @@ PII KEY 회전 Phase 2 배치 워크플로(`rotate-pii-key.yml`)를 **dev 환경
 | 본 PR (Phase 2 워크플로) 머지 또는 본 브랜치 dispatch 가능 | `gh workflow list` 결과에 `rotate-pii-key.yml` 존재 |
 | dev BE 가동 + `/actuator/health` UP | `curl https://mindgarden.dev.core-solution.co.kr/actuator/health` → `{"status":"UP"}` |
 | dev BE 의 `PERSONAL_DATA_ENCRYPTION_KEYS` CSV 가 v1 단일 키 또는 v1,v2 다중 키 | `gh secret list --env dev` |
-| `secrets.PII_ROTATION_ADMIN_TOKEN` 등록 (HQ_MASTER JWT) | runbook §5 발급 후 `gh secret set` |
+| `secrets.PII_ROTATION_ADMIN_TOKEN` 등록 (ADMIN JWT — 레거시 HQ_MASTER 매핑 통합, ROLE_STANDARD.md §5.1) | runbook §5 발급 후 `gh secret set` |
 | `secrets.ROTATION_SECRETS_PAT` 등록 (Phase 4 이력 PR 생성용) | 기존 회전 워크플로와 공유 |
 | GH Secrets 4종 동기화 (PR-1 #339 / PR-2 #340 완료) | `gh secret list --env dev` 에 `MINDGARDEN_DORMANT_PII_ENC_KEY` 등 존재 |
 
@@ -41,7 +41,7 @@ PII KEY 회전 Phase 2 배치 워크플로(`rotate-pii-key.yml`)를 **dev 환경
 워크플로 실행 전 endpoint 가 실제로 가용한지 1회 수동 확인한다. 평문 PII 노출 0 — `/progress` 만 사용.
 
 ```bash
-# 1) dev admin JWT 발급 (runbook §5 절차로 dev BE 에서 HQ_MASTER 로 로그인 → access token)
+# 1) dev admin JWT 발급 (runbook §5 절차로 dev BE 에서 ADMIN 으로 로그인 → access token; 레거시 HQ_MASTER 계정은 ROLE_STANDARD.md §5.1 매핑으로 ADMIN 인식)
 DEV_ADMIN_TOKEN="..."  # 절대 echo / log 금지
 
 # 2) /progress 호출 — 200 + PII 누출 0 확인

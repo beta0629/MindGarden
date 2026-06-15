@@ -5,7 +5,7 @@
  * - API mock (jest.fn) 으로 도메인 중복검사·제출 흐름 검증
  * - 사용자 시나리오: 약관 동의 → "다음" → step 이동
  * - 도메인 중복검사 실패 시 에러 메시지 노출
- * - React #130 / safeDisplay: 객체 직접 출력 없음
+ * - React issue-130 / safeDisplay: 객체 직접 출력 없음
  *
  * @author MindGarden
  * @since 2026-06-16

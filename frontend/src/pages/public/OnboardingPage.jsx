@@ -5,7 +5,7 @@
  * 6단계 Stepper 폼 상태 관리 + API 호출 + 검증.
  * 라우트: /onboarding
  *
- * React #130 / safeDisplay 준수: 객체 직접 출력 금지.
+ * React issue-130 / safeDisplay 준수: 객체 직접 출력 금지.
  * StandardizedApi 사용, mg-v2-* 토큰 100%.
  *
  * @author MindGarden

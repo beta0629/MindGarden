@@ -84,6 +84,14 @@ inputs:
     description: '변경 발생 시 mindgarden-core-{blue,green}.service 양쪽 재시작 + 헬스체크 수행'
     required: false
     default: 'true'
+  db_fail_fast:
+    description: |
+      DB 핵심 키 (DB_HOST/DB_NAME/DB_USERNAME) FAIL-FAST 가드 활성화 여부.
+      default 'true' — prod-from-dev.env (DB 키가 있는 SSOT) 호출자 (Apple/Google/REGISTERED_URLS/PROFILE_IMAGE/JWT_SECRET/HQ_TENANT_ID) 는 그대로 유지.
+      env_path 가 /etc/mindgarden/prod.env (DB 키가 없는 비-secret 운영 상수 파일) 같이 DB 키가 존재하지 않는 파일을 갱신할 때만 'false' 로 비활성화.
+      PRESERVE/RESTORE 가드는 무해 (해당 키가 없으면 noop) 라 그대로 유지.
+    required: false
+    default: 'true'
 
 runs:
   using: composite
@@ -118,6 +126,7 @@ runs:
         SYNC_MKDIR_VALUE_KEYS: ${{ inputs.mkdir_value_keys }}
         SYNC_MKDIR_CHOWN_USER: ${{ inputs.mkdir_chown_user }}
         SYNC_RESTART_ON_CHANGE: ${{ inputs.restart_on_change }}
+        SYNC_DB_FAIL_FAST: ${{ inputs.db_fail_fast }}
       with:
         host: ${{ inputs.ssh_host }}
         username: ${{ inputs.ssh_user }}
@@ -141,6 +150,7 @@ runs:
           MKDIR_VALUE_KEYS="${SYNC_MKDIR_VALUE_KEYS}"
           MKDIR_CHOWN_USER="${SYNC_MKDIR_CHOWN_USER}"
           RESTART_ON_CHANGE="${SYNC_RESTART_ON_CHANGE}"
+          DB_FAIL_FAST="${SYNC_DB_FAIL_FAST:-true}"
 
           ACTIVE_FILE=/etc/mindgarden/active-backend
           UNIT_BLUE=mindgarden-core-blue.service
@@ -315,29 +325,33 @@ runs:
             done < "$DB_PRESERVED_FILE"
             rm -f "$DB_PRESERVED_FILE"
           fi
-          DB_REQUIRED_KEYS="DB_HOST DB_NAME DB_USERNAME"
-          DB_MISSING_KEYS=""
-          DB_EMPTY_KEYS=""
-          for _dkey in $DB_REQUIRED_KEYS; do
-            _line=$(sudo grep -E "^[[:space:]]*${_dkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
-            if [ -z "$_line" ]; then
-              DB_MISSING_KEYS="$DB_MISSING_KEYS $_dkey"
-            else
-              _val=$(printf '%s' "$_line" | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
-              if [ -z "$_val" ]; then
-                DB_EMPTY_KEYS="$DB_EMPTY_KEYS $_dkey"
+          if [ "$DB_FAIL_FAST" = "true" ]; then
+            DB_REQUIRED_KEYS="DB_HOST DB_NAME DB_USERNAME"
+            DB_MISSING_KEYS=""
+            DB_EMPTY_KEYS=""
+            for _dkey in $DB_REQUIRED_KEYS; do
+              _line=$(sudo grep -E "^[[:space:]]*${_dkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+              if [ -z "$_line" ]; then
+                DB_MISSING_KEYS="$DB_MISSING_KEYS $_dkey"
+              else
+                _val=$(printf '%s' "$_line" | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+                if [ -z "$_val" ]; then
+                  DB_EMPTY_KEYS="$DB_EMPTY_KEYS $_dkey"
+                fi
               fi
+            done
+            if [ -n "$DB_MISSING_KEYS" ]; then
+              echo "::error title=${PROD_ENV_FILE##*/} DB 키 누락::다음 키가 ${PROD_ENV_FILE} 에 없습니다 -$DB_MISSING_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+              exit 1
             fi
-          done
-          if [ -n "$DB_MISSING_KEYS" ]; then
-            echo "::error title=${PROD_ENV_FILE##*/} DB 키 누락::다음 키가 ${PROD_ENV_FILE} 에 없습니다 -$DB_MISSING_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
-            exit 1
+            if [ -n "$DB_EMPTY_KEYS" ]; then
+              echo "::error title=${PROD_ENV_FILE##*/} DB 키 빈 값::다음 키 값이 비어 있습니다 -$DB_EMPTY_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
+              exit 1
+            fi
+            echo "✅ ${PROD_ENV_FILE} DB 키 검증 PASS (DB_HOST/DB_NAME/DB_USERNAME)"
+          else
+            echo "ℹ️ DB FAIL-FAST 가드 비활성 (db_fail_fast=false) — DB 키가 없는 운영 상수 파일(${PROD_ENV_FILE##*/}) 호출 컨텍스트."
           fi
-          if [ -n "$DB_EMPTY_KEYS" ]; then
-            echo "::error title=${PROD_ENV_FILE##*/} DB 키 빈 값::다음 키 값이 비어 있습니다 -$DB_EMPTY_KEYS. 2026-06-13 운영 BE boot loop 회귀 위험 — deploy 중단."
-            exit 1
-          fi
-          echo "✅ ${PROD_ENV_FILE} DB 키 검증 PASS (DB_HOST/DB_NAME/DB_USERNAME)"
 
           # 5) 값 노출 없이 길이만 표시 (Secret 보안 — 절대 echo 금지)
           echo "✅ ${STEP_NAME} 갱신 완료 — 길이만 표시:"

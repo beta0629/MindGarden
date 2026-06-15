@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
+import PublicLayout from '../public/layouts/PublicLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './PrivacyPolicy.css';
 import './AccountDeletionInstructions.css';
@@ -230,7 +230,7 @@ const AccountDeletionInstructions = () => {
   }, [t]);
 
   return (
-    <AdminCommonLayout title={t('pageTitle')}>
+    <PublicLayout>
       <ContentArea ariaLabel={t('pageTitle')}>
         <ContentHeader
           title={t('pageTitle')}
@@ -238,7 +238,7 @@ const AccountDeletionInstructions = () => {
         />
         <AccountDeletionInstructionsContent omitHeading />
       </ContentArea>
-    </AdminCommonLayout>
+    </PublicLayout>
   );
 };
 

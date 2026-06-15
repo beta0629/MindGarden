@@ -169,6 +169,8 @@ import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
 import AccountDeletionInstructions from './components/common/AccountDeletionInstructions';
 import CounselingCenterLanding from './pages/CounselingCenterLanding';
+import TenantOnboardingPage from './pages/public/TenantOnboardingPage';
+import PricingPage from './pages/public/PricingPage';
 import SystemNotifications from './components/notifications/SystemNotifications';
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
@@ -397,7 +399,8 @@ function AppContent() {
           <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>{t('common.messages.loading')}</div>}>
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
-            <Route path="/landing" element={<CounselingCenterLanding />} />
+            {/* §P 옵션 C: /landing → / 흡수 (단일 SSOT). 레거시 경로 리다이렉트 유지. */}
+            <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="/test/modal" element={<div className="mg-modal" />} />
             <Route path="/test/loading" element={<div className="mg-loading">{t('common:misc.App.t_f596b561')}</div>} />
             <Route path="/test/header" element={<UnifiedHeader />} />
@@ -752,6 +755,10 @@ function AppContent() {
             <Route path="/tenant/pg-configurations/new" element={<PgConfigurationCreate />} />
             <Route path="/tenant/pg-configurations/:id" element={<PgConfigurationDetail />} />
             <Route path="/tenant/pg-configurations/:id/edit" element={<PgConfigurationEdit />} />
+            
+            {/* Design v2 Phase B — 공개 페이지 라우트 */}
+            <Route path="/onboarding" element={<TenantOnboardingPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             
             {/* 온보딩 관련 라우트 */}
             

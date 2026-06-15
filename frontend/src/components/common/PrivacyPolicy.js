@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
+import PublicLayout from '../public/layouts/PublicLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './PrivacyPolicy.css';
 import './AccountDeletionInstructions.css';
@@ -201,12 +201,12 @@ export const PrivacyPolicyContent = ({ omitHeading = false }) => {
 
 const PrivacyPolicy = () => {
   const { t } = useTranslation(); return (
-  <AdminCommonLayout title={t('common:common.PrivacyPolicy.t_339679c5')}>
+  <PublicLayout>
     <ContentArea ariaLabel="개인정보 처리방침">
       <ContentHeader title={t('common:common.PrivacyPolicy.t_532136c0')} titleId={PRIVACY_PAGE_TITLE_ID} />
       <PrivacyPolicyContent omitHeading />
     </ContentArea>
-  </AdminCommonLayout>
+  </PublicLayout>
 );
 };
 

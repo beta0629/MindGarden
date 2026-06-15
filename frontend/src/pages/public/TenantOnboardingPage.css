@@ -1,0 +1,84 @@
+/**
+ * TenantOnboardingPage CSS — mg-v2-* 토큰 한정
+ * @author MindGarden
+ * @since 2026-06-15
+ */
+
+.mg-v2-onboarding-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--mg-v2-space-4) 0;
+}
+
+.mg-v2-onboarding-page__header {
+  text-align: center;
+  margin-bottom: var(--mg-v2-space-8);
+}
+
+.mg-v2-onboarding-page__title {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  line-height: var(--mg-v2-font-line-height-heading);
+  margin-bottom: var(--mg-v2-space-3);
+}
+
+.mg-v2-onboarding-page__subtitle {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-lg);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-font-line-height-body);
+}
+
+.mg-v2-onboarding-page__step-content {
+  margin-top: var(--mg-v2-space-8);
+  min-height: 300px;
+}
+
+/* Skeleton */
+.mg-v2-onboarding-page__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-8);
+  background-color: var(--mg-v2-color-surface-card);
+  border-radius: var(--mg-v2-radius-lg);
+  border: 1px solid var(--mg-v2-color-border-light);
+}
+
+.mg-v2-onboarding-page__skeleton-block {
+  height: 48px;
+  background: linear-gradient(
+    90deg,
+    var(--mg-v2-color-neutral-200) 25%,
+    var(--mg-v2-color-neutral-100) 50%,
+    var(--mg-v2-color-neutral-200) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--mg-v2-radius-md);
+  animation: mg-v2-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.mg-v2-onboarding-page__skeleton-block--short {
+  width: 60%;
+}
+
+.mg-v2-onboarding-page__skeleton-text {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-tertiary);
+  text-align: center;
+  margin-top: var(--mg-v2-space-4);
+}
+
+@keyframes mg-v2-skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (max-width: 768px) {
+  .mg-v2-onboarding-page__title {
+    font-size: var(--mg-v2-font-size-h3);
+  }
+}

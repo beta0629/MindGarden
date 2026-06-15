@@ -1,0 +1,102 @@
+/**
+ * PricingPage CSS — mg-v2-* 토큰 한정
+ * @author MindGarden
+ * @since 2026-06-15
+ */
+
+.mg-v2-pricing-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--mg-v2-space-4) 0;
+}
+
+.mg-v2-pricing-page__header {
+  text-align: center;
+  margin-bottom: var(--mg-v2-space-12);
+}
+
+.mg-v2-pricing-page__title {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  line-height: var(--mg-v2-font-line-height-heading);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.mg-v2-pricing-page__subtitle {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-lg);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-font-line-height-body);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Cards Grid */
+.mg-v2-pricing-page__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--mg-v2-space-6);
+  align-items: start;
+  margin-bottom: var(--mg-v2-space-12);
+}
+
+/* FAQ */
+.mg-v2-pricing-page__faq {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.mg-v2-pricing-page__faq-title {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-h3);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  text-align: center;
+  margin-bottom: var(--mg-v2-space-6);
+}
+
+.mg-v2-pricing-page__faq-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-pricing-page__faq-item {
+  height: 56px;
+  background: linear-gradient(
+    90deg,
+    var(--mg-v2-color-neutral-200) 25%,
+    var(--mg-v2-color-neutral-100) 50%,
+    var(--mg-v2-color-neutral-200) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--mg-v2-radius-md);
+  animation: mg-v2-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.mg-v2-pricing-page__faq-coming-soon {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-tertiary);
+  text-align: center;
+  margin-top: var(--mg-v2-space-4);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mg-v2-pricing-page__cards {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: var(--mg-v2-space-12);
+  }
+}
+
+@media (max-width: 768px) {
+  .mg-v2-pricing-page__title {
+    font-size: var(--mg-v2-font-size-h2);
+  }
+}

@@ -32,13 +32,23 @@ public class SecurityAuditService {
     // 의심스러운 IP 추적
     private final ConcurrentHashMap<String, SuspiciousActivity> suspiciousIPs = new ConcurrentHashMap<>();
     
-    // SQL 인젝션 패턴
+    // SQL 인젝션 패턴 (쿼리 파라미터·요청 body 전용)
     // 주의: URI·쿼리에 포함될 수 있는 단어(예: subscriptions → 부분문자열 "script")는 제외한다.
     // script/javascript/vbscript 계열은 XSS_PATTERNS에서 별도 처리한다.
+    // [P0 핫픽스 2026-06-15] 본 패턴은 query/body 값에만 적용되며, URI path 는 SQL_URI_META_PATTERN 으로 별도 검사한다.
+    //   사유: RESTful 액션 토큰(create/update/delete/insert/select 등)이 SQL 키워드와 겹쳐 합법 엔드포인트가 오탐·차단되는 P0 회귀를 차단.
     private static final List<Pattern> SQL_INJECTION_PATTERNS = List.of(
         Pattern.compile("(?i).*('|(\\-\\-)|(;)|(\\|)|(\\*)|(%)|\\bunion\\b|\\bselect\\b|\\binsert\\b|\\bdelete\\b|\\bupdate\\b|\\bdrop\\b|\\bcreate\\b|\\balter\\b|\\bexec\\b|\\bexecute\\b).*"),
         Pattern.compile("(?i).*(or\\s+1=1|and\\s+1=1|'\\s*or\\s*'1'='1|'\\s*or\\s*1=1).*"),
         Pattern.compile("(?i).*(union\\s+select|union\\s+all\\s+select).*")
+    );
+
+    // [P0 핫픽스 2026-06-15] URI path 전용 SQL injection 메타 시퀀스 패턴.
+    //   - 실전 SQL injection 시도 흔적인 메타 문자/시퀀스만 검사
+    //   - 작은따옴표('), 라인 주석(--), 구문 종료(;), OR 우회(|), 블록 주석(/*, */)
+    //   - SQL 키워드 단어 매칭은 일부러 제외 → /api/v1/ratings/create 등 RESTful 액션 URI 오탐 방지
+    private static final Pattern SQL_URI_META_PATTERN = Pattern.compile(
+        "('|(--)|(;)|(\\|)|(/\\*)|(\\*/))"
     );
     
     // XSS 패턴
@@ -197,42 +207,60 @@ public class SecurityAuditService {
         log.error("🚨 긴급 보안 알림: {} | IP: {} | Details: {}", eventType, clientIP, details);
     }
 
-    private boolean checkSQLInjection(Map<String, String[]> parameters, String requestURI) {
+    /**
+     * SQL 인젝션 검사.
+     *
+     * <p>[P0 핫픽스 2026-06-15] URI path 는 SQL 키워드 단어 매칭에서 제외하고,
+     * SQL 메타 문자(', --, ;, |, /*, *&#47;)만 검사한다. 기존 정규식은 RESTful 액션 토큰
+     * (create/update/delete/insert/select 등)을 SQL 키워드로 오탐하여 합법 엔드포인트를
+     * 모두 차단(HTTP 403)하는 회귀를 야기했다.</p>
+     *
+     * <p>쿼리 파라미터 / 요청 body 값에는 기존 SQL 키워드 정규식을 그대로 적용한다.</p>
+     *
+     * @param parameters 요청 파라미터 (query string + form body)
+     * @param requestURI 요청 URI path
+     * @return SQL 인젝션 의심 시 true
+     */
+    boolean checkSQLInjection(Map<String, String[]> parameters, String requestURI) {
         // URI 검사 (숫자만 있는 경로 변수는 제외)
         // 예: /api/consultation-messages/client/555 -> /api/consultation-messages/client/{id}로 변환하여 검사
-        String sanitizedURI = requestURI.replaceAll("/\\d+", "/{id}");
-        
+        String sanitizedURI = requestURI != null ? requestURI.replaceAll("/\\d+", "/{id}") : "";
+
         // 숫자만 있는 경로 변수가 있는 경우 SQL 인젝션 검사에서 제외
         // 예: /api/consultation-messages/client/555 -> 검사 제외
-        if (requestURI.matches(".*/\\d+$") || requestURI.matches(".*/\\d+\\?.*")) {
+        if (requestURI != null && (requestURI.matches(".*/\\d+$") || requestURI.matches(".*/\\d+\\?.*"))) {
             log.debug("🔍 SQL 인젝션 검사 스킵 - 숫자만 있는 경로 변수: {}", requestURI);
             return false;
         }
-        
+
         log.debug("🔍 SQL 인젝션 검사 - 원본 URI: {}, 정제된 URI: {}", requestURI, sanitizedURI);
-        
-        for (Pattern pattern : SQL_INJECTION_PATTERNS) {
-            if (pattern.matcher(sanitizedURI).matches()) {
-                log.warn("⚠️ SQL 인젝션 패턴 매칭 - 정제된 URI: {}, 패턴: {}", sanitizedURI, pattern.pattern());
-                return true;
-            }
+
+        // [P0 핫픽스] URI 는 SQL 메타 문자만 검사 (SQL 키워드 단어 매칭은 적용하지 않음)
+        if (SQL_URI_META_PATTERN.matcher(sanitizedURI).find()) {
+            log.warn("⚠️ SQL 인젝션 메타 문자 매칭 - 정제된 URI: {}", sanitizedURI);
+            return true;
         }
-        
-        log.debug("✅ SQL 인젝션 검사 통과 - 정제된 URI: {}", sanitizedURI);
-        
-        // 파라미터 검사
-        for (String[] values : parameters.values()) {
-            for (String value : values) {
-                if (value != null) {
-                    for (Pattern pattern : SQL_INJECTION_PATTERNS) {
-                        if (pattern.matcher(value).matches()) {
-                            return true;
+
+        log.debug("✅ SQL 인젝션 URI 검사 통과 - 정제된 URI: {}", sanitizedURI);
+
+        // 파라미터 검사 (query string + form body) — 기존 SQL 키워드 정규식 그대로 적용
+        if (parameters != null) {
+            for (String[] values : parameters.values()) {
+                if (values == null) {
+                    continue;
+                }
+                for (String value : values) {
+                    if (value != null) {
+                        for (Pattern pattern : SQL_INJECTION_PATTERNS) {
+                            if (pattern.matcher(value).matches()) {
+                                return true;
+                            }
                         }
                     }
                 }
             }
         }
-        
+
         return false;
     }
 

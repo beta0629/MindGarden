@@ -36,8 +36,18 @@ export default function ClientSessionDetail() {
   const recordGardenGrowth = useMindGardenStore((s) => s.recordGrowthEvent);
 
   const isCompleted = detail?.status === 'COMPLETED';
+  const hasRating = detail?.hasRating === true;
 
   const handleReview = () => {
+    // TestFlight 1.0.9 hotfix(2026-06-15): 라우터 진입 시점 가드 — H1(중복 평가) 차단
+    if (!isCompleted) {
+      Alert.alert('알림', '완료된 상담만 평가할 수 있습니다.');
+      return;
+    }
+    if (hasRating) {
+      Alert.alert('알림', '이미 평가하신 상담입니다.');
+      return;
+    }
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -233,28 +243,30 @@ export default function ClientSessionDetail() {
         <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.actionGroup}>
           {isCompleted && (
             <>
-              <Pressable
-                onPress={handleReview}
-                style={[
-                  styles.primaryActionButton,
-                  {
-                    backgroundColor: theme.colors.primary,
-                    borderRadius: theme.borderRadius.lg,
-                  },
-                ]}
-                accessibilityLabel="상담사 평가하기"
-                accessibilityRole="button"
-              >
-                <Text
-                  style={{
-                    fontFamily: theme.fontFamily.semibold,
-                    fontSize: theme.fontSize.base,
-                    color: theme.colors.textOnPrimary,
-                  }}
+              {!hasRating && (
+                <Pressable
+                  onPress={handleReview}
+                  style={[
+                    styles.primaryActionButton,
+                    {
+                      backgroundColor: theme.colors.primary,
+                      borderRadius: theme.borderRadius.lg,
+                    },
+                  ]}
+                  accessibilityLabel="상담사 평가하기"
+                  accessibilityRole="button"
                 >
-                  평가하기
-                </Text>
-              </Pressable>
+                  <Text
+                    style={{
+                      fontFamily: theme.fontFamily.semibold,
+                      fontSize: theme.fontSize.base,
+                      color: theme.colors.textOnPrimary,
+                    }}
+                  >
+                    평가하기
+                  </Text>
+                </Pressable>
+              )}
               <Pressable
                 onPress={handleApplyGardenGrowthForSession}
                 style={[

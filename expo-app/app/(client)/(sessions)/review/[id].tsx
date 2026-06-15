@@ -28,6 +28,7 @@ import { Chip } from '@/components/atoms/Chip';
 import { RatingStars } from '@/components/molecules/RatingStars';
 import { useConsultationDetail } from '@/api/hooks/useConsultations';
 import { useCreateRating } from '@/api/hooks/useRatings';
+import { buildRatingErrorAlertMessage } from '@/api/hooks/ratingErrorMessage';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { maskEncryptedDisplay, resolveProfileImageUrlForNative } from '@/utils/displayString';
 
@@ -78,6 +79,17 @@ export default function ClientSessionReview() {
       Alert.alert('오류', '로그인 정보가 만료되었습니다. 다시 로그인해주세요.');
       return;
     }
+    // TestFlight 1.0.9 hotfix(2026-06-15): 제출 직전 가드 — BE 500 발생 전 친화 알럿으로 차단
+    if (detail.status !== 'COMPLETED') {
+      Alert.alert('알림', '완료된 상담만 평가할 수 있습니다.');
+      return;
+    }
+    if (detail.hasRating === true) {
+      Alert.alert('알림', '이미 평가하신 상담입니다.', [
+        { text: '확인', onPress: () => router.back() },
+      ]);
+      return;
+    }
 
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -95,8 +107,9 @@ export default function ClientSessionReview() {
       Alert.alert('감사합니다', '평가가 제출되었습니다.', [
         { text: '확인', onPress: () => router.back() },
       ]);
-    } catch {
-      Alert.alert('오류', '평가 제출 중 문제가 발생했습니다.');
+    } catch (err) {
+      // 빈 catch 가 BE 메시지(`이미 평가한 상담입니다` 등)를 가리던 1.0.8 회귀 차단
+      Alert.alert('오류', buildRatingErrorAlertMessage(err));
     }
   };
 

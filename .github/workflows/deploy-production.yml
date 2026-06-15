@@ -653,6 +653,11 @@ jobs:
       with:
         step_name: 'MINDGARDEN_HQ_TENANT_ID'
         keys: 'MINDGARDEN_HQ_TENANT_ID'
+        # SSOT 통일 (cutover 정합, 2026-06-15 PR-4 후속): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1).
+        # cutover-prod-env-ssot.yml 실행 (run 27528336064) 으로 prod-from-dev.env 가 .DEPRECATED-* 로 폐기됨에 따라
+        # composite action default env_path('/etc/mindgarden/prod-from-dev.env') 가 파일 부재로 신규 생성을
+        # 시도하고 DB FAIL-FAST 가드(DB_HOST/DB_NAME/DB_USERNAME 누락)에 걸려 deploy 중단되는 회귀 차단.
+        env_path: '/etc/mindgarden/prod.env'
         ssh_host: ${{ secrets.PRODUCTION_HOST }}
         ssh_user: ${{ secrets.PRODUCTION_USER }}
         ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}

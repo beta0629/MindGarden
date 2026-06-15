@@ -17,7 +17,7 @@ import {
   User, Calendar, MessageCircle, UserPlus, History, 
   FileText, Link2, Code, BarChart3, HelpCircle, Settings 
 } from 'lucide-react';
-import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from './roles';
+import { RoleUtils, USER_ROLES } from './roles';
 
 /**
  * 기본 공통 액션들 (모든 사용자)
@@ -117,7 +117,7 @@ const ADMIN_ACTIONS = [
     label: '매칭 시스템',
     icon: <Link2 size={24} />,
     url: '/admin/mapping-management',
-    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF, LEGACY_USER_ROLES.HQ_MASTER, LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN],
+    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF],
     tooltip: '상담사-내담자 매칭 관리'
   },
   {
@@ -125,7 +125,7 @@ const ADMIN_ACTIONS = [
     label: '공통코드',
     icon: <Code size={24} />,
     url: '/admin/common-codes',
-    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF, LEGACY_USER_ROLES.HQ_MASTER],
+    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF],
     tooltip: '시스템 공통코드 관리'
   },
   {
@@ -133,7 +133,7 @@ const ADMIN_ACTIONS = [
     label: '통계',
     icon: <BarChart3 size={24} />,
     url: '/admin/statistics',
-    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF, LEGACY_USER_ROLES.HQ_MASTER],
+    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF],
     tooltip: '시스템 통계 보기'
   }
 ];
@@ -162,8 +162,9 @@ export const generateQuickActionsConfig = (user) => {
     actions = [...actions, ...CLIENT_ACTIONS.filter(action => action.enabled !== false)];
   }
   
-  // 관리자·스태프 전용 액션 추가
-  if ([USER_ROLES.ADMIN, USER_ROLES.STAFF, LEGACY_USER_ROLES.BRANCH_SUPER_ADMIN, LEGACY_USER_ROLES.HQ_MASTER].includes(user.role)) {
+  // 관리자·스태프 전용 액션 추가 — RoleUtils.isAdmin/isStaff 가 LEGACY_ROLE_TO_SSOT 매핑을
+  // 통해 HQ_*/BRANCH_*/SUPER_*/PRINCIPAL/OWNER 등 레거시 역할도 자동 정규화한다.
+  if (RoleUtils.isAdmin(user) || RoleUtils.isStaff(user)) {
     actions = [...actions, ...ADMIN_ACTIONS];
   }
 

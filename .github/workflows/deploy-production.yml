@@ -653,6 +653,10 @@ jobs:
       with:
         step_name: 'MINDGARDEN_HQ_TENANT_ID'
         keys: 'MINDGARDEN_HQ_TENANT_ID'
+        # SSOT 통일 (PR #310 누락 정정, 2026-06-15): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
+        # default '/etc/mindgarden/prod-from-dev.env' 사용 시 신규 파일 생성 → composite action PRESERVE 가드
+        # 12키 (DB 8 + PII 4) 검사에서 DB_HOST/DB_NAME/DB_USERNAME 부재 → fail-fast 로 운영 BE 신규 배포 차단.
+        env_path: '/etc/mindgarden/prod.env'
         ssh_host: ${{ secrets.PRODUCTION_HOST }}
         ssh_user: ${{ secrets.PRODUCTION_USER }}
         ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}

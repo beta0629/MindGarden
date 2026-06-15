@@ -53,6 +53,13 @@ jobs:
   deploy-backend:
     name: 🏗️ 코어솔루션 백엔드 빌드 및 배포
     runs-on: ubuntu-latest
+    # ops-portal-migration Phase 1 fix (PR #366, 2026-06-15):
+    # `environment: dev` 선언이 없으면 ${{ secrets.X }} 가 repository-level secret 만 해석한다.
+    # MINDGARDEN_HQ_TENANT_ID 등 env=dev 로만 등록된 secret 은 빈 값으로 해석되어
+    # OpsTenantConstants#validate() 가드가 BE 부팅 시 fail-fast 발생.
+    # 본 선언으로 `dev` 환경의 env-level secret 을 정상 해석한다.
+    # 동일 키가 repo-level + env-level 양쪽에 있으면 env-level 이 우선 (GitHub 정책).
+    environment: dev
     # Apple SIWA 환경변수 6종 — 개발 배포 SSH 스크립트가 /etc/mindgarden/dev.env 에 주입할 때 사용 (P0 hotfix 2026-06-08)
     # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1
     # 실제 런타임 주입은 서버 systemd EnvironmentFile=/etc/mindgarden/dev.env 가 담당하나,

@@ -426,24 +426,32 @@ jobs:
               done
 
               # 5-5) 활성 slot 프로세스 env 검증 — JWT_SECRET 길이만 (값 노출 금지)
-              ACTIVE=$(sudo cat /etc/mindgarden/active-backend 2>/dev/null | tr -d '[:space:]' | awk '{print tolower($0)}')
-              ACTIVE_UNIT="mindgarden-core-${ACTIVE}.service"
-              PID=$(systemctl show -p MainPID --value "$ACTIVE_UNIT" 2>/dev/null || echo "")
-              if [ -n "$PID" ] && [ "$PID" != "0" ]; then
-                echo "🔍 active=$ACTIVE / PID=$PID — JWT_SECRET 주입 확인"
-                LEN=$(sudo cat "/proc/$PID/environ" 2>/dev/null | tr '\0' '\n' | awk -F= '$1=="JWT_SECRET" {print length(substr($0, 12)); exit}')
-                if [ -n "$LEN" ] && [ "$LEN" != "0" ]; then
-                  echo "   ✅ JWT_SECRET = ($LEN chars)"
-                else
-                  echo "::warning::JWT_SECRET 프로세스 env 누락 — 회귀 위험"
+              # SIGPIPE 회피: awk { exit } + pipefail 조합으로 인한 141 종료 방지 (subshell + set +o pipefail).
+              (
+                set +o pipefail
+                ACTIVE=$(sudo cat /etc/mindgarden/active-backend 2>/dev/null | tr -d '[:space:]' | awk '{print tolower($0)}')
+                ACTIVE_UNIT="mindgarden-core-${ACTIVE}.service"
+                PID=$(systemctl show -p MainPID --value "$ACTIVE_UNIT" 2>/dev/null || echo "")
+                if [ -n "$PID" ] && [ "$PID" != "0" ]; then
+                  echo "🔍 active=$ACTIVE / PID=$PID — JWT_SECRET 주입 확인"
+                  # awk: exit 제거 — 전체 라인을 끝까지 읽되 첫 매치만 출력 (SIGPIPE 없음)
+                  LEN=$(sudo cat "/proc/$PID/environ" 2>/dev/null \
+                    | tr '\0' '\n' \
+                    | awk -F= 'BEGIN{found=0} found==0 && $1=="JWT_SECRET" {print length(substr($0, 12)); found=1}' \
+                    || true)
+                  if [ -n "$LEN" ] && [ "$LEN" != "0" ]; then
+                    echo "   ✅ JWT_SECRET = ($LEN chars)"
+                  else
+                    echo "::warning::JWT_SECRET 프로세스 env 누락 — 회귀 위험"
+                  fi
                 fi
-              fi
+              ) || true
 
               # 5-6) journal 에러 모니터 (최근 5분)
               echo "🔍 journal ERROR 모니터 (최근 5분, 양쪽 slot)"
               for slot in blue green; do
-                ERR_COUNT=$(sudo journalctl -u "mindgarden-core-${slot}.service" --since "5 minutes ago" --no-pager 2>/dev/null \
-                  | grep -ciE 'ERROR|Exception|fail-fast|FATAL' || true)
+                ERR_COUNT=$( ( set +o pipefail; sudo journalctl -u "mindgarden-core-${slot}.service" --since "5 minutes ago" --no-pager 2>/dev/null \
+                  | grep -ciE 'ERROR|Exception|fail-fast|FATAL' ) || echo 0 )
                 echo "   $slot: ERROR/Exception/FATAL = $ERR_COUNT 건"
               done
             else

@@ -63,6 +63,25 @@ Truth)** 만 사용한다.
 - **백엔드 가드**: `@PreAuthorize("hasAnyRole('ADMIN','STAFF')")`
 - **프론트 헬퍼**: `isStaff(user)` / `RoleUtils.isStaff(user)`
 
+#### 2.2.1 ⚠️ STAFF 자동 ADMIN/OPS 부여 제거 (Phase 1b · 2026-06-15)
+
+`OPS_PORTAL_MIGRATION` Phase 1b P0 보안 정정. 인증 필터의 STAFF 분기에서
+`ROLE_ADMIN` + `ROLE_OPS` 가 자동 부여되던 버그를 제거한다.
+
+- **정정 대상**: `JwtAuthenticationFilter#createAuthoritiesFromUser`
+  의 `case STAFF:` (이전: ROLE_ADMIN + ROLE_OPS, 이후: **ROLE_STAFF 만**)
+- **정합 기준**: `SessionBasedAuthenticationFilter#case STAFF:` (이미 ROLE_STAFF
+  단독 부여) 와 동일 정책으로 통일.
+- **추가 권한**: 명시적 `hasAnyRole('ADMIN','STAFF')` 가드 또는
+  `role_permissions` 동적 권한 시스템(§6) 으로만 부여. **인증 필터에서 자동 부여
+  금지**.
+- **회귀 가드**: `JwtAuthenticationFilterAuthoritiesTest` (STAFF 인증 시
+  ROLE_ADMIN/ROLE_OPS 부재 검증).
+- **영향**: STAFF 가 이전에 자동 ROLE_ADMIN 부여로 호출 가능했던 ADMIN-only
+  엔드포인트(`PiiKeyRotationAdminController`, `MonitoringController`,
+  `AdminMappingCleanupController` 등 `hasRole('ADMIN')` 단독)는 정정 후 차단된다.
+  명시적 `hasAnyRole('ADMIN','STAFF')` 엔드포인트는 정합 (정상 통과).
+
 ### 2.3 CONSULTANT (전문가)
 
 - **권한 묶음**: 본인 스케줄·상담일지·매핑된 내담자 조회. 본인 데이터 외 접근 금지.

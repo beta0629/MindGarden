@@ -21,7 +21,10 @@ public final class SecurityRoleConstants {
     
     /** Ops Portal 운영자 역할 */
     public static final String ROLE_OPS = "ROLE_OPS";
-    
+
+    /** 사내 운영 직원 역할 (Phase 1b 정정: STAFF 자동 ADMIN/OPS 부여 제거) */
+    public static final String ROLE_STAFF = "ROLE_STAFF";
+
     /** 본사 관리자 역할 */
     public static final String ROLE_HQ_ADMIN = "ROLE_HQ_ADMIN";
     

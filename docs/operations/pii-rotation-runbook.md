@@ -210,18 +210,20 @@ gh workflow run deploy-production.yml --ref main -f deploy_ref=main
 
 ## 5. admin JWT 토큰 발급 가이드
 
-본 워크플로는 `secrets.PII_ROTATION_ADMIN_TOKEN` (ADMIN 권한 JWT — 레거시 `HQ_MASTER` 매핑 통합, `docs/standards/ROLE_STANDARD.md` §5.1) 으로 admin endpoint 를 호출한다.
+본 워크플로는 `secrets.PII_ROTATION_ADMIN_TOKEN` (**OPS Authority + 본사(HQ) 테넌트 컨텍스트** 를 보유한 본사 ADMIN 계정의 JWT) 으로 admin endpoint 를 호출한다. Phase 1 (`ops-portal-migration`) 부터 컨트롤러는 **옵션 3+1 하이브리드 가드** 를 적용한다 — `@PreAuthorize("hasRole('OPS')")` (Ops Portal Authority) + `OpsTenantConstants#isHqTenant(...)` (본사 테넌트 자체 검증). 자세한 배경은 `docs/project-management/OPS_PORTAL_MIGRATION_PLAN.md` §6 참조.
 
 ### 5.1 발급 원칙
 
-- **권한**: ADMIN 권한 사용자 1명 (운영팀 책임자, 레거시 HQ_MASTER 매핑 통합 — ROLE_STANDARD.md SSOT)
+- **권한**: **OPS Authority 보유 + 본사(HQ) 테넌트 ADMIN** 사용자 1명 (운영팀 책임자). JWT 발급 시 actor role 이 `ACTOR_ROLE_OPS` (= `"OPS"`) 또는 본사 테넌트의 ADMIN 계정으로 발급되어야 한다.
+- **테넌트 컨텍스트**: 발급 계정은 **본사(HQ) 테넌트** 로 인식되어야 한다 — 외부 테넌트 ADMIN 으로 발급된 토큰은 `OpsTenantConstants` HQ 가드가 `AccessDeniedException` 으로 차단 (Defense in Depth).
 - **만료**: **1주일 이하** (회전 작업 직전 발급, 작업 완료 후 즉시 폐기 권장)
 - **저장**: GH Secrets `PII_ROTATION_ADMIN_TOKEN` (환경별 `dev` / `prod` 분리)
 - **노출**: 채팅·티켓·문서·로그 어디에도 평문 0건 — 워크플로는 `::add-mask::` 즉시 마스킹
+- **사전 등록**: BE 부팅 fail-fast 방지를 위해 `MINDGARDEN_HQ_TENANT_ID` GH Secret(또는 `prod.env`) 등록이 사전 조건 — 미설정 시 `OpsTenantConstants#validate()` 가 부트 자체를 실패시킨다.
 
 ### 5.2 발급 절차
 
-1. **ADMIN 계정으로 BE 로그인** (레거시 HQ_MASTER 계정도 ROLE_STANDARD §5.1 매핑으로 ADMIN 으로 인식됨):
+1. **본사(HQ) 테넌트 ADMIN 계정으로 BE 로그인** (Ops Portal Authority 보유 — actor role `OPS` 또는 본사 테넌트 ADMIN):
 
    ```bash
    # 회전 대상 환경의 로그인 endpoint
@@ -285,7 +287,7 @@ gh workflow run deploy-production.yml --ref main -f deploy_ref=main
 |---|---|---|
 | 404 | endpoint 미배포 | PR #344 (Phase 1 인프라) 머지 + deploy-production 재실행 |
 | 401 | 토큰 만료 | runbook §5 절차로 신 JWT 재발급 |
-| 403 | ADMIN 권한 없음 | 사용자 권한 확인 → 적절한 ADMIN 계정으로 재발급 (레거시 HQ_MASTER 계정은 ROLE_STANDARD §5.1 매핑으로 ADMIN 인식) |
+| 403 | OPS 권한 미보유 또는 외부 테넌트 차단 (`@PreAuthorize("hasRole('OPS')")` 또는 `OpsTenantConstants` HQ 가드) | (1) 발급 계정이 OPS Authority 를 보유한지 확인 (`SecurityRoleConstants.ACTOR_ROLE_OPS`) (2) 본사(HQ) 테넌트 컨텍스트로 발급되었는지 확인 (3) `MINDGARDEN_HQ_TENANT_ID` 환경변수가 실제 운영 본사 테넌트 UUID 와 정확히 일치하는지 점검 |
 
 ### 6.3 `rowsRotated > 0` (활성 키와 다른 키로 저장된 row 존재)
 

@@ -432,14 +432,19 @@ CREATE TABLE IF NOT EXISTS pii_reencryption_progress (
 | `POST` | `/api/v1/admin/pii-rotation/resume` | `table`, `target_key_id` | `PiiRotationResult` (FAILED chunk 만 재실행) |
 | `POST` | `/api/v1/admin/pii-rotation/cancel` | `table`, `target_key_id` | `{ table, target_key_id, cancelled_chunks }` |
 
-권한 가드: 컨트롤러 클래스에 `@PreAuthorize("hasRole('ADMIN')")` 부착 (레거시 `HQ_MASTER` 매핑 통합 — `docs/standards/ROLE_STANDARD.md` §3.1·§5.1 SSOT). 모든 응답은 평문/암호문 PII 를 절대 포함하지 않는다 (단위 테스트에서 정규식 가드로 회귀 차단).
+권한 가드: **옵션 3+1 하이브리드 (Defense in Depth — `docs/project-management/OPS_PORTAL_MIGRATION_PLAN.md` §6)**.
+
+1. 컨트롤러 클래스에 `@PreAuthorize("hasRole('OPS')")` 부착 — Ops Portal 운영자 Authority (`SecurityRoleConstants.ROLE_OPS`) 만 진입 허용. 4종 SSOT (`ADMIN`/`STAFF`/`CONSULTANT`/`CLIENT`) 의 어떤 역할도 본 endpoint 를 호출할 수 없다.
+2. 각 메서드 진입부에서 `OpsTenantConstants#isHqTenant(TenantContextHolder.getRequiredTenantId())` 자체 검증 — `ROLE_OPS` Authority 가 외부 테넌트로 확장될 가능성에 대비해 본사(HQ) 테넌트 자체 검증을 병행 (`docs/standards/ROLE_STANDARD.md` §3.2 테넌트 가드 병행 패턴). 본사 외 테넌트는 `AccessDeniedException` 으로 차단.
+
+레거시 `@PreAuthorize("hasRole('ADMIN')")` 매핑은 Phase 1 (`ops-portal-migration`) 에서 위 옵션 3+1 하이브리드로 전환됨. 운영 반영 전 `MINDGARDEN_HQ_TENANT_ID` 환경변수 등록 필수 (미설정 시 `OpsTenantConstants#validate()` 가 부트를 fail-fast — fail-open 차단). 모든 응답은 평문/암호문 PII 를 절대 포함하지 않는다 (단위 테스트에서 정규식 가드로 회귀 차단).
 
 > admin override 강제 회전 / grace 무시는 **금지**. 본 endpoint 는 chunk 단위 진행만 트리거하며, 옛 keyId 폐기는 워크플로 별도 phase (§3.5) 에서만 수행한다.
 
 #### 3.2.5 단위 테스트 (구현 완료)
 
 - `src/test/java/com/coresolution/consultation/service/PersonalDataKeyRotationServiceTest.java` — 14 케이스 (chunk 회전·idempotency·실패 chunk 격리·targetKey 검증·평문 게이트·테이블 부재·재시도·취소·집계).
-- `src/test/java/com/coresolution/core/controller/PiiKeyRotationAdminControllerTest.java` — 8 케이스 (4 endpoints + `@PreAuthorize` reflection 검증 + 평문 PII 응답 비포함 정규식).
+- `src/test/java/com/coresolution/core/controller/PiiKeyRotationAdminControllerTest.java` — 옵션 3+1 하이브리드 회귀 (8 endpoints 동작 + 평문 PII 응답 비포함 정규식 + Phase 1 하이브리드 가드 8건: ROLE_OPS+HQ→200, ROLE_OPS+외부 테넌트→403, ROLE_ADMIN/STAFF/CONSULTANT/CLIENT/anonymous → 403/401, ROLE_STAFF 는 Phase 1b 머지 후 활성화 (`@Disabled`) + `OpsTenantConstants` fail-fast / `isHqTenant` 동작 회귀).
 
 ### 3.3 Phase 2 — 배치 재암호화 실행
 

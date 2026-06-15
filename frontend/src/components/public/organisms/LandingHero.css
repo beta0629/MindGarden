@@ -1,0 +1,161 @@
+/**
+ * LandingHero CSS — mg-v2-* 토큰 한정
+ * Hero 섹션: 좌우 Split (데스크탑) → 상하 Stack (모바일)
+ *
+ * @author MindGarden
+ * @since 2026-06-15
+ */
+
+.mg-v2-landing-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-12);
+  padding: var(--mg-v2-space-20) var(--mg-v2-grid-margin-desktop);
+  background: linear-gradient(
+    to bottom,
+    var(--mg-v2-color-surface-bg),
+    var(--mg-v2-color-surface-card)
+  );
+  max-width: var(--mg-v2-grid-container-2xl);
+  margin: 0 auto;
+}
+
+.mg-v2-landing-hero__content {
+  flex: 5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-6);
+}
+
+.mg-v2-landing-hero__title {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-display);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  line-height: var(--mg-v2-font-line-height-tight);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
+  margin: 0;
+}
+
+.mg-v2-landing-hero__subtitle {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-h4);
+  font-weight: var(--mg-v2-font-weight-regular);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-font-line-height-body);
+  margin: 0;
+}
+
+.mg-v2-landing-hero__cta-group {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-4);
+  margin-top: var(--mg-v2-space-4);
+}
+
+.mg-v2-landing-hero__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-lg);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-8);
+  border-radius: var(--mg-v2-radius-md);
+  text-decoration: none;
+  min-height: var(--mg-v2-component-touch-target);
+  transition: var(--mg-v2-transition-fast);
+  cursor: pointer;
+  border: none;
+}
+
+.mg-v2-landing-hero__cta--primary {
+  background-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-inverse);
+}
+
+.mg-v2-landing-hero__cta--primary:hover {
+  background-color: var(--mg-v2-color-primary-hover);
+}
+
+.mg-v2-landing-hero__cta--primary:active {
+  background-color: var(--mg-v2-color-primary-active);
+}
+
+.mg-v2-landing-hero__cta--primary:focus-visible {
+  outline: var(--mg-v2-border-width-focus) solid var(--mg-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+.mg-v2-landing-hero__cta--secondary {
+  background-color: transparent;
+  color: var(--mg-v2-color-primary-main);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-landing-hero__cta--secondary:hover {
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+.mg-v2-landing-hero__cta--secondary:active {
+  background-color: var(--mg-v2-color-state-active);
+}
+
+.mg-v2-landing-hero__cta--secondary:focus-visible {
+  outline: var(--mg-v2-border-width-focus) solid var(--mg-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+.mg-v2-landing-hero__media {
+  flex: 7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-v2-landing-hero__image {
+  width: 100%;
+  height: auto;
+  border-radius: var(--mg-v2-radius-xl);
+  object-fit: cover;
+}
+
+/* Responsive: Mobile < 768px */
+@media (max-width: 767px) {
+  .mg-v2-landing-hero {
+    flex-direction: column;
+    padding: var(--mg-v2-space-12) var(--mg-v2-grid-margin-mobile);
+    gap: var(--mg-v2-space-8);
+  }
+
+  .mg-v2-landing-hero__content {
+    flex: none;
+    width: 100%;
+  }
+
+  .mg-v2-landing-hero__title {
+    font-size: 2.25rem;
+  }
+
+  .mg-v2-landing-hero__cta-group {
+    flex-direction: column;
+  }
+
+  .mg-v2-landing-hero__cta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mg-v2-landing-hero__media {
+    flex: none;
+    width: 100%;
+  }
+}
+
+/* Responsive: Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mg-v2-landing-hero {
+    padding: var(--mg-v2-space-16) var(--mg-v2-grid-margin-tablet);
+    gap: var(--mg-v2-space-8);
+  }
+}

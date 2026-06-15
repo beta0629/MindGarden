@@ -84,6 +84,12 @@ jobs:
       PERSONAL_DATA_ENCRYPTION_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
       PERSONAL_DATA_ENCRYPTION_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
       MINDGARDEN_DORMANT_PII_ENC_KEY: ${{ secrets.MINDGARDEN_DORMANT_PII_ENC_KEY }}
+      # ops-portal-migration Phase 1 (PR #362, 2026-06-15):
+      # OpsTenantConstants#validate() 가 BE 부팅 시 본 키 미설정/blank 면 fail-fast.
+      # 운영 본사 tenantId 는 단일 값(`tenant-incheon-counseling-001`)이며
+      # 운영(deploy-production.yml) 과 동일 set 으로 dev.env 도 동기화한다.
+      # 미주입 시 ::notice 후 skip — secret 등록 전 batch fail 방지.
+      MINDGARDEN_HQ_TENANT_ID: ${{ secrets.MINDGARDEN_HQ_TENANT_ID }}
       # NCP SENS 4종 환경변수 폐기 (2026-06-12 SSOT 통합).
       # SmsGatewayServiceImpl → SolapiSmsProvider 단일 통합. 솔라피 자격 증명은
       # scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
@@ -871,6 +877,76 @@ jobs:
     # ============================================================================
 
     # ============================================================================
+    # [ops-portal-migration Phase 1 fix 2026-06-15] MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증 (개발)
+    # 배경: PR #362/#363 (Phase 1) 머지 후 운영 배포 run 27519148353 에서 GREEN 슬롯 BE
+    #       크래시 루프 — OpsTenantConstants#validate() 가 본 키 미설정/blank 시 BE 부팅 fail-fast.
+    # 가드: 본 step 은 dev.env 의 MINDGARDEN_HQ_TENANT_ID 를 GitHub Secret 으로 멱등 동기화.
+    #       운영(deploy-production.yml) 과 동일 set, dev 는 단일 systemd unit + 통합 restart step 패턴.
+    # 정책: secret 미등록 시 step skip — Phase 1 진입 전 등록 안내(notice) 후 BE 기동 영향 최소화.
+    # 사용자 액션:
+    #   gh secret set MINDGARDEN_HQ_TENANT_ID --env dev --body 'tenant-incheon-counseling-001' --repo beta0629/MindGarden
+    # ============================================================================
+    - name: 🏷️ MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: MINDGARDEN_HQ_TENANT_ID
+        script: |
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          KEY=MINDGARDEN_HQ_TENANT_ID
+
+          VALUE="${MINDGARDEN_HQ_TENANT_ID}"
+          if [ -z "$VALUE" ]; then
+            echo "::notice title=${KEY} secret missing::GitHub Secret ${KEY} 미설정 → dev.env 갱신을 skip 합니다. BE 부팅 시 OpsTenantConstants#validate() 가 fail-fast 합니다. 등록 권장: gh secret set ${KEY} --env dev --body 'tenant-incheon-counseling-001' --repo ${{ github.repository }}"
+            exit 0
+          fi
+
+          # 1) 파일 존재 보장
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+
+          # 2) no-op 검사 — 동일 값이면 마커 미작성 (재시작 생략)
+          CURRENT_VALUE=$(sudo grep -E "^[[:space:]]*${KEY}=" "$DEV_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+          if [ "$CURRENT_VALUE" = "$VALUE" ]; then
+            echo "✅ ${KEY} 변경 없음 (길이 ${#VALUE}자) — env 갱신·재시작 생략 (no-op)"
+            exit 0
+          fi
+
+          # 3) 백업
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          # 4) 멱등 KEY="VALUE" 갱신 (다른 dev sync step 과 동일 로직)
+          escaped_value=$(printf '%s' "$VALUE" | sed -e 's/[\\&|]/\\&/g')
+          if sudo grep -qE "^[[:space:]]*${KEY}=" "$DEV_ENV_FILE" 2>/dev/null; then
+            sudo sed -i "s|^[[:space:]]*${KEY}=.*|${KEY}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+          else
+            printf '%s="%s"\n' "$KEY" "$VALUE" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+          fi
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+          echo "✅ ${KEY} 갱신 완료 — 길이만 표시: (${#VALUE} chars)"
+
+          # 5) 변경 마커 작성 — 통합 restart step 이 1회만 systemctl restart 수행 (P2 transient 502 차단).
+          # ${KEY} PID env 검증은 통합 restart step 으로 이관.
+          sudo touch /tmp/mindgarden-dev-env-pending-restart
+          echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart (통합 restart step 에서 ${KEY} 반영·검증)"
+    # ============================================================================
+    # [/ops-portal-migration Phase 1 fix 2026-06-15]
+    # ============================================================================
+
+    # ============================================================================
     # [2026-06-12 SSOT 통합] NCP SENS env 자동 주입 step 폐기.
     # PR #227 (NCP SENS SignatureV2 정식 호출) + 다중 어댑터(NhnSmsProvider) 폐기.
     # SmsGatewayServiceImpl 은 SolapiSmsProvider 단일 호출로 통합됨.
@@ -1028,7 +1104,7 @@ jobs:
             echo "::warning::${UNIT} MainPID 조회 실패 (PID='$PID') — 프로세스 env 검증 skip"
           else
             echo "🔍 unit=${UNIT} / PID=${PID} 프로세스 env 일괄 확인"
-            ALL_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS PROFILE_IMAGE_UPLOAD_DIR"
+            ALL_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS PROFILE_IMAGE_UPLOAD_DIR MINDGARDEN_HQ_TENANT_ID"
             MISSING_ENV=0
             CHECKED=0
             for k in $ALL_KEYS; do

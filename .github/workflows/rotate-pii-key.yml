@@ -260,7 +260,7 @@ jobs:
           echo "✅ 입력 검증 통과 — env=${ROTATION_ENV} phase=${ROTATION_PHASE} table=${ROTATION_TABLE} effective='${EFFECTIVE_TABLES}' targetKey=*** chunk=${CS} dry_run=${ROTATION_DRY_RUN}"
 
       - name: 📥 체크아웃 (이력 PR / 워크플로 메타용)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: develop
           fetch-depth: 1

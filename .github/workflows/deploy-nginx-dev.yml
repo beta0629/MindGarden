@@ -16,7 +16,7 @@ jobs:
     
     steps:
     - name: 📥 코드 체크아웃
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 통합 설정)
       uses: appleboy/scp-action@v0.1.7

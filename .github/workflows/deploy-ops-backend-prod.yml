@@ -49,7 +49,7 @@ jobs:
           echo "이벤트=${{ github.event_name }} 배포 ref=$DREF"
 
       - name: 📥 코드 체크아웃
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.guard.outputs.deploy_ref }}
 

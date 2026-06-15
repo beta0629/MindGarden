@@ -1,0 +1,27 @@
+/**
+ * LandingTemplate CSS — mg-v2-* 토큰 한정
+ * 랜딩 페이지 4종 Organism 수직 조립 래퍼.
+ *
+ * @author MindGarden
+ * @since 2026-06-16
+ */
+
+.mg-v2-landing-template {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: var(--mg-v2-color-surface-bg);
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* 섹션 간 시각적 구분선 */
+.mg-v2-landing-template > * + * {
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+}
+
+/* 다크 모드: border 자동 적용 (color-scheme inherit) */
+@media (prefers-color-scheme: dark) {
+  .mg-v2-landing-template {
+    background-color: var(--mg-v2-color-surface-bg);
+  }
+}

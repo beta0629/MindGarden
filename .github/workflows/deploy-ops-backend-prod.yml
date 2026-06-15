@@ -54,7 +54,7 @@ jobs:
           ref: ${{ steps.guard.outputs.deploy_ref }}
 
       - name: ☕ Java 17 설정
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: "17"
           distribution: "temurin"

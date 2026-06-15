@@ -5,12 +5,15 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.core.constant.OpsTenantConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.SecurityAuditLog;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.SecurityAuditLogRepository;
+import com.coresolution.core.util.LogSanitizer;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,25 +23,34 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 보안 감사 로그 API 컨트롤러
- * 테넌트별 보안 감사 로그 및 통계 제공
+ * 보안 감사 로그 API 컨트롤러 — Ops Portal 전용 (본사 운영팀).
+ * 테넌트별 보안 감사 로그 및 통계 제공.
  *
- * <p><b>Ops Portal 분리 권장 (PR-2/9 SSOT):</b>
- * 본 컨트롤러의 {@code HQ_MASTER} 가드는 코어솔루션 본사(공급사) 권한이며,
- * 별도 후속 PR ({@code ops-portal-migration}) 에서 운영 포털로 분리 예정.
- * 본 PR 에서는 변경 안 함 (회귀 위험 최소화).</p>
+ * <h3>권한 가드 — 옵션 3+1 하이브리드 (Defense in Depth)</h3>
+ * <ol>
+ *   <li>클래스 레벨 {@code @PreAuthorize("hasRole('OPS')")} — Ops Portal 운영자만 호출 가능.</li>
+ *   <li>메서드별 진입부 {@link OpsTenantConstants#isHqTenant(String)} 자체 검증.</li>
+ * </ol>
+ *
+ * <p>표준 정합:
+ * {@code docs/standards/ROLE_STANDARD.md} §3.2 +
+ * {@code docs/project-management/OPS_PORTAL_MIGRATION_PLAN.md} §4.4, §5 (Phase 3).</p>
  *
  * @author CoreSolution
- * @version 1.0.0
  * @since 2025-12-02
  */
 @Slf4j
 @RestController
 @RequestMapping({"/api/v1/security/audit", "/api/security/audit"})
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('OPS')")
 public class SecurityAuditController {
-    
+
+    private static final String HQ_GUARD_DENY_MESSAGE =
+        "보안 감사 로그는 본사(Ops) 테넌트만 호출 가능 — 외부 테넌트 차단";
+
     private final SecurityAuditLogRepository auditLogRepository;
+    private final OpsTenantConstants opsTenantConstants;
     
     /**
      * 최근 보안 감사 로그 조회 (테넌트별)
@@ -48,11 +60,11 @@ public class SecurityAuditController {
      * @return 최근 감사 로그
      */
     @GetMapping("/recent")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<List<SecurityAuditLog>>> getRecentAuditLogs(
             @RequestParam(required = false) String tenantId,
             @RequestParam(defaultValue = "20") int limit
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
             
@@ -93,10 +105,10 @@ public class SecurityAuditController {
      * @return 요약 통계
      */
     @GetMapping("/summary")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAuditSummary(
             @RequestParam(required = false) String tenantId
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
             
@@ -162,12 +174,12 @@ public class SecurityAuditController {
      * @return 감사 로그 통계
      */
     @GetMapping("/statistics")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAuditStatistics(
             @RequestParam(required = false) String tenantId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
             
@@ -238,12 +250,12 @@ public class SecurityAuditController {
      * @return 이벤트 타입별 감사 로그
      */
     @GetMapping("/by-event-type")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<List<SecurityAuditLog>>> getAuditLogsByEventType(
             @RequestParam(required = false) String tenantId,
             @RequestParam String eventType,
             @RequestParam(defaultValue = "10") int limit
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
             
@@ -269,6 +281,24 @@ public class SecurityAuditController {
         } catch (Exception e) {
             log.error("이벤트 타입별 보안 감사 로그 조회 실패", e);
             return ResponseEntity.ok(ApiResponse.error("이벤트 타입별 보안 감사 로그 조회 실패: " + e.getMessage()));
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Internal — HQ 테넌트 가드 (옵션 3+1 하이브리드, Defense in Depth)
+    // ------------------------------------------------------------------
+
+    /**
+     * 현재 요청 테넌트가 본사(HQ) 인지 검증한다.
+     *
+     * @throws AccessDeniedException 본사 테넌트가 아닌 경우
+     */
+    private void assertHqTenant() {
+        String currentTenant = TenantContextHolder.getRequiredTenantId();
+        if (!opsTenantConstants.isHqTenant(currentTenant)) {
+            log.warn("[OPS] 보안 감사 로그 외부 테넌트 차단 — currentTenant={} (HQ 가드)",
+                LogSanitizer.forLog(currentTenant));
+            throw new AccessDeniedException(HQ_GUARD_DENY_MESSAGE);
         }
     }
 }

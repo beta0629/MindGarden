@@ -1,0 +1,161 @@
+/**
+ * OnboardingNavigation CSS — mg-v2-* 토큰 한정
+ *
+ * 하단 이전·다음·임시저장·완료 네비게이션 Organism 스타일.
+ * §10 사양 준수: Primary / Outline / Text 버튼 배치.
+ *
+ * @author MindGarden
+ * @since 2026-06-15
+ */
+
+/* ============================================================
+   Container
+   ============================================================ */
+.mg-v2-onboarding-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mg-v2-space-6) 0;
+  gap: var(--mg-v2-space-3);
+}
+
+/* ============================================================
+   Button Groups
+   ============================================================ */
+.mg-v2-onboarding-nav__left {
+  display: flex;
+  align-items: center;
+}
+
+.mg-v2-onboarding-nav__right {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  margin-left: auto;
+}
+
+/* ============================================================
+   Base Button
+   ============================================================ */
+.mg-v2-onboarding-nav__btn {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  border-radius: var(--mg-v2-radius-md);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-6);
+  min-height: var(--mg-v2-component-height-lg);
+  cursor: pointer;
+  transition: background-color var(--mg-v2-transition-fast),
+              border-color var(--mg-v2-transition-fast),
+              color var(--mg-v2-transition-fast),
+              box-shadow var(--mg-v2-transition-fast);
+  border: var(--mg-v2-border-width-thin) solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-space-2);
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: var(--mg-v2-font-line-height-body);
+}
+
+.mg-v2-onboarding-nav__btn:focus-visible {
+  outline: 2px solid var(--mg-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+.mg-v2-onboarding-nav__btn:disabled {
+  opacity: var(--mg-v2-opacity-disabled);
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Primary (다음 단계로 / 신청 완료)
+   ============================================================ */
+.mg-v2-onboarding-nav__btn--primary {
+  background-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-inverse);
+  border-color: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-onboarding-nav__btn--primary:hover:not(:disabled) {
+  background-color: var(--mg-v2-color-primary-hover);
+  border-color: var(--mg-v2-color-primary-hover);
+}
+
+.mg-v2-onboarding-nav__btn--primary:active:not(:disabled) {
+  background-color: var(--mg-v2-color-primary-active);
+  border-color: var(--mg-v2-color-primary-active);
+}
+
+/* ============================================================
+   Outline (이전)
+   ============================================================ */
+.mg-v2-onboarding-nav__btn--outline {
+  background-color: var(--mg-v2-color-surface-bg);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-border-default);
+}
+
+.mg-v2-onboarding-nav__btn--outline:hover:not(:disabled) {
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+.mg-v2-onboarding-nav__btn--outline:active:not(:disabled) {
+  background-color: var(--mg-v2-color-state-active);
+}
+
+/* ============================================================
+   Secondary (임시저장)
+   ============================================================ */
+.mg-v2-onboarding-nav__btn--secondary {
+  background-color: transparent;
+  color: var(--mg-v2-color-text-secondary);
+  border-color: var(--mg-v2-color-border-default);
+}
+
+.mg-v2-onboarding-nav__btn--secondary:hover:not(:disabled) {
+  background-color: var(--mg-v2-color-state-hover);
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* ============================================================
+   Loading Spinner (inline)
+   ============================================================ */
+.mg-v2-onboarding-nav__spinner {
+  display: inline-block;
+  width: var(--mg-v2-space-4);
+  height: var(--mg-v2-space-4);
+  border: var(--mg-v2-border-width-normal) solid var(--mg-v2-color-text-inverse);
+  border-top-color: transparent;
+  border-radius: var(--mg-v2-radius-pill);
+  animation: mg-v2-nav-spin var(--mg-v2-transition-duration-slow) linear infinite;
+}
+
+@keyframes mg-v2-nav-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   Responsive — Mobile: 수직 적층 or full-width
+   ============================================================ */
+@media (max-width: 768px) {
+  .mg-v2-onboarding-nav {
+    flex-direction: column-reverse;
+    gap: var(--mg-v2-space-3);
+  }
+
+  .mg-v2-onboarding-nav__left,
+  .mg-v2-onboarding-nav__right {
+    width: 100%;
+  }
+
+  .mg-v2-onboarding-nav__right {
+    flex-direction: column;
+    margin-left: 0;
+  }
+
+  .mg-v2-onboarding-nav__btn {
+    width: 100%;
+  }
+}

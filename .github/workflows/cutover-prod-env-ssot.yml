@@ -1,0 +1,485 @@
+name: 🔄 prod.env SSOT cutover (1회성)
+
+# ============================================================================
+# prod.env SSOT cutover 1회성 워크플로 (2026-06-15 신설)
+#
+# 목적: DB_ENV_SSOT_POLICY.md §1~§4 정합 — /etc/mindgarden/prod-from-dev.env (60키)
+#       와 drop-in 90-envfile.conf 를 /etc/mindgarden/prod.env 단일 SSOT 로 통합한다.
+#
+# 정합 표준:
+#   - docs/standards/DB_ENV_SSOT_POLICY.md §1 (SSOT 단일화), §2 (PR-4 cutover),
+#     §3 (drop-in 평문 secret 금지), §4 (백업 보존 최신 7개)
+#   - docs/운영반영/DB_ENV_SSOT_PRECHECK_20260613.md 부록 D.4
+#   - .github/workflows/deploy-production.yml L737~L900 (BG slot 절차)
+#
+# 안전장치:
+#   - workflow_dispatch only (자동 트리거 금지)
+#   - if: github.ref == 'refs/heads/main' (main 가드)
+#   - concurrency: group=deploy-production (deploy-production.yml 와 동일 group)
+#       → 운영 배포와 동시 실행 직렬화 (cancel-in-progress=false 큐잉)
+#   - environment: prod (required reviewers + wait_timer)
+#   - dry_run 기본 true — Phase 1(사전 점검·백업)·Phase 5(검증)만 실행, Phase 2~4·6 skip
+#   - prod.env 와 prod-from-dev.env 의 키 set 공통 0개 (정책 §1) — 머지 충돌 없음
+#   - BG slot 순차 재시작 (비활성 먼저, grace 30s + 5회 연속 UP) — 무다운타임
+#
+# 1회성: cutover 완료 후 본 워크플로는 별 PR 로 archive 또는 retain 결정.
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (시뮬레이션만 — Phase 1·5 실행, 머지·재시작 skip)'
+        type: boolean
+        default: true
+        required: true
+
+concurrency:
+  # deploy-production.yml 과 동일 group — 운영 배포와 동시 실행 시 큐잉 (cutover 중 deploy 차단)
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  cutover:
+    # main 가드: workflow_dispatch 가 다른 브랜치에서 시도되면 job 자체 skip
+    if: github.ref == 'refs/heads/main'
+    name: 🔄 prod.env SSOT cutover
+    runs-on: ubuntu-latest
+    # prod environment — required reviewers + wait_timer 적용
+    environment: prod
+    timeout-minutes: 30
+    env:
+      DRY_RUN: ${{ github.event.inputs.dry_run }}
+    steps:
+      - name: 📥 체크아웃 (main pin)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # ========================================================================
+      # Phase 1 — 사전 점검 + 백업 (always)
+      # 백업 대상: prod.env, prod-from-dev.env, drop-in *.service.d/
+      # 키 수 사전 확인 (BEFORE) → Phase 5 검증 시 AFTER 와 비교
+      # ========================================================================
+      - name: 🔒 Phase 1 — 사전 점검 + 백업
+        env:
+          DRY_RUN_FLAG: ${{ github.event.inputs.dry_run }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          envs: DRY_RUN_FLAG
+          script: |
+            set -euo pipefail
+            echo "🔒 Phase 1 — 사전 점검 + 백업 시작 (dry_run=${DRY_RUN_FLAG})"
+            TS=$(date +%Y%m%d-%H%M%S)
+            STATE_FILE=/tmp/cutover-state.env
+            sudo rm -f "$STATE_FILE"
+
+            # 활성 slot 식별 — deploy-production.yml 패턴 (active-backend 파일)
+            ACTIVE_FILE=/etc/mindgarden/active-backend
+            ACTIVE=$(sudo cat "$ACTIVE_FILE" 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}')
+            if [ -z "$ACTIVE" ]; then
+              ACTIVE=blue
+              echo "::warning::active-backend 파일 없음 — blue 로 가정"
+            fi
+            if [ "$ACTIVE" != "blue" ] && [ "$ACTIVE" != "green" ]; then
+              echo "::error::active-backend 값 비정상 ('$ACTIVE') — cutover 중단"
+              exit 1
+            fi
+            echo "📌 현재 활성 slot: $ACTIVE"
+            echo "ACTIVE_SLOT=$ACTIVE" | sudo tee "$STATE_FILE" > /dev/null
+            echo "TS=$TS" | sudo tee -a "$STATE_FILE" > /dev/null
+
+            # prod.env / prod-from-dev.env 존재 점검
+            if [ ! -f /etc/mindgarden/prod.env ]; then
+              echo "::error::/etc/mindgarden/prod.env 누락 — cutover 중단"
+              exit 1
+            fi
+            if [ ! -f /etc/mindgarden/prod-from-dev.env ]; then
+              echo "::warning::/etc/mindgarden/prod-from-dev.env 없음 — 이미 cutover 완료된 상태로 추정"
+              echo "PFD_ABSENT=1" | sudo tee -a "$STATE_FILE" > /dev/null
+            else
+              echo "PFD_ABSENT=0" | sudo tee -a "$STATE_FILE" > /dev/null
+            fi
+
+            # 키 수 사전 확인 (BEFORE)
+            BEFORE_PROD=$(sudo grep -cE '^[A-Z_][A-Z0-9_]*=' /etc/mindgarden/prod.env || true)
+            echo "📊 BEFORE prod.env 키 수: $BEFORE_PROD"
+            if [ -f /etc/mindgarden/prod-from-dev.env ]; then
+              BEFORE_PFD=$(sudo grep -cE '^[A-Z_][A-Z0-9_]*=' /etc/mindgarden/prod-from-dev.env || true)
+              echo "📊 BEFORE prod-from-dev.env 키 수: $BEFORE_PFD"
+              echo "BEFORE_PFD=$BEFORE_PFD" | sudo tee -a "$STATE_FILE" > /dev/null
+            fi
+            echo "BEFORE_PROD=$BEFORE_PROD" | sudo tee -a "$STATE_FILE" > /dev/null
+
+            # 키 set 공통 0 검증 (정책 §1)
+            if [ -f /etc/mindgarden/prod-from-dev.env ]; then
+              COMMON_COUNT=$(comm -12 \
+                <(sudo grep -E '^[A-Z_][A-Z0-9_]*=' /etc/mindgarden/prod.env | cut -d= -f1 | sort -u) \
+                <(sudo grep -E '^[A-Z_][A-Z0-9_]*=' /etc/mindgarden/prod-from-dev.env | cut -d= -f1 | sort -u) \
+                | wc -l | tr -d ' ')
+              echo "📊 키 set 공통: $COMMON_COUNT 개 (정책 §1 기대값=0)"
+              echo "COMMON_COUNT=$COMMON_COUNT" | sudo tee -a "$STATE_FILE" > /dev/null
+              if [ "$COMMON_COUNT" != "0" ]; then
+                echo "::warning::두 env 파일 키 set 에 공통 키 발견 ($COMMON_COUNT 개) — Phase 2 머지 시 prod.env 기존 값 유지"
+              fi
+            fi
+
+            # 백업 — 누적 7개 보존 정책 (정책 §4) 은 Phase 6 에서 정리
+            echo "💾 백업 생성 (TS=$TS)"
+            sudo cp -a /etc/mindgarden/prod.env "/etc/mindgarden/prod.env.bak.$TS"
+            echo "   ✅ prod.env → prod.env.bak.$TS"
+            if [ -f /etc/mindgarden/prod-from-dev.env ]; then
+              sudo cp -a /etc/mindgarden/prod-from-dev.env "/etc/mindgarden/prod-from-dev.env.bak.$TS"
+              echo "   ✅ prod-from-dev.env → prod-from-dev.env.bak.$TS"
+            fi
+            for slot in blue green; do
+              DROP_IN_DIR="/etc/systemd/system/mindgarden-core-${slot}.service.d"
+              if [ -d "$DROP_IN_DIR" ]; then
+                sudo cp -a "$DROP_IN_DIR" "/tmp/drop-in-${slot}-${TS}"
+                echo "   ✅ ${DROP_IN_DIR} → /tmp/drop-in-${slot}-${TS}"
+              fi
+            done
+
+            # 권한·소유권 검증 (RFC: root:mindgarden 0640 또는 root:root 600 — deploy-production.yml 참조)
+            PERM=$(sudo stat -c '%a' /etc/mindgarden/prod.env)
+            OWN=$(sudo stat -c '%U:%G' /etc/mindgarden/prod.env)
+            echo "📋 prod.env 권한: $PERM, 소유: $OWN"
+            echo "PERM=$PERM" | sudo tee -a "$STATE_FILE" > /dev/null
+            echo "OWN=$OWN" | sudo tee -a "$STATE_FILE" > /dev/null
+
+            echo "✅ Phase 1 완료"
+            sudo cat "$STATE_FILE"
+
+      # ========================================================================
+      # Phase 2 — prod.env 머지 (dry_run=false only)
+      # comm -23: prod-from-dev.env 에만 있는 키만 prod.env 에 append
+      # ========================================================================
+      - name: 🔀 Phase 2 — prod.env 머지 (DB_ENV_SSOT_POLICY §1)
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            STATE_FILE=/tmp/cutover-state.env
+            if [ ! -f "$STATE_FILE" ]; then
+              echo "::error::Phase 1 state 파일 누락 — 사전 점검 실패"
+              exit 1
+            fi
+            # shellcheck disable=SC1091
+            sudo cat "$STATE_FILE"
+            # state 변수 로드 (PFD_ABSENT, TS)
+            PFD_ABSENT=$(sudo grep '^PFD_ABSENT=' "$STATE_FILE" | cut -d= -f2)
+            TS=$(sudo grep '^TS=' "$STATE_FILE" | cut -d= -f2)
+            if [ "$PFD_ABSENT" = "1" ]; then
+              echo "ℹ️ prod-from-dev.env 부재 — 이미 cutover 완료. Phase 2 skip."
+              exit 0
+            fi
+
+            echo "🔀 Phase 2 — prod-from-dev.env 신규 키만 prod.env 에 머지"
+
+            # comm -23: prod-from-dev.env 에만 있는 키 (prod.env 에 없는 키)
+            sudo bash -c "
+              comm -23 \
+                <(grep -E '^[A-Z_][A-Z0-9_]*=' /etc/mindgarden/prod-from-dev.env | cut -d= -f1 | sort -u) \
+                <(grep -E '^[A-Z_][A-Z0-9_]*=' /etc/mindgarden/prod.env | cut -d= -f1 | sort -u) \
+                > /tmp/keys-to-add.txt
+            "
+            ADD_COUNT=$(wc -l < /tmp/keys-to-add.txt | tr -d ' ')
+            echo "📊 추가 대상 키 수: $ADD_COUNT"
+            if [ "$ADD_COUNT" = "0" ]; then
+              echo "ℹ️ 추가할 키 없음 — Phase 2 머지 skip (이미 동기화된 상태)"
+            else
+              # 멱등 보장: 머지 헤더 추가 (이미 있으면 skip)
+              if ! sudo grep -q "^# ===== prod-from-dev.env merge $TS =====" /etc/mindgarden/prod.env 2>/dev/null; then
+                echo "" | sudo tee -a /etc/mindgarden/prod.env > /dev/null
+                echo "# ===== prod-from-dev.env merge $TS =====" | sudo tee -a /etc/mindgarden/prod.env > /dev/null
+                echo "# DB_ENV_SSOT_POLICY.md §1·§2 — cutover (1회성) 머지" | sudo tee -a /etc/mindgarden/prod.env > /dev/null
+              fi
+
+              # 각 키의 정의 라인 (마지막 정의 우선)을 prod.env 에 append
+              sudo bash -c '
+                while IFS= read -r key; do
+                  [ -z "$key" ] && continue
+                  line=$(grep -E "^${key}=" /etc/mindgarden/prod-from-dev.env | tail -n1)
+                  if [ -n "$line" ]; then
+                    echo "$line" >> /etc/mindgarden/prod.env
+                  fi
+                done < /tmp/keys-to-add.txt
+              '
+              echo "✅ $ADD_COUNT 개 키 append 완료"
+            fi
+
+            # 권한 복원 (root:mindgarden 0640 또는 기존 권한 유지)
+            PERM=$(sudo grep '^PERM=' "$STATE_FILE" | cut -d= -f2)
+            OWN=$(sudo grep '^OWN=' "$STATE_FILE" | cut -d= -f2)
+            sudo chown "$OWN" /etc/mindgarden/prod.env
+            sudo chmod "$PERM" /etc/mindgarden/prod.env
+            echo "✅ 권한 복원: chown $OWN, chmod $PERM"
+
+            # 머지 후 키 수
+            AFTER_PROD=$(sudo grep -cE '^[A-Z_][A-Z0-9_]*=' /etc/mindgarden/prod.env || true)
+            echo "📊 AFTER prod.env 키 수: $AFTER_PROD"
+            echo "AFTER_PROD=$AFTER_PROD" | sudo tee -a "$STATE_FILE" > /dev/null
+
+            # prod-from-dev.env 폐기 (rename → DEPRECATED-<TS>)
+            DEPRECATED="/etc/mindgarden/prod-from-dev.env.DEPRECATED-$TS"
+            sudo mv /etc/mindgarden/prod-from-dev.env "$DEPRECATED"
+            echo "🗑️ prod-from-dev.env → $DEPRECATED"
+            sudo rm -f /tmp/keys-to-add.txt
+
+      # ========================================================================
+      # Phase 3 — drop-in 90-envfile.conf 제거 + daemon-reload (dry_run=false only)
+      # ========================================================================
+      - name: 🗑️ Phase 3 — drop-in 90-envfile.conf 제거 + daemon-reload
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            echo "🗑️ Phase 3 — drop-in 90-envfile.conf 제거"
+            STATE_FILE=/tmp/cutover-state.env
+            TS=$(sudo grep '^TS=' "$STATE_FILE" | cut -d= -f2)
+            for slot in blue green; do
+              DROP_IN="/etc/systemd/system/mindgarden-core-${slot}.service.d/90-envfile.conf"
+              if [ -f "$DROP_IN" ]; then
+                # 안전 — rename 으로 폐기 (직접 rm 대신 .DEPRECATED-$TS)
+                sudo mv "$DROP_IN" "${DROP_IN}.DEPRECATED-${TS}"
+                echo "   ✅ ${DROP_IN} → ${DROP_IN}.DEPRECATED-${TS}"
+              else
+                echo "   ℹ️ ${DROP_IN} 없음 — skip"
+              fi
+            done
+            echo "🔄 systemctl daemon-reload"
+            sudo systemctl daemon-reload
+            echo "✅ Phase 3 완료"
+
+      # ========================================================================
+      # Phase 4 — BG slot 순차 재시작 (무다운타임, dry_run=false only)
+      # 비활성 → grace 30s + 5회 연속 UP → nginx upstream 전환 → 이전 활성
+      # ========================================================================
+      - name: 🔵🟢 Phase 4 — BG slot 순차 재시작 (무다운타임)
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          timeout: 120s
+          command_timeout: 25m
+          script: |
+            set -euo pipefail
+            STATE_FILE=/tmp/cutover-state.env
+            ACTIVE_SLOT=$(sudo grep '^ACTIVE_SLOT=' "$STATE_FILE" | cut -d= -f2)
+            ACTIVE_FILE=/etc/mindgarden/active-backend
+            UPSTREAM_SNIP=/etc/nginx/snippets/mindgarden-core-backend-upstream.conf
+
+            if [ "$ACTIVE_SLOT" = "blue" ]; then
+              INACTIVE=green
+              INACTIVE_PORT=8081
+              ACTIVE_PORT=8080
+            else
+              INACTIVE=blue
+              INACTIVE_PORT=8080
+              ACTIVE_PORT=8081
+            fi
+            INACTIVE_UNIT="mindgarden-core-${INACTIVE}.service"
+            ACTIVE_UNIT="mindgarden-core-${ACTIVE_SLOT}.service"
+            echo "📌 현재 active=${ACTIVE_SLOT}(:${ACTIVE_PORT}) / 재시작 대상 inactive=${INACTIVE}(:${INACTIVE_PORT})"
+
+            # 4-1) 비활성 slot 재시작 (새 prod.env 로드)
+            echo "🔄 [4-1] 비활성 slot 재시작: $INACTIVE_UNIT"
+            sudo systemctl restart "$INACTIVE_UNIT" || true
+            sleep 30
+
+            # 5회 연속 UP 확인 (총 최대 ~3분)
+            echo "🏥 [4-1] 비활성 slot 헬스 — 5회 연속 200 확인"
+            CONSEC_UP=0
+            for i in $(seq 1 30); do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
+                "http://127.0.0.1:${INACTIVE_PORT}/actuator/health" 2>/dev/null || echo "000")
+              if [ "$CODE" = "200" ]; then
+                CONSEC_UP=$((CONSEC_UP + 1))
+                echo "   ✅ 시도 $i: $CODE (연속 UP=$CONSEC_UP)"
+                if [ "$CONSEC_UP" -ge 5 ]; then break; fi
+              else
+                CONSEC_UP=0
+                echo "   ⏳ 시도 $i: $CODE (연속 UP 리셋)"
+              fi
+              sleep 6
+            done
+            if [ "$CONSEC_UP" -lt 5 ]; then
+              echo "::error::[4-1] 비활성 slot ($INACTIVE) 5회 연속 UP 실패 — cutover 중단"
+              sudo systemctl status "$INACTIVE_UNIT" --no-pager -l | head -40 || true
+              sudo journalctl -u "$INACTIVE_UNIT" --no-pager -n 80 || true
+              exit 1
+            fi
+            echo "✅ [4-1] $INACTIVE slot 안정 (5회 연속 UP)"
+
+            # 4-2) nginx upstream 전환 (deploy-production.yml L854~L864 패턴)
+            echo "🌐 [4-2] nginx upstream → $INACTIVE (:$INACTIVE_PORT)"
+            sudo mkdir -p /etc/nginx/snippets
+            {
+              echo 'upstream mindgarden_core_backend {'
+              echo "    server 127.0.0.1:${INACTIVE_PORT};"
+              echo '    keepalive 32;'
+              echo '}'
+            } | sudo tee "$UPSTREAM_SNIP" > /dev/null
+
+            if ! sudo nginx -t 2>&1 | tee /tmp/nginx-t.log; then
+              echo "::error::nginx -t 실패 — upstream 롤백"
+              sudo cp -a "${UPSTREAM_SNIP}" "${UPSTREAM_SNIP}.failed-$(date +%s)" || true
+              cat /tmp/nginx-t.log
+              exit 1
+            fi
+            sudo systemctl reload nginx
+            echo "$INACTIVE" | sudo tee "$ACTIVE_FILE" > /dev/null
+            echo "✅ [4-2] active-backend → $INACTIVE (트래픽 전환 완료)"
+
+            # 4-3) 이전 활성 slot 재시작 (이제는 inactive 가 되어 트래픽 영향 0)
+            sleep 10
+            echo "🔄 [4-3] 이전 활성 slot 재시작 (이제 idle): $ACTIVE_UNIT"
+            sudo systemctl restart "$ACTIVE_UNIT" || true
+            sleep 30
+
+            CONSEC_UP=0
+            for i in $(seq 1 30); do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
+                "http://127.0.0.1:${ACTIVE_PORT}/actuator/health" 2>/dev/null || echo "000")
+              if [ "$CODE" = "200" ]; then
+                CONSEC_UP=$((CONSEC_UP + 1))
+                if [ "$CONSEC_UP" -ge 5 ]; then break; fi
+              else
+                CONSEC_UP=0
+              fi
+              sleep 6
+            done
+            if [ "$CONSEC_UP" -lt 5 ]; then
+              echo "::warning::[4-3] 이전 활성 slot 5회 연속 UP 실패 — 트래픽 영향 없으나 회수 후 점검 필요"
+              sudo systemctl status "$ACTIVE_UNIT" --no-pager -l | head -40 || true
+              sudo journalctl -u "$ACTIVE_UNIT" --no-pager -n 80 || true
+            else
+              echo "✅ [4-3] 이전 활성 slot 안정 (5회 연속 UP)"
+            fi
+            echo "✅ Phase 4 완료 — 양쪽 슬롯 새 prod.env SSOT 로 가동"
+
+      # ========================================================================
+      # Phase 5 — 검증 (always — dry_run 시에도 점검)
+      # ========================================================================
+      - name: ✅ Phase 5 — 검증
+        env:
+          DRY_RUN_FLAG: ${{ github.event.inputs.dry_run }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          envs: DRY_RUN_FLAG
+          script: |
+            set -euo pipefail
+            echo "✅ Phase 5 — 검증 (dry_run=${DRY_RUN_FLAG})"
+            STATE_FILE=/tmp/cutover-state.env
+            sudo cat "$STATE_FILE" || true
+
+            # 5-1) prod.env 키 수 확인
+            AFTER_PROD=$(sudo grep -cE '^[A-Z_][A-Z0-9_]*=' /etc/mindgarden/prod.env || true)
+            BEFORE_PROD=$(sudo grep '^BEFORE_PROD=' "$STATE_FILE" | cut -d= -f2)
+            echo "📊 prod.env 키 수: BEFORE=$BEFORE_PROD → AFTER=$AFTER_PROD"
+
+            if [ "$DRY_RUN_FLAG" = "false" ]; then
+              # 5-2) prod-from-dev.env 폐기 확인
+              if [ -f /etc/mindgarden/prod-from-dev.env ]; then
+                echo "::error::prod-from-dev.env 가 여전히 존재 — Phase 2 폐기 실패"
+                exit 1
+              fi
+              echo "✅ prod-from-dev.env 폐기 확인"
+
+              # 5-3) drop-in 90-envfile.conf 제거 확인
+              for slot in blue green; do
+                DROP_IN="/etc/systemd/system/mindgarden-core-${slot}.service.d/90-envfile.conf"
+                if [ -f "$DROP_IN" ]; then
+                  echo "::error::$DROP_IN 가 여전히 존재 — Phase 3 제거 실패"
+                  exit 1
+                fi
+              done
+              echo "✅ drop-in 90-envfile.conf 제거 확인"
+
+              # 5-4) BG slot 양쪽 헬스 확인
+              for port in 8080 8081; do
+                CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
+                  "http://127.0.0.1:${port}/actuator/health" 2>/dev/null || echo "000")
+                echo "🏥 :${port}/actuator/health = $CODE"
+                if [ "$CODE" != "200" ]; then
+                  echo "::warning:::${port} 비정상 — 후속 deploy-production.yml 헬스체크에서 재검증 필요"
+                fi
+              done
+
+              # 5-5) 활성 slot 프로세스 env 검증 — JWT_SECRET 길이만 (값 노출 금지)
+              ACTIVE=$(sudo cat /etc/mindgarden/active-backend 2>/dev/null | tr -d '[:space:]' | awk '{print tolower($0)}')
+              ACTIVE_UNIT="mindgarden-core-${ACTIVE}.service"
+              PID=$(systemctl show -p MainPID --value "$ACTIVE_UNIT" 2>/dev/null || echo "")
+              if [ -n "$PID" ] && [ "$PID" != "0" ]; then
+                echo "🔍 active=$ACTIVE / PID=$PID — JWT_SECRET 주입 확인"
+                LEN=$(sudo cat "/proc/$PID/environ" 2>/dev/null | tr '\0' '\n' | awk -F= '$1=="JWT_SECRET" {print length(substr($0, 12)); exit}')
+                if [ -n "$LEN" ] && [ "$LEN" != "0" ]; then
+                  echo "   ✅ JWT_SECRET = ($LEN chars)"
+                else
+                  echo "::warning::JWT_SECRET 프로세스 env 누락 — 회귀 위험"
+                fi
+              fi
+
+              # 5-6) journal 에러 모니터 (최근 5분)
+              echo "🔍 journal ERROR 모니터 (최근 5분, 양쪽 slot)"
+              for slot in blue green; do
+                ERR_COUNT=$(sudo journalctl -u "mindgarden-core-${slot}.service" --since "5 minutes ago" --no-pager 2>/dev/null \
+                  | grep -ciE 'ERROR|Exception|fail-fast|FATAL' || true)
+                echo "   $slot: ERROR/Exception/FATAL = $ERR_COUNT 건"
+              done
+            else
+              echo "ℹ️ dry_run 모드 — Phase 2~4 skip, 사전 점검·백업만 완료"
+            fi
+            echo "✅ Phase 5 검증 완료"
+
+      # ========================================================================
+      # Phase 6 — 누적 백업 정리 (최신 7개, 정책 §4) (dry_run=false only)
+      # ========================================================================
+      - name: 🧹 Phase 6 — 누적 백업 정리 (최신 7개 보존)
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            echo "🧹 Phase 6 — 누적 백업 정리 (정책 §4: 최신 7개 유지)"
+            cd /etc/mindgarden
+            for pattern in 'prod.env.bak.*' 'prod-from-dev.env.bak.*' 'prod-from-dev.env.DEPRECATED-*'; do
+              # shellcheck disable=SC2010
+              FOUND=$(sudo ls -1t $pattern 2>/dev/null || true)
+              if [ -n "$FOUND" ]; then
+                TOTAL=$(echo "$FOUND" | wc -l | tr -d ' ')
+                echo "📋 $pattern : $TOTAL 건"
+                echo "$FOUND" | tail -n +8 | while IFS= read -r f; do
+                  [ -z "$f" ] && continue
+                  echo "   🗑️ $f"
+                  sudo rm -f "$f"
+                done
+              fi
+            done
+            # /tmp/drop-in-*-* 정리
+            sudo find /tmp -maxdepth 1 -name 'drop-in-blue-*' -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+            sudo find /tmp -maxdepth 1 -name 'drop-in-green-*' -mtime +1 -exec rm -rf {} + 2>/dev/null || true
+            sudo rm -f /tmp/cutover-state.env /tmp/nginx-t.log
+            echo "✅ Phase 6 정리 완료"

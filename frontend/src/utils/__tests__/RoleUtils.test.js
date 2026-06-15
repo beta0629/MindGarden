@@ -20,6 +20,7 @@ import RoleUtils, {
   isStaff,
   isConsultant,
   isClient,
+  isOps,
   isProfessionalProvider,
   hasRole,
   hasAnyRole
@@ -147,6 +148,37 @@ describe('isClient', () => {
   });
 });
 
+describe('isOps (ops-portal-migration Phase 5)', () => {
+  test('OPS_AWARE_LEGACY_ROLES(HQ_MASTER/HQ_ADMIN/SUPER_HQ_ADMIN/SUPER_ADMIN) 는 true', () => {
+    expect(isOps({ role: 'HQ_MASTER' })).toBe(true);
+    expect(isOps({ role: 'HQ_ADMIN' })).toBe(true);
+    expect(isOps({ role: 'SUPER_HQ_ADMIN' })).toBe(true);
+    expect(isOps({ role: 'SUPER_ADMIN' })).toBe(true);
+  });
+
+  test('일반 ADMIN/STAFF/CONSULTANT/CLIENT 는 false (BE 의 ROLE_OPS Authority 미부여)', () => {
+    expect(isOps({ role: 'ADMIN' })).toBe(false);
+    expect(isOps({ role: 'STAFF' })).toBe(false);
+    expect(isOps({ role: 'CONSULTANT' })).toBe(false);
+    expect(isOps({ role: 'CLIENT' })).toBe(false);
+    expect(isOps({ role: 'BRANCH_SUPER_ADMIN' })).toBe(false);
+    expect(isOps({ role: 'TENANT_ADMIN' })).toBe(false);
+  });
+
+  test('null/undefined/공백 은 false', () => {
+    expect(isOps(null)).toBe(false);
+    expect(isOps(undefined)).toBe(false);
+    expect(isOps({})).toBe(false);
+    expect(isOps({ role: '' })).toBe(false);
+    expect(isOps({ role: '   ' })).toBe(false);
+  });
+
+  test('대소문자 무관 — 원본 문자열을 toUpperCase 후 비교', () => {
+    expect(isOps({ role: 'hq_master' })).toBe(true);
+    expect(isOps({ role: 'Hq_Admin' })).toBe(true);
+  });
+});
+
 describe('isProfessionalProvider', () => {
   test('CONSULTANT 본인(전문가 세부 유형 포함)만 true', () => {
     expect(isProfessionalProvider({ role: 'CONSULTANT' })).toBe(true);
@@ -196,6 +228,7 @@ describe('RoleUtils 디폴트 export', () => {
     expect(typeof RoleUtils.isStaff).toBe('function');
     expect(typeof RoleUtils.isConsultant).toBe('function');
     expect(typeof RoleUtils.isClient).toBe('function');
+    expect(typeof RoleUtils.isOps).toBe('function');
     expect(typeof RoleUtils.isProfessionalProvider).toBe('function');
     expect(typeof RoleUtils.mapLegacyRole).toBe('function');
     expect(typeof RoleUtils.hasRole).toBe('function');

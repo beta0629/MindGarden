@@ -33,6 +33,26 @@ export const ROLE_CONSULTANT = USER_ROLES.CONSULTANT;
 export const ROLE_CLIENT = USER_ROLES.CLIENT;
 
 /**
+ * Ops Portal 운영자 후보 역할 (4종 SSOT 외 — BE 의 actorRole / 레거시 role 기준).
+ *
+ * BE 의 `JwtAuthenticationFilter#createAuthoritiesFromActorRole` 가 ROLE_OPS Authority 를
+ * 부여하는 actorRole 집합과 일치. FE 에서는 `user.role` 의 원본 문자열을 mapLegacyRole
+ * 정규화 전에 비교하여 Ops Portal 진입 가능성을 판단한다.
+ *
+ * 사용 사례:
+ *   - 메뉴/위젯에서 "본사 운영자만" 노출되는 항목의 가드 (예: SuperAdmin Tenant Component)
+ *   - 라우트 가드에서 ROLE_OPS 권한이 필요한 페이지 접근 차단
+ *
+ * 참고: 일반 ADMIN/STAFF 는 ROLE_OPS 를 받지 않으므로 isOps=false (Phase 1b 정정 후).
+ */
+const OPS_AWARE_LEGACY_ROLES = Object.freeze([
+  LEGACY_USER_ROLES.HQ_MASTER,
+  LEGACY_USER_ROLES.HQ_ADMIN,
+  LEGACY_USER_ROLES.SUPER_HQ_ADMIN,
+  LEGACY_USER_ROLES.SUPER_ADMIN
+]);
+
+/**
  * 4종 SSOT 역할 목록.
  */
 export const SSOT_ROLES = Object.freeze([
@@ -145,6 +165,29 @@ export const isConsultant = (user) => getNormalizedRole(user) === ROLE_CONSULTAN
 export const isClient = (user) => getNormalizedRole(user) === ROLE_CLIENT;
 
 /**
+ * Ops Portal 운영자(본사 운영팀) 여부.
+ *
+ * - `user.role` 의 **원본 문자열** (정규화 전) 이 OPS_AWARE_LEGACY_ROLES 중 하나면 true.
+ *   - HQ_MASTER / HQ_ADMIN / SUPER_HQ_ADMIN / SUPER_ADMIN
+ * - 일반 ADMIN / STAFF / CONSULTANT / CLIENT 는 false.
+ * - ops-portal-migration Phase 5: FE 에서 본사 운영자만 노출할 메뉴·위젯 가드용.
+ *
+ * 주의: 본 헬퍼는 FE 의 `user.role` 만 본다. BE 의 `ROLE_OPS` Authority 는 JWT actorRole
+ *   기반이며 FE 에 직접 노출되지 않는다. 향후 actorRole 을 FE 응답에 포함하게 되면 본 헬퍼를
+ *   actorRole 기반으로 확장한다.
+ *
+ * @param {{ role?: string|null }|null|undefined} user
+ * @returns {boolean}
+ */
+export const isOps = (user) => {
+  const raw = extractRole(user);
+  if (!raw) {
+    return false;
+  }
+  return OPS_AWARE_LEGACY_ROLES.includes(raw.toUpperCase());
+};
+
+/**
  * 전문가 제공자(CONSULTANT) 여부.
  *
  * - 정의: 정규화된 역할이 CONSULTANT 인 사용자(전문가 세부 유형 포함).
@@ -204,6 +247,7 @@ const RoleUtils = Object.freeze({
   isStaff,
   isConsultant,
   isClient,
+  isOps,
   isProfessionalProvider,
   hasRole,
   hasAnyRole

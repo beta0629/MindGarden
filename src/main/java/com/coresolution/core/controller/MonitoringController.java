@@ -1,5 +1,7 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.core.constant.OpsTenantConstants;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.AiAnomalyDetection;
 import com.coresolution.core.domain.SecurityThreatDetection;
 import com.coresolution.core.domain.SystemMetric;
@@ -7,9 +9,11 @@ import com.coresolution.core.repository.AiAnomalyDetectionRepository;
 import com.coresolution.core.repository.SecurityThreatDetectionRepository;
 import com.coresolution.core.repository.SystemMetricRepository;
 import com.coresolution.core.service.AnomalyDetectionService;
+import com.coresolution.core.util.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,23 +23,39 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * AI 모니터링 API 컨트롤러
- * 
+ * 일반 모니터링 API 컨트롤러 — Ops Portal 전용 (본사 운영팀).
+ * 시스템 메트릭·이상 탐지·보안 위협·대시보드 통계 통합 제공.
+ *
+ * <h3>권한 가드 — 옵션 3+1 하이브리드 (Defense in Depth)</h3>
+ * <ol>
+ *   <li>클래스 레벨 {@code @PreAuthorize("hasRole('OPS')")} — Ops Portal 운영자만 호출 가능.</li>
+ *   <li>메서드별 진입부 {@link OpsTenantConstants#isHqTenant(String)} 자체 검증.</li>
+ * </ol>
+ *
+ * <p>표준 정합:
+ * {@code docs/standards/ROLE_STANDARD.md} §3.2 +
+ * {@code docs/project-management/OPS_PORTAL_MIGRATION_PLAN.md} §4.3 (Phase 2).
+ * 레거시 {@code @PreAuthorize("hasRole('ADMIN')")} 매핑은 본 Phase 2 에서
+ * {@code OPS} + HQ 테넌트 가드로 전환된다.</p>
+ *
  * @author CoreSolution
- * @version 1.0.0
  * @since 2025-12-02
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/monitoring")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('OPS')")
 public class MonitoringController {
-    
+
+    private static final String HQ_GUARD_DENY_MESSAGE =
+        "모니터링은 본사(Ops) 테넌트만 호출 가능 — 외부 테넌트 차단";
+
     private final SystemMetricRepository systemMetricRepository;
     private final AiAnomalyDetectionRepository anomalyDetectionRepository;
     private final SecurityThreatDetectionRepository threatDetectionRepository;
     private final AnomalyDetectionService anomalyDetectionService;
+    private final OpsTenantConstants opsTenantConstants;
     
     /**
      * 시스템 메트릭 조회
@@ -45,6 +65,7 @@ public class MonitoringController {
         @RequestParam(required = false) String metricType,
         @RequestParam(defaultValue = "60") int minutes
     ) {
+        assertHqTenant();
         try {
             LocalDateTime since = LocalDateTime.now().minusMinutes(minutes);
             
@@ -79,6 +100,7 @@ public class MonitoringController {
         @RequestParam(required = false) String severity,
         @RequestParam(defaultValue = "false") boolean resolvedOnly
     ) {
+        assertHqTenant();
         try {
             List<AiAnomalyDetection> anomalies;
             
@@ -116,6 +138,7 @@ public class MonitoringController {
      */
     @PostMapping("/anomalies/{anomalyId}/resolve")
     public ResponseEntity<Map<String, Object>> resolveAnomaly(@PathVariable Long anomalyId) {
+        assertHqTenant();
         try {
             anomalyDetectionService.resolveAnomaly(anomalyId);
             
@@ -141,6 +164,7 @@ public class MonitoringController {
         @RequestParam(required = false) String threatType,
         @RequestParam(defaultValue = "24") int hours
     ) {
+        assertHqTenant();
         try {
             LocalDateTime since = LocalDateTime.now().minusHours(hours);
             List<SecurityThreatDetection> threats = threatDetectionRepository
@@ -172,6 +196,7 @@ public class MonitoringController {
      */
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> getDashboard() {
+        assertHqTenant();
         try {
             LocalDateTime last24Hours = LocalDateTime.now().minusHours(24);
             
@@ -205,6 +230,24 @@ public class MonitoringController {
             error.put("success", false);
             error.put("message", e.getMessage());
             return ResponseEntity.internalServerError().body(error);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Internal — HQ 테넌트 가드 (옵션 3+1 하이브리드, Defense in Depth)
+    // ------------------------------------------------------------------
+
+    /**
+     * 현재 요청 테넌트가 본사(HQ) 인지 검증한다.
+     *
+     * @throws AccessDeniedException 본사 테넌트가 아닌 경우
+     */
+    private void assertHqTenant() {
+        String currentTenant = TenantContextHolder.getRequiredTenantId();
+        if (!opsTenantConstants.isHqTenant(currentTenant)) {
+            log.warn("[OPS] 모니터링 외부 테넌트 차단 — currentTenant={} (HQ 가드)",
+                LogSanitizer.forLog(currentTenant));
+            throw new AccessDeniedException(HQ_GUARD_DENY_MESSAGE);
         }
     }
 }

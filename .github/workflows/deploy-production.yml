@@ -55,6 +55,9 @@ on:
       - 'database/schema/**'
       - 'config/nginx/**'
       - '.github/workflows/deploy-production.yml'
+      # composite action: 본 워크플로가 호출하는 sync-prod-env-key 변경도 push 자동 트리거 대상에 포함
+      # (PR #385 핫픽스 시 자동 트리거 안 됐던 보조 발견 정정 — 수동 workflow_dispatch 로 우회)
+      - '.github/actions/sync-prod-env-key/**'
   workflow_dispatch:
     inputs:
       deploy_ref:

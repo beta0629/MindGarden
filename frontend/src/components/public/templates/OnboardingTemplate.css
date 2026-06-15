@@ -1,0 +1,58 @@
+/**
+ * OnboardingTemplate — Phase C-3 W1
+ * mg-v2-* 토큰 100% · 하드코딩 0 · !important 0 · 인라인 style 0
+ */
+
+.mg-v2-onboarding-template {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+}
+
+.mg-v2-onboarding-template__header {
+  text-align: center;
+  margin-bottom: var(--mg-v2-space-8);
+}
+
+.mg-v2-onboarding-template__title {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+  line-height: var(--mg-v2-font-line-height-heading);
+  color: var(--mg-v2-color-text-primary);
+  margin: 0 0 var(--mg-v2-space-2);
+}
+
+.mg-v2-onboarding-template__subtitle {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-lg);
+  font-weight: var(--mg-v2-font-weight-regular);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-secondary);
+  margin: 0;
+}
+
+.mg-v2-onboarding-template__body {
+  background-color: var(--mg-v2-color-surface-card);
+  border: 1px solid var(--mg-v2-color-border-light);
+  border-radius: var(--mg-v2-radius-xl);
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-6);
+  margin: var(--mg-v2-space-6) 0;
+  box-shadow: var(--mg-v2-shadow-sm);
+  transition: box-shadow var(--mg-v2-transition-fast);
+}
+
+@media (max-width: 768px) {
+  .mg-v2-onboarding-template {
+    padding: var(--mg-v2-space-4) var(--mg-v2-space-3);
+  }
+
+  .mg-v2-onboarding-template__title {
+    font-size: var(--mg-v2-font-size-h3);
+  }
+
+  .mg-v2-onboarding-template__body {
+    padding: var(--mg-v2-space-5) var(--mg-v2-space-4);
+    border-radius: var(--mg-v2-radius-lg);
+  }
+}

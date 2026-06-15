@@ -1,0 +1,27 @@
+{
+  "public": {
+    "onboarding": {
+      "pageTitle": "Get Started with MindGarden",
+      "pageSubtitle": "Set up your consultation center in just a few minutes.",
+      "stepContentLabel": "Step content area",
+      "errorTenantNameRequired": "Please enter a tenant name.",
+      "errorDomainRequired": "Please enter a domain.",
+      "errorDomainFormat": "Only lowercase letters, numbers, and hyphens (-) are allowed.",
+      "errorDomainTaken": "This domain is already in use.",
+      "errorDomainCheckFailed": "An error occurred while checking the domain.",
+      "errorPhoneRequired": "Please enter a phone number.",
+      "errorPhoneFormat": "Invalid phone number format.",
+      "errorEmailRequired": "Please enter an email address.",
+      "errorEmailFormat": "Invalid email format.",
+      "errorTermsRequired": "You must agree to the Terms of Service.",
+      "errorPrivacyRequired": "You must agree to the Privacy Policy.",
+      "errorAdminNameRequired": "Please enter the administrator name.",
+      "errorAdminEmailRequired": "Please enter the administrator email.",
+      "errorAdminEmailFormat": "Invalid email format.",
+      "errorPasswordRequired": "Please enter a password.",
+      "errorPasswordLength": "Password must be at least 8 characters.",
+      "errorPasswordMismatch": "Passwords do not match.",
+      "errorSubmitFailed": "An error occurred while processing your application. Please try again later."
+    }
+  }
+}

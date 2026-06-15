@@ -19,7 +19,7 @@ import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
-import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ErpManagementGridWidget.css';
 import SafeText from '../../../common/SafeText';
 import UnifiedLoading from '../../../common/UnifiedLoading';
@@ -122,7 +122,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       url: '/erp/financial',
       permission: 'ERP_FINANCIAL_READ',
       category: 'finance',
-      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN, LEGACY_USER_ROLES.HQ_MASTER]
+      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]
     },
     {
       id: 'purchase-management',
@@ -132,7 +132,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       url: '/erp/purchase',
       permission: 'ERP_PURCHASE_READ',
       category: 'purchase',
-      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN, LEGACY_USER_ROLES.HQ_MASTER]
+      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]
     },
     {
       id: 'budget-management',
@@ -142,7 +142,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       url: '/erp/budget',
       permission: 'ERP_BUDGET_READ',
       category: 'budget',
-      roles: [USER_ROLES.ADMIN, LEGACY_USER_ROLES.HQ_MASTER]
+      roles: [USER_ROLES.ADMIN]
     },
     {
       id: 'expense-form',
@@ -152,7 +152,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       url: '/erp/financial',
       permission: 'ERP_EXPENSE_CREATE',
       category: 'expense',
-      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN, LEGACY_USER_ROLES.HQ_MASTER]
+      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]
     },
     {
       id: 'reports',
@@ -162,7 +162,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       url: '/erp/dashboard',
       permission: 'ERP_REPORT_READ',
       category: 'report',
-      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN, LEGACY_USER_ROLES.HQ_MASTER]
+      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]
     },
     {
       id: 'tax-management',
@@ -172,7 +172,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       url: '/erp/tax',
       permission: 'ERP_TAX_READ',
       category: 'tax',
-      roles: [USER_ROLES.ADMIN, LEGACY_USER_ROLES.HQ_MASTER]
+      roles: [USER_ROLES.ADMIN]
     },
     {
       id: 'analytics',
@@ -182,7 +182,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       url: '/erp/dashboard',
       permission: 'ERP_ANALYTICS_READ',
       category: 'analytics',
-      roles: [USER_ROLES.ADMIN, LEGACY_USER_ROLES.HQ_MASTER]
+      roles: [USER_ROLES.ADMIN]
     },
     {
       id: 'settings',
@@ -192,7 +192,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       url: '/erp/dashboard',
       permission: 'ERP_SETTINGS_READ',
       category: 'settings',
-      roles: [USER_ROLES.ADMIN, LEGACY_USER_ROLES.HQ_MASTER]
+      roles: [USER_ROLES.ADMIN]
     }
   ];
 

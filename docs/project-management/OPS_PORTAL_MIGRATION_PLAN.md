@@ -1,10 +1,35 @@
 # Ops Portal Migration Plan — HQ_MASTER 18건 가드 분리 종합 계획서
 
-**버전**: 1.0.0
-**작성일**: 2026-06-15
+**버전**: 1.1.0
+**작성일**: 2026-06-15 (v1.1 갱신: Phase 1~5 완료)
 **작성자**: core-planner (오케스트레이터)
-**상태**: 사용자 결정 대기 (옵션 B = 일괄 마이그 채택, Phase 분리 권장)
+**상태**: ✅ **Phase 1~5 머지 완료** (Phase 6 = 본 갱신 PR)
 **우선순위**: ⭐⭐⭐⭐⭐ (보안 핵심 — 외부 테넌트 ADMIN 의 HQ 전용 엔드포인트 침범 차단)
+
+---
+
+## 0.1 진행 현황 (2026-06-15 기준)
+
+| Phase | 영역 | PR | Merge SHA | 상태 |
+|-------|------|----|-----------|------|
+| **1** | PII 회전 (`PiiKeyRotationAdminController`) | #362 / #363 | (Phase 1) | ✅ 머지 |
+| **1b** | `JwtAuthenticationFilter` STAFF 정정 (P0) | #361 / #374 | (Phase 1b) | ✅ 머지 |
+| **2** | 시스템 모니터링 (AIMonitoring / SystemMetrics / SchedulerMonitoring / Monitoring) | #370 | (Phase 2) | ✅ 머지 |
+| **3** | 보안 감사 (`SecurityAuditController`) | #373 | `daee3ad74` | ✅ 머지 |
+| **4** | 테넌트 관리 (`SuperAdminTenantComponentController` + DynamicPermission/PermissionMatrix 주석 정리) | #375 | `969f5e318` | ✅ 머지 |
+| **5** | FE Role 헬퍼 `isOps` + 위젯/QuickAction HQ_MASTER 정리 | #378 | `4ee8536a3` | ✅ 머지 |
+| **6** | 표준·런북·SSOT 갱신 (`ROLE_STANDARD.md` §3.3 신설, 본 계획서 갱신) | (이 PR) | — | 🟢 진행 중 |
+
+### 회귀 테스트 합계
+- 신규 `*OpsGuardTest` 5종 (Phase 2~4) — 모두 PASS
+- `RoleUtils.test.js` 24건 (Phase 5) — 모두 PASS
+- 표본 패턴 (필수 6종) 모두 충족: `@PreAuthorize` 검증 / OPS+HQ 200 / OPS+외부 403 / ADMIN-STAFF-CONSULTANT-CLIENT 403 / 무인증 401 / 잔존 HQ_MASTER·SUPER_ADMIN 표현식 0건 정적 검증
+
+### 정착된 패턴 (`ROLE_STANDARD.md` §3.3 신설)
+**옵션 3+1 하이브리드** (방어 in depth)
+1. 클래스 레벨 `@PreAuthorize("hasRole('OPS')")`
+2. 메서드 시작점 `assertHqTenant()` — `OpsTenantConstants.isHqTenant()` 검증
+3. FE 짝 헬퍼 `RoleUtils.isOps(user)` (Phase 5 신설)
 
 > **본 문서의 성격**: 본 문서는 **계획서(docs only)** 이며, 코드 수정은 **각 Phase 별 core-coder 위임 PR** 로 진행한다. 본 계획서 PR 자체는 운영 영향 0 — 표준·체크리스트·분배실행 표만 추가한다.
 
@@ -101,12 +126,12 @@
 
 | # | 파일 | 라인 | 현 가드 | 비고 |
 |---|------|------|---------|------|
-| 1 | `PiiKeyRotationAdminController.java` | 54 (class) | `hasRole('ADMIN')` | **Phase 1 단독** — 가장 보안 민감 (KEY/IV 회전) |
-| 2 | `SystemMetricsController.java` | 52, 118, 146 | `hasAnyRole('ADMIN','HQ_MASTER')` × 3 | SSOT 위반 (HQ_MASTER 잔존) — Phase 2 |
-| 3 | `SecurityAuditController.java` | 51, 96, 165, 241 | `hasAnyRole('ADMIN','HQ_MASTER')` × 4 | SSOT 위반 — Phase 3 |
-| 4 | `SchedulerMonitoringController.java` | 51, 96, 159, 238 | `hasAnyRole('ADMIN','HQ_MASTER')` × 4 | SSOT 위반 — Phase 2 |
-| 5 | `AIMonitoringController.java` | 56, 102, 147, 196, 253, 311 | `hasAnyRole('ADMIN','HQ_MASTER')` × 6 | SSOT 위반 — Phase 2 |
-| 6 | `SuperAdminTenantComponentController.java` | 31 (class) | `hasRole('SUPER_ADMIN')` | SSOT 위반 — Phase 4 |
+| 1 | `PiiKeyRotationAdminController.java` | 54 (class) | `hasRole('ADMIN')` | ✅ **Phase 1 완료** (PR #362) — KEY/IV 회전 |
+| 2 | `SystemMetricsController.java` | 52, 118, 146 | `hasAnyRole('ADMIN','HQ_MASTER')` × 3 | ✅ **Phase 2 완료** (PR #370) |
+| 3 | `SecurityAuditController.java` | 51, 96, 165, 241 | `hasAnyRole('ADMIN','HQ_MASTER')` × 4 | ✅ **Phase 3 완료** (PR #373) |
+| 4 | `SchedulerMonitoringController.java` | 51, 96, 159, 238 | `hasAnyRole('ADMIN','HQ_MASTER')` × 4 | ✅ **Phase 2 완료** (PR #370) |
+| 5 | `AIMonitoringController.java` | 56, 102, 147, 196, 253, 311 | `hasAnyRole('ADMIN','HQ_MASTER')` × 6 | ✅ **Phase 2 완료** (PR #370) |
+| 6 | `SuperAdminTenantComponentController.java` | 31 (class) | `hasRole('SUPER_ADMIN')` | ✅ **Phase 4 완료** (PR #375) |
 | 7 | `BrandingController.java` | 81, 139, 168 (특정 테넌트 변형) | `hasRole('ADMIN')` + `TenantContextHolder` 자체 검증 | **이미 PR-2/9 패턴 적용** — 표본·참고 (변경 대상 아님) |
 | 8 | `MonitoringController.java` | 32 (class) | `hasRole('ADMIN')` | Phase 2 — 검토 후 OPS 로 격상 여부 결정 |
 | 9 | `TenantDisplayNameController.java` | 60 | `hasRole('ADMIN') or hasRole('OPS')` | **이미 OPS 동시 가드 적용 — 기존 패턴 표본** |
@@ -138,19 +163,20 @@ src/main/java/com/coresolution/core/controller/ops/
 
 | # | 파일 | 라인 | 내용 | 처리 |
 |---|------|------|------|------|
-| 1 | `core/context/TenantContext.java` | 108 | 주석 — `HQ_MASTER` 본사 관리자 설명 | 주석 정리 (Phase 6) |
+| 1 | `core/context/TenantContext.java` | 108 | 주석 — `HQ_MASTER` 본사 관리자 설명 | ⏸ Phase 6 보류 — 주석 잔존 무영향 (실코드 0건) |
 | 2 | `core/constants/SecurityRoleConstants.java` | 26, 34 | `ROLE_HQ_ADMIN`, `ACTOR_ROLE_HQ_ADMIN` 상수 | **유지** — 인프라 SSOT |
-| 3 | `consultation/util/AdminRoleUtils.java` | 12, 102 | `isHqMaster(User user)` 메서드 | **deprecated 처리 + 사용처 정리** (Phase 4) |
+| 3 | `consultation/util/AdminRoleUtils.java` | 12, 102 | `isHqMaster(User user)` 메서드 | ✅ **Phase 4 확인** — 이미 deprecated + 사용처 0건 (PR #375) |
 | 4 | `consultation/service/impl/UserProfileServiceImpl.java` | 833 | 주석만 | 주석 정리 (Phase 6) |
 | 5 | `consultation/service/impl/SuperAdminServiceImpl.java` | 69, 108 | 주석만 | 주석 정리 (Phase 6) |
 | 6 | `consultation/service/impl/SecurityAlertServiceImpl.java` | 174 | 주석만 | 주석 정리 (Phase 6) |
 | 7 | `consultation/service/impl/PermissionInitializationServiceImpl.java` | 147 | 주석만 | 주석 정리 (Phase 6) |
 | 8 | `consultation/service/impl/ErpServiceImpl.java` | 315, 352, 403, 1183, 1190, 1197, 1239 | 주석만 (`HQ_MASTER_APPROVED → ADMIN_APPROVED` 통합 기록) | **유지** (이력 가치) |
-| 9 | `consultation/service/impl/DynamicPermissionServiceImpl.java` | 861-863 | **HQ_MASTER 분기 실코드 (모든 API 접근 허용)** | **Phase 4 — 제거 검토** (deprecated) |
+| 9 | `consultation/service/impl/DynamicPermissionServiceImpl.java` | 861-863 | **HQ_MASTER 분기 실코드 (모든 API 접근 허용)** | ✅ **Phase 4 완료** (PR #375) — `API_ACCESS_ALL` 권한 코드 기반으로 명확화, 주석 정리 |
+| 12-bis | `consultation/constant/PermissionMatrix.java` | 260 | 주석 + 분기 | ✅ **Phase 4 완료** (PR #375) — 와일드카드 `/api/**` 패턴으로 명확화, 주석 정리 |
 | 10 | `consultation/controller/SuperAdminController.java` | 149 | 주석만 | 주석 정리 (Phase 6) |
 | 11 | `consultation/constant/UserRole.java` | 161 | `fromString` 에서 `case "HQ_MASTER"` 매핑 | **유지** — `mapLegacyRole` 호환 |
 | 12 | `consultation/constant/PermissionMatrix.java` | 260 | 주석 + 분기 | **Phase 4 검토** |
-| 13 | `consultation/config/filter/JwtAuthenticationFilter.java` | 257, 290-294 | **STAFF → ROLE_ADMIN + ROLE_OPS** (P0 발견), HQ actorRole → ROLE_OPS | **Phase 1b** 별도 P0 (§5 참조) |
+| 13 | `consultation/config/filter/JwtAuthenticationFilter.java` | 257, 290-294 | **STAFF → ROLE_ADMIN + ROLE_OPS** (P0 발견), HQ actorRole → ROLE_OPS | ✅ **Phase 1b 완료** (PR #361 / #374) — STAFF 의 ROLE_OPS 부여 제거, actorRole 기반만 유지 |
 
 ### 2.4 FE — `frontend/src` (역할 가드 직접 비교)
 
@@ -169,11 +195,11 @@ src/main/java/com/coresolution/core/controller/ops/
 
 | # | 파일 | 라인 | 현 패턴 | 처리 |
 |---|------|------|---------|------|
-| 1 | `dashboard/widgets/erp/ErpManagementGridWidget.js` | 125, 135, 145, 155, 165, 175, 185, 195 | `roles: [..., LEGACY_USER_ROLES.HQ_MASTER]` × 8 | **Phase 5** — `isAdmin` 헬퍼로 치환 |
-| 2 | `constants/quickActionsConfig.js` | 120, 128, 136, 166 | `roles: [..., LEGACY_USER_ROLES.HQ_MASTER]` × 4 | Phase 5 |
-| 3 | `utils/lnbMenuUtils.js` | 21-26 | LEGACY 역할 배열 (HQ_MASTER 포함) | Phase 5 |
-| 4 | `utils/session.js` | 262-267 | 대시보드 라우팅 매핑 (HQ_MASTER) | Phase 5 |
-| 5 | `utils/dashboardUtils.js` | 178-183 | 동일 매핑 | Phase 5 |
+| 1 | `dashboard/widgets/erp/ErpManagementGridWidget.js` | 125, 135, 145, 155, 165, 175, 185, 195 | `roles: [..., LEGACY_USER_ROLES.HQ_MASTER]` × 8 | ✅ **Phase 5 완료** (PR #378) — HQ_MASTER 제거 + RoleUtils 정규화 위임 |
+| 2 | `constants/quickActionsConfig.js` | 120, 128, 136, 166 | `roles: [..., LEGACY_USER_ROLES.HQ_MASTER]` × 4 | ✅ **Phase 5 완료** (PR #378) |
+| 3 | `utils/lnbMenuUtils.js` | 21-26 | LEGACY 역할 배열 (HQ_MASTER 포함) | ⏸ 보류 — CONSULTANT 폴백 차단 의도로 유지 (Phase 5 결정) |
+| 4 | `utils/session.js` | 262-267 | 대시보드 라우팅 매핑 (HQ_MASTER) | ⏸ 보류 — 캐시된 세션 호환 위해 유지 (Phase 5 결정) |
+| 5 | `utils/dashboardUtils.js` | 178-183 | 동일 매핑 | ⏸ 보류 — 캐시된 세션 호환 위해 유지 (Phase 5 결정) |
 | 6 | `components/dashboard/widgets/admin/*Widget.js` | 주석만 (5 파일) | "레거시 HQ_MASTER 도 매핑됨" 주석 | 주석 갱신 (Phase 6) |
 
 #### 2.4.3 Ops Portal 진입점 (현 FE)

@@ -156,7 +156,24 @@ function mapClientScheduleRow(
         : row.consultationId != null
           ? Number(row.consultationId)
           : undefined,
+    ...(extractHasRating(row) !== undefined ? { hasRating: extractHasRating(row) } : {}),
   };
+}
+
+/**
+ * BE 응답에서 평가 완료 여부 boolean 을 추출 (TestFlight 1.0.9 hotfix — 2026-06-15).
+ *
+ * `hasRating` / `alreadyRated` / `rated` 셋 중 하나라도 boolean 으로 내려오면 채택한다.
+ * 어느 것도 없으면 `undefined` 를 반환해 UI 가드를 통과시킨다 — BE 검증이 최종 안전망 역할.
+ */
+function extractHasRating(row: Record<string, unknown>): boolean | undefined {
+  const candidates: unknown[] = [row.hasRating, row.alreadyRated, row.rated];
+  for (const v of candidates) {
+    if (typeof v === 'boolean') {
+      return v;
+    }
+  }
+  return undefined;
 }
 
 export interface ClientConsultationPage {

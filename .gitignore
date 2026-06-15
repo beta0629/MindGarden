@@ -86,6 +86,10 @@ deployment/*template*
 # Exception: client shop templates (atomic design; not *-template.* secrets)
 !frontend/src/components/shop/templates/
 
+# Exception: public page templates (atomic design; Design v2 Phase C-3)
+!frontend/src/components/public/templates/
+!frontend/src/components/public/templates/**
+
 # Exception: admin SMS template management UI/API (NOT secrets — DB-managed messages).
 !frontend/src/api/admin/smsTemplateApi.js
 !frontend/src/components/admin/sms-templates/

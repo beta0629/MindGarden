@@ -1,0 +1,105 @@
+{
+  "plans": [
+    {
+      "planKey": "basic",
+      "nameLabel": "Basic",
+      "price": "49,000",
+      "priceUnit": "₩",
+      "pricePeriod": "mo",
+      "features": [
+        "상담사 5명까지",
+        "기본 일정 관리",
+        "고객 관리",
+        "상담 기록",
+        "이메일 지원"
+      ],
+      "isHighlighted": false,
+      "isEnterprise": false
+    },
+    {
+      "planKey": "pro",
+      "nameLabel": "Pro",
+      "price": "149,000",
+      "priceUnit": "₩",
+      "pricePeriod": "mo",
+      "features": [
+        "상담사 20명까지",
+        "고급 일정 관리",
+        "고객 및 상담 분석",
+        "ERP 연동",
+        "SMS/카카오 알림",
+        "우선 지원"
+      ],
+      "isHighlighted": true,
+      "isEnterprise": false
+    },
+    {
+      "planKey": "enterprise",
+      "nameLabel": "Enterprise",
+      "price": null,
+      "priceUnit": null,
+      "pricePeriod": null,
+      "features": [
+        "상담사 무제한",
+        "커스텀 브랜딩",
+        "전담 지원",
+        "SLA 보장",
+        "커스텀 연동",
+        "온프레미스 옵션"
+      ],
+      "isHighlighted": false,
+      "isEnterprise": true
+    }
+  ],
+  "matrix": {
+    "plans": [
+      { "key": "basic", "name": "Basic" },
+      { "key": "pro", "name": "Pro" },
+      { "key": "enterprise", "name": "Enterprise" }
+    ],
+    "featureCategories": [
+      {
+        "category": "사용자 관리",
+        "features": [
+          { "name": "상담사 계정 수", "basic": "최대 5명", "pro": "최대 20명", "enterprise": "무제한" },
+          { "name": "권한 관리", "basic": false, "pro": true, "enterprise": true },
+          { "name": "다중 지점 관리", "basic": false, "pro": false, "enterprise": true }
+        ]
+      },
+      {
+        "category": "상담 기능",
+        "features": [
+          { "name": "기본 상담 기록", "basic": true, "pro": true, "enterprise": true },
+          { "name": "고급 통계 분석", "basic": false, "pro": true, "enterprise": true },
+          { "name": "AI 상담 보조", "basic": false, "pro": false, "enterprise": true }
+        ]
+      },
+      {
+        "category": "일정 관리",
+        "features": [
+          { "name": "기본 일정 관리", "basic": true, "pro": true, "enterprise": true },
+          { "name": "고급 일정 자동화", "basic": false, "pro": true, "enterprise": true },
+          { "name": "외부 캘린더 연동", "basic": false, "pro": true, "enterprise": true }
+        ]
+      },
+      {
+        "category": "알림 및 연동",
+        "features": [
+          { "name": "이메일 알림", "basic": true, "pro": true, "enterprise": true },
+          { "name": "SMS/카카오 알림", "basic": false, "pro": true, "enterprise": true },
+          { "name": "ERP 연동", "basic": false, "pro": true, "enterprise": true },
+          { "name": "커스텀 API 연동", "basic": false, "pro": false, "enterprise": true }
+        ]
+      },
+      {
+        "category": "지원",
+        "features": [
+          { "name": "이메일 지원", "basic": true, "pro": true, "enterprise": true },
+          { "name": "우선 지원", "basic": false, "pro": true, "enterprise": true },
+          { "name": "전담 매니저", "basic": false, "pro": false, "enterprise": true },
+          { "name": "SLA 보장", "basic": false, "pro": false, "enterprise": true }
+        ]
+      }
+    ]
+  }
+}

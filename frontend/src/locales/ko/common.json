@@ -2092,6 +2092,79 @@
       "t_eb11e9a6": "결제 내역을 불러오는 중..."
     }
   },
+  "public": {
+    "landing": {
+      "pageTitle": "마인드가든 — 심리상담센터 관리 솔루션",
+      "pageDescription": "마인드가든은 심리상담센터를 위한 예약·기록·정산 올인원 솔루션입니다. 지금 무료로 시작하세요.",
+      "heroTitle": "마음을 돌보는 가장 안정적인 공간",
+      "heroSubtitle": "상담 기록부터 예약 관리까지, 원장님을 위한 완벽한 솔루션",
+      "heroPrimaryCta": "무료로 시작하기",
+      "heroSecondaryCta": "요금제 보기",
+      "feature": {
+        "scheduling": {
+          "title": "스마트 예약 관리",
+          "description": "노쇼를 방지하는 자동 알림과 캘린더 연동"
+        },
+        "records": {
+          "title": "안전한 상담 기록",
+          "description": "종단간 암호화로 보호되는 내담자 차트"
+        },
+        "settlement": {
+          "title": "자동 정산 시스템",
+          "description": "복잡한 수기 정산을 클릭 한 번으로"
+        }
+      },
+      "stat": {
+        "centers": "도입 센터",
+        "users": "활성 사용자",
+        "reservations": "누적 예약 건수",
+        "satisfaction": "고객 만족도"
+      },
+      "testimonial1Content": "마인드가든 도입 후 행정 업무가 절반으로 줄었습니다.",
+      "testimonial1Author": "A 심리상담센터 원장",
+      "testimonial2Content": "예약 관리와 정산이 자동화되어 상담에만 집중할 수 있게 되었어요.",
+      "testimonial2Author": "B 상담소 대표",
+      "testimonial3Content": "내담자 관리 시스템이 정말 직관적이고 안전합니다.",
+      "testimonial3Author": "C 클리닉 실장",
+      "ctaTitle": "지금 바로 차원이 다른 상담 센터 관리를 경험해보세요.",
+      "ctaSubtitle": "14일 무료 체험으로 모든 기능을 사용해볼 수 있습니다.",
+      "ctaPrimaryCta": "무료로 시작하기",
+      "ctaSecondaryCta": "도입 문의하기"
+    },
+    "onboarding": {
+      "pageTitle": "MindGarden 시작하기",
+      "pageSubtitle": "몇 분이면 상담센터를 개설할 수 있습니다.",
+      "stepContentLabel": "단계별 입력 영역",
+      "errorTenantNameRequired": "테넌트명을 입력해주세요.",
+      "errorDomainRequired": "도메인을 입력해주세요.",
+      "errorDomainFormat": "영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다.",
+      "errorDomainTaken": "이미 사용 중인 도메인입니다.",
+      "errorDomainCheckFailed": "도메인 확인 중 오류가 발생했습니다.",
+      "errorPhoneRequired": "연락처를 입력해주세요.",
+      "errorPhoneFormat": "올바른 전화번호 형식이 아닙니다.",
+      "errorEmailRequired": "이메일을 입력해주세요.",
+      "errorEmailFormat": "올바른 이메일 형식이 아닙니다.",
+      "errorTermsRequired": "이용약관에 동의해주세요.",
+      "errorPrivacyRequired": "개인정보 처리방침에 동의해주세요.",
+      "errorAdminNameRequired": "관리자 이름을 입력해주세요.",
+      "errorAdminEmailRequired": "관리자 이메일을 입력해주세요.",
+      "errorAdminEmailFormat": "올바른 이메일 형식이 아닙니다.",
+      "errorPasswordRequired": "비밀번호를 입력해주세요.",
+      "errorPasswordLength": "비밀번호는 8자 이상이어야 합니다.",
+      "errorPasswordMismatch": "비밀번호가 일치하지 않습니다.",
+      "errorSubmitFailed": "신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+    },
+    "pricing": {
+      "pageTitle": "심플하고 투명한 요금제",
+      "pageSubtitle": "상담 센터에 맞는 플랜을 선택하세요.",
+      "plansAriaLabel": "요금제 플랜",
+      "contactSales": "영업팀 문의",
+      "getStarted": "시작하기",
+      "faqAriaLabel": "자주 묻는 질문",
+      "faqTitle": "자주 묻는 질문",
+      "faqComingSoon": "FAQ 내용은 Phase C에서 제공될 예정입니다."
+    }
+  },
   "homepage": {
     "Homepage": {
       "t_e225a6fd": "로그인",
@@ -2121,5 +2194,18 @@
       "t_195da620": "메뉴 열기",
       "t_923b2615": "메뉴 닫기"
     }
+  },
+  "pricing": {
+    "pageTitle": "간단하고 투명한 요금제",
+    "pageSubtitle": "상담센터에 맞는 요금제를 선택하세요.",
+    "plansAriaLabel": "요금제 목록",
+    "matrixAriaLabel": "기능 비교",
+    "matrixTitle": "플랜 상세 기능 비교",
+    "recommended": "추천",
+    "getStarted": "시작하기",
+    "contactSales": "문의하기",
+    "custom": "맞춤 견적",
+    "loading": "요금제 정보를 불러오는 중...",
+    "loadError": "요금제 정보를 불러오는 데 실패했습니다."
   }
 }

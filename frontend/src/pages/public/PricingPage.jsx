@@ -1,124 +1,132 @@
 /**
- * PricingPage — 요금제 페이지 스켈레톤
+ * PricingPage — 요금제 페이지
  *
- * §P 옵션 C: Basic/Pro 공개 + Enterprise 견적.
- * PricingCard 3종 (Basic/Pro/Enterprise) 배치 + FAQ 섹션 스켈레톤.
+ * 책임:
+ * - 요금제 데이터 로드 (mock JSON → 추후 API 전환 가능 추상화)
+ * - 선택된 요금제 상태 관리
+ * - PricingTemplate에 데이터/핸들러 주입
+ * - PublicErrorBoundary + PublicLayout wrapping
+ *
  * 라우트: /pricing
  *
  * @author MindGarden
- * @since 2026-06-15
+ * @since 2026-06-16
  */
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import PublicLayout from '../../components/public/layouts/PublicLayout';
-import PricingCard from '../../components/public/molecules/PricingCard';
+import PublicErrorBoundary from '../../components/public/organisms/PublicErrorBoundary';
+import PricingTemplate from '../../components/public/templates/PricingTemplate';
+import { toDisplayString } from '../../utils/safeDisplay';
+import mockPricingData from '../../data/pricingPlans.json';
 import './PricingPage.css';
 
-const PRICING_PLANS = [
-  {
-    planKey: 'basic',
-    nameLabel: 'Basic',
-    price: '49,000',
-    priceUnit: '₩',
-    pricePeriod: 'mo',
-    features: [
-      'Up to 5 consultants',
-      'Basic scheduling',
-      'Client management',
-      'Session records',
-      'Email support',
-    ],
-    ctaLabel: null,
-    isHighlighted: false,
-    isEnterprise: false,
-  },
-  {
-    planKey: 'pro',
-    nameLabel: 'Pro',
-    price: '149,000',
-    priceUnit: '₩',
-    pricePeriod: 'mo',
-    features: [
-      'Up to 20 consultants',
-      'Advanced scheduling',
-      'Client & session analytics',
-      'ERP integration',
-      'SMS/Kakao notifications',
-      'Priority support',
-    ],
-    ctaLabel: null,
-    isHighlighted: true,
-    isEnterprise: false,
-  },
-  {
-    planKey: 'enterprise',
-    nameLabel: 'Enterprise',
-    price: null,
-    priceUnit: null,
-    pricePeriod: null,
-    features: [
-      'Unlimited consultants',
-      'Custom branding',
-      'Dedicated support',
-      'SLA guarantee',
-      'Custom integrations',
-      'On-premise option',
-    ],
-    ctaLabel: null,
-    isHighlighted: false,
-    isEnterprise: true,
-  },
-];
+/**
+ * 요금제 데이터 로드 함수.
+ * 현재: mock JSON에서 직접 로드 (추후 API 전환 가능 추상화).
+ * 추후: StandardizedApi를 통해 /api/v1/public/pricing 으로 전환.
+ *
+ * @returns {Promise<{plans: Array, matrix: {plans: Array, featureCategories: Array}}>}
+ */
+async function loadPricingData() {
+  /* TODO: 2026-07-01 API 전환 시 StandardizedApi.get('/api/v1/public/pricing')으로 교체 */
+  return Promise.resolve(mockPricingData);
+}
+
+/** 로딩 상태 표시 컴포넌트 (순수 표현) */
+function PricingLoadingView({ message }) {
+  return (
+    <div className="mg-v2-pricing-page__loading" role="status" aria-live="polite">
+      <div className="mg-v2-pricing-page__loading-spinner" aria-hidden="true" />
+      <p className="mg-v2-pricing-page__loading-text">{toDisplayString(message)}</p>
+    </div>
+  );
+}
+
+/** 에러 상태 표시 컴포넌트 (순수 표현) */
+function PricingErrorView({ message, onRetry }) {
+  return (
+    <div className="mg-v2-pricing-page__error" role="alert">
+      <p className="mg-v2-pricing-page__error-text">{toDisplayString(message)}</p>
+      {typeof onRetry === 'function' && (
+        <button
+          type="button"
+          className="mg-v2-pricing-page__error-retry"
+          onClick={onRetry}
+        >
+          다시 시도
+        </button>
+      )}
+    </div>
+  );
+}
 
 const PricingPage = () => {
   const { t } = useTranslation('common');
 
+  const [plans, setPlans] = useState([]);
+  const [matrixPlans, setMatrixPlans] = useState([]);
+  const [matrixCategories, setMatrixCategories] = useState([]);
+  const [selectedPlanKey, setSelectedPlanKey] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const data = await loadPricingData();
+      setPlans(Array.isArray(data.plans) ? data.plans : []);
+      setMatrixPlans(Array.isArray(data.matrix?.plans) ? data.matrix.plans : []);
+      setMatrixCategories(Array.isArray(data.matrix?.featureCategories) ? data.matrix.featureCategories : []);
+    } catch (err) {
+      setLoadError('요금제 정보를 불러오는 데 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleSelectPlan = useCallback((planKey) => {
+    setSelectedPlanKey(planKey);
+  }, []);
+
+  const handleContactSales = useCallback(() => {
+    /* TODO: 2026-07-01 Enterprise 문의 모달 또는 /contact 라우트로 전환 */
+    window.location.assign('/onboarding');
+  }, []);
+
+  const renderContent = () => {
+    if (isLoading) {
+      return <PricingLoadingView message={t('pricing.loading', '요금제 정보를 불러오는 중...')} />;
+    }
+    if (loadError) {
+      return <PricingErrorView message={loadError} onRetry={fetchData} />;
+    }
+    return (
+      <PricingTemplate
+        plans={plans}
+        matrixPlans={matrixPlans}
+        matrixCategories={matrixCategories}
+        selectedPlanKey={selectedPlanKey}
+        onSelectPlan={handleSelectPlan}
+        onContactSales={handleContactSales}
+      />
+    );
+  };
+
   return (
-    <PublicLayout>
-      <div className="mg-v2-pricing-page">
-        <header className="mg-v2-pricing-page__header">
-          <h1 className="mg-v2-pricing-page__title">
-            {t('public.pricing.pageTitle', 'Simple, Transparent Pricing')}
-          </h1>
-          <p className="mg-v2-pricing-page__subtitle">
-            {t('public.pricing.pageSubtitle', 'Choose the plan that fits your counseling center.')}
-          </p>
-        </header>
-
-        <section
-          className="mg-v2-pricing-page__cards"
-          aria-label={t('public.pricing.plansAriaLabel', 'Pricing plans')}
-        >
-          {PRICING_PLANS.map((plan) => (
-            <PricingCard
-              key={plan.planKey}
-              {...plan}
-              ctaLabel={
-                plan.isEnterprise
-                  ? t('public.pricing.contactSales', 'Contact Sales')
-                  : t('public.pricing.getStarted', 'Get Started')
-              }
-              ctaTo={plan.isEnterprise ? '/onboarding' : '/onboarding'}
-            />
-          ))}
-        </section>
-
-        <section className="mg-v2-pricing-page__faq" aria-label={t('public.pricing.faqAriaLabel', 'FAQ')}>
-          <h2 className="mg-v2-pricing-page__faq-title">
-            {t('public.pricing.faqTitle', 'Frequently Asked Questions')}
-          </h2>
-          <div className="mg-v2-pricing-page__faq-skeleton">
-            <div className="mg-v2-pricing-page__faq-item" />
-            <div className="mg-v2-pricing-page__faq-item" />
-            <div className="mg-v2-pricing-page__faq-item" />
-            <p className="mg-v2-pricing-page__faq-coming-soon">
-              {t('public.pricing.faqComingSoon', 'FAQ content will be available in Phase C.')}
-            </p>
-          </div>
-        </section>
-      </div>
-    </PublicLayout>
+    <PublicErrorBoundary>
+      <PublicLayout>
+        <div className="mg-v2-pricing-page" data-testid="pricing-page">
+          {renderContent()}
+        </div>
+      </PublicLayout>
+    </PublicErrorBoundary>
   );
 };
 

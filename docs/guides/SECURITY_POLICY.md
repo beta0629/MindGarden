@@ -289,7 +289,7 @@ PERSONAL_DATA_ENCRYPTION_IVS=v2:Q29vbElWMjMxMjM=,v1:QmFja3VwSXYxMjM=
 
 **보안팀:**
 - 이메일: security@mindgarden.com
-- 긴급 연락: 02-1234-5678
+- 긴급 연락: 032-724-8501
 
 ---
 

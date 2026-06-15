@@ -121,9 +121,9 @@ public final class ComplianceDashboardSampleContent {
                 "개발팀장 (기술적 대응)"
             ),
             "contactInfo", Map.of(
-                "emergency", "02-1234-5678",
+                "emergency", "032-724-8501",
                 "email", "privacy@mindgarden.co.kr",
-                "address", "서울시 강남구 테헤란로 123"
+                "address", "인천광역시 연수구 해돋이로120번길 23 2층 204호"
             )
         );
     }

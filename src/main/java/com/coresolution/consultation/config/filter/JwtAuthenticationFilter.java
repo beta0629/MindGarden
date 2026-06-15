@@ -253,8 +253,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
                 break;
             case STAFF:
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS));
+                // OPS_PORTAL_MIGRATION Phase 1b (2026-06-15) — P0 보안 정정:
+                // 기존: ROLE_ADMIN + ROLE_OPS 자동 부여 → STAFF 가 ADMIN-only / OPS-only 엔드포인트
+                // (PiiKeyRotationAdminController 등) 호출 가능했던 권한 상승 취약점.
+                // 정정: ROLE_STAFF 만 부여. 추가 권한은 명시적 hasAnyRole 또는 동적 권한 시스템으로 부여.
+                // SessionBasedAuthenticationFilter (case STAFF: ROLE_STAFF) 와 정합.
+                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_STAFF));
                 break;
             case CONSULTANT:
                 authorities.add(new SimpleGrantedAuthority(

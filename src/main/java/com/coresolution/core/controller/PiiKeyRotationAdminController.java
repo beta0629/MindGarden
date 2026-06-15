@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,8 @@ import com.coresolution.consultation.dto.security.PiiRotationProgressResponse;
 import com.coresolution.consultation.dto.security.PiiRotationResult;
 import com.coresolution.consultation.entity.PiiReencryptionProgress.Status;
 import com.coresolution.consultation.service.PersonalDataKeyRotationService;
+import com.coresolution.core.constant.OpsTenantConstants;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.util.LogSanitizer;
 
@@ -26,9 +29,22 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * PII KEY/IV 회전 어드민 엔드포인트.
  *
- * <p>운영팀 슈퍼관리자 ({@code ADMIN}) 만 호출 가능 (레거시 {@code HQ_MASTER} 매핑 통합 —
- * {@code docs/standards/ROLE_STANDARD.md} §3.1·§5.1 SSOT). 본 컨트롤러는 회전 메타·진행률만
- * 노출하며, 응답에 평문 / 암호문 PII 를 포함하지 않는다.</p>
+ * <p>본 컨트롤러는 회전 메타·진행률만 노출하며, 응답에 평문 / 암호문 PII 를 포함하지 않는다.</p>
+ *
+ * <h3>권한 가드 — 옵션 3+1 하이브리드 (Defense in Depth)</h3>
+ * <ol>
+ *   <li>클래스 레벨 {@code @PreAuthorize("hasRole('OPS')")} — Ops Portal 운영자만 호출 가능
+ *       ({@code SecurityRoleConstants.ROLE_OPS} Authority).</li>
+ *   <li>메서드별 진입부 {@link OpsTenantConstants#isHqTenant(String)} 자체 검증 —
+ *       외부 테넌트가 어떤 경로로든 컨텍스트를 위조해 진입해도 차단.</li>
+ * </ol>
+ *
+ * <p>표준 정합:
+ * {@code docs/standards/ROLE_STANDARD.md} §3.3 (테넌트 가드 병행 패턴, §3.2 와 동일 의미) +
+ * {@code docs/project-management/OPS_PORTAL_MIGRATION_PLAN.md} §6 (옵션 3+1).
+ * 레거시 {@code @PreAuthorize("hasRole('ADMIN')")} 매핑은 본 Phase 1 에서 {@code OPS} +
+ * HQ 테넌트 가드로 전환 — 외부 테넌트 ADMIN 의 본사 키 회전 호출 가능성 (Defense in Depth 위반)
+ * 차단.</p>
  *
  * <h3>엔드포인트</h3>
  * <ul>
@@ -41,7 +57,9 @@ import lombok.extern.slf4j.Slf4j;
  * <h3>관련 표준</h3>
  * <ul>
  *   <li>{@code docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md} §3.2.4</li>
- *   <li>{@code docs/standards/SECRET_ROTATION_POLICY.md} v1.2.0 §3.4</li>
+ *   <li>{@code docs/standards/SECRET_ROTATION_POLICY.md} v1.4.0 §3.4</li>
+ *   <li>{@code docs/standards/ROLE_STANDARD.md} §3.2 (테넌트 가드 병행 패턴)</li>
+ *   <li>{@code docs/project-management/OPS_PORTAL_MIGRATION_PLAN.md} §6 (옵션 3+1 하이브리드)</li>
  * </ul>
  *
  * @author CoreSolution
@@ -51,10 +69,14 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/admin/pii-rotation")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('OPS')")
 public class PiiKeyRotationAdminController extends BaseApiController {
 
+    private static final String HQ_GUARD_DENY_MESSAGE =
+        "PII 회전은 본사(Ops) 테넌트만 호출 가능 — 외부 테넌트 차단";
+
     private final PersonalDataKeyRotationService rotationService;
+    private final OpsTenantConstants opsTenantConstants;
 
     /**
      * PII 회전 시작.
@@ -69,6 +91,7 @@ public class PiiKeyRotationAdminController extends BaseApiController {
             @RequestParam String table,
             @RequestParam("target_key_id") String targetKeyId,
             @RequestParam(value = "chunk_size", defaultValue = "100") int chunkSize) {
+        assertHqTenant();
         log.info("PII 회전 시작 요청 — table={}, targetKeyId={}, chunkSize={}",
             LogSanitizer.forLog(table), LogSanitizer.forLog(targetKeyId), chunkSize);
         PiiRotationResult result = dispatchStart(table, chunkSize, targetKeyId);
@@ -84,6 +107,7 @@ public class PiiKeyRotationAdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<PiiRotationProgressResponse>> progress(
             @RequestParam String table,
             @RequestParam("target_key_id") String targetKeyId) {
+        assertHqTenant();
         log.info("PII 회전 진행률 조회 — table={}, targetKeyId={}",
             LogSanitizer.forLog(table), LogSanitizer.forLog(targetKeyId));
         Map<Status, Long> agg = rotationService.aggregateProgress(table, targetKeyId);
@@ -109,6 +133,7 @@ public class PiiKeyRotationAdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<PiiRotationResult>> resume(
             @RequestParam String table,
             @RequestParam("target_key_id") String targetKeyId) {
+        assertHqTenant();
         log.info("PII 회전 재시도 요청 — table={}, targetKeyId={}",
             LogSanitizer.forLog(table), LogSanitizer.forLog(targetKeyId));
         List<String> columns = resolveColumns(table);
@@ -123,6 +148,7 @@ public class PiiKeyRotationAdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancel(
             @RequestParam String table,
             @RequestParam("target_key_id") String targetKeyId) {
+        assertHqTenant();
         log.info("PII 회전 취소 요청 — table={}, targetKeyId={}",
             LogSanitizer.forLog(table), LogSanitizer.forLog(targetKeyId));
         int cancelled = rotationService.cancelPendingChunks(table, targetKeyId);
@@ -131,6 +157,28 @@ public class PiiKeyRotationAdminController extends BaseApiController {
         body.put("target_key_id", targetKeyId);
         body.put("cancelled_chunks", cancelled);
         return success("진행 중 chunk 가 취소되었습니다.", body);
+    }
+
+    // ------------------------------------------------------------------
+    // Internal — HQ 테넌트 가드 (옵션 3+1 하이브리드, Defense in Depth)
+    // ------------------------------------------------------------------
+
+    /**
+     * 현재 요청 테넌트가 본사(HQ) 인지 검증한다.
+     *
+     * <p>{@code OpsTenantConstants} fail-fast 로 환경변수 주입을 보장하지만, 외부 테넌트가
+     * {@code ROLE_OPS} Authority 를 보유한 채 진입하더라도 본 가드가 차단한다
+     * (Ops 권한이 향후 HQ 외 테넌트로 확장될 가능성에 대한 Defense in Depth).</p>
+     *
+     * @throws AccessDeniedException 본사 테넌트가 아닌 경우
+     */
+    private void assertHqTenant() {
+        String currentTenant = TenantContextHolder.getRequiredTenantId();
+        if (!opsTenantConstants.isHqTenant(currentTenant)) {
+            log.warn("[OPS] PII 회전 외부 테넌트 차단 — currentTenant={} (HQ 가드)",
+                LogSanitizer.forLog(currentTenant));
+            throw new AccessDeniedException(HQ_GUARD_DENY_MESSAGE);
+        }
     }
 
     // ------------------------------------------------------------------

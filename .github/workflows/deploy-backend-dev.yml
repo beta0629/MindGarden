@@ -676,6 +676,8 @@ jobs:
           # 3) 권한 보호
           sudo chmod 600 "$DEV_ENV_FILE"
           sudo chown root:root "$DEV_ENV_FILE"
+          # SSOT 통일 (PR-2, 2026-06-13): 운영 prod.env 와 동일 패턴 — root:mindgarden 0640 멱등 적용 (DB_ENV_SSOT_POLICY.md §1)
+          if id mindgarden >/dev/null 2>&1; then sudo chown root:mindgarden "$DEV_ENV_FILE" && sudo chmod 640 "$DEV_ENV_FILE"; fi
           
           # 4) 값 노출 없이 길이만 표시
           echo "✅ dev.env Apple SIWA 6종 갱신 완료 — 길이만 표시:"
@@ -764,6 +766,8 @@ jobs:
           # 3) 권한 보호
           sudo chmod 600 "$DEV_ENV_FILE"
           sudo chown root:root "$DEV_ENV_FILE"
+          # SSOT 통일 (PR-2, 2026-06-13): 운영 prod.env 와 동일 패턴 — root:mindgarden 0640 멱등 적용 (DB_ENV_SSOT_POLICY.md §1)
+          if id mindgarden >/dev/null 2>&1; then sudo chown root:mindgarden "$DEV_ENV_FILE" && sudo chmod 640 "$DEV_ENV_FILE"; fi
           
           # 4) 값 노출 없이 길이만 표시
           echo "✅ dev.env Google OAuth 3종 갱신 완료 — 길이만 표시:"
@@ -852,6 +856,8 @@ jobs:
           # 3) 권한 보호
           sudo chmod 600 "$DEV_ENV_FILE"
           sudo chown root:root "$DEV_ENV_FILE"
+          # SSOT 통일 (PR-2, 2026-06-13): 운영 prod.env 와 동일 패턴 — root:mindgarden 0640 멱등 적용 (DB_ENV_SSOT_POLICY.md §1)
+          if id mindgarden >/dev/null 2>&1; then sudo chown root:mindgarden "$DEV_ENV_FILE" && sudo chmod 640 "$DEV_ENV_FILE"; fi
 
           # 4) 값 노출 없이 길이만 표시 (콜백 URL 은 비밀이 아니지만 일관 표시)
           echo "✅ dev.env *_REGISTERED_URLS 갱신 완료 — 길이만 표시:"
@@ -1028,6 +1034,8 @@ jobs:
           fi
           sudo chmod 600 "$DEV_ENV_FILE"
           sudo chown root:root "$DEV_ENV_FILE"
+          # SSOT 통일 (PR-2, 2026-06-13): 운영 prod.env 와 동일 패턴 — root:mindgarden 0640 멱등 적용 (DB_ENV_SSOT_POLICY.md §1)
+          if id mindgarden >/dev/null 2>&1; then sudo chown root:mindgarden "$DEV_ENV_FILE" && sudo chmod 640 "$DEV_ENV_FILE"; fi
           echo "✅ ${KEY}=\"${VALUE}\" 갱신 완료 (was: '${CURRENT_VALUE}')"
 
           sudo mkdir -p "$VALUE"

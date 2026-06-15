@@ -1,0 +1,24 @@
+# MindGarden Core 운영 systemd drop-in — 로깅 (예시)
+#
+# SSOT: docs/standards/DB_ENV_SSOT_POLICY.md (v1.0.0, 2026-06-13) — prod.env 단일.
+# 평문 secret 금지: 본 drop-in 의 [Service] 섹션에 Environment= 라인을 두지 말 것
+#   (DB_ENV_SSOT_POLICY.md §3 — secret 은 EnvironmentFile=/etc/mindgarden/prod.env 로만 주입).
+#
+# 설치 위치:
+#   /etc/systemd/system/mindgarden-core-blue.service.d/20-logging.conf
+#   /etc/systemd/system/mindgarden-core-green.service.d/20-logging.conf
+# 적용:
+#   sudo install -m 0644 -o root -g root 20-logging.conf.example /etc/systemd/system/mindgarden-core-blue.service.d/20-logging.conf \
+#     && sudo systemctl daemon-reload && sudo systemctl restart mindgarden-core-blue.service
+#
+# 로그 디렉터리(/var/log/mindgarden) 는 사전에 생성·소유권 부여 필요:
+#   sudo install -d -m 0755 -o mindgarden -g mindgarden /var/log/mindgarden
+#
+# 본 drop-in 은 deployment/systemd/mindgarden-core-{blue,green}.service.example 의
+# StandardOutput / StandardError append 경로와 정합. unit 본체 변경 없이 로그 정책만 조정할 때 사용.
+
+[Service]
+StandardOutput=append:/var/log/mindgarden/core-blue.log
+StandardError=append:/var/log/mindgarden/core-blue-error.log
+SyslogIdentifier=mindgarden-core-blue
+# green 슬롯 적용 시 위 3 줄을 core-green.log / core-green-error.log / mindgarden-core-green 으로 교체할 것.

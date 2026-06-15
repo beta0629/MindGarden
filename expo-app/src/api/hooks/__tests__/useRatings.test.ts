@@ -8,11 +8,26 @@
  *   - 필수: `clientId`, `scheduleId`, `heartScore` — 누락 시 BE NumberFormatException(500)
  */
 import { buildCreateRatingPayload } from '../ratingPayload';
+import { RATING_QUERY_KEYS } from '../ratingQueryKeys';
 import { RATING_API } from '../../endpoints';
 
 describe('RATING_API endpoint contract', () => {
   it('SUBMIT_RATING points to BE-provided `/create` path', () => {
     expect(RATING_API.SUBMIT_RATING).toBe('/api/v1/ratings/create');
+  });
+});
+
+describe('RATING_QUERY_KEYS contract (TestFlight 1.0.9 hotfix)', () => {
+  it('exposes a root key for bulk invalidation', () => {
+    expect(RATING_QUERY_KEYS.all).toEqual(['ratings']);
+  });
+
+  it('builds ratable-schedules key under the root, keyed by clientId', () => {
+    expect(RATING_QUERY_KEYS.ratableSchedules(303)).toEqual(['ratings', 'ratable-schedules', 303]);
+  });
+
+  it('builds consultant-stats key under the root, keyed by consultantId', () => {
+    expect(RATING_QUERY_KEYS.consultantStats(202)).toEqual(['ratings', 'consultant-stats', 202]);
   });
 });
 

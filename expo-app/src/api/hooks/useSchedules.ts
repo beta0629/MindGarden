@@ -59,6 +59,13 @@ export interface ScheduleDetail extends Schedule {
   consultationRecordId?: number;
   /** 백엔드 미제공 시 생략 가능 — UI에서는 falsy로 취급 */
   hasRecord?: boolean;
+  /**
+   * 본인이 이미 평가 완료한 상담 여부 (TestFlight 1.0.9 hotfix — 2026-06-15).
+   *
+   * BE `ScheduleController` 응답에 `hasRating` / `alreadyRated` 둘 중 하나가 내려오면 매핑된다.
+   * 미제공 환경에서는 `undefined` → 가드는 통과되고 BE 의 "이미 평가한 상담입니다" 응답이 알럿으로 표시된다.
+   */
+  hasRating?: boolean;
 }
 
 interface SchedulesParams {

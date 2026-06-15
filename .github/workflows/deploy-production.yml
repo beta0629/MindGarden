@@ -1303,6 +1303,12 @@ jobs:
       with:
         step_name: 'PII KEY/IV 회전'
         keys: 'PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS MINDGARDEN_DORMANT_PII_ENC_KEY'
+        # SSOT 통일 (PR-3, 2026-06-15 PR #310 / PR #390 시리즈 종결): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1).
+        # cutover-prod-env-ssot.yml 실행 (run 27528336064) 으로 prod-from-dev.env 가 .DEPRECATED-* 로 폐기됨에 따라
+        # composite action default env_path('/etc/mindgarden/prod-from-dev.env') 가 파일 부재로 신규 생성을
+        # 시도하고 DB FAIL-FAST 가드(DB_HOST/DB_NAME/DB_USERNAME 누락)에 걸려 deploy 중단되는 회귀 차단.
+        # PII secret 4종 등록 완료 시 skip_when='all_missing' graceful skip 비활성 → 즉시 정정 필요.
+        env_path: '/etc/mindgarden/prod.env'
         ssh_host: ${{ secrets.PRODUCTION_HOST }}
         ssh_user: ${{ secrets.PRODUCTION_USER }}
         ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}

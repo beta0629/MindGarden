@@ -1,0 +1,23 @@
+# MindGarden Core 운영 systemd drop-in — 리소스 한도 (예시)
+#
+# SSOT: docs/standards/DB_ENV_SSOT_POLICY.md (v1.0.0, 2026-06-13) — prod.env 단일.
+# 평문 secret 금지: 본 drop-in 의 [Service] 섹션에 Environment= 라인을 두지 말 것
+#   (DB_ENV_SSOT_POLICY.md §3 — secret 은 EnvironmentFile=/etc/mindgarden/prod.env 로만 주입).
+#
+# 설치 위치:
+#   /etc/systemd/system/mindgarden-core-blue.service.d/10-resource-limits.conf
+#   /etc/systemd/system/mindgarden-core-green.service.d/10-resource-limits.conf
+# 적용:
+#   sudo install -m 0644 -o root -g root 10-resource-limits.conf.example /etc/systemd/system/mindgarden-core-blue.service.d/10-resource-limits.conf \
+#     && sudo systemctl daemon-reload && sudo systemctl restart mindgarden-core-blue.service
+#
+# JVM heap 은 unit 본체 ExecStart 의 -Xms/-Xmx (현재 -Xms1g -Xmx4g) 로 제어한다. 본 drop-in 은
+# OS 차원의 fd / 프로세스 한도만 보강 — heap 변경은 unit 파일·deploy-production.yml 과 함께 일관 갱신해야 한다.
+
+[Service]
+# 파일 디스크립터: Spring Boot HTTP/2 + DB 풀 + actuator 모니터링 합산 — 65535 권장
+LimitNOFILE=65535
+# 프로세스/스레드 한도: HikariCP + Tomcat NIO worker + 스케줄러 합산
+LimitNPROC=4096
+# 코어 덤프 비활성화 (운영 디스크 보호 — JVM heap dump 는 -XX:HeapDumpPath 로 별도 관리)
+LimitCORE=0

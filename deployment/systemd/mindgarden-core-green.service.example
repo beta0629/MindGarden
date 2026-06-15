@@ -1,4 +1,5 @@
 # MindGarden Core 운영 — 그린 슬롯 (예시)
+# SSOT: docs/standards/DB_ENV_SSOT_POLICY.md (v1.0.0, 2026-06-13) — prod.env 단일, prod-from-dev.env 폐기.
 # 복사: sudo cp mindgarden-core-green.service.example /etc/systemd/system/mindgarden-core-green.service
 #       sudo systemctl daemon-reload
 #

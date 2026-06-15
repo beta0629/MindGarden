@@ -1,0 +1,23 @@
+# MindGarden Core 운영 systemd drop-in — 재시작 정책 (예시)
+#
+# SSOT: docs/standards/DB_ENV_SSOT_POLICY.md (v1.0.0, 2026-06-13) — prod.env 단일.
+# 평문 secret 금지: 본 drop-in 의 [Service] 섹션에 Environment= 라인을 두지 말 것
+#   (DB_ENV_SSOT_POLICY.md §3 — secret 은 EnvironmentFile=/etc/mindgarden/prod.env 로만 주입).
+#
+# 설치 위치:
+#   /etc/systemd/system/mindgarden-core-blue.service.d/00-restart-policy.conf
+#   /etc/systemd/system/mindgarden-core-green.service.d/00-restart-policy.conf
+# 적용:
+#   sudo install -m 0644 -o root -g root 00-restart-policy.conf.example /etc/systemd/system/mindgarden-core-blue.service.d/00-restart-policy.conf \
+#     && sudo systemctl daemon-reload && sudo systemctl restart mindgarden-core-blue.service
+#   (green 슬롯도 동일 절차로 별도 적용 — 무중단 cutover 는 docs/deployment/PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md 참고)
+#
+# 슬롯 단위 재시작·헬스 검증은 deploy-production.yml 워크플로 패턴과 일치.
+
+[Service]
+# Restart=always 는 OOM·일시 예외 시에도 즉시 재시도. 운영 BG 슬롯은 무한 boot loop 방지를 위해
+# StartLimitIntervalSec / StartLimitBurst 와 함께 운영해야 한다 (본 drop-in 은 서비스 본체 [Unit] 미수정 → unit 파일과 동일 limit 유지).
+Restart=always
+RestartSec=10
+TimeoutStartSec=180
+TimeoutStopSec=120

@@ -4,24 +4,28 @@ import java.time.LocalDate;
 import com.coresolution.consultation.constant.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 /**
  * 상담사 상세 엔티티
  * User 엔티티를 상속받아 상담사 전용 정보를 관리
- * 
+ *
+ * <p>JOINED 상속 매핑(부모 {@link User} 가 {@code InheritanceType.JOINED}) 이므로
+ * {@code consultants} 테이블은 Consultant 고유 컬럼만 보유한다. {@code grade}/
+ * {@code is_deleted} 는 부모 {@code users} 테이블에 존재하며 {@code idx_users_grade}/
+ * {@code idx_users_is_deleted} 로 이미 인덱싱되어 있으므로, 본 테이블에 추가
+ * {@code @Index} 를 선언하지 않는다. 과거 정의되었던 {@code idx_consultants_grade}/
+ * {@code idx_consultants_specialty}/{@code idx_consultants_is_deleted} 는 H2 ddl-auto
+ * update 단계에서 컬럼 부재로 SessionFactory 초기화를 깨뜨려 2026-06-15 main CI 게이트
+ * 회귀 (consultants 컬럼 NOT FOUND) 의 직접 원인이 되어 제거되었다.</p>
+ *
  * @author MindGarden
- * @version 1.0.0
+ * @version 1.0.1
  * @since 2024-12-19
  */
 @Entity
-@Table(name = "consultants", indexes = {
-    @Index(name = "idx_consultants_grade", columnList = "grade"),
-    @Index(name = "idx_consultants_specialty", columnList = "specialty"),
-    @Index(name = "idx_consultants_is_deleted", columnList = "is_deleted")
-})
+@Table(name = "consultants")
 public class Consultant extends User {
     
     @Size(max = 100, message = "전문 분야는 100자 이하여야 합니다.")

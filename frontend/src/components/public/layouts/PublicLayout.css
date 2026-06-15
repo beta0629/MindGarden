@@ -1,0 +1,29 @@
+/**
+ * PublicLayout CSS — mg-v2-* 토큰 한정
+ * @author MindGarden
+ * @since 2026-06-15
+ */
+
+.mg-v2-public-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--mg-v2-color-surface-bg);
+  color: var(--mg-v2-color-text-primary);
+  font-family: var(--mg-v2-font-family-base);
+}
+
+.mg-v2-public-layout__content {
+  flex: 1;
+  max-width: var(--mg-v2-grid-max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mg-v2-public-layout__content {
+    padding: var(--mg-v2-space-4) var(--mg-v2-space-4);
+  }
+}

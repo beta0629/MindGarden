@@ -63,11 +63,14 @@ class PiiKeyRotationAdminControllerTest {
     }
 
     @Test
-    @DisplayName("@PreAuthorize 가드가 클래스 레벨에 HQ_MASTER 로 부착되어 있다")
-    void classLevelPreAuthorize_isHqMaster() {
+    @DisplayName("@PreAuthorize 가드가 클래스 레벨에 ADMIN 로 부착되어 있다 (ROLE_STANDARD SSOT)")
+    void classLevelPreAuthorize_isAdmin() {
         PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
         assertThat(annotation).as("@PreAuthorize 어노테이션이 클래스 레벨에 부착되어 있어야 한다").isNotNull();
-        assertThat(annotation.value()).contains("HQ_MASTER");
+        assertThat(annotation.value())
+            .as("ROLE_STANDARD.md §3.1 — 레거시 HQ_MASTER 비교 금지, ADMIN 통합 매핑 사용")
+            .contains("ADMIN")
+            .doesNotContain("HQ_MASTER");
     }
 
     @Test

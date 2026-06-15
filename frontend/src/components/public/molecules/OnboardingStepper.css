@@ -1,0 +1,156 @@
+/**
+ * OnboardingStepper CSS — mg-v2-* 토큰 한정
+ * @author MindGarden
+ * @since 2026-06-15
+ */
+
+.mg-v2-onboarding-stepper {
+  width: 100%;
+  padding: var(--mg-v2-space-4) 0;
+}
+
+.mg-v2-onboarding-stepper__list {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: step;
+}
+
+.mg-v2-onboarding-stepper__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Connector line */
+.mg-v2-onboarding-stepper__connector {
+  position: absolute;
+  top: 18px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  z-index: 0;
+}
+
+.mg-v2-onboarding-stepper__connector--active {
+  background-color: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-onboarding-stepper__connector--inactive {
+  background-color: var(--mg-v2-color-border-light);
+}
+
+/* Circle */
+.mg-v2-onboarding-stepper__circle {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--mg-v2-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  border: 2px solid transparent;
+  cursor: default;
+  padding: 0;
+  transition: var(--mg-v2-transition-fast);
+  font-family: var(--mg-v2-font-family-base);
+}
+
+.mg-v2-onboarding-stepper__circle--completed {
+  background-color: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-inverse);
+  cursor: pointer;
+}
+
+.mg-v2-onboarding-stepper__circle--completed:hover:not(:disabled) {
+  background-color: var(--mg-v2-color-primary-hover);
+  border-color: var(--mg-v2-color-primary-hover);
+}
+
+.mg-v2-onboarding-stepper__circle--current {
+  background-color: var(--mg-v2-color-surface-raised);
+  border-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-primary-main);
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+.mg-v2-onboarding-stepper__circle--pending {
+  background-color: var(--mg-v2-color-surface-bg);
+  border-color: var(--mg-v2-color-border-default);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.mg-v2-onboarding-stepper__circle:focus-visible {
+  outline: 2px solid var(--mg-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+.mg-v2-onboarding-stepper__circle:disabled {
+  cursor: default;
+}
+
+/* Check icon */
+.mg-v2-onboarding-stepper__check-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Number */
+.mg-v2-onboarding-stepper__number {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  line-height: 1;
+}
+
+/* Label */
+.mg-v2-onboarding-stepper__label {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-secondary);
+  margin-top: var(--mg-v2-space-2);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-onboarding-stepper__item--current .mg-v2-onboarding-stepper__label {
+  color: var(--mg-v2-color-primary-main);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.mg-v2-onboarding-stepper__item--completed .mg-v2-onboarding-stepper__label {
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* Responsive — Mobile: horizontal scroll */
+@media (max-width: 768px) {
+  .mg-v2-onboarding-stepper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .mg-v2-onboarding-stepper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mg-v2-onboarding-stepper__list {
+    min-width: 540px;
+    padding: 0 var(--mg-v2-space-4);
+  }
+
+  .mg-v2-onboarding-stepper__label {
+    font-size: var(--mg-v2-font-size-micro);
+  }
+}

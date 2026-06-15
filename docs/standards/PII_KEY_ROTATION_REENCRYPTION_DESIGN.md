@@ -432,7 +432,7 @@ CREATE TABLE IF NOT EXISTS pii_reencryption_progress (
 | `POST` | `/api/v1/admin/pii-rotation/resume` | `table`, `target_key_id` | `PiiRotationResult` (FAILED chunk 만 재실행) |
 | `POST` | `/api/v1/admin/pii-rotation/cancel` | `table`, `target_key_id` | `{ table, target_key_id, cancelled_chunks }` |
 
-권한 가드: 컨트롤러 클래스에 `@PreAuthorize("hasRole('HQ_MASTER')")` 부착. 모든 응답은 평문/암호문 PII 를 절대 포함하지 않는다 (단위 테스트에서 정규식 가드로 회귀 차단).
+권한 가드: 컨트롤러 클래스에 `@PreAuthorize("hasRole('ADMIN')")` 부착 (레거시 `HQ_MASTER` 매핑 통합 — `docs/standards/ROLE_STANDARD.md` §3.1·§5.1 SSOT). 모든 응답은 평문/암호문 PII 를 절대 포함하지 않는다 (단위 테스트에서 정규식 가드로 회귀 차단).
 
 > admin override 강제 회전 / grace 무시는 **금지**. 본 endpoint 는 chunk 단위 진행만 트리거하며, 옛 keyId 폐기는 워크플로 별도 phase (§3.5) 에서만 수행한다.
 

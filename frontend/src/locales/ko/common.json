@@ -2092,6 +2092,62 @@
       "t_eb11e9a6": "결제 내역을 불러오는 중..."
     }
   },
+  "public": {
+    "landing": {
+      "pageTitle": "마인드가든 — 심리상담센터 관리 솔루션",
+      "pageDescription": "마인드가든은 심리상담센터를 위한 예약·기록·정산 올인원 솔루션입니다. 지금 무료로 시작하세요.",
+      "heroTitle": "마음을 돌보는 가장 안정적인 공간",
+      "heroSubtitle": "상담 기록부터 예약 관리까지, 원장님을 위한 완벽한 솔루션",
+      "heroPrimaryCta": "무료로 시작하기",
+      "heroSecondaryCta": "요금제 보기",
+      "feature": {
+        "scheduling": {
+          "title": "스마트 예약 관리",
+          "description": "노쇼를 방지하는 자동 알림과 캘린더 연동"
+        },
+        "records": {
+          "title": "안전한 상담 기록",
+          "description": "종단간 암호화로 보호되는 내담자 차트"
+        },
+        "settlement": {
+          "title": "자동 정산 시스템",
+          "description": "복잡한 수기 정산을 클릭 한 번으로"
+        }
+      },
+      "stat": {
+        "centers": "도입 센터",
+        "users": "활성 사용자",
+        "reservations": "누적 예약 건수",
+        "satisfaction": "고객 만족도"
+      },
+      "testimonial1Content": "마인드가든 도입 후 행정 업무가 절반으로 줄었습니다.",
+      "testimonial1Author": "A 심리상담센터 원장",
+      "testimonial2Content": "예약 관리와 정산이 자동화되어 상담에만 집중할 수 있게 되었어요.",
+      "testimonial2Author": "B 상담소 대표",
+      "testimonial3Content": "내담자 관리 시스템이 정말 직관적이고 안전합니다.",
+      "testimonial3Author": "C 클리닉 실장",
+      "ctaTitle": "지금 바로 차원이 다른 상담 센터 관리를 경험해보세요.",
+      "ctaSubtitle": "14일 무료 체험으로 모든 기능을 사용해볼 수 있습니다.",
+      "ctaPrimaryCta": "무료로 시작하기",
+      "ctaSecondaryCta": "도입 문의하기"
+    },
+    "onboarding": {
+      "pageTitle": "마인드가든 시작하기",
+      "pageSubtitle": "상담 센터를 몇 분 만에 설정하세요.",
+      "stepContentLabel": "단계 내용",
+      "comingSoon": "단계 내용은 Phase C에서 제공될 예정입니다."
+    },
+    "pricing": {
+      "pageTitle": "심플하고 투명한 요금제",
+      "pageSubtitle": "상담 센터에 맞는 플랜을 선택하세요.",
+      "plansAriaLabel": "요금제 플랜",
+      "contactSales": "영업팀 문의",
+      "getStarted": "시작하기",
+      "faqAriaLabel": "자주 묻는 질문",
+      "faqTitle": "자주 묻는 질문",
+      "faqComingSoon": "FAQ 내용은 Phase C에서 제공될 예정입니다."
+    }
+  },
   "homepage": {
     "Homepage": {
       "t_e225a6fd": "로그인",

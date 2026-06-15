@@ -156,6 +156,7 @@ import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
 import { TenantComponentFlagsProvider } from './contexts/TenantComponentFlagsContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { DarkModeProvider } from './contexts/DarkModeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { ToastProvider } from './contexts/ToastContext';
 import AppToast from './components/common/AppToast';
@@ -265,7 +266,13 @@ function AppContent() {
   useEffect(() => {
     // 로그인 전에는 CSS 테마 로드를 건너뛰고 기본 테마만 설정
     const shouldLoadColors = !!user; // 로그인된 경우에만 색상 로드
-    
+
+    // H6 가드: initializeDynamicThemeSystem 내부의 setTheme('ios') 가
+    // <html data-theme="..."> 를 일괄 removeAttribute 하므로,
+    // DarkModeProvider 가 적용해둔 'dark' 를 user 갱신 시점에 복원한다.
+    const preserveDarkTheme = typeof document !== 'undefined'
+      && document.documentElement.getAttribute('data-theme') === 'dark';
+
     initializeDynamicThemeSystem({
       theme: 'ios', // iOS 스타일 기본 테마
       enableThemeWatcher: true, // 테마 변경 감지 활성화
@@ -279,6 +286,10 @@ function AppContent() {
         highContrast: 1000
       }
     });
+
+    if (preserveDarkTheme && typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
   }, [user]); // user 상태에 따라 재실행
 
   // 통합 레이아웃 시스템 초기화
@@ -1096,17 +1107,19 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <SessionProvider>
-          <TenantComponentFlagsProvider>
-            <NotificationProvider>
-              <ToastProvider>
-                <Router>
-                  <AppContent />
-                </Router>
-              </ToastProvider>
-            </NotificationProvider>
-          </TenantComponentFlagsProvider>
-        </SessionProvider>
+        <DarkModeProvider>
+          <SessionProvider>
+            <TenantComponentFlagsProvider>
+              <NotificationProvider>
+                <ToastProvider>
+                  <Router>
+                    <AppContent />
+                  </Router>
+                </ToastProvider>
+              </NotificationProvider>
+            </TenantComponentFlagsProvider>
+          </SessionProvider>
+        </DarkModeProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

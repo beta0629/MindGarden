@@ -42,11 +42,13 @@ import {
   Megaphone,
   Merge,
   MessageCircle,
+  Moon,
   Package,
   Palette,
   Settings,
   Shield,
   Sparkles,
+  Sun,
   Tags,
   Target,
   UserCog,
@@ -88,6 +90,7 @@ import {
   SchedulePendingList
 } from '../admin/AdminDashboard/index';
 import { useSession } from '../../contexts/SessionContext';
+import { useDarkMode, DARK_MODE_VALUES } from '../../contexts/DarkModeContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
@@ -210,6 +213,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [confirm, ConfirmModal] = useConfirm();
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
+  const { mode: darkMode, resolved: darkResolved, toggle: toggleDarkMode } = useDarkMode();
   const dashboardUser = propUser || sessionUser;
   const { brandingInfo, isLoading: isBrandingLoading } = useBranding({
     autoLoad: Boolean(dashboardUser)
@@ -1058,6 +1062,16 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const HEADER_ICON_SIZE = 20;
 
+  // 다크 모드 3단 토글 — 아이콘 / 라벨 / aria-pressed 동기화
+  const ThemeIcon = darkMode === DARK_MODE_VALUES.AUTO
+    ? Palette
+    : darkResolved === DARK_MODE_VALUES.DARK
+      ? Sun
+      : Moon;
+  const themeButtonLabel = t(
+    `common:dashboard-v2.AdminDashboardV2.theme_${darkMode}`
+  );
+
   const headerActions = (
       <div className="mg-v2-ad-b0kla__header-actions">
         <div className="mg-v2-ad-b0kla__icon-group">
@@ -1093,12 +1107,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             size="small"
             className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            aria-label={t('common:dashboard-v2.AdminDashboardV2.t_5d8fee11')}
-            title={t('common:dashboard-v2.AdminDashboardV2.t_5d8fee11')}
-            onClick={() => {}}
+            aria-label={themeButtonLabel}
+            aria-pressed={darkResolved === DARK_MODE_VALUES.DARK}
+            title={themeButtonLabel}
+            onClick={toggleDarkMode}
             preventDoubleClick={false}
           >
-            <Palette size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
+            <ThemeIcon size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
           </MGButton>
         </div>
       </div>

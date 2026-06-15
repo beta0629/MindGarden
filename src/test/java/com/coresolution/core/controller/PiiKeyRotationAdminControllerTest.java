@@ -9,17 +9,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -28,6 +32,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.coresolution.consultation.dto.security.PiiRotationResult;
 import com.coresolution.consultation.entity.PiiReencryptionProgress.Status;
 import com.coresolution.consultation.service.PersonalDataKeyRotationService;
+import com.coresolution.core.constant.OpsTenantConstants;
+import com.coresolution.core.context.TenantContextHolder;
 
 /**
  * {@link PiiKeyRotationAdminController} 단위 테스트.
@@ -35,15 +41,32 @@ import com.coresolution.consultation.service.PersonalDataKeyRotationService;
  * <p>standalone {@link MockMvc} 로 4개 엔드포인트의 입력 파싱·서비스 dispatch·응답 페이로드를
  * 검증한다. 응답에 평문 / 암호문 PII 가 절대 포함되지 않음을 정규식으로 확인한다.</p>
  *
- * <p>{@code @PreAuthorize} 의 권한 가드는 standalone MockMvc 가 적용하지 않으므로, 본 테스트는
- * 별도의 reflection 검증으로 어노테이션이 클래스 레벨에 부착되어 있음을 확인한다 (security 통합
- * 테스트는 후속 PR 에서 통합 환경으로 추가 권장).</p>
+ * <p>옵션 3+1 하이브리드 가드(OPS Authority + HQ 테넌트 자체 검증) 회귀:
+ * <ul>
+ *   <li>HQ 테넌트 자체 검증 ({@link OpsTenantConstants#isHqTenant(String)}) 은 메서드 진입부
+ *       에서 동기 호출되므로 standalone MockMvc 로 직접 200 / 403 회귀 검증 가능.</li>
+ *   <li>{@code @PreAuthorize("hasRole('OPS')")} 가드는 standalone MockMvc 가 적용하지 않으므로
+ *       reflection 으로 표현식이 클래스 레벨에 부착되어 있고 4종 SSOT 역할이 아닌지 확인한다
+ *       (security 통합 테스트는 후속 PR — Phase 1b 머지 후).</li>
+ * </ul>
+ *
+ * <h3>옵션 3+1 하이브리드 회귀 8건 (Phase 1 — ops-portal-migration)</h3>
+ * <ol>
+ *   <li>ROLE_OPS + HQ 테넌트 → 200</li>
+ *   <li>ROLE_OPS + 외부 테넌트 → 403 (AccessDeniedException)</li>
+ *   <li>ROLE_ADMIN + HQ 테넌트 → 403 (OPS 권한 없음, @PreAuthorize 가드)</li>
+ *   <li>ROLE_ADMIN + 외부 테넌트 → 403</li>
+ *   <li>ROLE_STAFF → 403 (Phase 1b 의존 — JwtFilter STAFF→OPS 자동 부여 차단 후 활성화)</li>
+ *   <li>ROLE_CONSULTANT → 403</li>
+ *   <li>ROLE_CLIENT → 403</li>
+ *   <li>무인증 → 401</li>
+ * </ol>
  *
  * @author CoreSolution
  * @since 2026-06-15
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PiiKeyRotationAdminController 단위 테스트 — 4 endpoints + PII 비노출")
+@DisplayName("PiiKeyRotationAdminController 단위 테스트 — 4 endpoints + PII 비노출 + 옵션 3+1 가드")
 class PiiKeyRotationAdminControllerTest {
 
     /** PII 평문 / 암호문 의심 패턴 — 응답 본문에 포함되면 즉시 실패. */
@@ -51,26 +74,58 @@ class PiiKeyRotationAdminControllerTest {
         "(?i)(@example\\.com|@gmail\\.com|password|rrn=|\\d{6}-\\d{7}|\\d{3}-\\d{4}-\\d{4}|"
         + "[a-zA-Z0-9+/]{40,}={0,2})");
 
+    private static final String HQ_TENANT_ID = "hq-tenant-id-for-test";
+    private static final String EXTERNAL_TENANT_ID = "external-tenant-uuid-001";
+
     @Mock
     private PersonalDataKeyRotationService rotationService;
 
+    private OpsTenantConstants opsTenantConstants;
     private MockMvc mockMvc;
 
     @BeforeEach
-    void setUp() {
-        PiiKeyRotationAdminController controller = new PiiKeyRotationAdminController(rotationService);
+    void setUp() throws Exception {
+        opsTenantConstants = new OpsTenantConstants();
+        injectHqTenantId(opsTenantConstants, HQ_TENANT_ID);
+        PiiKeyRotationAdminController controller =
+            new PiiKeyRotationAdminController(rotationService, opsTenantConstants);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        TenantContextHolder.setTenantId(HQ_TENANT_ID);
     }
 
+    @AfterEach
+    void tearDown() {
+        TenantContextHolder.clear();
+    }
+
+    /**
+     * 환경변수 주입을 거치지 않고 단위 테스트 격리를 위해 {@link OpsTenantConstants#hqTenantId} 를
+     * reflection 으로 세팅한다. 운영 코드는 {@code @Value} + {@code @PostConstruct} validate 로
+     * 부트 시 fail-fast 한다.
+     */
+    private static void injectHqTenantId(OpsTenantConstants target, String value) throws Exception {
+        Field field = OpsTenantConstants.class.getDeclaredField("hqTenantId");
+        field.setAccessible(true);
+        field.set(target, value);
+    }
+
+    // ------------------------------------------------------------------
+    // 기존 회귀 — 4 endpoints + PII 비노출 + @PreAuthorize 부착
+    // ------------------------------------------------------------------
+
     @Test
-    @DisplayName("@PreAuthorize 가드가 클래스 레벨에 ADMIN 로 부착되어 있다 (ROLE_STANDARD SSOT)")
-    void classLevelPreAuthorize_isAdmin() {
+    @DisplayName("@PreAuthorize 가드가 클래스 레벨에 OPS 로 부착되어 있다 (옵션 3+1 하이브리드)")
+    void classLevelPreAuthorize_isOps() {
         PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
         assertThat(annotation).as("@PreAuthorize 어노테이션이 클래스 레벨에 부착되어 있어야 한다").isNotNull();
         assertThat(annotation.value())
-            .as("ROLE_STANDARD.md §3.1 — 레거시 HQ_MASTER 비교 금지, ADMIN 통합 매핑 사용")
-            .contains("ADMIN")
-            .doesNotContain("HQ_MASTER");
+            .as("OPS_PORTAL_MIGRATION_PLAN §6 — Ops Portal 운영자 Authority (ROLE_OPS)")
+            .contains("hasRole('OPS')")
+            .doesNotContain("ADMIN")
+            .doesNotContain("HQ_MASTER")
+            .doesNotContain("STAFF")
+            .doesNotContain("CONSULTANT")
+            .doesNotContain("CLIENT");
     }
 
     @Test
@@ -220,5 +275,166 @@ class PiiKeyRotationAdminControllerTest {
         assertThat(progress).isNotNull();
         assertThat(resume).isNotNull();
         assertThat(cancel).isNotNull();
+    }
+
+    // ------------------------------------------------------------------
+    // 옵션 3+1 하이브리드 회귀 8건 (ops-portal-migration Phase 1)
+    // ------------------------------------------------------------------
+
+    @Test
+    @DisplayName("[옵션3+1 #1] ROLE_OPS + HQ 테넌트 → 200 (정상)")
+    void hybrid_opsRole_hqTenant_returns200() throws Exception {
+        TenantContextHolder.setTenantId(HQ_TENANT_ID);
+        PiiRotationResult result = PiiRotationResult.builder()
+            .tableName("users").chunksProcessed(0).chunksDone(0).chunksFailed(0)
+            .rowsScanned(0).rowsRotated(0)
+            .activeKeyId("v2").targetKeyId("v2").build();
+        when(rotationService.rotateUserPersonalData(eq(100), eq("v2"))).thenReturn(result);
+
+        mockMvc.perform(post("/api/v1/admin/pii-rotation/start")
+                .param("table", "users")
+                .param("target_key_id", "v2"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @DisplayName("[옵션3+1 #2] ROLE_OPS + 외부 테넌트 → 403 AccessDeniedException (HQ 가드 차단)")
+    void hybrid_opsRole_externalTenant_throwsAccessDenied() {
+        TenantContextHolder.setTenantId(EXTERNAL_TENANT_ID);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+            mockMvc.perform(post("/api/v1/admin/pii-rotation/start")
+                .param("table", "users")
+                .param("target_key_id", "v2")))
+            .satisfies(e -> {
+                Throwable root = e;
+                while (root.getCause() != null && root.getCause() != root) {
+                    root = root.getCause();
+                }
+                assertThat(root)
+                    .as("HQ 가드는 AccessDeniedException 로 차단해야 한다")
+                    .isInstanceOf(AccessDeniedException.class);
+                assertThat(root.getMessage())
+                    .as("거부 메시지는 외부 테넌트 차단 사유를 명시해야 한다")
+                    .contains("본사").contains("외부 테넌트");
+            });
+    }
+
+    @Test
+    @DisplayName("[옵션3+1 #3] ROLE_ADMIN + HQ 테넌트 → 403 (@PreAuthorize OPS 가드)")
+    void hybrid_adminRole_hqTenant_blockedByPreAuthorize() {
+        // standalone MockMvc 는 @PreAuthorize 를 적용하지 않으므로, 클래스 레벨 가드 표현식이
+        // ADMIN 을 허용하지 않음을 reflection 으로 회귀 검증한다 (통합 환경에서는 SecurityFilter 가 403 처리).
+        PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
+        assertThat(annotation).isNotNull();
+        assertThat(annotation.value())
+            .as("ADMIN 은 OPS Authority 미보유 — hasRole('OPS') 표현식이 ADMIN 을 허용하면 안 됨")
+            .contains("hasRole('OPS')")
+            .doesNotContain("ADMIN");
+    }
+
+    @Test
+    @DisplayName("[옵션3+1 #4] ROLE_ADMIN + 외부 테넌트 → 403 (이중 차단 — PreAuthorize + HQ 가드)")
+    void hybrid_adminRole_externalTenant_doubleBlocked() {
+        // 1차: @PreAuthorize 가 ADMIN 차단 (위 #3 검증)
+        PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
+        assertThat(annotation).isNotNull();
+        assertThat(annotation.value()).doesNotContain("ADMIN");
+
+        // 2차 (Defense in Depth): @PreAuthorize 우회 가정 시에도 HQ 가드가 외부 테넌트를 차단
+        TenantContextHolder.setTenantId(EXTERNAL_TENANT_ID);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+            mockMvc.perform(get("/api/v1/admin/pii-rotation/progress")
+                .param("table", "users")
+                .param("target_key_id", "v2")))
+            .satisfies(e -> {
+                Throwable root = e;
+                while (root.getCause() != null && root.getCause() != root) {
+                    root = root.getCause();
+                }
+                assertThat(root).isInstanceOf(AccessDeniedException.class);
+            });
+    }
+
+    @Test
+    @Disabled("Phase 1b 의존 — JwtAuthenticationFilter 의 STAFF → ROLE_OPS 자동 부여 차단 머지 후 활성화"
+        + " (OPS_PORTAL_MIGRATION_PLAN.md §10 P0 정정)")
+    @DisplayName("[옵션3+1 #5] ROLE_STAFF → 403 (Phase 1b 정정 의존)")
+    void hybrid_staffRole_blocked() {
+        // Phase 1b 머지 시점에 SecurityMockMvc 통합 테스트로 활성화한다.
+        // 현재 standalone MockMvc 는 @PreAuthorize 미적용이므로 단위 단계에서는 검증 불가.
+        PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
+        assertThat(annotation).isNotNull();
+        assertThat(annotation.value()).doesNotContain("STAFF");
+    }
+
+    @Test
+    @DisplayName("[옵션3+1 #6] ROLE_CONSULTANT → 403 (@PreAuthorize 표현식이 CONSULTANT 미허용)")
+    void hybrid_consultantRole_blockedByPreAuthorize() {
+        PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
+        assertThat(annotation).isNotNull();
+        assertThat(annotation.value())
+            .contains("hasRole('OPS')")
+            .doesNotContain("CONSULTANT");
+    }
+
+    @Test
+    @DisplayName("[옵션3+1 #7] ROLE_CLIENT → 403 (@PreAuthorize 표현식이 CLIENT 미허용)")
+    void hybrid_clientRole_blockedByPreAuthorize() {
+        PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
+        assertThat(annotation).isNotNull();
+        assertThat(annotation.value())
+            .contains("hasRole('OPS')")
+            .doesNotContain("CLIENT");
+    }
+
+    @Test
+    @DisplayName("[옵션3+1 #8] 무인증 → 401 (클래스 레벨 @PreAuthorize 부착 회귀)")
+    void hybrid_anonymous_blockedByPreAuthorize() {
+        // 무인증 401 은 Spring Security 통합 필터 체인이 처리. 단위 단계에서는 클래스 레벨
+        // @PreAuthorize 부착 자체가 보장되어 있는지 회귀 검증한다 (없으면 anonymous 통과 위험).
+        PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
+        assertThat(annotation)
+            .as("클래스 레벨 @PreAuthorize 가 누락되면 무인증 호출이 허용될 위험 — 회귀 차단")
+            .isNotNull();
+        assertThat(annotation.value()).isNotBlank().contains("hasRole");
+    }
+
+    // ------------------------------------------------------------------
+    // OpsTenantConstants 기본 동작 회귀
+    // ------------------------------------------------------------------
+
+    @Test
+    @DisplayName("[OpsTenant] hqTenantId null 주입 시 validate() 가 fail-fast 한다")
+    void opsTenantConstants_failFast_whenHqTenantIdMissing() throws Exception {
+        OpsTenantConstants bare = new OpsTenantConstants();
+        injectHqTenantId(bare, null);
+        org.assertj.core.api.Assertions.assertThatThrownBy(bare::validate)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("MINDGARDEN_HQ_TENANT_ID");
+    }
+
+    @Test
+    @DisplayName("[OpsTenant] hqTenantId 빈 문자열 시 validate() 가 fail-fast 한다")
+    void opsTenantConstants_failFast_whenHqTenantIdBlank() throws Exception {
+        OpsTenantConstants bare = new OpsTenantConstants();
+        injectHqTenantId(bare, "   ");
+        org.assertj.core.api.Assertions.assertThatThrownBy(bare::validate)
+            .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("[OpsTenant] isHqTenant 는 정확히 일치하는 ID 만 true 를 반환한다")
+    void opsTenantConstants_isHqTenant_matchesExactlyOnly() throws Exception {
+        OpsTenantConstants constants = new OpsTenantConstants();
+        injectHqTenantId(constants, HQ_TENANT_ID);
+        constants.validate();
+
+        assertThat(constants.isHqTenant(HQ_TENANT_ID)).isTrue();
+        assertThat(constants.isHqTenant(EXTERNAL_TENANT_ID)).isFalse();
+        assertThat(constants.isHqTenant(null)).isFalse();
+        assertThat(constants.isHqTenant("")).isFalse();
+        assertThat(constants.getHqTenantId()).isEqualTo(HQ_TENANT_ID);
     }
 }

@@ -257,7 +257,9 @@ public class PermissionMatrix {
         List<String> allowedPatterns = ROLE_API_PATTERNS.get(role);
         if (allowedPatterns == null) return false;
         
-        // HQ_MASTER는 모든 API 접근 가능
+        // 와일드카드 패턴(/api/**) 보유 역할은 모든 API 접근 가능
+        // (ops-portal-migration Phase 4: 레거시 HQ_MASTER 주석 정리.
+        // 본 정적 매트릭스는 deprecated 이며 DynamicPermissionService 로 마이그됨)
         if (allowedPatterns.contains("/api/**")) {
             return true;
         }

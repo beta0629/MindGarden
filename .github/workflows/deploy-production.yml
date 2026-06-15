@@ -128,6 +128,13 @@ jobs:
       # JWT_SECRET 과 동일하게 sync-prod-env-key composite action 으로 멱등 주입.
       # 미등록 시 ::notice 후 skip — Phase 1 secret 등록 전 batch fail 방지.
       MINDGARDEN_HQ_TENANT_ID: ${{ secrets.MINDGARDEN_HQ_TENANT_ID }}
+      # SESSION_COOKIE_DOMAIN: OAuth apex 콜백 일관성. RFC 6265 (선행 점 없음).
+      # 운영 표준값은 deployment/mindgarden.prod-env.example 의 'core-solution.co.kr'.
+      # Secret 미등록 시 composite action 의 default_value 가 적용되어 prod.env 에 자동 주입된다.
+      # 환경변수명은 prod.env 에 저장될 키 이름(SESSION_COOKIE_DOMAIN, Spring 이 읽는 키) 과 동일하게 두어
+      # composite action 의 sed 갱신이 그대로 SESSION_COOKIE_DOMAIN="..." 형태로 들어가도록 한다.
+      # GitHub Secret 명은 ops 일관성을 위해 MINDGARDEN_ prefix 사용 (HQ_TENANT_ID 와 동일 컨벤션).
+      SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
 
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
@@ -169,7 +176,7 @@ jobs:
         cache-dependency-path: frontend/package-lock.json
         
     - name: 🔧 Maven 캐시 설정
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -651,6 +658,38 @@ jobs:
     # ============================================================================
     # [/ops-portal-migration Phase 1 fix 2026-06-15]
     # ============================================================================
+
+    # ============================================================================
+    # SESSION_COOKIE_DOMAIN env 자동 주입 + 검증 (운영)
+    # 배경: deploy-production.yml '🔄 블루그린 백엔드·Nginx 적용' step 의 사후 검사가
+    #       /etc/mindgarden/prod.env 에 SESSION_COOKIE_DOMAIN 키 누락/빈값을 ::warning 으로
+    #       annotation 하고 있으나, prod.env 갱신 자체는 운영자 수동 작업이라
+    #       반영 누락 / 회귀 위험이 누적된다. JWT_SECRET / HQ_TENANT_ID 패턴과 동일하게
+    #       sync-prod-env-key composite action 으로 멱등 inject 한다.
+    # 운영 표준값: deployment/mindgarden.prod-env.example 의 'core-solution.co.kr' (RFC 6265, 선행 점 없음).
+    # 비-secret 운영 상수 → composite action 의 default_value 로 fallback 처리 (PROFILE_IMAGE_UPLOAD_DIR 와 동일 패턴).
+    # GitHub Secret 'MINDGARDEN_SESSION_COOKIE_DOMAIN' 등록 시 default 보다 우선 적용 (스테이징·서브브랜드 도메인 분리 시).
+    # 미등록 시: default 'core-solution.co.kr' 자동 주입 (annotation 만 남기고 sync 진행).
+    # env_path: '/etc/mindgarden/prod.env' — SSOT 정책 §1 (PR #300) 에 따라 prod.env 단일화 대상 키.
+    # 동일 값 재배포 시 noop_compare='true' 로 재시작 생략 (배포 비용 최소화).
+    # 사용자 액션 (선택 — default 'core-solution.co.kr' 와 다른 값 사용 시에만):
+    #   gh secret set MINDGARDEN_SESSION_COOKIE_DOMAIN --env prod --body 'core-solution.co.kr' --repo beta0629/MindGarden
+    # ============================================================================
+    - name: 🍪 SESSION_COOKIE_DOMAIN env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'SESSION_COOKIE_DOMAIN'
+        keys: 'SESSION_COOKIE_DOMAIN'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        default_value: 'core-solution.co.kr'
+        noop_compare: 'true'
+        # prod.env 는 SESSION_COOKIE_DOMAIN 등 비-secret 운영 상수만 보유 — DB 키 없음.
+        # composite action 의 DB FAIL-FAST 가드 비활성 (prod-from-dev.env 호출자는 default 'true' 유지).
+        db_fail_fast: 'false'
 
     # prod.env 존재 시 SESSION_COOKIE_DOMAIN 미설정 → 테넌트 서브도메인에서 세션 쿠키 불일치·401 가능.
     # 운영 담당: /etc/mindgarden/prod.env 에 SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음) — deployment/mindgarden.prod-env.example 과 동일.

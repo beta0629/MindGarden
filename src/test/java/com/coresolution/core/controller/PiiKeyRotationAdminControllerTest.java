@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -358,15 +357,31 @@ class PiiKeyRotationAdminControllerTest {
     }
 
     @Test
-    @Disabled("Phase 1b 의존 — JwtAuthenticationFilter 의 STAFF → ROLE_OPS 자동 부여 차단 머지 후 활성화"
-        + " (OPS_PORTAL_MIGRATION_PLAN.md §10 P0 정정)")
-    @DisplayName("[옵션3+1 #5] ROLE_STAFF → 403 (Phase 1b 정정 의존)")
+    @DisplayName("[옵션3+1 #5] ROLE_STAFF → 403 (Phase 1b 정정 후 활성화)")
     void hybrid_staffRole_blocked() {
-        // Phase 1b 머지 시점에 SecurityMockMvc 통합 테스트로 활성화한다.
-        // 현재 standalone MockMvc 는 @PreAuthorize 미적용이므로 단위 단계에서는 검증 불가.
+        // Phase 1b 정정 (PR #361, 2026-06-15 develop 머지): JwtAuthenticationFilter#mapAuthorities()
+        // 의 case STAFF 분기에서 ROLE_ADMIN/ROLE_OPS 자동 부여를 제거하여 STAFF 가 OPS 권한을
+        // 우회 획득하던 P0 권한 상승을 차단.
+        //
+        // standalone MockMvc 는 @PreAuthorize 를 적용하지 않으므로 단위 단계에서는 두 가지 가드로
+        // 회귀를 보장한다 (defense in depth):
+        //
+        //   1) (이곳) reflection 으로 클래스 레벨 @PreAuthorize 표현식이 STAFF 미허용임을 검증.
+        //      → 향후 표현식이 hasAnyRole('OPS','STAFF') 등으로 회귀하면 본 테스트가 즉시 fail.
+        //   2) (별도) JwtAuthenticationFilterAuthoritiesTest#staffUser_grantsOnlyRoleStaff_withoutAdminOrOps
+        //      가 JwtFilter 단의 권한 매핑이 ROLE_STAFF 만 부여함을 보장.
+        //      → @PreAuthorize 가 STAFF 차단을 신뢰할 수 있는 근거.
+        //
+        // 두 단위 가드의 곱(AND) 이 SecurityMockMvc 통합 시나리오(STAFF 토큰 → 403)와 동등한
+        // 회귀 차단 효과를 제공한다.
         PreAuthorize annotation = PiiKeyRotationAdminController.class.getAnnotation(PreAuthorize.class);
-        assertThat(annotation).isNotNull();
-        assertThat(annotation.value()).doesNotContain("STAFF");
+        assertThat(annotation)
+            .as("클래스 레벨 @PreAuthorize 가 누락되면 STAFF 차단 가드가 사라짐")
+            .isNotNull();
+        assertThat(annotation.value())
+            .as("@PreAuthorize 표현식이 STAFF 를 허용하면 Phase 1b P0 권한 상승 회귀")
+            .contains("hasRole('OPS')")
+            .doesNotContain("STAFF");
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.coresolution.core.security;
 
+import com.coresolution.core.util.LogSanitizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -229,19 +230,20 @@ public class SecurityAuditService {
         // 숫자만 있는 경로 변수가 있는 경우 SQL 인젝션 검사에서 제외
         // 예: /api/consultation-messages/client/555 -> 검사 제외
         if (requestURI != null && (requestURI.matches(".*/\\d+$") || requestURI.matches(".*/\\d+\\?.*"))) {
-            log.debug("🔍 SQL 인젝션 검사 스킵 - 숫자만 있는 경로 변수: {}", requestURI);
+            log.debug("🔍 SQL 인젝션 검사 스킵 - 숫자만 있는 경로 변수: {}", LogSanitizer.forLog(requestURI));
             return false;
         }
 
-        log.debug("🔍 SQL 인젝션 검사 - 원본 URI: {}, 정제된 URI: {}", requestURI, sanitizedURI);
+        log.debug("🔍 SQL 인젝션 검사 - 원본 URI: {}, 정제된 URI: {}",
+            LogSanitizer.forLog(requestURI), LogSanitizer.forLog(sanitizedURI));
 
         // [P0 핫픽스] URI 는 SQL 메타 문자만 검사 (SQL 키워드 단어 매칭은 적용하지 않음)
         if (SQL_URI_META_PATTERN.matcher(sanitizedURI).find()) {
-            log.warn("⚠️ SQL 인젝션 메타 문자 매칭 - 정제된 URI: {}", sanitizedURI);
+            log.warn("⚠️ SQL 인젝션 메타 문자 매칭 - 정제된 URI: {}", LogSanitizer.forLog(sanitizedURI));
             return true;
         }
 
-        log.debug("✅ SQL 인젝션 URI 검사 통과 - 정제된 URI: {}", sanitizedURI);
+        log.debug("✅ SQL 인젝션 URI 검사 통과 - 정제된 URI: {}", LogSanitizer.forLog(sanitizedURI));
 
         // 파라미터 검사 (query string + form body) — 기존 SQL 키워드 정규식 그대로 적용
         if (parameters != null) {

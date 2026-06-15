@@ -144,6 +144,122 @@ public ResponseEntity<...> getBrandingInfoByTenantId(@PathVariable String tenant
 }
 ```
 
+### 3.3 Ops Portal — `ROLE_OPS` Authority + HQ 테넌트 가드 (옵션 3+1 하이브리드)
+
+ops-portal-migration (PR #362 ~ #378) 에서 정착된 **본사 운영 전용** 엔드포인트 표준
+패턴이다. 4종 SSOT 외에 새 역할을 만들지 않고, **JWT actorRole 기반의 추가 Authority**
+(`ROLE_OPS`) 와 **HQ 테넌트 식별 가드** 두 층으로 차단한다.
+
+#### 패턴 (방어 in depth)
+
+1. **`@PreAuthorize("hasRole('OPS')")`** — 클래스 레벨에서 ROLE_OPS Authority 보유자만
+   진입. (Spring Security 층)
+2. **`assertHqTenant()`** — 각 메서드 시작점에서 `TenantContextHolder.getRequiredTenantId()`
+   가 `OpsTenantConstants.HQ_TENANT_ID` 와 일치하지 않으면 `AccessDeniedException` 발생.
+   (운영 컨텍스트 층)
+3. **외부 테넌트 ADMIN/STAFF 차단** — JwtAuthenticationFilter 의 `actorRole` 매핑은
+   HQ_MASTER / HQ_ADMIN / SUPER_HQ_ADMIN / SUPER_ADMIN 만 ROLE_OPS Authority 를
+   부여 (Phase 1b PR #361 정정 이후). 일반 ADMIN/STAFF 는 ROLE_OPS 없음 → @PreAuthorize
+   단계에서 차단.
+
+#### 표본 코드 (PiiKeyRotationAdminController — Phase 1)
+
+```java
+@RestController
+@RequestMapping("/api/v1/admin/security/pii-key")
+@PreAuthorize("hasRole('OPS')")
+@RequiredArgsConstructor
+public class PiiKeyRotationAdminController extends BaseApiController {
+
+    private static final String HQ_GUARD_DENY_MESSAGE =
+            "Ops 전용 — 본사 테넌트만 호출 가능";
+
+    private final OpsTenantConstants opsTenantConstants;
+    private final PersonalDataKeyRotationService rotationService;
+
+    @PostMapping("/rotate")
+    public ResponseEntity<...> rotate(@RequestBody RotateRequest request) {
+        assertHqTenant();
+        // 핵심 로직
+    }
+
+    private void assertHqTenant() {
+        String currentTenant = TenantContextHolder.getRequiredTenantId();
+        if (!opsTenantConstants.isHqTenant(currentTenant)) {
+            log.warn("Ops 엔드포인트 외부 테넌트 차단 — tenant={}", currentTenant);
+            throw new AccessDeniedException(HQ_GUARD_DENY_MESSAGE);
+        }
+    }
+}
+```
+
+#### `OpsTenantConstants` SSOT
+
+```java
+@Component
+public class OpsTenantConstants {
+
+    @Value("${mindgarden.hq.tenant-id:#{null}}")
+    private String hqTenantId;
+
+    @PostConstruct
+    public void validate() {
+        if (hqTenantId == null || hqTenantId.isBlank()) {
+            throw new IllegalStateException(
+                "MINDGARDEN_HQ_TENANT_ID 환경변수가 필수입니다. " +
+                "운영/개발 환경에 fail-fast 로 설정하세요.");
+        }
+    }
+
+    public boolean isHqTenant(String tenantId) {
+        return hqTenantId.equals(tenantId);
+    }
+}
+```
+
+#### 적용 대상 (ops-portal-migration 완료 인벤토리)
+
+| Phase | 컨트롤러 | PR |
+|-------|----------|----|
+| 1 | `PiiKeyRotationAdminController` | #362 |
+| 2 | `AIMonitoringController`, `SystemMetricsController`, `SchedulerMonitoringController`, `MonitoringController` | #370 |
+| 3 | `SecurityAuditController` | #373 |
+| 4 | `SuperAdminTenantComponentController` | #375 |
+
+#### 회귀 테스트 표본 (필수 6종)
+
+각 Ops 컨트롤러에는 `*ControllerOpsGuardTest` 를 작성한다.
+
+1. **클래스 레벨 `@PreAuthorize("hasRole('OPS')")` 어노테이션 존재 검증** (리플렉션)
+2. **OPS + HQ 테넌트** → 200 OK
+3. **OPS + 외부 테넌트** → 403 (`AccessDeniedException` "Ops 전용 — 본사 테넌트만 호출 가능")
+4. **ADMIN / STAFF / CONSULTANT / CLIENT** → 403 (ROLE_OPS 없음 — Spring Security 차단)
+5. **무인증** → 401
+6. **`@PreAuthorize` 표현식에 `HQ_MASTER` / `SUPER_ADMIN` 잔존 없음** (주석 제외 정적 검증)
+
+#### 금지 사항
+
+- ❌ ROLE_OPS 만 적용 (HQ 테넌트 가드 누락) — 외부 테넌트 운영자가 본사 데이터 접근 가능
+- ❌ HQ 테넌트 가드만 적용 (`@PreAuthorize` 누락) — 일반 ADMIN 도 통과
+- ❌ ROLE_OPS 를 일반 ADMIN/STAFF 에 부여 — Phase 1b 결정 위반
+- ❌ `OpsTenantConstants.HQ_TENANT_ID` 를 하드코딩 (반드시 `MINDGARDEN_HQ_TENANT_ID` 환경변수)
+- ❌ 4종 SSOT 외 `OPS` 역할 enum 신설 — ROLE_OPS 는 **Authority 만** (UserRole enum 추가 금지)
+
+#### 프론트엔드 짝 헬퍼 — `RoleUtils.isOps(user)` (Phase 5)
+
+FE 에서는 BE actorRole 을 직접 받지 못하므로 `user.role` 의 **원본 문자열**을 사용한다.
+
+```js
+import { isOps } from '@/utils/RoleUtils';
+
+// Ops Portal 전용 메뉴/위젯 가드
+if (isOps(user)) {
+    // HQ_MASTER / HQ_ADMIN / SUPER_HQ_ADMIN / SUPER_ADMIN 만 노출
+}
+```
+
+향후 BE 응답에 `actorRole` 을 포함하게 되면 `isOps` 를 actorRole 기반으로 확장한다.
+
 ---
 
 ## 4. 프론트엔드 사용 가이드 — `RoleUtils`
@@ -176,6 +292,7 @@ export const isAdmin = (user) => getNormalizedRole(user) === ROLE_ADMIN;
 export const isStaff = (user) => getNormalizedRole(user) === ROLE_STAFF;
 export const isConsultant = (user) => getNormalizedRole(user) === ROLE_CONSULTANT;
 export const isClient = (user) => getNormalizedRole(user) === ROLE_CLIENT;
+export const isOps = (user) => { /* OPS_AWARE_LEGACY_ROLES 비교 (Phase 5) */ };
 export const isProfessionalProvider = (user) => isConsultant(user);
 export const hasRole = (user, role) => { /* mapLegacyRole 자동 정규화 */ };
 export const hasAnyRole = (user, roles) => { /* mapLegacyRole 자동 정규화 */ };
@@ -364,3 +481,4 @@ public static UserRole fromString(String role) {
 | 날짜 | 버전 | 변경 | 작성자 |
 |------|------|------|--------|
 | 2026-06-13 | 1.0.0 | 초안 — Role SSOT 9-PR 시리즈 PR-9/9 표준 확정 | core-coder |
+| 2026-06-15 | 1.1.0 | §3.3 신설 — `ROLE_OPS` Authority + HQ 테넌트 가드 표본 패턴 (ops-portal-migration Phase 1~5 정착) | core-coder |

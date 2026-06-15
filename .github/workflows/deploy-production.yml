@@ -114,6 +114,13 @@ jobs:
       PERSONAL_DATA_ENCRYPTION_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
       PERSONAL_DATA_ENCRYPTION_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
       MINDGARDEN_DORMANT_PII_ENC_KEY: ${{ secrets.MINDGARDEN_DORMANT_PII_ENC_KEY }}
+      # ops-portal-migration Phase 1 (PR #362, 2026-06-15):
+      # OpsTenantConstants#validate() 가 BE 부팅 시 본 키 미설정/blank 면 fail-fast.
+      # 운영 본사 tenantId 는 단일 값(`tenant-incheon-counseling-001`)이며
+      # 응용에서 OPS PII 권한 가드·HQ 테넌트 라우팅에 사용된다.
+      # JWT_SECRET 과 동일하게 sync-prod-env-key composite action 으로 멱등 주입.
+      # 미등록 시 ::notice 후 skip — Phase 1 secret 등록 전 batch fail 방지.
+      MINDGARDEN_HQ_TENANT_ID: ${{ secrets.MINDGARDEN_HQ_TENANT_ID }}
 
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, main만 허용)
@@ -1200,6 +1207,34 @@ jobs:
         skip_when: 'all_missing'
     # ============================================================================
     # [/PII 회전 선행 PR-1 SSOT 2026-06-14]
+    # ============================================================================
+
+    # ============================================================================
+    # [ops-portal-migration Phase 1 fix 2026-06-15] MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증 (운영)
+    # 배경: PR #362/#363 (Phase 1) 머지 후 운영 배포 run 27519148353 에서 GREEN 슬롯 BE
+    #       크래시 루프 — OpsTenantConstants#validate() 가 본 키 미설정/blank 시 BE 부팅 fail-fast.
+    #       운영 트래픽은 BLUE 슬롯이 정상 가동하여 다운타임 0, GREEN 만 재시작 실패.
+    # 가드: 본 step 은 prod-from-dev.env 의 MINDGARDEN_HQ_TENANT_ID 를 GitHub Secret 으로 멱등 동기화.
+    #       JWT_SECRET / Apple SIWA / Google OAuth 자동 주입 step 과 동일 패턴 (composite action).
+    # 운영 본사 tenantId: 단일 값(`tenant-incheon-counseling-001`).
+    # Secret 미등록 시 ::notice 후 skip — Phase 1 secret 등록이 끝나지 않은 단계에서 batch fail 방지.
+    # 동일 키 재배포 시 재시작 생략 (noop_compare='true', JWT_SECRET 패턴 미러링).
+    # 사용자 액션:
+    #   gh secret set MINDGARDEN_HQ_TENANT_ID --env prod --body 'tenant-incheon-counseling-001' --repo beta0629/MindGarden
+    # ============================================================================
+    - name: 🏷️ MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'MINDGARDEN_HQ_TENANT_ID'
+        keys: 'MINDGARDEN_HQ_TENANT_ID'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        # 동일 키 재배포 시 재시작 생략 (배포 비용 최소화)
+        noop_compare: 'true'
+    # ============================================================================
+    # [/ops-portal-migration Phase 1 fix 2026-06-15]
     # ============================================================================
 
     - name: 🏥 헬스체크

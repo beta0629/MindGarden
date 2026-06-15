@@ -1,0 +1,138 @@
+/**
+ * PublicErrorBoundary — 공개 페이지 에러 경계 스타일
+ *
+ * mg-v2-* 토큰 100% · 하드코딩 0 · !important 0 · 인라인 스타일 0
+ * 다크 모드: 토큰 자동 전환 (prefers-color-scheme + [data-theme="dark"])
+ *
+ * @author MindGarden
+ * @since 2026-06-15
+ */
+
+.mg-v2-public-error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 24rem;
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+  text-align: center;
+  font-family: var(--mg-v2-font-family-base);
+}
+
+.mg-v2-public-error-boundary__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-v2-space-4);
+  max-width: var(--mg-v2-grid-container-sm);
+  padding: var(--mg-v2-space-10) var(--mg-v2-space-8);
+  background-color: var(--mg-v2-color-surface-raised);
+  border-radius: var(--mg-v2-radius-lg);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
+  box-shadow: var(--mg-v2-shadow-md);
+}
+
+.mg-v2-public-error-boundary__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-space-16);
+  height: var(--mg-v2-space-16);
+  border-radius: var(--mg-v2-radius-pill);
+  background-color: var(--mg-v2-color-semantic-error-light);
+  color: var(--mg-v2-color-semantic-error);
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+}
+
+.mg-v2-public-error-boundary__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h3);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  line-height: var(--mg-v2-font-line-height-heading);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-public-error-boundary__description {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-lg);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-public-error-boundary__actions {
+  display: flex;
+  gap: var(--mg-v2-space-3);
+  margin-top: var(--mg-v2-space-4);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mg-v2-public-error-boundary__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--mg-v2-component-height-md);
+  padding: var(--mg-v2-component-padding-md);
+  border-radius: var(--mg-v2-radius-sm);
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  cursor: pointer;
+  transition:
+    background-color var(--mg-v2-transition-fast),
+    border-color var(--mg-v2-transition-fast);
+  text-decoration: none;
+  border: var(--mg-v2-border-width-thin) solid transparent;
+}
+
+.mg-v2-public-error-boundary__btn--primary {
+  background-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-inverse);
+  border-color: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-public-error-boundary__btn--primary:hover {
+  background-color: var(--mg-v2-color-primary-hover);
+  border-color: var(--mg-v2-color-primary-hover);
+}
+
+.mg-v2-public-error-boundary__btn--primary:focus-visible {
+  outline: var(--mg-v2-border-width-focus) solid var(--mg-v2-color-border-focus);
+  outline-offset: var(--mg-v2-space-1);
+}
+
+.mg-v2-public-error-boundary__btn--secondary {
+  background-color: transparent;
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-border-default);
+}
+
+.mg-v2-public-error-boundary__btn--secondary:hover {
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+.mg-v2-public-error-boundary__btn--secondary:focus-visible {
+  outline: var(--mg-v2-border-width-focus) solid var(--mg-v2-color-border-focus);
+  outline-offset: var(--mg-v2-space-1);
+}
+
+/* ---- Mobile responsive ---- */
+@media (max-width: 768px) {
+  .mg-v2-public-error-boundary {
+    padding: var(--mg-v2-space-6) var(--mg-v2-space-3);
+  }
+
+  .mg-v2-public-error-boundary__card {
+    padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+  }
+
+  .mg-v2-public-error-boundary__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .mg-v2-public-error-boundary__btn {
+    width: 100%;
+  }
+}

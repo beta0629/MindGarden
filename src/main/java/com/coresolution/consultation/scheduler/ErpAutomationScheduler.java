@@ -13,9 +13,11 @@ import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
 import com.coresolution.consultation.service.erp.settlement.SettlementService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.service.TenantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -40,6 +42,8 @@ public class ErpAutomationScheduler {
 
     private static final DateTimeFormatter YYYYMM = DateTimeFormatter.ofPattern("yyyyMM");
 
+    private static final String SCHEDULER_NAME = "ErpAutomation";
+
     private final TenantService tenantService;
     private final ErpFinancialCloseService erpFinancialCloseService;
     private final FinancialStatementService financialStatementService;
@@ -48,6 +52,11 @@ public class ErpAutomationScheduler {
     private final PlSqlFinancialService plSqlFinancialService;
     private final PlSqlMappingSyncService plSqlMappingSyncService;
     private final AccountingService accountingService;
+    /**
+     * Discord 알람 컴포넌트 (선택 의존성).
+     * {@code monitoring.discord.webhook-url} 미설정 시 빈 자체가 없으므로 graceful skip 한다.
+     */
+    private final ObjectProvider<SchedulerFailureNotifier> failureNotifierProvider;
 
     /**
      * ERP init + 백필 — 매일 00:08 (일별 통계 00:01 이후, 일 마감 00:10 이전)
@@ -67,6 +76,7 @@ public class ErpAutomationScheduler {
                     result.getOrDefault("skippedCount", 0L));
             } catch (Exception e) {
                 log.warn("[ErpAutomation] init+backfill 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                notifyFailureSafely("ErpInitAndBackfill", tenantId, e);
             }
         });
     }
@@ -112,6 +122,7 @@ public class ErpAutomationScheduler {
                 log.debug("[ErpAutomation] 재무제표 생성 완료: tenantId={}", tenantId);
             } catch (Exception e) {
                 log.warn("[ErpAutomation] 재무제표 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                notifyFailureSafely("FinancialStatement", tenantId, e);
             }
         });
     }
@@ -127,8 +138,9 @@ public class ErpAutomationScheduler {
                 erpService.getDailyFinanceReport(reportDate, null);
                 log.debug("[ErpAutomation] 일보 생성 완료: tenantId={}", TenantContextHolder.getTenantId());
             } catch (Exception e) {
-                log.warn("[ErpAutomation] 일보 생성 실패: tenantId={}, error={}",
-                    TenantContextHolder.getTenantId(), e.getMessage());
+                String tenantId = TenantContextHolder.getTenantId();
+                log.warn("[ErpAutomation] 일보 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                notifyFailureSafely("DailyReport", tenantId, e);
             }
         });
     }
@@ -146,8 +158,9 @@ public class ErpAutomationScheduler {
                 erpService.getMonthlyFinanceReport(year, month, null);
                 log.debug("[ErpAutomation] 월보 생성 완료: tenantId={}", TenantContextHolder.getTenantId());
             } catch (Exception e) {
-                log.warn("[ErpAutomation] 월보 생성 실패: tenantId={}, error={}",
-                    TenantContextHolder.getTenantId(), e.getMessage());
+                String tenantId = TenantContextHolder.getTenantId();
+                log.warn("[ErpAutomation] 월보 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                notifyFailureSafely("MonthlyReport", tenantId, e);
             }
         });
     }
@@ -163,8 +176,9 @@ public class ErpAutomationScheduler {
                 erpService.getYearlyFinanceReport(year);
                 log.debug("[ErpAutomation] 연보 생성 완료: tenantId={}", TenantContextHolder.getTenantId());
             } catch (Exception e) {
-                log.warn("[ErpAutomation] 연보 생성 실패: tenantId={}, error={}",
-                    TenantContextHolder.getTenantId(), e.getMessage());
+                String tenantId = TenantContextHolder.getTenantId();
+                log.warn("[ErpAutomation] 연보 생성 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                notifyFailureSafely("YearlyReport", tenantId, e);
             }
         });
     }
@@ -200,6 +214,7 @@ public class ErpAutomationScheduler {
             } catch (Exception e) {
                 log.warn("[ErpAutomation] 정산 배치 실패: tenantId={}, period={}, error={}",
                     tenantId, period, e.getMessage());
+                notifyFailureSafely("SettlementBatch", tenantId, e);
             }
         });
     }
@@ -227,8 +242,9 @@ public class ErpAutomationScheduler {
                 plSqlFinancialService.getBranchFinancialBreakdown(yesterday, yesterday);
                 log.debug("[ErpAutomation] 통합 재무 갱신 완료: tenantId={}", TenantContextHolder.getTenantId());
             } catch (Exception e) {
-                log.warn("[ErpAutomation] 통합 재무 갱신 실패: tenantId={}, error={}",
-                    TenantContextHolder.getTenantId(), e.getMessage());
+                String tenantId = TenantContextHolder.getTenantId();
+                log.warn("[ErpAutomation] 통합 재무 갱신 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                notifyFailureSafely("ConsolidatedFinancialRefresh", tenantId, e);
             }
         });
     }
@@ -243,8 +259,9 @@ public class ErpAutomationScheduler {
                 plSqlMappingSyncService.syncAllMappings();
                 log.debug("[ErpAutomation] 매핑 동기화 완료: tenantId={}", TenantContextHolder.getTenantId());
             } catch (Exception e) {
-                log.warn("[ErpAutomation] 매핑 동기화 실패: tenantId={}, error={}",
-                    TenantContextHolder.getTenantId(), e.getMessage());
+                String tenantId = TenantContextHolder.getTenantId();
+                log.warn("[ErpAutomation] 매핑 동기화 실패: tenantId={}, error={}", tenantId, e.getMessage());
+                notifyFailureSafely("MappingSync", tenantId, e);
             }
         });
     }
@@ -258,10 +275,30 @@ public class ErpAutomationScheduler {
                 runnable.run();
             } catch (Exception e) {
                 log.error("[ErpAutomation] {} 실패: tenantId={}, error={}", jobName, tenantId, e.getMessage(), e);
+                notifyFailureSafely(jobName, tenantId, e);
             } finally {
                 TenantContextHolder.clear();
             }
         }
         log.info("[ErpAutomation] {} 완료: param={}", jobName, jobParam);
+    }
+
+    /**
+     * Discord 알람을 안전하게 발송한다. (실패해도 본 BE 흐름 차단 금지)
+     *
+     * @param stepName  세부 단계 (예: {@code "DailyFinancialClose"})
+     * @param tenantId  대상 테넌트 ID (없으면 {@code null})
+     * @param error     원인 예외
+     */
+    private void notifyFailureSafely(String stepName, String tenantId, Throwable error) {
+        try {
+            SchedulerFailureNotifier notifier = failureNotifierProvider.getIfAvailable();
+            if (notifier != null) {
+                notifier.notifyFailure(SCHEDULER_NAME, stepName, tenantId, error);
+            }
+        } catch (Exception alertEx) {
+            log.warn("[ErpAutomation] 실패 알람 발송 자체 실패: step={}, tenantId={}, error={}",
+                stepName, tenantId, alertEx.getMessage());
+        }
     }
 }

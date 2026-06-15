@@ -18,6 +18,11 @@ module.exports = defineConfig([
     'android/**',
     'ios/**',
     'coverage/**',
+    /**
+     * JSON 파일(i18n 번역 SSOT 등)은 ESLint 파서 대상에서 제외한다.
+     * 검증이 필요하면 별도 스크립트 또는 ts-loader/json schema 로 처리.
+     */
+    '**/*.json',
   ]),
   ...expoFlat,
   eslintPluginPrettierRecommended,
@@ -33,7 +38,48 @@ module.exports = defineConfig([
           selector: 'Literal[value=/^#[0-9a-fA-F]{3,8}$/]',
           message: '색상 하드코딩 금지 — theme 토큰을 사용하세요.',
         },
+        /**
+         * i18n 정책 (A8, 2026-06-14): 신규 한국어 인라인 문자열 추가를 점진적으로 금지한다.
+         * `src/i18n/translations/<lang>.json` 에 키를 정의하고 `useTranslation()` / `t()` 를 사용한다.
+         *
+         * <p>현재 인라인 한국어 약 20,718 라인이 존재하므로 본 규칙은 `warn` 으로 시작하여
+         * 디자인 v2 와 병행해 점진적으로 마이그한다. 신규 코드에서 경고가 뜨면 i18n 키로 옮긴다.</p>
+         *
+         * <p>정책 문서: `docs/standards/EXPO_APP_I18N_POLICY.md`.</p>
+         */
+        {
+          selector:
+            'Literal[value=/[\\uAC00-\\uD7A3]/], TemplateElement[value.raw=/[\\uAC00-\\uD7A3]/], JSXText[value=/[\\uAC00-\\uD7A3]/]',
+          message:
+            '한국어 인라인 문자열 금지 — src/i18n/translations/ko.json 에 키를 정의하고 useTranslation()/t() 를 사용하세요.',
+        },
       ],
+    },
+  },
+  {
+    /**
+     * i18n 정책 제외 경로 — SSOT 번역 파일·테스트·표준 문서 인용·디버그 로그·앱 설정.
+     *
+     * <p>`src/i18n/translations/*.json` 은 한국어 SSOT 그 자체이므로 위반 대상이 아니다.
+     * `app.config.ts`·`assets`·`scripts` 는 빌드 메타데이터·CLI 안내 문구로 사용자 가시 UI 가
+     * 아니다.</p>
+     */
+    name: 'mindgarden/i18n-policy-allowlist',
+    files: [
+      'src/i18n/translations/**/*.json',
+      'src/i18n/translations/**/*.ts',
+      'src/i18n/index.ts',
+      'src/i18n/__tests__/**/*.{ts,tsx}',
+      'app.config.ts',
+      'app.json',
+      'eslint.config.js',
+      'scripts/**/*.js',
+      'scripts/**/*.ts',
+      '**/__tests__/**/*.{ts,tsx}',
+      '**/*.test.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
   {

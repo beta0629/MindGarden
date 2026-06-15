@@ -52,13 +52,13 @@ jobs:
         echo "✅ mobile/android 또는 mobile/ios 폴더 확인됨"
       
     - name: ☕ Java 17 설정 (Android 빌드용)
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
         
     - name: 📦 Node.js 20 설정
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: '20'
         
@@ -248,7 +248,7 @@ jobs:
         echo "✅ mobile/android 또는 mobile/ios 폴더 확인됨"
       
     - name: 📦 Node.js 20 설정
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: '20'
         
@@ -307,7 +307,7 @@ jobs:
     
     steps:
     - name: 📥 빌드 아티팩트 다운로드
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         pattern: '*-release'
         merge-multiple: true

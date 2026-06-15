@@ -10,6 +10,7 @@ module.exports = {
     '<rootDir>/src/api/hooks/__tests__',
     '<rootDir>/src/components/molecules/__tests__',
     '<rootDir>/src/components/organisms/login/__tests__',
+    '<rootDir>/src/i18n/__tests__',
   ],
   testMatch: ['**/*.test.ts'],
   transform: {
@@ -22,6 +23,7 @@ module.exports = {
           strict: true,
           baseUrl: '.',
           paths: { '@/*': ['./src/*'] },
+          resolveJsonModule: true,
         },
       },
     ],

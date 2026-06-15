@@ -171,9 +171,9 @@ import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
 import AccountDeletionInstructions from './components/common/AccountDeletionInstructions';
 import CounselingCenterLanding from './pages/CounselingCenterLanding';
-import TenantOnboardingPage from './pages/public/TenantOnboardingPage';
 import PricingPage from './pages/public/PricingPage';
 import LandingPage from './pages/public/LandingPage';
+const OnboardingPage = lazy(() => import('./pages/public/OnboardingPage'));
 import SystemNotifications from './components/notifications/SystemNotifications';
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
@@ -769,9 +769,10 @@ function AppContent() {
             <Route path="/tenant/pg-configurations/:id" element={<PgConfigurationDetail />} />
             <Route path="/tenant/pg-configurations/:id/edit" element={<PgConfigurationEdit />} />
             
-            {/* Design v2 Phase B — 공개 페이지 라우트 */}
-            <Route path="/onboarding" element={<TenantOnboardingPage />} />
+            {/* Design v2 Phase C-3 — 공개 페이지 라우트 */}
+            <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            {/* PUBLIC_ROUTES_INSERT_HERE - C-3 W1: W2/W3 공개 라우트를 여기에 추가 */}
             
             {/* 온보딩 관련 라우트 */}
             

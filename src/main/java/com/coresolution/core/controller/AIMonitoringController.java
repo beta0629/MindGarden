@@ -6,14 +6,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.repository.AiUsageLogRepository;
+import com.coresolution.core.constant.OpsTenantConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.AiAnomalyDetection;
 import com.coresolution.core.domain.SecurityThreatDetection;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.AiAnomalyDetectionRepository;
 import com.coresolution.core.repository.SecurityThreatDetectionRepository;
+import com.coresolution.core.util.LogSanitizer;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,27 +26,41 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * AI 모니터링 API 컨트롤러
- * 테넌트별 AI 이상 탐지 및 보안 위협 모니터링 데이터 제공
+ * AI 모니터링 API 컨트롤러 — Ops Portal 전용 (본사 운영팀).
+ * 테넌트별 AI 이상 탐지 및 보안 위협 모니터링 데이터 제공.
  *
- * <p><b>Ops Portal 분리 권장 (PR-2/9 SSOT):</b>
- * 본 컨트롤러의 {@code HQ_MASTER} 가드는 코어솔루션 본사(공급사) 권한이며,
- * 별도 후속 PR ({@code ops-portal-migration}) 에서 운영 포털로 분리 예정.
- * 본 PR 에서는 변경 안 함 (회귀 위험 최소화).</p>
+ * <h3>권한 가드 — 옵션 3+1 하이브리드 (Defense in Depth)</h3>
+ * <ol>
+ *   <li>클래스 레벨 {@code @PreAuthorize("hasRole('OPS')")} — Ops Portal 운영자만 호출 가능
+ *       ({@code SecurityRoleConstants.ROLE_OPS} Authority).</li>
+ *   <li>메서드별 진입부 {@link OpsTenantConstants#isHqTenant(String)} 자체 검증 —
+ *       외부 테넌트가 어떤 경로로든 컨텍스트를 위조해 진입해도 차단.</li>
+ * </ol>
+ *
+ * <p>표준 정합:
+ * {@code docs/standards/ROLE_STANDARD.md} §3.2 (테넌트 가드 병행 패턴) +
+ * {@code docs/project-management/OPS_PORTAL_MIGRATION_PLAN.md} §4.3, §5 (Phase 2 — 옵션 3+1).
+ * 레거시 {@code @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")} 매핑은 본 Phase 2 에서
+ * {@code OPS} + HQ 테넌트 가드로 전환 — 외부 테넌트 ADMIN 의 본사 모니터링 호출 가능성
+ * (Defense in Depth 위반) 차단.</p>
  *
  * @author CoreSolution
- * @version 1.0.0
  * @since 2025-12-02
  */
 @Slf4j
 @RestController
 @RequestMapping({"/api/v1/monitoring", "/api/monitoring"})
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('OPS')")
 public class AIMonitoringController {
-    
+
+    private static final String HQ_GUARD_DENY_MESSAGE =
+        "AI 모니터링은 본사(Ops) 테넌트만 호출 가능 — 외부 테넌트 차단";
+
     private final AiAnomalyDetectionRepository anomalyDetectionRepository;
     private final SecurityThreatDetectionRepository threatDetectionRepository;
     private final AiUsageLogRepository usageLogRepository;
+    private final OpsTenantConstants opsTenantConstants;
     
     /**
      * 최근 이상 탐지 목록 조회 (테넌트별)
@@ -53,11 +70,11 @@ public class AIMonitoringController {
      * @return 최근 이상 탐지 목록
      */
     @GetMapping("/anomaly-detection/recent")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<List<AiAnomalyDetection>>> getRecentAnomalies(
             @RequestParam(required = false) String tenantId,
             @RequestParam(defaultValue = "10") int limit
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
             
@@ -99,11 +116,11 @@ public class AIMonitoringController {
      * @return 최근 보안 위협 목록
      */
     @GetMapping("/security-threats/recent")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<List<SecurityThreatDetection>>> getRecentThreats(
             @RequestParam(required = false) String tenantId,
             @RequestParam(defaultValue = "10") int limit
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
             
@@ -144,10 +161,10 @@ public class AIMonitoringController {
      * @return AI 사용량 요약
      */
     @GetMapping("/ai-usage/summary")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAIUsageSummary(
             @RequestParam(required = false) String tenantId
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
             
@@ -193,8 +210,8 @@ public class AIMonitoringController {
      * @return AI 사용량 상세
      */
     @GetMapping("/ai-usage/detailed")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAIUsageDetailed() {
+        assertHqTenant();
         try {
             log.info("AI 사용량 상세 조회");
             
@@ -250,18 +267,18 @@ public class AIMonitoringController {
      * @return 이상 탐지 통계
      */
     @GetMapping("/anomaly-detection/statistics")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAnomalyStatistics(
             @RequestParam(required = false) String tenantId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
-            
+
             LocalDateTime start = (startDate != null ? startDate : LocalDate.now().minusDays(7)).atStartOfDay();
             LocalDateTime end = (endDate != null ? endDate : LocalDate.now()).atTime(23, 59, 59);
-            
+
             log.info("이상 탐지 통계 조회: tenantId={}, start={}, end={}", targetTenantId, start, end);
             
             List<AiAnomalyDetection> anomalies;
@@ -308,18 +325,18 @@ public class AIMonitoringController {
      * @return 보안 위협 통계
      */
     @GetMapping("/security-threats/statistics")
-    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getThreatStatistics(
             @RequestParam(required = false) String tenantId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
+        assertHqTenant();
         try {
             String targetTenantId = tenantId != null ? tenantId : TenantContextHolder.getTenantId();
-            
+
             LocalDateTime start = (startDate != null ? startDate : LocalDate.now().minusDays(7)).atStartOfDay();
             LocalDateTime end = (endDate != null ? endDate : LocalDate.now()).atTime(23, 59, 59);
-            
+
             log.info("보안 위협 통계 조회: tenantId={}, start={}, end={}", targetTenantId, start, end);
             
             List<SecurityThreatDetection> threats;
@@ -356,6 +373,28 @@ public class AIMonitoringController {
         } catch (Exception e) {
             log.error("보안 위협 통계 조회 실패", e);
             return ResponseEntity.ok(ApiResponse.error("보안 위협 통계 조회 실패: " + e.getMessage()));
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Internal — HQ 테넌트 가드 (옵션 3+1 하이브리드, Defense in Depth)
+    // ------------------------------------------------------------------
+
+    /**
+     * 현재 요청 테넌트가 본사(HQ) 인지 검증한다.
+     *
+     * <p>{@code @PreAuthorize("hasRole('OPS')")} 가 1차 차단 후에도, 외부 테넌트가
+     * {@code ROLE_OPS} Authority 를 보유한 채 진입하더라도 본 가드가 차단한다
+     * (Ops 권한이 향후 HQ 외 테넌트로 확장될 가능성에 대한 Defense in Depth).</p>
+     *
+     * @throws AccessDeniedException 본사 테넌트가 아닌 경우
+     */
+    private void assertHqTenant() {
+        String currentTenant = TenantContextHolder.getRequiredTenantId();
+        if (!opsTenantConstants.isHqTenant(currentTenant)) {
+            log.warn("[OPS] AI 모니터링 외부 테넌트 차단 — currentTenant={} (HQ 가드)",
+                LogSanitizer.forLog(currentTenant));
+            throw new AccessDeniedException(HQ_GUARD_DENY_MESSAGE);
         }
     }
 }

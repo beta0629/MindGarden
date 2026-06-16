@@ -67,8 +67,8 @@ const PublicHeader = () => {
   return (
     <header className={headerClassName} role="banner">
       <div className="mg-v2-public-header__inner">
-        <Link to="/" className="mg-v2-public-header__logo" aria-label="MindGarden Home">
-          <span className="mg-v2-public-header__logo-text">MindGarden</span>
+        <Link to="/" className="mg-v2-public-header__logo" aria-label={t('public.homeAriaLabel', 'Core Solution Home')}>
+          <span className="mg-v2-public-header__logo-text">{t('public.brandName', 'Core Solution')}</span>
         </Link>
 
         <nav className="mg-v2-public-header__nav" aria-label={t('public.nav.ariaLabel', 'Main navigation')}>

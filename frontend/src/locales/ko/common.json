@@ -2163,7 +2163,9 @@
       "faqAriaLabel": "자주 묻는 질문",
       "faqTitle": "자주 묻는 질문",
       "faqComingSoon": "FAQ 내용은 Phase C에서 제공될 예정입니다."
-    }
+    },
+    "brandName": "Core Solution",
+    "homeAriaLabel": "Core Solution 홈"
   },
   "homepage": {
     "Homepage": {

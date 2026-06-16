@@ -36,8 +36,8 @@ const PublicFooter = () => {
     <footer className="mg-v2-public-footer" role="contentinfo">
       <div className="mg-v2-public-footer__inner">
         <div className="mg-v2-public-footer__brand">
-          <Link to="/" className="mg-v2-public-footer__logo" aria-label="MindGarden Home">
-            <span className="mg-v2-public-footer__logo-text">MindGarden</span>
+          <Link to="/" className="mg-v2-public-footer__logo" aria-label={t('public.homeAriaLabel', 'Core Solution Home')}>
+            <span className="mg-v2-public-footer__logo-text">{t('public.brandName', 'Core Solution')}</span>
           </Link>
           <p className="mg-v2-public-footer__tagline">
             {t('public.footer.tagline', 'Professional counseling management platform')}

@@ -46,7 +46,8 @@ describe('PublicFooter', () => {
 
   it('displays Core Solution company name', () => {
     renderFooter();
-    expect(screen.getByText('Core Solution')).toBeInTheDocument();
+    const matches = screen.getAllByText('Core Solution');
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays business registration number', () => {

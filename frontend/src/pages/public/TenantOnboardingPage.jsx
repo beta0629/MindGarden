@@ -30,7 +30,7 @@ const TenantOnboardingPage = () => {
       <div className="mg-v2-onboarding-page">
         <header className="mg-v2-onboarding-page__header">
           <h1 className="mg-v2-onboarding-page__title">
-            {t('public.onboarding.pageTitle', 'Get Started with MindGarden')}
+            {t('public.onboarding.pageTitle', 'Get Started with Core Solution')}
           </h1>
           <p className="mg-v2-onboarding-page__subtitle">
             {t('public.onboarding.pageSubtitle', 'Set up your counseling center in minutes.')}

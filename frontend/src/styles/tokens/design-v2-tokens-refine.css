@@ -1,0 +1,23 @@
+/**
+ * Design V2 Refine — 확장 토큰 (Phase C-Refine)
+ *
+ * SSOT 본체(design-v2-tokens.css) 변경 금지.
+ * Refine 단계에서 필요하지만 SSOT에 없는 semantic 토큰만 정의.
+ *
+ * @author CoreSolution
+ * @since 2026-06-16
+ */
+
+:root {
+  --mg-v2-refine-shadow-form: 0 4px 24px rgba(44, 42, 39, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mg-v2-refine-shadow-form: none;
+  }
+}
+
+[data-theme="dark"] {
+  --mg-v2-refine-shadow-form: none;
+}

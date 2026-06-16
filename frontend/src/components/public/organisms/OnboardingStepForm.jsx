@@ -102,7 +102,7 @@ const StepBasicInfo = ({ formData, onChange, errors, onDomainCheck, domainStatus
         className={`mg-v2-step-form__input${errors?.tenantName ? ' mg-v2-step-form__input--error' : ''}`}
         value={formData?.tenantName || ''}
         onChange={onChange}
-        placeholder={t('public.onboarding.tenantNamePlaceholder', '예: 마인드가든 심리상담센터')}
+        placeholder={t('public.onboarding.tenantNamePlaceholder', '예: 코어솔루션 심리상담센터')}
         required
         aria-required="true"
         aria-invalid={!!errors?.tenantName}
@@ -193,7 +193,7 @@ const StepBasicInfo = ({ formData, onChange, errors, onDomainCheck, domainStatus
         className={`mg-v2-step-form__input${errors?.email ? ' mg-v2-step-form__input--error' : ''}`}
         value={formData?.email || ''}
         onChange={onChange}
-        placeholder={t('public.onboarding.emailPlaceholder', '예: hello@mindgarden.com')}
+        placeholder={t('public.onboarding.emailPlaceholder', '예: hello@example.com')}
         required
         aria-required="true"
         aria-invalid={!!errors?.email}

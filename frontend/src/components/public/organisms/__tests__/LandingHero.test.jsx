@@ -65,7 +65,7 @@ describe('LandingHero', () => {
 
   it('renders hero image when heroImageSlot is a string', () => {
     render(<LandingHero heroImageSlot="https://example.com/hero.png" />);
-    const img = screen.getByAltText('MindGarden 대시보드');
+    const img = screen.getByAltText('Core Solution 대시보드');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/hero.png');
   });

@@ -5,7 +5,7 @@
  * 가격 + 기능 리스트 + CTA 버튼 + Highlighted (추천) 상태.
  * mg-v2-* 토큰 한정.
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-15
  */
 

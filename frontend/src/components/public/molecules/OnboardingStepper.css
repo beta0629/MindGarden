@@ -133,8 +133,8 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-/* Responsive — Mobile: horizontal scroll */
-@media (max-width: 768px) {
+/* Responsive — Mobile: horizontal scroll (≤767px) */
+@media (max-width: 767px) {
   .mg-v2-onboarding-stepper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;

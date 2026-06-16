@@ -1,10 +1,13 @@
 /**
- * OnboardingTemplate — Phase C-3 W1
+ * OnboardingTemplate — Phase C-Refine W1
  * mg-v2-* 토큰 100% · 하드코딩 0 · !important 0 · 인라인 style 0
+ *
+ * Spec: docs/design/v2/refine/DESIGN_V2_REFINE_ONBOARDING_SPEC.md
+ * §2 레이아웃 그리드 · §4 타이포 · §8 반응형 · §9 다크 모드
  */
 
 .mg-v2-onboarding-template {
-  max-width: 720px;
+  max-width: 600px;
   margin: 0 auto;
   padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
 }
@@ -17,8 +20,8 @@
 .mg-v2-onboarding-template__title {
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-h2);
-  font-weight: var(--mg-v2-font-weight-bold);
-  line-height: var(--mg-v2-font-line-height-heading);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  line-height: var(--mg-v2-font-line-height-subheading);
   color: var(--mg-v2-color-text-primary);
   margin: 0 0 var(--mg-v2-space-2);
 }
@@ -34,16 +37,30 @@
 
 .mg-v2-onboarding-template__body {
   background-color: var(--mg-v2-color-surface-card);
-  border: 1px solid var(--mg-v2-color-border-light);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
   border-radius: var(--mg-v2-radius-xl);
-  padding: var(--mg-v2-space-8) var(--mg-v2-space-6);
-  margin: var(--mg-v2-space-6) 0;
-  box-shadow: var(--mg-v2-shadow-sm);
+  padding: var(--mg-v2-space-10) var(--mg-v2-space-8);
+  margin-top: var(--mg-v2-space-8);
+  margin-bottom: var(--mg-v2-space-6);
+  box-shadow: var(--mg-v2-refine-shadow-form);
   transition: box-shadow var(--mg-v2-transition-fast);
 }
 
-@media (max-width: 768px) {
+/* §8 Tablet: 768–1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
   .mg-v2-onboarding-template {
+    max-width: 90%;
+  }
+
+  .mg-v2-onboarding-template__body {
+    padding: var(--mg-v2-space-8) var(--mg-v2-space-6);
+  }
+}
+
+/* §8 Mobile: ≤767px */
+@media (max-width: 767px) {
+  .mg-v2-onboarding-template {
+    max-width: 100%;
     padding: var(--mg-v2-space-4) var(--mg-v2-space-3);
   }
 
@@ -52,7 +69,8 @@
   }
 
   .mg-v2-onboarding-template__body {
-    padding: var(--mg-v2-space-5) var(--mg-v2-space-4);
+    padding: var(--mg-v2-space-6) var(--mg-v2-space-4);
     border-radius: var(--mg-v2-radius-lg);
+    box-shadow: none;
   }
 }

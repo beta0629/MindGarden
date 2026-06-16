@@ -6,12 +6,12 @@
  *
  * 하드코딩 0 · CSS override 0 · !important 0
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-16
  */
 
 .mg-v2-pricing-page {
-  min-height: var(--mg-v2-space-64, 256px);
+  min-height: 256px;
 }
 
 /* ================================================================
@@ -29,9 +29,9 @@
 .mg-v2-pricing-page__loading-spinner {
   width: var(--mg-v2-space-10);
   height: var(--mg-v2-space-10);
-  border: 3px solid var(--mg-v2-color-border-light);
-  border-top-color: var(--mg-v2-color-primary-500);
-  border-radius: 50%;
+  border: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-border-light);
+  border-top-color: var(--mg-v2-color-primary-main);
+  border-radius: var(--mg-v2-radius-pill);
   animation: mg-v2-pricing-spin 0.8s linear infinite;
 }
 
@@ -63,21 +63,30 @@
 .mg-v2-pricing-page__error-text {
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-error-500, var(--mg-v2-color-text-primary));
+  color: var(--mg-v2-color-semantic-error);
 }
 
 .mg-v2-pricing-page__error-retry {
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-primary-600);
+  color: var(--mg-v2-color-primary-main);
   background: transparent;
-  border: 1px solid var(--mg-v2-color-primary-500);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-primary-main);
   border-radius: var(--mg-v2-radius-md);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
   cursor: pointer;
-  transition: var(--mg-v2-transition-normal);
+  transition: background-color var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default);
 }
 
 .mg-v2-pricing-page__error-retry:hover {
-  background-color: var(--mg-v2-color-primary-50);
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+/* ================================================================
+   REDUCED MOTION
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-pricing-page__loading-spinner {
+    animation: none;
+  }
 }

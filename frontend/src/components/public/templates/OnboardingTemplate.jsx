@@ -16,6 +16,7 @@ import PublicLayout from '../layouts/PublicLayout';
 import OnboardingStepper from '../molecules/OnboardingStepper';
 import OnboardingStepForm from '../organisms/OnboardingStepForm';
 import OnboardingNavigation from '../organisms/OnboardingNavigation';
+import '../../../styles/tokens/design-v2-tokens-refine.css';
 import './OnboardingTemplate.css';
 
 const TOTAL_STEPS = 6;
@@ -42,7 +43,7 @@ const OnboardingTemplate = ({
       <article className="mg-v2-onboarding-template">
         <header className="mg-v2-onboarding-template__header">
           <h1 className="mg-v2-onboarding-template__title">
-            {t('public.onboarding.pageTitle', 'MindGarden 시작하기')}
+            {t('public.onboarding.pageTitle', 'Core Solution 시작하기')}
           </h1>
           <p className="mg-v2-onboarding-template__subtitle">
             {t('public.onboarding.pageSubtitle', '몇 분이면 상담센터를 개설할 수 있습니다.')}

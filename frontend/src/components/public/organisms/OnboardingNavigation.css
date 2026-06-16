@@ -3,8 +3,9 @@
  *
  * 하단 이전·다음·임시저장·완료 네비게이션 Organism 스타일.
  * §10 사양 준수: Primary / Outline / Text 버튼 배치.
+ * Spec §3 border-radius 8px · §6 마이크로 인터랙션
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-15
  */
 
@@ -41,14 +42,15 @@
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: var(--mg-v2-font-weight-semibold);
-  border-radius: var(--mg-v2-radius-md);
+  border-radius: var(--mg-v2-radius-sm);
   padding: var(--mg-v2-space-3) var(--mg-v2-space-6);
   min-height: var(--mg-v2-component-height-lg);
   cursor: pointer;
   transition: background-color var(--mg-v2-transition-fast),
               border-color var(--mg-v2-transition-fast),
               color var(--mg-v2-transition-fast),
-              box-shadow var(--mg-v2-transition-fast);
+              box-shadow var(--mg-v2-transition-fast),
+              transform var(--mg-v2-transition-fast);
   border: var(--mg-v2-border-width-thin) solid transparent;
   display: inline-flex;
   align-items: center;
@@ -86,6 +88,7 @@
 .mg-v2-onboarding-nav__btn--primary:active:not(:disabled) {
   background-color: var(--mg-v2-color-primary-active);
   border-color: var(--mg-v2-color-primary-active);
+  transform: scale(0.98);
 }
 
 /* ============================================================
@@ -137,9 +140,9 @@
 }
 
 /* ============================================================
-   Responsive — Mobile: 수직 적층 or full-width
+   Responsive — Mobile: 수직 적층 or full-width (≤767px)
    ============================================================ */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .mg-v2-onboarding-nav {
     flex-direction: column-reverse;
     gap: var(--mg-v2-space-3);

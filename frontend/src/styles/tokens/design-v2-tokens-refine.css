@@ -1,0 +1,136 @@
+/**
+ * Design V2 Refine — 확장 토큰 (Phase C-Refine)
+ *
+ * SSOT 본체(design-v2-tokens.css) 변경 금지.
+ * Refine 단계에서 필요하지만 SSOT에 없는 semantic 토큰만 정의.
+ *
+ * Phase C-Refine에서 추가된 Landing / Onboarding / Pricing 전용 토큰.
+ * 베이스 SSOT(design-v2-tokens.css)를 변경하지 않고 여기서 확장.
+ *
+ * 명명 규칙:
+ *   --mg-v2-{page}-{category}-{role}     (Pricing 등 페이지 전용)
+ *   --mg-v2-refine-{category}-{role}     (Refine 공용/Landing/Onboarding)
+ *
+ * @author CoreSolution
+ * @since 2026-06-16
+ */
+
+/* ================================================================
+   1. LIGHT MODE — Refine / Landing / Pricing 전용 토큰
+   ================================================================ */
+:root {
+  /* Refine — Onboarding form shadow (W1) */
+  --mg-v2-refine-shadow-form: 0 4px 24px rgba(44, 42, 39, 0.04);
+
+  /* Pricing Card — Shadow (W2) */
+  --mg-v2-pricing-shadow-card: 0 4px 12px rgba(44, 42, 39, 0.05);
+  --mg-v2-pricing-shadow-card-hover: 0 8px 24px rgba(44, 42, 39, 0.1);
+  --mg-v2-pricing-shadow-popular: 0 12px 32px rgba(44, 42, 39, 0.1);
+  --mg-v2-pricing-shadow-popular-hover: 0 16px 40px rgba(44, 42, 39, 0.15);
+
+  /* Pricing Card — Typography */
+  --mg-v2-pricing-font-size-price: 2.5rem;
+  --mg-v2-pricing-font-size-period: var(--mg-v2-font-size-body-lg);
+
+  /* Pricing Card — Spacing */
+  --mg-v2-pricing-card-padding: var(--mg-v2-space-10);
+  --mg-v2-pricing-card-padding-mobile: var(--mg-v2-space-6);
+  --mg-v2-pricing-card-gap: var(--mg-v2-space-8);
+
+  /* Pricing Card — Radius */
+  --mg-v2-pricing-card-radius: var(--mg-v2-radius-2xl);
+
+  /* Pricing Layout */
+  --mg-v2-pricing-header-gap: var(--mg-v2-space-16);
+
+  /* Pricing Card — Dark mode surface (highlighted) */
+  --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
+
+  /* ── Landing — Typography (W3) ── */
+  --mg-v2-refine-font-size-landing-h1: 4rem;
+  --mg-v2-refine-font-size-landing-tablet-h1: 3rem;
+  --mg-v2-refine-font-size-landing-mobile-h1: 2.25rem;
+  --mg-v2-refine-font-size-landing-h2: 2.5rem;
+  --mg-v2-refine-font-size-landing-body: 1.25rem;
+  --mg-v2-refine-font-weight-extrabold: 800;
+  --mg-v2-refine-font-line-height-body-lg: 1.6;
+
+  /* ── Landing — Spacing ── */
+  --mg-v2-refine-space-hero-y: 7.5rem;
+  --mg-v2-refine-space-text-media-gap: 4rem;
+
+  /* ── Landing — Component ── */
+  --mg-v2-refine-component-cta-height: 3.5rem;
+  --mg-v2-refine-component-cta-px: 2rem;
+
+  /* ── Landing — Radius ── */
+  --mg-v2-refine-radius-mockup: 1rem;
+
+  /* ── Landing — Shadow ── */
+  --mg-v2-refine-shadow-mockup: 0 1.25rem 2.5rem rgba(44, 42, 39, 0.08);
+
+  /* ── Landing — Mesh Gradient (Hero) ── */
+  --mg-v2-refine-color-mesh-1: rgba(74, 99, 84, 0.06);
+  --mg-v2-refine-color-mesh-2: rgba(130, 150, 137, 0.05);
+  --mg-v2-refine-color-mesh-3: rgba(163, 139, 109, 0.04);
+
+  /* ── Landing — Navbar Blur ── */
+  --mg-v2-refine-blur-navbar: 10px;
+
+  /* ── Landing — Mockup Border (light: none, dark: border 대체) ── */
+  --mg-v2-refine-border-mockup: none;
+}
+
+/* ================================================================
+   2. DARK MODE — prefers-color-scheme
+   ================================================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mg-v2-refine-shadow-form: none;
+
+    --mg-v2-pricing-shadow-card: none;
+    --mg-v2-pricing-shadow-card-hover: none;
+    --mg-v2-pricing-shadow-popular: none;
+    --mg-v2-pricing-shadow-popular-hover: none;
+
+    --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
+
+    --mg-v2-refine-shadow-mockup: none;
+    --mg-v2-refine-border-mockup: 1px solid rgba(255, 255, 255, 0.08);
+
+    --mg-v2-refine-color-mesh-1: rgba(125, 166, 138, 0.06);
+    --mg-v2-refine-color-mesh-2: rgba(151, 168, 156, 0.05);
+    --mg-v2-refine-color-mesh-3: rgba(187, 163, 133, 0.04);
+  }
+}
+
+/* ================================================================
+   3. DARK MODE — data-theme="dark" (수동 토글)
+   ================================================================ */
+[data-theme="dark"] {
+  --mg-v2-refine-shadow-form: none;
+
+  --mg-v2-pricing-shadow-card: none;
+  --mg-v2-pricing-shadow-card-hover: none;
+  --mg-v2-pricing-shadow-popular: none;
+  --mg-v2-pricing-shadow-popular-hover: none;
+
+  --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
+
+  --mg-v2-refine-shadow-mockup: none;
+  --mg-v2-refine-border-mockup: 1px solid rgba(255, 255, 255, 0.08);
+
+  --mg-v2-refine-color-mesh-1: rgba(125, 166, 138, 0.06);
+  --mg-v2-refine-color-mesh-2: rgba(151, 168, 156, 0.05);
+  --mg-v2-refine-color-mesh-3: rgba(187, 163, 133, 0.04);
+}
+
+/* ================================================================
+   4. REDUCED MOTION — fade-up 초기 상태 비활성 (W3)
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-fade-up {
+    opacity: 1;
+    transform: none;
+  }
+}

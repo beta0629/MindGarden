@@ -57,7 +57,7 @@ describe('LandingTestimonials', () => {
 
   it('renders testimonials content', () => {
     render(<LandingTestimonials />);
-    expect(screen.getByText(/마인드가든 도입 후 행정 업무가 절반으로 줄었습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/코어 솔루션 도입 후 행정 업무가 절반으로 줄었습니다/)).toBeInTheDocument();
   });
 
   it('renders custom testimonials via testimonialsSlot', () => {

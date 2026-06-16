@@ -1,8 +1,9 @@
 /**
  * LandingTestimonials CSS — mg-v2-* 토큰 한정
  * Testimonials 섹션: Stats + Carousel (자동 슬라이드, 일시정지, 키보드 nav)
+ * Phase C-Refine: 타이포 위계 보정
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-15
  */
 
@@ -13,7 +14,7 @@
   margin: 0 auto;
 }
 
-/* Stats */
+/* ── Stats ── */
 .mg-v2-landing-testimonials__stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -30,7 +31,7 @@
 
 .mg-v2-landing-testimonials__stat-value {
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-h1);
+  font-size: var(--mg-v2-refine-font-size-landing-h2);
   font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-v2-color-primary-main);
   line-height: var(--mg-v2-font-line-height-tight);
@@ -43,7 +44,7 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
-/* Carousel */
+/* ── Carousel ── */
 .mg-v2-landing-testimonials__carousel {
   position: relative;
   overflow: hidden;
@@ -119,7 +120,7 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-/* Controls */
+/* ── Controls ── */
 .mg-v2-landing-testimonials__controls {
   display: flex;
   align-items: center;
@@ -151,7 +152,7 @@
   outline-offset: 2px;
 }
 
-/* Responsive: Tablet */
+/* ── Responsive: Tablet ── */
 @media (min-width: 768px) and (max-width: 1023px) {
   .mg-v2-landing-testimonials {
     padding: var(--mg-v2-space-16) var(--mg-v2-grid-margin-tablet);
@@ -166,7 +167,7 @@
   }
 }
 
-/* Responsive: Mobile */
+/* ── Responsive: Mobile ── */
 @media (max-width: 767px) {
   .mg-v2-landing-testimonials {
     padding: var(--mg-v2-space-12) var(--mg-v2-grid-margin-mobile);

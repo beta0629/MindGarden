@@ -2094,8 +2094,8 @@
   },
   "public": {
     "landing": {
-      "pageTitle": "마인드가든 — 심리상담센터 관리 솔루션",
-      "pageDescription": "마인드가든은 심리상담센터를 위한 예약·기록·정산 올인원 솔루션입니다. 지금 무료로 시작하세요.",
+      "pageTitle": "Core Solution — 심리상담센터 관리 솔루션",
+      "pageDescription": "Core Solution은 심리상담센터를 위한 예약·기록·정산 올인원 솔루션입니다. 지금 무료로 시작하세요.",
       "heroTitle": "마음을 돌보는 가장 안정적인 공간",
       "heroSubtitle": "상담 기록부터 예약 관리까지, 원장님을 위한 완벽한 솔루션",
       "heroPrimaryCta": "무료로 시작하기",
@@ -2120,7 +2120,7 @@
         "reservations": "누적 예약 건수",
         "satisfaction": "고객 만족도"
       },
-      "testimonial1Content": "마인드가든 도입 후 행정 업무가 절반으로 줄었습니다.",
+      "testimonial1Content": "코어 솔루션 도입 후 행정 업무가 절반으로 줄었습니다.",
       "testimonial1Author": "A 심리상담센터 원장",
       "testimonial2Content": "예약 관리와 정산이 자동화되어 상담에만 집중할 수 있게 되었어요.",
       "testimonial2Author": "B 상담소 대표",

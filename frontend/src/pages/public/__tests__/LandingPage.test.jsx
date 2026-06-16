@@ -197,12 +197,12 @@ describe('LandingPage', () => {
     /* react-helmet v6: Helmet.peek()으로 현재 head 상태 확인 (jsdom에서 DOM 직접 확인 대체) */
     const { Helmet } = require('react-helmet');
     const helmetState = Helmet.peek();
-    expect(helmetState.title).toContain('MindGarden');
+    expect(helmetState.title).toContain('Core Solution');
   });
 
   it('Hero 제목이 i18n fallback 텍스트로 렌더됨', () => {
     renderWithRouter(React.createElement(LandingPage));
-    expect(screen.getByText('MindGarden for Counseling Centers')).toBeInTheDocument();
+    expect(screen.getByText('Core Solution for Counseling Centers')).toBeInTheDocument();
   });
 
   it('CTA Primary 버튼 텍스트가 i18n fallback으로 렌더됨', () => {

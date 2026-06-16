@@ -52,7 +52,7 @@ const LandingHero = ({
             <img
               className="mg-v2-landing-hero__image"
               src={heroImageSlot}
-              alt="MindGarden 대시보드"
+              alt="Core Solution 대시보드"
             />
           ) : (
             heroImageSlot

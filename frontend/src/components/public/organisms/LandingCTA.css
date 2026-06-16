@@ -1,8 +1,9 @@
 /**
  * LandingCTA CSS — mg-v2-* 토큰 한정
  * CTA 섹션: 다크 배경 강조, 중앙 정렬 텍스트 + 버튼 그룹
+ * Phase C-Refine: CTA 높이 56px, 호버 그림자
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-15
  */
 
@@ -23,7 +24,7 @@
 
 .mg-v2-landing-cta__title {
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-h1);
+  font-size: var(--mg-v2-refine-font-size-landing-h2);
   font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-v2-color-text-inverse);
   line-height: var(--mg-v2-font-line-height-heading);
@@ -32,10 +33,10 @@
 
 .mg-v2-landing-cta__subtitle {
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-h4);
+  font-size: var(--mg-v2-refine-font-size-landing-body);
   font-weight: var(--mg-v2-font-weight-regular);
   color: var(--mg-v2-color-text-inverse);
-  line-height: var(--mg-v2-font-line-height-body);
+  line-height: var(--mg-v2-refine-font-line-height-body-lg);
   opacity: 0.85;
   margin: 0;
 }
@@ -51,13 +52,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--mg-v2-space-2);
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-body-lg);
   font-weight: var(--mg-v2-font-weight-semibold);
-  padding: var(--mg-v2-space-4) var(--mg-v2-space-10);
+  padding: var(--mg-v2-space-4) var(--mg-v2-refine-component-cta-px);
   border-radius: var(--mg-v2-radius-md);
   text-decoration: none;
-  min-height: var(--mg-v2-component-touch-target);
+  min-height: var(--mg-v2-refine-component-cta-height);
   transition: var(--mg-v2-transition-fast);
   cursor: pointer;
   border: none;
@@ -68,8 +70,19 @@
   color: var(--mg-v2-color-primary-dark);
 }
 
+.mg-v2-landing-cta__btn--primary::after {
+  content: '\2192';
+  display: inline-block;
+  transition: transform var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default);
+}
+
 .mg-v2-landing-cta__btn--primary:hover {
   background-color: var(--mg-v2-color-surface-bg);
+  box-shadow: var(--mg-v2-shadow-md);
+}
+
+.mg-v2-landing-cta__btn--primary:hover::after {
+  transform: translateX(var(--mg-v2-space-1));
 }
 
 .mg-v2-landing-cta__btn--primary:active {
@@ -100,14 +113,14 @@
   outline-offset: 2px;
 }
 
-/* Responsive: Tablet */
+/* ── Responsive: Tablet ── */
 @media (min-width: 768px) and (max-width: 1023px) {
   .mg-v2-landing-cta {
     padding: var(--mg-v2-space-16) var(--mg-v2-grid-margin-tablet);
   }
 }
 
-/* Responsive: Mobile */
+/* ── Responsive: Mobile ── */
 @media (max-width: 767px) {
   .mg-v2-landing-cta {
     padding: var(--mg-v2-space-12) var(--mg-v2-grid-margin-mobile);

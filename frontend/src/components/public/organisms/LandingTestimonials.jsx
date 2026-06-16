@@ -23,7 +23,7 @@ const DEFAULT_STATS = [
 
 const DEFAULT_TESTIMONIALS = [
   {
-    content: '마인드가든 도입 후 행정 업무가 절반으로 줄었습니다.',
+    content: '코어 솔루션 도입 후 행정 업무가 절반으로 줄었습니다.',
     author: 'A 심리상담센터 원장',
     avatar: null,
   },

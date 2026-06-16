@@ -1,5 +1,43 @@
 {
   "public": {
+    "landing": {
+      "pageTitle": "Core Solution — Counseling Center Management Solution",
+      "pageDescription": "Core Solution provides all-in-one scheduling, records, and billing for counseling centers. Start your free trial today.",
+      "heroTitle": "The Most Reliable Space for Mental Wellness",
+      "heroSubtitle": "From consultation records to appointment management, the perfect solution for center directors",
+      "heroPrimaryCta": "Get Started Free",
+      "heroSecondaryCta": "View Pricing",
+      "feature": {
+        "scheduling": {
+          "title": "Smart Scheduling",
+          "description": "Automatic reminders and calendar sync to prevent no-shows"
+        },
+        "records": {
+          "title": "Secure Records",
+          "description": "End-to-end encrypted client charts"
+        },
+        "settlement": {
+          "title": "Automated Billing",
+          "description": "One-click settlement for complex manual calculations"
+        }
+      },
+      "stat": {
+        "centers": "Centers",
+        "users": "Active Users",
+        "reservations": "Reservations",
+        "satisfaction": "Satisfaction"
+      },
+      "testimonial1Content": "Administrative work was cut in half after adopting Core Solution.",
+      "testimonial1Author": "Director, Psychology Counseling Center A",
+      "testimonial2Content": "Scheduling and billing are automated so I can focus on counseling.",
+      "testimonial2Author": "CEO, Counseling Office B",
+      "testimonial3Content": "The client management system is truly intuitive and secure.",
+      "testimonial3Author": "Manager, Clinic C",
+      "ctaTitle": "Experience the difference in counseling center management.",
+      "ctaSubtitle": "Try all features free for 14 days.",
+      "ctaPrimaryCta": "Get Started Free",
+      "ctaSecondaryCta": "Contact Us"
+    },
     "onboarding": {
       "pageTitle": "Get Started with Core Solution",
       "pageSubtitle": "Set up your consultation center in just a few minutes.",

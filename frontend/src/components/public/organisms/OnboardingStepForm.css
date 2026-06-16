@@ -4,12 +4,15 @@
  * Step 1~6 입력 양식의 통합 Organism 스타일.
  * 모든 색상·여백·폰트·radius는 var(--mg-v2-*) 토큰만 사용.
  *
- * @author MindGarden
+ * Spec: docs/design/v2/refine/DESIGN_V2_REFINE_ONBOARDING_SPEC.md
+ * §3 비주얼 디테일 · §4 타이포 · §6 마이크로 인터랙션
+ *
+ * @author CoreSolution
  * @since 2026-06-15
  */
 
 /* ============================================================
-   Container
+   Container — §P1: 폼 필드 간격 24px
    ============================================================ */
 .mg-v2-step-form {
   width: 100%;
@@ -41,9 +44,9 @@
 .mg-v2-step-form__title {
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-h2);
-  font-weight: var(--mg-v2-font-weight-bold);
+  font-weight: var(--mg-v2-font-weight-semibold);
   color: var(--mg-v2-color-text-primary);
-  line-height: var(--mg-v2-font-line-height-heading);
+  line-height: var(--mg-v2-font-line-height-subheading);
   margin: 0 0 var(--mg-v2-space-2) 0;
 }
 
@@ -61,12 +64,12 @@
 .mg-v2-step-form__field {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-1);
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-v2-step-form__label {
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-body-sm);
+  font-size: var(--mg-v2-font-size-body-md);
   font-weight: var(--mg-v2-font-weight-medium);
   color: var(--mg-v2-color-text-secondary);
   line-height: var(--mg-v2-font-line-height-body);
@@ -83,7 +86,7 @@
   color: var(--mg-v2-color-text-primary);
   background-color: var(--mg-v2-color-surface-raised);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
-  border-radius: var(--mg-v2-radius-md);
+  border-radius: var(--mg-v2-radius-sm);
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
   height: var(--mg-v2-component-height-lg);
   transition: border-color var(--mg-v2-transition-fast), box-shadow var(--mg-v2-transition-fast);
@@ -94,6 +97,10 @@
 
 .mg-v2-step-form__input::placeholder {
   color: var(--mg-v2-color-text-tertiary);
+}
+
+.mg-v2-step-form__input:hover:not(:focus):not(:disabled) {
+  border-color: var(--mg-v2-color-border-dark);
 }
 
 .mg-v2-step-form__input:focus {
@@ -121,7 +128,7 @@
   color: var(--mg-v2-color-text-primary);
   background-color: var(--mg-v2-color-surface-raised);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
-  border-radius: var(--mg-v2-radius-md);
+  border-radius: var(--mg-v2-radius-sm);
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
   height: var(--mg-v2-component-height-lg);
   transition: border-color var(--mg-v2-transition-fast), box-shadow var(--mg-v2-transition-fast);
@@ -130,6 +137,10 @@
   box-sizing: border-box;
   appearance: none;
   cursor: pointer;
+}
+
+.mg-v2-step-form__select:hover:not(:focus):not(:disabled) {
+  border-color: var(--mg-v2-color-border-dark);
 }
 
 .mg-v2-step-form__select:focus {
@@ -192,16 +203,20 @@
   color: var(--mg-v2-color-primary-main);
   background-color: transparent;
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-primary-main);
-  border-radius: var(--mg-v2-radius-md);
+  border-radius: var(--mg-v2-radius-sm);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color var(--mg-v2-transition-fast);
+  transition: background-color var(--mg-v2-transition-fast), transform var(--mg-v2-transition-fast);
   height: var(--mg-v2-component-height-lg);
 }
 
 .mg-v2-step-form__check-btn:hover {
   background-color: var(--mg-v2-color-state-hover);
+}
+
+.mg-v2-step-form__check-btn:active {
+  transform: scale(0.98);
 }
 
 .mg-v2-step-form__check-btn:focus-visible {
@@ -517,7 +532,7 @@
 .mg-v2-step-form__complete-title {
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-h2);
-  font-weight: var(--mg-v2-font-weight-bold);
+  font-weight: var(--mg-v2-font-weight-semibold);
   color: var(--mg-v2-color-text-primary);
   margin: 0;
 }
@@ -532,9 +547,18 @@
 }
 
 /* ============================================================
-   Responsive — Mobile (414px)
+   Responsive — Tablet (768–1023px)
    ============================================================ */
-@media (max-width: 768px) {
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mg-v2-step-form__plans {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+   Responsive — Mobile (≤767px)
+   ============================================================ */
+@media (max-width: 767px) {
   .mg-v2-step-form__plans {
     grid-template-columns: 1fr;
   }

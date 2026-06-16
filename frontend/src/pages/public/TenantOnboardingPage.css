@@ -1,11 +1,13 @@
 /**
  * TenantOnboardingPage CSS — mg-v2-* 토큰 한정
- * @author MindGarden
+ * Spec §2 컨테이너 600px · §4 타이포 · §8 반응형
+ *
+ * @author CoreSolution
  * @since 2026-06-15
  */
 
 .mg-v2-onboarding-page {
-  max-width: 800px;
+  max-width: 600px;
   margin: 0 auto;
   padding: var(--mg-v2-space-4) 0;
 }
@@ -18,9 +20,9 @@
 .mg-v2-onboarding-page__title {
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-h2);
-  font-weight: var(--mg-v2-font-weight-bold);
+  font-weight: var(--mg-v2-font-weight-semibold);
   color: var(--mg-v2-color-text-primary);
-  line-height: var(--mg-v2-font-line-height-heading);
+  line-height: var(--mg-v2-font-line-height-subheading);
   margin-bottom: var(--mg-v2-space-3);
 }
 
@@ -44,7 +46,7 @@
   padding: var(--mg-v2-space-8);
   background-color: var(--mg-v2-color-surface-card);
   border-radius: var(--mg-v2-radius-lg);
-  border: 1px solid var(--mg-v2-color-border-light);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
 }
 
 .mg-v2-onboarding-page__skeleton-block {
@@ -56,7 +58,7 @@
     var(--mg-v2-color-neutral-200) 75%
   );
   background-size: 200% 100%;
-  border-radius: var(--mg-v2-radius-md);
+  border-radius: var(--mg-v2-radius-sm);
   animation: mg-v2-skeleton-pulse 1.5s ease-in-out infinite;
 }
 
@@ -77,7 +79,19 @@
   100% { background-position: -200% 0; }
 }
 
-@media (max-width: 768px) {
+/* §8 Tablet: 768–1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mg-v2-onboarding-page {
+    max-width: 90%;
+  }
+}
+
+/* §8 Mobile: ≤767px */
+@media (max-width: 767px) {
+  .mg-v2-onboarding-page {
+    max-width: 100%;
+  }
+
   .mg-v2-onboarding-page__title {
     font-size: var(--mg-v2-font-size-h3);
   }

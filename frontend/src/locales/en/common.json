@@ -1,7 +1,7 @@
 {
   "public": {
     "onboarding": {
-      "pageTitle": "Get Started with MindGarden",
+      "pageTitle": "Get Started with Core Solution",
       "pageSubtitle": "Set up your consultation center in just a few minutes.",
       "stepContentLabel": "Step content area",
       "errorTenantNameRequired": "Please enter a tenant name.",

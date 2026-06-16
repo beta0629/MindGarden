@@ -2132,7 +2132,7 @@
       "ctaSecondaryCta": "도입 문의하기"
     },
     "onboarding": {
-      "pageTitle": "MindGarden 시작하기",
+      "pageTitle": "Core Solution 시작하기",
       "pageSubtitle": "몇 분이면 상담센터를 개설할 수 있습니다.",
       "stepContentLabel": "단계별 입력 영역",
       "errorTenantNameRequired": "테넌트명을 입력해주세요.",

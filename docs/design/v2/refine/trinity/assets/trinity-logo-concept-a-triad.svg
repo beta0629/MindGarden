@@ -1,0 +1,23 @@
+<svg width="400" height="120" viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept A: Trinity Triad (Dark Navy & White for Dark Background) -->
+  <rect width="400" height="120" rx="8" fill="#1A2233" />
+  
+  <!-- Symbol: Three geometric elements representing Tenant, Connection, Growth -->
+  <g transform="translate(40, 35)">
+    <!-- Bottom Left -->
+    <circle cx="15" cy="35" r="15" fill="#3D5246" opacity="0.9" />
+    <!-- Bottom Right -->
+    <circle cx="45" cy="35" r="15" fill="#6B7F72" opacity="0.9" />
+    <!-- Top Center -->
+    <circle cx="30" cy="15" r="15" fill="#FAF9F7" opacity="0.9" />
+    
+    <!-- Connection lines -->
+    <path d="M22.5 25 L37.5 25" stroke="#1A2233" stroke-width="2" />
+    <path d="M25 30 L30 20" stroke="#1A2233" stroke-width="2" />
+    <path d="M35 30 L30 20" stroke="#1A2233" stroke-width="2" />
+  </g>
+  
+  <!-- Wordmark -->
+  <text x="120" y="70" font-family="'Inter', 'Noto Sans KR', sans-serif" font-weight="600" font-size="32" fill="#FAF9F7" letter-spacing="-0.5">Trinity</text>
+  <text x="122" y="90" font-family="'Inter', 'Noto Sans KR', sans-serif" font-weight="400" font-size="12" fill="#8C9EAB" letter-spacing="1">CORPORATION</text>
+</svg>

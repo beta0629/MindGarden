@@ -1,0 +1,19 @@
+<svg width="400" height="120" viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept D: Monogram eT -->
+  <rect width="400" height="120" rx="8" fill="#FAF9F7" />
+  
+  <!-- Symbol: Monogram 'eT' inside a rounded square -->
+  <g transform="translate(40, 30)">
+    <rect x="0" y="0" width="60" height="60" rx="14" fill="#1A2233" />
+    
+    <!-- 'e' part -->
+    <path d="M 20 38 C 15 38 12 34 12 28 C 12 22 16 18 22 18 C 28 18 30 23 30 28 L 12 28 C 13 33 16 35 20 35 C 23 35 25 33 26 31 L 30 31 C 28 36 24 38 20 38 Z M 22 21 C 18 21 16 23 15 25 L 27 25 C 26 23 24 21 22 21 Z" fill="#FAF9F7" />
+    
+    <!-- 'T' part -->
+    <path d="M 32 18 L 48 18 L 48 22 L 42 22 L 42 38 L 38 38 L 38 22 L 32 22 Z" fill="#3D5246" />
+  </g>
+  
+  <!-- Wordmark -->
+  <text x="120" y="68" font-family="'Inter', 'Noto Sans KR', sans-serif" font-weight="600" font-size="30" fill="#1A2233" letter-spacing="-0.5">e-trinity</text>
+  <text x="122" y="88" font-family="'Inter', 'Noto Sans KR', sans-serif" font-weight="500" font-size="12" fill="#5C6B61" letter-spacing="0.5">CORP.</text>
+</svg>

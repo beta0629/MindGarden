@@ -2094,42 +2094,58 @@
   },
   "public": {
     "landing": {
-      "pageTitle": "Core Solution — 심리상담센터 관리 솔루션",
-      "pageDescription": "Core Solution은 심리상담센터를 위한 예약·기록·정산 올인원 솔루션입니다. 지금 무료로 시작하세요.",
-      "heroTitle": "마음을 돌보는 가장 안정적인 공간",
-      "heroSubtitle": "상담 기록부터 예약 관리까지, 원장님을 위한 완벽한 솔루션",
-      "heroPrimaryCta": "무료로 시작하기",
-      "heroSecondaryCta": "요금제 보기",
+      "pageTitle": "Core Solution — Multi-Tenant SaaS Platform",
+      "pageDescription": "Core Solution은 B2B 비즈니스 운영을 통합 관리하는 SaaS 플랫폼입니다. 멀티 테넌트 격리, 자동화 워크플로우, 실시간 분석을 하나의 콘솔에서 제공합니다.",
+      "htmlLang": "ko",
+      "hero": {
+        "eyebrow": "Multi-Tenant SaaS Platform",
+        "titleLine1": "여러 테넌트, 하나의 플랫폼.",
+        "titleLine2": "운영을 단순하게.",
+        "subtitle": "Core Solution은 B2B 비즈니스 운영을 통합 관리하는 SaaS 플랫폼입니다. 멀티 테넌트 격리, 자동화 워크플로우, 실시간 분석을 하나의 콘솔에서 제공합니다."
+      },
+      "cta": {
+        "primary": "무료로 시작",
+        "secondary": "데모 보기",
+        "contact": "도입 문의"
+      },
+      "socialProof": {
+        "title": "현재 200+ 기업이 사용 중",
+        "ariaLabel": "고객사 로고"
+      },
+      "preview": {
+        "alt": "Core Solution 운영 대시보드 프리뷰"
+      },
+      "features": {
+        "ariaLabel": "핵심 기능"
+      },
       "feature": {
-        "scheduling": {
-          "title": "스마트 예약 관리",
-          "description": "노쇼를 방지하는 자동 알림과 캘린더 연동"
+        "isolation": {
+          "title": "멀티 테넌트 격리",
+          "desc": "테넌트별 데이터·권한·도메인을 완벽 분리"
         },
-        "records": {
-          "title": "안전한 상담 기록",
-          "description": "종단간 암호화로 보호되는 내담자 차트"
+        "workflow": {
+          "title": "자동화 워크플로우",
+          "desc": "반복 업무를 코드 없이 자동화"
         },
-        "settlement": {
-          "title": "자동 정산 시스템",
-          "description": "복잡한 수기 정산을 클릭 한 번으로"
+        "analytics": {
+          "title": "실시간 운영 분석",
+          "desc": "비즈니스 지표를 한눈에 추적"
         }
       },
-      "stat": {
-        "centers": "도입 센터",
-        "users": "활성 사용자",
-        "reservations": "누적 예약 건수",
-        "satisfaction": "고객 만족도"
+      "trust": {
+        "heading": "검증된 보안·컴플라이언스",
+        "ariaLabel": "보안 인증 배지",
+        "badge": {
+          "iso27001": "ISO 27001",
+          "soc2": "SOC 2",
+          "gdpr": "GDPR",
+          "kisaIsms": "KISA-ISMS"
+        }
       },
-      "testimonial1Content": "코어 솔루션 도입 후 행정 업무가 절반으로 줄었습니다.",
-      "testimonial1Author": "A 심리상담센터 원장",
-      "testimonial2Content": "예약 관리와 정산이 자동화되어 상담에만 집중할 수 있게 되었어요.",
-      "testimonial2Author": "B 상담소 대표",
-      "testimonial3Content": "내담자 관리 시스템이 정말 직관적이고 안전합니다.",
-      "testimonial3Author": "C 클리닉 실장",
-      "ctaTitle": "지금 바로 차원이 다른 상담 센터 관리를 경험해보세요.",
-      "ctaSubtitle": "14일 무료 체험으로 모든 기능을 사용해볼 수 있습니다.",
-      "ctaPrimaryCta": "무료로 시작하기",
-      "ctaSecondaryCta": "도입 문의하기"
+      "finalCta": {
+        "title": "모든 테넌트를 하나의 콘솔에서 안전하게 운영하세요.",
+        "subtitle": "14일 무료로 Core Solution을 체험해보세요. 신용카드 등록이 필요하지 않습니다."
+      }
     },
     "onboarding": {
       "pageTitle": "Core Solution 시작하기",

@@ -1,42 +1,58 @@
 {
   "public": {
     "landing": {
-      "pageTitle": "Core Solution — Counseling Center Management Solution",
-      "pageDescription": "Core Solution provides all-in-one scheduling, records, and billing for counseling centers. Start your free trial today.",
-      "heroTitle": "The Most Reliable Space for Mental Wellness",
-      "heroSubtitle": "From consultation records to appointment management, the perfect solution for center directors",
-      "heroPrimaryCta": "Get Started Free",
-      "heroSecondaryCta": "View Pricing",
+      "pageTitle": "Core Solution — Multi-Tenant SaaS Platform",
+      "pageDescription": "Core Solution is a multi-tenant SaaS platform that unifies tenant isolation, automation workflows, and real-time analytics in a single console.",
+      "htmlLang": "en",
+      "hero": {
+        "eyebrow": "Multi-Tenant SaaS Platform",
+        "titleLine1": "Many tenants,",
+        "titleLine2": "one platform.",
+        "subtitle": "Core Solution unifies tenant isolation, automation workflows, and real-time analytics in a single console — built for B2B operations at any scale."
+      },
+      "cta": {
+        "primary": "Get Started Free",
+        "secondary": "View Demo",
+        "contact": "Contact Sales"
+      },
+      "socialProof": {
+        "title": "Trusted by 200+ companies",
+        "ariaLabel": "Customer logos"
+      },
+      "preview": {
+        "alt": "Core Solution Dashboard Preview"
+      },
+      "features": {
+        "ariaLabel": "Key Features"
+      },
       "feature": {
-        "scheduling": {
-          "title": "Smart Scheduling",
-          "description": "Automatic reminders and calendar sync to prevent no-shows"
+        "isolation": {
+          "title": "Multi-Tenant Isolation",
+          "desc": "Complete isolation of data, permissions, and domains per tenant"
         },
-        "records": {
-          "title": "Secure Records",
-          "description": "End-to-end encrypted client charts"
+        "workflow": {
+          "title": "Automation Workflows",
+          "desc": "Automate repetitive operations without writing code"
         },
-        "settlement": {
-          "title": "Automated Billing",
-          "description": "One-click settlement for complex manual calculations"
+        "analytics": {
+          "title": "Real-Time Analytics",
+          "desc": "Track every business metric from a single console"
         }
       },
-      "stat": {
-        "centers": "Centers",
-        "users": "Active Users",
-        "reservations": "Reservations",
-        "satisfaction": "Satisfaction"
+      "trust": {
+        "heading": "Trusted Security & Compliance",
+        "ariaLabel": "Security certifications",
+        "badge": {
+          "iso27001": "ISO 27001",
+          "soc2": "SOC 2",
+          "gdpr": "GDPR",
+          "kisaIsms": "KISA-ISMS"
+        }
       },
-      "testimonial1Content": "Administrative work was cut in half after adopting Core Solution.",
-      "testimonial1Author": "Director, Psychology Counseling Center A",
-      "testimonial2Content": "Scheduling and billing are automated so I can focus on counseling.",
-      "testimonial2Author": "CEO, Counseling Office B",
-      "testimonial3Content": "The client management system is truly intuitive and secure.",
-      "testimonial3Author": "Manager, Clinic C",
-      "ctaTitle": "Experience the difference in counseling center management.",
-      "ctaSubtitle": "Try all features free for 14 days.",
-      "ctaPrimaryCta": "Get Started Free",
-      "ctaSecondaryCta": "Contact Us"
+      "finalCta": {
+        "title": "Run every tenant on a single, scalable console.",
+        "subtitle": "Try Core Solution free for 14 days. No credit card required."
+      }
     },
     "onboarding": {
       "pageTitle": "Get Started with Core Solution",

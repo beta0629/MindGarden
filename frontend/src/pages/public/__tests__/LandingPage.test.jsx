@@ -1,26 +1,26 @@
 /**
  * LandingPage 통합 테스트
  *
+ * Design v2 Refine v2 W3 — Multi-Tenant SaaS Platform 카피 + Hero/Trust/CTA 슬롯 주입.
+ *
  * 사용자 시나리오:
- * - Hero Primary CTA 클릭 → /onboarding 라우팅
- * - Hero Secondary CTA 클릭 → /pricing 라우팅
- * - Bottom Primary CTA 클릭 → /onboarding 라우팅
- * - Bottom Secondary CTA 클릭 → /onboarding 라우팅 (도입 문의)
- * - SEO meta: react-helmet document.title 확인
- * - i18n fallback 텍스트 렌더 확인
- * - LandingTemplate 렌더 확인
+ *  - Hero Primary CTA → /onboarding
+ *  - Hero Secondary CTA (데모 보기) → /onboarding
+ *  - Bottom Primary CTA → /onboarding
+ *  - Bottom Secondary CTA (도입 문의) → /onboarding
+ *  - SEO meta: react-helmet document.title 확인 ("Core Solution" 포함)
+ *  - i18n fallback 텍스트 렌더 확인 (eyebrow / titleLine / CTA)
+ *  - LandingTemplate 렌더 확인
+ *  - trustBadgesProps 전달 확인
  *
- * useNavigate mock 전략:
- * - 변수 이름이 'mock' 접두사이면 jest.mock factory에서 참조 가능 (Jest 허용)
- * - jest.mock('react-router-dom', factory) 에서 useNavigate를 교체
+ * useNavigate mock: 변수 이름이 'mock' 접두사이면 jest.mock factory에서 참조 가능.
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-16
  */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
-/* mockNavigate: 'mock' 접두사로 jest.mock factory 내 참조 허용 */
 const mockNavigate = jest.fn();
 
 jest.mock('axios', () => ({
@@ -70,7 +70,7 @@ jest.mock('../../../i18n', () => ({
   default: { t: (key) => key }
 }));
 
-/* LandingTemplate mock — jest 팩토리 내 require 사용 */
+/* LandingTemplate mock — heroProps/trustBadgesProps/ctaProps 만 노출 */
 jest.mock('../../../components/public/templates/LandingTemplate', () => {
   const R = require('react');
   return {
@@ -78,13 +78,17 @@ jest.mock('../../../components/public/templates/LandingTemplate', () => {
     default: function MockLandingTemplate(props) {
       var heroProps = props.heroProps || {};
       var ctaProps = props.ctaProps || {};
+      var trustBadgesProps = props.trustBadgesProps || null;
       return R.createElement(
         'div',
         { 'data-testid': 'landing-template' },
         R.createElement(
           'section',
           { 'data-testid': 'hero-section' },
-          R.createElement('h1', null, heroProps.titleSlot),
+          heroProps.titleLine1Slot &&
+            R.createElement('h1', { 'data-testid': 'hero-title-line-1' }, heroProps.titleLine1Slot),
+          heroProps.titleLine2Slot &&
+            R.createElement('h1', { 'data-testid': 'hero-title-line-2' }, heroProps.titleLine2Slot),
           heroProps.primaryCta &&
             R.createElement(
               'button',
@@ -106,6 +110,16 @@ jest.mock('../../../components/public/templates/LandingTemplate', () => {
               heroProps.secondaryCta.label
             )
         ),
+        trustBadgesProps &&
+          R.createElement(
+            'section',
+            { 'data-testid': 'trust-section' },
+            R.createElement(
+              'span',
+              { 'data-testid': 'trust-count' },
+              (trustBadgesProps.badges || []).length + ' badges'
+            )
+          ),
         R.createElement(
           'section',
           { 'data-testid': 'cta-section' },
@@ -135,7 +149,6 @@ jest.mock('../../../components/public/templates/LandingTemplate', () => {
   };
 });
 
-/* LandingPage — 지연 require (모든 mock 등록 완료 후) */
 let LandingPage;
 
 beforeAll(() => {
@@ -158,13 +171,10 @@ describe('LandingPage', () => {
     expect(screen.getByTestId('landing-template')).toBeInTheDocument();
   });
 
-  it('renders hero section', () => {
+  it('renders hero / trust / CTA sections', () => {
     renderWithRouter(React.createElement(LandingPage));
     expect(screen.getByTestId('hero-section')).toBeInTheDocument();
-  });
-
-  it('renders CTA section', () => {
-    renderWithRouter(React.createElement(LandingPage));
+    expect(screen.getByTestId('trust-section')).toBeInTheDocument();
     expect(screen.getByTestId('cta-section')).toBeInTheDocument();
   });
 
@@ -174,10 +184,10 @@ describe('LandingPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/onboarding');
   });
 
-  it('Hero Secondary CTA 클릭 시 /pricing 으로 navigate', () => {
+  it('Hero Secondary CTA(데모 보기) 클릭 시 /onboarding 으로 navigate', () => {
     renderWithRouter(React.createElement(LandingPage));
     fireEvent.click(screen.getByTestId('hero-secondary-cta'));
-    expect(mockNavigate).toHaveBeenCalledWith('/pricing');
+    expect(mockNavigate).toHaveBeenCalledWith('/onboarding');
   });
 
   it('Bottom Primary CTA 클릭 시 /onboarding 으로 navigate', () => {
@@ -192,21 +202,27 @@ describe('LandingPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/onboarding');
   });
 
-  it('SEO meta: react-helmet이 title을 랜딩 페이지 타이틀로 설정', () => {
+  it('SEO meta: react-helmet이 title에 Core Solution 을 포함', () => {
     renderWithRouter(React.createElement(LandingPage));
-    /* react-helmet v6: Helmet.peek()으로 현재 head 상태 확인 (jsdom에서 DOM 직접 확인 대체) */
     const { Helmet } = require('react-helmet');
     const helmetState = Helmet.peek();
     expect(helmetState.title).toContain('Core Solution');
+    expect(helmetState.title).toMatch(/Multi-Tenant SaaS Platform/i);
   });
 
-  it('Hero 제목이 i18n fallback 텍스트로 렌더됨', () => {
+  it('Hero 2줄 제목 슬롯이 모두 렌더됨', () => {
     renderWithRouter(React.createElement(LandingPage));
-    expect(screen.getByText('Core Solution for Counseling Centers')).toBeInTheDocument();
+    expect(screen.getByTestId('hero-title-line-1')).toBeInTheDocument();
+    expect(screen.getByTestId('hero-title-line-2')).toBeInTheDocument();
   });
 
-  it('CTA Primary 버튼 텍스트가 i18n fallback으로 렌더됨', () => {
+  it('CTA Primary 버튼 텍스트가 i18n fallback (Get Started Free) 으로 렌더됨', () => {
     renderWithRouter(React.createElement(LandingPage));
     expect(screen.getAllByText('Get Started Free').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('Trust 배지 4개가 props 로 전달됨', () => {
+    renderWithRouter(React.createElement(LandingPage));
+    expect(screen.getByTestId('trust-count')).toHaveTextContent('4 badges');
   });
 });

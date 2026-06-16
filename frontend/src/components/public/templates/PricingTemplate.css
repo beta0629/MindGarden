@@ -1,10 +1,11 @@
 /**
  * PricingTemplate CSS — mg-v2-* 토큰 한정
  *
- * 하드코딩 0 · CSS override 0 · !important 0 · 인라인 style 0
+ * Phase C-Refine: 레이아웃 간격 확대, 반응형 분기점, 모바일 순서 보정
  * 다크 모드 자동 지원 (토큰 기반)
+ * 하드코딩 0 · CSS override 0 · !important 0 · 인라인 style 0
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-16
  */
 
@@ -13,9 +14,9 @@
    ================================================================ */
 .mg-v2-pricing-template {
   width: 100%;
-  max-width: var(--mg-v2-layout-max-width, 1200px);
+  max-width: var(--mg-v2-grid-container-xl);
   margin: 0 auto;
-  padding: var(--mg-v2-space-4) 0;
+  padding: var(--mg-v2-space-4) var(--mg-v2-grid-margin-desktop);
 }
 
 /* ================================================================
@@ -23,15 +24,16 @@
    ================================================================ */
 .mg-v2-pricing-template__header {
   text-align: center;
-  margin-bottom: var(--mg-v2-space-12);
+  margin-bottom: var(--mg-v2-pricing-header-gap);
 }
 
 .mg-v2-pricing-template__title {
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-h1);
+  font-size: var(--mg-v2-font-size-display);
   font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-v2-color-text-primary);
-  line-height: var(--mg-v2-font-line-height-heading);
+  line-height: var(--mg-v2-font-line-height-tight);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
   margin-bottom: var(--mg-v2-space-4);
 }
 
@@ -45,31 +47,31 @@
 }
 
 /* ================================================================
-   CARDS GRID
+   CARDS GRID — 3-column desktop, 32px gap
    ================================================================ */
 .mg-v2-pricing-template__cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--mg-v2-space-6);
+  gap: var(--mg-v2-pricing-card-gap);
   align-items: start;
   margin-bottom: var(--mg-v2-space-16);
 }
 
-/* 카드 래퍼: 클릭 영역 + 선택 표시 */
+/* Card wrapper: clickable area + selection indicator */
 .mg-v2-pricing-template__card-wrapper {
   cursor: pointer;
-  border-radius: var(--mg-v2-radius-lg);
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  transition: var(--mg-v2-transition-normal);
+  border-radius: var(--mg-v2-pricing-card-radius);
+  outline: var(--mg-v2-border-width-normal) solid transparent;
+  outline-offset: var(--mg-v2-space-1);
+  transition: outline-color var(--mg-v2-transition-duration-normal) var(--mg-v2-transition-easing-default);
 }
 
 .mg-v2-pricing-template__card-wrapper:focus-visible {
-  outline-color: var(--mg-v2-color-primary-500);
+  outline-color: var(--mg-v2-color-border-focus);
 }
 
 .mg-v2-pricing-template__card-wrapper--selected {
-  outline-color: var(--mg-v2-color-primary-500);
+  outline-color: var(--mg-v2-color-primary-main);
 }
 
 /* ================================================================
@@ -89,20 +91,53 @@
 }
 
 /* ================================================================
-   RESPONSIVE
+   RESPONSIVE — Tablet (768px ~ 1023px): 2-column
    ================================================================ */
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
+  .mg-v2-pricing-template {
+    padding: var(--mg-v2-space-4) var(--mg-v2-grid-margin-tablet);
+  }
+
   .mg-v2-pricing-template__cards {
-    grid-template-columns: 1fr;
-    max-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Popular card (highlighted) spans full width on 2-col → center */
+  .mg-v2-pricing-template__card-wrapper:nth-child(3) {
+    grid-column: 1 / -1;
+    max-width: 50%;
+    justify-self: center;
   }
 }
 
-@media (max-width: 768px) {
+/* ================================================================
+   RESPONSIVE — Mobile (767px 이하): 1-column, Popular 카드 최상단
+   ================================================================ */
+@media (max-width: 767px) {
+  .mg-v2-pricing-template {
+    padding: var(--mg-v2-space-4) var(--mg-v2-grid-margin-mobile);
+  }
+
+  .mg-v2-pricing-template__header {
+    margin-bottom: var(--mg-v2-space-8);
+  }
+
   .mg-v2-pricing-template__title {
     font-size: var(--mg-v2-font-size-h2);
+  }
+
+  .mg-v2-pricing-template__cards {
+    grid-template-columns: 1fr;
+    gap: var(--mg-v2-space-6);
+  }
+
+  /* Popular (highlighted = 2nd child) → order -1 to move to top */
+  .mg-v2-pricing-template__card-wrapper:nth-child(2) {
+    order: -1;
+  }
+
+  .mg-v2-pricing-template__card-wrapper:nth-child(3) {
+    max-width: none;
   }
 
   .mg-v2-pricing-template__matrix-title {

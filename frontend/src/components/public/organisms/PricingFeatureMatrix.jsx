@@ -9,7 +9,7 @@
  *
  * mg-v2-* 토큰 한정. CSS-only 반응형 전환.
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-15
  */
 

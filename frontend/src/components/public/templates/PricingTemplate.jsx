@@ -11,7 +11,7 @@
  * - 다크 모드 자동 지원 (토큰 기반)
  * - React #130 / safeDisplay 준수 (toDisplayString 사용)
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-16
  */
 

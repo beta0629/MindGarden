@@ -1,0 +1,84 @@
+/**
+ * FeatureCard CSS — mg-v2-* 토큰 한정
+ * SPEC §3.4 Feature Card
+ * - Padding 32px (2rem)
+ * - Border 1px solid border-main
+ * - Radius 16px (1rem)
+ * - Background surface-main
+ * - Shadow xs
+ * - Icon 40px (2.5rem), 그라데이션 배경
+ * - Title 20px / 700
+ * - Description 14px / secondary
+ *
+ * @author CoreSolution
+ * @since 2026-06-16
+ */
+
+.mg-v2-feature-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--mg-v2-refine-landing-feature-padding);
+  border-radius: var(--mg-v2-refine-landing-feature-radius);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  background-color: var(--mg-v2-color-surface-card);
+  box-shadow: var(--mg-v2-refine-landing-feature-shadow);
+  transition:
+    transform var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default),
+    box-shadow var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default),
+    border-color var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default);
+}
+
+.mg-v2-feature-card:hover {
+  border-color: var(--mg-v2-color-primary-main);
+  box-shadow: var(--mg-v2-refine-landing-feature-shadow-hover);
+}
+
+.mg-v2-feature-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-refine-landing-feature-icon-size);
+  height: var(--mg-v2-refine-landing-feature-icon-size);
+  border-radius: var(--mg-v2-radius-md);
+  background-image: var(--mg-v2-refine-landing-feature-icon-bg-gradient);
+  color: var(--mg-v2-color-primary-main);
+  transition: transform var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default);
+}
+
+.mg-v2-feature-card:hover .mg-v2-feature-card__icon {
+  transform: scale(1.05);
+}
+
+.mg-v2-feature-card__icon img,
+.mg-v2-feature-card__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.mg-v2-feature-card__title {
+  margin: 0;
+  margin-top: var(--mg-v2-refine-landing-feature-title-margin-top);
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-refine-landing-feature-title-size);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  line-height: var(--mg-v2-font-line-height-subheading);
+}
+
+.mg-v2-feature-card__desc {
+  margin: 0;
+  margin-top: var(--mg-v2-refine-landing-feature-desc-margin-top);
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-refine-landing-feature-desc-size);
+  font-weight: var(--mg-v2-font-weight-regular);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-font-line-height-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-feature-card,
+  .mg-v2-feature-card__icon {
+    transition: none;
+  }
+}

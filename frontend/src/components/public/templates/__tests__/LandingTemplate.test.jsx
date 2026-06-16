@@ -1,13 +1,14 @@
 /**
  * LandingTemplate 통합 테스트
  *
- * - 4종 Organism(Hero/Features/Testimonials/CTA) 모두 렌더링
- * - props 전달 검증 (heroProps, featuresProps, testimonialsProps, ctaProps)
- * - PublicErrorBoundary 섹션별 격리 확인 (4개)
- * - 기본 props 렌더링 (props 미전달 시 기본값)
- * - 렌더 순서: Hero → Features → Testimonials → CTA
+ * Design v2 Refine v2 W3 — Hero → Features → TrustBadgesGrid → CTA 4-섹션 조립.
+ *  - 4종 컴포넌트 모두 렌더링 (trustBadgesProps 주입 시)
+ *  - props 전달 검증 (heroProps, featuresProps, trustBadgesProps, ctaProps)
+ *  - PublicErrorBoundary 섹션별 격리 확인
+ *  - 기본 props 렌더링 (props 미전달 시 trust badges 미렌더)
+ *  - 렌더 순서: Hero → Features → TrustBadgesGrid → CTA
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-16
  */
 import React from 'react';
@@ -79,7 +80,7 @@ jest.mock('../../organisms/LandingHero', () => {
       return R.createElement(
         'section',
         { 'data-testid': 'landing-hero' },
-        R.createElement('h1', null, props.titleSlot || 'default-hero-title')
+        R.createElement('h1', null, props.titleSlot || props.titleLine1Slot || 'default-hero-title')
       );
     }
   };
@@ -99,15 +100,15 @@ jest.mock('../../organisms/LandingFeatures', () => {
   };
 });
 
-jest.mock('../../organisms/LandingTestimonials', () => {
+jest.mock('../../molecules/TrustBadgesGrid', () => {
   const R = require('react');
   return {
     __esModule: true,
-    default: function MockLandingTestimonials(props) {
+    default: function MockTrustBadgesGrid(props) {
       return R.createElement(
         'section',
-        { 'data-testid': 'landing-testimonials' },
-        R.createElement('span', null, (props.testimonialsSlot ? props.testimonialsSlot.length : 0) + ' testimonials')
+        { 'data-testid': 'trust-badges' },
+        R.createElement('span', null, (props.badges ? props.badges.length : 0) + ' badges')
       );
     }
   };
@@ -147,18 +148,30 @@ describe('LandingTemplate', () => {
     expect(screen.getByTestId('public-layout')).toBeInTheDocument();
   });
 
-  it('renders all 4 Organisms (Hero, Features, Testimonials, CTA)', () => {
+  it('renders 3 sections by default (Hero, Features, CTA) when trustBadgesProps is null', () => {
     render(<LandingTemplate />);
     expect(screen.getByTestId('landing-hero')).toBeInTheDocument();
     expect(screen.getByTestId('landing-features')).toBeInTheDocument();
-    expect(screen.getByTestId('landing-testimonials')).toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badges')).not.toBeInTheDocument();
     expect(screen.getByTestId('landing-cta')).toBeInTheDocument();
   });
 
-  it('renders 4 PublicErrorBoundary sections (one per Organism)', () => {
-    render(<LandingTemplate />);
-    const boundaries = screen.getAllByTestId('error-boundary');
-    expect(boundaries).toHaveLength(4);
+  it('renders trust badges when trustBadgesProps is provided', () => {
+    render(
+      <LandingTemplate
+        trustBadgesProps={{ badges: ['iso27001', 'soc2'] }}
+      />
+    );
+    expect(screen.getByTestId('trust-badges')).toBeInTheDocument();
+    expect(screen.getByText('2 badges')).toBeInTheDocument();
+  });
+
+  it('renders PublicErrorBoundary per section (3 by default, 4 with trust badges)', () => {
+    const { rerender } = render(<LandingTemplate />);
+    expect(screen.getAllByTestId('error-boundary')).toHaveLength(3);
+
+    rerender(<LandingTemplate trustBadgesProps={{ badges: ['iso27001'] }} />);
+    expect(screen.getAllByTestId('error-boundary')).toHaveLength(4);
   });
 
   it('passes heroProps.titleSlot to LandingHero', () => {
@@ -168,20 +181,11 @@ describe('LandingTemplate', () => {
 
   it('passes featuresProps.featuresSlot to LandingFeatures', () => {
     const features = [
-      { icon: '🔒', title: 'A', description: 'desc A' },
-      { icon: '📅', title: 'B', description: 'desc B' }
+      { key: 'a', icon: null, title: 'A', description: 'desc A' },
+      { key: 'b', icon: null, title: 'B', description: 'desc B' }
     ];
     render(<LandingTemplate featuresProps={{ featuresSlot: features }} />);
     expect(screen.getByText('2 features')).toBeInTheDocument();
-  });
-
-  it('passes testimonialsProps.testimonialsSlot to LandingTestimonials', () => {
-    const testimonials = [
-      { content: 'Great!', author: 'Author 1', avatar: null },
-      { content: 'Awesome!', author: 'Author 2', avatar: null }
-    ];
-    render(<LandingTemplate testimonialsProps={{ testimonialsSlot: testimonials }} />);
-    expect(screen.getByText('2 testimonials')).toBeInTheDocument();
   });
 
   it('passes ctaProps.titleSlot to LandingCTA', () => {
@@ -189,17 +193,19 @@ describe('LandingTemplate', () => {
     expect(screen.getByText('Custom CTA Title')).toBeInTheDocument();
   });
 
-  it('renders organisms in order: Hero → Features → Testimonials → CTA', () => {
-    const { container } = render(<LandingTemplate />);
+  it('renders sections in order: Hero → Features → TrustBadgesGrid → CTA', () => {
+    const { container } = render(
+      <LandingTemplate trustBadgesProps={{ badges: ['iso27001'] }} />
+    );
     const sections = container.querySelectorAll('[data-testid]');
     const testIds = Array.from(sections).map((el) => el.getAttribute('data-testid'));
     const heroIdx = testIds.indexOf('landing-hero');
     const featuresIdx = testIds.indexOf('landing-features');
-    const testimonialsIdx = testIds.indexOf('landing-testimonials');
+    const trustIdx = testIds.indexOf('trust-badges');
     const ctaIdx = testIds.indexOf('landing-cta');
     expect(heroIdx).toBeLessThan(featuresIdx);
-    expect(featuresIdx).toBeLessThan(testimonialsIdx);
-    expect(testimonialsIdx).toBeLessThan(ctaIdx);
+    expect(featuresIdx).toBeLessThan(trustIdx);
+    expect(trustIdx).toBeLessThan(ctaIdx);
   });
 
   it('uses mg-v2-landing-template class on wrapper', () => {

@@ -1,110 +1,60 @@
 /**
  * LandingFeatures CSS — mg-v2-* 토큰 한정
- * Features 섹션: 카드 그리드 (PC 3열 / 태블릿 2열 / 모바일 1열)
- * Phase C-Refine: 타이포 위계 보정, 카드 간격 개선
+ * Design v2 Refine v2 W3 SPEC §3.4
+ *  - 3열 Grid (Desktop), gap 24px (1.5rem)
+ *  - 카드 내부 디자인은 FeatureCard CSS 가 담당
  *
  * @author CoreSolution
- * @since 2026-06-15
+ * @since 2026-06-16
  */
 
 .mg-v2-landing-features {
-  padding: var(--mg-v2-space-20) var(--mg-v2-grid-margin-desktop);
-  background-color: var(--mg-v2-color-surface-card);
+  width: 100%;
+  padding:
+    var(--mg-v2-space-20)
+    var(--mg-v2-grid-margin-desktop);
+  background-color: var(--mg-v2-color-surface-bg);
+}
+
+.mg-v2-landing-features__inner {
   max-width: var(--mg-v2-grid-container-2xl);
   margin: 0 auto;
 }
 
 .mg-v2-landing-features__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--mg-v2-grid-gutter-desktop);
+  grid-template-columns: repeat(
+    var(--mg-v2-landing-features-cols-desktop, 3),
+    minmax(0, 1fr)
+  );
+  gap: var(--mg-v2-refine-landing-feature-gap);
 }
 
-.mg-v2-landing-features__card {
-  position: relative;
-  background-color: var(--mg-v2-color-surface-raised);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
-  border-radius: var(--mg-v2-radius-xl);
-  padding: var(--mg-v2-space-8);
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-4);
-  box-shadow: var(--mg-v2-shadow-sm);
-  transition: var(--mg-v2-transition-normal);
-  overflow: hidden;
-}
-
-.mg-v2-landing-features__card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: var(--mg-v2-space-1);
-  background-color: var(--mg-v2-color-primary-main);
-  border-radius: var(--mg-v2-radius-xl) 0 0 var(--mg-v2-radius-xl);
-}
-
-.mg-v2-landing-features__card:hover {
-  transform: translateY(calc(-1 * var(--mg-v2-space-1)));
-  box-shadow: var(--mg-v2-shadow-md);
-}
-
-.mg-v2-landing-features__card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--mg-v2-space-12);
-  height: var(--mg-v2-space-12);
-  border-radius: var(--mg-v2-radius-lg);
-  background-color: var(--mg-v2-color-state-hover);
-  color: var(--mg-v2-color-primary-main);
-  font-size: var(--mg-v2-font-size-h2);
-  flex-shrink: 0;
-}
-
-.mg-v2-landing-features__card-title {
-  font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-h5);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-v2-color-text-primary);
-  line-height: var(--mg-v2-font-line-height-heading);
-  margin: 0;
-}
-
-.mg-v2-landing-features__card-desc {
-  font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-body-md);
-  font-weight: var(--mg-v2-font-weight-regular);
-  color: var(--mg-v2-color-text-secondary);
-  line-height: var(--mg-v2-font-line-height-body);
-  margin: 0;
-}
-
-/* ── Responsive: Tablet (768–1023px) ── */
 @media (min-width: 768px) and (max-width: 1023px) {
   .mg-v2-landing-features {
-    padding: var(--mg-v2-space-16) var(--mg-v2-grid-margin-tablet);
+    padding:
+      var(--mg-v2-space-16)
+      var(--mg-v2-grid-margin-tablet);
   }
 
   .mg-v2-landing-features__grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(
+      var(--mg-v2-landing-features-cols-tablet, 2),
+      minmax(0, 1fr)
+    );
     gap: var(--mg-v2-grid-gutter-tablet);
   }
 }
 
-/* ── Responsive: Mobile (< 768px) ── */
 @media (max-width: 767px) {
   .mg-v2-landing-features {
-    padding: var(--mg-v2-space-12) var(--mg-v2-grid-margin-mobile);
+    padding:
+      var(--mg-v2-space-12)
+      var(--mg-v2-grid-margin-mobile);
   }
 
   .mg-v2-landing-features__grid {
     grid-template-columns: 1fr;
     gap: var(--mg-v2-grid-gutter-mobile);
-  }
-
-  .mg-v2-landing-features__card:hover {
-    transform: none;
   }
 }

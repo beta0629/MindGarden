@@ -1,0 +1,69 @@
+/**
+ * SocialProofLogos CSS — mg-v2-* 토큰 한정
+ * SPEC §3.2 Social Proof Row
+ * - 라벨: 14px, semibold
+ * - 로고: height 24px, opacity 0.6, grayscale
+ * - 컨테이너 gap: 24px (1.5rem)
+ *
+ * @author CoreSolution
+ * @since 2026-06-16
+ */
+
+.mg-v2-social-proof {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  margin-top: var(--mg-v2-refine-landing-proof-margin-top);
+}
+
+.mg-v2-social-proof__label {
+  margin: 0;
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-refine-landing-proof-label-size);
+  font-weight: var(--mg-v2-refine-landing-proof-label-weight);
+  color: var(--mg-v2-color-text-primary);
+  letter-spacing: var(--mg-v2-font-letter-spacing-normal);
+}
+
+.mg-v2-social-proof__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-refine-landing-proof-gap);
+}
+
+.mg-v2-social-proof__item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mg-v2-social-proof__logo {
+  display: block;
+  height: var(--mg-v2-refine-landing-proof-logo-height);
+  width: auto;
+  opacity: var(--mg-v2-refine-landing-proof-logo-opacity);
+  filter: grayscale(1);
+  color: var(--mg-v2-color-text-secondary);
+  transition:
+    opacity var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-out),
+    filter var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-out);
+}
+
+.mg-v2-social-proof__logo:hover {
+  opacity: 1;
+  filter: grayscale(0);
+}
+
+@media (max-width: 767px) {
+  .mg-v2-social-proof__list {
+    justify-content: flex-start;
+    gap: var(--mg-v2-space-4);
+  }
+
+  .mg-v2-social-proof__logo {
+    height: var(--mg-v2-space-5);
+  }
+}

@@ -1,0 +1,344 @@
+/**
+ * OnboardingPage CSS — 우측 폼 패널 스타일 (Phase C-Refine v2)
+ *
+ * SPEC §3.2: 폼 필드 높이 56px, border-radius 8px, gradient CTA.
+ * SPEC §5: Focus Ring, CTA hover/active.
+ * 모든 색상·폰트·간격은 --mg-v2-onboarding-* 토큰만 사용.
+ */
+
+/* ================================================================
+   Form Section Container
+   ================================================================ */
+.mg-v2-onboarding-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.mg-v2-onboarding-form__header {
+  margin-bottom: var(--mg-v2-onboarding-subtitle-margin-bottom);
+}
+
+/* §3.2 h1 (제목): 36px / weight 700 / 하단 간격 16px */
+.mg-v2-onboarding-form__title {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-h1);
+  font-weight: var(--mg-v2-onboarding-font-weight-bold);
+  line-height: var(--mg-v2-onboarding-font-line-height-h1);
+  color: var(--mg-v2-onboarding-color-text-primary);
+  margin: 0 0 var(--mg-v2-onboarding-title-margin-bottom);
+}
+
+/* §3.2 sub-h1 (부제목): 16px / weight 400 / Gray text / 하단 간격 48px */
+.mg-v2-onboarding-form__subtitle {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-subtitle);
+  font-weight: var(--mg-v2-onboarding-font-weight-regular);
+  color: var(--mg-v2-onboarding-color-text-muted);
+  line-height: var(--mg-v2-onboarding-font-line-height-body);
+  margin: 0;
+}
+
+/* ================================================================
+   Form Fields — §3.2 폼 필드 (3종)
+   ================================================================ */
+.mg-v2-onboarding-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-onboarding-field-gap);
+  margin-bottom: var(--mg-v2-space-8);
+}
+
+.mg-v2-onboarding-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-onboarding-form__label {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-caption);
+  font-weight: var(--mg-v2-onboarding-font-weight-medium);
+  color: var(--mg-v2-onboarding-color-text-primary);
+}
+
+.mg-v2-onboarding-form__required {
+  color: var(--mg-v2-color-semantic-error);
+  margin-left: var(--mg-v2-space-1);
+}
+
+/* §3.2 공통 폼 필드: 높이 56px, border-radius 8px, border 1px gray */
+.mg-v2-onboarding-form__input,
+.mg-v2-onboarding-form__select {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-subtitle);
+  color: var(--mg-v2-onboarding-color-text-primary);
+  background-color: var(--mg-v2-onboarding-color-white);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-onboarding-color-border);
+  border-radius: var(--mg-v2-onboarding-field-radius);
+  padding: 0 var(--mg-v2-onboarding-field-padding-x);
+  height: var(--mg-v2-onboarding-field-height);
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color var(--mg-v2-onboarding-transition-fast),
+              box-shadow var(--mg-v2-onboarding-transition-fast);
+}
+
+/* §3.2 Dropdown: 우측 chevron 아이콘 */
+.mg-v2-onboarding-form__select {
+  appearance: none;
+  cursor: pointer;
+  background-image: var(--mg-v2-onboarding-select-chevron);
+  background-repeat: no-repeat;
+  background-position: right var(--mg-v2-onboarding-field-padding-x) center;
+  padding-right: var(--mg-v2-space-10);
+}
+
+.mg-v2-onboarding-form__input::placeholder {
+  color: var(--mg-v2-onboarding-color-text-muted);
+}
+
+/* §5 Focus Ring */
+.mg-v2-onboarding-form__input:focus,
+.mg-v2-onboarding-form__select:focus {
+  border-color: var(--mg-v2-onboarding-color-primary);
+  box-shadow: var(--mg-v2-onboarding-shadow-focus);
+}
+
+.mg-v2-onboarding-form__input--error,
+.mg-v2-onboarding-form__select--error {
+  border-color: var(--mg-v2-color-semantic-error);
+}
+
+.mg-v2-onboarding-form__error {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-micro);
+  color: var(--mg-v2-color-semantic-error);
+  line-height: var(--mg-v2-onboarding-font-line-height-body);
+}
+
+/* ================================================================
+   Terms Checkbox List
+   ================================================================ */
+.mg-v2-onboarding-form__terms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-onboarding-form__term-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-onboarding-form__checkbox {
+  width: var(--mg-v2-space-5);
+  height: var(--mg-v2-space-5);
+  accent-color: var(--mg-v2-onboarding-color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mg-v2-onboarding-form__term-label {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-caption);
+  color: var(--mg-v2-onboarding-color-text-primary);
+  cursor: pointer;
+}
+
+.mg-v2-onboarding-form__term-required {
+  color: var(--mg-v2-color-semantic-error);
+  margin-right: var(--mg-v2-space-1);
+}
+
+/* ================================================================
+   Step Actions (CTA + Prev) — §3.2 Primary CTA + 보조 링크
+   ================================================================ */
+.mg-v2-onboarding-form__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  margin-bottom: var(--mg-v2-onboarding-cta-login-gap);
+}
+
+/* §3.2 Primary CTA: 너비 100%, 높이 56px, Gradient, Shadow */
+.mg-v2-onboarding-form__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-space-2);
+  width: 100%;
+  height: var(--mg-v2-onboarding-cta-height);
+  background: var(--mg-v2-onboarding-gradient-primary);
+  color: var(--mg-v2-onboarding-color-white);
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-subtitle);
+  font-weight: var(--mg-v2-onboarding-font-weight-semibold);
+  border: 0;
+  border-radius: var(--mg-v2-onboarding-field-radius);
+  cursor: pointer;
+  box-shadow: var(--mg-v2-onboarding-shadow-cta);
+  transition: filter var(--mg-v2-onboarding-transition-fast),
+              box-shadow var(--mg-v2-onboarding-transition-fast),
+              transform var(--mg-v2-onboarding-transition-fast);
+}
+
+/* §5 CTA Hover: 밝기 증가 + Shadow 강화 */
+.mg-v2-onboarding-form__cta:hover:not(:disabled) {
+  filter: brightness(var(--mg-v2-onboarding-hover-brightness));
+  box-shadow: var(--mg-v2-onboarding-shadow-cta-hover);
+}
+
+/* §5 CTA Active: scale(0.98) */
+.mg-v2-onboarding-form__cta:active:not(:disabled) {
+  transform: scale(var(--mg-v2-onboarding-active-scale));
+}
+
+.mg-v2-onboarding-form__cta:disabled {
+  opacity: var(--mg-v2-onboarding-disabled-opacity);
+  cursor: not-allowed;
+}
+
+.mg-v2-onboarding-form__cta:focus-visible {
+  outline: var(--mg-v2-border-width-normal) solid var(--mg-v2-onboarding-color-primary);
+  outline-offset: var(--mg-v2-space-1);
+}
+
+.mg-v2-onboarding-form__cta-arrow {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.mg-v2-onboarding-form__cta-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: var(--mg-v2-border-width-normal) solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: mg-v2-onboarding-spinner 0.75s linear infinite;
+}
+
+@keyframes mg-v2-onboarding-spinner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mg-v2-onboarding-form__cta-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--mg-v2-onboarding-cta-height);
+  background-color: transparent;
+  color: var(--mg-v2-onboarding-color-text-primary);
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-subtitle);
+  font-weight: var(--mg-v2-onboarding-font-weight-medium);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-onboarding-color-border);
+  border-radius: var(--mg-v2-onboarding-field-radius);
+  cursor: pointer;
+  transition: background-color var(--mg-v2-onboarding-transition-fast),
+              border-color var(--mg-v2-onboarding-transition-fast);
+}
+
+.mg-v2-onboarding-form__cta-secondary:hover:not(:disabled) {
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+.mg-v2-onboarding-form__cta-secondary:focus-visible {
+  border-color: var(--mg-v2-onboarding-color-primary);
+  box-shadow: var(--mg-v2-onboarding-shadow-focus);
+  outline: none;
+}
+
+/* ================================================================
+   §3.2 보조 링크 (로그인) — 하단 중앙, 14px, 상단 간격 24px
+   ================================================================ */
+.mg-v2-onboarding-form__login-link {
+  text-align: center;
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-caption);
+  color: var(--mg-v2-onboarding-color-text-muted);
+  margin: 0;
+}
+
+.mg-v2-onboarding-form__login-anchor {
+  color: var(--mg-v2-onboarding-color-primary);
+  text-decoration: none;
+  font-weight: var(--mg-v2-onboarding-font-weight-medium);
+  margin-left: var(--mg-v2-space-1);
+}
+
+.mg-v2-onboarding-form__login-anchor:hover {
+  text-decoration: underline;
+}
+
+.mg-v2-onboarding-form__login-anchor:focus-visible {
+  outline: var(--mg-v2-border-width-normal) solid var(--mg-v2-onboarding-color-primary);
+  outline-offset: var(--mg-v2-space-1);
+  border-radius: var(--mg-v2-space-1);
+}
+
+/* ================================================================
+   Completion Step
+   ================================================================ */
+.mg-v2-onboarding-form__complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--mg-v2-space-6);
+  padding: var(--mg-v2-space-12) 0;
+}
+
+.mg-v2-onboarding-form__complete-icon {
+  width: var(--mg-v2-space-20);
+  height: var(--mg-v2-space-20);
+  color: var(--mg-v2-color-semantic-success);
+}
+
+.mg-v2-onboarding-form__complete-title {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-h1);
+  font-weight: var(--mg-v2-onboarding-font-weight-bold);
+  color: var(--mg-v2-onboarding-color-text-primary);
+  margin: 0;
+}
+
+.mg-v2-onboarding-form__complete-message {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-subtitle);
+  color: var(--mg-v2-onboarding-color-text-muted);
+  line-height: var(--mg-v2-onboarding-font-line-height-body);
+  margin: 0;
+  max-width: 22rem;
+}
+
+/* ================================================================
+   §6 Responsive — Mobile (<768px)
+   ================================================================ */
+@media (max-width: 767px) {
+  .mg-v2-onboarding-form__title {
+    font-size: var(--mg-v2-onboarding-font-size-h1-mobile);
+  }
+
+  .mg-v2-onboarding-form__header {
+    margin-bottom: var(--mg-v2-space-8);
+  }
+
+  .mg-v2-onboarding-form__input,
+  .mg-v2-onboarding-form__select,
+  .mg-v2-onboarding-form__cta,
+  .mg-v2-onboarding-form__cta-secondary {
+    height: var(--mg-v2-onboarding-field-height-mobile);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-onboarding-form__cta-spinner {
+    animation: none;
+  }
+}

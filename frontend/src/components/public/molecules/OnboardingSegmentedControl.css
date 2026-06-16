@@ -1,0 +1,76 @@
+/**
+ * OnboardingSegmentedControl CSS — 4분할 세그먼트 (Phase C-Refine v2)
+ *
+ * SPEC §3.2: 각 세그먼트 균등 분할, 높이 56px, border-radius 8px.
+ * SPEC §5: 선택 시 슬라이딩 트랜지션.
+ */
+
+.mg-v2-onboarding-segmented {
+  display: grid;
+  grid-template-columns: repeat(var(--mg-v2-onboarding-segmented-cols, 4), 1fr);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-onboarding-color-border);
+  border-radius: var(--mg-v2-onboarding-field-radius);
+  overflow: hidden;
+  background-color: var(--mg-v2-onboarding-color-white);
+}
+
+.mg-v2-onboarding-segmented__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--mg-v2-onboarding-field-height);
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-caption);
+  font-weight: var(--mg-v2-onboarding-font-weight-medium);
+  color: var(--mg-v2-onboarding-color-text-primary);
+  background-color: transparent;
+  border: 0;
+  border-right: var(--mg-v2-border-width-thin) solid var(--mg-v2-onboarding-color-border);
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: background-color var(--mg-v2-onboarding-transition-fast),
+              color var(--mg-v2-onboarding-transition-fast),
+              transform var(--mg-v2-onboarding-transition-fast);
+}
+
+.mg-v2-onboarding-segmented__item:last-child {
+  border-right: 0;
+}
+
+.mg-v2-onboarding-segmented__item:hover:not(.mg-v2-onboarding-segmented__item--selected) {
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+.mg-v2-onboarding-segmented__item--selected {
+  background-color: var(--mg-v2-onboarding-color-primary);
+  color: var(--mg-v2-onboarding-color-white);
+}
+
+.mg-v2-onboarding-segmented__item:active {
+  transform: scale(var(--mg-v2-onboarding-active-scale));
+}
+
+.mg-v2-onboarding-segmented__item:focus-visible {
+  box-shadow: var(--mg-v2-onboarding-shadow-focus);
+  z-index: var(--mg-v2-z-content-hover);
+}
+
+/* §6 Mobile (<768px): 2열 그리드로 축소 */
+@media (max-width: 767px) {
+  .mg-v2-onboarding-segmented {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mg-v2-onboarding-segmented__item {
+    height: var(--mg-v2-onboarding-field-height-mobile);
+  }
+
+  .mg-v2-onboarding-segmented__item:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .mg-v2-onboarding-segmented__item:not(:nth-last-child(-n + 2)) {
+    border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-onboarding-color-border);
+  }
+}

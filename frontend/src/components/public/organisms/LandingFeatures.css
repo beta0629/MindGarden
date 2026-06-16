@@ -1,8 +1,9 @@
 /**
  * LandingFeatures CSS — mg-v2-* 토큰 한정
  * Features 섹션: 카드 그리드 (PC 3열 / 태블릿 2열 / 모바일 1열)
+ * Phase C-Refine: 타이포 위계 보정, 카드 간격 개선
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-15
  */
 
@@ -39,13 +40,13 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 4px;
+  width: var(--mg-v2-space-1);
   background-color: var(--mg-v2-color-primary-main);
   border-radius: var(--mg-v2-radius-xl) 0 0 var(--mg-v2-radius-xl);
 }
 
 .mg-v2-landing-features__card:hover {
-  transform: translateY(-4px);
+  transform: translateY(calc(-1 * var(--mg-v2-space-1)));
   box-shadow: var(--mg-v2-shadow-md);
 }
 
@@ -80,7 +81,7 @@
   margin: 0;
 }
 
-/* Responsive: Tablet — 2 columns */
+/* ── Responsive: Tablet (768–1023px) ── */
 @media (min-width: 768px) and (max-width: 1023px) {
   .mg-v2-landing-features {
     padding: var(--mg-v2-space-16) var(--mg-v2-grid-margin-tablet);
@@ -92,7 +93,7 @@
   }
 }
 
-/* Responsive: Mobile — 1 column */
+/* ── Responsive: Mobile (< 768px) ── */
 @media (max-width: 767px) {
   .mg-v2-landing-features {
     padding: var(--mg-v2-space-12) var(--mg-v2-grid-margin-mobile);

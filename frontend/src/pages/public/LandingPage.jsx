@@ -1,5 +1,5 @@
 /**
- * LandingPage — 마인드가든 서비스 랜딩 페이지
+ * LandingPage — Core Solution 서비스 랜딩 페이지
  *
  * Phase C-3 W3: LandingTemplate에 데이터·이벤트를 주입하는 Page 계층.
  * 라우트: /landing
@@ -14,7 +14,7 @@
  * react-helmet ^6.1.0 (package.json 확인 완료, react-helmet-async 미사용)
  * mg-v2-* 토큰 한정, 하드코딩 0, React #130 / safeDisplay 준수.
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-16
  */
 
@@ -31,7 +31,7 @@ import './LandingPage.css';
 const STATIC_FEATURES = [
   {
     icon: '📅',
-    title: null, // i18n 주입
+    title: null,
     description: null,
     featureKey: 'scheduling',
   },
@@ -119,7 +119,7 @@ const LandingPage = () => {
 
   /* ─── 템플릿 props ─── */
   const heroProps = {
-    titleSlot: t('public.landing.heroTitle', 'MindGarden for Counseling Centers'),
+    titleSlot: t('public.landing.heroTitle', 'Core Solution for Counseling Centers'),
     subtitleSlot: t('public.landing.heroSubtitle', 'All-in-one solution for scheduling, records, and billing'),
     primaryCta: {
       label: t('public.landing.heroPrimaryCta', 'Get Started Free'),
@@ -160,23 +160,24 @@ const LandingPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('public.landing.pageTitle', 'MindGarden — Counseling Center Management Solution')}</title>
+        <title>{t('public.landing.pageTitle', 'Core Solution — Counseling Center Management Solution')}</title>
         <meta
           name="description"
           content={t(
             'public.landing.pageDescription',
-            'MindGarden provides all-in-one scheduling, records, and billing for counseling centers. Start your free trial today.'
+            'Core Solution provides all-in-one scheduling, records, and billing for counseling centers. Start your free trial today.'
           )}
         />
-        <meta property="og:title" content={t('public.landing.pageTitle', 'MindGarden — Counseling Center Management Solution')} />
+        <meta property="og:title" content={t('public.landing.pageTitle', 'Core Solution — Counseling Center Management Solution')} />
         <meta
           property="og:description"
           content={t(
             'public.landing.pageDescription',
-            'MindGarden provides all-in-one scheduling, records, and billing for counseling centers. Start your free trial today.'
+            'Core Solution provides all-in-one scheduling, records, and billing for counseling centers. Start your free trial today.'
           )}
         />
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Core Solution" />
       </Helmet>
 
       <LandingTemplate

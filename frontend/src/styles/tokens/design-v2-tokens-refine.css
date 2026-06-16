@@ -19,6 +19,95 @@
    1. LIGHT MODE — Refine / Landing / Pricing 전용 토큰
    ================================================================ */
 :root {
+  /* ────────────────────────────────────────────────────────────────
+     Onboarding v2 (Phase C-Refine v2 W1 — SPEC §3, §4, §6, §7)
+     Core Solution B2B SaaS 아이덴티티: Navy + Primary Blue + Network Node
+     ──────────────────────────────────────────────────────────────── */
+  /* §4.1 컬러 토큰 (Light Mode) */
+  --mg-v2-onboarding-color-navy: #0F172A;
+  --mg-v2-onboarding-color-primary: #3B82F6;
+  --mg-v2-onboarding-color-primary-rgb: 59, 130, 246;
+  --mg-v2-onboarding-color-accent: #8B5CF6;
+  --mg-v2-onboarding-color-accent-rgb: 139, 92, 246;
+  --mg-v2-onboarding-color-border: #E2E8F0;
+  --mg-v2-onboarding-color-text-muted: #64748B;
+  --mg-v2-onboarding-color-white: #FFFFFF;
+  --mg-v2-onboarding-color-text-primary: #0F172A;
+  --mg-v2-onboarding-color-dark-surface: #1E293B;
+
+  /* §3 그라데이션 */
+  --mg-v2-onboarding-gradient-primary: linear-gradient(135deg, var(--mg-v2-onboarding-color-primary) 0%, var(--mg-v2-onboarding-color-accent) 100%);
+
+  /* §3.2 Shadow / Focus Ring */
+  --mg-v2-onboarding-shadow-cta: 0 4px 14px rgba(var(--mg-v2-onboarding-color-primary-rgb), 0.4);
+  --mg-v2-onboarding-shadow-cta-hover: 0 6px 20px rgba(var(--mg-v2-onboarding-color-primary-rgb), 0.5);
+  --mg-v2-onboarding-shadow-focus: 0 0 0 3px rgba(var(--mg-v2-onboarding-color-primary-rgb), 0.2);
+  --mg-v2-onboarding-bar-track: rgba(255, 255, 255, 0.15);
+  --mg-v2-onboarding-network-line-opacity: 0.4;
+
+  /* §4.2 Typography */
+  --mg-v2-onboarding-font-family-base: 'Pretendard', 'Noto Sans KR', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --mg-v2-onboarding-font-size-h1: 2.25rem;
+  --mg-v2-onboarding-font-size-h1-mobile: 1.75rem;
+  --mg-v2-onboarding-font-size-value-prop: 2.5rem;
+  --mg-v2-onboarding-font-size-value-prop-tablet: 1.5rem;
+  --mg-v2-onboarding-font-size-subtitle: 1rem;
+  --mg-v2-onboarding-font-size-caption: 0.875rem;
+  --mg-v2-onboarding-font-size-micro: 0.75rem;
+  --mg-v2-onboarding-font-line-height-h1: 1.4;
+  --mg-v2-onboarding-font-line-height-body: 1.5;
+  --mg-v2-onboarding-font-weight-regular: 400;
+  --mg-v2-onboarding-font-weight-medium: 500;
+  --mg-v2-onboarding-font-weight-semibold: 600;
+  --mg-v2-onboarding-font-weight-bold: 700;
+
+  /* §3.1, §3.2 Spacing */
+  --mg-v2-onboarding-panel-padding: 4rem;
+  --mg-v2-onboarding-panel-padding-tablet: 2rem;
+  --mg-v2-onboarding-form-padding-y: 5rem;
+  --mg-v2-onboarding-form-padding-x: 7.5rem;
+  --mg-v2-onboarding-form-padding-x-tablet: 2.5rem;
+  --mg-v2-onboarding-form-padding-x-mobile: 1.5rem;
+  --mg-v2-onboarding-field-height: 3.5rem;
+  --mg-v2-onboarding-field-height-mobile: 3rem;
+  --mg-v2-onboarding-field-radius: 0.5rem;
+  --mg-v2-onboarding-field-padding-x: 1rem;
+  --mg-v2-onboarding-cta-height: 3.5rem;
+  --mg-v2-onboarding-field-gap: 1.5rem;
+  --mg-v2-onboarding-title-margin-bottom: 1rem;
+  --mg-v2-onboarding-subtitle-margin-bottom: 3rem;
+  --mg-v2-onboarding-cta-login-gap: 1.5rem;
+
+  /* §2 레이아웃 (40/60 Split) */
+  --mg-v2-onboarding-panel-left-width: 40%;
+  --mg-v2-onboarding-panel-right-width: 60%;
+  --mg-v2-onboarding-form-max-width: 30rem;
+
+  /* §3.1 좌측 패널 일러스트 */
+  --mg-v2-onboarding-brand-height: 2rem;
+  --mg-v2-onboarding-core-symbol-size: 7.5rem;
+  --mg-v2-onboarding-core-symbol-size-tablet: 5rem;
+  --mg-v2-onboarding-node-size: 4rem;
+  --mg-v2-onboarding-node-size-tablet: 3rem;
+  --mg-v2-onboarding-network-radius: 12.5rem;
+  --mg-v2-onboarding-network-stroke: 2px;
+  --mg-v2-onboarding-progress-stroke: 2px;
+
+  /* §3.2 4-dot Stepper */
+  --mg-v2-onboarding-dot-size: 2rem;
+  --mg-v2-onboarding-dot-size-mobile: 1.5rem;
+  --mg-v2-onboarding-dot-connector-width: 4rem;
+  --mg-v2-onboarding-dot-connector-width-mobile: 2rem;
+  --mg-v2-onboarding-stepper-margin-bottom: 2.5rem;
+
+  /* §5 Interaction */
+  --mg-v2-onboarding-transition-fast: 0.2s ease;
+  --mg-v2-onboarding-transition-normal: 0.3s ease;
+  --mg-v2-onboarding-active-scale: 0.98;
+  --mg-v2-onboarding-hover-brightness: 1.05;
+  --mg-v2-onboarding-disabled-opacity: 0.6;
+  --mg-v2-onboarding-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+
   /* Refine — Onboarding form shadow (W1) */
   --mg-v2-refine-shadow-form: 0 4px 24px rgba(44, 42, 39, 0.04);
 
@@ -86,6 +175,13 @@
    ================================================================ */
 @media (prefers-color-scheme: dark) {
   :root {
+    /* §7 Onboarding v2 Dark Mode overrides */
+    --mg-v2-onboarding-color-white: #1E293B;
+    --mg-v2-onboarding-color-text-primary: #F8FAFC;
+    --mg-v2-onboarding-color-border: #334155;
+    --mg-v2-onboarding-color-text-muted: #94A3B8;
+    --mg-v2-onboarding-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+
     --mg-v2-refine-shadow-form: none;
 
     --mg-v2-pricing-shadow-card: none;
@@ -108,6 +204,13 @@
    3. DARK MODE — data-theme="dark" (수동 토글)
    ================================================================ */
 [data-theme="dark"] {
+  /* §7 Onboarding v2 Dark Mode overrides */
+  --mg-v2-onboarding-color-white: #1E293B;
+  --mg-v2-onboarding-color-text-primary: #F8FAFC;
+  --mg-v2-onboarding-color-border: #334155;
+  --mg-v2-onboarding-color-text-muted: #94A3B8;
+  --mg-v2-onboarding-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+
   --mg-v2-refine-shadow-form: none;
 
   --mg-v2-pricing-shadow-card: none;

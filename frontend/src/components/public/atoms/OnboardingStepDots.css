@@ -1,0 +1,109 @@
+/**
+ * OnboardingStepDots CSS — 4-dot 시각 stepper (Phase C-Refine v2)
+ *
+ * SPEC §3.2: 상단 중앙 배치, dot 32x32px, 활성 상태 배경 Primary.
+ * SPEC §6: 모바일에서 dot 축소.
+ *
+ * 모든 색상·간격·폰트는 --mg-v2-onboarding-* / --mg-v2-* 토큰만 사용.
+ */
+
+.mg-v2-onboarding-step-dots {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--mg-v2-onboarding-stepper-margin-bottom);
+}
+
+.mg-v2-onboarding-step-dots__list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+}
+
+.mg-v2-onboarding-step-dots__item {
+  display: flex;
+  align-items: center;
+}
+
+.mg-v2-onboarding-step-dots__connector {
+  width: var(--mg-v2-onboarding-dot-connector-width);
+  height: var(--mg-v2-onboarding-progress-stroke);
+  transition: background-color var(--mg-v2-onboarding-transition-normal);
+}
+
+.mg-v2-onboarding-step-dots__connector--active {
+  background-color: var(--mg-v2-onboarding-color-primary);
+}
+
+.mg-v2-onboarding-step-dots__connector--inactive {
+  background-color: var(--mg-v2-onboarding-color-border);
+}
+
+.mg-v2-onboarding-step-dots__dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-onboarding-dot-size);
+  height: var(--mg-v2-onboarding-dot-size);
+  border-radius: 50%;
+  border: var(--mg-v2-border-width-normal) solid var(--mg-v2-onboarding-color-border);
+  background-color: var(--mg-v2-onboarding-color-white);
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-caption);
+  font-weight: var(--mg-v2-onboarding-font-weight-bold);
+  color: var(--mg-v2-onboarding-color-text-muted);
+  cursor: default;
+  transition: all var(--mg-v2-onboarding-transition-fast);
+  padding: 0;
+  outline: none;
+}
+
+.mg-v2-onboarding-step-dots__dot--current {
+  background-color: var(--mg-v2-onboarding-color-primary);
+  border-color: var(--mg-v2-onboarding-color-primary);
+  color: var(--mg-v2-onboarding-color-white);
+}
+
+.mg-v2-onboarding-step-dots__dot--completed {
+  background-color: var(--mg-v2-onboarding-color-primary);
+  border-color: var(--mg-v2-onboarding-color-primary);
+  color: var(--mg-v2-onboarding-color-white);
+  cursor: pointer;
+}
+
+.mg-v2-onboarding-step-dots__dot--completed:hover {
+  filter: brightness(var(--mg-v2-onboarding-hover-brightness));
+}
+
+.mg-v2-onboarding-step-dots__dot:focus-visible {
+  box-shadow: var(--mg-v2-onboarding-shadow-focus);
+}
+
+.mg-v2-onboarding-step-dots__number {
+  line-height: 1;
+}
+
+.mg-v2-onboarding-step-dots__check {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* §6 Mobile (<768px): dot 크기 축소 */
+@media (max-width: 767px) {
+  .mg-v2-onboarding-step-dots__connector {
+    width: var(--mg-v2-onboarding-dot-connector-width-mobile);
+  }
+
+  .mg-v2-onboarding-step-dots__dot {
+    width: var(--mg-v2-onboarding-dot-size-mobile);
+    height: var(--mg-v2-onboarding-dot-size-mobile);
+    font-size: var(--mg-v2-onboarding-font-size-micro);
+  }
+
+  .mg-v2-onboarding-step-dots__check {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+}

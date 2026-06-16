@@ -1,76 +1,221 @@
 /**
- * OnboardingTemplate — Phase C-Refine W1
- * mg-v2-* 토큰 100% · 하드코딩 0 · !important 0 · 인라인 style 0
+ * OnboardingTemplate CSS — 40/60 Split View (Phase C-Refine v2)
  *
- * Spec: docs/design/v2/refine/DESIGN_V2_REFINE_ONBOARDING_SPEC.md
- * §2 레이아웃 그리드 · §4 타이포 · §8 반응형 · §9 다크 모드
+ * SPEC §2 레이아웃 그리드 · §3 정량 명세 · §6 반응형 · §7 다크 모드 매핑
+ * mg-v2-onboarding-* 토큰 100% · 하드코딩 0 · !important 0 · 인라인 style 0
  */
 
-.mg-v2-onboarding-template {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+/* ================================================================
+   Split Container — §2 40/60 Panel Split
+   ================================================================ */
+.mg-v2-onboarding-split {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--mg-v2-onboarding-color-navy);
 }
 
-.mg-v2-onboarding-template__header {
-  text-align: center;
-  margin-bottom: var(--mg-v2-space-8);
+/* ================================================================
+   Left Panel (40%) — Dark Navy — §3.1
+   ================================================================ */
+.mg-v2-onboarding-split__left {
+  width: var(--mg-v2-onboarding-panel-left-width);
+  background-color: var(--mg-v2-onboarding-color-navy);
+  padding: var(--mg-v2-onboarding-panel-padding);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  color: var(--mg-v2-onboarding-color-white);
 }
 
-.mg-v2-onboarding-template__title {
-  font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-h2);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  line-height: var(--mg-v2-font-line-height-subheading);
-  color: var(--mg-v2-color-text-primary);
-  margin: 0 0 var(--mg-v2-space-2);
+.mg-v2-onboarding-split__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  height: var(--mg-v2-onboarding-brand-height);
 }
 
-.mg-v2-onboarding-template__subtitle {
-  font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-body-lg);
-  font-weight: var(--mg-v2-font-weight-regular);
-  line-height: var(--mg-v2-font-line-height-body);
-  color: var(--mg-v2-color-text-secondary);
+.mg-v2-onboarding-split__brand-name {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-subtitle);
+  font-weight: var(--mg-v2-onboarding-font-weight-bold);
+  color: var(--mg-v2-onboarding-color-white);
+  letter-spacing: -0.01em;
+}
+
+.mg-v2-onboarding-split__visual {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--mg-v2-space-6) 0;
+}
+
+/* §3.1 Value Proposition: h1 40px / weight 700 / line-height 1.4 (56px) */
+.mg-v2-onboarding-split__value-prop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-onboarding-split__value-title {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-value-prop);
+  font-weight: var(--mg-v2-onboarding-font-weight-bold);
+  line-height: var(--mg-v2-onboarding-font-line-height-h1);
+  color: var(--mg-v2-onboarding-color-white);
   margin: 0;
 }
 
-.mg-v2-onboarding-template__body {
-  background-color: var(--mg-v2-color-surface-card);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
-  border-radius: var(--mg-v2-radius-xl);
-  padding: var(--mg-v2-space-10) var(--mg-v2-space-8);
-  margin-top: var(--mg-v2-space-8);
-  margin-bottom: var(--mg-v2-space-6);
-  box-shadow: var(--mg-v2-refine-shadow-form);
-  transition: box-shadow var(--mg-v2-transition-fast);
+.mg-v2-onboarding-split__value-desc {
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-subtitle);
+  color: var(--mg-v2-onboarding-color-text-muted);
+  line-height: var(--mg-v2-onboarding-font-line-height-body);
+  margin: 0;
 }
 
-/* §8 Tablet: 768–1023px */
+/* §3.1 STEP X OF N 인디케이터 (좌측 하단) */
+.mg-v2-onboarding-split__step-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  margin-top: var(--mg-v2-space-6);
+}
+
+.mg-v2-onboarding-split__step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  font-family: var(--mg-v2-onboarding-font-family-base);
+  font-size: var(--mg-v2-onboarding-font-size-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mg-v2-onboarding-split__step-current {
+  font-weight: var(--mg-v2-onboarding-font-weight-bold);
+  color: var(--mg-v2-onboarding-color-primary);
+}
+
+.mg-v2-onboarding-split__step-total {
+  color: var(--mg-v2-onboarding-color-text-muted);
+}
+
+.mg-v2-onboarding-split__step-bar {
+  width: 100%;
+  height: var(--mg-v2-onboarding-progress-stroke);
+  background-color: var(--mg-v2-onboarding-bar-track);
+  border-radius: var(--mg-v2-onboarding-progress-stroke);
+  overflow: hidden;
+}
+
+.mg-v2-onboarding-split__step-bar-fill {
+  height: 100%;
+  background: var(--mg-v2-onboarding-gradient-primary);
+  border-radius: inherit;
+  transition: width var(--mg-v2-onboarding-transition-normal);
+}
+
+/* ================================================================
+   Right Panel (60%) — White Form — §3.2
+   ================================================================ */
+.mg-v2-onboarding-split__right {
+  width: var(--mg-v2-onboarding-panel-right-width);
+  background-color: var(--mg-v2-onboarding-color-white);
+  padding: var(--mg-v2-onboarding-form-padding-y) var(--mg-v2-onboarding-form-padding-x);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.mg-v2-onboarding-split__form-wrapper {
+  width: 100%;
+  max-width: var(--mg-v2-onboarding-form-max-width);
+  margin: 0 auto;
+}
+
+/* ================================================================
+   §6 Responsive — Tablet (768px–1023px)
+   좌측 패널을 상단 Hero 영역으로 변환
+   ================================================================ */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .mg-v2-onboarding-template {
-    max-width: 90%;
+  .mg-v2-onboarding-split {
+    flex-direction: column;
+    min-height: 100vh;
   }
 
-  .mg-v2-onboarding-template__body {
-    padding: var(--mg-v2-space-8) var(--mg-v2-space-6);
+  .mg-v2-onboarding-split__left {
+    width: 100%;
+    height: auto;
+    padding: var(--mg-v2-onboarding-panel-padding-tablet);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-v2-space-8);
+    justify-content: flex-start;
+  }
+
+  .mg-v2-onboarding-split__brand {
+    align-self: flex-start;
+  }
+
+  .mg-v2-onboarding-split__visual {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .mg-v2-onboarding-split__value-prop {
+    flex: 1;
+  }
+
+  .mg-v2-onboarding-split__value-title {
+    font-size: var(--mg-v2-onboarding-font-size-value-prop-tablet);
+  }
+
+  .mg-v2-onboarding-split__step-indicator {
+    display: none;
+  }
+
+  .mg-v2-onboarding-split__right {
+    width: 100%;
+    padding: var(--mg-v2-onboarding-panel-padding-tablet) var(--mg-v2-onboarding-form-padding-x-tablet);
   }
 }
 
-/* §8 Mobile: ≤767px */
+/* ================================================================
+   §6 Responsive — Mobile (<768px)
+   좌측 패널 숨김, 폼 패널만 노출
+   ================================================================ */
 @media (max-width: 767px) {
-  .mg-v2-onboarding-template {
-    max-width: 100%;
-    padding: var(--mg-v2-space-4) var(--mg-v2-space-3);
+  .mg-v2-onboarding-split {
+    flex-direction: column;
+    background-color: var(--mg-v2-onboarding-color-white);
   }
 
-  .mg-v2-onboarding-template__title {
-    font-size: var(--mg-v2-font-size-h3);
+  .mg-v2-onboarding-split__left {
+    display: none;
   }
 
-  .mg-v2-onboarding-template__body {
-    padding: var(--mg-v2-space-6) var(--mg-v2-space-4);
-    border-radius: var(--mg-v2-radius-lg);
-    box-shadow: none;
+  .mg-v2-onboarding-split__right {
+    width: 100%;
+    padding: var(--mg-v2-space-8) var(--mg-v2-onboarding-form-padding-x-mobile);
+    min-height: 100vh;
   }
+}
+
+/* ================================================================
+   §7 Dark Mode — 우측 폼 패널 배경 변환
+   토큰이 다크 모드에서 자동 매핑되므로 별도 오버라이드 최소화.
+   ================================================================ */
+@media (prefers-color-scheme: dark) {
+  .mg-v2-onboarding-split {
+    background-color: var(--mg-v2-onboarding-color-navy);
+  }
+}
+
+[data-theme="dark"] .mg-v2-onboarding-split {
+  background-color: var(--mg-v2-onboarding-color-navy);
 }

@@ -1,13 +1,12 @@
 /**
- * OnboardingPage 통합 테스트
+ * OnboardingPage 통합 테스트 (Phase C-Refine v2)
  *
- * Phase C-3 W1:
- * - API mock (jest.fn) 으로 도메인 중복검사·제출 흐름 검증
- * - 사용자 시나리오: 약관 동의 → "다음" → step 이동
- * - 도메인 중복검사 실패 시 에러 메시지 노출
- * - React issue-130 / safeDisplay: 객체 직접 출력 없음
+ * SPEC: 4단계 stepper, Split View, 회사명/업종/임직원 규모 첫 화면.
+ *   - StandardizedApi 모킹으로 도메인 중복검사·제출 흐름 검증
+ *   - safeDisplay 준수 (객체 직접 렌더 없음)
+ *   - 다음/이전 단계 전환, validation 동작 확인
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-16
  */
 
@@ -22,13 +21,13 @@ jest.mock('axios', () => ({
     post: jest.fn(() => Promise.resolve({ data: {} })),
     create: jest.fn(() => ({
       get: jest.fn(() => Promise.resolve({ data: {} })),
-      interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } }
+      interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } },
     })),
     interceptors: {
       request: { use: jest.fn(), eject: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn() }
-    }
-  }
+      response: { use: jest.fn(), eject: jest.fn() },
+    },
+  },
 }));
 
 const mockGet = jest.fn();
@@ -51,115 +50,104 @@ const renderPage = () =>
     </MemoryRouter>
   );
 
-describe('OnboardingPage', () => {
+describe('OnboardingPage (Phase C-Refine v2)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGet.mockResolvedValue({ available: true });
     mockPost.mockResolvedValue({ success: true });
   });
 
-  it('renders the onboarding page with template', () => {
+  it('renders the v2 split view template', () => {
     const { container } = renderPage();
-    expect(container.querySelector('.mg-v2-onboarding-template')).toBeInTheDocument();
+    expect(container.querySelector('.mg-v2-onboarding-split')).toBeInTheDocument();
   });
 
-  it('renders at step 0 initially', () => {
+  it('renders step 0 with company name, industry, staff size inputs', () => {
     const { container } = renderPage();
-    const stepper = container.querySelector('.mg-v2-onboarding-stepper');
-    expect(stepper).toBeInTheDocument();
-    const currentItem = container.querySelector('.mg-v2-onboarding-stepper__item--current');
-    expect(currentItem).toBeInTheDocument();
+    expect(container.querySelector('input[name="tenantName"]')).toBeInTheDocument();
+    expect(container.querySelector('select[name="businessType"]')).toBeInTheDocument();
+    expect(container.querySelector('.mg-v2-onboarding-segmented')).toBeInTheDocument();
   });
 
-  it('shows validation error when required fields are empty on next click', () => {
-    const { container } = renderPage();
-    const nextBtn = container.querySelector('.mg-v2-onboarding-nav__btn--primary');
-    if (nextBtn) {
-      fireEvent.click(nextBtn);
-      expect(container.querySelector('.mg-v2-step-form')).toBeInTheDocument();
-    }
+  it('renders v2 title "Start your tenant registration" or Korean equivalent', () => {
+    renderPage();
+    const title = screen.getByText(/테넌트 등록을 시작하세요|Start your tenant registration/i);
+    expect(title).toBeInTheDocument();
   });
 
-  it('navigates to next step after filling required fields', async () => {
-    const { container } = renderPage();
-
-    const tenantInput = container.querySelector('input[name="tenantName"]');
-    const domainInput = container.querySelector('input[name="domain"]');
-    const phoneInput = container.querySelector('input[name="phone"]');
-    const emailInput = container.querySelector('input[name="email"]');
-
-    if (tenantInput && domainInput && phoneInput && emailInput) {
-      fireEvent.change(tenantInput, { target: { name: 'tenantName', value: '테스트 센터' } });
-      fireEvent.change(domainInput, { target: { name: 'domain', value: 'test-center' } });
-      fireEvent.change(phoneInput, { target: { name: 'phone', value: '01012345678' } });
-      fireEvent.change(emailInput, { target: { name: 'email', value: 'test@example.com' } });
-
-      const navBtns = container.querySelectorAll('.mg-v2-onboarding-nav__btn--primary');
-      const nextBtn = navBtns[navBtns.length - 1];
-      if (nextBtn) {
-        fireEvent.click(nextBtn);
-        await waitFor(() => {
-          const completedItems = container.querySelectorAll(
-            '.mg-v2-onboarding-stepper__item--completed'
-          );
-          expect(completedItems.length).toBeGreaterThanOrEqual(1);
-        });
-      }
-    }
+  it('renders the login link in step 0', () => {
+    renderPage();
+    const link = screen.getByText(/로그인|Log in/i);
+    expect(link.closest('a')).toHaveAttribute('href', '/login');
   });
 
-  it('shows domain taken error when domain check returns unavailable', async () => {
-    mockGet.mockResolvedValueOnce({ available: false });
-
+  it('disables CTA until company name is provided on step 0', () => {
     const { container } = renderPage();
-
-    const domainInput = container.querySelector('input[name="domain"]');
-    if (domainInput) {
-      fireEvent.change(domainInput, { target: { name: 'domain', value: 'taken-domain' } });
-
-      const checkBtn = container.querySelector('[data-testid="domain-check-btn"]')
-        || container.querySelector('.mg-v2-onboarding-step-form__domain-check-btn');
-
-      if (checkBtn) {
-        await act(async () => {
-          fireEvent.click(checkBtn);
-        });
-        await waitFor(() => {
-          expect(mockGet).toHaveBeenCalledWith(
-            '/api/v1/public/onboarding/domain-check',
-            expect.objectContaining({ domain: 'taken-domain' })
-          );
-        });
-      }
-    }
+    const cta = container.querySelector('.mg-v2-onboarding-form__cta');
+    expect(cta).toBeDisabled();
+    fireEvent.change(container.querySelector('input[name="tenantName"]'), {
+      target: { name: 'tenantName', value: 'Acme Corp' },
+    });
+    expect(cta).not.toBeDisabled();
   });
 
-  it('shows domain check network error message', async () => {
-    mockGet.mockRejectedValueOnce(new Error('Network error'));
-
+  it('advances to step 1 when CTA clicked with valid company name', async () => {
     const { container } = renderPage();
+    fireEvent.change(container.querySelector('input[name="tenantName"]'), {
+      target: { name: 'tenantName', value: 'Acme Corp' },
+    });
+    fireEvent.click(container.querySelector('.mg-v2-onboarding-form__cta'));
+    await waitFor(() => {
+      expect(container.querySelector('[data-step="1"]')).toBeInTheDocument();
+    });
+  });
+
+  it('selects staff size segmented control', () => {
+    const { container } = renderPage();
+    const segments = container.querySelectorAll('.mg-v2-onboarding-segmented__item');
+    expect(segments.length).toBe(4);
+    fireEvent.click(segments[1]);
+    expect(segments[1].classList.contains('mg-v2-onboarding-segmented__item--selected')).toBe(true);
+  });
+
+  it('renders 4-dot stepper with 4 dots', () => {
+    const { container } = renderPage();
+    const dots = container.querySelectorAll('.mg-v2-onboarding-step-dots__dot');
+    expect(dots.length).toBe(4);
+  });
+
+  it('runs domain check on blur in step 1', async () => {
+    const { container } = renderPage();
+    fireEvent.change(container.querySelector('input[name="tenantName"]'), {
+      target: { name: 'tenantName', value: 'Acme Corp' },
+    });
+    fireEvent.click(container.querySelector('.mg-v2-onboarding-form__cta'));
+    await waitFor(() => {
+      expect(container.querySelector('input[name="domain"]')).toBeInTheDocument();
+    });
 
     const domainInput = container.querySelector('input[name="domain"]');
-    if (domainInput) {
-      fireEvent.change(domainInput, { target: { name: 'domain', value: 'test-domain' } });
-
-      const checkBtn = container.querySelector('[data-testid="domain-check-btn"]')
-        || container.querySelector('.mg-v2-onboarding-step-form__domain-check-btn');
-
-      if (checkBtn) {
-        await act(async () => {
-          fireEvent.click(checkBtn);
-        });
-        await waitFor(() => {
-          expect(mockGet).toHaveBeenCalled();
-        });
-      }
-    }
+    fireEvent.change(domainInput, { target: { name: 'domain', value: 'acme' } });
+    await act(async () => {
+      fireEvent.blur(domainInput);
+    });
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        '/api/v1/public/onboarding/domain-check',
+        expect.objectContaining({ domain: 'acme' })
+      );
+    });
   });
 
-  it('does not render raw object to DOM (safeDisplay compliance)', () => {
+  it('does not render raw object output (safeDisplay compliance)', () => {
     const { container } = renderPage();
-    const bodyText = container.textContent || '';
-    expect(bodyText).not.toContain('[object Object]');
+    expect(container.textContent).not.toContain('[object Object]');
+  });
+
+  it('renders Core Solution brand wordmark in left panel', () => {
+    const { container } = renderPage();
+    const wordmark = container.querySelector('.mg-v2-onboarding-split__brand-name');
+    expect(wordmark).toBeInTheDocument();
+    expect(wordmark.textContent).toMatch(/Core Solution/i);
   });
 });

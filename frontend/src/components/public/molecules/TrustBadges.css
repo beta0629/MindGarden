@@ -1,0 +1,55 @@
+/**
+ * TrustBadges CSS — mg-v2-* 토큰 한정
+ *
+ * Spec §3.4: 모노톤 그레이스케일, 가로 일렬, 모바일 wrap.
+ *
+ * @author CoreSolution
+ * @since 2026-06-16
+ */
+
+.mg-v2-trust-badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-space-8);
+}
+
+.mg-v2-trust-badges__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  color: var(--mg-v2-pricing-trust-badge-color);
+  filter: grayscale(1);
+  transition: color var(--mg-v2-transition-duration-normal) var(--mg-v2-transition-easing-default);
+}
+
+.mg-v2-trust-badges__item:hover {
+  color: var(--mg-v2-pricing-trust-badge-color-hover);
+}
+
+.mg-v2-trust-badges__shield {
+  width: var(--mg-v2-space-6);
+  height: var(--mg-v2-space-6);
+  flex-shrink: 0;
+}
+
+.mg-v2-trust-badges__label {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  letter-spacing: var(--mg-v2-font-letter-spacing-wide);
+}
+
+@media (max-width: 767px) {
+  .mg-v2-trust-badges {
+    gap: var(--mg-v2-space-4);
+  }
+
+  .mg-v2-trust-badges__label {
+    font-size: var(--mg-v2-font-size-body-sm);
+  }
+}

@@ -1,0 +1,23 @@
+/**
+ * PricingPlanIcon CSS — mg-v2-* 토큰 한정
+ *
+ * 색상은 currentColor 상속 → 카드 variant별 색상 토큰 적용.
+ *
+ * @author CoreSolution
+ * @since 2026-06-16
+ */
+
+.mg-v2-pricing-plan-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-space-16);
+  height: var(--mg-v2-space-16);
+  margin: 0 auto var(--mg-v2-space-4);
+  color: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-pricing-plan-icon__svg {
+  width: 100%;
+  height: 100%;
+}

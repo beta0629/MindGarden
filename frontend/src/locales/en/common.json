@@ -60,6 +60,8 @@
       "errorPasswordLength": "Password must be at least 8 characters.",
       "errorPasswordMismatch": "Passwords do not match.",
       "errorSubmitFailed": "An error occurred while processing your application. Please try again later."
-    }
+    },
+    "brandName": "Core Solution",
+    "homeAriaLabel": "Core Solution Home"
   }
 }

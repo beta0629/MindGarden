@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(0, 0)" stroke-width="1.5">
+    <rect x="6" y="6" width="20" height="20" rx="3" />
+    <path d="M 12 20 L 20 12 M 16 12 H 20 V 16" />
+  </g>
+  <text x="36" y="22" font-family="sans-serif" font-weight="600" font-size="16" fill="currentColor" stroke="none">Initech</text>
+</svg>

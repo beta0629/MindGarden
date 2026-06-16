@@ -195,6 +195,84 @@
 
   /* ── Landing — Mockup Border (light: none, dark: border 대체) ── */
   --mg-v2-refine-border-mockup: none;
+
+  /* ── Landing v2 (W3 SPEC) — Hero gradient stops ── */
+  --mg-v2-refine-landing-hero-gradient-stop-1: #3B82F6;
+  --mg-v2-refine-landing-hero-gradient-stop-2: #8B5CF6;
+  --mg-v2-refine-landing-hero-gradient: linear-gradient(
+    90deg,
+    var(--mg-v2-refine-landing-hero-gradient-stop-1) 0%,
+    var(--mg-v2-refine-landing-hero-gradient-stop-2) 100%
+  );
+
+  /* ── Landing v2 — Eyebrow Chip ── */
+  --mg-v2-refine-landing-eyebrow-padding-y: 0.375rem;
+  --mg-v2-refine-landing-eyebrow-padding-x: 1rem;
+  --mg-v2-refine-landing-eyebrow-font-size: var(--mg-v2-font-size-body-md);
+  --mg-v2-refine-landing-eyebrow-border-color: rgba(59, 130, 246, 0.32);
+
+  /* ── Landing v2 — Hero CTA spacing ── */
+  --mg-v2-refine-landing-cta-gap: 1rem;
+  --mg-v2-refine-landing-cta-padding-y: 0.75rem;
+  --mg-v2-refine-landing-cta-padding-x: 2rem;
+  --mg-v2-refine-landing-cta-radius: 0.625rem;
+  --mg-v2-refine-landing-cta-shadow: 0 0.25rem 0.875rem rgba(0, 0, 0, 0.1);
+
+  /* ── Landing v2 — Hero subtitle/body ── */
+  --mg-v2-refine-landing-subtitle-size: 1.125rem;
+  --mg-v2-refine-landing-subtitle-line-height: 1.6;
+
+  /* ── Landing v2 — Hero proof row ── */
+  --mg-v2-refine-landing-proof-margin-top: 3rem;
+  --mg-v2-refine-landing-proof-label-size: var(--mg-v2-font-size-body-md);
+  --mg-v2-refine-landing-proof-label-weight: var(--mg-v2-font-weight-semibold);
+  --mg-v2-refine-landing-proof-gap: 1.5rem;
+  --mg-v2-refine-landing-proof-logo-height: 1.5rem;
+  --mg-v2-refine-landing-proof-logo-opacity: 0.6;
+
+  /* ── Landing v2 — DashboardPreview container ── */
+  --mg-v2-refine-landing-preview-max-width: 50rem;
+  --mg-v2-refine-landing-preview-aspect-ratio: 16 / 10;
+  --mg-v2-refine-landing-preview-radius: 1rem;
+  --mg-v2-refine-landing-preview-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.1);
+  --mg-v2-refine-landing-preview-hover-lift: -0.5rem;
+  --mg-v2-refine-landing-preview-hover-scale: 1.01;
+
+  /* ── Landing v2 — Feature Cards ── */
+  --mg-v2-refine-landing-feature-padding: 2rem;
+  --mg-v2-refine-landing-feature-radius: 1rem;
+  --mg-v2-refine-landing-feature-gap: 1.5rem;
+  --mg-v2-refine-landing-feature-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.04);
+  --mg-v2-refine-landing-feature-shadow-hover: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.08);
+  --mg-v2-refine-landing-feature-icon-size: 2.5rem;
+  --mg-v2-refine-landing-feature-title-size: 1.25rem;
+  --mg-v2-refine-landing-feature-title-margin-top: 1rem;
+  --mg-v2-refine-landing-feature-desc-size: var(--mg-v2-font-size-body-md);
+  --mg-v2-refine-landing-feature-desc-margin-top: 0.5rem;
+
+  /* ── Landing v2 — Trust badges ── */
+  --mg-v2-refine-landing-trust-gap: 2rem;
+  --mg-v2-refine-landing-trust-badge-height: 2rem;
+  --mg-v2-refine-landing-trust-badge-opacity: 0.7;
+  --mg-v2-refine-landing-trust-padding-y: 3rem;
+
+  /* ── Landing v2 — Eyebrow chip / Feature icon gradient backgrounds
+        (단일 SSOT: 본 파일에서만 RGBA 정의, 컴포넌트 CSS 는 var() 만 사용) ── */
+  --mg-v2-refine-landing-chip-bg-start: rgba(59, 130, 246, 0.06);
+  --mg-v2-refine-landing-chip-bg-end: rgba(139, 92, 246, 0.06);
+  --mg-v2-refine-landing-chip-bg-gradient: linear-gradient(
+    90deg,
+    var(--mg-v2-refine-landing-chip-bg-start) 0%,
+    var(--mg-v2-refine-landing-chip-bg-end) 100%
+  );
+
+  --mg-v2-refine-landing-feature-icon-bg-start: rgba(59, 130, 246, 0.12);
+  --mg-v2-refine-landing-feature-icon-bg-end: rgba(139, 92, 246, 0.1);
+  --mg-v2-refine-landing-feature-icon-bg-gradient: linear-gradient(
+    135deg,
+    var(--mg-v2-refine-landing-feature-icon-bg-start) 0%,
+    var(--mg-v2-refine-landing-feature-icon-bg-end) 100%
+  );
 }
 
 /* ================================================================
@@ -233,6 +311,16 @@
     --mg-v2-refine-color-mesh-1: rgba(125, 166, 138, 0.06);
     --mg-v2-refine-color-mesh-2: rgba(151, 168, 156, 0.05);
     --mg-v2-refine-color-mesh-3: rgba(187, 163, 133, 0.04);
+
+    --mg-v2-refine-landing-hero-gradient-stop-1: #93C5FD;
+    --mg-v2-refine-landing-hero-gradient-stop-2: #C4B5FD;
+    --mg-v2-refine-landing-eyebrow-border-color: rgba(147, 197, 253, 0.4);
+    --mg-v2-refine-landing-feature-shadow: none;
+    --mg-v2-refine-landing-feature-shadow-hover: none;
+    --mg-v2-refine-landing-preview-shadow: none;
+    --mg-v2-refine-landing-cta-shadow: none;
+    --mg-v2-refine-landing-proof-logo-opacity: 0.8;
+    --mg-v2-refine-landing-trust-badge-opacity: 0.85;
   }
 }
 
@@ -270,6 +358,16 @@
   --mg-v2-refine-color-mesh-1: rgba(125, 166, 138, 0.06);
   --mg-v2-refine-color-mesh-2: rgba(151, 168, 156, 0.05);
   --mg-v2-refine-color-mesh-3: rgba(187, 163, 133, 0.04);
+
+  --mg-v2-refine-landing-hero-gradient-stop-1: #93C5FD;
+  --mg-v2-refine-landing-hero-gradient-stop-2: #C4B5FD;
+  --mg-v2-refine-landing-eyebrow-border-color: rgba(147, 197, 253, 0.4);
+  --mg-v2-refine-landing-feature-shadow: none;
+  --mg-v2-refine-landing-feature-shadow-hover: none;
+  --mg-v2-refine-landing-preview-shadow: none;
+  --mg-v2-refine-landing-cta-shadow: none;
+  --mg-v2-refine-landing-proof-logo-opacity: 0.8;
+  --mg-v2-refine-landing-trust-badge-opacity: 0.85;
 }
 
 /* ================================================================

@@ -2213,9 +2213,44 @@
     "pricing": {
       "pageTitle": "심플하고 투명한 요금제",
       "pageSubtitle": "상담 센터에 맞는 플랜을 선택하세요.",
+      "eyebrow": "PRICING",
+      "heroTitle": "비즈니스 규모에 맞춘 합리적인 요금",
+      "heroSubtitle": "모든 플랜은 투명한 가격과 유연한 확장성을 제공합니다.",
       "plansAriaLabel": "요금제 플랜",
+      "matrixAriaLabel": "기능 비교",
+      "matrixTitle": "플랜 상세 기능 비교",
+      "bottomAriaLabel": "추가 정보",
       "contactSales": "영업팀 문의",
       "getStarted": "시작하기",
+      "recommended": "Recommended",
+      "popularBadge": "가장 인기",
+      "custom": "맞춤 견적",
+      "compareToggle": "자세한 비교 보기",
+      "loading": "요금제 정보를 불러오는 중...",
+      "loadError": "요금제 정보를 불러오는 데 실패했습니다.",
+      "retry": "다시 시도",
+      "starter": {
+        "subText": "30일 무료 체험"
+      },
+      "pro": {
+        "subText": "가장 많이 선택하는 플랜"
+      },
+      "enterprise": {
+        "subText": "조직 맞춤 솔루션"
+      },
+      "billingCycle": {
+        "ariaLabel": "결제 주기 선택",
+        "monthly": "월간",
+        "yearly": "연간",
+        "discount": "20% 할인"
+      },
+      "trustBadges": {
+        "ariaLabel": "보안·인증 마크",
+        "iso27001": "ISO 27001",
+        "soc2": "SOC 2",
+        "gdpr": "GDPR",
+        "kisaIsms": "KISA-ISMS"
+      },
       "faqAriaLabel": "자주 묻는 질문",
       "faqTitle": "자주 묻는 질문",
       "faqComingSoon": "FAQ 내용은 Phase C에서 제공될 예정입니다."

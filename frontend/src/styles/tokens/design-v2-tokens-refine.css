@@ -124,7 +124,8 @@
   /* Pricing Card — Spacing */
   --mg-v2-pricing-card-padding: var(--mg-v2-space-10);
   --mg-v2-pricing-card-padding-mobile: var(--mg-v2-space-6);
-  --mg-v2-pricing-card-gap: var(--mg-v2-space-8);
+  /* Spec §3 / §3.3: Pricing Cards Gap 24px = space-6 */
+  --mg-v2-pricing-card-gap: var(--mg-v2-space-6);
 
   /* Pricing Card — Radius */
   --mg-v2-pricing-card-radius: var(--mg-v2-radius-2xl);
@@ -132,8 +133,34 @@
   /* Pricing Layout */
   --mg-v2-pricing-header-gap: var(--mg-v2-space-16);
 
+  /* Spec §3.1: PublicNavBar 고정 높이 72px */
+  --mg-v2-public-header-height: 4.5rem;
+
   /* Pricing Card — Dark mode surface (highlighted) */
   --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
+
+  /* Spec §3.3 Enterprise — 다크 Navy/블랙 계열 변형 (라이트 모드에서도 항상 다크) */
+  --mg-v2-pricing-surface-enterprise: var(--mg-v2-color-neutral-900);
+  --mg-v2-pricing-text-enterprise-primary: var(--mg-v2-color-text-inverse);
+  --mg-v2-pricing-text-enterprise-secondary: var(--mg-v2-color-neutral-300);
+  --mg-v2-pricing-border-enterprise: var(--mg-v2-color-neutral-700);
+
+  /* Spec §3.3 Pro — Y축 상향 배치 (Featured offset) */
+  --mg-v2-pricing-popular-y-offset: calc(-1 * var(--mg-v2-space-3));
+
+  /* Spec §3.4 Trust Badge — 모노톤/그레이스케일 색상 */
+  --mg-v2-pricing-trust-badge-color: var(--mg-v2-color-text-tertiary);
+  --mg-v2-pricing-trust-badge-color-hover: var(--mg-v2-color-text-secondary);
+
+  /* Spec §3.2 BillingCycleToggle */
+  --mg-v2-pricing-toggle-bg: var(--mg-v2-color-surface-card);
+  --mg-v2-pricing-toggle-border: var(--mg-v2-color-border-light);
+  --mg-v2-pricing-toggle-active-bg: var(--mg-v2-color-primary-main);
+  --mg-v2-pricing-toggle-active-text: var(--mg-v2-color-text-inverse);
+
+  /* Spec §3.2 Eyebrow ("PRICING") */
+  --mg-v2-pricing-eyebrow-color: var(--mg-v2-color-primary-main);
+  --mg-v2-pricing-eyebrow-letter-spacing: var(--mg-v2-font-letter-spacing-wider);
 
   /* ── Landing — Typography (W3) ── */
   --mg-v2-refine-font-size-landing-h1: 4rem;
@@ -191,6 +218,15 @@
 
     --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
 
+    /* Spec §8 Dark mode: Enterprise는 더 깊은 검정으로 분리 */
+    --mg-v2-pricing-surface-enterprise: var(--mg-v2-color-surface-sidebar);
+    --mg-v2-pricing-text-enterprise-primary: var(--mg-v2-color-text-primary);
+    --mg-v2-pricing-text-enterprise-secondary: var(--mg-v2-color-text-secondary);
+    --mg-v2-pricing-border-enterprise: var(--mg-v2-color-border-default);
+
+    --mg-v2-pricing-toggle-bg: var(--mg-v2-color-surface-raised);
+    --mg-v2-pricing-toggle-border: var(--mg-v2-color-border-default);
+
     --mg-v2-refine-shadow-mockup: none;
     --mg-v2-refine-border-mockup: 1px solid rgba(255, 255, 255, 0.08);
 
@@ -219,6 +255,14 @@
   --mg-v2-pricing-shadow-popular-hover: none;
 
   --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
+
+  --mg-v2-pricing-surface-enterprise: var(--mg-v2-color-surface-sidebar);
+  --mg-v2-pricing-text-enterprise-primary: var(--mg-v2-color-text-primary);
+  --mg-v2-pricing-text-enterprise-secondary: var(--mg-v2-color-text-secondary);
+  --mg-v2-pricing-border-enterprise: var(--mg-v2-color-border-default);
+
+  --mg-v2-pricing-toggle-bg: var(--mg-v2-color-surface-raised);
+  --mg-v2-pricing-toggle-border: var(--mg-v2-color-border-default);
 
   --mg-v2-refine-shadow-mockup: none;
   --mg-v2-refine-border-mockup: 1px solid rgba(255, 255, 255, 0.08);

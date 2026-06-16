@@ -39,9 +39,9 @@ const renderHeader = () =>
   );
 
 describe('PublicHeader', () => {
-  it('renders logo with MindGarden text', () => {
+  it('renders logo with Core Solution text', () => {
     renderHeader();
-    expect(screen.getByText('MindGarden')).toBeInTheDocument();
+    expect(screen.getByText('Core Solution')).toBeInTheDocument();
   });
 
   it('renders navigation links', () => {
@@ -58,7 +58,7 @@ describe('PublicHeader', () => {
 
   it('has accessible logo link with aria-label', () => {
     renderHeader();
-    const logo = screen.getByLabelText('MindGarden Home');
+    const logo = screen.getByLabelText('Core Solution Home');
     expect(logo).toBeInTheDocument();
     expect(logo.closest('a')).toHaveAttribute('href', '/');
   });

@@ -9,7 +9,7 @@
  *
  * 라우트: /pricing
  *
- * @author MindGarden
+ * @author CoreSolution
  * @since 2026-06-16
  */
 

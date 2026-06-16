@@ -1,39 +1,55 @@
 /**
  * PricingCard CSS — mg-v2-* 토큰 한정
- * @author MindGarden
+ *
+ * Phase C-Refine: 시각 리뉴얼 (shadow, hover, 타이포 위계, CTA 강화)
+ * 다크 모드 자동 지원 (토큰 기반)
+ * 하드코딩 0 · CSS override 0 · !important 0 · 인라인 style 0
+ *
+ * @author CoreSolution
  * @since 2026-06-15
  */
 
+/* ================================================================
+   BASE CARD
+   ================================================================ */
 .mg-v2-pricing-card {
   position: relative;
   background-color: var(--mg-v2-color-surface-card);
-  border: 1px solid var(--mg-v2-color-border-light);
-  border-radius: var(--mg-v2-radius-lg);
-  padding: var(--mg-v2-space-8);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
+  border-radius: var(--mg-v2-pricing-card-radius);
+  padding: var(--mg-v2-pricing-card-padding);
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-6);
-  transition: var(--mg-v2-transition-normal);
+  box-shadow: var(--mg-v2-pricing-shadow-card);
+  transition:
+    transform var(--mg-v2-transition-duration-normal) var(--mg-v2-transition-easing-default),
+    box-shadow var(--mg-v2-transition-duration-normal) var(--mg-v2-transition-easing-default);
 }
 
 .mg-v2-pricing-card:hover {
-  box-shadow: var(--mg-v2-shadow-md);
+  transform: translateY(-4px);
+  box-shadow: var(--mg-v2-pricing-shadow-card-hover);
 }
 
-/* Highlighted variant */
+/* ================================================================
+   HIGHLIGHTED (Popular) VARIANT
+   ================================================================ */
 .mg-v2-pricing-card--highlighted {
-  background-color: var(--mg-v2-color-surface-raised);
+  background-color: var(--mg-v2-pricing-surface-popular);
   border-color: var(--mg-v2-color-primary-main);
-  border-width: 2px;
-  box-shadow: var(--mg-v2-shadow-lg);
-  transform: scale(1.02);
+  border-width: var(--mg-v2-border-width-normal);
+  box-shadow: var(--mg-v2-pricing-shadow-popular);
 }
 
 .mg-v2-pricing-card--highlighted:hover {
-  box-shadow: var(--mg-v2-shadow-xl);
+  transform: translateY(-4px);
+  box-shadow: var(--mg-v2-pricing-shadow-popular-hover);
 }
 
-/* Badge */
+/* ================================================================
+   BADGE (Recommended / Popular)
+   ================================================================ */
 .mg-v2-pricing-card__badge {
   position: absolute;
   top: calc(-1 * var(--mg-v2-space-3));
@@ -45,12 +61,14 @@
   font-size: var(--mg-v2-font-size-caption);
   font-weight: var(--mg-v2-font-weight-semibold);
   padding: var(--mg-v2-space-1) var(--mg-v2-space-4);
-  border-radius: var(--mg-v2-radius-full);
+  border-radius: var(--mg-v2-radius-pill);
   white-space: nowrap;
   letter-spacing: var(--mg-v2-font-letter-spacing-wide);
 }
 
-/* Header */
+/* ================================================================
+   HEADER — Plan Name + Price
+   ================================================================ */
 .mg-v2-pricing-card__header {
   text-align: center;
 }
@@ -79,7 +97,7 @@
 
 .mg-v2-pricing-card__price {
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-display);
+  font-size: var(--mg-v2-pricing-font-size-price);
   font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-v2-color-text-primary);
   line-height: var(--mg-v2-font-line-height-tight);
@@ -91,12 +109,14 @@
 
 .mg-v2-pricing-card__period {
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-body-md);
+  font-size: var(--mg-v2-pricing-font-size-period);
   font-weight: var(--mg-v2-font-weight-regular);
-  color: var(--mg-v2-color-text-secondary);
+  color: var(--mg-v2-color-text-tertiary);
 }
 
-/* Features */
+/* ================================================================
+   FEATURES LIST
+   ================================================================ */
 .mg-v2-pricing-card__features {
   list-style: none;
   padding: 0;
@@ -112,33 +132,38 @@
   align-items: flex-start;
   gap: var(--mg-v2-space-2);
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-body-md);
+  font-size: var(--mg-v2-font-size-body-lg);
   color: var(--mg-v2-color-text-secondary);
   line-height: var(--mg-v2-font-line-height-body);
 }
 
 .mg-v2-pricing-card__feature-icon {
-  width: 18px;
-  height: 18px;
+  width: var(--mg-v2-space-5);
+  height: var(--mg-v2-space-5);
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: var(--mg-v2-space-1);
   color: var(--mg-v2-color-semantic-success);
 }
 
-/* CTA */
+/* ================================================================
+   CTA BUTTON — Outline (기본) / Solid (Highlighted)
+   ================================================================ */
 .mg-v2-pricing-card__cta {
   display: block;
   text-align: center;
   font-family: var(--mg-v2-font-family-base);
-  font-size: var(--mg-v2-font-size-body-md);
+  font-size: var(--mg-v2-font-size-body-lg);
   font-weight: var(--mg-v2-font-weight-semibold);
   color: var(--mg-v2-color-primary-main);
   background-color: transparent;
-  border: 1px solid var(--mg-v2-color-primary-main);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-primary-main);
   border-radius: var(--mg-v2-radius-md);
   padding: var(--mg-v2-space-3) var(--mg-v2-space-6);
   text-decoration: none;
-  transition: var(--mg-v2-transition-fast);
+  transition:
+    background-color var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default),
+    border-color var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default),
+    color var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default);
 }
 
 .mg-v2-pricing-card__cta:hover {
@@ -150,11 +175,11 @@
 }
 
 .mg-v2-pricing-card__cta:focus-visible {
-  outline: 2px solid var(--mg-v2-color-border-focus);
-  outline-offset: 2px;
+  outline: var(--mg-v2-border-width-focus) solid var(--mg-v2-color-border-focus);
+  outline-offset: var(--mg-v2-space-1);
 }
 
-/* Primary CTA (highlighted plan) */
+/* Solid CTA (highlighted / Popular plan) */
 .mg-v2-pricing-card__cta--primary {
   color: var(--mg-v2-color-text-inverse);
   background-color: var(--mg-v2-color-primary-main);
@@ -171,13 +196,42 @@
   border-color: var(--mg-v2-color-primary-active);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* ================================================================
+   DARK MODE — Elevation Border 보정
+   ================================================================ */
+@media (prefers-color-scheme: dark) {
   .mg-v2-pricing-card {
-    padding: var(--mg-v2-space-6);
+    border: var(--mg-v2-border-elevation-2, var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default));
   }
 
   .mg-v2-pricing-card--highlighted {
+    border: var(--mg-v2-border-width-normal) solid var(--mg-v2-color-primary-main);
+  }
+}
+
+[data-theme="dark"] {
+  .mg-v2-pricing-card {
+    border: var(--mg-v2-border-elevation-2, var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default));
+  }
+
+  .mg-v2-pricing-card--highlighted {
+    border: var(--mg-v2-border-width-normal) solid var(--mg-v2-color-primary-main);
+  }
+}
+
+/* ================================================================
+   RESPONSIVE — Mobile
+   ================================================================ */
+@media (max-width: 767px) {
+  .mg-v2-pricing-card {
+    padding: var(--mg-v2-pricing-card-padding-mobile);
+  }
+
+  .mg-v2-pricing-card:hover {
+    transform: none;
+  }
+
+  .mg-v2-pricing-card--highlighted:hover {
     transform: none;
   }
 }

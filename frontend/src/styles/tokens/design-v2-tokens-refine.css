@@ -4,20 +4,70 @@
  * SSOT 본체(design-v2-tokens.css) 변경 금지.
  * Refine 단계에서 필요하지만 SSOT에 없는 semantic 토큰만 정의.
  *
+ * Phase C-Refine에서 추가된 Pricing / Landing / Onboarding 전용 토큰.
+ * 베이스 SSOT(design-v2-tokens.css)를 변경하지 않고 여기서 확장.
+ *
+ * 명명 규칙: --mg-v2-{page}-{category}-{role}
+ *
  * @author CoreSolution
  * @since 2026-06-16
  */
 
+/* ================================================================
+   1. LIGHT MODE — Refine / Pricing 전용 토큰
+   ================================================================ */
 :root {
+  /* Refine — Onboarding form shadow (W1) */
   --mg-v2-refine-shadow-form: 0 4px 24px rgba(44, 42, 39, 0.04);
+
+  /* Pricing Card — Shadow (W2) */
+  --mg-v2-pricing-shadow-card: 0 4px 12px rgba(44, 42, 39, 0.05);
+  --mg-v2-pricing-shadow-card-hover: 0 8px 24px rgba(44, 42, 39, 0.1);
+  --mg-v2-pricing-shadow-popular: 0 12px 32px rgba(44, 42, 39, 0.1);
+  --mg-v2-pricing-shadow-popular-hover: 0 16px 40px rgba(44, 42, 39, 0.15);
+
+  /* Pricing Card — Typography */
+  --mg-v2-pricing-font-size-price: 2.5rem;
+  --mg-v2-pricing-font-size-period: var(--mg-v2-font-size-body-lg);
+
+  /* Pricing Card — Spacing */
+  --mg-v2-pricing-card-padding: var(--mg-v2-space-10);
+  --mg-v2-pricing-card-padding-mobile: var(--mg-v2-space-6);
+  --mg-v2-pricing-card-gap: var(--mg-v2-space-8);
+
+  /* Pricing Card — Radius */
+  --mg-v2-pricing-card-radius: var(--mg-v2-radius-2xl);
+
+  /* Pricing Layout */
+  --mg-v2-pricing-header-gap: var(--mg-v2-space-16);
+
+  /* Pricing Card — Dark mode surface (highlighted) */
+  --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
 }
 
+/* ================================================================
+   2. DARK MODE — Refine / Pricing 전용 토큰
+   ================================================================ */
 @media (prefers-color-scheme: dark) {
   :root {
     --mg-v2-refine-shadow-form: none;
+
+    --mg-v2-pricing-shadow-card: none;
+    --mg-v2-pricing-shadow-card-hover: none;
+    --mg-v2-pricing-shadow-popular: none;
+    --mg-v2-pricing-shadow-popular-hover: none;
+
+    --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
   }
 }
 
 [data-theme="dark"] {
   --mg-v2-refine-shadow-form: none;
+
+  --mg-v2-pricing-shadow-card: none;
+  --mg-v2-pricing-shadow-card-hover: none;
+  --mg-v2-pricing-shadow-popular: none;
+  --mg-v2-pricing-shadow-popular-hover: none;
+
+  --mg-v2-pricing-surface-popular: var(--mg-v2-color-surface-raised);
 }

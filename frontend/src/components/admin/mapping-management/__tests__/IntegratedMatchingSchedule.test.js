@@ -153,7 +153,7 @@ jest.mock('../../../erp/common/erpMgButtonProps', () => ({
 
 jest.mock('../integrated-schedule/organisms/MappingScheduleCard', () => ({
   __esModule: true,
-  default: ({ mapping, onScheduleFromCard, onCheckoutSameDay }) => (
+  default: ({ mapping, onScheduleFromCard, onCheckoutSameDay, onSessionExtension }) => (
     <div data-testid={`mapping-card-${mapping.id}`}>
       <span>{mapping.clientName}</span>
       {onScheduleFromCard && (
@@ -174,8 +174,30 @@ jest.mock('../integrated-schedule/organisms/MappingScheduleCard', () => ({
           당일 결제 + 활성화 mock
         </button>
       )}
+      {onSessionExtension && mapping.status === 'ACTIVE' && (
+        <button
+          type="button"
+          data-testid={`session-extension-${mapping.id}`}
+          onClick={() => onSessionExtension(mapping)}
+        >
+          회기 추가 mock
+        </button>
+      )}
     </div>
   )
+}));
+
+jest.mock('../../mapping/SessionExtensionModal', () => ({
+  __esModule: true,
+  default: (props) => {
+    if (!props.isOpen) return null;
+    return (
+      <div
+        data-testid="session-extension-modal"
+        data-mapping-id={props.mapping?.id ?? ''}
+      />
+    );
+  }
 }));
 
 import IntegratedMatchingSchedule from '../IntegratedMatchingSchedule';
@@ -296,5 +318,26 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
     expect(modal).toBeInTheDocument();
     expect(modal.getAttribute('data-mapping-id')).toBe('555');
     expect(notificationManager.warning).not.toHaveBeenCalled();
+  });
+
+  test('ACTIVE 매칭 — 헤더·카드 회기 추가 → SessionExtensionModal 오픈', async() => {
+    await renderWithMappings([ADVANCE_ACTIVE_MAPPING]);
+
+    const headerBtn = await screen.findByRole('button', { name: '회기 추가' });
+    expect(headerBtn).not.toBeDisabled();
+
+    await act(async() => {
+      fireEvent.click(headerBtn);
+    });
+
+    const modal = await screen.findByTestId('session-extension-modal');
+    expect(modal).toBeInTheDocument();
+    expect(modal.getAttribute('data-mapping-id')).toBe('777');
+
+    await act(async() => {
+      fireEvent.click(await screen.findByTestId('session-extension-777'));
+    });
+
+    expect(screen.getByTestId('session-extension-modal')).toBeInTheDocument();
   });
 });

@@ -300,6 +300,12 @@ public final class AdminServiceUserFacingMessages {
             "새로운 매칭 생성으로 인한 자동 종료 - 회기 자동 소진";
 
     /**
+     * ACTIVE 매핑 존재 시 신규 매칭 생성 차단 메시지 (인자: 상담사명, 내담자명, 매핑 ID).
+     */
+    public static final String MSG_ACTIVE_MAPPING_EXISTS_USE_SESSION_EXTENSION_FMT =
+            "이미 활성 매칭이 있습니다 (%s ↔ %s, 매칭 #%d). 신규 매칭 대신 회기 추가를 이용해 주세요.";
+
+    /**
      * 강제 종료 매칭 notes 한 줄 (인자: 일시 문자열, 사유, 환불 회기, 환불 금액).
      */
     public static final String NOTES_FORCE_TERMINATION_LINE_FMT =

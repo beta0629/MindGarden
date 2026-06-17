@@ -7,7 +7,7 @@
  * @since 2025-02-25
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Draggable } from '@fullcalendar/interaction';
 import StandardizedApi from '../../../utils/standardizedApi';
@@ -19,6 +19,7 @@ import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
 import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
+import SessionExtensionModal from '../mapping/SessionExtensionModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
 import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
@@ -28,6 +29,7 @@ import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import ActionBarButton from '../../common/ActionBarButton';
+import ActionBar from '../../common/ActionBar';
 import MappingScheduleCard from './integrated-schedule/organisms/MappingScheduleCard';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
@@ -104,6 +106,7 @@ const IntegratedMatchingSchedule = () => {
   const [selectedDateForModal, setSelectedDateForModal] = useState(() => new Date());
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
+  const [sessionExtensionMapping, setSessionExtensionMapping] = useState(null);
   const [viewFilter, setViewFilter] = useState(VIEW_FILTER_NEW);
   const [statusFilter, setStatusFilter] = useState('ongoing');
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
@@ -525,15 +528,56 @@ const IntegratedMatchingSchedule = () => {
     setPreFilledMapping(null);
   };
 
+  const activeMappingsForExtension = useMemo(
+    () => mappings.filter((mapping) => mapping.status === 'ACTIVE'),
+    [mappings]
+  );
+
+  const handleOpenSessionExtensionFromHeader = useCallback(() => {
+    if (activeMappingsForExtension.length === 0) {
+      notificationManager.info('회기를 추가할 활성 매칭이 없습니다.');
+      return;
+    }
+    const sorted = [...activeMappingsForExtension].sort(
+      (a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0)
+    );
+    setSessionExtensionMapping(sorted[0]);
+  }, [activeMappingsForExtension]);
+
+  const handleSessionExtensionFromCard = useCallback((mapping) => {
+    setSessionExtensionMapping(mapping);
+  }, []);
+
+  const handleSessionExtensionFromCreation = useCallback((mapping) => {
+    setCreateMappingModalOpen(false);
+    setSessionExtensionMapping(mapping);
+  }, []);
+
+  const handleSessionExtensionRequested = useCallback(() => {
+    loadMappings();
+    setSessionExtensionMapping(null);
+  }, [loadMappings]);
+
   const headerActions = (
-    <ActionBarButton
-      variant="primary"
-      onClick={() => setCreateMappingModalOpen(true)}
-      aria-label="신규 매칭 생성"
-      className="integrated-schedule__btn-new-mapping"
-    >
-      신규 매칭
-    </ActionBarButton>
+    <ActionBar align="end" gap="md">
+      <ActionBarButton
+        variant="outline"
+        onClick={handleOpenSessionExtensionFromHeader}
+        disabled={activeMappingsForExtension.length === 0}
+        aria-label="회기 추가"
+        className="integrated-schedule__btn-add-sessions"
+      >
+        회기 추가
+      </ActionBarButton>
+      <ActionBarButton
+        variant="primary"
+        onClick={() => setCreateMappingModalOpen(true)}
+        aria-label="신규 매칭 생성"
+        className="integrated-schedule__btn-new-mapping"
+      >
+        신규 매칭
+      </ActionBarButton>
+    </ActionBar>
   );
 
   return (
@@ -734,6 +778,7 @@ const IntegratedMatchingSchedule = () => {
                         onApprove={handleApprove}
                         onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
                         onCancelPendingMapping={handleRequestCancelPendingMapping}
+                        onSessionExtension={handleSessionExtensionFromCard}
                         approveProcessing={approveProcessing}
                         cancelPendingProcessing={
                           cancelPendingProcessing
@@ -815,7 +860,17 @@ const IntegratedMatchingSchedule = () => {
         isOpen={createMappingModalOpen}
         onClose={() => setCreateMappingModalOpen(false)}
         onMappingCreated={handleMappingCreated}
+        onRedirectToSessionExtension={handleSessionExtensionFromCreation}
       />
+
+      {sessionExtensionMapping && (
+        <SessionExtensionModal
+          isOpen={!!sessionExtensionMapping}
+          onClose={() => setSessionExtensionMapping(null)}
+          mapping={sessionExtensionMapping}
+          onSessionExtensionRequested={handleSessionExtensionRequested}
+        />
+      )}
 
       {paymentModalMapping && (
         <MappingPaymentModal

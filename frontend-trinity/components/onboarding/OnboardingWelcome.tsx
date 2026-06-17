@@ -79,7 +79,7 @@ export default function OnboardingWelcome({ onStart }: OnboardingWelcomeProps) {
           </div>
 
           <div className="mt-auto">
-            <V2Button onClick={onStart} size="lg" className="w-full sm:w-auto px-12 py-4 text-lg rounded-xl shadow-[0_4px_14px_rgba(37,99,235,0.4)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.5)] transition-all">
+            <V2Button onClick={onStart} size="lg" className="w-full sm:w-auto px-12 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all">
               시작하기 →
             </V2Button>
             <p className="text-sm text-slate-500 mt-6 flex items-center gap-2">

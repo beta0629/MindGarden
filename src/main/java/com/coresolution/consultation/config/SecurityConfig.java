@@ -331,6 +331,8 @@ public class SecurityConfig {
                 "http://core-solution.co.kr",
                 "https://*.e-trinity.co.kr",
                 "http://*.e-trinity.co.kr",
+                "https://e-trinity.co.kr",        // apex (와일드카드 *.e-trinity.co.kr 미매칭)
+                "http://e-trinity.co.kr",
                 "https://apply.e-trinity.co.kr", 
                 "http://apply.e-trinity.co.kr",
                 "https://ops.e-trinity.co.kr", 
@@ -347,6 +349,8 @@ public class SecurityConfig {
                 "http://dev.core-solution.co.kr", 
                 "https://*.dev.e-trinity.co.kr",
                 "http://*.dev.e-trinity.co.kr",
+                "https://dev.e-trinity.co.kr",        // apex (와일드카드 *.dev.e-trinity.co.kr 미매칭)
+                "http://dev.e-trinity.co.kr",
                 "https://apply.dev.e-trinity.co.kr",
                 "http://apply.dev.e-trinity.co.kr",
                 "https://ops.dev.e-trinity.co.kr",

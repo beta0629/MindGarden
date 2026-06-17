@@ -626,7 +626,14 @@ export const useOnboarding = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tenantName || !formData.businessType || !formData.contactPhone || !phoneVerified || !formData.planId) {
+    if (
+      !formData.tenantName ||
+      !formData.businessType ||
+      !formData.regionCode?.trim() ||
+      !formData.contactPhone ||
+      !phoneVerified ||
+      !formData.planId
+    ) {
       setError(
         !phoneVerified
           ? TRINITY_CONSTANTS.MESSAGES.ERROR_PHONE_VERIFY_REQUIRED
@@ -651,7 +658,7 @@ export const useOnboarding = () => {
         requestedBy: normalizedPhone,
         riskLevel: defaultRiskLevel as "LOW" | "MEDIUM" | "HIGH", // 공통 코드에서 동적으로 가져온 값
         businessType: formData.businessType,
-        regionCode: formData.regionCode || undefined,
+        regionCode: formData.regionCode.trim(),
         brandName: formData.brandName || undefined,
         subdomain: formData.subdomain || undefined,
         ...(captchaToken && captchaToken.trim()
@@ -665,7 +672,7 @@ export const useOnboarding = () => {
           adminPassword: formData.adminPassword,
           paymentMethodId: formData.paymentMethodId,
           subscriptionId: formData.subscriptionId,
-          regionCode: formData.regionCode || undefined, // 지역 코드 추가
+          regionCode: formData.regionCode.trim(), // 지역 코드 추가
           brandName: formData.brandName || undefined, // 브랜드명 추가
           subdomain: formData.subdomain || undefined, // 서브도메인 추가
           dashboardTemplates: formData.dashboardTemplates || {}, // 대시보드 템플릿 설정

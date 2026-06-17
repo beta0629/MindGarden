@@ -122,9 +122,10 @@ export default function Step1BasicInfoProgressive({
     {
       id: 'regionCode',
       label: '지역',
-      required: false,
-      validation: () => true,
-      placeholder: '지역을 선택하세요 (선택사항)',
+      required: true,
+      validation: (value: string) => value.trim().length > 0,
+      placeholder: '지역을 선택하세요',
+      hint: '사업장이 위치한 시·도를 선택해주세요.',
       isSelect: true,
       options: (() => {
         const uniqueCodes = new Map<string, typeof regionCodes[0]>();
@@ -407,11 +408,14 @@ export default function Step1BasicInfoProgressive({
                 onChange={(e) => {
                   const selectValue = e.target.value;
                   handleFieldChange(field.id, selectValue);
-                  handleFieldComplete(field.id, selectValue);
+                  if (selectValue.trim()) {
+                    handleFieldComplete(field.id, selectValue);
+                  }
                 }}
                 className={COMPONENT_CSS.ONBOARDING.INPUT}
+                required={field.required}
               >
-                <option value="">지역을 선택하세요 (선택사항)</option>
+                <option value="">지역을 선택하세요</option>
                 {field.options && field.options.length > 0 ? (
                   field.options.map((option, optionIndex) => (
                     <option key={`${option.value}-${optionIndex}`} value={option.value}>

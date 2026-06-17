@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.config.BatchNotificationProperties;
+import com.coresolution.consultation.constant.BookingReminderPushConstants;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -96,6 +97,10 @@ class ReservationReminderSchedulerTest {
         when(systemConfigService.getGlobalBoolean(
                 eq(NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED), anyBoolean()))
             .thenReturn(true);
+        // D-1 푸시 배치 기본: 대상 없음 (개별 테스트에서 override).
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                any(), eq(LocalDate.now().plusDays(BookingReminderPushConstants.REMINDER_D1_DAYS_AHEAD)), anyList()))
+            .thenReturn(Collections.emptyList());
     }
 
     @Test
@@ -278,37 +283,66 @@ class ReservationReminderSchedulerTest {
     }
 
     @Test
-    @DisplayName("D-2 푸시 — 알림톡 발화 직후 mobilePushDispatchService.dispatchBookingReminder 호출 (내담자·상담사 양쪽)")
-    void runDailyReminder_triggersD2BookingReminderPushPerSchedule() {
+    @DisplayName("D-2 푸시 미발송 — 2026-06-17 정책 (SMS D-2 배치는 유지)")
+    void runDailyReminder_doesNotTriggerD2BookingReminderPush() {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
-        Schedule scheduleA = buildSchedule(101L, TENANT_A, 5001L, 6001L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
-            .thenReturn(List.of(scheduleA));
+        Schedule scheduleD2 = buildSchedule(101L, TENANT_A, 5001L, 6001L, 2);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
+            .thenReturn(List.of(scheduleD2));
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(1)), anyList()))
+            .thenReturn(List.of());
         givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+
+        scheduler.runDailyReminder();
+
+        verify(mobilePushDispatchService, never()).dispatchBookingReminder(
+            any(), any(), any(String.class), eq(BookingReminderPushConstants.REMINDER_D2_SLOT_CODE));
+    }
+
+    @Test
+    @DisplayName("D-1 푸시 — 09:00 배치에서 mobilePushDispatchService.dispatchBookingReminder 호출 (내담자·상담사 양쪽)")
+    void runDailyReminder_triggersD1BookingReminderPushPerSchedule() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule scheduleD2Sms = buildSchedule(101L, TENANT_A, 5001L, 6001L, 2);
+        Schedule scheduleD1Push = buildSchedule(201L, TENANT_A, 5002L, 6002L, 1);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
+            .thenReturn(List.of(scheduleD2Sms));
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(1)), anyList()))
+            .thenReturn(List.of(scheduleD1Push));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 3);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
 
         scheduler.runDailyReminder();
 
         verify(mobilePushDispatchService, times(1)).dispatchBookingReminder(
-            eq(TENANT_A), eq(scheduleA), any(String.class), eq("D2"));
+            eq(TENANT_A), eq(scheduleD1Push), any(String.class),
+            eq(BookingReminderPushConstants.REMINDER_D1_SLOT_CODE));
+        verify(mobilePushDispatchService, never()).dispatchBookingReminder(
+            any(), eq(scheduleD2Sms), any(String.class), any());
     }
 
     @Test
-    @DisplayName("D-2 푸시 실패는 본 배치 실행에 영향 없음 — 카운트 보존")
-    void runDailyReminder_doesNotPropagatePushErrors() {
+    @DisplayName("D-1 푸시 실패는 본 배치 실행에 영향 없음 — SMS D-2 카운트 보존")
+    void runDailyReminder_doesNotPropagateD1PushErrors() {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
-        Schedule scheduleA = buildSchedule(101L, TENANT_A, 5001L, 6001L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
-            .thenReturn(List.of(scheduleA));
+        Schedule scheduleD2Sms = buildSchedule(101L, TENANT_A, 5001L, 6001L, 2);
+        Schedule scheduleD1Push = buildSchedule(201L, TENANT_A, 5002L, 6002L, 1);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
+            .thenReturn(List.of(scheduleD2Sms));
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(1)), anyList()))
+            .thenReturn(List.of(scheduleD1Push));
         givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 3);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
         org.mockito.Mockito.doThrow(new RuntimeException("expo down"))
             .when(mobilePushDispatchService).dispatchBookingReminder(
-                eq(TENANT_A), eq(scheduleA), any(String.class), eq("D2"));
+                eq(TENANT_A), eq(scheduleD1Push), any(String.class),
+                eq(BookingReminderPushConstants.REMINDER_D1_SLOT_CODE));
 
         scheduler.runDailyReminder();
 
-        // 푸시 실패는 swallow — dispatched=1 이 그대로 기록되어야 한다.
         verify(logService).saveExecutionLog(any(), eq(TENANT_A),
             eq("ReservationReminderD2"), eq("SUCCESS"),
             eq("dispatched=1, skipped=0, failed=0"));
@@ -372,12 +406,18 @@ class ReservationReminderSchedulerTest {
     }
 
     private Schedule buildSchedule(Long id, String tenantId, Long consultantId, Long clientId) {
+        return buildSchedule(id, tenantId, consultantId, clientId,
+            properties.getReservationReminderDaysAhead());
+    }
+
+    private Schedule buildSchedule(Long id, String tenantId, Long consultantId, Long clientId,
+            int daysFromToday) {
         Schedule schedule = new Schedule();
         schedule.setId(id);
         schedule.setTenantId(tenantId);
         schedule.setConsultantId(consultantId);
         schedule.setClientId(clientId);
-        schedule.setDate(LocalDate.now().plusDays(2));
+        schedule.setDate(LocalDate.now().plusDays(daysFromToday));
         schedule.setStartTime(LocalTime.of(14, 30));
         schedule.setEndTime(LocalTime.of(15, 30));
         schedule.setStatus(ScheduleStatus.BOOKED);

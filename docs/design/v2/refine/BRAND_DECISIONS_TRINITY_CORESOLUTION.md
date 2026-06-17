@@ -40,8 +40,8 @@
 - [ ] Pricing·Landing hero 등 제품 구간 placement는 [`CORE_SOLUTION_LOGO_DESIGN_SPEC.md` §4](./core-solution/CORE_SOLUTION_LOGO_DESIGN_SPEC.md) 와 본 문서 #2 정합
 
 ### CoreSolution 로고
-- [ ] preview·SVG wordmark → `CoreSolution`
-- [ ] G1–G3 중 최종 컨셉 선정 후 core-coder 핸드오프 (SPEC §5)
+- [x] preview·SVG wordmark → `CoreSolution`
+- [x] G1–G3 중 최종 컨셉 선정 후 core-coder 핸드오프 (SPEC §5)
 
 ### Defer (MindGarden v2 #425–427)
 - [ ] Trinity onboarding v2 + F1 develop merge·정착 확인

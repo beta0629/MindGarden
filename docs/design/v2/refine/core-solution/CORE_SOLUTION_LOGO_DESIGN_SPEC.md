@@ -13,17 +13,18 @@
 
 ## 2. Concepts (v1)
 
-### Concept G1: C+S Geometric Monogram
+### Concept G1: C+S Geometric Monogram (Finalized Master)
 - **Concept**: A modern, geometric monogram combining 'C' and 'S'. It represents the structured, systematic nature of the B2B SaaS solution.
 - **Colors**: Primary Green (#3D5246) and Accent Brown (#8B7355).
+- **Wordmark**: `CoreSolution` (no space, per `BRAND_DECISIONS_TRINITY_CORESOLUTION.md`)
 - **Vibe**: Professional, structured, reliable.
 
-### Concept G2: Abstract Mind/Garden Motif
+### Concept G2: Abstract Mind/Garden Motif (Rejected)
 - **Concept**: An abstract representation of a leaf or neural network (Mind + Garden), symbolizing growth, care, and intelligence.
 - **Colors**: Primary Green (#3D5246) and Secondary Green (#6B7F72).
 - **Vibe**: Organic, intelligent, nurturing.
 
-### Concept G3: Modern Typographic "Core"
+### Concept G3: Modern Typographic "Core" (Rejected)
 - **Concept**: A bold, typographic approach where the "C" in Core encompasses a central dot (the solution/core).
 - **Colors**: Primary Green (#3D5246) and Dark Navy/Black (#2C2C2C).
 - **Vibe**: Direct, bold, contemporary.
@@ -51,13 +52,15 @@
 
 Once a concept is finalized, the SVG assets should be exported and placed in the following directories:
 
-1. **Frontend (MindGarden CRA)**:
+1. **Frontend (MindGarden CRA)** (Optional, if applicable):
    - `frontend/public/assets/logo-core-solution-primary.svg`
    - `frontend/public/assets/logo-core-solution-inverse.svg`
    - `frontend/public/assets/icon-core-solution.svg`
    - `frontend/public/favicon.ico`
 
 2. **Frontend-Trinity (Next.js)**:
-   - `frontend-trinity/public/assets/logo-core-solution.svg` (For landing/pricing pages)
+   - `frontend-trinity/public/assets/logo-core-solution-primary.svg` (For Welcome, Step 3/5/6, Hero, Powered by)
+   - `frontend-trinity/public/assets/logo-core-solution-inverse.svg`
+   - `frontend-trinity/public/assets/icon-core-solution.svg`
 
-*Note: Replace existing placeholder logos and update references in `frontend/src/components/` and `frontend-trinity/src/components/`.*
+*Note: Replace existing placeholder logos and update references in `frontend/src/components/` and `frontend-trinity/src/components/`. No code changes are made by the designer agent.*

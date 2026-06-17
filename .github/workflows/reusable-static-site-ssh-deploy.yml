@@ -47,6 +47,11 @@ on:
         description: "헬스체크 URL 목록 (줄바꿈 구분, 빈 줄 무시)"
         required: true
         type: string
+      health_require_all_urls:
+        description: "true면 health_urls 전부 성공해야 pass (false면 하나라도 성공 시 pass)"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy:
@@ -149,16 +154,17 @@ jobs:
       - name: 🏥 배포 후 헬스체크
         env:
           HEALTH_URLS_ECHO: ${{ inputs.health_urls }}
+          HEALTH_REQUIRE_ALL: ${{ inputs.health_require_all_urls }}
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.ssh_host }}
           username: ${{ secrets.ssh_user }}
           key: ${{ secrets.ssh_key }}
           port: 22
-          timeout: 30s
-          envs: HEALTH_URLS_ECHO
+          timeout: 120s
+          envs: HEALTH_URLS_ECHO,HEALTH_REQUIRE_ALL
           script: |
-            echo "🏥 헬스체크 시작..."
+            echo "🏥 헬스체크 시작 (require_all=$HEALTH_REQUIRE_ALL)..."
             sleep 3
 
             if sudo nginx -t 2>/dev/null; then
@@ -167,21 +173,79 @@ jobs:
               echo "⚠️ Nginx 설정 오류 (계속 진행)"
             fi
 
+            check_health_url() {
+              url="$1"
+              curl_err_file=$(mktemp)
+              for i in 1 2 3; do
+                http_code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "$url" 2>"$curl_err_file")
+                curl_exit=$?
+                curl_err=$(cat "$curl_err_file" 2>/dev/null || true)
+
+                if [ "$curl_exit" -eq 0 ] && echo "$http_code" | grep -qE '^(200|301|302)$'; then
+                  echo "✅ 웹사이트 접근 성공: $url (HTTP $http_code, 시도 $i/3)"
+                  curl -sI "$url" | head -5
+                  rm -f "$curl_err_file"
+                  return 0
+                fi
+
+                if echo "$curl_err" | grep -qiE 'ssl|certificate|TLS|handshake'; then
+                  echo "❌ SSL/TLS 오류: $url (시도 $i/3)"
+                  echo "   $curl_err"
+                elif [ "$http_code" != "000" ] && echo "$http_code" | grep -qE '^[0-9]+$'; then
+                  echo "❌ HTTP $http_code: $url (시도 $i/3)"
+                  [ -n "$curl_err" ] && echo "   $curl_err"
+                else
+                  echo "❌ 연결 실패: $url (curl exit $curl_exit, 시도 $i/3)"
+                  [ -n "$curl_err" ] && echo "   $curl_err"
+                fi
+
+                [ "$i" -lt 3 ] && sleep 5
+              done
+              rm -f "$curl_err_file"
+              return 1
+            }
+
+            success_count=0
+            fail_count=0
+            checked_count=0
+            failed_urls=""
+
             while IFS= read -r url || [ -n "$url" ]; do
               url_trimmed=$(echo "$url" | xargs)
               [ -z "$url_trimmed" ] && continue
-              for i in 1 2 3; do
-                if curl -f -s -o /dev/null -w "%{http_code}" "$url_trimmed" | grep -qE "200|301|302"; then
-                  echo "✅ 웹사이트 접근 성공: $url_trimmed (시도 $i)"
-                  curl -s -I "$url_trimmed" | head -5
+              checked_count=$((checked_count + 1))
+
+              if check_health_url "$url_trimmed"; then
+                success_count=$((success_count + 1))
+                if [ "$HEALTH_REQUIRE_ALL" != "true" ]; then
+                  echo "✅ 헬스체크 통과 (URL $success_count/$checked_count 성공, require_all=false)"
                   exit 0
                 fi
-                echo "⏳ 헬스체크 대기 중... (시도 $i/3)"
-                sleep 5
-              done
+              else
+                fail_count=$((fail_count + 1))
+                failed_urls="${failed_urls}  - ${url_trimmed}"$'\n'
+                if [ "$HEALTH_REQUIRE_ALL" != "true" ]; then
+                  continue
+                fi
+                echo "::error::필수 헬스체크 실패 (require_all=true): $url_trimmed"
+                echo "❌ 배포 헬스체크 실패 — 모든 URL 필수"
+                echo "실패 URL:"
+                printf '%s' "$failed_urls"
+                exit 1
+              fi
             done <<< "$HEALTH_URLS_ECHO"
 
-            echo "⚠️ 헬스체크 실패 - 수동 확인 필요"
+            if [ "$checked_count" -eq 0 ]; then
+              echo "::error::헬스체크 URL이 비어 있습니다"
+              exit 1
+            fi
+
+            if [ "$HEALTH_REQUIRE_ALL" = "true" ]; then
+              echo "✅ 헬스체크 통과 ($success_count/$checked_count URL 모두 성공)"
+              exit 0
+            fi
+
+            echo "::error::헬스체크 실패 — 확인된 URL 중 성공 없음 ($fail_count/$checked_count 실패)"
             echo "확인 URL 목록:"
             echo "$HEALTH_URLS_ECHO"
-            exit 0
+            exit 1

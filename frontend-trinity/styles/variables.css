@@ -40,12 +40,37 @@
   --trinity-v2-step-label-active: #111827;
   --trinity-v2-content-padding: var(--spacing-xxl);
   --trinity-v2-form-max-width: 36rem;
+  --trinity-v2-form-max-width-wide: 48rem;
   --trinity-v2-stepper-width: 12rem;
   --trinity-v2-panel-split: 40%;
   --trinity-v2-main-split: 60%;
   --trinity-v2-input-focus-ring: rgba(37, 99, 235, 0.25);
   --trinity-v2-chip-selected-bg: #2563eb;
   --trinity-v2-chip-border: #e5e7eb;
+  --trinity-v2-panel-padding: var(--spacing-xxl);
+  --trinity-v2-panel-padding-tablet: var(--spacing-xl);
+  --trinity-v2-brand-height: 2rem;
+  --trinity-v2-network-max-width: 20rem;
+  --trinity-v2-network-max-width-tablet: 10rem;
+  --trinity-v2-value-prop-size: 2.5rem;
+  --trinity-v2-value-prop-size-tablet: 1.5rem;
+  --trinity-v2-progress-stroke: 2px;
+  --trinity-v2-bar-track: rgba(255, 255, 255, 0.15);
+  --trinity-v2-gradient-primary: linear-gradient(135deg, var(--trinity-v2-accent) 0%, var(--trinity-v2-accent-light) 100%);
+  --trinity-v2-form-padding-y: var(--spacing-xxl);
+  --trinity-v2-form-padding-x: var(--spacing-xxl);
+  --trinity-v2-radius-pill: 9999px;
+  --trinity-v2-toggle-bg: var(--bg-secondary);
+  --trinity-v2-discount-badge-bg: rgba(255, 255, 255, 0.18);
+  --trinity-v2-discount-badge-bg-inactive: rgba(37, 99, 235, 0.08);
+  --trinity-v2-trust-badge-color: var(--text-secondary);
+  --trinity-v2-trust-icon-size: 2rem;
+  --trinity-v2-pricing-card-gap: var(--spacing-lg);
+  --trinity-v2-pricing-shadow: var(--shadow-md);
+  --trinity-v2-pricing-shadow-hover: var(--shadow-lg);
+  --trinity-v2-pricing-shadow-popular: var(--shadow-xl);
+  --trinity-v2-price-size: 2.5rem;
+  --trinity-v2-enterprise-border: rgba(255, 255, 255, 0.2);
 
   /* 로고 크기 — Trinity F1 */
   --logo-height-header: 2rem;

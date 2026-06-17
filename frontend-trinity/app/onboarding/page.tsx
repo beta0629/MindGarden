@@ -24,6 +24,10 @@ import OnboardingCaptchaSection, {
 import OnboardingLogin from "../../components/onboarding/OnboardingLogin";
 import OnboardingWelcome from "../../components/onboarding/OnboardingWelcome";
 import OnboardingContentShell from "../../components/onboarding/OnboardingContentShell";
+import {
+  resolveDisplayStep,
+  useOnboardingLayout,
+} from "../../components/onboarding/OnboardingLayoutContext";
 
 function getStepHeader(step: number): { title: string; subtitle: string } {
   const headers = TRINITY_CONSTANTS.ONBOARDING_V2.STEP_HEADERS as Record<
@@ -116,6 +120,28 @@ export default function OnboardingPage() {
     captchaToken,
     setCaptchaToken,
   } = useOnboarding();
+
+  const { setLayoutState } = useOnboardingLayout();
+  const totalDisplaySteps = TRINITY_CONSTANTS.ONBOARDING_STEPS_V2.length;
+
+  useEffect(() => {
+    if (showWelcome) {
+      setLayoutState({
+        panelMode: "welcome",
+        showStepIndicator: false,
+        displayStep: 1,
+        totalDisplaySteps,
+      });
+      return;
+    }
+
+    setLayoutState({
+      panelMode: "flow",
+      showStepIndicator: true,
+      displayStep: resolveDisplayStep(step),
+      totalDisplaySteps,
+    });
+  }, [step, showWelcome, setLayoutState, totalDisplaySteps]);
 
   // 단계 변경 시 방향 감지 및 애니메이션 방향 설정
   const setStep = (newStep: number) => {
@@ -494,25 +520,12 @@ export default function OnboardingPage() {
 
             <StepTransition step={3} currentStep={step} direction={transitionDirection}>
               {step === 3 && (
-                <>
-                  <Step3PricingPlan
+                <Step3PricingPlan
                   formData={formData}
                   setFormData={setFormData}
                   pricingPlans={pricingPlans}
                   loading={loading}
                 />
-                {/* PG 결제 프로세스 안내 메시지 */}
-                <div className="trinity-onboarding__warning-box">
-                  <p className="trinity-onboarding__warning-title">
-                    ⚠️ PG사 결제 프로세스는 추후 진행 예정입니다
-                  </p>
-                  <p className="trinity-onboarding__warning-text">
-                    현재는 결제 수단 등록 없이 바로 온보딩 등록이 가능합니다.
-                    <br />
-                    온보딩 승인 후 서비스 이용 시점에 결제 수단을 등록하실 수 있습니다.
-                  </p>
-                </div>
-                </>
               )}
             </StepTransition>
 

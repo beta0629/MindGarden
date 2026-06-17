@@ -1,14 +1,22 @@
 /**
- * Trinity Onboarding v2 — 메인 콘텐츠 영역 (40/60 split 우측)
+ * Trinity Onboarding v2 — 우측 Form Panel (mockup 60% white)
  */
 
 .trinity-onboarding-v2__shell {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-height: var(--full-height);
   background-color: var(--trinity-v2-main-bg);
-  padding: var(--trinity-v2-content-padding);
+  padding: var(--trinity-v2-form-padding-y) var(--trinity-v2-form-padding-x);
   box-sizing: border-box;
+  justify-content: center;
+}
+
+.trinity-onboarding-v2__form-wrapper {
+  width: 100%;
+  max-width: var(--trinity-v2-form-max-width-wide);
+  margin: 0 auto;
 }
 
 .trinity-onboarding-v2__top {
@@ -33,7 +41,6 @@
 
 .trinity-onboarding-v2__header {
   margin-bottom: var(--spacing-xxl);
-  max-width: var(--trinity-v2-form-max-width);
 }
 
 .trinity-onboarding-v2__eyebrow {
@@ -71,7 +78,6 @@
 .trinity-onboarding-v2__form-area {
   flex: 1;
   min-width: 0;
-  max-width: var(--trinity-v2-form-max-width);
 }
 
 .trinity-onboarding-v2__form-area .trinity-onboarding__title {
@@ -87,7 +93,6 @@
   color: var(--text-secondary);
 }
 
-/* v2 컨텍스트 — 카드형 폼 → 플랫 */
 .trinity-onboarding-v2__shell .trinity-onboarding__form {
   max-width: none;
   margin: 0;
@@ -99,10 +104,8 @@
 
 .trinity-onboarding-v2__shell.trinity-onboarding {
   background-color: var(--trinity-v2-main-bg);
-  min-height: var(--full-height);
 }
 
-/* Step 타이틀 v2 */
 .trinity-onboarding-v2__shell .trinity-onboarding__step-title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
@@ -116,7 +119,6 @@
   margin-bottom: var(--spacing-xl);
 }
 
-/* 그리드 버튼 v2 — 칩 스타일 */
 .trinity-onboarding-v2__shell .trinity-onboarding__grid-button {
   border: 1px solid var(--trinity-v2-chip-border);
   border-radius: var(--border-radius-md);
@@ -137,7 +139,6 @@
   color: var(--trinity-v2-step-active-text);
 }
 
-/* Primary 버튼 v2 accent */
 .trinity-onboarding-v2__shell .trinity-onboarding__button,
 .trinity-onboarding-v2__shell .trinity-progressive-fields__nav-button--next {
   background-color: var(--trinity-v2-accent);
@@ -148,7 +149,6 @@
   background-color: var(--trinity-v2-accent-light);
 }
 
-/* 네비게이션 v2 */
 .trinity-onboarding-v2__shell .trinity-progressive-fields__navigation {
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-lg);
@@ -164,17 +164,13 @@
 
   .trinity-onboarding-v2__form-area {
     flex: 1;
-    max-width: none;
-  }
-
-  .trinity-onboarding-v2__header {
-    max-width: none;
   }
 }
 
 @media (max-width: 768px) {
   .trinity-onboarding-v2__shell {
     padding: var(--spacing-lg);
+    justify-content: flex-start;
   }
 
   .trinity-onboarding-v2__title {

@@ -42,6 +42,18 @@ export const TRINITY_CONSTANTS = {
       ICON: '/assets/core-solution-logo-icon.svg',
       ALT: 'CoreSolution',
     },
+    TENANT_NETWORK_VISUAL: '/assets/tenant-network-visual.svg',
+    PRICING_ICONS: {
+      STARTER: '/assets/icon-plan-starter.svg',
+      PRO: '/assets/icon-plan-pro.svg',
+      ENTERPRISE: '/assets/icon-plan-enterprise.svg',
+    },
+    TRUST_BADGES: {
+      ISO27001: '/assets/badge-iso27001.svg',
+      SOC2: '/assets/badge-soc2.svg',
+      GDPR: '/assets/badge-gdpr.svg',
+      KISA_ISMS: '/assets/badge-kisa-isms.svg',
+    },
   },
   
   // CoreSolution 브랜딩
@@ -138,6 +150,19 @@ export const TRINITY_CONSTANTS = {
     DEFAULT_TITLE: '서비스 신청을 시작합니다',
     DEFAULT_SUBTITLE: '간단한 단계를 따라 CoreSolution 워크스페이스를 준비하세요.',
     HELP_LABEL: '도움이 필요하신가요?',
+    PANEL: {
+      ARIA_LABEL: 'Trinity 브랜드 패널',
+      NETWORK_ARIA: '멀티 테넌트 네트워크 구조 일러스트',
+      VALUE_PROP_TITLE: '여러 테넌트, 하나의 플랫폼',
+      VALUE_PROP_DESC: 'Trinity에서 CoreSolution 기반 비즈니스 운영을 통합하세요.',
+      STEP_LABEL: 'STEP',
+      STEP_OF: 'OF',
+      STATS: [
+        { value: '500+', label: '활성 테넌트' },
+        { value: '99.9%', label: '가동률' },
+        { value: '24/7', label: '운영 지원' },
+      ],
+    },
     STEP_HEADERS: {
       1: {
         title: '기본 정보를 입력해 주세요',
@@ -277,6 +302,56 @@ export const TRINITY_CONSTANTS = {
     ORDER_MANAGEMENT: '주문 관리',
   },
   
+  /** Step3 Pricing v2 — UI 전용 (API planId 매핑은 기존 로직 유지) */
+  PRICING: {
+    BILLING_CYCLE: {
+      MONTHLY: 'MONTHLY',
+      YEARLY: 'YEARLY',
+    },
+    VARIANT: {
+      STARTER: 'starter',
+      POPULAR: 'popular',
+      ENTERPRISE: 'enterprise',
+    },
+    YEARLY_DISCOUNT_RATE: 0.2,
+    LABELS: {
+      BILLING_CYCLE_ARIA: '결제 주기 선택',
+      BILLING_MONTHLY: '월간',
+      BILLING_YEARLY: '연간',
+      BILLING_DISCOUNT: '20% 할인',
+      TRUST_BADGES_ARIA: '보안·인증 마크',
+      SELECTED: '✓ 선택됨',
+      SELECT_PLAN: '선택하기',
+      POPULAR_BADGE: '가장 인기',
+      PERIOD_MONTHLY: '월',
+      PERIOD_YEARLY: '년',
+    },
+    TRUST_BADGES: [
+      { key: 'iso27001', label: 'ISO 27001', iconSrc: '/assets/badge-iso27001.svg' },
+      { key: 'soc2', label: 'SOC 2', iconSrc: '/assets/badge-soc2.svg' },
+      { key: 'gdpr', label: 'GDPR', iconSrc: '/assets/badge-gdpr.svg' },
+      { key: 'kisaIsms', label: 'KISA-ISMS', iconSrc: '/assets/badge-kisa-isms.svg' },
+    ],
+    PLAN_META: {
+      starter: {
+        variant: 'starter' as const,
+        iconSrc: '/assets/icon-plan-starter.svg',
+        fallbackFeatures: ['기본 기능', '최대 10명 사용자', '기본 지원'],
+      },
+      pro: {
+        variant: 'popular' as const,
+        iconSrc: '/assets/icon-plan-pro.svg',
+        badgeLabel: '가장 인기',
+        fallbackFeatures: ['ERP 포함', '최대 50명 사용자', '우선 지원'],
+      },
+      enterprise: {
+        variant: 'enterprise' as const,
+        iconSrc: '/assets/icon-plan-enterprise.svg',
+        fallbackFeatures: ['모든 기능', '무제한 사용자', '전담 지원'],
+      },
+    },
+  },
+
   // 이메일 도메인 목록
   EMAIL_DOMAINS: [
     '@gmail.com',

@@ -137,11 +137,11 @@
 
 .trinity-onboarding-v2__shell .trinity-onboarding__grid-button--active {
   background-color: var(--trinity-v2-chip-selected-bg);
-  border-color: var(--trinity-v2-chip-selected-bg);
+  border-color: var(--trinity-v2-chip-selected-border);
 }
 
 .trinity-onboarding-v2__shell .trinity-onboarding__grid-button--active .trinity-onboarding__grid-button-title {
-  color: var(--trinity-v2-step-active-text);
+  color: var(--trinity-v2-accent-dark);
 }
 
 .trinity-onboarding-v2__shell .trinity-onboarding__template-card {
@@ -158,7 +158,7 @@
 }
 
 .trinity-onboarding-v2__shell .trinity-onboarding__template-card--selected {
-  border-color: var(--trinity-v2-chip-selected-bg);
+  border-color: var(--trinity-v2-chip-selected-border);
   background-color: var(--trinity-v2-chip-selected-bg);
   box-shadow: none;
 }
@@ -166,7 +166,7 @@
 .trinity-onboarding-v2__shell .trinity-onboarding__template-card--selected .trinity-onboarding__template-card-title,
 .trinity-onboarding-v2__shell .trinity-onboarding__template-card--selected .trinity-onboarding__template-card-description,
 .trinity-onboarding-v2__shell .trinity-onboarding__template-card--selected .trinity-onboarding__text-secondary {
-  color: var(--trinity-v2-step-active-text);
+  color: var(--trinity-v2-accent-dark);
 }
 
 .trinity-onboarding-v2__shell .trinity-onboarding__template-card-check {

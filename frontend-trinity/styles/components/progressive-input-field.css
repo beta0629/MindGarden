@@ -65,7 +65,7 @@
   width: 100%;
   padding: var(--spacing-md) var(--spacing-lg);
   border: 1px solid var(--trinity-v2-step-inactive-border);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--trinity-v2-radius-md);
   font-size: var(--font-size-md);
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -232,7 +232,7 @@
   justify-content: center;
   gap: var(--spacing-xs);
   border: 2px solid var(--trinity-v2-accent);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--trinity-v2-radius-md);
   background-color: var(--bg-primary);
   color: var(--trinity-v2-accent);
   cursor: pointer;

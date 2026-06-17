@@ -3,26 +3,23 @@
 import { Suspense, type ReactNode } from "react";
 import OnboardingSidePanel from "./OnboardingSidePanel";
 import { OnboardingLayoutProvider } from "./OnboardingLayoutContext";
-import "../../styles/components/onboarding-layout.css";
 
 interface OnboardingLayoutClientProps {
   children: ReactNode;
 }
 
-/**
- * 온보딩 v2 Split 레이아웃 — mockup 40/60 (좌 navy / 우 white)
- */
 export default function OnboardingLayoutClient({
   children,
 }: OnboardingLayoutClientProps) {
   return (
     <OnboardingLayoutProvider>
-      <div className="trinity-onboarding-split">
+      <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 w-full overflow-hidden font-sans text-slate-900">
         <OnboardingSidePanel />
-        <main className="trinity-onboarding-split__main">
+        <main className="flex-1 w-full lg:w-3/5 overflow-y-auto relative bg-white">
           <Suspense
             fallback={
-              <div className="trinity-onboarding-split__loading">
+              <div className="flex items-center justify-center min-h-screen text-slate-500">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
                 페이지 로딩 중...
               </div>
             }

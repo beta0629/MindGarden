@@ -721,6 +721,33 @@
   cursor: not-allowed;
 }
 
+/* 서브도메인: 행 전체 기준 absolute 체크는 중복 확인 버튼과 겹침 → 숨기고 성공 메시지에 인라인 */
+.trinity-progressive-field__input-wrapper:has(.trinity-onboarding__subdomain-field) .trinity-progressive-field__checkmark {
+  display: none;
+}
+
+.trinity-onboarding__subdomain-field .trinity-onboarding__success-text {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.25rem);
+  margin-bottom: 0;
+}
+
+.trinity-onboarding__subdomain-field .trinity-onboarding__success-text::before {
+  content: '✓';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+  color: var(--text-inverse, #fff);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold, 700);
+}
+
 /* 이메일 인증 섹션 */
 .trinity-onboarding__verification-section {
   margin-top: 1rem;

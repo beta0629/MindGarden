@@ -15,6 +15,8 @@ import {
   createSubscription,
   sendEmailVerificationCode,
   verifyEmailCode,
+  sendSmsVerificationCode,
+  verifySmsCode,
   checkEmailDuplicate,
   checkSubdomainDuplicate,
   type OnboardingCreateRequest,
@@ -25,6 +27,11 @@ import {
 import { generateUUID } from "../utils/uuid";
 import { SESSION_STORAGE_KEYS, TRINITY_CONSTANTS } from "../constants/trinity";
 import { getDefaultRiskLevel, getRegionCodes, type CommonCode } from "../utils/commonCodeUtils";
+import {
+  buildOtpSentMessage,
+  normalizeKoreanMobileDigits,
+  validatePhoneFormat,
+} from "../utils/phoneUtils";
 
 export interface OnboardingFormData {
   tenantName: string;
@@ -83,6 +90,13 @@ export const useOnboarding = () => {
   const [emailVerificationCode, setEmailVerificationCode] = useState("");
   const [emailVerificationSending, setEmailVerificationSending] = useState(false);
   const [emailVerificationVerifying, setEmailVerificationVerifying] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneVerificationCode, setPhoneVerificationCode] = useState("");
+  const [phoneVerificationSending, setPhoneVerificationSending] = useState(false);
+  const [phoneVerificationVerifying, setPhoneVerificationVerifying] = useState(false);
+  const [phoneVerificationTimeLeft, setPhoneVerificationTimeLeft] = useState<number | null>(null);
+  const [phoneFormatError, setPhoneFormatError] = useState<string | null>(null);
+  const [phoneOtpSentMessage, setPhoneOtpSentMessage] = useState<string | null>(null);
   const [emailDuplicateChecked, setEmailDuplicateChecked] = useState(false);
   const [emailDuplicateChecking, setEmailDuplicateChecking] = useState(false);
   const [emailDuplicateError, setEmailDuplicateError] = useState<string | null>(null);
@@ -161,6 +175,24 @@ export const useOnboarding = () => {
 
     return () => clearInterval(timer);
   }, [emailVerificationTimeLeft]);
+
+  // 휴대폰 인증 코드 타이머
+  useEffect(() => {
+    if (phoneVerificationTimeLeft === null || phoneVerificationTimeLeft <= 0) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setPhoneVerificationTimeLeft((prev) => {
+        if (prev === null || prev <= 1) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [phoneVerificationTimeLeft]);
 
   // 재발송 쿨다운 타이머
   useEffect(() => {
@@ -400,7 +432,104 @@ export const useOnboarding = () => {
     return skipFlag === undefined || skipFlag === 'true' || skipFlag === '1';
   };
 
-  // 이메일 인증 코드 발송
+  // 휴대폰 인증 건너뛰기 (개발 환경)
+  const shouldSkipPhoneVerification = () => {
+    if (!isDevelopment()) {
+      return false;
+    }
+    const skipFlag = process.env.NEXT_PUBLIC_SKIP_PHONE_VERIFICATION;
+    return skipFlag === undefined || skipFlag === 'true' || skipFlag === '1';
+  };
+
+  const handleSendPhoneVerificationCode = async (phone: string) => {
+    const validation = validatePhoneFormat(phone);
+    if (!validation.valid) {
+      setPhoneFormatError(validation.error || TRINITY_CONSTANTS.MESSAGES.ERROR_PHONE_INVALID);
+      return;
+    }
+
+    try {
+      setPhoneVerificationSending(true);
+      setError(null);
+      setPhoneOtpSentMessage(null);
+
+      const normalizedPhone = normalizeKoreanMobileDigits(phone);
+
+      if (shouldSkipPhoneVerification()) {
+        console.log('[개발 모드] 휴대폰 인증 코드 발송 건너뛰기:', normalizedPhone);
+        setPhoneVerified(true);
+        setPhoneVerificationTimeLeft(null);
+        setCanResendCode(false);
+        setResendCooldown(0);
+        return;
+      }
+
+      const result = await sendSmsVerificationCode(
+        normalizedPhone,
+        TRINITY_CONSTANTS.OTP.PURPOSE_SIGNUP
+      );
+      setPhoneOtpSentMessage(buildOtpSentMessage(result.deliveryChannel));
+      setPhoneVerificationTimeLeft(TRINITY_CONSTANTS.OTP.TTL_SECONDS);
+      setCanResendCode(false);
+      setResendCooldown(TRINITY_CONSTANTS.OTP.RESEND_COOLDOWN_SECONDS);
+    } catch (err) {
+      console.error('인증번호 발송 실패:', err);
+      setError(err instanceof Error ? err.message : TRINITY_CONSTANTS.MESSAGES.SMS_SEND_FAILED);
+    } finally {
+      setPhoneVerificationSending(false);
+    }
+  };
+
+  const handleVerifyPhoneCode = async (phone: string, code: string) => {
+    const validation = validatePhoneFormat(phone);
+    if (!validation.valid) {
+      setPhoneFormatError(validation.error || TRINITY_CONSTANTS.MESSAGES.ERROR_PHONE_INVALID);
+      return;
+    }
+
+    if (!code || code.length !== TRINITY_CONSTANTS.OTP.CODE_LENGTH) {
+      setError(TRINITY_CONSTANTS.MESSAGES.ERROR_OTP_REQUIRED);
+      return;
+    }
+
+    try {
+      setPhoneVerificationVerifying(true);
+      setError(null);
+
+      const normalizedPhone = normalizeKoreanMobileDigits(phone);
+
+      if (shouldSkipPhoneVerification()) {
+        console.log('[개발 모드] 휴대폰 인증 코드 검증 건너뛰기:', normalizedPhone);
+        setPhoneVerified(true);
+        setPhoneVerificationCode('');
+        setPhoneVerificationTimeLeft(null);
+        setVerificationAttempts(0);
+        return;
+      }
+
+      await verifySmsCode(normalizedPhone, code);
+      setPhoneVerified(true);
+      setPhoneVerificationCode('');
+      setPhoneVerificationTimeLeft(null);
+      setVerificationAttempts(0);
+      setPhoneOtpSentMessage(null);
+    } catch (err) {
+      console.error('인증번호 검증 실패:', err);
+      setVerificationAttempts((prev) => prev + 1);
+      setError(err instanceof Error ? err.message : TRINITY_CONSTANTS.MESSAGES.SMS_VERIFY_FAILED);
+    } finally {
+      setPhoneVerificationVerifying(false);
+    }
+  };
+
+  const resetPhoneVerification = () => {
+    setPhoneVerified(false);
+    setPhoneVerificationCode('');
+    setPhoneVerificationTimeLeft(null);
+    setPhoneOtpSentMessage(null);
+  };
+
+  // 이메일 인증 코드 발송 (레거시 — 선택 이메일 필드용, Step1에서 미사용)
   const handleSendEmailVerificationCode = async (email: string) => {
     try {
       setEmailVerificationSending(true);
@@ -497,8 +626,12 @@ export const useOnboarding = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tenantName || !formData.businessType || !formData.contactEmail || !formData.planId) {
-      setError(TRINITY_CONSTANTS.MESSAGES.ERROR_REQUIRED_FIELDS);
+    if (!formData.tenantName || !formData.businessType || !formData.contactPhone || !phoneVerified || !formData.planId) {
+      setError(
+        !phoneVerified
+          ? TRINITY_CONSTANTS.MESSAGES.ERROR_PHONE_VERIFY_REQUIRED
+          : TRINITY_CONSTANTS.MESSAGES.ERROR_REQUIRED_FIELDS
+      );
       return;
     }
 
@@ -511,10 +644,11 @@ export const useOnboarding = () => {
     setError(null);
 
     try {
+      const normalizedPhone = normalizeKoreanMobileDigits(formData.contactPhone);
       const request: OnboardingCreateRequest = {
         tenantId: undefined,
         tenantName: formData.tenantName,
-        requestedBy: formData.contactEmail,
+        requestedBy: normalizedPhone,
         riskLevel: defaultRiskLevel as "LOW" | "MEDIUM" | "HIGH", // 공통 코드에서 동적으로 가져온 값
         businessType: formData.businessType,
         regionCode: formData.regionCode || undefined,
@@ -524,7 +658,9 @@ export const useOnboarding = () => {
           ? { captchaToken: captchaToken.trim() }
           : {}),
         checklistJson: JSON.stringify({
-          contactPhone: formData.contactPhone,
+          contactPhone: normalizedPhone,
+          phoneVerified: true,
+          contactEmail: formData.contactEmail?.trim() || undefined,
           planId: formData.planId,
           adminPassword: formData.adminPassword,
           paymentMethodId: formData.paymentMethodId,
@@ -600,9 +736,24 @@ export const useOnboarding = () => {
     setCanResendCode,
     resendCooldown,
     setResendCooldown,
+
+    // Phone verification
+    phoneVerified,
+    setPhoneVerified,
+    phoneVerificationCode,
+    setPhoneVerificationCode,
+    phoneVerificationSending,
+    phoneVerificationVerifying,
+    phoneVerificationTimeLeft,
+    setPhoneVerificationTimeLeft,
+    phoneFormatError,
+    setPhoneFormatError,
+    phoneOtpSentMessage,
+    resetPhoneVerification,
     
     // Methods
     validateEmailFormat,
+    validatePhoneFormat,
     loadPricingPlans,
     loadBusinessCategories,
     loadBusinessCategoryItems,
@@ -612,6 +763,8 @@ export const useOnboarding = () => {
     checkEmailDuplicate,
     sendEmailVerificationCode: handleSendEmailVerificationCode,
     verifyEmailCode: handleVerifyEmailCode,
+    sendPhoneVerificationCode: handleSendPhoneVerificationCode,
+    verifyPhoneCode: handleVerifyPhoneCode,
     createPaymentMethod,
     createSubscription,
     

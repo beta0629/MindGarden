@@ -76,22 +76,18 @@ export default function OnboardingPage() {
     paymentOption,
     setPaymentOption,
     customerKey,
-    emailFormatError,
-    setEmailFormatError,
-    emailDuplicateChecked,
-    setEmailDuplicateChecked,
-    emailDuplicateChecking,
-    setEmailDuplicateChecking,
-    emailDuplicateError,
-    setEmailDuplicateError,
-    emailVerified,
-    setEmailVerified,
-    emailVerificationCode,
-    setEmailVerificationCode,
-    emailVerificationSending,
-    emailVerificationVerifying,
-    emailVerificationTimeLeft,
-    setEmailVerificationTimeLeft,
+    phoneFormatError,
+    setPhoneFormatError,
+    phoneVerified,
+    setPhoneVerified,
+    phoneVerificationCode,
+    setPhoneVerificationCode,
+    phoneVerificationSending,
+    phoneVerificationVerifying,
+    phoneVerificationTimeLeft,
+    setPhoneVerificationTimeLeft,
+    phoneOtpSentMessage,
+    resetPhoneVerification,
     resendCooldown,
     verificationAttempts,
     setVerificationAttempts,
@@ -102,9 +98,8 @@ export default function OnboardingPage() {
     loadRegionCodes,
     regionCodes,
     handleSubmit,
-    checkEmailDuplicate,
-    sendEmailVerificationCode,
-    verifyEmailCode,
+    sendPhoneVerificationCode,
+    verifyPhoneCode,
     createPaymentMethod,
     subdomainDuplicateChecked,
     subdomainDuplicateChecking,
@@ -247,12 +242,9 @@ export default function OnboardingPage() {
                 setFormData(prev => ({
                   ...prev,
                   contactEmail: userEmail,
-                  // 필요한 경우 다른 필드도 채울 수 있음
                 }));
-                // 이메일 인증 완료 처리 (이미 로그인된 사용자이므로)
-                setEmailVerified(true);
                 
-                // 진행 중인 온보딩 요청 조회
+                // 진행 중인 온보딩 요청 조회 (레거시: 이메일 기준)
                 loadExistingOnboardingRequests(userEmail);
               }, 0);
             }
@@ -280,7 +272,7 @@ export default function OnboardingPage() {
     };
 
     checkOnboardingAccess();
-  }, [router, setFormData, setEmailVerified, showWelcome]);
+  }, [router, setFormData, showWelcome]);
 
   // 진행 중인 온보딩 요청 조회
   const loadExistingOnboardingRequests = async (email: string) => {
@@ -341,7 +333,6 @@ export default function OnboardingPage() {
         ...prev,
         contactEmail: userEmail
       }));
-      setEmailVerified(true);
       // 진행 중인 온보딩 요청 조회
       loadExistingOnboardingRequests(userEmail);
     }
@@ -467,26 +458,23 @@ export default function OnboardingPage() {
                 formData={formData}
                 setFormData={setFormData}
                 onStepComplete={() => setStep(2)}
-                emailFormatError={emailFormatError}
-                emailDuplicateChecked={emailDuplicateChecked}
-                emailDuplicateChecking={emailDuplicateChecking}
-                emailDuplicateError={emailDuplicateError}
-                emailVerified={emailVerified}
-                emailVerificationCode={emailVerificationCode}
-                emailVerificationSending={emailVerificationSending}
-                emailVerificationVerifying={emailVerificationVerifying}
-                emailVerificationTimeLeft={emailVerificationTimeLeft}
+                phoneFormatError={phoneFormatError}
+                phoneVerified={phoneVerified}
+                phoneVerificationCode={phoneVerificationCode}
+                phoneVerificationSending={phoneVerificationSending}
+                phoneVerificationVerifying={phoneVerificationVerifying}
+                phoneVerificationTimeLeft={phoneVerificationTimeLeft}
                 resendCooldown={resendCooldown}
-                setEmailVerified={setEmailVerified}
-                setEmailVerificationCode={setEmailVerificationCode}
-                setEmailDuplicateChecked={setEmailDuplicateChecked}
-                setEmailDuplicateError={setEmailDuplicateError}
-                setEmailVerificationTimeLeft={setEmailVerificationTimeLeft}
+                phoneOtpSentMessage={phoneOtpSentMessage}
+                setPhoneVerified={setPhoneVerified}
+                setPhoneVerificationCode={setPhoneVerificationCode}
+                setPhoneVerificationTimeLeft={setPhoneVerificationTimeLeft}
                 setVerificationAttempts={setVerificationAttempts}
-                sendEmailVerificationCode={sendEmailVerificationCode}
-                verifyEmailCode={verifyEmailCode}
+                sendPhoneVerificationCode={sendPhoneVerificationCode}
+                verifyPhoneCode={verifyPhoneCode}
+                resetPhoneVerification={resetPhoneVerification}
                 validateEmailFormat={validateEmailFormat}
-                checkEmailDuplicate={checkEmailDuplicate}
+                setPhoneFormatError={setPhoneFormatError}
                 subdomainDuplicateChecked={subdomainDuplicateChecked}
                 subdomainDuplicateChecking={subdomainDuplicateChecking}
                 subdomainDuplicateError={subdomainDuplicateError}
@@ -496,7 +484,6 @@ export default function OnboardingPage() {
                 setSubdomainPreview={setSubdomainPreview}
                 checkSubdomainDuplicate={checkSubdomainDuplicate}
                 setError={setError}
-                setEmailFormatError={setEmailFormatError}
                 regionCodes={regionCodes}
                 loadRegionCodes={loadRegionCodes}
               />

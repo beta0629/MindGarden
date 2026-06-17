@@ -683,6 +683,44 @@
   margin-top: 0.5rem;
 }
 
+.trinity-onboarding__phone-actions {
+  margin-top: 0.5rem;
+}
+
+.trinity-onboarding__phone-input {
+  width: 100%;
+}
+
+.trinity-onboarding__subdomain-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, 0.5rem);
+}
+
+.trinity-onboarding__subdomain-row {
+  display: flex;
+  gap: var(--spacing-sm, 0.5rem);
+}
+
+.trinity-onboarding__subdomain-row .trinity-onboarding__input {
+  flex: 1;
+}
+
+.trinity-onboarding__subdomain-check-button {
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
+  background-color: var(--color-primary, #007aff);
+  color: var(--color-text-inverse, #fff);
+  border: none;
+  border-radius: var(--radius-sm, 0.375rem);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.trinity-onboarding__subdomain-check-button:disabled {
+  background-color: var(--color-text-muted, #ccc);
+  cursor: not-allowed;
+}
+
 /* 이메일 인증 섹션 */
 .trinity-onboarding__verification-section {
   margin-top: 1rem;

@@ -21,7 +21,7 @@ export default function Step5Completion({ formData }: Step5CompletionProps) {
           {TRINITY_CONSTANTS.MESSAGES.ONBOARDING_SUCCESS}
         </h3>
         <p className={COMPONENT_CSS.ONBOARDING.SUCCESS_DETAIL}>
-          신청하신 내용을 검토한 후 이메일로 연락드리겠습니다.
+          신청하신 내용을 검토한 후 연락드리겠습니다.
         </p>
         
         <div className={`${COMPONENT_CSS.ONBOARDING.FIELD} trinity-onboarding__completion-info`}>
@@ -31,11 +31,11 @@ export default function Step5Completion({ formData }: Step5CompletionProps) {
               <strong>회사명:</strong> {formData.tenantName}
             </div>
             <div className="trinity-onboarding__info-item">
-              <strong>이메일:</strong> {formData.contactEmail}
+              <strong>휴대폰:</strong> {formData.contactPhone}
             </div>
-            {formData.contactPhone && (
+            {formData.contactEmail && (
               <div className="trinity-onboarding__info-item">
-                <strong>연락처:</strong> {formData.contactPhone}
+                <strong>이메일:</strong> {formData.contactEmail}
               </div>
             )}
             {formData.businessType && (

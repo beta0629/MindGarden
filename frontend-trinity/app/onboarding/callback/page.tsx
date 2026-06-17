@@ -12,6 +12,7 @@ import {
 import { COMPONENT_CSS } from "../../../constants/css-variables";
 import { createPaymentMethod, createOnboardingRequest, type OnboardingCreateRequest } from "../../../utils/api";
 import { getDefaultRiskLevel } from "../../../utils/commonCodeUtils";
+import { normalizeKoreanMobileDigits } from "../../../utils/phoneUtils";
 
 function toStr(v: unknown): string {
   return typeof v === "string" ? v : "";
@@ -34,6 +35,7 @@ export default function OnboardingCallbackPage() {
   const customerKey = searchParams.get("customerKey");
   const tenantName = searchParams.get("tenantName");
   const contactEmail = searchParams.get("contactEmail");
+  const contactPhone = searchParams.get("contactPhone");
   const errorCode = searchParams.get("code") || searchParams.get("errorCode"); // 토스페이먼츠는 'code' 파라미터 사용
   const errorMessage = searchParams.get("message") || searchParams.get("errorMessage"); // 토스페이먼츠는 'message' 파라미터 사용
   
@@ -152,7 +154,7 @@ export default function OnboardingCallbackPage() {
 
       if (statusParam === "success") {
         // 성공 처리
-        if (!customerKey || !tenantName || !contactEmail) {
+        if (!customerKey || !tenantName || (!contactPhone && !contactEmail)) {
           setError("필수 정보가 누락되었습니다.");
           setStatus("fail");
           setLoading(false);
@@ -195,12 +197,17 @@ export default function OnboardingCallbackPage() {
           // URL 파라미터에서 폼 데이터 보완
           const finalTenantName =
             toStr(formData.tenantName) || (tenantName ? decodeURIComponent(tenantName) : "");
+          const finalContactPhoneRaw =
+            toStr(formData.contactPhone) || (contactPhone ? decodeURIComponent(contactPhone) : "");
+          const finalRequestedBy = finalContactPhoneRaw
+            ? normalizeKoreanMobileDigits(finalContactPhoneRaw)
+            : toStr(formData.contactEmail) || (contactEmail ? decodeURIComponent(contactEmail) : "");
           const finalContactEmail =
             toStr(formData.contactEmail) || (contactEmail ? decodeURIComponent(contactEmail) : "");
-          
-          if (!finalTenantName || !finalContactEmail) {
-            const errorMsg = `필수 정보가 누락되었습니다. tenantName: ${finalTenantName ? '있음' : '없음'}, contactEmail: ${finalContactEmail ? '있음' : '없음'}`;
-            console.error("[OnboardingCallback]", errorMsg, { formData, tenantName, contactEmail });
+
+          if (!finalTenantName || !finalRequestedBy) {
+            const errorMsg = `필수 정보가 누락되었습니다. tenantName: ${finalTenantName ? '있음' : '없음'}, contactPhone: ${finalRequestedBy ? '있음' : '없음'}`;
+            console.error("[OnboardingCallback]", errorMsg, { formData, tenantName, contactPhone, contactEmail });
             setError(errorMsg);
             setStatus("fail");
             setLoading(false);
@@ -238,13 +245,15 @@ export default function OnboardingCallbackPage() {
           const request: OnboardingCreateRequest = {
             tenantId: null,
             tenantName: finalTenantName,
-            requestedBy: finalContactEmail,
+            requestedBy: finalRequestedBy,
             riskLevel: defaultRiskLevel as "LOW" | "MEDIUM" | "HIGH", // 공통 코드에서 동적으로 가져온 값
             businessType: toStr(formData.businessType),
             adminPassword: toStr(formData.adminPassword), // 관리자 계정 비밀번호 (checklistJson에 포함)
             ...(storedCaptchaToken ? { captchaToken: storedCaptchaToken } : {}),
             checklistJson: JSON.stringify({
-              contactPhone: toStr(formData.contactPhone),
+              contactPhone: finalRequestedBy,
+              phoneVerified: true,
+              contactEmail: finalContactEmail || undefined,
               planId: toStr(formData.planId),
               adminPassword: toStr(formData.adminPassword), // 관리자 계정 비밀번호 (승인 시 사용)
               paymentMethodId,

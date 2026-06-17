@@ -353,7 +353,7 @@ export async function apiDelete<T>(endpoint: string): Promise<T> {
 export interface OnboardingCreateRequest {
   tenantId?: string | null; // 옵션: 신규 생성 시 null
   tenantName: string;
-  requestedBy: string; // 이메일 주소
+  requestedBy: string; // 인증된 휴대폰 번호(정규화) 또는 연락처 식별자
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   checklistJson?: string;
   businessType: string;
@@ -992,6 +992,44 @@ export async function verifyEmailCode(email: string, code: string): Promise<void
   if (!response.success) {
     throw new Error(response.message || '인증 코드가 올바르지 않습니다.');
   }
+}
+
+export interface SmsSendResult {
+  message?: string;
+  deliveryChannel?: string;
+}
+
+export interface SmsVerifyResult {
+  message?: string;
+  phoneNumber?: string;
+}
+
+/**
+ * 휴대폰 SMS 인증번호 발송 — AuthController#sendSmsCode
+ */
+export async function sendSmsVerificationCode(
+  phoneNumber: string,
+  purpose: string = TRINITY_CONSTANTS.OTP.PURPOSE_SIGNUP
+): Promise<SmsSendResult> {
+  const data = await apiPost<SmsSendResult>(TRINITY_CONSTANTS.API_ENDPOINTS.SMS_SEND, {
+    phoneNumber,
+    purpose,
+  });
+  return data ?? {};
+}
+
+/**
+ * 휴대폰 SMS 인증번호 검증 — AuthController#verifySmsCode
+ */
+export async function verifySmsCode(
+  phoneNumber: string,
+  verificationCode: string
+): Promise<SmsVerifyResult> {
+  const data = await apiPost<SmsVerifyResult>(TRINITY_CONSTANTS.API_ENDPOINTS.SMS_VERIFY, {
+    phoneNumber,
+    verificationCode,
+  });
+  return data ?? {};
 }
 
 /**

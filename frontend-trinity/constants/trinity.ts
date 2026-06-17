@@ -212,6 +212,25 @@ export const TRINITY_CONSTANTS = {
     PRICING_PLANS: '/api/v1/ops/plans/active',
     /** 공개 Turnstile site key (서버 mindgarden.security.captcha.site-key) */
     CAPTCHA_SITE_KEY: '/api/v1/onboarding/captcha/site-key',
+    /** Core Solution AuthController — 휴대폰 SMS OTP */
+    SMS_SEND: '/api/v1/auth/sms/send',
+    SMS_VERIFY: '/api/v1/auth/sms/verify',
+  },
+
+  /** SMS OTP — AuthController SSOT (5분 TTL · 6자리) */
+  OTP: {
+    CODE_LENGTH: 6,
+    TTL_SECONDS: 300,
+    RESEND_COOLDOWN_SECONDS: 60,
+    PURPOSE_SIGNUP: 'SIGNUP_VERIFICATION',
+    DELIVERY_CHANNEL_PUSH: 'PUSH',
+    DELIVERY_CHANNEL_SMS: 'SMS',
+    DELIVERY_CHANNEL_SMS_STUB: 'SMS_STUB',
+  },
+
+  PHONE: {
+    DISPLAY_MAX_LENGTH: 13,
+    PLACEHOLDER: '010-1234-5678',
   },
   
   // 메시지
@@ -238,7 +257,19 @@ export const TRINITY_CONSTANTS = {
     PLACEHOLDER_COMPANY_NAME: '회사명을 입력하세요',
     PLACEHOLDER_EMAIL: '이메일을 입력하세요',
     PLACEHOLDER_EMAIL_LOCAL: '이메일 아이디',
-    PLACEHOLDER_PHONE: '연락처를 입력하세요',
+    PLACEHOLDER_PHONE: '010-1234-5678',
+    PLACEHOLDER_EMAIL_OPTIONAL: 'example@email.com (선택)',
+    // 휴대폰 관련
+    ERROR_PHONE_REQUIRED: '휴대폰 번호를 입력해주세요.',
+    ERROR_PHONE_INVALID: '올바른 휴대폰 번호를 입력해주세요. (예: 010-1234-5678)',
+    ERROR_PHONE_VERIFY_REQUIRED: '휴대폰 인증을 완료해주세요.',
+    ERROR_OTP_REQUIRED: '6자리 인증번호를 입력해주세요.',
+    PHONE_VERIFY_SUCCESS: '✓ 휴대폰 인증이 완료되었습니다.',
+    OTP_SENT_PUSH: '앱 푸시 알림으로 인증번호가 발송되었습니다.',
+    OTP_SENT_SMS: 'SMS로 인증번호가 발송되었습니다.',
+    OTP_SENT_DEFAULT: '인증번호가 전송되었습니다.',
+    SMS_SEND_FAILED: '인증번호 발송에 실패했습니다.',
+    SMS_VERIFY_FAILED: '인증번호가 올바르지 않습니다.',
     // 결제 수단 관련
     ERROR_PAYMENT_METHOD_REQUIRED: '결제 수단을 등록해주세요.',
     PAYMENT_METHOD_REGISTERED: '✅ 결제 수단이 등록되었습니다.',

@@ -23,6 +23,15 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f2f2f7;
   --bg-dark: #1d1d1f;
+
+  /* Trinity v2 — 온보딩 Dark Panel */
+  --trinity-v2-panel-bg: #0f172a;
+
+  /* Trinity 로고 크기 */
+  --logo-height-header: 2rem;
+  --logo-max-width-header: 11.25rem;
+  --logo-height-onboarding-panel: 2rem;
+  --logo-max-width-onboarding-panel: 12.5rem;
   
   /* 간격 */
   --spacing-xs: 0.25rem;

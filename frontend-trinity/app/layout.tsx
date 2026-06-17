@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { TRINITY_CONSTANTS } from "../constants/trinity";
 // TossPaymentsScript 제거 - npm 패키지(@tosspayments/tosspayments-sdk)를 사용하여 동적으로 로드
 
 export const metadata: Metadata = {
   title: "Trinity - CoreSolution | 소상공인을 위한 통합 솔루션",
+  icons: {
+    icon: TRINITY_CONSTANTS.ASSETS.LOGO.ICON,
+  },
   description: "Trinity의 CoreSolution은 소상공인이 필요한 시스템을 저비용으로 활용할 수 있도록 제공하는 통합 플랫폼입니다. 대기업 수준의 ERP 시스템을 저렴한 비용으로 제공합니다.",
   keywords: "소상공인, ERP, 통합 솔루션, CoreSolution, Trinity, 재무관리, 회계시스템, 정산시스템, 권한관리",
   authors: [{ name: "Trinity" }],

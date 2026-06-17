@@ -33,41 +33,17 @@
 }
 
 .trinity-header__brand-logo {
-  width: 2.5rem;
-  height: 2.5rem;
-  background-color: var(--color-primary);
-  border-radius: var(--border-radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-inverse);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-xl);
+  display: block;
+  height: var(--logo-height-header);
+  width: auto;
+  max-width: var(--logo-max-width-header);
   flex-shrink: 0;
 }
 
 @media (min-width: 640px) {
   .trinity-header__brand-logo {
-    width: 3rem;
-    height: 3rem;
-    font-size: var(--font-size-xxl);
+    height: 2.5rem;
   }
-}
-
-.trinity-header__brand-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.trinity-header__brand-name {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-}
-
-.trinity-header__brand-subtitle {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
 }
 
 .trinity-header__nav {

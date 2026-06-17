@@ -1,0 +1,53 @@
+/**
+ * 온보딩 Split 레이아웃 — 좌측 Dark Panel (40%)
+ */
+
+.trinity-onboarding-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--full-height);
+}
+
+.trinity-onboarding-layout__panel {
+  display: none;
+}
+
+.trinity-onboarding-layout__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.trinity-onboarding-layout__logo {
+  display: block;
+  width: auto;
+  height: var(--logo-height-onboarding-panel);
+  max-width: var(--logo-max-width-onboarding-panel);
+}
+
+@media (min-width: 1024px) {
+  .trinity-onboarding-layout {
+    flex-direction: row;
+  }
+
+  .trinity-onboarding-layout__panel {
+    display: flex;
+    flex: 0 0 40%;
+    align-items: flex-start;
+    background-color: var(--trinity-v2-panel-bg);
+    padding: var(--spacing-xxl);
+    box-sizing: border-box;
+  }
+
+  .trinity-onboarding-layout__main {
+    flex: 0 0 60%;
+  }
+}
+
+.trinity-onboarding-layout__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: var(--full-height);
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+}

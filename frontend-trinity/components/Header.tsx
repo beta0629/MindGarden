@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { COMPONENT_CSS } from "../constants/css-variables";
-import { TRINITY_CONSTANTS } from "../constants/trinity";
+import TrinityLogo from "./TrinityLogo";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,13 +20,7 @@ export default function Header() {
     <header className={COMPONENT_CSS.HEADER.CONTAINER}>
       <div className="trinity-header__container">
         <Link href="/" className={COMPONENT_CSS.HEADER.BRAND} onClick={closeMenu}>
-          <div className="trinity-header__brand-logo">
-            {TRINITY_CONSTANTS.COMPANY.NAME.charAt(0)}
-          </div>
-          <div className="trinity-header__brand-text">
-            <div className="trinity-header__brand-name">{TRINITY_CONSTANTS.COMPANY.NAME}</div>
-            <div className="trinity-header__brand-subtitle">CoreSolution</div>
-          </div>
+          <TrinityLogo variant="primary" className="trinity-header__brand-logo" />
         </Link>
         <button
           className="trinity-header__menu-button"

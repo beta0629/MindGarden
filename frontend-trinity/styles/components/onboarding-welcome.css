@@ -9,18 +9,27 @@
 
 .trinity-onboarding-welcome {
   width: 100%;
-  min-height: 60vh;
+  min-height: var(--full-height);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: center;
-  padding: var(--spacing-xxl) var(--spacing-lg);
+  padding: var(--trinity-v2-content-padding);
   animation: fadeIn 0.6s var(--animation-ease-out);
+  box-sizing: border-box;
 }
 
 .trinity-onboarding-welcome__content {
   max-width: 500px;
   width: 100%;
   text-align: center;
+  margin: 0 auto;
+}
+
+.trinity-onboarding-welcome__eyebrow {
+  display: block;
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
 }
 
 .trinity-onboarding-welcome__icon {
@@ -93,10 +102,10 @@
 }
 
 .trinity-onboarding-welcome__feature-icon {
-  width: 24px;
-  height: 24px;
+  width: var(--icon-size-medium);
+  height: var(--icon-size-medium);
   border-radius: 50%;
-  background-color: var(--color-success);
+  background-color: var(--trinity-v2-accent);
   color: var(--text-inverse);
   display: flex;
   align-items: center;
@@ -108,9 +117,12 @@
 
 .trinity-onboarding-welcome__start-button {
   width: 100%;
+  max-width: 20rem;
+  margin: 0 auto;
   min-height: 56px;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
+  background-color: var(--trinity-v2-accent);
   animation: slideInUp 0.6s var(--animation-ease-out) 0.6s both;
   position: relative;
   overflow: hidden;

@@ -24,6 +24,28 @@
   --bg-secondary: #f2f2f7;
   --bg-dark: #1d1d1f;
   --trinity-v2-panel-bg: #0f172a;
+  --trinity-v2-accent: #2563eb;
+  --trinity-v2-accent-light: #3b82f6;
+  --trinity-v2-text-on-panel: #ffffff;
+  --trinity-v2-text-muted-on-panel: rgba(255, 255, 255, 0.55);
+  --trinity-v2-watermark-opacity: 0.07;
+  --trinity-v2-main-bg: #ffffff;
+  --trinity-v2-eyebrow-color: #2563eb;
+  --trinity-v2-title-color: #0f172a;
+  --trinity-v2-step-active-bg: #2563eb;
+  --trinity-v2-step-active-text: #ffffff;
+  --trinity-v2-step-inactive-border: #d1d5db;
+  --trinity-v2-step-inactive-text: #9ca3af;
+  --trinity-v2-step-line: #e5e7eb;
+  --trinity-v2-step-label-active: #111827;
+  --trinity-v2-content-padding: var(--spacing-xxl);
+  --trinity-v2-form-max-width: 36rem;
+  --trinity-v2-stepper-width: 12rem;
+  --trinity-v2-panel-split: 40%;
+  --trinity-v2-main-split: 60%;
+  --trinity-v2-input-focus-ring: rgba(37, 99, 235, 0.25);
+  --trinity-v2-chip-selected-bg: #2563eb;
+  --trinity-v2-chip-border: #e5e7eb;
 
   /* 로고 크기 — Trinity F1 */
   --logo-height-header: 2rem;

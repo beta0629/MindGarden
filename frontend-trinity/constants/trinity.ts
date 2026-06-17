@@ -123,6 +123,44 @@ export const TRINITY_CONSTANTS = {
     { id: 4, label: '결제 수단', description: '결제 수단 등록' },
     { id: 5, label: '신청 완료', description: '신청 완료' },
   ],
+
+  /** v2 세로 Stepper — Step4 hidden, Step3→6 skip 반영 */
+  ONBOARDING_STEPS_V2: [
+    { displayId: 1, stepKey: 1, label: '기본 정보' },
+    { displayId: 2, stepKey: 2, label: '업종 선택' },
+    { displayId: 3, stepKey: 3, label: '요금제 선택' },
+    { displayId: 4, stepKey: 6, label: '대시보드 설정' },
+    { displayId: 5, stepKey: 5, label: '신청 완료' },
+  ],
+
+  ONBOARDING_V2: {
+    WELCOME_EYEBROW: 'WELCOME TO TRINITY',
+    DEFAULT_TITLE: '서비스 신청을 시작합니다',
+    DEFAULT_SUBTITLE: '간단한 단계를 따라 CoreSolution 워크스페이스를 준비하세요.',
+    HELP_LABEL: '도움이 필요하신가요?',
+    STEP_HEADERS: {
+      1: {
+        title: '기본 정보를 입력해 주세요',
+        subtitle: '생성될 기관의 대표 정보를 설정합니다.',
+      },
+      2: {
+        title: '업종을 선택해 주세요',
+        subtitle: '서비스를 제공할 업종을 선택해주세요.',
+      },
+      3: {
+        title: '요금제를 선택해 주세요',
+        subtitle: '기관 규모에 맞는 요금제를 선택해주세요.',
+      },
+      5: {
+        title: '신청이 완료되었습니다',
+        subtitle: '내부 검토를 거쳐 1~2 영업일 내에 승인될 예정입니다.',
+      },
+      6: {
+        title: '대시보드를 설정해 주세요',
+        subtitle: '역할별 대시보드 템플릿을 선택해주세요.',
+      },
+    },
+  },
   
   // 온보딩 단계 상수
   ONBOARDING_STEP: {

@@ -10,35 +10,44 @@ interface OnboardingWelcomeProps {
 }
 
 /**
- * 온보딩 환영 화면
- * iOS/Android 설정 화면 스타일의 첫 인사 화면
- * 
- * @author Trinity Team
- * @version 1.0.0
- * @since 2025-12-09
+ * 온보딩 v2 환영 화면 — CoreSolution H2 (B안 제품 구간)
  */
 export default function OnboardingWelcome({ onStart }: OnboardingWelcomeProps) {
   return (
-    <div className="trinity-onboarding-welcome">
+    <div className="trinity-onboarding-v2__shell trinity-onboarding-welcome">
+      <div className="trinity-onboarding-v2__top">
+        <a
+          href={`mailto:${TRINITY_CONSTANTS.COMPANY.EMAIL}`}
+          className="trinity-onboarding-v2__help"
+        >
+          {TRINITY_CONSTANTS.ONBOARDING_V2.HELP_LABEL}
+        </a>
+      </div>
+
       <div className="trinity-onboarding-welcome__content">
+        <span className="trinity-onboarding-v2__eyebrow trinity-onboarding-welcome__eyebrow">
+          {TRINITY_CONSTANTS.ONBOARDING_V2.WELCOME_EYEBROW}
+        </span>
+
         <div className="trinity-onboarding-welcome__icon">
           <CoreSolutionLogo
             variant="primary"
             className="trinity-core-solution-logo--welcome"
           />
         </div>
-        
+
         <h1 className="trinity-onboarding-welcome__title">
           환영합니다
         </h1>
-        
+
         <p className="trinity-onboarding-welcome__subtitle">
           {TRINITY_CONSTANTS.BRANDING.CORESOLUTION_NAME} 서비스 신청을 시작합니다
         </p>
-        
+
         <div className="trinity-onboarding-welcome__description">
           <p>
-            간단한 정보만 입력하시면<br />
+            간단한 정보만 입력하시면
+            <br />
             빠르게 서비스 신청을 완료하실 수 있습니다.
           </p>
         </div>

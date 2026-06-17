@@ -6,16 +6,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Header from "../../components/Header";
 import { COMPONENT_CSS } from "../../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { apiGet, getPublicOnboardingRequests, type OnboardingRequest } from "../../utils/api";
-import ProgressSteps from "../../components/onboarding/ProgressSteps";
-import AnimatedProgressBar from "../../components/onboarding/AnimatedProgressBar";
 import StepTransition from "../../components/onboarding/StepTransition";
 import ErrorMessage from "../../components/onboarding/ErrorMessage";
-import Step1BasicInfo from "../../components/onboarding/Step1BasicInfo";
 import Step1BasicInfoProgressive from "../../components/onboarding/Step1BasicInfoProgressive";
 import Step2BusinessType from "../../components/onboarding/Step2BusinessType";
 import Step3PricingPlan from "../../components/onboarding/Step3PricingPlan";
@@ -27,6 +23,20 @@ import OnboardingCaptchaSection, {
 } from "../../components/onboarding/OnboardingCaptchaSection";
 import OnboardingLogin from "../../components/onboarding/OnboardingLogin";
 import OnboardingWelcome from "../../components/onboarding/OnboardingWelcome";
+import OnboardingContentShell from "../../components/onboarding/OnboardingContentShell";
+
+function getStepHeader(step: number): { title: string; subtitle: string } {
+  const headers = TRINITY_CONSTANTS.ONBOARDING_V2.STEP_HEADERS as Record<
+    number,
+    { title: string; subtitle: string }
+  >;
+  return (
+    headers[step] ?? {
+      title: TRINITY_CONSTANTS.ONBOARDING_V2.DEFAULT_TITLE,
+      subtitle: TRINITY_CONSTANTS.ONBOARDING_V2.DEFAULT_SUBTITLE,
+    }
+  );
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -324,122 +334,107 @@ export default function OnboardingPage() {
   // 접근 권한 확인 중이면 로딩 표시
   if (accessChecking) {
     return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className="trinity-onboarding__loading-container">
-            접근 권한 확인 중...
-          </div>
-        </main>
+      <div className="trinity-onboarding-v2__loading">
+        접근 권한 확인 중...
       </div>
     );
   }
 
   // 환영 화면 표시
   if (showWelcome) {
-    return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-            <OnboardingWelcome onStart={handleWelcomeStart} />
-          </div>
-        </main>
-      </div>
-    );
+    return <OnboardingWelcome onStart={handleWelcomeStart} />;
   }
 
   // 기존 온보딩 요청 선택 화면 표시
   if (showExistingRequests && existingRequests.length > 0) {
     return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-            <h2 className="trinity-onboarding__title">진행 중인 온보딩</h2>
-            <p className="trinity-onboarding__description">
-              진행 중인 온보딩 요청이 있습니다. 이어서 진행하시겠습니까?
-            </p>
-            
-            <div className="trinity-onboarding__existing-requests">
-              {existingRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="trinity-onboarding__request-card"
-                  onClick={() => handleContinueExistingRequest(request)}
-                >
-                  <div className="trinity-onboarding__request-title">
-                    {request.tenantName || '테넌트 이름 없음'}
-                  </div>
-                  <div className="trinity-onboarding__request-meta">
-                    신청일: {new Date(request.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                  <div className="trinity-onboarding__request-status">
-                    상태: 대기 중
-                  </div>
-                </div>
-              ))}
-              
-              <button
-                type="button"
-                onClick={() => setShowExistingRequests(false)}
-                className={`${COMPONENT_CSS.ONBOARDING.BUTTON_SECONDARY} trinity-onboarding__new-start-button`}
+      <OnboardingContentShell showStepper={false}>
+        <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+          <h2 className="trinity-onboarding__title">진행 중인 온보딩</h2>
+          <p className="trinity-onboarding__description">
+            진행 중인 온보딩 요청이 있습니다. 이어서 진행하시겠습니까?
+          </p>
+
+          <div className="trinity-onboarding__existing-requests">
+            {existingRequests.map((request) => (
+              <div
+                key={request.id}
+                className="trinity-onboarding__request-card"
+                onClick={() => handleContinueExistingRequest(request)}
               >
-                새로 시작하기
-              </button>
-            </div>
+                <div className="trinity-onboarding__request-title">
+                  {request.tenantName || "테넌트 이름 없음"}
+                </div>
+                <div className="trinity-onboarding__request-meta">
+                  신청일:{" "}
+                  {new Date(request.createdAt).toLocaleString("ko-KR", {
+                    timeZone: "Asia/Seoul",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+                <div className="trinity-onboarding__request-status">
+                  상태: 대기 중
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setShowExistingRequests(false)}
+              className={`${COMPONENT_CSS.ONBOARDING.BUTTON_SECONDARY} trinity-onboarding__new-start-button`}
+            >
+              새로 시작하기
+            </button>
           </div>
-        </main>
-      </div>
+        </div>
+      </OnboardingContentShell>
     );
   }
 
   // 로그인 화면 표시
   if (showLogin) {
     return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-            <OnboardingLogin 
-              onLoginSuccess={handleLoginSuccess}
-              onSkipLogin={handleSkipLogin}
-            />
-          </div>
-        </main>
-      </div>
+      <OnboardingContentShell showStepper={false}>
+        <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+          <OnboardingLogin
+            onLoginSuccess={handleLoginSuccess}
+            onSkipLogin={handleSkipLogin}
+          />
+        </div>
+      </OnboardingContentShell>
     );
   }
 
   // 접근 권한 오류가 있으면 오류 메시지 표시
   if (accessError) {
     return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-            <ErrorMessage message={accessError} />
-            <p className="trinity-onboarding__error-message">
-              잠시 후 홈으로 이동합니다...
-            </p>
-          </div>
-        </main>
-      </div>
+      <OnboardingContentShell showStepper={false}>
+        <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+          <ErrorMessage message={accessError} />
+          <p className="trinity-onboarding__error-message">
+            잠시 후 홈으로 이동합니다...
+          </p>
+        </div>
+      </OnboardingContentShell>
     );
   }
 
+  const stepHeader = getStepHeader(step);
+
   return (
-    <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-      <Header />
-      <main className="container">
-        <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-          <h2 className="trinity-onboarding__title">서비스 신청</h2>
+    <OnboardingContentShell
+      currentStep={step}
+      title={stepHeader.title}
+      subtitle={stepHeader.subtitle}
+    >
+      <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+        <ErrorMessage message={error} />
 
-          <ErrorMessage message={error} />
-
-          <AnimatedProgressBar currentStep={step} totalSteps={TRINITY_CONSTANTS.ONBOARDING_STEPS.length} />
-
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
             <StepTransition step={1} currentStep={step} direction={transitionDirection}>
               {step === 1 && (
                 <Step1BasicInfoProgressive
@@ -617,7 +612,6 @@ export default function OnboardingPage() {
             )}
           </form>
         </div>
-      </main>
-    </div>
+    </OnboardingContentShell>
   );
 }

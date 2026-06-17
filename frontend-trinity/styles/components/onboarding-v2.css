@@ -1,0 +1,187 @@
+/**
+ * Trinity Onboarding v2 — 메인 콘텐츠 영역 (40/60 split 우측)
+ */
+
+.trinity-onboarding-v2__shell {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--full-height);
+  background-color: var(--trinity-v2-main-bg);
+  padding: var(--trinity-v2-content-padding);
+  box-sizing: border-box;
+}
+
+.trinity-onboarding-v2__top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-lg);
+}
+
+.trinity-onboarding-v2__help {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.trinity-onboarding-v2__help:hover {
+  color: var(--trinity-v2-accent);
+}
+
+.trinity-onboarding-v2__header {
+  margin-bottom: var(--spacing-xxl);
+  max-width: var(--trinity-v2-form-max-width);
+}
+
+.trinity-onboarding-v2__eyebrow {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--trinity-v2-eyebrow-color);
+  margin-bottom: var(--spacing-sm);
+}
+
+.trinity-onboarding-v2__title {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--trinity-v2-title-color);
+  margin: 0 0 var(--spacing-md);
+  line-height: 1.25;
+}
+
+.trinity-onboarding-v2__subtitle {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.trinity-onboarding-v2__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  flex: 1;
+}
+
+.trinity-onboarding-v2__form-area {
+  flex: 1;
+  min-width: 0;
+  max-width: var(--trinity-v2-form-max-width);
+}
+
+.trinity-onboarding-v2__form-area .trinity-onboarding__title {
+  display: none;
+}
+
+.trinity-onboarding-v2__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+}
+
+/* v2 컨텍스트 — 카드형 폼 → 플랫 */
+.trinity-onboarding-v2__shell .trinity-onboarding__form {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.trinity-onboarding-v2__shell.trinity-onboarding {
+  background-color: var(--trinity-v2-main-bg);
+  min-height: var(--full-height);
+}
+
+/* Step 타이틀 v2 */
+.trinity-onboarding-v2__shell .trinity-onboarding__step-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--trinity-v2-title-color);
+  margin-bottom: var(--spacing-sm);
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__step-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* 그리드 버튼 v2 — 칩 스타일 */
+.trinity-onboarding-v2__shell .trinity-onboarding__grid-button {
+  border: 1px solid var(--trinity-v2-chip-border);
+  border-radius: var(--border-radius-md);
+  background-color: var(--bg-primary);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__grid-button:hover {
+  border-color: var(--trinity-v2-accent-light);
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__grid-button--active {
+  background-color: var(--trinity-v2-chip-selected-bg);
+  border-color: var(--trinity-v2-chip-selected-bg);
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__grid-button--active .trinity-onboarding__grid-button-title {
+  color: var(--trinity-v2-step-active-text);
+}
+
+/* Primary 버튼 v2 accent */
+.trinity-onboarding-v2__shell .trinity-onboarding__button,
+.trinity-onboarding-v2__shell .trinity-progressive-fields__nav-button--next {
+  background-color: var(--trinity-v2-accent);
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__button:hover:not(:disabled),
+.trinity-onboarding-v2__shell .trinity-progressive-fields__nav-button--next:hover:not(:disabled) {
+  background-color: var(--trinity-v2-accent-light);
+}
+
+/* 네비게이션 v2 */
+.trinity-onboarding-v2__shell .trinity-progressive-fields__navigation {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--trinity-v2-chip-border);
+}
+
+@media (min-width: 1024px) {
+  .trinity-onboarding-v2__body {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--spacing-xxl);
+  }
+
+  .trinity-onboarding-v2__form-area {
+    flex: 1;
+    max-width: none;
+  }
+
+  .trinity-onboarding-v2__header {
+    max-width: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .trinity-onboarding-v2__shell {
+    padding: var(--spacing-lg);
+  }
+
+  .trinity-onboarding-v2__title {
+    font-size: var(--font-size-xxl);
+  }
+
+  .trinity-onboarding-v2__top {
+    margin-bottom: var(--spacing-md);
+  }
+}

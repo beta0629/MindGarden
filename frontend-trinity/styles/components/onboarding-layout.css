@@ -1,5 +1,5 @@
 /**
- * 온보딩 Split 레이아웃 — 좌측 Dark Panel (40%)
+ * 온보딩 Split 레이아웃 — 좌측 Dark Panel (40%) + 우측 Main (60%)
  */
 
 .trinity-onboarding-layout {
@@ -15,6 +15,16 @@
 .trinity-onboarding-layout__main {
   flex: 1;
   min-width: 0;
+  background-color: var(--trinity-v2-main-bg);
+}
+
+.trinity-onboarding-layout__panel-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  overflow: hidden;
 }
 
 .trinity-onboarding-layout__logo {
@@ -22,6 +32,24 @@
   width: auto;
   height: var(--logo-height-onboarding-panel);
   max-width: var(--logo-max-width-onboarding-panel);
+  position: relative;
+  z-index: 2;
+}
+
+.trinity-onboarding-layout__watermark {
+  position: absolute;
+  bottom: calc(var(--spacing-xxl) * -1);
+  right: calc(var(--spacing-xxl) * -1);
+  width: min(28rem, 80%);
+  opacity: var(--trinity-v2-watermark-opacity);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.trinity-onboarding-layout__watermark img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 @media (min-width: 1024px) {
@@ -31,15 +59,15 @@
 
   .trinity-onboarding-layout__panel {
     display: flex;
-    flex: 0 0 40%;
-    align-items: flex-start;
+    flex: 0 0 var(--trinity-v2-panel-split);
+    align-items: stretch;
     background-color: var(--trinity-v2-panel-bg);
-    padding: var(--spacing-xxl);
+    padding: var(--trinity-v2-content-padding);
     box-sizing: border-box;
   }
 
   .trinity-onboarding-layout__main {
-    flex: 0 0 60%;
+    flex: 0 0 var(--trinity-v2-main-split);
   }
 }
 

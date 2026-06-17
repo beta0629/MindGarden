@@ -80,7 +80,9 @@
   min-width: 0;
 }
 
-.trinity-onboarding-v2__form-area .trinity-onboarding__title {
+.trinity-onboarding-v2__form-area .trinity-onboarding__title,
+.trinity-onboarding-v2__form-area .trinity-onboarding__step-title,
+.trinity-onboarding-v2__form-area .trinity-onboarding__step-description {
   display: none;
 }
 
@@ -124,6 +126,9 @@
   border-radius: var(--border-radius-md);
   background-color: var(--bg-primary);
   transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  min-height: 48px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  flex-direction: row;
 }
 
 .trinity-onboarding-v2__shell .trinity-onboarding__grid-button:hover {
@@ -137,6 +142,36 @@
 
 .trinity-onboarding-v2__shell .trinity-onboarding__grid-button--active .trinity-onboarding__grid-button-title {
   color: var(--trinity-v2-step-active-text);
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__template-card {
+  border: 1px solid var(--trinity-v2-chip-border);
+  border-radius: var(--border-radius-md);
+  background-color: var(--bg-primary);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__template-card:hover {
+  border-color: var(--trinity-v2-accent-light);
+  box-shadow: none;
+  transform: none;
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__template-card--selected {
+  border-color: var(--trinity-v2-chip-selected-bg);
+  background-color: var(--trinity-v2-chip-selected-bg);
+  box-shadow: none;
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__template-card--selected .trinity-onboarding__template-card-title,
+.trinity-onboarding-v2__shell .trinity-onboarding__template-card--selected .trinity-onboarding__template-card-description,
+.trinity-onboarding-v2__shell .trinity-onboarding__template-card--selected .trinity-onboarding__text-secondary {
+  color: var(--trinity-v2-step-active-text);
+}
+
+.trinity-onboarding-v2__shell .trinity-onboarding__template-card-check {
+  background-color: var(--bg-primary);
+  color: var(--trinity-v2-accent);
 }
 
 .trinity-onboarding-v2__shell .trinity-onboarding__button,

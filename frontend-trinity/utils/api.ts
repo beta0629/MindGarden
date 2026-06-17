@@ -280,7 +280,7 @@ async function apiRequest<T>(
         });
       }
 
-      if (isOnboardingEndpoint && (response.status === 400 || response.status === 401 || response.status === 403)) {
+      if (isOnboardingEndpoint(endpoint) && (response.status === 400 || response.status === 401 || response.status === 403)) {
         if (endpoint.includes('/business-categories') || endpoint.includes('/pricing-plans')) {
           if (process.env.NODE_ENV === 'development') {
             console.warn('[DEBUG] Returning empty array for business-categories/pricing-plans endpoint (status:', response.status, '):', endpoint);
@@ -313,7 +313,7 @@ async function apiRequest<T>(
         errorMessage = `API 요청 실패: ${response.status} ${response.statusText}`;
       }
 
-      if (!isOnboardingEndpoint) {
+      if (!isOnboardingEndpoint(endpoint)) {
         console.error('API Error:', {
           status: response.status,
           statusText: response.statusText,

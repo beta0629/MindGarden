@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import OnboardingSidePanel from "../../components/onboarding/OnboardingSidePanel";
+import "../../styles/components/onboarding-layout.css";
 
 /**
  * 온보딩 페이지 레이아웃
@@ -10,20 +12,19 @@ export default function OnboardingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        fontSize: '18px',
-        color: '#666'
-      }}>
-        페이지 로딩 중...
+    <div className="trinity-onboarding-layout">
+      <OnboardingSidePanel />
+      <div className="trinity-onboarding-layout__main">
+        <Suspense
+          fallback={
+            <div className="trinity-onboarding-layout__loading">
+              페이지 로딩 중...
+            </div>
+          }
+        >
+          {children}
+        </Suspense>
       </div>
-    }>
-      {children}
-    </Suspense>
+    </div>
   );
 }
-

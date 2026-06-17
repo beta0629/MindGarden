@@ -3,11 +3,16 @@
 import Link from "next/link";
 import { COMPONENT_CSS } from "../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../constants/trinity";
+import CoreSolutionLogo from "./CoreSolutionLogo";
 
 export default function Hero() {
   return (
     <section className={COMPONENT_CSS.HERO.SECTION}>
       <div className="container">
+        <CoreSolutionLogo
+          variant="primary"
+          className="trinity-core-solution-logo--hero"
+        />
         <h2 className={COMPONENT_CSS.HERO.TITLE}>
           소상공인을 위한<br />
           통합 솔루션
@@ -27,4 +32,3 @@ export default function Hero() {
     </section>
   );
 }
-

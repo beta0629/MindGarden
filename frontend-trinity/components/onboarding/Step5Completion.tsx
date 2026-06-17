@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { COMPONENT_CSS } from "../../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
+import CoreSolutionLogo from "../CoreSolutionLogo";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
 
 interface Step5CompletionProps {
@@ -14,6 +15,7 @@ interface Step5CompletionProps {
 export default function Step5Completion({ formData }: Step5CompletionProps) {
   return (
     <div className={COMPONENT_CSS.ONBOARDING.STEP}>
+      <CoreSolutionLogo variant="primary" className="trinity-core-solution-logo--step" />
       <div className={COMPONENT_CSS.ONBOARDING.SUCCESS}>
         <h3 className="trinity-onboarding__step-title">
           {TRINITY_CONSTANTS.MESSAGES.ONBOARDING_SUCCESS}

@@ -7,6 +7,7 @@ import Section from "../components/Section";
 import Card from "../components/Card";
 import PricingCard from "../components/PricingCard";
 import Footer from "../components/Footer";
+import CoreSolutionLogo from "../components/CoreSolutionLogo";
 import { TRINITY_CONSTANTS } from "../constants/trinity";
 import { COMPONENT_CSS } from "../constants/css-variables";
 import { getActivePricingPlans, type PricingPlan } from "../utils/api";
@@ -76,6 +77,10 @@ export default function HomePage() {
       <Hero />
       
       <Section id="about" title="회사 소개">
+        <CoreSolutionLogo
+          variant="primary"
+          className="trinity-core-solution-logo--product"
+        />
         <div className="trinity-section__text">
           <strong>{TRINITY_CONSTANTS.COMPANY.NAME}</strong>는 소상공인을 위한 혁신적인 솔루션을 제공하는 기업입니다.
         </div>

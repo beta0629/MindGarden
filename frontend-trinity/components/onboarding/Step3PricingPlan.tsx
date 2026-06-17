@@ -4,6 +4,7 @@
 
 import { COMPONENT_CSS } from "../../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
+import CoreSolutionLogo from "../CoreSolutionLogo";
 import type { PricingPlan } from "../../utils/api";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
 
@@ -36,6 +37,7 @@ export default function Step3PricingPlan({
 
   return (
     <div className={COMPONENT_CSS.ONBOARDING.STEP}>
+      <CoreSolutionLogo variant="primary" className="trinity-core-solution-logo--step" />
       <h3 className="trinity-onboarding__step-title">요금제 선택</h3>
       <p className="trinity-onboarding__step-description">
         원하시는 요금제를 선택해주세요.

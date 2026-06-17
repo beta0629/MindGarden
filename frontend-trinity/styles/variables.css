@@ -23,6 +23,25 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f2f2f7;
   --bg-dark: #1d1d1f;
+  --trinity-v2-panel-bg: #0f172a;
+
+  /* 로고 크기 — Trinity F1 */
+  --logo-height-header: 2rem;
+  --logo-max-width-header: 11.25rem;
+  --logo-height-onboarding-panel: 2rem;
+  --logo-max-width-onboarding-panel: 12.5rem;
+
+  /* 로고 크기 — CoreSolution G1 (B안 제품 구간) */
+  --logo-height-core-solution-hero: 2.5rem;
+  --logo-max-width-core-solution-hero: 14rem;
+  --logo-height-core-solution-welcome: 2.25rem;
+  --logo-max-width-core-solution-welcome: 12.5rem;
+  --logo-height-core-solution-step: 2rem;
+  --logo-max-width-core-solution-step: 11.25rem;
+  --logo-height-core-solution-product: 2rem;
+  --logo-max-width-core-solution-product: 11.25rem;
+  --logo-height-core-solution-powered-by: 1.25rem;
+  --logo-max-width-core-solution-powered-by: 8.75rem;
   
   /* 간격 */
   --spacing-xs: 0.25rem;

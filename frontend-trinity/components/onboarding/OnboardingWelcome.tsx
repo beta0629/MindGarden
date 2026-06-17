@@ -1,6 +1,8 @@
 "use client";
 
 import { COMPONENT_CSS } from "../../constants/css-variables";
+import { TRINITY_CONSTANTS } from "../../constants/trinity";
+import CoreSolutionLogo from "../CoreSolutionLogo";
 import "../../styles/components/onboarding-welcome.css";
 
 interface OnboardingWelcomeProps {
@@ -20,9 +22,10 @@ export default function OnboardingWelcome({ onStart }: OnboardingWelcomeProps) {
     <div className="trinity-onboarding-welcome">
       <div className="trinity-onboarding-welcome__content">
         <div className="trinity-onboarding-welcome__icon">
-          <div className="trinity-onboarding-welcome__icon-circle">
-            ✨
-          </div>
+          <CoreSolutionLogo
+            variant="primary"
+            className="trinity-core-solution-logo--welcome"
+          />
         </div>
         
         <h1 className="trinity-onboarding-welcome__title">
@@ -30,7 +33,7 @@ export default function OnboardingWelcome({ onStart }: OnboardingWelcomeProps) {
         </h1>
         
         <p className="trinity-onboarding-welcome__subtitle">
-          CoreSolution 서비스 신청을 시작합니다
+          {TRINITY_CONSTANTS.BRANDING.CORESOLUTION_NAME} 서비스 신청을 시작합니다
         </p>
         
         <div className="trinity-onboarding-welcome__description">
@@ -66,4 +69,3 @@ export default function OnboardingWelcome({ onStart }: OnboardingWelcomeProps) {
     </div>
   );
 }
-

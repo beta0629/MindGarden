@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { COMPONENT_CSS } from "../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../constants/trinity";
+import CoreSolutionLogo from "./CoreSolutionLogo";
 
 export default function Footer() {
   return (
@@ -12,7 +13,7 @@ export default function Footer() {
           <div>
             <h3 className={COMPONENT_CSS.FOOTER.TITLE}>{TRINITY_CONSTANTS.COMPANY.NAME_FULL}</h3>
             <p className="trinity-footer__text">{TRINITY_CONSTANTS.COMPANY.DESCRIPTION}</p>
-            <p className="trinity-footer__text" style={{ marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-sm)', opacity: 0.8 }}>
+            <p className="trinity-footer__text trinity-footer__text--muted">
               {TRINITY_CONSTANTS.BRANDING.CORESOLUTION_DESCRIPTION}
             </p>
           </div>
@@ -53,12 +54,17 @@ export default function Footer() {
         </div>
         <div className="trinity-footer__divider">
           <p>{TRINITY_CONSTANTS.COMPANY.COPYRIGHT}</p>
-          <p style={{ marginTop: 'var(--spacing-xs)', fontSize: 'var(--font-size-xs)', opacity: 0.7 }}>
-            {TRINITY_CONSTANTS.BRANDING.POWERED_BY}
-          </p>
+          <div className="trinity-footer__powered-by">
+            <span className="trinity-footer__powered-by-label">
+              {TRINITY_CONSTANTS.BRANDING.POWERED_BY}
+            </span>
+            <CoreSolutionLogo
+              variant="inverse"
+              className="trinity-core-solution-logo--powered-by"
+            />
+          </div>
         </div>
       </div>
     </footer>
   );
 }
-

@@ -27,6 +27,22 @@ export const TRINITY_CONSTANTS = {
     WEBSITE: 'https://e-trinity.co.kr',
     COPYRIGHT: '© 2025 Trinity. All rights reserved.',
   },
+
+  // 브랜드 자산 (public/assets)
+  ASSETS: {
+    LOGO: {
+      PRIMARY: '/assets/trinity-logo-primary.svg',
+      INVERSE: '/assets/trinity-logo-inverse.svg',
+      ICON: '/assets/trinity-logo-icon.svg',
+      ALT: 'Trinity',
+    },
+    CORE_SOLUTION_LOGO: {
+      PRIMARY: '/assets/core-solution-logo-primary.svg',
+      INVERSE: '/assets/core-solution-logo-inverse.svg',
+      ICON: '/assets/core-solution-logo-icon.svg',
+      ALT: 'CoreSolution',
+    },
+  },
   
   // CoreSolution 브랜딩
   BRANDING: {

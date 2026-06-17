@@ -79,6 +79,7 @@ jobs:
       health_urls: |
         https://apply.dev.e-trinity.co.kr
         https://dev.e-trinity.co.kr
+      health_require_all_urls: true
     secrets:
       ssh_host: ${{ secrets.DEV_SERVER_HOST }}
       ssh_user: ${{ secrets.DEV_SERVER_USER }}

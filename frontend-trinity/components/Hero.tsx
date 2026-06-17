@@ -1,75 +1,66 @@
 "use client";
 
 import Link from "next/link";
-import { V2Button } from "./ui/V2Button";
 import CoreSolutionLogo from "./CoreSolutionLogo";
 
 export default function Hero() {
   return (
-    <section className="pt-32 pb-20 md:pt-40 md:pb-28 bg-slate-900 overflow-hidden relative border-b border-slate-800">
-      {/* Background decoration */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-1/2 -right-1/4 w-[1000px] h-[1000px] rounded-full bg-blue-600/20 blur-[120px] opacity-70"></div>
-        <div className="absolute -bottom-1/2 -left-1/4 w-[800px] h-[800px] rounded-full bg-indigo-600/20 blur-[100px] opacity-60"></div>
+    <section className="pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden relative border-b border-slate-800 bg-slate-900" aria-label="Hero">
+      {/* Background radial gradient meshes to match mockup */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{
+        background: `
+          radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 100% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 50% 100%, rgba(30, 64, 175, 0.15) 0%, transparent 50%),
+          #0f172a
+        `
+      }}>
       </div>
 
-      <div className="container mx-auto px-4 md:px-6 relative z-10 text-center max-w-5xl">
-        <div className="flex justify-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800/50 border border-slate-700 text-blue-400 text-sm font-medium backdrop-blur-sm">
-            <span className="flex h-2 w-2 rounded-full bg-blue-500 shadow-blue-500/50 shadow-lg"></span>
-            새로운 Core Solution 2.0 출시
-          </div>
-        </div>
-        
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-tight mb-6">
-          기업 성장의 <br className="hidden md:block"/>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">새로운 표준을 제시합니다</span>
-        </h1>
-        
-        <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-          대기업 수준의 ERP 시스템을 저렴한 비용으로. 복잡한 시스템 구축 없이 즉시 도입 가능한 클라우드 기반 통합 솔루션입니다.
-        </p>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-          <Link href="/onboarding" className="inline-flex justify-center items-center px-8 py-4 text-lg font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/40 hover:shadow-lg hover:shadow-blue-600/50 transition-all w-full sm:w-auto">
-            무료로 시작하기
-          </Link>
-          <Link href="#services" className="inline-flex justify-center items-center px-8 py-4 text-lg font-semibold rounded-xl text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all w-full sm:w-auto">
-            서비스 알아보기
-          </Link>
-        </div>
-
-        {/* Dashboard Preview mockup wrapper */}
-        <div className="relative mx-auto w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-700/50 bg-slate-900 overflow-hidden transform translate-y-4 hover:-translate-y-2 transition-transform duration-500">
-          <div className="h-12 bg-slate-800 border-b border-slate-700/50 flex items-center px-4">
-            <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-slate-600"></div>
-              <div className="w-3 h-3 rounded-full bg-slate-600"></div>
-              <div className="w-3 h-3 rounded-full bg-slate-600"></div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1536px] relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+          
+          {/* Left Content */}
+          <div className="flex flex-col items-start text-left max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 border border-slate-700 text-blue-400 text-sm font-semibold tracking-wide backdrop-blur-sm mb-6">
+              새로운 Core Solution 2.0 출시
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl lg:text-[56px] font-extrabold text-white tracking-tight leading-[1.1] mb-6 flex flex-col gap-2">
+              <span className="block">마음을 돌보는</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">가장 안정적인 공간</span>
+            </h1>
+            
+            <p className="text-lg lg:text-xl text-slate-400 mb-10 leading-relaxed font-normal">
+              상담 기록부터 예약 관리까지, 원장님을 위한 완벽한 솔루션
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
+              <Link 
+                href="/onboarding" 
+                className="inline-flex justify-center items-center px-8 py-4 text-lg font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-500 shadow-[0_4px_14px_rgba(37,99,235,0.39)] hover:shadow-lg hover:-translate-y-0.5 transition-all outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              >
+                무료로 시작하기
+              </Link>
+              <Link 
+                href="#pricing" 
+                className="group inline-flex justify-center items-center px-8 py-4 text-lg font-semibold rounded-xl text-white bg-transparent border border-slate-700 hover:bg-slate-800 hover:border-blue-600 hover:text-blue-500 transition-all outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              >
+                <span>요금제 보기</span>
+                <span className="ml-2 transition-transform duration-200 group-hover:translate-x-1">→</span>
+              </Link>
             </div>
           </div>
-          <div className="bg-slate-900 w-full aspect-[16/10] flex items-center justify-center relative overflow-hidden">
-             <div className="absolute inset-0 flex">
-                {/* Sidebar */}
-                <div className="w-64 bg-slate-950 border-r border-slate-800 p-6 flex flex-col hidden md:flex">
-                  <div className="mb-8 opacity-90"><CoreSolutionLogo variant="inverse" /></div>
-                  <div className="space-y-4">
-                    <div className="h-10 bg-blue-600/10 border border-blue-500/20 rounded-lg w-full"></div>
-                    <div className="h-10 bg-slate-800/50 rounded-lg w-3/4"></div>
-                    <div className="h-10 bg-slate-800/50 rounded-lg w-5/6"></div>
-                  </div>
-                </div>
-                {/* Main */}
-                <div className="flex-1 bg-slate-900 p-8 flex flex-col">
-                   <div className="h-8 bg-slate-800 rounded w-1/3 mb-8"></div>
-                   <div className="flex gap-6 mb-8">
-                     <div className="h-32 bg-slate-800 rounded-xl flex-1 border border-slate-700/50"></div>
-                     <div className="h-32 bg-slate-800 rounded-xl flex-1 border border-slate-700/50"></div>
-                     <div className="h-32 bg-slate-800 rounded-xl flex-1 border border-slate-700/50"></div>
-                   </div>
-                   <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700/50"></div>
-                </div>
-             </div>
+
+          {/* Right Content - Media */}
+          <div className="w-full flex justify-center items-center min-w-0">
+            <img 
+              src="/assets/dashboard-preview.svg" 
+              alt="Core Solution 대시보드" 
+              className="w-full max-w-full lg:max-w-[720px] h-auto rounded-2xl border border-slate-700/50 shadow-2xl object-cover"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </div>
       </div>

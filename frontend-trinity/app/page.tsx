@@ -72,15 +72,22 @@ export default function HomePage() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {TRINITY_CONSTANTS.SERVICES.map((service) => (
-                <div key={service.id} className="bg-slate-800/50 border border-slate-700/50 p-8 rounded-2xl hover:bg-slate-800 transition-colors">
-                  <div className="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center text-2xl mb-6">
-                    {service.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-3">{service.title}</h3>
-                  <p className="text-slate-400 leading-relaxed">{service.description}</p>
-                </div>
-              ))}
+              {TRINITY_CONSTANTS.SERVICES.map((service, index) => {
+                // Map the emoji icons from TRINITY_CONSTANTS to the new SVGs
+                const svgIcons = [
+                  <img key="icon-1" src="/assets/icon-feature-multi-tenant.svg" alt="ERP" className="w-12 h-12" />,
+                  <img key="icon-2" src="/assets/icon-feature-automation.svg" alt="권한 관리" className="w-12 h-12" />,
+                  <img key="icon-3" src="/assets/icon-feature-analytics.svg" alt="쉬운 사용" className="w-12 h-12" />
+                ];
+                return (
+                  <FeatureCard
+                    key={service.id}
+                    icon={svgIcons[index] || <span className="text-2xl">{service.icon}</span>}
+                    title={service.title}
+                    description={service.description}
+                  />
+                );
+              })}
             </div>
           </div>
         </section>

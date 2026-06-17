@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
-import OnboardingVerticalStepper from "./OnboardingVerticalStepper";
+import OnboardingStepDots from "./OnboardingStepDots";
 
 interface OnboardingContentShellProps {
   children: React.ReactNode;
@@ -21,9 +21,15 @@ export default function OnboardingContentShell({
   title = TRINITY_CONSTANTS.ONBOARDING_V2.DEFAULT_TITLE,
   subtitle = TRINITY_CONSTANTS.ONBOARDING_V2.DEFAULT_SUBTITLE,
 }: OnboardingContentShellProps) {
+  const totalDisplaySteps = TRINITY_CONSTANTS.ONBOARDING_STEPS_V2.length;
+  // Map internal step (1,2,3,6,5) to displayStep (1,2,3,4,5)
+  const displayStep = TRINITY_CONSTANTS.ONBOARDING_STEPS_V2.find(
+    (s) => s.stepKey === currentStep
+  )?.displayId ?? 1;
+
   return (
-    <div className="flex flex-col min-h-screen px-6 py-12 md:px-16 lg:px-24 xl:px-32 relative bg-white">
-      <div className="w-full max-w-2xl mx-auto flex flex-col flex-1">
+    <div className="flex flex-col min-h-screen px-6 py-12 md:px-12 lg:px-16 xl:px-24 relative bg-white">
+      <div className="w-full max-w-[560px] mx-auto flex flex-col flex-1">
         
         <div className="flex justify-end mb-12">
           <Link
@@ -37,27 +43,26 @@ export default function OnboardingContentShell({
           </Link>
         </div>
 
-        <header className="mb-12">
-          <span className="block text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">
+        {showStepper && currentStep > 0 && (
+          <div className="mb-12">
+            <OnboardingStepDots totalSteps={totalDisplaySteps} currentStep={displayStep - 1} />
+          </div>
+        )}
+
+        <header className="mb-10">
+          <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 mb-3">
             {eyebrow}
           </span>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight leading-tight">
+          <h1 className="text-3xl lg:text-[32px] font-bold text-slate-900 mb-4 tracking-tight leading-[1.25]">
             {title}
           </h1>
-          <p className="text-lg text-slate-600 leading-relaxed">
+          <p className="text-base lg:text-lg text-slate-500 leading-[1.6] font-normal">
             {subtitle}
           </p>
         </header>
 
-        <div className="flex flex-col md:flex-row gap-12 flex-1">
-          {showStepper && currentStep > 0 && (
-            <div className="hidden md:block w-48 shrink-0">
-               <OnboardingVerticalStepper currentStep={currentStep} />
-            </div>
-          )}
-          <div className="flex-1 w-full min-w-0 pb-20">
-            {children}
-          </div>
+        <div className="flex-1 w-full min-w-0 pb-20">
+          {children}
         </div>
 
       </div>

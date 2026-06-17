@@ -13,9 +13,9 @@ export default function OnboardingLayoutClient({
 }: OnboardingLayoutClientProps) {
   return (
     <OnboardingLayoutProvider>
-      <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 w-full overflow-hidden font-sans text-slate-900">
+      <div className="flex flex-col md:flex-row min-h-screen bg-[#0f172a] md:bg-white w-full overflow-hidden font-sans text-slate-900">
         <OnboardingSidePanel />
-        <main className="flex-1 w-full lg:w-3/5 overflow-y-auto relative bg-white">
+        <main className="flex-1 w-full md:w-[60%] overflow-y-auto relative bg-white">
           <Suspense
             fallback={
               <div className="flex items-center justify-center min-h-screen text-slate-500">

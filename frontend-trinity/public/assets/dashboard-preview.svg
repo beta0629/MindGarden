@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <style>
+      :root {
+        --mg-color-background-main: #FAF9F7;
+        --mg-color-primary-main: #3D5246;
+        --mg-color-primary-light: #4A6354;
+        --mg-color-text-main: #2C2C2C;
+        --mg-color-text-secondary: #5C6B61;
+        --mg-color-surface-main: #F5F3EF;
+        --mg-color-border-main: #D4CFC8;
+        --mg-sidebar-bg: #2C2C2C;
+        --mg-sidebar-text: #E0E0E0;
+      }
+      .bg-main { fill: var(--mg-color-background-main, #FAF9F7); }
+      .bg-sidebar { fill: var(--mg-sidebar-bg, #2C2C2C); }
+      .bg-surface { fill: var(--mg-color-surface-main, #F5F3EF); }
+      .border-main { stroke: var(--mg-color-border-main, #D4CFC8); stroke-width: 1; }
+      .text-main { fill: var(--mg-color-text-main, #2C2C2C); font-family: 'Noto Sans KR', sans-serif; }
+      .text-secondary { fill: var(--mg-color-text-secondary, #5C6B61); font-family: 'Noto Sans KR', sans-serif; }
+      .text-sidebar { fill: var(--mg-sidebar-text, #E0E0E0); font-family: 'Noto Sans KR', sans-serif; }
+      .text-sidebar-active { fill: #FAF9F7; font-family: 'Noto Sans KR', sans-serif; font-weight: 600; }
+      .primary-fill { fill: var(--mg-color-primary-main, #3D5246); }
+      .primary-stroke { stroke: var(--mg-color-primary-main, #3D5246); }
+      .accent-bar { fill: var(--mg-color-primary-main, #3D5246); }
+      .shadow { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.05)); }
+      .chart-line { fill: none; stroke: var(--mg-color-primary-main, #3D5246); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .chart-area { fill: url(#chart-gradient); opacity: 0.2; }
+    </style>
+    <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3D5246" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#3D5246" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="chart-clip">
+      <rect x="220" y="240" width="540" height="100" />
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="500" class="bg-main" />
+
+  <!-- Sidebar -->
+  <rect width="180" height="500" class="bg-sidebar" />
+  
+  <!-- Logo -->
+  <rect x="20" y="24" width="24" height="24" rx="6" fill="#FAF9F7" opacity="0.9" />
+  <circle cx="32" cy="36" r="6" fill="#3D5246" />
+  <text x="56" y="41" class="text-sidebar" font-size="16" font-weight="700">Core Solution</text>
+
+  <!-- Sidebar Menu -->
+  <!-- Active Menu -->
+  <rect x="12" y="80" width="156" height="40" rx="8" class="primary-fill" />
+  <rect x="24" y="92" width="16" height="16" rx="4" fill="#FAF9F7" opacity="0.8" />
+  <text x="52" y="105" class="text-sidebar-active" font-size="14">Dashboard</text>
+
+  <!-- Inactive Menus -->
+  <rect x="24" y="142" width="16" height="16" rx="4" fill="#E0E0E0" opacity="0.5" />
+  <text x="52" y="155" class="text-sidebar" font-size="14" opacity="0.7">Tenants</text>
+
+  <rect x="24" y="192" width="16" height="16" rx="4" fill="#E0E0E0" opacity="0.5" />
+  <text x="52" y="205" class="text-sidebar" font-size="14" opacity="0.7">Workflows</text>
+
+  <rect x="24" y="242" width="16" height="16" rx="4" fill="#E0E0E0" opacity="0.5" />
+  <text x="52" y="255" class="text-sidebar" font-size="14" opacity="0.7">Analytics</text>
+
+  <rect x="24" y="292" width="16" height="16" rx="4" fill="#E0E0E0" opacity="0.5" />
+  <text x="52" y="305" class="text-sidebar" font-size="14" opacity="0.7">Settings</text>
+
+  <!-- Main Content Area -->
+  <!-- Header -->
+  <text x="212" y="40" class="text-secondary" font-size="12">Overview / Dashboard</text>
+  <text x="212" y="64" class="text-main" font-size="24" font-weight="600">Dashboard</text>
+  
+  <rect x="680" y="36" width="88" height="36" rx="8" class="primary-fill" />
+  <text x="724" y="59" fill="#FAF9F7" font-size="13" font-weight="600" text-anchor="middle" font-family="Noto Sans KR">Download</text>
+
+  <!-- Top KPI Cards -->
+  <!-- Card 1 -->
+  <rect x="212" y="96" width="174" height="88" rx="12" class="bg-surface border-main shadow" />
+  <rect x="212" y="116" width="4" height="48" rx="2" class="accent-bar" />
+  <text x="236" y="124" class="text-secondary" font-size="13">Total Tenants</text>
+  <text x="236" y="156" class="text-main" font-size="28" font-weight="700">1,240</text>
+  <text x="236" y="172" fill="#4A6354" font-size="11" font-weight="600">+12% from last month</text>
+
+  <!-- Card 2 -->
+  <rect x="402" y="96" width="174" height="88" rx="12" class="bg-surface border-main shadow" />
+  <rect x="402" y="116" width="4" height="48" rx="2" class="accent-bar" opacity="0.7" />
+  <text x="426" y="124" class="text-secondary" font-size="13">Active Workflows</text>
+  <text x="426" y="156" class="text-main" font-size="28" font-weight="700">8,530</text>
+  <text x="426" y="172" fill="#4A6354" font-size="11" font-weight="600">+5% from last month</text>
+
+  <!-- Card 3 -->
+  <rect x="592" y="96" width="174" height="88" rx="12" class="bg-surface border-main shadow" />
+  <rect x="592" y="116" width="4" height="48" rx="2" class="accent-bar" opacity="0.4" />
+  <text x="616" y="124" class="text-secondary" font-size="13">System Uptime</text>
+  <text x="616" y="156" class="text-main" font-size="28" font-weight="700">99.9%</text>
+  <text x="616" y="172" class="text-secondary" font-size="11">All systems operational</text>
+
+  <!-- Line Chart Section -->
+  <rect x="212" y="208" width="554" height="152" rx="12" class="bg-surface border-main shadow" />
+  <text x="236" y="236" class="text-main" font-size="16" font-weight="600">Monthly Activity</text>
+  
+  <!-- Chart Grid Lines -->
+  <line x1="236" y1="260" x2="742" y2="260" stroke="#D4CFC8" stroke-width="1" stroke-dasharray="4 4" />
+  <line x1="236" y1="290" x2="742" y2="290" stroke="#D4CFC8" stroke-width="1" stroke-dasharray="4 4" />
+  <line x1="236" y1="320" x2="742" y2="320" stroke="#D4CFC8" stroke-width="1" stroke-dasharray="4 4" />
+  
+  <!-- Chart Path -->
+  <path d="M 236 320 C 270 300, 300 310, 330 280 C 370 240, 400 290, 440 260 C 480 230, 510 250, 550 210 C 590 170, 620 220, 660 190 C 700 160, 720 150, 742 140 L 742 340 L 236 340 Z" class="chart-area" transform="translate(0, 10) scale(1, 0.8)" />
+  <path d="M 236 320 C 270 300, 300 310, 330 280 C 370 240, 400 290, 440 260 C 480 230, 510 250, 550 210 C 590 170, 620 220, 660 190 C 700 160, 720 150, 742 140" class="chart-line" transform="translate(0, 10) scale(1, 0.8)" />
+  
+  <!-- Data Points -->
+  <circle cx="330" cy="234" r="4" class="primary-fill" stroke="#FAF9F7" stroke-width="2" />
+  <circle cx="440" cy="218" r="4" class="primary-fill" stroke="#FAF9F7" stroke-width="2" />
+  <circle cx="550" cy="178" r="4" class="primary-fill" stroke="#FAF9F7" stroke-width="2" />
+  <circle cx="660" cy="162" r="4" class="primary-fill" stroke="#FAF9F7" stroke-width="2" />
+
+  <!-- X Axis Labels -->
+  <text x="236" y="344" class="text-secondary" font-size="11" text-anchor="middle">Jan</text>
+  <text x="330" y="344" class="text-secondary" font-size="11" text-anchor="middle">Feb</text>
+  <text x="440" y="344" class="text-secondary" font-size="11" text-anchor="middle">Mar</text>
+  <text x="550" y="344" class="text-secondary" font-size="11" text-anchor="middle">Apr</text>
+  <text x="660" y="344" class="text-secondary" font-size="11" text-anchor="middle">May</text>
+  <text x="742" y="344" class="text-secondary" font-size="11" text-anchor="middle">Jun</text>
+
+  <!-- Data Table Section -->
+  <rect x="212" y="384" width="554" height="96" rx="12" class="bg-surface border-main shadow" />
+  <text x="236" y="412" class="text-main" font-size="16" font-weight="600">Recent Tenants</text>
+  
+  <!-- Table Header -->
+  <rect x="212" y="424" width="554" height="28" fill="#EAE7E0" />
+  <text x="236" y="442" class="text-secondary" font-size="12" font-weight="600">Tenant Name</text>
+  <text x="400" y="442" class="text-secondary" font-size="12" font-weight="600">Status</text>
+  <text x="520" y="442" class="text-secondary" font-size="12" font-weight="600">Plan</text>
+  <text x="650" y="442" class="text-secondary" font-size="12" font-weight="600">Joined Date</text>
+
+  <!-- Table Row 1 -->
+  <text x="236" y="468" class="text-main" font-size="13">Acme Corp</text>
+  <rect x="400" y="456" width="52" height="18" rx="9" fill="#E6F4EA" />
+  <text x="426" y="469" fill="#2E7D32" font-size="10" font-weight="600" text-anchor="middle">Active</text>
+  <text x="520" y="468" class="text-main" font-size="13">Enterprise</text>
+  <text x="650" y="468" class="text-secondary" font-size="13">2026.06.15</text>
+</svg>

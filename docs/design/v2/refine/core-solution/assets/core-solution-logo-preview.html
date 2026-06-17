@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Core Solution Logo Concepts — Visual Preview</title>
+  <style>
+    :root {
+      --mg-color-primary-main: #3D5246;
+      --mg-color-primary-light: #4A6354;
+      --mg-color-secondary-main: #6B7F72;
+      --mg-color-accent-main: #8B7355;
+      --mg-color-text-main: #2C2C2C;
+      --mg-color-text-secondary: #5C6B61;
+      --mg-color-surface-main: #F5F3EF;
+      --mg-color-border-main: #D4CFC8;
+      --mg-color-background-main: #FAF9F7;
+      --sidebar-dark: #2C2C2C;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans KR", system-ui, sans-serif;
+      background: #eef1f4;
+      color: var(--mg-color-text-main);
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    header {
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin: 0;
+      color: var(--mg-color-text-secondary);
+      font-size: 0.95rem;
+    }
+    .concept {
+      background: #fff;
+      border: 1px solid var(--mg-color-border-main);
+      border-radius: 12px;
+      padding: 1.25rem 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .concept__head {
+      margin-bottom: 1rem;
+    }
+    .concept__label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--mg-color-primary-main);
+      margin-bottom: 0.25rem;
+    }
+    .concept__title {
+      margin: 0 0 0.35rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+    .concept__desc {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--mg-color-text-secondary);
+    }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 640px) {
+      .compare { grid-template-columns: 1fr; }
+    }
+    .panel {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--mg-color-border-main);
+    }
+    .panel__tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 0.4rem 0.65rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .panel--light .panel__tag {
+      background: var(--mg-color-background-main);
+      color: var(--mg-color-text-secondary);
+    }
+    .panel--dark .panel__tag {
+      background: #1a1a1a;
+      color: #8c9eab;
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .panel__canvas {
+      padding: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+    }
+    .panel--light .panel__canvas { background: var(--mg-color-background-main); }
+    .panel--dark .panel__canvas { background: var(--sidebar-dark); }
+    .logo-embed {
+      display: block;
+      max-width: 100%;
+      width: min(100%, 300px);
+    }
+    .logo-embed svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Core Solution (MindGarden) — Logo Concepts</h1>
+      <p>3가지 방향성 · 라이트(메인/랜딩) 및 다크(사이드바) 배경 위 동일 SVG 임베드</p>
+    </header>
+
+    <!-- Concept G1 -->
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept G1</span>
+        <h2 class="concept__title">C+S Geometric Monogram</h2>
+        <p class="concept__desc">구조적이고 체계적인 B2B SaaS 솔루션을 상징하는 기하학적 C와 S의 결합.</p>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__tag">Light page (#FAF9F7)</div>
+          <div class="panel__canvas">
+            <span class="logo-embed" role="img" aria-label="Concept G1 — Light">
+              <svg width="100%" height="auto" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Mark -->
+                <path d="M45 20 C30 20 20 30 20 40 C20 50 30 60 45 60" stroke="#3D5246" stroke-width="8" stroke-linecap="round" />
+                <path d="M35 40 C45 40 55 45 55 50 C55 55 45 60 35 60" stroke="#8B7355" stroke-width="8" stroke-linecap="round" />
+                <!-- Wordmark -->
+                <text x="75" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="700" font-size="28" fill="#2C2C2C" letter-spacing="-0.5">Core Solution</text>
+              </svg>
+            </span>
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__tag">Dark Sidebar (#2C2C2C)</div>
+          <div class="panel__canvas">
+            <span class="logo-embed" role="img" aria-label="Concept G1 — Dark">
+              <svg width="100%" height="auto" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Mark -->
+                <path d="M45 20 C30 20 20 30 20 40 C20 50 30 60 45 60" stroke="#FAF9F7" stroke-width="8" stroke-linecap="round" />
+                <path d="M35 40 C45 40 55 45 55 50 C55 55 45 60 35 60" stroke="#8B7355" stroke-width="8" stroke-linecap="round" />
+                <!-- Wordmark -->
+                <text x="75" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="700" font-size="28" fill="#FAF9F7" letter-spacing="-0.5">Core Solution</text>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Concept G2 -->
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept G2</span>
+        <h2 class="concept__title">Abstract Mind/Garden Motif</h2>
+        <p class="concept__desc">성장과 지능을 상징하는 추상적인 잎사귀/네트워크 형태의 심볼.</p>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__tag">Light page (#FAF9F7)</div>
+          <div class="panel__canvas">
+            <span class="logo-embed" role="img" aria-label="Concept G2 — Light">
+              <svg width="100%" height="auto" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Mark -->
+                <path d="M20 40 Q 35 15, 50 40 Q 35 65, 20 40 Z" fill="#3D5246" opacity="0.9" />
+                <circle cx="50" cy="40" r="10" fill="#6B7F72" />
+                <!-- Wordmark -->
+                <text x="75" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="700" font-size="28" fill="#2C2C2C" letter-spacing="-0.5">Core Solution</text>
+              </svg>
+            </span>
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__tag">Dark Sidebar (#2C2C2C)</div>
+          <div class="panel__canvas">
+            <span class="logo-embed" role="img" aria-label="Concept G2 — Dark">
+              <svg width="100%" height="auto" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Mark -->
+                <path d="M20 40 Q 35 15, 50 40 Q 35 65, 20 40 Z" fill="#FAF9F7" opacity="0.9" />
+                <circle cx="50" cy="40" r="10" fill="#6B7F72" />
+                <!-- Wordmark -->
+                <text x="75" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="700" font-size="28" fill="#FAF9F7" letter-spacing="-0.5">Core Solution</text>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Concept G3 -->
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept G3</span>
+        <h2 class="concept__title">Modern Typographic "Core"</h2>
+        <p class="concept__desc">중심(Core)을 강조하는 볼드한 C와 내부의 원형 포인트가 결합된 타이포그래피 중심 마크.</p>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__tag">Light page (#FAF9F7)</div>
+          <div class="panel__canvas">
+            <span class="logo-embed" role="img" aria-label="Concept G3 — Light">
+              <svg width="100%" height="auto" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Mark -->
+                <path d="M45 20 A 20 20 0 1 0 45 60" stroke="#3D5246" stroke-width="8" stroke-linecap="square" />
+                <circle cx="35" cy="40" r="6" fill="#8B7355" />
+                <!-- Wordmark -->
+                <text x="65" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="800" font-size="28" fill="#2C2C2C" letter-spacing="-0.5">Core Solution</text>
+              </svg>
+            </span>
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__tag">Dark Sidebar (#2C2C2C)</div>
+          <div class="panel__canvas">
+            <span class="logo-embed" role="img" aria-label="Concept G3 — Dark">
+              <svg width="100%" height="auto" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Mark -->
+                <path d="M45 20 A 20 20 0 1 0 45 60" stroke="#FAF9F7" stroke-width="8" stroke-linecap="square" />
+                <circle cx="35" cy="40" r="6" fill="#8B7355" />
+                <!-- Wordmark -->
+                <text x="65" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="800" font-size="28" fill="#FAF9F7" letter-spacing="-0.5">Core Solution</text>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

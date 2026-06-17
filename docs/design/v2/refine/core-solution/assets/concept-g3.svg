@@ -1,0 +1,5 @@
+<svg width="300" height="80" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M45 20 A 20 20 0 1 0 45 60" stroke="#3D5246" stroke-width="8" stroke-linecap="square" />
+  <circle cx="35" cy="40" r="6" fill="#8B7355" />
+  <text x="65" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="800" font-size="28" fill="#2C2C2C" letter-spacing="-0.5">Core Solution</text>
+</svg>

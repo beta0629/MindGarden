@@ -32,8 +32,8 @@ jobs:
 
       - name: 🏗️ Trinity 프론트엔드 빌드
         env:
-          # dev 서버에서 실제 SMS OTP UI·API 호출 검증 (로컬 기본 skip 과 분리)
-          NEXT_PUBLIC_SKIP_PHONE_VERIFICATION: 'false'
+          # dev 서버 온보딩: SMS OTP 생략 (런타임 dev 호스트명 fallback과 이중 방어)
+          NEXT_PUBLIC_SKIP_PHONE_VERIFICATION: 'true'
         run: |
           cd frontend-trinity
           ESLINT_NO_DEV_ERRORS=true npm run build

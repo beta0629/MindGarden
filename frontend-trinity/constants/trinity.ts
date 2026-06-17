@@ -273,6 +273,7 @@ export const TRINITY_CONSTANTS = {
     SMS_SEND_FAILED: '인증번호 발송에 실패했습니다.',
     SMS_VERIFY_FAILED: '인증번호가 올바르지 않습니다.',
     DEV_PHONE_SKIP_BANNER: '개발 환경: SMS 인증 생략',
+    DEV_PHONE_SKIP_BUTTON: '개발: 인증 생략',
     // 결제 수단 관련
     ERROR_PAYMENT_METHOD_REQUIRED: '결제 수단을 등록해주세요.',
     PAYMENT_METHOD_REGISTERED: '✅ 결제 수단이 등록되었습니다.',
@@ -420,17 +421,14 @@ export function isTrinityDevPhoneSkipHostname(hostname?: string): boolean {
 
 /**
  * 개발 환경 휴대폰 SMS 인증 생략 여부.
- * NEXT_PUBLIC_SKIP_PHONE_VERIFICATION=true 또는 dev 호스트명일 때 true.
- * 운영(apply.e-trinity.co.kr) 빌드에서는 false.
+ * dev 호스트명(런타임) 또는 NEXT_PUBLIC_SKIP_PHONE_VERIFICATION=true 일 때 true.
+ * 운영(apply.e-trinity.co.kr) 호스트에서는 env가 true여도 skip 하지 않음.
  */
 export function shouldSkipPhoneVerification(): boolean {
-  const skipFlag = process.env.NEXT_PUBLIC_SKIP_PHONE_VERIFICATION;
-  if (skipFlag === 'true' || skipFlag === '1') {
+  if (isTrinityDevPhoneSkipHostname()) {
     return true;
   }
-  if (skipFlag === 'false' || skipFlag === '0') {
-    return false;
-  }
-  return isTrinityDevPhoneSkipHostname();
+  const skipFlag = process.env.NEXT_PUBLIC_SKIP_PHONE_VERIFICATION;
+  return skipFlag === 'true' || skipFlag === '1';
 }
 

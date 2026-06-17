@@ -20,6 +20,7 @@ interface PhoneVerificationProps {
   onSendVerificationCode: (phone: string) => void;
   onVerifyCode: (phone: string, code: string) => void;
   setPhoneVerificationCode: (code: string) => void;
+  onSkipPhoneVerify?: () => void;
   className?: string;
 }
 
@@ -36,6 +37,7 @@ export default function PhoneVerification({
   onSendVerificationCode,
   onVerifyCode,
   setPhoneVerificationCode,
+  onSkipPhoneVerify,
   className = '',
 }: PhoneVerificationProps) {
   if (!phone || phoneFormatError) {
@@ -52,7 +54,21 @@ export default function PhoneVerification({
           {TRINITY_CONSTANTS.MESSAGES.DEV_PHONE_SKIP_BANNER}
         </p>
       )}
-      {!phoneVerified && (
+      {skipSmsVerification && !phoneVerified && (
+        <div className={COMPONENT_CSS.ONBOARDING.VERIFICATION_SECTION}>
+          <div className={COMPONENT_CSS.ONBOARDING.VERIFICATION_BUTTON_WRAPPER}>
+            <Button
+              type="button"
+              onClick={() => onSkipPhoneVerify?.()}
+              variant="outline"
+              size="small"
+            >
+              {TRINITY_CONSTANTS.MESSAGES.DEV_PHONE_SKIP_BUTTON}
+            </Button>
+          </div>
+        </div>
+      )}
+      {!skipSmsVerification && !phoneVerified && (
         <div className={COMPONENT_CSS.ONBOARDING.VERIFICATION_SECTION}>
           <div className={COMPONENT_CSS.ONBOARDING.VERIFICATION_BUTTON_WRAPPER}>
             <Button

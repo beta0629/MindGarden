@@ -2,6 +2,7 @@
  * 순차적 진행 휴대폰 입력 + SMS 인증 컴포넌트
  */
 
+import { useEffect } from 'react';
 import { COMPONENT_CSS } from '../../constants/css-variables';
 import { TRINITY_CONSTANTS, shouldSkipPhoneVerification } from '../../constants/trinity';
 import {
@@ -52,6 +53,26 @@ export default function PhoneInputProgressive({
   onPhoneChangeReset,
   onSkipPhoneVerify,
 }: PhoneInputProgressiveProps) {
+  const skipSmsVerification = shouldSkipPhoneVerification();
+
+  const tryAutoSkipVerify = (display: string) => {
+    if (!skipSmsVerification || phoneVerified) {
+      return;
+    }
+    const validation = validatePhoneFormat(display);
+    if (validation.valid) {
+      onSkipPhoneVerify?.();
+      onValidationChange?.(true);
+    }
+  };
+
+  useEffect(() => {
+    if (value) {
+      tryAutoSkipVerify(value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- value·skip 플래그 변경 시에만 재평가
+  }, [value, skipSmsVerification, phoneVerified]);
+
   const handlePhoneInput = (raw: string) => {
     const digits = normalizeKoreanMobileDigits(raw);
     const display = formatPhoneDisplay(digits);
@@ -73,9 +94,8 @@ export default function PhoneInputProgressive({
 
     setPhoneFormatError(null);
 
-    if (shouldSkipPhoneVerification()) {
-      onSkipPhoneVerify?.();
-      onValidationChange?.(true);
+    if (skipSmsVerification) {
+      tryAutoSkipVerify(display);
       return;
     }
 
@@ -114,6 +134,7 @@ export default function PhoneInputProgressive({
         onSendVerificationCode={onSendVerificationCode}
         onVerifyCode={onVerifyCode}
         setPhoneVerificationCode={setPhoneVerificationCode}
+        onSkipPhoneVerify={onSkipPhoneVerify}
       />
     </div>
   );

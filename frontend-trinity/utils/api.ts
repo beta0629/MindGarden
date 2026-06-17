@@ -14,6 +14,88 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 const CSRF_TOKEN_PATH = '/api/v1/auth/csrf-token';
 const DEFAULT_CSRF_HEADER_NAME = 'X-XSRF-TOKEN';
 
+const ONBOARDING_ENDPOINT_PREFIXES = [
+  '/auth/current-user',
+  '/common-codes',
+  '/business-categories',
+  '/pricing-plans',
+  '/onboarding/subdomain-check',
+  '/onboarding/email-check',
+] as const;
+
+const NON_JSON_RESPONSE_MESSAGE =
+  '서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해 주세요.';
+const SERVER_UNAVAILABLE_MESSAGE =
+  '서버에 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+
+function isOnboardingEndpoint(endpoint: string): boolean {
+  return ONBOARDING_ENDPOINT_PREFIXES.some((prefix) => endpoint.includes(prefix));
+}
+
+function isJsonContentType(contentType: string | null): boolean {
+  if (!contentType) {
+    return false;
+  }
+  const normalized = contentType.toLowerCase();
+  return normalized.includes('application/json') || normalized.includes('+json');
+}
+
+async function readResponseBodyText(response: Response): Promise<string> {
+  try {
+    return await response.text();
+  } catch {
+    return '';
+  }
+}
+
+async function parseJsonResponseBody(
+  response: Response,
+  endpoint: string
+): Promise<unknown> {
+  const contentType = response.headers.get('content-type');
+  const bodyText = await readResponseBodyText(response);
+
+  if (!bodyText.trim()) {
+    if (response.status >= 500) {
+      throw new Error(SERVER_UNAVAILABLE_MESSAGE);
+    }
+    return null;
+  }
+
+  if (!isJsonContentType(contentType)) {
+    const looksLikeHtml =
+      bodyText.trimStart().startsWith('<') ||
+      contentType?.toLowerCase().includes('text/html');
+    if (looksLikeHtml || response.status >= 500) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[DEBUG] Non-JSON API response:', {
+          endpoint,
+          status: response.status,
+          contentType,
+          preview: bodyText.slice(0, 120),
+        });
+      }
+      throw new Error(
+        response.status >= 500 ? SERVER_UNAVAILABLE_MESSAGE : NON_JSON_RESPONSE_MESSAGE
+      );
+    }
+  }
+
+  try {
+    return JSON.parse(bodyText) as unknown;
+  } catch {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEBUG] JSON parse failed:', {
+        endpoint,
+        status: response.status,
+        contentType,
+        preview: bodyText.slice(0, 120),
+      });
+    }
+    throw new Error(NON_JSON_RESPONSE_MESSAGE);
+  }
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -84,7 +166,7 @@ async function fetchCsrfMetaFromNetwork(): Promise<CsrfMeta> {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
   });
-  const jsonData: unknown = await response.json();
+  const jsonData: unknown = await parseJsonResponseBody(response, CSRF_TOKEN_PATH);
   if (!response.ok) {
     const errBody = jsonData as ApiResponse<unknown> | undefined;
     const msg =
@@ -172,14 +254,9 @@ async function apiRequest<T>(
         credentials: 'include',
       });
 
-      jsonData = await response.json();
+      jsonData = await parseJsonResponseBody(response, endpoint);
     } catch (fetchError) {
-      const isOnboardingEndpoint =
-        endpoint.includes('/auth/current-user') ||
-        endpoint.includes('/common-codes') ||
-        endpoint.includes('/business-categories') ||
-        endpoint.includes('/pricing-plans');
-      if (isOnboardingEndpoint) {
+      if (isOnboardingEndpoint(endpoint)) {
         if (process.env.NODE_ENV === 'development') {
           console.error('[DEBUG] Onboarding API connection failed:', endpoint, fetchError);
         }
@@ -187,12 +264,6 @@ async function apiRequest<T>(
       }
       throw fetchError;
     }
-
-    const isOnboardingEndpoint =
-      endpoint.includes('/auth/current-user') ||
-      endpoint.includes('/common-codes') ||
-      endpoint.includes('/business-categories') ||
-      endpoint.includes('/pricing-plans');
 
     if (!response.ok) {
       if (mutate && response.status === 403 && !csrf403Retried) {

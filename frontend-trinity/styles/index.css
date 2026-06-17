@@ -12,6 +12,7 @@
 @import './components/animated-progress-bar.css';
 @import './components/input-animation.css';
 @import './components/progressive-input-field.css';
+@import './components/password-policy.css';
 @import './components/onboarding-v2.css';
 @import './components/onboarding-vertical-stepper.css';
 @import './components/onboarding-pricing-v2.css';

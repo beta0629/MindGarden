@@ -10,6 +10,14 @@ import ProgressiveInputField from "./ProgressiveInputField";
 import PhoneInputProgressive from "./PhoneInputProgressive";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
 import { validatePhoneFormat } from "../../utils/phoneUtils";
+import {
+  getFirstLoginPasswordViolationMessage,
+  isLoginPasswordValid,
+  LOGIN_PASSWORD_FIELD_PLACEHOLDER,
+  LOGIN_PASSWORD_MAX_LENGTH,
+  LOGIN_PASSWORD_MIN_LENGTH,
+} from "../../constants/passwordPolicy";
+import PasswordPolicyPanel from "./PasswordPolicyPanel";
 
 interface Step1BasicInfoProgressiveProps {
   formData: OnboardingFormData;
@@ -81,6 +89,8 @@ export default function Step1BasicInfoProgressive({
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
   const [completedFields, setCompletedFields] = useState<Set<number>>(new Set());
   const [emailFormatError, setEmailFormatError] = useState<string | null>(null);
+  const [passwordPolicyError, setPasswordPolicyError] = useState<string | null>(null);
+  const [passwordConfirmError, setPasswordConfirmError] = useState<string | null>(null);
   const pendingFieldCompleteRef = useRef<{ fieldId: string; value: string; fieldIdx: number } | null>(null);
 
   useEffect(() => {
@@ -192,15 +202,15 @@ export default function Step1BasicInfoProgressive({
       id: 'adminPassword',
       label: '관리자 비밀번호',
       required: true,
-      validation: (value: string) => value.length >= 8,
-      placeholder: '최소 8자 이상',
+      validation: (value: string) => isLoginPasswordValid(value),
+      placeholder: LOGIN_PASSWORD_FIELD_PLACEHOLDER,
       hint: '테넌트 승인 시 관리자 계정 생성에 사용됩니다.',
     },
     {
       id: 'adminPasswordConfirm',
       label: '관리자 비밀번호 확인',
       required: true,
-      validation: (value: string) => value === formData.adminPassword && value.length >= 8,
+      validation: (value: string) => value === formData.adminPassword && isLoginPasswordValid(value),
       placeholder: '비밀번호를 다시 입력하세요',
     },
   ], [regionCodes, formData.adminPassword, phoneVerified, subdomainDuplicateChecked, subdomainDuplicateError, validateEmailFormat]);
@@ -345,6 +355,14 @@ export default function Step1BasicInfoProgressive({
       return subdomainDuplicateChecked && !subdomainDuplicateError;
     }
 
+    if (currentField.id === 'adminPassword') {
+      return isLoginPasswordValid(value);
+    }
+
+    if (currentField.id === 'adminPasswordConfirm') {
+      return value === formData.adminPassword && isLoginPasswordValid(value);
+    }
+
     return currentField.validation ? currentField.validation(value) : true;
   };
 
@@ -371,12 +389,38 @@ export default function Step1BasicInfoProgressive({
             isCompleted={completedFields.has(index)}
           >
             {field.id === 'adminPassword' || field.id === 'adminPasswordConfirm' ? (
+              <>
               <input
                 type="password"
                 value={getFieldValue(field.id)}
-                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  handleFieldChange(field.id, inputValue);
+                  if (field.id === 'adminPassword') {
+                    const policyMsg = getFirstLoginPasswordViolationMessage(inputValue);
+                    setPasswordPolicyError(policyMsg);
+                    if (formData.adminPasswordConfirm) {
+                      setPasswordConfirmError(
+                        inputValue === formData.adminPasswordConfirm
+                          ? null
+                          : '비밀번호가 일치하지 않습니다.',
+                      );
+                    }
+                  } else {
+                    setPasswordConfirmError(
+                      inputValue === formData.adminPassword
+                        ? null
+                        : '비밀번호가 일치하지 않습니다.',
+                    );
+                  }
+                }}
                 onBlur={(e) => {
                   const inputValue = e.target.value;
+                  if (field.id === 'adminPassword') {
+                    setPasswordPolicyError(getFirstLoginPasswordViolationMessage(inputValue));
+                  } else if (inputValue !== formData.adminPassword) {
+                    setPasswordConfirmError('비밀번호가 일치하지 않습니다.');
+                  }
                   if (field.required) {
                     if (inputValue && field.validation && field.validation(inputValue)) {
                       handleFieldComplete(field.id, inputValue);
@@ -400,8 +444,23 @@ export default function Step1BasicInfoProgressive({
                 placeholder={field.placeholder}
                 className={COMPONENT_CSS.ONBOARDING.INPUT}
                 required={field.required}
-                minLength={field.id.includes('Password') ? 8 : undefined}
+                minLength={LOGIN_PASSWORD_MIN_LENGTH}
+                maxLength={LOGIN_PASSWORD_MAX_LENGTH}
+                autoComplete="new-password"
+                aria-describedby={field.id === 'adminPassword' ? 'admin-password-policy' : undefined}
               />
+              {field.id === 'adminPassword' && (
+                <div id="admin-password-policy">
+                  <PasswordPolicyPanel password={getFieldValue('adminPassword')} />
+                  {passwordPolicyError && (
+                    <div className={COMPONENT_CSS.ONBOARDING.ERROR_TEXT}>{passwordPolicyError}</div>
+                  )}
+                </div>
+              )}
+              {field.id === 'adminPasswordConfirm' && passwordConfirmError && (
+                <div className={COMPONENT_CSS.ONBOARDING.ERROR_TEXT}>{passwordConfirmError}</div>
+              )}
+              </>
             ) : field.id === 'regionCode' ? (
               <select
                 value={getFieldValue(field.id)}

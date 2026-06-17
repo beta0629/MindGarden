@@ -36,6 +36,10 @@ import {
   normalizeKoreanMobileDigits,
   validatePhoneFormat,
 } from "../utils/phoneUtils";
+import {
+  getFirstLoginPasswordViolationMessage,
+  isLoginPasswordValid,
+} from "../constants/passwordPolicy";
 
 export interface OnboardingFormData {
   tenantName: string;
@@ -639,6 +643,20 @@ export const useOnboarding = () => {
 
     if (captchaRequired && (!captchaToken || !captchaToken.trim())) {
       setError(TRINITY_CONSTANTS.MESSAGES.CAPTCHA_REQUIRED_BEFORE_SUBMIT);
+      return;
+    }
+
+    const passwordPolicyMessage = getFirstLoginPasswordViolationMessage(formData.adminPassword);
+    if (passwordPolicyMessage) {
+      setError(passwordPolicyMessage);
+      return;
+    }
+    if (!isLoginPasswordValid(formData.adminPassword)) {
+      setError(TRINITY_CONSTANTS.MESSAGES.ERROR_REQUIRED_FIELDS);
+      return;
+    }
+    if (formData.adminPassword !== formData.adminPasswordConfirm) {
+      setError('비밀번호 확인이 일치하지 않습니다.');
       return;
     }
 

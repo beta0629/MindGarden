@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <g transform="translate(20, 20)">
+    <!-- Horizontal Data Streams -->
+    <rect x="0" y="8" width="14" height="4" rx="2" fill="#6B7F72" />
+    <rect x="0" y="18" width="14" height="4" rx="2" fill="#6B7F72" />
+    <rect x="0" y="28" width="14" height="4" rx="2" fill="#6B7F72" />
+    
+    <!-- Central Processor / Core -->
+    <rect x="18" y="4" width="22" height="32" rx="6" fill="#3D5246" />
+    <!-- Core Indicator -->
+    <circle cx="29" cy="20" r="4" fill="#8B7355" />
+  </g>
+  <text x="76" y="48" font-family="'Inter', 'Noto Sans KR', sans-serif" font-size="24" font-weight="700" fill="#2C2C2C" letter-spacing="-0.02em">Core<tspan font-weight="400" fill="#5C6B61">Solution</tspan></text>
+</svg>

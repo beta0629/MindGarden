@@ -11,23 +11,39 @@
   - Text: `var(--mg-color-text-main)` (#2C2C2C)
   - Background: `var(--mg-color-background-main)` (#FAF9F7)
 
-## 2. Concepts (v1)
+## 2. Concepts (v1 - All Rejected)
 
-### Concept G1: C+S Geometric Monogram (Finalized Master)
-- **Concept**: A modern, geometric monogram combining 'C' and 'S'. It represents the structured, systematic nature of the B2B SaaS solution.
-- **Colors**: Primary Green (#3D5246) and Accent Brown (#8B7355).
-- **Wordmark**: `CoreSolution` (no space, per `BRAND_DECISIONS_TRINITY_CORESOLUTION.md`)
-- **Vibe**: Professional, structured, reliable.
+### Concept G1: C+S Geometric Monogram (Rejected)
+- **Status**: Rejected. The user did not select this concept.
+- **Concept**: A modern, geometric monogram combining 'C' and 'S'.
 
 ### Concept G2: Abstract Mind/Garden Motif (Rejected)
-- **Concept**: An abstract representation of a leaf or neural network (Mind + Garden), symbolizing growth, care, and intelligence.
-- **Colors**: Primary Green (#3D5246) and Secondary Green (#6B7F72).
-- **Vibe**: Organic, intelligent, nurturing.
+- **Status**: Rejected.
+- **Concept**: An abstract representation of a leaf or neural network (Mind + Garden).
 
 ### Concept G3: Modern Typographic "Core" (Rejected)
-- **Concept**: A bold, typographic approach where the "C" in Core encompasses a central dot (the solution/core).
-- **Colors**: Primary Green (#3D5246) and Dark Navy/Black (#2C2C2C).
-- **Vibe**: Direct, bold, contemporary.
+- **Status**: Rejected.
+- **Concept**: A bold, typographic approach where the "C" in Core encompasses a central dot.
+
+## 2.1 Concepts (v2 - Pending Selection)
+
+### Concept H1: Platform & Core (Nexus)
+- **Concept**: A solid horizontal base (platform) with a geometric core resting on it. Represents the stability and connectivity of a multi-tenant SaaS.
+- **Colors**: Primary Green (#3D5246), Accent Brown (#8B7355), and Background (#FAF9F7).
+- **Wordmark**: `CoreSolution` (no space)
+- **Vibe**: Calm, professional, foundational.
+
+### Concept H2: Shield & Layers
+- **Concept**: Overlapping geometric shield shapes forming a central core. Represents security, layers of data, and B2B reliability.
+- **Colors**: Primary Green (#3D5246), Secondary Green (#6B7F72), and Accent Brown (#8B7355).
+- **Wordmark**: `CoreSolution` (no space)
+- **Vibe**: Secure, layered, trustworthy.
+
+### Concept H3: Data Flow (Horizontal Rule)
+- **Concept**: Horizontal data streams converging into a central processor/core. Maintains a visual lineage with Trinity F1's horizontal rule wordmark while being distinctly product-focused.
+- **Colors**: Primary Green (#3D5246), Secondary Green (#6B7F72), and Accent Brown (#8B7355).
+- **Wordmark**: `CoreSolution` (no space)
+- **Vibe**: Modern, data-driven, systematic.
 
 ## 3. Usage Mapping
 

@@ -25,7 +25,11 @@ import {
   type BusinessCategoryItem,
 } from "../utils/api";
 import { generateUUID } from "../utils/uuid";
-import { SESSION_STORAGE_KEYS, TRINITY_CONSTANTS } from "../constants/trinity";
+import {
+  SESSION_STORAGE_KEYS,
+  TRINITY_CONSTANTS,
+  shouldSkipPhoneVerification,
+} from "../constants/trinity";
 import { getDefaultRiskLevel, getRegionCodes, type CommonCode } from "../utils/commonCodeUtils";
 import {
   buildOtpSentMessage,
@@ -429,15 +433,6 @@ export const useOnboarding = () => {
     // 환경 변수로 제어 가능
     const skipFlag = process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION;
     // 기본값은 true (개발 환경에서는 기본적으로 인증 건너뛰기)
-    return skipFlag === undefined || skipFlag === 'true' || skipFlag === '1';
-  };
-
-  // 휴대폰 인증 건너뛰기 (개발 환경)
-  const shouldSkipPhoneVerification = () => {
-    if (!isDevelopment()) {
-      return false;
-    }
-    const skipFlag = process.env.NEXT_PUBLIC_SKIP_PHONE_VERIFICATION;
     return skipFlag === undefined || skipFlag === 'true' || skipFlag === '1';
   };
 

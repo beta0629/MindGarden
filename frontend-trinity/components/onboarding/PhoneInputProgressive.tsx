@@ -3,7 +3,7 @@
  */
 
 import { COMPONENT_CSS } from '../../constants/css-variables';
-import { TRINITY_CONSTANTS } from '../../constants/trinity';
+import { TRINITY_CONSTANTS, shouldSkipPhoneVerification } from '../../constants/trinity';
 import {
   formatPhoneDisplay,
   normalizeKoreanMobileDigits,
@@ -29,6 +29,7 @@ interface PhoneInputProgressiveProps {
   setPhoneVerificationCode: (code: string) => void;
   setPhoneFormatError: (error: string | null) => void;
   onPhoneChangeReset?: () => void;
+  onSkipPhoneVerify?: () => void;
 }
 
 export default function PhoneInputProgressive({
@@ -49,6 +50,7 @@ export default function PhoneInputProgressive({
   setPhoneVerificationCode,
   setPhoneFormatError,
   onPhoneChangeReset,
+  onSkipPhoneVerify,
 }: PhoneInputProgressiveProps) {
   const handlePhoneInput = (raw: string) => {
     const digits = normalizeKoreanMobileDigits(raw);
@@ -70,6 +72,13 @@ export default function PhoneInputProgressive({
     }
 
     setPhoneFormatError(null);
+
+    if (shouldSkipPhoneVerification()) {
+      onSkipPhoneVerify?.();
+      onValidationChange?.(true);
+      return;
+    }
+
     onValidationChange?.(phoneVerified);
   };
 

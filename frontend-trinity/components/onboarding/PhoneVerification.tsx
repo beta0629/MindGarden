@@ -4,7 +4,7 @@
  */
 
 import { COMPONENT_CSS } from '../../constants/css-variables';
-import { TRINITY_CONSTANTS } from '../../constants/trinity';
+import { TRINITY_CONSTANTS, shouldSkipPhoneVerification } from '../../constants/trinity';
 import Button from '../Button';
 
 interface PhoneVerificationProps {
@@ -43,9 +43,15 @@ export default function PhoneVerification({
   }
 
   const codeLength = TRINITY_CONSTANTS.OTP.CODE_LENGTH;
+  const skipSmsVerification = shouldSkipPhoneVerification();
 
   return (
     <div className={`trinity-onboarding__phone-actions ${className}`}>
+      {skipSmsVerification && (
+        <p className={COMPONENT_CSS.ONBOARDING.PAYMENT_INFO_TEXT}>
+          {TRINITY_CONSTANTS.MESSAGES.DEV_PHONE_SKIP_BANNER}
+        </p>
+      )}
       {!phoneVerified && (
         <div className={COMPONENT_CSS.ONBOARDING.VERIFICATION_SECTION}>
           <div className={COMPONENT_CSS.ONBOARDING.VERIFICATION_BUTTON_WRAPPER}>

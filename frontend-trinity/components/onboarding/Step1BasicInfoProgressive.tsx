@@ -540,6 +540,9 @@ export default function Step1BasicInfoProgressive({
                   setPhoneVerificationTimeLeft(null);
                   setVerificationAttempts(0);
                 }}
+                onSkipPhoneVerify={() => {
+                  setPhoneVerified(true);
+                }}
               />
             ) : (
               <input

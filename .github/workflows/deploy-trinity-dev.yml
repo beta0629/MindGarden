@@ -31,6 +31,8 @@ jobs:
           npm ci
 
       - name: 🏗️ Trinity 프론트엔드 빌드
+        env:
+          NEXT_PUBLIC_SKIP_PHONE_VERIFICATION: "true"
         run: |
           cd frontend-trinity
           ESLINT_NO_DEV_ERRORS=true npm run build

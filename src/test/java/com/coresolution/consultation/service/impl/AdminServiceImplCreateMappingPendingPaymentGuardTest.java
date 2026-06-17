@@ -5,6 +5,7 @@ import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.ActiveMappingExistsException;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -62,24 +63,28 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 옵션 B (예약 우선 매칭) 자동 종료 가드 검증.
+ * 옵션 B (예약 우선 매칭) 자동 종료 가드 + ACTIVE 매핑 신규 생성 차단 검증.
  *
  * <p>합의서 (E1 §2 GAP): 신규 매칭 생성 시 기존 동일 consultant·client 매핑은 자동 TERMINATED 처리되지만,
  * PENDING_PAYMENT 또는 PAYMENT_CONFIRMED 상태(사후 카드 결제 대기)는 옵션 B 흐름이 진행 중이므로
- * 자동 TERMINATED 대상에서 제외되어야 한다.
+ * 자동 TERMINATED 대상에서 제외되어야 한다.</p>
+ *
+ * <p>P0 (2026-06-17): ACTIVE 매핑 존재 시 신규 INSERT + remaining 소진 금지 — 409 + session-extension 안내.</p>
  *
  * @author MindGarden
  * @since 2026-05-28
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AdminServiceImpl 옵션 B 자동 종료 가드 (PENDING_PAYMENT/PAYMENT_CONFIRMED 보호)")
+@DisplayName("AdminServiceImpl createMapping 가드 (옵션 B + ACTIVE 차단)")
 class AdminServiceImplCreateMappingPendingPaymentGuardTest {
 
     private static final String TEST_TENANT_ID = "tenant-option-b-guard-" + UUID.randomUUID();
@@ -178,7 +183,7 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
     @DisplayName("PENDING_PAYMENT 기존 매핑은 자동 종료 대상에서 제외")
     void createMapping_protectsPendingPaymentMappingFromAutoTerminate() {
         ConsultantClientMapping pendingPaymentMapping = newExistingMapping(101L, MappingStatus.PENDING_PAYMENT);
-        stubCreateFlow(List.of(pendingPaymentMapping));
+        stubCreateFlowWithSave(List.of(pendingPaymentMapping));
 
         adminService.createMapping(newRequest());
 
@@ -190,7 +195,7 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
     @DisplayName("PAYMENT_CONFIRMED 기존 매핑도 자동 종료 대상에서 제외")
     void createMapping_protectsPaymentConfirmedMappingFromAutoTerminate() {
         ConsultantClientMapping confirmedMapping = newExistingMapping(102L, MappingStatus.PAYMENT_CONFIRMED);
-        stubCreateFlow(List.of(confirmedMapping));
+        stubCreateFlowWithSave(List.of(confirmedMapping));
 
         adminService.createMapping(newRequest());
 
@@ -199,41 +204,56 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
     }
 
     @Test
-    @DisplayName("ACTIVE 기존 매핑은 정상적으로 TERMINATED 처리 (기존 동작 회귀 방지)")
-    void createMapping_terminatesActiveMappingAsBefore() {
+    @DisplayName("ACTIVE 기존 매핑 존재 시 신규 생성 차단 (409 ActiveMappingExistsException)")
+    void createMapping_rejectsWhenActiveMappingExists() {
         ConsultantClientMapping activeMapping = newExistingMapping(103L, MappingStatus.ACTIVE);
         activeMapping.setRemainingSessions(3);
         activeMapping.setUsedSessions(2);
         stubCreateFlow(List.of(activeMapping));
 
-        adminService.createMapping(newRequest());
+        assertThatThrownBy(() -> adminService.createMapping(newRequest()))
+                .isInstanceOf(ActiveMappingExistsException.class)
+                .satisfies(ex -> {
+                    ActiveMappingExistsException ame = (ActiveMappingExistsException) ex;
+                    assertThat(ame.getMappingId()).isEqualTo(103L);
+                });
 
-        assertThat(activeMapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
-        assertThat(activeMapping.getTerminatedAt()).isNotNull();
-        // 남은 회기는 0으로 흡수
-        assertThat(activeMapping.getRemainingSessions()).isZero();
-        assertThat(activeMapping.getUsedSessions()).isEqualTo(5);
+        assertThat(activeMapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(activeMapping.getTerminatedAt()).isNull();
+        assertThat(activeMapping.getRemainingSessions()).isEqualTo(3);
+        assertThat(activeMapping.getUsedSessions()).isEqualTo(2);
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
     }
 
     @Test
-    @DisplayName("혼합 (ACTIVE + PENDING_PAYMENT): ACTIVE만 종료되고 PENDING_PAYMENT는 보호")
-    void createMapping_terminatesActiveButProtectsPendingPaymentMixed() {
+    @DisplayName("TERMINATED 기존 매핑은 정상적으로 재종료 처리 후 신규 생성 (ACTIVE 아님)")
+    void createMapping_terminatesTerminatedMappingAsBefore() {
+        ConsultantClientMapping terminatedMapping = newExistingMapping(104L, MappingStatus.TERMINATED);
+        terminatedMapping.setRemainingSessions(2);
+        terminatedMapping.setUsedSessions(3);
+        stubCreateFlowWithSave(List.of(terminatedMapping));
+
+        adminService.createMapping(newRequest());
+
+        assertThat(terminatedMapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
+        assertThat(terminatedMapping.getRemainingSessions()).isZero();
+        assertThat(terminatedMapping.getUsedSessions()).isEqualTo(5);
+        verify(mappingRepository, atLeast(2)).save(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("혼합 (ACTIVE + PENDING_PAYMENT): ACTIVE 존재로 신규 생성 차단")
+    void createMapping_rejectsWhenActiveAndPendingPaymentMixed() {
         ConsultantClientMapping pendingPaymentMapping = newExistingMapping(201L, MappingStatus.PENDING_PAYMENT);
         ConsultantClientMapping activeMapping = newExistingMapping(202L, MappingStatus.ACTIVE);
         stubCreateFlow(Arrays.asList(pendingPaymentMapping, activeMapping));
 
-        adminService.createMapping(newRequest());
+        assertThatThrownBy(() -> adminService.createMapping(newRequest()))
+                .isInstanceOf(ActiveMappingExistsException.class);
 
         assertThat(pendingPaymentMapping.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
-        assertThat(pendingPaymentMapping.getTerminatedAt()).isNull();
-        assertThat(activeMapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
-        assertThat(activeMapping.getTerminatedAt()).isNotNull();
-
-        // 저장 호출 횟수: ACTIVE 1건 종료 + 신규 1건 = 최소 2회 (PENDING_PAYMENT는 skip되어 save 안 됨)
-        ArgumentCaptor<ConsultantClientMapping> captor = ArgumentCaptor.forClass(ConsultantClientMapping.class);
-        verify(mappingRepository, atLeast(2)).save(captor.capture());
-        List<ConsultantClientMapping> savedAll = captor.getAllValues();
-        assertThat(savedAll).noneMatch(m -> m == pendingPaymentMapping);
+        assertThat(activeMapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
     }
 
     private ConsultantClientMapping newExistingMapping(Long id, MappingStatus status) {
@@ -264,11 +284,13 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
         consultant.setId(CONSULTANT_ID);
         consultant.setTenantId(TEST_TENANT_ID);
         consultant.setRole(UserRole.CONSULTANT);
+        consultant.setName("테스트상담사");
 
         User client = new User();
         client.setId(CLIENT_ID);
         client.setTenantId(TEST_TENANT_ID);
         client.setRole(UserRole.CLIENT);
+        client.setName("테스트내담자");
 
         when(userRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(CONSULTANT_ID)))
                 .thenReturn(Optional.of(consultant));
@@ -276,6 +298,10 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
                 .thenReturn(Optional.of(client));
         when(mappingRepository.findByTenantIdAndConsultantAndClient(eq(TEST_TENANT_ID), eq(consultant), eq(client)))
                 .thenReturn(existingMappings);
+    }
+
+    private void stubCreateFlowWithSave(List<ConsultantClientMapping> existingMappings) {
+        stubCreateFlow(existingMappings);
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> {
             ConsultantClientMapping m = inv.getArgument(0);
             if (m.getId() == null) {

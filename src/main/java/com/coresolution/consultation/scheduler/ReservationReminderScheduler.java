@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.coresolution.consultation.config.BatchNotificationProperties;
+import com.coresolution.consultation.constant.BookingReminderPushConstants;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -41,8 +42,9 @@ import lombok.extern.slf4j.Slf4j;
  * 따라서 {@code remaining < 1} 잔여 가드는 적용하지 않으며 SESSIONS_EXHAUSTED 매핑의
  * 미래 BOOKED schedule 도 정상 안내한다.
  *
- * <p>단발성 결제(={@code totalSessions == 1})는 스케줄 등록 즉시 발송 경로
- * ({@code RESERVATION_IMMEDIATE_SINGLE}) 에서 처리하므로 D-2 배치에서는 제외한다.
+ * <p>2026-06-17 푸시 정책: D-2 푸시는 발송하지 않으며, 동일 09:00 KST 배치에서 D-1(내일) 일정에 대해
+ * {@link BookingReminderPushConstants#REMINDER_D1_DAYS_AHEAD} 푸시만 내담자·상담사 양쪽 fanout 한다.
+ * SMS D-2 배치({@code RESERVATION_REMINDER_D2})는 기존과 동일하게 유지한다.
  *
  * <p>ShedLock 미적용 — 운영 단일 호스트 가정.
  * 멱등성은 {@link BatchNotificationDispatchService} 가 멱등 로그 테이블로 보장한다.
@@ -61,12 +63,6 @@ import lombok.extern.slf4j.Slf4j;
     matchIfMissing = true
 )
 public class ReservationReminderScheduler {
-
-    /** D-2 푸시 본문(임시) — 디자이너 카피 확정 시 교체. */
-    // TODO(D10): 디자이너 카피 확정 후 MobilePushMessageFormatter 에 상수화·표시 양식 통일.
-    private static final String D2_REMINDER_BODY = "내일 상담 예약이 있습니다.";
-    /** D-2 푸시 dedupe 슬롯 코드 — buildScheduleData / dedupe 버킷 prefix. */
-    private static final String D2_REMINDER_SLOT_CODE = "D2";
 
     private final TenantService tenantService;
     private final ScheduleRepository scheduleRepository;
@@ -142,10 +138,13 @@ public class ReservationReminderScheduler {
                 }
             }
 
+            int totalD1PushAttempted = dispatchD1PushForAllTenants(activeTenantIds);
+
             LocalDateTime endTime = LocalDateTime.now();
             long durationMs = Duration.between(startTime, endTime).toMillis();
-            log.info("✅ [ReservationReminderD2] 스케줄러 완료: executionId={}, duration={}ms, tenants={}, dispatched={}, skipped={}, failed={}",
-                executionId, durationMs, totalTenants, totalDispatched, totalSkipped, totalFailed);
+            log.info("✅ [ReservationReminderD2] 스케줄러 완료: executionId={}, duration={}ms, tenants={}, dispatched={}, skipped={}, failed={}, d1PushAttempted={}",
+                executionId, durationMs, totalTenants, totalDispatched, totalSkipped, totalFailed,
+                totalD1PushAttempted);
             logService.saveSummaryLog(executionId, "ReservationReminderD2",
                 totalTenants, totalTenants - failureTenantCount, failureTenantCount,
                 durationMs, startTime, endTime);
@@ -206,10 +205,7 @@ public class ReservationReminderScheduler {
                         failed++;
                         break;
                 }
-                // 시나리오 #2 — 알림톡 발화 직후 D-2 푸시(내담자·상담사 양쪽) 트리거.
-                // 스케줄러 = 시스템 actor 이므로 actor-skip 미적용. dedupe 는 MobilePushDispatchService 내부 슬롯 키로 보장.
-                // 알림톡 결과(SKIPPED/FAILED 포함)와 무관하게 푸시는 시도하며, 푸시 실패는 본 배치 카운트에 영향 주지 않는다.
-                tryDispatchD2Push(tenantId, schedule);
+                // D-2 SMS/알림톡만 발송. D-2 푸시는 2026-06-17 정책으로 미발송.
             } catch (Exception perScheduleError) {
                 failed++;
                 log.warn("⚠️ [ReservationReminderD2] 스케줄 처리 예외: tenantId={}, scheduleId={}",
@@ -260,21 +256,74 @@ public class ReservationReminderScheduler {
     }
 
     /**
-     * D-2 푸시 발화(비차단). dedupe 는 {@link MobilePushDispatchService} 내부에서
-     * {@code D2|{scheduleDate}} 슬롯 키로 보장하므로 본 배치가 재실행돼도 중복 발송 없음.
+     * 활성 테넌트 전체에 D-1 푸시(내담자·상담사 양쪽)를 시도한다.
      *
-     * <p>본 배치 흐름의 카운트(dispatched/skipped/failed) 는 알림톡 결과 기준이며
-     * 푸시 결과는 별도 로그로만 기록한다.
+     * @param activeTenantIds 활성 테넌트 ID 목록
+     * @return 푸시 시도 건수(대상 schedule 수)
+     */
+    private int dispatchD1PushForAllTenants(List<String> activeTenantIds) {
+        LocalDate d1TargetDate = LocalDate.now().plusDays(BookingReminderPushConstants.REMINDER_D1_DAYS_AHEAD);
+        int attempted = 0;
+        log.info("🔔 [ReservationReminderD1Push] D-1 푸시 배치 시작: targetDate={}", d1TargetDate);
+        for (String tenantId : activeTenantIds) {
+            try {
+                TenantContextHolder.setTenantId(tenantId);
+                attempted += processTenantD1Push(tenantId, d1TargetDate);
+            } catch (Exception tenantError) {
+                log.warn("⚠️ [ReservationReminderD1Push] 테넌트 D-1 푸시 실패(비차단): tenantId={}, error={}",
+                    tenantId, tenantError.getMessage(), tenantError);
+            } finally {
+                TenantContextHolder.clear();
+            }
+        }
+        log.info("🔔 [ReservationReminderD1Push] D-1 푸시 배치 완료: targetDate={}, attempted={}",
+            d1TargetDate, attempted);
+        return attempted;
+    }
+
+    /**
+     * 단일 테넌트 D-1 푸시 대상 schedule 순회.
+     *
+     * @param tenantId   테넌트 ID
+     * @param targetDate D-1 대상 일자(내일)
+     * @return 푸시 시도 건수
+     */
+    private int processTenantD1Push(String tenantId, LocalDate targetDate) {
+        List<Schedule> schedules = scheduleRepository.findByTenantIdAndDateAndStatusIn(
+            tenantId, targetDate,
+            List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED));
+        int attempted = 0;
+        for (Schedule schedule : schedules) {
+            if (schedule.getClientId() == null || schedule.getConsultantId() == null) {
+                continue;
+            }
+            if (Boolean.TRUE.equals(schedule.getIsDeleted())) {
+                continue;
+            }
+            if (!shouldSendForSchedule(tenantId, schedule)) {
+                continue;
+            }
+            tryDispatchD1Push(tenantId, schedule);
+            attempted++;
+        }
+        return attempted;
+    }
+
+    /**
+     * D-1 푸시 발화(비차단). dedupe 는 {@link MobilePushDispatchService} 내부에서
+     * {@code D1|{scheduleDate}} 슬롯 키로 보장.
      *
      * @param tenantId 테넌트 ID
      * @param schedule 일정
      */
-    private void tryDispatchD2Push(String tenantId, Schedule schedule) {
+    private void tryDispatchD1Push(String tenantId, Schedule schedule) {
         try {
-            String body = MobilePushMessageFormatter.buildBookingReminderLead(D2_REMINDER_BODY, schedule);
-            mobilePushDispatchService.dispatchBookingReminder(tenantId, schedule, body, D2_REMINDER_SLOT_CODE);
+            String body = MobilePushMessageFormatter.buildBookingReminderLead(
+                BookingReminderPushConstants.REMINDER_D1_BODY_LEAD, schedule);
+            mobilePushDispatchService.dispatchBookingReminder(
+                tenantId, schedule, body, BookingReminderPushConstants.REMINDER_D1_SLOT_CODE);
         } catch (Exception pushError) {
-            log.warn("⚠️ [ReservationReminderD2] D-2 푸시 실패(비차단): tenantId={}, scheduleId={}",
+            log.warn("⚠️ [ReservationReminderD1Push] D-1 푸시 실패(비차단): tenantId={}, scheduleId={}",
                 tenantId, schedule.getId(), pushError);
         }
     }

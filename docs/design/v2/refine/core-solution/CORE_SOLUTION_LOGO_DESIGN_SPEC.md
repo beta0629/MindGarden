@@ -28,18 +28,21 @@
 ## 2.1 Concepts (v2 - Pending Selection)
 
 ### Concept H1: Platform & Core (Nexus)
+- **Status**: Rejected.
 - **Concept**: A solid horizontal base (platform) with a geometric core resting on it. Represents the stability and connectivity of a multi-tenant SaaS.
 - **Colors**: Primary Green (#3D5246), Accent Brown (#8B7355), and Background (#FAF9F7).
 - **Wordmark**: `CoreSolution` (no space)
 - **Vibe**: Calm, professional, foundational.
 
 ### Concept H2: Shield & Layers
+- **Status**: Selected/Finalized.
 - **Concept**: Overlapping geometric shield shapes forming a central core. Represents security, layers of data, and B2B reliability.
 - **Colors**: Primary Green (#3D5246), Secondary Green (#6B7F72), and Accent Brown (#8B7355).
 - **Wordmark**: `CoreSolution` (no space)
 - **Vibe**: Secure, layered, trustworthy.
 
 ### Concept H3: Data Flow (Horizontal Rule)
+- **Status**: Rejected.
 - **Concept**: Horizontal data streams converging into a central processor/core. Maintains a visual lineage with Trinity F1's horizontal rule wordmark while being distinctly product-focused.
 - **Colors**: Primary Green (#3D5246), Secondary Green (#6B7F72), and Accent Brown (#8B7355).
 - **Wordmark**: `CoreSolution` (no space)

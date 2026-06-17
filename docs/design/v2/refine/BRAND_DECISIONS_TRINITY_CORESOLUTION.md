@@ -41,7 +41,7 @@
 
 ### CoreSolution 로고
 - [x] preview·SVG wordmark → `CoreSolution`
-- [x] G1–G3 중 최종 컨셉 선정 후 core-coder 핸드오프 (SPEC §5)
+- [x] G1–G3, H1–H3 중 최종 컨셉 선정(H2) 후 core-coder 핸드오프 (SPEC §5)
 
 ### Defer (MindGarden v2 #425–427)
 - [ ] Trinity onboarding v2 + F1 develop merge·정착 확인

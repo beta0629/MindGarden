@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CoreSolution Logo — Final Visual Preview</title>
+  <title>CoreSolution Logo — Final</title>
   <style>
     :root {
       --mg-color-primary-main: #3D5246;
@@ -20,7 +20,7 @@
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Noto Sans KR", system-ui, sans-serif;
+      font-family: "Inter", "Noto Sans KR", system-ui, sans-serif;
       background: #eef1f4;
       color: var(--mg-color-text-main);
       line-height: 1.5;
@@ -127,27 +127,30 @@
   <div class="wrap">
     <header>
       <h1>CoreSolution — Final Logo</h1>
-      <p>Finalized G1 Concept · Light (Main/Landing) and Dark (Sidebar) backgrounds</p>
+      <p>선정된 H2 컨셉 (Shield & Layers) · 라이트(메인/랜딩) 및 다크(사이드바) 배경 위 동일 SVG 임베드</p>
     </header>
 
-    <!-- Final Logo -->
     <section class="concept">
       <div class="concept__head">
-        <span class="concept__label">Final (G1)</span>
-        <h2 class="concept__title">C+S Geometric Monogram</h2>
-        <p class="concept__desc">구조적이고 체계적인 B2B SaaS 솔루션을 상징하는 기하학적 C와 S의 결합.</p>
+        <span class="concept__label">Final Concept</span>
+        <h2 class="concept__title">Shield & Layers (H2)</h2>
+        <p class="concept__desc">Overlapping geometric shield shapes forming a central core. Represents security, layers of data, and B2B reliability.</p>
       </div>
       <div class="compare">
         <div class="panel panel--light">
           <div class="panel__tag">Light page (#FAF9F7)</div>
           <div class="panel__canvas">
-            <span class="logo-embed" role="img" aria-label="CoreSolution — Primary">
-              <svg width="100%" height="auto" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Mark -->
-                <path d="M45 20 C30 20 20 30 20 40 C20 50 30 60 45 60" stroke="#3D5246" stroke-width="8" stroke-linecap="round" />
-                <path d="M35 40 C45 40 55 45 55 50 C55 55 45 60 35 60" stroke="#8B7355" stroke-width="8" stroke-linecap="round" />
-                <!-- Wordmark -->
-                <text x="75" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="700" font-size="28" fill="#2C2C2C" letter-spacing="-0.5">CoreSolution</text>
+            <span class="logo-embed" role="img" aria-label="CoreSolution Logo — Light">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+                <g transform="translate(20, 20)">
+                  <!-- Outer Shield Layer -->
+                  <path d="M4 12 L20 4 L36 12 L36 24 C36 32 28 38 20 40 C12 38 4 32 4 24 Z" fill="#6B7F72" opacity="0.3" />
+                  <!-- Inner Shield Layer -->
+                  <path d="M8 16 L20 10 L32 16 L32 24 C32 30 26 34 20 36 C14 34 8 30 8 24 Z" fill="#3D5246" />
+                  <!-- Core Data Point -->
+                  <circle cx="20" cy="22" r="4" fill="#8B7355" />
+                </g>
+                <text x="76" y="48" font-family="'Inter', 'Noto Sans KR', sans-serif" font-size="24" font-weight="700" fill="#2C2C2C" letter-spacing="-0.02em">Core<tspan font-weight="400" fill="#5C6B61">Solution</tspan></text>
               </svg>
             </span>
           </div>
@@ -155,20 +158,23 @@
         <div class="panel panel--dark">
           <div class="panel__tag">Dark Sidebar (#2C2C2C)</div>
           <div class="panel__canvas">
-            <span class="logo-embed" role="img" aria-label="CoreSolution — Inverse">
-              <svg width="100%" height="auto" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Mark -->
-                <path d="M45 20 C30 20 20 30 20 40 C20 50 30 60 45 60" stroke="#3D5246" stroke-width="8" stroke-linecap="round" />
-                <path d="M35 40 C45 40 55 45 55 50 C55 55 45 60 35 60" stroke="#8B7355" stroke-width="8" stroke-linecap="round" />
-                <!-- Wordmark -->
-                <text x="75" y="48" font-family="'Noto Sans KR', sans-serif" font-weight="700" font-size="28" fill="#FAF9F7" letter-spacing="-0.5">CoreSolution</text>
+            <span class="logo-embed" role="img" aria-label="CoreSolution Logo — Dark">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+                <g transform="translate(20, 20)">
+                  <!-- Outer Shield Layer -->
+                  <path d="M4 12 L20 4 L36 12 L36 24 C36 32 28 38 20 40 C12 38 4 32 4 24 Z" fill="#6B7F72" opacity="0.3" />
+                  <!-- Inner Shield Layer -->
+                  <path d="M8 16 L20 10 L32 16 L32 24 C32 30 26 34 20 36 C14 34 8 30 8 24 Z" fill="#3D5246" />
+                  <!-- Core Data Point -->
+                  <circle cx="20" cy="22" r="4" fill="#8B7355" />
+                </g>
+                <text x="76" y="48" font-family="'Inter', 'Noto Sans KR', sans-serif" font-size="24" font-weight="700" fill="#FAF9F7" letter-spacing="-0.02em">Core<tspan font-weight="400" fill="#FAF9F7" opacity="0.8">Solution</tspan></text>
               </svg>
             </span>
           </div>
         </div>
       </div>
     </section>
-
   </div>
 </body>
 </html>

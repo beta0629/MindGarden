@@ -3,16 +3,14 @@
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
-import Section from "../components/Section";
-import Card from "../components/Card";
-import PricingCard from "../components/PricingCard";
 import Footer from "../components/Footer";
+import PricingCard from "../components/PricingCard";
+import { FeatureCard } from "../components/ui/FeatureCard";
 import { TRINITY_CONSTANTS } from "../constants/trinity";
 import { COMPONENT_CSS } from "../constants/css-variables";
 import { getActivePricingPlans, type PricingPlan } from "../utils/api";
 import { parseAndConvertFeatures } from "../utils/feature-names";
 
-// 상수 정의
 const DEFAULT_CURRENCY = "KRW";
 const DEFAULT_FEATURE_TEXT = "기본 기능 포함";
 const POPULAR_PLAN_DISPLAY_ORDER = 1;
@@ -22,7 +20,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 실시간 요금제 정보 로드
   useEffect(() => {
     loadPricingPlans();
   }, []);
@@ -32,9 +29,7 @@ export default function HomePage() {
       setLoading(true);
       setError(null);
       const plans = await getActivePricingPlans();
-      // displayOrder로 정렬
       const sortedPlans = plans.sort((a, b) => {
-        // displayOrder가 있으면 사용, 없으면 기본 순서 유지
         const orderA = (a as any).displayOrder ?? 999;
         const orderB = (b as any).displayOrder ?? 999;
         return orderA - orderB;
@@ -43,113 +38,134 @@ export default function HomePage() {
     } catch (err) {
       console.error("요금제 정보 로드 실패:", err);
       setError("요금제 정보를 불러오는데 실패했습니다.");
-      // 에러 시 기본 요금제 정보 사용
       setPricingPlans([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // features_json 파싱 (JSON 문자열 또는 배열) 및 한글 변환
   const parseFeatures = (plan: PricingPlan): string[] => {
     const featuresJson = (plan as any).featuresJson;
     if (!featuresJson) {
-      // features_json이 없으면 descriptionKo를 사용
-      if (plan.descriptionKo) {
-        return [plan.descriptionKo];
-      }
-      return [];
+      return plan.descriptionKo ? [plan.descriptionKo] : [];
     }
-    
     const features = parseAndConvertFeatures(featuresJson);
-    if (features.length > 0) {
-      return features;
-    }
-    
-    // 파싱 실패 시 descriptionKo 사용
+    if (features.length > 0) return features;
     return plan.descriptionKo ? [plan.descriptionKo] : [];
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-slate-900 flex flex-col">
       <Header />
-      <Hero />
       
-      <Section id="about" title="회사 소개">
-        <div className="trinity-section__text">
-          <strong>{TRINITY_CONSTANTS.COMPANY.NAME}</strong>는 소상공인을 위한 혁신적인 솔루션을 제공하는 기업입니다.
-        </div>
-        <div className="trinity-section__text">
-          <strong>{TRINITY_CONSTANTS.BRANDING.CORESOLUTION_NAME}</strong>은 대기업 수준의 ERP 시스템을 저렴한 비용으로 제공하여, 
-          소상공인도 전문적인 시스템을 활용할 수 있도록 지원합니다.
-        </div>
-        <div className="trinity-section__text">
-          복잡한 권한 관리 없이 간단하게 운영할 수 있으며, 업종별 맞춤 기능을 제공합니다.
-        </div>
-      </Section>
-
-      <Section id="services" title="서비스 소개" bgSecondary wide>
-        <div className="trinity-pricing">
-          {TRINITY_CONSTANTS.SERVICES.map((service) => (
-            <Card
-              key={service.id}
-              icon={service.icon}
-              iconColor={service.color as "primary" | "success" | "warning"}
-              title={service.title}
-              description={service.description}
-            />
-          ))}
-        </div>
-      </Section>
-
-      <Section id="pricing" title="가격 정보" wide>
-        {loading ? (
-          <div className={COMPONENT_CSS.PRICING.MESSAGE}>
-            {TRINITY_CONSTANTS.MESSAGES.LOADING_PRICING_HOMEPAGE}
-          </div>
-        ) : error && pricingPlans.length === 0 ? (
-          <div className={`${COMPONENT_CSS.PRICING.MESSAGE} ${COMPONENT_CSS.PRICING.MESSAGE_ERROR}`}>
-            {error}
-            <br />
-            <button
-              onClick={loadPricingPlans}
-              className={COMPONENT_CSS.PRICING.RETRY_BUTTON}
-            >
-              {TRINITY_CONSTANTS.MESSAGES.RETRY}
-            </button>
-          </div>
-        ) : pricingPlans.length === 0 ? (
-          <div className={COMPONENT_CSS.PRICING.MESSAGE}>
-            {TRINITY_CONSTANTS.MESSAGES.NO_PRICING_PLANS}
-          </div>
-        ) : (
-          <>
-            <div className={COMPONENT_CSS.PRICING.CONTAINER}>
-              {pricingPlans.map((plan) => {
-                const features = parseFeatures(plan);
-                const isPopular = (plan as any).displayOrder === POPULAR_PLAN_DISPLAY_ORDER;
-                
+      <main className="flex-grow">
+        <Hero />
+        
+        {/* Features / Services Section */}
+        <section id="services" className="py-24 bg-slate-900 border-b border-slate-800">
+          <div className="container mx-auto px-4 md:px-6">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">서비스 소개</h2>
+              <p className="text-lg text-slate-400">
+                {TRINITY_CONSTANTS.COMPANY.NAME}는 복잡한 권한 관리 없이 간단하게 운영할 수 있는 맞춤형 시스템을 제공합니다.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {TRINITY_CONSTANTS.SERVICES.map((service, index) => {
+                // Map the emoji icons from TRINITY_CONSTANTS to the new SVGs
+                const svgIcons = [
+                  <img key="icon-1" src="/assets/icon-feature-multi-tenant.svg" alt="ERP" className="w-12 h-12" />,
+                  <img key="icon-2" src="/assets/icon-feature-automation.svg" alt="권한 관리" className="w-12 h-12" />,
+                  <img key="icon-3" src="/assets/icon-feature-analytics.svg" alt="쉬운 사용" className="w-12 h-12" />
+                ];
                 return (
-                  <PricingCard
-                    key={plan.planId || plan.id || plan.planCode}
-                    id={plan.planId || plan.id || plan.planCode || ""}
-                    name={plan.nameKo || plan.name || plan.displayNameKo || plan.displayName || plan.planCode}
-                    price={Number(plan.baseFee)}
-                    currency={plan.currency || DEFAULT_CURRENCY}
-                    features={features.length > 0 ? features : [plan.descriptionKo || plan.description || DEFAULT_FEATURE_TEXT]}
-                    popular={isPopular}
+                  <FeatureCard
+                    key={service.id}
+                    icon={svgIcons[index] || <span className="text-2xl">{service.icon}</span>}
+                    title={service.title}
+                    description={service.description}
                   />
                 );
               })}
             </div>
-            {error && (
-              <div className={`${COMPONENT_CSS.PRICING.MESSAGE} ${COMPONENT_CSS.PRICING.MESSAGE_WARNING}`}>
-                ⚠️ {TRINITY_CONSTANTS.MESSAGES.WARNING_PRICING_PARTIAL}
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="py-24 bg-slate-950">
+          <div className="container mx-auto px-4 md:px-6">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">합리적인 요금제</h2>
+              <p className="text-lg text-slate-400">
+                비즈니스 규모에 맞는 최적의 플랜을 선택하세요.
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
+            ) : error && pricingPlans.length === 0 ? (
+              <div className="text-center p-8 bg-red-900/20 rounded-xl border border-red-500/20 max-w-2xl mx-auto">
+                <p className="text-red-400 mb-4">{error}</p>
+                <button
+                  onClick={loadPricingPlans}
+                  className="px-4 py-2 bg-slate-800 text-red-400 border border-red-500/30 rounded-lg hover:bg-slate-700 transition-colors"
+                >
+                  {TRINITY_CONSTANTS.MESSAGES.RETRY}
+                </button>
+              </div>
+            ) : pricingPlans.length === 0 ? (
+              <div className="text-center p-8 text-slate-500">
+                {TRINITY_CONSTANTS.MESSAGES.NO_PRICING_PLANS}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
+                  {pricingPlans.map((plan) => {
+                    const features = parseFeatures(plan);
+                    const isPopular = (plan as any).displayOrder === POPULAR_PLAN_DISPLAY_ORDER;
+                    
+                    return (
+                      <div key={plan.planId || plan.id || plan.planCode} className={`relative bg-slate-900 border ${isPopular ? 'border-blue-500 shadow-lg shadow-blue-500/20' : 'border-slate-800'} rounded-2xl p-8 flex flex-col`}>
+                        {isPopular && (
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                            가장 인기있는 요금제
+                          </div>
+                        )}
+                        <h3 className="text-xl font-semibold text-white mb-2">{plan.nameKo || plan.name || plan.displayNameKo || plan.displayName || plan.planCode}</h3>
+                        <div className="flex items-baseline gap-1 mb-6">
+                          <span className="text-4xl font-bold text-white">
+                            {new Intl.NumberFormat("ko-KR").format(Number(plan.baseFee))}
+                          </span>
+                          <span className="text-slate-400">원 / 월</span>
+                        </div>
+                        <ul className="space-y-4 mb-8 flex-1">
+                          {(features.length > 0 ? features : [plan.descriptionKo || plan.description || DEFAULT_FEATURE_TEXT]).map((feature, idx) => (
+                            <li key={idx} className="flex items-start gap-3 text-slate-300">
+                              <svg className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <a href="/onboarding" className={`block w-full py-3 px-4 rounded-xl text-center font-semibold transition-colors ${isPopular ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}>
+                          선택하기
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+                {error && (
+                  <div className="text-center mt-8 text-amber-400 bg-amber-900/20 border border-amber-500/20 p-4 rounded-lg max-w-2xl mx-auto text-sm">
+                    ⚠️ {TRINITY_CONSTANTS.MESSAGES.WARNING_PRICING_PARTIAL}
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
-      </Section>
+          </div>
+        </section>
+      </main>
 
       <Footer />
     </div>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+  <!-- Outer Shield Layer -->
+  <path d="M4 12 L20 4 L36 12 L36 24 C36 32 28 38 20 40 C12 38 4 32 4 24 Z" fill="#6B7F72" opacity="0.3" />
+  <!-- Inner Shield Layer -->
+  <path d="M8 16 L20 10 L32 16 L32 24 C32 30 26 34 20 36 C14 34 8 30 8 24 Z" fill="#3D5246" />
+  <!-- Core Data Point -->
+  <circle cx="20" cy="22" r="4" fill="#8B7355" />
+</svg>

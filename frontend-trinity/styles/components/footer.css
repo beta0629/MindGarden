@@ -46,6 +46,12 @@
   margin-bottom: var(--spacing-sm);
 }
 
+.trinity-footer__text--muted {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+}
+
 .trinity-footer__list {
   list-style: none;
   space-y: var(--spacing-sm);
@@ -67,5 +73,10 @@
   padding-top: var(--spacing-xl);
   text-align: center;
   color: #9ca3af;
+}
+
+.trinity-footer__powered-by-label {
+  font-size: var(--font-size-xs);
+  opacity: 0.7;
 }
 

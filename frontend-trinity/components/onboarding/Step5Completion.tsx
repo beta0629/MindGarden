@@ -2,9 +2,10 @@
  * Step 5: 신청 완료 컴포넌트
  */
 
-import Link from "next/link";
 import { COMPONENT_CSS } from "../../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
+import CoreSolutionLogo from "../CoreSolutionLogo";
+import { V2Button } from "../ui/V2Button";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
 
 interface Step5CompletionProps {
@@ -14,12 +15,13 @@ interface Step5CompletionProps {
 export default function Step5Completion({ formData }: Step5CompletionProps) {
   return (
     <div className={COMPONENT_CSS.ONBOARDING.STEP}>
+      <CoreSolutionLogo variant="primary" className="trinity-core-solution-logo--step" />
       <div className={COMPONENT_CSS.ONBOARDING.SUCCESS}>
         <h3 className="trinity-onboarding__step-title">
           {TRINITY_CONSTANTS.MESSAGES.ONBOARDING_SUCCESS}
         </h3>
         <p className={COMPONENT_CSS.ONBOARDING.SUCCESS_DETAIL}>
-          신청하신 내용을 검토한 후 이메일로 연락드리겠습니다.
+          신청하신 내용을 검토한 후 연락드리겠습니다.
         </p>
         
         <div className={`${COMPONENT_CSS.ONBOARDING.FIELD} trinity-onboarding__completion-info`}>
@@ -29,11 +31,11 @@ export default function Step5Completion({ formData }: Step5CompletionProps) {
               <strong>회사명:</strong> {formData.tenantName}
             </div>
             <div className="trinity-onboarding__info-item">
-              <strong>이메일:</strong> {formData.contactEmail}
+              <strong>휴대폰:</strong> {formData.contactPhone}
             </div>
-            {formData.contactPhone && (
+            {formData.contactEmail && (
               <div className="trinity-onboarding__info-item">
-                <strong>연락처:</strong> {formData.contactPhone}
+                <strong>이메일:</strong> {formData.contactEmail}
               </div>
             )}
             {formData.businessType && (
@@ -44,19 +46,25 @@ export default function Step5Completion({ formData }: Step5CompletionProps) {
           </div>
         </div>
 
-        <div className="trinity-onboarding__buttons trinity-onboarding__completion-buttons">
-          <Link
+        <div className="flex flex-col sm:flex-row gap-4 w-full trinity-onboarding__completion-buttons">
+          <V2Button
             href="/onboarding/status"
-            className={COMPONENT_CSS.ONBOARDING.BUTTON}
+            variant="primary"
+            size="lg"
+            fullWidth
+            className="rounded-xl shadow-lg hover:shadow-xl transition-all"
           >
             신청 상태 확인
-          </Link>
-          <Link
+          </V2Button>
+          <V2Button
             href="/"
-            className={COMPONENT_CSS.ONBOARDING.BUTTON_SECONDARY}
+            variant="outline"
+            size="lg"
+            fullWidth
+            className="rounded-xl"
           >
             {TRINITY_CONSTANTS.MESSAGES.GO_HOME}
-          </Link>
+          </V2Button>
         </div>
       </div>
     </div>

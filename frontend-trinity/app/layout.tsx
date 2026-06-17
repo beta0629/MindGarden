@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
+import { Inter, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
-// TossPaymentsScript 제거 - npm 패키지(@tosspayments/tosspayments-sdk)를 사용하여 동적으로 로드
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-noto-sans-kr",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Trinity - CoreSolution | 소상공인을 위한 통합 솔루션",
@@ -32,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={`${inter.variable} ${notoSansKr.variable}`}>
       <body className="antialiased">
         {/* 토스페이먼츠 SDK는 npm 패키지(@tosspayments/tosspayments-sdk)를 통해 동적으로 로드됩니다 */}
         {children}

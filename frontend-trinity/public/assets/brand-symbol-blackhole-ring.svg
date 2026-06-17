@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- BrandSymbol "blackhole-ring" variant: Black disc with a gradient ring (Primary #3B82F6 to Accent #8B5CF6) -->
+  <defs>
+    <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="26" stroke="url(#ring-gradient)" stroke-width="6" fill="none" />
+  <circle cx="32" cy="32" r="22" fill="#0A0A0A" />
+</svg>

@@ -6,16 +6,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Header from "../../components/Header";
 import { COMPONENT_CSS } from "../../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { apiGet, getPublicOnboardingRequests, type OnboardingRequest } from "../../utils/api";
-import ProgressSteps from "../../components/onboarding/ProgressSteps";
-import AnimatedProgressBar from "../../components/onboarding/AnimatedProgressBar";
 import StepTransition from "../../components/onboarding/StepTransition";
 import ErrorMessage from "../../components/onboarding/ErrorMessage";
-import Step1BasicInfo from "../../components/onboarding/Step1BasicInfo";
 import Step1BasicInfoProgressive from "../../components/onboarding/Step1BasicInfoProgressive";
 import Step2BusinessType from "../../components/onboarding/Step2BusinessType";
 import Step3PricingPlan from "../../components/onboarding/Step3PricingPlan";
@@ -27,6 +23,24 @@ import OnboardingCaptchaSection, {
 } from "../../components/onboarding/OnboardingCaptchaSection";
 import OnboardingLogin from "../../components/onboarding/OnboardingLogin";
 import OnboardingWelcome from "../../components/onboarding/OnboardingWelcome";
+import OnboardingContentShell from "../../components/onboarding/OnboardingContentShell";
+import {
+  resolveDisplayStep,
+  useOnboardingLayout,
+} from "../../components/onboarding/OnboardingLayoutContext";
+
+function getStepHeader(step: number): { title: string; subtitle: string } {
+  const headers = TRINITY_CONSTANTS.ONBOARDING_V2.STEP_HEADERS as Record<
+    number,
+    { title: string; subtitle: string }
+  >;
+  return (
+    headers[step] ?? {
+      title: TRINITY_CONSTANTS.ONBOARDING_V2.DEFAULT_TITLE,
+      subtitle: TRINITY_CONSTANTS.ONBOARDING_V2.DEFAULT_SUBTITLE,
+    }
+  );
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -62,22 +76,18 @@ export default function OnboardingPage() {
     paymentOption,
     setPaymentOption,
     customerKey,
-    emailFormatError,
-    setEmailFormatError,
-    emailDuplicateChecked,
-    setEmailDuplicateChecked,
-    emailDuplicateChecking,
-    setEmailDuplicateChecking,
-    emailDuplicateError,
-    setEmailDuplicateError,
-    emailVerified,
-    setEmailVerified,
-    emailVerificationCode,
-    setEmailVerificationCode,
-    emailVerificationSending,
-    emailVerificationVerifying,
-    emailVerificationTimeLeft,
-    setEmailVerificationTimeLeft,
+    phoneFormatError,
+    setPhoneFormatError,
+    phoneVerified,
+    setPhoneVerified,
+    phoneVerificationCode,
+    setPhoneVerificationCode,
+    phoneVerificationSending,
+    phoneVerificationVerifying,
+    phoneVerificationTimeLeft,
+    setPhoneVerificationTimeLeft,
+    phoneOtpSentMessage,
+    resetPhoneVerification,
     resendCooldown,
     verificationAttempts,
     setVerificationAttempts,
@@ -88,9 +98,8 @@ export default function OnboardingPage() {
     loadRegionCodes,
     regionCodes,
     handleSubmit,
-    checkEmailDuplicate,
-    sendEmailVerificationCode,
-    verifyEmailCode,
+    sendPhoneVerificationCode,
+    verifyPhoneCode,
     createPaymentMethod,
     subdomainDuplicateChecked,
     subdomainDuplicateChecking,
@@ -106,6 +115,28 @@ export default function OnboardingPage() {
     captchaToken,
     setCaptchaToken,
   } = useOnboarding();
+
+  const { setLayoutState } = useOnboardingLayout();
+  const totalDisplaySteps = TRINITY_CONSTANTS.ONBOARDING_STEPS_V2.length;
+
+  useEffect(() => {
+    if (showWelcome) {
+      setLayoutState({
+        panelMode: "welcome",
+        showStepIndicator: false,
+        displayStep: 1,
+        totalDisplaySteps,
+      });
+      return;
+    }
+
+    setLayoutState({
+      panelMode: "flow",
+      showStepIndicator: true,
+      displayStep: resolveDisplayStep(step),
+      totalDisplaySteps,
+    });
+  }, [step, showWelcome, setLayoutState, totalDisplaySteps]);
 
   // 단계 변경 시 방향 감지 및 애니메이션 방향 설정
   const setStep = (newStep: number) => {
@@ -211,12 +242,9 @@ export default function OnboardingPage() {
                 setFormData(prev => ({
                   ...prev,
                   contactEmail: userEmail,
-                  // 필요한 경우 다른 필드도 채울 수 있음
                 }));
-                // 이메일 인증 완료 처리 (이미 로그인된 사용자이므로)
-                setEmailVerified(true);
                 
-                // 진행 중인 온보딩 요청 조회
+                // 진행 중인 온보딩 요청 조회 (레거시: 이메일 기준)
                 loadExistingOnboardingRequests(userEmail);
               }, 0);
             }
@@ -244,7 +272,7 @@ export default function OnboardingPage() {
     };
 
     checkOnboardingAccess();
-  }, [router, setFormData, setEmailVerified, showWelcome]);
+  }, [router, setFormData, showWelcome]);
 
   // 진행 중인 온보딩 요청 조회
   const loadExistingOnboardingRequests = async (email: string) => {
@@ -305,7 +333,6 @@ export default function OnboardingPage() {
         ...prev,
         contactEmail: userEmail
       }));
-      setEmailVerified(true);
       // 진행 중인 온보딩 요청 조회
       loadExistingOnboardingRequests(userEmail);
     }
@@ -324,148 +351,130 @@ export default function OnboardingPage() {
   // 접근 권한 확인 중이면 로딩 표시
   if (accessChecking) {
     return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className="trinity-onboarding__loading-container">
-            접근 권한 확인 중...
-          </div>
-        </main>
+      <div className="trinity-onboarding-v2__loading">
+        접근 권한 확인 중...
       </div>
     );
   }
 
   // 환영 화면 표시
   if (showWelcome) {
-    return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-            <OnboardingWelcome onStart={handleWelcomeStart} />
-          </div>
-        </main>
-      </div>
-    );
+    return <OnboardingWelcome onStart={handleWelcomeStart} />;
   }
 
   // 기존 온보딩 요청 선택 화면 표시
   if (showExistingRequests && existingRequests.length > 0) {
     return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-            <h2 className="trinity-onboarding__title">진행 중인 온보딩</h2>
-            <p className="trinity-onboarding__description">
-              진행 중인 온보딩 요청이 있습니다. 이어서 진행하시겠습니까?
-            </p>
-            
-            <div className="trinity-onboarding__existing-requests">
-              {existingRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="trinity-onboarding__request-card"
-                  onClick={() => handleContinueExistingRequest(request)}
-                >
-                  <div className="trinity-onboarding__request-title">
-                    {request.tenantName || '테넌트 이름 없음'}
-                  </div>
-                  <div className="trinity-onboarding__request-meta">
-                    신청일: {new Date(request.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                  <div className="trinity-onboarding__request-status">
-                    상태: 대기 중
-                  </div>
-                </div>
-              ))}
-              
-              <button
-                type="button"
-                onClick={() => setShowExistingRequests(false)}
-                className={`${COMPONENT_CSS.ONBOARDING.BUTTON_SECONDARY} trinity-onboarding__new-start-button`}
+      <OnboardingContentShell showStepper={false}>
+        <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+          <h2 className="trinity-onboarding__title">진행 중인 온보딩</h2>
+          <p className="trinity-onboarding__description">
+            진행 중인 온보딩 요청이 있습니다. 이어서 진행하시겠습니까?
+          </p>
+
+          <div className="trinity-onboarding__existing-requests">
+            {existingRequests.map((request) => (
+              <div
+                key={request.id}
+                className="trinity-onboarding__request-card"
+                onClick={() => handleContinueExistingRequest(request)}
               >
-                새로 시작하기
-              </button>
-            </div>
+                <div className="trinity-onboarding__request-title">
+                  {request.tenantName || "테넌트 이름 없음"}
+                </div>
+                <div className="trinity-onboarding__request-meta">
+                  신청일:{" "}
+                  {new Date(request.createdAt).toLocaleString("ko-KR", {
+                    timeZone: "Asia/Seoul",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+                <div className="trinity-onboarding__request-status">
+                  상태: 대기 중
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setShowExistingRequests(false)}
+              className={`${COMPONENT_CSS.ONBOARDING.BUTTON_SECONDARY} trinity-onboarding__new-start-button`}
+            >
+              새로 시작하기
+            </button>
           </div>
-        </main>
-      </div>
+        </div>
+      </OnboardingContentShell>
     );
   }
 
   // 로그인 화면 표시
   if (showLogin) {
     return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-            <OnboardingLogin 
-              onLoginSuccess={handleLoginSuccess}
-              onSkipLogin={handleSkipLogin}
-            />
-          </div>
-        </main>
-      </div>
+      <OnboardingContentShell showStepper={false}>
+        <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+          <OnboardingLogin
+            onLoginSuccess={handleLoginSuccess}
+            onSkipLogin={handleSkipLogin}
+          />
+        </div>
+      </OnboardingContentShell>
     );
   }
 
   // 접근 권한 오류가 있으면 오류 메시지 표시
   if (accessError) {
     return (
-      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-        <Header />
-        <main className="container">
-          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-            <ErrorMessage message={accessError} />
-            <p className="trinity-onboarding__error-message">
-              잠시 후 홈으로 이동합니다...
-            </p>
-          </div>
-        </main>
-      </div>
+      <OnboardingContentShell showStepper={false}>
+        <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+          <ErrorMessage message={accessError} />
+          <p className="trinity-onboarding__error-message">
+            잠시 후 홈으로 이동합니다...
+          </p>
+        </div>
+      </OnboardingContentShell>
     );
   }
 
+  const stepHeader = getStepHeader(step);
+
   return (
-    <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
-      <Header />
-      <main className="container">
-        <div className={COMPONENT_CSS.ONBOARDING.FORM}>
-          <h2 className="trinity-onboarding__title">서비스 신청</h2>
+    <OnboardingContentShell
+      currentStep={step}
+      title={stepHeader.title}
+      subtitle={stepHeader.subtitle}
+    >
+      <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+        <ErrorMessage message={error} />
 
-          <ErrorMessage message={error} />
-
-          <AnimatedProgressBar currentStep={step} totalSteps={TRINITY_CONSTANTS.ONBOARDING_STEPS.length} />
-
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
             <StepTransition step={1} currentStep={step} direction={transitionDirection}>
               {step === 1 && (
                 <Step1BasicInfoProgressive
                 formData={formData}
                 setFormData={setFormData}
                 onStepComplete={() => setStep(2)}
-                emailFormatError={emailFormatError}
-                emailDuplicateChecked={emailDuplicateChecked}
-                emailDuplicateChecking={emailDuplicateChecking}
-                emailDuplicateError={emailDuplicateError}
-                emailVerified={emailVerified}
-                emailVerificationCode={emailVerificationCode}
-                emailVerificationSending={emailVerificationSending}
-                emailVerificationVerifying={emailVerificationVerifying}
-                emailVerificationTimeLeft={emailVerificationTimeLeft}
+                phoneFormatError={phoneFormatError}
+                phoneVerified={phoneVerified}
+                phoneVerificationCode={phoneVerificationCode}
+                phoneVerificationSending={phoneVerificationSending}
+                phoneVerificationVerifying={phoneVerificationVerifying}
+                phoneVerificationTimeLeft={phoneVerificationTimeLeft}
                 resendCooldown={resendCooldown}
-                setEmailVerified={setEmailVerified}
-                setEmailVerificationCode={setEmailVerificationCode}
-                setEmailDuplicateChecked={setEmailDuplicateChecked}
-                setEmailDuplicateError={setEmailDuplicateError}
-                setEmailVerificationTimeLeft={setEmailVerificationTimeLeft}
+                phoneOtpSentMessage={phoneOtpSentMessage}
+                setPhoneVerified={setPhoneVerified}
+                setPhoneVerificationCode={setPhoneVerificationCode}
+                setPhoneVerificationTimeLeft={setPhoneVerificationTimeLeft}
                 setVerificationAttempts={setVerificationAttempts}
-                sendEmailVerificationCode={sendEmailVerificationCode}
-                verifyEmailCode={verifyEmailCode}
+                sendPhoneVerificationCode={sendPhoneVerificationCode}
+                verifyPhoneCode={verifyPhoneCode}
+                resetPhoneVerification={resetPhoneVerification}
                 validateEmailFormat={validateEmailFormat}
-                checkEmailDuplicate={checkEmailDuplicate}
+                setPhoneFormatError={setPhoneFormatError}
                 subdomainDuplicateChecked={subdomainDuplicateChecked}
                 subdomainDuplicateChecking={subdomainDuplicateChecking}
                 subdomainDuplicateError={subdomainDuplicateError}
@@ -475,7 +484,6 @@ export default function OnboardingPage() {
                 setSubdomainPreview={setSubdomainPreview}
                 checkSubdomainDuplicate={checkSubdomainDuplicate}
                 setError={setError}
-                setEmailFormatError={setEmailFormatError}
                 regionCodes={regionCodes}
                 loadRegionCodes={loadRegionCodes}
               />
@@ -499,25 +507,12 @@ export default function OnboardingPage() {
 
             <StepTransition step={3} currentStep={step} direction={transitionDirection}>
               {step === 3 && (
-                <>
-                  <Step3PricingPlan
+                <Step3PricingPlan
                   formData={formData}
                   setFormData={setFormData}
                   pricingPlans={pricingPlans}
                   loading={loading}
                 />
-                {/* PG 결제 프로세스 안내 메시지 */}
-                <div className="trinity-onboarding__warning-box">
-                  <p className="trinity-onboarding__warning-title">
-                    ⚠️ PG사 결제 프로세스는 추후 진행 예정입니다
-                  </p>
-                  <p className="trinity-onboarding__warning-text">
-                    현재는 결제 수단 등록 없이 바로 온보딩 등록이 가능합니다.
-                    <br />
-                    온보딩 승인 후 서비스 이용 시점에 결제 수단을 등록하실 수 있습니다.
-                  </p>
-                </div>
-                </>
               )}
             </StepTransition>
 
@@ -617,7 +612,6 @@ export default function OnboardingPage() {
             )}
           </form>
         </div>
-      </main>
-    </div>
+    </OnboardingContentShell>
   );
 }

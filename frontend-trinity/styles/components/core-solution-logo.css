@@ -1,0 +1,50 @@
+/**
+ * CoreSolution G1 로고 배치 (B안 제품 구간)
+ */
+
+.trinity-core-solution-logo--hero {
+  display: block;
+  height: var(--logo-height-core-solution-hero);
+  width: auto;
+  max-width: var(--logo-max-width-core-solution-hero);
+  margin: 0 auto var(--spacing-lg);
+}
+
+.trinity-core-solution-logo--welcome {
+  display: block;
+  height: var(--logo-height-core-solution-welcome);
+  width: auto;
+  max-width: var(--logo-max-width-core-solution-welcome);
+  margin: 0 auto;
+}
+
+.trinity-core-solution-logo--step {
+  display: block;
+  height: var(--logo-height-core-solution-step);
+  width: auto;
+  max-width: var(--logo-max-width-core-solution-step);
+  margin-bottom: var(--spacing-lg);
+}
+
+.trinity-core-solution-logo--product {
+  display: block;
+  height: var(--logo-height-core-solution-product);
+  width: auto;
+  max-width: var(--logo-max-width-core-solution-product);
+  margin-bottom: var(--spacing-md);
+}
+
+.trinity-footer__powered-by {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.trinity-core-solution-logo--powered-by {
+  display: block;
+  height: var(--logo-height-core-solution-powered-by);
+  width: auto;
+  max-width: var(--logo-max-width-core-solution-powered-by);
+}

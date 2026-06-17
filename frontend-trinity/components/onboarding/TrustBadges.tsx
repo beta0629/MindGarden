@@ -21,12 +21,11 @@ export default function TrustBadges({ className = "" }: TrustBadgesProps) {
         <li key={badge.key} className="trinity-trust-badges__item">
           <Image
             src={badge.iconSrc}
-            alt=""
-            width={32}
+            alt={badge.label}
+            width={100}
             height={32}
-            className="trinity-trust-badges__icon"
+            className="trinity-trust-badges__badge"
           />
-          <span className="trinity-trust-badges__label">{badge.label}</span>
         </li>
       ))}
     </ul>

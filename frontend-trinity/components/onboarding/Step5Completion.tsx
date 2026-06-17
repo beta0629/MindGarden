@@ -2,10 +2,10 @@
  * Step 5: 신청 완료 컴포넌트
  */
 
-import Link from "next/link";
 import { COMPONENT_CSS } from "../../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import CoreSolutionLogo from "../CoreSolutionLogo";
+import { V2Button } from "../ui/V2Button";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
 
 interface Step5CompletionProps {
@@ -46,19 +46,25 @@ export default function Step5Completion({ formData }: Step5CompletionProps) {
           </div>
         </div>
 
-        <div className="trinity-onboarding__buttons trinity-onboarding__completion-buttons">
-          <Link
+        <div className="flex flex-col sm:flex-row gap-4 w-full trinity-onboarding__completion-buttons">
+          <V2Button
             href="/onboarding/status"
-            className={COMPONENT_CSS.ONBOARDING.BUTTON}
+            variant="primary"
+            size="lg"
+            fullWidth
+            className="rounded-xl shadow-lg hover:shadow-xl transition-all"
           >
             신청 상태 확인
-          </Link>
-          <Link
+          </V2Button>
+          <V2Button
             href="/"
-            className={COMPONENT_CSS.ONBOARDING.BUTTON_SECONDARY}
+            variant="outline"
+            size="lg"
+            fullWidth
+            className="rounded-xl"
           >
             {TRINITY_CONSTANTS.MESSAGES.GO_HOME}
-          </Link>
+          </V2Button>
         </div>
       </div>
     </div>

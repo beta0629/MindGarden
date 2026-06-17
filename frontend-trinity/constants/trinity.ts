@@ -301,6 +301,18 @@ export const TRINITY_CONSTANTS = {
     CAPTCHA_NETWORK: '네트워크 오류로 확인을 완료할 수 없습니다. 연결을 확인한 뒤 다시 시도해 주세요.',
     CAPTCHA_REFRESH_HINT: '문제가 계속되면 페이지를 새로고침한 뒤 다시 시도해 주세요.',
     CAPTCHA_REQUIRED_BEFORE_SUBMIT: '보안 확인을 완료한 뒤 제출해 주세요.',
+    // 신청 상태 조회
+    STATUS_LOOKUP_DESCRIPTION:
+      '신청 시 인증하신 휴대폰 번호 또는 입력하신 이메일로 신청 내역을 조회할 수 있습니다.',
+    STATUS_LOOKUP_CONTACT_LABEL: '휴대폰 번호 또는 이메일',
+    STATUS_LOOKUP_CONTACT_REQUIRED: '휴대폰 번호 또는 이메일 중 하나를 입력해주세요.',
+    STATUS_LOOKUP_PHONE_PLACEHOLDER: '010-1234-5678',
+    STATUS_LOOKUP_EMAIL_PLACEHOLDER: 'example@email.com (선택)',
+    STATUS_LOOKUP_REQUEST_ID_LABEL: '신청 번호 (선택사항)',
+    STATUS_LOOKUP_REQUEST_ID_PLACEHOLDER: '신청 번호를 입력하면 상세 내역을 조회합니다',
+    STATUS_LOOKUP_SEARCH: '조회하기',
+    STATUS_LOOKUP_SEARCHING: '조회 중...',
+    STATUS_LOOKUP_EMPTY: '조회된 신청 내역이 없습니다.',
   },
   
   // 결제 관련 상수

@@ -81,6 +81,32 @@ public interface OnboardingRequestRepository extends JpaRepository<OnboardingReq
      * 이메일로 온보딩 요청 조회 (공개 조회용)
      */
     List<OnboardingRequest> findByRequestedByAndIsDeletedFalseOrderByCreatedAtDesc(String requestedBy);
+
+    /**
+     * requestedBy 대소문자 무시 조회 (레거시 이메일·공개 조회용)
+     */
+    @Query("SELECT o FROM OnboardingRequest o WHERE LOWER(o.requestedBy) = LOWER(:requestedBy) "
+            + "AND o.isDeleted = false ORDER BY o.createdAt DESC")
+    List<OnboardingRequest> findByRequestedByIgnoreCaseAndIsDeletedFalseOrderByCreatedAtDesc(
+            @Param("requestedBy") String requestedBy);
+
+    /**
+     * checklist_json 내 contactEmail 일치 (Trinity 휴대폰 SSOT 이후 이메일 조회)
+     */
+    @Query("SELECT o FROM OnboardingRequest o WHERE o.isDeleted = false AND o.checklistJson IS NOT NULL "
+            + "AND (LOWER(o.checklistJson) LIKE LOWER(CONCAT('%\"contactEmail\":\"', :email, '\"%')) "
+            + "OR LOWER(o.checklistJson) LIKE LOWER(CONCAT('%\"contactEmail\": \"', :email, '\"%'))) "
+            + "ORDER BY o.createdAt DESC")
+    List<OnboardingRequest> findByChecklistContactEmailIgnoreCase(@Param("email") String email);
+
+    /**
+     * checklist_json 내 contactPhone 일치 (보조 조회)
+     */
+    @Query("SELECT o FROM OnboardingRequest o WHERE o.isDeleted = false AND o.checklistJson IS NOT NULL "
+            + "AND (o.checklistJson LIKE CONCAT('%\"contactPhone\":\"', :phone, '\"%') "
+            + "OR o.checklistJson LIKE CONCAT('%\"contactPhone\": \"', :phone, '\"%')) "
+            + "ORDER BY o.createdAt DESC")
+    List<OnboardingRequest> findByChecklistContactPhone(@Param("phone") String phone);
     
     /**
      * ID와 이메일로 온보딩 요청 조회 (본인 확인용)

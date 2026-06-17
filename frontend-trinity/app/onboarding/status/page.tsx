@@ -6,37 +6,92 @@ import Header from "../../../components/Header";
 import Button from "../../../components/Button";
 import OnboardingStatusCard from "../../../components/onboarding/OnboardingStatusCard";
 import { COMPONENT_CSS } from "../../../constants/css-variables";
-import { getPublicOnboardingRequests, getPublicOnboardingRequest, type OnboardingRequest } from "../../../utils/api";
+import { TRINITY_CONSTANTS } from "../../../constants/trinity";
+import {
+  getPublicOnboardingRequests,
+  getPublicOnboardingRequest,
+  type OnboardingRequest,
+  type PublicOnboardingContactQuery,
+} from "../../../utils/api";
+import {
+  formatPhoneDisplay,
+  isValidKoreanMobileDigits,
+  normalizeKoreanMobileDigits,
+  validatePhoneFormat,
+} from "../../../utils/phoneUtils";
 import "../../../styles/components/onboarding-status.css";
+
+const { MESSAGES } = TRINITY_CONSTANTS;
+
+function buildContactQuery(phone: string, email: string): PublicOnboardingContactQuery {
+  const query: PublicOnboardingContactQuery = {};
+  const phoneDigits = normalizeKoreanMobileDigits(phone);
+  if (phoneDigits) {
+    query.phone = phoneDigits;
+  }
+  const trimmedEmail = email.trim();
+  if (trimmedEmail) {
+    query.email = trimmedEmail;
+  }
+  return query;
+}
+
+function hasContactInput(phone: string, email: string): boolean {
+  const phoneDigits = normalizeKoreanMobileDigits(phone);
+  return Boolean(phoneDigits || email.trim());
+}
 
 export default function OnboardingStatusPage() {
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const initialPhone = searchParams.get("phone") || "";
+  const initialEmail = searchParams.get("email") || "";
+  const [phone, setPhone] = useState(
+    initialPhone ? formatPhoneDisplay(initialPhone) : ""
+  );
+  const [email, setEmail] = useState(initialEmail);
   const [requestId, setRequestId] = useState(searchParams.get("id") || "");
   const [requests, setRequests] = useState<OnboardingRequest[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<OnboardingRequest | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
+
+  const validateContact = (): PublicOnboardingContactQuery | null => {
+    const phoneDigits = normalizeKoreanMobileDigits(phone);
+    const trimmedEmail = email.trim();
+
+    if (!phoneDigits && !trimmedEmail) {
+      setError(MESSAGES.STATUS_LOOKUP_CONTACT_REQUIRED);
+      return null;
+    }
+
+    if (phone.trim() && !isValidKoreanMobileDigits(phoneDigits)) {
+      const phoneValidation = validatePhoneFormat(phone);
+      setError(phoneValidation.error || MESSAGES.ERROR_PHONE_INVALID);
+      return null;
+    }
+
+    return buildContactQuery(phone, email);
+  };
 
   const handleSearch = async () => {
-    if (!email || !email.trim()) {
-      setError("이메일을 입력해주세요.");
+    const contactQuery = validateContact();
+    if (!contactQuery) {
       return;
     }
 
     setLoading(true);
     setError(null);
     setSelectedRequest(null);
+    setSearched(true);
 
     try {
       if (requestId && requestId.trim()) {
-        // ID와 이메일로 상세 조회 (ID는 UUID 문자열)
-        const request = await getPublicOnboardingRequest(requestId.trim(), email);
+        const request = await getPublicOnboardingRequest(requestId.trim(), contactQuery);
         setSelectedRequest(request);
         setRequests([]);
       } else {
-        // 이메일로 목록 조회
-        const results = await getPublicOnboardingRequests(email);
+        const results = await getPublicOnboardingRequests(contactQuery);
         setRequests(results);
         setSelectedRequest(null);
       }
@@ -70,12 +125,19 @@ export default function OnboardingStatusPage() {
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
-        timeZone: "Asia/Seoul", // 한국 표준시 명시
+        timeZone: "Asia/Seoul",
       });
     } catch {
       return dateString;
     }
   };
+
+  const handlePhoneChange = (value: string) => {
+    const digits = normalizeKoreanMobileDigits(value);
+    setPhone(digits ? formatPhoneDisplay(digits) : value.replace(/\D/g, ""));
+  };
+
+  const canSearch = hasContactInput(phone, email);
 
   return (
     <div className="trinity-onboarding">
@@ -84,31 +146,47 @@ export default function OnboardingStatusPage() {
         <div className={COMPONENT_CSS.ONBOARDING.FORM}>
           <h1 className={COMPONENT_CSS.ONBOARDING.TITLE}>온보딩 신청 상태 조회</h1>
           <p className={`${COMPONENT_CSS.ONBOARDING.TEXT_SECONDARY} trinity-onboarding-status__description`}>
-            신청 시 입력하신 이메일 주소로 신청 내역을 조회할 수 있습니다.
+            {MESSAGES.STATUS_LOOKUP_DESCRIPTION}
           </p>
 
           <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
             <label className={COMPONENT_CSS.ONBOARDING.LABEL}>
-              이메일 주소 <span className="trinity-onboarding-status__required">*</span>
+              {MESSAGES.STATUS_LOOKUP_CONTACT_LABEL}{" "}
+              <span className="trinity-onboarding-status__required">*</span>
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="신청 시 입력하신 이메일 주소"
+              type="tel"
+              value={phone}
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              placeholder={MESSAGES.STATUS_LOOKUP_PHONE_PLACEHOLDER}
               className={`${COMPONENT_CSS.ONBOARDING.INPUT} trinity-onboarding-status__input`}
+              autoComplete="tel"
             />
           </div>
 
           <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
             <label className={COMPONENT_CSS.ONBOARDING.LABEL}>
-              신청 번호 (선택사항)
+              이메일 (선택)
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={MESSAGES.STATUS_LOOKUP_EMAIL_PLACEHOLDER}
+              className={`${COMPONENT_CSS.ONBOARDING.INPUT} trinity-onboarding-status__input`}
+              autoComplete="email"
+            />
+          </div>
+
+          <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
+            <label className={COMPONENT_CSS.ONBOARDING.LABEL}>
+              {MESSAGES.STATUS_LOOKUP_REQUEST_ID_LABEL}
             </label>
             <input
               type="text"
               value={requestId}
               onChange={(e) => setRequestId(e.target.value)}
-              placeholder="신청 번호를 입력하면 상세 내역을 조회합니다"
+              placeholder={MESSAGES.STATUS_LOOKUP_REQUEST_ID_PLACEHOLDER}
               className={COMPONENT_CSS.ONBOARDING.INPUT}
             />
           </div>
@@ -122,16 +200,15 @@ export default function OnboardingStatusPage() {
           <Button
             type="button"
             onClick={handleSearch}
-            disabled={loading || !email.trim()}
+            disabled={loading || !canSearch}
             variant="primary"
             fullWidth
             loading={loading}
-            loadingText="조회 중..."
+            loadingText={MESSAGES.STATUS_LOOKUP_SEARCHING}
           >
-            조회하기
+            {MESSAGES.STATUS_LOOKUP_SEARCH}
           </Button>
 
-          {/* 조회 결과: 목록 */}
           {requests.length > 0 && (
             <div className="trinity-onboarding-status__results">
               <h2 className="trinity-onboarding-status__results-title">
@@ -143,9 +220,8 @@ export default function OnboardingStatusPage() {
                     key={request.id}
                     request={request}
                     onViewDetail={(id) => {
-                      // id는 UUID 문자열이므로 그대로 사용
-                      setRequestId(typeof id === 'string' ? id : String(id));
-                      handleSearch();
+                      setRequestId(typeof id === "string" ? id : String(id));
+                      void handleSearch();
                     }}
                     formatDate={formatDate}
                     getStatusLabel={getStatusLabel}
@@ -155,7 +231,6 @@ export default function OnboardingStatusPage() {
             </div>
           )}
 
-          {/* 조회 결과: 상세 */}
           {selectedRequest && (
             <div className="trinity-onboarding-status__detail">
               <h2 className="trinity-onboarding-status__detail-title">
@@ -169,9 +244,9 @@ export default function OnboardingStatusPage() {
             </div>
           )}
 
-          {requests.length === 0 && !selectedRequest && !loading && email && !error && (
+          {requests.length === 0 && !selectedRequest && !loading && searched && !error && (
             <div className="trinity-onboarding-status__empty">
-              조회된 신청 내역이 없습니다.
+              {MESSAGES.STATUS_LOOKUP_EMPTY}
             </div>
           )}
         </div>
@@ -179,4 +254,3 @@ export default function OnboardingStatusPage() {
     </div>
   );
 }
-

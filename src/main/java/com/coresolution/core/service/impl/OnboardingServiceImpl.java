@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +16,8 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
@@ -45,6 +48,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.StringUtils;
 import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -965,6 +969,43 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<OnboardingRequest> findPublicByContact(String email, String phone) {
+        boolean hasEmail = StringUtils.hasText(email);
+        boolean hasPhone = StringUtils.hasText(phone);
+        if (!hasEmail && !hasPhone) {
+            throw new IllegalArgumentException(OnboardingConstants.ERROR_ONBOARDING_PUBLIC_CONTACT_REQUIRED);
+        }
+
+        LinkedHashMap<Long, OnboardingRequest> merged = new LinkedHashMap<>();
+
+        if (hasPhone) {
+            String normalizedPhone = LoginIdentifierUtils.normalizeKoreanMobileDigits(phone.trim());
+            if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalizedPhone)) {
+                throw new IllegalArgumentException(OnboardingConstants.ERROR_ONBOARDING_PUBLIC_CONTACT_REQUIRED);
+            }
+            log.debug("공개 온보딩 요청 조회(휴대폰): phone={}",
+                    PhoneLogMasking.maskForLog(normalizedPhone));
+            mergePublicRequests(merged,
+                    repository.findByRequestedByAndIsDeletedFalseOrderByCreatedAtDesc(normalizedPhone));
+            mergePublicRequests(merged, repository.findByChecklistContactPhone(normalizedPhone));
+        }
+
+        if (hasEmail) {
+            String normalizedEmail = email.trim().toLowerCase();
+            log.debug("공개 온보딩 요청 조회(이메일): email={}",
+                    EmailLogMasking.maskForLog(normalizedEmail));
+            mergePublicRequests(merged,
+                    repository.findByRequestedByIgnoreCaseAndIsDeletedFalseOrderByCreatedAtDesc(
+                            normalizedEmail));
+            mergePublicRequests(merged,
+                    repository.findByChecklistContactEmailIgnoreCase(normalizedEmail));
+        }
+
+        return new ArrayList<>(merged.values());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public OnboardingRequest findByIdAndEmail(Long id, String email) {
         log.debug("ID와 이메일로 온보딩 요청 조회: id={}, email={}", id, EmailLogMasking.maskForLog(email));
         OnboardingRequest request = repository.findByIdAndRequestedByAndIsDeletedFalse(id, email);
@@ -973,6 +1014,92 @@ public class OnboardingServiceImpl implements OnboardingService {
                     OnboardingConstants.ERROR_ONBOARDING_REQUEST_NOT_FOUND);
         }
         return request;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OnboardingRequest findByIdAndContact(Long id, String email, String phone) {
+        boolean hasEmail = StringUtils.hasText(email);
+        boolean hasPhone = StringUtils.hasText(phone);
+        if (!hasEmail && !hasPhone) {
+            throw new IllegalArgumentException(OnboardingConstants.ERROR_ONBOARDING_PUBLIC_CONTACT_REQUIRED);
+        }
+
+        OnboardingRequest request = repository.findActiveById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        OnboardingConstants.ERROR_ONBOARDING_REQUEST_NOT_FOUND));
+
+        String normalizedEmail = hasEmail ? email.trim().toLowerCase() : null;
+        String normalizedPhone = hasPhone
+                ? LoginIdentifierUtils.normalizeKoreanMobileDigits(phone.trim())
+                : null;
+        if (hasPhone && !LoginIdentifierUtils.isValidKoreanMobileDigits(normalizedPhone)) {
+            throw new IllegalArgumentException(OnboardingConstants.ERROR_ONBOARDING_REQUEST_NOT_FOUND);
+        }
+
+        if (!matchesPublicContact(request, normalizedEmail, normalizedPhone)) {
+            throw new IllegalArgumentException(OnboardingConstants.ERROR_ONBOARDING_REQUEST_NOT_FOUND);
+        }
+
+        log.debug("ID와 연락처로 온보딩 요청 조회 완료: id={}, hasEmail={}, hasPhone={}",
+                id, hasEmail, hasPhone);
+        return request;
+    }
+
+    private void mergePublicRequests(LinkedHashMap<Long, OnboardingRequest> merged,
+            List<OnboardingRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            return;
+        }
+        for (OnboardingRequest request : requests) {
+            if (request != null && request.getId() != null) {
+                merged.putIfAbsent(request.getId(), request);
+            }
+        }
+    }
+
+    private boolean matchesPublicContact(OnboardingRequest request, String normalizedEmail,
+            String normalizedPhone) {
+        String requestedBy = request.getRequestedBy();
+        if (StringUtils.hasText(requestedBy)) {
+            if (normalizedPhone != null
+                    && normalizedPhone.equals(
+                            LoginIdentifierUtils.normalizeKoreanMobileDigits(requestedBy))) {
+                return true;
+            }
+            if (normalizedEmail != null
+                    && normalizedEmail.equalsIgnoreCase(requestedBy.trim())) {
+                return true;
+            }
+        }
+
+        Map<String, Object> checklist = parseChecklistMap(request.getChecklistJson());
+        if (checklist.isEmpty()) {
+            return false;
+        }
+
+        Object checklistPhone = checklist.get(OnboardingConstants.CHECKLIST_JSON_KEY_CONTACT_PHONE);
+        if (normalizedPhone != null && checklistPhone instanceof String checklistPhoneStr
+                && normalizedPhone.equals(
+                        LoginIdentifierUtils.normalizeKoreanMobileDigits(checklistPhoneStr))) {
+            return true;
+        }
+
+        Object checklistEmail = checklist.get(OnboardingConstants.CHECKLIST_JSON_KEY_CONTACT_EMAIL);
+        return normalizedEmail != null && checklistEmail instanceof String checklistEmailStr
+                && normalizedEmail.equalsIgnoreCase(checklistEmailStr.trim());
+    }
+
+    private Map<String, Object> parseChecklistMap(String checklistJson) {
+        if (!StringUtils.hasText(checklistJson)) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(checklistJson, new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException e) {
+            log.debug("checklistJson 파싱 실패(공개 조회 본인 확인): {}", e.getMessage());
+            return Map.of();
+        }
     }
 
     @Override

@@ -30,7 +30,8 @@ public class OnboardingConstants {
     public static final String ERROR_EMAIL_DUPLICATE = "이미 해당 이메일로 테넌트가 생성되어 있습니다.";
     public static final String ERROR_INVALID_STATUS = "유효하지 않은 상태 코드입니다: {0}";
     public static final String ERROR_RETRY_ONLY_ON_HOLD = "재시도는 ON_HOLD 상태인 경우에만 가능합니다. 현재 상태: {0}";
-    public static final String ERROR_ONBOARDING_REQUEST_NOT_FOUND = "온보딩 요청을 찾을 수 없습니다. ID와 이메일을 확인해주세요.";
+    public static final String ERROR_ONBOARDING_REQUEST_NOT_FOUND =
+            "온보딩 요청을 찾을 수 없습니다. 신청 번호와 연락처를 확인해주세요.";
 
     /** 온보딩 요청 생성 시 checklist_json 병합 실패 */
     public static final String ERROR_ONBOARDING_CHECKLIST_MERGE_FAILED =
@@ -443,6 +444,11 @@ public class OnboardingConstants {
     public static final String CHECKLIST_JSON_KEY_ADDRESS = "address";
     public static final String CHECKLIST_JSON_KEY_POSTAL_CODE = "postalCode";
     public static final String CHECKLIST_JSON_KEY_BRAND_NAME = "brandName";
+    public static final String CHECKLIST_JSON_KEY_CONTACT_PHONE = "contactPhone";
+    public static final String CHECKLIST_JSON_KEY_CONTACT_EMAIL = "contactEmail";
+
+    public static final String ERROR_ONBOARDING_PUBLIC_CONTACT_REQUIRED =
+            "이메일 또는 휴대폰 번호 중 하나를 입력해주세요.";
 
     public static final String INIT_STATUS_JSON_KEY_COMMON_CODES = "commonCodes";
     public static final String INIT_STATUS_JSON_KEY_ROLE_CODES = "roleCodes";

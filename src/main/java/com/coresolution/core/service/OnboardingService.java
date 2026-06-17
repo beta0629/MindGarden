@@ -111,11 +111,30 @@ public interface OnboardingService {
      * 이메일로 온보딩 요청 조회 (공개 조회용)
      */
     List<OnboardingRequest> findByEmail(String email);
-    
+
+    /**
+     * 휴대폰·이메일로 온보딩 요청 목록 조회 (공개 조회용, 둘 중 하나 이상 필수)
+     *
+     * @param email 연락 이메일 (선택)
+     * @param phone 휴대폰 번호 (선택, 정규화 전 입력 가능)
+     * @return 매칭 요청 목록 (최신순, 중복 제거)
+     */
+    List<OnboardingRequest> findPublicByContact(String email, String phone);
+
     /**
      * ID와 이메일로 온보딩 요청 조회 (본인 확인용)
      */
     OnboardingRequest findByIdAndEmail(Long id, String email);
+
+    /**
+     * ID와 휴대폰·이메일로 온보딩 요청 조회 (본인 확인용, 둘 중 하나 이상 필수)
+     *
+     * @param id 요청 PK
+     * @param email 연락 이메일 (선택)
+     * @param phone 휴대폰 번호 (선택)
+     * @return 본인 확인된 요청
+     */
+    OnboardingRequest findByIdAndContact(Long id, String email, String phone);
     
     /**
      * 이메일 중복 확인 (온보딩 요청 및 테넌트 관리자 계정 확인)

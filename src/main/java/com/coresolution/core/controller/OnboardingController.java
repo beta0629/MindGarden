@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.dto.OnboardingCaptchaSiteKeyResponse;
 import com.coresolution.core.controller.dto.OnboardingCreateRequest;
@@ -356,18 +357,30 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 온보딩 요청 조회 (이메일로 조회) /** GET /api/v1/onboarding/requests/public?email={email} /** 새로운 테넌트를
-     * 등록하려는 사용자만 접근 가능 /** (이미 테넌트에 속한 사용자는 접근 불가)
+     * 온보딩 요청 조회 (휴대폰·이메일로 조회) /** GET /api/v1/onboarding/requests/public?email={email}&phone={phone}
+     * /** 새로운 테넌트를 등록하려는 사용자만 접근 가능 /** (이미 테넌트에 속한 사용자는 접근 불가)
      */
     @GetMapping("/requests/public")
     public ResponseEntity<ApiResponse<List<OnboardingRequest>>> getPublicRequests(
-            @RequestParam String email, HttpSession session) {
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            HttpSession session) {
         validateOnboardingAccess(session);
-        log.debug("공개 온보딩 요청 조회: email={}", EmailLogMasking.maskForLog(email));
+        if (!StringUtils.hasText(email) && !StringUtils.hasText(phone)) {
+            throw new IllegalArgumentException(OnboardingConstants.ERROR_ONBOARDING_PUBLIC_CONTACT_REQUIRED);
+        }
+        if (StringUtils.hasText(email)) {
+            log.debug("공개 온보딩 요청 조회: email={}", EmailLogMasking.maskForLog(email));
+        }
+        if (StringUtils.hasText(phone)) {
+            log.debug("공개 온보딩 요청 조회: phone={}", PhoneLogMasking.maskForLog(phone));
+        }
 
-        List<OnboardingRequest> requests = onboardingService.findByEmail(email);
+        List<OnboardingRequest> requests = onboardingService.findPublicByContact(
+                StringUtils.hasText(email) ? email.trim() : null,
+                StringUtils.hasText(phone) ? phone.trim() : null);
 
-        log.debug("✅ 공개 온보딩 요청 조회 완료: email={}, count={}", EmailLogMasking.maskForLog(email), requests.size());
+        log.debug("✅ 공개 온보딩 요청 조회 완료: count={}", requests.size());
         return success(requests);
     }
 
@@ -428,16 +441,27 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 온보딩 요청 상세 조회 (ID + 이메일로 본인 확인) /** GET /api/v1/onboarding/requests/public/{id}?email={email}
+     * 온보딩 요청 상세 조회 (ID + 휴대폰·이메일로 본인 확인)
+     * /** GET /api/v1/onboarding/requests/public/{id}?email={email}&phone={phone}
      * /** 새로운 테넌트를 등록하려는 사용자만 접근 가능 /** (이미 테넌트에 속한 사용자는 접근 불가)
      */
     @GetMapping("/requests/public/{id}")
     public ResponseEntity<ApiResponse<OnboardingRequest>> getPublicRequest(
-            @PathVariable Long id, @RequestParam String email, HttpSession session) {
+            @PathVariable Long id,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            HttpSession session) {
         validateOnboardingAccess(session);
-        log.debug("공개 온보딩 요청 상세 조회: id={}, email={}", id, EmailLogMasking.maskForLog(email));
+        if (!StringUtils.hasText(email) && !StringUtils.hasText(phone)) {
+            throw new IllegalArgumentException(OnboardingConstants.ERROR_ONBOARDING_PUBLIC_CONTACT_REQUIRED);
+        }
+        log.debug("공개 온보딩 요청 상세 조회: id={}, hasEmail={}, hasPhone={}",
+                id, StringUtils.hasText(email), StringUtils.hasText(phone));
 
-        OnboardingRequest request = onboardingService.findByIdAndEmail(id, email);
+        OnboardingRequest request = onboardingService.findByIdAndContact(
+                id,
+                StringUtils.hasText(email) ? email.trim() : null,
+                StringUtils.hasText(phone) ? phone.trim() : null);
 
         return success(request);
     }

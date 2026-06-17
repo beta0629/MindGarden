@@ -267,6 +267,8 @@ export const TRINITY_CONSTANTS = {
     PHONE_VERIFY_SUCCESS: '✓ 휴대폰 인증이 완료되었습니다.',
     OTP_SENT_PUSH: '앱 푸시 알림으로 인증번호가 발송되었습니다.',
     OTP_SENT_SMS: 'SMS로 인증번호가 발송되었습니다.',
+    OTP_SENT_SMS_STUB:
+      '개발: 실제 문자 미발송, 서버 로그에서 OTP를 확인하세요.',
     OTP_SENT_DEFAULT: '인증번호가 전송되었습니다.',
     SMS_SEND_FAILED: '인증번호 발송에 실패했습니다.',
     SMS_VERIFY_FAILED: '인증번호가 올바르지 않습니다.',

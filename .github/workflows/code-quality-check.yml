@@ -7,6 +7,13 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+# CI Java timezone 표준화 (A3, 2026-06-12): GitHub Actions runner JVM 을 KST 로 고정.
+# hotfix-4 [a73567ad] §A-3 의 pom.xml surefire/failsafe argLine 패턴을 워크플로 레벨로 확장.
+# JAVA_TOOL_OPTIONS 는 모든 mvn/gradle/java 호출에 자동 적용되며,
+# 후속 C4 (운영 BE Dockerfile/systemd JAVA_TOOL_OPTIONS) 와 일관성을 유지한다.
+env:
+  JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR"
+
 jobs:
   # 정적 검사(Checkstyle, SpotBugs, 하드코딩, 프론트 검증) 전용 job.
   # 빠른 피드백을 위해 분리(이전: 모든 검사 + 테스트가 하나의 job).

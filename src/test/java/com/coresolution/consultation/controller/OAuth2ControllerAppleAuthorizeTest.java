@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +43,7 @@ import static org.mockito.Mockito.when;
  * @author MindGarden
  * @since 2026-06-11
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("OAuth2Controller#appleAuthorize — server-side auth-code (Google PR #204 패턴)")
 class OAuth2ControllerAppleAuthorizeTest {

@@ -5,6 +5,9 @@ import java.util.Base64;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 
 /**
  * OAuth2 state 복합 문자열(base64url 테넌트 접두 + nonce) 파싱·디코딩 회귀 방지.
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.Test;
  * @author CoreSolution
  * @since 2026-04-09
  */
+@ExtendWith(SecurityContextIsolationExtension.class)
 class OAuth2ControllerOAuthStateTest {
 
     @Test

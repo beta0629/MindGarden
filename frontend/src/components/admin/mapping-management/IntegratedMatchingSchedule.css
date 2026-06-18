@@ -47,8 +47,8 @@
 }
 
 .integrated-schedule__title {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--mg-v2-font-size-h3, 24px);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--mg-color-text-main);
   margin: 0;
 }
@@ -57,11 +57,11 @@
 .integrated-schedule__btn-new-mapping {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 26px;
+  gap: var(--mg-v2-space-3, 10px);
+  padding: var(--mg-v2-space-4, 14px) var(--mg-v2-space-6, 26px);
   min-height: 52px;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--mg-v2-font-size-body-lg, 16px);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--mg-color-white);
   background-color: var(--ad-b0kla-green);
   border: none;
@@ -100,7 +100,7 @@
   min-height: 0;
   background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main);
-  border-radius: 16px;
+  border-radius: var(--mg-v2-radius-xl, 16px);
   padding: var(--mg-spacing-24);
   display: flex;
   flex-direction: column;
@@ -132,9 +132,9 @@
 .integrated-schedule__sidebar-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  gap: var(--mg-v2-space-2, 8px);
+  font-size: var(--mg-v2-font-size-body-lg, 16px);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
   color: var(--mg-color-text-main);
   margin: 0;
   min-width: 0;
@@ -493,7 +493,7 @@
   min-height: 0;
   background-color: var(--mg-color-background-main);
   border: 1px solid var(--mg-color-border-main);
-  border-radius: 16px;
+  border-radius: var(--mg-v2-radius-xl, 16px);
   padding: var(--mg-spacing-24);
   overflow-y: auto;
   overflow-x: auto;

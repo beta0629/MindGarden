@@ -3,8 +3,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--mg-spacing-sm);
-  min-height: 32px;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm));
+  min-height: var(--mg-v2-component-height-sm, 32px);
 }
 
 .integrated-schedule__card-meta .mg-v2-status-badge,

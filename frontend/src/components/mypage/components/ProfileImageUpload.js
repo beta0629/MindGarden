@@ -6,12 +6,14 @@ import notificationManager from '../../../utils/notification';
 import StandardizedApi from '../../../utils/standardizedApi';
 import resolveAvatarSourceUri from '../../../utils/resolveAvatarSourceUri';
 import { useTranslation } from 'react-i18next';
+import {
+  buildProfileImageUploadEndpoint,
+  extractProfileImageUrlFromUploadResponse,
+  validateProfileImageFile,
+} from '../utils/profileImageUploadClient';
 
 // P0 영구 대책 Phase 2 (2026-06-09): base64 dataURI → multipart 업로드 endpoint 로 전환.
-// 동일 정책 BE: ProfileImageUploadController#uploadProfileImage. 사이즈/MIME 검증은 서버 권위.
-const PROFILE_IMAGE_UPLOAD_ENDPOINT = (userId) => `/api/v1/users/profile/${userId}/image`;
-const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-const PROFILE_IMAGE_ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+// 정책 상수(사이즈/MIME/endpoint) 는 ../utils/profileImageUploadClient 모듈로 추출 — BE 와 1:1 동기화 + 단위 테스트.
 const PROFILE_IMAGE_CROPPED_WIDTH = 200;
 
 const ProfileImageUpload = ({
@@ -71,26 +73,13 @@ const ProfileImageUpload = ({
     setDragActive(false);
   };
 
-  const validateClientSide = (file) => {
-    if (!file) {
-      return '파일을 선택해 주세요.';
-    }
-    if (file.size > PROFILE_IMAGE_MAX_BYTES) {
-      return '파일 크기가 너무 큽니다. 최대 5MB까지 업로드 가능합니다.';
-    }
-    if (file.type && !PROFILE_IMAGE_ALLOWED_MIME.includes(file.type)) {
-      return '지원하지 않는 파일 형식입니다. PNG, JPG, WEBP만 업로드 가능합니다.';
-    }
-    return null;
-  };
-
   const handleDrop = (e) => {
     e.preventDefault();
     setDragActive(false);
     if (!isEditing) return;
     const { files } = e.dataTransfer;
     if (files.length > 0 && files[0].type.startsWith('image/')) {
-      const validationError = validateClientSide(files[0]);
+      const validationError = validateProfileImageFile(files[0]);
       if (validationError) {
         notificationManager.show(validationError, 'warning');
         return;
@@ -132,21 +121,7 @@ const ProfileImageUpload = ({
     }
     const formData = new FormData();
     formData.append('file', blob, `profile_${Date.now()}.jpg`);
-    return StandardizedApi.postFormData(PROFILE_IMAGE_UPLOAD_ENDPOINT(userId), formData);
-  };
-
-  const extractProfileImageUrl = (response) => {
-    if (!response || typeof response !== 'object') {
-      return null;
-    }
-    if (typeof response.profileImageUrl === 'string') {
-      return response.profileImageUrl;
-    }
-    const data = response.data;
-    if (data && typeof data === 'object' && typeof data.profileImageUrl === 'string') {
-      return data.profileImageUrl;
-    }
-    return null;
+    return StandardizedApi.postFormData(buildProfileImageUploadEndpoint(userId), formData);
   };
 
   const handleCropImage = async () => {
@@ -171,7 +146,7 @@ const ProfileImageUpload = ({
 
       const blob = await canvasToBlobAsync(canvas, 'image/jpeg', 0.85);
       const response = await uploadBlobToServer(blob);
-      const uploadedUrl = extractProfileImageUrl(response);
+      const uploadedUrl = extractProfileImageUrlFromUploadResponse(response);
       if (!uploadedUrl) {
         throw new Error('서버 응답에서 업로드된 URL을 찾을 수 없습니다.');
       }
@@ -199,7 +174,7 @@ const ProfileImageUpload = ({
     if (!file) {
       return;
     }
-    const validationError = validateClientSide(file);
+    const validationError = validateProfileImageFile(file);
     if (validationError) {
       notificationManager.show(validationError, 'warning');
       e.target.value = '';

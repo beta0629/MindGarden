@@ -128,6 +128,7 @@
 
 /* ================================================================
    Hero Section (Visual Pack §1.1 Hero)
+   Calm Forest subtle gradient — not generic gray
    ================================================================ */
 .mg-v2-homepage-hero {
   display: flex;
@@ -135,9 +136,11 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 70vh;
+  min-height: 80vh;
   padding: calc(64px + var(--mg-v2-space-20)) var(--mg-v2-space-8) var(--mg-v2-space-20);
-  background-color: var(--mg-v2-color-surface-bg);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(61, 82, 70, 0.06) 0%, transparent 70%),
+    linear-gradient(180deg, var(--mg-v2-color-surface-bg) 0%, rgba(245, 243, 239, 0.5) 100%);
 }
 
 .mg-v2-homepage-hero__headline {
@@ -147,6 +150,7 @@
   line-height: var(--mg-v2-font-line-height-tight);
   margin: 0 0 var(--mg-v2-space-4);
   max-width: 720px;
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
 }
 
 .mg-v2-homepage-hero__subcopy {
@@ -166,26 +170,30 @@
   flex-wrap: wrap;
 }
 
+/* Dashboard Preview — actual SVG/PNG embed with depth frame */
 .mg-v2-homepage-hero__mockup {
   margin-top: var(--mg-v2-space-12);
   max-width: 800px;
   width: 100%;
-  padding: var(--mg-v2-space-6);
+  padding: var(--mg-v2-space-4);
   background-color: var(--mg-v2-color-surface-card);
   border-radius: var(--mg-v2-radius-xl);
+  box-shadow: var(--mg-v2-shadow-xl);
+  transform: perspective(1200px) rotateX(2deg);
+  transition: transform var(--mg-v2-transition-slow),
+              box-shadow var(--mg-v2-transition-slow);
+}
+
+.mg-v2-homepage-hero__mockup:hover {
+  transform: perspective(1200px) rotateX(0deg);
   box-shadow: var(--mg-v2-shadow-lg);
 }
 
-.mg-v2-homepage-hero__mockup-placeholder {
+.mg-v2-homepage-hero__mockup-img {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background-color: var(--mg-v2-color-surface-bg);
+  height: auto;
+  display: block;
   border-radius: var(--mg-v2-radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--mg-v2-color-text-secondary);
-  font-size: var(--mg-v2-font-size-body-md);
 }
 
 /* ================================================================
@@ -196,18 +204,120 @@
   align-items: center;
   justify-content: center;
   gap: var(--mg-v2-space-8);
-  padding: var(--mg-v2-space-8) var(--mg-v2-space-8);
+  padding: var(--mg-v2-space-10) var(--mg-v2-space-8);
   border-top: 1px solid var(--mg-v2-color-border-light);
 }
 
 .mg-v2-homepage-trust__badge {
   height: 32px;
-  opacity: 0.6;
+  opacity: 0.5;
   transition: opacity var(--mg-v2-transition-fast);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-homepage-trust__badge:hover {
-  opacity: 1;
+  opacity: 0.85;
+}
+
+/* ================================================================
+   Features 3-Column (상담센터 정체성)
+   ================================================================ */
+.mg-v2-homepage-features {
+  padding: var(--mg-v2-space-20) var(--mg-v2-space-8);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.mg-v2-homepage-features__title {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  text-align: center;
+  margin: 0 0 var(--mg-v2-space-12);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
+}
+
+.mg-v2-homepage-features__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--mg-v2-space-8);
+}
+
+.mg-v2-homepage-feature-card {
+  background-color: var(--mg-v2-color-surface-card);
+  border-radius: var(--mg-v2-radius-xl);
+  padding: var(--mg-v2-space-8);
+  transition: box-shadow var(--mg-v2-transition-fast),
+              transform var(--mg-v2-transition-fast);
+}
+
+.mg-v2-homepage-feature-card:hover {
+  box-shadow: var(--mg-v2-shadow-md);
+  transform: translateY(-2px);
+}
+
+.mg-v2-homepage-feature-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-space-12);
+  height: var(--mg-v2-space-12);
+  border-radius: var(--mg-v2-radius-lg);
+  background-color: rgba(61, 82, 70, 0.08);
+  color: var(--mg-v2-color-primary-main);
+  font-size: var(--mg-v2-font-size-h3);
+  margin-bottom: var(--mg-v2-space-5);
+}
+
+.mg-v2-homepage-feature-card__title {
+  font-size: var(--mg-v2-font-size-h4);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+  margin: 0 0 var(--mg-v2-space-3);
+}
+
+.mg-v2-homepage-feature-card__desc {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-regular);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-font-line-height-body);
+  margin: 0;
+}
+
+/* ================================================================
+   Secondary CTA Band — 센터 도입 문의
+   ================================================================ */
+.mg-v2-homepage-cta-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--mg-v2-space-20) var(--mg-v2-space-8);
+  background-color: var(--mg-v2-color-surface-card);
+  border-top: 1px solid var(--mg-v2-color-border-light);
+  border-bottom: 1px solid var(--mg-v2-color-border-light);
+}
+
+.mg-v2-homepage-cta-band__headline {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  margin: 0 0 var(--mg-v2-space-4);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
+}
+
+.mg-v2-homepage-cta-band__desc {
+  font-size: var(--mg-v2-font-size-body-lg);
+  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-font-line-height-body);
+  margin: 0 0 var(--mg-v2-space-8);
+  max-width: 480px;
+}
+
+.mg-v2-homepage-cta-band__btn {
+  padding: 0 var(--mg-v2-space-8);
+  height: var(--mg-v2-component-height-lg);
+  font-size: var(--mg-v2-font-size-body-lg);
 }
 
 /* ================================================================
@@ -215,12 +325,11 @@
    ================================================================ */
 .mg-v2-homepage-footer {
   background-color: var(--mg-v2-color-surface-bg);
-  padding: var(--mg-v2-space-8) var(--mg-v2-space-8);
+  padding: var(--mg-v2-space-10) var(--mg-v2-space-8);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--mg-v2-space-4);
-  border-top: 1px solid var(--mg-v2-color-border-light);
+  gap: var(--mg-v2-space-3);
 }
 
 .mg-v2-homepage-footer__copyright {
@@ -346,7 +455,24 @@
 }
 
 /* ================================================================
-   Responsive — Tablet
+   Reduced Motion
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-homepage-hero__mockup {
+    transform: none;
+  }
+
+  .mg-v2-homepage-hero__mockup:hover {
+    transform: none;
+  }
+
+  .mg-v2-homepage-feature-card:hover {
+    transform: none;
+  }
+}
+
+/* ================================================================
+   Responsive — Tablet (1024px)
    ================================================================ */
 @media (max-width: 1024px) {
   .mg-v2-homepage-gnb {
@@ -357,10 +483,19 @@
     padding-left: var(--mg-v2-space-6);
     padding-right: var(--mg-v2-space-6);
   }
+
+  .mg-v2-homepage-features {
+    padding-left: var(--mg-v2-space-6);
+    padding-right: var(--mg-v2-space-6);
+  }
+
+  .mg-v2-homepage-features__grid {
+    gap: var(--mg-v2-space-6);
+  }
 }
 
 /* ================================================================
-   Responsive — Mobile (375px)
+   Responsive — Mobile (767px)
    ================================================================ */
 @media (max-width: 767px) {
   .mg-v2-homepage-gnb {
@@ -398,17 +533,53 @@
   }
 
   .mg-v2-homepage-hero__mockup {
-    padding: var(--mg-v2-space-3);
+    padding: var(--mg-v2-space-2);
+    transform: none;
+    border-radius: var(--mg-v2-radius-lg);
+  }
+
+  .mg-v2-homepage-hero__mockup:hover {
+    transform: none;
   }
 
   .mg-v2-homepage-trust {
     flex-wrap: wrap;
+    gap: var(--mg-v2-space-6);
+    padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+  }
+
+  .mg-v2-homepage-features {
+    padding: var(--mg-v2-space-12) var(--mg-v2-space-4);
+  }
+
+  .mg-v2-homepage-features__title {
+    font-size: var(--mg-v2-font-size-h3);
+    margin-bottom: var(--mg-v2-space-8);
+  }
+
+  .mg-v2-homepage-features__grid {
+    grid-template-columns: 1fr;
     gap: var(--mg-v2-space-4);
-    padding: var(--mg-v2-space-6) var(--mg-v2-space-4);
+  }
+
+  .mg-v2-homepage-feature-card {
+    padding: var(--mg-v2-space-6);
+  }
+
+  .mg-v2-homepage-cta-band {
+    padding: var(--mg-v2-space-12) var(--mg-v2-space-4);
+  }
+
+  .mg-v2-homepage-cta-band__headline {
+    font-size: var(--mg-v2-font-size-h3);
+  }
+
+  .mg-v2-homepage-cta-band__btn {
+    width: 100%;
   }
 
   .mg-v2-homepage-footer {
-    padding: var(--mg-v2-space-6) var(--mg-v2-space-4);
+    padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
   }
 
   .mg-v2-homepage-footer__links {

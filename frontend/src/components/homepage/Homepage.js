@@ -5,11 +5,38 @@ import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
+import badgeIso from '../../assets/landing/badge-iso27001.svg';
+import badgeGdpr from '../../assets/landing/badge-gdpr.svg';
+import badgeKisa from '../../assets/landing/badge-kisa-isms.svg';
 import '../../styles/main.css';
 import './Homepage.css';
 
 const APPLY_URL = 'https://apply.e-trinity.co.kr';
 const SHIELD_LOGO_PATH = '/assets/core-solution-logo.svg';
+
+const FEATURES = [
+  {
+    icon: 'bi-calendar-check',
+    title: '일정 · 회기 · 정산',
+    desc: '예약부터 회기 기록, 자동 정산까지 하나의 흐름으로 관리합니다. 수기 엑셀 작업을 줄이고 센터 운영에 집중하세요.'
+  },
+  {
+    icon: 'bi-people',
+    title: '상담사 · 내담자 관리',
+    desc: '상담사 배정, 내담자 접수, 매칭 이력을 한 화면에서 확인합니다. 사각지대 없는 케어가 가능합니다.'
+  },
+  {
+    icon: 'bi-arrow-repeat',
+    title: 'ERP 연동 · 자동화',
+    desc: '입금 확인, 회기 권한 부여, 정산 차감을 자동 파이프라인으로 처리합니다. 수작업 오류를 원천 차단합니다.'
+  }
+];
+
+const TRUST_BADGES = [
+  { src: badgeIso, alt: 'ISO 27001 인증' },
+  { src: badgeGdpr, alt: 'GDPR Ready' },
+  { src: badgeKisa, alt: 'KISA ISMS 인증' }
+];
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -39,7 +66,7 @@ const Homepage = () => {
     };
   }, [isMenuOpen]);
 
-  const handleDashboardOrLogin = async () => {
+  const handleDashboardOrLogin = async() => {
     if (user) {
       if (user?.role) {
         const authResponse = {
@@ -149,7 +176,7 @@ const Homepage = () => {
           </div>
         )}
 
-        {/* Hero Section */}
+        {/* Hero Section — Calm Forest gradient background */}
         <section className="mg-v2-homepage-hero" aria-label="메인 히어로">
           <h1 className="mg-v2-homepage-hero__headline">
             예약부터 회기, 정산까지.
@@ -178,20 +205,62 @@ const Homepage = () => {
             </button>
           </div>
 
+          {/* Dashboard Preview — actual SVG embed */}
           <div className="mg-v2-homepage-hero__mockup" aria-hidden="true">
-            <div className="mg-v2-homepage-hero__mockup-placeholder">
-              대시보드 미리보기
-            </div>
+            <img
+              src="/assets/dashboard-preview.svg"
+              alt=""
+              className="mg-v2-homepage-hero__mockup-img"
+            />
           </div>
         </section>
 
-        {/* Trust Strip */}
+        {/* Trust Strip — badge icons */}
         <section className="mg-v2-homepage-trust" aria-label="보안 인증">
-          <span
-            style={{ color: 'var(--mg-v2-color-text-secondary)', fontSize: 'var(--mg-v2-font-size-caption)' }}
+          {TRUST_BADGES.map((badge) => (
+            <img
+              key={badge.alt}
+              src={badge.src}
+              alt={badge.alt}
+              className="mg-v2-homepage-trust__badge"
+            />
+          ))}
+        </section>
+
+        {/* Features 3-column — 상담센터 정체성 */}
+        <section className="mg-v2-homepage-features" aria-label="주요 기능">
+          <h2 className="mg-v2-homepage-features__title">
+            센터 운영, 이렇게 달라집니다
+          </h2>
+          <div className="mg-v2-homepage-features__grid">
+            {FEATURES.map((feature) => (
+              <article key={feature.title} className="mg-v2-homepage-feature-card">
+                <div className="mg-v2-homepage-feature-card__icon" aria-hidden="true">
+                  <i className={`bi ${feature.icon}`} />
+                </div>
+                <h3 className="mg-v2-homepage-feature-card__title">{feature.title}</h3>
+                <p className="mg-v2-homepage-feature-card__desc">{feature.desc}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* Secondary CTA Band */}
+        <section className="mg-v2-homepage-cta-band" aria-label="도입 문의">
+          <h2 className="mg-v2-homepage-cta-band__headline">
+            우리 센터에도 도입할 수 있을까?
+          </h2>
+          <p className="mg-v2-homepage-cta-band__desc">
+            센터 규모와 상관없이 시작할 수 있습니다. 무료 체험으로 직접 확인해 보세요.
+          </p>
+          <a
+            href={APPLY_URL}
+            className="mg-v2-homepage-gnb__btn--primary mg-v2-homepage-cta-band__btn"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            ISO 27001 · GDPR · KISA ISMS
-          </span>
+            센터 도입 문의
+          </a>
         </section>
 
         {/* Footer */}

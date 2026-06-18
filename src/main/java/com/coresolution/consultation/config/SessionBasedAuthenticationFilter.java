@@ -51,17 +51,38 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
                                   FilterChain filterChain) throws ServletException, IOException {
-        
+        // 표준화 v2 §B1 / PR #226 hotfix-4 동행:
+        // 운영 thread-pool(Tomcat HTTP-NIO) 재사용 시 ThreadLocal leak 차단.
+        // 본 필터 내부에서 setTenantId(line 185·270·309 부근) 호출이 있으므로
+        // 본 필터 종료 시 반드시 TenantContextHolder 를 정리한다.
+        // (TenantContextFilter 도 별도 finally clear 를 가지지만,
+        //  set 한 위치에서 정리하는 단일 책임 원칙을 적용해 안전망을 다중화한다.)
+        try {
+            authenticateAndContinue(request, response, filterChain);
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * 실제 세션 기반 인증 로직과 다음 필터 호출을 수행한다.
+     *
+     * <p>{@link #doFilterInternal} 가 {@link TenantContextHolder#clear()} 를
+     * {@code finally} 로 가드하기 위해 본문을 헬퍼로 분리.</p>
+     */
+    private void authenticateAndContinue(HttpServletRequest request, HttpServletResponse response,
+                                         FilterChain filterChain) throws ServletException, IOException {
+
         String requestPath = request.getRequestURI();
         log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", requestPath);
-        
+
         // 소셜 계정 관련 요청에 대한 특별 로깅
         if (requestPath.contains("/social-account")) {
             log.info("🔍 소셜 계정 요청 감지: {}", requestPath);
         }
-        
+
         HttpServletRequest requestToUse = request; // 기본값은 원본 요청
-        
+
         try {
             // 쿠키에서 JSESSIONID 확인
             jakarta.servlet.http.Cookie[] cookies = request.getCookies();

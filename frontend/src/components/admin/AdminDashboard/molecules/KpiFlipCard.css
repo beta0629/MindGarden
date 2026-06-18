@@ -1,0 +1,225 @@
+/**
+ * KpiFlipCard — 3D Flip KPI 카드 (Phase 3 · KPI_FLIP_CARD_SPEC.md)
+ * perspective: 1000px, rotateY(180deg), 400ms
+ * Calm Forest --mg-v2-* 토큰 전용
+ */
+
+.mg-v2-kpi-flip-card {
+  perspective: 1000px;
+  cursor: pointer;
+  flex: 1 1 0;
+  min-width: 220px;
+  min-height: 160px;
+}
+
+.mg-v2-kpi-flip-card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  transition: transform 400ms var(--mg-v2-transition-easing-default, cubic-bezier(0.4, 0, 0.2, 1));
+  transform-style: preserve-3d;
+}
+
+.mg-v2-kpi-flip-card--flipped .mg-v2-kpi-flip-card__inner {
+  transform: rotateY(180deg);
+}
+
+.mg-v2-kpi-flip-card__front,
+.mg-v2-kpi-flip-card__back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--mg-v2-radius-xl);
+  background-color: var(--mg-v2-color-surface-card);
+  box-shadow: var(--mg-v2-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  padding: var(--mg-v2-space-6);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.mg-v2-kpi-flip-card__front {
+  border-left: 4px solid var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-kpi-flip-card__back {
+  transform: rotateY(180deg);
+  border-left: 4px solid var(--mg-v2-color-primary-main);
+}
+
+/* Front — 요약면 */
+.mg-v2-kpi-flip-card__label {
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-secondary);
+  margin: 0 0 var(--mg-v2-space-2);
+  line-height: var(--mg-v2-font-line-height-caption);
+}
+
+.mg-v2-kpi-flip-card__value {
+  font-size: var(--mg-v2-font-size-h3);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  margin: 0 0 var(--mg-v2-space-2);
+  line-height: var(--mg-v2-font-line-height-subheading);
+}
+
+.mg-v2-kpi-flip-card__summary {
+  font-size: var(--mg-v2-font-size-body-sm);
+  color: var(--mg-v2-color-text-secondary);
+  margin: 0;
+  line-height: var(--mg-v2-font-line-height-body);
+}
+
+.mg-v2-kpi-flip-card__flip-hint {
+  margin-top: auto;
+  font-size: var(--mg-v2-font-size-micro);
+  color: var(--mg-v2-color-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+}
+
+/* Back — 상세면 */
+.mg-v2-kpi-flip-card__back-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.mg-v2-kpi-flip-card__back-title {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+  margin: 0;
+}
+
+.mg-v2-kpi-flip-card__close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--mg-v2-color-text-secondary);
+  border-radius: var(--mg-v2-radius-sm);
+  transition: background-color var(--mg-v2-transition-fast);
+}
+
+.mg-v2-kpi-flip-card__close-btn:hover {
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+.mg-v2-kpi-flip-card__close-btn:focus-visible {
+  outline: 2px solid var(--mg-v2-color-state-focus-ring);
+  outline-offset: 2px;
+}
+
+.mg-v2-kpi-flip-card__back-content {
+  flex: 1;
+  overflow-y: auto;
+  font-size: var(--mg-v2-font-size-body-sm);
+  color: var(--mg-v2-color-text-primary);
+  line-height: var(--mg-v2-font-line-height-body);
+}
+
+.mg-v2-kpi-flip-card__back-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-kpi-flip-card__back-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mg-v2-space-2) 0;
+  border-bottom: 1px solid var(--mg-v2-color-border-light);
+}
+
+.mg-v2-kpi-flip-card__back-list-item:last-child {
+  border-bottom: none;
+}
+
+.mg-v2-kpi-flip-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
+  background-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-inverse);
+  border: none;
+  border-radius: var(--mg-v2-radius-md);
+  font-size: var(--mg-v2-font-size-body-sm);
+  font-weight: var(--mg-v2-font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--mg-v2-transition-fast);
+}
+
+.mg-v2-kpi-flip-card__cta:hover {
+  background-color: var(--mg-v2-color-primary-hover);
+}
+
+.mg-v2-kpi-flip-card__cta:focus-visible {
+  outline: 2px solid var(--mg-v2-color-state-focus-ring);
+  outline-offset: 2px;
+}
+
+/* States */
+.mg-v2-kpi-flip-card:hover .mg-v2-kpi-flip-card__front {
+  box-shadow: var(--mg-v2-shadow-md);
+}
+
+.mg-v2-kpi-flip-card:focus-visible {
+  outline: 2px solid var(--mg-v2-color-state-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--mg-v2-radius-xl);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-kpi-flip-card__inner {
+    transition: none;
+  }
+
+  .mg-v2-kpi-flip-card--flipped .mg-v2-kpi-flip-card__front {
+    visibility: hidden;
+  }
+
+  .mg-v2-kpi-flip-card--flipped .mg-v2-kpi-flip-card__back {
+    transform: none;
+    position: relative;
+  }
+
+  .mg-v2-kpi-flip-card:not(.mg-v2-kpi-flip-card--flipped) .mg-v2-kpi-flip-card__back {
+    visibility: hidden;
+  }
+
+  .mg-v2-kpi-flip-card:not(.mg-v2-kpi-flip-card--flipped) .mg-v2-kpi-flip-card__front {
+    position: relative;
+  }
+}
+
+/* Mobile — full width stacking */
+@media (max-width: 767px) {
+  .mg-v2-kpi-flip-card {
+    min-width: 100%;
+  }
+
+  .mg-v2-kpi-flip-card__back-content {
+    max-height: 200px;
+  }
+}

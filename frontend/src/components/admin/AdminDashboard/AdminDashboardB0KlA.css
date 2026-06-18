@@ -194,27 +194,27 @@
   width: 100%;
 }
 
-/* ===== 헤더 ===== */
+/* ===== 헤더 (Phase 3: --mg-v2-* 토큰 정합) ===== */
 .mg-v2-ad-b0kla__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--mg-spacing-xl, 1.5rem);
+  margin-bottom: var(--mg-v2-space-6, var(--mg-spacing-xl, 1.5rem));
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--mg-v2-space-4, 1rem);
 }
 
 .mg-v2-ad-b0kla__header-left h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--ad-b0kla-title-color);
+  font-size: var(--mg-v2-font-size-h2, 28px);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary, var(--ad-b0kla-title-color));
   margin: 0;
 }
 
 .mg-v2-ad-b0kla__header-left p {
-  font-size: 15px;
-  color: var(--ad-b0kla-subtitle-color);
-  margin: 0.25rem 0 0 0;
+  font-size: var(--mg-v2-font-size-body-md, 15px);
+  color: var(--mg-v2-color-text-secondary, var(--ad-b0kla-subtitle-color));
+  margin: var(--mg-v2-space-1, 0.25rem) 0 0 0;
 }
 
 .mg-v2-ad-b0kla__header-right {
@@ -2021,4 +2021,17 @@ button.mg-v2-ad-b0kla__icon-btn.mg-button .mg-button__text {
   gap: 0.75rem;
   width: 100%;
   text-align: left;
+}
+
+/* ===== KPI Flip Row (Phase 3 · Visual Pack §2.2) ===== */
+.mg-v2-kpi-flip-row {
+  display: flex;
+  gap: var(--mg-v2-space-6, 1.5rem);
+  margin-bottom: var(--mg-v2-space-6, 1.5rem);
+}
+
+@media (max-width: 767px) {
+  .mg-v2-kpi-flip-row {
+    flex-direction: column;
+  }
 }

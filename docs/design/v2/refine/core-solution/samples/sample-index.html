@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trinity vs Core Solution - Page Structure Index</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --text-color: #1f2937;
+            --bg-color: #f9fafb;
+            --border-color: #e5e7eb;
+            --trinity-color: #7c3aed;
+            --core-color: #059669;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+        p.description {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        tr:hover {
+            background-color: #f9fafb;
+        }
+        .brand-trinity {
+            color: var(--trinity-color);
+            font-weight: 600;
+        }
+        .brand-core {
+            color: var(--core-color);
+            font-weight: 600;
+        }
+        code {
+            background-color: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.875em;
+            color: #ef4444;
+        }
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .na-text {
+            color: #9ca3af;
+            font-style: italic;
+        }
+        .link-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>페이지 구조 인덱스</h1>
+        <p class="description">Trinity와 Core Solution의 페이지 구조 유사성 비교 및 샘플 링크</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Trinity Page</th>
+                    <th>Core Solution 대응</th>
+                    <th>샘플 링크</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <span class="brand-trinity">Trinity Landing</span><br>
+                        <code>/</code>
+                    </td>
+                    <td>
+                        <span class="brand-core">Core Solution Landing</span><br>
+                        <code>/landing</code>
+                    </td>
+                    <td>
+                        <div class="link-group">
+                            <a href="../mockups/landing-mockup.html" target="_blank">샘플 1안 (Landing Mockup)</a>
+                            <a href="/landing" target="_blank">개발 서버 라우트</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="brand-trinity">Trinity Onboarding</span><br>
+                        <code>/onboarding</code>
+                    </td>
+                    <td>
+                        <span class="brand-core">Core Solution Onboarding</span><br>
+                        <code>/onboarding</code>
+                    </td>
+                    <td>
+                        <span class="na-text">N/A (샘플 만들지 않음)</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="brand-trinity">Trinity Pricing</span><br>
+                        <code>/#pricing</code>
+                    </td>
+                    <td>
+                        <span class="brand-core">Core Solution Pricing</span><br>
+                        <code>/pricing</code>
+                    </td>
+                    <td>
+                        <span class="na-text">N/A (샘플 만들지 않음)</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

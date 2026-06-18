@@ -32,6 +32,12 @@ const FEATURES = [
   }
 ];
 
+const STATS = [
+  { label: '누적 예약 처리', value: '150,000+' },
+  { label: '활성 상담 센터', value: '300+' },
+  { label: '업무 시간 절약', value: '75%' }
+];
+
 const TRUST_BADGES = [
   { src: badgeIso, alt: 'ISO 27001 인증' },
   { src: badgeGdpr, alt: 'GDPR Ready' },
@@ -207,11 +213,31 @@ const Homepage = () => {
 
           {/* Dashboard Preview — actual SVG embed */}
           <div className="mg-v2-homepage-hero__mockup" aria-hidden="true">
+            <div className="mg-v2-homepage-hero__browser-chrome">
+              <span className="dot dot-close" />
+              <span className="dot dot-min" />
+              <span className="dot dot-expand" />
+            </div>
             <img
               src="/assets/dashboard-preview.svg"
-              alt=""
+              alt="대시보드 미리보기"
               className="mg-v2-homepage-hero__mockup-img"
             />
+          </div>
+        </section>
+
+        {/* Stats Strip */}
+        <section className="mg-v2-homepage-stats" aria-label="운영 지표">
+          <div className="mg-v2-homepage-stats__container">
+            <p className="mg-v2-homepage-stats__title">센터 운영에 최적화된 플랫폼</p>
+            <div className="mg-v2-homepage-stats__grid">
+              {STATS.map((stat, idx) => (
+                <div key={idx} className="mg-v2-homepage-stat-item">
+                  <span className="mg-v2-homepage-stat-item__value">{stat.value}</span>
+                  <span className="mg-v2-homepage-stat-item__label">{stat.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -265,19 +291,34 @@ const Homepage = () => {
 
         {/* Footer */}
         <footer className="mg-v2-homepage-footer">
-          <p className="mg-v2-homepage-footer__copyright">
-            © 2026 Core Solution. All rights reserved.
-          </p>
-          <div className="mg-v2-homepage-footer__links">
-            <Link className="mg-v2-homepage-footer__link" to="/terms">
-              이용약관
-            </Link>
-            <Link className="mg-v2-homepage-footer__link" to="/privacy">
-              개인정보처리방침
-            </Link>
-            <Link className="mg-v2-homepage-footer__link" to="/account-deletion">
-              계정 탈퇴
-            </Link>
+          <div className="mg-v2-homepage-footer__container">
+            <div className="mg-v2-homepage-footer__brand">
+              <img src={SHIELD_LOGO_PATH} alt="Core Solution" className="mg-v2-homepage-footer__logo" />
+              <p className="mg-v2-homepage-footer__desc">상담센터 운영의 표준을 제시합니다.</p>
+            </div>
+            
+            <div className="mg-v2-homepage-footer__nav">
+              <div className="mg-v2-homepage-footer__col">
+                <h4 className="mg-v2-homepage-footer__col-title">제품</h4>
+                <Link className="mg-v2-homepage-footer__link" to="/">기능 소개</Link>
+                <Link className="mg-v2-homepage-footer__link" to="/">도입 안내</Link>
+              </div>
+              <div className="mg-v2-homepage-footer__col">
+                <h4 className="mg-v2-homepage-footer__col-title">정책</h4>
+                <Link className="mg-v2-homepage-footer__link" to="/terms">이용약관</Link>
+                <Link className="mg-v2-homepage-footer__link" to="/privacy">개인정보처리방침</Link>
+                <Link className="mg-v2-homepage-footer__link" to="/account-deletion">계정 탈퇴</Link>
+              </div>
+              <div className="mg-v2-homepage-footer__col">
+                <h4 className="mg-v2-homepage-footer__col-title">지원</h4>
+                <a className="mg-v2-homepage-footer__link" href={APPLY_URL} target="_blank" rel="noopener noreferrer">문의하기</a>
+              </div>
+            </div>
+          </div>
+          <div className="mg-v2-homepage-footer__bottom">
+            <p className="mg-v2-homepage-footer__copyright">
+              © 2026 Core Solution. All rights reserved.
+            </p>
           </div>
         </footer>
       </div>

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.repository.RoleTemplateRepository;
@@ -45,6 +46,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private final ApplicationContext applicationContext;
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
     private final com.coresolution.core.service.TenantDashboardService tenantDashboardService;
+    private final OAuth2DomainUtil oauth2DomainUtil;
 
     /**
      * 온보딩 승인 프로세스 실행 1. 프로시저를 먼저 시도 2. 프로시저 실패 시 Java 코드로 단계별 처리 (fallback) 전체 프로세스를 하나의 트랜잭션으로 감싸서
@@ -1320,8 +1322,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     finalSubdomain = generateSubdomain(tenantName);
                 }
 
-                // 도메인 생성
-                String domain = finalSubdomain + ".dev.core-solution.co.kr";
+                // 도메인 생성 (spring.security.oauth2.domain.main-domains 기준 fallback)
+                String domain = oauth2DomainUtil.buildTenantHost(finalSubdomain, null);
 
                 // settings_json 생성
                 String settingsJson = String.format(

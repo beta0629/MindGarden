@@ -32,10 +32,24 @@ public class OAuth2DomainUtil {
      */
     private static final Set<String> OAUTH_INFRA_SUBDOMAIN_LABELS;
 
+    /** TenantContextFilter 와 동일 순서 — 긴 suffix 우선 */
+    private static final String[] TENANT_PARENT_DOMAIN_SUFFIXES = {
+            ".dev.core-solution.co.kr",
+            ".staging.core-solution.co.kr",
+            ".core-solution.co.kr"
+    };
+
+    /** TenantContextFilter 예약 라벨 + 온보딩 reserved (admin, ops, apply) */
+    private static final Set<String> NON_TENANT_SUBDOMAIN_LABELS;
+
     static {
         Set<String> labels = new HashSet<>();
         Collections.addAll(labels, "dev", "app", "api", "staging", "www");
         OAUTH_INFRA_SUBDOMAIN_LABELS = Collections.unmodifiableSet(labels);
+
+        Set<String> nonTenantLabels = new HashSet<>(labels);
+        Collections.addAll(nonTenantLabels, "admin", "ops", "apply");
+        NON_TENANT_SUBDOMAIN_LABELS = Collections.unmodifiableSet(nonTenantLabels);
     }
 
     @Value("${spring.security.oauth2.domain.main-domains:dev.core-solution.co.kr}")
@@ -148,6 +162,119 @@ public class OAuth2DomainUtil {
             }
         }
         return parentDomain;
+    }
+
+    /**
+     * 요청 Host 기준 테넌트 parent 도메인 (온보딩 subdomain 미리보기 등).
+     * 예: mindgarden.core-solution.co.kr → core-solution.co.kr,
+     * app.dev.core-solution.co.kr → dev.core-solution.co.kr
+     *
+     * @param requestHost X-Forwarded-Host / Host (포트 포함 가능), null 이면 설정 fallback
+     * @return parent FQDN
+     */
+    public String resolveTenantParentDomain(String requestHost) {
+        if (requestHost == null || requestHost.trim().isEmpty()) {
+            return resolveFallbackTenantParentDomain();
+        }
+
+        String hostWithoutPort = requestHost.split(":")[0].trim().toLowerCase();
+        String tenantLabel = extractTenantSubdomainLabel(hostWithoutPort);
+        String parentDomain = hostWithoutPort;
+        if (tenantLabel != null) {
+            parentDomain = hostWithoutPort.substring(tenantLabel.length() + 1);
+        }
+        parentDomain = normalizeTenantParentDomainForPreview(parentDomain);
+        if (parentDomain == null || parentDomain.isEmpty()) {
+            return resolveFallbackTenantParentDomain();
+        }
+        return parentDomain;
+    }
+
+    /**
+     * 온보딩 subdomain-check 등에서 표시할 테넌트 FQDN 미리보기.
+     *
+     * @param tenantSubdomain 사용자 입력 서브도메인
+     * @param requestHost     요청 Host (null 이면 spring.security.oauth2.domain.main-domains fallback)
+     * @return {@code {subdomain}.{parent}} 또는 subdomain 비어 있으면 null
+     */
+    public String buildTenantHost(String tenantSubdomain, String requestHost) {
+        if (tenantSubdomain == null || tenantSubdomain.trim().isEmpty()) {
+            return null;
+        }
+        String parent = resolveTenantParentDomain(requestHost);
+        if (parent == null || parent.isEmpty()) {
+            return null;
+        }
+        return tenantSubdomain.trim().toLowerCase() + "." + parent;
+    }
+
+    private String normalizeTenantParentDomainForPreview(String parentDomain) {
+        if (parentDomain == null || parentDomain.isEmpty()) {
+            return parentDomain;
+        }
+        parentDomain = normalizeFrontendParentDomainForRedirect(parentDomain);
+
+        String stagingApex = findConfiguredStagingApexHost();
+        if (stagingApex != null && parentDomain.endsWith("." + stagingApex)) {
+            String head = parentDomain.substring(0, parentDomain.length() - stagingApex.length() - 1);
+            if (!head.contains(".") && isOAuthInfraSubdomainLabel(head)) {
+                return stagingApex;
+            }
+        }
+        if (stagingApex != null && parentDomain.equals(stagingApex)) {
+            return parentDomain;
+        }
+        return parentDomain;
+    }
+
+    private String extractTenantSubdomainLabel(String hostWithoutPort) {
+        if (hostWithoutPort == null || hostWithoutPort.isEmpty()) {
+            return null;
+        }
+        for (String suffix : TENANT_PARENT_DOMAIN_SUFFIXES) {
+            if (!hostWithoutPort.endsWith(suffix)) {
+                continue;
+            }
+            String label = hostWithoutPort.substring(0, hostWithoutPort.length() - suffix.length());
+            if (label.isEmpty() || label.contains(".")) {
+                return null;
+            }
+            if (NON_TENANT_SUBDOMAIN_LABELS.contains(label)) {
+                return null;
+            }
+            return label;
+        }
+        return null;
+    }
+
+    private String resolveFallbackTenantParentDomain() {
+        String prodApex = findConfiguredProdApexHost();
+        if (prodApex != null) {
+            return prodApex;
+        }
+        String devApex = findConfiguredDevApexHost();
+        if (devApex != null) {
+            return devApex;
+        }
+        String stagingApex = findConfiguredStagingApexHost();
+        if (stagingApex != null) {
+            return stagingApex;
+        }
+        if (mainDomains != null && !mainDomains.isEmpty()) {
+            String first = mainDomains.get(0).trim();
+            if (!first.isEmpty()) {
+                return first;
+            }
+        }
+        return null;
+    }
+
+    private String findConfiguredStagingApexHost() {
+        return mainDomains.stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && s.contains("staging.core-solution"))
+                .findFirst()
+                .orElse(null);
     }
 
     private static boolean isOAuthInfraSubdomainLabel(String label) {

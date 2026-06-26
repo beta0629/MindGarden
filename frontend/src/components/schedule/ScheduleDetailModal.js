@@ -49,6 +49,13 @@ const CONSULTATION_LOG_LINK_VISIBLE_STATUSES = Object.freeze([
     'COMPLETED'
 ]);
 
+/** 예약 변경(날짜·시간) 액션 가능 상태 — status 유지, date/start/end 만 PUT */
+const RESCHEDULE_ACTION_ELIGIBLE_STATUSES = Object.freeze([
+    'BOOKED',
+    'TENTATIVE_PENDING_PAYMENT',
+    'CONFIRMED'
+]);
+
 /**
  * 모달의 회기 라벨(사용/총) 계산.
  *
@@ -188,6 +195,25 @@ function shouldShowConsultationLogLink(schedule, statusCode, isVacation, now = n
         return false;
     }
     return sessionDate <= todayIso;
+}
+
+/**
+ * 일정 상세 푸터 "예약 변경" 버튼 노출 여부.
+ * - BOOKED·가예약·CONFIRMED(회기 차감 후) 동일 — 취소 없이 date/time PUT
+ * - ADMIN 만 (RescheduleScheduleModal·UnifiedSchedule admin-like 와 정합)
+ * - 내담자·휴가 일정 제외
+ *
+ * @param {string} statusCode 정규화된 상태 코드
+ * @param {boolean} canRescheduleByRole RoleUtils.isAdmin(user)
+ * @param {boolean} isVacation
+ * @param {boolean} isClient
+ * @returns {boolean}
+ */
+function shouldShowRescheduleAction(statusCode, canRescheduleByRole, isVacation, isClient) {
+    if (isVacation || isClient || !canRescheduleByRole) {
+        return false;
+    }
+    return RESCHEDULE_ACTION_ELIGIBLE_STATUSES.includes(statusCode);
 }
 
 /**
@@ -797,6 +823,13 @@ const ScheduleDetailModal = ({
 
     const displayData = localScheduleOverride ?? scheduleData;
     const statusForDisplay = resolveStatusForActions(displayData) ?? displayData.status;
+    const statusCodeForActions = getStatusCodeValue(resolveStatusForActions(displayData));
+    const showRescheduleAction = shouldShowRescheduleAction(
+        statusCodeForActions,
+        canRescheduleByRole,
+        isVacationEvent(),
+        isClient
+    );
     const showNotesTab = !isVacationEvent() && (RoleUtils.isAdmin(user) || RoleUtils.isStaff(user));
     const canPartyQuickSummary = showNotesTab;
     const { parsedClientName, parsedConsultantName } = partyNameParse;
@@ -904,19 +937,25 @@ const ScheduleDetailModal = ({
                 </div>
             );
         }
+
+        const renderRescheduleButton = () => (
+            showRescheduleAction ? (
+                <ActionBarButton
+                    variant="outline"
+                    onClick={handleEditSchedule}
+                    disabled={loading}
+                    data-testid="schedule-detail-reschedule"
+                >
+                    {t('schedule:ScheduleDetailModal.t_a8136a0a')}
+                </ActionBarButton>
+            ) : null
+        );
+
         return (
             <>
                 {isBookedOrTentativePending() && (
                     <>
-                        {canRescheduleByRole && (
-                            <ActionBarButton
-                                variant="outline"
-                                onClick={handleEditSchedule}
-                                disabled={loading}
-                            >
-                                {t('schedule:ScheduleDetailModal.t_a8136a0a')}
-                            </ActionBarButton>
-                        )}
+                        {renderRescheduleButton()}
                         <ActionBarButton
                             variant="primary"
                             onClick={() => setShowConfirmModal(true)}
@@ -948,6 +987,7 @@ const ScheduleDetailModal = ({
                     const showWriteConsultationLog = true;
                     return (
                         <>
+                            {renderRescheduleButton()}
                             {showWriteConsultationLog && (
                                 <ActionBarButton
                                     variant="outline"
@@ -1258,6 +1298,8 @@ export {
     resolveModalSessionInfo,
     resolveModalLifetimeSessionInfo,
     shouldShowConsultationLogLink,
+    shouldShowRescheduleAction,
     toIsoDateString,
-    CONSULTATION_LOG_LINK_VISIBLE_STATUSES
+    CONSULTATION_LOG_LINK_VISIBLE_STATUSES,
+    RESCHEDULE_ACTION_ELIGIBLE_STATUSES
 };

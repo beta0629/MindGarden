@@ -154,9 +154,31 @@ public final class ScheduleMappingContextResolver {
         if (mappingRepository == null) {
             return null;
         }
-        return mappingRepository
-                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId)
-                .orElse(null);
+        List<ConsultantClientMapping> candidates = mappingRepository
+                .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
+        return selectLatestActiveOrExhaustedMapping(candidates).orElse(null);
+    }
+
+    /**
+     * ACTIVE/SESSIONS_EXHAUSTED 복수 매핑 중 최신 1건 선택 (NonUniqueResult 방지).
+     */
+    public static java.util.Optional<ConsultantClientMapping> selectLatestActiveOrExhaustedMapping(
+            List<ConsultantClientMapping> candidates) {
+        if (candidates == null || candidates.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        Comparator<ConsultantClientMapping> recency = Comparator
+                .comparing(ConsultantClientMapping::getUpdatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(ConsultantClientMapping::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder()));
+        java.util.Optional<ConsultantClientMapping> active = candidates.stream()
+                .filter(m -> m.getStatus() == MappingStatus.ACTIVE)
+                .max(recency);
+        if (active.isPresent()) {
+            return active;
+        }
+        return candidates.stream()
+                .filter(m -> m.getStatus() == MappingStatus.SESSIONS_EXHAUSTED)
+                .max(recency);
     }
 
     private static ConsultantClientMapping preferActiveMapping(

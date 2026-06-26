@@ -12,6 +12,7 @@ import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
@@ -238,9 +239,11 @@ public class ReservationReminderScheduler {
      * @return 발송 대상이면 {@code true}
      */
     private boolean shouldSendForSchedule(String tenantId, Schedule schedule) {
-        Optional<ConsultantClientMapping> opt = mappingRepository
-            .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+        List<ConsultantClientMapping> candidates = mappingRepository
+            .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
                 tenantId, schedule.getConsultantId(), schedule.getClientId());
+        Optional<ConsultantClientMapping> opt =
+            ScheduleMappingContextResolver.selectLatestActiveOrExhaustedMapping(candidates);
         if (opt.isEmpty()) {
             log.debug("D-2 skip — 매핑 없음: scheduleId={}", schedule.getId());
             return false;

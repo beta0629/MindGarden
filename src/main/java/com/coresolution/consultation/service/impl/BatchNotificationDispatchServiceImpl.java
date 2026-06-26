@@ -22,11 +22,13 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserPrivacyConsentRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
+import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +57,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class BatchNotificationDispatchServiceImpl implements BatchNotificationDispatchService {
 
@@ -79,24 +80,28 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     private final SmsTemplateService smsTemplateService;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DispatchOutcome dispatchReservationReminderD2(Long scheduleId) {
         return dispatchScheduleBased(scheduleId,
             BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2, true);
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DispatchOutcome dispatchReservationImmediateSingle(Long scheduleId) {
         return dispatchScheduleBased(scheduleId,
             BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE, false);
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DispatchOutcome dispatchReservationImmediateLate(Long scheduleId) {
         return dispatchScheduleBased(scheduleId,
             BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE, false);
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DispatchOutcome dispatchSessionEndingSoon(Long mappingId) {
         String tenantId = resolveTenantId();
         if (tenantId == null) {
@@ -130,6 +135,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DispatchOutcome dispatchSessionRenewPrompt(Long mappingId) {
         String tenantId = resolveTenantId();
         if (tenantId == null) {
@@ -181,6 +187,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DispatchOutcome dispatchClientWelcomeFirst(Long mappingId) {
         String tenantId = resolveTenantId();
         if (tenantId == null) {
@@ -232,6 +239,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DispatchOutcome dispatchInitialGuide(Long scheduleId) {
         String tenantId = resolveTenantId();
         if (tenantId == null) {
@@ -571,9 +579,11 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @return 잔여 회기 (찾지 못하면 0)
      */
     private int resolveRemainingSessionsForSchedule(String tenantId, Schedule schedule) {
-        Optional<ConsultantClientMapping> opt = mappingRepository
-            .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+        List<ConsultantClientMapping> candidates = mappingRepository
+            .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
                 tenantId, schedule.getConsultantId(), schedule.getClientId());
+        Optional<ConsultantClientMapping> opt =
+            ScheduleMappingContextResolver.selectLatestActiveOrExhaustedMapping(candidates);
         if (opt.isPresent()) {
             Integer remaining = opt.get().getRemainingSessions();
             return remaining == null ? 0 : remaining;

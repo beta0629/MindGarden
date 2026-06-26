@@ -25,6 +25,8 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WorkflowAutomationService;
 import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.TenantService;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +53,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     private final CommonCodeService commonCodeService;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final SystemConfigService systemConfigService;
+    private final TenantService tenantService;
     
     // 워크플로우 실행 로그 저장용 (실제 환경에서는 별도 테이블 사용 권장)
     private final List<Map<String, Object>> workflowLogs = new ArrayList<>();
@@ -85,43 +88,51 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             return;
         }
         log.info("🔔 예약 리마인더 자동 발송 시작");
-        
+
         try {
             LocalDateTime now = LocalDateTime.now();
             LocalDate today = now.toLocalDate();
             LocalTime currentTime = now.toLocalTime();
-            
-            // 오늘 예정된 상담 조회 - 공통코드에서 상태 코드 조회
-            List<String> activeStatusNames = List.of("BOOKED", "CONFIRMED");
-            List<String> activeStatusCodes = getScheduleStatusCodesFromCommonCode(activeStatusNames);
-            List<Schedule> todaySchedules = scheduleRepository.findByDateAndStatusIn(
-                today, 
-                activeStatusCodes.stream()
-                    .map(code -> ScheduleStatus.valueOf(code))
-                    .collect(Collectors.toList())
-            );
-            
-            for (Schedule schedule : todaySchedules) {
-                LocalTime startTime = schedule.getStartTime();
-                LocalTime reminderTime1Hour = startTime.minusHours(1);
-                LocalTime reminderTime30Min = startTime.minusMinutes(30);
-                
-                // 1시간 전 리마인더
-                if (isTimeInRange(currentTime, reminderTime1Hour, 5)) {
-                    sendReminderMessage(schedule, "1시간 전 리마인더",
-                        "상담이 1시간 후에 시작됩니다. 준비해주세요.", "T60");
-                }
 
-                // 30분 전 리마인더
-                if (isTimeInRange(currentTime, reminderTime30Min, 5)) {
-                    sendReminderMessage(schedule, "30분 전 리마인더",
-                        "상담이 30분 후에 시작됩니다. 곧 시작됩니다!", "T30");
+            List<String> activeStatusNames = List.of("BOOKED", "CONFIRMED");
+            List<ScheduleStatus> activeStatuses = getScheduleStatusCodesFromCommonCode(activeStatusNames).stream()
+                .map(ScheduleStatus::valueOf)
+                .collect(Collectors.toList());
+
+            int totalSchedules = 0;
+            for (String tenantId : tenantService.getAllActiveTenantIds()) {
+                try {
+                    TenantContextHolder.setTenantId(tenantId);
+                    List<Schedule> todaySchedules = scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                        tenantId, today, activeStatuses);
+                    totalSchedules += todaySchedules.size();
+
+                    for (Schedule schedule : todaySchedules) {
+                        LocalTime startTime = schedule.getStartTime();
+                        LocalTime reminderTime1Hour = startTime.minusHours(1);
+                        LocalTime reminderTime30Min = startTime.minusMinutes(30);
+
+                        if (isTimeInRange(currentTime, reminderTime1Hour, 5)) {
+                            sendReminderMessage(schedule, "1시간 전 리마인더",
+                                "상담이 1시간 후에 시작됩니다. 준비해주세요.", "T60");
+                        }
+
+                        if (isTimeInRange(currentTime, reminderTime30Min, 5)) {
+                            sendReminderMessage(schedule, "30분 전 리마인더",
+                                "상담이 30분 후에 시작됩니다. 곧 시작됩니다!", "T30");
+                        }
+                    }
+                } catch (Exception tenantError) {
+                    log.error("❌ 예약 리마인더 테넌트 처리 실패: tenantId={}, error={}",
+                        tenantId, tenantError.getMessage(), tenantError);
+                } finally {
+                    TenantContextHolder.clear();
                 }
             }
-            
-            logWorkflowExecution("sendScheduleReminders", "SUCCESS", 
-                String.format("오늘 %d건의 예약에 대해 리마인더 확인 완료", todaySchedules.size()));
-            
+
+            logWorkflowExecution("sendScheduleReminders", "SUCCESS",
+                String.format("오늘 %d건의 예약에 대해 리마인더 확인 완료", totalSchedules));
+
         } catch (Exception e) {
             log.error("❌ 예약 리마인더 자동 발송 실패", e);
             logWorkflowExecution("sendScheduleReminders", "FAILED", e.getMessage());
@@ -138,57 +149,61 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             return;
         }
         log.info("⚠️ 미완료 상담 알림 시작");
-        
+
         try {
             LocalDateTime now = LocalDateTime.now();
             LocalDate today = now.toLocalDate();
             LocalTime currentTime = now.toLocalTime();
-            
-            // 시간이 지났지만 완료되지 않은 상담 조회 - 공통코드에서 상태 코드 조회
-            List<String> incompleteStatusNames = List.of("BOOKED", "CONFIRMED");
-            List<String> incompleteStatusCodes = getScheduleStatusCodesFromCommonCode(incompleteStatusNames);
-            List<Schedule> incompleteSchedules = scheduleRepository.findByDateAndStatusIn(
-                today, 
-                incompleteStatusCodes.stream()
-                    .map(code -> ScheduleStatus.valueOf(code))
-                    .collect(Collectors.toList())
-            ).stream()
-            .filter(schedule -> schedule.getEndTime().isBefore(currentTime))
-            .collect(Collectors.toList());
-            
-            for (Schedule schedule : incompleteSchedules) {
-                // 상담사에게 미완료 알림 (결제·매출 정보 미포함)
-                String alertMessage = String.format(
-                    WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_BODY_FMT,
-                    schedule.getDate(),
-                    schedule.getStartTime(),
-                    schedule.getEndTime(),
-                    WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_CLIENT_LABEL
-                );
 
+            List<String> incompleteStatusNames = List.of("BOOKED", "CONFIRMED");
+            List<ScheduleStatus> incompleteStatuses = getScheduleStatusCodesFromCommonCode(incompleteStatusNames).stream()
+                .map(ScheduleStatus::valueOf)
+                .collect(Collectors.toList());
+
+            int totalIncomplete = 0;
+            for (String tenantId : tenantService.getAllActiveTenantIds()) {
                 try {
-                    TenantContextHolder.setTenantId(schedule.getTenantId());
-                    consultationMessageService.sendSystemThreadMessage(
-                        schedule.getConsultantId(),
-                        schedule.getClientId(),
-                        schedule.getConsultantId(),
-                        null,
-                        WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_TITLE,
-                        alertMessage,
-                        getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
-                        true,
-                        false);
+                    TenantContextHolder.setTenantId(tenantId);
+                    List<Schedule> incompleteSchedules = scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                        tenantId, today, incompleteStatuses).stream()
+                        .filter(schedule -> schedule.getEndTime().isBefore(currentTime))
+                        .collect(Collectors.toList());
+                    totalIncomplete += incompleteSchedules.size();
+
+                    for (Schedule schedule : incompleteSchedules) {
+                        String alertMessage = String.format(
+                            WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_BODY_FMT,
+                            schedule.getDate(),
+                            schedule.getStartTime(),
+                            schedule.getEndTime(),
+                            WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_CLIENT_LABEL
+                        );
+
+                        consultationMessageService.sendSystemThreadMessage(
+                            schedule.getConsultantId(),
+                            schedule.getClientId(),
+                            schedule.getConsultantId(),
+                            null,
+                            WorkflowAutomationCopy.INCOMPLETE_CONSULTATION_TITLE,
+                            alertMessage,
+                            getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
+                            true,
+                            false);
+
+                        log.info("⚠️ 미완료 상담 알림 발송: scheduleId={}, consultantId={}",
+                            schedule.getId(), schedule.getConsultantId());
+                    }
+                } catch (Exception tenantError) {
+                    log.error("❌ 미완료 상담 알림 테넌트 처리 실패: tenantId={}, error={}",
+                        tenantId, tenantError.getMessage(), tenantError);
                 } finally {
                     TenantContextHolder.clear();
                 }
-                
-                log.info("⚠️ 미완료 상담 알림 발송: scheduleId={}, consultantId={}", 
-                    schedule.getId(), schedule.getConsultantId());
             }
-            
-            logWorkflowExecution("sendIncompleteConsultationAlerts", "SUCCESS", 
-                String.format("%d건의 미완료 상담에 대해 알림 발송", incompleteSchedules.size()));
-            
+
+            logWorkflowExecution("sendIncompleteConsultationAlerts", "SUCCESS",
+                String.format("%d건의 미완료 상담에 대해 알림 발송", totalIncomplete));
+
         } catch (Exception e) {
             log.error("❌ 미완료 상담 알림 실패", e);
             logWorkflowExecution("sendIncompleteConsultationAlerts", "FAILED", e.getMessage());
@@ -200,63 +215,69 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
      */
     @Override
     @Scheduled(cron = "0 0 18 * * *") // 매일 오후 6시
+    @SchedulerLock(
+        name = "workflow-automation-daily-summary",
+        lockAtMostFor = "PT30M",
+        lockAtLeastFor = "PT5M"
+    )
     public void sendDailyPerformanceSummary() {
         if (isDisabledByDbFlag("DailySummary")) {
             return;
         }
         log.info("📊 일일 성과 요약 알림 시작");
-        
+
         try {
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
-                return;
-            }
-            
             LocalDate today = LocalDate.now();
-            
-            // 상담사 조회
-            // 공통코드에서 상담사 역할 코드 조회 (표준화 2025-12-05: enum 활용)
             String consultantRoleCode = getRoleCodeFromCommonCode(UserRole.CONSULTANT.name());
-            List<User> consultants = userRepository.findByRoleAndIsDeletedFalse(tenantId, consultantRoleCode);
-            
-            for (User consultant : consultants) {
+            int totalConsultants = 0;
+
+            for (String tenantId : tenantService.getAllActiveTenantIds()) {
                 try {
-                    // 상담사별 오늘 성과 조회
-                    ConsultantPerformance consultantPerformance = statisticsService.getConsultantPerformance(
-                        consultant.getId(), today);
+                    TenantContextHolder.setTenantId(tenantId);
+                    List<User> consultants = userRepository.findByRoleAndIsDeletedFalse(tenantId, consultantRoleCode);
+                    totalConsultants += consultants.size();
 
-                    // 보안 라운드 2 (2026-06-03): 상담사 본문에서 매출/수익 라인 제거.
-                    // 매출 정보는 ADMIN/STAFF 가 수신하는 월간 리포트 채널로 일원화한다.
-                    String summaryMessage = String.format(
-                        WorkflowAutomationCopy.DAILY_SUMMARY_BODY_FMT,
-                        today,
-                        consultantPerformance.getCompletedSchedules(),
-                        consultantPerformance.getAvgRating() != null
-                            ? consultantPerformance.getAvgRating().doubleValue()
-                            : 0.0
-                    );
+                    for (User consultant : consultants) {
+                        try {
+                            ConsultantPerformance consultantPerformance = statisticsService.getConsultantPerformance(
+                                consultant.getId(), today);
 
-                    consultationMessageService.sendMessage(
-                        consultant.getId(),
-                        null,
-                        null, // consultationId
-                        getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
-                        WorkflowAutomationCopy.DAILY_SUMMARY_TITLE,
-                        summaryMessage,
-                        getMessageTypeFromCommonCode("DAILY_SUMMARY"),
-                        false, // isImportant
-                        false  // isUrgent
-                    );
+                            String summaryMessage = String.format(
+                                WorkflowAutomationCopy.DAILY_SUMMARY_BODY_FMT,
+                                today,
+                                consultantPerformance.getCompletedSchedules(),
+                                consultantPerformance.getAvgRating() != null
+                                    ? consultantPerformance.getAvgRating().doubleValue()
+                                    : 0.0
+                            );
 
-                } catch (Exception e) {
-                    log.error("상담사 {} 일일 성과 요약 발송 실패", consultant.getId(), e);
+                            consultationMessageService.sendMessage(
+                                consultant.getId(),
+                                null,
+                                null,
+                                getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()),
+                                WorkflowAutomationCopy.DAILY_SUMMARY_TITLE,
+                                summaryMessage,
+                                getMessageTypeFromCommonCode("DAILY_SUMMARY"),
+                                false,
+                                false
+                            );
+
+                        } catch (Exception e) {
+                            log.error("상담사 {} 일일 성과 요약 발송 실패", consultant.getId(), e);
+                        }
+                    }
+                } catch (Exception tenantError) {
+                    log.error("❌ 일일 성과 요약 테넌트 처리 실패: tenantId={}, error={}",
+                        tenantId, tenantError.getMessage(), tenantError);
+                } finally {
+                    TenantContextHolder.clear();
                 }
             }
-            
-            logWorkflowExecution("sendDailyPerformanceSummary", "SUCCESS", 
-                String.format("%d명의 상담사에게 일일 성과 요약 발송", consultants.size()));
-            
+
+            logWorkflowExecution("sendDailyPerformanceSummary", "SUCCESS",
+                String.format("%d명의 상담사에게 일일 성과 요약 발송", totalConsultants));
+
         } catch (Exception e) {
             log.error("❌ 일일 성과 요약 알림 실패", e);
             logWorkflowExecution("sendDailyPerformanceSummary", "FAILED", e.getMessage());
@@ -268,62 +289,69 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
      */
     @Override
     @Scheduled(cron = "0 0 9 1 * *") // 매월 1일 오전 9시
+    @SchedulerLock(
+        name = "workflow-automation-monthly-report",
+        lockAtMostFor = "PT30M",
+        lockAtLeastFor = "PT5M"
+    )
     public void generateMonthlyPerformanceReport() {
         if (isDisabledByDbFlag("MonthlyReport")) {
             return;
         }
         log.info("📈 월간 성과 리포트 생성 시작");
-        
+
         try {
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
-                return;
-            }
-            
             LocalDate lastMonth = LocalDate.now().minusMonths(1);
             LocalDate firstDayOfLastMonth = lastMonth.withDayOfMonth(1);
             LocalDate lastDayOfLastMonth = lastMonth.withDayOfMonth(lastMonth.lengthOfMonth());
-            
-            // 전체 지점 통계
-            Map<String, Object> monthlyStats = statisticsService.getMonthlyStatistics(
-                firstDayOfLastMonth, lastDayOfLastMonth, null);
-            
-            // 관리자/스태프 채널: 매출 라인 포함 허용 (상담사 채널과 분리)
-            String reportMessage = String.format(
-                WorkflowAutomationCopy.MONTHLY_REPORT_BODY_FMT,
-                lastMonth.format(java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월")),
-                firstDayOfLastMonth,
-                lastDayOfLastMonth,
-                (Integer) monthlyStats.getOrDefault("totalConsultations", 0),
-                monthlyStats.getOrDefault("totalRevenue", "0"),
-                ((Number) monthlyStats.getOrDefault("avgRating", 0)).doubleValue()
-            );
-            
-            // 관리자들에게 월간 리포트 발송
-            // 공통코드에서 관리자 역할 코드들 조회 (표준화 2025-12-05: enum 활용)
-            // 표준화 2025-12-05: 레거시 역할 제거, 표준 관리자 역할만 사용
             String adminRoleCode = getRoleCodeFromCommonCode(UserRole.ADMIN.name());
             List<String> roleList = List.of(adminRoleCode);
-            List<User> admins = userRepository.findByRoleInAndIsDeletedFalse(tenantId, roleList);
-            
-            for (User admin : admins) {
-                consultationMessageService.sendMessage(
-                    admin.getId(),
-                    null,
-                    null, // consultationId
-                    getRoleCodeFromCommonCode(UserRole.ADMIN.name()),
-                    WorkflowAutomationCopy.MONTHLY_REPORT_TITLE,
-                    reportMessage,
-                    getMessageTypeFromCommonCode("MONTHLY_REPORT"),
-                    true, // isImportant
-                    false  // isUrgent
-                );
+            int totalAdmins = 0;
+
+            for (String tenantId : tenantService.getAllActiveTenantIds()) {
+                try {
+                    TenantContextHolder.setTenantId(tenantId);
+
+                    Map<String, Object> monthlyStats = statisticsService.getMonthlyStatistics(
+                        firstDayOfLastMonth, lastDayOfLastMonth, null);
+
+                    String reportMessage = String.format(
+                        WorkflowAutomationCopy.MONTHLY_REPORT_BODY_FMT,
+                        lastMonth.format(java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월")),
+                        firstDayOfLastMonth,
+                        lastDayOfLastMonth,
+                        (Integer) monthlyStats.getOrDefault("totalConsultations", 0),
+                        monthlyStats.getOrDefault("totalRevenue", "0"),
+                        ((Number) monthlyStats.getOrDefault("avgRating", 0)).doubleValue()
+                    );
+
+                    List<User> admins = userRepository.findByRoleInAndIsDeletedFalse(tenantId, roleList);
+                    totalAdmins += admins.size();
+
+                    for (User admin : admins) {
+                        consultationMessageService.sendMessage(
+                            admin.getId(),
+                            null,
+                            null,
+                            getRoleCodeFromCommonCode(UserRole.ADMIN.name()),
+                            WorkflowAutomationCopy.MONTHLY_REPORT_TITLE,
+                            reportMessage,
+                            getMessageTypeFromCommonCode("MONTHLY_REPORT"),
+                            true,
+                            false
+                        );
+                    }
+                } catch (Exception tenantError) {
+                    log.error("❌ 월간 성과 리포트 테넌트 처리 실패: tenantId={}, error={}",
+                        tenantId, tenantError.getMessage(), tenantError);
+                } finally {
+                    TenantContextHolder.clear();
+                }
             }
-            
-            logWorkflowExecution("generateMonthlyPerformanceReport", "SUCCESS", 
-                String.format("%d명의 관리자에게 월간 리포트 발송", admins.size()));
-            
+
+            logWorkflowExecution("generateMonthlyPerformanceReport", "SUCCESS",
+                String.format("%d명의 관리자에게 월간 리포트 발송", totalAdmins));
+
         } catch (Exception e) {
             log.error("❌ 월간 성과 리포트 생성 실패", e);
             logWorkflowExecution("generateMonthlyPerformanceReport", "FAILED", e.getMessage());

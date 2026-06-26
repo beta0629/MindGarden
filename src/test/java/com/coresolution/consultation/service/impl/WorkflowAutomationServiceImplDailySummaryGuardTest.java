@@ -24,6 +24,7 @@ import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.TenantService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -64,6 +65,7 @@ class WorkflowAutomationServiceImplDailySummaryGuardTest {
     @Mock private CommonCodeService commonCodeService;
     @Mock private MobilePushDispatchService mobilePushDispatchService;
     @Mock private SystemConfigService systemConfigService;
+    @Mock private TenantService tenantService;
 
     private WorkflowAutomationServiceImpl service;
 
@@ -72,8 +74,8 @@ class WorkflowAutomationServiceImplDailySummaryGuardTest {
         service = new WorkflowAutomationServiceImpl(
                 scheduleRepository, userRepository, consultationMessageService,
                 statisticsService, commonCodeService, mobilePushDispatchService,
-                systemConfigService);
-        TenantContextHolder.setTenantId(TENANT_ID);
+                systemConfigService, tenantService);
+        lenient().when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_ID));
         lenient().when(systemConfigService.getGlobalBoolean(
                 eq(NotificationSchedulerFlagKeys.WORKFLOW_AUTOMATION_ENABLED), anyBoolean()))
                 .thenReturn(true);

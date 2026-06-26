@@ -9,9 +9,12 @@ import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.TenantService;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -19,8 +22,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +53,7 @@ class WorkflowAutomationServiceImplGuardTest {
     @Mock private CommonCodeService commonCodeService;
     @Mock private MobilePushDispatchService mobilePushDispatchService;
     @Mock private SystemConfigService systemConfigService;
+    @Mock private TenantService tenantService;
 
     private WorkflowAutomationServiceImpl service;
 
@@ -52,7 +62,7 @@ class WorkflowAutomationServiceImplGuardTest {
         service = new WorkflowAutomationServiceImpl(
                 scheduleRepository, userRepository, consultationMessageService,
                 statisticsService, commonCodeService, mobilePushDispatchService,
-                systemConfigService);
+                systemConfigService, tenantService);
     }
 
     @AfterEach
@@ -103,15 +113,57 @@ class WorkflowAutomationServiceImplGuardTest {
     }
 
     @Test
-    @DisplayName("DB 플래그 ON + tenantId 없음 — 본문 진입 후 자체 early-return (downstream 호출 없음)")
-    void sendDailyPerformanceSummary_enabledWithoutTenantContext_returnsEarly() {
+    @DisplayName("DB 플래그 ON + 활성 테넌트 없음 — tenantService만 호출, downstream 없음")
+    void sendDailyPerformanceSummary_enabledWithNoActiveTenants_returnsEarly() {
         flagReturning(true);
+        when(tenantService.getAllActiveTenantIds()).thenReturn(Collections.emptyList());
 
         service.sendDailyPerformanceSummary();
 
+        verify(tenantService).getAllActiveTenantIds();
         verifyNoInteractions(userRepository);
         verifyNoInteractions(statisticsService);
         verifyNoInteractions(consultationMessageService);
+    }
+
+    @Nested
+    @DisplayName("@SchedulerLock 어노테이션 메타데이터 (blue/green dedup)")
+    class SchedulerLockMetadata {
+
+        @Test
+        @DisplayName("sendDailyPerformanceSummary — name=workflow-automation-daily-summary")
+        void sendDailyPerformanceSummary_hasSchedulerLock() throws NoSuchMethodException {
+            SchedulerLock lock = findLock("sendDailyPerformanceSummary");
+            assertThat(lock)
+                .as("일일 성과 요약 — blue/green 동시 실행 차단을 위해 ShedLock 필수")
+                .isNotNull();
+            assertThat(lock.name()).isEqualTo("workflow-automation-daily-summary");
+            assertThat(lock.lockAtMostFor()).isEqualTo("PT30M");
+            assertThat(lock.lockAtLeastFor()).isEqualTo("PT5M");
+        }
+
+        @Test
+        @DisplayName("generateMonthlyPerformanceReport — name=workflow-automation-monthly-report")
+        void generateMonthlyPerformanceReport_hasSchedulerLock() throws NoSuchMethodException {
+            SchedulerLock lock = findLock("generateMonthlyPerformanceReport");
+            assertThat(lock).isNotNull();
+            assertThat(lock.name()).isEqualTo("workflow-automation-monthly-report");
+            assertThat(lock.lockAtMostFor()).isEqualTo("PT30M");
+            assertThat(lock.lockAtLeastFor()).isEqualTo("PT5M");
+        }
+
+        @Test
+        @DisplayName("일일/월간 스케줄러는 서로 다른 lock name 을 사용한다")
+        void distinctLockNames() throws NoSuchMethodException {
+            String daily = findLock("sendDailyPerformanceSummary").name();
+            String monthly = findLock("generateMonthlyPerformanceReport").name();
+            assertThat(daily).isNotEqualTo(monthly);
+        }
+
+        private SchedulerLock findLock(String methodName) throws NoSuchMethodException {
+            Method method = WorkflowAutomationServiceImpl.class.getDeclaredMethod(methodName);
+            return method.getAnnotation(SchedulerLock.class);
+        }
     }
 
     private void flagReturning(boolean value) {
@@ -127,5 +179,6 @@ class WorkflowAutomationServiceImplGuardTest {
         verifyNoInteractions(statisticsService);
         verifyNoInteractions(commonCodeService);
         verifyNoInteractions(mobilePushDispatchService);
+        verifyNoInteractions(tenantService);
     }
 }

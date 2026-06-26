@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.dto.OnboardingCaptchaSiteKeyResponse;
 import com.coresolution.core.controller.dto.OnboardingCreateRequest;
@@ -70,6 +71,7 @@ public class OnboardingController extends BaseApiController {
     private final ObjectMapper objectMapper;
     private final CaptchaVerifier captchaVerifier;
     private final MindgardenSecurityProperties mindgardenSecurityProperties;
+    private final OAuth2DomainUtil oauth2DomainUtil;
 
     /**
      * 온보딩 접근 권한 확인 /** 온보딩은 새로운 테넌트를 등록하는 것이므로, 이미 테넌트에 속한 사용자는 접근할 수 없음 /**
@@ -129,6 +131,20 @@ public class OnboardingController extends BaseApiController {
         }
 
         log.debug("온보딩 접근 허용: 새로운 테넌트 등록 가능 - email={}", EmailLogMasking.maskForLog(normalizedEmail));
+    }
+
+    private String resolveRequestHost(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String host = request.getHeader("X-Forwarded-Host");
+        if (!StringUtils.hasText(host)) {
+            host = request.getHeader("Host");
+        }
+        if (!StringUtils.hasText(host)) {
+            host = request.getServerName();
+        }
+        return host;
     }
 
     /**
@@ -401,7 +417,7 @@ public class OnboardingController extends BaseApiController {
      */
     @GetMapping("/subdomain-check")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkSubdomainDuplicate(
-            @RequestParam String subdomain, HttpSession session) {
+            @RequestParam String subdomain, HttpSession session, HttpServletRequest request) {
         validateOnboardingAccess(session);
         log.debug("서브도메인 중복 확인 요청: subdomain={}", subdomain);
 
@@ -416,7 +432,7 @@ public class OnboardingController extends BaseApiController {
         response.put("message", result.message() != null ? result.message() : "");
         response.put("previewDomain",
                 result.isValid() && result.available()
-                        ? subdomain.trim().toLowerCase() + ".dev.core-solution.co.kr"
+                        ? oauth2DomainUtil.buildTenantHost(subdomain, resolveRequestHost(request))
                         : null);
 
         log.debug(

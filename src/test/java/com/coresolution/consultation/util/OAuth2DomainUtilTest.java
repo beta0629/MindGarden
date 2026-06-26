@@ -68,4 +68,35 @@ class OAuth2DomainUtilTest {
         assertEquals("dev.core-solution.co.kr", devUtil.convertToMainDomain("tenant.dev.core-solution.co.kr"));
         assertEquals("core-solution.co.kr", devUtil.convertToMainDomain("tenant.core-solution.co.kr"));
     }
+
+    @Test
+    void buildTenantHost_prodOnboardingHost_usesCoreSolutionParent() {
+        assertEquals("trinity.core-solution.co.kr",
+                util.buildTenantHost("trinity", "mindgarden.core-solution.co.kr"));
+    }
+
+    @Test
+    void buildTenantHost_devOnboardingHost_usesDevParent() {
+        assertEquals("trinity.dev.core-solution.co.kr",
+                util.buildTenantHost("trinity", "app.dev.core-solution.co.kr"));
+    }
+
+    @Test
+    void buildTenantHost_stagingOnboardingHost_usesStagingParent() {
+        OAuth2DomainUtil stagingUtil = new OAuth2DomainUtil();
+        ReflectionTestUtils.setField(stagingUtil, "mainDomainsConfig",
+                "staging.core-solution.co.kr,core-solution.co.kr,dev.core-solution.co.kr");
+        ReflectionTestUtils.setField(stagingUtil, "subdomainPatternsConfig",
+                "^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr");
+        ReflectionTestUtils.setField(stagingUtil, "removeRegexPattern", true);
+        stagingUtil.init();
+
+        assertEquals("trinity.staging.core-solution.co.kr",
+                stagingUtil.buildTenantHost("trinity", "app.staging.core-solution.co.kr"));
+    }
+
+    @Test
+    void buildTenantHost_noRequestHost_usesConfiguredProdApexFallback() {
+        assertEquals("trinity.core-solution.co.kr", util.buildTenantHost("trinity", null));
+    }
 }

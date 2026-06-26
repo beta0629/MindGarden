@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.controller.dto.OnboardingCaptchaSiteKeyResponse;
 import com.coresolution.core.controller.dto.OnboardingCreateRequest;
 import com.coresolution.core.constant.OnboardingConstants;
@@ -22,6 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +32,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * {@link OnboardingController} CAPTCHA·site-key 동작 단위 테스트.
@@ -60,8 +64,22 @@ class OnboardingControllerTest {
     @Mock
     private HttpServletRequest httpRequest;
 
+    private OAuth2DomainUtil oauth2DomainUtil;
+
     @InjectMocks
     private OnboardingController onboardingController;
+
+    @BeforeEach
+    void setUpDomainUtil() {
+        oauth2DomainUtil = new OAuth2DomainUtil();
+        ReflectionTestUtils.setField(oauth2DomainUtil, "mainDomainsConfig",
+                "core-solution.co.kr,dev.core-solution.co.kr");
+        ReflectionTestUtils.setField(oauth2DomainUtil, "subdomainPatternsConfig",
+                "^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr");
+        ReflectionTestUtils.setField(oauth2DomainUtil, "removeRegexPattern", true);
+        oauth2DomainUtil.init();
+        ReflectionTestUtils.setField(onboardingController, "oauth2DomainUtil", oauth2DomainUtil);
+    }
 
     private OnboardingCreateRequest basePayload() {
         return new OnboardingCreateRequest(null, "테넌트", "a@b.com", RiskLevel.LOW, null, "ACADEMY", null,
@@ -153,5 +171,36 @@ class OnboardingControllerTest {
 
         assertThat(response.getBody().getData().enabled()).isTrue();
         assertThat(response.getBody().getData().siteKey()).isEqualTo("site-key-public");
+    }
+
+    @Test
+    @DisplayName("subdomain-check: 운영 Host 기준 previewDomain 은 .dev 가 아닌 core-solution.co.kr")
+    void checkSubdomainDuplicate_prodHost_returnsProdPreviewDomain() {
+        when(httpRequest.getHeader("X-Forwarded-Host")).thenReturn("mindgarden.core-solution.co.kr");
+        when(onboardingService.checkSubdomainDuplicate("trinity")).thenReturn(
+                new OnboardingService.SubdomainCheckResult(false, true, "사용 가능한 서브도메인입니다.", true));
+
+        ResponseEntity<com.coresolution.core.dto.ApiResponse<Map<String, Object>>> response =
+                onboardingController.checkSubdomainDuplicate("trinity", null, httpRequest);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData().get("previewDomain"))
+                .isEqualTo("trinity.core-solution.co.kr");
+    }
+
+    @Test
+    @DisplayName("subdomain-check: dev Host 기준 previewDomain 은 dev.core-solution.co.kr")
+    void checkSubdomainDuplicate_devHost_returnsDevPreviewDomain() {
+        when(httpRequest.getHeader("X-Forwarded-Host")).thenReturn(null);
+        when(httpRequest.getHeader("Host")).thenReturn("app.dev.core-solution.co.kr");
+        when(onboardingService.checkSubdomainDuplicate("trinity")).thenReturn(
+                new OnboardingService.SubdomainCheckResult(false, true, "사용 가능한 서브도메인입니다.", true));
+
+        ResponseEntity<com.coresolution.core.dto.ApiResponse<Map<String, Object>>> response =
+                onboardingController.checkSubdomainDuplicate("trinity", null, httpRequest);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getData().get("previewDomain"))
+                .isEqualTo("trinity.dev.core-solution.co.kr");
     }
 }

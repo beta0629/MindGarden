@@ -74,8 +74,24 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
         Pageable pageable);
     
     /**
-     * 긴급 공지 조회
+     * 테넌트별 긴급 공지 조회 (테넌트 필터링)
      */
+    @Query("SELECT n FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' " +
+           "AND n.isUrgent = true " +
+           "AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
+           "ORDER BY n.publishedAt DESC")
+    List<SystemNotification> findUrgentNotificationsByTenantIdAndTargetTypes(
+        @Param("tenantId") String tenantId,
+        @Param("targetTypes") List<String> targetTypes,
+        @Param("now") LocalDateTime now);
+
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 긴급 공지 노출!
+     */
+    @Deprecated
     @Query("SELECT n FROM SystemNotification n WHERE n.targetType IN (:targetTypes) " +
            "AND n.status = 'PUBLISHED' " +
            "AND n.isUrgent = true " +
@@ -88,8 +104,24 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
         @Param("now") LocalDateTime now);
     
     /**
-     * 중요 공지 조회
+     * 테넌트별 중요 공지 조회 (테넌트 필터링)
      */
+    @Query("SELECT n FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' " +
+           "AND n.isImportant = true " +
+           "AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
+           "ORDER BY n.publishedAt DESC")
+    List<SystemNotification> findImportantNotificationsByTenantIdAndTargetTypes(
+        @Param("tenantId") String tenantId,
+        @Param("targetTypes") List<String> targetTypes,
+        @Param("now") LocalDateTime now);
+
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 중요 공지 노출!
+     */
+    @Deprecated
     @Query("SELECT n FROM SystemNotification n WHERE n.targetType IN (:targetTypes) " +
            "AND n.status = 'PUBLISHED' " +
            "AND n.isImportant = true " +

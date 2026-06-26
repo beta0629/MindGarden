@@ -181,7 +181,7 @@ const wrapError = (err, fallbackMessage) => {
 
 /**
  * 수신자 검색 (이름·이메일·전화 부분 일치). 백엔드 위임.
- * @param {{ query?: string, page?: number, size?: number }} [params]
+ * @param {{ search?: string, role?: string, hasPhone?: boolean }} [params]
  * @returns {Promise<any>}
  */
 export const searchRecipients = async(params = {}) => {

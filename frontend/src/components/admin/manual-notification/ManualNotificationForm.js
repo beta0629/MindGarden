@@ -109,7 +109,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
     const handle = window.setTimeout(async() => {
       setRecipientLoading(true);
       try {
-        const raw = await searchRecipients({ query: recipientQuery.trim() });
+        const raw = await searchRecipients({ search: recipientQuery.trim() });
         if (cancelled) {
           return;
         }

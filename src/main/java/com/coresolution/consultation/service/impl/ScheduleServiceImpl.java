@@ -2431,22 +2431,67 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null) {
             return;
         }
-        Optional<ConsultantClientMapping> opt = mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
-                tenantId, consultantId, clientId);
-        if (opt.isEmpty()) {
-            log.warn("⚠️ 회기 복원 대상 매핑 없음: scheduleId={}, consultantId={}, clientId={}",
-                    schedule.getId(), consultantId, clientId);
-            return;
-        }
-        ConsultantClientMapping mapping = opt.get();
         try {
+            Optional<ConsultantClientMapping> mappingOpt = resolveMappingForSessionRestore(
+                    tenantId, schedule, consultantId, clientId);
+            if (mappingOpt.isEmpty()) {
+                log.warn("⚠️ 회기 복원 대상 매핑 없음: scheduleId={}, consultantId={}, clientId={}",
+                        schedule.getId(), consultantId, clientId);
+                return;
+            }
+            ConsultantClientMapping mapping = mappingOpt.get();
             mapping.restoreSession();
             mappingRepository.save(mapping);
             log.info("✅ 예약 취소로 회기 1회 복원: scheduleId={}, mappingId={}, sessionSequence={}, 남은 회기={}",
                     schedule.getId(), mapping.getId(), schedule.getSessionSequence(), mapping.getRemainingSessions());
         } catch (Exception e) {
-            log.error("❌ 회기 복원 처리 실패: scheduleId={}, {}", schedule.getId(), e.getMessage(), e);
+            log.warn("회기 복원 처리 실패(취소는 계속): scheduleId={}, {}", schedule.getId(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * 회기 복원 대상 매핑 resolve: 일정 {@code mappingId} 우선, 없으면 ACTIVE 최신 1건 fallback.
+     */
+    private Optional<ConsultantClientMapping> resolveMappingForSessionRestore(
+            String tenantId, Schedule schedule, Long consultantId, Long clientId) {
+        Long mappingId = schedule.getMappingId();
+        if (mappingId != null) {
+            Optional<ConsultantClientMapping> byId = mappingRepository.findByTenantIdAndId(tenantId, mappingId);
+            if (byId.isPresent()) {
+                ConsultantClientMapping mapping = byId.get();
+                if (mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE
+                        || mapping.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+                    return byId;
+                }
+                log.warn("일정 mappingId 매핑이 ACTIVE/SESSIONS_EXHAUSTED 아님 — fallback: scheduleId={}, mappingId={}, status={}",
+                        schedule.getId(), mappingId, mapping.getStatus());
+            } else {
+                log.warn("일정 mappingId 매핑 없음 — fallback: scheduleId={}, mappingId={}",
+                        schedule.getId(), mappingId);
+            }
+        }
+        List<ConsultantClientMapping> candidates = mappingRepository
+                .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
+        return selectLatestActiveOrExhaustedMapping(candidates);
+    }
+
+    private Optional<ConsultantClientMapping> selectLatestActiveOrExhaustedMapping(
+            List<ConsultantClientMapping> candidates) {
+        if (candidates == null || candidates.isEmpty()) {
+            return Optional.empty();
+        }
+        Comparator<ConsultantClientMapping> recency = Comparator
+                .comparing(ConsultantClientMapping::getUpdatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(ConsultantClientMapping::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder()));
+        Optional<ConsultantClientMapping> active = candidates.stream()
+                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .max(recency);
+        if (active.isPresent()) {
+            return active;
+        }
+        return candidates.stream()
+                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)
+                .max(recency);
     }
 
      /**

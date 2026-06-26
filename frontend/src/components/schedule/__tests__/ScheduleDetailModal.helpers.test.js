@@ -16,8 +16,10 @@ import {
   resolveModalSessionInfo,
   resolveModalLifetimeSessionInfo,
   shouldShowConsultationLogLink,
+  shouldShowRescheduleAction,
   toIsoDateString,
-  CONSULTATION_LOG_LINK_VISIBLE_STATUSES
+  CONSULTATION_LOG_LINK_VISIBLE_STATUSES,
+  RESCHEDULE_ACTION_ELIGIBLE_STATUSES
 } from '../ScheduleDetailModal';
 
 describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금지)', () => {
@@ -314,5 +316,49 @@ describe('CONSULTATION_LOG_LINK_VISIBLE_STATUSES (COMPLETED 단일)', () => {
 
   test('상수 길이는 1 (COMPLETED 단일 SSOT)', () => {
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).toHaveLength(1);
+  });
+});
+
+describe('shouldShowRescheduleAction (예약 변경 버튼 노출)', () => {
+  test('CONFIRMED + ADMIN → true (운영 신고 핵심 케이스)', () => {
+    expect(shouldShowRescheduleAction('CONFIRMED', true, false, false)).toBe(true);
+  });
+
+  test('BOOKED + ADMIN → true', () => {
+    expect(shouldShowRescheduleAction('BOOKED', true, false, false)).toBe(true);
+  });
+
+  test('TENTATIVE_PENDING_PAYMENT + ADMIN → true', () => {
+    expect(shouldShowRescheduleAction('TENTATIVE_PENDING_PAYMENT', true, false, false)).toBe(true);
+  });
+
+  test('CONFIRMED + 비관리자 → false (상담사 status-only PUT 정책과 정합)', () => {
+    expect(shouldShowRescheduleAction('CONFIRMED', false, false, false)).toBe(false);
+  });
+
+  test('COMPLETED → false', () => {
+    expect(shouldShowRescheduleAction('COMPLETED', true, false, false)).toBe(false);
+  });
+
+  test('CANCELLED → false', () => {
+    expect(shouldShowRescheduleAction('CANCELLED', true, false, false)).toBe(false);
+  });
+
+  test('내담자 포털 → false', () => {
+    expect(shouldShowRescheduleAction('CONFIRMED', true, false, true)).toBe(false);
+  });
+
+  test('휴가 이벤트 → false', () => {
+    expect(shouldShowRescheduleAction('CONFIRMED', true, true, false)).toBe(false);
+  });
+});
+
+describe('RESCHEDULE_ACTION_ELIGIBLE_STATUSES', () => {
+  test('BOOKED·가예약·CONFIRMED 포함, COMPLETED·CANCELLED 제외', () => {
+    expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).toContain('BOOKED');
+    expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).toContain('TENTATIVE_PENDING_PAYMENT');
+    expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).toContain('CONFIRMED');
+    expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).not.toContain('COMPLETED');
+    expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).not.toContain('CANCELLED');
   });
 });

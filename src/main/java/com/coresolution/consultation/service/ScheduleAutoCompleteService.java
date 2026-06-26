@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
@@ -12,6 +13,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantService;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -139,12 +141,9 @@ public class ScheduleAutoCompleteService {
                                 // 지난 스케줄: 상담일지 작성된 경우에만 COMPLETED 전환, 미작성이면 리마인더만 발송
                                 boolean hasRecord = consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, schedule.getId());
                                 if (hasRecord) {
-                                    schedule.setStatus(ScheduleStatus.COMPLETED);
-                                    scheduleRepository.save(schedule);
-                                    tenantCompletedCount++;
-                                    realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
-                                    log.info("✅ 지난 스케줄 COMPLETED 전환 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 날짜={}",
-                                        tenantId, schedule.getId(), schedule.getTitle(), schedule.getDate());
+                                    if (completePastScheduleWithRetry(tenantId, schedule)) {
+                                        tenantCompletedCount++;
+                                    }
                                 } else {
                                     var reminderResult = plSqlScheduleValidationService.createConsultationRecordReminder(
                                         schedule.getId(),
@@ -183,6 +182,42 @@ public class ScheduleAutoCompleteService {
         } catch (Exception e) {
             log.error("❌ 스케줄 자동 완료 처리 실패 (스케줄러): {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * 지난 스케줄 COMPLETED 전환 — 낙관적 락 충돌 시 1회 재시도.
+     *
+     * @return 완료 처리 성공 여부
+     */
+    private boolean completePastScheduleWithRetry(String tenantId, Schedule schedule) {
+        for (int attempt = 0; attempt < 2; attempt++) {
+            try {
+                Optional<Schedule> freshOpt = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId());
+                if (freshOpt.isEmpty()) {
+                    return false;
+                }
+                Schedule fresh = freshOpt.get();
+                if (!ScheduleStatus.BOOKED.equals(fresh.getStatus())
+                        && !ScheduleStatus.CONFIRMED.equals(fresh.getStatus())) {
+                    return false;
+                }
+                fresh.setStatus(ScheduleStatus.COMPLETED);
+                scheduleRepository.save(fresh);
+                realTimeStatisticsService.updateStatisticsOnScheduleCompletion(fresh);
+                log.info("✅ 지난 스케줄 COMPLETED 전환 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 날짜={}",
+                    tenantId, fresh.getId(), fresh.getTitle(), fresh.getDate());
+                return true;
+            } catch (ObjectOptimisticLockingFailureException lockError) {
+                if (attempt == 0) {
+                    log.warn("⚠️ 지난 스케줄 완료 낙관적 락 충돌 — 재시도: tenantId={}, scheduleId={}",
+                        tenantId, schedule.getId());
+                } else {
+                    log.error("❌ 지난 스케줄 완료 낙관적 락 재시도 실패: tenantId={}, scheduleId={}",
+                        tenantId, schedule.getId(), lockError);
+                }
+            }
+        }
+        return false;
     }
     
     /**

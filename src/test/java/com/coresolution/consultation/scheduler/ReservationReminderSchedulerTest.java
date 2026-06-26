@@ -209,8 +209,8 @@ class ReservationReminderSchedulerTest {
         when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
             .thenReturn(List.of(schedule));
         when(mappingRepository
-            .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(TENANT_A, 5001L, 6001L))
-            .thenReturn(Optional.empty());
+            .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(TENANT_A, 5001L, 6001L))
+            .thenReturn(List.of());
 
         scheduler.runDailyReminder();
 
@@ -367,8 +367,8 @@ class ReservationReminderSchedulerTest {
         mapping.setId(consultantId * 1000 + clientId);
         mapping.setTenantId(tenantId);
         when(mappingRepository
-            .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId))
-            .thenReturn(Optional.of(mapping));
+            .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId))
+            .thenReturn(java.util.List.of(mapping));
     }
 
     private Schedule buildSchedule(Long id, String tenantId, Long consultantId, Long clientId) {

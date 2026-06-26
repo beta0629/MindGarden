@@ -10,6 +10,7 @@ import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
@@ -85,8 +86,8 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
                             .declareParameters(new SqlParameter("p_tenant_id", Types.VARCHAR),
                                     new SqlParameter("p_stat_date", Types.DATE),
                                     new SqlParameter("p_updated_by", Types.VARCHAR),
-                                    new SqlParameter("p_success", Types.BOOLEAN),
-                                    new SqlParameter("p_message", Types.VARCHAR));
+                                    new SqlOutParameter("p_success", Types.BOOLEAN),
+                                    new SqlOutParameter("p_message", Types.VARCHAR));
 
             Map<String, Object> params = new HashMap<>();
             params.put("p_tenant_id", tenantId);
@@ -171,8 +172,8 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
                                     new SqlParameter("p_performance_date", Types.DATE),
                                     new SqlParameter("p_tenant_id", Types.VARCHAR),
                                     new SqlParameter("p_updated_by", Types.VARCHAR),
-                                    new SqlParameter("p_success", Types.BOOLEAN),
-                                    new SqlParameter("p_message", Types.VARCHAR));
+                                    new SqlOutParameter("p_success", Types.BOOLEAN),
+                                    new SqlOutParameter("p_message", Types.VARCHAR));
 
             Map<String, Object> params = new HashMap<>();
             params.put("p_consultant_id", consultantId);
@@ -237,9 +238,9 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
                             .declareParameters(new SqlParameter("p_tenant_id", Types.VARCHAR),
                                     new SqlParameter("p_monitoring_date", Types.DATE),
                                     new SqlParameter("p_processed_by", Types.VARCHAR),
-                                    new SqlParameter("p_success", Types.BOOLEAN),
-                                    new SqlParameter("p_message", Types.VARCHAR),
-                                    new SqlParameter("p_alert_count", Types.INTEGER));
+                                    new SqlOutParameter("p_success", Types.BOOLEAN),
+                                    new SqlOutParameter("p_message", Types.VARCHAR),
+                                    new SqlOutParameter("p_alert_count", Types.INTEGER));
 
             Map<String, Object> params = new HashMap<>();
             params.put("p_tenant_id", tenantId);

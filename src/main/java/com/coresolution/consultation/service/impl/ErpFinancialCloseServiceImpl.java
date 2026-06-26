@@ -37,12 +37,12 @@ public class ErpFinancialCloseServiceImpl implements ErpFinancialCloseService {
         try {
             financialPeriodService.closePeriod(tenantId, targetDate, PeriodType.DAY);
         } catch (TaxIntegrityException e) {
-            // Q8 부가세 가드 — 합의서 §2 Q8: 마감 차단 + 알림 발송 (알림은 별도 채널)
-            log.error(
-                "[ErpFinancialClose][Q8] 부가세 가드 위반으로 일 마감 차단: tenantId={} targetDate={}"
-                + " expected={} actual={}",
-                tenantId, targetDate, e.getExpected(), e.getActual());
-            throw e;
+            // Q8 부가세 가드 — 데이터 보정 필요(운영 runbook §P1-B). 테넌트 격리: throw 하지 않고 WARN.
+            log.warn(
+                "[ErpFinancialClose][Q8] 부가세 가드 위반으로 일 마감 차단(데이터 보정 필요): tenantId={} targetDate={}"
+                + " expected={} actual={} diff={}",
+                tenantId, targetDate, e.getExpected(), e.getActual(),
+                e.getExpected().subtract(e.getActual()).abs());
         } catch (Exception e) {
             // Q9: retry 3회 소진 후에도 실패 시 status=OPEN 유지 (FinancialPeriodServiceImpl 내부)
             log.error("[ErpFinancialClose] 일 마감 실패(retry 소진): tenantId={} targetDate={} error={}",
@@ -68,11 +68,11 @@ public class ErpFinancialCloseServiceImpl implements ErpFinancialCloseService {
         try {
             financialPeriodService.closePeriod(tenantId, periodStart, PeriodType.MONTH);
         } catch (TaxIntegrityException e) {
-            log.error(
-                "[ErpFinancialClose][Q8] 부가세 가드 위반으로 월 마감 차단: tenantId={} yearMonth={}"
-                + " expected={} actual={}",
-                tenantId, yearMonth, e.getExpected(), e.getActual());
-            throw e;
+            log.warn(
+                "[ErpFinancialClose][Q8] 부가세 가드 위반으로 월 마감 차단(데이터 보정 필요): tenantId={} yearMonth={}"
+                + " expected={} actual={} diff={}",
+                tenantId, yearMonth, e.getExpected(), e.getActual(),
+                e.getExpected().subtract(e.getActual()).abs());
         } catch (Exception e) {
             log.error("[ErpFinancialClose] 월 마감 실패(retry 소진): tenantId={} yearMonth={} error={}",
                     tenantId, yearMonth, e.getMessage(), e);

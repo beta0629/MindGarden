@@ -66,8 +66,8 @@ class ScheduleMappingContextResolverTest {
                 LocalDate.of(2026, 4, 4));
 
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, 11L)).thenReturn(Optional.of(singleMapping));
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
-                TENANT_ID, CONSULTANT_ID, CLIENT_ID)).thenReturn(Optional.of(tenPackMapping));
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                TENANT_ID, CONSULTANT_ID, CLIENT_ID)).thenReturn(List.of(tenPackMapping));
 
         ScheduleMappingResponseContext context = ScheduleMappingContextResolver.resolveForScheduleResponse(
                 schedule, TENANT_ID, mappingRepository, Map.of());
@@ -89,8 +89,8 @@ class ScheduleMappingContextResolverTest {
                 LocalDate.of(2026, 4, 22));
 
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, 32L)).thenReturn(Optional.of(tenPackMapping));
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
-                TENANT_ID, CONSULTANT_ID, CLIENT_ID)).thenReturn(Optional.of(tenPackMapping));
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                TENANT_ID, CONSULTANT_ID, CLIENT_ID)).thenReturn(List.of(tenPackMapping));
 
         ScheduleMappingResponseContext context = ScheduleMappingContextResolver.resolveForScheduleResponse(
                 schedule, TENANT_ID, mappingRepository, Map.of());
@@ -117,14 +117,31 @@ class ScheduleMappingContextResolverTest {
         when(mappingRepository.findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc(
                 eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID)))
                 .thenReturn(List.of(tenPackMapping, singleMapping));
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
-                TENANT_ID, CONSULTANT_ID, CLIENT_ID)).thenReturn(Optional.of(tenPackMapping));
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                TENANT_ID, CONSULTANT_ID, CLIENT_ID)).thenReturn(List.of(tenPackMapping));
 
         ScheduleMappingResponseContext context = ScheduleMappingContextResolver.resolveForScheduleResponse(
                 schedule, TENANT_ID, mappingRepository, Map.of());
 
         assertThat(context.getMappingId()).isEqualTo(17L);
         assertThat(context.getTotalSessions()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("복수 ACTIVE/SESSIONS_EXHAUSTED 매핑 — ACTIVE 최신 1건 선택 (NonUnique 방지)")
+    void selectLatestActiveOrExhaustedMapping_prefersLatestActive() {
+        ConsultantClientMapping olderActive = mapping(10L, 5, 2, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 4, 1, 9, 0), null);
+        olderActive.setUpdatedAt(LocalDateTime.of(2026, 4, 1, 9, 0));
+        ConsultantClientMapping newerActive = mapping(11L, 10, 8, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 4, 10, 9, 0), null);
+        newerActive.setUpdatedAt(LocalDateTime.of(2026, 4, 10, 9, 0));
+
+        var selected = ScheduleMappingContextResolver.selectLatestActiveOrExhaustedMapping(
+                List.of(olderActive, newerActive));
+
+        assertThat(selected).isPresent();
+        assertThat(selected.get().getId()).isEqualTo(11L);
     }
 
     private static Schedule schedule(

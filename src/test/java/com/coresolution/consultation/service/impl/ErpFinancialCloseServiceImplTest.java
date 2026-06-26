@@ -83,16 +83,17 @@ class ErpFinancialCloseServiceImplTest {
     }
 
     @Test
-    @DisplayName("Q8: 일 마감 중 TaxIntegrityException 전파 (마감 차단 + 알림 발송 트리거)")
-    void performDailyClose_taxIntegrityFails_propagates() {
+    @DisplayName("Q8: 일 마감 중 TaxIntegrityException — WARN 로그만, 전파하지 않음(테넌트 격리)")
+    void performDailyClose_taxIntegrityFails_doesNotPropagate() {
         LocalDate yesterday = LocalDate.of(2026, 5, 27);
         when(financialPeriodService.closePeriod(eq(TENANT_A), eq(yesterday), eq(PeriodType.DAY)))
                 .thenThrow(new TaxIntegrityException(TENANT_A,
                         new BigDecimal("100000.00"), new BigDecimal("80000.00")));
 
-        assertThatThrownBy(() -> service.performDailyClose(TENANT_A, yesterday))
-                .isInstanceOf(TaxIntegrityException.class)
-                .hasMessageContaining("부가세 누적 차이");
+        service.performDailyClose(TENANT_A, yesterday);
+
+        verify(financialPeriodService, times(1))
+                .closePeriod(eq(TENANT_A), eq(yesterday), eq(PeriodType.DAY));
     }
 
     @Test

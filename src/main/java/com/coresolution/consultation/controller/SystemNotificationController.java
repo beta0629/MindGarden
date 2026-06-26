@@ -349,7 +349,9 @@ public class SystemNotificationController extends BaseApiController {
         String userRole = currentUser.getRole().name();
         
         log.info("📢 긴급 공지 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
-        
+
+        try {
+        setTenantContextFromUser(currentUser);
         List<SystemNotification> notifications = systemNotificationService.getUrgentNotifications(userId, userRole);
         
         List<Map<String, Object>> notificationList = new ArrayList<>();
@@ -363,6 +365,9 @@ public class SystemNotificationController extends BaseApiController {
         }
         
         return success("긴급 공지를 성공적으로 조회했습니다.", notificationList);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
     
     // ==================== 관리자 전용 API (지점 관리자 이상) ====================
@@ -381,9 +386,12 @@ public class SystemNotificationController extends BaseApiController {
         if (!hasAdminPermission(session)) {
             throw new org.springframework.security.access.AccessDeniedException("공지 관리 권한이 없습니다. 지점 관리자 이상만 접근 가능합니다.");
         }
-        
+
+        User currentUser = SessionUtils.getCurrentUser(session);
         log.info("📢 관리자용 전체 공지 조회 - 대상: {}, 상태: {}", targetType, status);
-        
+
+        try {
+        setTenantContextFromUser(currentUser);
         // 표준화 원칙: 페이지 크기 최대 20개로 제한
         Pageable pageable = PaginationUtils.createPageable(page, size);
         Page<SystemNotification> notifications = systemNotificationService.getAllNotificationsForAdmin(targetType, status, pageable);
@@ -414,6 +422,9 @@ public class SystemNotificationController extends BaseApiController {
         responseData.put("currentPage", notifications.getNumber());
         
         return success("관리자용 공지 목록을 성공적으로 조회했습니다.", responseData);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
     
     /**
@@ -433,7 +444,9 @@ public class SystemNotificationController extends BaseApiController {
         String userName = currentUser.getName();
         
         log.info("📢 공지 생성 - 작성자 ID: {}, 이름: {}", userId, userName);
-        
+
+        try {
+        setTenantContextFromUser(currentUser);
         SystemNotification notification = new SystemNotification();
         notification.setTargetType((String) request.get("targetType"));
         notification.setTitle((String) request.get("title"));
@@ -459,6 +472,9 @@ public class SystemNotificationController extends BaseApiController {
         data.put("id", created.getId());
         
         return created("공지가 생성되었습니다.", data);
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
     
     /**

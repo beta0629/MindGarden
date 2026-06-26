@@ -202,13 +202,14 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public List<SystemNotification> getUrgentNotifications(Long userId, String userRole) {
         log.info("📢 긴급 공지 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         List<String> targetTypes = getTargetTypesForUser(userRole);
         LocalDateTime now = LocalDateTime.now();
         
         List<SystemNotification> notifications = systemNotificationRepository
-            .findUrgentNotificationsByTargetTypes(targetTypes, now);
+            .findUrgentNotificationsByTenantIdAndTargetTypes(tenantId, targetTypes, now);
         
-        log.info("✅ 긴급 공지 조회 완료 - 총 {}개", notifications.size());
+        log.info("✅ 긴급 공지 조회 완료 - 총 {}개 (tenantId: {})", notifications.size(), tenantId);
         
         return notifications;
     }
@@ -217,13 +218,14 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public List<SystemNotification> getImportantNotifications(Long userId, String userRole) {
         log.info("📢 중요 공지 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         List<String> targetTypes = getTargetTypesForUser(userRole);
         LocalDateTime now = LocalDateTime.now();
         
         List<SystemNotification> notifications = systemNotificationRepository
-            .findImportantNotificationsByTargetTypes(targetTypes, now);
+            .findImportantNotificationsByTenantIdAndTargetTypes(tenantId, targetTypes, now);
         
-        log.info("✅ 중요 공지 조회 완료 - 총 {}개", notifications.size());
+        log.info("✅ 중요 공지 조회 완료 - 총 {}개 (tenantId: {})", notifications.size(), tenantId);
         
         return notifications;
     }
@@ -232,6 +234,8 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     public SystemNotification createNotification(SystemNotification notification) {
         log.info("📢 공지 생성 - 제목: {}, 대상: {}", notification.getTitle(), notification.getTargetType());
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        notification.setTenantId(tenantId);
         notification.setStatus("DRAFT");
         notification.setIsDeleted(false);
         notification.setViewCount(0);
@@ -330,12 +334,13 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     
     @Override
     public Page<SystemNotification> getAllNotificationsForAdmin(String targetType, String status, Pageable pageable) {
-        log.info("📢 관리자용 전체 공지 조회 - 대상: {}, 상태: {}", targetType, status);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📢 관리자용 전체 공지 조회 - tenantId: {}, 대상: {}, 상태: {}", tenantId, targetType, status);
         
         Page<SystemNotification> notifications = systemNotificationRepository
-            .findAllForAdmin(targetType, status, pageable);
+            .findAllForAdminByTenantId(tenantId, targetType, status, pageable);
         
-        log.info("✅ 관리자용 전체 공지 조회 완료 - 총 {}개", notifications.getTotalElements());
+        log.info("✅ 관리자용 전체 공지 조회 완료 - tenantId: {}, 총 {}개", tenantId, notifications.getTotalElements());
         
         return notifications;
     }

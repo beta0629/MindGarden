@@ -1,0 +1,91 @@
+/**
+ * TrustBadgesGrid CSS — mg-v2-* 토큰 한정
+ * Landing 페이지 보안 인증 배지 섹션 (그리드형, 인라인 SVG 4종).
+ * - 배지 height 32px (var token)
+ * - 배지 opacity 0.7 (light) / 0.85 (dark)
+ * - 호버 시 opacity 1
+ *
+ * Pricing 의 `TrustBadges` (`.mg-v2-trust-badges`) 와 클래스 충돌 방지를 위해
+ * `mg-v2-trust-badges-grid` 네임스페이스로 분리.
+ *
+ * @author CoreSolution
+ * @since 2026-06-16
+ */
+
+.mg-v2-trust-badges-grid {
+  width: 100%;
+  padding:
+    var(--mg-v2-refine-landing-trust-padding-y)
+    var(--mg-v2-grid-margin-desktop);
+  background-color: var(--mg-v2-color-surface-bg);
+}
+
+.mg-v2-trust-badges-grid__container {
+  max-width: var(--mg-v2-grid-container-2xl);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-v2-space-4);
+}
+
+.mg-v2-trust-badges-grid__heading {
+  margin: 0;
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-secondary);
+  letter-spacing: var(--mg-v2-font-letter-spacing-wider);
+  text-transform: uppercase;
+}
+
+.mg-v2-trust-badges-grid__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-refine-landing-trust-gap);
+}
+
+.mg-v2-trust-badges-grid__item {
+  display: inline-flex;
+  align-items: center;
+  height: var(--mg-v2-refine-landing-trust-badge-height);
+  color: var(--mg-v2-color-text-secondary);
+  opacity: var(--mg-v2-refine-landing-trust-badge-opacity);
+  transition: opacity var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-out);
+}
+
+.mg-v2-trust-badges-grid__item:hover {
+  opacity: 1;
+  color: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-trust-badges-grid__item svg {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mg-v2-trust-badges-grid {
+    padding:
+      var(--mg-v2-space-12)
+      var(--mg-v2-grid-margin-tablet);
+  }
+}
+
+@media (max-width: 767px) {
+  .mg-v2-trust-badges-grid {
+    padding:
+      var(--mg-v2-space-10)
+      var(--mg-v2-grid-margin-mobile);
+  }
+
+  .mg-v2-trust-badges-grid__list {
+    gap: var(--mg-v2-space-4);
+  }
+}

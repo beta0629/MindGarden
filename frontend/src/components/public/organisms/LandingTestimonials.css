@@ -1,0 +1,185 @@
+/**
+ * LandingTestimonials CSS — mg-v2-* 토큰 한정
+ * Testimonials 섹션: Stats + Carousel (자동 슬라이드, 일시정지, 키보드 nav)
+ * Phase C-Refine: 타이포 위계 보정
+ *
+ * @author CoreSolution
+ * @since 2026-06-15
+ */
+
+.mg-v2-landing-testimonials {
+  padding: var(--mg-v2-space-20) var(--mg-v2-grid-margin-desktop);
+  background-color: var(--mg-v2-color-surface-bg);
+  max-width: var(--mg-v2-grid-container-2xl);
+  margin: 0 auto;
+}
+
+/* ── Stats ── */
+.mg-v2-landing-testimonials__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--mg-v2-grid-gutter-desktop);
+  margin-bottom: var(--mg-v2-space-16);
+  text-align: center;
+}
+
+.mg-v2-landing-testimonials__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-landing-testimonials__stat-value {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-refine-font-size-landing-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-primary-main);
+  line-height: var(--mg-v2-font-line-height-tight);
+}
+
+.mg-v2-landing-testimonials__stat-label {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+/* ── Carousel ── */
+.mg-v2-landing-testimonials__carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.mg-v2-landing-testimonials__track {
+  display: flex;
+  transition: transform var(--mg-v2-transition-normal);
+}
+
+.mg-v2-landing-testimonials__slide {
+  flex: 0 0 calc(100% / 3);
+  padding: 0 var(--mg-v2-space-3);
+  box-sizing: border-box;
+}
+
+.mg-v2-landing-testimonials__card {
+  background-color: var(--mg-v2-color-surface-card);
+  border-radius: var(--mg-v2-radius-lg);
+  padding: var(--mg-v2-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  height: 100%;
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
+}
+
+.mg-v2-landing-testimonials__card-content {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-lg);
+  font-weight: var(--mg-v2-font-weight-regular);
+  color: var(--mg-v2-color-text-primary);
+  line-height: var(--mg-v2-font-line-height-body);
+  flex: 1;
+  margin: 0;
+}
+
+.mg-v2-landing-testimonials__card-author {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-landing-testimonials__card-avatar {
+  width: var(--mg-v2-space-10);
+  height: var(--mg-v2-space-10);
+  border-radius: var(--mg-v2-radius-pill);
+  background-color: var(--mg-v2-color-secondary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mg-v2-landing-testimonials__card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mg-v2-landing-testimonials__card-avatar-placeholder {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-inverse);
+}
+
+.mg-v2-landing-testimonials__card-name {
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* ── Controls ── */
+.mg-v2-landing-testimonials__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-space-4);
+  margin-top: var(--mg-v2-space-8);
+}
+
+.mg-v2-landing-testimonials__control-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-component-touch-target);
+  height: var(--mg-v2-component-touch-target);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-pill);
+  background-color: var(--mg-v2-color-surface-raised);
+  color: var(--mg-v2-color-text-primary);
+  cursor: pointer;
+  transition: var(--mg-v2-transition-fast);
+}
+
+.mg-v2-landing-testimonials__control-btn:hover {
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+.mg-v2-landing-testimonials__control-btn:focus-visible {
+  outline: var(--mg-v2-border-width-focus) solid var(--mg-v2-color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ── Responsive: Tablet ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mg-v2-landing-testimonials {
+    padding: var(--mg-v2-space-16) var(--mg-v2-grid-margin-tablet);
+  }
+
+  .mg-v2-landing-testimonials__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mg-v2-landing-testimonials__slide {
+    flex: 0 0 50%;
+  }
+}
+
+/* ── Responsive: Mobile ── */
+@media (max-width: 767px) {
+  .mg-v2-landing-testimonials {
+    padding: var(--mg-v2-space-12) var(--mg-v2-grid-margin-mobile);
+  }
+
+  .mg-v2-landing-testimonials__stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--mg-v2-space-6);
+    margin-bottom: var(--mg-v2-space-10);
+  }
+
+  .mg-v2-landing-testimonials__slide {
+    flex: 0 0 100%;
+  }
+}

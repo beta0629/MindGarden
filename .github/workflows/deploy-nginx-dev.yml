@@ -204,6 +204,15 @@ jobs:
             echo "✅ 통합 설정 파일 적용 완료"
           fi
           
+          # app.dev 등 테넌트 Host 전용 sites-enabled 가 wildcard OAuth location 을 가리는 경우 제거
+          echo "🧹 wildcard OAuth shadow sites-enabled 정리..."
+          for stale in app.dev.core-solution.co.kr app.dev.core-solution.co.kr.conf; do
+            if [ -e "/etc/nginx/sites-enabled/$stale" ]; then
+              sudo rm -f "/etc/nginx/sites-enabled/$stale"
+              echo "  removed sites-enabled/$stale"
+            fi
+          done
+          
           # 기존 도메인 설정 업데이트 (하위 호환성)
           M_GARDEN_CONF="/tmp/config/nginx/dev.m-garden.co.kr.conf"
           if [ ! -f "$M_GARDEN_CONF" ]; then

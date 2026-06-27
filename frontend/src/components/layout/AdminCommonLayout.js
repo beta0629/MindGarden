@@ -23,6 +23,7 @@ import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import {
   deriveGnbQuickNavigateActionsFromLnb,
   filterBranchAdminLnbItems,
+  filterHiddenAdminLnbItems,
   getLnbTreeFromResponse,
   mergeBillingAdminLnbItems,
   mergeClientShopLnbItems,
@@ -93,16 +94,16 @@ const AdminCommonLayout = ({
         normalized = mergeShopAdminLnbItems(normalized, { adminShopCatalogEnabled, userRole });
         normalized = mergeBillingAdminLnbItems(normalized, { userRole });
       }
-      return filterBranchAdminLnbItems(normalized);
+      return filterHiddenAdminLnbItems(filterBranchAdminLnbItems(normalized));
     }
     if (lnbRawTree === null) {
       return userRole === USER_ROLES.CLIENT
         ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-        : filterBranchAdminLnbItems(fallback);
+        : filterHiddenAdminLnbItems(filterBranchAdminLnbItems(fallback));
     }
     return userRole === USER_ROLES.CLIENT
       ? mergeClientShopLnbItems(fallback, { clientShopEnabled, clientRewardEnabled })
-      : filterBranchAdminLnbItems(mergeBillingAdminLnbItems(
+      : filterHiddenAdminLnbItems(filterBranchAdminLnbItems(mergeBillingAdminLnbItems(
         mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
         { userRole }
       ));

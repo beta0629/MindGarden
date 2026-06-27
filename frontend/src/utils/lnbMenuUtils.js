@@ -226,6 +226,23 @@ export function mergeShopAdminLnbItems(items, options = {}) {
   ];
 }
 
+/** LNB에서 노출하지 않는 어드민 설정 경로 (라우트·API 유지, 메뉴만 숨김) */
+const HIDDEN_ADMIN_LNB_PATHS = new Set([
+  ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS,
+  ADMIN_ROUTES.TENANT_SMS_SETTINGS
+]);
+
+/**
+ * @param {string|undefined|null} path
+ * @returns {boolean}
+ */
+function isHiddenAdminLnbPath(path) {
+  if (typeof path !== 'string' || !path.startsWith('/')) {
+    return false;
+  }
+  return HIDDEN_ADMIN_LNB_PATHS.has(path.split('?')[0]);
+}
+
 const BRANCH_LNB_PATH_PREFIXES = [
   '/admin/branches',
   '/admin/branch-create',
@@ -268,6 +285,39 @@ function isBranchAdminLnbPath(path) {
  * @param {Array<{ to?: string, label?: string, icon?: string, end?: boolean, children?: Array }>} items
  * @returns {typeof items}
  */
+/**
+ * DB LNB에서 카카오 알림톡·문자(SMS) 설정 메뉴를 제거.
+ *
+ * BE Flyway 시드 변경 없이 FE에서 메뉴 노출만 숨긴다. 페이지 라우트·API는 유지.
+ *
+ * @param {Array<{ to?: string, label?: string, icon?: string, end?: boolean, children?: Array }>} items
+ * @returns {typeof items}
+ */
+export function filterHiddenAdminLnbItems(items) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+
+  const filterNode = (item) => {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+    if (isHiddenAdminLnbPath(item.to)) {
+      return null;
+    }
+    if (!Array.isArray(item.children) || item.children.length === 0) {
+      return item;
+    }
+    const children = item.children.map(filterNode).filter(Boolean);
+    if (children.length === 0) {
+      return null;
+    }
+    return { ...item, children };
+  };
+
+  return items.map(filterNode).filter(Boolean);
+}
+
 export function filterBranchAdminLnbItems(items) {
   if (!Array.isArray(items)) {
     return items;
@@ -359,8 +409,6 @@ export function mergeSupplementalAdminLnbItems(items) {
     return items;
   }
   const supplemental = [
-    { to: ADMIN_ROUTES.TENANT_SMS_SETTINGS, icon: 'MESSAGE_SQUARE', label: '문자 메시지(SMS)', end: true },
-    { to: ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS, icon: 'MESSAGE_CIRCLE', label: '카카오 알림톡', end: true },
     { to: ADMIN_ROUTES.BRANDING, icon: 'IMAGE', label: '브랜딩', end: true }
   ];
   return items.map((item) => {

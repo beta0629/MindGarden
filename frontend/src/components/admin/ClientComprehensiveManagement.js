@@ -874,8 +874,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         await loadClients();
                                         handleCloseModal();
                                     } else if (modalType === 'delete') {
-                                        await apiDelete(`/api/v1/admin/clients/${editingClient.id}`);
-                                        const msg = '내담자가 성공적으로 삭제되었습니다.';
+                                        const deleteResponse = await apiDelete(
+                                            `/api/v1/admin/clients/${editingClient.id}`
+                                        );
+                                        const msg = deleteResponse?.message
+                                            || '내담자가 성공적으로 강제 종료되었습니다 (7일 내 되돌리기 가능)';
                                         showSuccess(msg);
                                         await loadClients();
                                         handleCloseModal();

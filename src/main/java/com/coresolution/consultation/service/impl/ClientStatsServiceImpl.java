@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ClientProfileContextFields;
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -239,8 +240,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return List.of();
         }
-        List<com.coresolution.consultation.entity.User> clientUsers = userRepository
-                .findByRole(tenantId, UserRole.CLIENT);
+        List<com.coresolution.consultation.entity.User> clientUsers = loadClientsVisibleInStatsList(tenantId);
         
         return buildClientStatsList(clientUsers);
     }
@@ -253,12 +253,29 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     public List<Map<String, Object>> getAllClientsWithStatsByTenant(String tenantId) {
         log.info("📊 테넌트별 내담자 통계 조회: tenantId={}", tenantId);
         
-        List<com.coresolution.consultation.entity.User> clientUsers = userRepository
-                .findByRole(tenantId, UserRole.CLIENT);
+        List<com.coresolution.consultation.entity.User> clientUsers = loadClientsVisibleInStatsList(tenantId);
         
         log.info("📊 테넌트별 내담자 조회 완료: tenantId={}, 조회된 수={}", tenantId, clientUsers.size());
         
         return buildClientStatsList(clientUsers);
+    }
+
+    /**
+     * 종합관리 목록(with-stats)에 노출할 내담자만 조회.
+     * DELETED_BY_ADMIN / ANONYMIZED / HARD_DELETED 는 삭제 대기·종료 전용 화면으로 분리.
+     */
+    private List<com.coresolution.consultation.entity.User> loadClientsVisibleInStatsList(String tenantId) {
+        return userRepository.findByRole(tenantId, UserRole.CLIENT).stream()
+                .filter(this::isVisibleInClientStatsList)
+                .collect(Collectors.toList());
+    }
+
+    private boolean isVisibleInClientStatsList(com.coresolution.consultation.entity.User user) {
+        LifecycleState state = user.getLifecycleState();
+        if (state == null) {
+            return true;
+        }
+        return state != LifecycleState.DELETED_BY_ADMIN && !state.isTerminal();
     }
     
      /**
@@ -501,6 +518,9 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         // 내담자 어드민 모달·ClientFilters·ClientCard 등에서 합산 표시 시 참조.
         clientMap.put("pastSessionCount", user != null ? user.getPastSessionCount() : null);
         clientMap.put("role", UserRole.CLIENT.name());
+        if (user != null && user.getLifecycleState() != null) {
+            clientMap.put("lifecycleState", user.getLifecycleState().name());
+        }
         clientMap.put("isDeleted", client.getIsDeleted());
         clientMap.put("createdAt", client.getCreatedAt());
         clientMap.put("updatedAt", client.getUpdatedAt());

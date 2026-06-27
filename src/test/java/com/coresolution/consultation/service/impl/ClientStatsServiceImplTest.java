@@ -16,7 +16,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Arrays;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
@@ -93,6 +95,45 @@ class ClientStatsServiceImplTest {
     @AfterEach
     void tearDown() {
         TenantContextHolder.clear();
+    }
+
+    @Test
+    @DisplayName("getAllClientsWithStatsByTenant: DELETED_BY_ADMIN·ANONYMIZED·HARD_DELETED 내담자는 목록에서 제외")
+    void getAllClientsWithStatsByTenant_excludesDeletedLifecycleStates() {
+        User active = buildListClientUser(101L, "활성", LifecycleState.ACTIVE);
+        User deletedByAdmin = buildListClientUser(102L, "삭제대기", LifecycleState.DELETED_BY_ADMIN);
+        User anonymized = buildListClientUser(103L, "익명", LifecycleState.ANONYMIZED);
+        User hardDeleted = buildListClientUser(104L, "하드삭제", LifecycleState.HARD_DELETED);
+
+        when(userRepository.findByRole(TENANT, UserRole.CLIENT))
+            .thenReturn(Arrays.asList(active, deletedByAdmin, anonymized, hardDeleted));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(eq(TENANT), anyLong()))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(anyString(), anyLong(), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(anyString(), anyLong())).thenReturn(0L);
+
+        List<Map<String, Object>> result = clientStatsService.getAllClientsWithStatsByTenant(TENANT);
+
+        assertEquals(1, result.size());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> clientMap = (Map<String, Object>) result.get(0).get("client");
+        assertEquals(101L, clientMap.get("id"));
+        assertEquals(LifecycleState.ACTIVE.name(), clientMap.get("lifecycleState"));
+    }
+
+    private User buildListClientUser(Long id, String name, LifecycleState lifecycleState) {
+        User user = User.builder()
+            .userId("client-" + id)
+            .email("c" + id + "@test.example")
+            .password("password12")
+            .name(name)
+            .role(UserRole.CLIENT)
+            .build();
+        user.setId(id);
+        user.setTenantId(TENANT);
+        user.setLifecycleState(lifecycleState);
+        return user;
     }
 
     @Test

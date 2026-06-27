@@ -3491,12 +3491,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("📅 내담자 삭제로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
 
-        // Phase 2-β redirect — 직접 setIsActive(false) 대신 lifecycle 단일 진입점 호출.
-        // UserLifecycleService 가 (a) 전이 그래프 가드, (b) deleted_at + deleted_by_admin_id stamp,
-        // (c) audit_logs (ADMIN_FORCED_DELETE) 기록을 단일 트랜잭션으로 수행한다.
-        Actor actor = resolveAdminActor(adminUserId, adminRoleCode);
-        String resolvedReason = resolveAdminReason(reason, "ADMIN_FORCED_DELETE_CLIENT");
-        userLifecycleService.transitionTo(id, LifecycleState.DELETED_BY_ADMIN, actor, resolvedReason);
+        transitionClientToDeletedByAdmin(id, client, adminUserId, adminRoleCode, reason);
 
         clientStatsService.evictTenantClientsWithStatsListCache(tenantId);
         clientStatsService.evictClientStatsCache(tenantId, id);
@@ -3567,6 +3562,47 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         log.info("✅ 스태프 강제 종료 완료 (DELETED_BY_ADMIN, 7일 윈도우 진입): ID={}, role={}, name={}",
                 id, targetRole, staff.getName());
+    }
+
+    /**
+     * 내담자 어드민 강제 종료 lifecycle 전이 — §3.6 그래프 준수 (ACTIVE → DELETED_BY_ADMIN).
+     *
+     * <p>{@code is_active=false} 마이그레이션(SUSPENDED) 등 비-ACTIVE 상태는 ACTIVE 브릿지 후
+     * DELETED_BY_ADMIN 전이. 이미 DELETED_BY_ADMIN 이면 409, ACTIVE 복귀 불가 상태면 차단.</p>
+     */
+    private void transitionClientToDeletedByAdmin(
+            Long id, User client, Long adminUserId, String adminRoleCode, String reason) {
+        Actor actor = resolveAdminActor(adminUserId, adminRoleCode);
+        String resolvedReason = resolveAdminReason(reason, "ADMIN_FORCED_DELETE_CLIENT");
+
+        LifecycleState current = client.getLifecycleState() != null
+                ? client.getLifecycleState() : LifecycleState.ACTIVE;
+
+        if (current == LifecycleState.DELETED_BY_ADMIN) {
+            Map<String, Object> details = new LinkedHashMap<>();
+            details.put("lifecycleState", current.getCode());
+            throw new AdminDeleteBlockedException(
+                    AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_ALREADY_DELETED_BY_ADMIN,
+                    AdminServiceUserFacingMessages.MSG_CLIENT_ALREADY_DELETED_BY_ADMIN,
+                    details);
+        }
+
+        if (current != LifecycleState.ACTIVE) {
+            if (!current.canTransitionTo(LifecycleState.ACTIVE)) {
+                Map<String, Object> details = new LinkedHashMap<>();
+                details.put("lifecycleState", current.getCode());
+                throw new AdminDeleteBlockedException(
+                        AdminServiceUserFacingMessages.DELETE_BLOCKED_CODE_LIFECYCLE_TRANSITION_NOT_ALLOWED,
+                        String.format(
+                                AdminServiceUserFacingMessages.MSG_CLIENT_DELETE_LIFECYCLE_BLOCKED_FMT,
+                                current.getCode()),
+                        details);
+            }
+            userLifecycleService.transitionTo(
+                    id, LifecycleState.ACTIVE, actor, "ADMIN_DELETE_CLIENT_LIFECYCLE_BRIDGE");
+        }
+
+        userLifecycleService.transitionTo(id, LifecycleState.DELETED_BY_ADMIN, actor, resolvedReason);
     }
 
     /**

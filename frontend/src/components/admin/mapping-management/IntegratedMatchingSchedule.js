@@ -7,41 +7,33 @@
  * @since 2025-02-25
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Draggable } from '@fullcalendar/interaction';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { useSession } from '../../../contexts/SessionContext';
 import useMonthlyConsultantCounts from '../../../hooks/useMonthlyConsultantCounts';
 import useMissingConsultationLogs from '../../../hooks/useMissingConsultationLogs';
-import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
 import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
+import SessionExtensionModal from '../mapping/SessionExtensionModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
 import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
 import MappingCancelModal from './molecules/MappingCancelModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import ActionBarButton from '../../common/ActionBarButton';
-import MappingScheduleCard from './integrated-schedule/organisms/MappingScheduleCard';
+import ActionBar from '../../common/ActionBar';
+import MatchingScheduleSidebar from './integrated-schedule/organisms/MatchingScheduleSidebar';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
-import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   NEW_DAYS,
   VIEW_FILTER_NEW,
   VIEW_FILTER_REMAINING,
-  VIEW_FILTER_ALL,
-  VIEW_FILTER_NEW_LABEL,
-  STATUS_FILTER_OPTIONS,
   PAYMENT_TIMING_SAME_DAY_CARD,
-  canScheduleForMapping,
   isOngoingMapping,
   getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
@@ -104,6 +96,7 @@ const IntegratedMatchingSchedule = () => {
   const [selectedDateForModal, setSelectedDateForModal] = useState(() => new Date());
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
+  const [sessionExtensionMapping, setSessionExtensionMapping] = useState(null);
   const [viewFilter, setViewFilter] = useState(VIEW_FILTER_NEW);
   const [statusFilter, setStatusFilter] = useState('ongoing');
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
@@ -114,8 +107,6 @@ const IntegratedMatchingSchedule = () => {
   // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 관리자 취소 확인 모달 대상 + 처리 중 플래그.
   const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
   const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
-  const sidebarListRef = useRef(null);
-
   // 월별 상담사 COMPLETED 카운트 — 캘린더 datesSet 콜백에서 갱신.
   // 초기값은 현재 년/월. 캘린더가 첫 렌더 시 onMonthChange 로 동일 값을 다시 set 해도 동일 키 → 캐시 hit.
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
@@ -319,16 +310,6 @@ const IntegratedMatchingSchedule = () => {
     return byView.filter((m) => m.status === value).length;
   };
 
-  const scheduleableCount = filteredMappings.filter((m) => canScheduleForMapping(m)).length;
-
-  useEffect(() => {
-    if (!sidebarListRef.current || filteredMappings.length === 0) return;
-    const draggable = new Draggable(sidebarListRef.current, {
-      itemSelector: '.integrated-schedule__card.fc-event'
-    });
-    return () => draggable.destroy();
-  }, [viewFilter, filteredMappings.length, scheduleableCount, mappings]);
-
   const handleDropFromExternal = (date, mappingPayload) => {
     const dateCheck = assertDropDateNotPast(date);
     if (!dateCheck.ok) {
@@ -525,15 +506,56 @@ const IntegratedMatchingSchedule = () => {
     setPreFilledMapping(null);
   };
 
+  const activeMappingsForExtension = useMemo(
+    () => mappings.filter((mapping) => mapping.status === 'ACTIVE'),
+    [mappings]
+  );
+
+  const handleOpenSessionExtensionFromHeader = useCallback(() => {
+    if (activeMappingsForExtension.length === 0) {
+      notificationManager.info('회기를 추가할 활성 매칭이 없습니다.');
+      return;
+    }
+    const sorted = [...activeMappingsForExtension].sort(
+      (a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0)
+    );
+    setSessionExtensionMapping(sorted[0]);
+  }, [activeMappingsForExtension]);
+
+  const handleSessionExtensionFromCard = useCallback((mapping) => {
+    setSessionExtensionMapping(mapping);
+  }, []);
+
+  const handleSessionExtensionFromCreation = useCallback((mapping) => {
+    setCreateMappingModalOpen(false);
+    setSessionExtensionMapping(mapping);
+  }, []);
+
+  const handleSessionExtensionRequested = useCallback(() => {
+    loadMappings();
+    setSessionExtensionMapping(null);
+  }, [loadMappings]);
+
   const headerActions = (
-    <ActionBarButton
-      variant="primary"
-      onClick={() => setCreateMappingModalOpen(true)}
-      aria-label="신규 매칭 생성"
-      className="integrated-schedule__btn-new-mapping"
-    >
-      신규 매칭
-    </ActionBarButton>
+    <ActionBar align="end" gap="md">
+      <ActionBarButton
+        variant="outline"
+        onClick={handleOpenSessionExtensionFromHeader}
+        disabled={activeMappingsForExtension.length === 0}
+        aria-label="회기 추가"
+        className="integrated-schedule__btn-add-sessions"
+      >
+        회기 추가
+      </ActionBarButton>
+      <ActionBarButton
+        variant="primary"
+        onClick={() => setCreateMappingModalOpen(true)}
+        aria-label="신규 매칭 생성"
+        className="integrated-schedule__btn-new-mapping"
+      >
+        신규 매칭
+      </ActionBarButton>
+    </ActionBar>
   );
 
   return (
@@ -555,199 +577,27 @@ const IntegratedMatchingSchedule = () => {
           */}
 
           <div className="integrated-schedule__content">
-        <aside
-          className={`integrated-schedule__sidebar${
-            isSidebarCollapsed ? ' integrated-schedule__sidebar--collapsed' : ''
-          }`}
-          aria-label="매칭 목록 패널"
-        >
-          <div className="integrated-schedule__sidebar-header">
-            <h2
-              className="integrated-schedule__sidebar-title"
-              id="integrated-schedule-sidebar-title"
-            >
-              매칭 목록
-              <span
-                className="integrated-schedule__sidebar-count"
-                aria-label={t('integratedSchedule.sidebar.collapsedBadgeLabel', { count: filteredMappings.length })}
-              >
-                {filteredMappings.length}
-              </span>
-            </h2>
-            <button
-              type="button"
-              className="integrated-schedule__sidebar-toggle"
-              onClick={handleSidebarToggle}
-              aria-expanded={!isSidebarCollapsed}
-              aria-controls="integrated-schedule-sidebar-body"
-              aria-label={
-                isSidebarCollapsed
-                  ? t('integratedSchedule.sidebar.expandAria')
-                  : t('integratedSchedule.sidebar.collapseAria')
-              }
-              title={
-                isSidebarCollapsed
-                  ? t('integratedSchedule.sidebar.expandAria')
-                  : t('integratedSchedule.sidebar.collapseAria')
-              }
-            >
-              {isSidebarCollapsed ? <ChevronRight size={18} aria-hidden="true" /> : <ChevronLeft size={18} aria-hidden="true" />}
-            </button>
-          </div>
-          <div
-            id="integrated-schedule-sidebar-body"
-            className="integrated-schedule__sidebar-body"
-            hidden={isSidebarCollapsed}
-          >
-          {/* Task C: 필터 통합 후보 — MappingFilterSection + UnifiedFilterSearch(quickFilterOptions·filters 계약 정렬 시 이 블록 치환) */}
-          <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
-            <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
-            <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_NEW ? 'integrated-schedule__filter-label--selected' : ''}`}>
-              <input
-                type="radio"
-                name="viewFilter"
-                value={VIEW_FILTER_NEW}
-                checked={viewFilter === VIEW_FILTER_NEW}
-                onChange={() => setViewFilter(VIEW_FILTER_NEW)}
-                aria-label={VIEW_FILTER_NEW_LABEL}
-              />
-              <span className="integrated-schedule__filter-text">{VIEW_FILTER_NEW_LABEL}</span>
-            </label>
-            <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_REMAINING ? 'integrated-schedule__filter-label--selected' : ''}`}>
-              <input
-                type="radio"
-                name="viewFilter"
-                value={VIEW_FILTER_REMAINING}
-                checked={viewFilter === VIEW_FILTER_REMAINING}
-                onChange={() => setViewFilter(VIEW_FILTER_REMAINING)}
-                aria-label="회기 남은 매칭"
-              />
-              <span className="integrated-schedule__filter-text">회기 남은 매칭</span>
-            </label>
-            <label className={`integrated-schedule__filter-label ${viewFilter === VIEW_FILTER_ALL ? 'integrated-schedule__filter-label--selected' : ''}`}>
-              <input
-                type="radio"
-                name="viewFilter"
-                value={VIEW_FILTER_ALL}
-                checked={viewFilter === VIEW_FILTER_ALL}
-                onChange={() => setViewFilter(VIEW_FILTER_ALL)}
-                aria-label={t('admin.labels.all')}
-              />
-              <span className="integrated-schedule__filter-text">{t('admin.labels.all')}</span>
-            </label>
-          </fieldset>
-          <fieldset className="integrated-schedule__filter integrated-schedule__filter--status" aria-label="상태별 필터">
-            <legend className="integrated-schedule__filter-legend">{t('admin.labels.status')}</legend>
-            <div className="integrated-schedule__status-btns">
-              {STATUS_FILTER_OPTIONS.map((opt) => {
-                const count = getStatusCount(opt.value);
-                const isSelected = statusFilter === opt.value;
-                return (
-                  <MGButton
-                    key={opt.value || 'all'}
-                    type="button"
-                    variant="outline"
-                    size="small"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'sm',
-                      loading: false,
-                      className: `integrated-schedule__status-btn ${isSelected ? 'integrated-schedule__status-btn--selected' : ''}`
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => setStatusFilter(opt.value)}
-                    aria-pressed={isSelected}
-                    aria-label={`${toDisplayString(opt.label)} (${count}건)`}
-                    preventDoubleClick={false}
-                  >
-                    <span className="integrated-schedule__status-btn-text">{toDisplayString(opt.label)}</span>
-                    <span className="integrated-schedule__status-badge" aria-hidden="true">
-                      {count}
-                    </span>
-                  </MGButton>
-                );
-              })}
-            </div>
-          </fieldset>
-          {loading ? (
-            <UnifiedLoading type="inline" text="매칭 목록 불러오는 중..." />
-          ) : (
-            <ul
-              ref={sidebarListRef}
-              className="integrated-schedule__list"
-              aria-label="매칭 목록"
-            >
-              {(() => {
-                if (filteredMappings.length === 0) {
-                  let emptyMessage = '매칭이 없습니다.';
-                  if (statusFilter) {
-                    emptyMessage = '선택한 조건에 맞는 매칭이 없습니다.';
-                  } else if (viewFilter === VIEW_FILTER_NEW) {
-                    emptyMessage = `${VIEW_FILTER_NEW_LABEL}이 없습니다.`;
-                  } else if (viewFilter === VIEW_FILTER_REMAINING) {
-                    emptyMessage = '회기 남은 매칭이 없습니다.';
-                  }
-                  return (
-                    <li className="integrated-schedule__empty">
-                      {toDisplayString(emptyMessage)}
-                    </li>
-                  );
-                }
-                return filteredMappings.map((mapping) => {
-                  const scheduleable = canScheduleForMapping(mapping);
-                  // 옵션 B: paymentTiming·packageName·packagePrice·totalSessions 까지 함께 보존하여
-                  // 드래그 → ScheduleModal → CheckoutSameDayModal 자동 진입 흐름에서 prefill 로 사용.
-                  const eventData = {
-                    id: `mapping-${mapping.id}`,
-                    title: mapping.clientName || '내담자',
-                    extendedProps: {
-                      mappingId: mapping.id,
-                      consultantId: mapping.consultantId,
-                      clientId: mapping.clientId,
-                      consultantName: mapping.consultantName || '상담사',
-                      clientName: mapping.clientName || '내담자',
-                      status: mapping.status,
-                      remainingSessions: mapping.remainingSessions,
-                      paymentTiming: mapping.paymentTiming ?? null,
-                      packageName: mapping.packageName ?? null,
-                      packagePrice: mapping.packagePrice ?? null,
-                      totalSessions: mapping.totalSessions ?? null
-                    }
-                  };
-                  return (
-                    <li
-                      key={mapping.id}
-                      className={`integrated-schedule__card${scheduleable ? ' fc-event' : ''}`}
-                      data-event={scheduleable ? JSON.stringify(eventData) : undefined}
-                    >
-                      <MappingScheduleCard
-                        mapping={mapping}
-                        eventData={eventData}
-                        isDraggable={scheduleable}
-                        onScheduleFromCard={
-                          scheduleable
-                            ? () => handleOpenScheduleFromCard(mapping)
-                            : undefined
-                        }
-                        onPayment={setPaymentModalMapping}
-                        onDeposit={setDepositModalMapping}
-                        onApprove={handleApprove}
-                        onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
-                        onCancelPendingMapping={handleRequestCancelPendingMapping}
-                        approveProcessing={approveProcessing}
-                        cancelPendingProcessing={
-                          cancelPendingProcessing
-                          && cancelTargetMapping?.id === mapping.id
-                        }
-                      />
-                    </li>
-                  );
-                });
-              })()}
-            </ul>
-          )}
-          </div>
-        </aside>
+        <MatchingScheduleSidebar
+          isCollapsed={isSidebarCollapsed}
+          onToggle={handleSidebarToggle}
+          filteredMappings={filteredMappings}
+          loading={loading}
+          viewFilter={viewFilter}
+          onViewFilterChange={setViewFilter}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          getStatusCount={getStatusCount}
+          onScheduleFromCard={handleOpenScheduleFromCard}
+          onPayment={setPaymentModalMapping}
+          onDeposit={setDepositModalMapping}
+          onApprove={handleApprove}
+          onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
+          onCancelPendingMapping={handleRequestCancelPendingMapping}
+          onSessionExtension={handleSessionExtensionFromCard}
+          approveProcessing={approveProcessing}
+          cancelPendingProcessing={cancelPendingProcessing}
+          cancelTargetMappingId={cancelTargetMapping?.id ?? null}
+        />
 
         <main
           className="integrated-schedule__calendar-wrapper integrated-schedule__calendar-wrapper--integrated"
@@ -815,7 +665,17 @@ const IntegratedMatchingSchedule = () => {
         isOpen={createMappingModalOpen}
         onClose={() => setCreateMappingModalOpen(false)}
         onMappingCreated={handleMappingCreated}
+        onRedirectToSessionExtension={handleSessionExtensionFromCreation}
       />
+
+      {sessionExtensionMapping && (
+        <SessionExtensionModal
+          isOpen={!!sessionExtensionMapping}
+          onClose={() => setSessionExtensionMapping(null)}
+          mapping={sessionExtensionMapping}
+          onSessionExtensionRequested={handleSessionExtensionRequested}
+        />
+      )}
 
       {paymentModalMapping && (
         <MappingPaymentModal

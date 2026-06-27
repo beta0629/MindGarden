@@ -47,10 +47,21 @@
   flex: 0 0 auto;
 }
 
-/* 통합 스케줄: 내부 flex 높이 계산 체인 안정화 */
+/*
+ * 통합 스케줄(/admin/integrated-schedule): viewport-bound 레이아웃
+ * main overflow-y:auto 는 자식(사이드바 카드) 높이만큼 main 전체가 늘어나
+ * 사이드바 __list-scroll 독립 스크롤이 동작하지 않음 → overflow:hidden 으로 고정.
+ */
+.mg-v2-desktop-layout__main:has(> .integrated-schedule.integrated-schedule--b0kla) {
+  overflow: hidden;
+}
+
 .mg-v2-desktop-layout__main > .integrated-schedule.integrated-schedule--b0kla {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
   height: 100%;
+  overflow: hidden;
 }

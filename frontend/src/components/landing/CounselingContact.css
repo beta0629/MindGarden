@@ -1,0 +1,26 @@
+/**
+ * 상담센터 랜딩 — 연락처 (CTA·카드 클리핑 스코프)
+ */
+
+.counseling-contact .counseling-contact__form-card.mg-card,
+.counseling-contact .counseling-contact__info .mg-card {
+  overflow: visible;
+}
+
+.counseling-contact__form .counseling-contact__cta.mg-button {
+  overflow: visible;
+}
+
+.counseling-contact .mg-button--primary.counseling-contact__cta {
+  background-color: var(--mg-color-primary-main, var(--mg-primary-600));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
+  border-color: transparent;
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.counseling-contact .mg-button--primary.counseling-contact__cta:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-primary-700);
+  color: var(--mg-color-text-on-primary, var(--mg-white));
+  opacity: 1;
+  box-shadow: var(--cs-shadow-soft);
+}

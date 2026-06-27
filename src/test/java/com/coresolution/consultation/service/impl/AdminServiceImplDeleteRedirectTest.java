@@ -69,6 +69,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -182,6 +184,33 @@ class AdminServiceImplDeleteRedirectTest {
     @AfterEach
     void tearDown() {
         TenantContextHolder.clear();
+    }
+
+    @Test
+    @DisplayName("deleteClient: SUSPENDED 내담자 — ACTIVE 브릿지 후 DELETED_BY_ADMIN 전이")
+    void deleteClient_suspendedClient_bridgesToActiveThenDeletes() {
+        clientUser.setLifecycleState(LifecycleState.SUSPENDED);
+        clientUser.setIsActive(false);
+
+        when(userRepository.findByTenantIdAndId(TENANT_ID, CLIENT_ID))
+                .thenReturn(Optional.of(clientUser));
+        when(mappingRepository.findByTenantId(TENANT_ID)).thenReturn(Collections.emptyList());
+        when(scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TENANT_ID), eq(CLIENT_ID), any(LocalDate.class)))
+                .thenReturn(Collections.emptyList());
+
+        adminService.deleteClient(CLIENT_ID, ADMIN_ID, ADMIN_ROLE, REASON);
+
+        InOrder inOrder = Mockito.inOrder(userLifecycleService);
+        inOrder.verify(userLifecycleService).transitionTo(
+                eq(CLIENT_ID), eq(LifecycleState.ACTIVE),
+                any(Actor.class), eq("ADMIN_DELETE_CLIENT_LIFECYCLE_BRIDGE"));
+        inOrder.verify(userLifecycleService).transitionTo(
+                eq(CLIENT_ID), eq(LifecycleState.DELETED_BY_ADMIN),
+                any(Actor.class), eq(REASON));
+
+        verify(clientStatsService).evictTenantClientsWithStatsListCache(TENANT_ID);
+        verify(clientStatsService).evictClientStatsCache(TENANT_ID, CLIENT_ID);
     }
 
     @Test

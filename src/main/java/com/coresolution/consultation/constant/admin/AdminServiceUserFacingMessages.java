@@ -88,6 +88,13 @@ public final class AdminServiceUserFacingMessages {
     /** 상담사: 예정 스케줄이 존재해 이관 없이 삭제 차단. */
     public static final String DELETE_BLOCKED_CODE_CONSULTANT_FUTURE_SCHEDULES = "CONSULTANT_FUTURE_SCHEDULES";
 
+    /** 내담자: 이미 DELETED_BY_ADMIN(삭제 대기) 상태. */
+    public static final String DELETE_BLOCKED_CODE_ALREADY_DELETED_BY_ADMIN = "ALREADY_DELETED_BY_ADMIN";
+
+    /** 내담자: 현재 lifecycle 상태에서 ACTIVE 브릿지 전이 불가. */
+    public static final String DELETE_BLOCKED_CODE_LIFECYCLE_TRANSITION_NOT_ALLOWED =
+            "LIFECYCLE_TRANSITION_NOT_ALLOWED";
+
     public static final String MSG_DELETE_TARGET_NOT_CONSULTANT = "삭제 대상이 상담사가 아닙니다.";
 
     public static final String MSG_TRANSFER_TARGET_NOT_CONSULTANT = "이전 대상이 상담사가 아닙니다.";
@@ -104,6 +111,12 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String MSG_CLIENT_PENDING_PAYMENT_MAPPINGS_FMT =
             "내담자에게 %d 개의 결제 대기 중인 매칭이 있습니다. 결제 처리 완료 후 삭제해주세요.";
+
+    public static final String MSG_CLIENT_ALREADY_DELETED_BY_ADMIN =
+            "이미 삭제 대기(어드민 강제 종료) 상태입니다.";
+
+    public static final String MSG_CLIENT_DELETE_LIFECYCLE_BLOCKED_FMT =
+            "현재 lifecycle 상태(%s)에서는 삭제할 수 없습니다.";
 
     public static final String MSG_CLIENT_FUTURE_SCHEDULES_FMT =
             "내담자에게 %d 개의 예정된 스케줄이 있습니다. "

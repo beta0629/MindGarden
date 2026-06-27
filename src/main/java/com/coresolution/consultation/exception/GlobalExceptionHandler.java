@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.core.dto.ErrorResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -395,23 +396,36 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * lifecycle §3.6 전이 그래프 위반 — HTTP 409 (시스템 오류 아님).
+     */
+    @ExceptionHandler(IllegalStateTransitionException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalStateTransition(
+            IllegalStateTransitionException e, HttpServletRequest request) {
+        LifecycleState fromState = e.getFromState();
+        LifecycleState toState = e.getToState();
+        log.info("[ILLEGAL_STATE_TRANSITION] from={} to={} message={} path={}",
+                fromState, toState, e.getMessage(), request.getRequestURI());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", "ILLEGAL_STATE_TRANSITION");
+        body.put("message", e.getMessage());
+        body.put("fromState", fromState != null ? fromState.getCode() : null);
+        body.put("toState", toState != null ? toState.getCode() : null);
+        body.put("errorCode", "ILLEGAL_STATE_TRANSITION");
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
      * 어드민 강제 종료(삭제) 가드가 발동된 경우 처리.
      *
      * <p>의도된 비즈니스 차단 흐름이므로 HTTP {@code 409 Conflict} + 정형화된 JSON 본문으로
      * 응답하고, 로그 레벨은 {@code INFO} 로 기록한다 (시스템 오류 아님).</p>
-     *
-     * <p>응답 본문 스키마:
-     * <pre>{@code
-     * {
-     *   "success": false,
-     *   "code": "PENDING_PAYMENT_MAPPING",
-     *   "message": "내담자에게 N 개의 결제 대기 ...",
-     *   "details": { "pendingMappingCount": N },
-     *   "errorCode": "ADMIN_DELETE_BLOCKED",
-     *   "status": 409,
-     *   "timestamp": "..."
-     * }
-     * }</pre></p>
      */
     @ExceptionHandler(AdminDeleteBlockedException.class)
     public ResponseEntity<Map<String, Object>> handleAdminDeleteBlocked(

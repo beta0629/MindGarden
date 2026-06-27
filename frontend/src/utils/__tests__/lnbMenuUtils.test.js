@@ -12,7 +12,11 @@
 
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { LEGACY_USER_ROLES, USER_ROLES } from '../../constants/roles';
-import { filterBranchAdminLnbItems, mergeShopAdminLnbItems } from '../lnbMenuUtils';
+import {
+  filterBranchAdminLnbItems,
+  filterHiddenAdminLnbItems,
+  mergeShopAdminLnbItems
+} from '../lnbMenuUtils';
 
 const SHOP_ADMIN_GROUP_LABEL = '쇼핑·리워드';
 
@@ -315,5 +319,70 @@ describe('filterBranchAdminLnbItems', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].to).toBe('/admin/branding');
+  });
+});
+
+/**
+ * filterHiddenAdminLnbItems 단위 테스트
+ *
+ * 카카오 알림톡·문자(SMS) 설정은 LNB에서만 숨김. 라우트·API는 유지.
+ */
+describe('filterHiddenAdminLnbItems', () => {
+  test('시스템·설정 그룹에서 카카오 알림톡·SMS 항목만 제거', () => {
+    const items = [
+      {
+        to: '/tenant/profile',
+        label: '시스템·설정',
+        icon: 'SETTINGS',
+        end: false,
+        children: [
+          { to: '/tenant/profile', label: '테넌트 프로필', icon: 'BUILDING', end: true },
+          { to: '/tenant/pg-configurations', label: 'PG 설정', icon: 'CREDIT_CARD', end: true },
+          { to: ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS, label: '카카오 알림톡', icon: 'MESSAGE_CIRCLE', end: true },
+          { to: ADMIN_ROUTES.TENANT_SMS_SETTINGS, label: '문자 메시지(SMS)', icon: 'MESSAGE_SQUARE', end: true },
+          { to: ADMIN_ROUTES.TEST_NOTIFICATION, label: '알림 테스트 발송', icon: 'BELL', end: true }
+        ]
+      }
+    ];
+
+    const result = filterHiddenAdminLnbItems(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].children).toHaveLength(3);
+    expect(result[0].children.map((c) => c.to)).toEqual([
+      '/tenant/profile',
+      '/tenant/pg-configurations',
+      ADMIN_ROUTES.TEST_NOTIFICATION
+    ]);
+  });
+
+  test('루트에 숨김 경로가 있으면 해당 항목 제거', () => {
+    const items = [
+      { to: ADMIN_ROUTES.DASHBOARD, label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      { to: ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS, label: '카카오 알림톡', icon: 'MESSAGE_CIRCLE', end: true }
+    ];
+
+    const result = filterHiddenAdminLnbItems(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].to).toBe(ADMIN_ROUTES.DASHBOARD);
+  });
+
+  test('숨김 경로가 없으면 트리를 변형하지 않음 (no-op)', () => {
+    const items = [
+      { to: ADMIN_ROUTES.DASHBOARD, label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      { to: '/tenant/pg-configurations', label: 'PG 설정', icon: 'CREDIT_CARD', end: true }
+    ];
+
+    const result = filterHiddenAdminLnbItems(items);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].to).toBe(ADMIN_ROUTES.DASHBOARD);
+    expect(result[1].to).toBe('/tenant/pg-configurations');
+  });
+
+  test('items 가 배열이 아니면 그대로 반환', () => {
+    expect(filterHiddenAdminLnbItems(null)).toBeNull();
+    expect(filterHiddenAdminLnbItems(undefined)).toBeUndefined();
   });
 });

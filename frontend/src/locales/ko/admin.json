@@ -545,8 +545,6 @@
       "pgConfig": "PG 설정",
       "aiProvider": "AI 프로바이더",
       "packagePricing": "패키지 요금 관리",
-      "kakaoAlimtalk": "카카오 알림톡",
-      "tenantSms": "문자 메시지(SMS)",
       "testNotification": "알림 테스트 발송",
       "manualNotification": "수동 알림 발송",
       "smsTemplates": "SMS 템플릿 관리",

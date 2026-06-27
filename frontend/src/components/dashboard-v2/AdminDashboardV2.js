@@ -12,6 +12,7 @@ import { getLnbMenus } from '../../utils/menuApi';
 import {
   deriveGnbQuickNavigateActionsFromLnb,
   filterBranchAdminLnbItems,
+  filterHiddenAdminLnbItems,
   getLnbTreeFromResponse,
   mergeShopAdminLnbItems,
   mergeSupplementalAdminLnbItems,
@@ -275,10 +276,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         if (tree && tree.length > 0) {
           setLnbMenuItems(
             normalizeLnbMenuItemsForDashboard(
-              filterBranchAdminLnbItems(
-                mergeShopAdminLnbItems(
-                  mergeSupplementalAdminLnbItems(normalizeLnbTree(tree)),
-                  { adminShopCatalogEnabled, userRole }
+              filterHiddenAdminLnbItems(
+                filterBranchAdminLnbItems(
+                  mergeShopAdminLnbItems(
+                    mergeSupplementalAdminLnbItems(normalizeLnbTree(tree)),
+                    { adminShopCatalogEnabled, userRole }
+                  )
                 )
               )
             )

@@ -184,13 +184,17 @@ public final class ScheduleMappingContextResolver {
     private static ConsultantClientMapping preferActiveMapping(
             ConsultantClientMapping existing,
             ConsultantClientMapping incoming) {
+        if (existing.getStatus() == MappingStatus.ACTIVE
+                && incoming.getStatus() == MappingStatus.ACTIVE) {
+            return selectLatestActiveOrExhaustedMapping(List.of(existing, incoming)).orElse(existing);
+        }
         if (existing.getStatus() == MappingStatus.ACTIVE) {
             return existing;
         }
         if (incoming.getStatus() == MappingStatus.ACTIVE) {
             return incoming;
         }
-        return existing;
+        return selectLatestActiveOrExhaustedMapping(List.of(existing, incoming)).orElse(existing);
     }
 
     private static String mappingLookupKey(Long consultantId, Long clientId) {

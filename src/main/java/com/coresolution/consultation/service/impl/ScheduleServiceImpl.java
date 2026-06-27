@@ -964,9 +964,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return;
             }
 
-            Optional<ConsultantClientMapping> opt = mappingRepository
-                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+            List<ConsultantClientMapping> mappingCandidates = mappingRepository
+                .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
                     tenantId, schedule.getConsultantId(), schedule.getClientId());
+            Optional<ConsultantClientMapping> opt = ScheduleMappingContextResolver
+                .selectLatestActiveOrExhaustedMapping(mappingCandidates);
             if (opt.isEmpty()) {
                 log.debug("즉시 발송 분기 skip — 매핑 없음: scheduleId={}", schedule.getId());
                 return;
@@ -2347,18 +2349,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.debug("📅 매칭 회기 사용 처리: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
 
-        Optional<ConsultantClientMapping> mappingOpt = mappingRepository
-                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
-        if (mappingOpt.isEmpty()) {
-            List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
-                    tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
-            for (ConsultantClientMapping mapping : activeMappings) {
-                if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
-                    mappingOpt = Optional.of(mapping);
-                    break;
-                }
-            }
-        }
+        List<ConsultantClientMapping> mappingCandidates = mappingRepository
+                .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
+        Optional<ConsultantClientMapping> mappingOpt = ScheduleMappingContextResolver
+                .selectLatestActiveOrExhaustedMapping(mappingCandidates);
         if (mappingOpt.isEmpty()) {
             log.warn("회기 차감 대상 매핑 없음: consultantId={}, clientId={}", consultantId, clientId);
             return;
@@ -2472,26 +2466,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         List<ConsultantClientMapping> candidates = mappingRepository
                 .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId);
-        return selectLatestActiveOrExhaustedMapping(candidates);
-    }
-
-    private Optional<ConsultantClientMapping> selectLatestActiveOrExhaustedMapping(
-            List<ConsultantClientMapping> candidates) {
-        if (candidates == null || candidates.isEmpty()) {
-            return Optional.empty();
-        }
-        Comparator<ConsultantClientMapping> recency = Comparator
-                .comparing(ConsultantClientMapping::getUpdatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
-                .thenComparing(ConsultantClientMapping::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder()));
-        Optional<ConsultantClientMapping> active = candidates.stream()
-                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
-                .max(recency);
-        if (active.isPresent()) {
-            return active;
-        }
-        return candidates.stream()
-                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)
-                .max(recency);
+        return ScheduleMappingContextResolver.selectLatestActiveOrExhaustedMapping(candidates);
     }
 
      /**

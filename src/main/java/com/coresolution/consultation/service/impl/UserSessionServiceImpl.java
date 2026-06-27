@@ -343,11 +343,40 @@ public class UserSessionServiceImpl implements UserSessionService {
             int cleanedCount = userSessionRepository.deactivateExpiredSessions(LocalDateTime.now());
             log.debug("🧹 만료된 세션 정리 완료: count={}", cleanedCount);
             return cleanedCount;
-            
+
         } catch (Exception e) {
+            if (isRetryableSessionCleanupFailure(e)) {
+                throw e instanceof RuntimeException runtime
+                        ? runtime
+                        : new RuntimeException("만료된 세션 정리 실패(재시도 가능)", e);
+            }
             log.error("❌ 만료된 세션 정리 실패: error={}", e.getMessage(), e);
             return 0;
         }
+    }
+
+    private static boolean isRetryableSessionCleanupFailure(Throwable error) {
+        Throwable current = error;
+        for (int depth = 0; current != null && depth < 8; depth++) {
+            if (current instanceof java.sql.SQLException sqlEx) {
+                String sqlState = sqlEx.getSQLState();
+                if ("40001".equals(sqlState) || "40P01".equals(sqlState)) {
+                    return true;
+                }
+                if ("HY000".equals(sqlState) && sqlEx.getErrorCode() == 1213) {
+                    return true;
+                }
+            }
+            String message = current.getMessage();
+            if (message != null) {
+                String lower = message.toLowerCase();
+                if (lower.contains("deadlock") || lower.contains("try restarting transaction")) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
     }
     
     @Override

@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -34,6 +35,8 @@ import java.util.UUID;
 public class SessionCleanupScheduler {
 
     private static final String SCHEDULER_NAME = "SessionCleanup";
+    private static final int DEADLOCK_MAX_ATTEMPTS = 3;
+    private static final long DEADLOCK_RETRY_DELAY_MS = 200L;
 
     private final UserSessionService userSessionService;
     private final SchedulerExecutionLogService logService;
@@ -58,7 +61,7 @@ public class SessionCleanupScheduler {
         log.debug("⏰ [SessionCleanup] 스케줄러 시작: executionId={}", executionId);
         
         try {
-            int totalCleaned = userSessionService.cleanupExpiredSessions();
+            int totalCleaned = cleanupExpiredSessionsWithDeadlockRetry();
             
             logService.saveExecutionLog(
                 executionId, "ALL", SCHEDULER_NAME, "SUCCESS",
@@ -120,6 +123,59 @@ public class SessionCleanupScheduler {
         } catch (Exception e) {
             log.error("❌ 세션 통계 조회 실패: error={}", e.getMessage(), e);
             notifyFailureSafely("LogSessionStatistics", null, e);
+        }
+    }
+
+    /**
+     * 만료 세션 bulk UPDATE — MySQL deadlock 시 짧은 backoff 후 재시도.
+     */
+    private int cleanupExpiredSessionsWithDeadlockRetry() {
+        RuntimeException lastError = null;
+        for (int attempt = 1; attempt <= DEADLOCK_MAX_ATTEMPTS; attempt++) {
+            try {
+                return userSessionService.cleanupExpiredSessions();
+            } catch (RuntimeException error) {
+                lastError = error;
+                if (!isRetryableDeadlock(error) || attempt >= DEADLOCK_MAX_ATTEMPTS) {
+                    throw error;
+                }
+                log.warn("⚠️ [SessionCleanup] deadlock 감지 — 재시도 {}/{}: {}",
+                    attempt, DEADLOCK_MAX_ATTEMPTS, error.getMessage());
+                sleepBeforeDeadlockRetry();
+            }
+        }
+        throw lastError != null ? lastError : new IllegalStateException("Session cleanup retry exhausted");
+    }
+
+    private static boolean isRetryableDeadlock(Throwable error) {
+        Throwable current = error;
+        for (int depth = 0; current != null && depth < 8; depth++) {
+            if (current instanceof SQLException sqlEx) {
+                String sqlState = sqlEx.getSQLState();
+                if ("40001".equals(sqlState) || "40P01".equals(sqlState)) {
+                    return true;
+                }
+                if ("HY000".equals(sqlState) && sqlEx.getErrorCode() == 1213) {
+                    return true;
+                }
+            }
+            String message = current.getMessage();
+            if (message != null) {
+                String lower = message.toLowerCase();
+                if (lower.contains("deadlock") || lower.contains("try restarting transaction")) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private static void sleepBeforeDeadlockRetry() {
+        try {
+            Thread.sleep(DEADLOCK_RETRY_DELAY_MS);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
         }
     }
 

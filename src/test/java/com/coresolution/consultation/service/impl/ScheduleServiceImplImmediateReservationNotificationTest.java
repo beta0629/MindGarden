@@ -285,9 +285,9 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID)).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
         // dispatchImmediateReservationNotification → ACTIVE/SESSIONS_EXHAUSTED lookup
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
                 TENANT_ID, CONSULTANT_ID, CLIENT_ID))
-                .thenReturn(Optional.of(mapping));
+                .thenReturn(java.util.List.of(mapping));
     }
 
     private void stubMappingSingleSession() {
@@ -310,9 +310,9 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
                 .thenReturn(List.of(mapping));
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID)).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
                 TENANT_ID, CONSULTANT_ID, CLIENT_ID))
-                .thenReturn(Optional.of(mapping));
+                .thenReturn(java.util.List.of(mapping));
     }
 
 }

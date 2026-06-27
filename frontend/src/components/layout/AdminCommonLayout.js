@@ -106,7 +106,7 @@ const AdminCommonLayout = ({
       : filterHiddenAdminLnbItems(filterBranchAdminLnbItems(mergeBillingAdminLnbItems(
         mergeShopAdminLnbItems(fallback, { adminShopCatalogEnabled, userRole }),
         { userRole }
-      ));
+      )));
   }, [lnbRawTree, userRole, adminShopCatalogEnabled, clientShopEnabled, clientRewardEnabled]);
 
   const navigateQuickActionsFromLnb = useMemo(

@@ -13,6 +13,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantService;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.hibernate.StaleStateException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -207,12 +208,12 @@ public class ScheduleAutoCompleteService {
                 log.info("✅ 지난 스케줄 COMPLETED 전환 및 통계 업데이트: tenantId={}, ID={}, 제목={}, 날짜={}",
                     tenantId, fresh.getId(), fresh.getTitle(), fresh.getDate());
                 return true;
-            } catch (ObjectOptimisticLockingFailureException lockError) {
+            } catch (ObjectOptimisticLockingFailureException | StaleStateException lockError) {
                 if (attempt == 0) {
                     log.warn("⚠️ 지난 스케줄 완료 낙관적 락 충돌 — 재시도: tenantId={}, scheduleId={}",
                         tenantId, schedule.getId());
                 } else {
-                    log.error("❌ 지난 스케줄 완료 낙관적 락 재시도 실패: tenantId={}, scheduleId={}",
+                    log.warn("⚠️ 지난 스케줄 완료 낙관적 락 재시도 실패 — skip: tenantId={}, scheduleId={}",
                         tenantId, schedule.getId(), lockError);
                 }
             }

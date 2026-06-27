@@ -124,9 +124,9 @@ class ScheduleServiceImplConfirmScheduleSessionDeductionTest {
         when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
                 eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID)))
-                .thenReturn(Optional.of(mapping));
+                .thenReturn(java.util.List.of(mapping));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
                 .thenReturn(Optional.of(fresh));
 

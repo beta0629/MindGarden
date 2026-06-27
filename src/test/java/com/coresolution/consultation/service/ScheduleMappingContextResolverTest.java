@@ -144,6 +144,30 @@ class ScheduleMappingContextResolverTest {
         assertThat(selected.get().getId()).isEqualTo(11L);
     }
 
+    @Test
+    @DisplayName("buildActiveOrExhaustedMappingLookup — 복수 ACTIVE merge 시 최신 1건 유지")
+    void buildActiveOrExhaustedMappingLookup_mergesMultipleActiveToLatest() {
+        ConsultantClientMapping olderActive = mapping(10L, 5, 2, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 4, 1, 9, 0), null);
+        olderActive.setUpdatedAt(LocalDateTime.of(2026, 4, 1, 9, 0));
+        ConsultantClientMapping newerActive = mapping(11L, 10, 8, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 4, 10, 9, 0), null);
+        newerActive.setUpdatedAt(LocalDateTime.of(2026, 4, 10, 9, 0));
+        olderActive.getConsultant().setId(CONSULTANT_ID);
+        olderActive.getClient().setId(CLIENT_ID);
+        newerActive.getConsultant().setId(CONSULTANT_ID);
+        newerActive.getClient().setId(CLIENT_ID);
+
+        when(mappingRepository.findActiveOrExhaustedByTenantId(TENANT_ID))
+                .thenReturn(List.of(olderActive, newerActive));
+
+        var lookup = ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(
+                TENANT_ID, mappingRepository);
+
+        assertThat(lookup).containsKey(CONSULTANT_ID + ":" + CLIENT_ID);
+        assertThat(lookup.get(CONSULTANT_ID + ":" + CLIENT_ID).getId()).isEqualTo(11L);
+    }
+
     private static Schedule schedule(
             Long id,
             Long mappingId,

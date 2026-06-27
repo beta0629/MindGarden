@@ -170,6 +170,7 @@ import SessionIdleWarningModal from './components/common/SessionIdleWarningModal
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
 import AccountDeletionInstructions from './components/common/AccountDeletionInstructions';
+import CounselingCenterLanding from './pages/CounselingCenterLanding';
 import PricingPage from './pages/public/PricingPage';
 import LandingPage from './pages/public/LandingPage';
 const OnboardingPage = lazy(() => import('./pages/public/OnboardingPage'));
@@ -410,9 +411,9 @@ function AppContent() {
           <WithdrawalPendingBanner />
           <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>{t('common.messages.loading')}</div>}>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/landing" element={<Navigate to="/" replace />} />
-            <Route path="/public-main" element={<TabletHomepage />} />
+            <Route path="/" element={<TabletHomepage />} />
+            {/* Design v2 Phase C-3 W3: /landing → LandingPage (Design v2 랜딩) */}
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/test/modal" element={<div className="mg-modal" />} />
             <Route path="/test/loading" element={<div className="mg-loading">{t('common:misc.App.t_f596b561')}</div>} />
             <Route path="/test/header" element={<UnifiedHeader />} />

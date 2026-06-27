@@ -5,7 +5,7 @@
  * LandingTemplate(Hero → Features → TrustBadgesGrid → CTA)에
  * i18n 키 기반 데이터를 주입하는 Page 계층.
  *
- * 라우트: / (북마크 호환: /landing → / 리다이렉트)
+ * 라우트: /landing (App 라우터 설정에 따라)
  *
  * 책임:
  * - react-helmet 으로 SEO meta 주입 (title / description / og)

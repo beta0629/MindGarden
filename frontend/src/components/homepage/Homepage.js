@@ -1,20 +1,50 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import TabletBottomNavigation from '../layout/TabletBottomNavigation';
-import UnifiedHeader from '../common/UnifiedHeader';
 import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
+import badgeIso from '../../assets/landing/badge-iso27001.svg';
+import badgeGdpr from '../../assets/landing/badge-gdpr.svg';
+import badgeKisa from '../../assets/landing/badge-kisa-isms.svg';
 import '../../styles/main.css';
 import './Homepage.css';
-import { useTranslation } from 'react-i18next';
+
+const APPLY_URL = 'https://apply.e-trinity.co.kr';
+const SHIELD_LOGO_PATH = '/assets/core-solution-logo.svg';
+
+const FEATURES = [
+  {
+    icon: 'bi-calendar-check',
+    title: '일정 · 회기 · 정산',
+    desc: '예약부터 회기 기록, 자동 정산까지 하나의 흐름으로 관리합니다. 수기 엑셀 작업을 줄이고 센터 운영에 집중하세요.'
+  },
+  {
+    icon: 'bi-people',
+    title: '상담사 · 내담자 관리',
+    desc: '상담사 배정, 내담자 접수, 매칭 이력을 한 화면에서 확인합니다. 사각지대 없는 케어가 가능합니다.'
+  },
+  {
+    icon: 'bi-arrow-repeat',
+    title: 'ERP 연동 · 자동화',
+    desc: '입금 확인, 회기 권한 부여, 정산 차감을 자동 파이프라인으로 처리합니다. 수작업 오류를 원천 차단합니다.'
+  }
+];
+
+const STATS = [
+  { label: '누적 예약 처리', value: '150,000+' },
+  { label: '활성 상담 센터', value: '300+' },
+  { label: '업무 시간 절약', value: '75%' }
+];
+
+const TRUST_BADGES = [
+  { src: badgeIso, alt: 'ISO 27001 인증' },
+  { src: badgeGdpr, alt: 'GDPR Ready' },
+  { src: badgeKisa, alt: 'KISA ISMS 인증' }
+];
 
 const Homepage = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -22,22 +52,18 @@ const Homepage = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
-    if (!isMenuOpen) {
-      return undefined;
-    }
+    if (!isMenuOpen) return undefined;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setIsMenuOpen(false);
-      }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsMenuOpen(false);
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => {
@@ -46,380 +72,255 @@ const Homepage = () => {
     };
   }, [isMenuOpen]);
 
-  const handleLogin = () => {
-    navigate('/login');
-  };
-
-  const handleRegister = () => {
-    navigate('/register');
-  };
-
-  const handleHamburgerToggle = () => {
-    setIsMenuOpen(prev => !prev);
-  };
-
-  const scrollToHomepageFeatures = () => {
-    document.getElementById('homepage-features')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleMenuClick = (menuItem) => {
-    const { MENU_ITEMS } = HOMEPAGE_CONSTANTS;
-    setIsMenuOpen(false);
-    
-    switch (menuItem) {
-      case MENU_ITEMS.HOME:
-        navigate('/');
-        break;
-      case MENU_ITEMS.LOGIN:
-        navigate('/login');
-        break;
-      case MENU_ITEMS.REGISTER:
-        navigate('/register');
-        break;
-      case MENU_ITEMS.ABOUT:
-      case MENU_ITEMS.SERVICES:
-      case MENU_ITEMS.CONTACT:
-        // 라우트 미제공: 동일 페이지 Features 앵커로 이동(임시)
-        scrollToHomepageFeatures();
-        break;
-      default:
-        break;
+  const handleDashboardOrLogin = async() => {
+    if (user) {
+      if (user?.role) {
+        const authResponse = {
+          user,
+          currentTenantRole: sessionManager.getCurrentTenantRole()
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
+      } else {
+        navigate('/dashboard');
+      }
+    } else {
+      navigate('/login');
     }
   };
 
-  const handleOverlayClick = () => {
-    setIsMenuOpen(false);
-  };
-
   return (
-    <CommonPageTemplate 
-      title="Core Solution - 비즈니스의 핵심을 솔루션하다"
-      description="Core Solution과 함께 비즈니스의 모든 과정을 통합하고 자동화하여 혁신적인 성장을 경험하세요."
+    <CommonPageTemplate
+      title="Core Solution — 상담센터 운영 플랫폼"
+      description="예약부터 회기, 정산까지. 센터 운영의 모든 것을 한곳에서."
       bodyClass="mg-v2-homepage-body"
     >
       <div className="mg-v2-homepage">
-        {/* Header (GNB) */}
-        <UnifiedHeader 
-          variant={isScrolled ? 'default' : 'transparent'}
-          sticky={true}
-          showBackButton={false}
-          title="Core Solution"
-          singleLineLogo={true}
-          useBrandingInfo={!!user}
-          onLogoClick={() => navigate('/')}
-          extraActions={
-            !user && (
-              <div className="mg-v2-homepage-header-actions">
-                <nav className="mg-v2-homepage-nav desktop-only">
-                  <MGButton
-                    type="button"
-                    variant="outline"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'md',
-                      loading: false
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={handleLogin}
-                    preventDoubleClick={false}
-                  >
-                    {t('common:homepage.Homepage.t_e225a6fd')}
-                  </MGButton>
-                  <MGButton
-                    type="button"
-                    variant="primary"
-                    className={buildErpMgButtonClassName({
-                      variant: 'primary',
-                      size: 'md',
-                      loading: false
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={handleRegister}
-                    preventDoubleClick={false}
-                  >
-                    {t('common:homepage.Homepage.t_ecb4cc87')}
-                  </MGButton>
-                </nav>
-                <MGButton
+        {/* GNB — 64px, Shield Logo left */}
+        <header
+          className={`mg-v2-homepage-gnb${isScrolled ? ' mg-v2-homepage-gnb--scrolled' : ''}`}
+          role="banner"
+        >
+          <Link to="/" className="mg-v2-homepage-gnb__logo" aria-label="Core Solution 홈">
+            <img
+              src={SHIELD_LOGO_PATH}
+              alt="Core Solution"
+              className="mg-v2-homepage-gnb__logo-img"
+            />
+          </Link>
+
+          <nav className="mg-v2-homepage-gnb__actions" aria-label="주요 탐색">
+            <button
+              type="button"
+              className="mg-v2-homepage-gnb__btn--secondary"
+              onClick={() => navigate('/login')}
+            >
+              로그인
+            </button>
+            <a
+              href={APPLY_URL}
+              className="mg-v2-homepage-gnb__btn--primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              시작하기
+            </a>
+            <button
+              type="button"
+              className="mg-v2-homepage-gnb__hamburger"
+              onClick={() => setIsMenuOpen(prev => !prev)}
+              aria-label="메뉴 열기"
+              aria-expanded={isMenuOpen}
+            >
+              <i className="bi bi-list" />
+            </button>
+          </nav>
+        </header>
+
+        {/* Mobile Drawer */}
+        {isMenuOpen && (
+          <div
+            className="mg-v2-homepage-drawer-overlay"
+            onClick={() => setIsMenuOpen(false)}
+            role="presentation"
+          >
+            <aside
+              className="mg-v2-homepage-drawer"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-label="모바일 메뉴"
+            >
+              <div className="mg-v2-homepage-drawer__header">
+                <h3 className="mg-v2-homepage-drawer__title">메뉴</h3>
+                <button
                   type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: 'mg-v2-homepage-hamburger mobile-only'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={handleHamburgerToggle}
-                  preventDoubleClick={false}
-                  aria-label={t('common:homepage.Homepage.t_195da620')}
-                >
-                  <i className="bi bi-list" />
-                </MGButton>
-              </div>
-            )
-          }
-        />
-        
-        {/* 햄버거 메뉴 */}
-        {!user && isMenuOpen && (
-          <div className="hamburger-menu-overlay" onClick={handleOverlayClick}>
-            <div className="hamburger-menu" onClick={(e) => e.stopPropagation()}>
-              <div className="hamburger-menu-header">
-                <h3>{t('common:homepage.Homepage.t_076925c5')}</h3>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: 'hamburger-menu-close'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  className="mg-v2-homepage-drawer__close"
                   onClick={() => setIsMenuOpen(false)}
-                  preventDoubleClick={false}
-                  aria-label={t('common:homepage.Homepage.t_923b2615')}
+                  aria-label="메뉴 닫기"
                 >
-                  <i className="bi bi-x" />
-                </MGButton>
+                  <i className="bi bi-x-lg" />
+                </button>
               </div>
-              <div className="hamburger-menu-content">
-                <MGButton
+              <nav className="mg-v2-homepage-drawer__nav">
+                <button
                   type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: 'hamburger-menu-item mg-button--with-icon'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.HOME)}
-                  preventDoubleClick={false}
+                  className="mg-v2-homepage-drawer__item"
+                  onClick={() => { setIsMenuOpen(false); navigate('/login'); }}
                 >
-                  <i className="bi bi-house" />
-                  {t('common:homepage.Homepage.t_13a46f96')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: 'hamburger-menu-item mg-button--with-icon'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.ABOUT)}
-                  preventDoubleClick={false}
+                  로그인
+                </button>
+                <a
+                  href={APPLY_URL}
+                  className="mg-v2-homepage-drawer__item"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsMenuOpen(false)}
                 >
-                  <i className="bi bi-info-circle" />
-                  {t('common:homepage.Homepage.t_fa255f0c')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: 'hamburger-menu-item mg-button--with-icon'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.SERVICES)}
-                  preventDoubleClick={false}
-                >
-                  <i className="bi bi-heart" />
-                  {t('common:homepage.Homepage.t_45c901dc')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: 'hamburger-menu-item mg-button--with-icon'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.CONTACT)}
-                  preventDoubleClick={false}
-                >
-                  <i className="bi bi-telephone" />
-                  {t('common:homepage.Homepage.t_0fc1eee5')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: 'hamburger-menu-item mg-button--with-icon'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.LOGIN)}
-                  preventDoubleClick={false}
-                >
-                  <i className="bi bi-box-arrow-in-right" />
-                  {t('common:homepage.Homepage.t_e225a6fd')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false,
-                    className: 'hamburger-menu-item mg-button--with-icon'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.REGISTER)}
-                  preventDoubleClick={false}
-                >
-                  <i className="bi bi-person-plus" />
-                  {t('common:homepage.Homepage.t_ecb4cc87')}
-                </MGButton>
-              </div>
-            </div>
+                  시작하기
+                </a>
+              </nav>
+            </aside>
           </div>
         )}
 
-        {/* Hero Section */}
-        <section className="mg-v2-homepage-hero">
-          <div className="mg-v2-homepage-hero-overlay" />
-          <div className="mg-v2-homepage-hero-content">
-            <h1 className="mg-v2-homepage-hero-title">{t('common:homepage.Homepage.t_532c5f8e')}</h1>
-            <p className="mg-v2-homepage-hero-subtitle">{t('common:homepage.Homepage.t_9b6a94eb')}</p>
-            <MGButton
-              type="button"
-              variant="primary"
-              size="large"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                size: 'lg',
-                loading: false,
-                className: 'mg-v2-btn-primary-large'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={async() => {
-                if (user) {
-                  if (user?.role) {
-                    const authResponse = {
-                      user: user,
-                      currentTenantRole: sessionManager.getCurrentTenantRole()
-                    };
-                    await redirectToDynamicDashboard(authResponse, navigate);
-                  } else {
-                    navigate('/dashboard');
-                  }
-                } else {
-                  handleLogin();
-                }
-              }}
-              preventDoubleClick={false}
+        {/* Hero Section — Calm Forest gradient background */}
+        <section className="mg-v2-homepage-hero" aria-label="메인 히어로">
+          <h1 className="mg-v2-homepage-hero__headline">
+            예약부터 회기, 정산까지.
+            <br />
+            센터 운영의 모든 것을 한곳에서.
+          </h1>
+          <p className="mg-v2-homepage-hero__subcopy">
+            복잡한 행정 업무는 코어 솔루션에 맡기고,
+            내담자와의 소중한 시간에 집중하세요.
+          </p>
+          <div className="mg-v2-homepage-hero__cta-group">
+            <a
+              href={APPLY_URL}
+              className="mg-v2-homepage-gnb__btn--primary"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              {t('common:homepage.Homepage.t_7bbd5bba')}
-            </MGButton>
-          </div>
-          <div className="mg-v2-homepage-scroll-indicator" aria-hidden="true">
-            <span className="mg-v2-homepage-scroll-indicator__text">SCROLL</span>
-            <span className="mg-v2-homepage-scroll-indicator__mouse">
-              <span className="mg-v2-homepage-scroll-indicator__wheel" />
-            </span>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="homepage-features" className="mg-v2-homepage-features">
-          <h2 className="mg-v2-homepage-section-title">{t('common:homepage.Homepage.t_93b319e0')}</h2>
-          <div className="mg-v2-homepage-features-grid">
-            <div className="mg-v2-card">
-              <div className="mg-v2-card-image bg-img-data" />
-              <div className="mg-v2-card-content">
-                <h3 className="mg-v2-card-title">{t('common:homepage.Homepage.t_09d6d7e8')}</h3>
-                <p className="mg-v2-card-desc">{t('common:homepage.Homepage.t_0deda332')}</p>
-              </div>
-            </div>
-            <div className="mg-v2-card">
-              <div className="mg-v2-card-image bg-img-finance" />
-              <div className="mg-v2-card-content">
-                <h3 className="mg-v2-card-title">{t('common:homepage.Homepage.t_26689987')}</h3>
-                <p className="mg-v2-card-desc">{t('common:homepage.Homepage.t_662f130f')}</p>
-              </div>
-            </div>
-            <div className="mg-v2-card">
-              <div className="mg-v2-card-image bg-img-collab" />
-              <div className="mg-v2-card-content">
-                <h3 className="mg-v2-card-title">{t('common:homepage.Homepage.t_cf4bbccd')}</h3>
-                <p className="mg-v2-card-desc">{t('common:homepage.Homepage.t_beb6763b')}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Image & Text Split Section */}
-        <section className="mg-v2-homepage-split">
-          <div className="mg-v2-homepage-split-image bg-img-split" />
-          <div className="mg-v2-homepage-split-text">
-            <span className="mg-v2-homepage-split-subtitle">SEAMLESS INTEGRATION</span>
-            <h2 className="mg-v2-homepage-split-title">{t('common:homepage.Homepage.t_cf78c9e3')}</h2>
-            <p className="mg-v2-homepage-split-desc">{t('common:homepage.Homepage.t_cc30f363')}</p>
-            <MGButton
+              시작하기
+            </a>
+            <button
               type="button"
-              variant="outline"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'md',
-                loading: false,
-                className: 'mg-v2-btn-text-link'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={scrollToHomepageFeatures}
-              preventDoubleClick={false}
+              className="mg-v2-homepage-gnb__btn--secondary"
+              onClick={() => navigate('/login')}
             >
-              {t('common:homepage.Homepage.t_8871edb9')}
-            </MGButton>
+              로그인
+            </button>
+          </div>
+
+          {/* Dashboard Preview — actual SVG embed */}
+          <div className="mg-v2-homepage-hero__mockup" aria-hidden="true">
+            <div className="mg-v2-homepage-hero__browser-chrome">
+              <span className="dot dot-close" />
+              <span className="dot dot-min" />
+              <span className="dot dot-expand" />
+            </div>
+            <img
+              src="/assets/dashboard-preview.svg"
+              alt="대시보드 미리보기"
+              className="mg-v2-homepage-hero__mockup-img"
+            />
           </div>
         </section>
 
-        {/* Bottom CTA & Footer */}
-        <section className="mg-v2-homepage-bottom-cta">
-          <h2 className="mg-v2-homepage-bottom-cta-title">{t('common:homepage.Homepage.t_f6cb0de3')}</h2>
-          <MGButton
-            type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'md',
-              loading: false,
-              className: 'mg-v2-btn-white'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={handleRegister}
-            preventDoubleClick={false}
+        {/* Stats Strip */}
+        <section className="mg-v2-homepage-stats" aria-label="운영 지표">
+          <div className="mg-v2-homepage-stats__container">
+            <p className="mg-v2-homepage-stats__title">센터 운영에 최적화된 플랫폼</p>
+            <div className="mg-v2-homepage-stats__grid">
+              {STATS.map((stat, idx) => (
+                <div key={idx} className="mg-v2-homepage-stat-item">
+                  <span className="mg-v2-homepage-stat-item__value">{stat.value}</span>
+                  <span className="mg-v2-homepage-stat-item__label">{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Trust Strip — badge icons */}
+        <section className="mg-v2-homepage-trust" aria-label="보안 인증">
+          {TRUST_BADGES.map((badge) => (
+            <img
+              key={badge.alt}
+              src={badge.src}
+              alt={badge.alt}
+              className="mg-v2-homepage-trust__badge"
+            />
+          ))}
+        </section>
+
+        {/* Features 3-column — 상담센터 정체성 */}
+        <section className="mg-v2-homepage-features" aria-label="주요 기능">
+          <h2 className="mg-v2-homepage-features__title">
+            센터 운영, 이렇게 달라집니다
+          </h2>
+          <div className="mg-v2-homepage-features__grid">
+            {FEATURES.map((feature) => (
+              <article key={feature.title} className="mg-v2-homepage-feature-card">
+                <div className="mg-v2-homepage-feature-card__icon" aria-hidden="true">
+                  <i className={`bi ${feature.icon}`} />
+                </div>
+                <h3 className="mg-v2-homepage-feature-card__title">{feature.title}</h3>
+                <p className="mg-v2-homepage-feature-card__desc">{feature.desc}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* Secondary CTA Band */}
+        <section className="mg-v2-homepage-cta-band" aria-label="도입 문의">
+          <h2 className="mg-v2-homepage-cta-band__headline">
+            우리 센터에도 도입할 수 있을까?
+          </h2>
+          <p className="mg-v2-homepage-cta-band__desc">
+            센터 규모와 상관없이 시작할 수 있습니다. 무료 체험으로 직접 확인해 보세요.
+          </p>
+          <a
+            href={APPLY_URL}
+            className="mg-v2-homepage-gnb__btn--primary mg-v2-homepage-cta-band__btn"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            {t('common:homepage.Homepage.t_f6a6f901')}
-          </MGButton>
+            센터 도입 문의
+          </a>
         </section>
 
+        {/* Footer */}
         <footer className="mg-v2-homepage-footer">
-          <p className="mg-v2-homepage-footer-text">© 2026 Core Solution. All rights reserved.</p>
-          <div className="mg-v2-homepage-footer-links">
-            <Link className="mg-v2-homepage-footer-link" to="/terms">
-              {t('common:homepage.Homepage.t_3b9e30dd')}
-            </Link>
-            <Link className="mg-v2-homepage-footer-link" to="/privacy">
-              {t('common:homepage.Homepage.t_339679c5')}
-            </Link>
-            <Link className="mg-v2-homepage-footer-link" to="/account-deletion">
-              {t('accountDeletion:pageTitle')}
-            </Link>
+          <div className="mg-v2-homepage-footer__container">
+            <div className="mg-v2-homepage-footer__brand">
+              <img src={SHIELD_LOGO_PATH} alt="Core Solution" className="mg-v2-homepage-footer__logo" />
+              <p className="mg-v2-homepage-footer__desc">상담센터 운영의 표준을 제시합니다.</p>
+            </div>
+            
+            <div className="mg-v2-homepage-footer__nav">
+              <div className="mg-v2-homepage-footer__col">
+                <h4 className="mg-v2-homepage-footer__col-title">제품</h4>
+                <Link className="mg-v2-homepage-footer__link" to="/">기능 소개</Link>
+                <Link className="mg-v2-homepage-footer__link" to="/">도입 안내</Link>
+              </div>
+              <div className="mg-v2-homepage-footer__col">
+                <h4 className="mg-v2-homepage-footer__col-title">정책</h4>
+                <Link className="mg-v2-homepage-footer__link" to="/terms">이용약관</Link>
+                <Link className="mg-v2-homepage-footer__link" to="/privacy">개인정보처리방침</Link>
+                <Link className="mg-v2-homepage-footer__link" to="/account-deletion">계정 탈퇴</Link>
+              </div>
+              <div className="mg-v2-homepage-footer__col">
+                <h4 className="mg-v2-homepage-footer__col-title">지원</h4>
+                <a className="mg-v2-homepage-footer__link" href={APPLY_URL} target="_blank" rel="noopener noreferrer">문의하기</a>
+              </div>
+            </div>
+          </div>
+          <div className="mg-v2-homepage-footer__bottom">
+            <p className="mg-v2-homepage-footer__copyright">
+              © 2026 Core Solution. All rights reserved.
+            </p>
           </div>
         </footer>
-        
-        <TabletBottomNavigation userRole={null} />
       </div>
     </CommonPageTemplate>
   );

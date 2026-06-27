@@ -1,0 +1,70 @@
+/* MatchingScheduleList — 사이드바 매칭 목록 독립 스크롤·컴팩트 카드 */
+
+.integrated-schedule__list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.integrated-schedule__list-scroll .integrated-schedule__list {
+  flex: none;
+  min-height: 0;
+  overflow: visible;
+  gap: var(--mg-spacing-sm);
+  padding-right: var(--mg-spacing-xs);
+}
+
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card .mg-v2-card-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  min-height: 0;
+  padding: var(--mg-spacing-sm);
+  font-size: var(--font-size-sm);
+  background-color: var(--mg-color-surface-main);
+  border-color: var(--mg-color-border-main);
+}
+
+.integrated-schedule__sidebar .integrated-schedule__card-body {
+  min-height: 0;
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule__sidebar .integrated-schedule__card-meta {
+  min-height: 0;
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule__sidebar .integrated-schedule__card-meta .mg-v2-status-badge,
+.integrated-schedule__sidebar .integrated-schedule__card-meta .mg-v2-count-badge {
+  min-height: var(--mg-spacing-lg);
+  font-size: var(--font-size-xs);
+}
+
+.integrated-schedule__sidebar .mg-v2-card-actions {
+  justify-content: center;
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule__sidebar .mg-v2-card-actions .mg-v2-button,
+.integrated-schedule__sidebar .mg-v2-card-actions .mg-button {
+  min-width: var(--mg-spacing-2xl);
+  min-height: var(--mg-spacing-xl);
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.integrated-schedule__sidebar .integrated-schedule__btn-schedule-from-card {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.integrated-schedule__sidebar .mg-v2-mapping-match-actions__cancel-btn {
+  min-height: var(--mg-spacing-xl);
+  margin-top: var(--mg-spacing-xs);
+  padding: 0 var(--mg-spacing-sm);
+  font-size: var(--font-size-xs);
+}

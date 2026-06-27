@@ -28,7 +28,6 @@ jobs:
         timeout: 120s
         source: "config/nginx/core-solution-dev.conf"
         target: "/tmp/"
-        strip_components: 2
         overwrite: true
         
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 기존 도메인)
@@ -41,7 +40,6 @@ jobs:
         timeout: 120s
         source: "config/nginx/dev.m-garden.co.kr.conf"
         target: "/tmp/"
-        strip_components: 2
         overwrite: true
         
     - name: 🔄 Nginx 설정 적용 및 재시작
@@ -193,17 +191,25 @@ jobs:
           fi
           
           # Nginx 설정 업데이트 (전체 설정 적용)
-          if [ -f /tmp/core-solution-dev.conf ]; then
+          CORE_SOLUTION_DEV_CONF="/tmp/config/nginx/core-solution-dev.conf"
+          if [ ! -f "$CORE_SOLUTION_DEV_CONF" ]; then
+            CORE_SOLUTION_DEV_CONF="/tmp/core-solution-dev.conf"
+          fi
+          if [ -f "$CORE_SOLUTION_DEV_CONF" ]; then
             echo "🌐 Nginx 통합 설정 업데이트 중..."
-            sudo cp /tmp/core-solution-dev.conf /etc/nginx/sites-available/core-solution-dev
+            sudo cp "$CORE_SOLUTION_DEV_CONF" /etc/nginx/sites-available/core-solution-dev
             sudo ln -sf /etc/nginx/sites-available/core-solution-dev /etc/nginx/sites-enabled/core-solution-dev
             echo "✅ 통합 설정 파일 적용 완료"
           fi
           
           # 기존 도메인 설정 업데이트 (하위 호환성)
-          if [ -f /tmp/dev.m-garden.co.kr.conf ]; then
+          M_GARDEN_CONF="/tmp/config/nginx/dev.m-garden.co.kr.conf"
+          if [ ! -f "$M_GARDEN_CONF" ]; then
+            M_GARDEN_CONF="/tmp/dev.m-garden.co.kr.conf"
+          fi
+          if [ -f "$M_GARDEN_CONF" ]; then
             echo "🌐 Nginx 기존 도메인 설정 업데이트 중..."
-            sudo cp /tmp/dev.m-garden.co.kr.conf /etc/nginx/sites-available/dev.m-garden.co.kr.conf
+            sudo cp "$M_GARDEN_CONF" /etc/nginx/sites-available/dev.m-garden.co.kr.conf
             sudo ln -sf /etc/nginx/sites-available/dev.m-garden.co.kr.conf /etc/nginx/sites-enabled/dev.m-garden.co.kr.conf
             echo "✅ 기존 도메인 설정 파일 적용 완료"
           fi

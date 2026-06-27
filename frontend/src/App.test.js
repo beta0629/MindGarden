@@ -56,4 +56,17 @@ describe('App', () => {
 
     errSpy.mockRestore();
   });
+
+  test('/landing은 Public Main(/)으로 리다이렉트된다', async() => {
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    window.history.pushState({}, '', '/landing');
+
+    render(<App />);
+
+    const loginHits = await screen.findAllByText('로그인');
+    expect(loginHits.length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe('/');
+
+    errSpy.mockRestore();
+  });
 });

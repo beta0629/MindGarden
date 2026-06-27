@@ -1,8 +1,9 @@
 /* MatchingScheduleList — 사이드바 매칭 목록 독립 스크롤·컴팩트 카드 */
 
 .integrated-schedule__list-scroll {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;

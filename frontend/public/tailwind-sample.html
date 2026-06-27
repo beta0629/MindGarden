@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindGarden 디자인 시스템 샘플</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mindgarden': {
+                            'beige': '#D2B48C',
+                            'cream': '#F5F5DC',
+                            'olive': '#6B7C32',
+                            'sage': '#9CAF88',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-mindgarden-cream via-white to-mindgarden-beige/30">
+    <div class="min-h-screen p-8">
+        <div class="max-w-7xl mx-auto space-y-12">
+            
+            <!-- 헤더 -->
+            <div class="text-center space-y-4">
+                <div class="flex items-center justify-center gap-3">
+                    <div class="p-4 bg-mindgarden-beige rounded-xl">
+                        <span class="text-4xl">🌱</span>
+                    </div>
+                    <h1 class="text-5xl font-bold text-mindgarden-olive">MindGarden Design System</h1>
+                </div>
+                <p class="text-lg text-mindgarden-sage max-w-2xl mx-auto">
+                    v0.dev 기반의 새로운 베이지/크림/올리브 그린 색상 시스템으로 재탄생한 디자인 시스템
+                </p>
+            </div>
+
+            <!-- 색상 팔레트 -->
+            <section class="space-y-6">
+                <h2 class="text-3xl font-bold text-mindgarden-olive text-center">색상 팔레트</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center">
+                        <div class="w-20 h-20 rounded-xl mx-auto mb-2 shadow-md bg-mindgarden-beige"></div>
+                        <p class="font-semibold text-mindgarden-olive">베이지</p>
+                        <p class="text-sm text-mindgarden-sage">Primary</p>
+                        <p class="text-xs text-gray-500">#D2B48C</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 rounded-xl mx-auto mb-2 shadow-md bg-mindgarden-cream"></div>
+                        <p class="font-semibold text-mindgarden-olive">크림</p>
+                        <p class="text-sm text-mindgarden-sage">Background</p>
+                        <p class="text-xs text-gray-500">#F5F5DC</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 rounded-xl mx-auto mb-2 shadow-md bg-mindgarden-olive"></div>
+                        <p class="font-semibold text-mindgarden-olive">올리브 그린</p>
+                        <p class="text-sm text-mindgarden-sage">Accent</p>
+                        <p class="text-xs text-gray-500">#6B7C32</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 rounded-xl mx-auto mb-2 shadow-md bg-mindgarden-sage"></div>
+                        <p class="font-semibold text-mindgarden-olive">세이지 그린</p>
+                        <p class="text-sm text-mindgarden-sage">Secondary</p>
+                        <p class="text-xs text-gray-500">#9CAF88</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 버튼 컴포넌트 -->
+            <section class="space-y-6">
+                <h2 class="text-3xl font-bold text-mindgarden-olive text-center">버튼 컴포넌트</h2>
+                
+                <!-- Variants -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-mindgarden-olive">Variants</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <button class="bg-mindgarden-beige text-white hover:bg-mindgarden-beige/80 px-4 py-2 rounded-lg font-medium transition-colors">
+                            Primary
+                        </button>
+                        <button class="bg-transparent border-2 border-mindgarden-beige text-mindgarden-beige hover:bg-mindgarden-beige/10 px-4 py-2 rounded-lg font-medium transition-colors">
+                            Secondary
+                        </button>
+                        <button class="bg-mindgarden-sage text-white hover:bg-mindgarden-sage/80 px-4 py-2 rounded-lg font-medium transition-colors">
+                            Success
+                        </button>
+                        <button class="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-lg font-medium transition-colors">
+                            Danger
+                        </button>
+                        <button class="bg-mindgarden-olive text-white hover:bg-mindgarden-olive/80 px-4 py-2 rounded-lg font-medium transition-colors">
+                            Warning
+                        </button>
+                        <button class="bg-transparent text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg font-medium transition-colors">
+                            Ghost
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sizes -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-mindgarden-olive">Sizes</h3>
+                    <div class="flex items-center gap-4">
+                        <button class="bg-mindgarden-beige text-white px-3 py-1 text-xs rounded-lg font-medium">
+                            Small
+                        </button>
+                        <button class="bg-mindgarden-beige text-white px-4 py-2 text-sm rounded-lg font-medium">
+                            Medium
+                        </button>
+                        <button class="bg-mindgarden-beige text-white px-6 py-3 text-base rounded-lg font-medium">
+                            Large
+                        </button>
+                    </div>
+                </div>
+
+                <!-- States -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-mindgarden-olive">States</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <button class="bg-mindgarden-beige text-white px-4 py-2 rounded-lg font-medium opacity-50 cursor-not-allowed">
+                            <span class="animate-spin mr-2">⟳</span>로딩 중
+                        </button>
+                        <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg font-medium cursor-not-allowed">
+                            비활성화
+                        </button>
+                        <button class="bg-mindgarden-beige text-white hover:bg-mindgarden-beige/80 px-4 py-2 rounded-lg font-medium transition-colors">
+                            <span class="mr-2">🚀</span>아이콘 버튼
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 카드 컴포넌트 -->
+            <section class="space-y-6">
+                <h2 class="text-3xl font-bold text-mindgarden-olive text-center">카드 컴포넌트</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-mindgarden-cream border border-mindgarden-beige/20 rounded-xl p-6 shadow-sm">
+                        <div class="text-center">
+                            <p class="font-semibold text-mindgarden-olive">Default</p>
+                            <p class="text-sm text-mindgarden-sage">카드 스타일</p>
+                        </div>
+                    </div>
+                    <div class="bg-mindgarden-cream border border-mindgarden-beige/20 rounded-xl p-6 shadow-lg">
+                        <div class="text-center">
+                            <p class="font-semibold text-mindgarden-olive">Elevated</p>
+                            <p class="text-sm text-mindgarden-sage">카드 스타일</p>
+                        </div>
+                    </div>
+                    <div class="bg-mindgarden-cream border-2 border-mindgarden-beige rounded-xl p-6">
+                        <div class="text-center">
+                            <p class="font-semibold text-mindgarden-olive">Outlined</p>
+                            <p class="text-sm text-mindgarden-sage">카드 스타일</p>
+                        </div>
+                    </div>
+                    <div class="bg-mindgarden-cream/25 backdrop-blur-md border border-mindgarden-beige/18 rounded-xl p-6">
+                        <div class="text-center">
+                            <p class="font-semibold text-mindgarden-olive">Glass</p>
+                            <p class="text-sm text-mindgarden-sage">카드 스타일</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 통계 컴포넌트 -->
+            <section class="space-y-6">
+                <h2 class="text-3xl font-bold text-mindgarden-olive text-center">통계 컴포넌트</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-mindgarden-cream border border-mindgarden-beige/20 rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-3 bg-blue-100 rounded-lg">
+                                <span class="text-2xl">👥</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
+                                    <span>↗</span>
+                                    <span>12.5%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-mindgarden-olive mb-1">12,847</h3>
+                            <p class="text-sm text-mindgarden-sage">총 사용자</p>
+                        </div>
+                        <div class="mt-4">
+                            <svg className="h-12 w-full" viewBox="0 0 100 50" preserveAspectRatio="none">
+                                <polyline
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="opacity-50 text-blue-600"
+                                    points="0,40 10,35 20,25 30,30 40,20 50,25 60,15 70,20 80,10 90,15 100,5"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-mindgarden-cream border border-mindgarden-beige/20 rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-3 bg-orange-100 rounded-lg">
+                                <span class="text-2xl">💬</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
+                                    <span>↗</span>
+                                    <span>8.2%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-mindgarden-olive mb-1">3,429</h3>
+                            <p class="text-sm text-mindgarden-sage">활성 세션</p>
+                        </div>
+                        <div class="mt-4">
+                            <svg className="h-12 w-full" viewBox="0 0 100 50" preserveAspectRatio="none">
+                                <polyline
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="opacity-50 text-orange-600"
+                                    points="0,35 10,30 20,25 30,20 40,15 50,20 60,25 70,30 80,35 90,30 100,25"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-mindgarden-cream border border-mindgarden-beige/20 rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-3 bg-green-100 rounded-lg">
+                                <span class="text-2xl">✅</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-sm font-medium">
+                                    <span>↘</span>
+                                    <span>3.1%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-mindgarden-olive mb-1">8,923</h3>
+                            <p class="text-sm text-mindgarden-sage">완료된 상담</p>
+                        </div>
+                        <div class="mt-4">
+                            <svg className="h-12 w-full" viewBox="0 0 100 50" preserveAspectRatio="none">
+                                <polyline
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="opacity-50 text-green-600"
+                                    points="0,20 10,25 20,30 30,35 40,40 50,35 60,30 70,25 80,20 90,25 100,30"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-mindgarden-cream border border-mindgarden-beige/20 rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-3 bg-purple-100 rounded-lg">
+                                <span class="text-2xl">⭐</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
+                                    <span>↗</span>
+                                    <span>5.4%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-mindgarden-olive mb-1">4.8/5</h3>
+                            <p class="text-sm text-mindgarden-sage">만족도</p>
+                        </div>
+                        <div class="mt-4">
+                            <svg className="h-12 w-full" viewBox="0 0 100 50" preserveAspectRatio="none">
+                                <polyline
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="opacity-50 text-purple-600"
+                                    points="0,10 10,15 20,20 30,25 40,30 50,35 60,40 70,35 80,30 90,25 100,20"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 글래스모피즘 디자인 -->
+            <section class="space-y-6">
+                <h2 class="text-3xl font-bold text-mindgarden-olive text-center">글래스모피즘 디자인</h2>
+                <div class="relative overflow-hidden rounded-2xl p-8 bg-gradient-to-br from-mindgarden-cream/50 via-white/30 to-mindgarden-beige/20 backdrop-blur-sm border border-mindgarden-beige/20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-mindgarden-cream/25 backdrop-blur-md border border-mindgarden-beige/18 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="p-3 bg-mindgarden-beige/20 rounded-lg">
+                                    <span class="text-2xl">👥</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-mindgarden-olive">총 사용자</p>
+                                    <p class="text-2xl font-bold text-mindgarden-sage">12,847</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 text-sm">
+                                <span class="text-green-600">↗</span>
+                                <span class="text-mindgarden-sage">+12.5%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-mindgarden-cream/25 backdrop-blur-md border border-mindgarden-beige/18 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="p-3 bg-mindgarden-beige/20 rounded-lg">
+                                    <span class="text-2xl">💬</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-mindgarden-olive">활성 세션</p>
+                                    <p class="text-2xl font-bold text-mindgarden-sage">3,429</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 text-sm">
+                                <span class="text-green-600">↗</span>
+                                <span class="text-mindgarden-sage">+8.2%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-mindgarden-cream/25 backdrop-blur-md border border-mindgarden-beige/18 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="p-3 bg-mindgarden-beige/20 rounded-lg">
+                                    <span class="text-2xl">✅</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-mindgarden-olive">완료된 상담</p>
+                                    <p class="text-2xl font-bold text-mindgarden-sage">8,923</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 text-sm">
+                                <span class="text-red-600">↘</span>
+                                <span class="text-mindgarden-sage">-3.1%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-mindgarden-cream/25 backdrop-blur-md border border-mindgarden-beige/18 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="p-3 bg-mindgarden-beige/20 rounded-lg">
+                                    <span class="text-2xl">⭐</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-mindgarden-olive">만족도</p>
+                                    <p class="text-2xl font-bold text-mindgarden-sage">4.8/5</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 text-sm">
+                                <span class="text-green-600">↗</span>
+                                <span class="text-mindgarden-sage">+5.4%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 푸터 -->
+            <footer class="text-center py-8 border-t border-mindgarden-beige/20">
+                <p class="text-mindgarden-sage">
+                    MindGarden Design System - v0.dev 기반의 새로운 디자인 시스템
+                </p>
+            </footer>
+        </div>
+    </div>
+</body>
+</html>

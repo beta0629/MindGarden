@@ -2,7 +2,7 @@
  * App 스모크 테스트 — 상위 Provider·라우트가 마운트되는지 확인
  */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 
 jest.mock('axios', () => ({
   __esModule: true,
@@ -46,13 +46,32 @@ jest.mock('./utils/designSystemHelper', () => ({
 import App from './App';
 
 describe('App', () => {
-  test('루트 경로에서 앱이 마운트되고 홈 관련 UI가 보인다', async() => {
+  test('루트(/)에서 Phase 3 Public Main Homepage가 렌더된다', async() => {
     const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    render(<App />);
+    const { container } = render(<App />);
 
-    const loginHits = await screen.findAllByText('로그인');
-    expect(loginHits.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(container.querySelector('.mg-v2-homepage')).toBeInTheDocument();
+      expect(container.querySelector('.mg-v2-homepage-hero__headline')).toBeInTheDocument();
+    });
+    expect(container.querySelector('.mg-v2-landing-template')).not.toBeInTheDocument();
+    expect(container.querySelector('.mg-v2-landing-hero')).not.toBeInTheDocument();
+
+    errSpy.mockRestore();
+  });
+
+  test('/landing은 / 로 리다이렉트되어 Homepage가 렌더된다', async() => {
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    window.history.pushState({}, '', '/landing');
+
+    const { container } = render(<App />);
+
+    await waitFor(() => {
+      expect(container.querySelector('.mg-v2-homepage')).toBeInTheDocument();
+    });
+    expect(window.location.pathname).toBe('/');
+    expect(container.querySelector('.mg-v2-landing-template')).not.toBeInTheDocument();
 
     errSpy.mockRestore();
   });

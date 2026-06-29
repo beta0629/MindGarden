@@ -198,9 +198,8 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
   const staffEditPhoneBaselineRef = useRef('');
-  // 컴팩트 패턴 SSOT (PR-200·PR-202): 기본 작은 카드 그리드
-  // (mg-v2-list-block__grid--small + ProfileCard variant=compact)
-  const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list'
+  // PR-200·PR-202 list 렌더 경로 유지, 기본 뷰는 목록(밀도 최적)
+  const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list'
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });
   const [staffEditForm, setStaffEditForm] = useState({ name: '', email: '', phone: '' });

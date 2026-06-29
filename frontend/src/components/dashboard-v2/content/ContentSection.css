@@ -36,9 +36,10 @@
   min-width: 0;
 }
 
-/* Pill 탭 행 — 컨테이너 상·하 여백 (pill-toggle 이 가장자리에 붙지 않도록) */
+/* Pill 탭 행 — 컨테이너 상·하 여백 (pill-toggle 이 위·구분선에 붙지 않도록) */
 .mg-v2-content-section--plain:has(.mg-v2-ad-b0kla__pill-toggle) {
-  padding-block: var(--mg-spacing-md, 1rem);
+  padding-block-start: var(--mg-spacing-lg, 1.5rem);
+  padding-block-end: var(--mg-spacing-md, 1rem);
 }
 
 /* stack gap 이 간격을 담당 — KPI·검색 섹션 margin-bottom 중복 방지 */

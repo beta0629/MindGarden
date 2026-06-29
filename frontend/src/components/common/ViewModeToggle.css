@@ -5,7 +5,8 @@
  * @since 2026-04-14
  */
 
-/* 목록 블록 헤더 내 pill 행 — 상·하 여백·구분선 간격 (MappingListBlock header SSOT 보조) */
+/* 목록 블록 헤더 내 pill 행 — 상단·구분선과 간격 (MappingListBlock header SSOT 보조) */
 .mg-v2-ad-b0kla__pill-toggle.mg-v2-mapping-list-block__toggle {
-  margin-block: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-xs, 0.25rem);
+  padding-block-start: var(--mg-spacing-sm, 0.5rem);
+  margin-block: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-xs, 0.25rem);
 }

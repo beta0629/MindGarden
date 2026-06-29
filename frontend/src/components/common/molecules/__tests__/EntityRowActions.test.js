@@ -94,6 +94,16 @@ describe('EntityRowActions', () => {
     expect(screen.getByRole('menuitem', { name: '삭제' })).toBeInTheDocument();
   });
 
+  it('renders menu in document body via portal when open', () => {
+    render(<EntityRowActions items={baseItems} ariaLabel="테스트 작업" />);
+
+    fireEvent.click(screen.getByRole('button', { name: '더보기' }));
+
+    const menu = screen.getByRole('menu');
+    expect(menu).toHaveClass('mg-v2-entity-row-actions__menu--portal');
+    expect(document.body.contains(menu)).toBe(true);
+  });
+
   it('returns null when no visible items and no primary', () => {
     const { container } = render(
       <EntityRowActions items={[{ id: 'x', label: 'X', hidden: true }]} ariaLabel="빈" />

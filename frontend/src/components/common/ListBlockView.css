@@ -12,6 +12,17 @@
   display: grid;
   gap: var(--mg-spacing-16, 1rem);
   padding-inline: var(--mg-spacing-16, 1rem);
+  overflow: visible;
+}
+
+/* smallCard grid: ⋮ 드롭다운이 아래 카드에 가려지지 않도록 스택·클립 해제 */
+.mg-v2-list-block__grid--small > * {
+  position: relative;
+  overflow: visible;
+}
+
+.mg-v2-list-block__grid--small > *:has(.mg-v2-entity-row-actions--open) {
+  z-index: var(--z-dropdown-menu, var(--z-dropdown, 1000));
 }
 
 /* P1 컴팩트화 (2026-06-10): 그리드 좌우 패딩 12-16px — 카드와 컨테이너 사이 호흡 확보 */
@@ -48,9 +59,10 @@
   height: auto;
 }
 
-/* compact 카드가 너무 좁아져 배지 오버플로우 나지 않도록 최소 폭 */
+/* compact 카드가 너무 좁아져 배지 오버플로우 나지 않도록 최소 폭 + grid에서 ⋮ 메뉴 클립 방지 */
 .mg-v2-list-block__grid--small .mg-v2-profile-card--compact {
   min-width: 140px;
+  overflow: visible;
 }
 
 /* 모바일(<600px): 그리드 좌우 패딩 약간 감소(공간 협소) */

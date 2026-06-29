@@ -143,6 +143,16 @@
   flex-shrink: 0;
 }
 
+/* body portal — grid/card overflow:hidden 조상에서도 메뉴가 가려지지 않음 */
+.mg-v2-entity-row-actions__menu--portal[role="menu"] {
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: var(--z-dropdown-menu, var(--z-dropdown, 1000));
+}
+
 /* 테이블 작업열: flex column stack 제거·열 너비 축소 */
 .mg-v2-list-block__table td:has(.mg-v2-entity-row-actions),
 .mg-v2-list-block__list td:has(.mg-v2-entity-row-actions) {

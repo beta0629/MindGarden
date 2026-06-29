@@ -12,7 +12,7 @@
   display: grid;
   gap: var(--mg-spacing-16, 1rem);
   padding-inline: var(--mg-spacing-16, 1rem);
-  padding-block-end: var(--mg-spacing-md, 1rem);
+  padding-block-end: var(--mg-spacing-lg, 1.5rem);
   overflow: visible;
 }
 
@@ -31,7 +31,7 @@
   grid-template-columns: 1fr;
   gap: var(--mg-spacing-12, 0.75rem);
   padding-inline: var(--mg-spacing-12, 0.75rem);
-  padding-block-end: var(--mg-spacing-md, 1rem);
+  padding-block-end: var(--mg-spacing-lg, 1.5rem);
 }
 
 @media (min-width: 600px) {
@@ -72,6 +72,30 @@
   .mg-v2-list-block__grid--small {
     padding-inline: var(--mg-spacing-8, 0.5rem);
   }
+}
+
+/* ----- 목록 블록 헤더·제목 (내담자/상담사/스태프·매핑 공통 SSOT) ----- */
+.mg-v2-list-block__header,
+.mg-v2-mapping-list-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md, 1rem);
+  margin-block-end: var(--mg-spacing-md, 1rem);
+  padding-block-start: var(--mg-spacing-md, 1rem);
+  padding-block-end: var(--mg-spacing-md, 1rem);
+  padding-inline-start: 0;
+  padding-inline-end: 0;
+  border-bottom: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+}
+
+.mg-v2-list-block__title,
+.mg-v2-mapping-list-block__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ad-b0kla-title-color);
+  padding-inline-start: var(--mg-spacing-md, 1rem);
 }
 
 /* ----- 리스트(테이블) 뷰 ----- */

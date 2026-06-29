@@ -11,6 +11,7 @@
 .mg-v2-list-block__grid {
   display: grid;
   gap: var(--mg-spacing-16, 1rem);
+  padding-inline: var(--mg-spacing-16, 1rem);
 }
 
 /* P1 컴팩트화 (2026-06-10): 그리드 좌우 패딩 12-16px — 카드와 컨테이너 사이 호흡 확보 */
@@ -87,11 +88,21 @@
   white-space: nowrap;
 }
 
+.mg-v2-list-block__table th:first-child,
+.mg-v2-list-block__list th:first-child {
+  padding-left: var(--mg-spacing-24, 1.5rem);
+}
+
 .mg-v2-list-block__table td,
 .mg-v2-list-block__list td {
   padding: var(--mg-spacing-12, 0.75rem) var(--mg-spacing-16, 1rem);
   border-bottom: 1px solid var(--ad-b0kla-border);
   vertical-align: middle;
+}
+
+.mg-v2-list-block__table td:first-child,
+.mg-v2-list-block__list td:first-child {
+  padding-left: var(--mg-spacing-24, 1.5rem);
 }
 
 .mg-v2-list-block__table tbody tr:last-child td,

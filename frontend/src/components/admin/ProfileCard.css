@@ -6,10 +6,11 @@
   background: var(--color-surface, var(--mg-white));
   border: 1px solid var(--color-border-light, var(--mg-color-border-main));
   border-radius: var(--radius-lg, 16px);
-  padding: var(--spacing-lg, 24px);
+  padding: var(--mg-spacing-24, 1.5rem);
+  padding-left: calc(var(--mg-spacing-24, 1.5rem) + 4px); /* 좌측 상태 스트라이프 여백 보정 */
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md, 16px);
+  gap: var(--mg-spacing-16, 1rem);
   transition: all 0.2s ease-in-out;
   cursor: pointer;
 }
@@ -277,6 +278,7 @@
  */
 .mg-v2-profile-card--compact {
   padding: var(--mg-spacing-16, 1rem) var(--mg-spacing-16, 1rem) var(--mg-spacing-12, 0.75rem);
+  padding-left: calc(var(--mg-spacing-16, 1rem) + 4px); /* 좌측 상태 스트라이프 여백 보정 */
   gap: var(--mg-spacing-8, 0.5rem);
   min-width: 0;
   /* 콘텐츠 기반 자동 높이 (공통 .mg-v2-profile-card 의 padding-lg/gap-md 오버라이드) */

@@ -23,7 +23,6 @@ const ProfileCard = React.forwardRef(({
   renderActions,
   onClick,
   className,
-  status,
   isOnline,
   progress,
   riskLevel,
@@ -35,7 +34,6 @@ const ProfileCard = React.forwardRef(({
   const rootClassName = [
     'mg-v2-profile-card',
     isCompact && 'mg-v2-profile-card--compact',
-    status && `mg-v2-profile-card--status-${status}`,
     className
   ].filter(Boolean).join(' ');
 
@@ -207,8 +205,6 @@ ProfileCard.propTypes = {
   onClick: PropTypes.func,
   /** 추가 className */
   className: PropTypes.string,
-  /** 좌측 상태 스트라이프 */
-  status: PropTypes.oneOf(['active', 'inactive', 'urgent', 'pending']),
   /** 아바타 온라인 인디케이터 (undefined이면 미표시) */
   isOnline: PropTypes.bool,
   /** 미니 진행률 바 (0~100) */

@@ -56,12 +56,6 @@ const ClientOverviewTab = ({
         />
     );
 
-    const resolveClientStatus = (clientStatus) => {
-        if (clientStatus === 'ACTIVE') return 'active';
-        if (clientStatus === 'INACTIVE') return 'inactive';
-        return 'pending';
-    };
-
     const renderClientCard = (client) => {
         const statusKorean = getUserStatusKoreanNameSync(client?.status);
         const gradeKorean = getUserGradeKoreanNameSync(client.grade);
@@ -82,7 +76,6 @@ const ClientOverviewTab = ({
                     <StatusBadge key="status" status={client?.status}>{statusKorean}</StatusBadge>,
                     <span key="grade" className="mg-v2-grade-badge"><SafeText>{gradeKorean}</SafeText></span>
                 ]}
-                status={resolveClientStatus(client?.status)}
                 riskLevel={client.riskLevel?.toLowerCase()}
                 statsItems={[
                     {

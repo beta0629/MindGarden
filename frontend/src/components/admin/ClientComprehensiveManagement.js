@@ -757,7 +757,10 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                 />
             )}
             {embedded ? tabAndBelow : (
-                <main aria-labelledby={CLIENT_COMP_MGMT_TITLE_ID}>
+                <main
+                    className="mg-v2-user-management-stack"
+                    aria-labelledby={CLIENT_COMP_MGMT_TITLE_ID}
+                >
                     {tabAndBelow}
                 </main>
             )}

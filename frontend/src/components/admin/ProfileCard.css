@@ -392,8 +392,13 @@
   position: absolute;
   top: var(--mg-spacing-8, 0.5rem);
   right: var(--mg-spacing-8, 0.5rem);
-  z-index: 2;
+  z-index: 3;
   overflow: visible;
+  pointer-events: none;
+}
+
+.mg-v2-profile-card__corner-actions > * {
+  pointer-events: auto;
 }
 
 /* compact + corner overflow: 드롭다운 패널이 카드 밖으로 펼쳐지도록 */

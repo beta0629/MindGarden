@@ -108,7 +108,13 @@ const ProfileCard = React.forwardRef(({
       <div ref={ref} className={rootClassName} {...interactionProps} {...restProps}>
         {headerNode}
         {renderActions && (
-          <div className="mg-v2-profile-card__corner-actions">
+          <div
+            className="mg-v2-profile-card__corner-actions"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             {renderActions()}
           </div>
         )}

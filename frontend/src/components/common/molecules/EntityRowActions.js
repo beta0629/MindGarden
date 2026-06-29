@@ -37,6 +37,7 @@ function EntityRowActions({
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
+  const ignoreOutsideUntilRef = useRef(false);
   const autoMenuId = useId();
   const menuId = menuIdProp || autoMenuId;
 
@@ -98,10 +99,18 @@ function EntityRowActions({
   useEffect(() => {
     if (!open) return undefined;
 
+    const isInside = (event) => {
+      const target = event.target;
+      return Boolean(
+        rootRef.current?.contains(target)
+        || menuRef.current?.contains(target)
+        || triggerRef.current?.contains(target)
+      );
+    };
+
     const handleOutside = (event) => {
-      const inRoot = rootRef.current?.contains(event.target);
-      const inMenu = menuRef.current?.contains(event.target);
-      if (!inRoot && !inMenu) {
+      if (ignoreOutsideUntilRef.current) return;
+      if (!isInside(event)) {
         close();
       }
     };
@@ -109,10 +118,15 @@ function EntityRowActions({
       if (event.key === 'Escape') close();
     };
 
-    document.addEventListener('mousedown', handleOutside);
+    // mousedown 대신 click + rAF 지연: 트리거 클릭과 동일 턴에서 즉시 닫히는 레이스 방지
+    const listenerFrame = requestAnimationFrame(() => {
+      document.addEventListener('click', handleOutside, true);
+    });
+
     document.addEventListener('keydown', handleEscape);
     return () => {
-      document.removeEventListener('mousedown', handleOutside);
+      cancelAnimationFrame(listenerFrame);
+      document.removeEventListener('click', handleOutside, true);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [open, close]);
@@ -123,7 +137,13 @@ function EntityRowActions({
 
   const handleToggle = (event) => {
     event.stopPropagation();
+    ignoreOutsideUntilRef.current = true;
     setOpen((prev) => !prev);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        ignoreOutsideUntilRef.current = false;
+      });
+    });
   };
 
   const handleItemClick = (item) => (event) => {
@@ -199,6 +219,8 @@ function EntityRowActions({
       ref={rootRef}
       className={rootClass}
       onClick={stopPropagation}
+      onMouseDown={stopPropagation}
+      onPointerDown={stopPropagation}
       onKeyDown={stopPropagation}
       role="group"
       aria-label={ariaLabel}
@@ -217,7 +239,12 @@ function EntityRowActions({
         </MGButton>
       )}
       {visibleItems.length > 0 && (
-        <div ref={triggerRef} className="mg-v2-entity-row-actions__menu-wrap">
+        <div
+          ref={triggerRef}
+          className="mg-v2-entity-row-actions__menu-wrap"
+          onMouseDown={stopPropagation}
+          onPointerDown={stopPropagation}
+        >
           <MGButton
             type="button"
             variant="ghost"

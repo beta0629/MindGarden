@@ -3,7 +3,8 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import ProfileCard from '../../../ui/Card/ProfileCard';
 import EntityRowActions, { ENTITY_ROW_ACTIONS_LAYOUT } from '../EntityRowActions';
 
 describe('EntityRowActions', () => {
@@ -102,6 +103,64 @@ describe('EntityRowActions', () => {
     const menu = screen.getByRole('menu');
     expect(menu).toHaveClass('mg-v2-entity-row-actions__menu--portal');
     expect(document.body.contains(menu)).toBe(true);
+  });
+
+  it('opens corner menu inside compact ProfileCard without triggering card onClick', () => {
+    const onCardClick = jest.fn();
+    const onEdit = jest.fn();
+    render(
+      <ProfileCard
+        variant="compact"
+        name="Test User"
+        onClick={onCardClick}
+        renderActions={() => (
+          <EntityRowActions
+            layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
+            ariaLabel="카드 작업"
+            items={[{ id: 'edit', label: '수정', onClick: onEdit }]}
+          />
+        )}
+      />
+    );
+
+    const trigger = screen.getByRole('button', { name: '더보기' });
+    fireEvent.mouseDown(trigger);
+    fireEvent.mouseUp(trigger);
+    fireEvent.click(trigger);
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('menuitem', { name: '수정' })).toBeInTheDocument();
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it('keeps menu open after outside mousedown on open tick', () => {
+    render(<EntityRowActions items={baseItems} ariaLabel="테스트 작업" />);
+
+    const trigger = screen.getByRole('button', { name: '더보기' });
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.mouseDown(document.body);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('closes menu on subsequent outside click', async () => {
+    render(<EntityRowActions items={baseItems} ariaLabel="테스트 작업" />);
+
+    fireEvent.click(screen.getByRole('button', { name: '더보기' }));
+
+    await act(async () => {
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(resolve);
+        });
+      });
+    });
+
+    fireEvent.click(document.body);
+
+    expect(screen.queryByRole('menuitem', { name: '수정' })).not.toBeInTheDocument();
   });
 
   it('returns null when no visible items and no primary', () => {

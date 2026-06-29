@@ -20,7 +20,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
-import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge, SafeText } from '../common';
+import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge, SafeText, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -710,74 +710,37 @@ const StaffManagement = ({ embedded = false }) => {
   }, [staffEditModal, staffEditForm, closeStaffEdit, loadUsers, staffPhoneCheckStatus]);
 
   const renderStaffActionBar = useCallback(
-    (staff, { compact = false, table = false } = {}) => {
-      const stop = (e) => {
-        e.stopPropagation();
-      };
-      const wrapClass = [
-        'mg-v2-profile-card__actions',
-        'mg-v2-client-actions',
-        compact && 'mg-v2-client-actions--compact',
-        table && 'mg-v2-client-actions--table'
-      ]
-        .filter(Boolean)
-        .join(' ');
+    (staff, { layout = ENTITY_ROW_ACTIONS_LAYOUT.TABLE } = {}) => {
       const isSelf = sessionUserId != null && staff?.id != null
         && Number(sessionUserId) === Number(staff.id);
       return (
-        <div
-          className={wrapClass}
-          onClick={stop}
-          onKeyDown={stop}
-          role="group"
-          aria-label={STAFF_MGMT_ARIA.STAFF_ACTIONS}
-        >
-          <MGButton
-            type="button"
-            variant="secondary"
-            size="small"
-            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-            onClick={() => openStaffDetail(staff)}
-            preventDoubleClick={false}
-          >
-            {STAFF_MGMT_BUTTON.DETAIL}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="primary"
-            size="small"
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-            onClick={() => openStaffEdit(staff)}
-            preventDoubleClick={false}
-          >
-            {STAFF_MGMT_BUTTON.EDIT}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="secondary"
-            size="small"
-            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-            onClick={() => handleOpenRoleChange(staff)}
-            preventDoubleClick={false}
-          >
-            {STAFF_MGMT_BUTTON.ROLE_CHANGE}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="danger"
-            size="small"
-            className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-            onClick={() => openStaffDelete(staff)}
-            disabled={isSelf}
-            title={isSelf ? '자기 자신은 삭제할 수 없습니다.' : undefined}
-            preventDoubleClick={false}
-          >
-            {STAFF_MGMT_BUTTON.DELETE}
-          </MGButton>
-        </div>
+        <EntityRowActions
+          layout={layout}
+          ariaLabel={STAFF_MGMT_ARIA.STAFF_ACTIONS}
+          items={[
+            {
+              id: 'edit',
+              label: STAFF_MGMT_BUTTON.EDIT,
+              onClick: () => openStaffEdit(staff)
+            },
+            {
+              id: 'role-change',
+              label: STAFF_MGMT_BUTTON.ROLE_CHANGE,
+              onClick: () => handleOpenRoleChange(staff)
+            },
+            {
+              id: 'delete',
+              label: STAFF_MGMT_BUTTON.DELETE,
+              onClick: () => openStaffDelete(staff),
+              variant: 'destructive',
+              disabled: isSelf,
+              title: isSelf ? '자기 자신은 삭제할 수 없습니다.' : undefined
+            }
+          ]}
+        />
       );
     },
-    [openStaffDetail, openStaffEdit, handleOpenRoleChange, openStaffDelete, sessionUserId]
+    [openStaffEdit, handleOpenRoleChange, openStaffDelete, sessionUserId]
   );
 
   const handleSearch = useCallback((term) => {
@@ -929,7 +892,8 @@ const StaffManagement = ({ embedded = false }) => {
                         {staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}
                       </StatusBadge>
                     ]}
-                    renderActions={() => renderStaffActionBar(staff)}
+                    onClick={() => openStaffDetail(staff)}
+                    renderActions={() => renderStaffActionBar(staff, { layout: ENTITY_ROW_ACTIONS_LAYOUT.CARD })}
                   />
                 ))}
               </div>
@@ -954,7 +918,7 @@ const StaffManagement = ({ embedded = false }) => {
                       </StatusBadge>
                     ]}
                     onClick={() => openStaffDetail(staff)}
-                    renderActions={() => renderStaffActionBar(staff, { compact: true })}
+                    renderActions={() => renderStaffActionBar(staff, { layout: ENTITY_ROW_ACTIONS_LAYOUT.CORNER })}
                   />
                 ))}
               </SmallCardGrid>
@@ -969,7 +933,9 @@ const StaffManagement = ({ embedded = false }) => {
                 ]}
                 data={filteredStaff}
                 renderCell={(key, item) => {
-                  if (key === '_actions') return renderStaffActionBar(item, { table: true });
+                  if (key === '_actions') {
+                    return renderStaffActionBar(item, { layout: ENTITY_ROW_ACTIONS_LAYOUT.TABLE });
+                  }
                   if (key === 'role') return STAFF_MGMT_ROLE_LABELS[item.role] || item.role;
                   if (key === 'isActive') return item.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE;
                   if (key === 'name') return maskEncryptedDisplay(item.name, STAFF_MGMT_MASK.NAME);

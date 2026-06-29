@@ -675,6 +675,15 @@ const ConsultantCard = ({
                 }}
                 aria-label={`${toDisplayString(consultant.name)} 상담사 상세 보기`}
             >
+                {renderActions && (
+                    <div
+                        className="mg-consultant-card__corner-actions"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                    >
+                        {renderActions(consultant)}
+                    </div>
+                )}
                 <div className="mg-consultant-card__header-section">
                     <Avatar
                         profileImageUrl={consultant.profileImageUrl}

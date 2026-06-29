@@ -1,7 +1,5 @@
 import { User, Calendar, Users, MessageSquare } from 'lucide-react';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import { SmallCardGrid, ListTableView, StatusBadge } from '../../common';
+import { SmallCardGrid, ListTableView, StatusBadge, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../common';
 import SafeText from '../../common/SafeText';
 import { ProfileCard } from '../../ui/Card/index';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
@@ -24,69 +22,39 @@ const ClientOverviewTab = ({
     viewMode = 'smallCard'
 }) => {
     const { t } = useTranslation();
-    /** 큰/작은 카드·목록에서 동일한 내담자 작업 버튼 (행·카드 클릭과 분리) */
-    const renderClientActions = (client, { compact = false, table = false } = {}) => {
-        const actionClass = [
-            'mg-v2-profile-card__actions',
-            'mg-v2-client-actions',
-            compact && 'mg-v2-client-actions--compact',
-            table && 'mg-v2-client-actions--table'
-        ].filter(Boolean).join(' ');
 
-        return (
-            <div
-                className={actionClass}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-                role="group"
-                aria-label="내담자 작업"
-            >
-                <MGButton
-                    variant="secondary"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => onClientSelect(client)}
-                    preventDoubleClick={true}
-                >
-                    상세보기
-                </MGButton>
-                <MGButton
-                    variant="primary"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => onEditClient(client)}
-                    preventDoubleClick={true}
-                >
-                    {t('common.actions.edit')}
-                </MGButton>
-                {onResetPassword && (
-                    <MGButton
-                        variant="secondary"
-                        size="small"
-                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={() => onResetPassword(client)}
-                        title="비밀번호 초기화"
-                        preventDoubleClick={true}
-                    >
-                        비밀번호 초기화
-                    </MGButton>
-                )}
-                <MGButton
-                    variant="danger"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => onDeleteClient(client)}
-                    preventDoubleClick={true}
-                >
-                    {t('admin.actions.delete')}
-                </MGButton>
-            </div>
-        );
+    const buildClientActionItems = (client) => {
+        const items = [
+            {
+                id: 'edit',
+                label: t('common.actions.edit'),
+                onClick: () => onEditClient(client)
+            }
+        ];
+        if (onResetPassword) {
+            items.push({
+                id: 'reset-password',
+                label: '비밀번호 초기화',
+                title: '비밀번호 초기화',
+                onClick: () => onResetPassword(client)
+            });
+        }
+        items.push({
+            id: 'delete',
+            label: t('admin.actions.delete'),
+            onClick: () => onDeleteClient(client),
+            variant: 'destructive'
+        });
+        return items;
     };
+
+    const renderClientActions = (client, { layout = ENTITY_ROW_ACTIONS_LAYOUT.TABLE } = {}) => (
+        <EntityRowActions
+            layout={layout}
+            ariaLabel="내담자 작업"
+            items={buildClientActionItems(client)}
+        />
+    );
 
     const resolveClientStatus = (clientStatus) => {
         if (clientStatus === 'ACTIVE') return 'active';
@@ -144,7 +112,8 @@ const ClientOverviewTab = ({
                         )
                         : undefined
                 }
-                renderActions={() => renderClientActions(client)}
+                onClick={() => onClientSelect(client)}
+                renderActions={() => renderClientActions(client, { layout: ENTITY_ROW_ACTIONS_LAYOUT.CARD })}
             />
         );
     };
@@ -168,7 +137,7 @@ const ClientOverviewTab = ({
                     <span key="grade" className="mg-v2-grade-badge"><SafeText>{gradeKorean}</SafeText></span>
                 ]}
                 onClick={() => onClientSelect(client)}
-                renderActions={() => renderClientActions(client, { compact: true })}
+                renderActions={() => renderClientActions(client, { layout: ENTITY_ROW_ACTIONS_LAYOUT.CORNER })}
             />
         );
     };
@@ -200,7 +169,9 @@ const ClientOverviewTab = ({
                     ]}
                     data={clients}
                     renderCell={(key, item) => {
-                        if (key === '_actions') return renderClientActions(item, { table: true });
+                        if (key === '_actions') {
+                            return renderClientActions(item, { layout: ENTITY_ROW_ACTIONS_LAYOUT.TABLE });
+                        }
                         if (key === 'name') return maskEncryptedDisplay(item.name, '이름');
                         if (key === 'email') return maskEncryptedDisplay(item.email, '이메일');
                         if (key === 'status') return getUserStatusKoreanNameSync(item?.status);

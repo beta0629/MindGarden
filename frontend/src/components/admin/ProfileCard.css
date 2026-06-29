@@ -389,6 +389,18 @@
   justify-content: flex-end;
 }
 
+/* compact/smallCard: 우상단 overflow (⋮) — 인라인 버튼 스택 제거 */
+.mg-v2-profile-card__corner-actions {
+  position: absolute;
+  top: var(--mg-spacing-8, 0.5rem);
+  right: var(--mg-spacing-8, 0.5rem);
+  z-index: 2;
+}
+
+.mg-v2-profile-card--compact {
+  padding-right: calc(var(--mg-spacing-16, 1rem) + var(--touch-target-min, 2.75rem));
+}
+
 /* 좌측 상태 스트라이프 */
 .mg-v2-profile-card::before {
   content: '';

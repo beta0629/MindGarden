@@ -33,7 +33,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
-import { ViewModeToggle, SmallCardGrid, ListTableView } from '../common';
+import { ViewModeToggle, SmallCardGrid, ListTableView, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../common';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -764,6 +764,38 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         });
     }, []);
 
+    const renderConsultantActions = useCallback((consultant, layout = ENTITY_ROW_ACTIONS_LAYOUT.TABLE) => (
+        <EntityRowActions
+            layout={layout}
+            ariaLabel="상담사 작업"
+            items={[
+                {
+                    id: 'edit',
+                    label: t('common.actions.edit'),
+                    onClick: () => handleOpenModal('edit', consultant)
+                },
+                {
+                    id: 'reset-password',
+                    label: CONSULTANT_COMP_PASSWORD_RESET.BTN_LABEL,
+                    title: CONSULTANT_COMP_PASSWORD_RESET.BTN_TITLE,
+                    onClick: () => {
+                        setPasswordResetConsultant(consultant);
+                        setShowPasswordResetModal(true);
+                    }
+                },
+                {
+                    id: 'delete',
+                    label: t('admin.actions.delete'),
+                    onClick: () => {
+                        setSelectedConsultant(consultant);
+                        setShowDeleteConfirm(true);
+                    },
+                    variant: 'destructive'
+                }
+            ]}
+        />
+    ), [handleOpenModal, t]);
+
     useEffect(() => {
         if (!showModal || !selectedConsultant?.id) {
             return undefined;
@@ -1420,49 +1452,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         consultant={consultant}
                                                         badgeInfo={getConsultantBadgeDisplay(consultant)}
                                                         onCardClick={() => handleConsultantSelect(consultant)}
-                                                        renderActions={(c) => (
-                                                            <>
-                                                                <MGButton
-                                                                    variant="primary"
-                                                                    size="small"
-                                                                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleOpenModal('edit', c);
-                                                                    }}
-                                                                    preventDoubleClick={true}
-                                                                >
-                                                                    {t('common.actions.edit')}
-                                                                </MGButton>
-                                                                <MGButton
-                                                                    variant="secondary"
-                                                                    size="small"
-                                                                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setPasswordResetConsultant(c);
-                                                                        setShowPasswordResetModal(true);
-                                                                    }}
-                                                                    preventDoubleClick={true}
-                                                                    title={CONSULTANT_COMP_PASSWORD_RESET.BTN_TITLE}
-                                                                >
-                                                                    {CONSULTANT_COMP_PASSWORD_RESET.BTN_LABEL}
-                                                                </MGButton>
-                                                                <MGButton
-                                                                    variant="danger"
-                                                                    size="small"
-                                                                    className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedConsultant(c);
-                                                                        setShowDeleteConfirm(true);
-                                                                    }}
-                                                                    preventDoubleClick={true}
-                                                                >
-                                                                    {t('admin.actions.delete')}
-                                                                </MGButton>
-                                                            </>
-                                                        )}
+                                                        renderActions={(c) => renderConsultantActions(c, ENTITY_ROW_ACTIONS_LAYOUT.CARD)}
                                                     />
                                                 ))}
                                             </div>
@@ -1475,6 +1465,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         consultant={consultant}
                                                         badgeInfo={getConsultantBadgeDisplay(consultant)}
                                                         onCardClick={() => handleConsultantSelect(consultant)}
+                                                        renderActions={(c) => renderConsultantActions(c, ENTITY_ROW_ACTIONS_LAYOUT.CORNER)}
                                                     />
                                                 ))}
                                             </SmallCardGrid>
@@ -1486,10 +1477,14 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     { key: 'email', label: t('admin:consultant.table.email') },
                                                     { key: 'status', label: t('admin:consultant.table.status') },
                                                     { key: 'createdAt', label: t('admin:consultant.table.joinDate'), hideOnMobile: true },
-                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount'), hideOnMobile: true }
+                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount'), hideOnMobile: true },
+                                                    { key: '_actions', label: t('common.actions.actions', '작업') }
                                                 ]}
                                                 data={getFilteredConsultants}
                                                 renderCell={(key, item) => {
+                                                    if (key === '_actions') {
+                                                        return renderConsultantActions(item, ENTITY_ROW_ACTIONS_LAYOUT.TABLE);
+                                                    }
                                                     if (key === 'professionalProviderTypeCode') return getProfessionalProviderTypeLabel(item.professionalProviderTypeCode) || '-';
                                                     if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
                                                     if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
@@ -1596,49 +1591,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         consultant={consultant}
                                                         badgeInfo={getConsultantBadgeDisplay(consultant)}
                                                         onCardClick={() => handleConsultantSelect(consultant)}
-                                                        renderActions={(c) => (
-                                                            <>
-                                                                <MGButton
-                                                                    variant="primary"
-                                                                    size="small"
-                                                                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleOpenModal('edit', c);
-                                                                    }}
-                                                                    preventDoubleClick={true}
-                                                                >
-                                                                    {t('common.actions.edit')}
-                                                                </MGButton>
-                                                                <MGButton
-                                                                    variant="secondary"
-                                                                    size="small"
-                                                                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setPasswordResetConsultant(c);
-                                                                        setShowPasswordResetModal(true);
-                                                                    }}
-                                                                    preventDoubleClick={true}
-                                                                    title={CONSULTANT_COMP_PASSWORD_RESET.BTN_TITLE}
-                                                                >
-                                                                    {CONSULTANT_COMP_PASSWORD_RESET.BTN_LABEL}
-                                                                </MGButton>
-                                                                <MGButton
-                                                                    variant="danger"
-                                                                    size="small"
-                                                                    className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedConsultant(c);
-                                                                        setShowDeleteConfirm(true);
-                                                                    }}
-                                                                    preventDoubleClick={true}
-                                                                >
-                                                                    {t('admin.actions.delete')}
-                                                                </MGButton>
-                                                            </>
-                                                        )}
+                                                        renderActions={(c) => renderConsultantActions(c, ENTITY_ROW_ACTIONS_LAYOUT.CARD)}
                                                     />
                                                 ))}
                                             </div>
@@ -1651,6 +1604,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                         consultant={consultant}
                                                         badgeInfo={getConsultantBadgeDisplay(consultant)}
                                                         onCardClick={() => handleConsultantSelect(consultant)}
+                                                        renderActions={(c) => renderConsultantActions(c, ENTITY_ROW_ACTIONS_LAYOUT.CORNER)}
                                                     />
                                                 ))}
                                             </SmallCardGrid>
@@ -1662,10 +1616,14 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                     { key: 'email', label: t('admin:consultant.table.email') },
                                                     { key: 'status', label: t('admin:consultant.table.status') },
                                                     { key: 'createdAt', label: t('admin:consultant.table.joinDate'), hideOnMobile: true },
-                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount'), hideOnMobile: true }
+                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount'), hideOnMobile: true },
+                                                    { key: '_actions', label: t('common.actions.actions', '작업') }
                                                 ]}
                                                 data={getFilteredConsultants}
                                                 renderCell={(key, item) => {
+                                                    if (key === '_actions') {
+                                                        return renderConsultantActions(item, ENTITY_ROW_ACTIONS_LAYOUT.TABLE);
+                                                    }
                                                     if (key === 'professionalProviderTypeCode') return getProfessionalProviderTypeLabel(item.professionalProviderTypeCode) || '-';
                                                     if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
                                                     if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';

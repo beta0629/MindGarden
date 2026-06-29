@@ -10,7 +10,7 @@ const VARIANT_TO_MG = {
   warning: 'warning',
   info: 'info',
   outline: 'outline',
-  ghost: 'outline'
+  ghost: 'ghost'
 };
 
 const SIZE_TO_MG = {

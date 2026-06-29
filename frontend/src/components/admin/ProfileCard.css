@@ -395,6 +395,12 @@
   top: var(--mg-spacing-8, 0.5rem);
   right: var(--mg-spacing-8, 0.5rem);
   z-index: 2;
+  overflow: visible;
+}
+
+/* compact + corner overflow: 드롭다운 패널이 카드 밖으로 펼쳐지도록 */
+.mg-v2-profile-card--compact:has(.mg-v2-profile-card__corner-actions) {
+  overflow: visible;
 }
 
 .mg-v2-profile-card--compact {

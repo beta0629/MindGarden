@@ -26,4 +26,9 @@
   top: var(--mg-spacing-8, 0.5rem);
   right: var(--mg-spacing-8, 0.5rem);
   z-index: 2;
+  overflow: visible;
+}
+
+.mg-consultant-card--admin-compact:has(.mg-consultant-card__corner-actions) {
+  overflow: visible;
 }

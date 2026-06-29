@@ -7,7 +7,6 @@
   border: 1px solid var(--color-border-light, var(--mg-color-border-main));
   border-radius: var(--radius-lg, 16px);
   padding: var(--mg-spacing-24, 1.5rem);
-  padding-left: calc(var(--mg-spacing-24, 1.5rem) + 4px); /* 좌측 상태 스트라이프 여백 보정 */
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-16, 1rem);
@@ -278,7 +277,6 @@
  */
 .mg-v2-profile-card--compact {
   padding: var(--mg-spacing-16, 1rem) var(--mg-spacing-16, 1rem) var(--mg-spacing-12, 0.75rem);
-  padding-left: calc(var(--mg-spacing-16, 1rem) + 4px); /* 좌측 상태 스트라이프 여백 보정 */
   gap: var(--mg-spacing-8, 0.5rem);
   min-width: 0;
   /* 콘텐츠 기반 자동 높이 (공통 .mg-v2-profile-card 의 padding-lg/gap-md 오버라이드) */
@@ -407,20 +405,6 @@
   padding-right: calc(var(--mg-spacing-16, 1rem) + var(--touch-target-min, 2.75rem));
 }
 
-/* 좌측 상태 스트라이프 */
-.mg-v2-profile-card::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
-  background-color: transparent;
-  border-radius: var(--radius-lg, 16px) 0 0 var(--radius-lg, 16px);
-}
-.mg-v2-profile-card--status-active::before { background-color: var(--mg-success-500); }
-.mg-v2-profile-card--status-inactive::before { background-color: var(--mg-gray-400); }
-.mg-v2-profile-card--status-urgent::before { background-color: var(--mg-error-500); }
-.mg-v2-profile-card--status-pending::before { background-color: var(--mg-warning-500); }
-
 /* 아바타 래퍼 + 인디케이터 */
 .mg-v2-profile-card__avatar-wrapper {
   position: relative; display: inline-flex; flex-shrink: 0;
@@ -462,7 +446,3 @@
 .mg-v2-profile-card__risk-badge--high { background: var(--mg-error-100); color: var(--mg-error-600); }
 .mg-v2-profile-card__risk-badge--medium { background: var(--mg-warning-100); color: var(--mg-warning-700); }
 .mg-v2-profile-card__risk-badge--low { background: var(--mg-success-100); color: var(--mg-success-600); }
-
-/* INACTIVE 카드 전체 톤 다운 */
-.mg-v2-profile-card--status-inactive { opacity: 0.75; }
-.mg-v2-profile-card--status-inactive:hover { opacity: 1; }

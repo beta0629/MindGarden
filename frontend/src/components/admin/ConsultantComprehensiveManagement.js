@@ -1667,7 +1667,10 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                 />
             )}
             {embedded ? consultantTabAndBelow : (
-                <main aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}>
+                <main
+                    className="mg-v2-user-management-stack"
+                    aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}
+                >
                     {consultantTabAndBelow}
                 </main>
             )}

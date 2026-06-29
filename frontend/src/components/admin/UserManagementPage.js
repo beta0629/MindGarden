@@ -71,7 +71,10 @@ const UserManagementPage = () => {
               subtitle="상담사·내담자·스태프 계정을 유형별로 조회·관리합니다."
               titleId="user-management-page-title"
             />
-            <main aria-labelledby="user-management-page-title">
+            <main
+              className="mg-v2-user-management-stack"
+              aria-labelledby="user-management-page-title"
+            >
               <ContentSection noCard>
                 <div className="mg-v2-ad-b0kla__pill-toggle">
                   <MGButton

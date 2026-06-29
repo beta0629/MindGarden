@@ -22,9 +22,7 @@
   width: 100%;
 }
 
-.mg-v2-consultant-management .mg-v2-ad-b0kla__pill-toggle {
-  margin-bottom: var(--mg-layout-gap, 1.5rem);
-}
+/* 탭·KPI 간격: ContentSection.css mg-v2-user-management-stack SSOT */
 
 .mg-v2-consultant-search-actions {
   margin-left: auto;

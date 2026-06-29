@@ -24,6 +24,33 @@
   padding: 0;
 }
 
+/**
+ * 통합 사용자 관리·종합관리 탭 스택 — 세로 리듬 SSOT
+ * ListBlockView padding-inline 과 동일 토큰 계열 (--mg-spacing-*)
+ */
+.mg-v2-user-management-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-layout-gap, var(--mg-spacing-lg, 1.5rem));
+  width: 100%;
+  min-width: 0;
+}
+
+/* Pill 탭 행 — 컨테이너 상·하 여백 (pill-toggle 이 가장자리에 붙지 않도록) */
+.mg-v2-content-section--plain:has(.mg-v2-ad-b0kla__pill-toggle) {
+  padding-block: var(--mg-spacing-md, 1rem);
+}
+
+/* stack gap 이 간격을 담당 — KPI·검색 섹션 margin-bottom 중복 방지 */
+.mg-v2-user-management-stack > .mg-v2-mapping-kpi-section,
+.mg-v2-user-management-stack > .mg-v2-mapping-search-section {
+  margin-bottom: 0;
+}
+
+.mg-v2-tab-content {
+  min-width: 0;
+}
+
 .mg-v2-content-section__header {
   display: flex;
   justify-content: space-between;

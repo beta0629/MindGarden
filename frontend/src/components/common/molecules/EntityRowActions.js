@@ -62,14 +62,16 @@ function EntityRowActions({
       return {
         position: 'fixed',
         top: `${Math.max(MENU_GAP_PX, rect.top - menuHeight - MENU_GAP_PX)}px`,
-        right: `${window.innerWidth - rect.right}px`
+        right: `${window.innerWidth - rect.right}px`,
+        visibility: 'visible'
       };
     }
 
     return {
       position: 'fixed',
       top: `${rect.bottom + MENU_GAP_PX}px`,
-      right: `${window.innerWidth - rect.right}px`
+      right: `${window.innerWidth - rect.right}px`,
+      visibility: 'visible'
     };
   }, []);
 
@@ -174,13 +176,21 @@ function EntityRowActions({
     openUpward && 'mg-v2-entity-row-actions__menu--open-upward'
   ].filter(Boolean).join(' ');
 
+  const portalMenuStyle = open
+    ? {
+      ...(menuCoords || { position: 'fixed', visibility: 'hidden' }),
+      zIndex: 'var(--z-modal, 10000)'
+    }
+    : undefined;
+
   const menuNode = open ? (
     <div
       ref={menuRef}
       id={menuId}
       className={menuClassName}
       role="menu"
-      style={menuCoords || undefined}
+      data-mg-managed-position="entity-row-actions"
+      style={portalMenuStyle}
     >
       {regularItems.map((item) => (
         <button

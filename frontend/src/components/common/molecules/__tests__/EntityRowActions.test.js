@@ -103,6 +103,7 @@ describe('EntityRowActions', () => {
     const menu = screen.getByRole('menu');
     expect(menu).toHaveClass('mg-v2-entity-row-actions__menu--portal');
     expect(document.body.contains(menu)).toBe(true);
+    expect(menu).toHaveStyle({ position: 'fixed', visibility: 'visible' });
   });
 
   it('opens corner menu inside compact ProfileCard without triggering card onClick', () => {

@@ -196,6 +196,24 @@
   box-shadow: var(--cs-shadow-xs);
 }
 
+.mg-button--ghost {
+  background-color: transparent;
+  color: var(--ad-b0kla-icon-color, var(--mg-color-text-secondary));
+  border-color: transparent;
+}
+
+.mg-button--ghost:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--ad-b0kla-bg, var(--mg-color-background-sub));
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  box-shadow: none;
+  transform: none;
+}
+
+.mg-button--ghost:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+  box-shadow: none;
+}
+
 .mg-button--progress {
   background-color: var(--mg-color-primary-light, rgba(61, 82, 70, 0.15));
   color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));

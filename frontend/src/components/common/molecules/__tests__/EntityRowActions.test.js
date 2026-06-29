@@ -27,11 +27,28 @@ describe('EntityRowActions', () => {
 
     const trigger = screen.getByRole('button', { name: '더보기' });
     expect(trigger).toBeInTheDocument();
+    expect(trigger).toHaveClass('mg-button--ghost');
+    expect(trigger).toHaveClass('mg-v2-entity-row-actions__trigger');
     expect(screen.queryByRole('menuitem', { name: '수정' })).not.toBeInTheDocument();
 
     fireEvent.click(trigger);
     expect(screen.getByRole('menuitem', { name: '수정' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: '삭제' })).toBeInTheDocument();
+  });
+
+  it('renders menu as vertical list structure', () => {
+    render(<EntityRowActions items={baseItems} ariaLabel="테스트 작업" />);
+
+    fireEvent.click(screen.getByRole('button', { name: '더보기' }));
+
+    const menu = screen.getByRole('menu');
+    const items = screen.getAllByRole('menuitem');
+
+    expect(menu).toHaveClass('mg-v2-entity-row-actions__menu');
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent('수정');
+    expect(items[1]).toHaveTextContent('삭제');
+    expect(screen.getByRole('separator')).toBeInTheDocument();
   });
 
   it('invokes item onClick and closes menu', () => {

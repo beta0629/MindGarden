@@ -29,70 +29,110 @@
   z-index: 2;
 }
 
+.mg-v2-entity-row-actions--open {
+  z-index: var(--z-dropdown-menu, var(--z-dropdown, 1000));
+}
+
 .mg-v2-entity-row-actions__menu-wrap {
   position: relative;
   flex-shrink: 0;
 }
 
-.mg-v2-entity-row-actions__trigger {
+.mg-v2-entity-row-actions--open .mg-v2-entity-row-actions__menu-wrap {
+  z-index: var(--z-dropdown-menu, var(--z-dropdown, 1000));
+}
+
+/* B0KlA ghost icon-only ⋮ 트리거 */
+.mg-v2-entity-row-actions__trigger.mg-button {
   min-width: var(--touch-target-min, 2.75rem);
   min-height: var(--touch-target-min, 2.75rem);
   padding: var(--mg-spacing-6, 0.375rem);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  box-shadow: none;
 }
 
-.mg-v2-entity-row-actions__menu {
+.mg-v2-entity-row-actions__trigger.mg-button .mg-button__content,
+.mg-v2-entity-row-actions__trigger.mg-button .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-v2-entity-row-actions__trigger.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  transform: none;
+}
+
+/* 전역 [role="menu"] 규칙(_dropdowns.css) 오버라이드 — menuitem position:fixed 겹침 방지 */
+.mg-v2-entity-row-actions__menu[role="menu"] {
   position: absolute;
   top: calc(100% + var(--mg-spacing-4, 0.25rem));
   right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   min-width: var(--mg-spacing-160, 10rem);
   background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
   border: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
   border-radius: var(--ad-b0kla-radius-sm, var(--mg-radius-md));
   box-shadow: var(--mg-shadow-md);
   padding: var(--mg-spacing-4, 0.25rem) 0;
-  z-index: var(--z-dropdown, 1000);
+  z-index: var(--z-dropdown-menu, var(--z-dropdown, 1000));
+  isolation: auto;
+  overflow: visible;
 }
 
-.mg-v2-entity-row-actions--corner .mg-v2-entity-row-actions__menu {
+.mg-v2-entity-row-actions__menu[role="menu"] > * {
+  position: static;
+  transform: none;
+  will-change: auto;
+  isolation: auto;
+}
+
+.mg-v2-entity-row-actions--corner .mg-v2-entity-row-actions__menu[role="menu"] {
   top: calc(100% + var(--mg-spacing-4, 0.25rem));
   bottom: auto;
 }
 
-.mg-v2-entity-row-actions__menu-item {
-  display: block;
+.mg-v2-entity-row-actions__menu-item[role="menuitem"] {
+  display: flex;
+  align-items: center;
   width: 100%;
+  min-height: var(--touch-target-min, 2.75rem);
   padding: var(--mg-spacing-10, 0.625rem) var(--mg-spacing-16, 1rem);
   border: none;
   background: transparent;
   text-align: left;
   font-size: var(--mg-font-size-sm, 0.875rem);
   font-weight: 500;
+  line-height: var(--mg-line-height-normal, 1.5);
   color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
   cursor: pointer;
   white-space: nowrap;
+  box-sizing: border-box;
+  flex-shrink: 0;
   transition: background-color 0.15s ease;
 }
 
-.mg-v2-entity-row-actions__menu-item:hover:not(:disabled),
-.mg-v2-entity-row-actions__menu-item:focus-visible {
+.mg-v2-entity-row-actions__menu-item[role="menuitem"]:hover:not(:disabled),
+.mg-v2-entity-row-actions__menu-item[role="menuitem"]:focus-visible {
   background: var(--ad-b0kla-green-bg, var(--mg-color-background-sub));
   outline: none;
 }
 
-.mg-v2-entity-row-actions__menu-item:disabled {
+.mg-v2-entity-row-actions__menu-item[role="menuitem"]:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.mg-v2-entity-row-actions__menu-item--destructive {
+.mg-v2-entity-row-actions__menu-item--destructive[role="menuitem"] {
   color: var(--mg-error-500, var(--mg-color-error));
 }
 
-.mg-v2-entity-row-actions__menu-item--destructive:hover:not(:disabled),
-.mg-v2-entity-row-actions__menu-item--destructive:focus-visible {
+.mg-v2-entity-row-actions__menu-item--destructive[role="menuitem"]:hover:not(:disabled),
+.mg-v2-entity-row-actions__menu-item--destructive[role="menuitem"]:focus-visible {
   background: var(--mg-error-50);
 }
 
@@ -100,6 +140,7 @@
   height: 1px;
   margin: var(--mg-spacing-4, 0.25rem) 0;
   background: var(--ad-b0kla-border, var(--mg-color-border-main));
+  flex-shrink: 0;
 }
 
 /* 테이블 작업열: flex column stack 제거·열 너비 축소 */

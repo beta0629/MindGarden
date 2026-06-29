@@ -116,10 +116,10 @@ function EntityRowActions({
         <div className="mg-v2-entity-row-actions__menu-wrap">
           <MGButton
             type="button"
-            variant="outline"
+            variant="ghost"
             size="small"
             className={buildErpMgButtonClassName({
-              variant: 'outline',
+              variant: 'ghost',
               size: 'sm',
               loading: false,
               className: 'mg-v2-entity-row-actions__trigger'

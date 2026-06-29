@@ -9,7 +9,7 @@ import './MGButton.css';
  * - 접근성 고려
  * 
  * @param {Object} props - 컴포넌트 props
- * @param {string} props.variant - 버튼 스타일 (primary, secondary, success, danger, warning, info, outline, progress)
+ * @param {string} props.variant - 버튼 스타일 (primary, secondary, success, danger, warning, info, outline, ghost, progress)
  * @param {string} props.size - 버튼 크기 (small, medium, large)
  * @param {boolean} props.disabled - 비활성화 상태
  * @param {boolean} props.loading - 로딩 상태

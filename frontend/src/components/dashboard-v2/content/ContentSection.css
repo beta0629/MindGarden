@@ -58,8 +58,12 @@
   flex-wrap: wrap;
   gap: var(--mg-layout-gap, 1rem);
   margin-bottom: var(--mg-layout-gap, 1rem);
-  padding-bottom: var(--mg-spacing-md, 1rem);
+  padding-block-end: var(--mg-spacing-md, 1rem);
   border-bottom: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-content-section--plain .mg-v2-content-section__header {
+  padding-inline: var(--mg-spacing-md, 1rem);
 }
 
 .mg-v2-content-section__title-wrap {

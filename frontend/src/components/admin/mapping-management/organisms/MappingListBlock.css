@@ -9,18 +9,18 @@
 }
 
 /* CARD_VISUAL_UNIFIED_SPEC 1번 통일 스펙 적용 */
-.mg-v2-mapping-list-block__card {
+.mg-v2-content-card.mg-v2-mapping-list-block__card {
   position: relative;
   border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-radius-lg);
-  padding: var(--mg-spacing-16);
+  padding: var(--mg-spacing-md, 1rem);
   min-height: 140px;
   box-shadow: var(--mg-shadow-sm);
   background: var(--mg-bg-card, var(--mg-color-surface-main));
   transition: box-shadow 0.2s ease;
 }
 
-.mg-v2-mapping-list-block__card:hover {
+.mg-v2-content-card.mg-v2-mapping-list-block__card:hover {
   box-shadow: var(--mg-card-hover-shadow);
 }
 
@@ -28,8 +28,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md, 1rem);
+  margin-block-end: var(--mg-spacing-md, 1rem);
+  padding-block-end: var(--mg-spacing-md, 1rem);
+  padding-inline-start: var(--mg-spacing-sm, 0.5rem);
+  padding-inline-end: 0;
   border-bottom: 1px solid var(--ad-b0kla-border);
 }
 
@@ -37,6 +41,11 @@
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--ad-b0kla-title-color);
+  padding-inline-start: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-mapping-list-block__toggle {
+  flex-shrink: 0;
 }
 
 /* B0KlA Pill Toggle (PILL_TOGGLE_DESIGN_SPEC v1.0 - AdminDashboardB0KlA.css와 동일) */
@@ -84,7 +93,8 @@
 .mg-v2-mapping-list-block__grid {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--mg-spacing-12, 0.75rem);
+  padding-block-end: var(--mg-spacing-md, 1rem);
 }
 
 /* 한 열 flex 안에서 프로필 카드가 뷰포트 폭을 밀어내지 않도록 */

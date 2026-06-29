@@ -13,7 +13,8 @@ const V2_DROPDOWN_PANEL_CLASSES = [
   'mg-v2-dropdown-panel',
   'mg-v2-profile-dropdown__panel',
   'mg-v2-quick-actions-dropdown__panel',
-  'mg-v2-notification-dropdown__panel'
+  'mg-v2-notification-dropdown__panel',
+  'mg-v2-entity-row-actions__menu--portal'
 ];
 
 const isV2DropdownPanel = (element) => {

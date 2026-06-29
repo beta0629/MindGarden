@@ -127,7 +127,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const consultantEditPhoneBaselineRef = useRef('');
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
-    const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list' — 기본: 컴팩트(작은 카드)
+    const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list' — 기본: 목록(밀도 최적)
 
     const loadProfessionalTypeCodes = useCallback(async() => {
         const fetchOnce = async() => {

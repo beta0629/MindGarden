@@ -29,6 +29,13 @@
   z-index: 2;
 }
 
+/* ProfileCard corner-actions 래퍼가 이미 absolute — 이중 오프셋·히트영역 축소 방지 */
+.mg-v2-profile-card__corner-actions .mg-v2-entity-row-actions--corner {
+  position: static;
+  top: auto;
+  right: auto;
+}
+
 .mg-v2-entity-row-actions--open {
   z-index: var(--z-dropdown-menu, var(--z-dropdown, 1000));
 }
@@ -36,6 +43,7 @@
 .mg-v2-entity-row-actions__menu-wrap {
   position: relative;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 
 .mg-v2-entity-row-actions--open .mg-v2-entity-row-actions__menu-wrap {
@@ -150,6 +158,10 @@
   left: auto;
   right: auto;
   bottom: auto;
+  display: flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
   z-index: var(--z-dropdown-menu, var(--z-dropdown, 1000));
 }
 

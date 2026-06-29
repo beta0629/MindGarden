@@ -6,7 +6,8 @@
  * @since 2026-06-29
  */
 
-import React, { useState, useRef, useEffect, useCallback, useId } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useId } from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { MoreVertical } from 'lucide-react';
 import MGButton from '../MGButton';
@@ -20,6 +21,8 @@ export const ENTITY_ROW_ACTIONS_LAYOUT = {
 };
 
 const ICON_SIZE = 16;
+const MENU_GAP_PX = 4;
+const MENU_ESTIMATE_HEIGHT_PX = 160;
 
 function EntityRowActions({
   items = [],
@@ -29,7 +32,11 @@ function EntityRowActions({
   menuId: menuIdProp
 }) {
   const [open, setOpen] = useState(false);
+  const [menuCoords, setMenuCoords] = useState(null);
+  const [openUpward, setOpenUpward] = useState(false);
   const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
   const autoMenuId = useId();
   const menuId = menuIdProp || autoMenuId;
 
@@ -39,11 +46,62 @@ function EntityRowActions({
 
   const close = useCallback(() => setOpen(false), []);
 
+  const computeMenuCoords = useCallback(() => {
+    if (!triggerRef.current) return null;
+
+    const rect = triggerRef.current.getBoundingClientRect();
+    const menuHeight = menuRef.current?.offsetHeight || MENU_ESTIMATE_HEIGHT_PX;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const shouldOpenUpward = spaceBelow < menuHeight + MENU_GAP_PX
+      && rect.top > menuHeight + MENU_GAP_PX;
+
+    setOpenUpward(shouldOpenUpward);
+
+    if (shouldOpenUpward) {
+      return {
+        position: 'fixed',
+        top: `${Math.max(MENU_GAP_PX, rect.top - menuHeight - MENU_GAP_PX)}px`,
+        right: `${window.innerWidth - rect.right}px`
+      };
+    }
+
+    return {
+      position: 'fixed',
+      top: `${rect.bottom + MENU_GAP_PX}px`,
+      right: `${window.innerWidth - rect.right}px`
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuCoords(null);
+      setOpenUpward(false);
+      return undefined;
+    }
+
+    const updatePosition = () => {
+      setMenuCoords(computeMenuCoords());
+    };
+
+    updatePosition();
+    requestAnimationFrame(updatePosition);
+
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open, computeMenuCoords, visibleItems.length]);
+
   useEffect(() => {
     if (!open) return undefined;
 
     const handleOutside = (event) => {
-      if (rootRef.current && !rootRef.current.contains(event.target)) {
+      const inRoot = rootRef.current?.contains(event.target);
+      const inMenu = menuRef.current?.contains(event.target);
+      if (!inRoot && !inMenu) {
         close();
       }
     };
@@ -90,6 +148,52 @@ function EntityRowActions({
     open && 'mg-v2-entity-row-actions--open'
   ].filter(Boolean).join(' ');
 
+  const menuClassName = [
+    'mg-v2-entity-row-actions__menu',
+    'mg-v2-entity-row-actions__menu--portal',
+    openUpward && 'mg-v2-entity-row-actions__menu--open-upward'
+  ].filter(Boolean).join(' ');
+
+  const menuNode = open ? (
+    <div
+      ref={menuRef}
+      id={menuId}
+      className={menuClassName}
+      role="menu"
+      style={menuCoords || undefined}
+    >
+      {regularItems.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="menuitem"
+          className="mg-v2-entity-row-actions__menu-item"
+          disabled={item.disabled}
+          title={item.title}
+          onClick={handleItemClick(item)}
+        >
+          {item.label}
+        </button>
+      ))}
+      {regularItems.length > 0 && destructiveItems.length > 0 && (
+        <div className="mg-v2-entity-row-actions__menu-divider" role="separator" />
+      )}
+      {destructiveItems.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="menuitem"
+          className="mg-v2-entity-row-actions__menu-item mg-v2-entity-row-actions__menu-item--destructive"
+          disabled={item.disabled}
+          title={item.title}
+          onClick={handleItemClick(item)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
   return (
     <div
       ref={rootRef}
@@ -113,7 +217,7 @@ function EntityRowActions({
         </MGButton>
       )}
       {visibleItems.length > 0 && (
-        <div className="mg-v2-entity-row-actions__menu-wrap">
+        <div ref={triggerRef} className="mg-v2-entity-row-actions__menu-wrap">
           <MGButton
             type="button"
             variant="ghost"
@@ -135,43 +239,9 @@ function EntityRowActions({
           >
             <MoreVertical size={ICON_SIZE} aria-hidden="true" />
           </MGButton>
-          {open && (
-            <div
-              id={menuId}
-              className="mg-v2-entity-row-actions__menu"
-              role="menu"
-            >
-              {regularItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="menuitem"
-                  className="mg-v2-entity-row-actions__menu-item"
-                  disabled={item.disabled}
-                  title={item.title}
-                  onClick={handleItemClick(item)}
-                >
-                  {item.label}
-                </button>
-              ))}
-              {regularItems.length > 0 && destructiveItems.length > 0 && (
-                <div className="mg-v2-entity-row-actions__menu-divider" role="separator" />
-              )}
-              {destructiveItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="menuitem"
-                  className="mg-v2-entity-row-actions__menu-item mg-v2-entity-row-actions__menu-item--destructive"
-                  disabled={item.disabled}
-                  title={item.title}
-                  onClick={handleItemClick(item)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          )}
+          {menuNode && typeof document !== 'undefined'
+            ? ReactDOM.createPortal(menuNode, document.body)
+            : null}
         </div>
       )}
     </div>

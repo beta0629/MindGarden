@@ -199,7 +199,7 @@ const StaffManagement = ({ embedded = false }) => {
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
   const staffEditPhoneBaselineRef = useRef('');
   // PR-200·PR-202 list 렌더 경로 유지, 기본 뷰는 목록(밀도 최적)
-  const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list'
+  const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list'
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });
   const [staffEditForm, setStaffEditForm] = useState({ name: '', email: '', phone: '' });

@@ -29,6 +29,7 @@
   overflow: visible;
 }
 
-.mg-consultant-card--admin-compact:has(.mg-consultant-card__corner-actions) {
+.mg-v2-consultant-card--admin-compact:has(.mg-consultant-card__corner-actions),
+.mg-v2-list-block__grid--small .mg-consultant-card--admin-compact {
   overflow: visible;
 }

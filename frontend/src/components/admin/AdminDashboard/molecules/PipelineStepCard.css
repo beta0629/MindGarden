@@ -37,30 +37,7 @@
   line-height: var(--mg-v2-font-line-height-subheading, 1.4);
 }
 
-.pipeline-step-card--warning {
-  border-left: 3px solid var(--mg-v2-color-semantic-warning);
-}
-
-.pipeline-step-card--success {
-  border-left: 3px solid var(--mg-v2-color-semantic-success);
-}
-
-.pipeline-step-card--info {
-  border-left: 3px solid var(--mg-v2-color-semantic-info);
-}
-
-.pipeline-step-card--auto {
-  border-left: 3px solid var(--mg-v2-color-accent-main);
-}
-
-.pipeline-step-card--neutral {
-  border-left: 3px solid var(--mg-v2-color-border-default);
-}
-
 /* 진행 중/활성 단계 하이라이트 */
-.pipeline-step-card--active {
-  border-left: 3px solid var(--mg-v2-color-primary-main);
-}
 
 .pipeline-step-card--active .pipeline-step-card__title {
   font-weight: var(--mg-v2-font-weight-bold, 700);

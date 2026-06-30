@@ -170,26 +170,6 @@
   color: var(--cs-error-600);
 }
 
-.widget-statistics-color-primary {
-  border-left: 4px solid var(--mg-primary-500);
-}
-
-.widget-statistics-color-success {
-  border-left: 4px solid var(--mg-success-500);
-}
-
-.widget-statistics-color-warning {
-  border-left: 4px solid var(--mg-warning-500);
-}
-
-.widget-statistics-color-danger {
-  border-left: 4px solid var(--mg-error-500);
-}
-
-.widget-statistics-color-info {
-  border-left: 4px solid var(--mg-info-500);
-}
-
 .widget-statistics-trend {
   display: inline-flex;
   align-items: center;
@@ -544,9 +524,6 @@
   line-height: 1.2;
 }
 
-
-
-
 /* ========================================
    PendingDepositsWidget 전용 스타일
    Core Solution 디자인 시스템 기반
@@ -740,21 +717,6 @@
 }
 
 /* 통계 카드 상태별 스타일 */
-.mg-widget--api-performance .mg-stats-card--excellent {
-  border-left: 4px solid var(--mg-success-500);
-}
-
-.mg-widget--api-performance .mg-stats-card--good {
-  border-left: 4px solid var(--mg-info-500);
-}
-
-.mg-widget--api-performance .mg-stats-card--fair {
-  border-left: 4px solid var(--mg-warning-500);
-}
-
-.mg-widget--api-performance .mg-stats-card--poor {
-  border-left: 4px solid var(--mg-error-500);
-}
 
 /* 통계 카드 아이콘 */
 .mg-widget--api-performance .mg-stats-card__icon {
@@ -811,14 +773,7 @@
   border-color: var(--mg-gray-300);
 }
 
-/* API 아이템 상태별 스타일 */
-.mg-widget--api-performance .mg-api-item--warning {
-  border-left: 4px solid var(--mg-warning-500);
-}
-
-.mg-widget--api-performance .mg-api-item--error {
-  border-left: 4px solid var(--mg-error-500);
-}
+/* API 아이템 상태별 스타일 — 좌측 스트라이프 제거, 배지/테두리로 상태 표시 */
 
 /* API 엔드포인트 */
 .mg-widget--api-performance .mg-api-item__endpoint {

@@ -593,7 +593,6 @@
   border-radius: var(--mg-radius-md, 10px);
   background: var(--ad-b0kla-green-bg);
   border: 1px solid var(--ad-b0kla-border);
-  border-left: 4px solid var(--ad-b0kla-green);
   box-sizing: border-box;
   color: var(--ad-b0kla-title-color);
 }
@@ -1698,21 +1697,6 @@
 }
 
 /* 월 통계 카드 좌측 악센트 바 4px (§5.5: 수입=success, 지출=error, 순이익=primary, 건수=secondary) */
-.mg-financial-calendar-monthly-stats .mg-v2-ad-b0kla__card--accent-success {
-  border-left: 4px solid var(--mg-success-500);
-}
-
-.mg-financial-calendar-monthly-stats .mg-v2-ad-b0kla__card--accent-error {
-  border-left: 4px solid var(--mg-error-500);
-}
-
-.mg-financial-calendar-monthly-stats .mg-v2-ad-b0kla__card--accent-primary {
-  border-left: 4px solid var(--mg-primary-500);
-}
-
-.mg-financial-calendar-monthly-stats .mg-v2-ad-b0kla__card--accent-secondary {
-  border-left: 4px solid var(--mg-color-secondary-main, var(--ad-b0kla-text-secondary));
-}
 
 .mg-financial-calendar-monthly-grid {
   display: grid;
@@ -1818,25 +1802,6 @@
 }
 
 /* KPI 카드 좌측 악센트 바 4px (§6.2: 수입=success, 지출=error, 순이익=primary, 거래 건수=secondary) */
-.mg-v2-erp-dashboard-block .mg-v2-ad-b0kla__card--accent-success {
-  border-left: 4px solid var(--mg-success-500);
-}
-
-.mg-v2-erp-dashboard-block .mg-v2-ad-b0kla__card--accent-error {
-  border-left: 4px solid var(--mg-error-500);
-}
-
-.mg-v2-erp-dashboard-block .mg-v2-ad-b0kla__card--accent-primary {
-  border-left: 4px solid var(--mg-primary-500, var(--ad-b0kla-green));
-}
-
-.mg-v2-erp-dashboard-block .mg-v2-ad-b0kla__card--accent-secondary {
-  border-left: 4px solid var(--mg-color-secondary-main, var(--ad-b0kla-text-secondary));
-}
-
-.mg-v2-erp-dashboard-block .mg-v2-ad-b0kla__card--accent-warning {
-  border-left: 4px solid var(--mg-warning-500, var(--ad-b0kla-orange));
-}
 
 /* KPI 라벨·숫자 (§6.2: 라벨 12px secondary, 숫자 24px 600 main) */
 .mg-v2-erp-dashboard-kpi-label {

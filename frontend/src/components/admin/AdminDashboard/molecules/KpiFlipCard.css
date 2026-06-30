@@ -44,13 +44,8 @@
   overflow: hidden;
 }
 
-.mg-v2-kpi-flip-card__front {
-  border-left: 4px solid var(--mg-v2-color-primary-main);
-}
-
 .mg-v2-kpi-flip-card__back {
   transform: rotateY(180deg);
-  border-left: 4px solid var(--mg-v2-color-primary-main);
 }
 
 /* Front — 요약면 */

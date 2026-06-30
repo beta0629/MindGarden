@@ -87,18 +87,6 @@
   min-width: 0;
 }
 
-.refund-management__stat-card--accent-primary {
-  border-left: 4px solid var(--mg-color-primary-main, var(--ad-b0kla-green));
-}
-
-.refund-management__stat-card--accent-accent {
-  border-left: 4px solid var(--mg-color-accent-main, var(--ad-b0kla-orange));
-}
-
-.refund-management__stat-card--accent-secondary {
-  border-left: 4px solid var(--mg-color-text-secondary, var(--ad-b0kla-blue));
-}
-
 .refund-management__stat-label {
   font-size: var(--font-size-xs);
   color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));

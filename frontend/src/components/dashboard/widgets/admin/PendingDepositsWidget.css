@@ -72,21 +72,6 @@
 }
 
 /* 상태별 스타일 */
-.deposit-item.status-pending {
-  border-left: 4px solid var(--cs-warning-500);
-}
-
-.deposit-item.status-confirmed {
-  border-left: 4px solid var(--cs-success-500);
-}
-
-.deposit-item.status-rejected {
-  border-left: 4px solid var(--cs-error-500);
-}
-
-.deposit-item.status-unknown {
-  border-left: 4px solid var(--cs-gray-400);
-}
 
 /* 입금 정보 */
 .deposit-info {

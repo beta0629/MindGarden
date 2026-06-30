@@ -84,14 +84,6 @@
   box-shadow: var(--cs-shadow-md);
 }
 
-.consultant-rating-stat-card.primary {
-  border-left: 4px solid var(--cs-primary-500);
-}
-
-.consultant-rating-stat-card.secondary {
-  border-left: 4px solid var(--cs-teal-500);
-}
-
 .consultant-rating-stat-icon {
   width: 48px;
   height: 48px;

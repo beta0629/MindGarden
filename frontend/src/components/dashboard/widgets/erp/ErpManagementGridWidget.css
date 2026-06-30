@@ -87,72 +87,37 @@
 }
 
 /* 카테고리별 액션 카드 스타일 */
-.erp-action-finance {
-  border-left: 4px solid var(--cs-success-500);
-}
 
 .erp-action-finance:hover {
   background: var(--cs-glass-success-light);
-}
-
-.erp-action-purchase {
-  border-left: 4px solid var(--cs-blue-500);
 }
 
 .erp-action-purchase:hover {
   background: var(--cs-glass-blue-light);
 }
 
-.erp-action-budget {
-  border-left: 4px solid var(--cs-orange-500);
-}
-
 .erp-action-budget:hover {
   background: var(--cs-glass-orange-light);
-}
-
-.erp-action-expense {
-  border-left: 4px solid var(--cs-purple-500);
 }
 
 .erp-action-expense:hover {
   background: var(--cs-glass-primary-10);
 }
 
-.erp-action-report {
-  border-left: 4px solid var(--cs-teal-500);
-}
-
 .erp-action-report:hover {
   background: var(--cs-glass-teal-light);
-}
-
-.erp-action-tax {
-  border-left: 4px solid var(--cs-yellow-600);
 }
 
 .erp-action-tax:hover {
   background: var(--cs-glass-yellow-light);
 }
 
-.erp-action-analytics {
-  border-left: 4px solid var(--cs-pink-500);
-}
-
 .erp-action-analytics:hover {
   background: var(--cs-glass-pink-light);
 }
 
-.erp-action-settings {
-  border-left: 4px solid var(--cs-gray-500);
-}
-
 .erp-action-settings:hover {
   background: var(--cs-glass-gray-light);
-}
-
-.erp-action-other {
-  border-left: 4px solid var(--cs-gray-400);
 }
 
 .erp-action-other:hover {

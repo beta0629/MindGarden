@@ -180,17 +180,6 @@
   position: relative;
 }
 
-.mg-v2-client-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--mg-color-primary-main, var(--mg-success-800));
-  border-radius: 2px 0 0 2px;
-}
-
 .mg-v2-client-card:hover {
   border-color: var(--mg-color-primary-main, var(--mg-success-800));
   box-shadow: 0 4px 8px var(--mg-shadow-light);

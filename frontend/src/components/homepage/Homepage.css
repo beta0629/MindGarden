@@ -325,7 +325,6 @@
   background-color: var(--mg-v2-color-surface-card);
   border-radius: var(--mg-v2-radius-xl);
   padding: var(--mg-v2-space-8);
-  border-left: 4px solid var(--mg-v2-color-primary-main);
   transition: box-shadow var(--mg-v2-transition-fast),
               transform var(--mg-v2-transition-fast);
 }

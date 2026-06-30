@@ -17,30 +17,6 @@
   box-shadow: var(--shadow-lg);
 }
 
-.statistics-card--primary {
-  border-left: 4px solid var(--ios-blue);
-}
-
-.statistics-card--secondary {
-  border-left: 4px solid var(--ios-gray);
-}
-
-.statistics-card--success {
-  border-left: 4px solid var(--ios-green);
-}
-
-.statistics-card--warning {
-  border-left: 4px solid var(--ios-yellow);
-}
-
-.statistics-card--danger {
-  border-left: 4px solid var(--ios-red);
-}
-
-.statistics-card--info {
-  border-left: 4px solid var(--ios-blue);
-}
-
 .statistics-card.loading {
   opacity: 0.7;
   pointer-events: none;

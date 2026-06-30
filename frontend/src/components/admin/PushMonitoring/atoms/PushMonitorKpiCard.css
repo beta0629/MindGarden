@@ -1,8 +1,6 @@
 /**
  * PushMonitorKpiCard 스타일.
  *
- * 디자인 토큰만 사용. 좌측 4px 세로 악센트 바 — variant 별 색 토큰.
- *
  * @since 2026-06-07
  */
 
@@ -23,17 +21,6 @@
 
 .mg-push-monitor__kpi-card:hover {
   box-shadow: var(--ad-b0kla-shadow-hover);
-}
-
-.mg-push-monitor__kpi-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 4px;
-  background: var(--mg-push-monitor-kpi-accent, var(--ad-b0kla-blue));
-  border-radius: 2px;
 }
 
 .mg-push-monitor__kpi-card--queue {

@@ -105,18 +105,6 @@
   box-shadow: var(--cs-shadow-md);
 }
 
-.consultation-record-stat-card.primary {
-  border-left: 4px solid var(--cs-primary-500);
-}
-
-.consultation-record-stat-card.secondary {
-  border-left: 4px solid var(--cs-teal-500);
-}
-
-.consultation-record-stat-card.warning {
-  border-left: 4px solid var(--cs-warning-500);
-}
-
 .consultation-record-stat-icon {
   width: 48px;
   height: 48px;

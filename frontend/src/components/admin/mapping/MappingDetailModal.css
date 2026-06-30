@@ -211,7 +211,6 @@
     background: var(--ad-b0kla-bg);
     border-radius: var(--ad-b0kla-radius-sm);
     padding: 1rem;
-    border-left: 4px solid var(--ad-b0kla-green);
 }
 
 .transaction-type.income {

@@ -113,39 +113,18 @@
   background: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
   border-radius: 10px;
-  padding: 16px 16px 16px 20px;
+  padding: var(--mg-spacing-md, 16px);
   position: relative;
 }
 
-.mg-v2-ad-notifications__card-accent {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-radius: 2px 0 0 2px;
-  flex-shrink: 0;
-}
-
-/* T8-C1-5: 알림/공지 카드 액센트 상태 modifier */
-.mg-v2-ad-notifications__card-accent--published {
-  background-color: var(--mg-color-primary-main);
-}
-
-.mg-v2-ad-notifications__card-accent--draft {
-  background-color: var(--mg-color-text-secondary);
-}
-
-.mg-v2-ad-notifications__card-accent--neutral {
-  background-color: var(--mg-color-border-main);
-}
-
-.mg-v2-ad-notifications__card-accent--unread {
-  background-color: var(--mg-color-accent-main);
-}
-
+/* 좌측 상태 스트라이프 제거 — 액센트 엘리먼트 숨김 (JS 마크업 유지) */
+.mg-v2-ad-notifications__card-accent,
+.mg-v2-ad-notifications__card-accent--published,
+.mg-v2-ad-notifications__card-accent--draft,
+.mg-v2-ad-notifications__card-accent--neutral,
+.mg-v2-ad-notifications__card-accent--unread,
 .mg-v2-ad-notifications__card-accent--read {
-  background-color: var(--mg-color-border-main);
+  display: none;
 }
 
 /* T8-C1-5: 공지 작성 폼 fieldset 리셋 */

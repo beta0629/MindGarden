@@ -102,9 +102,6 @@
 }
 
 /* 카드 색상 변형 */
-.stats-card.primary {
-  border-left: 4px solid var(--card-color-primary);
-}
 
 .stats-card.primary .stats-card-icon {
   background: var(--card-color-primary);
@@ -113,10 +110,6 @@
 
 .stats-card.primary .stats-card-value {
   color: var(--card-color-primary);
-}
-
-.stats-card.success {
-  border-left: 4px solid var(--card-color-success);
 }
 
 .stats-card.success .stats-card-icon {
@@ -128,10 +121,6 @@
   color: var(--card-color-success);
 }
 
-.stats-card.warning {
-  border-left: 4px solid var(--card-color-warning);
-}
-
 .stats-card.warning .stats-card-icon {
   background: var(--card-color-warning);
   color: white;
@@ -141,10 +130,6 @@
   color: var(--card-color-warning);
 }
 
-.stats-card.danger {
-  border-left: 4px solid var(--card-color-danger);
-}
-
 .stats-card.danger .stats-card-icon {
   background: var(--card-color-danger);
   color: white;
@@ -152,10 +137,6 @@
 
 .stats-card.danger .stats-card-value {
   color: var(--card-color-danger);
-}
-
-.stats-card.info {
-  border-left: 4px solid var(--card-color-info);
 }
 
 .stats-card.info .stats-card-icon {

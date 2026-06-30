@@ -5,10 +5,6 @@
   margin: 0 auto;
 }
 
-.mg-v2-tenant-sms-settings .mg-v2-content-section--card {
-  border-left: 4px solid var(--ad-b0kla-green);
-}
-
 .mg-tenant-sms__form {
   display: flex;
   flex-direction: column;

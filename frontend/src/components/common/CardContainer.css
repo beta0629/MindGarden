@@ -16,13 +16,3 @@
   box-shadow: var(--mg-card-hover-shadow);
 }
 
-.mg-v2-card-container::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
-  border-radius: 12px 0 0 12px;
-}

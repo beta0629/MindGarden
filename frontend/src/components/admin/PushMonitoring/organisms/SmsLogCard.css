@@ -48,7 +48,6 @@
 .mg-sms-log-card__error {
   color: var(--ad-b0kla-danger, var(--mg-color-error-main));
   background: var(--ad-b0kla-orange-bg);
-  border-left: 4px solid var(--ad-b0kla-danger, var(--mg-color-error-main));
 }
 
 .mg-sms-log-card__refresh {

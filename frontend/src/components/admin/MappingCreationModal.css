@@ -285,6 +285,63 @@
   opacity: 0.5;
 }
 
+.mg-v2-mapping-creation-modal__prev-pkg-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-md, 1rem);
+  flex-wrap: wrap;
+  margin-bottom: var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-md, 1rem);
+  background: var(--ad-b0kla-green-bg);
+  border: 1px solid var(--ad-b0kla-green);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+.mg-v2-mapping-creation-modal__prev-pkg-hint-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-title-color);
+}
+
+.mg-v2-mapping-creation-modal__prev-pkg-hint-btn {
+  flex-shrink: 0;
+}
+
+.mg-v2-mapping-creation-modal__prev-pkg-discontinued {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  margin-bottom: var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-md, 1rem);
+  background: var(--ad-b0kla-orange-bg);
+  border: 1px dashed var(--ad-b0kla-orange);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
+.mg-v2-mapping-creation-modal__prev-pkg-discontinued svg {
+  flex-shrink: 0;
+  color: var(--ad-b0kla-orange);
+}
+
+.mg-v2-mapping-creation-modal__prev-pkg-discontinued p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-text-secondary);
+}
+
+.mg-v2-mapping-creation-modal__prev-pkg-badge {
+  display: inline-block;
+  margin-bottom: var(--mg-spacing-xs, 0.25rem);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-green);
+  background: var(--ad-b0kla-green-bg);
+  border: 1px solid var(--ad-b0kla-green);
+  border-radius: var(--ad-b0kla-radius-sm);
+}
+
 /* 패키지 그리드 */
 .mg-v2-mapping-creation-modal__pkg-grid {
   display: grid;

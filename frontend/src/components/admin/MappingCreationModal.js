@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import {
@@ -29,6 +29,10 @@ import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
+import {
+  PREVIOUS_PACKAGE_STATUS,
+  resolvePreviousPackage
+} from '../../utils/resolvePreviousPackage';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
@@ -88,6 +92,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [responsibilityOptions, setResponsibilityOptions] = useState([]);
   const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
+  const [previousPackageHint, setPreviousPackageHint] = useState(null);
+  const previousPackageAppliedKeyRef = useRef(null);
 
   // P0 핫픽스 2026-05-28 후속 (MAPPING_CREATION_MODAL_STEP3_NEXT_DISABLED_DEBUG.md §H6 CONFIRM):
   // 첫 mount 시 default 패키지가 truthy 로 설정되어 step 3 "다음" 버튼이 즉시 활성화되는
@@ -232,6 +238,51 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     setFilteredClients(filtered);
   }, [clientSearchTerm, clientFilterStatus, clientSortBy, clients, mappings]);
 
+  const applyPackageOption = useCallback((pkg) => {
+    if (!pkg) return;
+    setPaymentInfo(prev => ({
+      ...prev,
+      packageName: pkg.label,
+      totalSessions: pkg.sessions,
+      packagePrice: pkg.price
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (step !== 3 || !selectedClient?.id || !selectedConsultant?.id) {
+      return;
+    }
+    if (loadingPackageCodes || !packageOptions.length) {
+      return;
+    }
+
+    const applyKey = `${selectedConsultant.id}:${selectedClient.id}`;
+    const resolved = resolvePreviousPackage({
+      clientId: selectedClient.id,
+      consultantId: selectedConsultant.id,
+      mappings,
+      packageOptions
+    });
+    setPreviousPackageHint(resolved);
+
+    if (previousPackageAppliedKeyRef.current === applyKey) {
+      return;
+    }
+    previousPackageAppliedKeyRef.current = applyKey;
+
+    if (resolved.status === PREVIOUS_PACKAGE_STATUS.MATCHED && resolved.packageOption) {
+      applyPackageOption(resolved.packageOption);
+    }
+  }, [
+    step,
+    selectedClient?.id,
+    selectedConsultant?.id,
+    mappings,
+    packageOptions,
+    loadingPackageCodes,
+    applyPackageOption
+  ]);
+
   const loadConsultants = async() => {
     try {
       const list = await getAllConsultantsWithStats();
@@ -375,6 +426,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     setStep(1);
     setSelectedConsultant(null);
     setSelectedClient(null);
+    setPreviousPackageHint(null);
+    previousPackageAppliedKeyRef.current = null;
     // P0 핫픽스 2026-05-28: default 패키지 강제 제거 — 초기 state 와 동일하게 0/null 로 초기화.
     setPaymentInfo({
       totalSessions: 0,
@@ -547,33 +600,85 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 </MGButton>
               </div>
             ) : (
-              <div className="mg-v2-mapping-creation-modal__pkg-grid">
-                {packageOptions.filter(p => p.price > 0).map(pkg => (
-                  <MGButton
-                    key={pkg.value}
-                    type="button"
-                    variant="outline"
-                    aria-pressed={paymentInfo.packageName === pkg.label}
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'md',
-                      loading: false,
-                      className: `mg-v2-mapping-creation-modal__pkg-card ${paymentInfo.packageName === pkg.label ? 'mg-v2-mapping-creation-modal__pkg-card--selected' : ''}`
-                    })}
-                    onClick={() => setPaymentInfo(prev => ({
-                      ...prev,
-                      packageName: pkg.label,
-                      totalSessions: pkg.sessions,
-                      packagePrice: pkg.price
-                    }))}
-                    preventDoubleClick={false}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              <>
+                {previousPackageHint?.status === PREVIOUS_PACKAGE_STATUS.MATCHED
+                  && previousPackageHint.packageOption && (
+                  <div
+                    className="mg-v2-mapping-creation-modal__prev-pkg-hint"
+                    data-testid="mapping-creation-previous-package-hint"
                   >
-                    <strong><SafeText tag="span">{pkg.label}</SafeText></strong>
-                    <span>{t('admin:mappingCreation.packageSummary', { sessions: pkg.sessions, price: pkg.price.toLocaleString() })}</span>
-                  </MGButton>
-                ))}
-              </div>
+                    <p className="mg-v2-mapping-creation-modal__prev-pkg-hint-text">
+                      {t('admin:mappingCreation.previousPackage.recent', {
+                        name: previousPackageHint.packageOption.label,
+                        price: Number(previousPackageHint.packageOption.price).toLocaleString()
+                      })}
+                    </p>
+                    {paymentInfo.packageName !== previousPackageHint.packageOption.label && (
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'sm',
+                          loading: false,
+                          className: 'mg-v2-mapping-creation-modal__prev-pkg-hint-btn'
+                        })}
+                        onClick={() => applyPackageOption(previousPackageHint.packageOption)}
+                        preventDoubleClick={false}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        data-testid="mapping-creation-use-previous-package"
+                      >
+                        {t('admin:mappingCreation.previousPackage.useThis')}
+                      </MGButton>
+                    )}
+                  </div>
+                )}
+                {previousPackageHint?.status === PREVIOUS_PACKAGE_STATUS.DISCONTINUED && (
+                  <div
+                    className="mg-v2-mapping-creation-modal__prev-pkg-discontinued"
+                    data-testid="mapping-creation-discontinued-package-hint"
+                  >
+                    <AlertCircle size={18} aria-hidden="true" />
+                    <p>
+                      {t('admin:mappingCreation.previousPackage.discontinued', {
+                        name: previousPackageHint.historicalPackageName || t('admin:mappingCreation.previousPackage.unknown')
+                      })}
+                    </p>
+                  </div>
+                )}
+                <div className="mg-v2-mapping-creation-modal__pkg-grid">
+                  {packageOptions.filter(p => p.price > 0).map(pkg => {
+                    const isRecommended = previousPackageHint?.status === PREVIOUS_PACKAGE_STATUS.MATCHED
+                      && previousPackageHint.packageOption?.value === pkg.value;
+                    return (
+                      <MGButton
+                        key={pkg.value}
+                        type="button"
+                        variant="outline"
+                        aria-pressed={paymentInfo.packageName === pkg.label}
+                        className={buildErpMgButtonClassName({
+                          variant: 'outline',
+                          size: 'md',
+                          loading: false,
+                          className: `mg-v2-mapping-creation-modal__pkg-card ${paymentInfo.packageName === pkg.label ? 'mg-v2-mapping-creation-modal__pkg-card--selected' : ''}`
+                        })}
+                        onClick={() => applyPackageOption(pkg)}
+                        preventDoubleClick={false}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      >
+                        {isRecommended && (
+                          <span className="mg-v2-mapping-creation-modal__prev-pkg-badge">
+                            {t('admin:mappingCreation.previousPackage.badge')}
+                          </span>
+                        )}
+                        <strong><SafeText tag="span">{pkg.label}</SafeText></strong>
+                        <span>{t('admin:mappingCreation.packageSummary', { sessions: pkg.sessions, price: pkg.price.toLocaleString() })}</span>
+                      </MGButton>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </section>
         )}

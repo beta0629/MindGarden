@@ -1,0 +1,41 @@
+.mg-v2-session-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-8);
+  min-width: 100px;
+}
+
+.mg-v2-session-progress__bar-bg {
+  flex: 1;
+  height: 6px;
+  background-color: var(--mg-color-border-main);
+  border-radius: var(--mg-radius-full, 9999px);
+  overflow: hidden;
+  position: relative;
+}
+
+.mg-v2-session-progress__bar-fill {
+  height: 100%;
+  border-radius: var(--mg-radius-full, 9999px);
+  transition: width 0.3s ease;
+}
+
+/* Colors based on B0KlA / MindGarden design tokens */
+.mg-v2-session-progress--active .mg-v2-session-progress__bar-fill {
+  background-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-session-progress--completed .mg-v2-session-progress__bar-fill {
+  background-color: var(--mg-color-success-main);
+}
+
+.mg-v2-session-progress--pending .mg-v2-session-progress__bar-fill {
+  background-color: var(--mg-color-text-disabled);
+}
+
+.mg-v2-session-progress__text {
+  font-size: 13px;
+  color: var(--mg-color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}

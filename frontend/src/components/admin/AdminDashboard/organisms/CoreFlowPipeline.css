@@ -14,10 +14,12 @@
   justify-content: flex-start; /* 좁은 화면: 왼쪽부터 스크롤 */
   gap: var(--mg-layout-gap, 20px);
   overflow-x: auto;
-  padding: var(--mg-spacing-md, 12px) var(--mg-layout-page-padding, 24px);
+  padding-block: var(--mg-spacing-md, 12px);
+  padding-inline: var(--mg-layout-page-padding, var(--mg-spacing-lg));
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
 }
 

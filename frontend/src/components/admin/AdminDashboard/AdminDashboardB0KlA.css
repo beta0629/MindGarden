@@ -1147,6 +1147,12 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
   background: transparent;
   border: none;
   box-shadow: none;
+  margin-bottom: 0;
+}
+
+/* 파이프라인 래퍼·단계 행 — ListBlockView와 동일 padding-inline SSOT */
+.mg-v2-ad-b0kla .mg-v2-content-card--pipeline .core-flow-pipeline__steps {
+  padding-inline: var(--mg-spacing-sm);
 }
 
 /* ContentSection 내부 mg-stats-grid: 그리드만, 카드 스타일 제거 (섹션이 카드) */

@@ -91,6 +91,11 @@ const MappingListBlock = ({
           mappings={mappings}
           getStatusColor={getStatusColor}
           onView={onView}
+          onEdit={onEdit}
+          onRefund={onRefund}
+          onConfirmPayment={onConfirmPayment}
+          onConfirmDeposit={onConfirmDeposit}
+          onApprove={onApprove}
         />
       );
     }

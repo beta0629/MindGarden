@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   User,
@@ -8,13 +8,10 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react';
-import MappingPaymentModal from '../../admin/mapping/MappingPaymentModal';
-import MappingDepositModal from '../../admin/mapping/MappingDepositModal';
-import { ActionButton, StatusBadge, CardContainer } from '../../common';
+import { StatusBadge, CardContainer, ENTITY_ROW_ACTIONS_LAYOUT } from '../../common';
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import MappingEntityRowActions from '../../admin/mapping-management/molecules/MappingEntityRowActions';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
 
@@ -111,8 +108,22 @@ const MappingCardDetailed = ({
   onRefund
 }) => {
   const { t } = useTranslation();
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showDepositModal, setShowDepositModal] = useState(false);
+
+  const handleCardClick = useCallback(() => {
+    if (onView) {
+      onView(mapping);
+    }
+  }, [onView, mapping]);
+
+  const handleCardKeyDown = useCallback(
+    (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && onView) {
+        event.preventDefault();
+        onView(mapping);
+      }
+    },
+    [onView, mapping]
+  );
 
   const isErpIntegrated = () => (
     mapping.status === 'ACTIVE' ||
@@ -127,7 +138,13 @@ const MappingCardDetailed = ({
   const statusLabel = statusInfo?.label || mapping?.status || 'N/A';
 
   return (
-    <CardContainer className="mg-v2-mapping-card">
+    <CardContainer
+      className="mg-v2-mapping-card mg-v2-mapping-card--clickable"
+      role={onView ? 'button' : undefined}
+      tabIndex={onView ? 0 : undefined}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+    >
       <div className="mg-v2-card-header">
         <div className="mg-v2-mapping-card-header-left">
           <StatusBadge status={mapping?.status} variant={mapStatusVariant(statusInfo?.variant)}>
@@ -137,11 +154,16 @@ const MappingCardDetailed = ({
             <StatusBadge variant="info">ERP 연동</StatusBadge>
           )}
         </div>
-        {onView && (
-          <ActionButton variant="primary" size="small" onClick={() => onView(mapping)}>
-            상세보기
-          </ActionButton>
-        )}
+        <MappingEntityRowActions
+          mapping={mapping}
+          layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
+          menuId={`mapping-card-actions-${mapping.id}`}
+          onEdit={onEdit}
+          onRefund={onRefund}
+          onConfirmPayment={onConfirmPayment}
+          onConfirmDeposit={onConfirmDeposit}
+          onApprove={onApprove}
+        />
       </div>
 
       <div className="mg-v2-mapping-card-body">
@@ -214,52 +236,6 @@ const MappingCardDetailed = ({
         </div>
       </div>
 
-      <div className="mg-v2-card-footer">
-        <div className="mg-v2-mapping-card-footer-left">
-          {mapping.status === 'PENDING_PAYMENT' && (
-            <ActionButton variant="success" size="small" onClick={() => setShowPaymentModal(true)}>
-              {t('admin.actions.paymentConfirm')}
-            </ActionButton>
-          )}
-          {mapping.status === 'PAYMENT_CONFIRMED' && (
-            <ActionButton variant="primary" size="small" onClick={() => setShowDepositModal(true)}>
-              입금 확인
-            </ActionButton>
-          )}
-          {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-            <ActionButton variant="success" size="small" onClick={() => onApprove(mapping)}>
-              최종 승인
-            </ActionButton>
-          )}
-          {onEdit && (
-            <ActionButton variant="outline" size="small" onClick={() => onEdit(mapping)}>
-              {t('common.actions.edit')}
-            </ActionButton>
-          )}
-          {onRefund && (
-            <ActionButton variant="danger" size="small" onClick={() => onRefund(mapping)}>
-              환불
-            </ActionButton>
-          )}
-        </div>
-      </div>
-
-      {showPaymentModal && (
-        <MappingPaymentModal
-          isOpen={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          mapping={mapping}
-          onPaymentConfirmed={onConfirmPayment}
-        />
-      )}
-      {showDepositModal && (
-        <MappingDepositModal
-          isOpen={showDepositModal}
-          onClose={() => setShowDepositModal(false)}
-          mapping={mapping}
-          onDepositConfirmed={onConfirmDeposit}
-        />
-      )}
     </CardContainer>
   );
 };
@@ -285,15 +261,57 @@ const MappingCardCompact = ({
   const endDateStr = endDate ? new Date(endDate).toLocaleDateString('ko-KR') : null;
   const createdStr = createdAt ? new Date(createdAt).toLocaleDateString('ko-KR') : '날짜 없음';
 
+  const compactMapping = {
+    id,
+    consultantName,
+    packageName,
+    status,
+    usedSessions,
+    totalSessions,
+    remainingSessions,
+    startDate,
+    endDate,
+    createdAt,
+    notes
+  };
+
+  const handleCardClick = useCallback(() => {
+    if (onViewDetail) {
+      onViewDetail();
+    }
+  }, [onViewDetail]);
+
+  const handleCardKeyDown = useCallback(
+    (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && onViewDetail) {
+        event.preventDefault();
+        onViewDetail();
+      }
+    },
+    [onViewDetail]
+  );
+
   return (
-    <CardContainer className="mg-v2-mapping-card__compact">
+    <CardContainer
+      className="mg-v2-mapping-card__compact mg-v2-mapping-card--clickable"
+      role={onViewDetail ? 'button' : undefined}
+      tabIndex={onViewDetail ? 0 : undefined}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+    >
       <div className="mg-v2-card-header">
         <div className="mg-v2-mapping-info">
           <h4 className="mg-v2-mapping-card__title mg-v2-h4">매칭 #{id}</h4>
           <p className="mg-v2-mapping-date">{createdStr}</p>
         </div>
-        <div className="mg-v2-mapping-status">
+        <div className="mg-v2-mapping-card__compact-header-actions">
           <StatusBadge status={status} />
+          <MappingEntityRowActions
+            mapping={compactMapping}
+            layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
+            menuId={`mapping-compact-actions-${id}`}
+            onEdit={onEdit}
+          />
         </div>
       </div>
       <div className="mg-v2-card-content">
@@ -337,28 +355,6 @@ const MappingCardCompact = ({
             </div>
           )}
         </div>
-      </div>
-      <div className="mg-v2-card-footer">
-        <MGButton
-          variant="secondary"
-          size="small"
-          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          preventDoubleClick={true}
-          onClick={onViewDetail}
-        >
-          상세보기
-        </MGButton>
-        <MGButton
-          variant="secondary"
-          size="small"
-          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          preventDoubleClick={true}
-          onClick={onEdit}
-        >
-          {t('common.actions.edit')}
-        </MGButton>
       </div>
     </CardContainer>
   );

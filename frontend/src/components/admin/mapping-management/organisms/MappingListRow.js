@@ -1,19 +1,17 @@
 /**
- * MappingListRow - 매칭 목록 행 (테이블 스타일)
- * 기존 MappingCard와 동일 액션(버튼·텍스트만)
+ * MappingListRow - 매칭 목록 행 (카드 뷰)
+ * Primary: 행 클릭 → 상세. Overflow: EntityRowActions ⋮
  *
  * @author Core Solution
  * @since 2025-02-22
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
-import MappingPaymentModal from '../../mapping/MappingPaymentModal';
-import MappingDepositModal from '../../mapping/MappingDepositModal';
-import { ActionButton, StatusBadge } from '../../../common';
-import MappingMatchActions from '../molecules/MappingMatchActions';
+import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
+import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import './MappingListRow.css';
 import { useTranslation } from 'react-i18next';
 
@@ -48,21 +46,21 @@ const MappingListRow = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [processing, setProcessing] = useState(false);
 
-  const handleCriticalAction = useCallback(
-    async(fn) => {
-      if (processing) return;
-      setProcessing(true);
-      try {
-        if (fn) await fn();
-      } finally {
-        setTimeout(() => setProcessing(false), 1000);
+  const handleRowClick = useCallback(() => {
+    if (onView) {
+      onView(mapping);
+    }
+  }, [onView, mapping]);
+
+  const handleRowKeyDown = useCallback(
+    (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && onView) {
+        event.preventDefault();
+        onView(mapping);
       }
     },
-    [processing]
+    [onView, mapping]
   );
 
   const isErpIntegrated =
@@ -78,7 +76,13 @@ const MappingListRow = ({
   const badgeVariant = statusInfo.variant === 'secondary' ? 'neutral' : (statusInfo.variant || undefined);
 
   return (
-    <div className="mg-v2-mapping-list-row">
+    <div
+      className="mg-v2-mapping-list-row"
+      role={onView ? 'button' : undefined}
+      tabIndex={onView ? 0 : undefined}
+      onClick={handleRowClick}
+      onKeyDown={handleRowKeyDown}
+    >
       <div className="mg-v2-mapping-list-row__main">
         <div className="mg-v2-mapping-list-row__status-col">
           <StatusBadge
@@ -124,7 +128,10 @@ const MappingListRow = ({
               })}
               loading={false}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
+              onClick={(event) => {
+                event.stopPropagation();
+                navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`);
+              }}
               title="스케줄 보기"
               preventDoubleClick={false}
             >
@@ -137,70 +144,17 @@ const MappingListRow = ({
         </div>
       </div>
       <div className="mg-v2-mapping-list-row__actions">
-        {onView && (
-          <ActionButton
-            variant="primary"
-            size="small"
-            onClick={() => onView(mapping)}
-          >
-            상세
-          </ActionButton>
-        )}
-        <MappingMatchActions
+        <MappingEntityRowActions
           mapping={mapping}
-          onPayment={() => setShowPaymentModal(true)}
-          onDeposit={() => setShowDepositModal(true)}
-          onApprove={
-            onApprove
-              ? (mappingId) => handleCriticalAction(() => onApprove(mappingId))
-              : undefined
-          }
-          disabled={processing}
-          loading={processing}
+          layout={ENTITY_ROW_ACTIONS_LAYOUT.CARD}
+          menuId={`mapping-row-actions-${mapping.id}`}
+          onEdit={onEdit}
+          onRefund={onRefund}
+          onConfirmPayment={onConfirmPayment}
+          onConfirmDeposit={onConfirmDeposit}
+          onApprove={onApprove}
         />
-        {onEdit && (
-          <ActionButton
-            variant="outline"
-            size="small"
-            onClick={() => onEdit(mapping)}
-          >
-            {t('common.actions.edit')}
-          </ActionButton>
-        )}
-        {onRefund && (
-          <ActionButton
-            variant="danger"
-            size="small"
-            onClick={() => handleCriticalAction(() => onRefund(mapping))}
-            disabled={processing}
-          >
-            환불
-          </ActionButton>
-        )}
       </div>
-
-      {showPaymentModal && (
-        <MappingPaymentModal
-          isOpen={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          mapping={mapping}
-          onPaymentConfirmed={() => {
-            setShowPaymentModal(false);
-            onConfirmPayment && onConfirmPayment();
-          }}
-        />
-      )}
-      {showDepositModal && (
-        <MappingDepositModal
-          isOpen={showDepositModal}
-          onClose={() => setShowDepositModal(false)}
-          mapping={mapping}
-          onDepositConfirmed={() => {
-            setShowDepositModal(false);
-            onConfirmDeposit && onConfirmDeposit();
-          }}
-        />
-      )}
     </div>
   );
 };

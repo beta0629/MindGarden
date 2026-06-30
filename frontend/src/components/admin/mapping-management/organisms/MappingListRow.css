@@ -34,6 +34,16 @@
   box-shadow: var(--mg-card-hover-shadow);
 }
 
+.mg-v2-mapping-list-row--clickable,
+.mg-v2-mapping-list-row[role='button'] {
+  cursor: pointer;
+}
+
+.mg-v2-mapping-list-row[role='button']:focus-visible {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: 2px;
+}
+
 @media (min-width: 900px) {
   .mg-v2-mapping-list-row {
     flex-direction: row;
@@ -160,23 +170,8 @@
 
 .mg-v2-mapping-list-row__actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.mg-v2-mapping-list-row__actions .mg-button {
-  white-space: nowrap;
-}
-
-/* 활성 상태 행: 환불 버튼 가시성 강화 (대비·시인성) */
-.mg-v2-mapping-list-row__actions .mg-v2-button--danger {
-  background: var(--mg-error-600);
-  color: var(--mg-white);
-  border: 1px solid var(--mg-error-700);
-  font-weight: 600;
-  box-shadow: var(--cs-shadow-sm);
-}
-.mg-v2-mapping-list-row__actions .mg-v2-button--danger:hover:not(:disabled) {
-  background: var(--mg-error-700);
-  box-shadow: 0 2px 4px var(--mg-error-200);
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }

@@ -54,17 +54,16 @@ const MatchingScheduleList = ({
   cancelTargetMappingId
 }) => {
   const listRef = useRef(null);
-  const scheduleableCount = mappings.filter((m) => canScheduleForMapping(m)).length;
 
   useEffect(() => {
-    if (!listRef.current || mappings.length === 0) {
+    if (loading || !listRef.current || mappings.length === 0) {
       return undefined;
     }
     const draggable = new Draggable(listRef.current, {
       itemSelector: '.integrated-schedule__card.fc-event'
     });
     return () => draggable.destroy();
-  }, [mappings.length, scheduleableCount]);
+  }, [loading, mappings]);
 
   if (loading) {
     return (

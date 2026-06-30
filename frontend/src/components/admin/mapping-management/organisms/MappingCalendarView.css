@@ -51,6 +51,45 @@
   cursor: pointer;
   transition: opacity 0.2s;
   border: none;
+  overflow: visible;
+}
+
+.mg-v2-mapping-calendar-event {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-4, 0.25rem);
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.mg-v2-mapping-calendar-event__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-mapping-calendar-event__actions {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.mg-v2-mapping-calendar-event__actions .mg-v2-entity-row-actions--corner {
+  position: static;
+}
+
+.mg-v2-mapping-calendar-event__actions .mg-v2-entity-row-actions__trigger.mg-button {
+  min-width: var(--mg-spacing-24, 1.5rem);
+  min-height: var(--mg-spacing-24, 1.5rem);
+  padding: var(--mg-spacing-2, 0.125rem);
+  color: var(--mg-white);
+}
+
+.mg-v2-mapping-calendar-event__actions .mg-v2-entity-row-actions__trigger.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: color-mix(in srgb, var(--mg-white) 15%, transparent);
 }
 
 .mg-v2-mapping-calendar-wrapper .fc-event:hover {

@@ -1,18 +1,18 @@
 /**
  * MappingTableView - 매칭 목록 테이블 뷰 (B0KlA 스타일)
+ * Primary: 행 클릭 → 상세. Overflow: EntityRowActions ⋮
  *
  * @author Core Solution
  * @since 2025-02-22
  */
 
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import MappingPaymentModal from '../../mapping/MappingPaymentModal';
-import MappingDepositModal from '../../mapping/MappingDepositModal';
-import { StatusBadge } from '../../../common';
+import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import './MappingTableView.css';
 import { useTranslation } from 'react-i18next';
 
@@ -51,32 +51,11 @@ const MappingTableView = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [selectedMapping, setSelectedMapping] = useState(null);
-  const [processing, setProcessing] = useState(false);
 
-  const handleCriticalAction = useCallback(
-    async(fn) => {
-      if (processing) return;
-      setProcessing(true);
-      try {
-        if (fn) await fn();
-      } finally {
-        setTimeout(() => setProcessing(false), 1000);
-      }
-    },
-    [processing]
-  );
-
-  const openPaymentModal = (mapping) => {
-    setSelectedMapping(mapping);
-    setShowPaymentModal(true);
-  };
-
-  const openDepositModal = (mapping) => {
-    setSelectedMapping(mapping);
-    setShowDepositModal(true);
+  const handleRowClick = (mapping) => {
+    if (onView) {
+      onView(mapping);
+    }
   };
 
   return (
@@ -122,7 +101,11 @@ const MappingTableView = ({
             else if (rawVariant === 'error') statusBadgeVariant = 'danger';
 
             return (
-              <tr key={mapping.id}>
+              <tr
+                key={mapping.id}
+                className={onView ? 'mg-v2-mapping-table__row--clickable' : undefined}
+                onClick={() => handleRowClick(mapping)}
+              >
                 <td>
                   <div className="mg-v2-mapping-table__status">
                     {StatusIcon ? <StatusIcon size={12} className="mg-v2-mapping-table__status-icon" aria-hidden /> : null}
@@ -160,7 +143,10 @@ const MappingTableView = ({
                       loading={false}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
-                      onClick={() => navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`);
+                      }}
                       title="스케줄 보기"
                     >
                       {t('common.labels.schedule')}
@@ -169,159 +155,22 @@ const MappingTableView = ({
                 </td>
                 <td>{formatDate(mapping.startDate || mapping.createdAt)}</td>
                 <td className="mg-v2-mapping-table__actions">
-                  <div className="mg-v2-mapping-table__actions-inner">
-                    {onView && (
-                      <MGButton
-                        type="button"
-                        variant="primary"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'primary',
-                          size: 'sm',
-                          loading: false,
-                          className: 'mg-v2-mapping-table__action-icon'
-                        })}
-                        loading={false}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
-                        onClick={() => onView(mapping)}
-                        title="상세"
-                      >
-                        상세
-                      </MGButton>
-                    )}
-                    {mapping.status === 'PENDING_PAYMENT' && (
-                      <MGButton
-                        type="button"
-                        variant="success"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'success',
-                          size: 'sm',
-                          loading: false,
-                          className: 'mg-v2-mapping-table__action-icon'
-                        })}
-                        loading={false}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
-                        onClick={() => openPaymentModal(mapping)}
-                        title={t('admin.actions.paymentConfirm')}
-                      >
-                        {t('admin.actions.paymentConfirm')}
-                      </MGButton>
-                    )}
-                    {mapping.status === 'PAYMENT_CONFIRMED' && (
-                      <MGButton
-                        type="button"
-                        variant="primary"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'primary',
-                          size: 'sm',
-                          loading: false,
-                          className: 'mg-v2-mapping-table__action-icon'
-                        })}
-                        loading={false}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
-                        onClick={() => openDepositModal(mapping)}
-                        title="입금 확인"
-                      >
-                        입금 확인
-                      </MGButton>
-                    )}
-                    {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
-                      <MGButton
-                        type="button"
-                        variant="success"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'success',
-                          size: 'sm',
-                          loading: processing,
-                          className: 'mg-v2-mapping-table__action-icon'
-                        })}
-                        loading={processing}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
-                        onClick={() => handleCriticalAction(() => onApprove(mapping.id))}
-                        disabled={processing}
-                        title="승인"
-                      >
-                        승인
-                      </MGButton>
-                    )}
-                    {onEdit && (
-                      <MGButton
-                        type="button"
-                        variant="outline"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'outline',
-                          size: 'sm',
-                          loading: false,
-                          className: 'mg-v2-mapping-table__action-icon'
-                        })}
-                        loading={false}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
-                        onClick={() => onEdit(mapping)}
-                        title={t('common.actions.edit')}
-                      >
-                        {t('common.actions.edit')}
-                      </MGButton>
-                    )}
-                    {onRefund && (
-                      <MGButton
-                        type="button"
-                        variant="danger"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'danger',
-                          size: 'sm',
-                          loading: processing,
-                          className: 'mg-v2-mapping-table__action-icon'
-                        })}
-                        loading={processing}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        preventDoubleClick={false}
-                        onClick={() => handleCriticalAction(() => onRefund(mapping))}
-                        disabled={processing}
-                        title="환불"
-                      >
-                        환불
-                      </MGButton>
-                    )}
-                  </div>
+                  <MappingEntityRowActions
+                    mapping={mapping}
+                    layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
+                    menuId={`mapping-table-actions-${mapping.id}`}
+                    onEdit={onEdit}
+                    onRefund={onRefund}
+                    onConfirmPayment={onConfirmPayment}
+                    onConfirmDeposit={onConfirmDeposit}
+                    onApprove={onApprove}
+                  />
                 </td>
               </tr>
             );
           })}
         </tbody>
       </table>
-
-      {showPaymentModal && selectedMapping && (
-        <MappingPaymentModal
-          isOpen={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          mapping={selectedMapping}
-          onPaymentConfirmed={() => {
-            setShowPaymentModal(false);
-            onConfirmPayment && onConfirmPayment();
-          }}
-        />
-      )}
-      {showDepositModal && selectedMapping && (
-        <MappingDepositModal
-          isOpen={showDepositModal}
-          onClose={() => setShowDepositModal(false)}
-          mapping={selectedMapping}
-          onDepositConfirmed={() => {
-            setShowDepositModal(false);
-            onConfirmDeposit && onConfirmDeposit();
-          }}
-        />
-      )}
     </div>
   );
 };

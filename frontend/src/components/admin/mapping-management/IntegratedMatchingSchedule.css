@@ -144,7 +144,7 @@
   background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-v2-radius-xl, 16px);
-  padding: var(--mg-spacing-24);
+  padding: var(--mg-spacing-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -163,7 +163,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--mg-spacing-sm, 8px);
-  margin-bottom: var(--mg-spacing-16);
+  margin-bottom: var(--mg-spacing-md);
   flex-shrink: 0;
 }
 

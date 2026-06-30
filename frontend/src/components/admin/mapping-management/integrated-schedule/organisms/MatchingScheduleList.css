@@ -15,7 +15,7 @@
   min-height: 0;
   overflow: visible;
   gap: var(--mg-spacing-sm);
-  padding-right: var(--mg-spacing-xs);
+  padding-inline-end: var(--mg-spacing-xs);
 }
 
 .integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card .mg-v2-card-container {
@@ -23,7 +23,8 @@
   flex-direction: column;
   gap: var(--mg-spacing-sm);
   min-height: 0;
-  padding: var(--mg-spacing-sm);
+  padding-block: var(--mg-spacing-sm);
+  padding-inline: var(--mg-spacing-md);
   font-size: var(--font-size-sm);
   background-color: var(--mg-color-surface-main);
   border-color: var(--mg-color-border-main);

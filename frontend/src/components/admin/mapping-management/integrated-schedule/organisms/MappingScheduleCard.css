@@ -25,10 +25,10 @@
   min-height: 38px;
   margin-top: var(--mg-spacing-12, 0.75rem);
   padding: 0 var(--mg-spacing-12, 0.75rem);
-  background: transparent;
-  border: 1.5px solid var(--mg-error-500);
+  background-color: var(--ad-b0kla-danger, var(--mg-error-500));
+  border: none;
   border-radius: var(--mg-radius-md);
-  color: var(--mg-error-600);
+  color: var(--mg-white, #fff);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   line-height: 1.4;
@@ -36,21 +36,18 @@
   cursor: pointer;
   text-decoration: none;
   transition: background-color 0.15s ease-in-out,
-              border-color 0.15s ease-in-out,
               color 0.15s ease-in-out,
               box-shadow 0.15s ease-in-out;
 }
 
 .mg-v2-mapping-match-actions__cancel-btn:hover:not(:disabled) {
-  background-color: var(--mg-error-500);
-  border-color: var(--mg-error-600);
-  color: var(--color-text-on-danger);
+  background-color: color-mix(in srgb, var(--ad-b0kla-danger, var(--mg-error-500)) 85%, #000);
+  color: var(--mg-white, #fff);
 }
 
 .mg-v2-mapping-match-actions__cancel-btn:active:not(:disabled) {
-  background-color: var(--mg-error-600);
-  border-color: var(--mg-error-700);
-  color: var(--color-text-on-danger);
+  background-color: color-mix(in srgb, var(--ad-b0kla-danger, var(--mg-error-500)) 70%, #000);
+  color: var(--mg-white, #fff);
 }
 
 .mg-v2-mapping-match-actions__cancel-btn:focus-visible {
@@ -59,26 +56,23 @@
 }
 
 .mg-v2-mapping-match-actions__cancel-btn:disabled {
-  background: transparent;
-  border-color: var(--mg-gray-300);
+  background-color: var(--mg-gray-100);
   color: var(--color-text-secondary);
   cursor: not-allowed;
   box-shadow: none;
 }
 
 /*
- * 다크 모드 cascade — SSOT 의 dark 정의(--mg-color-error-dark 는 red-300 톤,
- * --mg-color-error-100 은 red-900 톤) 를 활용한 대비 반전.
+ * 다크 모드 cascade
  */
 [data-theme='dark'] .mg-v2-mapping-match-actions__cancel-btn {
-  border-color: var(--mg-color-error-dark);
-  color: var(--mg-color-error-100);
+  background-color: var(--mg-color-error-dark, var(--mg-error-600));
+  color: var(--mg-white, #fff);
 }
 
 [data-theme='dark'] .mg-v2-mapping-match-actions__cancel-btn:hover:not(:disabled) {
-  background-color: var(--mg-color-error-dark);
-  border-color: var(--mg-color-error-dark);
-  color: var(--color-text-on-danger);
+  background-color: color-mix(in srgb, var(--mg-color-error-dark, var(--mg-error-600)) 85%, #fff);
+  color: var(--mg-white, #fff);
 }
 
 [data-theme='dark'] .mg-v2-mapping-match-actions__cancel-btn:focus-visible {

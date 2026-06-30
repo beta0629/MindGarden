@@ -23,7 +23,7 @@
   justify-content: center;
   width: 100%;
   min-height: 38px;
-  margin-top: var(--mg-spacing-12, 0.75rem);
+  margin-top: 0;
   padding: 0 var(--mg-spacing-12, 0.75rem);
   background: transparent;
   border: 1.5px solid var(--mg-error-500);

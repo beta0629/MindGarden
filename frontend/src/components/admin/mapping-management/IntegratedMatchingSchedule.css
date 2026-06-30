@@ -132,10 +132,11 @@
   align-items: stretch;
 }
 
-/* 좌측 매칭 목록 — 옵션 A: collapse 토글 지원 (320px ↔ 48px) */
+/* 좌측 매칭 목록 — 옵션 A: collapse 토글 지원 (사이드바 폭 토큰화, 380px ↔ 48px) */
 .integrated-schedule__sidebar {
-  min-width: 320px;
-  width: 320px;
+  --integrated-schedule-sidebar-width: 380px;
+  min-width: var(--integrated-schedule-sidebar-width);
+  width: var(--integrated-schedule-sidebar-width);
   flex-shrink: 0;
   min-height: 0;
   max-height: 100%;
@@ -280,7 +281,8 @@
   background-color: var(--mg-color-surface-sub);
   border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-radius-md, 10px);
-  width: fit-content;
+  width: 100%;
+  flex-wrap: nowrap;
 }
 
 .integrated-schedule__filter-legend {
@@ -300,6 +302,9 @@
   align-items: stretch;
   width: 100%;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  padding: var(--mg-spacing-sm);
+  gap: var(--mg-spacing-xs);
 }
 
 .integrated-schedule__status-btns {
@@ -418,7 +423,9 @@
   align-items: center;
   justify-content: center;
   gap: var(--mg-spacing-xs);
-  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
   min-height: var(--touch-target-min);
   font-size: var(--font-size-sm);
   font-weight: 500;
@@ -459,6 +466,7 @@
 
 .integrated-schedule__filter-text {
   pointer-events: none;
+  white-space: nowrap;
 }
 
 .integrated-schedule__list {
@@ -682,8 +690,9 @@
  */
 @media (max-width: 1024px) {
   .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
-    width: 280px;
-    min-width: 280px;
+    --integrated-schedule-sidebar-width: 320px;
+    width: var(--integrated-schedule-sidebar-width);
+    min-width: var(--integrated-schedule-sidebar-width);
   }
   .integrated-schedule__sidebar--collapsed {
     width: 48px;

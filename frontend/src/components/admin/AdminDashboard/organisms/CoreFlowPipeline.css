@@ -14,11 +14,13 @@
   display: flex;
   align-items: stretch;
   justify-content: stretch;
-  gap: 0;
-  padding: var(--mg-v2-space-3, 12px) 0;
+  gap: var(--mg-spacing-sm);
+  padding-block: var(--mg-v2-space-3, 12px);
+  padding-inline: var(--mg-spacing-sm);
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .core-flow-pipeline__loading {

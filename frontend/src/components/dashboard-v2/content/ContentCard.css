@@ -21,6 +21,7 @@
 /* 파이프라인 래퍼: B0KlA 통일 좌측 악센트 4px, radius 16px */
 .mg-v2-content-card--pipeline {
   overflow: visible;
-  padding: var(--mg-spacing-md, 12px) 0;
+  padding-block: var(--mg-spacing-md, 12px);
+  padding-inline: var(--mg-spacing-lg);
   border-radius: 16px;
 }

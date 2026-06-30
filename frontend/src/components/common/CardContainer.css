@@ -16,3 +16,10 @@
   box-shadow: var(--mg-card-hover-shadow);
 }
 
+/* 사이드바 compact list row — 전역 min-height 140px 해제 */
+.mg-v2-card-container--sidebar-row {
+  min-height: auto;
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border-radius: var(--mg-radius-md);
+}
+

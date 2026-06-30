@@ -1,15 +1,5 @@
 /**
- * CardActionGroup — 통합 스케줄 사이드바 카드 액션 분기 단위 테스트.
- *
- * 옵션 B (예약 우선 매칭) — paymentTiming=SAME_DAY_CARD 분기 검증.
- * 합의서: docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md.
- *
- * 검증:
- *  - PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제 + 활성화" 버튼 + onCheckoutSameDay 호출
- *  - PENDING_PAYMENT + ADVANCE → 기존 "결제 확인" 버튼 + onPayment 호출
- *  - PAYMENT_CONFIRMED → "입금 확인" 버튼
- *  - DEPOSIT_PENDING → "승인" 버튼
- *  - 일정 등록 onScheduleFromCard 콜백
+ * CardActionGroup — 통합 스케줄 사이드바 compact row 액션 분기 단위 테스트.
  *
  * @author MindGarden
  * @since 2026-05-28
@@ -26,8 +16,13 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('../../../../../common/MGButton', () => ({
   __esModule: true,
-  default: ({ children, onClick, 'aria-label': ariaLabel, disabled }) => (
-    <button type="button" onClick={onClick} aria-label={ariaLabel} disabled={disabled}>
+  default: ({ children, onClick, 'aria-label': ariaLabel, disabled, loading }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      disabled={disabled || loading}
+    >
       {children}
     </button>
   )
@@ -41,7 +36,24 @@ jest.mock('../../../../../erp/common/erpMgButtonProps', () => ({
 
 jest.mock('../../../../../common', () => ({
   __esModule: true,
-  CardActionGroup: ({ children }) => <div data-testid="common-card-actions">{children}</div>
+  EntityRowActions: ({ items }) => (
+    <div data-testid="entity-row-overflow">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          data-testid={item.testId}
+          aria-label={item.label}
+          disabled={item.disabled}
+          aria-busy={item.busy ? 'true' : undefined}
+          onClick={item.onClick}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ),
+  ENTITY_ROW_ACTIONS_LAYOUT: { TABLE: 'table', CARD: 'card', CORNER: 'corner' }
 }));
 
 import CardActionGroup from '../CardActionGroup';
@@ -62,8 +74,8 @@ const SAME_DAY_CARD = {
   packageName: 'pkg'
 };
 
-describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
-  test('PENDING_PAYMENT + SAME_DAY_CARD → "당일 결제 + 활성화" 버튼 렌더 + 클릭 시 onCheckoutSameDay 호출', () => {
+describe('CardActionGroup — compact row primary + overflow', () => {
+  test('PENDING_PAYMENT + SAME_DAY_CARD → primary "당일 결제 + 활성화" + overflow 취소', () => {
     const onCheckoutSameDay = jest.fn();
     const onPayment = jest.fn();
     render(
@@ -71,12 +83,13 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
         mapping={SAME_DAY_CARD}
         onPayment={onPayment}
         onCheckoutSameDay={onCheckoutSameDay}
+        onCancelPendingMapping={jest.fn()}
       />
     );
     const checkoutBtn = screen.getByLabelText('admin:mapping.card.actions.checkoutSameDayPayment');
     expect(checkoutBtn).toBeInTheDocument();
-    // 결제 확인 버튼은 노출되지 않아야 함
     expect(screen.queryByLabelText('admin.actions.paymentConfirm')).toBeNull();
+    expect(screen.getByTestId('mapping-cancel-pending-trigger')).toBeInTheDocument();
 
     fireEvent.click(checkoutBtn);
     expect(onCheckoutSameDay).toHaveBeenCalledTimes(1);
@@ -84,7 +97,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onPayment).not.toHaveBeenCalled();
   });
 
-  test('PENDING_PAYMENT + ADVANCE → 기존 "결제 확인" 버튼 + onPayment 호출', () => {
+  test('PENDING_PAYMENT + ADVANCE → primary "결제 확인" + overflow 취소', () => {
     const onCheckoutSameDay = jest.fn();
     const onPayment = jest.fn();
     render(
@@ -92,12 +105,13 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
         mapping={ADVANCE}
         onPayment={onPayment}
         onCheckoutSameDay={onCheckoutSameDay}
+        onCancelPendingMapping={jest.fn()}
       />
     );
     const paymentBtn = screen.getByLabelText('admin.actions.paymentConfirm');
     expect(paymentBtn).toBeInTheDocument();
-    // 당일 결제 + 활성화 버튼은 노출되지 않아야 함
     expect(screen.queryByLabelText('admin:mapping.card.actions.checkoutSameDayPayment')).toBeNull();
+    expect(screen.getByTestId('mapping-cancel-pending-trigger')).toBeInTheDocument();
 
     fireEvent.click(paymentBtn);
     expect(onPayment).toHaveBeenCalledTimes(1);
@@ -105,21 +119,20 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onCheckoutSameDay).not.toHaveBeenCalled();
   });
 
-  test('paymentTiming 미지정(PENDING_PAYMENT, 레거시) → 기존 "결제 확인" 흐름 유지', () => {
-    const onCheckoutSameDay = jest.fn();
-    const onPayment = jest.fn();
+  test('paymentTiming 미지정(PENDING_PAYMENT) → "결제 확인" primary 유지', () => {
     render(
       <CardActionGroup
         mapping={{ id: 13, status: 'PENDING_PAYMENT', consultantId: 1, packageName: 'p' }}
-        onPayment={onPayment}
-        onCheckoutSameDay={onCheckoutSameDay}
+        onPayment={jest.fn()}
+        onCheckoutSameDay={jest.fn()}
+        onCancelPendingMapping={jest.fn()}
       />
     );
     expect(screen.getByLabelText('admin.actions.paymentConfirm')).toBeInTheDocument();
     expect(screen.queryByLabelText('admin:mapping.card.actions.checkoutSameDayPayment')).toBeNull();
   });
 
-  test('PAYMENT_CONFIRMED → "입금 확인" 버튼', () => {
+  test('PAYMENT_CONFIRMED → primary "입금 확인"', () => {
     const onDeposit = jest.fn();
     render(
       <CardActionGroup
@@ -133,7 +146,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onDeposit).toHaveBeenCalled();
   });
 
-  test('DEPOSIT_PENDING → "승인" 버튼 + onApprove(id) 호출', () => {
+  test('DEPOSIT_PENDING → primary "승인" + onApprove(id)', () => {
     const onApprove = jest.fn();
     render(
       <CardActionGroup
@@ -147,7 +160,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onApprove).toHaveBeenCalledWith(15);
   });
 
-  test('onScheduleFromCard 제공 시 "일정 등록" 버튼 렌더 + 클릭 콜백', () => {
+  test('onScheduleFromCard → primary "일정 등록"', () => {
     const onScheduleFromCard = jest.fn();
     render(
       <CardActionGroup
@@ -161,21 +174,33 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onScheduleFromCard).toHaveBeenCalled();
   });
 
-  test('mapping 없으면 액션 버튼 없음 (안전)', () => {
+  test('ACTIVE + onSessionExtension → overflow "회기 추가"', () => {
+    const onSessionExtension = jest.fn();
+    render(
+      <CardActionGroup
+        mapping={{ id: 17, status: 'ACTIVE', remainingSessions: 3 }}
+        onScheduleFromCard={jest.fn()}
+        onSessionExtension={onSessionExtension}
+      />
+    );
+    const extBtn = screen.getByLabelText('admin:sessionManagement.quickAdd.addBtn');
+    expect(extBtn).toBeInTheDocument();
+    fireEvent.click(extBtn);
+    expect(onSessionExtension).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 17, status: 'ACTIVE' })
+    );
+  });
+
+  test('mapping 없으면 액션 없음', () => {
     render(
       <CardActionGroup mapping={null} onPayment={jest.fn()} onCheckoutSameDay={jest.fn()} />
     );
     expect(screen.queryByLabelText('admin.actions.paymentConfirm')).toBeNull();
-    expect(screen.queryByLabelText('admin:mapping.card.actions.checkoutSameDayPayment')).toBeNull();
+    expect(screen.queryByTestId('mapping-match-actions')).toBeNull();
   });
 
-  /*
-   * R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 사이드바 카드 "매칭 취소" 보조 액션 노출 매트릭스.
-   * 합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
-   * 디자이너 시안: docs/project-management/2026-05-28/R4_DESIGN_HANDOFF_DETAIL.md (옵션 A 텍스트 링크).
-   */
-  describe('R4 — PENDING_PAYMENT 매칭 취소 보조 액션', () => {
-    test('PENDING_PAYMENT + SAME_DAY_CARD + onCancelPendingMapping 제공 → "매칭 취소" 텍스트 링크 노출 + 클릭 콜백', () => {
+  describe('PENDING_PAYMENT 매칭 취소 overflow', () => {
+    test('SAME_DAY_CARD + onCancelPendingMapping → overflow 취소 클릭 콜백', () => {
       const onCancelPendingMapping = jest.fn();
       render(
         <CardActionGroup
@@ -184,45 +209,28 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
           onCancelPendingMapping={onCancelPendingMapping}
         />
       );
-      const cancelLink = screen.getByTestId('mapping-cancel-pending-trigger');
-      expect(cancelLink).toBeInTheDocument();
-      expect(cancelLink).toHaveAttribute('aria-label', 'admin:mapping.card.actions.cancel');
-      // 텍스트 링크는 button 으로 렌더되어 modal 트리거 역할만 수행 (실제 API 호출은 부모 핸들러에서).
-      fireEvent.click(cancelLink);
+      const cancelBtn = screen.getByTestId('mapping-cancel-pending-trigger');
+      expect(cancelBtn).toHaveAttribute('aria-label', 'admin:mapping.card.actions.cancel');
+      fireEvent.click(cancelBtn);
       expect(onCancelPendingMapping).toHaveBeenCalledTimes(1);
       expect(onCancelPendingMapping).toHaveBeenCalledWith(SAME_DAY_CARD);
     });
 
-    test('PENDING_PAYMENT + ADVANCE + onCancelPendingMapping 제공 → 옵션 A 잔존 정리 케이스에서도 노출', () => {
-      const onCancelPendingMapping = jest.fn();
-      render(
-        <CardActionGroup
-          mapping={ADVANCE}
-          onPayment={jest.fn()}
-          onCancelPendingMapping={onCancelPendingMapping}
-        />
-      );
-      expect(screen.getByTestId('mapping-cancel-pending-trigger')).toBeInTheDocument();
-    });
-
-    test('PENDING_PAYMENT + cancelPendingProcessing=true → 링크 disabled (중복 클릭 차단)', () => {
-      const onCancelPendingMapping = jest.fn();
+    test('cancelPendingProcessing → overflow 취소 disabled', () => {
       render(
         <CardActionGroup
           mapping={SAME_DAY_CARD}
           onCheckoutSameDay={jest.fn()}
-          onCancelPendingMapping={onCancelPendingMapping}
+          onCancelPendingMapping={jest.fn()}
           cancelPendingProcessing
         />
       );
-      const cancelLink = screen.getByTestId('mapping-cancel-pending-trigger');
-      expect(cancelLink).toBeDisabled();
-      expect(cancelLink).toHaveAttribute('aria-busy', 'true');
-      fireEvent.click(cancelLink);
-      expect(onCancelPendingMapping).not.toHaveBeenCalled();
+      const cancelBtn = screen.getByTestId('mapping-cancel-pending-trigger');
+      expect(cancelBtn).toBeDisabled();
+      expect(cancelBtn).toHaveAttribute('aria-busy', 'true');
     });
 
-    test('ACTIVE 매칭 → "매칭 취소" 미노출 (회귀 0)', () => {
+    test('ACTIVE → overflow 취소 미노출', () => {
       render(
         <CardActionGroup
           mapping={{ id: 70, status: 'ACTIVE', remainingSessions: 3 }}
@@ -232,28 +240,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
       expect(screen.queryByTestId('mapping-cancel-pending-trigger')).toBeNull();
     });
 
-    test('TERMINATED 매칭 → "매칭 취소" 미노출 (이미 종료)', () => {
-      render(
-        <CardActionGroup
-          mapping={{ id: 71, status: 'TERMINATED' }}
-          onCancelPendingMapping={jest.fn()}
-        />
-      );
-      expect(screen.queryByTestId('mapping-cancel-pending-trigger')).toBeNull();
-    });
-
-    test('PAYMENT_CONFIRMED 매칭 → "매칭 취소" 미노출 (입금 확인 흐름이 정식 종료 사용)', () => {
-      render(
-        <CardActionGroup
-          mapping={{ id: 72, status: 'PAYMENT_CONFIRMED' }}
-          onDeposit={jest.fn()}
-          onCancelPendingMapping={jest.fn()}
-        />
-      );
-      expect(screen.queryByTestId('mapping-cancel-pending-trigger')).toBeNull();
-    });
-
-    test('onCancelPendingMapping 콜백 미제공 → PENDING_PAYMENT 라도 링크 렌더 0', () => {
+    test('onCancelPendingMapping 미제공 → overflow 취소 미노출', () => {
       render(
         <CardActionGroup
           mapping={SAME_DAY_CARD}

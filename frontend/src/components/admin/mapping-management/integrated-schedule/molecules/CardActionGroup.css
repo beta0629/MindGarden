@@ -1,0 +1,25 @@
+/* CardActionGroup — 사이드바 compact row trailing actions */
+.mg-v2-card-actions--compact-row {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mg-spacing-xs);
+  flex-shrink: 0;
+  margin-top: 0;
+  min-height: 0;
+}
+
+.mg-v2-card-actions--compact-row .integrated-schedule__card-primary-action.mg-button {
+  min-width: var(--mg-spacing-3xl);
+  min-height: var(--mg-spacing-xl);
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.mg-v2-card-actions--compact-row .mg-v2-entity-row-actions__trigger.mg-button {
+  min-width: var(--mg-spacing-xl);
+  min-height: var(--mg-spacing-xl);
+}

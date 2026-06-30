@@ -200,6 +200,8 @@ function EntityRowActions({
           className="mg-v2-entity-row-actions__menu-item"
           disabled={item.disabled}
           title={item.title}
+          data-testid={item.testId}
+          aria-busy={item.busy === true ? 'true' : undefined}
           onClick={handleItemClick(item)}
         >
           {item.label}
@@ -216,6 +218,8 @@ function EntityRowActions({
           className="mg-v2-entity-row-actions__menu-item mg-v2-entity-row-actions__menu-item--destructive"
           disabled={item.disabled}
           title={item.title}
+          data-testid={item.testId}
+          aria-busy={item.busy === true ? 'true' : undefined}
           onClick={handleItemClick(item)}
         >
           {item.label}
@@ -294,7 +298,9 @@ EntityRowActions.propTypes = {
       variant: PropTypes.oneOf(['default', 'destructive']),
       disabled: PropTypes.bool,
       hidden: PropTypes.bool,
-      title: PropTypes.string
+      title: PropTypes.string,
+      testId: PropTypes.string,
+      busy: PropTypes.bool
     })
   ),
   primaryAction: PropTypes.shape({

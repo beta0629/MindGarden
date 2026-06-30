@@ -39,3 +39,34 @@
   color: var(--mg-color-text-secondary);
   font-weight: normal;
 }
+
+/* compact row — 1-line ellipsis, honorific 생략 */
+.integrated-schedule__card-parties--compact {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  text-align: start;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.integrated-schedule__card-parties--compact .integrated-schedule__card-party {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.integrated-schedule__card-parties--compact .integrated-schedule__card-consultant,
+.integrated-schedule__card-parties--compact .integrated-schedule__card-client {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.integrated-schedule__card-parties--compact .integrated-schedule__card-arrow {
+  margin-inline: var(--mg-spacing-xs);
+}

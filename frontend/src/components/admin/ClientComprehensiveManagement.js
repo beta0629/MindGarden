@@ -663,12 +663,12 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                         <MGButton
                                             key={opt.value}
                                             type="button"
-                                            variant="outline"
+                                            variant="ghost"
                                             size="small"
                                             preventDoubleClick={false}
                                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                             className={buildErpMgButtonClassName({
-                                                variant: 'outline',
+                                                variant: 'ghost',
                                                 size: 'sm',
                                                 loading: false,
                                                 className: `mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`

@@ -21,9 +21,14 @@
 
 .mg-v2-mapping-table th,
 .mg-v2-mapping-table td {
-  padding: 1rem;
+  padding: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
   border-bottom: 1px solid var(--ad-b0kla-border);
   white-space: nowrap;
+}
+
+.mg-v2-mapping-table th:first-child,
+.mg-v2-mapping-table td:first-child {
+  padding-left: var(--mg-spacing-lg, var(--mg-spacing-24, 1.5rem));
 }
 
 .mg-v2-mapping-table th {

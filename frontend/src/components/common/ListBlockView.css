@@ -143,6 +143,29 @@
   padding-left: var(--mg-spacing-24, 1.5rem);
 }
 
+/* ----- 카드/row 리스트 좌측 여백 SSOT (테이블 th/td:first-child와 정합) ----- */
+.mg-v2-mapping-list-row {
+  padding-block: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
+  padding-inline: var(--mg-spacing-lg, var(--mg-spacing-24, 1.5rem));
+}
+
+.mg-v2-mapping-list-block__grid {
+  padding-inline: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
+}
+
+.mg-v2-list-block__grid > .mg-v2-profile-card,
+.mg-v2-list-block__grid > .mg-v2-profile-card--compact,
+.mg-v2-list-block__grid--small > .mg-v2-profile-card,
+.mg-v2-list-block__grid--small > .mg-v2-profile-card--compact {
+  padding-inline: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
+}
+
+.mg-v2-mapping-list-block__grid .mg-v2-content-card.mg-v2-mapping-card,
+.mg-v2-mapping-list-block__grid .mg-v2-card-container.mg-v2-mapping-card__compact,
+.mg-v2-mapping-list-section .mg-v2-content-card.mg-v2-mapping-card {
+  padding-inline: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
+}
+
 .mg-v2-list-block__table tbody tr:last-child td,
 .mg-v2-list-block__list tbody tr:last-child td {
   border-bottom: none;

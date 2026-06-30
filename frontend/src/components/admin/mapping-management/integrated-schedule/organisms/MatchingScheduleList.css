@@ -47,27 +47,29 @@
 }
 
 .integrated-schedule__sidebar .mg-v2-card-actions {
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: var(--mg-spacing-xs);
+  width: 100%;
+}
+
+.integrated-schedule__sidebar .mg-v2-mapping-match-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--mg-spacing-xs);
+  width: 100%;
 }
 
 .integrated-schedule__sidebar .mg-v2-card-actions .mg-v2-button,
-.integrated-schedule__sidebar .mg-v2-card-actions .mg-button {
-  min-width: var(--mg-spacing-2xl);
+.integrated-schedule__sidebar .mg-v2-card-actions .mg-button,
+.integrated-schedule__sidebar .mg-v2-mapping-match-actions__cancel-btn {
+  width: 100%;
+  min-width: 0;
   min-height: var(--mg-spacing-xl);
   padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
   font-size: var(--font-size-xs);
   white-space: nowrap;
-}
-
-.integrated-schedule__sidebar .integrated-schedule__btn-schedule-from-card {
-  width: 100%;
-  margin-bottom: 0;
-}
-
-.integrated-schedule__sidebar .mg-v2-mapping-match-actions__cancel-btn {
-  min-height: var(--mg-spacing-xl);
-  margin-top: var(--mg-spacing-xs);
-  padding: 0 var(--mg-spacing-sm);
-  font-size: var(--font-size-xs);
+  margin: 0;
 }

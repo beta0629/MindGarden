@@ -12,6 +12,7 @@ import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
+import SessionProgressIndicator from '../molecules/SessionProgressIndicator';
 import './MappingListRow.css';
 import { useTranslation } from 'react-i18next';
 
@@ -83,64 +84,74 @@ const MappingListRow = ({
       onClick={handleRowClick}
       onKeyDown={handleRowKeyDown}
     >
-      <div className="mg-v2-mapping-list-row__main">
-        <div className="mg-v2-mapping-list-row__status-col">
-          <StatusBadge
-            status={mapping.status}
-            variant={badgeVariant}
-            className="mg-v2-mapping-list-row__status"
-          >
-            {statusLabel}
-          </StatusBadge>
-          {isErpIntegrated && (
-            <span className="mg-v2-mapping-list-row__erp">
-              ERP
-            </span>
-          )}
-        </div>
-        <div className="mg-v2-mapping-list-row__participants">
-          <div className="mg-v2-mapping-list-row__party">
-            <span>{mapping.consultantName || 'N/A'}</span>
+      <div className="mg-v2-mapping-list-row__content">
+        <div className="mg-v2-mapping-list-row__primary">
+          <div className="mg-v2-mapping-list-row__participants">
+            <div className="mg-v2-mapping-list-row__party">
+              <span>{mapping.consultantName || 'N/A'}</span>
+            </div>
+            <span className="mg-v2-mapping-list-row__arrow">→</span>
+            <div className="mg-v2-mapping-list-row__party">
+              <span>{mapping.clientName || 'N/A'}</span>
+            </div>
           </div>
-          <span className="mg-v2-mapping-list-row__arrow">→</span>
-          <div className="mg-v2-mapping-list-row__party">
-            <span>{mapping.clientName || 'N/A'}</span>
+          <div className="mg-v2-mapping-list-row__package">
+            <span>{mapping.packageName || 'N/A'}</span>
           </div>
         </div>
-        <div className="mg-v2-mapping-list-row__package">
-          <span>{mapping.packageName || 'N/A'}</span>
-        </div>
-        <div className="mg-v2-mapping-list-row__amount">
-          {formatAmount(mapping.packagePrice || mapping.paymentAmount)}
-        </div>
-        <div className="mg-v2-mapping-list-row__sessions">
-          <span>{mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회</span>
-          {mapping.totalSessions > 0 && (
-            <MGButton
-              type="button"
-              variant="outline"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'sm',
-                loading: false,
-                className: 'mg-v2-mapping-list-row__schedule-link'
-              })}
-              loading={false}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={(event) => {
-                event.stopPropagation();
-                navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`);
-              }}
-              title="스케줄 보기"
-              preventDoubleClick={false}
+
+        <div className="mg-v2-mapping-list-row__meta">
+          <div className="mg-v2-mapping-list-row__status-col">
+            <StatusBadge
+              status={mapping.status}
+              variant={badgeVariant}
+              className="mg-v2-mapping-list-row__status"
             >
-              {t('common.labels.schedule')}
-            </MGButton>
+              {statusLabel}
+            </StatusBadge>
+            {isErpIntegrated && (
+              <span className="mg-v2-mapping-list-row__erp">
+                ERP
+              </span>
+            )}
+          </div>
+          <div className="mg-v2-mapping-list-row__amount">
+            {formatAmount(mapping.packagePrice || mapping.paymentAmount)}
+          </div>
+          <div className="mg-v2-mapping-list-row__sessions">
+            <SessionProgressIndicator 
+              used={mapping.usedSessions} 
+              total={mapping.totalSessions} 
+            />
+          </div>
+          <div className="mg-v2-mapping-list-row__date">
+            {formatDate(mapping.startDate || mapping.createdAt)}
+          </div>
+          {mapping.totalSessions > 0 && (
+            <div className="mg-v2-mapping-list-row__schedule">
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-v2-mapping-list-row__schedule-link'
+                })}
+                loading={false}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`);
+                }}
+                title="스케줄 보기"
+                preventDoubleClick={false}
+              >
+                {t('common.labels.schedule')}
+              </MGButton>
+            </div>
           )}
-        </div>
-        <div className="mg-v2-mapping-list-row__date">
-          {formatDate(mapping.startDate || mapping.createdAt)}
         </div>
       </div>
       <div className="mg-v2-mapping-list-row__actions">

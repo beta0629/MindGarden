@@ -17,15 +17,19 @@ const MappingPartiesRow = ({ consultantName, clientName }) => {
 
   return (
     <div className="integrated-schedule__card-parties">
-      <span className="integrated-schedule__card-consultant">
-        {consultantDisplay}
+      <span className="integrated-schedule__card-party">
+        <span className="integrated-schedule__card-consultant">
+          {consultantDisplay}
+        </span>
+        <span className="integrated-schedule__card-consultant-honorific">선생님</span>
       </span>
-      <span className="integrated-schedule__card-consultant-honorific">선생님</span>
       <span className="integrated-schedule__card-arrow" aria-hidden="true">→</span>
-      <span className="integrated-schedule__card-client">
-        {clientDisplay}
+      <span className="integrated-schedule__card-party">
+        <span className="integrated-schedule__card-client">
+          {clientDisplay}
+        </span>
+        <span className="integrated-schedule__card-client-honorific">{t('admin.labels.client')}</span>
       </span>
-      <span className="integrated-schedule__card-client-honorific">{t('admin.labels.client')}</span>
     </div>
   );
 };

@@ -156,10 +156,10 @@ const MatchingScheduleSidebar = ({
                 <MGButton
                   key={opt.value || 'all'}
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="small"
                   className={buildErpMgButtonClassName({
-                    variant: 'outline',
+                    variant: 'ghost',
                     size: 'sm',
                     loading: false,
                     className: `integrated-schedule__status-btn ${

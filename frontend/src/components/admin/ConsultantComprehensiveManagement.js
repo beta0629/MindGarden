@@ -1393,11 +1393,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <MGButton
                                                     key={opt.value}
                                                     type="button"
-                                                    variant="outline"
+                                                    variant="ghost"
                                                     size="small"
                                                     preventDoubleClick={false}
                                                     className={buildErpMgButtonClassName({
-                                                        variant: 'outline',
+                                                        variant: 'ghost',
                                                         size: 'sm',
                                                         loading: false,
                                                         className: `mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`
@@ -1532,11 +1532,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                                 <MGButton
                                                     key={opt.value}
                                                     type="button"
-                                                    variant="outline"
+                                                    variant="ghost"
                                                     size="small"
                                                     preventDoubleClick={false}
                                                     className={buildErpMgButtonClassName({
-                                                        variant: 'outline',
+                                                        variant: 'ghost',
                                                         size: 'sm',
                                                         loading: false,
                                                         className: `mg-v2-mapping-search-section__chip ${chipFilterStatus === opt.value ? 'mg-v2-mapping-search-section__chip--active' : ''}`

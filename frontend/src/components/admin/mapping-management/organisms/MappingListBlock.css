@@ -78,6 +78,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-12, 0.75rem);
+  padding-inline: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
   padding-block-end: var(--mg-spacing-lg, 1.5rem);
 }
 

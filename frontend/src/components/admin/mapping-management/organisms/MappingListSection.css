@@ -18,7 +18,8 @@
   position: relative;
   border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-radius-lg);
-  padding: var(--mg-spacing-16);
+  padding-block: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
+  padding-inline: var(--mg-spacing-md, var(--mg-spacing-16, 1rem));
   min-height: 140px;
   box-shadow: var(--mg-shadow-sm);
   background: var(--mg-bg-card, var(--mg-color-surface-main));

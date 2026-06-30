@@ -81,8 +81,22 @@ jest.mock('../../common/modals/UnifiedModal', () => ({
 
 jest.mock('../../common/MGButton', () => ({
   __esModule: true,
-  default: ({ children, onClick, disabled, type = 'button', className }) => (
-    <button type={type} onClick={onClick} disabled={disabled} className={className}>{children}</button>
+  default: ({ children, onClick, disabled, type = 'button', className, ...rest }) => (
+    <button type={type} onClick={onClick} disabled={disabled} className={className} {...rest}>{children}</button>
+  )
+}));
+
+jest.mock('../../common/ActionBarButton', () => ({
+  __esModule: true,
+  default: ({ children, onClick, disabled, loading, type = 'button', className }) => (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled || loading}
+      className={className}
+    >
+      {children}
+    </button>
   )
 }));
 
@@ -314,6 +328,84 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await waitFor(() => expect(screen.getByText('표준 패키지')).toBeInTheDocument());
     // 패키지 클릭 전 시점에서 apiPost 미호출 + "다음" disabled 동시 단언 (DEFAULT_MAPPING_CONFIG 강제 적용 방지).
     expect(apiPost).not.toHaveBeenCalled();
+    expect(screen.getByText('common:action.next')).toBeDisabled();
+  });
+
+  test('step 3 진입 시 settled 이력 있으면 이전 패키지 자동 선택 + 다음 버튼 enabled', async () => {
+    apiGet.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        return Promise.resolve({ clients: clientFixture });
+      }
+      if (typeof url === 'string' && url.includes('/mappings')) {
+        return Promise.resolve({
+          data: [{
+            id: 501,
+            clientId: 22,
+            consultantId: 11,
+            packageName: '표준 패키지',
+            totalSessions: 5,
+            packagePrice: 300000,
+            paymentStatus: 'PAY',
+            createdAt: '2026-05-01T00:00:00.000Z'
+          }]
+        });
+      }
+      return Promise.resolve([]);
+    });
+
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('mapping-creation-previous-package-hint')).toBeInTheDocument());
+    expect(screen.getByText('admin:mappingCreation.previousPackage.badge')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('common:action.next')).not.toBeDisabled());
+  });
+
+  test('step 3 진입 시 단종 패키지 이력이면 자동 선택 없음 + discontinued 안내', async () => {
+    apiGet.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        return Promise.resolve({ clients: clientFixture });
+      }
+      if (typeof url === 'string' && url.includes('/mappings')) {
+        return Promise.resolve({
+          data: [{
+            id: 502,
+            clientId: 22,
+            consultantId: 11,
+            packageName: '단종 패키지',
+            totalSessions: 99,
+            packagePrice: 999999,
+            paymentStatus: 'DEP',
+            createdAt: '2026-05-01T00:00:00.000Z'
+          }]
+        });
+      }
+      return Promise.resolve([]);
+    });
+
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('mapping-creation-discontinued-package-hint')).toBeInTheDocument());
+    expect(screen.queryByTestId('mapping-creation-previous-package-hint')).toBeNull();
     expect(screen.getByText('common:action.next')).toBeDisabled();
   });
 

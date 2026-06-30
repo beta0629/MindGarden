@@ -195,14 +195,6 @@
     box-shadow: 0 0 0 3px var(--color-info-light);
 }
 
-.group-card.tenant {
-    border-left: 4px solid var(--tenant-primary);
-}
-
-.group-card.core {
-    border-left: 4px solid var(--core-primary);
-}
-
 .group-header {
     display: flex;
     align-items: center;

@@ -157,12 +157,11 @@
 }
 
 .deposit-item.priority-urgent {
-  border-left: 4px solid var(--cs-error-500);
   background: var(--cs-glass-error-light);
 }
 
 .deposit-item.priority-high {
-  border-left: 4px solid var(--cs-warning-500);
+  background: var(--cs-glass-warning-light, var(--cs-bg-hover));
 }
 
 .deposit-info {

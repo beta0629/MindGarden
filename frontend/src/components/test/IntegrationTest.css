@@ -12,14 +12,6 @@
   box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
-.result-card.success {
-  border-left: 4px solid var(--mg-success-500);
-}
-
-.result-card.error {
-  border-left: 4px solid var(--mg-error-500);
-}
-
 .result-header {
   display: flex;
   justify-content: space-between;

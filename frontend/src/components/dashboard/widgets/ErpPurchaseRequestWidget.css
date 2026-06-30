@@ -135,18 +135,6 @@
   box-shadow: var(--cs-shadow-md);
 }
 
-.erp-purchase-stat-card.pending {
-  border-left: 4px solid var(--cs-warning-500);
-}
-
-.erp-purchase-stat-card.approved {
-  border-left: 4px solid var(--cs-success-500);
-}
-
-.erp-purchase-stat-card.total {
-  border-left: 4px solid var(--cs-blue-500);
-}
-
 .erp-purchase-stat-icon {
   width: 48px;
   height: 48px;

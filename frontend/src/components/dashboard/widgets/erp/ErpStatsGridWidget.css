@@ -49,56 +49,29 @@
 }
 
 /* 카테고리별 스타일 */
-.erp-stat-revenue {
-  border-left: 4px solid var(--cs-success-500);
-}
 
 .erp-stat-revenue:hover {
   background: var(--cs-glass-success-light);
-}
-
-.erp-stat-expenses {
-  border-left: 4px solid var(--cs-warning-500);
 }
 
 .erp-stat-expenses:hover {
   background: var(--cs-glass-warning-light);
 }
 
-.erp-stat-profit {
-  border-left: 4px solid var(--cs-blue-500);
-}
-
 .erp-stat-profit:hover {
   background: var(--cs-glass-blue-light);
-}
-
-.erp-stat-loss {
-  border-left: 4px solid var(--cs-error-500);
 }
 
 .erp-stat-loss:hover {
   background: var(--cs-glass-error-light);
 }
 
-.erp-stat-margin {
-  border-left: 4px solid var(--cs-purple-500);
-}
-
 .erp-stat-margin:hover {
   background: var(--cs-glass-primary-10);
 }
 
-.erp-stat-purchase {
-  border-left: 4px solid var(--cs-teal-500);
-}
-
 .erp-stat-purchase:hover {
   background: var(--cs-glass-teal-light);
-}
-
-.erp-stat-budget {
-  border-left: 4px solid var(--cs-orange-500);
 }
 
 .erp-stat-budget:hover {

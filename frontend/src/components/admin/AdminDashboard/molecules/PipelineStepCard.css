@@ -1,48 +1,53 @@
 /**
- * PipelineStepCard - 파이프라인 단계 카드 스타일
+ * PipelineStepCard — 파이프라인 단계 카드 (Phase 3 · Visual Pack §2.3)
+ * flex: 1 균등 분배 · B0KlA 토큰 → --mg-v2-* 전환
  */
 .pipeline-step-card {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-sm, 8px);
-  padding: var(--mg-spacing-md, 12px);
-  background: var(--mg-color-background-main);
-  border-radius: var(--ad-b0kla-radius-sm, 12px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  min-width: 140px;
-  flex-shrink: 0;
+  gap: var(--mg-v2-space-2, 8px);
+  padding: var(--mg-v2-space-4, 16px);
+  background: var(--mg-v2-color-surface-card);
+  border-radius: var(--mg-v2-radius-lg, 12px);
+  box-shadow: var(--mg-v2-shadow-xs);
+  flex: 1 1 0;
+  min-width: 120px;
+  transition: box-shadow var(--mg-v2-transition-fast);
+}
+
+.pipeline-step-card:hover {
+  box-shadow: var(--mg-v2-shadow-sm);
 }
 
 .pipeline-step-card__icon {
-  color: var(--mg-color-brand-olive-muted);
+  color: var(--mg-v2-color-primary-main);
 }
 
 .pipeline-step-card__content {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-xs, 4px);
+  gap: var(--mg-v2-space-1, 4px);
 }
 
 .pipeline-step-card__title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--mg-color-text-main);
+  font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
   margin: 0;
-  line-height: 1.3;
+  line-height: var(--mg-v2-font-line-height-subheading, 1.4);
 }
 
-.pipeline-step-card--warning {
-  background: #fff5f5;
+/* 진행 중/활성 단계 하이라이트 */
+
+.pipeline-step-card--active .pipeline-step-card__title {
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-primary-main);
 }
 
-.pipeline-step-card--success {
-  background: var(--mg-color-b0kla-green-50);
-}
-
-.pipeline-step-card--info {
-  background: var(--mg-color-b0kla-orange-50);
-}
-
-.pipeline-step-card--auto {
-  background: var(--mg-color-background-main);
+/* Mobile — 최소 너비 보장 (가로 스크롤 시) */
+@media (max-width: 767px) {
+  .pipeline-step-card {
+    min-width: 140px;
+    flex-shrink: 0;
+  }
 }

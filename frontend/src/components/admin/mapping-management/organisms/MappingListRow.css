@@ -19,17 +19,6 @@
   transition: box-shadow 0.2s ease;
 }
 
-.mg-v2-mapping-list-row::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background-color: var(--mg-color-primary-main);
-  border-radius: 12px 0 0 12px;
-}
-
 .mg-v2-mapping-list-row:hover {
   box-shadow: var(--mg-card-hover-shadow);
 }

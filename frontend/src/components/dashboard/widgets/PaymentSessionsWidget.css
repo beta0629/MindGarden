@@ -30,34 +30,15 @@
   overflow: hidden;
 }
 
-.payment-stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--cs-gray-300);
-  transition: all 0.3s ease;
-}
-
 .payment-stat-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--cs-shadow-lg);
 }
 
 /* 통계 카드 색상별 스타일 */
-.payment-stat-card--primary::before {
-  background: linear-gradient(180deg, var(--cs-primary-500), var(--cs-primary-600));
-}
-
 .payment-stat-card--primary .payment-stat-icon {
   background: var(--cs-primary-100);
   color: var(--cs-primary-600);
-}
-
-.payment-stat-card--success::before {
-  background: linear-gradient(180deg, var(--cs-success-500), var(--cs-success-600));
 }
 
 .payment-stat-card--success .payment-stat-icon {
@@ -65,17 +46,9 @@
   color: var(--cs-success-600);
 }
 
-.payment-stat-card--warning::before {
-  background: linear-gradient(180deg, var(--cs-warning-500), var(--cs-warning-600));
-}
-
 .payment-stat-card--warning .payment-stat-icon {
   background: var(--cs-warning-100);
   color: var(--cs-warning-700);
-}
-
-.payment-stat-card--info::before {
-  background: linear-gradient(180deg, var(--cs-blue-500), var(--cs-blue-600));
 }
 
 .payment-stat-card--info .payment-stat-icon {

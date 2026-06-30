@@ -99,7 +99,6 @@
     border-bottom: 1px solid var(--ad-b0kla-border);
     cursor: pointer;
     transition: all 0.2s ease;
-    border-left: 3px solid transparent;
 }
 
 .mg-v2-ad-b0kla__group-card:last-child {
@@ -112,7 +111,6 @@
 
 .mg-v2-ad-b0kla__group-card--selected {
     background: var(--ad-b0kla-green-bg);
-    border-left: 3px solid var(--ad-b0kla-green);
 }
 
 .mg-v2-ad-b0kla__group-card-header {

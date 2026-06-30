@@ -71,7 +71,6 @@
   gap: var(--mg-spacing-md);
   padding: var(--mg-spacing-md);
   background-color: var(--mg-consultant-surface);
-  border-left: 4px solid var(--mg-color-error);
   border-radius: var(--mg-radius-lg);
   box-shadow: var(--mg-shadow-sm);
   cursor: pointer;
@@ -245,7 +244,6 @@
   padding: var(--mg-spacing-md);
   background-color: var(--mg-consultant-surface);
   border-radius: var(--mg-radius-xl);
-  border-left: 4px solid var(--mg-color-error);
   box-shadow: var(--mg-shadow-sm);
   cursor: pointer;
   transition: transform 0.1s ease;

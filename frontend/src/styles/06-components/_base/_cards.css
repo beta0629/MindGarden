@@ -90,21 +90,6 @@
 }
 
 /* 카드 상태 */
-.card--success {
-  border-left: 4px solid var(--ios-green);
-}
-
-.card--warning {
-  border-left: 4px solid var(--ios-orange);
-}
-
-.card--danger {
-  border-left: 4px solid var(--ios-red);
-}
-
-.card--info {
-  border-left: 4px solid var(--ios-blue);
-}
 
 /* 카드 요소 */
 .card__header {

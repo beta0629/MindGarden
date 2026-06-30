@@ -91,17 +91,6 @@
   background: rgba(0, 0, 0, var(--mg-opacity-subtle));
 }
 
-.mg-notif-center__card--unread::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--mg-chat-primary, var(--mg-client-primary));
-  border-radius: 0 2px 2px 0;
-}
-
 /* 아이콘 */
 .mg-notif-center__icon {
   width: 40px;

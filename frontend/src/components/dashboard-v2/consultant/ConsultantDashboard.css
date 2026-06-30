@@ -377,18 +377,7 @@
   background-color: var(--mg-color-primary-50);
   border: 2px solid var(--mg-color-primary-200);
   position: relative;
-  padding-left: calc(var(--mg-v2-spacing-md, 12px) + 8px);
-}
-
-.upcoming-schedule-item--highlighted::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background-color: var(--mg-v2-color-primary-600, var(--mg-color-info));
-  border-radius: 2px 0 0 2px;
+  padding-left: var(--mg-v2-spacing-md, 12px);
 }
 
 .upcoming-schedule-item--highlighted:hover {
@@ -424,7 +413,7 @@
 .upcoming-schedule-item--highlighted.mg-button.mg-button--outline {
   background-color: var(--mg-color-primary-50);
   border: 2px solid var(--mg-color-primary-200);
-  padding-left: calc(var(--mg-v2-spacing-md, 12px) + 8px);
+  padding-left: var(--mg-v2-spacing-md, 12px);
 }
 
 .upcoming-schedule-item--highlighted.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
@@ -495,7 +484,7 @@
   }
 
   .upcoming-schedule-item--highlighted {
-    padding-left: calc(var(--mg-v2-spacing-sm, 10px) + 8px);
+    padding-left: var(--mg-v2-spacing-sm, 10px);
   }
 
   .upcoming-schedule-date {
@@ -594,23 +583,9 @@
   position: relative;
 }
 
-.mg-v2-alert::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-radius: 2px 0 0 2px;
-}
-
 .mg-v2-alert--warning {
   background: var(--mg-color-warning-bg);
   border: 1px solid var(--mg-color-warning-main, var(--mg-warning-500));
-}
-
-.mg-v2-alert--warning::before {
-  background: var(--mg-color-warning-main, var(--mg-warning-500));
 }
 
 .mg-v2-alert__content {
@@ -675,17 +650,6 @@
   margin-bottom: 24px;
   position: relative;
   transition: border-color 0.2s ease;
-}
-
-.mg-v2-next-consultation-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--mg-color-primary-main, var(--mg-color-primary-main));
-  border-radius: 2px 0 0 2px;
 }
 
 .mg-v2-next-consultation-card:hover {
@@ -806,17 +770,6 @@
   padding: 24px;
   margin-bottom: 24px;
   position: relative;
-}
-
-.mg-v2-urgent-clients-section::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--mg-color-error-main, var(--mg-error-500));
-  border-radius: 2px 0 0 2px;
 }
 
 .mg-v2-urgent-clients-section__header {

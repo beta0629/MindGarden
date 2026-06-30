@@ -261,7 +261,6 @@
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);
   box-shadow: var(--ad-b0kla-shadow);
-  border-left: 4px solid transparent;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -272,7 +271,6 @@
 
 .mg-v2-ad-b0kla .mg-client-card.mg-client-card--selected {
   border-color: var(--ad-b0kla-green);
-  border-left-color: var(--ad-b0kla-green);
   background: var(--ad-b0kla-green-bg);
 }
 
@@ -572,7 +570,6 @@
 .mg-v2-ad-b0kla .mg-v2-legend-section-right {
   margin-left: auto;
 }
-
 
 .mg-v2-ad-b0kla .mg-v2-legend-title {
   font-size: var(--font-size-sm);
@@ -1832,7 +1829,6 @@
   background-color: var(--mg-gray-50);
   border: 1px solid var(--mg-gray-300);
   border-radius: 6px;
-  border-left: 4px solid var(--mg-primary-500);
   padding: 6px 8px;
   display: flex;
   flex-direction: column;
@@ -2553,5 +2549,4 @@ textarea.mg-v2-textarea {
   justify-content: flex-end;
   width: 100%;
 }
-
 

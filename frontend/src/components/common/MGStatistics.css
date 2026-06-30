@@ -31,25 +31,6 @@
 }
 
 /* ===== 통계 색상 ===== */
-.mg-statistics--primary {
-  border-left: 4px solid var(--primary-color);
-}
-
-.mg-statistics--success {
-  border-left: 4px solid var(--success-color);
-}
-
-.mg-statistics--warning {
-  border-left: 4px solid var(--warning-color);
-}
-
-.mg-statistics--danger {
-  border-left: 4px solid var(--error-color);
-}
-
-.mg-statistics--info {
-  border-left: 4px solid var(--info-color);
-}
 
 /* ===== 클릭 가능 ===== */
 .mg-statistics--clickable {
@@ -376,6 +357,4 @@
     background: rgba(26, 32, 44, 0.8);
   }
 }
-
-
 

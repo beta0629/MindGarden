@@ -25,23 +25,6 @@
   transition: all 0.2s;
 }
 
-/* B0KlA 통일: 좌측 세로 악센트 4px */
-.mg-v2-content-kpi-card--accent-green {
-  border-left: 4px solid var(--mg-color-b0kla-green-500);
-}
-
-.mg-v2-content-kpi-card--accent-orange {
-  border-left: 4px solid var(--mg-color-b0kla-orange-300);
-}
-
-.mg-v2-content-kpi-card--accent-blue {
-  border-left: 4px solid var(--mg-color-b0kla-blue-400);
-}
-
-.mg-v2-content-kpi-card--accent-gray {
-  border-left: 4px solid var(--mg-color-text-secondary-dark);
-}
-
 .mg-v2-content-kpi-card:hover {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
 }

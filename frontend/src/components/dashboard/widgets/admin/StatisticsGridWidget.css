@@ -49,40 +49,21 @@
 }
 
 /* 카테고리별 스타일 */
-.stat-card-user {
-  border-left: 4px solid var(--cs-blue-500);
-}
 
 .stat-card-user:hover {
   background: var(--cs-glass-blue-light);
-}
-
-.stat-card-mapping {
-  border-left: 4px solid var(--cs-purple-500);
 }
 
 .stat-card-mapping:hover {
   background: var(--cs-glass-primary-10);
 }
 
-.stat-card-schedule {
-  border-left: 4px solid var(--cs-orange-500);
-}
-
 .stat-card-schedule:hover {
   background: var(--cs-glass-orange-light);
 }
 
-.stat-card-session {
-  border-left: 4px solid var(--cs-teal-500);
-}
-
 .stat-card-session:hover {
   background: var(--cs-glass-teal-light);
-}
-
-.stat-card-finance {
-  border-left: 4px solid var(--cs-success-500);
 }
 
 .stat-card-finance:hover {
@@ -90,9 +71,6 @@
 }
 
 /* 경고 상태 카드 */
-.stat-card-warning {
-  border-left: 4px solid var(--cs-warning-500);
-}
 
 .stat-card-warning:hover {
   background: var(--cs-glass-warning-light);

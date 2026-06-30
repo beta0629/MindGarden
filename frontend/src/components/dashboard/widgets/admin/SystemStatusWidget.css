@@ -73,21 +73,6 @@
 }
 
 /* 상태별 카드 스타일 */
-.status-card.status-healthy {
-  border-left: 4px solid var(--cs-success-500);
-}
-
-.status-card.status-warning {
-  border-left: 4px solid var(--cs-warning-500);
-}
-
-.status-card.status-error {
-  border-left: 4px solid var(--cs-error-500);
-}
-
-.status-card.status-unknown {
-  border-left: 4px solid var(--cs-gray-400);
-}
 
 /* 상태 카드 헤더 */
 .status-card-header {

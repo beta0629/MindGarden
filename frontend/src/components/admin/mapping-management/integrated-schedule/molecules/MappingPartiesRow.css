@@ -1,25 +1,7 @@
-/* MappingPartiesRow - integrated-schedule__card-parties (사이드바 카드 상단, 카드 폭 균형) */
+/* MappingPartiesRow - integrated-schedule__card-parties */
 .integrated-schedule__card-parties {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: baseline;
-  gap: var(--mg-spacing-xs) var(--mg-spacing-sm);
-  width: 100%;
-  text-align: center;
-  line-height: 1.5;
-  word-break: break-word;
   font-size: var(--font-size-sm);
   color: var(--mg-color-text-main);
-}
-
-.integrated-schedule__card-party {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: var(--mg-spacing-xs);
-  max-width: 100%;
 }
 
 .integrated-schedule__card-consultant,
@@ -28,45 +10,14 @@
 }
 
 .integrated-schedule__card-arrow {
-  flex-shrink: 0;
-  margin: 0;
+  margin: 0 var(--mg-spacing-xs);
   color: var(--mg-color-text-secondary);
 }
 
 .integrated-schedule__card-consultant-honorific,
 .integrated-schedule__card-client-honorific {
+  margin-left: 0.25em;
   font-size: var(--font-size-xs);
   color: var(--mg-color-text-secondary);
   font-weight: normal;
-}
-
-/* compact row — 1-line ellipsis, honorific 생략 */
-.integrated-schedule__card-parties--compact {
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  text-align: start;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.integrated-schedule__card-parties--compact .integrated-schedule__card-party {
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.integrated-schedule__card-parties--compact .integrated-schedule__card-consultant,
-.integrated-schedule__card-parties--compact .integrated-schedule__card-client {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.integrated-schedule__card-parties--compact .integrated-schedule__card-arrow {
-  margin-inline: var(--mg-spacing-xs);
 }

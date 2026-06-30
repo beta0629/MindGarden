@@ -100,16 +100,12 @@ const MatchingScheduleList = ({
             return (
               <li
                 key={mapping.id}
-                className={[
-                  'integrated-schedule__card',
-                  'integrated-schedule__card--compact-row',
-                  scheduleable && 'fc-event',
-                  scheduleable && 'integrated-schedule__card--draggable'
-                ].filter(Boolean).join(' ')}
+                className={`integrated-schedule__card${scheduleable ? ' fc-event' : ''}`}
                 data-event={scheduleable ? JSON.stringify(eventData) : undefined}
               >
                 <MappingScheduleCard
                   mapping={mapping}
+                  eventData={eventData}
                   isDraggable={scheduleable}
                   onScheduleFromCard={
                     scheduleable

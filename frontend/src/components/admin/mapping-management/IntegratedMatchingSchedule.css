@@ -144,7 +144,7 @@
   background-color: var(--mg-color-surface-main);
   border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-v2-radius-xl, 16px);
-  padding: var(--mg-spacing-lg);
+  padding: var(--mg-spacing-24);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -163,7 +163,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--mg-spacing-sm, 8px);
-  margin-bottom: var(--mg-spacing-md);
+  margin-bottom: var(--mg-spacing-16);
   flex-shrink: 0;
 }
 
@@ -481,20 +481,16 @@
   font-size: var(--font-size-md);
 }
 
-/* 매칭 카드 (사이드바 compact row) — DnD는 li.fc-event, grip이 grab affordance */
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card--compact-row,
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card--compact-row.fc-event {
+/* 매칭 카드 (사이드바 전용) - CardContainer가 시각 스타일 담당, li는 리스트 레이아웃만 */
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card,
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card.fc-event {
   flex-shrink: 0;
   list-style: none;
   width: 100%;
-  cursor: default;
-}
-
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card--compact-row.fc-event .integrated-schedule__card-grip {
   cursor: grab;
 }
 
-.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card--compact-row.fc-event:active .integrated-schedule__card-grip {
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card.fc-event:active {
   cursor: grabbing;
 }
 

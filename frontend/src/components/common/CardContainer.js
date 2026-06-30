@@ -10,14 +10,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './CardContainer.css';
 
-const CARD_CONTAINER_VARIANTS = {
-  default: '',
-  sidebarRow: 'mg-v2-card-container--sidebar-row'
-};
-
-function CardContainer({ children, className = '', variant = 'default', ...rest }) {
-  const variantClass = CARD_CONTAINER_VARIANTS[variant] || '';
-  const classNames = ['mg-v2-card-container', variantClass, className].filter(Boolean).join(' ').trim();
+function CardContainer({ children, className = '', ...rest }) {
+  const classNames = ['mg-v2-card-container', className].filter(Boolean).join(' ').trim();
 
   return (
     <div className={classNames} {...rest}>
@@ -28,13 +22,11 @@ function CardContainer({ children, className = '', variant = 'default', ...rest 
 
 CardContainer.propTypes = {
   children: PropTypes.node.isRequired,
-  className: PropTypes.string,
-  variant: PropTypes.oneOf(['default', 'sidebarRow'])
+  className: PropTypes.string
 };
 
 CardContainer.defaultProps = {
-  className: '',
-  variant: 'default'
+  className: ''
 };
 
 export default CardContainer;

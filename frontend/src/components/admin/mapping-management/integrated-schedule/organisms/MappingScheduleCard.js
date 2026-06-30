@@ -1,23 +1,26 @@
 /**
- * MappingScheduleCard - 사이드바 compact list row (grip + parties/meta + actions)
- *
- * @author CoreSolution
- * @since 2026-04-30
+ * MappingScheduleCard - 매칭 스케줄 카드 (상담사→내담자 + 메타 + 액션 버튼)
+ * @param {Object} mapping - 매칭 객체
+ * @param {Object} eventData - 드래그용 이벤트 데이터 (FullCalendar)
+ * @param {boolean} isDraggable - 드래그 가능 여부
+ * @param {Function} [onScheduleFromCard] - «일정 등록» 클릭 시 (통합 스케줄 사이드바)
+ * @param {Function} onPayment - 결제 확인 핸들러
+ * @param {Function} onDeposit - 입금 확인 핸들러
+ * @param {Function} onApprove - 승인 핸들러
+ * @param {boolean} approveProcessing - 승인 처리 중 여부
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { GripVertical } from 'lucide-react';
 import CardContainer from '../../../../common/CardContainer';
 import MappingPartiesRow from '../molecules/MappingPartiesRow';
 import CardMeta from '../molecules/CardMeta';
 import CardActionGroup from '../molecules/CardActionGroup';
 import './MappingScheduleCard.css';
 
-const GRIP_ICON_SIZE = 16;
-
 const MappingScheduleCard = ({
   mapping,
+  eventData,
   isDraggable,
   onScheduleFromCard,
   onPayment,
@@ -25,30 +28,12 @@ const MappingScheduleCard = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
-  onSessionExtension,
   approveProcessing,
   cancelPendingProcessing
 }) => (
-  <CardContainer
-    variant="sidebarRow"
-    className={[
-      'integrated-schedule__card-row',
-      isDraggable && 'integrated-schedule__card-row--draggable'
-    ].filter(Boolean).join(' ')}
-  >
-    <div
-      className={[
-        'integrated-schedule__card-grip',
-        !isDraggable && 'integrated-schedule__card-grip--disabled'
-      ].filter(Boolean).join(' ')}
-      aria-hidden={!isDraggable}
-      aria-label={isDraggable ? '캘린더로 끌어 일정 등록' : undefined}
-    >
-      <GripVertical size={GRIP_ICON_SIZE} aria-hidden="true" />
-    </div>
-    <div className="integrated-schedule__card-center">
+  <CardContainer>
+    <div className="integrated-schedule__card-body">
       <MappingPartiesRow
-        layout="compact"
         consultantName={mapping?.consultantName}
         clientName={mapping?.clientName}
       />
@@ -65,7 +50,6 @@ const MappingScheduleCard = ({
       onApprove={onApprove}
       onCheckoutSameDay={onCheckoutSameDay}
       onCancelPendingMapping={onCancelPendingMapping}
-      onSessionExtension={onSessionExtension}
       approveProcessing={approveProcessing}
       cancelPendingProcessing={cancelPendingProcessing}
     />
@@ -81,6 +65,7 @@ MappingScheduleCard.propTypes = {
     clientName: PropTypes.string,
     remainingSessions: PropTypes.number
   }),
+  eventData: PropTypes.object,
   isDraggable: PropTypes.bool,
   onScheduleFromCard: PropTypes.func,
   onPayment: PropTypes.func,
@@ -88,13 +73,13 @@ MappingScheduleCard.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
-  onSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool
 };
 
 MappingScheduleCard.defaultProps = {
   mapping: null,
+  eventData: null,
   isDraggable: false,
   onScheduleFromCard: null,
   onPayment: null,
@@ -102,7 +87,6 @@ MappingScheduleCard.defaultProps = {
   onApprove: null,
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
-  onSessionExtension: null,
   approveProcessing: false,
   cancelPendingProcessing: false
 };

@@ -7,7 +7,7 @@
  * @since 2025-02-25
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { useSession } from '../../../contexts/SessionContext';
@@ -506,6 +506,22 @@ const IntegratedMatchingSchedule = () => {
     setPreFilledMapping(null);
   };
 
+  const activeMappingsForExtension = useMemo(
+    () => mappings.filter((mapping) => mapping.status === 'ACTIVE'),
+    [mappings]
+  );
+
+  const handleOpenSessionExtensionFromHeader = useCallback(() => {
+    if (activeMappingsForExtension.length === 0) {
+      notificationManager.info('회기를 추가할 활성 매칭이 없습니다.');
+      return;
+    }
+    const sorted = [...activeMappingsForExtension].sort(
+      (a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0)
+    );
+    setSessionExtensionMapping(sorted[0]);
+  }, [activeMappingsForExtension]);
+
   const handleSessionExtensionFromCard = useCallback((mapping) => {
     setSessionExtensionMapping(mapping);
   }, []);
@@ -522,6 +538,15 @@ const IntegratedMatchingSchedule = () => {
 
   const headerActions = (
     <ActionBar align="end" gap="md">
+      <ActionBarButton
+        variant="outline"
+        onClick={handleOpenSessionExtensionFromHeader}
+        disabled={activeMappingsForExtension.length === 0}
+        aria-label="회기 추가"
+        className="integrated-schedule__btn-add-sessions"
+      >
+        회기 추가
+      </ActionBarButton>
       <ActionBarButton
         variant="primary"
         onClick={() => setCreateMappingModalOpen(true)}

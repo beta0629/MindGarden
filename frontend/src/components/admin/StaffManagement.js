@@ -20,11 +20,12 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
-import { ViewModeToggle, SmallCardGrid, ListTableView, StatusBadge, SafeText, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../common';
+import { ViewModeToggle, SafeText, SidePeekShell } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { ProfileCard } from '../ui/Card/index';
+import StaffOverviewTab from './StaffManagement/StaffOverviewTab';
+import StaffSidePeekContent from './StaffManagement/molecules/StaffSidePeekContent';
 import { showSuccess, showError } from '../../utils/notification';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { formatKoreanMobileForDisplay, isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
@@ -42,8 +43,7 @@ import {
   STAFF_MGMT_PAGE,
   STAFF_MGMT_PLACEHOLDER,
   STAFF_MGMT_ROLE_LABELS,
-  STAFF_MGMT_STATUS,
-  STAFF_MGMT_TABLE
+  STAFF_MGMT_STATUS
 } from '../../constants/staffManagementStrings';
 import { fetchUserPermissions, hasPermission, PERMISSIONS } from '../../utils/permissionUtils';
 import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete';
@@ -58,9 +58,13 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
 import './mapping-management/organisms/MappingSearchSection.css';
 import './mapping-management/organisms/MappingListBlock.css';
-import './ProfileCard.css';
+import './StaffManagementPage.css';
 
 import { USER_ROLES } from '../../constants/roles';
+
+const STAFF_MGMT_PEEK_LAYOUT_CLASS = 'staff-management__peek-layout';
+const STAFF_MGMT_PEEK_LAYOUT_OPEN_MODIFIER = 'staff-management__peek-layout--peek-open';
+const STAFF_MGMT_MAIN_REGION_CLASS = 'staff-management__main-region';
 
 const API_USER_MANAGEMENT = '/api/v1/admin/user-management';
 const API_ROLES = '/api/v1/admin/user-management/roles';
@@ -198,8 +202,8 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
   const staffEditPhoneBaselineRef = useRef('');
-  // PR-200·PR-202 list 렌더 경로 유지, 기본 뷰는 목록(밀도 최적)
-  const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list'
+  const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list'
+  const [peekStaff, setPeekStaff] = useState(null);
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });
   const [staffEditForm, setStaffEditForm] = useState({ name: '', email: '', phone: '' });
@@ -223,6 +227,14 @@ const StaffManagement = ({ embedded = false }) => {
   const normalizeStaffPhoneForEdit = useCallback((p) => {
     if (p == null || String(p).trim() === '' || String(p).trim() === STAFF_MGMT_MASK.PHONE_NONE) return '';
     return String(p).trim();
+  }, []);
+
+  const handleStaffPeek = useCallback((staff) => {
+    setPeekStaff(staff);
+  }, []);
+
+  const handleCloseStaffPeek = useCallback(() => {
+    setPeekStaff(null);
   }, []);
 
   const openStaffDetail = useCallback((staff) => {
@@ -709,40 +721,6 @@ const StaffManagement = ({ embedded = false }) => {
     }
   }, [staffEditModal, staffEditForm, closeStaffEdit, loadUsers, staffPhoneCheckStatus]);
 
-  const renderStaffActionBar = useCallback(
-    (staff, { layout = ENTITY_ROW_ACTIONS_LAYOUT.TABLE } = {}) => {
-      const isSelf = sessionUserId != null && staff?.id != null
-        && Number(sessionUserId) === Number(staff.id);
-      return (
-        <EntityRowActions
-          layout={layout}
-          ariaLabel={STAFF_MGMT_ARIA.STAFF_ACTIONS}
-          items={[
-            {
-              id: 'edit',
-              label: STAFF_MGMT_BUTTON.EDIT,
-              onClick: () => openStaffEdit(staff)
-            },
-            {
-              id: 'role-change',
-              label: STAFF_MGMT_BUTTON.ROLE_CHANGE,
-              onClick: () => handleOpenRoleChange(staff)
-            },
-            {
-              id: 'delete',
-              label: STAFF_MGMT_BUTTON.DELETE,
-              onClick: () => openStaffDelete(staff),
-              variant: 'destructive',
-              disabled: isSelf,
-              title: isSelf ? '자기 자신은 삭제할 수 없습니다.' : undefined
-            }
-          ]}
-        />
-      );
-    },
-    [openStaffEdit, handleOpenRoleChange, openStaffDelete, sessionUserId]
-  );
-
   const handleSearch = useCallback((term) => {
     setSearchTerm(term);
   }, []);
@@ -850,103 +828,64 @@ const StaffManagement = ({ embedded = false }) => {
 
       <div className="mg-v2-tab-content">
         <ContentSection noCard className="mg-v2-mapping-list-block">
-          <ContentCard className="mg-v2-mapping-list-block__card">
-            <div className="mg-v2-mapping-list-block__header">
-              <div className="mg-v2-mapping-list-block__title">{STAFF_MGMT_PAGE.LIST_HEADING}</div>
-              <ViewModeToggle
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                className="mg-v2-mapping-list-block__toggle"
-                ariaLabel={STAFF_MGMT_ARIA.VIEW_MODE_TOGGLE}
-              />
-            </div>
-            {filteredStaff.length === 0 ? (
-              <div className="mg-v2-mapping-list-block__empty">
-                <div className="mg-v2-mapping-list-block__empty-icon">
-                  <User size={48} />
+          <div
+            className={`${STAFF_MGMT_PEEK_LAYOUT_CLASS}${
+              peekStaff ? ` ${STAFF_MGMT_PEEK_LAYOUT_OPEN_MODIFIER}` : ''
+            }`}
+          >
+            <div
+              className={STAFF_MGMT_MAIN_REGION_CLASS}
+              data-region="R-MAIN"
+            >
+              <ContentCard className="mg-v2-mapping-list-block__card">
+                <div className="mg-v2-mapping-list-block__header">
+                  <div className="mg-v2-mapping-list-block__title">{STAFF_MGMT_PAGE.LIST_HEADING}</div>
+                  <ViewModeToggle
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    className="mg-v2-mapping-list-block__toggle"
+                    ariaLabel={STAFF_MGMT_ARIA.VIEW_MODE_TOGGLE}
+                  />
                 </div>
-                <h3 className="mg-v2-mapping-list-block__empty-title">
-                  {staffList.length === 0 ? STAFF_MGMT_PAGE.EMPTY_NO_STAFF_TITLE : STAFF_MGMT_PAGE.EMPTY_NO_SEARCH_TITLE}
-                </h3>
-                <p className="mg-v2-mapping-list-block__empty-desc">
-                  {staffList.length === 0 ? STAFF_MGMT_PAGE.EMPTY_NO_STAFF_DESC : STAFF_MGMT_PAGE.EMPTY_NO_SEARCH_DESC}
-                </p>
-              </div>
-            ) : viewMode === 'largeCard' ? (
-              <div className="mg-v2-mapping-list-block__grid">
-                {filteredStaff.map((staff) => (
-                  <ProfileCard
-                    key={staff.id}
-                    variant="list"
-                    avatar={{ profileImageUrl: staff.profileImageUrl, displayName: toDisplayString(staff.name), size: 48 }}
-                    name={maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}
-                    contactInfo={{
-                      email: <><Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}</>,
-                      phone: <><Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</>
-                    }}
-                    badges={[
-                      <StatusBadge key="role" variant={staff.role === USER_ROLES.ADMIN ? 'info' : 'neutral'}>
-                        {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
-                      </StatusBadge>,
-                      <StatusBadge key="status" variant={staff.isActive ? 'success' : 'neutral'}>
-                        {staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}
-                      </StatusBadge>
-                    ]}
-                    onClick={() => openStaffDetail(staff)}
-                    renderActions={() => renderStaffActionBar(staff, { layout: ENTITY_ROW_ACTIONS_LAYOUT.CARD })}
+                {filteredStaff.length === 0 ? (
+                  <div className="mg-v2-mapping-list-block__empty">
+                    <div className="mg-v2-mapping-list-block__empty-icon">
+                      <User size={48} />
+                    </div>
+                    <h3 className="mg-v2-mapping-list-block__empty-title">
+                      {staffList.length === 0 ? STAFF_MGMT_PAGE.EMPTY_NO_STAFF_TITLE : STAFF_MGMT_PAGE.EMPTY_NO_SEARCH_TITLE}
+                    </h3>
+                    <p className="mg-v2-mapping-list-block__empty-desc">
+                      {staffList.length === 0 ? STAFF_MGMT_PAGE.EMPTY_NO_STAFF_DESC : STAFF_MGMT_PAGE.EMPTY_NO_SEARCH_DESC}
+                    </p>
+                  </div>
+                ) : (
+                  <StaffOverviewTab
+                    staffList={filteredStaff}
+                    onStaffPeek={handleStaffPeek}
+                    onStaffSelect={openStaffDetail}
+                    onEditStaff={openStaffEdit}
+                    onRoleChange={handleOpenRoleChange}
+                    onDeleteStaff={openStaffDelete}
+                    sessionUserId={sessionUserId}
+                    viewMode={viewMode}
                   />
-                ))}
-              </div>
-            ) : viewMode === 'smallCard' ? (
-              <SmallCardGrid>
-                {filteredStaff.map((staff) => (
-                  <ProfileCard
-                    key={staff.id}
-                    variant="compact"
-                    avatar={{ profileImageUrl: staff.profileImageUrl, displayName: toDisplayString(staff.name), size: 36 }}
-                    name={maskEncryptedDisplay(staff.name, STAFF_MGMT_MASK.NAME)}
-                    contactInfo={{
-                      email: <><Mail size={12} /> {maskEncryptedDisplay(staff.email, STAFF_MGMT_MASK.EMAIL)}</>,
-                      phone: <><Phone size={12} /> {formatKoreanMobileForDisplay(maskEncryptedDisplay(staff.phone, STAFF_MGMT_MASK.PHONE_NONE))}</>
-                    }}
-                    badges={[
-                      <StatusBadge key="role" variant={staff.role === USER_ROLES.ADMIN ? 'info' : 'neutral'}>
-                        {STAFF_MGMT_ROLE_LABELS[staff.role] || staff.role}
-                      </StatusBadge>,
-                      <StatusBadge key="status" variant={staff.isActive ? 'success' : 'neutral'}>
-                        {staff.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE}
-                      </StatusBadge>
-                    ]}
-                    onClick={() => openStaffDetail(staff)}
-                    renderActions={() => renderStaffActionBar(staff, { layout: ENTITY_ROW_ACTIONS_LAYOUT.CORNER })}
-                  />
-                ))}
-              </SmallCardGrid>
-            ) : (
-              <ListTableView
-                columns={[
-                  { key: 'name', label: STAFF_MGMT_TABLE.COL_NAME },
-                  { key: 'email', label: STAFF_MGMT_TABLE.COL_EMAIL },
-                  { key: 'role', label: STAFF_MGMT_TABLE.COL_ROLE },
-                  { key: 'isActive', label: STAFF_MGMT_TABLE.COL_STATUS },
-                  { key: '_actions', label: STAFF_MGMT_TABLE.COL_ACTIONS }
-                ]}
-                data={filteredStaff}
-                renderCell={(key, item) => {
-                  if (key === '_actions') {
-                    return renderStaffActionBar(item, { layout: ENTITY_ROW_ACTIONS_LAYOUT.TABLE });
-                  }
-                  if (key === 'role') return STAFF_MGMT_ROLE_LABELS[item.role] || item.role;
-                  if (key === 'isActive') return item.isActive ? STAFF_MGMT_STATUS.ACTIVE : STAFF_MGMT_STATUS.INACTIVE;
-                  if (key === 'name') return maskEncryptedDisplay(item.name, STAFF_MGMT_MASK.NAME);
-                  if (key === 'email') return maskEncryptedDisplay(item.email, STAFF_MGMT_MASK.EMAIL);
-                  const v = item[key];
-                  return v != null ? String(v) : '-';
-                }}
-                onRowClick={openStaffDetail}
-              />
-            )}
-          </ContentCard>
+                )}
+              </ContentCard>
+            </div>
+            <SidePeekShell
+              isOpen={Boolean(peekStaff)}
+              onClose={handleCloseStaffPeek}
+              title="상세"
+              ariaLabel={
+                peekStaff
+                  ? `${maskEncryptedDisplay(peekStaff.name, STAFF_MGMT_MASK.NAME)} 상세`
+                  : '상세'
+              }
+            >
+              <StaffSidePeekContent staff={peekStaff} />
+            </SidePeekShell>
+          </div>
         </ContentSection>
       </div>
       </ContentArea>

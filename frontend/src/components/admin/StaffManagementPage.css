@@ -1,0 +1,32 @@
+/**
+ * StaffManagementPage — B0KlA 스태ff 관리 + Side Peek 분할
+ *
+ * @author Core Solution
+ * @since 2026-07-01
+ */
+
+/* R-MAIN + R-PEEK 분할 — 스태ff overview list Side Peek pilot */
+.staff-management__peek-layout {
+  display: flex;
+  flex: 1;
+  gap: var(--mg-spacing-24);
+  min-width: 0;
+  align-items: stretch;
+}
+
+.staff-management__main-region {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.staff-management__peek-layout--peek-open .staff-management__main-region {
+  min-width: 0;
+}
+
+.staff-management__main-region .mg-v2-mapping-list-block__card {
+  flex: 1;
+  min-width: 0;
+}

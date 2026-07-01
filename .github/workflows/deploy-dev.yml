@@ -204,7 +204,7 @@ jobs:
         echo "=========================================="
         
     - name: 📤 백엔드 파일 업로드 SCP (개발 서버)
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -226,7 +226,7 @@ jobs:
         echo "=========================================="
         
     - name: 📤 프론트엔드 파일 업로드 SCP (개발 서버)
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -248,7 +248,7 @@ jobs:
         echo "=========================================="
         
     - name: 📤 Trinity 프론트엔드 파일 업로드 SCP (개발 서버)
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -270,7 +270,7 @@ jobs:
         echo "=========================================="
         
     - name: 📤 Ops 프론트엔드 파일 업로드 SCP (개발 서버)
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -283,7 +283,7 @@ jobs:
         overwrite: true
         
     - name: 📤 개발 서버 환경 변수 파일 업로드
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -295,7 +295,7 @@ jobs:
         overwrite: true
         
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 통합 설정)
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -307,7 +307,7 @@ jobs:
         overwrite: true
         
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 기존 도메인)
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -319,7 +319,7 @@ jobs:
         overwrite: true
         
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}

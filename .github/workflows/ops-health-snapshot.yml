@@ -42,7 +42,7 @@ jobs:
             rm -f /tmp/prod-health-snapshot.sh || true
 
       - name: 스냅샷 스크립트 업로드
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

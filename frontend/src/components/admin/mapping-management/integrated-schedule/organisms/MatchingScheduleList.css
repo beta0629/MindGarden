@@ -37,6 +37,11 @@
   gap: var(--mg-spacing-sm);
 }
 
+.integrated-schedule__sidebar .integrated-schedule__card-progress.mg-v2-session-progress {
+  width: 100%;
+  min-width: 0;
+}
+
 .integrated-schedule__sidebar .integrated-schedule__card-meta {
   justify-content: center;
   width: 100%;

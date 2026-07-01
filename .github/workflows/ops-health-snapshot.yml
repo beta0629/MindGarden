@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 코드 체크아웃
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # /tmp 직접 덮어쓰기 시 root 소유 파일 등으로 untar 실패할 수 있어, run_id 별 전용 디렉터리 사용.
       # scp-action: strip_components: 2 → target 아래 prod-health-snapshot.sh 로 평탄화.

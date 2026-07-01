@@ -42,6 +42,7 @@ const MatchingScheduleList = ({
   loading,
   viewFilter,
   statusFilter,
+  onOpenPeek,
   onScheduleFromCard,
   onPayment,
   onDeposit,
@@ -107,6 +108,7 @@ const MatchingScheduleList = ({
                   mapping={mapping}
                   eventData={eventData}
                   isDraggable={scheduleable}
+                  onOpenPeek={onOpenPeek}
                   onScheduleFromCard={
                     scheduleable
                       ? () => onScheduleFromCard(mapping)
@@ -138,6 +140,7 @@ MatchingScheduleList.propTypes = {
   loading: PropTypes.bool,
   viewFilter: PropTypes.string,
   statusFilter: PropTypes.string,
+  onOpenPeek: PropTypes.func,
   onScheduleFromCard: PropTypes.func.isRequired,
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
@@ -154,6 +157,7 @@ MatchingScheduleList.defaultProps = {
   loading: false,
   viewFilter: '',
   statusFilter: '',
+  onOpenPeek: null,
   onPayment: null,
   onDeposit: null,
   onApprove: null,

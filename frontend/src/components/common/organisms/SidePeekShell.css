@@ -1,0 +1,100 @@
+/**
+ * SidePeekShell — R-PEEK 우측 360px 분할 패널
+ * SSOT: ADMIN_INAPP_VISUALIZATION_DESIGN_HANDOFF §3.1 Peek
+ */
+
+.mg-side-peek-shell {
+  --mg-side-peek-shell-width: min(360px, 32%);
+  flex: 0 0 0;
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-height: 0;
+  max-height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  border-left: 0 solid transparent;
+  background-color: var(--mg-color-background-main);
+  transition:
+    flex-basis 0.2s ease,
+    width 0.2s ease,
+    max-width 0.2s ease,
+    opacity 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.mg-side-peek-shell--open {
+  flex: 0 0 var(--mg-side-peek-shell-width);
+  width: var(--mg-side-peek-shell-width);
+  max-width: var(--mg-side-peek-shell-width);
+  opacity: 1;
+  pointer-events: auto;
+  border-left-width: 1px;
+  border-left-color: var(--mg-color-border-main);
+  box-shadow: var(--cs-shadow-lg-multi);
+}
+
+.mg-side-peek-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+  flex-shrink: 0;
+  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
+  border-bottom: 1px solid var(--mg-color-border-main);
+  background-color: var(--mg-color-surface-main);
+}
+
+.mg-side-peek-shell__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-lg, var(--font-size-md));
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-color-text-main);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-side-peek-shell__title--placeholder {
+  display: block;
+}
+
+.mg-side-peek-shell__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target-min, 32px);
+  height: var(--touch-target-min, 32px);
+  flex-shrink: 0;
+  padding: 0;
+  color: var(--mg-color-text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.mg-side-peek-shell__close:hover {
+  color: var(--mg-color-text-main);
+  border-color: var(--mg-color-primary-main);
+  background-color: var(--mg-color-surface-sub);
+}
+
+.mg-side-peek-shell__close:focus-visible {
+  outline: none;
+  border-color: var(--mg-color-primary-main);
+  box-shadow: 0 0 0 2px var(--mg-color-primary-light);
+}
+
+.mg-side-peek-shell__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--mg-spacing-lg);
+}

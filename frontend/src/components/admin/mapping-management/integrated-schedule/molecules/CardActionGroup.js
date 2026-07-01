@@ -14,6 +14,7 @@ import MappingMatchActions from '../../molecules/MappingMatchActions';
 
 const CardActionGroup = ({
   mapping,
+  onOpenPeek,
   onScheduleFromCard,
   onPayment,
   onDeposit,
@@ -24,6 +25,30 @@ const CardActionGroup = ({
   cancelPendingProcessing
 }) => (
   <CommonCardActionGroup>
+    {onOpenPeek && (
+      <MGButton
+        type="button"
+        variant="ghost"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'ghost',
+          size: 'sm',
+          loading: false,
+          className: 'integrated-schedule__btn-detail-peek'
+        })}
+        loading={false}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpenPeek();
+        }}
+        aria-label="상세"
+        data-testid={`mapping-detail-peek-${mapping?.id ?? 'unknown'}`}
+        preventDoubleClick={false}
+      >
+        상세
+      </MGButton>
+    )}
     {onScheduleFromCard && (
       <MGButton
         type="button"
@@ -65,6 +90,7 @@ CardActionGroup.propTypes = {
     paymentTiming: PropTypes.string,
     clientName: PropTypes.string
   }),
+  onOpenPeek: PropTypes.func,
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,
@@ -76,6 +102,7 @@ CardActionGroup.propTypes = {
 
 CardActionGroup.defaultProps = {
   mapping: null,
+  onOpenPeek: null,
   onScheduleFromCard: null,
   onPayment: null,
   onDeposit: null,

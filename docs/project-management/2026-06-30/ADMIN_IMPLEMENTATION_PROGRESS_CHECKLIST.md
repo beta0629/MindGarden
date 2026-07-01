@@ -30,7 +30,7 @@
 
 | Phase | Seq | 작업명 | 담당 | 감독者 (sign-off) | 선행조건 | DoD | good SHA / rollback SHA | 상태 | dev/prod run · 사용자 검수 |
 |-------|-----|--------|------|-------------------|----------|-----|-------------------------|------|---------------------------|
-| V0-coder | 6 | `SidePeekShell` stub 또는 MVP (360px, R-PEEK) | coder | **designer** (감리) | Seq 4 ☑, Seq 5 권고 반영 | handoff §3.1 Peek; 행 클릭 시 peek; UnifiedModal 전체 전환 금지; 1 PR | branch from `93c39c35b` | ☐ pending | — |
+| V0-coder | 6 | `SidePeekShell` stub 또는 MVP (360px, R-PEEK) | coder | **designer** (감리) | Seq 4 ☑, Seq 5 권고 반영 | handoff §3.1 Peek; 행 클릭 시 peek; UnifiedModal 전체 전환 금지; 1 PR | branch from `93c39c35b` | ☑ done | develop push 후 dev FE 배포 |
 | V0-coder | 7 | 사이드바 카드 `SessionProgress` / `SessionProgressIndicator` 주입 | coder | **designer** | Seq 6 또는 동일 PR 정책 준수 | L-B progress; stripe 금지; aria-valuenow; 회기/결제 시각화 | 동일 | ☐ pending | — |
 | V0-coder | 8 | `DensityToggle` — default comfortable, compact OFF, localStorage persist | coder | **designer** | Seq 6~7 | comfortable default; compact **토글 ON** 시만; `R-SIDEBAR`만 영향; 380px·필터 1줄 유지 | 동일 | ☑ done | develop push 후 dev FE 배포 |
 | V0-design-gate | 9 | V0 구현 디자인 감리 (handoff 대비) | designer | **designer** | Seq 6~8 PR | R-PARTIES hide 없음; Must not 0건; B0KlA 토큰 | — | ☐ pending | — |
@@ -85,4 +85,4 @@
 | 날짜 | Seq | 변경 |
 |------|-----|------|
 | 2026-07-01 | 1~3 | P0-doc checklist·governance 초안 ☑ |
-| 2026-07-01 | 4 | P0-design-review ☑ — gap 3건(전무), UnifiedModal 위반 확인, V0-coder 착수 가능 |
+| 2026-07-01 | 6 | V0 SidePeekShell stub ☑ — 360px R-PEEK, 카드 상세·row click, Jest |

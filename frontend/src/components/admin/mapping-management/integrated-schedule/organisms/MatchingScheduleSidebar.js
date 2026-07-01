@@ -39,6 +39,7 @@ const MatchingScheduleSidebar = ({
   onScheduleDensityChange,
   getStatusCount,
   onScheduleFromCard,
+  onOpenPeek,
   onPayment,
   onDeposit,
   onApprove,
@@ -199,6 +200,7 @@ const MatchingScheduleSidebar = ({
           loading={loading}
           viewFilter={viewFilter}
           statusFilter={statusFilter}
+          onOpenPeek={onOpenPeek}
           onScheduleFromCard={onScheduleFromCard}
           onPayment={onPayment}
           onDeposit={onDeposit}
@@ -228,6 +230,7 @@ MatchingScheduleSidebar.propTypes = {
   onScheduleDensityChange: PropTypes.func.isRequired,
   getStatusCount: PropTypes.func.isRequired,
   onScheduleFromCard: PropTypes.func.isRequired,
+  onOpenPeek: PropTypes.func,
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
   onApprove: PropTypes.func,
@@ -243,6 +246,7 @@ MatchingScheduleSidebar.defaultProps = {
   isCollapsed: false,
   loading: false,
   scheduleDensity: SCHEDULE_DENSITY_COMFORTABLE,
+  onOpenPeek: null,
   onPayment: null,
   onDeposit: null,
   onApprove: null,

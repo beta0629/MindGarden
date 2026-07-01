@@ -12,7 +12,6 @@ import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
     getAllConsultantsWithStats,
-    getConsultantBadgeDisplay,
     formatConsultantGenderLabel,
     getConsultantAgeYears
 } from '../../utils/consultantHelper';
@@ -24,8 +23,9 @@ import MgEmailFieldWithAutocomplete from '../common/MgEmailFieldWithAutocomplete
 import ProfileImageInput from '../common/ProfileImageInput';
 import KoreanMobileDuplicateField from '../common/molecules/KoreanMobileDuplicateField';
 import Avatar from '../common/Avatar';
-import ConsultantCard from '../ui/Card/ConsultantCard';
 import PasswordResetModal from './PasswordResetModal';
+import ConsultantOverviewTab from './ConsultantComprehensiveManagement/ConsultantOverviewTab';
+import ConsultantSidePeekContent from './ConsultantComprehensiveManagement/molecules/ConsultantSidePeekContent';
 import { showSuccess, showError } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -33,7 +33,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
-import { ViewModeToggle, SmallCardGrid, ListTableView, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../common';
+import { ViewModeToggle, SidePeekShell } from '../common';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -46,6 +46,7 @@ import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../ut
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
+import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { CONSULTANT_COMP_SPECIALTY, CONSULTANT_COMP_PASSWORD_RESET } from '../../constants/consultantComprehensiveStrings';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
@@ -61,8 +62,7 @@ import {
     mapTenantCommonCodesToGradeSelectOptions,
     DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
     FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL,
-    fetchProfessionalProviderTypeSelectOptions,
-    getProfessionalProviderTypeLabel
+    fetchProfessionalProviderTypeSelectOptions
 } from '../../constants/professionalProviderRoles';
 import { useTranslation } from 'react-i18next';
 
@@ -71,6 +71,10 @@ const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
 const API_COMMON_CODES_CORE_GROUPS_SPECIALTY = '/api/v1/common-codes/core/groups/SPECIALTY';
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
+
+const CONSULTANT_COMP_PEEK_LAYOUT_CLASS = 'consultant-comprehensive__peek-layout';
+const CONSULTANT_COMP_PEEK_LAYOUT_OPEN_MODIFIER = 'consultant-comprehensive__peek-layout--peek-open';
+const CONSULTANT_COMP_MAIN_REGION_CLASS = 'consultant-comprehensive__main-region';
 
 const CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
   notificationChannelPreference: 'TENANT_DEFAULT',
@@ -127,7 +131,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const consultantEditPhoneBaselineRef = useRef('');
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
-    const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list'
+    const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list'
+    const [peekConsultant, setPeekConsultant] = useState(null);
 
     const loadProfessionalTypeCodes = useCallback(async() => {
         const fetchOnce = async() => {
@@ -663,14 +668,23 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         };
     }, [consultants, mappings, schedules]);
 
-    const handleConsultantSelect = useCallback((consultant) => {
-        console.log('👤 상담사 선택:', consultant);
+    const handleConsultantPeek = useCallback((consultant) => {
+        setPeekConsultant(consultant);
+    }, []);
+
+    const handleCloseConsultantPeek = useCallback(() => {
+        setPeekConsultant(null);
+    }, []);
+
+    const handleResetPasswordConsultant = useCallback((consultant) => {
+        setPasswordResetConsultant(consultant);
+        setShowPasswordResetModal(true);
+    }, []);
+
+    const handleDeleteConsultantFromList = useCallback((consultant) => {
         setSelectedConsultant(consultant);
-        setModalType('view');
-        setShowModal(true);
-        void loadProfessionalTypeCodes();
-        void loadConsultantGradeCodes();
-    }, [loadProfessionalTypeCodes, loadConsultantGradeCodes]);
+        setShowDeleteConfirm(true);
+    }, []);
 
     const handleOpenModal = useCallback((type, consultant = null) => {
         setModalType(type);
@@ -763,38 +777,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
             ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
     }, []);
-
-    const renderConsultantActions = useCallback((consultant, layout = ENTITY_ROW_ACTIONS_LAYOUT.TABLE) => (
-        <EntityRowActions
-            layout={layout}
-            ariaLabel="상담사 작업"
-            items={[
-                {
-                    id: 'edit',
-                    label: t('common.actions.edit'),
-                    onClick: () => handleOpenModal('edit', consultant)
-                },
-                {
-                    id: 'reset-password',
-                    label: CONSULTANT_COMP_PASSWORD_RESET.BTN_LABEL,
-                    title: CONSULTANT_COMP_PASSWORD_RESET.BTN_TITLE,
-                    onClick: () => {
-                        setPasswordResetConsultant(consultant);
-                        setShowPasswordResetModal(true);
-                    }
-                },
-                {
-                    id: 'delete',
-                    label: t('admin.actions.delete'),
-                    onClick: () => {
-                        setSelectedConsultant(consultant);
-                        setShowDeleteConfirm(true);
-                    },
-                    variant: 'destructive'
-                }
-            ]}
-        />
-    ), [handleOpenModal, t]);
 
     useEffect(() => {
         if (!showModal || !selectedConsultant?.id) {
@@ -1294,6 +1276,56 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         );
     }
 
+    const consultantListPeekSection = (
+        <ContentSection noCard className="mg-v2-mapping-list-block">
+            <div
+                className={`${CONSULTANT_COMP_PEEK_LAYOUT_CLASS}${
+                    peekConsultant ? ` ${CONSULTANT_COMP_PEEK_LAYOUT_OPEN_MODIFIER}` : ''
+                }`}
+            >
+                <div
+                    className={CONSULTANT_COMP_MAIN_REGION_CLASS}
+                    data-region="R-MAIN"
+                >
+                    <ContentCard className="mg-v2-mapping-list-block__card">
+                        <div className="mg-v2-mapping-list-block__header">
+                            <div className="mg-v2-mapping-list-block__title">
+                                {t('admin:ConsultantComprehensiveManagement.t_8a952452')}
+                            </div>
+                            <ViewModeToggle
+                                viewMode={viewMode}
+                                onViewModeChange={setViewMode}
+                                className="mg-v2-mapping-list-block__toggle"
+                                ariaLabel="목록 보기 전환"
+                            />
+                        </div>
+                        <ConsultantOverviewTab
+                            consultants={getFilteredConsultants}
+                            onConsultantPeek={handleConsultantPeek}
+                            onEditConsultant={(consultant) => handleOpenModal('edit', consultant)}
+                            onDeleteConsultant={handleDeleteConsultantFromList}
+                            onResetPassword={handleResetPasswordConsultant}
+                            onCreateConsultant={() => handleOpenModal('create')}
+                            viewMode={viewMode}
+                        />
+                    </ContentCard>
+                </div>
+                <SidePeekShell
+                    isOpen={Boolean(peekConsultant)}
+                    onClose={handleCloseConsultantPeek}
+                    title="상세"
+                    ariaLabel={
+                        peekConsultant
+                            ? `${maskEncryptedDisplay(peekConsultant.name, '상담사')} 상세`
+                            : '상세'
+                    }
+                >
+                    <ConsultantSidePeekContent consultant={peekConsultant} />
+                </SidePeekShell>
+            </div>
+        </ContentSection>
+    );
+
     const consultantTabAndBelow = (
         <>
             <ContentSection noCard>
@@ -1411,93 +1443,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     </div>
                                 </ContentSection>
 
-                                <ContentSection noCard className="mg-v2-mapping-list-block">
-                                    <ContentCard className="mg-v2-mapping-list-block__card">
-                                        <div className="mg-v2-mapping-list-block__header">
-                                            <div className="mg-v2-mapping-list-block__title">{t('admin:ConsultantComprehensiveManagement.t_8a952452')}</div>
-                                            <ViewModeToggle
-                                                viewMode={viewMode}
-                                                onViewModeChange={setViewMode}
-                                                className="mg-v2-mapping-list-block__toggle"
-                                                ariaLabel="목록 보기 전환"
-                                            />
-                                        </div>
-                                        {getFilteredConsultants.length === 0 ? (
-                                            <div className="mg-v2-mapping-list-block__empty">
-                                                <div className="mg-v2-mapping-list-block__empty-icon">
-                                                    <Users size={48} />
-                                                </div>
-                                                <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title')}</h3>
-                                                <p className="mg-v2-mapping-list-block__empty-desc">{t('admin:ConsultantComprehensiveManagement.t_cff51bee')}</p>
-                                                <MGButton
-                                                    type="button"
-                                                    variant="primary"
-                                                    preventDoubleClick={false}
-                                                    className={buildErpMgButtonClassName({
-                                                        variant: 'primary',
-                                                        loading: false,
-                                                        className: 'mg-v2-mapping-list-block__empty-btn'
-                                                    })}
-                                                    onClick={() => handleOpenModal('create')}
-                                                >
-                                                                                                       {t('admin:ConsultantComprehensiveManagement.t_72bf00c9')}
-                                                </MGButton>
-                                            </div>
-                                        ) : viewMode === 'largeCard' ? (
-                                            <div className="mg-v2-mapping-list-block__grid">
-                                                {getFilteredConsultants.map((consultant) => (
-                                                    <ConsultantCard
-                                                        key={consultant.id}
-                                                        variant="admin-list"
-                                                        consultant={consultant}
-                                                        badgeInfo={getConsultantBadgeDisplay(consultant)}
-                                                        onCardClick={() => handleConsultantSelect(consultant)}
-                                                        renderActions={(c) => renderConsultantActions(c, ENTITY_ROW_ACTIONS_LAYOUT.CARD)}
-                                                    />
-                                                ))}
-                                            </div>
-                                        ) : viewMode === 'smallCard' ? (
-                                            <SmallCardGrid>
-                                                {getFilteredConsultants.map((consultant) => (
-                                                    <ConsultantCard
-                                                        key={consultant.id}
-                                                        variant="admin-compact"
-                                                        consultant={consultant}
-                                                        badgeInfo={getConsultantBadgeDisplay(consultant)}
-                                                        onCardClick={() => handleConsultantSelect(consultant)}
-                                                        renderActions={(c) => renderConsultantActions(c, ENTITY_ROW_ACTIONS_LAYOUT.CORNER)}
-                                                    />
-                                                ))}
-                                            </SmallCardGrid>
-                                        ) : (
-                                            <ListTableView
-                                                columns={[
-                                                    { key: 'name', label: t('admin:consultant.table.name') },
-                                                    { key: 'professionalProviderTypeCode', label: t('admin:consultant.filter.specialization') },
-                                                    { key: 'email', label: t('admin:consultant.table.email') },
-                                                    { key: 'status', label: t('admin:consultant.table.status') },
-                                                    { key: 'createdAt', label: t('admin:consultant.table.joinDate'), hideOnMobile: true },
-                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount'), hideOnMobile: true },
-                                                    { key: '_actions', label: t('common.actions.actions', '작업') }
-                                                ]}
-                                                data={getFilteredConsultants}
-                                                renderCell={(key, item) => {
-                                                    if (key === '_actions') {
-                                                        return renderConsultantActions(item, ENTITY_ROW_ACTIONS_LAYOUT.TABLE);
-                                                    }
-                                                    if (key === 'professionalProviderTypeCode') return getProfessionalProviderTypeLabel(item.professionalProviderTypeCode) || '-';
-                                                    if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
-                                                    if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
-                                                    if (key === 'currentClients') return item.currentClients != null ? `${item.currentClients}명` : '-';
-                                                    if (key === 'name' || key === 'email') return toDisplayString(item[key], '-');
-                                                    const v = item[key];
-                                                    return toDisplayString(v, '-');
-                                                }}
-                                                onRowClick={handleConsultantSelect}
-                                            />
-                                        )}
-                                    </ContentCard>
-                                </ContentSection>
+                                {consultantListPeekSection}
                             </>
                         ) : (
                             <>
@@ -1550,93 +1496,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                     </div>
                                 </ContentSection>
 
-                                <ContentSection noCard className="mg-v2-mapping-list-block">
-                                    <ContentCard className="mg-v2-mapping-list-block__card">
-                                        <div className="mg-v2-mapping-list-block__header">
-                                            <div className="mg-v2-mapping-list-block__title">{t('admin:ConsultantComprehensiveManagement.t_8a952452')}</div>
-                                            <ViewModeToggle
-                                                viewMode={viewMode}
-                                                onViewModeChange={setViewMode}
-                                                className="mg-v2-mapping-list-block__toggle"
-                                                ariaLabel="목록 보기 전환"
-                                            />
-                                        </div>
-                                        {getFilteredConsultants.length === 0 ? (
-                                            <div className="mg-v2-mapping-list-block__empty">
-                                                <div className="mg-v2-mapping-list-block__empty-icon">
-                                                    <Users size={48} />
-                                                </div>
-                                                <h3 className="mg-v2-mapping-list-block__empty-title">{t('admin:consultant.empty.title')}</h3>
-                                                <p className="mg-v2-mapping-list-block__empty-desc">{t('admin:ConsultantComprehensiveManagement.t_cff51bee')}</p>
-                                                <MGButton
-                                                    type="button"
-                                                    variant="primary"
-                                                    preventDoubleClick={false}
-                                                    className={buildErpMgButtonClassName({
-                                                        variant: 'primary',
-                                                        loading: false,
-                                                        className: 'mg-v2-mapping-list-block__empty-btn'
-                                                    })}
-                                                    onClick={() => handleOpenModal('create')}
-                                                >
-                                                                                                       {t('admin:ConsultantComprehensiveManagement.t_72bf00c9')}
-                                                </MGButton>
-                                            </div>
-                                        ) : viewMode === 'largeCard' ? (
-                                            <div className="mg-v2-mapping-list-block__grid">
-                                                {getFilteredConsultants.map((consultant) => (
-                                                    <ConsultantCard
-                                                        key={consultant.id}
-                                                        variant="admin-list"
-                                                        consultant={consultant}
-                                                        badgeInfo={getConsultantBadgeDisplay(consultant)}
-                                                        onCardClick={() => handleConsultantSelect(consultant)}
-                                                        renderActions={(c) => renderConsultantActions(c, ENTITY_ROW_ACTIONS_LAYOUT.CARD)}
-                                                    />
-                                                ))}
-                                            </div>
-                                        ) : viewMode === 'smallCard' ? (
-                                            <SmallCardGrid>
-                                                {getFilteredConsultants.map((consultant) => (
-                                                    <ConsultantCard
-                                                        key={consultant.id}
-                                                        variant="admin-compact"
-                                                        consultant={consultant}
-                                                        badgeInfo={getConsultantBadgeDisplay(consultant)}
-                                                        onCardClick={() => handleConsultantSelect(consultant)}
-                                                        renderActions={(c) => renderConsultantActions(c, ENTITY_ROW_ACTIONS_LAYOUT.CORNER)}
-                                                    />
-                                                ))}
-                                            </SmallCardGrid>
-                                        ) : (
-                                            <ListTableView
-                                                columns={[
-                                                    { key: 'name', label: t('admin:consultant.table.name') },
-                                                    { key: 'professionalProviderTypeCode', label: t('admin:consultant.filter.specialization') },
-                                                    { key: 'email', label: t('admin:consultant.table.email') },
-                                                    { key: 'status', label: t('admin:consultant.table.status') },
-                                                    { key: 'createdAt', label: t('admin:consultant.table.joinDate'), hideOnMobile: true },
-                                                    { key: 'currentClients', label: t('admin:consultant.table.sessionCount'), hideOnMobile: true },
-                                                    { key: '_actions', label: t('common.actions.actions', '작업') }
-                                                ]}
-                                                data={getFilteredConsultants}
-                                                renderCell={(key, item) => {
-                                                    if (key === '_actions') {
-                                                        return renderConsultantActions(item, ENTITY_ROW_ACTIONS_LAYOUT.TABLE);
-                                                    }
-                                                    if (key === 'professionalProviderTypeCode') return getProfessionalProviderTypeLabel(item.professionalProviderTypeCode) || '-';
-                                                    if (key === 'status') return getStatusLabel(item.status || 'ACTIVE');
-                                                    if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';
-                                                    if (key === 'currentClients') return item.currentClients != null ? `${item.currentClients}명` : '-';
-                                                    if (key === 'name' || key === 'email') return toDisplayString(item[key], '-');
-                                                    const v = item[key];
-                                                    return toDisplayString(v, '-');
-                                                }}
-                                                onRowClick={handleConsultantSelect}
-                                            />
-                                        )}
-                                    </ContentCard>
-                                </ContentSection>
+                                {consultantListPeekSection}
                             </>
                         )}
         </>

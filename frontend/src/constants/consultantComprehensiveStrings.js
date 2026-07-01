@@ -18,6 +18,12 @@ export const CONSULTANT_COMP_PASSWORD_RESET = {
     BTN_TITLE: '비밀번호 초기화'
 };
 
+/** Side Peek stub — G2-02 pilot */
+export const CONSULTANT_COMP_SIDE_PEEK = {
+    UTILIZATION_PLACEHOLDER: '—',
+    MVP_NOTE: '자격·일정·가동률 상세는 이후 Side Peek MVP에서 제공됩니다.'
+};
+
 /**
  * 전문가 유형(PROFESSIONAL_PROVIDER_TYPE) — 레거시 ConsultantManagement 등 폼·목록 라벨 SSOT
  *

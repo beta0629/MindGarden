@@ -355,7 +355,7 @@ jobs:
           
     - name: 📤 백엔드 파일 업로드
       if: steps.changed-files.outputs.backend_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -375,7 +375,7 @@ jobs:
     # 과거 /var/www/html/ 업로드는 이 경로와 불일치하여 운영 SPA가 구버전으로 고정됨
     - name: 📤 프론트엔드 파일 업로드
       if: steps.changed-files.outputs.frontend_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -393,7 +393,7 @@ jobs:
         
     - name: 📤 설정 파일 업로드
       if: steps.changed-files.outputs.config_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -406,7 +406,7 @@ jobs:
         overwrite: true
         
     - name: 📤 Nginx 설정 파일 업로드 (운영 서버 - 통합 설정)
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -421,7 +421,7 @@ jobs:
         
     # PL/SQL 프로시저 업로드는 필요할 때만 수동으로 실행
     # - name: 📤 PL/SQL 프로시저 업로드
-    #   uses: appleboy/scp-action@v0.1.7
+    #   uses: appleboy/scp-action@v1.0.0
     #   with:
     #     host: ${{ secrets.PRODUCTION_HOST }}
     #     username: ${{ secrets.PRODUCTION_USER }}
@@ -435,7 +435,7 @@ jobs:
         
     - name: 📤 메뉴 업데이트 SQL 업로드
       if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -449,7 +449,7 @@ jobs:
         
     - name: 📤 매핑 수정 프로시저 업로드
       if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -464,7 +464,7 @@ jobs:
 
     - name: 📤 production_mapping_procedures.sql 업로드
       if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -478,7 +478,7 @@ jobs:
 
     - name: 📤 business_time_procedures_final.sql 업로드
       if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -492,7 +492,7 @@ jobs:
 
     - name: 📤 production_all_missing_procedures.sql 업로드
       if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v1.0.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -507,7 +507,7 @@ jobs:
     # 메시지 권한 SQL 업로드 - 권한 오류로 주석 처리
     # SQL 파일은 한 번만 실행되어야 함 - 수동 실행 필요
     # - name: 📤 메시지 권한 SQL 업로드
-    #   uses: appleboy/scp-action@v0.1.7
+    #   uses: appleboy/scp-action@v1.0.0
     #   with:
     #     host: ${{ secrets.PRODUCTION_HOST }}
     #     username: ${{ secrets.PRODUCTION_USER }}
@@ -521,7 +521,7 @@ jobs:
         
     # 메시지 권한 강제 추가 SQL은 한 번만 실행되어야 함 - 수동 실행 필요
     # - name: 📤 메시지 권한 강제 추가 SQL 업로드
-    #   uses: appleboy/scp-action@v0.1.7
+    #   uses: appleboy/scp-action@v1.0.0
     #   with:
     #     host: ${{ secrets.PRODUCTION_HOST }}
     #     username: ${{ secrets.PRODUCTION_USER }}

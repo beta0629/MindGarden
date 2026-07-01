@@ -1,0 +1,48 @@
+/**
+ * ClientSidePeekContent — stub 본문 스타일
+ */
+
+.client-side-peek-stub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+}
+
+.client-side-peek-stub__facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.client-side-peek-stub__fact {
+  display: grid;
+  grid-template-columns: minmax(0, 5rem) minmax(0, 1fr);
+  gap: var(--mg-spacing-sm);
+  align-items: baseline;
+}
+
+.client-side-peek-stub__fact dt {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--mg-color-text-secondary);
+}
+
+.client-side-peek-stub__fact dd {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--mg-color-text-main);
+  word-break: break-word;
+}
+
+.client-side-peek-stub__placeholder {
+  margin: 0;
+  padding: var(--mg-spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--mg-color-text-secondary);
+  background-color: var(--mg-color-surface-sub);
+  border-radius: var(--mg-radius-md);
+  border: 1px solid var(--mg-color-border-main);
+}

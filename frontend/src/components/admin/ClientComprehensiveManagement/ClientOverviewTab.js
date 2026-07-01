@@ -13,18 +13,34 @@ import { useTranslation } from 'react-i18next';
 const ClientOverviewTab = ({
     clients,
     onClientSelect,
+    onClientPeek,
     onEditClient,
     onDeleteClient,
     onResetPassword,
     consultants,
     mappings,
     consultations,
-    viewMode = 'smallCard'
+    viewMode = 'list'
 }) => {
     const { t } = useTranslation();
 
+    const handleRowPeek = (client) => {
+        if (onClientPeek) {
+            onClientPeek(client);
+            return;
+        }
+        if (onClientSelect) {
+            onClientSelect(client);
+        }
+    };
+
     const buildClientActionItems = (client) => {
         const items = [
+            {
+                id: 'detail',
+                label: '상세',
+                onClick: () => handleRowPeek(client)
+            },
             {
                 id: 'edit',
                 label: t('common.actions.edit'),
@@ -105,7 +121,7 @@ const ClientOverviewTab = ({
                         )
                         : undefined
                 }
-                onClick={() => onClientSelect(client)}
+                onClick={() => handleRowPeek(client)}
                 renderActions={() => renderClientActions(client, { layout: ENTITY_ROW_ACTIONS_LAYOUT.CARD })}
             />
         );
@@ -129,7 +145,7 @@ const ClientOverviewTab = ({
                     <StatusBadge key="status" status={client?.status}>{statusKorean}</StatusBadge>,
                     <span key="grade" className="mg-v2-grade-badge"><SafeText>{gradeKorean}</SafeText></span>
                 ]}
-                onClick={() => onClientSelect(client)}
+                onClick={() => handleRowPeek(client)}
                 renderActions={() => renderClientActions(client, { layout: ENTITY_ROW_ACTIONS_LAYOUT.CORNER })}
             />
         );
@@ -173,7 +189,7 @@ const ClientOverviewTab = ({
                         const v = item[key];
                         return toDisplayString(v, '-');
                     }}
-                    onRowClick={onClientSelect}
+                    onRowClick={handleRowPeek}
                 />
             )}
         </div>

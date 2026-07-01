@@ -53,8 +53,8 @@
 
 | Phase | Seq | 작업명 | 담당 | 감독者 | 선행조건 | DoD (요약) | good SHA | 상태 | 비고 |
 |-------|-----|--------|------|--------|----------|------------|----------|------|------|
-| V1-design | 13 | G2 P0 3화면 handoff (내담자·상담사·스태프) | designer | designer | V0-user ☑ | list+peek wire; Must not | — | ☐ pending | **V0 완료 전 금지** |
-| V1-coder | 14 | G2-01 내담자 default=list + SidePeekShell | coder | designer | Seq 13 ☑ | table default; overflow | — | ☐ pending | |
+| V1-design | 13 | G2 P0 3화면 handoff (내담자·상담사·스태프) | designer | designer | V0-user ☑ | list+peek wire; Must not | — | ◐ waived | pilot: handoff §3.2 + PER_PAGE G2-01 |
+| V1-coder | 14 | G2-01 내담자 default=list + SidePeekShell | coder | designer | Seq 13 ☑ | table default; overflow | — | ☑ done | route: `/admin/user-management?type=client` |
 | V1-coder | 15 | G2-02 상담사 default=list | coder | designer | Seq 13 ☑ | 동일 | — | ☐ pending | |
 | V1-coder | 16 | G2-03 스태프 EntityRowActions | coder | designer | Seq 13 ☑ | Primary1+overflow | — | ☐ pending | |
 | V1-tester | 17 | G2 P0 3화면 QA gate (×3 또는 1 suite) | tester | tester | Seq 14~16 | 20+ row; viewMode persist | — | ☐ pending | 병렬 3 PR 시 gate 3 |
@@ -76,7 +76,7 @@
 | P0-design-review 완료 | 2026-07-01 | ☑ |
 | V0 dev 배포 | 2026-07-01 | ☑ run `28491931243` |
 | V0 사용자 sign-off | 2026-07-01 | ☑ prod 검수 OK |
-| V1 착수 | 2026-07-01 | ◐ Seq 14 pilot |
+| V1 착수 | 2026-07-01 | ◐ Seq 14 pilot ☑ |
 
 ---
 
@@ -86,3 +86,5 @@
 |------|-----|------|
 | 2026-07-01 | 1~3 | P0-doc checklist·governance 초안 ☑ |
 | 2026-07-01 | 6 | V0 SidePeekShell stub ☑ — 360px R-PEEK, 카드 상세·row click, Jest |
+| 2026-07-01 | 7·10~12 | V0 마감 — SessionProgress·QA·dev/prod deploy·사용자 prod 검수 ☑ |
+| 2026-07-01 | 14 | V1 G2-01 내담자 list default + SidePeekShell pilot ☑ — Jest; dev deploy 대기 |

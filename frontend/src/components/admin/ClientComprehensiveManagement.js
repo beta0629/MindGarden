@@ -9,13 +9,14 @@ import { showError, showSuccess, showWarning } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ViewModeToggle } from '../common';
+import { ViewModeToggle, SidePeekShell } from '../common';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
 import ClientOverviewTab from './ClientComprehensiveManagement/ClientOverviewTab';
+import ClientSidePeekContent from './ClientComprehensiveManagement/molecules/ClientSidePeekContent';
 import ClientConsultationTab from './ClientComprehensiveManagement/ClientConsultationTab';
 import ClientMappingTab from './ClientComprehensiveManagement/ClientMappingTab';
 import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatisticsTab';
@@ -33,6 +34,7 @@ import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ClientManagementPage.css';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
+import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +50,10 @@ const CLIENT_KPI_ICON_SIZE = 24;
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CLIENT_COMP_MGMT_TITLE_ID = 'client-comprehensive-management-title';
+
+const CLIENT_COMP_PEEK_LAYOUT_CLASS = 'client-comprehensive__peek-layout';
+const CLIENT_COMP_PEEK_LAYOUT_OPEN_MODIFIER = 'client-comprehensive__peek-layout--peek-open';
+const CLIENT_COMP_MAIN_REGION_CLASS = 'client-comprehensive__main-region';
 
 const CLIENT_FORM_NOTIFICATION_CHANNEL_DEFAULTS = {
   notificationChannelPreference: 'TENANT_DEFAULT',
@@ -91,7 +97,8 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [activeFilters, setActiveFilters] = useState({});
-    const [viewMode, setViewMode] = useState('smallCard'); // 'largeCard' | 'smallCard' | 'list'
+    const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list'
+    const [peekClient, setPeekClient] = useState(null);
     
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'
@@ -295,6 +302,14 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         loadConsultants();
         loadMappings();
         loadConsultations();
+    }, []);
+
+    const handleClientPeek = useCallback((client) => {
+        setPeekClient(client);
+    }, []);
+
+    const handleCloseClientPeek = useCallback(() => {
+        setPeekClient(null);
     }, []);
 
     const handleClientSelect = useCallback((client) => {
@@ -685,28 +700,51 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         <div className="mg-v2-tab-content">
                             {mainTab === 'overview' && (
                                 <ContentSection noCard className="mg-v2-mapping-list-block">
-                                    <ContentCard className="mg-v2-mapping-list-block__card">
-                                        <div className="mg-v2-mapping-list-block__header">
-                                            <div className="mg-v2-mapping-list-block__title">{t('admin:client.list.title')}</div>
-                                            <ViewModeToggle
-                                                viewMode={viewMode}
-                                                onViewModeChange={setViewMode}
-                                                className="mg-v2-mapping-list-block__toggle"
-                                                ariaLabel={t('admin:client.list.toggleAria')}
-                                            />
+                                    <div
+                                        className={`${CLIENT_COMP_PEEK_LAYOUT_CLASS}${
+                                            peekClient ? ` ${CLIENT_COMP_PEEK_LAYOUT_OPEN_MODIFIER}` : ''
+                                        }`}
+                                    >
+                                        <div
+                                            className={CLIENT_COMP_MAIN_REGION_CLASS}
+                                            data-region="R-MAIN"
+                                        >
+                                            <ContentCard className="mg-v2-mapping-list-block__card">
+                                                <div className="mg-v2-mapping-list-block__header">
+                                                    <div className="mg-v2-mapping-list-block__title">{t('admin:client.list.title')}</div>
+                                                    <ViewModeToggle
+                                                        viewMode={viewMode}
+                                                        onViewModeChange={setViewMode}
+                                                        className="mg-v2-mapping-list-block__toggle"
+                                                        ariaLabel={t('admin:client.list.toggleAria')}
+                                                    />
+                                                </div>
+                                                <ClientOverviewTab
+                                                    clients={filteredClients}
+                                                    onClientPeek={handleClientPeek}
+                                                    onEditClient={handleEditClient}
+                                                    onDeleteClient={handleDeleteClient}
+                                                    onResetPassword={handleResetPassword}
+                                                    consultants={consultants}
+                                                    mappings={mappings}
+                                                    consultations={consultations}
+                                                    viewMode={viewMode}
+                                                />
+                                            </ContentCard>
                                         </div>
-                                        <ClientOverviewTab
-                                            clients={filteredClients}
-                                            onClientSelect={handleClientSelect}
-                                            onEditClient={handleEditClient}
-                                            onDeleteClient={handleDeleteClient}
-                                            onResetPassword={handleResetPassword}
-                                            consultants={consultants}
-                                            mappings={mappings}
-                                            consultations={consultations}
-                                            viewMode={viewMode}
-                                        />
-                                    </ContentCard>
+                                        <SidePeekShell
+                                            isOpen={Boolean(peekClient)}
+                                            onClose={handleCloseClientPeek}
+                                            title="상세"
+                                            ariaLabel={
+                                                peekClient
+                                                    ? `${maskEncryptedDisplay(peekClient.name, '내담자')} 상세`
+                                                    : '상세'
+                                            }
+                                        >
+                                            <ClientSidePeekContent client={peekClient} />
+                                        </SidePeekShell>
+                                    </div>
                                 </ContentSection>
                             )}
 

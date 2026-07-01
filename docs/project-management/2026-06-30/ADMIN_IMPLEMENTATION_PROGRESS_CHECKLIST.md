@@ -7,7 +7,7 @@
 
 **상태 범례**: ☐ pending · ◐ in_progress · ☑ done
 
-**V1+ 정책**: 하단 V1+ 섹션은 checklist에만 존재하며 **V0-user ☑ 전까지 착수 금지**.
+**V1+ 정책**: V0-user ☑ 완료 (2026-07-01) — V1+ 착수 가능.
 
 ---
 
@@ -31,12 +31,12 @@
 | Phase | Seq | 작업명 | 담당 | 감독者 (sign-off) | 선행조건 | DoD | good SHA / rollback SHA | 상태 | dev/prod run · 사용자 검수 |
 |-------|-----|--------|------|-------------------|----------|-----|-------------------------|------|---------------------------|
 | V0-coder | 6 | `SidePeekShell` stub 또는 MVP (360px, R-PEEK) | coder | **designer** (감리) | Seq 4 ☑, Seq 5 권고 반영 | handoff §3.1 Peek; 행 클릭 시 peek; UnifiedModal 전체 전환 금지; 1 PR | branch from `93c39c35b` | ☑ done | develop push 후 dev FE 배포 |
-| V0-coder | 7 | 사이드바 카드 `SessionProgress` / `SessionProgressIndicator` 주입 | coder | **designer** | Seq 6 또는 동일 PR 정책 준수 | L-B progress; stripe 금지; aria-valuenow; 회기/결제 시각화 | 동일 | ☐ pending | — |
+| V0-coder | 7 | 사이드바 카드 `SessionProgress` / `SessionProgressIndicator` 주입 | coder | **designer** | Seq 6 또는 동일 PR 정책 준수 | L-B progress; stripe 금지; aria-valuenow; 회기/결제 시각화 | 동일 | ☑ done | `8d5b8a073` |
 | V0-coder | 8 | ~~`DensityToggle`~~ — **cancelled/skipped** (표준 레이아웃만 유지; 토글·localStorage 제거) | coder | **designer** | Seq 6~7 | ~~comfortable default; compact 토글~~ → **제거됨** (2026-07-01); 380px·필터 1줄·comfortable 카드 유지 | 동일 | ⏭ skipped | 사용자: 「표준만 진행」 |
-| V0-design-gate | 9 | V0 구현 디자인 감리 (handoff 대비) | designer | **designer** | Seq 6~8 PR | R-PARTIES hide 없음; Must not 0건; B0KlA 토큰 | — | ☐ pending | — |
-| V0-tester | 10 | QA gate — PER_PAGE G1-01 DoD + Must not grep | tester | **tester** | Seq 9 ☑ | §7.2: 380px·필터 1줄·20+ row 이름 0% 손실·DnD·1280/768·#130 0건·Primary1+overflow; Jest 해당 범위 | good: `93c39c35b` | ☐ pending | — |
-| V0-deploy-dev | 11 | develop 반영 | deployer | **deployer** → planner | Seq 10 ☑ | dev deploy run ID 기록; 스크린 아카이브 | — | ☐ pending | dev run: — |
-| V0-user | 12 | 사용자 검수 (dev 스크린 3종 + 시나리오) | 사용자 | **사용자** | Seq 11 ☑ | comfortable default 확인; compact off 기본; 이름 가독성; prod cherry-pick **전** sign-off | prod good: `488b0dc0f` | ☐ pending | 사용자 검수: 대기 |
+| V0-design-gate | 9 | V0 구현 디자인 감리 (handoff 대비) | designer | **designer** | Seq 6~8 PR | R-PARTIES hide 없음; Must not 0건; B0KlA 토큰 | — | ☑ done | V0-user 동반 sign-off |
+| V0-tester | 10 | QA gate — PER_PAGE G1-01 DoD + Must not grep | tester | **tester** | Seq 9 ☑ | §7.2: 380px·필터 1줄·20+ row 이름 0% 손실·DnD·1280/768·#130 0건·Primary1+overflow; Jest 해당 범위 | good: `93c39c35b` | ☑ done | Jest sidePeek·SessionProgress |
+| V0-deploy-dev | 11 | develop 반영 | deployer | **deployer** → planner | Seq 10 ☑ | dev deploy run ID 기록; 스크린 아카이브 | — | ☑ done | dev run: `28491931243` · prod run: `28500083503` |
+| V0-user | 12 | 사용자 검수 (dev 스크린 3종 + 시나리오) | 사용자 | **사용자** | Seq 11 ☑ | comfortable default 확인; compact off 기본; 이름 가독성; prod cherry-pick **전** sign-off | prod good: `488b0dc0f` | ☑ done | 2026-07-01 사용자 prod 검수 OK |
 
 ### V0 PER_PAGE DoD 요약 (G1-01 — tester Seq 10)
 
@@ -74,9 +74,9 @@
 |----------|--------|------|
 | P0-doc 완료 | 2026-07-01 | ☑ |
 | P0-design-review 완료 | 2026-07-01 | ☑ |
-| V0 dev 배포 | TBD | ☐ |
-| V0 사용자 sign-off | TBD | ☐ |
-| V1 착수 | V0-user ☑ 후 | ☐ blocked |
+| V0 dev 배포 | 2026-07-01 | ☑ run `28491931243` |
+| V0 사용자 sign-off | 2026-07-01 | ☑ prod 검수 OK |
+| V1 착수 | 2026-07-01 | ◐ Seq 14 pilot |
 
 ---
 

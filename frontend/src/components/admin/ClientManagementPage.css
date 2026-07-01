@@ -29,3 +29,29 @@
   flex-direction: column;
   gap: 0.75rem;
 }
+
+/* R-MAIN + R-PEEK 분할 — 내담자 overview list Side Peek pilot */
+.client-comprehensive__peek-layout {
+  display: flex;
+  flex: 1;
+  gap: var(--mg-spacing-24);
+  min-width: 0;
+  align-items: stretch;
+}
+
+.client-comprehensive__main-region {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.client-comprehensive__peek-layout--peek-open .client-comprehensive__main-region {
+  min-width: 0;
+}
+
+.client-comprehensive__main-region .mg-v2-mapping-list-block__card {
+  flex: 1;
+  min-width: 0;
+}

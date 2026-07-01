@@ -103,7 +103,7 @@ jobs:
           cp -a frontend/build/. _gha_static_site_upload/
 
       - name: 📤 빌드 산출물 업로드
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: core-frontend-prod-static-site-artifact
           path: _gha_static_site_upload/

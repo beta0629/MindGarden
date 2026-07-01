@@ -132,6 +132,32 @@
   align-items: stretch;
 }
 
+/* R-MAIN + R-PEEK 분할 — peek open 시 캘린더 shrink (가림 X) */
+.integrated-schedule__main-region {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  gap: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.integrated-schedule__content--peek-open .integrated-schedule__calendar-wrapper {
+  min-width: 0;
+}
+
+.integrated-schedule__card-body--peek-trigger {
+  cursor: pointer;
+}
+
+.integrated-schedule__card-body--peek-trigger:focus-visible {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: 2px;
+  border-radius: var(--mg-radius-sm);
+}
+
 /* 좌측 매칭 목록 — 옵션 A: collapse 토글 지원 (사이드바 폭 토큰화, 380px ↔ 48px) */
 .integrated-schedule__sidebar {
   --integrated-schedule-sidebar-width: 380px;

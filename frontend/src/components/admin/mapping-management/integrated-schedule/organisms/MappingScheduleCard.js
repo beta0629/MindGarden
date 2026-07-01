@@ -22,6 +22,7 @@ const MappingScheduleCard = ({
   mapping,
   eventData,
   isDraggable,
+  onOpenPeek,
   onScheduleFromCard,
   onPayment,
   onDeposit,
@@ -31,9 +32,33 @@ const MappingScheduleCard = ({
   onSessionExtension,
   approveProcessing,
   cancelPendingProcessing
-}) => (
+}) => {
+  const handleCardBodyClick = () => {
+    if (onOpenPeek) {
+      onOpenPeek(mapping);
+    }
+  };
+
+  const handleCardBodyKeyDown = (event) => {
+    if (!onOpenPeek) {
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onOpenPeek(mapping);
+    }
+  };
+
+  return (
   <CardContainer>
-    <div className="integrated-schedule__card-body">
+    <div
+      className="integrated-schedule__card-body integrated-schedule__card-body--peek-trigger"
+      role={onOpenPeek ? 'button' : undefined}
+      tabIndex={onOpenPeek ? 0 : undefined}
+      onClick={onOpenPeek ? handleCardBodyClick : undefined}
+      onKeyDown={onOpenPeek ? handleCardBodyKeyDown : undefined}
+      aria-label={onOpenPeek ? `${mapping?.clientName || '매칭'} 상세 보기` : undefined}
+    >
       <MappingPartiesRow
         consultantName={mapping?.consultantName}
         clientName={mapping?.clientName}
@@ -45,6 +70,7 @@ const MappingScheduleCard = ({
     </div>
     <CardActionGroup
       mapping={mapping}
+      onOpenPeek={onOpenPeek ? () => onOpenPeek(mapping) : undefined}
       onScheduleFromCard={onScheduleFromCard}
       onPayment={onPayment}
       onDeposit={onDeposit}
@@ -56,7 +82,8 @@ const MappingScheduleCard = ({
       cancelPendingProcessing={cancelPendingProcessing}
     />
   </CardContainer>
-);
+  );
+};
 
 MappingScheduleCard.propTypes = {
   mapping: PropTypes.shape({
@@ -69,6 +96,7 @@ MappingScheduleCard.propTypes = {
   }),
   eventData: PropTypes.object,
   isDraggable: PropTypes.bool,
+  onOpenPeek: PropTypes.func,
   onScheduleFromCard: PropTypes.func,
   onPayment: PropTypes.func,
   onDeposit: PropTypes.func,
@@ -84,6 +112,7 @@ MappingScheduleCard.defaultProps = {
   mapping: null,
   eventData: null,
   isDraggable: false,
+  onOpenPeek: null,
   onScheduleFromCard: null,
   onPayment: null,
   onDeposit: null,

@@ -26,6 +26,8 @@ import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import ActionBarButton from '../../common/ActionBarButton';
 import ActionBar from '../../common/ActionBar';
 import MatchingScheduleSidebar from './integrated-schedule/organisms/MatchingScheduleSidebar';
+import SidePeekShell from '../../common/organisms/SidePeekShell';
+import MappingScheduleSidePeekContent from './integrated-schedule/molecules/MappingScheduleSidePeekContent';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
@@ -107,6 +109,7 @@ const IntegratedMatchingSchedule = () => {
   // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 관리자 취소 확인 모달 대상 + 처리 중 플래그.
   const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
   const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
+  const [peekMapping, setPeekMapping] = useState(null);
   // 월별 상담사 COMPLETED 카운트 — 캘린더 datesSet 콜백에서 갱신.
   // 초기값은 현재 년/월. 캘린더가 첫 렌더 시 onMonthChange 로 동일 값을 다시 set 해도 동일 키 → 캐시 hit.
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
@@ -178,6 +181,16 @@ const IntegratedMatchingSchedule = () => {
       cancelled = true;
     };
   }, [user?.tenantId]);
+
+  const handleOpenPeekFromCard = useCallback((mapping) => {
+    if (mapping) {
+      setPeekMapping(mapping);
+    }
+  }, []);
+
+  const handleClosePeek = useCallback(() => {
+    setPeekMapping(null);
+  }, []);
 
   /**
    * 2026-06-XX R4 (P0) — 4월 보기에서 month=3 호출 회귀 해결.
@@ -551,7 +564,11 @@ const IntegratedMatchingSchedule = () => {
             - 빠른 결제 진입: 사이드바 카드별 "당일 결제 + 활성화" 버튼이 동일 기능 제공.
           */}
 
-          <div className="integrated-schedule__content">
+          <div
+            className={`integrated-schedule__content${
+              peekMapping ? ' integrated-schedule__content--peek-open' : ''
+            }`}
+          >
         <MatchingScheduleSidebar
           isCollapsed={isSidebarCollapsed}
           onToggle={handleSidebarToggle}
@@ -563,6 +580,7 @@ const IntegratedMatchingSchedule = () => {
           onStatusFilterChange={setStatusFilter}
           getStatusCount={getStatusCount}
           onScheduleFromCard={handleOpenScheduleFromCard}
+          onOpenPeek={handleOpenPeekFromCard}
           onPayment={setPaymentModalMapping}
           onDeposit={setDepositModalMapping}
           onApprove={handleApprove}
@@ -574,10 +592,15 @@ const IntegratedMatchingSchedule = () => {
           cancelTargetMappingId={cancelTargetMapping?.id ?? null}
         />
 
+        <div
+          className="integrated-schedule__main-region"
+          data-region="R-MAIN-PEEK"
+        >
         <main
           className="integrated-schedule__calendar-wrapper integrated-schedule__calendar-wrapper--integrated"
           data-layout-context="integrated-schedule"
           data-calendar-skin="integrated"
+          data-region="R-MAIN"
         >
           {/*
             R2 (2026-06-09): 가예약 범례를 ScheduleLegend body 로 흡수해 상단 영역 압축.
@@ -618,6 +641,15 @@ const IntegratedMatchingSchedule = () => {
             />
           </div>
         </main>
+        <SidePeekShell
+          isOpen={Boolean(peekMapping)}
+          onClose={handleClosePeek}
+          title="상세"
+          ariaLabel={peekMapping ? `${peekMapping.clientName || '매칭'} 상세` : '상세'}
+        >
+          <MappingScheduleSidePeekContent mapping={peekMapping} />
+        </SidePeekShell>
+        </div>
           </div>
         </ContentArea>
       </div>

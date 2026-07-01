@@ -28,3 +28,4 @@ export { default as SafeNumeric } from './SafeNumeric';
 /* MGButton SSOT v1.1 (2026-06-05) — SegmentedTabs + ActionBar */
 export { default as SegmentedTabs } from './SegmentedTabs';
 export { default as ActionBar } from './ActionBar';
+export { default as SidePeekShell } from './organisms/SidePeekShell';

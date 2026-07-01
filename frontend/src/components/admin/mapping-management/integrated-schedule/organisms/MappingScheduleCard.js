@@ -16,6 +16,7 @@ import CardContainer from '../../../../common/CardContainer';
 import MappingPartiesRow from '../molecules/MappingPartiesRow';
 import CardMeta from '../molecules/CardMeta';
 import CardActionGroup from '../molecules/CardActionGroup';
+import SessionProgressIndicator from '../../molecules/SessionProgressIndicator';
 import './MappingScheduleCard.css';
 
 const MappingScheduleCard = ({
@@ -58,6 +59,11 @@ const MappingScheduleCard = ({
       onKeyDown={onOpenPeek ? handleCardBodyKeyDown : undefined}
       aria-label={onOpenPeek ? `${mapping?.clientName || '매칭'} 상세 보기` : undefined}
     >
+      <SessionProgressIndicator
+        className="integrated-schedule__card-progress"
+        used={mapping?.usedSessions}
+        total={mapping?.totalSessions}
+      />
       <MappingPartiesRow
         consultantName={mapping?.consultantName}
         clientName={mapping?.clientName}
@@ -90,6 +96,8 @@ MappingScheduleCard.propTypes = {
     paymentTiming: PropTypes.string,
     consultantName: PropTypes.string,
     clientName: PropTypes.string,
+    usedSessions: PropTypes.number,
+    totalSessions: PropTypes.number,
     remainingSessions: PropTypes.number
   }),
   eventData: PropTypes.object,

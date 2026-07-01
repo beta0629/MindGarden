@@ -6,6 +6,11 @@
   gap: var(--mg-spacing-8);
 }
 
+.integrated-schedule__card-progress {
+  width: 100%;
+  min-width: 0;
+}
+
 /*
  * R4 v2.0 — 매칭 취소 보조 버튼 (옵션 A2: 풀-width Danger Outline).
  * 디자이너 시안 (R4_BUTTON_REDESIGN_V2.md):

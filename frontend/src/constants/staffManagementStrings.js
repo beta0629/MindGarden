@@ -156,3 +156,10 @@ export const STAFF_MGMT_COUNSELING = {
   LOADING_HINT: '설정을 불러오는 중…',
   TOGGLE_LABEL: '상담 일정에 배정합니다'
 };
+
+/** Side Peek stub — G2-03 pilot */
+export const STAFF_MGMT_SIDE_PEEK = {
+  PERMISSION_ADMIN: '관리자 전체',
+  PERMISSION_STAFF: '사무원 기본',
+  MVP_NOTE: '권한 트리·접속 로그 상세는 이후 Side Peek MVP에서 제공됩니다.'
+};

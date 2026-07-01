@@ -52,7 +52,6 @@ const SidePeekShell = ({
       className={`${SIDE_PEEK_SHELL_CSS_CLASS}${
         isOpen ? ` ${SIDE_PEEK_SHELL_OPEN_CLASS}` : ''
       }`}
-      role="complementary"
       {...{ [SIDE_PEEK_SHELL_REGION_ATTR]: SIDE_PEEK_SHELL_REGION_PEEK }}
       aria-label={resolvedAriaLabel}
       aria-hidden={!isOpen}

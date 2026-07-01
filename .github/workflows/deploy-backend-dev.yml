@@ -112,7 +112,7 @@ jobs:
         distribution: 'temurin'
         
     - name: 🔧 Maven 캐시 설정
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}

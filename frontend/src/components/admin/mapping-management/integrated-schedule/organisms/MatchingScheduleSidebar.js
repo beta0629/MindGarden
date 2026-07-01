@@ -20,6 +20,11 @@ import {
   STATUS_FILTER_OPTIONS
 } from '../../constants/integratedScheduleSidebarFilterConstants';
 import MatchingScheduleList from './MatchingScheduleList';
+import ScheduleDensityToggle from '../molecules/ScheduleDensityToggle';
+import {
+  SCHEDULE_DENSITY_COMFORTABLE,
+  SCHEDULE_DENSITY_COMPACT
+} from '../../constants/integratedScheduleDensityConstants';
 
 const MatchingScheduleSidebar = ({
   isCollapsed,
@@ -30,6 +35,8 @@ const MatchingScheduleSidebar = ({
   onViewFilterChange,
   statusFilter,
   onStatusFilterChange,
+  scheduleDensity,
+  onScheduleDensityChange,
   getStatusCount,
   onScheduleFromCard,
   onPayment,
@@ -183,6 +190,10 @@ const MatchingScheduleSidebar = ({
             })}
           </div>
         </fieldset>
+        <ScheduleDensityToggle
+          value={scheduleDensity}
+          onChange={onScheduleDensityChange}
+        />
         <MatchingScheduleList
           mappings={filteredMappings}
           loading={loading}
@@ -213,6 +224,8 @@ MatchingScheduleSidebar.propTypes = {
   onViewFilterChange: PropTypes.func.isRequired,
   statusFilter: PropTypes.string.isRequired,
   onStatusFilterChange: PropTypes.func.isRequired,
+  scheduleDensity: PropTypes.oneOf([SCHEDULE_DENSITY_COMFORTABLE, SCHEDULE_DENSITY_COMPACT]),
+  onScheduleDensityChange: PropTypes.func.isRequired,
   getStatusCount: PropTypes.func.isRequired,
   onScheduleFromCard: PropTypes.func.isRequired,
   onPayment: PropTypes.func,
@@ -229,6 +242,7 @@ MatchingScheduleSidebar.propTypes = {
 MatchingScheduleSidebar.defaultProps = {
   isCollapsed: false,
   loading: false,
+  scheduleDensity: SCHEDULE_DENSITY_COMFORTABLE,
   onPayment: null,
   onDeposit: null,
   onApprove: null,

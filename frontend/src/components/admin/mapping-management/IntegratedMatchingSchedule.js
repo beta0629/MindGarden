@@ -38,6 +38,13 @@ import {
   getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
 import {
+  SCHEDULE_DENSITY_DEFAULT,
+  SCHEDULE_DENSITY_COMPACT,
+  buildScheduleDensityStorageKey,
+  readStoredScheduleDensity,
+  writeStoredScheduleDensity
+} from './constants/integratedScheduleDensityConstants';
+import {
   assertExternalMappingDropAllowed,
   assertDropDateNotPast
 } from '../../../utils/scheduleExternalDropGuards';
@@ -217,6 +224,24 @@ const IntegratedMatchingSchedule = () => {
     return false;
   });
   const userOverrideSidebarRef = useRef(readStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY) !== null);
+
+  const [scheduleDensity, setScheduleDensity] = useState(SCHEDULE_DENSITY_DEFAULT);
+  const lastDensityTenantRef = useRef(null);
+
+  useEffect(() => {
+    const tenantId = user?.tenantId ?? null;
+    if (lastDensityTenantRef.current === tenantId) {
+      return;
+    }
+    lastDensityTenantRef.current = tenantId;
+    const stored = readStoredScheduleDensity(buildScheduleDensityStorageKey(tenantId));
+    setScheduleDensity(stored ?? SCHEDULE_DENSITY_DEFAULT);
+  }, [user?.tenantId]);
+
+  const handleScheduleDensityChange = useCallback((next) => {
+    setScheduleDensity(next);
+    writeStoredScheduleDensity(buildScheduleDensityStorageKey(user?.tenantId), next);
+  }, [user?.tenantId]);
 
   /**
    * 1280px 이하에서 자동 접힘 (사용자 명시적 토글 이전까지만 적용).
@@ -534,7 +559,11 @@ const IntegratedMatchingSchedule = () => {
   );
 
   return (
-    <div className="mg-v2-ad-b0kla integrated-schedule integrated-schedule--b0kla">
+    <div
+      className={`mg-v2-ad-b0kla integrated-schedule integrated-schedule--b0kla${
+        scheduleDensity === SCHEDULE_DENSITY_COMPACT ? ' integrated-schedule--density-compact' : ''
+      }`}
+    >
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="통합 스케줄링 센터">
           <ContentHeader
@@ -561,6 +590,8 @@ const IntegratedMatchingSchedule = () => {
           onViewFilterChange={setViewFilter}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
+          scheduleDensity={scheduleDensity}
+          onScheduleDensityChange={handleScheduleDensityChange}
           getStatusCount={getStatusCount}
           onScheduleFromCard={handleOpenScheduleFromCard}
           onPayment={setPaymentModalMapping}

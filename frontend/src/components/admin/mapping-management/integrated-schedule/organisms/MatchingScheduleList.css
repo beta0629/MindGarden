@@ -82,3 +82,34 @@
   white-space: nowrap;
   margin: 0;
 }
+
+/*
+ * compact 밀도 — padding/gap만 축소. 카드 세로 스택·R-PARTIES(이름) 레이아웃 유지.
+ * comfortable(default)는 본 파일 기존 규칙 그대로.
+ */
+.integrated-schedule--density-compact .integrated-schedule__list-scroll .integrated-schedule__list {
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule--density-compact
+  .integrated-schedule__sidebar
+  .integrated-schedule__list
+  > li.integrated-schedule__card
+  .mg-v2-card-container {
+  padding-block: var(--mg-spacing-xs);
+  padding-inline: var(--mg-spacing-sm);
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule--density-compact .integrated-schedule__sidebar .integrated-schedule__card-body {
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule--density-compact .integrated-schedule__sidebar .integrated-schedule__card-meta {
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule--density-compact .integrated-schedule__sidebar .mg-v2-card-actions,
+.integrated-schedule--density-compact .integrated-schedule__sidebar .mg-v2-mapping-match-actions {
+  gap: var(--mg-spacing-xs);
+}

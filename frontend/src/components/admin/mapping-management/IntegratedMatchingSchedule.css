@@ -495,33 +495,6 @@
   white-space: nowrap;
 }
 
-/* 카드 밀도 토글 — 사이드바 필터 아래, 380px 폭 내 full-width SegmentedTabs */
-.integrated-schedule__density-toggle {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--mg-spacing-xs);
-  flex-shrink: 0;
-  margin-bottom: var(--mg-spacing-sm);
-  width: 100%;
-}
-
-.integrated-schedule__density-toggle-label {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: var(--mg-color-text-secondary);
-}
-
-.integrated-schedule__density-toggle-tabs.mg-segmented-tabs {
-  width: 100%;
-  display: flex;
-}
-
-.integrated-schedule__density-toggle-tabs .mg-segmented-tabs__tab {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
 .integrated-schedule__list {
   list-style: none;
   margin: 0;

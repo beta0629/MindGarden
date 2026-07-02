@@ -44,6 +44,32 @@
   width: 100%;
 }
 
+/* R-MAIN + R-PEEK 분할 — 매칭 목록 table Side Peek pilot */
+.mapping-management__peek-layout {
+  display: flex;
+  flex: 1;
+  gap: var(--mg-spacing-24);
+  min-width: 0;
+  align-items: stretch;
+}
+
+.mapping-management__main-region {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mapping-management__peek-layout--peek-open .mapping-management__main-region {
+  min-width: 0;
+}
+
+.mapping-management__main-region .mg-v2-mapping-list-block__card {
+  flex: 1;
+  min-width: 0;
+}
+
 /* 환불 모달 (기존 mapping-refund-modal 호환) */
 .mapping-refund-modal-overlay {
   position: fixed;

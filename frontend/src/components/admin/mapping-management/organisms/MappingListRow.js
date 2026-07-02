@@ -159,6 +159,7 @@ const MappingListRow = ({
           mapping={mapping}
           layout={ENTITY_ROW_ACTIONS_LAYOUT.CARD}
           menuId={`mapping-row-actions-${mapping.id}`}
+          onView={onView}
           onEdit={onEdit}
           onRefund={onRefund}
           onConfirmPayment={onConfirmPayment}

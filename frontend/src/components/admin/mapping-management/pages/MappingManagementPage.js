@@ -7,9 +7,10 @@
  * @since 2025-02-22
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ActionBar from '../../../common/ActionBar';
 import ActionBarButton from '../../../common/ActionBarButton';
+import { SidePeekShell } from '../../../common';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useConfirm } from '../../../../hooks/useConfirm';
@@ -20,6 +21,7 @@ import ContentHeader from '../../../dashboard-v2/content/ContentHeader';
 import MappingKpiSection from '../organisms/MappingKpiSection';
 import MappingSearchSection from '../organisms/MappingSearchSection';
 import MappingListBlock from '../organisms/MappingListBlock';
+import MappingScheduleSidePeekContent from '../integrated-schedule/molecules/MappingScheduleSidePeekContent';
 import MappingCreationModal from '../../MappingCreationModal';
 import ConsultantTransferModal from '../../mapping/ConsultantTransferModal';
 import ConsultantTransferHistory from '../../mapping/ConsultantTransferHistory';
@@ -37,6 +39,10 @@ import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPPING_STATUS';
+
+const MAPPING_MGMT_PEEK_LAYOUT_CLASS = 'mapping-management__peek-layout';
+const MAPPING_MGMT_PEEK_LAYOUT_OPEN_MODIFIER = 'mapping-management__peek-layout--peek-open';
+const MAPPING_MGMT_MAIN_REGION_CLASS = 'mapping-management__main-region';
 
 
 const MappingManagementPage = () => {
@@ -65,6 +71,15 @@ const MappingManagementPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editMapping, setEditMapping] = useState(null);
   const [isLoadingMappings, setIsLoadingMappings] = useState(false);
+  const [peekMapping, setPeekMapping] = useState(null);
+
+  const handleMappingPeek = useCallback((mapping) => {
+    setPeekMapping(mapping);
+  }, []);
+
+  const handleClosePeek = useCallback(() => {
+    setPeekMapping(null);
+  }, []);
 
   const loadMappings = async() => {
     if (isLoadingMappings) return;
@@ -428,22 +443,43 @@ const MappingManagementPage = () => {
 
           <MappingKpiSection mappings={mappings} onStatCardClick={handleStatCardClick} />
 
-          <MappingListBlock
-            mappings={filteredMappings}
-            mappingStatusInfo={mappingStatusInfo}
-            getStatusKoreanName={getStatusKoreanName}
-            getStatusColor={getStatusColor}
-            getStatusIcon={getStatusIcon}
-            getStatusIconComponent={getStatusIconComponent}
-            getStatusVariant={getStatusVariant}
-            onView={handleViewMapping}
-            onEdit={handleEditMapping}
-            onRefund={handleRefundMapping}
-            onConfirmPayment={handleConfirmPayment}
-            onConfirmDeposit={handleConfirmDeposit}
-            onApprove={handleApproveMapping}
-            onCreateClick={() => setShowCreateModal(true)}
-          />
+          <div
+            className={[
+              MAPPING_MGMT_PEEK_LAYOUT_CLASS,
+              peekMapping ? MAPPING_MGMT_PEEK_LAYOUT_OPEN_MODIFIER : ''
+            ].filter(Boolean).join(' ')}
+          >
+            <div className={MAPPING_MGMT_MAIN_REGION_CLASS} data-region="R-MAIN">
+              <MappingListBlock
+                mappings={filteredMappings}
+                mappingStatusInfo={mappingStatusInfo}
+                getStatusKoreanName={getStatusKoreanName}
+                getStatusColor={getStatusColor}
+                getStatusIcon={getStatusIcon}
+                getStatusIconComponent={getStatusIconComponent}
+                getStatusVariant={getStatusVariant}
+                onView={handleMappingPeek}
+                onEdit={handleEditMapping}
+                onRefund={handleRefundMapping}
+                onConfirmPayment={handleConfirmPayment}
+                onConfirmDeposit={handleConfirmDeposit}
+                onApprove={handleApproveMapping}
+                onCreateClick={() => setShowCreateModal(true)}
+              />
+            </div>
+            <SidePeekShell
+              isOpen={Boolean(peekMapping)}
+              onClose={handleClosePeek}
+              title="상세"
+              ariaLabel={
+                peekMapping
+                  ? `${peekMapping.clientName || '매칭'} 상세`
+                  : '상세'
+              }
+            >
+              <MappingScheduleSidePeekContent mapping={peekMapping} />
+            </SidePeekShell>
+          </div>
         </section>
       </ContentArea>
 

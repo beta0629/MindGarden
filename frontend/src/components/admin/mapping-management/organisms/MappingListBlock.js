@@ -17,6 +17,9 @@ import MappingCalendarView from './MappingCalendarView';
 import { MAPPING_MESSAGES } from '../../../../constants/mapping';
 import './MappingListBlock.css';
 
+/** PER_PAGE G1-04: 매칭 목록 기본 보기 = 테이블 */
+export const MAPPING_LIST_DEFAULT_VIEW_MODE = 'table';
+
 /** 매칭 리스트 보기 전환 옵션: 카드 / 테이블 / 캘린더 */
 const MAPPING_VIEW_MODE_OPTIONS = [
   { value: 'card', label: '카드 뷰' },
@@ -40,7 +43,7 @@ const MappingListBlock = ({
   onApprove,
   onCreateClick
 }) => {
-  const [viewMode, setViewMode] = useState('card'); // 'card', 'table', 'calendar'
+  const [viewMode, setViewMode] = useState(MAPPING_LIST_DEFAULT_VIEW_MODE);
   const isEmpty = !mappings || mappings.length === 0;
 
   const renderContent = () => {

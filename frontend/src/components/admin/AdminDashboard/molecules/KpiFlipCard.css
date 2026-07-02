@@ -4,11 +4,41 @@
  * Calm Forest --mg-v2-* 토큰 전용
  */
 
+/* Dashboard KPI zone — AdminDashboardV2 §3.4 */
+.mg-v2-dashboard-kpi-zone {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--mg-spacing-xl, 1.5rem);
+}
+
+/* 그리드 필수: KpiFlipCard 3종 행. 덮어쓰지 말 것 */
+.mg-v2-kpi-flip-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mg-layout-grid-gap-mobile, var(--mg-layout-grid-gap, 1rem));
+  min-width: 0;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .mg-v2-kpi-flip-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--mg-layout-grid-gap-tablet, var(--mg-layout-grid-gap, 1.25rem));
+  }
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-kpi-flip-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--mg-layout-grid-gap-desktop, var(--mg-layout-grid-gap, 1.5rem));
+  }
+}
+
 .mg-v2-kpi-flip-card {
   perspective: 1000px;
   cursor: pointer;
-  flex: 1 1 0;
-  min-width: 220px;
+  min-width: 0;
+  width: 100%;
   min-height: 160px;
 }
 
@@ -269,12 +299,8 @@
   }
 }
 
-/* Mobile — full width stacking */
+/* Mobile — single column stack (row grid handles width) */
 @media (max-width: 767px) {
-  .mg-v2-kpi-flip-card {
-    min-width: 100%;
-  }
-
   .mg-v2-kpi-flip-card__back-content {
     max-height: 200px;
   }

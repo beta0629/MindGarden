@@ -24,6 +24,19 @@ describe('KpiFlipCard', () => {
   });
 
   describe('Dashboard KPI zone pilot', () => {
+    it('KpiFlipCard 행 래퍼에 mg-v2-kpi-flip-row 그리드 클래스를 사용한다', () => {
+      const { container } = render(
+        <div className="mg-v2-kpi-flip-row" role="list" aria-label="핵심 KPI">
+          <KpiFlipCard {...defaultProps} />
+          <KpiFlipCard {...defaultProps} id="second" label="두 번째 KPI" />
+          <KpiFlipCard {...defaultProps} id="third" label="세 번째 KPI" />
+        </div>
+      );
+      const row = container.querySelector('.mg-v2-kpi-flip-row');
+      expect(row).toBeInTheDocument();
+      expect(row.querySelectorAll('.mg-v2-kpi-flip-card')).toHaveLength(3);
+    });
+
     it('sparklineData와 trendBadge가 앞면에 표시된다', () => {
       render(
         <KpiFlipCard

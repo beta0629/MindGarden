@@ -1,0 +1,50 @@
+/**
+ * KpiSparkline — Dashboard KPI zone 미니 추세선
+ *
+ * @author CoreSolution
+ * @since 2026-07-02
+ */
+
+.mg-v2-kpi-sparkline {
+  width: 100%;
+  height: var(--mg-kpi-sparkline-height, 2rem);
+  margin-top: var(--mg-spacing-xs, 0.25rem);
+  min-width: 0;
+}
+
+.mg-v2-kpi-sparkline__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mg-v2-kpi-sparkline__line {
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.mg-v2-kpi-sparkline--green {
+  color: var(--mg-color-b0kla-green-500, var(--mg-color-success-main));
+}
+
+.mg-v2-kpi-sparkline--orange {
+  color: var(--mg-color-b0kla-orange-300, var(--cs-orange-400));
+}
+
+.mg-v2-kpi-sparkline--blue {
+  color: var(--mg-color-b0kla-blue-400, var(--mg-color-primary-main));
+}
+
+.mg-v2-kpi-sparkline--gray {
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-kpi-sparkline__line {
+  stroke: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-kpi-sparkline__line {
+    stroke-width: 2.5;
+  }
+}

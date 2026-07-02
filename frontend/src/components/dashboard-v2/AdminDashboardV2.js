@@ -27,7 +27,7 @@ import { AdminMgmtNavCard, AdminMgmtActionCard } from './molecules/AdminMgmtGrid
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
-import { FaCalendarAlt, FaCheckCircle, FaUsers } from 'react-icons/fa';
+import { FaCalendarAlt } from 'react-icons/fa';
 import {
   Activity,
   Bell,
@@ -61,7 +61,6 @@ import StatCard from '../ui/Card/StatCard';
 import {
   ContentArea,
   ContentHeader,
-  ContentKpiRow,
   ContentSection,
   ContentCard
 } from './content';
@@ -114,6 +113,10 @@ import MGButton from '../common/MGButton';
 import SegmentedTabs from '../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Icon from '../ui/Icon/Icon';
+import {
+  buildTrendAriaLabel,
+  extractSparklineValues
+} from './utils/dashboardKpiSparklineUtils';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
@@ -1025,49 +1028,24 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     navigateQuickActionsFromLnb
   };
 
-  const kpiItems = [
-    {
-      id: 'users',
-      icon: <FaUsers size={28} />,
-      label: t('admin:dashboard.summary.totalUsers'),
-      value: (stats.totalConsultants + stats.totalClients).toLocaleString(),
-      subtitle: `상담사 ${stats.totalConsultants} · 내담자 ${stats.totalClients}`,
-      subtitleBadge: todayStats.totalUsersGrowthRate != null
-        ? (todayStats.totalUsersGrowthRate === 0 ? '변동 없음' : `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%`)
-        : '-',
-      badge: todayStats.totalUsersGrowthRate != null
-        ? (todayStats.totalUsersGrowthRate === 0 ? '변동 없음' : `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%`)
-        : '-',
-      badgeVariant: 'green',
-      iconVariant: 'green'
-    },
-    {
-      id: 'booked',
-      icon: <FaCalendarAlt size={28} />,
-      label: t('admin:dashboard.summary.bookedConsultations'),
-      value: toSafeNumber(todayStats.bookedToday, 0) + toSafeNumber(todayStats.confirmedToday, 0),
-      badge: todayStats.bookedGrowthRate != null
-        ? (todayStats.bookedGrowthRate === 0 ? '변동 없음' : `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%`)
-        : '-',
-      badgeVariant: 'orange',
-      iconVariant: 'orange'
-    },
-    {
-      id: 'completion',
-      icon: <FaCheckCircle size={28} aria-hidden />,
-      label: t('admin:dashboard.summary.completionRate'),
-      value: stats.consultationStats?.completionRate != null ? `${stats.consultationStats.completionRate}%` : 'N/A',
-      subtitle: stats.consultationStats?.completionRate == null && todayStats.completedToday != null
-        ? `오늘 완료 ${todayStats.completedToday}건`
-        : undefined,
-      badge: stats.consultationStats?.completionRateChange != null
-        ? `${stats.consultationStats.completionRateChange > 0 ? '+' : ''}${stats.consultationStats.completionRateChange}%`
-        : undefined,
-      badgeTitle: stats.consultationStats?.completionRateChange != null ? '전월 대비 변동' : undefined,
-      badgeVariant: 'blue',
-      iconVariant: 'blue'
+  const formatGrowthBadge = useCallback((growthRate) => {
+    if (growthRate == null || !Number.isFinite(Number(growthRate))) {
+      return null;
     }
-  ];
+    const rate = Number(growthRate);
+    if (rate === 0) {
+      return '변동 없음';
+    }
+    return `${rate > 0 ? '+' : ''}${rate}%`;
+  }, []);
+
+  const kpiSparklineWeekly = useMemo(() => {
+    const weeklyRows = stats.consultationStats?.weeklyData;
+    return {
+      booked: extractSparklineValues(weeklyRows, 'bookedCount'),
+      completed: extractSparklineValues(weeklyRows, 'completedCount')
+    };
+  }, [stats.consultationStats?.weeklyData]);
 
   const HEADER_ICON_SIZE = 20;
 
@@ -1136,13 +1114,24 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         actions={headerActions}
       />
 
-      {/* KPI 3종 — 3D KpiFlipCard (Visual Pack §2.2) */}
-      <div className="mg-v2-kpi-flip-row" role="region" aria-label="핵심 KPI">
+      {/* KPI 3종 — KpiFlipCard + 스파크라인 pilot (§3.4 Dashboard KPI Zone) */}
+      <section
+        className="mg-v2-dashboard-kpi-zone"
+        aria-labelledby="admin-dashboard-kpi-zone-title"
+      >
+        <h2 id="admin-dashboard-kpi-zone-title" className="sr-only">
+          {t('admin:dashboard.v2.title')}
+        </h2>
+        <div className="mg-v2-kpi-flip-row" role="list" aria-label="핵심 KPI">
         <KpiFlipCard
           id="today-schedule"
           label="오늘 상담 일정"
           value={`${toSafeNumber(todayStats.bookedToday, 0) + toSafeNumber(todayStats.confirmedToday, 0)}건`}
           summary={`예약 ${toSafeNumber(todayStats.bookedToday, 0)}건 · 확정 ${toSafeNumber(todayStats.confirmedToday, 0)}건`}
+          variant="orange"
+          sparklineData={kpiSparklineWeekly.booked}
+          trendBadge={formatGrowthBadge(todayStats.bookedGrowthRate)}
+          trendAriaLabel={buildTrendAriaLabel(todayStats.bookedGrowthRate)}
           backContent={
             <ul className="mg-v2-kpi-flip-card__back-list">
               <li className="mg-v2-kpi-flip-card__back-list-item">
@@ -1169,6 +1158,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           label="상담사별 오늘 일정"
           value={`${stats.totalConsultants}명`}
           summary={`활동 상담사 ${stats.totalConsultants}명`}
+          variant="blue"
           backContent={
             <ConsultantCountsBadgeList />
           }
@@ -1182,6 +1172,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           label="신규 상담 접수"
           value={`${toSafeNumber(stats.totalClients, 0)}건`}
           summary={`전체 내담자 ${toSafeNumber(stats.totalClients, 0)}명`}
+          variant="green"
+          sparklineData={kpiSparklineWeekly.completed}
+          trendBadge={formatGrowthBadge(stats.consultationStats?.completionRateChange)}
+          trendAriaLabel={buildTrendAriaLabel(stats.consultationStats?.completionRateChange)}
           backContent={
             <p>신규 내담자 배정 대기 현황을 확인하세요.</p>
           }
@@ -1190,11 +1184,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           isFlipped={flippedKpiId === 'new-intake'}
           onFlip={handleKpiFlip}
         />
-      </div>
+        </div>
+      </section>
 
       <ContentCard className="mg-v2-content-card--pipeline">
         <AdminMetricsVisualization
-          variant="pipeline"
+          variant="option-c"
           loading={loading}
           stats={{
             totalMappings: stats.totalMappings,

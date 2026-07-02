@@ -23,6 +23,31 @@ describe('KpiFlipCard', () => {
     jest.clearAllMocks();
   });
 
+  describe('Dashboard KPI zone pilot', () => {
+    it('sparklineData와 trendBadge가 앞면에 표시된다', () => {
+      render(
+        <KpiFlipCard
+          {...defaultProps}
+          variant="orange"
+          sparklineData={[1, 3, 2]}
+          trendBadge="+5%"
+          trendAriaLabel="5% 상승"
+        />
+      );
+      expect(screen.getByTestId('kpi-sparkline')).toBeInTheDocument();
+      expect(screen.getByText('+5%')).toBeInTheDocument();
+      expect(screen.getByText('5% 상승')).toHaveClass('sr-only');
+    });
+
+    it('variant별 accent 클래스가 적용된다', () => {
+      const { container } = render(
+        <KpiFlipCard {...defaultProps} variant="green" />
+      );
+      expect(container.querySelector('.mg-v2-kpi-flip-card--accent-green')).toBeInTheDocument();
+      expect(container.querySelector('.mg-v2-kpi-flip-card__accent')).toBeInTheDocument();
+    });
+  });
+
   describe('렌더링', () => {
     it('라벨, 값, 요약이 앞면에 표시된다', () => {
       render(<KpiFlipCard {...defaultProps} />);

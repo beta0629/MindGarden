@@ -55,6 +55,7 @@
   min-width: 0;
   box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
   transition: box-shadow 0.2s;
+  overflow: hidden;
 }
 
 .admin-metrics-visualization__grid-tile:hover {
@@ -62,7 +63,32 @@
 }
 
 .admin-metrics-visualization__grid-tile-accent {
-  display: none;
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  display: block;
+  background: var(--mg-metrics-tile-accent, var(--mg-color-border-main));
+}
+
+.admin-metrics-visualization__grid-tile--success {
+  --mg-metrics-tile-accent: var(--ad-b0kla-green, var(--mg-success-600));
+}
+
+.admin-metrics-visualization__grid-tile--warning {
+  --mg-metrics-tile-accent: var(--ad-b0kla-orange, var(--cs-orange-400));
+}
+
+.admin-metrics-visualization__grid-tile--info {
+  --mg-metrics-tile-accent: var(--ad-b0kla-blue, var(--mg-primary-400));
+}
+
+.admin-metrics-visualization__grid-tile--auto {
+  --mg-metrics-tile-accent: var(--mg-color-text-secondary);
+}
+
+.admin-metrics-visualization__grid-tile--neutral {
+  --mg-metrics-tile-accent: var(--mg-color-border-main);
 }
 
 .admin-metrics-visualization__grid-tile-content {

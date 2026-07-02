@@ -3,7 +3,7 @@
 **작성일**: 2026-07-01  
 **담당**: core-planner (갱신 주체)  
 **거버넌스**: [`ADMIN_IMPLEMENTATION_GOVERNANCE.md`](./ADMIN_IMPLEMENTATION_GOVERNANCE.md)  
-**Good SHA**: develop `f5b83ca81` · prod `d681275bd` · rollback 금지 패턴 `0676dfa2d`
+**Good SHA**: develop `3f636c414` · prod `e85a26d78` · rollback 금지 패턴 `0676dfa2d`
 
 **상태 범례**: ☐ pending · ◐ in_progress · ☑ done
 
@@ -69,7 +69,8 @@
 | V2-coder | 25 | G1 Dashboard KPI zone 시각화 pilot | coder | designer | Seq 24 ☑ | handoff §Dashboard; 기존 component·토큰 재사용 | `416f54a80` | ☑ done | route: `/admin/dashboard` · PR #447 · dev run: `28558696969` · prod run: `28561691886` · prod `d681275bd` |
 | V2-tester | 25b | Dashboard KPI zone Jest gate | tester | tester | Seq 25 ☑ | KpiFlipCard·ContentKpiRow·dashboardKpiSparklineUtils 23 tests PASS | `416f54a80` | ☑ done | Jest 3 suites · 23 passed |
 | V2-coder | 26 | G1-05 MappingCard SSOT (Primary1+overflow) | coder | designer | Seq 25 또는 병렬 | PER_PAGE #6 | `f5b83ca81` | ☑ done | prod run: `28561691886` · prod `d681275bd` |
-| V3+ | 27+ | AdminCommonLayout 통일·알림 API·Saved View·compact row 재도입(토글 ON만) | designer/coder/tester | planner 합류 | V2 완료 | v2 로드맵 Phase 3~4 | — | ☐ pending | 개별 행 분할 예정 |
+| V2-hotfix | 27 | manual matching queue 삭제 내담자 제외 | coder | planner | 운영 이슈 | BE `with-mapping-info` lifecycle 필터; FE `filterManualMatchingQueueClients`; Jest+Java | `e85a26d78` | ◐ in_progress | FE prod `28565916490` ☑ · BE prod `28565916405` **waiting** (`environment: prod` 승인 대기) · health UP |
+| V3+ | 28+ | AdminCommonLayout 통일·알림 API·Saved View·compact row 재도입(토글 ON만) | designer/coder/tester | planner 합류 | Seq 27 ☑ | v2 로드맵 Phase 3~4 | — | ☐ pending | 개별 행 분할 예정 |
 
 ---
 
@@ -86,8 +87,9 @@
 | V2 Seq 24~26 prod | 2026-07-02 | ☑ prod run `28561691886` · main `d681275bd` (Seq 24 dead code · 25 KPI · 26 MappingCard SSOT 일괄) |
 | V2 Dashboard KPI pilot | 2026-07-02 | ☑ PR #447 · dev run `28558696969` · Jest gate Seq 25b · prod run `28561691886` |
 | V2 MappingCard SSOT | 2026-07-02 | ☑ `f5b83ca81` · prod run `28561691886` |
+| V2-hotfix Seq 27 (manual matching queue) | 2026-07-02 | ◐ FE prod `28565916490` ☑ · BE prod `28565916405` waiting (prod env 승인) · main `e85a26d78` |
 | V1 착수 | 2026-07-01 | ☑ Seq 14~16 pilot |
-| **다음 (pending)** | — | **Seq 17** G2 QA gate · **Seq 22b** G3 ERP sparkline/status (잔여) |
+| **다음 (pending)** | — | **Seq 27** BE prod 승인·완료 후 ☑ · **Seq 17** G2 QA gate |
 
 ---
 
@@ -107,3 +109,4 @@
 | 2026-07-02 | 25b | Dashboard KPI Jest gate ☑ — KpiFlipCard·ContentKpiRow·dashboardKpiSparklineUtils 23 passed |
 | 2026-07-02 | 26 | MappingCard SSOT ☑ — `f5b83ca81` · prod run `28561691886` · main `d681275bd` |
 | 2026-07-02 | 22 | G3-01 FinancialManagement table-default ☑ — `FM_TRANSACTION_DEFAULT_VIEW_MODE=table` · route `/erp/financial` |
+| 2026-07-02 | 27 | manual matching queue 삭제 내담자 제외 ◐ — `e85a26d78` · FE prod `28565916490` ☑ · BE prod `28565916405` waiting (`environment: prod` 승인) · health UP |

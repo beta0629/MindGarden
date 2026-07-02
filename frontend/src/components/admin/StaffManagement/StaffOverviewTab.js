@@ -13,7 +13,8 @@ import {
   ListTableView,
   StatusBadge,
   EntityRowActions,
-  ENTITY_ROW_ACTIONS_LAYOUT
+  ENTITY_ROW_ACTIONS_LAYOUT,
+  USER_MANAGEMENT_DEFAULT_VIEW_MODE
 } from '../../common';
 import { ProfileCard } from '../../ui/Card/index';
 import { maskEncryptedDisplay } from '../../../utils/codeHelper';
@@ -40,7 +41,7 @@ const StaffOverviewTab = ({
   onRoleChange,
   onDeleteStaff,
   sessionUserId,
-  viewMode = 'list'
+  viewMode = USER_MANAGEMENT_DEFAULT_VIEW_MODE
 }) => {
   const handleRowPeek = useCallback((staff) => {
     if (onStaffPeek) {
@@ -205,7 +206,7 @@ StaffOverviewTab.defaultProps = {
   onStaffPeek: null,
   onStaffSelect: null,
   sessionUserId: null,
-  viewMode: 'list'
+  viewMode: USER_MANAGEMENT_DEFAULT_VIEW_MODE
 };
 
 export default StaffOverviewTab;

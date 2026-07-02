@@ -33,7 +33,7 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
 import { SearchInput } from '../dashboard-v2/atoms';
-import { ViewModeToggle, SidePeekShell } from '../common';
+import { ViewModeToggle, SidePeekShell, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../common';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './mapping-management/organisms/MappingKpiSection.css';
@@ -131,7 +131,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
     const consultantEditPhoneBaselineRef = useRef('');
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
-    const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list'
+    const [viewMode, setViewMode] = useState(USER_MANAGEMENT_DEFAULT_VIEW_MODE);
     const [peekConsultant, setPeekConsultant] = useState(null);
 
     const loadProfessionalTypeCodes = useCallback(async() => {
@@ -1254,7 +1254,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
 
     if (loading) {
         if (embedded) {
-            return <UnifiedLoading type="inline" text={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')} variant="pulse" />;
+            return (
+                <UnifiedLoading
+                    type="inline"
+                    variant="spinner"
+                    tone="primary"
+                    size="md"
+                    text={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')}
+                />
+            );
         }
         return (
             <AdminCommonLayout title={t('admin:consultant.title')}>
@@ -1267,7 +1275,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                                 titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
                             />
                             <main aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}>
-                                <UnifiedLoading type="inline" text={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')} variant="pulse" />
+                                <UnifiedLoading
+                                    type="inline"
+                                    variant="spinner"
+                                    tone="primary"
+                                    size="md"
+                                    text={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')}
+                                />
                             </main>
                         </ContentArea>
                     </div>

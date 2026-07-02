@@ -9,7 +9,7 @@ import { showError, showSuccess, showWarning } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ViewModeToggle, SidePeekShell } from '../common';
+import { ViewModeToggle, SidePeekShell, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../common';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
@@ -97,7 +97,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [activeFilters, setActiveFilters] = useState({});
-    const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list'
+    const [viewMode, setViewMode] = useState(USER_MANAGEMENT_DEFAULT_VIEW_MODE);
     const [peekClient, setPeekClient] = useState(null);
     
     const [showModal, setShowModal] = useState(false);
@@ -516,7 +516,15 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     
     if (loading) {
         if (embedded) {
-            return <UnifiedLoading type="inline" text={t('common:state.dataLoading')} variant="pulse" />;
+            return (
+                <UnifiedLoading
+                    type="inline"
+                    variant="spinner"
+                    tone="primary"
+                    size="md"
+                    text={t('common:state.dataLoading')}
+                />
+            );
         }
         return (
             <AdminCommonLayout title={t('admin:client.pageTitle')}>
@@ -529,7 +537,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 titleId={CLIENT_COMP_MGMT_TITLE_ID}
                             />
                             <main aria-labelledby={CLIENT_COMP_MGMT_TITLE_ID}>
-                                <UnifiedLoading type="inline" text={t('common:state.dataLoading')} variant="pulse" />
+                                <UnifiedLoading
+                                    type="inline"
+                                    variant="spinner"
+                                    tone="primary"
+                                    size="md"
+                                    text={t('common:state.dataLoading')}
+                                />
                             </main>
                         </ContentArea>
                     </div>

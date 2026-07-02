@@ -22,6 +22,9 @@ const DEFAULT_OPTIONS = [
   { value: 'list', label: '\uB9AC\uC2A4\uD2B8' }
 ];
 
+/** 사용자 관리(내담자·상담사·스태프) 목록 기본 보기 모드 */
+export const USER_MANAGEMENT_DEFAULT_VIEW_MODE = 'smallCard';
+
 function ViewModeToggle({
   viewMode,
   onViewModeChange,

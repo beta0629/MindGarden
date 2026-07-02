@@ -1,5 +1,5 @@
 import { User, Calendar, Users, MessageSquare } from 'lucide-react';
-import { SmallCardGrid, ListTableView, StatusBadge, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../common';
+import { SmallCardGrid, ListTableView, StatusBadge, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../../common';
 import SafeText from '../../common/SafeText';
 import { ProfileCard } from '../../ui/Card/index';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
@@ -20,7 +20,7 @@ const ClientOverviewTab = ({
     consultants,
     mappings,
     consultations,
-    viewMode = 'list'
+    viewMode = USER_MANAGEMENT_DEFAULT_VIEW_MODE
 }) => {
     const { t } = useTranslation();
 

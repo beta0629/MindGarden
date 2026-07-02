@@ -131,6 +131,7 @@ import '../../styles/themes/admin-theme.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
 import { useTranslation } from 'react-i18next';
+import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // /api/v1/admin/mappings 는 SSOT(API_ENDPOINTS.ADMIN.MAPPINGS.LIST) 사용
@@ -655,7 +656,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       ]);
       const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
       const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
-      const unassigned = clients.filter((c) => (c.mappingCount ?? 0) === 0);
+      const unassigned = filterManualMatchingQueueClients(clients);
       setUnassignedClients(unassigned);
       const consultantsRaw =
         consultantsRes?.consultants ?? consultantsRes?.data?.consultants ?? consultantsRes;

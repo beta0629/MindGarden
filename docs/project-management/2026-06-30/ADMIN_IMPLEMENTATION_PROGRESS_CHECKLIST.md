@@ -3,7 +3,7 @@
 **작성일**: 2026-07-01  
 **담당**: core-planner (갱신 주체)  
 **거버넌스**: [`ADMIN_IMPLEMENTATION_GOVERNANCE.md`](./ADMIN_IMPLEMENTATION_GOVERNANCE.md)  
-**Good SHA**: develop `4201b8a0a` · prod `e35ab2410` · rollback 금지 패턴 `0676dfa2d`
+**Good SHA**: develop `553162e30` · prod `e35ab2410` · rollback 금지 패턴 `0676dfa2d`
 
 **상태 범례**: ☐ pending · ◐ in_progress · ☑ done
 
@@ -65,7 +65,7 @@
 | V2-coder | 21 | G1-04 default=table + peek | coder | designer | Seq 20 ☑ | card optional | `e35ab2410` | ☑ done | route: `/admin/mapping-management` |
 | V2-coder | 22 | G3 ERP mini-sparkline / status (Financial 등) | coder | designer | V1-user ☑ | L-B 시각화 | — | ☐ pending | G3 default=list 등 |
 | V2-tester | 23 | V2 QA gate (매칭 SidePeek) | tester | tester | Seq 21 | PER_PAGE DoD | `e35ab2410` | ☑ done | prod run: `28556626050` |
-| V2-coder | 24 | QA follow-up — MappingDetailModal dead code 정리 | coder | designer | Seq 23 ☑ | `handleViewMapping`·Modal wiring 제거; Jest 회귀 0 | TBD | ◐ in_progress | route: `/admin/mapping-management` |
+| V2-coder | 24 | QA follow-up — MappingDetailModal dead code 정리 | coder | designer | Seq 23 ☑ | `handleViewMapping`·Modal wiring 제거; Jest 회귀 0 | `553162e30` | ☑ done | route: `/admin/mapping-management` · dev run: `28558620481` |
 | V2-coder | 25 | G1 Dashboard KPI zone 시각화 pilot | coder | designer | Seq 24 ☑ | handoff §Dashboard; 기존 component·토큰 재사용 | — | ☐ pending | route: `/admin/dashboard` |
 | V2-coder | 26 | G1-05 MappingCard SSOT (Primary1+overflow) | coder | designer | Seq 25 또는 병렬 | PER_PAGE #6 | — | ☐ pending | |
 | V3+ | 27+ | AdminCommonLayout 통일·알림 API·Saved View·compact row 재도입(토글 ON만) | designer/coder/tester | planner 합류 | V2 완료 | v2 로드맵 Phase 3~4 | — | ☐ pending | 개별 행 분할 예정 |
@@ -98,4 +98,4 @@
 | 2026-07-02 | 19 | V1-user ☑ — 사용자 prod 반영 요청 |
 | 2026-07-02 | 21 | V2 G1-04 매칭 default=table + SidePeekShell pilot ☑ |
 | 2026-07-02 | 23 | V2 QA gate (매칭) ☑ — prod run `28556626050` |
-| 2026-07-02 | 24 | MappingDetailModal dead code 정리 (develop) |
+| 2026-07-02 | 24 | MappingDetailModal dead code ☑ — `553162e30` · dev run `28558620481` |

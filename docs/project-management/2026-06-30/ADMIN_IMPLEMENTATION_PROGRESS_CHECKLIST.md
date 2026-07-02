@@ -63,7 +63,7 @@
 | V1-user | 19 | 사용자 검수 | 사용자 | 사용자 | Seq 18 ☑ | sign-off | — | ☑ done | 2026-07-02 사용자 prod 반영 요청 |
 | V2-design | 20 | G1-04 매칭 목록 table-default handoff | designer | designer | V1-user ☑ | MappingListBlock | — | ◐ waived | pilot: PER_PAGE G1-04 + handoff §3 |
 | V2-coder | 21 | G1-04 default=table + peek | coder | designer | Seq 20 ☑ | card optional | `e35ab2410` | ☑ done | route: `/admin/mapping-management` |
-| V2-coder | 22 | G3 ERP mini-sparkline / status (Financial 등) | coder | designer | V1-user ☑ | L-B 시각화 | _(commit 후 기록)_ | ☑ done | route: `/erp/financial` · G3-01 table-default |
+| V2-coder | 22 | G3 ERP mini-sparkline / status (Financial 등) | coder | designer | V1-user ☑ | L-B 시각화 | `b6ce620ff` | ☑ done | route: `/erp/financial` · dev run: `28571636340` · G3-01 table-default |
 | V2-tester | 23 | V2 QA gate (매칭 SidePeek) | tester | tester | Seq 21 | PER_PAGE DoD | `e35ab2410` | ☑ done | prod run: `28556626050` |
 | V2-coder | 24 | QA follow-up — MappingDetailModal dead code 정리 | coder | designer | Seq 23 ☑ | `handleViewMapping`·Modal wiring 제거; Jest 회귀 0 | `553162e30` | ☑ done | route: `/admin/mapping-management` · dev run: `28558620481` · prod run: `28561691886` · prod `d681275bd` |
 | V2-coder | 25 | G1 Dashboard KPI zone 시각화 pilot | coder | designer | Seq 24 ☑ | handoff §Dashboard; 기존 component·토큰 재사용 | `416f54a80` | ☑ done | route: `/admin/dashboard` · PR #447 · dev run: `28558696969` · prod run: `28561691886` · prod `d681275bd` |

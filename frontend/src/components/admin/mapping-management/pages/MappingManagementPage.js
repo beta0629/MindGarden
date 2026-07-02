@@ -27,7 +27,6 @@ import ConsultantTransferModal from '../../mapping/ConsultantTransferModal';
 import ConsultantTransferHistory from '../../mapping/ConsultantTransferHistory';
 import PartialRefundModal from '../../mapping/PartialRefundModal';
 import PaymentConfirmationModal from '../../PaymentConfirmationModal';
-import MappingDetailModal from '../../mapping/MappingDetailModal';
 import MappingEditModal from '../../MappingEditModal';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
 import '../../../../styles/unified-design-tokens.css';
@@ -66,8 +65,6 @@ const MappingManagementPage = () => {
   const [refundReason, setRefundReason] = useState('');
   const [showPartialRefundModal, setShowPartialRefundModal] = useState(false);
   const [partialRefundMapping, setPartialRefundMapping] = useState(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [detailMapping, setDetailMapping] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editMapping, setEditMapping] = useState(null);
   const [isLoadingMappings, setIsLoadingMappings] = useState(false);
@@ -273,11 +270,6 @@ const MappingManagementPage = () => {
     setRefundMapping(mapping);
     setRefundReason('');
     setShowRefundModal(true);
-  };
-
-  const handleViewMapping = (mapping) => {
-    setDetailMapping(mapping);
-    setShowDetailModal(true);
   };
 
   const handleCloseRefundModal = () => {
@@ -517,15 +509,6 @@ const MappingManagementPage = () => {
           setPartialRefundMapping(null);
         }}
         onSuccess={loadMappings}
-      />
-
-      <MappingDetailModal
-        mapping={detailMapping}
-        isOpen={showDetailModal}
-        onClose={() => {
-          setShowDetailModal(false);
-          setDetailMapping(null);
-        }}
       />
 
       <UnifiedModal

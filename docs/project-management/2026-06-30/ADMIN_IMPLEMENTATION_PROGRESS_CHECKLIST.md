@@ -58,10 +58,10 @@
 | V1-coder | 15 | G2-02 상담사 default=list | coder | designer | Seq 13 ☑ | 동일 | — | ☑ done | route: `/admin/user-management?type=consultant` |
 | V1-coder | 16 | G2-03 스태ff default=list + SidePeekShell | coder | designer | Seq 13 ☑ | Primary1+overflow | — | ☑ done | route: `/admin/user-management?type=staff` |
 | V1-tester | 17 | G2 P0 3화면 QA gate (×3 또는 1 suite) | tester | tester | Seq 14~16 | 20+ row; viewMode persist | — | ☐ pending | 병렬 3 PR 시 gate 3 |
-| V1-deploy-dev | 18 | develop 반영 | deployer | deployer | Seq 17 ☑ | run ID | — | ☐ pending | |
-| V1-user | 19 | 사용자 검수 | 사용자 | 사용자 | Seq 18 ☑ | sign-off | — | ☐ pending | |
-| V2-design | 20 | G1-04 매칭 목록 table-default handoff | designer | designer | V1-user ☑ | MappingListBlock | — | ☐ pending | |
-| V2-coder | 21 | G1-04 default=table + peek | coder | designer | Seq 20 ☑ | card optional | — | ☐ pending | |
+| V1-deploy-dev | 18 | develop 반영 | deployer | deployer | Seq 17 ☑ | run ID | — | ☐ pending | dev run: _(pending)_ · prod run: _(V1 prod placeholder)_ |
+| V1-user | 19 | 사용자 검수 | 사용자 | 사용자 | Seq 18 ☑ | sign-off | — | ☑ done | 2026-07-02 사용자 prod 반영 요청 |
+| V2-design | 20 | G1-04 매칭 목록 table-default handoff | designer | designer | V1-user ☑ | MappingListBlock | — | ◐ waived | pilot: PER_PAGE G1-04 + handoff §3 |
+| V2-coder | 21 | G1-04 default=table + peek | coder | designer | Seq 20 ☑ | card optional | — | ☑ done | route: `/admin/mapping-management` |
 | V2-coder | 22 | G3 ERP mini-sparkline / status (Financial 등) | coder | designer | V1-user ☑ | L-B 시각화 | — | ☐ pending | G3 default=list 등 |
 | V2-tester | 23 | V2 QA gate | tester | tester | Seq 21~22 | PER_PAGE DoD | — | ☐ pending | |
 | V3+ | 24+ | AdminCommonLayout 통일·알림 API·Saved View·compact row 재도입(토글 ON만) | designer/coder/tester | planner 합류 | V2 완료 | v2 로드맵 Phase 3~4 | — | ☐ pending | 개별 행 분할 예정 |
@@ -76,7 +76,9 @@
 | P0-design-review 완료 | 2026-07-01 | ☑ |
 | V0 dev 배포 | 2026-07-01 | ☑ run `28491931243` |
 | V0 사용자 sign-off | 2026-07-01 | ☑ prod 검수 OK |
-| V1 착수 | 2026-07-01 | ◐ Seq 14 pilot ☑ |
+| V1 착수 | 2026-07-01 | ◐ Seq 14~16 pilot ☑ |
+| V1-user prod 반영 요청 | 2026-07-02 | ☑ |
+| V2 매칭 Side Peek pilot | 2026-07-02 | ☑ Seq 21 |
 
 ---
 
@@ -90,3 +92,5 @@
 | 2026-07-01 | 14 | V1 G2-01 내담자 list default + SidePeekShell pilot ☑ — Jest; dev deploy 대기 |
 | 2026-07-01 | 15 | V1 G2-02 상담사 list default + SidePeekShell pilot ☑ — Jest; dev deploy |
 | 2026-07-01 | 16 | V1 G2-03 스태ff list default + SidePeekShell pilot ☑ — Jest; dev deploy 대기 |
+| 2026-07-02 | 19 | V1-user ☑ — 사용자 prod 반영 요청; V1 prod run placeholder |
+| 2026-07-02 | 21 | V2 G1-04 매칭 default=table + SidePeekShell pilot ☑ — route `/admin/mapping-management`; Jest |

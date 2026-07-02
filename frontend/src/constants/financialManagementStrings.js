@@ -33,6 +33,9 @@ export const FM_VIEW_TABS = {
   DASHBOARD: '대시보드'
 };
 
+/** PER_PAGE G3-01: 재무 거래 목록 기본 보기 = 테이블 */
+export const FM_TRANSACTION_DEFAULT_VIEW_MODE = 'table';
+
 export const FM_TRANSACTION_VIEW_MODE_OPTIONS = [
   { value: 'card', label: '카드' },
   { value: 'compact', label: '작은 카드' },

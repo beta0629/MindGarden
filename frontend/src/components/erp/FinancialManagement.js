@@ -72,6 +72,7 @@ import {
   FM_FINANCIAL_PAGE_SUBTITLE_DEFAULT,
   FM_EXPORT,
   FM_VIEW_TABS,
+  FM_TRANSACTION_DEFAULT_VIEW_MODE,
   FM_TRANSACTION_VIEW_MODE_OPTIONS,
   FM_TX_TABLE_LABELS,
   FM_TX_TYPE,
@@ -505,7 +506,7 @@ const FinancialManagement = () => {
     navigate({ pathname: location.pathname, search: qs ? `?${qs}` : '' }, { replace: true });
   }, [filters.dateRange, filters.monthYm, location.pathname, location.search, navigate]);
   
-  const [transactionViewMode, setTransactionViewMode] = useState('card');
+  const [transactionViewMode, setTransactionViewMode] = useState(FM_TRANSACTION_DEFAULT_VIEW_MODE);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState({

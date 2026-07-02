@@ -8,7 +8,12 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react';
-import { StatusBadge, CardContainer, ENTITY_ROW_ACTIONS_LAYOUT } from '../../common';
+import {
+  StatusBadge,
+  CardContainer,
+  CardActionGroup,
+  ENTITY_ROW_ACTIONS_LAYOUT
+} from '../../common';
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
 import MappingEntityRowActions from '../../admin/mapping-management/molecules/MappingEntityRowActions';
@@ -154,16 +159,6 @@ const MappingCardDetailed = ({
             <StatusBadge variant="info">ERP 연동</StatusBadge>
           )}
         </div>
-        <MappingEntityRowActions
-          mapping={mapping}
-          layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
-          menuId={`mapping-card-actions-${mapping.id}`}
-          onEdit={onEdit}
-          onRefund={onRefund}
-          onConfirmPayment={onConfirmPayment}
-          onConfirmDeposit={onConfirmDeposit}
-          onApprove={onApprove}
-        />
       </div>
 
       <div className="mg-v2-mapping-card-body">
@@ -234,6 +229,27 @@ const MappingCardDetailed = ({
             </div>
           )}
         </div>
+      </div>
+
+      <div
+        className="mg-v2-mapping-card-footer"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        <CardActionGroup>
+          <MappingEntityRowActions
+            mapping={mapping}
+            layout={ENTITY_ROW_ACTIONS_LAYOUT.CARD}
+            menuId={`mapping-card-actions-${mapping.id}`}
+            exposePrimaryAction
+            onView={onView}
+            onEdit={onEdit}
+            onRefund={onRefund}
+            onConfirmPayment={onConfirmPayment}
+            onConfirmDeposit={onConfirmDeposit}
+            onApprove={onApprove}
+          />
+        </CardActionGroup>
       </div>
 
     </CardContainer>

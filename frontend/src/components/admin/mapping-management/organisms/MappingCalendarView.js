@@ -17,6 +17,7 @@ import './MappingCalendarView.css';
 const MappingCalendarEventContent = ({
   mapping,
   title,
+  onView,
   onEdit,
   onRefund,
   onConfirmPayment,
@@ -35,6 +36,7 @@ const MappingCalendarEventContent = ({
         mapping={mapping}
         layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
         menuId={`mapping-calendar-actions-${mapping.id}`}
+        onView={onView}
         onEdit={onEdit}
         onRefund={onRefund}
         onConfirmPayment={onConfirmPayment}
@@ -48,6 +50,7 @@ const MappingCalendarEventContent = ({
 MappingCalendarEventContent.propTypes = {
   mapping: PropTypes.object.isRequired,
   title: PropTypes.string,
+  onView: PropTypes.func,
   onEdit: PropTypes.func,
   onRefund: PropTypes.func,
   onConfirmPayment: PropTypes.func,
@@ -102,6 +105,7 @@ const MappingCalendarView = ({
         <MappingCalendarEventContent
           mapping={mapping}
           title={eventInfo.event.title}
+          onView={onView}
           onEdit={onEdit}
           onRefund={onRefund}
           onConfirmPayment={onConfirmPayment}
@@ -110,7 +114,7 @@ const MappingCalendarView = ({
         />
       );
     },
-    [onEdit, onRefund, onConfirmPayment, onConfirmDeposit, onApprove]
+    [onView, onEdit, onRefund, onConfirmPayment, onConfirmDeposit, onApprove]
   );
 
   return (

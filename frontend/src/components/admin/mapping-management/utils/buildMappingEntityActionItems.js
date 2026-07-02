@@ -19,6 +19,7 @@ import {
  * @param {Function} [params.onApprove]
  * @param {Function} [params.onCheckoutSameDay]
  * @param {Function} [params.onCancelPendingMapping]
+ * @param {Function} [params.onView]
  * @param {Function} [params.onEdit]
  * @param {Function} [params.onRefund]
  * @param {boolean} [params.processing]
@@ -33,6 +34,7 @@ export function buildMappingEntityActionItems({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onView,
   onEdit,
   onRefund,
   processing = false,
@@ -84,6 +86,14 @@ export function buildMappingEntityActionItems({
       label: t('admin:mapping.card.actions.cancel'),
       disabled: cancelPendingProcessing,
       onClick: () => onCancelPendingMapping(mapping)
+    });
+  }
+
+  if (onView) {
+    items.push({
+      id: 'detail',
+      label: '상세',
+      onClick: () => onView(mapping)
     });
   }
 

@@ -159,6 +159,7 @@ const MappingTableView = ({
                     mapping={mapping}
                     layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
                     menuId={`mapping-table-actions-${mapping.id}`}
+                    onView={onView}
                     onEdit={onEdit}
                     onRefund={onRefund}
                     onConfirmPayment={onConfirmPayment}

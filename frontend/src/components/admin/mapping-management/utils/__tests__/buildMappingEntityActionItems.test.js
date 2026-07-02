@@ -28,11 +28,12 @@ describe('buildMappingEntityActionItems', () => {
     const items = buildMappingEntityActionItems({
       mapping: baseMapping,
       t,
+      onView: jest.fn(),
       onEdit,
       onRefund
     });
 
-    expect(items.map((item) => item.id)).toEqual(['edit', 'refund']);
+    expect(items.map((item) => item.id)).toEqual(['detail', 'edit', 'refund']);
     expect(items.find((item) => item.id === 'refund').variant).toBe('destructive');
   });
 

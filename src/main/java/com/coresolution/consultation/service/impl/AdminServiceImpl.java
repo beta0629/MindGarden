@@ -2489,6 +2489,24 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             .collect(Collectors.toList());
     }
 
+    /**
+     * 통합 내담자 데이터(with-mapping-info) 목록에 노출할 내담자만 포함.
+     * DELETED_BY_ADMIN / ANONYMIZED / HARD_DELETED 는 삭제·종료 전용 화면으로 분리.
+     */
+    private boolean isVisibleInClientMappingList(User user) {
+        if (user == null) {
+            return false;
+        }
+        if (Boolean.FALSE.equals(user.getIsActive()) || Boolean.TRUE.equals(user.getIsDeleted())) {
+            return false;
+        }
+        LifecycleState state = user.getLifecycleState();
+        if (state == null) {
+            return true;
+        }
+        return state != LifecycleState.DELETED_BY_ADMIN && !state.isTerminal();
+    }
+
     @Override
     public List<Map<String, Object>> getAllClientsWithMappingInfo() {
         try {
@@ -2496,7 +2514,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
-            List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
+            List<User> clientUsers = userRepository.findByRole(tenantId, UserRole.CLIENT).stream()
+                    .filter(this::isVisibleInClientMappingList)
+                    .collect(Collectors.toList());
             log.info("🔍 내담자 수: {}", clientUsers.size());
             
             // 표준화 2025-12-05: tenantId 필터링 필수
@@ -2531,6 +2551,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 clientData.put("grade", user.getGrade() != null ? user.getGrade() : "");
                 clientData.put("isActive", user.getIsActive());
                 clientData.put("isDeleted", user.getIsDeleted());
+                LifecycleState lifecycleState = user.getLifecycleState();
+                clientData.put("lifecycleState",
+                        lifecycleState != null ? lifecycleState.name() : LifecycleState.ACTIVE.name());
                 clientData.put("createdAt", user.getCreatedAt());
                 clientData.put("updatedAt", user.getUpdatedAt());
                 clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지

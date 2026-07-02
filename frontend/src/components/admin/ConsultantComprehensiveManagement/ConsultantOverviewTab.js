@@ -3,7 +3,7 @@ import { Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
-import { SmallCardGrid, ListTableView, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../common';
+import { SmallCardGrid, ListTableView, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../../common';
 import ConsultantCard from '../../ui/Card/ConsultantCard';
 import { getConsultantBadgeDisplay } from '../../../utils/consultantHelper';
 import { getStatusLabel } from '../../../utils/colorUtils';
@@ -22,7 +22,7 @@ const ConsultantOverviewTab = ({
   onDeleteConsultant,
   onResetPassword,
   onCreateConsultant,
-  viewMode = 'list'
+  viewMode = USER_MANAGEMENT_DEFAULT_VIEW_MODE
 }) => {
   const { t } = useTranslation(['admin', 'common']);
 

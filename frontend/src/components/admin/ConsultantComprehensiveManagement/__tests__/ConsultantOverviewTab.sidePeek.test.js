@@ -135,8 +135,8 @@ describe('ConsultantOverviewTab — SidePeekShell stub', () => {
     expect(panel).toHaveAttribute('hidden');
   });
 
-  test('default viewMode는 list (테이블 렌더)', () => {
-    render(
+  test('default viewMode는 smallCard (작은 카드 그리드 렌더)', () => {
+    const { container } = render(
       <ConsultantOverviewTab
         consultants={[SAMPLE_CONSULTANT]}
         onConsultantPeek={jest.fn()}
@@ -145,6 +145,7 @@ describe('ConsultantOverviewTab — SidePeekShell stub', () => {
       />
     );
 
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(container.querySelector('.mg-v2-list-block__grid--small')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 });

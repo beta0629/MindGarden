@@ -20,7 +20,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
-import { ViewModeToggle, SafeText, SidePeekShell } from '../common';
+import { ViewModeToggle, SafeText, SidePeekShell, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -202,7 +202,7 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
   const staffEditPhoneBaselineRef = useRef('');
-  const [viewMode, setViewMode] = useState('list'); // 'largeCard' | 'smallCard' | 'list'
+  const [viewMode, setViewMode] = useState(USER_MANAGEMENT_DEFAULT_VIEW_MODE);
   const [peekStaff, setPeekStaff] = useState(null);
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });
@@ -730,7 +730,13 @@ const StaffManagement = ({ embedded = false }) => {
       return (
         <ContentArea ariaLabel={STAFF_MGMT_PAGE.ARIA_MAIN}>
           <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text={STAFF_MGMT_PAGE.LOADING} variant="pulse" />
+            <UnifiedLoading
+              type="inline"
+              variant="spinner"
+              tone="primary"
+              size="md"
+              text={STAFF_MGMT_PAGE.LOADING}
+            />
           </div>
         </ContentArea>
       );
@@ -742,7 +748,13 @@ const StaffManagement = ({ embedded = false }) => {
           subtitle={STAFF_MGMT_PAGE.SUBTITLE}
         />
         <div aria-busy="true" aria-live="polite">
-          <UnifiedLoading type="inline" text={STAFF_MGMT_PAGE.LOADING} variant="pulse" />
+          <UnifiedLoading
+            type="inline"
+            variant="spinner"
+            tone="primary"
+            size="md"
+            text={STAFF_MGMT_PAGE.LOADING}
+          />
         </div>
       </ContentArea>
     );
@@ -1196,7 +1208,13 @@ const StaffManagement = ({ embedded = false }) => {
         }
       >
         {addStaffModal.loading ? (
-          <UnifiedLoading type="block" text={STAFF_MGMT_MODAL.LOADING_USERS} variant="pulse" />
+          <UnifiedLoading
+            type="block"
+            variant="spinner"
+            tone="primary"
+            size="md"
+            text={STAFF_MGMT_MODAL.LOADING_USERS}
+          />
         ) : (
           <AddStaffModalContent
             list={addStaffModal.nonStaffUsers}

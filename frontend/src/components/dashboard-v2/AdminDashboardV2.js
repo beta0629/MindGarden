@@ -117,6 +117,13 @@ import {
   buildTrendAriaLabel,
   extractSparklineValues
 } from './utils/dashboardKpiSparklineUtils';
+import {
+  DASHBOARD_CHART_ROLLING_MONTHS,
+  DASHBOARD_CHART_ROLLING_WEEKS,
+  formatChartPeriodLabel,
+  resolveRollingMonthlyChartRows,
+  resolveRollingWeeklyChartRows
+} from './utils/dashboardChartPeriodUtils';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
@@ -148,70 +155,6 @@ const STEP_CHART_LABELS = [
   '스케줄 등록',
   '회계처리'
 ];
-
-/** 차트용 최근 N개월 빈 데이터 (데이터 없을 때 0으로 표시) */
-function getEmptyMonthlyChartData(months = 6) {
-  const result = [];
-  const now = new Date();
-  for (let i = months - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    result.push({
-      period: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      completedCount: 0
-    });
-  }
-  return result;
-}
-
-/**
- * period 객체를 차트 라벨 문자열로 변환
- * @param {object} p
- * @returns {string}
- */
-function chartPeriodObjectToLabel(p) {
-  const { label, value, month, year } = p;
-  if (typeof label === 'string') return label;
-  if (typeof value === 'string') return value;
-  if (typeof month === 'string' && typeof year === 'string') return `${year}-${month}`;
-  if (typeof month === 'string') return month;
-  if (typeof year === 'string') return year;
-  if (label != null) return String(label);
-  if (value != null) return String(value);
-  try {
-    return JSON.stringify(p);
-  } catch {
-    return '';
-  }
-}
-
-/**
- * 차트 X축 라벨용: API가 period를 객체로 줄 때 React/Chart.js에서 객체 자식 오류 방지
- * @param {object} d 월간/주간 데이터 행
- * @returns {string}
- */
-function formatChartPeriodLabel(d) {
-  const p = d?.period;
-  if (p == null) return '';
-  if (typeof p !== 'object') return String(p);
-  return chartPeriodObjectToLabel(p);
-}
-
-/** 차트용 최근 N주 빈 데이터 (데이터 없을 때 0으로 표시) */
-function getEmptyWeeklyChartData(weeks = 6) {
-  const result = [];
-  const now = new Date();
-  for (let i = weeks - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i * 7);
-    const m = d.getMonth() + 1;
-    const day = d.getDate();
-    result.push({
-      period: `${String(m).padStart(2, '0')}/${String(day).padStart(2, '0')}`,
-      completedCount: 0
-    });
-  }
-  return result;
-}
 
 const AdminDashboardV2 = ({ user: propUser }) => {
   const { t } = useTranslation(['admin', 'common']);
@@ -1265,12 +1208,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               {(() => {
                 const isWeekly = chartPeriod === 'weekly';
                 const rawData = isWeekly
-                  ? (stats.consultationStats?.weeklyData?.length > 0
-                      ? stats.consultationStats.weeklyData.slice(0, 6)
-                      : getEmptyWeeklyChartData(6))
-                  : (stats.consultationStats?.monthlyData?.length > 0
-                      ? stats.consultationStats.monthlyData.slice(0, 6)
-                      : getEmptyMonthlyChartData(6));
+                  ? resolveRollingWeeklyChartRows(
+                    stats.consultationStats?.weeklyData,
+                    DASHBOARD_CHART_ROLLING_WEEKS
+                  )
+                  : resolveRollingMonthlyChartRows(
+                    stats.consultationStats?.monthlyData,
+                    DASHBOARD_CHART_ROLLING_MONTHS
+                  );
                 const values = rawData.map((d) => d.completedCount || 0);
                 const allZero = values.length > 0 && values.every((v) => v === 0);
                 if (allZero) {
@@ -1373,12 +1318,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               {(() => {
                 const isWeekly = lineChartPeriod === 'weekly';
                 const rawData = isWeekly
-                  ? (stats.consultationStats?.weeklyData?.length > 0
-                      ? stats.consultationStats.weeklyData.slice(0, 6)
-                      : getEmptyWeeklyChartData(6))
-                  : (stats.consultationStats?.monthlyData?.length > 0
-                      ? stats.consultationStats.monthlyData.slice(0, 6)
-                      : getEmptyMonthlyChartData(6));
+                  ? resolveRollingWeeklyChartRows(
+                    stats.consultationStats?.weeklyData,
+                    DASHBOARD_CHART_ROLLING_WEEKS
+                  )
+                  : resolveRollingMonthlyChartRows(
+                    stats.consultationStats?.monthlyData,
+                    DASHBOARD_CHART_ROLLING_MONTHS
+                  );
                 const completedValues = rawData.map((d) => d.completedCount ?? 0);
                 const hasBooked = rawData.some((d) => (d.bookedCount ?? d.scheduledCount) != null);
                 const bookedValues = hasBooked

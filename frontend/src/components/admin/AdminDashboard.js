@@ -4,6 +4,9 @@ import { useConfirm } from '../../hooks/useConfirm';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
+import {
+  resolveRollingMonthlyChartRows
+} from '../dashboard-v2/utils/dashboardChartPeriodUtils';
 import { FaUsers, FaDollarSign, FaChartLine, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
 import {
     Activity,
@@ -908,7 +911,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     <div className="mg-v2-ad-b0kla__chart-placeholder">
                         {stats.consultationStats?.monthlyData?.length > 0 ? (
                             (() => {
-                                const chartData = stats.consultationStats.monthlyData.slice(0, 6);
+                                const chartData = resolveRollingMonthlyChartRows(stats.consultationStats.monthlyData);
                                 const values = chartData.map((d) => d.completedCount || 0);
                                 const allZero = values.length > 0 && values.every((v) => v === 0);
                                 if (allZero) {

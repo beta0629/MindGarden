@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -5749,14 +5750,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             List<User> consultants = mergeConsultantActorsForTenant(tenantId);
             List<Map<String, Object>> monthlyData = new ArrayList<>();
-            LocalDate now = LocalDate.now();
-            LocalDate yearStart = LocalDate.of(now.getYear(), 1, 1);
-            int monthsCount = (int) java.time.temporal.ChronoUnit.MONTHS.between(yearStart, now) + 1;
-            if (monthsCount <= 0) monthsCount = 1;
-            for (int i = 0; i < monthsCount; i++) {
-                LocalDate monthStart = yearStart.plusMonths(i);
+            LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
+            List<LocalDate> monthStarts = DashboardTrendPeriodUtils.rollingMonthStarts(lastMonths, now);
+            for (LocalDate monthStart : monthStarts) {
                 LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
-                if (monthEnd.isAfter(now)) monthEnd = now;
+                if (monthEnd.isAfter(now)) {
+                    monthEnd = now;
+                }
                 int sum = 0;
                 for (User consultant : consultants) {
                     sum += getCompletedScheduleCount(consultant.getId(), monthStart, monthEnd);
@@ -5771,7 +5771,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 row.put("bookedCount", bookedSum);
                 monthlyData.add(row);
             }
-            log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (KPI와 동일 집계)", monthlyData.size());
+            log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (rolling, KST)", monthlyData.size());
             return monthlyData;
         } catch (Exception e) {
             log.error("❌ 월별 상담 완료 추이 조회 실패 (반환: 빈 목록). 원인: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
@@ -5789,8 +5789,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             List<User> consultants = mergeConsultantActorsForTenant(tenantId);
             List<Map<String, Object>> weeklyData = new ArrayList<>();
-            LocalDate now = LocalDate.now();
-            for (int i = lastWeeks - 1; i >= 0; i--) {
+            LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
+            int weeks = lastWeeks > 0 ? lastWeeks : 1;
+            for (int i = weeks - 1; i >= 0; i--) {
                 LocalDate weekEnd = now.minusWeeks(i);
                 LocalDate weekStart = weekEnd.minusDays(6);
                 int sum = 0;

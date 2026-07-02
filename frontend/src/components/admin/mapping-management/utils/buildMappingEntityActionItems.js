@@ -10,6 +10,36 @@ import {
   PAYMENT_TIMING_SAME_DAY_CARD
 } from '../constants/integratedScheduleSidebarFilterConstants';
 
+/** 카드 Primary CTA 1개로 노출할 workflow 액션 id (CardActionGroup SSOT) */
+export const MAPPING_PRIMARY_ACTION_IDS = [
+  'checkout-same-day',
+  'payment',
+  'deposit',
+  'approve'
+];
+
+/**
+ * workflow Primary 1개와 overflow items 분리
+ *
+ * @param {Array} items - buildMappingEntityActionItems 결과
+ * @returns {{ primaryAction: { label: string, onClick: Function }|null, overflowItems: Array }}
+ */
+export function splitMappingActionItems(items = []) {
+  const primaryIndex = items.findIndex((item) => MAPPING_PRIMARY_ACTION_IDS.includes(item.id));
+  if (primaryIndex === -1) {
+    return { primaryAction: null, overflowItems: items };
+  }
+
+  const primaryItem = items[primaryIndex];
+  return {
+    primaryAction: {
+      label: primaryItem.label,
+      onClick: primaryItem.onClick
+    },
+    overflowItems: items.filter((_, index) => index !== primaryIndex)
+  };
+}
+
 /**
  * @param {Object} params
  * @param {Object} params.mapping

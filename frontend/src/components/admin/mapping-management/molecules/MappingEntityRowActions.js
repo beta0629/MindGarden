@@ -12,13 +12,17 @@ import { useTranslation } from 'react-i18next';
 import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import MappingPaymentModal from '../../mapping/MappingPaymentModal';
 import MappingDepositModal from '../../mapping/MappingDepositModal';
-import { buildMappingEntityActionItems } from '../utils/buildMappingEntityActionItems';
+import {
+  buildMappingEntityActionItems,
+  splitMappingActionItems
+} from '../utils/buildMappingEntityActionItems';
 
 const MappingEntityRowActions = ({
   mapping,
   layout = ENTITY_ROW_ACTIONS_LAYOUT.TABLE,
   ariaLabel = '매칭 작업',
   menuId,
+  exposePrimaryAction = false,
   onView,
   onEdit,
   onRefund,
@@ -65,7 +69,7 @@ const MappingEntityRowActions = ({
     [handleCriticalAction, onRefund]
   );
 
-  const items = buildMappingEntityActionItems({
+  const allItems = buildMappingEntityActionItems({
     mapping,
     t,
     onPayment: openPaymentModal,
@@ -80,7 +84,11 @@ const MappingEntityRowActions = ({
     cancelPendingProcessing
   });
 
-  if (items.length === 0) {
+  const { primaryAction, overflowItems } = exposePrimaryAction
+    ? splitMappingActionItems(allItems)
+    : { primaryAction: null, overflowItems: allItems };
+
+  if (overflowItems.length === 0 && !primaryAction) {
     return null;
   }
 
@@ -90,7 +98,8 @@ const MappingEntityRowActions = ({
         layout={layout}
         ariaLabel={ariaLabel}
         menuId={menuId}
-        items={items}
+        items={overflowItems}
+        primaryAction={primaryAction}
       />
       {showPaymentModal && (
         <MappingPaymentModal
@@ -123,6 +132,7 @@ MappingEntityRowActions.propTypes = {
   layout: PropTypes.oneOf(Object.values(ENTITY_ROW_ACTIONS_LAYOUT)),
   ariaLabel: PropTypes.string,
   menuId: PropTypes.string,
+  exposePrimaryAction: PropTypes.bool,
   onView: PropTypes.func,
   onEdit: PropTypes.func,
   onRefund: PropTypes.func,

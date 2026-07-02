@@ -2,7 +2,10 @@
  * buildMappingEntityActionItems — overflow items 단위 테스트
  */
 
-import { buildMappingEntityActionItems } from '../buildMappingEntityActionItems';
+import {
+  buildMappingEntityActionItems,
+  splitMappingActionItems
+} from '../buildMappingEntityActionItems';
 
 const t = (key) => {
   const labels = {
@@ -60,5 +63,35 @@ describe('buildMappingEntityActionItems', () => {
     });
 
     expect(items[items.length - 1]).toMatchObject({ id: 'refund', variant: 'destructive' });
+  });
+
+  it('splitMappingActionItems extracts workflow primary and keeps rest in overflow', () => {
+    const onPayment = jest.fn();
+    const items = buildMappingEntityActionItems({
+      mapping: { ...baseMapping, status: 'PENDING_PAYMENT' },
+      t,
+      onPayment,
+      onView: jest.fn(),
+      onEdit: jest.fn()
+    });
+
+    const { primaryAction, overflowItems } = splitMappingActionItems(items);
+
+    expect(primaryAction).toMatchObject({ label: '결제 확인' });
+    expect(overflowItems.map((item) => item.id)).toEqual(['detail', 'edit']);
+  });
+
+  it('splitMappingActionItems returns null primary when no workflow action', () => {
+    const items = buildMappingEntityActionItems({
+      mapping: baseMapping,
+      t,
+      onView: jest.fn(),
+      onEdit: jest.fn()
+    });
+
+    const { primaryAction, overflowItems } = splitMappingActionItems(items);
+
+    expect(primaryAction).toBeNull();
+    expect(overflowItems.map((item) => item.id)).toEqual(['detail', 'edit']);
   });
 });

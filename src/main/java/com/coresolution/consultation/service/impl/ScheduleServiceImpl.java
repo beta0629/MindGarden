@@ -26,6 +26,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.consultation.ConsultationServiceUserFacingMessages;
 import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
+import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse.ConsultantCount;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
@@ -3387,6 +3388,68 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsInDateRange(
                 tenantId, MISSING_LOG_TARGET_STATUSES, startDate, endDate, today);
 
+        List<ConsultantMissingLogs> items = buildConsultantMissingLogItems(tenantId, rows);
+
+        log.info("✅ 월별 상담사 상담일지 누락 일자 응답: tenantId={}, year={}, month={}, items={}",
+                tenantId, year, month, items.size());
+
+        return MonthlyMissingConsultationLogsResponse.builder()
+                .year(year)
+                .month(month)
+                .items(items)
+                .build();
+    }
+
+    /**
+     * 어드민 대시보드 — 상담사별 «상담일지 누락(누적, 전체 기간)» 조회.
+     *
+     * <p>SSOT 정합:</p>
+     * <ul>
+     *   <li>대상 상태 집합: {@link #MISSING_LOG_TARGET_STATUSES} (COMPLETED + CONFIRMED
+     *       + BOOKED). 월별 조회와 동일 기준.</li>
+     *   <li>기간: 월(月) 범위 제한 없이 «지난 일정»({@code s.date < today}) 전체.
+     *       대시보드 «상담일지 누락» 섹션은 달이 바뀌어도 이전 달 누락 건이 사라지면
+     *       안 되므로 {@code YearMonth} 경계에 의존하지 않는다. (7/3 접속 시 6/30
+     *       누락 건이 7월 범위 밖으로 빠져 미집계되던 버그 보정.)</li>
+     *   <li>행 → 상담사별 그룹핑·표시명 복호화·정렬은
+     *       {@link #buildConsultantMissingLogItems(String, List)} 공통 로직 재사용.</li>
+     * </ul>
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public CumulativeMissingConsultationLogsResponse getCumulativeMissingConsultationLogs() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        // 월별 조회(getMonthlyMissingConsultationLogs)와 동일한 시계 처리 패턴(LocalDate.now()).
+        LocalDate today = LocalDate.now();
+
+        log.info("📝 누적 상담사 상담일지 누락 일자 조회: tenantId={}, today={}, statuses={}",
+                tenantId, today, MISSING_LOG_TARGET_STATUSES);
+
+        List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
+                tenantId, MISSING_LOG_TARGET_STATUSES, today);
+
+        List<ConsultantMissingLogs> items = buildConsultantMissingLogItems(tenantId, rows);
+
+        log.info("✅ 누적 상담사 상담일지 누락 일자 응답: tenantId={}, items={}", tenantId, items.size());
+
+        return CumulativeMissingConsultationLogsResponse.builder()
+                .items(items)
+                .build();
+    }
+
+    /**
+     * 상담일지 누락 조회 행([consultantId, date])을 상담사별 응답 항목으로 변환한다.
+     *
+     * <p>{@link #getMonthlyMissingConsultationLogs(int, int)} 와
+     * {@link #getCumulativeMissingConsultationLogs()} 공통 로직: 상담사 → 일자 집합
+     * ({@link TreeSet} 오름차순·중복 제거) 그룹핑, distinct consultantId 표시명 batch
+     * 복호화(N+1 가드), 누락 0건 상담사 제외.</p>
+     *
+     * @param tenantId 테넌트 ID (표시명 batch 조회 격리)
+     * @param rows     [0]=consultantId(Number), [1]=date(LocalDate) 행 목록
+     * @return 상담사별 누락 일자 항목 (입력이 비면 빈 리스트)
+     */
+    private List<ConsultantMissingLogs> buildConsultantMissingLogItems(String tenantId, List<Object[]> rows) {
         // 상담사 → 일자 집합 (TreeSet 으로 오름차순·중복 제거 보장).
         Map<Long, TreeSet<LocalDate>> datesByConsultantId = new LinkedHashMap<>();
         for (Object[] row : rows) {
@@ -3401,13 +3464,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
 
         if (datesByConsultantId.isEmpty()) {
-            log.info("✅ 월별 상담사 상담일지 누락 일자 응답: tenantId={}, year={}, month={}, items=0",
-                    tenantId, year, month);
-            return MonthlyMissingConsultationLogsResponse.builder()
-                    .year(year)
-                    .month(month)
-                    .items(new ArrayList<>())
-                    .build();
+            return new ArrayList<>();
         }
 
         // 표시명 batch fetch — distinct consultantId 만 1회 조회.
@@ -3433,15 +3490,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     .missingDates(new ArrayList<>(entry.getValue()))
                     .build());
         }
-
-        log.info("✅ 월별 상담사 상담일지 누락 일자 응답: tenantId={}, year={}, month={}, items={}",
-                tenantId, year, month, items.size());
-
-        return MonthlyMissingConsultationLogsResponse.builder()
-                .year(year)
-                .month(month)
-                .items(items)
-                .build();
+        return items;
     }
 
     /**

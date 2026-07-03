@@ -133,4 +133,4 @@ const useMissingConsultationLogs = (year, month) => {
 };
 
 export default useMissingConsultationLogs;
-export { MONTHLY_MISSING_CONSULTATION_LOGS_ENDPOINT };
+export { MONTHLY_MISSING_CONSULTATION_LOGS_ENDPOINT, normalize, unwrapPayload };

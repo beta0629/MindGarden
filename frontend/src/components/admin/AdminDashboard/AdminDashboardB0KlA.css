@@ -1476,12 +1476,65 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
 
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-button__content,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-button__text,
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-text-lg {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-text-lg,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-form-section__item-primary {
   color: var(--mg-white);
 }
 
-.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-text-secondary {
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-text-secondary,
+.mg-modal.mg-v2-ad-b0kla .mg-modal__body .mg-button.mg-button--primary .mg-v2-form-section__item-secondary {
   color: rgba(255, 255, 255, 0.92);
+}
+
+/*
+ * form-section 액션 타일(DateActionModal 등): MGButton 기본 min-height(40px)+overflow:hidden 이
+ * 제목+부제 2줄 레이아웃 하단을 잘라내므로, 본문 CTA만 auto 높이·visible overflow 로 복원.
+ */
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-section .mg-button.mg-v2-form-section__action {
+  width: 100%;
+  min-height: auto;
+  height: auto;
+  overflow: visible;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
+  text-align: left;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-section .mg-button.mg-v2-form-section__action .mg-button__content {
+  align-items: stretch;
+  justify-content: flex-start;
+  height: auto;
+  width: 100%;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-section .mg-button.mg-v2-form-section__action .mg-button__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-xs);
+  width: 100%;
+  white-space: normal;
+  flex-shrink: 0;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-section .mg-button.mg-v2-form-section__action .mg-v2-form-section__item-primary {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  line-height: 1.35;
+  flex-shrink: 0;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-section .mg-button.mg-v2-form-section__action .mg-v2-form-section__item-secondary {
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  flex-shrink: 0;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+
+.mg-modal.mg-v2-ad-b0kla .mg-v2-form-section .mg-button.mg-button--secondary.mg-v2-form-section__action .mg-v2-form-section__item-secondary {
+  color: var(--ad-b0kla-text-secondary);
 }
 
 /* 안내 박스 (💡 비밀번호 미입력 시 임시 비밀번호 등) */

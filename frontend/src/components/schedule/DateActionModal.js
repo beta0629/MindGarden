@@ -72,16 +72,14 @@ const DateActionModal = ({
               variant: 'primary',
               size: 'md',
               loading: false,
-              className: 'mg-v2-w-full'
+              className: 'mg-v2-w-full mg-v2-form-section__action'
             })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onScheduleClick}
             preventDoubleClick={false}
           >
-            <div className="mg-v2-text-left mg-v2-flex-1">
-              <div className="mg-v2-text-lg mg-v2-font-semibold">상담 일정 등록</div>
-              <div className="mg-v2-text-sm mg-v2-text-secondary">상담사와 내담자의 상담 일정을 등록합니다</div>
-            </div>
+            <span className="mg-v2-form-section__item-primary">상담 일정 등록</span>
+            <span className="mg-v2-form-section__item-secondary">상담사와 내담자의 상담 일정을 등록합니다</span>
           </MGButton>
 
           <MGButton
@@ -92,16 +90,14 @@ const DateActionModal = ({
               variant: 'secondary',
               size: 'md',
               loading: false,
-              className: 'mg-v2-w-full mg-v2-mt-md'
+              className: 'mg-v2-w-full mg-v2-mt-md mg-v2-form-section__action'
             })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             onClick={onVacationClick}
             preventDoubleClick={false}
           >
-            <div className="mg-v2-text-left mg-v2-flex-1">
-              <div className="mg-v2-text-lg mg-v2-font-semibold">휴가 등록</div>
-              <div className="mg-v2-text-sm mg-v2-text-secondary">상담사의 휴가를 등록합니다</div>
-            </div>
+            <span className="mg-v2-form-section__item-primary">휴가 등록</span>
+            <span className="mg-v2-form-section__item-secondary">상담사의 휴가를 등록합니다</span>
           </MGButton>
         </div>
       )}

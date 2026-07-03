@@ -22,6 +22,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
 import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
 import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
+import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
@@ -216,6 +217,34 @@ public class ScheduleController extends BaseApiController {
         log.info("📝 월별 상담사 상담일지 누락 조회: tenantId={}, year={}, month={}", tenantId, year, month);
         MonthlyMissingConsultationLogsResponse response =
                 scheduleService.getMonthlyMissingConsultationLogs(year, month);
+        return success(response);
+    }
+
+    /**
+     * 어드민 대시보드 — 상담사별 상담일지 미작성(누락, 누적·전체 기간).
+     *
+     * <p>{@code GET /api/v1/schedules/cumulative-missing-consultation-logs}.
+     * 어드민 대시보드 {@code section.mg-v2-ad-b0kla__missing-logs-section} SSOT.
+     * {@code monthly-missing-consultation-logs} 가 특정 월로 제한되는 것과 달리, «지난
+     * 일정»({@code date < today}) 전체에서 상태가 {@code {COMPLETED, CONFIRMED, BOOKED}}
+     * 이고 ConsultationRecord(비삭제)가 없는 일정을 상담사별로 그룹화한다. 누락 0건
+     * 상담사는 응답에서 제외. 대시보드 섹션이 달이 바뀌어도 이전 달 누락 건을 놓치지
+     * 않도록 월 경계에 의존하지 않는다.</p>
+     *
+     * <p>가드: {@code @PreAuthorize} (ADMIN/STAFF) + {@code TenantContextHolder#getRequiredTenantId}
+     * 이중 가드.</p>
+     *
+     * @return 표준 {@link ApiResponse} 래퍼 + {@link CumulativeMissingConsultationLogsResponse}
+     * @author CoreSolution
+     * @since 2026-07-03
+     */
+    @GetMapping("/cumulative-missing-consultation-logs")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<CumulativeMissingConsultationLogsResponse>> getCumulativeMissingConsultationLogs() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📝 누적 상담사 상담일지 누락 조회: tenantId={}", tenantId);
+        CumulativeMissingConsultationLogsResponse response =
+                scheduleService.getCumulativeMissingConsultationLogs();
         return success(response);
     }
 

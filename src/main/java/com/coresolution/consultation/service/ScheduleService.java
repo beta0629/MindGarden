@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
+import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleResponse;
@@ -516,6 +517,21 @@ public interface ScheduleService {
      * @since 2026-06-09
      */
     MonthlyMissingConsultationLogsResponse getMonthlyMissingConsultationLogs(int year, int month);
+
+    /**
+     * 어드민 대시보드 — 상담사별 «상담일지 누락(누적, 전체 기간)» 조회.
+     *
+     * <p>{@link #getMonthlyMissingConsultationLogs(int, int)} 가 월 범위로 제한되는 것과
+     * 달리, «지난 일정»({@code date < today}) 전체를 대상으로 누락 상담일지를 상담사별로
+     * 그룹화한다. 대시보드 «상담일지 누락» 섹션은 달이 바뀌어도 이전 달 누락 건이 사라지면
+     * 안 되므로 월 경계에 의존하지 않는다. 상태·LEFT JOIN·테넌트 격리 정합은 월별과 동일.</p>
+     *
+     * @return 상담사별 누락 일자 응답 DTO (누락 0건 상담사 제외)
+     * @throws IllegalStateException 테넌트 컨텍스트 미설정 시
+     * @author CoreSolution
+     * @since 2026-07-03
+     */
+    CumulativeMissingConsultationLogsResponse getCumulativeMissingConsultationLogs();
 
     /**
      * 스케줄 상태를 한글로 변환

@@ -20,7 +20,7 @@ import {
 } from '../../utils/lnbMenuUtils';
 import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import useMonthlyConsultantCounts from '../../hooks/useMonthlyConsultantCounts';
-import useMissingConsultationLogs from '../../hooks/useMissingConsultationLogs';
+import useCumulativeMissingConsultationLogs from '../../hooks/useCumulativeMissingConsultationLogs';
 import useCumulativeConsultantCounts from '../../hooks/useCumulativeConsultantCounts';
 import { useNavigate } from 'react-router-dom';
 import { AdminMgmtNavCard, AdminMgmtActionCard } from './molecules/AdminMgmtGridCard';
@@ -336,22 +336,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
    * R6 (2026-06-06) Phase 3-B — 「상담사 별 통합데이터」 카드 확장.
    * - §A 누적: 집계 기간이 '전체' 일 때만 노출 (전체 기간 SSOT — useCumulativeConsultantCounts)
    * - §B 월별: 집계 기간이 '월별' 일 때만 노출 (integratedDataYear/Month — 사용자 선택 월)
-   * - §C 누락: 모든 탭에서 항상 노출, 현재 연/월 기준
+   * - §C 누락: 모든 탭에서 항상 노출, «지난 일정» 전체 누적 기준 (월 경계 비의존).
+   *   현재 월만 조회하면 월초에 이전 달 누락 건이 사라지는 버그가 있어 누적 SSOT로 통일.
    *
    * 캐시·tenantId 리셋·cancelled race 패턴은 hook 내부에서 보존.
    */
-  const currentDateForMissingLogsRef = useRef(new Date());
-  const currentYearForMissingLogs = currentDateForMissingLogsRef.current.getFullYear();
-  const currentMonthForMissingLogs = currentDateForMissingLogsRef.current.getMonth() + 1;
   const { counts: cumulativeConsultantCounts } = useCumulativeConsultantCounts();
   const { counts: monthlyConsultantCountsForCard } = useMonthlyConsultantCounts(
     integratedDataPeriodType === 'month' ? integratedDataYear : null,
     integratedDataPeriodType === 'month' ? integratedDataMonth : null
   );
-  const { items: missingConsultationLogsForCard } = useMissingConsultationLogs(
-    currentYearForMissingLogs,
-    currentMonthForMissingLogs
-  );
+  const { items: missingConsultationLogsForCard } = useCumulativeMissingConsultationLogs();
 
   const [searchValue, setSearchValue] = useState('');
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */

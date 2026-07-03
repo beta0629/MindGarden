@@ -692,6 +692,43 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("today") LocalDate today);
 
     /**
+     * 어드민 대시보드 — «상담일지 누락(누적, 전체 기간)» 일정 조회.
+     *
+     * <p>어드민 대시보드 {@code section.mg-v2-ad-b0kla__missing-logs-section} SSOT.
+     * {@link #findMissingConsultationLogScheduleRowsInDateRange} 가 월(月) 범위로
+     * 제한되는 것과 달리, 본 쿼리는 «지난 일정»({@code s.date < :today}) 전체를 대상으로
+     * 한다. 대시보드 섹션은 특정 달이 아니라 «미작성 상담일지가 남아 있는지»를 상시
+     * 경고하는 용도이므로, 달이 바뀌어도 이전 달 누락 건이 사라지면 안 된다.
+     * (예: 7/3 접속 시 6/30 누락 건이 7월 범위 밖으로 빠져 미집계되던 버그 보정.)</p>
+     *
+     * <p>상태·LEFT JOIN·테넌트 격리·인덱스 정합은
+     * {@link #findMissingConsultationLogScheduleRowsInDateRange} 와 동일하다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param statuses 집계 대상 상태 집합 (운영상 {@code COMPLETED + CONFIRMED + BOOKED})
+     * @param today    오늘 일자 — {@code s.date < today} 컷. 호출부에서 SSOT 시계 주입.
+     * @return [0]=consultantId(Long), [1]=date(LocalDate). 상담사 → 일자 오름차순.
+     * @author CoreSolution
+     * @since 2026-07-03
+     */
+    @Query("SELECT s.consultantId, s.date FROM Schedule s "
+            + "LEFT JOIN com.coresolution.consultation.entity.ConsultationRecord r "
+            + "  ON r.consultationId = s.id "
+            + " AND r.isDeleted = false "
+            + " AND r.tenantId = s.tenantId "
+            + "WHERE s.tenantId = :tenantId "
+            + "  AND s.isDeleted = false "
+            + "  AND s.status IN :statuses "
+            + "  AND s.consultantId IS NOT NULL "
+            + "  AND s.date < :today "
+            + "  AND r.id IS NULL "
+            + "ORDER BY s.consultantId ASC, s.date ASC")
+    List<Object[]> findMissingConsultationLogScheduleRowsBeforeDate(
+            @Param("tenantId") String tenantId,
+            @Param("statuses") Collection<ScheduleStatus> statuses,
+            @Param("today") LocalDate today);
+
+    /**
      * 자동 등급 승급용: 테넌트 내 내담자별 완료된 상담 일정(스케줄) 건수 집계.
      * <p>
      * 정의: {@link com.coresolution.consultation.entity.Schedule} 중 {@code isDeleted == false},

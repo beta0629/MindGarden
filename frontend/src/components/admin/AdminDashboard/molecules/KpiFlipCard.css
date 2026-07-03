@@ -39,14 +39,21 @@
   cursor: pointer;
   min-width: 0;
   width: 100%;
-  min-height: 160px;
+  /* sparkline + meta + flip-hint 가시 — padding·콘텐츠 합산 (토큰 only) */
+  --mg-kpi-flip-card-min-height: calc(
+    var(--mg-v2-space-6) * 2 +
+    var(--mg-v2-space-8) * 2 +
+    var(--mg-v2-space-10) +
+    var(--mg-v2-space-6)
+  );
+  min-height: var(--mg-kpi-flip-card-min-height);
 }
 
 .mg-v2-kpi-flip-card__inner {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 160px;
+  min-height: var(--mg-kpi-flip-card-min-height);
   transition: transform 400ms var(--mg-v2-transition-easing-default, cubic-bezier(0.4, 0, 0.2, 1));
   transform-style: preserve-3d;
 }
@@ -105,6 +112,7 @@
   justify-content: space-between;
   gap: var(--mg-v2-space-2);
   margin-bottom: var(--mg-v2-space-2);
+  flex-shrink: 0;
 }
 
 .mg-v2-kpi-flip-card__trend {
@@ -154,6 +162,7 @@
   color: var(--mg-v2-color-text-primary);
   margin: 0 0 var(--mg-v2-space-2);
   line-height: var(--mg-v2-font-line-height-subheading);
+  flex-shrink: 0;
 }
 
 .mg-v2-kpi-flip-card__summary {
@@ -161,15 +170,28 @@
   color: var(--mg-v2-color-text-secondary);
   margin: 0;
   line-height: var(--mg-v2-font-line-height-body);
+  flex-shrink: 0;
+}
+
+/* 스파크라인은 공간 부족 시만 축소 — hint·meta 가시 우선 */
+.mg-v2-kpi-flip-card__front > .mg-v2-kpi-sparkline {
+  flex: 1 1 auto;
+  min-height: var(--mg-v2-space-4);
+  max-height: var(--mg-kpi-sparkline-height, var(--mg-v2-space-8));
+  margin-top: var(--mg-v2-space-1);
 }
 
 .mg-v2-kpi-flip-card__flip-hint {
   margin-top: auto;
+  padding-top: var(--mg-v2-space-1);
   font-size: var(--mg-v2-font-size-micro);
+  line-height: var(--mg-v2-font-line-height-caption);
   color: var(--mg-v2-color-text-tertiary);
   display: flex;
   align-items: center;
   gap: var(--mg-v2-space-1);
+  flex-shrink: 0;
+  min-height: var(--mg-v2-space-5);
 }
 
 /* Back — 상세면 */

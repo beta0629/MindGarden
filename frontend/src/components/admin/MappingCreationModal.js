@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import {
@@ -72,7 +72,7 @@ const PAYMENT_TIMING_OPTIONS = [
   }
 ];
 
-const MappingCreationModal = ({ isOpen, onClose, onMappingCreated, onRedirectToSessionExtension }) => {
+const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const { t } = useTranslation(['admin', 'common']);
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -238,71 +238,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated, onRedirectToS
     setFilteredClients(filtered);
   }, [clientSearchTerm, clientFilterStatus, clientSortBy, clients, mappings]);
 
-  const conflictingActiveMapping = useMemo(() => {
-    if (!selectedConsultant?.id || !selectedClient?.id) {
-      return null;
-    }
-    return mappings.find((mapping) => {
-      const consultantId = mapping.consultantId ?? mapping.consultant?.id;
-      const clientId = mapping.clientId ?? mapping.client?.id;
-      return consultantId === selectedConsultant.id
-        && clientId === selectedClient.id
-        && mapping.status === 'ACTIVE';
-    }) ?? null;
-  }, [selectedConsultant, selectedClient, mappings]);
-
-  const handleRedirectToSessionExtension = useCallback(() => {
-    if (!conflictingActiveMapping) {
-      return;
-    }
-    resetModal();
-    onClose();
-    onRedirectToSessionExtension?.(conflictingActiveMapping);
-  }, [conflictingActiveMapping, onClose, onRedirectToSessionExtension]);
-
-  const renderActiveMappingWarning = () => {
-    if (!conflictingActiveMapping || step < 3 || step > 4) {
-      return null;
-    }
-    const remaining = conflictingActiveMapping.remainingSessions ?? 0;
-    const total = conflictingActiveMapping.totalSessions ?? 0;
-    return (
-      <div
-        className="mg-v2-mapping-creation-modal__active-mapping-warning"
-        role="alert"
-        data-testid="active-mapping-warning"
-      >
-        <AlertCircle size={20} aria-hidden="true" />
-        <div className="mg-v2-mapping-creation-modal__active-mapping-warning-body">
-          <p>
-            {t(
-              'admin:mappingCreation.warn.activeMappingExists',
-              '선택한 상담사·내담자 조합에 이미 활성 매칭이 있습니다. 신규 매칭 대신 회기 추가를 이용해 주세요.'
-            )}
-          </p>
-          <p className="mg-v2-mapping-creation-modal__active-mapping-warning-meta">
-            {t('admin:mappingCreation.warn.activeMappingSessions', {
-              remaining,
-              total,
-              defaultValue: `남은 ${remaining}회 / 총 ${total}회`
-            })}
-          </p>
-          <MGButton
-            type="button"
-            variant="primary"
-            size="small"
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-            onClick={handleRedirectToSessionExtension}
-            preventDoubleClick={false}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          >
-            {t('admin:mappingCreation.redirectToSessionExtension', '회기 추가로 이동')}
-          </MGButton>
-        </div>
-      </div>
-    );
-  };
-
   const applyPackageOption = useCallback((pkg) => {
     if (!pkg) return;
     setPaymentInfo(prev => ({
@@ -423,17 +358,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated, onRedirectToS
       setLoading(false);
       return;
     }
-    if (conflictingActiveMapping) {
-      notificationManager.warning(
-        t(
-          'admin:mappingCreation.warn.activeMappingExists',
-          '선택한 상담사·내담자 조합에 이미 활성 매칭이 있습니다. 회기 추가를 이용해 주세요.'
-        )
-      );
-      handleRedirectToSessionExtension();
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
       const isSameDayCard = paymentInfo.paymentTiming === 'SAME_DAY_CARD';
@@ -491,23 +415,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated, onRedirectToS
         totalSessions: paymentInfo.totalSessions
       });
     } catch (apiError) {
-      const responseData = apiError?.response?.data;
-      const conflictCode = responseData?.code ?? responseData?.errorCode;
-      if (conflictCode === 'ACTIVE_MAPPING_EXISTS') {
-        notificationManager.warning(
-          responseData?.message
-            || t(
-              'admin:mappingCreation.warn.activeMappingExists',
-              '이미 활성 매칭이 있습니다. 회기 추가를 이용해 주세요.'
-            )
-        );
-        if (conflictingActiveMapping) {
-          handleRedirectToSessionExtension();
-        }
-      } else {
-        const msg = responseData?.message || apiError?.message || t('admin:mappingCreation.error.createFailed');
-        notificationManager.error(msg);
-      }
+      const msg = apiError?.response?.data?.message || apiError?.message || t('admin:mappingCreation.error.createFailed');
+      notificationManager.error(msg);
     } finally {
       setLoading(false);
     }
@@ -571,7 +480,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated, onRedirectToS
         </ActionBarButton>
       )}
       {step === 4 && (
-        <ActionBarButton variant="primary" onClick={handleCreateMapping} loading={loading} disabled={!!conflictingActiveMapping}>
+        <ActionBarButton variant="primary" onClick={handleCreateMapping} loading={loading}>
           {t('admin:mappingCreation.createMapping')}
         </ActionBarButton>
       )}
@@ -670,7 +579,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated, onRedirectToS
         {/* 3단계: 패키지 (사용자 요청 2026-05-28 step swap — 이전: 2단계) */}
         {step === 3 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
-            {renderActiveMappingWarning()}
             <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.selectPackage')}</h3>
             {loadingPackageCodes ? (
               <div className="mg-v2-mapping-creation-modal__loading">{t('admin:mappingCreation.packageLoading')}</div>
@@ -857,7 +765,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated, onRedirectToS
         {/* 4단계: 결제 */}
         {step === 4 && (
           <section className="mg-v2-mapping-creation-modal__step-content">
-            {renderActiveMappingWarning()}
             <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.payment')}</h3>
             {/* 옵션 B: 결제 방식 선택 (선납 / 사후 카드) — 합의서 §0 Q4
                 2026-05-28: 라디오 → 카드형 선택 UI (MAPPING_PAYMENT_TIMING_CARD_SELECT_DESIGN.md) */}

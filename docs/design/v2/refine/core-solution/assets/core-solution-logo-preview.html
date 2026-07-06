@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Core Solution Logo — Trinity Canonical</title>
+  <style>
+    :root {
+      --bg-light: #FAF9F7;
+      --text-light: #2C2C2C;
+      --bg-dark: #1A1A1A;
+      --text-dark: #FFFFFF;
+      --font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .header {
+      padding: 24px 40px;
+      background: #FFFFFF;
+      border-bottom: 1px solid #E5E5E5;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #111;
+    }
+    .header p {
+      margin: 8px 0 0;
+      color: #666;
+      font-size: 14px;
+    }
+    .preview-container {
+      display: flex;
+      flex: 1;
+    }
+    .panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 60px;
+    }
+    .panel.light {
+      background-color: var(--bg-light);
+      color: var(--text-light);
+    }
+    .panel.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    .logo-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.6;
+      margin-bottom: 8px;
+    }
+    .symbol {
+      width: 64px;
+      height: 64px;
+    }
+    .horizontal {
+      height: 48px;
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Core Solution Logo</h1>
+    <p>Canonical: frontend-trinity/public/assets/core-solution-logo-*.svg (H2 Shield &amp; Layers)</p>
+  </div>
+
+  <div class="preview-container">
+    <!-- Light Mode Panel -->
+    <div class="panel light">
+      <div class="logo-wrapper">
+        <div class="logo-label">Icon (Light)</div>
+        <img src="../mockups/assets/trinity/core-solution-logo-icon.svg" class="symbol" alt="Core Solution Icon">
+      </div>
+
+      <div class="logo-wrapper">
+        <div class="logo-label">Primary (Light)</div>
+        <img src="../mockups/assets/trinity/core-solution-logo-primary.svg" class="horizontal" alt="Core Solution Primary Logo">
+      </div>
+    </div>
+
+    <!-- Dark Mode Panel -->
+    <div class="panel dark">
+      <div class="logo-wrapper">
+        <div class="logo-label">Icon (Dark)</div>
+        <img src="../mockups/assets/trinity/core-solution-logo-icon.svg" class="symbol" alt="Core Solution Icon">
+      </div>
+
+      <div class="logo-wrapper">
+        <div class="logo-label">Inverse (Dark)</div>
+        <img src="../mockups/assets/trinity/core-solution-logo-inverse.svg" class="horizontal" alt="Core Solution Inverse Logo">
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

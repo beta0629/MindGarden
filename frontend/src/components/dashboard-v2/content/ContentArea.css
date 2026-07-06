@@ -10,10 +10,12 @@
 .mg-v2-content-area {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-layout-grid-gap, 1.5rem);
+  gap: var(--mg-v2-space-6, var(--mg-layout-grid-gap, 1.5rem));
   width: 100%;
   min-width: 0;
   min-height: 0;
+  padding: var(--mg-v2-space-8, 32px);
+  background-color: var(--mg-v2-color-surface-bg);
 }
 
 /* B0KlA growth-row: 차트 + 상담사 2fr 1fr */

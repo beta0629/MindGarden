@@ -8,6 +8,7 @@
 @import './components/onboarding-layout.css';
 @import './components/onboarding-welcome.css';
 @import './components/onboarding.css';
+@import './components/onboarding-layout.css';
 @import './components/step-transition.css';
 @import './components/animated-progress-bar.css';
 @import './components/input-animation.css';

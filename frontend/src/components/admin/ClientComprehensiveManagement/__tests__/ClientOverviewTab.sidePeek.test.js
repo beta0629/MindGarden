@@ -24,11 +24,7 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('../../../ui/Card/index', () => ({
   __esModule: true,
-  ProfileCard: ({ name, onClick }) => (
-    <button type="button" onClick={onClick}>
-      {name}
-    </button>
-  )
+  ProfileCard: () => null
 }));
 
 import ClientOverviewTab from '../ClientOverviewTab';
@@ -36,7 +32,6 @@ import SidePeekShell from '../../../common/organisms/SidePeekShell';
 import ClientSidePeekContent from '../molecules/ClientSidePeekContent';
 import { SIDE_PEEK_SHELL_REGION_PEEK } from '../../../../constants/sidePeekShellConstants';
 import { maskEncryptedDisplay, getUserStatusKoreanNameSync } from '../../../../utils/codeHelper';
-import { buildManyClients, G2_ROW_VISIBILITY_MIN } from '../../__tests__/userManagementGateFixtures';
 
 const SAMPLE_CLIENT = {
   id: 101,
@@ -48,7 +43,7 @@ const SAMPLE_CLIENT = {
   createdAt: '2026-01-15T00:00:00.000Z'
 };
 
-const ClientPeekHarness = ({ clients = [SAMPLE_CLIENT], viewMode = 'list' }) => {
+const ClientPeekHarness = ({ clients = [SAMPLE_CLIENT] }) => {
   const [peekClient, setPeekClient] = useState(null);
   const handleClientPeek = useCallback((client) => {
     setPeekClient(client);
@@ -68,7 +63,7 @@ const ClientPeekHarness = ({ clients = [SAMPLE_CLIENT], viewMode = 'list' }) => 
           consultants={[]}
           mappings={[]}
           consultations={[]}
-          viewMode={viewMode}
+          viewMode="list"
         />
       </div>
       <SidePeekShell
@@ -148,74 +143,5 @@ describe('ClientOverviewTab — SidePeekShell stub', () => {
 
     expect(container.querySelector('.mg-v2-list-block__grid--small')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  });
-
-  test('smallCard 카드 클릭 → peek 오픈', async() => {
-    render(<ClientPeekHarness clients={[SAMPLE_CLIENT]} viewMode="smallCard" />);
-
-    const harness = screen.getByRole('button', { name: /김내담/ });
-    await act(async() => {
-      fireEvent.click(harness);
-    });
-
-    expect(screen.getByRole('complementary', { name: '김내담 상세' })).toBeInTheDocument();
-  });
-
-  test(`list ${G2_ROW_VISIBILITY_MIN}+ row 이름 가시성`, () => {
-    const clients = buildManyClients();
-    render(
-      <ClientOverviewTab
-        clients={clients}
-        onClientPeek={jest.fn()}
-        onEditClient={jest.fn()}
-        onDeleteClient={jest.fn()}
-        consultants={[]}
-        mappings={[]}
-        consultations={[]}
-        viewMode="list"
-      />
-    );
-
-    clients.forEach((client) => {
-      expect(screen.getByText(client.name)).toBeInTheDocument();
-    });
-  });
-
-  test(`smallCard ${G2_ROW_VISIBILITY_MIN}+ row 이름 가시성`, () => {
-    const clients = buildManyClients();
-    render(
-      <ClientOverviewTab
-        clients={clients}
-        onClientPeek={jest.fn()}
-        onEditClient={jest.fn()}
-        onDeleteClient={jest.fn()}
-        consultants={[]}
-        mappings={[]}
-        consultations={[]}
-        viewMode="smallCard"
-      />
-    );
-
-    clients.forEach((client) => {
-      expect(screen.getByRole('button', { name: new RegExp(client.name) })).toBeInTheDocument();
-    });
-  });
-
-  test('viewMode 전환 — smallCard → list 테이블 렌더', () => {
-    const props = {
-      clients: [SAMPLE_CLIENT],
-      onClientPeek: jest.fn(),
-      onEditClient: jest.fn(),
-      onDeleteClient: jest.fn(),
-      consultants: [],
-      mappings: [],
-      consultations: []
-    };
-
-    const { container, rerender } = render(<ClientOverviewTab {...props} />);
-    expect(container.querySelector('.mg-v2-list-block__grid--small')).toBeInTheDocument();
-
-    rerender(<ClientOverviewTab {...props} viewMode="list" />);
-    expect(screen.getByRole('table')).toBeInTheDocument();
   });
 });

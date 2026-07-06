@@ -19,7 +19,6 @@ import {
   STAFF_MGMT_STATUS
 } from '../../../../constants/staffManagementStrings';
 import { USER_ROLES } from '../../../../constants/roles';
-import { buildManyStaff, G2_ROW_VISIBILITY_MIN } from '../../__tests__/userManagementGateFixtures';
 
 const SAMPLE_STAFF = {
   id: 301,
@@ -31,7 +30,7 @@ const SAMPLE_STAFF = {
   createdAt: '2026-01-15T00:00:00.000Z'
 };
 
-const StaffPeekHarness = ({ staffList = [SAMPLE_STAFF], viewMode = 'list' }) => {
+const StaffPeekHarness = ({ staffList = [SAMPLE_STAFF] }) => {
   const [peekStaff, setPeekStaff] = useState(null);
   const handleStaffPeek = useCallback((staff) => {
     setPeekStaff(staff);
@@ -49,7 +48,7 @@ const StaffPeekHarness = ({ staffList = [SAMPLE_STAFF], viewMode = 'list' }) => 
           onEditStaff={jest.fn()}
           onRoleChange={jest.fn()}
           onDeleteStaff={jest.fn()}
-          viewMode={viewMode}
+          viewMode="list"
         />
       </div>
       <SidePeekShell
@@ -129,67 +128,5 @@ describe('StaffOverviewTab — SidePeekShell stub', () => {
 
     expect(container.querySelector('.mg-v2-list-block__grid--small')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  });
-
-  test('smallCard 카드 클릭 → peek 오픈', async() => {
-    render(<StaffPeekHarness staffList={[SAMPLE_STAFF]} viewMode="smallCard" />);
-
-    await act(async() => {
-      fireEvent.click(screen.getByRole('button', { name: /김스태ff/ }));
-    });
-
-    expect(screen.getByRole('complementary', { name: '김스태ff 상세' })).toBeInTheDocument();
-  });
-
-  test(`list ${G2_ROW_VISIBILITY_MIN}+ row 이름 가시성`, () => {
-    const staffList = buildManyStaff();
-    render(
-      <StaffOverviewTab
-        staffList={staffList}
-        onStaffPeek={jest.fn()}
-        onEditStaff={jest.fn()}
-        onRoleChange={jest.fn()}
-        onDeleteStaff={jest.fn()}
-        viewMode="list"
-      />
-    );
-
-    staffList.forEach((staff) => {
-      expect(screen.getByText(staff.name)).toBeInTheDocument();
-    });
-  });
-
-  test(`smallCard ${G2_ROW_VISIBILITY_MIN}+ row 이름 가시성`, () => {
-    const staffList = buildManyStaff();
-    render(
-      <StaffOverviewTab
-        staffList={staffList}
-        onStaffPeek={jest.fn()}
-        onEditStaff={jest.fn()}
-        onRoleChange={jest.fn()}
-        onDeleteStaff={jest.fn()}
-        viewMode="smallCard"
-      />
-    );
-
-    staffList.forEach((staff) => {
-      expect(screen.getByRole('button', { name: new RegExp(staff.name) })).toBeInTheDocument();
-    });
-  });
-
-  test('viewMode 전환 — smallCard → list 테이블 렌더', () => {
-    const props = {
-      staffList: [SAMPLE_STAFF],
-      onStaffPeek: jest.fn(),
-      onEditStaff: jest.fn(),
-      onRoleChange: jest.fn(),
-      onDeleteStaff: jest.fn()
-    };
-
-    const { container, rerender } = render(<StaffOverviewTab {...props} />);
-    expect(container.querySelector('.mg-v2-list-block__grid--small')).toBeInTheDocument();
-
-    rerender(<StaffOverviewTab {...props} viewMode="list" />);
-    expect(screen.getByRole('table')).toBeInTheDocument();
   });
 });

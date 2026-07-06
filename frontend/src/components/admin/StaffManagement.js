@@ -74,6 +74,10 @@ const STAFF_MGMT_PEEK_LAYOUT_CLASS = 'staff-management__peek-layout';
 const STAFF_MGMT_PEEK_LAYOUT_OPEN_MODIFIER = 'staff-management__peek-layout--peek-open';
 const STAFF_MGMT_MAIN_REGION_CLASS = 'staff-management__main-region';
 
+const STAFF_MGMT_PEEK_LAYOUT_CLASS = 'staff-management__peek-layout';
+const STAFF_MGMT_PEEK_LAYOUT_OPEN_MODIFIER = 'staff-management__peek-layout--peek-open';
+const STAFF_MGMT_MAIN_REGION_CLASS = 'staff-management__main-region';
+
 const API_USER_MANAGEMENT = '/api/v1/admin/user-management';
 const API_ROLES = '/api/v1/admin/user-management/roles';
 const API_STAFF_REGISTER = '/api/v1/admin/staff';

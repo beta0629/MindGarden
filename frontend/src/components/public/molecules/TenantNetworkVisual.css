@@ -1,0 +1,37 @@
+/**
+ * TenantNetworkVisual CSS — 좌측 패널 일러스트 (Phase C-Refine v2)
+ *
+ * SPEC §3.1: 좌측 패널 중앙 배치, 컨테이너 폭 자동.
+ * SPEC §6: Tablet 축소, Mobile 숨김.
+ */
+
+.mg-v2-tenant-network {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.mg-v2-tenant-network__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* §6 Tablet 768–1023px: 일러스트 폭 축소 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mg-v2-tenant-network {
+    max-width: 14rem;
+  }
+}
+
+/* §6 Mobile <768px: 일러스트 숨김 */
+@media (max-width: 767px) {
+  .mg-v2-tenant-network {
+    display: none;
+  }
+}

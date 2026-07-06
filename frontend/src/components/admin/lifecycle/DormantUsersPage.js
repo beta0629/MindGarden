@@ -14,6 +14,8 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import AdminCommonLayout from '../../layout/AdminCommonLayout';
+import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import DormantUsersList from './DormantUsersList';
 import DormantUserDetail from './DormantUserDetail';
@@ -27,8 +29,11 @@ import {
 } from './dormantUsersApi';
 import { useToast } from '../../../contexts/ToastContext';
 import { toErrorMessage } from '../../../utils/safeDisplay';
+import '../../../styles/unified-design-tokens.css';
+import '../AdminDashboard/AdminDashboardB0KlA.css';
 
 const PAGE_SIZE = 20;
+const PAGE_TITLE_ID = 'dormant-users-page-title';
 
 const extractPage = (response) => {
   if (response && response.data && typeof response.data === 'object'
@@ -179,22 +184,34 @@ const DormantUsersPage = () => {
     }
   }, [loadList, pageNumber, t, toast]);
 
+  const pageTitle = t('lifecycle.dormantUsers.pageTitle', '휴면 사용자 관리');
+  const pageSubtitle = t('lifecycle.dormantUsers.pageSubtitle',
+    '1년 비활성 사용자(DORMANT)의 4년 안정 보관 진행 상태를 확인하고 강제 복귀 또는 즉시 익명화할 수 있습니다.');
+
   return (
-    <section className="mg-v2-page" data-testid="dormant-users-page">
-      <ContentHeader
-        title={t('lifecycle.dormantUsers.pageTitle', '휴면 사용자 관리')}
-        subtitle={t('lifecycle.dormantUsers.pageSubtitle',
-          '1년 비활성 사용자(DORMANT)의 4년 안정 보관 진행 상태를 확인하고 강제 복귀 또는 즉시 익명화할 수 있습니다.')}
-      />
-      <DormantUsersList
-        page={page}
-        loading={loading}
-        error={error}
-        onChangePage={handleChangePage}
-        onViewDetail={handleViewDetail}
-        onReactivate={handleOpenReactivate}
-        onForceAnonymize={handleOpenForceAnonymize}
-      />
+    <AdminCommonLayout title={pageTitle} loading={loading}>
+      <div className="mg-v2-ad-b0kla" data-testid="dormant-users-page">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel={pageTitle}>
+            <ContentHeader
+              title={pageTitle}
+              subtitle={pageSubtitle}
+              titleId={PAGE_TITLE_ID}
+            />
+            <main aria-labelledby={PAGE_TITLE_ID}>
+              <DormantUsersList
+                page={page}
+                loading={loading}
+                error={error}
+                onChangePage={handleChangePage}
+                onViewDetail={handleViewDetail}
+                onReactivate={handleOpenReactivate}
+                onForceAnonymize={handleOpenForceAnonymize}
+              />
+            </main>
+          </ContentArea>
+        </div>
+      </div>
 
       <DormantUserDetail
         isOpen={!!detailUser}
@@ -219,7 +236,7 @@ const DormantUsersPage = () => {
         user={forceAnonymizeTarget}
         loading={forceAnonymizeLoading}
       />
-    </section>
+    </AdminCommonLayout>
   );
 };
 

@@ -71,7 +71,14 @@
 | V2-coder | 26 | G1-05 MappingCard SSOT (Primary1+overflow) | coder | designer | Seq 25 또는 병렬 | PER_PAGE #6 | `f5b83ca81` | ☑ done | prod run: `28561691886` · prod `d681275bd` |
 | V2-hotfix | 27 | manual matching queue 삭제 내담자 제외 | coder | planner | 운영 이슈 | BE `with-mapping-info` lifecycle 필터; FE `filterManualMatchingQueueClients`; Jest+Java | `e85a26d78` | ☑ done | BE prod `28565916405` ☑ · FE prod `28565916490` ☑ · prod `e85a26d78` · **사용자 검수 ☑** (삭제 내담 이내담 미표시) |
 | V2-hotfix | 27b | 상담일지 누락 누적 집계 fix | coder | planner | Seq 27 ☑ | `fix(admin): 상담일지 누락 누적 집계` — 현재월 한정 버그; Jest+Java | `7de415923` | ☑ done | BE prod `28647824571` ☑ · FE prod `28647824713` ☑ · **사용자 검수 ☑** (2026-07-06: `/admin/dashboard` 6/30 조재은 2건 OK) |
-| V3+ | 28+ | AdminCommonLayout 통일·알림 API·Saved View·compact row 재도입(토글 ON만) | designer/coder/tester | planner 합류 | Seq 27b ☑ | v2 로드맵 Phase 3~4 | — | ☐ pending | **후속**: G2 viewMode localStorage/URL persist (Seq 17 gate에서 제외·문서만) |
+| V3+-coder | 28a | `useViewModePreference` hook (viewMode SSOT) | coder | designer → planner | Seq 27b ☑ | localStorage+URL 공통 훅; Jest 11 PASS; 28b/28d/28e 선행 | — | ☑ done | tester gate PASS · 네이버 Phase 0 보류 (추후) |
+| V3+-coder | 28b | G2 user-management viewMode persist | coder | designer | Seq 28a ☑ | client/consultant/staff viewMode persist; Seq 17 gate 후속 | — | ☐ pending | route: `/admin/user-management` |
+| V3+-coder | 28c | AdminCommonLayout — DormantUsersPage | coder | designer | Seq 27b ☑ | AdminCommonLayout 통일; LNB/GNB 정합; Jest 8 PASS | — | ☑ done | tester gate PASS · route `/admin/lifecycle/dormant-users` · **dev 배포 후 사용자 검수** |
+| V3+-coder | 28d | MappingListBlock viewMode persist | coder | designer | Seq 28a ☑ | table/card viewMode persist | — | ☐ pending | route: `/admin/mapping-management` |
+| V3+-coder | 28e | FinancialManagement viewMode persist | coder | designer | Seq 28a ☑ | table/card viewMode persist | — | ☐ pending | route: `/erp/financial` |
+| V3+-design | 28f | compact row 재도입 (토글 ON만) | designer → coder | designer | designer spec | handoff compact row; comfortable default 유지 | — | ☐ pending | `INTEGRATED_SCHEDULE_SIDEBAR_CARD_COMPACT_ROW_SPEC` |
+| V3+-design | 28g | Saved View | designer → coder | designer | spec 필요 | Saved View spec + 구현 | — | ☐ pending | v2 로드맵 Phase 4 |
+| V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; 대부분 완료 | — | ☐ pending | low priority |
 
 ---
 
@@ -93,7 +100,8 @@
 | G3 Seq 22 (ERP FinancialManagement table-default) | 2026-07-06 | ☑ FE prod `28772941474` · main `4a2cd67a0` (cherry-pick `b6ce620ff`) · bundle `main.fbf474e5.js` · **사용자 검수 ☑** |
 | V1 G2 QA gate (Seq 17) | 2026-07-06 | ☑ Jest 26 · E2E 3 · good `4a2cd67a0` · viewMode persist → V3+ 후속 |
 | V1 착수 | 2026-07-01 | ☑ Seq 14~16 pilot |
-| **다음 (pending)** | — | **V3+ Seq 28+** (viewMode persist 등) |
+| V3+ Seq 28a·28c | 2026-07-06 | ☑ **28a** hook Jest 11 · **28c** DormantUsersPage Jest 8 · tester gate PASS |
+| **다음 (pending)** | — | **28b/28d/28e** viewMode persist (병렬 착수 가능) · **28f** designer spec · **28g** Saved View spec · **28c** dev 배포·사용자 검수 |
 
 ---
 
@@ -121,3 +129,5 @@
 | 2026-07-06 | 22 | G3 ERP FinancialManagement table-default prod ☑ — cherry-pick `b6ce620ff` → main `4a2cd67a0` · FE prod `28772941474` · `/erp/financial` bundle `main.fbf474e5.js` · **사용자 검수 ☑** |
 | 2026-07-06 | 17 | G2 P0 3화면 QA gate ☑ — Jest 26 · E2E smoke 3 (1280/768) · good `4a2cd67a0` · viewMode persist 갭 V3+ 후속 기록 |
 | 2026-07-06 | 18 | V1 develop FE dev deploy ☑ — run `28781477470` · ref main workflow_dispatch |
+| 2026-07-06 | 28a~28h | V3+ 병렬 kickoff — Seq 27b ☑ 후 28a~28h 분할; **28a** `useViewModePreference` ◐ · **28c** AdminCommonLayout DormantUsersPage ◐ · **28b/28d/28e** viewMode persist ☐ (28a 선행) · **28f** compact row · **28g** Saved View · **28h** Notification API ☐ · good develop `3f636c414` · prod `4a2cd67a0` |
+| 2026-07-06 | 28a·28c | **28a** ☑ — hook+Jest 11 · tester [840e9bc5](840e9bc5-9d17-4fba-a711-e617ff364ac5) PASS · **28c** ☑ — DormantUsersPage AdminCommonLayout+Jest 8 · tester [afbf431d](afbf431d-88bc-437c-bdc3-1d6fbd47a7b9) PASS · PR 분리 권장(28a/28c) · **28b/28d/28e** 착수 가능 |

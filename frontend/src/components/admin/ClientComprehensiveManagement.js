@@ -39,6 +39,11 @@ import { Users, UserCheck, Clock, Link2 } from 'lucide-react';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
+import {
+  buildViewModeStorageKey,
+  resolveViewModeStorageScope,
+  useViewModePreference
+} from '../../hooks/useViewModePreference';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CONSULTATIONS = '/api/v1/admin/consultations';
@@ -50,6 +55,9 @@ const CLIENT_KPI_ICON_SIZE = 24;
 
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CLIENT_COMP_MGMT_TITLE_ID = 'client-comprehensive-management-title';
+
+const CLIENT_VIEW_MODE_PAGE_ID = 'admin.user-management.client';
+const USER_MANAGEMENT_ALLOWED_VIEW_MODES = ['largeCard', 'smallCard', 'list'];
 
 const CLIENT_COMP_PEEK_LAYOUT_CLASS = 'client-comprehensive__peek-layout';
 const CLIENT_COMP_PEEK_LAYOUT_OPEN_MODIFIER = 'client-comprehensive__peek-layout--peek-open';
@@ -97,7 +105,11 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [activeFilters, setActiveFilters] = useState({});
-    const [viewMode, setViewMode] = useState(USER_MANAGEMENT_DEFAULT_VIEW_MODE);
+    const { viewMode, setViewMode } = useViewModePreference({
+        storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), CLIENT_VIEW_MODE_PAGE_ID),
+        defaultMode: USER_MANAGEMENT_DEFAULT_VIEW_MODE,
+        allowedModes: USER_MANAGEMENT_ALLOWED_VIEW_MODES
+    });
     const [peekClient, setPeekClient] = useState(null);
     
     const [showModal, setShowModal] = useState(false);

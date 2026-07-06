@@ -61,6 +61,14 @@ import './mapping-management/organisms/MappingListBlock.css';
 import './StaffManagementPage.css';
 
 import { USER_ROLES } from '../../constants/roles';
+import {
+  buildViewModeStorageKey,
+  resolveViewModeStorageScope,
+  useViewModePreference
+} from '../../hooks/useViewModePreference';
+
+const STAFF_VIEW_MODE_PAGE_ID = 'admin.user-management.staff';
+const USER_MANAGEMENT_ALLOWED_VIEW_MODES = ['largeCard', 'smallCard', 'list'];
 
 const STAFF_MGMT_PEEK_LAYOUT_CLASS = 'staff-management__peek-layout';
 const STAFF_MGMT_PEEK_LAYOUT_OPEN_MODIFIER = 'staff-management__peek-layout--peek-open';
@@ -202,7 +210,11 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
   const staffEditPhoneBaselineRef = useRef('');
-  const [viewMode, setViewMode] = useState(USER_MANAGEMENT_DEFAULT_VIEW_MODE);
+  const { viewMode, setViewMode } = useViewModePreference({
+    storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), STAFF_VIEW_MODE_PAGE_ID),
+    defaultMode: USER_MANAGEMENT_DEFAULT_VIEW_MODE,
+    allowedModes: USER_MANAGEMENT_ALLOWED_VIEW_MODES
+  });
   const [peekStaff, setPeekStaff] = useState(null);
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });

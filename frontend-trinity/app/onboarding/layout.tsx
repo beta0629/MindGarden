@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import OnboardingSidePanel from "../../components/onboarding/OnboardingSidePanel";
+import { OnboardingLayoutProvider } from "../../components/onboarding/OnboardingLayoutContext";
 import "../../styles/components/onboarding-layout.css";
 
 /**
@@ -12,20 +13,22 @@ export default function OnboardingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="trinity-onboarding-layout">
-      <OnboardingSidePanel />
-      <div className="trinity-onboarding-layout__main">
-        <Suspense
-          fallback={
-            <div className="trinity-onboarding-layout__loading">
-              페이지 로딩 중...
-            </div>
-          }
-        >
-          {children}
-        </Suspense>
+    <OnboardingLayoutProvider>
+      <div className="trinity-onboarding-layout">
+        <OnboardingSidePanel />
+        <div className="trinity-onboarding-layout__main">
+          <Suspense
+            fallback={
+              <div className="trinity-onboarding-layout__loading">
+                페이지 로딩 중...
+              </div>
+            }
+          >
+            {children}
+          </Suspense>
+        </div>
       </div>
-    </div>
+    </OnboardingLayoutProvider>
   );
 }
 

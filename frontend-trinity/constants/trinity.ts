@@ -36,6 +36,24 @@ export const TRINITY_CONSTANTS = {
       ICON: '/assets/trinity-logo-icon.svg',
       ALT: 'Trinity',
     },
+    CORE_SOLUTION_LOGO: {
+      PRIMARY: '/assets/core-solution-logo-primary.svg',
+      INVERSE: '/assets/core-solution-logo-inverse.svg',
+      ICON: '/assets/core-solution-logo-icon.svg',
+      ALT: 'CoreSolution',
+    },
+    TENANT_NETWORK_VISUAL: '/assets/tenant-network-visual.svg',
+    PRICING_ICONS: {
+      STARTER: '/assets/icon-plan-starter.svg',
+      PRO: '/assets/icon-plan-pro.svg',
+      ENTERPRISE: '/assets/icon-plan-enterprise.svg',
+    },
+    TRUST_BADGES: {
+      ISO27001: '/assets/badge-iso27001.svg',
+      SOC2: '/assets/badge-soc2.svg',
+      GDPR: '/assets/badge-gdpr.svg',
+      KISA_ISMS: '/assets/badge-kisa-isms.svg',
+    },
   },
   
   // CoreSolution 브랜딩
@@ -117,7 +135,58 @@ export const TRINITY_CONSTANTS = {
     { id: 4, label: '결제 수단', description: '결제 수단 등록' },
     { id: 5, label: '신청 완료', description: '신청 완료' },
   ],
-  
+
+  /** v2 세로 Stepper — Step4 hidden, Step3→6 skip 반영 */
+  ONBOARDING_STEPS_V2: [
+    { displayId: 1, stepKey: 1, label: '기본 정보' },
+    { displayId: 2, stepKey: 2, label: '업종 선택' },
+    { displayId: 3, stepKey: 3, label: '요금제 선택' },
+    { displayId: 4, stepKey: 6, label: '대시보드 설정' },
+    { displayId: 5, stepKey: 5, label: '신청 완료' },
+  ],
+
+  ONBOARDING_V2: {
+    WELCOME_EYEBROW: 'WELCOME TO TRINITY',
+    DEFAULT_TITLE: '서비스 신청을 시작합니다',
+    DEFAULT_SUBTITLE: '간단한 단계를 따라 CoreSolution 워크스페이스를 준비하세요.',
+    HELP_LABEL: '도움이 필요하신가요?',
+    PANEL: {
+      ARIA_LABEL: 'Trinity 브랜드 패널',
+      NETWORK_ARIA: '멀티 테넌트 네트워크 구조 일러스트',
+      VALUE_PROP_TITLE: '여러 테넌트, 하나의 플랫폼',
+      VALUE_PROP_DESC: 'Trinity에서 CoreSolution 기반 비즈니스 운영을 통합하세요.',
+      STEP_LABEL: 'STEP',
+      STEP_OF: 'OF',
+      STATS: [
+        { value: '500+', label: '활성 테넌트' },
+        { value: '99.9%', label: '가동률' },
+        { value: '24/7', label: '운영 지원' },
+      ],
+    },
+    STEP_HEADERS: {
+      1: {
+        title: '기본 정보를 입력해 주세요',
+        subtitle: '생성될 기관의 대표 정보를 설정합니다.',
+      },
+      2: {
+        title: '업종을 선택해 주세요',
+        subtitle: '서비스를 제공할 업종을 선택해주세요.',
+      },
+      3: {
+        title: '요금제를 선택해 주세요',
+        subtitle: '기관 규모에 맞는 요금제를 선택해주세요.',
+      },
+      5: {
+        title: '신청이 완료되었습니다',
+        subtitle: '내부 검토를 거쳐 1~2 영업일 내에 승인될 예정입니다.',
+      },
+      6: {
+        title: '대시보드를 설정해 주세요',
+        subtitle: '역할별 대시보드 템플릿을 선택해주세요.',
+      },
+    },
+  },
+
   // 온보딩 단계 상수
   ONBOARDING_STEP: {
     BASIC_INFO: 1,
@@ -143,8 +212,27 @@ export const TRINITY_CONSTANTS = {
     PRICING_PLANS: '/api/v1/ops/plans/active',
     /** 공개 Turnstile site key (서버 mindgarden.security.captcha.site-key) */
     CAPTCHA_SITE_KEY: '/api/v1/onboarding/captcha/site-key',
+    /** Core Solution AuthController — 휴대폰 SMS OTP */
+    SMS_SEND: '/api/v1/auth/sms/send',
+    SMS_VERIFY: '/api/v1/auth/sms/verify',
   },
-  
+
+  /** SMS OTP — AuthController SSOT (5분 TTL · 6자리) */
+  OTP: {
+    CODE_LENGTH: 6,
+    TTL_SECONDS: 300,
+    RESEND_COOLDOWN_SECONDS: 60,
+    PURPOSE_SIGNUP: 'SIGNUP_VERIFICATION',
+    DELIVERY_CHANNEL_PUSH: 'PUSH',
+    DELIVERY_CHANNEL_SMS: 'SMS',
+    DELIVERY_CHANNEL_SMS_STUB: 'SMS_STUB',
+  },
+
+  PHONE: {
+    DISPLAY_MAX_LENGTH: 13,
+    PLACEHOLDER: '010-1234-5678',
+  },
+
   // 메시지
   MESSAGES: {
     ONBOARDING_SUCCESS: '신청이 완료되었습니다. 검토 후 연락드리겠습니다.',
@@ -169,7 +257,23 @@ export const TRINITY_CONSTANTS = {
     PLACEHOLDER_COMPANY_NAME: '회사명을 입력하세요',
     PLACEHOLDER_EMAIL: '이메일을 입력하세요',
     PLACEHOLDER_EMAIL_LOCAL: '이메일 아이디',
-    PLACEHOLDER_PHONE: '연락처를 입력하세요',
+    PLACEHOLDER_PHONE: '010-1234-5678',
+    PLACEHOLDER_EMAIL_OPTIONAL: 'example@email.com (선택)',
+    // 휴대폰 관련
+    ERROR_PHONE_REQUIRED: '휴대폰 번호를 입력해주세요.',
+    ERROR_PHONE_INVALID: '올바른 휴대폰 번호를 입력해주세요. (예: 010-1234-5678)',
+    ERROR_PHONE_VERIFY_REQUIRED: '휴대폰 인증을 완료해주세요.',
+    ERROR_OTP_REQUIRED: '6자리 인증번호를 입력해주세요.',
+    PHONE_VERIFY_SUCCESS: '✓ 휴대폰 인증이 완료되었습니다.',
+    OTP_SENT_PUSH: '앱 푸시 알림으로 인증번호가 발송되었습니다.',
+    OTP_SENT_SMS: 'SMS로 인증번호가 발송되었습니다.',
+    OTP_SENT_SMS_STUB:
+      '개발: 실제 문자 미발송, 서버 로그에서 OTP를 확인하세요.',
+    OTP_SENT_DEFAULT: '인증번호가 전송되었습니다.',
+    SMS_SEND_FAILED: '인증번호 발송에 실패했습니다.',
+    SMS_VERIFY_FAILED: '인증번호가 올바르지 않습니다.',
+    DEV_PHONE_SKIP_BANNER: '개발 환경: SMS 인증 생략',
+    DEV_PHONE_SKIP_BUTTON: '개발: 인증 생략',
     // 결제 수단 관련
     ERROR_PAYMENT_METHOD_REQUIRED: '결제 수단을 등록해주세요.',
     PAYMENT_METHOD_REGISTERED: '✅ 결제 수단이 등록되었습니다.',
@@ -197,6 +301,18 @@ export const TRINITY_CONSTANTS = {
     CAPTCHA_NETWORK: '네트워크 오류로 확인을 완료할 수 없습니다. 연결을 확인한 뒤 다시 시도해 주세요.',
     CAPTCHA_REFRESH_HINT: '문제가 계속되면 페이지를 새로고침한 뒤 다시 시도해 주세요.',
     CAPTCHA_REQUIRED_BEFORE_SUBMIT: '보안 확인을 완료한 뒤 제출해 주세요.',
+    // 신청 상태 조회
+    STATUS_LOOKUP_DESCRIPTION:
+      '신청 시 인증하신 휴대폰 번호 또는 입력하신 이메일로 신청 내역을 조회할 수 있습니다.',
+    STATUS_LOOKUP_CONTACT_LABEL: '휴대폰 번호 또는 이메일',
+    STATUS_LOOKUP_CONTACT_REQUIRED: '휴대폰 번호 또는 이메일 중 하나를 입력해주세요.',
+    STATUS_LOOKUP_PHONE_PLACEHOLDER: '010-1234-5678',
+    STATUS_LOOKUP_EMAIL_PLACEHOLDER: 'example@email.com (선택)',
+    STATUS_LOOKUP_REQUEST_ID_LABEL: '신청 번호 (선택사항)',
+    STATUS_LOOKUP_REQUEST_ID_PLACEHOLDER: '신청 번호를 입력하면 상세 내역을 조회합니다',
+    STATUS_LOOKUP_SEARCH: '조회하기',
+    STATUS_LOOKUP_SEARCHING: '조회 중...',
+    STATUS_LOOKUP_EMPTY: '조회된 신청 내역이 없습니다.',
   },
   
   // 결제 관련 상수
@@ -233,6 +349,56 @@ export const TRINITY_CONSTANTS = {
     ORDER_MANAGEMENT: '주문 관리',
   },
   
+  /** Step3 Pricing v2 — UI 전용 (API planId 매핑은 기존 로직 유지) */
+  PRICING: {
+    BILLING_CYCLE: {
+      MONTHLY: 'MONTHLY',
+      YEARLY: 'YEARLY',
+    },
+    VARIANT: {
+      STARTER: 'starter',
+      POPULAR: 'popular',
+      ENTERPRISE: 'enterprise',
+    },
+    YEARLY_DISCOUNT_RATE: 0.2,
+    LABELS: {
+      BILLING_CYCLE_ARIA: '결제 주기 선택',
+      BILLING_MONTHLY: '월간',
+      BILLING_YEARLY: '연간',
+      BILLING_DISCOUNT: '20% 할인',
+      TRUST_BADGES_ARIA: '보안·인증 마크',
+      SELECTED: '✓ 선택됨',
+      SELECT_PLAN: '선택하기',
+      POPULAR_BADGE: '가장 인기',
+      PERIOD_MONTHLY: '월',
+      PERIOD_YEARLY: '년',
+    },
+    TRUST_BADGES: [
+      { key: 'iso27001', label: 'ISO 27001', iconSrc: '/assets/badge-iso27001.svg' },
+      { key: 'soc2', label: 'SOC 2', iconSrc: '/assets/badge-soc2.svg' },
+      { key: 'gdpr', label: 'GDPR', iconSrc: '/assets/badge-gdpr.svg' },
+      { key: 'kisaIsms', label: 'KISA-ISMS', iconSrc: '/assets/badge-kisa-isms.svg' },
+    ],
+    PLAN_META: {
+      starter: {
+        variant: 'starter' as const,
+        iconSrc: '/assets/icon-plan-starter.svg',
+        fallbackFeatures: ['기본 기능', '최대 10명 사용자', '기본 지원'],
+      },
+      pro: {
+        variant: 'popular' as const,
+        iconSrc: '/assets/icon-plan-pro.svg',
+        badgeLabel: '가장 인기',
+        fallbackFeatures: ['ERP 포함', '최대 50명 사용자', '우선 지원'],
+      },
+      enterprise: {
+        variant: 'enterprise' as const,
+        iconSrc: '/assets/icon-plan-enterprise.svg',
+        fallbackFeatures: ['모든 기능', '무제한 사용자', '전담 지원'],
+      },
+    },
+  },
+
   // 이메일 도메인 목록
   EMAIL_DOMAINS: [
     '@gmail.com',
@@ -248,4 +414,33 @@ export const TRINITY_CONSTANTS = {
     '@직접입력',
   ],
 };
+
+/** 개발 환경 SMS 인증 생략 허용 호스트 (운영 도메인 제외) */
+export const TRINITY_DEV_PHONE_SKIP_HOSTNAMES = [
+  'localhost',
+  '127.0.0.1',
+  'dev.e-trinity.co.kr',
+  'apply.dev.e-trinity.co.kr',
+] as const;
+
+/** 현재 호스트가 dev SMS skip 대상인지 (클라이언트 런타임) */
+export function isTrinityDevPhoneSkipHostname(hostname?: string): boolean {
+  const host =
+    hostname ??
+    (typeof window !== 'undefined' ? window.location.hostname : '');
+  return (TRINITY_DEV_PHONE_SKIP_HOSTNAMES as readonly string[]).includes(host);
+}
+
+/**
+ * 개발 환경 휴대폰 SMS 인증 생략 여부.
+ * dev 호스트명(런타임) 또는 NEXT_PUBLIC_SKIP_PHONE_VERIFICATION=true 일 때 true.
+ * 운영(apply.e-trinity.co.kr) 호스트에서는 env가 true여도 skip 하지 않음.
+ */
+export function shouldSkipPhoneVerification(): boolean {
+  if (isTrinityDevPhoneSkipHostname()) {
+    return true;
+  }
+  const skipFlag = process.env.NEXT_PUBLIC_SKIP_PHONE_VERIFICATION;
+  return skipFlag === 'true' || skipFlag === '1';
+}
 

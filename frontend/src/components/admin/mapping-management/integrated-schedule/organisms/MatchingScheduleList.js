@@ -10,7 +10,12 @@ import PropTypes from 'prop-types';
 import { Draggable } from '@fullcalendar/interaction';
 import UnifiedLoading from '../../../../common/UnifiedLoading';
 import MappingScheduleCard from './MappingScheduleCard';
+import MatchingScheduleCompactRow from '../molecules/MatchingScheduleCompactRow';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import {
+  SIDEBAR_DENSITY_COMFORTABLE,
+  SIDEBAR_DENSITY_COMPACT
+} from '../../constants/integratedScheduleSidebarDensityConstants';
 import {
   VIEW_FILTER_NEW,
   VIEW_FILTER_REMAINING,
@@ -40,8 +45,10 @@ const buildEventData = (mapping) => ({
 const MatchingScheduleList = ({
   mappings,
   loading,
+  density,
   viewFilter,
   statusFilter,
+  activePeekMappingId,
   onOpenPeek,
   onScheduleFromCard,
   onPayment,
@@ -83,11 +90,15 @@ const MatchingScheduleList = ({
     emptyMessage = '회기 남은 매칭이 없습니다.';
   }
 
+  const isCompact = density === SIDEBAR_DENSITY_COMPACT;
+
   return (
     <div className="integrated-schedule__list-scroll">
       <ul
         ref={listRef}
-        className="integrated-schedule__list"
+        className={`integrated-schedule__list${
+          isCompact ? ' integrated-schedule__list--compact' : ''
+        }`}
         aria-label="매칭 목록"
       >
         {mappings.length === 0 ? (
@@ -98,6 +109,27 @@ const MatchingScheduleList = ({
           mappings.map((mapping) => {
             const scheduleable = canScheduleForMapping(mapping);
             const eventData = buildEventData(mapping);
+            const isPeekActive = activePeekMappingId != null
+              && String(activePeekMappingId) === String(mapping.id);
+
+            if (isCompact) {
+              return (
+                <li
+                  key={mapping.id}
+                  className={`integrated-schedule__card integrated-schedule__card--compact${
+                    scheduleable ? ' fc-event' : ''
+                  }`}
+                  data-event={scheduleable ? JSON.stringify(eventData) : undefined}
+                >
+                  <MatchingScheduleCompactRow
+                    mapping={mapping}
+                    onOpenPeek={onOpenPeek}
+                    isActive={isPeekActive}
+                  />
+                </li>
+              );
+            }
+
             return (
               <li
                 key={mapping.id}
@@ -138,8 +170,10 @@ const MatchingScheduleList = ({
 MatchingScheduleList.propTypes = {
   mappings: PropTypes.arrayOf(PropTypes.object).isRequired,
   loading: PropTypes.bool,
+  density: PropTypes.string,
   viewFilter: PropTypes.string,
   statusFilter: PropTypes.string,
+  activePeekMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onOpenPeek: PropTypes.func,
   onScheduleFromCard: PropTypes.func.isRequired,
   onPayment: PropTypes.func,
@@ -155,8 +189,10 @@ MatchingScheduleList.propTypes = {
 
 MatchingScheduleList.defaultProps = {
   loading: false,
+  density: SIDEBAR_DENSITY_COMFORTABLE,
   viewFilter: '',
   statusFilter: '',
+  activePeekMappingId: null,
   onOpenPeek: null,
   onPayment: null,
   onDeposit: null,

@@ -1,0 +1,106 @@
+/* MatchingScheduleCompactRow — Compact 밀도 단일 행 (SSOT: SCREEN_SPEC_INTEGRATED_SCHEDULE_COMPACT_ROW) */
+
+.integrated-schedule__compact-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  width: 100%;
+  min-height: var(--mg-spacing-xl);
+  max-height: var(--mg-spacing-36);
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-sm, 6px);
+  box-sizing: border-box;
+  text-align: left;
+  font-family: inherit;
+}
+
+.integrated-schedule__compact-row--interactive {
+  cursor: pointer;
+}
+
+.integrated-schedule__compact-row--interactive:hover {
+  background-color: var(--mg-color-background-main);
+}
+
+.integrated-schedule__compact-row--active {
+  background-color: color-mix(
+    in srgb,
+    var(--mg-color-primary-light) 10%,
+    var(--mg-color-surface-main)
+  );
+}
+
+.integrated-schedule__compact-row--interactive:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--mg-color-primary-light);
+}
+
+.integrated-schedule__compact-row-accent {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 3px;
+  min-height: var(--mg-spacing-lg);
+  border-radius: var(--mg-radius-sm, 6px);
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__compact-row--accent-active .integrated-schedule__compact-row-accent {
+  background-color: var(--mg-color-success);
+}
+
+.integrated-schedule__compact-row--accent-warning .integrated-schedule__compact-row-accent {
+  background-color: var(--mg-color-warning-dark, var(--mg-warning-600));
+}
+
+.integrated-schedule__compact-row--accent-info .integrated-schedule__compact-row-accent {
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__compact-row--accent-muted .integrated-schedule__compact-row-accent {
+  background-color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule__compact-row--accent-default .integrated-schedule__compact-row-accent {
+  background-color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__compact-row-primary {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--mg-color-text-main);
+}
+
+.integrated-schedule__compact-row-consultant,
+.integrated-schedule__compact-row-client {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.integrated-schedule__compact-row-arrow {
+  flex-shrink: 0;
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule__compact-row-secondary {
+  flex-shrink: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  color: var(--mg-color-text-secondary);
+}

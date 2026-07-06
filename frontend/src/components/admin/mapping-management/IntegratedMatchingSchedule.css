@@ -295,6 +295,21 @@
   display: none;
 }
 
+/* 필터 툴바 — 보기 필터 + 밀도 토글(우측) */
+.integrated-schedule__filter-toolbar {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mg-spacing-sm);
+  flex-shrink: 0;
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.integrated-schedule__filter-toolbar .integrated-schedule__filter {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
 /* 필터: 세그먼트 컨트롤(pill) 형태 — 정보 밀도 상향(간격·패딩 축소, 터치 최소 영역 유지) */
 .integrated-schedule__filter {
   margin: 0 0 var(--mg-spacing-sm);

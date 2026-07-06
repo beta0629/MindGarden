@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { COMPONENT_CSS } from "../../constants/css-variables";
+import CoreSolutionLogo from "../CoreSolutionLogo";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
 
 interface Step6DashboardSetupProps {
@@ -204,6 +205,7 @@ export default function Step6DashboardSetup({
 
   return (
     <div className={COMPONENT_CSS.ONBOARDING.STEP}>
+      <CoreSolutionLogo variant="primary" className="trinity-core-solution-logo--step" />
       <h3 className="trinity-onboarding__step-title">대시보드 템플릿 선택</h3>
       <p className="trinity-onboarding__step-description">
         역할별 대시보드 템플릿을 선택해주세요.

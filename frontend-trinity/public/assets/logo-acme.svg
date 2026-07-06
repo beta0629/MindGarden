@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(0, 0)" stroke-width="1.5">
+    <path d="M 16 6 L 26 26 L 6 26 Z" />
+    <path d="M 16 6 L 16 26" />
+  </g>
+  <text x="36" y="22" font-family="sans-serif" font-weight="900" font-size="18" fill="currentColor" stroke="none" letter-spacing="-0.5">ACME</text>
+</svg>

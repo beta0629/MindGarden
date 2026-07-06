@@ -30,6 +30,7 @@ const MappingScheduleCard = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onSessionExtension,
   approveProcessing,
   cancelPendingProcessing
 }) => {
@@ -82,6 +83,7 @@ const MappingScheduleCard = ({
       onApprove={onApprove}
       onCheckoutSameDay={onCheckoutSameDay}
       onCancelPendingMapping={onCancelPendingMapping}
+      onSessionExtension={onSessionExtension}
       approveProcessing={approveProcessing}
       cancelPendingProcessing={cancelPendingProcessing}
     />
@@ -109,6 +111,7 @@ MappingScheduleCard.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
+  onSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool
 };
@@ -124,6 +127,7 @@ MappingScheduleCard.defaultProps = {
   onApprove: null,
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
+  onSessionExtension: null,
   approveProcessing: false,
   cancelPendingProcessing: false
 };

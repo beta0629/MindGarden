@@ -556,4 +556,48 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
       expect(screen.queryByTestId('payment-timing-card-check-ADVANCE')).toBeNull();
     });
   });
+
+  test('ACTIVE 매칭 존재 시 경고 배너 + 회기 추가 리다이렉트 (apiPost 미호출)', async () => {
+    const onRedirectToSessionExtension = jest.fn();
+    apiGet.mockImplementation((url) => {
+      if (String(url).includes('/mappings')) {
+        return Promise.resolve({
+          data: [{
+            id: 75,
+            consultantId: 11,
+            clientId: 22,
+            status: 'ACTIVE',
+            remainingSessions: 3,
+            totalSessions: 10
+          }]
+        });
+      }
+      if (String(url).includes('/clients')) {
+        return Promise.resolve({ clients: clientFixture });
+      }
+      return Promise.resolve({});
+    });
+
+    renderModal({ onRedirectToSessionExtension });
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByTestId('active-mapping-warning')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('회기 추가로 이동'));
+
+    expect(onRedirectToSessionExtension).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 75, status: 'ACTIVE' })
+    );
+    expect(apiPost).not.toHaveBeenCalled();
+  });
 });

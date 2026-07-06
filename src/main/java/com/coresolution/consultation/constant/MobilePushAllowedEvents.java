@@ -11,7 +11,7 @@ import java.util.Set;
  *   <li>{@link MobilePushCanonicalTypes#BOOKING_CONFIRMED} — 예약 확정(첫상담 시 내담자 단독)</li>
  *   <li>{@link MobilePushCanonicalTypes#BOOKING_RESCHEDULED} — 예약 일정 변경</li>
  *   <li>{@link MobilePushCanonicalTypes#MAPPING_APPROVED} — 어드민 매칭 승인(내담자 단독)</li>
- *   <li>{@link MobilePushCanonicalTypes#BOOKING_REMINDER} — D-2 리마인더(내담자·상담사 양쪽)</li>
+ *   <li>{@link MobilePushCanonicalTypes#BOOKING_REMINDER} — D-1 리마인더(내담자·상담사 양쪽)</li>
  * </ul>
  * 그 외(취소·실패·환불 등)는 푸시만 차단하며, 알림톡/SMS 등 다른 채널은 영향 없음.</p>
  *

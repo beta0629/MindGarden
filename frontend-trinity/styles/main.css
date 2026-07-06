@@ -3,6 +3,7 @@
  * MindGarden 구조를 따름
  */
 
+@import '../../frontend/src/styles/unified-design-tokens.css';
 @import './variables.css';
 
 /* 전역 리셋 */

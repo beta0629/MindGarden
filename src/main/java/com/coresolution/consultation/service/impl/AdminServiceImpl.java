@@ -682,7 +682,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         List<ConsultantClientMapping> existingMappings = mappingRepository
             .findByTenantIdAndConsultantAndClient(tenantId, consultant, clientUser);
-        
+
+        // P0 (2026-06-17): ACTIVE 매핑 존재 시 신규 INSERT + 기존 TERMINATED + remaining 소진 금지.
+        // 회기 추가는 session-extensions / SessionExtensionModal 경로를 사용한다.
+        ConsultantClientMapping activeExisting = existingMappings.stream()
+                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .findFirst()
+                .orElse(null);
+        if (activeExisting != null) {
+            log.info("⛔ ACTIVE 매핑 존재 — 신규 매칭 생성 차단: 매칭ID={}, 상담사={}, 내담자={}",
+                    activeExisting.getId(), consultant.getName(), clientUser.getName());
+            throw new com.coresolution.consultation.exception.ActiveMappingExistsException(
+                    activeExisting.getId(),
+                    String.format(AdminServiceUserFacingMessages.MSG_ACTIVE_MAPPING_EXISTS_USE_SESSION_EXTENSION_FMT,
+                            consultant.getName(), clientUser.getName(), activeExisting.getId()));
+        }
+
         if (!existingMappings.isEmpty()) {
             log.info("🔍 기존 매칭 발견, 자동 종료 처리: 상담사={}, 내담자={}, 기존 매칭 수={}", 
                 consultant.getName(), clientUser.getName(), existingMappings.size());
@@ -698,6 +713,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         || currentStatus == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED) {
                     log.info("⏸️ 옵션 B 가드: 결제 대기 매핑 자동 종료 제외: 매칭ID={}, 상태={}",
                             existingMapping.getId(), currentStatus);
+                    continue;
+                }
+                if (currentStatus == ConsultantClientMapping.MappingStatus.ACTIVE) {
                     continue;
                 }
                 try {

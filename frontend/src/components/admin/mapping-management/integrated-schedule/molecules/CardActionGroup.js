@@ -21,6 +21,7 @@ const CardActionGroup = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onSessionExtension,
   approveProcessing,
   cancelPendingProcessing
 }) => (
@@ -69,6 +70,26 @@ const CardActionGroup = ({
         일정 등록
       </MGButton>
     )}
+    {mapping?.status === 'ACTIVE' && onSessionExtension && (
+      <MGButton
+        type="button"
+        variant="secondary"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'secondary',
+          size: 'sm',
+          loading: false,
+          className: 'integrated-schedule__btn-add-sessions-from-card'
+        })}
+        loading={false}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={() => onSessionExtension(mapping)}
+        aria-label="회기 추가"
+        preventDoubleClick={false}
+      >
+        회기 추가
+      </MGButton>
+    )}
     <MappingMatchActions
       mapping={mapping}
       onPayment={onPayment}
@@ -96,6 +117,7 @@ CardActionGroup.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
+  onSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool
 };
@@ -109,6 +131,7 @@ CardActionGroup.defaultProps = {
   onApprove: null,
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
+  onSessionExtension: null,
   approveProcessing: false,
   cancelPendingProcessing: false
 };

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <style>
+      .stroke-main { fill: none; stroke: #3D5246; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .fill-main { fill: #3D5246; }
+      .bg-accent { fill: #F5F3EF; stroke: #3D5246; stroke-width: 2; }
+    </style>
+  </defs>
+  
+  <!-- Circular Workflow Arrows -->
+  <path d="M 24 8 A 16 16 0 0 1 40 24 A 16 16 0 0 1 24 40 A 16 16 0 0 1 8 24 A 16 16 0 0 1 12 13" class="stroke-main" stroke-dasharray="6 4" />
+  
+  <!-- Arrow Heads -->
+  <path d="M 40 20 L 40 24 L 36 24" class="stroke-main" />
+  <path d="M 28 40 L 24 40 L 24 36" class="stroke-main" />
+  <path d="M 8 28 L 8 24 L 12 24" class="stroke-main" />
+  <path d="M 16 9 L 12 13 L 16 17" class="stroke-main" />
+
+  <!-- Nodes -->
+  <circle cx="24" cy="8" r="4" class="bg-accent" />
+  <circle cx="40" cy="24" r="4" class="bg-accent" />
+  <circle cx="24" cy="40" r="4" class="bg-accent" />
+  <circle cx="8" cy="24" r="4" class="bg-accent" />
+  
+  <!-- Center Gear/Core -->
+  <circle cx="24" cy="24" r="6" class="stroke-main" />
+  <circle cx="24" cy="24" r="2" class="fill-main" />
+  <path d="M 24 16 V 18 M 24 30 V 32 M 16 24 H 18 M 30 24 H 32 M 18.3 18.3 L 19.7 19.7 M 28.3 28.3 L 29.7 29.7 M 18.3 29.7 L 19.7 28.3 M 28.3 19.7 L 29.7 18.3" class="stroke-main" />
+</svg>

@@ -222,10 +222,17 @@ const SessionExtensionModal = ({
                                 <div className="mg-v2-form-group">
                                     <label className="mg-v2-label">현재 회기</label>
                                     <div className="mg-v2-text-primary mg-v2-font-weight-semibold">
+                                        <span className="mg-v2-text-secondary">사용 </span>
                                         <span>{mapping.usedSessions || 0}</span>
-                                        <span className="mg-v2-text-secondary">/</span>
+                                        <span className="mg-v2-text-secondary"> / 남은 </span>
+                                        <span>{mapping.remainingSessions ?? Math.max(
+                                            0,
+                                            (mapping.totalSessions || mapping.package?.sessions || 0)
+                                                - (mapping.usedSessions || 0)
+                                        )}</span>
+                                        <span className="mg-v2-text-secondary"> / 총 </span>
                                         <span>{mapping.totalSessions || mapping.package?.sessions || 0}</span>
-                                        <span className="mg-v2-text-secondary">회기</span>
+                                        <span className="mg-v2-text-secondary">회</span>
                                     </div>
                                 </div>
                             </div>

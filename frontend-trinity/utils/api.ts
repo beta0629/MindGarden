@@ -353,7 +353,7 @@ export async function apiDelete<T>(endpoint: string): Promise<T> {
 export interface OnboardingCreateRequest {
   tenantId?: string | null; // 옵션: 신규 생성 시 null
   tenantName: string;
-  requestedBy: string; // 이메일 주소
+  requestedBy: string; // 인증된 휴대폰 번호(정규화) 또는 연락처 식별자
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   checklistJson?: string;
   businessType: string;
@@ -533,15 +533,61 @@ export async function getOnboardingRequest(
 }
 
 /**
- * 공개 온보딩 요청 조회 (이메일로 조회)
+ * 공개 온보딩 조회 연락처 (휴대폰·이메일 중 하나 이상)
+ */
+export interface PublicOnboardingContactQuery {
+  email?: string;
+  phone?: string;
+}
+
+function buildPublicOnboardingContactQuery(
+  contact: string | PublicOnboardingContactQuery
+): PublicOnboardingContactQuery {
+  if (typeof contact === 'string') {
+    const trimmed = contact.trim();
+    if (!trimmed) {
+      return {};
+    }
+    if (trimmed.includes('@')) {
+      return { email: trimmed };
+    }
+    return { phone: trimmed };
+  }
+  return {
+    ...(contact.email?.trim() ? { email: contact.email.trim() } : {}),
+    ...(contact.phone?.trim() ? { phone: contact.phone.trim() } : {}),
+  };
+}
+
+function toPublicOnboardingContactSearchParams(
+  contact: PublicOnboardingContactQuery
+): string {
+  const params = new URLSearchParams();
+  if (contact.email) {
+    params.set('email', contact.email);
+  }
+  if (contact.phone) {
+    params.set('phone', contact.phone);
+  }
+  return params.toString();
+}
+
+/**
+ * 공개 온보딩 요청 조회 (휴대폰·이메일로 조회, 둘 중 하나 이상 필수)
  */
 export async function getPublicOnboardingRequests(
-  email: string
+  contact: string | PublicOnboardingContactQuery
 ): Promise<OnboardingRequest[]> {
+  const query = buildPublicOnboardingContactQuery(contact);
+  if (!query.email && !query.phone) {
+    return [];
+  }
+
   try {
-    // apiGet은 이미 ApiResponse의 data를 추출하므로,
-    // response는 OnboardingRequest[] 배열을 직접 받음
-    const response = await apiGet<OnboardingRequest[]>(`/api/v1/onboarding/requests/public?email=${encodeURIComponent(email)}`);
+    const search = toPublicOnboardingContactSearchParams(query);
+    const response = await apiGet<OnboardingRequest[]>(
+      `/api/v1/onboarding/requests/public?${search}`
+    );
     
     // response가 배열인 경우
     if (Array.isArray(response)) {
@@ -582,33 +628,26 @@ export async function getPublicOnboardingRequests(
 }
 
 /**
- * 공개 온보딩 요청 상세 조회 (ID + 이메일로 본인 확인)
- * 
- * @param id 온보딩 요청 ID (UUID 문자열 - HEX 형식 또는 하이픈 포함 형식)
- * @param email 요청자 이메일
+ * 공개 온보딩 요청 상세 조회 (ID + 휴대폰·이메일로 본인 확인)
+ *
+ * @param id 온보딩 요청 ID
+ * @param contact 휴대폰·이메일 (둘 중 하나 이상)
  */
 export async function getPublicOnboardingRequest(
   id: string,
-  email: string
+  contact: string | PublicOnboardingContactQuery
 ): Promise<OnboardingRequest> {
+  const query = buildPublicOnboardingContactQuery(contact);
+  if (!query.email && !query.phone) {
+    throw new Error('휴대폰 번호 또는 이메일 중 하나를 입력해주세요.');
+  }
+
   try {
-    // UUID 형식 변환: HEX 형식 (32자)을 하이픈 포함 형식으로 변환
-    // 예: CB1057B0AF8A47A69CE80671405213F4 -> cb1057b0-af8a-47a6-9ce8-0671405213f4
-    let uuidString = id.trim();
-    if (uuidString.length === 32 && !uuidString.includes('-')) {
-      // HEX 형식을 UUID 형식으로 변환
-      uuidString = [
-        uuidString.substring(0, 8),
-        uuidString.substring(8, 12),
-        uuidString.substring(12, 16),
-        uuidString.substring(16, 20),
-        uuidString.substring(20, 32)
-      ].join('-').toLowerCase();
-    }
-    
-    // apiGet은 이미 ApiResponse의 data를 추출하므로,
-    // response는 OnboardingRequest 객체를 직접 받음
-    const response = await apiGet<OnboardingRequest>(`/api/v1/onboarding/requests/public/${encodeURIComponent(uuidString)}?email=${encodeURIComponent(email)}`);
+    const requestId = id.trim();
+    const contactSearch = toPublicOnboardingContactSearchParams(query);
+    const response = await apiGet<OnboardingRequest>(
+      `/api/v1/onboarding/requests/public/${encodeURIComponent(requestId)}?${contactSearch}`
+    );
     
     // response가 객체인 경우
     if (response && typeof response === 'object' && 'id' in response) {
@@ -992,6 +1031,44 @@ export async function verifyEmailCode(email: string, code: string): Promise<void
   if (!response.success) {
     throw new Error(response.message || '인증 코드가 올바르지 않습니다.');
   }
+}
+
+export interface SmsSendResult {
+  message?: string;
+  deliveryChannel?: string;
+}
+
+export interface SmsVerifyResult {
+  message?: string;
+  phoneNumber?: string;
+}
+
+/**
+ * 휴대폰 SMS 인증번호 발송 — AuthController#sendSmsCode
+ */
+export async function sendSmsVerificationCode(
+  phoneNumber: string,
+  purpose: string = TRINITY_CONSTANTS.OTP.PURPOSE_SIGNUP
+): Promise<SmsSendResult> {
+  const data = await apiPost<SmsSendResult>(TRINITY_CONSTANTS.API_ENDPOINTS.SMS_SEND, {
+    phoneNumber,
+    purpose,
+  });
+  return data ?? {};
+}
+
+/**
+ * 휴대폰 SMS 인증번호 검증 — AuthController#verifySmsCode
+ */
+export async function verifySmsCode(
+  phoneNumber: string,
+  verificationCode: string
+): Promise<SmsVerifyResult> {
+  const data = await apiPost<SmsVerifyResult>(TRINITY_CONSTANTS.API_ENDPOINTS.SMS_VERIFY, {
+    phoneNumber,
+    verificationCode,
+  });
+  return data ?? {};
 }
 
 /**

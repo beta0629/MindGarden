@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <style>
+      .stroke-main { fill: none; stroke: #3D5246; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .fill-main { fill: #3D5246; }
+      .bg-accent { fill: #F5F3EF; stroke: #3D5246; stroke-width: 2; }
+      .stroke-light { fill: none; stroke: #D4CFC8; stroke-width: 1; stroke-dasharray: 2 2; }
+    </style>
+  </defs>
+
+  <!-- Grid -->
+  <path d="M 8 12 H 40 M 8 20 H 40 M 8 28 H 40" class="stroke-light" />
+  
+  <!-- Axes -->
+  <path d="M 8 8 V 40 H 40" class="stroke-main" />
+
+  <!-- Bar Chart Background -->
+  <rect x="12" y="24" width="6" height="16" rx="1" class="bg-accent" />
+  <rect x="22" y="16" width="6" height="24" rx="1" class="bg-accent" />
+  <rect x="32" y="28" width="6" height="12" rx="1" class="bg-accent" />
+
+  <!-- Line Chart -->
+  <path d="M 8 32 L 15 20 L 25 24 L 35 12 L 40 16" class="stroke-main" stroke-width="2.5" />
+  
+  <!-- Data Points -->
+  <circle cx="15" cy="20" r="2.5" class="bg-accent" />
+  <circle cx="25" cy="24" r="2.5" class="bg-accent" />
+  <circle cx="35" cy="12" r="2.5" class="bg-accent" />
+</svg>

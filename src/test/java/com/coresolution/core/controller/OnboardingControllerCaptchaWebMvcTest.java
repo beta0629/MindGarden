@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.integrationtest.onboarding.OnboardingControllerMvcTestApplication;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
@@ -66,6 +67,9 @@ class OnboardingControllerCaptchaWebMvcTest {
 
     @MockBean
     private MindgardenSecurityProperties mindgardenSecurityProperties;
+
+    @MockBean
+    private OAuth2DomainUtil oauth2DomainUtil;
 
     private String buildCreateBody(boolean includeCaptchaToken, String captchaTokenValue) throws Exception {
         Map<String, Object> m = new LinkedHashMap<>();

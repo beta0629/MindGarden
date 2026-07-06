@@ -65,6 +65,11 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/
 import { ErpFilterToolbar, ErpSafeText, useErpSilentRefresh } from './common';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import {
+  buildViewModeStorageKey,
+  resolveViewModeStorageScope,
+  useViewModePreference
+} from '../../hooks/useViewModePreference';
+import {
   FM_PAGE_TITLE,
   FM_SESSION,
   FM_LOGIN,
@@ -506,7 +511,11 @@ const FinancialManagement = () => {
     navigate({ pathname: location.pathname, search: qs ? `?${qs}` : '' }, { replace: true });
   }, [filters.dateRange, filters.monthYm, location.pathname, location.search, navigate]);
   
-  const [transactionViewMode, setTransactionViewMode] = useState(FM_TRANSACTION_DEFAULT_VIEW_MODE);
+  const { viewMode: transactionViewMode, setViewMode: setTransactionViewMode } = useViewModePreference({
+    storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), 'erp.financial.transactions'),
+    defaultMode: FM_TRANSACTION_DEFAULT_VIEW_MODE,
+    allowedModes: FM_TRANSACTION_VIEW_MODE_OPTIONS.map((opt) => opt.value)
+  });
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState({

@@ -1,8 +1,10 @@
 /**
- * CoreFlowPipeline - 5단계 파이프라인 스타일
+ * CoreFlowPipeline — 5단계 파이프라인 (Phase 3 · Visual Pack §2.3)
+ * 전체 너비 균등 분배(Equal Distribution)
+ * Calm Forest --mg-v2-* 토큰 전용
  */
 .core-flow-pipeline {
-  margin-bottom: var(--mg-spacing-lg, 24px);
+  margin-bottom: var(--mg-v2-space-6, 24px);
   width: 100%;
   min-width: 0;
   overflow: visible;
@@ -11,41 +13,56 @@
 .core-flow-pipeline__steps {
   display: flex;
   align-items: stretch;
-  justify-content: flex-start; /* 좁은 화면: 왼쪽부터 스크롤 */
-  gap: var(--mg-layout-gap, 20px);
-  overflow-x: auto;
-  padding-block: var(--mg-spacing-md, 12px);
-  padding-inline: var(--mg-layout-page-padding, var(--mg-spacing-lg));
+  justify-content: stretch;
+  gap: var(--mg-spacing-sm);
+  padding-block: var(--mg-v2-space-3, 12px);
+  padding-inline: var(--mg-spacing-sm);
   width: 100%;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  -webkit-overflow-scrolling: touch;
 }
 
 .core-flow-pipeline__loading {
-  padding: var(--mg-spacing-lg, 24px);
-  color: var(--mg-text-secondary, var(--mg-gray-600));
-  font-size: var(--mg-font-size-sm, 0.875rem);
-}
-
-/* 데스크톱: 카드 균형 배치 (좌우 여백 비슷하게) */
-@media (min-width: 1280px) {
-  .core-flow-pipeline__steps {
-    justify-content: center;
-  }
+  padding: var(--mg-v2-space-6, 24px);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-sm);
 }
 
 .core-flow-pipeline__connector {
-  width: 24px;
-  min-width: 24px;
+  display: flex;
+  align-items: center;
+  width: var(--mg-v2-space-6, 24px);
+  min-width: var(--mg-v2-space-6, 24px);
   flex-shrink: 0;
-  border-top: 2px dashed var(--mg-border-default, var(--mg-border-dark));
-  margin-top: 40px;
+  position: relative;
 }
 
-/* 포커스 가능한 단계 카드: B0KlA 접근성 포커스 링 */
+.core-flow-pipeline__connector::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--mg-v2-color-border-default) 0,
+    var(--mg-v2-color-border-default) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
 .pipeline-step-card:focus-visible {
-  outline: 2px solid var(--ad-b0kla-green, var(--mg-focus-ring-color, var(--mg-success-600)));
+  outline: 2px solid var(--mg-v2-color-state-focus-ring);
   outline-offset: 2px;
+}
+
+/* Mobile — 가로 스크롤 */
+@media (max-width: 767px) {
+  .core-flow-pipeline__steps {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--mg-v2-space-3, 12px) var(--mg-v2-space-4, 16px);
+    gap: 0;
+  }
 }

@@ -48,6 +48,8 @@ class SecurityConfigCorsCallbackTest {
     private static final String APPLE_ORIGIN = "https://appleid.apple.com";
     private static final String SAFARI_NULL_ORIGIN = "null";
     private static final String EVIL_ORIGIN = "https://evil.example.com";
+    private static final String TRINITY_DEV_APEX_ORIGIN = "https://dev.e-trinity.co.kr";
+    private static final String TRINITY_PROD_APEX_ORIGIN = "https://e-trinity.co.kr";
 
     private MockMvc mockMvc;
 
@@ -137,6 +139,50 @@ class SecurityConfigCorsCallbackTest {
             .andExpect(content().string(containsString("Invalid CORS request")));
     }
 
+    @Test
+    @DisplayName("Trinity dev apex origin (dev.e-trinity.co.kr) 은 SMS API CORS 통과해야 한다")
+    void trinityDevApexOrigin_acceptsSmsSendPost() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/sms/send")
+                .header(HttpHeaders.ORIGIN, TRINITY_DEV_APEX_ORIGIN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"phone\":\"01012345678\"}"))
+            .andExpect(status().is(not(403)))
+            .andExpect(content().string(not(containsString("Invalid CORS request"))));
+    }
+
+    @Test
+    @DisplayName("Trinity prod apex origin (e-trinity.co.kr) 은 dev 프로파일 CORS 에서 거부되어야 한다")
+    void trinityProdApexOrigin_rejectedInDevProfile() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/sms/send")
+                .header(HttpHeaders.ORIGIN, TRINITY_PROD_APEX_ORIGIN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"phone\":\"01012345678\"}"))
+            .andExpect(status().isForbidden())
+            .andExpect(content().string(containsString("Invalid CORS request")));
+    }
+
+    @Test
+    @DisplayName("Trinity prod apex origin (e-trinity.co.kr) 은 prod 프로파일 CORS 통과해야 한다")
+    void trinityProdApexOrigin_acceptsSmsSendPostInProdProfile() throws Exception {
+        SecurityConfig securityConfig = new SecurityConfig(null, null, null, null);
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("prod");
+        Field environmentField = SecurityConfig.class.getDeclaredField("environment");
+        environmentField.setAccessible(true);
+        environmentField.set(securityConfig, env);
+
+        MockMvc prodMockMvc = MockMvcBuilders.standaloneSetup(new DummyController())
+                .addFilter(new CorsFilter(securityConfig.corsConfigurationSource()))
+                .build();
+
+        prodMockMvc.perform(post("/api/v1/auth/sms/send")
+                .header(HttpHeaders.ORIGIN, TRINITY_PROD_APEX_ORIGIN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"phone\":\"01012345678\"}"))
+            .andExpect(status().is(not(403)))
+            .andExpect(content().string(not(containsString("Invalid CORS request"))));
+    }
+
     /**
      * 회귀 검증용 더미 컨트롤러. 컨트롤러 도달 여부보다는 {@link CorsFilter} 의 거부/통과만이 본 테스트의 관심사다.
      *
@@ -181,6 +227,12 @@ class SecurityConfigCorsCallbackTest {
         @PostMapping("/api/v1/admin/users")
         @ResponseBody
         String adminUsersPost() {
+            return "{\"ok\":true}";
+        }
+
+        @PostMapping("/api/v1/auth/sms/send")
+        @ResponseBody
+        String smsSendPost() {
             return "{\"ok\":true}";
         }
     }

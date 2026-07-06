@@ -23,9 +23,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: var(--mg-v2-grid-max-width);
+  max-width: var(--mg-v2-grid-container-xl);
   margin: 0 auto;
-  padding: var(--mg-v2-space-3) var(--mg-v2-space-6);
+  /* Spec §3.1 PublicNavBar: 고정 높이 72px */
+  min-height: var(--mg-v2-public-header-height);
+  padding: 0 var(--mg-v2-space-6);
   gap: var(--mg-v2-space-4);
 }
 

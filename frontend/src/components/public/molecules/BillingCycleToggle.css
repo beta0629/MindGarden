@@ -1,0 +1,89 @@
+/**
+ * BillingCycleToggle CSS — mg-v2-* 토큰 한정
+ *
+ * Spec §3.2 / §6: Pill 형태, Active 시 그라데이션 배경 + 텍스트 반전.
+ * 다크 모드 자동 지원.
+ *
+ * @author CoreSolution
+ * @since 2026-06-16
+ */
+
+.mg-v2-billing-cycle-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-1);
+  background-color: var(--mg-v2-pricing-toggle-bg);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-pricing-toggle-border);
+  border-radius: var(--mg-v2-radius-pill);
+}
+
+.mg-v2-billing-cycle-toggle__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-secondary);
+  background-color: transparent;
+  border: none;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-5);
+  border-radius: var(--mg-v2-radius-pill);
+  cursor: pointer;
+  transition:
+    background-color var(--mg-v2-transition-duration-normal) var(--mg-v2-transition-easing-default),
+    color var(--mg-v2-transition-duration-normal) var(--mg-v2-transition-easing-default);
+}
+
+.mg-v2-billing-cycle-toggle__option:hover {
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-billing-cycle-toggle__option:focus-visible {
+  outline: var(--mg-v2-border-width-focus) solid var(--mg-v2-color-border-focus);
+  outline-offset: var(--mg-v2-space-1);
+}
+
+.mg-v2-billing-cycle-toggle__option--active {
+  color: var(--mg-v2-pricing-toggle-active-text);
+  background-color: var(--mg-v2-pricing-toggle-active-bg);
+  background-image: linear-gradient(
+    135deg,
+    var(--mg-v2-color-primary-main),
+    var(--mg-v2-color-primary-light)
+  );
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.mg-v2-billing-cycle-toggle__option--active:hover {
+  color: var(--mg-v2-pricing-toggle-active-text);
+}
+
+.mg-v2-billing-cycle-toggle__discount-badge {
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  letter-spacing: var(--mg-v2-font-letter-spacing-wide);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-pill);
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.mg-v2-billing-cycle-toggle__option:not(.mg-v2-billing-cycle-toggle__option--active)
+  .mg-v2-billing-cycle-toggle__discount-badge {
+  background-color: var(--mg-v2-color-state-hover);
+  color: var(--mg-v2-color-primary-main);
+}
+
+@media (max-width: 767px) {
+  .mg-v2-billing-cycle-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mg-v2-billing-cycle-toggle__option {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  }
+}

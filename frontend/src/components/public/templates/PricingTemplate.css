@@ -1,7 +1,12 @@
 /**
- * PricingTemplate CSS — mg-v2-* 토큰 한정
+ * PricingTemplate CSS — mg-v2-* 토큰 한정 (Refine v2)
  *
- * Phase C-Refine: 레이아웃 간격 확대, 반응형 분기점, 모바일 순서 보정
+ * Spec §2 / §3 / §7 / §8:
+ *   - Container max 1200px
+ *   - Eyebrow + H1(48px) + Subtitle + BillingCycleToggle
+ *   - 3-카드 그리드 24px gap, Tablet 2x1, Mobile 1열
+ *   - 하단: Compare Toggle + Matrix (펼침/접힘) + TrustBadges 행
+ *
  * 다크 모드 자동 지원 (토큰 기반)
  * 하드코딩 0 · CSS override 0 · !important 0 · 인라인 style 0
  *
@@ -16,25 +21,40 @@
   width: 100%;
   max-width: var(--mg-v2-grid-container-xl);
   margin: 0 auto;
-  padding: var(--mg-v2-space-4) var(--mg-v2-grid-margin-desktop);
+  padding: var(--mg-v2-space-12) var(--mg-v2-grid-margin-desktop);
 }
 
 /* ================================================================
-   HEADER
+   HEADER (Eyebrow + Title + Subtitle + Cycle Toggle)
    ================================================================ */
 .mg-v2-pricing-template__header {
   text-align: center;
   margin-bottom: var(--mg-v2-pricing-header-gap);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-pricing-template__eyebrow {
+  display: inline-block;
+  font-family: var(--mg-v2-font-family-base);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-pricing-eyebrow-color);
+  letter-spacing: var(--mg-v2-pricing-eyebrow-letter-spacing);
+  text-transform: uppercase;
 }
 
 .mg-v2-pricing-template__title {
   font-family: var(--mg-v2-font-family-base);
+  /* Spec §3.2 / §5: H1 약 48px (3rem) — display 토큰 = 3rem */
   font-size: var(--mg-v2-font-size-display);
   font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-v2-color-text-primary);
   line-height: var(--mg-v2-font-line-height-tight);
   letter-spacing: var(--mg-v2-font-letter-spacing-tight);
-  margin-bottom: var(--mg-v2-space-4);
+  margin: 0;
 }
 
 .mg-v2-pricing-template__subtitle {
@@ -42,18 +62,24 @@
   font-size: var(--mg-v2-font-size-body-lg);
   color: var(--mg-v2-color-text-secondary);
   line-height: var(--mg-v2-font-line-height-body);
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: var(--mg-v2-grid-container-md);
+  margin: 0;
+}
+
+.mg-v2-pricing-template__cycle-toggle {
+  margin-top: var(--mg-v2-space-4);
 }
 
 /* ================================================================
-   CARDS GRID — 3-column desktop, 32px gap
+   CARDS GRID — 3-column desktop, 24px gap (Spec §3 / §7)
    ================================================================ */
 .mg-v2-pricing-template__cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--mg-v2-pricing-card-gap);
+  /* Pro 카드 Y-offset 으로 인한 헤더 영역 확보 */
   align-items: start;
+  padding-top: var(--mg-v2-space-6);
   margin-bottom: var(--mg-v2-space-16);
 }
 
@@ -75,10 +101,36 @@
 }
 
 /* ================================================================
-   FEATURE MATRIX SECTION
+   BOTTOM 영역 (Compare + Matrix + Trust Badges)
    ================================================================ */
-.mg-v2-pricing-template__matrix {
+.mg-v2-pricing-template__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-v2-space-12);
   margin-top: var(--mg-v2-space-4);
+}
+
+.mg-v2-pricing-template__compare {
+  display: flex;
+  justify-content: center;
+}
+
+.mg-v2-pricing-template__matrix {
+  width: 100%;
+  margin: 0;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition:
+    opacity var(--mg-v2-transition-duration-normal) var(--mg-v2-transition-easing-default),
+    max-height var(--mg-v2-transition-duration-slow) var(--mg-v2-transition-easing-default);
+}
+
+.mg-v2-pricing-template__matrix--expanded {
+  opacity: 1;
+  max-height: none;
+  overflow: visible;
 }
 
 .mg-v2-pricing-template__matrix-title {
@@ -90,19 +142,28 @@
   margin-bottom: var(--mg-v2-space-8);
 }
 
+.mg-v2-pricing-template__trust {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: var(--mg-v2-space-8);
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
+}
+
 /* ================================================================
-   RESPONSIVE — Tablet (768px ~ 1023px): 2-column
+   RESPONSIVE — Tablet (768px ~ 1023px) — Spec §7
+   상단 2 (Starter, Pro), 하단 1 (Enterprise)
    ================================================================ */
 @media (max-width: 1023px) {
   .mg-v2-pricing-template {
-    padding: var(--mg-v2-space-4) var(--mg-v2-grid-margin-tablet);
+    padding: var(--mg-v2-space-10) var(--mg-v2-grid-margin-tablet);
   }
 
   .mg-v2-pricing-template__cards {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* Popular card (highlighted) spans full width on 2-col → center */
+  /* Enterprise (3번째) → 다음 줄 중앙 정렬 */
   .mg-v2-pricing-template__card-wrapper:nth-child(3) {
     grid-column: 1 / -1;
     max-width: 50%;
@@ -111,27 +172,29 @@
 }
 
 /* ================================================================
-   RESPONSIVE — Mobile (767px 이하): 1-column, Popular 카드 최상단
+   RESPONSIVE — Mobile (≤767px) — Spec §7
+   1열 스택, Pro 카드 최상단
    ================================================================ */
 @media (max-width: 767px) {
   .mg-v2-pricing-template {
-    padding: var(--mg-v2-space-4) var(--mg-v2-grid-margin-mobile);
+    padding: var(--mg-v2-space-8) var(--mg-v2-grid-margin-mobile);
   }
 
   .mg-v2-pricing-template__header {
-    margin-bottom: var(--mg-v2-space-8);
+    margin-bottom: var(--mg-v2-space-10);
   }
 
   .mg-v2-pricing-template__title {
-    font-size: var(--mg-v2-font-size-h2);
+    font-size: var(--mg-v2-refine-font-size-landing-mobile-h1, 2.25rem);
   }
 
   .mg-v2-pricing-template__cards {
     grid-template-columns: 1fr;
     gap: var(--mg-v2-space-6);
+    padding-top: 0;
   }
 
-  /* Popular (highlighted = 2nd child) → order -1 to move to top */
+  /* Pro 카드(2번째) → 모바일 최상단 */
   .mg-v2-pricing-template__card-wrapper:nth-child(2) {
     order: -1;
   }
@@ -142,5 +205,9 @@
 
   .mg-v2-pricing-template__matrix-title {
     font-size: var(--mg-v2-font-size-h4);
+  }
+
+  .mg-v2-pricing-template__bottom {
+    gap: var(--mg-v2-space-8);
   }
 }

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trinity Logo Concepts — v2 Iteration</title>
+  <style>
+    :root {
+      --navy: #1a2233;
+      --cream: #faf9f7;
+      --green: #3d5246;
+      --muted: #5c6b61;
+      --border: #d8dde3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Noto Sans KR", system-ui, sans-serif;
+      background: #eef1f4;
+      color: var(--navy);
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    header {
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .section-title {
+      margin: 3rem 0 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .concept {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .concept__head {
+      margin-bottom: 1rem;
+    }
+    .concept__label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 0.25rem;
+    }
+    .concept__title {
+      margin: 0 0 0.35rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+    .concept__desc {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 640px) {
+      .compare { grid-template-columns: 1fr; }
+    }
+    .panel {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .panel__tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 0.4rem 0.65rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .panel--light .panel__tag {
+      background: var(--cream);
+      color: var(--muted);
+    }
+    .panel--dark .panel__tag {
+      background: #141b28;
+      color: #8c9eab;
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .panel__canvas {
+      padding: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+    }
+    .panel--light .panel__canvas { background: var(--cream); color: var(--navy); }
+    .panel--dark .panel__canvas { background: var(--navy); color: #fff; }
+    .panel__canvas img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .note {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    .mockup {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 2rem;
+    }
+    .mockup h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.125rem;
+    }
+    .mockup p {
+      margin: 0 0 1rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .mockup img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Trinity Logo Concepts — v2 Iteration</h1>
+      <p>B2B SaaS 온보딩 맥락에 맞춘 3가지 새 컨셉 (E1, E2, E3) 제안 및 기존 v1 비교</p>
+    </header>
+
+    <h2 class="section-title">v2 Concepts (New)</h2>
+
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept E1</span>
+        <h2 class="concept__title">Refined Wordmark</h2>
+        <p class="concept__desc">Inter 기반의 깔끔한 e-trinity 워드마크 + 액센트 닷. 가장 직관적이고 심플한 형태.</p>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__tag">Light page (#FAF9F7)</div>
+          <div class="panel__canvas">
+            <img src="v2/trinity-logo-v2-concept-e1.svg" alt="Concept E1 — Light" width="280" height="60" />
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__tag">Dark page (#1A2233)</div>
+          <div class="panel__canvas">
+            <img src="v2/trinity-logo-v2-concept-e1.svg" alt="Concept E1 — Dark" width="280" height="60" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept E2</span>
+        <h2 class="concept__title">Abstract Knot / Link</h2>
+        <p class="concept__desc">멀티테넌트 연결을 상징하는 끊기지 않는 선(Infinity/Knot) + Trinity 워드마크.</p>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__tag">Light page (#FAF9F7)</div>
+          <div class="panel__canvas">
+            <img src="v2/trinity-logo-v2-concept-e2.svg" alt="Concept E2 — Light" width="280" height="60" />
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__tag">Dark page (#1A2233)</div>
+          <div class="panel__canvas">
+            <img src="v2/trinity-logo-v2-concept-e2.svg" alt="Concept E2 — Dark" width="280" height="60" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept E3</span>
+        <h2 class="concept__title">Portal Frame</h2>
+        <p class="concept__desc">온보딩 게이트웨이를 은유하는 브라켓 형태의 포털 프레임 + e-trinity.</p>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__tag">Light page (#FAF9F7)</div>
+          <div class="panel__canvas">
+            <img src="v2/trinity-logo-v2-concept-e3.svg" alt="Concept E3 — Light" width="280" height="60" />
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__tag">Dark page (#1A2233)</div>
+          <div class="panel__canvas">
+            <img src="v2/trinity-logo-v2-concept-e3.svg" alt="Concept E3 — Dark" width="280" height="60" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title">v1 Concepts (Archived)</h2>
+
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept A</span>
+        <h2 class="concept__title">Trinity Triad</h2>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__canvas">
+            <img src="trinity-logo-concept-a-triad.svg" alt="Concept A" width="400" height="120" />
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__canvas">
+            <img src="trinity-logo-concept-a-triad.svg" alt="Concept A" width="400" height="120" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept B</span>
+        <h2 class="concept__title">Enterprise Wordmark</h2>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__canvas">
+            <img src="trinity-logo-concept-b-wordmark.svg" alt="Concept B" width="400" height="120" />
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__canvas">
+            <img src="trinity-logo-concept-b-wordmark.svg" alt="Concept B" width="400" height="120" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept C</span>
+        <h2 class="concept__title">Gateway Mark</h2>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__canvas">
+            <img src="trinity-logo-concept-c-gateway.svg" alt="Concept C" width="400" height="120" />
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__canvas">
+            <img src="trinity-logo-concept-c-gateway.svg" alt="Concept C" width="400" height="120" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="concept">
+      <div class="concept__head">
+        <span class="concept__label">Concept D</span>
+        <h2 class="concept__title">Monogram eT</h2>
+      </div>
+      <div class="compare">
+        <div class="panel panel--light">
+          <div class="panel__canvas">
+            <img src="trinity-logo-concept-d-monogram.svg" alt="Concept D" width="400" height="120" />
+          </div>
+        </div>
+        <div class="panel panel--dark">
+          <div class="panel__canvas">
+            <img src="trinity-logo-concept-d-monogram.svg" alt="Concept D" width="400" height="120" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup">
+      <h2>온보딩 Mockup</h2>
+      <p>좌측 Dark Navy 패널(40%) 상단 로고 슬롯 맥락 — UI 시뮬레이션</p>
+      <img src="trinity-onboarding-mockup.png" alt="Trinity onboarding split mockup" />
+    </section>
+  </div>
+</body>
+</html>

@@ -396,31 +396,6 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * ACTIVE 매핑 존재 시 신규 매칭 생성 차단 (회기 추가 경로 안내).
-     *
-     * @since 2026-06-17
-     */
-    @ExceptionHandler(ActiveMappingExistsException.class)
-    public ResponseEntity<Map<String, Object>> handleActiveMappingExists(
-            ActiveMappingExistsException e, HttpServletRequest request) {
-        log.info("[ACTIVE_MAPPING_EXISTS] mappingId={} message={} path={}",
-                e.getMappingId(), e.getMessage(), request.getRequestURI());
-
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("success", false);
-        body.put("code", ActiveMappingExistsException.ERROR_CODE);
-        body.put("mappingId", e.getMappingId());
-        body.put("message", e.getMessage());
-        body.put("errorCode", ActiveMappingExistsException.ERROR_CODE);
-        body.put("status", HttpStatus.CONFLICT.value());
-        body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
-        body.put("method", request.getMethod());
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-    }
-
-    /**
      * lifecycle §3.6 전이 그래프 위반 — HTTP 409 (시스템 오류 아님).
      */
     @ExceptionHandler(IllegalStateTransitionException.class)

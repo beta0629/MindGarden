@@ -16,6 +16,7 @@
 |------|------|
 | [관리자 대시보드 모니터링 섹션](./ADMIN_DASHBOARD_MONITORING_DESIGN_SPEC.md) | AI·보안 모니터링, 시스템 모니터링 두 Organism 섹션의 UI/UX·레이아웃·비주얼 설계 스펙. |
 | [구현 참조: 관리자 대시보드 모니터링](./ADMIN_DASHBOARD_MONITORING.md) | 위 스펙의 구현 컴포넌트 경로 및 디자인 스펙 링크 요약. |
+| [통합일정 사이드바 Compact Row](./SCREEN_SPEC_INTEGRATED_SCHEDULE_COMPACT_ROW.md) | IntegratedMatchingSchedule 사이드바 밀도 토글·Compact Row 비주얼 handoff (V3+ Seq 28f). |
 
 ---
 

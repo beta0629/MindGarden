@@ -19,6 +19,8 @@ export const ADMIN_ROUTES = {
     SESSIONS: '/admin/sessions',
     USERS: '/admin/user-management',
     USER_MANAGEMENT: '/admin/user-management',
+    /** 휴면 사용자(DORMANT) 모니터링 — Phase 4 lifecycle */
+    DORMANT_USERS: '/admin/lifecycle/dormant-users',
     CONSULTANTS: '/admin/consultants',
     /** @deprecated redirect to /admin/user-management?type=consultant */
     CONSULTANT_COMPREHENSIVE: '/admin/consultant-comprehensive',

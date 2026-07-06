@@ -58,7 +58,8 @@ const DEFAULT_MENU_ITEMS = [
     end: false,
     children: [
       { to: ADMIN_ROUTES.USER_MANAGEMENT, icon: 'USER', label: '사용자 목록', end: true },
-      { to: '/admin/accounts', icon: 'BOOK_USER', label: '계좌 관리', end: true }
+      { to: '/admin/accounts', icon: 'BOOK_USER', label: '계좌 관리', end: true },
+      { to: ADMIN_ROUTES.DORMANT_USERS, icon: 'MOON', label: '휴면 사용자', end: true }
     ]
   },
   {

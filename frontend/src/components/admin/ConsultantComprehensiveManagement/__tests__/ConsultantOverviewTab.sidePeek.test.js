@@ -31,7 +31,11 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('../../../ui/Card/ConsultantCard', () => ({
   __esModule: true,
-  default: () => null
+  default: ({ consultant, onCardClick }) => (
+    <button type="button" onClick={onCardClick}>
+      {consultant?.name}
+    </button>
+  )
 }));
 
 import ConsultantOverviewTab from '../ConsultantOverviewTab';
@@ -40,6 +44,7 @@ import ConsultantSidePeekContent from '../molecules/ConsultantSidePeekContent';
 import { SIDE_PEEK_SHELL_REGION_PEEK } from '../../../../constants/sidePeekShellConstants';
 import { maskEncryptedDisplay, getUserStatusKoreanNameSync } from '../../../../utils/codeHelper';
 import { CONSULTANT_COMP_SIDE_PEEK } from '../../../../constants/consultantComprehensiveStrings';
+import { buildManyConsultants, G2_ROW_VISIBILITY_MIN } from '../../__tests__/userManagementGateFixtures';
 
 const SAMPLE_CONSULTANT = {
   id: 201,
@@ -52,7 +57,7 @@ const SAMPLE_CONSULTANT = {
   currentClients: 3
 };
 
-const ConsultantPeekHarness = ({ consultants = [SAMPLE_CONSULTANT] }) => {
+const ConsultantPeekHarness = ({ consultants = [SAMPLE_CONSULTANT], viewMode = 'list' }) => {
   const [peekConsultant, setPeekConsultant] = useState(null);
   const handleConsultantPeek = useCallback((consultant) => {
     setPeekConsultant(consultant);
@@ -69,7 +74,7 @@ const ConsultantPeekHarness = ({ consultants = [SAMPLE_CONSULTANT] }) => {
           onConsultantPeek={handleConsultantPeek}
           onEditConsultant={jest.fn()}
           onDeleteConsultant={jest.fn()}
-          viewMode="list"
+          viewMode={viewMode}
         />
       </div>
       <SidePeekShell
@@ -147,5 +152,64 @@ describe('ConsultantOverviewTab — SidePeekShell stub', () => {
 
     expect(container.querySelector('.mg-v2-list-block__grid--small')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  test('smallCard 카드 클릭 → peek 오픈', async() => {
+    render(<ConsultantPeekHarness consultants={[SAMPLE_CONSULTANT]} viewMode="smallCard" />);
+
+    await act(async() => {
+      fireEvent.click(screen.getByRole('button', { name: /김상담/ }));
+    });
+
+    expect(screen.getByRole('complementary', { name: '김상담 상세' })).toBeInTheDocument();
+  });
+
+  test(`list ${G2_ROW_VISIBILITY_MIN}+ row 이름 가시성`, () => {
+    const consultants = buildManyConsultants();
+    render(
+      <ConsultantOverviewTab
+        consultants={consultants}
+        onConsultantPeek={jest.fn()}
+        onEditConsultant={jest.fn()}
+        onDeleteConsultant={jest.fn()}
+        viewMode="list"
+      />
+    );
+
+    consultants.forEach((consultant) => {
+      expect(screen.getByText(consultant.name)).toBeInTheDocument();
+    });
+  });
+
+  test(`smallCard ${G2_ROW_VISIBILITY_MIN}+ row 이름 가시성`, () => {
+    const consultants = buildManyConsultants();
+    render(
+      <ConsultantOverviewTab
+        consultants={consultants}
+        onConsultantPeek={jest.fn()}
+        onEditConsultant={jest.fn()}
+        onDeleteConsultant={jest.fn()}
+        viewMode="smallCard"
+      />
+    );
+
+    consultants.forEach((consultant) => {
+      expect(screen.getByRole('button', { name: new RegExp(consultant.name) })).toBeInTheDocument();
+    });
+  });
+
+  test('viewMode 전환 — smallCard → list 테이블 렌더', () => {
+    const props = {
+      consultants: [SAMPLE_CONSULTANT],
+      onConsultantPeek: jest.fn(),
+      onEditConsultant: jest.fn(),
+      onDeleteConsultant: jest.fn()
+    };
+
+    const { container, rerender } = render(<ConsultantOverviewTab {...props} />);
+    expect(container.querySelector('.mg-v2-list-block__grid--small')).toBeInTheDocument();
+
+    rerender(<ConsultantOverviewTab {...props} viewMode="list" />);
+    expect(screen.getByRole('table')).toBeInTheDocument();
   });
 });

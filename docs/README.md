@@ -65,6 +65,7 @@
 - [QUICK_WILDCARD_TEST](./troubleshooting/QUICK_WILDCARD_TEST.md)
 
 ### Project Management (프로젝트 관리)
+- **[네이버 플레이스(스마트플레이스) 예약 연동](./project-management/NAVER_PLACE_BOOKING_INTEGRATION_ROADMAP.md)** — Phase 0 제휴 블로커~양방향 동기화 로드맵·서브에이전트 분배. [ADR-0004](./adr/adr-0004-external-booking-channel-naver-place-adapter.md), [연동 스펙](./standards/EXTERNAL_BOOKING_CHANNEL_ADAPTER_SPEC.md), [제휴·운영 체크리스트](./project-management/NAVER_PLACE_BOOKING_PARTNERSHIP_ORCHESTRATION_CHECKLIST.md), [설정 UI 요구](./planning/NAVER_PLACE_BOOKING_SETTINGS_UI_REQUIREMENTS.md)
 - **[온라인 결제·카탈로그·체크아웃 기획 (상담료·TCI·MMPI 등)](./project-management/ONLINE_PAYMENT_CATALOG_CHECKOUT_SPEC.md)** — 쇼핑몰형 PLP/PDP·주문·PG·ERP·테넌트·심리검사 fulfillment, 로드맵·위임 배분
 - **[웹 전용 어드민 · 앱 범위 및 체크아웃 연계 기능](./project-management/WEB_ADMIN_APP_SCOPE_AND_CHECKOUT_FEATURES.md)** — 어드민 **본체는 웹**·Expo는 내담자/상담사(추후 **제한적** 앱 어드민 §2.1), WA/EA 기능 ID, ONLINE P0~P5 채널 매핑
 - **[포인트 리워드 — 적립·사용(체크아웃)·환불 기획](./project-management/POINT_REWARD_EARN_AND_REDEEM_SPEC.md)** — hold·멱등·테넌트 정책·ERP 옵션 A/B·어드민·core-designer/coder/tester 배분

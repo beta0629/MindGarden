@@ -10,30 +10,14 @@
  */
 // @ts-ignore - Playwright 패키지 설치 후 타입 오류 해결됨
 import { test, expect, Page } from '@playwright/test';
-import { getMindGardenWebLogin } from '../../helpers/erpAuth';
-
-const REACT_130_OR_INVALID_CHILD =
-  /Minified React error #130|Objects are not valid as a React child|invariant=130/i;
-
-function attachRuntimeErrorCollectors(page: Page, bucket: string[]) {
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      bucket.push(`[console.error] ${msg.text()}`);
-    }
-  });
-  page.on('pageerror', (err) => {
-    const stack = err.stack ? '\n' + err.stack : '';
-    bucket.push('[pageerror] ' + err.message + stack);
-  });
-}
-
-async function adminLogin(page: Page, username: string, password: string) {
-  await page.goto('/login');
-  await page.fill('input[name="username"], input[type="email"]', username);
-  await page.fill('input[name="password"], input[type="password"]', password);
-  await page.click('button[type="submit"], button:has-text("로그인")');
-  await page.waitForURL(/dashboard|admin|home/, { timeout: 10000 });
-}
+import {
+  loginErpUser,
+  skipWhenCiMissingE2eCredentials
+} from '../../helpers/erpAuth';
+import {
+  REACT_130_OR_INVALID_CHILD,
+  attachRuntimeErrorCollectors
+} from '../../helpers/react130ConsoleGate';
 
 /** SPA에서 의미 있는 본문 영역이 보이고 body가 완전 공백이 아닌지 확인 */
 async function assertNotBlankScreen(page: Page) {
@@ -66,15 +50,51 @@ async function gotoAdminPathOptional403(
 }
 
 test.describe('관리자 — 통합 사용자 관리 콘솔 스모크 (React #130 감지)', () => {
-  const { username: TEST_USERNAME, password: TEST_PASSWORD } = getMindGardenWebLogin();
-
   let collectedErrors: string[] = [];
 
-  test.beforeEach(async ({ page }: { page: Page }) => {
+  const USER_MGMT_PATHS = [
+    '/admin/user-management?type=client',
+    '/admin/user-management?type=consultant',
+    '/admin/user-management?type=staff',
+  ] as const;
+
+  test.beforeEach(async ({ page }, testInfo) => {
+    skipWhenCiMissingE2eCredentials();
     collectedErrors = [];
     attachRuntimeErrorCollectors(page, collectedErrors);
-    await adminLogin(page, TEST_USERNAME, TEST_PASSWORD);
+    await loginErpUser(page, testInfo, { timeoutMs: 25_000 });
   });
+
+  for (const viewport of [
+    { label: '1280', width: 1280, height: 800 },
+    { label: '768', width: 768, height: 1024 },
+  ]) {
+    test(`${viewport.label}px viewport — 3화면 blank·#130 없음`, async ({ page }: { page: Page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+      for (const path of USER_MGMT_PATHS) {
+        const outcome = await gotoAdminPathOptional403(page, path);
+        if (outcome === 'skipped') {
+          test.info().annotations.push({
+            type: 'note',
+            description: `HTTP 403 — 경로 건너뜀: ${path}`,
+          });
+          continue;
+        }
+        await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+        await page.waitForTimeout(1500);
+        await assertNotBlankScreen(page);
+      }
+
+      const reactHits = collectedErrors.filter((line) =>
+        REACT_130_OR_INVALID_CHILD.test(line)
+      );
+      expect(
+        reactHits,
+        `React #130 또는 invalid child (${viewport.label}px):\n${reactHits.join('\n---\n')}`
+      ).toEqual([]);
+    });
+  }
 
   test('사용자 관리 진입·pill 전환·콘솔 검사', async ({ page }: { page: Page }) => {
     const outcome = await gotoAdminPathOptional403(

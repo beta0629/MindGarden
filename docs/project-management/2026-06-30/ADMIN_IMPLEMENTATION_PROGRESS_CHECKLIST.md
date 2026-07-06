@@ -59,7 +59,7 @@
 | V1-coder | 16 | G2-03 스태ff default=list + SidePeekShell | coder | designer | Seq 13 ☑ | Primary1+overflow | `9a8ae8659` | ☑ done | route: `/admin/user-management?type=staff` |
 | V1-coder | 16b | G2 smallCard default + 공통 로딩바 | coder | designer | Seq 14~16 | smallCard default | `9e68fd248` | ☑ done | prod |
 | V1-tester | 17 | G2 P0 3화면 QA gate (×3 또는 1 suite) | tester | tester | Seq 14~16 | 20+ row; default=list+SidePeek; **viewMode persist → V3+ 후속(구현 제외)** | good: `4a2cd67a0` | ☑ done | Jest 26 PASS · E2E smoke 3 PASS (1280/768) · `userManagement.defaultViewMode`·sidePeek·gateFixtures |
-| V1-deploy-dev | 18 | develop 반영 | deployer | deployer | Seq 17 ☑ | run ID | — | ◐ in_progress | dev run: _(pending)_ |
+| V1-deploy-dev | 18 | develop 반영 | deployer | deployer | Seq 17 ☑ | run ID | — | ☑ done | dev run: `28781477470` · ref main workflow_dispatch |
 | V1-user | 19 | 사용자 검수 | 사용자 | 사용자 | Seq 18 ☑ | sign-off | — | ☑ done | 2026-07-02 사용자 prod 반영 요청 |
 | V2-design | 20 | G1-04 매칭 목록 table-default handoff | designer | designer | V1-user ☑ | MappingListBlock | — | ◐ waived | pilot: PER_PAGE G1-04 + handoff §3 |
 | V2-coder | 21 | G1-04 default=table + peek | coder | designer | Seq 20 ☑ | card optional | `e35ab2410` | ☑ done | route: `/admin/mapping-management` |
@@ -93,7 +93,7 @@
 | G3 Seq 22 (ERP FinancialManagement table-default) | 2026-07-06 | ☑ FE prod `28772941474` · main `4a2cd67a0` (cherry-pick `b6ce620ff`) · bundle `main.fbf474e5.js` · **사용자 검수 ☑** |
 | V1 G2 QA gate (Seq 17) | 2026-07-06 | ☑ Jest 26 · E2E 3 · good `4a2cd67a0` · viewMode persist → V3+ 후속 |
 | V1 착수 | 2026-07-01 | ☑ Seq 14~16 pilot |
-| **다음 (pending)** | — | **Seq 18** develop FE dev deploy |
+| **다음 (pending)** | — | **V3+ Seq 28+** (viewMode persist 등) |
 
 ---
 
@@ -120,3 +120,4 @@
 | 2026-07-06 | 22 | G3 ERP `b6ce620ff` prod 미반영 명시 (develop only) — pending prod cherry-pick |
 | 2026-07-06 | 22 | G3 ERP FinancialManagement table-default prod ☑ — cherry-pick `b6ce620ff` → main `4a2cd67a0` · FE prod `28772941474` · `/erp/financial` bundle `main.fbf474e5.js` · **사용자 검수 ☑** |
 | 2026-07-06 | 17 | G2 P0 3화면 QA gate ☑ — Jest 26 · E2E smoke 3 (1280/768) · good `4a2cd67a0` · viewMode persist 갭 V3+ 후속 기록 |
+| 2026-07-06 | 18 | V1 develop FE dev deploy ☑ — run `28781477470` · ref main workflow_dispatch |

@@ -5,7 +5,7 @@
  * @since 2026-06-27
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -13,12 +13,23 @@ import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
+  buildViewModeStorageKey,
+  resolveViewModeStorageScope,
+  useViewModePreference
+} from '../../../../../hooks/useViewModePreference';
+import {
   VIEW_FILTER_NEW,
   VIEW_FILTER_REMAINING,
   VIEW_FILTER_ALL,
   VIEW_FILTER_NEW_LABEL,
   STATUS_FILTER_OPTIONS
 } from '../../constants/integratedScheduleSidebarFilterConstants';
+import {
+  SIDEBAR_DENSITY_COMFORTABLE,
+  SIDEBAR_DENSITY_MODES,
+  SIDEBAR_DENSITY_PAGE_ID
+} from '../../constants/integratedScheduleSidebarDensityConstants';
+import DensityToggle from '../molecules/DensityToggle';
 import MatchingScheduleList from './MatchingScheduleList';
 
 const MatchingScheduleSidebar = ({
@@ -41,14 +52,28 @@ const MatchingScheduleSidebar = ({
   onSessionExtension,
   approveProcessing,
   cancelPendingProcessing,
-  cancelTargetMappingId
+  cancelTargetMappingId,
+  activePeekMappingId
 }) => {
   const { t } = useTranslation();
+  const densityStorageKey = useMemo(
+    () => buildViewModeStorageKey(resolveViewModeStorageScope(), SIDEBAR_DENSITY_PAGE_ID),
+    []
+  );
+  const { viewMode: sidebarDensity, setViewMode: setSidebarDensity } = useViewModePreference({
+    storageKey: densityStorageKey,
+    defaultMode: SIDEBAR_DENSITY_COMFORTABLE,
+    allowedModes: SIDEBAR_DENSITY_MODES
+  });
 
   return (
     <aside
       className={`integrated-schedule__sidebar${
         isCollapsed ? ' integrated-schedule__sidebar--collapsed' : ''
+      }${
+        sidebarDensity !== SIDEBAR_DENSITY_COMFORTABLE
+          ? ' integrated-schedule__sidebar--compact'
+          : ''
       }`}
       aria-label="매칭 목록 패널"
     >
@@ -96,8 +121,9 @@ const MatchingScheduleSidebar = ({
         className="integrated-schedule__sidebar-body"
         hidden={isCollapsed}
       >
-        <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
-          <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
+        <div className="integrated-schedule__filter-toolbar">
+          <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
+            <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
           <label
             className={`integrated-schedule__filter-label ${
               viewFilter === VIEW_FILTER_NEW ? 'integrated-schedule__filter-label--selected' : ''
@@ -143,7 +169,12 @@ const MatchingScheduleSidebar = ({
             />
             <span className="integrated-schedule__filter-text">{t('admin.labels.all')}</span>
           </label>
-        </fieldset>
+          </fieldset>
+          <DensityToggle
+            density={sidebarDensity}
+            onDensityChange={setSidebarDensity}
+          />
+        </div>
         <fieldset
           className="integrated-schedule__filter integrated-schedule__filter--status"
           aria-label="상태별 필터"
@@ -187,8 +218,10 @@ const MatchingScheduleSidebar = ({
         <MatchingScheduleList
           mappings={filteredMappings}
           loading={loading}
+          density={sidebarDensity}
           viewFilter={viewFilter}
           statusFilter={statusFilter}
+          activePeekMappingId={activePeekMappingId}
           onOpenPeek={onOpenPeek}
           onScheduleFromCard={onScheduleFromCard}
           onPayment={onPayment}
@@ -226,7 +259,8 @@ MatchingScheduleSidebar.propTypes = {
   onSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool,
-  cancelTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  cancelTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  activePeekMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 MatchingScheduleSidebar.defaultProps = {
@@ -241,7 +275,8 @@ MatchingScheduleSidebar.defaultProps = {
   onSessionExtension: null,
   approveProcessing: false,
   cancelPendingProcessing: false,
-  cancelTargetMappingId: null
+  cancelTargetMappingId: null,
+  activePeekMappingId: null
 };
 
 export default MatchingScheduleSidebar;

@@ -2797,7 +2797,10 @@
       "toggleAria": "매칭 목록 패널 토글",
       "expandAria": "매칭 목록 패널 펼치기",
       "collapseAria": "매칭 목록 패널 접기",
-      "collapsedBadgeLabel": "매칭 {{count}}건"
+      "collapsedBadgeLabel": "매칭 {{count}}건",
+      "densityCompactAria": "목록 압축 보기 켜기",
+      "densityComfortableAria": "목록 압축 보기 끄기",
+      "compactRemainingSessions": "남은 {{count}}회"
     },
     "legend": {
       "heading": "안내",

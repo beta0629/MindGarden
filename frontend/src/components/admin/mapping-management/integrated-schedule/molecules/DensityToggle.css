@@ -1,0 +1,44 @@
+/* DensityToggle — 사이드바 필터 영역 우측 밀도 토글 */
+
+.integrated-schedule__density-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--mg-spacing-xl);
+  height: var(--mg-spacing-xl);
+  padding: 0;
+  color: var(--mg-color-text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-sm, 8px);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.integrated-schedule__density-toggle:hover:not(:disabled) {
+  color: var(--mg-color-text-main);
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  background-color: var(--mg-color-surface-sub);
+}
+
+.integrated-schedule__density-toggle--active {
+  color: var(--mg-color-primary-main, var(--mg-primary-500));
+  background-color: color-mix(
+    in srgb,
+    var(--mg-color-primary-main, var(--mg-primary-500)) 10%,
+    var(--mg-color-surface-main)
+  );
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+}
+
+.integrated-schedule__density-toggle:focus-visible {
+  outline: none;
+  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
+  box-shadow: 0 0 0 2px var(--mg-color-primary-light);
+}
+
+.integrated-schedule__density-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

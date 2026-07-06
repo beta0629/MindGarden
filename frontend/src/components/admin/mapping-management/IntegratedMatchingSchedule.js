@@ -590,6 +590,7 @@ const IntegratedMatchingSchedule = () => {
           approveProcessing={approveProcessing}
           cancelPendingProcessing={cancelPendingProcessing}
           cancelTargetMappingId={cancelTargetMapping?.id ?? null}
+          activePeekMappingId={peekMapping?.id ?? null}
         />
 
         <div

@@ -107,12 +107,12 @@ export default function OnboardingStatusPage() {
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, { label: string; color: string }> = {
-      PENDING: { label: "대기 중", color: "#ff9800" },
-      APPROVED: { label: "승인됨", color: "#4caf50" },
-      REJECTED: { label: "거부됨", color: "#f44336" },
-      ON_HOLD: { label: "보류", color: "#9e9e9e" },
+      PENDING: { label: "대기 중", color: "var(--color-warning)" },
+      APPROVED: { label: "승인됨", color: "var(--color-success)" },
+      REJECTED: { label: "거부됨", color: "var(--color-danger)" },
+      ON_HOLD: { label: "보류", color: "var(--color-secondary)" },
     };
-    return statusMap[status] || { label: status, color: "#666" };
+    return statusMap[status] || { label: status, color: "var(--color-secondary)" };
   };
 
   const formatDate = (dateString: string) => {
@@ -141,7 +141,7 @@ export default function OnboardingStatusPage() {
 
   return (
     <div className="trinity-onboarding">
-      <Header />
+      <Header theme="dark" />
       <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
         <div className={COMPONENT_CSS.ONBOARDING.FORM}>
           <h1 className={COMPONENT_CSS.ONBOARDING.TITLE}>온보딩 신청 상태 조회</h1>

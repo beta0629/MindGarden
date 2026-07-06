@@ -319,7 +319,7 @@ export default function OnboardingCallbackPage() {
 
   return (
     <div className="trinity-onboarding" data-loading={loading ? "true" : "false"}>
-      <Header />
+      <Header theme="dark" />
       <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
         <div className={COMPONENT_CSS.ONBOARDING.FORM}>
           {status === "processing" && (

@@ -56,7 +56,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
-      <Header />
+      <Header theme="dark" />
       
       <main className="flex-grow">
         <Hero />

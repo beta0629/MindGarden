@@ -60,6 +60,7 @@ import MappingListBlock, { MAPPING_LIST_DEFAULT_VIEW_MODE } from '../organisms/M
 import SidePeekShell from '../../../common/organisms/SidePeekShell';
 import MappingScheduleSidePeekContent from '../integrated-schedule/molecules/MappingScheduleSidePeekContent';
 import { SIDE_PEEK_SHELL_REGION_PEEK } from '../../../../constants/sidePeekShellConstants';
+import { buildViewModeStorageKey } from '../../../../hooks/useViewModePreference';
 
 const SAMPLE_MAPPING = {
   id: 501,
@@ -122,6 +123,10 @@ const MappingPeekHarness = ({ mappings = [SAMPLE_MAPPING] }) => {
 };
 
 describe('MappingListBlock — SidePeekShell stub', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   test('default viewMode는 table (테이블 렌더)', () => {
     expect(MAPPING_LIST_DEFAULT_VIEW_MODE).toBe('table');
 
@@ -136,6 +141,23 @@ describe('MappingListBlock — SidePeekShell stub', () => {
 
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '카드 뷰' })).toBeInTheDocument();
+  });
+
+  test('localStorage에 저장된 viewMode를 복원한다', () => {
+    const storageKey = buildViewModeStorageKey({}, 'admin.mapping-management.list');
+    localStorage.setItem(storageKey, 'card');
+
+    render(
+      <MappingListBlock
+        mappings={[SAMPLE_MAPPING]}
+        mappingStatusInfo={{}}
+        {...noopStatusHelpers}
+        onView={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(document.querySelector('.mg-v2-mapping-list-block__grid')).toBeInTheDocument();
   });
 
   test('table 행 클릭 → R-PEEK 패널 오픈 + stub 본문', async() => {

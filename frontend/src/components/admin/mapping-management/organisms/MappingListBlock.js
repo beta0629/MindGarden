@@ -5,7 +5,12 @@
  * @since 2025-02-22
  */
 
-import React, { useState } from 'react';
+import React from 'react';
+import {
+  buildViewModeStorageKey,
+  resolveViewModeStorageScope,
+  useViewModePreference
+} from '../../../../hooks/useViewModePreference';
 import PropTypes from 'prop-types';
 import { Link2 } from 'lucide-react';
 import ContentSection from '../../../dashboard-v2/content/ContentSection';
@@ -19,6 +24,8 @@ import './MappingListBlock.css';
 
 /** PER_PAGE G1-04: 매칭 목록 기본 보기 = 테이블 */
 export const MAPPING_LIST_DEFAULT_VIEW_MODE = 'table';
+
+const MAPPING_LIST_VIEW_MODE_PAGE_ID = 'admin.mapping-management.list';
 
 /** 매칭 리스트 보기 전환 옵션: 카드 / 테이블 / 캘린더 */
 const MAPPING_VIEW_MODE_OPTIONS = [
@@ -43,7 +50,11 @@ const MappingListBlock = ({
   onApprove,
   onCreateClick
 }) => {
-  const [viewMode, setViewMode] = useState(MAPPING_LIST_DEFAULT_VIEW_MODE);
+  const { viewMode, setViewMode } = useViewModePreference({
+    storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), MAPPING_LIST_VIEW_MODE_PAGE_ID),
+    defaultMode: MAPPING_LIST_DEFAULT_VIEW_MODE,
+    allowedModes: MAPPING_VIEW_MODE_OPTIONS.map((opt) => opt.value)
+  });
   const isEmpty = !mappings || mappings.length === 0;
 
   const renderContent = () => {

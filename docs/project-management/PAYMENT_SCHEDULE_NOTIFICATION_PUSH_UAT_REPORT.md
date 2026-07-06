@@ -3,7 +3,7 @@
 **작성**: core-tester  
 **최종 갱신**: 2026-05-22 (배치 **10** 게이트 — Solapi Phase D **`c5b181d28`** + 감정일기 inbox 회귀 **32+23 PASS**; human Solapi·§8.5 **NOT RUN**)  
 **이전**: 2026-05-20 배치 6/6 · 2026-05-20 배치 5/5 · 2026-05-18 Phase C 자동 게이트  
-**SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7·§7.6 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1  
+**SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7·§7.6 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1 · **API·시드·common_code 정합**: [PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md)  
 **코드 기준**: **`c5b181d28`** (Solapi Phase D SSOT) · 실행 HEAD **`3f3e97e28`** — `MappingSettlementNotificationHelper`, `NotificationServiceImpl`, Expo `pushNavigation`  
 **환경**: `https://dev.core-solution.co.kr` — `/actuator/health` **200** (배치 **10**). dev JVM journal L1·`mobile_push_tokens`·CLIENT 실기기·Solapi ENV — **human 선행**.
 

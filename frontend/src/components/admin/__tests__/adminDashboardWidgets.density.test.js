@@ -44,6 +44,46 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).toContain('mg-v2-dashboard-kpi-zone--compact');
   });
 
+  it('AdminDashboardV2 헤더가 Primary 1 + EntityRowActions overflow를 사용한다 (PR-DASH-04)', () => {
+    const source = fs.readFileSync(DASHBOARD_PATH, 'utf8');
+
+    expect(source).toContain('EntityRowActions');
+    expect(source).toContain('ENTITY_ROW_ACTIONS_LAYOUT.CORNER');
+    expect(source).toContain('mg-v2-ad-b0kla__header-primary-btn');
+    expect(source).not.toContain('mg-v2-ad-b0kla__icon-group');
+  });
+
+  it('AdminDashboardV2 환불 StatCard가 toSafeNumber로 null 방어한다 (PR-DASH-04)', () => {
+    const source = fs.readFileSync(DASHBOARD_PATH, 'utf8');
+
+    expect(source).toContain('toSafeNumber(refundStats.totalRefundCount');
+    expect(source).toContain('toSafeNumber(refundStats.totalRefundedSessions');
+    expect(source).toContain('toSafeNumber(refundStats.totalRefundAmount');
+    expect(source).toContain('toSafeNumber(refundStats.averageRefundPerCase');
+  });
+
+  it('KPI CSS가 1280px compact·414px 회귀 방어를 정의한다 (PR-DASH-04)', () => {
+    const css = fs.readFileSync(KPI_CSS_PATH, 'utf8');
+
+    expect(css).toContain('max-height: 120px');
+    expect(css).toMatch(/@media \(max-width: 414px\)/);
+  });
+
+  it('Pipeline·위젯 CSS에 dark cascade [data-theme="dark"] 규칙이 있다 (PR-DASH-03)', () => {
+    const pipelineCss = fs.readFileSync(
+      path.join(REPO_ROOT, 'frontend/src/components/admin/AdminDashboard/AdminDashboardPipeline.css'),
+      'utf8'
+    );
+    const queueCss = fs.readFileSync(
+      path.join(REPO_ROOT, 'frontend/src/components/admin/AdminDashboard/organisms/ManualMatchingQueue.css'),
+      'utf8'
+    );
+
+    expect(pipelineCss).toContain('[data-theme="dark"]');
+    expect(queueCss).toContain('[data-theme="dark"]');
+    expect(pipelineCss).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
+  });
+
   it('Pending List 위젯이 ListTableView·단일 viewAllHref CTA를 사용한다', () => {
     const deposit = fs.readFileSync(DEPOSIT_LIST_PATH, 'utf8');
     const schedule = fs.readFileSync(SCHEDULE_LIST_PATH, 'utf8');

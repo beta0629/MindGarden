@@ -19,7 +19,6 @@ import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { FaCalendarAlt } from 'react-icons/fa';
 import {
   Activity,
-  Bell,
   BellRing,
   Brain,
   Calendar,
@@ -32,13 +31,10 @@ import {
   Megaphone,
   Merge,
   MessageCircle,
-  Moon,
   Package,
-  Palette,
   Settings,
   Shield,
   Sparkles,
-  Sun,
   Tags,
   Target,
   UserCog,
@@ -79,7 +75,7 @@ import {
   SchedulePendingList
 } from '../admin/AdminDashboard/index';
 import { useSession } from '../../contexts/SessionContext';
-import { useDarkMode, DARK_MODE_VALUES } from '../../contexts/DarkModeContext';
+import { useDarkMode } from '../../contexts/DarkModeContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
@@ -92,6 +88,7 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { toSafeNumber, toDisplayString } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
+import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../common';
 import SegmentedTabs from '../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Icon from '../ui/Icon/Icon';
@@ -847,60 +844,49 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const HEADER_ICON_SIZE = 20;
 
-  // 다크 모드 3단 토글 — 아이콘 / 라벨 / aria-pressed 동기화
-  const ThemeIcon = darkMode === DARK_MODE_VALUES.AUTO
-    ? Palette
-    : darkResolved === DARK_MODE_VALUES.DARK
-      ? Sun
-      : Moon;
+  // 다크 모드 3단 토글 — overflow 메뉴 라벨 동기화
   const themeButtonLabel = t(
     `common:dashboard-v2.AdminDashboardV2.theme_${darkMode}`
   );
 
   const headerActions = (
       <div className="mg-v2-ad-b0kla__header-actions">
-        <div className="mg-v2-ad-b0kla__icon-group">
-          <MGButton
-            type="button"
-            variant="outline"
-            size="small"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
-            aria-label={t('common:dashboard-v2.AdminDashboardV2.t_b2cb2d40')}
-            title={t('common:dashboard-v2.AdminDashboardV2.t_b2cb2d40')}
-            preventDoubleClick={false}
-          >
-            <Calendar size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="outline"
-            size="small"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
-            aria-label={t('admin.labels.notification')}
-            title={t('admin.labels.notification')}
-            preventDoubleClick={false}
-          >
-            <Bell size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="outline"
-            size="small"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-ad-b0kla__icon-btn' })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            aria-label={themeButtonLabel}
-            aria-pressed={darkResolved === DARK_MODE_VALUES.DARK}
-            title={themeButtonLabel}
-            onClick={toggleDarkMode}
-            preventDoubleClick={false}
-          >
-            <ThemeIcon size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
-          </MGButton>
-        </div>
+        <MGButton
+          type="button"
+          variant="primary"
+          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'sm',
+            loading: false,
+            className: 'mg-v2-ad-b0kla__header-primary-btn'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
+          aria-label={t('common:dashboard-v2.AdminDashboardV2.t_b2cb2d40')}
+          title={t('common:dashboard-v2.AdminDashboardV2.t_b2cb2d40')}
+          preventDoubleClick={false}
+        >
+          <Calendar size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
+        </MGButton>
+        <EntityRowActions
+          layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
+          ariaLabel={t('common:dashboard-v2.AdminDashboardV2.t_header_overflow', {
+            defaultValue: '대시보드 추가 작업'
+          })}
+          items={[
+            {
+              id: 'notifications',
+              label: t('admin.labels.notification'),
+              onClick: () => navigate(ADMIN_ROUTES.MESSAGES)
+            },
+            {
+              id: 'theme',
+              label: themeButtonLabel,
+              onClick: toggleDarkMode
+            }
+          ]}
+        />
       </div>
     );
 
@@ -1492,6 +1478,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                         plugins: {
                           legend: { display: false },
                           tooltip: {
+                            ...chartJsTooltipOptions,
                             callbacks: {
                               label: (ctx) => {
                                 const d = consultantIntegratedData[ctx.dataIndex];
@@ -1504,19 +1491,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                           }
                         },
                         scales: {
+                          ...chartJsScaleOptions,
                           x: {
-                            grid: { display: false },
+                            ...chartJsScaleOptions.x,
                             ticks: {
-                              font: { size: 11 },
-                              color: 'var(--ad-b0kla-text-secondary)',
+                              ...chartJsScaleOptions.x.ticks,
                               maxRotation: 45,
                               minRotation: 0
                             }
-                          },
-                          y: {
-                            beginAtZero: true,
-                            grid: { color: 'var(--mg-shadow-light)' },
-                            ticks: { font: { size: 11 }, color: 'var(--ad-b0kla-text-secondary)' }
                           }
                         }
                       }}
@@ -1673,22 +1655,22 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         <div className="mg-stats-grid mg-stats-grid--display-only">
           <StatCard
             icon={<Icon name="RECEIPT" size="LG" color="TRANSPARENT" />}
-            value={`${refundStats.totalRefundCount}건`}
+            value={`${toSafeNumber(refundStats.totalRefundCount, 0)}건`}
             label={t('common:dashboard-v2.AdminDashboardV2.t_e07e5754')}
           />
           <StatCard
             icon={<FaCalendarAlt />}
-            value={`${refundStats.totalRefundedSessions}회`}
+            value={`${toSafeNumber(refundStats.totalRefundedSessions, 0)}회`}
             label={t('common:dashboard-v2.AdminDashboardV2.t_7362540d')}
           />
           <StatCard
             icon={<Icon name="DOLLAR_SIGN" size="LG" color="TRANSPARENT" />}
-            value={`${refundStats.totalRefundAmount.toLocaleString()}원`}
+            value={`${toSafeNumber(refundStats.totalRefundAmount, 0).toLocaleString()}원`}
             label={t('common:dashboard-v2.AdminDashboardV2.t_ca5c157c')}
           />
           <StatCard
             icon={<Icon name="TRENDING_UP" size="LG" color="TRANSPARENT" />}
-            value={`${refundStats.averageRefundPerCase.toLocaleString()}원`}
+            value={`${toSafeNumber(refundStats.averageRefundPerCase, 0).toLocaleString()}원`}
             label={t('common:dashboard-v2.AdminDashboardV2.t_5c45c1f3')}
           />
         </div>

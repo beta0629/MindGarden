@@ -66,3 +66,18 @@
     gap: 0;
   }
 }
+
+/* Admin Dark Mode C-3 — Core Flow Pipeline */
+[data-theme="dark"] .core-flow-pipeline__loading {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .core-flow-pipeline__connector::before {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--mg-v2-color-border-default) 0,
+    var(--mg-v2-color-border-default) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}

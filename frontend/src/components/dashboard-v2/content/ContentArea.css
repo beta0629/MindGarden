@@ -120,3 +120,31 @@
   max-width: min(100%, 560px);
   box-sizing: border-box;
 }
+
+/* Admin Dark Mode C-3 — visualization group */
+[data-theme="dark"] .mg-v2-content-visualization-group {
+  background: var(--mg-v2-color-surface-card);
+  border-color: var(--mg-v2-color-border-default);
+}
+
+[data-theme="dark"] .mg-v2-content-visualization-group__title {
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* G1-02 DASH-04: 414px — detail row 가로 스크롤 방지 */
+@media (max-width: 414px) {
+  .mg-v2-content-area {
+    padding: var(--mg-v2-space-4, 16px);
+    overflow-x: hidden;
+  }
+
+  .mg-v2-content-detail-row {
+    min-width: 0;
+  }
+
+  .mg-v2-content-detail-row > .deposit-pending-list,
+  .mg-v2-content-detail-row > .schedule-pending-list {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}

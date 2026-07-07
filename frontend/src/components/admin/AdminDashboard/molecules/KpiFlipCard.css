@@ -40,7 +40,37 @@
 @media (min-width: 1280px) {
   .mg-v2-kpi-flip-row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--mg-layout-grid-gap-desktop, var(--mg-layout-grid-gap, 1.5rem));
+    gap: var(--mg-layout-grid-gap-desktop, var(--mg-v2-space-4, 1rem));
+  }
+
+  /* G1-02 DASH-04: 1280px KPI 4-grid — 스크롤 없이 한눈에 (max 120px, padding 16px) */
+  .mg-v2-dashboard-kpi-zone--compact {
+    margin-bottom: var(--mg-v2-space-4, 1rem);
+  }
+
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card {
+    --mg-kpi-flip-card-min-height: 88px;
+    max-height: 120px;
+  }
+
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__inner {
+    min-height: 88px;
+    max-height: 120px;
+  }
+
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__front,
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__back {
+    padding: var(--mg-v2-space-4, 16px);
+    padding-inline-start: calc(var(--mg-v2-space-4, 16px) + 4px);
+  }
+
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__value {
+    font-size: var(--mg-v2-font-size-h4, 1.25rem);
+    margin-bottom: var(--mg-v2-space-1, 4px);
+  }
+
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__front > .mg-v2-kpi-sparkline {
+    max-height: var(--mg-v2-space-6, 1.5rem);
   }
 }
 
@@ -335,6 +365,19 @@
 @media (max-width: 767px) {
   .mg-v2-kpi-flip-card__back-content {
     max-height: 200px;
+  }
+}
+
+/* G1-02 DASH-04: 414px 회귀 방지 — KPI 단일열·가로 스크롤 없음 */
+@media (max-width: 414px) {
+  .mg-v2-dashboard-kpi-zone,
+  .mg-v2-kpi-flip-row {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .mg-v2-kpi-flip-row {
+    gap: var(--mg-v2-space-3, 0.75rem);
   }
 }
 

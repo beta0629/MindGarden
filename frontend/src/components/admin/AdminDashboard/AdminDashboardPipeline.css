@@ -27,7 +27,7 @@
   --mg-pipeline-radius: 12px;
   --mg-pipeline-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   --mg-pipeline-card-bg-neutral: var(--mg-color-background-main);
-  --mg-pipeline-card-bg-warning: var(--mg-v2-color-semantic-error-light, #FFEBEE);
+  --mg-pipeline-card-bg-warning: var(--mg-v2-color-semantic-error-light);
   --mg-pipeline-card-bg-success: var(--mg-color-b0kla-green-50);
   --mg-pipeline-card-bg-info: var(--mg-color-b0kla-orange-50);
   --mg-pipeline-card-bg-auto: var(--mg-color-background-main);

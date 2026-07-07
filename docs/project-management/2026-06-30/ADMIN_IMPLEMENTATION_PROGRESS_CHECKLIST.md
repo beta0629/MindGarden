@@ -78,7 +78,7 @@
 | V3+-coder | 28e | FinancialManagement viewMode persist | coder | designer | Seq 28a ☑ | table/card viewMode persist | — | ☑ done | PR #452 merged · route: `/erp/financial` |
 | V3+-coder | 28f | compact row 재도입 (토글 ON만) | designer → coder | designer | designer spec ☑ | DensityToggle+CompactRow; comfortable default; Jest PASS | `f62cccb9a` | ☑ done | PR #455 merged · route `/admin/mapping-management` · **dev 배포 후 사용자 검수** |
 | V3+-coder | 28g | Saved View (Phase 1 stub) | coder | designer | spec ☑ | `useSavedViewPreference` localStorage stub; Jest PASS | `2a18d947e` | ☑ done | PR #456 merged · Phase 2 client pilot ◐ |
-| V3+-coder | 28g-p2 | Saved View client pilot (silent persist) | coder | designer | 28g Phase 1 ☑ | ClientComprehensiveManagement filters+viewMode debounced persist; no save/load UI | — | ◐ in_progress | route `/admin/user-management` client tab · consultant/staff follow-up ☐ |
+| V3+-coder | 28g-p2 | Saved View client pilot (silent persist) | coder | designer | 28g Phase 1 ☑ | ClientComprehensiveManagement filters+viewMode debounced persist; no save/load UI | `c8fd805ab` | ◐ in_progress | PR #462 · route `/admin/user-management` client tab · consultant/staff follow-up ☐ |
 | V3+-coder | 28f-lnb | 휴면 사용자 LNB 메뉴 | coder | planner | Seq 28c ☑ | Flyway `V20260706_001` · ADM_DORMANT_USERS | `c74af8210` | ☑ done | PR #454 merged · **BE dev 배포**(Flyway) |
 | V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `16e8bb69b` | ☑ done | PR #453 + 잔여 정합(28h-D) · D-1~D-4·D-6 닫힘 · D-5(감사 §2~§3) 열림 |
 

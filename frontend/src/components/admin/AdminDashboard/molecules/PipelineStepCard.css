@@ -51,3 +51,21 @@
     flex-shrink: 0;
   }
 }
+
+/* Admin Dark Mode C-3 — Pipeline Step Card */
+[data-theme="dark"] .pipeline-step-card {
+  background: var(--mg-v2-color-surface-card);
+  box-shadow: var(--mg-v2-shadow-xs);
+}
+
+[data-theme="dark"] .pipeline-step-card:hover {
+  box-shadow: var(--mg-v2-shadow-sm);
+}
+
+[data-theme="dark"] .pipeline-step-card__title {
+  color: var(--mg-v2-color-text-primary);
+}
+
+[data-theme="dark"] .pipeline-step-card--active .pipeline-step-card__title {
+  color: var(--mg-v2-color-primary-main);
+}

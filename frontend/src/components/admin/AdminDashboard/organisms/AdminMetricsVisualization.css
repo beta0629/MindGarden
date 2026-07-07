@@ -150,3 +150,16 @@
 [data-theme="dark"] .admin-metrics-visualization__loading {
   color: var(--mg-v2-color-text-secondary);
 }
+
+[data-theme="dark"] .admin-metrics-visualization__grid-tile-title,
+[data-theme="dark"] .admin-metrics-visualization__grid-tile-value {
+  color: var(--mg-v2-color-text-primary);
+}
+
+[data-theme="dark"] .admin-metrics-visualization__grid-tile-icon {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .admin-metrics-visualization__error {
+  color: var(--mg-v2-color-semantic-error-main);
+}

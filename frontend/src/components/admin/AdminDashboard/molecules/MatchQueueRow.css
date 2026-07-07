@@ -76,3 +76,21 @@
     max-width: 100%;
   }
 }
+
+/* Admin Dark Mode C-3 — Match Queue Row */
+[data-theme="dark"] .match-queue-row {
+  background: var(--mg-v2-color-surface-card);
+  border-color: var(--mg-v2-color-border-default);
+}
+
+[data-theme="dark"] .match-queue-row__client-name {
+  color: var(--mg-v2-color-text-primary);
+}
+
+[data-theme="dark"] .match-queue-row__client-meta {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .match-queue-row__arrow {
+  color: var(--mg-v2-color-text-tertiary);
+}

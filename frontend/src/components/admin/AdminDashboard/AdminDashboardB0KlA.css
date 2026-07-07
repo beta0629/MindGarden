@@ -230,6 +230,15 @@
   flex-wrap: wrap;
 }
 
+.mg-v2-ad-b0kla__header-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding-inline: var(--mg-v2-space-3, 0.75rem);
+}
+
 .mg-v2-ad-b0kla__quick-add {
   display: flex;
   align-items: center;

@@ -57,3 +57,22 @@
 .deposit-pending-list__view-all:hover {
   text-decoration: underline;
 }
+
+/* Admin Dark Mode C-3 — Deposit Pending List */
+[data-theme="dark"] .deposit-pending-list {
+  background: var(--mg-v2-color-surface-card);
+  border-color: var(--mg-v2-color-border-default);
+}
+
+[data-theme="dark"] .deposit-pending-list__title {
+  color: var(--mg-v2-color-text-primary);
+}
+
+[data-theme="dark"] .deposit-pending-list__count,
+[data-theme="dark"] .deposit-pending-list__empty {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .deposit-pending-list__view-all {
+  color: var(--mg-v2-color-primary-main);
+}

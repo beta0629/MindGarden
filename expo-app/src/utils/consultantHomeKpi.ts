@@ -55,6 +55,24 @@ export function buildConsultantTodaySummary(count: number): string {
 }
 
 /**
+ * 미작성 일지 배너 건수 — incomplete API 우선, 없으면 pending/대시보드 폴백
+ */
+export function resolveConsultantPendingCount(
+  incompleteCount: number,
+  pendingRecordsLength: number | null | undefined,
+  dashboardPendingCount: number,
+): number {
+  const safeIncomplete = toNonNegativeInt(incompleteCount);
+  if (safeIncomplete > 0) {
+    return safeIncomplete;
+  }
+  if (pendingRecordsLength != null && Number.isFinite(pendingRecordsLength)) {
+    return toNonNegativeInt(pendingRecordsLength);
+  }
+  return toNonNegativeInt(dashboardPendingCount);
+}
+
+/**
  * P0~P1 KPI 스트립 — 오늘 상담·안읽은 메시지·신규 내담
  */
 export function selectConsultantHomeKpiItems(input: ConsultantHomeKpiInput): ConsultantHomeKpiItem[] {

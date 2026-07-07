@@ -10,7 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import type { HighPriorityClientItem } from '@/api/hooks/useConsultantHome';
-import { CONSULTANT_HOME_COPY } from '@/constants/consultantHomeCopy';
+import { buildConsultantUrgentClientBannerModel } from '@/utils/consultantHomeComponentUi';
 
 interface ConsultantUrgentClientBannerProps {
   client: HighPriorityClientItem;
@@ -22,6 +22,7 @@ export function ConsultantUrgentClientBanner({
   onPress,
 }: ConsultantUrgentClientBannerProps) {
   const theme = useTheme();
+  const model = buildConsultantUrgentClientBannerModel(client);
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
@@ -29,8 +30,6 @@ export function ConsultantUrgentClientBanner({
     }
     onPress();
   };
-
-  const riskLabel = CONSULTANT_HOME_COPY.riskLevelLabel(client.riskLevel);
 
   return (
     <Pressable
@@ -45,7 +44,7 @@ export function ConsultantUrgentClientBanner({
         },
       ]}
       accessibilityRole="button"
-      accessibilityLabel={CONSULTANT_HOME_COPY.URGENT_CLIENT_BANNER_A11Y(client.clientName, riskLabel)}
+      accessibilityLabel={model.accessibilityLabel}
     >
       <AlertCircle size={20} color={theme.colors.warning} />
       <Text
@@ -60,7 +59,7 @@ export function ConsultantUrgentClientBanner({
         ]}
         numberOfLines={2}
       >
-        {CONSULTANT_HOME_COPY.URGENT_CLIENT_BANNER(client.clientName, riskLabel)}
+        {model.bannerText}
       </Text>
       <Text
         style={{
@@ -69,7 +68,7 @@ export function ConsultantUrgentClientBanner({
           fontSize: theme.fontSize.sm,
         }}
       >
-        {CONSULTANT_HOME_COPY.PENDING_BANNER_CTA}
+        {model.ctaLabel}
       </Text>
     </Pressable>
   );

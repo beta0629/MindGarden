@@ -13,6 +13,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import type { UpcomingPreparationSession } from '@/api/hooks/useConsultantHome';
 import { CONSULTANT_HOME_COPY } from '@/constants/consultantHomeCopy';
+import { buildConsultantNextSessionCardModel } from '@/utils/consultantHomeComponentUi';
 
 interface ConsultantNextSessionCardProps {
   session: UpcomingPreparationSession | null;
@@ -28,39 +29,28 @@ export function ConsultantNextSessionCard({
   onPressRecord,
 }: ConsultantNextSessionCardProps) {
   const theme = useTheme();
+  const model = buildConsultantNextSessionCardModel(session, isLoading);
 
-  if (isLoading) {
+  if (model.kind === 'loading') {
     return <SkeletonCard />;
   }
 
-  if (!session) {
+  if (model.kind === 'empty') {
     return null;
   }
-
-  const badgeLabel =
-    session.countdownLabel ??
-    (session.isToday
-      ? CONSULTANT_HOME_COPY.NEXT_SESSION_BADGE_TODAY
-      : CONSULTANT_HOME_COPY.NEXT_SESSION_BADGE_TOMORROW);
-
-  const timeRange = `${session.startTime} - ${session.endTime}`;
-  const clientLine = `${session.clientName} 님`;
-  const sessionLine = session.consultationType
-    ? `${clientLine} (${session.consultationType})`
-    : clientLine;
 
   const handleDetail = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    onPressDetail(session.scheduleId);
+    onPressDetail(model.scheduleId);
   };
 
   const handleRecord = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    onPressRecord(session.scheduleId);
+    onPressRecord(model.scheduleId);
   };
 
   return (
@@ -77,7 +67,7 @@ export function ConsultantNextSessionCard({
         },
       ]}
       accessibilityRole="summary"
-      accessibilityLabel={CONSULTANT_HOME_COPY.NEXT_SESSION_A11Y(session.clientName, timeRange)}
+      accessibilityLabel={model.accessibilityLabel}
     >
       <View style={styles.header}>
         <View style={styles.titleRow}>
@@ -93,7 +83,7 @@ export function ConsultantNextSessionCard({
             {CONSULTANT_HOME_COPY.NEXT_SESSION_TITLE}
           </Text>
         </View>
-        <Badge label={badgeLabel} variant="primary" size="md" />
+        <Badge label={model.badgeLabel} variant="primary" size="md" />
       </View>
 
       <Text
@@ -104,7 +94,7 @@ export function ConsultantNextSessionCard({
           marginTop: theme.spacing.md,
         }}
       >
-        {timeRange}
+        {model.timeRange}
       </Text>
       <Text
         style={{
@@ -114,7 +104,7 @@ export function ConsultantNextSessionCard({
           marginTop: theme.spacing.xs,
         }}
       >
-        {sessionLine}
+        {model.sessionLine}
       </Text>
 
       <View style={[styles.actions, { marginTop: theme.spacing.lg, gap: theme.spacing.sm }]}>
@@ -129,7 +119,7 @@ export function ConsultantNextSessionCard({
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={CONSULTANT_HOME_COPY.NEXT_SESSION_RECORD_CTA}
+          accessibilityLabel={model.recordCta}
         >
           <FileText size={16} color={theme.colors.primary} />
           <Text
@@ -140,7 +130,7 @@ export function ConsultantNextSessionCard({
               marginLeft: theme.spacing.xs,
             }}
           >
-            {CONSULTANT_HOME_COPY.NEXT_SESSION_RECORD_CTA}
+            {model.recordCta}
           </Text>
         </Pressable>
         <Pressable
@@ -156,7 +146,7 @@ export function ConsultantNextSessionCard({
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={CONSULTANT_HOME_COPY.NEXT_SESSION_DETAIL_CTA}
+          accessibilityLabel={model.detailCta}
         >
           <Text
             style={{
@@ -165,7 +155,7 @@ export function ConsultantNextSessionCard({
               fontSize: theme.fontSize.sm,
             }}
           >
-            {CONSULTANT_HOME_COPY.NEXT_SESSION_DETAIL_CTA}
+            {model.detailCta}
           </Text>
         </Pressable>
       </View>

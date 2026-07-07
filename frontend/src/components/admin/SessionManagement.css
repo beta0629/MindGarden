@@ -1,0 +1,88 @@
+/**
+ * Session Management — Admin Dark Mode C-3b P1 cascade
+ *
+ * @author CoreSolution
+ * @since 2026-07-07
+ */
+
+/* 탭 */
+[data-theme="dark"] .mg-v2-session-management .mg-tabs {
+  background: var(--mg-dark-toolbar-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-tabs .mg-button.mg-tab.mg-button--outline {
+  color: var(--mg-dark-chip-text);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-tabs .mg-button.mg-tab.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-dark-chip-bg);
+  color: var(--mg-dark-chip-active-text);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-tabs .mg-button.mg-tab.mg-button--outline.mg-tab-active {
+  background: var(--mg-dark-chip-active-bg);
+  color: var(--mg-dark-chip-active-text);
+  border-bottom-color: var(--mg-color-primary-main);
+}
+
+/* 폼 입력 */
+[data-theme="dark"] .mg-v2-session-management .mg-v2-input {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-v2-input:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+/* 매핑 필터·카드 */
+[data-theme="dark"] .mg-v2-session-management .mg-v2-mapping-filters {
+  background-color: var(--mg-dark-toolbar-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-v2-mapping-card {
+  background: var(--mg-color-surface-main);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-v2-mapping-card:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-v2-mapping-client,
+[data-theme="dark"] .mg-v2-session-management .mg-v2-mapping-consultant,
+[data-theme="dark"] .mg-v2-session-management .mg-v2-mapping-sessions {
+  color: var(--mg-v2-form-text);
+}
+
+/* 회기 요청 카드 */
+[data-theme="dark"] .mg-v2-session-management .mg-v2-request-card {
+  background-color: var(--mg-color-surface-main);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-v2-request-client,
+[data-theme="dark"] .mg-v2-session-management .mg-v2-request-consultant,
+[data-theme="dark"] .mg-v2-session-management .mg-v2-request-sessions,
+[data-theme="dark"] .mg-v2-session-management .mg-v2-request-package {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-v2-request-date,
+[data-theme="dark"] .mg-v2-session-management .mg-v2-request-reason {
+  color: var(--mg-v2-form-label);
+}
+
+/* 빈 상태 */
+[data-theme="dark"] .mg-v2-session-management .mg-empty-state {
+  background: var(--mg-dark-chip-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-empty-state__text {
+  color: var(--mg-v2-form-label);
+}

@@ -114,6 +114,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
 import { useTranslation } from 'react-i18next';
 import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
+import { DASHBOARD_KPI_IDS } from '../../constants/adminDashboardWidgetConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // /api/v1/admin/mappings 는 SSOT(API_ENDPOINTS.ADMIN.MAPPINGS.LIST) 사용
@@ -943,9 +944,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         actions={headerActions}
       />
 
-      {/* KPI 3종 — KpiFlipCard + 스파크라인 pilot (§3.4 Dashboard KPI Zone) */}
+      {/* KPI 4블록 — Compact KpiFlipCard (G1-02) */}
       <section
-        className="mg-v2-dashboard-kpi-zone"
+        className="mg-v2-dashboard-kpi-zone mg-v2-dashboard-kpi-zone--compact"
         aria-labelledby="admin-dashboard-kpi-zone-title"
       >
         <h2 id="admin-dashboard-kpi-zone-title" className="sr-only">
@@ -953,10 +954,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         </h2>
         <div className="mg-v2-kpi-flip-row" role="list" aria-label="핵심 KPI">
         <KpiFlipCard
-          id="today-schedule"
-          label="오늘 상담 일정"
+          id={DASHBOARD_KPI_IDS.TODAY_BOOKINGS}
+          label="금일 예약"
           value={`${toSafeNumber(todayStats.bookedToday, 0) + toSafeNumber(todayStats.confirmedToday, 0)}건`}
-          summary={`예약 ${toSafeNumber(todayStats.bookedToday, 0)}건 · 확정 ${toSafeNumber(todayStats.confirmedToday, 0)}건`}
+          summary={`예약 ${toSafeNumber(todayStats.bookedToday, 0)} · 확정 ${toSafeNumber(todayStats.confirmedToday, 0)}`}
           variant="orange"
           sparklineData={kpiSparklineWeekly.booked}
           trendBadge={formatGrowthBadge(todayStats.bookedGrowthRate)}
@@ -964,53 +965,63 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           backContent={
             <ul className="mg-v2-kpi-flip-card__back-list">
               <li className="mg-v2-kpi-flip-card__back-list-item">
-                <span>예약(Booked)</span>
-                <strong>{toSafeNumber(todayStats.bookedToday, 0)}건</strong>
-              </li>
-              <li className="mg-v2-kpi-flip-card__back-list-item">
-                <span>확정(Confirmed)</span>
-                <strong>{toSafeNumber(todayStats.confirmedToday, 0)}건</strong>
-              </li>
-              <li className="mg-v2-kpi-flip-card__back-list-item">
-                <span>완료(Completed)</span>
+                <span>완료</span>
                 <strong>{toSafeNumber(todayStats.completedToday, 0)}건</strong>
+              </li>
+              <li className="mg-v2-kpi-flip-card__back-list-item">
+                <span>진행 중</span>
+                <strong>{toSafeNumber(todayStats.inProgressToday, 0)}건</strong>
               </li>
             </ul>
           }
           ctaLabel="일정 보기"
           onCtaClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
-          isFlipped={flippedKpiId === 'today-schedule'}
+          isFlipped={flippedKpiId === DASHBOARD_KPI_IDS.TODAY_BOOKINGS}
           onFlip={handleKpiFlip}
         />
         <KpiFlipCard
-          id="consultant-schedule"
-          label="상담사별 오늘 일정"
-          value={`${stats.totalConsultants}명`}
-          summary={`활동 상담사 ${stats.totalConsultants}명`}
+          id={DASHBOARD_KPI_IDS.PENDING_PAYMENT}
+          label="미결제"
+          value={`${toSafeNumber(pendingDepositStats.count, 0)}건`}
+          summary={`대기 금액 ${toSafeNumber(pendingDepositStats.totalAmount, 0).toLocaleString()}원`}
           variant="blue"
           backContent={
-            <ConsultantCountsBadgeList />
+            <p>입금 확인 대기 중인 매칭 건입니다.</p>
           }
-          ctaLabel="스케줄 보기"
-          onCtaClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
-          isFlipped={flippedKpiId === 'consultant-schedule'}
+          ctaLabel="전체 보기"
+          onCtaClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`)}
+          isFlipped={flippedKpiId === DASHBOARD_KPI_IDS.PENDING_PAYMENT}
           onFlip={handleKpiFlip}
         />
         <KpiFlipCard
-          id="new-intake"
-          label="신규 상담 접수"
-          value={`${toSafeNumber(stats.totalClients, 0)}건`}
-          summary={`전체 내담자 ${toSafeNumber(stats.totalClients, 0)}명`}
+          id={DASHBOARD_KPI_IDS.NO_SHOW}
+          label="노쇼"
+          value={`${toSafeNumber(todayStats.cancelledToday, 0)}건`}
+          summary="금일 취소·노쇼"
+          variant="gray"
+          backContent={
+            <p>금일 취소된 일정 건수입니다.</p>
+          }
+          ctaLabel="알림 센터"
+          onCtaClick={() => navigate(ADMIN_ROUTES.NOTIFICATIONS)}
+          isFlipped={flippedKpiId === DASHBOARD_KPI_IDS.NO_SHOW}
+          onFlip={handleKpiFlip}
+        />
+        <KpiFlipCard
+          id={DASHBOARD_KPI_IDS.ACTIVE_SESSIONS}
+          label="활성"
+          value={`${toSafeNumber(stats.activeMappings, 0)}건`}
+          summary={`전체 매칭 ${toSafeNumber(stats.totalMappings, 0)}건`}
           variant="green"
           sparklineData={kpiSparklineWeekly.completed}
           trendBadge={formatGrowthBadge(stats.consultationStats?.completionRateChange)}
           trendAriaLabel={buildTrendAriaLabel(stats.consultationStats?.completionRateChange)}
           backContent={
-            <p>신규 내담자 배정 대기 현황을 확인하세요.</p>
+            <p>현재 활성 상태의 매칭 세션입니다.</p>
           }
-          ctaLabel="배정하기"
-          onCtaClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
-          isFlipped={flippedKpiId === 'new-intake'}
+          ctaLabel="매칭 관리"
+          onCtaClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=ACTIVE`)}
+          isFlipped={flippedKpiId === DASHBOARD_KPI_IDS.ACTIVE_SESSIONS}
           onFlip={handleKpiFlip}
         />
         </div>
@@ -1734,17 +1745,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           items={pendingDepositList.map((m) => ({
             id: m.id,
             clientName: m.clientName,
-            amount: m.packagePrice,
-            _raw: m
+            amount: m.packagePrice
           }))}
-          onDepositConfirm={(item) => {
-            const mapping = item._raw || item;
-            setDepositModalMapping(mapping);
-          }}
+          viewAllHref={`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`}
         />
         <SchedulePendingList
-          items={[]}
-          onScheduleRegister={() => navigate(ADMIN_ROUTES.SCHEDULES)}
+          items={pendingDepositList.map((m) => ({
+            id: `sched-${m.id}`,
+            clientName: m.clientName,
+            consultantName: m.consultantName
+          }))}
+          viewAllHref={ADMIN_ROUTES.NOTIFICATIONS}
         />
       </div>
 

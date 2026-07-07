@@ -11,7 +11,17 @@
   margin-bottom: var(--mg-spacing-xl, 1.5rem);
 }
 
-/* 그리드 필수: KpiFlipCard 3종 행. 덮어쓰지 말 것 */
+/* G1-02 Compact — KPI 카드 최소 높이 축소 */
+.mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card {
+  --mg-kpi-flip-card-min-height: calc(
+    var(--mg-v2-space-6) +
+    var(--mg-v2-space-8) +
+    var(--mg-v2-space-10) +
+    var(--mg-v2-space-4)
+  );
+}
+
+/* 그리드 필수: KpiFlipCard 4종 행 (G1-02 Compact). 덮어쓰지 말 것 */
 .mg-v2-kpi-flip-row {
   display: grid;
   grid-template-columns: 1fr;
@@ -29,7 +39,7 @@
 
 @media (min-width: 1280px) {
   .mg-v2-kpi-flip-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--mg-layout-grid-gap-desktop, var(--mg-layout-grid-gap, 1.5rem));
   }
 }

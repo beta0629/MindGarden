@@ -2069,16 +2069,27 @@ button.mg-v2-ad-b0kla__icon-btn.mg-button .mg-button__text {
   text-align: left;
 }
 
-/* ===== KPI Flip Row (Phase 3 · Visual Pack §2.2) ===== */
+/* ===== KPI Flip Row (G1-02 · 4-column compact grid) ===== */
 .mg-v2-kpi-flip-row {
-  display: flex;
-  gap: var(--mg-v2-space-6, 1.5rem);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mg-layout-grid-gap-mobile, var(--mg-v2-space-4, 1rem));
   margin-bottom: var(--mg-v2-space-6, 1.5rem);
+  min-width: 0;
+  width: 100%;
 }
 
-@media (max-width: 767px) {
+@media (min-width: 768px) {
   .mg-v2-kpi-flip-row {
-    flex-direction: column;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--mg-layout-grid-gap-tablet, var(--mg-v2-space-5, 1.25rem));
+  }
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-kpi-flip-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--mg-layout-grid-gap-desktop, var(--mg-v2-space-6, 1.5rem));
   }
 }
 

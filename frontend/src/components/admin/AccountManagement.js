@@ -215,14 +215,15 @@ const AccountManagement = () => {
   );
 
   return (
-    <AdminCommonLayout title={ACCOUNT_PAGE_TITLES.MAIN}>
+    <AdminCommonLayout title="계좌 관리">
       <div className={`mg-v2-ad-b0kla ${ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT}`}>
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="계좌 관리 콘텐츠">
             <ContentHeader
-              title={null}
+              title={ACCOUNT_PAGE_TITLES.MAIN}
               subtitle="정산·입금 안내에 사용할 계좌를 등록·관리합니다."
               actions={accountHeaderActions}
+              titleId="account-management-page-title"
             />
 
             {loading && accounts.length === 0 ? (

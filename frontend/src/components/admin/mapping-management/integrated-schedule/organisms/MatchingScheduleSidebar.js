@@ -5,7 +5,7 @@
  * @since 2026-06-27
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -13,22 +13,13 @@ import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
-  buildViewModeStorageKey,
-  resolveViewModeStorageScope,
-  useViewModePreference
-} from '../../../../../hooks/useViewModePreference';
-import {
   VIEW_FILTER_NEW,
   VIEW_FILTER_REMAINING,
   VIEW_FILTER_ALL,
   VIEW_FILTER_NEW_LABEL,
   STATUS_FILTER_OPTIONS
 } from '../../constants/integratedScheduleSidebarFilterConstants';
-import {
-  SIDEBAR_DENSITY_COMFORTABLE,
-  SIDEBAR_DENSITY_MODES,
-  SIDEBAR_DENSITY_PAGE_ID
-} from '../../constants/integratedScheduleSidebarDensityConstants';
+import { SIDEBAR_DENSITY_COMFORTABLE } from '../../constants/integratedScheduleSidebarDensityConstants';
 import DensityToggle from '../molecules/DensityToggle';
 import MatchingScheduleList from './MatchingScheduleList';
 
@@ -41,6 +32,9 @@ const MatchingScheduleSidebar = ({
   onViewFilterChange,
   statusFilter,
   onStatusFilterChange,
+  sidebarDensity = SIDEBAR_DENSITY_COMFORTABLE,
+  onSidebarDensityChange,
+  savedViewControls = null,
   getStatusCount,
   onScheduleFromCard,
   onOpenPeek,
@@ -56,15 +50,6 @@ const MatchingScheduleSidebar = ({
   activePeekMappingId
 }) => {
   const { t } = useTranslation();
-  const densityStorageKey = useMemo(
-    () => buildViewModeStorageKey(resolveViewModeStorageScope(), SIDEBAR_DENSITY_PAGE_ID),
-    []
-  );
-  const { viewMode: sidebarDensity, setViewMode: setSidebarDensity } = useViewModePreference({
-    storageKey: densityStorageKey,
-    defaultMode: SIDEBAR_DENSITY_COMFORTABLE,
-    allowedModes: SIDEBAR_DENSITY_MODES
-  });
 
   return (
     <aside
@@ -121,6 +106,11 @@ const MatchingScheduleSidebar = ({
         className="integrated-schedule__sidebar-body"
         hidden={isCollapsed}
       >
+        {savedViewControls ? (
+          <div className="integrated-schedule__saved-view-controls">
+            {savedViewControls}
+          </div>
+        ) : null}
         <div className="integrated-schedule__filter-toolbar">
           <fieldset className="integrated-schedule__filter" aria-label="매칭 목록 보기 필터">
             <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
@@ -172,7 +162,7 @@ const MatchingScheduleSidebar = ({
           </fieldset>
           <DensityToggle
             density={sidebarDensity}
-            onDensityChange={setSidebarDensity}
+            onDensityChange={onSidebarDensityChange}
           />
         </div>
         <fieldset
@@ -248,6 +238,9 @@ MatchingScheduleSidebar.propTypes = {
   onViewFilterChange: PropTypes.func.isRequired,
   statusFilter: PropTypes.string.isRequired,
   onStatusFilterChange: PropTypes.func.isRequired,
+  sidebarDensity: PropTypes.string,
+  onSidebarDensityChange: PropTypes.func,
+  savedViewControls: PropTypes.node,
   getStatusCount: PropTypes.func.isRequired,
   onScheduleFromCard: PropTypes.func.isRequired,
   onOpenPeek: PropTypes.func,
@@ -266,6 +259,9 @@ MatchingScheduleSidebar.propTypes = {
 MatchingScheduleSidebar.defaultProps = {
   isCollapsed: false,
   loading: false,
+  sidebarDensity: SIDEBAR_DENSITY_COMFORTABLE,
+  onSidebarDensityChange: null,
+  savedViewControls: null,
   onOpenPeek: null,
   onPayment: null,
   onDeposit: null,

@@ -32,7 +32,7 @@ const NextConsultationCard = ({
   };
 
   return (
-    <div className={`mg-v2-next-consultation-card ${className}`}>
+    <div className={`mg-v2-next-consultation-card consultant-dashboard-v2__next-card ${className}`}>
       <div className="mg-v2-next-consultation-card__header">
         <div className="mg-v2-next-consultation-card__title">
           <Icon name="CALENDAR" size="MD" color="TRANSPARENT" />

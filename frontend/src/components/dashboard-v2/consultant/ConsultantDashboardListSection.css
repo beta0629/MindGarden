@@ -1,0 +1,50 @@
+/**
+ * Consultant Dashboard list sections — G1-02 ListTableView flat (SchedulePendingList 정합)
+ */
+
+.consultant-dashboard-list-section__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.consultant-dashboard-list-section__table {
+  margin-bottom: var(--mg-spacing-sm, 0.5rem);
+}
+
+.consultant-dashboard-list-section__empty,
+.consultant-dashboard-list-section__loading,
+.consultant-dashboard-list-section__error {
+  margin: 0;
+  padding: var(--mg-spacing-md, 0.75rem) 0;
+  font-size: var(--mg-v2-font-size-body-sm);
+  text-align: center;
+}
+
+.consultant-dashboard-list-section__empty,
+.consultant-dashboard-list-section__loading {
+  color: var(--mg-color-text-secondary);
+}
+
+.consultant-dashboard-list-section__error {
+  color: var(--mg-color-error-main);
+}
+
+.consultant-dashboard-list-section__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--mg-spacing-xs, 0.25rem);
+  border-top: 1px solid var(--mg-color-border-main);
+  margin-top: var(--mg-spacing-sm, 0.5rem);
+}
+
+.consultant-dashboard-list-section__view-all {
+  font-size: var(--mg-v2-font-size-body-sm);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-color-primary-main);
+  text-decoration: none;
+}
+
+.consultant-dashboard-list-section__view-all:hover {
+  text-decoration: underline;
+}

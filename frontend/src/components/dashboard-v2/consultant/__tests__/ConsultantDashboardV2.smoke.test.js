@@ -80,6 +80,12 @@ jest.mock('../../../common/ListTableView', () => ({
 jest.mock('../../../consultant/ConsultationLogModal', () => () => null);
 jest.mock('../../../ui/Icon/Icon', () => () => null);
 
+const mockStatsResponse = {
+  newClients: 1,
+  unreadMessages: 2,
+  weeklyStats: [{ period: '07/01', completedCount: 5 }]
+};
+
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
@@ -105,11 +111,7 @@ jest.mock('../../../../utils/standardizedApi', () => ({
       if (String(url).includes('schedules')) {
         return Promise.resolve({ schedules: [] });
       }
-      return Promise.resolve({
-        newClients: 1,
-        unreadMessages: 2,
-        weeklyStats: [{ period: '07/01', completedCount: 5 }]
-      });
+      return Promise.resolve(mockStatsResponse);
     })
   }
 }));
@@ -124,6 +126,10 @@ const renderDashboard = () => render(
 );
 
 describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
+  beforeEach(() => {
+    mockStatsResponse.weeklyStats = [{ period: '07/01', completedCount: 5 }];
+  });
+
   test('G-14: ACL title 생략, ContentHeader welcome SSOT, B0KlA 루트', async() => {
     renderDashboard();
 
@@ -164,5 +170,20 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     expect(screen.getByRole('button', { name: '상담일지 작성' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '일정 조회' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '내담자 관리' })).toBeInTheDocument();
+  });
+
+  test('weekly chart empty uses B0KlA chart-empty (not legacy empty-state)', async() => {
+    mockStatsResponse.weeklyStats = [];
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultant-dashboard-weekly-chart')).toBeInTheDocument();
+    });
+
+    expect(document.querySelector('.consultant-dashboard-v2__chart-empty')).toBeInTheDocument();
+    expect(document.querySelector('.consultant-dashboard-v2__chart-empty-text')).toBeInTheDocument();
+    expect(document.querySelector('.empty-state')).not.toBeInTheDocument();
+    expect(document.querySelector('.chart-container')).not.toBeInTheDocument();
   });
 });

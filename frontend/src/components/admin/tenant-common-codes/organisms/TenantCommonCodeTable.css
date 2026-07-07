@@ -1,0 +1,85 @@
+/**
+ * TenantCommonCodeTable — Comfortable 밀도 B0KlA
+ */
+
+.tenant-common-code-table.mg-v2-list-block__table {
+  width: 100%;
+}
+
+.tenant-common-code-table.mg-v2-ad-b0kla__data-table--comfortable tbody tr {
+  min-height: var(--mg-v2-space-12, 3rem);
+}
+
+.tenant-common-code-table.mg-v2-ad-b0kla__data-table--comfortable td,
+.tenant-common-code-table.mg-v2-ad-b0kla__data-table--comfortable th {
+  padding: var(--mg-spacing-12, 0.75rem) var(--mg-spacing-16, 1rem);
+}
+
+.tenant-common-code__peek-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  min-width: 0;
+}
+
+@media (min-width: 1280px) {
+  .tenant-common-code__peek-layout--peek-open {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
+    gap: var(--mg-spacing-16, 1rem);
+  }
+}
+
+.tenant-common-code__main-region {
+  min-width: 0;
+}
+
+.tenant-common-code__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-12, 0.75rem);
+  margin-bottom: var(--mg-spacing-16, 1rem);
+  align-items: flex-end;
+}
+
+.tenant-common-code__filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-4, 0.25rem);
+  min-width: min(100%, 12rem);
+}
+
+.tenant-common-code__filter-label {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-color-text-secondary);
+  font-weight: var(--mg-v2-font-weight-medium);
+}
+
+.tenant-common-code__filter-input,
+.tenant-common-code__filter-select {
+  min-height: var(--input-height-default);
+  padding: var(--mg-spacing-8, 0.5rem) var(--mg-spacing-12, 0.75rem);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-v2-font-size-body-sm);
+}
+
+.tenant-common-code__filter-input:focus-visible,
+.tenant-common-code__filter-select:focus-visible {
+  outline: 2px solid var(--mg-v2-color-state-focus-ring);
+  outline-offset: 1px;
+}
+
+.tenant-common-code__header-actions {
+  margin-inline-start: auto;
+}
+
+.tenant-common-code__error {
+  padding: var(--mg-spacing-12, 0.75rem);
+  margin-bottom: var(--mg-spacing-16, 1rem);
+  border-radius: var(--mg-radius-md);
+  border: 1px solid var(--mg-v2-color-danger-border, var(--mg-color-border-main));
+  background: var(--mg-v2-color-danger-bg, var(--mg-color-surface-main));
+  color: var(--mg-v2-color-danger-main, var(--mg-color-text-main));
+}

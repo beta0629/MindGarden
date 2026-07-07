@@ -1,0 +1,80 @@
+/**
+ * TenantCommonCodeSidePeekContent — B0KlA diff 패널
+ */
+
+.tenant-common-code-side-peek {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-16, 1rem);
+}
+
+.tenant-common-code-side-peek__loading {
+  margin: 0;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-sm);
+}
+
+.tenant-common-code-side-peek__header {
+  padding-bottom: var(--mg-spacing-12, 0.75rem);
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.tenant-common-code-side-peek__title {
+  margin: 0 0 var(--mg-spacing-4, 0.25rem);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-color-text-main);
+  padding-inline-start: calc(var(--mg-spacing-4, 0.25rem) + 4px);
+  border-inline-start: 4px solid var(--mg-color-primary-main);
+  border-radius: 2px;
+}
+
+.tenant-common-code-side-peek__meta {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-color-text-secondary);
+}
+
+.tenant-common-code-side-peek__diff-head,
+.tenant-common-code-side-peek__diff-row {
+  display: grid;
+  grid-template-columns: minmax(4rem, 0.8fr) 1fr 1fr;
+  gap: var(--mg-spacing-8, 0.5rem);
+  align-items: start;
+}
+
+.tenant-common-code-side-peek__diff-head {
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-color-text-secondary);
+  padding-bottom: var(--mg-spacing-8, 0.5rem);
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.tenant-common-code-side-peek__diff-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tenant-common-code-side-peek__diff-row {
+  padding: var(--mg-spacing-8, 0.5rem) 0;
+  border-bottom: 1px solid var(--mg-color-border-main);
+  font-size: var(--mg-v2-font-size-body-sm);
+  color: var(--mg-color-text-main);
+}
+
+.tenant-common-code-side-peek__diff-row--changed {
+  background: var(--mg-v2-color-warning-bg, var(--mg-color-surface-main));
+}
+
+.tenant-common-code-side-peek__diff-row--changed .tenant-common-code-side-peek__diff-col:last-child {
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-warning-main, var(--mg-color-text-main));
+}
+
+.tenant-common-code-side-peek__note {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-color-text-secondary);
+}

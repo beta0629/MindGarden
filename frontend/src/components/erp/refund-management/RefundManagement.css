@@ -364,3 +364,67 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* Admin Dark Mode C-3 P1-i — Refund Management cascade */
+[data-theme="dark"] .refund-management__section,
+[data-theme="dark"] .refund-management__kpi-block,
+[data-theme="dark"] .refund-management__stat-card,
+[data-theme="dark"] .refund-management__inline-loading {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .refund-management__section-title,
+[data-theme="dark"] .refund-management__stat-value {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .refund-management__stat-label,
+[data-theme="dark"] .refund-management__pagination-info,
+[data-theme="dark"] .refund-management__reason-stats-empty {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .refund-management__filter-block {
+  background: var(--mg-dark-toolbar-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .refund-management__history-table th,
+[data-theme="dark"] .refund-management__reason-stats-table th {
+  background: var(--ad-b0kla-table-header-bg);
+  color: var(--ad-b0kla-table-header-text);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .refund-management__history-table td,
+[data-theme="dark"] .refund-management__reason-stats-table td {
+  color: var(--mg-v2-form-text);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .refund-management__history-table tbody tr,
+[data-theme="dark"] .refund-management__reason-stats-table tbody tr {
+  background: var(--ad-b0kla-table-row-bg);
+}
+
+[data-theme="dark"] .refund-management__history-table tbody tr:hover,
+[data-theme="dark"] .refund-management__reason-stats-table tbody tr:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .refund-management__erp-sync-block,
+[data-theme="dark"] .refund-management__accounting-block {
+  background: var(--mg-color-surface-main);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .refund-management__erp-sync-content p,
+[data-theme="dark"] .refund-management__accounting-item {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .refund-management__accounting-item--muted {
+  color: var(--mg-v2-form-label);
+}
+

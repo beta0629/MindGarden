@@ -14,6 +14,7 @@ import { ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { PiggyBank, List, TrendingUp, Wallet, Percent, DollarSign } from 'lucide-react';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
+import './BudgetManagementB0KlA.css';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';

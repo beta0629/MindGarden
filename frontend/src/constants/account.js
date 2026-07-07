@@ -4,13 +4,28 @@
 
 import { createApiUrl } from './environment';
 
+/** StandardizedApi용 상대 경로 (tenantId 헤더 자동) */
+export const ACCOUNT_API = {
+  BASE: '/api/v1/accounts',
+  ACTIVE: '/api/v1/accounts/active',
+  BANKS: '/api/v1/accounts/banks',
+  STATISTICS: '/api/v1/accounts/statistics',
+  VALIDATE: '/api/v1/accounts/validate',
+  PRIMARY: '/api/v1/accounts/primary'
+};
+
+export const buildAccountItemPath = (id) => `${ACCOUNT_API.BASE}/${id}`;
+export const buildAccountToggleStatusPath = (id) => `${ACCOUNT_API.BASE}/${id}/toggle-status`;
+export const buildAccountSetPrimaryPath = (id) => `${ACCOUNT_API.BASE}/${id}/set-primary`;
+
+/** @deprecated fetch 레거시 — StandardizedApi는 ACCOUNT_API 사용 */
 export const ACCOUNT_API_ENDPOINTS = {
-  BASE: createApiUrl('/api/v1/accounts'),
-  ACTIVE: createApiUrl('/api/v1/accounts/active'),
-  BANKS: createApiUrl('/api/v1/accounts/banks'),
-  STATISTICS: createApiUrl('/api/v1/accounts/statistics'),
-  VALIDATE: createApiUrl('/api/v1/accounts/validate'),
-  PRIMARY: createApiUrl('/api/v1/accounts/primary')
+  BASE: createApiUrl(ACCOUNT_API.BASE),
+  ACTIVE: createApiUrl(ACCOUNT_API.ACTIVE),
+  BANKS: createApiUrl(ACCOUNT_API.BANKS),
+  STATISTICS: createApiUrl(ACCOUNT_API.STATISTICS),
+  VALIDATE: createApiUrl(ACCOUNT_API.VALIDATE),
+  PRIMARY: createApiUrl(ACCOUNT_API.PRIMARY)
 };
 
 export const HTTP_METHODS = {
@@ -76,7 +91,7 @@ export const ACCOUNT_FORM_PLACEHOLDERS = {
 };
 
 export const ACCOUNT_BUTTON_TEXT = {
-  REGISTER: '계좌 등록',
+  REGISTER: '+ 계좌 등록',
   EDIT: '수정',
   DELETE: '삭제',
   CANCEL: '취소',
@@ -85,7 +100,17 @@ export const ACCOUNT_BUTTON_TEXT = {
   PROCESSING: '처리 중...',
   ACTIVATE: '활성화',
   DEACTIVATE: '비활성화',
-  SET_PRIMARY: '기본설정'
+  SET_PRIMARY: '기본 계좌로 설정',
+  TOGGLE_STATUS: '활성 상태 변경'
+};
+
+export const ACCOUNT_ARIA = {
+  ROW_ACTIONS: '계좌 작업'
+};
+
+export const ACCOUNT_MASK = {
+  HOLDER: '예금주',
+  NUMBER: '계좌번호'
 };
 
 export const ACCOUNT_MESSAGES = {
@@ -119,14 +144,13 @@ export const ACCOUNT_VALIDATION = {
 };
 
 export const ACCOUNT_TABLE_COLUMNS = {
+  PRIMARY: '기본',
   BANK: '은행',
   ACCOUNT_NUMBER: '계좌번호',
-  ACCOUNT_HOLDER: '예금주명',
-  BRANCH_ID: '지점 ID',
+  ACCOUNT_HOLDER: '예금주',
+  DESCRIPTION: '설명',
   STATUS: '상태',
-  PRIMARY: '기본계좌',
-  CREATED_AT: '등록일',
-  ACTIONS: '작업'
+  ACTIONS: '액션'
 };
 
 export const ACCOUNT_PAGE_TITLES = {
@@ -137,7 +161,7 @@ export const ACCOUNT_PAGE_TITLES = {
 
 /** 목록 영역(B0KlA 섹션) 제목 */
 export const ACCOUNT_SECTION_TITLES = {
-  REGISTERED_LIST: '등록된 계좌'
+  REGISTERED_LIST: '등록된 계좌 목록'
 };
 
 /** 계좌 목록이 비었을 때 안내 */

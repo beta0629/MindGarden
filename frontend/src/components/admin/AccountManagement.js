@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -15,25 +15,31 @@ import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
 import { ACCOUNT_CSS_CLASSES } from '../../constants/css';
 import {
-  ACCOUNT_API_ENDPOINTS,
-  HTTP_METHODS,
-  HTTP_HEADERS,
   ACCOUNT_BUTTON_TEXT,
   ACCOUNT_MESSAGES,
   ACCOUNT_PAGE_TITLES,
   ACCOUNT_SECTION_TITLES
 } from '../../constants/account';
+import {
+  createAccount,
+  deleteAccount,
+  listAccountBanks,
+  listActiveAccounts,
+  setPrimaryAccount,
+  toggleAccountStatus,
+  updateAccount
+} from '../../services/accountManagementService';
+import { toDisplayString } from '../../utils/safeDisplay';
 
-const FETCH_CREDENTIALS = 'include';
-
-/**
- * API가 배열을 직접 주거나 ApiResponse({ data: [] }) 형태일 때 모두 안전하게 배열로 정규화
- */
-const normalizeListResponse = (payload) => {
-  if (payload == null) return [];
-  if (Array.isArray(payload)) return payload;
-  if (typeof payload === 'object' && Array.isArray(payload.data)) return payload.data;
-  return [];
+const EMPTY_FORM_DATA = {
+  bankCode: '',
+  bankName: '',
+  accountNumber: '',
+  accountHolder: '',
+  branchId: null,
+  isPrimary: false,
+  isActive: true,
+  description: ''
 };
 
 const AccountManagement = () => {
@@ -43,85 +49,57 @@ const AccountManagement = () => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
-  const [formData, setFormData] = useState({
-    bankCode: '',
-    bankName: '',
-    accountNumber: '',
-    accountHolder: '',
-    branchId: null,
-    isPrimary: false,
-    isActive: true,
-    description: ''
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM_DATA);
+
+  const loadAccounts = useCallback(async() => {
+    try {
+      setLoading(true);
+      const list = await listActiveAccounts();
+      setAccounts(Array.isArray(list) ? list : []);
+    } catch (error) {
+      console.error(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, error);
+      notificationManager.show(
+        toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.LOAD_FAILED),
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadBanks = useCallback(async() => {
+    try {
+      const list = await listAccountBanks();
+      setBanks(Array.isArray(list) ? list : []);
+    } catch (error) {
+      console.error(ACCOUNT_MESSAGES.ERROR.BANK_LOAD_FAILED, error);
+    }
+  }, []);
 
   useEffect(() => {
     loadAccounts();
     loadBanks();
-  }, []);
-
-  const loadAccounts = async() => {
-    try {
-      setLoading(true);
-      const response = await fetch(ACCOUNT_API_ENDPOINTS.ACTIVE, {
-        credentials: FETCH_CREDENTIALS
-      });
-      if (response.ok) {
-        const raw = await response.json();
-        setAccounts(normalizeListResponse(raw));
-      } else {
-        notificationManager.show(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, 'error');
-      }
-    } catch (error) {
-      console.error(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, error);
-      notificationManager.show(ACCOUNT_MESSAGES.ERROR.LOAD_FAILED, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadBanks = async() => {
-    try {
-      const response = await fetch(ACCOUNT_API_ENDPOINTS.BANKS, {
-        credentials: FETCH_CREDENTIALS
-      });
-      if (response.ok) {
-        const raw = await response.json();
-        setBanks(normalizeListResponse(raw));
-      }
-    } catch (error) {
-      console.error(ACCOUNT_MESSAGES.ERROR.BANK_LOAD_FAILED, error);
-    }
-  };
+  }, [loadAccounts, loadBanks]);
 
   const handleSubmit = async(e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      const url = editingAccount 
-        ? `${ACCOUNT_API_ENDPOINTS.BASE}/${editingAccount.id}`
-        : ACCOUNT_API_ENDPOINTS.BASE;
-      
-      const method = editingAccount ? HTTP_METHODS.PUT : HTTP_METHODS.POST;
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON },
-        credentials: FETCH_CREDENTIALS,
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        await loadAccounts();
-        resetForm();
-        notificationManager.show(editingAccount ? ACCOUNT_MESSAGES.SUCCESS.UPDATED : ACCOUNT_MESSAGES.SUCCESS.CREATED, 'success');
+      if (editingAccount) {
+        await updateAccount(editingAccount.id, formData);
+        notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.UPDATED, 'success');
       } else {
-        const error = await response.json();
-        notificationManager.show(`오류: ${error.message || ACCOUNT_MESSAGES.ERROR.CREATE_FAILED}`, 'info');
+        await createAccount(formData);
+        notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.CREATED, 'success');
       }
+      await loadAccounts();
+      resetForm();
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.CREATE_FAILED, error);
-      notificationManager.show(ACCOUNT_MESSAGES.ERROR.CREATE_FAILED, 'error');
+      notificationManager.show(
+        toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.CREATE_FAILED),
+        'error'
+      );
     } finally {
       setLoading(false);
     }
@@ -145,23 +123,18 @@ const AccountManagement = () => {
   const handleDelete = async(id) => {
     const confirmed = await confirm({ message: ACCOUNT_MESSAGES.CONFIRM.DELETE, variant: 'danger' });
     if (!confirmed) return;
-    
+
     try {
       setLoading(true);
-      const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}`, {
-        method: HTTP_METHODS.DELETE,
-        credentials: FETCH_CREDENTIALS
-      });
-
-      if (response.ok) {
-        await loadAccounts();
-        notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.DELETED, 'success');
-      } else {
-        notificationManager.show(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, 'error');
-      }
+      await deleteAccount(id);
+      await loadAccounts();
+      notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.DELETED, 'success');
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, error);
-      notificationManager.show(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, 'error');
+      notificationManager.show(
+        toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.DELETE_FAILED),
+        'error'
+      );
     } finally {
       setLoading(false);
     }
@@ -170,20 +143,15 @@ const AccountManagement = () => {
   const handleToggleStatus = async(id) => {
     try {
       setLoading(true);
-      const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}/toggle-status`, {
-        method: HTTP_METHODS.PATCH,
-        credentials: FETCH_CREDENTIALS
-      });
-
-      if (response.ok) {
-        await loadAccounts();
-        notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.STATUS_CHANGED, 'success');
-      } else {
-        notificationManager.show(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED, 'error');
-      }
+      await toggleAccountStatus(id);
+      await loadAccounts();
+      notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.STATUS_CHANGED, 'success');
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED, error);
-      notificationManager.show(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED, 'error');
+      notificationManager.show(
+        toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED),
+        'error'
+      );
     } finally {
       setLoading(false);
     }
@@ -192,43 +160,29 @@ const AccountManagement = () => {
   const handleSetPrimary = async(id) => {
     try {
       setLoading(true);
-      const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}/set-primary`, {
-        method: HTTP_METHODS.PATCH,
-        credentials: FETCH_CREDENTIALS
-      });
-
-      if (response.ok) {
-        await loadAccounts();
-        notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.PRIMARY_SET, 'success');
-      } else {
-        notificationManager.show(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED, 'error');
-      }
+      await setPrimaryAccount(id);
+      await loadAccounts();
+      notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.PRIMARY_SET, 'success');
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED, error);
-      notificationManager.show(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED, 'error');
+      notificationManager.show(
+        toDisplayString(error?.message, ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED),
+        'error'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const resetForm = () => {
-    setFormData({
-      bankCode: '',
-      bankName: '',
-      accountNumber: '',
-      accountHolder: '',
-      branchId: null,
-      isPrimary: false,
-      isActive: true,
-      description: ''
-    });
+    setFormData(EMPTY_FORM_DATA);
     setEditingAccount(null);
     setShowForm(false);
   };
 
   const handleBankChange = (bankCode) => {
-    const bank = banks.find(b => b.code === bankCode);
-    setFormData(prev => ({
+    const bank = banks.find((b) => b.code === bankCode);
+    setFormData((prev) => ({
       ...prev,
       bankCode,
       bankName: bank ? bank.name : ''
@@ -236,7 +190,7 @@ const AccountManagement = () => {
   };
 
   const handleFormDataChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value
     }));

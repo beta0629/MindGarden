@@ -1,27 +1,79 @@
+/**
+ * AccountTable — ListTableView + EntityRowActions (G2-07 Phase 1-C)
+ *
+ * @author CoreSolution
+ * @since 2026-07-07
+ */
+
+import React, { useCallback, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import { Building2 } from 'lucide-react';
 import UnifiedLoading from '../../common/UnifiedLoading';
-import MGCard from '../../common/MGCard';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import {
+  ListTableView,
+  StatusBadge,
+  EntityRowActions,
+  ENTITY_ROW_ACTIONS_LAYOUT
+} from '../../common';
+import SafeText from '../../common/SafeText';
 import { ACCOUNT_CSS_CLASSES } from '../../../constants/css';
 import {
-  ACCOUNT_STATUS_LABELS,
-  ACCOUNT_PRIMARY_LABELS,
+  ACCOUNT_ARIA,
   ACCOUNT_BUTTON_TEXT,
-  ACCOUNT_TABLE_COLUMNS,
-  ACCOUNT_EMPTY_STATE
+  ACCOUNT_EMPTY_STATE,
+  ACCOUNT_MASK,
+  ACCOUNT_PRIMARY_LABELS,
+  ACCOUNT_STATUS_LABELS,
+  ACCOUNT_TABLE_COLUMNS
 } from '../../../constants/account';
+import { maskEncryptedDisplay } from '../../../utils/codeHelper';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './AccountTable.css';
 
-const formatCreatedAt = (createdAt) => {
-  if (createdAt == null || createdAt === '') {
-    return '—';
-  }
-  const d = new Date(createdAt);
-  if (Number.isNaN(d.getTime())) {
-    return '—';
-  }
-  return d.toLocaleDateString('ko-KR');
+const TABLE_COLUMNS = [
+  { key: 'isPrimary', label: ACCOUNT_TABLE_COLUMNS.PRIMARY },
+  { key: 'bankName', label: ACCOUNT_TABLE_COLUMNS.BANK },
+  { key: 'accountNumber', label: ACCOUNT_TABLE_COLUMNS.ACCOUNT_NUMBER },
+  { key: 'accountHolder', label: ACCOUNT_TABLE_COLUMNS.ACCOUNT_HOLDER },
+  { key: 'description', label: ACCOUNT_TABLE_COLUMNS.DESCRIPTION, hideOnMobile: true },
+  { key: 'isActive', label: ACCOUNT_TABLE_COLUMNS.STATUS },
+  { key: '_actions', label: ACCOUNT_TABLE_COLUMNS.ACTIONS }
+];
+
+/**
+ * EntityRowActions primary·overflow 구성 (G2-07 SSOT)
+ * @param {object} account
+ * @param {object} handlers
+ * @returns {{ primaryAction: object, items: object[] }}
+ */
+export const buildAccountRowActions = (account, { onEdit, onDelete, onToggleStatus, onSetPrimary }) => {
+  const items = [
+    {
+      id: 'set-primary',
+      label: ACCOUNT_BUTTON_TEXT.SET_PRIMARY,
+      onClick: () => onSetPrimary(account.id),
+      hidden: Boolean(account.isPrimary)
+    },
+    {
+      id: 'toggle-status',
+      label: ACCOUNT_BUTTON_TEXT.TOGGLE_STATUS,
+      onClick: () => onToggleStatus(account.id)
+    },
+    {
+      id: 'delete',
+      label: ACCOUNT_BUTTON_TEXT.DELETE,
+      onClick: () => onDelete(account.id),
+      variant: 'destructive'
+    }
+  ];
+
+  return {
+    primaryAction: {
+      label: ACCOUNT_BUTTON_TEXT.EDIT,
+      onClick: () => onEdit(account)
+    },
+    items
+  };
 };
 
 const AccountTable = ({
@@ -32,6 +84,88 @@ const AccountTable = ({
   onToggleStatus,
   onSetPrimary
 }) => {
+  const renderAccountActions = useCallback((account) => {
+    const config = buildAccountRowActions(account, {
+      onEdit,
+      onDelete,
+      onToggleStatus,
+      onSetPrimary
+    });
+    return (
+      <EntityRowActions
+        layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
+        ariaLabel={ACCOUNT_ARIA.ROW_ACTIONS}
+        {...config}
+      />
+    );
+  }, [onEdit, onDelete, onToggleStatus, onSetPrimary]);
+
+  const renderCell = useCallback((columnKey, account) => {
+    if (columnKey === '_actions') {
+      return renderAccountActions(account);
+    }
+    if (columnKey === 'isPrimary') {
+      return account.isPrimary ? (
+        <StatusBadge variant="info">{ACCOUNT_PRIMARY_LABELS.TRUE}</StatusBadge>
+      ) : (
+        <SafeText tag="span">—</SafeText>
+      );
+    }
+    if (columnKey === 'bankName') {
+      const bankLabel = toDisplayString(account.bankName);
+      const iconSrc = toDisplayString(account.bankIcon || account.icon, '');
+      return (
+        <span className="mg-v2-account-table__bank">
+          {iconSrc ? (
+            <img
+              src={iconSrc}
+              alt=""
+              className="mg-v2-account-table__bank-icon"
+              aria-hidden="true"
+            />
+          ) : (
+            <Building2 size={16} className="mg-v2-account-table__bank-icon-fallback" aria-hidden="true" />
+          )}
+          <SafeText tag="span">{bankLabel}</SafeText>
+        </span>
+      );
+    }
+    if (columnKey === 'accountNumber') {
+      return (
+        <SafeText tag="span">
+          {maskEncryptedDisplay(
+            toDisplayString(account.accountNumber, ''),
+            ACCOUNT_MASK.NUMBER
+          )}
+        </SafeText>
+      );
+    }
+    if (columnKey === 'accountHolder') {
+      return (
+        <SafeText tag="span">
+          {maskEncryptedDisplay(
+            toDisplayString(account.accountHolder, ''),
+            ACCOUNT_MASK.HOLDER
+          )}
+        </SafeText>
+      );
+    }
+    if (columnKey === 'description') {
+      return <SafeText tag="span">{toDisplayString(account.description, '—')}</SafeText>;
+    }
+    if (columnKey === 'isActive') {
+      return (
+        <StatusBadge variant={account.isActive ? 'success' : 'neutral'}>
+          {account.isActive ? ACCOUNT_STATUS_LABELS.ACTIVE : ACCOUNT_STATUS_LABELS.INACTIVE}
+        </StatusBadge>
+      );
+    }
+    const value = account[columnKey];
+    return <SafeText tag="span">{toDisplayString(value, '—')}</SafeText>;
+  }, [renderAccountActions]);
+
+  const tableData = useMemo(() => accounts, [accounts]);
+
   if (loading) {
     return (
       <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_LIST}>
@@ -57,120 +191,27 @@ const AccountTable = ({
 
   return (
     <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_LIST}>
-      <div className="mg-v2-account-cards-grid">
-        {accounts.map((account) => (
-          <MGCard key={account.id} variant="default" className="account-card">
-            <div className="account-card__header">
-              <h3 className="account-card__title">{toDisplayString(account.bankName)}</h3>
-              {account.isPrimary && (
-                <span className="primary-badge">{ACCOUNT_PRIMARY_LABELS.TRUE}</span>
-              )}
-            </div>
-
-            <div className="account-card__content">
-              <div className="account-card__field">
-                <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.ACCOUNT_NUMBER}</span>
-                <span className="account-card__value">
-                  {toDisplayString(account.accountNumber)}
-                </span>
-              </div>
-
-              <div className="account-card__field">
-                <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.ACCOUNT_HOLDER}</span>
-                <span className="account-card__value">
-                  {toDisplayString(account.accountHolder)}
-                </span>
-              </div>
-
-              {account.branchId ? (
-                <div className="account-card__field">
-                  <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.BRANCH_ID}</span>
-                  <span className="account-card__value">{account.branchId}</span>
-                </div>
-              ) : null}
-
-              <div className="account-card__field">
-                <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.STATUS}</span>
-                <span
-                  className={`account-card__status ${account.isActive ? 'active' : 'inactive'}`}
-                >
-                  {account.isActive ? ACCOUNT_STATUS_LABELS.ACTIVE : ACCOUNT_STATUS_LABELS.INACTIVE}
-                </span>
-              </div>
-
-              <div className="account-card__field">
-                <span className="account-card__label">{ACCOUNT_TABLE_COLUMNS.CREATED_AT}</span>
-                <span className="account-card__value account-card__value--secondary">
-                  {formatCreatedAt(account.createdAt)}
-                </span>
-              </div>
-            </div>
-
-            <div className="account-card__actions">
-              <MGButton
-                variant="secondary"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'secondary',
-                  size: 'sm',
-                  loading: false
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => onEdit(account)}
-                preventDoubleClick
-              >
-                {ACCOUNT_BUTTON_TEXT.EDIT}
-              </MGButton>
-              <MGButton
-                variant="warning"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'warning',
-                  size: 'sm',
-                  loading: false
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => onToggleStatus(account.id)}
-                preventDoubleClick
-              >
-                {account.isActive ? ACCOUNT_BUTTON_TEXT.DEACTIVATE : ACCOUNT_BUTTON_TEXT.ACTIVATE}
-              </MGButton>
-              {!account.isPrimary && (
-                <MGButton
-                  variant="info"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'info',
-                    size: 'sm',
-                    loading: false
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => onSetPrimary(account.id)}
-                  preventDoubleClick
-                >
-                  {ACCOUNT_BUTTON_TEXT.SET_PRIMARY}
-                </MGButton>
-              )}
-              <MGButton
-                variant="danger"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'danger',
-                  size: 'sm',
-                  loading: false
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => onDelete(account.id)}
-                preventDoubleClick
-              >
-                {ACCOUNT_BUTTON_TEXT.DELETE}
-              </MGButton>
-            </div>
-          </MGCard>
-        ))}
-      </div>
+      <ListTableView
+        className="mg-v2-account-table"
+        columns={TABLE_COLUMNS}
+        data={tableData}
+        renderCell={renderCell}
+      />
     </div>
   );
+};
+
+AccountTable.propTypes = {
+  accounts: PropTypes.arrayOf(PropTypes.object).isRequired,
+  loading: PropTypes.bool,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onToggleStatus: PropTypes.func.isRequired,
+  onSetPrimary: PropTypes.func.isRequired
+};
+
+AccountTable.defaultProps = {
+  loading: false
 };
 
 export default AccountTable;

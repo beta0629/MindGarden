@@ -310,13 +310,17 @@
 }
 
 .mg-v2-ad-b0kla__data-table th {
-    background: var(--ad-b0kla-bg);
+    background: var(--ad-b0kla-table-header-bg, var(--ad-b0kla-bg));
     border-bottom: 2px solid var(--ad-b0kla-border);
     color: var(--ad-b0kla-text-secondary);
     font-weight: 600;
     font-size: 13px;
     padding: var(--mg-spacing-sm) var(--mg-spacing-md);
     text-align: left;
+}
+
+.mg-v2-ad-b0kla__data-table tbody tr {
+    background: var(--ad-b0kla-table-row-bg, transparent);
 }
 
 .mg-v2-ad-b0kla__data-table td {
@@ -328,7 +332,7 @@
 }
 
 .mg-v2-ad-b0kla__data-table tbody tr:hover {
-    background: var(--ad-b0kla-bg);
+    background: var(--ad-b0kla-table-row-hover, var(--ad-b0kla-bg));
 }
 
 /* 뱃지 */

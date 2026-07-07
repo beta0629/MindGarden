@@ -150,6 +150,9 @@
   --ad-b0kla-bg: var(--mg-gray-50);
   --ad-b0kla-card-bg: var(--mg-white);
   --ad-b0kla-border: var(--cs-slate-200);
+  --ad-b0kla-table-header-bg: var(--mg-gray-50);
+  --ad-b0kla-table-row-hover: var(--mg-gray-50);
+  --ad-b0kla-table-row-bg: transparent;
   --ad-b0kla-radius: 24px;
   --ad-b0kla-radius-sm: 12px;
   --ad-b0kla-shadow: var(--cs-shadow-xs);
@@ -271,9 +274,12 @@
   --mg-badge-count-text: var(--mg-primary-200);
 
   /* B0KlA Admin — ContentHeader / GNB 다크 cascade (Phase 1 Set C) */
-  --ad-b0kla-bg: var(--mg-color-background-main);
-  --ad-b0kla-card-bg: var(--mg-color-surface-main);
-  --ad-b0kla-border: var(--mg-color-border-main);
+  --ad-b0kla-bg: var(--mg-dark-content-bg);
+  --ad-b0kla-card-bg: var(--mg-dark-card-bg);
+  --ad-b0kla-border: var(--mg-dark-card-border);
+  --ad-b0kla-table-header-bg: var(--mg-dark-table-header-bg);
+  --ad-b0kla-table-row-hover: var(--mg-dark-table-row-hover);
+  --ad-b0kla-table-row-bg: var(--mg-dark-table-row-bg);
   --ad-b0kla-title-color: var(--mg-v2-color-text-primary);
   --ad-b0kla-subtitle-color: var(--mg-v2-color-text-secondary);
   --ad-b0kla-text-secondary: var(--mg-v2-color-text-secondary);

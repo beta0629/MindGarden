@@ -160,4 +160,9 @@
   --mg-layout-main-bg-end: var(--mg-color-background-muted);
   --mg-layout-section-bg: var(--mg-color-surface-main);
   --mg-layout-section-border: var(--mg-color-border-main);
+
+  /* Phase 2 Set F C-2b — LNB/Sidebar */
+  --mg-layout-sidebar-bg: var(--mg-dark-lnb-bg);
+  --mg-layout-sidebar-active-bg: var(--mg-dark-lnb-hover);
+  --mg-layout-sidebar-text: var(--mg-dark-lnb-text);
 }

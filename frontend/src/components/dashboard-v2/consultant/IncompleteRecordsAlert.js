@@ -22,7 +22,10 @@ const IncompleteRecordsAlert = ({
   if (count === 0) return null;
 
   return (
-    <div className={`mg-v2-alert mg-v2-alert--warning ${className}`}>
+    <div
+      className={`mg-v2-alert mg-v2-alert--warning consultant-dashboard-v2__alert ${className}`}
+      role="status"
+    >
       <div className="mg-v2-alert__content">
         <Icon name="ALERT_TRIANGLE" size="XXL" color="TRANSPARENT" className="mg-v2-alert__icon" />
         <div className="mg-v2-alert__text">

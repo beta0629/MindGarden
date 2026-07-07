@@ -25,6 +25,10 @@ const WIDGET_CONSTANTS_PATH = path.join(
   REPO_ROOT,
   'frontend/src/constants/adminDashboardWidgetConstants.js'
 );
+const ADMIN_DASHBOARD_PATH = path.join(
+  REPO_ROOT,
+  'frontend/src/components/admin/AdminDashboard.js'
+);
 
 describe('AdminDashboard G1-02 widgets guard', () => {
   it('AdminDashboardV2가 AdminCommonLayout·KpiFlipCard 4블록·DASHBOARD_KPI_IDS를 사용한다', () => {
@@ -65,5 +69,28 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).toContain('DASHBOARD_PENDING_LIST_MAX_ROWS');
     expect(source).toContain('DASHBOARD_PENDING_LIST_VIEW_ALL_LABEL');
     expect(source).toContain('DASHBOARD_KPI_IDS');
+  });
+
+  it('AdminDashboard가 SchedulePendingList를 별도 schedulePendingList로 와이어링한다 (PR-DASH-02)', () => {
+    const source = fs.readFileSync(ADMIN_DASHBOARD_PATH, 'utf8');
+
+    expect(source).toContain('const [schedulePendingList, setSchedulePendingList]');
+    expect(source).toContain('loadSchedulePendingList');
+    expect(source).toContain("StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' })");
+    expect(source).toMatch(/schedulePendingCount:\s*schedulePendingList\.length/);
+    expect(source).toMatch(/<SchedulePendingList[\s\S]*?items=\{schedulePendingList\.map/);
+    expect(source).toContain('viewAllHref={ADMIN_ROUTES.INTEGRATED_SCHEDULE}');
+
+    expect(source).not.toContain('onScheduleRegister');
+    expect(source).not.toMatch(/<SchedulePendingList[^>]*\sitems=\{\[\]\}/);
+
+    const scheduleBlock = source.match(/<SchedulePendingList[\s\S]*?\/>/)?.[0] || '';
+    expect(scheduleBlock).not.toContain('pendingDepositList');
+
+    const loadStatsBlock = source.match(/const loadStats[\s\S]*?},\s*\[showToast, t\]\);/)?.[0] || '';
+    expect(loadStatsBlock).not.toContain('API_ADMIN_VACATION_STATISTICS');
+    expect(loadStatsBlock).not.toContain('vacationRes');
+
+    expect(source).toMatch(/if\s*\(isVacationExpanded\)\s*\{[\s\S]*loadVacationStats\(\)/);
   });
 });

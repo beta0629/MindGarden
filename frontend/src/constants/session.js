@@ -87,11 +87,40 @@ export const DASHBOARD_PATHS = {
   SUPER_ADMIN: '/super_admin/dashboard'
 };
 
+/**
+ * 레거시 role → DASHBOARD_PATHS 키 (roles.js import 금지: ajax/session ESLint 순환 방지).
+ * HQ_ADMIN/TENANT_ADMIN 등은 ADMIN 대시보드로 매핑.
+ */
+const LEGACY_ROLE_TO_DASHBOARD_KEY = Object.freeze({
+  SUPER_ADMIN: 'ADMIN',
+  HQ_ADMIN: 'ADMIN',
+  HQ_MASTER: 'ADMIN',
+  SUPER_HQ_ADMIN: 'ADMIN',
+  BRANCH_ADMIN: 'ADMIN',
+  TENANT_ADMIN: 'ADMIN',
+  PRINCIPAL: 'ADMIN',
+  OWNER: 'ADMIN',
+  PLAY_THERAPIST: 'CONSULTANT',
+  SPEECH_THERAPIST: 'CONSULTANT',
+  ROLE_CONSULTANT: 'CONSULTANT',
+  ROLE_CLIENT: 'CLIENT'
+});
+
+const resolveDashboardRoleKey = (role) => {
+  if (role == null || role === '') {
+    return 'CLIENT';
+  }
+  const normalized = String(role).trim().toUpperCase();
+  if (DASHBOARD_PATHS[normalized]) {
+    return normalized;
+  }
+  return LEGACY_ROLE_TO_DASHBOARD_KEY[normalized] || 'ADMIN';
+};
+
 /** 역할에 맞는 대시보드 경로 반환 (세션/권한 체크 후 리다이렉트용) */
 export function getDashboardPathByRole(role) {
-  if (!role) return DASHBOARD_PATHS.CLIENT;
-  const path = DASHBOARD_PATHS[role];
-  return path || DASHBOARD_PATHS.ADMIN;
+  const dashboardKey = resolveDashboardRoleKey(role);
+  return DASHBOARD_PATHS[dashboardKey] || DASHBOARD_PATHS.CLIENT;
 }
 
 // 기본 대시보드 경로

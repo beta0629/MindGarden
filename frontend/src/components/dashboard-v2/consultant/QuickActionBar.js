@@ -5,50 +5,47 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import Icon from '../../ui/Icon/Icon';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { ContentSection } from '../content';
+import { CONSULTANT_DASHBOARD_ROUTES } from '../../../constants/consultantDashboardConstants';
 
 /**
- * 빠른 액션 바 컴포넌트
- * 
- * @description 상담사가 자주 사용하는 동작을 1클릭으로 접근할 수 있는 바
- * @param {Function} onNavigate - 네비게이션 함수
- * @param {string} className - 추가 CSS 클래스
+ * 빠른 액션 바 — ContentSection + G2-08 flat UI
  */
 const QuickActionBar = ({ onNavigate, className = '' }) => {
   const actions = [
     {
       id: 'create-record',
       label: '상담일지 작성',
-      path: '/consultant/consultation-records?action=create',
+      path: `${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?action=create`,
       variant: 'primary'
     },
     {
       id: 'view-schedule',
       label: '일정 조회',
-      path: '/consultant/schedule',
+      path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
       variant: 'outline'
     },
     {
       id: 'view-clients',
-      label: '내담자 조회',
-      path: '/consultant/clients',
-      variant: 'outline'
-    },
-    {
-      id: 'check-messages',
-      label: '메시지 확인',
-      path: '/consultant/messages',
+      label: '내담자 관리',
+      path: CONSULTANT_DASHBOARD_ROUTES.CLIENTS,
       variant: 'outline'
     }
   ];
 
   return (
-    <div className={`mg-v2-quick-action-bar ${className}`}>
-      <div className="mg-v2-quick-action-bar__title">
-        <Icon name="ZAP" size="MD" color="TRANSPARENT" aria-hidden />
-        빠른 액션
-      </div>
-      <div className="mg-v2-quick-action-bar__actions">
-        {actions.map((action) => (
+    <ContentSection
+      className={`consultant-quick-action-bar mg-v2-ad-b0kla__section ${className}`.trim()}
+      noCard
+      dataTestId="consultant-dashboard-quick-action-bar"
+    >
+      <div className="consultant-quick-action-bar__inner">
+        <div className="consultant-quick-action-bar__title">
+          <Icon name="ZAP" size="MD" color="TRANSPARENT" aria-hidden />
+          <SafeText tag="span">빠른 액션</SafeText>
+        </div>
+        <div className="consultant-quick-action-bar__actions">
+          {actions.map((action) => (
             <MGButton
               key={action.id}
               type="button"
@@ -67,9 +64,10 @@ const QuickActionBar = ({ onNavigate, className = '' }) => {
             >
               <SafeText tag="span">{action.label}</SafeText>
             </MGButton>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </ContentSection>
   );
 };
 

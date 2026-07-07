@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { apiGet } from '../../utils/ajax';
 import {
     getCommonCodes,
     createCommonCode,
     updateCommonCode,
     deleteCommonCode,
     toggleCommonCodeStatus,
-    getCodeGroups
+    getCodeGroups,
+    getLegacyCodeGroupsList
 } from '../../utils/commonCodeApi';
 import CustomSelect from '../common/CustomSelect';
 import {
@@ -19,7 +19,6 @@ import { useConfirm } from '../../hooks/useConfirm';
 import { 
     loadCodeGroupMetadata, 
     getCodeGroupKoreanNameSync,
-    getCodeGroupIconSync,
     clearCodeGroupCache
 } from '../../utils/codeHelper';
 import { useSession } from '../../contexts/SessionContext';
@@ -40,12 +39,12 @@ import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import './AdminDashboard/AdminDashboardB0KlA.css';
 import './CommonCodeManagementB0KlA.css';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_COMMON_CODES_GROUPS_LIST = '/api/v1/common-codes/groups/list';
+// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0) — getLegacyCodeGroupsList 내부 SSOT
 
 const COMMON_CODE_DEFAULT_SAVED_VIEW = buildCommonCodeManagementDefaultSavedView();
 
@@ -153,13 +152,22 @@ const CommonCodeManagement = () => {
         }
     }, []);
 
-    const getGroupKoreanName = useCallback((groupName) => {
-        return getCodeGroupKoreanNameSync(groupName);
-    }, []);
+    const convertGroupNameToKorean = useCallback((groupName) => {
+        if (!groupName) {
+            return groupName;
+        }
+        const fallback = COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK[groupName] || groupName;
+        return t(`admin:commonCode.groupKoFallback.${groupName}`, fallback);
+    }, [t]);
 
-    const getGroupIcon = useCallback((groupName) => {
-        return getCodeGroupIconSync(groupName);
-    }, []);
+    const resolveGroupDisplayName = useCallback((group) => {
+        if (!group) {
+            return toDisplayString(group, t('admin:commonCode.ui.displayEmpty', '—'));
+        }
+        const koreanName = getCodeGroupKoreanNameSync(group);
+        const displayName = koreanName !== group ? koreanName : convertGroupNameToKorean(group);
+        return toDisplayString(displayName, toDisplayString(group, t('admin:commonCode.ui.displayEmpty', '—')));
+    }, [convertGroupNameToKorean, t]);
 
     const [newCodeData, setNewCodeData] = useState({
         codeGroup: '',
@@ -183,7 +191,7 @@ const CommonCodeManagement = () => {
             if (groups && groups.length > 0) {
                 setCodeGroups(groups);
             } else {
-                const response = await apiGet(API_COMMON_CODES_GROUPS_LIST);
+                const response = await getLegacyCodeGroupsList();
                 if (response && response.length > 0) {
                     const filteredGroups = response.filter(groupCode => {
                         return hasCodeGroupPermission(groupCode);
@@ -306,12 +314,6 @@ const CommonCodeManagement = () => {
         }
 
         return filtered;
-    };
-
-    const convertGroupNameToKorean = (groupName) => {
-        if (!groupName) return groupName;
-        const fallback = COMMON_CODE_MANAGEMENT_GROUP_KO_FALLBACK[groupName] || groupName;
-        return t(`admin:commonCode.groupKoFallback.${groupName}`, fallback);
     };
 
     const handleAddCode = async(e) => {
@@ -730,10 +732,10 @@ const CommonCodeManagement = () => {
                                 >
                                     <div className="mg-v2-ad-b0kla__group-card-header">
                                         <h3 className="mg-v2-ad-b0kla__group-title">
-                                            { getGroupKoreanName(group) !== group ? getGroupKoreanName(group) : convertGroupNameToKorean(group) }
+                                            { resolveGroupDisplayName(group) }
                                         </h3>
                                     </div>
-                                    <span className="mg-v2-ad-b0kla__group-code">{ group }</span>
+                                    <span className="mg-v2-ad-b0kla__group-code">{ toDisplayString(group, t('admin:commonCode.ui.displayEmpty', '—')) }</span>
                                 </MGButton>
                             ))}
                         </div>
@@ -751,10 +753,10 @@ const CommonCodeManagement = () => {
                             <>
                                 <div className="mg-v2-ad-b0kla__section-header">
                                     <span>
-                                        {t('admin:commonCode.msg.detailTitle', { displayName: getGroupKoreanName(selectedGroup) !== selectedGroup
-                                                ? getGroupKoreanName(selectedGroup)
-                                                : convertGroupNameToKorean(selectedGroup), groupCode: selectedGroup
-                                         })}
+                                        {t('admin:commonCode.msg.detailTitle', {
+                                            displayName: resolveGroupDisplayName(selectedGroup),
+                                            groupCode: toDisplayString(selectedGroup, t('admin:commonCode.ui.displayEmpty', '—'))
+                                        })}
                                     </span>
                                     <div className="mg-v2-ad-b0kla__action-buttons">
                                         {!showAddForm && (
@@ -937,7 +939,7 @@ const CommonCodeManagement = () => {
                                 {loading && groupCodes.length === 0 ? (
                                     <div className="mg-v2-ad-b0kla__loading-message">{t('admin:commonCode.ui.loading')}</div>
                                 ) : (
-                                    <table className="mg-v2-ad-b0kla__data-table">
+                                    <table className="mg-v2-ad-b0kla__data-table mg-v2-ad-b0kla__data-table--comfortable">
                                         <thead>
                                             <tr>
                                                 <th>{t('admin:commonCode.ui.colCodeLabel')}</th>

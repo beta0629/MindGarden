@@ -1,10 +1,12 @@
 /* CommonCodeManagementB0KlA.css - 공통코드 관리 리뉴얼 스타일 */
 /* B0KlA 디자인 토큰 및 아토믹 디자인 적용 */
 
+/* G5-01 Phase 1-B: 2단 마스터-디테일 Comfortable 밀도 (Table SSOT → AdminDashboardB0KlA.css) */
+
 .mg-v2-ad-b0kla__common-code-container {
     display: grid;
     grid-template-columns: 350px 1fr;
-    gap: var(--mg-spacing-xl);
+    gap: var(--mg-spacing-lg);
     align-items: start;
     width: 100%;
 }
@@ -12,7 +14,6 @@
 @media (max-width: 768px) {
     .mg-v2-ad-b0kla__common-code-container {
         grid-template-columns: 1fr;
-        flex-direction: column;
     }
 }
 
@@ -211,9 +212,17 @@
 }
 
 .mg-v2-ad-b0kla__form-header-close.mg-button {
-    padding: 4px 8px;
+    padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
     min-height: unset;
     min-width: unset;
+}
+
+/* Table Comfortable — page modifier only (base table SSOT: AdminDashboardB0KlA.css) */
+.mg-v2-ad-b0kla__data-table--comfortable th,
+.mg-v2-ad-b0kla__data-table--comfortable td {
+    min-height: var(--input-height-lg);
+    padding-top: var(--mg-spacing-sm);
+    padding-bottom: var(--mg-spacing-sm);
 }
 
 /* 우측 디테일 패널 (세부 코드 목록) */
@@ -221,7 +230,7 @@
     background: var(--ad-b0kla-card-bg);
     border: 1px solid var(--ad-b0kla-border);
     border-radius: var(--ad-b0kla-radius-sm);
-    padding: var(--mg-spacing-xl);
+    padding: var(--mg-spacing-lg);
     display: flex;
     flex-direction: column;
     gap: var(--mg-spacing-lg);
@@ -303,37 +312,7 @@
     background: var(--ad-b0kla-bg);
 }
 
-/* 데이터 테이블 */
-.mg-v2-ad-b0kla__data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.mg-v2-ad-b0kla__data-table th {
-    background: var(--ad-b0kla-table-header-bg, var(--ad-b0kla-bg));
-    border-bottom: 2px solid var(--ad-b0kla-border);
-    color: var(--ad-b0kla-text-secondary);
-    font-weight: 600;
-    font-size: 13px;
-    padding: var(--mg-spacing-sm) var(--mg-spacing-md);
-    text-align: left;
-}
-
-.mg-v2-ad-b0kla__data-table tbody tr {
-    background: var(--ad-b0kla-table-row-bg, transparent);
-}
-
-.mg-v2-ad-b0kla__data-table td {
-    border-bottom: 1px solid var(--ad-b0kla-border);
-    padding: var(--mg-spacing-md);
-    color: var(--ad-b0kla-title-color);
-    font-size: 14px;
-    vertical-align: middle;
-}
-
-.mg-v2-ad-b0kla__data-table tbody tr:hover {
-    background: var(--ad-b0kla-table-row-hover, var(--ad-b0kla-bg));
-}
+/* 데이터 테이블 — base SSOT는 AdminDashboardB0KlA.css (.mg-v2-ad-b0kla__data-table) */
 
 /* 뱃지 */
 .mg-v2-badge {
@@ -355,7 +334,7 @@
     color: var(--ad-b0kla-text-secondary);
 }
 
-/* 폼 영억 */
+/* 폼 영역 — G5-01 Comfortable */
 .mg-v2-ad-b0kla__form-container {
     background: var(--ad-b0kla-bg);
     border: 1px solid var(--ad-b0kla-border);
@@ -382,15 +361,16 @@
 
 .mg-v2-ad-b0kla__form-row {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--mg-spacing-md);
     margin-bottom: var(--mg-spacing-md);
 }
 
 .mg-v2-ad-b0kla__form-group {
-    flex: 1;
+    flex: 1 1 240px;
     display: flex;
     flex-direction: column;
-    gap: var(--mg-spacing-xs);
+    gap: var(--mg-spacing-sm);
 }
 
 .mg-v2-ad-b0kla__form-group--full-width {
@@ -399,20 +379,22 @@
 }
 
 .mg-v2-ad-b0kla__form-label {
-    font-size: 13px;
+    font-size: var(--mg-font-size-xs);
     font-weight: 500;
-    color: var(--ad-b0kla-title-color);
+    color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-ad-b0kla__form-input,
 .mg-v2-ad-b0kla__form-textarea {
     width: 100%;
+    min-height: var(--input-height-default);
     padding: var(--mg-spacing-sm) var(--mg-spacing-md);
-    border: 1px solid var(--ad-b0kla-border);
-    border-radius: var(--ad-b0kla-radius-sm);
-    font-size: 14px;
+    border: 1px solid var(--mg-v2-color-border-default);
+    border-radius: var(--mg-radius-md);
+    font-size: var(--mg-font-size-sm);
     outline: none;
     transition: border-color 0.2s ease;
+    box-sizing: border-box;
 }
 
 .mg-v2-ad-b0kla__form-input:focus,
@@ -434,28 +416,20 @@
 
 .mg-v2-ad-b0kla__code-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--mg-spacing-xs);
+    justify-content: center;
 }
 
-.mg-v2-ad-b0kla__code-actions button,
 .mg-v2-ad-b0kla__code-actions .mg-button.mg-button--outline.mg-button--small {
-    padding: 4px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-size: 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    min-height: unset;
-    min-width: unset;
+    padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+    min-height: var(--input-height-sm);
+    font-size: var(--mg-font-size-sm);
+    border-radius: var(--mg-radius-md);
     box-shadow: none;
 }
 
-.mg-v2-ad-b0kla__code-actions button:hover,
 .mg-v2-ad-b0kla__code-actions .mg-button.mg-button--outline.mg-button--small:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-    background: var(--ad-b0kla-bg);
     transform: none;
 }
 
@@ -470,8 +444,8 @@
 .mg-v2-ad-b0kla__form-group--inline-check {
     flex-direction: row;
     align-items: center;
-    gap: var(--mg-spacing-8);
-    padding-top: var(--mg-spacing-24);
+    gap: var(--mg-spacing-sm);
+    padding-top: var(--mg-spacing-lg);
 }
 
 .mg-v2-ad-b0kla__form-label--clickable {
@@ -517,10 +491,10 @@
 }
 
 .mg-v2-ad-b0kla__code-inline {
-    font-size: 12px;
+    font-size: var(--mg-font-size-xs);
     background: var(--mg-gray-100);
-    padding: 2px 4px;
-    border-radius: 4px;
+    padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+    border-radius: var(--mg-radius-sm);
 }
 
 /* 코드 액션 버튼 색상 토큰 */

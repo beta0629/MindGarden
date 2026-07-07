@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Calendar, Users, CheckCircle, TrendingUp, Zap } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -21,12 +21,34 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
+import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';
+import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import {
+    buildViewModeStorageKey,
+    resolveViewModeStorageScope,
+    useViewModePreference
+} from '../../hooks/useViewModePreference';
+import {
+    SESSION_MANAGEMENT_ALLOWED_VIEW_MODES,
+    SESSION_MANAGEMENT_DEFAULT_ACTIVE_TAB,
+    SESSION_MANAGEMENT_DEFAULT_FILTER_STATUS,
+    SESSION_MANAGEMENT_DEFAULT_SEARCH_TERM,
+    SESSION_MANAGEMENT_DEFAULT_VIEW_MODE,
+    SESSION_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+    SESSION_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+    buildSessionManagementDefaultSavedView
+} from '../../constants/sessionManagementSavedViewConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
 const API_ADMIN_SESSION_EXTENSIONS_REQUESTS = '/api/v1/admin/session-extensions/requests';
 const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPPING_STATUS';
 
+const SESSION_DEFAULT_SAVED_VIEW = buildSessionManagementDefaultSavedView(
+    SESSION_MANAGEMENT_DEFAULT_VIEW_MODE
+);
+
+const SESSION_SAVED_VIEW_ROW_ARIA_LABEL = '저장된 뷰';
 
 /**
  * 회기 관리 컴포넌트 - 완전 재설계
@@ -52,8 +74,8 @@ const SessionManagement = () => {
     const [consultants, setConsultants] = useState([]);
     const [mappings, setMappings] = useState([]);
     
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('ALL');
+    const [searchTerm, setSearchTerm] = useState(SESSION_MANAGEMENT_DEFAULT_SEARCH_TERM);
+    const [filterStatus, setFilterStatus] = useState(SESSION_MANAGEMENT_DEFAULT_FILTER_STATUS);
     
     const [mappingStatusOptions, setMappingStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
@@ -61,7 +83,36 @@ const SessionManagement = () => {
     const [showSessionExtensionModal, setShowSessionExtensionModal] = useState(false);
     const [selectedMapping, setSelectedMapping] = useState(null);
     
-    const [activeTab, setActiveTab] = useState('quick'); // 'quick', 'search', 'mapping'
+    const [activeTab, setActiveTab] = useState(SESSION_MANAGEMENT_DEFAULT_ACTIVE_TAB);
+    const { viewMode, setViewMode } = useViewModePreference({
+        storageKey: buildViewModeStorageKey(
+            resolveViewModeStorageScope(),
+            SESSION_MANAGEMENT_SAVED_VIEW_PAGE_ID
+        ),
+        defaultMode: SESSION_MANAGEMENT_DEFAULT_VIEW_MODE,
+        allowedModes: SESSION_MANAGEMENT_ALLOWED_VIEW_MODES
+    });
+    const {
+        savedView,
+        setSavedView,
+        views,
+        activeViewId,
+        saveNamedView,
+        loadNamedView,
+        resetToDefaultView,
+        deleteNamedView
+    } = useSavedViewPreference({
+        pageId: SESSION_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+        defaultView: SESSION_DEFAULT_SAVED_VIEW,
+        namedViews: true
+    });
+    const savedViewFiltersRestoredRef = useRef(false);
+    const savedViewPersistReadyRef = useRef(false);
+    const savedViewPersistTimerRef = useRef(null);
+    const savedViewMetaRef = useRef({
+        sort: SESSION_DEFAULT_SAVED_VIEW.sort,
+        density: SESSION_DEFAULT_SAVED_VIEW.density
+    });
     
     const [sessionExtensionRequests, setSessionExtensionRequests] = useState([]);
     
@@ -280,6 +331,106 @@ const SessionManagement = () => {
     };
 
     useEffect(() => {
+        if (savedViewFiltersRestoredRef.current) {
+            return;
+        }
+        savedViewFiltersRestoredRef.current = true;
+        savedViewMetaRef.current = {
+            sort: savedView.sort ?? SESSION_DEFAULT_SAVED_VIEW.sort,
+            density: savedView.density ?? SESSION_DEFAULT_SAVED_VIEW.density
+        };
+        if (savedView?.viewMode) {
+            setViewMode(savedView.viewMode);
+        }
+        const storedFilters = savedView?.filters;
+        if (storedFilters && Object.keys(storedFilters).length > 0) {
+            if (storedFilters.searchTerm != null) {
+                setSearchTerm(storedFilters.searchTerm);
+            }
+            if (storedFilters.filterStatus != null) {
+                setFilterStatus(storedFilters.filterStatus);
+            }
+            if (storedFilters.activeTab != null) {
+                setActiveTab(storedFilters.activeTab);
+            }
+        }
+        savedViewPersistReadyRef.current = true;
+    }, [savedView, setViewMode]);
+
+    useEffect(() => {
+        if (!savedViewPersistReadyRef.current) {
+            return undefined;
+        }
+
+        if (savedViewPersistTimerRef.current) {
+            clearTimeout(savedViewPersistTimerRef.current);
+        }
+
+        savedViewPersistTimerRef.current = setTimeout(() => {
+            savedViewPersistTimerRef.current = null;
+            setSavedView({
+                viewMode,
+                filters: { searchTerm, filterStatus, activeTab },
+                sort: savedViewMetaRef.current.sort,
+                density: savedViewMetaRef.current.density
+            });
+        }, SESSION_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+        return () => {
+            if (savedViewPersistTimerRef.current) {
+                clearTimeout(savedViewPersistTimerRef.current);
+                savedViewPersistTimerRef.current = null;
+            }
+        };
+    }, [viewMode, searchTerm, filterStatus, activeTab, setSavedView]);
+
+    const applySavedViewPayload = useCallback((payload) => {
+        if (payload?.viewMode) {
+            setViewMode(payload.viewMode);
+        }
+        const storedFilters = payload?.filters ?? {};
+        if (storedFilters.searchTerm != null) {
+            setSearchTerm(storedFilters.searchTerm);
+        }
+        if (storedFilters.filterStatus != null) {
+            setFilterStatus(storedFilters.filterStatus);
+        }
+        if (storedFilters.activeTab != null) {
+            setActiveTab(storedFilters.activeTab);
+        }
+        savedViewMetaRef.current = {
+            sort: payload?.sort ?? SESSION_DEFAULT_SAVED_VIEW.sort,
+            density: payload?.density ?? SESSION_DEFAULT_SAVED_VIEW.density
+        };
+    }, [setViewMode]);
+
+    const handleSelectSavedView = useCallback((viewId) => {
+        const payload = loadNamedView(viewId);
+        applySavedViewPayload(payload);
+    }, [loadNamedView, applySavedViewPayload]);
+
+    const handleResetSavedView = useCallback(() => {
+        const payload = resetToDefaultView();
+        applySavedViewPayload(payload);
+    }, [resetToDefaultView, applySavedViewPayload]);
+
+    const handleSaveNamedView = useCallback((label) => {
+        saveNamedView(label, {
+            viewMode,
+            filters: { searchTerm, filterStatus, activeTab },
+            sort: savedViewMetaRef.current.sort,
+            density: savedViewMetaRef.current.density
+        });
+    }, [saveNamedView, viewMode, searchTerm, filterStatus, activeTab]);
+
+    const handleDeleteSavedView = useCallback((viewId) => {
+        const fallbackPayload = deleteNamedView(viewId);
+        if (fallbackPayload) {
+            applySavedViewPayload(fallbackPayload);
+        }
+    }, [deleteNamedView, applySavedViewPayload]);
+
+    useEffect(() => {
         loadData();
         loadMappingStatusCodes();
     }, [loadData, loadMappingStatusCodes]);
@@ -304,6 +455,16 @@ const SessionManagement = () => {
                     </div>
                 ) : (
                     <>
+                <section className="mg-v2-session-saved-view-row" aria-label={SESSION_SAVED_VIEW_ROW_ARIA_LABEL}>
+                    <SavedViewControls
+                        views={views}
+                        activeViewId={activeViewId}
+                        onSelectView={handleSelectSavedView}
+                        onSaveView={handleSaveNamedView}
+                        onResetToDefault={handleResetSavedView}
+                        onDeleteView={handleDeleteSavedView}
+                    />
+                </section>
                 {/* 통계 카드 그리드 */}
                 <div className="mg-dashboard-stats">
                     <StatCard

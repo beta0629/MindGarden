@@ -905,22 +905,8 @@ function AppContent() {
                 userId={user?.id}
               />
             } />
-            <Route path="/admin/statistics" element={
-              <AdminCommonLayout title={t('common:misc.App.t_4938fae0')}>
-                <StatisticsDashboard 
-                  userRole={user?.role || USER_ROLES.ADMIN}
-                  userId={user?.id}
-                />
-              </AdminCommonLayout>
-            } />
-            <Route path="/admin/statistics-dashboard" element={
-              <AdminCommonLayout title={t('common:misc.App.t_505d75b1')}>
-                <StatisticsDashboard 
-                  userRole={user?.role || USER_ROLES.ADMIN}
-                  userId={user?.id}
-                />
-              </AdminCommonLayout>
-            } />
+            <Route path="/admin/statistics" element={<StatisticsDashboard />} />
+            <Route path="/admin/statistics-dashboard" element={<StatisticsDashboard />} />
             
             
             {/* 시스템 관리 라우트 (준비중) */}

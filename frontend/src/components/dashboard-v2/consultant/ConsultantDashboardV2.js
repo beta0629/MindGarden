@@ -1,24 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MessageSquare, Star, UserPlus } from 'lucide-react';
+import { Calendar, ClipboardList, MessageSquare, UserPlus } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import Icon from '../../ui/Icon/Icon';
 import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../content';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import StandardizedApi from '../../../utils/standardizedApi';
-import { DASHBOARD_API, RATING_API } from '../../../constants/api';
+import { DASHBOARD_API } from '../../../constants/api';
 import QuickActionBar from './QuickActionBar';
 import IncompleteRecordsAlert from './IncompleteRecordsAlert';
 import NextConsultationCard from './NextConsultationCard';
 import UrgentClientsSection from './UrgentClientsSection';
+import ConsultantDashboardListSection from './ConsultantDashboardListSection';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import SafeText from '../../common/SafeText';
+import { toDisplayString } from '../../../utils/safeDisplay';
+import {
+  CONSULTANT_DASHBOARD_TITLE_ID,
+  CONSULTANT_DASHBOARD_PAGE_TEST_ID,
+  CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID,
+  CONSULTANT_DASHBOARD_ROUTES,
+  CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL,
+  CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL,
+  CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL,
+  CONSULTANT_SCHEDULE_STATUS_LABELS
+} from '../../../constants/consultantDashboardConstants';
 import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantDashboard.css';
+import './ConsultantDashboardListSection.css';
 import { USER_ROLES } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +37,23 @@ import { useTranslation } from 'react-i18next';
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTATION_MESSAGES_UNREAD_COUNT = '/api/v1/consultation-messages/unread-count';
 const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. 로그아웃 후 다시 로그인해 주세요.';
-const CONSULTANT_DASHBOARD_TITLE_ID = 'consultant-dashboard-v2-page-title';
+
+const RECENT_SCHEDULE_COLUMNS = [
+  { key: 'clientName', label: '내담자' },
+  { key: 'timeLabel', label: '시간' },
+  { key: 'statusLabel', label: '상태', hideOnMobile: true }
+];
+
+const UPCOMING_SCHEDULE_COLUMNS = [
+  { key: 'clientName', label: '내담자' },
+  { key: 'datetimeLabel', label: '일시' },
+  { key: 'statusLabel', label: '상태', hideOnMobile: true }
+];
+
+const NOTIFICATION_COLUMNS = [
+  { key: 'text', label: '알림' },
+  { key: 'time', label: '일시', hideOnMobile: true }
+];
 
 /** KPI 좌측 아이콘: 부모 `.mg-v2-content-kpi-card__icon--*` 의 color → Lucide currentColor */
 const kpiLucideProps = {
@@ -45,9 +72,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     stats: {
       todaySchedules: 0,
       newClients: 0,
-      unreadMessages: 0,
-      averageRating: 0,
-      totalRatingCount: 0
+      unreadMessages: 0
     },
     todaySchedules: [],
     upcomingSchedules: [],
@@ -90,9 +115,7 @@ const ConsultantDashboardV2 = ({ user }) => {
         stats: {
           todaySchedules: 0,
           newClients: 0,
-          unreadMessages: 0,
-          averageRating: 0,
-          totalRatingCount: 0
+          unreadMessages: 0
         },
         todaySchedules: []
       }));
@@ -113,15 +136,6 @@ const ConsultantDashboardV2 = ({ user }) => {
         if (isTenantError) setDashboardError(TENANT_ERROR_MESSAGE);
         console.warn('상담사 통계 API 실패, 기본값 사용:', statsErr?.message || statsErr);
         statsResponse = null;
-      }
-
-      // 1-1. 평가 통계 조회 (하트 점수)
-      let ratingStatsResponse;
-      try {
-        ratingStatsResponse = await StandardizedApi.get(RATING_API.CONSULTANT_STATS(currentUser.id));
-      } catch (ratingErr) {
-        console.warn('평가 통계 API 실패, 기본값 사용:', ratingErr?.message || ratingErr);
-        ratingStatsResponse = null;
       }
 
       // 2. 오늘의 일정 조회
@@ -305,18 +319,13 @@ const ConsultantDashboardV2 = ({ user }) => {
         return getTimeValue(a.startTime) - getTimeValue(b.startTime);
       });
 
-      // 평가 통계 데이터 추출
-      const ratingStats = ratingStatsResponse && typeof ratingStatsResponse === 'object' ? ratingStatsResponse : {};
-      const averageHeartScore = ratingStats.averageHeartScore ?? 0;
-      const totalRatingCount = ratingStats.totalRatingCount ?? 0;
+      // 평가 통계 제거 — KPI는 주간 상담·신규 내담자·미확인 메시지·작성 대기 일지 (ROLE-C-02)
 
       setDashboardData({
         stats: {
           todaySchedules: todayOnlyCount ?? todaySchedulesFromStats ?? 0,
           newClients: stats.newClients ?? 0,
-          unreadMessages,
-          averageRating: averageHeartScore,
-          totalRatingCount: totalRatingCount
+          unreadMessages
         },
         todaySchedules: schedules,
         upcomingSchedules: upcomingSchedules,
@@ -335,9 +344,7 @@ const ConsultantDashboardV2 = ({ user }) => {
           ...prev.stats,
           todaySchedules: prev.stats?.todaySchedules ?? 0,
           newClients: prev.stats?.newClients ?? 0,
-          unreadMessages: prev.stats?.unreadMessages ?? 0,
-          averageRating: prev.stats?.averageRating ?? 0,
-          totalRatingCount: prev.stats?.totalRatingCount ?? 0
+          unreadMessages: prev.stats?.unreadMessages ?? 0
         }
       }));
     } finally {
@@ -445,7 +452,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
   const handleScheduleClick = (scheduleId) => {
     if (!scheduleId) return;
-    navigate(`/consultant/consultation-records?scheduleId=${scheduleId}`);
+    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?scheduleId=${scheduleId}`);
   };
 
   const normalizeIncompleteSessionDate = (entry) => {
@@ -489,19 +496,19 @@ const ConsultantDashboardV2 = ({ user }) => {
   };
 
   const handleViewPreviousRecords = (clientId) => {
-    navigate(`/consultant/consultation-records?clientId=${clientId}`);
+    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?clientId=${clientId}`);
   };
 
   const handleViewDetails = (scheduleId) => {
-    navigate(`/consultant/consultation-records?scheduleId=${scheduleId}`);
+    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?scheduleId=${scheduleId}`);
   };
 
   const handleViewAllClients = () => {
-    navigate('/consultant/clients?filter=urgent');
+    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CLIENTS}?filter=urgent`);
   };
 
   const handleViewClientDetails = (clientId) => {
-    navigate(`/consultant/clients/${clientId}`);
+    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CLIENTS}/${clientId}`);
   };
 
   const handleConsultationLogSave = () => {
@@ -510,147 +517,90 @@ const ConsultantDashboardV2 = ({ user }) => {
     fetchDashboardData();
   };
 
+  const weeklyConsultationCount = useMemo(() => {
+    if (!dashboardData.weeklyStats.length) return 0;
+    const latest = dashboardData.weeklyStats[dashboardData.weeklyStats.length - 1];
+    return latest?.count ?? 0;
+  }, [dashboardData.weeklyStats]);
+
   const weeklyCounts = dashboardData.weeklyStats.map((s) => s.count);
   const maxChartValue = weeklyCounts.length > 0 ? Math.max(...weeklyCounts) : 1;
 
-  const renderSchedules = () => {
-    if (loading) {
-      return (
-        <div className="empty-state">
-          <div className="mg-v2-spinner" />
-          <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_185723e2')}</span>
-        </div>
-      );
-    }
-    
-    if (dashboardData.todaySchedules.length > 0) {
-      return (
-        <div className="schedule-list">
-          {dashboardData.todaySchedules.slice(0, 5).map((schedule, idx) => {
-            const { time, meridiem } = formatTime(schedule.startTime);
-            return (
-              <div key={schedule.id || `schedule-${idx}`} className="schedule-item">
-                <div className="schedule-time">
-                  <span>{time}</span>
-                  <span className="schedule-time-meridiem">{meridiem}</span>
-                </div>
-                <div className="schedule-details">
-                  <div className="schedule-client">{schedule.clientName || '내담자'}</div>
-                  <div className="schedule-type">
-                    <Icon name="USERS" size="XS" color="TRANSPARENT" />
-                    {schedule.consultationType || '개인상담'}
-                  </div>
-                </div>
-                <div className={`schedule-status ${schedule.status === 'CONFIRMED' ? 'status-confirmed' : 'status-pending'}`}>
-                  {schedule.status === 'CONFIRMED' ? '확정' : '대기'}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-    
-    return (
-      <div className="empty-state">
-        <Icon name="CALENDAR" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
-        <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_b2218467')}</span>
-      </div>
-    );
-  };
+  const resolveStatusLabel = useCallback((status) => {
+    if (!status) return CONSULTANT_SCHEDULE_STATUS_LABELS.PENDING;
+    return CONSULTANT_SCHEDULE_STATUS_LABELS[status] || CONSULTANT_SCHEDULE_STATUS_LABELS.PENDING;
+  }, []);
 
-  const renderUpcomingSchedules = () => {
-    if (loading) {
-      return (
-        <div className="empty-state">
-          <div className="mg-v2-spinner" />
-          <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_185723e2')}</span>
-        </div>
-      );
-    }
-    
-    if (dashboardData.upcomingSchedules && dashboardData.upcomingSchedules.length > 0) {
-      return (
-        <div className="upcoming-schedule-list">
-          {dashboardData.upcomingSchedules.slice(0, 5).map((schedule, idx) => {
-            const isHighlighted = idx === 0;
-            const { dateStr, weekday, timeStr } = formatUpcomingSchedule(schedule);
-            
-            return (
-              <MGButton
-                key={schedule.id || `upcoming-schedule-${idx}`}
-                type="button"
-                variant="outline"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'sm',
-                  loading: false,
-                  className: `upcoming-schedule-item ${isHighlighted ? 'upcoming-schedule-item--highlighted' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => handleScheduleClick(schedule.id)}
-                preventDoubleClick={false}
-                aria-label={`${dateStr} ${timeStr} ${schedule.clientName} ${schedule.consultationType} ${schedule.status === 'CONFIRMED' ? '확정' : '대기'}`}
-              >
-                <div className="upcoming-schedule-date">
-                  <span className="upcoming-schedule-date__day">{dateStr}</span>
-                  <span className="upcoming-schedule-date__weekday">{weekday}</span>
-                  <span className="upcoming-schedule-date__time">{timeStr}</span>
-                </div>
-                
-                <div className="upcoming-schedule-details">
-                  <div className="upcoming-schedule-details__client">
-                    {schedule.clientName || '내담자'}
-                  </div>
-                  <div className="upcoming-schedule-details__meta">
-                    <span>
-                      {schedule.consultationType || '개인상담'}
-                      {schedule.sessionNumber ? ` · ${schedule.sessionNumber}회기` : ''}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className={`schedule-status ${schedule.status === 'CONFIRMED' ? 'status-confirmed' : 'status-pending'}`}>
-                  {schedule.status === 'CONFIRMED' ? '확정' : '대기'}
-                </div>
-              </MGButton>
-            );
-          })}
-        </div>
-      );
-    }
-    
-    return (
-      <div className="empty-state">
-        <Icon name="CALENDAR" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
-        <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_7f221836')}</span>
-      </div>
-    );
-  };
+  const recentScheduleRows = useMemo(() => (
+    dashboardData.todaySchedules.map((schedule, idx) => {
+      const { time, meridiem } = formatTime(schedule.startTime);
+      return {
+        id: schedule.id || `recent-schedule-${idx}`,
+        clientName: schedule.clientName || '내담자',
+        timeLabel: `${time} ${meridiem}`,
+        statusLabel: resolveStatusLabel(schedule.status),
+        scheduleId: schedule.id
+      };
+    })
+  ), [dashboardData.todaySchedules, resolveStatusLabel]);
 
-  const todayDateStr = new Date().toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long'
-  });
+  const upcomingScheduleRows = useMemo(() => (
+    (dashboardData.upcomingSchedules || []).map((schedule, idx) => {
+      const { dateStr, weekday, timeStr } = formatUpcomingSchedule(schedule);
+      return {
+        id: schedule.id || `upcoming-schedule-${idx}`,
+        clientName: schedule.clientName || '내담자',
+        datetimeLabel: `${dateStr} (${weekday}) ${timeStr}`,
+        statusLabel: resolveStatusLabel(schedule.status),
+        scheduleId: schedule.id
+      };
+    })
+  ), [dashboardData.upcomingSchedules, resolveStatusLabel]);
+
+  const notificationRows = useMemo(() => (
+    dashboardData.recentNotifications.map((noti) => ({
+      id: noti.id,
+      text: noti.text,
+      time: noti.time
+    }))
+  ), [dashboardData.recentNotifications]);
+
+  const renderScheduleCell = useCallback((columnKey, item) => {
+    const value = item[columnKey];
+    return <SafeText tag="span">{toDisplayString(value, '—')}</SafeText>;
+  }, []);
+
+  const renderNotificationCell = useCallback((columnKey, item) => {
+    const value = item[columnKey];
+    return <SafeText tag="span">{toDisplayString(value, '—')}</SafeText>;
+  }, []);
+
+  const welcomeTitle = (
+    <>
+      {'환영합니다, '}
+      <SafeText tag="span">{toDisplayString(user?.name, '상담사')}</SafeText>
+      {' 상담사님'}
+    </>
+  );
 
   const dashboardShell = (mainBody) => (
-    <ContentArea ariaLabel="상담사 대시보드">
-      <ContentHeader
-        title={t('common:dashboard-v2.ConsultantDashboardV2.t_808c1f0c')}
-        subtitle={`${user?.name || '상담사'} 선생님, 환영합니다. 오늘(${todayDateStr}) 일정·알림·내담 현황을 한곳에서 확인하세요.`}
-        titleId={CONSULTANT_DASHBOARD_TITLE_ID}
-        actions={<QuickActionBar onNavigate={navigate} />}
-      />
-      {mainBody}
-    </ContentArea>
+    <div className="mg-v2-ad-b0kla consultant-dashboard-v2" data-testid={CONSULTANT_DASHBOARD_PAGE_TEST_ID}>
+      <div className="mg-v2-ad-b0kla__container consultant-dashboard-v2__container">
+        <ContentArea ariaLabel="상담사 대시보드">
+          <ContentHeader
+            title={welcomeTitle}
+            subtitle={t('common:dashboard-v2.ConsultantDashboardV2.t_808c1f0c')}
+            titleId={CONSULTANT_DASHBOARD_TITLE_ID}
+          />
+          {mainBody}
+        </ContentArea>
+      </div>
+    </div>
   );
 
   if (loading && user?.id) {
     return (
-      <AdminCommonLayout title={t('common:dashboard-v2.ConsultantDashboardV2.t_5f9ac71e')}>
+      <AdminCommonLayout className="mg-v2-dashboard-layout">
         {dashboardShell(
           <UnifiedLoading type="inline" text={t('common:dashboard-v2.ConsultantDashboardV2.t_484d08c9')} />
         )}
@@ -659,214 +609,159 @@ const ConsultantDashboardV2 = ({ user }) => {
   }
 
   return (
-    <AdminCommonLayout title={t('common:dashboard-v2.ConsultantDashboardV2.t_5f9ac71e')}>
+    <AdminCommonLayout className="mg-v2-dashboard-layout">
       {dashboardShell(
         <>
-        {/* 테넌트 미설정 안내 배너 */}
         {dashboardError && (
           <div className="consultant-dashboard-tenant-alert" role="alert">
             {dashboardError}
           </div>
         )}
 
-        {/* Phase 1 컨텐츠: 미작성 상담일지 알림 */}
+        <QuickActionBar onNavigate={navigate} />
+
         <IncompleteRecordsAlert
           count={incompleteRecords.count}
           schedules={incompleteRecords.schedules}
           onAction={handleIncompleteRecordsAction}
         />
 
-        {/* Phase 1 컨텐츠: 다음 상담 준비 카드 */}
         <NextConsultationCard
           consultation={nextConsultation}
           onViewPreviousRecords={handleViewPreviousRecords}
           onViewDetails={handleViewDetails}
         />
 
-        {/* Hero Area: 주요 통계 */}
-        <ContentKpiRow items={[
-          {
-            id: 'todaySchedules',
-            icon: <Calendar {...kpiLucideProps} />,
-            label: '오늘의 상담',
-            value: `${dashboardData.stats.todaySchedules}건`,
-            iconVariant: 'blue'
-          },
-          {
-            id: 'newClients',
-            icon: <UserPlus {...kpiLucideProps} />,
-            label: '신규 내담자',
-            value: `${dashboardData.stats.newClients}명`,
-            iconVariant: 'green'
-          },
-          {
-            id: 'unreadMessages',
-            icon: <MessageSquare {...kpiLucideProps} />,
-            label: '안읽은 메시지',
-            value: `${dashboardData.stats.unreadMessages}건`,
-            iconVariant: 'orange'
-          },
-          {
-            id: 'averageRating',
-            icon: <Star {...kpiLucideProps} />,
-            label: '평균 평점',
-            value: dashboardData.stats.averageRating > 0 ? dashboardData.stats.averageRating.toFixed(1) : '-',
-            subtitle: dashboardData.stats.totalRatingCount > 0 ? `(${dashboardData.stats.totalRatingCount}개 평가)` : undefined,
-            iconVariant: 'gray'
-          }
-        ]} />
+        <section
+          className="consultant-dashboard-v2__kpi-zone"
+          aria-label="핵심 지표"
+          data-testid={CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID}
+        >
+          <ContentKpiRow
+            className="consultant-dashboard-v2__kpi-row"
+            items={[
+              {
+                id: 'weeklyConsultations',
+                icon: <Calendar {...kpiLucideProps} />,
+                label: '주간 상담 건수',
+                value: `${weeklyConsultationCount}건`,
+                iconVariant: 'blue'
+              },
+              {
+                id: 'newClients',
+                icon: <UserPlus {...kpiLucideProps} />,
+                label: '신규 내담자',
+                value: `${dashboardData.stats.newClients}명`,
+                iconVariant: 'green'
+              },
+              {
+                id: 'unreadMessages',
+                icon: <MessageSquare {...kpiLucideProps} />,
+                label: '미확인 메시지',
+                value: `${dashboardData.stats.unreadMessages}건`,
+                iconVariant: 'orange'
+              },
+              {
+                id: 'incompleteRecords',
+                icon: <ClipboardList {...kpiLucideProps} />,
+                label: '작성 대기 일지',
+                value: `${incompleteRecords.count}건`,
+                iconVariant: 'gray'
+              }
+            ]}
+          />
+        </section>
 
-        {/* Main Content Grid */}
-        <div className="mg-v2-content-growth-row">
-          
-          {/* Section A: 최근 일정 (오늘·어제) - 테넌트별 조회는 백엔드 TenantContextHolder 적용 */}
-          <ContentSection
-            title={t('common:dashboard-v2.ConsultantDashboardV2.t_f39a6b65')}
-            titleIcon={<Icon name="CLOCK" size="LG" color="TRANSPARENT" />}
-            actions={
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'sm',
-                  loading: false,
-                  className: 'mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => navigate('/consultant/schedule')}
-                preventDoubleClick={false}
-              >
-                <span>{t('common:dashboard-v2.ConsultantDashboardV2.t_96999c6c')}</span>
-              </MGButton>
-            }
-          >
-            <div className="card-body">
-              {renderSchedules()}
-            </div>
-          </ContentSection>
-
-          {/* Section B: 다가오는 상담 (신규) */}
-          <ContentSection
-            title={t('common:dashboard-v2.ConsultantDashboardV2.t_1e4cd526')}
-            titleIcon={<Icon name="CALENDAR" size="LG" color="TRANSPARENT" />}
-            actions={
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'sm',
-                  loading: false,
-                  className: 'mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => navigate('/consultant/schedule')}
-                preventDoubleClick={false}
-              >
-                <span>{t('common:dashboard-v2.ConsultantDashboardV2.t_96999c6c')}</span>
-              </MGButton>
-            }
-          >
-            <div className="card-body">
-              {renderUpcomingSchedules()}
-            </div>
-          </ContentSection>
-
-          {/* Section C: 최근 알림 */}
-          <ContentSection
-            title={t('common:dashboard-v2.ConsultantDashboardV2.t_74e4a0da')}
-            titleIcon={<Icon name="BELL" size="LG" color="TRANSPARENT" />}
-            actions={
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'sm',
-                  loading: false,
-                  className: 'mg-v2-btn mg-v2-btn-ghost mg-v2-btn-sm'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => navigate('/notifications')}
-                preventDoubleClick={false}
-              >
-                <span>{t('common:dashboard-v2.ConsultantDashboardV2.t_96999c6c')}</span>
-              </MGButton>
-            }
-          >
-            <div className="card-body">
-              {dashboardData.recentNotifications.length > 0 ? (
-                <div className="notification-list">
-                  {dashboardData.recentNotifications.map((noti) => (
-                    <div key={noti.id} className="notification-item">
-                      <div className="notification-icon">
-                        <Icon name="BELL" size="SM" color="TRANSPARENT" />
-                      </div>
-                      <div className="notification-content">
-                        <SafeText className="notification-text" tag="div">{noti.text}</SafeText>
-                        <SafeText className="notification-time" tag="div">{noti.time}</SafeText>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <Icon name="BELL" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
-                  <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_00fa1636')}</span>
-                </div>
-              )}
-            </div>
-          </ContentSection>
-
-          {/* Section D: 주간 상담 현황 (전체 너비) */}
-          <ContentSection
-            title={t('common:dashboard-v2.ConsultantDashboardV2.t_2a22e022')}
-            titleIcon={<Icon name="BAR_CHART_3" size="LG" color="TRANSPARENT" />}
-            className="mg-v2-content-section--full"
-          >
-            <div className="card-body">
-              {dashboardData.weeklyStats.length === 0 ? (
-                <div className="empty-state">
-                  <Icon name="BAR_CHART_3" size="XXXL" color="TRANSPARENT" className="empty-state-icon" />
-                  <span className="empty-state-text">{t('common:dashboard-v2.ConsultantDashboardV2.t_b283cb3a')}</span>
-                </div>
-              ) : (
-                <div className="chart-container">
-                  {dashboardData.weeklyStats.map((stat, idx) => {
-                    const heightPercent = maxChartValue > 0 ? (stat.count / maxChartValue) * 100 : 0;
-                    const isLatestWeek = idx === dashboardData.weeklyStats.length - 1;
-                    return (
-                      <div key={`stat-${stat.label}-${idx}`} className="chart-bar-wrapper">
-                        <div
-                          className={`chart-bar ${isLatestWeek ? 'active' : ''}`}
-                          style={{ height: `${Math.max(heightPercent, 4)}%` }}
-                          title={`${stat.label}: ${stat.count}건`}
-                         />
-                        <span className="chart-label">{stat.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </ContentSection>
-
-        </div>
-
-        {/* Phase 1 컨텐츠: 긴급 확인 필요 내담자 */}
         <UrgentClientsSection
           clients={urgentClients}
           onViewAllClients={handleViewAllClients}
           onViewClientDetails={handleViewClientDetails}
         />
+
+        <div className="consultant-dashboard-v2__lists-row">
+          <ConsultantDashboardListSection
+            title={t('common:dashboard-v2.ConsultantDashboardV2.t_f39a6b65')}
+            titleIconName="CLOCK"
+            columns={RECENT_SCHEDULE_COLUMNS}
+            data={recentScheduleRows}
+            renderCell={renderScheduleCell}
+            onRowClick={(item) => handleScheduleClick(item.scheduleId)}
+            emptyText={t('common:dashboard-v2.ConsultantDashboardV2.t_b2218467')}
+            viewAllHref={CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}
+            viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL}
+            dataTestId="consultant-dashboard-recent-schedules"
+            error={dashboardError}
+          />
+
+          <ConsultantDashboardListSection
+            title={t('common:dashboard-v2.ConsultantDashboardV2.t_1e4cd526')}
+            titleIconName="CALENDAR"
+            columns={UPCOMING_SCHEDULE_COLUMNS}
+            data={upcomingScheduleRows}
+            renderCell={renderScheduleCell}
+            onRowClick={(item) => handleScheduleClick(item.scheduleId)}
+            emptyText={t('common:dashboard-v2.ConsultantDashboardV2.t_7f221836')}
+            viewAllHref={CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}
+            viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL}
+            dataTestId="consultant-dashboard-upcoming-schedules"
+            error={dashboardError}
+          />
+
+          <ConsultantDashboardListSection
+            title={t('common:dashboard-v2.ConsultantDashboardV2.t_74e4a0da')}
+            titleIconName="BELL"
+            columns={NOTIFICATION_COLUMNS}
+            data={notificationRows}
+            renderCell={renderNotificationCell}
+            onRowClick={() => navigate(CONSULTANT_DASHBOARD_ROUTES.NOTIFICATIONS)}
+            emptyText={t('common:dashboard-v2.ConsultantDashboardV2.t_00fa1636')}
+            viewAllHref={CONSULTANT_DASHBOARD_ROUTES.NOTIFICATIONS}
+            viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL}
+            rowKeyField="id"
+            dataTestId="consultant-dashboard-notifications"
+            error={dashboardError}
+          />
+        </div>
+
+        <ContentSection
+          title={t('common:dashboard-v2.ConsultantDashboardV2.t_2a22e022')}
+          className="mg-v2-content-section--full consultant-dashboard-v2__weekly-chart"
+          dataTestId="consultant-dashboard-weekly-chart"
+        >
+          {dashboardData.weeklyStats.length === 0 ? (
+            <div className="consultant-dashboard-v2__chart-empty mg-v2-ad-b0kla__chart-empty">
+              <Icon
+                name="BAR_CHART_3"
+                size="XXXL"
+                color="TRANSPARENT"
+                className="consultant-dashboard-v2__chart-empty-icon mg-v2-ad-b0kla__chart-placeholder-icon"
+              />
+              <p className="consultant-dashboard-v2__chart-empty-text">
+                {t('common:dashboard-v2.ConsultantDashboardV2.t_b283cb3a')}
+              </p>
+            </div>
+          ) : (
+            <div className="consultant-dashboard-v2__chart-container">
+              {dashboardData.weeklyStats.map((stat, idx) => {
+                const heightPercent = maxChartValue > 0 ? (stat.count / maxChartValue) * 100 : 0;
+                const isLatestWeek = idx === dashboardData.weeklyStats.length - 1;
+                return (
+                  <div key={`stat-${stat.label}-${idx}`} className="consultant-dashboard-v2__chart-bar-wrapper">
+                    <div
+                      className={`consultant-dashboard-v2__chart-bar${isLatestWeek ? ' consultant-dashboard-v2__chart-bar--active' : ''}`}
+                      style={{ height: `${Math.max(heightPercent, 4)}%` }}
+                      title={`${stat.label}: ${stat.count}건`}
+                    />
+                    <span className="consultant-dashboard-v2__chart-label">{stat.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </ContentSection>
         </>
       )}
 
-      {/* 상담일지 작성 모달 */}
       {showConsultationLogModal && selectedSchedule && (
         <ConsultationLogModal
           isOpen={showConsultationLogModal}

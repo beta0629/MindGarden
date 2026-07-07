@@ -173,11 +173,11 @@ describe('AdminDashboardV2 AdminCommonLayout 스모크', () => {
     expect(screen.getByTestId('admin-dashboard-v2-page')).toBeInTheDocument();
   });
 
-  test('KPI zone 3종 카드가 로드 후 렌더', async() => {
+  test('KPI zone 4종 카드가 로드 후 렌더', async() => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getAllByTestId('kpi-flip-card')).toHaveLength(3);
+      expect(screen.getAllByTestId('kpi-flip-card')).toHaveLength(4);
     });
   });
 

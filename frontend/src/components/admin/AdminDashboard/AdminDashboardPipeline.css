@@ -32,3 +32,23 @@
   --mg-pipeline-card-bg-info: var(--mg-color-b0kla-orange-50);
   --mg-pipeline-card-bg-auto: var(--mg-color-background-main);
 }
+
+/* Admin Dark Mode C-3 — Pipeline layout tokens */
+[data-theme="dark"] .mg-dashboard-layout {
+  --mg-pipeline-text: var(--mg-v2-color-text-primary);
+  --mg-pipeline-card-bg-neutral: var(--mg-v2-color-surface-card);
+  --mg-pipeline-card-bg-warning: var(--mg-v2-color-semantic-error-light);
+  --mg-pipeline-card-bg-success: var(--mg-v2-color-semantic-success-light);
+  --mg-pipeline-card-bg-info: var(--mg-v2-color-semantic-warning-light);
+  --mg-pipeline-card-bg-auto: var(--mg-v2-color-surface-card);
+  --mg-pipeline-shadow: var(--mg-v2-shadow-sm);
+}
+
+[data-theme="dark"] .mg-dashboard-pipeline-detail > .deposit-pending-list,
+[data-theme="dark"] .mg-dashboard-pipeline-detail > .schedule-pending-list,
+[data-theme="dark"] .mg-v2-content-detail-row > .deposit-pending-list,
+[data-theme="dark"] .mg-v2-content-detail-row > .schedule-pending-list,
+[data-theme="dark"] .manual-matching-queue {
+  background: var(--mg-v2-color-surface-card);
+  border-color: var(--mg-v2-color-border-default);
+}

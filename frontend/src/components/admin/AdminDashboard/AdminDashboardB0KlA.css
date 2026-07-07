@@ -1179,6 +1179,21 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
   box-shadow: var(--ad-b0kla-shadow-hover);
 }
 
+/* PR-DASH-01: 환불 StatCard — 표시 전용 + 단일 CTA */
+.mg-v2-ad-b0kla .mg-stats-grid--display-only .mg-dashboard-stat-card {
+  cursor: default;
+}
+
+.mg-v2-ad-b0kla .mg-stats-grid--display-only .mg-dashboard-stat-card:hover {
+  box-shadow: var(--ad-b0kla-shadow);
+}
+
+.mg-v2-ad-b0kla__refund-cta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--mg-v2-space-4);
+}
+
 .mg-v2-ad-b0kla .mg-stats-grid .mg-dashboard-stat-icon {
   width: 56px;
   height: 56px;
@@ -2157,4 +2172,38 @@ button.mg-v2-ad-b0kla__icon-btn.mg-button .mg-button__text {
 
 [data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-form-label {
   color: var(--mg-v2-form-label);
+}
+
+/* Admin Dark Mode C-3 — Chart placeholder · bar labels */
+[data-theme="dark"] .mg-v2-ad-b0kla__chart-placeholder {
+  background: var(--mg-v2-color-surface-card);
+  border-color: var(--mg-v2-color-border-default);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__chart-bar-value {
+  color: var(--mg-v2-color-text-primary);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__chart-bar-label {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__chart-empty {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__chart-placeholder-icon {
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-chart-container {
+  background: var(--mg-v2-color-surface-card);
+  border-color: var(--mg-v2-color-border-default);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-chart-title,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-chart-label,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-chart-value {
+  color: var(--mg-v2-color-text-primary);
 }

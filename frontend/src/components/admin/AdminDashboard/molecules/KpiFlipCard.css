@@ -337,3 +337,39 @@
     max-height: 200px;
   }
 }
+
+/* Admin Dark Mode C-3 — KPI Flip Card */
+[data-theme="dark"] .mg-v2-kpi-flip-card__front,
+[data-theme="dark"] .mg-v2-kpi-flip-card__back {
+  background-color: var(--mg-v2-color-surface-card);
+  box-shadow: var(--mg-v2-shadow-sm);
+}
+
+[data-theme="dark"] .mg-v2-kpi-flip-card__label,
+[data-theme="dark"] .mg-v2-kpi-flip-card__summary {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-kpi-flip-card__value,
+[data-theme="dark"] .mg-v2-kpi-flip-card__back-title,
+[data-theme="dark"] .mg-v2-kpi-flip-card__back-content {
+  color: var(--mg-v2-color-text-primary);
+}
+
+[data-theme="dark"] .mg-v2-kpi-flip-card__flip-hint,
+[data-theme="dark"] .mg-v2-kpi-flip-card__close-btn {
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+[data-theme="dark"] .mg-v2-kpi-flip-card__close-btn:hover {
+  background-color: var(--mg-v2-color-state-hover);
+}
+
+[data-theme="dark"] .mg-v2-kpi-flip-card__back-list-item {
+  border-bottom-color: var(--mg-v2-color-border-light);
+}
+
+[data-theme="dark"] .mg-v2-kpi-flip-card__trend--gray {
+  background: var(--mg-v2-color-surface-raised);
+  color: var(--mg-v2-color-text-secondary);
+}

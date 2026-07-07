@@ -1,20 +1,10 @@
 /**
  * Core Solution 위젯 상수 정의
 /**
- * 
-/**
- * CSS와 비즈니스 로직 분리를 위한 상수 관리
-/**
- * 모든 하드코딩된 값들을 여기서 중앙 관리
-/**
- * 
-/**
- * @author Core Solution
-/**
- * @version 1.0.0
-/**
  * @since 2025-11-28
  */
+
+import { ADMIN_ROUTES } from './adminRoutes';
 
 // 🎨 CSS 클래스 상수 (Core Solution 디자인 시스템 기반)
 export const WIDGET_CONSTANTS = {
@@ -278,7 +268,7 @@ export const WIDGET_SPECIFIC_CONSTANTS = {
       VIEW_SCHEDULES: {
         ICON: WIDGET_CONSTANTS.ICONS.CALENDAR,
         LABEL: '스케줄 관리',
-        URL: '/admin/schedule'
+        URL: ADMIN_ROUTES.INTEGRATED_SCHEDULE
       },
       SYSTEM_SETTINGS: {
         ICON: WIDGET_CONSTANTS.ICONS.SETTINGS,

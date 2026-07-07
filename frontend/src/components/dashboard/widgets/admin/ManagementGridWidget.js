@@ -61,7 +61,7 @@ const ManagementGridWidget = ({ widget, user }) => {
       id: 'schedule-management',
       title: '일정 관리',
       description: '상담 일정을 확인하고 관리합니다',
-      url: ADMIN_ROUTES.SCHEDULES,
+      url: ADMIN_ROUTES.INTEGRATED_SCHEDULE,
       color: 'cyan'
     },
     {
@@ -103,7 +103,7 @@ const ManagementGridWidget = ({ widget, user }) => {
       id: 'dashboards',
       title: '대시보드 관리',
       description: '사용자별 대시보드를 관리합니다',
-      url: ADMIN_ROUTES.DASHBOARDS,
+      url: ADMIN_ROUTES.DASHBOARD,
       color: 'violet'
     }
   ];

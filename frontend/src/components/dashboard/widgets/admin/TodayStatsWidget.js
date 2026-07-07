@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
 import StatCard from '../../../ui/Card/StatCard';
+import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
 import '../Widget.css';
 /**
  * 오늘의 통계 위젯 - 표준화된 위젯
@@ -42,13 +43,13 @@ const TodayStatsWidget = ({ widget, user }) => {
   const handleStatClick = (statType) => {
     switch (statType) {
       case 'schedules':
-        navigate('/admin/schedules');
+        navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE);
         break;
       case 'sessions':
-        navigate('/admin/sessions');
+        navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT);
         break;
       default:
-        navigate('/admin/schedules');
+        navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE);
         break;
     }
   };

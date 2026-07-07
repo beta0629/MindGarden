@@ -59,7 +59,6 @@ import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
 import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import ErpReportModal from '../erp/ErpReportModal';
-import MappingDepositModal from './mapping/MappingDepositModal';
 import AdminDashboardMonitoring from './AdminDashboard/AdminDashboardMonitoring';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import Badge from '../common/Badge';
@@ -91,6 +90,10 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
+import {
+  API_ADMIN_SCHEDULES,
+  DASHBOARD_REFUND_SECTION_CTA_LABEL
+} from '../../constants/adminDashboardWidgetConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
@@ -98,7 +101,6 @@ const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
 const API_ADMIN_REFUND_STATISTICS = '/api/v1/admin/refund-statistics?period=month';
-const API_ADMIN_CONSULTANTS_WITH_VACATION = '/api/v1/admin/consultants/with-vacation';
 const API_ADMIN_MAPPINGS_PENDING_DEPOSIT = '/api/v1/admin/mappings/pending-deposit';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE = '/api/v1/admin/schedules/auto-complete';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER = '/api/v1/admin/schedules/auto-complete-with-reminder';
@@ -170,10 +172,9 @@ const AdminDashboard = ({ user: propUser }) => {
         oldestHours: 0
     });
     const [unassignedClients, setUnassignedClients] = useState([]);
-    const [consultants, setConsultants] = useState([]);
     const [pendingDepositList, setPendingDepositList] = useState([]);
+    const [schedulePendingList, setSchedulePendingList] = useState([]);
     const [matchingQueueLoading, setMatchingQueueLoading] = useState(false);
-    const [depositModalMapping, setDepositModalMapping] = useState(null);
     
     const [showErpReport, setShowErpReport] = useState(false);
     const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
@@ -297,12 +298,11 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadStats = useCallback(async() => {
         setLoading(true);
         try {
-            const [consultantsRes, clientsRes, mappingsRes, ratingRes, vacationRes, consultationRes] = await Promise.all([
+            const [consultantsRes, clientsRes, mappingsRes, ratingRes, consultationRes] = await Promise.all([
                 fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
                 fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
                 fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST),
                 fetch(API_ADMIN_CONSULTANT_RATING_STATS),
-                fetch(API_ADMIN_VACATION_STATISTICS),
                 fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION)
             ]);
 
@@ -314,14 +314,6 @@ const AdminDashboard = ({ user: propUser }) => {
                 totalRatings: 0,
                 averageScore: 0,
                 topConsultants: []
-            };
-            let vacationStats = {
-                summary: {
-                    totalConsultants: 0,
-                    totalVacationDays: 0,
-                    averageVacationDays: 0
-                },
-                consultantStats: []
             };
             let consultationStats = {
                 totalCompleted: 0,
@@ -365,20 +357,6 @@ const AdminDashboard = ({ user: propUser }) => {
                 }
             }
 
-            if (vacationRes.ok) {
-                const vacationData = await vacationRes.json();
-                if (vacationData.success) {
-                    vacationStats = {
-                        summary: vacationData.summary || {
-                            totalConsultants: 0,
-                            totalVacationDays: 0,
-                            averageVacationDays: 0
-                        },
-                        consultantStats: vacationData.consultantStats || []
-                    };
-                }
-            }
-
             if (consultationRes.ok) {
                 const consultationData = await consultationRes.json();
                 if (consultationData.success) {
@@ -391,22 +369,46 @@ const AdminDashboard = ({ user: propUser }) => {
                 }
             }
 
-            setStats({
+            setStats((prev) => ({
                 totalConsultants,
                 totalClients,
                 totalMappings,
                 activeMappings,
                 consultantRatingStats,
-                vacationStats,
+                vacationStats: prev.vacationStats,
                 consultationStats
-            });
+            }));
         } catch (error) {
             console.error('통계 데이터 로드 실패:', error);
             showToast(t('admin:dashboard.error.statsLoad'), 'danger');
         } finally {
             setLoading(false);
         }
-    }, [showToast]);
+    }, [showToast, t]);
+
+    const loadVacationStats = useCallback(async() => {
+        try {
+            const response = await fetch(API_ADMIN_VACATION_STATISTICS);
+            if (response.ok) {
+                const vacationData = await response.json();
+                if (vacationData.success) {
+                    setStats((prev) => ({
+                        ...prev,
+                        vacationStats: {
+                            summary: vacationData.summary || {
+                                totalConsultants: 0,
+                                totalVacationDays: 0,
+                                averageVacationDays: 0
+                            },
+                            consultantStats: vacationData.consultantStats || []
+                        }
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('휴가 통계 로드 실패:', error);
+        }
+    }, []);
 
     const loadRefundStats = useCallback(async() => {
         try {
@@ -430,23 +432,15 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadUnassignedClientsAndConsultants = useCallback(async() => {
         setMatchingQueueLoading(true);
         try {
-            const dateStr = new Date().toISOString().split('T')[0];
-            const [clientsRes, consultantsRes] = await Promise.all([
-                StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
-                StandardizedApi.get(API_ADMIN_CONSULTANTS_WITH_VACATION, { date: dateStr })
-            ]);
+            const clientsRes = await StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO);
             const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
             const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
             const unassigned = filterManualMatchingQueueClients(clients);
             setUnassignedClients(unassigned);
-            const consultantsRaw = consultantsRes?.consultants ?? consultantsRes?.data?.consultants ?? consultantsRes;
-            const consultantsList = Array.isArray(consultantsRaw) ? consultantsRaw : [];
-            setConsultants(consultantsList);
         } catch (error) {
-            console.error('미배정 내담자/상담사 로드 실패:', error);
+            console.error('미배정 내담자 로드 실패:', error);
             notificationManager.error(error?.message || t('admin:dashboard.error.unassignedLoad'));
             setUnassignedClients([]);
-            setConsultants([]);
         } finally {
             setMatchingQueueLoading(false);
         }
@@ -472,25 +466,19 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, [t]);
 
-    const handleConfirmMatch = useCallback(async(clientId, consultantId) => {
+    const loadSchedulePendingList = useCallback(async() => {
         try {
-            await StandardizedApi.post(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, {
-                clientId: Number(clientId),
-                consultantId: Number(consultantId),
-                status: 'PENDING_PAYMENT',
-                totalSessions: 1,
-                remainingSessions: 1,
-                packageName: t('admin:dashboard.initialConsultation'),
-                packagePrice: 0,
-                paymentStatus: 'PENDING'
-            });
-            notificationManager.success(t('admin:dashboard.success.matchingCreated'));
-            await Promise.all([loadUnassignedClientsAndConsultants(), loadStats(), loadPendingDepositStats()]);
+            const data = await StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' });
+            const rawSchedules =
+                data?.schedules ?? data?.data?.schedules ?? (Array.isArray(data) ? data : []);
+            const bookedList = Array.isArray(rawSchedules) ? rawSchedules : [];
+            setSchedulePendingList(bookedList);
         } catch (error) {
-            const msg = error?.message || error?.response?.data?.message || t('admin:dashboard.error.matchingCreate');
-            notificationManager.error(msg);
+            console.error('스케줄 등록 대기 목록 로드 실패:', error);
+            notificationManager.error(error?.message || '스케줄 등록 대기 목록을 불러오지 못했습니다.');
+            setSchedulePendingList([]);
         }
-    }, [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats, t]);
+    }, []);
 
     const handleAutoCompleteSchedules = async() => {
         setAutoCompleteLoading(true);
@@ -575,8 +563,21 @@ const AdminDashboard = ({ user: propUser }) => {
         loadStats();
         loadRefundStats();
         loadPendingDepositStats();
+        loadSchedulePendingList();
         loadUnassignedClientsAndConsultants();
-    }, [loadStats, loadRefundStats, loadPendingDepositStats, loadUnassignedClientsAndConsultants]);
+    }, [
+        loadStats,
+        loadRefundStats,
+        loadPendingDepositStats,
+        loadSchedulePendingList,
+        loadUnassignedClientsAndConsultants
+    ]);
+
+    useEffect(() => {
+        if (isVacationExpanded) {
+            loadVacationStats();
+        }
+    }, [isVacationExpanded, loadVacationStats]);
 
     const createTestData = async() => {
         try {
@@ -846,7 +847,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 totalMappings: stats.totalMappings,
                 pendingDepositCount: pendingDepositStats.count,
                 activeMappings: stats.activeMappings,
-                schedulePendingCount: 0
+                schedulePendingCount: schedulePendingList.length
               }}
             />
             </div>
@@ -949,13 +950,9 @@ const AdminDashboard = ({ user: propUser }) => {
               items={unassignedClients.map((client) => ({
                 id: client.id,
                 clientName: client.name || '-',
-                clientMeta: client.email || '매칭 없음',
-                consultantOptions: consultants.map((c) => ({
-                  value: String(c.id),
-                  label: c.name || `상담사 ${c.id}`
-                }))
+                clientMeta: client.email || '매칭 없음'
               }))}
-              onConfirmMatch={handleConfirmMatch}
+              viewAllHref={ADMIN_ROUTES.CLIENT_COMPREHENSIVE}
               loading={matchingQueueLoading}
             />
 
@@ -965,17 +962,17 @@ const AdminDashboard = ({ user: propUser }) => {
                 items={pendingDepositList.map((m) => ({
                   id: m.id,
                   clientName: m.clientName,
-                  amount: m.packagePrice,
-                  _raw: m
+                  amount: m.packagePrice
                 }))}
-                onDepositConfirm={(item) => {
-                  const mapping = item._raw || item;
-                  setDepositModalMapping(mapping);
-                }}
+                viewAllHref={`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`}
               />
               <SchedulePendingList
-                items={[]}
-                onScheduleRegister={() => navigate(ADMIN_ROUTES.SCHEDULES)}
+                items={schedulePendingList.map((s) => ({
+                  id: String(s.id),
+                  clientName: s.clientName,
+                  consultantName: s.consultantName
+                }))}
+                viewAllHref={ADMIN_ROUTES.INTEGRATED_SCHEDULE}
               />
             </div>
 
@@ -1183,31 +1180,38 @@ const AdminDashboard = ({ user: propUser }) => {
                     subtitle="최근 1개월 환불 통계"
                     icon={<RotateCcw />}
                 >
-                    <div className="mg-stats-grid">
+                    <div className="mg-stats-grid mg-stats-grid--display-only">
                         <StatCard
                             icon={<Receipt />}
                             value={`${refundStats.totalRefundCount}건`}
                             label={t('admin:AdminDashboard.t_e07e5754')}
-                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<Calendar />}
                             value={`${refundStats.totalRefundedSessions}회`}
                             label={t('admin:AdminDashboard.t_7362540d')}
-                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<DollarSign />}
                             value={`${refundStats.totalRefundAmount.toLocaleString()}원`}
                             label={t('admin:AdminDashboard.t_ca5c157c')}
-                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<TrendingUp />}
                             value={`${refundStats.averageRefundPerCase.toLocaleString()}원`}
                             label={t('admin:AdminDashboard.t_5c45c1f3')}
-                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
+                    </div>
+                    <div className="mg-v2-ad-b0kla__refund-cta">
+                        <MGButton
+                            type="button"
+                            variant="primary"
+                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
+                        >
+                            {DASHBOARD_REFUND_SECTION_CTA_LABEL}
+                        </MGButton>
                     </div>
                 </DashboardSection>
 
@@ -1223,7 +1227,7 @@ const AdminDashboard = ({ user: propUser }) => {
                                 icon={<CheckCircle />}
                                 value={`${stats.consultationStats?.totalCompleted || 0}건`}
                                 label={t('admin:AdminDashboard.t_6911ff22')}
-                                onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}
+                                onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                             />
                             <StatCard
                                 icon={<TrendingUp />}
@@ -1327,7 +1331,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             className: 'mg-v2-ad-b0kla__admin-card'
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}
+                        onClick={() => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE)}
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Calendar} tone="green" />
@@ -1343,7 +1347,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             className: 'mg-v2-ad-b0kla__admin-card'
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}
+                        onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={Target} tone="gray" />
@@ -1473,7 +1477,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             className: 'mg-v2-ad-b0kla__admin-card'
                         })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={() => navigate(ADMIN_ROUTES.DASHBOARDS)}
+                        onClick={() => navigate(ADMIN_ROUTES.DASHBOARD)}
                         preventDoubleClick={false}
                     >
                         <AdminMgmtCardIcon icon={LayoutDashboard} tone="gray" />
@@ -1880,17 +1884,6 @@ const AdminDashboard = ({ user: propUser }) => {
                     onClose={() => setShowErpReport(false)}
                 />
             )}
-
-            <MappingDepositModal
-                isOpen={!!depositModalMapping}
-                onClose={() => setDepositModalMapping(null)}
-                mapping={depositModalMapping || {}}
-                onDepositConfirmed={() => {
-                    setDepositModalMapping(null);
-                    loadStats();
-                    loadPendingDepositStats();
-                }}
-            />
 
             {/* AI 및 시스템 모니터링 - 관리자만 접근 가능 */}
             {(() => {

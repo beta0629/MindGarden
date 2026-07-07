@@ -137,3 +137,16 @@
 .admin-metrics-visualization__pipeline-wrap {
   margin-top: var(--mg-spacing-xl, 1.5rem);
 }
+
+/* Admin Dark Mode C-3 — metrics visualization tiles */
+[data-theme="dark"] .admin-metrics-visualization__grid-tile {
+  background: var(--mg-v2-color-surface-card);
+  border-color: var(--mg-v2-color-border-default);
+  box-shadow: var(--mg-v2-shadow-sm);
+}
+
+[data-theme="dark"] .admin-metrics-visualization__grid-tile-label,
+[data-theme="dark"] .admin-metrics-visualization__placeholder,
+[data-theme="dark"] .admin-metrics-visualization__loading {
+  color: var(--mg-v2-color-text-secondary);
+}

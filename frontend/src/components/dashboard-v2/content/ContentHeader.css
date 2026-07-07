@@ -40,7 +40,9 @@
   line-height: var(--mg-v2-font-line-height-body, 1.5);
 }
 
-/* Phase 1 Set C — 다크 모드 가독성 (design-v2-tokens [data-theme="dark"] cascade) */
+/* Admin Dark Mode C-2 Phase 1 — title/subtitle token cascade
+ * SSOT: docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C2_CONTENT_HEADER.md
+ */
 [data-theme="dark"] .mg-v2-content-header__title {
   color: var(--mg-v2-color-text-primary);
 }

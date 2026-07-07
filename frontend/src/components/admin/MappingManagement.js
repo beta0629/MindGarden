@@ -15,13 +15,10 @@ import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
 import '../../styles/themes/admin-theme.css';
-import { useTranslation } from 'react-i18next';
 
 const MappingManagement = () => {
-  const { t } = useTranslation();
-
   return (
-    <AdminCommonLayout title={t('admin.labels.matchingManagement')}>
+    <AdminCommonLayout>
       <MappingManagementPage />
     </AdminCommonLayout>
   );

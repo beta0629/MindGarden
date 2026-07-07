@@ -2006,13 +2006,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     </div>
   );
 
-  const dashboardTitle = t('admin:dashboard.v2.title');
   const dashboardLoadingText = t('common:dashboard-v2.AdminDashboardV2.t_06e61b86');
 
   return (
     <>
       <AdminCommonLayout
-        title={dashboardTitle}
         loading={sessionLoading || loading}
         loadingText={dashboardLoadingText}
         searchValue={searchValue}

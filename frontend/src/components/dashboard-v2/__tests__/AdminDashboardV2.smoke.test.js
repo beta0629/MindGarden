@@ -160,11 +160,12 @@ const renderDashboard = () => render(
 );
 
 describe('AdminDashboardV2 AdminCommonLayout 스모크', () => {
-  test('mount 시 AdminCommonLayout title 및 본문 data-testid 렌더', async() => {
+  test('mount 시 ContentHeader title 및 본문 data-testid 렌더 (ACL title dedup)', async() => {
     renderDashboard();
 
     expect(screen.getByTestId('admin-common-layout')).toBeInTheDocument();
-    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', '대시보드');
+    expect(screen.getByTestId('admin-common-layout')).not.toHaveAttribute('data-title', '대시보드');
+    expect(screen.getByRole('heading', { level: 1, name: '대시보드' })).toBeInTheDocument();
     expect(screen.getByTestId('admin-dashboard-v2-page')).toBeInTheDocument();
 
     await waitFor(() => {

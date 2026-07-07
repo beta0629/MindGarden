@@ -19,6 +19,10 @@ import '../../styles/themes/client-theme.css';
 import './ClientDashboard.css';
 
 import {
+  CLIENT_DASHBOARD_ROUTES,
+  CLIENT_DASHBOARD_KPI_ROUTES
+} from '../../constants/clientDashboardRoutes';
+import {
   CLIENT_DASHBOARD_ARIA_LABEL,
   CLIENT_DASHBOARD_MAIN_ID,
   CLIENT_DASHBOARD_PAGE_TITLE,
@@ -56,11 +60,18 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     return sharedClientMappings.find((x) => x.status === 'ACTIVE') || null;
   }, [sharedClientMappings]);
 
-  const goSchedule = useCallback(() => navigate('/client/schedule'), [navigate]);
-  const goMessages = useCallback(() => navigate('/client/messages'), [navigate]);
-  const goSessions = useCallback(() => navigate('/client/session-management'), [navigate]);
-  const goSettings = useCallback(() => navigate('/client/settings'), [navigate]);
-  const goWellness = useCallback(() => navigate('/client/wellness-hub'), [navigate]);
+  const goSchedule = useCallback(
+    () => navigate(CLIENT_DASHBOARD_ROUTES.SCHEDULE),
+    [navigate]
+  );
+  const goMessages = useCallback(
+    () => navigate(CLIENT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES),
+    [navigate]
+  );
+  const goSessions = useCallback(
+    () => navigate(CLIENT_DASHBOARD_KPI_ROUTES.REMAINING_SESSIONS),
+    [navigate]
+  );
   const goCustomerSupport = useCallback(() => {
     notificationManager.show(CUSTOMER_SUPPORT_TOAST, 'info');
   }, []);
@@ -135,13 +146,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
             mappingsLoadFailed={mappingsLoadFailed}
           />
 
-          <ClientDashboardQuickMenuSection
-            onNavigateSchedule={goSchedule}
-            onNavigateMessages={goMessages}
-            onNavigateSettings={goSettings}
-            onCustomerSupport={goCustomerSupport}
-            onNavigateWellness={goWellness}
-          />
+          <ClientDashboardQuickMenuSection onCustomerSupport={goCustomerSupport} />
         </main>
       )}
     </AdminCommonLayout>

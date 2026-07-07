@@ -8,10 +8,12 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
 import { ContentSection } from '../../dashboard-v2/content';
 import ClientPersonalizedMessages from '../../dashboard/ClientPersonalizedMessages';
 import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
+import { CLIENT_DASHBOARD_KPI_ROUTES } from '../../../constants/clientDashboardRoutes';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   CLIENT_CORE_ACTIVE_TITLE,
@@ -27,10 +29,9 @@ const ClientDashboardCoreSection = ({
   user,
   consultationData,
   clientStatus,
-  primaryActiveMapping,
-  onNavigateSessions,
-  onNavigateMessages
+  primaryActiveMapping
 }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   const coreConsultationSummary = useMemo(() => {
@@ -85,7 +86,7 @@ const ClientDashboardCoreSection = ({
               <MGButton
                 variant="outline"
                 className={outlineBtnClass}
-                onClick={onNavigateSessions}
+                onClick={() => navigate(CLIENT_DASHBOARD_KPI_ROUTES.REMAINING_SESSIONS)}
                 preventDoubleClick={false}
               >
                 상세
@@ -108,7 +109,7 @@ const ClientDashboardCoreSection = ({
               <MGButton
                 variant="outline"
                 className={outlineBtnClass}
-                onClick={onNavigateMessages}
+                onClick={() => navigate(CLIENT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)}
                 preventDoubleClick={false}
               >
                 목록
@@ -133,9 +134,7 @@ ClientDashboardCoreSection.propTypes = {
   user: PropTypes.object,
   consultationData: PropTypes.object,
   clientStatus: PropTypes.object,
-  primaryActiveMapping: PropTypes.object,
-  onNavigateSessions: PropTypes.func.isRequired,
-  onNavigateMessages: PropTypes.func.isRequired
+  primaryActiveMapping: PropTypes.object
 };
 
 export default ClientDashboardCoreSection;

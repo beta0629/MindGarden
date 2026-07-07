@@ -15,9 +15,14 @@ import {
   BookOpen
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
 import { ContentSection } from '../../dashboard-v2/content';
 import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
+import {
+  CLIENT_DASHBOARD_ROUTES,
+  buildClientDashboardQuickMenuItemTestId
+} from '../../../constants/clientDashboardRoutes';
 import {
   CLIENT_DASHBOARD_QUICK_MENU_SECTION_TEST_ID,
   CLIENT_DASHBOARD_QUICK_MENU_TEST_ID,
@@ -27,13 +32,8 @@ import {
 
 const QUICK_BTN_CLASS = `${buildErpMgButtonClassName({ variant: 'outline', loading: false })} client-dashboard__quick-btn`;
 
-const ClientDashboardQuickMenuSection = ({
-  onNavigateSchedule,
-  onNavigateMessages,
-  onNavigateSettings,
-  onCustomerSupport,
-  onNavigateWellness
-}) => {
+const ClientDashboardQuickMenuSection = ({ onCustomerSupport }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   return (
@@ -49,8 +49,9 @@ const ClientDashboardQuickMenuSection = ({
           <MGButton
             variant="outline"
             className={QUICK_BTN_CLASS}
-            onClick={onNavigateSchedule}
+            onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.SCHEDULE)}
             preventDoubleClick={false}
+            data-testid={buildClientDashboardQuickMenuItemTestId('schedule')}
           >
             <CalendarDays size={22} aria-hidden />
             <span>일정</span>
@@ -58,7 +59,7 @@ const ClientDashboardQuickMenuSection = ({
           <MGButton
             variant="outline"
             className={QUICK_BTN_CLASS}
-            onClick={onNavigateMessages}
+            onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.MESSAGES)}
             preventDoubleClick={false}
           >
             <MessageCircle size={22} aria-hidden />
@@ -67,8 +68,9 @@ const ClientDashboardQuickMenuSection = ({
           <MGButton
             variant="outline"
             className={QUICK_BTN_CLASS}
-            onClick={onNavigateSettings}
+            onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.SETTINGS)}
             preventDoubleClick={false}
+            data-testid={buildClientDashboardQuickMenuItemTestId('settings')}
           >
             <User size={22} aria-hidden />
             <span>설정</span>
@@ -85,7 +87,7 @@ const ClientDashboardQuickMenuSection = ({
           <MGButton
             variant="outline"
             className={QUICK_BTN_CLASS}
-            onClick={onNavigateWellness}
+            onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.WELLNESS_HUB)}
             preventDoubleClick={false}
           >
             <BookOpen size={22} aria-hidden />
@@ -98,11 +100,7 @@ const ClientDashboardQuickMenuSection = ({
 };
 
 ClientDashboardQuickMenuSection.propTypes = {
-  onNavigateSchedule: PropTypes.func.isRequired,
-  onNavigateMessages: PropTypes.func.isRequired,
-  onNavigateSettings: PropTypes.func.isRequired,
-  onCustomerSupport: PropTypes.func.isRequired,
-  onNavigateWellness: PropTypes.func.isRequired
+  onCustomerSupport: PropTypes.func.isRequired
 };
 
 export default ClientDashboardQuickMenuSection;

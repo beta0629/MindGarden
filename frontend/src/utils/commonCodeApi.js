@@ -12,7 +12,7 @@
  * @since 2025-01-XX
  */
 
-import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from './ajax';
+import StandardizedApi from './standardizedApi';
 import {
     TENANT_WRITE_ISOLATED_GROUPS,
     CORE_CODE_GROUPS,
@@ -99,7 +99,7 @@ export const getCommonCodes = async(codeGroup = null, forceTenant = null) => {
             url = codeGroup ? `${API_BASE}?codeGroup=${codeGroup}` : API_BASE;
         }
         
-        const response = await apiGet(url);
+        const response = await StandardizedApi.get(url);
         
         console.log('📋 getCommonCodes 응답 구조:', { 
             codeGroup,
@@ -146,7 +146,7 @@ export const getCommonCodes = async(codeGroup = null, forceTenant = null) => {
 export const getTenantCodes = async(codeGroup = null) => {
     try {
         const url = codeGroup ? `${API_BASE}/tenant?codeGroup=${codeGroup}` : `${API_BASE}/tenant`;
-        const response = await apiGet(url);
+        const response = await StandardizedApi.get(url);
         
         console.log('📋 getTenantCodes 응답 구조:', { 
             response, 
@@ -191,7 +191,7 @@ export const getTenantCodes = async(codeGroup = null) => {
  */
 export const getCommonCodeById = async(id) => {
     try {
-        const response = await apiGet(`${API_BASE}/${id}`);
+        const response = await StandardizedApi.get(`${API_BASE}/${id}`);
         
         if (response.success && response.data) {
             return response.data;
@@ -220,7 +220,7 @@ export const createCommonCode = async(codeData) => {
             delete payload.tenantId;
         }
         const url = useTenant ? TENANT_CODES_WRITE_BASE : API_BASE;
-        const response = await apiPost(url, payload);
+        const response = await StandardizedApi.post(url, payload);
         return normalizeMutationResponse(response, '공통코드 생성에 실패했습니다.');
     } catch (error) {
         console.error('공통코드 생성 실패:', error);
@@ -245,7 +245,7 @@ export const updateCommonCode = async(id, codeData, routeOpts = {}) => {
         const group = resolveCodeGroupForRoute(codeData, routeOpts);
         const useTenant = isTenantWriteIsolatedGroup(group);
         const url = useTenant ? `${TENANT_CODES_WRITE_BASE}/${id}` : `${API_BASE}/${id}`;
-        const response = await apiPut(url, codeData);
+        const response = await StandardizedApi.put(url, codeData);
         return normalizeMutationResponse(response, '공통코드 수정에 실패했습니다.');
     } catch (error) {
         console.error('공통코드 수정 실패:', error);
@@ -268,7 +268,7 @@ export const deleteCommonCode = async(id, routeOpts = {}) => {
         const group = routeOpts.codeGroup ?? null;
         const useTenant = isTenantWriteIsolatedGroup(group);
         const url = useTenant ? `${TENANT_CODES_WRITE_BASE}/${id}` : `${API_BASE}/${id}`;
-        const response = await apiDelete(url);
+        const response = await StandardizedApi.delete(url);
         return normalizeDeleteResponse(response, '공통코드 삭제에 실패했습니다.');
     } catch (error) {
         console.error('공통코드 삭제 실패:', error);
@@ -295,13 +295,13 @@ export const toggleCommonCodeStatus = async(id, routeOpts = {}) => {
             if (typeof cur !== 'boolean') {
                 throw new TypeError('테넌트 코드 상태 변경에는 현재 활성 여부가 필요합니다.');
             }
-            const response = await apiPatch(
+            const response = await StandardizedApi.patch(
                 `${TENANT_CODES_WRITE_BASE}/${id}/active`,
                 { isActive: !cur }
             );
             return normalizeMutationResponse(response, '공통코드 상태 변경에 실패했습니다.');
         }
-        const response = await apiPut(`${API_BASE}/${id}/toggle-status`, {});
+        const response = await StandardizedApi.put(`${API_BASE}/${id}/toggle-status`, {});
         return normalizeMutationResponse(response, '공통코드 상태 변경에 실패했습니다.');
     } catch (error) {
         console.error('공통코드 상태 변경 실패:', error);
@@ -318,7 +318,7 @@ export const toggleCommonCodeStatus = async(id, routeOpts = {}) => {
  */
 export const createCommonCodesBatch = async(codesData) => {
     try {
-        const response = await apiPost(`${API_BASE}/batch`, codesData);
+        const response = await StandardizedApi.post(`${API_BASE}/batch`, codesData);
         
         if (response.success && response.data) {
             return response.data;
@@ -332,6 +332,20 @@ export const createCommonCodesBatch = async(codesData) => {
 };
 
 /**
+ * 레거시 코드 그룹 목록 조회 (/groups/list)
+ * @returns {Promise<Array<string>>} 코드 그룹 목록
+ */
+export const getLegacyCodeGroupsList = async() => {
+    try {
+        const legacyResponse = await StandardizedApi.get(`${API_BASE}/groups/list`);
+        return Array.isArray(legacyResponse) ? legacyResponse : [];
+    } catch (error) {
+        console.error('레거시 코드 그룹 목록 조회 실패:', error);
+        return [];
+    }
+};
+
+/**
  * 코드 그룹 목록 조회 (하위 호환성)
 /**
  * @returns {Promise<Array>} 코드 그룹 목록
@@ -339,7 +353,7 @@ export const createCommonCodesBatch = async(codesData) => {
 export const getCodeGroups = async() => {
     try {
         // 새로운 API 시도
-        const response = await apiGet(`${API_BASE}?codeGroup=`);
+        const response = await StandardizedApi.get(`${API_BASE}?codeGroup=`);
         
         if (response.success && response.data) {
             // 코드 그룹 목록 추출
@@ -349,7 +363,7 @@ export const getCodeGroups = async() => {
         }
         
         // 하위 호환성: 기존 API 사용
-        const legacyResponse = await apiGet(`${API_BASE}/groups/list`);
+        const legacyResponse = await StandardizedApi.get(`${API_BASE}/groups/list`);
         if (Array.isArray(legacyResponse)) {
             return legacyResponse;
         }
@@ -370,7 +384,7 @@ export const getCodeGroups = async() => {
  */
 export const getCoreCodesAPI = async(codeGroup) => {
     try {
-        const response = await apiGet(`${API_BASE}?codeGroup=${codeGroup}`);
+        const response = await StandardizedApi.get(`${API_BASE}?codeGroup=${codeGroup}`);
         
         if (response?.data?.codes && Array.isArray(response.data.codes)) {
             return response.data.codes;

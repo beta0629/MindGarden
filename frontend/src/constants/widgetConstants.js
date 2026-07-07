@@ -284,11 +284,6 @@ export const WIDGET_SPECIFIC_CONSTANTS = {
         ICON: WIDGET_CONSTANTS.ICONS.SETTINGS,
         LABEL: '시스템 설정',
         URL: '/admin/system-config'
-      },
-      REPORTS: {
-        ICON: WIDGET_CONSTANTS.ICONS.CHART,
-        LABEL: '통계 보고서',
-        URL: '/admin/statistics'
       }
     }
   }

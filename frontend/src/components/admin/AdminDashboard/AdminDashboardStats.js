@@ -97,7 +97,6 @@ const AdminDashboardStats = ({
             value: stats.consultantRatingStats?.averageScore?.toFixed(1) || '0.0',
             icon: <TrendingUp className="mg-v2-icon" />,
             color: 'blue',
-            onClick: () => onNavigate('/admin/statistics'),
             description: '상담사 평균 평점'
         },
         {
@@ -113,7 +112,6 @@ const AdminDashboardStats = ({
             value: stats.todayVisitors,
             icon: <Users className="mg-v2-icon" />,
             color: 'purple',
-            onClick: () => onNavigate('/admin/statistics'),
             description: '오늘 사이트 방문자'
         }
     ];

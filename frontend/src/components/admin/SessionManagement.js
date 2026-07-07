@@ -10,7 +10,6 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
-import StatisticsDashboard from './StatisticsDashboard';
 import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import SessionExtensionModal from './mapping/SessionExtensionModal';

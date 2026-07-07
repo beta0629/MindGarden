@@ -342,8 +342,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
               { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
               { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
               { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
-              { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' },
-              { id: 'reports', label: '통계 보고서', icon: 'chart', url: '/admin/statistics' }
+              { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
             ],
             color: 'primary'
           }
@@ -561,8 +560,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
                 { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
                 { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
                 { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
-                { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' },
-                { id: 'reports', label: '통계 보고서', icon: 'chart', url: '/admin/statistics' }
+                { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
               ],
               color: 'primary'
             }

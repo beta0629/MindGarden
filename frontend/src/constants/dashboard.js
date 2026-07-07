@@ -121,11 +121,6 @@ export const DASHBOARD_ACTIONS = {
     ICON: 'bi bi-list-ul',
     ROUTE: '/admin/common-codes'
   },
-  STATISTICS: {
-    LABEL: '통계',
-    ICON: 'bi bi-graph-up',
-    ROUTE: '/admin/statistics'
-  },
   CONSULTATION_HISTORY: {
     LABEL: '상담 내역',
     ICON: 'bi bi-clock-history',

@@ -114,7 +114,6 @@ jest.mock('../../statistics/PerformanceMetricsModal', () => () => null);
 jest.mock('../../finance/RecurringExpenseModal', () => () => null);
 jest.mock('../../erp/ErpReportModal', () => () => null);
 jest.mock('../../admin/mapping/MappingDepositModal', () => () => null);
-jest.mock('../../admin/StatisticsDashboard', () => () => null);
 jest.mock('../molecules/AdminMgmtGridCard', () => ({
   AdminMgmtNavCard: () => null,
   AdminMgmtActionCard: () => null

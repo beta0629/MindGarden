@@ -62,7 +62,6 @@ export const ADMIN_ROUTES = {
     PG_OPS_APPROVAL: '/admin/ops/pg-approval',
     /** @deprecated redirect to NOTIFICATIONS */
     MESSAGES: '/admin/messages',
-    STATISTICS: '/admin/statistics',
     COMPLIANCE: '/admin/compliance',
     COMPLIANCE_DASHBOARD: '/admin/compliance/dashboard',
     COMPLIANCE_DESTRUCTION: '/admin/compliance/destruction',

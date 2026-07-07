@@ -101,4 +101,35 @@ describe('ERP Financial savedView named views (28g-p8)', () => {
     expect(result.current.savedView).toEqual(DEFAULT_SAVED_VIEW);
     expect(result.current.activeViewId).toBe('default');
   });
+
+  it('named view 삭제 시 active view가 default로 복귀한다', () => {
+    const { result } = renderHook(() =>
+      useSavedViewPreference({
+        pageId: FM_SAVED_VIEW_PAGE_ID,
+        defaultView: DEFAULT_SAVED_VIEW,
+        namedViews: true
+      })
+    );
+
+    let viewId;
+    act(() => {
+      viewId = result.current.saveNamedView('삭제 대상', {
+        viewMode: 'compact',
+        filters: { transactionType: 'EXPENSE', searchText: '임대료' },
+        sort: {},
+        density: 'comfortable'
+      });
+    });
+
+    act(() => {
+      result.current.loadNamedView(viewId);
+    });
+
+    act(() => {
+      result.current.deleteNamedView(viewId);
+    });
+
+    expect(result.current.activeViewId).toBe('default');
+    expect(result.current.views.some((view) => view.id === viewId)).toBe(false);
+  });
 });

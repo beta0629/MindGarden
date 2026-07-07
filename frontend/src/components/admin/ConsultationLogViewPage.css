@@ -227,3 +227,38 @@
   color: var(--ad-b0kla-text-secondary);
   margin: 0;
 }
+
+/* Admin Dark Mode C-3 — 상담일지 필터·탭·폼 cascade */
+[data-theme="dark"] .mg-v2-consultation-log-view-tabs__tab {
+  background: var(--mg-dark-chip-bg);
+  color: var(--mg-dark-chip-text);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-consultation-log-view-tabs__tab:hover {
+  color: var(--mg-dark-chip-active-text);
+  border-color: var(--mg-color-primary-main);
+}
+
+[data-theme="dark"] .mg-v2-consultation-log-view-tabs__tab--active {
+  background: var(--mg-dark-chip-active-bg);
+  color: var(--mg-dark-chip-active-text);
+  border-color: var(--mg-color-primary-main);
+}
+
+[data-theme="dark"] .mg-v2-consultation-log-filter__select,
+[data-theme="dark"] .mg-v2-consultation-log-filter__input {
+  background: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-consultation-log-filter__select:focus,
+[data-theme="dark"] .mg-v2-consultation-log-filter__input:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+[data-theme="dark"] .mg-v2-consultation-log-filter__label {
+  color: var(--mg-v2-form-label);
+}

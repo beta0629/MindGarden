@@ -2081,3 +2081,69 @@ button.mg-v2-ad-b0kla__icon-btn.mg-button .mg-button__text {
     flex-direction: column;
   }
 }
+
+/* ===== B0KlA 데이터 테이블 (P0 라우트 공통) ===== */
+.mg-v2-ad-b0kla__data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mg-v2-ad-b0kla__data-table th {
+  background: var(--ad-b0kla-table-header-bg);
+  border-bottom: 2px solid var(--ad-b0kla-table-border, var(--ad-b0kla-border));
+  color: var(--ad-b0kla-table-header-text, var(--ad-b0kla-text-secondary));
+  font-weight: var(--mg-font-semibold);
+  font-size: var(--mg-font-sm);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  text-align: left;
+}
+
+.mg-v2-ad-b0kla__data-table tbody tr {
+  background: var(--ad-b0kla-table-row-bg, transparent);
+}
+
+.mg-v2-ad-b0kla__data-table td {
+  border-bottom: 1px solid var(--ad-b0kla-table-border, var(--ad-b0kla-border));
+  padding: var(--mg-spacing-md);
+  color: var(--ad-b0kla-title-color);
+  font-size: var(--mg-font-md);
+  vertical-align: middle;
+}
+
+.mg-v2-ad-b0kla__data-table tbody tr:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+.mg-v2-ad-b0kla__data-table tbody tr.mg-v2-ad-b0kla__data-table-row--selected,
+.mg-v2-ad-b0kla__data-table tbody tr[aria-selected='true'] {
+  background: var(--ad-b0kla-table-row-selected, var(--mg-dark-table-row-hover));
+}
+
+/* Admin Dark Mode C-3 — 필터 툴바·검색·칩 영역 */
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-filter-search__panel {
+  background: var(--mg-dark-toolbar-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-saved-view-chip-wrap + .mg-v2-saved-view-chip-wrap {
+  margin-left: 0;
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-form-input,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-form-select,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-form-textarea {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-form-input:focus,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-form-select:focus,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-form-textarea:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-form-label {
+  color: var(--mg-v2-form-label);
+}

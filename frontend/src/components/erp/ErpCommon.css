@@ -2600,3 +2600,42 @@
 .erp-refresh-icon--spin {
   animation: erp-refresh-icon-spin 0.8s var(--animation-ease-linear, linear) infinite;
 }
+
+/* ===== Admin Dark Mode C-3 — ERP Financial filter/toolbar cascade ===== */
+[data-theme="dark"] .erp-system .mg-financial-filter-secondary {
+  background: var(--mg-dark-toolbar-bg);
+  border: 1px solid var(--mg-dark-toolbar-border);
+  border-radius: var(--ad-b0kla-radius-sm);
+  padding: var(--mg-spacing-md);
+}
+
+[data-theme="dark"] .erp-system .mg-erp-filter-badge {
+  background: var(--mg-dark-chip-bg);
+  border-color: var(--mg-dark-toolbar-border);
+  color: var(--mg-dark-chip-text);
+}
+
+[data-theme="dark"] .erp-system .mg-erp-filter-badge:hover {
+  background: var(--mg-gray-800);
+  color: var(--mg-dark-chip-active-text);
+  border-color: var(--mg-color-border-subtle);
+}
+
+[data-theme="dark"] .erp-system .mg-erp-filter-badge--selected,
+[data-theme="dark"] .erp-system .mg-erp-filter-badge--selected:hover {
+  background: var(--mg-dark-chip-active-bg);
+  border-color: var(--mg-dark-chip-active-bg);
+  color: var(--mg-dark-chip-active-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline:not(.mg-erp-filter-badge--selected) {
+  background: var(--mg-dark-chip-bg);
+  color: var(--mg-dark-chip-text);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-erp-filter-badge.mg-button.mg-button--outline.mg-v2-button-outline.mg-erp-filter-badge--selected {
+  background: var(--mg-dark-chip-active-bg);
+  color: var(--mg-dark-chip-active-text);
+  border-color: var(--mg-dark-chip-active-bg);
+}

@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import './SavedViewChip.css';
 
 /**
  * 저장된 뷰 Chip (Atoms)

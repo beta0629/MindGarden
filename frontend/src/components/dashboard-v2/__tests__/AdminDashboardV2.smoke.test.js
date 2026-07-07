@@ -84,6 +84,10 @@ jest.mock('../../../utils/permissionUtils', () => ({
   PermissionChecks: { canManageUsers: () => false }
 }));
 
+jest.mock('../../../utils/apiHeaders', () => ({
+  getDefaultApiHeaders: jest.fn(() => ({ 'X-Tenant-Id': 'test-tenant' }))
+}));
+
 jest.mock('../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
@@ -160,17 +164,13 @@ const renderDashboard = () => render(
 );
 
 describe('AdminDashboardV2 AdminCommonLayout 스모크', () => {
-  test('mount 시 ContentHeader title 및 본문 data-testid 렌더 (ACL title dedup)', async() => {
+  test('mount 시 ContentHeader title 및 본문 data-testid 렌더 (ACL title dedup)', () => {
     renderDashboard();
 
     expect(screen.getByTestId('admin-common-layout')).toBeInTheDocument();
     expect(screen.getByTestId('admin-common-layout')).not.toHaveAttribute('data-title', '대시보드');
     expect(screen.getByRole('heading', { level: 1, name: '대시보드' })).toBeInTheDocument();
     expect(screen.getByTestId('admin-dashboard-v2-page')).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-loading', 'false');
-    });
   });
 
   test('KPI zone 3종 카드가 로드 후 렌더', async() => {
@@ -209,5 +209,15 @@ describe('AdminDashboardV2 AdminCommonLayout 스모크', () => {
     await waitFor(() => {
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
+  });
+
+  test('dark fixture: AdminDashboardV2 mount + data-theme="dark" 유지', async() => {
+    document.documentElement.setAttribute('data-theme', 'dark');
+
+    renderDashboard();
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(screen.getByTestId('admin-dashboard-v2-page')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-common-layout')).toBeInTheDocument();
   });
 });

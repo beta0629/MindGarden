@@ -285,6 +285,60 @@
   --ad-b0kla-text-secondary: var(--mg-v2-color-text-secondary);
   --ad-b0kla-placeholder: var(--mg-v2-color-text-tertiary);
   --ad-b0kla-icon-color: var(--mg-v2-color-text-secondary);
+
+  /* Admin Dark Mode C-3 — Global Cascade (Modal · Toolbar · Table · Form · Badge) */
+  --mg-dark-modal-overlay: var(--mg-overlay);
+  --ad-b0kla-overlay-bg: var(--mg-dark-modal-overlay);
+  --mg-color-surface-raised: var(--mg-gray-700);
+  --mg-color-border-subtle: var(--mg-gray-600);
+  --mg-color-text-primary: var(--mg-gray-100);
+
+  --mg-dark-toolbar-bg: var(--mg-gray-900);
+  --mg-dark-toolbar-border: var(--mg-gray-700);
+  --mg-dark-chip-bg: var(--mg-gray-700);
+  --mg-dark-chip-text: var(--mg-gray-300);
+  --mg-dark-chip-active-bg: var(--mg-success-900);
+  --mg-dark-chip-active-text: var(--mg-gray-200);
+
+  --filter-search-background: var(--mg-dark-toolbar-bg);
+  --filter-search-border: var(--mg-dark-toolbar-border);
+  --filter-search-background-hover: var(--mg-gray-800);
+  --filter-search-text: var(--mg-gray-100);
+  --filter-search-text-secondary: var(--mg-gray-400);
+  --filter-search-text-placeholder: var(--mg-gray-500);
+  --filter-search-chip-bg: var(--mg-dark-chip-bg);
+  --filter-search-chip-border: var(--mg-dark-toolbar-border);
+  --filter-search-chip-text: var(--mg-dark-chip-text);
+
+  --mg-v2-form-bg: var(--mg-gray-700);
+  --mg-v2-form-input-bg: var(--mg-gray-700);
+  --mg-v2-form-border: var(--mg-gray-600);
+  --mg-v2-form-text: var(--mg-gray-100);
+  --mg-v2-form-focus-ring: var(--mg-success-900);
+  --mg-v2-form-label: var(--mg-gray-400);
+  --mg-v2-form-error: var(--mg-error-400);
+
+  --ad-b0kla-table-header-text: var(--mg-gray-300);
+  --ad-b0kla-table-border: var(--mg-gray-600);
+  --ad-b0kla-table-row-selected: var(--mg-success-900);
+
+  --mg-badge-status-success-bg: var(--mg-success-900);
+  --mg-badge-status-success-text: var(--mg-success-200);
+  --mg-badge-status-warning-bg: var(--mg-warning-900);
+  --mg-badge-status-warning-text: var(--mg-warning-200);
+  --mg-badge-status-neutral-bg: var(--mg-gray-700);
+  --mg-badge-status-neutral-text: var(--mg-gray-200);
+  --mg-badge-status-danger-bg: var(--mg-error-900);
+  --mg-badge-status-danger-text: var(--mg-error-200);
+  --mg-badge-status-info-bg: var(--mg-info-900);
+  --mg-badge-status-info-text: var(--mg-info-200);
+
+  /* Legacy alias — form/modal cascade (unified-design-tokens 직접 수정 대신 extension) */
+  --color-text-primary: var(--mg-gray-100);
+  --color-text-secondary: var(--mg-gray-400);
+  --color-background-primary: var(--mg-gray-700);
+  --color-border-light: var(--mg-gray-600);
+  --background-primary: var(--mg-gray-900);
 }
 
 

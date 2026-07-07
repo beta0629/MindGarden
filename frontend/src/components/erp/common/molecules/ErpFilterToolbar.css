@@ -81,3 +81,32 @@
     max-width: 100%;
   }
 }
+
+/* Admin Dark Mode C-3 — ErpFilterToolbar cascade */
+[data-theme="dark"] .mg-v2-erp-filter-toolbar {
+  background: var(--mg-dark-toolbar-bg);
+  border: 1px solid var(--mg-dark-toolbar-border);
+  border-radius: var(--ad-b0kla-radius-sm, var(--mg-radius-md));
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+}
+
+[data-theme="dark"] .mg-v2-erp-filter-toolbar__date-separator {
+  color: var(--mg-dark-chip-text);
+}
+
+[data-theme="dark"] .mg-v2-erp-filter-toolbar .mg-v2-form-label {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-erp-filter-toolbar .mg-v2-form-select,
+[data-theme="dark"] .mg-v2-erp-filter-toolbar .mg-v2-form-input {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-erp-filter-toolbar .mg-v2-form-select:focus,
+[data-theme="dark"] .mg-v2-erp-filter-toolbar .mg-v2-form-input:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}

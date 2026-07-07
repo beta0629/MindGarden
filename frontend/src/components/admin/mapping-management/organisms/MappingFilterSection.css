@@ -41,3 +41,15 @@
   padding-top: 0.75rem;
   border-top: 1px solid var(--ad-b0kla-border);
 }
+
+/* Admin Dark Mode C-3 — 매핑 필터 섹션 cascade */
+[data-theme="dark"] .mg-v2-mapping-filter-section .mg-v2-filter-search__panel {
+  background: var(--mg-dark-toolbar-bg);
+  border-top-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-mapping-filter-section .mg-v2-filter-search__toggle {
+  background: var(--mg-dark-chip-bg);
+  color: var(--mg-dark-chip-text);
+  border-color: var(--mg-dark-toolbar-border);
+}

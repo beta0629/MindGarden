@@ -1,0 +1,70 @@
+/**
+ * SavedViewChip — B0KlA 필터 칩 (light/dark 토큰 cascade)
+ *
+ * @author CoreSolution
+ * @since 2026-07-07
+ */
+
+.mg-v2-saved-view-chip-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+}
+
+.mg-v2-saved-view-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-xs) var(--mg-spacing-md);
+  border: 1px solid var(--mg-dark-toolbar-border, var(--filter-search-chip-border));
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-dark-chip-bg, var(--filter-search-chip-bg));
+  color: var(--mg-dark-chip-text, var(--filter-search-chip-text));
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-medium);
+  line-height: 1.25;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.mg-v2-saved-view-chip:hover {
+  background: var(--mg-dark-chip-active-bg, var(--filter-search-primary-medium));
+  border-color: var(--mg-dark-toolbar-border, var(--filter-search-chip-border));
+  color: var(--mg-dark-chip-active-text, var(--filter-search-chip-text));
+}
+
+.mg-v2-saved-view-chip--active,
+.mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
+  background: var(--mg-dark-chip-active-bg, var(--filter-search-primary-light));
+  border-color: var(--mg-dark-chip-active-bg, var(--filter-search-primary));
+  color: var(--mg-dark-chip-active-text, var(--filter-search-primary-dark));
+}
+
+.mg-v2-saved-view-chip:focus-visible {
+  outline: 2px solid var(--mg-v2-form-focus-ring, var(--mg-color-primary-main));
+  outline-offset: 2px;
+}
+
+.mg-v2-saved-view-chip__dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: calc(var(--mg-spacing-xs) * -1);
+  padding: 0 var(--mg-spacing-sm);
+  border: none;
+  border-radius: 0 var(--mg-radius-full) var(--mg-radius-full) 0;
+  background: transparent;
+  color: inherit;
+  font-size: var(--mg-font-md);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mg-v2-saved-view-chip__dismiss:hover {
+  color: var(--mg-v2-form-error, var(--mg-color-error-main));
+}
+
+.mg-v2-saved-view-chip__dismiss:focus-visible {
+  outline: 2px solid var(--mg-v2-form-focus-ring, var(--mg-color-primary-main));
+  outline-offset: 1px;
+}

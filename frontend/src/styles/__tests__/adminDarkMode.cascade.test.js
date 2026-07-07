@@ -92,11 +92,23 @@ const C3_P1K_FILES = [
   'src/components/erp/organisms/ErpDashboardFinanceOrganisms.css'
 ];
 
+const C3_P1L_FILES = [
+  'src/components/admin/billing/SubscriptionsPage.css',
+  'src/components/admin/billing/PaymentMethodsPage.css'
+];
+
 const C3_P1DIF_ALL_FILES = [
   ...C3_P1DIF_PR_A_FILES,
   ...C3_P1DIF_PR_B_FILES,
   ...C3_P1DIF_PR_C_FILES
 ];
+
+const P1JL_SPEC_PATH = path.join(
+  REPO_ROOT,
+  'docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C3_P1J_N.md'
+);
+
+const readP1JlSpec = () => fs.readFileSync(P1JL_SPEC_PATH, 'utf8');
 
 const HEX_IN_DECLARATION = /:\s*[^;{]*#[0-9a-fA-F]{3,8}/;
 
@@ -309,13 +321,7 @@ describe('Admin Dark Mode C-3 cascade', () => {
   });
 
   test('SCREEN_SPEC P1-j ERP 라우트가 스펙과 일치', () => {
-    const spec = fs.readFileSync(
-      path.join(
-        REPO_ROOT,
-        'docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C3_P1J_N.md'
-      ),
-      'utf8'
-    );
+    const spec = readP1JlSpec();
 
     [
       '/erp/budget',
@@ -342,17 +348,38 @@ describe('Admin Dark Mode C-3 cascade', () => {
   });
 
   test('SCREEN_SPEC P1-k ERP 라우트가 스펙과 일치', () => {
-    const spec = fs.readFileSync(
-      path.join(
-        REPO_ROOT,
-        'docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C3_P1J_N.md'
-      ),
-      'utf8'
-    );
+    const spec = readP1JlSpec();
 
     [
       '/erp/salary',
       '/erp/dashboard'
+    ].forEach((route) => {
+      expect(spec).toContain(route);
+    });
+  });
+
+  test('P1-l 컴포넌트 CSS [data-theme="dark"] 블록에 hex 하드코딩 0건', () => {
+    C3_P1L_FILES.forEach((file) => {
+      const css = readCss(file);
+      const darkCss = extractDarkBlocks(css);
+      expect(darkCss.trim().length).toBeGreaterThan(0);
+      expect(darkCss).not.toMatch(HEX_IN_DECLARATION);
+    });
+  });
+
+  test('P1-l CSS 파일에 [data-theme="dark"] cascade 존재', () => {
+    C3_P1L_FILES.forEach((file) => {
+      const css = readCss(file);
+      expect(css).toMatch(/\[data-theme=["']dark["']\]/);
+    });
+  });
+
+  test('SCREEN_SPEC P1-l billing 라우트가 스펙과 일치', () => {
+    const spec = readP1JlSpec();
+
+    [
+      '/admin/billing/subscriptions',
+      '/admin/billing/payment-methods'
     ].forEach((route) => {
       expect(spec).toContain(route);
     });

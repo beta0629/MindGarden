@@ -1,0 +1,73 @@
+.mg-v2-saved-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-2, 8px);
+  min-height: var(--mg-spacing-8, 32px);
+  margin-bottom: var(--mg-spacing-2, 8px);
+}
+
+.mg-v2-saved-view-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-1, 4px) var(--mg-spacing-3, 12px);
+  border-radius: var(--mg-radius-pill, 16px);
+  border: var(--mg-border-width-1, 1px) solid var(--mg-color-border-main);
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-xs, 12px);
+  font-weight: var(--mg-font-weight-regular, 400);
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.mg-v2-saved-view-chip:hover {
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-saved-view-chip--active {
+  background: var(--mg-color-primary-main);
+  color: var(--mg-color-background-main);
+  border-color: transparent;
+  font-weight: var(--mg-font-weight-semibold, 600);
+}
+
+.mg-v2-saved-view-controls__save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-1, 4px) var(--mg-spacing-3, 12px);
+  border: none;
+  border-radius: var(--mg-radius-sm, 4px);
+  background: transparent;
+  color: var(--mg-color-primary-main);
+  font-size: var(--mg-font-size-xs, 12px);
+  font-weight: var(--mg-font-weight-semibold, 600);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mg-v2-saved-view-controls__save-btn:hover {
+  color: var(--mg-color-primary-dark, var(--mg-color-primary-main));
+}
+
+.mg-v2-saved-view-controls__load-select {
+  min-width: var(--mg-spacing-40, 160px);
+  max-width: var(--mg-spacing-56, 224px);
+  font-size: var(--mg-font-size-xs, 12px);
+}
+
+.mg-v2-saved-view-modal__label {
+  display: block;
+  margin-bottom: var(--mg-spacing-2, 8px);
+  color: var(--mg-color-text-primary);
+  font-size: var(--mg-font-size-sm, 14px);
+  font-weight: var(--mg-font-weight-medium, 500);
+}
+
+.mg-v2-saved-view-modal__input {
+  width: 100%;
+}

@@ -21,6 +21,7 @@ import ClientConsultationTab from './ClientComprehensiveManagement/ClientConsult
 import ClientMappingTab from './ClientComprehensiveManagement/ClientMappingTab';
 import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatisticsTab';
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
+import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';
 import PasswordResetModal from './PasswordResetModal';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
@@ -117,9 +118,10 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         defaultMode: USER_MANAGEMENT_DEFAULT_VIEW_MODE,
         allowedModes: USER_MANAGEMENT_ALLOWED_VIEW_MODES
     });
-    const { savedView, setSavedView } = useSavedViewPreference({
+    const { savedView, setSavedView, views, activeViewId, saveNamedView, loadNamedView, resetToDefaultView } = useSavedViewPreference({
         pageId: CLIENT_VIEW_MODE_PAGE_ID,
-        defaultView: CLIENT_DEFAULT_SAVED_VIEW
+        defaultView: CLIENT_DEFAULT_SAVED_VIEW,
+        namedViews: true
     });
     const savedViewFiltersRestoredRef = useRef(false);
     const savedViewPersistReadyRef = useRef(false);
@@ -586,6 +588,36 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
     const handleFilterChange = useCallback((filters) => {
         setActiveFilters(filters);
     }, []);
+
+    const applySavedViewPayload = useCallback((payload) => {
+        if (payload?.viewMode) {
+            setViewMode(payload.viewMode);
+        }
+        setActiveFilters(payload?.filters ?? {});
+        savedViewMetaRef.current = {
+            sort: payload?.sort ?? CLIENT_DEFAULT_SAVED_VIEW.sort,
+            density: payload?.density ?? CLIENT_DEFAULT_SAVED_VIEW.density
+        };
+    }, [setViewMode]);
+
+    const handleSelectSavedView = useCallback((viewId) => {
+        const payload = loadNamedView(viewId);
+        applySavedViewPayload(payload);
+    }, [loadNamedView, applySavedViewPayload]);
+
+    const handleResetSavedView = useCallback(() => {
+        const payload = resetToDefaultView();
+        applySavedViewPayload(payload);
+    }, [resetToDefaultView, applySavedViewPayload]);
+
+    const handleSaveNamedView = useCallback((label) => {
+        saveNamedView(label, {
+            viewMode,
+            filters: activeFilters,
+            sort: savedViewMetaRef.current.sort,
+            density: savedViewMetaRef.current.density
+        });
+    }, [saveNamedView, viewMode, activeFilters]);
     
     if (loading) {
         if (embedded) {
@@ -734,6 +766,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                         </ContentSection>
 
                         <ContentSection noCard className="mg-v2-mapping-search-section">
+                            <SavedViewControls
+                                views={views}
+                                activeViewId={activeViewId}
+                                onSelectView={handleSelectSavedView}
+                                onSaveView={handleSaveNamedView}
+                                onResetToDefault={handleResetSavedView}
+                            />
                             <div className="mg-v2-mapping-search-section__row">
                                 <div className="mg-v2-mapping-search-section__input-wrap">
                                     <SearchInput

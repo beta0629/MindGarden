@@ -1,25 +1,27 @@
 # Handoff — 2026-07-07 EOD (퇴근 전 → 집에서 이어하기)
 
-**작성**: core-planner · **시각**: 2026-07-07 ~20:00 KST  
+**작성**: core-planner · **시각**: 2026-07-07 ~20:40 KST (스냅샷 v2 · [#537](https://github.com/beta0629/MindGarden/pull/537))  
 **목표 마일스톤**: **2026-07-13** design/UI/UX dev 완료 + 사용자 sign-off (prod 반영 별도)  
 **SSOT**: [`COMPREHENSIVE_IMPROVEMENT_WBS.md`](./COMPREHENSIVE_IMPROVEMENT_WBS.md) · [`ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md`](../2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md)
 
 ---
 
-## 스냅샷 (2026-07-07 EOD)
+## 스냅샷 (2026-07-07 EOD v2)
 
 | 항목 | 값 |
 |------|-----|
-| **develop HEAD** | `27eb9dbae8ac8adad4dc8c8ae2b42d2398d36e2c` |
-| **HEAD 메시지** | `feat(dashboard): PR-B Consultant V2 + Client routes SSOT (ROLE-C-02)` (#530 merge) |
-| **직전 merge** | `092cb71fd` (#535 session cycle hotfix) · `edaa0528a` (#533 RoleUtils) |
+| **develop HEAD** | `dc1eae2f9689033937aa09e3a987a42e98928619` |
+| **HEAD 메시지** | `Merge pull request #531` — docs(wbs): UI/UX Quality Gate + App/Web 분리 SSOT |
+| **직전 merge** | `76103c3d8` (#529 DASH-02) · `8646d892e` (#534 PR-D) · `27eb9dbae` (#530) |
 | **dev URL (정식)** | **`https://mindgarden.dev.core-solution.co.kr`** |
 | **dev URL (wrong-path)** | `https://dev.core-solution.co.kr` — 테넌트 서브도메인 없음 → **의도된 wrong-path → `/`** (버그 아님) |
-| **마지막 dev deploy SUCCESS** | run [`28858525028`](https://github.com/beta0629/MindGarden/actions/runs/28858525028) · SHA `aaa9ff883` (#527 merge) |
-| **마지막 SUCCESS bundle** | `main.95ce56a1.js` · `main.8fad5536.css` |
+| **마지막 dev deploy SUCCESS** | run [`28861227866`](https://github.com/beta0629/MindGarden/actions/runs/28861227866) · SHA `76103c3d8` (#529 merge) |
+| **마지막 SUCCESS bundle (live)** | `main.a82dfbd8.js` · `main.8fad5536.css` — dev HTML 확인 ☑ |
+| **이전 deploy (#530)** | run [`28860409561`](https://github.com/beta0629/MindGarden/actions/runs/28860409561) · SHA `27eb9dbae` · bundle `main.95ce56a1.js` |
+| **#534 deploy** | run [`28861054757`](https://github.com/beta0629/MindGarden/actions/runs/28861054757) · SHA `8646d892e` · bundle `main.a82dfbd8.js` |
 | **GATE-01 baseline deploy** | run [`28855153365`](https://github.com/beta0629/MindGarden/actions/runs/28855153365) · SHA `c65d9f326` · bundle `main.0ef5994d.js` |
-| **진행 중 deploy** | run `28860212927` @ `092cb71fd` (#535) **in_progress** · run `28860409561` @ `27eb9dbae` (#530) **queued** |
-| **develop CI (HEAD)** | run `28860409377` @ `27eb9dbae` — **queued** (merge 직후, green 미확인) |
+| **develop CI (HEAD)** | run `28863216570` @ `dc1eae2f9` (#531 docs) — **in_progress** (docs-only, prod deploy 없음) |
+| **prod** | **GATE-04 미실행** — prod deploy **금지** 유지 |
 
 ---
 
@@ -35,6 +37,9 @@
 | [#530](https://github.com/beta0629/MindGarden/pull/530) | `27eb9dbae` | ConsultantDashboardV2 B0KlA content blocks (ROLE-C-02) |
 | [#533](https://github.com/beta0629/MindGarden/pull/533) | `edaa0528a` | ProtectedRoute·SessionContext → RoleUtils SSOT (GATE-01) |
 | [#535](https://github.com/beta0629/MindGarden/pull/535) | `092cb71fd` | `session.js` import/no-cycle 제거 (GATE-01 follow-up) |
+| [#534](https://github.com/beta0629/MindGarden/pull/534) | `8646d892e` | PR-D Consultant V2 B0KlA + App/Web route SSOT (SAFE-03) |
+| [#529](https://github.com/beta0629/MindGarden/pull/529) | `76103c3d8` | DASH-02 SchedulePendingList 와이어링 회귀 방지 (test) |
+| [#531](https://github.com/beta0629/MindGarden/pull/531) | `dc1eae2f9` | UI/UX Quality Gate + App/Web SSOT + WBS v1.3 (docs-only) |
 
 ### 검수·정책·원인 확정
 
@@ -48,8 +53,8 @@
 
 ### 문서
 
-- [`COMPREHENSIVE_IMPROVEMENT_WBS.md`](./COMPREHENSIVE_IMPROVEMENT_WBS.md) v2026-07-07 초안 (7/13 Critical Path·병렬 트랙)
-- [#531](https://github.com/beta0629/MindGarden/pull/531) 오픈 — UI/UX Quality Gate + App/Web SSOT + HANDOFF v1.3 (docs-only, merge 대기)
+- [`COMPREHENSIVE_IMPROVEMENT_WBS.md`](./COMPREHENSIVE_IMPROVEMENT_WBS.md) v2026-07-07 — [#531](https://github.com/beta0629/MindGarden/pull/531) **MERGED** `dc1eae2f9`
+- [#537](https://github.com/beta0629/MindGarden/pull/537) OPEN — 본 HANDOFF EOD 스냅샷 v2 갱신 (docs-only · rebase 후 merge)
 
 ---
 
@@ -57,12 +62,10 @@
 
 | 트랙 | 상태 | 비고 |
 |------|------|------|
-| **#534 rebase·merge** | `MERGEABLE` · `UNSTABLE` · head `19e960d7e` | PR-D: Consultant V2 polish + `clientDashboardRoutes` SSOT — **고유 7파일** 잔여. develop `27eb9dbae` 기준 rebase·CI green 후 merge. 백그라운드: agent `e37c3b86` |
-| **import/no-cycle fix** | **#535 MERGED** `092cb71fd` ☑ | `session.js` ↔ `roles.js` ↔ `ajax` 순환 — #535로 인라인 해결 완료. develop HEAD CI green **미확인**(queued). agent `1e747737` — **완료·재확인만** |
-| **CI / #534 게이트** | develop CI **queued** run `28860409377` | merge 전 **CI green 필수**. #536은 #535와 중복 — close 검토 |
-| **docs PR (WBS v1.3)** | [#531](https://github.com/beta0629/MindGarden/pull/531) OPEN | `CLIENT_DASHBOARD_REBUILD_HANDOFF_v1.3.md` 신규 예정 · HF-02 run `28858525028` / SHA `aaa9ff883` 반영 |
-| **dev FE deploy** | #535·#530 연쇄 deploy queued/in_progress | SUCCESS 후 **새 bundle hash** 기록 필요 (아래 §스냅샷 갱신) |
-| **#536** | OPEN · MERGEABLE | #535와 유사 hotfix — **중복 여부 확인 후 close 또는 supersede** |
+| **docs PR [#537](https://github.com/beta0629/MindGarden/pull/537)** | OPEN · **CONFLICTING** | 본 HANDOFF v2 스냅샷 — `origin/develop`(`dc1eae2f9`) rebase → CI green → squash merge. **docs-only · prod 금지** |
+| **develop CI (#531 HEAD)** | run `28863216570` **in_progress** | docs-only merge 직후 — green 확인 후 #537 rebase 기준선 확정 |
+| **#532** | OPEN | `clientDashboardRoutes` SSOT — #534 merge로 **대부분 반영** · 범위 겹침 검토 후 close 또는 축소 |
+| **#536** | **CLOSED** | #535와 중복 — superseded |
 
 ---
 
@@ -70,11 +73,11 @@
 
 | ID | 내용 | 해결 방향 |
 |----|------|-----------|
-| **B-01** | develop **CI green 미확인** (`27eb9dbae`) | Actions 완료 대기 → 실패 시 #535 cycle fix 잔여·정적 검사 로그 확인 |
-| **B-02** | **#534 rebase·CI** | develop rebase → conflict 시 Consultant V2 + clientDashboardRoutes **고유분만** 유지 → CI green → squash merge |
-| **B-03** | dev bundle **HEAD 미반영** | deploy run `28860409561` SUCCESS 후 `main.*.js` hash 확인 · GATE-01 재스모크는 **테넌트 URL**로 |
+| **B-01** | **#537 rebase conflict** | `docs/handoff-20260707-eod` → `origin/develop`(`dc1eae2f9`) rebase · HANDOFF v2만 유지 → CI green → merge |
+| **B-02** | develop HEAD CI (#531) **in_progress** | run `28863216570` green 확인 — docs-only이므로 FE deploy 불필요 |
+| **B-03** | **#532 범위 정리** | #534 merge 후 잔여 diff 검토 — close 또는 축소 PR |
 
-**원칙**: **CI green 전 merge 금지** · **WBS §1 Hotfix·§0 GATE** 범위만 신중 수정.
+**원칙**: **CI green 전 merge 금지** · **GATE-04 prod deploy 금지** · **WBS §1 Hotfix·§0 GATE** 범위만 신중 수정.
 
 ---
 
@@ -84,11 +87,17 @@
 
 | # | 제목 | mergeable | CI / 비고 |
 |---|------|-----------|-----------|
-| [#534](https://github.com/beta0629/MindGarden/pull/534) | feat(consultant): PR-D Consultant V2 B0KlA + App/Web route SSOT | **MERGEABLE** (UNSTABLE) | rebase·CI green 후 merge **P0** |
-| [#536](https://github.com/beta0629/MindGarden/pull/536) | hotfix(auth): GATE-01 session import/no-cycle fix | MERGEABLE | #535와 중복 검토 |
-| [#531](https://github.com/beta0629/MindGarden/pull/531) | docs(wbs): UI/UX Quality Gate + App/Web 분리 SSOT | UNKNOWN | docs-only · v1.3 |
-| [#532](https://github.com/beta0629/MindGarden/pull/532) | feat(client-dashboard): clientDashboardRoutes SSOT KPI·CTA | UNKNOWN | #534와 범위 겹침 — **534 우선** |
-| [#529](https://github.com/beta0629/MindGarden/pull/529) | test(admin): PR-DASH-02 SchedulePendingList 와이어링 | UNKNOWN | DASH-02 회귀 |
+| [#537](https://github.com/beta0629/MindGarden/pull/537) | docs(handoff): 2026-07-07 EOD handoff + WBS §1 EOD 갱신 | **CONFLICTING** | docs-only · rebase onto `dc1eae2f9` → CI green → merge **P0** |
+| [#532](https://github.com/beta0629/MindGarden/pull/532) | feat(client-dashboard): clientDashboardRoutes SSOT KPI·CTA | UNKNOWN | #534와 범위 겹침 — **close·축소 검토** |
+
+### 오늘 merge 완료 ☑
+
+| # | merge SHA | 요약 |
+|---|-----------|------|
+| [#534](https://github.com/beta0629/MindGarden/pull/534) | `8646d892e` | PR-D Consultant V2 B0KlA + App/Web route SSOT |
+| [#529](https://github.com/beta0629/MindGarden/pull/529) | `76103c3d8` | DASH-02 SchedulePendingList 와이어링 회귀 방지 |
+| [#531](https://github.com/beta0629/MindGarden/pull/531) | `dc1eae2f9` | WBS UI/UX Quality Gate + App/Web SSOT (docs-only) |
+| [#536](https://github.com/beta0629/MindGarden/pull/536) | — | CLOSED (#535 supersede) |
 
 ### 기타 open (stale·별도 트랙)
 
@@ -100,11 +109,11 @@
 
 ### P0 — 오늘/내일 첫 작업
 
-1. **develop CI** run `28860409377` (또는 최신) **green 확인** — red면 #535 잔여 cycle·build:ci 로그
-2. **#534 rebase** onto `27eb9dbae` → conflict 해결 → CI green → **squash merge**
-3. **dev deploy** SUCCESS 확인 → bundle hash 갱신 (본 문서 §스냅샷 + WBS good SHA)
+1. **develop CI** run `28863216570` (또는 최신) @ `dc1eae2f9` **green 확인** — docs-only (#531)
+2. **[#537](https://github.com/beta0629/MindGarden/pull/537) rebase** onto `dc1eae2f9` → conflict 해결 → CI green → **squash merge** (docs-only, prod 금지)
+3. **dev bundle 확인** ☑ — live `main.a82dfbd8.js` (run `28861227866` @ `76103c3d8`)
 4. **테넌트 smoke 재확인**: `https://mindgarden.dev.core-solution.co.kr/admin/dashboard` · `/consultant/dashboard-v2` · `/client/dashboard`
-5. **[#531](https://github.com/beta0629/MindGarden/pull/531) merge** — WBS v1.3 + HANDOFF v1.3 (docs-only, 코드 무)
+5. **#532 범위 정리** — #534 merge 후 잔여 diff → close 또는 축소
 
 ### P1 — 7/13 Critical Path
 
@@ -114,7 +123,7 @@
 | `DASH-03`~`04` | Dark cascade · safeDisplay · 1280px | core-coder |
 | `DASH-08` | Jest·Must-not gate | core-tester |
 | `ADM-01` | dark-c3b 잔여 (PR-C ☑ 기반) | core-coder |
-| `HF-02` | header title dev 검증 (run `28858525028` 이후 deploy 대조) | core-deployer |
+| `HF-02` | header title dev 검증 (bundle `main.a82dfbd8.js` / run `28861227866`) | core-deployer |
 | `ROLE-01` | Client v1.1 **Design Freeze** sign-off | 사용자 + planner |
 | `GATE-02` | 7/13 통합 검수 체크리스트 (`SEQ_28` 형식) | core-planner + core-tester |
 
@@ -122,7 +131,7 @@
 
 - **DEC-01** `/admin/sessions` redirect vs Table 개선
 - **DEC-02** App/Web SSOT 장기 (현재 **C** 단기: 문서 분리)
-- **#536** 중복 PR 정리
+- **#536** — CLOSED (#535 supersede) ☑
 - stale open PR inventory (#446 등)
 
 ---
@@ -147,27 +156,28 @@
 
 ```text
 GATE-01 smoke ☑ (tenant URL)
-  → DASH-02 데이터 버그 ☐
+  → DASH-02 데이터 버그 ◐ (#529 test merge · dev 검증 잔여)
   → DASH-01~04 위젯·다크 ☐
   → DASH-08 Jest gate ☐
   → ADM-01 dark-c3b ◐ (PR-C partial ☑)
-  → HF-02 header dev 검증 ◐
+  → HF-02 header dev 검증 ◐ (bundle `main.a82dfbd8.js`)
+  → ROLE-02 Consultant V2 ◐ (#534 merge ☑ · dev smoke 잔여)
   → GATE-03 사용자 sign-off ☐
 ```
 
 ### 7/13 완료 체크리스트 (WBS 요약)
 
 - [x] `GATE-01` parallel-4 dev smoke (tenant URL) ☑
-- [ ] `DASH-02` SchedulePendingList 데이터 버그
+- [ ] `DASH-02` SchedulePendingList 데이터 버그 ◐ (#529 test merge · dev 검증)
 - [ ] `DASH-01`~`04` PR-DASH P0 갭 0
 - [ ] `DASH-08` Jest gate PASS
 - [ ] `ADM-01` dark-c3b ☑
-- [ ] `HF-02` header hotfix dev 검증
+- [ ] `HF-02` header hotfix dev 검증 ◐
 - [ ] `HF-03` session Error Boundary (또는 defer 명시)
 - [ ] `ROLE-01` Client v1.1 freeze ☑
-- [ ] `ROLE-02` Consultant V2 dev 정합 (#534 merge 후)
+- [x] `ROLE-02` Consultant V2 dev 정합 (#534 merge ☑ · smoke 잔여)
 - [ ] `GATE-03` 사용자 dev sign-off
-- [ ] `GATE-04` prod deploy **미실행** 확인
+- [x] `GATE-04` prod deploy **미실행** 확인
 
 ### Out-of-scope (7/13)
 
@@ -198,18 +208,18 @@ cd tests/e2e && E2E_BASE_URL=https://mindgarden.dev.core-solution.co.kr \
 
 ---
 
-## §오프라인 복구 (2026-07-07 ~20:50 KST 스냅샷)
+## §오프라인 복구 (2026-07-07 ~20:40 KST 스냅샷 v2)
 
-> 인터넷 끊김·퇴근 전 기록. 집에서 **이 절을 먼저** 읽고 §5 P0 진행.
+> [#537](https://github.com/beta0629/MindGarden/pull/537) 반영. 집에서 **이 절을 먼저** 읽고 §5 P0 진행.
 
 ### 로컬 git 스냅샷
 
 | 항목 | 값 |
 |------|-----|
-| **작업 브랜치** | `feat/pr-d-consultant-v2-app-web` @ `19e960d7e` (PR [#534](https://github.com/beta0629/MindGarden/pull/534)) |
-| **origin/develop** | `27eb9dbae` — `feat(dashboard): PR-B Consultant V2 + Client routes SSOT` (#530) |
-| **로컬 develop** | `373c1d257` — origin/develop 대비 **behind 134** (오래된 로컬 체크아웃, **fetch 후 origin/develop 사용**) |
-| **working tree** | 대량 코드 변경 없음 · `HANDOFF_20260707_EOD.md` **untracked → 본 커밋으로 #531 반영 예정** |
+| **작업 브랜치** | `docs/handoff-20260707-eod` (PR [#537](https://github.com/beta0629/MindGarden/pull/537)) — **rebase 필요** (CONFLICTING) |
+| **origin/develop** | `dc1eae2f9` — `Merge pull request #531` (docs/wbs Quality Gate) |
+| **직전 코드 merge** | `76103c3d8` (#529) · `8646d892e` (#534) · `27eb9dbae` (#530) |
+| **working tree** | `HANDOFF_20260707_EOD.md` v2 갱신 — #537 push 후 CI green → merge |
 
 ### unpushed branches (ahead of remote, 상위만)
 
@@ -227,33 +237,34 @@ cd tests/e2e && E2E_BASE_URL=https://mindgarden.dev.core-solution.co.kr \
 
 ### 진행 중 subagent · 재개 프롬프트
 
-| Agent ID | 담당 | EOD 상태 | 집에서 재개 프롬프트 |
-|----------|------|----------|---------------------|
-| `e37c3b86-174d-4c6f-b431-79fff3fc9660` | #534 rebase·merge | head `19e960d7e` · MERGEABLE · rebase 미완 | 「#534 `feat/pr-d-consultant-v2-app-web`를 `origin/develop`(`27eb9dbae`)에 rebase. conflict는 Consultant V2 + `clientDashboardRoutes` 고유 7파일만 유지. CI green 후 squash merge. WBS §1 신중 수정.」 |
-| `1e747737-b038-4fbc-9c1f-ea84ab9d4d75` | import/no-cycle | **#535 MERGED** — 코드 완료 | 「develop CI run `28860409377`(또는 최신) green 확인만. red면 #535 잔여 cycle·정적 검사 로그. 코드 수정은 최소 diff.」 |
-| `3f7889b3-f6b6-4cb9-bbf5-d6dcbf29a0b9` | EOD HANDOFF 작성 | 본 문서 v1 + §오프라인 복구 | 「`HANDOFF_20260707_EOD.md` §스냅샷·deploy bundle·CI run ID 갱신.」 |
-| `9edb303d-1678-48f6-9c9e-38c494d25ded` | WBS 신중 수정 프로토콜 | `COMPREHENSIVE_IMPROVEMENT_WBS.md` §1 추가 완료 | 「WBS §1 프로토콜 유지. 추가 코드 변경 없음.」 |
+| Agent ID | 담당 | EOD v2 상태 | 집에서 재개 프롬프트 |
+|----------|------|-------------|---------------------|
+| `b70e3130` | #537 HANDOFF v2 | 스냅샷 갱신 완료 · rebase·push 대기 | 「#537 `docs/handoff-20260707-eod`를 `origin/develop`(`dc1eae2f9`)에 rebase. HANDOFF v2만 유지. CI green → squash merge. docs-only · prod 금지.」 |
+| `3f7889b3` | EOD HANDOFF 작성 | v2 스냅샷 반영 완료 | 「추가 갱신 시 deploy bundle·CI run ID만 §스냅샷 업데이트.」 |
 
-### PR·CI·cycle 상태 (오프라인 시점)
+### PR·CI·deploy 상태 (v2)
 
 | 트랙 | 상태 |
 |------|------|
-| **#534 rebase** | OPEN · `MERGEABLE` · `mergeStateStatus: UNSTABLE` · CI checks **queued** on PR head |
-| **docs PR [#531](https://github.com/beta0629/MindGarden/pull/531)** | OPEN · branch `docs/wbs-quality-gate-20260707` @ `8b35d4758` · CI 대부분 SUCCESS · 통합 테스트 IN_PROGRESS |
-| **cycle fix** | **완료** — [#535](https://github.com/beta0629/MindGarden/pull/535) merged `092cb71fd` · [#536](https://github.com/beta0629/MindGarden/pull/536) 중복 — close 검토 |
-| **develop CI** | run `28860409377` @ `27eb9dbae` — **queued** (green 미확인) |
+| **#534 PR-D** | **MERGED** `8646d892e` ☑ · deploy run `28861054757` SUCCESS |
+| **#529 DASH-02** | **MERGED** `76103c3d8` ☑ · deploy run `28861227866` SUCCESS · bundle `main.a82dfbd8.js` live |
+| **#531 WBS docs** | **MERGED** `dc1eae2f9` ☑ · CI run `28863216570` in_progress (docs-only) |
+| **docs PR [#537](https://github.com/beta0629/MindGarden/pull/537)** | OPEN · CONFLICTING · HANDOFF v2 갱신 후 rebase·merge |
+| **#536** | **CLOSED** — #535 supersede ☑ |
+| **dev bundle** | `main.a82dfbd8.js` (최신) · 이전 `main.95ce56a1.js` (run `28860409561` @ #530) |
 
 ### 집에서 첫 명령 (순서 고정)
 
 ```bash
 cd /Users/mind/mindGarden
-git fetch origin develop docs/wbs-quality-gate-20260707 feat/pr-d-consultant-v2-app-web
+git fetch origin develop docs/handoff-20260707-eod
 git log -1 --oneline origin/develop
 gh run list --branch develop --limit 3
+gh run list --workflow=deploy-frontend-dev.yml --limit 3
 cat docs/project-management/2026-07-07/HANDOFF_20260707_EOD.md
 ```
 
-**사용자 재개 한 줄**: 「handoff 이어서 — develop CI 확인, #534 rebase merge, docs PR」
+**사용자 재개 한 줄**: 「handoff v2 — #537 rebase·merge, develop CI green, #532 정리」
 
 ### push 실패 시 로컬 전용 파일
 
@@ -269,7 +280,8 @@ push 성공 전까지 **원격에 없을 수 있는 파일**:
 |------------|------|
 | 2026-07-07 ~20:00 | EOD handoff 초안 (core-planner) |
 | 2026-07-07 ~20:50 | §오프라인 복구 추가 · #534 MERGEABLE·#535 merged 반영 |
+| 2026-07-07 ~20:40 | **v2 스냅샷** — develop `dc1eae2f9` (#531) · #534/#529 merge · bundle `main.a82dfbd8.js` live · [#537](https://github.com/beta0629/MindGarden/pull/537) |
 
 ---
 
-**다음 세션 첫 액션**: §5 P0-1 CI green 확인 → P0-2 #534 rebase/merge.
+**다음 세션 첫 액션**: §5 P0-1 develop CI green (`dc1eae2f9`) → P0-2 [#537](https://github.com/beta0629/MindGarden/pull/537) rebase·merge (docs-only, prod 금지).

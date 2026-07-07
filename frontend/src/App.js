@@ -45,7 +45,7 @@ import UserManagementPage from './components/admin/UserManagementPage';
 import SessionManagement from './components/admin/SessionManagement';
 import MappingManagement from './components/admin/MappingManagement';
 import ConsultationLogView from './components/admin/ConsultationLogView';
-import IntegratedMatchingSchedule from './components/admin/mapping-management/IntegratedMatchingSchedule';
+import IntegratedMatchingScheduleManagement from './components/admin/IntegratedMatchingScheduleManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
 // ScheduleList는 현재 사용되지 않음
@@ -811,14 +811,7 @@ function AppContent() {
             } />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
             <Route path="/admin/consultation-logs" element={<ConsultationLogView />} />
-            <Route
-              path="/admin/integrated-schedule"
-              element={
-                <AdminCommonLayout title={t('common:misc.App.t_d67bbae4')}>
-                  <IntegratedMatchingSchedule />
-                </AdminCommonLayout>
-              }
-            />
+            <Route path="/admin/integrated-schedule" element={<IntegratedMatchingScheduleManagement />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={

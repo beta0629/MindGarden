@@ -11,11 +11,11 @@ import { USER_ROLES } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
 import { useConfirm } from '../../../hooks/useConfirm';
 import StatusBadge from '../../common/StatusBadge';
+import SafeText from '../../common/SafeText';
 import UnifiedLoading from '../../common/UnifiedLoading';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../common';
 import SystemNotificationFormModal from '../molecules/SystemNotificationFormModal';
-import { toDisplayString } from '../../../utils/safeDisplay';
+import { toDisplayString, htmlToPlainText } from '../../../utils/safeDisplay';
 import '../../../styles/unified-design-tokens.css';
 import { useTranslation } from 'react-i18next';
 
@@ -37,6 +37,62 @@ const TARGET_OPTIONS = [
   { value: USER_ROLES.CONSULTANT, label: '상담사만' },
   { value: USER_ROLES.CLIENT, label: '내담자만' }
 ];
+
+/**
+ * 공지 카드 EntityRowActions primary·overflow 구성 (G1-03 P2 SSOT §3)
+ * @param {object} notification
+ * @param {object} handlers
+ * @param {string} editLabel
+ * @param {string} deleteLabel
+ * @returns {{ primaryAction: object, items: object[] }}
+ */
+export const buildNotificationRowActions = (
+  notification,
+  { onPublish, onArchive, onEdit, onDelete },
+  editLabel,
+  deleteLabel
+) => {
+  const deleteItem = {
+    id: 'delete',
+    label: deleteLabel,
+    onClick: () => onDelete(notification.id),
+    variant: 'destructive'
+  };
+
+  if (notification.status === 'DRAFT') {
+    return {
+      primaryAction: {
+        label: '게시',
+        onClick: () => onPublish(notification.id)
+      },
+      items: [
+        { id: 'edit', label: editLabel, onClick: () => onEdit(notification) },
+        deleteItem
+      ]
+    };
+  }
+
+  if (notification.status === 'PUBLISHED') {
+    return {
+      primaryAction: {
+        label: '보관',
+        onClick: () => onArchive(notification.id)
+      },
+      items: [
+        { id: 'edit', label: editLabel, onClick: () => onEdit(notification) },
+        deleteItem
+      ]
+    };
+  }
+
+  return {
+    primaryAction: {
+      label: editLabel,
+      onClick: () => onEdit(notification)
+    },
+    items: [deleteItem]
+  };
+};
 
 const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
   const { t } = useTranslation(['admin', 'common']);
@@ -171,9 +227,34 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
     }
   };
 
+  const getTargetTypeLabel = (targetType) => {
+    if (targetType === 'ALL') return '전체';
+    if (targetType === USER_ROLES.CONSULTANT) return '상담사';
+    if (targetType === USER_ROLES.CLIENT) return '내담자';
+    return toDisplayString(targetType, '—');
+  };
+
+  const getStatusLabel = (status) => {
+    if (status === 'PUBLISHED') return '게시중';
+    if (status === 'DRAFT') return '임시저장';
+    if (status === 'ARCHIVED') return '보관됨';
+    return toDisplayString(status, '만료');
+  };
+
+  const resolveNotificationRowActions = (notification) => buildNotificationRowActions(
+    notification,
+    {
+      onPublish: handlePublish,
+      onArchive: handleArchive,
+      onEdit: handleEdit,
+      onDelete: handleDelete
+    },
+    t('common.actions.edit'),
+    t('admin.actions.delete')
+  );
+
   const stripHtml = (html) => {
-    if (!html) return '';
-    const text = String(html).replaceAll(/<[^>]*>/g, '');
+    const text = toDisplayString(htmlToPlainText(html), '');
     return text.length > 150 ? `${text.substring(0, 150)}...` : text;
   };
 
@@ -272,7 +353,9 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                     aria-hidden="true"
                   />
                   <div>
-                    <h3 className="mg-v2-ad-notifications__card-title">{toDisplayString(notification.title)}</h3>
+                    <h3 className="mg-v2-ad-notifications__card-title">
+                      <SafeText tag="span">{notification.title}</SafeText>
+                    </h3>
                     <div className="mg-v2-ad-notifications__card-meta">
                       <StatusBadge
                         variant={
@@ -283,11 +366,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                               : 'neutral'
                         }
                       >
-                        {notification.targetType === 'ALL'
-                          ? '전체'
-                          : notification.targetType === USER_ROLES.CONSULTANT
-                            ? '상담사'
-                            : '내담자'}
+                        {toDisplayString(getTargetTypeLabel(notification.targetType))}
                       </StatusBadge>
                       <StatusBadge
                         variant={
@@ -298,11 +377,7 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                               : 'neutral'
                         }
                       >
-                        {notification.status === 'PUBLISHED'
-                          ? '게시중'
-                          : notification.status === 'DRAFT'
-                            ? '임시저장'
-                            : '만료'}
+                        {toDisplayString(getStatusLabel(notification.status))}
                       </StatusBadge>
                       <span>
                         등록일:{' '}
@@ -310,71 +385,12 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
                       </span>
                     </div>
                   </div>
-                  <div className="mg-v2-ad-notifications__card-actions mg-v2-card-actions">
-                    {notification.status === 'DRAFT' && (
-                      <MGButton
-                        type="button"
-                        variant="outline"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'outline',
-                          size: 'sm',
-                          loading: false
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        aria-label="게시"
-                        onClick={() => handlePublish(notification.id)}
-                      >
-                        게시
-                      </MGButton>
-                    )}
-                    {notification.status === 'PUBLISHED' && (
-                      <MGButton
-                        type="button"
-                        variant="outline"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'outline',
-                          size: 'sm',
-                          loading: false
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        aria-label="보관"
-                        onClick={() => handleArchive(notification.id)}
-                      >
-                        보관
-                      </MGButton>
-                    )}
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="small"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'sm',
-                        loading: false
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      aria-label={t('common.actions.edit')}
-                      onClick={() => handleEdit(notification)}
-                    >
-                      {t('common.actions.edit')}
-                    </MGButton>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="small"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'sm',
-                        loading: false
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      aria-label={t('admin.actions.delete')}
-                      onClick={() => handleDelete(notification.id)}
-                    >
-                      {t('admin.actions.delete')}
-                    </MGButton>
+                  <div className="mg-v2-ad-notifications__card-actions mg-v2-card-actions mg-v2-entity-row-actions">
+                    <EntityRowActions
+                      layout={ENTITY_ROW_ACTIONS_LAYOUT.CARD}
+                      ariaLabel="공지 작업"
+                      {...resolveNotificationRowActions(notification)}
+                    />
                   </div>
                 </li>
               ))}

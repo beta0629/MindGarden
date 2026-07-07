@@ -103,3 +103,85 @@ describe('매칭 관리 savedView 영속화 (28g Phase 3)', () => {
     });
   });
 });
+
+describe('매칭 관리 savedView named views (28g-p7)', () => {
+  const originalSessionManager = window.sessionManager;
+
+  beforeEach(() => {
+    localStorage.clear();
+    window.sessionManager = {
+      getUser: () => ({ id: 'user-test', tenantId: 'tenant-test' })
+    };
+  });
+
+  afterEach(() => {
+    window.sessionManager = originalSessionManager;
+  });
+
+  it('named view 저장·복원 시 filters·viewMode를 유지한다', () => {
+    const { result } = renderHook(() =>
+      useSavedViewPreference({
+        pageId: MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+        defaultView: DEFAULT_SAVED_VIEW,
+        namedViews: true
+      })
+    );
+
+    const storedFilters = {
+      filterStatus: 'ACTIVE',
+      searchTerm: '김상담'
+    };
+
+    let viewId;
+    act(() => {
+      viewId = result.current.saveNamedView('활성 매칭', {
+        viewMode: 'table',
+        filters: storedFilters,
+        sort: {},
+        density: 'comfortable'
+      });
+    });
+
+    expect(result.current.views.some((view) => view.id === viewId)).toBe(true);
+
+    act(() => {
+      result.current.loadNamedView(viewId);
+    });
+
+    expect(result.current.savedView.viewMode).toBe('table');
+    expect(result.current.savedView.filters).toEqual(storedFilters);
+  });
+
+  it('deleteNamedView가 사용자 뷰를 제거하고 default payload로 복귀한다', () => {
+    const storageKey = buildSavedViewStorageKey(SCOPE, MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID);
+
+    const { result } = renderHook(() =>
+      useSavedViewPreference({
+        pageId: MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+        defaultView: DEFAULT_SAVED_VIEW,
+        namedViews: true
+      })
+    );
+
+    let savedViewId;
+    act(() => {
+      savedViewId = result.current.saveNamedView('삭제 대상', {
+        viewMode: 'card',
+        filters: { filterStatus: 'PENDING_PAYMENT', searchTerm: '' },
+        sort: {},
+        density: 'comfortable'
+      });
+    });
+
+    let fallbackPayload;
+    act(() => {
+      fallbackPayload = result.current.deleteNamedView(savedViewId);
+    });
+
+    expect(fallbackPayload).toEqual(DEFAULT_SAVED_VIEW);
+    expect(result.current.views).toHaveLength(1);
+
+    const stored = JSON.parse(localStorage.getItem(storageKey));
+    expect(stored.views).toHaveLength(1);
+  });
+});

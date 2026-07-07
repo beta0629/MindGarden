@@ -21,6 +21,7 @@ import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SessionManagement.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { asArray } from '../../utils/apiResponseNormalize';
 import { useTranslation } from 'react-i18next';
 import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';
 import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
@@ -136,10 +137,10 @@ const SessionManagement = () => {
                 apiGet(API_ADMIN_SESSION_EXTENSIONS_REQUESTS)
             ]);
             
-            const clientsData = clientsRes?.data || clientsRes || [];
-            const consultantsData = consultantsRes?.data || consultantsRes || [];
-            const mappingsData = mappingsRes?.data || mappingsRes || [];
-            const requestsData = requestsRes?.data || requestsRes || [];
+            const clientsData = asArray(clientsRes, 'clients');
+            const consultantsData = asArray(consultantsRes, 'consultants');
+            const mappingsData = asArray(mappingsRes, 'mappings');
+            const requestsData = asArray(requestsRes, 'requests');
             
             setClients(clientsData);
             setConsultants(consultantsData);

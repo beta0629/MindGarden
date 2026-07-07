@@ -567,11 +567,27 @@ const CommonCodeManagement = () => {
         if (storedFilters.categoryFilter != null) {
             setCategoryFilter(storedFilters.categoryFilter);
         }
+        if (storedFilters.selectedGroup !== undefined) {
+            const group = storedFilters.selectedGroup;
+            setShowAddForm(false);
+            setEditingCode(null);
+            if (group == null) {
+                setSelectedGroup(null);
+                setGroupCodes([]);
+            } else if (hasCodeGroupPermission(group)) {
+                setSelectedGroup(group);
+                loadParentCategoryCodes(group);
+                loadGroupCodes(group);
+            } else {
+                setSelectedGroup(null);
+                setGroupCodes([]);
+            }
+        }
         savedViewMetaRef.current = {
             sort: payload?.sort ?? COMMON_CODE_DEFAULT_SAVED_VIEW.sort,
             density: payload?.density ?? COMMON_CODE_DEFAULT_SAVED_VIEW.density
         };
-    }, []);
+    }, [loadGroupCodes, loadParentCategoryCodes]);
 
     const handleSelectSavedView = useCallback((viewId) => {
         const payload = loadNamedView(viewId);
@@ -586,11 +602,11 @@ const CommonCodeManagement = () => {
     const handleSaveNamedView = useCallback((label) => {
         saveNamedView(label, {
             viewMode: COMMON_CODE_DEFAULT_SAVED_VIEW.viewMode,
-            filters: { searchTerm, categoryFilter },
+            filters: { searchTerm, categoryFilter, selectedGroup },
             sort: savedViewMetaRef.current.sort,
             density: savedViewMetaRef.current.density
         });
-    }, [saveNamedView, searchTerm, categoryFilter]);
+    }, [saveNamedView, searchTerm, categoryFilter, selectedGroup]);
 
     const handleDeleteSavedView = useCallback((viewId) => {
         const fallbackPayload = deleteNamedView(viewId);
@@ -625,7 +641,7 @@ const CommonCodeManagement = () => {
             savedViewPersistTimerRef.current = null;
             setSavedView({
                 viewMode: COMMON_CODE_DEFAULT_SAVED_VIEW.viewMode,
-                filters: { searchTerm, categoryFilter },
+                filters: { searchTerm, categoryFilter, selectedGroup },
                 sort: savedViewMetaRef.current.sort,
                 density: savedViewMetaRef.current.density
             });
@@ -637,7 +653,7 @@ const CommonCodeManagement = () => {
                 savedViewPersistTimerRef.current = null;
             }
         };
-    }, [searchTerm, categoryFilter, setSavedView]);
+    }, [searchTerm, categoryFilter, selectedGroup, setSavedView]);
 
     useEffect(() => {
         loadMetadata();
@@ -650,7 +666,7 @@ const CommonCodeManagement = () => {
                 <ContentHeader title={t('admin:commonCode.ui.pageTitle')} subtitle={t('admin:commonCode.ui.headerSubtitle')} />
 
                 <section
-                    className="mg-v2-common-code-saved-view-row"
+                    className="mg-v2-session-saved-view-row"
                     aria-label={COMMON_CODE_MANAGEMENT_SAVED_VIEW_ROW_ARIA_LABEL}
                 >
                     <SavedViewControls

@@ -5,7 +5,6 @@ import { Calendar, ClipboardList, MessageSquare, UserPlus } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import Icon from '../../ui/Icon/Icon';
 import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../content';
-import UnifiedLoading from '../../common/UnifiedLoading';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../../constants/api';
 import QuickActionBar from './QuickActionBar';
@@ -598,15 +597,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     </div>
   );
 
-  if (loading && user?.id) {
-    return (
-      <AdminCommonLayout className="mg-v2-dashboard-layout">
-        {dashboardShell(
-          <UnifiedLoading type="inline" text={t('common:dashboard-v2.ConsultantDashboardV2.t_484d08c9')} />
-        )}
-      </AdminCommonLayout>
-    );
-  }
+  const isSectionLoading = loading && Boolean(user?.id);
 
   return (
     <AdminCommonLayout className="mg-v2-dashboard-layout">
@@ -639,6 +630,7 @@ const ConsultantDashboardV2 = ({ user }) => {
         >
           <ContentKpiRow
             className="consultant-dashboard-v2__kpi-row"
+            loading={isSectionLoading}
             items={[
               {
                 id: 'weeklyConsultations',
@@ -690,7 +682,7 @@ const ConsultantDashboardV2 = ({ user }) => {
             viewAllHref={CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}
             viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL}
             dataTestId="consultant-dashboard-recent-schedules"
-            error={dashboardError}
+            loading={isSectionLoading}
           />
 
           <ConsultantDashboardListSection
@@ -704,7 +696,7 @@ const ConsultantDashboardV2 = ({ user }) => {
             viewAllHref={CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}
             viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL}
             dataTestId="consultant-dashboard-upcoming-schedules"
-            error={dashboardError}
+            loading={isSectionLoading}
           />
 
           <ConsultantDashboardListSection
@@ -719,7 +711,7 @@ const ConsultantDashboardV2 = ({ user }) => {
             viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL}
             rowKeyField="id"
             dataTestId="consultant-dashboard-notifications"
-            error={dashboardError}
+            loading={isSectionLoading}
           />
         </div>
 
@@ -749,7 +741,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                   <div key={`stat-${stat.label}-${idx}`} className="consultant-dashboard-v2__chart-bar-wrapper">
                     <div
                       className={`consultant-dashboard-v2__chart-bar${isLatestWeek ? ' consultant-dashboard-v2__chart-bar--active' : ''}`}
-                      style={{ height: `${Math.max(heightPercent, 4)}%` }}
+                      style={{ '--chart-bar-height': `${Math.max(heightPercent, 4)}%` }}
                       title={`${stat.label}: ${stat.count}건`}
                     />
                     <span className="consultant-dashboard-v2__chart-label">{stat.label}</span>

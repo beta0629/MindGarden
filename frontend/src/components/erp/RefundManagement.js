@@ -6,7 +6,7 @@
  * @since 2025-03-16
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
@@ -29,6 +29,16 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { useErpSilentRefresh } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import notificationManager from '../../utils/notification';
+import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import SavedViewControls from '../admin/ClientComprehensiveManagement/molecules/SavedViewControls';
+import {
+  RM_SAVED_VIEW_PAGE_ID,
+  RM_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+  RM_DEFAULT_SELECTED_PERIOD,
+  RM_DEFAULT_SELECTED_STATUS,
+  RM_DEFAULT_REFUND_VIEW_MODE,
+  buildRefundManagementDefaultSavedView
+} from '../../constants/refundManagementSavedViewConstants';
 
 /** 환불 이력 보기 전환 옵션 (현재 테이블만 지원, 카드 뷰 추후 구현) */
 const REFUND_VIEW_MODE_OPTIONS = [
@@ -44,6 +54,8 @@ const REFLECT_ERP_REFUND_ENDPOINT = (mappingId) =>
 /** 초기·필터 변경 시 목록/KPI 등 공통 로딩 문구 (UnifiedLoading) */
 const REFUND_MANAGEMENT_LOADING_TEXT = '환불 데이터를 불러오는 중...';
 
+const RM_DEFAULT_SAVED_VIEW = buildRefundManagementDefaultSavedView();
+
 const RefundManagement = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -54,10 +66,119 @@ const RefundManagement = () => {
   const [erpSyncStatus, setErpSyncStatus] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
   const [pageInfo, setPageInfo] = useState({});
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedPeriod, setSelectedPeriod] = useState(RM_DEFAULT_SELECTED_PERIOD);
+  const [selectedStatus, setSelectedStatus] = useState(RM_DEFAULT_SELECTED_STATUS);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
-  const [refundViewMode, setRefundViewMode] = useState('table');
+  const [refundViewMode, setRefundViewMode] = useState(RM_DEFAULT_REFUND_VIEW_MODE);
+
+  const {
+    savedView,
+    setSavedView,
+    views,
+    activeViewId,
+    saveNamedView,
+    loadNamedView,
+    resetToDefaultView,
+    deleteNamedView
+  } = useSavedViewPreference({
+    pageId: RM_SAVED_VIEW_PAGE_ID,
+    defaultView: RM_DEFAULT_SAVED_VIEW,
+    namedViews: true
+  });
+  const savedViewFiltersRestoredRef = useRef(false);
+  const savedViewPersistReadyRef = useRef(false);
+  const savedViewPersistTimerRef = useRef(null);
+  const savedViewMetaRef = useRef({
+    sort: RM_DEFAULT_SAVED_VIEW.sort,
+    density: RM_DEFAULT_SAVED_VIEW.density
+  });
+
+  const buildCurrentSavedViewPayload = useCallback(() => ({
+    viewMode: refundViewMode,
+    filters: {
+      selectedPeriod,
+      selectedStatus,
+      refundViewMode
+    },
+    sort: savedViewMetaRef.current.sort,
+    density: savedViewMetaRef.current.density
+  }), [refundViewMode, selectedPeriod, selectedStatus]);
+
+  const applySavedViewPayload = useCallback((payload) => {
+    if (payload?.viewMode) {
+      setRefundViewMode(payload.viewMode);
+    }
+    const storedFilters = payload?.filters ?? {};
+    if (storedFilters.selectedPeriod != null) {
+      setSelectedPeriod(storedFilters.selectedPeriod);
+    }
+    if (storedFilters.selectedStatus != null) {
+      setSelectedStatus(storedFilters.selectedStatus);
+    }
+    if (storedFilters.refundViewMode != null) {
+      setRefundViewMode(storedFilters.refundViewMode);
+    }
+    savedViewMetaRef.current = {
+      sort: payload?.sort ?? RM_DEFAULT_SAVED_VIEW.sort,
+      density: payload?.density ?? RM_DEFAULT_SAVED_VIEW.density
+    };
+  }, []);
+
+  const handleSelectSavedView = useCallback((viewId) => {
+    const payload = loadNamedView(viewId);
+    applySavedViewPayload(payload);
+  }, [loadNamedView, applySavedViewPayload]);
+
+  const handleResetSavedView = useCallback(() => {
+    const payload = resetToDefaultView();
+    applySavedViewPayload(payload);
+  }, [resetToDefaultView, applySavedViewPayload]);
+
+  const handleSaveNamedView = useCallback((label) => {
+    saveNamedView(label, buildCurrentSavedViewPayload());
+  }, [saveNamedView, buildCurrentSavedViewPayload]);
+
+  const handleDeleteSavedView = useCallback((viewId) => {
+    const fallbackPayload = deleteNamedView(viewId);
+    if (fallbackPayload) {
+      applySavedViewPayload(fallbackPayload);
+    }
+  }, [deleteNamedView, applySavedViewPayload]);
+
+  useEffect(() => {
+    if (savedViewFiltersRestoredRef.current) {
+      return;
+    }
+    savedViewFiltersRestoredRef.current = true;
+    savedViewMetaRef.current = {
+      sort: savedView.sort ?? RM_DEFAULT_SAVED_VIEW.sort,
+      density: savedView.density ?? RM_DEFAULT_SAVED_VIEW.density
+    };
+    applySavedViewPayload(savedView);
+    savedViewPersistReadyRef.current = true;
+  }, [savedView, applySavedViewPayload]);
+
+  useEffect(() => {
+    if (!savedViewPersistReadyRef.current) {
+      return undefined;
+    }
+
+    if (savedViewPersistTimerRef.current) {
+      clearTimeout(savedViewPersistTimerRef.current);
+    }
+
+    savedViewPersistTimerRef.current = setTimeout(() => {
+      savedViewPersistTimerRef.current = null;
+      setSavedView(buildCurrentSavedViewPayload());
+    }, RM_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (savedViewPersistTimerRef.current) {
+        clearTimeout(savedViewPersistTimerRef.current);
+        savedViewPersistTimerRef.current = null;
+      }
+    };
+  }, [refundViewMode, selectedPeriod, selectedStatus, setSavedView, buildCurrentSavedViewPayload]);
 
   const loadRefundData = useCallback(async(options = {}) => {
     const silent = options.silent === true;
@@ -226,6 +347,16 @@ const RefundManagement = () => {
             erpSyncStatus={erpSyncStatus}
             isLoading={loading}
           />
+          <div className="mg-w-full mg-mb-md">
+            <SavedViewControls
+              views={views}
+              activeViewId={activeViewId}
+              onSelectView={handleSelectSavedView}
+              onSaveView={handleSaveNamedView}
+              onResetToDefault={handleResetSavedView}
+              onDeleteView={handleDeleteSavedView}
+            />
+          </div>
           <RefundFilterBlock
             selectedPeriod={selectedPeriod}
             selectedStatus={selectedStatus}

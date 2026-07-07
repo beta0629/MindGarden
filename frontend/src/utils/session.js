@@ -5,7 +5,7 @@
  */
 
 import { storage } from './common';
-import { getLegacyDashboardPath } from './dashboardUtils';
+import { getLegacyDashboardPath } from './dashboardPathUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
 
 // 세션 키 상수

@@ -6,6 +6,9 @@
 
 import { apiGet } from './ajax';
 import { API_BASE_URL } from '../constants/api';
+import { getLegacyDashboardPath } from './dashboardPathUtils';
+
+export { getLegacyDashboardPath } from './dashboardPathUtils';
 
 const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
 
@@ -154,36 +157,6 @@ export const getDashboardFromAuthResponse = async(authResponse) => {
     console.error('AuthResponse에서 대시보드 조회 실패:', error);
     return null;
   }
-};
-
-/**
- * 레거시 역할 기반 대시보드 경로 (하위 호환성)
-/**
- * 
-/**
- * @param {string} role 역할
-/**
- * @returns {string} 대시보드 경로
- */
-export const getLegacyDashboardPath = (role) => {
-  if (!role) return '/client/dashboard';
-  
-  const normalizedRole = role.toUpperCase();
-  // STAFF: ERP만 제외 — 대시보드는 ADMIN과 동일 경로 (STAFF_PERMISSION_POLICY_PHASE2)
-  const ROLE_DASHBOARD_MAP = {
-    'CLIENT': '/client/dashboard',
-    'CONSULTANT': '/consultant/dashboard',
-    'ADMIN': '/admin/dashboard',
-    'STAFF': '/admin/dashboard',
-    'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',
-    'BRANCH_MANAGER': '/admin/dashboard',
-    'HQ_ADMIN': '/admin/dashboard',
-    'SUPER_HQ_ADMIN': '/admin/dashboard',
-    'HQ_MASTER': '/admin/dashboard',
-    'HQ_SUPER_ADMIN': '/admin/dashboard'
-  };
-  
-  return ROLE_DASHBOARD_MAP[normalizedRole] || '/client/dashboard';
 };
 
 /**

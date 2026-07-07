@@ -6,6 +6,8 @@
  * @since 2024-12-19
  */
 
+import { getLegacyDashboardPath } from '../utils/dashboardPathUtils';
+
 // 세션 확인 간격 (밀리초)
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5분
 
@@ -88,15 +90,15 @@ export const DASHBOARD_PATHS = {
 };
 
 /**
- * 레거시 role → DASHBOARD_PATHS 키 (roles.js import 금지: ajax/session ESLint 순환 방지).
- * HQ_ADMIN/TENANT_ADMIN 등은 ADMIN 대시보드로 매핑.
+ * 레거시 role → SSOT (roles.js import 금지: ajax/session ESLint 순환 방지).
  */
-const LEGACY_ROLE_TO_DASHBOARD_KEY = Object.freeze({
+const LEGACY_ROLE_TO_SSOT = Object.freeze({
   SUPER_ADMIN: 'ADMIN',
   HQ_ADMIN: 'ADMIN',
   HQ_MASTER: 'ADMIN',
   SUPER_HQ_ADMIN: 'ADMIN',
   BRANCH_ADMIN: 'ADMIN',
+  BRANCH_SUPER_ADMIN: 'ADMIN',
   TENANT_ADMIN: 'ADMIN',
   PRINCIPAL: 'ADMIN',
   OWNER: 'ADMIN',
@@ -106,21 +108,26 @@ const LEGACY_ROLE_TO_DASHBOARD_KEY = Object.freeze({
   ROLE_CLIENT: 'CLIENT'
 });
 
-const resolveDashboardRoleKey = (role) => {
-  if (role == null || role === '') {
-    return 'CLIENT';
+const SSOT_ROLES = ['ADMIN', 'STAFF', 'CONSULTANT', 'CLIENT'];
+
+const mapLegacyRoleInline = (role) => {
+  if (role == null) {
+    return null;
   }
   const normalized = String(role).trim().toUpperCase();
-  if (DASHBOARD_PATHS[normalized]) {
+  if (normalized.length === 0) {
+    return null;
+  }
+  if (SSOT_ROLES.includes(normalized)) {
     return normalized;
   }
-  return LEGACY_ROLE_TO_DASHBOARD_KEY[normalized] || 'ADMIN';
+  return LEGACY_ROLE_TO_SSOT[normalized] || null;
 };
 
 /** 역할에 맞는 대시보드 경로 반환 (세션/권한 체크 후 리다이렉트용) */
 export function getDashboardPathByRole(role) {
-  const dashboardKey = resolveDashboardRoleKey(role);
-  return DASHBOARD_PATHS[dashboardKey] || DASHBOARD_PATHS.CLIENT;
+  const ssotRole = mapLegacyRoleInline(role);
+  return getLegacyDashboardPath(ssotRole || role);
 }
 
 // 기본 대시보드 경로

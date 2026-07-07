@@ -446,11 +446,10 @@ const SessionManagement = () => {
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel={t('admin:session.ariaContent')}>
                         <ContentHeader
-                            title={t('admin:session.pageTitle')}
+                            title={null}
                             subtitle={t('admin:session.subtitle')}
-                            titleId="session-management-title"
                         />
-                        <main aria-labelledby="session-management-title" className="mg-dashboard-layout">
+                        <main aria-label={t('admin:session.pageTitle')} className="mg-dashboard-layout">
                 {showSessionBodyLoader ? (
                     <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
                         <UnifiedLoading type="inline" text={t('common:state.dataLoading')} />

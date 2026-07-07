@@ -3,8 +3,8 @@
 **작성일**: 2026-07-07  
 **담당**: core-planner (오케스트레이션 SSOT)  
 **목표 마일스톤**: **2026-07-13 (KST)** — design/UI/UX **dev 완료** + **사용자 sign-off** (prod 반영은 별도 Phase)  
-**baseline develop**: `aaa9ff883` (PR #527+#528 merge · HF-02 dev deploy) · **prod sign-off 없음 · prod 금지**  
-**참조 SSOT**: [`ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md`](../2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) · [`ADMIN_IMPLEMENTATION_GOVERNANCE.md`](../2026-06-30/ADMIN_IMPLEMENTATION_GOVERNANCE.md) · [`SCREEN_SPEC_ADMIN_DASHBOARD_G1-02_FULL.md`](../../design-system/SCREEN_SPEC_ADMIN_DASHBOARD_G1-02_FULL.md) · [`CLIENT_DASHBOARD_REBUILD_HANDOFF_v1.3.md`](../../design-system/CLIENT_DASHBOARD_REBUILD_HANDOFF_v1.3.md) · [`SCREEN_SPEC_CONSULTANT_DASHBOARD_V2_ENHANCED.md`](../../design-system/SCREEN_SPEC_CONSULTANT_DASHBOARD_V2_ENHANCED.md)
+**baseline develop**: `5f1e478f5` (PR #540 ADM-01 dark-c3b · prior #541 DASH-02 · #539 P0-6 Consultant) · **prod sign-off 없음 · prod 금지**  
+**참조 SSOT**: [`GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md`](../../guides/testing/GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md) · [`ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md`](../2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) · [`ADMIN_IMPLEMENTATION_GOVERNANCE.md`](../2026-06-30/ADMIN_IMPLEMENTATION_GOVERNANCE.md) · [`SCREEN_SPEC_ADMIN_DASHBOARD_G1-02_FULL.md`](../../design-system/SCREEN_SPEC_ADMIN_DASHBOARD_G1-02_FULL.md) · [`CLIENT_DASHBOARD_REBUILD_HANDOFF_v1.3.md`](../../design-system/CLIENT_DASHBOARD_REBUILD_HANDOFF_v1.3.md) · [`SCREEN_SPEC_CONSULTANT_DASHBOARD_V2_ENHANCED.md`](../../design-system/SCREEN_SPEC_CONSULTANT_DASHBOARD_V2_ENHANCED.md)
 
 ---
 
@@ -125,7 +125,7 @@ MindGarden 개선 WBS v2026-07-07
 |----|--------------|------|------|------|------------------|----------|
 | `GOV-01` | Progress checklist·WBS 동기화 | core-planner | 07-07 | — | 본 문서 + checklist 교차 링크 · good SHA 갱신 | dev |
 | `GATE-01` | parallel-4 dev smoke 사용자 검수 | **사용자** | 07-07~08 | dev deploy `28855153365` ☑ | dark P1-j~l · G5-02/G1-02 · header P2 6라우트 스크린 · **smoke base `https://{tenant}.dev.core-solution.co.kr` 필수** (`E2E_TENANT_ID` 또는 `mindgarden`) · bare `dev.core-solution.co.kr` 단독 접속 → wrong-path expected (**smoke FAIL 아님**) · blocking 0 또는 이슈 티켓화 | **dev only** |
-| `GATE-02` | 7/13 dev 통합 검수 체크리스트 작성 | core-planner + core-tester | 07-10 | DASH-08 | `SEQ_28` 형식 evidence 템플릿 · PR-DASH-05 항목 포함 | dev |
+| `GATE-02` | 7/13 dev 통합 검수 체크리스트 ☑ | core-planner + core-tester | 07-07 | DASH-08 | [`GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md`](../../guides/testing/GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md) — `SEQ_28` 형식 · CP 5건 evidence · PR-DASH-05 · **prod 금지** | dev |
 | `GATE-03` | **7/13 사용자 sign-off** | **사용자** | **07-13** | GATE-02 · DASH-09 | Admin G1-02 · parallel-4 잔여 · dark-c3b · header hotfix dev 확인 · **prod 승인 아님** | dev |
 | `GATE-04` | prod 배포 금지 게이트 유지 | core-planner | 상시 | governance | parallel-4 without sign-off → prod workflow 미실행 | prod 금지 |
 

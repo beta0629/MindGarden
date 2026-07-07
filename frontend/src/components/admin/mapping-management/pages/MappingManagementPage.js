@@ -534,17 +534,7 @@ const MappingManagementPage = () => {
     })
     .sort((a, b) => (b.id || 0) - (a.id || 0));
 
-  if (loading) {
-    return (
-      <div aria-busy="true" aria-live="polite">
-        <UnifiedLoading
-          type="inline"
-          text={t('admin:mapping.page.loadingText')}
-          variant="pulse"
-        />
-      </div>
-    );
-  }
+  const isInitialLoading = loading && mappings.length === 0;
 
   return (
     <>
@@ -567,6 +557,17 @@ const MappingManagementPage = () => {
           }
         />
 
+        {isInitialLoading ? (
+          <div aria-busy="true" aria-live="polite">
+            <UnifiedLoading
+              type="inline"
+              text={t('admin:mapping.page.loadingText')}
+              variant="spinner"
+              tone="primary"
+              size="md"
+            />
+          </div>
+        ) : (
         <section aria-labelledby="mapping-management-title">
           <MappingSearchSection
             searchValue={searchTerm}
@@ -628,6 +629,7 @@ const MappingManagementPage = () => {
             </SidePeekShell>
           </div>
         </section>
+        )}
       </ContentArea>
 
       <MappingCreationModal

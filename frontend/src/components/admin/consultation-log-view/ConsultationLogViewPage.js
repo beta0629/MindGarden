@@ -296,7 +296,11 @@ const ConsultationLogViewPage = () => {
   if (loading && records.length === 0) {
     return (
       <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL}>
-        <ContentHeader title={PAGE_TITLE} subtitle={PAGE_SUBTITLE} />
+        <ContentHeader
+          title={PAGE_TITLE}
+          subtitle={PAGE_SUBTITLE}
+          titleId="consultation-log-view-page-title"
+        />
         <div aria-busy="true" aria-live="polite">
           <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
         </div>
@@ -307,7 +311,11 @@ const ConsultationLogViewPage = () => {
   return (
     <>
       <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL}>
-        <ContentHeader title={PAGE_TITLE} subtitle={PAGE_SUBTITLE} />
+        <ContentHeader
+          title={PAGE_TITLE}
+          subtitle={PAGE_SUBTITLE}
+          titleId="consultation-log-view-page-title"
+        />
 
         <ConsultationLogFilterSection
           isAdmin={isAdmin}

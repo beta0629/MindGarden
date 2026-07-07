@@ -63,6 +63,12 @@ const C3_P1_COMPONENT_FILES = [
   'src/components/admin/CommonCodeManagementB0KlA.css'
 ];
 
+const C3_P1DIF_PR_A_FILES = [
+  'src/components/admin/PermissionManagementB0KlA.css',
+  'src/components/schedule/ScheduleB0KlA.css',
+  'src/components/admin/AdminNotificationsPage.css'
+];
+
 const HEX_IN_DECLARATION = /:\s*[^;{]*#[0-9a-fA-F]{3,8}/;
 
 describe('Admin Dark Mode C-3 cascade', () => {
@@ -110,6 +116,41 @@ describe('Admin Dark Mode C-3 cascade', () => {
     });
   });
 
+  test('P1-d~f 컴포넌트 CSS [data-theme="dark"] 블록에 hex 하드코딩 0건', () => {
+    C3_P1DIF_PR_A_FILES.forEach((file) => {
+      const css = readCss(file);
+      const darkCss = extractDarkBlocks(css);
+      expect(darkCss.trim().length).toBeGreaterThan(0);
+      expect(darkCss).not.toMatch(HEX_IN_DECLARATION);
+    });
+  });
+
+  test('P1-d~f CSS 파일에 [data-theme="dark"] cascade 존재', () => {
+    C3_P1DIF_PR_A_FILES.forEach((file) => {
+      const css = readCss(file);
+      expect(css).toMatch(/\[data-theme=["']dark["']\]/);
+    });
+  });
+
+  test('SCREEN_SPEC P1-d~f 라우트가 로드맵과 일치', () => {
+    const spec = fs.readFileSync(
+      path.join(
+        REPO_ROOT,
+        'docs/project-management/2026-06-30/ADMIN_DARK_MODE_C3_ROADMAP.md'
+      ),
+      'utf8'
+    );
+
+    [
+      '/admin/permissions',
+      '/admin/schedule',
+      '/admin/schedules',
+      '/admin/notifications'
+    ].forEach((route) => {
+      expect(spec).toContain(route);
+    });
+  });
+
   test('SavedViewChip 클래스가 dark 토큰(var)을 사용', () => {
     const css = readCss(
       'src/components/admin/ClientComprehensiveManagement/atoms/SavedViewChip.css'
@@ -141,11 +182,11 @@ describe('Admin Dark Mode C-3 cascade', () => {
     });
   });
 
-  test('SCREEN_SPEC P1 3라우트가 스펙과 일치', () => {
+  test('SCREEN_SPEC P1 3라우트가 로드맵과 일치', () => {
     const spec = fs.readFileSync(
       path.join(
         REPO_ROOT,
-        'docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C3_P1_SESSIONS_WELLNESS_CODES.md'
+        'docs/project-management/2026-06-30/ADMIN_DARK_MODE_C3_ROADMAP.md'
       ),
       'utf8'
     );

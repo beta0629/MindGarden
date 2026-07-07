@@ -2550,3 +2550,64 @@ textarea.mg-v2-textarea {
   width: 100%;
 }
 
+/* Admin Dark Mode C-3 P1-e — Schedule / Admin Schedules cascade */
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-header,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-legend {
+  background: var(--mg-dark-toolbar-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-header__title,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-title {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-header__select,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-consultant-filter,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-select {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-header__select:focus,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-select:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-legend__toggle {
+  color: var(--mg-dark-chip-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-legend__toggle:hover {
+  background: var(--mg-dark-chip-bg);
+  color: var(--mg-dark-chip-active-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-schedule-calendar-view,
+[data-theme="dark"] .mg-v2-ad-b0kla .mg-v2-ad-b0kla-fc-wrapper,
+[data-theme="dark"] .mg-v2-ad-b0kla .fc-scrollgrid,
+[data-theme="dark"] .mg-v2-ad-b0kla .fc-daygrid-day {
+  background: var(--mg-color-surface-main);
+  border-color: var(--mg-color-border-subtle);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .fc-col-header-cell,
+[data-theme="dark"] .mg-v2-ad-b0kla .fc-daygrid-day-top {
+  background: var(--ad-b0kla-table-header-bg);
+  color: var(--ad-b0kla-table-header-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .fc-daygrid-day:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla .fc-toolbar-title {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-admin-schedules-page .mg-v2-ad-b0kla__container {
+  background: var(--mg-dark-content-bg);
+}
+

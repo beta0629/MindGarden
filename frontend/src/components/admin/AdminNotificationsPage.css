@@ -231,3 +231,64 @@
     width: 100%;
   }
 }
+
+/* Admin Dark Mode C-3 P1-f — Notifications cascade */
+[data-theme="dark"] .mg-v2-ad-b0kla__tab {
+  color: var(--mg-dark-chip-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__tab:hover {
+  color: var(--mg-dark-chip-active-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__tab--active {
+  color: var(--mg-v2-form-text);
+  border-bottom-color: var(--mg-color-primary-main);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__tabs {
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__section {
+  background: var(--mg-color-surface-main);
+  border-color: var(--mg-color-border-subtle);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__section-title {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__section-filters .mg-v2-select,
+[data-theme="dark"] .mg-v2-ad-b0kla__filter-select,
+[data-theme="dark"] .mg-v2-ad-b0kla__filter-input {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__section-filters .mg-v2-select:focus,
+[data-theme="dark"] .mg-v2-ad-b0kla__filter-select:focus,
+[data-theme="dark"] .mg-v2-ad-b0kla__filter-input:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+[data-theme="dark"] .mg-v2-ad-notifications__card {
+  background: var(--ad-b0kla-table-row-bg);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-notifications__card:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .mg-v2-ad-notifications__card-title {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-notifications__card-meta,
+[data-theme="dark"] .mg-v2-ad-b0kla__table-empty,
+[data-theme="dark"] .mg-v2-notification-empty {
+  color: var(--mg-v2-form-label);
+}

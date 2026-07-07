@@ -151,3 +151,13 @@
     --mg-container-max: var(--mg-container-max-4k);
   }
 }
+
+/* Phase 1 Set C — 어드민 GNB/메인 레이아웃 다크 cascade (unified-design-tokens SSOT 참조) */
+:root[data-theme="dark"] {
+  --mg-layout-header-bg: var(--mg-color-background-main);
+  --mg-layout-header-border: var(--mg-color-border-main);
+  --mg-layout-main-bg-start: var(--mg-color-background-main);
+  --mg-layout-main-bg-end: var(--mg-color-background-muted);
+  --mg-layout-section-bg: var(--mg-color-surface-main);
+  --mg-layout-section-border: var(--mg-color-border-main);
+}

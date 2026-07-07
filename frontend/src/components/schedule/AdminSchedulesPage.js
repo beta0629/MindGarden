@@ -14,7 +14,7 @@ const ADMIN_SCHEDULES_TITLE_ID = 'admin-schedules-title';
  * @since 2026-03-21
  */
 const AdminSchedulesPage = ({ userRole, userId }) => (
-  <AdminCommonLayout title="스케줄">
+  <AdminCommonLayout>
     <div className="mg-v2-ad-b0kla mg-v2-admin-schedules-page">
       <div className="mg-v2-ad-b0kla__container">
         <ContentArea ariaLabel="관리자 스케줄 본문">

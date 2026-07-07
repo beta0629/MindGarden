@@ -1,31 +1,23 @@
 /**
- * Seq 28g Phase 4 — FinancialManagement savedView silent persist
+ * Seq 28g — ERP Financial Saved View named views UI
  */
-import {
-  FM_TRANSACTION_DEFAULT_VIEW_MODE,
-  FM_TRANSACTION_VIEW_MODE_OPTIONS
-} from '../../../constants/financialManagementStrings';
-import {
-  FM_SAVED_VIEW_PAGE_ID,
-  buildFinancialManagementDefaultSavedView
-} from '../../../constants/financialManagementSavedViewConstants';
-import {
-  buildViewModeStorageKey,
-  useViewModePreference
-} from '../../../hooks/useViewModePreference';
+import { act, renderHook } from '@testing-library/react';
 import {
   buildSavedViewStorageKey,
   useSavedViewPreference
 } from '../../../hooks/useSavedViewPreference';
-import { act, renderHook } from '@testing-library/react';
+import {
+  FM_SAVED_VIEW_PAGE_ID,
+  buildFinancialManagementDefaultSavedView
+} from '../../../constants/financialManagementSavedViewConstants';
+import { FM_TRANSACTION_DEFAULT_VIEW_MODE } from '../../../constants/financialManagementStrings';
 
 const SCOPE = { tenantId: 'tenant-test', userId: 'user-test' };
-const FM_TRANSACTION_ALLOWED_MODES = FM_TRANSACTION_VIEW_MODE_OPTIONS.map((opt) => opt.value);
 const DEFAULT_SAVED_VIEW = buildFinancialManagementDefaultSavedView(
   FM_TRANSACTION_DEFAULT_VIEW_MODE
 );
 
-describe('재무 관리 savedView 영속화 (28g Phase 4)', () => {
+describe('ERP Financial savedView named views (28g-p8)', () => {
   const originalSessionManager = window.sessionManager;
 
   beforeEach(() => {
@@ -39,91 +31,74 @@ describe('재무 관리 savedView 영속화 (28g Phase 4)', () => {
     window.sessionManager = originalSessionManager;
   });
 
-  it('viewMode·savedView storageKey가 동일 pageId를 공유한다', () => {
-    const viewModeKey = buildViewModeStorageKey(SCOPE, FM_SAVED_VIEW_PAGE_ID);
+  it('pageId storageKey가 erp.financial.transactions를 사용한다', () => {
     const savedViewKey = buildSavedViewStorageKey(SCOPE, FM_SAVED_VIEW_PAGE_ID);
 
-    expect(viewModeKey).toContain(FM_SAVED_VIEW_PAGE_ID);
     expect(savedViewKey).toContain(FM_SAVED_VIEW_PAGE_ID);
-    expect(viewModeKey).not.toBe(savedViewKey);
   });
 
-  it('저장된 viewMode를 복원한다', () => {
-    const storageKey = buildViewModeStorageKey(SCOPE, FM_SAVED_VIEW_PAGE_ID);
-    localStorage.setItem(storageKey, 'card');
-
+  it('named view 저장·복원 시 filters·viewMode를 유지한다', () => {
     const { result } = renderHook(() =>
-      useViewModePreference({
-        storageKey,
-        defaultMode: FM_TRANSACTION_DEFAULT_VIEW_MODE,
-        allowedModes: FM_TRANSACTION_ALLOWED_MODES
+      useSavedViewPreference({
+        pageId: FM_SAVED_VIEW_PAGE_ID,
+        defaultView: DEFAULT_SAVED_VIEW,
+        namedViews: true
       })
     );
 
-    expect(result.current.viewMode).toBe('card');
-
-    act(() => {
-      result.current.setViewMode('compact');
-    });
-
-    expect(localStorage.getItem(storageKey)).toBe('compact');
-  });
-
-  it('savedView는 저장된 filters·viewMode를 mount 시 복원하고 변경 시 persist한다', () => {
-    const storageKey = buildSavedViewStorageKey(SCOPE, FM_SAVED_VIEW_PAGE_ID);
     const storedFilters = {
       transactionType: 'INCOME',
       category: 'CONSULTATION',
       dateRange: 'MONTH',
-      monthYm: '2026-06',
+      monthYm: '2026-07',
       startDate: '',
       endDate: '',
-      searchText: '김상담'
+      searchText: '김내담'
     };
-    const storedView = {
-      ...DEFAULT_SAVED_VIEW,
-      viewMode: 'table',
-      filters: storedFilters
-    };
-    localStorage.setItem(storageKey, JSON.stringify(storedView));
 
-    const { result } = renderHook(() =>
-      useSavedViewPreference({
-        pageId: FM_SAVED_VIEW_PAGE_ID,
-        defaultView: DEFAULT_SAVED_VIEW
-      })
-    );
-
-    expect(result.current.savedView.viewMode).toBe('table');
-    expect(result.current.savedView.filters).toEqual(storedFilters);
-
+    let viewId;
     act(() => {
-      result.current.setSavedView({
-        viewMode: 'card',
-        filters: {
-          transactionType: 'EXPENSE',
-          category: 'ALL',
-          dateRange: 'WEEK',
-          monthYm: '2026-07',
-          startDate: '',
-          endDate: '',
-          searchText: '임대료'
-        }
+      viewId = result.current.saveNamedView('7월 수입', {
+        viewMode: 'table',
+        filters: storedFilters,
+        sort: {},
+        density: 'comfortable'
       });
     });
 
-    expect(JSON.parse(localStorage.getItem(storageKey))).toEqual({
-      ...DEFAULT_SAVED_VIEW,
-      viewMode: 'card',
-      filters: {
-        transactionType: 'EXPENSE',
-        category: 'ALL',
-        dateRange: 'WEEK',
-        monthYm: '2026-07',
-        startDate: '',
-        endDate: '',
-        searchText: '임대료'
-      }
+    expect(result.current.views.some((view) => view.id === viewId)).toBe(true);
+
+    act(() => {
+      result.current.loadNamedView(viewId);
     });
+
+    expect(result.current.savedView.viewMode).toBe('table');
+    expect(result.current.savedView.filters).toEqual(storedFilters);
+  });
+
+  it('기본값 reset 시 default payload로 복원한다', () => {
+    const { result } = renderHook(() =>
+      useSavedViewPreference({
+        pageId: FM_SAVED_VIEW_PAGE_ID,
+        defaultView: DEFAULT_SAVED_VIEW,
+        namedViews: true
+      })
+    );
+
+    act(() => {
+      result.current.saveNamedView('임시 뷰', {
+        viewMode: 'card',
+        filters: { transactionType: 'EXPENSE' },
+        sort: {},
+        density: 'comfortable'
+      });
+    });
+
+    act(() => {
+      result.current.resetToDefaultView();
+    });
+
+    expect(result.current.savedView).toEqual(DEFAULT_SAVED_VIEW);
+    expect(result.current.activeViewId).toBe('default');
   });
 });

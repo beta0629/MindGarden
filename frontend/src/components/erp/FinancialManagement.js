@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
@@ -70,6 +70,7 @@ import {
   useViewModePreference
 } from '../../hooks/useViewModePreference';
 import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import SavedViewControls from '../admin/ClientComprehensiveManagement/molecules/SavedViewControls';
 import {
   FM_SAVED_VIEW_PAGE_ID,
   FM_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
@@ -526,9 +527,19 @@ const FinancialManagement = () => {
     defaultMode: FM_TRANSACTION_DEFAULT_VIEW_MODE,
     allowedModes: FM_TRANSACTION_VIEW_MODE_OPTIONS.map((opt) => opt.value)
   });
-  const { savedView, setSavedView } = useSavedViewPreference({
+  const {
+    savedView,
+    setSavedView,
+    views,
+    activeViewId,
+    saveNamedView,
+    loadNamedView,
+    resetToDefaultView,
+    deleteNamedView
+  } = useSavedViewPreference({
     pageId: FM_SAVED_VIEW_PAGE_ID,
-    defaultView: FM_DEFAULT_SAVED_VIEW
+    defaultView: FM_DEFAULT_SAVED_VIEW,
+    namedViews: true
   });
   const savedViewFiltersRestoredRef = useRef(false);
   const savedViewPersistReadyRef = useRef(false);
@@ -547,6 +558,9 @@ const FinancialManagement = () => {
       sort: savedView.sort ?? FM_DEFAULT_SAVED_VIEW.sort,
       density: savedView.density ?? FM_DEFAULT_SAVED_VIEW.density
     };
+    if (savedView?.viewMode) {
+      setTransactionViewMode(savedView.viewMode);
+    }
     const storedFilters = savedView?.filters;
     if (storedFilters && Object.keys(storedFilters).length > 0) {
       setFilters((prev) => ({
@@ -555,7 +569,60 @@ const FinancialManagement = () => {
       }));
     }
     savedViewPersistReadyRef.current = true;
-  }, [savedView]);
+  }, [savedView, setTransactionViewMode]);
+
+  const buildCurrentSavedViewPayload = useCallback(() => ({
+    viewMode: transactionViewMode,
+    filters: {
+      transactionType: filters.transactionType,
+      category: filters.category,
+      dateRange: filters.dateRange,
+      monthYm: filters.monthYm,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      searchText: filters.searchText
+    },
+    sort: savedViewMetaRef.current.sort,
+    density: savedViewMetaRef.current.density
+  }), [transactionViewMode, filters]);
+
+  const applySavedViewPayload = useCallback((payload) => {
+    if (payload?.viewMode) {
+      setTransactionViewMode(payload.viewMode);
+    }
+    const storedFilters = payload?.filters ?? {};
+    if (storedFilters && Object.keys(storedFilters).length > 0) {
+      setFilters((prev) => ({
+        ...prev,
+        ...storedFilters
+      }));
+    }
+    savedViewMetaRef.current = {
+      sort: payload?.sort ?? FM_DEFAULT_SAVED_VIEW.sort,
+      density: payload?.density ?? FM_DEFAULT_SAVED_VIEW.density
+    };
+  }, [setTransactionViewMode]);
+
+  const handleSelectSavedView = useCallback((viewId) => {
+    const payload = loadNamedView(viewId);
+    applySavedViewPayload(payload);
+  }, [loadNamedView, applySavedViewPayload]);
+
+  const handleResetSavedView = useCallback(() => {
+    const payload = resetToDefaultView();
+    applySavedViewPayload(payload);
+  }, [resetToDefaultView, applySavedViewPayload]);
+
+  const handleSaveNamedView = useCallback((label) => {
+    saveNamedView(label, buildCurrentSavedViewPayload());
+  }, [saveNamedView, buildCurrentSavedViewPayload]);
+
+  const handleDeleteSavedView = useCallback((viewId) => {
+    const fallbackPayload = deleteNamedView(viewId);
+    if (fallbackPayload) {
+      applySavedViewPayload(fallbackPayload);
+    }
+  }, [deleteNamedView, applySavedViewPayload]);
 
   useEffect(() => {
     if (!savedViewPersistReadyRef.current) {
@@ -1344,6 +1411,14 @@ const FinancialManagement = () => {
               filterSlot={
                 activeTab === 'transactions' && !error ? (
                   <div className="mg-w-full mg-mb-md">
+                    <SavedViewControls
+                      views={views}
+                      activeViewId={activeViewId}
+                      onSelectView={handleSelectSavedView}
+                      onSaveView={handleSaveNamedView}
+                      onResetToDefault={handleResetSavedView}
+                      onDeleteView={handleDeleteSavedView}
+                    />
                   <ErpFilterToolbar
                     ariaLabel={t('erp:finance.management.filter.ariaToolbar')}
                     primaryRow={(

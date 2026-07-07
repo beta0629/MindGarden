@@ -27,6 +27,34 @@ function extractListArrayFromObject(obj) {
 }
 
 /**
+ * AdminDashboard loadUnassignedClientsAndConsultants / loadPendingDepositStats 배열 정규화 패턴.
+ * apiGet unwrap 후 `{ mappings: [] }` 등 객체가 그대로 state에 들어가 `.filter` TypeError 나는 경우 방지.
+ *
+ * @param {*} payload — apiGet·StandardizedApi 결과 또는 원시 배열
+ * @param {string} listKey — 'clients' | 'consultants' | 'mappings' | 'requests' 등 목록 필드명
+ * @returns {unknown[]}
+ */
+export function asArray(payload, listKey) {
+  if (payload == null) {
+    return [];
+  }
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (typeof payload !== 'object') {
+    return [];
+  }
+  const fromKey = payload[listKey] ?? payload.data?.[listKey];
+  if (Array.isArray(fromKey)) {
+    return fromKey;
+  }
+  if (Array.isArray(payload.data)) {
+    return payload.data;
+  }
+  return [];
+}
+
+/**
  * @param {*} payload — apiGet 결과 또는 원시 배열
  * @returns {unknown[]}
  */

@@ -9,7 +9,7 @@ import {
   isSessionPublicPath
 } from '../constants/session';
 import { AUTH_MESSAGES } from '../constants/messages';
-import { USER_ROLES } from '../constants/roles';
+import RoleUtils from '../utils/RoleUtils';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_PERMISSIONS_CHECK_PERMISSION = '/api/v1/permissions/check-permission';
@@ -552,13 +552,13 @@ export const SessionProvider = ({ children }) => {
     setDuplicateLoginModal,
     // setBranchMappingModal, handleBranchMappingSuccess 제거됨 - 브랜치 코드 제거 정책
     
-    // 유틸리티 (서버에서 받은 role, permissionGroupCodes 기준)
-    hasRole: (role) => state.user?.role === role,
-    hasAnyRole: (roles) => Array.isArray(roles) && roles.includes(state.user?.role),
-    isAdmin: () => state.user?.role === USER_ROLES.ADMIN,
-    isConsultant: () => state.user?.role === USER_ROLES.CONSULTANT,
-    isClient: () => state.user?.role === USER_ROLES.CLIENT,
-    isStaff: () => state.user?.role === USER_ROLES.STAFF,
+    // 유틸리티 (4종 SSOT + 레거시 mapLegacyRole, permissionGroupCodes 기준)
+    hasRole: (role) => RoleUtils.hasRole(state.user, role),
+    hasAnyRole: (roles) => RoleUtils.hasAnyRole(state.user, roles),
+    isAdmin: () => RoleUtils.isAdmin(state.user),
+    isConsultant: () => RoleUtils.isConsultant(state.user),
+    isClient: () => RoleUtils.isClient(state.user),
+    isStaff: () => RoleUtils.isStaff(state.user),
     /** 서버에서 받은 권한 그룹 코드 목록으로 그룹 코드 보유 여부 확인 (동적 권한) */
     hasPermissionGroup: (groupCode) => Array.isArray(state.user?.permissionGroupCodes) &&
       state.user.permissionGroupCodes.includes(groupCode),

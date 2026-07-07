@@ -1,6 +1,6 @@
 /**
  * 보호된 라우트 컴포넌트
- * 권한 확인: 서버에서 받은 role, permissionGroupCodes 기준 (하드코딩 역할명 사용 금지)
+ * 권한 확인: 4종 SSOT RoleUtils + permissionGroupCodes 기준 (레거시 role 자동 매핑)
  *
  * @author Core Solution
  * @version 2.0.0
@@ -10,11 +10,16 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
-import { getDashboardPathByRole } from '../../constants/session';
+import { mapLegacyRole } from '../../constants/roles';
+import { getLegacyDashboardPath } from '../../utils/dashboardUtils';
+import RoleUtils from '../../utils/RoleUtils';
 import UnifiedLoading from './UnifiedLoading';
 
+const getRoleDashboardRedirectPath = (user) =>
+  getLegacyDashboardPath(mapLegacyRole(user?.role) || user?.role);
+
 const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermissionGroups }) => {
-  const { user, isLoading, hasCheckedSession, hasRole, hasPermissionGroup, isAdmin } = useSession();
+  const { user, isLoading, hasCheckedSession, hasPermissionGroup } = useSession();
 
   if (isLoading) {
     return <UnifiedLoading />;
@@ -28,7 +33,7 @@ const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermiss
     return <Navigate to="/login" replace />;
   }
 
-  const roleDashboardPath = getDashboardPathByRole(user?.role);
+  const roleDashboardPath = getRoleDashboardRedirectPath(user);
 
   if (requiredPermissionGroups && Array.isArray(requiredPermissionGroups)) {
     const hasAnyGroup = requiredPermissionGroups.some((code) => hasPermissionGroup(code));
@@ -38,14 +43,11 @@ const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermiss
   }
 
   if (requiredRole || requiredRoles) {
-    let allowed = false;
-    if (requiredRole) {
-      allowed = hasRole(requiredRole) || isAdmin();
-    }
-    if (requiredRoles && Array.isArray(requiredRoles)) {
-      allowed = allowed || requiredRoles.some((role) => hasRole(role)) || isAdmin();
-    }
-    if (!allowed) {
+    const rolesToCheck = [
+      ...(requiredRole ? [requiredRole] : []),
+      ...(Array.isArray(requiredRoles) ? requiredRoles : [])
+    ];
+    if (!RoleUtils.hasAnyRole(user, rolesToCheck)) {
       return <Navigate to={roleDashboardPath} replace />;
     }
   }
@@ -54,4 +56,3 @@ const ProtectedRoute = ({ children, requiredRole, requiredRoles, requiredPermiss
 };
 
 export default ProtectedRoute;
-

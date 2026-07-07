@@ -6,6 +6,9 @@
  * @since 2024-12-19
  */
 
+import { mapLegacyRole } from './roles';
+import { getLegacyDashboardPath } from '../utils/dashboardUtils';
+
 // 세션 확인 간격 (밀리초)
 export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5분
 
@@ -89,9 +92,8 @@ export const DASHBOARD_PATHS = {
 
 /** 역할에 맞는 대시보드 경로 반환 (세션/권한 체크 후 리다이렉트용) */
 export function getDashboardPathByRole(role) {
-  if (!role) return DASHBOARD_PATHS.CLIENT;
-  const path = DASHBOARD_PATHS[role];
-  return path || DASHBOARD_PATHS.ADMIN;
+  const ssotRole = mapLegacyRole(role);
+  return getLegacyDashboardPath(ssotRole || role);
 }
 
 // 기본 대시보드 경로

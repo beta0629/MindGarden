@@ -75,4 +75,41 @@ describe('App', () => {
 
     errSpy.mockRestore();
   });
+
+  describe('admin orphan redirects (CLN-01)', () => {
+    const redirectCases = [
+      ['/admin/sessions', '/admin/mapping-management'],
+      ['/admin/schedules', '/admin/integrated-schedule'],
+      ['/admin/schedule', '/admin/integrated-schedule'],
+      ['/admin/dashboards', '/admin/dashboard'],
+      ['/admin/statistics', '/admin/dashboard']
+    ];
+
+    test.each(redirectCases)('%s → %s', async(from, to) => {
+      const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      window.history.pushState({}, '', from);
+
+      render(<App />);
+
+      await waitFor(() => {
+        expect(window.location.pathname).toBe(to);
+      });
+
+      errSpy.mockRestore();
+    });
+
+    test('/admin/schedules?consultantId=1 preserves query string', async() => {
+      const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      window.history.pushState({}, '', '/admin/schedules?consultantId=1&clientId=2');
+
+      render(<App />);
+
+      await waitFor(() => {
+        expect(window.location.pathname).toBe('/admin/integrated-schedule');
+        expect(window.location.search).toBe('?consultantId=1&clientId=2');
+      });
+
+      errSpy.mockRestore();
+    });
+  });
 });

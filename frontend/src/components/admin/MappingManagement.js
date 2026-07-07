@@ -1,13 +1,13 @@
 /**
- * 매칭 관리 페이지 - 아토믹 구조 래퍼
- * AdminDashboardV2와 동일한 레이아웃(GNB+LNB) 사용
+ * 매칭 관리 페이지 — AdminCommonLayout 래퍼 (G-14)
+ * IntegratedMatchingScheduleManagement와 동일 패턴.
  *
  * @author Core Solution
  * @since 2024-12-19
- * @updated 2025-02-22 - AdminDashboardV2 레이아웃 적용
+ * @updated 2026-07-07 — G-14 Pilot: App.js 인라인 ACL 제거·래퍼 SSOT
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { MappingManagementPage } from './mapping-management';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -19,14 +19,9 @@ import { useTranslation } from 'react-i18next';
 
 const MappingManagement = () => {
   const { t } = useTranslation();
-  const [searchValue, setSearchValue] = useState('');
 
   return (
-    <AdminCommonLayout
-      title={t('admin.labels.matchingManagement')}
-      searchValue={searchValue}
-      onSearchChange={setSearchValue}
-    >
+    <AdminCommonLayout title={t('admin.labels.matchingManagement')}>
       <MappingManagementPage />
     </AdminCommonLayout>
   );

@@ -1274,6 +1274,18 @@
   --mg-color-background-main: #1a1a1a;
 }
 
+/* Admin Dark Mode C-2 Phase 1 — B0KlA container surface/border (scoped)
+ * 전역 admin rollout 금지: .mg-v2-ad-b0kla 하위만 토큰·배경 정합
+ * SSOT: docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C2_CONTENT_HEADER.md
+ */
+[data-theme="dark"] .mg-v2-ad-b0kla {
+  --ad-b0kla-bg: var(--mg-color-background-main);
+  --ad-b0kla-border: var(--mg-color-border-main);
+  --ad-b0kla-title-color: var(--mg-v2-color-text-primary);
+  --ad-b0kla-subtitle-color: var(--mg-v2-color-text-secondary);
+  background: var(--mg-color-background-main);
+}
+
 /* ========================================
    2026 Q2 R-4 핫픽스 — 누락된 브랜드 primary·white 토큰 정의
    SSOT: docs/standards/DESIGN_TOKEN_GAP_2026Q2.md (D1) §A,

@@ -81,3 +81,31 @@
   justify-content: flex-end;
   width: 100%;
 }
+
+/* Admin Dark Mode C-3 P1-i — ERP Dashboard cascade */
+[data-theme="dark"] .erp-dashboard__content .mg-v2-erp-dashboard-block {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .erp-dashboard__content .mg-v2-erp-dashboard-kpi-label {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .erp-dashboard__content .mg-v2-erp-dashboard-kpi-value {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .erp-dashboard__content .mg-v2-ad-b0kla__admin-card {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .erp-dashboard__content .mg-v2-ad-b0kla__admin-card:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .erp-dashboard__content .mg-dashboard-tenant-info {
+  color: var(--mg-v2-form-label);
+}
+

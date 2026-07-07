@@ -6,7 +6,7 @@
  * @since 2025-03-02
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { useSession } from '../../../contexts/SessionContext';
@@ -24,6 +24,15 @@ import ConsultationLogCalendarBlock from './ConsultationLogCalendarBlock';
 import ConsultationLogTableBlock from './ConsultationLogTableBlock';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import { getAllConsultantsWithStats, getAllClientsWithStats } from '../../../utils/consultantHelper';
+import SavedViewControls from '../ClientComprehensiveManagement/molecules/SavedViewControls';
+import { useSavedViewPreference } from '../../../hooks/useSavedViewPreference';
+import {
+  CONSULTATION_LOG_VIEW_DEFAULT_VIEW_MODE,
+  CONSULTATION_LOG_VIEW_SAVED_VIEW_PAGE_ID,
+  CONSULTATION_LOG_VIEW_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+  CONSULTATION_LOG_VIEW_SAVED_VIEW_ROW_ARIA_LABEL,
+  buildConsultationLogViewDefaultSavedView
+} from '../../../constants/consultationLogViewSavedViewConstants';
 import '../ConsultationLogViewPage.css';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -109,6 +118,20 @@ export const parseNumericQueryParam = (searchParams, key) => {
   return n;
 };
 
+/**
+ * Deep link 쿼리가 있으면 saved view 복원을 건너뛴다.
+ *
+ * @param {{ startDate?: string|null, endDate?: string|null, clientId?: number|null, consultantId?: number|null, scheduleId?: number|null }} queryFilter
+ * @returns {boolean}
+ */
+export const hasConsultationLogDeepLinkQuery = (queryFilter) => Boolean(
+  queryFilter?.startDate
+  || queryFilter?.endDate
+  || queryFilter?.clientId
+  || queryFilter?.consultantId
+  || queryFilter?.scheduleId
+);
+
 const ConsultationLogViewPage = () => {
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
@@ -131,6 +154,15 @@ const ConsultationLogViewPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const defaultDateRange = useMemo(() => computeDefaultDateRange(), []);
+  const consultationLogDefaultSavedView = useMemo(
+    () => buildConsultationLogViewDefaultSavedView(
+      CONSULTATION_LOG_VIEW_DEFAULT_VIEW_MODE,
+      defaultDateRange
+    ),
+    [defaultDateRange]
+  );
+
   const [consultants, setConsultants] = useState([]);
   const [clients, setClients] = useState([]);
   const [records, setRecords] = useState([]);
@@ -146,6 +178,32 @@ const ConsultationLogViewPage = () => {
   const [modalRecordId, setModalRecordId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(VIEW_MODE_LIST);
+
+  const {
+    savedView,
+    setSavedView,
+    views,
+    activeViewId,
+    saveNamedView,
+    loadNamedView,
+    resetToDefaultView,
+    deleteNamedView
+  } = useSavedViewPreference({
+    pageId: CONSULTATION_LOG_VIEW_SAVED_VIEW_PAGE_ID,
+    defaultView: consultationLogDefaultSavedView,
+    namedViews: true
+  });
+  const savedViewFiltersRestoredRef = useRef(false);
+  const savedViewPersistReadyRef = useRef(false);
+  const savedViewPersistTimerRef = useRef(null);
+  const savedViewMetaRef = useRef({
+    sort: consultationLogDefaultSavedView.sort,
+    density: consultationLogDefaultSavedView.density
+  });
+  const hasDeepLinkQuery = useMemo(
+    () => hasConsultationLogDeepLinkQuery(initialQueryFilter),
+    [initialQueryFilter]
+  );
 
   const loadConsultants = useCallback(async() => {
     if (!isAdmin) return;
@@ -293,6 +351,114 @@ const ConsultationLogViewPage = () => {
     setModalRecordId(null);
   };
 
+  const applySavedViewPayload = useCallback((payload) => {
+    if (payload?.viewMode) {
+      setViewMode(payload.viewMode);
+    }
+    const storedFilters = payload?.filters ?? {};
+    if (storedFilters.consultantId !== undefined) {
+      setConsultantId(storedFilters.consultantId);
+    }
+    if (storedFilters.clientId !== undefined) {
+      setClientId(storedFilters.clientId);
+    }
+    if (storedFilters.startDate != null) {
+      setStartDate(storedFilters.startDate);
+    }
+    if (storedFilters.endDate != null) {
+      setEndDate(storedFilters.endDate);
+    }
+    savedViewMetaRef.current = {
+      sort: payload?.sort ?? consultationLogDefaultSavedView.sort,
+      density: payload?.density ?? consultationLogDefaultSavedView.density
+    };
+  }, [consultationLogDefaultSavedView]);
+
+  const handleSelectSavedView = useCallback((viewId) => {
+    const payload = loadNamedView(viewId);
+    applySavedViewPayload(payload);
+  }, [loadNamedView, applySavedViewPayload]);
+
+  const handleResetSavedView = useCallback(() => {
+    const payload = resetToDefaultView();
+    applySavedViewPayload(payload);
+  }, [resetToDefaultView, applySavedViewPayload]);
+
+  const handleSaveNamedView = useCallback((label) => {
+    saveNamedView(label, {
+      viewMode,
+      filters: { consultantId, clientId, startDate, endDate },
+      sort: savedViewMetaRef.current.sort,
+      density: savedViewMetaRef.current.density
+    });
+  }, [saveNamedView, viewMode, consultantId, clientId, startDate, endDate]);
+
+  const handleDeleteSavedView = useCallback((viewId) => {
+    const fallbackPayload = deleteNamedView(viewId);
+    if (fallbackPayload) {
+      applySavedViewPayload(fallbackPayload);
+    }
+  }, [deleteNamedView, applySavedViewPayload]);
+
+  useEffect(() => {
+    if (savedViewFiltersRestoredRef.current) {
+      return;
+    }
+    savedViewFiltersRestoredRef.current = true;
+    savedViewMetaRef.current = {
+      sort: savedView.sort ?? consultationLogDefaultSavedView.sort,
+      density: savedView.density ?? consultationLogDefaultSavedView.density
+    };
+    if (!hasDeepLinkQuery) {
+      if (savedView?.viewMode) {
+        setViewMode(savedView.viewMode);
+      }
+      const storedFilters = savedView?.filters;
+      if (storedFilters && Object.keys(storedFilters).length > 0) {
+        if (storedFilters.consultantId !== undefined) {
+          setConsultantId(storedFilters.consultantId);
+        }
+        if (storedFilters.clientId !== undefined) {
+          setClientId(storedFilters.clientId);
+        }
+        if (storedFilters.startDate != null) {
+          setStartDate(storedFilters.startDate);
+        }
+        if (storedFilters.endDate != null) {
+          setEndDate(storedFilters.endDate);
+        }
+      }
+    }
+    savedViewPersistReadyRef.current = true;
+  }, [savedView, hasDeepLinkQuery, consultationLogDefaultSavedView]);
+
+  useEffect(() => {
+    if (!savedViewPersistReadyRef.current) {
+      return undefined;
+    }
+
+    if (savedViewPersistTimerRef.current) {
+      clearTimeout(savedViewPersistTimerRef.current);
+    }
+
+    savedViewPersistTimerRef.current = setTimeout(() => {
+      savedViewPersistTimerRef.current = null;
+      setSavedView({
+        viewMode,
+        filters: { consultantId, clientId, startDate, endDate },
+        sort: savedViewMetaRef.current.sort,
+        density: savedViewMetaRef.current.density
+      });
+    }, CONSULTATION_LOG_VIEW_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (savedViewPersistTimerRef.current) {
+        clearTimeout(savedViewPersistTimerRef.current);
+        savedViewPersistTimerRef.current = null;
+      }
+    };
+  }, [viewMode, consultantId, clientId, startDate, endDate, setSavedView]);
+
   if (loading && records.length === 0) {
     return (
       <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL}>
@@ -316,6 +482,20 @@ const ConsultationLogViewPage = () => {
           subtitle={PAGE_SUBTITLE}
           titleId="consultation-log-view-page-title"
         />
+
+        <section
+          className="mg-v2-consultation-log-saved-view-row"
+          aria-label={CONSULTATION_LOG_VIEW_SAVED_VIEW_ROW_ARIA_LABEL}
+        >
+          <SavedViewControls
+            views={views}
+            activeViewId={activeViewId}
+            onSelectView={handleSelectSavedView}
+            onSaveView={handleSaveNamedView}
+            onResetToDefault={handleResetSavedView}
+            onDeleteView={handleDeleteSavedView}
+          />
+        </section>
 
         <ConsultationLogFilterSection
           isAdmin={isAdmin}

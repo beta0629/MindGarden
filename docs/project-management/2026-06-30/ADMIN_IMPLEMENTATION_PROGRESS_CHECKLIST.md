@@ -3,7 +3,7 @@
 **작성일**: 2026-07-01  
 **담당**: core-planner (갱신 주체)  
 **거버넌스**: [`ADMIN_IMPLEMENTATION_GOVERNANCE.md`](./ADMIN_IMPLEMENTATION_GOVERNANCE.md)  
-**Good SHA**: develop `37f50830b` · prod `37f50830b` · rollback 금지 패턴 `0676dfa2d`
+**Good SHA**: develop `ef19718e2` · prod `ef19718e2` (28g-p5/p5b) · prior prod `37f50830b` (28 smoke A~D) · rollback 금지 패턴 `0676dfa2d`
 
 **상태 범례**: ☐ pending · ◐ in_progress · ☑ done
 
@@ -82,6 +82,8 @@
 | V3+-coder | 28g-p2b | Saved View consultant/staff pilot (silent persist) | coder | designer | 28g-p2 ☑ | ConsultantComprehensiveManagement+StaffManagement filters+viewMode debounced persist | `e7e505cb2` | ☑ done | PR #463 merged · routes `/admin/user-management` consultant/staff tabs |
 | V3+-coder | 28g-p3 | Saved View mapping list pilot (silent persist) | coder | designer | 28g-p2b ☑ | MappingListBlock filters+viewMode debounced persist; no save/load UI | `108615ebc` | ☑ done | PR #465 merged · route `/admin/mapping-management` · dev FE run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE run `28837307167` SUCCESS · main `c8f5a2cc6` |
 | V3+-coder | 28g-p4 | Saved View FinancialManagement pilot (silent persist) | coder | designer | 28g-p3 ☑ | FinancialManagement filters+viewMode debounced persist; pageId `erp.financial.transactions` | `047194130` | ☑ done | PR #466 merged · route `/erp/financial` · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` |
+| V3+-coder | 28g-p5 | Saved View client named views UI (save/load) | coder | designer | 28g-p4 ☑ | SavedViewControls+SaveViewModal; namedViews localStorage v1; Client tab only | `5e7026ea1` | ☑ done | PR #467 merged · route `/admin/user-management?type=client` · develop/main `ef19718e2` · prod FE run `TBD` (queued `28840058342`) |
+| V3+-coder | 28g-p5b | Saved View client delete chip | coder | designer | 28g-p5 ☑ | chip dismiss + UnifiedModal confirm; default chip protected; Jest PASS | `ef19718e2` | ☑ done | PR #470 merged · route `/admin/user-management?type=client` · prod FE run `TBD` (queued `28840058342`) · **사용자 prod sign-off ☑** (delete chip) |
 | V3+-coder | 28f-lnb | 휴면 사용자 LNB 메뉴 | coder | planner | Seq 28c ☑ | Flyway `V20260706_001` · ADM_DORMANT_USERS | `c74af8210` | ☑ done | PR #454 merged · **BE dev 배포**(Flyway) |
 | V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `97436d432` | ☑ done | PR #453+#464 merged · D-1~D-6 **전부 닫힘** (D-5 AUDIT §2~§3 스냅샷·2026-07-07) |
 
@@ -110,7 +112,9 @@
 | V3+ 28g-p3 dev+prod FE deploy | 2026-07-07 | ☑ dev FE run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE run `28837307167` SUCCESS · main `c8f5a2cc6` |
 | V3+ 28g-p4 dev+prod FE deploy | 2026-07-07 | ☑ dev FE run `28838011403` · prod FE run `28838028601` · main/develop `f3fe6a323` · PR #466 merged |
 | V3+ Seq 28 smoke sign-off | 2026-07-07 | ☑ 사용자 prod A~D 검수 OK · prod FE `28838028601` |
-| **다음 (pending)** | — | 네이버 Phase 0 보류 |
+| V3+ 28g-p5/p5b prod FE deploy | 2026-07-07 | ◐ prod FE run `28840058342` in progress · main `ef19718e2` · PR #467+#470 |
+| V3+ 28g-p5b prod sign-off | 2026-07-07 | ☑ delete chip E2-1~E3 · [체크리스트 §E2](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md) |
+| **다음 (pending)** | — | 28g-p5 prod save/load sign-off · prod FE run ID 확정 |
 
 ---
 
@@ -150,4 +154,5 @@
 | 2026-07-07 | 28g-p3-deploy | dev FE deploy ☑ — run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE deploy ☑ — run `28837307167` SUCCESS · main `c8f5a2cc6` · PR #465 merged · route `/admin/mapping-management` |
 | 2026-07-07 | 28g-p4-deploy | PR #466 merged · FinancialManagement saved view silent persist · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` · route `/erp/financial` · pageId `erp.financial.transactions` |
 | 2026-07-07 | 28-smoke | Seq 28 prod smoke sign-off ☑ — 사용자 A~D 검수 OK · good SHA `37f50830b` · prod FE run `28838028601` · [체크리스트](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md) |
+| 2026-07-07 | 28g-p5·28g-p5b | **#467** client named views save/load ☑ · **#470** client delete chip ☑ · develop/main `ef19718e2` · prod FE deploy queued `28840058342` · 28g-p5b prod sign-off ☑ · 28g-p5 prod pending |
 | 2026-07-07 | 5 | P0 SidePeekShell·DensityToggle SSOT 중복 검토 ☑ — [제안서](./ADMIN_COMPONENT_SSOT_SIDEPEEK_DENSITY_REVIEW.md) · 중복 0건 · PR-H1 문서 정렬·PR-H2 peek layout 패턴 후속 |

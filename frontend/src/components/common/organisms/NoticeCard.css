@@ -1,0 +1,128 @@
+/**
+ * NoticeCard — B0KlA mg-v2-notice-card (G-14 Phase 3)
+ * 토큰만 사용, 풀스크린·그라데이션 금지
+ */
+
+.mg-v2-notice-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 37.5rem;
+  margin-inline: auto;
+  background: var(--mg-surface-base, var(--mg-color-surface-main));
+  border: 1px solid var(--mg-border-base, var(--mg-color-border-main));
+  border-radius: var(--mg-radius-xl, 16px);
+  overflow: hidden;
+}
+
+.mg-v2-notice-card__accent {
+  flex-shrink: 0;
+  width: var(--mg-spacing-xs, 4px);
+  min-width: var(--mg-spacing-xs, 4px);
+  background: var(--mg-primary-main, var(--mg-color-primary-main));
+}
+
+.mg-v2-notice-card--warning .mg-v2-notice-card__accent {
+  background: var(--mg-warning-main, var(--mg-warning-500));
+}
+
+.mg-v2-notice-card__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-16, var(--mg-spacing-md, 16px));
+  flex: 1;
+  min-width: 0;
+  padding: var(--mg-spacing-24, var(--mg-spacing-lg, 24px));
+}
+
+.mg-v2-notice-card__icon {
+  font-size: var(--mg-v2-font-size-h2, 1.75rem);
+  color: var(--mg-primary-main, var(--mg-color-primary-main));
+  line-height: 1;
+}
+
+.mg-v2-notice-card--warning .mg-v2-notice-card__icon {
+  color: var(--mg-warning-main, var(--mg-warning-500));
+}
+
+.mg-v2-notice-card__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2, 1.5rem);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-text-primary, var(--mg-color-text-main));
+  line-height: var(--mg-v2-line-height-tight, 1.25);
+}
+
+.mg-v2-notice-card__desc {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md, 1rem);
+  color: var(--mg-text-secondary, var(--mg-color-text-secondary));
+  line-height: var(--mg-v2-line-height-normal, 1.5);
+}
+
+.mg-v2-notice-card__features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 8px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.mg-v2-notice-card__feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm, 8px);
+  padding: var(--mg-spacing-sm, 8px) var(--mg-spacing-md, 16px);
+  border-radius: var(--mg-radius-md, 8px);
+  background: var(--mg-color-surface-subtle, var(--mg-color-surface-main));
+  color: var(--mg-text-primary, var(--mg-color-text-main));
+  font-size: var(--mg-v2-font-size-body-sm, 0.875rem);
+}
+
+.mg-v2-notice-card__feature-item i {
+  flex-shrink: 0;
+  color: var(--mg-primary-main, var(--mg-color-primary-main));
+  margin-top: var(--mg-spacing-xs, 2px);
+}
+
+.mg-v2-notice-card--warning .mg-v2-notice-card__feature-item i {
+  color: var(--mg-warning-main, var(--mg-warning-500));
+}
+
+.mg-v2-notice-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-md, 16px);
+  width: 100%;
+  margin-top: var(--mg-spacing-sm, 8px);
+}
+
+@media (max-width: 1279px) {
+  .mg-v2-notice-card__content {
+    padding: var(--mg-spacing-20, var(--mg-spacing-lg, 20px));
+  }
+}
+
+@media (max-width: 767px) {
+  .mg-v2-notice-card {
+    flex-direction: column;
+  }
+
+  .mg-v2-notice-card__accent {
+    width: 100%;
+    min-width: 0;
+    height: var(--mg-spacing-xs, 4px);
+  }
+
+  .mg-v2-notice-card__actions {
+    flex-direction: column;
+  }
+
+  .mg-v2-notice-card__actions .mg-v2-button,
+  .mg-v2-notice-card__actions .mg-button {
+    width: 100%;
+  }
+}

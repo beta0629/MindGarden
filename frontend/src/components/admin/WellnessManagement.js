@@ -306,14 +306,13 @@ const WellnessManagement = () => {
     };
 
     return (
-        <AdminCommonLayout title={t('admin:wellnessMgmt.title')}>
+        <AdminCommonLayout title={t('admin:wellnessMgmt.title')} loading={loading}>
             <div className="mg-v2-ad-b0kla mg-v2-wellness-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel={t('admin:wellnessMgmt.regionLabel')}>
                         <ContentHeader
-                            title={t('admin:wellnessMgmt.title')}
+                            title={null}
                             subtitle={t('admin:wellnessMgmt.subtitle')}
-                            titleId="wellness-management-title"
                             actions={(
                                 <>
                                     <MGButton
@@ -366,7 +365,7 @@ const WellnessManagement = () => {
                             )}
                         />
 
-                        <main aria-labelledby="wellness-management-title">
+                        <main aria-label={t('admin:wellnessMgmt.regionLabel')}>
                 {loading ? (
                     <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
                         <UnifiedLoading type="inline" text={t('admin:wellnessMgmt.loading')} />

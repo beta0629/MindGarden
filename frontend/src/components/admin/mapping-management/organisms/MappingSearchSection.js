@@ -20,10 +20,12 @@ const MappingSearchSection = ({
   onSearchChange,
   filterStatus = 'ALL',
   onFilterChange,
-  placeholder = '상담사, 내담자, 패키지명 또는 #상태로 검색...'
+  placeholder = '상담사, 내담자, 패키지명 또는 #상태로 검색...',
+  savedViewControls = null
 }) => {
   return (
     <ContentSection noCard className="mg-v2-mapping-search-section">
+      {savedViewControls}
       <div className="mg-v2-mapping-search-section__row">
         <div className="mg-v2-mapping-search-section__input-wrap">
           <SearchInput

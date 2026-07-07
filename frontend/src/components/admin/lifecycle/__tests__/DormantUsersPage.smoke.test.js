@@ -105,11 +105,11 @@ describe('DormantUsersPage 스모크', () => {
     fetchDormantUsers.mockImplementation(() => Promise.resolve(EMPTY_PAGE_RESPONSE));
   });
 
-  test('mount 시 AdminCommonLayout title 및 본문 영역 렌더', async() => {
+  test('mount 시 AdminCommonLayout·본문 영역 렌더(G-14: ACL title 생략)', async() => {
     render(<DormantUsersPage />);
 
     expect(screen.getByTestId('admin-common-layout')).toBeInTheDocument();
-    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', PAGE_TITLE);
+    expect(screen.getByTestId('admin-common-layout')).not.toHaveAttribute('data-title', PAGE_TITLE);
     expect(screen.getByTestId('dormant-users-page')).toBeInTheDocument();
 
     await waitFor(() => {
@@ -150,14 +150,14 @@ describe('DormantUsersPage 스모크', () => {
     expect(screen.getByTestId('dormant-users-empty')).toBeInTheDocument();
   });
 
-  test('ContentHeader subtitle 표시(G-14: title은 ACL SSOT)', async() => {
+  test('ContentHeader title·subtitle 표시(G-14 P0: 본문 h1 SSOT)', async() => {
     render(<DormantUsersPage />);
 
     await waitFor(() => {
       expect(screen.getByTestId('content-header')).toBeInTheDocument();
     });
 
-    expect(screen.queryByRole('heading', { name: PAGE_TITLE })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
   });
 

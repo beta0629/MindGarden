@@ -97,3 +97,22 @@
 [data-theme="dark"] .mg-v2-session-management .mg-empty-state__text {
   color: var(--mg-v2-form-label);
 }
+
+/* 상단 StatCard 그리드 */
+[data-theme="dark"] .mg-v2-session-management .mg-dashboard-stats .mg-dashboard-stat-card {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-border);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-dashboard-stats .mg-dashboard-stat-value {
+  color: var(--ad-b0kla-title-color);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-dashboard-stats .mg-dashboard-stat-label {
+  color: var(--ad-b0kla-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-dashboard-stats .mg-dashboard-stat-icon {
+  background: var(--mg-dark-chip-bg);
+  color: var(--ad-b0kla-green);
+}

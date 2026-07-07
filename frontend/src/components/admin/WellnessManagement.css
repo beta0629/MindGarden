@@ -517,6 +517,10 @@
     color: var(--mg-v2-form-label);
 }
 
+[data-theme="dark"] .mg-v2-wellness-management .mg-v2-stat-icon {
+    color: var(--ad-b0kla-green);
+}
+
 [data-theme="dark"] .mg-v2-wellness-management .mg-v2-card {
     background-color: var(--ad-b0kla-card-bg);
     border-color: var(--ad-b0kla-border);
@@ -580,5 +584,10 @@
 [data-theme="dark"] .mg-v2-wellness-management .wellness-empty,
 [data-theme="dark"] .mg-v2-wellness-management .wellness-empty-hint {
     color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-section-title {
+    color: var(--ad-b0kla-title-color);
+    border-color: var(--ad-b0kla-table-border);
 }
 

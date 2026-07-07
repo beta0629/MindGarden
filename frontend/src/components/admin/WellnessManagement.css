@@ -502,3 +502,78 @@
     }
 }
 
+/* Admin Dark Mode C-3b P1 — Wellness Management cascade */
+[data-theme="dark"] .mg-v2-wellness-management .mg-v2-stat-card {
+    background: var(--ad-b0kla-card-bg);
+    border-color: var(--ad-b0kla-border);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .mg-v2-stat-value {
+    color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .mg-v2-stat-label,
+[data-theme="dark"] .mg-v2-wellness-management .mg-v2-stat-description {
+    color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .mg-v2-card {
+    background-color: var(--ad-b0kla-card-bg);
+    border-color: var(--ad-b0kla-border);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .mg-v2-h2 {
+    color: var(--ad-b0kla-title-color);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-log-item {
+    background: var(--mg-dark-chip-bg);
+    border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-log-item:hover {
+    background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-log-type {
+    color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-log-model {
+    background: var(--mg-dark-toolbar-bg);
+    color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-log-details,
+[data-theme="dark"] .mg-v2-wellness-management .wellness-log-date {
+    color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-template-card {
+    background: var(--ad-b0kla-card-bg);
+    border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-template-card:hover {
+    background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-template-title {
+    color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-template-tag {
+    background: var(--mg-dark-toolbar-bg);
+    color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-template-stat,
+[data-theme="dark"] .mg-v2-wellness-management .wellness-template-date {
+    color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-wellness-management .wellness-empty,
+[data-theme="dark"] .mg-v2-wellness-management .wellness-empty-hint {
+    color: var(--mg-v2-form-label);
+}
+

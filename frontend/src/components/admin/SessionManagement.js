@@ -19,6 +19,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import './SessionManagement.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';

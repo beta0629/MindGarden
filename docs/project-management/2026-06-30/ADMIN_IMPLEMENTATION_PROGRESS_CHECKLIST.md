@@ -91,8 +91,13 @@
 | V3+-coder | g14-pilot | G-14 Pilot 1~3 + mapping wrapper · Statistics 삭제 | coder | designer | 28g-p5b ☑ | AdminCommonLayout dashboard(#468)·integrated(#478); mapping wrapper(#479); Statistics page removed(#476) | `eacb047d5` | ☑ done | PR #468+#478+#479+#476 merged |
 | V3+-coder | g14-header | G-14 header dedup P0/P1 | coder | designer | g14-pilot ☑ | ContentHeader 이중 헤더 제거 — P0: consultation-logs·integrated-schedule·schedule(#485) · P1: dashboard·mapping·schedules(#482) | `eacb047d5` | ☑ done | PR #485+#482 merged |
 | V3+-coder | dark-c2 | Dark mode C-2 1차 (ContentHeader + B0KlA + GNB) | coder | designer | g14-header ☑ | #484 GNB/NavIcon/SearchInput tokens · #486 ContentHeader+B0KlA container `[data-theme="dark"]` cascade | `eacb047d5` | ☑ done | PR #484+#486 merged · **dev 배포 후 3화면 사용자 검수 pending** |
-| V3+-coder | dark-c3 | Dark mode C-3 global | coder | designer | g14-p3 ☑ | 모달·필터툴바·테이블·폼 `[data-theme="dark"]` cascade 전역 rollout; P0 6라우트; prod deploy/sign-off 금지 | `4b79e752` | ☐ pending | [roadmap](./ADMIN_DARK_MODE_C3_ROADMAP.md) · Phase 4A→4D · dev only |
+| V3+-coder | dark-c3 | Dark mode C-3 global (P0 6라우트) | coder | designer | g14-p3 ☑ | 모달·필터툴바·테이블·폼 `[data-theme="dark"]` cascade 전역 rollout; P0 6라우트; prod deploy/sign-off 금지 | `947fb4f47` | ☑ done | PR #493 merged · [roadmap](./ADMIN_DARK_MODE_C3_ROADMAP.md) Phase 4A · dev only |
+| V3+-coder | dark-c3b | Dark mode C-3b P1 (sessions·wellness·common-codes) | coder | designer | dark-c3 ☑ | P1 3라우트 dark cascade; Jest adminDarkMode.cascade P1 확장; prod 금지 | TBD | ◐ in_progress | routes `/admin/sessions` · `/admin/wellness` · `/admin/common-codes` |
 | V3+-tester | 28g-p6-p8-jest | Saved View named UI Jest gates (28g-p6~p8) | tester | tester | 28g-p8b ☑ | consultant/staff/mapping/integrated/erp savedView named views tests PASS | `eacb047d5` | ☑ done | PR #487 merged |
+| V3+-coder | 28g-p9a | Saved View session named views UI | coder | designer | 28g-p8b ☑ | SessionManagement SavedViewControls; pageId `admin.session-management` | `309dc5af6` | ☑ done | PR #489 merged · route `/admin/sessions` |
+| V3+-coder | 28g-p9b | Saved View ERP budget named views UI | coder | designer | 28g-p9a ☑ | BudgetManagement SavedViewControls; pageId `erp.budget.management` | `309dc5af6` | ☑ done | PR #490 merged · route `/erp/budget` |
+| V3+-coder | 28g-p9c | Saved View ERP refund named views UI | coder | designer | 28g-p9b ☑ | RefundManagement SavedViewControls; pageId `erp.refund.management` | `309dc5af6` | ☑ done | PR #490 merged · route `/erp/refund-management` |
+| V3+-tester | 28g-p9-jest | Saved View session/budget/refund Jest gates (28g-p9a~c) | tester | tester | 28g-p9c ☑ | session/budget/refund savedView 3 suites · 12 tests PASS | `947fb4f47` | ☑ done | Phase 5C-1 · dev smoke L·M F5 ☑ · K session Error Boundary pending |
 | V3+-coder | 28f-lnb | 휴면 사용자 LNB 메뉴 | coder | planner | Seq 28c ☑ | Flyway `V20260706_001` · ADM_DORMANT_USERS | `c74af8210` | ☑ done | PR #454 merged · **BE dev 배포**(Flyway) |
 | V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `97436d432` | ☑ done | PR #453+#464 merged · D-1~D-6 **전부 닫힘** (D-5 AUDIT §2~§3 스냅샷·2026-07-07) |
 
@@ -175,4 +180,6 @@
 | 2026-07-07 | 28g-p6-p8-jest | **#487** Saved View named UI Jest gates ☑ · develop `eacb047d5` |
 | 2026-07-07 | good-sha | develop good SHA `ef19718e2` → `eacb047d5` · pending: dev 배포 후 Saved View named UI 전 화면 + dark mode C-2 3화면 사용자 검수 |
 | 2026-07-07 | dark-c3 | Phase 4 C-3 roadmap 초안 — [ADMIN_DARK_MODE_C3_ROADMAP.md](./ADMIN_DARK_MODE_C3_ROADMAP.md) · baseline `4b79e752` · PR #492 · dev run `28844920543` · checklist `dark-c3` ☐ pending |
+| 2026-07-07 | 28g-p9 | **#489** session Saved View ☑ · **#490** budget+refund Saved View ☑ · develop `309dc5af6` |
+| 2026-07-07 | 28g-p9-jest | Phase 5C-1 tester gate ☑ — Jest 3 suites 12 PASS · dev smoke budget+refund F5 ☑ · session Error Boundary pending |
 | 2026-07-07 | 5 | P0 SidePeekShell·DensityToggle SSOT 중복 검토 ☑ — [제안서](./ADMIN_COMPONENT_SSOT_SIDEPEEK_DENSITY_REVIEW.md) · 중복 0건 · PR-H1 문서 정렬·PR-H2 peek layout 패턴 후속 |

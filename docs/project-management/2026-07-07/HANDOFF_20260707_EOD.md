@@ -2,7 +2,7 @@
 
 **작성**: core-planner · **시각**: 2026-07-07 ~20:40 KST (스냅샷 v2 · [#537](https://github.com/beta0629/MindGarden/pull/537))  
 **목표 마일스톤**: **2026-07-13** design/UI/UX dev 완료 + 사용자 sign-off (prod 반영 별도)  
-**SSOT**: [`COMPREHENSIVE_IMPROVEMENT_WBS.md`](./COMPREHENSIVE_IMPROVEMENT_WBS.md) · [`ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md`](../2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md)
+**SSOT**: [`COMPREHENSIVE_IMPROVEMENT_WBS.md`](./COMPREHENSIVE_IMPROVEMENT_WBS.md) · [`GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md`](../../guides/testing/GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md) · [`ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md`](../2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md)
 
 ---
 
@@ -125,7 +125,7 @@
 | `ADM-01` | dark-c3b 잔여 (PR-C ☑ 기반) | core-coder |
 | `HF-02` | header title dev 검증 (bundle `main.a82dfbd8.js` / run `28861227866`) | core-deployer |
 | `ROLE-01` | Client v1.1 **Design Freeze** sign-off | 사용자 + planner |
-| `GATE-02` | 7/13 통합 검수 체크리스트 (`SEQ_28` 형식) | core-planner + core-tester |
+| `GATE-02` | 7/13 dev 통합 검수 ☑ — [`GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md`](../../guides/testing/GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md) (`SEQ_28` 형식 · develop `5f1e478f5`) | core-planner + core-tester |
 
 ### P2 — 결정·백로그
 
@@ -176,6 +176,7 @@ GATE-01 smoke ☑ (tenant URL)
 - [ ] `HF-03` session Error Boundary (또는 defer 명시)
 - [ ] `ROLE-01` Client v1.1 freeze ☑
 - [x] `ROLE-02` Consultant V2 dev 정합 (#534 merge ☑ · smoke 잔여)
+- [x] `GATE-02` dev 통합 검수 체크리스트 ☑ — [`GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md`](../../guides/testing/GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md)
 - [ ] `GATE-03` 사용자 dev sign-off
 - [x] `GATE-04` prod deploy **미실행** 확인
 

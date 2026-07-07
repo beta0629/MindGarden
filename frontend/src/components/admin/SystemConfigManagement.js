@@ -422,7 +422,7 @@ const SystemConfigManagement = () => {
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea>
             <ContentHeader
-              title={t('systemConfig.pageTitle')}
+              title={null}
               subtitle={t('systemConfig.pageSubtitle')}
               actions={
                 <ActionBarButton

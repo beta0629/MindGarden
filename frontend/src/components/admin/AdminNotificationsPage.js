@@ -78,16 +78,15 @@ const AdminNotificationsPage = () => {
     <AdminCommonLayout title="알림·메시지 관리">
       <main
         className="mg-v2-dashboard-layout"
-        aria-labelledby="admin-notifications-page-title"
+        aria-label="알림·메시지 관리"
       >
         <div className="mg-v2-ad-b0kla mg-v2-admin-notifications-page">
           <div className="mg-v2-ad-b0kla__container">
             <ContentArea ariaLabel="알림·메시지 관리 콘텐츠">
               <ContentHeader
-                title="알림·메시지 관리"
+                title={null}
                 subtitle={subtitle}
                 actions={headerActions}
-                titleId="admin-notifications-page-title"
               />
 
               <SegmentedTabs

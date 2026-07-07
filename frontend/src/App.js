@@ -35,14 +35,12 @@ import ConsultantSessionKpiPage from './components/consultant/ConsultantSessionK
 import ConsultantMindWeatherInboxPage from './components/consultant/ConsultantMindWeatherInboxPage';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
-import AdminSchedulesPage from './components/schedule/AdminSchedulesPage';
 import UnifiedModalTest from './components/test/UnifiedModalTest';
 import UnifiedLoadingTest from './components/test/UnifiedLoadingTest';
 import UnifiedLoading from './components/common/UnifiedLoading';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import UserManagementPage from './components/admin/UserManagementPage';
-import SessionManagement from './components/admin/SessionManagement';
 import MappingManagement from './components/admin/MappingManagement';
 import ConsultationLogView from './components/admin/ConsultationLogView';
 import IntegratedMatchingScheduleManagement from './components/admin/IntegratedMatchingScheduleManagement';
@@ -215,6 +213,12 @@ function QueryParamHandler({ children, onLoginSuccess }) {
   }, [location]); // onLoginSuccess 의존성 제거 (무한루프 방지)
   
   return children;
+}
+
+/** CLN-01 — orphan 라우트 redirect 시 query string 보존 (#476 Statistics 패턴) */
+function RedirectWithSearch({ to }) {
+  const { search } = useLocation();
+  return <Navigate to={`${to}${search}`} replace />;
 }
 
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
@@ -448,8 +452,8 @@ function AppContent() {
                 </ProtectedRoute>
               }
             >
-              {/* Phase 2B 리뉴얼 화면 — Outlet으로 렌더링 */}
-              <Route index element={<ClientHomeRenewal />} />
+              {/* DEC-02: 로그인 SSOT(`/client/dashboard`)와 index 정합 — ClientHomeRenewal 이중 스택 방지 */}
+              <Route index element={<Navigate to="/client/dashboard" replace />} />
               <Route path="home" element={<ClientHomeRenewal />} />
               <Route path="booking" element={<ClientBookingRenewal />} />
               <Route path="consultations" element={<ClientConsultationsRenewal />} />
@@ -795,8 +799,11 @@ function AppContent() {
             
             {/* 통합 스케줄 관리 라우트 */}
             <Route path="/schedule" element={<SchedulePage user={user} />} />
-            <Route path="/admin/schedule" element={<SchedulePage user={user} />} />
-            <Route path="/staff/schedule" element={<Navigate to="/admin/schedule" replace />} />
+            <Route
+              path="/admin/schedule"
+              element={<RedirectWithSearch to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} />}
+            />
+            <Route path="/staff/schedule" element={<Navigate to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} replace />} />
             <Route path="/staff/clients" element={<Navigate to="/admin/user-management?type=client" replace />} />
             <Route path="/staff/records" element={<Navigate to="/admin/consultation-logs" replace />} />
             <Route path="/consultant/schedule-new" element={<SchedulePage user={user} />} />
@@ -813,7 +820,7 @@ function AppContent() {
             <Route path="/admin/consultation-logs" element={<ConsultationLogView />} />
             <Route path="/admin/integrated-schedule" element={<IntegratedMatchingScheduleManagement />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
-            <Route path="/admin/sessions" element={<SessionManagement />} />
+            <Route path="/admin/sessions" element={<Navigate to={ADMIN_ROUTES.MAPPING_MANAGEMENT} replace />} />
             <Route path="/admin/accounts" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AccountManagement />
@@ -891,14 +898,13 @@ function AppContent() {
             <Route path="/academy" element={<AcademyDashboard />} />
             <Route path="/admin/academy" element={<AcademyDashboard />} />
             <Route path="/academy/register" element={<AcademyRegister />} />
-            <Route path="/admin/schedules" element={
-              <AdminSchedulesPage
-                userRole={user?.role || USER_ROLES.ADMIN}
-                userId={user?.id}
-              />
-            } />
-            <Route path="/admin/statistics" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/admin/statistics-dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route
+              path="/admin/schedules"
+              element={<RedirectWithSearch to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} />}
+            />
+            <Route path={ADMIN_ROUTES.DASHBOARDS} element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
+            <Route path="/admin/statistics" element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
+            <Route path="/admin/statistics-dashboard" element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
             
             
             {/* 시스템 관리 라우트 (준비중) */}

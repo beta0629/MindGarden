@@ -15,6 +15,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import './MappingTableView.css';
 import { useTranslation } from 'react-i18next';
+import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -145,7 +146,7 @@ const MappingTableView = ({
                       preventDoubleClick={false}
                       onClick={(event) => {
                         event.stopPropagation();
-                        navigate(`/admin/schedules?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`);
+                        navigate(`${ADMIN_ROUTES.INTEGRATED_SCHEDULE}?consultantId=${mapping.consultantId}&clientId=${mapping.clientId}`);
                       }}
                       title="스케줄 보기"
                     >

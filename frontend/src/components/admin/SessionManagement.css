@@ -5,6 +5,17 @@
  * @since 2026-07-07
  */
 
+/* 카드·Saved View 행 */
+[data-theme="dark"] .mg-v2-session-management .mg-v2-card {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-border);
+}
+
+[data-theme="dark"] .mg-v2-session-management .mg-v2-session-saved-view-row {
+  background: var(--mg-dark-toolbar-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
 /* 탭 */
 [data-theme="dark"] .mg-v2-session-management .mg-tabs {
   background: var(--mg-dark-toolbar-bg);

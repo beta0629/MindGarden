@@ -15,7 +15,9 @@
 export const ADMIN_ROUTES = {
     /** 어드민 메인 대시보드 (B0KlA) */
     DASHBOARD: '/admin/dashboard',
+    /** @deprecated CLN-01 — App.js redirects to INTEGRATED_SCHEDULE; navigate 시 INTEGRATED_SCHEDULE 사용 */
     SCHEDULES: '/admin/schedules',
+    /** @deprecated CLN-01 — App.js redirects to MAPPING_MANAGEMENT; navigate 시 MAPPING_MANAGEMENT 사용 */
     SESSIONS: '/admin/sessions',
     USERS: '/admin/user-management',
     USER_MANAGEMENT: '/admin/user-management',
@@ -66,6 +68,7 @@ export const ADMIN_ROUTES = {
     COMPLIANCE_DASHBOARD: '/admin/compliance/dashboard',
     COMPLIANCE_DESTRUCTION: '/admin/compliance/destruction',
     ERP_FINANCIAL: '/admin/erp/financial',
+    /** @deprecated CLN-02 — App.js redirects to DASHBOARD; navigate 시 DASHBOARD 사용 */
     DASHBOARDS: '/admin/dashboards',
     CACHE_MONITORING: '/admin/cache-monitoring',
     SECURITY_MONITORING: '/admin/security-monitoring',

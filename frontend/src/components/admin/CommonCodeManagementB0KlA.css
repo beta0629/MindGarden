@@ -548,6 +548,14 @@
     color: var(--mg-v2-form-label);
 }
 
+[data-theme="dark"] .mg-v2-ad-b0kla__group-card {
+    border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__group-code {
+    color: var(--mg-v2-form-label);
+}
+
 [data-theme="dark"] .mg-v2-ad-b0kla__group-card:hover {
     background: var(--ad-b0kla-table-row-hover);
 }

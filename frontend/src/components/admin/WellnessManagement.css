@@ -567,6 +567,11 @@
     color: var(--mg-v2-form-label);
 }
 
+[data-theme="dark"] .mg-v2-wellness-management .wellness-template-badge--important {
+    background: var(--mg-dark-chip-active-bg);
+    color: var(--mg-dark-chip-active-text);
+}
+
 [data-theme="dark"] .mg-v2-wellness-management .wellness-template-stat,
 [data-theme="dark"] .mg-v2-wellness-management .wellness-template-date {
     color: var(--mg-v2-form-label);

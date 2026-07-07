@@ -406,7 +406,7 @@ const SystemConfigManagement = () => {
       ? t('systemConfig.loading.session')
       : t('systemConfig.loading.config');
     return (
-      <AdminCommonLayout title={t('systemConfig.pageTitle')}>
+      <AdminCommonLayout>
         <div className="mg-v2-ad-b0kla mg-v2-system-config-management">
           <div className="mg-v2-ad-b0kla__container" aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text={loadingText} variant="pulse" />
@@ -416,13 +416,15 @@ const SystemConfigManagement = () => {
     );
   }
 
+  const pageTitle = t('systemConfig.pageTitle');
+
   return (
-    <AdminCommonLayout title={t('systemConfig.pageTitle')}>
+    <AdminCommonLayout>
       <div className="mg-v2-ad-b0kla mg-v2-system-config-management">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea>
             <ContentHeader
-              title={null}
+              title={pageTitle}
               subtitle={t('systemConfig.pageSubtitle')}
               actions={
                 <ActionBarButton

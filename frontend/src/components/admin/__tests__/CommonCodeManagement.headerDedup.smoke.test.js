@@ -8,8 +8,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
-const PAGE_TITLE = '공통 코드 관리';
-const PAGE_SUBTITLE = '시스템 공통 코드를 그룹별로 관리합니다.';
+const PAGE_TITLE = '공통코드 관리';
+const PAGE_SUBTITLE = '코드그룹을 선택한 뒤 해당 그룹의 세부 코드를 관리합니다.';
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
   __esModule: true,
@@ -118,14 +118,14 @@ jest.mock('../../common/MGButton', () => ({
 import CommonCodeManagement from '../CommonCodeManagement';
 
 describe('CommonCodeManagement (G-14 P2 header dedup)', () => {
-  test('ACL title SSOT 유지, ContentHeader title={null} prop 주입', () => {
+  test('ContentHeader title SSOT, ACL title 생략, 부제 유지', () => {
     render(<CommonCodeManagement />);
 
-    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', PAGE_TITLE);
+    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', '');
 
     const header = screen.getByTestId('content-header');
-    expect(header).toHaveAttribute('data-has-title', 'false');
-    expect(screen.queryByRole('heading', { name: PAGE_TITLE })).not.toBeInTheDocument();
+    expect(header).toHaveAttribute('data-has-title', 'true');
+    expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
   });
 });

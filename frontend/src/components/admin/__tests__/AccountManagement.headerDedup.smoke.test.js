@@ -85,17 +85,14 @@ import AccountManagement from '../AccountManagement';
 import { ACCOUNT_PAGE_TITLES } from '../../../constants/account';
 
 describe('AccountManagement (G-14 P2 header dedup)', () => {
-  test('ACL·ContentHeader title SSOT 통일, ContentHeader title 생략', async() => {
+  test('ContentHeader title SSOT, ACL title 생략, 부제 유지', async() => {
     render(<AccountManagement />);
 
-    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute(
-      'data-title',
-      ACCOUNT_PAGE_TITLES.MAIN
-    );
+    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', '');
 
     const header = screen.getByTestId('content-header');
-    expect(header).toHaveAttribute('data-has-title', 'false');
-    expect(screen.queryByRole('heading', { name: ACCOUNT_PAGE_TITLES.MAIN })).not.toBeInTheDocument();
+    expect(header).toHaveAttribute('data-has-title', 'true');
+    expect(screen.getByRole('heading', { name: ACCOUNT_PAGE_TITLES.MAIN })).toBeInTheDocument();
     expect(screen.getByText('정산·입금 안내에 사용할 계좌를 등록·관리합니다.')).toBeInTheDocument();
 
     await waitFor(() => {

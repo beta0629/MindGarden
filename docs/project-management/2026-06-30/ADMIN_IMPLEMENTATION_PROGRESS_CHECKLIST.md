@@ -3,7 +3,7 @@
 **작성일**: 2026-07-01  
 **담당**: core-planner (갱신 주체)  
 **거버넌스**: [`ADMIN_IMPLEMENTATION_GOVERNANCE.md`](./ADMIN_IMPLEMENTATION_GOVERNANCE.md)  
-**Good SHA**: develop `ef19718e2` · prod `ef19718e2` (28g-p5/p5b) · prior prod `37f50830b` (28 smoke A~D) · rollback 금지 패턴 `0676dfa2d`
+**Good SHA**: develop `eacb047d5` · prod `ef19718e2` (28g-p5/p5b) · prior prod `37f50830b` (28 smoke A~D) · rollback 금지 패턴 `0676dfa2d`
 
 **상태 범례**: ☐ pending · ◐ in_progress · ☑ done
 
@@ -84,6 +84,14 @@
 | V3+-coder | 28g-p4 | Saved View FinancialManagement pilot (silent persist) | coder | designer | 28g-p3 ☑ | FinancialManagement filters+viewMode debounced persist; pageId `erp.financial.transactions` | `047194130` | ☑ done | PR #466 merged · route `/erp/financial` · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` |
 | V3+-coder | 28g-p5 | Saved View client named views UI (save/load) | coder | designer | 28g-p4 ☑ | SavedViewControls+SaveViewModal; namedViews localStorage v1; Client tab only | `5e7026ea1` | ☑ done | PR #467 merged · route `/admin/user-management?type=client` · develop/main `ef19718e2` · prod FE run `TBD` (queued `28840058342`) |
 | V3+-coder | 28g-p5b | Saved View client delete chip | coder | designer | 28g-p5 ☑ | chip dismiss + UnifiedModal confirm; default chip protected; Jest PASS | `ef19718e2` | ☑ done | PR #470 merged · route `/admin/user-management?type=client` · prod FE run `TBD` (queued `28840058342`) · **사용자 prod sign-off ☑** (delete chip) |
+| V3+-coder | 28g-p6 | Saved View consultant/staff named views UI | coder | designer | 28g-p5b ☑ | SavedViewControls+SaveViewModal; consultant+staff tabs; namedViews localStorage v1 | `eacb047d5` | ☑ done | PR #473 merged · routes `/admin/user-management?type=consultant` · `?type=staff` |
+| V3+-coder | 28g-p7 | Saved View mapping list named views UI | coder | designer | 28g-p6 ☑ | MappingListBlock SavedViewControls; pageId `admin.mapping-management.list` | `eacb047d5` | ☑ done | PR #471 merged · route `/admin/mapping-management` |
+| V3+-coder | 28g-p8a | Saved View integrated schedule named views UI | coder | designer | 28g-p7 ☑ | IntegratedMatchingSchedule sidebar SavedViewControls; pageId `admin.integrated-schedule.sidebar` | `eacb047d5` | ☑ done | PR #480 merged · route `/admin/mapping-management` (좌측 통합일정) |
+| V3+-coder | 28g-p8b | Saved View ERP financial named views UI | coder | designer | 28g-p8a ☑ | FinancialManagement SavedViewControls; pageId `erp.financial.transactions` | `eacb047d5` | ☑ done | PR #481 merged · route `/erp/financial` |
+| V3+-coder | g14-pilot | G-14 Pilot 1~3 + mapping wrapper · Statistics 삭제 | coder | designer | 28g-p5b ☑ | AdminCommonLayout dashboard(#468)·integrated(#478); mapping wrapper(#479); Statistics page removed(#476) | `eacb047d5` | ☑ done | PR #468+#478+#479+#476 merged |
+| V3+-coder | g14-header | G-14 header dedup P0/P1 | coder | designer | g14-pilot ☑ | ContentHeader 이중 헤더 제거 — P0: consultation-logs·integrated-schedule·schedule(#485) · P1: dashboard·mapping·schedules(#482) | `eacb047d5` | ☑ done | PR #485+#482 merged |
+| V3+-coder | dark-c2 | Dark mode C-2 1차 (ContentHeader + B0KlA + GNB) | coder | designer | g14-header ☑ | #484 GNB/NavIcon/SearchInput tokens · #486 ContentHeader+B0KlA container `[data-theme="dark"]` cascade | `eacb047d5` | ☑ done | PR #484+#486 merged · **dev 배포 후 3화면 사용자 검수 pending** |
+| V3+-tester | 28g-p6-p8-jest | Saved View named UI Jest gates (28g-p6~p8) | tester | tester | 28g-p8b ☑ | consultant/staff/mapping/integrated/erp savedView named views tests PASS | `eacb047d5` | ☑ done | PR #487 merged |
 | V3+-coder | 28f-lnb | 휴면 사용자 LNB 메뉴 | coder | planner | Seq 28c ☑ | Flyway `V20260706_001` · ADM_DORMANT_USERS | `c74af8210` | ☑ done | PR #454 merged · **BE dev 배포**(Flyway) |
 | V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `97436d432` | ☑ done | PR #453+#464 merged · D-1~D-6 **전부 닫힘** (D-5 AUDIT §2~§3 스냅샷·2026-07-07) |
 
@@ -114,7 +122,11 @@
 | V3+ Seq 28 smoke sign-off | 2026-07-07 | ☑ 사용자 prod A~D 검수 OK · prod FE `28838028601` |
 | V3+ 28g-p5/p5b prod FE deploy | 2026-07-07 | ◐ prod FE run `28840058342` in progress · main `ef19718e2` · PR #467+#470 |
 | V3+ 28g-p5b prod sign-off | 2026-07-07 | ☑ delete chip E2-1~E3 · [체크리스트 §E2](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md) |
-| **다음 (pending)** | — | 28g-p5 prod save/load sign-off · prod FE run ID 확정 |
+| V3+ 28g-p6~p8 named views UI | 2026-07-07 | ☑ PR #473+#471+#480+#481 · develop `eacb047d5` |
+| V3+ G-14 pilot + header dedup | 2026-07-07 | ☑ PR #468+#478+#479+#476+#485+#482 · develop `eacb047d5` |
+| V3+ dark mode C-2 1차 | 2026-07-07 | ☑ PR #484+#486 · develop `eacb047d5` |
+| V3+ 28g-p6~p8 Jest gates | 2026-07-07 | ☑ PR #487 · develop `eacb047d5` |
+| **다음 (pending)** | — | **dev 배포 후 사용자 검수** — Saved View named UI 전 화면(consultant/staff/mapping/integrated/ERP · [체크리스트 §F~J](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md)) + dark mode C-2 3화면 |
 
 ---
 
@@ -155,4 +167,10 @@
 | 2026-07-07 | 28g-p4-deploy | PR #466 merged · FinancialManagement saved view silent persist · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` · route `/erp/financial` · pageId `erp.financial.transactions` |
 | 2026-07-07 | 28-smoke | Seq 28 prod smoke sign-off ☑ — 사용자 A~D 검수 OK · good SHA `37f50830b` · prod FE run `28838028601` · [체크리스트](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md) |
 | 2026-07-07 | 28g-p5·28g-p5b | **#467** client named views save/load ☑ · **#470** client delete chip ☑ · develop/main `ef19718e2` · prod FE deploy queued `28840058342` · 28g-p5b prod sign-off ☑ · 28g-p5 prod pending |
+| 2026-07-07 | 28g-p6~p8 | **#473** consultant/staff named views ☑ · **#471** mapping named views ☑ · **#480** integrated schedule ☑ · **#481** ERP financial ☑ · develop `eacb047d5` |
+| 2026-07-07 | g14-pilot | **#468** dashboard AdminCommonLayout ☑ · **#478** integrated pilot ☑ · **#479** mapping wrapper ☑ · **#476** Statistics 삭제 ☑ |
+| 2026-07-07 | g14-header | **#485** header dedup P0 ☑ · **#482** header dedup P1 ☑ |
+| 2026-07-07 | dark-c2 | **#484** GNB dark tokens ☑ · **#486** ContentHeader+B0KlA C-2 1차 ☑ |
+| 2026-07-07 | 28g-p6-p8-jest | **#487** Saved View named UI Jest gates ☑ · develop `eacb047d5` |
+| 2026-07-07 | good-sha | develop good SHA `ef19718e2` → `eacb047d5` · pending: dev 배포 후 Saved View named UI 전 화면 + dark mode C-2 3화면 사용자 검수 |
 | 2026-07-07 | 5 | P0 SidePeekShell·DensityToggle SSOT 중복 검토 ☑ — [제안서](./ADMIN_COMPONENT_SSOT_SIDEPEEK_DENSITY_REVIEW.md) · 중복 0건 · PR-H1 문서 정렬·PR-H2 peek layout 패턴 후속 |

@@ -35,8 +35,8 @@ jest.mock('../../../layout/AdminCommonLayout', () => ({
 jest.mock('../../../dashboard-v2/content/ContentHeader', () => ({
   __esModule: true,
   default: ({ title, subtitle, titleId }) => (
-    <header data-testid="content-header">
-      <h1 id={titleId}>{title}</h1>
+    <header data-testid="content-header" data-has-title={String(Boolean(title))}>
+      {title ? <h1 id={titleId}>{title}</h1> : null}
       {subtitle ? <p>{subtitle}</p> : null}
     </header>
   )
@@ -150,14 +150,14 @@ describe('DormantUsersPage 스모크', () => {
     expect(screen.getByTestId('dormant-users-empty')).toBeInTheDocument();
   });
 
-  test('ContentHeader title·subtitle 표시', async() => {
+  test('ContentHeader subtitle 표시(G-14: title은 ACL SSOT)', async() => {
     render(<DormantUsersPage />);
 
     await waitFor(() => {
       expect(screen.getByTestId('content-header')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: PAGE_TITLE })).not.toBeInTheDocument();
     expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
   });
 

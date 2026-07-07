@@ -66,16 +66,9 @@ import {
   resolveViewModeStorageScope,
   useViewModePreference
 } from '../../hooks/useViewModePreference';
-import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
-import {
-  USER_MANAGEMENT_SAVED_VIEW_PAGE_IDS,
-  USER_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
-  buildUserManagementDefaultSavedView
-} from '../../constants/userManagementSavedViewConstants';
 
-const STAFF_VIEW_MODE_PAGE_ID = USER_MANAGEMENT_SAVED_VIEW_PAGE_IDS.staff;
+const STAFF_VIEW_MODE_PAGE_ID = 'admin.user-management.staff';
 const USER_MANAGEMENT_ALLOWED_VIEW_MODES = ['largeCard', 'smallCard', 'list'];
-const STAFF_DEFAULT_SAVED_VIEW = buildUserManagementDefaultSavedView(USER_MANAGEMENT_DEFAULT_VIEW_MODE);
 
 const STAFF_MGMT_PEEK_LAYOUT_CLASS = 'staff-management__peek-layout';
 const STAFF_MGMT_PEEK_LAYOUT_OPEN_MODIFIER = 'staff-management__peek-layout--peek-open';
@@ -222,54 +215,6 @@ const StaffManagement = ({ embedded = false }) => {
     defaultMode: USER_MANAGEMENT_DEFAULT_VIEW_MODE,
     allowedModes: USER_MANAGEMENT_ALLOWED_VIEW_MODES
   });
-  const { savedView, setSavedView } = useSavedViewPreference({
-    pageId: STAFF_VIEW_MODE_PAGE_ID,
-    defaultView: STAFF_DEFAULT_SAVED_VIEW
-  });
-  const savedViewPersistReadyRef = useRef(false);
-  const savedViewPersistTimerRef = useRef(null);
-  const savedViewMetaRef = useRef({
-    sort: STAFF_DEFAULT_SAVED_VIEW.sort,
-    density: STAFF_DEFAULT_SAVED_VIEW.density
-  });
-
-  useEffect(() => {
-    if (savedViewPersistReadyRef.current) {
-      return;
-    }
-    savedViewPersistReadyRef.current = true;
-    savedViewMetaRef.current = {
-      sort: savedView.sort ?? STAFF_DEFAULT_SAVED_VIEW.sort,
-      density: savedView.density ?? STAFF_DEFAULT_SAVED_VIEW.density
-    };
-  }, [savedView]);
-
-  useEffect(() => {
-    if (!savedViewPersistReadyRef.current) {
-      return undefined;
-    }
-
-    if (savedViewPersistTimerRef.current) {
-      clearTimeout(savedViewPersistTimerRef.current);
-    }
-
-    savedViewPersistTimerRef.current = setTimeout(() => {
-      savedViewPersistTimerRef.current = null;
-      setSavedView({
-        viewMode,
-        filters: STAFF_DEFAULT_SAVED_VIEW.filters,
-        sort: savedViewMetaRef.current.sort,
-        density: savedViewMetaRef.current.density
-      });
-    }, USER_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
-
-    return () => {
-      if (savedViewPersistTimerRef.current) {
-        clearTimeout(savedViewPersistTimerRef.current);
-        savedViewPersistTimerRef.current = null;
-      }
-    };
-  }, [viewMode, setSavedView]);
   const [peekStaff, setPeekStaff] = useState(null);
   const [staffDetailModal, setStaffDetailModal] = useState({ open: false, staff: null });
   const [staffEditModal, setStaffEditModal] = useState({ open: false, staff: null });

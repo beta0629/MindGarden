@@ -70,12 +70,6 @@ import {
   resolveViewModeStorageScope,
   useViewModePreference
 } from '../../hooks/useViewModePreference';
-import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
-import {
-  USER_MANAGEMENT_SAVED_VIEW_PAGE_IDS,
-  USER_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
-  buildUserManagementDefaultSavedView
-} from '../../constants/userManagementSavedViewConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
@@ -83,9 +77,8 @@ const API_COMMON_CODES_CORE_GROUPS_SPECIALTY = '/api/v1/common-codes/core/groups
 /** ContentHeader / 본문 main aria-labelledby 연동 */
 const CONSULTANT_COMP_MGMT_TITLE_ID = 'consultant-comprehensive-management-title';
 
-const CONSULTANT_VIEW_MODE_PAGE_ID = USER_MANAGEMENT_SAVED_VIEW_PAGE_IDS.consultant;
+const CONSULTANT_VIEW_MODE_PAGE_ID = 'admin.user-management.consultant';
 const USER_MANAGEMENT_ALLOWED_VIEW_MODES = ['largeCard', 'smallCard', 'list'];
-const CONSULTANT_DEFAULT_SAVED_VIEW = buildUserManagementDefaultSavedView(USER_MANAGEMENT_DEFAULT_VIEW_MODE);
 
 const CONSULTANT_COMP_PEEK_LAYOUT_CLASS = 'consultant-comprehensive__peek-layout';
 const CONSULTANT_COMP_PEEK_LAYOUT_OPEN_MODIFIER = 'consultant-comprehensive__peek-layout--peek-open';
@@ -151,60 +144,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
         defaultMode: USER_MANAGEMENT_DEFAULT_VIEW_MODE,
         allowedModes: USER_MANAGEMENT_ALLOWED_VIEW_MODES
     });
-    const { savedView, setSavedView } = useSavedViewPreference({
-        pageId: CONSULTANT_VIEW_MODE_PAGE_ID,
-        defaultView: CONSULTANT_DEFAULT_SAVED_VIEW
-    });
-    const savedViewFiltersRestoredRef = useRef(false);
-    const savedViewPersistReadyRef = useRef(false);
-    const savedViewPersistTimerRef = useRef(null);
-    const savedViewMetaRef = useRef({
-        sort: CONSULTANT_DEFAULT_SAVED_VIEW.sort,
-        density: CONSULTANT_DEFAULT_SAVED_VIEW.density
-    });
-
-    useEffect(() => {
-        if (savedViewFiltersRestoredRef.current) {
-            return;
-        }
-        savedViewFiltersRestoredRef.current = true;
-        savedViewMetaRef.current = {
-            sort: savedView.sort ?? CONSULTANT_DEFAULT_SAVED_VIEW.sort,
-            density: savedView.density ?? CONSULTANT_DEFAULT_SAVED_VIEW.density
-        };
-        const storedFilters = savedView?.filters;
-        if (storedFilters && Object.keys(storedFilters).length > 0) {
-            setActiveFilters(storedFilters);
-        }
-        savedViewPersistReadyRef.current = true;
-    }, [savedView]);
-
-    useEffect(() => {
-        if (!savedViewPersistReadyRef.current) {
-            return undefined;
-        }
-
-        if (savedViewPersistTimerRef.current) {
-            clearTimeout(savedViewPersistTimerRef.current);
-        }
-
-        savedViewPersistTimerRef.current = setTimeout(() => {
-            savedViewPersistTimerRef.current = null;
-            setSavedView({
-                viewMode,
-                filters: activeFilters,
-                sort: savedViewMetaRef.current.sort,
-                density: savedViewMetaRef.current.density
-            });
-        }, USER_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
-
-        return () => {
-            if (savedViewPersistTimerRef.current) {
-                clearTimeout(savedViewPersistTimerRef.current);
-                savedViewPersistTimerRef.current = null;
-            }
-        };
-    }, [viewMode, activeFilters, setSavedView]);
     const [peekConsultant, setPeekConsultant] = useState(null);
 
     const loadProfessionalTypeCodes = useCallback(async() => {

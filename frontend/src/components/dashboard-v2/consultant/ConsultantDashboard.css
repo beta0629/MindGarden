@@ -30,6 +30,12 @@
   gap: var(--mg-layout-grid-gap, 1rem);
 }
 
+@media (min-width: 768px) and (max-width: 1279px) {
+  .consultant-dashboard-v2__kpi-row.mg-v2-content-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (min-width: 1280px) {
   .consultant-dashboard-v2__kpi-row.mg-v2-content-kpi-row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -457,6 +463,7 @@
 .consultant-dashboard-v2__chart-bar {
   width: 100%;
   max-width: var(--mg-chart-bar-max-width, 2rem);
+  height: var(--chart-bar-height, 4%);
   background-color: var(--mg-color-info-100);
   border-radius: var(--mg-radius-sm, 0.25rem) var(--mg-radius-sm, 0.25rem) 0 0;
   transition: height 0.3s ease, background-color 0.2s ease;
@@ -481,4 +488,80 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ===== Dark Cascade (spec §5.3 · ClientDashboard 패턴 정합) ===== */
+[data-theme="dark"] .mg-v2-ad-b0kla.consultant-dashboard-v2 {
+  background: var(--mg-color-background-main);
+}
+
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-section--card,
+[data-theme="dark"] .consultant-quick-action-bar__inner,
+[data-theme="dark"] .mg-v2-next-consultation-card,
+[data-theme="dark"] .mg-v2-urgent-clients-section {
+  background: var(--mg-color-surface-main);
+  border-color: var(--mg-color-border-main);
+}
+
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-kpi-card {
+  background: var(--mg-color-surface-main);
+  border-color: var(--mg-color-border-main);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-section__title,
+[data-theme="dark"] .consultant-quick-action-bar__title,
+[data-theme="dark"] .mg-v2-alert__text-title,
+[data-theme="dark"] .mg-v2-next-consultation-card__title,
+[data-theme="dark"] .mg-v2-urgent-client-card__name,
+[data-theme="dark"] .consultant-dashboard-v2__chart-empty-text {
+  color: var(--mg-color-text-main);
+}
+
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-section__subtitle,
+[data-theme="dark"] .consultant-dashboard-list-section__empty,
+[data-theme="dark"] .consultant-dashboard-list-section__loading,
+[data-theme="dark"] .mg-v2-alert__text-subtitle,
+[data-theme="dark"] .mg-v2-info-block__label,
+[data-theme="dark"] .mg-v2-urgent-client-card__meta,
+[data-theme="dark"] .mg-v2-urgent-client-card__issue,
+[data-theme="dark"] .consultant-dashboard-v2__chart-label,
+[data-theme="dark"] .consultant-dashboard-v2__chart-empty-icon {
+  color: var(--mg-color-text-secondary-dark, var(--mg-color-text-secondary));
+}
+
+[data-theme="dark"] .consultant-dashboard-tenant-alert {
+  background: var(--mg-color-warning-900, var(--mg-color-warning-50));
+  border-color: var(--mg-color-warning-main);
+  color: var(--mg-color-text-main);
+}
+
+[data-theme="dark"] .consultant-dashboard-v2__chart-bar {
+  background-color: var(--mg-color-primary-dark, var(--mg-color-info-100));
+}
+
+[data-theme="dark"] .consultant-dashboard-v2__chart-bar--active {
+  background-color: var(--mg-color-primary-main);
+}
+
+[data-theme="dark"] .consultant-dashboard-v2__chart-empty.mg-v2-ad-b0kla__chart-empty {
+  color: var(--mg-color-text-secondary-dark, var(--mg-color-text-secondary));
+}
+
+[data-theme="dark"] .consultant-dashboard-list-section__footer {
+  border-top-color: var(--mg-color-border-main);
+}
+
+[data-theme="dark"] .consultant-dashboard-list-section__view-all {
+  color: var(--mg-color-primary-main);
+}
+
+[data-theme="dark"] .mg-v2-urgent-client-card {
+  background: var(--mg-color-background-main);
+  border-color: var(--mg-color-border-main);
+}
+
+[data-theme="dark"] .mg-v2-urgent-client-card:hover {
+  background: var(--mg-color-surface-main);
+  border-color: var(--mg-color-error-main);
 }

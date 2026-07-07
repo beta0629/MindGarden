@@ -53,3 +53,22 @@
 .mg-v2-search-input__field:focus {
   outline: none;
 }
+
+/* Phase 1 Set C — GNB 검색바 다크 모드 */
+[data-theme="dark"] .mg-v2-search-input {
+  background: var(--mg-v2-color-surface-raised, var(--mg-color-surface-main));
+  border-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+}
+
+[data-theme="dark"] .mg-v2-search-input:focus-within {
+  border-color: var(--mg-v2-color-border-focus, var(--mg-color-primary-main));
+}
+
+[data-theme="dark"] .mg-v2-search-input__icon {
+  color: var(--mg-v2-color-text-tertiary, var(--mg-color-text-tertiary));
+}
+
+[data-theme="dark"] .mg-v2-search-input__field::placeholder {
+  color: var(--mg-v2-color-text-tertiary, var(--mg-color-text-tertiary));
+}

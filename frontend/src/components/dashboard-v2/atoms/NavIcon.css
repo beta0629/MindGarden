@@ -71,3 +71,20 @@
 .mg-v2-nav-icon__lucide svg {
   display: block;
 }
+
+/* Phase 1 Set C — GNB 아이콘 버튼 다크 모드 */
+[data-theme="dark"] .mg-v2-nav-icon,
+[data-theme="dark"] .mg-v2-nav-icon.mg-button.mg-button--outline {
+  background: var(--mg-v2-color-surface-raised, var(--mg-color-surface-main));
+  border-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
+}
+
+[data-theme="dark"] .mg-v2-nav-icon:hover:not(:disabled),
+[data-theme="dark"] .mg-v2-nav-icon.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background: var(--mg-v2-color-state-hover, var(--mg-color-bg-hover));
+}
+
+[data-theme="dark"] .mg-v2-nav-icon__lucide {
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
+}

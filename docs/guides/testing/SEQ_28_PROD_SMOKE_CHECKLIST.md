@@ -2,7 +2,7 @@
 
 **역할**: ADMIN (ERP·어드민 LNB 접근 권한)  
 **환경**: prod — `https://mindgarden.core-solution.co.kr`  
-**배포 기준**: main `f3fe6a323` · Seq28 batch `061edcc0f` · prod BE run `28788111673` · prod FE run `28838028601`  
+**배포 기준**: main `37f50830b` (또는 f3fe6a323 batch + 37f50830b docs) · prod FE run `28838028601`  
 **선행**: 브라우저 개발자 도구 **콘솔·네트워크** 열고 진행. 치명 오류(빨간 스택) 없을 것.
 
 **참조**: [ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST](../../project-management/2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) · [Compact Row 스펙](../../design-system/SCREEN_SPEC_INTEGRATED_SCHEDULE_COMPACT_ROW.md)
@@ -29,7 +29,7 @@
 
 **Sign-off 28c + 28f-lnb**
 
-- [ ] A1~A5 통과 — 휴면 LNB·페이지·AdminCommonLayout prod OK
+- [x] A1~A5 통과 — 휴면 LNB·페이지·AdminCommonLayout prod OK
 
 ---
 
@@ -47,7 +47,7 @@
 
 **Sign-off 28f**
 
-- [ ] B1~B5 통과 — compact row 토글 ON만·기본 comfortable prod OK
+- [x] B1~B5 통과 — compact row 토글 ON만·기본 comfortable prod OK
 
 ---
 
@@ -86,9 +86,9 @@
 
 **Sign-off 28b · 28d · 28e**
 
-- [ ] C1 내담자/상담사/스태프 중 **1탭 이상** persist OK
-- [ ] C2 매칭 table↔card persist OK
-- [ ] C3 ERP 재무 table↔card persist OK
+- [x] C1 내담자/상담사/스태프 중 **1탭 이상** persist OK
+- [x] C2 매칭 table↔card persist OK
+- [x] C3 ERP 재무 table↔card persist OK
 
 ---
 
@@ -120,9 +120,9 @@
 
 **Sign-off 28g-p2~p4**
 
-- [ ] D1 client/consultant/staff 중 **1탭 이상** saved view F5 restore OK
-- [ ] D2 매칭 필터+viewMode F5 restore OK
-- [ ] D3 ERP 재무 필터+viewMode F5 restore OK
+- [x] D1 client/consultant/staff 중 **1탭 이상** saved view F5 restore OK
+- [x] D2 매칭 필터+viewMode F5 restore OK
+- [x] D3 ERP 재무 필터+viewMode F5 restore OK
 
 ---
 
@@ -144,9 +144,9 @@
 
 | 항목 | Seq | 완료 |
 |------|-----|------|
-| 휴면 LNB + AdminCommonLayout 페이지 | 28c · 28f-lnb | [ ] |
-| 통합일정 compact row (ON만·기본 comfortable) | 28f | [ ] |
-| viewMode persist (user / mapping / ERP) | 28b · 28d · 28e | [ ] |
-| Saved View silent persist (client/consultant/staff/mapping/ERP) | 28g-p2~p4 | [ ] (사용자 sign-off 대기) |
+| 휴면 LNB + AdminCommonLayout 페이지 | 28c · 28f-lnb | [x] |
+| 통합일정 compact row (ON만·기본 comfortable) | 28f | [x] |
+| viewMode persist (user / mapping / ERP) | 28b · 28d · 28e | [x] |
+| Saved View silent persist (client/consultant/staff/mapping/ERP) | 28g-p2~p4 | [x] |
 
-**검수자 / 일자**: _______________
+**검수자 / 일자**: 사용자 / 2026-07-07

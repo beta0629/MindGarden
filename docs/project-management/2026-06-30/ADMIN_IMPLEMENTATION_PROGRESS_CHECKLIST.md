@@ -3,7 +3,7 @@
 **작성일**: 2026-07-01  
 **담당**: core-planner (갱신 주체)  
 **거버넌스**: [`ADMIN_IMPLEMENTATION_GOVERNANCE.md`](./ADMIN_IMPLEMENTATION_GOVERNANCE.md)  
-**Good SHA**: develop `3f636c414` · prod `4a2cd67a0` · rollback 금지 패턴 `0676dfa2d`
+**Good SHA**: develop `37f50830b` · prod `37f50830b` · rollback 금지 패턴 `0676dfa2d`
 
 **상태 범례**: ☐ pending · ◐ in_progress · ☑ done
 
@@ -109,7 +109,8 @@
 | V3+ dev FE deploy (28g 포함) | 2026-07-07 | ☑ dev FE run `28833732369` SUCCESS · ref develop `97436d432` |
 | V3+ 28g-p3 dev+prod FE deploy | 2026-07-07 | ☑ dev FE run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE run `28837307167` SUCCESS · main `c8f5a2cc6` |
 | V3+ 28g-p4 dev+prod FE deploy | 2026-07-07 | ☑ dev FE run `28838011403` · prod FE run `28838028601` · main/develop `f3fe6a323` · PR #466 merged |
-| **다음 (pending)** | — | **28g-p3/p4 F5 restore 검수** · **Seq 28 prod smoke sign-off** ([체크리스트](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md)) · 28h D-5(감사 오케스트레이션) · 네이버 Phase 0 보류 |
+| V3+ Seq 28 smoke sign-off | 2026-07-07 | ☑ 사용자 prod A~D 검수 OK · prod FE `28838028601` |
+| **다음 (pending)** | — | **28h D-5**(감사 오케스트레이션) · 네이버 Phase 0 보류 |
 
 ---
 
@@ -147,3 +148,4 @@
 | 2026-07-07 | 28g-p4 | PR #466 OPEN — FinancialManagement saved view silent persist · route `/erp/financial` · pageId `erp.financial.transactions` |
 | 2026-07-07 | 28g-p3-deploy | dev FE deploy ☑ — run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE deploy ☑ — run `28837307167` SUCCESS · main `c8f5a2cc6` · PR #465 merged · route `/admin/mapping-management` |
 | 2026-07-07 | 28g-p4-deploy | PR #466 merged · FinancialManagement saved view silent persist · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` · route `/erp/financial` · pageId `erp.financial.transactions` |
+| 2026-07-07 | 28-smoke | Seq 28 prod smoke sign-off ☑ — 사용자 A~D 검수 OK · good SHA `37f50830b` · prod FE run `28838028601` · [체크리스트](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md) |

@@ -153,17 +153,17 @@ describe('BranchDeprecationNotice (G-14 Phase 3 B0KlA)', () => {
   });
 });
 
-describe('WellnessManagement (G-14 Phase 3 header dedup)', () => {
-  test('ContentHeader title 생략, AdminCommonLayout title·loading 유지', async () => {
+describe('WellnessManagement (G-14 P0 ContentHeader title SSOT)', () => {
+  test('ContentHeader h1 title·ACL title 생략·loading 유지', async () => {
     const { container } = render(<WellnessManagement />);
 
     const layout = screen.getByTestId('admin-common-layout');
-    expect(layout).toHaveAttribute('data-title', '웰니스 알림 관리');
+    expect(layout).not.toHaveAttribute('data-title', '웰니스 알림 관리');
     expect(layout).toHaveAttribute('data-loading', 'true');
 
     const header = screen.getByTestId('content-header');
-    expect(header).toHaveAttribute('data-has-title', 'false');
-    expect(header.querySelector('h1')).not.toBeInTheDocument();
+    expect(header).toHaveAttribute('data-has-title', 'true');
+    expect(header.querySelector('h1')).toHaveTextContent('웰니스 알림 관리');
     expect(container.querySelector('.mg-v2-ad-b0kla')).toBeInTheDocument();
   });
 });

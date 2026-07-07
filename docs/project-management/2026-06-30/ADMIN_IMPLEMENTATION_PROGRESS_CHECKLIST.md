@@ -3,7 +3,7 @@
 **작성일**: 2026-07-01  
 **담당**: core-planner (갱신 주체)  
 **거버넌스**: [`ADMIN_IMPLEMENTATION_GOVERNANCE.md`](./ADMIN_IMPLEMENTATION_GOVERNANCE.md)  
-**Good SHA**: develop `eacb047d5` · prod `ef19718e2` (28g-p5/p5b) · prior prod `37f50830b` (28 smoke A~D) · rollback 금지 패턴 `0676dfa2d`
+**Good SHA**: develop `c65d9f326` (#523 hotfix) · develop `cb9ca7249` (parallel-4 #506~#522) · prior develop `56d93c61f` (parallel-4 pre-#522) · prior develop `6a38a97b5` (parallel-3) · prod `ef19718e2` (28g-p5/p5b) · prior prod `37f50830b` (28 smoke A~D) · rollback 금지 패턴 `0676dfa2d` · **prod sign-off 없음** · **prod 금지** · **Phase2 (G-10 BE) 미착수** · **pending: parallel-4 dev smoke 사용자 검수**
 
 **상태 범례**: ☐ pending · ◐ in_progress · ☑ done
 
@@ -93,6 +93,12 @@
 | V3+-coder | dark-c2 | Dark mode C-2 1차 (ContentHeader + B0KlA + GNB) | coder | designer | g14-header ☑ | #484 GNB/NavIcon/SearchInput tokens · #486 ContentHeader+B0KlA container `[data-theme="dark"]` cascade | `eacb047d5` | ☑ done | PR #484+#486 merged · **dev 배포 후 3화면 사용자 검수 pending** |
 | V3+-coder | dark-c3 | Dark mode C-3 global (P0 6라우트) | coder | designer | g14-p3 ☑ | 모달·필터툴바·테이블·폼 `[data-theme="dark"]` cascade 전역 rollout; P0 6라우트; prod deploy/sign-off 금지 | `947fb4f47` | ☑ done | PR #493 merged · [roadmap](./ADMIN_DARK_MODE_C3_ROADMAP.md) Phase 4A · dev only |
 | V3+-coder | dark-c3b | Dark mode C-3b P1 (sessions·wellness·common-codes) | coder | designer | dark-c3 ☑ | P1 3라우트 dark cascade; Jest adminDarkMode.cascade P1 확장; prod 금지 | TBD | ◐ in_progress | routes `/admin/sessions` · `/admin/wellness` · `/admin/common-codes` |
+| V3+-design/coder | dark-c3-p1j-l | Track A — Dark mode C-3 P1-j~l (ERP budget/refund·salary/dashboard·billing) | designer+coder | designer | parallel-3 ☑ · baseline `6a38a97b5` | P1-j~l dark cascade; spec [`SCREEN_SPEC_ADMIN_DARK_MODE_C3_P1J_N.md`](../../design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C3_P1J_N.md); **prod 금지** | `ece81caf7` → merge | ☑ done | PR #506+#508+#509+#510+#512 merged · develop `ece81caf7` → 후속 merge · **prod 금지** |
+| V3+-design/coder | commercial-p2-g5-02-g1-02 | Track B — Commercial P2 G5-02 + G1-02 (TenantCommonCodeManager·Dashboard widgets) | designer+coder | designer | g5-01 ☑ · baseline `6a38a97b5` | G5-02 ListTableView/density SSOT · G1-02 KPI 4-grid·Pipeline·Pending Lists Table; routes `/admin/tenant-common-codes` · `/admin/dashboard`; **prod 금지** | `c65d9f326` | ☑ done | PR #511+#519+#521+#523 merged · develop `c65d9f326` · **prod 금지** |
+| V3+-coder | g14-header-p2 | Track C — G-14 header dedup P2 (6 routes) | coder | designer | g14-header ☑ · baseline `6a38a97b5` | ContentHeader `title={null}`; ACL `title` SSOT; routes sessions·notifications·common-codes·system-config·accounts·dormant-users; **prod 금지** | `cb9ca7249` | ☑ done | PR #515+#522 merged · develop `cb9ca7249` · **prod 금지** |
+| V3+-tester | parallel-4-jest | Parallel batch 4 Jest gate (40177956 Phase 3) | tester | tester | 3-track coder ☑ | Jest **58/58 PASS** (Track A 28 + B 17 + C 13); blocking 0; dev only | `c65d9f326` | ☑ done | develop `c65d9f326` · **prod 금지** |
+| V3+-deploy | parallel-4-dev-deploy | develop FE deploy (40177956 Phase 4) | deployer | deployer | parallel-4-jest ☑ | dev deploy run ID · ref `c65d9f326`; **prod 금지** | `c65d9f326` | ☑ done | dev FE run `28855153365` SUCCESS (workflow_dispatch) · bundle `main.0ef5994d.js` · ref `c65d9f326` |
+| V3+-user | parallel-4-dev-smoke | 사용자 dev 검수 (parallel-4 3트랙) | 사용자 | 사용자 | parallel-4-deploy-dev ☑ | dark P1-j~l · G5-02/G1-02 · header P2 6라우트 dev 스크린 | — | ☐ pending | **pending dev smoke 사용자 검수** |
 | V3+-tester | 28g-p6-p8-jest | Saved View named UI Jest gates (28g-p6~p8) | tester | tester | 28g-p8b ☑ | consultant/staff/mapping/integrated/erp savedView named views tests PASS | `eacb047d5` | ☑ done | PR #487 merged |
 | V3+-coder | 28g-p9a | Saved View session named views UI | coder | designer | 28g-p8b ☑ | SessionManagement SavedViewControls; pageId `admin.session-management` | `309dc5af6` | ☑ done | PR #489 merged · route `/admin/sessions` |
 | V3+-coder | 28g-p9b | Saved View ERP budget named views UI | coder | designer | 28g-p9a ☑ | BudgetManagement SavedViewControls; pageId `erp.budget.management` | `309dc5af6` | ☑ done | PR #490 merged · route `/erp/budget` |
@@ -132,7 +138,12 @@
 | V3+ G-14 pilot + header dedup | 2026-07-07 | ☑ PR #468+#478+#479+#476+#485+#482 · develop `eacb047d5` |
 | V3+ dark mode C-2 1차 | 2026-07-07 | ☑ PR #484+#486 · develop `eacb047d5` |
 | V3+ 28g-p6~p8 Jest gates | 2026-07-07 | ☑ PR #487 · develop `eacb047d5` |
-| **다음 (pending)** | — | **dark-c3 Phase 4** — [C-3 roadmap](./ADMIN_DARK_MODE_C3_ROADMAP.md) 4A design kickoff · dev only (prod 금지) |
+| V3+ parallel-4 3-track coder (40177956 Phase 2) | 2026-07-07 | ☑ Track A `dark-c3-p1j-l` (#506+#508+#509+#510+#512) · Track B `commercial-p2-g5-02-g1-02` (#511+#519+#521+#523 → `c65d9f326`) · Track C `g14-header-p2` (#515+#522 → `cb9ca7249`) · baseline `6a38a97b5` · **prod 금지** |
+| V3+ parallel-4 Jest gate (40177956 Phase 3) | 2026-07-07 | ☑ Jest **58/58 PASS** (A 28 + B 17 + C 13) · blocking 0 · develop `c65d9f326` · **prod 금지** |
+| V3+ parallel-4 dev FE deploy (40177956 Phase 4) | 2026-07-07 | ☑ dev FE run `28855153365` SUCCESS · ref `c65d9f326` · **prod 금지** |
+| V3+ parallel-4 dev smoke (사용자) | — | ☐ pending — dark P1-j~l · G5-02/G1-02 · header P2 6라우트 |
+| **Phase2 (G-10 BE) 회기·결제 상태 정합** | — | ☐ **미착수** |
+| **다음 (pending)** | — | **parallel-4 dev smoke 사용자 검수** · dark-c3b P1(sessions·wellness·common-codes) ◐ · **prod deploy/sign-off 금지** |
 
 ---
 
@@ -183,3 +194,6 @@
 | 2026-07-07 | 28g-p9 | **#489** session Saved View ☑ · **#490** budget+refund Saved View ☑ · develop `309dc5af6` |
 | 2026-07-07 | 28g-p9-jest | Phase 5C-1 tester gate ☑ — Jest 3 suites 12 PASS · dev smoke budget+refund F5 ☑ · session Error Boundary pending |
 | 2026-07-07 | 5 | P0 SidePeekShell·DensityToggle SSOT 중복 검토 ☑ — [제안서](./ADMIN_COMPONENT_SSOT_SIDEPEEK_DENSITY_REVIEW.md) · 중복 0건 · PR-H1 문서 정렬·PR-H2 peek layout 패턴 후속 |
+| 2026-07-07 | 40177956-p2 | **40177956 Phase 2** 3-track coder ☑ — baseline develop `6a38a97b5` → **Track A** `dark-c3-p1j-l` (#506+#508+#509+#510+#512 · `ece81caf7`→merge) · **Track B** `commercial-p2-g5-02-g1-02` (#511+#519+#521+#523 · `c65d9f326`) · **Track C** `g14-header-p2` (#515+#522 · `cb9ca7249`) · **prod 금지** |
+| 2026-07-07 | 40177956-p3 | **40177956 Phase 3** tester gate ☑ — Jest **58/58 PASS** (Track A 28 + B 17 + C 13) · blocking 0 · develop `c65d9f326` · **prod 금지** |
+| 2026-07-07 | 40177956-p4 | **40177956 Phase 4** dev FE deploy ☑ — run `28855153365` SUCCESS · ref `c65d9f326` · **prod 금지** · **dev smoke 사용자 검수 pending** |

@@ -1,6 +1,7 @@
 /**
  * 스케줄 관리 메인 페이지 - 아토믹 구조 래퍼
  * AdminDashboardV2와 동일한 레이아웃(GNB+LNB) 사용
+ * G-14 P0: ACL title 생략, ContentHeader SSOT는 페이지 본문.
  *
  * @author Core Solution
  * @since 2024-12-19
@@ -25,7 +26,7 @@ import { canRegisterSchedulerByRoleString } from '../../utils/scheduleRoleGuards
 
 const SchedulePage = ({ user: propUser }) => {
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
-  
+
   const [userRole, setUserRole] = useState(USER_ROLES.CLIENT);
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +77,6 @@ const SchedulePage = ({ user: propUser }) => {
   if (loading || sessionLoading) {
     return (
       <AdminCommonLayout
-        title="스케줄 관리"
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         loading={true}
@@ -88,7 +88,6 @@ const SchedulePage = ({ user: propUser }) => {
   if (!displayUser) {
     return (
       <AdminCommonLayout
-        title="스케줄 관리"
         searchValue={searchValue}
         onSearchChange={setSearchValue}
       >
@@ -120,7 +119,6 @@ const SchedulePage = ({ user: propUser }) => {
   if (!hasSchedulePermission()) {
     return (
       <AdminCommonLayout
-        title="스케줄 관리"
         searchValue={searchValue}
         onSearchChange={setSearchValue}
       >
@@ -139,53 +137,57 @@ const SchedulePage = ({ user: propUser }) => {
   }
 
   const pageContent = (
-    <ContentArea>
-      <ContentHeader 
-        title="스케줄 통합 관리" 
-        subtitle="전체 상담사 및 내담자의 일정을 한눈에 확인하고 관리하세요."
-      />
-      
-      {isScheduleRegisterActor() && (
-        <div className="mg-v2-mb-lg">
-          <TodayStats />
-        </div>
-      )}
+    <div className="mg-v2-ad-b0kla">
+      <div className="mg-v2-ad-b0kla__container">
+        <ContentArea ariaLabel="스케줄 통합 관리 콘텐츠">
+          <ContentHeader
+            title="스케줄 통합 관리"
+            subtitle="전체 상담사 및 내담자의 일정을 한눈에 확인하고 관리하세요."
+            titleId="schedule-page-title"
+          />
 
-      <div className="mg-v2-schedule-grid">
-        {/* 좌측 캘린더 영역 (메인) */}
-        <div className="mg-v2-schedule-grid__main">
-          <ContentSection noCard={true} className="mg-v2-schedule-content-section">
-            <div
-              className="mg-v2-schedule-grid__main-inner"
-              data-calendar-skin="integrated"
-              data-layout-context="schedule-page"
-            >
-              <UnifiedScheduleComponent 
-                user={displayUser}
-                userRole={userRole}
-                userId={isScheduleRegisterActor() ? 0 : userId}
-                integratedMonthEventLayout
-                calendarSkin="integrated"
-              />
+          {isScheduleRegisterActor() && (
+            <div className="mg-v2-mb-lg">
+              <TodayStats />
             </div>
-          </ContentSection>
-        </div>
+          )}
 
-        {/* 우측 통계/현황 영역 (사이드바) */}
-        {isScheduleRegisterActor() && (
-          <div className="mg-v2-schedule-grid__sidebar">
-            <ContentSection title="상담사 현황" noCard={true}>
-              <ConsultantStatus />
-            </ContentSection>
+          <div className="mg-v2-schedule-grid">
+            {/* 좌측 캘린더 영역 (메인) */}
+            <div className="mg-v2-schedule-grid__main">
+              <ContentSection noCard={true} className="mg-v2-schedule-content-section">
+                <div
+                  className="mg-v2-schedule-grid__main-inner"
+                  data-calendar-skin="integrated"
+                  data-layout-context="schedule-page"
+                >
+                  <UnifiedScheduleComponent
+                    user={displayUser}
+                    userRole={userRole}
+                    userId={isScheduleRegisterActor() ? 0 : userId}
+                    integratedMonthEventLayout
+                    calendarSkin="integrated"
+                  />
+                </div>
+              </ContentSection>
+            </div>
+
+            {/* 우측 통계/현황 영역 (사이드바) */}
+            {isScheduleRegisterActor() && (
+              <div className="mg-v2-schedule-grid__sidebar">
+                <ContentSection title="상담사 현황" noCard={true}>
+                  <ConsultantStatus />
+                </ContentSection>
+              </div>
+            )}
           </div>
-        )}
+        </ContentArea>
       </div>
-    </ContentArea>
+    </div>
   );
 
   return (
     <AdminCommonLayout
-      title="스케줄 관리"
       searchValue={searchValue}
       onSearchChange={setSearchValue}
     >

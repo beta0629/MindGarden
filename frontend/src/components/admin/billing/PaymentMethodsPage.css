@@ -107,3 +107,27 @@
   justify-content: flex-end;
   gap: var(--mg-spacing-sm, var(--mg-v2-space-12));
 }
+
+/* Admin Dark Mode C-3 P1-l — Payment Methods cascade */
+[data-theme="dark"] .mg-admin-billing-payment-methods__card {
+  background: var(--ad-b0kla-card-bg);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-admin-billing-payment-methods__card:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .mg-admin-billing-payment-methods__card-title-row,
+[data-theme="dark"] .mg-admin-billing-payment-methods__card-title {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-admin-billing-payment-methods__card-last4,
+[data-theme="dark"] .mg-admin-billing-payment-methods__card-body dt {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-admin-billing-payment-methods__card-body dd {
+  color: var(--mg-v2-form-text);
+}

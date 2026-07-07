@@ -7,12 +7,11 @@ import {
   FM_TRANSACTION_DEFAULT_VIEW_MODE,
   FM_TRANSACTION_VIEW_MODE_OPTIONS
 } from '../../../constants/financialManagementStrings';
+import { FM_SAVED_VIEW_PAGE_ID } from '../../../constants/financialManagementSavedViewConstants';
 import {
   buildViewModeStorageKey,
   useViewModePreference
 } from '../../../hooks/useViewModePreference';
-
-const FM_TRANSACTION_PAGE_ID = 'erp.financial.transactions';
 const FM_TRANSACTION_ALLOWED_MODES = FM_TRANSACTION_VIEW_MODE_OPTIONS.map((opt) => opt.value);
 
 describe('FinancialManagement 거래 목록 기본 보기 (G3-01)', () => {
@@ -31,7 +30,7 @@ describe('FinancialManagement 거래 목록 기본 보기 (G3-01)', () => {
   });
 
   it('localStorage에 저장된 viewMode를 복원한다 (28e)', () => {
-    const storageKey = buildViewModeStorageKey({}, FM_TRANSACTION_PAGE_ID);
+    const storageKey = buildViewModeStorageKey({}, FM_SAVED_VIEW_PAGE_ID);
     localStorage.setItem(storageKey, 'card');
 
     const { result } = renderHook(() =>

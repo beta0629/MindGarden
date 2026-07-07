@@ -69,6 +69,12 @@ import {
   resolveViewModeStorageScope,
   useViewModePreference
 } from '../../hooks/useViewModePreference';
+import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import {
+  FM_SAVED_VIEW_PAGE_ID,
+  FM_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+  buildFinancialManagementDefaultSavedView
+} from '../../constants/financialManagementSavedViewConstants';
 import {
   FM_PAGE_TITLE,
   FM_SESSION,
@@ -124,6 +130,10 @@ const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
 const TRANSACTION_VIEW_MODE_OPTIONS = FM_TRANSACTION_VIEW_MODE_OPTIONS;
 
 const FINANCIAL_PAGE_TITLE_ID = 'financial-management-page-title';
+
+const FM_DEFAULT_SAVED_VIEW = buildFinancialManagementDefaultSavedView(
+  FM_TRANSACTION_DEFAULT_VIEW_MODE
+);
 
 /** 재무 거래 행 액션 — Lucide 아이콘 크기(디자인 토큰 --icon-size-sm 20px에 맞춤) */
 const FINANCIAL_TX_ICON_SIZE = 20;
@@ -512,10 +522,75 @@ const FinancialManagement = () => {
   }, [filters.dateRange, filters.monthYm, location.pathname, location.search, navigate]);
   
   const { viewMode: transactionViewMode, setViewMode: setTransactionViewMode } = useViewModePreference({
-    storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), 'erp.financial.transactions'),
+    storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), FM_SAVED_VIEW_PAGE_ID),
     defaultMode: FM_TRANSACTION_DEFAULT_VIEW_MODE,
     allowedModes: FM_TRANSACTION_VIEW_MODE_OPTIONS.map((opt) => opt.value)
   });
+  const { savedView, setSavedView } = useSavedViewPreference({
+    pageId: FM_SAVED_VIEW_PAGE_ID,
+    defaultView: FM_DEFAULT_SAVED_VIEW
+  });
+  const savedViewFiltersRestoredRef = useRef(false);
+  const savedViewPersistReadyRef = useRef(false);
+  const savedViewPersistTimerRef = useRef(null);
+  const savedViewMetaRef = useRef({
+    sort: FM_DEFAULT_SAVED_VIEW.sort,
+    density: FM_DEFAULT_SAVED_VIEW.density
+  });
+
+  useEffect(() => {
+    if (savedViewFiltersRestoredRef.current) {
+      return;
+    }
+    savedViewFiltersRestoredRef.current = true;
+    savedViewMetaRef.current = {
+      sort: savedView.sort ?? FM_DEFAULT_SAVED_VIEW.sort,
+      density: savedView.density ?? FM_DEFAULT_SAVED_VIEW.density
+    };
+    const storedFilters = savedView?.filters;
+    if (storedFilters && Object.keys(storedFilters).length > 0) {
+      setFilters((prev) => ({
+        ...prev,
+        ...storedFilters
+      }));
+    }
+    savedViewPersistReadyRef.current = true;
+  }, [savedView]);
+
+  useEffect(() => {
+    if (!savedViewPersistReadyRef.current) {
+      return undefined;
+    }
+
+    if (savedViewPersistTimerRef.current) {
+      clearTimeout(savedViewPersistTimerRef.current);
+    }
+
+    savedViewPersistTimerRef.current = setTimeout(() => {
+      savedViewPersistTimerRef.current = null;
+      setSavedView({
+        viewMode: transactionViewMode,
+        filters: {
+          transactionType: filters.transactionType,
+          category: filters.category,
+          dateRange: filters.dateRange,
+          monthYm: filters.monthYm,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          searchText: filters.searchText
+        },
+        sort: savedViewMetaRef.current.sort,
+        density: savedViewMetaRef.current.density
+      });
+    }, FM_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (savedViewPersistTimerRef.current) {
+        clearTimeout(savedViewPersistTimerRef.current);
+        savedViewPersistTimerRef.current = null;
+      }
+    };
+  }, [transactionViewMode, filters, setSavedView]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState({

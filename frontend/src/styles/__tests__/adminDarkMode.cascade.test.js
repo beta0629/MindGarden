@@ -81,6 +81,11 @@ const C3_P1DIF_PR_C_FILES = [
   'src/components/erp/organisms/ErpDashboardFinanceOrganisms.css'
 ];
 
+const C3_P1J_FILES = [
+  'src/components/erp/BudgetManagementB0KlA.css',
+  'src/components/erp/refund-management/RefundManagement.css'
+];
+
 const C3_P1DIF_ALL_FILES = [
   ...C3_P1DIF_PR_A_FILES,
   ...C3_P1DIF_PR_B_FILES,
@@ -276,6 +281,39 @@ describe('Admin Dark Mode C-3 cascade', () => {
       '/admin/integrated-schedule',
       '/admin/consultation-logs',
       '/erp/financial'
+    ].forEach((route) => {
+      expect(spec).toContain(route);
+    });
+  });
+
+  test('P1-j 컴포넌트 CSS [data-theme="dark"] 블록에 hex 하드코딩 0건', () => {
+    C3_P1J_FILES.forEach((file) => {
+      const css = readCss(file);
+      const darkCss = extractDarkBlocks(css);
+      expect(darkCss.trim().length).toBeGreaterThan(0);
+      expect(darkCss).not.toMatch(HEX_IN_DECLARATION);
+    });
+  });
+
+  test('P1-j CSS 파일에 [data-theme="dark"] cascade 존재', () => {
+    C3_P1J_FILES.forEach((file) => {
+      const css = readCss(file);
+      expect(css).toMatch(/\[data-theme=["']dark["']\]/);
+    });
+  });
+
+  test('SCREEN_SPEC P1-j ERP 라우트가 스펙과 일치', () => {
+    const spec = fs.readFileSync(
+      path.join(
+        REPO_ROOT,
+        'docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C3_P1J_N.md'
+      ),
+      'utf8'
+    );
+
+    [
+      '/erp/budget',
+      '/erp/refund-management'
     ].forEach((route) => {
       expect(spec).toContain(route);
     });

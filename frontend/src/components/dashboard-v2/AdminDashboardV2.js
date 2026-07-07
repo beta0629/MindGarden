@@ -8,17 +8,6 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { getLnbMenus } from '../../utils/menuApi';
-import {
-  deriveGnbQuickNavigateActionsFromLnb,
-  filterBranchAdminLnbItems,
-  filterHiddenAdminLnbItems,
-  getLnbTreeFromResponse,
-  mergeShopAdminLnbItems,
-  mergeSupplementalAdminLnbItems,
-  normalizeLnbTree
-} from '../../utils/lnbMenuUtils';
-import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import useMonthlyConsultantCounts from '../../hooks/useMonthlyConsultantCounts';
 import useCumulativeMissingConsultationLogs from '../../hooks/useCumulativeMissingConsultationLogs';
 import useCumulativeConsultantCounts from '../../hooks/useCumulativeConsultantCounts';
@@ -56,8 +45,8 @@ import {
   UserRound,
   Users
 } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import StatCard from '../ui/Card/StatCard';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import {
   ContentArea,
   ContentHeader,
@@ -95,12 +84,6 @@ import { useDarkMode, DARK_MODE_VALUES } from '../../contexts/DarkModeContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
-import { useResponsive } from '../../hooks/useResponsive';
-import { useBranding } from '../../hooks/useBranding';
-import { getTenantGnbLabel } from '../../utils/tenantDisplayName';
-import { getGnbLogoUrl } from '../../utils/brandingUtils';
-import { DesktopLayout, MobileLayout } from './templates';
-import { DEFAULT_MENU_ITEMS, BREAKPOINT_DESKTOP } from './constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import {
   HIDE_ADMIN_CARD_IDS,
@@ -164,88 +147,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
   const { mode: darkMode, resolved: darkResolved, toggle: toggleDarkMode } = useDarkMode();
   const dashboardUser = propUser || sessionUser;
-  const { brandingInfo, isLoading: isBrandingLoading } = useBranding({
-    autoLoad: Boolean(dashboardUser)
-  });
-  const logoLabel = useMemo(
-    () => getTenantGnbLabel(dashboardUser, brandingInfo),
-    [dashboardUser, brandingInfo]
-  );
-  const logoUrl = useMemo(
-    () => getGnbLogoUrl(brandingInfo),
-    [brandingInfo]
-  );
-  const { windowSize } = useResponsive();
-  const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
 
   const canManageClients = hasRole(USER_ROLES.ADMIN) || hasRole(USER_ROLES.STAFF);
 
-  const { adminShopCatalogEnabled } = useTenantComponentFlags({
-    enabled: Boolean(dashboardUser)
-  });
-  const userRole = dashboardUser?.role;
-
-  const [lnbMenuItems, setLnbMenuItems] = useState(null);
   const [flippedKpiId, setFlippedKpiId] = useState(null);
 
   const handleKpiFlip = useCallback((id) => {
     setFlippedKpiId(prev => prev === id ? null : id);
   }, []);
-
-  /** API LNB 메뉴 후처리: 매칭관리→통합 스케줄 센터 치환, 알림을 세 번째 위치로 정렬 */
-  const normalizeLnbMenuItemsForDashboard = useCallback((items) => {
-    if (!Array.isArray(items) || items.length === 0) return items;
-    const replaced = items.map((item) => {
-      const isMappingManagement =
-        item.to === '/admin/mapping-management' || item.label === '매칭 관리';
-      if (isMappingManagement) {
-        return { ...item, to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, label: '통합 스케줄 센터' };
-      }
-      return item;
-    });
-    const dashboard = replaced.find(
-      (i) => i.to === ADMIN_ROUTES.DASHBOARD || i.label === '대시보드'
-    );
-    const integrated = replaced.find(
-      (i) =>
-        i.to === ADMIN_ROUTES.INTEGRATED_SCHEDULE || i.label === '통합 스케줄 센터'
-    );
-    const alarm = replaced.find(
-      (i) =>
-        i.to === ADMIN_ROUTES.NOTIFICATIONS || i.to === ADMIN_ROUTES.SYSTEM_NOTIFICATIONS || i.label === '알림' || i.label === '알림·메시지 관리'
-    );
-    const rest = replaced.filter(
-      (i) => i !== dashboard && i !== integrated && i !== alarm
-    );
-    return [dashboard, integrated, alarm].filter(Boolean).concat(rest);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    getLnbMenus()
-      .then((res) => {
-        if (cancelled) return;
-        const tree = getLnbTreeFromResponse(res);
-        if (tree && tree.length > 0) {
-          setLnbMenuItems(
-            normalizeLnbMenuItemsForDashboard(
-              filterHiddenAdminLnbItems(
-                filterBranchAdminLnbItems(
-                  mergeShopAdminLnbItems(
-                    mergeSupplementalAdminLnbItems(normalizeLnbTree(tree)),
-                    { adminShopCatalogEnabled, userRole }
-                  )
-                )
-              )
-            )
-          );
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLnbMenuItems(DEFAULT_MENU_ITEMS);
-      });
-    return () => { cancelled = true; };
-  }, [normalizeLnbMenuItemsForDashboard, adminShopCatalogEnabled, userRole]);
 
   const [userPermissions, setUserPermissions] = useState([]);
   const [stats, setStats] = useState({
@@ -948,25 +857,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   }, [logout]);
 
-  const dashboardMenuItems = lnbMenuItems ?? DEFAULT_MENU_ITEMS;
-  const navigateQuickActionsFromLnb = useMemo(
-    () => deriveGnbQuickNavigateActionsFromLnb(dashboardMenuItems),
-    [dashboardMenuItems]
-  );
-
-  const layoutProps = {
-    menuItems: dashboardMenuItems,
-    headerTitle: t('admin:system.title'),
-    logoLabel,
-    logoUrl,
-    logoBrandingLoading: isBrandingLoading,
-    searchValue,
-    onSearchChange: setSearchValue,
-    onBellClick: () => navigate(ADMIN_ROUTES.MESSAGES),
-    onLogout: handleLogout,
-    navigateQuickActionsFromLnb
-  };
-
   const formatGrowthBadge = useCallback((growthRate) => {
     if (growthRate == null || !Number.isFinite(Number(growthRate))) {
       return null;
@@ -1046,6 +936,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     );
 
   const mainContent = (
+    <div className="mg-v2-ad-b0kla" data-testid="admin-dashboard-v2-page">
+      <div className="mg-v2-ad-b0kla__container">
     <ContentArea>
       <ContentHeader
         title={t('admin:dashboard.v2.title')}
@@ -2127,27 +2019,28 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       )}
 
     </ContentArea>
+      </div>
+    </div>
   );
 
-  if (sessionLoading) {
-    return (
-      <div className="admin-dashboard">
-        <div className="admin-dashboard-content">
-          <UnifiedLoading type="inline" text={t('common:dashboard-v2.AdminDashboardV2.t_06e61b86')} />
-        </div>
-      </div>
-    );
-  }
+  const dashboardTitle = t('admin:dashboard.v2.title');
+  const dashboardLoadingText = t('common:dashboard-v2.AdminDashboardV2.t_06e61b86');
 
   return (
-    <div className="mg-v2-ad-b0kla mg-v2-ad-dashboard-v2">
-      {isDesktop ? (
-        <DesktopLayout {...layoutProps}>{mainContent}</DesktopLayout>
-      ) : (
-        <MobileLayout {...layoutProps}>{mainContent}</MobileLayout>
-      )}
+    <>
+      <AdminCommonLayout
+        title={dashboardTitle}
+        loading={sessionLoading || loading}
+        loadingText={dashboardLoadingText}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        onBellClick={() => navigate(ADMIN_ROUTES.MESSAGES)}
+        onLogout={handleLogout}
+      >
+        {mainContent}
+      </AdminCommonLayout>
       <ConfirmModal />
-    </div>
+    </>
   );
 };
 

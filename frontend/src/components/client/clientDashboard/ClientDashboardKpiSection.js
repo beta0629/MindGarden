@@ -9,7 +9,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Calendar, Heart, Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { ContentSection, ContentKpiRow } from '../../dashboard-v2/content';
+import { CLIENT_DASHBOARD_KPI_ROUTES } from '../../../constants/clientDashboardRoutes';
 import { toSafeNumber } from '../../../utils/safeDisplay';
 import {
   CLIENT_DASHBOARD_KPI_SECTION_TEST_ID,
@@ -22,11 +24,9 @@ const KPI_ICON_PROPS = { size: 28, strokeWidth: 2, 'aria-hidden': true };
 const ClientDashboardKpiSection = ({
   remainingSessions,
   thisMonthScheduleCount,
-  unreadMessageCount,
-  onNavigateSessions,
-  onNavigateSchedule,
-  onNavigateMessages
+  unreadMessageCount
 }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const unread = toSafeNumber(unreadMessageCount);
 
@@ -46,7 +46,7 @@ const ClientDashboardKpiSection = ({
             label: t('common:client.ClientDashboard.t_e9792c10'),
             value: toSafeNumber(remainingSessions),
             iconVariant: 'gray',
-            onClick: onNavigateSessions
+            onClick: () => navigate(CLIENT_DASHBOARD_KPI_ROUTES.REMAINING_SESSIONS)
           },
           {
             id: 'thisMonthConsultations',
@@ -54,7 +54,7 @@ const ClientDashboardKpiSection = ({
             label: t('common:client.ClientDashboard.t_4af64dc5'),
             value: toSafeNumber(thisMonthScheduleCount),
             iconVariant: 'blue',
-            onClick: onNavigateSchedule
+            onClick: () => navigate(CLIENT_DASHBOARD_KPI_ROUTES.THIS_MONTH_SESSIONS)
           },
           {
             id: 'unreadMessages',
@@ -64,7 +64,7 @@ const ClientDashboardKpiSection = ({
             iconVariant: 'orange',
             subtitleBadge: unread > 0 ? '새 소식' : null,
             badgeVariant: 'green',
-            onClick: onNavigateMessages
+            onClick: () => navigate(CLIENT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)
           }
         ]}
       />
@@ -75,10 +75,7 @@ const ClientDashboardKpiSection = ({
 ClientDashboardKpiSection.propTypes = {
   remainingSessions: PropTypes.number,
   thisMonthScheduleCount: PropTypes.number,
-  unreadMessageCount: PropTypes.number,
-  onNavigateSessions: PropTypes.func.isRequired,
-  onNavigateSchedule: PropTypes.func.isRequired,
-  onNavigateMessages: PropTypes.func.isRequired
+  unreadMessageCount: PropTypes.number
 };
 
 export default ClientDashboardKpiSection;

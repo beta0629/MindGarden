@@ -8,10 +8,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import { ContentSection } from '../../dashboard-v2/content';
 import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
+import { CLIENT_DASHBOARD_KPI_ROUTES } from '../../../constants/clientDashboardRoutes';
 import {
   CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TEST_ID,
   CLIENT_NEXT_SECTION_DESC,
@@ -25,9 +27,11 @@ import { formatScheduleCardDateTime } from './scheduleUtils';
 const outlineBtnClass = buildErpMgButtonClassName({ variant: 'outline', loading: false });
 const primaryBtnClass = buildErpMgButtonClassName({ variant: 'primary', loading: false });
 
-const ClientDashboardUpcomingSection = ({ schedules, onNavigateSchedule }) => {
+const ClientDashboardUpcomingSection = ({ schedules }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const cards = [schedules[0], schedules[1]].filter(Boolean);
+  const goSchedule = () => navigate(CLIENT_DASHBOARD_KPI_ROUTES.THIS_MONTH_SESSIONS);
 
   return (
     <ContentSection
@@ -69,7 +73,7 @@ const ClientDashboardUpcomingSection = ({ schedules, onNavigateSchedule }) => {
                   <MGButton
                     variant="primary"
                     className={primaryBtnClass}
-                    onClick={onNavigateSchedule}
+                    onClick={goSchedule}
                     preventDoubleClick={false}
                   >
                     {CLIENT_SCHEDULE_VIEW_LABEL}
@@ -78,7 +82,7 @@ const ClientDashboardUpcomingSection = ({ schedules, onNavigateSchedule }) => {
                     <MGButton
                       variant="outline"
                       className={outlineBtnClass}
-                      onClick={onNavigateSchedule}
+                      onClick={goSchedule}
                       preventDoubleClick={false}
                     >
                       자세히
@@ -95,7 +99,7 @@ const ClientDashboardUpcomingSection = ({ schedules, onNavigateSchedule }) => {
           <MGButton
             variant="primary"
             className={`${primaryBtnClass} client-dashboard__schedule-empty-cta`}
-            onClick={onNavigateSchedule}
+            onClick={goSchedule}
             preventDoubleClick={false}
           >
             {CLIENT_SCHEDULE_VIEW_LABEL}
@@ -107,8 +111,7 @@ const ClientDashboardUpcomingSection = ({ schedules, onNavigateSchedule }) => {
 };
 
 ClientDashboardUpcomingSection.propTypes = {
-  schedules: PropTypes.arrayOf(PropTypes.object),
-  onNavigateSchedule: PropTypes.func.isRequired
+  schedules: PropTypes.arrayOf(PropTypes.object)
 };
 
 export default ClientDashboardUpcomingSection;

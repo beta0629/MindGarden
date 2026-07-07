@@ -7,7 +7,7 @@
  * @since 2025-02-22
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ActionBar from '../../../common/ActionBar';
 import ActionBarButton from '../../../common/ActionBarButton';
 import { SidePeekShell } from '../../../common';
@@ -34,6 +34,20 @@ import '../../../../styles/dashboard-tokens-extension.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
+import {
+  buildViewModeStorageKey,
+  resolveViewModeStorageScope,
+  useViewModePreference
+} from '../../../../hooks/useViewModePreference';
+import { useSavedViewPreference } from '../../../../hooks/useSavedViewPreference';
+import {
+  MAPPING_LIST_DEFAULT_VIEW_MODE,
+  MAPPING_MANAGEMENT_DEFAULT_FILTER_STATUS,
+  MAPPING_MANAGEMENT_DEFAULT_SEARCH_TERM,
+  MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+  MAPPING_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+  buildMappingManagementDefaultSavedView
+} from '../../../../constants/mappingManagementSavedViewConstants';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -43,6 +57,10 @@ const MAPPING_MGMT_PEEK_LAYOUT_CLASS = 'mapping-management__peek-layout';
 const MAPPING_MGMT_PEEK_LAYOUT_OPEN_MODIFIER = 'mapping-management__peek-layout--peek-open';
 const MAPPING_MGMT_MAIN_REGION_CLASS = 'mapping-management__main-region';
 
+const MAPPING_LIST_ALLOWED_VIEW_MODES = ['card', 'table', 'calendar'];
+const MAPPING_DEFAULT_SAVED_VIEW = buildMappingManagementDefaultSavedView(
+  MAPPING_LIST_DEFAULT_VIEW_MODE
+);
 
 const MappingManagementPage = () => {
   const { t } = useTranslation();
@@ -52,8 +70,75 @@ const MappingManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedMapping, setSelectedMapping] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState(MAPPING_MANAGEMENT_DEFAULT_FILTER_STATUS);
+  const [searchTerm, setSearchTerm] = useState(MAPPING_MANAGEMENT_DEFAULT_SEARCH_TERM);
+  const { viewMode, setViewMode } = useViewModePreference({
+    storageKey: buildViewModeStorageKey(
+      resolveViewModeStorageScope(),
+      MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID
+    ),
+    defaultMode: MAPPING_LIST_DEFAULT_VIEW_MODE,
+    allowedModes: MAPPING_LIST_ALLOWED_VIEW_MODES
+  });
+  const { savedView, setSavedView } = useSavedViewPreference({
+    pageId: MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+    defaultView: MAPPING_DEFAULT_SAVED_VIEW
+  });
+  const savedViewFiltersRestoredRef = useRef(false);
+  const savedViewPersistReadyRef = useRef(false);
+  const savedViewPersistTimerRef = useRef(null);
+  const savedViewMetaRef = useRef({
+    sort: MAPPING_DEFAULT_SAVED_VIEW.sort,
+    density: MAPPING_DEFAULT_SAVED_VIEW.density
+  });
+
+  useEffect(() => {
+    if (savedViewFiltersRestoredRef.current) {
+      return;
+    }
+    savedViewFiltersRestoredRef.current = true;
+    savedViewMetaRef.current = {
+      sort: savedView.sort ?? MAPPING_DEFAULT_SAVED_VIEW.sort,
+      density: savedView.density ?? MAPPING_DEFAULT_SAVED_VIEW.density
+    };
+    const storedFilters = savedView?.filters;
+    if (storedFilters && Object.keys(storedFilters).length > 0) {
+      if (storedFilters.filterStatus != null) {
+        setFilterStatus(storedFilters.filterStatus);
+      }
+      if (storedFilters.searchTerm != null) {
+        setSearchTerm(storedFilters.searchTerm);
+      }
+    }
+    savedViewPersistReadyRef.current = true;
+  }, [savedView]);
+
+  useEffect(() => {
+    if (!savedViewPersistReadyRef.current) {
+      return undefined;
+    }
+
+    if (savedViewPersistTimerRef.current) {
+      clearTimeout(savedViewPersistTimerRef.current);
+    }
+
+    savedViewPersistTimerRef.current = setTimeout(() => {
+      savedViewPersistTimerRef.current = null;
+      setSavedView({
+        viewMode,
+        filters: { filterStatus, searchTerm },
+        sort: savedViewMetaRef.current.sort,
+        density: savedViewMetaRef.current.density
+      });
+    }, MAPPING_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (savedViewPersistTimerRef.current) {
+        clearTimeout(savedViewPersistTimerRef.current);
+        savedViewPersistTimerRef.current = null;
+      }
+    };
+  }, [viewMode, filterStatus, searchTerm, setSavedView]);
   const [mappingStatusInfo, setMappingStatusInfo] = useState({});
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showTransferHistory, setShowTransferHistory] = useState(false);
@@ -457,6 +542,8 @@ const MappingManagementPage = () => {
                 onConfirmDeposit={handleConfirmDeposit}
                 onApprove={handleApproveMapping}
                 onCreateClick={() => setShowCreateModal(true)}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
               />
             </div>
             <SidePeekShell

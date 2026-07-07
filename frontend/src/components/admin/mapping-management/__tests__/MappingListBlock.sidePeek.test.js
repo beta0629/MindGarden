@@ -61,6 +61,7 @@ import SidePeekShell from '../../../common/organisms/SidePeekShell';
 import MappingScheduleSidePeekContent from '../integrated-schedule/molecules/MappingScheduleSidePeekContent';
 import { SIDE_PEEK_SHELL_REGION_PEEK } from '../../../../constants/sidePeekShellConstants';
 import { buildViewModeStorageKey } from '../../../../hooks/useViewModePreference';
+import { MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID } from '../../../../constants/mappingManagementSavedViewConstants';
 
 const SAMPLE_MAPPING = {
   id: 501,
@@ -144,7 +145,7 @@ describe('MappingListBlock — SidePeekShell stub', () => {
   });
 
   test('localStorage에 저장된 viewMode를 복원한다', () => {
-    const storageKey = buildViewModeStorageKey({}, 'admin.mapping-management.list');
+    const storageKey = buildViewModeStorageKey({}, MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID);
     localStorage.setItem(storageKey, 'card');
 
     render(

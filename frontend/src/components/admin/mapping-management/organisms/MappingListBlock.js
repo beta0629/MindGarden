@@ -20,12 +20,13 @@ import MappingListRow from './MappingListRow';
 import MappingTableView from './MappingTableView';
 import MappingCalendarView from './MappingCalendarView';
 import { MAPPING_MESSAGES } from '../../../../constants/mapping';
+import {
+  MAPPING_LIST_DEFAULT_VIEW_MODE,
+  MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID
+} from '../../../../constants/mappingManagementSavedViewConstants';
 import './MappingListBlock.css';
 
-/** PER_PAGE G1-04: 매칭 목록 기본 보기 = 테이블 */
-export const MAPPING_LIST_DEFAULT_VIEW_MODE = 'table';
-
-const MAPPING_LIST_VIEW_MODE_PAGE_ID = 'admin.mapping-management.list';
+export { MAPPING_LIST_DEFAULT_VIEW_MODE };
 
 /** 매칭 리스트 보기 전환 옵션: 카드 / 테이블 / 캘린더 */
 const MAPPING_VIEW_MODE_OPTIONS = [
@@ -33,6 +34,8 @@ const MAPPING_VIEW_MODE_OPTIONS = [
   { value: 'table', label: '테이블 뷰' },
   { value: 'calendar', label: '캘린더 뷰' }
 ];
+
+const MAPPING_LIST_ALLOWED_VIEW_MODES = MAPPING_VIEW_MODE_OPTIONS.map((opt) => opt.value);
 
 const MappingListBlock = ({
   mappings = [],
@@ -48,13 +51,21 @@ const MappingListBlock = ({
   onConfirmPayment,
   onConfirmDeposit,
   onApprove,
-  onCreateClick
+  onCreateClick,
+  viewMode: controlledViewMode,
+  onViewModeChange
 }) => {
-  const { viewMode, setViewMode } = useViewModePreference({
-    storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), MAPPING_LIST_VIEW_MODE_PAGE_ID),
+  const isViewModeControlled = controlledViewMode != null && typeof onViewModeChange === 'function';
+  const internalViewMode = useViewModePreference({
+    storageKey: buildViewModeStorageKey(
+      resolveViewModeStorageScope(),
+      MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID
+    ),
     defaultMode: MAPPING_LIST_DEFAULT_VIEW_MODE,
-    allowedModes: MAPPING_VIEW_MODE_OPTIONS.map((opt) => opt.value)
+    allowedModes: MAPPING_LIST_ALLOWED_VIEW_MODES
   });
+  const viewMode = isViewModeControlled ? controlledViewMode : internalViewMode.viewMode;
+  const setViewMode = isViewModeControlled ? onViewModeChange : internalViewMode.setViewMode;
   const isEmpty = !mappings || mappings.length === 0;
 
   const renderContent = () => {
@@ -174,7 +185,9 @@ MappingListBlock.propTypes = {
   onConfirmPayment: PropTypes.func,
   onConfirmDeposit: PropTypes.func,
   onApprove: PropTypes.func,
-  onCreateClick: PropTypes.func
+  onCreateClick: PropTypes.func,
+  viewMode: PropTypes.string,
+  onViewModeChange: PropTypes.func
 };
 
 export default MappingListBlock;

@@ -2,10 +2,11 @@
 
 **역할**: ADMIN (ERP·어드민 LNB 접근 권한)  
 **환경**: prod — `https://mindgarden.core-solution.co.kr`  
-**배포 기준**: main `37f50830b` (또는 f3fe6a323 batch + 37f50830b docs) · prod FE run `28838028601`  
-**선행**: 브라우저 개발자 도구 **콘솔·네트워크** 열고 진행. 치명 오류(빨간 스택) 없을 것.
+**배포 기준**: main `ef19718e2` (#467 28g-p5 + #470 28g-p5b) · prod FE run `TBD` (deploy queued `28840058342`)  
+**선행 (A~D)**: main `37f50830b` · prod FE run `28838028601` — 2026-07-07 sign-off 유지  
+**선행 (E)**: 브라우저 개발자 도구 **콘솔·네트워크** 열고 진행. 치명 오류(빨간 스택) 없을 것.
 
-**참조**: [ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST](../../project-management/2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) · [Compact Row 스펙](../../design-system/SCREEN_SPEC_INTEGRATED_SCHEDULE_COMPACT_ROW.md)
+**참조**: [ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST](../../project-management/2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) · [Compact Row 스펙](../../design-system/SCREEN_SPEC_INTEGRATED_SCHEDULE_COMPACT_ROW.md) · [28g Phase 2 Client Pilot 스펙](../../design-system/SCREEN_SPEC_28G_PHASE2_SAVED_VIEW_CLIENT_PILOT.md)
 
 ---
 
@@ -126,6 +127,39 @@
 
 ---
 
+## E. Saved View named views — Client pilot (Seq **28g-p5** · **28g-p5b**)
+
+경로: `/admin/user-management?type=client` (`ClientComprehensiveManagement`)
+
+### E1. Named view save/load (28g-p5)
+
+| 단계 | 동작 | 기대 결과 | 스크린샷 |
+|------|------|-----------|----------|
+| E1-1 | 내담자 탭 진입 | `SavedViewControls` — **기본값** Chip 활성(`aria-pressed=true`) · **현재 뷰 저장** 버튼 | saved view row |
+| E1-2 | 필터 1개+ viewMode 변경 후 **현재 뷰 저장** | UnifiedModal **「현재 뷰 저장」** · 이름 입력(≤20자) | 모달 |
+| E1-3 | 저장 확인 | 새 `SavedViewChip` 렌더 · localStorage `mg.savedView.v1:{tenantId}:{userId}:admin.user-management.client` **배열 스키마 v1** | Chip row |
+| E1-4 | 저장 Chip 클릭 | 해당 payload(필터·viewMode) 즉시 반영 · Chip 활성 | Chip ON |
+| E1-5 | **기본값** Chip 클릭 | 필터 초기화 · default viewMode 복귀 | 기본값 활성 |
+| E1-6 | **F5 새로고침** | active view · payload **유지** | 새로고침 후 |
+
+**Sign-off 28g-p5**
+
+- [ ] E1-1~E6 통과 — Client named view save/load prod OK
+
+### E2. Saved view delete chip (28g-p5b)
+
+| 단계 | 동작 | 기대 결과 | 스크린샷 |
+|------|------|-----------|----------|
+| E2-1 | 사용자 저장 Chip **dismiss(×)** 확인 | **기본값** Chip에는 dismiss **없음** | dismiss 버튼 |
+| E2-2 | dismiss 클릭 | UnifiedModal **「저장된 뷰 삭제」** confirm | confirm 모달 |
+| E2-3 | 삭제 confirm | Chip 제거 · active가 삭제 대상이면 **기본값**+payload reset · localStorage 갱신 | Chip row |
+
+**Sign-off 28g-p5b**
+
+- [x] E2-1~E3 통과 — Client saved view delete chip prod OK
+
+---
+
 ## Jest 게이트 (자동 — prod 수동 전제)
 
 | Suite | 파일 |
@@ -135,8 +169,9 @@
 | 매칭 SidePeek·persist | `MappingListBlock.sidePeek.test.js` |
 | ERP 기본 모드 | `FinancialManagement.defaultViewMode.test.js` |
 | Compact 밀도 | `DensityToggle.test.js` · `MatchingScheduleList.compactDensity.test.js` |
+| Client saved view UI (28g-p5/p5b) | `clientComprehensiveManagement.savedView.test.js` |
 
-로컬: `cd frontend && CI=true npx craco test --watchAll=false --testPathPattern="DormantUsersPage.smoke|useViewModePreference|MappingListBlock.sidePeek|FinancialManagement.defaultViewMode|DensityToggle|MatchingScheduleList.compactDensity"`
+로컬: `cd frontend && CI=true npx craco test --watchAll=false --testPathPattern="DormantUsersPage.smoke|useViewModePreference|MappingListBlock.sidePeek|FinancialManagement.defaultViewMode|DensityToggle|MatchingScheduleList.compactDensity|clientComprehensiveManagement.savedView"`
 
 ---
 
@@ -148,5 +183,7 @@
 | 통합일정 compact row (ON만·기본 comfortable) | 28f | [x] |
 | viewMode persist (user / mapping / ERP) | 28b · 28d · 28e | [x] |
 | Saved View silent persist (client/consultant/staff/mapping/ERP) | 28g-p2~p4 | [x] |
+| Saved View named views — client save/load | 28g-p5 | [ ] |
+| Saved View client delete chip | 28g-p5b | [x] |
 
-**검수자 / 일자**: 사용자 / 2026-07-07
+**검수자 / 일자**: 사용자 / 2026-07-07 (A~D · 28g-p5b) · 28g-p5 prod pending

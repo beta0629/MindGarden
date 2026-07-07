@@ -15,7 +15,8 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import Badge from '../../common/Badge';
 import BadgeSelect from '../../common/BadgeSelect';
 import SafeText from '../../common/SafeText';
-import { toDisplayString } from '../../../utils/safeDisplay';
+import { toDisplayString, htmlToPlainText } from '../../../utils/safeDisplay';
+import { sanitizeHealingHtml } from '../../../utils/safeHtml';
 import { ADMIN_MESSAGE_INBOX_STRINGS } from '../../../constants/adminMessageInboxStrings';
 import {
   ADMIN_MESSAGE_INBOX_VIEW,
@@ -31,6 +32,31 @@ const MESSAGE_TYPES = {
   HOMEWORK: { label: '과제 안내', color: 'var(--mg-color-success)' },
   REMINDER: { label: '알림', color: 'var(--mg-color-warning)' },
   URGENT: { label: '긴급', color: 'var(--mg-color-danger)' }
+};
+
+const MESSAGE_PREVIEW_MAX_LEN = 80;
+
+const HTML_TAG_PATTERN = /<[a-z][\s\S]*>/i;
+
+const buildMessagePreview = (content) => {
+  const plain = toDisplayString(htmlToPlainText(content), '');
+  if (plain.length <= MESSAGE_PREVIEW_MAX_LEN) return plain;
+  return `${plain.slice(0, MESSAGE_PREVIEW_MAX_LEN)}…`;
+};
+
+const renderMessageBody = (content) => {
+  const raw = toDisplayString(content, '');
+  if (!raw) {
+    return <SafeText tag="p" fallback="내용이 없습니다." />;
+  }
+  if (HTML_TAG_PATTERN.test(raw)) {
+    const safeHtml = sanitizeHealingHtml(raw);
+    if (safeHtml) {
+      return <div dangerouslySetInnerHTML={{ __html: safeHtml }} />;
+    }
+    return <SafeText tag="p">{htmlToPlainText(raw)}</SafeText>;
+  }
+  return <SafeText tag="p">{raw}</SafeText>;
 };
 
 const AdminMessageListBlock = () => {
@@ -193,8 +219,7 @@ const AdminMessageListBlock = () => {
                       <SafeText tag="span">{message.title}</SafeText>
                     </h3>
                     <p className="mg-v2-ad-notifications__card-meta">
-                      {(message.content || '').replaceAll(/<[^>]*>/g, '').slice(0, 80)}
-                      {(message.content || '').length > 80 ? '…' : ''}
+                      {buildMessagePreview(message.content)}
                     </p>
                     <span className="mg-v2-ad-notifications__card-meta">
                       {new Date(message.createdAt).toLocaleString('ko-KR', {
@@ -271,7 +296,7 @@ const AdminMessageListBlock = () => {
               </div>
             </div>
             <div className="mg-v2-message-modal-body">
-              {selectedMessage.content}
+              {renderMessageBody(selectedMessage.content)}
             </div>
           </div>
         )}
@@ -280,4 +305,5 @@ const AdminMessageListBlock = () => {
   );
 };
 
+export { buildMessagePreview, renderMessageBody };
 export default AdminMessageListBlock;

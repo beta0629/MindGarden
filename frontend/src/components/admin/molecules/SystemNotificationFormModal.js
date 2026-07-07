@@ -52,8 +52,8 @@ const SystemNotificationFormModal = ({
       if (initialData) {
         setFormData({
           targetType: initialData.targetType || 'ALL',
-          title: initialData.title || '',
-          content: initialData.content || '',
+          title: toDisplayString(initialData.title, ''),
+          content: toDisplayString(initialData.content, ''),
           notificationType: initialData.notificationType || 'GENERAL',
           isImportant: !!initialData.isImportant,
           isUrgent: !!initialData.isUrgent,

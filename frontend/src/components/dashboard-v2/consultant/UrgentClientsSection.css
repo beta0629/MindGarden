@@ -1,14 +1,9 @@
 /**
- * UrgentClientsSection 추출 스타일
- *
- * T8-C4-2 인라인 스타일 → CSS 클래스 추출 (HARDCODE_CLEANUP_HOTZONE_INVENTORY §4.C)
- * - 동작·시각 변경 0건. 추출 클래스는 인라인과 1:1 동등.
- *
- * @since 2026-05-21
+ * UrgentClientsSection — B0KlA 토큰
  */
 
 .urgent-clients-section__title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--mg-spacing-sm, 0.5rem);
 }

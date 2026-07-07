@@ -365,7 +365,7 @@
   border: 0;
 }
 
-/* Admin Dark Mode C-3 P1-i — Refund Management cascade */
+/* Admin Dark Mode C-3 P1-j — Refund Management cascade */
 [data-theme="dark"] .refund-management__section,
 [data-theme="dark"] .refund-management__kpi-block,
 [data-theme="dark"] .refund-management__stat-card,
@@ -388,6 +388,23 @@
 [data-theme="dark"] .refund-management__filter-block {
   background: var(--mg-dark-toolbar-bg);
   border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .refund-management__filter-block .mg-v2-select,
+[data-theme="dark"] .refund-management__filter-block .mg-v2-form-input {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .refund-management__filter-block .mg-v2-select:focus,
+[data-theme="dark"] .refund-management__filter-block .mg-v2-form-input:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+[data-theme="dark"] .refund-management__filter-block .mg-v2-form-label {
+  color: var(--mg-v2-form-label);
 }
 
 [data-theme="dark"] .refund-management__history-table th,

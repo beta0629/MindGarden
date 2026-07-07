@@ -515,6 +515,11 @@
 }
 
 /* Admin Dark Mode C-3b P1 — Common Code Management cascade */
+[data-theme="dark"] section.mg-v2-session-saved-view-row:has(+ .mg-v2-ad-b0kla__common-code-container) {
+    background: var(--mg-dark-toolbar-bg);
+    border-color: var(--mg-dark-toolbar-border);
+}
+
 [data-theme="dark"] .mg-v2-ad-b0kla__group-list-section,
 [data-theme="dark"] .mg-v2-ad-b0kla__detail-section {
     background: var(--ad-b0kla-card-bg);
@@ -600,5 +605,23 @@
 [data-theme="dark"] .mg-v2-ad-b0kla__detail-empty,
 [data-theme="dark"] .mg-v2-ad-b0kla__loading-message,
 [data-theme="dark"] .mg-v2-ad-b0kla__data-table-empty-cell {
+    color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__data-cell--label {
+    color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-ad-b0kla__data-cell--secondary {
+    color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-badge--active {
+    background: var(--mg-dark-chip-active-bg);
+    color: var(--mg-dark-chip-active-text);
+}
+
+[data-theme="dark"] .mg-v2-badge--inactive {
+    background: var(--mg-dark-chip-bg);
     color: var(--mg-v2-form-label);
 }

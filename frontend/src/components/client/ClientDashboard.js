@@ -7,7 +7,6 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
@@ -35,7 +34,6 @@ import ClientDashboardPaymentSection from './clientDashboard/ClientDashboardPaym
 import ClientDashboardQuickMenuSection from './clientDashboard/ClientDashboardQuickMenuSection';
 
 const ClientDashboard = ({ user: userFromRoute }) => {
-  const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
   const { sessionUser, sessionIsLoggedIn } = useClientSessionBootstrap(checkSession);
 
@@ -56,11 +54,6 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     return sharedClientMappings.find((x) => x.status === 'ACTIVE') || null;
   }, [sharedClientMappings]);
 
-  const goSchedule = useCallback(() => navigate('/client/schedule'), [navigate]);
-  const goMessages = useCallback(() => navigate('/client/messages'), [navigate]);
-  const goSessions = useCallback(() => navigate('/client/session-management'), [navigate]);
-  const goSettings = useCallback(() => navigate('/client/settings'), [navigate]);
-  const goWellness = useCallback(() => navigate('/client/wellness-hub'), [navigate]);
   const goCustomerSupport = useCallback(() => {
     notificationManager.show(CUSTOMER_SUPPORT_TOAST, 'info');
   }, []);
@@ -106,18 +99,12 @@ const ClientDashboard = ({ user: userFromRoute }) => {
             primaryActiveMapping={primaryActiveMapping}
           />
 
-          <ClientDashboardUpcomingSection
-            schedules={consultationData.upcomingSchedules}
-            onNavigateSchedule={goSchedule}
-          />
+          <ClientDashboardUpcomingSection schedules={consultationData.upcomingSchedules} />
 
           <ClientDashboardKpiSection
             remainingSessions={consultationData.remainingSessions}
             thisMonthScheduleCount={consultationData.thisMonthScheduleCount}
             unreadMessageCount={unreadMessageCount}
-            onNavigateSessions={goSessions}
-            onNavigateSchedule={goSchedule}
-            onNavigateMessages={goMessages}
           />
 
           <ClientDashboardCoreSection
@@ -125,8 +112,6 @@ const ClientDashboard = ({ user: userFromRoute }) => {
             consultationData={consultationData}
             clientStatus={clientStatus}
             primaryActiveMapping={primaryActiveMapping}
-            onNavigateSessions={goSessions}
-            onNavigateMessages={goMessages}
           />
 
           <ClientDashboardPaymentSection
@@ -135,13 +120,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
             mappingsLoadFailed={mappingsLoadFailed}
           />
 
-          <ClientDashboardQuickMenuSection
-            onNavigateSchedule={goSchedule}
-            onNavigateMessages={goMessages}
-            onNavigateSettings={goSettings}
-            onCustomerSupport={goCustomerSupport}
-            onNavigateWellness={goWellness}
-          />
+          <ClientDashboardQuickMenuSection onCustomerSupport={goCustomerSupport} />
         </main>
       )}
     </AdminCommonLayout>

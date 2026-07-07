@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   FaUsers, FaUserTie, FaUser, FaChartBar, FaChartLine,
   FaDollarSign, FaArrowUp, FaArrowDown,
@@ -6,11 +7,11 @@ import {
 } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import UnifiedLoading from '../common/UnifiedLoading';
 import SafeText from '../common/SafeText';
 import Chart from '../common/Chart';
 import '../../styles/unified-design-tokens.css';
@@ -24,18 +25,20 @@ const API_ADMIN_STATISTICS_TRENDS = '/api/v1/admin/statistics/trends';
 const API_ADMIN_STATISTICS_CHART_DATA = '/api/v1/admin/statistics/chart-data';
 const API_ADMIN_STATISTICS_RECENT_ACTIVITY = '/api/v1/admin/statistics/recent-activity';
 
-
 const STATISTICS_TITLE_ID = 'statistics-dashboard-title';
+const STATISTICS_LOADING_TEXT = '통계 데이터를 불러오는 중...';
 
 /**
- * 통계 대시보드 — ACL 외곽은 App에서만 적용, 본문은 B0KlA 셸.
+ * 통계 대시보드 — G-14 Pilot 2: AdminCommonLayout 내장, App.js 이중 래핑 제거.
  *
  * @author Core Solution
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2025-01-21
  */
 const StatisticsDashboard = () => {
   const { t } = useTranslation();
+  const location = useLocation();
+  const mountedRef = useRef(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statistics, setStatistics] = useState({
@@ -60,6 +63,13 @@ const StatisticsDashboard = () => {
     recentActivity: []
   });
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const loadStatistics = useCallback(async() => {
     setLoading(true);
     setError(null);
@@ -71,6 +81,10 @@ const StatisticsDashboard = () => {
         apiGet(API_ADMIN_STATISTICS_CHART_DATA),
         apiGet(API_ADMIN_STATISTICS_RECENT_ACTIVITY)
       ]);
+
+      if (!mountedRef.current) {
+        return;
+      }
 
       const apiData = {
         overall: overallStats.data || {
@@ -96,11 +110,16 @@ const StatisticsDashboard = () => {
 
       setStatistics(apiData);
     } catch (err) {
+      if (!mountedRef.current) {
+        return;
+      }
       console.error('통계 API 호출 오류:', err);
       setError(err.message || '통계 데이터를 불러오지 못했습니다.');
       showNotification('통계를 불러오지 못했습니다.', 'warning');
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -134,6 +153,10 @@ const StatisticsDashboard = () => {
     return trend > 0 ? 'stats-trend-positive' : 'stats-trend-negative';
   };
 
+  const layoutTitle = location.pathname.includes('statistics-dashboard')
+    ? t('common:misc.App.t_505d75b1')
+    : t('common:misc.App.t_4938fae0');
+
   const headerActions = (
     <MGButton
       type="button"
@@ -150,58 +173,32 @@ const StatisticsDashboard = () => {
     </MGButton>
   );
 
-  const shell = (body) => (
-    <div className="mg-v2-ad-b0kla mg-v2-statistics-dashboard">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="통계 대시보드 본문">
-          <ContentHeader
-            title="통계 대시보드"
-            subtitle="전체 시스템 현황 및 성과 분석"
-            titleId={STATISTICS_TITLE_ID}
-            actions={headerActions}
-          />
-          {body}
-        </ContentArea>
+  const errorBody = (
+    <main aria-labelledby={STATISTICS_TITLE_ID} className="statistics-dashboard-container">
+      <div className="statistics-error-card">
+        <div className="statistics-error-content">
+          <FaChartBar className="statistics-error-icon" />
+          <h3 className="statistics-error-title">오류 발생</h3>
+          <p className="statistics-error-message">{error}</p>
+          <MGButton
+            type="button"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              loading,
+              className: 'statistics-retry-btn'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            loading={loading}
+            onClick={loadStatistics}
+          >
+            {t('common.labels.retry')}
+          </MGButton>
+        </div>
       </div>
-    </div>
+    </main>
   );
 
-  if (loading && !error) {
-    return shell(
-      <div aria-busy="true" aria-live="polite">
-        <UnifiedLoading type="inline" text="통계 데이터를 불러오는 중..." />
-      </div>
-    );
-  }
-
-  if (error) {
-    return shell(
-      <main aria-labelledby={STATISTICS_TITLE_ID} className="statistics-dashboard-container">
-        <div className="statistics-error-card">
-          <div className="statistics-error-content">
-            <FaChartBar className="statistics-error-icon" />
-            <h3 className="statistics-error-title">오류 발생</h3>
-            <p className="statistics-error-message">{error}</p>
-            <MGButton
-              type="button"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                loading,
-                className: 'statistics-retry-btn'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              loading={loading}
-              onClick={loadStatistics}
-            >
-              {t('common.labels.retry')}
-            </MGButton>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  return shell(
+  const statisticsBody = (
     <main aria-labelledby={STATISTICS_TITLE_ID} className="statistics-dashboard-container">
       <div className="statistics-cards-grid">
         <div className="statistics-card statistics-card--primary">
@@ -384,6 +381,28 @@ const StatisticsDashboard = () => {
         </div>
       </div>
     </main>
+  );
+
+  return (
+    <AdminCommonLayout
+      title={layoutTitle}
+      loading={loading && !error}
+      loadingText={STATISTICS_LOADING_TEXT}
+    >
+      <div className="mg-v2-ad-b0kla mg-v2-statistics-dashboard" data-testid="statistics-dashboard-page">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="통계 대시보드 본문">
+            <ContentHeader
+              title="통계 대시보드"
+              subtitle="전체 시스템 현황 및 성과 분석"
+              titleId={STATISTICS_TITLE_ID}
+              actions={headerActions}
+            />
+            {error ? errorBody : statisticsBody}
+          </ContentArea>
+        </div>
+      </div>
+    </AdminCommonLayout>
   );
 };
 

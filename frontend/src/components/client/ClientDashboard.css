@@ -1,81 +1,65 @@
 /**
- * 내담자 대시보드 CSS - 표준화 적용 버전
- * 
- * Phase 6: 대시보드 디자인 개선 - 표준화 및 디자인 중앙화
- * 모든 하드코딩된 값을 CSS 변수로 교체
- * 
- * 생성일: 2025-12-03
- * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
- * 네이밍: BEM 규칙 (mg-{component}-{element}--{modifier})
+ * Client Dashboard v1.1 Freeze — B0KlA + 1280/768 반응형 + Dark Cascade
+ *
+ * @author CoreSolution
+ * @since 2026-07-07
  */
 
-/* ===== Import 공통 스타일 및 테마 ===== */
-@import '../../styles/dashboard-tokens-extension.css';
 @import '../../styles/themes/client-theme.css';
 
-/* ===== 와이어 단일 컬럼 (client-dash) ===== */
-.client-dash__main {
+/* ===== Shell ===== */
+.mg-v2-ad-b0kla.mg-v2-client-dashboard-layout {
+  min-height: 100vh;
+  background: var(--mg-color-background-main);
+}
+
+.client-dashboard__container {
+  max-width: 1200px;
+  margin-inline: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.client-dashboard__body {
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-xl);
-  max-width: 100%;
-  /*
-   * ContentArea(세로 flex) 자식으로서 기본 flex-shrink: 1 이면
-   * 뷰포트보다 긴 페이지에서 본문 높이가 압축되어 KPI 카드 하단이 잘릴 수 있음.
-   * 스크롤은 DesktopLayout의 main(.mg-v2-desktop-layout__main)에서 처리.
-   */
   flex-shrink: 0;
   min-height: min-content;
 }
 
-.client-dash__section {
+.client-dashboard__section {
   margin: 0;
 }
 
-.client-dash__section-head {
-  margin-bottom: var(--mg-spacing-md);
-}
-
-.client-dash__section-title {
+.client-dashboard__section .mg-v2-content-section__title {
   font-size: var(--mg-font-xl);
-  font-weight: var(--mg-font-bold);
-  color: var(--mg-text-primary);
-  margin: 0 0 var(--mg-spacing-xs) 0;
-  line-height: var(--mg-line-height-tight);
+  color: var(--mg-color-text-main);
 }
 
-.client-dash__section-desc {
+.client-dashboard__section .mg-v2-content-section__subtitle {
   font-size: var(--mg-font-sm);
-  color: var(--mg-text-secondary);
-  margin: 0;
-  line-height: var(--mg-line-height-normal);
+  color: var(--mg-color-text-secondary);
 }
 
-.client-dash__welcome-card {
-  margin-bottom: 0;
+/* ===== Welcome ===== */
+.client-dashboard__welcome-card {
+  background: var(--mg-color-surface-main);
+  border: var(--border-width) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  padding: var(--mg-spacing-lg);
 }
 
-/* 웰컴: 카피 + 장식 aside (1024px+ 2열) */
-.client-dash__welcome-layout {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-md);
-  width: 100%;
-  min-width: 0;
-}
-
-.client-dash__welcome-inner {
+.client-dashboard__welcome-inner {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-sm);
-  min-width: 0;
-  max-width: min(72ch, 100%);
   padding-left: calc(var(--mg-spacing-md) + var(--mg-spacing-xs));
+  max-width: min(72ch, 100%);
 }
 
-/* 메인 열 좌측 브랜드 악센트 바 (~4px) */
-.client-dash__welcome-inner::before {
+.client-dashboard__welcome-inner::before {
   content: '';
   position: absolute;
   left: 0;
@@ -83,675 +67,106 @@
   bottom: 0;
   width: var(--mg-spacing-xs);
   border-radius: var(--mg-radius-sm);
-  background: var(--mg-client-primary, var(--mg-primary-500));
-  pointer-events: none;
+  background: var(--mg-client-primary, var(--mg-color-primary-main));
 }
 
-.client-dash__welcome-hero {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-xs);
+.client-dashboard__eyebrow {
   margin: 0;
-  padding: 0;
-  border: none;
-  min-width: 0;
-}
-
-/* 장식 aside — 그라데이션·패턴 + 좌측 브랜드 스트립(인셋) */
-.client-dash__welcome-aside {
-  position: relative;
-  flex-shrink: 0;
-  width: 100%;
-  min-height: clamp(
-    calc(var(--mg-spacing-md) * 6),
-    18vw,
-    calc(var(--mg-spacing-md) * 7.5)
-  );
-  border-radius: var(--mg-radius-md);
-  overflow: hidden;
-  background: var(--mg-bg-card);
-  box-shadow: inset var(--mg-spacing-xs) 0 0 0 var(--mg-client-primary, var(--mg-primary-500));
-}
-
-.client-dash__welcome-aside::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--mg-client-gradient);
-  opacity: var(--pattern-opacity-light, 0.1);
-  pointer-events: none;
-}
-
-.client-dash__welcome-aside::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: var(--pattern-opacity-subtle, 0.06);
-  background-image: repeating-linear-gradient(
-    135deg,
-    transparent,
-    transparent var(--mg-spacing-sm),
-    color-mix(in srgb, var(--mg-client-primary) 22%, transparent) var(--mg-spacing-sm),
-    color-mix(in srgb, var(--mg-client-primary) 22%, transparent) var(--mg-spacing-md)
-  );
-  pointer-events: none;
-}
-
-.client-dash__welcome-deco {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.client-dash__welcome-deco-icon {
-  position: absolute;
-  color: var(--mg-client-primary);
-  opacity: var(--pattern-opacity-medium, 0.22);
-}
-
-.client-dash__welcome-deco-icon--a {
-  top: 16%;
-  right: 18%;
-  width: calc(var(--mg-spacing-lg) * 1.25);
-  height: calc(var(--mg-spacing-lg) * 1.25);
-}
-
-.client-dash__welcome-deco-icon--b {
-  bottom: 22%;
-  left: 20%;
-  width: calc(var(--mg-spacing-md) * 1.75);
-  height: calc(var(--mg-spacing-md) * 1.75);
-}
-
-@media (min-width: 1024px) {
-  .client-dash__welcome-layout {
-    flex-direction: row;
-    align-items: stretch;
-    gap: var(--mg-spacing-lg);
-    min-height: calc(var(--mg-spacing-xl) * 3);
-  }
-
-  .client-dash__welcome-inner {
-    flex: 1 1 auto;
-  }
-
-  .client-dash__welcome-aside {
-    flex: 0 0 min(32%, 14rem);
-    width: auto;
-    min-height: 0;
-    align-self: stretch;
-  }
-}
-
-.client-dash__eyebrow {
   font-size: var(--mg-font-xs);
   font-weight: var(--mg-font-semibold);
   letter-spacing: var(--mg-letter-spacing-wide, 0.04em);
   text-transform: uppercase;
-  color: var(--mg-text-secondary);
-  margin: 0;
+  color: var(--mg-color-text-secondary);
 }
 
-.client-dash__title {
+.client-dashboard__welcome-title {
+  margin: 0;
   font-size: var(--mg-font-xxl);
   font-weight: var(--mg-font-bold);
-  color: var(--mg-text-primary);
-  margin: 0;
   line-height: var(--mg-line-height-tight);
+  color: var(--mg-color-text-main);
 }
 
-.client-dash__lede {
-  font-size: var(--mg-font-md);
-  color: var(--mg-text-secondary);
+.client-dashboard__welcome-lede {
   margin: 0;
+  font-size: var(--mg-font-md);
   line-height: var(--mg-line-height-normal);
+  color: var(--mg-color-text-secondary);
 }
 
-.client-dash__welcome-meta {
+.client-dashboard__welcome-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--mg-spacing-sm);
-  margin-top: var(--mg-spacing-md);
+  margin-top: var(--mg-spacing-sm);
 }
 
-.client-dash__meta-chip-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.client-dashboard__meta-chip-list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--mg-spacing-sm);
-}
-
-.client-dash__meta-chip-item {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
-  background: color-mix(in srgb, var(--mg-client-primary) 8%, var(--mg-white));
-  border: var(--border-width) solid var(--mg-border);
-  border-radius: var(--mg-radius-md);
-}
-
-.client-dash__meta-text {
-  font-size: var(--mg-font-sm);
-  color: var(--mg-text-secondary);
-}
-
-.client-dash__stack {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.client-dashboard__meta-text {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+/* ===== Cards / stacks ===== */
+.client-dashboard__card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.client-dashboard__action-card,
+.client-dashboard__core-card {
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-md);
 }
 
-.client-dash__action-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-md);
-}
-
-.client-dash__action-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-sm);
-}
-
-.client-dash__action-top {
+.client-dashboard__action-top,
+.client-dashboard__core-card-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--mg-spacing-sm);
-}
-
-.client-dash__time {
-  font-size: var(--mg-font-sm);
-  font-weight: var(--mg-font-medium);
-  color: var(--mg-text-primary);
-}
-
-.client-dash__card-title {
-  font-size: var(--mg-font-lg);
-  font-weight: var(--mg-font-semibold);
-  color: var(--mg-text-primary);
-  margin: 0;
-}
-
-.client-dash__card-text {
-  font-size: var(--mg-font-sm);
-  color: var(--mg-text-secondary);
-  margin: 0;
-  line-height: var(--mg-line-height-normal);
-}
-
-.client-dash__card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mg-spacing-sm);
-  justify-content: flex-start;
-}
-
-.client-dash__core-card-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mg-spacing-sm);
-  margin-bottom: var(--mg-spacing-xs);
-}
-
-.client-dash__core-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-md);
-}
-
-.client-dash__core-cards {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--mg-spacing-md);
-}
-
-@media (min-width: 769px) {
-  .client-dash__core-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.client-dash__personalized {
-  margin-top: var(--mg-spacing-xl);
-}
-
-/* KPI: 데스크톱 3열, 모바일 1열 (핸드오프) */
-.client-dash__kpi-row-wrap .mg-v2-content-kpi-row {
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 769px) {
-  .client-dash__kpi-row-wrap .mg-v2-content-kpi-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-/* KPI 행: 그리드/버튼 오버플로로 카드가 잘리지 않도록 */
-.client-dash__section.client-dash__kpi {
-  overflow: visible;
-  min-height: min-content;
-}
-
-.client-dash__kpi-row-wrap {
-  overflow: visible;
-  min-width: 0;
-}
-
-/* 결제 요약: 페이지 섹션 제목만 노출 — 자식 컴포넌트 내부 h2 숨김 */
-.client-dash__payment-wrap .payment-sessions-header {
-  display: none;
-}
-
-.client-dash__payment-wrap .payment-sessions-section {
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.client-dash__quick-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--action-button-min-width, 8.75rem), 1fr));
-  gap: var(--mg-spacing-md);
-}
-
-.client-dash__quick-btn {
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: var(--mg-spacing-sm);
-}
-
-/* ===== 내담자 대시보드 테마 변수 ===== */
-.client-dashboard {
-  --client-primary: var(--mg-client-primary, var(--mg-primary-400));
-  --client-secondary: var(--mg-success-300);
-  --client-success: var(--mg-success-400);
-  --client-info: var(--mg-primary-300);
-  --client-warning: var(--mg-warning-300);
-  --client-gradient-1: linear-gradient(135deg, var(--mg-pink-50) 0%, var(--mg-yellow-50) 100%);
-  --client-gradient-2: linear-gradient(135deg, var(--mg-success-50) 0%, var(--mg-primary-50) 100%);
-  --client-gradient-3: linear-gradient(135deg, var(--mg-orange-50) 0%, var(--mg-pink-50) 100%);
-  --client-shadow: var(--mg-shadow-md);
-  --client-shadow-hover: var(--mg-shadow-lg);
-}
-
-/* ===== 대시보드 배경 패턴 및 애니메이션 ===== */
-.mg-v2-dashboard-layout {
-  position: relative;
-  min-height: 100vh;
-  background: linear-gradient(135deg, 
-    var(--mg-pink-50) 0%, 
-    var(--mg-success-50) 50%, 
-    var(--mg-primary-50) 100%);
-  overflow: hidden;
-}
-
-/* 배경 패턴 레이어 */
-.mg-v2-dashboard-layout::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  opacity: var(--pattern-opacity-subtle, 0.03);
-  background-image: 
-    repeating-linear-gradient(45deg, transparent, transparent var(--pattern-size-base, 2.1875rem), 
-      rgba(var(--mg-primary-500-rgb, var(--color-primary-rgb)), var(--pattern-opacity-medium, 0.5)) var(--pattern-size-base, 2.1875rem), 
-      rgba(var(--mg-primary-500-rgb, var(--color-primary-rgb)), var(--pattern-opacity-medium, 0.5)) var(--pattern-size-double, 4.375rem)),
-    repeating-linear-gradient(-45deg, transparent, transparent var(--pattern-size-base, 2.1875rem), 
-      rgba(var(--mg-success-500-rgb, var(--status-success-rgb)), var(--pattern-opacity-medium, 0.5)) var(--pattern-size-base, 2.1875rem), 
-      rgba(var(--mg-success-500-rgb, var(--status-success-rgb)), var(--pattern-opacity-medium, 0.5)) var(--pattern-size-double, 4.375rem));
-  animation: patternMove var(--mg-animation-slow, 20s) linear infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* 배경 애니메이션 원들 */
-.mg-v2-dashboard-layout::after {
-  content: '';
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: 
-    radial-gradient(circle at 20% 50%, rgba(var(--mg-primary-500-rgb, var(--color-primary-rgb)), var(--pattern-opacity-light, 0.08)) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(var(--mg-success-500-rgb, var(--status-success-rgb)), var(--pattern-opacity-light, 0.08)) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(var(--mg-primary-400-rgb, var(--color-primary-rgb)), var(--pattern-opacity-light, 0.08)) 0%, transparent 50%);
-  animation: backgroundFloat var(--mg-animation-normal, 15s) ease-in-out infinite;
-}
-
-/* 패턴 이동 애니메이션 */
-@keyframes patternMove {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(var(--pattern-size-double, 4.375rem), var(--pattern-size-double, 4.375rem));
-  }
-}
-
-/* 배경 플로팅 애니메이션 */
-@keyframes backgroundFloat {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-    opacity: var(--opacity-full, 1);
-  }
-  33% {
-    transform: translate(var(--mg-spacing-lg), calc(var(--mg-spacing-lg) * -1)) scale(1.1);
-    opacity: var(--opacity-hover, 0.8);
-  }
-  66% {
-    transform: translate(calc(var(--mg-spacing-lg) * -1), var(--mg-spacing-lg)) scale(0.9);
-    opacity: var(--opacity-hover, 0.9);
-  }
-}
-
-/* 모든 대시보드 컨텐츠가 배경 위에 표시되도록 */
-.mg-v2-dashboard-layout > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* ===== 웰컴 헤더 ===== */
-.client-dashboard__welcome {
-  background: var(--client-gradient-1);
-  border-radius: var(--mg-radius-lg);
-  padding: var(--mg-spacing-xl);
-  margin-bottom: var(--mg-spacing-xl);
-  box-shadow: var(--client-shadow);
-  animation: fadeInUp var(--mg-animation-slow) var(--mg-easing);
-}
-
-.client-dashboard__welcome-content {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-lg);
-  flex-wrap: wrap;
-}
-
-.client-dashboard__welcome-icon {
-  width: calc(var(--mg-spacing-xl) * 4);
-  height: calc(var(--mg-spacing-xl) * 4);
-  background: linear-gradient(135deg, var(--mg-grade-client-gold), var(--mg-warning-500));
-  border-radius: var(--mg-radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--mg-white);
-  box-shadow: var(--mg-shadow-md);
-  animation: pulse var(--mg-animation-slow, 2s) ease-in-out infinite;
-}
-
-.client-dashboard__welcome-text {
-  flex: 1;
-  min-width: calc(var(--mg-spacing-lg) * 10);
-}
-
-.client-dashboard__greeting {
-  font-size: var(--mg-font-xxl);
-  font-weight: var(--mg-font-bold);
-  color: var(--mg-text-primary);
-  margin: 0 0 var(--mg-spacing-sm) 0;
-  line-height: var(--mg-line-height-normal);
-}
-
-.client-dashboard__name {
-  color: var(--mg-client-primary);
-  background: linear-gradient(135deg, var(--mg-client-primary), var(--mg-client-primary-light));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.client-dashboard__subtitle {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
-  font-size: var(--mg-font-md);
-  color: var(--mg-text-secondary);
-  margin: 0;
 }
 
 .client-dashboard__time {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
-  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
-  background: var(--cs-glass-light);
-  border-radius: var(--mg-radius-lg);
-  font-size: var(--mg-font-md);
-  font-weight: var(--mg-font-semibold);
-  color: var(--mg-text-primary);
-  box-shadow: var(--mg-shadow-sm);
-}
-
-/* ===== 통계 카드 ===== */
-.client-dashboard__stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--stat-card-min-width), 1fr));
-  gap: var(--mg-spacing-lg);
-  margin-bottom: var(--mg-spacing-xl);
-}
-
-.client-dashboard__stat-card {
-  background: var(--mg-bg-card);
-  backdrop-filter: blur(var(--mg-glass-blur, 10px));
-  -webkit-backdrop-filter: blur(var(--mg-glass-blur, 10px));
-  border: var(--border-width) solid var(--mg-border-light);
-  border-radius: var(--mg-radius-lg);
-  padding: var(--mg-spacing-xl);
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-lg);
-  box-shadow: var(--mg-shadow-md);
-  transition: all var(--mg-transition-normal) var(--mg-easing);
-  position: relative;
-  overflow: hidden;
-}
-
-.client-dashboard__stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: calc(var(--mg-spacing-xl) * 5);
-  height: calc(var(--mg-spacing-xl) * 5);
-  border-radius: var(--mg-radius-full);
-  opacity: var(--pattern-opacity-light, 0.1);
-  transform: translate(30%, -30%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.client-dashboard__stat-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.client-dashboard__stat-card--primary::before {
-  background: var(--client-primary);
-}
-
-.client-dashboard__stat-card--success::before {
-  background: var(--client-success);
-}
-
-.client-dashboard__stat-card--info::before {
-  background: var(--client-info);
-}
-
-.client-dashboard__stat-card--warning::before {
-  background: var(--client-warning);
-}
-
-.client-dashboard__stat-card:hover {
-  background: var(--mg-bg-card-hover);
-  transform: translateY(calc(var(--spacing-xs) * -1));
-  box-shadow: var(--mg-shadow-xl);
-}
-
-.client-dashboard__stat-icon {
-  width: calc(var(--mg-spacing-xl) * 2.5);
-  height: calc(var(--mg-spacing-xl) * 2.5);
-  border-radius: var(--mg-radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--mg-white);
-  flex-shrink: 0;
-}
-
-.client-dashboard__stat-card--primary .client-dashboard__stat-icon {
-  background: linear-gradient(135deg, var(--client-primary), var(--mg-primary-500));
-}
-
-.client-dashboard__stat-card--success .client-dashboard__stat-icon {
-  background: linear-gradient(135deg, var(--client-success), var(--mg-success-500));
-}
-
-.client-dashboard__stat-card--info .client-dashboard__stat-icon {
-  background: linear-gradient(135deg, var(--client-info), var(--mg-primary-400));
-}
-
-.client-dashboard__stat-card--warning .client-dashboard__stat-icon {
-  background: linear-gradient(135deg, var(--client-warning), var(--mg-warning-500));
-}
-
-.client-dashboard__stat-content {
-  flex: 1;
-}
-
-.client-dashboard__stat-value {
-  font-size: var(--mg-font-xxxl);
-  font-weight: var(--mg-font-bold);
-  color: var(--mg-text-primary);
-  line-height: 1;
-  margin-bottom: var(--mg-spacing-xs);
-}
-
-.client-dashboard__stat-label {
   font-size: var(--mg-font-sm);
-  color: var(--mg-text-secondary);
   font-weight: var(--mg-font-medium);
+  color: var(--mg-color-text-main);
 }
 
-/* ===== 섹션 ===== */
-.client-dashboard__section {
-  background: var(--mg-bg-card);
-  border-radius: var(--mg-radius-lg);
-  padding: var(--mg-spacing-xl);
-  margin-bottom: var(--mg-spacing-xl);
-  box-shadow: var(--client-shadow);
-  animation: fadeInUp var(--mg-animation-slow) var(--mg-easing);
-}
-
-.client-dashboard__section-header {
-  margin-bottom: var(--mg-spacing-lg);
-}
-
-.client-dashboard__section-title {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-md);
-  font-size: var(--mg-font-xl);
-  font-weight: var(--mg-font-bold);
-  color: var(--mg-text-primary);
-  margin: 0 0 var(--mg-spacing-lg) 0;
-}
-
-.client-dashboard__section-title svg {
-  color: var(--mg-client-primary);
-}
-
-/* ===== 스케줄 리스트 ===== */
-.client-dashboard__schedule-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-md);
-}
-
-.client-dashboard__schedule-item {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-lg);
-  padding: var(--mg-spacing-lg);
-  background: var(--client-gradient-2);
-  border-radius: var(--mg-radius-lg);
-  transition: all var(--mg-transition-normal) var(--mg-easing);
-}
-
-.client-dashboard__schedule-item:hover {
-  transform: translateX(var(--mg-spacing-xs));
-  box-shadow: var(--mg-shadow-md);
-}
-
-.client-dashboard__schedule-date {
-  width: calc(var(--mg-spacing-lg) * 5);
-  height: calc(var(--mg-spacing-lg) * 5);
-  background: var(--mg-white);
-  border-radius: var(--mg-radius-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: var(--mg-shadow-sm);
-}
-
-.client-dashboard__schedule-day {
-  font-size: var(--mg-font-xl);
-  font-weight: var(--mg-font-bold);
-  color: var(--mg-client-primary);
-  line-height: 1;
-}
-
-.client-dashboard__schedule-month {
-  font-size: var(--mg-font-xs);
-  color: var(--mg-text-secondary);
-  margin-top: var(--mg-spacing-xs);
-}
-
-.client-dashboard__schedule-info {
-  flex: 1;
-}
-
-.client-dashboard__schedule-title {
-  font-size: var(--mg-font-md);
-  font-weight: var(--mg-font-semibold);
-  color: var(--mg-text-primary);
-  margin: 0 0 var(--mg-spacing-xs) 0;
-}
-
-.client-dashboard__schedule-time {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-xs);
-  font-size: var(--mg-font-sm);
-  color: var(--mg-text-secondary);
+.client-dashboard__card-title {
   margin: 0;
+  font-size: var(--mg-font-lg);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-color-text-main);
 }
 
-.client-dashboard__schedule-status {
-  flex-shrink: 0;
+.client-dashboard__card-text,
+.client-dashboard__card-subtext {
+  margin: 0;
+  font-size: var(--mg-font-sm);
+  line-height: var(--mg-line-height-normal);
+  color: var(--mg-color-text-secondary);
+}
+
+.client-dashboard__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
 }
 
 .client-dashboard__schedule-empty {
@@ -759,173 +174,138 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--mg-spacing-md);
-  margin: var(--mg-spacing-sm) 0;
-  padding: var(--mg-spacing-md) 0;
 }
 
 .client-dashboard__schedule-empty p {
   margin: 0;
   font-size: var(--mg-font-sm);
-  font-weight: var(--mg-font-normal);
-  line-height: var(--mg-line-height-normal);
-  color: var(--mg-text-secondary);
+  color: var(--mg-color-text-secondary);
 }
 
-/* ===== 빠른 액션 ===== */
-.client-dashboard__quick-actions {
-  background: var(--client-gradient-3);
-  border-radius: var(--mg-radius-lg);
-  padding: var(--mg-spacing-xl);
-  margin-bottom: var(--mg-spacing-xl);
-  box-shadow: var(--client-shadow);
+/* ===== KPI ===== */
+.client-dashboard__section--kpi .mg-v2-content-kpi-row {
+  grid-template-columns: 1fr;
 }
 
-.client-dashboard__action-grid {
+/* ===== Core grid (1280 2-col) ===== */
+.client-dashboard__core-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mg-spacing-md);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.client-dashboard__personalized {
+  margin-top: var(--mg-spacing-lg);
+}
+
+/* ===== Payment ===== */
+.client-dashboard__payment-wrap .payment-sessions-header {
+  display: none;
+}
+
+.client-dashboard__payment-wrap .payment-sessions-section {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ===== Quick menu ===== */
+.client-dashboard__quick-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--action-button-min-width, 8.75rem), 1fr));
   gap: var(--mg-spacing-md);
 }
 
-/* 빠른 메뉴 그리드 내 MGButton: 아이콘+라벨 가로 정렬 */
-.client-dashboard__action-grid .client-dashboard__action-btn {
+.client-dashboard__quick-btn {
+  display: inline-flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: var(--mg-spacing-sm);
+  min-height: var(--mg-touch-target-min, 2.75rem);
 }
 
-.client-dashboard__action-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--mg-spacing-sm);
-  padding: var(--mg-spacing-xl);
-  background: var(--mg-white);
-  border: none;
-  border-radius: var(--mg-radius-lg);
-  font-size: var(--mg-font-sm);
-  font-weight: var(--mg-font-semibold);
-  color: var(--mg-text-primary);
-  cursor: pointer;
-  transition: all var(--mg-transition-normal) var(--mg-easing);
-  box-shadow: var(--mg-shadow-sm);
-}
-
-.client-dashboard__action-btn:hover {
-  transform: translateY(calc(var(--spacing-xs) * -1));
-  box-shadow: var(--client-shadow-hover);
-}
-
-.client-dashboard__action-btn svg {
-  transition: all var(--mg-transition-normal) var(--mg-easing);
-}
-
-.client-dashboard__action-btn--primary:hover svg {
-  color: var(--mg-client-primary);
-}
-
-.client-dashboard__action-btn--success:hover svg {
-  color: var(--mg-success-500);
-}
-
-.client-dashboard__action-btn--info:hover svg {
-  color: var(--mg-primary-400);
-}
-
-.client-dashboard__action-btn--warning:hover svg {
-  color: var(--mg-warning-500);
-}
-
-/* ===== 애니메이션 ===== */
-@keyframes fadeInUp {
-  from {
-    opacity: var(--opacity-hidden, 0);
-    transform: translateY(var(--mg-spacing-xl));
+/* ===== Desktop 1280+ ===== */
+@media (min-width: 1280px) {
+  .client-dashboard__section--kpi .mg-v2-content-kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  to {
-    opacity: var(--opacity-full, 1);
-    transform: translateY(0);
+
+  .client-dashboard__core-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
+/* ===== Tablet 769–1279 ===== */
+@media (min-width: 769px) and (max-width: 1279px) {
+  .client-dashboard__section--kpi .mg-v2-content-kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  50% {
-    transform: scale(1.05);
+
+  .client-dashboard__core-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-/* ===== 반응형 디자인 ===== */
+/* ===== Mobile 768- ===== */
 @media (max-width: 768px) {
-  .client-dashboard__welcome {
-    padding: var(--mg-spacing-lg);
+  .client-dashboard__container {
+    padding-inline: var(--mg-spacing-md);
   }
 
-  .client-dashboard__welcome-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .client-dashboard__welcome-icon {
-    width: calc(var(--mg-spacing-lg) * 4);
-    height: calc(var(--mg-spacing-lg) * 4);
-  }
-
-  .client-dashboard__greeting {
+  .client-dashboard__welcome-title {
     font-size: var(--mg-font-xl);
   }
 
-  .client-dashboard__time {
-    width: 100%;
-    justify-content: center;
+  .client-dashboard__welcome-lede,
+  .client-dashboard__card-text {
+    font-size: var(--mg-font-sm);
   }
 
-  .client-dashboard__stats {
-    grid-template-columns: 1fr;
-    gap: var(--mg-spacing-md);
-  }
-
-  .client-dashboard__stat-card {
-    padding: var(--mg-spacing-lg);
-  }
-
-  .client-dashboard__stat-icon {
-    width: calc(var(--mg-spacing-lg) * 4);
-    height: calc(var(--mg-spacing-lg) * 4);
-  }
-
-  .client-dashboard__stat-value {
-    font-size: var(--mg-font-xxl);
-  }
-
-  .client-dashboard__section {
-    padding: var(--mg-spacing-lg);
-  }
-
-  .client-dashboard__schedule-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .client-dashboard__schedule-date {
-    width: calc(var(--mg-spacing-lg) * 5);
-    height: calc(var(--mg-spacing-lg) * 5);
-  }
-
-  .client-dashboard__action-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .client-dashboard__quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
-  .client-dashboard__stats {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 480px) {
+  .client-dashboard__container {
+    padding-inline: var(--mg-spacing-sm);
   }
+}
 
-  .client-dashboard__action-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* ===== Dark Cascade (spec §8) ===== */
+[data-theme="dark"] .mg-v2-ad-b0kla.mg-v2-client-dashboard-layout {
+  background: var(--mg-color-background-main, var(--mg-dark-bg-900));
+}
+
+[data-theme="dark"] .client-dashboard__welcome-card,
+[data-theme="dark"] .client-dashboard__action-card,
+[data-theme="dark"] .client-dashboard__core-card {
+  background: var(--mg-color-surface-main, var(--mg-dark-bg-800));
+  border-color: var(--mg-border_dark, var(--mg-color-border-main));
+}
+
+[data-theme="dark"] .client-dashboard__welcome-title,
+[data-theme="dark"] .client-dashboard__card-title,
+[data-theme="dark"] .client-dashboard__time,
+[data-theme="dark"] .client-dashboard .mg-v2-content-section__title {
+  color: var(--mg-color-text-main);
+}
+
+[data-theme="dark"] .client-dashboard__welcome-lede,
+[data-theme="dark"] .client-dashboard__card-text,
+[data-theme="dark"] .client-dashboard__card-subtext,
+[data-theme="dark"] .client-dashboard__meta-text,
+[data-theme="dark"] .client-dashboard__eyebrow,
+[data-theme="dark"] .client-dashboard__schedule-empty p,
+[data-theme="dark"] .client-dashboard .mg-v2-content-section__subtitle {
+  color: var(--mg-color-text-secondary-dark, var(--mg-color-text-secondary));
+}
+
+[data-theme="dark"] .client-dashboard__welcome-inner::before {
+  background: var(--mg-color-primary-dark, var(--mg-color-primary-main));
 }

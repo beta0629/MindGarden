@@ -70,6 +70,7 @@ import {
 } from '@/constants/consultantHomeCopy';
 import {
   buildConsultantTodaySummary,
+  resolveConsultantPendingCount,
   resolveTodayCount,
   selectConsultantHomeKpiItems,
 } from '@/utils/consultantHomeKpi';
@@ -113,8 +114,11 @@ export default function ConsultantDashboard() {
 
   const schedules = dashboard.todaySchedules;
   const incompleteCount = incompleteQuery.data?.count ?? 0;
-  const pendingCount =
-    incompleteCount > 0 ? incompleteCount : (pendingQuery.data?.length ?? dashboard.pendingRecordCount);
+  const pendingCount = resolveConsultantPendingCount(
+    incompleteCount,
+    pendingQuery.data?.length,
+    dashboard.pendingRecordCount,
+  );
   const urgentClient = urgentClientsQuery.data?.[0] ?? null;
   const unreadNotificationCount = unreadNotificationQuery.data?.count ?? 0;
   const unreadMessageCount = unreadMessageQuery.data?.count ?? 0;

@@ -1,5 +1,6 @@
 import {
   buildConsultantTodaySummary,
+  resolveConsultantPendingCount,
   resolveTodayCount,
   selectConsultantHomeKpiItems,
 } from '../consultantHomeKpi';
@@ -61,5 +62,39 @@ describe('selectConsultantHomeKpiItems', () => {
     });
     expect(items[1]?.value).toBe(0);
     expect(items[2]?.value).toBe(0);
+  });
+
+  it('uses scheduleLength fallback for today_sessions when todayCount is nullish', () => {
+    const items = selectConsultantHomeKpiItems({
+      todayCount: undefined,
+      scheduleLength: 6,
+      unreadMessageCount: 0,
+      newClientsCount: 0,
+    });
+    expect(items[0]?.value).toBe(6);
+  });
+
+  it('maps homeStats newClients into KPI strip', () => {
+    const items = selectConsultantHomeKpiItems({
+      todayCount: 2,
+      unreadMessageCount: 1,
+      newClientsCount: 3,
+    });
+    expect(items[2]?.value).toBe(3);
+  });
+});
+
+describe('resolveConsultantPendingCount', () => {
+  it('prefers incomplete API count when positive', () => {
+    expect(resolveConsultantPendingCount(5, 2, 1)).toBe(5);
+  });
+
+  it('falls back to pending records length when incomplete is zero', () => {
+    expect(resolveConsultantPendingCount(0, 3, 9)).toBe(3);
+  });
+
+  it('falls back to dashboard pending count when others are empty', () => {
+    expect(resolveConsultantPendingCount(0, undefined, 4)).toBe(4);
+    expect(resolveConsultantPendingCount(0, null, 2)).toBe(2);
   });
 });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -20,6 +20,16 @@ import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
 import { useTranslation } from 'react-i18next';
+import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import SavedViewControls from '../admin/ClientComprehensiveManagement/molecules/SavedViewControls';
+import {
+  BM_SAVED_VIEW_PAGE_ID,
+  BM_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+  BM_DEFAULT_ACTIVE_TAB,
+  BM_DEFAULT_FILTER_CATEGORY,
+  BM_DEFAULT_FILTER_STATUS,
+  buildBudgetManagementDefaultSavedView
+} from '../../constants/budgetManagementSavedViewConstants';
 
 const INITIAL_NEW_BUDGET = {
   name: '',
@@ -49,6 +59,10 @@ const BUDGET_STATUS_OPTIONS = [
   { value: 'EXPIRED', label: '만료' }
 ];
 
+const BUDGET_FILTER_ALL_VALUE = 'all';
+
+const BM_DEFAULT_SAVED_VIEW = buildBudgetManagementDefaultSavedView();
+
 /**
  * ERP 예산 관리 페이지
  * 예산 계획 및 관리
@@ -58,7 +72,9 @@ const BudgetManagement = () => {
   const [confirm, ConfirmModal] = useConfirm();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [userPermissions, setUserPermissions] = useState([]);
-  const [activeTab, setActiveTab] = useState('budgets');
+  const [activeTab, setActiveTab] = useState(BM_DEFAULT_ACTIVE_TAB);
+  const [filterCategory, setFilterCategory] = useState(BM_DEFAULT_FILTER_CATEGORY);
+  const [filterStatus, setFilterStatus] = useState(BM_DEFAULT_FILTER_STATUS);
   const [budgets, setBudgets] = useState([]);
   const [budgetCategories, setBudgetCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -75,6 +91,124 @@ const BudgetManagement = () => {
     () => PermissionChecks.canManageBudget(userPermissions, user),
     [userPermissions, user]
   );
+
+  const {
+    savedView,
+    setSavedView,
+    views,
+    activeViewId,
+    saveNamedView,
+    loadNamedView,
+    resetToDefaultView,
+    deleteNamedView
+  } = useSavedViewPreference({
+    pageId: BM_SAVED_VIEW_PAGE_ID,
+    defaultView: BM_DEFAULT_SAVED_VIEW,
+    namedViews: true
+  });
+  const savedViewFiltersRestoredRef = useRef(false);
+  const savedViewPersistReadyRef = useRef(false);
+  const savedViewPersistTimerRef = useRef(null);
+  const savedViewMetaRef = useRef({
+    sort: BM_DEFAULT_SAVED_VIEW.sort,
+    density: BM_DEFAULT_SAVED_VIEW.density
+  });
+
+  const filteredBudgets = useMemo(() => {
+    return budgets.filter((budget) => {
+      const matchesCategory =
+        filterCategory === BUDGET_FILTER_ALL_VALUE
+        || budget.category === filterCategory;
+      const matchesStatus =
+        filterStatus === BUDGET_FILTER_ALL_VALUE
+        || budget.status === filterStatus;
+      return matchesCategory && matchesStatus;
+    });
+  }, [budgets, filterCategory, filterStatus]);
+
+  const buildCurrentSavedViewPayload = useCallback(() => ({
+    viewMode: BM_DEFAULT_SAVED_VIEW.viewMode,
+    filters: {
+      activeTab,
+      category: filterCategory,
+      status: filterStatus
+    },
+    sort: savedViewMetaRef.current.sort,
+    density: savedViewMetaRef.current.density
+  }), [activeTab, filterCategory, filterStatus]);
+
+  const applySavedViewPayload = useCallback((payload) => {
+    const storedFilters = payload?.filters ?? {};
+    if (storedFilters.activeTab != null) {
+      setActiveTab(storedFilters.activeTab);
+    }
+    if (storedFilters.category != null) {
+      setFilterCategory(storedFilters.category);
+    }
+    if (storedFilters.status != null) {
+      setFilterStatus(storedFilters.status);
+    }
+    savedViewMetaRef.current = {
+      sort: payload?.sort ?? BM_DEFAULT_SAVED_VIEW.sort,
+      density: payload?.density ?? BM_DEFAULT_SAVED_VIEW.density
+    };
+  }, []);
+
+  const handleSelectSavedView = useCallback((viewId) => {
+    const payload = loadNamedView(viewId);
+    applySavedViewPayload(payload);
+  }, [loadNamedView, applySavedViewPayload]);
+
+  const handleResetSavedView = useCallback(() => {
+    const payload = resetToDefaultView();
+    applySavedViewPayload(payload);
+  }, [resetToDefaultView, applySavedViewPayload]);
+
+  const handleSaveNamedView = useCallback((label) => {
+    saveNamedView(label, buildCurrentSavedViewPayload());
+  }, [saveNamedView, buildCurrentSavedViewPayload]);
+
+  const handleDeleteSavedView = useCallback((viewId) => {
+    const fallbackPayload = deleteNamedView(viewId);
+    if (fallbackPayload) {
+      applySavedViewPayload(fallbackPayload);
+    }
+  }, [deleteNamedView, applySavedViewPayload]);
+
+  useEffect(() => {
+    if (savedViewFiltersRestoredRef.current) {
+      return;
+    }
+    savedViewFiltersRestoredRef.current = true;
+    savedViewMetaRef.current = {
+      sort: savedView.sort ?? BM_DEFAULT_SAVED_VIEW.sort,
+      density: savedView.density ?? BM_DEFAULT_SAVED_VIEW.density
+    };
+    applySavedViewPayload(savedView);
+    savedViewPersistReadyRef.current = true;
+  }, [savedView, applySavedViewPayload]);
+
+  useEffect(() => {
+    if (!savedViewPersistReadyRef.current) {
+      return undefined;
+    }
+
+    if (savedViewPersistTimerRef.current) {
+      clearTimeout(savedViewPersistTimerRef.current);
+    }
+
+    savedViewPersistTimerRef.current = setTimeout(() => {
+      savedViewPersistTimerRef.current = null;
+      setSavedView(buildCurrentSavedViewPayload());
+    }, BM_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (savedViewPersistTimerRef.current) {
+        clearTimeout(savedViewPersistTimerRef.current);
+        savedViewPersistTimerRef.current = null;
+      }
+    };
+  }, [activeTab, filterCategory, filterStatus, setSavedView, buildCurrentSavedViewPayload]);
 
   const resetNewBudgetForm = useCallback(() => {
     setNewBudget({ ...INITIAL_NEW_BUDGET });
@@ -108,7 +242,7 @@ const BudgetManagement = () => {
 
       switch (activeTab) {
         case 'budgets':
-          await loadBudgets();
+          await Promise.all([loadBudgets(), loadBudgetCategories()]);
           break;
         case 'categories':
           await loadBudgetCategories();
@@ -415,8 +549,58 @@ const BudgetManagement = () => {
         >
           <div className="erp-container">
             <div className="mg-w-full mg-mb-md">
+              <SavedViewControls
+                views={views}
+                activeViewId={activeViewId}
+                onSelectView={handleSelectSavedView}
+                onSaveView={handleSaveNamedView}
+                onResetToDefault={handleResetSavedView}
+                onDeleteView={handleDeleteSavedView}
+              />
               <ErpFilterToolbar
                 ariaLabel="예산 목록 도구"
+                primaryRow={
+                  activeTab === 'budgets' ? (
+                    <div className="mg-v2-filter-grid mg-v2-filter-grid--row1">
+                      <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label" htmlFor="budget-filter-category">
+                          {t('erp:BudgetManagement.t_31125b29')}
+                        </label>
+                        <select
+                          id="budget-filter-category"
+                          className="mg-v2-form-select"
+                          value={filterCategory}
+                          onChange={(e) => setFilterCategory(e.target.value)}
+                        >
+                          <option value={BUDGET_FILTER_ALL_VALUE}>{t('common.labels.all')}</option>
+                          {budgetCategories.map((category) => (
+                            <option key={category.id} value={category.codeValue}>
+                              {toDisplayString(category.codeLabel)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label" htmlFor="budget-filter-status">
+                          {t('common.labels.status')}
+                        </label>
+                        <select
+                          id="budget-filter-status"
+                          className="mg-v2-form-select"
+                          value={filterStatus}
+                          onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                          <option value={BUDGET_FILTER_ALL_VALUE}>{t('common.labels.all')}</option>
+                          {BUDGET_STATUS_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ) : null
+                }
                 secondaryRow={
                   <div className="budget-management__toolbar-actions">
                     <MGButton
@@ -479,7 +663,7 @@ const BudgetManagement = () => {
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--primary">
-                            {formatCurrency(budgets.reduce((sum, b) => sum + (b.totalBudget || 0), 0))}
+                            {formatCurrency(filteredBudgets.reduce((sum, b) => sum + (b.totalBudget || 0), 0))}
                           </div>
                           <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_f41a7f05')}</span>
                         </div>
@@ -491,7 +675,7 @@ const BudgetManagement = () => {
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--warning">
-                            {formatCurrency(budgets.reduce((sum, b) => sum + (b.usedBudget || 0), 0))}
+                            {formatCurrency(filteredBudgets.reduce((sum, b) => sum + (b.usedBudget || 0), 0))}
                           </div>
                           <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_d1af9444')}</span>
                         </div>
@@ -503,7 +687,7 @@ const BudgetManagement = () => {
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--success">
-                            {formatCurrency(budgets.reduce((sum, b) => sum + (b.remainingBudget || 0), 0))}
+                            {formatCurrency(filteredBudgets.reduce((sum, b) => sum + (b.remainingBudget || 0), 0))}
                           </div>
                           <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_b025a34c')}</span>
                         </div>
@@ -515,7 +699,7 @@ const BudgetManagement = () => {
                         </div>
                         <div className="mg-v2-ad-b0kla__chart-body">
                           <div className="mg-v2-ad-b0kla__kpi-value mg-v2-ad-b0kla__kpi-value--info">
-                            {toDisplayString(budgets.length)}개
+                            {toDisplayString(filteredBudgets.length)}개
                           </div>
                           <span className="mg-v2-ad-b0kla__kpi-label">{t('erp:BudgetManagement.t_6cd25c68')}</span>
                         </div>
@@ -545,9 +729,9 @@ const BudgetManagement = () => {
                     </div>
 
                     <div className="erp-budget-list">
-                      {budgets.length > 0 ? (
+                      {filteredBudgets.length > 0 ? (
                         <div className="erp-budget-grid">
-                          {budgets.map((budget) => {
+                          {filteredBudgets.map((budget) => {
                             const usagePercentage =
                               budget.totalBudget > 0
                                 ? ((budget.usedBudget || 0) / budget.totalBudget) * 100

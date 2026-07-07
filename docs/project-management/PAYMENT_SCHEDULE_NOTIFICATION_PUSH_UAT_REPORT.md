@@ -1,7 +1,7 @@
 # 결제·승인·일정 알림/푸시 — 수동 UAT 리포트
 
 **작성**: core-tester  
-**최종 갱신**: 2026-07-07 (Seq **28h** doc alignment — B1 §0/§10 cross-ref · B5 `APPOINTMENT` alias · B6 `/confirm` API path; 배치 **10** Solapi Phase D **`c5b181d28`** + 감정일기 inbox 회귀 **32+23 PASS**; human Solapi·§8.5 **NOT RUN**)  
+**최종 갱신**: 2026-07-07 (Seq **28h** D-5 — AUDIT §2~§3 스냅샷 cross-ref · B1 §0/§10 · B5 `APPOINTMENT` alias · B6 `/confirm` API path; 배치 **10** Solapi Phase D **`c5b181d28`** + 감정일기 inbox 회귀 **32+23 PASS**; human Solapi·§8.5 **NOT RUN**)  
 **이전**: 2026-05-20 배치 6/6 · 2026-05-20 배치 5/5 · 2026-05-18 Phase C 자동 게이트  
 **SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7·§7.6 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1 · **API·시드·common_code 정합**: [PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md)  
 **코드 기준**: **`c5b181d28`** (Solapi Phase D SSOT) · 실행 HEAD **`3f3e97e28`** — `MappingSettlementNotificationHelper`, `NotificationServiceImpl`, Expo `pushNavigation`  
@@ -84,7 +84,7 @@
 |------|-----|-----------|
 | **1** | **시스템 알림 (P0-3 → Phase D ☑)** | Phase D **`c5b181d28`** 에서 PG `APPROVED`·confirm-payment/deposit → `sendPaymentCompleted` **연결됨** (§10·[정합표](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md) §2 B1~B3). **잔여**: human Solapi UAT §10.3 D-0~D-4 **NOT RUN** · `ALIMTALK_BIZ_TEMPLATE_CODE.PAYMENT_COMPLETED` Flyway 미시드(정합표 §3.1) |
 | **2** | **웹 푸시 파이프라인 부재 (P0-4)** | 서버 `MobilePushPlatform` ios/android만; `frontend/.../PushNotificationService.js` **미참조** — Phase C 별도 트랙 또는 문서화 |
-| **3** | **오케스트레이션 §2~§3 문서 드리프트** | `createConsultantSchedule`·매칭 API는 **Y**로 구현됨 — [오케스트레이션](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §2·§9·§7 수동 기대(「없음」) 갱신 또는 `session_low`가 **입금 직후**에도 나가야 하는지 제품 확인 (`confirm-deposit`만으로는 회기 차감 없으면 푸시 없음) |
+| **3** | **오케스트레이션 §2~§3 문서 드리프트** | **✅ 닫힘 (Seq 28h D-5)** — AUDIT §2~§3는 **사전 P0 스냅샷**; 현행 SSOT는 UAT §0·§A.1·[정합표 §2](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md#2-트리거--api--채널--식별자-마스터-정합표). `session_low`는 입금 직후가 아니라 **회기 차감·잔여≤2** 시만 (**의도적** · B3·§A.2 2-4) |
 
 ---
 

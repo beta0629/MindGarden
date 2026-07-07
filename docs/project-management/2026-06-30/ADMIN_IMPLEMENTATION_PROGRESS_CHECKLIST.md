@@ -19,7 +19,7 @@
 | P0-doc | 2 | 본 progress checklist 작성 | planner | **planner** | Seq 1 | Phase·담당·감독·DoD·상태 열 완비; V0~V1+ 구분 | — | ☑ done | — |
 | P0-doc | 3 | governance 문서 작성 (RACI·병렬 시퀀스) | planner | **planner** | Seq 1 | RACI 표; mermaid 2종; 1 PR=1 가설; 병렬 tester gate 규칙 | — | ☑ done | — |
 | P0-design-review | 4 | 통합일정 handoff vs 현재 코드 gap 분석 (readonly) | designer | **designer** → planner 합류 | Seq 1~3 ☑ | gap list only; `SidePeekShell`·`DensityToggle`·`SessionProgress` 존재/부재; R-PARTIES·Must not 체크; **코드 변경 없음** | baseline: `93c39c35b` | ☑ done | Task [066a8c23](066a8c23-f0de-4ae3-8a93-d679f59c9728) · V0-coder 착수 **가능** |
-| P0-component | 5 | SidePeekShell·DensityToggle SSOT 중복 검토 (제안서) | component-manager | **component-manager** → designer | Seq 4 gap 초안 | 기존 컴포넌트 vs 신규; reuse 권고; 문서만 | — | ☐ pending | — |
+| P0-component | 5 | SidePeekShell·DensityToggle SSOT 중복 검토 (제안서) | component-manager | **component-manager** → designer | Seq 4 gap 초안 | 기존 컴포넌트 vs 신규; reuse 권고; 문서만 | — | ☑ done | [`ADMIN_COMPONENT_SSOT_SIDEPEEK_DENSITY_REVIEW.md`](./ADMIN_COMPONENT_SSOT_SIDEPEEK_DENSITY_REVIEW.md) |
 
 ---
 
@@ -83,7 +83,7 @@
 | V3+-coder | 28g-p3 | Saved View mapping list pilot (silent persist) | coder | designer | 28g-p2b ☑ | MappingListBlock filters+viewMode debounced persist; no save/load UI | `108615ebc` | ☑ done | PR #465 merged · route `/admin/mapping-management` · dev FE run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE run `28837307167` SUCCESS · main `c8f5a2cc6` |
 | V3+-coder | 28g-p4 | Saved View FinancialManagement pilot (silent persist) | coder | designer | 28g-p3 ☑ | FinancialManagement filters+viewMode debounced persist; pageId `erp.financial.transactions` | `047194130` | ☑ done | PR #466 merged · route `/erp/financial` · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` |
 | V3+-coder | 28f-lnb | 휴면 사용자 LNB 메뉴 | coder | planner | Seq 28c ☑ | Flyway `V20260706_001` · ADM_DORMANT_USERS | `c74af8210` | ☑ done | PR #454 merged · **BE dev 배포**(Flyway) |
-| V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `97436d432` | ☑ done | PR #453+#464 merged · D-1~D-4·D-6 닫힘 · D-5(감사 §2~§3) 열림 |
+| V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `97436d432` | ☑ done | PR #453+#464 merged · D-1~D-6 **전부 닫힘** (D-5 AUDIT §2~§3 스냅샷·2026-07-07) |
 
 ---
 
@@ -110,7 +110,7 @@
 | V3+ 28g-p3 dev+prod FE deploy | 2026-07-07 | ☑ dev FE run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE run `28837307167` SUCCESS · main `c8f5a2cc6` |
 | V3+ 28g-p4 dev+prod FE deploy | 2026-07-07 | ☑ dev FE run `28838011403` · prod FE run `28838028601` · main/develop `f3fe6a323` · PR #466 merged |
 | V3+ Seq 28 smoke sign-off | 2026-07-07 | ☑ 사용자 prod A~D 검수 OK · prod FE `28838028601` |
-| **다음 (pending)** | — | **28h D-5**(감사 오케스트레이션) · 네이버 Phase 0 보류 |
+| **다음 (pending)** | — | 네이버 Phase 0 보류 |
 
 ---
 
@@ -142,6 +142,7 @@
 | 2026-07-06 | 28a·28c | **28a** ☑ — hook+Jest 11 · tester [840e9bc5](840e9bc5-9d17-4fba-a711-e617ff364ac5) PASS · **28c** ☑ — DormantUsersPage AdminCommonLayout+Jest 8 · tester [afbf431d](afbf431d-88bc-437c-bdc3-1d6fbd47a7b9) PASS · PR 분리 권장(28a/28c) · **28b/28d/28e** 착수 가능 |
 | 2026-07-06 | 28b·28d·28e | **28b** ☑ PR #450 · **28d** ☑ PR #451 · **28e** ☑ PR #452 · develop merge batch |
 | 2026-07-06 | 28f·28g·lnb·docs | **28f** ☑ PR #455 · **28g** ☑ PR #456 · **28f-lnb** ☑ PR #454 · **28h/docs** ☑ PR #453 · develop `16e8bb69b` · dev FE deploy queued |
+| 2026-07-07 | 28h-D5 | **28h D-5** ☑ — AUDIT §2~§3 사전 P0 스냅샷·UAT/정합표 SSOT cross-ref; `session_low` 입금 직후 **의도적 미발화**; §7 D-1~D-6 **전부 닫힘** |
 | 2026-07-07 | 28h-D | **28h** 잔여 doc 정합 ☑ — UAT↔정합표 B1/B5/B6·ALIMTALK 미시드; D-1~D-4·D-6 닫힘 · D-5 열림 |
 | 2026-07-07 | 28g-p2·28h | **#462** client saved view ☑ · **#463** consultant/staff saved view ☑ · **#464** 28h doc 잔여 ☑ · develop `97436d432` · CI green · merge chain 재개 완료(네트워크 오류 이후) |
 | 2026-07-07 | 28g-deploy | dev FE deploy ☑ — run `28833732369` SUCCESS · develop `97436d432` · 28g-p2/p2b saved view 포함 |
@@ -149,3 +150,4 @@
 | 2026-07-07 | 28g-p3-deploy | dev FE deploy ☑ — run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE deploy ☑ — run `28837307167` SUCCESS · main `c8f5a2cc6` · PR #465 merged · route `/admin/mapping-management` |
 | 2026-07-07 | 28g-p4-deploy | PR #466 merged · FinancialManagement saved view silent persist · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` · route `/erp/financial` · pageId `erp.financial.transactions` |
 | 2026-07-07 | 28-smoke | Seq 28 prod smoke sign-off ☑ — 사용자 A~D 검수 OK · good SHA `37f50830b` · prod FE run `28838028601` · [체크리스트](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md) |
+| 2026-07-07 | 5 | P0 SidePeekShell·DensityToggle SSOT 중복 검토 ☑ — [제안서](./ADMIN_COMPONENT_SSOT_SIDEPEEK_DENSITY_REVIEW.md) · 중복 0건 · PR-H1 문서 정렬·PR-H2 peek layout 패턴 후속 |

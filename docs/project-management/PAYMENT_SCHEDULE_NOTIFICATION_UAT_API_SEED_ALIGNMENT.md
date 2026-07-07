@@ -134,7 +134,7 @@
 | D-2 | UAT ↔ 코드 | B5 CLIENT `APPOINTMENT_CONFIRMATION` vs DB **`APPOINTMENT`** | **✅ 닫힘** — UAT §0·§4 + 본 표 §4; QA는 DB 컬럼 기준 |
 | D-3 | 시드 | `ALIMTALK_BIZ_TEMPLATE_CODE.PAYMENT_COMPLETED` Flyway **미시드** | **✅ 문서화** — §3.1 「의도적 미시드」; human §10 D-1·후속 Flyway 선택 |
 | D-4 | UAT ↔ API | B6 **`PUT .../schedules/{id}/confirm`** | **✅ 닫힘** — UAT §0 B6·§4 4-2·§8.4 6b 반영 |
-| D-5 | 감사 문서 | [AUDIT §2~§3](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) 「없음」 | **열림** — UAT §A.5 Top 3 #3; 오케스트레이션 갱신 또는 제품 확인 (`session_low` 입금 직후) |
+| D-5 | 감사 문서 | [AUDIT §2~§3](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) 「없음」 vs P0 후 코드·UAT §0 | **✅ 닫힘** — §2·§3 **사전 P0 스냅샷** 배너·현행 SSOT 교차 참조(2026-07-07); `session_low`는 입금 직후가 아니라 **회기 차감·잔여≤2** 시만 (**의도적** · 본 표 §2 B3·UAT §A.2 2-4) |
 | D-6 | 레거시 | `ALIMTALK_TEMPLATE.PAYMENT_COMPLETE` vs `PAYMENT_COMPLETED` | **✅ 문서화** — §3.1 레거시 주석; 신규 작업 **`ALIMTALK_BIZ_TEMPLATE_CODE`** 만 |
 
 ---
@@ -160,5 +160,6 @@
 
 | 일자 | 변경 |
 |------|------|
+| 2026-07-07 | Seq **28h** D-5 — AUDIT §2~§3 사전 P0 스냅샷·SSOT cross-ref; §7 D-5 닫힘 (`session_low` 의도적) |
 | 2026-07-07 | Seq **28h** 잔여 정합 — B1/B5 **✅†** 허용 드리프트·B6 API path·§3.1 ALIMTALK 미시드 명시·§7 D-1~D-4·D-6 닫힘 |
 | 2026-07-06 | 초판 — V3+ Seq 28h Notification API/doc·시드 정합표 (코드 변경 없음) |

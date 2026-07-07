@@ -31,6 +31,7 @@ import { useToast } from '../../../contexts/ToastContext';
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
+import './DormantUsersPage.css';
 
 const PAGE_SIZE = 20;
 const PAGE_TITLE_ID = 'dormant-users-page-title';
@@ -190,7 +191,7 @@ const DormantUsersPage = () => {
 
   return (
     <AdminCommonLayout title={pageTitle} loading={loading}>
-      <div className="mg-v2-ad-b0kla" data-testid="dormant-users-page">
+      <div className="mg-v2-ad-b0kla mg-v2-dormant-users-page" data-testid="dormant-users-page">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={pageTitle}>
             <ContentHeader

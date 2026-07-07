@@ -551,3 +551,65 @@
         justify-content: space-between;
     }
 }
+
+/* Admin Dark Mode C-3 P1-h — System Config cascade ([data-theme="dark"] only) */
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__section,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-ad-b0kla__card {
+  background: var(--mg-color-surface-main);
+  border-color: var(--mg-color-border-subtle);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__section-desc,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__provider-title,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__radio-empty {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__radio-label {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-input,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-select,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-textarea,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__input--mb-sm {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-input:focus,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-select:focus,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-textarea:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-label {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-notification-scheduler__item {
+  background: var(--mg-color-surface-main);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-notification-scheduler__item-label {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-notification-scheduler__item-hint,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-notification-scheduler__item-meta {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__notice-link {
+  background: var(--mg-dark-chip-bg);
+  border-color: var(--mg-color-primary-main);
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__notice-link:hover,
+[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__notice-link:focus-visible {
+  background: var(--mg-dark-chip-active-bg);
+}

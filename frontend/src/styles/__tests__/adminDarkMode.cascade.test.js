@@ -69,6 +69,16 @@ const C3_P1DIF_PR_A_FILES = [
   'src/components/admin/AdminNotificationsPage.css'
 ];
 
+const C3_P1DIF_PR_B_FILES = [
+  'src/components/admin/lifecycle/DormantUsersPage.css',
+  'src/components/admin/SystemConfigManagement.css'
+];
+
+const C3_P1DIF_AB_FILES = [
+  ...C3_P1DIF_PR_A_FILES,
+  ...C3_P1DIF_PR_B_FILES
+];
+
 const HEX_IN_DECLARATION = /:\s*[^;{]*#[0-9a-fA-F]{3,8}/;
 
 describe('Admin Dark Mode C-3 cascade', () => {
@@ -132,6 +142,29 @@ describe('Admin Dark Mode C-3 cascade', () => {
     });
   });
 
+  test('P1-g~h 컴포넌트 CSS [data-theme="dark"] 블록에 hex 하드코딩 0건', () => {
+    C3_P1DIF_PR_B_FILES.forEach((file) => {
+      const css = readCss(file);
+      const darkCss = extractDarkBlocks(css);
+      expect(darkCss.trim().length).toBeGreaterThan(0);
+      expect(darkCss).not.toMatch(HEX_IN_DECLARATION);
+    });
+  });
+
+  test('P1-g~h CSS 파일에 [data-theme="dark"] cascade 존재', () => {
+    C3_P1DIF_PR_B_FILES.forEach((file) => {
+      const css = readCss(file);
+      expect(css).toMatch(/\[data-theme=["']dark["']\]/);
+    });
+  });
+
+  test('P1-d~h 전체 CSS 파일에 [data-theme="dark"] cascade 존재', () => {
+    C3_P1DIF_AB_FILES.forEach((file) => {
+      const css = readCss(file);
+      expect(css).toMatch(/\[data-theme=["']dark["']\]/);
+    });
+  });
+
   test('SCREEN_SPEC P1-d~f 라우트가 로드맵과 일치', () => {
     const spec = fs.readFileSync(
       path.join(
@@ -146,6 +179,24 @@ describe('Admin Dark Mode C-3 cascade', () => {
       '/admin/schedule',
       '/admin/schedules',
       '/admin/notifications'
+    ].forEach((route) => {
+      expect(spec).toContain(route);
+    });
+  });
+
+  test('SCREEN_SPEC P1-g~h 라우트가 로드맵과 일치', () => {
+    const spec = fs.readFileSync(
+      path.join(
+        REPO_ROOT,
+        'docs/project-management/2026-06-30/ADMIN_DARK_MODE_C3_ROADMAP.md'
+      ),
+      'utf8'
+    );
+
+    [
+      '/admin/lifecycle/dormant-users',
+      '/admin/system-config',
+      '/admin/settings'
     ].forEach((route) => {
       expect(spec).toContain(route);
     });

@@ -1,0 +1,47 @@
+/**
+ * Dormant Users — Admin Dark Mode C-3 P1-g cascade
+ *
+ * @author CoreSolution
+ * @since 2026-07-07
+ */
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-card {
+  background: var(--mg-color-surface-main);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-table th {
+  background: var(--ad-b0kla-table-header-bg);
+  color: var(--ad-b0kla-table-header-text);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-table td {
+  color: var(--mg-v2-form-text);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-table tbody tr {
+  background: var(--ad-b0kla-table-row-bg);
+}
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-table tbody tr:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-table tbody tr[aria-selected="true"] {
+  background: var(--ad-b0kla-table-row-selected);
+}
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-pagination__indicator {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-empty-state__title {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-empty-state__description,
+[data-theme="dark"] .mg-v2-dormant-users-page .mg-v2-error-state {
+  color: var(--mg-v2-form-label);
+}

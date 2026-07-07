@@ -120,7 +120,7 @@ jest.mock('../../common/modals/UnifiedModal', () => ({
 import SystemConfigManagement from '../SystemConfigManagement';
 
 describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
-  test('ACL title SSOT 유지, ContentHeader title 생략, 부제·저장 액션 유지', async() => {
+  test('ContentHeader title SSOT, ACL title 생략, 부제·저장 액션 유지', async() => {
     render(
       <MemoryRouter>
         <SystemConfigManagement />
@@ -128,12 +128,12 @@ describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', PAGE_TITLE);
+      expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', '');
     });
 
     const header = screen.getByTestId('content-header');
-    expect(header).toHaveAttribute('data-has-title', 'false');
-    expect(screen.queryByRole('heading', { name: PAGE_TITLE })).not.toBeInTheDocument();
+    expect(header).toHaveAttribute('data-has-title', 'true');
+    expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
     expect(screen.getByTestId('content-header-actions')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '저장' })).toBeInTheDocument();

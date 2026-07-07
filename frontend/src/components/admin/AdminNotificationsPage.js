@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 
 const TAB_SYSTEM = 'system';
 const TAB_MESSAGES = 'messages';
+const PAGE_TITLE = '알림·메시지 관리';
 
 const AdminNotificationsPage = () => {
   const { t } = useTranslation();
@@ -75,16 +76,16 @@ const AdminNotificationsPage = () => {
     ) : null;
 
   return (
-    <AdminCommonLayout title="알림·메시지 관리">
+    <AdminCommonLayout>
       <main
         className="mg-v2-dashboard-layout"
-        aria-label="알림·메시지 관리"
+        aria-label={PAGE_TITLE}
       >
         <div className="mg-v2-ad-b0kla mg-v2-admin-notifications-page">
           <div className="mg-v2-ad-b0kla__container">
             <ContentArea ariaLabel="알림·메시지 관리 콘텐츠">
               <ContentHeader
-                title={null}
+                title={PAGE_TITLE}
                 subtitle={subtitle}
                 actions={headerActions}
               />

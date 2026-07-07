@@ -190,12 +190,12 @@ const DormantUsersPage = () => {
     '1년 비활성 사용자(DORMANT)의 4년 안정 보관 진행 상태를 확인하고 강제 복귀 또는 즉시 익명화할 수 있습니다.');
 
   return (
-    <AdminCommonLayout title={pageTitle} loading={loading}>
+    <AdminCommonLayout loading={loading}>
       <div className="mg-v2-ad-b0kla mg-v2-dormant-users-page" data-testid="dormant-users-page">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={pageTitle}>
             <ContentHeader
-              title={null}
+              title={pageTitle}
               subtitle={pageSubtitle}
               titleId={PAGE_TITLE_ID}
             />

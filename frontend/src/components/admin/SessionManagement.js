@@ -440,16 +440,18 @@ const SessionManagement = () => {
     const showSessionBodyLoader =
         (loading && mappings.length === 0) || (loading && clients.length === 0);
 
+    const pageTitle = t('admin:session.pageTitle');
+
     return (
-        <AdminCommonLayout title={t('admin:session.pageTitle')}>
+        <AdminCommonLayout>
             <div className="mg-v2-ad-b0kla mg-v2-session-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel={t('admin:session.ariaContent')}>
                         <ContentHeader
-                            title={null}
+                            title={pageTitle}
                             subtitle={t('admin:session.subtitle')}
                         />
-                        <main aria-label={t('admin:session.pageTitle')} className="mg-dashboard-layout">
+                        <main aria-label={pageTitle} className="mg-dashboard-layout">
                 {showSessionBodyLoader ? (
                     <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
                         <UnifiedLoading type="inline" text={t('common:state.dataLoading')} />

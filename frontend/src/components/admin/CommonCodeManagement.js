@@ -47,6 +47,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0) — getLegacyCodeGroupsList 내부 SSOT
 
 const COMMON_CODE_DEFAULT_SAVED_VIEW = buildCommonCodeManagementDefaultSavedView();
+const COMMON_CODE_PAGE_TITLE_ID = 'common-code-page-title';
 
 /**
  * - 2단 분할 구조 (마스터-디테일): 코드그룹 목록(좌) / 코드 관리(우)
@@ -662,10 +663,17 @@ const CommonCodeManagement = () => {
         loadCodeGroups();
     }, [loadMetadata, loadCodeGroups]);
 
+    const pageTitle = t('admin:commonCode.ui.pageTitle');
+    const pageSubtitle = t('admin:commonCode.ui.headerSubtitle');
+
     return (
-        <AdminCommonLayout title={t('admin:commonCode.ui.pageTitle')}>
+        <AdminCommonLayout>
             <ContentArea>
-                <ContentHeader title={null} subtitle={t('admin:commonCode.ui.headerSubtitle')} />
+                <ContentHeader
+                    title={pageTitle}
+                    subtitle={pageSubtitle}
+                    titleId={COMMON_CODE_PAGE_TITLE_ID}
+                />
 
                 <section
                     className="mg-v2-session-saved-view-row"

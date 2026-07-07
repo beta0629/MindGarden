@@ -195,7 +195,7 @@ const DormantUsersPage = () => {
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={pageTitle}>
             <ContentHeader
-              title={pageTitle}
+              title={null}
               subtitle={pageSubtitle}
               titleId={PAGE_TITLE_ID}
             />

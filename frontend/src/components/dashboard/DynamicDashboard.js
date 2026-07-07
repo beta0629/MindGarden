@@ -46,6 +46,7 @@ import ClientDashboard from '../client/ClientDashboard';
 import AdminDashboard from '../admin/AdminDashboard';
 import AcademyDashboard from '../academy/AcademyDashboard';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -341,7 +342,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
               { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
               { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
               { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
-              { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
+              { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: ADMIN_ROUTES.INTEGRATED_SCHEDULE },
               { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
             ],
             color: 'primary'
@@ -559,7 +560,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
                 { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
                 { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
                 { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
-                { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
+                { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: ADMIN_ROUTES.INTEGRATED_SCHEDULE },
                 { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
               ],
               color: 'primary'
@@ -1098,7 +1099,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
         actions: [
           { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
           { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
-          { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
+          { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: ADMIN_ROUTES.INTEGRATED_SCHEDULE },
           { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
         ]
       }

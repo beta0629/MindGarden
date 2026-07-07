@@ -71,7 +71,7 @@ import CumulativeConsultantCountsChart from './molecules/CumulativeConsultantCou
 import './molecules/CumulativeConsultantCountsChart.css';
 import Chart from '../common/Chart';
 import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STEP_CHART_HEX } from '../../constants/charts';
-import { resolveCssColorTokensArray } from '../../utils/resolveCssColorVarToHex';
+import { resolveCssColorTokensArray, resolveCssColorVarToHex } from '../../utils/resolveCssColorVarToHex';
 import {
   AdminMetricsVisualization,
   ManualMatchingQueue,
@@ -114,13 +114,12 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
 import { useTranslation } from 'react-i18next';
 import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
-import { DASHBOARD_KPI_IDS } from '../../constants/adminDashboardWidgetConstants';
+import { DASHBOARD_KPI_IDS, API_ADMIN_SCHEDULES, DASHBOARD_REFUND_SECTION_CTA_LABEL } from '../../constants/adminDashboardWidgetConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // /api/v1/admin/mappings 는 SSOT(API_ENDPOINTS.ADMIN.MAPPINGS.LIST) 사용
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
-const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
 const API_ADMIN_REFUND_STATISTICS = '/api/v1/admin/refund-statistics?period=month';
 const API_ADMIN_CONSULTANTS_WITH_VACATION = '/api/v1/admin/consultants/with-vacation';
@@ -169,14 +168,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       averageScore: 0,
       topConsultants: []
     },
-    vacationStats: {
-      summary: {
-        totalConsultants: 0,
-        totalVacationDays: 0,
-        averageVacationDays: 0
-      },
-      consultantStats: []
-    },
     consultationStats: {
       totalCompleted: 0,
       completionRate: 0,
@@ -202,6 +193,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [unassignedClients, setUnassignedClients] = useState([]);
   const [consultants, setConsultants] = useState([]);
   const [pendingDepositList, setPendingDepositList] = useState([]);
+  const [schedulePendingList, setSchedulePendingList] = useState([]);
   const [matchingQueueLoading, setMatchingQueueLoading] = useState(false);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
   const [showErpReport, setShowErpReport] = useState(false);
@@ -263,11 +255,18 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     fill: B0KLA_CHART_BAR_FALLBACK.FILL,
     border: B0KLA_CHART_BAR_FALLBACK.BORDER
   });
+  const [chartCanvasTheme, setChartCanvasTheme] = useState({
+    tick: '#6B7280',
+    grid: '#E5E7EB',
+    tooltipBg: '#FFFFFF',
+    tooltipText: '#111827',
+    legend: '#374151'
+  });
   const chartBarWrapperRef = useRef(null);
   const lineChartWrapperRef = useRef(null);
   const isInitialized = useRef(false);
 
-  /** B0KlA 차트 막대/라인 색상: CSS 변수를 resolved 값(hex/rgb)으로 읽어 Canvas에 전달 */
+  /** B0KlA 차트 막대/라인·축 색상: CSS 변수를 resolved 값으로 읽어 Canvas에 전달 (다크모드 연동) */
   useEffect(() => {
     const el = chartBarWrapperRef.current || lineChartWrapperRef.current || document.documentElement;
     const style = el && typeof getComputedStyle !== 'undefined' ? getComputedStyle(el) : null;
@@ -278,7 +277,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       fill: fill || B0KLA_CHART_BAR_FALLBACK.FILL,
       border: border || B0KLA_CHART_BAR_FALLBACK.BORDER
     });
-  }, [chartPeriod, lineChartPeriod]);
+    setChartCanvasTheme({
+      tick: resolveCssColorVarToHex('--mg-v2-color-text-secondary', '#6B7280'),
+      grid: resolveCssColorVarToHex('--mg-v2-color-border-light', '#E5E7EB'),
+      tooltipBg: resolveCssColorVarToHex('--mg-v2-color-surface-raised', '#FFFFFF'),
+      tooltipText: resolveCssColorVarToHex('--mg-v2-color-text-primary', '#111827'),
+      legend: resolveCssColorVarToHex('--mg-v2-color-text-secondary', '#6B7280')
+    });
+  }, [chartPeriod, lineChartPeriod, darkResolved]);
 
   /**
    * 단계별 도넛 차트 색상: B0KLA_STEP_CHART_HEX 의 `var(--*)` 항목을 Canvas 호환 색으로 resolve.
@@ -295,7 +301,33 @@ const AdminDashboardV2 = ({ user: propUser }) => {
    */
   const stepChartCanvasColors = useMemo(
     () => resolveCssColorTokensArray(B0KLA_STEP_CHART_HEX),
-    []
+    [darkResolved]
+  );
+
+  const chartJsScaleOptions = useMemo(
+    () => ({
+      x: {
+        grid: { display: false },
+        ticks: { maxRotation: 0, font: { size: 11 }, color: chartCanvasTheme.tick }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { stepSize: 1, color: chartCanvasTheme.tick },
+        grid: { color: chartCanvasTheme.grid }
+      }
+    }),
+    [chartCanvasTheme]
+  );
+
+  const chartJsTooltipOptions = useMemo(
+    () => ({
+      backgroundColor: chartCanvasTheme.tooltipBg,
+      titleColor: chartCanvasTheme.tooltipText,
+      bodyColor: chartCanvasTheme.tooltipText,
+      borderColor: chartCanvasTheme.grid,
+      borderWidth: 1
+    }),
+    [chartCanvasTheme]
   );
 
   const loadTodayStats = useCallback(async() => {
@@ -381,7 +413,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO, { headers, credentials: 'include' }),
         fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, { headers, credentials: 'include' }),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
-        fetch(API_ADMIN_VACATION_STATISTICS, { headers, credentials: 'include' }),
         fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION, { headers, credentials: 'include' }),
         fetch(SCHEDULE_API.STATISTICS, { headers, credentials: 'include' })
       ]);
@@ -389,15 +420,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();
       const mappingsRes = settled[2].status === 'fulfilled' ? settled[2].value : dummyFailedResponse();
       const ratingRes = settled[3].status === 'fulfilled' ? settled[3].value : dummyFailedResponse();
-      const vacationRes = settled[4].status === 'fulfilled' ? settled[4].value : dummyFailedResponse();
-      const consultationRes = settled[5].status === 'fulfilled' ? settled[5].value : dummyFailedResponse();
-      const scheduleStatsRes = settled[6].status === 'fulfilled' ? settled[6].value : dummyFailedResponse();
+      const consultationRes = settled[4].status === 'fulfilled' ? settled[4].value : dummyFailedResponse();
+      const scheduleStatsRes = settled[5].status === 'fulfilled' ? settled[5].value : dummyFailedResponse();
 
       // [Dashboard Charts] consultation-completion 호출 결과(상담 현황 추이/예약 vs 완료 차트용)
-      if (settled[5].status === 'rejected') {
-        console.warn('[Dashboard Charts] consultation-completion 요청 실패 (rejected):', settled[5].reason);
+      if (settled[4].status === 'rejected') {
+        console.warn('[Dashboard Charts] consultation-completion 요청 실패 (rejected):', settled[4].reason);
       } else {
-        const res = settled[5].value;
+        const res = settled[4].value;
         console.log('[Dashboard Charts] consultation-completion 응답:', {
           status: res.status,
           ok: res.ok,
@@ -410,10 +440,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       let totalMappings = 0;
       let activeMappings = 0;
       let consultantRatingStats = { totalRatings: 0, averageScore: 0, topConsultants: [] };
-      let vacationStats = {
-        summary: { totalConsultants: 0, totalVacationDays: 0, averageVacationDays: 0 },
-        consultantStats: []
-      };
       let consultationStats = {
         totalCompleted: 0,
         completionRate: 0,
@@ -451,15 +477,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             totalRatings: d.data.totalRatings || 0,
             averageScore: d.data.averageScore || 0,
             topConsultants: d.data.topConsultants || []
-          };
-        }
-      }
-      if (vacationRes.ok) {
-        const d = await vacationRes.json();
-        if (d.success) {
-          vacationStats = {
-            summary: d.summary || vacationStats.summary,
-            consultantStats: d.consultantStats || []
           };
         }
       }
@@ -515,7 +532,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         activeMappings,
         schedulePendingCount,
         consultantRatingStats,
-        vacationStats,
         consultationStats
       });
       const user = propUser || sessionUser;
@@ -595,33 +611,19 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
   }, [t]);
 
-  const handleConfirmMatch = useCallback(
-    async(clientId, consultantId) => {
-      try {
-        await StandardizedApi.post(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, {
-          clientId: Number(clientId),
-          consultantId: Number(consultantId),
-          status: 'PENDING_PAYMENT',
-          totalSessions: 1,
-          remainingSessions: 1,
-          packageName: t('admin:dashboard.initialConsultation'),
-          packagePrice: 0,
-          paymentStatus: 'PENDING'
-        });
-        notificationManager.success(t('admin:dashboard.success.matchingCreated'));
-        await Promise.all([
-          loadUnassignedClientsAndConsultants(),
-          loadStats(),
-          loadPendingDepositStats()
-        ]);
-      } catch (error) {
-        const msg =
-          error?.message || error?.response?.data?.message || t('admin:dashboard.error.matchingCreate');
-        notificationManager.error(msg);
-      }
-    },
-    [loadUnassignedClientsAndConsultants, loadStats, loadPendingDepositStats, t]
-  );
+  const loadSchedulePendingList = useCallback(async() => {
+    try {
+      const data = await StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' });
+      const rawSchedules =
+        data?.schedules ?? data?.data?.schedules ?? (Array.isArray(data) ? data : []);
+      const bookedList = Array.isArray(rawSchedules) ? rawSchedules : [];
+      setSchedulePendingList(bookedList);
+    } catch (error) {
+      console.error('스케줄 등록 대기 목록 로드 실패:', error);
+      notificationManager.error(error?.message || '스케줄 등록 대기 목록을 불러오지 못했습니다.');
+      setSchedulePendingList([]);
+    }
+  }, []);
 
   const handleAutoCompleteSchedules = async() => {
     setAutoCompleteLoading(true);
@@ -705,6 +707,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadStats();
     loadRefundStats();
     loadPendingDepositStats();
+    loadSchedulePendingList();
     loadUnassignedClientsAndConsultants();
     if (!sessionLoading) {
       const user = propUser || sessionUser;
@@ -714,6 +717,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadStats,
     loadRefundStats,
     loadPendingDepositStats,
+    loadSchedulePendingList,
     loadUnassignedClientsAndConsultants,
     sessionLoading,
     sessionUser,
@@ -726,10 +730,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     const handler = () => {
       loadStats();
       loadTodayStats();
+      loadSchedulePendingList();
+      loadPendingDepositStats();
     };
     window.addEventListener('admin-dashboard-refresh-stats', handler);
     return () => window.removeEventListener('admin-dashboard-refresh-stats', handler);
-  }, [loadStats, loadTodayStats]);
+  }, [loadStats, loadTodayStats, loadSchedulePendingList, loadPendingDepositStats]);
 
   /** 탭 포커스 복귀 시 KPI 한 번 재조회 (다른 탭에서 등록 후 돌아온 경우 등) */
   useEffect(() => {
@@ -1143,21 +1149,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       plugins: {
                         legend: { display: false },
                         tooltip: {
+                          ...chartJsTooltipOptions,
                           callbacks: {
                             label: (ctx) => `완료: ${ctx.parsed.y}건`
                           }
                         }
                       },
                       scales: {
-                        x: {
-                          grid: { display: false },
-                          ticks: { maxRotation: 0, font: { size: 11 } }
-                        },
+                        ...chartJsScaleOptions,
                         y: {
-                          beginAtZero: true,
-                          suggestedMax: Math.max(maxVal + 1, 2),
-                          ticks: { stepSize: 1 },
-                          grid: { color: 'var(--mg-shadow-light)' }
+                          ...chartJsScaleOptions.y,
+                          suggestedMax: Math.max(maxVal + 1, 2)
                         }
                       }
                     }}
@@ -1280,24 +1282,25 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                         legend: {
                           display: true,
                           position: 'top',
-                          labels: { usePointStyle: true, padding: 12, font: { size: 11 } }
+                          labels: {
+                            usePointStyle: true,
+                            padding: 12,
+                            font: { size: 11 },
+                            color: chartCanvasTheme.legend
+                          }
                         },
                         tooltip: {
+                          ...chartJsTooltipOptions,
                           callbacks: {
                             label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}건`
                           }
                         }
                       },
                       scales: {
-                        x: {
-                          grid: { display: false },
-                          ticks: { maxRotation: 0, font: { size: 11 } }
-                        },
+                        ...chartJsScaleOptions,
                         y: {
-                          beginAtZero: true,
-                          suggestedMax: Math.max(maxVal + 1, 2),
-                          ticks: { stepSize: 1 },
-                          grid: { color: 'var(--mg-shadow-light)' }
+                          ...chartJsScaleOptions.y,
+                          suggestedMax: Math.max(maxVal + 1, 2)
                         }
                       }
                     }}
@@ -1345,9 +1348,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                       plugins: {
                         legend: {
                           position: 'right',
-                          labels: { usePointStyle: true, padding: 12, font: { size: 11 } }
+                          labels: {
+                            usePointStyle: true,
+                            padding: 12,
+                            font: { size: 11 },
+                            color: chartCanvasTheme.legend
+                          }
                         },
                         tooltip: {
+                          ...chartJsTooltipOptions,
                           callbacks: {
                             label: (ctx) => {
                               const v = ctx.parsed;
@@ -1697,31 +1706,38 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         title={t('common:dashboard-v2.AdminDashboardV2.t_ac9f714d')}
         subtitle="최근 1개월 환불 통계"
       >
-        <div className="mg-stats-grid">
+        <div className="mg-stats-grid mg-stats-grid--display-only">
           <StatCard
             icon={<Icon name="RECEIPT" size="LG" color="TRANSPARENT" />}
             value={`${refundStats.totalRefundCount}건`}
             label={t('common:dashboard-v2.AdminDashboardV2.t_e07e5754')}
-            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
           />
           <StatCard
             icon={<FaCalendarAlt />}
             value={`${refundStats.totalRefundedSessions}회`}
             label={t('common:dashboard-v2.AdminDashboardV2.t_7362540d')}
-            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
           />
           <StatCard
             icon={<Icon name="DOLLAR_SIGN" size="LG" color="TRANSPARENT" />}
             value={`${refundStats.totalRefundAmount.toLocaleString()}원`}
             label={t('common:dashboard-v2.AdminDashboardV2.t_ca5c157c')}
-            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
           />
           <StatCard
             icon={<Icon name="TRENDING_UP" size="LG" color="TRANSPARENT" />}
             value={`${refundStats.averageRefundPerCase.toLocaleString()}원`}
             label={t('common:dashboard-v2.AdminDashboardV2.t_5c45c1f3')}
-            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
           />
+        </div>
+        <div className="mg-v2-ad-b0kla__refund-cta">
+          <MGButton
+            type="button"
+            variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
+          >
+            {DASHBOARD_REFUND_SECTION_CTA_LABEL}
+          </MGButton>
         </div>
       </ContentSection>
       )}
@@ -1730,13 +1746,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         items={unassignedClients.map((client) => ({
           id: client.id,
           clientName: client.name || '-',
-          clientMeta: client.email || '매칭 없음',
-          consultantOptions: consultants.map((c) => ({
-            value: String(c.id),
-            label: c.name || `상담사 ${c.id}`
-          }))
+          clientMeta: client.email || '매칭 없음'
         }))}
-        onConfirmMatch={handleConfirmMatch}
+        viewAllHref={ADMIN_ROUTES.CLIENT_COMPREHENSIVE}
         loading={matchingQueueLoading}
       />
 
@@ -1750,12 +1762,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           viewAllHref={`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`}
         />
         <SchedulePendingList
-          items={pendingDepositList.map((m) => ({
-            id: `sched-${m.id}`,
-            clientName: m.clientName,
-            consultantName: m.consultantName
+          items={schedulePendingList.map((s) => ({
+            id: String(s.id),
+            clientName: s.clientName,
+            consultantName: s.consultantName
           }))}
-          viewAllHref={ADMIN_ROUTES.NOTIFICATIONS}
+          viewAllHref={ADMIN_ROUTES.INTEGRATED_SCHEDULE}
         />
       </div>
 
@@ -1787,7 +1799,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           />
           {!HIDE_ADMIN_CARD_IDS.has('sessions') && (
             <AdminMgmtNavCard
-              to={ADMIN_ROUTES.SESSIONS}
+              to={ADMIN_ROUTES.MAPPING_MANAGEMENT}
               icon={Target}
               tone="gray"
               label={t('common:dashboard-v2.AdminDashboardV2.t_be89c264')}
@@ -1841,7 +1853,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           />
           {!HIDE_ADMIN_CARD_IDS.has('schedule-management') && (
             <AdminMgmtNavCard
-              to={ADMIN_ROUTES.SCHEDULES}
+              to={ADMIN_ROUTES.INTEGRATED_SCHEDULE}
               icon={Calendar}
               tone="green"
               label={t('common:dashboard-v2.AdminDashboardV2.t_6ddcca42')}
@@ -1880,7 +1892,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           />
           {!HIDE_ADMIN_CARD_IDS.has('dashboards') && (
             <AdminMgmtNavCard
-              to={ADMIN_ROUTES.DASHBOARDS}
+              to={ADMIN_ROUTES.DASHBOARD}
               icon={LayoutDashboard}
               tone="gray"
               label={t('common:dashboard-v2.AdminDashboardV2.t_d8189860')}

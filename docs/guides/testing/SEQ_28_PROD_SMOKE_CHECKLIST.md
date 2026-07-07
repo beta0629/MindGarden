@@ -2,7 +2,8 @@
 
 **역할**: ADMIN (ERP·어드민 LNB 접근 권한)  
 **환경**: prod — `https://mindgarden.core-solution.co.kr`  
-**배포 기준**: develop `eacb047d5` (#473+#471+#480+#481 28g-p6~p8 · #485+#482 G-14 header · #486 dark C-2) · prod `ef19718e2` (#467 28g-p5 + #470 28g-p5b) · prod FE run `TBD` (deploy queued `28840058342`)  
+**배포 기준**: develop `cb9ca7249` (parallel-4 #506~#522 · dark P1-j~l · G5-02 · G1-02 · header P2) · prior develop `eacb047d5` (#473+#471+#480+#481 28g-p6~p8 · #485+#482 G-14 header · #486 dark C-2) · prod `ef19718e2` (#467 28g-p5 + #470 28g-p5b) · prod FE run `TBD` (deploy queued `28840058342`) · **parallel-4 prod sign-off 없음** · **Phase2 (G-10 BE) 미착수**  
+**dev FE (parallel-4)**: run `28853779280` queued · ref develop `cb9ca7249` (#522 dormant-users hotfix merge)  
 **선행 (A~D)**: main `37f50830b` · prod FE run `28838028601` — 2026-07-07 sign-off 유지  
 **선행 (E)**: 브라우저 개발자 도구 **콘솔·네트워크** 열고 진행. 치명 오류(빨간 스택) 없을 것.
 
@@ -360,4 +361,4 @@
 | Saved View named views — integrated schedule | 28g-p8a | [ ] |
 | Saved View named views — ERP financial | 28g-p8b | [ ] |
 
-**검수자 / 일자**: 사용자 / 2026-07-07 (A~D · 28g-p5b) · 28g-p5 prod pending · **F~J dev 배포 후 검수 pending**
+**검수자 / 일자**: 사용자 / 2026-07-07 (A~D · 28g-p5b) · 28g-p5 prod pending · **F~J dev 배포 후 검수 pending** · **parallel-4 (dark P1-j~l · G5-02 · G1-02 · header P2) dev smoke pending** — develop `cb9ca7249` · prod sign-off 없음

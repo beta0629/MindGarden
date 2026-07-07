@@ -25,6 +25,7 @@ import './StatisticsGridWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
+import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CONSULTANTS_WITH_STATS = '/api/v1/admin/consultants/with-stats';
@@ -180,7 +181,7 @@ const StatisticsGridWidget = ({ widget, user }) => {
       title: '오늘 일정',
       value: displayStats.todaySchedules.toLocaleString(),
       category: 'schedule',
-      onClick: () => navigate('/admin/schedules'),
+      onClick: () => navigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE),
       description: '오늘 예정된 상담'
     },
     {
@@ -188,7 +189,7 @@ const StatisticsGridWidget = ({ widget, user }) => {
       title: '완료된 세션',
       value: displayStats.completedSessions.toLocaleString(),
       category: 'session',
-      onClick: () => navigate('/admin/sessions'),
+      onClick: () => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT),
       description: '완료된 상담 세션'
     },
     {

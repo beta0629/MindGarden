@@ -2,6 +2,7 @@ import React from 'react';
 import StatCard from '../../ui/Card/StatCard';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaDollarSign, FaChartLine, FaCheckCircle, FaWallet, FaTruck, FaExclamationTriangle } from 'react-icons/fa';
 import { Users, User, Link2, Calendar, CalendarCheck, DollarSign, TrendingUp, CheckCircle, Wallet, Truck, AlertTriangle } from 'lucide-react';
+import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
 /**
  * AdminDashboard 통계 카드 컴포넌트
@@ -57,7 +58,7 @@ const AdminDashboardStats = ({
             value: stats.todaySchedules,
             icon: <Calendar className="mg-v2-icon" />,
             color: 'orange',
-            onClick: () => onNavigate('/admin/schedules'),
+            onClick: () => onNavigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE),
             description: '오늘 예정된 일정'
         },
         {
@@ -65,7 +66,7 @@ const AdminDashboardStats = ({
             value: stats.completedSchedules,
             icon: <CalendarCheck className="mg-v2-icon" />,
             color: 'green',
-            onClick: () => onNavigate('/admin/schedules'),
+            onClick: () => onNavigate(ADMIN_ROUTES.INTEGRATED_SCHEDULE),
             description: '오늘 완료된 일정'
         },
         {

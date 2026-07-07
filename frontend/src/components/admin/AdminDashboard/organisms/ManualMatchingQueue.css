@@ -1,39 +1,60 @@
 /**
- * ManualMatchingQueue - 미배정 내담자 매칭 대기열 스타일
+ * ManualMatchingQueue - 미배정 내담자 매칭 대기열 (G1-02 ListTableView flat)
  */
 .manual-matching-queue {
-  background: var(--mg-bg-surface, var(--mg-white));
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  padding: var(--mg-spacing-lg, 20px);
-  margin-bottom: var(--mg-spacing-lg, 24px);
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg, 1rem);
+  padding: var(--mg-spacing-md, 0.75rem);
+  margin-bottom: var(--mg-spacing-md, 1rem);
+  min-width: 0;
 }
 
 .manual-matching-queue__header {
-  margin-bottom: var(--mg-spacing-md, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  margin-bottom: var(--mg-spacing-sm, 0.5rem);
 }
 
 .manual-matching-queue__title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: var(--mg-v2-font-size-body-sm);
+  font-weight: var(--mg-v2-font-weight-semibold);
   color: var(--mg-color-text-main);
-  margin: 0 0 4px 0;
-}
-
-.manual-matching-queue__subtitle {
-  font-size: 0.85rem;
-  color: var(--mg-color-text-secondary);
   margin: 0;
 }
 
-.manual-matching-queue__list {
-  display: flex;
-  flex-direction: column;
+.manual-matching-queue__count {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-color-text-secondary);
+}
+
+.manual-matching-queue__table {
+  margin-bottom: var(--mg-spacing-sm, 0.5rem);
 }
 
 .manual-matching-queue__empty {
-  padding: var(--mg-spacing-xl, 24px);
-  text-align: center;
+  margin: 0;
+  padding: var(--mg-spacing-md, 0.75rem) 0;
+  font-size: var(--mg-v2-font-size-body-sm);
   color: var(--mg-color-text-secondary);
-  font-size: 0.9rem;
+  text-align: center;
+}
+
+.manual-matching-queue__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--mg-spacing-xs, 0.25rem);
+}
+
+.manual-matching-queue__view-all {
+  font-size: var(--mg-v2-font-size-body-sm);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-color-primary-main);
+  text-decoration: none;
+}
+
+.manual-matching-queue__view-all:hover {
+  text-decoration: underline;
 }

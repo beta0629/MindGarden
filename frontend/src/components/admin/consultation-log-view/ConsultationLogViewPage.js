@@ -6,7 +6,7 @@
  * @since 2025-03-02
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { useSession } from '../../../contexts/SessionContext';
@@ -24,7 +24,19 @@ import ConsultationLogCalendarBlock from './ConsultationLogCalendarBlock';
 import ConsultationLogTableBlock from './ConsultationLogTableBlock';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import { getAllConsultantsWithStats, getAllClientsWithStats } from '../../../utils/consultantHelper';
+import SavedViewControls from '../ClientComprehensiveManagement/molecules/SavedViewControls';
+import { useSavedViewPreference } from '../../../hooks/useSavedViewPreference';
+import {
+  CONSULTATION_LOG_VIEW_DEFAULT_VIEW_MODE,
+  CONSULTATION_LOG_VIEW_SAVED_VIEW_PAGE_ID,
+  CONSULTATION_LOG_VIEW_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+  CONSULTATION_LOG_VIEW_SAVED_VIEW_ROW_ARIA_LABEL,
+  buildConsultationLogViewDefaultSavedView,
+  computeDefaultDateRange
+} from '../../../constants/consultationLogViewSavedViewConstants';
 import '../ConsultationLogViewPage.css';
+
+export { computeDefaultDateRange };
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CONSULTATION_RECORDS = '/api/v1/admin/consultation-records';
@@ -33,7 +45,7 @@ const API_ADMIN_CONSULTATION_RECORDS = '/api/v1/admin/consultation-records';
 const PAGE_TITLE = '상담일지 조회';
 const PAGE_SUBTITLE = '상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다.';
 const CONTENT_AREA_ARIA_LABEL = '상담일지 조회 콘텐츠';
-const VIEW_MODE_LIST = 'list';
+const VIEW_MODE_LIST = CONSULTATION_LOG_VIEW_DEFAULT_VIEW_MODE;
 const VIEW_MODE_CALENDAR = 'calendar';
 const VIEW_MODE_TABLE = 'table';
 const TAB_LABELS = {
@@ -45,24 +57,10 @@ const DEFAULT_PAGE = 0;
 // P0 핫픽스 2026-05-29: 백엔드 어드민 상담일지 조회 캡(200)에 맞춰 100 으로 상향.
 // 참고: docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md
 const DEFAULT_SIZE = 100;
-// 진입 시 기본 표시 기간 = "지난 달 1일 ~ 이번 달 말일".
-// 사용자가 startDate/endDate 를 직접 비우면 null 전송 → 백엔드 전체 모드 (페이지네이션).
-const DEFAULT_RANGE_MONTHS_BEFORE = 1;
 
-/**
- * 기본 기간 (지난 달 1일 ~ 이번 달 말일) 을 ISO yyyy-MM-dd 문자열로 계산.
- *
- * @param {Date} [now] 기준 일시 (테스트에서 주입 가능, 기본값: 현재 시각)
- * @returns {{ startDate: string, endDate: string }}
- */
-export const computeDefaultDateRange = (now = new Date()) => {
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const start = new Date(year, month - DEFAULT_RANGE_MONTHS_BEFORE, 1);
-  const end = new Date(year, month + 1, 0);
-  const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  return { startDate: fmt(start), endDate: fmt(end) };
-};
+const CONSULTATION_LOG_DEFAULT_SAVED_VIEW = buildConsultationLogViewDefaultSavedView(
+  CONSULTATION_LOG_VIEW_DEFAULT_VIEW_MODE
+);
 
 /**
  * URL `?date=yyyy-mm-dd` 등 deep link 쿼리에서 시작·종료 일자를 추출.
@@ -146,6 +144,33 @@ const ConsultationLogViewPage = () => {
   const [modalRecordId, setModalRecordId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(VIEW_MODE_LIST);
+  const {
+    savedView,
+    setSavedView,
+    views,
+    activeViewId,
+    saveNamedView,
+    loadNamedView,
+    resetToDefaultView,
+    deleteNamedView
+  } = useSavedViewPreference({
+    pageId: CONSULTATION_LOG_VIEW_SAVED_VIEW_PAGE_ID,
+    defaultView: CONSULTATION_LOG_DEFAULT_SAVED_VIEW,
+    namedViews: true
+  });
+  const savedViewFiltersRestoredRef = useRef(false);
+  const savedViewPersistReadyRef = useRef(false);
+  const savedViewPersistTimerRef = useRef(null);
+  const savedViewMetaRef = useRef({
+    sort: CONSULTATION_LOG_DEFAULT_SAVED_VIEW.sort,
+    density: CONSULTATION_LOG_DEFAULT_SAVED_VIEW.density
+  });
+
+  const hasDeepLinkOnMount = useMemo(() => (
+    initialQueryFilter.startDate != null
+    || initialQueryFilter.clientId != null
+    || initialQueryFilter.consultantId != null
+  ), [initialQueryFilter]);
 
   const loadConsultants = useCallback(async() => {
     if (!isAdmin) return;
@@ -252,6 +277,118 @@ const ConsultationLogViewPage = () => {
     loadRecords();
   }, [loadRecords]);
 
+  useEffect(() => {
+    if (savedViewFiltersRestoredRef.current) {
+      return;
+    }
+    savedViewFiltersRestoredRef.current = true;
+    savedViewMetaRef.current = {
+      sort: savedView.sort ?? CONSULTATION_LOG_DEFAULT_SAVED_VIEW.sort,
+      density: savedView.density ?? CONSULTATION_LOG_DEFAULT_SAVED_VIEW.density
+    };
+    if (hasDeepLinkOnMount) {
+      savedViewPersistReadyRef.current = true;
+      return;
+    }
+    if (savedView?.viewMode) {
+      setViewMode(savedView.viewMode);
+    }
+    const storedFilters = savedView?.filters;
+    if (storedFilters && Object.keys(storedFilters).length > 0) {
+      if (storedFilters.consultantId !== undefined) {
+        setConsultantId(storedFilters.consultantId);
+      }
+      if (storedFilters.clientId !== undefined) {
+        setClientId(storedFilters.clientId);
+      }
+      if (storedFilters.startDate != null) {
+        setStartDate(storedFilters.startDate);
+      }
+      if (storedFilters.endDate != null) {
+        setEndDate(storedFilters.endDate);
+      }
+    }
+    savedViewPersistReadyRef.current = true;
+  }, [savedView, hasDeepLinkOnMount]);
+
+  useEffect(() => {
+    if (!savedViewPersistReadyRef.current) {
+      return undefined;
+    }
+
+    if (savedViewPersistTimerRef.current) {
+      clearTimeout(savedViewPersistTimerRef.current);
+    }
+
+    savedViewPersistTimerRef.current = setTimeout(() => {
+      savedViewPersistTimerRef.current = null;
+      setSavedView({
+        viewMode,
+        filters: { consultantId, clientId, startDate, endDate },
+        sort: savedViewMetaRef.current.sort,
+        density: savedViewMetaRef.current.density
+      });
+    }, CONSULTATION_LOG_VIEW_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (savedViewPersistTimerRef.current) {
+        clearTimeout(savedViewPersistTimerRef.current);
+        savedViewPersistTimerRef.current = null;
+      }
+    };
+  }, [viewMode, consultantId, clientId, startDate, endDate, setSavedView]);
+
+  const applySavedViewPayload = useCallback((payload) => {
+    if (payload?.viewMode) {
+      setViewMode(payload.viewMode);
+    }
+    const storedFilters = payload?.filters ?? {};
+    if (storedFilters.consultantId !== undefined) {
+      setConsultantId(storedFilters.consultantId);
+    }
+    if (storedFilters.clientId !== undefined) {
+      setClientId(storedFilters.clientId);
+    }
+    if (storedFilters.startDate != null) {
+      setStartDate(storedFilters.startDate);
+    }
+    if (storedFilters.endDate != null) {
+      setEndDate(storedFilters.endDate);
+    }
+    savedViewMetaRef.current = {
+      sort: payload?.sort ?? CONSULTATION_LOG_DEFAULT_SAVED_VIEW.sort,
+      density: payload?.density ?? CONSULTATION_LOG_DEFAULT_SAVED_VIEW.density
+    };
+  }, []);
+
+  const handleSelectSavedView = useCallback((viewId) => {
+    const payload = loadNamedView(viewId);
+    applySavedViewPayload(payload);
+  }, [loadNamedView, applySavedViewPayload]);
+
+  const handleResetSavedView = useCallback(() => {
+    resetToDefaultView();
+    const freshDefault = buildConsultationLogViewDefaultSavedView();
+    applySavedViewPayload(freshDefault);
+    setSavedView(freshDefault);
+  }, [resetToDefaultView, applySavedViewPayload, setSavedView]);
+
+  const handleSaveNamedView = useCallback((label) => {
+    saveNamedView(label, {
+      viewMode,
+      filters: { consultantId, clientId, startDate, endDate },
+      sort: savedViewMetaRef.current.sort,
+      density: savedViewMetaRef.current.density
+    });
+  }, [saveNamedView, viewMode, consultantId, clientId, startDate, endDate]);
+
+  const handleDeleteSavedView = useCallback((viewId) => {
+    const fallbackPayload = deleteNamedView(viewId);
+    if (fallbackPayload) {
+      applySavedViewPayload(fallbackPayload);
+    }
+  }, [deleteNamedView, applySavedViewPayload]);
+
   const clientNameMap = {};
   const consultantNameMap = {};
   (clients || []).forEach((c) => {
@@ -316,6 +453,20 @@ const ConsultationLogViewPage = () => {
           subtitle={PAGE_SUBTITLE}
           titleId="consultation-log-view-page-title"
         />
+
+        <section
+          className="mg-v2-saved-view-controls-wrapper"
+          aria-label={CONSULTATION_LOG_VIEW_SAVED_VIEW_ROW_ARIA_LABEL}
+        >
+          <SavedViewControls
+            views={views}
+            activeViewId={activeViewId}
+            onSelectView={handleSelectSavedView}
+            onSaveView={handleSaveNamedView}
+            onResetToDefault={handleResetSavedView}
+            onDeleteView={handleDeleteSavedView}
+          />
+        </section>
 
         <ConsultationLogFilterSection
           isAdmin={isAdmin}

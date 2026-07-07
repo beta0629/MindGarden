@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiGet } from '../../utils/ajax';
 import {
     getCommonCodes,
@@ -33,9 +33,22 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './CommonCodeManagementB0KlA.css';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';
+import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import {
+  COMMON_CODE_MANAGEMENT_DEFAULT_CATEGORY_FILTER,
+  COMMON_CODE_MANAGEMENT_DEFAULT_SEARCH_TERM,
+  COMMON_CODE_MANAGEMENT_DEFAULT_SELECTED_GROUP,
+  COMMON_CODE_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+  COMMON_CODE_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+  COMMON_CODE_MANAGEMENT_SAVED_VIEW_ROW_ARIA_LABEL,
+  buildCommonCodeManagementDefaultSavedView
+} from '../../constants/commonCodeManagementSavedViewConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_LIST = '/api/v1/common-codes/groups/list';
+
+const COMMON_CODE_DEFAULT_SAVED_VIEW = buildCommonCodeManagementDefaultSavedView();
 
 
 /**
@@ -105,9 +118,30 @@ const CommonCodeManagement = () => {
 
     const [groupMetadata, setGroupMetadata] = useState([]);
     
-    const [searchTerm, setSearchTerm] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState(COMMON_CODE_MANAGEMENT_DEFAULT_SEARCH_TERM);
+    const [categoryFilter, setCategoryFilter] = useState(COMMON_CODE_MANAGEMENT_DEFAULT_CATEGORY_FILTER);
     const [parentCategoryCodes, setParentCategoryCodes] = useState([]);
+    const {
+        savedView,
+        setSavedView,
+        views,
+        activeViewId,
+        saveNamedView,
+        loadNamedView,
+        resetToDefaultView,
+        deleteNamedView
+    } = useSavedViewPreference({
+        pageId: COMMON_CODE_MANAGEMENT_SAVED_VIEW_PAGE_ID,
+        defaultView: COMMON_CODE_DEFAULT_SAVED_VIEW,
+        namedViews: true
+    });
+    const savedViewFiltersRestoredRef = useRef(false);
+    const savedViewPersistReadyRef = useRef(false);
+    const savedViewPersistTimerRef = useRef(null);
+    const savedViewMetaRef = useRef({
+        sort: COMMON_CODE_DEFAULT_SAVED_VIEW.sort,
+        density: COMMON_CODE_DEFAULT_SAVED_VIEW.density
+    });
 
     const loadMetadata = useCallback(async() => {
         try {
@@ -230,6 +264,105 @@ const CommonCodeManagement = () => {
         loadParentCategoryCodes(group);
         loadGroupCodes(group);
     };
+
+    const applySavedViewPayload = useCallback((payload) => {
+        const storedFilters = payload?.filters ?? {};
+        if (storedFilters.searchTerm != null) {
+            setSearchTerm(storedFilters.searchTerm);
+        }
+        if (storedFilters.categoryFilter != null) {
+            setCategoryFilter(storedFilters.categoryFilter);
+        }
+        if (storedFilters.selectedGroup !== undefined) {
+            if (storedFilters.selectedGroup) {
+                handleGroupSelect(storedFilters.selectedGroup);
+            } else {
+                setSelectedGroup(COMMON_CODE_MANAGEMENT_DEFAULT_SELECTED_GROUP);
+                setGroupCodes([]);
+            }
+        }
+        savedViewMetaRef.current = {
+            sort: payload?.sort ?? COMMON_CODE_DEFAULT_SAVED_VIEW.sort,
+            density: payload?.density ?? COMMON_CODE_DEFAULT_SAVED_VIEW.density
+        };
+    }, [handleGroupSelect]);
+
+    const handleSelectSavedView = useCallback((viewId) => {
+        const payload = loadNamedView(viewId);
+        applySavedViewPayload(payload);
+    }, [loadNamedView, applySavedViewPayload]);
+
+    const handleResetSavedView = useCallback(() => {
+        const payload = resetToDefaultView();
+        applySavedViewPayload(payload);
+    }, [resetToDefaultView, applySavedViewPayload]);
+
+    const handleSaveNamedView = useCallback((label) => {
+        saveNamedView(label, {
+            viewMode: COMMON_CODE_DEFAULT_SAVED_VIEW.viewMode,
+            filters: { searchTerm, categoryFilter, selectedGroup },
+            sort: savedViewMetaRef.current.sort,
+            density: savedViewMetaRef.current.density
+        });
+    }, [saveNamedView, searchTerm, categoryFilter, selectedGroup]);
+
+    const handleDeleteSavedView = useCallback((viewId) => {
+        const fallbackPayload = deleteNamedView(viewId);
+        if (fallbackPayload) {
+            applySavedViewPayload(fallbackPayload);
+        }
+    }, [deleteNamedView, applySavedViewPayload]);
+
+    useEffect(() => {
+        if (savedViewFiltersRestoredRef.current) {
+            return;
+        }
+        savedViewFiltersRestoredRef.current = true;
+        savedViewMetaRef.current = {
+            sort: savedView.sort ?? COMMON_CODE_DEFAULT_SAVED_VIEW.sort,
+            density: savedView.density ?? COMMON_CODE_DEFAULT_SAVED_VIEW.density
+        };
+        const storedFilters = savedView?.filters;
+        if (storedFilters && Object.keys(storedFilters).length > 0) {
+            if (storedFilters.searchTerm != null) {
+                setSearchTerm(storedFilters.searchTerm);
+            }
+            if (storedFilters.categoryFilter != null) {
+                setCategoryFilter(storedFilters.categoryFilter);
+            }
+            if (storedFilters.selectedGroup) {
+                handleGroupSelect(storedFilters.selectedGroup);
+            }
+        }
+        savedViewPersistReadyRef.current = true;
+    }, [savedView, handleGroupSelect]);
+
+    useEffect(() => {
+        if (!savedViewPersistReadyRef.current) {
+            return undefined;
+        }
+
+        if (savedViewPersistTimerRef.current) {
+            clearTimeout(savedViewPersistTimerRef.current);
+        }
+
+        savedViewPersistTimerRef.current = setTimeout(() => {
+            savedViewPersistTimerRef.current = null;
+            setSavedView({
+                viewMode: COMMON_CODE_DEFAULT_SAVED_VIEW.viewMode,
+                filters: { searchTerm, categoryFilter, selectedGroup },
+                sort: savedViewMetaRef.current.sort,
+                density: savedViewMetaRef.current.density
+            });
+        }, COMMON_CODE_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+        return () => {
+            if (savedViewPersistTimerRef.current) {
+                clearTimeout(savedViewPersistTimerRef.current);
+                savedViewPersistTimerRef.current = null;
+            }
+        };
+    }, [searchTerm, categoryFilter, selectedGroup, setSavedView]);
 
     const getFilteredCodeGroups = () => {
         let filtered = codeGroups;
@@ -535,6 +668,20 @@ const CommonCodeManagement = () => {
         <AdminCommonLayout title={t('admin:commonCode.ui.pageTitle')}>
             <ContentArea>
                 <ContentHeader title={t('admin:commonCode.ui.pageTitle')} subtitle={t('admin:commonCode.ui.headerSubtitle')} />
+
+                <section
+                    className="mg-v2-saved-view-controls-wrapper"
+                    aria-label={COMMON_CODE_MANAGEMENT_SAVED_VIEW_ROW_ARIA_LABEL}
+                >
+                    <SavedViewControls
+                        views={views}
+                        activeViewId={activeViewId}
+                        onSelectView={handleSelectSavedView}
+                        onSaveView={handleSaveNamedView}
+                        onResetToDefault={handleResetSavedView}
+                        onDeleteView={handleDeleteSavedView}
+                    />
+                </section>
                 
                 <div className="mg-v2-ad-b0kla__common-code-container">
                     {/* 좌측: GroupListSection */}

@@ -26,6 +26,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StaffOverviewTab from './StaffManagement/StaffOverviewTab';
 import StaffSidePeekContent from './StaffManagement/molecules/StaffSidePeekContent';
+import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';
 import { showSuccess, showError } from '../../utils/notification';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { formatKoreanMobileForDisplay, isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../utils/koreanMobilePhone';
@@ -222,9 +223,10 @@ const StaffManagement = ({ embedded = false }) => {
     defaultMode: USER_MANAGEMENT_DEFAULT_VIEW_MODE,
     allowedModes: USER_MANAGEMENT_ALLOWED_VIEW_MODES
   });
-  const { savedView, setSavedView } = useSavedViewPreference({
+  const { savedView, setSavedView, views, activeViewId, saveNamedView, loadNamedView, resetToDefaultView, deleteNamedView } = useSavedViewPreference({
     pageId: STAFF_VIEW_MODE_PAGE_ID,
-    defaultView: STAFF_DEFAULT_SAVED_VIEW
+    defaultView: STAFF_DEFAULT_SAVED_VIEW,
+    namedViews: true
   });
   const savedViewPersistReadyRef = useRef(false);
   const savedViewPersistTimerRef = useRef(null);
@@ -792,6 +794,42 @@ const StaffManagement = ({ embedded = false }) => {
     setSearchTerm(term);
   }, []);
 
+  const applySavedViewPayload = useCallback((payload) => {
+    if (payload?.viewMode) {
+      setViewMode(payload.viewMode);
+    }
+    savedViewMetaRef.current = {
+      sort: payload?.sort ?? STAFF_DEFAULT_SAVED_VIEW.sort,
+      density: payload?.density ?? STAFF_DEFAULT_SAVED_VIEW.density
+    };
+  }, [setViewMode]);
+
+  const handleSelectSavedView = useCallback((viewId) => {
+    const payload = loadNamedView(viewId);
+    applySavedViewPayload(payload);
+  }, [loadNamedView, applySavedViewPayload]);
+
+  const handleResetSavedView = useCallback(() => {
+    const payload = resetToDefaultView();
+    applySavedViewPayload(payload);
+  }, [resetToDefaultView, applySavedViewPayload]);
+
+  const handleSaveNamedView = useCallback((label) => {
+    saveNamedView(label, {
+      viewMode,
+      filters: STAFF_DEFAULT_SAVED_VIEW.filters,
+      sort: savedViewMetaRef.current.sort,
+      density: savedViewMetaRef.current.density
+    });
+  }, [saveNamedView, viewMode]);
+
+  const handleDeleteSavedView = useCallback((viewId) => {
+    const fallbackPayload = deleteNamedView(viewId);
+    if (fallbackPayload) {
+      applySavedViewPayload(fallbackPayload);
+    }
+  }, [deleteNamedView, applySavedViewPayload]);
+
   if (loading && staffList.length === 0) {
     if (embedded) {
       return (
@@ -852,6 +890,14 @@ const StaffManagement = ({ embedded = false }) => {
       </ContentSection>
 
       <ContentSection noCard className="mg-v2-mapping-search-section">
+        <SavedViewControls
+          views={views}
+          activeViewId={activeViewId}
+          onSelectView={handleSelectSavedView}
+          onSaveView={handleSaveNamedView}
+          onResetToDefault={handleResetSavedView}
+          onDeleteView={handleDeleteSavedView}
+        />
         <div className="mg-v2-mapping-search-section__row">
           <div className="mg-v2-mapping-search-section__input-wrap">
             <SearchInput

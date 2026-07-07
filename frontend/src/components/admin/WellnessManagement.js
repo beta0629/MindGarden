@@ -33,6 +33,7 @@ const API_ADMIN_WELLNESS_TEMPLATES = '/api/v1/admin/wellness/templates';
 const API_ADMIN_WELLNESS_EXCHANGE_RATE = '/api/v1/admin/wellness/exchange-rate';
 const API_ADMIN_WELLNESS_TEST_SEND = '/api/v1/admin/wellness/test-send';
 const API_ADMIN_WELLNESS_EXCHANGE_RATE_REFRESH = '/api/v1/admin/wellness/exchange-rate/refresh';
+const PAGE_TITLE_ID = 'wellness-management-page-title';
 
 
 /**
@@ -305,14 +306,17 @@ const WellnessManagement = () => {
         return t(`admin:wellnessMgmt.season.${season}`, fallback);
     };
 
+    const pageTitle = t('admin:wellnessMgmt.title');
+
     return (
-        <AdminCommonLayout title={t('admin:wellnessMgmt.title')} loading={loading}>
+        <AdminCommonLayout loading={loading}>
             <div className="mg-v2-ad-b0kla mg-v2-wellness-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel={t('admin:wellnessMgmt.regionLabel')}>
                         <ContentHeader
-                            title={null}
+                            title={pageTitle}
                             subtitle={t('admin:wellnessMgmt.subtitle')}
+                            titleId={PAGE_TITLE_ID}
                             actions={(
                                 <>
                                     <MGButton
@@ -365,7 +369,7 @@ const WellnessManagement = () => {
                             )}
                         />
 
-                        <main aria-label={t('admin:wellnessMgmt.regionLabel')}>
+                        <main aria-labelledby={PAGE_TITLE_ID}>
                 {loading ? (
                     <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
                         <UnifiedLoading type="inline" text={t('admin:wellnessMgmt.loading')} />

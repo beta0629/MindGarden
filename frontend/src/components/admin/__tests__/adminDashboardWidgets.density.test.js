@@ -93,4 +93,21 @@ describe('AdminDashboard G1-02 widgets guard', () => {
 
     expect(source).toMatch(/if\s*\(isVacationExpanded\)\s*\{[\s\S]*loadVacationStats\(\)/);
   });
+
+  it('AdminDashboardV2가 SchedulePendingList를 schedulePendingList·BOOKED API로 와이어링한다 (PR-DASH-02)', () => {
+    const source = fs.readFileSync(DASHBOARD_PATH, 'utf8');
+
+    expect(source).toContain('const [schedulePendingList, setSchedulePendingList]');
+    expect(source).toContain('loadSchedulePendingList');
+    expect(source).toContain("StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' })");
+    expect(source).toMatch(/schedulePendingCount:\s*schedulePendingList\.length/);
+    expect(source).toMatch(/<SchedulePendingList[\s\S]*?items=\{schedulePendingList\.map/);
+
+    const scheduleBlock = source.match(/<SchedulePendingList[\s\S]*?\/>/)?.[0] || '';
+    expect(scheduleBlock).not.toContain('pendingDepositList');
+
+    expect(source).not.toContain('API_ADMIN_CONSULTANTS_WITH_VACATION');
+    expect(source).not.toContain('SCHEDULE_API.STATISTICS');
+    expect(source).not.toContain('schedulePendingCount: null');
+  });
 });

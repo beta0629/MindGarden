@@ -53,7 +53,7 @@ import {
   ContentSection,
   ContentCard
 } from './content';
-import { API_BASE_URL, SCHEDULE_API } from '../../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 import { getDefaultApiHeaders } from '../../utils/apiHeaders';
 import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
@@ -122,7 +122,6 @@ const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
 const API_ADMIN_REFUND_STATISTICS = '/api/v1/admin/refund-statistics?period=month';
-const API_ADMIN_CONSULTANTS_WITH_VACATION = '/api/v1/admin/consultants/with-vacation';
 const API_ADMIN_MAPPINGS_PENDING_DEPOSIT = '/api/v1/admin/mappings/pending-deposit';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE = '/api/v1/admin/schedules/auto-complete';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER = '/api/v1/admin/schedules/auto-complete-with-reminder';
@@ -161,8 +160,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     totalClients: 0,
     totalMappings: 0,
     activeMappings: 0,
-    /** 스케줄 등록 대기(의견수렴) 건수. GET /api/v1/admin/schedules/statistics 연동 */
-    schedulePendingCount: null,
     consultantRatingStats: {
       totalRatings: 0,
       averageScore: 0,
@@ -191,7 +188,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     oldestHours: 0
   });
   const [unassignedClients, setUnassignedClients] = useState([]);
-  const [consultants, setConsultants] = useState([]);
   const [pendingDepositList, setPendingDepositList] = useState([]);
   const [schedulePendingList, setSchedulePendingList] = useState([]);
   const [matchingQueueLoading, setMatchingQueueLoading] = useState(false);
@@ -413,15 +409,13 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO, { headers, credentials: 'include' }),
         fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, { headers, credentials: 'include' }),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
-        fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION, { headers, credentials: 'include' }),
-        fetch(SCHEDULE_API.STATISTICS, { headers, credentials: 'include' })
+        fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION, { headers, credentials: 'include' })
       ]);
       const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
       const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();
       const mappingsRes = settled[2].status === 'fulfilled' ? settled[2].value : dummyFailedResponse();
       const ratingRes = settled[3].status === 'fulfilled' ? settled[3].value : dummyFailedResponse();
       const consultationRes = settled[4].status === 'fulfilled' ? settled[4].value : dummyFailedResponse();
-      const scheduleStatsRes = settled[5].status === 'fulfilled' ? settled[5].value : dummyFailedResponse();
 
       // [Dashboard Charts] consultation-completion 호출 결과(상담 현황 추이/예약 vs 완료 차트용)
       if (settled[4].status === 'rejected') {
@@ -504,33 +498,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         console.warn('[Dashboard Charts] consultation-completion 응답이 ok가 아님 (차트 데이터 미적용). status:', consultationRes.status);
       }
 
-      let schedulePendingCount = null;
-      if (scheduleStatsRes.ok) {
-        try {
-          const d = await scheduleStatsRes.json();
-          const payload = d?.data != null ? d.data : d;
-          if (payload != null) {
-            const booked = payload.bookedSchedules;
-            const { statusCount } = payload;
-            if (typeof booked === 'number') {
-              schedulePendingCount = booked;
-            } else if (statusCount && typeof statusCount.BOOKED === 'number') {
-              schedulePendingCount = statusCount.BOOKED;
-            } else if (statusCount && typeof statusCount.BOOKED === 'string') {
-              schedulePendingCount = parseInt(statusCount.BOOKED, 10) || 0;
-            }
-          }
-        } catch (e) {
-          console.error('스케줄 통계 파싱 실패:', e);
-        }
-      }
-
       setStats({
         totalConsultants,
         totalClients,
         totalMappings,
         activeMappings,
-        schedulePendingCount,
         consultantRatingStats,
         consultationStats
       });
@@ -568,23 +540,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const loadUnassignedClientsAndConsultants = useCallback(async() => {
     setMatchingQueueLoading(true);
     try {
-      const dateStr = new Date().toISOString().split('T')[0];
-      const [clientsRes, consultantsRes] = await Promise.all([
-        StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO),
-        StandardizedApi.get(API_ADMIN_CONSULTANTS_WITH_VACATION, { date: dateStr })
-      ]);
+      const clientsRes = await StandardizedApi.get(API_ADMIN_CLIENTS_WITH_MAPPING_INFO);
       const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
       const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
       const unassigned = filterManualMatchingQueueClients(clients);
       setUnassignedClients(unassigned);
-      const consultantsRaw =
-        consultantsRes?.consultants ?? consultantsRes?.data?.consultants ?? consultantsRes;
-      setConsultants(Array.isArray(consultantsRaw) ? consultantsRaw : []);
     } catch (error) {
-      console.error('미배정 내담자/상담사 로드 실패:', error);
+      console.error('미배정 내담자 로드 실패:', error);
       notificationManager.error(error?.message || t('admin:dashboard.error.unassignedLoad'));
       setUnassignedClients([]);
-      setConsultants([]);
     } finally {
       setMatchingQueueLoading(false);
     }
@@ -1041,7 +1005,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             totalMappings: stats.totalMappings,
             pendingDepositCount: pendingDepositStats.count,
             activeMappings: stats.activeMappings,
-            schedulePendingCount: stats.schedulePendingCount
+            schedulePendingCount: schedulePendingList.length
           }}
         />
       </ContentCard>
@@ -1318,7 +1282,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                   stats.totalMappings ?? 0,
                   pendingDepositStats.count ?? 0,
                   stats.activeMappings ?? 0,
-                  stats.schedulePendingCount ?? 0,
+                  schedulePendingList.length,
                   0
                 ];
                 const total = stepValues.reduce((a, b) => a + b, 0);

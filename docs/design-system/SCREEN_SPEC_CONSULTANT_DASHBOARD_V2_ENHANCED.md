@@ -3,6 +3,8 @@
 ## 1. 개요 및 배경
 본 스펙은 상담사 대시보드의 V2 개선안을 정의합니다. Web과 App 환경에서 동일한 데이터를 제공하되, 각 플랫폼의 특성에 맞는 레이아웃(Web LNB vs App AppShell)을 적용합니다. B0KlA 어드민 대시보드 샘플, G-14 ContentHeader, KPI 4-grid 등의 기존 디자인 시스템을 준수하며, Web과 App 간의 크로스 링크를 엄격히 금지합니다.
 
+**API·기능 SSOT (explore 21c0fb39)**: Web `ConsultantDashboardV2` + `ScheduleController` Phase1 API가 단일 진실 공급원이며, Expo·Renewal은 동일 BE 계약을 공유하되 UI는 플랫폼별 독립 구현한다.
+
 ## 2. 레이아웃 구조
 
 ### 2.1 Web `/consultant/dashboard` (LNB 기반)
@@ -48,17 +50,54 @@
 - **위치**: Web은 ContentHeader 우측 또는 우측 하단 플로팅. App은 화면 하단 플로팅(FAB) 또는 최상단 카드 아래 배치.
 - **항목**: 일정 등록, 메시지 작성, 내담자 추가 등 주요 액션.
 
-## 4. API 매핑 표
+## 4. API 매핑
 
-> **BE SSOT (explore 2026-07-07)**: 실제 경로는 `frontend/src/constants/api.js` `DASHBOARD_API` — KPI `GET /api/v1/schedules/today/statistics`, 긴급 내담자 `.../high-priority-clients`, 일정 `GET /api/v1/schedules`·`/upcoming` (아래 `/api/v1/consultant/*`는 섹션 매핑용 논리 경로).
+> **BE SSOT**: `frontend/src/constants/api.js` (`DASHBOARD_API`) · `ScheduleController` (Phase1) · `expo-app/src/api/endpoints.ts`  
+> **금지/미구현**: `GET /api/v1/consultants/{id}/dashboard` (BE 없음) · Renewal `GET /api/v1/consultants/{id}/urgent-clients` (BE 없음 — `high-priority-clients` 사용)
 
-| 엔드포인트 | 연결 섹션 | Empty 상태 | Loading 상태 | Error 상태 |
-|---|---|---|---|---|
-| `GET /api/v1/consultant/kpi` | KPI 4-grid | `0`으로 표시 | 스켈레톤 UI (숫자 영역) | `-` 표시 및 스낵바 에러 |
-| `GET /api/v1/consultant/schedules/today` | 오늘/다가오는 일정 | "예정된 일정이 없습니다" (일러스트) | 리스트 스켈레톤 (3줄) | "일정을 불러오지 못했습니다" + 재시도 버튼 |
-| `GET /api/v1/consultant/clients/urgent` | 긴급 내담자 | "주의가 필요한 내담자가 없습니다" | 리스트 스켈레톤 (2줄) | "데이터 로드 실패" + 재시도 버튼 |
-| `GET /api/v1/consultant/messages/recent` | 최근 메시지 | "새로운 메시지가 없습니다" | 리스트 스켈레톤 (3줄) | "메시지 로드 실패" + 재시도 버튼 |
-| `GET /api/v1/consultant/stats/monthly` | 월간 통계 차트 | `chart-empty` 컴포넌트 렌더링 | 차트 영역 스켈레톤 박스 | "통계를 불러올 수 없습니다" + 재시도 |
+### 4.1 API ↔ 화면 매트릭스 (Web V2 / Web Renewal / Expo Home / BE)
+
+| API (BE SSOT) | 연결 섹션 | Web V2 | Web Renewal | Expo Home | BE |
+|---------------|-----------|--------|-------------|-----------|-----|
+| `GET /api/v1/schedules/today/statistics?userRole=CONSULTANT` | KPI 4-grid · 주간 차트 (`weeklyStats`) | ✅ | ❌ | ❌ (`todayCount`=목록 length) | ✅ |
+| `GET /api/v1/schedules?userId={id}&userRole=CONSULTANT` | 오늘·어제 일정 (클라이언트 필터) | ✅ | ⚠️ 오늘만 | ⚠️ `/schedules/date/{ymd}` | ✅ |
+| `GET /api/v1/schedules/upcoming` | 다가오는 7일 | ✅ | ❌ | ❌ | ✅ |
+| `GET /api/v1/schedules/consultants/{id}/incomplete-records` | 미작성 일지 (`IncompleteRecordsAlert`) | ✅ | ❌ (스텁 API) | ⚠️ `usePendingRecords`(다른 API) | ✅ |
+| `GET /api/v1/schedules/consultants/{id}/high-priority-clients` | 긴급 내담자 (`UrgentClientsSection`) | ✅ | ❌ (`urgent-clients` **금지**) | ❌ | ✅ |
+| `GET /api/v1/schedules/consultants/{id}/upcoming-preparation` | 다음 상담 준비 (`NextConsultationCard`) | ✅ | ❌ | ❌ | ✅ |
+| `GET /api/v1/consultation-messages/unread-count` | KPI 메시지 | ✅ | ❌ | ✅ KPI | ✅ |
+| `GET /api/v1/ratings/consultant/{id}/stats` | KPI 평점 | ✅ | ❌ | ❌ | ✅ |
+| `GET /api/v1/system-notifications/active` | 최근 알림 (3건) | ✅ | ❌ | — (TopBar dot만) | ✅ |
+| `GET /api/v1/consultants/{id}/consultation-records` | — | ❌ | ⚠️ **스텁(빈 배열)** | ❌ | ⚠️ 스텁 |
+| `GET /api/v1/consultants/{id}/dashboard` | — | ❌ | ❌ | ❌ (상수만) | ❌ **미구현** |
+
+### 4.2 섹션별 Empty / Loading / Error (Web V2 SSOT)
+
+| 섹션 | API | Empty | Loading | Error |
+|------|-----|-------|---------|-------|
+| KPI 4-grid | `today/statistics` + `ratings/.../stats` + `unread-count` | 숫자 `0` | `ContentKpiRow` 스켈레톤 (4칸) | `-` 표시 · tenantId 없음 시 배너 |
+| 미작성 일지 | `incomplete-records` | 알림 숨김 (`count=0`) | 인라인 스피너 | 섹션 생략 · 콘솔 warn |
+| 다음 상담 준비 | `upcoming-preparation` | 카드 숨김 | 카드 스켈레톤 | 카드 숨김 |
+| 긴급 내담자 | `high-priority-clients` | "주의가 필요한 내담자가 없습니다" | `ListTableView` 스켈레톤 (2줄) | "데이터 로드 실패" + 재시도 |
+| 오늘·어제 일정 | `schedules?userId&userRole` | "예정된 일정이 없습니다" | 리스트 스켈레톤 (3줄) | "일정을 불러오지 못했습니다" |
+| 다가오는 7일 | `upcoming` | "다가오는 상담이 없습니다" | 리스트 스켈레톤 (3줄) | "일정을 불러오지 못했습니다" |
+| 최근 알림 | `system-notifications/active` | "새로운 알림이 없습니다" | 리스트 스켈레톤 (3줄) | "알림 로드 실패" |
+| 주간 차트 | `today/statistics` (`weeklyStats`) | `chart-empty` ("이번 달 통계 데이터가 없습니다") | 차트 영역 스켈레톤 | "통계를 불러올 수 없습니다" |
+
+### 4.3 P0 개선 항목 (P0-1~10, defer 없음)
+
+| # | 항목 | 대상 | 근거 |
+|---|------|------|------|
+| **P0-1** | Web SSOT 단일화: 로그인·LNB·딥링크를 `ConsultantDashboardV2`(`/consultant/dashboard`) freeze; Renewal deprecated 명시 | Web | 이중 트랙 · `ROLE-02` |
+| **P0-2** | Renewal API 교정: `TenantAwareApiClient` → `StandardizedApi`, Phase1 API 연동; `urgent-clients` 제거 | `ConsultantDashboardRenewal.js` | BE 미존재·스텁 |
+| **P0-3** | Expo Phase1 API 훅: `useConsultantHomeStats`, `useIncompleteRecords`, `useHighPriorityClients`, `useUpcomingPreparation` + `endpoints.ts` 정렬 | Expo | orchestration §5.2 |
+| **P0-4** | Expo 홈 UI P1: `ConsultantNextSessionCard`, `ConsultantUrgentClientBanner`, KPI 확장, QuickAction 4~5 | `(home)/index.tsx` | `SCREEN_SPEC_CONSULTANT_MOBILE_HOME.md` §3 |
+| **P0-5** | 미작성 일지 SSOT: Expo `usePendingRecords` ↔ BE `incomplete-records` 정합 | Expo + Web | orchestration §6 |
+| **P0-6** | Web V2 B0KlA Quality Gate: `ContentKpiRow`·spacing·1280px·dark cascade | `ConsultantDashboardV2.js` | `ROLE-02` DoD |
+| **P0-7** | QuickActionBar 경로: `consultantDashboardRoutes` 상수 SSOT (client 대칭) | Web | 레거시 경로 혼선 |
+| **P0-8** | 죽은 API 상수 정리: Expo `consultantDashboard`, Renewal `urgent-clients` 제거 | Expo + Web | phantom endpoint |
+| **P0-9** | 화면설계서 SSOT: 본 ENHANCED + Phase1 v2 + Mobile Home 인덱스 freeze | docs | FULL.md 대체 |
+| **P0-10** | E2E smoke: V2 KPI·Phase1 블록·tenantId 배너 + Expo 홈 KPI/refetch | QA | `ROLE-04` |
 
 ## 5. 상태·예외, 접근성(a11y), 다크 모드, Must-not
 
@@ -86,7 +125,9 @@
 
 ## 6. core-coder Handoff
 
-1. **Web/App 분리**: Web은 `frontend/src/components/consultant/Dashboard/`, App은 `expo-app/app/(consultant)/(home)/`에 각각 구현. 크로스 링크 절대 금지.
+> **착수 게이트**: 구현은 **#534 merge + develop CI green 후** — **P0-6 Web V2 먼저**, **P0-3~4 Expo 별도 PR**.
+
+1. **Web/App 분리**: Web은 `frontend/src/components/dashboard-v2/consultant/`, App은 `expo-app/app/(consultant)/(home)/`에 각각 구현. 크로스 링크 절대 금지.
 2. **Web 레이아웃**: `docs/design-system/PENCIL_DESIGN_GUIDE.md` B0KlA 샘플 기준. `var(--mg-*)` 토큰 사용, 사이드바(260px) + 메인 영역 구조.
 3. **App 레이아웃**: Bottom Tab 기반 AppShell. 모바일 화면 밀도에 맞춰 카드 패딩 축소(`var(--mg-spacing-16)`), 세로 스크롤 대응.
 4. **공통 컴포넌트**: `ContentHeader` (G-14), `QuickActionBar`, `ListTableView` 등 기존 공통 모듈 우선 사용.

@@ -15,13 +15,8 @@ export const CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL = '전체 일정 보�
 export const CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL = '전체 스케줄 보기';
 export const CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL = '전체 보기';
 
-export const CONSULTANT_DASHBOARD_ROUTES = {
-  SCHEDULE: '/consultant/schedule',
-  NOTIFICATIONS: '/notifications',
-  CONSULTATION_RECORDS: '/consultant/consultation-records',
-  CLIENTS: '/consultant/clients',
-  MESSAGES: '/consultant/messages'
-};
+/** @deprecated import from `consultantDashboardRoutes.js` — re-export for backward compat */
+export { CONSULTANT_DASHBOARD_ROUTES } from './consultantDashboardRoutes';
 
 export const CONSULTANT_SCHEDULE_STATUS_LABELS = {
   CONFIRMED: '확정',

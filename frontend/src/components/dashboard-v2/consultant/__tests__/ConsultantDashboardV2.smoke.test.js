@@ -53,8 +53,8 @@ jest.mock('../../../common/UnifiedLoading', () => ({
 
 jest.mock('../../../common/MGButton', () => ({
   __esModule: true,
-  default: ({ children, onClick, 'aria-label': ariaLabel }) => (
-    <button type="button" onClick={onClick} aria-label={ariaLabel}>
+  default: ({ children, onClick, 'aria-label': ariaLabel, 'data-testid': dataTestId }) => (
+    <button type="button" onClick={onClick} aria-label={ariaLabel} data-testid={dataTestId}>
       {children}
     </button>
   )
@@ -149,15 +149,15 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('consultant-dashboard-kpi-section')).toBeInTheDocument();
+      expect(screen.getByTestId('consultant-dashboard-recent-schedules')).toBeInTheDocument();
+      expect(screen.getByTestId('consultant-dashboard-upcoming-schedules')).toBeInTheDocument();
+      expect(screen.getByTestId('consultant-dashboard-notifications')).toBeInTheDocument();
     });
 
     expect(screen.getByTestId('consultant-dashboard-quick-action-bar')).toBeInTheDocument();
-    expect(screen.getByTestId('consultant-dashboard-recent-schedules')).toBeInTheDocument();
-    expect(screen.getByTestId('consultant-dashboard-upcoming-schedules')).toBeInTheDocument();
-    expect(screen.getByTestId('consultant-dashboard-notifications')).toBeInTheDocument();
   });
 
-  test('KPI 4종 및 ListTableView 기반 목록 섹션 렌더', async() => {
+  test('KPI 4종 및 QuickActionBar SSOT routes 렌더', async() => {
     renderDashboard();
 
     await waitFor(() => {

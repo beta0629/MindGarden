@@ -36,6 +36,12 @@
   }
 }
 
+@media (min-width: 768px) and (max-width: 1279px) {
+  .consultant-dashboard-v2__kpi-row.mg-v2-content-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .consultant-dashboard-v2 .mg-v2-content-kpi-card {
   box-shadow: none;
 }
@@ -457,6 +463,7 @@
 .consultant-dashboard-v2__chart-bar {
   width: 100%;
   max-width: var(--mg-chart-bar-max-width, 2rem);
+  height: var(--chart-bar-height, 4%);
   background-color: var(--mg-color-info-100);
   border-radius: var(--mg-radius-sm, 0.25rem) var(--mg-radius-sm, 0.25rem) 0 0;
   transition: height 0.3s ease, background-color 0.2s ease;
@@ -481,4 +488,54 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ===== Dark Cascade (ENHANCED spec §5.3) ===== */
+[data-theme="dark"] .mg-v2-ad-b0kla.consultant-dashboard-v2 {
+  background: var(--mg-color-background-main, var(--mg-dark-bg-900));
+}
+
+[data-theme="dark"] .consultant-quick-action-bar__inner,
+[data-theme="dark"] .consultant-dashboard-v2__next-card.mg-v2-next-consultation-card,
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-urgent-clients-section.mg-v2-content-section--card,
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-section--card {
+  background: var(--mg-color-surface-main, var(--mg-dark-bg-800));
+  border-color: var(--mg-border_dark, var(--mg-color-border-main));
+}
+
+[data-theme="dark"] .consultant-quick-action-bar__title,
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-section__title,
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-kpi-card__value,
+[data-theme="dark"] .mg-v2-next-consultation-card__title,
+[data-theme="dark"] .mg-v2-urgent-client-card__name {
+  color: var(--mg-color-text-main);
+}
+
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-kpi-card__label,
+[data-theme="dark"] .consultant-dashboard-v2__chart-empty-text,
+[data-theme="dark"] .consultant-dashboard-v2__chart-label,
+[data-theme="dark"] .mg-v2-next-consultation-card__body .mg-v2-info-block__label,
+[data-theme="dark"] .mg-v2-urgent-client-card__meta,
+[data-theme="dark"] .mg-v2-urgent-client-card__issue {
+  color: var(--mg-color-text-secondary-dark, var(--mg-color-text-secondary));
+}
+
+[data-theme="dark"] .consultant-dashboard-v2 .mg-v2-content-kpi-card {
+  background: var(--mg-color-surface-main, var(--mg-dark-bg-800));
+  border-color: var(--mg-border_dark, var(--mg-color-border-main));
+  box-shadow: none;
+}
+
+[data-theme="dark"] .consultant-dashboard-tenant-alert {
+  background-color: var(--mg-color-warning-900, var(--mg-color-warning-50));
+  border-color: var(--mg-color-warning-main);
+  color: var(--mg-color-text-main);
+}
+
+[data-theme="dark"] .consultant-dashboard-v2__chart-bar {
+  background-color: var(--mg-color-info-800, var(--mg-color-info-100));
+}
+
+[data-theme="dark"] .consultant-dashboard-v2__chart-bar--active {
+  background-color: var(--mg-color-primary-dark, var(--mg-color-primary-main));
 }

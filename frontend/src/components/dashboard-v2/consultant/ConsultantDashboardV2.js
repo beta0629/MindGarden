@@ -5,7 +5,6 @@ import { Calendar, ClipboardList, MessageSquare, UserPlus } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import Icon from '../../ui/Icon/Icon';
 import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../content';
-import UnifiedLoading from '../../common/UnifiedLoading';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../../constants/api';
 import QuickActionBar from './QuickActionBar';
@@ -20,12 +19,15 @@ import {
   CONSULTANT_DASHBOARD_TITLE_ID,
   CONSULTANT_DASHBOARD_PAGE_TEST_ID,
   CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID,
-  CONSULTANT_DASHBOARD_ROUTES,
   CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL,
   CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL,
   CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL,
   CONSULTANT_SCHEDULE_STATUS_LABELS
 } from '../../../constants/consultantDashboardConstants';
+import {
+  CONSULTANT_DASHBOARD_KPI_ROUTES,
+  CONSULTANT_DASHBOARD_ROUTES
+} from '../../../constants/consultantDashboardRoutes';
 import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantDashboard.css';
@@ -473,7 +475,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       const firstSchedule = incompleteRecords.schedules[0];
       const sid = firstSchedule.scheduleId;
       if (sid == null || sid === '') {
-        navigate('/consultant/consultation-records?filter=incomplete');
+        navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.INCOMPLETE_RECORDS);
         return;
       }
       const sessionDateStr = normalizeIncompleteSessionDate(firstSchedule);
@@ -491,7 +493,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       });
       setShowConsultationLogModal(true);
     } else {
-      navigate('/consultant/consultation-records?filter=incomplete');
+      navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.INCOMPLETE_RECORDS);
     }
   };
 
@@ -602,7 +604,26 @@ const ConsultantDashboardV2 = ({ user }) => {
     return (
       <AdminCommonLayout className="mg-v2-dashboard-layout">
         {dashboardShell(
-          <UnifiedLoading type="inline" text={t('common:dashboard-v2.ConsultantDashboardV2.t_484d08c9')} />
+          <>
+            <QuickActionBar onNavigate={navigate} />
+            <section
+              className="consultant-dashboard-v2__kpi-zone"
+              aria-label="핵심 지표"
+              aria-busy="true"
+              data-testid={CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID}
+            >
+              <ContentKpiRow
+                className="consultant-dashboard-v2__kpi-row"
+                loading
+                items={[
+                  { id: 'weeklyConsultations', label: '주간 상담 건수', value: '—', iconVariant: 'blue' },
+                  { id: 'newClients', label: '신규 내담자', value: '—', iconVariant: 'green' },
+                  { id: 'unreadMessages', label: '미확인 메시지', value: '—', iconVariant: 'orange' },
+                  { id: 'incompleteRecords', label: '작성 대기 일지', value: '—', iconVariant: 'gray' }
+                ]}
+              />
+            </section>
+          </>
         )}
       </AdminCommonLayout>
     );
@@ -645,28 +666,32 @@ const ConsultantDashboardV2 = ({ user }) => {
                 icon: <Calendar {...kpiLucideProps} />,
                 label: '주간 상담 건수',
                 value: `${weeklyConsultationCount}건`,
-                iconVariant: 'blue'
+                iconVariant: 'blue',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.WEEKLY_CONSULTATIONS)
               },
               {
                 id: 'newClients',
                 icon: <UserPlus {...kpiLucideProps} />,
                 label: '신규 내담자',
                 value: `${dashboardData.stats.newClients}명`,
-                iconVariant: 'green'
+                iconVariant: 'green',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
               },
               {
                 id: 'unreadMessages',
                 icon: <MessageSquare {...kpiLucideProps} />,
                 label: '미확인 메시지',
                 value: `${dashboardData.stats.unreadMessages}건`,
-                iconVariant: 'orange'
+                iconVariant: 'orange',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)
               },
               {
                 id: 'incompleteRecords',
                 icon: <ClipboardList {...kpiLucideProps} />,
                 label: '작성 대기 일지',
                 value: `${incompleteRecords.count}건`,
-                iconVariant: 'gray'
+                iconVariant: 'gray',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.INCOMPLETE_RECORDS)
               }
             ]}
           />
@@ -749,7 +774,7 @@ const ConsultantDashboardV2 = ({ user }) => {
                   <div key={`stat-${stat.label}-${idx}`} className="consultant-dashboard-v2__chart-bar-wrapper">
                     <div
                       className={`consultant-dashboard-v2__chart-bar${isLatestWeek ? ' consultant-dashboard-v2__chart-bar--active' : ''}`}
-                      style={{ height: `${Math.max(heightPercent, 4)}%` }}
+                      style={{ '--chart-bar-height': `${Math.max(heightPercent, 4)}%` }}
                       title={`${stat.label}: ${stat.count}건`}
                     />
                     <span className="consultant-dashboard-v2__chart-label">{stat.label}</span>

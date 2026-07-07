@@ -20,7 +20,7 @@
 | **이전 deploy (#530)** | run [`28860409561`](https://github.com/beta0629/MindGarden/actions/runs/28860409561) · SHA `27eb9dbae` · bundle `main.95ce56a1.js` |
 | **#534 deploy** | run [`28861054757`](https://github.com/beta0629/MindGarden/actions/runs/28861054757) · SHA `8646d892e` · bundle `main.a82dfbd8.js` |
 | **GATE-01 baseline deploy** | run [`28855153365`](https://github.com/beta0629/MindGarden/actions/runs/28855153365) · SHA `c65d9f326` · bundle `main.0ef5994d.js` |
-| **develop CI (HEAD)** | run `28863216570` @ `dc1eae2f9` (#531 docs) — **in_progress** (docs-only, prod deploy 없음) |
+| **develop CI (HEAD)** | run [`28863216570`](https://github.com/beta0629/MindGarden/actions/runs/28863216570) @ `dc1eae2f9` (#531 docs) — **SUCCESS** ☑ (docs-only, prod deploy 없음) |
 | **prod** | **GATE-04 미실행** — prod deploy **금지** 유지 |
 
 ---
@@ -62,8 +62,8 @@
 
 | 트랙 | 상태 | 비고 |
 |------|------|------|
-| **docs PR [#537](https://github.com/beta0629/MindGarden/pull/537)** | OPEN · **CONFLICTING** | 본 HANDOFF v2 스냅샷 — `origin/develop`(`dc1eae2f9`) rebase → CI green → squash merge. **docs-only · prod 금지** |
-| **develop CI (#531 HEAD)** | run `28863216570` **in_progress** | docs-only merge 직후 — green 확인 후 #537 rebase 기준선 확정 |
+| **docs PR [#537](https://github.com/beta0629/MindGarden/pull/537)** | OPEN · **MERGEABLE** | 본 HANDOFF v2 스냅샷 — P0 gate CI green 후 squash merge. **docs-only · prod 금지** |
+| **develop CI (#531 HEAD)** | run `28863216570` **SUCCESS** ☑ | docs-only merge 직후 — #537 merge 대기 |
 | **#532** | OPEN | `clientDashboardRoutes` SSOT — #534 merge로 **대부분 반영** · 범위 겹침 검토 후 close 또는 축소 |
 | **#536** | **CLOSED** | #535와 중복 — superseded |
 
@@ -73,8 +73,8 @@
 
 | ID | 내용 | 해결 방향 |
 |----|------|-----------|
-| **B-01** | **#537 rebase conflict** | `docs/handoff-20260707-eod` → `origin/develop`(`dc1eae2f9`) rebase · HANDOFF v2만 유지 → CI green → merge |
-| **B-02** | develop HEAD CI (#531) **in_progress** | run `28863216570` green 확인 — docs-only이므로 FE deploy 불필요 |
+| **B-01** | ~~#537 rebase conflict~~ | **해소** — `origin/develop`(`dc1eae2f9`) 기준 MERGEABLE |
+| **B-02** | ~~develop HEAD CI in_progress~~ | **해소** — run `28863216570` SUCCESS |
 | **B-03** | **#532 범위 정리** | #534 merge 후 잔여 diff 검토 — close 또는 축소 PR |
 
 **원칙**: **CI green 전 merge 금지** · **GATE-04 prod deploy 금지** · **WBS §1 Hotfix·§0 GATE** 범위만 신중 수정.
@@ -87,7 +87,7 @@
 
 | # | 제목 | mergeable | CI / 비고 |
 |---|------|-----------|-----------|
-| [#537](https://github.com/beta0629/MindGarden/pull/537) | docs(handoff): 2026-07-07 EOD handoff + WBS §1 EOD 갱신 | **CONFLICTING** | docs-only · rebase onto `dc1eae2f9` → CI green → merge **P0** |
+| [#537](https://github.com/beta0629/MindGarden/pull/537) | docs(handoff): 2026-07-07 EOD handoff + WBS §1 EOD 갱신 | **MERGEABLE** | docs-only · CI green → squash merge **P0** |
 | [#532](https://github.com/beta0629/MindGarden/pull/532) | feat(client-dashboard): clientDashboardRoutes SSOT KPI·CTA | UNKNOWN | #534와 범위 겹침 — **close·축소 검토** |
 
 ### 오늘 merge 완료 ☑
@@ -216,7 +216,7 @@ cd tests/e2e && E2E_BASE_URL=https://mindgarden.dev.core-solution.co.kr \
 
 | 항목 | 값 |
 |------|-----|
-| **작업 브랜치** | `docs/handoff-20260707-eod` (PR [#537](https://github.com/beta0629/MindGarden/pull/537)) — **rebase 필요** (CONFLICTING) |
+| **작업 브랜치** | `docs/handoff-20260707-eod` (PR [#537](https://github.com/beta0629/MindGarden/pull/537)) — **MERGEABLE** (P0 gate push 대기) |
 | **origin/develop** | `dc1eae2f9` — `Merge pull request #531` (docs/wbs Quality Gate) |
 | **직전 코드 merge** | `76103c3d8` (#529) · `8646d892e` (#534) · `27eb9dbae` (#530) |
 | **working tree** | `HANDOFF_20260707_EOD.md` v2 갱신 — #537 push 후 CI green → merge |
@@ -248,8 +248,8 @@ cd tests/e2e && E2E_BASE_URL=https://mindgarden.dev.core-solution.co.kr \
 |------|------|
 | **#534 PR-D** | **MERGED** `8646d892e` ☑ · deploy run `28861054757` SUCCESS |
 | **#529 DASH-02** | **MERGED** `76103c3d8` ☑ · deploy run `28861227866` SUCCESS · bundle `main.a82dfbd8.js` live |
-| **#531 WBS docs** | **MERGED** `dc1eae2f9` ☑ · CI run `28863216570` in_progress (docs-only) |
-| **docs PR [#537](https://github.com/beta0629/MindGarden/pull/537)** | OPEN · CONFLICTING · HANDOFF v2 갱신 후 rebase·merge |
+| **#531 WBS docs** | **MERGED** `dc1eae2f9` ☑ · CI run `28863216570` SUCCESS (docs-only) |
+| **docs PR [#537](https://github.com/beta0629/MindGarden/pull/537)** | OPEN · MERGEABLE · P0 gate 스냅샷 갱신 push → CI green → merge |
 | **#536** | **CLOSED** — #535 supersede ☑ |
 | **dev bundle** | `main.a82dfbd8.js` (최신) · 이전 `main.95ce56a1.js` (run `28860409561` @ #530) |
 
@@ -280,6 +280,7 @@ push 성공 전까지 **원격에 없을 수 있는 파일**:
 |------------|------|
 | 2026-07-07 ~20:00 | EOD handoff 초안 (core-planner) |
 | 2026-07-07 ~20:50 | §오프라인 복구 추가 · #534 MERGEABLE·#535 merged 반영 |
+| 2026-07-07 ~21:15 | **P0 gate** — develop CI run `28863216570` SUCCESS · #537 MERGEABLE · live bundle `main.a82dfbd8.js` 확인 |
 | 2026-07-07 ~20:40 | **v2 스냅샷** — develop `dc1eae2f9` (#531) · #534/#529 merge · bundle `main.a82dfbd8.js` live · [#537](https://github.com/beta0629/MindGarden/pull/537) |
 
 ---

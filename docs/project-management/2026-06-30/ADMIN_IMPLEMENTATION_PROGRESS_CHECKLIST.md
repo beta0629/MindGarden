@@ -80,6 +80,8 @@
 | V3+-coder | 28g | Saved View (Phase 1 stub) | coder | designer | spec ☑ | `useSavedViewPreference` localStorage stub; Jest PASS | `2a18d947e` | ☑ done | PR #456 merged · Phase 2 silent persist ☑ (#462+#463) |
 | V3+-coder | 28g-p2 | Saved View client pilot (silent persist) | coder | designer | 28g Phase 1 ☑ | ClientComprehensiveManagement filters+viewMode debounced persist; no save/load UI | `985e59c11` | ☑ done | PR #462 merged · route `/admin/user-management` client tab · **dev FE 배포 후 F5 restore 검수** |
 | V3+-coder | 28g-p2b | Saved View consultant/staff pilot (silent persist) | coder | designer | 28g-p2 ☑ | ConsultantComprehensiveManagement+StaffManagement filters+viewMode debounced persist | `e7e505cb2` | ☑ done | PR #463 merged · routes `/admin/user-management` consultant/staff tabs |
+| V3+-coder | 28g-p3 | Saved View mapping list pilot (silent persist) | coder | designer | 28g-p2b ☑ | MappingListBlock filters+viewMode debounced persist; no save/load UI | `108615ebc` | ☑ done | PR #465 merged · route `/admin/mapping-management` · dev FE run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE run `28837307167` SUCCESS · main `c8f5a2cc6` |
+| V3+-coder | 28g-p4 | Saved View FinancialManagement pilot (silent persist) | coder | designer | 28g-p3 ☑ | FinancialManagement filters+viewMode debounced persist; pageId `erp.financial.transactions` | `047194130` | ☑ done | PR #466 merged · route `/erp/financial` · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` |
 | V3+-coder | 28f-lnb | 휴면 사용자 LNB 메뉴 | coder | planner | Seq 28c ☑ | Flyway `V20260706_001` · ADM_DORMANT_USERS | `c74af8210` | ☑ done | PR #454 merged · **BE dev 배포**(Flyway) |
 | V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `97436d432` | ☑ done | PR #453+#464 merged · D-1~D-4·D-6 닫힘 · D-5(감사 §2~§3) 열림 |
 
@@ -105,7 +107,9 @@
 | V1 착수 | 2026-07-01 | ☑ Seq 14~16 pilot |
 | V3+ Seq 28a~28h | 2026-07-07 | ☑ #462+#463+#464 develop merge chain · develop `97436d432` · CI green |
 | V3+ dev FE deploy (28g 포함) | 2026-07-07 | ☑ dev FE run `28833732369` SUCCESS · ref develop `97436d432` |
-| **다음 (pending)** | — | **Seq 28 prod smoke sign-off** ([체크리스트](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md)) · 28h D-5(감사 오케스트레이션) · 네이버 Phase 0 보류 |
+| V3+ 28g-p3 dev+prod FE deploy | 2026-07-07 | ☑ dev FE run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE run `28837307167` SUCCESS · main `c8f5a2cc6` |
+| V3+ 28g-p4 dev+prod FE deploy | 2026-07-07 | ☑ dev FE run `28838011403` · prod FE run `28838028601` · main/develop `f3fe6a323` · PR #466 merged |
+| **다음 (pending)** | — | **28g-p3/p4 F5 restore 검수** · **Seq 28 prod smoke sign-off** ([체크리스트](../../guides/testing/SEQ_28_PROD_SMOKE_CHECKLIST.md)) · 28h D-5(감사 오케스트레이션) · 네이버 Phase 0 보류 |
 
 ---
 
@@ -140,3 +144,6 @@
 | 2026-07-07 | 28h-D | **28h** 잔여 doc 정합 ☑ — UAT↔정합표 B1/B5/B6·ALIMTALK 미시드; D-1~D-4·D-6 닫힘 · D-5 열림 |
 | 2026-07-07 | 28g-p2·28h | **#462** client saved view ☑ · **#463** consultant/staff saved view ☑ · **#464** 28h doc 잔여 ☑ · develop `97436d432` · CI green · merge chain 재개 완료(네트워크 오류 이후) |
 | 2026-07-07 | 28g-deploy | dev FE deploy ☑ — run `28833732369` SUCCESS · develop `97436d432` · 28g-p2/p2b saved view 포함 |
+| 2026-07-07 | 28g-p4 | PR #466 OPEN — FinancialManagement saved view silent persist · route `/erp/financial` · pageId `erp.financial.transactions` |
+| 2026-07-07 | 28g-p3-deploy | dev FE deploy ☑ — run `28837299816` SUCCESS · develop `c8f5a2cc6` · prod FE deploy ☑ — run `28837307167` SUCCESS · main `c8f5a2cc6` · PR #465 merged · route `/admin/mapping-management` |
+| 2026-07-07 | 28g-p4-deploy | PR #466 merged · FinancialManagement saved view silent persist · dev FE run `28838011403` SUCCESS · prod FE run `28838028601` SUCCESS · develop/main `f3fe6a323` · route `/erp/financial` · pageId `erp.financial.transactions` |

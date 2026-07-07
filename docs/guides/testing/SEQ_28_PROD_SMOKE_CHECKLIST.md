@@ -2,7 +2,7 @@
 
 **역할**: ADMIN (ERP·어드민 LNB 접근 권한)  
 **환경**: prod — `https://mindgarden.core-solution.co.kr`  
-**배포 기준**: main `b7927be01` · Seq28 batch `061edcc0f` · prod BE run `28788111673` · prod FE run `28788111979`  
+**배포 기준**: main `f3fe6a323` · Seq28 batch `061edcc0f` · prod BE run `28788111673` · prod FE run `28838028601`  
 **선행**: 브라우저 개발자 도구 **콘솔·네트워크** 열고 진행. 치명 오류(빨간 스택) 없을 것.
 
 **참조**: [ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST](../../project-management/2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) · [Compact Row 스펙](../../design-system/SCREEN_SPEC_INTEGRATED_SCHEDULE_COMPACT_ROW.md)
@@ -92,6 +92,40 @@
 
 ---
 
+## D. Saved View silent persist (Seq **28g-p2** · **28g-p2b** · **28g-p3** · **28g-p4**)
+
+공통: 필터·viewMode 변경 후 **F5 새로고침** → debounced localStorage persist 복원. save/load UI **없음**(silent).
+
+### D1. 사용자 관리 (28g-p2 · 28g-p2b) — `/admin/user-management`
+
+| 탭 | URL | 검증 |
+|----|-----|------|
+| 내담자 | `?type=client` | 필터 1개 이상 변경 + viewMode 전환 → 새로고침 → 필터·viewMode 유지 |
+| 상담사 | `?type=consultant` | 동일 |
+| 스태프 | `?type=staff` | 동일 |
+
+### D2. 매칭 관리 (28g-p3) — `/admin/mapping-management`
+
+| 단계 | 동작 | 기대 결과 |
+|------|------|-----------|
+| D2-1 | 필터 1개 이상 변경 + table↔card 전환 | 즉시 UI 반영 |
+| D2-2 | **F5 새로고침** | 필터·viewMode **유지** |
+
+### D3. ERP 재무 (28g-p4) — `/erp/financial`
+
+| 단계 | 동작 | 기대 결과 |
+|------|------|-----------|
+| D3-1 | 거래 목록 필터 1개 이상 변경 + table↔card 전환 | 즉시 UI 반영 |
+| D3-2 | **F5 새로고침** | 필터·viewMode **유지** · pageId `erp.financial.transactions` |
+
+**Sign-off 28g-p2~p4**
+
+- [ ] D1 client/consultant/staff 중 **1탭 이상** saved view F5 restore OK
+- [ ] D2 매칭 필터+viewMode F5 restore OK
+- [ ] D3 ERP 재무 필터+viewMode F5 restore OK
+
+---
+
 ## Jest 게이트 (자동 — prod 수동 전제)
 
 | Suite | 파일 |
@@ -113,5 +147,6 @@
 | 휴면 LNB + AdminCommonLayout 페이지 | 28c · 28f-lnb | [ ] |
 | 통합일정 compact row (ON만·기본 comfortable) | 28f | [ ] |
 | viewMode persist (user / mapping / ERP) | 28b · 28d · 28e | [ ] |
+| Saved View silent persist (client/consultant/staff/mapping/ERP) | 28g-p2~p4 | [ ] (사용자 sign-off 대기) |
 
 **검수자 / 일자**: _______________

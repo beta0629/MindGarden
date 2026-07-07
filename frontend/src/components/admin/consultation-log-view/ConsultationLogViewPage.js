@@ -32,7 +32,7 @@ import {
   CONSULTATION_LOG_VIEW_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
   CONSULTATION_LOG_VIEW_SAVED_VIEW_ROW_ARIA_LABEL,
   buildConsultationLogViewDefaultSavedView
-} from '../../../constants/consultationLogViewSavedViewConstants';
+} from '../../../constants/consultationLogSavedViewConstants';
 import '../ConsultationLogViewPage.css';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)

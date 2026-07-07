@@ -5,15 +5,15 @@ import { act, renderHook } from '@testing-library/react';
 import {
   buildSavedViewStorageKey,
   useSavedViewPreference
-} from '../../../hooks/useSavedViewPreference';
+} from '../../../../hooks/useSavedViewPreference';
 import {
   CONSULTATION_LOG_VIEW_DEFAULT_VIEW_MODE,
   CONSULTATION_LOG_VIEW_SAVED_VIEW_PAGE_ID,
   buildConsultationLogViewDefaultSavedView
-} from '../../../constants/consultationLogViewSavedViewConstants';
+} from '../../../../constants/consultationLogSavedViewConstants';
 import {
   USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID
-} from '../../../constants/userManagementSavedViewConstants';
+} from '../../../../constants/userManagementSavedViewConstants';
 
 const PAGE_ID = CONSULTATION_LOG_VIEW_SAVED_VIEW_PAGE_ID;
 const SCOPE = { tenantId: 'tenant-test', userId: 'user-test' };

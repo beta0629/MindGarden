@@ -34,7 +34,7 @@ import {
     COMMON_CODE_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
     COMMON_CODE_MANAGEMENT_SAVED_VIEW_ROW_ARIA_LABEL,
     buildCommonCodeManagementDefaultSavedView
-} from '../../constants/commonCodeManagementSavedViewConstants';
+} from '../../constants/commonCodeSavedViewConstants';
 import SavedViewControls from './ClientComprehensiveManagement/molecules/SavedViewControls';
 import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
 import { useTranslation } from 'react-i18next';

@@ -9,7 +9,7 @@ import {
 import {
   COMMON_CODE_MANAGEMENT_SAVED_VIEW_PAGE_ID,
   buildCommonCodeManagementDefaultSavedView
-} from '../../../constants/commonCodeManagementSavedViewConstants';
+} from '../../../constants/commonCodeSavedViewConstants';
 import {
   USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID
 } from '../../../constants/userManagementSavedViewConstants';

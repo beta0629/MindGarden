@@ -2,7 +2,8 @@
 
 **작성**: core-planner  
 **일자**: 2026-05-18  
-**상태**: 점검·분배 대기 (코드 변경 없음 — 본 문서는 감사·UAT·서브에이전트 위임용)
+**최종 갱신**: 2026-07-07 (Seq **28h** D-5 — §2~§3 **사전 P0 스냅샷** 명시·현행 SSOT 교차 참조)  
+**상태**: Phase A~C·Solapi Phase D **코드 반영 완료** — §2~§3·§7 수동 기대 「없음」은 **2026-05-18 감사 시점** 기록. **런타임·UAT SSOT**는 [UAT 리포트 §0·§A.1](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md) · [정합표 §2](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md#2-트리거--api--채널--식별자-마스터-정합표)
 
 ---
 
@@ -38,6 +39,10 @@ Expo 앱·웹에서 아래 **3대 트리거** 발생 시, **인앱 메시지**, 
 ---
 
 ## 2. 코드 팩트 요약 (탐색 앵커)
+
+> **Seq 28h D-5 (2026-07-07) — 사전 P0 스냅샷**  
+> 아래 §2.1~§2.5는 **2026-05-18 Phase A1 탐색** 당시 코드 기준이며, Phase C·Solapi Phase D 이후 **confirm-payment/deposit/approve·`createConsultantSchedule` 인앱·푸시는 구현됨** (`MappingSettlementNotificationHelper`, `ScheduleCreatedNotificationHelper`). **현행 Y/N·API·시드**는 [UAT §0·§A.1](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md) · [정합표 §2](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md#2-트리거--api--채널--식별자-마스터-정합표)를 따른다.  
+> **`session_low`**: 입금 확인(`confirm-deposit`) **직후 단독**으로는 발화하지 않음 — **회기 차감**(`useSessionForSpecificMapping`, 잔여 ≤2) 경로에서만 `dispatchSessionLow` (**의도적 설계**; UAT B3·정합표 §2 B3·UAT §A.2 2-4 주석).
 
 ### 2.1 결제 완료 (`Payment` 엔티티, `APPROVED`)
 
@@ -100,6 +105,8 @@ Expo 앱·웹에서 아래 **3대 트리거** 발생 시, **인앱 메시지**, 
 ---
 
 ## 3. 시나리오 × 역할 × 채널 매트릭스
+
+> **현행 SSOT (2026-07-07)**: 본 §3 표의 「N」·「없음」은 **감사 당시(§2 동일 시점)** 기대이다. P0 후 **B1~B6** 기대 Y/N은 [UAT §0](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md#0-p0-후-기대-코더테스터-ssot--기대-y-표) · 코드 대조는 [UAT §A.1](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_UAT_REPORT.md#a1-오케스트레이션-3-기대-vs-코드-실제-grepjava). **§7.2~§7.4** 수동 체크리스트의 「없음이 정상(현행)」 문구는 **구 §3 기준** — human UAT 시 **UAT §2~§4** expected 열을 사용한다.
 
 **범례**: **Y** = 코드상 발화·수신 경로 있음 | **N** = 없음 | **조건부** = 설정·토큰·tenant·키워드·상태에 따름
 

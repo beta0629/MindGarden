@@ -7,12 +7,12 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import AdminCommonLayout from '../../layout/AdminCommonLayout';
-import ContentArea from '../../dashboard-v2/content/ContentArea';
-import ContentHeader from '../../dashboard-v2/content/ContentHeader';
-import { SidePeekShell } from '../../common';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ContentArea from '../dashboard-v2/content/ContentArea';
+import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import { SidePeekShell } from '../common';
+import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import TenantCommonCodeTable from './tenant-common-codes/organisms/TenantCommonCodeTable';
 import TenantCommonCodeSidePeekContent from './tenant-common-codes/molecules/TenantCommonCodeSidePeekContent';
 import TenantCommonCodeFormModal from './tenant-common-codes/molecules/TenantCommonCodeFormModal';

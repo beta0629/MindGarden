@@ -665,7 +665,7 @@ const CommonCodeManagement = () => {
     return (
         <AdminCommonLayout title={t('admin:commonCode.ui.pageTitle')}>
             <ContentArea>
-                <ContentHeader title={t('admin:commonCode.ui.pageTitle')} subtitle={t('admin:commonCode.ui.headerSubtitle')} />
+                <ContentHeader title={null} subtitle={t('admin:commonCode.ui.headerSubtitle')} />
 
                 <section
                     className="mg-v2-session-saved-view-row"

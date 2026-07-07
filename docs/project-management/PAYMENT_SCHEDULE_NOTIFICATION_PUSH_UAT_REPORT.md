@@ -1,7 +1,7 @@
 # 결제·승인·일정 알림/푸시 — 수동 UAT 리포트
 
 **작성**: core-tester  
-**최종 갱신**: 2026-05-22 (배치 **10** 게이트 — Solapi Phase D **`c5b181d28`** + 감정일기 inbox 회귀 **32+23 PASS**; human Solapi·§8.5 **NOT RUN**)  
+**최종 갱신**: 2026-07-07 (Seq **28h** doc alignment — B1 §0/§10 cross-ref · B5 `APPOINTMENT` alias · B6 `/confirm` API path; 배치 **10** Solapi Phase D **`c5b181d28`** + 감정일기 inbox 회귀 **32+23 PASS**; human Solapi·§8.5 **NOT RUN**)  
 **이전**: 2026-05-20 배치 6/6 · 2026-05-20 배치 5/5 · 2026-05-18 Phase C 자동 게이트  
 **SSOT**: [PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §3~§7·§7.6 · [MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md](./MOBILE_PUSH_EXPO_DEPLOYMENT_CHECKLIST.md) §2.1 · **API·시드·common_code 정합**: [PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md)  
 **코드 기준**: **`c5b181d28`** (Solapi Phase D SSOT) · 실행 HEAD **`3f3e97e28`** — `MappingSettlementNotificationHelper`, `NotificationServiceImpl`, Expo `pushNavigation`  
@@ -19,7 +19,7 @@
 |--------|------|--------------------------|-------------------------|-------------------------|
 | **PG `Payment` APPROVED** | 인앱 | 조건부 | **Y** — `PaymentServiceImpl` `sendMessage(consultantId, clientId, …, CONSULTANT, PAYMENT_COMPLETION)` | `PaymentServiceImpl` 경로 (별도 베이스라인 없음) |
 | | 푸시 | 조건부 (payer) | **Y** — `dispatchPaymentCompleted` (쇼핑 PG는 스킵) | `MobilePushDispatchServiceImplTest` |
-| | 시스템 | **N** | **N** — `sendPaymentCompleted` **호출처 0** | — |
+| | 시스템 | **N** | **조건부 Y** (Phase D **`c5b181d28`** 이후) — `sendPaymentCompleted` · §10 D-3 | `NotificationServiceImplSmsFallbackTest` |
 | | admin_ops | 조건부 | **조건부** — 본문 「결제」·타입 필터 | — |
 | **confirm-payment** | 인앱·푸시 | **N** | **Y** — `notifyMappingSettlement(PAYMENT_CONFIRMED)` → `MappingSettlementNotificationHelper` | `AdminServiceImplMappingSettlementNotificationBaselineTest` |
 | **confirm-deposit** | 인앱·푸시 | **N** / session_low만 | **Y** 인앱·`payment_completed` 푸시 + **session_low**는 회기 차감 시 `remaining≤2` (`useSessionForSpecificMapping`) | 동일 + `ScheduleServiceImplFinalizeTentativeAfterDepositTest` |
@@ -82,7 +82,7 @@
 
 | 순위 | 갭 | 근거·권장 |
 |------|-----|-----------|
-| **1** | **시스템 알림 미연결 (P0-3)** | `NotificationService.sendPaymentCompleted` 구현만 존재, PG `APPROVED`·매칭 정산 경로 **미호출** — 알림톡·Alert SSOT 합의 후 1곳에서 호출 |
+| **1** | **시스템 알림 (P0-3 → Phase D ☑)** | Phase D **`c5b181d28`** 에서 PG `APPROVED`·confirm-payment/deposit → `sendPaymentCompleted` **연결됨** (§10·[정합표](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md) §2 B1~B3). **잔여**: human Solapi UAT §10.3 D-0~D-4 **NOT RUN** · `ALIMTALK_BIZ_TEMPLATE_CODE.PAYMENT_COMPLETED` Flyway 미시드(정합표 §3.1) |
 | **2** | **웹 푸시 파이프라인 부재 (P0-4)** | 서버 `MobilePushPlatform` ios/android만; `frontend/.../PushNotificationService.js` **미참조** — Phase C 별도 트랙 또는 문서화 |
 | **3** | **오케스트레이션 §2~§3 문서 드리프트** | `createConsultantSchedule`·매칭 API는 **Y**로 구현됨 — [오케스트레이션](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) §2·§9·§7 수동 기대(「없음」) 갱신 또는 `session_low`가 **입금 직후**에도 나가야 하는지 제품 확인 (`confirm-deposit`만으로는 회기 차감 없으면 푸시 없음) |
 
@@ -96,12 +96,14 @@
 | B2 | 어드민 **confirm-payment** | **Y** (`PAYMENT_COMPLETION`) | **조건부 Y** (`payment_completed`) | N | N | **조건부** (키워드·타입) | N |
 | B3 | 어드민 **confirm-deposit** | **Y** | **조건부 Y** (`payment_completed`) + **조건부** (`session_low`, 잔여 ≤2) | N | N | **조건부** | N |
 | B4 | 어드민 **approve** | **Y** | **조건부 Y** (`mapping_approved`) | **Y** | **조건부 Y** (`mapping_approved`) | **조건부** | N |
-| B5 | **POST** `/api/v1/schedules/consultant` (BOOKED 등록) | **Y** (`APPOINTMENT_CONFIRMATION`) | **조건부 Y** (`booking_confirmed`) | **Y** (`NEW_APPOINTMENT`) | N | **조건부** | N |
+| B5 | **POST** `/api/v1/schedules/consultant` (BOOKED 등록) | **Y** (`APPOINTMENT`¹) | **조건부 Y** (`booking_confirmed`) | **Y** (`NEW_APPOINTMENT`) | N | **조건부** | N |
 | B5-API | 동일 API **HTTP 응답** (P0·`ScheduleCreatedNotificationHelper` REQUIRES_NEW 반영 후) | — | — | — | — | **Y** — `success=true`, `data.id`(또는 schedule id) | — |
-| B6 | 관리자 **confirmSchedule** (예약 확정) | N (별도 메시지 타입 없음) | **조건부 Y** (`booking_confirmed`) | N | N | N | **조건부 Y** (내담자 알림톡/SMS) |
+| B6 | **`PUT /api/v1/schedules/{id}/confirm?userRole=ADMIN\|STAFF`** (`confirmSchedule`) | N (별도 메시지 타입 없음) | **조건부 Y** (`booking_confirmed`) | N | N | N | **조건부 Y** (내담자 알림톡/SMS) |
 
 > **조건부**: `EXPO_ACCESS_TOKEN`·활성 토큰(`mobile_push_tokens.active=1`)·앱 카테고리(`payment`/`schedule`/`system`) on. 가예약(`tentativeBeforeDeposit=true`) 일정 등록은 B5·B5-API 알림 **N**(API 자체는 200 가능).  
-> **ADMIN 모바일 MVP**: `payment_completed`·푸시 E2E **비대상** — 검증은 **CLIENT**(필수)·CONSULTANT(매핑 승인 시) APK.
+> **ADMIN 모바일 MVP**: `payment_completed`·푸시 E2E **비대상** — 검증은 **CLIENT**(필수)·CONSULTANT(매핑 승인 시) APK.  
+> **B1 시스템 열**: 본 §0 표는 **P0·Phase C 스냅샷**(시스템 **N**). Solapi Phase D(§10) 이후 B1~B3 시스템 알림톡/SMS는 **조건부 Y** — [정합표](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md) §2·§6·§7 D-1.  
+> ¹ **B5 인앱 type**: 런타임 DB `consultation_messages.message_type` = **`APPOINTMENT`**. common_code 시드명 `APPOINTMENT_CONFIRMATION`과 **별칭** — admin_ops 필터는 둘 다 allow ([정합표](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md) §4).
 
 ---
 
@@ -143,10 +145,12 @@
 
 | 단계 | 조작 | 역할 | 인앱 | 푸시 | 시스템 | Pass |
 |------|------|------|:----:|:----:|:------:|:----:|
-| 4-1 | 웹 또는 Expo 어드민 `POST /api/v1/schedules/consultant` (BOOKED) | CLIENT | **Y** (B5) | **조건부 Y** — `booking_confirmed` | **N** | ☐ |
+| 4-1 | 웹 또는 Expo 어드민 `POST /api/v1/schedules/consultant` (BOOKED) | CLIENT | **Y** (B5) — `message_type` **`APPOINTMENT`**¹ | **조건부 Y** — `booking_confirmed` | **N** | ☐ |
 | 4-1b | 동일 | CONSULTANT | **Y** — `NEW_APPOINTMENT` | **N** | **N** | ☐ |
-| 4-2 | 관리자 **예약 확정** (`confirmSchedule`) | CLIENT | N | **`booking_confirmed` 조건부 Y** (B6) | 알림톡/SMS **조건부** | ☐ |
+| 4-2 | **`PUT /api/v1/schedules/{id}/confirm?userRole=ADMIN\|STAFF`** (B6) | CLIENT | N | **`booking_confirmed` 조건부 Y** (B6) | 알림톡/SMS **조건부** (`CONSULTATION_CONFIRMED`) | ☐ |
 | 4-3 | 동일 | CONSULTANT | N | N | N | ☐ |
+
+> ¹ B5 CLIENT 인앱: DB `message_type` = **`APPOINTMENT`** (시드 라벨 `APPOINTMENT_CONFIRMATION`과 별칭). QA 증빙은 `consultation_messages.message_type` 컬럼 기준 — [정합표 §4](./PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md).
 
 ---
 
@@ -275,6 +279,7 @@ mvn -q -Dtest=ScheduleCreatedNotificationHelperImplTest,ExpoPushPropertiesTest,M
 | 4 | 앱 설정: 카테고리 `payment`·`schedule` **ON** | §1 P-4 |
 | 5 | PG **APPROVED** 또는 `confirm-payment` | CLIENT 인앱·`payment_completed` (ADMIN 앱 아님) | §2 |
 | 6 | 웹·Expo 어드민 `POST /api/v1/schedules/consultant` (BOOKED, 가예약 아님) | **B5-API Y** + B5 인앱·`booking_confirmed` | §4 · §0 |
+| 6b | (선택) **`PUT /api/v1/schedules/{id}/confirm?userRole=ADMIN\|STAFF`** | B6 — `booking_confirmed` 푸시·`CONSULTATION_CONFIRMED` 알림톡/SMS | §4 4-2 |
 | 7 | DB: `consultation_messages` + `mobile_push_tokens` (CLIENT `user_id`, `active=1`) | §6 |
 | 8 | 서버 로그·실기기 알림 스크린 | §8.5 로그 키워드 | §6 |
 

@@ -286,4 +286,42 @@ push 성공 전까지 **원격에 없을 수 있는 파일**:
 
 ---
 
-**다음 세션 첫 액션**: §5 P0-1 develop CI green (`dc1eae2f9`) → P0-2 [#537](https://github.com/beta0629/MindGarden/pull/537) rebase·merge (docs-only, prod 금지).
+**다음 세션 첫 액션**: **7/13 GATE-03 사용자 sign-off** — [`GATE_03_USER_SIGNOFF_SHEET_20260713.md`](../../guides/testing/GATE_03_USER_SIGNOFF_SHEET_20260713.md) 1-pager (C1/E/G1~G3) · 상세: [`GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md`](../../guides/testing/GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md) · evidence: [`DASH_10_EVIDENCE_PACK_20260713.md`](../../guides/testing/DASH_10_EVIDENCE_PACK_20260713.md) · **prod/EAS/OTA 금지**.
+
+---
+
+## §Overnight CP (2026-07-08 KST)
+
+> develop `419a0177d` (#545 Expo wiring merged) · ROLE-03 P0-3~4 ☑ (#544+#545)
+
+### 스냅샷
+
+| 항목 | 값 |
+|------|-----|
+| **develop HEAD** | `419a0177d61c09b328f2ead14e06251ff0c4c7aa` |
+| **HEAD 메시지** | `feat(expo): wire consultant home P1 index to ROLE-03 hooks (#545)` |
+| **직전 merge** | `482e7e7a0` (#544 ROLE-03 hooks·organisms) · `8bf5ace0d` (#543 DASH-03~04) |
+| **dev FE deploy (latest)** | run [`28875323851`](https://github.com/beta0629/MindGarden/actions/runs/28875323851) @ #543 · #545 Expo-only — FE redeploy 불필요 |
+| **ROLE-03 P0-3~4** | ☑ #544 + #545 |
+| **ROLE-03 P0-2 Renewal** | **defer 권고** (post-GATE-03 · V2 SSOT) |
+| **Expo OTA** | **report only** — `eas.json` channels만 유지 · publish/build는 사용자 요청 시 |
+| **prod** | **GATE-04 미실행** — prod deploy **금지** 유지 |
+
+### Overnight 잔여
+
+| WP | 상태 | 담당 |
+|----|------|------|
+| `HF-02` F1~F6 header 6 routes dev verify | ☑ | core-tester |
+| `GATE-03` manual checklist prep | ☑ | core-tester |
+| `ROLE-04` Expo consultant home Jest | ☑ 4 suites/32 tests | core-coder |
+| `GATE-03` 사용자 sign-off (7/13) | ☐ C1/E1/G1/G2/G3 | **사용자** · 1-pager: [`GATE_03_USER_SIGNOFF_SHEET_20260713.md`](../../guides/testing/GATE_03_USER_SIGNOFF_SHEET_20260713.md) |
+| `DASH-10` evidence pack | ☑ 초안 | [`DASH_10_EVIDENCE_PACK_20260713.md`](../../guides/testing/DASH_10_EVIDENCE_PACK_20260713.md) |
+| `ROLE-03` P0-2 Renewal | defer | — |
+
+### 변경 이력 (overnight)
+
+| 시각 (KST) | 변경 |
+|------------|------|
+| 2026-07-08 ~00:30 | Overnight CP — #545 merge · P0-3~4 ☑ · P0-2 defer · HF-02/GATE-03 handoff (core-planner) |
+| 2026-07-08 ~01:00 | Overnight handoffs ☑ — HF-02 F1~F6 · GATE-03 prep · ROLE-04 Jest · CP-7 사용자만 잔여 |
+| 2026-07-08 | DASH-10 evidence pack·GATE-03 1-pager 신규 — cross-link (docs-only) |

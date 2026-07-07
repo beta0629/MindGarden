@@ -77,9 +77,10 @@
 | V3+-coder | 28d | MappingListBlock viewMode persist | coder | designer | Seq 28a ☑ | table/card viewMode persist | — | ☑ done | PR #451 merged · route: `/admin/mapping-management` |
 | V3+-coder | 28e | FinancialManagement viewMode persist | coder | designer | Seq 28a ☑ | table/card viewMode persist | — | ☑ done | PR #452 merged · route: `/erp/financial` |
 | V3+-coder | 28f | compact row 재도입 (토글 ON만) | designer → coder | designer | designer spec ☑ | DensityToggle+CompactRow; comfortable default; Jest PASS | `f62cccb9a` | ☑ done | PR #455 merged · route `/admin/mapping-management` · **dev 배포 후 사용자 검수** |
-| V3+-coder | 28g | Saved View (Phase 1 stub) | coder | designer | spec ☑ | `useSavedViewPreference` localStorage stub; Jest PASS | `2a18d947e` | ☑ done | PR #456 merged · Phase 2 API 연동 ☐ |
+| V3+-coder | 28g | Saved View (Phase 1 stub) | coder | designer | spec ☑ | `useSavedViewPreference` localStorage stub; Jest PASS | `2a18d947e` | ☑ done | PR #456 merged · Phase 2 client pilot ◐ |
+| V3+-coder | 28g-p2 | Saved View client pilot (silent persist) | coder | designer | 28g Phase 1 ☑ | ClientComprehensiveManagement filters+viewMode debounced persist; no save/load UI | `c8fd805ab` | ◐ in_progress | PR #462 · route `/admin/user-management` client tab · consultant/staff follow-up ☐ |
 | V3+-coder | 28f-lnb | 휴면 사용자 LNB 메뉴 | coder | planner | Seq 28c ☑ | Flyway `V20260706_001` · ADM_DORMANT_USERS | `c74af8210` | ☑ done | PR #454 merged · **BE dev 배포**(Flyway) |
-| V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `16e8bb69b` | ◐ in_progress | PR #453 docs merged · low priority 잔여 |
+| V3+-doc | 28h | Notification API/doc alignment | coder/planner | planner | — | API·문서 정합; UAT↔시드 정합표 | `16e8bb69b` | ☑ done | PR #453 + 잔여 정합(28h-D) · D-1~D-4·D-6 닫힘 · D-5(감사 §2~§3) 열림 |
 
 ---
 
@@ -102,7 +103,7 @@
 | V1 G2 QA gate (Seq 17) | 2026-07-06 | ☑ Jest 26 · E2E 3 · good `4a2cd67a0` · viewMode persist → V3+ 후속 |
 | V1 착수 | 2026-07-01 | ☑ Seq 14~16 pilot |
 | V3+ Seq 28a~28g | 2026-07-06 | ☑ #457+#449~#456 develop merge · CI bypass(단위 fail·통합 pending) · develop `16e8bb69b` |
-| **다음 (pending)** | — | **dev FE deploy** sign-off · **28c/28f** 사용자 검수 · **28f-lnb** BE dev Flyway · **28h** 잔여 |
+| **다음 (pending)** | — | **dev FE deploy** sign-off · **28c/28f** 사용자 검수 · **28f-lnb** BE dev Flyway · **28g-p2** client pilot · 28h D-5(감사 오케스트레이션) 후속 |
 
 ---
 
@@ -134,3 +135,4 @@
 | 2026-07-06 | 28a·28c | **28a** ☑ — hook+Jest 11 · tester [840e9bc5](840e9bc5-9d17-4fba-a711-e617ff364ac5) PASS · **28c** ☑ — DormantUsersPage AdminCommonLayout+Jest 8 · tester [afbf431d](afbf431d-88bc-437c-bdc3-1d6fbd47a7b9) PASS · PR 분리 권장(28a/28c) · **28b/28d/28e** 착수 가능 |
 | 2026-07-06 | 28b·28d·28e | **28b** ☑ PR #450 · **28d** ☑ PR #451 · **28e** ☑ PR #452 · develop merge batch |
 | 2026-07-06 | 28f·28g·lnb·docs | **28f** ☑ PR #455 · **28g** ☑ PR #456 · **28f-lnb** ☑ PR #454 · **28h/docs** ☑ PR #453 · develop `16e8bb69b` · dev FE deploy queued |
+| 2026-07-07 | 28h-D | **28h** 잔여 doc 정합 ☑ — UAT↔정합표 B1/B5/B6·ALIMTALK 미시드; D-1~D-4·D-6 닫힘 · D-5 열림 |

@@ -15,7 +15,7 @@
 |------|------|
 | **목적** | UAT 리포트 §0(B1~B6)·§10(Solapi Phase D) 기대와 **REST API·Flyway 시드·common_codes** 실제를 한 표에서 대조 |
 | **독자** | human/QA(UAT 실행)·core-tester(회귀)·core-coder(드리프트 수정 전 SSOT) |
-| **정합 기호** | **✅** 일치 · **⚠️** UAT↔코드/시드 드리프트(기능은 동작하나 명칭·시드·문서 불일치) · **—** 해당 없음 · **조건부** 토큰·카테고리·ENV |
+| **정합 기호** | **✅** 일치 · **⚠️** UAT↔코드/시드 드리프트(기능은 동작하나 명칭·시드·문서 불일치) · **✅†** 허용 드리프트(문서·QA SSOT로 확정) · **—** 해당 없음 · **조건부** 토큰·카테고리·ENV |
 
 > UAT §0 「시스템(Alert/알림톡)」 열은 **2026-05-18 P0 푸시 배치** 기준. **§10 Phase D** 이후 PG·매칭 정산 경로는 `sendPaymentCompleted` 연결됨 — §3·§4 참고.
 
@@ -25,13 +25,13 @@
 
 | UAT ID | 트리거 | HTTP API (표준) | 서비스·헬퍼 | CLIENT 인앱 `message_type` | CLIENT 푸시 `type` | CONSULTANT 인앱 | CONSULTANT 푸시 | 시스템(알림톡/SMS) | UAT §0 | 코드·시드 |
 |--------|--------|-----------------|-------------|----------------------------|--------------------|-----------------|-----------------|-------------------|--------|-----------|
-| **B1** | PG `Payment` **APPROVED** | `PUT /api/v1/payments/{paymentId}/status?status=APPROVED` | `PaymentServiceImpl.updatePaymentStatus` → `sendMessage` + `dispatchPaymentCompleted` + `trySendPaymentCompletedExternalNotification` | `PAYMENT_COMPLETION` (또는 본문 「결제」) | `payment_completed` | — | — | **조건부 Y** — `NotificationService.sendPaymentCompleted` · `NotificationType.PAYMENT_COMPLETED` | §0: 시스템 **N** · §10: **Y** | **⚠️** UAT §0 vs §10 내부 드리프트. 코드·§10 **일치** |
+| **B1** | PG `Payment` **APPROVED** | `PUT /api/v1/payments/{paymentId}/status?status=APPROVED` | `PaymentServiceImpl.updatePaymentStatus` → `sendMessage` + `dispatchPaymentCompleted` + `trySendPaymentCompletedExternalNotification` | `PAYMENT_COMPLETION` (또는 본문 「결제」) | `payment_completed` | — | — | **조건부 Y** — `NotificationService.sendPaymentCompleted` · `NotificationType.PAYMENT_COMPLETED` | §0: 시스템 **N** (P0 스냅샷) · §10: **Y** | **✅†** §0 vs §10 **허용 드리프트** — §0=P0·Phase C 기대, §10 Phase D·코드가 시스템 SSOT ([§6](#6-uat-10-solapi-phase-d--정합-요약)·UAT §0 각주) |
 | **B2** | 어드민 **confirm-payment** | `POST /api/v1/admin/mappings/{mappingId}/confirm-payment` | `AdminServiceImpl.confirmPayment` → `MappingSettlementNotificationHelper` (`PAYMENT_CONFIRMED`) | `PAYMENT_COMPLETION` | `payment_completed` | — | — | **조건부 Y** — `sendPaymentCompleted` | §0·§10 **Y** | **✅** |
 | **B3** | 어드민 **confirm-deposit** | `POST /api/v1/admin/mappings/{mappingId}/confirm-deposit` | `AdminServiceImpl.confirmDeposit` → helper (`DEPOSIT_CONFIRMED`) + `finalizeTentativeSchedulesAfterDepositConfirmed` | `PAYMENT_COMPLETION` (정산 인앱) | `payment_completed` + **조건부** `session_low` | — | — | **조건부 Y** — `sendPaymentCompleted` | §0 **Y** | **✅** · `session_low`는 **회기 차감**(`useSessionForSpecificMapping`, 잔여≤2) 시만 — 입금만으로는 **없을 수 있음** (UAT §A.2 2-4 주석과 일치) |
 | **B4** | 어드민 **approve** | `POST /api/v1/admin/mappings/{mappingId}/approve` | `AdminServiceImpl.approveMapping` → helper (`MAPPING_APPROVED`) | **Y** (매칭 승인 본문) | `mapping_approved` | **Y** | `mapping_approved` | **N** — helper가 `sendPaymentCompleted` **미호출** (단위 검증) | §0 **Y** / 시스템 **N** | **✅** |
-| **B5** | **POST** 일정 등록 (BOOKED) | `POST /api/v1/schedules/consultant` | `ScheduleServiceImpl.createConsultantSchedule` → `ScheduleCreatedNotificationHelper.notifyScheduleCreated` | UAT: `APPOINTMENT_CONFIRMATION` | `booking_confirmed` | `NEW_APPOINTMENT` | **N** | **N** | §0 **Y** | **⚠️** 인앱 type: 코드는 common_code 키 **`APPOINTMENT`** → DB `message_type` **`APPOINTMENT`** (20자 SSOT). 시드 `MESSAGE_TYPE.APPOINTMENT_CONFIRMATION`과 **별칭 불일치** — admin_ops 필터는 둘 다 allow |
+| **B5** | **POST** 일정 등록 (BOOKED) | `POST /api/v1/schedules/consultant` | `ScheduleServiceImpl.createConsultantSchedule` → `ScheduleCreatedNotificationHelper.notifyScheduleCreated` | UAT 라벨: `APPOINTMENT_CONFIRMATION` → DB **`APPOINTMENT`** | `booking_confirmed` | `NEW_APPOINTMENT` | **N** | **N** | §0 **Y** | **✅†** common_code 시드 `APPOINTMENT_CONFIRMATION` vs 런타임 `message_type` **`APPOINTMENT`** — [§4](#4-인앱-메시지--message_type-common_code)·UAT §0 각주¹ |
 | **B5-API** | 동일 API HTTP 응답 | 동일 | REQUIRES_NEW 헬퍼 — API 200·`data.id` | — | — | — | — | — | **Y** | **✅** |
-| **B6** | 관리자 **confirmSchedule** | `PUT /api/v1/schedules/{id}/confirm?userRole=ADMIN\|STAFF` | `ScheduleServiceImpl.confirmSchedule` → `sendConsultationConfirmed` + `dispatchBookingConfirmed` | **N** (별도 타입 없음) | `booking_confirmed` | — | — | **조건부 Y** — `NotificationType.CONSULTATION_CONFIRMED` | §0 **Y** | **✅** · UAT 본문에 API path **`/confirm`** 명시 없음 — **⚠️** 문서 보강 대상 |
+| **B6** | 관리자 **confirmSchedule** | `PUT /api/v1/schedules/{id}/confirm?userRole=ADMIN\|STAFF` | `ScheduleServiceImpl.confirmSchedule` → `sendConsultationConfirmed` + `dispatchBookingConfirmed` | **N** (별도 타입 없음) | `booking_confirmed` | — | — | **조건부 Y** — `NotificationType.CONSULTATION_CONFIRMED` | §0·§4 **Y** | **✅** UAT §4 4-2·§8.4 6b에 API path 반영 (2026-07-07) |
 
 **가예약 분기**: `tentativeBeforeDeposit=true` → B5·B5-API 알림 **N** (API 200 가능). UAT §0 각주와 `ScheduleServiceImplNotifyScheduleCreatedTest` **일치**.
 
@@ -57,8 +57,8 @@
 
 | code_value | V20260528_001 | UAT 결제·일정 트리거 | 비고 |
 |------------|:-------------:|----------------------|------|
-| `PAYMENT_COMPLETED` | **❌ 미시드** | B1~B3 · §10 | resolver ③단계 fallback **`PAYMENT_COMPLETED` 문자열** → Solapi 콘솔 templateId와 **수동 정합** 필요 (§10 D-1) |
-| `CONSULTATION_CONFIRMED` | **❌ 미시드** | B6 | fallback `CONSULTATION_CONFIRMED` |
+| `PAYMENT_COMPLETED` | **❌ 미시드** (의도적) | B1~B3 · §10 | resolver ③단계 fallback **`PAYMENT_COMPLETED` 문자열** → Solapi 콘솔 templateId와 **수동 정합** 필요 (§10 D-1). **Flyway 추가는 후속** — 운영 SSOT는 tenant 설정 + fallback |
+| `CONSULTATION_CONFIRMED` | **❌ 미시드** (의도적) | B6 | fallback `CONSULTATION_CONFIRMED` — 동일 resolver ③단계 |
 | `RESERVATION_IMMEDIATE_*` 등 8종 | **✅** | B5 직후 즉시 SMS/배치 (별 트랙) | `ScheduleServiceImpl.notifyScheduleCreated` — **BOOKED 등록 인앱·푸시와 별도** |
 
 **레거시 그룹 `ALIMTALK_TEMPLATE`**: `KakaoAlimTalkServiceImpl` 기동 시 자동 생성·`deployment/complete-common-codes-migration.sql`에 `PAYMENT_COMPLETE`(오타형) 존재. **운영 SSOT는 `ALIMTALK_BIZ_TEMPLATE_CODE` + `tenant_kakao_alimtalk_settings`** (`NotificationServiceImpl.resolveAlimTalkBizTemplateCode`).
@@ -128,14 +128,14 @@
 
 ## 7. 드리프트·후속 (코드 변경 없음 — 문서·QA만)
 
-| # | 구분 | 내용 | 권장 |
-|---|------|------|------|
-| D-1 | UAT 내부 | §0 B1 시스템 **N** vs §10 **Y** | §0 각주 또는 열 갱신 (코더 배치 시) |
-| D-2 | UAT ↔ 코드 | B5 CLIENT `APPOINTMENT_CONFIRMATION` vs DB **`APPOINTMENT`** | QA 증빙·UAT §4 expected를 **`APPOINTMENT`** 로 통일 검토 |
-| D-3 | 시드 | `ALIMTALK_BIZ_TEMPLATE_CODE.PAYMENT_COMPLETED` Flyway **미시드** | §10 D-1 human · 또는 후속 Flyway + `ALIMTALK_TEMPLATE_ID_ROTATION.md` |
-| D-4 | UAT ↔ API | B6 **`PUT .../schedules/{id}/confirm`** 미기재 | §4·§8.5 조작 열에 path 추가 검토 |
-| D-5 | 감사 문서 | [AUDIT §2~§3](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) 「없음」 | UAT §A.5 Top 3 — 오케스트레이션 갱신 또는 제품 확인 (`session_low` 입금 직후) |
-| D-6 | 레거시 | `ALIMTALK_TEMPLATE.PAYMENT_COMPLETE` vs `PAYMENT_COMPLETED` | 신규 작업 시 **`ALIMTALK_BIZ_TEMPLATE_CODE`** 만 참조 |
+| # | 구분 | 내용 | 상태 (2026-07-07) |
+|---|------|------|-------------------|
+| D-1 | UAT 내부 | §0 B1 시스템 **N** vs §10 **Y** | **✅ 닫힘** — UAT §0 각주 + 본 표 B1 **✅†**; §10·코드 SSOT |
+| D-2 | UAT ↔ 코드 | B5 CLIENT `APPOINTMENT_CONFIRMATION` vs DB **`APPOINTMENT`** | **✅ 닫힘** — UAT §0·§4 + 본 표 §4; QA는 DB 컬럼 기준 |
+| D-3 | 시드 | `ALIMTALK_BIZ_TEMPLATE_CODE.PAYMENT_COMPLETED` Flyway **미시드** | **✅ 문서화** — §3.1 「의도적 미시드」; human §10 D-1·후속 Flyway 선택 |
+| D-4 | UAT ↔ API | B6 **`PUT .../schedules/{id}/confirm`** | **✅ 닫힘** — UAT §0 B6·§4 4-2·§8.4 6b 반영 |
+| D-5 | 감사 문서 | [AUDIT §2~§3](./PAYMENT_SCHEDULE_NOTIFICATION_PUSH_AUDIT_ORCHESTRATION.md) 「없음」 | **열림** — UAT §A.5 Top 3 #3; 오케스트레이션 갱신 또는 제품 확인 (`session_low` 입금 직후) |
+| D-6 | 레거시 | `ALIMTALK_TEMPLATE.PAYMENT_COMPLETE` vs `PAYMENT_COMPLETED` | **✅ 문서화** — §3.1 레거시 주석; 신규 작업 **`ALIMTALK_BIZ_TEMPLATE_CODE`** 만 |
 
 ---
 
@@ -160,4 +160,5 @@
 
 | 일자 | 변경 |
 |------|------|
+| 2026-07-07 | Seq **28h** 잔여 정합 — B1/B5 **✅†** 허용 드리프트·B6 API path·§3.1 ALIMTALK 미시드 명시·§7 D-1~D-4·D-6 닫힘 |
 | 2026-07-06 | 초판 — V3+ Seq 28h Notification API/doc·시드 정합표 (코드 변경 없음) |

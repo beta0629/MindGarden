@@ -1,6 +1,6 @@
 /**
  * 상담사 대시보드 (홈)
- * AppTopBar, 인사·요약, 미작성 일지, KPI, 오늘 스케줄, 빠른 액션
+ * AppTopBar, 인사·요약, 미작성 일지, KPI, 다음 상담, 오늘 스케줄, 스냅샷, 빠른 액션
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -25,14 +25,18 @@ import {
   Calendar,
   CalendarPlus,
   Clock,
+  ClipboardList,
   MessageSquare,
   AlertTriangle,
+  Users,
+  Wallet,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { ADMIN_MIN_TOUCH_TARGET } from '@/theme/tokens';
 import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { StatCard } from '@/components/atoms/StatCard';
 import { ScheduleCard } from '@/components/molecules/ScheduleCard';
+import { ConsultantUrgentClientBanner } from '@/components/molecules/ConsultantUrgentClientBanner';
 import {
   getConsultantScheduleCardFooterHint,
   getConsultantScheduleCardVisualTone,
@@ -41,12 +45,25 @@ import {
 import { QuickActionBar, type QuickAction } from '@/components/molecules/QuickActionBar';
 import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
+import { ConsultantNextSessionCard } from '@/components/organisms/ConsultantNextSessionCard';
+import { ConsultantHomeSnapshotRow } from '@/components/organisms/ConsultantHomeSnapshotRow';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { useConsultantMobileDashboard } from '@/api/hooks/useSchedules';
+import {
+  useConsultantHomeStats,
+  useIncompleteRecords,
+  useHighPriorityClients,
+  useUpcomingPreparation,
+} from '@/api/hooks/useConsultantHome';
 import { usePendingRecords } from '@/api/hooks/useRecords';
 import { useUnreadCount } from '@/api/hooks/useNotifications';
-import { useUnreadMessageCount } from '@/api/hooks/useMessages';
+import {
+  buildConversationsFromRows,
+  useConversations,
+  useUnreadMessageCount,
+} from '@/api/hooks/useMessages';
+import { useConsultantSalarySettlements } from '@/api/hooks/useConsultantSalarySettlements';
 import {
   CONSULTANT_HOME_COPY,
   CONSULTANT_HOME_ROUTES,
@@ -56,6 +73,26 @@ import {
   resolveTodayCount,
   selectConsultantHomeKpiItems,
 } from '@/utils/consultantHomeKpi';
+import { toClientConsultantMessagingRole } from '@/utils/adminRole';
+import { toDisplayString } from '@/utils/safeDisplay';
+
+function formatSalarySnapshot(
+  period: string | null | undefined,
+  net: number | string | null | undefined,
+): { periodLabel: string; netLabel: string } | null {
+  const periodLabel = toDisplayString(period, '').trim();
+  const netLabel =
+    net != null && String(net).trim() !== ''
+      ? `${Number(net).toLocaleString('ko-KR')}원`
+      : '';
+  if (!periodLabel && !netLabel) {
+    return null;
+  }
+  return {
+    periodLabel: periodLabel || '최근 정산',
+    netLabel: netLabel || '—',
+  };
+}
 
 export default function ConsultantDashboard() {
   const theme = useTheme();
@@ -64,30 +101,78 @@ export default function ConsultantDashboard() {
   const { userId } = useApiQueryReady({ requireUserId: true });
 
   const dashboard = useConsultantMobileDashboard(userId);
+  const homeStatsQuery = useConsultantHomeStats();
+  const incompleteQuery = useIncompleteRecords(userId);
   const pendingQuery = usePendingRecords(userId);
+  const urgentClientsQuery = useHighPriorityClients(userId);
+  const upcomingQuery = useUpcomingPreparation(userId);
   const unreadNotificationQuery = useUnreadCount();
   const unreadMessageQuery = useUnreadMessageCount();
+  const conversationsQuery = useConversations('');
+  const salaryQuery = useConsultantSalarySettlements({ enabled: !!userId });
 
   const schedules = dashboard.todaySchedules;
-  const pendingCount = pendingQuery.data?.length ?? dashboard.pendingRecordCount;
+  const incompleteCount = incompleteQuery.data?.count ?? 0;
+  const pendingCount =
+    incompleteCount > 0 ? incompleteCount : (pendingQuery.data?.length ?? dashboard.pendingRecordCount);
+  const urgentClient = urgentClientsQuery.data?.[0] ?? null;
   const unreadNotificationCount = unreadNotificationQuery.data?.count ?? 0;
   const unreadMessageCount = unreadMessageQuery.data?.count ?? 0;
+  const statsTodayCount = homeStatsQuery.data?.totalToday;
 
-  const todayCount = resolveTodayCount(dashboard.todayCount, schedules.length);
+  const todayCount = resolveTodayCount(
+    statsTodayCount ?? dashboard.todayCount,
+    schedules.length,
+  );
   const todaySummary = buildConsultantTodaySummary(todayCount);
   const kpiItems = useMemo(
     () =>
       selectConsultantHomeKpiItems({
-        todayCount: dashboard.todayCount,
+        todayCount: statsTodayCount ?? dashboard.todayCount,
         scheduleLength: schedules.length,
         unreadMessageCount,
+        newClientsCount: homeStatsQuery.data?.newClients,
       }),
-    [dashboard.todayCount, schedules.length, unreadMessageCount],
+    [
+      statsTodayCount,
+      dashboard.todayCount,
+      schedules.length,
+      unreadMessageCount,
+      homeStatsQuery.data?.newClients,
+    ],
   );
 
-  const isDashboardKpiLoading = dashboard.isLoading;
+  const isDashboardKpiLoading = dashboard.isLoading || homeStatsQuery.isLoading;
   const isUnreadKpiLoading = unreadMessageQuery.isLoading;
   const isKpiLoading = isDashboardKpiLoading || isUnreadKpiLoading;
+
+  const snapshotMessage = useMemo(() => {
+    if (!user?.role || !userId) return null;
+    const flat =
+      conversationsQuery.data?.pages.flatMap((p) => ('messages' in p ? p.messages : [])) ?? [];
+    const conversations = buildConversationsFromRows(
+      flat,
+      toClientConsultantMessagingRole(user.role),
+      userId,
+      '',
+    );
+    const first = conversations[0];
+    if (!first) return null;
+    return {
+      partnerId: first.partnerId,
+      partnerName: first.partnerName,
+      lastMessage: first.lastMessage,
+    };
+  }, [conversationsQuery.data?.pages, user?.role, userId]);
+
+  const snapshotSalary = useMemo(() => {
+    const latest = salaryQuery.data?.[0];
+    if (!latest) return null;
+    return formatSalarySnapshot(
+      latest.calculationPeriod ?? latest.calculationPeriodEnd,
+      latest.netSalary ?? latest.totalSalary,
+    );
+  }, [salaryQuery.data]);
 
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
@@ -96,18 +181,30 @@ export default function ConsultantDashboard() {
     try {
       await Promise.all([
         dashboard.refetchAll(),
+        homeStatsQuery.refetch(),
+        incompleteQuery.refetch(),
         pendingQuery.refetch(),
+        urgentClientsQuery.refetch(),
+        upcomingQuery.refetch(),
         unreadNotificationQuery.refetch(),
         unreadMessageQuery.refetch(),
+        conversationsQuery.refetch(),
+        salaryQuery.refetch(),
       ]);
     } finally {
       setIsManualRefreshing(false);
     }
   }, [
     dashboard.refetchAll,
+    homeStatsQuery.refetch,
+    incompleteQuery.refetch,
     pendingQuery.refetch,
+    urgentClientsQuery.refetch,
+    upcomingQuery.refetch,
     unreadNotificationQuery.refetch,
     unreadMessageQuery.refetch,
+    conversationsQuery.refetch,
+    salaryQuery.refetch,
   ]);
 
   const quickActions: QuickAction[] = useMemo(
@@ -121,6 +218,21 @@ export default function ConsultantDashboard() {
         icon: Clock,
         label: CONSULTANT_HOME_COPY.QUICK_ACTION_AVAILABILITY,
         onPress: () => router.push(CONSULTANT_HOME_ROUTES.AVAILABILITY),
+      },
+      {
+        icon: MessageSquare,
+        label: CONSULTANT_HOME_COPY.QUICK_ACTION_MESSAGES,
+        onPress: () => router.push(CONSULTANT_HOME_ROUTES.MESSAGES),
+      },
+      {
+        icon: ClipboardList,
+        label: CONSULTANT_HOME_COPY.QUICK_ACTION_RECORDS,
+        onPress: () => router.push(CONSULTANT_HOME_ROUTES.RECORDS),
+      },
+      {
+        icon: Wallet,
+        label: CONSULTANT_HOME_COPY.QUICK_ACTION_SALARY,
+        onPress: () => router.push(CONSULTANT_HOME_ROUTES.SALARY),
       },
     ],
     [router],
@@ -138,7 +250,19 @@ export default function ConsultantDashboard() {
       router.push(CONSULTANT_HOME_ROUTES.SCHEDULE);
       return;
     }
+    if (id === 'new_clients') {
+      router.push('/(consultant)/(clients)/');
+      return;
+    }
     router.push(CONSULTANT_HOME_ROUTES.MESSAGES);
+  };
+
+  const handleScheduleNav = (scheduleId: number) => {
+    router.push(`/(consultant)/(schedule)/${scheduleId}`);
+  };
+
+  const handleRecordNav = (scheduleId: number) => {
+    router.push(`/(consultant)/(records)/create/${scheduleId}`);
   };
 
   const displayName = user?.name ?? CONSULTANT_HOME_COPY.GREETING_FALLBACK_NAME;
@@ -182,7 +306,6 @@ export default function ConsultantDashboard() {
           />
         }
       >
-        {/* 인사 + 오늘 N건 요약 */}
         <View style={[styles.greeting, { marginTop: theme.spacing.md }]}>
           <Text
             style={{
@@ -206,7 +329,6 @@ export default function ConsultantDashboard() {
           </Text>
         </View>
 
-        {/* 미작성 일지 배너 */}
         {pendingCount > 0 ? (
           <Pressable
             onPress={handlePendingPress}
@@ -248,7 +370,15 @@ export default function ConsultantDashboard() {
           </Pressable>
         ) : null}
 
-        {/* KPI 스트립 */}
+        {urgentClient ? (
+          <ConsultantUrgentClientBanner
+            client={urgentClient}
+            onPress={() =>
+              router.push(`/(consultant)/(clients)/${urgentClient.clientId}`)
+            }
+          />
+        ) : null}
+
         <View style={[styles.section, { marginTop: theme.spacing.lg }]}>
           <Text
             style={{
@@ -262,7 +392,7 @@ export default function ConsultantDashboard() {
           </Text>
           {isKpiLoading ? (
             <View style={styles.statRow}>
-              {[1, 2].map((i) => (
+              {[1, 2, 3].map((i) => (
                 <SkeletonLoader key={i} width={110} height={80} borderRadius={16} />
               ))}
             </View>
@@ -281,6 +411,8 @@ export default function ConsultantDashboard() {
                   icon={
                     item.id === 'today_sessions' ? (
                       <Calendar size={18} color={theme.colors.primary} />
+                    ) : item.id === 'new_clients' ? (
+                      <Users size={18} color={theme.colors.primary} />
                     ) : (
                       <MessageSquare size={18} color={theme.colors.primary} />
                     )
@@ -293,7 +425,13 @@ export default function ConsultantDashboard() {
           )}
         </View>
 
-        {/* 오늘의 스케줄 */}
+        <ConsultantNextSessionCard
+          session={upcomingQuery.data ?? null}
+          isLoading={upcomingQuery.isLoading && !upcomingQuery.isFetched}
+          onPressDetail={handleScheduleNav}
+          onPressRecord={handleRecordNav}
+        />
+
         <View style={[styles.sectionHeader, { marginTop: theme.spacing.lg }]}>
           <Text
             style={{
@@ -368,7 +506,19 @@ export default function ConsultantDashboard() {
           </View>
         )}
 
-        {/* 빠른 액션 */}
+        <ConsultantHomeSnapshotRow
+          message={snapshotMessage}
+          salary={snapshotSalary}
+          onPressMessage={() => {
+            if (snapshotMessage) {
+              router.push(`/(consultant)/(more)/messages/${snapshotMessage.partnerId}`);
+              return;
+            }
+            router.push(CONSULTANT_HOME_ROUTES.MESSAGES);
+          }}
+          onPressSalary={() => router.push(CONSULTANT_HOME_ROUTES.SALARY)}
+        />
+
         <Text
           style={{
             color: theme.colors.textMain,

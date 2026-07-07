@@ -6,7 +6,7 @@
  */
 import { CONSULTANT_HOME_COPY } from '@/constants/consultantHomeCopy';
 
-export type ConsultantHomeKpiId = 'today_sessions' | 'unread_messages';
+export type ConsultantHomeKpiId = 'today_sessions' | 'unread_messages' | 'new_clients';
 
 export interface ConsultantHomeKpiItem {
   id: ConsultantHomeKpiId;
@@ -19,6 +19,7 @@ export interface ConsultantHomeKpiInput {
   todayCount?: number | null;
   scheduleLength?: number | null;
   unreadMessageCount?: number | null;
+  newClientsCount?: number | null;
 }
 
 function toNonNegativeInt(value: number | null | undefined): number {
@@ -54,11 +55,12 @@ export function buildConsultantTodaySummary(count: number): string {
 }
 
 /**
- * P0 KPI 스트립 항목 — 오늘 상담·안읽은 메시지
+ * P0~P1 KPI 스트립 — 오늘 상담·안읽은 메시지·신규 내담
  */
 export function selectConsultantHomeKpiItems(input: ConsultantHomeKpiInput): ConsultantHomeKpiItem[] {
   const todayCount = resolveTodayCount(input.todayCount, input.scheduleLength);
   const unreadMessageCount = toNonNegativeInt(input.unreadMessageCount);
+  const newClientsCount = toNonNegativeInt(input.newClientsCount);
 
   return [
     {
@@ -72,6 +74,12 @@ export function selectConsultantHomeKpiItems(input: ConsultantHomeKpiInput): Con
       label: CONSULTANT_HOME_COPY.KPI_UNREAD_MESSAGES,
       value: unreadMessageCount,
       unit: CONSULTANT_HOME_COPY.UNIT_MESSAGE,
+    },
+    {
+      id: 'new_clients',
+      label: CONSULTANT_HOME_COPY.KPI_NEW_CLIENTS,
+      value: newClientsCount,
+      unit: CONSULTANT_HOME_COPY.UNIT_CLIENT,
     },
   ];
 }

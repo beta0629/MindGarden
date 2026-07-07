@@ -27,12 +27,13 @@ describe('buildConsultantTodaySummary', () => {
 });
 
 describe('selectConsultantHomeKpiItems', () => {
-  it('returns P0 KPI items with normalized values', () => {
+  it('returns P0~P1 KPI items with normalized values', () => {
     const items = selectConsultantHomeKpiItems({
       todayCount: 2,
       unreadMessageCount: 5,
+      newClientsCount: 1,
     });
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(3);
     expect(items[0]).toMatchObject({
       id: 'today_sessions',
       label: CONSULTANT_HOME_COPY.KPI_TODAY_SESSIONS,
@@ -45,6 +46,12 @@ describe('selectConsultantHomeKpiItems', () => {
       value: 5,
       unit: CONSULTANT_HOME_COPY.UNIT_MESSAGE,
     });
+    expect(items[2]).toMatchObject({
+      id: 'new_clients',
+      label: CONSULTANT_HOME_COPY.KPI_NEW_CLIENTS,
+      value: 1,
+      unit: CONSULTANT_HOME_COPY.UNIT_CLIENT,
+    });
   });
 
   it('clamps invalid unread counts to zero', () => {
@@ -53,5 +60,6 @@ describe('selectConsultantHomeKpiItems', () => {
       unreadMessageCount: Number.NaN,
     });
     expect(items[1]?.value).toBe(0);
+    expect(items[2]?.value).toBe(0);
   });
 });

@@ -102,6 +102,19 @@ export const SCHEDULE_API = {
   SCHEDULES_BY_DATE: '/api/v1/schedules/date',
   SCHEDULES_BY_CONSULTANT: '/api/v1/schedules/consultant',
   SCHEDULES_BY_CLIENT: '/api/v1/schedules/client',
+  /** 웹 `DASHBOARD_API.CONSULTANT_STATS` — KPI·주간 추이(weeklyStats) */
+  TODAY_STATISTICS: '/api/v1/schedules/today/statistics',
+  /** 웹 `DASHBOARD_API.CONSULTANT_UPCOMING_SCHEDULES` */
+  UPCOMING: '/api/v1/schedules/upcoming',
+  /** Phase1 — 미작성 일지 (`ScheduleController`) */
+  consultantIncompleteRecords: (consultantId: string | number) =>
+    `/api/v1/schedules/consultants/${encodeURIComponent(String(consultantId))}/incomplete-records`,
+  /** Phase1 — 긴급 내담자 */
+  consultantHighPriorityClients: (consultantId: string | number) =>
+    `/api/v1/schedules/consultants/${encodeURIComponent(String(consultantId))}/high-priority-clients`,
+  /** Phase1 — 다음 상담 준비 */
+  consultantUpcomingPreparation: (consultantId: string | number) =>
+    `/api/v1/schedules/consultants/${encodeURIComponent(String(consultantId))}/upcoming-preparation`,
   /** 내담자 본인 예약 — 어드민 일정 등록과 혼동 금지 */
   SCHEDULE_CREATE: '/api/v1/schedules',
   /** 웹 ScheduleModal SSOT — ADMIN/STAFF 상담 일정 등록 */

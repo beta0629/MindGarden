@@ -26,9 +26,9 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('../../common/modals/UnifiedModal', () => ({
   __esModule: true,
-  default: ({ isOpen, title, children, actions }) => (
+  default: ({ isOpen, title, children, actions, 'data-testid': dataTestId }) => (
     isOpen ? (
-      <div data-testid="save-view-modal">
+      <div data-testid={dataTestId || 'save-view-modal'}>
         <h2>{title}</h2>
         {children}
         <div>{actions}</div>
@@ -68,6 +68,16 @@ const SavedViewHarness = ({
     setFilters({});
   }, []);
 
+  const handleDeleteView = useCallback((viewId) => {
+    setViews((prev) => prev.filter((view) => view.id !== viewId));
+    setActiveViewId((prevActiveId) => (
+      prevActiveId === viewId ? USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID : prevActiveId
+    ));
+    if (activeViewId === viewId) {
+      setFilters({});
+    }
+  }, [activeViewId]);
+
   return (
     <div>
       <SavedViewControls
@@ -76,6 +86,7 @@ const SavedViewHarness = ({
         onSelectView={handleSelectView}
         onSaveView={handleSaveView}
         onResetToDefault={handleReset}
+        onDeleteView={handleDeleteView}
       />
       <div data-testid="active-filters">{JSON.stringify(filters)}</div>
     </div>
@@ -115,7 +126,7 @@ describe('Client saved view UI (28g-p5)', () => {
     });
     fireEvent.click(screen.getByTestId('saved-view-save-confirm'));
 
-    expect(screen.getByTestId(/^saved-view-chip-view_/)).toHaveTextContent('미결제 내담자');
+    expect(screen.getByRole('button', { name: '미결제 내담자' })).toBeInTheDocument();
   });
 
   it('SavedViewControls — Chip 클릭 시 payload가 반영된다', () => {
@@ -243,6 +254,47 @@ describe('Client saved view UI (28g-p5)', () => {
     expect(defaultView.payload.filters).toEqual({ status: 'INACTIVE' });
   });
 
+  it('SavedViewControls — 기본값 Chip은 dismiss 버튼이 없다', () => {
+    render(<SavedViewHarness />);
+
+    expect(screen.queryByTestId('saved-view-chip-default-dismiss')).not.toBeInTheDocument();
+  });
+
+  it('SavedViewControls — 사용자 Chip dismiss 클릭 시 UnifiedModal confirm이 열린다', () => {
+    render(
+      <SavedViewHarness
+        initialViews={[
+          { id: USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID, label: USER_MANAGEMENT_SAVED_VIEW_DEFAULT_LABEL },
+          { id: 'view_saved', label: '대기 중' }
+        ]}
+        initialActiveViewId="view_saved"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('saved-view-chip-view_saved-dismiss'));
+    expect(screen.getByTestId('delete-saved-view-modal')).toBeInTheDocument();
+    expect(screen.getByText('저장된 뷰 삭제')).toBeInTheDocument();
+  });
+
+  it('SavedViewControls — 삭제 confirm 후 Chip이 제거된다', () => {
+    render(
+      <SavedViewHarness
+        initialViews={[
+          { id: USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID, label: USER_MANAGEMENT_SAVED_VIEW_DEFAULT_LABEL },
+          { id: 'view_saved', label: '대기 중' }
+        ]}
+        initialActiveViewId="view_saved"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('saved-view-chip-view_saved-dismiss'));
+    fireEvent.click(screen.getByTestId('saved-view-delete-confirm'));
+
+    expect(screen.queryByTestId('saved-view-chip-view_saved')).not.toBeInTheDocument();
+    expect(screen.getByTestId('saved-view-chip-default')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('active-filters')).toHaveTextContent('{}');
+  });
+
   it('useSavedViewPreference namedViews — tenantId/userId 스코프가 다르면 저장 뷰가 격리된다', () => {
     const { result: resultA } = renderHook(() =>
       useSavedViewPreference({
@@ -281,5 +333,75 @@ describe('Client saved view UI (28g-p5)', () => {
     );
     expect(localStorage.getItem(tenantBKey)).toBeNull();
     expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  });
+
+  it('useSavedViewPreference namedViews — deleteNamedView가 사용자 뷰를 제거하고 default는 보호한다', () => {
+    const { result } = renderHook(() =>
+      useSavedViewPreference({
+        pageId: PAGE_ID,
+        defaultView: DEFAULT_VIEW,
+        namedViews: true
+      })
+    );
+
+    let savedViewId;
+    act(() => {
+      savedViewId = result.current.saveNamedView('삭제 대상', {
+        ...DEFAULT_VIEW,
+        filters: { status: 'PENDING' }
+      });
+    });
+
+    expect(result.current.views).toHaveLength(2);
+
+    act(() => {
+      expect(result.current.deleteNamedView(USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID)).toBeNull();
+    });
+
+    let fallbackPayload;
+    act(() => {
+      fallbackPayload = result.current.deleteNamedView(savedViewId);
+    });
+
+    expect(fallbackPayload).toEqual(DEFAULT_VIEW);
+
+    expect(result.current.views).toHaveLength(1);
+    expect(result.current.views[0].id).toBe(USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID);
+    expect(result.current.views[0].isReadonly).toBe(true);
+
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(stored.views).toHaveLength(1);
+    expect(stored.activeViewId).toBe(USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID);
+  });
+
+  it('useSavedViewPreference namedViews — active view 삭제 시 default payload로 복귀한다', () => {
+    const { result } = renderHook(() =>
+      useSavedViewPreference({
+        pageId: PAGE_ID,
+        defaultView: DEFAULT_VIEW,
+        namedViews: true
+      })
+    );
+
+    let savedViewId;
+    act(() => {
+      savedViewId = result.current.saveNamedView('활성 뷰', {
+        viewMode: 'largeCard',
+        filters: { status: 'PENDING' },
+        sort: {},
+        density: 'comfortable'
+      });
+    });
+
+    expect(result.current.activeViewId).toBe(savedViewId);
+
+    let fallbackPayload;
+    act(() => {
+      fallbackPayload = result.current.deleteNamedView(savedViewId);
+    });
+
+    expect(fallbackPayload).toEqual(DEFAULT_VIEW);
+    expect(result.current.activeViewId).toBe(USER_MANAGEMENT_SAVED_VIEW_DEFAULT_ID);
+    expect(result.current.savedView).toEqual(DEFAULT_VIEW);
   });
 });

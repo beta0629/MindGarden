@@ -118,7 +118,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
         defaultMode: USER_MANAGEMENT_DEFAULT_VIEW_MODE,
         allowedModes: USER_MANAGEMENT_ALLOWED_VIEW_MODES
     });
-    const { savedView, setSavedView, views, activeViewId, saveNamedView, loadNamedView, resetToDefaultView } = useSavedViewPreference({
+    const { savedView, setSavedView, views, activeViewId, saveNamedView, loadNamedView, resetToDefaultView, deleteNamedView } = useSavedViewPreference({
         pageId: CLIENT_VIEW_MODE_PAGE_ID,
         defaultView: CLIENT_DEFAULT_SAVED_VIEW,
         namedViews: true
@@ -618,6 +618,13 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
             density: savedViewMetaRef.current.density
         });
     }, [saveNamedView, viewMode, activeFilters]);
+
+    const handleDeleteSavedView = useCallback((viewId) => {
+        const fallbackPayload = deleteNamedView(viewId);
+        if (fallbackPayload) {
+            applySavedViewPayload(fallbackPayload);
+        }
+    }, [deleteNamedView, applySavedViewPayload]);
     
     if (loading) {
         if (embedded) {
@@ -772,6 +779,7 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                 onSelectView={handleSelectSavedView}
                                 onSaveView={handleSaveNamedView}
                                 onResetToDefault={handleResetSavedView}
+                                onDeleteView={handleDeleteSavedView}
                             />
                             <div className="mg-v2-mapping-search-section__row">
                                 <div className="mg-v2-mapping-search-section__input-wrap">

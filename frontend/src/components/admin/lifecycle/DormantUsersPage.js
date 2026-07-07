@@ -34,7 +34,6 @@ import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './DormantUsersPage.css';
 
 const PAGE_SIZE = 20;
-const PAGE_TITLE_ID = 'dormant-users-page-title';
 
 const extractPage = (response) => {
   if (response && response.data && typeof response.data === 'object'
@@ -195,11 +194,10 @@ const DormantUsersPage = () => {
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={pageTitle}>
             <ContentHeader
-              title={pageTitle}
+              title={null}
               subtitle={pageSubtitle}
-              titleId={PAGE_TITLE_ID}
             />
-            <main aria-labelledby={PAGE_TITLE_ID}>
+            <main aria-label={pageTitle}>
               <DormantUsersList
                 page={page}
                 loading={loading}

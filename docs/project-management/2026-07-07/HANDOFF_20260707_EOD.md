@@ -16,7 +16,7 @@
 | **dev URL (정식)** | **`https://mindgarden.dev.core-solution.co.kr`** |
 | **dev URL (wrong-path)** | `https://dev.core-solution.co.kr` — 테넌트 서브도메인 없음 → **의도된 wrong-path → `/`** (버그 아님) |
 | **마지막 dev deploy SUCCESS** | run [`28858525028`](https://github.com/beta0629/MindGarden/actions/runs/28858525028) · SHA `aaa9ff883` (#527 merge) |
-| **마지막 SUCCESS bundle** | `main.99fc29d1.js` · `main.8fad5536.css` |
+| **마지막 SUCCESS bundle** | `main.95ce56a1.js` · `main.8fad5536.css` |
 | **GATE-01 baseline deploy** | run [`28855153365`](https://github.com/beta0629/MindGarden/actions/runs/28855153365) · SHA `c65d9f326` · bundle `main.0ef5994d.js` |
 | **진행 중 deploy** | run `28860212927` @ `092cb71fd` (#535) **in_progress** · run `28860409561` @ `27eb9dbae` (#530) **queued** |
 | **develop CI (HEAD)** | run `28860409377` @ `27eb9dbae` — **queued** (merge 직후, green 미확인) |

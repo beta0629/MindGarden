@@ -15,7 +15,7 @@
 import React from 'react';
 import { 
   User, Calendar, MessageCircle, UserPlus, History, 
-  FileText, Link2, Code, BarChart3, HelpCircle, Settings 
+  FileText, Link2, Code, HelpCircle, Settings 
 } from 'lucide-react';
 import { RoleUtils, USER_ROLES } from './roles';
 
@@ -127,14 +127,6 @@ const ADMIN_ACTIONS = [
     url: '/admin/common-codes',
     roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF],
     tooltip: '시스템 공통코드 관리'
-  },
-  {
-    id: 'statistics',
-    label: '통계',
-    icon: <BarChart3 size={24} />,
-    url: '/admin/statistics',
-    roles: [USER_ROLES.ADMIN, USER_ROLES.STAFF],
-    tooltip: '시스템 통계 보기'
   }
 ];
 

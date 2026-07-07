@@ -54,7 +54,6 @@ import { ProfileCard, ConsultantRatingCard } from '../ui/Card/index';
 import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
-import StatisticsDashboard from './StatisticsDashboard';
 import SystemNotificationSection from '../dashboard/SystemNotificationSection';
 import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
@@ -180,7 +179,6 @@ const AdminDashboard = ({ user: propUser }) => {
     const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
     const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
     const [showRecurringExpense, setShowRecurringExpense] = useState(false);
-    const [showStatisticsModal, setShowStatisticsModal] = useState(false);
     const [isConsultantRatingExpanded, setIsConsultantRatingExpanded] = useState(false);
     const [isVacationExpanded, setIsVacationExpanded] = useState(false);
     
@@ -724,23 +722,6 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     <div className="mg-v2-ad-b0kla__icon-group">
                         <MGButton
-                            variant="outline"
-                            size="small"
-                            className={buildErpMgButtonClassName({
-                                variant: 'outline',
-                                size: 'sm',
-                                loading: false,
-                                className: 'mg-v2-ad-b0kla__icon-btn'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() => setShowStatisticsModal(true)}
-                            type="button"
-                            preventDoubleClick={false}
-                            aria-label={t('admin:AdminDashboard.t_4938fae0')}
-                        >
-                            {t('admin:AdminDashboard.t_4938fae0')}
-                        </MGButton>
-                        <MGButton
                             type="button"
                             variant="outline"
                             size="small"
@@ -1176,13 +1157,11 @@ const AdminDashboard = ({ user: propUser }) => {
                                     icon={<Heart />}
                                     value={`${stats.consultantRatingStats?.totalRatings || 0}개`}
                                     label={t('admin:AdminDashboard.t_0ebac2e7')}
-                                    onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                                 />
                                 <StatCard
                                     icon={<Trophy />}
                                     value={(stats.consultantRatingStats?.averageScore || 0).toFixed(1)}
                                     label={t('admin:AdminDashboard.t_380b3971')}
-                                    onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                                 />
                                 <StatCard
                                     icon={<Users />}
@@ -1250,7 +1229,6 @@ const AdminDashboard = ({ user: propUser }) => {
                                 icon={<TrendingUp />}
                                 value={`${stats.consultationStats?.completionRate || 0}%`}
                                 label={t('admin:AdminDashboard.t_611cadb3')}
-                                onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                             />
                             <StatCard
                                 icon={<PieChart />}
@@ -1894,23 +1872,6 @@ const AdminDashboard = ({ user: propUser }) => {
                     onClose={() => setShowRecurringExpense(false)}
                 />
             )}
-
-            {/* 통계 모달 */}
-            <UnifiedModal
-                isOpen={showStatisticsModal}
-                onClose={() => setShowStatisticsModal(false)}
-                title={t('admin:AdminDashboard.t_505d75b1')}
-                size="large"
-                showCloseButton={true}
-                backdropClick={true}
-                zIndex={10001}
-                className="mg-v2-ad-b0kla"
-            >
-                <StatisticsDashboard
-                    userRole={(propUser || sessionUser)?.role || USER_ROLES.ADMIN}
-                    userId={(propUser || sessionUser)?.id}
-                />
-            </UnifiedModal>
 
             {/* ERP 보고서 모달 */}
             {showErpReport && (

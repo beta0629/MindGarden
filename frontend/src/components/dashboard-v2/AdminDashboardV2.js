@@ -55,7 +55,6 @@ import {
 } from './content';
 import { API_BASE_URL, SCHEDULE_API } from '../../constants/api';
 import { getDefaultApiHeaders } from '../../utils/apiHeaders';
-import StatisticsDashboard from '../admin/StatisticsDashboard';
 import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
 import RecurringExpenseModal from '../finance/RecurringExpenseModal';
@@ -208,7 +207,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
   const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
   const [showRecurringExpense, setShowRecurringExpense] = useState(false);
-  const [showStatisticsModal, setShowStatisticsModal] = useState(false);
   const [todayStats, setTodayStats] = useState({
     totalToday: 0,
     completedToday: 0,
@@ -1984,21 +1982,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           onClose={() => setShowRecurringExpense(false)}
         />
       )}
-      <UnifiedModal
-        isOpen={showStatisticsModal}
-        onClose={() => setShowStatisticsModal(false)}
-        title={t('common:dashboard-v2.AdminDashboardV2.t_505d75b1')}
-        size="large"
-        showCloseButton={true}
-        backdropClick={true}
-        zIndex={10001}
-        className="mg-v2-ad-b0kla"
-      >
-        <StatisticsDashboard
-          userRole={(propUser || sessionUser)?.role || USER_ROLES.ADMIN}
-          userId={(propUser || sessionUser)?.id}
-        />
-      </UnifiedModal>
       {showErpReport && (
         <ErpReportModal isOpen={showErpReport} onClose={() => setShowErpReport(false)} />
       )}

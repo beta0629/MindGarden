@@ -48,7 +48,6 @@ import ConsultationLogView from './components/admin/ConsultationLogView';
 import IntegratedMatchingSchedule from './components/admin/mapping-management/IntegratedMatchingSchedule';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
-import StatisticsDashboard from './components/admin/StatisticsDashboard';
 // ScheduleList는 현재 사용되지 않음
 import ComingSoon from './components/common/ComingSoon';
 // PaymentManagement는 현재 사용되지 않음
@@ -905,8 +904,8 @@ function AppContent() {
                 userId={user?.id}
               />
             } />
-            <Route path="/admin/statistics" element={<StatisticsDashboard />} />
-            <Route path="/admin/statistics-dashboard" element={<StatisticsDashboard />} />
+            <Route path="/admin/statistics" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/statistics-dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             
             
             {/* 시스템 관리 라우트 (준비중) */}

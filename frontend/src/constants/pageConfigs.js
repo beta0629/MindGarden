@@ -195,24 +195,6 @@ export const COMPLIANCE_DASHBOARD_CONFIG = {
   }
 };
 
-// 통계 대시보드 설정
-export const STATISTICS_DASHBOARD_CONFIG = {
-  TITLE: '통계 대시보드',
-  DESCRIPTION: '시스템 통계 및 분석',
-  BODY_CLASS: 'statistics-dashboard',
-  PAGE_HEADER: {
-    TITLE: '데이터를 한눈에 분석하세요',
-    DESCRIPTION: '사용자, 매출, 성과 등 다양한 통계 데이터를 시각적으로 확인하고 분석할 수 있습니다.',
-    ICON: '📈',
-    ACTION_BUTTON: {
-      TEXT: '상세 분석',
-      ICON: '🔍',
-      VARIANT: 'primary',
-      SIZE: 'md'
-    }
-  }
-};
-
 // HQ 대시보드 설정
 export const HQ_DASHBOARD_CONFIG = {
   TITLE: '본부 대시보드',
@@ -225,24 +207,6 @@ export const HQ_DASHBOARD_CONFIG = {
     ACTION_BUTTON: {
       TEXT: '전체 현황',
       ICON: '📊',
-      VARIANT: 'primary',
-      SIZE: 'md'
-    }
-  }
-};
-
-// 지점 통계 대시보드 설정
-export const BRANCH_STATISTICS_DASHBOARD_CONFIG = {
-  TITLE: '지점 통계 대시보드',
-  DESCRIPTION: '지점별 성과 및 통계 분석',
-  BODY_CLASS: 'branch-statistics-dashboard',
-  PAGE_HEADER: {
-    TITLE: '지점 성과를 체계적으로 분석하세요',
-    DESCRIPTION: '지점별 매출, 고객, 직원 성과를 상세하게 분석하고 비교할 수 있습니다.',
-    ICON: '📊',
-    ACTION_BUTTON: {
-      TEXT: '성과 비교',
-      ICON: '📈',
       VARIANT: 'primary',
       SIZE: 'md'
     }

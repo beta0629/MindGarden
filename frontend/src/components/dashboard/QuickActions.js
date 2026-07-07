@@ -135,9 +135,6 @@ const QuickActions = ({ user }) => {
               <MGButton {...actionBtnProps} onClick={goToCommonCodeManagement}>
                 공통코드
               </MGButton>
-              <MGButton {...actionBtnProps} onClick={() => navigate('/admin/statistics')}>
-                통계
-              </MGButton>
             </>
           )}
 

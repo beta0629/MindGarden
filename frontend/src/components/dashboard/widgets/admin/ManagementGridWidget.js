@@ -86,13 +86,6 @@ const ManagementGridWidget = ({ widget, user }) => {
       color: 'red'
     },
     {
-      id: 'statistics',
-      title: '통계 및 분석',
-      description: '시스템 통계 및 성과를 분석합니다',
-      url: ADMIN_ROUTES.STATISTICS,
-      color: 'yellow'
-    },
-    {
       id: 'psych-assessments',
       title: '심리검사 리포트(AI)',
       description: 'TCI/MMPI 업로드 및 리포트 생성을 관리합니다',

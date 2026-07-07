@@ -19046,3 +19046,28 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
   --mg-login-bg-base: var(--mg-color-background-main, #1a1a1a);
 }
 
+
+/* ========================================
+   Admin Dark Mode C-2b Phase 2 — LNB, ContentArea, B0KlA
+   SSOT: docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C2B_LNB_CONTENT_B0KLA.md
+   ======================================== */
+
+[data-theme="dark"] {
+  /* LNB (Sidebar) */
+  --mg-dark-lnb-bg: #2C2C2C;
+  --mg-dark-lnb-text: var(--mg-gray-200, #E5E7EB);
+  --mg-dark-lnb-hover: #374151;
+  --mg-dark-lnb-border: #4B5563;
+
+  /* ContentArea */
+  --mg-dark-content-bg: var(--mg-gray-900, #1F2937);
+  --mg-dark-content-text: var(--mg-gray-100, #F3F4F6);
+  --mg-dark-content-border: var(--mg-gray-700, #374151);
+
+  /* B0KlA Cards & Tables */
+  --mg-dark-card-bg: var(--mg-gray-800, #374151);
+  --mg-dark-card-border: var(--mg-gray-700, #4B5563);
+  --mg-dark-table-row-bg: transparent;
+  --mg-dark-table-row-hover: #4B5563;
+  --mg-dark-table-header-bg: #1F2937;
+}

@@ -21,6 +21,7 @@ import ContentHeader from '../../../dashboard-v2/content/ContentHeader';
 import MappingKpiSection from '../organisms/MappingKpiSection';
 import MappingSearchSection from '../organisms/MappingSearchSection';
 import MappingListBlock from '../organisms/MappingListBlock';
+import SavedViewControls from '../../ClientComprehensiveManagement/molecules/SavedViewControls';
 import MappingScheduleSidePeekContent from '../integrated-schedule/molecules/MappingScheduleSidePeekContent';
 import MappingCreationModal from '../../MappingCreationModal';
 import ConsultantTransferModal from '../../mapping/ConsultantTransferModal';
@@ -80,9 +81,19 @@ const MappingManagementPage = () => {
     defaultMode: MAPPING_LIST_DEFAULT_VIEW_MODE,
     allowedModes: MAPPING_LIST_ALLOWED_VIEW_MODES
   });
-  const { savedView, setSavedView } = useSavedViewPreference({
+  const {
+    savedView,
+    setSavedView,
+    views,
+    activeViewId,
+    saveNamedView,
+    loadNamedView,
+    resetToDefaultView,
+    deleteNamedView
+  } = useSavedViewPreference({
     pageId: MAPPING_MANAGEMENT_SAVED_VIEW_PAGE_ID,
-    defaultView: MAPPING_DEFAULT_SAVED_VIEW
+    defaultView: MAPPING_DEFAULT_SAVED_VIEW,
+    namedViews: true
   });
   const savedViewFiltersRestoredRef = useRef(false);
   const savedViewPersistReadyRef = useRef(false);
@@ -101,6 +112,9 @@ const MappingManagementPage = () => {
       sort: savedView.sort ?? MAPPING_DEFAULT_SAVED_VIEW.sort,
       density: savedView.density ?? MAPPING_DEFAULT_SAVED_VIEW.density
     };
+    if (savedView?.viewMode) {
+      setViewMode(savedView.viewMode);
+    }
     const storedFilters = savedView?.filters;
     if (storedFilters && Object.keys(storedFilters).length > 0) {
       if (storedFilters.filterStatus != null) {
@@ -111,7 +125,7 @@ const MappingManagementPage = () => {
       }
     }
     savedViewPersistReadyRef.current = true;
-  }, [savedView]);
+  }, [savedView, setViewMode]);
 
   useEffect(() => {
     if (!savedViewPersistReadyRef.current) {
@@ -139,6 +153,50 @@ const MappingManagementPage = () => {
       }
     };
   }, [viewMode, filterStatus, searchTerm, setSavedView]);
+
+  const applySavedViewPayload = useCallback((payload) => {
+    if (payload?.viewMode) {
+      setViewMode(payload.viewMode);
+    }
+    const storedFilters = payload?.filters ?? {};
+    if (storedFilters.filterStatus != null) {
+      setFilterStatus(storedFilters.filterStatus);
+    }
+    if (storedFilters.searchTerm != null) {
+      setSearchTerm(storedFilters.searchTerm);
+    }
+    savedViewMetaRef.current = {
+      sort: payload?.sort ?? MAPPING_DEFAULT_SAVED_VIEW.sort,
+      density: payload?.density ?? MAPPING_DEFAULT_SAVED_VIEW.density
+    };
+  }, [setViewMode]);
+
+  const handleSelectSavedView = useCallback((viewId) => {
+    const payload = loadNamedView(viewId);
+    applySavedViewPayload(payload);
+  }, [loadNamedView, applySavedViewPayload]);
+
+  const handleResetSavedView = useCallback(() => {
+    const payload = resetToDefaultView();
+    applySavedViewPayload(payload);
+  }, [resetToDefaultView, applySavedViewPayload]);
+
+  const handleSaveNamedView = useCallback((label) => {
+    saveNamedView(label, {
+      viewMode,
+      filters: { filterStatus, searchTerm },
+      sort: savedViewMetaRef.current.sort,
+      density: savedViewMetaRef.current.density
+    });
+  }, [saveNamedView, viewMode, filterStatus, searchTerm]);
+
+  const handleDeleteSavedView = useCallback((viewId) => {
+    const fallbackPayload = deleteNamedView(viewId);
+    if (fallbackPayload) {
+      applySavedViewPayload(fallbackPayload);
+    }
+  }, [deleteNamedView, applySavedViewPayload]);
+
   const [mappingStatusInfo, setMappingStatusInfo] = useState({});
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showTransferHistory, setShowTransferHistory] = useState(false);
@@ -516,6 +574,16 @@ const MappingManagementPage = () => {
             filterStatus={filterStatus}
             onFilterChange={setFilterStatus}
             placeholder={t('admin:mapping.page.searchPlaceholder')}
+            savedViewControls={(
+              <SavedViewControls
+                views={views}
+                activeViewId={activeViewId}
+                onSelectView={handleSelectSavedView}
+                onSaveView={handleSaveNamedView}
+                onResetToDefault={handleResetSavedView}
+                onDeleteView={handleDeleteSavedView}
+              />
+            )}
           />
 
           <MappingKpiSection mappings={mappings} onStatCardClick={handleStatCardClick} />

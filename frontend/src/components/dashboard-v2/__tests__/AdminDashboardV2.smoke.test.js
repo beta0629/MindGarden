@@ -180,4 +180,34 @@ describe('AdminDashboardV2 AdminCommonLayout 스모크', () => {
       expect(screen.getAllByTestId('kpi-flip-card')).toHaveLength(3);
     });
   });
+
+  test('DarkModeProvider mode=dark 시 document html data-theme="dark" 반영', async() => {
+    document.documentElement.removeAttribute('data-theme');
+
+    const {
+      DarkModeProvider,
+      useDarkMode,
+      DARK_MODE_VALUES
+    } = jest.requireActual('../../../contexts/DarkModeContext');
+
+    const DarkModeActivator = () => {
+      const { setMode } = useDarkMode();
+      React.useEffect(() => {
+        setMode(DARK_MODE_VALUES.DARK);
+      }, [setMode]);
+      return null;
+    };
+
+    render(
+      <MemoryRouter>
+        <DarkModeProvider>
+          <DarkModeActivator />
+        </DarkModeProvider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    });
+  });
 });

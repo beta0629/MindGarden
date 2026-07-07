@@ -36,15 +36,15 @@
 }
 
 .mg-v2-desktop-gnb__logo-text {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--mg-color-text-main);
+  font-size: var(--mg-v2-font-size-h5, 18px);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 
 .mg-v2-desktop-gnb__brand-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--mg-color-text-main);
+  font-size: var(--mg-v2-font-size-h5, 18px);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
   min-width: 0;
   max-width: min(40vw, 28ch);
   overflow: hidden;
@@ -68,4 +68,15 @@
   align-items: center;
   margin-left: 24px;
   overflow: visible;
+}
+
+/* Phase 1 Set C — GNB 다크 모드 (layout + v2 text token cascade) */
+[data-theme="dark"] .mg-v2-desktop-gnb {
+  background: var(--mg-layout-header-bg, var(--mg-color-background-main));
+  border-bottom-color: var(--mg-layout-header-border, var(--mg-color-border-main));
+}
+
+[data-theme="dark"] .mg-v2-desktop-gnb__logo-text,
+[data-theme="dark"] .mg-v2-desktop-gnb__brand-name {
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }

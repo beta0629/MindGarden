@@ -269,6 +269,16 @@
    */
   --mg-badge-count-bg: var(--mg-primary-900);
   --mg-badge-count-text: var(--mg-primary-200);
+
+  /* B0KlA Admin — ContentHeader / GNB 다크 cascade (Phase 1 Set C) */
+  --ad-b0kla-bg: var(--mg-color-background-main);
+  --ad-b0kla-card-bg: var(--mg-color-surface-main);
+  --ad-b0kla-border: var(--mg-color-border-main);
+  --ad-b0kla-title-color: var(--mg-v2-color-text-primary);
+  --ad-b0kla-subtitle-color: var(--mg-v2-color-text-secondary);
+  --ad-b0kla-text-secondary: var(--mg-v2-color-text-secondary);
+  --ad-b0kla-placeholder: var(--mg-v2-color-text-tertiary);
+  --ad-b0kla-icon-color: var(--mg-v2-color-text-secondary);
 }
 
 

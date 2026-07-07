@@ -878,3 +878,26 @@
     gap: var(--mg-spacing-sm);
   }
 }
+
+/* Admin Dark Mode C-3 — 통합 스케줄 sidebar·필터 칩 cascade */
+[data-theme="dark"] .integrated-schedule.integrated-schedule--b0kla .integrated-schedule__sidebar-card {
+  background: var(--mg-dark-card-bg);
+  border-color: var(--mg-dark-card-border);
+}
+
+[data-theme="dark"] .integrated-schedule .integrated-schedule__filter-chip {
+  background: var(--mg-dark-chip-bg);
+  border-color: var(--mg-dark-toolbar-border);
+  color: var(--mg-dark-chip-text);
+}
+
+[data-theme="dark"] .integrated-schedule .integrated-schedule__filter-chip--active,
+[data-theme="dark"] .integrated-schedule .integrated-schedule__filter-chip[aria-pressed='true'] {
+  background: var(--mg-dark-chip-active-bg);
+  border-color: var(--mg-dark-chip-active-bg);
+  color: var(--mg-dark-chip-active-text);
+}
+
+[data-theme="dark"] .integrated-schedule .integrated-schedule__dnd-row:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}

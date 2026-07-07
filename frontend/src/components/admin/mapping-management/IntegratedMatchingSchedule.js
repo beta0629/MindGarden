@@ -28,6 +28,26 @@ import ActionBar from '../../common/ActionBar';
 import MatchingScheduleSidebar from './integrated-schedule/organisms/MatchingScheduleSidebar';
 import SidePeekShell from '../../common/organisms/SidePeekShell';
 import MappingScheduleSidePeekContent from './integrated-schedule/molecules/MappingScheduleSidePeekContent';
+import SavedViewControls from '../ClientComprehensiveManagement/molecules/SavedViewControls';
+import {
+  buildViewModeStorageKey,
+  resolveViewModeStorageScope,
+  useViewModePreference
+} from '../../../hooks/useViewModePreference';
+import { useSavedViewPreference } from '../../../hooks/useSavedViewPreference';
+import {
+  INTEGRATED_SCHEDULE_DEFAULT_SELECTED_CLIENT_IDS,
+  INTEGRATED_SCHEDULE_DEFAULT_STATUS_FILTER,
+  INTEGRATED_SCHEDULE_DEFAULT_VIEW_FILTER,
+  INTEGRATED_SCHEDULE_SAVED_VIEW_PAGE_ID,
+  INTEGRATED_SCHEDULE_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
+  buildIntegratedScheduleDefaultSavedView
+} from '../../../constants/integratedScheduleSavedViewConstants';
+import {
+  SIDEBAR_DENSITY_COMFORTABLE,
+  SIDEBAR_DENSITY_MODES,
+  SIDEBAR_DENSITY_PAGE_ID
+} from './constants/integratedScheduleSidebarDensityConstants';
 import '../../../styles/unified-design-tokens.css';
 import '../AdminDashboard/AdminDashboardB0KlA.css';
 import './IntegratedMatchingSchedule.css';
@@ -53,6 +73,9 @@ import { buildMappingPaymentTimingLookup } from '../../schedule/utils/sameDayPen
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
 const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
+const INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW = buildIntegratedScheduleDefaultSavedView(
+  SIDEBAR_DENSITY_COMFORTABLE
+);
 
 /**
  * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
@@ -99,8 +122,38 @@ const IntegratedMatchingSchedule = () => {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
   const [sessionExtensionMapping, setSessionExtensionMapping] = useState(null);
-  const [viewFilter, setViewFilter] = useState(VIEW_FILTER_NEW);
-  const [statusFilter, setStatusFilter] = useState('ongoing');
+  const [viewFilter, setViewFilter] = useState(INTEGRATED_SCHEDULE_DEFAULT_VIEW_FILTER);
+  const [statusFilter, setStatusFilter] = useState(INTEGRATED_SCHEDULE_DEFAULT_STATUS_FILTER);
+  const sidebarDensityStorageKey = buildViewModeStorageKey(
+    resolveViewModeStorageScope(),
+    SIDEBAR_DENSITY_PAGE_ID
+  );
+  const { viewMode: sidebarDensity, setViewMode: setSidebarDensity } = useViewModePreference({
+    storageKey: sidebarDensityStorageKey,
+    defaultMode: SIDEBAR_DENSITY_COMFORTABLE,
+    allowedModes: SIDEBAR_DENSITY_MODES
+  });
+  const {
+    savedView,
+    setSavedView,
+    views,
+    activeViewId,
+    saveNamedView,
+    loadNamedView,
+    resetToDefaultView,
+    deleteNamedView
+  } = useSavedViewPreference({
+    pageId: INTEGRATED_SCHEDULE_SAVED_VIEW_PAGE_ID,
+    defaultView: INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW,
+    namedViews: true
+  });
+  const savedViewFiltersRestoredRef = useRef(false);
+  const savedViewPersistReadyRef = useRef(false);
+  const savedViewPersistTimerRef = useRef(null);
+  const savedViewMetaRef = useRef({
+    sort: INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW.sort,
+    viewMode: INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW.viewMode
+  });
   const [paymentModalMapping, setPaymentModalMapping] = useState(null);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
   // 옵션 B (예약 우선 매칭) — 당일 카드 결제 모달 상태
@@ -122,7 +175,9 @@ const IntegratedMatchingSchedule = () => {
 
   // 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터.
   // 빈 배열 = 필터 비활성. UnifiedScheduleComponent 가 events 를 그대로 통과시킨다.
-  const [selectedClientIds, setSelectedClientIds] = useState([]);
+  const [selectedClientIds, setSelectedClientIds] = useState(
+    INTEGRATED_SCHEDULE_DEFAULT_SELECTED_CLIENT_IDS
+  );
   const [clientFilterOptions, setClientFilterOptions] = useState([]);
   // eslint-disable-next-line no-unused-vars
   const [clientFilterLoading, setClientFilterLoading] = useState(false);
@@ -191,6 +246,114 @@ const IntegratedMatchingSchedule = () => {
   const handleClosePeek = useCallback(() => {
     setPeekMapping(null);
   }, []);
+
+  useEffect(() => {
+    if (savedViewFiltersRestoredRef.current) {
+      return;
+    }
+    savedViewFiltersRestoredRef.current = true;
+    savedViewMetaRef.current = {
+      sort: savedView.sort ?? INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW.sort,
+      viewMode: savedView.viewMode ?? INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW.viewMode
+    };
+    if (savedView?.density) {
+      setSidebarDensity(savedView.density);
+    }
+    const storedFilters = savedView?.filters;
+    if (storedFilters && Object.keys(storedFilters).length > 0) {
+      if (storedFilters.viewFilter != null) {
+        setViewFilter(storedFilters.viewFilter);
+      }
+      if (storedFilters.statusFilter != null) {
+        setStatusFilter(storedFilters.statusFilter);
+      }
+      if (Array.isArray(storedFilters.selectedClientIds)) {
+        setSelectedClientIds(storedFilters.selectedClientIds);
+      }
+    }
+    savedViewPersistReadyRef.current = true;
+  }, [savedView, setSidebarDensity]);
+
+  useEffect(() => {
+    if (!savedViewPersistReadyRef.current) {
+      return undefined;
+    }
+
+    if (savedViewPersistTimerRef.current) {
+      clearTimeout(savedViewPersistTimerRef.current);
+    }
+
+    savedViewPersistTimerRef.current = setTimeout(() => {
+      savedViewPersistTimerRef.current = null;
+      setSavedView({
+        viewMode: savedViewMetaRef.current.viewMode,
+        filters: {
+          viewFilter,
+          statusFilter,
+          selectedClientIds
+        },
+        sort: savedViewMetaRef.current.sort,
+        density: sidebarDensity
+      });
+    }, INTEGRATED_SCHEDULE_SAVED_VIEW_PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (savedViewPersistTimerRef.current) {
+        clearTimeout(savedViewPersistTimerRef.current);
+        savedViewPersistTimerRef.current = null;
+      }
+    };
+  }, [viewFilter, statusFilter, selectedClientIds, sidebarDensity, setSavedView]);
+
+  const applySavedViewPayload = useCallback((payload) => {
+    const storedFilters = payload?.filters ?? {};
+    if (storedFilters.viewFilter != null) {
+      setViewFilter(storedFilters.viewFilter);
+    }
+    if (storedFilters.statusFilter != null) {
+      setStatusFilter(storedFilters.statusFilter);
+    }
+    if (Array.isArray(storedFilters.selectedClientIds)) {
+      setSelectedClientIds(storedFilters.selectedClientIds);
+    }
+    if (payload?.density) {
+      setSidebarDensity(payload.density);
+    }
+    savedViewMetaRef.current = {
+      sort: payload?.sort ?? INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW.sort,
+      viewMode: payload?.viewMode ?? INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW.viewMode
+    };
+  }, [setSidebarDensity]);
+
+  const handleSelectSavedView = useCallback((viewId) => {
+    const payload = loadNamedView(viewId);
+    applySavedViewPayload(payload);
+  }, [loadNamedView, applySavedViewPayload]);
+
+  const handleResetSavedView = useCallback(() => {
+    const payload = resetToDefaultView();
+    applySavedViewPayload(payload);
+  }, [resetToDefaultView, applySavedViewPayload]);
+
+  const handleSaveNamedView = useCallback((label) => {
+    saveNamedView(label, {
+      viewMode: savedViewMetaRef.current.viewMode,
+      filters: {
+        viewFilter,
+        statusFilter,
+        selectedClientIds
+      },
+      sort: savedViewMetaRef.current.sort,
+      density: sidebarDensity
+    });
+  }, [saveNamedView, viewFilter, statusFilter, selectedClientIds, sidebarDensity]);
+
+  const handleDeleteSavedView = useCallback((viewId) => {
+    const fallbackPayload = deleteNamedView(viewId);
+    if (fallbackPayload) {
+      applySavedViewPayload(fallbackPayload);
+    }
+  }, [deleteNamedView, applySavedViewPayload]);
 
   /**
    * 2026-06-XX R4 (P0) — 4월 보기에서 month=3 호출 회귀 해결.
@@ -578,6 +741,18 @@ const IntegratedMatchingSchedule = () => {
           onViewFilterChange={setViewFilter}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
+          sidebarDensity={sidebarDensity}
+          onSidebarDensityChange={setSidebarDensity}
+          savedViewControls={(
+            <SavedViewControls
+              views={views}
+              activeViewId={activeViewId}
+              onSelectView={handleSelectSavedView}
+              onSaveView={handleSaveNamedView}
+              onResetToDefault={handleResetSavedView}
+              onDeleteView={handleDeleteSavedView}
+            />
+          )}
           getStatusCount={getStatusCount}
           onScheduleFromCard={handleOpenScheduleFromCard}
           onOpenPeek={handleOpenPeekFromCard}

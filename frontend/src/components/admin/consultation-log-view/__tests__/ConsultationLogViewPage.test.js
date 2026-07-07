@@ -44,6 +44,11 @@ jest.mock('../../../../contexts/SessionContext', () => ({
   })
 }));
 
+jest.mock('../../ClientComprehensiveManagement/molecules/SavedViewControls', () => ({
+  __esModule: true,
+  default: () => <div data-testid="saved-view-controls" />
+}));
+
 jest.mock('../../../../utils/consultantHelper', () => ({
   __esModule: true,
   getAllConsultantsWithStats: jest.fn().mockResolvedValue([]),

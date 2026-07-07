@@ -34,9 +34,9 @@ jest.mock('../../../layout/AdminCommonLayout', () => ({
 
 jest.mock('../../../dashboard-v2/content/ContentHeader', () => ({
   __esModule: true,
-  default: ({ title, subtitle }) => (
-    <header data-testid="content-header" data-has-title={String(Boolean(title))}>
-      {title ? <h1>{title}</h1> : null}
+  default: ({ title, subtitle, titleId }) => (
+    <header data-testid="content-header">
+      <h1 id={titleId}>{title}</h1>
       {subtitle ? <p>{subtitle}</p> : null}
     </header>
   )
@@ -150,15 +150,14 @@ describe('DormantUsersPage 스모크', () => {
     expect(screen.getByTestId('dormant-users-empty')).toBeInTheDocument();
   });
 
-  test('ContentHeader title 생략(G-14 P2), subtitle 표시', async() => {
+  test('ContentHeader title·subtitle 표시', async() => {
     render(<DormantUsersPage />);
 
     await waitFor(() => {
       expect(screen.getByTestId('content-header')).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('content-header')).toHaveAttribute('data-has-title', 'false');
-    expect(screen.queryByRole('heading', { name: PAGE_TITLE })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
   });
 

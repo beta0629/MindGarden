@@ -484,7 +484,7 @@ const ConsultationLogViewPage = () => {
         />
 
         <section
-          className="mg-v2-consultation-log-saved-view-row"
+          className="mg-v2-session-saved-view-row"
           aria-label={CONSULTATION_LOG_VIEW_SAVED_VIEW_ROW_ARIA_LABEL}
         >
           <SavedViewControls

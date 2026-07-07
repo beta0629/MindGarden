@@ -14,6 +14,8 @@ export const COMMON_CODE_MANAGEMENT_DEFAULT_SEARCH_TERM = '';
 
 export const COMMON_CODE_MANAGEMENT_DEFAULT_CATEGORY_FILTER = 'all';
 
+export const COMMON_CODE_MANAGEMENT_DEFAULT_SELECTED_GROUP = null;
+
 /**
  * common-codes Saved View v1 기본 payload
  *
@@ -26,7 +28,8 @@ export const buildCommonCodeManagementDefaultSavedView = (
   viewMode,
   filters: {
     searchTerm: COMMON_CODE_MANAGEMENT_DEFAULT_SEARCH_TERM,
-    categoryFilter: COMMON_CODE_MANAGEMENT_DEFAULT_CATEGORY_FILTER
+    categoryFilter: COMMON_CODE_MANAGEMENT_DEFAULT_CATEGORY_FILTER,
+    selectedGroup: COMMON_CODE_MANAGEMENT_DEFAULT_SELECTED_GROUP
   },
   sort: {},
   density: COMMON_CODE_MANAGEMENT_SAVED_VIEW_DENSITY_COMFORTABLE

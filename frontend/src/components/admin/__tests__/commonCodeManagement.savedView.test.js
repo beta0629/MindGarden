@@ -38,6 +38,16 @@ describe('Common code management saved view (28g Phase 5D)', () => {
     expect(savedViewKey).toContain(PAGE_ID);
   });
 
+  it('default payload에 selectedGroup: null이 포함된다', () => {
+    expect(DEFAULT_SAVED_VIEW.filters).toEqual(
+      expect.objectContaining({
+        searchTerm: '',
+        categoryFilter: 'all',
+        selectedGroup: null
+      })
+    );
+  });
+
   it('named view 저장·복원 시 filters·viewMode를 유지한다', () => {
     const { result } = renderHook(() =>
       useSavedViewPreference({
@@ -49,7 +59,8 @@ describe('Common code management saved view (28g Phase 5D)', () => {
 
     const storedFilters = {
       searchTerm: 'MAPPING',
-      categoryFilter: 'system'
+      categoryFilter: 'system',
+      selectedGroup: 'USER_STATUS'
     };
 
     let viewId;
@@ -70,6 +81,7 @@ describe('Common code management saved view (28g Phase 5D)', () => {
 
     expect(result.current.savedView.viewMode).toBe('list');
     expect(result.current.savedView.filters).toEqual(storedFilters);
+    expect(result.current.savedView.filters.selectedGroup).toBe('USER_STATUS');
   });
 
   it('기본값 reset 시 default payload로 복원한다', () => {
@@ -86,7 +98,8 @@ describe('Common code management saved view (28g Phase 5D)', () => {
         viewMode: 'list',
         filters: {
           searchTerm: 'USER',
-          categoryFilter: 'payment'
+          categoryFilter: 'payment',
+          selectedGroup: 'PAYMENT_METHOD'
         },
         sort: {},
         density: 'comfortable'
@@ -118,7 +131,8 @@ describe('Common code management saved view (28g Phase 5D)', () => {
         ...DEFAULT_SAVED_VIEW,
         filters: {
           searchTerm: 'ERP',
-          categoryFilter: 'erp'
+          categoryFilter: 'erp',
+          selectedGroup: null
         }
       });
     });

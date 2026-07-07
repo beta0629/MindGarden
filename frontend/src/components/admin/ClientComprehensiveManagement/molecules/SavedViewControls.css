@@ -60,6 +60,81 @@
   font-size: var(--mg-font-size-xs, 12px);
 }
 
+.mg-v2-saved-view-chip-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: var(--mg-radius-pill, 16px);
+  overflow: hidden;
+  border: var(--mg-border-width-1, 1px) solid var(--mg-color-border-main);
+  background: var(--mg-color-surface-main);
+}
+
+.mg-v2-saved-view-chip-wrap--active {
+  border-color: transparent;
+  background: var(--mg-color-primary-main);
+}
+
+.mg-v2-saved-view-chip-wrap .mg-v2-saved-view-chip {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
+  color: var(--mg-color-background-main);
+}
+
+.mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip--active {
+  background: transparent;
+}
+
+.mg-v2-saved-view-chip__dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--mg-spacing-6, 24px);
+  padding: 0 var(--mg-spacing-1, 4px);
+  border: none;
+  border-left: var(--mg-border-width-1, 1px) solid var(--mg-color-border-main);
+  background: transparent;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm, 14px);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip__dismiss {
+  border-left-color: color-mix(in srgb, var(--mg-color-background-main) 35%, transparent);
+  color: var(--mg-color-background-main);
+}
+
+.mg-v2-saved-view-chip__dismiss:hover {
+  background: color-mix(in srgb, var(--mg-color-primary-main) 12%, transparent);
+}
+
+.mg-v2-saved-view-controls__delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-spacing-1, 4px) var(--mg-spacing-3, 12px);
+  border: none;
+  border-radius: var(--mg-radius-sm, 4px);
+  background: transparent;
+  color: var(--mg-color-danger-main, var(--mg-color-text-secondary));
+  font-size: var(--mg-font-size-xs, 12px);
+  font-weight: var(--mg-font-weight-semibold, 600);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mg-v2-saved-view-modal__message {
+  margin: 0;
+  color: var(--mg-color-text-primary);
+  font-size: var(--mg-font-size-sm, 14px);
+  line-height: 1.5;
+}
+
 .mg-v2-saved-view-modal__label {
   display: block;
   margin-bottom: var(--mg-spacing-2, 8px);

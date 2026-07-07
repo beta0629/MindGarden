@@ -360,6 +360,32 @@ export function useSavedViewPreference({ pageId, defaultView, namedViews = false
     persistNamedCollection
   ]);
 
+  const deleteNamedView = useCallback((viewId) => {
+    if (!namedViews) {
+      return null;
+    }
+
+    const normalizedViewId = String(viewId ?? '').trim();
+    if (!normalizedViewId || normalizedViewId === DEFAULT_NAMED_VIEW_ID) {
+      return null;
+    }
+
+    const collection = namedViewCollection ?? buildDefaultNamedViewCollection(defaultView);
+    const target = collection.views.find((view) => view.id === normalizedViewId);
+    if (!target || target.isReadonly) {
+      return null;
+    }
+
+    const wasActive = collection.activeViewId === normalizedViewId;
+    const nextCollection = {
+      activeViewId: wasActive ? DEFAULT_NAMED_VIEW_ID : collection.activeViewId,
+      views: collection.views.filter((view) => view.id !== normalizedViewId)
+    };
+
+    persistNamedCollection(nextCollection);
+    return wasActive ? getActiveNamedViewPayload(nextCollection, defaultView) : null;
+  }, [namedViews, namedViewCollection, defaultView, persistNamedCollection]);
+
   const views = namedViews ? (namedViewCollection?.views ?? []) : [];
   const activeViewId = namedViews
     ? (namedViewCollection?.activeViewId ?? DEFAULT_NAMED_VIEW_ID)
@@ -374,7 +400,8 @@ export function useSavedViewPreference({ pageId, defaultView, namedViews = false
       activeViewId,
       saveNamedView,
       loadNamedView,
-      resetToDefaultView
+      resetToDefaultView,
+      deleteNamedView
     } : {})
   };
 }

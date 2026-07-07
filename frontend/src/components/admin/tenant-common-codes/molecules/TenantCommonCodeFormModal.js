@@ -7,14 +7,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import MGButton from '../../common/MGButton';
-import UnifiedModal from '../../common/modals/UnifiedModal';
-import CustomSelect from '../../common/CustomSelect';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import MGButton from '../../../common/MGButton';
+import UnifiedModal from '../../../common/modals/UnifiedModal';
+import CustomSelect from '../../../common/CustomSelect';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import {
   getParentCodeGroupForSubcategory,
   isSubcategoryCodeGroup
-} from '../../../utils/commonCodeParentGroups';
+} from '../../../../utils/commonCodeParentGroups';
 import { useTranslation } from 'react-i18next';
 
 const TENANT_COMMON_CODE_FORM_ID = 'tenant-common-code-manager-form';

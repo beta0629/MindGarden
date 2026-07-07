@@ -71,10 +71,6 @@
   outline-offset: 1px;
 }
 
-.tenant-common-code__header-actions {
-  margin-inline-start: auto;
-}
-
 .tenant-common-code__error {
   padding: var(--mg-spacing-12, 0.75rem);
   margin-bottom: var(--mg-spacing-16, 1rem);

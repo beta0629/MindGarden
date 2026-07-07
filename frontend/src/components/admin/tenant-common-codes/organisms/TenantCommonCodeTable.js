@@ -13,17 +13,17 @@ import {
   EntityRowActions,
   ENTITY_ROW_ACTIONS_LAYOUT,
   EmptyState
-} from '../../common';
-import SafeText from '../../common/SafeText';
-import UnifiedLoading from '../../common/UnifiedLoading';
-import { toDisplayString } from '../../../utils/safeDisplay';
+} from '../../../common';
+import SafeText from '../../../common/SafeText';
+import UnifiedLoading from '../../../common/UnifiedLoading';
+import { toDisplayString } from '../../../../utils/safeDisplay';
 import {
   TENANT_COMMON_CODE_TABLE_COLUMNS,
   TENANT_COMMON_CODE_TABLE_COLUMN_KEYS,
   TENANT_COMMON_CODE_ROW_ACTIONS,
   TENANT_COMMON_CODE_TABLE_ARIA
-} from '../../../constants/tenantCommonCodeTableConstants';
-import { getOverrideStatusLabel } from '../../../utils/tenantCommonCodeDiff';
+} from '../../../../constants/tenantCommonCodeTableConstants';
+import { getOverrideStatusLabel } from '../../../../utils/tenantCommonCodeDiff';
 import './TenantCommonCodeTable.css';
 
 const TABLE_COLUMNS = [

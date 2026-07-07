@@ -8,6 +8,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import './PermissionManagementB0KlA.css';
 import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
 

@@ -1,0 +1,83 @@
+/**
+ * Permission Management — Admin Dark Mode C-3 P1-d cascade
+ *
+ * @author CoreSolution
+ * @since 2026-07-07
+ */
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-controls {
+  background: var(--mg-dark-toolbar-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-role-selector label {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-role-selector select,
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-form-select {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-role-selector select:focus,
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-form-select:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-role-restriction {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-category {
+  background: var(--mg-color-surface-main);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-category h3 {
+  color: var(--mg-v2-form-text);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-item {
+  background: var(--ad-b0kla-table-row-bg);
+  border-color: var(--ad-b0kla-table-border);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-item:hover {
+  background: var(--ad-b0kla-table-row-hover);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-checkbox input[type="checkbox"]:checked + .mg-v2-permission-name,
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-item:has(input:checked) {
+  background: var(--ad-b0kla-table-row-selected);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-name {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-description {
+  color: var(--mg-v2-form-label);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-summary {
+  background: var(--mg-dark-chip-bg);
+  border-color: var(--mg-dark-toolbar-border);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-v2-permission-summary h3 {
+  color: var(--mg-v2-form-text);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-permission-message.success {
+  background: var(--mg-dark-chip-active-bg);
+  border-color: var(--mg-color-primary-main);
+  color: var(--mg-dark-chip-active-text);
+}
+
+[data-theme="dark"] .mg-v2-permission-management .mg-permission-message.error {
+  color: var(--mg-v2-form-error);
+}

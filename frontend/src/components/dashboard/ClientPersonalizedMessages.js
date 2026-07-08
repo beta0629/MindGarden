@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import WeatherCard from './WeatherCard';
 import ConsultantListModal from '../common/ConsultantListModal';
 import ConsultationGuideModal from '../common/ConsultationGuideModal';
+import SafeText from '../common/SafeText';
 import notificationManager from '../../utils/notification';
 import { getLucideIcon } from '../../utils/iconUtils';
 import '../../styles/unified-design-tokens.css';
@@ -408,11 +409,11 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
               
               <div className="message-card-text">
                 <h3 className="message-card-title">
-                  {message.title}
+                  <SafeText tag="span">{message.title}</SafeText>
                 </h3>
                 
                 <p className="message-card-subtitle">
-                  {message.subtitle}
+                  <SafeText tag="span">{message.subtitle}</SafeText>
                 </p>
                 
                 {isClickable && (

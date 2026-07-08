@@ -1,12 +1,12 @@
 # GATE-03 — 사용자 sign-off 시트 (1페이지 · dev only)
 
 **Gate ID**: `GATE-03` · **환경**: dev only — `https://mindgarden.dev.core-solution.co.kr`  
-**develop**: `419a0177d` (#545) · **dev FE bundle**: `main.4278ef57.js` · deploy run [`28875323851`](https://github.com/beta0629/MindGarden/actions/runs/28875323851)  
+**develop**: `419a0177d` (#545) + **#548** Consultant ENHANCED · **dev FE bundle**: `main.2d20a7a4.js`  
 **prod sign-off 없음** · **EAS OTA publish 금지** · **ROLE-03 P0-2 Renewal → post-GATE-03 defer**
 
 **SSOT (상세)**: [`GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md`](./GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md) · evidence pack: [`DASH_10_EVIDENCE_PACK_20260713.md`](./DASH_10_EVIDENCE_PACK_20260713.md)
 
-**공통 선행**: ADMIN/CLIENT/CONSULTANT 각 역할 로그인 · 테넌트 URL 필수 · 콘솔 React #130·blocking error 0 · bundle `main.4278ef57.js` 확인
+**공통 선행**: ADMIN/CLIENT/CONSULTANT 각 역할 로그인 · 테넌트 URL 필수 · 콘솔 React #130·blocking error 0 · bundle `main.2d20a7a4.js` 확인
 
 ---
 
@@ -33,6 +33,10 @@
 
 ## E1 — dark-c3b P1 (ADM-01 · #540)
 
+| 항목 | 자동 evidence | 사용자 |
+|------|---------------|--------|
+| E1~E4 | Jest `adminDarkMode.cascade` · DASH-08 **57/57** @ `419a0177d` (UI dev Playwright **미실행**) | ☐ |
+
 - [ ] **E1** — `/admin/sessions` 다크 ON: SessionManagement 모달·테이블·폼 cascade · hex 0
 - [ ] **E2** — `/admin/wellness` 다크 ON: WellnessManagement B0KlA + 폼·테이블 cascade
 - [ ] **E3** — `/admin/common-codes` 다크 ON: CommonCodeManagement 테이블·필터 cascade
@@ -42,16 +46,28 @@
 
 ## G1 — Client Dashboard v1.3 (ROLE-01 · `/client/dashboard`)
 
+| 항목 | 자동 evidence | 사용자 |
+|------|---------------|--------|
+| G1-1~G1-3 | 스펙 `client-dashboard-smoke.spec.ts` · #532 `clientDashboardRoutes.js` Jest (UI dev Playwright **미실행** @ `main.2d20a7a4`) | ☐ |
+
 - [ ] **G1-1** — Client 로그인 → 대시보드: KPI·CTA·quick menu · `clientDashboardRoutes.js` SSOT (#532)
 - [ ] **G1-2** — App/Web: 웹↔Expo cross-import 0 · API-only 공유
 - [ ] **G1-3** — 콘솔: React #130 0
 
 ---
 
-## G2 — Consultant Dashboard V2 웹 (ROLE-02 · `/consultant/dashboard`)
+## G2 — Consultant Dashboard V2 웹 (ROLE-02 · `/consultant/dashboard` · #548 ENHANCED)
+
+| 항목 | 자동 evidence | 사용자 |
+|------|---------------|--------|
+| **G2-1** | ☑ dev Playwright PASS — KPI **4-grid** · QuickActionBar 3 CTA · `main.2d20a7a4.js` · [`G2-1-kpi-quickaction-1280.png`](./evidence/gate03-g2-20260708/G2-1-kpi-quickaction-1280.png) | ☐ |
+| **G2-2** | ☑ dev Playwright PASS — messages 섹션 · ListTableView · weekly chart · [`G2-2-messages-chart-listtable.png`](./evidence/gate03-g2-20260708/G2-2-messages-chart-listtable.png) | ☐ |
+| **G2-3** | ☑ dev Playwright PASS — 1280/414 가로 overflow 0 · React #130 0 · [`G2-3-viewport-1280.png`](./evidence/gate03-g2-20260708/G2-3-viewport-1280.png) · [`G2-3-viewport-414.png`](./evidence/gate03-g2-20260708/G2-3-viewport-414.png) | ☐ |
+
+**스펙**: `tests/e2e/tests/consultant/gate03-g2-consultant-dashboard.spec.ts` · CONSULTANT `01042858570` login **200** (비번 복구 후)
 
 - [ ] **G2-1** — Consultant 로그인: B0KlA ContentKpiRow·QuickActionBar · AdminCommonLayout children
-- [ ] **G2-2** — P0-6 polish (#539): spacing·ListTableView(Compact) · `a02f3843f`
+- [ ] **G2-2** — P0-6 polish (#539+#548): spacing·ListTableView(Compact) · messages·chart
 - [ ] **G2-3** — 1280/414: 반응형 회귀 0
 
 ---
@@ -73,5 +89,5 @@
 |---|---|
 | **검수자** | _______________ |
 | **일자** | **2026-07-13** |
-| **환경** | `https://mindgarden.dev.core-solution.co.kr` · develop `419a0177d` |
+| **환경** | `https://mindgarden.dev.core-solution.co.kr` · bundle `main.2d20a7a4.js` |
 | **prod 승인** | **없음** (dev sign-off only) |

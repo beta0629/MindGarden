@@ -48,6 +48,20 @@ const DEFAULT_CONSULTANT_LOGIN_ID = '01042858570';
 const DEFAULT_CLIENT_LOGIN_ID = '01086322121';
 
 /**
+ * 상담사·내담자 **로컬 시드 계정** 전용 기본 비밀번호.
+ * 관리자 E2E(`DEFAULT_E2E_PASSWORD`)와 값이 같더라도 상수를 분리해, 각 역할을
+ * `E2E_CONSULTANT_PASSWORD` / `E2E_CLIENT_PASSWORD` 로 **독립적으로 override** 할 수 있게 한다.
+ *
+ * ⚠️ 재발 방지(중요): 이 기본값은 **로컬에서 시드된 테스트 계정**에만 유효하다.
+ * dev·스테이징 등 **실계정**(예: `01042858570`)의 실제 비밀번호와 다를 수 있으며,
+ * 그 경우 반드시 `E2E_CONSULTANT_PASSWORD` / `E2E_CLIENT_PASSWORD` 환경 변수로 실제 값을 주입한다.
+ * **로그인 실패를 이유로 DB 비밀번호 해시를 이 기본값으로 덮어써서는 안 된다** —
+ * E2E/Playwright 는 UI **읽기 로그인만** 수행하며, 사용자 자격 증명을 변경하지 않는다.
+ */
+const DEFAULT_CONSULTANT_PASSWORD = DEFAULT_E2E_PASSWORD;
+const DEFAULT_CLIENT_PASSWORD = DEFAULT_E2E_PASSWORD;
+
+/**
  * OAuth(카카오·네이버) E2E 골격 — `tests/e2e/tests/auth/oauth-preregistered-kakao-naver.spec.ts`.
  * MindGarden 로그인 비밀번호가 아니라 **각 프로바이더 로그인**용 테스트 계정 값이다. CI에는 설정하지 않는 것을 권장(스펙 전부 skip).
  *
@@ -311,8 +325,11 @@ export function getMindGardenWebLogin(): { username: string; password: string } 
 
 /**
  * 상담사 웹 로그인 (`/login` — username 필드에 전화번호 또는 이메일).
- * 우선순위: `CONSULTANT_USERNAME` → `E2E_CONSULTANT_LOGIN_ID` → 기본 `01042858570`.
- * 비밀번호: `CONSULTANT_PASSWORD` → `E2E_CONSULTANT_PASSWORD` → 관리자 E2E와 동일 기본값 `godgod826!`.
+ * 우선순위(아이디): `CONSULTANT_USERNAME` → `E2E_CONSULTANT_LOGIN_ID` → 기본 `01042858570`.
+ * 우선순위(비밀번호): `CONSULTANT_PASSWORD` → `E2E_CONSULTANT_PASSWORD` → 로컬 시드 기본값(`DEFAULT_CONSULTANT_PASSWORD`).
+ *
+ * env override 가 **항상 우선**한다. dev·실계정을 대상으로 실행할 때는 반드시 위 환경 변수로 실제 비밀번호를 주입하고,
+ * 기본값(로컬 시드용)을 실계정에 맞추려고 DB 비밀번호를 변경하지 않는다. 자세한 내용은 상단 `DEFAULT_CONSULTANT_PASSWORD` 주석 참고.
  */
 export function getConsultantWebLogin(): { username: string; password: string } {
   const username =
@@ -322,14 +339,17 @@ export function getConsultantWebLogin(): { username: string; password: string } 
   const password =
     trimEnv('CONSULTANT_PASSWORD') ||
     trimEnv('E2E_CONSULTANT_PASSWORD') ||
-    DEFAULT_E2E_PASSWORD;
+    DEFAULT_CONSULTANT_PASSWORD;
   return { username, password };
 }
 
 /**
  * 내담자 웹 로그인 (`/login` — 아이디에 전화번호 또는 이메일).
- * 우선순위: `TEST_CLIENT_USERNAME` → `E2E_CLIENT_LOGIN_ID` → 기본 `01086322121`.
- * 비밀번호: `TEST_CLIENT_PASSWORD` → `E2E_CLIENT_PASSWORD` → 통합 E2E 비밀번호 `godgod826!`.
+ * 우선순위(아이디): `TEST_CLIENT_USERNAME` → `E2E_CLIENT_LOGIN_ID` → 기본 `01086322121`.
+ * 우선순위(비밀번호): `TEST_CLIENT_PASSWORD` → `E2E_CLIENT_PASSWORD` → 로컬 시드 기본값(`DEFAULT_CLIENT_PASSWORD`).
+ *
+ * env override 가 **항상 우선**한다. dev·실계정을 대상으로 실행할 때는 반드시 위 환경 변수로 실제 비밀번호를 주입하고,
+ * 기본값(로컬 시드용)을 실계정에 맞추려고 DB 비밀번호를 변경하지 않는다. 자세한 내용은 상단 `DEFAULT_CLIENT_PASSWORD` 주석 참고.
  */
 export function getClientWebLogin(): { username: string; password: string } {
   const username =
@@ -339,7 +359,7 @@ export function getClientWebLogin(): { username: string; password: string } {
   const password =
     trimEnv('TEST_CLIENT_PASSWORD') ||
     trimEnv('E2E_CLIENT_PASSWORD') ||
-    DEFAULT_E2E_PASSWORD;
+    DEFAULT_CLIENT_PASSWORD;
   return { username, password };
 }
 

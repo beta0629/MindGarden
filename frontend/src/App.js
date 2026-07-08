@@ -269,9 +269,9 @@ function AppContent() {
     // 로그인 전에는 CSS 테마 로드를 건너뛰고 기본 테마만 설정
     const shouldLoadColors = !!user; // 로그인된 경우에만 색상 로드
 
-    // H6 가드: initializeDynamicThemeSystem 내부의 setTheme('ios') 가
-    // <html data-theme="..."> 를 일괄 removeAttribute 하므로,
-    // DarkModeProvider 가 적용해둔 'dark' 를 user 갱신 시점에 복원한다.
+    // H6 가드: DarkModeProvider 가 적용해둔 'dark' 를 user 갱신 시점에 복원한다.
+    // Fix A 로 setTheme('ios') 는 더 이상 data-theme 를 제거하지 않지만,
+    // 비동기 초기화 도중의 레이스를 막기 위해 복원은 초기화 Promise 완료 후 실행한다.
     const preserveDarkTheme = typeof document !== 'undefined'
       && document.documentElement.getAttribute('data-theme') === 'dark';
 
@@ -287,11 +287,11 @@ function AppContent() {
         dark: 0,
         highContrast: 1000
       }
+    }).finally(() => {
+      if (preserveDarkTheme && typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
     });
-
-    if (preserveDarkTheme && typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
   }, [user]); // user 상태에 따라 재실행
 
   // 통합 레이아웃 시스템 초기화

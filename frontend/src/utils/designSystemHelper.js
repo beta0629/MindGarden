@@ -36,14 +36,17 @@ export const setConsultantColors = (colors) => {
  */
 export const setTheme = (theme) => {
   const root = document.documentElement;
-  
-  // 기존 테마 제거
-  root.removeAttribute('data-theme');
-  
+
+  // data-theme 은 dark/light 만 제어한다.
+  // 'ios' 등 그 외 값은 data-theme 를 변경하지 않는다.
+  // (E1: setTheme('ios') 가 DarkModeProvider 의 data-theme="dark" 를
+  //  무조건 제거해 다크 캐스케이드가 유실되던 레이스 방지)
   if (theme === 'dark') {
     root.setAttribute('data-theme', 'dark');
+  } else if (theme === 'light') {
+    root.removeAttribute('data-theme');
   }
-  
+
   console.log('🎨 테마 변경:', theme);
 };
 

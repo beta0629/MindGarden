@@ -48,7 +48,7 @@
 
 ---
 
-## G2 — Consultant Dashboard V2 웹 (ROLE-02 · `/consultant/dashboard-v2`)
+## G2 — Consultant Dashboard V2 웹 (ROLE-02 · `/consultant/dashboard`)
 
 - [ ] **G2-1** — Consultant 로그인: B0KlA ContentKpiRow·QuickActionBar · AdminCommonLayout children
 - [ ] **G2-2** — P0-6 polish (#539): spacing·ListTableView(Compact) · `a02f3843f`

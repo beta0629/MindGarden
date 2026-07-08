@@ -195,7 +195,7 @@ cd frontend && CI=true npx craco test --watchAll=false --testPathPattern="header
 
 ### G2. Consultant Dashboard V2 (ROLE-02 · #534+#539)
 
-경로: `/consultant/dashboard-v2` · SSOT [`SCREEN_SPEC_CONSULTANT_DASHBOARD_V2_ENHANCED.md`](../../design-system/SCREEN_SPEC_CONSULTANT_DASHBOARD_V2_ENHANCED.md)
+경로: `/consultant/dashboard` · SSOT [`SCREEN_SPEC_CONSULTANT_DASHBOARD_V2_ENHANCED.md`](../../design-system/SCREEN_SPEC_CONSULTANT_DASHBOARD_V2_ENHANCED.md)
 
 | 단계 | 동작 | 기대 결과 |
 |------|------|-----------|
@@ -305,7 +305,7 @@ cd frontend && CI=true npx craco test --watchAll=false \
 | 2 | dark-c3b P1 | ADMIN → `/admin/sessions`·`/wellness`·`/common-codes` 각 다크 토글 cascade·hex 0 스크린 → 라이트 복귀 회귀 0 | `adminDarkMode.cascade` ☑ @ `419a0177d` · #540 `5f1e478f5` | [ ] | E1~E4 |
 | 3 | Header P2 (HF-02) | F1~F6 6라우트 ContentHeader 단일 h1·ACL title SSOT (F1은 CLN-01 redirect) | headerDedup **7/7** ☑ @ `419a0177d` · overnight dev ☑ | [x] | CP-6 ☑ |
 | 4 | Client v1.3 | CLIENT 로그인 → `/client/dashboard` · KPI·CTA·quick menu · 콘솔 #130 0 | #532 · `clientDashboardRoutes` Jest ☑ | [ ] | ROLE-01 |
-| 5 | Consultant V2 웹 | CONSULTANT 로그인 → `/consultant/dashboard-v2` · B0KlA KPI·QuickAction · 1280/414 반응형 | #534+#539 `a02f3843f` ☑ | [ ] | ROLE-02 |
+| 5 | Consultant V2 웹 | CONSULTANT 로그인 → `/consultant/dashboard` · B0KlA KPI·QuickAction · 1280/414 반응형 | #534+#539 `a02f3843f` ☑ | [ ] | ROLE-02 |
 | 6 | Consultant Expo 홈 | Expo dev client / `internal-dev` APK · consultant 홈 탭 · KPI·NextSession·Urgent·Quick×5 · OTA **publish 금지** | #544 `482e7e7a0` · #545 `419a0177d` · **ROLE-04** 4 suites/**32** tests ☑ | [ ] | CP-6b · G3-6 report-only |
 | 7 | 거버넌스 | prod workflow·EAS OTA publish **미실행** · tenant URL(`mindgarden.dev…`) 필수 | GATE-04 ☑ · H1~H3 documented | [x] | dev only |
 
@@ -324,7 +324,7 @@ cd frontend && CI=true npx craco test --watchAll=false \
 | dark-c3b P1 (3 routes) | CP-5 · ADM-01 | `adminDarkMode.cascade` ☑ @ `419a0177d` · #540 | **#2** E1~E4 다크 cascade 스크린 | ☐ 사용자 |
 | Header P2 6 routes | HF-02 · CP-6 | headerDedup **7/7** ☑ · #515+#522 · overnight dev F1~F6 ☑ | (완료) §F | ☑ 자동+수동 |
 | Client dashboard v1.3 | ROLE-01 | #532 · routes Jest ☑ | **#4** G1 @ `/client/dashboard` | ☐ 사용자 |
-| Consultant V2 웹 | ROLE-02 | #534+#539 ☑ | **#5** G2 @ `/consultant/dashboard-v2` | ☐ 사용자 |
+| Consultant V2 웹 | ROLE-02 | #534+#539 ☑ | **#5** G2 @ `/consultant/dashboard` | ☐ 사용자 |
 | Consultant Expo P0-3~4 | ROLE-03 · CP-6b | #544+#545 · **ROLE-04** 4 suites · **32/32** Jest ☑ @ `419a0177d` | **#6** G3 dev client 홈 스모크 | ☐ 사용자 |
 | ROLE-03 P0-2 Renewal | ROLE-03 | **defer** post-GATE-03 | — | — (out) |
 | prod deploy 미실행 | GATE-04 | governance ☑ | (완료) H2 | ☑ 자동 |
@@ -371,7 +371,7 @@ cd expo-app && CI=true npm run test:utils -- --watchAll=false \
 |------|-------------|----------------|-----------|
 | **07-09 (목)** | Admin G1-02 대시보드 — C1-1~C1-7 · 1280/414 · 다크 | **#1** | ~45분 |
 | **07-10 (금)** | dark-c3b P1 — sessions·wellness·common-codes 다크 cascade | **#2** | ~30분 |
-| **07-11 (토)** | Client v1.3 + Consultant V2 웹 — `/client/dashboard` · `/consultant/dashboard-v2` | **#4** · **#5** | ~40분 |
+| **07-11 (토)** | Client v1.3 + Consultant V2 웹 — `/client/dashboard` · `/consultant/dashboard` | **#4** · **#5** | ~40분 |
 | **07-12 (일)** | Consultant Expo 홈 — dev client/APK · KPI·NextSession·Urgent·Quick×5 | **#6** | ~30분 |
 | **07-13 (월)** | 잔여 재확인 · GATE-03 시트 서명 · CP-7 close | **#1~#6** | ~20분 |
 

@@ -72,14 +72,20 @@ description: Core Solution(MindGarden) 테스트 표준 요약. 단위·통합·
 | 변수 | 없을 때 기본값 |
 |------|----------------|
 | `CONSULTANT_USERNAME` 또는 `E2E_CONSULTANT_LOGIN_ID` | `01042858570` |
-| `CONSULTANT_PASSWORD` 또는 `E2E_CONSULTANT_PASSWORD` | `godgod826!` (관리자 E2E와 동일) |
+| `CONSULTANT_PASSWORD` 또는 `E2E_CONSULTANT_PASSWORD` | 로컬 시드 계정용 기본값(관리자 E2E와 동일) |
 
 ### 내담자 웹 E2E (`/login` — 아이디에 전화번호)
 
 | 변수 | 없을 때 기본값 |
 |------|----------------|
 | `TEST_CLIENT_USERNAME` 또는 `E2E_CLIENT_LOGIN_ID` | `01086322121` |
-| `TEST_CLIENT_PASSWORD` 또는 `E2E_CLIENT_PASSWORD` | `godgod826!` |
+| `TEST_CLIENT_PASSWORD` 또는 `E2E_CLIENT_PASSWORD` | 로컬 시드 계정용 기본값 |
+
+> **재발 방지(상담사·내담자 실계정 충돌)**: 위 기본값은 **로컬에서 시드된 테스트 계정** 전용이다.
+> dev·스테이징의 **실계정**(예: `01042858570`)은 실제 비밀번호가 다를 수 있으므로, 그 대상으로 실행할 때는
+> 반드시 `E2E_CONSULTANT_PASSWORD` / `E2E_CLIENT_PASSWORD`(또는 `CONSULTANT_PASSWORD` / `TEST_CLIENT_PASSWORD`)에
+> **실제 비밀번호를 env 로 주입**한다. 로그인 실패를 이유로 **DB 비밀번호 해시를 기본값으로 덮어쓰지 않는다** —
+> E2E/Playwright 는 UI **읽기 로그인만** 수행하고 사용자 자격 증명을 변경하지 않는다. 실계정 비밀번호는 문서·커밋·로그에 평문으로 남기지 않는다.
 
 **core-tester·에이전트 사용 시**: Playwright·스크립트는 `tests/e2e/helpers/erpAuth.ts`의 **`getMindGardenWebLogin()`**(관리자 등)·**`getConsultantWebLogin()`**(상담사)·**`getClientWebLogin()`**(내담자)를 사용한다. 수동 안내 시에도 위 표를 인용한다.
 

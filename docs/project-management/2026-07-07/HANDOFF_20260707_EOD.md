@@ -112,7 +112,7 @@
 1. **develop CI** run `28863216570` (또는 최신) @ `dc1eae2f9` **green 확인** — docs-only (#531)
 2. **[#537](https://github.com/beta0629/MindGarden/pull/537) rebase** onto `dc1eae2f9` → conflict 해결 → CI green → **squash merge** (docs-only, prod 금지)
 3. **dev bundle 확인** ☑ — live `main.a82dfbd8.js` (run `28861227866` @ `76103c3d8`)
-4. **테넌트 smoke 재확인**: `https://mindgarden.dev.core-solution.co.kr/admin/dashboard` · `/consultant/dashboard-v2` · `/client/dashboard`
+4. **테넌트 smoke 재확인**: `https://mindgarden.dev.core-solution.co.kr/admin/dashboard` · `/consultant/dashboard` · `/client/dashboard`
 5. **#532 범위 정리** — #534 merge 후 잔여 diff → close 또는 축소
 
 ### P1 — 7/13 Critical Path

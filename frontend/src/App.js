@@ -521,6 +521,7 @@ function AppContent() {
                 <ConsultantDashboardV2 user={user} />
               </ProtectedRoute>
             } />
+            <Route path="/consultant/dashboard-v2" element={<Navigate to="/consultant/dashboard" replace />} />
             <Route path="/admin/dashboard" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AdminDashboardV2 user={user} />

@@ -70,11 +70,6 @@ jest.mock('../../dashboard/ClientPersonalizedMessages', () => ({
   default: () => <div data-testid="client-personalized-messages" />
 }));
 
-jest.mock('../../dashboard/ClientPaymentSessionsSection', () => ({
-  __esModule: true,
-  default: () => <div data-testid="client-payment-sessions" />
-}));
-
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key) => {

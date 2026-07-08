@@ -34,7 +34,7 @@ const ClientDashboardKpiSection = ({
     <ContentSection
       title={CLIENT_KPI_SECTION_TITLE}
       subtitle={CLIENT_KPI_SECTION_DESC}
-      className="client-dashboard__section client-dashboard__section--kpi"
+      className="client-dashboard__section client-dashboard__section--kpi mg-v2-dashboard-kpi-zone mg-v2-dashboard-kpi-zone--compact"
       dataTestId={CLIENT_DASHBOARD_KPI_SECTION_TEST_ID}
       noCard
     >

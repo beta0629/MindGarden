@@ -33,6 +33,10 @@ jest.mock('react-i18next', () => ({
   })
 }));
 
+jest.mock('../../../../contexts/DarkModeContext', () => ({
+  useDarkMode: () => ({ resolved: 'light' })
+}));
+
 jest.mock('../../../layout/AdminCommonLayout', () => ({
   __esModule: true,
   default: ({ children, title, className }) => (
@@ -60,6 +64,11 @@ jest.mock('../../../common/MGButton', () => ({
   )
 }));
 
+jest.mock('../../../common/Chart', () => ({
+  __esModule: true,
+  default: () => <div data-testid="chart-component" />
+}));
+
 jest.mock('../../../common/ListTableView', () => ({
   __esModule: true,
   default: ({ data, columns }) => (
@@ -79,9 +88,12 @@ jest.mock('../../../common/ListTableView', () => ({
 
 jest.mock('../../../consultant/ConsultationLogModal', () => () => null);
 jest.mock('../../../ui/Icon/Icon', () => () => null);
+jest.mock('../../atoms/ProfileAvatar', () => ({
+  __esModule: true,
+  default: () => <span data-testid="profile-avatar" />
+}));
 
 const mockStatsResponse = {
-  newClients: 1,
   unreadMessages: 2,
   weeklyStats: [{ period: '07/01', completedCount: 5 }]
 };
@@ -90,6 +102,12 @@ jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
     get: jest.fn((url) => {
+      if (String(url).includes('ratings/consultant')) {
+        return Promise.resolve({ averageHeartScore: 4.5, totalRatingCount: 3 });
+      }
+      if (String(url).includes('consultation-messages/consultant')) {
+        return Promise.resolve({ messages: [] });
+      }
       if (String(url).includes('incomplete-records')) {
         return Promise.resolve({ count: 2, records: [] });
       }
@@ -154,22 +172,23 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     expect(screen.getByTestId('consultant-dashboard-quick-action-bar')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-recent-schedules')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-upcoming-schedules')).toBeInTheDocument();
+    expect(screen.getByTestId('consultant-dashboard-recent-messages')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-notifications')).toBeInTheDocument();
   });
 
-  test('KPI 4종 및 ListTableView 기반 목록 섹션 렌더', async() => {
+  test('KPI 4종 및 QuickAction 헤더 액션 렌더', async() => {
     renderDashboard();
 
     await waitFor(() => {
       expect(screen.getByText('주간 상담 건수')).toBeInTheDocument();
-      expect(screen.getByText('신규 내담자')).toBeInTheDocument();
+      expect(screen.getByText('평점')).toBeInTheDocument();
       expect(screen.getByText('미확인 메시지')).toBeInTheDocument();
-      expect(screen.getByText('작성 대기 일지')).toBeInTheDocument();
+      expect(screen.getByText('미작성 일지')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: '상담일지 작성' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '일정 조회' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '내담자 관리' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '일정 등록' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '메시지 작성' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '내담자 추가' })).toBeInTheDocument();
   });
 
   test('weekly chart empty uses B0KlA chart-empty (not legacy empty-state)', async() => {
@@ -181,7 +200,10 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
       expect(screen.getByTestId('consultant-dashboard-weekly-chart')).toBeInTheDocument();
     });
 
-    expect(document.querySelector('.consultant-dashboard-v2__chart-empty')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(document.querySelector('.consultant-dashboard-v2__chart-empty')).toBeInTheDocument();
+    });
+
     expect(document.querySelector('.consultant-dashboard-v2__chart-empty-text')).toBeInTheDocument();
     expect(document.querySelector('.empty-state')).not.toBeInTheDocument();
     expect(document.querySelector('.chart-container')).not.toBeInTheDocument();

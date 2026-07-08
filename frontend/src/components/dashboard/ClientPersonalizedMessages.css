@@ -55,27 +55,27 @@
 
 /* 색상별 배경 */
 .personalized-message-card--primary::before {
-  background: var(--color-primary);
+  background: var(--mg-color-primary-main);
 }
 
 .personalized-message-card--success::before {
-  background: var(--color-success);
+  background: var(--mg-success-500);
 }
 
 .personalized-message-card--warning::before {
-  background: var(--color-warning);
+  background: var(--mg-warning-500);
 }
 
 .personalized-message-card--danger::before {
-  background: var(--color-danger);
+  background: var(--mg-error-500);
 }
 
 .personalized-message-card--info::before {
-  background: var(--color-info);
+  background: var(--mg-info-500);
 }
 
 .personalized-message-card--secondary::before {
-  background: var(--color-text-secondary);
+  background: var(--mg-color-text-secondary);
 }
 
 /* ============================================
@@ -98,7 +98,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: white;
+  color: var(--mg-color-text-on-primary);
   transition: all var(--transition-normal);
 }
 
@@ -108,27 +108,27 @@
 }
 
 .message-card-icon--primary {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: linear-gradient(135deg, var(--mg-color-primary-main), var(--mg-color-primary-dark, var(--mg-color-primary-main)));
 }
 
 .message-card-icon--success {
-  background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+  background: linear-gradient(135deg, var(--mg-success-500), var(--mg-success-700));
 }
 
 .message-card-icon--warning {
-  background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark));
+  background: linear-gradient(135deg, var(--mg-warning-500), var(--mg-warning-700));
 }
 
 .message-card-icon--danger {
-  background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
+  background: linear-gradient(135deg, var(--mg-error-500), var(--mg-error-700));
 }
 
 .message-card-icon--info {
-  background: linear-gradient(135deg, var(--color-info), var(--color-info-dark));
+  background: linear-gradient(135deg, var(--mg-info-500), var(--mg-info-700));
 }
 
 .message-card-icon--secondary {
-  background: linear-gradient(135deg, var(--color-text-secondary), var(--color-text-tertiary));
+  background: linear-gradient(135deg, var(--mg-color-text-secondary), var(--mg-color-text-secondary));
 }
 
 .personalized-message-card--clickable:hover .message-card-icon {
@@ -142,14 +142,14 @@
 .message-card-title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  color: var(--mg-color-text-main);
   margin: 0 0 var(--spacing-sm) 0;
   line-height: var(--line-height-tight);
 }
 
 .message-card-subtitle {
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: var(--mg-color-text-secondary);
   margin: 0;
   line-height: var(--line-height-relaxed);
 }
@@ -169,27 +169,27 @@
 }
 
 .message-card-action--primary {
-  color: var(--color-primary);
+  color: var(--mg-color-primary-main);
 }
 
 .message-card-action--success {
-  color: var(--color-success);
+  color: var(--mg-success-500);
 }
 
 .message-card-action--warning {
-  color: var(--color-warning);
+  color: var(--mg-warning-500);
 }
 
 .message-card-action--danger {
-  color: var(--color-danger);
+  color: var(--mg-error-500);
 }
 
 .message-card-action--info {
-  color: var(--color-info);
+  color: var(--mg-info-500);
 }
 
 .message-card-action--secondary {
-  color: var(--color-text-secondary);
+  color: var(--mg-color-text-secondary);
 }
 
 .message-card-action-text {

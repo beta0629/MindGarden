@@ -1,6 +1,8 @@
 package com.coresolution.consultation.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import com.coresolution.consultation.constant.NotificationType;
 import com.coresolution.consultation.entity.Notification;
@@ -8,9 +10,11 @@ import com.coresolution.consultation.entity.Notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * {@link Notification} 리포지토리 — 사용자별 in-app 알림.
@@ -55,4 +59,20 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     List<Notification> findByTenantIdAndNotificationTypeAndIsDeletedFalseOrderByCreatedAtDesc(
             String tenantId, NotificationType notificationType);
+
+    Optional<Notification> findByTenantIdAndIdAndRecipientUserIdAndIsDeletedFalse(
+            String tenantId, Long id, Long recipientUserId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Notification n SET n.status = 'READ', n.readAt = :readAt "
+            + "WHERE n.tenantId = :tenantId "
+            + "  AND n.recipientUserId = :recipientUserId "
+            + "  AND n.isDeleted = false "
+            + "  AND n.status <> 'READ' "
+            + "  AND n.status <> 'CANCELLED'")
+    int markAllUnreadAsReadForRecipient(
+            @Param("tenantId") String tenantId,
+            @Param("recipientUserId") Long recipientUserId,
+            @Param("readAt") LocalDateTime readAt);
 }

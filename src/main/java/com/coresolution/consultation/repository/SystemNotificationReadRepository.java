@@ -41,6 +41,7 @@ public interface SystemNotificationReadRepository extends BaseRepository<SystemN
            "AND n.targetType IN (:targetTypes) " +
            "AND n.status = 'PUBLISHED' " +
            "AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= CURRENT_TIMESTAMP) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > CURRENT_TIMESTAMP) " +
            "AND n.id NOT IN (SELECT r.notificationId FROM SystemNotificationRead r WHERE r.tenantId = :tenantId AND r.userId = :userId AND r.isRead = true)")
@@ -79,6 +80,7 @@ public interface SystemNotificationReadRepository extends BaseRepository<SystemN
            "WHERE n.targetType IN (:targetTypes) " +
            "AND n.status = 'PUBLISHED' " +
            "AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= CURRENT_TIMESTAMP) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > CURRENT_TIMESTAMP) " +
            "AND n.id NOT IN (SELECT r.notificationId FROM SystemNotificationRead r WHERE r.userId = :userId AND r.isRead = true)")

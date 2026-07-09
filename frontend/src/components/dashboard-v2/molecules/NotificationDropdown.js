@@ -27,7 +27,7 @@ import './NotificationDropdown.css';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications';
+const API_PERSONAL_NOTIFICATIONS = '/api/v1/notifications';
 
 
 const NOTIFICATION_PANEL_ID = 'mg-v2-notification-panel';
@@ -106,7 +106,7 @@ const NotificationDropdown = () => {
   const fetchSystemNotifications = async() => {
     try {
       setLoadingSystem(true);
-      const response = await StandardizedApi.get(API_SYSTEM_NOTIFICATIONS, {
+      const response = await StandardizedApi.get(API_PERSONAL_NOTIFICATIONS, {
         page: 0,
         size: LIST_SIZE
       });
@@ -175,7 +175,7 @@ const NotificationDropdown = () => {
   const getSystemItemDetail = async(item) => {
     if (!item?.id) return item;
     try {
-      const response = await StandardizedApi.get(`/api/v1/system-notifications/${item.id}`);
+      const response = await StandardizedApi.get(`${API_PERSONAL_NOTIFICATIONS}/${item.id}`);
       return response?.data || response || item;
     } catch (err) {
       console.error('공지 상세 조회 실패:', err);

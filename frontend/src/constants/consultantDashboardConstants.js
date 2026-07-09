@@ -20,14 +20,15 @@ export const CONSULTANT_DASHBOARD_VIEW_ALL_URGENT_CLIENTS_LABEL = '전체보기'
 
 export const CONSULTANT_DASHBOARD_URGENT_SECTION_TITLE = '긴급 확인 필요 내담자';
 
-export const CONSULTANT_DASHBOARD_ROUTES = {
-  SCHEDULE: '/consultant/schedule',
-  NOTIFICATIONS: '/notifications',
-  CONSULTATION_RECORDS: '/consultant/consultation-records',
-  CLIENTS: '/consultant/clients',
-  MESSAGES: '/consultant/messages',
-  SALARY_SETTLEMENT: '/consultant/salary-settlement'
-};
+export {
+  CONSULTANT_DASHBOARD_ROUTES,
+  CONSULTANT_DASHBOARD_KPI_ROUTES,
+  CONSULTANT_DASHBOARD_QUICK_ACTIONS,
+  buildConsultantClientDetailRoute,
+  buildConsultantConsultationRecordRoute,
+  buildConsultantConsultationRecordsRoute,
+  buildConsultantClientsRoute
+} from './consultantDashboardRoutes';
 
 export const CONSULTANT_SCHEDULE_STATUS_LABELS = {
   CONFIRMED: '확정',
@@ -54,40 +55,6 @@ export const CONSULTANT_URGENT_CLIENT_COLUMNS = [
   { key: 'lastDateLabel', label: '최근 상담', hideOnMobile: true },
   { key: 'riskLabel', label: '위험도' },
   { key: 'mainIssue', label: '주요 이슈', hideOnMobile: true }
-];
-
-/** v2.1 QuickAction 5 — 단일 진실 (Web ConsultantDashboardV2) */
-export const CONSULTANT_DASHBOARD_QUICK_ACTIONS = [
-  {
-    id: 'create-schedule',
-    label: '일정 등록',
-    path: `${CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}?action=create`,
-    variant: 'outline'
-  },
-  {
-    id: 'view-schedule',
-    label: '일정 확인',
-    path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
-    variant: 'outline'
-  },
-  {
-    id: 'check-messages',
-    label: '내담자 메시지',
-    path: CONSULTANT_DASHBOARD_ROUTES.MESSAGES,
-    variant: 'outline'
-  },
-  {
-    id: 'create-record',
-    label: '일지 작성',
-    path: `${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?action=create`,
-    variant: 'primary'
-  },
-  {
-    id: 'salary-settlement',
-    label: '정산 확인',
-    path: CONSULTANT_DASHBOARD_ROUTES.SALARY_SETTLEMENT,
-    variant: 'outline'
-  }
 ];
 
 export const CONSULTANT_DASHBOARD_LIST_LOADING_LABEL = '목록을 불러오는 중...';

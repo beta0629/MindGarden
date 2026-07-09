@@ -6,7 +6,7 @@ import Icon from '../../ui/Icon/Icon';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { ContentSection } from '../content';
-import { CONSULTANT_DASHBOARD_QUICK_ACTIONS } from '../../../constants/consultantDashboardConstants';
+import { CONSULTANT_DASHBOARD_QUICK_ACTIONS } from '../../../constants/consultantDashboardRoutes';
 
 /**
  * 빠른 액션 바 — v2.1 QuickAction 5 SSOT

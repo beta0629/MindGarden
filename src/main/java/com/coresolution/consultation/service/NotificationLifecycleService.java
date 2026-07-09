@@ -68,4 +68,19 @@ public interface NotificationLifecycleService {
      * 테넌트 + 수신자 + 미읽음 알림 카운트.
      */
     long countUnread(String tenantId, Long recipientUserId);
+
+    /**
+     * 수신자 본인 알림을 READ 상태로 전이 (tenant·recipient 가드).
+     */
+    Notification markReadForRecipient(String tenantId, Long recipientUserId, Long notificationId);
+
+    /**
+     * 수신자 본인 미읽음 알림 일괄 READ 전이.
+     */
+    void markAllReadForRecipient(String tenantId, Long recipientUserId);
+
+    /**
+     * 수신자 본인 알림 단건 조회 (tenant·recipient 가드).
+     */
+    Notification findForRecipient(String tenantId, Long recipientUserId, Long notificationId);
 }

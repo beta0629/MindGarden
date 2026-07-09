@@ -171,6 +171,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/ops/auth/**").permitAll()
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/system-notifications/**").authenticated()
+                    .requestMatchers("/api/v1/notifications/**").authenticated()
                     .requestMatchers("/api/consultation-messages/**").authenticated()
                     .requestMatchers("/api/client/**").authenticated()
                     .requestMatchers("/api/admin/**").authenticated()

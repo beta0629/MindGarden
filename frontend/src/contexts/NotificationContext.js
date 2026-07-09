@@ -7,7 +7,8 @@ import { getConsultationMessagesListPath } from '../utils/consultationMessagesAp
 import { USER_ROLES, RoleUtils } from '../constants/roles';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_SYSTEM_NOTIFICATIONS_READ_ALL = '/api/v1/system-notifications/read-all';
+const API_PERSONAL_NOTIFICATIONS = '/api/v1/notifications';
+const API_PERSONAL_NOTIFICATIONS_READ_ALL = '/api/v1/notifications/read-all';
 // 핫픽스 2026-05-23: 메시지 일괄 markAllAsRead 엔드포인트 (GNB 드롭다운 N건 한계 해소)
 const API_CONSULTATION_MESSAGES_MARK_ALL_READ = '/api/v1/consultation-messages/mark-all-read';
 
@@ -124,7 +125,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       const timestamp = new Date().getTime();
-      const endpoint = `/api/v1/system-notifications/unread-count?_t=${timestamp}`;
+      const endpoint = `${API_PERSONAL_NOTIFICATIONS}/unread-count?_t=${timestamp}`;
 
       const response = await apiGet(endpoint);
       const count = response != null && typeof response.unreadCount === 'number' ? response.unreadCount : 0;
@@ -198,7 +199,7 @@ export const NotificationProvider = ({ children }) => {
     }
 
     try {
-      const endpoint = `/api/v1/system-notifications?page=0&size=${CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS}`;
+      const endpoint = `${API_PERSONAL_NOTIFICATIONS}?page=0&size=${CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS}`;
       
       const response = await apiGet(endpoint);
       // apiGet은 data만 반환. 목록은 response가 배열이거나 response.notifications 등
@@ -238,7 +239,7 @@ export const NotificationProvider = ({ children }) => {
     try {
       console.log('📢 공지 읽음 처리 시작:', notificationId);
       // 백엔드: SystemNotificationController @PostMapping("/{notificationId}/read")
-      await apiPost(`/api/v1/system-notifications/${notificationId}/read`, {});
+      await apiPost(`${API_PERSONAL_NOTIFICATIONS}/${notificationId}/read`, {});
       // apiGet은 data만 반환. 에러 시 throw되므로 여기 도달하면 성공으로 간주
       setSystemNotifications(prev => prev.filter(n => n.id !== notificationId));
       await loadUnreadSystemCount();
@@ -251,7 +252,7 @@ export const NotificationProvider = ({ children }) => {
   const markAllSystemNotificationsAsRead = async() => {
     try {
       console.log('📢 공지 일괄 읽음 처리 시작');
-      await apiPost(API_SYSTEM_NOTIFICATIONS_READ_ALL, {});
+      await apiPost(API_PERSONAL_NOTIFICATIONS_READ_ALL, {});
       setSystemNotifications([]);
       lastMarkAllReadSystemAtRef.current = Date.now();
       setUnreadSystemCount(0);

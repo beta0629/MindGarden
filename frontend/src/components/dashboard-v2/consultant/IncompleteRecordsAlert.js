@@ -3,31 +3,22 @@ import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
-import SafeText from '../../common/SafeText';
-import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
  * 미작성 상담일지 알림 컴포넌트
+ * 
+ * @description 미작성 상담일지 개수를 표시하고 바로 작성하기 버튼 제공
+ * @param {number} count - 미작성 일지 개수
+ * @param {Array} schedules - 미작성 일지 목록 (선택)
+ * @param {Function} onAction - "바로 작성하기" 클릭 시 동작
+ * @param {string} className - 추가 CSS 클래스
  */
-const IncompleteRecordsAlert = ({
-  count,
-  schedules = [],
-  onAction,
-  loading = false,
-  className = ''
+const IncompleteRecordsAlert = ({ 
+  count, 
+  schedules = [], 
+  onAction, 
+  className = '' 
 }) => {
-  if (loading) {
-    return (
-      <div
-        className={`mg-v2-alert mg-v2-alert--warning consultant-dashboard-v2__alert consultant-dashboard-v2__alert--loading ${className}`}
-        aria-live="polite"
-        aria-busy="true"
-      >
-        <SafeText tag="span">미작성 일지를 확인하는 중...</SafeText>
-      </div>
-    );
-  }
-
   if (count === 0) return null;
 
   return (
@@ -36,13 +27,13 @@ const IncompleteRecordsAlert = ({
       role="status"
     >
       <div className="mg-v2-alert__content">
-        <Icon name="ALERT_TRIANGLE" size="XXL" color="TRANSPARENT" className="mg-v2-alert__icon" aria-hidden />
+        <Icon name="ALERT_TRIANGLE" size="XXL" color="TRANSPARENT" className="mg-v2-alert__icon" />
         <div className="mg-v2-alert__text">
           <div className="mg-v2-alert__text-title">
-            <SafeText tag="span">미작성 상담일지 {toDisplayString(count, '0')}건</SafeText>
+            미작성 상담일지 {count}건
           </div>
           <div className="mg-v2-alert__text-subtitle">
-            <SafeText tag="span">완료된 상담의 일지를 작성해 주세요.</SafeText>
+            완료된 상담의 일지를 작성해 주세요.
           </div>
         </div>
       </div>
@@ -83,7 +74,6 @@ IncompleteRecordsAlert.propTypes = {
     })
   ),
   onAction: PropTypes.func.isRequired,
-  loading: PropTypes.bool,
   className: PropTypes.string
 };
 

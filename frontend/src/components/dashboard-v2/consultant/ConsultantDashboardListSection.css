@@ -45,19 +45,6 @@
   text-decoration: none;
 }
 
-.consultant-dashboard-list-section__error-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--mg-spacing-sm, 0.5rem);
-  padding: var(--mg-spacing-md, 0.75rem) 0;
-}
-
-.consultant-dashboard-list-section__retry {
-  flex-shrink: 0;
-}
-
-.consultant-dashboard-list-section__view-all:focus-visible {
-  outline: 2px solid var(--mg-color-primary-main);
-  outline-offset: 2px;
+.consultant-dashboard-list-section__view-all:hover {
+  text-decoration: underline;
 }

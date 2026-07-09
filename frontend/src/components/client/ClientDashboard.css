@@ -187,21 +187,6 @@
   grid-template-columns: 1fr;
 }
 
-/* KPI compact density — 어드민/상담사 SSOT 정합 (value h4 1.25rem · card max 120px · padding 16px) */
-.client-dashboard__section--kpi.mg-v2-dashboard-kpi-zone {
-  margin-bottom: 0;
-}
-
-.client-dashboard__section--kpi.mg-v2-dashboard-kpi-zone--compact .mg-v2-content-kpi-card {
-  padding: var(--mg-v2-space-4);
-  padding-inline-start: calc(var(--mg-v2-space-4) + var(--mg-v2-space-1));
-  min-height: var(--mg-v2-space-20);
-}
-
-.client-dashboard__section--kpi.mg-v2-dashboard-kpi-zone--compact .mg-v2-content-kpi-card__value {
-  font-size: var(--mg-v2-font-size-h4, 1.25rem);
-}
-
 /* ===== Core grid (1280 2-col) ===== */
 .client-dashboard__core-grid {
   display: grid;
@@ -248,11 +233,6 @@
 @media (min-width: 1280px) {
   .client-dashboard__section--kpi .mg-v2-content-kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .client-dashboard__section--kpi.mg-v2-dashboard-kpi-zone--compact .mg-v2-content-kpi-card {
-    min-height: 88px;
-    max-height: 120px;
   }
 
   .client-dashboard__core-grid {

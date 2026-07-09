@@ -58,18 +58,6 @@
   --mg-content-kpi-accent: var(--mg-color-text-secondary);
 }
 
-.mg-v2-content-kpi-card--accent-accent {
-  --mg-content-kpi-accent: var(--mg-color-b0kla-purple-500, var(--mg-color-accent-main, var(--mg-color-info-main)));
-}
-
-.mg-v2-content-kpi-card--accent-error {
-  --mg-content-kpi-accent: var(--mg-color-error-main);
-}
-
-.mg-v2-content-kpi-card--accent-warning {
-  --mg-content-kpi-accent: var(--mg-color-warning-main);
-}
-
 .mg-v2-content-kpi-card--loading {
   opacity: 0.72;
 }
@@ -143,21 +131,6 @@ button.mg-v2-content-kpi-card.mg-v2-content-kpi-card--clickable .mg-button__text
 .mg-v2-content-kpi-card__icon--gray {
   background: var(--mg-color-surface-subtle, var(--mg-gray-100));
   color: var(--mg-color-text-secondary-dark);
-}
-
-.mg-v2-content-kpi-card__icon--accent {
-  background: var(--mg-color-b0kla-purple-50, var(--mg-color-info-50));
-  color: var(--mg-color-b0kla-purple-500, var(--mg-color-accent-main, var(--mg-color-info-main)));
-}
-
-.mg-v2-content-kpi-card__icon--error {
-  background: var(--mg-color-error-50, var(--mg-color-error-100));
-  color: var(--mg-color-error-main);
-}
-
-.mg-v2-content-kpi-card__icon--warning {
-  background: var(--mg-color-warning-50);
-  color: var(--mg-color-warning-main);
 }
 
 /* Lucide 직접 사용 시: 부모 색상 상속으로 stroke 표시 (Icon 래퍼·CSS 변수 stroke 미적용 대비) */

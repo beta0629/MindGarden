@@ -31,8 +31,7 @@ function ListTableView({
   renderCell,
   onRowClick,
   className = '',
-  rowKeyField = 'id',
-  getRowClassName = null
+  rowKeyField = 'id'
 }) {
   const tableClass = [TABLE_CLASS, className].filter(Boolean).join(' ');
   const getCellContent = (columnKey, item) => {
@@ -61,8 +60,6 @@ function ListTableView({
         <tbody>
           {data.map((item) => {
             const key = item[rowKeyField] ?? item.id;
-            const extraRowClass = typeof getRowClassName === 'function' ? getRowClassName(item) : '';
-            const rowClassName = [extraRowClass].filter(Boolean).join(' ');
             const rowProps = onRowClick
               ? {
                   role: 'button',
@@ -77,7 +74,7 @@ function ListTableView({
                 }
               : {};
             return (
-              <tr key={key} className={rowClassName || undefined} {...rowProps}>
+              <tr key={key} {...rowProps}>
                 {columns.map((col) => (
                   <td
                     key={col.key}
@@ -107,16 +104,14 @@ ListTableView.propTypes = {
   renderCell: PropTypes.func,
   onRowClick: PropTypes.func,
   className: PropTypes.string,
-  rowKeyField: PropTypes.string,
-  getRowClassName: PropTypes.func
+  rowKeyField: PropTypes.string
 };
 
 ListTableView.defaultProps = {
   renderCell: null,
   onRowClick: null,
   className: '',
-  rowKeyField: 'id',
-  getRowClassName: null
+  rowKeyField: 'id'
 };
 
 export default ListTableView;

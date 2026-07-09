@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -6,87 +6,32 @@ import Icon from '../../ui/Icon/Icon';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { ContentSection } from '../content';
-import {
-  CONSULTANT_DASHBOARD_ROUTES,
-  CONSULTANT_DASHBOARD_QUERY,
-  CONSULTANT_DASHBOARD_QUICK_ACTIONS
-} from '../../../constants/consultantDashboardConstants';
-
-export const buildConsultantQuickActionItems = () => [
-  {
-    id: CONSULTANT_DASHBOARD_QUICK_ACTIONS.SCHEDULE_CREATE.id,
-    label: CONSULTANT_DASHBOARD_QUICK_ACTIONS.SCHEDULE_CREATE.label,
-    ariaLabel: CONSULTANT_DASHBOARD_QUICK_ACTIONS.SCHEDULE_CREATE.ariaLabel,
-    path: `${CONSULTANT_DASHBOARD_ROUTES.SCHEDULE}?${CONSULTANT_DASHBOARD_QUERY.SCHEDULE_CREATE}`,
-    variant: 'primary'
-  },
-  {
-    id: CONSULTANT_DASHBOARD_QUICK_ACTIONS.MESSAGE_COMPOSE.id,
-    label: CONSULTANT_DASHBOARD_QUICK_ACTIONS.MESSAGE_COMPOSE.label,
-    ariaLabel: CONSULTANT_DASHBOARD_QUICK_ACTIONS.MESSAGE_COMPOSE.ariaLabel,
-    path: `${CONSULTANT_DASHBOARD_ROUTES.MESSAGES}?${CONSULTANT_DASHBOARD_QUERY.MESSAGE_COMPOSE}`,
-    variant: 'outline'
-  },
-  {
-    id: CONSULTANT_DASHBOARD_QUICK_ACTIONS.CLIENT_ADD.id,
-    label: CONSULTANT_DASHBOARD_QUICK_ACTIONS.CLIENT_ADD.label,
-    ariaLabel: CONSULTANT_DASHBOARD_QUICK_ACTIONS.CLIENT_ADD.ariaLabel,
-    path: `${CONSULTANT_DASHBOARD_ROUTES.CLIENTS}?${CONSULTANT_DASHBOARD_QUERY.CLIENT_ADD}`,
-    variant: 'outline'
-  }
-];
-
-const QuickActionButtons = ({ onNavigate, className = '', testId = '' }) => {
-  const actions = useMemo(() => buildConsultantQuickActionItems(), []);
-
-  return (
-    <div
-      className={`consultant-quick-action-bar__actions ${className}`.trim()}
-      data-testid={testId || undefined}
-    >
-      {actions.map((action) => (
-        <MGButton
-          key={action.id}
-          type="button"
-          variant={action.variant === 'primary' ? 'primary' : 'outline'}
-          size="medium"
-          className={buildErpMgButtonClassName({
-            variant: action.variant === 'primary' ? 'primary' : 'outline',
-            size: 'md',
-            loading: false,
-            className: `mg-v2-btn mg-v2-btn-${action.variant} mg-v2-btn-md`
-          })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={() => onNavigate(action.path)}
-          preventDoubleClick={false}
-          aria-label={toDisplayString(action.ariaLabel || action.label)}
-        >
-          <SafeText tag="span">{action.label}</SafeText>
-        </MGButton>
-      ))}
-    </div>
-  );
-};
-
-QuickActionButtons.propTypes = {
-  onNavigate: PropTypes.func.isRequired,
-  className: PropTypes.string,
-  testId: PropTypes.string
-};
+import { CONSULTANT_DASHBOARD_ROUTES } from '../../../constants/consultantDashboardConstants';
 
 /**
- * 빠른 액션 — ContentHeader actions(inline) 또는 레거시 ContentSection 래퍼
+ * 빠른 액션 바 — ContentSection + G2-08 flat UI
  */
-const QuickActionBar = ({ onNavigate, className = '', layout = 'section' }) => {
-  if (layout === 'inline') {
-    return (
-      <QuickActionButtons
-        onNavigate={onNavigate}
-        className={`consultant-quick-action-bar__actions--header ${className}`.trim()}
-        testId="consultant-dashboard-quick-action-bar"
-      />
-    );
-  }
+const QuickActionBar = ({ onNavigate, className = '' }) => {
+  const actions = [
+    {
+      id: 'create-record',
+      label: '상담일지 작성',
+      path: `${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?action=create`,
+      variant: 'primary'
+    },
+    {
+      id: 'view-schedule',
+      label: '일정 조회',
+      path: CONSULTANT_DASHBOARD_ROUTES.SCHEDULE,
+      variant: 'outline'
+    },
+    {
+      id: 'view-clients',
+      label: '내담자 관리',
+      path: CONSULTANT_DASHBOARD_ROUTES.CLIENTS,
+      variant: 'outline'
+    }
+  ];
 
   return (
     <ContentSection
@@ -99,7 +44,28 @@ const QuickActionBar = ({ onNavigate, className = '', layout = 'section' }) => {
           <Icon name="ZAP" size="MD" color="TRANSPARENT" aria-hidden />
           <SafeText tag="span">빠른 액션</SafeText>
         </div>
-        <QuickActionButtons onNavigate={onNavigate} />
+        <div className="consultant-quick-action-bar__actions">
+          {actions.map((action) => (
+            <MGButton
+              key={action.id}
+              type="button"
+              variant={action.variant === 'primary' ? 'primary' : 'outline'}
+              size="medium"
+              className={buildErpMgButtonClassName({
+                variant: action.variant === 'primary' ? 'primary' : 'outline',
+                size: 'md',
+                loading: false,
+                className: `mg-v2-btn mg-v2-btn-${action.variant} mg-v2-btn-md`
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => onNavigate(action.path)}
+              preventDoubleClick={false}
+              aria-label={toDisplayString(action.label)}
+            >
+              <SafeText tag="span">{action.label}</SafeText>
+            </MGButton>
+          ))}
+        </div>
       </div>
     </ContentSection>
   );
@@ -107,8 +73,7 @@ const QuickActionBar = ({ onNavigate, className = '', layout = 'section' }) => {
 
 QuickActionBar.propTypes = {
   onNavigate: PropTypes.func.isRequired,
-  className: PropTypes.string,
-  layout: PropTypes.oneOf(['section', 'inline'])
+  className: PropTypes.string
 };
 
 export default QuickActionBar;

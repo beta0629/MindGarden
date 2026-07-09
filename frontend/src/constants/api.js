@@ -235,9 +235,6 @@ export const MESSAGE_API = {
   
   // 상담사 메시지 조회
   GET_CONSULTANT_MESSAGES: (consultantId) => `/api/v1/consultation-messages/consultant/${consultantId}`,
-
-  // 안읽은 메시지 수
-  UNREAD_COUNT: '/api/v1/consultation-messages/unread-count',
   
   // 내담자 메시지 조회
   GET_CLIENT_MESSAGES: (clientId) => `/api/v1/consultation-messages/client/${clientId}`,

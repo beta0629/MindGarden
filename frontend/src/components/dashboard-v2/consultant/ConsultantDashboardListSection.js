@@ -10,15 +10,12 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { ListTableView } from '../../common';
 import SafeText from '../../common/SafeText';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
 import { ContentSection } from '../content';
 import {
   CONSULTANT_DASHBOARD_LIST_MAX_ROWS,
   CONSULTANT_DASHBOARD_LIST_LOADING_LABEL,
-  CONSULTANT_DASHBOARD_LIST_ERROR_LABEL,
-  CONSULTANT_DASHBOARD_SECTION_RETRY_LABEL
+  CONSULTANT_DASHBOARD_LIST_ERROR_LABEL
 } from '../../../constants/consultantDashboardConstants';
 import './ConsultantDashboardListSection.css';
 
@@ -32,15 +29,10 @@ const ConsultantDashboardListSection = ({
   emptyText,
   viewAllHref = '',
   viewAllLabel = '전체 보기',
-  viewAllAriaLabel = '',
   rowKeyField = 'id',
   dataTestId = '',
   loading = false,
-  error = '',
-  onRetry = null,
-  className = '',
-  sectionActions = null,
-  getRowClassName = null
+  error = ''
 }) => {
   const displayData = useMemo(
     () => (Array.isArray(data) ? data.slice(0, CONSULTANT_DASHBOARD_LIST_MAX_ROWS) : []),
@@ -67,30 +59,9 @@ const ConsultantDashboardListSection = ({
 
     if (error) {
       return (
-        <div className="consultant-dashboard-list-section__error-wrap" role="alert">
-          <p className="consultant-dashboard-list-section__error">
-            <SafeText tag="span">{error || CONSULTANT_DASHBOARD_LIST_ERROR_LABEL}</SafeText>
-          </p>
-          {typeof onRetry === 'function' ? (
-            <MGButton
-              type="button"
-              variant="outline"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'sm',
-                loading: false,
-                className: 'mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm consultant-dashboard-list-section__retry'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={onRetry}
-              preventDoubleClick={false}
-              aria-label={`${error || CONSULTANT_DASHBOARD_LIST_ERROR_LABEL} ${CONSULTANT_DASHBOARD_SECTION_RETRY_LABEL}`}
-            >
-              <SafeText tag="span">{CONSULTANT_DASHBOARD_SECTION_RETRY_LABEL}</SafeText>
-            </MGButton>
-          ) : null}
-        </div>
+        <p className="consultant-dashboard-list-section__error" role="alert">
+          <SafeText tag="span">{error || CONSULTANT_DASHBOARD_LIST_ERROR_LABEL}</SafeText>
+        </p>
       );
     }
 
@@ -103,7 +74,6 @@ const ConsultantDashboardListSection = ({
           onRowClick={onRowClick}
           className="consultant-dashboard-list-section__table mg-v2-ad-b0kla__data-table--comfortable"
           rowKeyField={rowKeyField}
-          getRowClassName={getRowClassName}
         />
       );
     }
@@ -116,21 +86,12 @@ const ConsultantDashboardListSection = ({
   };
 
   return (
-    <ContentSection
-      title={titleNode}
-      actions={sectionActions}
-      className={className}
-      dataTestId={dataTestId}
-    >
+    <ContentSection title={titleNode} dataTestId={dataTestId}>
       {renderBody()}
 
       {viewAllHref && !loading && !error ? (
         <footer className="consultant-dashboard-list-section__footer">
-          <Link
-            to={viewAllHref}
-            className="consultant-dashboard-list-section__view-all"
-            aria-label={viewAllAriaLabel || viewAllLabel}
-          >
+          <Link to={viewAllHref} className="consultant-dashboard-list-section__view-all">
             {viewAllLabel}
           </Link>
         </footer>
@@ -149,15 +110,10 @@ ConsultantDashboardListSection.propTypes = {
   emptyText: PropTypes.string.isRequired,
   viewAllHref: PropTypes.string,
   viewAllLabel: PropTypes.string,
-  viewAllAriaLabel: PropTypes.string,
   rowKeyField: PropTypes.string,
   dataTestId: PropTypes.string,
   loading: PropTypes.bool,
-  error: PropTypes.string,
-  onRetry: PropTypes.func,
-  className: PropTypes.string,
-  sectionActions: PropTypes.node,
-  getRowClassName: PropTypes.func
+  error: PropTypes.string
 };
 
 export default ConsultantDashboardListSection;

@@ -52,6 +52,38 @@ export const CLIENT_CORE_ACTIVE_TITLE = '진행 중인 상담';
 export const CLIENT_CORE_RECORDS_TITLE = '최근 기록 · 과제';
 export const CLIENT_CORE_RECORDS_BODY = '상담 후 안내와 메시지는 메시지함에서 한번에 볼 수 있어요.';
 
+export const CLIENT_UPCOMING_CTA_LABEL = '보기';
+
+export const CLIENT_DEFAULT_CONSULTANT_LABEL = '담당 상담사';
+export const CLIENT_DEFAULT_CONSULTATION_TYPE = '상담';
+export const CLIENT_DEFAULT_PACKAGE_LABEL = '상담 패키지';
+
+/** 표시 전용 상태 라벨 — 값 판정은 백엔드 코드 그대로 사용 */
+export const CLIENT_SCHEDULE_STATUS_LABELS = {
+  CONFIRMED: '확정',
+  BOOKED: '예약',
+  COMPLETED: '완료',
+  PENDING: '대기',
+  CANCELLED: '취소',
+  NO_SHOW: '불참'
+};
+
+export const CLIENT_PAYMENT_STATUS_LABELS = {
+  CONFIRMED: '완료',
+  PAY: '결제완료',
+  DEP: '입금완료',
+  APPROVED: '승인',
+  PENDING: '확인중',
+  REJECTED: '거절',
+  REFUNDED: '환불',
+  COMPLETED: '완료',
+  FAILED: '실패',
+  CANCELLED: '취소'
+};
+
+export const CLIENT_STATUS_FALLBACK_LABEL = '—';
+export const CLIENT_MAX_LIST_ROWS = 5;
+
 export const CLIENT_PAYMENT_SECTION_TITLE = '결제 요약';
 export const CLIENT_PAYMENT_SECTION_DESC = '최근 청구·납부 상태를 한눈에';
 

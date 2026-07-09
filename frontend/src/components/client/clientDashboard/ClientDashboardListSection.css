@@ -1,0 +1,78 @@
+/**
+ * Client Dashboard list sections — ListTableView · skeleton · error (v1.4)
+ */
+
+.client-dashboard-list-section__table {
+  margin-bottom: var(--mg-spacing-sm);
+}
+
+.client-dashboard-list-section__empty {
+  margin: 0;
+  padding: var(--mg-spacing-md) 0;
+  font-size: var(--mg-font-sm);
+  text-align: center;
+  color: var(--mg-color-text-secondary);
+}
+
+.client-dashboard-list-section__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-sm) 0;
+}
+
+.client-dashboard-list-section__skeleton-row {
+  min-height: var(--mg-touch-target-min, 2.75rem);
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-color-surface-muted, var(--mg-color-border-main));
+  opacity: var(--mg-opacity-muted, 0.6);
+  animation: client-dashboard-list-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes client-dashboard-list-skeleton-pulse {
+  0%,
+  100% {
+    opacity: var(--mg-opacity-muted, 0.45);
+  }
+
+  50% {
+    opacity: var(--mg-opacity-muted-strong, 0.75);
+  }
+}
+
+.client-dashboard-list-section__error-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-md);
+  background: var(--mg-color-error-50, var(--mg-color-surface-main));
+  border: var(--border-width) solid var(--mg-color-border-main);
+  border-left: var(--mg-spacing-xs) solid var(--mg-color-error-main);
+  border-radius: var(--mg-radius-md);
+}
+
+.client-dashboard-list-section__error-text {
+  margin: 0;
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-error-main);
+}
+
+.client-dashboard-list-section__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--mg-spacing-xs);
+  border-top: var(--border-width) solid var(--mg-color-border-main);
+  margin-top: var(--mg-spacing-sm);
+}
+
+.client-dashboard-list-section__view-all {
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-medium);
+  color: var(--mg-color-primary-main);
+  text-decoration: none;
+}
+
+.client-dashboard-list-section__view-all:hover {
+  text-decoration: underline;
+}

@@ -1,88 +1,92 @@
 /**
- * Client Dashboard — ListTableView 섹션 (B0KlA flat · 섹션별 loading/empty/error+retry)
- * 상담사 대시보드 V2(ConsultantDashboardListSection) 패턴 정합.
+ * Client Dashboard — ListTableView 섹션 (스켈레톤 · error · retry)
  *
  * @author CoreSolution
- * @since 2026-07-07
+ * @since 2026-07-09
  */
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
-import ListTableView from '../../common/ListTableView';
-import SafeText from '../../common/SafeText';
+import { ListTableView } from '../../common';
 import MGButton from '../../common/MGButton';
-import { ContentSection } from '../../dashboard-v2/content';
+import SafeText from '../../common/SafeText';
 import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
+import ClientDashboardSectionBlock from './ClientDashboardSectionBlock';
 import {
-  CLIENT_MAX_LIST_ROWS,
-  CLIENT_SECTION_LOADING_LABEL,
-  CLIENT_SECTION_RETRY_LABEL
+  CLIENT_DASHBOARD_LIST_ERROR_LABEL,
+  CLIENT_DASHBOARD_LIST_MAX_ROWS,
+  CLIENT_DASHBOARD_LIST_RETRY_LABEL,
+  CLIENT_DASHBOARD_LIST_SKELETON_ROW_COUNT
 } from './constants';
+import './ClientDashboardListSection.css';
 
-const SKELETON_ROW_COUNT = 3;
-const retryBtnClass = buildErpMgButtonClassName({ variant: 'outline', loading: false });
+const outlineBtnClass = buildErpMgButtonClassName({ variant: 'outline', loading: false });
 
 const ClientDashboardListSection = ({
   title,
   subtitle,
+  accentVariant = 'primary',
   columns,
   data = [],
   renderCell = null,
   onRowClick = null,
   emptyText,
-  loading = false,
-  error = '',
-  onRetry = null,
   viewAllHref = '',
-  viewAllLabel = '전체 보기',
+  viewAllLabel = '전체 일정 보기',
   rowKeyField = 'id',
   dataTestId = '',
-  noCard = false,
-  sectionClassName = ''
+  className = '',
+  loading = false,
+  error = '',
+  onRetry = null
 }) => {
   const displayData = useMemo(
-    () => (Array.isArray(data) ? data.slice(0, CLIENT_MAX_LIST_ROWS) : []),
+    () => (Array.isArray(data) ? data.slice(0, CLIENT_DASHBOARD_LIST_MAX_ROWS) : []),
     [data]
+  );
+
+  const renderSkeleton = () => (
+    <div
+      className="client-dashboard-list-section__skeleton"
+      aria-live="polite"
+      aria-busy="true"
+      data-testid="client-dashboard-list-skeleton"
+    >
+      {Array.from({ length: CLIENT_DASHBOARD_LIST_SKELETON_ROW_COUNT }, (_, idx) => (
+        <div
+          key={`skeleton-row-${idx}`}
+          className="client-dashboard-list-section__skeleton-row"
+        />
+      ))}
+    </div>
+  );
+
+  const renderError = () => (
+    <div className="client-dashboard-list-section__error-banner" role="alert">
+      <p className="client-dashboard-list-section__error-text">
+        <SafeText tag="span">{error || CLIENT_DASHBOARD_LIST_ERROR_LABEL}</SafeText>
+      </p>
+      {typeof onRetry === 'function' ? (
+        <MGButton
+          variant="outline"
+          className={outlineBtnClass}
+          onClick={onRetry}
+          preventDoubleClick={false}
+        >
+          {CLIENT_DASHBOARD_LIST_RETRY_LABEL}
+        </MGButton>
+      ) : null}
+    </div>
   );
 
   const renderBody = () => {
     if (loading) {
-      return (
-        <div
-          className="client-dashboard-list__skeleton"
-          aria-live="polite"
-          aria-busy="true"
-          role="status"
-          aria-label={CLIENT_SECTION_LOADING_LABEL}
-        >
-          {Array.from({ length: SKELETON_ROW_COUNT }).map((_, idx) => (
-            <span key={`sk-${idx}`} className="client-dashboard-list__skeleton-row" aria-hidden />
-          ))}
-        </div>
-      );
+      return renderSkeleton();
     }
 
     if (error) {
-      return (
-        <div className="client-dashboard-list__error" role="alert">
-          <p className="client-dashboard-list__error-text">
-            <SafeText tag="span">{error}</SafeText>
-          </p>
-          {onRetry ? (
-            <MGButton
-              variant="outline"
-              className={`${retryBtnClass} client-dashboard-list__retry`}
-              onClick={onRetry}
-              preventDoubleClick={false}
-            >
-              <RefreshCw size={16} aria-hidden />
-              <span>{CLIENT_SECTION_RETRY_LABEL}</span>
-            </MGButton>
-          ) : null}
-        </div>
-      );
+      return renderError();
     }
 
     if (displayData.length > 0) {
@@ -92,57 +96,57 @@ const ClientDashboardListSection = ({
           data={displayData}
           renderCell={renderCell}
           onRowClick={onRowClick}
-          className="client-dashboard-list__table mg-v2-ad-b0kla__data-table--comfortable"
+          className="client-dashboard-list-section__table mg-v2-ad-b0kla__data-table--comfortable"
           rowKeyField={rowKeyField}
         />
       );
     }
 
     return (
-      <p className="client-dashboard-list__empty">
+      <p className="client-dashboard-list-section__empty">
         <SafeText tag="span">{emptyText}</SafeText>
       </p>
     );
   };
 
   return (
-    <ContentSection
+    <ClientDashboardSectionBlock
       title={title}
       subtitle={subtitle}
-      className={`client-dashboard__section client-dashboard__section-block ${sectionClassName}`.trim()}
+      accentVariant={accentVariant}
       dataTestId={dataTestId}
-      noCard={noCard}
+      className={className}
     >
       {renderBody()}
 
       {viewAllHref && !loading && !error ? (
-        <footer className="client-dashboard-list__footer">
-          <Link to={viewAllHref} className="client-dashboard-list__view-all">
+        <footer className="client-dashboard-list-section__footer">
+          <Link to={viewAllHref} className="client-dashboard-list-section__view-all">
             {viewAllLabel}
           </Link>
         </footer>
       ) : null}
-    </ContentSection>
+    </ClientDashboardSectionBlock>
   );
 };
 
 ClientDashboardListSection.propTypes = {
-  title: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
-  subtitle: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
+  accentVariant: PropTypes.oneOf(['primary', 'accent', 'secondary']),
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
   data: PropTypes.arrayOf(PropTypes.object),
   renderCell: PropTypes.func,
   onRowClick: PropTypes.func,
   emptyText: PropTypes.string.isRequired,
-  loading: PropTypes.bool,
-  error: PropTypes.string,
-  onRetry: PropTypes.func,
   viewAllHref: PropTypes.string,
   viewAllLabel: PropTypes.string,
   rowKeyField: PropTypes.string,
   dataTestId: PropTypes.string,
-  noCard: PropTypes.bool,
-  sectionClassName: PropTypes.string
+  className: PropTypes.string,
+  loading: PropTypes.bool,
+  error: PropTypes.string,
+  onRetry: PropTypes.func
 };
 
 export default ClientDashboardListSection;

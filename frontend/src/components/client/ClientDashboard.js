@@ -1,17 +1,15 @@
 /**
- * 내담자 대시보드 — v1.1 Freeze 전면 재구성
+ * 내담자 대시보드 — v1.4 Rebuild (B0KlA · ListTableView · KPI 4-grid)
  * `/client/dashboard` SSOT (AdminCommonLayout + B0KlA, ClientAppShell `/client` 와 분리)
  *
  * @author CoreSolution
  * @since 2026-07-07
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import UnifiedLoading from '../common/UnifiedLoading';
-import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
@@ -21,8 +19,7 @@ import {
   CLIENT_DASHBOARD_ARIA_LABEL,
   CLIENT_DASHBOARD_MAIN_ID,
   CLIENT_DASHBOARD_PAGE_TITLE,
-  CLIENT_DASHBOARD_TITLE_ID,
-  CUSTOMER_SUPPORT_TOAST
+  CLIENT_DASHBOARD_TITLE_ID
 } from './clientDashboard/constants';
 import { useClientSessionBootstrap } from './clientDashboard/useClientSessionBootstrap';
 import { useClientDashboardData } from './clientDashboard/useClientDashboardData';
@@ -44,9 +41,10 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     consultationData,
     clientStatus,
     sharedClientMappings,
+    mappingsLoadFailed,
     unreadMessageCount,
-    sectionLoading,
-    sectionErrors,
+    isLoading,
+    sectionError,
     reload
   } = useClientDashboardData(currentUser, sessionLoading, currentIsLoggedIn);
 
@@ -55,9 +53,8 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     return sharedClientMappings.find((x) => x.status === 'ACTIVE') || null;
   }, [sharedClientMappings]);
 
-  const goCustomerSupport = useCallback(() => {
-    notificationManager.show(CUSTOMER_SUPPORT_TOAST, 'info');
-  }, []);
+  const sectionLoading = isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id;
+  const quickMenuDisabled = sectionLoading || sectionError;
 
   const renderShell = (body) => (
     <div className="mg-v2-ad-b0kla client-dashboard">
@@ -74,19 +71,6 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     </div>
   );
 
-  // 세션/인증 부트스트랩 게이트 — 데이터 로딩은 섹션별 skeleton 이 담당
-  if (sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
-    return (
-      <AdminCommonLayout className="mg-v2-client-dashboard-layout">
-        {renderShell(
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="대시보드를 불러오는 중..." />
-          </div>
-        )}
-      </AdminCommonLayout>
-    );
-  }
-
   return (
     <AdminCommonLayout className="mg-v2-client-dashboard-layout">
       {renderShell(
@@ -101,36 +85,39 @@ const ClientDashboard = ({ user: userFromRoute }) => {
             primaryActiveMapping={primaryActiveMapping}
           />
 
-          <ClientDashboardUpcomingSection
-            schedules={consultationData.upcomingSchedules}
-            loading={sectionLoading.schedules}
-            error={sectionErrors.schedules}
-            onRetry={reload}
-          />
-
           <ClientDashboardKpiSection
             remainingSessions={consultationData.remainingSessions}
             thisMonthScheduleCount={consultationData.thisMonthScheduleCount}
             unreadMessageCount={unreadMessageCount}
+            completedCount={consultationData.completedCount}
+            loading={sectionLoading}
+            error={sectionError}
+          />
+
+          <ClientDashboardUpcomingSection
+            schedules={consultationData.upcomingSchedules}
+            loading={sectionLoading}
+            error={sectionError}
+            onRetry={reload}
           />
 
           <ClientDashboardCoreSection
             user={currentUser}
             consultationData={consultationData}
             clientStatus={clientStatus}
-            loading={sectionLoading.schedules}
-            error={sectionErrors.schedules}
+            primaryActiveMapping={primaryActiveMapping}
+            loading={sectionLoading}
+            error={sectionError}
             onRetry={reload}
           />
 
           <ClientDashboardPaymentSection
-            recentPayments={consultationData.recentPayments}
-            loading={sectionLoading.mappings}
-            error={sectionErrors.mappings}
-            onRetry={reload}
+            userId={currentUser?.id}
+            sharedClientMappings={sharedClientMappings}
+            mappingsLoadFailed={mappingsLoadFailed}
           />
 
-          <ClientDashboardQuickMenuSection onCustomerSupport={goCustomerSupport} />
+          <ClientDashboardQuickMenuSection disabled={quickMenuDisabled} />
         </main>
       )}
     </AdminCommonLayout>

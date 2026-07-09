@@ -6,7 +6,6 @@
  */
 
 @import '../../styles/themes/client-theme.css';
-@import '../../styles/responsive-layout-tokens.css';
 
 /* ===== Shell ===== */
 .mg-v2-ad-b0kla.mg-v2-client-dashboard-layout {
@@ -31,6 +30,70 @@
 
 .client-dashboard__section {
   margin: 0;
+}
+
+/* ===== B0KlA section-block (v1.4) ===== */
+.client-dashboard__section-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-lg);
+  background: var(--mg-color-surface-main);
+  border: var(--border-width) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  border-left-width: var(--mg-spacing-xs);
+  border-left-style: solid;
+}
+
+.client-dashboard__section-block--accent-primary {
+  border-left-color: var(--mg-color-primary-main);
+}
+
+.client-dashboard__section-block--accent-accent {
+  border-left-color: var(--mg-color-accent-main);
+}
+
+.client-dashboard__section-block--accent-secondary {
+  border-left-color: var(--mg-color-secondary-main, var(--mg-color-primary-main));
+}
+
+.client-dashboard__section-block-head {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mg-spacing-sm);
+}
+
+.client-dashboard__accent-bar {
+  width: var(--mg-spacing-xs);
+  min-height: var(--mg-spacing-md);
+  align-self: stretch;
+  background: var(--mg-color-primary-main);
+  border-radius: var(--mg-radius-sm);
+}
+
+.client-dashboard__section-block--accent-accent .client-dashboard__accent-bar {
+  background: var(--mg-color-accent-main);
+}
+
+.client-dashboard__section-block--accent-secondary .client-dashboard__accent-bar {
+  background: var(--mg-color-secondary-main, var(--mg-color-primary-main));
+}
+
+.client-dashboard__section-block-title {
+  margin: 0;
+  font-size: var(--mg-font-lg);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.client-dashboard__section-block-subtitle {
+  margin: var(--mg-spacing-xs) 0 0;
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.client-dashboard__section-block-body {
+  min-width: 0;
 }
 
 .client-dashboard__section .mg-v2-content-section__title {
@@ -183,24 +246,18 @@
   color: var(--mg-color-text-secondary);
 }
 
-/* ===== KPI ===== */
-.client-dashboard__section--kpi .mg-v2-content-kpi-row {
-  grid-template-columns: 1fr;
+/* ===== KPI 4-grid (1280px) ===== */
+.client-dashboard__section--kpi .client-dashboard__kpi-row.mg-v2-content-kpi-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mg-layout-grid-gap, var(--mg-spacing-md));
 }
 
-/* KPI compact density — 어드민/상담사 SSOT 정합 (value h4 1.25rem · card max 120px · padding 16px) */
-.client-dashboard__section--kpi.mg-v2-dashboard-kpi-zone {
-  margin-bottom: 0;
+.client-dashboard__section--kpi .mg-v2-content-kpi-card {
+  box-shadow: none;
 }
 
-.client-dashboard__section--kpi.mg-v2-dashboard-kpi-zone--compact .mg-v2-content-kpi-card {
-  padding: var(--mg-v2-space-4);
-  padding-inline-start: calc(var(--mg-v2-space-4) + var(--mg-v2-space-1));
-  min-height: var(--mg-v2-space-20);
-}
-
-.client-dashboard__section--kpi.mg-v2-dashboard-kpi-zone--compact .mg-v2-content-kpi-card__value {
-  font-size: var(--mg-v2-font-size-h4, 1.25rem);
+.client-dashboard__section--kpi .mg-v2-content-kpi-card:hover {
+  box-shadow: none;
 }
 
 /* ===== Core grid (1280 2-col) ===== */
@@ -229,10 +286,10 @@
   box-shadow: none;
 }
 
-/* ===== Quick menu ===== */
+/* ===== Quick menu 4 SSOT ===== */
 .client-dashboard__quick-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--action-button-min-width, 8.75rem), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--mg-spacing-md);
 }
 
@@ -247,13 +304,12 @@
 
 /* ===== Desktop 1280+ ===== */
 @media (min-width: 1280px) {
-  .client-dashboard__section--kpi .mg-v2-content-kpi-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .client-dashboard__section--kpi .client-dashboard__kpi-row.mg-v2-content-kpi-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .client-dashboard__section--kpi.mg-v2-dashboard-kpi-zone--compact .mg-v2-content-kpi-card {
-    min-height: 88px;
-    max-height: 120px;
+  .client-dashboard__quick-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .client-dashboard__core-grid {
@@ -263,8 +319,12 @@
 
 /* ===== Tablet 769–1279 ===== */
 @media (min-width: 769px) and (max-width: 1279px) {
-  .client-dashboard__section--kpi .mg-v2-content-kpi-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .client-dashboard__section--kpi .client-dashboard__kpi-row.mg-v2-content-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .client-dashboard__quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .client-dashboard__core-grid {
@@ -305,7 +365,8 @@
 
 [data-theme="dark"] .client-dashboard__welcome-card,
 [data-theme="dark"] .client-dashboard__action-card,
-[data-theme="dark"] .client-dashboard__core-card {
+[data-theme="dark"] .client-dashboard__core-card,
+[data-theme="dark"] .client-dashboard__section-block {
   background: var(--mg-color-surface-main, var(--mg-dark-bg-800));
   border-color: var(--mg-border_dark, var(--mg-color-border-main));
 }
@@ -329,142 +390,4 @@
 
 [data-theme="dark"] .client-dashboard__welcome-inner::before {
   background: var(--mg-color-primary-dark, var(--mg-color-primary-main));
-}
-
-/* ===== Section block accent (spec §4 · 좌측 4px 악센트, card 한정) ===== */
-.mg-v2-content-section--card.client-dashboard__section-block {
-  position: relative;
-}
-
-.mg-v2-content-section--card.client-dashboard__section-block::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: var(--mg-spacing-xs);
-  background: var(--mg-client-primary, var(--mg-color-primary-main));
-}
-
-/* ===== List section (Upcoming · Payment · 최근 상담일지) ===== */
-.client-dashboard-list__table {
-  margin-bottom: var(--mg-spacing-sm);
-}
-
-.client-dashboard-list__cta {
-  font-size: var(--mg-font-sm);
-  font-weight: var(--mg-font-medium);
-  color: var(--mg-color-primary-main);
-  white-space: nowrap;
-}
-
-.client-dashboard-list__empty {
-  margin: 0;
-  padding: var(--mg-spacing-md) 0;
-  font-size: var(--mg-font-sm);
-  color: var(--mg-color-text-secondary);
-  text-align: center;
-}
-
-.client-dashboard-list__error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--mg-spacing-md);
-  padding: var(--mg-spacing-lg) 0;
-  text-align: center;
-}
-
-.client-dashboard-list__error-text {
-  margin: 0;
-  font-size: var(--mg-font-sm);
-  color: var(--mg-color-error-main);
-}
-
-.client-dashboard-list__retry {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mg-spacing-xs);
-}
-
-/* 스켈레톤 로딩 */
-.client-dashboard-list__skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-sm);
-  padding: var(--mg-spacing-sm) 0;
-}
-
-.client-dashboard-list__skeleton-row {
-  height: var(--mg-spacing-xl);
-  border-radius: var(--mg-radius-sm);
-  background: linear-gradient(
-    90deg,
-    var(--mg-color-surface-muted, var(--mg-color-background-muted)) 25%,
-    var(--mg-color-border-main) 37%,
-    var(--mg-color-surface-muted, var(--mg-color-background-muted)) 63%
-  );
-  background-size: 400% 100%;
-  animation: clientDashboardSkeleton 1.4s ease infinite;
-}
-
-@keyframes clientDashboardSkeleton {
-  0% { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
-}
-
-.client-dashboard-list__footer {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: var(--mg-spacing-xs);
-  border-top: var(--border-width) solid var(--mg-color-border-main);
-  margin-top: var(--mg-spacing-sm);
-}
-
-.client-dashboard-list__view-all {
-  font-size: var(--mg-font-sm);
-  font-weight: var(--mg-font-medium);
-  color: var(--mg-color-primary-main);
-  text-decoration: none;
-}
-
-.client-dashboard-list__view-all:hover {
-  text-decoration: underline;
-}
-
-/* ===== Core: 웰니스 + 최근 상담일지 (grid 는 §core-grid 재사용) ===== */
-.client-dashboard__core-card--wellness .client-personalized-messages {
-  gap: var(--mg-spacing-sm);
-}
-
-.client-dashboard__core-card--records .mg-v2-content-section--plain {
-  padding: 0;
-}
-
-/* ===== Mobile 414 (spec 반응형) ===== */
-@media (max-width: 414px) {
-  .client-dashboard__container {
-    padding-inline: var(--mg-spacing-sm);
-  }
-
-  .client-dashboard__quick-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .client-dashboard-list__footer {
-    justify-content: center;
-  }
-}
-
-/* ===== Dark cascade — list/accent 신규 요소 ===== */
-[data-theme="dark"] .mg-v2-content-section--card.client-dashboard__section-block::before {
-  background: var(--mg-color-primary-dark, var(--mg-color-primary-main));
-}
-
-[data-theme="dark"] .client-dashboard-list__empty {
-  color: var(--mg-color-text-secondary-dark, var(--mg-color-text-secondary));
-}
-
-[data-theme="dark"] .client-dashboard-list__footer {
-  border-top-color: var(--mg-border_dark, var(--mg-color-border-main));
 }

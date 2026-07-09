@@ -2,8 +2,8 @@
 
 **Work Package**: `DASH-10` · **유형**: Design Freeze Sign-off evidence pack  
 **환경**: **dev only** — `https://mindgarden.dev.core-solution.co.kr`  
-**develop HEAD**: `419a0177d` (#545 ROLE-03 Expo wiring) + **#548** Consultant ENHANCED  
-**dev FE bundle**: `main.2d20a7a4.js`  
+**develop HEAD**: `b97c0d05e` (#555 client-dashboard CL01) + **#548** Consultant ENHANCED  
+**dev FE bundle**: `main.9047d69c.js`  
 **prod deploy / EAS OTA publish**: **금지** · **prod sign-off 없음**
 
 **참조**: [`GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md`](./GATE_02_DEV_INTEGRATION_CHECKLIST_20260713.md) · [`GATE_03_USER_SIGNOFF_SHEET_20260713.md`](./GATE_03_USER_SIGNOFF_SHEET_20260713.md) · [`COMPREHENSIVE_IMPROVEMENT_WBS.md`](../../project-management/2026-07-07/COMPREHENSIVE_IMPROVEMENT_WBS.md)
@@ -18,7 +18,8 @@
 | **DASH-02** SchedulePendingList | [`28871900145`](https://github.com/beta0629/MindGarden/actions/runs/28871900145) | #541 `45a9d0d3c` | — | BOOKED API 와이어링 |
 | **HF-02** header P2 initial | [`28858525028`](https://github.com/beta0629/MindGarden/actions/runs/28858525028) | `aaa9ff883` (#515+#522) | — | 6-route header dedup |
 | **Latest FE** (#543 DASH-03~04) | [`28875323851`](https://github.com/beta0629/MindGarden/actions/runs/28875323851) | `8bf5ace0d` (#543) | **`main.4278ef57.js`** | #545 Expo-only — FE redeploy 불필요 |
-| **G2 Consultant ENHANCED** (#548) | — | — | **`main.2d20a7a4.js`** | GATE-03 G2 dev Playwright ☑ — [`GATE_03` G2 evidence](./GATE_03_USER_SIGNOFF_SHEET_20260713.md#g2--consultant-dashboard-v2-웹-role-02--consultantdashboard--548-enhanced) |
+| **G2 Consultant ENHANCED** (#548) | — | — | **`main.2d20a7a4.js`** | GATE-03 G2 초기 Playwright @ 2026-07-08 |
+| **G1·G2 GATE-03 follow-up** (#555) | [`28997842001`](https://github.com/beta0629/MindGarden/actions/runs/28997842001) | `b97c0d05e` | **`main.9047d69c.js`** | dev FE bundle SSOT · GATE-03 G2 v2.1 C01 — [`GATE_03` G2 evidence](./GATE_03_USER_SIGNOFF_SHEET_20260713.md#g2--consultant-dashboard-v2-웹-role-02--consultantdashboard--548-enhanced) |
 
 ---
 
@@ -29,7 +30,7 @@
 | **DASH-08** (CP-4) | 6 | **57** | `testPathPattern="SchedulePendingList.g1-02\|adminDashboardWidgets.density\|KpiFlipCard\|DepositPendingList.g1-02\|adminDarkMode.cascade"` | ☑ PASS |
 | **HF-02** headerDedup (CP-6) | 7 | **7/7** | `testPathPattern="headerDedup"` | ☑ PASS |
 | **ROLE-04** Expo consultant home (CP-6b) | 4 | **32** | `cd expo-app && testPathPattern="consultantHome\|useConsultantHome"` | ☑ PASS |
-| **G2** Consultant V2 web (GATE-03) | 3 | **3/3** | `gate03-g2-consultant-dashboard.spec.ts` @ `mindgarden.dev` · bundle `main.2d20a7a4.js` | ☑ PASS |
+| **G2** Consultant V2 web (GATE-03) | 3 | **3/3** | `gate03-g2-consultant-dashboard.spec.ts` @ `mindgarden.dev` · bundle `main.9047d69c.js` | ☑ PASS |
 
 **ROLE-04 suites**: `useConsultantHome.test.ts` · `consultantHomeKpi.test.ts` · `consultantHomeComponentUi.test.ts` · `consultantHomeApiNormalize.test.ts` · `expo-app/` ↔ `frontend/` cross-import **0**
 
@@ -89,7 +90,7 @@
 | **CP-5** | ADM-01 dark-c3b | ☑ cascade Jest · #540 | ☐ E1~E4 | 사용자 |
 | **CP-6** | HF-02 header 6 routes | ☑ headerDedup 7/7 · F1~F6 dev | ☑ overnight | ☑ |
 | **CP-6b** | ROLE-03 Expo P0-3~4 | ☑ #544+#545 · ROLE-04 32 tests | ☐ G3 Expo 홈 | 사용자 |
-| **CP-6c** | ROLE-02 Consultant V2 web G2 | ☑ Playwright G2-1~G2-3 @ `main.2d20a7a4.js` | ☐ G2 사용자 sign-off | 자동 ☑ |
+| **CP-6c** | ROLE-02 Consultant V2 web G2 | ☑ Playwright G2-1~G2-3 @ `main.9047d69c.js` | ☐ G2 사용자 sign-off | 자동 ☑ |
 | **CP-7** | GATE-03 사용자 sign-off | ☑ 시트·evidence 준비 | ☐ **7/13** C1/E/G1~G3 | **잔여** |
 
 **ROLE-03 P0-2 Renewal API 교정**: **post-GATE-03 defer** — blocking 아님
@@ -110,3 +111,4 @@
 |------------|------|
 | 2026-07-08 | DASH-10 evidence pack 초안 — deploy·Jest·PR #526–#545 · CP 표 · overnight cross-ref (docs-only) |
 | 2026-07-08 | G2 GATE-03 — Playwright 3/3 PASS @ `main.2d20a7a4.js` (#548) · evidence screenshots · GATE_03 cross-link |
+| 2026-07-09 | dev FE bundle SSOT `main.9047d69c.js` — deploy run [`28997842001`](https://github.com/beta0629/MindGarden/actions/runs/28997842001) @ `b97c0d05e` · G2 Playwright QuickAction 5 + urgent ListTableView testid (v2.1 C01) |

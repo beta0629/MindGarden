@@ -32,6 +32,70 @@
   margin: 0;
 }
 
+/* ===== B0KlA section-block (v1.4) ===== */
+.client-dashboard__section-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-lg);
+  background: var(--mg-color-surface-main);
+  border: var(--border-width) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+  border-left-width: var(--mg-spacing-xs);
+  border-left-style: solid;
+}
+
+.client-dashboard__section-block--accent-primary {
+  border-left-color: var(--mg-color-primary-main);
+}
+
+.client-dashboard__section-block--accent-accent {
+  border-left-color: var(--mg-color-accent-main);
+}
+
+.client-dashboard__section-block--accent-secondary {
+  border-left-color: var(--mg-color-secondary-main, var(--mg-color-primary-main));
+}
+
+.client-dashboard__section-block-head {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mg-spacing-sm);
+}
+
+.client-dashboard__accent-bar {
+  width: var(--mg-spacing-xs);
+  min-height: var(--mg-spacing-md);
+  align-self: stretch;
+  background: var(--mg-color-primary-main);
+  border-radius: var(--mg-radius-sm);
+}
+
+.client-dashboard__section-block--accent-accent .client-dashboard__accent-bar {
+  background: var(--mg-color-accent-main);
+}
+
+.client-dashboard__section-block--accent-secondary .client-dashboard__accent-bar {
+  background: var(--mg-color-secondary-main, var(--mg-color-primary-main));
+}
+
+.client-dashboard__section-block-title {
+  margin: 0;
+  font-size: var(--mg-font-lg);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-color-text-main);
+}
+
+.client-dashboard__section-block-subtitle {
+  margin: var(--mg-spacing-xs) 0 0;
+  font-size: var(--mg-font-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.client-dashboard__section-block-body {
+  min-width: 0;
+}
+
 .client-dashboard__section .mg-v2-content-section__title {
   font-size: var(--mg-font-xl);
   color: var(--mg-color-text-main);
@@ -182,9 +246,18 @@
   color: var(--mg-color-text-secondary);
 }
 
-/* ===== KPI ===== */
-.client-dashboard__section--kpi .mg-v2-content-kpi-row {
-  grid-template-columns: 1fr;
+/* ===== KPI 4-grid (1280px) ===== */
+.client-dashboard__section--kpi .client-dashboard__kpi-row.mg-v2-content-kpi-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mg-layout-grid-gap, var(--mg-spacing-md));
+}
+
+.client-dashboard__section--kpi .mg-v2-content-kpi-card {
+  box-shadow: none;
+}
+
+.client-dashboard__section--kpi .mg-v2-content-kpi-card:hover {
+  box-shadow: none;
 }
 
 /* ===== Core grid (1280 2-col) ===== */
@@ -213,10 +286,10 @@
   box-shadow: none;
 }
 
-/* ===== Quick menu ===== */
+/* ===== Quick menu 4 SSOT ===== */
 .client-dashboard__quick-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--action-button-min-width, 8.75rem), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--mg-spacing-md);
 }
 
@@ -231,8 +304,12 @@
 
 /* ===== Desktop 1280+ ===== */
 @media (min-width: 1280px) {
-  .client-dashboard__section--kpi .mg-v2-content-kpi-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .client-dashboard__section--kpi .client-dashboard__kpi-row.mg-v2-content-kpi-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .client-dashboard__quick-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .client-dashboard__core-grid {
@@ -242,8 +319,12 @@
 
 /* ===== Tablet 769–1279 ===== */
 @media (min-width: 769px) and (max-width: 1279px) {
-  .client-dashboard__section--kpi .mg-v2-content-kpi-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .client-dashboard__section--kpi .client-dashboard__kpi-row.mg-v2-content-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .client-dashboard__quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .client-dashboard__core-grid {
@@ -284,7 +365,8 @@
 
 [data-theme="dark"] .client-dashboard__welcome-card,
 [data-theme="dark"] .client-dashboard__action-card,
-[data-theme="dark"] .client-dashboard__core-card {
+[data-theme="dark"] .client-dashboard__core-card,
+[data-theme="dark"] .client-dashboard__section-block {
   background: var(--mg-color-surface-main, var(--mg-dark-bg-800));
   border-color: var(--mg-border_dark, var(--mg-color-border-main));
 }

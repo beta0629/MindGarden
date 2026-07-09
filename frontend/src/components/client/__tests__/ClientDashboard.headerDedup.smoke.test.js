@@ -1,13 +1,14 @@
 /**
- * ClientDashboard — v1.1 rebuild smoke (G-14 · B0KlA · ContentHeader SSOT)
+ * ClientDashboard — v1.4 rebuild smoke (B0KlA · KPI 4-grid · QuickMenu 4 SSOT)
  *
  * @author Core Solution
- * @since 2026-07-07
+ * @since 2026-07-09
  */
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { CLIENT_DASHBOARD_QUICK_MENU_ITEMS } from '../../../constants/clientDashboardRoutes';
 
 const PAGE_TITLE = '내 대시보드';
 
@@ -36,25 +37,25 @@ jest.mock('../../dashboard-v2/content', () => ({
       {subtitle ? <p>{subtitle}</p> : null}
     </header>
   ),
-  ContentSection: ({ title, subtitle, children, dataTestId }) => (
-    <section data-testid={dataTestId || undefined}>
-      {title ? <h2>{title}</h2> : null}
-      {subtitle ? <p>{subtitle}</p> : null}
-      {children}
-    </section>
-  ),
-  ContentKpiRow: () => <div data-testid="content-kpi-row" />
+  ContentSection: ({ children }) => <section>{children}</section>,
+  ContentKpiRow: ({ items, loading }) => (
+    <div data-testid="content-kpi-row" data-loading={String(Boolean(loading))} data-count={items.length}>
+      {items.map((item) => (
+        <span key={item.id}>{item.label}</span>
+      ))}
+    </div>
+  )
 }));
 
-jest.mock('../../common/UnifiedLoading', () => ({
+jest.mock('../../common/ListTableView', () => ({
   __esModule: true,
-  default: ({ text }) => <div data-testid="loading">{text}</div>
+  default: () => <table data-testid="list-table-view" />
 }));
 
 jest.mock('../../common/MGButton', () => ({
   __esModule: true,
-  default: ({ children, onClick }) => (
-    <button type="button" onClick={onClick}>
+  default: ({ children, onClick, disabled, ...rest }) => (
+    <button type="button" onClick={onClick} disabled={disabled} {...rest}>
       {children}
     </button>
   )
@@ -77,7 +78,7 @@ jest.mock('../../dashboard/ClientPaymentSessionsSection', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key) => {
+    t: (key, vars) => {
       const map = {
         'common:client.ClientDashboard.t_7be8ada9': '매칭 대기',
         'common:client.ClientDashboard.t_07de2f32': '상담 진행 중',
@@ -93,7 +94,7 @@ jest.mock('react-i18next', () => ({
         'common:client.ClientDashboard.t_7ba9542c': '예정',
         'common:client.ClientDashboard.t_d7f3f1d4': '매칭이 진행 중입니다.',
         'common:client.ClientDashboard.t_17cef764': '패키지',
-        'common:client.ClientDashboard.t_d23413ca': '상담이 진행 중입니다.',
+        'common:client.ClientDashboard.t_d23413ca': `${vars?.namePart || ''}${vars?.pkg || ''} · 남은 회기 ${vars?.rem || ''}회`,
         'common:client.ClientDashboard.t_6d8a0e47': '진행 중인 상담이 없습니다.',
         'common.labels.active': '활성',
         'common.labels.pending': '대기',
@@ -139,15 +140,10 @@ jest.mock('../../../utils/standardizedApi', () => ({
   }
 }));
 
-jest.mock('../../../utils/notification', () => ({
-  __esModule: true,
-  default: { show: jest.fn() }
-}));
-
 import ClientDashboard from '../ClientDashboard';
 
-describe('ClientDashboard v1.1 rebuild', () => {
-  test('ContentHeader SSOT · ACL title 생략 · B0KlA · E2E testid', async() => {
+describe('ClientDashboard v1.4 rebuild', () => {
+  test('ContentHeader SSOT · KPI 4-grid · QuickMenu 4 LNB · section-block', async() => {
     render(
       <MemoryRouter>
         <ClientDashboard />
@@ -170,14 +166,27 @@ describe('ClientDashboard v1.1 rebuild', () => {
       expect(screen.getByTestId('client-dashboard-kpi-section')).toBeInTheDocument();
     });
 
+    const kpiRow = screen.getByTestId('content-kpi-row');
+    expect(kpiRow).toHaveAttribute('data-count', '4');
+    expect(screen.getByText('완료 상담')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('client-personalized-messages')).toBeInTheDocument();
+    });
+
     expect(screen.getByTestId('client-dashboard-upcoming-schedule')).toBeInTheDocument();
+    expect(screen.getByTestId('client-dashboard-core-section')).toBeInTheDocument();
     expect(screen.getByTestId('client-dashboard-quick-menu')).toBeInTheDocument();
     expect(screen.getByTestId('client-dashboard-quick-menu-section')).toBeInTheDocument();
+
+    CLIENT_DASHBOARD_QUICK_MENU_ITEMS.forEach((item) => {
+      expect(screen.getByRole('button', { name: item.label })).toBeInTheDocument();
+    });
+
     expect(document.querySelector('.client-dashboard')).toBeInTheDocument();
     expect(document.querySelector('.client-dashboard__container')).toBeInTheDocument();
+    expect(document.querySelector('.client-dashboard__section-block')).toBeInTheDocument();
     expect(document.getElementById('client-dashboard-main')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^일정$/ })).toBeInTheDocument();
-    expect(screen.getByTestId('client-personalized-messages')).toBeInTheDocument();
     expect(screen.getByTestId('client-payment-sessions')).toBeInTheDocument();
   });
 });

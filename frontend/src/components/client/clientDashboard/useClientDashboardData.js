@@ -29,6 +29,7 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
   const [mappingsLoadFailed, setMappingsLoadFailed] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [scheduleLoadFailed, setScheduleLoadFailed] = useState(false);
 
   const loadClientData = useCallback(async() => {
     if (!currentUser?.id) {
@@ -36,15 +37,23 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
       return;
     }
 
-    try {
-      setIsLoading(true);
-      setMappingsLoadFailed(false);
+    setIsLoading(true);
+    setScheduleLoadFailed(false);
+    setMappingsLoadFailed(false);
 
-      const scheduleRaw = await StandardizedApi.get(DASHBOARD_API.CLIENT_SCHEDULES, {
-        userId: currentUser.id,
-        userRole: USER_ROLES.CLIENT
-      });
-      const schedules = normalizeScheduleListPayload(scheduleRaw);
+    try {
+      let schedules = [];
+      try {
+        const scheduleRaw = await StandardizedApi.get(DASHBOARD_API.CLIENT_SCHEDULES, {
+          userId: currentUser.id,
+          userRole: USER_ROLES.CLIENT
+        });
+        schedules = normalizeScheduleListPayload(scheduleRaw);
+      } catch (scheduleError) {
+        console.error('내담자 일정 로드 실패:', scheduleError);
+        setScheduleLoadFailed(true);
+        schedules = [];
+      }
 
       let mappings = [];
       try {
@@ -142,6 +151,7 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
       });
     } catch (error) {
       console.error('내담자 데이터 로드 실패:', error);
+      setScheduleLoadFailed(true);
       setMappingsLoadFailed(true);
       setSharedClientMappings([]);
       setClientStatus({ mappingStatus: 'NONE', paymentStatus: null });
@@ -159,13 +169,18 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
     loadClientData();
   }, [sessionLoading, isLoggedIn, currentUser?.id, loadClientData]);
 
+  const sectionLoading = isLoading || sessionLoading;
+  const sectionError = scheduleLoadFailed;
+
   return {
     consultationData,
     clientStatus,
     sharedClientMappings,
     mappingsLoadFailed,
     unreadMessageCount,
-    isLoading,
+    isLoading: sectionLoading,
+    scheduleLoadFailed,
+    sectionError,
     reload: loadClientData
   };
 }

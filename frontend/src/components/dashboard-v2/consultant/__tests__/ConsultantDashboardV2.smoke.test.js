@@ -118,6 +118,11 @@ jest.mock('../../../../utils/standardizedApi', () => ({
 
 import ConsultantDashboardV2 from '../ConsultantDashboardV2';
 import { CONSULTANT_DASHBOARD_TITLE_ID } from '../../../../constants/consultantDashboardConstants';
+import {
+  CONSULTANT_DASHBOARD_KPI_ROUTES,
+  CONSULTANT_DASHBOARD_QUICK_ACTIONS,
+  CONSULTANT_DASHBOARD_ROUTES
+} from '../../../../constants/consultantDashboardRoutes';
 
 const renderDashboard = () => render(
   <MemoryRouter>
@@ -167,9 +172,23 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
       expect(screen.getByText('작성 대기 일지')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: '상담일지 작성' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '일정 조회' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '내담자 관리' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '일정 등록' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '일정 확인' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '내담자 메시지' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '일지 작성' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '정산 확인' })).toBeInTheDocument();
+  });
+
+  test('dashboard link SSOT avoids renewal and dashboard-v2 paths', () => {
+    expect(CONSULTANT_DASHBOARD_ROUTES.DASHBOARD).toBe('/consultant/dashboard');
+    expect(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES).toBe('/consultant/messages');
+
+    const quickPaths = CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((action) => action.path);
+    quickPaths.forEach((path) => {
+      expect(path).not.toMatch(/dashboard-v2|\/renewal\//);
+    });
+    expect(quickPaths).toContain('/consultant/schedule');
+    expect(quickPaths).toContain('/consultant/consultation-records?filter=incomplete');
   });
 
   test('weekly chart empty uses B0KlA chart-empty (not legacy empty-state)', async() => {

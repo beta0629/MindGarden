@@ -24,6 +24,13 @@
   width: 100%;
   min-width: 0;
   margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
+  position: relative;
+}
+
+.consultant-dashboard-v2__kpi-retry {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--mg-spacing-xs, 0.25rem);
 }
 
 .consultant-dashboard-v2__kpi-row.mg-v2-content-kpi-row {

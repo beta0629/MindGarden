@@ -14,17 +14,28 @@ import UrgentClientsSection from './UrgentClientsSection';
 import ConsultantDashboardListSection from './ConsultantDashboardListSection';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import SafeText from '../../common/SafeText';
+import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   CONSULTANT_DASHBOARD_TITLE_ID,
   CONSULTANT_DASHBOARD_PAGE_TEST_ID,
   CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID,
-  CONSULTANT_DASHBOARD_ROUTES,
   CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL,
   CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL,
   CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL,
+  CONSULTANT_DASHBOARD_LIST_ERROR_LABEL,
+  CONSULTANT_DASHBOARD_KPI_RETRY_ARIA_LABEL,
   CONSULTANT_SCHEDULE_STATUS_LABELS
 } from '../../../constants/consultantDashboardConstants';
+import {
+  CONSULTANT_DASHBOARD_ROUTES,
+  CONSULTANT_DASHBOARD_KPI_ROUTES,
+  buildConsultantClientDetailRoute,
+  buildConsultantConsultationRecordRoute,
+  buildConsultantConsultationRecordsRoute,
+  buildConsultantClientsRoute
+} from '../../../constants/consultantDashboardRoutes';
 import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantDashboard.css';
@@ -81,6 +92,8 @@ const ConsultantDashboardV2 = ({ user }) => {
 
   const [incompleteRecords, setIncompleteRecords] = useState({ count: 0, schedules: [] });
   const [urgentClients, setUrgentClients] = useState([]);
+  const [phase1Loading, setPhase1Loading] = useState(false);
+  const [phase1Error, setPhase1Error] = useState('');
   const [nextConsultation, setNextConsultation] = useState(null);
   const [showConsultationLogModal, setShowConsultationLogModal] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
@@ -400,6 +413,8 @@ const ConsultantDashboardV2 = ({ user }) => {
   const fetchPhase1Content = async(consultantId) => {
     if (!consultantId) return;
 
+    setPhase1Loading(true);
+    setPhase1Error('');
     try {
       const [incompleteRes, urgentRes, preparationRes] = await Promise.allSettled([
         StandardizedApi.get(DASHBOARD_API.CONSULTANT_INCOMPLETE_RECORDS(consultantId)),
@@ -421,6 +436,10 @@ const ConsultantDashboardV2 = ({ user }) => {
       if (urgentRes.status === 'fulfilled' && urgentRes.value) {
         const data = urgentRes.value;
         setUrgentClients(data.clients ?? []);
+      } else if (urgentRes.status === 'rejected') {
+        setUrgentClients([]);
+        setPhase1Error(CONSULTANT_DASHBOARD_LIST_ERROR_LABEL);
+        console.warn('긴급 내담자 API 실패:', urgentRes.reason);
       }
 
       if (preparationRes.status === 'fulfilled' && preparationRes.value) {
@@ -445,13 +464,16 @@ const ConsultantDashboardV2 = ({ user }) => {
         }
       }
     } catch (error) {
+      setPhase1Error(CONSULTANT_DASHBOARD_LIST_ERROR_LABEL);
       console.warn('Phase 1 컨텐츠 로드 실패:', error);
+    } finally {
+      setPhase1Loading(false);
     }
   };
 
   const handleScheduleClick = (scheduleId) => {
     if (!scheduleId) return;
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?scheduleId=${scheduleId}`);
+    navigate(buildConsultantConsultationRecordRoute(scheduleId));
   };
 
   const normalizeIncompleteSessionDate = (entry) => {
@@ -472,7 +494,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       const firstSchedule = incompleteRecords.schedules[0];
       const sid = firstSchedule.scheduleId;
       if (sid == null || sid === '') {
-        navigate('/consultant/consultation-records?filter=incomplete');
+        navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }));
         return;
       }
       const sessionDateStr = normalizeIncompleteSessionDate(firstSchedule);
@@ -490,24 +512,24 @@ const ConsultantDashboardV2 = ({ user }) => {
       });
       setShowConsultationLogModal(true);
     } else {
-      navigate('/consultant/consultation-records?filter=incomplete');
+      navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }));
     }
   };
 
   const handleViewPreviousRecords = (clientId) => {
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?clientId=${clientId}`);
+    navigate(buildConsultantConsultationRecordsRoute({ clientId }));
   };
 
   const handleViewDetails = (scheduleId) => {
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?scheduleId=${scheduleId}`);
+    navigate(buildConsultantConsultationRecordRoute(scheduleId));
   };
 
   const handleViewAllClients = () => {
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CLIENTS}?filter=urgent`);
+    navigate(buildConsultantClientsRoute({ filter: 'urgent' }));
   };
 
   const handleViewClientDetails = (clientId) => {
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CLIENTS}/${clientId}`);
+    navigate(buildConsultantClientDetailRoute(clientId));
   };
 
   const handleConsultationLogSave = () => {
@@ -598,6 +620,16 @@ const ConsultantDashboardV2 = ({ user }) => {
   );
 
   const isSectionLoading = loading && Boolean(user?.id);
+  const kpiUnavailable = Boolean(dashboardError) && !isSectionLoading;
+  const listSectionError = kpiUnavailable ? CONSULTANT_DASHBOARD_LIST_ERROR_LABEL : '';
+
+  const formatKpiValue = (display) => (kpiUnavailable ? '—' : display);
+
+  const handlePhase1Retry = () => {
+    if (user?.id) {
+      fetchPhase1Content(user.id);
+    }
+  };
 
   return (
     <AdminCommonLayout className="mg-v2-dashboard-layout">
@@ -628,6 +660,27 @@ const ConsultantDashboardV2 = ({ user }) => {
           aria-label="핵심 지표"
           data-testid={CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID}
         >
+          {kpiUnavailable ? (
+            <div className="consultant-dashboard-v2__kpi-retry">
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-v2-btn mg-v2-btn-outline mg-v2-btn-sm'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={fetchDashboardData}
+                preventDoubleClick={false}
+                aria-label={CONSULTANT_DASHBOARD_KPI_RETRY_ARIA_LABEL}
+              >
+                <Icon name="REFRESH" size="SM" color="TRANSPARENT" aria-hidden />
+              </MGButton>
+            </div>
+          ) : null}
           <ContentKpiRow
             className="consultant-dashboard-v2__kpi-row"
             loading={isSectionLoading}
@@ -636,29 +689,33 @@ const ConsultantDashboardV2 = ({ user }) => {
                 id: 'weeklyConsultations',
                 icon: <Calendar {...kpiLucideProps} />,
                 label: '주간 상담 건수',
-                value: `${weeklyConsultationCount}건`,
-                iconVariant: 'blue'
+                value: formatKpiValue(`${weeklyConsultationCount}건`),
+                iconVariant: 'blue',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.WEEKLY_CONSULTATIONS)
               },
               {
                 id: 'newClients',
                 icon: <UserPlus {...kpiLucideProps} />,
                 label: '신규 내담자',
-                value: `${dashboardData.stats.newClients}명`,
-                iconVariant: 'green'
+                value: formatKpiValue(`${dashboardData.stats.newClients}명`),
+                iconVariant: 'green',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
               },
               {
                 id: 'unreadMessages',
                 icon: <MessageSquare {...kpiLucideProps} />,
                 label: '미확인 메시지',
-                value: `${dashboardData.stats.unreadMessages}건`,
-                iconVariant: 'orange'
+                value: formatKpiValue(`${dashboardData.stats.unreadMessages}건`),
+                iconVariant: 'orange',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)
               },
               {
                 id: 'incompleteRecords',
                 icon: <ClipboardList {...kpiLucideProps} />,
                 label: '작성 대기 일지',
-                value: `${incompleteRecords.count}건`,
-                iconVariant: 'gray'
+                value: formatKpiValue(`${incompleteRecords.count}건`),
+                iconVariant: 'gray',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.INCOMPLETE_RECORDS)
               }
             ]}
           />
@@ -666,6 +723,9 @@ const ConsultantDashboardV2 = ({ user }) => {
 
         <UrgentClientsSection
           clients={urgentClients}
+          loading={phase1Loading}
+          error={phase1Error}
+          onRetry={handlePhase1Retry}
           onViewAllClients={handleViewAllClients}
           onViewClientDetails={handleViewClientDetails}
         />
@@ -683,6 +743,8 @@ const ConsultantDashboardV2 = ({ user }) => {
             viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL}
             dataTestId="consultant-dashboard-recent-schedules"
             loading={isSectionLoading}
+            error={listSectionError}
+            onRetry={kpiUnavailable ? fetchDashboardData : undefined}
           />
 
           <ConsultantDashboardListSection
@@ -697,6 +759,8 @@ const ConsultantDashboardV2 = ({ user }) => {
             viewAllLabel={CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL}
             dataTestId="consultant-dashboard-upcoming-schedules"
             loading={isSectionLoading}
+            error={listSectionError}
+            onRetry={kpiUnavailable ? fetchDashboardData : undefined}
           />
 
           <ConsultantDashboardListSection
@@ -712,6 +776,8 @@ const ConsultantDashboardV2 = ({ user }) => {
             rowKeyField="id"
             dataTestId="consultant-dashboard-notifications"
             loading={isSectionLoading}
+            error={listSectionError}
+            onRetry={kpiUnavailable ? fetchDashboardData : undefined}
           />
         </div>
 

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -12,6 +12,10 @@ import ConsultantRecordListBlock from './records/ConsultantRecordListBlock';
 import ConsultationLogModal from './ConsultationLogModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import {
+  buildConsultantConsultationRecordRoute,
+  CONSULTANT_DASHBOARD_ROUTES
+} from '../../constants/consultantDashboardRoutes';
 import './ConsultantRecords.css';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
@@ -20,11 +24,14 @@ const ConsultantRecords = () => {
   const { t } = useTranslation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const deepLinkHandledRef = useRef(false);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [clientIdFilter, setClientIdFilter] = useState('');
   const [statusOptions, setStatusOptions] = useState([
     { value: 'ALL', label: '전체' }
   ]);
@@ -93,6 +100,39 @@ const ConsultantRecords = () => {
   }, [user?.id]);
 
   useEffect(() => {
+    if (deepLinkHandledRef.current) {
+      return;
+    }
+
+    const scheduleId = searchParams.get('scheduleId');
+    const action = searchParams.get('action');
+    const filter = searchParams.get('filter');
+    const clientId = searchParams.get('clientId');
+
+    if (scheduleId) {
+      deepLinkHandledRef.current = true;
+      navigate(buildConsultantConsultationRecordRoute(scheduleId), { replace: true });
+      return;
+    }
+
+    if (action === 'create') {
+      deepLinkHandledRef.current = true;
+      navigate(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE, { replace: true });
+      return;
+    }
+
+    deepLinkHandledRef.current = true;
+
+    if (filter === 'incomplete') {
+      setFilterStatus('PENDING');
+    }
+
+    if (clientId) {
+      setClientIdFilter(String(clientId));
+    }
+  }, [navigate, searchParams]);
+
+  useEffect(() => {
     if (!sessionLoading && isLoggedIn && user?.id) {
       loadRecords();
       loadStatusCodes();
@@ -109,8 +149,11 @@ const ConsultantRecords = () => {
     const isCompleted = record.isSessionCompleted === true;
     const recordStatus = isCompleted ? 'COMPLETED' : 'PENDING';
     const matchesStatus = filterStatus === 'ALL' || recordStatus === filterStatus || record.status === filterStatus;
+    const matchesClient = !clientIdFilter
+      || String(record.clientId ?? '') === clientIdFilter
+      || String(record.client?.id ?? '') === clientIdFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesClient;
   });
 
   const handleViewRecord = (recordId) => {
@@ -124,7 +167,7 @@ const ConsultantRecords = () => {
   };
 
   const handleNavigateSchedule = () => {
-    navigate('/consultant/schedule');
+    navigate(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE);
   };
 
   const handleModalClose = () => {

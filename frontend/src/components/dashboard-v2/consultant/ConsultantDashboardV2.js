@@ -21,7 +21,6 @@ import {
   CONSULTANT_DASHBOARD_TITLE_ID,
   CONSULTANT_DASHBOARD_PAGE_TEST_ID,
   CONSULTANT_DASHBOARD_KPI_SECTION_TEST_ID,
-  CONSULTANT_DASHBOARD_ROUTES,
   CONSULTANT_DASHBOARD_VIEW_ALL_SCHEDULE_LABEL,
   CONSULTANT_DASHBOARD_VIEW_ALL_UPCOMING_LABEL,
   CONSULTANT_DASHBOARD_VIEW_ALL_NOTIFICATIONS_LABEL,
@@ -29,6 +28,14 @@ import {
   CONSULTANT_DASHBOARD_KPI_RETRY_ARIA_LABEL,
   CONSULTANT_SCHEDULE_STATUS_LABELS
 } from '../../../constants/consultantDashboardConstants';
+import {
+  CONSULTANT_DASHBOARD_ROUTES,
+  CONSULTANT_DASHBOARD_KPI_ROUTES,
+  buildConsultantClientDetailRoute,
+  buildConsultantConsultationRecordRoute,
+  buildConsultantConsultationRecordsRoute,
+  buildConsultantClientsRoute
+} from '../../../constants/consultantDashboardRoutes';
 import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantDashboard.css';
@@ -466,7 +473,7 @@ const ConsultantDashboardV2 = ({ user }) => {
 
   const handleScheduleClick = (scheduleId) => {
     if (!scheduleId) return;
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?scheduleId=${scheduleId}`);
+    navigate(buildConsultantConsultationRecordRoute(scheduleId));
   };
 
   const normalizeIncompleteSessionDate = (entry) => {
@@ -487,7 +494,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       const firstSchedule = incompleteRecords.schedules[0];
       const sid = firstSchedule.scheduleId;
       if (sid == null || sid === '') {
-        navigate('/consultant/consultation-records?filter=incomplete');
+        navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }));
         return;
       }
       const sessionDateStr = normalizeIncompleteSessionDate(firstSchedule);
@@ -505,24 +512,24 @@ const ConsultantDashboardV2 = ({ user }) => {
       });
       setShowConsultationLogModal(true);
     } else {
-      navigate('/consultant/consultation-records?filter=incomplete');
+      navigate(buildConsultantConsultationRecordsRoute({ filter: 'incomplete' }));
     }
   };
 
   const handleViewPreviousRecords = (clientId) => {
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?clientId=${clientId}`);
+    navigate(buildConsultantConsultationRecordsRoute({ clientId }));
   };
 
   const handleViewDetails = (scheduleId) => {
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?scheduleId=${scheduleId}`);
+    navigate(buildConsultantConsultationRecordRoute(scheduleId));
   };
 
   const handleViewAllClients = () => {
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CLIENTS}?filter=urgent`);
+    navigate(buildConsultantClientsRoute({ filter: 'urgent' }));
   };
 
   const handleViewClientDetails = (clientId) => {
-    navigate(`${CONSULTANT_DASHBOARD_ROUTES.CLIENTS}/${clientId}`);
+    navigate(buildConsultantClientDetailRoute(clientId));
   };
 
   const handleConsultationLogSave = () => {
@@ -683,28 +690,32 @@ const ConsultantDashboardV2 = ({ user }) => {
                 icon: <Calendar {...kpiLucideProps} />,
                 label: '주간 상담 건수',
                 value: formatKpiValue(`${weeklyConsultationCount}건`),
-                iconVariant: 'blue'
+                iconVariant: 'blue',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.WEEKLY_CONSULTATIONS)
               },
               {
                 id: 'newClients',
                 icon: <UserPlus {...kpiLucideProps} />,
                 label: '신규 내담자',
                 value: formatKpiValue(`${dashboardData.stats.newClients}명`),
-                iconVariant: 'green'
+                iconVariant: 'green',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.NEW_CLIENTS)
               },
               {
                 id: 'unreadMessages',
                 icon: <MessageSquare {...kpiLucideProps} />,
                 label: '미확인 메시지',
                 value: formatKpiValue(`${dashboardData.stats.unreadMessages}건`),
-                iconVariant: 'orange'
+                iconVariant: 'orange',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES)
               },
               {
                 id: 'incompleteRecords',
                 icon: <ClipboardList {...kpiLucideProps} />,
                 label: '작성 대기 일지',
                 value: formatKpiValue(`${incompleteRecords.count}건`),
-                iconVariant: 'gray'
+                iconVariant: 'gray',
+                onClick: () => navigate(CONSULTANT_DASHBOARD_KPI_ROUTES.INCOMPLETE_RECORDS)
               }
             ]}
           />

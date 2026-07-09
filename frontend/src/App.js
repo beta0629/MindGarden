@@ -674,6 +674,7 @@ function AppContent() {
             <Route path="/erp/tax" element={<Navigate to="/erp/salary?tab=tax" replace />} />
             <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
             <Route path="/consultant/clients" element={<ConsultantClientList />} />
+            <Route path="/consultant/clients/:id" element={<ConsultantClientList />} />
             <Route path="/consultant/client/:id" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />
             <Route path="/consultant/consultation-records" element={<ConsultantRecords />} />

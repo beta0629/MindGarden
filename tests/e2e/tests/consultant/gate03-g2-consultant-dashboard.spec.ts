@@ -2,12 +2,12 @@
  * GATE-03 G2 — Consultant Dashboard V2 dev UI 검증 (ROLE-02 · #548 ENHANCED)
  *
  * env: BASE_URL=https://mindgarden.dev.core-solution.co.kr
- * bundle: main.2d20a7a4.js (EXPECTED_FE_BUNDLE_HASH)
+ * bundle: main.9047d69c.js (EXPECTED_FE_BUNDLE_HASH)
  * credentials: erpAuth SSOT — CONSULTANT 01042858570
  *
  * 실행:
  *   cd tests/e2e && BASE_URL=https://mindgarden.dev.core-solution.co.kr \
- *     EXPECTED_FE_BUNDLE_HASH=2d20a7a4 \
+ *     EXPECTED_FE_BUNDLE_HASH=9047d69c \
  *     npx playwright test tests/consultant/gate03-g2-consultant-dashboard.spec.ts \
  *     --config=playwright.manual.config.ts --project=chromium
  */
@@ -23,7 +23,7 @@ import {
 } from '../../helpers/react130ConsoleGate';
 
 const EXPECTED_BUNDLE_HASH =
-  (process as any).env.EXPECTED_FE_BUNDLE_HASH?.trim() || '2d20a7a4';
+  (process as any).env.EXPECTED_FE_BUNDLE_HASH?.trim() || '9047d69c';
 const EXPECTED_BUNDLE_FILE = `main.${EXPECTED_BUNDLE_HASH}.js`;
 
 const EVIDENCE_DIR = path.resolve(
@@ -91,10 +91,15 @@ test.describe('GATE-03 G2 — Consultant Dashboard V2 (dev)', () => {
     const bundleSrc = await assertFeBundle(page);
 
     await expect(page.locator('.mg-v2-dashboard-layout, .mg-admin-layout').first()).toBeVisible();
-    await expect(page.getByTestId('consultant-dashboard-quick-action-bar')).toBeVisible();
+    const quickActionBar = page.getByTestId('consultant-dashboard-quick-action-bar');
+    await expect(quickActionBar).toBeVisible();
+    const quickActionButtons = quickActionBar.getByRole('button');
+    await expect(quickActionButtons).toHaveCount(5);
     await expect(page.getByRole('button', { name: '일정 등록' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '메시지 작성' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '내담자 추가' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '일정 확인' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '내담자 메시지' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '일지 작성' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '정산 확인' })).toBeVisible();
 
     const kpiCards = page.locator('.mg-v2-content-kpi-card');
     await expect(kpiCards).toHaveCount(4);
@@ -107,7 +112,7 @@ test.describe('GATE-03 G2 — Consultant Dashboard V2 (dev)', () => {
 
     test.info().annotations.push({
       type: 'evidence',
-      description: `G2-1 PASS — bundle ${bundleSrc} · KPI 4-grid · QuickActionBar 3 CTA`
+      description: `G2-1 PASS — bundle ${bundleSrc} · KPI 4-grid · QuickActionBar 5 CTA (v2.1 SSOT)`
     });
   });
 
@@ -127,6 +132,12 @@ test.describe('GATE-03 G2 — Consultant Dashboard V2 (dev)', () => {
     const tableCount = await listTables.count();
     expect(tableCount).toBeGreaterThanOrEqual(1);
 
+    const urgentSection = page.getByTestId('consultant-dashboard-urgent-clients');
+    if ((await urgentSection.count()) > 0) {
+      await expect(urgentSection).toBeVisible();
+      await expect(urgentSection.locator('table.mg-v2-list-block__table')).toBeVisible();
+    }
+
     const chartSection = page.getByTestId('consultant-dashboard-weekly-chart');
     await expect(chartSection).toBeVisible();
     const chartCanvas = chartSection.locator('canvas');
@@ -137,7 +148,7 @@ test.describe('GATE-03 G2 — Consultant Dashboard V2 (dev)', () => {
 
     test.info().annotations.push({
       type: 'evidence',
-      description: `G2-2 PASS — messages section · ListTableView×${tableCount} · chart area visible`
+      description: `G2-2 PASS — messages · ListTableView×${tableCount} · urgent testid (v2.1 C01) · chart visible`
     });
   });
 

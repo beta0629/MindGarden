@@ -48,13 +48,20 @@
     margin-bottom: var(--mg-v2-space-4, 1rem);
   }
 
+  /* absolute front/back → in-flow 높이 없음: min-height로 subtitle·hint 가시 영역 확보 */
   .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card {
-    --mg-kpi-flip-card-min-height: 88px;
+    --mg-kpi-flip-card-min-height: calc(
+      var(--mg-v2-space-4) * 2 +
+      var(--mg-v2-space-6) +
+      var(--mg-v2-space-8) +
+      var(--mg-v2-space-6) +
+      var(--mg-v2-space-5)
+    );
     max-height: 120px;
   }
 
   .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__inner {
-    min-height: 88px;
+    min-height: var(--mg-kpi-flip-card-min-height);
     max-height: 120px;
   }
 
@@ -64,13 +71,27 @@
     padding-inline-start: calc(var(--mg-v2-space-4, 16px) + 4px);
   }
 
-  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__value {
-    font-size: var(--mg-v2-font-size-h4, 1.25rem);
-    margin-bottom: var(--mg-v2-space-1, 4px);
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__front-top {
+    margin-bottom: var(--mg-v2-space-1, 0.25rem);
   }
 
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__value {
+    font-size: var(--mg-v2-font-size-h4, 1.25rem);
+    margin-bottom: 0;
+  }
+
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__summary {
+    line-height: var(--mg-v2-font-line-height-caption);
+  }
+
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__flip-hint {
+    min-height: var(--mg-v2-space-4, 1rem);
+    padding-top: 0;
+  }
+
+  /* compact 4-grid: 스파크라인은 subtitle·hint 가독성 우선으로 숨김 (뒷면·추세 배지 유지) */
   .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__front > .mg-v2-kpi-sparkline {
-    max-height: var(--mg-v2-space-6, 1.5rem);
+    display: none;
   }
 }
 

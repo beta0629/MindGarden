@@ -8,19 +8,13 @@ import {
   Inbox,
   AlertCircle
 } from 'lucide-react';
-import StandardizedApi from '../../utils/standardizedApi';
+import { apiGet } from '../../utils/ajax';
 import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/apiResponseNormalize';
 
 import UnifiedLoading from '../common/UnifiedLoading';
-import SafeText from '../common/SafeText';
-import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentSessionsSection.css';
 import { useTranslation } from 'react-i18next';
-
-/** 표준화 2026-07-07: 내담자 매핑 조회 엔드포인트(리터럴 제거) */
-const CLIENT_MAPPINGS_ENDPOINT = (clientId) => `/api/v1/admin/mappings/client?clientId=${clientId}`;
-const PAYMENT_RETRY_LABEL = '다시 시도';
 /**
  * 내담자 결제 내역 및 총회기수 섹션 컴포넌트
 /**
@@ -78,8 +72,7 @@ const ClientPaymentSessionsSection = ({
   userId,
   supplyMappingsFromParent,
   parentMappings,
-  parentMappingsFetchFailed = false,
-  onRetry = null
+  parentMappingsFetchFailed = false
 }) => {
   const { t } = useTranslation();
   const [paymentData, setPaymentData] = useState({
@@ -131,8 +124,8 @@ const ClientPaymentSessionsSection = ({
         return;
       }
 
-      // 표준화 2026-07-07: StandardizedApi + /api/v1/admin 경로 통일
-      const mappingResponse = await StandardizedApi.get(CLIENT_MAPPINGS_ENDPOINT(userId));
+      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
+      const mappingResponse = await apiGet(`/api/v1/admin/mappings/client?clientId=${userId}`);
       if (isApiGetNullFailure(mappingResponse)) {
         setError(MAPPINGS_FETCH_ERROR_TEXT);
         return;
@@ -224,27 +217,14 @@ const ClientPaymentSessionsSection = ({
     );
   }
 
-  const handleRetry = () => {
-    if (supplyMappingsFromParent && typeof onRetry === 'function') {
-      onRetry();
-      return;
-    }
-    loadPaymentSessionsData();
-  };
-
   if (error) {
     return (
       <div className="payment-sessions-section">
-        <div className="payment-sessions-error" role="alert">
+        <div className="payment-sessions-error">
           <div className="payment-sessions-error__icon" aria-hidden>
             <AlertCircle size={PAYMENT_STATE_ICON_SIZE} />
           </div>
-          <p className="payment-sessions-error__text">
-            <SafeText tag="span">{error}</SafeText>
-          </p>
-          <button type="button" className="payment-sessions-error__retry" onClick={handleRetry}>
-            {PAYMENT_RETRY_LABEL}
-          </button>
+          <p className="payment-sessions-error__text">{error}</p>
         </div>
       </div>
     );
@@ -319,18 +299,21 @@ const ClientPaymentSessionsSection = ({
                 <div className="payment-item__content">
                   <div className="payment-item__header">
                     <h4 className="payment-item__package">
-                      <SafeText tag="span">{formatCurrency(payment.amount)}</SafeText>
+                      
+                      {formatCurrency(payment.amount)}
                     </h4>
                     <span className={`mg-badge mg-badge-${getStatusClass(payment.status)}`}>
-                      <SafeText tag="span">{getStatusText(payment.status)}</SafeText>
+                      {getStatusText(payment.status)}
                     </span>
                   </div>
                   <div className="payment-item__details">
                     <span className="payment-item__sessions">
-                      <SafeText tag="span">{`${toDisplayString(payment.sessions, 0)}회`}</SafeText>
+                      
+                      {payment.sessions}회
                     </span>
                     <span className="payment-item__date">
-                      <SafeText tag="span">{formatDate(payment.paymentDate)}</SafeText>
+                      
+                      {formatDate(payment.paymentDate)}
                     </span>
                   </div>
                 </div>

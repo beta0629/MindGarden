@@ -17,12 +17,12 @@
   gap: var(--spacing-sm);
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
-  color: var(--mg-color-text-main);
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .payment-sessions-title svg {
-  color: var(--mg-color-primary-main);
+  color: var(--color-primary);
 }
 
 /* 회기 현황 통계 카드 */
@@ -66,7 +66,7 @@
 }
 
 .payment-stat-card--primary .payment-stat-icon svg {
-  color: var(--mg-color-text-on-primary);
+  color: var(--color-white);
 }
 
 .payment-stat-card--success .payment-stat-icon {
@@ -75,7 +75,7 @@
 }
 
 .payment-stat-card--success .payment-stat-icon svg {
-  color: var(--mg-color-text-on-primary);
+  color: var(--color-white);
 }
 
 .payment-stat-card--warning .payment-stat-icon {
@@ -84,7 +84,7 @@
 }
 
 .payment-stat-card--warning .payment-stat-icon svg {
-  color: var(--mg-color-text-on-primary);
+  color: var(--color-white);
 }
 
 .payment-stat-card--info .payment-stat-icon {
@@ -93,7 +93,7 @@
 }
 
 .payment-stat-card--info .payment-stat-icon svg {
-  color: var(--mg-color-text-on-primary);
+  color: var(--color-white);
 }
 
 .payment-stat-content {
@@ -102,7 +102,7 @@
 
 .payment-stat-label {
   font-size: var(--font-size-sm);
-  color: var(--mg-color-text-secondary);
+  color: var(--color-text-secondary);
   margin-bottom: var(--spacing-xxs);
   font-weight: var(--font-weight-medium);
 }
@@ -110,7 +110,7 @@
 .payment-stat-value {
   font-size: var(--font-size-xxl);
   font-weight: var(--font-weight-bold);
-  color: var(--mg-color-text-main);
+  color: var(--color-text-primary);
   line-height: 1;
 }
 
@@ -130,12 +130,12 @@
   gap: var(--spacing-sm);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--mg-color-text-main);
+  color: var(--color-text-primary);
   margin: 0 0 var(--spacing-lg) 0;
 }
 
 .payment-sessions-subtitle svg {
-  color: var(--mg-color-primary-main);
+  color: var(--color-primary);
 }
 
 .payment-items {
@@ -179,7 +179,7 @@
 }
 
 .payment-item__icon svg {
-  color: var(--mg-color-text-on-primary);
+  color: var(--color-white);
 }
 
 .payment-item__content {
@@ -198,7 +198,7 @@
 .payment-item__package {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
-  color: var(--mg-color-text-main);
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -216,18 +216,18 @@
   align-items: center;
   gap: var(--spacing-xs);
   font-size: var(--font-size-sm);
-  color: var(--mg-color-text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .payment-item__amount svg,
 .payment-item__sessions svg,
 .payment-item__date svg {
-  color: var(--mg-color-primary-main);
+  color: var(--color-primary);
 }
 
 .payment-item__amount {
   font-weight: var(--font-weight-bold);
-  color: var(--mg-color-text-main);
+  color: var(--color-text-primary);
 }
 
 /* 빈 상태 */
@@ -260,12 +260,12 @@
 }
 
 .payment-sessions-empty__icon svg {
-  color: var(--mg-color-text-on-primary);
+  color: var(--color-white);
 }
 
 .payment-sessions-empty__text {
   font-size: var(--font-size-lg);
-  color: var(--mg-color-text-secondary);
+  color: var(--color-text-secondary);
   margin: 0;
   font-weight: var(--font-weight-medium);
 }
@@ -300,32 +300,14 @@
 }
 
 .payment-sessions-error__icon svg {
-  color: var(--mg-color-text-on-primary);
+  color: var(--color-white);
 }
 
 .payment-sessions-error__text {
   font-size: var(--font-size-lg);
-  color: var(--mg-color-text-secondary);
+  color: var(--color-text-secondary);
   margin: 0;
   font-weight: var(--font-weight-medium);
-}
-
-.payment-sessions-error__retry {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--mg-color-text-on-primary);
-  background: var(--mg-color-primary-main);
-  border: var(--border-width-thin) solid var(--mg-color-primary-main);
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-}
-
-.payment-sessions-error__retry:hover {
-  opacity: var(--mg-opacity-hover, 0.9);
 }
 
 /* 반응형 디자인 */

@@ -1,69 +1,117 @@
 /**
- * Client Dashboard — 다음 일정 섹션 (ListTableView)
+ * Client Dashboard — 다음 액션·일정 섹션
  *
  * @author CoreSolution
  * @since 2026-07-07
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
-import ClientDashboardListSection from './ClientDashboardListSection';
-import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
-import { toDisplayString } from '../../../utils/safeDisplay';
+import { ContentSection } from '../../dashboard-v2/content';
+import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
+import { CLIENT_DASHBOARD_KPI_ROUTES } from '../../../constants/clientDashboardRoutes';
 import {
   CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TEST_ID,
   CLIENT_NEXT_SECTION_DESC,
   CLIENT_NEXT_SECTION_TITLE,
-  CLIENT_SCHEDULE_VIEW_LABEL,
-  CLIENT_UPCOMING_COLUMNS,
-  CLIENT_UPCOMING_CTA_LABEL,
-  CLIENT_UPCOMING_EMPTY_TEXT
+  CLIENT_SCHEDULE_DETAIL_HINT,
+  CLIENT_SCHEDULE_EMPTY_BODY,
+  CLIENT_SCHEDULE_VIEW_LABEL
 } from './constants';
-import { buildUpcomingRows } from './scheduleUtils';
+import { formatScheduleCardDateTime } from './scheduleUtils';
 
-const ClientDashboardUpcomingSection = ({ schedules, loading, error, onRetry }) => {
+const outlineBtnClass = buildErpMgButtonClassName({ variant: 'outline', loading: false });
+const primaryBtnClass = buildErpMgButtonClassName({ variant: 'primary', loading: false });
+
+const ClientDashboardUpcomingSection = ({ schedules }) => {
   const navigate = useNavigate();
-  const rows = useMemo(() => buildUpcomingRows(schedules), [schedules]);
-  const goSchedule = useCallback(() => navigate(CLIENT_DASHBOARD_ROUTES.SCHEDULE), [navigate]);
-
-  const renderCell = useCallback((columnKey, item) => {
-    if (columnKey === 'cta') {
-      return (
-        <span className="client-dashboard-list__cta" aria-hidden>
-          {CLIENT_UPCOMING_CTA_LABEL}
-        </span>
-      );
-    }
-    return <SafeText tag="span">{toDisplayString(item[columnKey], '—')}</SafeText>;
-  }, []);
+  const { t } = useTranslation();
+  const cards = [schedules[0], schedules[1]].filter(Boolean);
+  const goSchedule = () => navigate(CLIENT_DASHBOARD_KPI_ROUTES.THIS_MONTH_SESSIONS);
 
   return (
-    <ClientDashboardListSection
+    <ContentSection
       title={CLIENT_NEXT_SECTION_TITLE}
       subtitle={CLIENT_NEXT_SECTION_DESC}
-      columns={CLIENT_UPCOMING_COLUMNS}
-      data={rows}
-      renderCell={renderCell}
-      onRowClick={goSchedule}
-      emptyText={CLIENT_UPCOMING_EMPTY_TEXT}
-      loading={loading}
-      error={error}
-      onRetry={onRetry}
-      viewAllHref={CLIENT_DASHBOARD_ROUTES.SCHEDULE}
-      viewAllLabel={CLIENT_SCHEDULE_VIEW_LABEL}
+      className="client-dashboard__section client-dashboard__section--upcoming"
       dataTestId={CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TEST_ID}
-      sectionClassName="client-dashboard__section--upcoming"
-    />
+      noCard
+    >
+      {cards.length > 0 ? (
+        <ul className="client-dashboard__card-stack">
+          {cards.map((schedule, idx) => (
+            <li key={`${schedule.date}-${schedule.startTime}-${idx}`}>
+              <article
+                className="mg-v2-card-container client-dashboard__action-card"
+                aria-labelledby={`client-dashboard-action-${idx}`}
+              >
+                <div className="client-dashboard__action-body">
+                  <div className="client-dashboard__action-top">
+                    <span
+                      className={
+                        idx === 0
+                          ? 'mg-v2-status-badge mg-v2-badge--warning'
+                          : 'mg-v2-status-badge mg-v2-badge--neutral'
+                      }
+                    >
+                      {idx === 0 ? '다음 일정' : t('common:client.ClientDashboard.t_7ba9542c')}
+                    </span>
+                    <time className="client-dashboard__time" dateTime={schedule.date}>
+                      {formatScheduleCardDateTime(schedule)}
+                    </time>
+                  </div>
+                  <h3 id={`client-dashboard-action-${idx}`} className="client-dashboard__card-title">
+                    <SafeText>{schedule.title || t('common:client.ClientDashboard.t_4968e29c')}</SafeText>
+                  </h3>
+                  <p className="client-dashboard__card-text">{CLIENT_SCHEDULE_DETAIL_HINT}</p>
+                </div>
+                <div className="mg-v2-card-actions client-dashboard__card-actions">
+                  <MGButton
+                    variant="primary"
+                    className={primaryBtnClass}
+                    onClick={goSchedule}
+                    preventDoubleClick={false}
+                  >
+                    {CLIENT_SCHEDULE_VIEW_LABEL}
+                  </MGButton>
+                  {idx === 0 ? (
+                    <MGButton
+                      variant="outline"
+                      className={outlineBtnClass}
+                      onClick={goSchedule}
+                      preventDoubleClick={false}
+                    >
+                      자세히
+                    </MGButton>
+                  ) : null}
+                </div>
+              </article>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="client-dashboard__schedule-empty">
+          <p>{CLIENT_SCHEDULE_EMPTY_BODY}</p>
+          <MGButton
+            variant="primary"
+            className={`${primaryBtnClass} client-dashboard__schedule-empty-cta`}
+            onClick={goSchedule}
+            preventDoubleClick={false}
+          >
+            {CLIENT_SCHEDULE_VIEW_LABEL}
+          </MGButton>
+        </div>
+      )}
+    </ContentSection>
   );
 };
 
 ClientDashboardUpcomingSection.propTypes = {
-  schedules: PropTypes.arrayOf(PropTypes.object),
-  loading: PropTypes.bool,
-  error: PropTypes.string,
-  onRetry: PropTypes.func
+  schedules: PropTypes.arrayOf(PropTypes.object)
 };
 
 export default ClientDashboardUpcomingSection;

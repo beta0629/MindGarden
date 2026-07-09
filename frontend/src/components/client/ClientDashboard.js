@@ -44,10 +44,9 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     consultationData,
     clientStatus,
     sharedClientMappings,
+    mappingsLoadFailed,
     unreadMessageCount,
-    sectionLoading,
-    sectionErrors,
-    reload
+    isLoading
   } = useClientDashboardData(currentUser, sessionLoading, currentIsLoggedIn);
 
   const primaryActiveMapping = useMemo(() => {
@@ -74,8 +73,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     </div>
   );
 
-  // 세션/인증 부트스트랩 게이트 — 데이터 로딩은 섹션별 skeleton 이 담당
-  if (sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
+  if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
       <AdminCommonLayout className="mg-v2-client-dashboard-layout">
         {renderShell(
@@ -101,12 +99,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
             primaryActiveMapping={primaryActiveMapping}
           />
 
-          <ClientDashboardUpcomingSection
-            schedules={consultationData.upcomingSchedules}
-            loading={sectionLoading.schedules}
-            error={sectionErrors.schedules}
-            onRetry={reload}
-          />
+          <ClientDashboardUpcomingSection schedules={consultationData.upcomingSchedules} />
 
           <ClientDashboardKpiSection
             remainingSessions={consultationData.remainingSessions}
@@ -118,16 +111,13 @@ const ClientDashboard = ({ user: userFromRoute }) => {
             user={currentUser}
             consultationData={consultationData}
             clientStatus={clientStatus}
-            loading={sectionLoading.schedules}
-            error={sectionErrors.schedules}
-            onRetry={reload}
+            primaryActiveMapping={primaryActiveMapping}
           />
 
           <ClientDashboardPaymentSection
-            recentPayments={consultationData.recentPayments}
-            loading={sectionLoading.mappings}
-            error={sectionErrors.mappings}
-            onRetry={reload}
+            userId={currentUser.id}
+            sharedClientMappings={sharedClientMappings}
+            mappingsLoadFailed={mappingsLoadFailed}
           />
 
           <ClientDashboardQuickMenuSection onCustomerSupport={goCustomerSupport} />

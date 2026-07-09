@@ -70,6 +70,11 @@ jest.mock('../../dashboard/ClientPersonalizedMessages', () => ({
   default: () => <div data-testid="client-personalized-messages" />
 }));
 
+jest.mock('../../dashboard/ClientPaymentSessionsSection', () => ({
+  __esModule: true,
+  default: () => <div data-testid="client-payment-sessions" />
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key) => {
@@ -173,10 +178,6 @@ describe('ClientDashboard v1.1 rebuild', () => {
     expect(document.getElementById('client-dashboard-main')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^일정$/ })).toBeInTheDocument();
     expect(screen.getByTestId('client-personalized-messages')).toBeInTheDocument();
-    // P2: 결제 요약은 ListTableView 섹션으로 재구성 (레거시 위젯 대체)
-    await waitFor(() => {
-      expect(screen.getByTestId('client-dashboard-payment-section')).toBeInTheDocument();
-    });
-    expect(screen.getByTestId('client-dashboard-core-section')).toBeInTheDocument();
+    expect(screen.getByTestId('client-payment-sessions')).toBeInTheDocument();
   });
 });

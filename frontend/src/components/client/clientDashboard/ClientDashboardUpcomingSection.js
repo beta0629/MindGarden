@@ -1,60 +1,71 @@
 /**
- * Client Dashboard — 다음 일정 섹션 (ListTableView)
+ * Client Dashboard — 다음 일정 섹션 (ListTableView · v1.4)
  *
  * @author CoreSolution
  * @since 2026-07-07
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import SafeText from '../../common/SafeText';
-import ClientDashboardListSection from './ClientDashboardListSection';
-import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
-import { toDisplayString } from '../../../utils/safeDisplay';
 import {
+  CLIENT_DASHBOARD_KPI_ROUTES,
+  CLIENT_DASHBOARD_ROUTES
+} from '../../../constants/clientDashboardRoutes';
+import ClientDashboardListSection from './ClientDashboardListSection';
+import {
+  CLIENT_DASHBOARD_UPCOMING_COLUMNS,
   CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TEST_ID,
   CLIENT_NEXT_SECTION_DESC,
   CLIENT_NEXT_SECTION_TITLE,
-  CLIENT_SCHEDULE_VIEW_LABEL,
-  CLIENT_UPCOMING_COLUMNS,
-  CLIENT_UPCOMING_CTA_LABEL,
-  CLIENT_UPCOMING_EMPTY_TEXT
+  CLIENT_SCHEDULE_EMPTY_BODY,
+  CLIENT_SCHEDULE_LOAD_ERROR_LABEL,
+  CLIENT_SCHEDULE_VIEW_ALL_LABEL
 } from './constants';
-import { buildUpcomingRows } from './scheduleUtils';
+import { formatScheduleCardDateTime } from './scheduleUtils';
 
-const ClientDashboardUpcomingSection = ({ schedules, loading, error, onRetry }) => {
+const ClientDashboardUpcomingSection = ({
+  schedules,
+  loading = false,
+  error = false,
+  onRetry = null
+}) => {
   const navigate = useNavigate();
-  const rows = useMemo(() => buildUpcomingRows(schedules), [schedules]);
-  const goSchedule = useCallback(() => navigate(CLIENT_DASHBOARD_ROUTES.SCHEDULE), [navigate]);
+  const { t } = useTranslation();
 
-  const renderCell = useCallback((columnKey, item) => {
-    if (columnKey === 'cta') {
-      return (
-        <span className="client-dashboard-list__cta" aria-hidden>
-          {CLIENT_UPCOMING_CTA_LABEL}
-        </span>
-      );
-    }
-    return <SafeText tag="span">{toDisplayString(item[columnKey], '—')}</SafeText>;
-  }, []);
+  const tableData = useMemo(
+    () => (Array.isArray(schedules) ? schedules : []).map((schedule, idx) => ({
+      id: `${schedule.date}-${schedule.startTime}-${idx}`,
+      datetimeLabel: formatScheduleCardDateTime(schedule),
+      titleLabel: schedule.title || t('common:client.ClientDashboard.t_4968e29c'),
+      statusLabel: idx === 0
+        ? '다음 일정'
+        : t('common:client.ClientDashboard.t_7ba9542c')
+    })),
+    [schedules, t]
+  );
+
+  const goSchedule = () => navigate(CLIENT_DASHBOARD_KPI_ROUTES.THIS_MONTH_SESSIONS);
 
   return (
     <ClientDashboardListSection
       title={CLIENT_NEXT_SECTION_TITLE}
       subtitle={CLIENT_NEXT_SECTION_DESC}
-      columns={CLIENT_UPCOMING_COLUMNS}
-      data={rows}
-      renderCell={renderCell}
+      accentVariant="primary"
+      columns={CLIENT_DASHBOARD_UPCOMING_COLUMNS}
+      data={tableData}
+      renderCell={(columnKey, item) => <SafeText tag="span">{item[columnKey]}</SafeText>}
       onRowClick={goSchedule}
-      emptyText={CLIENT_UPCOMING_EMPTY_TEXT}
-      loading={loading}
-      error={error}
-      onRetry={onRetry}
+      emptyText={CLIENT_SCHEDULE_EMPTY_BODY}
       viewAllHref={CLIENT_DASHBOARD_ROUTES.SCHEDULE}
-      viewAllLabel={CLIENT_SCHEDULE_VIEW_LABEL}
+      viewAllLabel={CLIENT_SCHEDULE_VIEW_ALL_LABEL}
       dataTestId={CLIENT_DASHBOARD_UPCOMING_SCHEDULE_TEST_ID}
-      sectionClassName="client-dashboard__section--upcoming"
+      className="client-dashboard__section client-dashboard__section--upcoming"
+      loading={loading}
+      error={error ? CLIENT_SCHEDULE_LOAD_ERROR_LABEL : ''}
+      onRetry={onRetry}
     />
   );
 };
@@ -62,7 +73,7 @@ const ClientDashboardUpcomingSection = ({ schedules, loading, error, onRetry }) 
 ClientDashboardUpcomingSection.propTypes = {
   schedules: PropTypes.arrayOf(PropTypes.object),
   loading: PropTypes.bool,
-  error: PropTypes.string,
+  error: PropTypes.bool,
   onRetry: PropTypes.func
 };
 

@@ -1,5 +1,5 @@
 /**
- * Client Dashboard — 빠른 메뉴 섹션
+ * Client Dashboard — 빠른 메뉴 4 SSOT (LNB 정합 · v1.4)
  *
  * @author CoreSolution
  * @since 2026-07-07
@@ -9,20 +9,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   CalendarDays,
-  MessageCircle,
-  User,
-  Headphones,
-  BookOpen
+  ClipboardList,
+  Receipt,
+  Settings
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
-import { ContentSection } from '../../dashboard-v2/content';
 import { buildErpMgButtonClassName } from '../../erp/common/erpMgButtonProps';
 import {
-  CLIENT_DASHBOARD_ROUTES,
+  CLIENT_DASHBOARD_QUICK_MENU_ITEMS,
   buildClientDashboardQuickMenuItemTestId
 } from '../../../constants/clientDashboardRoutes';
+import ClientDashboardSectionBlock from './ClientDashboardSectionBlock';
 import {
   CLIENT_DASHBOARD_QUICK_MENU_SECTION_TEST_ID,
   CLIENT_DASHBOARD_QUICK_MENU_TEST_ID,
@@ -32,75 +30,51 @@ import {
 
 const QUICK_BTN_CLASS = `${buildErpMgButtonClassName({ variant: 'outline', loading: false })} client-dashboard__quick-btn`;
 
-const ClientDashboardQuickMenuSection = ({ onCustomerSupport }) => {
+const QUICK_MENU_ICONS = {
+  schedule: CalendarDays,
+  'session-management': ClipboardList,
+  'payment-history': Receipt,
+  settings: Settings
+};
+
+const ClientDashboardQuickMenuSection = ({ disabled = false }) => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   return (
     <div data-testid={CLIENT_DASHBOARD_QUICK_MENU_TEST_ID}>
-      <ContentSection
+      <ClientDashboardSectionBlock
         title={CLIENT_QUICK_SECTION_TITLE}
         subtitle={CLIENT_QUICK_SECTION_DESC}
-        className="client-dashboard__section client-dashboard__section--quick"
+        accentVariant="primary"
         dataTestId={CLIENT_DASHBOARD_QUICK_MENU_SECTION_TEST_ID}
-        noCard
+        className="client-dashboard__section client-dashboard__section--quick"
       >
         <nav className="client-dashboard__quick-grid" aria-label={CLIENT_QUICK_SECTION_TITLE}>
-          <MGButton
-            variant="outline"
-            className={QUICK_BTN_CLASS}
-            onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.SCHEDULE)}
-            preventDoubleClick={false}
-            data-testid={buildClientDashboardQuickMenuItemTestId('schedule')}
-          >
-            <CalendarDays size={22} aria-hidden />
-            <span>일정</span>
-          </MGButton>
-          <MGButton
-            variant="outline"
-            className={QUICK_BTN_CLASS}
-            onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.MESSAGES)}
-            preventDoubleClick={false}
-          >
-            <MessageCircle size={22} aria-hidden />
-            <span>{t('admin.labels.message')}</span>
-          </MGButton>
-          <MGButton
-            variant="outline"
-            className={QUICK_BTN_CLASS}
-            onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.SETTINGS)}
-            preventDoubleClick={false}
-            data-testid={buildClientDashboardQuickMenuItemTestId('settings')}
-          >
-            <User size={22} aria-hidden />
-            <span>설정</span>
-          </MGButton>
-          <MGButton
-            variant="outline"
-            className={QUICK_BTN_CLASS}
-            onClick={onCustomerSupport}
-            preventDoubleClick={false}
-          >
-            <Headphones size={22} aria-hidden />
-            <span>고객센터</span>
-          </MGButton>
-          <MGButton
-            variant="outline"
-            className={QUICK_BTN_CLASS}
-            onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.WELLNESS_HUB)}
-            preventDoubleClick={false}
-          >
-            <BookOpen size={22} aria-hidden />
-            <span>자료실</span>
-          </MGButton>
+          {CLIENT_DASHBOARD_QUICK_MENU_ITEMS.map((item) => {
+            const IconComponent = QUICK_MENU_ICONS[item.id];
+            return (
+              <MGButton
+                key={item.id}
+                variant="outline"
+                className={QUICK_BTN_CLASS}
+                onClick={() => navigate(item.route)}
+                preventDoubleClick={false}
+                disabled={disabled}
+                data-testid={buildClientDashboardQuickMenuItemTestId(item.id)}
+              >
+                {IconComponent ? <IconComponent size={22} aria-hidden /> : null}
+                <span>{item.label}</span>
+              </MGButton>
+            );
+          })}
         </nav>
-      </ContentSection>
+      </ClientDashboardSectionBlock>
     </div>
   );
 };
 
 ClientDashboardQuickMenuSection.propTypes = {
-  onCustomerSupport: PropTypes.func.isRequired
+  disabled: PropTypes.bool
 };
 
 export default ClientDashboardQuickMenuSection;

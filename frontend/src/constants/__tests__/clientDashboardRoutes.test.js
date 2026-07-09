@@ -31,6 +31,9 @@ describe('clientDashboardRoutes web-native SSOT', () => {
     expect(CLIENT_DASHBOARD_KPI_ROUTES.UNREAD_MESSAGES).toBe(
       CLIENT_DASHBOARD_ROUTES.MESSAGES
     );
+    expect(CLIENT_DASHBOARD_KPI_ROUTES.COMPLETED_SESSIONS).toBe(
+      CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT
+    );
   });
 
   test('quick menu mirrors LNB minus dashboard', () => {

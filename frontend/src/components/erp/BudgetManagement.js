@@ -708,9 +708,7 @@ const BudgetManagement = () => {
                         </div>
                       </div>
                     </div>
-
-                    </div>
-<div className="erp-section-header">
+                    <div className="erp-section-header">
                       <div className="erp-section-title">
                         <h2>
                           <i className="bi bi-list-ul" />
@@ -733,79 +731,79 @@ const BudgetManagement = () => {
                     </div>
 
                     <div className="mg-v2-ad-b0kla__card">
+                      {filteredBudgets.length > 0 ? (
                         <ListTableView
                           data={filteredBudgets}
-                          emptyMessage={
-                            <div className="erp-empty-state">
-                              <div className="erp-empty-icon">
-                                <PiggyBank size={24} aria-hidden />
-                              </div>
-                              <h3>{t('erp:BudgetManagement.t_269c245f')}</h3>
-                              <p>{t('erp:BudgetManagement.t_6bed278b')}</p>
-                              {canManageBudget && (
-                                <MGButton
-                                  variant="primary"
-                                  size="medium"
-                                  type="button"
-                                  className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
-                                  onClick={() => setShowCreateModal(true)}
-                                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                >
-                                  {t('erp:BudgetManagement.t_c58ced33')}
-                                </MGButton>
-                              )}
-                            </div>
-                          }
                           columns={[
                             {
-                              id: 'name',
-                              label: t('erp:BudgetManagement.t_b67f8470'),
-                              renderCell: (budget) => (
-                                <div style={{ color: 'var(--mg-color-text-main)', fontWeight: 600 }}>
-                                  {toDisplayString(budget.name)}
-                                </div>
-                              )
+                              key: 'name',
+                              label: t('erp:BudgetManagement.t_b67f8470')
                             },
                             {
-                              id: 'status',
-                              label: t('common.labels.status'),
-                              renderCell: (budget) => (
-                                <StatusBadge
-                                  status={getStatusColor(budget.status)}
-                                  label={budget.status === 'ACTIVE' ? '활성' : toDisplayString(budget.status)}
-                                />
-                              )
+                              key: 'status',
+                              label: t('common.labels.status')
                             },
                             {
-                              id: 'category',
-                              label: t('erp:BudgetManagement.t_31125b29'),
-                              renderCell: (budget) => (
-                                <div style={{ color: 'var(--mg-color-text-secondary)' }}>
-                                  <i className="bi bi-tag mg-v2-mr-xs" />
-                                  {toDisplayString(budget.category)}
-                                </div>
-                              )
+                              key: 'category',
+                              label: t('erp:BudgetManagement.t_31125b29')
                             },
                             {
-                              id: 'totalBudget',
-                              label: t('erp:BudgetManagement.t_b8a443b3'),
-                              renderCell: (budget) => (
-                                <div style={{ color: 'var(--mg-color-text-main)' }}>
-                                  {formatCurrency(budget.totalBudget)}
-                                </div>
-                              )
+                              key: 'totalBudget',
+                              label: t('erp:BudgetManagement.t_b8a443b3')
                             },
                             {
-                              id: 'usedBudget',
-                              label: t('erp:BudgetManagement.t_8dacd326'),
-                              renderCell: (budget) => (
-                                <div>{formatCurrency(budget.usedBudget || 0)}</div>
-                              )
+                              key: 'usedBudget',
+                              label: t('erp:BudgetManagement.t_8dacd326')
                             },
                             {
-                              id: 'remainingBudget',
-                              label: t('erp:BudgetManagement.t_cc5d8b16'),
-                              renderCell: (budget) => {
+                              key: 'remainingBudget',
+                              label: t('erp:BudgetManagement.t_cc5d8b16')
+                            },
+                            {
+                              key: 'progress',
+                              label: t('erp:BudgetManagement.t_897659ea')
+                            },
+                            {
+                              key: 'period',
+                              label: t('erp:BudgetManagement.t_d5bc99dd')
+                            },
+                            ...(canManageBudget ? [{
+                              key: 'actions',
+                              label: t('common.labels.manage', '관리'),
+                              align: 'right'
+                            }] : [])
+                          ]}
+                          renderCell={(columnKey, budget) => {
+                            switch (columnKey) {
+                              case 'name':
+                                return (
+                                  <div style={{ color: 'var(--mg-color-text-main)', fontWeight: 600 }}>
+                                    {toDisplayString(budget.name)}
+                                  </div>
+                                );
+                              case 'status':
+                                return (
+                                  <StatusBadge
+                                    status={getStatusColor(budget.status)}
+                                    label={budget.status === 'ACTIVE' ? '활성' : toDisplayString(budget.status)}
+                                  />
+                                );
+                              case 'category':
+                                return (
+                                  <div style={{ color: 'var(--mg-color-text-secondary)' }}>
+                                    <i className="bi bi-tag mg-v2-mr-xs" />
+                                    {toDisplayString(budget.category)}
+                                  </div>
+                                );
+                              case 'totalBudget':
+                                return (
+                                  <div style={{ color: 'var(--mg-color-text-main)' }}>
+                                    {formatCurrency(budget.totalBudget)}
+                                  </div>
+                                );
+                              case 'usedBudget':
+                                return <div>{formatCurrency(budget.usedBudget || 0)}</div>;
+                              case 'remainingBudget': {
                                 const isOverBudget = (budget.usedBudget || 0) > budget.totalBudget;
                                 return (
                                   <div style={{ color: isOverBudget ? 'var(--mg-color-error-500)' : 'var(--mg-color-success)' }}>
@@ -813,11 +811,7 @@ const BudgetManagement = () => {
                                   </div>
                                 );
                               }
-                            },
-                            {
-                              id: 'progress',
-                              label: t('erp:BudgetManagement.t_897659ea'),
-                              renderCell: (budget) => {
+                              case 'progress': {
                                 const usagePercentage =
                                   budget.totalBudget > 0
                                     ? ((budget.usedBudget || 0) / budget.totalBudget) * 100
@@ -834,48 +828,43 @@ const BudgetManagement = () => {
                                   </div>
                                 );
                               }
-                            },
-                            {
-                              id: 'period',
-                              label: t('erp:BudgetManagement.t_d5bc99dd'),
-                              renderCell: (budget) => (
-                                <div>
-                                  {toSafeNumber(budget.year)}년 {toSafeNumber(budget.month)}월
-                                </div>
-                              )
-                            },
-                            ...(canManageBudget ? [{
-                              id: 'actions',
-                              label: t('common.labels.manage', '관리'),
-                              align: 'right',
-                              renderCell: (budget) => (
-                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
-                                  <MGButton
-                                    variant="outline"
-                                    size="small"
-                                    type="button"
-                                    className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
-                                    onClick={() => openEditModal(budget)}
-                                    title={t('common.actions.edit')}
-                                    aria-label={t('erp:BudgetManagement.t_82fa5b68')}
-                                  >
-                                    수정
-                                  </MGButton>
-                                  <MGButton
-                                    variant="danger"
-                                    size="small"
-                                    type="button"
-                                    className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                                    onClick={() => handleDeleteBudget(budget.id)}
-                                    title={t('common.actions.delete')}
-                                    aria-label={t('erp:BudgetManagement.t_112efb89')}
-                                  >
-                                    삭제
-                                  </MGButton>
-                                </div>
-                              )
-                            }] : [])
-                          ]}
+                              case 'period':
+                                return (
+                                  <div>
+                                    {toSafeNumber(budget.year)}년 {toSafeNumber(budget.month)}월
+                                  </div>
+                                );
+                              case 'actions':
+                                return (
+                                  <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                                    <MGButton
+                                      variant="outline"
+                                      size="small"
+                                      type="button"
+                                      className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
+                                      onClick={() => openEditModal(budget)}
+                                      title={t('common.actions.edit')}
+                                      aria-label={t('erp:BudgetManagement.t_82fa5b68')}
+                                    >
+                                      수정
+                                    </MGButton>
+                                    <MGButton
+                                      variant="danger"
+                                      size="small"
+                                      type="button"
+                                      className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
+                                      onClick={() => handleDeleteBudget(budget.id)}
+                                      title={t('common.actions.delete')}
+                                      aria-label={t('erp:BudgetManagement.t_112efb89')}
+                                    >
+                                      삭제
+                                    </MGButton>
+                                  </div>
+                                );
+                              default:
+                                return budget[columnKey] ?? '-';
+                            }
+                          }}
                         />
                       ) : (
                         <div className="erp-empty-state">
@@ -1037,9 +1026,7 @@ const BudgetManagement = () => {
                         </div>
                       </div>
                     </div>
-
-                    </div>
-<div className="erp-section">
+                    <div className="erp-section">
                       <div className="erp-section-header">
                         <div className="erp-section-title">
                           <h3>

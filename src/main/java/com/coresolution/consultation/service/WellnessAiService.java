@@ -297,8 +297,13 @@ public class WellnessAiService {
             int promptTokens, int completionTokens, int totalTokens,
             long responseTimeMs, String requestedBy, String promptBody, String responseBody) {
         try {
+            if (!StringUtils.hasText(tenantId)) {
+                log.warn("⚠️ AI 사용 로그 스킵 — tenantId 누락 (requestType={}, model={})",
+                        requestType, model);
+                return;
+            }
             AiUsageLog usageLogRow = AiUsageLog.builder()
-                    .tenantId(tenantId)
+                    .tenantId(tenantId.trim())
                     .aiProvider(aiProvider)
                     .requestType(requestType)
                     .model(model)

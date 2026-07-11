@@ -197,7 +197,17 @@ export const API_PERFORMANCE_WIDGET = {
     CLEAR_CONFIRM: '모든 성능 통계를 초기화하시겠습니까?',
     CLEAR_SUCCESS: '성능 통계가 초기화되었습니다.',
     CLEAR_ERROR: '통계 초기화에 실패했습니다.',
-    DOWNLOAD_ERROR: '보고서 다운로드 중 오류가 발생했습니다.'
+    DOWNLOAD_ERROR: '보고서 다운로드 중 오류가 발생했습니다.',
+    AI_LOG_EMPTY_TITLE: '오늘 수집 없음',
+    AI_LOG_EMPTY_HINT:
+      '웰니스 AI 스케줄러 OFF 가능 — 알림과 분리된 ai.usage-log.scheduler.enabled(DEV)를 확인하세요.',
+    AI_LOG_LOADING: '데이터 로딩 중...',
+    AI_LOG_ERROR: 'AI 로그 모니터링 데이터를 불러오지 못했습니다.',
+    AI_LOG_API_HINT: '연동 API: GET /api/v1/admin/ai/usage-stats',
+    AI_LOG_CALLS_TODAY: '오늘 호출 건수',
+    AI_LOG_SUCCESS_RATE: '성공률',
+    AI_LOG_AVG_DURATION: '평균 응답 시간',
+    AI_LOG_TOTAL_TOKENS: '총 사용 토큰'
   }
 };
 

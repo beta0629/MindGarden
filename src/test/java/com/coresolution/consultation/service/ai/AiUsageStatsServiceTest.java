@@ -101,6 +101,32 @@ class AiUsageStatsServiceTest {
     }
 
     @Test
+    @DisplayName("getUsageStats — period=today 이면 successRate/tokens/duration 이 오늘 구간")
+    void getUsageStats_periodToday_usesTodayMetricsWindow() {
+        // count: today=10, week=20, month=100
+        when(usageLogRepository.countByTenantAndPeriod(eq(TENANT_ID), any(), any()))
+                .thenReturn(10L, 20L, 100L);
+        // metrics window = today → success 9 / tokens 500 / avg 120
+        when(usageLogRepository.countSuccessByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(9L);
+        when(usageLogRepository.sumTokensByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(500L);
+        when(usageLogRepository.averageDurationByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(120.0);
+        when(usageLogRepository.countByCallerInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+        when(usageLogRepository.countByProviderInPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+        when(usageLogRepository.countDailyByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(List.of());
+
+        AiUsageStatsResponse stats = service.getUsageStats(TENANT_ID, "today");
+
+        assertEquals(10L, stats.getCallsToday());
+        assertEquals(20L, stats.getCallsThisWeek());
+        assertEquals(100L, stats.getCallsThisMonth());
+        assertEquals(90.0, stats.getSuccessRate());
+        assertEquals(10.0, stats.getFailureRate());
+        assertEquals(120L, stats.getAverageDurationMs());
+        assertEquals(500L, stats.getTotalTokens());
+        assertEquals("today", stats.getRequestedPeriod());
+    }
+
+    @Test
     @DisplayName("getUsageStats — provider 라벨이 ai_provider 컬럼으로 집계됨 (N3, V20260529_001)")
     void getUsageStats_providerGroupingFromColumn() {
         when(usageLogRepository.countByTenantAndPeriod(eq(TENANT_ID), any(), any())).thenReturn(100L);

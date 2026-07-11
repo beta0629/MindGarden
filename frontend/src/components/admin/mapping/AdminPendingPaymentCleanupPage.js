@@ -80,7 +80,7 @@ const AdminPendingPaymentCleanupPage = () => {
     }))
   ), [t]);
 
-  const fetchList = useCallback(async () => {
+  const fetchList = useCallback(async() => {
     setLoading(true);
     setError(null);
     try {
@@ -279,36 +279,40 @@ const AdminPendingPaymentCleanupPage = () => {
                     rowKeyField="__rowKey"
                     renderCell={renderCell}
                   />
-                  <div className="mg-v2-content-section__actions" data-testid="cleanup-pagination">
-                    <SafeText tag="span">
-                      {t('admin:mappings.pendingPaymentCleanup.pagination.summary', {
-                        page: page + 1,
-                        totalPages: Math.max(totalPages, 1),
-                        totalElements
-                      })}
-                    </SafeText>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="small"
-                      className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm' })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      disabled={page <= 0}
-                      onClick={() => setPage(Math.max(page - 1, 0))}
-                    >
-                      {t('admin:mappings.pendingPaymentCleanup.pagination.prev')}
-                    </MGButton>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      size="small"
-                      className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm' })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      disabled={page + 1 >= totalPages}
-                      onClick={() => setPage(page + 1)}
-                    >
-                      {t('admin:mappings.pendingPaymentCleanup.pagination.next')}
-                    </MGButton>
+                  <div className="mg-v2-content-section__actions mg-v2-content-section__actions--pagination" data-testid="cleanup-pagination">
+                    <div className="mg-v2-content-section__pagination-buttons">
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm' })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        disabled={page <= 0}
+                        onClick={() => setPage(Math.max(page - 1, 0))}
+                      >
+                        {t('admin:mappings.pendingPaymentCleanup.pagination.prev')}
+                      </MGButton>
+                      <MGButton
+                        type="button"
+                        variant="outline"
+                        size="small"
+                        className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm' })}
+                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                        disabled={page + 1 >= totalPages}
+                        onClick={() => setPage(page + 1)}
+                      >
+                        {t('admin:mappings.pendingPaymentCleanup.pagination.next')}
+                      </MGButton>
+                    </div>
+                    <span className="mg-v2-content-section__subtitle">
+                      <SafeText tag="span">
+                        {t('admin:mappings.pendingPaymentCleanup.pagination.summary', {
+                          page: page + 1,
+                          totalPages: Math.max(totalPages, 1),
+                          totalElements
+                        })}
+                      </SafeText>
+                    </span>
                   </div>
                 </>
               )}

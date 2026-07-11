@@ -23,6 +23,7 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
     @Query("SELECT n FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.targetType IN (:targetTypes) " +
            "AND n.status = 'PUBLISHED' " +
            "AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
            "ORDER BY n.isUrgent DESC, n.isImportant DESC, n.publishedAt DESC")
@@ -39,6 +40,7 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
     @Query("SELECT n FROM SystemNotification n WHERE n.targetType IN (:targetTypes) " +
            "AND n.status = 'PUBLISHED' " +
            "AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
            "ORDER BY n.isUrgent DESC, n.isImportant DESC, n.publishedAt DESC")
@@ -80,6 +82,7 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
            "AND n.status = 'PUBLISHED' " +
            "AND n.isUrgent = true " +
            "AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
            "ORDER BY n.publishedAt DESC")
@@ -96,6 +99,7 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
            "AND n.status = 'PUBLISHED' " +
            "AND n.isUrgent = true " +
            "AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
            "ORDER BY n.publishedAt DESC")
@@ -110,6 +114,7 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
            "AND n.status = 'PUBLISHED' " +
            "AND n.isImportant = true " +
            "AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
            "ORDER BY n.publishedAt DESC")
@@ -126,6 +131,7 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
            "AND n.status = 'PUBLISHED' " +
            "AND n.isImportant = true " +
            "AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
            "ORDER BY n.publishedAt DESC")
@@ -138,6 +144,7 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
      */
     @Query("SELECT n.id FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.targetType IN (:targetTypes) " +
            "AND n.status = 'PUBLISHED' AND n.isDeleted = false " +
+           "AND n.authorId <> 0 " +
            "AND (n.publishedAt IS NULL OR n.publishedAt <= CURRENT_TIMESTAMP) " +
            "AND (n.expiresAt IS NULL OR n.expiresAt > CURRENT_TIMESTAMP) " +
            "AND n.id NOT IN (SELECT r.notificationId FROM SystemNotificationRead r WHERE r.tenantId = :tenantId AND r.userId = :userId AND r.isRead = true)")

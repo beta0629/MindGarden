@@ -54,7 +54,7 @@ public class NotificationLifecycleServiceImpl implements NotificationLifecycleSe
                 .notificationType(type)
                 .title(title)
                 .body(body)
-                .status(Notification.STATUS_PENDING)
+                .status(Notification.STATUS_SENT)
                 .build();
         return notificationRepository.save(entry);
     }
@@ -103,5 +103,32 @@ public class NotificationLifecycleServiceImpl implements NotificationLifecycleSe
     @Transactional(readOnly = true)
     public long countUnread(String tenantId, Long recipientUserId) {
         return notificationRepository.countUnreadByTenantIdAndRecipient(tenantId, recipientUserId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Notification findForRecipient(String tenantId, Long recipientUserId, Long notificationId) {
+        return notificationRepository
+                .findByTenantIdAndIdAndRecipientUserIdAndIsDeletedFalse(tenantId, notificationId, recipientUserId)
+                .orElseThrow(() -> new EntityNotFoundException("Notification not found: " + notificationId));
+    }
+
+    @Override
+    @Transactional
+    public Notification markReadForRecipient(String tenantId, Long recipientUserId, Long notificationId) {
+        Notification notification = findForRecipient(tenantId, recipientUserId, notificationId);
+        if (!Notification.STATUS_READ.equals(notification.getStatus())) {
+            notification.setStatus(Notification.STATUS_READ);
+            notification.setReadAt(LocalDateTime.now());
+            return notificationRepository.save(notification);
+        }
+        return notification;
+    }
+
+    @Override
+    @Transactional
+    public void markAllReadForRecipient(String tenantId, Long recipientUserId) {
+        notificationRepository.markAllUnreadAsReadForRecipient(
+                tenantId, recipientUserId, LocalDateTime.now());
     }
 }

@@ -464,6 +464,75 @@
   border: 1px solid var(--mg-color-warning-200);
 }
 
+/*
+ * Auth Dark Mode — login form input/label contrast (WCAG AA)
+ * SessionManagement / B0KlA form cascade 패턴 정합
+ */
+[data-theme="dark"] .mg-v2-login-container .mg-v2-login-title {
+  color: var(--mg-v2-color-text-primary);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-login-subtitle {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-login-form-wrapper {
+  background-color: var(--mg-v2-color-surface-card);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-label {
+  color: var(--mg-v2-color-text-primary);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-field .mg-v2-text-secondary {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-input {
+  background-color: var(--mg-v2-form-input-bg);
+  color: var(--mg-v2-form-text);
+  border-color: var(--mg-v2-form-border);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-input::placeholder {
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-input:focus {
+  border-color: var(--mg-v2-form-focus-ring);
+  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-password-toggle {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-divider span {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-link {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-tooltip--error {
+  background-color: var(--mg-v2-color-semantic-error-light);
+  color: var(--mg-v2-color-semantic-error-dark);
+  border-color: var(--mg-v2-color-semantic-error);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-tooltip--success {
+  background-color: var(--mg-v2-color-semantic-success-light);
+  color: var(--mg-v2-color-semantic-success-dark);
+  border-color: var(--mg-v2-color-semantic-success);
+}
+
+[data-theme="dark"] .mg-v2-login-container .mg-v2-tooltip--warning {
+  background-color: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning-dark);
+  border-color: var(--mg-v2-color-semantic-warning);
+}
+
 /* 반응형 브레이크포인트 */
 @media (max-width: 1023px) {
   .mg-v2-login-content {

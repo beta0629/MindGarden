@@ -192,41 +192,42 @@ const AdminMindGardenObservabilityPage = () => {
                   renderCell={renderCell}
                 />
               )}
-              <div className="mg-v2-content-section__actions">
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    className: 'mg-v2-mapping-header-btn'
-                  })}
-                  disabled={!canPrev}
-                  onClick={() => {
-                    setPage((p) => Math.max(0, p - 1));
-                  }}
-                >
-                  이전 페이지
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    className: 'mg-v2-mapping-header-btn'
-                  })}
-                  disabled={!canNext}
-                  onClick={() => {
-                    setPage((p) => p + 1);
-                  }}
-                >
-                  다음 페이지
-                </MGButton>
+              <div className="mg-v2-content-section__actions mg-v2-content-section__actions--pagination">
+                <div className="mg-v2-content-section__pagination-buttons">
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      className: 'mg-v2-mapping-header-btn'
+                    })}
+                    disabled={!canPrev}
+                    onClick={() => {
+                      setPage((p) => Math.max(0, p - 1));
+                    }}
+                  >
+                    이전 페이지
+                  </MGButton>
+                  <MGButton
+                    type="button"
+                    variant="outline"
+                    className={buildErpMgButtonClassName({
+                      variant: 'outline',
+                      size: 'md',
+                      className: 'mg-v2-mapping-header-btn'
+                    })}
+                    disabled={!canNext}
+                    onClick={() => {
+                      setPage((p) => p + 1);
+                    }}
+                  >
+                    다음 페이지
+                  </MGButton>
+                </div>
                 <span className="mg-v2-content-section__subtitle">
                   <SafeText tag="span">
-                    {toDisplayString(pageMeta.number + 1)} / {toDisplayString(Math.max(pageMeta.totalPages, 1))}{' '}
-                    (총 {toDisplayString(pageMeta.totalElements)}건)
+                    {`${pageMeta.number + 1} / ${Math.max(pageMeta.totalPages, 1)} (총 ${pageMeta.totalElements}건)`}
                   </SafeText>
                 </span>
               </div>

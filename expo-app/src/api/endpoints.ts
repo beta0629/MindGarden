@@ -142,7 +142,17 @@ export const MESSAGE_API = {
 } as const;
 
 export const NOTIFICATION_API = {
+  GET_NOTIFICATIONS: '/api/v1/notifications',
+  GET_UNREAD_COUNT: '/api/v1/notifications/unread-count',
+  MARK_ALL_READ: '/api/v1/notifications/read-all',
+  detail: (id: string | number) => `/api/v1/notifications/${id}`,
+  markAsRead: (id: string | number) => `/api/v1/notifications/${id}/read`,
+} as const;
+
+/** admin broadcast·웰니스 공지 등 role-target broadcast 전용 */
+export const SYSTEM_NOTIFICATION_API = {
   GET_NOTIFICATIONS: '/api/v1/system-notifications',
+  GET_ACTIVE: '/api/v1/system-notifications/active',
   GET_UNREAD_COUNT: '/api/v1/system-notifications/unread-count',
   MARK_ALL_READ: '/api/v1/system-notifications/read-all',
   detail: (id: string | number) => `/api/v1/system-notifications/${id}`,
@@ -445,6 +455,7 @@ export const API_ENDPOINTS = {
   SCHEDULE: SCHEDULE_API,
   MESSAGE: MESSAGE_API,
   NOTIFICATION: NOTIFICATION_API,
+  SYSTEM_NOTIFICATION: SYSTEM_NOTIFICATION_API,
   PUSH: PUSH_API,
   CONSULTANT: CONSULTANT_API,
   ADMIN_COMMUNITY: ADMIN_COMMUNITY_API,

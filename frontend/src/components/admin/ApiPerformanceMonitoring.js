@@ -8,6 +8,7 @@ import MGButton from '../../components/common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
 import { API_PERFORMANCE_WIDGET } from '../../constants/widgetConstants';
+import { getAiUsageStats } from '../../api/admin/aiUsageApi';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import './ApiPerformanceMonitoring.css';
@@ -50,6 +51,74 @@ const MOCK_CHART_DATA = {
  * API 성능 모니터링 페이지
  * 종합적인 API 성능 분석 및 모니터링 대시보드
  */
+
+/**
+ * AI 로그 모니터링 지표 위젯
+ */
+const AiLogMonitorWidget = ({ loading, error, stats }) => {
+  if (loading) {
+    return (
+      <div className="mg-v2-ad-b0kla__kpi-row api-perf-summary" style={{ marginBottom: 0 }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card" style={{ opacity: 0.5 }}>
+            <div className="api-perf-summary__bar" />
+            <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">데이터 로딩 중...</span>
+            <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value">-</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="mg-v2-ad-b0kla__stat-item" style={{ color: 'var(--mg-v2-color-error, var(--mg-color-error-main))', width: '100%', padding: 'var(--mg-v2-space-4, 16px)' }}>
+        AI 로그 모니터링 데이터를 불러오지 못했습니다. <br />
+        <span style={{ fontSize: 'var(--mg-v2-font-size-caption, 12px)', color: 'var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary))' }}>연동 API: GET /api/v1/admin/ai/usage-stats</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mg-v2-ad-b0kla__kpi-row api-perf-summary" style={{ marginBottom: 0 }}>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
+        <div className="api-perf-summary__bar" />
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">오늘 호출 건수</span>
+        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value">
+          {stats.callsToday?.toLocaleString() || 0}건
+        </span>
+      </div>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
+        <div className="api-perf-summary__bar" />
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">성공률</span>
+        <span 
+          className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value"
+          style={{ color: stats.successRate >= 95 ? 'var(--mg-success-500, var(--mg-color-success-main))' : stats.successRate >= 80 ? 'var(--mg-warning-500, var(--mg-color-warning-main))' : 'var(--mg-error-500, var(--mg-color-error-main))' }}
+        >
+          {stats.successRate != null ? `${stats.successRate}%` : '-'}
+        </span>
+      </div>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
+        <div className="api-perf-summary__bar" />
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">평균 응답 시간</span>
+        <span 
+          className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value"
+          style={{ color: stats.averageDurationMs < 2000 ? 'var(--mg-success-500, var(--mg-color-success-main))' : stats.averageDurationMs < 5000 ? 'var(--mg-warning-500, var(--mg-color-warning-main))' : 'var(--mg-error-500, var(--mg-color-error-main))' }}
+        >
+          {stats.averageDurationMs != null ? `${stats.averageDurationMs}ms` : '-'}
+        </span>
+      </div>
+      <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
+        <div className="api-perf-summary__bar" />
+        <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">총 사용 토큰</span>
+        <span className="mg-v2-ad-b0kla__text--xl mg-v2-ad-b0kla__text--bold api-perf-summary__value api-perf-summary__value--neutral">
+          {stats.totalTokens?.toLocaleString() || 0}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 const ApiPerformanceMonitoring = () => {
   const navigate = useNavigate();
   const [confirm, ConfirmModal] = useConfirm();
@@ -59,9 +128,15 @@ const ApiPerformanceMonitoring = () => {
   
   // 상태 관리
   const [dashboardData, setDashboardData] = useState(MOCK_CHART_DATA);
+  const [aiStats, setAiStats] = useState(null);
+  const [aiStatsLoading, setAiStatsLoading] = useState(false);
+  const [aiStatsError, setAiStatsError] = useState(false);
 
   const fetchDashboardData = useCallback(async() => {
     setRefreshing(true);
+    setAiStatsLoading(true);
+    setAiStatsError(false);
+
     // 실제 환경에서는 API 호출을 통해 데이터를 가져옵니다.
     // 현재는 Mock 데이터로 시뮬레이션합니다.
     setTimeout(() => {
@@ -74,6 +149,17 @@ const ApiPerformanceMonitoring = () => {
       });
       setRefreshing(false);
     }, 800);
+
+    // AI 로그 모니터링 데이터 (실제 API 호출)
+    try {
+      const stats = await getAiUsageStats('today');
+      setAiStats(stats);
+    } catch (error) {
+      console.error('AI 통계 조회 오류:', error);
+      setAiStatsError(true);
+    } finally {
+      setAiStatsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -180,6 +266,11 @@ const ApiPerformanceMonitoring = () => {
 
         {/* Top Section: 요약 지표 카드 4종 */}
         <ApiPerformanceWidget summary={dashboardData.summary} />
+
+        {/* AI 로그 모니터링 섹션 */}
+        <ContentSection title="로컬 AI 로그 모니터링 지표 (Today)" className="api-perf-monitor__section">
+          <AiLogMonitorWidget loading={aiStatsLoading} error={aiStatsError} stats={aiStats} />
+        </ContentSection>
 
         {/* Middle Section: 메인 차트 2종 */}
         <div className="mg-v2-ad-b0kla__grid-container api-perf-monitor__grid api-perf-monitor__grid--7-3">

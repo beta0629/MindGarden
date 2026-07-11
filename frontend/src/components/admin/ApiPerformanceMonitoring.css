@@ -4,7 +4,9 @@
  */
 
 .api-perf-monitor__actions {
-    gap: var(--mg-v2-space-2, 8px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--mg-v2-space-2);
 }
 
 .api-perf-monitor__container {

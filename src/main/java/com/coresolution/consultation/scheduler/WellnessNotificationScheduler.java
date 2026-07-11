@@ -9,18 +9,16 @@ import java.util.List;
 import java.util.UUID;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.entity.DailyHealingContent;
 import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.SystemNotificationRead;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.WellnessTemplate;
-import com.coresolution.consultation.repository.DailyHealingContentRepository;
 import com.coresolution.consultation.repository.SystemNotificationReadRepository;
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.DailyHealingContentGenerator;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WellnessTemplateService;
-import com.coresolution.consultation.service.impl.HealingContentServiceImpl;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
@@ -60,8 +58,7 @@ public class WellnessNotificationScheduler {
     private final SystemNotificationReadRepository systemNotificationReadRepository;
     private final UserRepository userRepository;
     private final WellnessTemplateService wellnessTemplateService;
-    private final DailyHealingContentRepository dailyHealingContentRepository;
-    private final HealingContentServiceImpl healingContentService;
+    private final DailyHealingContentGenerator dailyHealingContentGenerator;
     private final TenantService tenantService;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
@@ -275,8 +272,8 @@ public class WellnessNotificationScheduler {
         // 모든 CLIENT와 CONSULTANT 사용자에 대해 읽음 상태 생성 (읽지 않은 상태로)
         createReadStatusForAllUsers(savedNotification.getId(), tenantId);
         
-        // 오늘의 힐링 컨텐츠 생성 및 저장 (tenantId 명시 전달)
-        generateDailyHealingContent(today, tenantId);
+        // 오늘의 힐링 컨텐츠 생성 및 저장 (알림 ON 경로 — 모니터링 스케줄러와 idempotent 공유)
+        dailyHealingContentGenerator.generateForTenant(today, tenantId);
         
         log.info("💚 [WellnessNotification] 테넌트 알림 발송 완료: tenantId={}, notificationId={}, title={}",
             tenantId, savedNotification.getId(), template.getTitle());
@@ -338,80 +335,6 @@ public class WellnessNotificationScheduler {
         } catch (Exception e) {
             log.error("❌ 사용자 {} 읽음 상태 생성 실패: {}", user.getId(), e.getMessage());
             return false;
-        }
-    }
-    
-    /**
-     * 오늘의 힐링 컨텐츠 생성 및 저장.
-     *
-     * <p>핫픽스 (2026-05-24, B2): tenantId 를 명시 인자로 받아 매 iteration 마다 ThreadLocal 을
-     * 재설정한다 (defense in depth). 이전 구현은 외부 루프의 ThreadLocal 에만 의존했고,
-     * AiChatCompletionServiceImpl.completeChat 의 finally clear 와 결합되어 1회차 직후
-     * 컨텍스트가 소실되어 2~6회차가 "no_openai_or_gemini_api_key" 로 회귀했다.</p>
-     *
-     * @param today 대상 날짜
-     * @param tenantId 테넌트 ID (필수)
-     */
-    private void generateDailyHealingContent(LocalDate today, String tenantId) {
-        try {
-            log.debug("💚 오늘의 힐링 컨텐츠 생성 시작 - 날짜: {}, tenantId: {}", today, tenantId);
-            
-            // 이미 오늘 컨텐츠가 있는지 확인
-            if (dailyHealingContentRepository.existsByDate(today)) {
-                log.debug("💚 오늘의 힐링 컨텐츠가 이미 존재합니다 - 날짜: {}", today);
-                return;
-            }
-            
-            // 내담자용 힐링 컨텐츠 생성
-            generateHealingContentForRole("CLIENT", "GENERAL", today, tenantId);
-            generateHealingContentForRole("CLIENT", "HUMOR", today, tenantId);
-            generateHealingContentForRole("CLIENT", "WARM_WORDS", today, tenantId);
-            
-            // 상담사용 힐링 컨텐츠 생성
-            generateHealingContentForRole("CONSULTANT", "GENERAL", today, tenantId);
-            generateHealingContentForRole("CONSULTANT", "HUMOR", today, tenantId);
-            generateHealingContentForRole("CONSULTANT", "WARM_WORDS", today, tenantId);
-            
-            log.debug("✅ 오늘의 힐링 컨텐츠 생성 완료 - 날짜: {}, tenantId: {}", today, tenantId);
-            
-        } catch (Exception e) {
-            log.error("❌ 오늘의 힐링 컨텐츠 생성 실패 - 날짜: {}, tenantId: {}", today, tenantId, e);
-        }
-    }
-    
-    /**
-     * 특정 역할과 카테고리의 힐링 컨텐츠 생성.
-     *
-     * <p>핫픽스 (2026-05-24, B2): 매 호출 진입 시 TenantContextHolder 를 재설정한다
-     * (defense in depth). 하위 SSOT 호출이 ThreadLocal 을 침범해도 보호된다.</p>
-     */
-    private void generateHealingContentForRole(String userRole, String category, LocalDate today, String tenantId) {
-        try {
-            // 핫픽스: 매 iteration 마다 TenantContextHolder 재확인/재설정.
-            TenantContextHolder.setTenantId(tenantId);
-
-            // GPT로 힐링 컨텐츠 생성
-            var healingContent = healingContentService.generateNewHealingContent(userRole, category);
-            
-            // DB에 저장
-            DailyHealingContent dailyContent = DailyHealingContent.builder()
-                .contentDate(today)
-                .title(healingContent.getTitle())
-                .content(healingContent.getContent())
-                .category(category)
-                .userRole(userRole)
-                .emoji(healingContent.getEmoji())
-                .isActive(true)
-                .build();
-            
-            dailyHealingContentRepository.save(dailyContent);
-            
-            log.debug("💚 힐링 컨텐츠 저장 완료 - tenantId: {}, 역할: {}, 카테고리: {}, 제목: {}",
-                tenantId, userRole, category, healingContent.getTitle());
-            
-        } catch (Exception e) {
-            log.error("❌ 힐링 컨텐츠 생성 실패 - tenantId: {}, 역할: {}, 카테고리: {}",
-                tenantId, userRole, category, e);
         }
     }
     

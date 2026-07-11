@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import ApiPerformanceWidget from './widgets/ApiPerformanceWidget';
 import { ResponseTimeLineChart, StatusCodeDoughnutChart, CacheHitBarChart } from './widgets/ApiPerformanceChart';
 import MGButton from '../../components/common/MGButton';
@@ -177,7 +177,6 @@ const ApiPerformanceMonitoring = () => {
             </div>
           }
         />
-        <div className="mg-v2-ad-b0kla__container api-perf-monitor__container">
 
         {/* Top Section: 요약 지표 카드 4종 */}
         <ApiPerformanceWidget summary={dashboardData.summary} />
@@ -185,36 +184,24 @@ const ApiPerformanceMonitoring = () => {
         {/* Middle Section: 메인 차트 2종 */}
         <div className="mg-v2-ad-b0kla__grid-container api-perf-monitor__grid api-perf-monitor__grid--7-3">
           {/* 응답 시간 트렌드 */}
-          <div className="mg-v2-ad-b0kla__chart-section api-perf-monitor__section">
-            <div className="mg-v2-ad-b0kla__section-header api-perf-monitor__section-header">
-              <span className="mg-v2-ad-b0kla__accent-bar api-perf-monitor__accent-bar" />
-              <h3 className="api-perf-monitor__section-title">응답 시간 트렌드</h3>
-            </div>
+          <ContentSection title="응답 시간 트렌드" className="api-perf-monitor__section">
             <div className="mg-v2-ad-b0kla__canvas-wrapper api-perf-monitor__canvas-wrapper">
               <ResponseTimeLineChart data={dashboardData.lineChart} />
             </div>
-          </div>
+          </ContentSection>
 
           {/* 상태 코드 비율 */}
-          <div className="mg-v2-ad-b0kla__chart-section api-perf-monitor__section">
-            <div className="mg-v2-ad-b0kla__section-header api-perf-monitor__section-header">
-              <span className="mg-v2-ad-b0kla__accent-bar api-perf-monitor__accent-bar" />
-              <h3 className="api-perf-monitor__section-title">상태 코드 비율</h3>
-            </div>
+          <ContentSection title="상태 코드 비율" className="api-perf-monitor__section">
             <div className="mg-v2-ad-b0kla__canvas-wrapper api-perf-monitor__canvas-wrapper">
               <StatusCodeDoughnutChart data={dashboardData.doughnutChart} />
             </div>
-          </div>
+          </ContentSection>
         </div>
 
         {/* Bottom Section: 상세 지표 및 리스트 */}
         <div className="mg-v2-ad-b0kla__grid-container api-perf-monitor__grid api-perf-monitor__grid--1-1">
           {/* 가장 느린 API 리스트 */}
-          <div className="mg-v2-ad-b0kla__chart-section api-perf-monitor__section">
-            <div className="mg-v2-ad-b0kla__section-header api-perf-monitor__section-header">
-              <span className="mg-v2-ad-b0kla__accent-bar api-perf-monitor__accent-bar" />
-              <h3 className="api-perf-monitor__section-title">가장 느린 API Top 5</h3>
-            </div>
+          <ContentSection title="가장 느린 API Top 5" className="api-perf-monitor__section">
             <div className="mg-v2-ad-b0kla__list-wrapper api-perf-monitor__list">
               {Object.entries(dashboardData.slowApis).map(([endpoint, stats]) => (
                 <div key={endpoint} className="api-perf-monitor__list-row">
@@ -229,21 +216,16 @@ const ApiPerformanceMonitoring = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </ContentSection>
 
           {/* 캐시 히트율 상세 */}
-          <div className="mg-v2-ad-b0kla__chart-section api-perf-monitor__section">
-            <div className="mg-v2-ad-b0kla__section-header api-perf-monitor__section-header">
-              <span className="mg-v2-ad-b0kla__accent-bar api-perf-monitor__accent-bar" />
-              <h3 className="api-perf-monitor__section-title">캐시 히트 상태</h3>
-            </div>
+          <ContentSection title="캐시 히트 상태" className="api-perf-monitor__section">
             <div className="mg-v2-ad-b0kla__canvas-wrapper api-perf-monitor__canvas-wrapper--cache">
               <CacheHitBarChart data={dashboardData.cacheHit} />
             </div>
-          </div>
+          </ContentSection>
         </div>
 
-      </div>
       </ContentArea>
       <ConfirmModal />
     </AdminCommonLayout>

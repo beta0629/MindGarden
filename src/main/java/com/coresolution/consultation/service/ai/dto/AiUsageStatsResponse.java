@@ -38,9 +38,9 @@ public class AiUsageStatsResponse {
     /**
      * 요청 기간 라벨 echo (today | week | month).
      *
-     * <p>현재 통계 응답은 period 와 무관하게 callsToday / callsThisWeek / callsThisMonth 3종을
-     * 모두 반환한다. 클라이언트는 본 필드로 자신이 요청한 기간 라벨을 식별한다.
-     * 후속 PR 에서 period 별 분기를 추가할 때도 backward-compatible 하게 동작한다.</p>
+     * <p>callsToday / callsThisWeek / callsThisMonth 는 period 와 무관하게 항상 반환한다.
+     * successRate / averageDurationMs / totalTokens / callsByCaller / callsByProvider 는
+     * 요청 period(today|week|month) 구간에 맞춰 집계된다.</p>
      */
     private String requestedPeriod;
 
@@ -80,7 +80,7 @@ public class AiUsageStatsResponse {
     /** 평균 응답 시간(ms). 데이터 없을 때 0. */
     private long averageDurationMs;
 
-    /** 토큰 총합 (이번 달 기준). */
+    /** 토큰 총합 (요청 period 구간 기준). */
     private long totalTokens;
 
     /** 최근 30일 일별 호출 수 (차트용). */

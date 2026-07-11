@@ -65,9 +65,9 @@ public class AiUsageStatsService {
     /**
      * 테넌트의 AI 사용 통계를 집계한다.
      *
-     * <p>응답은 period 라벨과 무관하게 callsToday / callsThisWeek / callsThisMonth 3종을 모두
-     * 반환한다. period 는 {@link AiUsageStatsResponse#getRequestedPeriod()} 로 echo 되며,
-     * 후속 PR 에서 period 별 분기를 추가할 때도 backward-compatible 하다.</p>
+     * <p>callsToday / callsThisWeek / callsThisMonth 는 period 와 무관하게 항상 반환한다.
+     * successRate / failureRate / averageDurationMs / totalTokens / callsByCaller / callsByProvider
+     * 는 요청 period(today|week|month) 구간에 맞춰 집계한다.</p>
      *
      * @param tenantId 테넌트 ID (필수)
      * @param period   요청 기간 라벨 (today | week | month — 응답에 echo). null 허용.
@@ -86,11 +86,38 @@ public class AiUsageStatsService {
         long callsToday = usageLogRepository.countByTenantAndPeriod(tenantId, startOfToday, startOfTomorrow);
         long callsThisWeek = usageLogRepository.countByTenantAndPeriod(tenantId, startOfWeek, startOfTomorrow);
         long callsThisMonth = usageLogRepository.countByTenantAndPeriod(tenantId, startOfMonth, startOfNextMonth);
-        long successThisMonth = usageLogRepository.countSuccessByTenantAndPeriod(tenantId, startOfMonth, startOfNextMonth);
-        Long tokensThisMonth = usageLogRepository.sumTokensByTenantAndPeriod(tenantId, startOfMonth, startOfNextMonth);
-        Double avgDurationThisMonth = usageLogRepository.averageDurationByTenantAndPeriod(tenantId, startOfMonth, startOfNextMonth);
 
-        List<Object[]> callerRows = usageLogRepository.countByCallerInPeriod(tenantId, startOfMonth, startOfNextMonth);
+        String echoLabel = resolvePeriodLabel(period);
+        LocalDateTime metricsStart;
+        LocalDateTime metricsEnd;
+        long callsInPeriod;
+        switch (echoLabel) {
+            case "today" -> {
+                metricsStart = startOfToday;
+                metricsEnd = startOfTomorrow;
+                callsInPeriod = callsToday;
+            }
+            case "week" -> {
+                metricsStart = startOfWeek;
+                metricsEnd = startOfTomorrow;
+                callsInPeriod = callsThisWeek;
+            }
+            default -> {
+                metricsStart = startOfMonth;
+                metricsEnd = startOfNextMonth;
+                callsInPeriod = callsThisMonth;
+            }
+        }
+
+        long successInPeriod = usageLogRepository.countSuccessByTenantAndPeriod(
+                tenantId, metricsStart, metricsEnd);
+        Long tokensInPeriod = usageLogRepository.sumTokensByTenantAndPeriod(
+                tenantId, metricsStart, metricsEnd);
+        Double avgDurationInPeriod = usageLogRepository.averageDurationByTenantAndPeriod(
+                tenantId, metricsStart, metricsEnd);
+
+        List<Object[]> callerRows = usageLogRepository.countByCallerInPeriod(
+                tenantId, metricsStart, metricsEnd);
         Map<String, Long> callsByCaller = new LinkedHashMap<>();
         for (Object[] row : callerRows) {
             String caller = row[0] != null ? row[0].toString() : "unknown";
@@ -98,7 +125,8 @@ public class AiUsageStatsService {
             callsByCaller.put(caller, count);
         }
 
-        List<Object[]> providerRows = usageLogRepository.countByProviderInPeriod(tenantId, startOfMonth, startOfNextMonth);
+        List<Object[]> providerRows = usageLogRepository.countByProviderInPeriod(
+                tenantId, metricsStart, metricsEnd);
         Map<String, Long> callsByProvider = new LinkedHashMap<>();
         KNOWN_PROVIDERS.forEach(p -> callsByProvider.put(p, 0L));
         callsByProvider.put(PROVIDER_UNKNOWN, 0L);
@@ -110,17 +138,16 @@ public class AiUsageStatsService {
 
         double successRate = 0.0;
         double failureRate = 0.0;
-        if (callsThisMonth > 0) {
-            successRate = (successThisMonth * 100.0) / callsThisMonth;
+        if (callsInPeriod > 0) {
+            successRate = (successInPeriod * 100.0) / callsInPeriod;
             failureRate = 100.0 - successRate;
         }
 
-        long averageDurationMs = avgDurationThisMonth != null ? Math.round(avgDurationThisMonth) : 0L;
-        long totalTokens = tokensThisMonth != null ? tokensThisMonth : 0L;
+        long averageDurationMs = avgDurationInPeriod != null ? Math.round(avgDurationInPeriod) : 0L;
+        long totalTokens = tokensInPeriod != null ? tokensInPeriod : 0L;
 
         List<AiUsageStatsResponse.DailyCount> dailyCalls30d = buildDailyCalls(tenantId, today);
 
-        String echoLabel = (period != null && !period.isBlank()) ? period : DEFAULT_PERIOD_LABEL;
         return AiUsageStatsResponse.builder()
                 .tenantId(tenantId)
                 // period 는 deprecated alias — 신규 클라이언트는 requestedPeriod 사용
@@ -139,6 +166,20 @@ public class AiUsageStatsService {
                 .totalTokens(totalTokens)
                 .dailyCalls30d(dailyCalls30d)
                 .build();
+    }
+
+    /**
+     * period 라벨 정규화. blank/미지원 → month.
+     */
+    private static String resolvePeriodLabel(String period) {
+        if (period == null || period.isBlank()) {
+            return DEFAULT_PERIOD_LABEL;
+        }
+        String normalized = period.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "today", "week", "month" -> normalized;
+            default -> DEFAULT_PERIOD_LABEL;
+        };
     }
 
     /**

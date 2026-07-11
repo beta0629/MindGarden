@@ -1,13 +1,17 @@
 package com.coresolution.consultation.scheduler;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
-import com.coresolution.consultation.repository.DailyHealingContentRepository;
 import com.coresolution.consultation.repository.SystemNotificationReadRepository;
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.DailyHealingContentGenerator;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WellnessTemplateService;
-import com.coresolution.consultation.service.impl.HealingContentServiceImpl;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.TenantService;
@@ -20,16 +24,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link WellnessNotificationScheduler} DB 플래그 가드 단위 테스트.
- *
- * <p>외부 의존(템플릿/리포지토리/AI) 호출을 트리거하지 않고 가드 동작만 검증한다.
- * 풀 시나리오는 통합 테스트(별도 PR) 에서 다룬다.
  *
  * @author MindGarden
  * @since 2026-05-25
@@ -43,8 +39,7 @@ class WellnessNotificationSchedulerGuardTest {
     @Mock private SystemNotificationReadRepository systemNotificationReadRepository;
     @Mock private UserRepository userRepository;
     @Mock private WellnessTemplateService wellnessTemplateService;
-    @Mock private DailyHealingContentRepository dailyHealingContentRepository;
-    @Mock private HealingContentServiceImpl healingContentService;
+    @Mock private DailyHealingContentGenerator dailyHealingContentGenerator;
     @Mock private TenantService tenantService;
     @Mock private SchedulerExecutionLogService logService;
     @Mock private SchedulerAlertService alertService;
@@ -56,7 +51,7 @@ class WellnessNotificationSchedulerGuardTest {
     void setUp() {
         scheduler = new WellnessNotificationScheduler(
                 systemNotificationRepository, systemNotificationReadRepository, userRepository,
-                wellnessTemplateService, dailyHealingContentRepository, healingContentService,
+                wellnessTemplateService, dailyHealingContentGenerator,
                 tenantService, logService, alertService, systemConfigService);
     }
 
@@ -72,6 +67,7 @@ class WellnessNotificationSchedulerGuardTest {
         verifyNoInteractions(tenantService);
         verifyNoInteractions(systemNotificationRepository);
         verifyNoInteractions(logService);
+        verifyNoInteractions(dailyHealingContentGenerator);
     }
 
     @Test
@@ -86,6 +82,7 @@ class WellnessNotificationSchedulerGuardTest {
         verifyNoInteractions(tenantService);
         verifyNoInteractions(systemNotificationRepository);
         verifyNoInteractions(logService);
+        verifyNoInteractions(dailyHealingContentGenerator);
     }
 
     @Test
@@ -98,8 +95,8 @@ class WellnessNotificationSchedulerGuardTest {
 
         scheduler.sendDailyWellnessTip();
 
-        // 활성 테넌트 0건이라 발송 본문은 호출되지 않지만 tenantService 는 호출되어야 함.
         org.mockito.Mockito.verify(tenantService).getAllActiveTenantIds();
         verifyNoInteractions(systemNotificationRepository);
+        verifyNoInteractions(dailyHealingContentGenerator);
     }
 }

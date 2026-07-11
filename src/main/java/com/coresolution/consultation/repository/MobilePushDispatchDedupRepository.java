@@ -12,4 +12,16 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface MobilePushDispatchDedupRepository extends JpaRepository<MobilePushDispatchDedup, Long> {
+
+    /**
+     * 멱등 키 존재 여부.
+     *
+     * @param tenantId 테넌트 ID
+     * @param pushType canonical type
+     * @param entityId 비즈니스 엔티티 키
+     * @param timeBucket 시간 창·슬롯
+     * @return 이미 청구된 경우 true
+     */
+    boolean existsByTenantIdAndPushTypeAndEntityIdAndTimeBucket(
+            String tenantId, String pushType, String entityId, String timeBucket);
 }

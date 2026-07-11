@@ -32,7 +32,7 @@ const ApiPerformanceWidget = ({
   };
 
   return (
-    <div className={`mg-v2-ad-b0kla__grid api-perf-summary ${className}`} {...props}>
+    <div className={`mg-v2-ad-b0kla__kpi-row api-perf-summary ${className}`} style={{ marginBottom: 0 }} {...props}>
       <div className="mg-v2-ad-b0kla__stat-item mg-v2-ad-b0kla__flex-col api-perf-summary__card">
         <div className="api-perf-summary__bar" />
         <span className="mg-v2-ad-b0kla__text--sm mg-v2-ad-b0kla__flex api-perf-summary__label">

@@ -359,8 +359,13 @@ public class HealingContentServiceImpl implements HealingContentService {
                                 int totalTokens, long responseTimeMs,
                                 String promptBody, String responseBody) {
         try {
+            if (!StringUtils.hasText(tenantId)) {
+                log.warn("⚠️ 힐링 사용량 로그 스킵 — tenantId 누락 (requestType={}, model={})",
+                        requestType, model);
+                return;
+            }
             AiUsageLog usageLog = AiUsageLog.builder()
-                .tenantId(tenantId)
+                .tenantId(tenantId.trim())
                 .aiProvider(aiProvider)
                 .requestType(requestType)
                 .model(model)

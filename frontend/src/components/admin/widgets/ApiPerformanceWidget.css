@@ -4,15 +4,14 @@
  */
 
 .api-perf-summary {
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--mg-spacing-16);
+    /* mg-v2-ad-b0kla__kpi-row provides responsive grid */
 }
 
 .api-perf-summary__card {
-    background-color: var(--mg-color-surface-main);
-    border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--mg-radius-16, 16px);
-    padding: var(--mg-spacing-24);
+    background-color: var(--mg-v2-color-surface-card, var(--mg-color-surface-main));
+    border: 1px solid var(--mg-v2-color-border-default, var(--mg-color-border-main));
+    border-radius: var(--mg-v2-radius-xl, 16px);
+    padding: var(--mg-v2-space-6, 24px);
     position: relative;
     overflow: hidden;
 }
@@ -20,23 +19,23 @@
 .api-perf-summary__bar {
     position: absolute;
     left: 0;
-    top: var(--mg-spacing-24);
-    bottom: var(--mg-spacing-24);
+    top: var(--mg-v2-space-6, 24px);
+    bottom: var(--mg-v2-space-6, 24px);
     width: 4px;
-    background-color: var(--mg-color-primary-main);
+    background-color: var(--mg-v2-color-primary, var(--mg-color-primary-main));
     border-radius: 0 2px 2px 0;
 }
 
 .api-perf-summary__label {
-    color: var(--mg-color-text-secondary);
+    color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
     align-items: center;
 }
 
 .api-perf-summary__value {
-    margin-top: var(--mg-spacing-8);
-    font-size: var(--mg-font-size-2xl, 24px);
+    margin-top: var(--mg-v2-space-2, 8px);
+    font-size: var(--mg-v2-font-size-h3, 24px);
 }
 
 .api-perf-summary__value--neutral {
-    color: var(--mg-color-text-main);
+    color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }

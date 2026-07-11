@@ -4,17 +4,18 @@
  */
 
 .api-perf-monitor__actions {
-    gap: var(--mg-spacing-8);
+    gap: var(--mg-v2-space-2, 8px);
 }
 
 .api-perf-monitor__container {
-    padding: var(--mg-spacing-24) var(--mg-spacing-32);
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-v2-space-6, 24px);
 }
 
 .api-perf-monitor__grid {
     display: grid;
-    gap: var(--mg-spacing-16);
-    margin-top: var(--mg-spacing-24);
+    gap: var(--mg-v2-space-6, 24px);
 }
 
 .api-perf-monitor__grid--7-3 {
@@ -25,32 +26,15 @@
     grid-template-columns: 1fr 1fr;
 }
 
+@media (max-width: 900px) {
+    .api-perf-monitor__grid--7-3,
+    .api-perf-monitor__grid--1-1 {
+        grid-template-columns: 1fr;
+    }
+}
+
 .api-perf-monitor__section {
-    background-color: var(--mg-color-surface-main);
-    border: 1px solid var(--mg-color-border-main);
-    border-radius: var(--mg-radius-16, 16px);
-    padding: var(--mg-spacing-24);
-}
-
-.api-perf-monitor__section-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: var(--mg-spacing-16);
-}
-
-.api-perf-monitor__accent-bar {
-    width: 4px;
-    height: 16px;
-    background-color: var(--mg-color-primary-main);
-    border-radius: 2px;
-    margin-right: var(--mg-spacing-8);
-}
-
-.api-perf-monitor__section-title {
-    font-size: var(--mg-font-size-base, 16px);
-    font-weight: 600;
-    color: var(--mg-color-text-main);
-    margin: 0;
+    height: 100%;
 }
 
 .api-perf-monitor__canvas-wrapper {
@@ -70,15 +54,15 @@
 .api-perf-monitor__list {
     display: flex;
     flex-direction: column;
-    gap: var(--mg-spacing-12);
+    gap: var(--mg-v2-space-3, 12px);
 }
 
 .api-perf-monitor__list-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: var(--mg-spacing-12);
-    border-bottom: 1px solid var(--mg-color-border-main);
+    padding-bottom: var(--mg-v2-space-3, 12px);
+    border-bottom: 1px solid var(--mg-v2-color-border-default, var(--mg-color-border-main));
 }
 
 .api-perf-monitor__list-col {
@@ -87,15 +71,15 @@
 }
 
 .api-perf-monitor__list-endpoint {
-    font-size: var(--mg-font-size-sm, 14px);
+    font-size: var(--mg-v2-font-size-body-sm, 14px);
     font-weight: 600;
-    color: var(--mg-color-text-main);
+    color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 
 .api-perf-monitor__list-meta {
-    font-size: var(--mg-font-size-xs, 12px);
-    color: var(--mg-color-text-secondary);
-    margin-top: var(--mg-spacing-4);
+    font-size: var(--mg-v2-font-size-caption, 12px);
+    color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
+    margin-top: var(--mg-v2-space-1, 4px);
 }
 
 .api-perf-monitor__list-right {
@@ -103,7 +87,7 @@
 }
 
 .api-perf-monitor__list-duration {
-    font-size: var(--mg-font-size-sm, 14px);
+    font-size: var(--mg-v2-font-size-body-sm, 14px);
     font-weight: 600;
-    color: var(--mg-color-error-main, var(--mg-error-500));
+    color: var(--mg-v2-color-error, var(--mg-color-error-main));
 }

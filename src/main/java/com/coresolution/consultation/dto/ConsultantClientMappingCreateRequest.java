@@ -51,7 +51,7 @@ public class ConsultantClientMappingCreateRequest {
     private String paymentStatus;
 
     @NotNull(message = "회기 수는 필수입니다.")
-    @Min(value = 1, message = "회기 수는 1 이상이어야 합니다.")
+    @Min(value = 0, message = "회기 수는 0 이상이어야 합니다.")
     private Integer totalSessions;
 
     private Integer remainingSessions;
@@ -60,7 +60,7 @@ public class ConsultantClientMappingCreateRequest {
     private String packageName;
 
     @NotNull(message = "패키지 가격은 필수입니다.")
-    @Min(value = 1, message = "패키지 가격은 1 이상이어야 합니다.")
+    @Min(value = 0, message = "패키지 가격은 0 이상이어야 합니다.")
     private Long packagePrice;
 
     private Long paymentAmount;

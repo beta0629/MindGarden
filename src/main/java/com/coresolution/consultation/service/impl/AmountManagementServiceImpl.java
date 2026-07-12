@@ -186,8 +186,8 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         amountInfo.put("relatedTransactions", transactionList);
         
         // 회기당 단가 계산
-        if (mapping.getTotalSessions() != null && mapping.getTotalSessions() > 0 && accurateAmount != null) {
-            long pricePerSession = accurateAmount / mapping.getTotalSessions();
+        if (mapping.getTotalSessions() != null && accurateAmount != null) {
+            long pricePerSession = mapping.getTotalSessions() > 0 ? accurateAmount / mapping.getTotalSessions() : accurateAmount;
             amountInfo.put("pricePerSession", pricePerSession);
         }
         

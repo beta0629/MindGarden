@@ -112,8 +112,8 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
       if (!String(form.koreanName).trim()) err.koreanName = '패키지명을 입력하세요.';
     }
     const sessionsNum = Number.parseInt(form.sessions, 10);
-    if (form.sessions === '' || Number.isNaN(sessionsNum) || sessionsNum <= 0) {
-      err.sessions = '회기 수는 1 이상의 숫자를 입력하세요.';
+    if (form.sessions === '' || Number.isNaN(sessionsNum) || sessionsNum < 0) {
+      err.sessions = '회기 수는 0 이상의 숫자를 입력하세요.';
     }
     const priceNum = Number.parseInt(form.price, 10);
     if (form.price === '' || Number.isNaN(priceNum) || priceNum < 0) {
@@ -221,7 +221,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                 </label>
                 <input
                   type="number"
-                  min={1}
+                  min={0}
                   className="mg-v2-form-input mg-v2-package-pricing__form-control"
                   value={form.sessions}
                   onChange={(e) => setForm((f) => ({ ...f, sessions: e.target.value }))}

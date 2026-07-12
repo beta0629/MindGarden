@@ -222,7 +222,7 @@ export const getPackageOptions = async() => {
                         // 세션 수 추출
                         if (extraData.sessions !== undefined && extraData.sessions !== null) {
                             sessions = parseInt(extraData.sessions, 10);
-                            if (isNaN(sessions) || sessions <= 0) {
+                            if (isNaN(sessions) || sessions < 0) {
                                 console.warn(`세션 수 파싱 실패 또는 유효하지 않음: codeValue=${code.codeValue}, sessions=${extraData.sessions}`);
                                 sessions = 20; // 기본값
                             }

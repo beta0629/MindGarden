@@ -117,6 +117,12 @@
   margin-top: 0.5rem;
 }
 
+.mg-v2-mapping-edit-modal__discount-input {
+  width: 5rem;
+  text-align: right;
+  padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
+}
+
 /* 주의사항 마진 */
 .mg-v2-mapping-edit-modal__alert {
   margin-top: 1rem;

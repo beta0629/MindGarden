@@ -32,6 +32,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   const [formData, setFormData] = useState({
     packageName: '',
     packagePrice: '',
+    originalPrice: '',
+    discountRate: '',
     totalSessions: ''
   });
   const [packageOptions, setPackageOptions] = useState([]);
@@ -57,6 +59,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
       setFormData({
         packageName: mapping.packageName || '',
         packagePrice: mapping.packagePrice || '',
+        originalPrice: mapping.packagePrice || '',
+        discountRate: '',
         totalSessions: mapping.totalSessions || ''
       });
       setErrors({});
@@ -106,6 +110,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     setFormData({
       packageName: pkg.value,
       packagePrice: pkg.price == null ? '' : pkg.price,
+      originalPrice: pkg.price == null ? '' : pkg.price,
+      discountRate: '',
       totalSessions: pkg.sessions == null ? '' : pkg.sessions
     });
     if (errors.packageName) {
@@ -173,10 +179,24 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
    */
   const handleClose = () => {
     if (!loading) {
-      setFormData({ packageName: '', packagePrice: '', totalSessions: '' });
+      setFormData({ packageName: '', packagePrice: '', originalPrice: '', discountRate: '', totalSessions: '' });
       setErrors({});
       onClose();
     }
+  };
+
+  const handleDiscountChange = (e) => {
+    const rateString = e.target.value;
+    const rate = rateString === '' ? 0 : Math.max(0, Math.min(100, Number(rateString) || 0));
+    setFormData(prev => {
+      const original = Number(prev.originalPrice) || 0;
+      const discountedPrice = Math.floor(original * (1 - rate / 100));
+      return {
+        ...prev,
+        discountRate: rateString === '' ? '' : rate,
+        packagePrice: discountedPrice
+      };
+    });
   };
 
   if (!isOpen || !mapping) {
@@ -296,12 +316,26 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             </section>
 
             {/* 선택된 패키지 요약 - 금액·회기수 강조 */}
-            {(formData.packageName && (formData.packagePrice || formData.totalSessions)) && (
+            {(formData.packageName && (formData.packagePrice !== '' || formData.totalSessions !== '')) && (
               <section className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent mg-v2-mapping-edit-modal__section mg-v2-mapping-edit-modal__change-summary">
                 <h4 className="mg-v2-ad-b0kla__section-title mg-v2-mapping-edit-modal__change-summary-title">
                   변경 예정
                 </h4>
                 <div className="mg-v2-info-grid">
+                  <div className="mg-v2-info-row">
+                    <span className="mg-v2-info-label">할인율(%)</span>
+                    <span className="mg-v2-mapping-edit-modal__value-emphasis">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={formData.discountRate}
+                        onChange={handleDiscountChange}
+                        className="mg-v2-form-input mg-v2-mapping-edit-modal__input mg-v2-mapping-edit-modal__discount-input"
+                        placeholder="예: 10"
+                      />
+                    </span>
+                  </div>
                   <div className="mg-v2-info-row">
                     <span className="mg-v2-info-label">패키지 가격</span>
                     <span className="mg-v2-mapping-edit-modal__value-emphasis">

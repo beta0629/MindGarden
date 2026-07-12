@@ -154,10 +154,10 @@ class AdminControllerCreateMappingValidationIntegrationTest {
     }
 
     @Test
-    @DisplayName("packagePrice 0 → 400 (@Min(1) 위반)")
-    void createMapping_zeroPackagePrice_returns400() throws Exception {
+    @DisplayName("packagePrice 음수 → 400 (@Min(0) 위반)")
+    void createMapping_negativePackagePrice_returns400() throws Exception {
         Map<String, Object> body = validPayload();
-        body.put("packagePrice", 0);
+        body.put("packagePrice", -1);
 
         mockMvc.perform(post("/api/v1/admin/mappings")
                         .sessionAttr(SessionConstants.USER_OBJECT, adminUser())
@@ -193,6 +193,44 @@ class AdminControllerCreateMappingValidationIntegrationTest {
                         .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validPayload())))
+                .andExpect(status().is2xxSuccessful());
+
+        verify(adminService)
+                .createMapping(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
+    }
+
+    @Test
+    @DisplayName("정상 페이로드 (packageId null 포함 다중 조합) → 200 + createMapping 호출")
+    void createMapping_packageIdNull_returnsOk() throws Exception {
+        User consultant = new User();
+        consultant.setId(10L);
+        consultant.setTenantId(TEST_TENANT_ID);
+        User client = new User();
+        client.setId(20L);
+        client.setTenantId(TEST_TENANT_ID);
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(1L);
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
+        mapping.setPackageName("검사 + 상담(1회기)");
+        mapping.setPackagePrice(135000L); // 150000원 -> 10% 할인
+        mapping.setTotalSessions(1);
+
+        when(adminService.createMapping(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class)))
+                .thenReturn(mapping);
+
+        Map<String, Object> payload = validPayload();
+        payload.put("packageName", "검사 + 상담(1회기)");
+        payload.put("totalSessions", 1);
+        payload.put("packagePrice", 135000L);
+        payload.put("packageId", null); // 프론트에서 넘기는 방식 시뮬레이션
+
+        mockMvc.perform(post("/api/v1/admin/mappings")
+                        .sessionAttr(SessionConstants.USER_OBJECT, adminUser())
+                        .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().is2xxSuccessful());
 
         verify(adminService)

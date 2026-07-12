@@ -99,6 +99,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   // 첫 mount 시 default 패키지가 truthy 로 설정되어 step 3 "다음" 버튼이 즉시 활성화되는
   // PR #47 step swap 잔여 결함을 해소. 초기값을 resetModal() (아래) 과 1:1 정합.
   const [paymentInfo, setPaymentInfo] = useState({
+    selectedPackages: [],
     packageName: null,
     packageId: null,
     totalSessions: 0,
@@ -455,6 +456,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     previousPackageAppliedKeyRef.current = null;
     // P0 핫픽스 2026-05-28: default 패키지 강제 제거 — 초기 state 와 동일하게 0/null 로 초기화.
     setPaymentInfo({
+      selectedPackages: [],
       packageName: null,
       packageId: null,
       totalSessions: 0,

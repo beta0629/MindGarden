@@ -5,6 +5,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import Icon from '../../ui/Icon/Icon';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { renderCompactPackageName } from '../../../utils/packagePricing';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -73,6 +74,15 @@ const NextConsultationCard = ({
             </SafeText>
           </div>
         </div>
+
+        {consultation.packageName && (
+          <div className="mg-v2-info-block">
+            <div className="mg-v2-info-block__label">패키지</div>
+            <div className="mg-v2-info-block__value">
+              {renderCompactPackageName(consultation.packageName)}
+            </div>
+          </div>
+        )}
 
         <div className="mg-v2-info-block">
           <div className="mg-v2-info-block__label">회기</div>

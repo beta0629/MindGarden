@@ -8,6 +8,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { parseCombinedPackageName } from '../../../../../utils/packagePricing';
 import './MappingScheduleSidePeekContent.css';
 
 const MappingScheduleSidePeekContent = ({ mapping }) => {
@@ -19,6 +20,7 @@ const MappingScheduleSidePeekContent = ({ mapping }) => {
   const consultantName = toDisplayString(mapping.consultantName, '—');
   const status = toDisplayString(mapping.status, '—');
   const remainingSessions = mapping.remainingSessions ?? '—';
+  const packageParts = parseCombinedPackageName(mapping.packageName);
 
   return (
     <div className="integrated-schedule-side-peek-stub">
@@ -30,6 +32,22 @@ const MappingScheduleSidePeekContent = ({ mapping }) => {
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>상담사</dt>
           <dd>{consultantName}</dd>
+        </div>
+        <div className="integrated-schedule-side-peek-stub__fact">
+          <dt>패키지</dt>
+          <dd>
+            {packageParts.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' }}>
+                {packageParts.map((pkg, idx) => (
+                  <span key={idx} className="mg-v2-chip mg-v2-chip--neutral" style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--spacing-xxs) var(--spacing-sm)' }}>
+                    {pkg}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              '—'
+            )}
+          </dd>
         </div>
         <div className="integrated-schedule-side-peek-stub__fact">
           <dt>상태</dt>

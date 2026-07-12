@@ -6,7 +6,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ActionButton, StatusBadge } from '../common';
 import SafeText from '../common/SafeText';
-import { toPackageOption } from '../../utils/packagePricing';
+import { toPackageOption, buildCombinedPackageName, parseCombinedPackageName } from '../../utils/packagePricing';
 import './MappingEditModal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -120,7 +120,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     const selectedPkgs = packageOptions.filter(p => newSelectedIds.includes(p.value));
     const totalSessions = selectedPkgs.reduce((sum, p) => sum + (p.sessions || 0), 0);
     const packagePrice = selectedPkgs.reduce((sum, p) => sum + (p.price || 0), 0);
-    const packageName = selectedPkgs.length > 0 ? selectedPkgs.map(p => p.label).join(' + ') : '';
+    const packageName = selectedPkgs.length > 0 ? buildCombinedPackageName(selectedPkgs.map(p => p.label)) : '';
 
     setFormData({
       packageName,
@@ -205,7 +205,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   // 패키지 옵션 로드 완료 또는 매칭 변경 시 기존 선택 패키지 ID 추론
   useEffect(() => {
     if (mapping?.packageName && packageOptions.length > 0) {
-      const parts = mapping.packageName.split('+').map(s => s.trim());
+      const parts = parseCombinedPackageName(mapping.packageName);
       const inferredIds = packageOptions
         .filter(p => parts.includes(p.label.trim()) || mapping.packageName === p.label)
         .map(p => p.value);
@@ -273,7 +273,17 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
               </div>
               <div className="mg-v2-info-row">
                 <span className="mg-v2-info-label">패키지</span>
-                <span className="mg-v2-info-value">{mapping.packageName || '-'}</span>
+                <span className="mg-v2-info-value">
+                  {mapping.packageName ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' }}>
+                      {parseCombinedPackageName(mapping.packageName).map((pkg, idx) => (
+                        <span key={idx} className="mg-v2-chip mg-v2-chip--neutral" style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--spacing-xxs) var(--spacing-sm)' }}>
+                          {pkg}
+                        </span>
+                      ))}
+                    </div>
+                  ) : '-'}
+                </span>
               </div>
               <div className="mg-v2-info-row">
                 <span className="mg-v2-info-label"><DollarSign size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />금액</span>

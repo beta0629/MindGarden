@@ -238,11 +238,28 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     setFilteredClients(filtered);
   }, [clientSearchTerm, clientFilterStatus, clientSortBy, clients, mappings]);
 
+  const handlePackageSelection = useCallback((selectedValues) => {
+    const selectedPkgs = packageOptions.filter(p => selectedValues.includes(p.value));
+    const totalSessions = selectedPkgs.reduce((sum, p) => sum + (p.sessions || 0), 0);
+    const packagePrice = selectedPkgs.reduce((sum, p) => sum + (p.price || 0), 0);
+    const packageName = selectedPkgs.length > 0 ? selectedPkgs.map(p => p.label).join(' + ') : null;
+    const packageId = selectedPkgs.length > 0 ? selectedPkgs.map(p => p.value).join(',') : null;
+
+    setPaymentInfo(prev => ({
+      ...prev,
+      selectedPackages: selectedPkgs,
+      packageName,
+      totalSessions,
+      packagePrice,
+      packageId
+    }));
+  }, [packageOptions]);
+
   const applyPackageOption = useCallback((pkg) => {
     if (!pkg) return;
     setPaymentInfo(prev => ({
       ...prev,
-      selectedPackages: [pkg], // 호환성을 위해 배열 유지 (또는 제거하고 packageName만 사용)
+      selectedPackages: [pkg],
       packageName: pkg.label,
       totalSessions: pkg.sessions,
       packagePrice: pkg.price,
@@ -660,16 +677,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 <div className="mg-v2-mapping-creation-modal__form-group">
                   <label>{t('admin:mappingCreation.step.package')}</label>
                   <BadgeSelect
-                    value={paymentInfo.packageId || ''}
-                    onChange={(val) => {
-                      const pkg = packageOptions.find(p => p.value === val);
-                      if (pkg) applyPackageOption(pkg);
-                    }}
+                    multiple={true}
+                    value={paymentInfo.selectedPackages?.map(p => p.value) || []}
+                    onChange={handlePackageSelection}
                     options={packageOptions.filter(p => p.price >= 0).map(p => ({
                       value: p.value,
                       label: `${p.label} (${p.sessions}회, ${p.price.toLocaleString()}원)`
                     }))}
-                    placeholder="패키지를 선택해주세요"
+                    placeholder="패키지를 선택해주세요 (다중 선택 가능)"
                     className="mg-v2-mapping-creation-modal__input"
                   />
                   <span className="mg-v2-mapping-creation-modal__form-help">

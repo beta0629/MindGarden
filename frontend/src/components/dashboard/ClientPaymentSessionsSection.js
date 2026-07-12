@@ -14,6 +14,7 @@ import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/a
 import UnifiedLoading from '../common/UnifiedLoading';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { renderCompactPackageName } from '../../utils/packagePricing';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentSessionsSection.css';
 import { useTranslation } from 'react-i18next';
@@ -319,13 +320,16 @@ const ClientPaymentSessionsSection = ({
                 <div className="payment-item__content">
                   <div className="payment-item__header">
                     <h4 className="payment-item__package">
-                      <SafeText tag="span">{formatCurrency(payment.amount)}</SafeText>
+                      {payment.packageName ? renderCompactPackageName(payment.packageName) : <SafeText tag="span">{formatCurrency(payment.amount)}</SafeText>}
                     </h4>
                     <span className={`mg-badge mg-badge-${getStatusClass(payment.status)}`}>
                       <SafeText tag="span">{getStatusText(payment.status)}</SafeText>
                     </span>
                   </div>
                   <div className="payment-item__details">
+                    <span className="payment-item__amount">
+                      <SafeText tag="span">{formatCurrency(payment.amount)}</SafeText>
+                    </span>
                     <span className="payment-item__sessions">
                       <SafeText tag="span">{`${toDisplayString(payment.sessions, 0)}회`}</SafeText>
                     </span>

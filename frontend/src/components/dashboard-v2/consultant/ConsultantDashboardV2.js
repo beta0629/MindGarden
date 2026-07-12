@@ -17,6 +17,7 @@ import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { renderCompactPackageName } from '../../../utils/packagePricing';
 import {
   CONSULTANT_DASHBOARD_TITLE_ID,
   CONSULTANT_DASHBOARD_PAGE_TEST_ID,
@@ -50,12 +51,14 @@ const TENANT_ERROR_MESSAGE = '테넌트 정보를 불러올 수 없습니다. �
 
 const RECENT_SCHEDULE_COLUMNS = [
   { key: 'clientName', label: '내담자' },
+  { key: 'packageLabel', label: '패키지', hideOnMobile: true },
   { key: 'timeLabel', label: '시간' },
   { key: 'statusLabel', label: '상태', hideOnMobile: true }
 ];
 
 const UPCOMING_SCHEDULE_COLUMNS = [
   { key: 'clientName', label: '내담자' },
+  { key: 'packageLabel', label: '패키지', hideOnMobile: true },
   { key: 'datetimeLabel', label: '일시' },
   { key: 'statusLabel', label: '상태', hideOnMobile: true }
 ];
@@ -558,6 +561,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       return {
         id: schedule.id || `recent-schedule-${idx}`,
         clientName: schedule.clientName || '내담자',
+        packageLabel: schedule.packageName ? renderCompactPackageName(schedule.packageName) : '—',
         timeLabel: `${time} ${meridiem}`,
         statusLabel: resolveStatusLabel(schedule.status),
         scheduleId: schedule.id
@@ -571,6 +575,7 @@ const ConsultantDashboardV2 = ({ user }) => {
       return {
         id: schedule.id || `upcoming-schedule-${idx}`,
         clientName: schedule.clientName || '내담자',
+        packageLabel: schedule.packageName ? renderCompactPackageName(schedule.packageName) : '—',
         datetimeLabel: `${dateStr} (${weekday}) ${timeStr}`,
         statusLabel: resolveStatusLabel(schedule.status),
         scheduleId: schedule.id
@@ -588,6 +593,9 @@ const ConsultantDashboardV2 = ({ user }) => {
 
   const renderScheduleCell = useCallback((columnKey, item) => {
     const value = item[columnKey];
+    if (React.isValidElement(value)) {
+      return value;
+    }
     return <SafeText tag="span">{toDisplayString(value, '—')}</SafeText>;
   }, []);
 

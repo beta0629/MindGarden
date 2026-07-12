@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * 상담 패키지(공통코드 CONSULTATION_PACKAGE) 관련 공용 유틸
  *
@@ -101,4 +103,55 @@ export function toPackageOption(commonCodeRow) {
     discountRate: extra.discountRate,
     originalPrice: extra.originalPrice
   };
+}
+
+/**
+ * 다중 패키지 문자열을 배열로 파싱 (Detailed View 용)
+ * @param {string} packageName 
+ * @returns {string[]}
+ */
+export function parseCombinedPackageName(packageName) {
+  if (!packageName) return [];
+  return packageName.split('+').map(p => p.trim()).filter(Boolean);
+}
+
+/**
+ * 다중 패키지 문자열을 생성
+ * @param {string[]} packageNames 
+ * @returns {string}
+ */
+export function buildCombinedPackageName(packageNames) {
+  if (!Array.isArray(packageNames) || packageNames.length === 0) return '';
+  return packageNames.join(' + ');
+}
+
+/**
+ * 다중 패키지명을 Compact View (첫 패키지 + N 뱃지) 형태로 렌더링
+ * @param {string} packageName 
+ * @returns {React.ReactNode|string}
+ */
+export function renderCompactPackageName(packageName) {
+  if (!packageName) return '-';
+  const parts = parseCombinedPackageName(packageName);
+  if (parts.length <= 1) {
+    return parts[0] || '-';
+  }
+  
+  return (
+    <span className="mg-v2-package-compact" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--spacing-xs)', maxWidth: '100%' }}>
+      <span className="mg-v2-package-compact__name" style={{
+        display: 'inline-block',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        verticalAlign: 'middle',
+        maxWidth: 'var(--grid-min-width-sm, 15ch)' // safeDisplay 원칙
+      }} title={packageName}>
+        {parts[0]}
+      </span>
+      <span className="mg-v2-badge mg-v2-badge--neutral" style={{ flexShrink: 0, padding: 'var(--spacing-xxs) var(--spacing-sm)', fontSize: 'var(--font-size-xs)', borderRadius: 'var(--border-radius-full)' }}>
+        +{parts.length - 1}
+      </span>
+    </span>
+  );
 }

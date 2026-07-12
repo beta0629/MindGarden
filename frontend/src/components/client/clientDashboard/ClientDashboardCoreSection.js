@@ -14,6 +14,7 @@ import ClientPersonalizedMessages from '../../dashboard/ClientPersonalizedMessag
 import { CLIENT_DASHBOARD_KPI_ROUTES } from '../../../constants/clientDashboardRoutes';
 import ClientDashboardListSection from './ClientDashboardListSection';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { renderCompactPackageName } from '../../../utils/packagePricing';
 import {
   CLIENT_CORE_ACTIVE_TITLE,
   CLIENT_CORE_RECORDS_BODY,
@@ -44,12 +45,20 @@ const ClientDashboardCoreSection = ({
     }
     if (primaryActiveMapping) {
       const namePart = toDisplayString(primaryActiveMapping.consultantName, '');
-      const pkg = toDisplayString(
-        primaryActiveMapping.packageName,
-        t('common:client.ClientDashboard.t_17cef764')
-      );
+      const pkg = primaryActiveMapping.packageName 
+        ? renderCompactPackageName(primaryActiveMapping.packageName) 
+        : t('common:client.ClientDashboard.t_17cef764');
       const rem = toDisplayString(primaryActiveMapping.remainingSessions, '0');
-      return t('common:client.ClientDashboard.t_d23413ca', { namePart, pkg, rem });
+      
+      // t_d23413ca: "{{namePart}} 상담사님과의 {{pkg}} 상담이 {{rem}}회 남았습니다."
+      // pkg가 React Node일 수 있으므로 안전하게 렌더링하기 위해 분리해서 반환
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--spacing-xs)', flexWrap: 'wrap' }}>
+          <span>{namePart} 상담사님과의</span>
+          {pkg}
+          <span>상담이 {rem}회 남았습니다.</span>
+        </span>
+      );
     }
     return t('common:client.ClientDashboard.t_6d8a0e47');
   }, [clientStatus, primaryActiveMapping, t]);
@@ -87,7 +96,10 @@ const ClientDashboardCoreSection = ({
         accentVariant="secondary"
         columns={CLIENT_DASHBOARD_CORE_COLUMNS}
         data={tableData}
-        renderCell={(columnKey, item) => <SafeText tag="span">{item[columnKey]}</SafeText>}
+        renderCell={(columnKey, item) => {
+          const val = item[columnKey];
+          return React.isValidElement(val) ? val : <SafeText tag="span">{val}</SafeText>;
+        }}
         onRowClick={handleRowClick}
         emptyText={CLIENT_DASHBOARD_LIST_ERROR_LABEL}
         dataTestId="client-dashboard-core-section"

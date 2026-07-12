@@ -33,6 +33,7 @@ import {
   PREVIOUS_PACKAGE_STATUS,
   resolvePreviousPackage
 } from '../../utils/resolvePreviousPackage';
+import { buildCombinedPackageName, parseCombinedPackageName } from '../../utils/packagePricing';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
@@ -243,7 +244,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     const selectedPkgs = packageOptions.filter(p => selectedValues.includes(p.value));
     const totalSessions = selectedPkgs.reduce((sum, p) => sum + (p.sessions || 0), 0);
     const packagePrice = selectedPkgs.reduce((sum, p) => sum + (p.price || 0), 0);
-    const packageName = selectedPkgs.length > 0 ? selectedPkgs.map(p => p.label).join(' + ') : null;
+    const packageName = selectedPkgs.length > 0 ? buildCombinedPackageName(selectedPkgs.map(p => p.label)) : null;
     const packageId = selectedPkgs.length > 0 ? selectedPkgs.map(p => p.value).join(',') : null;
 
     setPaymentInfo(prev => ({
@@ -855,7 +856,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               </span>
               <span className="mg-v2-mapping-creation-modal__summary-separator">|</span>
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--product">
-                {toDisplayString(paymentInfo.packageName)} · {paymentInfo.totalSessions}회
+                {paymentInfo.packageName ? (
+                  <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)', alignItems: 'center' }}>
+                    {parseCombinedPackageName(paymentInfo.packageName).map((pkg, idx) => (
+                      <span key={idx} className="mg-v2-chip mg-v2-chip--neutral" style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--spacing-xxs) var(--spacing-sm)' }}>
+                        {pkg}
+                      </span>
+                    ))}
+                  </span>
+                ) : 'N/A'} · {paymentInfo.totalSessions}회
               </span>
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--amount">
                 {paymentInfo.packagePrice != null ? `${Number(paymentInfo.packagePrice).toLocaleString()}원` : 'N/A'}
@@ -946,7 +955,18 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             <div className="mg-v2-mapping-creation-modal__completion-summary">
               <p><strong>{t('admin:labels.consultant')}:</strong> {toDisplayString(selectedConsultant?.name)}</p>
               <p><strong>{t('admin:labels.client')}:</strong> {toDisplayString(selectedClient?.name)}</p>
-              <p><strong>{t('admin:mappingCreation.step.package')}:</strong> {toDisplayString(paymentInfo.packageName)}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
+                <strong>{t('admin:mappingCreation.step.package')}:</strong>
+                {paymentInfo.packageName ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' }}>
+                    {parseCombinedPackageName(paymentInfo.packageName).map((pkg, idx) => (
+                      <span key={idx} className="mg-v2-chip mg-v2-chip--neutral" style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--spacing-xxs) var(--spacing-sm)' }}>
+                        {pkg}
+                      </span>
+                    ))}
+                  </div>
+                ) : 'N/A'}
+              </div>
               <p><strong>{t('admin:mappingCreation.sessionPrice')}:</strong> {paymentInfo.totalSessions}{t('admin:mappingCreation.sessionUnitShort')} · {paymentInfo.packagePrice?.toLocaleString()}{t('admin:mappingCreation.currency')}</p>
             </div>
             {paymentInfo.paymentTiming === 'SAME_DAY_CARD' && (

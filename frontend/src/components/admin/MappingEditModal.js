@@ -331,9 +331,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                         max="100"
                         value={formData.discountRate}
                         onChange={handleDiscountChange}
-                        className="mg-v2-mapping-edit-modal__input"
+                        className="mg-v2-form-input mg-v2-mapping-edit-modal__input mg-v2-mapping-edit-modal__discount-input"
                         placeholder="예: 10"
-                        style={{ width: '80px', padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px' }}
                       />
                     </span>
                   </div>

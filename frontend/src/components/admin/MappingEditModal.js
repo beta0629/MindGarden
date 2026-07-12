@@ -185,19 +185,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     }
   };
 
-  const handleDiscountChange = (e) => {
-    const rateString = e.target.value;
-    const rate = rateString === '' ? 0 : Math.max(0, Math.min(100, Number(rateString) || 0));
-    setFormData(prev => {
-      const original = Number(prev.originalPrice) || 0;
-      const discountedPrice = Math.floor(original * (1 - rate / 100));
-      return {
-        ...prev,
-        discountRate: rateString === '' ? '' : rate,
-        packagePrice: discountedPrice
-      };
-    });
-  };
+  // 할인율 입력 처리 제거
+
 
   if (!isOpen || !mapping) {
     return null;
@@ -322,20 +311,6 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                   변경 예정
                 </h4>
                 <div className="mg-v2-info-grid">
-                  <div className="mg-v2-info-row">
-                    <span className="mg-v2-info-label">할인율(%)</span>
-                    <span className="mg-v2-mapping-edit-modal__value-emphasis">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.discountRate}
-                        onChange={handleDiscountChange}
-                        className="mg-v2-form-input mg-v2-mapping-edit-modal__input mg-v2-mapping-edit-modal__discount-input"
-                        placeholder="예: 10"
-                      />
-                    </span>
-                  </div>
                   <div className="mg-v2-info-row">
                     <span className="mg-v2-info-label">패키지 가격</span>
                     <span className="mg-v2-mapping-edit-modal__value-emphasis">

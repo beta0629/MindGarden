@@ -99,18 +99,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   // 첫 mount 시 default 패키지가 truthy 로 설정되어 step 3 "다음" 버튼이 즉시 활성화되는
   // PR #47 step swap 잔여 결함을 해소. 초기값을 resetModal() (아래) 과 1:1 정합.
   const [paymentInfo, setPaymentInfo] = useState({
-    selectedPackages: [],
-    totalSessions: 0,
     packageName: null,
+    packageId: null,
+    totalSessions: 0,
     packagePrice: 0,
-    originalPrice: 0,
-    discountRate: 0,
     paymentMethod: 'BANK_TRANSFER',
     paymentReference: '',
     responsibility: '',
     specialConsiderations: '',
     notes: '',
-    // 옵션 B (예약 우선 매칭): ADVANCE = 선납 입금(현행) / SAME_DAY_CARD = 사후 카드 결제
     paymentTiming: 'ADVANCE'
   });
 
@@ -245,65 +242,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     if (!pkg) return;
     setPaymentInfo(prev => ({
       ...prev,
-      selectedPackages: [pkg],
+      selectedPackages: [pkg], // 호환성을 위해 배열 유지 (또는 제거하고 packageName만 사용)
       packageName: pkg.label,
       totalSessions: pkg.sessions,
       packagePrice: pkg.price,
-      originalPrice: pkg.price,
-      discountRate: 0
+      packageId: pkg.value
     }));
   }, []);
 
-  const addPackageItem = useCallback((pkg) => {
-    if (!pkg) return;
-    setPaymentInfo(prev => {
-      const newItems = [...(prev.selectedPackages || []), pkg];
-      const totalSessions = newItems.every(p => p.sessions === 0) ? 0 : newItems.reduce((acc, p) => acc + p.sessions, 0);
-      const originalPrice = newItems.reduce((acc, p) => acc + p.price, 0);
-      const discountRate = prev.discountRate || 0;
-      const packagePrice = Math.floor(originalPrice * (1 - discountRate / 100));
-      const packageName = newItems.length === 1 ? newItems[0].label : `패키지 조합 (${newItems.length}건)`;
-
-      return {
-        ...prev,
-        selectedPackages: newItems,
-        totalSessions,
-        originalPrice,
-        packagePrice,
-        packageName
-      };
-    });
-  }, []);
-
-  const removePackageItem = useCallback((index) => {
-    setPaymentInfo(prev => {
-      const newItems = (prev.selectedPackages || []).filter((_, i) => i !== index);
-      if (newItems.length === 0) {
-        return {
-          ...prev,
-          selectedPackages: [],
-          totalSessions: 0,
-          originalPrice: 0,
-          packagePrice: 0,
-          packageName: null
-        };
-      }
-      const totalSessions = newItems.every(p => p.sessions === 0) ? 0 : newItems.reduce((acc, p) => acc + p.sessions, 0);
-      const originalPrice = newItems.reduce((acc, p) => acc + p.price, 0);
-      const discountRate = prev.discountRate || 0;
-      const packagePrice = Math.floor(originalPrice * (1 - discountRate / 100));
-      const packageName = newItems.length === 1 ? newItems[0].label : `패키지 조합 (${newItems.length}건)`;
-
-      return {
-        ...prev,
-        selectedPackages: newItems,
-        totalSessions,
-        originalPrice,
-        packagePrice,
-        packageName
-      };
-    });
-  }, []);
 
   useEffect(() => {
     if (step !== 3 || !selectedClient?.id || !selectedConsultant?.id) {
@@ -419,14 +365,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     try {
       const isSameDayCard = paymentInfo.paymentTiming === 'SAME_DAY_CARD';
       
-      // 조합된 패키지 상세 내역을 notes에 추가
-      let finalNotes = paymentInfo.notes || '';
-      if (paymentInfo.selectedPackages?.length > 1) {
-        const builderDetail = `[패키지 조합 내역]\n` + 
-          paymentInfo.selectedPackages.map(p => `- ${p.label} (${p.sessions}회, ${p.price.toLocaleString()}원)`).join('\n') + 
-          `\n할인율: ${paymentInfo.discountRate}%\n원가: ${paymentInfo.originalPrice.toLocaleString()}원\n최종가: ${paymentInfo.packagePrice.toLocaleString()}원`;
-        finalNotes = finalNotes ? `${finalNotes}\n\n${builderDetail}` : builderDetail;
-      }
+      // 단일 패키지 정보만 전송
+      const finalNotes = paymentInfo.notes || '';
 
       const mappingData = {
         consultantId: selectedConsultant.id,
@@ -442,7 +382,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         // confirmDeposit (checkoutSameDayCard 내부) 단계에서 totalSessions를 채운다.
         remainingSessions: isSameDayCard ? 0 : paymentInfo.totalSessions,
         packageName: paymentInfo.packageName,
-        packageId: paymentInfo.selectedPackages?.length === 1 ? paymentInfo.selectedPackages[0].value : null,
+        packageId: paymentInfo.packageId,
         packagePrice: paymentInfo.packagePrice,
         paymentAmount: paymentInfo.packagePrice,
         paymentMethod: paymentInfo.paymentMethod,
@@ -498,12 +438,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     previousPackageAppliedKeyRef.current = null;
     // P0 핫픽스 2026-05-28: default 패키지 강제 제거 — 초기 state 와 동일하게 0/null 로 초기화.
     setPaymentInfo({
-      selectedPackages: [],
-      totalSessions: 0,
       packageName: null,
+      packageId: null,
+      totalSessions: 0,
       packagePrice: 0,
-      originalPrice: 0,
-      discountRate: 0,
       paymentMethod: 'BANK_TRANSFER',
       paymentReference: '',
       responsibility: '',
@@ -518,19 +456,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     onClose();
   };
 
-  const handleDiscountChange = (e) => {
-    const rateString = e.target.value;
-    const rate = rateString === '' ? 0 : Math.max(0, Math.min(100, Number(rateString) || 0));
-    setPaymentInfo(prev => {
-      const original = prev.originalPrice || 0;
-      const discountedPrice = Math.floor(original * (1 - rate / 100));
-      return {
-        ...prev,
-        discountRate: rateString === '' ? '' : rate,
-        packagePrice: discountedPrice
-      };
-    });
-  };
 
   // P0 핫픽스 2026-05-28 + 사용자 요청 step swap:
   // step 1=상담사, 2=내담자, 3=패키지(가드 강화), 4=결제(timing 확정).
@@ -732,89 +657,24 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     </p>
                   </div>
                 )}
-                <div className="mg-v2-mapping-creation-modal__builder-layout">
-                  <div className="mg-v2-mapping-creation-modal__builder-left">
-                    <div className="mg-v2-mapping-creation-modal__pkg-grid">
-                      {packageOptions.filter(p => p.price >= 0).map(pkg => {
-                        const isRecommended = previousPackageHint?.status === PREVIOUS_PACKAGE_STATUS.MATCHED
-                          && previousPackageHint.packageOption?.value === pkg.value;
-                        return (
-                          <MGButton
-                            key={pkg.value}
-                            type="button"
-                            variant="outline"
-                            className={buildErpMgButtonClassName({
-                              variant: 'outline',
-                              size: 'md',
-                              loading: false,
-                              className: 'mg-v2-mapping-creation-modal__pkg-card'
-                            })}
-                            onClick={() => addPackageItem(pkg)}
-                            preventDoubleClick={false}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          >
-                            {isRecommended && (
-                              <span className="mg-v2-mapping-creation-modal__prev-pkg-badge">
-                                {t('admin:mappingCreation.previousPackage.badge')}
-                              </span>
-                            )}
-                            <strong><SafeText tag="span">{pkg.label}</SafeText></strong>
-                            <span>{t('admin:mappingCreation.packageSummary', { sessions: pkg.sessions, price: pkg.price.toLocaleString() })}</span>
-                          </MGButton>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="mg-v2-mapping-creation-modal__builder-right">
-                    <h4 className="mg-v2-mapping-creation-modal__builder-right-title">선택된 패키지 (Line Items)</h4>
-                    <div className="mg-v2-mapping-creation-modal__selected-list">
-                      {paymentInfo.selectedPackages?.length > 0 ? (
-                        paymentInfo.selectedPackages.map((item, idx) => (
-                          <div key={`${item.value}-${idx}`} className="mg-v2-mapping-creation-modal__selected-item">
-                            <div className="mg-v2-mapping-creation-modal__selected-item-info">
-                              <span>{item.label}</span>
-                              <span className="mg-v2-mapping-creation-modal__selected-item-price">
-                                {item.sessions}회 · {item.price.toLocaleString()}원
-                              </span>
-                            </div>
-                            <button type="button" className="mg-v2-mapping-creation-modal__selected-item-remove" onClick={() => removePackageItem(idx)}>
-                              &times;
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="mg-v2-mapping-creation-modal__selected-empty">
-                          패키지를 추가해주세요.
-                        </div>
-                      )}
-                    </div>
-                    <div className="mg-v2-mapping-creation-modal__builder-summary">
-                      <div className="mg-v2-mapping-creation-modal__builder-summary-row">
-                        <span>총 회기수</span>
-                        <span>{paymentInfo.totalSessions}회</span>
-                      </div>
-                      <div className="mg-v2-mapping-creation-modal__builder-summary-row">
-                        <span>총 원가</span>
-                        <span>{paymentInfo.originalPrice?.toLocaleString()}원</span>
-                      </div>
-                      <div className="mg-v2-mapping-creation-modal__builder-summary-row">
-                        <span>할인율(%)</span>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={paymentInfo.discountRate === 0 ? '' : paymentInfo.discountRate}
-                          onChange={handleDiscountChange}
-                          className="mg-v2-mapping-creation-modal__input mg-v2-mapping-creation-modal__builder-discount"
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="mg-v2-mapping-creation-modal__builder-summary-row total">
-                        <span>최종 결제액</span>
-                        <span>{paymentInfo.packagePrice?.toLocaleString()}원</span>
-                      </div>
-                    </div>
-                  </div>
+                <div className="mg-v2-mapping-creation-modal__form-group">
+                  <label>{t('admin:mappingCreation.step.package')}</label>
+                  <BadgeSelect
+                    value={paymentInfo.packageId || ''}
+                    onChange={(val) => {
+                      const pkg = packageOptions.find(p => p.value === val);
+                      if (pkg) applyPackageOption(pkg);
+                    }}
+                    options={packageOptions.filter(p => p.price >= 0).map(p => ({
+                      value: p.value,
+                      label: `${p.label} (${p.sessions}회, ${p.price.toLocaleString()}원)`
+                    }))}
+                    placeholder="패키지를 선택해주세요"
+                    className="mg-v2-mapping-creation-modal__input"
+                  />
+                  <span className="mg-v2-mapping-creation-modal__form-help">
+                    패키지 구성 및 할인은 [패키지 요금 관리] 메뉴에서 설정할 수 있습니다.
+                  </span>
                 </div>
               </>
             )}
@@ -989,18 +849,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 <div className="mg-v2-mapping-creation-modal__form-group">
                   <label>{t('admin:mappingCreation.totalSessions')}</label>
                   <div className="mg-v2-mapping-creation-modal__readonly">{t('admin:mappingCreation.sessionUnit', { count: paymentInfo.totalSessions })}</div>
-                </div>
-                <div className="mg-v2-mapping-creation-modal__form-group">
-                  <label>할인율(%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={paymentInfo.discountRate === 0 ? '' : paymentInfo.discountRate}
-                    onChange={handleDiscountChange}
-                    className="mg-v2-mapping-creation-modal__input"
-                    placeholder="예: 10"
-                  />
                 </div>
                 <div className="mg-v2-mapping-creation-modal__form-group">
                   <label>{t('admin:mappingCreation.packagePrice')}</label>

@@ -11,10 +11,13 @@
 export const EXTRA_DATA_KEYS = Object.freeze({
   SESSIONS: 'sessions',
   PRICE: 'price',
-  REMARK: 'remark'
+  REMARK: 'remark',
+  ITEMS: 'items',
+  DISCOUNT_RATE: 'discountRate',
+  ORIGINAL_PRICE: 'originalPrice'
 });
 
-const EMPTY_EXTRA_DATA = Object.freeze({ sessions: null, price: null, remark: '' });
+const EMPTY_EXTRA_DATA = Object.freeze({ sessions: null, price: null, remark: '', items: [], discountRate: 0, originalPrice: null });
 
 const toNumberOrNull = (value) => {
   if (value === undefined || value === null || value === '') return null;
@@ -36,7 +39,10 @@ export function parseExtraData(extraData) {
       price: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.PRICE]),
       remark: parsed?.[EXTRA_DATA_KEYS.REMARK] != null
         ? String(parsed[EXTRA_DATA_KEYS.REMARK])
-        : ''
+        : '',
+      items: Array.isArray(parsed?.[EXTRA_DATA_KEYS.ITEMS]) ? parsed[EXTRA_DATA_KEYS.ITEMS] : [],
+      discountRate: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.DISCOUNT_RATE]) || 0,
+      originalPrice: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.ORIGINAL_PRICE])
     };
   } catch {
     return { ...EMPTY_EXTRA_DATA };
@@ -50,11 +56,14 @@ export function parseExtraData(extraData) {
  * @param {string|null} remark
  * @returns {string}
  */
-export function buildExtraDataString(sessions, price, remark) {
+export function buildExtraDataString(sessions, price, remark, items = [], discountRate = 0, originalPrice = null) {
   return JSON.stringify({
     [EXTRA_DATA_KEYS.SESSIONS]: sessions,
     [EXTRA_DATA_KEYS.PRICE]: price,
-    [EXTRA_DATA_KEYS.REMARK]: remark || ''
+    [EXTRA_DATA_KEYS.REMARK]: remark || '',
+    [EXTRA_DATA_KEYS.ITEMS]: items,
+    [EXTRA_DATA_KEYS.DISCOUNT_RATE]: discountRate,
+    [EXTRA_DATA_KEYS.ORIGINAL_PRICE]: originalPrice !== null ? originalPrice : price
   });
 }
 
@@ -87,6 +96,9 @@ export function toPackageOption(commonCodeRow) {
     sessions: extra.sessions,
     price: extra.price,
     remark: extra.remark,
-    sortOrder: toNumberOrNull(commonCodeRow?.sortOrder)
+    sortOrder: toNumberOrNull(commonCodeRow?.sortOrder),
+    items: extra.items,
+    discountRate: extra.discountRate,
+    originalPrice: extra.originalPrice
   };
 }

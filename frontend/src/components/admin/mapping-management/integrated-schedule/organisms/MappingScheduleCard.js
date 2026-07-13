@@ -72,6 +72,7 @@ const MappingScheduleCard = ({
       <CardMeta
         status={mapping?.status}
         remainingSessions={mapping?.remainingSessions}
+        packageName={mapping?.packageName}
       />
     </div>
     <CardActionGroup
@@ -98,6 +99,7 @@ MappingScheduleCard.propTypes = {
     paymentTiming: PropTypes.string,
     consultantName: PropTypes.string,
     clientName: PropTypes.string,
+    packageName: PropTypes.string,
     usedSessions: PropTypes.number,
     totalSessions: PropTypes.number,
     remainingSessions: PropTypes.number

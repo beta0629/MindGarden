@@ -60,10 +60,11 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     if (mapping && isOpen) {
       setFormData({
         packageName: mapping.packageName || '',
-        packagePrice: mapping.packagePrice || '',
-        originalPrice: mapping.packagePrice || '',
+        packagePrice: mapping.packagePrice ?? '',
+        originalPrice: mapping.packagePrice ?? '',
         discountRate: '',
-        totalSessions: mapping.totalSessions || ''
+        // 0회기는 유효값 — || 는 0을 ''로 치환하므로 ?? 사용
+        totalSessions: mapping.totalSessions ?? ''
       });
       setSelectedPackageIds([]); // 초기 매칭의 복수 패키지 ID 파싱은 어려우므로 일단 비워둠
       setErrors({});
@@ -144,7 +145,12 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     if (!formData.packageName.trim()) {
       newErrors.packageName = '패키지를 선택해주세요.';
     }
-    if (formData.packageName && (!formData.packagePrice || !formData.totalSessions)) {
+    // 0원·0회기는 유효값 — null/undefined/''/NaN 만 미준비로 본다
+    const priceMissing = formData.packagePrice === '' || formData.packagePrice == null
+      || Number.isNaN(Number(formData.packagePrice));
+    const sessionsMissing = formData.totalSessions === '' || formData.totalSessions == null
+      || Number.isNaN(Number(formData.totalSessions));
+    if (formData.packageName && (priceMissing || sessionsMissing)) {
       newErrors.packageName = '패키지 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.';
     }
 

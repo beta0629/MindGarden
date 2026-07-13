@@ -70,6 +70,7 @@ MappingScheduleSidePeekContent.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     clientName: PropTypes.string,
     consultantName: PropTypes.string,
+    packageName: PropTypes.string,
     status: PropTypes.string,
     remainingSessions: PropTypes.number
   })

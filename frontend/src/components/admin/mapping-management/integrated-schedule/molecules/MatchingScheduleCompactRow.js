@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import SafeText from '../../../../common/SafeText';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { renderCompactPackageName } from '../../../../../utils/packagePricing';
 import './MatchingScheduleCompactRow.css';
 
 const STATUS_ACCENT_CLASS = {
@@ -91,6 +92,11 @@ const MatchingScheduleCompactRow = ({
           {mapping?.clientName}
         </SafeText>
       </span>
+      {mapping?.packageName && (
+        <span className="integrated-schedule__compact-row-package">
+          {renderCompactPackageName(mapping.packageName)}
+        </span>
+      )}
       <span className="integrated-schedule__compact-row-secondary" title={secondaryLabel}>
         <SafeText>{secondaryLabel}</SafeText>
       </span>
@@ -103,6 +109,7 @@ MatchingScheduleCompactRow.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     consultantName: PropTypes.string,
     clientName: PropTypes.string,
+    packageName: PropTypes.string,
     status: PropTypes.string,
     remainingSessions: PropTypes.number
   }),

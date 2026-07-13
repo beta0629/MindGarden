@@ -1,5 +1,5 @@
 /**
- * MatchingScheduleCompactRow — Compact Row 표시·React #130 방어 테스트
+ * MatchingScheduleCompactRow — Compact Row 표시·React issue 130 방어 테스트
  *
  * @author CoreSolution
  * @since 2026-07-06
@@ -40,7 +40,7 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getAllByTitle('김상담 → 이내담 내담자').length).toBeGreaterThan(0);
   });
 
-  it('coerces object values to safe display strings (React #130 guard)', () => {
+  it('coerces object values to safe display strings (React issue 130 guard)', () => {
     render(
       <MatchingScheduleCompactRow
         mapping={{
@@ -74,5 +74,19 @@ describe('MatchingScheduleCompactRow', () => {
     );
 
     expect(container.querySelector('.integrated-schedule__compact-row--active')).toBeInTheDocument();
+  });
+
+  it('renders compact package name when packageName is provided', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          packageName: 'Package A + Package B + Package C'
+        }}
+      />
+    );
+
+    expect(screen.getByText('Package A')).toBeInTheDocument();
+    expect(screen.getByText('+2')).toBeInTheDocument();
   });
 });

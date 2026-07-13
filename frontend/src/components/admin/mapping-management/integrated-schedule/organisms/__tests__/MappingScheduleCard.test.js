@@ -69,4 +69,18 @@ describe('MappingScheduleCard SessionProgress', () => {
     expect(progress).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByText('0/0회')).toBeInTheDocument();
   });
+
+  it('renders compact package name when packageName is provided', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          packageName: 'Package A + Package B'
+        }}
+      />
+    );
+    
+    expect(screen.getByText('Package A')).toBeInTheDocument();
+    expect(screen.getByText('+1')).toBeInTheDocument();
+  });
 });

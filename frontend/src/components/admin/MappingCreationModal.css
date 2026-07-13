@@ -524,6 +524,37 @@
   border-color: var(--ad-b0kla-green);
 }
 
+/* 패키지 선택 배지 그리드 정렬 */
+.mg-v2-mapping-creation-modal__package-select.mg-v2-badge-select {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--mg-spacing-sm, 8px);
+  padding: var(--mg-spacing-sm, 8px);
+  height: auto;
+}
+
+.mg-v2-mapping-creation-modal__package-select .mg-v2-badge-select__item {
+  width: 100%;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.mg-v2-mapping-creation-modal__package-select .mg-button__text {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mg-v2-mapping-creation-modal__package-select .mg-v2-badge-select__item-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
 .mg-v2-mapping-creation-modal__readonly {
   padding: 0.5rem 0.75rem;
   background: var(--ad-b0kla-bg);

@@ -128,6 +128,16 @@ describe('packagePricing', () => {
       expect(opt.sessions).toBeNull();
       expect(opt.price).toBeNull();
     });
+
+    it('extraData.sessions=0 은 0으로 유지된다 (검사 단품 — falsy 폴백 금지)', () => {
+      const opt = toPackageOption({
+        codeValue: 'PSYCH_TEST',
+        koreanName: '심리검사',
+        extraData: JSON.stringify({ sessions: 0, price: 50000 })
+      });
+      expect(opt.sessions).toBe(0);
+      expect(opt.price).toBe(50000);
+    });
   });
 
   describe('parseCombinedPackageName', () => {

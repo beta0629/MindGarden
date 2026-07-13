@@ -147,7 +147,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             try {
               const extra = JSON.parse(code.extraData);
               if (extra.price != null) price = parseFloat(extra.price) || 0;
-              if (extra.sessions != null) sessions = parseInt(extra.sessions, 10) || 20;
+              // 0회기(검사 단품 등)는 유효값 — null/undefined/''/NaN 만 기본값 20
+              if (extra.sessions != null && extra.sessions !== '') {
+                const parsedSessions = parseInt(extra.sessions, 10);
+                sessions = Number.isNaN(parsedSessions) ? 20 : parsedSessions;
+              }
             } catch (e) {
               console.warn('Package extraData parse failed:', code.codeValue);
             }

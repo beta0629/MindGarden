@@ -692,7 +692,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                       label: `${p.label} (${p.sessions}회, ${p.price.toLocaleString()}원)`
                     }))}
                     placeholder="패키지를 선택해주세요 (다중 선택 가능)"
-                    className="mg-v2-mapping-creation-modal__input"
+                    className="mg-v2-mapping-creation-modal__input mg-v2-mapping-creation-modal__package-select"
                   />
                   <span className="mg-v2-mapping-creation-modal__form-help">
                     패키지 구성 및 할인은 [패키지 요금 관리] 메뉴에서 설정할 수 있습니다.

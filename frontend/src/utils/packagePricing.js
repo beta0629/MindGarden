@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * 상담 패키지(공통코드 CONSULTATION_PACKAGE) 관련 공용 유틸
  *
@@ -11,10 +13,13 @@
 export const EXTRA_DATA_KEYS = Object.freeze({
   SESSIONS: 'sessions',
   PRICE: 'price',
-  REMARK: 'remark'
+  REMARK: 'remark',
+  ITEMS: 'items',
+  DISCOUNT_RATE: 'discountRate',
+  ORIGINAL_PRICE: 'originalPrice'
 });
 
-const EMPTY_EXTRA_DATA = Object.freeze({ sessions: null, price: null, remark: '' });
+const EMPTY_EXTRA_DATA = Object.freeze({ sessions: null, price: null, remark: '', items: [], discountRate: 0, originalPrice: null });
 
 const toNumberOrNull = (value) => {
   if (value === undefined || value === null || value === '') return null;
@@ -36,7 +41,10 @@ export function parseExtraData(extraData) {
       price: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.PRICE]),
       remark: parsed?.[EXTRA_DATA_KEYS.REMARK] != null
         ? String(parsed[EXTRA_DATA_KEYS.REMARK])
-        : ''
+        : '',
+      items: Array.isArray(parsed?.[EXTRA_DATA_KEYS.ITEMS]) ? parsed[EXTRA_DATA_KEYS.ITEMS] : [],
+      discountRate: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.DISCOUNT_RATE]) || 0,
+      originalPrice: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.ORIGINAL_PRICE])
     };
   } catch {
     return { ...EMPTY_EXTRA_DATA };
@@ -50,11 +58,14 @@ export function parseExtraData(extraData) {
  * @param {string|null} remark
  * @returns {string}
  */
-export function buildExtraDataString(sessions, price, remark) {
+export function buildExtraDataString(sessions, price, remark, items = [], discountRate = 0, originalPrice = null) {
   return JSON.stringify({
     [EXTRA_DATA_KEYS.SESSIONS]: sessions,
     [EXTRA_DATA_KEYS.PRICE]: price,
-    [EXTRA_DATA_KEYS.REMARK]: remark || ''
+    [EXTRA_DATA_KEYS.REMARK]: remark || '',
+    [EXTRA_DATA_KEYS.ITEMS]: items,
+    [EXTRA_DATA_KEYS.DISCOUNT_RATE]: discountRate,
+    [EXTRA_DATA_KEYS.ORIGINAL_PRICE]: originalPrice !== null ? originalPrice : price
   });
 }
 
@@ -87,6 +98,60 @@ export function toPackageOption(commonCodeRow) {
     sessions: extra.sessions,
     price: extra.price,
     remark: extra.remark,
-    sortOrder: toNumberOrNull(commonCodeRow?.sortOrder)
+    sortOrder: toNumberOrNull(commonCodeRow?.sortOrder),
+    items: extra.items,
+    discountRate: extra.discountRate,
+    originalPrice: extra.originalPrice
   };
+}
+
+/**
+ * 다중 패키지 문자열을 배열로 파싱 (Detailed View 용)
+ * @param {string} packageName 
+ * @returns {string[]}
+ */
+export function parseCombinedPackageName(packageName) {
+  if (!packageName) return [];
+  return packageName.split('+').map(p => p.trim()).filter(Boolean);
+}
+
+/**
+ * 다중 패키지 문자열을 생성
+ * @param {string[]} packageNames 
+ * @returns {string}
+ */
+export function buildCombinedPackageName(packageNames) {
+  if (!Array.isArray(packageNames) || packageNames.length === 0) return '';
+  return packageNames.join(' + ');
+}
+
+/**
+ * 다중 패키지명을 Compact View (첫 패키지 + N 뱃지) 형태로 렌더링
+ * @param {string} packageName 
+ * @returns {React.ReactNode|string}
+ */
+export function renderCompactPackageName(packageName) {
+  if (!packageName) return '-';
+  const parts = parseCombinedPackageName(packageName);
+  if (parts.length <= 1) {
+    return parts[0] || '-';
+  }
+  
+  return (
+    <span className="mg-v2-package-compact" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--spacing-xs)', maxWidth: '100%' }}>
+      <span className="mg-v2-package-compact__name" style={{
+        display: 'inline-block',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        verticalAlign: 'middle',
+        maxWidth: 'var(--grid-min-width-sm, 15ch)' // safeDisplay 원칙
+      }} title={packageName}>
+        {parts[0]}
+      </span>
+      <span className="mg-v2-badge mg-v2-badge--neutral" style={{ flexShrink: 0, padding: 'var(--spacing-xxs) var(--spacing-sm)', fontSize: 'var(--font-size-xs)', borderRadius: 'var(--border-radius-full)' }}>
+        +{parts.length - 1}
+      </span>
+    </span>
+  );
 }

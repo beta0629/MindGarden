@@ -6,7 +6,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ActionButton, StatusBadge } from '../common';
 import SafeText from '../common/SafeText';
-import { toPackageOption } from '../../utils/packagePricing';
+import { toPackageOption, buildCombinedPackageName, parseCombinedPackageName } from '../../utils/packagePricing';
 import './MappingEditModal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -32,6 +32,8 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   const [formData, setFormData] = useState({
     packageName: '',
     packagePrice: '',
+    originalPrice: '',
+    discountRate: '',
     totalSessions: ''
   });
   const [packageOptions, setPackageOptions] = useState([]);
@@ -51,14 +53,19 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     }
   };
 
+  const [selectedPackageIds, setSelectedPackageIds] = useState([]);
+
   // 매칭 데이터가 변경될 때 폼 초기화
   useEffect(() => {
     if (mapping && isOpen) {
       setFormData({
         packageName: mapping.packageName || '',
         packagePrice: mapping.packagePrice || '',
+        originalPrice: mapping.packagePrice || '',
+        discountRate: '',
         totalSessions: mapping.totalSessions || ''
       });
+      setSelectedPackageIds([]); // 초기 매칭의 복수 패키지 ID 파싱은 어려우므로 일단 비워둠
       setErrors({});
     }
   }, [mapping, isOpen]);
@@ -98,17 +105,32 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   };
 
   /**
-   * 패키지 카드 클릭 처리
-   * - extraData 누락(null) 인 경우에도 선택은 허용하되, 폼은 빈 값을 그대로 둔다.
-   *   (validateForm 에서 가격/회기 필수 검증이 동작)
+   * 패키지 카드 클릭 처리 (다중 선택 지원)
    */
   const handlePackageSelect = (pkg) => {
+    let newSelectedIds;
+    if (selectedPackageIds.includes(pkg.value)) {
+      newSelectedIds = selectedPackageIds.filter(id => id !== pkg.value);
+    } else {
+      newSelectedIds = [...selectedPackageIds, pkg.value];
+    }
+    
+    setSelectedPackageIds(newSelectedIds);
+
+    const selectedPkgs = packageOptions.filter(p => newSelectedIds.includes(p.value));
+    const totalSessions = selectedPkgs.reduce((sum, p) => sum + (p.sessions || 0), 0);
+    const packagePrice = selectedPkgs.reduce((sum, p) => sum + (p.price || 0), 0);
+    const packageName = selectedPkgs.length > 0 ? buildCombinedPackageName(selectedPkgs.map(p => p.label)) : '';
+
     setFormData({
-      packageName: pkg.value,
-      packagePrice: pkg.price == null ? '' : pkg.price,
-      totalSessions: pkg.sessions == null ? '' : pkg.sessions
+      packageName,
+      packagePrice: packagePrice,
+      originalPrice: packagePrice,
+      discountRate: '',
+      totalSessions: totalSessions
     });
-    if (errors.packageName) {
+
+    if (errors.packageName && newSelectedIds.length > 0) {
       setErrors(prev => ({ ...prev, packageName: '' }));
     }
   };
@@ -173,11 +195,26 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
    */
   const handleClose = () => {
     if (!loading) {
-      setFormData({ packageName: '', packagePrice: '', totalSessions: '' });
+      setFormData({ packageName: '', packagePrice: '', originalPrice: '', discountRate: '', totalSessions: '' });
+      setSelectedPackageIds([]);
       setErrors({});
       onClose();
     }
   };
+
+  // 패키지 옵션 로드 완료 또는 매칭 변경 시 기존 선택 패키지 ID 추론
+  useEffect(() => {
+    if (mapping?.packageName && packageOptions.length > 0) {
+      const parts = parseCombinedPackageName(mapping.packageName);
+      const inferredIds = packageOptions
+        .filter(p => parts.includes(p.label.trim()) || mapping.packageName === p.label)
+        .map(p => p.value);
+      if (inferredIds.length > 0) {
+        setSelectedPackageIds(inferredIds);
+      }
+    }
+  }, [mapping, packageOptions]);
+
 
   if (!isOpen || !mapping) {
     return null;
@@ -236,7 +273,17 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
               </div>
               <div className="mg-v2-info-row">
                 <span className="mg-v2-info-label">패키지</span>
-                <span className="mg-v2-info-value">{mapping.packageName || '-'}</span>
+                <span className="mg-v2-info-value">
+                  {mapping.packageName ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' }}>
+                      {parseCombinedPackageName(mapping.packageName).map((pkg, idx) => (
+                        <span key={idx} className="mg-v2-chip mg-v2-chip--neutral" style={{ fontSize: 'var(--font-size-sm)', padding: 'var(--spacing-xxs) var(--spacing-sm)' }}>
+                          {pkg}
+                        </span>
+                      ))}
+                    </div>
+                  ) : '-'}
+                </span>
               </div>
               <div className="mg-v2-info-row">
                 <span className="mg-v2-info-label"><DollarSign size={14} className="mg-v2-mapping-edit-modal__section-title-icon" />금액</span>
@@ -267,28 +314,31 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
               패키지 변경
             </h3>
               <div className="mg-v2-mapping-edit-modal__package-grid">
-                {packageOptions.map(pkg => (
-                  <MGButton
-                    key={pkg.value}
-                    type="button"
-                    variant="outline"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'md',
-                      loading,
-                      className: `mg-v2-mapping-edit-modal__package-card ${formData.packageName === pkg.value ? 'mg-v2-mapping-edit-modal__package-card--selected' : ''}`
-                    })}
-                    onClick={() => handlePackageSelect(pkg)}
-                    disabled={loading}
-                    preventDoubleClick={false}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  >
-                    <SafeText className="mg-v2-mapping-edit-modal__package-card-label" tag="span">{pkg.label}</SafeText>
-                    <span className="mg-v2-mapping-edit-modal__package-card-meta">
-                      {formatSessions(pkg.sessions)} · {formatPrice(pkg.price)}
-                    </span>
-                  </MGButton>
-                ))}
+                {packageOptions.map(pkg => {
+                  const isSelected = selectedPackageIds.includes(pkg.value);
+                  return (
+                    <MGButton
+                      key={pkg.value}
+                      type="button"
+                      variant="outline"
+                      className={buildErpMgButtonClassName({
+                        variant: 'outline',
+                        size: 'md',
+                        loading,
+                        className: `mg-v2-mapping-edit-modal__package-card ${isSelected ? 'mg-v2-mapping-edit-modal__package-card--selected' : ''}`
+                      })}
+                      onClick={() => handlePackageSelect(pkg)}
+                      disabled={loading}
+                      preventDoubleClick={false}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    >
+                      <SafeText className="mg-v2-mapping-edit-modal__package-card-label" tag="span">{pkg.label}</SafeText>
+                      <span className="mg-v2-mapping-edit-modal__package-card-meta">
+                        {formatSessions(pkg.sessions)} · {formatPrice(pkg.price)}
+                      </span>
+                    </MGButton>
+                  );
+                })}
               </div>
               {errors.packageName && (
                 <span className="mg-v2-form-error">{errors.packageName}</span>
@@ -296,7 +346,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             </section>
 
             {/* 선택된 패키지 요약 - 금액·회기수 강조 */}
-            {(formData.packageName && (formData.packagePrice || formData.totalSessions)) && (
+            {(formData.packageName && (formData.packagePrice !== '' || formData.totalSessions !== '')) && (
               <section className="mg-v2-ad-b0kla__card mg-v2-ad-b0kla__card-accent mg-v2-mapping-edit-modal__section mg-v2-mapping-edit-modal__change-summary">
                 <h4 className="mg-v2-ad-b0kla__section-title mg-v2-mapping-edit-modal__change-summary-title">
                   변경 예정

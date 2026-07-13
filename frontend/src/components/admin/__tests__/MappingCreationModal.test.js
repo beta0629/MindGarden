@@ -506,6 +506,53 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(postedBody).toHaveProperty('totalSessions', 5);
   });
 
+  // P0: extra_data.sessions=0 이 parseInt(...) || 20 으로 20회가 되면 안 됨 (검사 단품)
+  test('회기 0 패키지 선택 시 totalSessions=0 유지 (20으로 치환 금지)', async () => {
+    getTenantCodes.mockImplementation((group) => {
+      if (group === 'CONSULTATION_PACKAGE') {
+        return Promise.resolve([
+          {
+            codeValue: 'PSYCH_TEST',
+            codeLabel: '심리검사',
+            koreanName: '심리검사',
+            extraData: JSON.stringify({ price: 50000, sessions: 0 })
+          }
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('심리검사 (0회, 50,000원)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('심리검사 (0회, 50,000원)'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody).toHaveProperty('totalSessions', 0);
+    expect(postedBody).toHaveProperty('packageName', '심리검사');
+    expect(postedBody).toHaveProperty('packagePrice', 50000);
+  });
+
   // 2026-05-28 카드형 결제 방식 선택 UI 회귀 가드
   // (MAPPING_PAYMENT_TIMING_CARD_SELECT_DESIGN.md)
   describe('결제 방식 카드형 선택 UI (2026-05-28)', () => {

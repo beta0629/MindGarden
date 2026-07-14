@@ -374,9 +374,10 @@
 
 ---
 
-## 7. 후속 (본 문서 범위 밖)
+## 7. 후속 — AI B-roll · 합성
 
-- 구글 옴니/Veo 등 AI B-roll·전환 이펙트 (끼울 때도 **§4.0·§4.2 타임코드 유지**)
+- 구글 옴니/Veo 등 AI B-roll·전환·CTA 프롬프트: [CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) (끼울 때도 **§4.0·§4.2 타임코드 유지**)
+- 트랙 합성·후반 컷·60/90초 숏폼: [CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md)
 - 성우 최종 더빙·타이밍 미세 보정 (자막 초안은 **§4.2·§4.3 SRT** 사용)
 - 브랜드 인트로/아웃트로 모션  
 

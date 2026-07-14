@@ -20,7 +20,8 @@
 - 개발 DB 계정은 해당 DB에 대한 **DDL/DML** 권한 필요(`DROP DATABASE`, `CREATE`, import).
 - 비밀번호는 `/etc/mindgarden/prod-to-dev-sync.env` (퍼미션 `600`) 또는 Secrets Manager·`mysql_config_editor` 사용. 저장소에 실비번 커밋 금지.
 - **PII (필수 권장)**: 복원 직후 `POST_SYNC_SQL_FILE` 로 `post-dev-sync-anonymize.sql` 을 실행한다.  
-  미설정 시 스크립트가 WARN 을 남기며, 개발 DB에 운영 PII(암호문·복호화 가능 환경의 실데이터)가 남을 수 있다.  
+  **로그인 식별자·비밀번호는 미치환**(email/phone/`user_id`/password 유지). 표시용 name·주소·계좌 등만 치환.  
+  미설정 시 스크립트가 WARN 을 남기며, 개발 DB에 운영 표시용 PII가 남을 수 있다.  
   표준: [`PII_PROTECTION_STANDARD.md`](../standards/PII_PROTECTION_STANDARD.md) §2.
 
 ## 설치

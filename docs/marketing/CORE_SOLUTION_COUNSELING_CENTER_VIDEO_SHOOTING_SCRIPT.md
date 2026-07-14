@@ -3,11 +3,11 @@
 **대상 시청자**: 상담센터 운영자·원장·관리자 (제품명을 모르는 설명형)  
 **매체**: macOS `Cmd+Shift+5` 화면녹화 + Expo 앱(시뮬레이터 또는 실기기)  
 **데이터**: **개발 서버만** + 표시용 PII 익명화 예정 데이터. **운영 실데이터 촬영 금지**  
-**범위**: AI(구글 옴니/Veo) B-roll은 후속. 본 문서는 **화면 촬영 순서·컷리스트·내레이션·자막(타임코드)**.
+**범위**: 본 문서는 **화면 촬영 순서·컷리스트·내레이션·자막(타임코드)**. AI B-roll·실제 Desktop 녹화 합성은 Omni 문서를 본다.
 
-**연관**: [운영→개발 DB 동기화 런북](../project-management/PROD_TO_DEV_DB_SYNC_RUNBOOK.md) · [PII 보호 표준](../standards/PII_PROTECTION_STANDARD.md)  
+**연관**: [운영→개발 DB 동기화 런북](../project-management/PROD_TO_DEV_DB_SYNC_RUNBOOK.md) · [PII 보호 표준](../standards/PII_PROTECTION_STANDARD.md) · [Google Omni 프롬프트·실제 녹화 인벤토리](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) · [합성·컷](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md)  
 **작성 기준 코드**: `frontend/src/constants/adminRoutes.js`, `menuItems.js` LNB 폴백, `expo-app/app/(consultant|client|admin)/_layout.tsx`  
-**최종 갱신**: 2026-07-15 (컷별 자막·SRT 큐시트 추가)
+**최종 갱신**: 2026-07-15 (Desktop `.mov` 10본 Omni 문서 연동)
 
 ---
 

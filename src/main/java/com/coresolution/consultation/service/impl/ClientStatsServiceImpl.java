@@ -230,8 +230,10 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return result;
     }
 
+    /**
+     * PII 포함 목록은 캐시하지 않음 — prod→dev 익명화·연락처 마스킹 즉시 반영.
+     */
     @Override
-    @Cacheable(value = "clientsWithStats", key = "'all'")
     public List<Map<String, Object>> getAllClientsWithStats() {
         log.info("📊 전체 내담자 통계 조회 (DB) - 레거시 호환");
         
@@ -246,10 +248,10 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     }
     
     /**
-     * 테넌트별 내담자 통계 조회 (신규 추가)
+     * 테넌트별 내담자 통계 조회 (신규 추가).
+     * 목록 응답은 캐시하지 않음.
      */
     @Override
-    @Cacheable(value = "clientsWithStats", key = "'tenant:' + #tenantId")
     public List<Map<String, Object>> getAllClientsWithStatsByTenant(String tenantId) {
         log.info("📊 테넌트별 내담자 통계 조회: tenantId={}", tenantId);
         

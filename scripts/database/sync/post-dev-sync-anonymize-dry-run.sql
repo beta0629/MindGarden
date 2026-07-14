@@ -4,12 +4,12 @@
 -- 사용: 개발 DB에서만.
 --   mysql ... < scripts/database/sync/post-dev-sync-anonymize-dry-run.sql
 -- 익명화 후 기대:
---   - KEEP: user_id / password
+--   - KEEP: user_id / password / email / phone (로그인 가능)
 --   - name: DevUser- / DevConsultant- / DevClient-
---   - phone: 010****NNNN / email: ??NNNN***@***.com
+--   - phone/email DB 마스킹 금지 (#584 폐기). 화면 마스킹은 FE.
 -- =============================================================================
 
-SELECT 'users sample (name + phone/email mask)' AS section;
+SELECT 'users sample (name REPLACE, email/phone KEEP)' AS section;
 SELECT
     id,
     tenant_id,
@@ -19,22 +19,27 @@ SELECT
     LEFT(IFNULL(phone, ''), 32) AS phone_preview,
     LEFT(name, 48) AS name_preview,
     CASE
-        WHEN role = 'CONSULTANT' AND name LIKE 'DevConsultant-%' THEN 'NAME_CONSULTANT_OK'
-        WHEN role <> 'CONSULTANT' AND name LIKE 'DevUser-%' THEN 'NAME_USER_OK'
+        WHEN (UPPER(TRIM(role)) IN ('CONSULTANT', 'ROLE_CONSULTANT')
+              OR UPPER(TRIM(role)) LIKE '%CONSULTANT%')
+             AND name LIKE 'DevConsultant-%' THEN 'NAME_CONSULTANT_OK'
+        WHEN UPPER(TRIM(role)) NOT IN ('CONSULTANT', 'ROLE_CONSULTANT')
+             AND UPPER(TRIM(role)) NOT LIKE '%CONSULTANT%'
+             AND name LIKE 'DevUser-%' THEN 'NAME_USER_OK'
         WHEN name LIKE 'DevConsultant-%' THEN 'NAME_CONSULTANT_OK'
         WHEN name LIKE '%::%' THEN 'NAME_CIPHER'
         ELSE 'NAME_OTHER'
     END AS name_state,
     CASE
-        WHEN email REGEXP '^[a-z]{2}[0-9]{4}\\*\\*\\*@\\*\\*\\*\\.com$' THEN 'EMAIL_MASK_OK'
+        WHEN email IS NULL OR email = '' THEN 'EMAIL_EMPTY'
+        WHEN email LIKE '%***@***.com' THEN 'EMAIL_LEGACY_DB_MASK'
         WHEN email LIKE '%::%' OR email LIKE 'legacy::%' THEN 'EMAIL_CIPHER'
-        ELSE 'EMAIL_OTHER'
+        ELSE 'EMAIL_KEEP_OK'
     END AS email_state,
     CASE
         WHEN phone IS NULL OR phone = '' THEN 'PHONE_EMPTY'
-        WHEN phone LIKE '010****%' THEN 'PHONE_MASK_OK'
+        WHEN phone LIKE '010****%' THEN 'PHONE_LEGACY_DB_MASK'
         WHEN phone LIKE '%::%' OR phone LIKE 'legacy::%' THEN 'PHONE_CIPHER'
-        ELSE 'PHONE_OTHER'
+        ELSE 'PHONE_KEEP_OK'
     END AS phone_state
 FROM users
 ORDER BY id
@@ -47,12 +52,23 @@ SELECT
     LEFT(u.name, 40) AS name_preview,
     CASE WHEN u.name LIKE 'DevConsultant-%' THEN 'OK' ELSE 'BAD' END AS consultant_name_state
 FROM users u
-WHERE u.role = 'CONSULTANT'
+WHERE UPPER(TRIM(u.role)) IN ('CONSULTANT', 'ROLE_CONSULTANT')
+   OR UPPER(TRIM(u.role)) LIKE '%CONSULTANT%'
    OR EXISTS (SELECT 1 FROM consultants c WHERE c.id = u.id)
 ORDER BY u.id
 LIMIT 20;
 
-SELECT 'clients sample (email/phone mask, name REPLACE)' AS section;
+SELECT 'consultants hangul residual (expect 0)' AS section;
+SELECT COUNT(*) AS consultant_hangul_name_suspect
+FROM users u
+WHERE (UPPER(TRIM(u.role)) IN ('CONSULTANT', 'ROLE_CONSULTANT')
+       OR UPPER(TRIM(u.role)) LIKE '%CONSULTANT%'
+       OR EXISTS (SELECT 1 FROM consultants c WHERE c.id = u.id))
+  AND u.name IS NOT NULL
+  AND CHAR_LENGTH(u.name) < 32
+  AND u.name REGEXP '[가-힣]';
+
+SELECT 'clients sample (name REPLACE, email/phone KEEP)' AS section;
 SELECT
     id,
     tenant_id,
@@ -65,9 +81,10 @@ SELECT
         ELSE 'NAME_OTHER'
     END AS name_state,
     CASE
-        WHEN email REGEXP '^[a-z]{2}[0-9]{4}\\*\\*\\*@\\*\\*\\*\\.com$' THEN 'EMAIL_MASK_OK'
+        WHEN email IS NULL OR email = '' THEN 'EMAIL_EMPTY'
+        WHEN email LIKE '%***@***.com' THEN 'EMAIL_LEGACY_DB_MASK'
         WHEN email LIKE '%::%' OR email LIKE 'legacy::%' THEN 'EMAIL_CIPHER'
-        ELSE 'EMAIL_OTHER'
+        ELSE 'EMAIL_KEEP_OK'
     END AS email_state
 FROM clients
 ORDER BY id
@@ -96,18 +113,11 @@ WHERE name IS NOT NULL
   AND CHAR_LENGTH(name) < 32
   AND name REGEXP '[가-힣]';
 
-SELECT COUNT(*) AS users_plain_email_suspect
+SELECT 'legacy #584 DB phone/email mask residual (informational)' AS section;
+SELECT COUNT(*) AS users_legacy_email_mask
 FROM users
-WHERE email IS NOT NULL
-  AND email NOT LIKE '%***@***.com'
-  AND email NOT LIKE '%::%'
-  AND email NOT LIKE 'legacy::%'
-  AND email LIKE '%@%';
+WHERE email LIKE '%***@***.com';
 
-SELECT COUNT(*) AS users_plain_phone_suspect
+SELECT COUNT(*) AS users_legacy_phone_mask
 FROM users
-WHERE phone IS NOT NULL
-  AND phone <> ''
-  AND phone NOT LIKE '010****%'
-  AND phone NOT LIKE '%::%'
-  AND phone NOT LIKE 'legacy::%';
+WHERE phone LIKE '010****%';

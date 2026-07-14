@@ -11,6 +11,7 @@ import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
 import { formatCurrency } from '../../../utils/formatUtils';
 import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
+import { maskEmailDisplay, maskPhoneDisplay } from '../../../utils/partyPiiDisplay';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { getStatusLabel } from '../../../utils/colorUtils';
 import './ConsultantCard.css';
@@ -605,10 +606,10 @@ const ConsultantCard = ({
                         </h4>
                         <div className="mg-consultant-card__contact">
                             <span className="mg-consultant-card__contact-item">
-                                <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
+                                <Mail size={12} /> <SafeText>{maskEmailDisplay(consultant.email)}</SafeText>
                             </span>
                             <span className="mg-consultant-card__contact-item">
-                                <Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText>
+                                <Phone size={12} /> <SafeText fallback="전화번호 없음">{maskPhoneDisplay(consultant.phone)}</SafeText>
                             </span>
                         </div>
                     </div>
@@ -697,10 +698,10 @@ const ConsultantCard = ({
                         </h4>
                         <div className="mg-consultant-card__contact">
                             <span className="mg-consultant-card__contact-item">
-                                <Mail size={12} /> <SafeText>{consultant.email}</SafeText>
+                                <Mail size={12} /> <SafeText>{maskEmailDisplay(consultant.email)}</SafeText>
                             </span>
                             <span className="mg-consultant-card__contact-item">
-                                <Phone size={12} /> <SafeText fallback="전화번호 없음">{formatKoreanMobileForDisplay(consultant.phone)}</SafeText>
+                                <Phone size={12} /> <SafeText fallback="전화번호 없음">{maskPhoneDisplay(consultant.phone)}</SafeText>
                             </span>
                         </div>
                     </div>

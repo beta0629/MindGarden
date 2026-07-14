@@ -3,40 +3,46 @@
 -- =============================================================================
 -- 사용: 개발 DB에서만.
 --   mysql ... mind_garden_dev < scripts/database/sync/post-dev-sync-anonymize-dry-run.sql
--- 익명화 전: 암호문/실명 길이 패턴 확인. 익명화 후: dev-u- / DevUser- 접두 확인.
+-- 익명화 후 기대:
+--   - login KEEP: user_id / email / phone 은 원본(암호문) 형태 유지
+--   - display REPLACE: name 이 DevUser- / DevClient- 접두
 -- =============================================================================
 
-SELECT 'users sample' AS section;
+SELECT 'users sample (login KEEP vs name REPLACE)' AS section;
 SELECT
     id,
     tenant_id,
+    role,
     user_id,
     LEFT(email, 48) AS email_preview,
-    LEFT(name, 48) AS name_preview,
     LEFT(IFNULL(phone, ''), 32) AS phone_preview,
-    CHAR_LENGTH(email) AS email_len,
-    CHAR_LENGTH(name) AS name_len,
+    LEFT(name, 48) AS name_preview,
     CASE
-        WHEN email LIKE 'dev-u-%@dev.local' THEN 'ANON_OK'
-        WHEN email LIKE '%::%' THEN 'CIPHER_OR_VERSIONED'
-        ELSE 'OTHER'
+        WHEN name LIKE 'DevUser-%' THEN 'NAME_ANON_OK'
+        WHEN name LIKE '%::%' THEN 'NAME_CIPHER'
+        ELSE 'NAME_OTHER'
+    END AS name_state,
+    CASE
+        WHEN email LIKE 'dev-u-%@dev.local' THEN 'EMAIL_SHOULD_NOT_BE_REPLACED'
+        WHEN email LIKE '%::%' OR CHAR_LENGTH(email) >= 32 THEN 'EMAIL_KEPT_LIKELY'
+        ELSE 'EMAIL_OTHER'
     END AS email_state
 FROM users
 ORDER BY id
 LIMIT 20;
 
-SELECT 'clients sample' AS section;
+SELECT 'clients sample (email/phone KEEP, name REPLACE)' AS section;
 SELECT
     id,
     tenant_id,
     LEFT(email, 48) AS email_preview,
-    LEFT(name, 48) AS name_preview,
     LEFT(IFNULL(phone, ''), 32) AS phone_preview,
+    LEFT(name, 48) AS name_preview,
     CASE
-        WHEN email LIKE 'dev-c-%@dev.local' THEN 'ANON_OK'
-        WHEN email LIKE '%::%' THEN 'CIPHER_OR_VERSIONED'
-        ELSE 'OTHER'
-    END AS email_state
+        WHEN name LIKE 'DevClient-%' THEN 'NAME_ANON_OK'
+        WHEN name LIKE '%::%' THEN 'NAME_CIPHER'
+        ELSE 'NAME_OTHER'
+    END AS name_state
 FROM clients
 ORDER BY id
 LIMIT 20;
@@ -62,7 +68,7 @@ FROM branches
 ORDER BY id
 LIMIT 10;
 
-SELECT 'pii residual probe (expect 0 after anonymize for Hangul in short name)' AS section;
+SELECT 'display-name residual (expect 0 short Hangul names after anonymize)' AS section;
 SELECT COUNT(*) AS users_short_hangul_name_suspect
 FROM users
 WHERE name IS NOT NULL

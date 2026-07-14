@@ -5,16 +5,17 @@
 -- 표준: docs/standards/PII_PROTECTION_STANDARD.md §2
 -- 런북: docs/project-management/PROD_TO_DEV_DB_SYNC_RUNBOOK.md
 --
--- 전략 (P0)
---   1) AES @Convert 컬럼(users/clients 의 name·email·phone·nickname 등):
---      식별 가능한 운영 암호문 → 행 id 기반 데모 평문 으로 치환.
---      PersonalDataEncryptionUtil.safeDecrypt() 는 암호문 형태가 아니면 평문 그대로
---      반환하므로 개발 앱 로그인·목록·검색이 깨지지 않는다.
---      이후 JPA 저장 시 AttributeConverter 가 활성 키로 재암호화한다.
---   2) UserAnonymizationService 는 사용하지 않음 (ANONYMIZED·tombstone·비활성화로
---      개발 로그인을 망가뜨림).
---   3) 보존: tenant_id, id, user_id, password, role, lifecycle_state, FK·업무 데이터.
---   4) consultants PII 는 users(JOINED) 에 있으므로 users UPDATE 로 충분.
+-- 전략 (P0) — 로그인 식별자·비밀번호 미치환
+--   KEEP (전원·역할 무관):
+--     user_id / password / email / phone / social_* / *hash* lookup /
+--     tenant_id / id / role / lifecycle_state / FK·업무 데이터
+--   REPLACE (표시·영상용 PII 만):
+--     name / nickname / address* / rrn / memo·notes / 계좌·지점 연락처 등
+--   AES @Convert 컬럼(name 등)은 데모 평문으로 치환.
+--     safeDecrypt() 는 비암호문을 그대로 반환 → 화면 표시 OK.
+--     이후 JPA 저장 시 AttributeConverter 가 활성 키로 재암호화.
+--   UserAnonymizationService 미사용 (계정 종료·tombstone 경로와 다름).
+--   consultants PII 는 users(JOINED) 의 name 등 UPDATE 로 충분.
 --
 -- 선택 실행 (수동):
 --   mysql ... mind_garden_dev < scripts/database/sync/post-dev-sync-anonymize.sql
@@ -24,14 +25,12 @@
 SET NAMES utf8mb4;
 
 -- -----------------------------------------------------------------------------
--- users (PII §2: name, phone, email + 주소·주민·소셜 토큰 등)
+-- users — 표시용 PII 만 (email/phone/user_id/password/social 로그인 필드 유지)
 -- -----------------------------------------------------------------------------
 UPDATE users
 SET
-    email = CONCAT('dev-u-', id, '@dev.local'),
     name = CONCAT('DevUser-', LPAD(id, 6, '0')),
     nickname = IF(nickname IS NULL OR nickname = '', NULL, CONCAT('nick-', id)),
-    phone = CONCAT('010-0000-', LPAD(MOD(id, 10000), 4, '0')),
     gender = NULL,
     birth_date = NULL,
     rrn_encrypted = NULL,
@@ -41,10 +40,7 @@ SET
     profile_image_url = NULL,
     memo = NULL,
     notes = NULL,
-    social_provider = NULL,
-    social_provider_user_id = NULL,
-    social_linked_at = NULL,
-    is_social_account = 0,
+    -- 로그인 자체는 유지; 일회성 토큰만 폐기 (비번·식별자와 무관)
     email_verification_token = NULL,
     email_verification_expires_at = NULL,
     password_reset_token = NULL,
@@ -53,13 +49,11 @@ SET
 WHERE id IS NOT NULL;
 
 -- -----------------------------------------------------------------------------
--- clients (PII §2 + 비상연락·의료·차량 등)
+-- clients — name/주소/의료 등만 (email·phone 유지: 로그인·OTP·동기화)
 -- -----------------------------------------------------------------------------
 UPDATE clients
 SET
     name = CONCAT('DevClient-', LPAD(id, 6, '0')),
-    email = CONCAT('dev-c-', id, '@dev.local'),
-    phone = CONCAT('010-1000-', LPAD(MOD(id, 10000), 4, '0')),
     gender = NULL,
     birth_date = NULL,
     address = NULL,
@@ -93,7 +87,7 @@ EXECUTE stmt_accounts;
 DEALLOCATE PREPARE stmt_accounts;
 
 -- -----------------------------------------------------------------------------
--- branches (연락·주소 — 테넌트 식별자/이름 유지)
+-- branches (연락·주소 — 테넌트 식별자/지점명 유지)
 -- -----------------------------------------------------------------------------
 SET @has_branches := (
     SELECT COUNT(*) FROM information_schema.TABLES

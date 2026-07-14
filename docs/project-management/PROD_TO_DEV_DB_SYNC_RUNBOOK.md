@@ -70,9 +70,10 @@ CRON_TZ=Asia/Seoul
    mysql ... "$DEV_DB_NAME" < /opt/mindgarden/scripts/database/sync/post-dev-sync-anonymize-dry-run.sql
    ```
 
-3. **전략 요약**: `users`/`clients` 의 name·email·phone 등 → `dev-u-{id}@dev.local` / `DevUser-…` 형태 데모 평문.  
-   `safeDecrypt` 가 비암호문을 통과시키므로 개발 로그인(`user_id`·`password` 유지)·목록이 동작한다.  
-   `UserAnonymizationService` 경로(계정 종료·tombstone)와는 **다름**. `tenant_id` 는 변경하지 않는다.
+3. **전략 요약**  
+   - **로그인 식별자·비밀번호 미치환**(전원·역할 무관): `user_id` / `password` / `email` / `phone` / 소셜 로그인·hash lookup 컬럼 유지 → 운영과 동일하게 개발 로그인·OTP.  
+   - **표시용만 치환**: `name`·`nickname`·주소·계좌·의료·지점 연락처 등 → `DevUser-…` / `DevClient-…` 등 데모 값.  
+   - `UserAnonymizationService`(계정 종료·tombstone)와는 **다름**. `tenant_id` 는 변경하지 않는다.
 
 - 스키마 버전이 어긋나면 **Flyway** `repair` / 마이그레이션 재실행 필요 여부를 배포 런북과 맞출 것.
 - 동일 `POST_SYNC_SQL_FILE` 훅으로 개발 전용 플래그·외부 발송 차단 SQL을 이어 붙일 수 있다 (경로를 합본 SQL 또는 별도 오케스트레이션으로).

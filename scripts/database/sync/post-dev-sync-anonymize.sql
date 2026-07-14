@@ -5,32 +5,53 @@
 -- 표준: docs/standards/PII_PROTECTION_STANDARD.md §2
 -- 런북: docs/project-management/PROD_TO_DEV_DB_SYNC_RUNBOOK.md
 --
--- 전략 (P0) — 로그인 식별자·비밀번호 미치환
---   KEEP (전원·역할 무관):
---     user_id / password / email / phone / social_* / *hash* lookup /
+-- 전략 (P1)
+--   KEEP:
+--     user_id / password / social_* / *hash* lookup /
 --     tenant_id / id / role / lifecycle_state / FK·업무 데이터
---   REPLACE (표시·영상용 PII 만):
---     name / nickname / address* / rrn / memo·notes / 계좌·지점 연락처 등
---   AES @Convert 컬럼(name 등)은 데모 평문으로 치환.
+--   REPLACE (표시용 + 화면 노출 방지):
+--     name / nickname / address* / rrn / memo·notes /
+--     phone·email → 부분 마스킹 평문 (010****1234 / ab####***@***.com)
+--     계좌·지점 연락처 등
+--   역할별 name 접두:
+--     CONSULTANT (또는 consultants JOIN) → DevConsultant-{id}
+--     그 외 users → DevUser-{id}
+--     clients → DevClient-{id}
+--   AES @Convert 컬럼은 데모 평문으로 치환.
 --     safeDecrypt() 는 비암호문을 그대로 반환 → 화면 표시 OK.
 --     이후 JPA 저장 시 AttributeConverter 가 활성 키로 재암호화.
+--   로그인 메모:
+--     폼은 email/phone 경로(CustomUserDetailsService). 원본 email/phone 로
+--     로그인은 불가 → 마스킹된 값 + password 로 로그인.
+--     user_id·password 컬럼은 유지.
 --   UserAnonymizationService 미사용 (계정 종료·tombstone 경로와 다름).
---   consultants PII 는 users(JOINED) 의 name 등 UPDATE 로 충분.
 --
 -- 선택 실행 (수동):
---   mysql ... mind_garden_dev < scripts/database/sync/post-dev-sync-anonymize.sql
+--   mysql ... < scripts/database/sync/post-dev-sync-anonymize.sql
 -- dry-run 샘플: post-dev-sync-anonymize-dry-run.sql
 -- =============================================================================
 
 SET NAMES utf8mb4;
 
 -- -----------------------------------------------------------------------------
--- users — 표시용 PII 만 (email/phone/user_id/password/social 로그인 필드 유지)
+-- users — name + phone/email 부분 마스킹 (user_id/password 유지)
 -- -----------------------------------------------------------------------------
 UPDATE users
 SET
     name = CONCAT('DevUser-', LPAD(id, 6, '0')),
     nickname = IF(nickname IS NULL OR nickname = '', NULL, CONCAT('nick-', id)),
+    -- 부분 마스킹(유니크): 010****{id 4자리} / {2글자}{id4}***@***.com
+    phone = IF(
+        phone IS NULL OR phone = '',
+        NULL,
+        CONCAT('010****', LPAD(MOD(id, 10000), 4, '0'))
+    ),
+    email = CONCAT(
+        CHAR(97 + MOD(id, 26)),
+        CHAR(97 + MOD(FLOOR(id / 26), 26)),
+        LPAD(MOD(id, 10000), 4, '0'),
+        '***@***.com'
+    ),
     gender = NULL,
     birth_date = NULL,
     rrn_encrypted = NULL,
@@ -40,7 +61,6 @@ SET
     profile_image_url = NULL,
     memo = NULL,
     notes = NULL,
-    -- 로그인 자체는 유지; 일회성 토큰만 폐기 (비번·식별자와 무관)
     email_verification_token = NULL,
     email_verification_expires_at = NULL,
     password_reset_token = NULL,
@@ -49,11 +69,44 @@ SET
 WHERE id IS NOT NULL;
 
 -- -----------------------------------------------------------------------------
--- clients — name/주소/의료 등만 (email·phone 유지: 로그인·OTP·동기화)
+-- 상담사 name — DevConsultant- (role 또는 consultants 테이블)
+-- -----------------------------------------------------------------------------
+UPDATE users
+SET
+    name = CONCAT('DevConsultant-', LPAD(id, 6, '0')),
+    updated_at = CURRENT_TIMESTAMP
+WHERE role = 'CONSULTANT';
+
+SET @has_consultants := (
+    SELECT COUNT(*) FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'consultants'
+);
+SET @sql_consultant_names := IF(
+    @has_consultants > 0,
+    'UPDATE users u INNER JOIN consultants c ON c.id = u.id SET u.name = CONCAT(''DevConsultant-'', LPAD(u.id, 6, ''0'')), u.updated_at = CURRENT_TIMESTAMP',
+    'SELECT 1'
+);
+PREPARE stmt_consultant_names FROM @sql_consultant_names;
+EXECUTE stmt_consultant_names;
+DEALLOCATE PREPARE stmt_consultant_names;
+
+-- -----------------------------------------------------------------------------
+-- clients — name + phone/email 부분 마스킹
 -- -----------------------------------------------------------------------------
 UPDATE clients
 SET
     name = CONCAT('DevClient-', LPAD(id, 6, '0')),
+    phone = IF(
+        phone IS NULL OR phone = '',
+        NULL,
+        CONCAT('010****', LPAD(MOD(id, 10000), 4, '0'))
+    ),
+    email = CONCAT(
+        CHAR(97 + MOD(id, 26)),
+        CHAR(97 + MOD(FLOOR(id / 26), 26)),
+        LPAD(MOD(id, 10000), 4, '0'),
+        '***@***.com'
+    ),
     gender = NULL,
     birth_date = NULL,
     address = NULL,
@@ -61,7 +114,11 @@ SET
     postal_code = NULL,
     vehicle_plate = NULL,
     emergency_contact = NULL,
-    emergency_phone = NULL,
+    emergency_phone = IF(
+        emergency_phone IS NULL OR emergency_phone = '',
+        NULL,
+        CONCAT('010****', LPAD(MOD(id, 10000), 4, '0'))
+    ),
     medical_history = NULL,
     allergies = NULL,
     medications = NULL,
@@ -87,15 +144,36 @@ EXECUTE stmt_accounts;
 DEALLOCATE PREPARE stmt_accounts;
 
 -- -----------------------------------------------------------------------------
--- branches (연락·주소 — 테넌트 식별자/지점명 유지)
+-- branches — VIEW(깨진 DEFINER) 이면 베이스 테이블로 폴백
 -- -----------------------------------------------------------------------------
-SET @has_branches := (
+SET @has_branches_base := (
     SELECT COUNT(*) FROM information_schema.TABLES
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'branches'
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'branches_dropped_20260612'
+);
+SET @branches_is_view := (
+    SELECT COUNT(*) FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'branches'
+      AND TABLE_TYPE = 'VIEW'
+);
+SET @has_branches_table := (
+    SELECT COUNT(*) FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'branches'
+      AND TABLE_TYPE = 'BASE TABLE'
+);
+SET @branches_target := IF(
+    @has_branches_table > 0,
+    'branches',
+    IF(@branches_is_view > 0 AND @has_branches_base > 0, 'branches_dropped_20260612', NULL)
 );
 SET @sql_branches := IF(
-    @has_branches > 0,
-    'UPDATE branches SET phone_number = ''02-0000-0000'', fax_number = NULL, email = CONCAT(''dev-branch-'', id, ''@dev.local''), address = ''Dev Address'', address_detail = NULL, updated_at = CURRENT_TIMESTAMP WHERE id IS NOT NULL',
+    @branches_target IS NOT NULL,
+    CONCAT(
+        'UPDATE `', @branches_target, '` SET phone_number = ''02-0000-0000'', fax_number = NULL, ',
+        'email = CONCAT(''dev-branch-'', id, ''@dev.local''), address = ''Dev Address'', ',
+        'address_detail = NULL, updated_at = CURRENT_TIMESTAMP WHERE id IS NOT NULL'
+    ),
     'SELECT 1'
 );
 PREPARE stmt_branches FROM @sql_branches;

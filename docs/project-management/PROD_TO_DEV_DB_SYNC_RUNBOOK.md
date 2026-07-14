@@ -20,7 +20,8 @@
 - 개발 DB 계정은 해당 DB에 대한 **DDL/DML** 권한 필요(`DROP DATABASE`, `CREATE`, import).
 - 비밀번호는 `/etc/mindgarden/prod-to-dev-sync.env` (퍼미션 `600`) 또는 Secrets Manager·`mysql_config_editor` 사용. 저장소에 실비번 커밋 금지.
 - **PII (필수 권장)**: 복원 직후 `POST_SYNC_SQL_FILE` 로 `post-dev-sync-anonymize.sql` 을 실행한다.  
-  **로그인 식별자·비밀번호는 미치환**(email/phone/`user_id`/password 유지). 표시용 name·주소·계좌 등만 치환.  
+  **유지**: `user_id` / `password` / 소셜·hash lookup.  
+  **치환**: name(`DevUser-` / `DevConsultant-` / `DevClient-`), phone·email **부분 마스킹**, 주소·계좌 등.  
   미설정 시 스크립트가 WARN 을 남기며, 개발 DB에 운영 표시용 PII가 남을 수 있다.  
   표준: [`PII_PROTECTION_STANDARD.md`](../standards/PII_PROTECTION_STANDARD.md) §2.
 
@@ -72,9 +73,12 @@ CRON_TZ=Asia/Seoul
    ```
 
 3. **전략 요약**  
-   - **로그인 식별자·비밀번호 미치환**(전원·역할 무관): `user_id` / `password` / `email` / `phone` / 소셜 로그인·hash lookup 컬럼 유지 → 운영과 동일하게 개발 로그인·OTP.  
-   - **표시용만 치환**: `name`·`nickname`·주소·계좌·의료·지점 연락처 등 → `DevUser-…` / `DevClient-…` 등 데모 값.  
-   - `UserAnonymizationService`(계정 종료·tombstone)와는 **다름**. `tenant_id` 는 변경하지 않는다.
+   - **유지**: `user_id` / `password` / 소셜·hash lookup. `tenant_id` 불변.  
+   - **name**: 일반 `DevUser-{id}` · 상담사 `DevConsultant-{id}` · 내담자(clients) `DevClient-{id}`.  
+   - **phone/email**: 부분 마스킹 평문 (`010****NNNN` / `abNNNN***@***.com`, id로 유니크).  
+     AES `@Convert` 컬럼도 평문 마스킹으로 덮어씀 → `safeDecrypt` 통과·화면 표시 OK.  
+   - **로그인**: 원본 email/phone 으로는 불가. **마스킹된 email(또는 phone) + password**.  
+   - `UserAnonymizationService`(계정 종료·tombstone)와는 **다름**.
 
 - 스키마 버전이 어긋나면 **Flyway** `repair` / 마이그레이션 재실행 필요 여부를 배포 런북과 맞출 것.
 - 동일 `POST_SYNC_SQL_FILE` 훅으로 개발 전용 플래그·외부 발송 차단 SQL을 이어 붙일 수 있다 (경로를 합본 SQL 또는 별도 오케스트레이션으로).

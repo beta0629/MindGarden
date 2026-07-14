@@ -2,13 +2,14 @@
 -- dry-run: prod→dev 익명화 전/후 샘플 점검 (SELECT only — WRITE 없음)
 -- =============================================================================
 -- 사용: 개발 DB에서만.
---   mysql ... mind_garden_dev < scripts/database/sync/post-dev-sync-anonymize-dry-run.sql
+--   mysql ... < scripts/database/sync/post-dev-sync-anonymize-dry-run.sql
 -- 익명화 후 기대:
---   - login KEEP: user_id / email / phone 은 원본(암호문) 형태 유지
---   - display REPLACE: name 이 DevUser- / DevClient- 접두
+--   - KEEP: user_id / password
+--   - name: DevUser- / DevConsultant- / DevClient-
+--   - phone: 010****NNNN / email: ??NNNN***@***.com
 -- =============================================================================
 
-SELECT 'users sample (login KEEP vs name REPLACE)' AS section;
+SELECT 'users sample (name + phone/email mask)' AS section;
 SELECT
     id,
     tenant_id,
@@ -18,20 +19,40 @@ SELECT
     LEFT(IFNULL(phone, ''), 32) AS phone_preview,
     LEFT(name, 48) AS name_preview,
     CASE
-        WHEN name LIKE 'DevUser-%' THEN 'NAME_ANON_OK'
+        WHEN role = 'CONSULTANT' AND name LIKE 'DevConsultant-%' THEN 'NAME_CONSULTANT_OK'
+        WHEN role <> 'CONSULTANT' AND name LIKE 'DevUser-%' THEN 'NAME_USER_OK'
+        WHEN name LIKE 'DevConsultant-%' THEN 'NAME_CONSULTANT_OK'
         WHEN name LIKE '%::%' THEN 'NAME_CIPHER'
         ELSE 'NAME_OTHER'
     END AS name_state,
     CASE
-        WHEN email LIKE 'dev-u-%@dev.local' THEN 'EMAIL_SHOULD_NOT_BE_REPLACED'
-        WHEN email LIKE '%::%' OR CHAR_LENGTH(email) >= 32 THEN 'EMAIL_KEPT_LIKELY'
+        WHEN email REGEXP '^[a-z]{2}[0-9]{4}\\*\\*\\*@\\*\\*\\*\\.com$' THEN 'EMAIL_MASK_OK'
+        WHEN email LIKE '%::%' OR email LIKE 'legacy::%' THEN 'EMAIL_CIPHER'
         ELSE 'EMAIL_OTHER'
-    END AS email_state
+    END AS email_state,
+    CASE
+        WHEN phone IS NULL OR phone = '' THEN 'PHONE_EMPTY'
+        WHEN phone LIKE '010****%' THEN 'PHONE_MASK_OK'
+        WHEN phone LIKE '%::%' OR phone LIKE 'legacy::%' THEN 'PHONE_CIPHER'
+        ELSE 'PHONE_OTHER'
+    END AS phone_state
 FROM users
 ORDER BY id
 LIMIT 20;
 
-SELECT 'clients sample (email/phone KEEP, name REPLACE)' AS section;
+SELECT 'consultants name check' AS section;
+SELECT
+    u.id,
+    u.role,
+    LEFT(u.name, 40) AS name_preview,
+    CASE WHEN u.name LIKE 'DevConsultant-%' THEN 'OK' ELSE 'BAD' END AS consultant_name_state
+FROM users u
+WHERE u.role = 'CONSULTANT'
+   OR EXISTS (SELECT 1 FROM consultants c WHERE c.id = u.id)
+ORDER BY u.id
+LIMIT 20;
+
+SELECT 'clients sample (email/phone mask, name REPLACE)' AS section;
 SELECT
     id,
     tenant_id,
@@ -42,7 +63,12 @@ SELECT
         WHEN name LIKE 'DevClient-%' THEN 'NAME_ANON_OK'
         WHEN name LIKE '%::%' THEN 'NAME_CIPHER'
         ELSE 'NAME_OTHER'
-    END AS name_state
+    END AS name_state,
+    CASE
+        WHEN email REGEXP '^[a-z]{2}[0-9]{4}\\*\\*\\*@\\*\\*\\*\\.com$' THEN 'EMAIL_MASK_OK'
+        WHEN email LIKE '%::%' OR email LIKE 'legacy::%' THEN 'EMAIL_CIPHER'
+        ELSE 'EMAIL_OTHER'
+    END AS email_state
 FROM clients
 ORDER BY id
 LIMIT 20;
@@ -54,17 +80,6 @@ SELECT
     LEFT(account_number, 24) AS account_number_preview,
     LEFT(account_holder, 32) AS account_holder_preview
 FROM accounts
-ORDER BY id
-LIMIT 10;
-
-SELECT 'branches sample' AS section;
-SELECT
-    id,
-    tenant_id,
-    LEFT(IFNULL(email, ''), 48) AS email_preview,
-    LEFT(IFNULL(phone_number, ''), 24) AS phone_preview,
-    LEFT(IFNULL(address, ''), 40) AS address_preview
-FROM branches
 ORDER BY id
 LIMIT 10;
 
@@ -80,3 +95,19 @@ FROM clients
 WHERE name IS NOT NULL
   AND CHAR_LENGTH(name) < 32
   AND name REGEXP '[가-힣]';
+
+SELECT COUNT(*) AS users_plain_email_suspect
+FROM users
+WHERE email IS NOT NULL
+  AND email NOT LIKE '%***@***.com'
+  AND email NOT LIKE '%::%'
+  AND email NOT LIKE 'legacy::%'
+  AND email LIKE '%@%';
+
+SELECT COUNT(*) AS users_plain_phone_suspect
+FROM users
+WHERE phone IS NOT NULL
+  AND phone <> ''
+  AND phone NOT LIKE '010****%'
+  AND phone NOT LIKE '%::%'
+  AND phone NOT LIKE 'legacy::%';

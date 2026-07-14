@@ -8,7 +8,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { getUserStatusKoreanNameSync, maskEncryptedDisplay } from '../../../../utils/codeHelper';
-import { formatKoreanMobileForDisplay } from '../../../../utils/koreanMobilePhone';
+import { maskPhoneDisplay } from '../../../../utils/partyPiiDisplay';
 import { CONSULTANT_COMP_SIDE_PEEK } from '../../../../constants/consultantComprehensiveStrings';
 import './ConsultantSidePeekContent.css';
 
@@ -19,7 +19,7 @@ const ConsultantSidePeekContent = ({ consultant }) => {
 
   const consultantName = maskEncryptedDisplay(consultant.name, '이름');
   const statusLabel = getUserStatusKoreanNameSync(consultant?.status);
-  const phone = formatKoreanMobileForDisplay(maskEncryptedDisplay(consultant.phone, '전화번호'));
+  const phone = maskPhoneDisplay(consultant.phone);
 
   return (
     <div className="consultant-side-peek-stub">

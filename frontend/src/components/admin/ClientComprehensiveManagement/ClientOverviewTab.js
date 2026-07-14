@@ -3,7 +3,7 @@ import { SmallCardGrid, ListTableView, StatusBadge, EntityRowActions, ENTITY_ROW
 import SafeText from '../../common/SafeText';
 import { ProfileCard } from '../../ui/Card/index';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, maskEncryptedDisplay } from '../../../utils/codeHelper';
-import { formatKoreanMobileForDisplay } from '../../../utils/koreanMobilePhone';
+import { maskEmailDisplay, maskPhoneDisplay } from '../../../utils/partyPiiDisplay';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
 
@@ -85,8 +85,8 @@ const ClientOverviewTab = ({
                 avatar={{ profileImageUrl: client.profileImageUrl, displayName: client.name, size: 48 }}
                 name={<SafeText>{maskEncryptedDisplay(client.name, '이름')}</SafeText>}
                 contactInfo={{
-                    email: <SafeText>{maskEncryptedDisplay(client.email, '이메일')}</SafeText>,
-                    phone: <SafeText>{formatKoreanMobileForDisplay(maskEncryptedDisplay(client.phone, '전화번호'))}</SafeText>
+                    email: <SafeText>{maskEmailDisplay(client.email)}</SafeText>,
+                    phone: <SafeText>{maskPhoneDisplay(client.phone)}</SafeText>
                 }}
                 badges={[
                     <StatusBadge key="status" status={client?.status}>{statusKorean}</StatusBadge>,
@@ -138,8 +138,8 @@ const ClientOverviewTab = ({
                 avatar={{ profileImageUrl: client.profileImageUrl, displayName: client.name, size: 36 }}
                 name={<SafeText>{maskEncryptedDisplay(client.name, '이름')}</SafeText>}
                 contactInfo={{
-                    email: <SafeText>{maskEncryptedDisplay(client.email, '이메일')}</SafeText>,
-                    phone: <SafeText>{formatKoreanMobileForDisplay(maskEncryptedDisplay(client.phone, '전화번호'))}</SafeText>
+                    email: <SafeText>{maskEmailDisplay(client.email)}</SafeText>,
+                    phone: <SafeText>{maskPhoneDisplay(client.phone)}</SafeText>
                 }}
                 badges={[
                     <StatusBadge key="status" status={client?.status}>{statusKorean}</StatusBadge>,
@@ -182,7 +182,7 @@ const ClientOverviewTab = ({
                             return renderClientActions(item, { layout: ENTITY_ROW_ACTIONS_LAYOUT.TABLE });
                         }
                         if (key === 'name') return maskEncryptedDisplay(item.name, '이름');
-                        if (key === 'email') return maskEncryptedDisplay(item.email, '이메일');
+                        if (key === 'email') return maskEmailDisplay(item.email) || '-';
                         if (key === 'status') return getUserStatusKoreanNameSync(item?.status);
                         if (key === 'grade') return getUserGradeKoreanNameSync(item.grade);
                         if (key === 'createdAt') return item.createdAt ? new Date(item.createdAt).toLocaleDateString('ko-KR') : '-';

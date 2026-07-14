@@ -5,25 +5,24 @@
 -- 표준: docs/standards/PII_PROTECTION_STANDARD.md §2
 -- 런북: docs/project-management/PROD_TO_DEV_DB_SYNC_RUNBOOK.md
 --
--- 전략 (P1)
---   KEEP:
---     user_id / password / social_* / *hash* lookup /
+-- 전략 (P1) — 2026-07-15 정정
+--   KEEP (로그인·인증 SSOT — DB에서 * 마스킹 금지):
+--     user_id / password / email / phone /
+--     social_* / *hash* lookup /
 --     tenant_id / id / role / lifecycle_state / FK·업무 데이터
---   REPLACE (표시용 + 화면 노출 방지):
+--   REPLACE (표시명·주소 등 비로그인 필드):
 --     name / nickname / address* / rrn / memo·notes /
---     phone·email → 부분 마스킹 평문 (010****1234 / ab####***@***.com)
 --     계좌·지점 연락처 등
 --   역할별 name 접두:
---     CONSULTANT (또는 consultants JOIN) → DevConsultant-{id}
+--     CONSULTANT (ROLE_CONSULTANT·consultants JOIN 포함) → DevConsultant-{id}
 --     그 외 users → DevUser-{id}
 --     clients → DevClient-{id}
---   AES @Convert 컬럼은 데모 평문으로 치환.
+--   phone/email 화면 마스킹은 FE(통합 사용자 관리) 전용.
+--     #584 의 DB phone/email 마스킹은 로그인 깨짐 → 폐기.
+--   AES @Convert 컬럼(name 등)은 데모 평문으로 치환.
 --     safeDecrypt() 는 비암호문을 그대로 반환 → 화면 표시 OK.
 --     이후 JPA 저장 시 AttributeConverter 가 활성 키로 재암호화.
---   로그인 메모:
---     폼은 email/phone 경로(CustomUserDetailsService). 원본 email/phone 로
---     로그인은 불가 → 마스킹된 값 + password 로 로그인.
---     user_id·password 컬럼은 유지.
+--   로그인: 운영과 동일한 email/phone + password (또는 user_id).
 --   UserAnonymizationService 미사용 (계정 종료·tombstone 경로와 다름).
 --
 -- 선택 실행 (수동):
@@ -34,24 +33,12 @@
 SET NAMES utf8mb4;
 
 -- -----------------------------------------------------------------------------
--- users — name + phone/email 부분 마스킹 (user_id/password 유지)
+-- users — name 등 표시용만 치환 (email/phone/user_id/password KEEP)
 -- -----------------------------------------------------------------------------
 UPDATE users
 SET
     name = CONCAT('DevUser-', LPAD(id, 6, '0')),
     nickname = IF(nickname IS NULL OR nickname = '', NULL, CONCAT('nick-', id)),
-    -- 부분 마스킹(유니크): 010****{id 4자리} / {2글자}{id4}***@***.com
-    phone = IF(
-        phone IS NULL OR phone = '',
-        NULL,
-        CONCAT('010****', LPAD(MOD(id, 10000), 4, '0'))
-    ),
-    email = CONCAT(
-        CHAR(97 + MOD(id, 26)),
-        CHAR(97 + MOD(FLOOR(id / 26), 26)),
-        LPAD(MOD(id, 10000), 4, '0'),
-        '***@***.com'
-    ),
     gender = NULL,
     birth_date = NULL,
     rrn_encrypted = NULL,
@@ -69,13 +56,16 @@ SET
 WHERE id IS NOT NULL;
 
 -- -----------------------------------------------------------------------------
--- 상담사 name — DevConsultant- (role 또는 consultants 테이블)
+-- 상담사 name — DevConsultant- (role·ROLE_ 접두·consultants JOIN)
+-- 통합 사용자 관리 목록은 users.name (Consultant JOINED) 을 사용한다.
+-- 적용 후 개발 백엔드 재시작 권장(단일 ID 캐시 등 잔존 가능).
 -- -----------------------------------------------------------------------------
 UPDATE users
 SET
     name = CONCAT('DevConsultant-', LPAD(id, 6, '0')),
     updated_at = CURRENT_TIMESTAMP
-WHERE role = 'CONSULTANT';
+WHERE UPPER(TRIM(role)) IN ('CONSULTANT', 'ROLE_CONSULTANT')
+   OR UPPER(TRIM(role)) LIKE '%CONSULTANT%';
 
 SET @has_consultants := (
     SELECT COUNT(*) FROM information_schema.TABLES
@@ -91,22 +81,11 @@ EXECUTE stmt_consultant_names;
 DEALLOCATE PREPARE stmt_consultant_names;
 
 -- -----------------------------------------------------------------------------
--- clients — name + phone/email 부분 마스킹
+-- clients — name 등 표시용만 (email/phone KEEP — 로그인 미사용이어도 DB mask 금지 일관)
 -- -----------------------------------------------------------------------------
 UPDATE clients
 SET
     name = CONCAT('DevClient-', LPAD(id, 6, '0')),
-    phone = IF(
-        phone IS NULL OR phone = '',
-        NULL,
-        CONCAT('010****', LPAD(MOD(id, 10000), 4, '0'))
-    ),
-    email = CONCAT(
-        CHAR(97 + MOD(id, 26)),
-        CHAR(97 + MOD(FLOOR(id / 26), 26)),
-        LPAD(MOD(id, 10000), 4, '0'),
-        '***@***.com'
-    ),
     gender = NULL,
     birth_date = NULL,
     address = NULL,
@@ -114,11 +93,7 @@ SET
     postal_code = NULL,
     vehicle_plate = NULL,
     emergency_contact = NULL,
-    emergency_phone = IF(
-        emergency_phone IS NULL OR emergency_phone = '',
-        NULL,
-        CONCAT('010****', LPAD(MOD(id, 10000), 4, '0'))
-    ),
+    emergency_phone = NULL,
     medical_history = NULL,
     allergies = NULL,
     medications = NULL,

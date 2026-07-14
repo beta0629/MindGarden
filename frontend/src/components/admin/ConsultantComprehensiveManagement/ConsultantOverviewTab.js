@@ -8,6 +8,7 @@ import ConsultantCard from '../../ui/Card/ConsultantCard';
 import { getConsultantBadgeDisplay } from '../../../utils/consultantHelper';
 import { getStatusLabel } from '../../../utils/colorUtils';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { maskEmailDisplay } from '../../../utils/partyPiiDisplay';
 import { getProfessionalProviderTypeLabel } from '../../../constants/professionalProviderRoles';
 import { CONSULTANT_COMP_PASSWORD_RESET } from '../../../constants/consultantComprehensiveStrings';
 
@@ -163,7 +164,8 @@ const ConsultantOverviewTab = ({
         if (key === 'currentClients') {
           return item.currentClients != null ? `${item.currentClients}명` : '-';
         }
-        if (key === 'name' || key === 'email') return toDisplayString(item[key], '-');
+        if (key === 'name') return toDisplayString(item[key], '-');
+        if (key === 'email') return maskEmailDisplay(item.email) || '-';
         const v = item[key];
         return toDisplayString(v, '-');
       }}

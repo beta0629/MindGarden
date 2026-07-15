@@ -2,8 +2,10 @@
 
 **용도**: 2026-07-15 Desktop 화면녹화(A-roll) + Google Omni/Veo B-roll 합성용.  
 **원칙**: 제품 UI·로고·읽히는 글씨는 **화면녹화만**. Omni는 분위기·전환·OP/ED만.  
-**연관**: [화면 촬영 스크립트](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md) · [합성·컷 상세](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md) · [확인용 보이스·자막 R01–R10](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)  
-**최종 갱신**: 2026-07-15 (보이스·자막 카피 문서 연동)
+**연관**: [화면 촬영 스크립트](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md) · [합성·컷 상세](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md) · [확인용 보이스·자막 R01–R10](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md) · [가독성·줌·모션 구현](./CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md)  
+**최종 갱신**: 2026-07-15 (가독성·줌 구현 가이드 연동)
+
+> **UI 확대**: Omni/AI로 하지 않는다. 편집기 키프레임·인서트 또는 재녹화 close-up → [모션·가독성 구현](./CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md).
 
 ---
 

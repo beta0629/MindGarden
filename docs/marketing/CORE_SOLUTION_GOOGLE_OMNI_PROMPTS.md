@@ -2,8 +2,8 @@
 
 **용도**: 2026-07-15 Desktop 화면녹화(A-roll) + Google Omni/Veo B-roll 합성용.  
 **원칙**: 제품 UI·로고·읽히는 글씨는 **화면녹화만**. Omni는 분위기·전환·OP/ED만.  
-**연관**: [화면 촬영 스크립트](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md) · [합성·컷 상세](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md)  
-**최종 갱신**: 2026-07-15 (Desktop `.mov` 10본 ffprobe·프레임 직접 확인 반영)
+**연관**: [화면 촬영 스크립트](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md) · [합성·컷 상세](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md) · [확인용 보이스·자막 R01–R10](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)  
+**최종 갱신**: 2026-07-15 (보이스·자막 카피 문서 연동)
 
 ---
 
@@ -106,7 +106,7 @@
 | **V1 A-roll** | Desktop `.mov` R01–R10 | 제품 증거가 필요한 전 구간. 기본 **불투명 100%** |
 | **V2 B-roll Omni** | 아래 §4 클립 O1–O12 | OP·ED, 컷 사이 디졸브 1–3초, 긴 클릭 로딩 메우기. **R03·R04 본문은 Omni로 덮지 말 것** |
 | **V3 타이틀** | 편집기 텍스트/로고 PNG | OP 카피, ED CTA만. Omni에 글자 생성 금지 |
-| **A1 / S1** | 내레이션 + SRT | 촬영 스크립트 톤을 이 순서에 맞게 재타이밍 (Omni 길이에 자막 OUT을 늘리지 않음) |
+| **A1 / S1** | 내레이션 + SRT | [보이스·자막 문서](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md) R순서 SSOT (Omni 길이에 자막 OUT을 늘리지 않음) |
 
 ```
 [Omni OP] → R01 ↔(O-login)→ R02 ↔(O-ops)→ R03
@@ -372,6 +372,7 @@ Top-down slow orbit of a closed notebook, a laptop with blurred dark screen, and
 | 문서 | 역할 |
 |------|------|
 | [화면 촬영 스크립트](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md) | 이상적 컷·내레이션·SRT (앱 포함) |
+| [확인용 보이스·자막](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md) | R01–R10 VO·하단 자막·챕터·SRT (본편·숏폼) |
 | [합성·컷 상세](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md) | 편집기 절차 (본 문서 R순서와 병행) |
 
 ---

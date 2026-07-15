@@ -2,8 +2,9 @@
 
 **목적**: Google Omni B-roll과 화면녹화를 **한 타임라인에 합치고**, 본편 후반을 **잘라** 60·90초 숏폼을 만드는 실무 절차.  
 **프롬프트·실제 녹화 SSOT**: [CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) (§1 인벤토리 · §2 합성 순서)  
+**보이스·자막 SSOT (R01–R10)**: [CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)  
 **이상 컷(앱 포함)**: [촬영 스크립트 §4.0·§4.2·§4.3](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md)  
-**최종 갱신**: 2026-07-15 (Desktop R01–R10 반영)
+**최종 갱신**: 2026-07-15 (보이스·자막 카피 문서 연동)
 
 ---
 
@@ -13,8 +14,8 @@
 |---|------|------|
 | 1 | Desktop 녹화 **R01–R10** (프롬프트 문서 §1) 또는 `cut-01`…`cut-11` | ☐ |
 | 2 | Omni O1–O10 (선택 O11–O12) — 화면 글씨·로고 없음 | ☐ |
-| 3 | 내레이션 WAV/AI 보이스 — R순서에 맞게 재타이밍 | ☐ |
-| 4 | 자막 SRT — 본편/숏폼 각각 | ☐ |
+| 3 | 내레이션 WAV/AI 보이스 — [나레이션 문서](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md) §2·§3 | ☐ |
+| 4 | 자막 SRT — 본편/숏폼 각각 (동일 문서 SRT) | ☐ |
 | 5 | CTA·로고 PNG (투명 배경) — **실사 브랜드 자산만**, AI 생성 로고 금지 | ☐ |
 
 프로젝트: **1920×1080 · 30fps**. Desktop 원본은 **4096×1728 @120fps** → 다운스케일·컨텐츠 크롭(Dock/메뉴바 제거 권장).
@@ -160,6 +161,7 @@ S1  Subtitles (SRT)              ← burn-in은 최종 export 시에만
 ## 8. 관련 문서
 
 - [Google Omni 프롬프트 · 실제 녹화 인벤토리](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md)  
+- [확인용 보이스·자막 R01–R10](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)  
 - [화면 촬영 스크립트](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md)
 
 ---

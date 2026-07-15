@@ -5,9 +5,9 @@
 **데이터**: **개발 서버만** + 표시용 PII 익명화 예정 데이터. **운영 실데이터 촬영 금지**  
 **범위**: 본 문서는 **화면 촬영 순서·컷리스트·내레이션·자막(타임코드)**. AI B-roll·실제 Desktop 녹화 합성은 Omni 문서를 본다.
 
-**연관**: [운영→개발 DB 동기화 런북](../project-management/PROD_TO_DEV_DB_SYNC_RUNBOOK.md) · [PII 보호 표준](../standards/PII_PROTECTION_STANDARD.md) · [Google Omni 프롬프트·실제 녹화 인벤토리](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) · [합성·컷](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md)  
+**연관**: [운영→개발 DB 동기화 런북](../project-management/PROD_TO_DEV_DB_SYNC_RUNBOOK.md) · [PII 보호 표준](../standards/PII_PROTECTION_STANDARD.md) · [Google Omni 프롬프트·실제 녹화 인벤토리](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) · [합성·컷](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md) · [확인용 보이스·자막 R01–R10](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)  
 **작성 기준 코드**: `frontend/src/constants/adminRoutes.js`, `menuItems.js` LNB 폴백, `expo-app/app/(consultant|client|admin)/_layout.tsx`  
-**최종 갱신**: 2026-07-15 (Desktop `.mov` 10본 Omni 문서 연동)
+**최종 갱신**: 2026-07-15 (Desktop R01–R10 확인용 보이스·자막 연동)
 
 ---
 
@@ -374,18 +374,31 @@
 
 ---
 
-## 7. 후속 — AI B-roll · 합성
+## 7. 확인용 보이스·자막 (Desktop R01–R10)
+
+본 문서 §4는 **웹+Expo 이상본**(컷 01–11)용이다.  
+**2026-07-15 Desktop 녹화 R01–R10**으로만 본편·센터장 숏폼을 만들 때의 VO·하단 자막·챕터 카드·SRT는 아래가 SSOT다.
+
+→ [CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)
+
+- 글자·목소리는 **A-roll 위 편집기 레이어**(V3·S1·A1)만. Omni에 UI/자막 생성 금지.
+- 권장 VO 길이: 본편 **약 3:20~4:20**, 센터장 60초 **약 50~55초**.
+
+---
+
+## 8. 후속 — AI B-roll · 합성
 
 - 구글 옴니/Veo 등 AI B-roll·전환·CTA 프롬프트: [CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) (끼울 때도 **§4.0·§4.2 타임코드 유지**)
 - 트랙 합성·후반 컷·60/90초 숏폼: [CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md)
-- 성우 최종 더빙·타이밍 미세 보정 (자막 초안은 **§4.2·§4.3 SRT** 사용)
+- Desktop R01–R10 보이스·자막: [CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)
+- 성우 최종 더빙·타이밍 미세 보정 (앱 포함 이상본은 **§4.2·§4.3 SRT**, Desktop만이면 나레이션 문서 SRT)
 - 브랜드 인트로/아웃트로 모션  
 
 화면 소스가 준비되면 위 컷 번호(`cut-01` …)와 §4.2 절대 타임코드를 마커로 맞추면 된다.
 
 ---
 
-## 8. 참고 경로 (개발자/촬영 조교)
+## 9. 참고 경로 (개발자/촬영 조교)
 
 | 구분 | 경로 |
 |------|------|

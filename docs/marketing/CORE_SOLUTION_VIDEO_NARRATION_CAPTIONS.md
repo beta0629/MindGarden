@@ -3,6 +3,7 @@
 **용도**: Desktop 녹화본 **R01–R10** A-roll 위에 얹는 **보이스오버 · 하단 자막 · 챕터 카드** 카피.  
 **SSOT 소스 순서**: [CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) §1·§2  
 **합성 트랙**: [CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md) (V3 타이틀 / S1 자막 / A1 내레이션)  
+**줌·자막 애니 구현**: [CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md](./CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md)  
 **이상본(앱 포함) 자막**: [촬영 스크립트 §4](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md) — Expo 컷을 붙일 때만  
 **최종 갱신**: 2026-07-15
 
@@ -203,6 +204,7 @@ Keep: OP + R01 짧게 + R03 + R04 앞(18–22초) + ED. R05–R10 ripple delete.
 |------|------|
 | [Google Omni 프롬프트 · R01–R10](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) | 녹화 인벤토리·합성 순서 |
 | [합성·숏폼 컷](./CORE_SOLUTION_GOOGLE_OMNI_EDIT_ASSEMBLY.md) | 트랙·뒷부분 자르기 |
+| [가독성·줌·모션 구현](./CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md) | CapCut/FCP/Resolve 확대·인서트 |
 | [촬영 스크립트](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md) | 앱 포함 이상본·기존 SRT |
 
 ---

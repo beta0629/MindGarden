@@ -3,8 +3,9 @@
 **목적**: Google Omni B-roll과 화면녹화를 **한 타임라인에 합치고**, 본편 후반을 **잘라** 60·90초 숏폼을 만드는 실무 절차.  
 **프롬프트·실제 녹화 SSOT**: [CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md) (§1 인벤토리 · §2 합성 순서)  
 **보이스·자막 SSOT (R01–R10)**: [CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)  
+**줌·인서트·모션 구현 (편집기)**: [CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md](./CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md)  
 **이상 컷(앱 포함)**: [촬영 스크립트 §4.0·§4.2·§4.3](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md)  
-**최종 갱신**: 2026-07-15 (보이스·자막 카피 문서 연동)
+**최종 갱신**: 2026-07-15 (가독성·줌 구현 가이드 연동)
 
 ---
 
@@ -60,6 +61,8 @@ S1  Subtitles (SRT)              ← burn-in은 최종 export 시에만
 ### 레이어 규칙 (한 줄)
 
 > **증거(화면) > 분위기(Omni) > 글자(타이틀)**. 같은 순간에 셋이 경쟁하면 증거를 남긴다.
+
+UI가 작아 안 보이면 Omni를 키우지 말고 [줌·인서트 구현](./CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md) (Scale 키프레임 / 복제 cut-in).
 
 ---
 
@@ -162,6 +165,7 @@ S1  Subtitles (SRT)              ← burn-in은 최종 export 시에만
 
 - [Google Omni 프롬프트 · 실제 녹화 인벤토리](./CORE_SOLUTION_GOOGLE_OMNI_PROMPTS.md)  
 - [확인용 보이스·자막 R01–R10](./CORE_SOLUTION_VIDEO_NARRATION_CAPTIONS.md)  
+- [화면 가독성·줌·모션 구현](./CORE_SOLUTION_VIDEO_MOTION_AND_READABILITY.md)  
 - [화면 촬영 스크립트](./CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md)
 
 ---

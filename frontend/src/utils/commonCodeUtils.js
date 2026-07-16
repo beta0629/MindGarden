@@ -274,14 +274,8 @@ export const getPackageOptions = async() => {
         });
     } catch (error) {
         console.error('패키지 옵션 조회 실패:', error);
-        // 기본값 반환
-        return [
-            { value: 'BASIC', label: i18n.t('common:utils.commonCodeUtils.t_4939184d'), sessions: 20, price: 200000 },
-            { value: 'STANDARD', label: i18n.t('common:utils.commonCodeUtils.t_fe2fd9b9'), sessions: 20, price: 400000 },
-            { value: 'PREMIUM', label: i18n.t('common:utils.commonCodeUtils.t_ffb0f4c9'), sessions: 20, price: 600000 },
-            { value: 'VIP', label: i18n.t('common:utils.commonCodeUtils.t_2e74e850'), sessions: 20, price: 1000000 },
-            { value: 'SINGLE_30000', label: i18n.t('common:utils.commonCodeUtils.t_4aecc83a'), sessions: 1, price: 30000 }
-        ];
+        // SSOT: CONSULTATION_PACKAGE 조회 실패 시 레거시 BASIC/SINGLE_* 하드코딩 폴백 금지
+        return [];
     }
 };
 

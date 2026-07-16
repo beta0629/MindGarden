@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
-import csrfTokenManager from '../../../utils/csrfTokenManager';
+import StandardizedApi from '../../../utils/standardizedApi';
+import { sessionManager } from '../../../utils/sessionManager';
+import { toErrorMessage } from '../../../utils/safeDisplay';
 import PackageSelector from '../../common/PackageSelector';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
@@ -11,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_SESSION_EXTENSIONS_REQUESTS = '/api/v1/admin/session-extensions/requests';
+const MSG_USER_REQUIRED = '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
+const MSG_SUBMIT_FAILED = '회기 추가 요청에 실패했습니다.';
 
 
 /**
@@ -107,42 +111,50 @@ const SessionExtensionModal = ({
             return;
         }
 
+        const currentUser = sessionManager.getUser();
+        const requesterId = currentUser?.id;
+        if (!requesterId) {
+            notificationManager.error(MSG_USER_REQUIRED);
+            return;
+        }
+
+        // packageName 은 매칭 생성과 동일하게 표시명(koreanName/label) 사용 — codeValue 제출 금지
+        const packageName = selectedPackageLabel || mapping.packageName || mapping.package?.name || '';
+        if (!packageName) {
+            notificationManager.error('패키지를 선택해 주세요.');
+            return;
+        }
+
         setIsLoading(true);
         
         try {
-            // packageName 은 매칭 생성과 동일하게 표시명(koreanName/label) 사용 — codeValue 제출 금지
             const requestData = {
                 mappingId: mapping.id,
-                requesterId: 1, // TODO: 실제 사용자 ID
+                requesterId,
                 additionalSessions: additionalSessions,
-                packageName: selectedPackageLabel || mapping.packageName || mapping.package?.name || '',
+                packageName,
                 packagePrice: packagePrice || mapping.packagePrice || mapping.package?.price || 0,
                 paymentMethod: paymentMethod,
                 paymentReference: paymentReference,
                 reason: reason || '회기 추가 요청'
             };
 
-            if (!requestData.packageName) {
-                notificationManager.error('패키지를 선택해 주세요.');
-                setIsLoading(false);
+            const result = await StandardizedApi.post(API_ADMIN_SESSION_EXTENSIONS_REQUESTS, requestData);
+
+            if (result && result.success === false) {
+                notificationManager.error(result.message || MSG_SUBMIT_FAILED);
                 return;
             }
 
-            console.log('🚀 회기 추가 요청:', requestData);
-
-            const response = await csrfTokenManager.post(API_ADMIN_SESSION_EXTENSIONS_REQUESTS, requestData);
-            const result = await response.json();
-
-            if (result.success !== false) {
-                notificationManager.success(`${additionalSessions}회기가 추가 요청되었습니다.`);
-                onSessionExtensionRequested?.(mapping.id);
-                handleClose();
-            } else {
-                notificationManager.error(result.message || '회기 추가 요청에 실패했습니다.');
-            }
+            notificationManager.success(`${additionalSessions}회기가 추가 요청되었습니다.`);
+            onSessionExtensionRequested?.(mapping.id);
+            handleClose();
         } catch (error) {
             console.error('❌ 회기 추가 실패:', error);
-            notificationManager.error(`회기 추가에 실패했습니다: ${error.message || error}`);
+            const message = error?.response?.data?.message
+                || error?.message
+                || toErrorMessage(error, MSG_SUBMIT_FAILED);
+            notificationManager.error(message);
         } finally {
             setIsLoading(false);
         }

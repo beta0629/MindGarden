@@ -588,6 +588,11 @@ const SessionManagement = () => {
       NotificationService.error('세션 개수는 1~1000개 사이여야 합니다.');
       return;
     }
+
+    if (!user?.id) {
+      NotificationService.error('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+      return;
+    }
     
     try {
       setIsCreatingRequest(true);
@@ -595,7 +600,7 @@ const SessionManagement = () => {
       // 신규 요청 생성 (PENDING 상태로 시작)
       const response = await apiPost(ADMIN_API.CREATE_SESSION_EXTENSION_REQUEST, {
         mappingId: selectedMappingForExtension.id,
-        requesterId: user?.id || 1,
+        requesterId: user.id,
         additionalSessions: extensionSessions,
         packageName: selectedPackage.label || selectedPackage.value,
         packagePrice: packagePrice || selectedPackage.price,
@@ -703,12 +708,17 @@ const SessionManagement = () => {
 
   // 관리자 승인 처리
   const handleApproveRequest = async (requestId) => {
+    if (!user?.id) {
+      NotificationService.error('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+      return;
+    }
+
     try {
       setApprovingRequest(true);
       setSelectedRequestForPayment(sessionExtensionRequests.find(r => r.id === requestId));
       
       const response = await apiPost(ADMIN_API.APPROVE_SESSION_EXTENSION(requestId), {
-        adminId: user?.id || 1,
+        adminId: user.id,
         comment: '관리자 승인',
       });
       
@@ -768,12 +778,17 @@ const SessionManagement = () => {
 
   // 요청 거부 처리
   const handleRejectRequest = async (requestId) => {
+    if (!user?.id) {
+      NotificationService.error('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+      return;
+    }
+
     try {
       setRejectingRequest(true);
       setSelectedRequestForPayment(sessionExtensionRequests.find(r => r.id === requestId));
       
       const response = await apiPost(ADMIN_API.REJECT_SESSION_EXTENSION(requestId), {
-        adminId: user?.id || 1,
+        adminId: user.id,
         reason: '관리자에 의해 거부됨',
       });
       

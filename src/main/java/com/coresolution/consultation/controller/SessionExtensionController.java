@@ -2,19 +2,30 @@ package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.dto.SessionExtensionRequestResponse;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.service.SessionExtensionService;
+import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
+import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 회기 추가 요청 컨트롤러.
@@ -39,17 +50,33 @@ public class SessionExtensionController extends BaseApiController {
     static final String ROLES_MANAGE_EXTENSION = "hasAnyRole('ADMIN','STAFF')";
     
     private final SessionExtensionService sessionExtensionService;
+    private final UserService userService;
     
     /**
      * 회기 추가 요청 생성
+     *
+     * <p>요청자는 HTTP 세션의 로그인 사용자로 확정한다. body {@code requesterId}는 무시하며,
+     * 멀티테넌트 전환 후 이전 테넌트 PK와 불일치할 경우 이메일 폴백으로 현재 테넌트 사용자를 조회한다.</p>
+     *
+     * @param request 요청 본문 (mappingId, additionalSessions, packageName, packagePrice, reason)
+     * @param session HTTP 세션
+     * @return 생성된 회기 추가 요청
      */
     @PostMapping("/requests")
     public ResponseEntity<ApiResponse<SessionExtensionRequestResponse>> createRequest(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         log.info("🔄 회기 추가 요청 생성 시작");
         
+        User sessionUser = SessionUtils.getCurrentUser(session);
+        if (sessionUser == null) {
+            throw new AccessDeniedException("로그인이 필요합니다.");
+        }
+        
+        Long requesterId = resolveRequesterIdForCurrentTenant(sessionUser);
+        warnIfBodyRequesterIdMismatch(request, requesterId);
+        
         Long mappingId = Long.valueOf(request.get("mappingId").toString());
-        Long requesterId = Long.valueOf(request.get("requesterId").toString());
         Integer additionalSessions = Integer.valueOf(request.get("additionalSessions").toString());
         String packageName = (String) request.get("packageName");
         BigDecimal packagePrice = new BigDecimal(request.get("packagePrice").toString());
@@ -233,6 +260,60 @@ public class SessionExtensionController extends BaseApiController {
         return success("요청 통계를 성공적으로 조회했습니다.", statistics);
     }
 
+    /**
+     * 현재 테넌트 컨텍스트에서 요청자 PK를 확정한다.
+     * 세션 userId가 현재 테넌트에 없으면 이메일로 1건 매칭 시 폴백한다.
+     *
+     * @param sessionUser HTTP 세션 사용자
+     * @return 현재 테넌트의 요청자 PK
+     */
+    private Long resolveRequesterIdForCurrentTenant(User sessionUser) {
+        Optional<User> bySessionId = userService.findActiveById(sessionUser.getId());
+        if (bySessionId.isPresent()) {
+            return bySessionId.get().getId();
+        }
+        
+        String email = sessionUser.getEmail();
+        if (email == null || email.isBlank()) {
+            throw new EntityNotFoundException("요청자", sessionUser.getId(),
+                    "현재 테넌트에서 요청자를 찾을 수 없습니다.");
+        }
+        
+        var matches = userService.findAllUsersMatchingEmailInCurrentTenant(email);
+        if (matches.size() == 1) {
+            User tenantUser = matches.get(0);
+            log.warn("회기 추가 요청: 세션 userId({})가 현재 테넌트에 없음 — 이메일 폴백으로 요청자({}) 확정",
+                    sessionUser.getId(), tenantUser.getId());
+            return tenantUser.getId();
+        }
+        if (matches.isEmpty()) {
+            throw new EntityNotFoundException("요청자", sessionUser.getId(),
+                    "현재 테넌트에서 요청자를 찾을 수 없습니다.");
+        }
+        throw new EntityNotFoundException("요청자", sessionUser.getId(),
+                "현재 테넌트에서 동일 이메일의 요청자가 여러 명입니다.");
+    }
+    
+    /**
+     * body requesterId가 세션 기준과 다르면 경고만 남긴다 (값은 사용하지 않음).
+     */
+    private void warnIfBodyRequesterIdMismatch(Map<String, Object> request, Long resolvedRequesterId) {
+        Object bodyRequesterId = request.get("requesterId");
+        if (bodyRequesterId == null) {
+            return;
+        }
+        try {
+            Long parsedBodyRequesterId = Long.valueOf(bodyRequesterId.toString());
+            if (!parsedBodyRequesterId.equals(resolvedRequesterId)) {
+                log.warn("회기 추가 요청: body requesterId({}) 무시 — 세션 기준 요청자({}) 사용",
+                        parsedBodyRequesterId, resolvedRequesterId);
+            }
+        } catch (NumberFormatException e) {
+            log.warn("회기 추가 요청: body requesterId 형식 오류 — 무시하고 세션 기준 요청자({}) 사용",
+                    resolvedRequesterId);
+        }
+    }
+    
     /**
      * 목록 API 공통 응답 맵 (엔티티 직렬화 대신 DTO 사용).
      */

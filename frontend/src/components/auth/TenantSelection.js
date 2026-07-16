@@ -68,22 +68,13 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
         if (data.success) {
           console.log('✅ 테넌트 전환 성공:', data);
           
-          // 세션 정보 갱신
+          // BE에서 USER_OBJECT 갱신 — 세션 재조회로 id·tenantId 동기화
+          await checkSession(true);
+          
           const user = sessionManager.getUser();
           if (user) {
-            // 테넌트 정보 업데이트
-            user.tenantId = tenantId;
-            
-            // 선택한 테넌트 정보에서 역할 정보 가져오기
             const selectedTenant = tenants.find(t => t.tenantId === tenantId);
-            if (selectedTenant && selectedTenant.role) {
-              user.role = selectedTenant.role;
-            }
             
-            sessionManager.setUser(user, sessionManager.getSessionInfo());
-            // SessionContext 동기화 (테넌트 선택 직후 공통코드 등에서 user 사용 가능하도록)
-            await checkSession(true);
-
             // 잠시 대기 후 동적 대시보드로 리다이렉트
             await new Promise(resolve => setTimeout(resolve, 300));
             

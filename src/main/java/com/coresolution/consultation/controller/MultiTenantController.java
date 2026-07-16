@@ -4,8 +4,10 @@ import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
+import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.MultiTenantUserService;
+import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +38,7 @@ public class MultiTenantController extends BaseApiController {
     
     private final MultiTenantUserService multiTenantUserService;
     private final TenantRepository tenantRepository;
+    private final UserService userService;
     
     /**
      * 사용자가 접근 가능한 모든 테넌트 목록 조회
@@ -133,11 +136,12 @@ public class MultiTenantController extends BaseApiController {
         
         log.info("✅ 테넌트 접근 권한 확인 완료: email={}, tenantId={}", EmailLogMasking.maskForLog(userEmail), tenantId);
         
-        // 세션에 테넌트 ID 저장
-        session.setAttribute("tenantId", tenantId);
-        
-        // TenantContextHolder에 설정 (다음 요청부터 적용)
+        // 세션·컨텍스트에 테넌트 ID 저장 (다음 요청부터 적용)
+        session.setAttribute(SessionConstants.TENANT_ID, tenantId);
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        
+        // 대상 테넌트의 User 행으로 세션 USER_OBJECT 갱신 (이전 테넌트 PK 잔존 방지)
+        refreshSessionUserForTenant(session, user, userEmail, tenantId);
         
         log.info("✅ 테넌트 전환 성공: userId={}, tenantId={}", user.getId(), tenantId);
         
@@ -146,6 +150,33 @@ public class MultiTenantController extends BaseApiController {
         data.put("tenantId", tenantId);
         
         return success(data);
+    }
+    
+    /**
+     * 테넌트 전환 후 세션의 User 객체를 대상 테넌트 사용자로 갱신한다.
+     *
+     * @param session HTTP 세션
+     * @param previousUser 전환 전 세션 사용자
+     * @param userEmail 로그인 이메일
+     * @param tenantId 전환 대상 테넌트 ID
+     */
+    private void refreshSessionUserForTenant(
+            HttpSession session, User previousUser, String userEmail, String tenantId) {
+        var tenantUsers = userService.findAllUsersMatchingEmailInCurrentTenant(userEmail);
+        if (tenantUsers.size() == 1) {
+            User tenantUser = tenantUsers.get(0);
+            SessionUtils.setCurrentUser(session, tenantUser);
+            log.info("✅ 세션 USER_OBJECT 갱신: oldUserId={}, newUserId={}, tenantId={}",
+                    previousUser.getId(), tenantUser.getId(), tenantId);
+            return;
+        }
+        if (tenantUsers.isEmpty()) {
+            log.warn("⚠️ 테넌트 전환 후 USER_OBJECT 갱신 실패 — 대상 테넌트에 사용자 없음: email={}, tenantId={}",
+                    EmailLogMasking.maskForLog(userEmail), tenantId);
+            return;
+        }
+        log.warn("⚠️ 테넌트 전환 후 USER_OBJECT 갱신 스킵 — 동일 이메일 다중 사용자: email={}, tenantId={}, count={}",
+                EmailLogMasking.maskForLog(userEmail), tenantId, tenantUsers.size());
     }
     
     /**

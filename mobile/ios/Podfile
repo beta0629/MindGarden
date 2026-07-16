@@ -32,6 +32,33 @@ target 'MindGardenMobile' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 26.4+/Apple Clang: fmt 11.0.2 (RCT-Folly) consteval 실패 우회
+    # error: call to consteval function 'fmt::basic_format_string<...>' is not a constant expression
+    # (format-inl.h FMT_STRING). fmt만 C++17로 내려 consteval 경로를 비활성화.
+    # fmt 11.0.2는 base.h가 FMT_USE_CONSTEVAL를 무조건 재정의하므로 -D 플래그는 무효 → 헤더 패치 병행.
+    installer.pods_project.targets.each do |target|
+      if target.name == 'fmt'
+        target.build_configurations.each do |bc|
+          bc.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        end
+      end
+    end
+    fmt_base = File.join(installer.sandbox.root, 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      content = File.read(fmt_base)
+      unless content.include?('Xcode 26 fmt consteval workaround')
+        patched = content.gsub(
+          /^(#\s*define FMT_USE_CONSTEVAL) 1/,
+          "// Xcode 26 fmt consteval workaround\n\\1 0"
+        )
+        if patched != content
+          File.chmod(0644, fmt_base)
+          File.write(fmt_base, patched)
+          puts '✅ Patched fmt/base.h: FMT_USE_CONSTEVAL=0 (Xcode 26+)'
+        end
+      end
+    end
     
     # 모든 타겟의 deployment target을 최소 15.1로 설정 및 Xcode 26.0.1 호환성 설정
     installer.pods_project.targets.each do |target|

@@ -228,7 +228,9 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     @Transactional(readOnly = true)
     public SessionExtensionRequest getRequestById(Long requestId) {
         log.info("요청 상세 조회: requestId={}", requestId);
-        return requireRequestForCurrentTenant(requestId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return requestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
+                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
     }
     
     @Override

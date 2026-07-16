@@ -1,5 +1,6 @@
 package com.coresolution.consultation.controller;
 
+import com.coresolution.consultation.dto.SessionExtensionRequestResponse;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
 import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.core.controller.BaseApiController;
@@ -43,7 +44,8 @@ public class SessionExtensionController extends BaseApiController {
      * 회기 추가 요청 생성
      */
     @PostMapping("/requests")
-    public ResponseEntity<ApiResponse<SessionExtensionRequest>> createRequest(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<SessionExtensionRequestResponse>> createRequest(
+            @RequestBody Map<String, Object> request) {
         log.info("🔄 회기 추가 요청 생성 시작");
         
         Long mappingId = Long.valueOf(request.get("mappingId").toString());
@@ -58,7 +60,9 @@ public class SessionExtensionController extends BaseApiController {
         
         log.info("✅ 회기 추가 요청 생성 완료: requestId={}", extensionRequest.getId());
         
-        return created("회기 추가 요청이 생성되었습니다. 입금 확인을 기다려주세요.", extensionRequest);
+        return created(
+                "회기 추가 요청이 생성되었습니다. 입금 확인을 기다려주세요.",
+                SessionExtensionRequestResponse.fromEntity(extensionRequest));
     }
     
     /**
@@ -176,11 +180,7 @@ public class SessionExtensionController extends BaseApiController {
         
         List<SessionExtensionRequest> requests = sessionExtensionService.getAllRequests();
         
-        Map<String, Object> data = new HashMap<>();
-        data.put("requests", requests);
-        data.put("count", requests.size());
-        
-        return success("전체 요청 목록을 성공적으로 조회했습니다.", data);
+        return success("전체 요청 목록을 성공적으로 조회했습니다.", toRequestListData(requests));
     }
     
     /**
@@ -192,11 +192,7 @@ public class SessionExtensionController extends BaseApiController {
         
         List<SessionExtensionRequest> requests = sessionExtensionService.getPendingPaymentRequests();
         
-        Map<String, Object> data = new HashMap<>();
-        data.put("requests", requests);
-        data.put("count", requests.size());
-        
-        return success("입금 확인 대기 중인 요청 목록을 성공적으로 조회했습니다.", data);
+        return success("입금 확인 대기 중인 요청 목록을 성공적으로 조회했습니다.", toRequestListData(requests));
     }
     
     /**
@@ -208,23 +204,21 @@ public class SessionExtensionController extends BaseApiController {
         
         List<SessionExtensionRequest> requests = sessionExtensionService.getPendingAdminApprovalRequests();
         
-        Map<String, Object> data = new HashMap<>();
-        data.put("requests", requests);
-        data.put("count", requests.size());
-        
-        return success("관리자 승인 대기 중인 요청 목록을 성공적으로 조회했습니다.", data);
+        return success("관리자 승인 대기 중인 요청 목록을 성공적으로 조회했습니다.", toRequestListData(requests));
     }
     
     /**
      * 요청 상세 조회
      */
     @GetMapping("/requests/{requestId}")
-    public ResponseEntity<ApiResponse<SessionExtensionRequest>> getRequestById(@PathVariable Long requestId) {
+    public ResponseEntity<ApiResponse<SessionExtensionRequestResponse>> getRequestById(
+            @PathVariable Long requestId) {
         log.info("회기 추가 요청 상세 조회: requestId={}", requestId);
         
         SessionExtensionRequest request = sessionExtensionService.getRequestById(requestId);
         
-        return success("요청 상세 정보를 성공적으로 조회했습니다.", request);
+        return success("요청 상세 정보를 성공적으로 조회했습니다.",
+                SessionExtensionRequestResponse.fromEntity(request));
     }
     
     /**
@@ -237,5 +231,17 @@ public class SessionExtensionController extends BaseApiController {
         Map<String, Object> statistics = sessionExtensionService.getRequestStatistics();
         
         return success("요청 통계를 성공적으로 조회했습니다.", statistics);
+    }
+
+    /**
+     * 목록 API 공통 응답 맵 (엔티티 직렬화 대신 DTO 사용).
+     */
+    private Map<String, Object> toRequestListData(List<SessionExtensionRequest> requests) {
+        List<SessionExtensionRequestResponse> responses =
+                SessionExtensionRequestResponse.fromEntities(requests);
+        Map<String, Object> data = new HashMap<>();
+        data.put("requests", responses);
+        data.put("count", responses.size());
+        return data;
     }
 }

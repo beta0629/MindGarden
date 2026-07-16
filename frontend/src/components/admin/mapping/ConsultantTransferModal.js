@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
+import { sessionManager } from '../../../utils/sessionManager';
 import { toErrorMessage, toDisplayString } from '../../../utils/safeDisplay';
 import SafeText from '../../common/SafeText';
 import UnifiedModal from '../../common/modals/UnifiedModal';
@@ -11,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_MAPPINGS_TRANSFER = '/api/v1/admin/mappings/transfer';
+const MSG_USER_REQUIRED = '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
 
 /**
  * 상담사 변경 모달 컴포넌트
@@ -138,6 +140,13 @@ const ConsultantTransferModal = ({
     if (!validateForm()) {
       return;
     }
+
+    const currentUser = sessionManager.getUser();
+    const transferredBy = currentUser?.name || currentUser?.email;
+    if (!currentUser?.id || !transferredBy) {
+      notificationManager.show(MSG_USER_REQUIRED, 'error');
+      return;
+    }
     
     setLoading(true);
     
@@ -147,7 +156,7 @@ const ConsultantTransferModal = ({
         newConsultantId: parseInt(formData.newConsultantId),
         transferReason: formData.transferReason.trim(),
         specialConsiderations: formData.specialConsiderations.trim(),
-        transferredBy: '관리자', // 실제로는 현재 로그인한 관리자 정보
+        transferredBy,
         totalSessions: formData.totalSessions ? parseInt(formData.totalSessions) : null,
         remainingSessions: formData.remainingSessions ? parseInt(formData.remainingSessions) : null,
         packageName: formData.packageName.trim() || null,

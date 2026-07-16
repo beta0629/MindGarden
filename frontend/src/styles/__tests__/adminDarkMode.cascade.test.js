@@ -58,7 +58,6 @@ const C3_COMPONENT_FILES = [
 ];
 
 const C3_P1_COMPONENT_FILES = [
-  'src/components/admin/SessionManagement.css',
   'src/components/admin/WellnessManagement.css',
   'src/components/admin/CommonCodeManagementB0KlA.css'
 ];

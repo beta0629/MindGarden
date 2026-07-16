@@ -11,6 +11,7 @@ import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
 import com.coresolution.consultation.service.EmailService;
@@ -54,10 +55,10 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
-                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
+                .orElseThrow(() -> new EntityNotFoundException("매핑", mappingId));
         
         User requester = userService.findActiveById(requesterId)
-                .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId));
+                .orElseThrow(() -> new EntityNotFoundException("요청자", requesterId));
         
         SessionExtensionRequest request = SessionExtensionRequest.builder()
                 .tenantId(tenantId)

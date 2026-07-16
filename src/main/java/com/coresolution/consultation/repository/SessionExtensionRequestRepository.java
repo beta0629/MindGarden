@@ -27,7 +27,20 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
      */
     @Query("SELECT ser FROM SessionExtensionRequest ser WHERE ser.tenantId = :tenantId AND ser.id = :id")
     Optional<SessionExtensionRequest> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
-    
+
+    /**
+     * 테넌트 ID와 요청 ID로 단건 조회 (연관 엔티티 fetch join)
+     */
+    @Query("SELECT ser FROM SessionExtensionRequest ser " +
+           "LEFT JOIN FETCH ser.mapping m " +
+           "LEFT JOIN FETCH m.client c " +
+           "LEFT JOIN FETCH m.consultant co " +
+           "LEFT JOIN FETCH ser.requester r " +
+           "LEFT JOIN FETCH ser.approvedBy ab " +
+           "WHERE ser.tenantId = :tenantId AND ser.id = :id")
+    Optional<SessionExtensionRequest> findByTenantIdAndIdWithDetails(
+            @Param("tenantId") String tenantId, @Param("id") Long id);
+
     /**
      * 전체 회기 추가 요청 목록 조회 (생성일 내림차순)
      */
@@ -40,6 +53,7 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
            "LEFT JOIN FETCH ser.mapping m " +
            "LEFT JOIN FETCH m.client c " +
            "LEFT JOIN FETCH m.consultant co " +
+           "LEFT JOIN FETCH ser.requester r " +
            "ORDER BY ser.createdAt DESC")
     List<SessionExtensionRequest> findAllWithMappingOrderByCreatedAtDesc();
     
@@ -65,6 +79,7 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
            "LEFT JOIN FETCH ser.mapping m " +
            "LEFT JOIN FETCH m.client c " +
            "LEFT JOIN FETCH m.consultant co " +
+           "LEFT JOIN FETCH ser.requester r " +
            "WHERE ser.status = 'PENDING' " +
            "ORDER BY ser.createdAt ASC")
     List<SessionExtensionRequest> findPendingPaymentRequests();
@@ -76,6 +91,7 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
            "LEFT JOIN FETCH ser.mapping m " +
            "LEFT JOIN FETCH m.client c " +
            "LEFT JOIN FETCH m.consultant co " +
+           "LEFT JOIN FETCH ser.requester r " +
            "WHERE ser.status = 'PAYMENT_CONFIRMED' " +
            "ORDER BY ser.createdAt ASC")
     List<SessionExtensionRequest> findPendingAdminApprovalRequests();

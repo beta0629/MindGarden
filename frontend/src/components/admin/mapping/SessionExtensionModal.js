@@ -37,18 +37,22 @@ const SessionExtensionModal = ({
     const { t } = useTranslation();
     const [additionalSessions, setAdditionalSessions] = useState(1);
     const [packagePrice, setPackagePrice] = useState(0);
+    /** select value = CONSULTATION_PACKAGE codeValue */
     const [selectedPackage, setSelectedPackage] = useState('');
+    /** 제출용 표시명 = koreanName (매칭 생성 packageName 과 정합) */
+    const [selectedPackageLabel, setSelectedPackageLabel] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('신용카드');
     const [paymentReference, setPaymentReference] = useState('');
     const [reason, setReason] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    // 패키지 선택 핸들러
+    // 패키지 선택 핸들러 — MappingCreationModal 과 동일하게 label(koreanName)을 패키지명으로 사용
     const handlePackageChange = (packageInfo) => {
         if (packageInfo) {
             setSelectedPackage(packageInfo.value);
-            setAdditionalSessions(packageInfo.sessions);
-            setPackagePrice(packageInfo.price);
+            setSelectedPackageLabel(packageInfo.label || '');
+            setAdditionalSessions(packageInfo.sessions != null ? packageInfo.sessions : 1);
+            setPackagePrice(packageInfo.price != null ? packageInfo.price : 0);
             
             // 결제 참조번호 자동 생성
             generatePaymentReference();
@@ -79,29 +83,19 @@ const SessionExtensionModal = ({
     };
 
     // 모달이 열릴 때 기존 매칭 정보로 초기화
+    // select value 는 codeValue 이므로 mapping.packageName(표시명)을 value 로 넣지 않음
     useEffect(() => {
         if (isOpen && mapping) {
-            // 기존 매칭의 패키지 정보를 기본값으로 설정
             const defaultSessions = mapping.package?.sessions || mapping.totalSessions || 5;
             const defaultPrice = mapping.packagePrice || mapping.package?.price || 0;
             
             setAdditionalSessions(defaultSessions);
             setPackagePrice(defaultPrice);
-            setSelectedPackage(mapping.packageName || '');
+            setSelectedPackage('');
+            setSelectedPackageLabel('');
             setReason('');
             
-            // 결제 참조번호 자동 생성
             generatePaymentReference();
-            
-            console.log('🔍 SessionExtensionModal 매칭 데이터:', {
-                mapping,
-                consultantName: mapping.consultantName,
-                clientName: mapping.clientName,
-                packageName: mapping.packageName,
-                packagePrice: mapping.packagePrice,
-                defaultSessions,
-                defaultPrice
-            });
         }
     }, [isOpen, mapping]);
 
@@ -116,16 +110,23 @@ const SessionExtensionModal = ({
         setIsLoading(true);
         
         try {
+            // packageName 은 매칭 생성과 동일하게 표시명(koreanName/label) 사용 — codeValue 제출 금지
             const requestData = {
                 mappingId: mapping.id,
                 requesterId: 1, // TODO: 실제 사용자 ID
                 additionalSessions: additionalSessions,
-                packageName: selectedPackage || mapping.packageName || mapping.package?.name || '기본 패키지',
+                packageName: selectedPackageLabel || mapping.packageName || mapping.package?.name || '',
                 packagePrice: packagePrice || mapping.packagePrice || mapping.package?.price || 0,
                 paymentMethod: paymentMethod,
                 paymentReference: paymentReference,
                 reason: reason || '회기 추가 요청'
             };
+
+            if (!requestData.packageName) {
+                notificationManager.error('패키지를 선택해 주세요.');
+                setIsLoading(false);
+                return;
+            }
 
             console.log('🚀 회기 추가 요청:', requestData);
 
@@ -151,6 +152,7 @@ const SessionExtensionModal = ({
         setAdditionalSessions(1);
         setPackagePrice(0);
         setSelectedPackage('');
+        setSelectedPackageLabel('');
         setPaymentMethod('신용카드');
         setPaymentReference('');
         setReason('');

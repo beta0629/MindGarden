@@ -132,6 +132,7 @@ const BadgeSelect = ({
               onClick={() => handleClick(optValue)}
               onKeyDown={(e) => handleKeyDown(e, optValue)}
               preventDoubleClick={false}
+              title={label}
             >
               {option.icon != null && <span className="mg-v2-badge-select__item-icon" aria-hidden>{option.icon}</span>}
               <span className="mg-v2-badge-select__item-label">{label}</span>

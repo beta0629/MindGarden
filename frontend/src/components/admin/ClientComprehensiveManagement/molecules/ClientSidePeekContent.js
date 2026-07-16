@@ -8,7 +8,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { getUserStatusKoreanNameSync, maskEncryptedDisplay } from '../../../../utils/codeHelper';
-import { formatKoreanMobileForDisplay } from '../../../../utils/koreanMobilePhone';
+import { maskEmailDisplay, maskPhoneDisplay } from '../../../../utils/partyPiiDisplay';
 import './ClientSidePeekContent.css';
 
 const ClientSidePeekContent = ({ client }) => {
@@ -18,8 +18,8 @@ const ClientSidePeekContent = ({ client }) => {
 
   const clientName = maskEncryptedDisplay(client.name, '이름');
   const statusLabel = getUserStatusKoreanNameSync(client?.status);
-  const phone = formatKoreanMobileForDisplay(maskEncryptedDisplay(client.phone, '전화번호'));
-  const email = maskEncryptedDisplay(client.email, '이메일');
+  const phone = maskPhoneDisplay(client.phone);
+  const email = maskEmailDisplay(client.email);
 
   return (
     <div className="client-side-peek-stub">

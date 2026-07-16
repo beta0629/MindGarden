@@ -76,8 +76,11 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return result;
     }
 
+    /**
+     * PII(name/email/phone)가 포함된 목록은 ConcurrentMapCache 에 두면
+     * prod→dev 익명화 SQL 이후에도 실명이 고정 노출된다. 단일 ID 통계만 캐시한다.
+     */
     @Override
-    @Cacheable(value = "consultantsWithStats", key = "'all'")
     public List<Map<String, Object>> getAllConsultantsWithStats() {
         log.info("📊 전체 상담사 통계 조회 (DB) - 레거시 호환");
         
@@ -89,9 +92,9 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     }
     
     /**
-     * 테넌트별 상담사 통계 조회 (신규 추가)
+     * 테넌트별 상담사 통계 조회 (신규 추가).
+     * 목록 응답은 캐시하지 않음 — 개발 DB 익명화·PII 치환 즉시 반영.
      */
-    @Cacheable(value = "consultantsWithStats", key = "'tenant:' + #tenantId")
     public List<Map<String, Object>> getAllConsultantsWithStatsByTenant(String tenantId) {
         log.info("📊 테넌트별 상담사 통계 조회: tenantId={}", tenantId);
         

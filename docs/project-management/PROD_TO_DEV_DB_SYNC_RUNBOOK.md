@@ -19,7 +19,12 @@
 - 운영 계정은 **읽기 전용(dump 전용)** 으로 제한하는 것을 권장.
 - 개발 DB 계정은 해당 DB에 대한 **DDL/DML** 권한 필요(`DROP DATABASE`, `CREATE`, import).
 - 비밀번호는 `/etc/mindgarden/prod-to-dev-sync.env` (퍼미션 `600`) 또는 Secrets Manager·`mysql_config_editor` 사용. 저장소에 실비번 커밋 금지.
-- **PII**: 필요 시 덤프 후 마스킹 스크립트·별도 DB 스키마 제외를 검토한다.
+- **PII (필수 권장)**: 복원 직후 `POST_SYNC_SQL_FILE` 로 `post-dev-sync-anonymize.sql` 을 실행한다.  
+  **유지(로그인)**: `user_id` / `password` / **`email` / `phone`**.  
+  **치환**: name(`DevUser-` / `DevConsultant-` / `DevClient-`), 주소·계좌 등.  
+  **표시용 phone/email 마스킹은 FE만** (DB mask 금지 — 로그인 깨짐).  
+  미설정 시 스크립트가 WARN 을 남기며, 개발 DB에 운영 표시용 PII(name)가 남을 수 있다.  
+  표준: [`PII_PROTECTION_STANDARD.md`](../standards/PII_PROTECTION_STANDARD.md) §2.
 
 ## 설치
 
@@ -51,10 +56,40 @@ CRON_TZ=Asia/Seoul
 - **타임존**: OS가 이미 `Asia/Seoul` 이면 `CRON_TZ` 생략 가능. 그 외에는 `date` 로 확인 후 `CRON_TZ` 유지.
 - 로그: 스크립트 자체가 `LOG_DIR` 아래 `prod-to-dev-sync_*.log` 에도 기록한다 (기본 `/var/log/mindgarden`).
 
-## 복원 후 개발 서버
+## 복원 후 익명화 (PII) · 개발 서버
+
+복원(`DROP`/`CREATE` + import) **직후** 개발 DB에서만 PII 치환을 권장한다. **운영 DB WRITE 금지.**
+
+1. env 에 경로 설정 (서버에 SQL 파일 배포 포함):
+
+   ```bash
+   POST_SYNC_SQL_FILE=/opt/mindgarden/scripts/database/sync/post-dev-sync-anonymize.sql
+   ```
+
+2. `prod-to-dev-daily.sh` 가 복원 후 위 파일을 자동 실행한다. 수동 검증:
+
+   ```bash
+   # dry-run (SELECT only)
+   mysql ... "$DEV_DB_NAME" < /opt/mindgarden/scripts/database/sync/post-dev-sync-anonymize-dry-run.sql
+   ```
+
+3. **전략 요약**  
+   - **유지 (로그인 SSOT)**: `user_id` / `password` / **`email` / `phone`** / 소셜·hash lookup. `tenant_id` 불변.  
+     → DB에서 phone/email을 `*` 로 바꾸면 **로그인 불가**. (#584 DB 마스킹은 **폐기**)  
+   - **name만 치환**: 일반 `DevUser-{id}` · 상담사 `DevConsultant-{id}` · 내담자(clients) `DevClient-{id}`.  
+   - **phone/email 화면 마스킹**: 통합 사용자 관리 FE 전용 (`maskPhoneDisplay` / `maskEmailDisplay`). API·DB 원본 유지.  
+   - **로그인**: 운영과 동일하게 **원본 email(또는 phone) + password**.  
+   - `UserAnonymizationService`(계정 종료·tombstone)와는 **다름**.  
+   - **상담사 name**: `users.name` (JOINED `consultants`) — `ROLE_CONSULTANT`·`consultants` JOIN 포함.  
+     통합 사용자 관리(`/admin/user-management?type=consultant`)는 이 컬럼을 표시한다.  
+   - **캐시**: 익명화 SQL(name) 직후 개발 **백엔드 재시작** 권장.  
+   - **#584 잔존**: 이미 Dev DB에서 email/phone이 `***@***.com` / `010****` 로 바뀐 경우,  
+     별도 백업 없이는 **원복 불가**. 그 동안은 **마스킹된 값 + password** 로 로그인.  
+     **다음 prod→dev 복원**(DROP sync) 시 운영 원본 email/phone이 다시 들어온다.  
+     (운영 WRITE·DROP은 사용자 명시 없이는 하지 않음.)
 
 - 스키마 버전이 어긋나면 **Flyway** `repair` / 마이그레이션 재실행 필요 여부를 배포 런북과 맞출 것.
-- `POST_SYNC_SQL_FILE`로 개발 전용 플래그·외부 발송 차단 등 후처리 SQL을 선택 적용할 수 있다.
+- 동일 `POST_SYNC_SQL_FILE` 훅으로 개발 전용 플래그·외부 발송 차단 SQL을 이어 붙일 수 있다 (경로를 합본 SQL 또는 별도 오케스트레이션으로).
 
 ## 관련 스크립트
 

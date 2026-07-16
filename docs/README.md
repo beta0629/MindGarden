@@ -38,6 +38,7 @@
 | **[analysis/](./analysis/)** | 분석·조사 산출물 | 대시보드·기능 개선 분석 등 |
 | **[changes/](./changes/)** | 변경 이력·변경 제안 | 권한·정책 변경 등 |
 | **[design/](./design/)** | 설계 가이드(보조) | 컴포넌트 스펙·레이아웃 가이드 (design-system과 구분) |
+| **[marketing/](./marketing/)** | 홍보·촬영·대외 커뮤니케이션 스크립트 | [상담센터 화면 촬영 스크립트](./marketing/CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md) |
 | **2026-prestartup/, 2026-startup-plan/, plans/** | 기획·사업 계획 등 | 필요 시 project-management로 통합 가능 |
 
 ---
@@ -81,6 +82,9 @@
 - [결제·일정 알림 UAT ↔ API·시드 정합표](./project-management/PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md) — V3+ Seq 28h
 - [카드 시각 통합 스펙](./design-system/v2/CARD_VISUAL_UNIFIED_SPEC.md)
 
+### Marketing (홍보)
+- **[상담센터 홍보용 화면 촬영 스크립트](./marketing/CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md)** — 개발·익명화 데이터 기준 Cmd+Shift+5 + Expo 컷리스트·내레이션 (운영 실데이터 촬영 금지)
+
 ### 기타
 - **Trinity CI·E2E·배포 구분**: [TRINITY_CI_AND_E2E](./guides/development/TRINITY_CI_AND_E2E.md) — ERP 스모크(`frontend/`) vs Trinity 빌드 스모크(`frontend-trinity/`) vs Trinity 배포 워크플로
 - **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md)
@@ -97,4 +101,4 @@
 
 ---
 
-*최종 업데이트: docs 직하위 구조 점검·누락 폴더(analysis, changes, design) 반영·planning 인덱스에 운영반영_문서정리_계획 추가*
+*최종 업데이트: marketing/ 상담센터 화면 촬영 스크립트 추가*

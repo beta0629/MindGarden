@@ -96,7 +96,7 @@ jobs:
         fi
         
     - name: 🔧 Android SDK 설정
-      uses: android-actions/setup-android@v3
+      uses: android-actions/setup-android@v4
       with:
         api-level: 33
         build-tools: 33.0.0

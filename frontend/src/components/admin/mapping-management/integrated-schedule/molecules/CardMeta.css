@@ -9,7 +9,7 @@
 
 .integrated-schedule__card-meta .mg-v2-status-badge,
 .integrated-schedule__card-meta .mg-v2-count-badge {
-  min-height: 24px;
+  min-height: var(--mg-v2-component-height-xs, var(--mg-spacing-lg));
 }
 
 /* 카드 액션 — CTA wrap 시 clip 방지 */

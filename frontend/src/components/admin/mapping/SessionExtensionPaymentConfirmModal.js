@@ -25,7 +25,9 @@ const SessionExtensionPaymentConfirmModal = ({
   isOpen,
   request = null,
   onClose,
-  onConfirmed
+  onConfirmed,
+  onCancelRequest,
+  isCancelling = false
 }) => {
   const [paymentMethod, setPaymentMethod] = useState(DEFAULT_PAYMENT_METHOD);
   const [paymentReference, setPaymentReference] = useState('');
@@ -41,13 +43,13 @@ const SessionExtensionPaymentConfirmModal = ({
   }, [isOpen, request?.sourceId]);
 
   const handleClose = () => {
-    if (!isSubmitting) {
+    if (!isSubmitting && !isCancelling) {
       onClose();
     }
   };
 
   const handleConfirm = async() => {
-    if (!request?.sourceId || isSubmitting) {
+    if (!request?.sourceId || isSubmitting || isCancelling) {
       return;
     }
     if (paymentMethod !== CASH_PAYMENT_METHOD && !paymentReference.trim()) {
@@ -100,14 +102,26 @@ const SessionExtensionPaymentConfirmModal = ({
       loading={isSubmitting}
       actions={
         <ActionBar align="end" gap="md">
-          <ActionBarButton variant="outline" onClick={handleClose} disabled={isSubmitting}>
+          <ActionBarButton
+            variant="danger"
+            onClick={() => onCancelRequest(request)}
+            loading={isCancelling}
+            disabled={isSubmitting || isCancelling}
+          >
+            요청 취소
+          </ActionBarButton>
+          <ActionBarButton
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting || isCancelling}
+          >
             취소
           </ActionBarButton>
           <ActionBarButton
             variant="primary"
             onClick={handleConfirm}
             loading={isSubmitting}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isCancelling}
           >
             입금 확인 및 회기 합산
           </ActionBarButton>
@@ -179,7 +193,9 @@ SessionExtensionPaymentConfirmModal.propTypes = {
     additionalSessions: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
   }),
   onClose: PropTypes.func.isRequired,
-  onConfirmed: PropTypes.func.isRequired
+  onConfirmed: PropTypes.func.isRequired,
+  onCancelRequest: PropTypes.func.isRequired,
+  isCancelling: PropTypes.bool
 };
 
 export default SessionExtensionPaymentConfirmModal;

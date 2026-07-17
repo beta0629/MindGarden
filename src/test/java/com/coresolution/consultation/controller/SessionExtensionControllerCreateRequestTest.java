@@ -121,7 +121,7 @@ class SessionExtensionControllerCreateRequestTest {
 
             when(userService.findActiveById(SESSION_USER_ID)).thenReturn(Optional.of(sessionUser));
             when(sessionExtensionService.createRequest(
-                    eq(10L), eq(SESSION_USER_ID), eq(5), eq("10회기"), any(BigDecimal.class), eq("추가")))
+                    eq(10L), eq(SESSION_USER_ID), eq(5), any(BigDecimal.class), eq("추가")))
                     .thenReturn(saved);
 
             ResponseEntity<ApiResponse<SessionExtensionRequestResponse>> response =
@@ -137,7 +137,7 @@ class SessionExtensionControllerCreateRequestTest {
             assertThat(json).doesNotContain("\"requester\":{");
 
             verify(sessionExtensionService).createRequest(
-                    eq(10L), eq(SESSION_USER_ID), eq(5), eq("10회기"), any(BigDecimal.class), eq("추가"));
+                    eq(10L), eq(SESSION_USER_ID), eq(5), any(BigDecimal.class), eq("추가"));
         }
     }
 
@@ -156,7 +156,7 @@ class SessionExtensionControllerCreateRequestTest {
             when(userService.findAllUsersMatchingEmailInCurrentTenant(USER_EMAIL))
                     .thenReturn(List.of(tenantUser));
             when(sessionExtensionService.createRequest(
-                    eq(10L), eq(TENANT_USER_ID), eq(5), eq("10회기"), any(BigDecimal.class), eq("추가")))
+                    eq(10L), eq(TENANT_USER_ID), eq(5), any(BigDecimal.class), eq("추가")))
                     .thenReturn(saved);
 
             ResponseEntity<ApiResponse<SessionExtensionRequestResponse>> response =
@@ -166,7 +166,7 @@ class SessionExtensionControllerCreateRequestTest {
             assertThat(response.getBody().getData().getRequesterId()).isEqualTo(TENANT_USER_ID);
 
             verify(sessionExtensionService).createRequest(
-                    eq(10L), eq(TENANT_USER_ID), eq(5), eq("10회기"), any(BigDecimal.class), eq("추가"));
+                    eq(10L), eq(TENANT_USER_ID), eq(5), any(BigDecimal.class), eq("추가"));
         }
 
         @Test

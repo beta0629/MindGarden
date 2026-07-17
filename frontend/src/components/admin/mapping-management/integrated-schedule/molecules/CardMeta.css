@@ -11,3 +11,21 @@
 .integrated-schedule__card-meta .mg-v2-count-badge {
   min-height: 24px;
 }
+
+/* 카드 액션 — CTA wrap 시 clip 방지 */
+.integrated-schedule__card-actions.mg-v2-card-actions,
+.integrated-schedule__card .mg-v2-card-actions {
+  overflow: visible;
+  flex-wrap: wrap;
+  align-items: stretch;
+  min-width: 0;
+  width: 100%;
+  padding-bottom: var(--mg-spacing-xs, 0.25rem);
+}
+
+.integrated-schedule__card-actions .mg-button,
+.integrated-schedule__card .mg-v2-card-actions .mg-button {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}

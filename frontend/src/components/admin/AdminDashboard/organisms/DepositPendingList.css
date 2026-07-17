@@ -1,5 +1,10 @@
 /**
  * DepositPendingList - 입금 확인 대기 (G1-02 ListTableView flat)
+ *
+ * CTA 잘림 원인:
+ * - `.mg-v2-list-block__table { overflow: hidden }` 가 액션 셀에서 버튼 wrap/스택 시 clip
+ * - wrapper `min-width: 600px` + 부모 `max-width: 560px` 조합으로 가로 스크롤·가장자리 clip
+ * - 액션 열 min-width 부재로 확인하기/취소 두 버튼이 좁은 폭에서 잘림
  */
 .deposit-pending-list {
   background: var(--mg-color-surface-main);
@@ -8,6 +13,7 @@
   padding: var(--mg-spacing-md, 0.75rem);
   margin-bottom: var(--mg-spacing-md, 1rem);
   min-width: 0;
+  overflow: visible;
 }
 
 .deposit-pending-list__header {
@@ -32,6 +38,37 @@
 
 .deposit-pending-list__table {
   margin-bottom: var(--mg-spacing-sm, 0.5rem);
+  overflow: visible;
+}
+
+/* ListBlockView overflow:hidden / min-width:600px 오버라이드 — CTA clip 방지 */
+.deposit-pending-list .mg-v2-list-block__table-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.deposit-pending-list .mg-v2-list-block__table-wrapper .mg-v2-list-block__table {
+  min-width: 0;
+  width: 100%;
+  overflow: visible;
+  table-layout: auto;
+}
+
+.deposit-pending-list .mg-v2-list-block__table th,
+.deposit-pending-list .mg-v2-list-block__table td {
+  vertical-align: top;
+  white-space: normal;
+  overflow: visible;
+  line-height: var(--mg-line-height-normal, 1.4);
+  padding-block: var(--mg-spacing-sm, 0.5rem);
+  padding-inline: var(--mg-spacing-sm, 0.5rem);
+}
+
+.deposit-pending-list .mg-v2-list-block__table th:last-child,
+.deposit-pending-list .mg-v2-list-block__table td:last-child {
+  min-width: var(--mg-spacing-3xl, 8rem);
+  width: 30%;
 }
 
 .deposit-pending-list__parties,
@@ -39,6 +76,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-xs);
+  min-width: 0;
 }
 
 .deposit-pending-list__client {
@@ -58,8 +96,47 @@
   font-size: var(--mg-v2-font-size-caption);
 }
 
-.deposit-pending-list__table .mg-v2-card-actions {
+.deposit-pending-list__table .mg-v2-card-actions,
+.deposit-pending-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   justify-content: flex-start;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  min-width: 0;
+  width: 100%;
+  margin-top: 0;
+  min-height: var(--touch-target-min, 2.75rem);
+  padding-bottom: var(--mg-spacing-xs, 0.25rem);
+}
+
+.deposit-pending-list__table .mg-v2-card-actions > .mg-v2-button,
+.deposit-pending-list__actions > .mg-v2-button {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  line-height: var(--mg-line-height-normal, 1.4);
+}
+
+/* 좁은 카드(대시보드 detail-row ≤560px) — 확인하기/취소 세로 스택 */
+@media (max-width: 599px) {
+  .deposit-pending-list__table .mg-v2-card-actions,
+  .deposit-pending-list__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .deposit-pending-list__table .mg-v2-card-actions > .mg-v2-button,
+  .deposit-pending-list__actions > .mg-v2-button {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}
+
+/* detail-row 카드 폭이 좁아도 2버튼이 한 줄에서 clip되지 않도록 스택 허용 */
+.mg-v2-content-detail-row > .deposit-pending-list .mg-v2-card-actions {
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .deposit-pending-list__empty {

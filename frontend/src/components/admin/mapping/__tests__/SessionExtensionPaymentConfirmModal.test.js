@@ -79,6 +79,7 @@ describe('SessionExtensionPaymentConfirmModal', () => {
         }}
         onClose={onClose}
         onConfirmed={onConfirmed}
+        onCancelRequest={jest.fn()}
       />
     );
 
@@ -119,6 +120,7 @@ describe('SessionExtensionPaymentConfirmModal', () => {
         }}
         onClose={jest.fn()}
         onConfirmed={onConfirmed}
+        onCancelRequest={jest.fn()}
       />
     );
 

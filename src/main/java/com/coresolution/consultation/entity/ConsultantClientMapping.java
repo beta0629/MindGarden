@@ -270,14 +270,20 @@ public class ConsultantClientMapping extends BaseEntity {
         }
     }
 
-     /**
-     * 회기 추가 (연장)
+    /**
+     * 기존 패키지에 회기를 추가한다.
+     *
+     * <p>패키지명·패키지 가격·기존 결제 정보는 변경하지 않고 통합 회기 수만 증가시킨다.</p>
+     *
+     * @param additionalSessions 추가할 회기 수
+     * @throws IllegalArgumentException 추가 회기 수가 1 미만인 경우
      */
-    public void addSessions(Integer additionalSessions, String packageName, Long packagePrice) {
-        this.totalSessions += additionalSessions;
-        this.remainingSessions += additionalSessions;
-        this.packageName = packageName;
-        this.packagePrice = packagePrice;
+    public void addSessions(Integer additionalSessions) {
+        if (additionalSessions == null || additionalSessions < 1) {
+            throw new IllegalArgumentException("추가 회기 수는 1 이상이어야 합니다.");
+        }
+        this.totalSessions = (this.totalSessions == null ? 0 : this.totalSessions) + additionalSessions;
+        this.remainingSessions = (this.remainingSessions == null ? 0 : this.remainingSessions) + additionalSessions;
         
         if (this.status == MappingStatus.SESSIONS_EXHAUSTED) {
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용

@@ -54,11 +54,7 @@ public class SessionSyncServiceImpl extends BaseTenantAwareService implements Se
         try {
             ConsultantClientMapping mapping = extensionRequest.getMapping();
             
-            mapping.addSessions(
-                extensionRequest.getAdditionalSessions(),
-                extensionRequest.getPackageName(),
-                extensionRequest.getPackagePrice().longValue()
-            );
+            mapping.addSessions(extensionRequest.getAdditionalSessions());
             mappingRepository.save(mapping);
             
             validateMappingStatus(mapping);

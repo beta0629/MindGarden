@@ -58,6 +58,37 @@ describe('DepositPendingList G1-02', () => {
     );
   });
 
+  test('회기 추가 행에 취소 버튼을 노출하고 onItemCancel을 전달한다', () => {
+    const handleCancel = jest.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <DepositPendingList
+          items={[
+            {
+              id: 'SESSION_EXTENSION-2',
+              sourceType: 'SESSION_EXTENSION',
+              sourceId: 2,
+              clientName: '이내담',
+              consultantName: '박상담',
+              amount: 200000,
+              additionalSessions: 4,
+              status: 'PENDING'
+            }
+          ]}
+          onItemAction={jest.fn()}
+          onItemCancel={handleCancel}
+        />
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector('.deposit-pending-list__actions')).toBeTruthy();
+    expect(container.querySelectorAll('.deposit-pending-list__table th')).toHaveLength(3);
+    screen.getByRole('button', { name: '이내담 회기 추가 요청 취소' }).click();
+    expect(handleCancel).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceType: 'SESSION_EXTENSION', sourceId: 2 })
+    );
+  });
+
   test('빈 목록이어도 위젯·전체 보기 CTA는 유지', () => {
     render(
       <MemoryRouter>

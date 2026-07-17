@@ -31,6 +31,8 @@ const MappingScheduleCard = ({
   onCheckoutSameDay,
   onCancelPendingMapping,
   onSessionExtension,
+  onConfirmSessionExtensionPayment,
+  onCancelSessionExtension,
   approveProcessing,
   cancelPendingProcessing
 }) => {
@@ -73,6 +75,7 @@ const MappingScheduleCard = ({
         status={mapping?.status}
         remainingSessions={mapping?.remainingSessions}
         packageName={mapping?.packageName}
+        pendingSessionExtension={mapping?.pendingSessionExtension}
       />
     </div>
     <CardActionGroup
@@ -85,6 +88,8 @@ const MappingScheduleCard = ({
       onCheckoutSameDay={onCheckoutSameDay}
       onCancelPendingMapping={onCancelPendingMapping}
       onSessionExtension={onSessionExtension}
+      onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
+      onCancelSessionExtension={onCancelSessionExtension}
       approveProcessing={approveProcessing}
       cancelPendingProcessing={cancelPendingProcessing}
     />
@@ -102,7 +107,8 @@ MappingScheduleCard.propTypes = {
     packageName: PropTypes.string,
     usedSessions: PropTypes.number,
     totalSessions: PropTypes.number,
-    remainingSessions: PropTypes.number
+    remainingSessions: PropTypes.number,
+    pendingSessionExtension: PropTypes.object
   }),
   eventData: PropTypes.object,
   isDraggable: PropTypes.bool,
@@ -114,6 +120,8 @@ MappingScheduleCard.propTypes = {
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
   onSessionExtension: PropTypes.func,
+  onConfirmSessionExtensionPayment: PropTypes.func,
+  onCancelSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool
 };
@@ -130,6 +138,8 @@ MappingScheduleCard.defaultProps = {
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
   onSessionExtension: null,
+  onConfirmSessionExtensionPayment: null,
+  onCancelSessionExtension: null,
   approveProcessing: false,
   cancelPendingProcessing: false
 };

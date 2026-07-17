@@ -1715,7 +1715,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
-        mapping.addSessions(additionalSessions, packageName, packagePrice);
+        mapping.addSessions(additionalSessions);
         
         ConsultantClientMapping saved = mappingRepository.save(mapping);
         Hibernate.initialize(saved.getConsultant());

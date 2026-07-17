@@ -47,26 +47,52 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     private final RealTimeStatisticsService realTimeStatisticsService;
     
     @Override
-    public SessionExtensionRequest createRequest(Long mappingId, Long requesterId, 
-                                               Integer additionalSessions, String packageName, 
-                                               BigDecimal packagePrice, String reason) {
+    public SessionExtensionRequest createRequest(
+            Long mappingId,
+            Long requesterId,
+            Integer additionalSessions,
+            BigDecimal extensionAmount,
+            String reason) {
         log.info("회기 추가 요청 생성: mappingId={}, requesterId={}, sessions={}", 
                 mappingId, requesterId, additionalSessions);
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new EntityNotFoundException("매핑", mappingId));
+
+        if (mapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+            throw new IllegalStateException("ACTIVE 매핑에만 회기를 추가할 수 있습니다.");
+        }
+        if (additionalSessions == null || additionalSessions < 1) {
+            throw new IllegalArgumentException("추가 회기 수는 1 이상이어야 합니다.");
+        }
+        if (extensionAmount == null || extensionAmount.signum() < 0) {
+            throw new IllegalArgumentException("추가분 결제 금액은 0 이상이어야 합니다.");
+        }
+        String inheritedPackageName = mapping.getPackageName();
+        if (inheritedPackageName == null || inheritedPackageName.isBlank()) {
+            throw new IllegalStateException("현재 매핑의 패키지 정보가 없어 회기를 추가할 수 없습니다.");
+        }
         
         User requester = userService.findActiveById(requesterId)
                 .orElseThrow(() -> new EntityNotFoundException("요청자", requesterId));
+
+        List<SessionExtensionRequest> pendingRequests = requestRepository
+                .findByTenantIdAndMappingIdAndStatus(
+                        tenantId, mappingId, SessionExtensionRequest.ExtensionStatus.PENDING);
+        if (!pendingRequests.isEmpty()) {
+            throw new IllegalStateException(
+                    "이미 입금 대기 중인 회기 추가 요청이 있습니다. 통합 스케줄에서 입금 확인 또는 취소를 진행해 주세요.");
+        }
         
+        // packageName은 mapping 승계(재선택 금지). packagePrice는 이번 요청 결제액만 저장.
         SessionExtensionRequest request = SessionExtensionRequest.builder()
                 .tenantId(tenantId)
                 .mapping(mapping)
                 .requester(requester)
                 .additionalSessions(additionalSessions)
-                .packageName(packageName)
-                .packagePrice(packagePrice)
+                .packageName(inheritedPackageName)
+                .packagePrice(extensionAmount)
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(SessionExtensionRequest.ExtensionStatus.PENDING)
                 .reason(reason)
@@ -106,45 +132,20 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         sessionSyncService.syncAfterSessionExtension(savedRequest);
         log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
         
+        ConsultantClientMapping mapping = request.getMapping();
         try {
-            ConsultantClientMapping mapping = request.getMapping();
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
-            mapping.setAdminApprovalDate(LocalDateTime.now());
-            mapping.setApprovedBy("시스템 자동 승인");
-            
-            mapping.setPaymentMethod(paymentMethod);
-            mapping.setPaymentReference(finalPaymentReference);
-            mapping.setPaymentDate(LocalDateTime.now());
-            
-            mappingRepository.save(mapping);
-            
-            try {
-                realTimeStatisticsService.updateStatisticsOnMappingChange(
-                    mapping.getConsultant().getId(), 
-                    mapping.getClient().getId(), 
-                    mapping.getBranchCode()
-                );
-                
-                if (mapping.getPaymentAmount() != null) {
-                    realTimeStatisticsService.updateFinancialStatisticsOnPayment(
-                        mapping.getBranchCode(), 
-                        mapping.getPaymentAmount(), 
-                        LocalDateTime.now().toLocalDate()
-                    );
-                }
-                
-                log.info("✅ 세션 연장 승인시 실시간 통계 업데이트 완료: mappingId={}", mapping.getId());
-            } catch (Exception e) {
-                log.error("❌ 세션 연장 승인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
-            }
-            
-            log.info("✅ 매핑 상태 자동 활성화 및 결제 정보 동기화: mappingId={}, paymentReference={}", 
-                    mapping.getId(), finalPaymentReference);
+            realTimeStatisticsService.updateStatisticsOnMappingChange(
+                    mapping.getConsultant().getId(),
+                    mapping.getClient().getId(),
+                    mapping.getBranchCode());
+            realTimeStatisticsService.updateFinancialStatisticsOnPayment(
+                    mapping.getBranchCode(),
+                    savedRequest.getPackagePrice().longValue(),
+                    LocalDateTime.now().toLocalDate());
+            log.info("✅ 회기 추가분 실시간 통계 업데이트 완료: mappingId={}, requestId={}",
+                    mapping.getId(), savedRequest.getId());
         } catch (Exception e) {
-            log.error("❌ 매핑 상태 활성화 실패: {}", e.getMessage(), e);
+            log.error("❌ 회기 추가분 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
         }
         
         try {
@@ -199,26 +200,35 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         log.info("✅ 요청 거부 완료: requestId={}", savedRequest.getId());
         return savedRequest;
     }
+
+    @Override
+    public SessionExtensionRequest cancelRequest(Long requestId, Long adminId, String reason) {
+        log.info("입금 전 회기 추가 요청 취소: requestId={}, adminId={}", requestId, adminId);
+
+        userService.findActiveById(adminId)
+                .orElseThrow(() -> new EntityNotFoundException("관리자", adminId));
+        SessionExtensionRequest request = requireRequestForCurrentTenantForUpdate(requestId);
+        request.cancel(reason);
+
+        SessionExtensionRequest savedRequest = requestRepository.save(request);
+        log.info("회기 추가 요청 취소 완료: requestId={}, status={}",
+                savedRequest.getId(), savedRequest.getStatus());
+        return savedRequest;
+    }
     
     @Override
     public SessionExtensionRequest completeRequest(Long requestId) {
         log.info("요청 완료 처리: requestId={}", requestId);
         
-        SessionExtensionRequest request = requireRequestForCurrentTenant(requestId);
-        
-        
+        SessionExtensionRequest request = requireRequestForCurrentTenantForUpdate(requestId);
+
         request.complete();
-        
+
         SessionExtensionRequest savedRequest = requestRepository.save(request);
-        
-        try {
-            sessionSyncService.syncAfterSessionExtension(savedRequest);
-            log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
-        } catch (Exception e) {
-            log.error("❌ 회기 추가 후 동기화 실패: requestId={}, error={}", 
-                     savedRequest.getId(), e.getMessage(), e);
-        }
-        
+
+        sessionSyncService.syncAfterSessionExtension(savedRequest);
+        log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
+
         log.info("✅ 회기 추가 완료: requestId={}, mappingId={}, sessions={}", 
                 savedRequest.getId(), savedRequest.getMapping().getId(), request.getAdditionalSessions());
         return savedRequest;
@@ -230,7 +240,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         log.info("요청 상세 조회: requestId={}", requestId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return requestRepository.findByTenantIdAndIdWithDetails(tenantId, requestId)
-                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+                .orElseThrow(() -> new EntityNotFoundException("회기 추가 요청", requestId));
     }
     
     @Override
@@ -342,7 +352,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     private SessionExtensionRequest requireRequestForCurrentTenant(Long requestId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return requestRepository.findByTenantIdAndId(tenantId, requestId)
-                .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+                .orElseThrow(() -> new EntityNotFoundException("회기 추가 요청", requestId));
     }
 
     /**

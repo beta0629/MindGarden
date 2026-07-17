@@ -86,6 +86,24 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
      * 매핑별 회기 추가 요청 목록 조회
      */
     List<SessionExtensionRequest> findByMappingIdOrderByCreatedAtDesc(Long mappingId);
+
+    /**
+     * 테넌트·매핑·상태 조건으로 회기 추가 요청을 조회한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 PK
+     * @param status 요청 상태
+     * @return 조건에 맞는 요청 목록
+     */
+    @Query("SELECT ser FROM SessionExtensionRequest ser "
+           + "WHERE ser.tenantId = :tenantId "
+           + "AND ser.mapping.id = :mappingId "
+           + "AND ser.status = :status "
+           + "ORDER BY ser.createdAt ASC")
+    List<SessionExtensionRequest> findByTenantIdAndMappingIdAndStatus(
+            @Param("tenantId") String tenantId,
+            @Param("mappingId") Long mappingId,
+            @Param("status") SessionExtensionRequest.ExtensionStatus status);
     
     /**
      * 입금 확인 대기 중인 요청 목록 조회 (매핑 정보 포함)

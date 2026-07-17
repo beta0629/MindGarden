@@ -21,9 +21,12 @@ public interface SessionExtensionService {
     /**
      * 회기 추가 요청 생성
      */
-    SessionExtensionRequest createRequest(Long mappingId, Long requesterId, 
-                                        Integer additionalSessions, String packageName, 
-                                        BigDecimal packagePrice, String reason);
+    SessionExtensionRequest createRequest(
+            Long mappingId,
+            Long requesterId,
+            Integer additionalSessions,
+            BigDecimal extensionAmount,
+            String reason);
     
     /**
      * 입금 확인 처리
@@ -43,6 +46,16 @@ public interface SessionExtensionService {
      * 요청 거부
      */
     SessionExtensionRequest rejectRequest(Long requestId, Long adminId, String reason);
+
+    /**
+     * 입금 전 회기 추가 요청 취소
+     *
+     * @param requestId 요청 PK
+     * @param adminId 현재 세션 관리자 PK
+     * @param reason 취소 사유
+     * @return 취소된 요청
+     */
+    SessionExtensionRequest cancelRequest(Long requestId, Long adminId, String reason);
     
     /**
      * 요청 완료 처리 (실제 회기 추가)

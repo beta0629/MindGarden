@@ -4,17 +4,17 @@ import notificationManager from '../../../utils/notification';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { sessionManager } from '../../../utils/sessionManager';
 import { toErrorMessage } from '../../../utils/safeDisplay';
-import PackageSelector from '../../common/PackageSelector';
+import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
-import BadgeSelect from '../../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { SESSION_EXTENSION_UI } from '../../../utils/sessionExtensionPending';
 import { useTranslation } from 'react-i18next';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_SESSION_EXTENSIONS_REQUESTS = '/api/v1/admin/session-extensions/requests';
 const MSG_USER_REQUIRED = '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
 const MSG_SUBMIT_FAILED = '회기 추가 요청에 실패했습니다.';
+const DEFAULT_ADDITIONAL_SESSIONS = 1;
+const DEFAULT_EXTENSION_AMOUNT = 0;
 
 
 /**
@@ -39,75 +39,34 @@ const SessionExtensionModal = ({
     onSessionExtensionRequested 
 }) => {
     const { t } = useTranslation();
-    const [additionalSessions, setAdditionalSessions] = useState(1);
-    const [packagePrice, setPackagePrice] = useState(0);
-    /** select value = CONSULTATION_PACKAGE codeValue */
-    const [selectedPackage, setSelectedPackage] = useState('');
-    /** 제출용 표시명 = koreanName (매칭 생성 packageName 과 정합) */
-    const [selectedPackageLabel, setSelectedPackageLabel] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('신용카드');
-    const [paymentReference, setPaymentReference] = useState('');
+    const [additionalSessions, setAdditionalSessions] = useState(DEFAULT_ADDITIONAL_SESSIONS);
+    const [extensionAmount, setExtensionAmount] = useState(DEFAULT_EXTENSION_AMOUNT);
     const [reason, setReason] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    // 패키지 선택 핸들러 — MappingCreationModal 과 동일하게 label(koreanName)을 패키지명으로 사용
-    const handlePackageChange = (packageInfo) => {
-        if (packageInfo) {
-            setSelectedPackage(packageInfo.value);
-            setSelectedPackageLabel(packageInfo.label || '');
-            setAdditionalSessions(packageInfo.sessions != null ? packageInfo.sessions : 1);
-            setPackagePrice(packageInfo.price != null ? packageInfo.price : 0);
-            
-            // 결제 참조번호 자동 생성
-            generatePaymentReference();
-        }
-    };
-
-    // 결제 참조번호 자동 생성
-    const generatePaymentReference = () => {
-        const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-        const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
-        
-        const methodMap = {
-            '신용카드': '신용카드',
-            '계좌이체': '계좌이체',
-            '현금': '현금'
-        };
-        
-        const method = methodMap[paymentMethod] || '신용카드';
-        const reference = `${method} ${dateStr} ${timeStr}`;
-        setPaymentReference(reference);
-    };
-
-    // 결제 방법 변경 시 참조번호 재생성
-    const handlePaymentMethodChange = (method) => {
-        setPaymentMethod(method);
-        generatePaymentReference();
-    };
-
-    // 모달이 열릴 때 기존 매칭 정보로 초기화
-    // select value 는 codeValue 이므로 mapping.packageName(표시명)을 value 로 넣지 않음
+    // 회기 추가는 기존 패키지를 승계하며 추가분 수량·결제 금액만 별도 입력한다.
     useEffect(() => {
         if (isOpen && mapping) {
-            const defaultSessions = mapping.package?.sessions || mapping.totalSessions || 5;
-            const defaultPrice = mapping.packagePrice || mapping.package?.price || 0;
-            
-            setAdditionalSessions(defaultSessions);
-            setPackagePrice(defaultPrice);
-            setSelectedPackage('');
-            setSelectedPackageLabel('');
+            setAdditionalSessions(DEFAULT_ADDITIONAL_SESSIONS);
+            setExtensionAmount(DEFAULT_EXTENSION_AMOUNT);
             setReason('');
-            
-            generatePaymentReference();
         }
     }, [isOpen, mapping]);
 
     const handleSubmit = async(e) => {
         e.preventDefault();
+
+        if (mapping?.pendingSessionExtension) {
+            notificationManager.warning(SESSION_EXTENSION_UI.DUPLICATE_PENDING);
+            return;
+        }
         
         if (additionalSessions < 1) {
             notificationManager.error('추가할 회기 수는 1회 이상이어야 합니다.');
+            return;
+        }
+        if (!Number.isFinite(extensionAmount) || extensionAmount < 0) {
+            notificationManager.error('추가분 결제 금액을 입력해 주세요. (회기 수와 다를 수 있습니다)');
             return;
         }
 
@@ -118,10 +77,9 @@ const SessionExtensionModal = ({
             return;
         }
 
-        // packageName 은 매칭 생성과 동일하게 표시명(koreanName/label) 사용 — codeValue 제출 금지
-        const packageName = selectedPackageLabel || mapping.packageName || mapping.package?.name || '';
+        const packageName = mapping.packageName || mapping.package?.name || '';
         if (!packageName) {
-            notificationManager.error('패키지를 선택해 주세요.');
+            notificationManager.error('현재 매핑의 패키지 정보를 확인할 수 없습니다.');
             return;
         }
 
@@ -131,22 +89,22 @@ const SessionExtensionModal = ({
             const requestData = {
                 mappingId: mapping.id,
                 requesterId,
-                additionalSessions: additionalSessions,
-                packageName,
-                packagePrice: packagePrice || mapping.packagePrice || mapping.package?.price || 0,
-                paymentMethod: paymentMethod,
-                paymentReference: paymentReference,
+                additionalSessions,
+                extensionAmount,
                 reason: reason || '회기 추가 요청'
             };
 
-            const result = await StandardizedApi.post(API_ADMIN_SESSION_EXTENSIONS_REQUESTS, requestData);
+            const result = await StandardizedApi.post(
+                API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.REQUESTS,
+                requestData
+            );
 
             if (result && result.success === false) {
                 notificationManager.error(result.message || MSG_SUBMIT_FAILED);
                 return;
             }
 
-            notificationManager.success(`${additionalSessions}회기가 추가 요청되었습니다.`);
+            notificationManager.success(SESSION_EXTENSION_UI.SUCCESS_HINT);
             onSessionExtensionRequested?.(mapping.id);
             handleClose();
         } catch (error) {
@@ -161,12 +119,8 @@ const SessionExtensionModal = ({
     };
 
     const handleClose = () => {
-        setAdditionalSessions(1);
-        setPackagePrice(0);
-        setSelectedPackage('');
-        setSelectedPackageLabel('');
-        setPaymentMethod('신용카드');
-        setPaymentReference('');
+        setAdditionalSessions(DEFAULT_ADDITIONAL_SESSIONS);
+        setExtensionAmount(DEFAULT_EXTENSION_AMOUNT);
         setReason('');
         setIsLoading(false);
         onClose();
@@ -179,7 +133,7 @@ const SessionExtensionModal = ({
             isOpen={isOpen}
             onClose={handleClose}
             title="회기 추가 요청"
-            subtitle="새로운 패키지를 선택하고 회기를 추가하세요"
+            subtitle="현재 패키지를 유지한 채 통합 회기에 추가합니다"
             size="large"
             backdropClick
             showCloseButton
@@ -256,72 +210,60 @@ const SessionExtensionModal = ({
                     <div className="mg-v2-form-section">
                         <div className="mg-v2-section-header">
                             <h4 className="mg-v2-section-title">회기 추가 정보</h4>
-                            <p className="mg-v2-section-subtitle">새로운 패키지를 선택하고 결제 정보를 입력하세요</p>
+                            <p className="mg-v2-section-subtitle">
+                                현재 패키지와 기존 결제 정보는 변경되지 않습니다.
+                            </p>
                         </div>
                         
                         <form onSubmit={handleSubmit} className="mg-v2-form">
-                            {/* 패키지 선택 */}
-                            <PackageSelector
-                                value={selectedPackage}
-                                onChange={handlePackageChange}
-                                disabled={isLoading}
-                            />
-                        
-                        {/* 총 세션 수 (자동 설정) */}
                         <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">총 세션 수</label>
+                            <span className="mg-v2-label">현재 패키지</span>
+                            <strong className="mg-v2-text-primary">
+                                {mapping.packageName || mapping.package?.name || '패키지 정보 없음'}
+                            </strong>
+                            <div className="mg-v2-text-secondary">
+                                동일 패키지를 승계하며 패키지명·기존 가격을 덮어쓰지 않습니다.
+                            </div>
+                        </div>
+
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label" htmlFor="session-extension-additional-sessions">
+                                추가 회기 수
+                            </label>
                             <input
+                                id="session-extension-additional-sessions"
                                 type="number"
                                 className="mg-v2-input"
                                 value={additionalSessions}
-                                readOnly
-                            />
-                            <div className="mg-v2-text-secondary">자동 설정</div>
-                        </div>
-                        
-                        {/* 패키지 가격 (자동 설정) */}
-                        <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">패키지 가격(원)</label>
-                            <input
-                                type="text"
-                                className="mg-v2-input"
-                                value={packagePrice > 0 ? packagePrice.toLocaleString() : ''}
-                                readOnly
-                            />
-                            <div className="mg-v2-text-secondary">자동 설정</div>
-                        </div>
-                        
-                        {/* 결제 방법 선택 */}
-                        <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">{t('admin.labels.paymentMethod')}</label>
-                            <BadgeSelect
-                                className="mg-v2-form-badge-select"
-                                value={paymentMethod}
-                                onChange={(val) => handlePaymentMethodChange(val)}
-                                options={[
-                                    { value: '신용카드', label: '신용카드' },
-                                    { value: '계좌이체', label: '계좌이체' },
-                                    { value: '현금', label: '현금' }
-                                ]}
-                                placeholder={t('admin.messages.pleaseSelect')}
+                                min={DEFAULT_ADDITIONAL_SESSIONS}
+                                step={DEFAULT_ADDITIONAL_SESSIONS}
+                                onChange={(event) => setAdditionalSessions(Number(event.target.value))}
                                 disabled={isLoading}
                             />
+                            <div className="mg-v2-text-secondary">
+                                패키지 기본 회기와 달라도 됩니다. 예: 10회 패키지에서 5회만 추가.
+                            </div>
                         </div>
-                        
-                        {/* 결제 참조번호 */}
+
                         <div className="mg-v2-form-group">
-                            <label className="mg-v2-label">결제 참조번호</label>
+                            <label className="mg-v2-label" htmlFor="session-extension-amount">
+                                추가분 결제 금액(원)
+                            </label>
                             <input
-                                type="text"
+                                id="session-extension-amount"
+                                type="number"
                                 className="mg-v2-input"
-                                value={paymentReference}
-                                onChange={(e) => setPaymentReference(e.target.value)}
+                                value={extensionAmount}
+                                min={DEFAULT_EXTENSION_AMOUNT}
+                                onChange={(event) => setExtensionAmount(Number(event.target.value))}
                                 disabled={isLoading}
-                                placeholder="결제 참조번호를 입력하세요"
+                                required
                             />
+                            <div className="mg-v2-text-secondary">
+                                이번 요청 결제액만 저장합니다. 회기 수에 따라 금액이 달라질 수 있습니다.
+                            </div>
                         </div>
                         
-                        {/* 추가 사유 입력 */}
                         <div className="mg-v2-form-group">
                             <label className="mg-v2-label">추가 사유 (선택사항)</label>
                             <textarea

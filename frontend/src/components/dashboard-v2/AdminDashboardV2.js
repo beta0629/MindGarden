@@ -130,6 +130,14 @@ const API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER = '/api/v1/admin/schedules
 const API_ADMIN_DUPLICATE_MAPPINGS = '/api/v1/admin/duplicate-mappings';
 const API_ADMIN_MERGE_DUPLICATE_MAPPINGS = '/api/v1/admin/merge-duplicate-mappings';
 
+const DASHBOARD_CHART_CANVAS_FALLBACK = Object.freeze({
+  TICK: 'var(--mg-v2-color-text-secondary)',
+  GRID: 'var(--mg-v2-color-border-light)',
+  TOOLTIP_BACKGROUND: 'var(--mg-v2-color-surface-raised)',
+  TOOLTIP_TEXT: 'var(--mg-v2-color-text-primary)',
+  LEGEND: 'var(--mg-v2-color-text-secondary)'
+});
+
 
 /** 단계별 현황 도넛 차트 라벨 (5단계) */
 const STEP_CHART_LABELS = [
@@ -255,11 +263,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     border: B0KLA_CHART_BAR_FALLBACK.BORDER
   });
   const [chartCanvasTheme, setChartCanvasTheme] = useState({
-    tick: '#6B7280',
-    grid: '#E5E7EB',
-    tooltipBg: '#FFFFFF',
-    tooltipText: '#111827',
-    legend: '#374151'
+    tick: DASHBOARD_CHART_CANVAS_FALLBACK.TICK,
+    grid: DASHBOARD_CHART_CANVAS_FALLBACK.GRID,
+    tooltipBg: DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_BACKGROUND,
+    tooltipText: DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_TEXT,
+    legend: DASHBOARD_CHART_CANVAS_FALLBACK.LEGEND
   });
   const chartBarWrapperRef = useRef(null);
   const lineChartWrapperRef = useRef(null);
@@ -277,11 +285,26 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       border: border || B0KLA_CHART_BAR_FALLBACK.BORDER
     });
     setChartCanvasTheme({
-      tick: resolveCssColorVarToHex('--mg-v2-color-text-secondary', '#6B7280'),
-      grid: resolveCssColorVarToHex('--mg-v2-color-border-light', '#E5E7EB'),
-      tooltipBg: resolveCssColorVarToHex('--mg-v2-color-surface-raised', '#FFFFFF'),
-      tooltipText: resolveCssColorVarToHex('--mg-v2-color-text-primary', '#111827'),
-      legend: resolveCssColorVarToHex('--mg-v2-color-text-secondary', '#6B7280')
+      tick: resolveCssColorVarToHex(
+        '--mg-v2-color-text-secondary',
+        DASHBOARD_CHART_CANVAS_FALLBACK.TICK
+      ),
+      grid: resolveCssColorVarToHex(
+        '--mg-v2-color-border-light',
+        DASHBOARD_CHART_CANVAS_FALLBACK.GRID
+      ),
+      tooltipBg: resolveCssColorVarToHex(
+        '--mg-v2-color-surface-raised',
+        DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_BACKGROUND
+      ),
+      tooltipText: resolveCssColorVarToHex(
+        '--mg-v2-color-text-primary',
+        DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_TEXT
+      ),
+      legend: resolveCssColorVarToHex(
+        '--mg-v2-color-text-secondary',
+        DASHBOARD_CHART_CANVAS_FALLBACK.LEGEND
+      )
     });
   }, [chartPeriod, lineChartPeriod, darkResolved]);
 

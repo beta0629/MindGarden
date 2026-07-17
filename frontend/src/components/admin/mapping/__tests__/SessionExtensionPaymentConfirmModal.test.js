@@ -4,6 +4,12 @@ import SessionExtensionPaymentConfirmModal from '../SessionExtensionPaymentConfi
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 
+const mockConfirm = jest.fn();
+
+jest.mock('../../../../hooks/useConfirm', () => ({
+  useConfirm: () => [mockConfirm, () => null]
+}));
+
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
@@ -55,6 +61,7 @@ jest.mock('../../../common/ActionBarButton', () => ({
 describe('SessionExtensionPaymentConfirmModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockConfirm.mockResolvedValue(true);
   });
 
   test('회기추가 API를 한 번만 호출하고 성공 후 재조회 콜백을 실행한다', async() => {
@@ -83,19 +90,20 @@ describe('SessionExtensionPaymentConfirmModal', () => {
       />
     );
 
-    expect(screen.getByText('담당 상담사')).toBeInTheDocument();
-    expect(screen.getByText('상담사')).toBeInTheDocument();
-    expect(screen.getByText('+3회기')).toBeInTheDocument();
+    expect(screen.getByText('입금 대기')).toBeInTheDocument();
+    expect(screen.getByText('+3회')).toBeInTheDocument();
+    expect(screen.getByText('120,000원')).toBeInTheDocument();
 
-    const confirmButton = screen.getByRole('button', { name: '입금 확인 및 회기 합산' });
+    const confirmButton = screen.getByRole('button', { name: '입금 확인' });
     fireEvent.click(confirmButton);
     fireEvent.click(confirmButton);
 
-    expect(StandardizedApi.post).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalledTimes(1));
     expect(StandardizedApi.post).toHaveBeenCalledWith(
       '/api/v1/admin/session-extensions/requests/30/confirm-payment',
       expect.objectContaining({ paymentMethod: 'BANK_TRANSFER' })
     );
+    expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({ variant: 'warning' }));
 
     resolveRequest({ success: true });
 
@@ -124,7 +132,7 @@ describe('SessionExtensionPaymentConfirmModal', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '입금 확인 및 회기 합산' }));
+    fireEvent.click(screen.getByRole('button', { name: '입금 확인' }));
 
     await waitFor(() => expect(notificationManager.error).toHaveBeenCalled());
     expect(notificationManager.success).not.toHaveBeenCalled();

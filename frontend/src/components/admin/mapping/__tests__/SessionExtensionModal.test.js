@@ -100,10 +100,25 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
       />
     );
 
-    expect(screen.getByText('현재 패키지')).toBeInTheDocument();
-    expect(screen.getByText('기존패키지(10회)')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '기존패키지(10회)' })).toBeInTheDocument();
+    expect(screen.getByText('사용 1회 / 남은 3회 / 총 4회')).toBeInTheDocument();
     expect(screen.queryByTestId('package-selector-mock')).not.toBeInTheDocument();
     expect(screen.queryByText('새로운 패키지를 선택')).not.toBeInTheDocument();
+  });
+
+  test('추가 회기 입력에 따라 총·남은 회기 예상 결과를 갱신한다', () => {
+    render(
+      <SessionExtensionModal
+        isOpen
+        mapping={mapping}
+        onClose={jest.fn()}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
+
+    expect(screen.getByText('9회')).toBeInTheDocument();
+    expect(screen.getByText('8회')).toBeInTheDocument();
   });
 
   test('사용자 id 없으면 제출을 차단하고 API를 호출하지 않는다', async () => {
@@ -120,7 +135,7 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
     fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
     fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
     await act(async () => {
-      fireEvent.click(screen.getByText('5회기 추가 요청'));
+      fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });
 
     expect(notificationManager.error).toHaveBeenCalledWith(
@@ -142,7 +157,7 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
     fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
     fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
     await act(async () => {
-      fireEvent.click(screen.getByText('5회기 추가 요청'));
+      fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });
 
     await waitFor(() => {
@@ -176,7 +191,7 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
     fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
     fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
     await act(async () => {
-      fireEvent.click(screen.getByText('5회기 추가 요청'));
+      fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });
 
     await waitFor(() => {

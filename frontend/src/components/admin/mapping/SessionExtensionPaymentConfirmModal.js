@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import BadgeSelect from '../../common/BadgeSelect';
 import SafeText from '../../common/SafeText';
+import StatusBadge from '../../common/StatusBadge';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import ActionBar from '../../common/ActionBar';
 import ActionBarButton from '../../common/ActionBarButton';
 import { MAPPING_PAYMENT_METHOD_LABELS } from '../../../constants/billing';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import { useConfirm } from '../../../hooks/useConfirm';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../../utils/safeDisplay';
+import './SessionExtensionModal.css';
 
 const DEFAULT_PAYMENT_METHOD = 'BANK_TRANSFER';
 const CASH_PAYMENT_METHOD = 'CASH';
@@ -20,6 +23,19 @@ const CONFIRM_SUCCESS_MESSAGE = '회기 추가 입금이 확인되어 회기가 
 const CONFIRM_ERROR_MESSAGE = '회기 추가 입금 확인에 실패했습니다.';
 
 const createPaymentReference = () => `SESSION_EXTENSION_${Date.now()}`;
+const formatRequestDate = (value) => {
+  if (!value) {
+    return '—';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+  return new Intl.DateTimeFormat('ko-KR', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(date);
+};
 
 const SessionExtensionPaymentConfirmModal = ({
   isOpen,
@@ -29,9 +45,11 @@ const SessionExtensionPaymentConfirmModal = ({
   onCancelRequest,
   isCancelling = false
 }) => {
+  const [confirm, ConfirmModal] = useConfirm();
   const [paymentMethod, setPaymentMethod] = useState(DEFAULT_PAYMENT_METHOD);
   const [paymentReference, setPaymentReference] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -40,6 +58,7 @@ const SessionExtensionPaymentConfirmModal = ({
     setPaymentMethod(DEFAULT_PAYMENT_METHOD);
     setPaymentReference(createPaymentReference());
     setIsSubmitting(false);
+    submittingRef.current = false;
   }, [isOpen, request?.sourceId]);
 
   const handleClose = () => {
@@ -49,11 +68,22 @@ const SessionExtensionPaymentConfirmModal = ({
   };
 
   const handleConfirm = async() => {
-    if (!request?.sourceId || isSubmitting || isCancelling) {
+    if (!request?.sourceId || submittingRef.current || isSubmitting || isCancelling) {
       return;
     }
     if (paymentMethod !== CASH_PAYMENT_METHOD && !paymentReference.trim()) {
       notificationManager.error('결제 참조번호를 입력해주세요.');
+      return;
+    }
+
+    submittingRef.current = true;
+    const additionalSessions = toSafeNumber(request.additionalSessions, 0);
+    const approved = await confirm({
+      message: `입금을 확인하시겠습니까? 총 회기 수가 즉시 +${additionalSessions}회 증가합니다.`,
+      variant: 'warning'
+    });
+    if (!approved) {
+      submittingRef.current = false;
       return;
     }
 
@@ -78,6 +108,7 @@ const SessionExtensionPaymentConfirmModal = ({
       console.error('회기 추가 입금 확인 실패:', error);
       notificationManager.error(toErrorMessage(error, CONFIRM_ERROR_MESSAGE));
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -89,97 +120,107 @@ const SessionExtensionPaymentConfirmModal = ({
   const amount = toSafeNumber(request.amount, 0);
   const additionalSessions = toSafeNumber(request.additionalSessions, 0);
 
+  const createdAt = formatRequestDate(request.createdAt);
+
   return (
-    <UnifiedModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="회기 추가 입금 확인"
-      subtitle="확인 즉시 요청이 완료되고 매핑 회기가 합산됩니다."
-      size="medium"
-      className="mg-v2-ad-b0kla"
-      backdropClick={!isSubmitting}
-      showCloseButton
-      loading={isSubmitting}
-      actions={
-        <ActionBar align="end" gap="md">
-          <ActionBarButton
-            variant="danger"
-            onClick={() => onCancelRequest(request)}
-            loading={isCancelling}
-            disabled={isSubmitting || isCancelling}
-          >
-            요청 취소
-          </ActionBarButton>
-          <ActionBarButton
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting || isCancelling}
-          >
-            취소
-          </ActionBarButton>
-          <ActionBarButton
-            variant="primary"
-            onClick={handleConfirm}
-            loading={isSubmitting}
-            disabled={isSubmitting || isCancelling}
-          >
-            입금 확인 및 회기 합산
-          </ActionBarButton>
-        </ActionBar>
-      }
-    >
-      <section className="mg-v2-form-section" aria-label="회기 추가 요청 요약">
-        <div className="mg-v2-form-grid">
-          <div className="mg-v2-form-group">
-            <span className="mg-v2-label">내담자</span>
-            <SafeText className="mg-v2-text-primary">
-              {toDisplayString(request.clientName, '—')}
+    <>
+      <UnifiedModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="회기 추가 대기 중"
+        subtitle={`${toDisplayString(request.clientName, '내담자')} - ${toDisplayString(
+          request.consultantName,
+          '상담사'
+        )}`}
+        size="medium"
+        className="mg-v2-ad-b0kla mg-extension-modal"
+        backdropClick={!isSubmitting}
+        showCloseButton
+        loading={isSubmitting}
+        actions={(
+          <ActionBar align="end" gap="md">
+            <ActionBarButton
+              variant="danger"
+              onClick={() => onCancelRequest(request)}
+              loading={isCancelling}
+              disabled={isSubmitting || isCancelling}
+            >
+              요청 취소
+            </ActionBarButton>
+            <ActionBarButton
+              variant="outline"
+              onClick={handleClose}
+              disabled={isSubmitting || isCancelling}
+            >
+              닫기
+            </ActionBarButton>
+            <ActionBarButton
+              variant="primary"
+              onClick={handleConfirm}
+              loading={isSubmitting}
+              disabled={isSubmitting || isCancelling}
+            >
+              입금 확인
+            </ActionBarButton>
+          </ActionBar>
+        )}
+      >
+        <section className="mg-extension mg-extension--pending" aria-label="회기 추가 요청 요약">
+          <header className="mg-extension__pending-header">
+            <StatusBadge status="PENDING" variant="warning">입금 대기</StatusBadge>
+            <SafeText tag="span" className="mg-extension__pending-package">
+              {toDisplayString(request.packageName, '동일 패키지 승계')}
             </SafeText>
-          </div>
-          <div className="mg-v2-form-group">
-            <span className="mg-v2-label">담당 상담사</span>
-            <SafeText className="mg-v2-text-primary">
-              {toDisplayString(request.consultantName, '—')}
-            </SafeText>
-          </div>
-          <div className="mg-v2-form-group">
-            <span className="mg-v2-label">추가 회기</span>
-            <strong className="mg-v2-text-primary">{`+${additionalSessions}회기`}</strong>
-          </div>
-          <div className="mg-v2-form-group">
-            <span className="mg-v2-label">입금 금액</span>
-            <strong className="mg-v2-text-primary">{`${amount.toLocaleString()}원`}</strong>
-          </div>
-        </div>
-        <div className="mg-v2-form-group">
-          <label className="mg-v2-label" htmlFor="session-extension-payment-method">
-            결제 방법
-          </label>
-          <BadgeSelect
-            id="session-extension-payment-method"
-            value={paymentMethod}
-            onChange={setPaymentMethod}
-            options={PAYMENT_METHOD_OPTIONS}
-            disabled={isSubmitting}
-          />
-        </div>
-        {paymentMethod !== CASH_PAYMENT_METHOD ? (
-          <div className="mg-v2-form-group">
-            <label className="mg-v2-label" htmlFor="session-extension-payment-reference">
-              결제 참조번호
-            </label>
-            <input
-              id="session-extension-payment-reference"
-              type="text"
-              className="mg-v2-input"
-              value={paymentReference}
-              onChange={(event) => setPaymentReference(event.target.value)}
+          </header>
+
+          <dl className="mg-extension__pending-summary">
+            <div className="mg-extension__pending-row">
+              <dt>추가 요청 회기</dt>
+              <dd>{`+${additionalSessions}회`}</dd>
+            </div>
+            <div className="mg-extension__pending-row">
+              <dt>입금 대기 금액</dt>
+              <dd>{`${amount.toLocaleString()}원`}</dd>
+            </div>
+            <div className="mg-extension__pending-row">
+              <dt>요청 일시</dt>
+              <dd>{createdAt}</dd>
+            </div>
+          </dl>
+
+          <div className="mg-extension__field">
+            <span id="mg-extension-payment-method-label" className="mg-extension__label">
+              결제 수단
+            </span>
+            <BadgeSelect
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              options={PAYMENT_METHOD_OPTIONS}
               disabled={isSubmitting}
+              aria-label="결제 수단"
             />
           </div>
-        ) : null}
-      </section>
-    </UnifiedModal>
+          {paymentMethod !== CASH_PAYMENT_METHOD ? (
+            <label className="mg-extension__field" htmlFor="mg-extension-payment-reference">
+              <span className="mg-extension__label">참조 번호</span>
+              <input
+                id="mg-extension-payment-reference"
+                type="text"
+                className="mg-v2-input"
+                value={paymentReference}
+                onChange={(event) => setPaymentReference(event.target.value)}
+                disabled={isSubmitting}
+              />
+            </label>
+          ) : null}
+
+          <p className="mg-extension__pending-notice">
+            입금이 확인되면 즉시 회기가 추가되며, 취소 시 요청이 삭제됩니다.
+          </p>
+        </section>
+      </UnifiedModal>
+      <ConfirmModal />
+    </>
   );
 };
 
@@ -189,6 +230,8 @@ SessionExtensionPaymentConfirmModal.propTypes = {
     sourceId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     clientName: PropTypes.string,
     consultantName: PropTypes.string,
+    packageName: PropTypes.string,
+    createdAt: PropTypes.string,
     amount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     additionalSessions: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
   }),

@@ -320,24 +320,16 @@ describe('IntegratedMatchingSchedule — v2.0 Path 3 UX 핫픽스', () => {
     expect(notificationManager.warning).not.toHaveBeenCalled();
   });
 
-  test('ACTIVE 매칭 — 헤더·카드 회기 추가 → SessionExtensionModal 오픈', async() => {
+  test('ACTIVE 매칭 — 카드 회기 추가 → SessionExtensionModal 오픈', async() => {
     await renderWithMappings([ADVANCE_ACTIVE_MAPPING]);
 
-    const headerBtn = await screen.findByRole('button', { name: '회기 추가' });
-    expect(headerBtn).not.toBeDisabled();
-
+    const cardButton = await screen.findByTestId('session-extension-777');
     await act(async() => {
-      fireEvent.click(headerBtn);
+      fireEvent.click(cardButton);
     });
 
     const modal = await screen.findByTestId('session-extension-modal');
     expect(modal).toBeInTheDocument();
     expect(modal.getAttribute('data-mapping-id')).toBe('777');
-
-    await act(async() => {
-      fireEvent.click(await screen.findByTestId('session-extension-777'));
-    });
-
-    expect(screen.getByTestId('session-extension-modal')).toBeInTheDocument();
   });
 });

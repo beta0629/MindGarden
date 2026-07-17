@@ -1,0 +1,268 @@
+.mg-modal-overlay.mg-extension-modal {
+  padding: var(--mg-spacing-md);
+}
+
+.mg-modal.mg-extension-modal {
+  min-height: 0;
+  padding: 0;
+  background: var(--mg-color-surface-main);
+}
+
+.mg-extension {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-lg);
+  color: var(--mg-color-text-main);
+}
+
+.mg-extension__status {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  background: var(--mg-consultant-surface);
+  border: var(--border-width-thin) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-lg);
+}
+
+.mg-extension__accent {
+  flex: 0 0 var(--border-width-thick);
+  background: var(--mg-color-primary-main);
+}
+
+.mg-extension__status-content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-md);
+}
+
+.mg-extension__package,
+.mg-extension__section-title,
+.mg-extension__session-summary,
+.mg-extension__help {
+  margin: 0;
+}
+
+.mg-extension__package,
+.mg-extension__section-title {
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+  line-height: var(--line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+.mg-extension__progress {
+  width: 100%;
+  height: var(--mg-spacing-sm);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--mg-radius-full);
+  background: var(--mg-color-border-main);
+  accent-color: var(--mg-color-primary-main);
+}
+
+.mg-extension__progress::-webkit-progress-bar {
+  background: var(--mg-color-border-main);
+  border-radius: var(--mg-radius-full);
+}
+
+.mg-extension__progress::-webkit-progress-value,
+.mg-extension__progress::-moz-progress-bar {
+  background: var(--mg-color-primary-main);
+  border-radius: var(--mg-radius-full);
+}
+
+.mg-extension__session-summary,
+.mg-extension__help {
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.mg-extension__inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.mg-extension__section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-extension__input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mg-spacing-md);
+}
+
+.mg-extension__field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-extension__label {
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.mg-extension__amount-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mg-extension__amount-control .mg-v2-input {
+  width: 100%;
+  padding-right: var(--mg-spacing-xl);
+}
+
+.mg-extension__unit {
+  position: absolute;
+  right: var(--mg-spacing-md);
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+  pointer-events: none;
+}
+
+.mg-extension__textarea {
+  min-height: calc(var(--mg-spacing-xl) * 2);
+  resize: vertical;
+}
+
+.mg-extension__projection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+  background: var(--mg-color-background-main);
+  border: var(--border-width-thin) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+}
+
+.mg-extension__projection-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  margin: 0;
+}
+
+.mg-extension__projection-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-md);
+}
+
+.mg-extension__projection-row dt,
+.mg-extension__projection-row dd {
+  margin: 0;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
+.mg-extension__projection-row dd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  white-space: nowrap;
+}
+
+.mg-extension__projection-row strong {
+  color: var(--mg-color-primary-main);
+  font-size: var(--mg-font-size-base);
+}
+
+.mg-extension--pending {
+  gap: var(--mg-spacing-md);
+}
+
+.mg-extension__pending-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-md);
+}
+
+.mg-extension__pending-package {
+  min-width: 0;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.mg-extension__pending-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  margin: 0;
+  padding: var(--mg-spacing-lg);
+  background: var(--mg-color-background-main);
+  border: var(--border-width-thin) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+}
+
+.mg-extension__pending-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-md);
+}
+
+.mg-extension__pending-row dt,
+.mg-extension__pending-row dd {
+  margin: 0;
+  font-size: var(--mg-font-size-sm);
+}
+
+.mg-extension__pending-row dt {
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-extension__pending-row dd {
+  color: var(--mg-color-text-main);
+  font-weight: var(--mg-font-weight-semibold);
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.mg-extension__pending-notice {
+  margin: 0;
+  padding: var(--mg-spacing-md);
+  color: var(--mg-color-text-secondary);
+  background: var(--mg-color-warning-50);
+  border-radius: var(--mg-radius-md);
+  font-size: var(--mg-font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+@media (max-width: 768px) {
+  .mg-extension__input-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mg-extension__projection-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--mg-spacing-sm);
+  }
+
+  .mg-extension__pending-header,
+  .mg-extension__pending-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mg-extension__pending-package,
+  .mg-extension__pending-row dd {
+    text-align: left;
+  }
+}

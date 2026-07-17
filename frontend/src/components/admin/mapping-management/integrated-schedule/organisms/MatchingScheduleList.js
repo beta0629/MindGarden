@@ -57,6 +57,8 @@ const MatchingScheduleList = ({
   onCheckoutSameDay,
   onCancelPendingMapping,
   onSessionExtension,
+  onConfirmSessionExtensionPayment,
+  onCancelSessionExtension,
   approveProcessing,
   cancelPendingProcessing,
   cancelTargetMappingId
@@ -152,6 +154,8 @@ const MatchingScheduleList = ({
                   onCheckoutSameDay={onCheckoutSameDay}
                   onCancelPendingMapping={onCancelPendingMapping}
                   onSessionExtension={onSessionExtension}
+                  onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
+                  onCancelSessionExtension={onCancelSessionExtension}
                   approveProcessing={approveProcessing}
                   cancelPendingProcessing={
                     cancelPendingProcessing
@@ -182,6 +186,8 @@ MatchingScheduleList.propTypes = {
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
   onSessionExtension: PropTypes.func,
+  onConfirmSessionExtensionPayment: PropTypes.func,
+  onCancelSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool,
   cancelTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
@@ -200,6 +206,8 @@ MatchingScheduleList.defaultProps = {
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
   onSessionExtension: null,
+  onConfirmSessionExtensionPayment: null,
+  onCancelSessionExtension: null,
   approveProcessing: false,
   cancelPendingProcessing: false,
   cancelTargetMappingId: null

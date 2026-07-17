@@ -17,6 +17,7 @@ import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
 import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
 import SessionExtensionModal from '../mapping/SessionExtensionModal';
+import SessionExtensionPaymentConfirmModal from '../mapping/SessionExtensionPaymentConfirmModal';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
 import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
@@ -68,7 +69,13 @@ import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 import { resolveMappingCreatedFollowUp } from './utils/sameDayCardCheckoutUtils';
 import { buildMappingPaymentTimingLookup } from '../../schedule/utils/sameDayPendingEventDecorator';
-
+import { useConfirm } from '../../../hooks/useConfirm';
+import {
+  attachPendingSessionExtensions,
+  normalizePendingSessionExtension,
+  SESSION_EXTENSION_UI
+} from '../../../utils/sessionExtensionPending';
+import { toErrorMessage } from '../../../utils/safeDisplay';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
@@ -112,6 +119,7 @@ const writeStoredBoolean = (key, value) => {
 const IntegratedMatchingSchedule = () => {
   const { t } = useTranslation();
   const { user } = useSession();
+  const [confirm, ConfirmModal] = useConfirm();
   /** 통합 스케줄 캘린더·등록 모달: 세션 역할 전달(STAFF 등). 미로그인 시에만 ADMIN 폴백 */
   const calendarUserRole = user?.role || USER_ROLES.ADMIN;
   const [mappings, setMappings] = useState([]);
@@ -122,6 +130,8 @@ const IntegratedMatchingSchedule = () => {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
   const [sessionExtensionMapping, setSessionExtensionMapping] = useState(null);
+  const [sessionExtensionPaymentRequest, setSessionExtensionPaymentRequest] = useState(null);
+  const [sessionExtensionCancellingId, setSessionExtensionCancellingId] = useState('');
   const [viewFilter, setViewFilter] = useState(INTEGRATED_SCHEDULE_DEFAULT_VIEW_FILTER);
   const [statusFilter, setStatusFilter] = useState(INTEGRATED_SCHEDULE_DEFAULT_STATUS_FILTER);
   const sidebarDensityStorageKey = buildViewModeStorageKey(
@@ -431,14 +441,24 @@ const IntegratedMatchingSchedule = () => {
   const loadMappings = useCallback(async() => {
     setLoading(true);
     try {
-      const response = await StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST);
+      const [response, extensionData] = await Promise.all([
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.LIST),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
+          .catch(() => null)
+      ]);
+      let list = [];
       if (response?.mappings) {
-        setMappings(response.mappings);
+        list = response.mappings;
       } else if (Array.isArray(response)) {
-        setMappings(response);
-      } else {
-        setMappings([]);
+        list = response;
       }
+      const rawExtensions = extensionData?.requests
+        ?? extensionData?.data?.requests
+        ?? (Array.isArray(extensionData) ? extensionData : []);
+      setMappings(attachPendingSessionExtensions(
+        list,
+        Array.isArray(rawExtensions) ? rawExtensions : []
+      ));
     } catch (error) {
       console.error('매칭 목록 로드 실패:', error);
       setMappings([]);
@@ -683,6 +703,10 @@ const IntegratedMatchingSchedule = () => {
   };
 
   const handleSessionExtensionFromCard = useCallback((mapping) => {
+    if (mapping?.pendingSessionExtension) {
+      notificationManager.warning(SESSION_EXTENSION_UI.DUPLICATE_PENDING);
+      return;
+    }
     setSessionExtensionMapping(mapping);
   }, []);
 
@@ -694,6 +718,73 @@ const IntegratedMatchingSchedule = () => {
   const handleSessionExtensionRequested = useCallback(() => {
     loadMappings();
     setSessionExtensionMapping(null);
+  }, [loadMappings]);
+
+  const handleConfirmSessionExtensionPayment = useCallback((mapping) => {
+    const pending = mapping?.pendingSessionExtension;
+    if (!pending?.id) {
+      return;
+    }
+    setSessionExtensionPaymentRequest({
+      ...normalizePendingSessionExtension(pending),
+      sourceId: pending.id,
+      clientName: mapping.clientName ?? pending.clientName,
+      consultantName: mapping.consultantName ?? pending.consultantName,
+      amount: pending.amount,
+      additionalSessions: pending.additionalSessions
+    });
+  }, []);
+
+  const cancelSessionExtensionRequest = useCallback(async(itemOrRequest) => {
+    const requestId = itemOrRequest?.sourceId ?? itemOrRequest?.id;
+    if (requestId == null) {
+      return false;
+    }
+    const confirmed = await confirm({
+      message: SESSION_EXTENSION_UI.CANCEL_CONFIRM_MESSAGE,
+      variant: 'danger'
+    });
+    if (!confirmed) {
+      return false;
+    }
+    setSessionExtensionCancellingId(String(requestId));
+    try {
+      const result = await StandardizedApi.post(
+        API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.CANCEL(requestId),
+        { reason: SESSION_EXTENSION_UI.CANCEL_REASON }
+      );
+      if (result?.success === false) {
+        throw new Error(result.message || '회기 추가 요청 취소에 실패했습니다.');
+      }
+      notificationManager.success(SESSION_EXTENSION_UI.CANCEL_SUCCESS);
+      setSessionExtensionPaymentRequest(null);
+      await loadMappings();
+      setRefetchTrigger((prev) => prev + 1);
+      return true;
+    } catch (error) {
+      console.error('회기 추가 요청 취소 실패:', error);
+      notificationManager.error(toErrorMessage(error, '회기 추가 요청 취소에 실패했습니다.'));
+      return false;
+    } finally {
+      setSessionExtensionCancellingId('');
+    }
+  }, [confirm, loadMappings]);
+
+  const handleCancelSessionExtensionFromCard = useCallback((mapping) => {
+    const pending = mapping?.pendingSessionExtension;
+    if (!pending?.id) {
+      return;
+    }
+    cancelSessionExtensionRequest({
+      id: pending.id,
+      sourceId: pending.id
+    });
+  }, [cancelSessionExtensionRequest]);
+
+  const handleSessionExtensionPaymentConfirmed = useCallback(async() => {
+    setSessionExtensionPaymentRequest(null);
+    await loadMappings();
+    setRefetchTrigger((prev) => prev + 1);
   }, [loadMappings]);
 
   const headerActions = (
@@ -762,6 +853,8 @@ const IntegratedMatchingSchedule = () => {
           onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
           onCancelPendingMapping={handleRequestCancelPendingMapping}
           onSessionExtension={handleSessionExtensionFromCard}
+          onConfirmSessionExtensionPayment={handleConfirmSessionExtensionPayment}
+          onCancelSessionExtension={handleCancelSessionExtensionFromCard}
           approveProcessing={approveProcessing}
           cancelPendingProcessing={cancelPendingProcessing}
           cancelTargetMappingId={cancelTargetMapping?.id ?? null}
@@ -860,6 +953,21 @@ const IntegratedMatchingSchedule = () => {
         />
       )}
 
+      <SessionExtensionPaymentConfirmModal
+        isOpen={Boolean(sessionExtensionPaymentRequest)}
+        request={sessionExtensionPaymentRequest}
+        onClose={() => setSessionExtensionPaymentRequest(null)}
+        onConfirmed={handleSessionExtensionPaymentConfirmed}
+        onCancelRequest={cancelSessionExtensionRequest}
+        isCancelling={Boolean(
+          sessionExtensionPaymentRequest
+          && sessionExtensionCancellingId
+          && String(sessionExtensionCancellingId) === String(
+            sessionExtensionPaymentRequest.sourceId ?? sessionExtensionPaymentRequest.id
+          )
+        )}
+      />
+
       {paymentModalMapping && (
         <MappingPaymentModal
           isOpen={!!paymentModalMapping}
@@ -892,6 +1000,7 @@ const IntegratedMatchingSchedule = () => {
           processing={cancelPendingProcessing}
         />
       )}
+      <ConfirmModal />
     </div>
   );
 };

@@ -48,6 +48,7 @@ public class SessionExtensionController extends BaseApiController {
 
     /** 회기 추가 요청 접근 허용 역할 — 결제 금액 노출 차단 위해 관리자/스태프로 한정. */
     static final String ROLES_MANAGE_EXTENSION = "hasAnyRole('ADMIN','STAFF')";
+    private static final String DEFAULT_CANCEL_REASON = "관리자 요청 취소";
     
     private final SessionExtensionService sessionExtensionService;
     private final UserService userService;
@@ -58,7 +59,7 @@ public class SessionExtensionController extends BaseApiController {
      * <p>요청자는 HTTP 세션의 로그인 사용자로 확정한다. body {@code requesterId}는 무시하며,
      * 멀티테넌트 전환 후 이전 테넌트 PK와 불일치할 경우 이메일 폴백으로 현재 테넌트 사용자를 조회한다.</p>
      *
-     * @param request 요청 본문 (mappingId, additionalSessions, packageName, packagePrice, reason)
+     * @param request 요청 본문 (mappingId, additionalSessions, extensionAmount, reason)
      * @param session HTTP 세션
      * @return 생성된 회기 추가 요청
      */
@@ -78,12 +79,14 @@ public class SessionExtensionController extends BaseApiController {
         
         Long mappingId = Long.valueOf(request.get("mappingId").toString());
         Integer additionalSessions = Integer.valueOf(request.get("additionalSessions").toString());
-        String packageName = (String) request.get("packageName");
-        BigDecimal packagePrice = new BigDecimal(request.get("packagePrice").toString());
+        Object extensionAmountValue = request.containsKey("extensionAmount")
+                ? request.get("extensionAmount")
+                : request.get("packagePrice");
+        BigDecimal extensionAmount = new BigDecimal(extensionAmountValue.toString());
         String reason = (String) request.get("reason");
         
         SessionExtensionRequest extensionRequest = sessionExtensionService.createRequest(
-            mappingId, requesterId, additionalSessions, packageName, packagePrice, reason);
+                mappingId, requesterId, additionalSessions, extensionAmount, reason);
         
         log.info("✅ 회기 추가 요청 생성 완료: requestId={}", extensionRequest.getId());
         
@@ -183,6 +186,41 @@ public class SessionExtensionController extends BaseApiController {
         data.put("rejectedAt", extensionRequest.getRejectedAt());
         
         return success("회기 추가 요청이 거부되었습니다.", data);
+    }
+
+    /**
+     * 입금 전 회기 추가 요청 취소.
+     *
+     * <p>현재 HTTP 세션 사용자를 관리자 SSOT로 사용하며, PENDING 요청만 REJECTED로 전환한다.</p>
+     *
+     * @param requestId 요청 PK
+     * @param request 선택 취소 사유
+     * @param session HTTP 세션
+     * @return 취소된 요청 상태
+     */
+    @PostMapping("/requests/{requestId}/cancel")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> cancelRequest(
+            @PathVariable Long requestId,
+            @RequestBody(required = false) Map<String, Object> request,
+            HttpSession session) {
+        User sessionUser = SessionUtils.getCurrentUser(session);
+        if (sessionUser == null) {
+            throw new AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        Long adminId = resolveUserIdForCurrentTenant(sessionUser, "관리자");
+        String reason = request != null && request.get("reason") != null
+                ? request.get("reason").toString()
+                : DEFAULT_CANCEL_REASON;
+        SessionExtensionRequest extensionRequest =
+                sessionExtensionService.cancelRequest(requestId, adminId, reason);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", extensionRequest.getId());
+        data.put("status", extensionRequest.getStatus().toString());
+        data.put("rejectionReason", extensionRequest.getRejectionReason());
+        data.put("rejectedAt", extensionRequest.getRejectedAt());
+        return success("회기 추가 요청이 취소되었습니다.", data);
     }
     
     /**

@@ -75,7 +75,7 @@ class SessionExtensionServiceImplSyncDeduplicationTest {
     @DisplayName("completeRequest: Java sync(syncAfterSessionExtension) 정확히 1회 호출")
     void completeRequest_callsJavaSyncExactlyOnce() {
         SessionExtensionRequest request = buildApprovedRequest();
-        when(requestRepository.findByTenantIdAndId(eq(TENANT_ID), eq(REQUEST_ID)))
+        when(requestRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(REQUEST_ID)))
                 .thenReturn(Optional.of(request));
         when(requestRepository.save(any(SessionExtensionRequest.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -142,6 +142,8 @@ class SessionExtensionServiceImplSyncDeduplicationTest {
         mapping.setId(MAPPING_ID);
         mapping.setConsultant(consultant);
         mapping.setClient(client);
+        mapping.setPackageName("테스트패키지");
+        mapping.setPackagePrice(100000L);
         mapping.setTotalSessions(10);
         mapping.setUsedSessions(0);
         mapping.setRemainingSessions(10);

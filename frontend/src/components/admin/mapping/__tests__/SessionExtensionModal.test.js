@@ -1,5 +1,5 @@
 /**
- * SessionExtensionModal — requesterId 세션 사용자 사용·하드코딩 금지 검증.
+ * SessionExtensionModal — 동일 패키지 승계·가변 회기/금액.
  *
  * @author Core Solution
  * @since 2026-07-16
@@ -31,7 +31,8 @@ jest.mock('../../../../utils/notification', () => ({
     success: jest.fn(),
     error: jest.fn(),
     info: jest.fn(),
-    warn: jest.fn()
+    warn: jest.fn(),
+    warning: jest.fn()
   }
 }));
 
@@ -64,39 +65,6 @@ jest.mock('../../../common/MGButton', () => ({
   )
 }));
 
-jest.mock('../../../common/PackageSelector', () => ({
-  __esModule: true,
-  default: ({ onChange }) => (
-    <button
-      type="button"
-      data-testid="package-selector-mock"
-      onClick={() => onChange({
-        value: 'PKG_BASIC',
-        label: '기본 패키지',
-        sessions: 4,
-        price: 100000
-      })}
-    >
-      select-package
-    </button>
-  )
-}));
-
-jest.mock('../../../common/BadgeSelect', () => ({
-  __esModule: true,
-  default: ({ value, onChange, options = [] }) => (
-    <select
-      data-testid="badge-select-mock"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>{opt.label}</option>
-      ))}
-    </select>
-  )
-}));
-
 jest.mock('lucide-react', () => ({
   Calendar: () => <span data-testid="icon-calendar" />
 }));
@@ -112,15 +80,45 @@ const mapping = {
   usedSessions: 1,
   remainingSessions: 3,
   totalSessions: 4,
-  packageName: '기존패키지',
-  packagePrice: 80000
+  packageName: '기존패키지(10회)',
+  packagePrice: 800000
 };
 
-describe('SessionExtensionModal — requesterId', () => {
+describe('SessionExtensionModal — 동일 패키지 승계', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     StandardizedApi.post.mockResolvedValue({ success: true });
     mockGetUser.mockReturnValue({ id: 99, name: '관리자' });
+  });
+
+  test('패키지 선택 UI 없이 현재 패키지를 read-only로 표시한다', () => {
+    render(
+      <SessionExtensionModal
+        isOpen
+        mapping={mapping}
+        onClose={jest.fn()}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: '기존패키지(10회)' })).toBeInTheDocument();
+    expect(screen.getByText('사용 1회 / 남은 3회 / 총 4회')).toBeInTheDocument();
+    expect(screen.queryByTestId('package-selector-mock')).not.toBeInTheDocument();
+    expect(screen.queryByText('새로운 패키지를 선택')).not.toBeInTheDocument();
+  });
+
+  test('추가 회기 입력에 따라 총·남은 회기 예상 결과를 갱신한다', () => {
+    render(
+      <SessionExtensionModal
+        isOpen
+        mapping={mapping}
+        onClose={jest.fn()}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
+
+    expect(screen.getByText('9회')).toBeInTheDocument();
+    expect(screen.getByText('8회')).toBeInTheDocument();
   });
 
   test('사용자 id 없으면 제출을 차단하고 API를 호출하지 않는다', async () => {
@@ -134,9 +132,10 @@ describe('SessionExtensionModal — requesterId', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('package-selector-mock'));
+    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
+    fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
     await act(async () => {
-      fireEvent.click(screen.getByText('4회기 추가 요청'));
+      fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });
 
     expect(notificationManager.error).toHaveBeenCalledWith(
@@ -145,7 +144,7 @@ describe('SessionExtensionModal — requesterId', () => {
     expect(StandardizedApi.post).not.toHaveBeenCalled();
   });
 
-  test('세션 사용자 id를 requesterId로 전달하고 packageName에 label을 사용한다', async () => {
+  test('가변 회기·금액으로 요청하고 packageName은 보내지 않는다', async () => {
     render(
       <SessionExtensionModal
         isOpen
@@ -155,9 +154,10 @@ describe('SessionExtensionModal — requesterId', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('package-selector-mock'));
+    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
+    fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
     await act(async () => {
-      fireEvent.click(screen.getByText('4회기 추가 요청'));
+      fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });
 
     await waitFor(() => {
@@ -167,10 +167,10 @@ describe('SessionExtensionModal — requesterId', () => {
     const [endpoint, body] = StandardizedApi.post.mock.calls[0];
     expect(endpoint).toBe('/api/v1/admin/session-extensions/requests');
     expect(body.requesterId).toBe(99);
-    expect(body.requesterId).not.toBe(1);
-    expect(body.packageName).toBe('기본 패키지');
     expect(body.mappingId).toBe(42);
-    expect(body.additionalSessions).toBe(4);
+    expect(body.additionalSessions).toBe(5);
+    expect(body.extensionAmount).toBe(400000);
+    expect(body.packageName).toBeUndefined();
     expect(notificationManager.success).toHaveBeenCalled();
   });
 
@@ -188,9 +188,10 @@ describe('SessionExtensionModal — requesterId', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('package-selector-mock'));
+    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
+    fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
     await act(async () => {
-      fireEvent.click(screen.getByText('4회기 추가 요청'));
+      fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });
 
     await waitFor(() => {

@@ -48,9 +48,14 @@ const MatchingScheduleCompactRow = ({
     clientHonorific
   );
   const remainingSessions = mapping?.remainingSessions;
-  const secondaryLabel = remainingSessions != null
+  const pendingSessions = mapping?.pendingSessionExtension?.additionalSessions;
+  let secondaryLabel = remainingSessions != null
     ? t('integratedSchedule.sidebar.compactRemainingSessions', { count: remainingSessions })
     : toDisplayString(mapping?.status, '');
+  if (mapping?.pendingSessionExtension) {
+    const pendingSuffix = pendingSessions != null ? ` +${pendingSessions}회기` : '';
+    secondaryLabel = `회기추가 입금대기${pendingSuffix}`;
+  }
 
   const handleClick = () => {
     if (onOpenPeek) {
@@ -111,7 +116,8 @@ MatchingScheduleCompactRow.propTypes = {
     clientName: PropTypes.string,
     packageName: PropTypes.string,
     status: PropTypes.string,
-    remainingSessions: PropTypes.number
+    remainingSessions: PropTypes.number,
+    pendingSessionExtension: PropTypes.object
   }),
   onOpenPeek: PropTypes.func,
   isActive: PropTypes.bool

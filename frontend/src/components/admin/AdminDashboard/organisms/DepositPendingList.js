@@ -33,6 +33,7 @@ const DepositPendingList = ({
   items = [],
   viewAllHref = '',
   onItemAction,
+  onItemCancel,
   processingItemId
 }) => {
   const displayItems = useMemo(
@@ -72,9 +73,10 @@ const DepositPendingList = ({
       );
     }
     if (columnKey === 'action') {
-      const isProcessing = processingItemId === item.id;
+      const isProcessing = String(processingItemId) === String(item.id);
+      const isExtension = item.sourceType === DEPOSIT_SOURCE_TYPES.SESSION_EXTENSION;
       return (
-        <CardActionGroup>
+        <CardActionGroup className="deposit-pending-list__actions">
           <ActionButton
             size="small"
             variant="primary"
@@ -85,6 +87,18 @@ const DepositPendingList = ({
           >
             확인하기
           </ActionButton>
+          {isExtension ? (
+            <ActionButton
+              size="small"
+              variant="danger"
+              onClick={() => onItemCancel?.(item)}
+              loading={isProcessing}
+              disabled={Boolean(processingItemId)}
+              aria-label={`${toDisplayString(item.clientName, '내담자')} 회기 추가 요청 취소`}
+            >
+              취소
+            </ActionButton>
+          ) : null}
         </CardActionGroup>
       );
     }
@@ -129,6 +143,7 @@ DepositPendingList.propTypes = {
   items: PropTypes.arrayOf(PropTypes.object),
   viewAllHref: PropTypes.string,
   onItemAction: PropTypes.func,
+  onItemCancel: PropTypes.func,
   processingItemId: PropTypes.string
 };
 
@@ -136,6 +151,7 @@ DepositPendingList.defaultProps = {
   items: [],
   viewAllHref: '',
   onItemAction: undefined,
+  onItemCancel: undefined,
   processingItemId: ''
 };
 

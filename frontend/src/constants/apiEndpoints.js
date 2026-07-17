@@ -65,9 +65,12 @@ export const API_ENDPOINTS = {
     },
 
     SESSION_EXTENSIONS: {
+      REQUESTS: '/api/v1/admin/session-extensions/requests',
       PENDING_PAYMENT: '/api/v1/admin/session-extensions/pending-payment',
       CONFIRM_PAYMENT: (requestId) =>
-        `/api/v1/admin/session-extensions/requests/${requestId}/confirm-payment`
+        `/api/v1/admin/session-extensions/requests/${requestId}/confirm-payment`,
+      CANCEL: (requestId) =>
+        `/api/v1/admin/session-extensions/requests/${requestId}/cancel`
     },
     
     STATISTICS: {

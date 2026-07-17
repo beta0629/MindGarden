@@ -28,7 +28,11 @@ public interface SessionExtensionService {
     /**
      * 입금 확인 처리
      */
-    SessionExtensionRequest confirmPayment(Long requestId, String paymentMethod, String paymentReference);
+    SessionExtensionRequest confirmPayment(
+            Long requestId,
+            Long adminId,
+            String paymentMethod,
+            String paymentReference);
     
     /**
      * 관리자 승인

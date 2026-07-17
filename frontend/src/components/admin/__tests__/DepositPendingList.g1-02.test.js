@@ -7,12 +7,19 @@ import { MemoryRouter } from 'react-router-dom';
 import DepositPendingList from '../AdminDashboard/organisms/DepositPendingList';
 
 describe('DepositPendingList G1-02', () => {
-  test('행 데이터가 있으면 테이블과 전체 보기 링크 1개만 렌더', () => {
+  test('행 데이터가 있으면 테이블과 입금 확인 액션을 렌더', () => {
     render(
       <MemoryRouter>
         <DepositPendingList
           items={[
-            { id: '1', clientName: '홍길동', amount: 100000 }
+            {
+              id: 'MAPPING_DEPOSIT-1',
+              sourceType: 'MAPPING_DEPOSIT',
+              sourceId: 1,
+              clientName: '홍길동',
+              amount: 100000,
+              status: 'PENDING_PAYMENT'
+            }
           ]}
           viewAllHref="/admin/mapping-management"
         />
@@ -25,7 +32,7 @@ describe('DepositPendingList G1-02', () => {
       'href',
       '/admin/mapping-management'
     );
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '홍길동 입금 확인' })).toBeInTheDocument();
   });
 
   test('빈 목록이어도 위젯·전체 보기 CTA는 유지', () => {

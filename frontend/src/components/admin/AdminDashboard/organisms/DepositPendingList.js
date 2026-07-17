@@ -8,9 +8,15 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { ListTableView } from '../../../common';
+import {
+  ActionButton,
+  CardActionGroup,
+  ListTableView,
+  StatusBadge
+} from '../../../common';
 import SafeText from '../../../common/SafeText';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
+import { DEPOSIT_SOURCE_TYPES } from '../../../../utils/depositPendingQueue';
 import {
   DASHBOARD_PENDING_LIST_MAX_ROWS,
   DASHBOARD_PENDING_LIST_VIEW_ALL_LABEL
@@ -18,29 +24,71 @@ import {
 import './DepositPendingList.css';
 
 const DEPOSIT_COLUMNS = [
-  { key: 'clientName', label: '내담자' },
-  { key: 'amount', label: '금액', hideOnMobile: true }
+  { key: 'sourceType', label: '출처' },
+  { key: 'parties', label: '내담자 / 상담사' },
+  { key: 'payment', label: '입금 정보', hideOnMobile: true },
+  { key: 'action', label: '처리' }
 ];
 
-const DepositPendingList = ({ items = [], viewAllHref = '' }) => {
+const DepositPendingList = ({
+  items = [],
+  viewAllHref = '',
+  onItemAction,
+  processingItemId
+}) => {
   const displayItems = useMemo(
     () => items.slice(0, DASHBOARD_PENDING_LIST_MAX_ROWS),
     [items]
   );
 
   const renderCell = (columnKey, item) => {
-    if (columnKey === 'clientName') {
-      return <SafeText tag="span">{toDisplayString(item.clientName, '—')}</SafeText>;
-    }
-    if (columnKey === 'amount') {
-      const amount = toSafeNumber(item.amount, null);
-      if (amount == null) {
-        return <SafeText tag="span">—</SafeText>;
-      }
+    if (columnKey === 'sourceType') {
+      const isExtension = item.sourceType === DEPOSIT_SOURCE_TYPES.SESSION_EXTENSION;
       return (
-        <SafeText tag="span">
-          {`${amount.toLocaleString()}원`}
-        </SafeText>
+        <StatusBadge status={item.status} variant={isExtension ? 'info' : 'warning'}>
+          {isExtension ? '회기 추가' : '최초 결제'}
+        </StatusBadge>
+      );
+    }
+    if (columnKey === 'parties') {
+      return (
+        <span className="deposit-pending-list__parties">
+          <SafeText tag="span">{toDisplayString(item.clientName, '—')}</SafeText>
+          <SafeText tag="span" className="deposit-pending-list__consultant">
+            {toDisplayString(item.consultantName, '—')}
+          </SafeText>
+        </span>
+      );
+    }
+    if (columnKey === 'payment') {
+      const amount = toSafeNumber(item.amount, null);
+      const additionalSessions = toSafeNumber(item.additionalSessions, null);
+      return (
+        <span className="deposit-pending-list__payment">
+          {additionalSessions != null ? (
+            <strong>{`+${additionalSessions}회기`}</strong>
+          ) : null}
+          <SafeText tag="span">
+            {amount == null ? '—' : `${amount.toLocaleString()}원`}
+          </SafeText>
+        </span>
+      );
+    }
+    if (columnKey === 'action') {
+      const isProcessing = processingItemId === item.id;
+      return (
+        <CardActionGroup>
+          <ActionButton
+            size="small"
+            variant="primary"
+            onClick={() => onItemAction?.(item)}
+            loading={isProcessing}
+            disabled={Boolean(processingItemId)}
+            aria-label={`${toDisplayString(item.clientName, '내담자')} 입금 확인`}
+          >
+            입금 확인
+          </ActionButton>
+        </CardActionGroup>
       );
     }
     return <SafeText tag="span">—</SafeText>;
@@ -82,12 +130,16 @@ const DepositPendingList = ({ items = [], viewAllHref = '' }) => {
 
 DepositPendingList.propTypes = {
   items: PropTypes.arrayOf(PropTypes.object),
-  viewAllHref: PropTypes.string
+  viewAllHref: PropTypes.string,
+  onItemAction: PropTypes.func,
+  processingItemId: PropTypes.string
 };
 
 DepositPendingList.defaultProps = {
   items: [],
-  viewAllHref: ''
+  viewAllHref: '',
+  onItemAction: undefined,
+  processingItemId: ''
 };
 
 export default DepositPendingList;

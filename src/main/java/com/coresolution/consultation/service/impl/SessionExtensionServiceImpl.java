@@ -79,18 +79,22 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     }
     
     @Override
-    public SessionExtensionRequest confirmPayment(Long requestId, String paymentMethod, String paymentReference) {
+    public SessionExtensionRequest confirmPayment(
+            Long requestId,
+            Long adminId,
+            String paymentMethod,
+            String paymentReference) {
         log.info("💰 입금 확인 및 자동 승인 처리: requestId={}, paymentMethod={}, paymentReference={}", 
                 requestId, paymentMethod, paymentReference);
         
-        SessionExtensionRequest request = requireRequestForCurrentTenant(requestId);
+        SessionExtensionRequest request = requireRequestForCurrentTenantForUpdate(requestId);
         
         String finalPaymentReference = "CASH".equals(paymentMethod) ? null : paymentReference;
         
         request.confirmPayment(paymentMethod, finalPaymentReference);
         
-        User systemAdmin = userService.findActiveById(1L) // 시스템 관리자 ID
-                .orElseThrow(() -> new RuntimeException("시스템 관리자를 찾을 수 없습니다"));
+        User systemAdmin = userService.findActiveById(adminId)
+                .orElseThrow(() -> new EntityNotFoundException("관리자", adminId));
         
         request.approveByAdmin(systemAdmin);
         request.setAdminComment("입금 확인 후 자동 승인 처리");
@@ -99,13 +103,8 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
-        try {
-            sessionSyncService.syncAfterSessionExtension(savedRequest);
-            log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
-        } catch (Exception e) {
-            log.error("❌ 회기 추가 후 동기화 실패: requestId={}, error={}", 
-                     savedRequest.getId(), e.getMessage(), e);
-        }
+        sessionSyncService.syncAfterSessionExtension(savedRequest);
+        log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
         
         try {
             ConsultantClientMapping mapping = request.getMapping();
@@ -252,7 +251,8 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     @Transactional(readOnly = true)
     public List<SessionExtensionRequest> getPendingPaymentRequests() {
         log.info("입금 확인 대기 중인 요청 목록 조회");
-        return requestRepository.findPendingPaymentRequests();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return requestRepository.findPendingPaymentRequests(tenantId);
     }
     
     @Override
@@ -343,6 +343,18 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return requestRepository.findByTenantIdAndId(tenantId, requestId)
                 .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+    }
+
+    /**
+     * 현재 테넌트 요청을 중복 처리 방지 잠금으로 조회합니다.
+     *
+     * @param requestId 요청 PK
+     * @return 잠긴 요청 엔티티
+     */
+    private SessionExtensionRequest requireRequestForCurrentTenantForUpdate(Long requestId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return requestRepository.findByTenantIdAndIdForUpdate(tenantId, requestId)
+                .orElseThrow(() -> new EntityNotFoundException("회기 추가 요청", requestId));
     }
 
     /**

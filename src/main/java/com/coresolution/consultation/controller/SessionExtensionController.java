@@ -73,7 +73,7 @@ public class SessionExtensionController extends BaseApiController {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
         
-        Long requesterId = resolveRequesterIdForCurrentTenant(sessionUser);
+        Long requesterId = resolveUserIdForCurrentTenant(sessionUser, "요청자");
         warnIfBodyRequesterIdMismatch(request, requesterId);
         
         Long mappingId = Long.valueOf(request.get("mappingId").toString());
@@ -98,14 +98,21 @@ public class SessionExtensionController extends BaseApiController {
     @PostMapping("/requests/{requestId}/confirm-payment")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmPayment(
             @PathVariable Long requestId,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         log.info("💰 회기 추가 요청 ID {} 입금 확인 시작", requestId);
+
+        User sessionUser = SessionUtils.getCurrentUser(session);
+        if (sessionUser == null) {
+            throw new AccessDeniedException("로그인이 필요합니다.");
+        }
+        Long adminId = resolveUserIdForCurrentTenant(sessionUser, "관리자");
         
         String paymentMethod = (String) request.get("paymentMethod");
         String paymentReference = (String) request.get("paymentReference");
         
         SessionExtensionRequest extensionRequest = sessionExtensionService.confirmPayment(
-            requestId, paymentMethod, paymentReference);
+            requestId, adminId, paymentMethod, paymentReference);
         
         log.info("💰 회기 추가 요청 ID {} 입금 확인 완료", requestId);
         
@@ -261,13 +268,14 @@ public class SessionExtensionController extends BaseApiController {
     }
 
     /**
-     * 현재 테넌트 컨텍스트에서 요청자 PK를 확정한다.
+     * 현재 테넌트 컨텍스트에서 사용자 PK를 확정한다.
      * 세션 userId가 현재 테넌트에 없으면 이메일로 1건 매칭 시 폴백한다.
      *
      * @param sessionUser HTTP 세션 사용자
-     * @return 현재 테넌트의 요청자 PK
+     * @param userLabel 예외 메시지에 사용할 사용자 유형
+     * @return 현재 테넌트의 사용자 PK
      */
-    private Long resolveRequesterIdForCurrentTenant(User sessionUser) {
+    private Long resolveUserIdForCurrentTenant(User sessionUser, String userLabel) {
         Optional<User> bySessionId = userService.findActiveById(sessionUser.getId());
         if (bySessionId.isPresent()) {
             return bySessionId.get().getId();
@@ -275,8 +283,8 @@ public class SessionExtensionController extends BaseApiController {
         
         String email = sessionUser.getEmail();
         if (email == null || email.isBlank()) {
-            throw new EntityNotFoundException("요청자", sessionUser.getId(),
-                    "현재 테넌트에서 요청자를 찾을 수 없습니다.");
+            throw new EntityNotFoundException(userLabel, sessionUser.getId(),
+                    "현재 테넌트에서 사용자를 찾을 수 없습니다.");
         }
         
         var matches = userService.findAllUsersMatchingEmailInCurrentTenant(email);
@@ -287,10 +295,10 @@ public class SessionExtensionController extends BaseApiController {
             return tenantUser.getId();
         }
         if (matches.isEmpty()) {
-            throw new EntityNotFoundException("요청자", sessionUser.getId(),
-                    "현재 테넌트에서 요청자를 찾을 수 없습니다.");
+            throw new EntityNotFoundException(userLabel, sessionUser.getId(),
+                    "현재 테넌트에서 사용자를 찾을 수 없습니다.");
         }
-        throw new EntityNotFoundException("요청자", sessionUser.getId(),
+        throw new EntityNotFoundException(userLabel, sessionUser.getId(),
                 "현재 테넌트에서 동일 이메일의 요청자가 여러 명입니다.");
     }
     

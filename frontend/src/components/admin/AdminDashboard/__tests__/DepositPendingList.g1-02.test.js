@@ -7,25 +7,55 @@ import { MemoryRouter } from 'react-router-dom';
 import DepositPendingList from '../organisms/DepositPendingList';
 
 describe('DepositPendingList G1-02', () => {
-  test('행 데이터가 있으면 테이블과 전체 보기 링크 1개만 렌더', () => {
+  test('최초 결제와 회기 추가를 공통 행으로 표시하고 출처별 액션을 전달', () => {
+    const handleAction = jest.fn();
     render(
       <MemoryRouter>
         <DepositPendingList
           items={[
-            { id: '1', clientName: '홍길동', amount: 100000 }
+            {
+              id: 'MAPPING_DEPOSIT-1',
+              sourceType: 'MAPPING_DEPOSIT',
+              sourceId: 1,
+              clientName: '홍길동',
+              consultantName: '김상담',
+              amount: 100000,
+              status: 'PENDING_PAYMENT'
+            },
+            {
+              id: 'SESSION_EXTENSION-2',
+              sourceType: 'SESSION_EXTENSION',
+              sourceId: 2,
+              clientName: '이내담',
+              consultantName: '박상담',
+              amount: 200000,
+              additionalSessions: 4,
+              status: 'PENDING'
+            }
           ]}
-          viewAllHref="/admin/mapping-management"
+          onItemAction={handleAction}
         />
       </MemoryRouter>
     );
 
     expect(screen.getByText('홍길동')).toBeInTheDocument();
     expect(screen.getByText('100,000원')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '전체 보기' })).toHaveAttribute(
-      'href',
-      '/admin/mapping-management'
+    expect(screen.getByText('최초 결제')).toBeInTheDocument();
+    expect(screen.getByText('회기 추가')).toBeInTheDocument();
+    expect(screen.getByText('+4회기')).toBeInTheDocument();
+    expect(screen.getByText('박상담')).toBeInTheDocument();
+    expect(screen.getByText('회기 추가').closest('td')).toBe(
+      screen.getByText('이내담').closest('td')
     );
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByText('200,000원').closest('td')).not.toHaveClass(
+      'mg-v2-list-block__col--hide-mobile'
+    );
+    expect(screen.getAllByRole('button', { name: /입금 확인/ })[0]).toHaveTextContent('확인하기');
+
+    screen.getByRole('button', { name: '이내담 입금 확인' }).click();
+    expect(handleAction).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceType: 'SESSION_EXTENSION', sourceId: 2 })
+    );
   });
 
   test('빈 목록이어도 위젯·전체 보기 CTA는 유지', () => {

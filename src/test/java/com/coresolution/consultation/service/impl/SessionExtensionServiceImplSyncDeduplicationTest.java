@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Optional;
 
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -24,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +43,7 @@ class SessionExtensionServiceImplSyncDeduplicationTest {
     private static final Long REQUEST_ID = 100L;
     private static final Long MAPPING_ID = 200L;
     private static final Integer ADDITIONAL_SESSIONS = 5;
+    private static final Long ADMIN_ID = 40L;
 
     @Mock
     private SessionExtensionRequestRepository requestRepository;
@@ -82,7 +85,54 @@ class SessionExtensionServiceImplSyncDeduplicationTest {
         verify(sessionSyncService, times(1)).syncAfterSessionExtension(any(SessionExtensionRequest.class));
     }
 
+    @Test
+    @DisplayName("confirmPayment: 동일 요청 재확인 시 회기를 중복 합산하지 않는다")
+    void confirmPayment_preventsDuplicateSessionSync() {
+        SessionExtensionRequest request = buildPendingRequest();
+        User admin = new User();
+        admin.setId(ADMIN_ID);
+        when(requestRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(REQUEST_ID)))
+                .thenReturn(Optional.of(request));
+        when(userService.findActiveById(ADMIN_ID)).thenReturn(Optional.of(admin));
+        when(requestRepository.save(any(SessionExtensionRequest.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        sessionExtensionService.confirmPayment(
+                REQUEST_ID,
+                ADMIN_ID,
+                "BANK_TRANSFER",
+                "TEST-REFERENCE");
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> sessionExtensionService.confirmPayment(
+                        REQUEST_ID,
+                        ADMIN_ID,
+                        "BANK_TRANSFER",
+                        "TEST-REFERENCE"));
+        verify(sessionSyncService, times(1)).syncAfterSessionExtension(any(SessionExtensionRequest.class));
+    }
+
+    @Test
+    @DisplayName("pendingPayment: 현재 테넌트 조건으로만 대기 요청을 조회한다")
+    void getPendingPaymentRequests_usesCurrentTenant() {
+        when(requestRepository.findPendingPaymentRequests(TENANT_ID))
+                .thenReturn(Collections.emptyList());
+
+        sessionExtensionService.getPendingPaymentRequests();
+
+        verify(requestRepository).findPendingPaymentRequests(TENANT_ID);
+    }
+
     private SessionExtensionRequest buildApprovedRequest() {
+        return buildRequest(SessionExtensionRequest.ExtensionStatus.ADMIN_APPROVED);
+    }
+
+    private SessionExtensionRequest buildPendingRequest() {
+        return buildRequest(SessionExtensionRequest.ExtensionStatus.PENDING);
+    }
+
+    private SessionExtensionRequest buildRequest(SessionExtensionRequest.ExtensionStatus status) {
         User consultant = new User();
         consultant.setId(10L);
         User client = new User();
@@ -109,7 +159,7 @@ class SessionExtensionServiceImplSyncDeduplicationTest {
                 .additionalSessions(ADDITIONAL_SESSIONS)
                 .packageName("테스트패키지")
                 .packagePrice(new BigDecimal("100000"))
-                .status(SessionExtensionRequest.ExtensionStatus.ADMIN_APPROVED)
+                .status(status)
                 .reason("단위 테스트 - Phase 1 1A")
                 .build();
     }

@@ -56,6 +56,7 @@ import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
 import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import ErpReportModal from '../erp/ErpReportModal';
 import MappingDepositModal from '../admin/mapping/MappingDepositModal';
+import SessionExtensionPaymentConfirmModal from '../admin/mapping/SessionExtensionPaymentConfirmModal';
 import AdminDashboardMonitoring from '../admin/AdminDashboard/AdminDashboardMonitoring';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -112,6 +113,11 @@ import '../admin/AdminDashboard/AdminDashboardPipeline.css';
 import { useTranslation } from 'react-i18next';
 import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
 import { DASHBOARD_KPI_IDS, API_ADMIN_SCHEDULES, DASHBOARD_REFUND_SECTION_CTA_LABEL } from '../../constants/adminDashboardWidgetConstants';
+import {
+  buildDepositPendingQueue,
+  DEPOSIT_QUEUE_REFRESH_EVENT,
+  DEPOSIT_SOURCE_TYPES
+} from '../../utils/depositPendingQueue';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // /api/v1/admin/mappings 는 SSOT(API_ENDPOINTS.ADMIN.MAPPINGS.LIST) 사용
@@ -119,11 +125,18 @@ const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
 const API_ADMIN_REFUND_STATISTICS = '/api/v1/admin/refund-statistics?period=month';
-const API_ADMIN_MAPPINGS_PENDING_DEPOSIT = '/api/v1/admin/mappings/pending-deposit';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE = '/api/v1/admin/schedules/auto-complete';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER = '/api/v1/admin/schedules/auto-complete-with-reminder';
 const API_ADMIN_DUPLICATE_MAPPINGS = '/api/v1/admin/duplicate-mappings';
 const API_ADMIN_MERGE_DUPLICATE_MAPPINGS = '/api/v1/admin/merge-duplicate-mappings';
+
+const DASHBOARD_CHART_CANVAS_FALLBACK = Object.freeze({
+  TICK: 'var(--mg-v2-color-text-secondary)',
+  GRID: 'var(--mg-v2-color-border-light)',
+  TOOLTIP_BACKGROUND: 'var(--mg-v2-color-surface-raised)',
+  TOOLTIP_TEXT: 'var(--mg-v2-color-text-primary)',
+  LEGEND: 'var(--mg-v2-color-text-secondary)'
+});
 
 
 /** 단계별 현황 도넛 차트 라벨 (5단계) */
@@ -189,6 +202,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [schedulePendingList, setSchedulePendingList] = useState([]);
   const [matchingQueueLoading, setMatchingQueueLoading] = useState(false);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
+  const [sessionExtensionPaymentRequest, setSessionExtensionPaymentRequest] = useState(null);
   const [showErpReport, setShowErpReport] = useState(false);
   const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
   const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
@@ -249,11 +263,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     border: B0KLA_CHART_BAR_FALLBACK.BORDER
   });
   const [chartCanvasTheme, setChartCanvasTheme] = useState({
-    tick: '#6B7280',
-    grid: '#E5E7EB',
-    tooltipBg: '#FFFFFF',
-    tooltipText: '#111827',
-    legend: '#374151'
+    tick: DASHBOARD_CHART_CANVAS_FALLBACK.TICK,
+    grid: DASHBOARD_CHART_CANVAS_FALLBACK.GRID,
+    tooltipBg: DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_BACKGROUND,
+    tooltipText: DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_TEXT,
+    legend: DASHBOARD_CHART_CANVAS_FALLBACK.LEGEND
   });
   const chartBarWrapperRef = useRef(null);
   const lineChartWrapperRef = useRef(null);
@@ -271,11 +285,26 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       border: border || B0KLA_CHART_BAR_FALLBACK.BORDER
     });
     setChartCanvasTheme({
-      tick: resolveCssColorVarToHex('--mg-v2-color-text-secondary', '#6B7280'),
-      grid: resolveCssColorVarToHex('--mg-v2-color-border-light', '#E5E7EB'),
-      tooltipBg: resolveCssColorVarToHex('--mg-v2-color-surface-raised', '#FFFFFF'),
-      tooltipText: resolveCssColorVarToHex('--mg-v2-color-text-primary', '#111827'),
-      legend: resolveCssColorVarToHex('--mg-v2-color-text-secondary', '#6B7280')
+      tick: resolveCssColorVarToHex(
+        '--mg-v2-color-text-secondary',
+        DASHBOARD_CHART_CANVAS_FALLBACK.TICK
+      ),
+      grid: resolveCssColorVarToHex(
+        '--mg-v2-color-border-light',
+        DASHBOARD_CHART_CANVAS_FALLBACK.GRID
+      ),
+      tooltipBg: resolveCssColorVarToHex(
+        '--mg-v2-color-surface-raised',
+        DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_BACKGROUND
+      ),
+      tooltipText: resolveCssColorVarToHex(
+        '--mg-v2-color-text-primary',
+        DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_TEXT
+      ),
+      legend: resolveCssColorVarToHex(
+        '--mg-v2-color-text-secondary',
+        DASHBOARD_CHART_CANVAS_FALLBACK.LEGEND
+      )
     });
   }, [chartPeriod, lineChartPeriod, darkResolved]);
 
@@ -553,14 +582,28 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const loadPendingDepositStats = useCallback(async() => {
     try {
-      const data = await StandardizedApi.get(API_ADMIN_MAPPINGS_PENDING_DEPOSIT);
-      const rawMappings = data?.mappings ?? data?.data?.mappings ?? (Array.isArray(data) ? data : []);
-      const pendingList = Array.isArray(rawMappings) ? rawMappings : [];
+      const [mappingData, extensionData] = await Promise.all([
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_DEPOSIT),
+        StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
+      ]);
+      const rawMappings = mappingData?.mappings
+        ?? mappingData?.data?.mappings
+        ?? (Array.isArray(mappingData) ? mappingData : []);
+      const rawExtensions = extensionData?.requests
+        ?? extensionData?.data?.requests
+        ?? (Array.isArray(extensionData) ? extensionData : []);
+      const pendingList = buildDepositPendingQueue(
+        Array.isArray(rawMappings) ? rawMappings : [],
+        Array.isArray(rawExtensions) ? rawExtensions : []
+      );
       const count = pendingList.length;
-      const totalAmount = pendingList.reduce((sum, m) => sum + (m.packagePrice || 0), 0);
+      const totalAmount = pendingList.reduce(
+        (sum, item) => sum + toSafeNumber(item.amount, 0),
+        0
+      );
       const oldestHours =
         pendingList.length > 0
-          ? Math.max(...pendingList.map((m) => m.hoursElapsed || 0), 0)
+          ? Math.max(...pendingList.map((item) => toSafeNumber(item.hoursElapsed, 0)), 0)
           : 0;
       setPendingDepositStats({ count, totalAmount, oldestHours });
       setPendingDepositList(pendingList);
@@ -584,6 +627,22 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       notificationManager.error(error?.message || '스케줄 등록 대기 목록을 불러오지 못했습니다.');
       setSchedulePendingList([]);
     }
+  }, []);
+
+  const refreshAfterDepositConfirmation = useCallback(async() => {
+    await Promise.all([
+      loadPendingDepositStats(),
+      loadStats()
+    ]);
+    window.dispatchEvent(new CustomEvent(DEPOSIT_QUEUE_REFRESH_EVENT));
+  }, [loadPendingDepositStats, loadStats]);
+
+  const handleDepositPendingAction = useCallback((item) => {
+    if (item.sourceType === DEPOSIT_SOURCE_TYPES.SESSION_EXTENSION) {
+      setSessionExtensionPaymentRequest(item);
+      return;
+    }
+    setDepositModalMapping({ ...item, id: item.sourceId });
   }, []);
 
   const handleAutoCompleteSchedules = async() => {
@@ -942,10 +1001,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           summary={`대기 금액 ${toSafeNumber(pendingDepositStats.totalAmount, 0).toLocaleString()}원`}
           variant="blue"
           backContent={
-            <p>입금 확인 대기 중인 매칭 건입니다.</p>
+            <p>최초 결제와 회기 추가 입금 확인 대기 건입니다.</p>
           }
-          ctaLabel="전체 보기"
-          onCtaClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`)}
+          ctaLabel="매핑 관리"
+          onCtaClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
           isFlipped={flippedKpiId === DASHBOARD_KPI_IDS.PENDING_PAYMENT}
           onFlip={handleKpiFlip}
         />
@@ -1700,12 +1759,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
       <div className="mg-v2-content-detail-row">
         <DepositPendingList
-          items={pendingDepositList.map((m) => ({
-            id: m.id,
-            clientName: m.clientName,
-            amount: m.packagePrice
-          }))}
-          viewAllHref={`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`}
+          items={pendingDepositList}
+          onItemAction={handleDepositPendingAction}
         />
         <SchedulePendingList
           items={schedulePendingList.map((s) => ({
@@ -1958,11 +2013,16 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         isOpen={!!depositModalMapping}
         onClose={() => setDepositModalMapping(null)}
         mapping={depositModalMapping || {}}
-        onDepositConfirmed={() => {
+        onDepositConfirmed={async() => {
           setDepositModalMapping(null);
-          loadStats();
-          loadPendingDepositStats();
+          await refreshAfterDepositConfirmation();
         }}
+      />
+      <SessionExtensionPaymentConfirmModal
+        isOpen={Boolean(sessionExtensionPaymentRequest)}
+        request={sessionExtensionPaymentRequest}
+        onClose={() => setSessionExtensionPaymentRequest(null)}
+        onConfirmed={refreshAfterDepositConfirmation}
       />
 
       {/* AI 모니터링(시스템 모니터링) */}

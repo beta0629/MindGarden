@@ -82,6 +82,10 @@ describe('SessionExtensionPaymentConfirmModal', () => {
       />
     );
 
+    expect(screen.getByText('담당 상담사')).toBeInTheDocument();
+    expect(screen.getByText('상담사')).toBeInTheDocument();
+    expect(screen.getByText('+3회기')).toBeInTheDocument();
+
     const confirmButton = screen.getByRole('button', { name: '입금 확인 및 회기 합산' });
     fireEvent.click(confirmButton);
     fireEvent.click(confirmButton);

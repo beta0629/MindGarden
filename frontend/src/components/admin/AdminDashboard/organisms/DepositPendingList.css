@@ -41,6 +41,13 @@
   gap: var(--mg-spacing-xs);
 }
 
+.deposit-pending-list__client {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-xs);
+}
+
 .deposit-pending-list__consultant {
   color: var(--mg-color-text-secondary);
   font-size: var(--mg-v2-font-size-caption);

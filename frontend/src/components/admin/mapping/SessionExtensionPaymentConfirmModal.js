@@ -123,7 +123,7 @@ const SessionExtensionPaymentConfirmModal = ({
             </SafeText>
           </div>
           <div className="mg-v2-form-group">
-            <span className="mg-v2-label">상담사</span>
+            <span className="mg-v2-label">담당 상담사</span>
             <SafeText className="mg-v2-text-primary">
               {toDisplayString(request.consultantName, '—')}
             </SafeText>

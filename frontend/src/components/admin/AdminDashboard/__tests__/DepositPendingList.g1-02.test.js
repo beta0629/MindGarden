@@ -44,6 +44,13 @@ describe('DepositPendingList G1-02', () => {
     expect(screen.getByText('회기 추가')).toBeInTheDocument();
     expect(screen.getByText('+4회기')).toBeInTheDocument();
     expect(screen.getByText('박상담')).toBeInTheDocument();
+    expect(screen.getByText('회기 추가').closest('td')).toBe(
+      screen.getByText('이내담').closest('td')
+    );
+    expect(screen.getByText('200,000원').closest('td')).not.toHaveClass(
+      'mg-v2-list-block__col--hide-mobile'
+    );
+    expect(screen.getAllByRole('button', { name: /입금 확인/ })[0]).toHaveTextContent('확인하기');
 
     screen.getByRole('button', { name: '이내담 입금 확인' }).click();
     expect(handleAction).toHaveBeenCalledWith(

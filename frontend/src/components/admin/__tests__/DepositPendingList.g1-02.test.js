@@ -32,7 +32,12 @@ describe('DepositPendingList G1-02', () => {
       'href',
       '/admin/mapping-management'
     );
-    expect(screen.getByRole('button', { name: '홍길동 입금 확인' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '홍길동 입금 확인' })).toHaveTextContent(
+      '확인하기'
+    );
+    expect(screen.getByText('100,000원').closest('td')).not.toHaveClass(
+      'mg-v2-list-block__col--hide-mobile'
+    );
   });
 
   test('빈 목록이어도 위젯·전체 보기 CTA는 유지', () => {

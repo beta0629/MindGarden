@@ -24,9 +24,8 @@ import {
 import './DepositPendingList.css';
 
 const DEPOSIT_COLUMNS = [
-  { key: 'sourceType', label: '출처' },
   { key: 'parties', label: '내담자 / 상담사' },
-  { key: 'payment', label: '입금 정보', hideOnMobile: true },
+  { key: 'payment', label: '입금 정보' },
   { key: 'action', label: '처리' }
 ];
 
@@ -42,18 +41,16 @@ const DepositPendingList = ({
   );
 
   const renderCell = (columnKey, item) => {
-    if (columnKey === 'sourceType') {
+    if (columnKey === 'parties') {
       const isExtension = item.sourceType === DEPOSIT_SOURCE_TYPES.SESSION_EXTENSION;
       return (
-        <StatusBadge status={item.status} variant={isExtension ? 'info' : 'warning'}>
-          {isExtension ? '회기 추가' : '최초 결제'}
-        </StatusBadge>
-      );
-    }
-    if (columnKey === 'parties') {
-      return (
         <span className="deposit-pending-list__parties">
-          <SafeText tag="span">{toDisplayString(item.clientName, '—')}</SafeText>
+          <span className="deposit-pending-list__client">
+            <SafeText tag="span">{toDisplayString(item.clientName, '—')}</SafeText>
+            <StatusBadge status={item.status} variant={isExtension ? 'info' : 'warning'}>
+              {isExtension ? '회기 추가' : '최초 결제'}
+            </StatusBadge>
+          </span>
           <SafeText tag="span" className="deposit-pending-list__consultant">
             {toDisplayString(item.consultantName, '—')}
           </SafeText>
@@ -86,7 +83,7 @@ const DepositPendingList = ({
             disabled={Boolean(processingItemId)}
             aria-label={`${toDisplayString(item.clientName, '내담자')} 입금 확인`}
           >
-            입금 확인
+            확인하기
           </ActionButton>
         </CardActionGroup>
       );

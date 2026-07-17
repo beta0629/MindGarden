@@ -235,4 +235,22 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
      */
     @Query("SELECT b FROM Branch b WHERE b.tenantId = :tenantId AND b.id = :id AND b.isDeleted = false")
     Optional<Branch> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
+
+    /**
+     * 테넌트 + 지점 코드로 지점명만 단건 조회 (Phase1 B7).
+     *
+     * <p>{@code /auth/current-user} 응답 흐름에서 지점명만 필요한 경우에 사용한다.
+     * {@code findByIsDeletedFalseOrderByBranchName} → {@code stream().filter().findFirst()} 패턴은
+     * 전체 테넌트의 모든 지점을 로드 + LAZY {@code manager}/{@code parentBranch} N+1 을 유발하므로
+     * 컬럼 단건 projection 으로 교체했다.</p>
+     *
+     * @param tenantId   테넌트 UUID (멀티테넌트 격리 필수)
+     * @param branchCode 지점 코드 (사용자 {@code user.branch_code})
+     * @return 지점명 한글 문자열 (없으면 {@link Optional#empty()})
+     */
+    @Query("SELECT b.branchName FROM Branch b "
+            + "WHERE b.tenantId = :tenantId AND b.branchCode = :branchCode AND b.isDeleted = false")
+    Optional<String> findBranchNameByTenantIdAndBranchCode(
+            @Param("tenantId") String tenantId,
+            @Param("branchCode") String branchCode);
 }

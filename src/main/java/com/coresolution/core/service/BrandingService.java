@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -99,8 +100,11 @@ public class BrandingService {
     
     /**
      * 브랜딩 정보 업데이트 (로고 제외)
+     *
+     * <p>Phase1 B7: 테넌트 브랜딩(회사명 등) 변경 시 {@code tenantById} 캐시 evict (TTL 10분 stale 차단).</p>
      */
     @Transactional
+    @CacheEvict(value = "tenantById", key = "#tenantId")
     public BrandingInfo updateBrandingInfo(String tenantId, BrandingUpdateRequest request) {
         log.info("브랜딩 정보 업데이트 시작: tenantId={}", tenantId);
         
@@ -161,9 +165,12 @@ public class BrandingService {
     /**
      * {@code tenants.name} 변경 후 {@code branding_json} 의 회사명(한글)을 동일하게 맞춥니다.
      *
+     * <p>Phase1 B7: 테넌트 엔티티 변경 시 {@code tenantById} 캐시 evict.</p>
+     *
      * @param tenant 방금 저장된 테넌트 엔티티
      */
     @Transactional
+    @CacheEvict(value = "tenantById", key = "#tenant.tenantId")
     public void syncBrandingJsonCompanyNameWithTenant(Tenant tenant) {
         String tenantId = tenant.getTenantId();
         log.debug("브랜딩 JSON 회사명을 테넌트 표시명과 동기화: tenantId={}", tenantId);
@@ -186,8 +193,11 @@ public class BrandingService {
 
     /**
      * 로고 업로드
+     *
+     * <p>Phase1 B7: 테넌트 브랜딩(로고 URL) 변경 시 {@code tenantById} 캐시 evict.</p>
      */
     @Transactional
+    @CacheEvict(value = "tenantById", key = "#tenantId")
     public BrandingInfo uploadLogo(String tenantId, MultipartFile logoFile) {
         log.info("로고 업로드 시작: tenantId={}, fileName={}, size={}", 
             tenantId, logoFile.getOriginalFilename(), logoFile.getSize());

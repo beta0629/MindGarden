@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.dto.BranchCreateRequest;
 import com.coresolution.consultation.dto.BranchResponse;
 import com.coresolution.consultation.dto.BranchUpdateRequest;
@@ -51,6 +52,18 @@ public interface BranchService extends BaseService<Branch, Long> {
      * 모든 활성 지점 조회
      */
     List<BranchResponse> getAllActiveBranches();
+
+    /**
+     * 테넌트 + 지점 코드로 지점명만 단건 조회 (Phase1 B7).
+     *
+     * <p>{@code /auth/current-user} 응답 흐름에서 지점명만 필요한 경우 사용.
+     * {@link #getAllActiveBranches()} 의 멀티테넌트 N+1 패턴을 회피하기 위해 추가됨.</p>
+     *
+     * @param tenantId   테넌트 UUID
+     * @param branchCode 지점 코드
+     * @return 지점명 한글 (없으면 {@link Optional#empty()})
+     */
+    Optional<String> getBranchNameByCode(String tenantId, String branchCode);
     
     /**
      * 지점 유형별 조회

@@ -55,13 +55,61 @@ class ConsultantClientMappingAddSessionsTest {
     }
 
     @Test
-    @DisplayName("추가 회기 수 1 미만이면 예외")
+    @DisplayName("기존 회기 수가 null이면 0으로 간주하여 합산")
+    void addSessions_treatsNullSessionCountsAsZero() {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+
+        mapping.addSessions(5);
+
+        assertThat(mapping.getTotalSessions()).isEqualTo(5);
+        assertThat(mapping.getRemainingSessions()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("추가 회기 수가 null이거나 1 미만이면 예외")
     void addSessions_rejectsInvalidCount() {
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setTotalSessions(10);
         mapping.setRemainingSessions(10);
 
+        assertThatThrownBy(() -> mapping.addSessions(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("추가 회기 수는 1 이상이어야 합니다.");
         assertThatThrownBy(() -> mapping.addSessions(0))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("추가 회기 수는 1 이상이어야 합니다.");
+        assertThatThrownBy(() -> mapping.addSessions(-1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("추가 회기 수는 1 이상이어야 합니다.");
+    }
+
+    @Test
+    @DisplayName("전체 회기 합산이 정수 범위를 초과하면 기존 값을 유지하고 예외")
+    void addSessions_rejectsTotalSessionsOverflowWithoutMutation() {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setTotalSessions(Integer.MAX_VALUE);
+        mapping.setRemainingSessions(10);
+
+        assertThatThrownBy(() -> mapping.addSessions(1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("회기 수 합산 결과가 허용 범위를 초과합니다.")
+                .hasCauseInstanceOf(ArithmeticException.class);
+        assertThat(mapping.getTotalSessions()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(mapping.getRemainingSessions()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("잔여 회기 합산이 정수 범위를 초과하면 기존 값을 유지하고 예외")
+    void addSessions_rejectsRemainingSessionsOverflowWithoutMutation() {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setTotalSessions(10);
+        mapping.setRemainingSessions(Integer.MAX_VALUE);
+
+        assertThatThrownBy(() -> mapping.addSessions(1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("회기 수 합산 결과가 허용 범위를 초과합니다.")
+                .hasCauseInstanceOf(ArithmeticException.class);
+        assertThat(mapping.getTotalSessions()).isEqualTo(10);
+        assertThat(mapping.getRemainingSessions()).isEqualTo(Integer.MAX_VALUE);
     }
 }

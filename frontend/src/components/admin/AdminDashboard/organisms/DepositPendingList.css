@@ -34,6 +34,34 @@
   margin-bottom: var(--mg-spacing-sm, 0.5rem);
 }
 
+.deposit-pending-list__parties,
+.deposit-pending-list__payment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+}
+
+.deposit-pending-list__client {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-xs);
+}
+
+.deposit-pending-list__consultant {
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.deposit-pending-list__payment strong {
+  color: var(--mg-color-primary-main);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.deposit-pending-list__table .mg-v2-card-actions {
+  justify-content: flex-start;
+}
+
 .deposit-pending-list__empty {
   margin: 0;
   padding: var(--mg-spacing-md, 0.75rem) 0;

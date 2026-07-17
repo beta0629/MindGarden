@@ -3,7 +3,8 @@ import { User, Link2, UserCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import SafeText from '../../common/SafeText';
-import { apiPost } from '../../../utils/ajax';
+import StandardizedApi from '../../../utils/standardizedApi';
+import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import ActionBar from '../../common/ActionBar';
 import ActionBarButton from '../../common/ActionBarButton';
@@ -64,13 +65,14 @@ const MappingDepositModal = ({
         setIsLoading(true);
         
         try {
-            // 표준화 2025-12-08: API 경로 표준화 및 apiPost 사용
-            const response = await apiPost(`/api/v1/admin/mappings/${mapping.id}/confirm-deposit`, {
+            const response = await StandardizedApi.post(
+              API_ENDPOINTS.ADMIN.MAPPINGS.CONFIRM_DEPOSIT(mapping.id),
+              {
                 depositReference: depositReference.trim()
-            });
+              }
+            );
 
-            // apiPost는 ApiResponse의 data만 반환하므로, response가 존재하면 성공
-            if (response) {
+            if (response?.success !== false) {
                 notificationManager.success('✅ 입금이 성공적으로 확인되었습니다.');
                 onDepositConfirmed?.(mapping.id);
                 handleClose();

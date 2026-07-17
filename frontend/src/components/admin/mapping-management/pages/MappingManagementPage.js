@@ -50,6 +50,7 @@ import {
   buildMappingManagementDefaultSavedView
 } from '../../../../constants/mappingManagementSavedViewConstants';
 import { useTranslation } from 'react-i18next';
+import { DEPOSIT_QUEUE_REFRESH_EVENT } from '../../../../utils/depositPendingQueue';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_MAPPING_STATUS = '/api/v1/common-codes/groups/MAPPING_STATUS';
@@ -247,6 +248,16 @@ const MappingManagementPage = () => {
   useEffect(() => {
     loadMappings();
     loadMappingStatusInfo();
+  }, []);
+
+  useEffect(() => {
+    const handleDepositQueueRefresh = () => {
+      loadMappings();
+    };
+    window.addEventListener(DEPOSIT_QUEUE_REFRESH_EVENT, handleDepositQueueRefresh);
+    return () => {
+      window.removeEventListener(DEPOSIT_QUEUE_REFRESH_EVENT, handleDepositQueueRefresh);
+    };
   }, []);
 
   useEffect(() => {

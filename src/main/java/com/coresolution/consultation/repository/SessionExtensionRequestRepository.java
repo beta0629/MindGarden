@@ -3,7 +3,9 @@ package com.coresolution.consultation.repository;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,6 +29,19 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
      */
     @Query("SELECT ser FROM SessionExtensionRequest ser WHERE ser.tenantId = :tenantId AND ser.id = :id")
     Optional<SessionExtensionRequest> findByTenantIdAndId(@Param("tenantId") String tenantId, @Param("id") Long id);
+
+    /**
+     * 입금 확인 중 동일 요청의 중복 처리를 막기 위해 행 잠금으로 조회한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param id 요청 PK
+     * @return 해당 테넌트의 잠긴 요청
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ser FROM SessionExtensionRequest ser WHERE ser.tenantId = :tenantId AND ser.id = :id")
+    Optional<SessionExtensionRequest> findByTenantIdAndIdForUpdate(
+            @Param("tenantId") String tenantId,
+            @Param("id") Long id);
 
     /**
      * 테넌트 ID와 요청 ID로 단건 조회 (연관 엔티티 fetch join)
@@ -80,9 +95,9 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
            "LEFT JOIN FETCH m.client c " +
            "LEFT JOIN FETCH m.consultant co " +
            "LEFT JOIN FETCH ser.requester r " +
-           "WHERE ser.status = 'PENDING' " +
+           "WHERE ser.tenantId = :tenantId AND ser.status = 'PENDING' " +
            "ORDER BY ser.createdAt ASC")
-    List<SessionExtensionRequest> findPendingPaymentRequests();
+    List<SessionExtensionRequest> findPendingPaymentRequests(@Param("tenantId") String tenantId);
     
     /**
      * 관리자 승인 대기 중인 요청 목록 조회 (매핑 정보 포함)

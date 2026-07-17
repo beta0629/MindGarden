@@ -169,6 +169,23 @@ public class SessionExtensionRequest {
         this.rejectionReason = reason;
         this.rejectedAt = LocalDateTime.now();
     }
+
+    /**
+     * 입금 전 요청 취소 처리.
+     *
+     * <p>회기 합산 전 상태인 {@link ExtensionStatus#PENDING} 에서만 취소할 수 있다.</p>
+     *
+     * @param reason 취소 사유
+     * @throws IllegalStateException 입금 확인이 시작됐거나 이미 종료된 요청인 경우
+     */
+    public void cancel(String reason) {
+        if (this.status != ExtensionStatus.PENDING) {
+            throw new IllegalStateException("취소할 수 없는 상태입니다: " + this.status);
+        }
+        this.status = ExtensionStatus.REJECTED;
+        this.rejectionReason = reason;
+        this.rejectedAt = LocalDateTime.now();
+    }
     
      /**
      * 완료 처리

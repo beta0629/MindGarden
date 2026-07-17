@@ -119,6 +119,8 @@
   min-width: min(100%, 260px);
   max-width: min(100%, 560px);
   box-sizing: border-box;
+  /* 액션 CTA wrap/스택 시 부모 clip 방지 */
+  overflow: visible;
 }
 
 /* Admin Dark Mode C-3 — visualization group */

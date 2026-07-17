@@ -118,6 +118,7 @@ import {
   DEPOSIT_QUEUE_REFRESH_EVENT,
   DEPOSIT_SOURCE_TYPES
 } from '../../utils/depositPendingQueue';
+import { SESSION_EXTENSION_UI } from '../../utils/sessionExtensionPending';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // /api/v1/admin/mappings 는 SSOT(API_ENDPOINTS.ADMIN.MAPPINGS.LIST) 사용
@@ -203,6 +204,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [matchingQueueLoading, setMatchingQueueLoading] = useState(false);
   const [depositModalMapping, setDepositModalMapping] = useState(null);
   const [sessionExtensionPaymentRequest, setSessionExtensionPaymentRequest] = useState(null);
+  const [sessionExtensionCancellingId, setSessionExtensionCancellingId] = useState('');
   const [showErpReport, setShowErpReport] = useState(false);
   const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
   const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
@@ -644,6 +646,46 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
     setDepositModalMapping({ ...item, id: item.sourceId });
   }, []);
+
+  const cancelSessionExtensionRequest = useCallback(async(item) => {
+    const requestId = item?.sourceId ?? item?.id;
+    if (requestId == null) {
+      return false;
+    }
+    const confirmed = await confirm({
+      message: SESSION_EXTENSION_UI.CANCEL_CONFIRM_MESSAGE,
+      variant: 'danger'
+    });
+    if (!confirmed) {
+      return false;
+    }
+    setSessionExtensionCancellingId(String(item.id ?? requestId));
+    try {
+      const result = await StandardizedApi.post(
+        API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.CANCEL(requestId),
+        { reason: SESSION_EXTENSION_UI.CANCEL_REASON }
+      );
+      if (result?.success === false) {
+        throw new Error(result.message || '회기 추가 요청 취소에 실패했습니다.');
+      }
+      notificationManager.success(SESSION_EXTENSION_UI.CANCEL_SUCCESS);
+      setSessionExtensionPaymentRequest(null);
+      await refreshAfterDepositConfirmation();
+      return true;
+    } catch (error) {
+      console.error('회기 추가 요청 취소 실패:', error);
+      notificationManager.error(
+        error?.message || '회기 추가 요청 취소에 실패했습니다.'
+      );
+      return false;
+    } finally {
+      setSessionExtensionCancellingId('');
+    }
+  }, [confirm, refreshAfterDepositConfirmation]);
+
+  const handleDepositPendingCancel = useCallback((item) => {
+    cancelSessionExtensionRequest(item);
+  }, [cancelSessionExtensionRequest]);
 
   const handleAutoCompleteSchedules = async() => {
     setAutoCompleteLoading(true);
@@ -1761,6 +1803,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         <DepositPendingList
           items={pendingDepositList}
           onItemAction={handleDepositPendingAction}
+          onItemCancel={handleDepositPendingCancel}
+          processingItemId={sessionExtensionCancellingId}
         />
         <SchedulePendingList
           items={schedulePendingList.map((s) => ({
@@ -2023,6 +2067,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         request={sessionExtensionPaymentRequest}
         onClose={() => setSessionExtensionPaymentRequest(null)}
         onConfirmed={refreshAfterDepositConfirmation}
+        onCancelRequest={cancelSessionExtensionRequest}
+        isCancelling={Boolean(
+          sessionExtensionPaymentRequest
+          && sessionExtensionCancellingId
+          && String(sessionExtensionCancellingId) === String(sessionExtensionPaymentRequest.id)
+        )}
       />
 
       {/* AI 모니터링(시스템 모니터링) */}

@@ -71,6 +71,25 @@
   box-shadow: none;
 }
 
+/* desync-cancel — Danger CTA 강조 (스펙 §2 Danger) */
+.mg-v2-mapping-match-actions__cancel-btn.integrated-schedule__action-danger {
+  background-color: var(--mg-error-600);
+  border-color: var(--mg-error-600);
+  color: var(--mg-color-white);
+}
+
+.mg-v2-mapping-match-actions__cancel-btn.integrated-schedule__action-danger:hover:not(:disabled) {
+  background-color: var(--mg-error-700);
+  border-color: var(--mg-error-700);
+  color: var(--mg-color-white);
+}
+
+.mg-v2-mapping-match-actions__cancel-btn.integrated-schedule__action-danger:active:not(:disabled) {
+  background-color: var(--mg-error-700);
+  border-color: var(--mg-error-700);
+  color: var(--mg-color-white);
+}
+
 /*
  * 다크 모드 cascade — SSOT 의 dark 정의(--mg-color-error-dark 는 red-300 톤,
  * --mg-color-error-100 은 red-900 톤) 를 활용한 대비 반전.

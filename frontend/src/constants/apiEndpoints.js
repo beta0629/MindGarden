@@ -56,12 +56,23 @@ export const API_ENDPOINTS = {
       // R4 (옵션 B 디러티 PENDING_PAYMENT 정리): 관리자 매칭 강제 종료. PENDING_PAYMENT 매칭은
       // 환불 우회 + paymentStatus REJECTED + 연결된 TENTATIVE_PENDING_PAYMENT 가예약 자동 취소.
       TERMINATE: (mappingId) => `/api/v1/admin/mappings/${mappingId}/terminate`,
+      /**
+       * desync-cleanup — 스케줄-only 미래 점유 일정 일괄 CANCELLED.
+       * 매핑 terminate/환불과 무관. 이미 TERMINATED여도 스케줄만 취소.
+       */
+      CLEANUP_FUTURE_SCHEDULES: (mappingId) =>
+        `/api/v1/admin/mappings/${mappingId}/cleanup-future-schedules`,
       // 옵션 B R4 — 디러티 PENDING_PAYMENT 매핑 어드민 수동 정리 (조회/단건/일괄)
       PENDING_PAYMENT_DIRTY: '/api/v1/admin/mappings/pending-payment-dirty',
       CLEANUP_PENDING_PAYMENT: (mappingId) =>
         `/api/v1/admin/mappings/${mappingId}/cleanup-pending-payment`,
       PENDING_PAYMENT_DIRTY_BULK_CLEANUP:
         '/api/v1/admin/mappings/pending-payment-dirty/bulk-cleanup'
+    },
+
+    /** 회기 동기화 — ACTIVE→SESSIONS_EXHAUSTED 등 상태 정합 (desync-status CTA) */
+    SESSION_SYNC: {
+      VALIDATE_MAPPING: (mappingId) => `/api/v1/admin/session-sync/validate/${mappingId}`
     },
 
     SESSION_EXTENSIONS: {

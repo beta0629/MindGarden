@@ -11,6 +11,15 @@ import { useTranslation } from 'react-i18next';
 import SafeText from '../../../../common/SafeText';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import { renderCompactPackageName } from '../../../../../utils/packagePricing';
+import {
+  MAPPING_SCHEDULE_STATUS_KIND,
+  resolveMappingScheduleStatus
+} from '../utils/mappingScheduleStatusDisplay';
+import {
+  MAPPING_DESYNC_BADGE_VARIANT,
+  MAPPING_DESYNC_KIND,
+  resolveMappingScheduleDesync
+} from '../utils/mappingScheduleDesync';
 import './MatchingScheduleCompactRow.css';
 
 const STATUS_ACCENT_CLASS = {
@@ -57,6 +66,25 @@ const MatchingScheduleCompactRow = ({
     secondaryLabel = `회기추가 입금대기${pendingSuffix}`;
   }
 
+  const scheduleStatus = resolveMappingScheduleStatus(mapping);
+  const scheduleStatusLabel = toDisplayString(scheduleStatus.label, '');
+  const desync = resolveMappingScheduleDesync(mapping);
+  const desyncBadgeLabel = toDisplayString(desync.badgeLabel, '');
+  const desyncTooltip = toDisplayString(desync.tooltip, '');
+  const showDesyncText = desync.isDesync && Boolean(desyncBadgeLabel);
+  const showSessionsInProgressHint =
+    desync.kind === MAPPING_DESYNC_KIND.SESSIONS_IN_PROGRESS;
+
+  const statusSegment = showDesyncText
+    ? desyncBadgeLabel
+    : scheduleStatusLabel;
+  const secondaryTitle = [
+    secondaryLabel,
+    statusSegment,
+    showSessionsInProgressHint ? desyncTooltip : '',
+    showDesyncText ? desyncTooltip : ''
+  ].filter(Boolean).join(' | ');
+
   const handleClick = () => {
     if (onOpenPeek) {
       onOpenPeek(mapping);
@@ -74,6 +102,24 @@ const MatchingScheduleCompactRow = ({
   };
 
   const accentClass = resolveAccentClass(mapping?.status);
+  let scheduleStatusClass =
+    scheduleStatus.kind === MAPPING_SCHEDULE_STATUS_KIND.REGISTERED
+      ? 'integrated-schedule__compact-schedule-status--registered'
+      : 'integrated-schedule__compact-schedule-status--muted';
+  if (showDesyncText) {
+    scheduleStatusClass =
+      desync.badgeVariant === MAPPING_DESYNC_BADGE_VARIANT.ERROR
+        ? 'integrated-schedule__compact-schedule-status--desync-error'
+        : 'integrated-schedule__compact-schedule-status--desync-warning';
+  }
+
+  let ariaLabel;
+  if (onOpenPeek) {
+    ariaLabel = `${partiesLabel} 상세 보기`;
+    if (desyncTooltip) {
+      ariaLabel = `${ariaLabel} — ${desyncTooltip}`;
+    }
+  }
 
   return (
     <div
@@ -84,7 +130,7 @@ const MatchingScheduleCompactRow = ({
       tabIndex={onOpenPeek ? 0 : undefined}
       onClick={onOpenPeek ? handleClick : undefined}
       onKeyDown={onOpenPeek ? handleKeyDown : undefined}
-      aria-label={onOpenPeek ? `${partiesLabel} 상세 보기` : undefined}
+      aria-label={ariaLabel}
       title={partiesLabel}
     >
       <span className="integrated-schedule__compact-row-accent" aria-hidden="true" />
@@ -105,8 +151,18 @@ const MatchingScheduleCompactRow = ({
           {renderCompactPackageName(mapping.packageName)}
         </span>
       )}
-      <span className="integrated-schedule__compact-row-secondary" title={secondaryLabel}>
+      <span className="integrated-schedule__compact-row-secondary" title={secondaryTitle}>
         <SafeText>{secondaryLabel}</SafeText>
+        {statusSegment ? (
+          <>
+            <span className="integrated-schedule__compact-row-sep" aria-hidden="true">|</span>
+            <SafeText
+              className={`integrated-schedule__compact-schedule-status ${scheduleStatusClass}`}
+            >
+              {statusSegment}
+            </SafeText>
+          </>
+        ) : null}
       </span>
     </div>
   );
@@ -120,7 +176,10 @@ MatchingScheduleCompactRow.propTypes = {
     packageName: PropTypes.string,
     status: PropTypes.string,
     remainingSessions: PropTypes.number,
-    pendingSessionExtension: PropTypes.object
+    pendingSessionExtension: PropTypes.object,
+    hasConsultationSchedule: PropTypes.bool,
+    nextConsultationDate: PropTypes.string,
+    paymentTiming: PropTypes.string
   }),
   onOpenPeek: PropTypes.func,
   isActive: PropTypes.bool

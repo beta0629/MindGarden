@@ -56,12 +56,15 @@ const MatchingScheduleList = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onDesyncAction,
   onSessionExtension,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
   approveProcessing,
   cancelPendingProcessing,
-  cancelTargetMappingId
+  cancelTargetMappingId,
+  desyncProcessing,
+  desyncTargetMappingId
 }) => {
   const listRef = useRef(null);
 
@@ -153,6 +156,7 @@ const MatchingScheduleList = ({
                   onApprove={onApprove}
                   onCheckoutSameDay={onCheckoutSameDay}
                   onCancelPendingMapping={onCancelPendingMapping}
+                  onDesyncAction={onDesyncAction}
                   onSessionExtension={onSessionExtension}
                   onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
                   onCancelSessionExtension={onCancelSessionExtension}
@@ -160,6 +164,10 @@ const MatchingScheduleList = ({
                   cancelPendingProcessing={
                     cancelPendingProcessing
                     && cancelTargetMappingId === mapping.id
+                  }
+                  desyncProcessing={
+                    desyncProcessing
+                    && String(desyncTargetMappingId) === String(mapping.id)
                   }
                 />
               </li>
@@ -185,12 +193,15 @@ MatchingScheduleList.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
+  onDesyncAction: PropTypes.func,
   onSessionExtension: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool,
-  cancelTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  cancelTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  desyncProcessing: PropTypes.bool,
+  desyncTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 MatchingScheduleList.defaultProps = {
@@ -205,12 +216,15 @@ MatchingScheduleList.defaultProps = {
   onApprove: null,
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
+  onDesyncAction: null,
   onSessionExtension: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
   approveProcessing: false,
   cancelPendingProcessing: false,
-  cancelTargetMappingId: null
+  cancelTargetMappingId: null,
+  desyncProcessing: false,
+  desyncTargetMappingId: null
 };
 
 export default MatchingScheduleList;

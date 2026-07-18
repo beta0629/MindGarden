@@ -1034,6 +1034,10 @@ public class AdminController extends BaseApiController {
         Set<String> consultantClientKeysWithOccupyingSchedules =
                 adminService.getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(tenantId,
                         occupyingScheduleFromDate);
+        Set<Long> mappingIdsWithConsultationSchedule =
+                adminService.getMappingIdsWithOccupyingConsultationSchedules(tenantId);
+        Map<Long, LocalDate> nextConsultationDateByMappingId =
+                adminService.getNextConsultationDateByMappingId(tenantId, occupyingScheduleFromDate);
 
         List<Map<String, Object>> mappingData = mappings.stream().map(mapping -> {
             Map<String, Object> data = new java.util.HashMap<>();
@@ -1100,6 +1104,16 @@ public class AdminController extends BaseApiController {
                 boolean hasUpcomingConsultationSchedule = cid != null && clid != null
                         && consultantClientKeysWithOccupyingSchedules.contains(cid + "_" + clid);
                 data.put("hasUpcomingConsultationSchedule", hasUpcomingConsultationSchedule);
+
+                Long mappingId = mapping.getId();
+                boolean hasConsultationSchedule = mappingId != null
+                        && mappingIdsWithConsultationSchedule.contains(mappingId);
+                data.put("hasConsultationSchedule", hasConsultationSchedule);
+                LocalDate nextConsultationDate = mappingId != null
+                        ? nextConsultationDateByMappingId.get(mappingId)
+                        : null;
+                data.put("nextConsultationDate",
+                        nextConsultationDate != null ? nextConsultationDate.toString() : null);
             } catch (Exception e) {
                 log.warn("매칭 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
                 data.put("id", mapping.getId());
@@ -1112,6 +1126,8 @@ public class AdminController extends BaseApiController {
                 data.put("assignedAt", null);
                 data.put("createdAt", mapping.getCreatedAt());
                 data.put("hasUpcomingConsultationSchedule", false);
+                data.put("hasConsultationSchedule", false);
+                data.put("nextConsultationDate", null);
             }
             return data;
         }).collect(java.util.stream.Collectors.toList());
@@ -2217,6 +2233,21 @@ public class AdminController extends BaseApiController {
         String reason = (String) requestBody.get("reason");
         adminService.terminateMapping(id, reason);
         return success("매칭이 성공적으로 종료되었습니다");
+    }
+
+    /**
+     * desync-cleanup — 스케줄-only 미래 점유 일정 정리.
+     * 매핑 terminate/환불 없음. 이미 TERMINATED여도 스케줄만 CANCELLED.
+     */
+    @PostMapping("/mappings/{id}/cleanup-future-schedules")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> cleanupFutureSchedulesForMapping(
+            @PathVariable Long id) {
+        log.info("🔧 desync-cleanup 미래 일정 정리: MappingID={}", id);
+        int cancelledCount = adminService.cleanupFutureSchedulesForMapping(id);
+        Map<String, Object> data = new HashMap<>();
+        data.put("mappingId", id);
+        data.put("cancelledScheduleCount", cancelledCount);
+        return success("잔여 일정을 정리했습니다.", data);
     }
 
     /**

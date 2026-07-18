@@ -29,3 +29,93 @@
   min-width: 0;
   white-space: nowrap;
 }
+
+/* 스케줄 등록 상태 배지 — INTEGRATED_SCHEDULE_CARD_SCHEDULE_STATUS_SPEC */
+.integrated-schedule__card-schedule-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mg-spacing-lg, 24px);
+  padding: var(--mg-spacing-2, 2px) var(--mg-spacing-6, 6px);
+  border-radius: var(--mg-radius-full);
+  font-size: var(--mg-font-xs, 0.75rem);
+  font-weight: 600;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.integrated-schedule__card-schedule-status--registered {
+  background-color: var(--mg-primary-100);
+  color: var(--mg-primary-700);
+  border: 1px solid transparent;
+}
+
+.integrated-schedule__card-schedule-status--history {
+  background-color: var(--mg-gray-100);
+  color: var(--mg-gray-700);
+  border: 1px solid transparent;
+}
+
+.integrated-schedule__card-schedule-status--none {
+  background-color: transparent;
+  color: var(--mg-gray-500);
+  border: 1px solid var(--mg-gray-300);
+}
+
+/* desync 배지 — INTEGRATED_SCHEDULE_CARD_DESYNC_SPEC (스케줄 배지보다 높은 위계) */
+.integrated-schedule__card-desync-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mg-spacing-lg, 24px);
+  padding: var(--mg-spacing-2, 2px) var(--mg-spacing-6, 6px);
+  border-radius: var(--mg-radius-full);
+  font-size: var(--mg-font-xs, 0.75rem);
+  font-weight: 600;
+  white-space: nowrap;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+}
+
+.integrated-schedule__card-desync-badge--warning {
+  background-color: var(--mg-warning-100);
+  color: var(--mg-warning-700);
+}
+
+.integrated-schedule__card-desync-badge--error {
+  background-color: var(--mg-error-100);
+  color: var(--mg-error-700);
+}
+
+/* Danger CTA — desync 액션 */
+.integrated-schedule__action-danger.mg-button,
+.integrated-schedule__card-actions .integrated-schedule__action-danger {
+  background-color: var(--mg-error-600);
+  color: var(--mg-color-white);
+  border-color: var(--mg-error-600);
+}
+
+.integrated-schedule__action-danger.mg-button:hover:not(:disabled),
+.integrated-schedule__card-actions .integrated-schedule__action-danger:hover:not(:disabled) {
+  background-color: var(--mg-error-700);
+  border-color: var(--mg-error-700);
+  color: var(--mg-color-white);
+}
+
+.integrated-schedule__desync-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  text-align: center;
+}
+
+.integrated-schedule__desync-modal-icon {
+  color: var(--mg-error-600);
+  flex-shrink: 0;
+}
+
+.integrated-schedule__desync-modal-message {
+  margin: 0;
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-sm, 0.875rem);
+  line-height: 1.5;
+}

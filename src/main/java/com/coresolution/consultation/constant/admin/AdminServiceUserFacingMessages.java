@@ -360,6 +360,16 @@ public final class AdminServiceUserFacingMessages {
     public static final String PENDING_PAYMENT_CANCEL_REASON_CODE = "PENDING_PAYMENT_CANCEL";
 
     /**
+     * desync-cleanup — 종료·비활성·일시정지 매칭의 잔여 미래 점유 일정 정리(스케줄-only).
+     * 매핑 terminate/환불과 무관.
+     */
+    public static final String SCHEDULE_NOTES_PREFIX_DESYNC_CLEANUP =
+            "[DESYNC_CLEANUP 종료 매칭 잔여 일정 정리] ";
+
+    /** desync-cleanup audit 사유 코드. */
+    public static final String DESYNC_CLEANUP_REASON_CODE = "DESYNC_CLEANUP";
+
+    /**
      * R4 — 결제 대기 매칭 관리자 취소 매핑 notes 한 줄 (인자: 일시, 사유, 취소된 가예약 수).
      */
     public static final String NOTES_PENDING_PAYMENT_CANCEL_LINE_FMT =

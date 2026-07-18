@@ -30,6 +30,7 @@ const MappingMatchActions = ({
   onCheckoutSameDay,
   onCancelPendingMapping,
   cancelPendingProcessing = false,
+  emphasizeCancelDanger = false,
   disabled = false,
   loading = false,
   buttonClassName = ''
@@ -144,7 +145,10 @@ const MappingMatchActions = ({
       {showCancelPending && (
         <button
           type="button"
-          className="mg-v2-mapping-match-actions__cancel-btn"
+          className={[
+            'mg-v2-mapping-match-actions__cancel-btn',
+            emphasizeCancelDanger ? 'integrated-schedule__action-danger' : ''
+          ].filter(Boolean).join(' ')}
           onClick={() => onCancelPendingMapping(mapping)}
           disabled={cancelPendingProcessing}
           aria-label={t('admin:mapping.card.actions.cancel')}
@@ -170,6 +174,7 @@ MappingMatchActions.propTypes = {
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
   cancelPendingProcessing: PropTypes.bool,
+  emphasizeCancelDanger: PropTypes.bool,
   disabled: PropTypes.bool,
   loading: PropTypes.bool,
   buttonClassName: PropTypes.string
@@ -183,6 +188,7 @@ MappingMatchActions.defaultProps = {
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
   cancelPendingProcessing: false,
+  emphasizeCancelDanger: false,
   disabled: false,
   loading: false,
   buttonClassName: ''

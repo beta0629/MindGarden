@@ -2669,6 +2669,67 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     @Override
+    public Set<Long> getMappingIdsWithOccupyingConsultationSchedules(String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            return Collections.emptySet();
+        }
+        try {
+            List<ScheduleStatus> occupying = List.of(
+                    ScheduleStatus.BOOKED,
+                    ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
+                    ScheduleStatus.CONFIRMED);
+            List<Long> ids = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
+                    tenantId, occupying);
+            Set<Long> result = new HashSet<>();
+            if (ids != null) {
+                for (Long id : ids) {
+                    if (id != null) {
+                        result.add(id);
+                    }
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getMappingIdsWithOccupyingConsultationSchedules 실패: {}", e.getMessage());
+            return Collections.emptySet();
+        }
+    }
+
+    @Override
+    public Map<Long, LocalDate> getNextConsultationDateByMappingId(String tenantId, LocalDate fromDate) {
+        if (tenantId == null || tenantId.isEmpty() || fromDate == null) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<ScheduleStatus> occupying = List.of(
+                    ScheduleStatus.BOOKED,
+                    ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
+                    ScheduleStatus.CONFIRMED);
+            List<Object[]> rows = scheduleRepository.findNextConsultationDateByMappingIdOnOrAfter(
+                    tenantId, fromDate, occupying);
+            Map<Long, LocalDate> result = new HashMap<>();
+            if (rows != null) {
+                for (Object[] row : rows) {
+                    if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                        continue;
+                    }
+                    Long mappingId = row[0] instanceof Long
+                            ? (Long) row[0]
+                            : Long.valueOf(row[0].toString());
+                    LocalDate nextDate = row[1] instanceof LocalDate
+                            ? (LocalDate) row[1]
+                            : LocalDate.parse(row[1].toString());
+                    result.put(mappingId, nextDate);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("getNextConsultationDateByMappingId 실패: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    @Override
     public User updateConsultant(Long id, ConsultantRegistrationRequest request) {
         if (request == null) {
             throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_REQUEST_BODY_MISSING);
@@ -3983,17 +4044,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 회기 소진(remaining<=0) 또는 강제 종료된 매핑의 미래 BOOKED/CONFIRMED 일정을 일괄 CANCELLED로 전이한다.
+     * 회기 소진(remaining&lt;=0) 또는 강제 종료된 매핑의 미래 점유 일정을 일괄 CANCELLED로 전이한다.
      *
      * <p>SSOT 핫픽스 2026-05-26 (P0-B): {@code terminateMapping}과 {@code partialRefundMapping}이
      * 회기 소진 시 동일한 후처리(미래 일정 일괄 취소)를 수행하도록 정합성을 맞춘다.</p>
+     *
+     * <p>desync-cleanup (2026-07-18): mappingId 일치(또는 legacy null mappingId + 동일 상담사·내담자)
+     * 만 대상으로 하며, 점유 상태 BOOKED / CONFIRMED / TENTATIVE_PENDING_PAYMENT 를 취소한다.
+     * package 가시성으로 thin API 에서 재사용한다.</p>
      *
      * @param mapping  대상 매핑 (consultant, client 초기화 필수)
      * @param tenantId 테넌트 ID
      * @param reason   취소 사유 (스케줄 notes 누적용)
      * @return 취소된 스케줄 개수 (실패 시 0)
      */
-    private int cancelFutureSchedulesForExhaustedMapping(ConsultantClientMapping mapping, String tenantId, String reason) {
+    int cancelFutureSchedulesForExhaustedMapping(ConsultantClientMapping mapping, String tenantId, String reason) {
         try {
             log.info("🔍 환불/소진 처리 관련 스케줄 조회 시작: MappingID={}, 상담사ID={}, 내담자ID={}, 오늘날짜={}",
                     mapping.getId(), mapping.getConsultant().getId(), mapping.getClient().getId(), LocalDate.now());
@@ -4009,37 +4074,85 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
             String bookedStatus = getScheduleStatusCode("BOOKED");
             String confirmedStatus = getScheduleStatusCode("CONFIRMED");
+            String tentativeStatus = ScheduleStatus.TENTATIVE_PENDING_PAYMENT.name();
             String cancelledStatus = getScheduleStatusCode("CANCELLED");
+            Long mappingId = mapping.getId();
+
+            String notesPrefix = AdminServiceUserFacingMessages.DESYNC_CLEANUP_REASON_CODE.equals(reason)
+                    ? AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_DESYNC_CLEANUP
+                    : AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL;
 
             int cancelledScheduleCount = 0;
             for (Schedule schedule : futureSchedules) {
+                // mappingId 필터: 동일 상담사·내담자의 다른 매칭 일정을 침범하지 않음.
+                // legacy(null mappingId)만 동일 페어 fallback 허용.
+                Long scheduleMappingId = schedule.getMappingId();
+                boolean mappingMatches = mappingId != null
+                        && (mappingId.equals(scheduleMappingId)
+                        || (scheduleMappingId == null));
+                if (!mappingMatches) {
+                    log.info("⏭️ 스케줄 취소 스킵: ID={}, mappingId={} (대상 매핑 {} 불일치)",
+                            schedule.getId(), scheduleMappingId, mappingId);
+                    continue;
+                }
+
                 log.info("📋 스케줄 확인: ID={}, 날짜={}, 시간={}-{}, 상태={}, 상담사ID={}, 내담자ID={}",
                         schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(),
                         schedule.getStatus(), schedule.getConsultantId(), schedule.getClientId());
 
-                if (schedule.getStatus().name().equals(bookedStatus) || schedule.getStatus().name().equals(confirmedStatus)) {
+                String statusName = schedule.getStatus() != null ? schedule.getStatus().name() : "";
+                boolean occupying = statusName.equals(bookedStatus)
+                        || statusName.equals(confirmedStatus)
+                        || statusName.equals(tentativeStatus);
+                if (occupying) {
                     log.info("🚫 스케줄 취소 처리: ID={}, 기존상태={}", schedule.getId(), schedule.getStatus());
 
                     schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
                     schedule.setNotes(schedule.getNotes() != null
-                            ? schedule.getNotes() + "\n" + AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL + reason
-                            : AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL + reason);
+                            ? schedule.getNotes() + "\n" + notesPrefix + reason
+                            : notesPrefix + reason);
                     schedule.setUpdatedAt(LocalDateTime.now());
                     scheduleRepository.save(schedule);
                     cancelledScheduleCount++;
 
                     log.info("✅ 스케줄 취소 완료: ID={}, 새상태={}", schedule.getId(), schedule.getStatus());
                 } else {
-                    log.info("⏭️ 스케줄 취소 스킵: ID={}, 상태={} (BOOKED/CONFIRMED가 아님)", schedule.getId(), schedule.getStatus());
+                    log.info("⏭️ 스케줄 취소 스킵: ID={}, 상태={} (점유 상태 아님)", schedule.getId(), schedule.getStatus());
                 }
             }
 
-            log.info("📅 환불/소진 처리로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
+            log.info("📅 환불/소진/desync 처리로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
             return cancelledScheduleCount;
         } catch (Exception e) {
             log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", mapping.getId(), e);
             return 0;
         }
+    }
+
+    /**
+     * desync-cleanup thin API — 매핑 terminate 없이 미래 점유 일정만 정리.
+     *
+     * @param mappingId 대상 매핑 ID
+     * @return 취소된 스케줄 개수
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int cleanupFutureSchedulesForMapping(Long mappingId) {
+        log.info("🔧 desync-cleanup 미래 일정 정리 시작: MappingID={}", mappingId);
+        String tenantId = getTenantId();
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        Hibernate.initialize(mapping.getConsultant());
+        Hibernate.initialize(mapping.getClient());
+        if (mapping.getConsultant() == null || mapping.getClient() == null) {
+            log.warn("desync-cleanup skip: consultant/client null MappingID={}", mappingId);
+            return 0;
+        }
+        int cancelled = cancelFutureSchedulesForExhaustedMapping(
+                mapping, tenantId, AdminServiceUserFacingMessages.DESYNC_CLEANUP_REASON_CODE);
+        log.info("✅ desync-cleanup 완료: MappingID={}, 취소={}건, mappingStatus={}",
+                mappingId, cancelled, mapping.getStatus());
+        return cancelled;
     }
 
     /**

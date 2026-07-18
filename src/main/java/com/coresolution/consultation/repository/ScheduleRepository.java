@@ -327,6 +327,30 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("fromDate") LocalDate fromDate,
             @Param("statuses") Collection<ScheduleStatus> statuses);
 
+    /**
+     * 점유 상태 상담 일정이 1건 이상인 mappingId 목록 (과거·미래 무관).
+     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich 용.
+     */
+    @Query("SELECT DISTINCT s.mappingId FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.mappingId IS NOT NULL AND s.status IN :statuses")
+    List<Long> findDistinctMappingIdsWithOccupyingSchedules(
+            @Param("tenantId") String tenantId,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
+    /**
+     * mappingId별 {@code fromDate}(포함) 이후 가장 이른 점유 상담일.
+     * 통합 스케줄 카드 {@code nextConsultationDate} enrich 용.
+     *
+     * @return 각 행 {@code [mappingId, minDate]}
+     */
+    @Query("SELECT s.mappingId, MIN(s.date) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.mappingId IS NOT NULL AND s.date >= :fromDate AND s.status IN :statuses "
+            + "GROUP BY s.mappingId")
+    List<Object[]> findNextConsultationDateByMappingIdOnOrAfter(
+            @Param("tenantId") String tenantId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
     // ==================== 시간 충돌 검사 ====================
     // 점유 상태: ScheduleServiceImpl.hasTimeConflict·ScheduleStatus#occupiesTimeForConflictCheck 와 동일 의미(Booked/확정 + 레거시 IN_PROGRESS).
 

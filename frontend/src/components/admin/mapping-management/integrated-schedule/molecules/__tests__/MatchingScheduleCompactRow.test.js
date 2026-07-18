@@ -89,4 +89,64 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getByText('Package A')).toBeInTheDocument();
     expect(screen.getByText('+2')).toBeInTheDocument();
   });
+
+  it('shows schedule status none by default in secondary', () => {
+    render(<MatchingScheduleCompactRow mapping={MOCK_MAPPING} />);
+    expect(screen.getByText('일정 미등록')).toBeInTheDocument();
+  });
+
+  it('shows registered schedule status with next date', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          hasConsultationSchedule: true,
+          nextConsultationDate: '2026-07-20'
+        }}
+      />
+    );
+    expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
+  });
+
+  it('shows history schedule status when past only', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          hasConsultationSchedule: true,
+          nextConsultationDate: null
+        }}
+      />
+    );
+    expect(screen.getByText('일정 이력 있음')).toBeInTheDocument();
+  });
+
+  it('shows desync-status text in secondary for ACTIVE remaining 0', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          remainingSessions: 0,
+          nextConsultationDate: null
+        }}
+      />
+    );
+    expect(screen.getByText('상태 불일치')).toBeInTheDocument();
+  });
+
+  it('does not show cleanup badge for SESSIONS_EXHAUSTED + nextDate', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          status: 'SESSIONS_EXHAUSTED',
+          remainingSessions: 0,
+          hasConsultationSchedule: true,
+          nextConsultationDate: '2026-07-20'
+        }}
+      />
+    );
+    expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
+    expect(screen.queryByText('일정 정리 필요')).not.toBeInTheDocument();
+  });
 });

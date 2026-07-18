@@ -83,4 +83,56 @@ describe('MappingScheduleCard SessionProgress', () => {
     expect(screen.getByText('Package A')).toBeInTheDocument();
     expect(screen.getByText('+1')).toBeInTheDocument();
   });
+
+  it('renders schedule status badge for registered next date', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          hasConsultationSchedule: true,
+          nextConsultationDate: '2026-07-20'
+        }}
+      />
+    );
+
+    expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
+  });
+
+  it('renders schedule status badge for unregistered', () => {
+    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+    expect(screen.getByText('일정 미등록')).toBeInTheDocument();
+  });
+
+  it('renders desync-status badge for ACTIVE with remaining 0', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          remainingSessions: 0,
+          hasConsultationSchedule: true,
+          nextConsultationDate: '2026-07-20'
+        }}
+      />
+    );
+    expect(screen.getByText('상태 불일치')).toBeInTheDocument();
+    expect(screen.queryByText('일정 등록 · 7/20')).not.toBeInTheDocument();
+  });
+
+  it('keeps schedule badge for SESSIONS_EXHAUSTED + nextDate (no desync CTA badge)', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          status: 'SESSIONS_EXHAUSTED',
+          remainingSessions: 0,
+          hasConsultationSchedule: true,
+          nextConsultationDate: '2026-07-20'
+        }}
+      />
+    );
+    const badge = screen.getByText('일정 등록 · 7/20');
+    expect(badge).toBeInTheDocument();
+    expect(badge.closest('[title]')).toHaveAttribute('title', '예정 상담 진행 중');
+    expect(screen.queryByText('일정 정리 필요')).not.toBeInTheDocument();
+  });
 });

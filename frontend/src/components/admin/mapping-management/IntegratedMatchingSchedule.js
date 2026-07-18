@@ -22,6 +22,7 @@ import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
 import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
 import MappingCancelModal from './molecules/MappingCancelModal';
+import MappingDesyncConfirmModal from './integrated-schedule/molecules/MappingDesyncConfirmModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import ActionBarButton from '../../common/ActionBarButton';
@@ -75,6 +76,10 @@ import {
   normalizePendingSessionExtension,
   SESSION_EXTENSION_UI
 } from '../../../utils/sessionExtensionPending';
+import {
+  MAPPING_DESYNC_CTA_TYPE,
+  MAPPING_DESYNC_KIND
+} from './integrated-schedule/utils/mappingScheduleDesync';
 import { toErrorMessage } from '../../../utils/safeDisplay';
 // T5 표준화 2026-05-21: API 경로는 SSOT(API_ENDPOINTS) 참조
 
@@ -172,6 +177,8 @@ const IntegratedMatchingSchedule = () => {
   // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 관리자 취소 확인 모달 대상 + 처리 중 플래그.
   const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
   const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
+  const [desyncTarget, setDesyncTarget] = useState(null);
+  const [desyncProcessing, setDesyncProcessing] = useState(false);
   const [peekMapping, setPeekMapping] = useState(null);
   // 월별 상담사 COMPLETED 카운트 — 캘린더 datesSet 콜백에서 갱신.
   // 초기값은 현재 년/월. 캘린더가 첫 렌더 시 onMonthChange 로 동일 값을 다시 set 해도 동일 키 → 캐시 hit.
@@ -681,6 +688,67 @@ const IntegratedMatchingSchedule = () => {
     }
   }, [cancelTargetMapping, cancelPendingProcessing, loadMappings]);
 
+  const handleRequestDesyncAction = useCallback((mapping, desyncMeta) => {
+    if (!mapping?.id || !desyncMeta?.kind || desyncProcessing) {
+      return;
+    }
+    if (desyncMeta.kind === MAPPING_DESYNC_KIND.SESSIONS_IN_PROGRESS) {
+      return;
+    }
+    if (desyncMeta.kind === MAPPING_DESYNC_KIND.CANCEL) {
+      handleRequestCancelPendingMapping(mapping);
+      return;
+    }
+    setDesyncTarget({
+      mappingId: mapping.id,
+      kind: desyncMeta.kind,
+      ctaType: desyncMeta.ctaType,
+      modalTitle: desyncMeta.modalTitle,
+      modalSubtitle: desyncMeta.modalSubtitle
+    });
+  }, [desyncProcessing, handleRequestCancelPendingMapping]);
+
+  const handleDesyncModalClose = useCallback(() => {
+    if (desyncProcessing) {
+      return;
+    }
+    setDesyncTarget(null);
+  }, [desyncProcessing]);
+
+  const handleConfirmDesyncAction = useCallback(async() => {
+    if (!desyncTarget?.mappingId || desyncProcessing) {
+      return;
+    }
+    const mappingId = desyncTarget.mappingId;
+    const ctaType = desyncTarget.ctaType;
+    setDesyncProcessing(true);
+    try {
+      if (ctaType === MAPPING_DESYNC_CTA_TYPE.CLEANUP) {
+        await StandardizedApi.post(
+          API_ENDPOINTS.ADMIN.MAPPINGS.CLEANUP_FUTURE_SCHEDULES(mappingId),
+          {}
+        );
+        notificationManager.success('잔여 일정을 정리했습니다.');
+      } else if (ctaType === MAPPING_DESYNC_CTA_TYPE.COMPLETE) {
+        await StandardizedApi.post(
+          API_ENDPOINTS.ADMIN.SESSION_SYNC.VALIDATE_MAPPING(mappingId),
+          {}
+        );
+        notificationManager.success('매칭을 완료 처리했습니다.');
+      } else {
+        notificationManager.warning('처리할 수 없는 요청입니다.');
+        return;
+      }
+      setDesyncTarget(null);
+      loadMappings();
+    } catch (error) {
+      console.error('desync 조치 실패:', error);
+      notificationManager.error(toErrorMessage(error) || '조치에 실패했습니다.');
+    } finally {
+      setDesyncProcessing(false);
+    }
+  }, [desyncTarget, desyncProcessing, loadMappings]);
+
   const handleScheduleModalClose = () => {
     setScheduleModalOpen(false);
     setPreFilledMapping(null);
@@ -852,12 +920,15 @@ const IntegratedMatchingSchedule = () => {
           onApprove={handleApprove}
           onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
           onCancelPendingMapping={handleRequestCancelPendingMapping}
+          onDesyncAction={handleRequestDesyncAction}
           onSessionExtension={handleSessionExtensionFromCard}
           onConfirmSessionExtensionPayment={handleConfirmSessionExtensionPayment}
           onCancelSessionExtension={handleCancelSessionExtensionFromCard}
           approveProcessing={approveProcessing}
           cancelPendingProcessing={cancelPendingProcessing}
           cancelTargetMappingId={cancelTargetMapping?.id ?? null}
+          desyncProcessing={desyncProcessing}
+          desyncTargetMappingId={desyncTarget?.mappingId ?? null}
           activePeekMappingId={peekMapping?.id ?? null}
         />
 
@@ -998,6 +1069,16 @@ const IntegratedMatchingSchedule = () => {
           onClose={handleCancelModalClose}
           onConfirm={handleConfirmCancelPendingMapping}
           processing={cancelPendingProcessing}
+        />
+      )}
+      {desyncTarget && (
+        <MappingDesyncConfirmModal
+          isOpen={!!desyncTarget}
+          title={desyncTarget.modalTitle}
+          subtitle={desyncTarget.modalSubtitle}
+          onClose={handleDesyncModalClose}
+          onConfirm={handleConfirmDesyncAction}
+          processing={desyncProcessing}
         />
       )}
       <ConfirmModal />

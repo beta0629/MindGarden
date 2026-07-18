@@ -9,11 +9,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { AlertTriangle } from 'lucide-react';
-import UnifiedModal from '../../../common/modals/UnifiedModal';
-import MGButton from '../../../common/MGButton';
-import SafeText from '../../../common/SafeText';
-import { toDisplayString } from '../../../../utils/safeDisplay';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import UnifiedModal from '../../../../common/modals/UnifiedModal';
+import MGButton from '../../../../common/MGButton';
+import SafeText from '../../../../common/SafeText';
+import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 
 const MappingDesyncConfirmModal = ({
   isOpen,

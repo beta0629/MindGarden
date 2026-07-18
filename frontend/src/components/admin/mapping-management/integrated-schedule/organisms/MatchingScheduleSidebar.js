@@ -51,7 +51,7 @@ const MatchingScheduleSidebar = ({
   cancelTargetMappingId,
   activePeekMappingId
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('admin');
 
   return (
     <aside

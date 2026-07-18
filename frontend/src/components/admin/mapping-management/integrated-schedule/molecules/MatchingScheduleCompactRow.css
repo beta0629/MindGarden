@@ -9,6 +9,7 @@
   min-height: var(--mg-spacing-xl);
   max-height: var(--mg-spacing-36);
   padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+  overflow: hidden;
   background-color: transparent;
   border: none;
   border-bottom: 1px solid var(--mg-color-border-main);
@@ -96,15 +97,37 @@
 }
 
 .integrated-schedule__compact-row-package {
-  flex-shrink: 0;
+  flex: 0 1 auto;
   display: flex;
   align-items: center;
-  max-width: 30%;
+  min-width: 0;
+  max-width: 28%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule__compact-row-package .mg-v2-package-compact {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.integrated-schedule__compact-row-package .mg-v2-package-compact__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .integrated-schedule__compact-row-secondary {
-  flex-shrink: 0;
-  max-width: 40%;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 28%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

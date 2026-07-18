@@ -13,7 +13,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({
     t: (key, opts) => {
-      if (key === 'admin.labels.client') return '내담자';
+      if (key === 'labels.client' || key === 'admin.labels.client') return '내담자';
       if (key === 'integratedSchedule.sidebar.compactRemainingSessions') {
         return `남은 ${opts?.count}회`;
       }

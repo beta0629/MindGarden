@@ -40,8 +40,8 @@ const MatchingScheduleCompactRow = ({
   onOpenPeek,
   isActive
 }) => {
-  const { t } = useTranslation();
-  const clientHonorific = t('admin.labels.client');
+  const { t } = useTranslation('admin');
+  const clientHonorific = t('labels.client');
   const partiesLabel = buildPartiesLabel(
     mapping?.consultantName,
     mapping?.clientName,
@@ -98,7 +98,10 @@ const MatchingScheduleCompactRow = ({
         </SafeText>
       </span>
       {mapping?.packageName && (
-        <span className="integrated-schedule__compact-row-package">
+        <span
+          className="integrated-schedule__compact-row-package"
+          title={toDisplayString(mapping.packageName)}
+        >
           {renderCompactPackageName(mapping.packageName)}
         </span>
       )}

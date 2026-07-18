@@ -16,7 +16,7 @@ import {
 import './DensityToggle.css';
 
 const DensityToggle = ({ density, onDensityChange, disabled }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('admin');
   const isCompact = density === SIDEBAR_DENSITY_COMPACT;
 
   const handleClick = () => {

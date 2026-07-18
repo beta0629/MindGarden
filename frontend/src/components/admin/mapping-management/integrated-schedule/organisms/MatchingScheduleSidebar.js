@@ -43,12 +43,15 @@ const MatchingScheduleSidebar = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onDesyncAction,
   onSessionExtension,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
   approveProcessing,
   cancelPendingProcessing,
   cancelTargetMappingId,
+  desyncProcessing,
+  desyncTargetMappingId,
   activePeekMappingId
 }) => {
   const { t } = useTranslation('admin');
@@ -221,12 +224,15 @@ const MatchingScheduleSidebar = ({
           onApprove={onApprove}
           onCheckoutSameDay={onCheckoutSameDay}
           onCancelPendingMapping={onCancelPendingMapping}
+          onDesyncAction={onDesyncAction}
           onSessionExtension={onSessionExtension}
           onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
           onCancelSessionExtension={onCancelSessionExtension}
           approveProcessing={approveProcessing}
           cancelPendingProcessing={cancelPendingProcessing}
           cancelTargetMappingId={cancelTargetMappingId}
+          desyncProcessing={desyncProcessing}
+          desyncTargetMappingId={desyncTargetMappingId}
         />
       </div>
     </aside>
@@ -253,12 +259,15 @@ MatchingScheduleSidebar.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
+  onDesyncAction: PropTypes.func,
   onSessionExtension: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool,
   cancelTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  desyncProcessing: PropTypes.bool,
+  desyncTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   activePeekMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
@@ -274,12 +283,15 @@ MatchingScheduleSidebar.defaultProps = {
   onApprove: null,
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
+  onDesyncAction: null,
   onSessionExtension: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
   approveProcessing: false,
   cancelPendingProcessing: false,
   cancelTargetMappingId: null,
+  desyncProcessing: false,
+  desyncTargetMappingId: null,
   activePeekMappingId: null
 };
 

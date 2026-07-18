@@ -79,6 +79,18 @@ public interface AdminService {
     Set<String> getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(String tenantId, LocalDate fromDate);
 
     /**
+     * mappingId 기준 점유 상담 일정(BOOKED/TENTATIVE_PENDING_PAYMENT/CONFIRMED)이 1건 이상인 ID 집합.
+     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich 용.
+     */
+    Set<Long> getMappingIdsWithOccupyingConsultationSchedules(String tenantId);
+
+    /**
+     * mappingId별 {@code fromDate}(포함) 이후 가장 이른 점유 상담일.
+     * 통합 스케줄 카드 {@code nextConsultationDate} enrich 용.
+     */
+    Map<Long, LocalDate> getNextConsultationDateByMappingId(String tenantId, LocalDate fromDate);
+
+    /**
      * 상담사 정보 수정
      */
     User updateConsultant(Long id, ConsultantRegistrationRequest request);
@@ -184,6 +196,15 @@ public interface AdminService {
      * 매칭 강제 종료 (환불 처리)
      */
     void terminateMapping(Long id, String reason);
+
+    /**
+     * desync-cleanup — 매핑 상태와 무관하게 미래 점유 일정만 CANCELLED 전이.
+     * terminate/환불을 호출하지 않는다. 이미 TERMINATED여도 스케줄만 정리한다.
+     *
+     * @param mappingId 대상 매핑 ID
+     * @return 취소된 스케줄 개수
+     */
+    int cleanupFutureSchedulesForMapping(Long mappingId);
     
     /**
      * 부분 환불 처리 (지정된 회기수만 환불)

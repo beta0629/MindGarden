@@ -12,6 +12,12 @@ import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import MappingMatchActions from '../../molecules/MappingMatchActions';
 import { SESSION_EXTENSION_UI } from '../../../../../utils/sessionExtensionPending';
+import {
+  MAPPING_DESYNC_CTA_TYPE,
+  MAPPING_DESYNC_KIND,
+  resolveMappingScheduleDesync
+} from '../utils/mappingScheduleDesync';
+import { toDisplayString } from '../../../../../utils/safeDisplay';
 
 const CardActionGroup = ({
   mapping,
@@ -22,14 +28,27 @@ const CardActionGroup = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onDesyncAction,
   onSessionExtension,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
   approveProcessing,
-  cancelPendingProcessing
+  cancelPendingProcessing,
+  desyncProcessing
 }) => {
   const pendingExtension = mapping?.pendingSessionExtension;
   const hasPendingExtension = Boolean(pendingExtension?.id);
+  const desync = resolveMappingScheduleDesync(mapping);
+  const showCleanupCta =
+    desync.kind === MAPPING_DESYNC_KIND.CLEANUP
+    && desync.ctaType === MAPPING_DESYNC_CTA_TYPE.CLEANUP
+    && onDesyncAction;
+  const showCompleteCta =
+    desync.kind === MAPPING_DESYNC_KIND.STATUS
+    && desync.ctaType === MAPPING_DESYNC_CTA_TYPE.COMPLETE
+    && onDesyncAction;
+  const emphasizeCancelDanger = desync.kind === MAPPING_DESYNC_KIND.CANCEL;
+  const desyncCtaLabel = toDisplayString(desync.ctaLabel, '');
 
   return (
   <CommonCardActionGroup className="integrated-schedule__card-actions">
@@ -137,6 +156,50 @@ const CardActionGroup = ({
         {SESSION_EXTENSION_UI.CANCEL_LABEL}
       </MGButton>
     )}
+    {showCleanupCta && (
+      <MGButton
+        type="button"
+        variant="danger"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'danger',
+          size: 'sm',
+          loading: desyncProcessing,
+          className: 'integrated-schedule__action-danger integrated-schedule__btn-desync-cleanup'
+        })}
+        loading={desyncProcessing}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        disabled={desyncProcessing}
+        onClick={() => onDesyncAction(mapping, desync)}
+        aria-label={desyncCtaLabel}
+        preventDoubleClick={false}
+        data-testid={`mapping-desync-cleanup-${mapping?.id ?? 'unknown'}`}
+      >
+        {desyncCtaLabel}
+      </MGButton>
+    )}
+    {showCompleteCta && (
+      <MGButton
+        type="button"
+        variant="danger"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'danger',
+          size: 'sm',
+          loading: desyncProcessing,
+          className: 'integrated-schedule__action-danger integrated-schedule__btn-desync-complete'
+        })}
+        loading={desyncProcessing}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        disabled={desyncProcessing}
+        onClick={() => onDesyncAction(mapping, desync)}
+        aria-label={desyncCtaLabel}
+        preventDoubleClick={false}
+        data-testid={`mapping-desync-complete-${mapping?.id ?? 'unknown'}`}
+      >
+        {desyncCtaLabel}
+      </MGButton>
+    )}
     <MappingMatchActions
       mapping={mapping}
       onPayment={onPayment}
@@ -145,6 +208,7 @@ const CardActionGroup = ({
       onCheckoutSameDay={onCheckoutSameDay}
       onCancelPendingMapping={onCancelPendingMapping}
       cancelPendingProcessing={cancelPendingProcessing}
+      emphasizeCancelDanger={emphasizeCancelDanger}
       disabled={approveProcessing}
       loading={approveProcessing}
     />
@@ -158,6 +222,9 @@ CardActionGroup.propTypes = {
     status: PropTypes.string,
     paymentTiming: PropTypes.string,
     clientName: PropTypes.string,
+    remainingSessions: PropTypes.number,
+    hasConsultationSchedule: PropTypes.bool,
+    nextConsultationDate: PropTypes.string,
     pendingSessionExtension: PropTypes.object
   }),
   onOpenPeek: PropTypes.func,
@@ -166,11 +233,13 @@ CardActionGroup.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
+  onDesyncAction: PropTypes.func,
   onSessionExtension: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
-  cancelPendingProcessing: PropTypes.bool
+  cancelPendingProcessing: PropTypes.bool,
+  desyncProcessing: PropTypes.bool
 };
 
 CardActionGroup.defaultProps = {
@@ -182,11 +251,13 @@ CardActionGroup.defaultProps = {
   onApprove: null,
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
+  onDesyncAction: null,
   onSessionExtension: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
   approveProcessing: false,
-  cancelPendingProcessing: false
+  cancelPendingProcessing: false,
+  desyncProcessing: false
 };
 
 export default CardActionGroup;

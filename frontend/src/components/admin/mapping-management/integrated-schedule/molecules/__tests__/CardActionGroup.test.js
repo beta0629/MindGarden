@@ -26,8 +26,8 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('../../../../../common/MGButton', () => ({
   __esModule: true,
-  default: ({ children, onClick, 'aria-label': ariaLabel, disabled }) => (
-    <button type="button" onClick={onClick} aria-label={ariaLabel} disabled={disabled}>
+  default: ({ children, onClick, 'aria-label': ariaLabel, disabled, 'data-testid': testId }) => (
+    <button type="button" onClick={onClick} aria-label={ariaLabel} disabled={disabled} data-testid={testId}>
       {children}
     </button>
   )
@@ -261,6 +261,60 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
         />
       );
       expect(screen.queryByTestId('mapping-cancel-pending-trigger')).toBeNull();
+    });
+  });
+
+  describe('desync Danger CTA', () => {
+    test('TERMINATED + nextConsultationDate → 일정 정리 CTA', () => {
+      const onDesyncAction = jest.fn();
+      render(
+        <CardActionGroup
+          mapping={{
+            id: 99,
+            status: 'TERMINATED',
+            nextConsultationDate: '2026-07-22',
+            remainingSessions: 0
+          }}
+          onDesyncAction={onDesyncAction}
+        />
+      );
+      fireEvent.click(screen.getByTestId('mapping-desync-cleanup-99'));
+      expect(onDesyncAction).toHaveBeenCalledTimes(1);
+      expect(onDesyncAction.mock.calls[0][0].id).toBe(99);
+      expect(onDesyncAction.mock.calls[0][1].kind).toBe('desync-cleanup');
+    });
+
+    test('ACTIVE + remaining 0 → 완료 처리 CTA', () => {
+      const onDesyncAction = jest.fn();
+      render(
+        <CardActionGroup
+          mapping={{
+            id: 88,
+            status: 'ACTIVE',
+            remainingSessions: 0
+          }}
+          onDesyncAction={onDesyncAction}
+        />
+      );
+      fireEvent.click(screen.getByTestId('mapping-desync-complete-88'));
+      expect(onDesyncAction).toHaveBeenCalledTimes(1);
+      expect(onDesyncAction.mock.calls[0][1].kind).toBe('desync-status');
+    });
+
+    test('SESSIONS_EXHAUSTED + nextDate → Danger CTA 없음', () => {
+      render(
+        <CardActionGroup
+          mapping={{
+            id: 77,
+            status: 'SESSIONS_EXHAUSTED',
+            remainingSessions: 0,
+            nextConsultationDate: '2026-07-20'
+          }}
+          onDesyncAction={jest.fn()}
+        />
+      );
+      expect(screen.queryByTestId('mapping-desync-cleanup-77')).toBeNull();
+      expect(screen.queryByTestId('mapping-desync-complete-77')).toBeNull();
     });
   });
 });

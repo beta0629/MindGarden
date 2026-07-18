@@ -30,11 +30,13 @@ const MappingScheduleCard = ({
   onApprove,
   onCheckoutSameDay,
   onCancelPendingMapping,
+  onDesyncAction,
   onSessionExtension,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
   approveProcessing,
-  cancelPendingProcessing
+  cancelPendingProcessing,
+  desyncProcessing
 }) => {
   const handleCardBodyClick = () => {
     if (onOpenPeek) {
@@ -76,6 +78,9 @@ const MappingScheduleCard = ({
         remainingSessions={mapping?.remainingSessions}
         packageName={mapping?.packageName}
         pendingSessionExtension={mapping?.pendingSessionExtension}
+        hasConsultationSchedule={mapping?.hasConsultationSchedule}
+        nextConsultationDate={mapping?.nextConsultationDate}
+        paymentTiming={mapping?.paymentTiming}
       />
     </div>
     <CardActionGroup
@@ -87,11 +92,13 @@ const MappingScheduleCard = ({
       onApprove={onApprove}
       onCheckoutSameDay={onCheckoutSameDay}
       onCancelPendingMapping={onCancelPendingMapping}
+      onDesyncAction={onDesyncAction}
       onSessionExtension={onSessionExtension}
       onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
       onCancelSessionExtension={onCancelSessionExtension}
       approveProcessing={approveProcessing}
       cancelPendingProcessing={cancelPendingProcessing}
+      desyncProcessing={desyncProcessing}
     />
   </CardContainer>
   );
@@ -108,7 +115,9 @@ MappingScheduleCard.propTypes = {
     usedSessions: PropTypes.number,
     totalSessions: PropTypes.number,
     remainingSessions: PropTypes.number,
-    pendingSessionExtension: PropTypes.object
+    pendingSessionExtension: PropTypes.object,
+    hasConsultationSchedule: PropTypes.bool,
+    nextConsultationDate: PropTypes.string
   }),
   eventData: PropTypes.object,
   isDraggable: PropTypes.bool,
@@ -119,11 +128,13 @@ MappingScheduleCard.propTypes = {
   onApprove: PropTypes.func,
   onCheckoutSameDay: PropTypes.func,
   onCancelPendingMapping: PropTypes.func,
+  onDesyncAction: PropTypes.func,
   onSessionExtension: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
   approveProcessing: PropTypes.bool,
-  cancelPendingProcessing: PropTypes.bool
+  cancelPendingProcessing: PropTypes.bool,
+  desyncProcessing: PropTypes.bool
 };
 
 MappingScheduleCard.defaultProps = {
@@ -137,11 +148,13 @@ MappingScheduleCard.defaultProps = {
   onApprove: null,
   onCheckoutSameDay: null,
   onCancelPendingMapping: null,
+  onDesyncAction: null,
   onSessionExtension: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
   approveProcessing: false,
-  cancelPendingProcessing: false
+  cancelPendingProcessing: false,
+  desyncProcessing: false
 };
 
 export default MappingScheduleCard;

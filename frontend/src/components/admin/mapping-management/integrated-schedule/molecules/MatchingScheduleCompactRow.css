@@ -126,11 +126,43 @@
 
 .integrated-schedule__compact-row-secondary {
   flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
   min-width: 0;
-  max-width: 28%;
+  max-width: 40%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-xs);
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule__compact-row-sep {
+  flex-shrink: 0;
+  color: var(--mg-gray-500);
+}
+
+.integrated-schedule__compact-schedule-status {
+  flex-shrink: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--font-size-xs);
-  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule__compact-schedule-status--registered {
+  color: var(--mg-primary-700);
+}
+
+.integrated-schedule__compact-schedule-status--muted {
+  color: var(--mg-gray-500);
+}
+
+.integrated-schedule__compact-schedule-status--desync-warning {
+  color: var(--mg-warning-700);
+}
+
+.integrated-schedule__compact-schedule-status--desync-error {
+  color: var(--mg-error-700);
 }

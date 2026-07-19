@@ -761,6 +761,12 @@ scheduler:
     enabled: ${SCHEDULER_SHOP_ORDER_HOLD_EXPIRY_ENABLED:true}
     cron: ${SCHEDULER_SHOP_ORDER_HOLD_EXPIRY_CRON:0 */5 * * * *}  # 매 5분마다
 
+  # 일정 변경 SCHEDULE_CHANGED 외부채널 10분 디바운스 발송
+  schedule-change-notification:
+    enabled: ${SCHEDULER_SCHEDULE_CHANGE_NOTIFICATION_ENABLED:true}
+    cron: ${SCHEDULER_SCHEDULE_CHANGE_NOTIFICATION_CRON:0 * * * * *}  # 매 1분
+    debounce-minutes: ${SCHEDULER_SCHEDULE_CHANGE_NOTIFICATION_DEBOUNCE_MINUTES:10}
+
   # 11. 스키마 변경 감지 스케줄러
   schema-change-detection:
     enabled: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_ENABLED:true}

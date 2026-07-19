@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,8 @@ class ScheduleServiceImplAdminStaffScheduleScopeTest {
     @Mock
     private CommonCodeService commonCodeService;
 
+    @Mock
+    private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
 

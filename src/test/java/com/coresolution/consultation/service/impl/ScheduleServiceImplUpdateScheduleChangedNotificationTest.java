@@ -1,24 +1,19 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.ScheduleStatus;
-import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.Schedule;
-import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
-import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
-import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.time.LocalDate;
@@ -35,14 +30,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * {@link ScheduleServiceImpl#updateSchedule} 일정 변경 시 SCHEDULE_CHANGED
- * 알림톡/SMS/인앱 NotificationService 트리거 검증 (핫픽스 2026-06-02).
+ * 외부 채널은 즉시 발송하지 않고 디바운스 pending 등록만 한다.
  *
- * <p>기존 push 테스트 ({@link ScheduleServiceImplUpdateSchedulePushTest}) 와 별도로,
- * 어드민/상담사의 schedules UI 직접 수정 경로에서도 SMS 알림이 발송되도록
- * {@code notificationService.sendScheduleChanged} 호출 여부를 검증.</p>
+ * @author MindGarden
+ * @since 2026-06-02
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ScheduleServiceImpl updateSchedule SCHEDULE_CHANGED 알림 트리거")
+@DisplayName("ScheduleServiceImpl updateSchedule SCHEDULE_CHANGED 디바운스 pending")
 class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
 
     private static final String TENANT_ID = "tenant-incheon-counseling-001";
@@ -63,11 +57,7 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     @Mock
     private ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
     @Mock
-    private UserRepository userRepository;
-    @Mock
-    private ConsultantRepository consultantRepository;
-    @Mock
-    private UserPersonalDataCacheService userPersonalDataCacheService;
+    private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
@@ -95,25 +85,9 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
         return s;
     }
 
-    private User stubClient() {
-        User u = new User();
-        u.setId(CLIENT_ID);
-        u.setTenantId(TENANT_ID);
-        u.setName("홍길동");
-        return u;
-    }
-
-    private Consultant stubConsultant() {
-        Consultant c = new Consultant();
-        c.setId(CONSULTANT_ID);
-        c.setTenantId(TENANT_ID);
-        c.setName("조재은");
-        return c;
-    }
-
     @Test
-    @DisplayName("date/time 변경 시 sendScheduleChanged 호출 - 변경된 슬롯과 상담사명 전달")
-    void slotChange_invokesSendScheduleChanged() {
+    @DisplayName("date/time 변경 시 enqueueScheduleChanged 호출 — sendScheduleChanged 즉시 미호출")
+    void slotChange_enqueuesDebounce_doesNotSendImmediately() {
         Schedule existing = existingConfirmed();
         Schedule patch = new Schedule();
         patch.setDate(LocalDate.of(2026, 5, 21));
@@ -123,23 +97,21 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
         when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(existing));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(userRepository.findByTenantIdAndId(eq(TENANT_ID), eq(CLIENT_ID)))
-                .thenReturn(Optional.of(stubClient()));
-        when(consultantRepository.findByTenantIdAndId(eq(TENANT_ID), eq(CONSULTANT_ID)))
-                .thenReturn(Optional.of(stubConsultant()));
 
         scheduleService.updateSchedule(SCHEDULE_ID, patch);
 
-        verify(notificationService).sendScheduleChanged(
-                any(User.class),
-                anyString(),
-                eq("2026-05-20 10:00"),
-                eq("2026-05-21 14:00"));
+        verify(scheduleChangeNotificationDebounceService).enqueueScheduleChanged(
+                eq(TENANT_ID),
+                any(Schedule.class),
+                eq(LocalDate.of(2026, 5, 20)),
+                eq(LocalTime.of(10, 0)));
+        verify(notificationService, never())
+                .sendScheduleChanged(any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("CANCELLED 로 변경 시 sendScheduleChanged 미호출")
-    void cancellingNow_doesNotInvokeSendScheduleChanged() {
+    @DisplayName("CANCELLED 로 변경 시 enqueue 및 sendScheduleChanged 미호출")
+    void cancellingNow_doesNotEnqueue() {
         Schedule existing = existingConfirmed();
         Schedule patch = new Schedule();
         patch.setDate(LocalDate.of(2026, 5, 21));
@@ -153,13 +125,15 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
 
         scheduleService.updateSchedule(SCHEDULE_ID, patch);
 
+        verify(scheduleChangeNotificationDebounceService, never())
+                .enqueueScheduleChanged(any(), any(), any(), any());
         verify(notificationService, never())
-                .sendScheduleChanged(any(), anyString(), anyString(), anyString());
+                .sendScheduleChanged(any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("clientId 가 null 인 개인 일정의 경우 sendScheduleChanged 미호출")
-    void personalSchedule_doesNotInvokeSendScheduleChanged() {
+    @DisplayName("clientId 가 null 인 개인 일정의 경우 enqueue 미호출")
+    void personalSchedule_doesNotEnqueue() {
         Schedule existing = existingConfirmed();
         existing.setClientId(null);
         Schedule patch = new Schedule();
@@ -173,13 +147,13 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
 
         scheduleService.updateSchedule(SCHEDULE_ID, patch);
 
-        verify(notificationService, never())
-                .sendScheduleChanged(any(), anyString(), anyString(), anyString());
+        verify(scheduleChangeNotificationDebounceService, never())
+                .enqueueScheduleChanged(any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("slot 변경 없음 (status 만 변경) — sendScheduleChanged 미호출")
-    void noSlotChange_doesNotInvokeSendScheduleChanged() {
+    @DisplayName("slot 변경 없음 (status 만 변경) — enqueue 미호출")
+    void noSlotChange_doesNotEnqueue() {
         Schedule existing = existingConfirmed();
         Schedule patch = new Schedule();
         patch.setDate(existing.getDate());
@@ -193,7 +167,7 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
 
         scheduleService.updateSchedule(SCHEDULE_ID, patch);
 
-        verify(notificationService, never())
-                .sendScheduleChanged(any(), anyString(), anyString(), anyString());
+        verify(scheduleChangeNotificationDebounceService, never())
+                .enqueueScheduleChanged(any(), any(), any(), any());
     }
 }

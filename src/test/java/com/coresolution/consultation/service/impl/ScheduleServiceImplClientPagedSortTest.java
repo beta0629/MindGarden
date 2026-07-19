@@ -32,6 +32,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.core.context.TenantContextHolder;
 
 /**
@@ -56,6 +57,8 @@ class ScheduleServiceImplClientPagedSortTest {
     @Mock
     private CommonCodeService commonCodeService;
 
+    @Mock
+    private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
 

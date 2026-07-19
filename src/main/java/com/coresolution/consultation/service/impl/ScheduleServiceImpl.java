@@ -75,6 +75,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -924,12 +926,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 매트릭스:
      * <ul>
      *   <li>BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 단발성({@code totalSessions == 1}) →
-     *       {@code RESERVATION_IMMEDIATE_SINGLE} (등록일/잔여 회기 무관).</li>
+     *       {@code RESERVATION_IMMEDIATE_SINGLE} (등록일/잔여 회기 무관). D-2/D-1/D-0 09:00 배치도
+     *       별도 대상이며 멱등 키로 중복 차단.</li>
      *   <li>BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 다회기 + D-2 →
      *       {@code RESERVATION_REMINDER_D2} (09:00 D-2 배치와 멱등 키 공유 → 중복 차단).</li>
      *   <li>BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 다회기 + D-1/D-0 →
      *       {@code RESERVATION_IMMEDIATE_LATE} (예약 임박 본문).</li>
-     *   <li>다회기 + D-3 이상 → 즉시 발송 없음. D-2 09:00 배치
+     *   <li>다회기 + D-3 이상 → 즉시 발송 없음. D-2/D-1/D-0 09:00 배치
      *       ({@link com.coresolution.consultation.scheduler.ReservationReminderScheduler}) 가 처리.</li>
      *   <li>CANCELLED → 발송 안 함 (status 가드).</li>
      * </ul>
@@ -937,12 +940,37 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * <p>채널 정책: {@code notification.batch.alimtalk-enabled=false} 영구화로 알림톡 매핑 lookup 자체가
      * skip 되며, SMS-only 폴백 경로(F1)로 발송된다.
      *
+     * <p>활성 트랜잭션이 있으면 {@code afterCommit} 이후 실행한다. 커밋 전 조회 시
+     * {@code TARGET_NOT_FOUND} silent skip 이 재발하지 않도록 한다. 트랜잭션이 없으면 즉시 동기 실행.
+     *
      * <p>발송 자체는 {@link BatchNotificationDispatchService} 가 멱등 로그로 중복을 차단하므로,
      * 본 메서드는 사전 분기만 담당한다. 매핑 lookup 실패·기타 예외는 전체 흐름을 막지 않도록 swallow.
      *
      * @param schedule 신규/입금확정 직후 BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 일정
      */
     private void dispatchImmediateReservationNotification(Schedule schedule) {
+        if (schedule == null || schedule.getId() == null) {
+            return;
+        }
+        final Schedule scheduleAfterCommit = schedule;
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    executeImmediateReservationNotification(scheduleAfterCommit);
+                }
+            });
+            return;
+        }
+        executeImmediateReservationNotification(schedule);
+    }
+
+    /**
+     * 즉시 예약 안내 SMS 실제 디스패치 (afterCommit 또는 비트랜잭션 동기 경로).
+     *
+     * @param schedule BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 일정
+     */
+    private void executeImmediateReservationNotification(Schedule schedule) {
         try {
             if (schedule == null || schedule.getId() == null
                 || schedule.getClientId() == null || schedule.getConsultantId() == null
@@ -994,7 +1022,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 batchNotificationDispatchService
                     .dispatchReservationImmediateLate(schedule.getId());
             }
-            // 그 외 (다회기 + D-3 이상) → 09:00 D-2 배치(ReservationReminderScheduler) 가 처리.
+            // 그 외 (다회기 + D-3 이상) → 09:00 D-2/D-1/D-0 배치(ReservationReminderScheduler) 가 처리.
         } catch (Exception e) {
             log.warn("즉시 발송 분기 실패(무시): scheduleId={}, error={}",
                 schedule != null ? schedule.getId() : null, e.getMessage());

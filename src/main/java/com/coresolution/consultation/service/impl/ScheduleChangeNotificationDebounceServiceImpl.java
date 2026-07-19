@@ -24,6 +24,7 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -66,6 +67,7 @@ public class ScheduleChangeNotificationDebounceServiceImpl
      * @param notificationService            알림 서비스
      * @param properties                     디바운스·스케줄러 설정
      */
+    @Autowired
     public ScheduleChangeNotificationDebounceServiceImpl(
             ScheduleChangeNotificationPendingRepository pendingRepository,
             ScheduleRepository scheduleRepository,

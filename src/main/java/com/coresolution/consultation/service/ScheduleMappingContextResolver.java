@@ -167,9 +167,7 @@ public final class ScheduleMappingContextResolver {
         if (candidates == null || candidates.isEmpty()) {
             return java.util.Optional.empty();
         }
-        Comparator<ConsultantClientMapping> recency = Comparator
-                .comparing(ConsultantClientMapping::getUpdatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
-                .thenComparing(ConsultantClientMapping::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder()));
+        Comparator<ConsultantClientMapping> recency = mappingRecencyComparator();
         java.util.Optional<ConsultantClientMapping> active = candidates.stream()
                 .filter(m -> m.getStatus() == MappingStatus.ACTIVE)
                 .max(recency);
@@ -179,6 +177,47 @@ public final class ScheduleMappingContextResolver {
         return candidates.stream()
                 .filter(m -> m.getStatus() == MappingStatus.SESSIONS_EXHAUSTED)
                 .max(recency);
+    }
+
+    /**
+     * 예약 즉시/리마인더 SMS 전용 매핑 선택.
+     *
+     * <p>우선순위: ACTIVE → SESSIONS_EXHAUSTED → PENDING_PAYMENT (현장결제 가예약).
+     * {@code preferPendingPayment=true} 이면 PENDING_PAYMENT(SAME_DAY) 를 ACTIVE 보다 우선한다.
+     *
+     * @param candidates           후보 목록
+     * @param preferPendingPayment 가예약(TENTATIVE) 분기 시 true
+     * @return 선택된 매핑
+     * @since 2026-07-19
+     */
+    public static java.util.Optional<ConsultantClientMapping> selectLatestMappingForReservationSms(
+            List<ConsultantClientMapping> candidates, boolean preferPendingPayment) {
+        if (candidates == null || candidates.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        Comparator<ConsultantClientMapping> recency = mappingRecencyComparator();
+        if (preferPendingPayment) {
+            java.util.Optional<ConsultantClientMapping> pending = candidates.stream()
+                    .filter(m -> m.getStatus() == MappingStatus.PENDING_PAYMENT)
+                    .max(recency);
+            if (pending.isPresent()) {
+                return pending;
+            }
+        }
+        java.util.Optional<ConsultantClientMapping> activeOrExhausted =
+                selectLatestActiveOrExhaustedMapping(candidates);
+        if (activeOrExhausted.isPresent()) {
+            return activeOrExhausted;
+        }
+        return candidates.stream()
+                .filter(m -> m.getStatus() == MappingStatus.PENDING_PAYMENT)
+                .max(recency);
+    }
+
+    private static Comparator<ConsultantClientMapping> mappingRecencyComparator() {
+        return Comparator
+                .comparing(ConsultantClientMapping::getUpdatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(ConsultantClientMapping::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder()));
     }
 
     private static ConsultantClientMapping preferActiveMapping(

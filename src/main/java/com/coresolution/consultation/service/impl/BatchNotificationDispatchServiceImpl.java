@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.config.BatchNotificationProperties;
 import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.NotificationBatchSendLog;
@@ -572,7 +573,8 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     }
 
     /**
-     * Schedule 의 잔여 회기 계산 — D-2 발송에서만 사용. ACTIVE/SESSIONS_EXHAUSTED 매핑 우선.
+     * Schedule 의 잔여 회기 계산 — D-2 발송에서만 사용.
+     * ACTIVE/SESSIONS_EXHAUSTED/PENDING_PAYMENT(SAME_DAY SMS) 매핑 우선.
      *
      * @param tenantId 테넌트 ID
      * @param schedule 일정
@@ -580,10 +582,13 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      */
     private int resolveRemainingSessionsForSchedule(String tenantId, Schedule schedule) {
         List<ConsultantClientMapping> candidates = mappingRepository
-            .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            .findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
                 tenantId, schedule.getConsultantId(), schedule.getClientId());
+        boolean preferPendingPayment =
+            schedule.getStatus() == ScheduleStatus.TENTATIVE_PENDING_PAYMENT;
         Optional<ConsultantClientMapping> opt =
-            ScheduleMappingContextResolver.selectLatestActiveOrExhaustedMapping(candidates);
+            ScheduleMappingContextResolver.selectLatestMappingForReservationSms(
+                candidates, preferPendingPayment);
         if (opt.isPresent()) {
             Integer remaining = opt.get().getRemainingSessions();
             return remaining == null ? 0 : remaining;

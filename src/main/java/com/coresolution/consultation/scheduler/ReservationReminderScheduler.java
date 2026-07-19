@@ -35,8 +35,10 @@ import lombok.extern.slf4j.Slf4j;
  * 예약 D-2 안내 일괄 발송 스케줄러.
  *
  * <p>매일 09:00 KST 에 활성 테넌트를 순회하며 {@code today + N일} ({@code N=2} 기본) 에 예약된
- * BOOKED/CONFIRMED 일정 중 단발성 결제(=총 1회기 패키지) 가 아닌 schedule 을
+ * BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 일정 중 단발성 결제(=총 1회기 패키지) 가 아닌 schedule 을
  * D-2 안내({@code RESERVATION_REMINDER_D2}) 대상으로 위임한다.
+ * 매핑 lookup 은 SMS 전용으로 ACTIVE/SESSIONS_EXHAUSTED/PENDING_PAYMENT(SAME_DAY) 를 포함하며,
+ * 회기 차감용 ACTIVE-only 조회와는 분리되어 있다.
  *
  * <p>회기 차감 정책 SSOT 는 (A) 예약(BOOKED) 시점 차감이므로 미래 BOOKED schedule 의 회기는
  * 이미 {@code used_sessions} 에 카운트되어 있어, D-2 발송 자격은 BOOKED 자체로 충족된다.
@@ -165,9 +167,12 @@ public class ReservationReminderScheduler {
      * @return 처리 요약
      */
     private TenantSummary processTenant(String tenantId, LocalDate targetDate) {
+        // TENTATIVE_PENDING_PAYMENT: D-3+ 다회기 현장결제 가예약이 09:00 D-2 SMS 에 포함되도록.
+        // D-1 푸시(processTenantD1Push)는 BOOKED/CONFIRMED 만 유지(정책: TENTATIVE 는 SMS만).
         List<Schedule> schedules = scheduleRepository.findByTenantIdAndDateAndStatusIn(
             tenantId, targetDate,
-            List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED));
+            List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED,
+                ScheduleStatus.TENTATIVE_PENDING_PAYMENT));
         log.info("🔄 [ReservationReminderD2] 테넌트 처리: tenantId={}, targetDate={}, candidates={}",
             tenantId, targetDate, schedules.size());
 
@@ -239,11 +244,15 @@ public class ReservationReminderScheduler {
      * @return 발송 대상이면 {@code true}
      */
     private boolean shouldSendForSchedule(String tenantId, Schedule schedule) {
+        // SMS 전용 lookup: PENDING_PAYMENT(SAME_DAY) 포함 — 회기 차감용 ACTIVE-only 와 분리.
         List<ConsultantClientMapping> candidates = mappingRepository
-            .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            .findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
                 tenantId, schedule.getConsultantId(), schedule.getClientId());
+        boolean preferPendingPayment =
+            schedule.getStatus() == ScheduleStatus.TENTATIVE_PENDING_PAYMENT;
         Optional<ConsultantClientMapping> opt =
-            ScheduleMappingContextResolver.selectLatestActiveOrExhaustedMapping(candidates);
+            ScheduleMappingContextResolver.selectLatestMappingForReservationSms(
+                candidates, preferPendingPayment);
         if (opt.isEmpty()) {
             log.debug("D-2 skip — 매핑 없음: scheduleId={}", schedule.getId());
             return false;

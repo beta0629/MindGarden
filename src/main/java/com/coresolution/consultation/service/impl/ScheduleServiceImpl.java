@@ -965,11 +965,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return;
             }
 
+            // SMS 전용 lookup: PENDING_PAYMENT(SAME_DAY 현장결제) 포함. 회기 차감용 ACTIVE-only 와 분리.
             List<ConsultantClientMapping> mappingCandidates = mappingRepository
-                .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                .findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
                     tenantId, schedule.getConsultantId(), schedule.getClientId());
+            boolean preferPendingPayment = status == ScheduleStatus.TENTATIVE_PENDING_PAYMENT;
             Optional<ConsultantClientMapping> opt = ScheduleMappingContextResolver
-                .selectLatestActiveOrExhaustedMapping(mappingCandidates);
+                .selectLatestMappingForReservationSms(mappingCandidates, preferPendingPayment);
             if (opt.isEmpty()) {
                 log.debug("즉시 발송 분기 skip — 매핑 없음: scheduleId={}", schedule.getId());
                 return;

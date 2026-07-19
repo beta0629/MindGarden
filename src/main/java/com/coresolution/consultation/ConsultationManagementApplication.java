@@ -21,6 +21,7 @@ import com.coresolution.consultation.config.MobileAppVersionProperties;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.config.NotificationRetentionProperties;
 import com.coresolution.consultation.config.PiiScrubberProperties;
+import com.coresolution.consultation.config.ScheduleChangeNotificationProperties;
 import com.coresolution.core.config.KiccEasypayProperties;
 
 /**
@@ -64,7 +65,8 @@ import com.coresolution.core.config.KiccEasypayProperties;
         BatchNotificationProperties.class,
         NotificationRetentionProperties.class,
         LifecycleCutoffProperties.class,
-        PiiScrubberProperties.class
+        PiiScrubberProperties.class,
+        ScheduleChangeNotificationProperties.class
 })
 public class ConsultationManagementApplication {
 

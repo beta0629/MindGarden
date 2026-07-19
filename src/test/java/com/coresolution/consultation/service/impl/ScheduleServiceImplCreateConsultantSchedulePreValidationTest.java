@@ -17,6 +17,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -103,6 +104,8 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     private NotificationService notificationService;
     @Mock
     private ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
+    @Mock
+    private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
 
     @Mock
     private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;

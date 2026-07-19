@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -101,6 +102,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
 
     @Autowired
     private MobilePushDispatchService mobilePushDispatchService;
+
+    @Autowired
+    private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
     
     @Autowired
     private UserPersonalDataCacheService userPersonalDataCacheService;
@@ -594,7 +598,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Consultation savedConsultation = save(consultation);
         
         sendConsultationChangeNotification(consultationId, "일정 변경");
-        trySendConsultationRescheduledExternalChannels(savedConsultation, previousDate, previousStart);
+        tryEnqueueConsultationRescheduledExternalChannels(
+                savedConsultation, previousDate, previousStart);
         tryDispatchConsultationRescheduledMobilePush(
                 savedConsultation, previousDate, previousStart, previousEnd);
         
@@ -2151,25 +2156,31 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return synthetic;
     }
 
-    private void trySendConsultationRescheduledExternalChannels(Consultation consultation,
+    private void tryEnqueueConsultationRescheduledExternalChannels(Consultation consultation,
             LocalDate previousDate, LocalTime previousStart) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
-            log.warn("일정 변경 알림: TenantContext 비어 있음, 발송 생략 consultationId={}", consultation.getId());
+            tenantId = consultation.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("일정 변경 디바운스: TenantContext 비어 있음, 생략 consultationId={}", consultation.getId());
             return;
         }
         try {
-            User client = userRepository.findByTenantIdAndId(tenantId, consultation.getClientId()).orElse(null);
-            if (client == null) {
+            Schedule linked = resolveScheduleForConsultationReschedulePush(tenantId, consultation);
+            if (linked == null || linked.getId() == null) {
+                log.warn(
+                        "일정 변경 디바운스: 연결된 schedule 없음, 생략 consultationId={}",
+                        consultation.getId());
                 return;
             }
-            String consultantName = resolveConsultantDisplayNameForAlimTalk(tenantId, consultation.getConsultantId());
-            String oldSlot = formatConsultationSlotForAlimTalk(previousDate, previousStart);
-            String newSlot = formatConsultationSlotForAlimTalk(consultation.getConsultationDate(), consultation.getStartTime());
-            notificationService.sendScheduleChanged(client, consultantName, oldSlot, newSlot);
+            scheduleChangeNotificationDebounceService.enqueueScheduleChanged(
+                    tenantId, linked, previousDate, previousStart);
         } catch (Exception e) {
-            log.warn("일정 변경 알림 발송 실패(본 처리 롤백 없음): consultationId={}, {}",
-                consultation.getId(), e.getMessage());
+            log.warn(
+                    "일정 변경 디바운스 pending 등록 실패(본 처리 롤백 없음): consultationId={}, {}",
+                    consultation.getId(),
+                    e.getMessage());
         }
     }
     

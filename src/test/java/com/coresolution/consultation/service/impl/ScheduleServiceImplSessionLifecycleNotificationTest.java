@@ -4,6 +4,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.SessionSyncService;
@@ -64,6 +65,8 @@ class ScheduleServiceImplSessionLifecycleNotificationTest {
     @Mock private BatchNotificationDispatchService batchNotificationDispatchService;
     @Mock private MobilePushDispatchService mobilePushDispatchService;
     @Mock private ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
+    @Mock
+    private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
     @Mock private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
 
     @InjectMocks

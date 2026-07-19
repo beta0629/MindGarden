@@ -11,6 +11,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.core.context.TenantContextHolder;
@@ -50,6 +51,8 @@ class ScheduleServiceImplUpdateSchedulePushTest {
     private MobilePushDispatchService mobilePushDispatchService;
     @Mock
     private ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
+    @Mock
+    private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;

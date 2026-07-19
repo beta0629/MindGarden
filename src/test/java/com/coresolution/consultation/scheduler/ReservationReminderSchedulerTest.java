@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import com.coresolution.consultation.config.BatchNotificationProperties;
 import com.coresolution.consultation.constant.BookingReminderPushConstants;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
@@ -47,7 +46,8 @@ import static org.mockito.Mockito.when;
  * <p>커버 영역:
  * <ul>
  *   <li>다중 테넌트 순회 — 테넌트별 독립 처리, 한 테넌트 실패가 다른 테넌트에 전파되지 않음.</li>
- *   <li>{@code shouldSendForSchedule} 발송 자격 판정 (P0 hotfix 회귀 보호 4종 케이스).</li>
+ *   <li>{@code shouldSendForSchedule} 발송 자격 판정 (단발성 포함, 매핑 없으면 skip).</li>
+ *   <li>D-2/D-1/D-0 SMS 배치 + D-1 푸시 병행.</li>
  *   <li>발송/skip/failed 카운트 집계 → SchedulerExecutionLogService 위임.</li>
  * </ul>
  *
@@ -55,12 +55,14 @@ import static org.mockito.Mockito.when;
  * {@code remaining < 1} 잔여 가드는 모순이며 제거됨. SESSIONS_EXHAUSTED 매핑의 미래 BOOKED
  * schedule 도 D-2 안내 대상으로 정상 dispatch 되어야 한다.
  *
+ * <p>2026-07-19: 단발성도 D-2/D-1/D-0 배치 대상. D-1 SMS({@code RESERVATION_IMMEDIATE_LATE}) 추가.
+ *
  * @author MindGarden
  * @since 2026-05-23
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("D-2 안내 스케줄러 — 다중 테넌트 + 단발성 필터 + 회기 차감 SSOT(A) 정합")
+@DisplayName("D-2/D-1/D-0 안내 스케줄러 — 다중 테넌트 + 단발성 포함 + 회기 차감 SSOT(A) 정합")
 class ReservationReminderSchedulerTest {
 
     private static final String TENANT_A = "tenant-a";
@@ -97,7 +99,10 @@ class ReservationReminderSchedulerTest {
         when(systemConfigService.getGlobalBoolean(
                 eq(NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED), anyBoolean()))
             .thenReturn(true);
-        // D-1 푸시 배치 기본: 대상 없음 (개별 테스트에서 override).
+        // D-0 SMS / D-1 SMS·푸시 배치 기본: 대상 없음 (개별 테스트에서 override).
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                any(), eq(LocalDate.now()), anyList()))
+            .thenReturn(Collections.emptyList());
         when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
                 any(), eq(LocalDate.now().plusDays(BookingReminderPushConstants.REMINDER_D1_DAYS_AHEAD)), anyList()))
             .thenReturn(Collections.emptyList());
@@ -110,9 +115,9 @@ class ReservationReminderSchedulerTest {
 
         Schedule scheduleA = buildSchedule(101L, TENANT_A, 5001L, 6001L);
         Schedule scheduleB = buildSchedule(201L, TENANT_B, 5002L, 6002L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(scheduleA));
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_B), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_B), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(scheduleB));
 
         givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
@@ -133,30 +138,32 @@ class ReservationReminderSchedulerTest {
     }
 
     @Test
-    @DisplayName("단발성(총 1회기) 매핑 — D-2 배치에서 skip")
-    void runDailyReminder_skipsSinglePackage() {
+    @DisplayName("단발성(총 1회기) 매핑 — D-2 배치에서도 ReminderD2 dispatch (다회기와 동일)")
+    void runDailyReminder_includesSinglePackageOnD2() {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
         Schedule single = buildSchedule(101L, TENANT_A, 5001L, 6001L);
         Schedule multi = buildSchedule(102L, TENANT_A, 5002L, 6002L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(single, multi));
 
         givenEligibleMapping(TENANT_A, 5001L, 6001L, 1, 1);
         givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 3);
+        when(dispatchService.dispatchReservationReminderD2(101L))
+            .thenReturn(success(700L));
         when(dispatchService.dispatchReservationReminderD2(102L))
             .thenReturn(success(701L));
 
         scheduler.runDailyReminder();
 
-        verify(dispatchService, never()).dispatchReservationReminderD2(101L);
+        verify(dispatchService).dispatchReservationReminderD2(101L);
         verify(dispatchService).dispatchReservationReminderD2(102L);
     }
 
     // ------------------------------------------------------------------
-    // shouldSendForSchedule — P0 hotfix 회귀 보호 4종 (2026-06-13)
+    // shouldSendForSchedule — P0 hotfix 회귀 보호
     //   case1: ACTIVE  + remaining=2          → dispatch ✓
     //   case2: EXHAUST + remaining=0 (total=2)→ dispatch ✓  (핫픽스 핵심)
-    //   case3: ACTIVE  + total=1              → skip       (단발성 정책 유지)
+    //   case3: ACTIVE  + total=1              → dispatch ✓  (2026-07-19 단발성 포함)
     //   case4: 매핑 없음                       → skip       (이상 데이터 차단)
     // ------------------------------------------------------------------
 
@@ -165,7 +172,7 @@ class ReservationReminderSchedulerTest {
     void shouldSend_case1_activeWithRemaining_dispatches() {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
         Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(schedule));
         givenMapping(TENANT_A, 5001L, 6001L, 10, 2, MappingStatus.ACTIVE);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
@@ -180,7 +187,7 @@ class ReservationReminderSchedulerTest {
     void shouldSend_case2_exhaustedWithZeroRemaining_dispatches() {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
         Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(schedule));
         // 회기 차감 정책 SSOT (A): 미래 BOOKED schedule 의 회기는 이미 used 에 카운트되어
         // remaining=0 + SESSIONS_EXHAUSTED 가 정상 상태. D-2 안내는 발송되어야 한다.
@@ -193,17 +200,18 @@ class ReservationReminderSchedulerTest {
     }
 
     @Test
-    @DisplayName("case3 — ACTIVE 매핑 + total=1 (단발성) → skip (회귀 보호)")
-    void shouldSend_case3_singlePackage_skips() {
+    @DisplayName("case3 — ACTIVE 매핑 + total=1 (단발성) → D-2 ReminderD2 dispatch")
+    void shouldSend_case3_singlePackage_dispatches() {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
         Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(schedule));
         givenMapping(TENANT_A, 5001L, 6001L, 1, 1, MappingStatus.ACTIVE);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
 
         scheduler.runDailyReminder();
 
-        verify(dispatchService, never()).dispatchReservationReminderD2(any());
+        verify(dispatchService).dispatchReservationReminderD2(101L);
     }
 
     @Test
@@ -211,7 +219,7 @@ class ReservationReminderSchedulerTest {
     void shouldSend_case4_noMapping_skips() {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
         Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(schedule));
         when(mappingRepository
             .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(TENANT_A, 5001L, 6001L))
@@ -232,7 +240,7 @@ class ReservationReminderSchedulerTest {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
         Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
         schedule.setStatus(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(schedule));
         givenMapping(TENANT_A, 5001L, 6001L, 10, 10, MappingStatus.PENDING_PAYMENT);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
@@ -243,13 +251,137 @@ class ReservationReminderSchedulerTest {
     }
 
     @Test
+    @DisplayName("case6 — TENTATIVE + PENDING_PAYMENT 단발성 → D-2 ReminderD2 dispatch")
+    void shouldSend_case6_tentativePendingPaymentSingle_dispatches() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        schedule.setStatus(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
+            .thenReturn(List.of(schedule));
+        givenMapping(TENANT_A, 5001L, 6001L, 1, 1, MappingStatus.PENDING_PAYMENT);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationReminderD2(101L);
+    }
+
+    @Test
+    @DisplayName("D-1 — BOOKED 다회기 내일 → ImmediateLate dispatch")
+    void runDailyReminder_d1_bookedMultiSession_dispatchesImmediateLate() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(401L, TENANT_A, 5001L, 6001L, 1);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(1)), anyList()))
+            .thenReturn(List.of(schedule));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(dispatchService.dispatchReservationImmediateLate(401L)).thenReturn(success(901L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationImmediateLate(401L);
+        verify(dispatchService, never()).dispatchReservationReminderD2(401L);
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD1"), eq("SUCCESS"),
+            eq("dispatched=1, skipped=0, failed=0"));
+    }
+
+    @Test
+    @DisplayName("D-1 — 단발성(총 1회기) 내일 → ImmediateLate dispatch")
+    void runDailyReminder_d1_includesSinglePackage() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule single = buildSchedule(402L, TENANT_A, 5001L, 6001L, 1);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(1)), anyList()))
+            .thenReturn(List.of(single));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 1, 1);
+        when(dispatchService.dispatchReservationImmediateLate(402L)).thenReturn(success(902L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationImmediateLate(402L);
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD1"), eq("SUCCESS"),
+            eq("dispatched=1, skipped=0, failed=0"));
+    }
+
+    @Test
+    @DisplayName("D-1 — TENTATIVE + PENDING_PAYMENT 다회기 내일 → ImmediateLate dispatch")
+    void runDailyReminder_d1_tentativePendingPaymentMultiSession_dispatchesImmediateLate() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(403L, TENANT_A, 5001L, 6001L, 1);
+        schedule.setStatus(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(1)), anyList()))
+            .thenReturn(List.of(schedule));
+        givenMapping(TENANT_A, 5001L, 6001L, 10, 10, MappingStatus.PENDING_PAYMENT);
+        when(dispatchService.dispatchReservationImmediateLate(403L)).thenReturn(success(903L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationImmediateLate(403L);
+        verify(dispatchService, never()).dispatchReservationReminderD2(403L);
+    }
+
+    @Test
+    @DisplayName("D-0 — TENTATIVE + PENDING_PAYMENT 다회기 당일 → ImmediateLate dispatch")
+    void runDailyReminder_d0_tentativePendingPaymentMultiSession_dispatchesImmediateLate() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(301L, TENANT_A, 5001L, 6001L, 0);
+        schedule.setStatus(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now()), anyList()))
+            .thenReturn(List.of(schedule));
+        givenMapping(TENANT_A, 5001L, 6001L, 10, 10, MappingStatus.PENDING_PAYMENT);
+        when(dispatchService.dispatchReservationImmediateLate(301L)).thenReturn(success(801L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationImmediateLate(301L);
+        verify(dispatchService, never()).dispatchReservationReminderD2(301L);
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD0"), eq("SUCCESS"),
+            eq("dispatched=1, skipped=0, failed=0"));
+    }
+
+    @Test
+    @DisplayName("D-0 — BOOKED 다회기 당일 → ImmediateLate dispatch (일반 예약과 동일)")
+    void runDailyReminder_d0_bookedMultiSession_dispatchesImmediateLate() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(302L, TENANT_A, 5001L, 6001L, 0);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now()), anyList()))
+            .thenReturn(List.of(schedule));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(dispatchService.dispatchReservationImmediateLate(302L)).thenReturn(success(802L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationImmediateLate(302L);
+        verify(dispatchService, never()).dispatchReservationReminderD2(302L);
+    }
+
+    @Test
+    @DisplayName("D-0 — 단발성(총 1회기) 당일 → ImmediateLate dispatch")
+    void runDailyReminder_d0_includesSinglePackage() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule single = buildSchedule(303L, TENANT_A, 5001L, 6001L, 0);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now()), anyList()))
+            .thenReturn(List.of(single));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 1, 1);
+        when(dispatchService.dispatchReservationImmediateLate(303L)).thenReturn(success(803L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationImmediateLate(303L);
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD0"), eq("SUCCESS"),
+            eq("dispatched=1, skipped=0, failed=0"));
+    }
+
+    @Test
     @DisplayName("dispatch 결과별 카운트 집계 — SKIPPED_DUPLICATE / FAILED / ALIMTALK_SENT 분류")
     void runDailyReminder_countsOutcomeBuckets() {
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
         Schedule s1 = buildSchedule(101L, TENANT_A, 5001L, 6001L);
         Schedule s2 = buildSchedule(102L, TENANT_A, 5002L, 6002L);
         Schedule s3 = buildSchedule(103L, TENANT_A, 5003L, 6003L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(s1, s2, s3));
         givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
         givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 7);
@@ -277,7 +409,7 @@ class ReservationReminderSchedulerTest {
             .thenThrow(new RuntimeException("tenant-a db down"));
 
         Schedule scheduleB = buildSchedule(201L, TENANT_B, 5002L, 6002L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_B), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_B), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(scheduleB));
         givenEligibleMapping(TENANT_B, 5002L, 6002L, 10, 5);
         when(dispatchService.dispatchReservationReminderD2(201L)).thenReturn(success(702L));
@@ -299,6 +431,7 @@ class ReservationReminderSchedulerTest {
         scheduler.runDailyReminder();
 
         verify(dispatchService, never()).dispatchReservationReminderD2(any());
+        verify(dispatchService, never()).dispatchReservationImmediateLate(any());
         verify(logService, never()).saveExecutionLog(any(), any(), any(), any(), any());
     }
 
@@ -333,9 +466,11 @@ class ReservationReminderSchedulerTest {
         givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
         givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 3);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+        when(dispatchService.dispatchReservationImmediateLate(201L)).thenReturn(success(801L));
 
         scheduler.runDailyReminder();
 
+        verify(dispatchService).dispatchReservationImmediateLate(201L);
         verify(mobilePushDispatchService, times(1)).dispatchBookingReminder(
             eq(TENANT_A), eq(scheduleD1Push), any(String.class),
             eq(BookingReminderPushConstants.REMINDER_D1_SLOT_CODE));
@@ -356,6 +491,7 @@ class ReservationReminderSchedulerTest {
         givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
         givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 3);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+        when(dispatchService.dispatchReservationImmediateLate(201L)).thenReturn(success(801L));
         org.mockito.Mockito.doThrow(new RuntimeException("expo down"))
             .when(mobilePushDispatchService).dispatchBookingReminder(
                 eq(TENANT_A), eq(scheduleD1Push), any(String.class),
@@ -365,6 +501,9 @@ class ReservationReminderSchedulerTest {
 
         verify(logService).saveExecutionLog(any(), eq(TENANT_A),
             eq("ReservationReminderD2"), eq("SUCCESS"),
+            eq("dispatched=1, skipped=0, failed=0"));
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD1"), eq("SUCCESS"),
             eq("dispatched=1, skipped=0, failed=0"));
     }
 
@@ -391,7 +530,7 @@ class ReservationReminderSchedulerTest {
             .thenReturn(true);
         when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
         Schedule scheduleA = buildSchedule(101L, TENANT_A, 5001L, 6001L);
-        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
             .thenReturn(List.of(scheduleA));
         givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));

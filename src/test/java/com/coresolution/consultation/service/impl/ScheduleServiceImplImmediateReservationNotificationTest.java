@@ -46,6 +46,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,6 +76,7 @@ import static org.mockito.Mockito.when;
  *   <li>TENTATIVE_PENDING_PAYMENT 다회기 + D-2 → {@code RESERVATION_REMINDER_D2}</li>
  *   <li>TENTATIVE + PENDING_PAYMENT(SAME_DAY) 단발성 → {@code RESERVATION_IMMEDIATE_SINGLE}</li>
  *   <li>TENTATIVE + PENDING_PAYMENT 다회기 + D-0/D-1/D-2 → LATE / D2</li>
+ *   <li>활성 트랜잭션 동기화가 있으면 afterCommit 이후 디스패치 (TARGET_NOT_FOUND 방지)</li>
  * </ul>
  *
  * @author MindGarden
@@ -130,6 +133,9 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
     @AfterEach
     void tearDown() {
         TenantContextHolder.clear();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
@@ -313,6 +319,36 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
                 "상담", "설명", "VIDEO", null, true);
 
         assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        verify(batchNotificationDispatchService).dispatchReservationReminderD2(SAVED_SCHEDULE_ID);
+        verify(batchNotificationDispatchService, never())
+            .dispatchReservationImmediateLate(anyLong());
+        verify(batchNotificationDispatchService, never())
+            .dispatchReservationImmediateSingle(anyLong());
+    }
+
+    @Test
+    @DisplayName("활성 트랜잭션 동기화 시 — afterCommit 전후에만 즉시 SMS 디스패치 (비동기화 시 동기 경로 회귀)")
+    void createConsultantSchedule_whenTxnSyncActive_dispatchesAfterCommit() {
+        stubMappingMultiSession();
+        stubScheduleSave();
+        TransactionSynchronizationManager.initSynchronization();
+
+        LocalDate dPlus2 = LocalDate.now().plusDays(2);
+        scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, dPlus2,
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "상담", "설명", "VIDEO", null, false);
+
+        // 커밋 전 — 예약 즉시 안내(D2/LATE/SINGLE)는 아직 디스패치되지 않음
+        verify(batchNotificationDispatchService, never()).dispatchReservationReminderD2(anyLong());
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateLate(anyLong());
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateSingle(anyLong());
+
+        // afterCommit 시뮬레이션
+        for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+            sync.afterCommit();
+        }
+
         verify(batchNotificationDispatchService).dispatchReservationReminderD2(SAVED_SCHEDULE_ID);
         verify(batchNotificationDispatchService, never())
             .dispatchReservationImmediateLate(anyLong());

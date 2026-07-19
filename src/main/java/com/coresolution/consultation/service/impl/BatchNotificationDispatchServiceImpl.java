@@ -334,6 +334,11 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             return validationFailure(BatchNotificationTemplateCodes.ERROR_CODE_TARGET_NOT_FOUND,
                 "schedule not found or missing client/consultant: id=" + scheduleId);
         }
+        // CANCELLED 만 차단 — BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 등 점유 상태는 허용.
+        if (schedule.getStatus() == ScheduleStatus.CANCELLED) {
+            return validationFailure(BatchNotificationTemplateCodes.ERROR_CODE_TARGET_NOT_FOUND,
+                "schedule cancelled: id=" + scheduleId);
+        }
 
         User client = userRepository
             .findByTenantIdAndIdIgnoringDeleted(tenantId, schedule.getClientId())

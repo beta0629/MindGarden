@@ -72,6 +72,8 @@ import static org.mockito.Mockito.when;
  *   <li>BOOKED 다회기 + D-3 이상 → 즉시 발송 없음 (09:00 D-2 배치 처리)</li>
  *   <li>BOOKED 단발성({@code totalSessions==1}) → {@code RESERVATION_IMMEDIATE_SINGLE}</li>
  *   <li>TENTATIVE_PENDING_PAYMENT 다회기 + D-2 → {@code RESERVATION_REMINDER_D2}</li>
+ *   <li>TENTATIVE + PENDING_PAYMENT(SAME_DAY) 단발성 → {@code RESERVATION_IMMEDIATE_SINGLE}</li>
+ *   <li>TENTATIVE + PENDING_PAYMENT 다회기 + D-0/D-1/D-2 → LATE / D2</li>
  * </ul>
  *
  * @author MindGarden
@@ -241,6 +243,83 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
             .notifyScheduleCreated(any(Schedule.class), org.mockito.ArgumentMatchers.anyBoolean());
     }
 
+    @Test
+    @DisplayName("TENTATIVE + PENDING_PAYMENT(SAME_DAY) 단발성 → RESERVATION_IMMEDIATE_SINGLE SMS 발송")
+    void createConsultantSchedule_whenTentativePendingPaymentSingle_dispatchesImmediateSingle() {
+        stubMappingPendingPaymentSingleSession();
+        stubScheduleSave();
+
+        LocalDate dPlus5 = LocalDate.now().plusDays(5);
+        Schedule saved = scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, dPlus5,
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "상담", "설명", "VIDEO", null, true);
+
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        verify(batchNotificationDispatchService).dispatchReservationImmediateSingle(SAVED_SCHEDULE_ID);
+        verify(batchNotificationDispatchService, never())
+            .dispatchReservationReminderD2(anyLong());
+        verify(batchNotificationDispatchService, never())
+            .dispatchReservationImmediateLate(anyLong());
+        verify(scheduleCreatedNotificationHelper, never())
+            .notifyScheduleCreated(any(Schedule.class), org.mockito.ArgumentMatchers.anyBoolean());
+    }
+
+    @Test
+    @DisplayName("TENTATIVE + PENDING_PAYMENT 다회기 D-0 → RESERVATION_IMMEDIATE_LATE SMS 발송")
+    void createConsultantSchedule_whenTentativePendingPaymentD0_dispatchesImmediateLate() {
+        stubMappingPendingPaymentMultiSession();
+        stubScheduleSave();
+
+        Schedule saved = scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, LocalDate.now(),
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "상담", "설명", "VIDEO", null, true);
+
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        verify(batchNotificationDispatchService).dispatchReservationImmediateLate(SAVED_SCHEDULE_ID);
+        verify(batchNotificationDispatchService, never())
+            .dispatchReservationReminderD2(anyLong());
+        verify(batchNotificationDispatchService, never())
+            .dispatchReservationImmediateSingle(anyLong());
+    }
+
+    @Test
+    @DisplayName("TENTATIVE + PENDING_PAYMENT 다회기 D-1 → RESERVATION_IMMEDIATE_LATE SMS 발송")
+    void createConsultantSchedule_whenTentativePendingPaymentD1_dispatchesImmediateLate() {
+        stubMappingPendingPaymentMultiSession();
+        stubScheduleSave();
+
+        LocalDate dPlus1 = LocalDate.now().plusDays(1);
+        Schedule saved = scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, dPlus1,
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "상담", "설명", "VIDEO", null, true);
+
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        verify(batchNotificationDispatchService).dispatchReservationImmediateLate(SAVED_SCHEDULE_ID);
+    }
+
+    @Test
+    @DisplayName("TENTATIVE + PENDING_PAYMENT 다회기 D-2 → RESERVATION_REMINDER_D2 SMS 발송")
+    void createConsultantSchedule_whenTentativePendingPaymentD2_dispatchesReminderD2() {
+        stubMappingPendingPaymentMultiSession();
+        stubScheduleSave();
+
+        LocalDate dPlus2 = LocalDate.now().plusDays(2);
+        Schedule saved = scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, dPlus2,
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "상담", "설명", "VIDEO", null, true);
+
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        verify(batchNotificationDispatchService).dispatchReservationReminderD2(SAVED_SCHEDULE_ID);
+        verify(batchNotificationDispatchService, never())
+            .dispatchReservationImmediateLate(anyLong());
+        verify(batchNotificationDispatchService, never())
+            .dispatchReservationImmediateSingle(anyLong());
+    }
+
     // ---------------------------------------------------------------- fixtures
 
     private void stubConflictCheckAndAutoComplete() {
@@ -284,8 +363,8 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
                 .thenReturn(List.of(mapping));
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID)).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        // dispatchImmediateReservationNotification → ACTIVE/SESSIONS_EXHAUSTED lookup
-        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+        // dispatchImmediateReservationNotification → SMS 전용 ACTIVE/EXHAUSTED/PENDING_PAYMENT lookup
+        when(mappingRepository.findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
                 TENANT_ID, CONSULTANT_ID, CLIENT_ID))
                 .thenReturn(java.util.List.of(mapping));
     }
@@ -310,9 +389,57 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
                 .thenReturn(List.of(mapping));
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID)).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+        when(mappingRepository.findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
                 TENANT_ID, CONSULTANT_ID, CLIENT_ID))
                 .thenReturn(java.util.List.of(mapping));
+    }
+
+    /**
+     * 실무 SAME_DAY 현장결제: PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD, ACTIVE 없음.
+     */
+    private ConsultantClientMapping buildPendingPaymentMapping(int totalSessions, int remainingSessions) {
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(MAPPING_ID);
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
+        mapping.setRemainingSessions(remainingSessions);
+        mapping.setTotalSessions(totalSessions);
+        mapping.setUsedSessions(Math.max(0, totalSessions - remainingSessions));
+        mapping.setStatus(MappingStatus.PENDING_PAYMENT);
+        mapping.setPaymentTiming("SAME_DAY_CARD");
+        mapping.setTenantId(TENANT_ID);
+        return mapping;
+    }
+
+    private void stubMappingPendingPaymentSingleSession() {
+        ConsultantClientMapping mapping = buildPendingPaymentMapping(1, 1);
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(Collections.emptyList());
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.PENDING_PAYMENT))
+                .thenReturn(List.of(mapping));
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID)).thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+                TENANT_ID, CONSULTANT_ID, CLIENT_ID))
+                .thenReturn(List.of(mapping));
+    }
+
+    private void stubMappingPendingPaymentMultiSession() {
+        ConsultantClientMapping mapping = buildPendingPaymentMapping(10, 10);
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(Collections.emptyList());
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.PENDING_PAYMENT))
+                .thenReturn(List.of(mapping));
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID)).thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+                TENANT_ID, CONSULTANT_ID, CLIENT_ID))
+                .thenReturn(List.of(mapping));
     }
 
 }

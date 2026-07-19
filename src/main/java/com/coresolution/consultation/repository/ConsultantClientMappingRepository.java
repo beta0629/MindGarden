@@ -125,6 +125,28 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
             @Param("clientId") Long clientId);
 
     /**
+     * 예약 즉시/리마인더 SMS 전용: ACTIVE·SESSIONS_EXHAUSTED·PENDING_PAYMENT 매핑 목록.
+     *
+     * <p>현장결제(SAME_DAY) 가예약은 매핑이 {@code PENDING_PAYMENT} 인 채 등록되므로
+     * {@link #findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId} 로는 {@code totalSessions}
+     * 를 읽지 못해 즉시 SMS 가 skip 된다. 회기 차감 등 기존 ACTIVE-only 호출처에는 사용하지 말 것.
+     *
+     * @param tenantId     테넌트 ID
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId     내담자 사용자 ID
+     * @return 후보 매핑 (없으면 empty)
+     * @since 2026-07-19
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.client.id = :clientId "
+            + "AND m.status IN ('ACTIVE', 'SESSIONS_EXHAUSTED', 'PENDING_PAYMENT') "
+            + "ORDER BY m.updatedAt DESC, m.createdAt DESC")
+    List<ConsultantClientMapping> findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId);
+
+    /**
      * 회기 차감 보정 배치용: 결제 승인된 활성/입금대기 매핑 1건 조회.
      *
      * <p>상태가 ACTIVE 또는 DEPOSIT_PENDING 이고 paymentStatus 가 APPROVED 인 매핑만 회기 차감을

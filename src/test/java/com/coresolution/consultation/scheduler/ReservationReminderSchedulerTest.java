@@ -216,10 +216,30 @@ class ReservationReminderSchedulerTest {
         when(mappingRepository
             .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(TENANT_A, 5001L, 6001L))
             .thenReturn(List.of());
+        when(mappingRepository
+            .findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+                TENANT_A, 5001L, 6001L))
+            .thenReturn(List.of());
 
         scheduler.runDailyReminder();
 
         verify(dispatchService, never()).dispatchReservationReminderD2(any());
+    }
+
+    @Test
+    @DisplayName("case5 — TENTATIVE + PENDING_PAYMENT 다회기 → D-2 SMS dispatch (SAME_DAY)")
+    void shouldSend_case5_tentativePendingPaymentMultiSession_dispatches() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule schedule = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        schedule.setStatus(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList()))
+            .thenReturn(List.of(schedule));
+        givenMapping(TENANT_A, 5001L, 6001L, 10, 10, MappingStatus.PENDING_PAYMENT);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationReminderD2(101L);
     }
 
     @Test
@@ -400,6 +420,11 @@ class ReservationReminderSchedulerTest {
             .build();
         mapping.setId(consultantId * 1000 + clientId);
         mapping.setTenantId(tenantId);
+        when(mappingRepository
+            .findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+                tenantId, consultantId, clientId))
+            .thenReturn(java.util.List.of(mapping));
+        // 회기 차감 등 레거시 stub 호환 — SMS 경로에서는 신규 메서드만 사용.
         when(mappingRepository
             .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(tenantId, consultantId, clientId))
             .thenReturn(java.util.List.of(mapping));

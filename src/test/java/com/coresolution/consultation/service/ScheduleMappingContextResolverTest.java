@@ -145,6 +145,37 @@ class ScheduleMappingContextResolverTest {
     }
 
     @Test
+    @DisplayName("selectLatestMappingForReservationSms — PENDING_PAYMENT만 있으면 선택")
+    void selectLatestMappingForReservationSms_selectsPendingPaymentWhenOnly() {
+        ConsultantClientMapping pending = mapping(50L, 1, 1, MappingStatus.PENDING_PAYMENT,
+                LocalDateTime.of(2026, 7, 19, 10, 0), null);
+        pending.setUpdatedAt(LocalDateTime.of(2026, 7, 19, 10, 0));
+
+        var selected = ScheduleMappingContextResolver.selectLatestMappingForReservationSms(
+                List.of(pending), false);
+
+        assertThat(selected).isPresent();
+        assertThat(selected.get().getId()).isEqualTo(50L);
+    }
+
+    @Test
+    @DisplayName("selectLatestMappingForReservationSms — preferPendingPayment 시 PENDING_PAYMENT 우선")
+    void selectLatestMappingForReservationSms_prefersPendingWhenRequested() {
+        ConsultantClientMapping active = mapping(10L, 10, 8, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 7, 1, 9, 0), null);
+        active.setUpdatedAt(LocalDateTime.of(2026, 7, 1, 9, 0));
+        ConsultantClientMapping pending = mapping(50L, 1, 1, MappingStatus.PENDING_PAYMENT,
+                LocalDateTime.of(2026, 7, 19, 10, 0), null);
+        pending.setUpdatedAt(LocalDateTime.of(2026, 7, 19, 10, 0));
+
+        var selected = ScheduleMappingContextResolver.selectLatestMappingForReservationSms(
+                List.of(active, pending), true);
+
+        assertThat(selected).isPresent();
+        assertThat(selected.get().getId()).isEqualTo(50L);
+    }
+
+    @Test
     @DisplayName("buildActiveOrExhaustedMappingLookup — 복수 ACTIVE merge 시 최신 1건 유지")
     void buildActiveOrExhaustedMappingLookup_mergesMultipleActiveToLatest() {
         ConsultantClientMapping olderActive = mapping(10L, 5, 2, MappingStatus.ACTIVE,

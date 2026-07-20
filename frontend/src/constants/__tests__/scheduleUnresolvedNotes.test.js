@@ -42,8 +42,8 @@ describe('parseClientScheduleNotesClientWideUnresolvedCount', () => {
 });
 
 describe('formatCalendarSessionLabel', () => {
-  it('다회기만 잔여 표시 (남은/총)', () => {
-    expect(formatCalendarSessionLabel(2, 10)).toBe('2/10회');
+  it('다회기만 사용/전체 표시 (remaining → used = total − remaining)', () => {
+    expect(formatCalendarSessionLabel(2, 10)).toBe('8/10회');
     expect(shouldShowCalendarSessionLabel(10, 2)).toBe(true);
   });
 
@@ -60,7 +60,7 @@ describe('resolveCalendarSessionLabel', () => {
     expect(SCHEDULE_SESSION_SEQUENCE_FIELD).toBe('sessionSequence');
   });
 
-  it('과거·sessionSequence 있으면 해당 시점 잔여 표시 (remainingSessions 무시)', () => {
+  it('과거·sessionSequence 있으면 해당 시점 사용 표시 (remainingSessions 무시)', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 6,
@@ -70,9 +70,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: true
       })
     ).toEqual({
-      label: '4/10회',
+      label: '6/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '6회차 · 잔여 4/10'
+      ariaLabel: '6회차 · 사용 6/10'
     });
     expect(
       resolveCalendarSessionLabel({
@@ -83,9 +83,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: true
       })
     ).toEqual({
-      label: '6/10회',
+      label: '4/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '4회차 · 잔여 6/10'
+      ariaLabel: '4회차 · 사용 4/10'
     });
   });
 
@@ -105,7 +105,7 @@ describe('resolveCalendarSessionLabel', () => {
     });
   });
 
-  it('한글 완료 상태도 해당 시점 잔여 표시', () => {
+  it('한글 완료 상태도 해당 시점 사용 표시', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 6,
@@ -115,13 +115,13 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: true
       })
     ).toEqual({
-      label: '4/10회',
+      label: '6/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '6회차 · 잔여 4/10'
+      ariaLabel: '6회차 · 사용 6/10'
     });
   });
 
-  it('완료 상태는 sessionSequence로 시점 잔여 계산', () => {
+  it('완료 상태는 sessionSequence로 시점 사용 계산', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 4,
@@ -131,9 +131,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '6/10회',
+      label: '4/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '4회차 · 잔여 6/10'
+      ariaLabel: '4회차 · 사용 4/10'
     });
   });
 
@@ -147,9 +147,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '3/10회',
+      label: '7/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '잔여 3/10'
+      ariaLabel: '사용 7/10'
     });
     expect(
       resolveCalendarSessionLabel({
@@ -160,9 +160,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '17/20회',
+      label: '3/20회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '잔여 17/20'
+      ariaLabel: '사용 3/20'
     });
     expect(
       resolveCalendarSessionLabel({
@@ -175,11 +175,11 @@ describe('resolveCalendarSessionLabel', () => {
     ).toEqual({
       label: '5/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '잔여 5/10'
+      ariaLabel: '사용 5/10'
     });
   });
 
-  it('미래·sessionSequence 없으면 remainingSessions fallback', () => {
+  it('미래·sessionSequence 없으면 remainingSessions → used fallback', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: null,
@@ -189,13 +189,13 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: false
       })
     ).toEqual({
-      label: '3/10회',
+      label: '7/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '잔여 3/10'
+      ariaLabel: '사용 7/10'
     });
   });
 
-  it('과거·sessionSequence 6은 4/10회 유지', () => {
+  it('과거·sessionSequence 6은 6/10회 (사용/전체)', () => {
     expect(
       resolveCalendarSessionLabel({
         sessionSequence: 6,
@@ -205,9 +205,9 @@ describe('resolveCalendarSessionLabel', () => {
         isPast: true
       })
     ).toEqual({
-      label: '4/10회',
+      label: '6/10회',
       variant: CALENDAR_SESSION_LABEL_VARIANT.BOOKING_SEQUENCE,
-      ariaLabel: '6회차 · 잔여 4/10'
+      ariaLabel: '6회차 · 사용 6/10'
     });
   });
 

@@ -90,13 +90,13 @@
       "krPublicHolidayDisclaimer": "표시는 참고용이며, 실제 휴무·급여 적용은 관공서·고용노동부 고시 및 내규를 확인하세요.",
       "integratedWeekendHolidayNote": "월간: 토요일은 연한 파랑·일요일은 연한 붉은 틴트, 공휴일은 붉은 계열(겹치면 공휴일 우선).",
       "sessionLabelsTitle": "회기 표기",
-      "sessionBookingSequenceMeaning": "해당 일정 시점 잔여 회기",
-      "sessionRemainingMeaning": "해당 예약 직후 잔여 회기 (미래 일정)"
+      "sessionBookingSequenceMeaning": "해당 일정 시점 사용 회기",
+      "sessionRemainingMeaning": "해당 예약 직후 사용 회기 (미래 일정)"
     },
     "calendar": {
-      "sessionLabelFormat": "{{remaining}}/{{total}}회",
-      "sessionAriaLabelBooking": "{{sequence}}회차 · 잔여 {{remaining}}/{{total}}",
-      "sessionAriaLabelRemaining": "잔여 {{remaining}}/{{total}}"
+      "sessionLabelFormat": "{{used}}/{{total}}회",
+      "sessionAriaLabelBooking": "{{sequence}}회차 · 사용 {{used}}/{{total}}",
+      "sessionAriaLabelRemaining": "사용 {{used}}/{{total}}"
     }
   },
   "UnifiedScheduleComponent": {

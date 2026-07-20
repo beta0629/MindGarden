@@ -32,25 +32,33 @@
   flex-shrink: 0;
 }
 
-/* B0KlA Pill Toggle (PILL_TOGGLE_DESIGN_SPEC v1.0 - AdminDashboardB0KlA.css와 동일) */
+/* B0KlA Pill Toggle — AdminDashboardB0KlA.css SSOT 와 동일 (shrink-to-fit) */
 .mg-v2-ad-b0kla__pill-toggle {
-  display: flex;
-  padding: 6px;
-  gap: 6px;
-  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  height: auto;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  gap: var(--mg-v2-space-1, 0.25rem);
+  border-radius: var(--mg-v2-radius-pill, 9999px);
   border: 1px solid var(--ad-b0kla-border);
   background: var(--ad-b0kla-bg);
+  box-sizing: border-box;
 }
 
 .mg-v2-ad-b0kla__pill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 20px;
-  min-height: 44px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 9999px;
+  box-sizing: border-box;
+  height: auto;
+  padding: var(--mg-v2-space-3, 12px) var(--mg-v2-space-5, 20px);
+  min-height: var(--mg-v2-component-touch-target, 44px);
+  font-size: var(--mg-v2-font-size-body-md, 14px);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  line-height: var(--mg-v2-font-line-height-body, 1.5);
+  border-radius: var(--mg-v2-radius-pill, 9999px);
   border: none;
   background: transparent;
   color: var(--ad-b0kla-text-secondary);

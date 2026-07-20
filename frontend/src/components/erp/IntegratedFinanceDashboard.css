@@ -114,10 +114,16 @@
 }
 
 .integrated-finance-tabs.mg-v2-ad-b0kla__pill-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: auto;
+  width: fit-content;
+  max-width: 100%;
   background: var(--ad-b0kla-bg);
-  border-radius: 9999px;
-  padding: 6px;
+  border-radius: var(--mg-v2-radius-pill, 9999px);
+  padding: 0;
   border: 1px solid var(--ad-b0kla-border);
+  box-sizing: border-box;
 }
 
 /* 첫 로딩: pill 탭과 동일 레이아웃, 비활성(클릭 불가) */

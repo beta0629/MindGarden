@@ -57,6 +57,11 @@ describe('ScheduleLegend', () => {
     expect(screen.getByText(`= ${SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING}`)).toBeInTheDocument();
     expect(screen.getByText(SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE)).toBeInTheDocument();
     expect(screen.getByText(`= ${SCHEDULE_LEGEND_SESSION_REMAINING_MEANING}`)).toBeInTheDocument();
+    // 분수형 a/b회 = 사용/전체 (잔여 의미 문구 금지)
+    expect(SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING).toContain('사용');
+    expect(SCHEDULE_LEGEND_SESSION_REMAINING_MEANING).toContain('사용');
+    expect(SCHEDULE_LEGEND_SESSION_BOOKING_SEQUENCE_MEANING).not.toContain('잔여');
+    expect(SCHEDULE_LEGEND_SESSION_REMAINING_MEANING).not.toContain('잔여');
   });
 
   test('calendarSkin=integrated 기본 접힘(Q2=A) — 토글 버튼이 존재하고 aria-expanded=false 이다', () => {

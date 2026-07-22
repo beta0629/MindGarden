@@ -115,7 +115,7 @@ jobs:
             ls -1t /var/www/backups/ops-backend/ops-backend-*.jar 2>/dev/null | tail -n +$((BACKUP_RETENTION_COUNT + 1)) | xargs -r sudo rm -f
 
       - name: 📤 Ops 백엔드 JAR 업로드
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

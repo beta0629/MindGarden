@@ -20,7 +20,15 @@ import './MobileLnbDrawer.css';
 
 const hasChildren = (item) => item.children && item.children.length > 0;
 
-/** 현재 경로가 속한 그룹의 key(item.to) 반환, 없으면 null */
+/** 동일 path 숏컷·그룹 병존 시 React key / 아코디언 key 충돌 방지 */
+const getLnbItemKey = (item) => {
+  if (item?.menuCode) {
+    return String(item.menuCode);
+  }
+  return `${toDisplayString(item?.label)}::${String(item?.to ?? '')}`;
+};
+
+/** 현재 경로가 속한 그룹의 key 반환, 없으면 null */
 const getInitialExpandedKey = (items, pathname) => {
   const group = items.find(
     (item) =>
@@ -30,11 +38,11 @@ const getInitialExpandedKey = (items, pathname) => {
           (sub) => pathname === sub.to || pathname.startsWith(`${sub.to}/`)
         ))
   );
-  return group ? group.to : null;
+  return group ? getLnbItemKey(group) : null;
 };
 
-const sublistId = (prefix, itemTo) =>
-  `${prefix}-sublist-${itemTo.replaceAll('/', '-').replace(/^-/, '')}`;
+const sublistId = (prefix, itemKey) =>
+  `${prefix}-sublist-${String(itemKey).replaceAll('/', '-').replace(/^-/, '')}`;
 
 const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시스템 관리', onLogout }) => {
   const location = useLocation();
@@ -79,11 +87,12 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
         </div>
         <nav className="mg-v2-mobile-lnb-drawer__nav">
           <ul className="mg-v2-mobile-lnb-drawer__list">
-            {menuItems.map((item) =>
-              hasChildren(item) ? (
+            {menuItems.map((item) => {
+              const itemKey = getLnbItemKey(item);
+              return hasChildren(item) ? (
                 <li
-                  key={item.to}
-                  className={`mg-v2-mobile-lnb-drawer__group ${expandedGroupKey === item.to ? 'mg-v2-mobile-lnb-drawer__group--expanded' : ''}`}
+                  key={itemKey}
+                  className={`mg-v2-mobile-lnb-drawer__group ${expandedGroupKey === itemKey ? 'mg-v2-mobile-lnb-drawer__group--expanded' : ''}`}
                 >
                   <div className="mg-v2-mobile-lnb-drawer__group-head">
                     <MGButton
@@ -97,13 +106,13 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                         className: 'mg-v2-mobile-lnb-drawer__group-chevron'
                       })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={(e) => handleGroupToggle(e, item.to)}
+                      onClick={(e) => handleGroupToggle(e, itemKey)}
                       preventDoubleClick={false}
-                      aria-expanded={expandedGroupKey === item.to}
-                      aria-controls={sublistId('mg-v2-mobile-lnb', item.to)}
-                      aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === item.to ? '접기' : '펼치기'}`}
+                      aria-expanded={expandedGroupKey === itemKey}
+                      aria-controls={sublistId('mg-v2-mobile-lnb', itemKey)}
+                      aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === itemKey ? '접기' : '펼치기'}`}
                     >
-                      {expandedGroupKey === item.to ? (
+                      {expandedGroupKey === itemKey ? (
                         <Icon name="CHEVRON_DOWN" size="MD" color="TRANSPARENT" aria-hidden />
                       ) : (
                         <Icon name="CHEVRON_RIGHT" size="MD" color="TRANSPARENT" aria-hidden />
@@ -119,14 +128,14 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                     </NavLinkWithRouter>
                   </div>
                   <ul
-                    id={sublistId('mg-v2-mobile-lnb', item.to)}
+                    id={sublistId('mg-v2-mobile-lnb', itemKey)}
                     className="mg-v2-mobile-lnb-drawer__sublist"
                     role="group"
                     aria-label={toDisplayString(item.label)}
                   >
                     {item.children.map((sub) => (
                       <LnbMenuItem
-                        key={sub.to}
+                        key={getLnbItemKey(sub)}
                         to={sub.to}
                         icon={sub.icon}
                         end={sub.end !== false}
@@ -139,7 +148,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                 </li>
               ) : (
                 <LnbMenuItem
-                  key={item.to}
+                  key={itemKey}
                   to={item.to}
                   icon={item.icon}
                   end={item.end !== false}
@@ -147,8 +156,8 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                 >
                   <SafeText>{item.label}</SafeText>
                 </LnbMenuItem>
-              )
-            )}
+              );
+            })}
           </ul>
         </nav>
         {onLogout && (

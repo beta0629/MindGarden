@@ -18,15 +18,34 @@ import { MemoryRouter } from 'react-router-dom';
 import DesktopLnb from '../DesktopLnb';
 
 const lnbItems = [
-  { to: '/admin/dashboard', icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true },
-  { to: '/admin/integrated-schedule', icon: 'CALENDAR_DAYS', label: '통합 스케줄', end: true },
+  { to: '/admin/dashboard', icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true, menuCode: 'ADM_DASHBOARD' },
+  { to: '/admin/integrated-schedule', icon: 'CALENDAR_DAYS', label: '통합 스케줄', end: true, menuCode: 'ADM_INTEGRATED_SCHEDULE' },
+  {
+    to: '/admin/user-management',
+    icon: 'USERS',
+    label: '사용자 관리',
+    end: true,
+    menuCode: 'ADM_USER_MANAGEMENT'
+  },
   {
     to: '/admin/notifications',
     icon: 'BELL',
     label: '알림·메시지',
     end: false,
+    menuCode: 'ADM_NOTIFICATIONS',
     children: [
       { to: '/admin/consultation-logs', icon: 'FILE_TEXT', label: '상담일지', end: true }
+    ]
+  },
+  {
+    to: '/admin/user-management',
+    icon: 'USERS',
+    label: '사용자/권한',
+    end: false,
+    menuCode: 'ADM_USERS',
+    children: [
+      { to: '/admin/user-management', icon: 'USER', label: '사용자 목록', end: true },
+      { to: '/admin/accounts', icon: 'BOOK_USER', label: '계좌 관리', end: true }
     ]
   },
   {
@@ -34,6 +53,7 @@ const lnbItems = [
     icon: 'CREDIT_CARD',
     label: '매칭·결제·환불',
     end: false,
+    menuCode: 'ADM_MATCHING_PAYMENT_REFUND',
     children: [
       { to: '/admin/mapping-management', icon: 'LINK', label: '매칭 관리(환불·취소)', end: true },
       { to: '/admin/billing/subscriptions', icon: 'RECEIPT', label: '결제/구독 관리', end: true }
@@ -67,6 +87,21 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
       renderLnb();
       expect(screen.getByText('대시보드')).toBeInTheDocument();
       expect(screen.getByText('통합 스케줄')).toBeInTheDocument();
+    });
+
+    it('사용자 관리 숏컷이 통합 스케줄 다음·알림보다 위에 노출되고 사용자/권한 그룹도 유지된다', () => {
+      renderLnb();
+      expect(screen.getByText('사용자 관리')).toBeInTheDocument();
+      expect(screen.getByText('사용자/권한')).toBeInTheDocument();
+      const list = screen.getByRole('navigation', { name: '좌측 메뉴' })
+        .querySelector('.mg-v2-desktop-lnb__list');
+      const topLabels = Array.from(list?.children || []).map((li) => li.textContent || '');
+      const shortcutIdx = topLabels.findIndex((t) => t.includes('사용자 관리') && !t.includes('사용자/권한'));
+      const notifyIdx = topLabels.findIndex((t) => t.includes('알림·메시지'));
+      const groupIdx = topLabels.findIndex((t) => t.includes('사용자/권한'));
+      expect(shortcutIdx).toBeGreaterThanOrEqual(0);
+      expect(notifyIdx).toBeGreaterThan(shortcutIdx);
+      expect(groupIdx).toBeGreaterThan(shortcutIdx);
     });
   });
 

@@ -497,6 +497,49 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     return true;
   };
 
+  const activeMappingForPair = (() => {
+    if (!selectedConsultant?.id || !selectedClient?.id) {
+      return null;
+    }
+    return mappings.find((m) => {
+      const consultantId = m.consultantId ?? m.consultant?.id;
+      const clientId = m.clientId ?? m.client?.id;
+      return consultantId === selectedConsultant.id
+        && clientId === selectedClient.id
+        && m.status === 'ACTIVE';
+    }) || null;
+  })();
+
+  const renderActiveMappingMergeHint = () => {
+    if (!activeMappingForPair || step < 2 || step > 4) {
+      return null;
+    }
+    return (
+      <div
+        className="mg-v2-mapping-creation-modal__active-mapping-warning"
+        data-testid="active-mapping-merge-hint"
+        role="status"
+      >
+        <AlertCircle size={18} aria-hidden="true" />
+        <div className="mg-v2-mapping-creation-modal__active-mapping-warning-body">
+          <p>
+            {t(
+              'admin:mappingCreation.activeMappingMergeHint',
+              '추가 패키지 결제 시 기존 활성 매칭 회기에 합산됩니다.'
+            )}
+          </p>
+          <p className="mg-v2-mapping-creation-modal__active-mapping-warning-meta">
+            {t('admin:mappingCreation.activeMappingMergeMeta', {
+              id: activeMappingForPair.id,
+              remaining: toDisplayString(activeMappingForPair.remainingSessions, '0'),
+              defaultValue: `활성 매칭 #${activeMappingForPair.id} · 잔여 ${toDisplayString(activeMappingForPair.remainingSessions, '0')}회`
+            })}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   const renderActions = () => (
     <ActionBar align="end" gap="md" className="mg-v2-mapping-creation-modal__actions">
       {step > 1 && step < 5 && (
@@ -554,6 +597,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             );
           })}
         </nav>
+
+        {renderActiveMappingMergeHint()}
 
         {/* 1단계: 상담사 */}
         {step === 1 && (

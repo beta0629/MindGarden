@@ -201,6 +201,7 @@ const SessionExtensionModal = ({
               <h3 id="mg-extension-input-title" className="mg-extension__section-title">추가 정보</h3>
               <p className="mg-extension__help">
                 동일 패키지를 승계하며 패키지명과 기존 가격은 변경하지 않습니다.
+                (기존 패키지 연장 전용)
               </p>
             </header>
             <div className="mg-extension__input-grid">

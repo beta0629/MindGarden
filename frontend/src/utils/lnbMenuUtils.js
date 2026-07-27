@@ -484,9 +484,9 @@ function buildGnbQuickNavigateId(label, path) {
 
 /**
  * API 메뉴 노드 → LNB 아이템 형태로 변환 (재귀)
- * @param {Array<{ menuPath?: string, menuName?: string, icon?: string, children?: Array }>} apiMenus
+ * @param {Array<{ menuPath?: string, menuName?: string, menuCode?: string, icon?: string, children?: Array }>} apiMenus
  * @param {{ userRole?: string }} options userRole이 있으면 '대시보드' 링크를 해당 역할 대시보드로 설정
- * @returns {Array<{ to: string, label: string, icon: string, end: boolean, children?: Array }>}
+ * @returns {Array<{ to: string, label: string, icon: string, end: boolean, menuCode?: string, children?: Array }>}
  */
 export function normalizeLnbTree(apiMenus, options = {}) {
   const dashboardPath = options.userRole ? getDashboardPathByRole(options.userRole) : '/admin/dashboard';
@@ -508,6 +508,7 @@ export function normalizeLnbTree(apiMenus, options = {}) {
       label,
       icon: getLnbIcon(m.icon),
       end: !hasChildren,
+      menuCode: m.menuCode || undefined,
       children: hasChildren ? children : undefined
     };
   }

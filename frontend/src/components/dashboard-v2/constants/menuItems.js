@@ -14,27 +14,38 @@ const BREAKPOINT_DESKTOP = 768;
  * IA SSOT: docs/project-management/2026-05-28/ADMIN_LNB_IA_RESTRUCTURE_PLAN.md
  *          docs/project-management/2026-05-28/ADMIN_LNB_IA_DESIGN_HANDOFF.md (53f2d5a6e)
  *
- * 1차 8개 (단독 3 + 그룹 5 — Q10 가드라인 ≤8):
+ * 1차 (단독 + 그룹 — Q10 ≤8 가드는 참고; UX 숏컷으로 단독 추가됨):
  *   1. 대시보드          (단독, sort=10)
  *   2. 통합 스케줄        (단독, sort=15) — DUP-1 fix
- *   3. 알림·메시지        (단독, sort=20) — DUP-2 fix (path=/admin/notifications)
- *   4. 매칭·결제·환불     (그룹, sort=25) — Q9 권고 (매칭/결제 강등)
- *   5. 사용자 관리        (그룹, sort=30)
- *   6. 콘텐츠·커뮤니티     (그룹, sort=35) — DUP-3 신설
- *   7. 쇼핑·리워드        (그룹, sort=40)
- *   8. 운영·재무 (ERP)    (그룹, sort=45)
- *   9. 시스템·설정        (그룹, sort=50)
+ *   3. 사용자 관리        (단독, sort=17) — ADM_USER_MANAGEMENT 숏컷 (ADM_USERS_LIST 와 동일 path)
+ *   4. 알림·메시지        (단독/그룹, sort=20) — DUP-2 fix (path=/admin/notifications)
+ *   5. 매칭·결제·환불     (그룹, sort=25) — Q9 권고 (매칭/결제 강등)
+ *   6. 사용자/권한        (그룹, sort=30) — ADM_USERS 유지 (숏컷과 병존)
+ *   7. 디러티 매칭 정리    (단독, 폴백 전용 보조)
+ *   8. 콘텐츠·커뮤니티     (그룹, sort=35) — DUP-3 신설
+ *   9. 쇼핑·리워드        (그룹, sort=40)
+ *  10. 운영·재무 (ERP)    (그룹, sort=45)
+ *  11. 시스템·설정        (그룹, sort=50)
  *
- * Flyway 마이그 V20260606_008__lnb_ia_restructure.sql 와 1:1 정합 (DB 시드 SSOT 우선).
+ * Flyway: V20260606_008__lnb_ia_restructure.sql + V20260727_001__lnb_admin_user_management_shortcut.sql
+ * (DB 시드 SSOT 우선).
  */
 const DEFAULT_MENU_ITEMS = [
-  { to: ADMIN_ROUTES.DASHBOARD, icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true },
-  { to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, icon: 'CALENDAR_DAYS', label: '통합 스케줄', end: true },
+  { to: ADMIN_ROUTES.DASHBOARD, icon: 'LAYOUT_DASHBOARD', label: '대시보드', end: true, menuCode: 'ADM_DASHBOARD' },
+  { to: ADMIN_ROUTES.INTEGRATED_SCHEDULE, icon: 'CALENDAR_DAYS', label: '통합 스케줄', end: true, menuCode: 'ADM_INTEGRATED_SCHEDULE' },
+  {
+    to: ADMIN_ROUTES.USER_MANAGEMENT,
+    icon: 'USERS',
+    label: '사용자 관리',
+    end: true,
+    menuCode: 'ADM_USER_MANAGEMENT'
+  },
   {
     to: ADMIN_ROUTES.NOTIFICATIONS,
     icon: 'BELL',
     label: '알림·메시지',
     end: false,
+    menuCode: 'ADM_NOTIFICATIONS',
     children: [
       { to: ADMIN_ROUTES.CONSULTATION_LOGS, icon: 'FILE_TEXT', label: '상담일지', end: true }
     ]
@@ -44,6 +55,7 @@ const DEFAULT_MENU_ITEMS = [
     icon: 'CREDIT_CARD',
     label: '매칭·결제·환불',
     end: false,
+    menuCode: 'ADM_MATCHING_PAYMENT_REFUND',
     children: [
       { to: ADMIN_ROUTES.MAPPING_MANAGEMENT, icon: 'LINK', label: '매칭 관리(환불·취소)', end: true },
       { to: ADMIN_ROUTES.BILLING_SUBSCRIPTIONS, icon: 'RECEIPT', label: '결제/구독 관리', end: true },
@@ -54,8 +66,9 @@ const DEFAULT_MENU_ITEMS = [
   {
     to: ADMIN_ROUTES.USER_MANAGEMENT,
     icon: 'USERS',
-    label: '사용자 관리',
+    label: '사용자/권한',
     end: false,
+    menuCode: 'ADM_USERS',
     children: [
       { to: ADMIN_ROUTES.USER_MANAGEMENT, icon: 'USER', label: '사용자 목록', end: true },
       { to: '/admin/accounts', icon: 'BOOK_USER', label: '계좌 관리', end: true },
@@ -159,7 +172,15 @@ export function buildAdminLnbFallbackQuickNavigateSpecs() {
       };
     }
     const fallbackId = `nav-${item.to.split('/').filter(Boolean).join('-')}`;
-    const id = ADMIN_LNB_QUICK_NAV_ID_BY_TO.get(item.to) ?? fallbackId;
+    let id = item.menuCode
+      ? `nav-${String(item.menuCode).toLowerCase().replaceAll('_', '-')}`
+      : (ADMIN_LNB_QUICK_NAV_ID_BY_TO.get(item.to) ?? fallbackId);
+    // 숏컷·그룹이 동일 path 를 공유해도 GNB id 는 구분
+    if (item.label === '사용자/권한') {
+      id = 'users-permissions';
+    } else if (item.label === '사용자 관리' && !item.children) {
+      id = 'user-management';
+    }
     return {
       id,
       to: item.to,

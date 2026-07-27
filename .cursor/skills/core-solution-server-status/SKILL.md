@@ -53,7 +53,7 @@ ssh root@beta0629.cafe24.com 'systemctl cat mindgarden-dev.service'
 | 구분 | 서비스/호스트 | 서비스명 | 로그·경로 |
 |------|----------------|----------|-----------|
 | **개발** | root@beta0629.cafe24.com | mindgarden-dev.service | /var/www/mindgarden-dev/logs/error.log, coresolution.log, sql-error.log, journalctl -u mindgarden-dev.service |
-| **운영** | root@beta74.cafe24.com | **mindgarden.service** | /var/log/mindgarden/application.log, `journalctl -u mindgarden.service`, 배포 가이드 참조 |
+| **운영** | root@beta74.cafe24.com | **mindgarden-core-blue** / **mindgarden-core-green** (레거시 `mindgarden.service` masked) | /var/log/mindgarden/application.log, `journalctl -u mindgarden-core-blue.service`(또는 green), `prod-health-snapshot.sh` 기본 blue+green |
 
 - shell 서브에이전트는 위 **SSH 접속 정보**를 사용해 `ssh root@beta0629.cafe24.com "tail -n 200 /var/www/mindgarden-dev/logs/error.log"` 형태로 로그 수집.
 
@@ -69,7 +69,8 @@ ssh root@beta0629.cafe24.com 'systemctl cat mindgarden-dev.service'
 - **앱이 쓰는 DB 환경 변수**는 **운영 서버의 systemd**에 있다. 아래로 실제 값 확인(민감값은 로그·답변에 그대로 붙여 넣지 말 것).
 
 ```bash
-ssh root@beta74.cafe24.com 'systemctl cat mindgarden.service'
+ssh root@beta74.cafe24.com 'systemctl cat mindgarden-core-blue.service'
+# (또는 mindgarden-core-green.service — active 슬롯 기준)
 ```
 
 - 일반적으로 Spring Boot가 기대하는 키: **`DB_HOST`**, **`DB_PORT`**(기본 3306), **`DB_NAME`**, **`DB_USERNAME`**, **`DB_PASSWORD`**
@@ -125,8 +126,8 @@ mysql -h "$DB_HOST" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$D
 
 ### shell 체크리스트에 넣을 한 줄 순서
 
-1. `systemctl status mindgarden.service --no-pager` + `curl` 로컬 헬스
-2. `journalctl -u mindgarden.service -n 300` 에서 Flyway·JPA schema **validate** 오류 유무
+1. `systemctl status mindgarden-core-blue.service mindgarden-core-green.service --no-pager` + `curl` 로컬 헬스(8080/8081)
+2. `journalctl -u mindgarden-core-blue.service -n 300`(및 green) 에서 Flyway·JPA schema **validate** 오류 유무
 3. (필요 시) MySQL로 **`flyway_schema_history`** 또는 핵심 테이블 존재 확인
 4. 프로시저 배포 후 **`information_schema.ROUTINES`** 로 대상 프로시저 확인
 

@@ -2,10 +2,23 @@
 # 운영 헬스·디스크·로그 디렉터리 스냅샷 (읽기 전용).
 # 코어 솔루션(MindGarden 백엔드) + OPS 포털(공개 URL) + 선택 systemd.
 # 공개 URL은 환경변수로만 지정(기본값 있음). 비활성: MG_SKIP_PUBLIC_EDGE_CHECKS=1
+# 기본 유닛: blue+green (레거시 mindgarden.service 는 masked — 기본에서 제외).
 set -euo pipefail
 
-MG_SERVICE_NAME="${MG_SERVICE_NAME:-mindgarden.service}"
-MG_HEALTH_URL="${MG_HEALTH_URL:-http://127.0.0.1:8080/actuator/health}"
+# 유닛 목록: MG_SERVICE_NAMES(공백 구분) > MG_SERVICE_NAME(단일) > blue+green 기본.
+# 예: MG_SERVICE_NAMES="mindgarden-core-blue.service mindgarden-core-green.service"
+# 예: MG_SERVICE_NAME=mindgarden-core-blue.service
+if [[ -n "${MG_SERVICE_NAMES:-}" ]]; then
+    # shellcheck disable=SC2206
+    _MG_SERVICES=(${MG_SERVICE_NAMES})
+elif [[ -n "${MG_SERVICE_NAME:-}" ]]; then
+    _MG_SERVICES=("${MG_SERVICE_NAME}")
+else
+    _MG_SERVICES=(mindgarden-core-blue.service mindgarden-core-green.service)
+fi
+
+# 전역 오버라이드가 있으면 모든 유닛에 동일 URL. 미설정 시 blue→8080 / green→8081.
+MG_HEALTH_URL="${MG_HEALTH_URL:-}"
 MG_LOG_DIRS="${MG_LOG_DIRS:-/var/log/mindgarden:/var/log/nginx}"
 MG_HEALTH_CONNECT_TIMEOUT="${MG_HEALTH_CONNECT_TIMEOUT:-10}"
 
@@ -22,6 +35,27 @@ CORE_EDGE_HEALTH_URL="${CORE_EDGE_HEALTH_URL-https://mindgarden.core-solution.co
 
 # 별도 ops-backend 유닛이 있는 호스트만 설정 (예: ops-backend.service). 미설정 시 블록 생략.
 OPS_BACKEND_SERVICE="${OPS_BACKEND_SERVICE:-}"
+
+# 유닛명 → 로컬 actuator URL (MG_HEALTH_URL 이 있으면 그대로 사용).
+mg_actuator_url_for() {
+    local _unit="$1"
+    if [[ -n "${MG_HEALTH_URL}" ]]; then
+        echo "${MG_HEALTH_URL}"
+        return 0
+    fi
+    local _base="${_unit%.service}"
+    case "${_base}" in
+        mindgarden-core-blue)
+            echo "http://127.0.0.1:8080/actuator/health"
+            ;;
+        mindgarden-core-green)
+            echo "http://127.0.0.1:8081/actuator/health"
+            ;;
+        *)
+            echo "http://127.0.0.1:8080/actuator/health"
+            ;;
+    esac
+}
 
 # stdin 한 줄씩: Authorization·Bearer·password/token/secret=·이메일·JWT 형태 문자열 과마스킹.
 mg_redact_log_stream() {
@@ -56,10 +90,12 @@ echo "=== Core Solution & OPS — prod health snapshot ==="
 echo "Time (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo ""
 
-echo "--- Core Solution (MindGarden) — systemctl (${MG_SERVICE_NAME}) ---"
-_svc_state=$(systemctl is-active "$MG_SERVICE_NAME" 2>&1 || true)
-echo "${_svc_state}"
-echo ""
+for _svc in "${_MG_SERVICES[@]}"; do
+    echo "--- Core Solution (MindGarden) — systemctl (${_svc}) ---"
+    _svc_state=$(systemctl is-active "$_svc" 2>&1 || true)
+    echo "${_svc_state}"
+    echo ""
+done
 
 if [[ -n "${OPS_BACKEND_SERVICE}" ]]; then
     echo "--- OPS backend — systemctl (${OPS_BACKEND_SERVICE}) ---"
@@ -90,7 +126,10 @@ done
 echo ""
 
 echo "--- Core Solution — local actuator (JVM 직접) ---"
-curl_health "actuator" "$MG_HEALTH_URL"
+for _svc in "${_MG_SERVICES[@]}"; do
+    _act_url="$(mg_actuator_url_for "${_svc}")"
+    curl_health "actuator (${_svc})" "${_act_url}"
+done
 
 if [[ -z "${MG_SKIP_PUBLIC_EDGE_CHECKS:-}" ]]; then
     if [[ -n "$OPS_PORTAL_HEALTH_URL" ]]; then
@@ -114,15 +153,17 @@ elif [[ "${MG_SKIP_JOURNAL:-0}" == "1" ]]; then
     echo "--- journalctl — skipped (MG_SKIP_JOURNAL=1) ---"
     echo ""
 else
-    echo "--- journalctl (${MG_SERVICE_NAME}, last ${MG_JOURNAL_LINES} lines, redacted) ---"
-    set +e
-    journalctl -u "${MG_SERVICE_NAME}" --no-pager -n "${MG_JOURNAL_LINES}" 2>&1 | mg_redact_log_stream | head -n "${MG_JOURNAL_OUT_MAX_LINES}"
-    _jc="${PIPESTATUS[0]}"
-    set -e
-    if [[ ${_jc} -ne 0 && ${_jc} -ne 141 ]]; then
-        echo "(journalctl exited ${_jc})"
-    fi
-    echo ""
+    for _svc in "${_MG_SERVICES[@]}"; do
+        echo "--- journalctl (${_svc}, last ${MG_JOURNAL_LINES} lines, redacted) ---"
+        set +e
+        journalctl -u "${_svc}" --no-pager -n "${MG_JOURNAL_LINES}" 2>&1 | mg_redact_log_stream | head -n "${MG_JOURNAL_OUT_MAX_LINES}"
+        _jc="${PIPESTATUS[0]}"
+        set -e
+        if [[ ${_jc} -ne 0 && ${_jc} -ne 141 ]]; then
+            echo "(journalctl exited ${_jc})"
+        fi
+        echo ""
+    done
 fi
 
 _memory_file=""

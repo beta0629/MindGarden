@@ -621,8 +621,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     });
   });
 
-  test.skip('ACTIVE 매칭 존재 시 경고 배너 + 회기 추가 리다이렉트 (apiPost 미호출)', async () => {
-    const onRedirectToSessionExtension = jest.fn();
+  test('ACTIVE 매칭 존재 시 합산 안내 배너 표시 (생성은 차단하지 않음)', async () => {
     apiGet.mockImplementation((url) => {
       if (String(url).includes('/mappings')) {
         return Promise.resolve({
@@ -642,7 +641,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
       return Promise.resolve({});
     });
 
-    renderModal({ onRedirectToSessionExtension });
+    renderModal();
 
     await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
     fireEvent.click(screen.getByText('상담사A'));
@@ -651,17 +650,10 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     });
     await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
     fireEvent.click(screen.getByText('내담자A'));
-    await act(async () => {
-      fireEvent.click(screen.getByText('common:action.next'));
-    });
 
-    await waitFor(() => expect(screen.getByTestId('active-mapping-warning')).toBeInTheDocument());
-
-    fireEvent.click(screen.getByText('회기 추가로 이동'));
-
-    expect(onRedirectToSessionExtension).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 75, status: 'ACTIVE' })
+    await waitFor(() => expect(screen.getByTestId('active-mapping-merge-hint')).toBeInTheDocument());
+    expect(screen.getByTestId('active-mapping-merge-hint')).toHaveTextContent(
+      '추가 패키지 결제 시 기존 활성 매칭 회기에 합산됩니다.'
     );
-    expect(apiPost).not.toHaveBeenCalled();
   });
 });

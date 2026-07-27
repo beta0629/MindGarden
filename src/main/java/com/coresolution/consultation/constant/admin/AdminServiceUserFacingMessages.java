@@ -313,10 +313,45 @@ public final class AdminServiceUserFacingMessages {
             "새로운 매칭 생성으로 인한 자동 종료 - 회기 자동 소진";
 
     /**
-     * ACTIVE 매핑 존재 시 신규 매칭 생성 차단 메시지 (인자: 상담사명, 내담자명, 매핑 ID).
+     * 추가 패키지 결제용 매칭 notes 마커 (ERP 분기·병합 파서가 동일 문자열을 사용).
      */
-    public static final String MSG_ACTIVE_MAPPING_EXISTS_USE_SESSION_EXTENSION_FMT =
-            "이미 활성 매칭이 있습니다 (%s ↔ %s, 매칭 #%d). 신규 매칭 대신 회기 추가를 이용해 주세요.";
+    public static final String NOTES_ADDITIONAL_MAPPING_MARKER = "[추가 매칭]";
+
+    /**
+     * 추가 패키지 notes 한 줄 (인자: 타깃 ACTIVE 매핑 ID, 추가 회기 수).
+     * <p>예: {@code [추가 매칭] activeMappingId=42 10회}</p>
+     */
+    public static final String NOTES_ADDITIONAL_MAPPING_LINE_FMT =
+            NOTES_ADDITIONAL_MAPPING_MARKER + " activeMappingId=%d %d회";
+
+    /**
+     * 추가 패키지 병합 완료 notes 한 줄 (인자: 타깃 ACTIVE ID, 합산 회기).
+     */
+    public static final String NOTES_ADDITIONAL_MAPPING_MERGED_FMT =
+            "[추가 패키지 병합 완료] targetActiveMappingId=%d sessions=%d";
+
+    /**
+     * 추가 패키지 확정 시 notes에서 타깃 ACTIVE ID를 파싱할 수 없을 때.
+     */
+    public static final String MSG_ADDITIONAL_MAPPING_TARGET_ID_MISSING =
+            "추가 매칭 notes에 타깃 활성 매칭 ID(activeMappingId)가 없습니다. 관리자에게 문의하세요.";
+
+    /**
+     * 추가 패키지 확정 시 타깃 ACTIVE가 없거나 ACTIVE가 아닐 때 (인자: 타깃 매핑 ID).
+     */
+    public static final String MSG_ADDITIONAL_MAPPING_TARGET_ACTIVE_MISSING_FMT =
+            "추가 패키지를 합산할 활성 매칭을 찾을 수 없습니다 (매칭 #%d). "
+                    + "이중 활성 매칭을 막기 위해 신규 활성화를 중단했습니다.";
+
+    /**
+     * 추가 패키지 타깃이 동일 상담사·내담자가 아닐 때.
+     */
+    public static final String MSG_ADDITIONAL_MAPPING_TARGET_PAIR_MISMATCH =
+            "추가 패키지 타깃 활성 매칭의 상담사·내담자가 일치하지 않습니다.";
+
+    /** 추가 패키지 행의 totalSessions가 1 미만일 때. */
+    public static final String MSG_ADDITIONAL_MAPPING_SESSIONS_INVALID =
+            "추가 패키지 회기 수가 유효하지 않습니다.";
 
     /**
      * 강제 종료 매칭 notes 한 줄 (인자: 일시 문자열, 사유, 환불 회기, 환불 금액).

@@ -21,8 +21,9 @@
 
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
-| `MG_SERVICE_NAME` | `mindgarden.service` | 코어 **MindGarden** `systemctl is-active` 대상 |
-| `MG_HEALTH_URL` | `http://127.0.0.1:8080/actuator/health` | 코어 JVM **직접** actuator |
+| `MG_SERVICE_NAMES` | `mindgarden-core-blue.service mindgarden-core-green.service` | 코어 **blue/green** `systemctl`·`journalctl`·actuator 대상(공백 구분). 레거시 `mindgarden.service` 는 기본에서 제외 |
+| `MG_SERVICE_NAME` | (미설정) | 단일 유닛만 스냅샷할 때. `MG_SERVICE_NAMES` 보다 우선순위 낮음 |
+| `MG_HEALTH_URL` | (미설정) | 설정 시 **모든** 유닛에 동일 URL. 미설정 시 blue→`:8080`, green→`:8081` actuator |
 | `OPS_PORTAL_HEALTH_URL` | `https://ops.e-trinity.co.kr/api/v1/health/server` | **OPS 포털** 공개 경로(nginx·TLS 포함). 끄려면 빈 문자열 |
 | `CORE_EDGE_HEALTH_URL` | `https://mindgarden.core-solution.co.kr/api/v1/health/server` | **코어 솔루션** 공개 엣지. 끄려면 빈 문자열 |
 | `MG_SKIP_PUBLIC_EDGE_CHECKS` | (미설정) | `1`이면 공개 URL 두 개 검사 생략(로컬 actuator만) |
@@ -63,7 +64,10 @@
 
 ```bash
 cd /path/to/mindGarden
+# 기본: blue(8080) + green(8081) 둘 다
 bash scripts/ops/prod-health-snapshot.sh
+# 단일 유닛만
+MG_SERVICE_NAME=mindgarden-core-blue.service bash scripts/ops/prod-health-snapshot.sh
 MG_LOG_DIRS="/var/log/mindgarden:/var/www/mindgarden" bash scripts/ops/prod-health-snapshot.sh
 ```
 

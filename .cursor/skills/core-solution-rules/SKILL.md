@@ -49,6 +49,9 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | **에러·500 원인 분석·수정 제안** | **core-debugger** | /core-solution-debug | 로그·스택트레이스 해석, 재현 절차·수정 제안. 코드 수정은 core-coder 위임 |
 | **서버 상태·에러 로그·긴급 복구** | **shell** → **core-debugger** → **core-coder** | /core-solution-server-status | 개발·운영 서버 상태/로그/복구 후 원인 분석·core-coder 조치 |
 | **배포·CI 워크플로 수정** | **core-coder** | /core-solution-deployment | GitHub Actions·systemd·배포 체크리스트·롤백 |
+| **GitHub PR 설명·리뷰 대응·머지 준비** | **core-planner** 또는 **generalPurpose** | /core-solution-github-pr-operations | PR 범위 정리, 리뷰 코멘트 대응, Bugbot/Security Review 반영, 검증 상태 요약 |
+| **GitHub CI 실패 조사·체크 빨간불 대응** | **generalPurpose** → 필요 시 **core-debugger/core-coder/core-tester/core-deployer** | /core-solution-github-ci-triage | 실패 원인 분류, 담당 위임, 재검증 기준 정리 |
+| **로컬 AI 운영 로그 감시·요약·이상 탐지** | **shell** → (로컬 LLM 요약) → **core-debugger** → 승인 후 **core-coder** → 별도 지시 시 **core-deployer** | /core-solution-local-ai-ops-log-watch | blue/green journalctl 마스킹 후 로컬 AI만. 자동 수정·배포 금지 |
 | **전반 기획·단계 설계·실행 계획** | **core-planner** | /core-solution-planning | 범위·Phase·산출물 정리, **분배실행(역할별 실행 분배)** 표 작성 — 디자인(core-designer)·코더(core-coder)·디버그(core-debugger)·**컴포넌트관리(core-component-manager)**·쉘(shell)·문서정리(generalPurpose)·탐색(explore)·테스터(core-tester)에 맞춰 분배. 컴포넌트 정리 Phase 시 component-manager + core-coder 함께 배정 권장. 실행은 해당 서브에이전트 호출로 진행 |
 | **화면·서버 컴포넌트 중복·적재적소 배치 제안** | **core-component-manager** | /core-solution-encapsulation-modularization, /core-solution-atomic-design | 코더와 한 팀(제안 → core-coder 실행). 코드 직접 작성 안 함 |
 | **작업 전 플랜·조사·영역 분석** | **explore** | /core-solution-documentation | 넓은 범위 작업 전 현황·누락·우선순위 조사 |
@@ -86,6 +89,9 @@ description: Core Solution(MindGarden) 프로젝트 전체 룰 인덱스. 백엔
 | **전반 기획·Phase·서브에이전트 가동 계획** | `/core-solution-planning` |
 | **서버 상태·에러 로그·긴급 복구** | `/core-solution-server-status` |
 | **배포·CI 워크플로 수정** | `/core-solution-deployment` |
+| **GitHub PR 설명·리뷰 대응·머지 준비** | `/core-solution-github-pr-operations` |
+| **GitHub CI 실패 조사·체크 빨간불 대응** | `/core-solution-github-ci-triage` |
+| **로컬 AI 운영 로그 감시·요약·이상 탐지** | `/core-solution-local-ai-ops-log-watch` |
 | **문서 작성·정리·체계화** | `/core-solution-documentation` |
 | **캡슐화·모듈화**(경량화·반복 제거) | `/core-solution-encapsulation-modularization` |
 | **에러·500 원인 분석·수정 제안**(core-debugger) | `/core-solution-debug` |

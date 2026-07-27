@@ -778,11 +778,6 @@ const IntegratedMatchingSchedule = () => {
     setSessionExtensionMapping(mapping);
   }, []);
 
-  const handleSessionExtensionFromCreation = useCallback((mapping) => {
-    setCreateMappingModalOpen(false);
-    setSessionExtensionMapping(mapping);
-  }, []);
-
   const handleSessionExtensionRequested = useCallback(() => {
     loadMappings();
     setSessionExtensionMapping(null);
@@ -1012,7 +1007,6 @@ const IntegratedMatchingSchedule = () => {
         isOpen={createMappingModalOpen}
         onClose={() => setCreateMappingModalOpen(false)}
         onMappingCreated={handleMappingCreated}
-        onRedirectToSessionExtension={handleSessionExtensionFromCreation}
       />
 
       {sessionExtensionMapping && (

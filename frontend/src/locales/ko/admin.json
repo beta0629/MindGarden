@@ -2052,6 +2052,8 @@
       "selectBoth": "상담사와 내담자를 모두 선택해주세요.",
       "missingPackage": "패키지·회기수·가격을 모두 선택해 주세요."
     },
+    "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 매칭 회기에 합산됩니다.",
+    "activeMappingMergeMeta": "활성 매칭 #{{id}} · 잔여 {{remaining}}회",
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",

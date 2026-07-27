@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.util.Map;
 import java.util.Optional;
 
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -57,7 +58,10 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -305,6 +309,121 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         assertNotNull(result);
         verify(mappingRepository).save(any(ConsultantClientMapping.class));
+        assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, result.getStatus());
+    }
+
+    @Test
+    @DisplayName("추가 매칭 confirmDeposit: self remaining 미채움 + 가예약 확정 스킵")
+    void confirmDeposit_additionalMapping_skipsSelfRemainingAndFinalize() {
+        Long mappingId = 50L;
+        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
+        mapping.setNotes(String.format(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT, 103L, 10));
+        mapping.setRemainingSessions(0);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
+                .thenReturn(Map.of("success", true, "message", "OK"));
+
+        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-ADD");
+
+        assertEquals(0, result.getRemainingSessions());
+        verify(scheduleService, never()).finalizeTentativeSchedulesAfterDepositConfirmed(any());
+        verify(adminService, never()).createConsultationIncomeTransactionAsync(any());
+    }
+
+    @Test
+    @DisplayName("추가 매칭 approveMapping: 타깃 ACTIVE addSessions + 본 행 TERMINATED + 이중 ACTIVE 없음")
+    void approveMapping_mergesAdditionalIntoActiveAndTerminates() {
+        Long additionalId = 60L;
+        Long activeId = 103L;
+
+        User consultant = new User();
+        consultant.setId(11L);
+        consultant.setTenantId(TEST_TENANT_ID);
+        User client = new User();
+        client.setId(21L);
+        client.setTenantId(TEST_TENANT_ID);
+
+        ConsultantClientMapping active = new ConsultantClientMapping();
+        active.setId(activeId);
+        active.setTenantId(TEST_TENANT_ID);
+        active.setConsultant(consultant);
+        active.setClient(client);
+        active.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+        active.setPackageName("기존패키지");
+        active.setPackagePrice(800_000L);
+        active.setTotalSessions(10);
+        active.setRemainingSessions(7);
+        active.setUsedSessions(3);
+
+        ConsultantClientMapping additional = new ConsultantClientMapping();
+        additional.setId(additionalId);
+        additional.setTenantId(TEST_TENANT_ID);
+        additional.setConsultant(consultant);
+        additional.setClient(client);
+        additional.setStatus(ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING);
+        additional.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+        additional.setTotalSessions(5);
+        additional.setRemainingSessions(0);
+        additional.setUsedSessions(0);
+        additional.setPackageName("추가오픈");
+        additional.setNotes(String.format(
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT, activeId, 5));
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(additionalId)))
+                .thenReturn(Optional.of(additional));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(activeId)))
+                .thenReturn(Optional.of(active));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ConsultantClientMapping result = adminService.approveMapping(additionalId, "AdminMerge");
+
+        assertEquals(ConsultantClientMapping.MappingStatus.TERMINATED, result.getStatus());
+        assertNotNull(result.getTerminatedAt());
+        assertEquals(0, result.getRemainingSessions());
+        assertTrue(result.getNotes().contains("추가 패키지 병합 완료"));
+
+        assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, active.getStatus());
+        assertEquals("기존패키지", active.getPackageName());
+        assertEquals(15, active.getTotalSessions());
+        assertEquals(12, active.getRemainingSessions());
+        assertEquals(3, active.getUsedSessions());
+    }
+
+    @Test
+    @DisplayName("추가 매칭 approveMapping: 타깃 ACTIVE 없으면 IllegalStateException (신규 ACTIVE 금지)")
+    void approveMapping_additionalThrowsWhenTargetActiveMissing() {
+        Long additionalId = 61L;
+        Long missingActiveId = 999L;
+
+        User consultant = new User();
+        consultant.setId(11L);
+        consultant.setTenantId(TEST_TENANT_ID);
+        User client = new User();
+        client.setId(21L);
+        client.setTenantId(TEST_TENANT_ID);
+
+        ConsultantClientMapping additional = new ConsultantClientMapping();
+        additional.setId(additionalId);
+        additional.setTenantId(TEST_TENANT_ID);
+        additional.setConsultant(consultant);
+        additional.setClient(client);
+        additional.setStatus(ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING);
+        additional.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+        additional.setTotalSessions(5);
+        additional.setNotes(String.format(
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT, missingActiveId, 5));
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(additionalId)))
+                .thenReturn(Optional.of(additional));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(missingActiveId)))
+                .thenReturn(Optional.empty());
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> adminService.approveMapping(additionalId, "AdminMerge"));
+        assertTrue(ex.getMessage().contains("활성 매칭을 찾을 수 없습니다"));
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
     }
 
     private ConsultantClientMapping buildMappingForConfirmDeposit(Long mappingId) {

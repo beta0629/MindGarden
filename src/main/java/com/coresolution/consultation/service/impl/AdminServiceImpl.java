@@ -683,19 +683,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         List<ConsultantClientMapping> existingMappings = mappingRepository
             .findByTenantIdAndConsultantAndClient(tenantId, consultant, clientUser);
 
-        // P0 (2026-06-17): ACTIVE 매핑 존재 시 신규 INSERT + 기존 TERMINATED + remaining 소진 금지.
-        // 회기 추가는 session-extensions / SessionExtensionModal 경로를 사용한다.
+        // ACTIVE가 있으면 결제용 PENDING 행을 추가 패키지로 생성하고, 확정(approve) 시 기존 ACTIVE에 회기 합산.
+        // 기존 ACTIVE는 TERMINATED/회기 소진하지 않는다 (이중 ACTIVE 금지).
         ConsultantClientMapping activeExisting = existingMappings.stream()
                 .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
                 .findFirst()
                 .orElse(null);
-        if (activeExisting != null) {
-            log.info("⛔ ACTIVE 매핑 존재 — 신규 매칭 생성 차단: 매칭ID={}, 상담사={}, 내담자={}",
+        final boolean isAdditionalPackageAgainstActive = activeExisting != null;
+        if (isAdditionalPackageAgainstActive) {
+            log.info("📦 ACTIVE 매핑 존재 — 추가 패키지 PENDING 생성: activeMappingId={}, 상담사={}, 내담자={}",
                     activeExisting.getId(), consultant.getName(), clientUser.getName());
-            throw new com.coresolution.consultation.exception.ActiveMappingExistsException(
-                    activeExisting.getId(),
-                    String.format(AdminServiceUserFacingMessages.MSG_ACTIVE_MAPPING_EXISTS_USE_SESSION_EXTENSION_FMT,
-                            consultant.getName(), clientUser.getName(), activeExisting.getId()));
         }
 
         if (!existingMappings.isEmpty()) {
@@ -773,7 +770,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("⚠️ 잘못된 결제 상태 값: {}, 기본값 사용: {}", dto.getPaymentStatus(), defaultPaymentStatus, e);
             mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(defaultPaymentStatus));
         }
-        mapping.setTotalSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 10);
+        int totalSessionsValue = dto.getTotalSessions() != null ? dto.getTotalSessions() : 10;
+        mapping.setTotalSessions(totalSessionsValue);
         // 신규 매칭: 입금 확인 전까지 사용 가능 회기는 0 (입금 확인 시 confirmDeposit에서 채움)
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
@@ -784,7 +782,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setPaymentReference(dto.getPaymentReference());
         mapping.setPaymentAmount(dto.getPaymentAmount());
         mapping.setAssignedAt(LocalDateTime.now());
-        mapping.setNotes(dto.getNotes());
+        if (isAdditionalPackageAgainstActive) {
+            String additionalLine = String.format(
+                    AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT,
+                    activeExisting.getId(),
+                    totalSessionsValue);
+            mapping.setNotes(appendMappingNoteLine(dto.getNotes(), additionalLine));
+        } else {
+            mapping.setNotes(dto.getNotes());
+        }
         mapping.setResponsibility(dto.getResponsibility());
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
@@ -801,8 +807,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // total_sessions == 1 인 신규 매핑은 환영 메시지(CLIENT_WELCOME_FIRST) 를 모든 채널(SMS/알림톡/인앱/푸시) 차단한다.
         // 단회기 빈도가 높아 매번 환영 메시지를 발송하면 스팸이 되므로 호출자 가드(옵션 A)로 dispatch 호출 자체를 skip.
         // null(컬럼 NULL) 은 안전하게 단회기 아님으로 간주하여 정상 발송한다.
+        // 추가 패키지 합산 건은 이미 ACTIVE 관계가 있으므로 CLIENT_WELCOME_FIRST 를 skip.
         Integer totalSessions = savedMapping.getTotalSessions();
-        if (totalSessions != null && totalSessions == 1) {
+        if (isAdditionalPackageAgainstActive) {
+            log.info("📭 추가 패키지 매핑 — CLIENT_WELCOME_FIRST skip: mappingId={}, activeMappingId={}",
+                    savedMapping.getId(), activeExisting.getId());
+        } else if (totalSessions != null && totalSessions == 1) {
             log.info("📭 단회기 매핑(total_sessions=1) — CLIENT_WELCOME_FIRST 모든 채널 차단: mappingId={}, clientId={}",
                 savedMapping.getId(),
                 savedMapping.getClient() != null ? savedMapping.getClient().getId() : null);
@@ -818,8 +828,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     /**
-     * 입금 확인 처리
+     * 결제 확인 처리
      */
     @Override
     public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount) {
@@ -839,8 +848,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
         try {
-            boolean isAdditionalMapping = savedMapping.getNotes() != null &&
-                                        savedMapping.getNotes().contains("[추가 매칭]");
+            boolean isAdditionalMapping = isAdditionalPackageMappingNotes(savedMapping.getNotes());
             if (isAdditionalMapping) {
                 log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션)");
                 String tenantId = getTenantIdFromMapping(savedMapping);
@@ -1136,7 +1144,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         try {
             String[] lines = notes.split("\n");
             for (String line : lines) {
-                if (line.contains("[추가 매칭]")) {
+                if (line.contains(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MARKER)) {
                     if (line.matches(".*\\d+회.*")) {
                         String sessionStr = line.replaceAll(".*?(\\d+)회.*", "$1");
                         return Integer.parseInt(sessionStr);
@@ -1434,11 +1442,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         mapping.confirmDeposit(depositReference);
 
-        // 입금 확인 시 회기 채우기: remainingSessions가 0이고 totalSessions > 0이면 사용 가능 회기 설정
+        boolean isAdditionalMapping = isAdditionalPackageMappingNotes(mapping.getNotes());
+
+        // 입금 확인 시 회기 채우기: remainingSessions가 0이고 totalSessions > 0이면 사용 가능 회기 설정.
+        // 추가 패키지 행은 approve 시 기존 ACTIVE에 합산 후 TERMINATED 되므로 self remaining 채우기를 스킵한다.
         Integer total = mapping.getTotalSessions();
         Integer remaining = mapping.getRemainingSessions();
         int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
-        if (total != null && total > 0 && remaining != null && remaining == 0) {
+        if (!isAdditionalMapping && total != null && total > 0 && remaining != null && remaining == 0) {
             mapping.setRemainingSessions(Math.max(0, total - used));
         }
 
@@ -1452,12 +1463,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
-        finalizeTentativeBookingsAfterDepositPhase4b(savedMapping);
+        // 추가 패키지: 가예약 확정·회기 차감은 타깃 ACTIVE SSOT에서 처리. self row 차감으로 실패하지 않도록 스킵.
+        if (!isAdditionalMapping) {
+            finalizeTentativeBookingsAfterDepositPhase4b(savedMapping);
+        } else {
+            log.info("📦 추가 매칭 입금 확인 — 가예약 확정 스킵(승인 시 ACTIVE 합산): MappingID={}", mappingId);
+        }
 
         try {
-            boolean isAdditionalMapping = savedMapping.getNotes() != null
-                    && savedMapping.getNotes().contains("[추가 매칭]");
-
             if (effectiveAmount == null || effectiveAmount <= 0) {
                 log.warn("⚠️ 입금 확인 ERP 거래 스킵: MappingID={}, packagePrice={}, paymentAmount={} (유효 금액 없음)",
                         mappingId, mapping.getPackagePrice(), mapping.getPaymentAmount());
@@ -1521,7 +1534,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public ConsultantClientMapping approveMapping(Long mappingId, String adminName) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
-        
+
+        // 추가 패키지: ACTIVE로 올리지 않고 타깃 ACTIVE에 회기 합산 후 본 행 TERMINATED.
+        if (isAdditionalPackageMappingNotes(mapping.getNotes())) {
+            ConsultantClientMapping merged = mergeAdditionalPackageIntoActiveAndTerminate(mapping, adminName);
+            Hibernate.initialize(merged.getConsultant());
+            Hibernate.initialize(merged.getClient());
+            notifyMappingSettlement(merged, MappingSettlementScenario.MAPPING_APPROVED);
+            return merged;
+        }
+
         mapping.approveByAdmin(adminName);
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
@@ -7278,7 +7300,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             for (int i = noteLines.length - 1; i >= 0; i--) {
                 String line = noteLines[i].trim();
                 
-                if (line.contains("[추가 매칭]")) {
+                if (line.contains(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MARKER)) {
                     result.put("sessions", 10); // 기본 패키지 회기수
                     result.put("price", mapping.getPackagePrice() != null ? mapping.getPackagePrice() : 0L);
                     result.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName()
@@ -7485,6 +7507,139 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     + ", actual=" + savedUser.getTenantId()
             );
         }
+    }
+
+    /**
+     * 추가 패키지 매칭 notes 여부 ({@link AdminServiceUserFacingMessages#NOTES_ADDITIONAL_MAPPING_MARKER}).
+     *
+     * @param notes 매핑 notes
+     * @return 추가 매칭 마커 포함 여부
+     */
+    private boolean isAdditionalPackageMappingNotes(String notes) {
+        return notes != null
+                && notes.contains(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MARKER);
+    }
+
+    /**
+     * notes에 한 줄을 append한다.
+     *
+     * @param existing 기존 notes (nullable)
+     * @param line 추가할 한 줄
+     * @return 합쳐진 notes
+     */
+    private String appendMappingNoteLine(String existing, String line) {
+        if (line == null || line.isBlank()) {
+            return existing;
+        }
+        if (existing == null || existing.isBlank()) {
+            return line;
+        }
+        return existing + "\n" + line;
+    }
+
+    /**
+     * notes에서 {@code activeMappingId=<id>} 를 파싱한다.
+     *
+     * @param notes 매핑 notes
+     * @return 타깃 ACTIVE 매핑 ID, 없으면 null
+     */
+    private Long parseActiveMappingIdFromAdditionalNotes(String notes) {
+        if (notes == null || notes.isBlank()) {
+            return null;
+        }
+        try {
+            java.util.regex.Matcher matcher = java.util.regex.Pattern
+                    .compile("activeMappingId=(\\d+)")
+                    .matcher(notes);
+            if (matcher.find()) {
+                return Long.parseLong(matcher.group(1));
+            }
+        } catch (Exception e) {
+            log.warn("추가 매칭 activeMappingId 파싱 실패: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 추가 패키지 결제 행을 기존 ACTIVE에 회기 합산하고 본 행을 TERMINATED 한다.
+     * ACTIVE로 올리지 않아 이중 ACTIVE를 방지한다.
+     *
+     * @param additionalMapping DEPOSIT_PENDING 추가 패키지 매핑
+     * @param adminName 승인자
+     * @return TERMINATED 된 추가 패키지 매핑
+     * @throws IllegalStateException 타깃 ACTIVE 부재·페어 불일치·게이트 위반
+     */
+    private ConsultantClientMapping mergeAdditionalPackageIntoActiveAndTerminate(
+            ConsultantClientMapping additionalMapping, String adminName) {
+        if (additionalMapping.getStatus() != ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING) {
+            throw new IllegalStateException("입금 확인이 완료되지 않았습니다. 현재 상태: "
+                    + additionalMapping.getStatus());
+        }
+        if (additionalMapping.getPaymentStatus() != ConsultantClientMapping.PaymentStatus.APPROVED) {
+            throw new IllegalStateException("결제 승인이 완료되지 않았습니다.");
+        }
+
+        Long targetId = parseActiveMappingIdFromAdditionalNotes(additionalMapping.getNotes());
+        if (targetId == null) {
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_TARGET_ID_MISSING);
+        }
+
+        String tenantId = getTenantId();
+        ConsultantClientMapping targetActive = mappingRepository.findByTenantIdAndId(tenantId, targetId)
+                .orElse(null);
+        if (targetActive == null
+                || targetActive.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_TARGET_ACTIVE_MISSING_FMT, targetId));
+        }
+
+        Long additionalConsultantId = additionalMapping.getConsultant() != null
+                ? additionalMapping.getConsultant().getId() : null;
+        Long additionalClientId = additionalMapping.getClient() != null
+                ? additionalMapping.getClient().getId() : null;
+        Long targetConsultantId = targetActive.getConsultant() != null
+                ? targetActive.getConsultant().getId() : null;
+        Long targetClientId = targetActive.getClient() != null
+                ? targetActive.getClient().getId() : null;
+        if (additionalConsultantId == null || additionalClientId == null
+                || !additionalConsultantId.equals(targetConsultantId)
+                || !additionalClientId.equals(targetClientId)) {
+            throw new IllegalStateException(
+                    AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_TARGET_PAIR_MISMATCH);
+        }
+
+        int sessionsToAdd = additionalMapping.getTotalSessions() != null
+                ? additionalMapping.getTotalSessions() : 0;
+        if (sessionsToAdd < 1) {
+            throw new IllegalStateException(
+                    AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_SESSIONS_INVALID);
+        }
+
+        String targetPackageNameBefore = targetActive.getPackageName();
+        targetActive.addSessions(sessionsToAdd);
+        mappingRepository.save(targetActive);
+        log.info("✅ 추가 패키지 회기 합산: targetActiveId={}, +{}회, packageName 유지={}, total={}, remaining={}",
+                targetActive.getId(), sessionsToAdd, targetPackageNameBefore,
+                targetActive.getTotalSessions(), targetActive.getRemainingSessions());
+
+        additionalMapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
+        additionalMapping.setTerminatedAt(LocalDateTime.now());
+        additionalMapping.setRemainingSessions(0);
+        int totalOnAdditional = additionalMapping.getTotalSessions() != null
+                ? additionalMapping.getTotalSessions() : 0;
+        additionalMapping.setUsedSessions(totalOnAdditional);
+        additionalMapping.setAdminApprovalDate(LocalDateTime.now());
+        additionalMapping.setApprovedBy(adminName);
+        additionalMapping.setNotes(appendMappingNoteLine(
+                additionalMapping.getNotes(),
+                String.format(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_FMT,
+                        targetActive.getId(), sessionsToAdd)));
+        additionalMapping.setUpdatedAt(LocalDateTime.now());
+
+        ConsultantClientMapping terminated = mappingRepository.save(additionalMapping);
+        log.info("✅ 추가 패키지 매핑 TERMINATED(병합): mappingId={}, targetActiveId={}",
+                terminated.getId(), targetActive.getId());
+        return terminated;
     }
 
     /**

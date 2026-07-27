@@ -3,7 +3,10 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Branch;
@@ -33,7 +36,17 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class SalaryBatchServiceImpl implements SalaryBatchService {
-    
+
+    /**
+     * 배치 "처리됨"으로 인정하는 급여 상태 (CANCELLED·PENDING 제외).
+     * CALCULATED 이후 승인·지급까지 진행된 건도 완료로 본다.
+     */
+    private static final Set<SalaryCalculation.SalaryStatus> PROCESSED_SALARY_STATUSES = EnumSet.of(
+            SalaryCalculation.SalaryStatus.CALCULATED,
+            SalaryCalculation.SalaryStatus.APPROVED,
+            SalaryCalculation.SalaryStatus.PAID
+    );
+
     private final UserRepository userRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final PlSqlSalaryManagementService plSqlSalaryManagementService;
@@ -153,14 +166,21 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
         List<User> consultants = getTargetConsultants(null);
         
         // 해당 월의 급여 계산 기록 조회: 배치 실행과 동일한 기산일 기준 기간 사용 (테넌트 격리)
+        // 처리됨 = CALCULATED|APPROVED|PAID (상담사 distinct). CANCELLED 제외.
         LocalDate[] period = salaryScheduleService.getCalculationPeriod(targetYear, targetMonth);
         LocalDate periodStart = period[0];
         LocalDate periodEnd = period[1];
         List<SalaryCalculation> existingCalculations = salaryCalculationRepository
-                .findByTenantIdAndStatusAndCalculationPeriodStartBetween(
-                    tenantId, SalaryCalculation.SalaryStatus.CALCULATED, periodStart, periodEnd);
+                .findByTenantIdAndStatusInAndCalculationPeriodStartBetweenWithConsultant(
+                    tenantId, PROCESSED_SALARY_STATUSES, periodStart, periodEnd);
         
-        int processedConsultants = existingCalculations.size();
+        int processedConsultants = (int) existingCalculations.stream()
+                .map(SalaryCalculation::getConsultant)
+                .filter(Objects::nonNull)
+                .map(User::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .count();
         int totalConsultants = consultants.size();
         
         // 공통 코드에서 배치 상태 조회
@@ -190,12 +210,13 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
         batchStatus.setLastExecuted(
             existingCalculations.stream()
                 .map(SalaryCalculation::getCreatedAt)
+                .filter(Objects::nonNull)
                 .max(LocalDateTime::compareTo)
                 .map(LocalDateTime::toLocalDate)
                 .orElse(null)
         );
         
-        log.info("✅ 배치 상태 조회 완료: 상태={}, 전체={}, 처리됨={}", 
+        log.info("✅ 배치 상태 조회 완료: 상태={}, 전체={}, 처리됨(distinct)={}", 
                 status, totalConsultants, processedConsultants);
         
         return batchStatus;

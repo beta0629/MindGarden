@@ -13,6 +13,7 @@ import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.TenantService;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -53,8 +54,15 @@ public class SalaryBatchScheduler {
     /**
      * 매월 기산일에 급여 배치 자동 실행 (표준화 적용)
      * Cron: 매일 새벽 2시
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.salary-batch.cron:0 0 2 * * ?}")
+    @SchedulerLock(
+            name = "SalaryBatchScheduler_checkAndExecute",
+            lockAtMostFor = "PT30M",
+            lockAtLeastFor = "PT1M"
+    )
     public void checkAndExecuteSalaryBatch() {
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
@@ -67,15 +75,17 @@ public class SalaryBatchScheduler {
         
         try {
             LocalDate now = LocalDate.now();
+            // 모니터와 동일: 이전 달 급여 마감일 기준으로 실행 가능 여부 판단
+            LocalDate previousMonth = now.minusMonths(1);
             
-            // 1. 배치 실행 가능 여부 확인
-            if (!salaryBatchService.canExecuteBatch(now)) {
-                log.info("⏳ [SalaryBatch] 급여 배치 실행 시간이 아닙니다: {}", now);
+            // 1. 배치 실행 가능 여부 확인 (이전 달 cutoff)
+            if (!salaryBatchService.canExecuteBatch(previousMonth)) {
+                log.info("⏳ [SalaryBatch] 급여 배치 실행 시간이 아닙니다: targetMonth={}-{}, today={}",
+                    previousMonth.getYear(), previousMonth.getMonthValue(), now);
                 return;
             }
             
             // 2. 이미 처리되었는지 확인 (이전 달 기준)
-            LocalDate previousMonth = now.minusMonths(1);
             SalaryBatchService.BatchStatus status = salaryBatchService.getBatchStatus(
                 previousMonth.getYear(), 
                 previousMonth.getMonthValue()
@@ -204,8 +214,15 @@ public class SalaryBatchScheduler {
     /**
      * 급여 배치 상태 모니터링 (표준화 적용)
      * Cron: 매시간 정각
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.salary-batch-monitor.cron:0 0 * * * ?}")
+    @SchedulerLock(
+            name = "SalaryBatchScheduler_monitorBatchStatus",
+            lockAtMostFor = "PT10M",
+            lockAtLeastFor = "PT30S"
+    )
     public void monitorBatchStatus() {
         String executionId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();

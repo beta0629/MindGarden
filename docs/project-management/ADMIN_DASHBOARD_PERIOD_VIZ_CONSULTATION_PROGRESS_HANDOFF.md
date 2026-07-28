@@ -2,14 +2,53 @@
 
 **작성**: core-planner  
 **일자**: 2026-07-28  
-**상태**: 기획 완료 · **구현/배포 금지** (사용자 “다음단계” 전 디자인 Phase만 착수 가능)  
+**갱신**: 2026-07-28 (피드백 v2 — 고대비·MoM·목표대비 · 「다음 진행」착수)  
+**상태**: **designer → coder → tester 연결 실행 중** · 커밋·배포는 사용자 추가 지시 전 **금지**  
 **범위 한정**: `AdminDashboardV2` 및 대시보드 시각화·관련 통계 API만. 배포 에이전트·타 기능 PR과 **파일 충돌 최소화**.
+
+---
+
+## 0. 피드백 v2 (2026-07-28) — 본 배치 최우선
+
+사용자 검수 피드백. **기존 V1 스펙(진행 시리즈 중심)을 아래처럼 재정의**한다. 디자이너·코더는 이 절을 SSOT로 본다.
+
+| # | 피드백 | 기획 반영 |
+|---|--------|-----------|
+| 1 | 시각화 **색상 대비** 부족 → 잘 안 보임 | B0KlA **고대비** 시리즈/배지 토큰 재정의. 배경·시리즈·텍스트 대비 확보. hex 하드코딩 금지. |
+| 2 | **「진행」(IN_PROGRESS)** 의미 약함 | 차트 **1급 시리즈에서 제거** 또는 **2순위(범례 약화·기본 off)**. 볼륨 중심은 **예약 vs 완료**. |
+| 3 | **지난달(전기간) 대비 증감**, **전체/목표 대비 성과**가 좋음 | **MoM / 전기간 대비 증감 %** + **목표 vs 실적** KPI/배지를 P0로 승격. |
+
+### 0.1 사용자 관점 갱신 (§0.4)
+
+| 항목 | 내용 |
+|------|------|
+| **사용성** | 관리자가 기간 pill로 볼륨을 보고, **직전 기간 대비 %·목표 달성**을 한눈에. 「진행」스캔은 부차. |
+| **정보 노출** | ADMIN 테넌트 집계: 예약·완료·증감%·목표/실적. 민감 PII 비노출. |
+| **레이아웃** | 시각화 그룹 유지. KPI 존에 **증감 배지·목표 대비** 강조. 시리즈 색은 고대비. |
+
+### 0.2 시각화 우선순위 재배치
+
+| ID | 요소 | 우선 | 비고 |
+|----|------|------|------|
+| V1 | 기간 pill | P0 | 유지 |
+| V2/V3 | 바·라인 | P0 | **예약·완료** 중심. 「진행」제거 또는 2순위 |
+| V4 | KPI + 스파크 | P0 | **MoM/전기간 증감 %** 배지 필수 |
+| V5 | 도넛 | P0 | 예약/완료(·선택적 진행 약화) 비율 |
+| V6 | 비교 배지 | **P0↑** | 직전 동기간 대비 (기존 P1 → 승격) |
+| V6b | 목표 vs 실적 | **P0 신규** | 전체/목표 대비 성과 배지·미니 KPI |
+| V7~V8 | 히트맵·랭킹 | P1 | 본 배치 비필수 |
+
+### 0.3 데이터 SSOT 추가 (코더)
+
+- **전기간 대비**: `previousPeriodTotals` 또는 row 차분 / `growthRateBooked`·`growthRateCompleted` (API 또는 FE 계산).
+- **목표**: 테넌트/기간 목표값 필드(기존 목표 API 있으면 재사용, 없으면 BE 최소 필드 또는 FE 설정값 — 코더가 인벤토리 후 확정).
+- **진행**: API 필드 `inProgressCount` 유지 가능하나 **UI 기본 시리즈에서 제외·약화**.
 
 ---
 
 ## 1. 한줄 목표
 
-일·주·월·년 기간 시각화에 **상담진행 건수**를 포함하고, 단순 막대/선만이 아닌 **다양한 B0KlA 정합 시각화 요소**로 레이아웃을 재구성한다.
+일·주·월·년 기간 시각화를 **고대비 B0KlA**로 재정의하고, **전기간 대비 증감 %·목표 vs 실적**을 중심으로 보여 주며, 「진행」시리즈는 제거 또는 2순위로 둔다.
 
 ---
 
@@ -153,59 +192,36 @@ Controller 응답 필드 추가(구조 파괴 없이).
 
 ---
 
-## 7. Phase · 분배실행
+## 7. Phase · 분배실행 (피드백 v2 · 「다음 진행」)
 
-**의존성**: 디자인 승인 → (API 확장 가능 시) 백엔드·프론트 병렬 가능 부분 분리 → 테스터 게이트.  
-**이번 턴**: Phase 0 문서만. **다음단계** 시 Phase 1부터.
+**의존성**: Phase 1(designer) → Phase 2(coder) → Phase 3(tester). **끊지 않고 연결.**  
+**금지**: 커밋·푸시·배포(사용자 추가 지시 전).
 
 | Phase | 담당 | 모델 | 목표 | 의존 |
 |-------|------|------|------|------|
-| **0** | core-planner | — | 본 핸드오프 | — (완료) |
-| **1** | **core-designer** | **`gemini-3.1-pro`** | 레이아웃·토큰·와이어·요소별 스펙 (코드 없음) | Phase 0 |
-| **1b** | explore (선택) | — | IN_PROGRESS 집계 쿼리·타임존·기존 count 메서드 인벤토리 | Phase 0과 병렬 가능 |
-| **2** | core-coder | 기본 | API `inProgressCount` + daily/yearly + UI 바인딩 | Phase 1 승인 |
-| **3** | core-tester | 기본 | 기간 전환·시리즈·empty·#130·반응형 | Phase 2 |
-| **—** | core-publisher | gemini (선택) | 마크업 시안만 필요 시 | Phase 1 후 |
+| **0** | core-planner | — | 핸드오프 §0 피드백 반영 | — (완료) |
+| **1** | **core-designer** | **`gemini-3.1-pro`** | 고대비 팔레트·MoM%·목표vs실적·「진행」2순위 | Phase 0 |
+| **2** | **core-coder** | 기본 | FE(+필요 시 BE 전기간·목표) 구현 | Phase 1 |
+| **3** | **core-tester** | 기본 | 대비·증감·목표·#130·하드코딩 게이트 | Phase 2 |
 
-### Phase 1 — core-designer 전달 프롬프트 (초안)
+### Phase 1 — core-designer (실행)
 
-```
-역할: core-designer (코드 작성 금지). model: gemini-3.1-pro
+→ 고대비 토큰, MoM/전기간 %, 목표 vs 실적, 「진행」제거/약화.  
+스펙 갱신: `docs/design-system/ADMIN_DASHBOARD_PERIOD_STATS_VIZ_SPEC.md` (또는 후속 문서).  
+코드·CSS 금지. `/core-solution-design-handoff`.
 
-과제: 어드민 대시보드 V2 「시각화 그룹」 기간(일/주/월/년) + 상담진행 건수 포함 멀티 비주얼 레이아웃 설계.
+### Phase 2 — core-coder (Phase 1 직후)
 
-필수 참조:
-- docs/project-management/ADMIN_DASHBOARD_PERIOD_VIZ_CONSULTATION_PROGRESS_HANDOFF.md (§2·§4·§5)
-- docs/design-system/ADMIN_DASHBOARD_VISUALIZATION_GROUP_LAYOUT_SPEC.md
-- 샘플: https://mindgarden.dev.core-solution.co.kr/admin-dashboard-sample
-- B0KlA / unified-design-tokens.css / /core-solution-design-handoff / atomic-design
-- AI 슬롭·퍼플 그라데이션 금지. 토큰만.
-
-사용성: 관리자가 기간 pill로 일~년을 바꾸고 예약·진행·완료를 한눈에.
-정보 노출: ADMIN 테넌트 집계 건수·비율만.
-레이아웃: §4.1 블록 순서. V1~V5는 P0로 시안 필수, V6~V8은 중기 슬롯.
-
-산출:
-1) 화면 와이어(데스크톱·모바일)
-2) 컴포넌트/블록별 토큰·간격·높이
-3) 기간별 empty/loading 상태
-4) docs/design-system/ 에 스펙 문서 1개
-코드·CSS 수정 금지.
-```
-
-### Phase 2 — core-coder 전달 프롬프트 (요약)
-
-- 핸드오프 §4·§5 + 디자이너 스펙 준수.
-- 백엔드: trend row에 `inProgressCount`; daily/yearly 시계열 추가.
-- 프론트: pill 4종, 차트 시리즈에 진행, KPI 미니카드·도넛; `toSafeNumber`/`safeDisplay`.
-- `/core-solution-frontend`, `/core-solution-backend`, `/core-solution-multi-tenant`, encapsulation.
-- 완료 조건: §8 체크리스트.
+- 디자이너 스펙 + 본 문서 §0 준수.
+- FE: `AdminDashboardVisualizationGroup*` · 차트 색 · KPI 증감 배지 · 목표 대비.
+- BE(필요 시): 전기간 합계·growthRate·목표값. StandardizedApi · safeDisplay · 하드코딩 금지.
+- 운영 하드코딩 게이트: `ADMIN_LNB…§17`, `SETTINGS…§1.3`, `PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`.
 
 ### Phase 3 — core-tester
 
-- 일/주/월/년 전환 시 시리즈·라벨·empty.
-- 진행 건수 표시·툴팁.
-- 콘솔 React #130 0건, 하드코딩 색상 스캔(해당 diff).
+- 고대비 시리즈(예약/완료) 가독·「진행」비표시 또는 2순위.
+- MoM/전기간 증감 %·목표 vs 실적 표시·empty.
+- #130 0건 · 해당 diff 하드코딩 색상 스캔.
 
 ---
 
@@ -214,27 +230,28 @@ Controller 응답 필드 추가(구조 파괴 없이).
 ### 기획 (본 문서)
 
 - [x] 갭·SSOT·레이아웃 제안·분배실행 문서화
-- [ ] 사용자 “다음단계” 후 Phase 1 호출
+- [x] 피드백 v2 (§0) 반영 · 「다음 진행」착수
 
 ### 디자인 (Phase 1)
 
-- [ ] 일/주/월/년 pill + V1~V5 시안
-- [ ] 상담진행이 시각적으로 구분(색은 토큰만)
-- [ ] 반응형·a11y·empty 스펙
-- [ ] 스펙 문서 경로 확정
+- [ ] 고대비 시리즈/배지 토큰 재정의
+- [ ] 「진행」제거 또는 2순위 스펙
+- [ ] MoM/전기간 증감 % + 목표 vs 실적 P0 시안
+- [ ] 스펙 문서 갱신 · design-handoff 완비
 
 ### 구현 (Phase 2)
 
-- [ ] API에 `inProgressCount` (+ daily/yearly)
-- [ ] 차트·KPI·도넛에 진행 반영
-- [ ] 기간 4종 UI 동작
-- [ ] B0KlA·하드코딩 금지
+- [ ] 고대비 색 적용 (토큰만)
+- [ ] 차트에서 진행 제거/약화 · 예약·완료 중심
+- [ ] 증감 % · 목표 vs 실적 UI (+필요 API)
+- [ ] safeDisplay · StandardizedApi · 하드코딩 금지
 
 ### 검증 (Phase 3)
 
-- [ ] 기간·시리즈·empty 스모크
+- [ ] 위 항목 스모크 PASS
 - [ ] #130 0건
 - [ ] 테스터 게이트 통과 전 “완료” 보고 금지
+- [ ] 커밋·배포 대기 (사용자 지시)
 
 ---
 
@@ -242,19 +259,19 @@ Controller 응답 필드 추가(구조 파괴 없이).
 
 | 리스크 | 대응 |
 |--------|------|
-| IN_PROGRESS 사용 빈도가 낮아 시계열이 거의 0 | empty/미미 상태 UX + 예약·완료와 함께 스택으로 맥락 유지 |
-| 일/년 API 공수 | P0는 주/월+진행 먼저, 일/년은 API 준비되면 pill 활성화(디자이너는 4종 시안) |
+| 「진행」제거 후 기존 테스트가 inProgress KPI 카드 기대 | 테스터·코더가 테스트 기대값 갱신 |
+| 목표값 API 부재 | 코더가 기존 목표/설정 인벤토리 후 최소 BE 또는 FE placeholder 확정(스펙에 명시) |
+| 대비만 올리고 브랜드 훼손 | B0KlA·샘플 정합 유지, 슬롭·퍼플 금지 |
 | 배포 에이전트와 충돌 | 대시보드·통계 파일만; 배포 워크플로 수정 금지 |
-| DASHBOARD_DESIGN_GUIDE 퍼플 예시 | B0KlA를 우선; 가이드 갱신은 문서 Phase(선택) |
 
 ---
 
 ## 10. 다음 단계
 
-1. 사용자 검수(본 핸드오프).  
-2. **「다음단계」** → Phase 1 **core-designer** (`model: "gemini-3.1-pro"`).  
-3. 시안 승인 → Phase 2 **core-coder** → Phase 3 **core-tester**.  
-4. 배포는 별도 지시 시에만 **core-deployer**.
+1. ~~사용자 「다음 진행」~~ → **실행 중**.  
+2. Phase 1 → 2 → 3 연결.  
+3. 최종 보고: 변경 요지·파일·PASS/FAIL·**배포 대기**.  
+4. 커밋·배포는 **별도 지시** 시에만.
 
 ---
 

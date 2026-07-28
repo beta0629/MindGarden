@@ -692,14 +692,23 @@
         "multiLineTitle": "추이 비교",
         "kpiTitle": "기간 합계",
         "donutTitle": "단계별 상태 비율",
-        "subtitleDaily": "최근 14일 예약·진행·완료",
-        "subtitleWeekly": "최근 6주 예약·진행·완료",
-        "subtitleMonthly": "최근 6개월 예약·진행·완료",
-        "subtitleYearly": "최근 5년 예약·진행·완료",
+        "subtitleDaily": "최근 14일 예약·완료",
+        "subtitleWeekly": "최근 6주 예약·완료",
+        "subtitleMonthly": "최근 6개월 예약·완료",
+        "subtitleYearly": "최근 5년 예약·완료",
         "emptyPeriod": "해당 기간의 데이터가 없습니다",
         "seriesBooked": "예약",
         "seriesInProgress": "진행",
-        "seriesCompleted": "완료"
+        "seriesCompleted": "완료",
+        "countUnit": "건",
+        "previousDaily": "전일",
+        "previousWeekly": "전주",
+        "previousMonthly": "지난달",
+        "previousYearly": "전년",
+        "targetTitle": "목표 달성률 (완료 기준)",
+        "targetAchieved": "목표 달성",
+        "targetInProgress": "{{percent}}% 진행",
+        "targetMeta": "{{actual}}{{unit}} / 목표 {{target}}{{unit}}"
       }
     },
     "form": {

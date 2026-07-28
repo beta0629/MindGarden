@@ -2233,7 +2233,8 @@ button.mg-v2-ad-b0kla__icon-btn.mg-button .mg-button__text {
   color: var(--mg-v2-color-text-secondary);
 }
 
-[data-theme="dark"] .mg-v2-ad-b0kla__chart-empty {
+[data-theme="dark"] .mg-v2-ad-b0kla__chart-empty,
+[data-theme="dark"] .mg-v2-ad-b0kla__chart-empty-text {
   color: var(--mg-v2-color-text-secondary);
 }
 

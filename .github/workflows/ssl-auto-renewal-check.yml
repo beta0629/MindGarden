@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 코드 체크아웃
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 📤 스크립트 업로드 (개발)
         if: inputs.target == 'dev'

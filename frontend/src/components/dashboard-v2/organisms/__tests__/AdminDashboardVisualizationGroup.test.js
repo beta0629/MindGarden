@@ -41,6 +41,9 @@ jest.mock('react-i18next', () => ({
         'admin:dashboard.v2.viz.previousMonthly': '지난달',
         'admin:dashboard.v2.viz.previousYearly': '전년',
         'admin:dashboard.v2.viz.growthFromZero': '▲ 신규',
+        'admin:dashboard.v2.viz.growthVsPrevious': '{{previous}} 대비 {{badge}}',
+        'admin:dashboard.v2.viz.growthSeriesVsPrevious': '{{series}} {{previous}} 대비 {{badge}}',
+        'admin:dashboard.v2.viz.growthBadgesGroupLabel': '전기간 대비 증감',
         'admin:dashboard.v2.viz.targetTitle': '목표 달성률 (완료 기준)',
         'admin:dashboard.v2.viz.targetAchieved': '목표 달성',
         'admin:dashboard.v2.viz.targetInProgress': '{{percent}}% 진행',
@@ -205,6 +208,51 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(screen.getByTestId('viz-target-progress')).toBeInTheDocument();
   });
 
+  test('상담 현황 차트 카드 제목 옆에 지난달 대비 예약·완료 증감 배지를 노출한다', () => {
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
+    );
+
+    const stackedCard = screen.getByTestId('viz-stacked-bar-card');
+    expect(within(stackedCard).getByTestId('viz-stacked-bar-growth-badges')).toBeInTheDocument();
+
+    const bookedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-booked');
+    const completedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-completed');
+    expect(bookedBadge).toHaveAttribute('data-variant', 'success');
+    expect(bookedBadge).toHaveAttribute('data-tone', 'up');
+    expect(bookedBadge).toHaveTextContent('예약 지난달 대비 ▲ 25%');
+    expect(completedBadge).toHaveAttribute('data-variant', 'success');
+    expect(completedBadge).toHaveTextContent('완료 지난달 대비 ▲ 33%');
+
+    const multiCard = screen.getByTestId('viz-multi-line-card');
+    expect(within(multiCard).getByTestId('viz-multi-line-growth-completed'))
+      .toHaveTextContent('완료 지난달 대비 ▲ 33%');
+  });
+
+  test('6개월 버킷·직전 완료값>0이면 상담 현황 카드에 증감 배지가 나온다', () => {
+    const sixMonthStats = {
+      ...sampleStats,
+      monthlyData: [
+        { period: '2026-02', bookedCount: 0, inProgressCount: 0, completedCount: 0 },
+        { period: '2026-03', bookedCount: 0, inProgressCount: 0, completedCount: 0 },
+        { period: '2026-04', bookedCount: 0, inProgressCount: 0, completedCount: 42 },
+        { period: '2026-05', bookedCount: 1, inProgressCount: 0, completedCount: 52 },
+        { period: '2026-06', bookedCount: 0, inProgressCount: 0, completedCount: 59 },
+        { period: '2026-07', bookedCount: 8, inProgressCount: 0, completedCount: 63 }
+      ]
+    };
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={sixMonthStats} loading={false} />
+    );
+    const stackedCard = screen.getByTestId('viz-stacked-bar-card');
+    const completedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-completed');
+    expect(completedBadge).toHaveAttribute('data-tone', 'up');
+    expect(completedBadge).toHaveTextContent('완료 지난달 대비 ▲ 7%');
+    const bookedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-booked');
+    expect(bookedBadge).toHaveAttribute('data-kind', 'fromZero');
+    expect(bookedBadge).toHaveTextContent('예약 지난달 대비 ▲ 신규');
+  });
+
   test('전기간 0·현재 증가 시 ▲ 신규 배지를 success로 노출한다', () => {
     const fromZeroStats = {
       ...sampleStats,
@@ -255,6 +303,27 @@ describe('AdminDashboardVisualizationGroup', () => {
     );
     expect(screen.queryByTestId('viz-kpi-card-booked-growth')).not.toBeInTheDocument();
     expect(screen.queryByTestId('viz-kpi-card-completed-growth')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('viz-stacked-bar-growth-badges')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('viz-stacked-bar-growth-booked')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('viz-stacked-bar-growth-completed')).not.toBeInTheDocument();
+  });
+
+  test('차트 카드 감소 배지는 danger·상담 현황 제목 옆에 노출한다', () => {
+    const downStats = {
+      ...sampleStats,
+      monthlyData: [
+        { period: '2026-06', bookedCount: 10, inProgressCount: 0, completedCount: 80 },
+        { period: '2026-07', bookedCount: 5, inProgressCount: 0, completedCount: 40 }
+      ]
+    };
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={downStats} loading={false} />
+    );
+    const stackedCard = screen.getByTestId('viz-stacked-bar-card');
+    const completedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-completed');
+    expect(completedBadge).toHaveAttribute('data-variant', 'danger');
+    expect(completedBadge).toHaveAttribute('data-tone', 'down');
+    expect(completedBadge).toHaveTextContent('완료 지난달 대비 ▼ 50%');
   });
 
   test('V3 라인 차트는 index 모드 동시 툴팁을 사용한다', () => {

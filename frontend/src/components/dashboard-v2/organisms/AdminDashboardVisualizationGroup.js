@@ -116,13 +116,13 @@ function extractPrimarySeriesArrays(rows) {
 }
 
 /**
- * MoM 증감 배지 라벨 (스펙 §3: ▲ 12% / ▼ 5% / - 0% / ▲ 신규)
+ * MoM 증감 배지 심볼 라벨 (스펙 §3: ▲ 12% / ▼ 5% / - 0% / ▲ 신규)
  *
  * @param {{ tone: 'up'|'down'|'flat', kind: 'percent'|'fromZero', rate: number|null }} badgeState
  * @param {string} fromZeroLabel
  * @returns {string}
  */
-function formatGrowthBadgeLabel(badgeState, fromZeroLabel) {
+function formatGrowthBadgeSymbol(badgeState, fromZeroLabel) {
   if (badgeState.kind === 'fromZero') {
     return toDisplayString(fromZeroLabel);
   }
@@ -134,6 +134,42 @@ function formatGrowthBadgeLabel(badgeState, fromZeroLabel) {
     return `▼ ${absRate}%`;
   }
   return `- ${absRate}%`;
+}
+
+/**
+ * KPI용 짧은 증감 라벨
+ *
+ * @param {{ tone: 'up'|'down'|'flat', kind: 'percent'|'fromZero', rate: number|null }} badgeState
+ * @param {string} fromZeroLabel
+ * @returns {string}
+ */
+function formatGrowthBadgeLabel(badgeState, fromZeroLabel) {
+  return formatGrowthBadgeSymbol(badgeState, fromZeroLabel);
+}
+
+/**
+ * 차트 카드용 「지난달 대비 ▲ 12%」 형태 라벨
+ *
+ * @param {{ tone: 'up'|'down'|'flat', kind: 'percent'|'fromZero', rate: number|null }} badgeState
+ * @param {string} previousLabel
+ * @param {string} fromZeroLabel
+ * @param {(key: string, options?: object) => string} t
+ * @param {string} [seriesLabel]
+ * @returns {string}
+ */
+function formatChartGrowthBadgeLabel(badgeState, previousLabel, fromZeroLabel, t, seriesLabel) {
+  const badge = formatGrowthBadgeSymbol(badgeState, fromZeroLabel);
+  if (seriesLabel) {
+    return toDisplayString(t('admin:dashboard.v2.viz.growthSeriesVsPrevious', {
+      series: seriesLabel,
+      previous: previousLabel,
+      badge
+    }));
+  }
+  return toDisplayString(t('admin:dashboard.v2.viz.growthVsPrevious', {
+    previous: previousLabel,
+    badge
+  }));
 }
 
 /**
@@ -257,6 +293,94 @@ VizTargetKpiCard.propTypes = {
   targetMeta: PropTypes.string.isRequired
 };
 
+/**
+ * 차트 카드 헤더 — 예약·완료 전기간 대비 증감 배지 (제목 옆 대형 노출)
+ *
+ * @param {object} props
+ * @returns {JSX.Element|null}
+ */
+function VizChartHeaderGrowthBadges({
+  testIdPrefix,
+  bookedState,
+  completedState,
+  bookedLabel,
+  completedLabel,
+  previousLabel,
+  fromZeroLabel,
+  t
+}) {
+  if (!bookedState && !completedState) {
+    return null;
+  }
+
+  return (
+    <div
+      className="mg-v2-viz-chart-header__badges"
+      data-testid={`${testIdPrefix}-growth-badges`}
+      role="group"
+      aria-label={t('admin:dashboard.v2.viz.growthBadgesGroupLabel')}
+    >
+      {bookedState ? (
+        <StatusBadge
+          variant={GROWTH_BADGE_VARIANT[bookedState.tone]}
+          className={
+            `mg-v2-viz-growth-badge mg-v2-viz-growth-badge--chart mg-v2-viz-growth-badge--${bookedState.tone}`
+          }
+          data-testid={`${testIdPrefix}-growth-booked`}
+          data-tone={bookedState.tone}
+          data-kind={bookedState.kind}
+        >
+          {formatChartGrowthBadgeLabel(
+            bookedState,
+            previousLabel,
+            fromZeroLabel,
+            t,
+            bookedLabel
+          )}
+        </StatusBadge>
+      ) : null}
+      {completedState ? (
+        <StatusBadge
+          variant={GROWTH_BADGE_VARIANT[completedState.tone]}
+          className={
+            `mg-v2-viz-growth-badge mg-v2-viz-growth-badge--chart mg-v2-viz-growth-badge--${completedState.tone}`
+          }
+          data-testid={`${testIdPrefix}-growth-completed`}
+          data-tone={completedState.tone}
+          data-kind={completedState.kind}
+        >
+          {formatChartGrowthBadgeLabel(
+            completedState,
+            previousLabel,
+            fromZeroLabel,
+            t,
+            completedLabel
+          )}
+        </StatusBadge>
+      ) : null}
+    </div>
+  );
+}
+
+VizChartHeaderGrowthBadges.propTypes = {
+  testIdPrefix: PropTypes.string.isRequired,
+  bookedState: PropTypes.shape({
+    tone: PropTypes.oneOf(['up', 'down', 'flat']).isRequired,
+    kind: PropTypes.oneOf(['percent', 'fromZero']).isRequired,
+    rate: PropTypes.number
+  }),
+  completedState: PropTypes.shape({
+    tone: PropTypes.oneOf(['up', 'down', 'flat']).isRequired,
+    kind: PropTypes.oneOf(['percent', 'fromZero']).isRequired,
+    rate: PropTypes.number
+  }),
+  bookedLabel: PropTypes.string.isRequired,
+  completedLabel: PropTypes.string.isRequired,
+  previousLabel: PropTypes.string.isRequired,
+  fromZeroLabel: PropTypes.string.isRequired,
+  t: PropTypes.func.isRequired
+};
+
 const AdminDashboardVisualizationGroup = ({
   consultationStats = null,
   loading = false,
@@ -346,6 +470,30 @@ const AdminDashboardVisualizationGroup = ({
   const achievementPercent = calcTargetAchievementPercent(
     comparison.currentCompleted,
     comparison.targetCompleted
+  );
+  const bookedGrowthState = useMemo(
+    () => resolveGrowthBadgeState(
+      comparison.growthRateBooked,
+      comparison.currentBooked,
+      comparison.previousBooked
+    ),
+    [
+      comparison.growthRateBooked,
+      comparison.currentBooked,
+      comparison.previousBooked
+    ]
+  );
+  const completedGrowthState = useMemo(
+    () => resolveGrowthBadgeState(
+      comparison.growthRateCompleted,
+      comparison.currentCompleted,
+      comparison.previousCompleted
+    ),
+    [
+      comparison.growthRateCompleted,
+      comparison.currentCompleted,
+      comparison.previousCompleted
+    ]
   );
 
   const scaleOptions = useMemo(
@@ -506,12 +654,26 @@ const AdminDashboardVisualizationGroup = ({
 
       <div className="mg-v2-content-visualization-group__grid">
         {/* V2 스택 바 — 예약/완료 */}
-        <div className="mg-v2-ad-b0kla__card">
+        <div className="mg-v2-ad-b0kla__card" data-testid="viz-stacked-bar-card">
           <div className="mg-v2-ad-b0kla__chart-header">
-            <div>
-              <h3 className="mg-v2-ad-b0kla__chart-title">
-                {t('admin:dashboard.v2.viz.stackedBarTitle')}
-              </h3>
+            <div className="mg-v2-viz-chart-header__main">
+              <div className="mg-v2-viz-chart-header__title-row">
+                <h3 className="mg-v2-ad-b0kla__chart-title">
+                  {t('admin:dashboard.v2.viz.stackedBarTitle')}
+                </h3>
+                {!loading ? (
+                  <VizChartHeaderGrowthBadges
+                    testIdPrefix="viz-stacked-bar"
+                    bookedState={bookedGrowthState}
+                    completedState={completedGrowthState}
+                    bookedLabel={seriesLabels.booked}
+                    completedLabel={seriesLabels.completed}
+                    previousLabel={previousPeriodLabel}
+                    fromZeroLabel={growthFromZeroLabel}
+                    t={t}
+                  />
+                ) : null}
+              </div>
               <p className="mg-v2-ad-b0kla__chart-desc">{toDisplayString(subtitle)}</p>
             </div>
           </div>
@@ -571,12 +733,26 @@ const AdminDashboardVisualizationGroup = ({
         </div>
 
         {/* V3 멀티라인 — 예약/완료 */}
-        <div className="mg-v2-ad-b0kla__card">
+        <div className="mg-v2-ad-b0kla__card" data-testid="viz-multi-line-card">
           <div className="mg-v2-ad-b0kla__chart-header">
-            <div>
-              <h3 className="mg-v2-ad-b0kla__chart-title">
-                {t('admin:dashboard.v2.viz.multiLineTitle')}
-              </h3>
+            <div className="mg-v2-viz-chart-header__main">
+              <div className="mg-v2-viz-chart-header__title-row">
+                <h3 className="mg-v2-ad-b0kla__chart-title">
+                  {t('admin:dashboard.v2.viz.multiLineTitle')}
+                </h3>
+                {!loading ? (
+                  <VizChartHeaderGrowthBadges
+                    testIdPrefix="viz-multi-line"
+                    bookedState={bookedGrowthState}
+                    completedState={completedGrowthState}
+                    bookedLabel={seriesLabels.booked}
+                    completedLabel={seriesLabels.completed}
+                    previousLabel={previousPeriodLabel}
+                    fromZeroLabel={growthFromZeroLabel}
+                    t={t}
+                  />
+                ) : null}
+              </div>
               <p className="mg-v2-ad-b0kla__chart-desc">{toDisplayString(subtitle)}</p>
             </div>
           </div>

@@ -61,10 +61,33 @@ export const B0KLA_STATUS_SERIES_COLOR_VARS = Object.freeze({
 });
 
 /**
- * 시각화 그룹 — 완료 목표 건수 플레이스홀더 (API targetCompleted 없을 때).
+ * 시각화 그룹 — 완료 목표 건수 기본 폴백 (localStorage·API targetCompleted 없을 때).
  * 하드코딩 산재 금지: 이 상수만 사용.
  */
 export const DASHBOARD_VIZ_TARGET_COMPLETED = 100;
+
+/** 목표 설정 모드 (localStorage preference.mode) */
+export const DASHBOARD_VIZ_TARGET_MODES = Object.freeze({
+  PRESET: 'preset',
+  RATIO: 'ratio',
+  CUSTOM: 'custom'
+});
+
+/** 목표 건수 프리셋 (건). SSOT — UI·테스트에서 리터럴 금지 */
+export const DASHBOARD_VIZ_TARGET_PRESETS = Object.freeze([50, 100, 200, 500]);
+
+/**
+ * 빠른 가산 — 현재 입력값 기준 배수.
+ * target = Math.round(currentInput * multiplier)
+ */
+export const DASHBOARD_VIZ_TARGET_QUICK_ADD_OPTIONS = Object.freeze([
+  Object.freeze({ id: 'plus10', percent: 10, multiplier: 1.1 }),
+  Object.freeze({ id: 'plus20', percent: 20, multiplier: 1.2 })
+]);
+
+/** 직접 입력 최소·최대 목표 건수 (양의 정수) */
+export const DASHBOARD_VIZ_TARGET_MIN_COMPLETED = 1;
+export const DASHBOARD_VIZ_TARGET_MAX_COMPLETED = 99999;
 
 /**
  * ERP 운영 현황 수입·지출 막대 차트 — Chart.js Canvas 전용 hex.

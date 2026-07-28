@@ -1138,6 +1138,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             newClientStats={newClientStats}
             consultationsByDow={consultationsByDow}
             inflowDowLoading={inflowDowLoading}
+            totalClients={stats.totalClients}
           />
         </div>
         <div className="mg-v2-ad-b0kla__card">

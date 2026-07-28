@@ -3,14 +3,16 @@
 **작성**: core-planner  
 **일자**: 2026-07-28  
 **브랜치**: `feat/admin-dashboard-inflow-dow-viz` (Y축 `deploy/viz-yaxis-*`와 분리)  
-**상태**: designer → coder → tester **완료** · 전반 **PASS** (WARN: AdminService 단위테스트 부재·i18n 키 중복)  
-**커밋·배포**: 사용자 「배포」 지시 전 **금지**
+**상태**: A/B viz designer→coder→tester **완료**(PASS) · **P1.5** designer→coder→tester **완료**(테스터 **PASS**) · **커밋·배포 금지**  
+**커밋·배포**: 사용자 지시 전 **금지**  
+**비차단 리스크**: testid/i18n 경로가 스펙 예시와 다름(기능 OK)
 
 ---
 
 ## 1. 목표
 
-관리자가 Visualization 영역에서 **(A) 월별 신규 내담자 등록 수**와 **(B) 요일별 상담 건수(피크 요일)** 를 수치 라벨과 함께 한눈에 본다.
+관리자가 Visualization 영역에서 **(A) 월별 신규 내담자 등록 수**와 **(B) 요일별 상담 건수(피크 요일)** 를 수치 라벨과 함께 한눈에 본다.  
+**(P1.5)** 「신규 내담자 유입」카드에 **총 내담자 현황** KPI를 큰 폰트로 노출한다.
 
 ## 2. 사용자 관점 (§0.4)
 
@@ -31,6 +33,18 @@
 ### 선택 (P1)
 - A: 전기간(전월) 대비 증감 % 배지
 - B: 선택 기간(월/주) 필터와 pill 연동
+
+### P1.5 — 「총 내담자 현황」KPI (신규·기획 확정)
+
+| 항목 | 확정안 |
+|------|--------|
+| **목표** | 「신규 내담자 유입」카드에 총 내담자 현황을 큰 폰트로 노출 |
+| **정의** | 활성(표시 가능) CLIENT 수 = `role=CLIENT` + `isDeleted=false` + `isActive≠false` + 터미널/관리자삭제 lifecycle 제외 = Admin V2 `GET /api/v1/admin/clients/with-mapping-info`의 `count` = FE `stats.totalClients` |
+| **라벨** | UI 카피 「총 내담자 현황」(사용자 요청 유지). 소스가 활성·목록노출 수임은 **스펙 주석에만** 명시 |
+| **데이터** | **기존 FE `stats.totalClients` 재사용 1순위**. `NewClientsStatisticsResponse`에 totalClients 추가·신규 API **불필요**(카드 단독 fetch 일원화 시에만 선택) |
+| **UI 배치 후보** | 카드 헤더 우측(제목·「지난달 대비」배지 맞은편) 큰 숫자 KPI. 유입 바 차트와 충돌 없이. B0KlA |
+| **분배** | designer(`gemini-3.1-pro`) → coder → tester **완료**. 커밋·배포 금지 |
+| **상태** | designer→coder→tester **완료**(테스터 **PASS**). 비차단: testid/i18n≠스펙 예시(기능 OK) |
 
 ### 제외
 - 커밋·배포, Expo, 상담사/내담자 대시보드, Y축 dataMax 자동스케일 로직 변경
@@ -70,14 +84,18 @@
 | 2 code | **core-coder** | Phase 1 |
 | 3 test | **core-tester** | Phase 2 |
 
+**P1.5 분배** (완료): designer → coder → tester **PASS**. 비차단: testid/i18n 경로≠스펙 예시(기능 OK). 커밋·배포 금지.
+
 ### 충돌 회피
 - **건드리지 말 것**: Y축 `dataMax`/자동 도메인 전용 로직·관련 커밋 의도.
 - **허용**: VisualizationGroup에 **신규 카드·섹션** 추가, API 상수, AdminDashboardV2 데이터 로드, AdminService/Repo 신규 집계.
+- **P1.5**: 신규 API 금지(원칙). `stats.totalClients` 재사용 · 유입 카드 헤더 KPI만 추가.
 
 ## 8. 완료 기준
 
-- [ ] A: 월별 신규 인원 + 수치 라벨
-- [ ] B: 월~일 건수 + 피크 강조 + 수치 라벨
-- [ ] tenant 격리·StandardizedApi·safeDisplay·하드코딩 없음
-- [ ] 단위/컴포넌트 테스트 PASS
+- [x] A: 월별 신규 인원 + 수치 라벨
+- [x] B: 월~일 건수 + 피크 강조 + 수치 라벨
+- [x] tenant 격리·StandardizedApi·safeDisplay·하드코딩 없음
+- [x] 단위/컴포넌트 테스트 PASS
+- [x] **P1.5**: 「총 내담자 현황」KPI (`stats.totalClients`) · 유입 카드 헤더 우측 · design→code→test PASS (16/16)
 - [ ] 커밋·배포 미실행

@@ -48,15 +48,25 @@ jest.mock('react-i18next', () => ({
         'admin:dashboard.v2.viz.targetAchieved': '목표 달성',
         'admin:dashboard.v2.viz.targetInProgress': '{{percent}}% 진행',
         'admin:dashboard.v2.viz.targetMeta': '{{actual}}{{unit}} / 목표 {{target}}{{unit}}',
+        'admin:dashboard.v2.viz.target.settingTitle': '목표 건수 설정',
+        'admin:dashboard.v2.viz.target.presetLabel': '빠른 설정',
+        'admin:dashboard.v2.viz.target.ratioLabel': '전월 대비',
+        'admin:dashboard.v2.viz.target.customLabel': '직접 입력',
+        'admin:dashboard.v2.viz.target.applyBtn': '적용',
+        'admin:dashboard.v2.viz.target.localNotice': '이 기기에만 저장됩니다.',
+        'admin:dashboard.v2.viz.target.noPreviousData': '전월 완료 건수가 없어 비율 설정을 사용할 수 없습니다.',
+        'admin:dashboard.v2.viz.target.presetBtn': '{{count}}{{unit}}',
+        'admin:dashboard.v2.viz.target.ratioBtn': '+{{percent}}% ({{count}}{{unit}})',
+        'common:actions.close': '닫기',
         'admin:dashboard.v2.viz.newClientsTitle': '신규 내담자 유입',
         'admin:dashboard.v2.viz.newClientsSubtitle': '최근 6개월 신규 등록',
+        'admin:dashboard.v2.viz.totalClientsLabel': '총 내담자 현황',
         'admin:dashboard.v2.viz.newClientsCountUnit': '명',
         'admin:dashboard.v2.viz.emptyInflowPeriod': '해당 기간에 집계된 데이터가 없습니다.',
         'admin:dashboard.v2.viz.dowTitle': '요일별 상담 건수',
         'admin:dashboard.v2.viz.dowSubtitle': '최근 6개월 요일별 합계',
         'admin:dashboard.v2.viz.dowPeakBadge': '최다 · {{count}}건',
         'admin:dashboard.v2.viz.dowPeakGroupLabel': '최다 요일',
-        'admin:dashboard.v2.viz.emptyInflowPeriod': '해당 기간에 집계된 데이터가 없습니다.',
         'admin:dashboard.v2.viz.dowShort.mon': '월',
         'admin:dashboard.v2.viz.dowShort.tue': '화',
         'admin:dashboard.v2.viz.dowShort.wed': '수',
@@ -141,13 +151,19 @@ jest.mock('../../../common/StatusBadge', () => {
 
 jest.mock('../../../ui/Icon/Icon', () => {
   const ReactActual = require('react');
-  return function MockIcon({ name }) {
-    return ReactActual.createElement('span', { 'data-testid': `icon-${name}` });
+  return function MockIcon({ name, ...rest }) {
+    return ReactActual.createElement('span', {
+      'data-testid': `icon-${name}`,
+      'aria-hidden': rest['aria-hidden'],
+      'aria-label': rest['aria-label']
+    });
   };
 });
 
+
 import AdminDashboardVisualizationGroup from '../AdminDashboardVisualizationGroup';
-import { CHART_TYPES } from '../../../../constants/charts';
+import { CHART_TYPES, DASHBOARD_VIZ_TARGET_MODES } from '../../../../constants/charts';
+import { buildVizTargetStorageKey } from '../../utils/dashboardVizTargetStorage';
 
 const sampleStats = {
   dailyData: [
@@ -183,8 +199,18 @@ const emptyStats = {
 };
 
 describe('AdminDashboardVisualizationGroup', () => {
+  const originalSessionManager = window.sessionManager;
+
   beforeEach(() => {
     chartCalls.length = 0;
+    localStorage.clear();
+    window.sessionManager = {
+      getUser: () => ({ id: 'user-1', tenantId: 'tenant-test' })
+    };
+  });
+
+  afterAll(() => {
+    window.sessionManager = originalSessionManager;
   });
 
   test('기간 pill 4종(일/주/월/년)을 렌더한다', () => {
@@ -450,9 +476,37 @@ describe('AdminDashboardVisualizationGroup', () => {
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading />
     );
     expect(screen.getByTestId('viz-kpi-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-total-clients-skeleton')).toBeInTheDocument();
     expect(document.querySelectorAll('.mg-v2-skeleton').length).toBeGreaterThanOrEqual(5);
     expect(screen.queryByTestId(`mock-chart-${CHART_TYPES.BAR}`)).not.toBeInTheDocument();
     expect(screen.queryByTestId('viz-kpi-card-booked')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('viz-total-clients-value')).not.toBeInTheDocument();
+    expect(screen.getByTestId('viz-total-clients-kpi')).toHaveTextContent('총 내담자 현황');
+  });
+
+  test('총 내담자 KPI: totalClients 큰 숫자·단위·0 표시', () => {
+    const { rerender } = render(
+      <AdminDashboardVisualizationGroup
+        consultationStats={sampleStats}
+        loading={false}
+        totalClients={1204}
+      />
+    );
+
+    expect(screen.getByTestId('viz-total-clients-kpi')).toHaveTextContent('총 내담자 현황');
+    expect(screen.getByTestId('viz-total-clients-value')).toHaveTextContent('1,204');
+    expect(screen.getByTestId('viz-total-clients-kpi')).toHaveTextContent('명');
+    expect(screen.queryByTestId('viz-total-clients-skeleton')).not.toBeInTheDocument();
+
+    rerender(
+      <AdminDashboardVisualizationGroup
+        consultationStats={sampleStats}
+        loading={false}
+        totalClients={0}
+      />
+    );
+    expect(screen.getByTestId('viz-total-clients-value')).toHaveTextContent('0');
+    expect(screen.getByTestId('viz-total-clients-kpi')).toHaveTextContent('명');
   });
 
   test('A/B 카드: 신규 유입 막대·요일 피크 배지·수치 라벨 옵션', () => {
@@ -484,6 +538,7 @@ describe('AdminDashboardVisualizationGroup', () => {
         loading={false}
         newClientStats={newClientStats}
         consultationsByDow={consultationsByDow}
+        totalClients={1204}
       />
     );
 
@@ -495,6 +550,8 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(screen.getByTestId('viz-dow-peak-badge')).toHaveTextContent('수요일');
     expect(screen.getByTestId('viz-dow-peak-badge')).toHaveTextContent('최다 · 32건');
     expect(screen.getByTestId('viz-new-clients-growth')).toHaveTextContent('지난달 대비 ▲ 25%');
+    expect(screen.getByTestId('viz-total-clients-value')).toHaveTextContent('1,204');
+    expect(screen.getByTestId('viz-total-clients-kpi')).toHaveTextContent('총 내담자 현황');
 
     const barCharts = screen.getAllByTestId(`mock-chart-${CHART_TYPES.BAR}`);
     expect(barCharts.length).toBeGreaterThanOrEqual(3);
@@ -505,5 +562,121 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(dowCall).toBeTruthy();
     expect(dowCall.options.plugins.mgVizBarValueLabels.enabled).toBe(true);
     expect(dowCall.data.datasets[0].data[2]).toBe(32);
+  });
+
+  test('목표 설정 트리거·인라인 팝오버 열림', () => {
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
+    );
+    const settingsBtn = screen.getByTestId('viz-target-settings-trigger');
+    expect(settingsBtn).toHaveAttribute('aria-label', '목표 건수 설정');
+    expect(screen.queryByTestId('viz-target-settings-popover')).not.toBeInTheDocument();
+
+    fireEvent.click(settingsBtn);
+    expect(screen.getByTestId('viz-target-settings-popover')).toBeInTheDocument();
+    expect(screen.getByText('빠른 설정')).toBeInTheDocument();
+    expect(screen.getByText('전월 대비')).toBeInTheDocument();
+    expect(screen.getByText('이 기기에만 저장됩니다.')).toBeInTheDocument();
+  });
+
+  test('목표 프리셋 클릭 시 즉시 저장·팝오버 닫힘·달성률 재계산', () => {
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
+    );
+
+    const targetCard = screen.getByTestId('viz-kpi-card-target');
+    expect(targetCard).toHaveTextContent('4%');
+    expect(targetCard).toHaveTextContent('4건 / 목표 100건');
+
+    fireEvent.click(screen.getByTestId('viz-target-settings-trigger'));
+    fireEvent.click(screen.getByTestId('viz-target-preset-50'));
+
+    expect(screen.queryByTestId('viz-target-settings-popover')).not.toBeInTheDocument();
+    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('8%');
+    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('4건 / 목표 50건');
+
+    const storageKey = buildVizTargetStorageKey({
+      tenantId: 'tenant-test',
+      userId: 'user-1'
+    });
+    const stored = JSON.parse(localStorage.getItem(storageKey));
+    expect(stored.mode).toBe(DASHBOARD_VIZ_TARGET_MODES.PRESET);
+    expect(stored.targetCompleted).toBe(50);
+  });
+
+  test('전월 대비 비율 클릭 시 previousCompleted 기준 목표 저장', () => {
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
+    );
+
+    fireEvent.click(screen.getByTestId('viz-target-settings-trigger'));
+    // previousCompleted(6월)=3 → +10% = 3
+    expect(screen.getByTestId('viz-target-ratio-plus10')).toHaveTextContent('+10% (3건)');
+    fireEvent.click(screen.getByTestId('viz-target-ratio-plus10'));
+
+    expect(screen.queryByTestId('viz-target-settings-popover')).not.toBeInTheDocument();
+    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('4건 / 목표 3건');
+    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('133%');
+
+    const storageKey = buildVizTargetStorageKey({
+      tenantId: 'tenant-test',
+      userId: 'user-1'
+    });
+    const stored = JSON.parse(localStorage.getItem(storageKey));
+    expect(stored.mode).toBe(DASHBOARD_VIZ_TARGET_MODES.RATIO);
+    expect(stored.targetCompleted).toBe(3);
+  });
+
+  test('previousCompleted=0이면 비율 비활성·안내 표시', () => {
+    const zeroPreviousStats = {
+      ...sampleStats,
+      monthlyData: [
+        { period: '2026-06', bookedCount: 0, inProgressCount: 0, completedCount: 0 },
+        { period: '2026-07', bookedCount: 5, inProgressCount: 1, completedCount: 4 }
+      ]
+    };
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={zeroPreviousStats} loading={false} />
+    );
+
+    fireEvent.click(screen.getByTestId('viz-target-settings-trigger'));
+    expect(screen.getByTestId('viz-target-ratio-plus10')).toBeDisabled();
+    expect(screen.getByTestId('viz-target-ratio-plus20')).toBeDisabled();
+    expect(screen.getByTestId('viz-target-ratio-plus30')).toBeDisabled();
+    expect(screen.getByTestId('viz-target-ratio-hint')).toHaveTextContent(
+      '전월 완료 건수가 없어 비율 설정을 사용할 수 없습니다.'
+    );
+  });
+
+  test('직접 입력 유효성·적용 시 저장', () => {
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
+    );
+
+    fireEvent.click(screen.getByTestId('viz-target-settings-trigger'));
+    const input = screen.getByTestId('viz-target-custom-input');
+    const applyBtn = screen.getByTestId('viz-target-custom-apply');
+
+    fireEvent.change(input, { target: { value: '0' } });
+    expect(applyBtn).toBeDisabled();
+
+    fireEvent.change(input, { target: { value: 'abc' } });
+    expect(applyBtn).toBeDisabled();
+
+    fireEvent.change(input, { target: { value: '200' } });
+    expect(applyBtn).not.toBeDisabled();
+    fireEvent.click(applyBtn);
+
+    expect(screen.queryByTestId('viz-target-settings-popover')).not.toBeInTheDocument();
+    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('4건 / 목표 200건');
+    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('2%');
+
+    const storageKey = buildVizTargetStorageKey({
+      tenantId: 'tenant-test',
+      userId: 'user-1'
+    });
+    const stored = JSON.parse(localStorage.getItem(storageKey));
+    expect(stored.mode).toBe(DASHBOARD_VIZ_TARGET_MODES.CUSTOM);
+    expect(stored.targetCompleted).toBe(200);
   });
 });

@@ -48,16 +48,21 @@ jest.mock('react-i18next', () => ({
         'admin:dashboard.v2.viz.targetAchieved': '목표 달성',
         'admin:dashboard.v2.viz.targetInProgress': '{{percent}}% 진행',
         'admin:dashboard.v2.viz.targetMeta': '{{actual}}{{unit}} / 목표 {{target}}{{unit}}',
-        'admin:dashboard.v2.viz.target.settingTitle': '목표 건수 설정',
-        'admin:dashboard.v2.viz.target.presetLabel': '빠른 설정',
-        'admin:dashboard.v2.viz.target.ratioLabel': '전월 대비',
-        'admin:dashboard.v2.viz.target.customLabel': '직접 입력',
-        'admin:dashboard.v2.viz.target.applyBtn': '적용',
-        'admin:dashboard.v2.viz.target.localNotice': '이 기기에만 저장됩니다.',
-        'admin:dashboard.v2.viz.target.noPreviousData': '전월 완료 건수가 없어 비율 설정을 사용할 수 없습니다.',
-        'admin:dashboard.v2.viz.target.presetBtn': '{{count}}{{unit}}',
-        'admin:dashboard.v2.viz.target.ratioBtn': '+{{percent}}% ({{count}}{{unit}})',
+        'admin:dashboard.v2.viz.targetGoal.title': '목표 설정',
+        'admin:dashboard.v2.viz.targetGoal.settingsAria': '목표 설정',
+        'admin:dashboard.v2.viz.targetGoal.currentTarget': '현재 목표: {{count}}{{unit}}',
+        'admin:dashboard.v2.viz.targetGoal.preset': '프리셋 선택',
+        'admin:dashboard.v2.viz.targetGoal.quickAdd': '빠른 가산 (현재 입력값 기준)',
+        'admin:dashboard.v2.viz.targetGoal.directInput': '직접 입력',
+        'admin:dashboard.v2.viz.targetGoal.save': '저장',
+        'admin:dashboard.v2.viz.targetGoal.cancel': '취소',
+        'admin:dashboard.v2.viz.targetGoal.presetBtn': '{{count}}{{unit}}',
+        'admin:dashboard.v2.viz.targetGoal.quickAddBtn': '+{{percent}}% ({{count}}{{unit}})',
+        'admin:dashboard.v2.viz.targetGoal.errorEmpty': '목표 건수를 입력해주세요.',
+        'admin:dashboard.v2.viz.targetGoal.errorMin': '목표는 1건 이상이어야 합니다.',
+        'admin:dashboard.v2.viz.targetGoal.errorMax': '목표는 {{max}}건 이하여야 합니다.',
         'common:actions.close': '닫기',
+        'action.close': '닫기',
         'admin:dashboard.v2.viz.newClientsTitle': '신규 내담자 유입',
         'admin:dashboard.v2.viz.newClientsSubtitle': '최근 6개월 신규 등록',
         'admin:dashboard.v2.viz.totalClientsLabel': '총 내담자 현황',
@@ -157,6 +162,35 @@ jest.mock('../../../ui/Icon/Icon', () => {
       'aria-hidden': rest['aria-hidden'],
       'aria-label': rest['aria-label']
     });
+  };
+});
+
+jest.mock('../../../common/modals/UnifiedModal', () => {
+  const ReactActual = require('react');
+  return function MockUnifiedModal({
+    isOpen,
+    children,
+    actions,
+    title,
+    onClose: _onClose,
+    ...rest
+  }) {
+    if (!isOpen) {
+      return null;
+    }
+    return ReactActual.createElement(
+      'div',
+      {
+        role: 'dialog',
+        'data-testid': rest['data-testid'] || 'unified-modal',
+        className: rest.className
+      },
+      ReactActual.createElement('h2', null, title),
+      children,
+      actions
+        ? ReactActual.createElement('div', { 'data-testid': 'viz-target-goal-actions' }, actions)
+        : null
+    );
   };
 });
 
@@ -564,22 +598,24 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(dowCall.data.datasets[0].data[2]).toBe(32);
   });
 
-  test('목표 설정 트리거·인라인 팝오버 열림', () => {
+  test('목표 설정 트리거·UnifiedModal 열림', () => {
     render(
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
     );
-    const settingsBtn = screen.getByTestId('viz-target-settings-trigger');
-    expect(settingsBtn).toHaveAttribute('aria-label', '목표 건수 설정');
+    const settingsBtn = screen.getByTestId('viz-target-goal-settings');
+    expect(settingsBtn).toHaveAttribute('aria-label', '목표 설정');
+    expect(screen.queryByTestId('viz-target-goal-modal')).not.toBeInTheDocument();
     expect(screen.queryByTestId('viz-target-settings-popover')).not.toBeInTheDocument();
 
     fireEvent.click(settingsBtn);
-    expect(screen.getByTestId('viz-target-settings-popover')).toBeInTheDocument();
-    expect(screen.getByText('빠른 설정')).toBeInTheDocument();
-    expect(screen.getByText('전월 대비')).toBeInTheDocument();
-    expect(screen.getByText('이 기기에만 저장됩니다.')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-target-goal-modal')).toBeInTheDocument();
+    expect(screen.getByText('프리셋 선택')).toBeInTheDocument();
+    expect(screen.getByText('빠른 가산 (현재 입력값 기준)')).toBeInTheDocument();
+    expect(screen.getByText('직접 입력')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-target-goal-current')).toHaveTextContent('현재 목표: 100건');
   });
 
-  test('목표 프리셋 클릭 시 즉시 저장·팝오버 닫힘·달성률 재계산', () => {
+  test('목표 프리셋 선택 후 저장 시 preset 모드·모달 닫힘·달성률 재계산', () => {
     render(
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
     );
@@ -588,10 +624,11 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(targetCard).toHaveTextContent('4%');
     expect(targetCard).toHaveTextContent('4건 / 목표 100건');
 
-    fireEvent.click(screen.getByTestId('viz-target-settings-trigger'));
-    fireEvent.click(screen.getByTestId('viz-target-preset-50'));
+    fireEvent.click(screen.getByTestId('viz-target-goal-settings'));
+    fireEvent.click(screen.getByRole('radio', { name: '50건' }));
+    fireEvent.click(screen.getByTestId('viz-target-goal-save'));
 
-    expect(screen.queryByTestId('viz-target-settings-popover')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('viz-target-goal-modal')).not.toBeInTheDocument();
     expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('8%');
     expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('4건 / 목표 50건');
 
@@ -604,70 +641,51 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(stored.targetCompleted).toBe(50);
   });
 
-  test('전월 대비 비율 클릭 시 previousCompleted 기준 목표 저장', () => {
+  test('빠른 가산 +10%/+20%는 현재 입력값 기준·custom 저장', () => {
     render(
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
     );
 
-    fireEvent.click(screen.getByTestId('viz-target-settings-trigger'));
-    // previousCompleted(6월)=3 → +10% = 3
-    expect(screen.getByTestId('viz-target-ratio-plus10')).toHaveTextContent('+10% (3건)');
-    fireEvent.click(screen.getByTestId('viz-target-ratio-plus10'));
+    fireEvent.click(screen.getByTestId('viz-target-goal-settings'));
+    // 현재 입력 100 → +10% = 110
+    expect(screen.getByTestId('viz-target-goal-quick-plus10')).toHaveTextContent('+10% (110건)');
+    expect(screen.getByTestId('viz-target-goal-quick-plus20')).toHaveTextContent('+20% (120건)');
+    fireEvent.click(screen.getByTestId('viz-target-goal-quick-plus10'));
+    expect(screen.getByTestId('viz-target-goal-input')).toHaveValue(110);
+    fireEvent.click(screen.getByTestId('viz-target-goal-save'));
 
-    expect(screen.queryByTestId('viz-target-settings-popover')).not.toBeInTheDocument();
-    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('4건 / 목표 3건');
-    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('133%');
+    expect(screen.queryByTestId('viz-target-goal-modal')).not.toBeInTheDocument();
+    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('4건 / 목표 110건');
 
     const storageKey = buildVizTargetStorageKey({
       tenantId: 'tenant-test',
       userId: 'user-1'
     });
     const stored = JSON.parse(localStorage.getItem(storageKey));
-    expect(stored.mode).toBe(DASHBOARD_VIZ_TARGET_MODES.RATIO);
-    expect(stored.targetCompleted).toBe(3);
+    expect(stored.mode).toBe(DASHBOARD_VIZ_TARGET_MODES.CUSTOM);
+    expect(stored.targetCompleted).toBe(110);
   });
 
-  test('previousCompleted=0이면 비율 비활성·안내 표시', () => {
-    const zeroPreviousStats = {
-      ...sampleStats,
-      monthlyData: [
-        { period: '2026-06', bookedCount: 0, inProgressCount: 0, completedCount: 0 },
-        { period: '2026-07', bookedCount: 5, inProgressCount: 1, completedCount: 4 }
-      ]
-    };
-    render(
-      <AdminDashboardVisualizationGroup consultationStats={zeroPreviousStats} loading={false} />
-    );
-
-    fireEvent.click(screen.getByTestId('viz-target-settings-trigger'));
-    expect(screen.getByTestId('viz-target-ratio-plus10')).toBeDisabled();
-    expect(screen.getByTestId('viz-target-ratio-plus20')).toBeDisabled();
-    expect(screen.getByTestId('viz-target-ratio-plus30')).toBeDisabled();
-    expect(screen.getByTestId('viz-target-ratio-hint')).toHaveTextContent(
-      '전월 완료 건수가 없어 비율 설정을 사용할 수 없습니다.'
-    );
-  });
-
-  test('직접 입력 유효성·적용 시 저장', () => {
+  test('직접 입력 유효성·저장', () => {
     render(
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
     );
 
-    fireEvent.click(screen.getByTestId('viz-target-settings-trigger'));
-    const input = screen.getByTestId('viz-target-custom-input');
-    const applyBtn = screen.getByTestId('viz-target-custom-apply');
+    fireEvent.click(screen.getByTestId('viz-target-goal-settings'));
+    const input = screen.getByTestId('viz-target-goal-input');
+    const saveBtn = screen.getByTestId('viz-target-goal-save');
+
+    fireEvent.change(input, { target: { value: '' } });
+    expect(saveBtn).toBeDisabled();
 
     fireEvent.change(input, { target: { value: '0' } });
-    expect(applyBtn).toBeDisabled();
-
-    fireEvent.change(input, { target: { value: 'abc' } });
-    expect(applyBtn).toBeDisabled();
+    expect(saveBtn).toBeDisabled();
 
     fireEvent.change(input, { target: { value: '200' } });
-    expect(applyBtn).not.toBeDisabled();
-    fireEvent.click(applyBtn);
+    expect(saveBtn).not.toBeDisabled();
+    fireEvent.click(saveBtn);
 
-    expect(screen.queryByTestId('viz-target-settings-popover')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('viz-target-goal-modal')).not.toBeInTheDocument();
     expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('4건 / 목표 200건');
     expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('2%');
 
@@ -678,5 +696,21 @@ describe('AdminDashboardVisualizationGroup', () => {
     const stored = JSON.parse(localStorage.getItem(storageKey));
     expect(stored.mode).toBe(DASHBOARD_VIZ_TARGET_MODES.CUSTOM);
     expect(stored.targetCompleted).toBe(200);
+  });
+
+  test('tenantId 없으면 저장 no-op·UI 목표만 반영', () => {
+    window.sessionManager = {
+      getUser: () => ({ id: 'user-1', tenantId: null })
+    };
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
+    );
+
+    fireEvent.click(screen.getByTestId('viz-target-goal-settings'));
+    fireEvent.click(screen.getByRole('radio', { name: '50건' }));
+    fireEvent.click(screen.getByTestId('viz-target-goal-save'));
+
+    expect(screen.getByTestId('viz-kpi-card-target')).toHaveTextContent('4건 / 목표 50건');
+    expect(localStorage.length).toBe(0);
   });
 });

@@ -1,0 +1,52 @@
+/**
+ * VizTargetGoalSettingModal — 목표 설정 모달 레이아웃
+ * SSOT: docs/design-system/ADMIN_DASHBOARD_TARGET_GOAL_SETTING_SPEC.md
+ */
+
+.mg-v2-viz-target-goal-modal .mg-modal__body {
+  background: var(--mg-color-background-main);
+}
+
+.mg-v2-viz-target-goal-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-24, var(--mg-spacing-lg, 1.5rem));
+}
+
+.mg-v2-viz-target-goal-modal__current {
+  margin: 0;
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-viz-target-goal-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-viz-target-goal-modal__label {
+  margin: 0;
+  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-viz-target-goal-modal__presets {
+  width: 100%;
+}
+
+.mg-v2-viz-target-goal-modal__quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-viz-target-goal-modal__quick-btn {
+  flex: 1 1 auto;
+}
+
+.mg-v2-viz-target-goal-modal__unit {
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  color: var(--mg-color-text-secondary);
+}

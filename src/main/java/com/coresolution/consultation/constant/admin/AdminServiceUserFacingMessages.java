@@ -466,6 +466,15 @@ public final class AdminServiceUserFacingMessages {
     /** 통계 등에서 기간 미지정 시 레이블 */
     public static final String STATS_PERIOD_LABEL_ALL = "전체";
 
+    /** 요일별 상담 집계 — ISO 1=월 … 7=일 표시 라벨 */
+    public static final String DAY_OF_WEEK_MON = "월요일";
+    public static final String DAY_OF_WEEK_TUE = "화요일";
+    public static final String DAY_OF_WEEK_WED = "수요일";
+    public static final String DAY_OF_WEEK_THU = "목요일";
+    public static final String DAY_OF_WEEK_FRI = "금요일";
+    public static final String DAY_OF_WEEK_SAT = "토요일";
+    public static final String DAY_OF_WEEK_SUN = "일요일";
+
     /**
      * 영문 전문분야 코드 → 한글 표시명 (관리 화면·API 통일).
      */

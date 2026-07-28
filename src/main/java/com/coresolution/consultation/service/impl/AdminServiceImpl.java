@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
+import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,6 +28,9 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
+import com.coresolution.consultation.dto.NewClientMonthlyItemResponse;
+import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
 import com.coresolution.consultation.dto.ResolvedProfessionalRegistration;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
@@ -6057,6 +6061,83 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.warn("월별 완료율 조회 실패: year={}, month={}, error={}", year, month, e.getMessage());
             return 0.0;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public NewClientsStatisticsResponse getNewClientMonthlyStatistics(int lastMonths) {
+        try {
+            String tenantId = getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ getNewClientMonthlyStatistics: tenantId 없음");
+                return NewClientsStatisticsResponse.builder().items(new ArrayList<>()).build();
+            }
+            LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
+            List<LocalDate> monthStarts = DashboardTrendPeriodUtils.rollingMonthStarts(lastMonths, now);
+            List<NewClientMonthlyItemResponse> items = new ArrayList<>(monthStarts.size());
+            long previousCount = -1L;
+            Double latestGrowthRate = null;
+            for (LocalDate monthStart : monthStarts) {
+                LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+                LocalDateTime rangeStart = monthStart.atStartOfDay();
+                LocalDateTime rangeEnd = monthEnd.atTime(23, 59, 59);
+                long count = userRepository.countByTenantIdAndCreatedAtBetweenAndRole(
+                        tenantId, rangeStart, rangeEnd, UserRole.CLIENT);
+                String period = monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+                Double growthRate = null;
+                if (previousCount >= 0L) {
+                    growthRate = ConsultationsByDayOfWeekUtils.calcGrowthRatePercent(count, previousCount);
+                }
+                items.add(NewClientMonthlyItemResponse.builder()
+                        .period(period)
+                        .newClientCount(count)
+                        .growthRate(growthRate)
+                        .build());
+                latestGrowthRate = growthRate;
+                previousCount = count;
+            }
+            log.info("✅ 월별 신규 내담자 유입 조회 완료: tenantId={}, months={}", tenantId, items.size());
+            return NewClientsStatisticsResponse.builder()
+                    .items(items)
+                    .growthRate(latestGrowthRate)
+                    .build();
+        } catch (Exception e) {
+            log.error("❌ 월별 신규 내담자 유입 조회 실패: {}", e.getMessage(), e);
+            return NewClientsStatisticsResponse.builder().items(new ArrayList<>()).build();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ConsultationsByDayOfWeekResponse getConsultationsByDayOfWeek(int lastMonths) {
+        try {
+            String tenantId = getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ getConsultationsByDayOfWeek: tenantId 없음");
+                return ConsultationsByDayOfWeekUtils.buildResponse(null);
+            }
+            LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
+            List<LocalDate> monthStarts = DashboardTrendPeriodUtils.rollingMonthStarts(lastMonths, now);
+            if (monthStarts.isEmpty()) {
+                return ConsultationsByDayOfWeekUtils.buildResponse(null);
+            }
+            LocalDate startDate = monthStarts.get(0);
+            LocalDate endDate = now;
+            List<ScheduleStatus> excluded = List.of(
+                    ScheduleStatus.CANCELLED,
+                    ScheduleStatus.AVAILABLE,
+                    ScheduleStatus.VACATION);
+            List<Object[]> rows = scheduleRepository.countSchedulesByDateBetweenExcludingStatuses(
+                    tenantId, startDate, endDate, excluded);
+            ConsultationsByDayOfWeekResponse response =
+                    ConsultationsByDayOfWeekUtils.aggregateFromDateCounts(rows);
+            log.info("✅ 요일별 상담 건수 조회 완료: tenantId={}, peakDay={}, peakCount={}",
+                    tenantId, response.getPeakDayOfWeek(), response.getPeakCount());
+            return response;
+        } catch (Exception e) {
+            log.error("❌ 요일별 상담 건수 조회 실패: {}", e.getMessage(), e);
+            return ConsultationsByDayOfWeekUtils.buildResponse(null);
         }
     }
     

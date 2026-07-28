@@ -498,3 +498,63 @@ export function resolveAutoYAxisMax(dataMax) {
   const padded = Math.ceil((safeMax * ratioHundredths) / 100);
   return Math.max(padded, safeMax + 1, CHART_Y_DOMAIN_MIN_CEILING);
 }
+
+/**
+ * 신규 내담자 월별 API items 정규화.
+ *
+ * @param {Array<object>|null|undefined} items
+ * @returns {Array<{ period: string, newClientCount: number, growthRate: number|null }>}
+ */
+export function normalizeNewClientMonthlyItems(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+  return items.map((row) => ({
+    period: row?.period != null ? String(row.period) : '',
+    newClientCount: toSafeNumber(row?.newClientCount, 0),
+    growthRate: row?.growthRate != null && Number.isFinite(Number(row.growthRate))
+      ? Number(row.growthRate)
+      : null
+  }));
+}
+
+/**
+ * 요일별 API items 정규화 (월=1 … 일=7 정렬 보장).
+ *
+ * @param {Array<object>|null|undefined} items
+ * @returns {Array<{ dayOfWeek: number, label: string, count: number }>}
+ */
+export function normalizeConsultationsByDayOfWeekItems(items) {
+  const byDow = new Map();
+  if (Array.isArray(items)) {
+    items.forEach((row) => {
+      const dayOfWeek = toSafeNumber(row?.dayOfWeek, 0);
+      if (dayOfWeek < 1 || dayOfWeek > 7) {
+        return;
+      }
+      byDow.set(dayOfWeek, {
+        dayOfWeek,
+        label: row?.label != null ? String(row.label) : '',
+        count: toSafeNumber(row?.count, 0)
+      });
+    });
+  }
+  const result = [];
+  for (let dow = 1; dow <= 7; dow += 1) {
+    result.push(byDow.get(dow) || { dayOfWeek: dow, label: '', count: 0 });
+  }
+  return result;
+}
+
+/**
+ * count 시리즈가 전부 0인지.
+ *
+ * @param {Array<number>} counts
+ * @returns {boolean}
+ */
+export function isCountSeriesAllZero(counts) {
+  if (!Array.isArray(counts) || counts.length === 0) {
+    return true;
+  }
+  return counts.every((v) => toSafeNumber(v, 0) === 0);
+}

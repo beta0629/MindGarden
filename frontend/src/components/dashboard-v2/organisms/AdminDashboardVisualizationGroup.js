@@ -1,7 +1,8 @@
 /**
- * AdminDashboardVisualizationGroup — 기간 pill + KPI(V6/V6b) + 예약/완료 차트 (v2)
+ * AdminDashboardVisualizationGroup — 기간 pill + KPI + 예약/완료 + 유입/요일 차트
  *
  * SSOT: docs/design-system/ADMIN_DASHBOARD_PERIOD_STATS_VIZ_SPEC.md
+ *       docs/design-system/ADMIN_DASHBOARD_NEW_CLIENT_AND_DOW_VIZ_SPEC.md
  *
  * @author CoreSolution
  * @since 2026-07-28
@@ -28,12 +29,17 @@ import {
   formatChartPeriodLabel,
   isBookedCompletedAllZero,
   calcTargetAchievementPercent,
+  normalizeConsultationsByDayOfWeekItems,
+  normalizeNewClientMonthlyItems,
   resolveAutoYAxisMax,
   resolveGrowthBadgeState,
   resolvePeriodComparisonMetrics,
   resolveTrendRowsByPeriod
 } from '../utils/dashboardChartPeriodUtils';
+import { ensureMgVizBarValueLabelsPlugin } from '../utils/chartBarValueLabelPlugin';
 import './AdminDashboardVisualizationGroup.css';
+
+ensureMgVizBarValueLabelsPlugin();
 
 /** 축·범례는 text-primary, 그리드는 border-default로 시리즈(진한 그린) 대비만 보강 */
 const CHART_CANVAS_FALLBACK = Object.freeze({
@@ -41,8 +47,27 @@ const CHART_CANVAS_FALLBACK = Object.freeze({
   GRID: 'var(--mg-v2-color-border-default)',
   TOOLTIP_BACKGROUND: 'var(--mg-v2-color-surface-raised)',
   TOOLTIP_TEXT: 'var(--mg-v2-color-text-primary)',
-  LEGEND: 'var(--mg-v2-color-text-primary)'
+  LEGEND: 'var(--mg-v2-color-text-primary)',
+  VALUE_LABEL: 'var(--mg-v2-color-text-secondary)',
+  VALUE_LABEL_PEAK: 'var(--mg-v2-color-text-primary)'
 });
+
+const INFLOW_SERIES_COLOR_VARS = Object.freeze({
+  PRIMARY: '--mg-color-primary-main',
+  PRIMARY_FALLBACK: '--mg-color-b0kla-green-500',
+  SECONDARY: '--mg-color-secondary-main',
+  SECONDARY_FALLBACK: '--mg-secondary-500'
+});
+
+const DOW_SHORT_LABEL_KEYS = Object.freeze([
+  'admin:dashboard.v2.viz.dowShort.mon',
+  'admin:dashboard.v2.viz.dowShort.tue',
+  'admin:dashboard.v2.viz.dowShort.wed',
+  'admin:dashboard.v2.viz.dowShort.thu',
+  'admin:dashboard.v2.viz.dowShort.fri',
+  'admin:dashboard.v2.viz.dowShort.sat',
+  'admin:dashboard.v2.viz.dowShort.sun'
+]);
 
 const VIZ_PERIOD_OPTIONS = [
   { key: DASHBOARD_CHART_PERIOD.DAILY, labelKey: 'admin:dashboard.v2.period.daily' },
@@ -399,13 +424,22 @@ VizChartHeaderGrowthBadges.propTypes = {
 const AdminDashboardVisualizationGroup = ({
   consultationStats = null,
   loading = false,
-  darkResolved = false
+  darkResolved = false,
+  newClientStats = null,
+  consultationsByDow = null,
+  inflowDowLoading = false
 }) => {
   const { t } = useTranslation(['admin', 'common']);
   const [vizPeriod, setVizPeriod] = useState(DASHBOARD_CHART_PERIOD.MONTHLY);
   const [seriesColors, setSeriesColors] = useState({
     booked: B0KLA_CHART_BAR_FALLBACK.BORDER,
     completed: B0KLA_CHART_BAR_FALLBACK.FILL
+  });
+  const [inflowDowColors, setInflowDowColors] = useState({
+    primary: B0KLA_CHART_BAR_FALLBACK.FILL,
+    secondary: B0KLA_CHART_BAR_FALLBACK.BORDER,
+    label: CHART_CANVAS_FALLBACK.TICK,
+    labelPeak: CHART_CANVAS_FALLBACK.TICK
   });
   const [canvasTheme, setCanvasTheme] = useState({
     tick: CHART_CANVAS_FALLBACK.TICK,
@@ -433,6 +467,30 @@ const AdminDashboardVisualizationGroup = ({
     setSeriesColors({
       booked: bookedResolved,
       completed: completedResolved
+    });
+    setInflowDowColors({
+      primary: resolveCssColorVarToHex(
+        INFLOW_SERIES_COLOR_VARS.PRIMARY,
+        resolveCssColorVarToHex(
+          INFLOW_SERIES_COLOR_VARS.PRIMARY_FALLBACK,
+          completedResolved
+        )
+      ),
+      secondary: resolveCssColorVarToHex(
+        INFLOW_SERIES_COLOR_VARS.SECONDARY,
+        resolveCssColorVarToHex(
+          INFLOW_SERIES_COLOR_VARS.SECONDARY_FALLBACK,
+          bookedResolved
+        )
+      ),
+      label: resolveCssColorVarToHex(
+        '--mg-v2-color-text-secondary',
+        CHART_CANVAS_FALLBACK.VALUE_LABEL
+      ),
+      labelPeak: resolveCssColorVarToHex(
+        '--mg-v2-color-text-primary',
+        CHART_CANVAS_FALLBACK.VALUE_LABEL_PEAK
+      )
     });
     setCanvasTheme({
       tick: resolveCssColorVarToHex('--mg-v2-color-text-primary', CHART_CANVAS_FALLBACK.TICK),
@@ -468,6 +526,7 @@ const AdminDashboardVisualizationGroup = ({
     PERIOD_SUBTITLE_KEYS[vizPeriod] || PERIOD_SUBTITLE_KEYS[DASHBOARD_CHART_PERIOD.MONTHLY]
   );
   const emptyMessage = t(EMPTY_MESSAGE_KEY);
+  const emptyInflowMessage = t('admin:dashboard.v2.viz.emptyInflowPeriod');
   const countUnit = t('admin:dashboard.v2.viz.countUnit');
   const previousPeriodLabel = t(
     PREVIOUS_PERIOD_LABEL_KEYS[vizPeriod]
@@ -568,6 +627,80 @@ const AdminDashboardVisualizationGroup = ({
     : 0;
   const lineYAxisMax = resolveAutoYAxisMax(maxLine);
   const stackedYAxisMax = resolveAutoYAxisMax(chartMaxY);
+
+  const newClientRows = useMemo(
+    () => normalizeNewClientMonthlyItems(
+      newClientStats?.items ?? newClientStats
+    ),
+    [newClientStats]
+  );
+  const newClientCounts = useMemo(
+    () => newClientRows.map((row) => row.newClientCount),
+    [newClientRows]
+  );
+  const newClientLabels = useMemo(
+    () => newClientRows.map((row) => formatChartPeriodLabel(row)),
+    [newClientRows]
+  );
+  const newClientYMax = resolveAutoYAxisMax(
+    newClientCounts.length > 0 ? Math.max(...newClientCounts, 0) : 0
+  );
+  const hasNewClientRows = newClientRows.length > 0;
+  const newClientGrowthState = useMemo(() => {
+    const len = newClientRows.length;
+    if (len < 2) {
+      return null;
+    }
+    const current = newClientRows[len - 1];
+    const previous = newClientRows[len - 2];
+    const growthRate = current.growthRate != null
+      ? current.growthRate
+      : (newClientStats?.growthRate != null ? Number(newClientStats.growthRate) : null);
+    return resolveGrowthBadgeState(
+      growthRate,
+      current.newClientCount,
+      previous.newClientCount
+    );
+  }, [newClientRows, newClientStats]);
+
+  const dowRows = useMemo(
+    () => (consultationsByDow == null
+      ? []
+      : normalizeConsultationsByDayOfWeekItems(consultationsByDow?.items)),
+    [consultationsByDow]
+  );
+  const dowCounts = useMemo(() => dowRows.map((row) => row.count), [dowRows]);
+  const dowShortLabels = useMemo(
+    () => DOW_SHORT_LABEL_KEYS.map((key) => t(key)),
+    [t]
+  );
+  const hasDowRows = dowRows.length > 0;
+  const dowYMax = resolveAutoYAxisMax(
+    dowCounts.length > 0 ? Math.max(...dowCounts, 0) : 0
+  );
+  const peakDayOfWeek = consultationsByDow?.peakDayOfWeek != null
+    ? toSafeNumber(consultationsByDow.peakDayOfWeek, 0)
+    : null;
+  const peakCount = consultationsByDow?.peakCount != null
+    ? toSafeNumber(consultationsByDow.peakCount, 0)
+    : null;
+  const peakIndex = peakDayOfWeek != null && peakDayOfWeek >= 1 && peakDayOfWeek <= 7
+    ? peakDayOfWeek - 1
+    : -1;
+  const peakDayLabel = peakIndex >= 0 && dowRows[peakIndex]
+    ? (dowRows[peakIndex].label
+      || t(DOW_SHORT_LABEL_KEYS[peakIndex])
+      || '')
+    : '';
+  const dowBarColors = useMemo(
+    () => dowCounts.map((_v, index) => (
+      index === peakIndex ? inflowDowColors.primary : inflowDowColors.secondary
+    )),
+    [dowCounts, peakIndex, inflowDowColors]
+  );
+  const peopleUnit = t('admin:dashboard.v2.viz.newClientsCountUnit');
+  const previousMonthlyLabel = t('admin:dashboard.v2.viz.previousMonthly');
+  const inflowDowBusy = Boolean(inflowDowLoading || loading);
 
   return (
     <section
@@ -838,6 +971,194 @@ const AdminDashboardVisualizationGroup = ({
           </div>
         </div>
       </div>
+
+      {/* A/B — 신규 내담자 유입 · 요일별 상담 (V2/V3 하단) */}
+      <div
+        className="mg-v2-content-visualization-group__inflow-dow-grid"
+        data-testid="viz-inflow-dow-grid"
+      >
+        <div className="mg-v2-ad-b0kla__card" data-testid="viz-new-clients-card">
+          <div className="mg-v2-ad-b0kla__chart-header">
+            <div className="mg-v2-viz-chart-header__main">
+              <div className="mg-v2-viz-chart-header__title-row">
+                <h3 className="mg-v2-ad-b0kla__chart-title">
+                  {t('admin:dashboard.v2.viz.newClientsTitle')}
+                </h3>
+                {!inflowDowBusy && newClientGrowthState ? (
+                  <div
+                    className="mg-v2-viz-chart-header__badges"
+                    data-testid="viz-new-clients-growth-badges"
+                    role="group"
+                    aria-label={t('admin:dashboard.v2.viz.growthBadgesGroupLabel')}
+                  >
+                    <StatusBadge
+                      variant={resolveGrowthBadgeVariant(newClientGrowthState)}
+                      className={
+                        `mg-v2-viz-growth-badge mg-v2-viz-growth-badge--chart mg-v2-viz-growth-badge--${newClientGrowthState.tone}`
+                      }
+                      data-testid="viz-new-clients-growth"
+                      data-tone={newClientGrowthState.tone}
+                      data-kind={newClientGrowthState.kind}
+                    >
+                      {formatChartGrowthBadgeLabel(
+                        newClientGrowthState,
+                        previousMonthlyLabel,
+                        growthFromZeroLabel,
+                        t
+                      )}
+                    </StatusBadge>
+                  </div>
+                ) : null}
+              </div>
+              <p className="mg-v2-ad-b0kla__chart-desc">
+                {toDisplayString(t('admin:dashboard.v2.viz.newClientsSubtitle'))}
+              </p>
+            </div>
+          </div>
+          <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-viz-chart">
+            {inflowDowBusy ? (
+              <div
+                className="mg-v2-skeleton mg-v2-viz-chart__skeleton"
+                aria-hidden="true"
+                data-testid="viz-new-clients-skeleton"
+              />
+            ) : !hasNewClientRows ? (
+              <VizChartEmpty message={emptyInflowMessage} />
+            ) : (
+              <Chart
+                type={CHART_TYPES.BAR}
+                data={{
+                  labels: newClientLabels,
+                  datasets: [
+                    {
+                      label: t('admin:dashboard.v2.viz.newClientsTitle'),
+                      data: newClientCounts,
+                      backgroundColor: inflowDowColors.primary,
+                      borderColor: inflowDowColors.primary,
+                      borderWidth: 1
+                    }
+                  ]
+                }}
+                height={CHART_HEIGHT}
+                options={{
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      ...tooltipOptions,
+                      callbacks: {
+                        label: (ctx) =>
+                          `${toSafeNumber(ctx.parsed.y, 0)}${peopleUnit}`
+                      }
+                    },
+                    mgVizBarValueLabels: {
+                      enabled: true,
+                      color: inflowDowColors.label,
+                      peakColor: inflowDowColors.labelPeak,
+                      peakIndex: -1,
+                      fontSize: 12
+                    }
+                  },
+                  scales: {
+                    ...scaleOptions,
+                    y: {
+                      ...scaleOptions.y,
+                      max: newClientYMax
+                    }
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="mg-v2-ad-b0kla__card" data-testid="viz-dow-card">
+          <div className="mg-v2-ad-b0kla__chart-header">
+            <div className="mg-v2-viz-chart-header__main">
+              <div className="mg-v2-viz-chart-header__title-row">
+                <h3 className="mg-v2-ad-b0kla__chart-title">
+                  {t('admin:dashboard.v2.viz.dowTitle')}
+                </h3>
+                {!inflowDowBusy && peakDayOfWeek != null && peakCount != null && peakCount > 0 ? (
+                  <div
+                    className="mg-v2-viz-peak-badge"
+                    data-testid="viz-dow-peak-badge"
+                    role="status"
+                    aria-label={t('admin:dashboard.v2.viz.dowPeakGroupLabel')}
+                  >
+                    <span className="mg-v2-viz-peak-badge__day">
+                      {toDisplayString(peakDayLabel)}
+                    </span>
+                    <span>
+                      {toDisplayString(t('admin:dashboard.v2.viz.dowPeakBadge', {
+                        count: peakCount
+                      }))}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+              <p className="mg-v2-ad-b0kla__chart-desc">
+                {toDisplayString(t('admin:dashboard.v2.viz.dowSubtitle'))}
+              </p>
+            </div>
+          </div>
+          <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-viz-chart">
+            {inflowDowBusy ? (
+              <div
+                className="mg-v2-skeleton mg-v2-viz-chart__skeleton"
+                aria-hidden="true"
+                data-testid="viz-dow-skeleton"
+              />
+            ) : !hasDowRows ? (
+              <VizChartEmpty message={emptyInflowMessage} />
+            ) : (
+              <Chart
+                type={CHART_TYPES.BAR}
+                data={{
+                  labels: dowShortLabels,
+                  datasets: [
+                    {
+                      label: t('admin:dashboard.v2.viz.dowTitle'),
+                      data: dowCounts,
+                      backgroundColor: dowBarColors,
+                      borderColor: dowBarColors,
+                      borderWidth: 1
+                    }
+                  ]
+                }}
+                height={CHART_HEIGHT}
+                options={{
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      ...tooltipOptions,
+                      callbacks: {
+                        label: (ctx) =>
+                          `${toSafeNumber(ctx.parsed.y, 0)}${countUnit}`
+                      }
+                    },
+                    mgVizBarValueLabels: {
+                      enabled: true,
+                      color: inflowDowColors.label,
+                      peakColor: inflowDowColors.labelPeak,
+                      peakIndex,
+                      fontSize: 12
+                    }
+                  },
+                  scales: {
+                    ...scaleOptions,
+                    y: {
+                      ...scaleOptions.y,
+                      max: dowYMax
+                    }
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </div>
     </section>
   );
 };
@@ -859,7 +1180,20 @@ AdminDashboardVisualizationGroup.propTypes = {
     })
   }),
   loading: PropTypes.bool,
-  darkResolved: PropTypes.bool
+  darkResolved: PropTypes.bool,
+  newClientStats: PropTypes.oneOfType([
+    PropTypes.shape({
+      items: PropTypes.array,
+      growthRate: PropTypes.number
+    }),
+    PropTypes.array
+  ]),
+  consultationsByDow: PropTypes.shape({
+    items: PropTypes.array,
+    peakDayOfWeek: PropTypes.number,
+    peakCount: PropTypes.number
+  }),
+  inflowDowLoading: PropTypes.bool
 };
 
 export default AdminDashboardVisualizationGroup;

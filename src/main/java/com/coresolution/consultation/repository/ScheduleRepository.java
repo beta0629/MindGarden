@@ -822,6 +822,25 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     @Query("SELECT s.date, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false AND s.date BETWEEN :startDate AND :endDate GROUP BY s.date ORDER BY s.date")
     List<Object[]> countSchedulesByDateBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    /**
+     * 날짜별 스케줄 수 (상태 목록 제외 — 요일별 상담 집계용).
+     * CANCELLED·AVAILABLE·VACATION 등 비상담 상태를 제외한다.
+     *
+     * @param tenantId         테넌트 ID
+     * @param startDate        시작일(포함)
+     * @param endDate          종료일(포함)
+     * @param excludedStatuses 제외할 상태 목록
+     * @return Object[]{LocalDate date, Long count}
+     */
+    @Query("SELECT s.date, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.status NOT IN :excludedStatuses AND s.date BETWEEN :startDate AND :endDate "
+            + "GROUP BY s.date ORDER BY s.date")
+    List<Object[]> countSchedulesByDateBetweenExcludingStatuses(
+            @Param("tenantId") String tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("excludedStatuses") List<ScheduleStatus> excludedStatuses);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

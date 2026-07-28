@@ -137,6 +137,37 @@
 
 .mg-v2-viz-growth-badge {
   flex-shrink: 0;
+  /* 진한 그린 차트 시리즈와 구분 — 배지 자체 대비 강화 */
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: 700;
+  line-height: 1.2;
+  padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
+  border-style: solid;
+  border-width: 1px;
+}
+
+/* 증가: 밝은 success 배경 + 진한 텍스트·테두리 (차트 primary 그린과 명도 대비) */
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--up,
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-badge--success {
+  background-color: var(--mg-success-100, var(--mg-badge-status-success-bg));
+  color: var(--mg-success-800, var(--mg-badge-status-success-text));
+  border-color: var(--mg-success-600, var(--mg-success-500));
+}
+
+/* 감소: danger/경고 계열 — 차트 그린과 색상 계열 분리 */
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down,
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-badge--danger {
+  background-color: var(--mg-error-100, var(--mg-badge-status-danger-bg));
+  color: var(--mg-error-800, var(--mg-badge-status-danger-text));
+  border-color: var(--mg-error-600, var(--mg-error-500));
+}
+
+/* 동일/보합: 중립 그레이 */
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--flat,
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-badge--neutral {
+  background-color: var(--mg-gray-100, var(--mg-badge-status-neutral-bg));
+  color: var(--mg-gray-800, var(--mg-badge-status-neutral-text));
+  border-color: var(--mg-gray-500, var(--mg-gray-400));
 }
 
 .mg-v2-viz-target-progress {

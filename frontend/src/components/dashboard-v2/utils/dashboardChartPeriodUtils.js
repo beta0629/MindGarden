@@ -318,7 +318,8 @@ export function isBookedCompletedAllZero(rows) {
 }
 
 /**
- * 직전 동기간 대비 증감률(%). previous 없거나 0이면 null(배지 미노출).
+ * 직전 동기간 대비 증감률(%).
+ * previous 없거나 비유한값·0 이하면 null(퍼센트 배지 불가 — fromZero는 resolveGrowthBadgeState).
  *
  * @param {number} current
  * @param {number|null|undefined} previous
@@ -351,6 +352,41 @@ export function resolveGrowthTone(growthRate) {
     return 'down';
   }
   return 'flat';
+}
+
+/**
+ * MoM 증감 배지 표시 상태.
+ * - percent: 전기간 &gt; 0 이고 증감률 산출 가능
+ * - fromZero: 전기간 0·현재 &gt; 0 (▲ 신규 등 — 퍼센트 불가)
+ * - null: 버킷 1개·previous 없음·양쪽 0 등 미노출
+ *
+ * @param {number|null|undefined} growthRate
+ * @param {number} current
+ * @param {number|null|undefined} previous
+ * @returns {{ tone: 'up'|'down'|'flat', kind: 'percent'|'fromZero', rate: number|null }|null}
+ */
+export function resolveGrowthBadgeState(growthRate, current, previous) {
+  const tone = resolveGrowthTone(growthRate);
+  if (tone != null) {
+    return {
+      tone,
+      kind: 'percent',
+      rate: Number(growthRate)
+    };
+  }
+  if (
+    previous != null
+    && Number.isFinite(Number(previous))
+    && Number(previous) === 0
+    && toSafeNumber(current, 0) > 0
+  ) {
+    return {
+      tone: 'up',
+      kind: 'fromZero',
+      rate: null
+    };
+  }
+  return null;
 }
 
 /**

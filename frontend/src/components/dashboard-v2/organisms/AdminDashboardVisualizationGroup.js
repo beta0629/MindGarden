@@ -28,7 +28,7 @@ import {
   formatChartPeriodLabel,
   isBookedCompletedAllZero,
   calcTargetAchievementPercent,
-  resolveGrowthTone,
+  resolveGrowthBadgeState,
   resolvePeriodComparisonMetrics,
   resolveTrendRowsByPeriod
 } from '../utils/dashboardChartPeriodUtils';
@@ -116,18 +116,21 @@ function extractPrimarySeriesArrays(rows) {
 }
 
 /**
- * MoM 증감 배지 라벨 (스펙 §3: ▲ 12% / ▼ 5% / - 0%)
+ * MoM 증감 배지 라벨 (스펙 §3: ▲ 12% / ▼ 5% / - 0% / ▲ 신규)
  *
- * @param {number} rate
- * @param {'up'|'down'|'flat'} tone
+ * @param {{ tone: 'up'|'down'|'flat', kind: 'percent'|'fromZero', rate: number|null }} badgeState
+ * @param {string} fromZeroLabel
  * @returns {string}
  */
-function formatGrowthBadgeLabel(rate, tone) {
-  const absRate = Math.abs(toSafeNumber(rate, 0));
-  if (tone === 'up') {
+function formatGrowthBadgeLabel(badgeState, fromZeroLabel) {
+  if (badgeState.kind === 'fromZero') {
+    return toDisplayString(fromZeroLabel);
+  }
+  const absRate = Math.abs(toSafeNumber(badgeState.rate, 0));
+  if (badgeState.tone === 'up') {
     return `▲ ${absRate}%`;
   }
-  if (tone === 'down') {
+  if (badgeState.tone === 'down') {
     return `▼ ${absRate}%`;
   }
   return `- ${absRate}%`;
@@ -147,10 +150,10 @@ function VizGrowthKpiCard({
   growthRate,
   previousCount,
   previousLabel,
-  countUnit
+  countUnit,
+  fromZeroLabel
 }) {
-  const tone = resolveGrowthTone(growthRate);
-  const showBadge = tone != null;
+  const badgeState = resolveGrowthBadgeState(growthRate, value, previousCount);
   const previousText = previousCount != null
     ? `${toDisplayString(previousLabel)} ${toSafeNumber(previousCount, 0)}${countUnit}`
     : null;
@@ -165,13 +168,15 @@ function VizGrowthKpiCard({
         <p className="mg-v2-viz-summary-kpi__value">
           {`${toSafeNumber(value, 0)}${countUnit}`}
         </p>
-        {showBadge ? (
+        {badgeState ? (
           <StatusBadge
-            variant={GROWTH_BADGE_VARIANT[tone]}
-            className="mg-v2-viz-growth-badge"
+            variant={GROWTH_BADGE_VARIANT[badgeState.tone]}
+            className={`mg-v2-viz-growth-badge mg-v2-viz-growth-badge--${badgeState.tone}`}
             data-testid={`${testId}-growth`}
+            data-tone={badgeState.tone}
+            data-kind={badgeState.kind}
           >
-            {formatGrowthBadgeLabel(growthRate, tone)}
+            {formatGrowthBadgeLabel(badgeState, fromZeroLabel)}
           </StatusBadge>
         ) : null}
       </div>
@@ -190,7 +195,8 @@ VizGrowthKpiCard.propTypes = {
   growthRate: PropTypes.number,
   previousCount: PropTypes.number,
   previousLabel: PropTypes.string,
-  countUnit: PropTypes.string.isRequired
+  countUnit: PropTypes.string.isRequired,
+  fromZeroLabel: PropTypes.string.isRequired
 };
 
 /**
@@ -328,6 +334,7 @@ const AdminDashboardVisualizationGroup = ({
     PREVIOUS_PERIOD_LABEL_KEYS[vizPeriod]
       || PREVIOUS_PERIOD_LABEL_KEYS[DASHBOARD_CHART_PERIOD.MONTHLY]
   );
+  const growthFromZeroLabel = t('admin:dashboard.v2.viz.growthFromZero');
   const seriesLabels = useMemo(
     () => ({
       booked: t(STATUS_SERIES_LABEL_KEYS.BOOKED),
@@ -465,6 +472,7 @@ const AdminDashboardVisualizationGroup = ({
             previousCount={comparison.previousBooked}
             previousLabel={previousPeriodLabel}
             countUnit={countUnit}
+            fromZeroLabel={growthFromZeroLabel}
           />
           <VizGrowthKpiCard
             testId="viz-kpi-card-completed"
@@ -475,6 +483,7 @@ const AdminDashboardVisualizationGroup = ({
             previousCount={comparison.previousCompleted}
             previousLabel={previousPeriodLabel}
             countUnit={countUnit}
+            fromZeroLabel={growthFromZeroLabel}
           />
           <VizTargetKpiCard
             label={t('admin:dashboard.v2.viz.targetTitle')}

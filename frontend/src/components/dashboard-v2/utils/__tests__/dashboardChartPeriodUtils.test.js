@@ -17,6 +17,7 @@ import {
   getKstDateParts,
   isBookedCompletedAllZero,
   isTrendSeriesAllZero,
+  resolveGrowthBadgeState,
   resolveGrowthTone,
   resolvePeriodComparisonMetrics,
   resolveRollingDailyChartRows,
@@ -160,7 +161,7 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
     expect(isTrendSeriesAllZero([])).toBe(true);
   });
 
-  test('calcGrowthRatePercent / resolveGrowthTone / resolvePeriodComparisonMetrics', () => {
+  test('calcGrowthRatePercent / resolveGrowthTone / resolveGrowthBadgeState / resolvePeriodComparisonMetrics', () => {
     expect(calcGrowthRatePercent(5, 4)).toBe(25);
     expect(calcGrowthRatePercent(3, 4)).toBe(-25);
     expect(calcGrowthRatePercent(4, 4)).toBe(0);
@@ -170,6 +171,29 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
     expect(resolveGrowthTone(-5)).toBe('down');
     expect(resolveGrowthTone(0)).toBe('flat');
     expect(resolveGrowthTone(null)).toBeNull();
+
+    expect(resolveGrowthBadgeState(25, 5, 4)).toEqual({
+      tone: 'up',
+      kind: 'percent',
+      rate: 25
+    });
+    expect(resolveGrowthBadgeState(-25, 3, 4)).toEqual({
+      tone: 'down',
+      kind: 'percent',
+      rate: -25
+    });
+    expect(resolveGrowthBadgeState(0, 4, 4)).toEqual({
+      tone: 'flat',
+      kind: 'percent',
+      rate: 0
+    });
+    expect(resolveGrowthBadgeState(null, 5, 0)).toEqual({
+      tone: 'up',
+      kind: 'fromZero',
+      rate: null
+    });
+    expect(resolveGrowthBadgeState(null, 0, 0)).toBeNull();
+    expect(resolveGrowthBadgeState(null, 5, null)).toBeNull();
 
     const rows = [
       { period: '2026-06', bookedCount: 4, completedCount: 3 },
@@ -198,6 +222,14 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
     expect(apiOverride.growthRateBooked).toBe(10);
     expect(apiOverride.growthRateCompleted).toBe(-5);
     expect(apiOverride.targetCompleted).toBe(50);
+
+    const singleBucket = resolvePeriodComparisonMetrics(
+      [{ period: '2026-07', bookedCount: 5, completedCount: 4 }],
+      null,
+      100
+    );
+    expect(singleBucket.previousBooked).toBeNull();
+    expect(singleBucket.growthRateBooked).toBeNull();
   });
 
   test('isBookedCompletedAllZero는 진행만 있어도 true', () => {

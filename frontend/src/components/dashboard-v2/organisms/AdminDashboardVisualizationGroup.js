@@ -69,11 +69,25 @@ const PREVIOUS_PERIOD_LABEL_KEYS = Object.freeze({
   [DASHBOARD_CHART_PERIOD.YEARLY]: 'admin:dashboard.v2.viz.previousYearly'
 });
 
+/** 주식창형: 상승=레드(danger), 하락=블루(info), 보합=neutral. 신규(fromZero)는 success. */
 const GROWTH_BADGE_VARIANT = Object.freeze({
-  up: 'success',
-  down: 'danger',
+  up: 'danger',
+  down: 'info',
   flat: 'neutral'
 });
+
+const GROWTH_BADGE_VARIANT_FROM_ZERO = 'success';
+
+/**
+ * @param {{ tone: 'up'|'down'|'flat', kind: 'percent'|'fromZero' }} badgeState
+ * @returns {'success'|'danger'|'info'|'neutral'}
+ */
+function resolveGrowthBadgeVariant(badgeState) {
+  if (badgeState.kind === 'fromZero') {
+    return GROWTH_BADGE_VARIANT_FROM_ZERO;
+  }
+  return GROWTH_BADGE_VARIANT[badgeState.tone];
+}
 
 const CHART_HEIGHT = '200px';
 const EMPTY_MESSAGE_KEY = 'admin:dashboard.v2.viz.emptyPeriod';
@@ -206,7 +220,7 @@ function VizGrowthKpiCard({
         </p>
         {badgeState ? (
           <StatusBadge
-            variant={GROWTH_BADGE_VARIANT[badgeState.tone]}
+            variant={resolveGrowthBadgeVariant(badgeState)}
             className={`mg-v2-viz-growth-badge mg-v2-viz-growth-badge--${badgeState.tone}`}
             data-testid={`${testId}-growth`}
             data-tone={badgeState.tone}
@@ -322,7 +336,7 @@ function VizChartHeaderGrowthBadges({
     >
       {bookedState ? (
         <StatusBadge
-          variant={GROWTH_BADGE_VARIANT[bookedState.tone]}
+          variant={resolveGrowthBadgeVariant(bookedState)}
           className={
             `mg-v2-viz-growth-badge mg-v2-viz-growth-badge--chart mg-v2-viz-growth-badge--${bookedState.tone}`
           }
@@ -341,7 +355,7 @@ function VizChartHeaderGrowthBadges({
       ) : null}
       {completedState ? (
         <StatusBadge
-          variant={GROWTH_BADGE_VARIANT[completedState.tone]}
+          variant={resolveGrowthBadgeVariant(completedState)}
           className={
             `mg-v2-viz-growth-badge mg-v2-viz-growth-badge--chart mg-v2-viz-growth-badge--${completedState.tone}`
           }

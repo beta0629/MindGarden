@@ -92,6 +92,13 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- Caffeine 캐시 (Phase1 B7: /auth/current-user 응답 시간 100ms 이내 최적화에 사용 — TTL 지원).
+             Spring Boot 3.2 BOM 이 caffeine 3.x 버전을 관리하므로 별도 version 지정 없음. -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- Database -->
         <dependency>
             <groupId>mysql</groupId>

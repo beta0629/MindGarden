@@ -53,11 +53,12 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                   FilterChain filterChain) throws ServletException, IOException {
         
         String requestPath = request.getRequestURI();
-        log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", requestPath);
-        
+        // Phase1 B7: 요청당 매번 INFO 였던 진입 로그를 DEBUG 로 강등 (운영 환경 콘솔/로그 백엔드 부하 감소).
+        log.debug("SessionBasedAuthenticationFilter 실행: {}", requestPath);
+
         // 소셜 계정 관련 요청에 대한 특별 로깅
         if (requestPath.contains("/social-account")) {
-            log.info("🔍 소셜 계정 요청 감지: {}", requestPath);
+            log.debug("소셜 계정 요청 감지: {}", requestPath);
         }
         
         HttpServletRequest requestToUse = request; // 기본값은 원본 요청
@@ -135,7 +136,8 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             // 따라서 쿠키의 JSESSIONID와 현재 세션 ID를 비교하여 일치하지 않으면
             // 세션을 강제로 생성하지 않도록 함
             HttpSession session = request.getSession(false);
-            log.info("🔍 세션 확인: {}", session != null ? session.getId() : "null");
+            // Phase1 B7: 매 요청 INFO → DEBUG.
+            log.debug("세션 확인: {}", session != null ? session.getId() : "null");
             
             // iOS 모바일 앱: Cookie 헤더에서 JSESSIONID를 찾았지만 request.getCookies()가 비어있는 경우
             // Spring이 Cookie 헤더를 자동으로 파싱하지 않으므로, HttpServletRequest를 래핑하여 쿠키를 추가
@@ -173,10 +175,18 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                 // userRepository에서 다시 조회하여 최신 정보 가져오기
                                 // TenantContextFilter가 먼저 실행되어 Holder에 tenant가 있으면 PK-only 조회를 피한다.
                                 User user = reloadUserFromRepository(sessionUser.getId(), sessionUser);
-                                log.info("🍎 iOS - userRepository(테넌트 스코프) 조회 결과: user={}", user != null ? "존재 (userId=" + user.getId() + ", email=" + EmailLogMasking.maskForLog(user.getEmail()) + ")" : "null");
-                                
+                                // Phase1 B7: 매 iOS 요청 INFO → DEBUG, EmailLogMasking 호출 가드.
+                                if (log.isDebugEnabled()) {
+                                    log.debug("iOS - userRepository(테넌트 스코프) 조회 결과: user={}",
+                                        user != null ? "존재 (userId=" + user.getId() + ", email="
+                                            + EmailLogMasking.maskForLog(user.getEmail()) + ")" : "null");
+                                }
+
                                 if (user != null) {
-                                    log.info("🍎 iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}", user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
+                                    if (log.isDebugEnabled()) {
+                                        log.debug("iOS - 데이터베이스에서 사용자 정보 조회 성공: userId={}, email={}",
+                                            user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
+                                    }
                                     // SecurityContext에 직접 사용자 정보 설정
                                     Authentication authentication = createAuthentication(user);
                                     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -185,7 +195,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                         TenantContextHolder.setTenantId(user.getTenantId());
                                         log.debug("✅ TenantContextHolder에 tenantId 설정: {}", user.getTenantId());
                                     }
-                                    log.info("🍎 iOS - SecurityContext에 사용자 정보 직접 설정 완료");
+                                    log.debug("iOS - SecurityContext에 사용자 정보 직접 설정 완료");
                                     // 세션에도 사용자 정보 저장 (다음 요청을 위해)
                                     // 하지만 session이 null이므로 저장할 수 없음
                                     // 대신 SecurityContext에만 설정
@@ -226,7 +236,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.clearContext();
                     log.warn("⚠️ 세션을 찾을 수 없어 SecurityContext 초기화");
                 } else {
-                    log.info("🍎 iOS - 세션은 null이지만 SecurityContext에 사용자 정보가 있음: {}", existingAuth.getName());
+                    log.debug("iOS - 세션은 null이지만 SecurityContext에 사용자 정보가 있음: {}", existingAuth.getName());
                 }
             }
             
@@ -235,17 +245,22 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             User user = null;
             
             if (session != null) {
-                // iOS 디버깅: 세션 속성 확인
-                java.util.Enumeration<String> attributeNames = session.getAttributeNames();
-                StringBuilder attributes = new StringBuilder();
-                while (attributeNames.hasMoreElements()) {
-                    String attrName = attributeNames.nextElement();
-                    attributes.append(attrName).append(", ");
+                // Phase1 B7: 세션 속성 enumerate + EmailLogMasking 호출은 DEBUG 가드.
+                if (log.isDebugEnabled()) {
+                    java.util.Enumeration<String> attributeNames = session.getAttributeNames();
+                    StringBuilder attributes = new StringBuilder();
+                    while (attributeNames.hasMoreElements()) {
+                        String attrName = attributeNames.nextElement();
+                        attributes.append(attrName).append(", ");
+                    }
+                    log.debug("iOS - 세션 속성 목록 (sessionId={}): {}", session.getId(), attributes.toString());
                 }
-                log.info("🍎 iOS - 세션 속성 목록 (sessionId={}): {}", session.getId(), attributes.toString());
-                
+
                 user = SessionUtils.getCurrentUser(session);
-                log.info("🔍 세션에서 사용자 조회: {}", user != null ? EmailLogMasking.maskForLog(user.getEmail()) : "null");
+                if (log.isDebugEnabled()) {
+                    log.debug("세션에서 사용자 조회: {}",
+                            user != null ? EmailLogMasking.maskForLog(user.getEmail()) : "null");
+                }
                 
                 // iOS 디버깅: 세션에 사용자 정보가 없으면 경고
                 if (user == null && jsessionIdFromCookie != null) {
@@ -298,7 +313,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 if (session != null && user != null) {
                     // 기존 인증 정보 확인
                     Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
-                    log.info("🔍 기존 인증 정보: {}", existingAuth != null ? existingAuth.getName() : "null");
+                    log.debug("기존 인증 정보: {}", existingAuth != null ? existingAuth.getName() : "null");
                     
                     // Spring Security 컨텍스트에 인증 정보 설정
                     Authentication authentication = createAuthentication(user);
@@ -326,12 +341,17 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                         log.info("🔍 세션 만료 시간 설정: {}초", SessionConstants.SESSION_TIMEOUT_SECONDS);
                     }
                     
-                    log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}, tenantId={}", EmailLogMasking.maskForLog(user.getEmail()), user.getRole(), user.getTenantId());
-                    
-                    // SecurityContext 확인
-                    Authentication authAfter = SecurityContextHolder.getContext().getAuthentication();
-                    log.info("🔍 SecurityContext 인증 상태: {}", authAfter != null && authAfter.isAuthenticated() ? "인증됨" : "미인증");
-                    log.info("🔍 SecurityContext 권한: {}", authAfter != null ? authAfter.getAuthorities() : "null");
+                    // Phase1 B7: 매 요청 INFO + EmailLogMasking 호출 → DEBUG 가드.
+                    if (log.isDebugEnabled()) {
+                        log.debug("세션 기반 인증 성공: 사용자={}, 역할={}, tenantId={}",
+                            EmailLogMasking.maskForLog(user.getEmail()), user.getRole(), user.getTenantId());
+
+                        Authentication authAfter = SecurityContextHolder.getContext().getAuthentication();
+                        log.debug("SecurityContext 인증 상태: {}",
+                            authAfter != null && authAfter.isAuthenticated() ? "인증됨" : "미인증");
+                        log.debug("SecurityContext 권한: {}",
+                            authAfter != null ? authAfter.getAuthorities() : "null");
+                    }
                 } else if (session != null) {
                     log.warn("⚠️ 세션에 사용자 정보 없음 - SecurityContext 초기화");
                     // 세션에 사용자 정보가 없으면 SecurityContext 초기화

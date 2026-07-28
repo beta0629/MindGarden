@@ -44,7 +44,9 @@ import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.PermissionGroupService;
+import com.coresolution.core.service.TenantService;
 import com.coresolution.core.service.UserRoleQueryService;
+import io.micrometer.core.annotation.Timed;
 import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.domain.TenantRole;
@@ -86,6 +88,7 @@ public class AuthController extends BaseApiController {
     private final TenantRoleRepository tenantRoleRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final PermissionGroupService permissionGroupService;
+    private final TenantService tenantService;
     private final org.springframework.core.env.Environment environment;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
@@ -137,15 +140,34 @@ public class AuthController extends BaseApiController {
         return success("세션이 초기화되었습니다.");
     }
 
+    /**
+     * 현재 로그인 사용자 정보 조회.
+     *
+     * <p>Phase1 B7 (2026-06-12) 최적화 — 256~1025ms → 100ms 이내 목표:</p>
+     * <ol>
+     *   <li>지점명 단건 조회({@code branchService.getBranchNameByCode}) — 멀티테넌트 N+1 제거</li>
+     *   <li>{@code tenantService.getTenantById} Caffeine 캐싱(TTL 10분) — DB 조회 회피</li>
+     *   <li>{@code permissionGroupService.getUserPermissionGroupCodes} Caffeine 캐싱(TTL 5분)</li>
+     *   <li>PII 복호화 캐싱({@code userPersonalDataCacheService.getDecryptedUserData})</li>
+     *   <li>핵심 경로 {@code log.info} → {@code log.debug} 강등</li>
+     * </ol>
+     *
+     * <p>Micrometer {@code auth.current_user.duration} 타이머로 응답 시간 모니터링 (Grafana 대시보드 후속).</p>
+     */
     @GetMapping("/current-user")
+    @Timed(value = "auth.current_user.duration",
+            description = "/api/v1/auth/current-user response time (Phase1 B7)")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCurrentUser(
             HttpSession session,
             org.springframework.security.core.Authentication authentication) {
-        log.info("🔍 /api/auth/current-user API 호출 시작");
-        
+        log.debug("/auth/current-user 호출 시작");
+
         User sessionUser = SessionUtils.getCurrentUser(session);
-        log.info("🔍 세션 사용자 조회 결과: {}", sessionUser != null ? EmailLogMasking.maskForLog(sessionUser.getEmail()) : "null");
-        
+        if (log.isDebugEnabled()) {
+            log.debug("세션 사용자 조회 결과: {}",
+                    sessionUser != null ? EmailLogMasking.maskForLog(sessionUser.getEmail()) : "null");
+        }
+
         // JWT 인증 사용자 확인 (Trinity, Ops Portal 등)
         User currentUser = null;
         if (sessionUser != null) {
@@ -153,8 +175,8 @@ public class AuthController extends BaseApiController {
         } else if (authentication != null && authentication.isAuthenticated()) {
             // JWT 인증된 사용자 처리
             String userId = authentication.getName();
-            log.info("🔍 JWT 인증 사용자 확인: userId={}", userId);
-            
+            log.debug("JWT 인증 사용자 확인: userId={}", userId);
+
             // 데이터베이스에서 사용자 조회 (현재 테넌트)
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null && !tenantId.isEmpty()) {
@@ -163,16 +185,13 @@ public class AuthController extends BaseApiController {
                 List<User> users = userRepository.findAllByEmail(userId);
                 currentUser = users.isEmpty() ? null : users.get(0);
             }
-            
+
             if (currentUser == null) {
                 // 데이터베이스에 없는 경우 (Ops Portal 전용 계정 등)
-                // JWT 토큰 정보로 임시 사용자 정보 생성
-                log.info("🔍 데이터베이스에 사용자 없음 - JWT 토큰 정보 사용: userId={}", userId);
-                // JWT 인증만으로는 사용자 정보를 반환할 수 없으므로 null 처리
-                // 필요시 JWT 토큰에서 actorRole 등을 추출하여 반환할 수 있음
+                log.debug("데이터베이스에 사용자 없음 - JWT 토큰 정보 사용: userId={}", userId);
             }
         }
-        
+
         // 인증되지 않은 사용자에 대해서는 401 Unauthorized 반환
         if (currentUser == null) {
             log.warn("current-user 401: 세션존재={}, sessionId={}, 세션사용자={}", session != null, session != null ? session.getId() : "N/A", sessionUser != null);
@@ -183,8 +202,8 @@ public class AuthController extends BaseApiController {
                     .data(null)
                     .build());
         }
-        
-        log.info("🔍 데이터베이스에서 사용자 정보 조회 시작: userId={}", currentUser.getId());
+
+        log.debug("데이터베이스에서 사용자 정보 조회 시작: userId={}", currentUser.getId());
         // 세션에 저장된 사용자 ID로 데이터베이스에서 최신 정보 조회 (테넌트 스코프)
         String ctxTenantId = TenantContextHolder.getTenantId();
         User user;
@@ -196,25 +215,34 @@ public class AuthController extends BaseApiController {
             }
             user = currentUser;
         }
-        log.info("🔍 사용자 정보 조회 완료: email={}, role={}, branchCode={}", 
-                EmailLogMasking.maskForLog(user.getEmail()), user.getRole(), user.getBranchCode());
-        
+        if (log.isDebugEnabled()) {
+            log.debug("사용자 정보 조회 완료: email={}, role={}, branchCode={}",
+                    EmailLogMasking.maskForLog(user.getEmail()), user.getRole(), user.getBranchCode());
+        }
+
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", user.getId());
-        
-        // 이메일, 이름, 닉네임 복호화
+
+        // Phase1 B7: PII 복호화 캐싱 — userPersonalDataCacheService 활용 (캐시 미스 시 1회 복호화).
+        // 캐시 키에 tenantId 포함 → 사용자 변경 API 에서 evictUserPersonalDataCache 로 무효화.
         String decryptedEmail = null;
         String decryptedName = null;
         String decryptedNickname = null;
-        
         try {
-            if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+            Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(user);
+            if (decrypted != null) {
+                decryptedEmail = decrypted.get("email");
+                decryptedName = decrypted.get("name");
+                decryptedNickname = decrypted.get("nickname");
+            }
+            // 캐시 미스/실패 시 fallback (원본 = 평문이거나 암호 키 폴백)
+            if (decryptedEmail == null && user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
                 decryptedEmail = encryptionUtil.safeDecrypt(user.getEmail());
             }
-            if (user.getName() != null && !user.getName().trim().isEmpty()) {
+            if (decryptedName == null && user.getName() != null && !user.getName().trim().isEmpty()) {
                 decryptedName = encryptionUtil.safeDecrypt(user.getName());
             }
-            if (user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
+            if (decryptedNickname == null && user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
                 decryptedNickname = encryptionUtil.safeDecrypt(user.getNickname());
             }
         } catch (Exception e) {
@@ -223,19 +251,20 @@ public class AuthController extends BaseApiController {
             decryptedName = user.getName();
             decryptedNickname = user.getNickname();
         }
-        
+
         userInfo.put("email", decryptedEmail);
         userInfo.put("name", decryptedName);
         userInfo.put("nickname", decryptedNickname);
         userInfo.put("role", user.getRole());
-        
+
         // 테넌트 정보 추가
         userInfo.put("tenantId", user.getTenantId());
-        
-        // 테넌트 표시명·업종 (동적 조회)
+
+        // Phase1 B7: TenantService 캐싱 사용 (TTL 10분, evict: TenantServiceImpl.updateTenantDisplayName,
+        // BrandingService.updateBrandingInfo / syncBrandingJsonCompanyNameWithTenant / uploadLogo).
         if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
             try {
-                Optional<Tenant> tenantOpt = tenantRepository.findByTenantIdAndIsDeletedFalse(user.getTenantId());
+                Optional<Tenant> tenantOpt = tenantService.getTenantById(user.getTenantId());
                 if (tenantOpt.isPresent()) {
                     Tenant tenantEntity = tenantOpt.get();
                     userInfo.put("businessType", tenantEntity.getBusinessType());
@@ -243,9 +272,11 @@ public class AuthController extends BaseApiController {
                     tenantPayload.put("tenantId", tenantEntity.getTenantId());
                     tenantPayload.put("name", tenantEntity.getName());
                     userInfo.put("tenant", tenantPayload);
-                    log.debug("테넌트 정보 추가: tenantId={}, businessType={}, namePresent={}",
-                        user.getTenantId(), tenantEntity.getBusinessType(),
-                        tenantEntity.getName() != null && !tenantEntity.getName().isEmpty());
+                    if (log.isDebugEnabled()) {
+                        log.debug("테넌트 정보 추가(cached): tenantId={}, businessType={}, namePresent={}",
+                            user.getTenantId(), tenantEntity.getBusinessType(),
+                            tenantEntity.getName() != null && !tenantEntity.getName().isEmpty());
+                    }
                 } else {
                     log.warn("테넌트를 찾을 수 없습니다: tenantId={}", user.getTenantId());
                 }
@@ -253,43 +284,45 @@ public class AuthController extends BaseApiController {
                 log.warn("테넌트 정보 조회 실패: tenantId={}, error={}", user.getTenantId(), e.getMessage());
             }
         }
-        
+
         // 지점 정보 추가 (공통코드 기반)
         // 2026-06-13: User.branch ManyToOne 매핑 제거 — User.branchId(Long) 직접 사용 (PR-7 회귀 차단).
         userInfo.put("branchId", user.getBranchId());
         userInfo.put("branchCode", user.getBranchCode());
         userInfo.put("needsBranchMapping", user.getBranchCode() == null);
-        
-        // 지점명 한글 표시 (branches 테이블에서 조회)
+
+        // Phase1 B7: 지점명 한글 단건 조회 (멀티테넌트 N+1 패턴 제거).
+        // 이전: branchService.getAllActiveBranches() → stream filter → 전체 테넌트 branches + LAZY manager/parentBranch.
+        // 변경: branchRepository.findBranchNameByTenantIdAndBranchCode JPQL projection.
         String branchName = user.getBranchCode();
-        if (user.getBranchCode() != null) {
+        if (user.getBranchCode() != null && user.getTenantId() != null && !user.getTenantId().isEmpty()) {
             try {
-                var branches = branchService.getAllActiveBranches();
-                var branchInfo = branches.stream()
-                    .filter(branch -> branch.getBranchCode().equals(user.getBranchCode()))
-                    .findFirst();
-                
-                if (branchInfo.isPresent()) {
-                    branchName = branchInfo.get().getBranchName(); // 한글명 사용
-                    log.info("✅ 지점명 한글 변환: {} -> {}", user.getBranchCode(), branchName);
+                Optional<String> branchNameOpt =
+                    branchService.getBranchNameByCode(user.getTenantId(), user.getBranchCode());
+                if (branchNameOpt.isPresent()) {
+                    branchName = branchNameOpt.get();
+                    if (log.isDebugEnabled()) {
+                        log.debug("지점명 한글 변환: {} -> {}", user.getBranchCode(), branchName);
+                    }
                 }
             } catch (Exception e) {
-                log.warn("⚠️ 지점명 한글 변환 실패: {}", e.getMessage());
+                log.warn("지점명 한글 변환 실패: tenantId={}, branchCode={}, error={}",
+                    user.getTenantId(), user.getBranchCode(), e.getMessage());
             }
         }
         userInfo.put("branchName", branchName);
-        
+
         // 소셜 계정 정보 조회하여 이미지 타입 구분 (테넌트별)
         String tenantId = user.getTenantId();
         List<UserSocialAccount> socialAccounts = tenantId != null
             ? userSocialAccountRepository.findByTenantIdAndUserIdAndIsDeletedFalse(tenantId, user.getId())
             : userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId()); // 레거시 호환
-        
+
         // 프로필 이미지 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
         String profileImageUrl = null;
         String socialProfileImage = null;
         String socialProvider = null;
-        
+
         if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()) {
             // 사용자가 직접 업로드한 이미지가 있는 경우
             profileImageUrl = user.getProfileImageUrl();
@@ -299,16 +332,17 @@ public class AuthController extends BaseApiController {
                 .filter(account -> account.getIsPrimary() != null && account.getIsPrimary())
                 .findFirst()
                 .orElse(socialAccounts.get(0));
-            
+
             socialProfileImage = primarySocialAccount.getProviderProfileImage();
             socialProvider = primarySocialAccount.getProvider();
         }
-        
+
         userInfo.put("profileImageUrl", profileImageUrl);
         userInfo.put("socialProfileImage", socialProfileImage);
         userInfo.put("socialProvider", socialProvider);
-        
+
         // 동적 권한 그룹 코드 목록 (DB/테넌트 역할 기반, 프론트 권한 비교용)
+        // Phase1 B7: Caffeine 캐싱(TTL 5분, evict: PermissionGroupServiceImpl 부여/회수/일괄부여).
         String tenantIdForGroups = SessionUtils.getTenantId(session);
         String roleId = SessionUtils.getRoleId(session);
         if (tenantIdForGroups != null && roleId != null) {
@@ -323,8 +357,8 @@ public class AuthController extends BaseApiController {
         } else {
             userInfo.put("permissionGroupCodes", Collections.emptyList());
         }
-        
-        log.info("✅ current-user API 응답 완료: userId={}", user.getId());
+
+        log.debug("current-user API 응답 완료: userId={}", user.getId());
         return success(userInfo);
     }
     

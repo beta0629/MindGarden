@@ -8,6 +8,8 @@ import com.coresolution.core.repository.RolePermissionGroupRepository;
 import com.coresolution.core.service.PermissionGroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,10 +31,20 @@ public class PermissionGroupServiceImpl implements PermissionGroupService {
     private final PermissionGroupRepository permissionGroupRepository;
     private final RolePermissionGroupRepository rolePermissionGroupRepository;
 
+    /**
+     * 사용자 권한 그룹 코드 목록 조회 (Phase1 B7: Caffeine 캐싱 적용 — TTL 5분).
+     *
+     * <p>{@code /auth/current-user} 등 빈번한 호출 경로에서 매 요청마다 DB 조회가 발생해
+     * 응답 시간 30~80ms 가 누적되던 병목을 차단한다. 캐시 무효화는 {@link #grantPermissionGroup},
+     * {@link #revokePermissionGroup}, {@link #batchGrantPermissionGroups} 에서 처리한다.</p>
+     */
     @Override
+    @Cacheable(value = "permissionGroupCodes",
+            key = "#tenantId + ':' + #tenantRoleId",
+            unless = "#result == null")
     public List<String> getUserPermissionGroupCodes(String tenantId, String tenantRoleId) {
-        log.debug("사용자 권한 그룹 코드 조회: tenantId={}, tenantRoleId={}", tenantId, tenantRoleId);
-        
+        log.debug("사용자 권한 그룹 코드 조회 (캐시 미스): tenantId={}, tenantRoleId={}", tenantId, tenantRoleId);
+
         return rolePermissionGroupRepository.findPermissionGroupCodesByTenantIdAndTenantRoleId(tenantId, tenantRoleId);
     }
 
@@ -65,8 +77,9 @@ public class PermissionGroupServiceImpl implements PermissionGroupService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "permissionGroupCodes", key = "#tenantId + ':' + #tenantRoleId")
     public void grantPermissionGroup(String tenantId, String tenantRoleId, String groupCode, String accessLevel) {
-        log.info("권한 그룹 부여: tenantId={}, tenantRoleId={}, groupCode={}, accessLevel={}", 
+        log.info("권한 그룹 부여 (캐시 evict: permissionGroupCodes/{}:{}): groupCode={}, accessLevel={}",
             tenantId, tenantRoleId, groupCode, accessLevel);
 
         // 1. 그룹 존재 확인 (중복 결과 처리)
@@ -119,8 +132,10 @@ public class PermissionGroupServiceImpl implements PermissionGroupService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "permissionGroupCodes", key = "#tenantId + ':' + #tenantRoleId")
     public void revokePermissionGroup(String tenantId, String tenantRoleId, String groupCode) {
-        log.info("권한 그룹 회수: tenantId={}, tenantRoleId={}, groupCode={}", tenantId, tenantRoleId, groupCode);
+        log.info("권한 그룹 회수 (캐시 evict: permissionGroupCodes/{}:{}): groupCode={}",
+            tenantId, tenantRoleId, groupCode);
 
         RolePermissionGroup permission = rolePermissionGroupRepository
             .findByTenantIdAndTenantRoleIdAndPermissionGroupCode(tenantId, tenantRoleId, groupCode)
@@ -134,8 +149,9 @@ public class PermissionGroupServiceImpl implements PermissionGroupService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "permissionGroupCodes", key = "#tenantId + ':' + #tenantRoleId")
     public void batchGrantPermissionGroups(String tenantId, String tenantRoleId, List<String> groupCodes, String accessLevel) {
-        log.info("권한 그룹 일괄 부여: tenantId={}, tenantRoleId={}, count={}, accessLevel={}", 
+        log.info("권한 그룹 일괄 부여 (캐시 evict: permissionGroupCodes/{}:{}): count={}, accessLevel={}",
             tenantId, tenantRoleId, groupCodes.size(), accessLevel);
 
         for (String groupCode : groupCodes) {

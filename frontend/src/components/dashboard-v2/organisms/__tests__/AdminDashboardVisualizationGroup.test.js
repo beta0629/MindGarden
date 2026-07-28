@@ -337,6 +337,32 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(lineCall.options.plugins.tooltip.intersect).toBe(false);
   });
 
+  test('추이 비교·상담 현황 Y축 max는 dataMax*1.1 자동 상한(고정 64 없음)', () => {
+    const highStats = {
+      ...sampleStats,
+      monthlyData: [
+        { period: '2026-02', bookedCount: 10, inProgressCount: 0, completedCount: 40 },
+        { period: '2026-03', bookedCount: 12, inProgressCount: 0, completedCount: 45 },
+        { period: '2026-04', bookedCount: 8, inProgressCount: 0, completedCount: 50 },
+        { period: '2026-05', bookedCount: 15, inProgressCount: 0, completedCount: 55 },
+        { period: '2026-06', bookedCount: 20, inProgressCount: 0, completedCount: 59 },
+        { period: '2026-07', bookedCount: 25, inProgressCount: 0, completedCount: 63 }
+      ]
+    };
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={highStats} loading={false} />
+    );
+    const lineCall = chartCalls.find((c) => c.type === CHART_TYPES.LINE);
+    const barCall = chartCalls.find((c) => c.type === CHART_TYPES.BAR);
+    // line max series = 63 → ceil(63*1.1)=70
+    expect(lineCall.options.scales.y.max).toBe(70);
+    expect(lineCall.options.scales.y.max).toBeGreaterThan(64);
+    expect(lineCall.options.scales.y.suggestedMax).toBeUndefined();
+    // stacked max = 25+63=88 → ceil(88*1.1)=97
+    expect(barCall.options.scales.y.max).toBe(97);
+    expect(barCall.options.scales.y.suggestedMax).toBeUndefined();
+  });
+
   test('기간 전환 시 다른 소스 데이터를 사용한다', () => {
     render(
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />

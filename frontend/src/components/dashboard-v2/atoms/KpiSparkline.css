@@ -28,6 +28,7 @@
 }
 
 .mg-v2-kpi-sparkline__line {
+  stroke: currentColor;
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
@@ -59,10 +60,6 @@
 
 .mg-v2-kpi-sparkline--primary {
   color: var(--mg-color-primary-main);
-}
-
-.mg-v2-kpi-sparkline__line {
-  stroke: currentColor;
 }
 
 @media (prefers-reduced-motion: reduce) {

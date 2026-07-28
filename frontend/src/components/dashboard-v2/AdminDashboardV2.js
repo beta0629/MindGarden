@@ -270,13 +270,16 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     );
     const inProgressResolved = resolveCssColorVarToHex(
       B0KLA_STATUS_SERIES_COLOR_VARS.IN_PROGRESS,
-      B0KLA_CHART_BAR_FALLBACK.FILL
+      resolveCssColorVarToHex(
+        B0KLA_STATUS_SERIES_COLOR_VARS.IN_PROGRESS_FALLBACK,
+        B0KLA_CHART_BAR_FALLBACK.FILL
+      )
     );
     const completedResolved = resolveCssColorVarToHex(
       B0KLA_STATUS_SERIES_COLOR_VARS.COMPLETED,
       resolveCssColorVarToHex(
         B0KLA_STATUS_SERIES_COLOR_VARS.COMPLETED_FALLBACK,
-        B0KLA_CHART_BAR_FALLBACK.BORDER
+        B0KLA_CHART_BAR_FALLBACK.FILL
       )
     );
     setStatusSeriesColors({

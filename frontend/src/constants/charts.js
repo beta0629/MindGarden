@@ -45,18 +45,25 @@ export const B0KLA_CHART_BAR_FALLBACK = {
 };
 
 /**
- * 상담 상태 시리즈 색상 토큰 (디자인 SSOT).
+ * 상담 상태 시리즈 색상 토큰 (디자인 SSOT v2).
  * Canvas 전달 전 resolveCssColorVarToHex로 해석. hex 리터럴 금지.
- * 예약=secondary, 진행=accent, 완료=primary.
+ * 예약=blue, 완료=green(고대비), 진행=text-secondary(2순위·기본 비표시).
+ * SSOT: docs/design-system/ADMIN_DASHBOARD_PERIOD_STATS_VIZ_SPEC.md §2
  */
 export const B0KLA_STATUS_SERIES_COLOR_VARS = Object.freeze({
-  BOOKED: '--mg-color-secondary-main',
-  BOOKED_FALLBACK: '--mg-secondary-500',
-  IN_PROGRESS: '--mg-color-accent-main',
-  COMPLETED: '--mg-color-primary-main',
-  /** primary 계열 해석 실패 시 — success(FILL)가 아닌 primary 앵커 */
-  COMPLETED_FALLBACK: '--mg-primary-500'
+  BOOKED: '--ad-b0kla-blue',
+  BOOKED_FALLBACK: '--mg-primary-400',
+  IN_PROGRESS: '--ad-b0kla-text-secondary',
+  IN_PROGRESS_FALLBACK: '--mg-gray-700',
+  COMPLETED: '--ad-b0kla-green',
+  COMPLETED_FALLBACK: '--mg-success-600'
 });
+
+/**
+ * 시각화 그룹 — 완료 목표 건수 플레이스홀더 (API targetCompleted 없을 때).
+ * 하드코딩 산재 금지: 이 상수만 사용.
+ */
+export const DASHBOARD_VIZ_TARGET_COMPLETED = 100;
 
 /**
  * ERP 운영 현황 수입·지출 막대 차트 — Chart.js Canvas 전용 hex.

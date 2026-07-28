@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -57,7 +58,7 @@ import static org.mockito.Mockito.when;
  * @author MindGarden
  * @since 2026-05-28
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("AdminMappingCleanupController (R4 PENDING_PAYMENT 매핑 정리 컨트롤러)")
 class AdminMappingCleanupControllerTest {
 

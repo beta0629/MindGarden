@@ -11,11 +11,13 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.AdminPushMonitoringService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,6 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
+@ExtendWith(SecurityContextIsolationExtension.class)
 @DisplayName("AdminPushMonitoringController API")
 class AdminPushMonitoringControllerTest {
 

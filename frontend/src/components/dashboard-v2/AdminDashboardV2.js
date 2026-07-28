@@ -126,11 +126,11 @@ const API_ADMIN_DUPLICATE_MAPPINGS = '/api/v1/admin/duplicate-mappings';
 const API_ADMIN_MERGE_DUPLICATE_MAPPINGS = '/api/v1/admin/merge-duplicate-mappings';
 
 const DASHBOARD_CHART_CANVAS_FALLBACK = Object.freeze({
-  TICK: 'var(--mg-v2-color-text-secondary)',
-  GRID: 'var(--mg-v2-color-border-light)',
+  TICK: 'var(--mg-v2-color-text-primary)',
+  GRID: 'var(--mg-v2-color-border-default)',
   TOOLTIP_BACKGROUND: 'var(--mg-v2-color-surface-raised)',
   TOOLTIP_TEXT: 'var(--mg-v2-color-text-primary)',
-  LEGEND: 'var(--mg-v2-color-text-secondary)'
+  LEGEND: 'var(--mg-v2-color-text-primary)'
 });
 
 
@@ -289,11 +289,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     });
     setChartCanvasTheme({
       tick: resolveCssColorVarToHex(
-        '--mg-v2-color-text-secondary',
+        '--mg-v2-color-text-primary',
         DASHBOARD_CHART_CANVAS_FALLBACK.TICK
       ),
       grid: resolveCssColorVarToHex(
-        '--mg-v2-color-border-light',
+        '--mg-v2-color-border-default',
         DASHBOARD_CHART_CANVAS_FALLBACK.GRID
       ),
       tooltipBg: resolveCssColorVarToHex(
@@ -305,7 +305,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_TEXT
       ),
       legend: resolveCssColorVarToHex(
-        '--mg-v2-color-text-secondary',
+        '--mg-v2-color-text-primary',
         DASHBOARD_CHART_CANVAS_FALLBACK.LEGEND
       )
     });

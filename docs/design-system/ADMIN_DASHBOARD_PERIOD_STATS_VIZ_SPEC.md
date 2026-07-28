@@ -63,17 +63,24 @@
 
 ---
 
-## 2. 시각화 시리즈 색상 토큰 (고대비 재정의)
+## 2. 시각화 시리즈 색상 토큰 (진한 그린 복원 + 축·배경 대비)
 
-기존 색상 대비 부족 피드백에 따라, B0KlA 고대비 토큰으로 재정의합니다. (Hex 하드코딩 금지)
+v2 고대비 팔레트(블루/에메랄드)는 톤이 어색해 **기존 B0KlA/P0 진한 올리브 그린**을 메인으로 되돌립니다.  
+가독성은 시리즈 색을 바꾸지 않고 **배경·축·범례 명도 차**로만 보강합니다. (Hex 하드코딩 금지)
 
 | 시리즈 | 색상 토큰 | 설명 / 적용 기준 |
 |--------|-----------|------------------|
-| **예약** (Booked) | `var(--ad-b0kla-blue)` | 대기/준비 상태. 명시적이고 신뢰감을 주는 블루 계열. 배경과 명도 대비. |
-| **완료** (Completed) | `var(--ad-b0kla-green)` | 긍정/달성 상태. 도달을 의미하는 그린 계열. 배경과 명도 대비 확실. |
+| **예약** (Booked) | `var(--mg-color-secondary-main)` | 대기/준비. 차분한 secondary. 완료(진한 그린)과 명도로 구분. |
+| **완료** (Completed) | `var(--mg-color-primary-main)` | 긍정/달성. 브랜드 진한 올리브 그린 (`#3D5246` 계열). |
 | **진행** (In Progress) | `var(--ad-b0kla-text-secondary)` | 2순위 지표. 시선을 뺏지 않도록 무채색 계열로 약화. |
 
-### 2.1 「진행」(IN_PROGRESS) 시리즈 처리 결정 및 범례 규칙
+### 2.1 대비 보강 (시리즈 외)
+- **축 tick / 범례**: `var(--mg-v2-color-text-primary)` — 차트 배경 대비 강화
+- **그리드**: `var(--mg-v2-color-border-default)` — border-light 대비 한 단계 상향
+- **차트 카드 배경**: `var(--mg-color-background-main)` (그룹 surface와 명도 대비 유지)
+- **비활성 pill**: `var(--mg-color-surface-main)` / 활성: `var(--mg-color-primary-main)`
+
+### 2.2 「진행」(IN_PROGRESS) 시리즈 처리 결정 및 범례 규칙
 - **기본 비노출(off) 혹은 2순위 약화**: 볼륨은 예약과 완료 중심으로 표현합니다. 차트에서 1급 데이터로 보이지 않게 하며, 렌더링 시에는 약화된 색상(`var(--ad-b0kla-text-secondary)`)을 사용합니다.
 - **범례 (Legend)**: 범례 위치를 가장 후순위로 내리고, 시각적 우선순위가 가장 낮은 스타일 톤을 적용합니다.
 
@@ -103,7 +110,7 @@
 - **달성 상태 배지**:
   - **초과 달성 (>= 100%)**: `var(--mg-badge-status-success-bg)` 배경 + `var(--mg-badge-status-success-text)` 텍스트 (예: "목표 달성")
   - **진행 중/미달 (< 100%)**: `var(--mg-badge-status-info-bg)` 배경 + `var(--mg-badge-status-info-text)` 텍스트 (예: "85% 진행")
-- **프로그레스 바**: 트랙 배경 `var(--ad-b0kla-bg)` 위에 채움(fill) `var(--ad-b0kla-green)` (100% 초과 시에도 바가 뚫고 나가지 않도록 100% 한정 처리).
+- **프로그레스 바**: 트랙 배경 `var(--ad-b0kla-bg)` 위에 채움(fill) `var(--mg-color-primary-main)` (100% 초과 시에도 바가 뚫고 나가지 않도록 100% 한정 처리).
 
 ---
 
@@ -118,7 +125,7 @@
 
 ### 5.2 구현 우선순위
 1. **최상단 KPI 컴포넌트 신설/배치**: V6(증감 배지) + V6b(목표대비 KPI)를 시각화 그룹 상단에 가장 먼저 읽히게 배치.
-2. **차트 시리즈 및 색상 갱신**: 예약(`var(--ad-b0kla-blue)`), 완료(`var(--ad-b0kla-green)`) 중심. 진행은 차트에서 약화(`var(--ad-b0kla-text-secondary)`) 또는 제외.
+2. **차트 시리즈 및 색상**: 예약(`var(--mg-color-secondary-main)`), 완료(`var(--mg-color-primary-main)` 진한 그린) 중심. 진행은 차트에서 약화(`var(--ad-b0kla-text-secondary)`) 또는 제외. 대비는 축/배경/범례 명도로만 보강.
 3. **증감 배지 로직**: 이전 기간 데이터와 비교해 상승/하락/보합 상태 판별 및 해당 CSS 변수 적용.
 
 ### 5.3 주의 (하드코딩 및 게이트 제약)

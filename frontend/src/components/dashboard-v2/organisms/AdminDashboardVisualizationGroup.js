@@ -34,12 +34,13 @@ import {
 } from '../utils/dashboardChartPeriodUtils';
 import './AdminDashboardVisualizationGroup.css';
 
+/** 축·범례는 text-primary, 그리드는 border-default로 시리즈(진한 그린) 대비만 보강 */
 const CHART_CANVAS_FALLBACK = Object.freeze({
-  TICK: 'var(--mg-v2-color-text-secondary)',
-  GRID: 'var(--mg-v2-color-border-light)',
+  TICK: 'var(--mg-v2-color-text-primary)',
+  GRID: 'var(--mg-v2-color-border-default)',
   TOOLTIP_BACKGROUND: 'var(--mg-v2-color-surface-raised)',
   TOOLTIP_TEXT: 'var(--mg-v2-color-text-primary)',
-  LEGEND: 'var(--mg-v2-color-text-secondary)'
+  LEGEND: 'var(--mg-v2-color-text-primary)'
 });
 
 const VIZ_PERIOD_OPTIONS = [
@@ -289,8 +290,8 @@ const AdminDashboardVisualizationGroup = ({
       completed: completedResolved
     });
     setCanvasTheme({
-      tick: resolveCssColorVarToHex('--mg-v2-color-text-secondary', CHART_CANVAS_FALLBACK.TICK),
-      grid: resolveCssColorVarToHex('--mg-v2-color-border-light', CHART_CANVAS_FALLBACK.GRID),
+      tick: resolveCssColorVarToHex('--mg-v2-color-text-primary', CHART_CANVAS_FALLBACK.TICK),
+      grid: resolveCssColorVarToHex('--mg-v2-color-border-default', CHART_CANVAS_FALLBACK.GRID),
       tooltipBg: resolveCssColorVarToHex(
         '--mg-v2-color-surface-raised',
         CHART_CANVAS_FALLBACK.TOOLTIP_BACKGROUND
@@ -299,7 +300,7 @@ const AdminDashboardVisualizationGroup = ({
         '--mg-v2-color-text-primary',
         CHART_CANVAS_FALLBACK.TOOLTIP_TEXT
       ),
-      legend: resolveCssColorVarToHex('--mg-v2-color-text-secondary', CHART_CANVAS_FALLBACK.LEGEND)
+      legend: resolveCssColorVarToHex('--mg-v2-color-text-primary', CHART_CANVAS_FALLBACK.LEGEND)
     });
   }, [vizPeriod, darkResolved]);
 

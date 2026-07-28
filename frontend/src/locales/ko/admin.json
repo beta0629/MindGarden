@@ -712,7 +712,25 @@
         "targetTitle": "목표 달성률 (완료 기준)",
         "targetAchieved": "목표 달성",
         "targetInProgress": "{{percent}}% 진행",
-        "targetMeta": "{{actual}}{{unit}} / 목표 {{target}}{{unit}}"
+        "targetMeta": "{{actual}}{{unit}} / 목표 {{target}}{{unit}}",
+        "newClientsTitle": "신규 내담자 유입",
+        "newClientsSubtitle": "최근 6개월 신규 등록",
+        "newClientsCountUnit": "명",
+        "emptyInflowPeriod": "해당 기간에 집계된 데이터가 없습니다.",
+        "dowTitle": "요일별 상담 건수",
+        "dowSubtitle": "최근 6개월 요일별 합계",
+        "dowPeakBadge": "최다 · {{count}}건",
+        "dowPeakGroupLabel": "최다 요일",
+        "emptyInflowPeriod": "해당 기간에 집계된 데이터가 없습니다.",
+        "dowShort": {
+          "mon": "월",
+          "tue": "화",
+          "wed": "수",
+          "thu": "목",
+          "fri": "금",
+          "sat": "토",
+          "sun": "일"
+        }
       }
     },
     "form": {

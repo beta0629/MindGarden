@@ -299,3 +299,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* A/B — 신규 유입 · 요일별 (V2/V3 하단) */
+.mg-v2-content-visualization-group__inflow-dow-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mg-spacing-md, 1rem);
+  margin-top: var(--mg-spacing-md, 1rem);
+}
+
+.mg-v2-viz-peak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
+  border-radius: var(--mg-border-radius-md, 8px);
+  background: var(--mg-color-surface-main);
+  color: var(--mg-color-text-primary);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: 600;
+  border: 1px solid var(--mg-v2-color-border-default);
+}
+
+.mg-v2-viz-peak-badge__day {
+  color: var(--mg-v2-color-text-primary);
+}
+
+@media (max-width: 900px) {
+  .mg-v2-content-visualization-group__inflow-dow-grid {
+    grid-template-columns: 1fr;
+  }
+}

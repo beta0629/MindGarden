@@ -19,8 +19,10 @@ import com.coresolution.consultation.dto.CheckoutSameDayRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
+import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
 import com.coresolution.consultation.entity.Client;
@@ -2719,6 +2721,72 @@ public class AdminController extends BaseApiController {
         log.info("📊 consultation-completion 응답: tenantId={}, daily={}건, weekly={}건, monthly={}건, yearly={}건",
                 tenantId, dailyData.size(), weeklyData.size(), monthlyData.size(), yearlyData.size());
 
+        return success(data);
+    }
+
+    /**
+     * 월별 신규 내담자(CLIENT) 유입 통계.
+     *
+     * @param months  최근 개월 수 (기본 6)
+     * @param session 세션
+     * @return period / newClientCount / growthRate
+     */
+    @GetMapping("/statistics/new-clients")
+    public ResponseEntity<ApiResponse<NewClientsStatisticsResponse>> getNewClientStatistics(
+            @RequestParam(required = false, defaultValue = "6") int months,
+            HttpSession session) {
+        log.info("📊 월별 신규 내담자 유입 통계 조회: months={}", months);
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalArgumentException(String.format(
+                    "테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
+                    currentUser.getId(), currentUser.getRole()));
+        }
+
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        int safeMonths = months > 0 ? months : 6;
+        NewClientsStatisticsResponse data = adminService.getNewClientMonthlyStatistics(safeMonths);
+        log.info("📊 new-clients 응답: tenantId={}, items={}", tenantId,
+                data.getItems() != null ? data.getItems().size() : 0);
+        return success(data);
+    }
+
+    /**
+     * 요일별(월~일) 상담 건수 통계 (취소 제외).
+     *
+     * @param months  집계 기간(최근 N개월, 기본 6)
+     * @param session 세션
+     * @return items + peakDayOfWeek
+     */
+    @GetMapping("/statistics/consultations-by-day-of-week")
+    public ResponseEntity<ApiResponse<ConsultationsByDayOfWeekResponse>> getConsultationsByDayOfWeek(
+            @RequestParam(required = false, defaultValue = "6") int months,
+            HttpSession session) {
+        log.info("📊 요일별 상담 건수 통계 조회: months={}", months);
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalArgumentException(String.format(
+                    "테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
+                    currentUser.getId(), currentUser.getRole()));
+        }
+
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        int safeMonths = months > 0 ? months : 6;
+        ConsultationsByDayOfWeekResponse data = adminService.getConsultationsByDayOfWeek(safeMonths);
+        log.info("📊 consultations-by-day-of-week 응답: tenantId={}, peakDay={}",
+                tenantId, data.getPeakDayOfWeek());
         return success(data);
     }
 

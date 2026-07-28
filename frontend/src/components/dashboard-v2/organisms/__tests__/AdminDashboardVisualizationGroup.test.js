@@ -48,6 +48,22 @@ jest.mock('react-i18next', () => ({
         'admin:dashboard.v2.viz.targetAchieved': '목표 달성',
         'admin:dashboard.v2.viz.targetInProgress': '{{percent}}% 진행',
         'admin:dashboard.v2.viz.targetMeta': '{{actual}}{{unit}} / 목표 {{target}}{{unit}}',
+        'admin:dashboard.v2.viz.newClientsTitle': '신규 내담자 유입',
+        'admin:dashboard.v2.viz.newClientsSubtitle': '최근 6개월 신규 등록',
+        'admin:dashboard.v2.viz.newClientsCountUnit': '명',
+        'admin:dashboard.v2.viz.emptyInflowPeriod': '해당 기간에 집계된 데이터가 없습니다.',
+        'admin:dashboard.v2.viz.dowTitle': '요일별 상담 건수',
+        'admin:dashboard.v2.viz.dowSubtitle': '최근 6개월 요일별 합계',
+        'admin:dashboard.v2.viz.dowPeakBadge': '최다 · {{count}}건',
+        'admin:dashboard.v2.viz.dowPeakGroupLabel': '최다 요일',
+        'admin:dashboard.v2.viz.emptyInflowPeriod': '해당 기간에 집계된 데이터가 없습니다.',
+        'admin:dashboard.v2.viz.dowShort.mon': '월',
+        'admin:dashboard.v2.viz.dowShort.tue': '화',
+        'admin:dashboard.v2.viz.dowShort.wed': '수',
+        'admin:dashboard.v2.viz.dowShort.thu': '목',
+        'admin:dashboard.v2.viz.dowShort.fri': '금',
+        'admin:dashboard.v2.viz.dowShort.sat': '토',
+        'admin:dashboard.v2.viz.dowShort.sun': '일',
         'common:dashboard-v2.AdminDashboardV2.t_01c7a211': '시각화 그룹'
       };
       let text = map[key] || key;
@@ -79,6 +95,12 @@ jest.mock('../../../common/Chart', () => {
     });
   };
 });
+
+jest.mock('../../utils/chartBarValueLabelPlugin', () => ({
+  __esModule: true,
+  ensureMgVizBarValueLabelsPlugin: jest.fn(),
+  MG_VIZ_BAR_VALUE_LABELS_PLUGIN_ID: 'mgVizBarValueLabels'
+}));
 
 jest.mock('../../../common/MGButton', () => {
   const ReactActual = require('react');
@@ -181,7 +203,8 @@ describe('AdminDashboardVisualizationGroup', () => {
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading={false} />
     );
 
-    expect(screen.getByTestId(`mock-chart-${CHART_TYPES.BAR}`)).toHaveAttribute(
+    const stackedCard = screen.getByTestId('viz-stacked-bar-card');
+    expect(within(stackedCard).getByTestId(`mock-chart-${CHART_TYPES.BAR}`)).toHaveAttribute(
       'data-datasets',
       '2'
     );
@@ -353,7 +376,9 @@ describe('AdminDashboardVisualizationGroup', () => {
       <AdminDashboardVisualizationGroup consultationStats={highStats} loading={false} />
     );
     const lineCall = chartCalls.find((c) => c.type === CHART_TYPES.LINE);
-    const barCall = chartCalls.find((c) => c.type === CHART_TYPES.BAR);
+    const barCall = chartCalls.find(
+      (c) => c.type === CHART_TYPES.BAR && c.data?.datasets?.length === 2
+    );
     // line max series = 63 → ceil(63*1.1)=70
     expect(lineCall.options.scales.y.max).toBe(70);
     expect(lineCall.options.scales.y.max).toBeGreaterThan(64);
@@ -381,17 +406,43 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(DASHBOARD_CHART_PERIOD.YEARLY).toBe('yearly');
   });
 
-  test('empty 경로: 바·라인 empty 카드 2개', () => {
+  test('empty 경로: V2/V3/유입/요일 empty 4개 (A/B props 없음)', () => {
     render(
       <AdminDashboardVisualizationGroup consultationStats={emptyStats} loading={false} />
     );
     const empties = screen.getAllByTestId('viz-chart-empty');
-    expect(empties.length).toBe(2);
+    expect(empties.length).toBe(4);
     empties.forEach((node) => {
       expect(within(node).getByTestId('icon-BAR_CHART_3')).toBeInTheDocument();
-      expect(within(node).getByText('해당 기간의 데이터가 없습니다')).toBeInTheDocument();
     });
-    expect(screen.queryByTestId(`mock-chart-${CHART_TYPES.BAR}`)).not.toBeInTheDocument();
+    expect(screen.getByTestId('viz-new-clients-card')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-dow-card')).toBeInTheDocument();
+  });
+
+  test('요일 Zero: items 있으면 축 유지(차트 렌더)·피크 배지 숨김', () => {
+    const zeroDow = {
+      items: [
+        { dayOfWeek: 1, label: '월요일', count: 0 },
+        { dayOfWeek: 2, label: '화요일', count: 0 },
+        { dayOfWeek: 3, label: '수요일', count: 0 },
+        { dayOfWeek: 4, label: '목요일', count: 0 },
+        { dayOfWeek: 5, label: '금요일', count: 0 },
+        { dayOfWeek: 6, label: '토요일', count: 0 },
+        { dayOfWeek: 7, label: '일요일', count: 0 }
+      ],
+      peakDayOfWeek: null,
+      peakCount: null
+    };
+    render(
+      <AdminDashboardVisualizationGroup
+        consultationStats={sampleStats}
+        loading={false}
+        consultationsByDow={zeroDow}
+      />
+    );
+    expect(within(screen.getByTestId('viz-dow-card'))
+      .getByTestId(`mock-chart-${CHART_TYPES.BAR}`)).toBeInTheDocument();
+    expect(screen.queryByTestId('viz-dow-peak-badge')).not.toBeInTheDocument();
   });
 
   test('loading 경로: 차트·KPI skeleton', () => {
@@ -399,8 +450,60 @@ describe('AdminDashboardVisualizationGroup', () => {
       <AdminDashboardVisualizationGroup consultationStats={sampleStats} loading />
     );
     expect(screen.getByTestId('viz-kpi-skeleton')).toBeInTheDocument();
-    expect(document.querySelectorAll('.mg-v2-skeleton').length).toBeGreaterThanOrEqual(3);
+    expect(document.querySelectorAll('.mg-v2-skeleton').length).toBeGreaterThanOrEqual(5);
     expect(screen.queryByTestId(`mock-chart-${CHART_TYPES.BAR}`)).not.toBeInTheDocument();
     expect(screen.queryByTestId('viz-kpi-card-booked')).not.toBeInTheDocument();
+  });
+
+  test('A/B 카드: 신규 유입 막대·요일 피크 배지·수치 라벨 옵션', () => {
+    const newClientStats = {
+      items: [
+        { period: '2026-05', newClientCount: 10, growthRate: null },
+        { period: '2026-06', newClientCount: 20, growthRate: 100 },
+        { period: '2026-07', newClientCount: 25, growthRate: 25 }
+      ],
+      growthRate: 25
+    };
+    const consultationsByDow = {
+      items: [
+        { dayOfWeek: 1, label: '월요일', count: 12 },
+        { dayOfWeek: 2, label: '화요일', count: 18 },
+        { dayOfWeek: 3, label: '수요일', count: 32 },
+        { dayOfWeek: 4, label: '목요일', count: 5 },
+        { dayOfWeek: 5, label: '금요일', count: 8 },
+        { dayOfWeek: 6, label: '토요일', count: 2 },
+        { dayOfWeek: 7, label: '일요일', count: 1 }
+      ],
+      peakDayOfWeek: 3,
+      peakCount: 32
+    };
+
+    render(
+      <AdminDashboardVisualizationGroup
+        consultationStats={sampleStats}
+        loading={false}
+        newClientStats={newClientStats}
+        consultationsByDow={consultationsByDow}
+      />
+    );
+
+    expect(screen.getByTestId('viz-inflow-dow-grid')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-new-clients-card')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-dow-card')).toBeInTheDocument();
+    expect(screen.getByText('신규 내담자 유입')).toBeInTheDocument();
+    expect(screen.getByText('요일별 상담 건수')).toBeInTheDocument();
+    expect(screen.getByTestId('viz-dow-peak-badge')).toHaveTextContent('수요일');
+    expect(screen.getByTestId('viz-dow-peak-badge')).toHaveTextContent('최다 · 32건');
+    expect(screen.getByTestId('viz-new-clients-growth')).toHaveTextContent('지난달 대비 ▲ 25%');
+
+    const barCharts = screen.getAllByTestId(`mock-chart-${CHART_TYPES.BAR}`);
+    expect(barCharts.length).toBeGreaterThanOrEqual(3);
+
+    const dowCall = chartCalls.find(
+      (call) => call?.options?.plugins?.mgVizBarValueLabels?.peakIndex === 2
+    );
+    expect(dowCall).toBeTruthy();
+    expect(dowCall.options.plugins.mgVizBarValueLabels.enabled).toBe(true);
+    expect(dowCall.data.datasets[0].data[2]).toBe(32);
   });
 });

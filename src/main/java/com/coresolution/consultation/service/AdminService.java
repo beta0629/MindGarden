@@ -9,6 +9,8 @@ import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
+import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
+import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
@@ -479,6 +481,22 @@ public interface AdminService {
      * @return 완료율 (0–100, 소수 첫째자리)
      */
     double getCompletionRateForMonth(int year, int month);
+
+    /**
+     * 월별 신규 내담자(CLIENT) 유입 집계 (tenant 격리, created_at 기준).
+     *
+     * @param lastMonths 최근 개월 수 (예: 6)
+     * @return period / newClientCount / growthRate 포함 응답
+     */
+    NewClientsStatisticsResponse getNewClientMonthlyStatistics(int lastMonths);
+
+    /**
+     * 요일별(월~일) 상담 건수 집계 (tenant 격리, 취소 제외).
+     *
+     * @param lastMonths 최근 개월 수 범위 (예: 6)
+     * @return 요일 항목 + peakDayOfWeek
+     */
+    ConsultationsByDayOfWeekResponse getConsultationsByDayOfWeek(int lastMonths);
 
     /**
      * 모든 스케줄 조회

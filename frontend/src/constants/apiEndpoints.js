@@ -93,6 +93,8 @@ export const API_ENDPOINTS = {
       CHART_DATA: '/api/v1/admin/statistics/chart-data',
       RECENT_ACTIVITY: '/api/v1/admin/statistics/recent-activity',
       CONSULTATION_COMPLETION: '/api/v1/admin/statistics/consultation-completion',
+      NEW_CLIENTS: '/api/v1/admin/statistics/new-clients',
+      CONSULTATIONS_BY_DAY_OF_WEEK: '/api/v1/admin/statistics/consultations-by-day-of-week',
       VACATION: '/api/v1/admin/vacation-statistics',
       REFUND: '/api/v1/admin/refund-statistics'
     },
@@ -188,7 +190,10 @@ export const ENDPOINT_MAPPING = {
   '/api/v1/admin/mappings': API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
   '/api/v1/admin/consultant-rating-stats': API_ENDPOINTS.ADMIN.CONSULTANTS.RATING_STATS,
   '/api/v1/admin/vacation-statistics': API_ENDPOINTS.ADMIN.STATISTICS.VACATION,
-  '/api/v1/admin/statistics/consultation-completion': API_ENDPOINTS.ADMIN.STATISTICS.CONSULTATION_COMPLETION
+  '/api/v1/admin/statistics/consultation-completion': API_ENDPOINTS.ADMIN.STATISTICS.CONSULTATION_COMPLETION,
+  '/api/v1/admin/statistics/new-clients': API_ENDPOINTS.ADMIN.STATISTICS.NEW_CLIENTS,
+  '/api/v1/admin/statistics/consultations-by-day-of-week':
+    API_ENDPOINTS.ADMIN.STATISTICS.CONSULTATIONS_BY_DAY_OF_WEEK
 };
 
 export const validateEndpoint = (endpoint) => {

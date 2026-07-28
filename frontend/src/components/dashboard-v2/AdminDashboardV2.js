@@ -119,6 +119,9 @@ import { SESSION_EXTENSION_UI } from '../../utils/sessionExtensionPending';
 const API_ADMIN_CLIENTS_WITH_MAPPING_INFO = '/api/v1/admin/clients/with-mapping-info';
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
+const API_ADMIN_STATISTICS_NEW_CLIENTS = API_ENDPOINTS.ADMIN.STATISTICS.NEW_CLIENTS;
+const API_ADMIN_STATISTICS_CONSULTATIONS_BY_DOW =
+  API_ENDPOINTS.ADMIN.STATISTICS.CONSULTATIONS_BY_DAY_OF_WEEK;
 const API_ADMIN_REFUND_STATISTICS = '/api/v1/admin/refund-statistics?period=month';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE = '/api/v1/admin/schedules/auto-complete';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER = '/api/v1/admin/schedules/auto-complete-with-reminder';
@@ -207,6 +210,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     totalUsersGrowthRate: null
   });
   const [loading, setLoading] = useState(false);
+  const [newClientStats, setNewClientStats] = useState(null);
+  const [consultationsByDow, setConsultationsByDow] = useState(null);
+  const [inflowDowLoading, setInflowDowLoading] = useState(false);
   const [showToastState, setShowToastState] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
@@ -411,6 +417,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const loadStats = useCallback(async() => {
     setLoading(true);
+    setInflowDowLoading(true);
     try {
       const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
       /** fetch 실패(rejected) 시 res.ok 체크를 통과하지 않도록 쓰는 더미 */
@@ -420,7 +427,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO, { headers, credentials: 'include' }),
         fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, { headers, credentials: 'include' }),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
-        StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION)
+        StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION),
+        StandardizedApi.get(API_ADMIN_STATISTICS_NEW_CLIENTS, { months: 6 }),
+        StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATIONS_BY_DOW, { months: 6 })
       ]);
       const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
       const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();
@@ -428,6 +437,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       const ratingRes = settled[3].status === 'fulfilled' ? settled[3].value : dummyFailedResponse();
       const consultationPayload =
         settled[4].status === 'fulfilled' ? settled[4].value : null;
+      const newClientsPayload =
+        settled[5].status === 'fulfilled' ? settled[5].value : null;
+      const dowPayload =
+        settled[6].status === 'fulfilled' ? settled[6].value : null;
 
       // [Dashboard Charts] consultation-completion 호출 결과(상담 현황 추이/예약 vs 완료 차트용)
       if (settled[4].status === 'rejected') {
@@ -513,6 +526,30 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         console.warn('[Dashboard Charts] consultation-completion 응답이 없어 차트 데이터를 미적용');
       }
 
+      if (newClientsPayload != null) {
+        const payload =
+          newClientsPayload?.data != null ? newClientsPayload.data : newClientsPayload;
+        setNewClientStats({
+          items: Array.isArray(payload?.items) ? payload.items : [],
+          growthRate: payload?.growthRate != null ? Number(payload.growthRate) : null
+        });
+      } else {
+        setNewClientStats({ items: [], growthRate: null });
+      }
+
+      if (dowPayload != null) {
+        const payload = dowPayload?.data != null ? dowPayload.data : dowPayload;
+        setConsultationsByDow({
+          items: Array.isArray(payload?.items) ? payload.items : [],
+          peakDayOfWeek: payload?.peakDayOfWeek != null
+            ? Number(payload.peakDayOfWeek)
+            : null,
+          peakCount: payload?.peakCount != null ? Number(payload.peakCount) : null
+        });
+      } else {
+        setConsultationsByDow({ items: [], peakDayOfWeek: null, peakCount: null });
+      }
+
       setStats({
         totalConsultants,
         totalClients,
@@ -527,6 +564,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       console.error('통계 데이터 로드 실패:', error);
       showToast('통계 데이터 로드에 실패했습니다.', 'danger');
     } finally {
+      setInflowDowLoading(false);
       setLoading(false);
     }
   }, [showToast, propUser, sessionUser, loadTodayStats]);
@@ -1097,6 +1135,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             consultationStats={stats.consultationStats}
             loading={loading}
             darkResolved={darkResolved}
+            newClientStats={newClientStats}
+            consultationsByDow={consultationsByDow}
+            inflowDowLoading={inflowDowLoading}
           />
         </div>
         <div className="mg-v2-ad-b0kla__card">

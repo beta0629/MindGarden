@@ -339,7 +339,7 @@ const AdminDashboardVisualizationGroup = ({
             {loading ? (
               <div className="mg-v2-skeleton mg-v2-viz-chart__skeleton" aria-hidden="true" />
             ) : allZero ? (
-              <p className="mg-v2-ad-b0kla__chart-empty">{toDisplayString(emptyMessage)}</p>
+              <VizChartEmpty message={emptyMessage} />
             ) : (
               <Chart
                 type={CHART_TYPES.BAR}
@@ -412,7 +412,7 @@ const AdminDashboardVisualizationGroup = ({
             {loading ? (
               <div className="mg-v2-skeleton mg-v2-viz-chart__skeleton" aria-hidden="true" />
             ) : allZero ? (
-              <p className="mg-v2-ad-b0kla__chart-empty">{toDisplayString(emptyMessage)}</p>
+              <VizChartEmpty message={emptyMessage} />
             ) : (
               <Chart
                 type={CHART_TYPES.LINE}
@@ -451,10 +451,16 @@ const AdminDashboardVisualizationGroup = ({
                 height={CHART_HEIGHT}
                 options={{
                   maintainAspectRatio: false,
+                  interaction: {
+                    mode: 'index',
+                    intersect: false
+                  },
                   plugins: {
                     legend: legendPlugin,
                     tooltip: {
                       ...tooltipOptions,
+                      mode: 'index',
+                      intersect: false,
                       callbacks: {
                         label: (ctx) =>
                           `${toDisplayString(ctx.dataset.label)}: ${toSafeNumber(ctx.parsed.y, 0)}건`
@@ -484,24 +490,34 @@ const AdminDashboardVisualizationGroup = ({
               <p className="mg-v2-ad-b0kla__chart-desc">{toDisplayString(subtitle)}</p>
             </div>
           </div>
-          <div className="mg-v2-viz-kpi-grid" aria-busy={loading}>
-            {kpiItems.map((item) => (
-              <article
-                key={item.key}
-                className={`mg-v2-viz-kpi-card ${item.toneClass}`}
-              >
-                <p className="mg-v2-viz-kpi-card__label">{toDisplayString(item.label)}</p>
-                <div className="mg-v2-viz-kpi-card__body">
-                  <p className="mg-v2-viz-kpi-card__value">
-                    {`${toSafeNumber(item.value, 0)}건`}
-                  </p>
-                  {!loading && Array.isArray(item.spark) && item.spark.length > 0 ? (
-                    <KpiSparkline data={item.spark} variant={item.sparkVariant} />
-                  ) : null}
-                </div>
-              </article>
-            ))}
-          </div>
+          {loading ? (
+            <div
+              className="mg-v2-skeleton mg-v2-viz-kpi-grid__skeleton"
+              aria-busy="true"
+              aria-hidden="true"
+              data-testid="viz-kpi-skeleton"
+            />
+          ) : (
+            <div className="mg-v2-viz-kpi-grid" aria-busy="false">
+              {kpiItems.map((item) => (
+                <article
+                  key={item.key}
+                  className={`mg-v2-viz-kpi-card ${item.toneClass}`}
+                  data-testid={`viz-kpi-card-${item.key}`}
+                >
+                  <p className="mg-v2-viz-kpi-card__label">{toDisplayString(item.label)}</p>
+                  <div className="mg-v2-viz-kpi-card__body">
+                    <p className="mg-v2-viz-kpi-card__value">
+                      {`${toSafeNumber(item.value, 0)}건`}
+                    </p>
+                    {Array.isArray(item.spark) && item.spark.length > 0 ? (
+                      <KpiSparkline data={item.spark} variant={item.sparkVariant} />
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* V5 상태 도넛 */}
@@ -518,7 +534,7 @@ const AdminDashboardVisualizationGroup = ({
             {loading ? (
               <div className="mg-v2-skeleton mg-v2-viz-chart__skeleton" aria-hidden="true" />
             ) : sums.total === 0 ? (
-              <p className="mg-v2-ad-b0kla__chart-empty">{toDisplayString(emptyMessage)}</p>
+              <VizChartEmpty message={emptyMessage} />
             ) : (
               <div className="mg-v2-viz-donut__layout">
                 <div className="mg-v2-viz-donut__chart">

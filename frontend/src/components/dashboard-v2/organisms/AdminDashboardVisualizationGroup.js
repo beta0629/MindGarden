@@ -8,7 +8,7 @@
  * @since 2026-07-28
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import Chart from '../../common/Chart';
@@ -20,8 +20,12 @@ import {
   CHART_TYPES,
   B0KLA_CHART_BAR_FALLBACK,
   B0KLA_STATUS_SERIES_COLOR_VARS,
-  DASHBOARD_VIZ_TARGET_COMPLETED
+  DASHBOARD_VIZ_TARGET_COMPLETED,
+  DASHBOARD_VIZ_TARGET_MODES,
+  DASHBOARD_VIZ_TARGET_PRESETS,
+  DASHBOARD_VIZ_TARGET_RATIO_OPTIONS
 } from '../../../constants/charts';
+import { resolveViewModeStorageScope } from '../../../hooks/useViewModePreference';
 import { resolveCssColorVarToHex } from '../../../utils/resolveCssColorVarToHex';
 import { toSafeNumber, toDisplayString } from '../../../utils/safeDisplay';
 import {
@@ -37,6 +41,12 @@ import {
   resolveTrendRowsByPeriod
 } from '../utils/dashboardChartPeriodUtils';
 import { ensureMgVizBarValueLabelsPlugin } from '../utils/chartBarValueLabelPlugin';
+import {
+  calcRatioTargetCompleted,
+  parseVizTargetCustomInput,
+  resolveVizTargetCompleted,
+  writeVizTargetPreference
+} from '../utils/dashboardVizTargetStorage';
 import './AdminDashboardVisualizationGroup.css';
 
 ensureMgVizBarValueLabelsPlugin();
@@ -276,7 +286,7 @@ VizGrowthKpiCard.propTypes = {
 };
 
 /**
- * V6b 목표 vs 실적 KPI
+ * V6b 목표 vs 실적 KPI + 목표 건수 인라인 설정 팝오버 (designer A안)
  *
  * @param {object} props
  * @returns {JSX.Element}
@@ -285,10 +295,89 @@ function VizTargetKpiCard({
   label,
   achievementPercent,
   statusLabel,
-  targetMeta
+  targetMeta,
+  targetCompleted,
+  previousCompleted,
+  countUnit,
+  onTargetChange
 }) {
+  const { t } = useTranslation();
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [customInput, setCustomInput] = useState(
+    String(toSafeNumber(targetCompleted, DASHBOARD_VIZ_TARGET_COMPLETED))
+  );
+  const popoverRef = useRef(null);
+  const triggerRef = useRef(null);
+
   const isAchieved = achievementPercent >= PROGRESS_BAR_MAX_PERCENT;
   const barWidth = Math.min(Math.max(achievementPercent, 0), PROGRESS_BAR_MAX_PERCENT);
+  const previousSafe = previousCompleted == null ? 0 : toSafeNumber(previousCompleted, 0);
+  const ratioDisabled = previousSafe <= 0;
+  const parsedCustom = parseVizTargetCustomInput(customInput);
+  const canApplyCustom = parsedCustom != null;
+
+  useEffect(() => {
+    if (isPopoverOpen) {
+      setCustomInput(String(toSafeNumber(targetCompleted, DASHBOARD_VIZ_TARGET_COMPLETED)));
+    }
+  }, [isPopoverOpen, targetCompleted]);
+
+  useEffect(() => {
+    if (!isPopoverOpen) {
+      return undefined;
+    }
+    const handlePointerDown = (event) => {
+      const target = event.target;
+      if (popoverRef.current?.contains(target) || triggerRef.current?.contains(target)) {
+        return;
+      }
+      setIsPopoverOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsPopoverOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPopoverOpen]);
+
+  const commitTarget = useCallback((mode, nextTarget) => {
+    if (typeof onTargetChange !== 'function') {
+      return;
+    }
+    const safeTarget = toSafeNumber(nextTarget, 0);
+    if (safeTarget < 1) {
+      return;
+    }
+    onTargetChange(mode, safeTarget);
+    setIsPopoverOpen(false);
+  }, [onTargetChange]);
+
+  const handlePresetClick = (preset) => {
+    commitTarget(DASHBOARD_VIZ_TARGET_MODES.PRESET, preset);
+  };
+
+  const handleRatioClick = (option) => {
+    const next = calcRatioTargetCompleted(previousSafe, option.multiplier);
+    if (next == null) {
+      return;
+    }
+    commitTarget(DASHBOARD_VIZ_TARGET_MODES.RATIO, next);
+  };
+
+  const handleApplyCustom = () => {
+    if (parsedCustom == null) {
+      return;
+    }
+    commitTarget(DASHBOARD_VIZ_TARGET_MODES.CUSTOM, parsedCustom);
+  };
+
+  const settingTitle = t('admin:dashboard.v2.viz.target.settingTitle');
 
   return (
     <article
@@ -308,7 +397,151 @@ function VizTargetKpiCard({
           {toDisplayString(statusLabel)}
         </StatusBadge>
       </div>
-      <p className="mg-v2-viz-summary-kpi__previous">{toDisplayString(targetMeta)}</p>
+      <div className="mg-v2-viz-summary-kpi__target-meta-row">
+        <p className="mg-v2-viz-summary-kpi__previous">{toDisplayString(targetMeta)}</p>
+        <button
+          ref={triggerRef}
+          type="button"
+          className="mg-v2-viz-target-settings-btn"
+          aria-label={toDisplayString(settingTitle)}
+          aria-expanded={isPopoverOpen}
+          aria-haspopup="dialog"
+          data-testid="viz-target-settings-trigger"
+          onClick={() => setIsPopoverOpen((open) => !open)}
+        >
+          <Icon name="SETTINGS" size="SM" color="SECONDARY" aria-hidden="true" />
+        </button>
+        {isPopoverOpen ? (
+          <div
+            ref={popoverRef}
+            className="mg-v2-viz-target-popover"
+            role="dialog"
+            aria-label={toDisplayString(settingTitle)}
+            data-testid="viz-target-settings-popover"
+          >
+            <div className="mg-v2-viz-target-popover__header">
+              <h3 className="mg-v2-viz-target-popover__title">
+                {toDisplayString(settingTitle)}
+              </h3>
+              <button
+                type="button"
+                className="mg-v2-viz-target-popover__close"
+                aria-label={toDisplayString(t('common:actions.close'))}
+                data-testid="viz-target-settings-close"
+                onClick={() => setIsPopoverOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mg-v2-viz-target-popover__section">
+              <p className="mg-v2-viz-target-popover__label">
+                {toDisplayString(t('admin:dashboard.v2.viz.target.presetLabel'))}
+              </p>
+              <div className="mg-v2-viz-target-popover__chips" role="group">
+                {DASHBOARD_VIZ_TARGET_PRESETS.map((preset) => {
+                  const isActive = toSafeNumber(targetCompleted, 0) === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      className={`mg-v2-viz-target-popover__chip${
+                        isActive ? ' mg-v2-viz-target-popover__chip--active' : ''
+                      }`}
+                      data-testid={`viz-target-preset-${preset}`}
+                      onClick={() => handlePresetClick(preset)}
+                    >
+                      {toDisplayString(t('admin:dashboard.v2.viz.target.presetBtn', {
+                        count: preset,
+                        unit: countUnit
+                      }))}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mg-v2-viz-target-popover__section">
+              <p className="mg-v2-viz-target-popover__label">
+                {toDisplayString(t('admin:dashboard.v2.viz.target.ratioLabel'))}
+              </p>
+              <div className="mg-v2-viz-target-popover__chips" role="group">
+                {DASHBOARD_VIZ_TARGET_RATIO_OPTIONS.map((option) => {
+                  const ratioTarget = calcRatioTargetCompleted(previousSafe, option.multiplier);
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className="mg-v2-viz-target-popover__chip"
+                      data-testid={`viz-target-ratio-${option.id}`}
+                      disabled={ratioDisabled || ratioTarget == null}
+                      onClick={() => handleRatioClick(option)}
+                    >
+                      {toDisplayString(t('admin:dashboard.v2.viz.target.ratioBtn', {
+                        percent: option.percent,
+                        count: ratioTarget != null ? ratioTarget : 0,
+                        unit: countUnit
+                      }))}
+                    </button>
+                  );
+                })}
+              </div>
+              {ratioDisabled ? (
+                <p className="mg-v2-viz-target-popover__hint" data-testid="viz-target-ratio-hint">
+                  {toDisplayString(t('admin:dashboard.v2.viz.target.noPreviousData'))}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mg-v2-viz-target-popover__section">
+              <p className="mg-v2-viz-target-popover__label">
+                {toDisplayString(t('admin:dashboard.v2.viz.target.customLabel'))}
+              </p>
+              <div className="mg-v2-viz-target-popover__custom-row">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  className="mg-v2-viz-target-popover__input"
+                  value={customInput}
+                  aria-label={toDisplayString(t('admin:dashboard.v2.viz.target.customLabel'))}
+                  data-testid="viz-target-custom-input"
+                  onChange={(event) => setCustomInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      handleApplyCustom();
+                    }
+                  }}
+                />
+                <span className="mg-v2-viz-target-popover__unit" aria-hidden="true">
+                  {toDisplayString(countUnit)}
+                </span>
+                <MGButton
+                  type="button"
+                  className={buildErpMgButtonClassName({
+                    variant: 'primary',
+                    size: 'sm',
+                    loading: false,
+                    className: 'mg-v2-viz-target-popover__apply'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  disabled={!canApplyCustom}
+                  data-testid="viz-target-custom-apply"
+                  onClick={handleApplyCustom}
+                  preventDoubleClick={false}
+                >
+                  {toDisplayString(t('admin:dashboard.v2.viz.target.applyBtn'))}
+                </MGButton>
+              </div>
+            </div>
+
+            <p className="mg-v2-viz-target-popover__footer">
+              {toDisplayString(t('admin:dashboard.v2.viz.target.localNotice'))}
+            </p>
+          </div>
+        ) : null}
+      </div>
       <div
         className="mg-v2-viz-target-progress"
         role="progressbar"
@@ -330,7 +563,11 @@ VizTargetKpiCard.propTypes = {
   label: PropTypes.string.isRequired,
   achievementPercent: PropTypes.number.isRequired,
   statusLabel: PropTypes.string.isRequired,
-  targetMeta: PropTypes.string.isRequired
+  targetMeta: PropTypes.string.isRequired,
+  targetCompleted: PropTypes.number.isRequired,
+  previousCompleted: PropTypes.number,
+  countUnit: PropTypes.string.isRequired,
+  onTargetChange: PropTypes.func.isRequired
 };
 
 /**
@@ -427,10 +664,14 @@ const AdminDashboardVisualizationGroup = ({
   darkResolved = false,
   newClientStats = null,
   consultationsByDow = null,
-  inflowDowLoading = false
+  inflowDowLoading = false,
+  totalClients = 0
 }) => {
   const { t } = useTranslation(['admin', 'common']);
   const [vizPeriod, setVizPeriod] = useState(DASHBOARD_CHART_PERIOD.MONTHLY);
+  const [targetCompletedOverride, setTargetCompletedOverride] = useState(() => (
+    resolveVizTargetCompleted(resolveViewModeStorageScope())
+  ));
   const [seriesColors, setSeriesColors] = useState({
     booked: B0KLA_CHART_BAR_FALLBACK.BORDER,
     completed: B0KLA_CHART_BAR_FALLBACK.FILL
@@ -448,6 +689,17 @@ const AdminDashboardVisualizationGroup = ({
     tooltipText: CHART_CANVAS_FALLBACK.TOOLTIP_TEXT,
     legend: CHART_CANVAS_FALLBACK.LEGEND
   });
+
+  const handleVizTargetChange = useCallback((mode, nextTarget) => {
+    const scope = resolveViewModeStorageScope();
+    const safeTarget = toSafeNumber(nextTarget, DASHBOARD_VIZ_TARGET_COMPLETED);
+    writeVizTargetPreference(scope, {
+      mode,
+      targetCompleted: safeTarget,
+      updatedAt: new Date().toISOString()
+    });
+    setTargetCompletedOverride(safeTarget);
+  }, []);
 
   useEffect(() => {
     const bookedResolved = resolveCssColorVarToHex(
@@ -512,14 +764,17 @@ const AdminDashboardVisualizationGroup = ({
     [vizPeriod, consultationStats]
   );
   const series = useMemo(() => extractPrimarySeriesArrays(trendRows), [trendRows]);
-  const comparison = useMemo(
-    () => resolvePeriodComparisonMetrics(
+  const comparison = useMemo(() => {
+    const metrics = resolvePeriodComparisonMetrics(
       trendRows,
       consultationStats,
-      DASHBOARD_VIZ_TARGET_COMPLETED
-    ),
-    [trendRows, consultationStats]
-  );
+      targetCompletedOverride
+    );
+    return {
+      ...metrics,
+      targetCompleted: toSafeNumber(targetCompletedOverride, DASHBOARD_VIZ_TARGET_COMPLETED)
+    };
+  }, [trendRows, consultationStats, targetCompletedOverride]);
   const allZero = isBookedCompletedAllZero(trendRows);
   const labels = useMemo(() => trendRows.map(formatChartPeriodLabel), [trendRows]);
   const subtitle = t(
@@ -699,8 +954,12 @@ const AdminDashboardVisualizationGroup = ({
     [dowCounts, peakIndex, inflowDowColors]
   );
   const peopleUnit = t('admin:dashboard.v2.viz.newClientsCountUnit');
+  const totalClientsLabel = t('admin:dashboard.v2.viz.totalClientsLabel');
   const previousMonthlyLabel = t('admin:dashboard.v2.viz.previousMonthly');
   const inflowDowBusy = Boolean(inflowDowLoading || loading);
+  const totalClientsSafe = toSafeNumber(totalClients, 0);
+  const totalClientsDisplay = totalClientsSafe.toLocaleString('ko-KR');
+  const totalClientsKpiLoading = Boolean(loading);
 
   return (
     <section
@@ -800,6 +1059,10 @@ const AdminDashboardVisualizationGroup = ({
               target: toSafeNumber(comparison.targetCompleted, 0),
               unit: countUnit
             })}
+            targetCompleted={toSafeNumber(comparison.targetCompleted, DASHBOARD_VIZ_TARGET_COMPLETED)}
+            previousCompleted={comparison.previousCompleted}
+            countUnit={countUnit}
+            onTargetChange={handleVizTargetChange}
           />
         </div>
       )}
@@ -978,7 +1241,7 @@ const AdminDashboardVisualizationGroup = ({
         data-testid="viz-inflow-dow-grid"
       >
         <div className="mg-v2-ad-b0kla__card" data-testid="viz-new-clients-card">
-          <div className="mg-v2-ad-b0kla__chart-header">
+          <div className="mg-v2-ad-b0kla__chart-header mg-v2-viz-new-clients-header">
             <div className="mg-v2-viz-chart-header__main">
               <div className="mg-v2-viz-chart-header__title-row">
                 <h3 className="mg-v2-ad-b0kla__chart-title">
@@ -1013,6 +1276,35 @@ const AdminDashboardVisualizationGroup = ({
               <p className="mg-v2-ad-b0kla__chart-desc">
                 {toDisplayString(t('admin:dashboard.v2.viz.newClientsSubtitle'))}
               </p>
+            </div>
+            <div
+              className="mg-v2-viz-new-clients-header__kpi"
+              data-testid="viz-total-clients-kpi"
+              role="group"
+              aria-label={toDisplayString(totalClientsLabel)}
+            >
+              <p className="mg-v2-viz-new-clients-header__kpi-label">
+                {toDisplayString(totalClientsLabel)}
+              </p>
+              {totalClientsKpiLoading ? (
+                <span
+                  className="mg-v2-skeleton mg-v2-viz-new-clients-header__kpi-skeleton"
+                  aria-hidden="true"
+                  data-testid="viz-total-clients-skeleton"
+                />
+              ) : (
+                <p className="mg-v2-viz-new-clients-header__kpi-value-row">
+                  <span
+                    className="mg-v2-viz-new-clients-header__kpi-value"
+                    data-testid="viz-total-clients-value"
+                  >
+                    {toDisplayString(totalClientsDisplay)}
+                  </span>
+                  <span className="mg-v2-viz-new-clients-header__kpi-unit">
+                    {toDisplayString(peopleUnit)}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
           <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-viz-chart">
@@ -1193,7 +1485,8 @@ AdminDashboardVisualizationGroup.propTypes = {
     peakDayOfWeek: PropTypes.number,
     peakCount: PropTypes.number
   }),
-  inflowDowLoading: PropTypes.bool
+  inflowDowLoading: PropTypes.bool,
+  totalClients: PropTypes.number
 };
 
 export default AdminDashboardVisualizationGroup;

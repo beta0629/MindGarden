@@ -85,6 +85,13 @@ export const DASHBOARD_VIZ_TARGET_QUICK_ADD_OPTIONS = Object.freeze([
   Object.freeze({ id: 'plus20', percent: 20, multiplier: 1.2 })
 ]);
 
+/**
+ * 레거시 alias (+10%/+20% 비율 옵션).
+ * b40348ab7 등에서 RATIO_OPTIONS import — 미export로 CRA 빌드 실패 방지.
+ * 신규 코드는 DASHBOARD_VIZ_TARGET_QUICK_ADD_OPTIONS 사용.
+ */
+export const DASHBOARD_VIZ_TARGET_RATIO_OPTIONS = DASHBOARD_VIZ_TARGET_QUICK_ADD_OPTIONS;
+
 /** 직접 입력 최소·최대 목표 건수 (양의 정수) */
 export const DASHBOARD_VIZ_TARGET_MIN_COMPLETED = 1;
 export const DASHBOARD_VIZ_TARGET_MAX_COMPLETED = 99999;

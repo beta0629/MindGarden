@@ -119,7 +119,8 @@
 - **신규 모달**: `frontend/src/components/dashboard-v2/organisms/VizTargetGoalSettingModal.js` (또는 `modals` 폴더)
 
 ### 6.2 스토리지 키 제안 (FE 전용)
-- **localStorage 키 패턴**: `mg.admin.dashboard.viz.targetCompleted:${tenantId}`
+- **localStorage 키 패턴**: `mg.dashboard.vizTarget.v1:{tenantId}:{userId}`
+- **no-op 조건**: `tenantId` 또는 `userId` 가 없으면 저장·조회를 수행하지 않는다(no-op).
 - **초기값 폴백**: 로컬 스토리지에 값이 없으면 기존 상수 `DASHBOARD_VIZ_TARGET_COMPLETED` (100) 사용.
 
 ### 6.3 i18n 다국어 키 제안

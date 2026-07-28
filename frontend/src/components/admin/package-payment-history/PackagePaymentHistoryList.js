@@ -9,21 +9,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { CreditCard } from 'lucide-react';
-import Badge from '../../../common/Badge';
-import { EmptyState, StatusBadge } from '../../../common';
-import SafeText from '../../../common/SafeText';
-import UnifiedLoading from '../../../common/UnifiedLoading';
-import MGButton from '../../../common/MGButton';
-import ContentCard from '../../../dashboard-v2/content/ContentCard';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
-import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
+import Badge from '../../common/Badge';
+import { EmptyState, StatusBadge } from '../../common';
+import SafeText from '../../common/SafeText';
+import UnifiedLoading from '../../common/UnifiedLoading';
+import MGButton from '../../common/MGButton';
+import ContentCard from '../../dashboard-v2/content/ContentCard';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import {
   PACKAGE_PAYMENT_HISTORY_TYPE,
   PACKAGE_PAYMENT_HISTORY_UI
-} from '../../../../constants/packagePaymentHistory';
-import notificationManager from '../../../../utils/notification';
-import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
-import StandardizedApi from '../../../../utils/standardizedApi';
+} from '../../../constants/packagePaymentHistory';
+import notificationManager from '../../../utils/notification';
+import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
+import StandardizedApi from '../../../utils/standardizedApi';
 import './PackagePaymentHistoryList.css';
 
 const TYPE_ACCENT_CLASS = Object.freeze({

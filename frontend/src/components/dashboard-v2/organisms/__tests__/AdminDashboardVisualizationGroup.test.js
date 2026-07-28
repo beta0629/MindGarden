@@ -40,6 +40,7 @@ jest.mock('react-i18next', () => ({
         'admin:dashboard.v2.viz.previousWeekly': '전주',
         'admin:dashboard.v2.viz.previousMonthly': '지난달',
         'admin:dashboard.v2.viz.previousYearly': '전년',
+        'admin:dashboard.v2.viz.growthFromZero': '▲ 신규',
         'admin:dashboard.v2.viz.targetTitle': '목표 달성률 (완료 기준)',
         'admin:dashboard.v2.viz.targetAchieved': '목표 달성',
         'admin:dashboard.v2.viz.targetInProgress': '{{percent}}% 진행',
@@ -103,6 +104,8 @@ jest.mock('../../../common/StatusBadge', () => {
       {
         'data-testid': rest['data-testid'] || 'status-badge',
         'data-variant': variant,
+        'data-tone': rest['data-tone'],
+        'data-kind': rest['data-kind'],
         className,
         role: 'status'
       },
@@ -189,9 +192,69 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(screen.queryByTestId('viz-kpi-card-inProgress')).not.toBeInTheDocument();
     expect(screen.queryByTestId('kpi-sparkline')).not.toBeInTheDocument();
 
-    expect(screen.getByTestId('viz-kpi-card-booked-growth')).toBeInTheDocument();
-    expect(screen.getByTestId('viz-kpi-card-completed-growth')).toBeInTheDocument();
+    const bookedGrowth = screen.getByTestId('viz-kpi-card-booked-growth');
+    const completedGrowth = screen.getByTestId('viz-kpi-card-completed-growth');
+    expect(bookedGrowth).toBeInTheDocument();
+    expect(completedGrowth).toBeInTheDocument();
+    expect(bookedGrowth).toHaveAttribute('data-variant', 'success');
+    expect(bookedGrowth).toHaveAttribute('data-tone', 'up');
+    expect(bookedGrowth).toHaveTextContent('▲ 25%');
+    expect(completedGrowth).toHaveAttribute('data-variant', 'success');
+    expect(completedGrowth).toHaveTextContent('▲ 33%');
+    expect(screen.getByText('지난달 4건')).toBeInTheDocument();
     expect(screen.getByTestId('viz-target-progress')).toBeInTheDocument();
+  });
+
+  test('전기간 0·현재 증가 시 ▲ 신규 배지를 success로 노출한다', () => {
+    const fromZeroStats = {
+      ...sampleStats,
+      monthlyData: [
+        { period: '2026-06', bookedCount: 0, inProgressCount: 0, completedCount: 0 },
+        { period: '2026-07', bookedCount: 5, inProgressCount: 0, completedCount: 3 }
+      ]
+    };
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={fromZeroStats} loading={false} />
+    );
+    const bookedGrowth = screen.getByTestId('viz-kpi-card-booked-growth');
+    expect(bookedGrowth).toHaveAttribute('data-variant', 'success');
+    expect(bookedGrowth).toHaveAttribute('data-kind', 'fromZero');
+    expect(bookedGrowth).toHaveTextContent('▲ 신규');
+  });
+
+  test('감소 시 danger 배지, 동일 시 neutral 배지를 노출한다', () => {
+    const downFlatStats = {
+      ...sampleStats,
+      monthlyData: [
+        { period: '2026-06', bookedCount: 10, inProgressCount: 0, completedCount: 8 },
+        { period: '2026-07', bookedCount: 5, inProgressCount: 0, completedCount: 8 }
+      ]
+    };
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={downFlatStats} loading={false} />
+    );
+    const bookedGrowth = screen.getByTestId('viz-kpi-card-booked-growth');
+    const completedGrowth = screen.getByTestId('viz-kpi-card-completed-growth');
+    expect(bookedGrowth).toHaveAttribute('data-variant', 'danger');
+    expect(bookedGrowth).toHaveAttribute('data-tone', 'down');
+    expect(bookedGrowth).toHaveTextContent('▼ 50%');
+    expect(completedGrowth).toHaveAttribute('data-variant', 'neutral');
+    expect(completedGrowth).toHaveAttribute('data-tone', 'flat');
+    expect(completedGrowth).toHaveTextContent('- 0%');
+  });
+
+  test('버킷 1개·previous API 없으면 MoM 배지를 숨긴다', () => {
+    const singleBucketStats = {
+      ...sampleStats,
+      monthlyData: [
+        { period: '2026-07', bookedCount: 5, inProgressCount: 0, completedCount: 4 }
+      ]
+    };
+    render(
+      <AdminDashboardVisualizationGroup consultationStats={singleBucketStats} loading={false} />
+    );
+    expect(screen.queryByTestId('viz-kpi-card-booked-growth')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('viz-kpi-card-completed-growth')).not.toBeInTheDocument();
   });
 
   test('V3 라인 차트는 index 모드 동시 툴팁을 사용한다', () => {

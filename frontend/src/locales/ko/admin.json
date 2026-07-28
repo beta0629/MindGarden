@@ -705,6 +705,7 @@
         "previousWeekly": "전주",
         "previousMonthly": "지난달",
         "previousYearly": "전년",
+        "growthFromZero": "▲ 신규",
         "targetTitle": "목표 달성률 (완료 기준)",
         "targetAchieved": "목표 달성",
         "targetInProgress": "{{percent}}% 진행",

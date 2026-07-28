@@ -6,6 +6,7 @@
  *
  * tenantId·userId 없으면 저장/조회 no-op (anonymous 충돌 방지·테넌트 격리).
  * 범위 해석은 `resolveViewModeStorageScope` SSOT를 재사용한다.
+ * UX는 preset/custom 중심. ratio 모드는 구 저장값 읽기 호환만 유지.
  *
  * @author CoreSolution
  * @since 2026-07-28
@@ -13,6 +14,7 @@
 
 import {
   DASHBOARD_VIZ_TARGET_COMPLETED,
+  DASHBOARD_VIZ_TARGET_MAX_COMPLETED,
   DASHBOARD_VIZ_TARGET_MIN_COMPLETED,
   DASHBOARD_VIZ_TARGET_MODES
 } from '../../../constants/charts';
@@ -98,7 +100,12 @@ function parseStoredPreference(raw) {
   }
   const mode = resolveMode(parsed.mode);
   const targetCompleted = toSafeNumber(parsed.targetCompleted, 0);
-  if (!mode || !Number.isFinite(targetCompleted) || targetCompleted < DASHBOARD_VIZ_TARGET_MIN_COMPLETED) {
+  if (
+    !mode
+    || !Number.isFinite(targetCompleted)
+    || targetCompleted < DASHBOARD_VIZ_TARGET_MIN_COMPLETED
+    || targetCompleted > DASHBOARD_VIZ_TARGET_MAX_COMPLETED
+  ) {
     return null;
   }
   const updatedAt = typeof parsed.updatedAt === 'string' && parsed.updatedAt.trim()
@@ -144,7 +151,12 @@ export function writeVizTargetPreference(scope, preference) {
   const storageKey = buildVizTargetStorageKey(resolvedScope);
   const mode = resolveMode(preference?.mode);
   const targetCompleted = toSafeNumber(preference?.targetCompleted, 0);
-  if (!storageKey || !mode || targetCompleted < DASHBOARD_VIZ_TARGET_MIN_COMPLETED) {
+  if (
+    !storageKey
+    || !mode
+    || targetCompleted < DASHBOARD_VIZ_TARGET_MIN_COMPLETED
+    || targetCompleted > DASHBOARD_VIZ_TARGET_MAX_COMPLETED
+  ) {
     return false;
   }
   if (typeof window === 'undefined') {
@@ -180,24 +192,37 @@ export function resolveVizTargetCompleted(scope) {
 }
 
 /**
- * 전월 대비 비율 목표 계산.
+ * 기준값 × 배수 목표 계산 (빠른 가산·구 ratio 호환).
  *
- * @param {number|null|undefined} previousCompleted
+ * @param {number|null|undefined} baseValue
  * @param {number} multiplier
- * @returns {number|null} previousCompleted &lt;= 0 이면 null
+ * @returns {number|null} baseValue &lt;= 0 이거나 결과 범위 밖이면 null
  */
-export function calcRatioTargetCompleted(previousCompleted, multiplier) {
-  const previous = toSafeNumber(previousCompleted, 0);
+export function calcQuickAddTarget(baseValue, multiplier) {
+  const base = toSafeNumber(baseValue, 0);
   const factor = Number(multiplier);
-  if (previous <= 0 || !Number.isFinite(factor) || factor <= 0) {
+  if (base <= 0 || !Number.isFinite(factor) || factor <= 0) {
     return null;
   }
-  const next = Math.round(previous * factor);
-  return next >= DASHBOARD_VIZ_TARGET_MIN_COMPLETED ? next : null;
+  const next = Math.round(base * factor);
+  if (next < DASHBOARD_VIZ_TARGET_MIN_COMPLETED || next > DASHBOARD_VIZ_TARGET_MAX_COMPLETED) {
+    return null;
+  }
+  return next;
 }
 
 /**
- * 직접 입력 문자열 → 양의 정수. 유효하지 않으면 null.
+ * @deprecated calcQuickAddTarget 사용. 구 테스트·호출 호환용 별칭.
+ * @param {number|null|undefined} previousCompleted
+ * @param {number} multiplier
+ * @returns {number|null}
+ */
+export function calcRatioTargetCompleted(previousCompleted, multiplier) {
+  return calcQuickAddTarget(previousCompleted, multiplier);
+}
+
+/**
+ * 직접 입력 문자열 → 양의 정수(1~99999). 유효하지 않으면 null.
  *
  * @param {unknown} raw
  * @returns {number|null}
@@ -211,7 +236,11 @@ export function parseVizTargetCustomInput(raw) {
     return null;
   }
   const value = Number(trimmed);
-  if (!Number.isFinite(value) || value < DASHBOARD_VIZ_TARGET_MIN_COMPLETED) {
+  if (
+    !Number.isFinite(value)
+    || value < DASHBOARD_VIZ_TARGET_MIN_COMPLETED
+    || value > DASHBOARD_VIZ_TARGET_MAX_COMPLETED
+  ) {
     return null;
   }
   return Math.round(value);

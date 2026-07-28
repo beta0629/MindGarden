@@ -286,13 +286,12 @@
   transition: width 0.2s ease;
 }
 
-/* 목표 건수 설정 — 인라인 팝오버 (designer A안) */
+/* 목표 건수 설정 — 진입점 버튼 (모달은 VizTargetGoalSettingModal) */
 .mg-v2-viz-summary-kpi__target-meta-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--mg-spacing-xs, 0.25rem);
-  position: relative;
 }
 
 .mg-v2-viz-summary-kpi__target-meta-row .mg-v2-viz-summary-kpi__previous {
@@ -317,7 +316,7 @@
 
 .mg-v2-viz-target-settings-btn:hover,
 .mg-v2-viz-target-settings-btn:focus-visible {
-  color: var(--mg-color-primary-main);
+  color: var(--mg-color-text-main);
   outline: none;
 }
 
@@ -329,154 +328,6 @@
 .mg-v2-viz-target-settings-btn svg {
   color: inherit;
   stroke: currentColor;
-}
-
-.mg-v2-viz-target-popover {
-  position: absolute;
-  top: calc(100% + var(--mg-spacing-xs, 0.25rem));
-  right: 0;
-  z-index: var(--z-popover, 1060);
-  width: max(100%, 16rem);
-  max-width: min(20rem, 90vw);
-  padding: var(--mg-spacing-md, 1rem);
-  background: var(--mg-color-surface-main, var(--mg-color-background-main));
-  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: var(--mg-border-radius-md, var(--ad-b0kla-radius-sm, 0.5rem));
-  box-shadow: var(--ad-b0kla-shadow, var(--mg-shadow-md));
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-md, 1rem);
-}
-
-.mg-v2-viz-target-popover__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mg-spacing-sm, 0.5rem);
-}
-
-.mg-v2-viz-target-popover__title {
-  margin: 0;
-  font-size: var(--mg-font-size-sm, 0.875rem);
-  font-weight: 600;
-  color: var(--mg-color-text-main, var(--ad-b0kla-title-color));
-}
-
-.mg-v2-viz-target-popover__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--mg-spacing-xs, 0.25rem);
-  margin: 0;
-  border: none;
-  border-radius: var(--mg-border-radius-sm, 0.25rem);
-  background: transparent;
-  color: var(--mg-color-text-secondary);
-  cursor: pointer;
-  font-size: var(--mg-font-size-base, 1rem);
-  line-height: 1;
-}
-
-.mg-v2-viz-target-popover__close:hover,
-.mg-v2-viz-target-popover__close:focus-visible {
-  color: var(--mg-color-text-main);
-  outline: none;
-}
-
-.mg-v2-viz-target-popover__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-sm, 0.5rem);
-}
-
-.mg-v2-viz-target-popover__label {
-  margin: 0;
-  font-size: var(--mg-font-size-xs, 0.75rem);
-  font-weight: 600;
-  color: var(--mg-color-text-secondary, var(--ad-b0kla-subtitle-color));
-}
-
-.mg-v2-viz-target-popover__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mg-spacing-xs, 0.25rem);
-}
-
-.mg-v2-viz-target-popover__chip {
-  margin: 0;
-  padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
-  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: var(--mg-border-radius-sm, 0.25rem);
-  background: var(--mg-color-surface-main, var(--mg-color-background-main));
-  color: var(--mg-color-text-main);
-  font-size: var(--mg-font-size-sm, 0.875rem);
-  cursor: pointer;
-  line-height: 1.3;
-}
-
-.mg-v2-viz-target-popover__chip:hover:not(:disabled),
-.mg-v2-viz-target-popover__chip:focus-visible:not(:disabled) {
-  border-color: var(--mg-color-primary-main);
-  color: var(--mg-color-primary-main);
-  outline: none;
-}
-
-.mg-v2-viz-target-popover__chip--active {
-  border-color: var(--mg-color-primary-main);
-  background: var(--mg-color-primary-main);
-  color: var(--mg-color-background-main, var(--mg-white));
-}
-
-.mg-v2-viz-target-popover__chip:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.mg-v2-viz-target-popover__hint {
-  margin: 0;
-  font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--mg-color-text-secondary, var(--ad-b0kla-subtitle-color));
-}
-
-.mg-v2-viz-target-popover__custom-row {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm, 0.5rem);
-}
-
-.mg-v2-viz-target-popover__input {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
-  border: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  border-radius: var(--mg-border-radius-sm, 0.25rem);
-  background: var(--mg-color-background-main);
-  color: var(--mg-color-text-main);
-  font-size: var(--mg-font-size-sm, 0.875rem);
-}
-
-.mg-v2-viz-target-popover__input:focus {
-  border-color: var(--mg-color-primary-main);
-  outline: none;
-}
-
-.mg-v2-viz-target-popover__unit {
-  flex-shrink: 0;
-  font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-color-text-secondary);
-}
-
-.mg-v2-viz-target-popover__apply {
-  flex-shrink: 0;
-}
-
-.mg-v2-viz-target-popover__footer {
-  margin: 0;
-  padding-top: var(--mg-spacing-xs, 0.25rem);
-  border-top: 1px solid var(--mg-color-border-main, var(--ad-b0kla-border));
-  font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--mg-color-text-secondary, var(--ad-b0kla-subtitle-color));
 }
 
 @media (max-width: 900px) {

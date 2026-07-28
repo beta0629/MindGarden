@@ -7,10 +7,12 @@
 
 import {
   DASHBOARD_VIZ_TARGET_COMPLETED,
+  DASHBOARD_VIZ_TARGET_MAX_COMPLETED,
   DASHBOARD_VIZ_TARGET_MODES
 } from '../../../../constants/charts';
 import {
   buildVizTargetStorageKey,
+  calcQuickAddTarget,
   calcRatioTargetCompleted,
   canPersistVizTarget,
   parseVizTargetCustomInput,
@@ -77,21 +79,26 @@ describe('dashboardVizTargetStorage', () => {
     expect(readVizTargetPreference(scope)).toBeNull();
   });
 
-  test('calcRatioTargetCompleted는 previousCompleted 기준 반올림한다', () => {
-    expect(calcRatioTargetCompleted(10, 1.1)).toBe(11);
+  test('calcQuickAddTarget은 현재 입력값 기준 반올림한다', () => {
+    expect(calcQuickAddTarget(100, 1.1)).toBe(110);
+    expect(calcQuickAddTarget(100, 1.2)).toBe(120);
+    expect(calcQuickAddTarget(10, 1.1)).toBe(11);
+    expect(calcQuickAddTarget(0, 1.1)).toBeNull();
+    expect(calcQuickAddTarget(null, 1.1)).toBeNull();
     expect(calcRatioTargetCompleted(10, 1.2)).toBe(12);
-    expect(calcRatioTargetCompleted(10, 1.3)).toBe(13);
-    expect(calcRatioTargetCompleted(0, 1.1)).toBeNull();
-    expect(calcRatioTargetCompleted(null, 1.1)).toBeNull();
   });
 
-  test('parseVizTargetCustomInput은 1 이상 양의 정수만 허용한다', () => {
+  test('parseVizTargetCustomInput은 1~99999 양의 정수만 허용한다', () => {
     expect(parseVizTargetCustomInput('1')).toBe(1);
     expect(parseVizTargetCustomInput('200')).toBe(200);
+    expect(parseVizTargetCustomInput(String(DASHBOARD_VIZ_TARGET_MAX_COMPLETED))).toBe(
+      DASHBOARD_VIZ_TARGET_MAX_COMPLETED
+    );
     expect(parseVizTargetCustomInput('0')).toBeNull();
     expect(parseVizTargetCustomInput('-3')).toBeNull();
     expect(parseVizTargetCustomInput('1.5')).toBeNull();
     expect(parseVizTargetCustomInput('abc')).toBeNull();
     expect(parseVizTargetCustomInput('')).toBeNull();
+    expect(parseVizTargetCustomInput(String(DASHBOARD_VIZ_TARGET_MAX_COMPLETED + 1))).toBeNull();
   });
 });

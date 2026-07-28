@@ -8,7 +8,7 @@
  * @since 2026-07-28
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import Chart from '../../common/Chart';
@@ -20,10 +20,7 @@ import {
   CHART_TYPES,
   B0KLA_CHART_BAR_FALLBACK,
   B0KLA_STATUS_SERIES_COLOR_VARS,
-  DASHBOARD_VIZ_TARGET_COMPLETED,
-  DASHBOARD_VIZ_TARGET_MODES,
-  DASHBOARD_VIZ_TARGET_PRESETS,
-  DASHBOARD_VIZ_TARGET_RATIO_OPTIONS
+  DASHBOARD_VIZ_TARGET_COMPLETED
 } from '../../../constants/charts';
 import { resolveViewModeStorageScope } from '../../../hooks/useViewModePreference';
 import { resolveCssColorVarToHex } from '../../../utils/resolveCssColorVarToHex';
@@ -42,11 +39,10 @@ import {
 } from '../utils/dashboardChartPeriodUtils';
 import { ensureMgVizBarValueLabelsPlugin } from '../utils/chartBarValueLabelPlugin';
 import {
-  calcRatioTargetCompleted,
-  parseVizTargetCustomInput,
   resolveVizTargetCompleted,
   writeVizTargetPreference
 } from '../utils/dashboardVizTargetStorage';
+import VizTargetGoalSettingModal from './VizTargetGoalSettingModal';
 import './AdminDashboardVisualizationGroup.css';
 
 ensureMgVizBarValueLabelsPlugin();
@@ -286,7 +282,7 @@ VizGrowthKpiCard.propTypes = {
 };
 
 /**
- * V6b 목표 vs 실적 KPI + 목표 건수 인라인 설정 팝오버 (designer A안)
+ * V6b 목표 vs 실적 KPI + UnifiedModal 목표 설정 진입점
  *
  * @param {object} props
  * @returns {JSX.Element}
@@ -297,87 +293,15 @@ function VizTargetKpiCard({
   statusLabel,
   targetMeta,
   targetCompleted,
-  previousCompleted,
   countUnit,
   onTargetChange
 }) {
   const { t } = useTranslation();
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [customInput, setCustomInput] = useState(
-    String(toSafeNumber(targetCompleted, DASHBOARD_VIZ_TARGET_COMPLETED))
-  );
-  const popoverRef = useRef(null);
-  const triggerRef = useRef(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isAchieved = achievementPercent >= PROGRESS_BAR_MAX_PERCENT;
   const barWidth = Math.min(Math.max(achievementPercent, 0), PROGRESS_BAR_MAX_PERCENT);
-  const previousSafe = previousCompleted == null ? 0 : toSafeNumber(previousCompleted, 0);
-  const ratioDisabled = previousSafe <= 0;
-  const parsedCustom = parseVizTargetCustomInput(customInput);
-  const canApplyCustom = parsedCustom != null;
-
-  useEffect(() => {
-    if (isPopoverOpen) {
-      setCustomInput(String(toSafeNumber(targetCompleted, DASHBOARD_VIZ_TARGET_COMPLETED)));
-    }
-  }, [isPopoverOpen, targetCompleted]);
-
-  useEffect(() => {
-    if (!isPopoverOpen) {
-      return undefined;
-    }
-    const handlePointerDown = (event) => {
-      const target = event.target;
-      if (popoverRef.current?.contains(target) || triggerRef.current?.contains(target)) {
-        return;
-      }
-      setIsPopoverOpen(false);
-    };
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setIsPopoverOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isPopoverOpen]);
-
-  const commitTarget = useCallback((mode, nextTarget) => {
-    if (typeof onTargetChange !== 'function') {
-      return;
-    }
-    const safeTarget = toSafeNumber(nextTarget, 0);
-    if (safeTarget < 1) {
-      return;
-    }
-    onTargetChange(mode, safeTarget);
-    setIsPopoverOpen(false);
-  }, [onTargetChange]);
-
-  const handlePresetClick = (preset) => {
-    commitTarget(DASHBOARD_VIZ_TARGET_MODES.PRESET, preset);
-  };
-
-  const handleRatioClick = (option) => {
-    const next = calcRatioTargetCompleted(previousSafe, option.multiplier);
-    if (next == null) {
-      return;
-    }
-    commitTarget(DASHBOARD_VIZ_TARGET_MODES.RATIO, next);
-  };
-
-  const handleApplyCustom = () => {
-    if (parsedCustom == null) {
-      return;
-    }
-    commitTarget(DASHBOARD_VIZ_TARGET_MODES.CUSTOM, parsedCustom);
-  };
-
-  const settingTitle = t('admin:dashboard.v2.viz.target.settingTitle');
+  const settingAriaLabel = t('admin:dashboard.v2.viz.targetGoal.settingsAria');
 
   return (
     <article
@@ -400,147 +324,16 @@ function VizTargetKpiCard({
       <div className="mg-v2-viz-summary-kpi__target-meta-row">
         <p className="mg-v2-viz-summary-kpi__previous">{toDisplayString(targetMeta)}</p>
         <button
-          ref={triggerRef}
           type="button"
           className="mg-v2-viz-target-settings-btn"
-          aria-label={toDisplayString(settingTitle)}
-          aria-expanded={isPopoverOpen}
+          aria-label={toDisplayString(settingAriaLabel)}
           aria-haspopup="dialog"
-          data-testid="viz-target-settings-trigger"
-          onClick={() => setIsPopoverOpen((open) => !open)}
+          aria-expanded={isModalOpen}
+          data-testid="viz-target-goal-settings"
+          onClick={() => setIsModalOpen(true)}
         >
           <Icon name="SETTINGS" size="SM" color="SECONDARY" aria-hidden="true" />
         </button>
-        {isPopoverOpen ? (
-          <div
-            ref={popoverRef}
-            className="mg-v2-viz-target-popover"
-            role="dialog"
-            aria-label={toDisplayString(settingTitle)}
-            data-testid="viz-target-settings-popover"
-          >
-            <div className="mg-v2-viz-target-popover__header">
-              <h3 className="mg-v2-viz-target-popover__title">
-                {toDisplayString(settingTitle)}
-              </h3>
-              <button
-                type="button"
-                className="mg-v2-viz-target-popover__close"
-                aria-label={toDisplayString(t('common:actions.close'))}
-                data-testid="viz-target-settings-close"
-                onClick={() => setIsPopoverOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mg-v2-viz-target-popover__section">
-              <p className="mg-v2-viz-target-popover__label">
-                {toDisplayString(t('admin:dashboard.v2.viz.target.presetLabel'))}
-              </p>
-              <div className="mg-v2-viz-target-popover__chips" role="group">
-                {DASHBOARD_VIZ_TARGET_PRESETS.map((preset) => {
-                  const isActive = toSafeNumber(targetCompleted, 0) === preset;
-                  return (
-                    <button
-                      key={preset}
-                      type="button"
-                      className={`mg-v2-viz-target-popover__chip${
-                        isActive ? ' mg-v2-viz-target-popover__chip--active' : ''
-                      }`}
-                      data-testid={`viz-target-preset-${preset}`}
-                      onClick={() => handlePresetClick(preset)}
-                    >
-                      {toDisplayString(t('admin:dashboard.v2.viz.target.presetBtn', {
-                        count: preset,
-                        unit: countUnit
-                      }))}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mg-v2-viz-target-popover__section">
-              <p className="mg-v2-viz-target-popover__label">
-                {toDisplayString(t('admin:dashboard.v2.viz.target.ratioLabel'))}
-              </p>
-              <div className="mg-v2-viz-target-popover__chips" role="group">
-                {DASHBOARD_VIZ_TARGET_RATIO_OPTIONS.map((option) => {
-                  const ratioTarget = calcRatioTargetCompleted(previousSafe, option.multiplier);
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      className="mg-v2-viz-target-popover__chip"
-                      data-testid={`viz-target-ratio-${option.id}`}
-                      disabled={ratioDisabled || ratioTarget == null}
-                      onClick={() => handleRatioClick(option)}
-                    >
-                      {toDisplayString(t('admin:dashboard.v2.viz.target.ratioBtn', {
-                        percent: option.percent,
-                        count: ratioTarget != null ? ratioTarget : 0,
-                        unit: countUnit
-                      }))}
-                    </button>
-                  );
-                })}
-              </div>
-              {ratioDisabled ? (
-                <p className="mg-v2-viz-target-popover__hint" data-testid="viz-target-ratio-hint">
-                  {toDisplayString(t('admin:dashboard.v2.viz.target.noPreviousData'))}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="mg-v2-viz-target-popover__section">
-              <p className="mg-v2-viz-target-popover__label">
-                {toDisplayString(t('admin:dashboard.v2.viz.target.customLabel'))}
-              </p>
-              <div className="mg-v2-viz-target-popover__custom-row">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  className="mg-v2-viz-target-popover__input"
-                  value={customInput}
-                  aria-label={toDisplayString(t('admin:dashboard.v2.viz.target.customLabel'))}
-                  data-testid="viz-target-custom-input"
-                  onChange={(event) => setCustomInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      handleApplyCustom();
-                    }
-                  }}
-                />
-                <span className="mg-v2-viz-target-popover__unit" aria-hidden="true">
-                  {toDisplayString(countUnit)}
-                </span>
-                <MGButton
-                  type="button"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'sm',
-                    loading: false,
-                    className: 'mg-v2-viz-target-popover__apply'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  disabled={!canApplyCustom}
-                  data-testid="viz-target-custom-apply"
-                  onClick={handleApplyCustom}
-                  preventDoubleClick={false}
-                >
-                  {toDisplayString(t('admin:dashboard.v2.viz.target.applyBtn'))}
-                </MGButton>
-              </div>
-            </div>
-
-            <p className="mg-v2-viz-target-popover__footer">
-              {toDisplayString(t('admin:dashboard.v2.viz.target.localNotice'))}
-            </p>
-          </div>
-        ) : null}
       </div>
       <div
         className="mg-v2-viz-target-progress"
@@ -555,6 +348,13 @@ function VizTargetKpiCard({
           style={{ '--mg-viz-target-progress': `${barWidth}%` }}
         />
       </div>
+      <VizTargetGoalSettingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        currentTarget={toSafeNumber(targetCompleted, DASHBOARD_VIZ_TARGET_COMPLETED)}
+        countUnit={countUnit}
+        onSave={onTargetChange}
+      />
     </article>
   );
 }
@@ -565,7 +365,6 @@ VizTargetKpiCard.propTypes = {
   statusLabel: PropTypes.string.isRequired,
   targetMeta: PropTypes.string.isRequired,
   targetCompleted: PropTypes.number.isRequired,
-  previousCompleted: PropTypes.number,
   countUnit: PropTypes.string.isRequired,
   onTargetChange: PropTypes.func.isRequired
 };
@@ -1060,7 +859,6 @@ const AdminDashboardVisualizationGroup = ({
               unit: countUnit
             })}
             targetCompleted={toSafeNumber(comparison.targetCompleted, DASHBOARD_VIZ_TARGET_COMPLETED)}
-            previousCompleted={comparison.previousCompleted}
             countUnit={countUnit}
             onTargetChange={handleVizTargetChange}
           />

@@ -33,9 +33,17 @@
   gap: var(--mg-spacing-md, 1rem);
 }
 
-/* 시리즈 토큰 스코프 (secondary-main 미정의 시 fallback) */
+/* 시리즈 토큰 스코프 + 성장 배지 시맨틱 토큰 (ADMIN_DASHBOARD_BADGE_COLOR_SPEC) */
 .mg-v2-content-visualization-group {
   --mg-color-secondary-main: var(--mg-secondary-500);
+  --mg-badge-growth-increase-bg: var(--mg-color-error-50);
+  --mg-badge-growth-increase-text: var(--mg-color-error-dark);
+  --mg-badge-growth-decrease-bg: var(--mg-color-info-bg);
+  --mg-badge-growth-decrease-text: var(--mg-color-info-dark);
+  --mg-badge-growth-new-bg: var(--mg-color-success-50);
+  --mg-badge-growth-new-text: var(--mg-color-success-800);
+  --mg-badge-growth-neutral-bg: var(--mg-color-surface-main);
+  --mg-badge-growth-neutral-text: var(--mg-color-text-secondary);
 }
 
 .mg-v2-content-visualization-group .mg-v2-ad-b0kla__card {
@@ -137,9 +145,9 @@
 
 .mg-v2-viz-growth-badge {
   flex-shrink: 0;
-  /* fill+텍스트만으로 구분 — 테두리 없음, 차트 진한 그린과 명도 분리 */
+  /* 파스텔 fill+텍스트만 — border 없음 (주식창형 증감 배지) */
   font-size: var(--mg-font-size-sm, 0.875rem);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
   border: none;
@@ -174,7 +182,7 @@
 
 .mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--chart {
   font-size: var(--mg-font-size-base, 1rem);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.25;
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
   border: none;
@@ -182,29 +190,34 @@
   white-space: nowrap;
 }
 
-/* 증가: 부드러운 B0KlA success tint + 진한 텍스트 (차트 시리즈 그린과 분리) */
-.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--up,
-.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-badge--success {
-  background-color: var(--ad-b0kla-green-bg, var(--mg-success-50));
-  color: var(--mg-success-800, var(--ad-b0kla-green, var(--mg-success-700)));
+/* 증가(퍼센트): 파스텔 레드 — 주식 상승 */
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--up:not([data-kind='fromZero']) {
+  background-color: var(--mg-badge-growth-increase-bg);
+  color: var(--mg-badge-growth-increase-text);
   border: none;
   border-color: transparent;
 }
 
-/* 감소: 부드러운 error tint + 진한 텍스트 */
-.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down,
-.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-badge--danger {
-  background-color: var(--mg-error-50, var(--mg-badge-status-danger-bg));
-  color: var(--mg-error-800, var(--mg-badge-status-danger-text));
+/* 감소: 파스텔 블루 — 주식 하락 */
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--down {
+  background-color: var(--mg-badge-growth-decrease-bg);
+  color: var(--mg-badge-growth-decrease-text);
   border: none;
   border-color: transparent;
 }
 
-/* 동일/보합·신규: 중립 그레이 fill */
-.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--flat,
-.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-badge--neutral {
-  background-color: var(--mg-gray-100, var(--mg-badge-status-neutral-bg));
-  color: var(--mg-gray-800, var(--mg-badge-status-neutral-text));
+/* 신규(전기간 0): 파스텔 그린 */
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge[data-kind='fromZero'] {
+  background-color: var(--mg-badge-growth-new-bg);
+  color: var(--mg-badge-growth-new-text);
+  border: none;
+  border-color: transparent;
+}
+
+/* 동일/보합 */
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--flat {
+  background-color: var(--mg-badge-growth-neutral-bg);
+  color: var(--mg-badge-growth-neutral-text);
   border: none;
   border-color: transparent;
 }

@@ -199,10 +199,10 @@ describe('AdminDashboardVisualizationGroup', () => {
     const completedGrowth = screen.getByTestId('viz-kpi-card-completed-growth');
     expect(bookedGrowth).toBeInTheDocument();
     expect(completedGrowth).toBeInTheDocument();
-    expect(bookedGrowth).toHaveAttribute('data-variant', 'success');
+    expect(bookedGrowth).toHaveAttribute('data-variant', 'danger');
     expect(bookedGrowth).toHaveAttribute('data-tone', 'up');
     expect(bookedGrowth).toHaveTextContent('▲ 25%');
-    expect(completedGrowth).toHaveAttribute('data-variant', 'success');
+    expect(completedGrowth).toHaveAttribute('data-variant', 'danger');
     expect(completedGrowth).toHaveTextContent('▲ 33%');
     expect(screen.getByText('지난달 4건')).toBeInTheDocument();
     expect(screen.getByTestId('viz-target-progress')).toBeInTheDocument();
@@ -218,10 +218,10 @@ describe('AdminDashboardVisualizationGroup', () => {
 
     const bookedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-booked');
     const completedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-completed');
-    expect(bookedBadge).toHaveAttribute('data-variant', 'success');
+    expect(bookedBadge).toHaveAttribute('data-variant', 'danger');
     expect(bookedBadge).toHaveAttribute('data-tone', 'up');
     expect(bookedBadge).toHaveTextContent('예약 지난달 대비 ▲ 25%');
-    expect(completedBadge).toHaveAttribute('data-variant', 'success');
+    expect(completedBadge).toHaveAttribute('data-variant', 'danger');
     expect(completedBadge).toHaveTextContent('완료 지난달 대비 ▲ 33%');
 
     const multiCard = screen.getByTestId('viz-multi-line-card');
@@ -270,7 +270,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(bookedGrowth).toHaveTextContent('▲ 신규');
   });
 
-  test('감소 시 danger 배지, 동일 시 neutral 배지를 노출한다', () => {
+  test('감소 시 info(블루) 배지, 동일 시 neutral 배지를 노출한다', () => {
     const downFlatStats = {
       ...sampleStats,
       monthlyData: [
@@ -283,7 +283,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     );
     const bookedGrowth = screen.getByTestId('viz-kpi-card-booked-growth');
     const completedGrowth = screen.getByTestId('viz-kpi-card-completed-growth');
-    expect(bookedGrowth).toHaveAttribute('data-variant', 'danger');
+    expect(bookedGrowth).toHaveAttribute('data-variant', 'info');
     expect(bookedGrowth).toHaveAttribute('data-tone', 'down');
     expect(bookedGrowth).toHaveTextContent('▼ 50%');
     expect(completedGrowth).toHaveAttribute('data-variant', 'neutral');
@@ -308,7 +308,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(screen.queryByTestId('viz-stacked-bar-growth-completed')).not.toBeInTheDocument();
   });
 
-  test('차트 카드 감소 배지는 danger·상담 현황 제목 옆에 노출한다', () => {
+  test('차트 카드 감소 배지는 info(블루)·상담 현황 제목 옆에 노출한다', () => {
     const downStats = {
       ...sampleStats,
       monthlyData: [
@@ -321,7 +321,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     );
     const stackedCard = screen.getByTestId('viz-stacked-bar-card');
     const completedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-completed');
-    expect(completedBadge).toHaveAttribute('data-variant', 'danger');
+    expect(completedBadge).toHaveAttribute('data-variant', 'info');
     expect(completedBadge).toHaveAttribute('data-tone', 'down');
     expect(completedBadge).toHaveTextContent('완료 지난달 대비 ▼ 50%');
   });

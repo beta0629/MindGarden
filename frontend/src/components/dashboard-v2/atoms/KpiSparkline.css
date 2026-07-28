@@ -5,7 +5,16 @@
  * @since 2026-07-02
  */
 
+/* 성장 배지 시맨틱 토큰 (ADMIN_DASHBOARD_BADGE_COLOR_SPEC — VisualizationGroup과 동일) */
 .mg-v2-kpi-sparkline {
+  --mg-badge-growth-increase-bg: var(--mg-color-error-50);
+  --mg-badge-growth-increase-text: var(--mg-color-error-dark);
+  --mg-badge-growth-decrease-bg: var(--mg-color-info-bg);
+  --mg-badge-growth-decrease-text: var(--mg-color-info-dark);
+  --mg-badge-growth-new-bg: var(--mg-color-success-50);
+  --mg-badge-growth-new-text: var(--mg-color-success-800);
+  --mg-badge-growth-neutral-bg: var(--mg-color-surface-main);
+  --mg-badge-growth-neutral-text: var(--mg-color-text-secondary);
   width: 100%;
   height: var(--mg-kpi-sparkline-height, 2rem);
   margin-top: var(--mg-spacing-xs, 0.25rem);

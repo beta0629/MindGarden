@@ -305,3 +305,136 @@ export function isTrendSeriesAllZero(rows) {
   const sums = sumTrendSeriesCounts(rows);
   return sums.total === 0;
 }
+
+/**
+ * 예약·완료만 모두 0인지 (진행 제외 — 차트 empty 판정용).
+ *
+ * @param {Array<object>|null|undefined} rows
+ * @returns {boolean}
+ */
+export function isBookedCompletedAllZero(rows) {
+  const sums = sumTrendSeriesCounts(rows);
+  return sums.booked + sums.completed === 0;
+}
+
+/**
+ * 직전 동기간 대비 증감률(%). previous 없거나 0이면 null(배지 미노출).
+ *
+ * @param {number} current
+ * @param {number|null|undefined} previous
+ * @returns {number|null}
+ */
+export function calcGrowthRatePercent(current, previous) {
+  if (previous == null || !Number.isFinite(Number(previous))) {
+    return null;
+  }
+  const prev = Number(previous);
+  if (prev <= 0) {
+    return null;
+  }
+  return Math.round(((toSafeNumber(current, 0) - prev) / prev) * 100);
+}
+
+/**
+ * @param {number|null|undefined} growthRate
+ * @returns {'up'|'down'|'flat'|null}
+ */
+export function resolveGrowthTone(growthRate) {
+  if (growthRate == null || !Number.isFinite(Number(growthRate))) {
+    return null;
+  }
+  const rate = Number(growthRate);
+  if (rate > 0) {
+    return 'up';
+  }
+  if (rate < 0) {
+    return 'down';
+  }
+  return 'flat';
+}
+
+/**
+ * 최신 버킷 vs 직전 버킷(또는 API previous/growth/target) 비교 메트릭.
+ *
+ * @param {Array<object>|null|undefined} rows
+ * @param {object|null|undefined} stats consultationStats (optional API fields)
+ * @param {number} defaultTargetCompleted
+ * @returns {{
+ *   currentBooked: number,
+ *   currentCompleted: number,
+ *   previousBooked: number|null,
+ *   previousCompleted: number|null,
+ *   growthRateBooked: number|null,
+ *   growthRateCompleted: number|null,
+ *   targetCompleted: number
+ * }}
+ */
+export function resolvePeriodComparisonMetrics(rows, stats, defaultTargetCompleted) {
+  let currentBooked = 0;
+  let currentCompleted = 0;
+  let previousBooked = null;
+  let previousCompleted = null;
+
+  if (Array.isArray(rows) && rows.length > 0) {
+    const last = rows[rows.length - 1];
+    currentBooked = toSafeNumber(last?.bookedCount ?? last?.scheduledCount, 0);
+    currentCompleted = toSafeNumber(last?.completedCount, 0);
+    if (rows.length >= 2) {
+      const prev = rows[rows.length - 2];
+      previousBooked = toSafeNumber(prev?.bookedCount ?? prev?.scheduledCount, 0);
+      previousCompleted = toSafeNumber(prev?.completedCount, 0);
+    }
+  }
+
+  const apiPrevBooked = stats?.previousPeriodBooked
+    ?? stats?.previousPeriodTotals?.booked;
+  const apiPrevCompleted = stats?.previousPeriodCompleted
+    ?? stats?.previousPeriodTotals?.completed;
+  if (apiPrevBooked != null && Number.isFinite(Number(apiPrevBooked))) {
+    previousBooked = toSafeNumber(apiPrevBooked, 0);
+  }
+  if (apiPrevCompleted != null && Number.isFinite(Number(apiPrevCompleted))) {
+    previousCompleted = toSafeNumber(apiPrevCompleted, 0);
+  }
+
+  const apiGrowthBooked = stats?.growthRateBooked;
+  const apiGrowthCompleted = stats?.growthRateCompleted;
+  const growthRateBooked = apiGrowthBooked != null && Number.isFinite(Number(apiGrowthBooked))
+    ? Math.round(Number(apiGrowthBooked))
+    : calcGrowthRatePercent(currentBooked, previousBooked);
+  const growthRateCompleted = apiGrowthCompleted != null
+    && Number.isFinite(Number(apiGrowthCompleted))
+    ? Math.round(Number(apiGrowthCompleted))
+    : calcGrowthRatePercent(currentCompleted, previousCompleted);
+
+  const apiTarget = stats?.targetCompleted;
+  const targetCompleted = apiTarget != null && Number.isFinite(Number(apiTarget))
+    && Number(apiTarget) > 0
+    ? toSafeNumber(apiTarget, defaultTargetCompleted)
+    : toSafeNumber(defaultTargetCompleted, 100);
+
+  return {
+    currentBooked,
+    currentCompleted,
+    previousBooked,
+    previousCompleted,
+    growthRateBooked,
+    growthRateCompleted,
+    targetCompleted
+  };
+}
+
+/**
+ * 목표 대비 달성률(%). target &lt;= 0 이면 0.
+ *
+ * @param {number} actual
+ * @param {number} target
+ * @returns {number}
+ */
+export function calcTargetAchievementPercent(actual, target) {
+  const t = toSafeNumber(target, 0);
+  if (t <= 0) {
+    return 0;
+  }
+  return Math.round((toSafeNumber(actual, 0) / t) * 100);
+}

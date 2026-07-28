@@ -1,5 +1,5 @@
 /**
- * AdminDashboardVisualizationGroup — 기간 pill + 예약/진행/완료 멀티 비주얼 (V1~V5)
+ * AdminDashboardVisualizationGroup — 기간 pill + KPI(V6/V6b) + 예약/완료 차트 (v2)
  *
  * SSOT: docs/design-system/ADMIN_DASHBOARD_PERIOD_STATS_VIZ_SPEC.md
  *
@@ -12,23 +12,25 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import Chart from '../../common/Chart';
 import MGButton from '../../common/MGButton';
+import StatusBadge from '../../common/StatusBadge';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import Icon from '../../ui/Icon/Icon';
 import {
   CHART_TYPES,
   B0KLA_CHART_BAR_FALLBACK,
-  B0KLA_STATUS_SERIES_COLOR_VARS
+  B0KLA_STATUS_SERIES_COLOR_VARS,
+  DASHBOARD_VIZ_TARGET_COMPLETED
 } from '../../../constants/charts';
 import { resolveCssColorVarToHex } from '../../../utils/resolveCssColorVarToHex';
 import { toSafeNumber, toDisplayString } from '../../../utils/safeDisplay';
-import KpiSparkline from '../atoms/KpiSparkline';
-import { extractSparklineValues } from '../utils/dashboardKpiSparklineUtils';
 import {
   DASHBOARD_CHART_PERIOD,
   formatChartPeriodLabel,
-  isTrendSeriesAllZero,
-  resolveTrendRowsByPeriod,
-  sumTrendSeriesCounts
+  isBookedCompletedAllZero,
+  calcTargetAchievementPercent,
+  resolveGrowthTone,
+  resolvePeriodComparisonMetrics,
+  resolveTrendRowsByPeriod
 } from '../utils/dashboardChartPeriodUtils';
 import './AdminDashboardVisualizationGroup.css';
 
@@ -49,7 +51,6 @@ const VIZ_PERIOD_OPTIONS = [
 
 const STATUS_SERIES_LABEL_KEYS = Object.freeze({
   BOOKED: 'admin:dashboard.v2.viz.seriesBooked',
-  IN_PROGRESS: 'admin:dashboard.v2.viz.seriesInProgress',
   COMPLETED: 'admin:dashboard.v2.viz.seriesCompleted'
 });
 
@@ -60,11 +61,25 @@ const PERIOD_SUBTITLE_KEYS = Object.freeze({
   [DASHBOARD_CHART_PERIOD.YEARLY]: 'admin:dashboard.v2.viz.subtitleYearly'
 });
 
+const PREVIOUS_PERIOD_LABEL_KEYS = Object.freeze({
+  [DASHBOARD_CHART_PERIOD.DAILY]: 'admin:dashboard.v2.viz.previousDaily',
+  [DASHBOARD_CHART_PERIOD.WEEKLY]: 'admin:dashboard.v2.viz.previousWeekly',
+  [DASHBOARD_CHART_PERIOD.MONTHLY]: 'admin:dashboard.v2.viz.previousMonthly',
+  [DASHBOARD_CHART_PERIOD.YEARLY]: 'admin:dashboard.v2.viz.previousYearly'
+});
+
+const GROWTH_BADGE_VARIANT = Object.freeze({
+  up: 'success',
+  down: 'danger',
+  flat: 'neutral'
+});
+
 const CHART_HEIGHT = '200px';
 const EMPTY_MESSAGE_KEY = 'admin:dashboard.v2.viz.emptyPeriod';
+const PROGRESS_BAR_MAX_PERCENT = 100;
 
 /**
- * V2/V3/V5 empty — 아이콘 + 문구 (스펙 §5)
+ * V2/V3 empty — 아이콘 + 문구 (스펙 §5)
  *
  * @param {{ message: string }} props
  * @returns {JSX.Element}
@@ -90,27 +105,150 @@ VizChartEmpty.propTypes = {
 
 /**
  * @param {Array<object>} rows
- * @returns {{ booked: number[], inProgress: number[], completed: number[] }}
+ * @returns {{ booked: number[], completed: number[] }}
  */
-function extractSeriesArrays(rows) {
+function extractPrimarySeriesArrays(rows) {
   return {
     booked: rows.map((row) => toSafeNumber(row?.bookedCount ?? row?.scheduledCount, 0)),
-    inProgress: rows.map((row) => toSafeNumber(row?.inProgressCount, 0)),
     completed: rows.map((row) => toSafeNumber(row?.completedCount, 0))
   };
 }
 
 /**
- * @param {number} value
- * @param {number} total
+ * MoM 증감 배지 라벨 (스펙 §3: ▲ 12% / ▼ 5% / - 0%)
+ *
+ * @param {number} rate
+ * @param {'up'|'down'|'flat'} tone
  * @returns {string}
  */
-function formatPercent(value, total) {
-  if (total <= 0) {
-    return '0';
+function formatGrowthBadgeLabel(rate, tone) {
+  const absRate = Math.abs(toSafeNumber(rate, 0));
+  if (tone === 'up') {
+    return `▲ ${absRate}%`;
   }
-  return ((toSafeNumber(value, 0) / total) * 100).toFixed(1);
+  if (tone === 'down') {
+    return `▼ ${absRate}%`;
+  }
+  return `- ${absRate}%`;
 }
+
+/**
+ * V6 증감 KPI 카드
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
+function VizGrowthKpiCard({
+  testId,
+  toneClass,
+  label,
+  value,
+  growthRate,
+  previousCount,
+  previousLabel,
+  countUnit
+}) {
+  const tone = resolveGrowthTone(growthRate);
+  const showBadge = tone != null;
+  const previousText = previousCount != null
+    ? `${toDisplayString(previousLabel)} ${toSafeNumber(previousCount, 0)}${countUnit}`
+    : null;
+
+  return (
+    <article
+      className={`mg-v2-viz-summary-kpi ${toneClass}`}
+      data-testid={testId}
+    >
+      <p className="mg-v2-viz-summary-kpi__label">{toDisplayString(label)}</p>
+      <div className="mg-v2-viz-summary-kpi__value-row">
+        <p className="mg-v2-viz-summary-kpi__value">
+          {`${toSafeNumber(value, 0)}${countUnit}`}
+        </p>
+        {showBadge ? (
+          <StatusBadge
+            variant={GROWTH_BADGE_VARIANT[tone]}
+            className="mg-v2-viz-growth-badge"
+            data-testid={`${testId}-growth`}
+          >
+            {formatGrowthBadgeLabel(growthRate, tone)}
+          </StatusBadge>
+        ) : null}
+      </div>
+      {previousText ? (
+        <p className="mg-v2-viz-summary-kpi__previous">{previousText}</p>
+      ) : null}
+    </article>
+  );
+}
+
+VizGrowthKpiCard.propTypes = {
+  testId: PropTypes.string.isRequired,
+  toneClass: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.number.isRequired,
+  growthRate: PropTypes.number,
+  previousCount: PropTypes.number,
+  previousLabel: PropTypes.string,
+  countUnit: PropTypes.string.isRequired
+};
+
+/**
+ * V6b 목표 vs 실적 KPI
+ *
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
+function VizTargetKpiCard({
+  label,
+  achievementPercent,
+  statusLabel,
+  targetMeta
+}) {
+  const isAchieved = achievementPercent >= PROGRESS_BAR_MAX_PERCENT;
+  const barWidth = Math.min(Math.max(achievementPercent, 0), PROGRESS_BAR_MAX_PERCENT);
+
+  return (
+    <article
+      className="mg-v2-viz-summary-kpi mg-v2-viz-summary-kpi--target"
+      data-testid="viz-kpi-card-target"
+    >
+      <p className="mg-v2-viz-summary-kpi__label">{toDisplayString(label)}</p>
+      <div className="mg-v2-viz-summary-kpi__value-row">
+        <p className="mg-v2-viz-summary-kpi__value mg-v2-viz-summary-kpi__value--achievement">
+          {`${toSafeNumber(achievementPercent, 0)}%`}
+        </p>
+        <StatusBadge
+          variant={isAchieved ? 'success' : 'info'}
+          className="mg-v2-viz-growth-badge"
+          data-testid="viz-kpi-card-target-status"
+        >
+          {toDisplayString(statusLabel)}
+        </StatusBadge>
+      </div>
+      <p className="mg-v2-viz-summary-kpi__previous">{toDisplayString(targetMeta)}</p>
+      <div
+        className="mg-v2-viz-target-progress"
+        role="progressbar"
+        aria-valuenow={barWidth}
+        aria-valuemin={0}
+        aria-valuemax={PROGRESS_BAR_MAX_PERCENT}
+        data-testid="viz-target-progress"
+      >
+        <div
+          className="mg-v2-viz-target-progress__fill"
+          style={{ '--mg-viz-target-progress': `${barWidth}%` }}
+        />
+      </div>
+    </article>
+  );
+}
+
+VizTargetKpiCard.propTypes = {
+  label: PropTypes.string.isRequired,
+  achievementPercent: PropTypes.number.isRequired,
+  statusLabel: PropTypes.string.isRequired,
+  targetMeta: PropTypes.string.isRequired
+};
 
 const AdminDashboardVisualizationGroup = ({
   consultationStats = null,
@@ -121,8 +259,7 @@ const AdminDashboardVisualizationGroup = ({
   const [vizPeriod, setVizPeriod] = useState(DASHBOARD_CHART_PERIOD.MONTHLY);
   const [seriesColors, setSeriesColors] = useState({
     booked: B0KLA_CHART_BAR_FALLBACK.BORDER,
-    inProgress: B0KLA_CHART_BAR_FALLBACK.FILL,
-    completed: B0KLA_CHART_BAR_FALLBACK.BORDER
+    completed: B0KLA_CHART_BAR_FALLBACK.FILL
   });
   const [canvasTheme, setCanvasTheme] = useState({
     tick: CHART_CANVAS_FALLBACK.TICK,
@@ -140,20 +277,15 @@ const AdminDashboardVisualizationGroup = ({
         B0KLA_CHART_BAR_FALLBACK.BORDER
       )
     );
-    const inProgressResolved = resolveCssColorVarToHex(
-      B0KLA_STATUS_SERIES_COLOR_VARS.IN_PROGRESS,
-      B0KLA_CHART_BAR_FALLBACK.FILL
-    );
     const completedResolved = resolveCssColorVarToHex(
       B0KLA_STATUS_SERIES_COLOR_VARS.COMPLETED,
       resolveCssColorVarToHex(
         B0KLA_STATUS_SERIES_COLOR_VARS.COMPLETED_FALLBACK,
-        B0KLA_CHART_BAR_FALLBACK.BORDER
+        B0KLA_CHART_BAR_FALLBACK.FILL
       )
     );
     setSeriesColors({
       booked: bookedResolved,
-      inProgress: inProgressResolved,
       completed: completedResolved
     });
     setCanvasTheme({
@@ -175,21 +307,37 @@ const AdminDashboardVisualizationGroup = ({
     () => resolveTrendRowsByPeriod(vizPeriod, consultationStats),
     [vizPeriod, consultationStats]
   );
-  const series = useMemo(() => extractSeriesArrays(trendRows), [trendRows]);
-  const sums = useMemo(() => sumTrendSeriesCounts(trendRows), [trendRows]);
-  const allZero = isTrendSeriesAllZero(trendRows);
+  const series = useMemo(() => extractPrimarySeriesArrays(trendRows), [trendRows]);
+  const comparison = useMemo(
+    () => resolvePeriodComparisonMetrics(
+      trendRows,
+      consultationStats,
+      DASHBOARD_VIZ_TARGET_COMPLETED
+    ),
+    [trendRows, consultationStats]
+  );
+  const allZero = isBookedCompletedAllZero(trendRows);
   const labels = useMemo(() => trendRows.map(formatChartPeriodLabel), [trendRows]);
   const subtitle = t(
     PERIOD_SUBTITLE_KEYS[vizPeriod] || PERIOD_SUBTITLE_KEYS[DASHBOARD_CHART_PERIOD.MONTHLY]
   );
   const emptyMessage = t(EMPTY_MESSAGE_KEY);
+  const countUnit = t('admin:dashboard.v2.viz.countUnit');
+  const previousPeriodLabel = t(
+    PREVIOUS_PERIOD_LABEL_KEYS[vizPeriod]
+      || PREVIOUS_PERIOD_LABEL_KEYS[DASHBOARD_CHART_PERIOD.MONTHLY]
+  );
   const seriesLabels = useMemo(
     () => ({
       booked: t(STATUS_SERIES_LABEL_KEYS.BOOKED),
-      inProgress: t(STATUS_SERIES_LABEL_KEYS.IN_PROGRESS),
       completed: t(STATUS_SERIES_LABEL_KEYS.COMPLETED)
     }),
     [t]
+  );
+
+  const achievementPercent = calcTargetAchievementPercent(
+    comparison.currentCompleted,
+    comparison.targetCompleted
   );
 
   const scaleOptions = useMemo(
@@ -240,42 +388,11 @@ const AdminDashboardVisualizationGroup = ({
     [canvasTheme.legend]
   );
 
-  const maxStacked = Math.max(sums.booked + sums.inProgress + sums.completed, 1);
-  const maxLine = Math.max(...series.booked, ...series.inProgress, ...series.completed, 1);
-
-  const sparkBooked = extractSparklineValues(trendRows, 'bookedCount');
-  const sparkInProgress = extractSparklineValues(trendRows, 'inProgressCount');
-  const sparkCompleted = extractSparklineValues(trendRows, 'completedCount');
-
-  const kpiItems = [
-    {
-      key: 'booked',
-      label: seriesLabels.booked,
-      value: sums.booked,
-      spark: sparkBooked,
-      sparkVariant: 'secondary',
-      toneClass: 'mg-v2-viz-kpi-card--booked'
-    },
-    {
-      key: 'inProgress',
-      label: seriesLabels.inProgress,
-      value: sums.inProgress,
-      spark: sparkInProgress,
-      sparkVariant: 'accent',
-      toneClass: 'mg-v2-viz-kpi-card--in-progress'
-    },
-    {
-      key: 'completed',
-      label: seriesLabels.completed,
-      value: sums.completed,
-      spark: sparkCompleted,
-      sparkVariant: 'primary',
-      toneClass: 'mg-v2-viz-kpi-card--completed'
-    }
-  ];
-
-  const donutValues = [sums.booked, sums.inProgress, sums.completed];
-  const donutColors = [seriesColors.booked, seriesColors.inProgress, seriesColors.completed];
+  const maxLine = Math.max(...series.booked, ...series.completed, 1);
+  const chartMaxY = Math.max(
+    ...series.booked.map((v, i) => v + series.completed[i]),
+    1
+  );
 
   return (
     <section
@@ -324,8 +441,61 @@ const AdminDashboardVisualizationGroup = ({
         </div>
       </div>
 
+      {/* V6/V6b — 최상단 KPI 존 */}
+      {loading ? (
+        <div
+          className="mg-v2-skeleton mg-v2-viz-summary-kpi-zone__skeleton"
+          aria-busy="true"
+          aria-hidden="true"
+          data-testid="viz-kpi-skeleton"
+        />
+      ) : (
+        <div
+          className="mg-v2-viz-summary-kpi-zone"
+          aria-busy="false"
+          data-testid="viz-summary-kpi-zone"
+        >
+          <VizGrowthKpiCard
+            testId="viz-kpi-card-booked"
+            toneClass="mg-v2-viz-summary-kpi--booked"
+            label={seriesLabels.booked}
+            value={comparison.currentBooked}
+            growthRate={comparison.growthRateBooked}
+            previousCount={comparison.previousBooked}
+            previousLabel={previousPeriodLabel}
+            countUnit={countUnit}
+          />
+          <VizGrowthKpiCard
+            testId="viz-kpi-card-completed"
+            toneClass="mg-v2-viz-summary-kpi--completed"
+            label={seriesLabels.completed}
+            value={comparison.currentCompleted}
+            growthRate={comparison.growthRateCompleted}
+            previousCount={comparison.previousCompleted}
+            previousLabel={previousPeriodLabel}
+            countUnit={countUnit}
+          />
+          <VizTargetKpiCard
+            label={t('admin:dashboard.v2.viz.targetTitle')}
+            achievementPercent={achievementPercent}
+            statusLabel={
+              achievementPercent >= PROGRESS_BAR_MAX_PERCENT
+                ? t('admin:dashboard.v2.viz.targetAchieved')
+                : t('admin:dashboard.v2.viz.targetInProgress', {
+                  percent: achievementPercent
+                })
+            }
+            targetMeta={t('admin:dashboard.v2.viz.targetMeta', {
+              actual: toSafeNumber(comparison.currentCompleted, 0),
+              target: toSafeNumber(comparison.targetCompleted, 0),
+              unit: countUnit
+            })}
+          />
+        </div>
+      )}
+
       <div className="mg-v2-content-visualization-group__grid">
-        {/* V2 스택 바 */}
+        {/* V2 스택 바 — 예약/완료 */}
         <div className="mg-v2-ad-b0kla__card">
           <div className="mg-v2-ad-b0kla__chart-header">
             <div>
@@ -355,14 +525,6 @@ const AdminDashboardVisualizationGroup = ({
                       stack: 'status'
                     },
                     {
-                      label: seriesLabels.inProgress,
-                      data: series.inProgress,
-                      backgroundColor: seriesColors.inProgress,
-                      borderColor: seriesColors.inProgress,
-                      borderWidth: 1,
-                      stack: 'status'
-                    },
-                    {
                       label: seriesLabels.completed,
                       data: series.completed,
                       backgroundColor: seriesColors.completed,
@@ -381,7 +543,7 @@ const AdminDashboardVisualizationGroup = ({
                       ...tooltipOptions,
                       callbacks: {
                         label: (ctx) =>
-                          `${toDisplayString(ctx.dataset.label)}: ${toSafeNumber(ctx.parsed.y, 0)}건`
+                          `${toDisplayString(ctx.dataset.label)}: ${toSafeNumber(ctx.parsed.y, 0)}${countUnit}`
                       }
                     }
                   },
@@ -389,7 +551,7 @@ const AdminDashboardVisualizationGroup = ({
                     ...stackedScaleOptions,
                     y: {
                       ...stackedScaleOptions.y,
-                      suggestedMax: Math.max(maxStacked + 1, 2)
+                      suggestedMax: Math.max(chartMaxY + 1, 2)
                     }
                   }
                 }}
@@ -398,7 +560,7 @@ const AdminDashboardVisualizationGroup = ({
           </div>
         </div>
 
-        {/* V3 멀티라인 3선 */}
+        {/* V3 멀티라인 — 예약/완료 */}
         <div className="mg-v2-ad-b0kla__card">
           <div className="mg-v2-ad-b0kla__chart-header">
             <div>
@@ -429,15 +591,6 @@ const AdminDashboardVisualizationGroup = ({
                       fill: false
                     },
                     {
-                      label: seriesLabels.inProgress,
-                      data: series.inProgress,
-                      borderColor: seriesColors.inProgress,
-                      backgroundColor: seriesColors.inProgress,
-                      borderWidth: 2,
-                      tension: 0.3,
-                      fill: false
-                    },
-                    {
                       label: seriesLabels.completed,
                       data: series.completed,
                       borderColor: seriesColors.completed,
@@ -463,7 +616,7 @@ const AdminDashboardVisualizationGroup = ({
                       intersect: false,
                       callbacks: {
                         label: (ctx) =>
-                          `${toDisplayString(ctx.dataset.label)}: ${toSafeNumber(ctx.parsed.y, 0)}건`
+                          `${toDisplayString(ctx.dataset.label)}: ${toSafeNumber(ctx.parsed.y, 0)}${countUnit}`
                       }
                     }
                   },
@@ -479,149 +632,6 @@ const AdminDashboardVisualizationGroup = ({
             )}
           </div>
         </div>
-
-        {/* V4 KPI 미니카드 + 스파크라인 */}
-        <div className="mg-v2-ad-b0kla__card">
-          <div className="mg-v2-ad-b0kla__chart-header">
-            <div>
-              <h3 className="mg-v2-ad-b0kla__chart-title">
-                {t('admin:dashboard.v2.viz.kpiTitle')}
-              </h3>
-              <p className="mg-v2-ad-b0kla__chart-desc">{toDisplayString(subtitle)}</p>
-            </div>
-          </div>
-          {loading ? (
-            <div
-              className="mg-v2-skeleton mg-v2-viz-kpi-grid__skeleton"
-              aria-busy="true"
-              aria-hidden="true"
-              data-testid="viz-kpi-skeleton"
-            />
-          ) : (
-            <div className="mg-v2-viz-kpi-grid" aria-busy="false">
-              {kpiItems.map((item) => (
-                <article
-                  key={item.key}
-                  className={`mg-v2-viz-kpi-card ${item.toneClass}`}
-                  data-testid={`viz-kpi-card-${item.key}`}
-                >
-                  <p className="mg-v2-viz-kpi-card__label">{toDisplayString(item.label)}</p>
-                  <div className="mg-v2-viz-kpi-card__body">
-                    <p className="mg-v2-viz-kpi-card__value">
-                      {`${toSafeNumber(item.value, 0)}건`}
-                    </p>
-                    {Array.isArray(item.spark) && item.spark.length > 0 ? (
-                      <KpiSparkline data={item.spark} variant={item.sparkVariant} />
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* V5 상태 도넛 */}
-        <div className="mg-v2-ad-b0kla__card">
-          <div className="mg-v2-ad-b0kla__chart-header">
-            <div>
-              <h3 className="mg-v2-ad-b0kla__chart-title">
-                {t('admin:dashboard.v2.viz.donutTitle')}
-              </h3>
-              <p className="mg-v2-ad-b0kla__chart-desc">{toDisplayString(subtitle)}</p>
-            </div>
-          </div>
-          <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-ad-b0kla__chart-wrapper--donut mg-v2-viz-donut">
-            {loading ? (
-              <div className="mg-v2-skeleton mg-v2-viz-chart__skeleton" aria-hidden="true" />
-            ) : sums.total === 0 ? (
-              <VizChartEmpty message={emptyMessage} />
-            ) : (
-              <div className="mg-v2-viz-donut__layout">
-                <div className="mg-v2-viz-donut__chart">
-                  <Chart
-                    type={CHART_TYPES.DOUGHNUT}
-                    data={{
-                      labels: [
-                        seriesLabels.booked,
-                        seriesLabels.inProgress,
-                        seriesLabels.completed
-                      ],
-                      datasets: [
-                        {
-                          data: donutValues,
-                          backgroundColor: donutColors,
-                          borderColor: donutColors,
-                          borderWidth: 2
-                        }
-                      ]
-                    }}
-                    height={CHART_HEIGHT}
-                    options={{
-                      maintainAspectRatio: false,
-                      cutout: '62%',
-                      plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                          ...tooltipOptions,
-                          callbacks: {
-                            label: (ctx) => {
-                              const v = toSafeNumber(ctx.parsed, 0);
-                              const pct = formatPercent(v, sums.total);
-                              return `${toDisplayString(ctx.label)}: ${v}건 (${pct}%)`;
-                            }
-                          }
-                        }
-                      }
-                    }}
-                  />
-                  <div className="mg-v2-viz-donut__center" aria-hidden="true">
-                    <span className="mg-v2-viz-donut__center-value">
-                      {toSafeNumber(sums.total, 0)}
-                    </span>
-                    <span className="mg-v2-viz-donut__center-label">건</span>
-                  </div>
-                </div>
-                <ul className="mg-v2-viz-donut__legend">
-                  {[
-                    {
-                      key: 'booked',
-                      label: seriesLabels.booked,
-                      value: sums.booked,
-                      swatchClass: 'mg-v2-viz-donut__swatch--booked'
-                    },
-                    {
-                      key: 'inProgress',
-                      label: seriesLabels.inProgress,
-                      value: sums.inProgress,
-                      swatchClass: 'mg-v2-viz-donut__swatch--in-progress'
-                    },
-                    {
-                      key: 'completed',
-                      label: seriesLabels.completed,
-                      value: sums.completed,
-                      swatchClass: 'mg-v2-viz-donut__swatch--completed'
-                    }
-                  ].map((item) => (
-                    <li key={item.key} className="mg-v2-viz-donut__legend-item">
-                      <span
-                        className={`mg-v2-viz-donut__swatch ${item.swatchClass}`}
-                        aria-hidden="true"
-                      />
-                      <span className="mg-v2-viz-donut__legend-text">
-                        {`${toDisplayString(item.label)} ${formatPercent(item.value, sums.total)}%`}
-                      </span>
-                      <span className="mg-v2-viz-donut__legend-count">
-                        {`${toSafeNumber(item.value, 0)}건`}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* P1 슬롯: V7 일간 히트맵 / V8 상담사 랭킹 — 이번 배치 미구현 */}
       </div>
     </section>
   );
@@ -632,7 +642,16 @@ AdminDashboardVisualizationGroup.propTypes = {
     dailyData: PropTypes.array,
     weeklyData: PropTypes.array,
     monthlyData: PropTypes.array,
-    yearlyData: PropTypes.array
+    yearlyData: PropTypes.array,
+    previousPeriodBooked: PropTypes.number,
+    previousPeriodCompleted: PropTypes.number,
+    growthRateBooked: PropTypes.number,
+    growthRateCompleted: PropTypes.number,
+    targetCompleted: PropTypes.number,
+    previousPeriodTotals: PropTypes.shape({
+      booked: PropTypes.number,
+      completed: PropTypes.number
+    })
   }),
   loading: PropTypes.bool,
   darkResolved: PropTypes.bool

@@ -8,12 +8,17 @@
 import {
   DASHBOARD_CHART_PERIOD,
   DASHBOARD_CHART_ROLLING_MONTHS,
+  calcGrowthRatePercent,
+  calcTargetAchievementPercent,
   getEmptyDailyChartData,
   getEmptyMonthlyChartData,
   getEmptyWeeklyChartData,
   getEmptyYearlyChartData,
   getKstDateParts,
+  isBookedCompletedAllZero,
   isTrendSeriesAllZero,
+  resolveGrowthTone,
+  resolvePeriodComparisonMetrics,
   resolveRollingDailyChartRows,
   resolveRollingMonthlyChartRows,
   resolveRollingWeeklyChartRows,
@@ -153,5 +158,55 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
     });
     expect(isTrendSeriesAllZero(rows)).toBe(false);
     expect(isTrendSeriesAllZero([])).toBe(true);
+  });
+
+  test('calcGrowthRatePercent / resolveGrowthTone / resolvePeriodComparisonMetrics', () => {
+    expect(calcGrowthRatePercent(5, 4)).toBe(25);
+    expect(calcGrowthRatePercent(3, 4)).toBe(-25);
+    expect(calcGrowthRatePercent(4, 4)).toBe(0);
+    expect(calcGrowthRatePercent(5, 0)).toBeNull();
+    expect(calcGrowthRatePercent(5, null)).toBeNull();
+    expect(resolveGrowthTone(12)).toBe('up');
+    expect(resolveGrowthTone(-5)).toBe('down');
+    expect(resolveGrowthTone(0)).toBe('flat');
+    expect(resolveGrowthTone(null)).toBeNull();
+
+    const rows = [
+      { period: '2026-06', bookedCount: 4, completedCount: 3 },
+      { period: '2026-07', bookedCount: 5, completedCount: 4 }
+    ];
+    const metrics = resolvePeriodComparisonMetrics(rows, null, 100);
+    expect(metrics.currentBooked).toBe(5);
+    expect(metrics.currentCompleted).toBe(4);
+    expect(metrics.previousBooked).toBe(4);
+    expect(metrics.growthRateBooked).toBe(25);
+    expect(metrics.growthRateCompleted).toBe(33);
+    expect(metrics.targetCompleted).toBe(100);
+    expect(calcTargetAchievementPercent(4, 100)).toBe(4);
+    expect(calcTargetAchievementPercent(120, 100)).toBe(120);
+    expect(calcTargetAchievementPercent(10, 0)).toBe(0);
+
+    const apiOverride = resolvePeriodComparisonMetrics(rows, {
+      previousPeriodBooked: 10,
+      previousPeriodCompleted: 8,
+      growthRateBooked: 10,
+      growthRateCompleted: -5,
+      targetCompleted: 50
+    }, 100);
+    expect(apiOverride.previousBooked).toBe(10);
+    expect(apiOverride.previousCompleted).toBe(8);
+    expect(apiOverride.growthRateBooked).toBe(10);
+    expect(apiOverride.growthRateCompleted).toBe(-5);
+    expect(apiOverride.targetCompleted).toBe(50);
+  });
+
+  test('isBookedCompletedAllZero는 진행만 있어도 true', () => {
+    expect(isBookedCompletedAllZero([
+      { bookedCount: 0, inProgressCount: 5, completedCount: 0 }
+    ])).toBe(true);
+    expect(isBookedCompletedAllZero([
+      { bookedCount: 1, inProgressCount: 0, completedCount: 0 }
+    ])).toBe(false);
+    expect(isBookedCompletedAllZero([])).toBe(true);
   });
 });

@@ -24,7 +24,7 @@
 }
 
 .mg-v2-kpi-sparkline--green {
-  color: var(--mg-color-b0kla-green-500, var(--mg-color-success-main));
+  color: var(--mg-color-primary-main, var(--mg-color-b0kla-green-500));
 }
 
 .mg-v2-kpi-sparkline--orange {

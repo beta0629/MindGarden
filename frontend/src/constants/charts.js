@@ -45,18 +45,19 @@ export const B0KLA_CHART_BAR_FALLBACK = {
 };
 
 /**
- * 상담 상태 시리즈 색상 토큰 (디자인 SSOT v2).
+ * 상담 상태 시리즈 색상 토큰 (디자인 SSOT — 진한 그린 복원).
  * Canvas 전달 전 resolveCssColorVarToHex로 해석. hex 리터럴 금지.
- * 예약=blue, 완료=green(고대비), 진행=text-secondary(2순위·기본 비표시).
+ * 예약=secondary(차분), 완료=primary(진한 올리브 그린), 진행=text-secondary(2순위·기본 비표시).
+ * 고대비는 시리즈 팔레트 교체(블루/에메랄드)가 아니라 축·배경·범례 명도 차로 확보.
  * SSOT: docs/design-system/ADMIN_DASHBOARD_PERIOD_STATS_VIZ_SPEC.md §2
  */
 export const B0KLA_STATUS_SERIES_COLOR_VARS = Object.freeze({
-  BOOKED: '--ad-b0kla-blue',
-  BOOKED_FALLBACK: '--mg-primary-400',
+  BOOKED: '--mg-color-secondary-main',
+  BOOKED_FALLBACK: '--mg-secondary-500',
   IN_PROGRESS: '--ad-b0kla-text-secondary',
   IN_PROGRESS_FALLBACK: '--mg-gray-700',
-  COMPLETED: '--ad-b0kla-green',
-  COMPLETED_FALLBACK: '--mg-success-600'
+  COMPLETED: '--mg-color-primary-main',
+  COMPLETED_FALLBACK: '--mg-color-b0kla-green-500'
 });
 
 /**

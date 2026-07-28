@@ -67,8 +67,9 @@ import KpiFlipCard from '../admin/AdminDashboard/molecules/KpiFlipCard';
 import CumulativeConsultantCountsChart from './molecules/CumulativeConsultantCountsChart';
 import './molecules/CumulativeConsultantCountsChart.css';
 import Chart from '../common/Chart';
-import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STEP_CHART_HEX } from '../../constants/charts';
-import { resolveCssColorTokensArray, resolveCssColorVarToHex } from '../../utils/resolveCssColorVarToHex';
+import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STATUS_SERIES_COLOR_VARS } from '../../constants/charts';
+import { resolveCssColorVarToHex } from '../../utils/resolveCssColorVarToHex';
+import AdminDashboardVisualizationGroup from './organisms/AdminDashboardVisualizationGroup';
 import {
   AdminMetricsVisualization,
   ManualMatchingQueue,
@@ -97,13 +98,6 @@ import {
   buildTrendAriaLabel,
   extractSparklineValues
 } from './utils/dashboardKpiSparklineUtils';
-import {
-  DASHBOARD_CHART_ROLLING_MONTHS,
-  DASHBOARD_CHART_ROLLING_WEEKS,
-  formatChartPeriodLabel,
-  resolveRollingMonthlyChartRows,
-  resolveRollingWeeklyChartRows
-} from './utils/dashboardChartPeriodUtils';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
@@ -140,15 +134,6 @@ const DASHBOARD_CHART_CANVAS_FALLBACK = Object.freeze({
 });
 
 
-/** 단계별 현황 도넛 차트 라벨 (5단계) */
-const STEP_CHART_LABELS = [
-  '매칭',
-  '입금 확인',
-  '회기 권한',
-  '스케줄 등록',
-  '회계처리'
-];
-
 const AdminDashboardV2 = ({ user: propUser }) => {
   const { t } = useTranslation(['admin', 'common']);
   const [confirm, ConfirmModal] = useConfirm();
@@ -181,8 +166,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       completionRate: 0,
       completionRateChange: null,
       averageCompletionTime: 0,
-      monthlyData: [],
+      dailyData: [],
       weeklyData: [],
+      monthlyData: [],
+      yearlyData: [],
       /** 상담사별 완료 건수/완료율 (consultation-completion API statistics) */
       consultantStatistics: []
     }
@@ -226,8 +213,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [autoCompleteLoading, setAutoCompleteLoading] = useState(false);
   const [autoCompleteWithReminderLoading, setAutoCompleteWithReminderLoading] = useState(false);
   const [mergeDuplicateLoading, setMergeDuplicateLoading] = useState(false);
-  const [chartPeriod, setChartPeriod] = useState('monthly');
-  const [lineChartPeriod, setLineChartPeriod] = useState('monthly');
   /** 상담사 별 통합데이터 뷰: 'table' | 'graph' | 'progress', 기본 프로그레스 바 */
   const [integratedDataView, setIntegratedDataView] = useState('progress');
   /** 상담사 통합데이터 집계 기간: 'all' | 'month' | 'year'. TODO: 년도별은 현재 전체와 동일 동작. consultation-completion에 year 파라미터 지원 시 연동 예정 (ADMIN_DASHBOARD_V2_INTEGRATED_DATA_PERIOD_AND_RANK_PULSE_PLAN Phase 1). */
@@ -259,10 +244,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const [searchValue, setSearchValue] = useState('');
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
-  /** 상담 현황 추이 막대 차트 색상 (CSS 변수 resolved, Canvas용) */
-  const [chartBarColors, setChartBarColors] = useState({
-    fill: B0KLA_CHART_BAR_FALLBACK.FILL,
-    border: B0KLA_CHART_BAR_FALLBACK.BORDER
+  /** 통합데이터 차트용 완료 시리즈 색상 (CSS 변수 resolved) */
+  const [statusSeriesColors, setStatusSeriesColors] = useState({
+    booked: B0KLA_CHART_BAR_FALLBACK.BORDER,
+    inProgress: B0KLA_CHART_BAR_FALLBACK.FILL,
+    completed: B0KLA_CHART_BAR_FALLBACK.BORDER
   });
   const [chartCanvasTheme, setChartCanvasTheme] = useState({
     tick: DASHBOARD_CHART_CANVAS_FALLBACK.TICK,
@@ -271,20 +257,32 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     tooltipText: DASHBOARD_CHART_CANVAS_FALLBACK.TOOLTIP_TEXT,
     legend: DASHBOARD_CHART_CANVAS_FALLBACK.LEGEND
   });
-  const chartBarWrapperRef = useRef(null);
-  const lineChartWrapperRef = useRef(null);
   const isInitialized = useRef(false);
 
-  /** B0KlA 차트 막대/라인·축 색상: CSS 변수를 resolved 값으로 읽어 Canvas에 전달 (다크모드 연동) */
+  /** B0KlA 상태 시리즈·축 색상: CSS 변수를 resolved 값으로 읽어 Canvas에 전달 */
   useEffect(() => {
-    const el = chartBarWrapperRef.current || lineChartWrapperRef.current || document.documentElement;
-    const style = el && typeof getComputedStyle !== 'undefined' ? getComputedStyle(el) : null;
-    if (!style) return;
-    const fill = style.getPropertyValue('--ad-b0kla-green').trim();
-    const border = style.getPropertyValue('--ad-b0kla-blue').trim();
-    setChartBarColors({
-      fill: fill || B0KLA_CHART_BAR_FALLBACK.FILL,
-      border: border || B0KLA_CHART_BAR_FALLBACK.BORDER
+    const bookedResolved = resolveCssColorVarToHex(
+      B0KLA_STATUS_SERIES_COLOR_VARS.BOOKED,
+      resolveCssColorVarToHex(
+        B0KLA_STATUS_SERIES_COLOR_VARS.BOOKED_FALLBACK,
+        B0KLA_CHART_BAR_FALLBACK.BORDER
+      )
+    );
+    const inProgressResolved = resolveCssColorVarToHex(
+      B0KLA_STATUS_SERIES_COLOR_VARS.IN_PROGRESS,
+      B0KLA_CHART_BAR_FALLBACK.FILL
+    );
+    const completedResolved = resolveCssColorVarToHex(
+      B0KLA_STATUS_SERIES_COLOR_VARS.COMPLETED,
+      resolveCssColorVarToHex(
+        B0KLA_STATUS_SERIES_COLOR_VARS.COMPLETED_FALLBACK,
+        B0KLA_CHART_BAR_FALLBACK.BORDER
+      )
+    );
+    setStatusSeriesColors({
+      booked: bookedResolved,
+      inProgress: inProgressResolved,
+      completed: completedResolved
     });
     setChartCanvasTheme({
       tick: resolveCssColorVarToHex(
@@ -308,25 +306,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         DASHBOARD_CHART_CANVAS_FALLBACK.LEGEND
       )
     });
-  }, [chartPeriod, lineChartPeriod, darkResolved]);
-
-  /**
-   * 단계별 도넛 차트 색상: B0KLA_STEP_CHART_HEX 의 `var(--*)` 항목을 Canvas 호환 색으로 resolve.
-   *
-   * 배경:
-   *   Chart.js 는 backgroundColor 문자열을 HTML5 Canvas 의 ctx.fillStyle 에 그대로 대입한다.
-   *   Canvas 사양상 `var(--*)` 표기는 파싱되지 않아 잘못된 값은 무시되고 슬라이스가 검정으로
-   *   렌더된다 (어드민 대시보드 5단계 도넛 P1 시각 결함).
-   *
-   * 해결:
-   *   B0KLA_STEP_CHART_HEX 는 SSOT 토큰 참조(charts.js)를 그대로 유지하고, Canvas 전달 직전에
-   *   :root 의 computed style 에서 토큰 값을 읽어 해석한다. 다크 모드 cascade 도 동일 헬퍼가
-   *   자동 처리 (`:root[data-theme="dark"]` override 자동 반영).
-   */
-  const stepChartCanvasColors = useMemo(
-    () => resolveCssColorTokensArray(B0KLA_STEP_CHART_HEX),
-    [darkResolved]
-  );
+  }, [darkResolved]);
 
   const chartJsScaleOptions = useMemo(
     () => ({
@@ -437,23 +417,23 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         fetch(API_ADMIN_CLIENTS_WITH_MAPPING_INFO, { headers, credentials: 'include' }),
         fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, { headers, credentials: 'include' }),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
-        fetch(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION, { headers, credentials: 'include' })
+        StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION)
       ]);
       const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
       const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();
       const mappingsRes = settled[2].status === 'fulfilled' ? settled[2].value : dummyFailedResponse();
       const ratingRes = settled[3].status === 'fulfilled' ? settled[3].value : dummyFailedResponse();
-      const consultationRes = settled[4].status === 'fulfilled' ? settled[4].value : dummyFailedResponse();
+      const consultationPayload =
+        settled[4].status === 'fulfilled' ? settled[4].value : null;
 
       // [Dashboard Charts] consultation-completion 호출 결과(상담 현황 추이/예약 vs 완료 차트용)
       if (settled[4].status === 'rejected') {
         console.warn('[Dashboard Charts] consultation-completion 요청 실패 (rejected):', settled[4].reason);
       } else {
-        const res = settled[4].value;
         console.log('[Dashboard Charts] consultation-completion 응답:', {
-          status: res.status,
-          ok: res.ok,
-          statusText: res.statusText
+          ok: consultationPayload != null,
+          hasMonthly: Array.isArray(consultationPayload?.monthlyData),
+          hasDaily: Array.isArray(consultationPayload?.dailyData)
         });
       }
 
@@ -466,8 +446,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         totalCompleted: 0,
         completionRate: 0,
         averageCompletionTime: 0,
-        monthlyData: [],
+        dailyData: [],
         weeklyData: [],
+        monthlyData: [],
+        yearlyData: [],
         consultantStatistics: []
       };
 
@@ -502,28 +484,30 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           };
         }
       }
-      if (consultationRes.ok) {
-        const d = await consultationRes.json();
-        const payload = d?.data != null ? d.data : d;
-        if (payload != null) {
-          consultationStats = {
-            totalCompleted: payload.totalCompleted ?? 0,
-            completionRate: payload.completionRate ?? 0,
-            completionRateChange: payload.completionRateChange != null ? payload.completionRateChange : null,
-            averageCompletionTime: payload.averageCompletionTime ?? 0,
-            monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : [],
-            weeklyData: Array.isArray(payload.weeklyData) ? payload.weeklyData : [],
-            consultantStatistics: Array.isArray(payload.statistics) ? payload.statistics : []
-          };
-        }
+      if (consultationPayload != null) {
+        const payload =
+          consultationPayload?.data != null ? consultationPayload.data : consultationPayload;
+        consultationStats = {
+          totalCompleted: payload.totalCompleted ?? 0,
+          completionRate: payload.completionRate ?? 0,
+          completionRateChange: payload.completionRateChange != null ? payload.completionRateChange : null,
+          averageCompletionTime: payload.averageCompletionTime ?? 0,
+          dailyData: Array.isArray(payload.dailyData) ? payload.dailyData : [],
+          weeklyData: Array.isArray(payload.weeklyData) ? payload.weeklyData : [],
+          monthlyData: Array.isArray(payload.monthlyData) ? payload.monthlyData : [],
+          yearlyData: Array.isArray(payload.yearlyData) ? payload.yearlyData : [],
+          consultantStatistics: Array.isArray(payload.statistics) ? payload.statistics : []
+        };
         console.log('[Dashboard Charts] consultation-completion payload:', {
-          monthlyDataLength: consultationStats.monthlyData?.length ?? 0,
+          dailyDataLength: consultationStats.dailyData?.length ?? 0,
           weeklyDataLength: consultationStats.weeklyData?.length ?? 0,
+          monthlyDataLength: consultationStats.monthlyData?.length ?? 0,
+          yearlyDataLength: consultationStats.yearlyData?.length ?? 0,
           monthlySample: consultationStats.monthlyData?.[0],
           weeklySample: consultationStats.weeklyData?.[0]
         });
       } else {
-        console.warn('[Dashboard Charts] consultation-completion 응답이 ok가 아님 (차트 데이터 미적용). status:', consultationRes.status);
+        console.warn('[Dashboard Charts] consultation-completion 응답이 없어 차트 데이터를 미적용');
       }
 
       setStats({
@@ -821,11 +805,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       setIntegratedDataConsultationStats(null);
       return;
     }
+    let cancelled = false;
     const period = `${integratedDataYear}-${String(integratedDataMonth).padStart(2, '0')}`;
-    const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
-    fetch(`/api/v1/admin/statistics/consultation-completion?period=${period}`, { headers, credentials: 'include' })
-      .then((res) => res.ok ? res.json() : null)
+    StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION, { period })
       .then((d) => {
+        if (cancelled) return;
         const payload = d?.data != null ? d.data : d;
         if (payload && Array.isArray(payload.statistics)) {
           setIntegratedDataConsultationStats({ consultantStatistics: payload.statistics });
@@ -833,7 +817,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           setIntegratedDataConsultationStats({ consultantStatistics: [] });
         }
       })
-      .catch(() => setIntegratedDataConsultationStats({ consultantStatistics: [] }));
+      .catch(() => {
+        if (!cancelled) {
+          setIntegratedDataConsultationStats({ consultantStatistics: [] });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [integratedDataPeriodType, integratedDataYear, integratedDataMonth]);
 
   /** 상담사 별 통합데이터: 평점(topConsultants) + 완료 통계(consultantStatistics)를 consultantId 기준 머지. 표시 이름은 API 복호화된 consultantName 사용. */
@@ -1099,332 +1090,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
       <div className="mg-v2-content-growth-row">
         <div className="mg-v2-content-growth-row__left">
-          <section
-            className="mg-v2-content-visualization-group"
-            aria-labelledby="admin-viz-group-title"
-          >
-            <div className="mg-v2-content-visualization-group__header">
-              <span
-                className="mg-v2-content-visualization-group__accent"
-                aria-hidden="true"
-              />
-              <h2
-                id="admin-viz-group-title"
-                className="mg-v2-content-visualization-group__title"
-              >
-                {t('common:dashboard-v2.AdminDashboardV2.t_01c7a211')}
-              </h2>
-            </div>
-            <div className="mg-v2-content-visualization-group__grid">
-              <div className="mg-v2-ad-b0kla__card">
-                <div className="mg-v2-ad-b0kla__chart-header">
-                  <div>
-                    <h3 className="mg-v2-ad-b0kla__chart-title">{t('admin:dashboard.chartTitle')}</h3>
-                <p className="mg-v2-ad-b0kla__chart-desc">
-                  {chartPeriod === 'weekly' ? t('admin:dashboard.chartWeeklySubtitle') : t('admin:dashboard.chartSubtitle')}
-                </p>
-              </div>
-              <div className="mg-v2-ad-b0kla__pill-toggle">
-                <MGButton
-                  type="button"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'md',
-                    loading: false,
-                    className: `mg-v2-ad-b0kla__pill ${chartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => setChartPeriod('monthly')}
-                  preventDoubleClick={false}
-                >
-                  {t('admin:dashboard.v2.period.monthly')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'md',
-                    loading: false,
-                    className: `mg-v2-ad-b0kla__pill ${chartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => setChartPeriod('weekly')}
-                  preventDoubleClick={false}
-                >
-                  {t('admin:dashboard.v2.period.weekly')}
-                </MGButton>
-              </div>
-            </div>
-            <div
-              className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper"
-              ref={chartBarWrapperRef}
-            >
-              {(() => {
-                const isWeekly = chartPeriod === 'weekly';
-                const rawData = isWeekly
-                  ? resolveRollingWeeklyChartRows(
-                    stats.consultationStats?.weeklyData,
-                    DASHBOARD_CHART_ROLLING_WEEKS
-                  )
-                  : resolveRollingMonthlyChartRows(
-                    stats.consultationStats?.monthlyData,
-                    DASHBOARD_CHART_ROLLING_MONTHS
-                  );
-                const values = rawData.map((d) => d.completedCount || 0);
-                const allZero = values.length > 0 && values.every((v) => v === 0);
-                if (allZero) {
-                  return (
-                    <p className="mg-v2-ad-b0kla__chart-empty">{t('common:dashboard-v2.AdminDashboardV2.t_385902d3')}</p>
-                  );
-                }
-                const maxVal = Math.max(...values, 1);
-                return (
-                  <Chart
-                    type={CHART_TYPES.BAR}
-                    data={{
-                      labels: rawData.map(formatChartPeriodLabel),
-                      datasets: [
-                        {
-                          label: '완료 상담',
-                          data: values,
-                          backgroundColor: chartBarColors.fill,
-                          borderColor: chartBarColors.border,
-                          borderWidth: 1,
-                          borderRadius: 6
-                        }
-                      ]
-                    }}
-                    height="180px"
-                    options={{
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                          ...chartJsTooltipOptions,
-                          callbacks: {
-                            label: (ctx) => `완료: ${ctx.parsed.y}건`
-                          }
-                        }
-                      },
-                      scales: {
-                        ...chartJsScaleOptions,
-                        y: {
-                          ...chartJsScaleOptions.y,
-                          suggestedMax: Math.max(maxVal + 1, 2)
-                        }
-                      }
-                    }}
-                  />
-                );
-              })()}
-            </div>
-          </div>
-          {/* 예약 vs 완료 라인 차트: consultationStats에 bookedCount/scheduledCount 있으면 2선, 없으면 완료 1선 */}
-          <div className="mg-v2-ad-b0kla__card">
-            <div className="mg-v2-ad-b0kla__chart-header">
-              <div>
-                <h3 className="mg-v2-ad-b0kla__chart-title">{t('common:dashboard-v2.AdminDashboardV2.t_7c466a6b')}</h3>
-                <p className="mg-v2-ad-b0kla__chart-desc">
-                  {lineChartPeriod === 'weekly'
-                    ? '최근 6주 예약·완료 추이'
-                    : '최근 6개월 예약·완료 추이'}
-                </p>
-              </div>
-              <div className="mg-v2-ad-b0kla__pill-toggle">
-                <MGButton
-                  type="button"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'md',
-                    loading: false,
-                    className: `mg-v2-ad-b0kla__pill ${lineChartPeriod === 'monthly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => setLineChartPeriod('monthly')}
-                  preventDoubleClick={false}
-                >
-                  {t('common:dashboard-v2.AdminDashboardV2.t_e81e0fc4')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'md',
-                    loading: false,
-                    className: `mg-v2-ad-b0kla__pill ${lineChartPeriod === 'weekly' ? 'mg-v2-ad-b0kla__pill--active' : ''}`
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => setLineChartPeriod('weekly')}
-                  preventDoubleClick={false}
-                >
-                  {t('common:dashboard-v2.AdminDashboardV2.t_9cbaf58b')}
-                </MGButton>
-              </div>
-            </div>
-            <div
-              className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper"
-              ref={lineChartWrapperRef}
-            >
-              {(() => {
-                const isWeekly = lineChartPeriod === 'weekly';
-                const rawData = isWeekly
-                  ? resolveRollingWeeklyChartRows(
-                    stats.consultationStats?.weeklyData,
-                    DASHBOARD_CHART_ROLLING_WEEKS
-                  )
-                  : resolveRollingMonthlyChartRows(
-                    stats.consultationStats?.monthlyData,
-                    DASHBOARD_CHART_ROLLING_MONTHS
-                  );
-                const completedValues = rawData.map((d) => d.completedCount ?? 0);
-                const hasBooked = rawData.some((d) => (d.bookedCount ?? d.scheduledCount) != null);
-                const bookedValues = hasBooked
-                  ? rawData.map((d) => d.bookedCount ?? d.scheduledCount ?? 0)
-                  : null;
-                const allZero =
-                  completedValues.every((v) => v === 0) &&
-                  (!bookedValues || bookedValues.every((v) => v === 0));
-                if (allZero) {
-                  return (
-                    <p className="mg-v2-ad-b0kla__chart-empty">
-                      {t('common:dashboard-v2.AdminDashboardV2.t_04eae6b1')}
-                    </p>
-                  );
-                }
-                const maxVal = Math.max(
-                  ...completedValues,
-                  ...(bookedValues || [0]),
-                  1
-                );
-                const datasets = [
-                  {
-                    label: '완료',
-                    data: completedValues,
-                    borderColor: chartBarColors.border,
-                    // 범례·포인트 색은 backgroundColor를 쓰므로 선(완료)과 동일하게 파랑(border) 사용. fill(녹색)이면 녹색 점이 됨.
-                    backgroundColor: chartBarColors.border,
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: false
-                  }
-                ];
-                if (bookedValues && bookedValues.some((v) => v > 0)) {
-                  datasets.push({
-                    label: '예약',
-                    data: bookedValues,
-                    borderColor: chartBarColors.fill,
-                    backgroundColor: chartBarColors.fill,
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: false
-                  });
-                }
-                return (
-                  <Chart
-                    type={CHART_TYPES.LINE}
-                    data={{
-                      labels: rawData.map(formatChartPeriodLabel),
-                      datasets
-                    }}
-                    height="180px"
-                    options={{
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          display: true,
-                          position: 'top',
-                          labels: {
-                            usePointStyle: true,
-                            padding: 12,
-                            font: { size: 11 },
-                            color: chartCanvasTheme.legend
-                          }
-                        },
-                        tooltip: {
-                          ...chartJsTooltipOptions,
-                          callbacks: {
-                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}건`
-                          }
-                        }
-                      },
-                      scales: {
-                        ...chartJsScaleOptions,
-                        y: {
-                          ...chartJsScaleOptions.y,
-                          suggestedMax: Math.max(maxVal + 1, 2)
-                        }
-                      }
-                    }}
-                  />
-                );
-              })()}
-            </div>
-          </div>
-          <div className="mg-v2-ad-b0kla__card">
-            <h3 className="mg-v2-ad-b0kla__chart-title">{t('common:dashboard-v2.AdminDashboardV2.t_e46896c4')}</h3>
-            <p className="mg-v2-ad-b0kla__chart-desc">{t('common:dashboard-v2.AdminDashboardV2.t_0b7b7f1d')}</p>
-            <div className="mg-v2-ad-b0kla__chart-placeholder mg-v2-ad-b0kla__chart-wrapper mg-v2-ad-b0kla__chart-wrapper--donut">
-              {(() => {
-                const stepValues = [
-                  stats.totalMappings ?? 0,
-                  pendingDepositStats.count ?? 0,
-                  stats.activeMappings ?? 0,
-                  schedulePendingList.length,
-                  0
-                ];
-                const total = stepValues.reduce((a, b) => a + b, 0);
-                const allZero = total === 0;
-                if (allZero) {
-                  return (
-                    <p className="mg-v2-ad-b0kla__chart-empty">{t('common:dashboard-v2.AdminDashboardV2.t_ec38756f')}</p>
-                  );
-                }
-                return (
-                  <Chart
-                    type={CHART_TYPES.DOUGHNUT}
-                    data={{
-                      labels: STEP_CHART_LABELS,
-                      datasets: [
-                        {
-                          data: stepValues,
-                          backgroundColor: stepChartCanvasColors,
-                          borderColor: stepChartCanvasColors,
-                          borderWidth: 2
-                        }
-                      ]
-                    }}
-                    height="180px"
-                    options={{
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'right',
-                          labels: {
-                            usePointStyle: true,
-                            padding: 12,
-                            font: { size: 11 },
-                            color: chartCanvasTheme.legend
-                          }
-                        },
-                        tooltip: {
-                          ...chartJsTooltipOptions,
-                          callbacks: {
-                            label: (ctx) => {
-                              const v = ctx.parsed;
-                              const pct = total > 0 ? ((v / total) * 100).toFixed(1) : '0';
-                              return `${ctx.label}: ${v}건 (${pct}%)`;
-                            }
-                          }
-                        }
-                      }
-                    }}
-                  />
-                );
-              })()}
-            </div>
-          </div>
-            </div>
-          </section>
+          <AdminDashboardVisualizationGroup
+            consultationStats={stats.consultationStats}
+            loading={loading}
+            darkResolved={darkResolved}
+          />
         </div>
         <div className="mg-v2-ad-b0kla__card">
           <h3 className="mg-v2-ad-b0kla__counselor-title">{t('common:dashboard-v2.AdminDashboardV2.t_8d3e51bd')}</h3>
@@ -1566,8 +1236,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
                           {
                             label: '완료 건수',
                             data: consultantIntegratedData.map((d) => d.completedCount),
-                            backgroundColor: chartBarColors.fill,
-                            borderColor: chartBarColors.fill,
+                            backgroundColor: statusSeriesColors.completed,
+                            borderColor: statusSeriesColors.completed,
                             borderWidth: 1,
                             borderRadius: 4
                           }

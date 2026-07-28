@@ -39,6 +39,19 @@
   color: var(--mg-color-text-secondary);
 }
 
+/* 상담 상태 시리즈 (ADMIN_DASHBOARD_PERIOD_STATS_VIZ_SPEC §3) */
+.mg-v2-kpi-sparkline--secondary {
+  color: var(--mg-color-secondary-main, var(--mg-secondary-500));
+}
+
+.mg-v2-kpi-sparkline--accent {
+  color: var(--mg-color-accent-main);
+}
+
+.mg-v2-kpi-sparkline--primary {
+  color: var(--mg-color-primary-main);
+}
+
 .mg-v2-kpi-sparkline__line {
   stroke: currentColor;
 }

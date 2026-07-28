@@ -73,7 +73,15 @@ const KpiSparkline = ({ data = null, variant = 'green', className = '' }) => {
 
 KpiSparkline.propTypes = {
   data: PropTypes.arrayOf(PropTypes.number),
-  variant: PropTypes.oneOf(['green', 'orange', 'blue', 'gray']),
+  variant: PropTypes.oneOf([
+    'green',
+    'orange',
+    'blue',
+    'gray',
+    'secondary',
+    'accent',
+    'primary'
+  ]),
   className: PropTypes.string
 };
 

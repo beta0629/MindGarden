@@ -516,7 +516,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   line-height: var(--mg-v2-font-line-height-body, 1.5);
   border-radius: var(--mg-v2-radius-pill, 9999px);
   border: none;
-  background: transparent;
+  background: var(--mg-color-surface-main);
   color: var(--ad-b0kla-text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -524,16 +524,17 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 
 .mg-v2-ad-b0kla__pill:hover {
   color: var(--ad-b0kla-title-color);
+  background: var(--mg-color-surface-main);
 }
 
 .mg-v2-ad-b0kla__pill--active {
-  background: var(--ad-b0kla-green);
+  background: var(--mg-color-primary-main);
   color: var(--mg-white);
   box-shadow: var(--ad-b0kla-shadow);
 }
 
 .mg-v2-ad-b0kla__pill--active:hover {
-  background: var(--ad-b0kla-green);
+  background: var(--mg-color-primary-main);
   color: var(--mg-white);
   filter: brightness(1.05);
 }
@@ -571,11 +572,23 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 }
 
 .mg-v2-ad-b0kla__chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-space-2, 0.5rem);
   font-size: var(--mg-v2-font-size-body-md, 14px);
-  color: var(--ad-b0kla-text-secondary);
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
   margin: 0;
   padding: var(--mg-v2-space-8, 2rem);
   text-align: center;
+  width: 100%;
+  min-height: 200px;
+}
+
+.mg-v2-ad-b0kla__chart-empty-text {
+  margin: 0;
+  color: var(--mg-color-text-secondary, var(--ad-b0kla-text-secondary));
 }
 
 .mg-v2-ad-b0kla__chart-placeholder-icon {
@@ -2009,7 +2022,7 @@ button.mg-v2-ad-b0kla__pill.mg-button {
   font-weight: var(--mg-v2-font-weight-semibold, 600);
   line-height: var(--mg-v2-font-line-height-body, 1.5);
   font-size: inherit;
-  background: transparent;
+  background: var(--mg-color-surface-main);
   color: var(--ad-b0kla-text-secondary);
   border: none;
   border-radius: var(--mg-v2-radius-pill, 9999px);
@@ -2025,17 +2038,17 @@ button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-ad-b0kla__pill--sm {
 button.mg-v2-ad-b0kla__pill.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
   color: var(--ad-b0kla-title-color);
-  background: transparent;
+  background: var(--mg-color-surface-main);
 }
 
 button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-ad-b0kla__pill--active:not(.mg-button--loading) {
-  background: var(--ad-b0kla-green);
+  background: var(--mg-color-primary-main);
   color: var(--mg-white);
   box-shadow: var(--ad-b0kla-shadow);
 }
 
 button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-ad-b0kla__pill--active:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--ad-b0kla-green);
+  background: var(--mg-color-primary-main);
   color: var(--mg-white);
   filter: brightness(1.05);
 }

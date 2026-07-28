@@ -43,6 +43,7 @@
 .mg-v2-content-visualization-group__header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem 1rem;
   margin-bottom: var(--mg-spacing-md, 1rem);
 }
@@ -61,27 +62,94 @@
   font-weight: 600;
   color: var(--mg-color-text-main);
   margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mg-v2-content-visualization-group__period-pills {
+  margin-left: auto;
+  flex-shrink: 0;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .mg-v2-content-visualization-group__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
-  gap: 1rem;
+  gap: var(--mg-spacing-md, 1rem);
 }
 
 .mg-v2-content-visualization-group .mg-v2-ad-b0kla__card {
-  padding: 16px;
+  padding: var(--mg-spacing-md, 16px);
   margin-bottom: 0;
+  background: var(--mg-color-background-main, var(--mg-v2-color-surface-bg));
 }
 
-/* 2+1 그리드: 세 번째 카드(단계별 현황)는 하단 전체 너비 */
-.mg-v2-content-visualization-group__grid .mg-v2-ad-b0kla__card:nth-child(3) {
-  grid-column: 1 / -1;
+/* 시리즈 토큰 스코프 (secondary-main 미정의 시 fallback) */
+.mg-v2-content-visualization-group {
+  --mg-color-secondary-main: var(--mg-secondary-500);
+}
+
+.mg-v2-content-visualization-group__kpi-mini-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mg-spacing-sm, 0.75rem);
+  margin-top: var(--mg-spacing-sm, 0.75rem);
+  min-height: 200px;
+}
+
+.mg-v2-content-visualization-group__kpi-mini {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm, 0.75rem);
+  padding: var(--mg-spacing-sm, 0.75rem) var(--mg-spacing-md, 1rem);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-spacing-sm, 0.5rem);
+  background: var(--mg-color-surface-main);
+  min-width: 0;
+}
+
+.mg-v2-content-visualization-group__kpi-mini .mg-v2-kpi-sparkline {
+  flex: 0 0 40%;
+  max-width: 7.5rem;
+  margin-top: 0;
+}
+
+.mg-v2-content-visualization-group__kpi-mini-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.mg-v2-content-visualization-group__kpi-mini-label {
+  font-size: 0.75rem;
+  color: var(--mg-color-text-secondary, var(--mg-v2-color-text-secondary));
+}
+
+.mg-v2-content-visualization-group__kpi-mini-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-content-visualization-group__kpi-mini--booked .mg-v2-content-visualization-group__kpi-mini-value {
+  color: var(--mg-color-secondary-main, var(--mg-secondary-500));
+}
+
+.mg-v2-content-visualization-group__kpi-mini--in-progress .mg-v2-content-visualization-group__kpi-mini-value {
+  color: var(--mg-color-accent-main);
+}
+
+.mg-v2-content-visualization-group__kpi-mini--completed .mg-v2-content-visualization-group__kpi-mini-value {
+  color: var(--mg-color-primary-main);
 }
 
 .mg-v2-content-visualization-group .mg-v2-ad-b0kla__chart-wrapper--donut {
-  min-height: 180px;
+  min-height: 200px;
 }
 
 .mg-v2-ad-b0kla__chart-wrapper--donut {
@@ -94,11 +162,16 @@
   }
 
   .mg-v2-content-visualization-group {
-    padding: 16px;
+    padding: var(--mg-spacing-md, 16px);
   }
 
   .mg-v2-content-visualization-group__grid {
     grid-template-columns: 1fr;
+  }
+
+  .mg-v2-content-visualization-group__period-pills {
+    margin-left: 0;
+    width: 100%;
   }
 }
 

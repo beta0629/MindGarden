@@ -52,4 +52,27 @@ class DashboardTrendPeriodUtilsTest {
         assertThat(periods).containsExactly(
                 "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03");
     }
+
+    @Test
+    @DisplayName("rolling 7일은 오늘 포함 과거 6일부터 오늘까지")
+    void rollingDays_includesTodayAndPast() {
+        LocalDate today = LocalDate.of(2026, 7, 28);
+        List<String> periods = DashboardTrendPeriodUtils.rollingDays(7, today).stream()
+                .map(d -> d.format(java.time.format.DateTimeFormatter.ofPattern("MM/dd")))
+                .collect(Collectors.toList());
+
+        assertThat(periods).containsExactly(
+                "07/22", "07/23", "07/24", "07/25", "07/26", "07/27", "07/28");
+    }
+
+    @Test
+    @DisplayName("rolling 5년은 당해 포함 과거 4년부터")
+    void rollingYearStarts_includesCurrentYear() {
+        LocalDate today = LocalDate.of(2026, 7, 28);
+        List<String> periods = DashboardTrendPeriodUtils.rollingYearStarts(5, today).stream()
+                .map(d -> d.format(java.time.format.DateTimeFormatter.ofPattern("yyyy")))
+                .collect(Collectors.toList());
+
+        assertThat(periods).containsExactly("2022", "2023", "2024", "2025", "2026");
+    }
 }

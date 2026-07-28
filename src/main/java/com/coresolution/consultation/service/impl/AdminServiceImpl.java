@@ -5915,19 +5915,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 if (monthEnd.isAfter(now)) {
                     monthEnd = now;
                 }
-                int sum = 0;
-                for (User consultant : consultants) {
-                    sum += getCompletedScheduleCount(consultant.getId(), monthStart, monthEnd);
-                }
-                long bookedSum = scheduleRepository.countByStatusAndDateBetween(
-                        tenantId, ScheduleStatus.BOOKED, monthStart, monthEnd)
-                        + scheduleRepository.countByStatusAndDateBetween(
-                                tenantId, ScheduleStatus.CONFIRMED, monthStart, monthEnd);
-                Map<String, Object> row = new HashMap<>();
-                row.put("period", monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM")));
-                row.put("completedCount", sum);
-                row.put("bookedCount", bookedSum);
-                monthlyData.add(row);
+                String period = monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+                monthlyData.add(buildConsultationTrendRow(tenantId, consultants, monthStart, monthEnd, period));
             }
             log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (rolling, KST)", monthlyData.size());
             return monthlyData;
@@ -5952,19 +5941,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             for (int i = weeks - 1; i >= 0; i--) {
                 LocalDate weekEnd = now.minusWeeks(i);
                 LocalDate weekStart = weekEnd.minusDays(6);
-                int sum = 0;
-                for (User consultant : consultants) {
-                    sum += getCompletedScheduleCount(consultant.getId(), weekStart, weekEnd);
-                }
-                long bookedSum = scheduleRepository.countByStatusAndDateBetween(
-                        tenantId, ScheduleStatus.BOOKED, weekStart, weekEnd)
-                        + scheduleRepository.countByStatusAndDateBetween(
-                                tenantId, ScheduleStatus.CONFIRMED, weekStart, weekEnd);
-                Map<String, Object> row = new HashMap<>();
-                row.put("period", weekEnd.format(DateTimeFormatter.ofPattern("MM/dd")));
-                row.put("completedCount", sum);
-                row.put("bookedCount", bookedSum);
-                weeklyData.add(row);
+                String period = weekEnd.format(DateTimeFormatter.ofPattern("MM/dd"));
+                weeklyData.add(buildConsultationTrendRow(tenantId, consultants, weekStart, weekEnd, period));
             }
             log.info("✅ 주간 상담 완료 추이 조회 완료: {}주 (KPI와 동일 집계)", weeklyData.size());
             return weeklyData;
@@ -5972,6 +5950,92 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ 주간 상담 완료 추이 조회 실패 (반환: 빈 목록). 원인: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
             return new ArrayList<>();
         }
+    }
+
+    @Override
+    public List<Map<String, Object>> getConsultationDailyTrend(int lastDays) {
+        try {
+            String tenantId = getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ getConsultationDailyTrend: tenantId 없음");
+                return new ArrayList<>();
+            }
+            List<User> consultants = mergeConsultantActorsForTenant(tenantId);
+            List<Map<String, Object>> dailyData = new ArrayList<>();
+            LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
+            List<LocalDate> days = DashboardTrendPeriodUtils.rollingDays(lastDays, now);
+            for (LocalDate day : days) {
+                String period = day.format(DateTimeFormatter.ofPattern("MM/dd"));
+                dailyData.add(buildConsultationTrendRow(tenantId, consultants, day, day, period));
+            }
+            log.info("✅ 일별 상담 추이 조회 완료: {}일 (rolling, KST)", dailyData.size());
+            return dailyData;
+        } catch (Exception e) {
+            log.error("❌ 일별 상담 추이 조회 실패 (반환: 빈 목록). 원인: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getConsultationYearlyTrend(int lastYears) {
+        try {
+            String tenantId = getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ getConsultationYearlyTrend: tenantId 없음");
+                return new ArrayList<>();
+            }
+            List<User> consultants = mergeConsultantActorsForTenant(tenantId);
+            List<Map<String, Object>> yearlyData = new ArrayList<>();
+            LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
+            List<LocalDate> yearStarts = DashboardTrendPeriodUtils.rollingYearStarts(lastYears, now);
+            for (LocalDate yearStart : yearStarts) {
+                LocalDate yearEnd = yearStart.withDayOfYear(yearStart.lengthOfYear());
+                if (yearEnd.isAfter(now)) {
+                    yearEnd = now;
+                }
+                String period = yearStart.format(DateTimeFormatter.ofPattern("yyyy"));
+                yearlyData.add(buildConsultationTrendRow(tenantId, consultants, yearStart, yearEnd, period));
+            }
+            log.info("✅ 연별 상담 추이 조회 완료: {}년 (rolling, KST)", yearlyData.size());
+            return yearlyData;
+        } catch (Exception e) {
+            log.error("❌ 연별 상담 추이 조회 실패 (반환: 빈 목록). 원인: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 상담 추이 row 공통 빌더 (예약·진행·완료).
+     *
+     * @param tenantId    테넌트 ID
+     * @param consultants 상담사 목록
+     * @param start       기간 시작
+     * @param end         기간 종료
+     * @param periodLabel period 라벨
+     * @return period, bookedCount, inProgressCount, completedCount
+     */
+    private Map<String, Object> buildConsultationTrendRow(
+            String tenantId,
+            List<User> consultants,
+            LocalDate start,
+            LocalDate end,
+            String periodLabel) {
+        int completedSum = 0;
+        for (User consultant : consultants) {
+            completedSum += getCompletedScheduleCount(consultant.getId(), start, end);
+        }
+        long bookedSum = scheduleRepository.countByStatusAndDateBetween(
+                tenantId, ScheduleStatus.BOOKED, start, end)
+                + scheduleRepository.countByStatusAndDateBetween(
+                        tenantId, ScheduleStatus.CONFIRMED, start, end);
+        long inProgressSum = scheduleRepository.countByStatusAndDateBetween(
+                tenantId, ScheduleStatus.IN_PROGRESS, start, end);
+        Map<String, Object> row = new HashMap<>();
+        row.put("period", periodLabel);
+        row.put("completedCount", completedSum);
+        row.put("bookedCount", bookedSum);
+        row.put("inProgressCount", inProgressSum);
+        return row;
     }
 
     @Override

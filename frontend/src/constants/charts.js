@@ -45,6 +45,20 @@ export const B0KLA_CHART_BAR_FALLBACK = {
 };
 
 /**
+ * 상담 상태 시리즈 색상 토큰 (디자인 SSOT).
+ * Canvas 전달 전 resolveCssColorVarToHex로 해석. hex 리터럴 금지.
+ * 예약=secondary, 진행=accent, 완료=primary.
+ */
+export const B0KLA_STATUS_SERIES_COLOR_VARS = Object.freeze({
+  BOOKED: '--mg-color-secondary-main',
+  BOOKED_FALLBACK: '--mg-secondary-500',
+  IN_PROGRESS: '--mg-color-accent-main',
+  COMPLETED: '--mg-color-primary-main',
+  /** primary 계열 해석 실패 시 — success(FILL)가 아닌 primary 앵커 */
+  COMPLETED_FALLBACK: '--mg-primary-500'
+});
+
+/**
  * ERP 운영 현황 수입·지출 막대 차트 — Chart.js Canvas 전용 hex.
  * CSS 변수(var(--mg-success-500) 등)는 Canvas에서 미해석 → 검정 막대 방지.
  * 값: unified-design-tokens.css --cs-success-400/600, --cs-error-500/600.

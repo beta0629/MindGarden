@@ -8,3 +8,4 @@ export { default as DesktopGnb } from './DesktopGnb';
 export { default as DesktopLnb } from './DesktopLnb';
 export { default as MobileGnb } from './MobileGnb';
 export { default as MobileLnbDrawer } from './MobileLnbDrawer';
+export { default as AdminDashboardVisualizationGroup } from './AdminDashboardVisualizationGroup';

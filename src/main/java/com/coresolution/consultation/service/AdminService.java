@@ -442,7 +442,7 @@ public interface AdminService {
      * 최근 N개월 월별 상담 완료 건수 추이 (전체 상담사 합계, tenantId 기준)
      *
      * @param lastMonths 최근 개월 수 (예: 6)
-     * @return period("YYYY-MM"), completedCount 포함 Map 리스트 (과거→현재 순)
+     * @return period("YYYY-MM"), bookedCount, inProgressCount, completedCount 포함 Map 리스트 (과거→현재 순)
      */
     List<Map<String, Object>> getConsultationMonthlyTrend(int lastMonths);
 
@@ -450,9 +450,25 @@ public interface AdminService {
      * 최근 N주 주간 상담 완료 건수 추이 (전체 상담사 합계, tenantId 기준)
      *
      * @param lastWeeks 최근 주 수 (예: 6)
-     * @return period("MM/dd"), completedCount 포함 Map 리스트 (과거→현재 순)
+     * @return period("MM/dd"), bookedCount, inProgressCount, completedCount 포함 Map 리스트 (과거→현재 순)
      */
     List<Map<String, Object>> getConsultationWeeklyTrend(int lastWeeks);
+
+    /**
+     * 최근 N일 일별 상담 추이 (전체 상담사 합계, tenantId 기준)
+     *
+     * @param lastDays 최근 일수 (예: 14)
+     * @return period("MM/dd"), bookedCount, inProgressCount, completedCount 포함 Map 리스트 (과거→현재 순)
+     */
+    List<Map<String, Object>> getConsultationDailyTrend(int lastDays);
+
+    /**
+     * 최근 N년 연별 상담 추이 (전체 상담사 합계, tenantId 기준)
+     *
+     * @param lastYears 최근 연수 (예: 5)
+     * @return period("yyyy"), bookedCount, inProgressCount, completedCount 포함 Map 리스트 (과거→현재 순)
+     */
+    List<Map<String, Object>> getConsultationYearlyTrend(int lastYears);
 
     /**
      * 해당 월의 테넌트 전체 완료율 조회 (해당 월 스케줄 중 완료 건수 / 해당 월 전체 스케줄)

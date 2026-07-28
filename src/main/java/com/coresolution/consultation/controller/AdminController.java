@@ -2681,6 +2681,8 @@ public class AdminController extends BaseApiController {
                 adminService.getConsultationCompletionStatistics(period);
         List<Map<String, Object>> monthlyData = adminService.getConsultationMonthlyTrend(6);
         List<Map<String, Object>> weeklyData = adminService.getConsultationWeeklyTrend(6);
+        List<Map<String, Object>> dailyData = adminService.getConsultationDailyTrend(14);
+        List<Map<String, Object>> yearlyData = adminService.getConsultationYearlyTrend(5);
 
         // 대시보드 KPI용: 전체 완료 건수·완료율 집계 (프론트 완료율 0% 방지)
         int totalCompleted = 0;
@@ -2708,12 +2710,14 @@ public class AdminController extends BaseApiController {
         data.put("period", period != null ? period : "전체");
         data.put("monthlyData", monthlyData);
         data.put("weeklyData", weeklyData);
+        data.put("dailyData", dailyData);
+        data.put("yearlyData", yearlyData);
         data.put("totalCompleted", totalCompleted);
         data.put("completionRate", completionRate);
         data.put("completionRateChange", completionRateChange);
 
-        log.info("📊 consultation-completion 응답: tenantId={}, monthlyData={}건, weeklyData={}건",
-                tenantId, monthlyData.size(), weeklyData.size());
+        log.info("📊 consultation-completion 응답: tenantId={}, daily={}건, weekly={}건, monthly={}건, yearly={}건",
+                tenantId, dailyData.size(), weeklyData.size(), monthlyData.size(), yearlyData.size());
 
         return success(data);
     }

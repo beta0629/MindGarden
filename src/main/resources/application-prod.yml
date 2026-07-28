@@ -74,6 +74,8 @@ spring:
         use_sql_comments: false
         jdbc:
           batch_size: 50
+          # 표준화 v2 §F1: 모든 프로파일 KST 통일 (LocalDateTime ↔ TIMESTAMP 변환 기준)
+          time_zone: Asia/Seoul
         cache:
           use_second_level_cache: false
           use_query_cache: false

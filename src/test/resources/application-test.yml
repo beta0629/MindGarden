@@ -71,6 +71,9 @@ spring:
           auto: ${SPRING_JPA_PROPERTIES_HIBERNATE_HBM2DDL_AUTO:update}
         format_sql: true
         use_sql_comments: true
+        # 표준화 v2 §F1: 운영·테스트 동일 KST 기준으로 timestamp 변환
+        jdbc:
+          time_zone: Asia/Seoul
   task:
     scheduling:
       enabled: false

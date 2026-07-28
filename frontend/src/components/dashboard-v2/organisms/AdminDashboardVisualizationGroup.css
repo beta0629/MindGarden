@@ -146,6 +146,40 @@
   border-width: 1px;
 }
 
+/* 차트 카드 제목 옆 — 전기간 대비 대형 배지 */
+.mg-v2-viz-chart-header__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  min-width: 0;
+  flex: 1;
+}
+
+.mg-v2-viz-chart-header__title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  min-width: 0;
+}
+
+.mg-v2-viz-chart-header__badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  min-width: 0;
+}
+
+.mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--chart {
+  font-size: var(--mg-font-size-base, 1rem);
+  font-weight: 700;
+  line-height: 1.25;
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  border-width: 2px;
+  white-space: nowrap;
+}
+
 /* 증가: 밝은 success 배경 + 진한 텍스트·테두리 (차트 primary 그린과 명도 대비) */
 .mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-viz-growth-badge--up,
 .mg-v2-content-visualization-group .mg-v2-viz-growth-badge.mg-v2-badge--success {

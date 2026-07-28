@@ -20,6 +20,7 @@ import {
   resolveGrowthBadgeState,
   resolveGrowthTone,
   resolvePeriodComparisonMetrics,
+  resolveAutoYAxisMax,
   resolveRollingDailyChartRows,
   resolveRollingMonthlyChartRows,
   resolveRollingWeeklyChartRows,
@@ -240,5 +241,14 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
       { bookedCount: 1, inProgressCount: 0, completedCount: 0 }
     ])).toBe(false);
     expect(isBookedCompletedAllZero([])).toBe(true);
+  });
+
+  test('resolveAutoYAxisMax는 dataMax에 10% 패딩을 적용하고 고정 상한을 쓰지 않는다', () => {
+    expect(resolveAutoYAxisMax(0)).toBe(2);
+    expect(resolveAutoYAxisMax(-1)).toBe(2);
+    expect(resolveAutoYAxisMax(63)).toBe(70);
+    expect(resolveAutoYAxisMax(64)).toBe(71);
+    expect(resolveAutoYAxisMax(10)).toBe(11);
+    expect(resolveAutoYAxisMax(100)).toBe(110);
   });
 });

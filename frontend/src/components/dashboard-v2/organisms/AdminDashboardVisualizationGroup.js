@@ -28,6 +28,7 @@ import {
   formatChartPeriodLabel,
   isBookedCompletedAllZero,
   calcTargetAchievementPercent,
+  resolveAutoYAxisMax,
   resolveGrowthBadgeState,
   resolvePeriodComparisonMetrics,
   resolveTrendRowsByPeriod
@@ -518,7 +519,8 @@ const AdminDashboardVisualizationGroup = ({
       },
       y: {
         beginAtZero: true,
-        ticks: { stepSize: 1, color: canvasTheme.tick },
+        /* stepSize 고정 금지 — 큰 dataMax에서 틱·상한 왜곡 방지. precision 0으로 정수 틱 */
+        ticks: { precision: 0, color: canvasTheme.tick },
         grid: { color: canvasTheme.grid }
       }
     }),
@@ -558,11 +560,14 @@ const AdminDashboardVisualizationGroup = ({
     [canvasTheme.legend]
   );
 
-  const maxLine = Math.max(...series.booked, ...series.completed, 1);
-  const chartMaxY = Math.max(
-    ...series.booked.map((v, i) => v + series.completed[i]),
-    1
-  );
+  const maxLine = series.booked.length > 0
+    ? Math.max(...series.booked, ...series.completed, 0)
+    : 0;
+  const chartMaxY = series.booked.length > 0
+    ? Math.max(...series.booked.map((v, i) => v + series.completed[i]), 0)
+    : 0;
+  const lineYAxisMax = resolveAutoYAxisMax(maxLine);
+  const stackedYAxisMax = resolveAutoYAxisMax(chartMaxY);
 
   return (
     <section
@@ -737,7 +742,7 @@ const AdminDashboardVisualizationGroup = ({
                     ...stackedScaleOptions,
                     y: {
                       ...stackedScaleOptions.y,
-                      suggestedMax: Math.max(chartMaxY + 1, 2)
+                      max: stackedYAxisMax
                     }
                   }
                 }}
@@ -824,7 +829,7 @@ const AdminDashboardVisualizationGroup = ({
                     ...scaleOptions,
                     y: {
                       ...scaleOptions.y,
-                      suggestedMax: Math.max(maxLine + 1, 2)
+                      max: lineYAxisMax
                     }
                   }
                 }}

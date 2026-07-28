@@ -474,3 +474,27 @@ export function calcTargetAchievementPercent(actual, target) {
   }
   return Math.round((toSafeNumber(actual, 0) / t) * 100);
 }
+
+/** Chart.js Y축 — dataMax 대비 상한 패딩 비율 (고정 max 하드코딩 금지) */
+export const CHART_Y_DOMAIN_PADDING_RATIO = 1.1;
+
+/** 데이터가 전부 0일 때 Y축 최소 천장 */
+export const CHART_Y_DOMAIN_MIN_CEILING = 2;
+
+/**
+ * 시리즈 최댓값에 맞춰 Y축 상한을 자동 산출한다 (auto domain + padding).
+ * 점·곡선(tension)이 축 상단에 잘리지 않도록 dataMax * 1.1(올림)과 dataMax+1 중 큰 값을 사용.
+ *
+ * @param {number} dataMax 시리즈(또는 스택 합) 최댓값
+ * @returns {number} Chart.js scales.y.max
+ */
+export function resolveAutoYAxisMax(dataMax) {
+  const safeMax = Math.max(0, toSafeNumber(dataMax, 0));
+  if (safeMax <= 0) {
+    return CHART_Y_DOMAIN_MIN_CEILING;
+  }
+  /* 부동소수 오차 회피: 1.1 → 11/10 정수 연산 */
+  const ratioHundredths = Math.round(CHART_Y_DOMAIN_PADDING_RATIO * 100);
+  const padded = Math.ceil((safeMax * ratioHundredths) / 100);
+  return Math.max(padded, safeMax + 1, CHART_Y_DOMAIN_MIN_CEILING);
+}

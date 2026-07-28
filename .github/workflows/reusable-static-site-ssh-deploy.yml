@@ -102,7 +102,7 @@ jobs:
             ls -1t "$BACKUP_DIR"/${{ inputs.backup_tar_prefix }}-*.tar.gz 2>/dev/null | tail -n +$((BACKUP_RETENTION_COUNT + 1)) | xargs -r sudo rm -f
 
       - name: 📤 정적 파일 업로드 SCP
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.ssh_host }}
           username: ${{ secrets.ssh_user }}

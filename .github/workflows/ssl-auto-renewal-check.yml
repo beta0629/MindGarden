@@ -25,7 +25,7 @@ jobs:
 
       - name: 📤 스크립트 업로드 (개발)
         if: inputs.target == 'dev'
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.DEV_SERVER_HOST }}
           username: ${{ secrets.DEV_SERVER_USER }}
@@ -46,7 +46,7 @@ jobs:
 
       - name: 📤 스크립트 업로드 (운영)
         if: inputs.target == 'prod'
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

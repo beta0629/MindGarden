@@ -6,6 +6,14 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+# CI Java timezone 표준화 (A3, 2026-06-12): GitHub Actions runner JVM (mvn clean package) 을 KST 로 고정.
+# hotfix-4 [a73567ad] §A-3 의 pom.xml surefire/failsafe argLine 패턴을 워크플로 레벨로 확장.
+# JAVA_TOOL_OPTIONS 는 빌드 단계의 모든 JVM 호출에 자동 적용되며,
+# 운영 서버 systemd 런타임 timezone 은 별도(EnvironmentFile/TimeZoneConfig) — C4 에서 통합 예정.
+# 본 env 는 빌드/배포 흐름 (step 순서·트리거·branch 가드) 에는 영향 없음.
+env:
+  JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR"
+
 #
 # 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스 →
 # /etc/nginx/snippets/mindgarden-core-backend-upstream.conf 갱신 → nginx -t && reload → /etc/mindgarden/active-backend 갱신.

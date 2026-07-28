@@ -25,6 +25,12 @@ on:
   workflow_dispatch:
     # 수동 실행 가능
 
+# CI Java timezone 표준화 (A3, 2026-06-12): GitHub Actions runner JVM 을 KST 로 고정.
+# hotfix-4 [a73567ad] §A-3 의 pom.xml surefire/failsafe argLine 패턴을 워크플로 레벨로 확장.
+# JAVA_TOOL_OPTIONS 는 mvn clean package 등 모든 JVM 호출에 자동 적용된다.
+env:
+  JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR"
+
 jobs:
   deploy-onboarding:
     name: 🏗️ 온보딩 백엔드 빌드 및 배포

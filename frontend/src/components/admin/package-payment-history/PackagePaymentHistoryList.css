@@ -1,0 +1,132 @@
+/**
+ * PackagePaymentHistoryList — SCREEN_SPEC_CLIENT_PACKAGE_PAYMENT_HISTORY 토큰
+ */
+
+.pkg-payment-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  min-height: 0;
+}
+
+.pkg-payment-history__header {
+  background: var(--mg-color-background-main);
+  padding-bottom: var(--mg-spacing-md);
+  border-bottom: 1px solid var(--mg-color-border-main);
+}
+
+.pkg-payment-history__title {
+  margin: 0;
+  font-size: var(--mg-font-size-base, var(--font-size-md));
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.pkg-payment-history__summary {
+  margin: var(--mg-spacing-xs) 0 0;
+  font-size: var(--mg-font-size-sm, var(--font-size-sm));
+  font-weight: 600;
+  color: var(--mg-color-primary-main);
+}
+
+.pkg-payment-history__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  overflow-y: auto;
+}
+
+.pkg-payment-history__timeline-item {
+  margin: 0;
+}
+
+.pkg-payment-history__card {
+  position: relative;
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-xl);
+  padding: var(--mg-spacing-lg);
+  overflow: hidden;
+}
+
+.pkg-payment-history__card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--mg-spacing-xs);
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-color-secondary-main);
+}
+
+.pkg-payment-history__card--accent-initial::before {
+  background: var(--mg-color-secondary-main);
+}
+
+.pkg-payment-history__card--accent-additional::before {
+  background: var(--mg-color-primary-main);
+}
+
+.pkg-payment-history__card--accent-extension::before {
+  background: var(--mg-color-primary-main);
+}
+
+.pkg-payment-history__card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+}
+
+.pkg-payment-history__date {
+  font-size: var(--mg-font-size-sm, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+}
+
+.pkg-payment-history__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+  align-items: center;
+}
+
+.pkg-payment-history__package-name {
+  margin: var(--mg-spacing-sm) 0 0;
+  font-size: var(--mg-font-size-base, var(--font-size-md));
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.pkg-payment-history__amount-row {
+  margin: var(--mg-spacing-xs) 0 0;
+  font-size: var(--mg-font-size-sm, var(--font-size-sm));
+  color: var(--mg-color-text-main);
+}
+
+.pkg-payment-history__meta {
+  margin-top: var(--mg-spacing-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm) var(--mg-spacing-md);
+  font-size: var(--mg-font-size-xs, var(--font-size-xs));
+  color: var(--mg-color-text-secondary);
+}
+
+.pkg-payment-history__error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-lg);
+}
+
+.pkg-payment-history__error-message {
+  margin: 0;
+  font-size: var(--mg-font-size-sm, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+}

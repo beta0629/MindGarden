@@ -46,3 +46,17 @@
   border-radius: var(--mg-radius-md);
   border: 1px solid var(--mg-color-border-main);
 }
+
+.client-side-peek-stub__payment-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  min-height: 0;
+}
+
+.client-side-peek-stub__section-title {
+  margin: 0;
+  font-size: var(--mg-font-size-base);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}

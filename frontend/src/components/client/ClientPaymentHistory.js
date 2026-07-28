@@ -33,6 +33,8 @@ import { useTranslation } from 'react-i18next';
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
 const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
+// TODO(P1, 2026-07-28): TERMINATED·회기추가 누락 해소 — API_ENDPOINTS.ADMIN.CLIENTS.PACKAGE_PAYMENT_HISTORY
+//   + PackagePaymentHistoryList(showAdminDetails=false) 로 교체. 현재는 mappings/client(TERMINATED 제외) 축.
 
 
 const CLIENT_PAYMENT_HISTORY_TITLE_ID = 'client-payment-history-title';

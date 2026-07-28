@@ -37,7 +37,10 @@ export const API_ENDPOINTS = {
     
     CLIENTS: {
       WITH_STATS: '/api/v1/admin/clients/with-stats',
-      WITH_MAPPING_INFO: '/api/v1/admin/clients/with-mapping-info'
+      WITH_MAPPING_INFO: '/api/v1/admin/clients/with-mapping-info',
+      /** 내담자별 패키지 결제 이력 (TERMINATED·회기추가 포함) */
+      PACKAGE_PAYMENT_HISTORY: (clientId) =>
+        `/api/v1/admin/clients/${clientId}/package-payment-history`
     },
     
     MAPPINGS: {

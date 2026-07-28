@@ -1,5 +1,5 @@
 /**
- * ClientSidePeekContent — 내담자 Side Peek stub 본문
+ * ClientSidePeekContent — 내담자 Side Peek 본문 (개요 + 결제 내역)
  *
  * @author CoreSolution
  * @since 2026-07-01
@@ -7,8 +7,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import SafeText from '../../../common/SafeText';
 import { getUserStatusKoreanNameSync, maskEncryptedDisplay } from '../../../../utils/codeHelper';
 import { maskEmailDisplay, maskPhoneDisplay } from '../../../../utils/partyPiiDisplay';
+import { PACKAGE_PAYMENT_HISTORY_UI } from '../../../../constants/packagePaymentHistory';
+import PackagePaymentHistoryList from '../../package-payment-history/PackagePaymentHistoryList';
 import './ClientSidePeekContent.css';
 
 const ClientSidePeekContent = ({ client }) => {
@@ -20,30 +23,40 @@ const ClientSidePeekContent = ({ client }) => {
   const statusLabel = getUserStatusKoreanNameSync(client?.status);
   const phone = maskPhoneDisplay(client.phone);
   const email = maskEmailDisplay(client.email);
+  const clientId = client.id;
 
   return (
     <div className="client-side-peek-stub">
       <dl className="client-side-peek-stub__facts">
         <div className="client-side-peek-stub__fact">
           <dt>이름</dt>
-          <dd>{clientName}</dd>
+          <dd><SafeText>{clientName}</SafeText></dd>
         </div>
         <div className="client-side-peek-stub__fact">
           <dt>상태</dt>
-          <dd>{statusLabel}</dd>
+          <dd><SafeText>{statusLabel}</SafeText></dd>
         </div>
         <div className="client-side-peek-stub__fact">
           <dt>연락처</dt>
-          <dd>{phone}</dd>
+          <dd><SafeText>{phone}</SafeText></dd>
         </div>
         <div className="client-side-peek-stub__fact">
           <dt>이메일</dt>
-          <dd>{email}</dd>
+          <dd><SafeText>{email}</SafeText></dd>
         </div>
       </dl>
-      <p className="client-side-peek-stub__placeholder" role="note">
-        상담 이력·매칭·결제 상세는 이후 Side Peek MVP에서 제공됩니다.
-      </p>
+
+      {clientId != null && (
+        <section
+          className="client-side-peek-stub__payment-history"
+          aria-label={PACKAGE_PAYMENT_HISTORY_UI.SECTION_TITLE}
+        >
+          <h3 className="client-side-peek-stub__section-title">
+            <SafeText>{PACKAGE_PAYMENT_HISTORY_UI.SECTION_TITLE}</SafeText>
+          </h3>
+          <PackagePaymentHistoryList clientId={clientId} showAdminDetails />
+        </section>
+      )}
     </div>
   );
 };

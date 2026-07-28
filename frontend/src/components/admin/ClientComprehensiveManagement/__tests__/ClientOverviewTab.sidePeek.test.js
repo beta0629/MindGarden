@@ -27,11 +27,17 @@ jest.mock('../../../ui/Card/index', () => ({
   ProfileCard: () => null
 }));
 
+jest.mock('../../package-payment-history/PackagePaymentHistoryList', () => ({
+  __esModule: true,
+  default: () => <div data-testid="package-payment-history-list">payment-history-mock</div>
+}));
+
 import ClientOverviewTab from '../ClientOverviewTab';
 import SidePeekShell from '../../../common/organisms/SidePeekShell';
 import ClientSidePeekContent from '../molecules/ClientSidePeekContent';
 import { SIDE_PEEK_SHELL_REGION_PEEK } from '../../../../constants/sidePeekShellConstants';
 import { maskEncryptedDisplay, getUserStatusKoreanNameSync } from '../../../../utils/codeHelper';
+import { PACKAGE_PAYMENT_HISTORY_UI } from '../../../../constants/packagePaymentHistory';
 
 const SAMPLE_CLIENT = {
   id: 101,
@@ -96,7 +102,8 @@ describe('ClientOverviewTab — SidePeekShell stub', () => {
     expect(within(peekPanel).getByText('김내담')).toBeInTheDocument();
     expect(within(peekPanel).getByText(getUserStatusKoreanNameSync('ACTIVE'))).toBeInTheDocument();
     expect(within(peekPanel).getByText(/010/)).toBeInTheDocument();
-    expect(within(peekPanel).getByText(/Side Peek MVP/)).toBeInTheDocument();
+    expect(within(peekPanel).getByText(PACKAGE_PAYMENT_HISTORY_UI.SECTION_TITLE)).toBeInTheDocument();
+    expect(within(peekPanel).getByTestId('package-payment-history-list')).toBeInTheDocument();
   });
 
   test('overflow 「상세」 → peek 오픈', async() => {

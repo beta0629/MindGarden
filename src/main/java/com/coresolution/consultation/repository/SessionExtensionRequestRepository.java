@@ -88,6 +88,24 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
     List<SessionExtensionRequest> findByMappingIdOrderByCreatedAtDesc(Long mappingId);
 
     /**
+     * 내담자별 회기 추가 요청 목록 조회 (패키지 결제 이력용, tenant 격리).
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 ID
+     * @return 매핑·상담사·내담자 fetch join 된 요청 목록
+     * @since 2026-07-28
+     */
+    @Query("SELECT ser FROM SessionExtensionRequest ser "
+            + "LEFT JOIN FETCH ser.mapping m "
+            + "LEFT JOIN FETCH m.client c "
+            + "LEFT JOIN FETCH m.consultant co "
+            + "WHERE ser.tenantId = :tenantId AND m.client.id = :clientId "
+            + "ORDER BY ser.createdAt DESC")
+    List<SessionExtensionRequest> findByTenantIdAndClientIdWithDetails(
+            @Param("tenantId") String tenantId,
+            @Param("clientId") Long clientId);
+
+    /**
      * 테넌트·매핑·상태 조건으로 회기 추가 요청을 조회한다.
      *
      * @param tenantId 테넌트 ID

@@ -47,6 +47,7 @@ const MatchingScheduleSidebar = ({
   onSessionExtension,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
+  onPackagePaymentHistory,
   approveProcessing,
   cancelPendingProcessing,
   cancelTargetMappingId,
@@ -228,6 +229,7 @@ const MatchingScheduleSidebar = ({
           onSessionExtension={onSessionExtension}
           onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
           onCancelSessionExtension={onCancelSessionExtension}
+          onPackagePaymentHistory={onPackagePaymentHistory}
           approveProcessing={approveProcessing}
           cancelPendingProcessing={cancelPendingProcessing}
           cancelTargetMappingId={cancelTargetMappingId}
@@ -263,6 +265,7 @@ MatchingScheduleSidebar.propTypes = {
   onSessionExtension: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
+  onPackagePaymentHistory: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool,
   cancelTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -287,6 +290,7 @@ MatchingScheduleSidebar.defaultProps = {
   onSessionExtension: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
+  onPackagePaymentHistory: null,
   approveProcessing: false,
   cancelPendingProcessing: false,
   cancelTargetMappingId: null,

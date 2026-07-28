@@ -13,6 +13,7 @@ import jakarta.validation.groups.Default;
 import org.springframework.validation.annotation.Validated;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
@@ -21,6 +22,7 @@ import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
+import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
 import com.coresolution.consultation.entity.Client;
 // 표준화 2025-12-05: 역할 체크를 공통코드 기반 동적 조회로 변경 (COMMON_CODE_SYSTEM_STANDARD.md 준수)
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -102,6 +104,7 @@ public class AdminController extends BaseApiController {
     private static final int ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE = 200;
 
     private final AdminService adminService;
+    private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final BranchService branchService;
     private final ScheduleService scheduleService;
     private final ConsultationRecordService consultationRecordService;
@@ -2368,6 +2371,34 @@ public class AdminController extends BaseApiController {
         }
 
         return success("상담사가 성공적으로 변경되었습니다.", mappingData);
+    }
+
+    /**
+     * 내담자별 패키지 결제 이력 (TERMINATED 매핑 + 회기추가, 최신순).
+     *
+     * <p>GET /api/v1/admin/clients/{clientId}/package-payment-history</p>
+     *
+     * @param clientId 내담자 ID
+     * @param session HTTP 세션 (상담사 호출 시 본인 담당 필터)
+     * @return 합산 요약 + 타임라인
+     * @since 2026-07-28
+     */
+    @GetMapping("/clients/{clientId}/package-payment-history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF', 'CONSULTANT')")
+    public ResponseEntity<ApiResponse<ClientPackagePaymentHistoryResponse>> getClientPackagePaymentHistory(
+            @PathVariable Long clientId,
+            HttpSession session) {
+        log.info("내담자 패키지 결제 이력 조회: clientId={}", clientId);
+        User currentUser = SessionUtils.getCurrentUser(session);
+        Long viewerConsultantId = null;
+        if (currentUser != null
+                && currentUser.getRole() != null
+                && currentUser.getRole().isProfessionalProvider()) {
+            viewerConsultantId = currentUser.getId();
+        }
+        ClientPackagePaymentHistoryResponse data =
+                clientPackagePaymentHistoryService.getPackagePaymentHistory(clientId, viewerConsultantId);
+        return success("내담자 패키지 결제 이력 조회 성공", data);
     }
 
     /**

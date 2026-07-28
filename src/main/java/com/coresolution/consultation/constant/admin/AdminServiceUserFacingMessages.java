@@ -325,10 +325,15 @@ public final class AdminServiceUserFacingMessages {
             NOTES_ADDITIONAL_MAPPING_MARKER + " activeMappingId=%d %d회";
 
     /**
+     * 추가 패키지 병합 완료 notes 마커 (이력 유형 판별·파서가 동일 문자열 사용).
+     */
+    public static final String NOTES_ADDITIONAL_MAPPING_MERGED_MARKER = "[추가 패키지 병합 완료]";
+
+    /**
      * 추가 패키지 병합 완료 notes 한 줄 (인자: 타깃 ACTIVE ID, 합산 회기).
      */
     public static final String NOTES_ADDITIONAL_MAPPING_MERGED_FMT =
-            "[추가 패키지 병합 완료] targetActiveMappingId=%d sessions=%d";
+            NOTES_ADDITIONAL_MAPPING_MERGED_MARKER + " targetActiveMappingId=%d sessions=%d";
 
     /**
      * 추가 패키지 확정 시 notes에서 타깃 ACTIVE ID를 파싱할 수 없을 때.

@@ -34,6 +34,7 @@ const MappingScheduleCard = ({
   onSessionExtension,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
+  onPackagePaymentHistory,
   approveProcessing,
   cancelPendingProcessing,
   desyncProcessing
@@ -96,6 +97,7 @@ const MappingScheduleCard = ({
       onSessionExtension={onSessionExtension}
       onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
       onCancelSessionExtension={onCancelSessionExtension}
+      onPackagePaymentHistory={onPackagePaymentHistory}
       approveProcessing={approveProcessing}
       cancelPendingProcessing={cancelPendingProcessing}
       desyncProcessing={desyncProcessing}
@@ -132,6 +134,7 @@ MappingScheduleCard.propTypes = {
   onSessionExtension: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
+  onPackagePaymentHistory: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool,
   desyncProcessing: PropTypes.bool
@@ -152,6 +155,7 @@ MappingScheduleCard.defaultProps = {
   onSessionExtension: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
+  onPackagePaymentHistory: null,
   approveProcessing: false,
   cancelPendingProcessing: false,
   desyncProcessing: false

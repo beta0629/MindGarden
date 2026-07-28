@@ -18,6 +18,8 @@ import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
 import SessionExtensionModal from '../mapping/SessionExtensionModal';
 import SessionExtensionPaymentConfirmModal from '../mapping/SessionExtensionPaymentConfirmModal';
+import PackagePaymentHistoryModal from '../package-payment-history/PackagePaymentHistoryModal';
+import { PACKAGE_PAYMENT_HISTORY_UI } from '../../../constants/packagePaymentHistory';
 import MappingPaymentModal from '../mapping/MappingPaymentModal';
 import MappingDepositModal from '../mapping/MappingDepositModal';
 import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
@@ -137,6 +139,7 @@ const IntegratedMatchingSchedule = () => {
   const [sessionExtensionMapping, setSessionExtensionMapping] = useState(null);
   const [sessionExtensionPaymentRequest, setSessionExtensionPaymentRequest] = useState(null);
   const [sessionExtensionCancellingId, setSessionExtensionCancellingId] = useState('');
+  const [packagePaymentHistoryClientId, setPackagePaymentHistoryClientId] = useState(null);
   const [viewFilter, setViewFilter] = useState(INTEGRATED_SCHEDULE_DEFAULT_VIEW_FILTER);
   const [statusFilter, setStatusFilter] = useState(INTEGRATED_SCHEDULE_DEFAULT_STATUS_FILTER);
   const sidebarDensityStorageKey = buildViewModeStorageKey(
@@ -778,6 +781,15 @@ const IntegratedMatchingSchedule = () => {
     setSessionExtensionMapping(mapping);
   }, []);
 
+  const handlePackagePaymentHistoryFromCard = useCallback((mapping) => {
+    const clientId = mapping?.clientId ?? mapping?.client?.id ?? null;
+    if (clientId == null) {
+      notificationManager.warning(PACKAGE_PAYMENT_HISTORY_UI.CLIENT_MISSING);
+      return;
+    }
+    setPackagePaymentHistoryClientId(clientId);
+  }, []);
+
   const handleSessionExtensionRequested = useCallback(() => {
     loadMappings();
     setSessionExtensionMapping(null);
@@ -919,6 +931,7 @@ const IntegratedMatchingSchedule = () => {
           onSessionExtension={handleSessionExtensionFromCard}
           onConfirmSessionExtensionPayment={handleConfirmSessionExtensionPayment}
           onCancelSessionExtension={handleCancelSessionExtensionFromCard}
+          onPackagePaymentHistory={handlePackagePaymentHistoryFromCard}
           approveProcessing={approveProcessing}
           cancelPendingProcessing={cancelPendingProcessing}
           cancelTargetMappingId={cancelTargetMapping?.id ?? null}
@@ -1017,6 +1030,12 @@ const IntegratedMatchingSchedule = () => {
           onSessionExtensionRequested={handleSessionExtensionRequested}
         />
       )}
+
+      <PackagePaymentHistoryModal
+        isOpen={packagePaymentHistoryClientId != null}
+        onClose={() => setPackagePaymentHistoryClientId(null)}
+        clientId={packagePaymentHistoryClientId}
+      />
 
       <SessionExtensionPaymentConfirmModal
         isOpen={Boolean(sessionExtensionPaymentRequest)}

@@ -12,6 +12,7 @@ import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import MappingMatchActions from '../../molecules/MappingMatchActions';
 import { SESSION_EXTENSION_UI } from '../../../../../utils/sessionExtensionPending';
+import { PACKAGE_PAYMENT_HISTORY_UI } from '../../../../../constants/packagePaymentHistory';
 import {
   MAPPING_DESYNC_CTA_TYPE,
   MAPPING_DESYNC_KIND,
@@ -32,6 +33,7 @@ const CardActionGroup = ({
   onSessionExtension,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
+  onPackagePaymentHistory,
   approveProcessing,
   cancelPendingProcessing,
   desyncProcessing
@@ -114,6 +116,30 @@ const CardActionGroup = ({
         preventDoubleClick={false}
       >
         {SESSION_EXTENSION_UI.ADD_LABEL}
+      </MGButton>
+    )}
+    {mapping?.status === 'ACTIVE' && onPackagePaymentHistory && (
+      <MGButton
+        type="button"
+        variant="ghost"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'ghost',
+          size: 'sm',
+          loading: false,
+          className: 'integrated-schedule__btn-package-payment-history'
+        })}
+        loading={false}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={(event) => {
+          event.stopPropagation();
+          onPackagePaymentHistory(mapping);
+        }}
+        aria-label={PACKAGE_PAYMENT_HISTORY_UI.CARD_ACTION_LABEL}
+        preventDoubleClick={false}
+        data-testid={`mapping-package-payment-history-${mapping?.id ?? 'unknown'}`}
+      >
+        {PACKAGE_PAYMENT_HISTORY_UI.CARD_ACTION_LABEL}
       </MGButton>
     )}
     {mapping?.status === 'ACTIVE' && hasPendingExtension && onConfirmSessionExtensionPayment && (
@@ -237,6 +263,7 @@ CardActionGroup.propTypes = {
   onSessionExtension: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
+  onPackagePaymentHistory: PropTypes.func,
   approveProcessing: PropTypes.bool,
   cancelPendingProcessing: PropTypes.bool,
   desyncProcessing: PropTypes.bool
@@ -255,6 +282,7 @@ CardActionGroup.defaultProps = {
   onSessionExtension: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
+  onPackagePaymentHistory: null,
   approveProcessing: false,
   cancelPendingProcessing: false,
   desyncProcessing: false

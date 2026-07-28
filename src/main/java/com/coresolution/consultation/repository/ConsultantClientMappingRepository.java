@@ -69,6 +69,22 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     List<ConsultantClientMapping> findByClientIdAndStatusNot(@Param("tenantId") String tenantId, @Param("clientId") Long clientId, @Param("status") ConsultantClientMapping.MappingStatus status);
 
     /**
+     * 내담자 매핑 전체 조회 (TERMINATED 포함, 패키지 결제 이력용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 ID
+     * @return consultant/client fetch join 된 매핑 목록
+     * @since 2026-07-28
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client "
+            + "WHERE m.tenantId = :tenantId AND m.client.id = :clientId "
+            + "ORDER BY m.createdAt DESC")
+    List<ConsultantClientMapping> findAllByTenantIdAndClientIdWithDetails(
+            @Param("tenantId") String tenantId,
+            @Param("clientId") Long clientId);
+
+    /**
      * 내담자({@code clientId}) 의 모든 매핑(TERMINATED 포함) {@code usedSessions} 합산.
      *
      * <p>일정 상세 모달의 "누적 상담 N회" 라벨 SSOT. {@code users.past_session_count} 와 합쳐서

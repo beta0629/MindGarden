@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -53,6 +54,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultantClientMappingHistoryService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
@@ -123,6 +125,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final BatchNotificationDispatchService batchNotificationDispatchService;
     private final ConsultantClientMappingHistoryService consultantClientMappingHistoryService;
     private final ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
+    private final ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService;
     private final ObjectMapper sessionHistoryObjectMapper = new ObjectMapper();
 
     /**
@@ -175,7 +178,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper,
             BatchNotificationDispatchService batchNotificationDispatchService,
             ConsultantClientMappingHistoryService consultantClientMappingHistoryService,
-            ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService) {
+            ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService,
+            ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -200,6 +204,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.batchNotificationDispatchService = batchNotificationDispatchService;
         this.consultantClientMappingHistoryService = consultantClientMappingHistoryService;
         this.scheduleChangeNotificationDebounceService = scheduleChangeNotificationDebounceService;
+        this.immediateReservationSmsDeferralService = immediateReservationSmsDeferralService;
     }
     
     
@@ -904,6 +909,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * <p>활성 트랜잭션이 있으면 {@code afterCommit} 이후 실행한다. 커밋 전 조회 시
      * {@code TARGET_NOT_FOUND} silent skip 이 재발하지 않도록 한다. 트랜잭션이 없으면 즉시 동기 실행.
      *
+     * <p>업무시간(기본 09:00~18:00 Asia/Seoul) 밖이면
+     * {@link ImmediateReservationSmsDeferralService} 로 지연 enqueue 하고 즉시 발송하지 않는다.
+     * 등록 시점 템플릿 코드를 pending 에 보존한다(발송 시각 재계산 방지).
+     *
      * <p>발송 자체는 {@link BatchNotificationDispatchService} 가 멱등 로그로 중복을 차단하므로,
      * 본 메서드는 사전 분기만 담당한다. 매핑 lookup 실패·기타 예외는 전체 흐름을 막지 않도록 swallow.
      *
@@ -970,20 +979,46 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
             long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), schedule.getDate());
 
+            String templateCode = null;
             if (total != null && total == 1) {
                 // 단발성 결제 — 등록 시점·D-N 무관 즉시 안내(기존 동작 유지).
-                batchNotificationDispatchService
-                    .dispatchReservationImmediateSingle(schedule.getId());
+                templateCode = BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE;
             } else if (daysUntil == 2L) {
                 // D-2 — 09:00 배치와 동일 본문/멱등 키(target_id=scheduleId) → 09:00 배치 중복 자동 차단.
-                batchNotificationDispatchService
-                    .dispatchReservationReminderD2(schedule.getId());
+                templateCode = BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2;
             } else if (daysUntil < 2L) {
                 // D-1/D-0 — 예약 임박 안내 본문.
+                templateCode = BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE;
+            }
+            // 그 외 (다회기 + D-3 이상) → 09:00 D-2/D-1/D-0 배치(ReservationReminderScheduler) 가 처리.
+            if (templateCode == null) {
+                return;
+            }
+
+            // 업무시간 외 → 지연 enqueue (심야/새벽 문자 방지). InjectMocks 단위테스트 null-safe.
+            if (immediateReservationSmsDeferralService != null) {
+                Optional<LocalDateTime> deferredFireAt =
+                    immediateReservationSmsDeferralService.resolveDeferredFireAt();
+                if (deferredFireAt.isPresent()) {
+                    immediateReservationSmsDeferralService.enqueue(
+                        tenantId, schedule.getId(), templateCode, deferredFireAt.get());
+                    log.info(
+                        "즉시 SMS 업무시간 외 지연 enqueue: scheduleId={}, templateCode={}, fireAt={}",
+                        schedule.getId(), templateCode, deferredFireAt.get());
+                    return;
+                }
+            }
+
+            if (BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE.equals(templateCode)) {
+                batchNotificationDispatchService
+                    .dispatchReservationImmediateSingle(schedule.getId());
+            } else if (BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2.equals(templateCode)) {
+                batchNotificationDispatchService
+                    .dispatchReservationReminderD2(schedule.getId());
+            } else if (BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE.equals(templateCode)) {
                 batchNotificationDispatchService
                     .dispatchReservationImmediateLate(schedule.getId());
             }
-            // 그 외 (다회기 + D-3 이상) → 09:00 D-2/D-1/D-0 배치(ReservationReminderScheduler) 가 처리.
         } catch (Exception e) {
             log.warn("즉시 발송 분기 실패(무시): scheduleId={}, error={}",
                 schedule != null ? schedule.getId() : null, e.getMessage());

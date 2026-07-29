@@ -110,6 +110,7 @@ jest.mock('../../admin/AdminDashboard/index', () => ({
 
 jest.mock('../../common/Chart', () => () => null);
 jest.mock('../molecules/CumulativeConsultantCountsChart', () => () => null);
+jest.mock('../molecules/SessionBurnRateSection', () => () => null);
 jest.mock('../../ui/Schedule/ConsultantCountsBadgeList', () => () => null);
 jest.mock('../../ui/Schedule/MissingConsultationLogsList', () => () => null);
 jest.mock('../../admin/AdminDashboard/AdminDashboardMonitoring', () => () => null);

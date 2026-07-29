@@ -66,6 +66,7 @@ import MissingConsultationLogsList from '../ui/Schedule/MissingConsultationLogsL
 import KpiFlipCard from '../admin/AdminDashboard/molecules/KpiFlipCard';
 import CumulativeConsultantCountsChart from './molecules/CumulativeConsultantCountsChart';
 import './molecules/CumulativeConsultantCountsChart.css';
+import SessionBurnRateSection from './molecules/SessionBurnRateSection';
 import Chart from '../common/Chart';
 import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STATUS_SERIES_COLOR_VARS } from '../../constants/charts';
 import { resolveCssColorVarToHex } from '../../utils/resolveCssColorVarToHex';
@@ -98,6 +99,7 @@ import {
   buildTrendAriaLabel,
   extractSparklineValues
 } from './utils/dashboardKpiSparklineUtils';
+import { aggregateConsultantSessionBurnRates } from './utils/aggregateConsultantSessionBurnRates';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
@@ -106,7 +108,12 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardPipeline.css';
 import { useTranslation } from 'react-i18next';
 import { filterManualMatchingQueueClients } from '../../utils/manualMatchingQueueUtils';
-import { DASHBOARD_KPI_IDS, API_ADMIN_SCHEDULES, DASHBOARD_REFUND_SECTION_CTA_LABEL } from '../../constants/adminDashboardWidgetConstants';
+import {
+  DASHBOARD_KPI_IDS,
+  API_ADMIN_SCHEDULES,
+  DASHBOARD_REFUND_SECTION_CTA_LABEL,
+  MAPPING_STATUS_ACTIVE
+} from '../../constants/adminDashboardWidgetConstants';
 import {
   buildDepositPendingQueue,
   DEPOSIT_QUEUE_REFRESH_EVENT,
@@ -231,6 +238,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [integratedDataRankUpSet, setIntegratedDataRankUpSet] = useState(() => new Set());
   const [integratedDataRankDownSet, setIntegratedDataRankDownSet] = useState(() => new Set());
   const previousRankByConsultantIdRef = useRef(new Map());
+  /**
+   * §D 회기 소진율 — mappings LIST 페이로드 재사용(추가 API 없음).
+   * 기간 pill과 독립 스냅샷(항상 ACTIVE 현재).
+   */
+  const [mappingsListForSessionBurn, setMappingsListForSessionBurn] = useState([]);
 
   /**
    * R6 (2026-06-06) Phase 3-B — 「상담사 별 통합데이터」 카드 확장.
@@ -238,6 +250,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
    * - §B 월별: 집계 기간이 '월별' 일 때만 노출 (integratedDataYear/Month — 사용자 선택 월)
    * - §C 누락: 모든 탭에서 항상 노출, «지난 일정» 전체 누적 기준 (월 경계 비의존).
    *   현재 월만 조회하면 월초에 이전 달 누락 건이 사라지는 버그가 있어 누적 SSOT로 통일.
+   * - §D 회기 소진율: ACTIVE 매핑 used/total 가중 집계 (기간 독립 스냅샷).
    *
    * 캐시·tenantId 리셋·cancelled race 패턴은 hook 내부에서 보존.
    */
@@ -488,7 +501,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               ? mappingsPayload
               : [];
         totalMappings = mappingsPayload?.count ?? mappingsData?.data?.count ?? mappingsData?.count ?? mappingsList.length;
-        activeMappings = mappingsList.filter((m) => m.status === 'ACTIVE').length;
+        activeMappings = mappingsList.filter((m) => m.status === MAPPING_STATUS_ACTIVE).length;
+        // §D: 동일 LIST 응답의 mappings 배열 보관 → FE 가중 집계(추가 API 없음)
+        setMappingsListForSessionBurn(mappingsList);
+      } else {
+        setMappingsListForSessionBurn([]);
       }
       if (ratingRes.ok) {
         const d = await ratingRes.json();
@@ -920,6 +937,27 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     return Array.from(byConsultantId.values())
       .sort((a, b) => (b.completedCount - a.completedCount) || ((b.rating ?? 0) - (a.rating ?? 0)))
       .slice(0, 10);
+  })();
+
+  /**
+   * §D 회기 소진율 — ACTIVE 매핑 가중 집계.
+   * 이름: mapping.consultantName 없으면 통합데이터 rows 에서 consultantId 로 폴백.
+   */
+  const sessionBurnRateItems = (() => {
+    const nameByConsultantId = new Map();
+    consultantIntegratedData.forEach((row) => {
+      if (row?.consultantId == null) {
+        return;
+      }
+      const name = row.consultantName;
+      if (name != null && name !== '' && name !== '-') {
+        nameByConsultantId.set(String(row.consultantId), name);
+      }
+    });
+    return aggregateConsultantSessionBurnRates(mappingsListForSessionBurn, {
+      statusActive: MAPPING_STATUS_ACTIVE,
+      nameByConsultantId
+    });
   })();
 
   /** 순위 변동 감지: 이전 순위와 비교해 rankUp/rankDown Set 갱신 후 ref 업데이트, 2초 뒤 펄스 클래스용 Set 초기화 */
@@ -1460,6 +1498,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               showTitle={false}
             />
           </section>
+
+          {/*
+            §D 회기 소진율 (2026-07-29) — ACTIVE 매핑 used/total 가중 집계.
+            기간 pill·뷰 탭과 독립 스냅샷. mappings LIST 재사용(추가 API·§E 없음).
+          */}
+          <SessionBurnRateSection items={sessionBurnRateItems} />
         </div>
       </div>
 

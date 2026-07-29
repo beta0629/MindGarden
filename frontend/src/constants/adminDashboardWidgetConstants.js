@@ -24,3 +24,12 @@ export const DASHBOARD_KPI_IDS = {
   NO_SHOW: 'no-show',
   ACTIVE_SESSIONS: 'active-sessions'
 };
+
+/** 매칭 status — §D 회기 소진율 모집단 */
+export const MAPPING_STATUS_ACTIVE = 'ACTIVE';
+
+/**
+ * §D 회기 소진율 랭킹 최대 행 수.
+ * 상단「상담사 별 통합데이터」top N과 동일.
+ */
+export const SESSION_BURN_TOP_LIMIT = 10;

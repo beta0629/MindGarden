@@ -1,6 +1,7 @@
 package com.coresolution.consultation.scheduler;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
@@ -34,17 +35,15 @@ import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * {@link SessionDeductionRecoveryBatch} 단위 테스트.
  *
- * <p>케이스 A~E (위임 명세 §7) 모두 통과해야 한다.</p>
+ * <p>케이스 A~E (위임 명세 §7) 및 P2(OPEN alreadyOpen·SUCCESS auto-resolve) 통과해야 한다.</p>
  *
  * @author CoreSolution
  * @since 2026-06-05
@@ -122,6 +121,9 @@ class SessionDeductionRecoveryBatchTest {
         when(mappingRepository.findActiveByConsultantAndClient(
                 eq(TENANT_A), eq(CONSULTANT_ID), eq(CLIENT_ID)))
                 .thenReturn(Optional.of(mapping));
+        when(alertRepository.resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_A), eq(107L), any(LocalDateTime.class)))
+                .thenReturn(0);
 
         RecoveryResult result = batch.runRecovery();
 
@@ -129,9 +131,12 @@ class SessionDeductionRecoveryBatchTest {
         assertThat(result.success()).isEqualTo(1);
         assertThat(result.skipped()).isZero();
         assertThat(result.alerted()).isZero();
+        assertThat(result.alreadyOpen()).isZero();
         verify(scheduleService).useSessionForSpecificMapping(
                 eq(TENANT_A), eq(MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), eq(completed));
         verify(alertRepository, never()).save(any(SessionRecoveryAlert.class));
+        verify(alertRepository).resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_A), eq(107L), any(LocalDateTime.class));
     }
 
     @Test
@@ -144,6 +149,7 @@ class SessionDeductionRecoveryBatchTest {
 
         assertThat(result.candidates()).isZero();
         assertThat(result.success()).isZero();
+        assertThat(result.alreadyOpen()).isZero();
         verify(scheduleService, never()).useSessionForSpecificMapping(
                 anyString(), anyLong(), anyLong(), anyLong(), any(Schedule.class));
         verify(alertRepository, never()).save(any(SessionRecoveryAlert.class));
@@ -169,6 +175,7 @@ class SessionDeductionRecoveryBatchTest {
         assertThat(result.candidates()).isEqualTo(1);
         assertThat(result.success()).isZero();
         assertThat(result.alerted()).isEqualTo(1);
+        assertThat(result.alreadyOpen()).isZero();
         verify(scheduleService, never()).useSessionForSpecificMapping(
                 anyString(), anyLong(), anyLong(), anyLong(), any(Schedule.class));
         ArgumentCaptor<SessionRecoveryAlert> alertCaptor =
@@ -197,6 +204,7 @@ class SessionDeductionRecoveryBatchTest {
         RecoveryResult result = batch.runRecovery();
 
         assertThat(result.alerted()).isEqualTo(1);
+        assertThat(result.alreadyOpen()).isZero();
         ArgumentCaptor<SessionRecoveryAlert> alertCaptor =
                 ArgumentCaptor.forClass(SessionRecoveryAlert.class);
         verify(alertRepository).save(alertCaptor.capture());
@@ -206,13 +214,16 @@ class SessionDeductionRecoveryBatchTest {
     }
 
     @Test
-    @DisplayName("케이스 D: 동시성 — sessionSequence 이미 채워진 일정은 멱등 skip")
+    @DisplayName("케이스 D: 동시성 — sessionSequence 이미 채워진 일정은 멱등 skip + OPEN auto-resolve")
     void caseD_alreadyDeducted_isIdempotentSkip() {
         Schedule alreadyDeducted = buildSchedule(300L, TENANT_A, ScheduleStatus.COMPLETED);
         alreadyDeducted.setSessionSequence(1);
 
         when(scheduleRepository.findRecoveryCandidates(anyCollection(), any(Pageable.class)))
                 .thenReturn(List.of(alreadyDeducted));
+        when(alertRepository.resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_A), eq(300L), any(LocalDateTime.class)))
+                .thenReturn(1);
 
         RecoveryResult result = batch.runRecovery();
 
@@ -221,6 +232,8 @@ class SessionDeductionRecoveryBatchTest {
         assertThat(result.success()).isZero();
         verify(scheduleService, never()).useSessionForSpecificMapping(
                 anyString(), anyLong(), anyLong(), anyLong(), any(Schedule.class));
+        verify(alertRepository).resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_A), eq(300L), any(LocalDateTime.class));
     }
 
     @Test
@@ -242,6 +255,9 @@ class SessionDeductionRecoveryBatchTest {
         when(mappingRepository.findActiveByConsultantAndClient(
                 eq(TENANT_B), eq(CONSULTANT_ID), eq(CLIENT_ID)))
                 .thenReturn(Optional.of(mappingB));
+        when(alertRepository.resolveUnresolvedByTenantIdAndScheduleId(
+                anyString(), anyLong(), any(LocalDateTime.class)))
+                .thenReturn(0);
 
         RecoveryResult result = batch.runRecovery();
 
@@ -251,11 +267,15 @@ class SessionDeductionRecoveryBatchTest {
                 eq(TENANT_A), eq(501L), eq(CONSULTANT_ID), eq(CLIENT_ID), eq(s1));
         verify(scheduleService).useSessionForSpecificMapping(
                 eq(TENANT_B), eq(502L), eq(CONSULTANT_ID), eq(CLIENT_ID), eq(s2));
+        verify(alertRepository).resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_A), eq(401L), any(LocalDateTime.class));
+        verify(alertRepository).resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_B), eq(402L), any(LocalDateTime.class));
     }
 
     @Test
-    @DisplayName("멱등 alert: 동일 schedule 미해결 알림 이미 있으면 중복 적재하지 않음")
-    void alertSavedOnlyOnce_perScheduleUnresolved() {
+    @DisplayName("P2: OPEN 이미 있으면 alerted 증가 없음 → alreadyOpen 집계, 중복 적재 안 함")
+    void alreadyOpen_countsSeparately_noAlertedIncrease() {
         Schedule s = buildSchedule(500L, TENANT_A, ScheduleStatus.COMPLETED);
         when(scheduleRepository.findRecoveryCandidates(anyCollection(), any(Pageable.class)))
                 .thenReturn(List.of(s));
@@ -267,7 +287,37 @@ class SessionDeductionRecoveryBatchTest {
 
         RecoveryResult result = batch.runRecovery();
 
-        assertThat(result.alerted()).isEqualTo(1);
+        assertThat(result.alerted()).isZero();
+        assertThat(result.alreadyOpen()).isEqualTo(1);
+        assertThat(result.success()).isZero();
+        verify(alertRepository, never()).save(any(SessionRecoveryAlert.class));
+        verify(alertRepository, never()).resolveUnresolvedByTenantIdAndScheduleId(
+                anyString(), anyLong(), any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("P2: SUCCESS 후 unresolved OPEN auto-resolve")
+    void success_resolvesUnresolvedOpenAlerts() {
+        Schedule completed = buildSchedule(700L, TENANT_A, ScheduleStatus.COMPLETED);
+        ConsultantClientMapping mapping = buildMapping(
+                MAPPING_ID, TENANT_A, MappingStatus.ACTIVE, PaymentStatus.APPROVED, 5, 2, 3);
+
+        when(scheduleRepository.findRecoveryCandidates(anyCollection(), any(Pageable.class)))
+                .thenReturn(List.of(completed));
+        when(mappingRepository.findActiveByConsultantAndClient(
+                eq(TENANT_A), eq(CONSULTANT_ID), eq(CLIENT_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(alertRepository.resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_A), eq(700L), any(LocalDateTime.class)))
+                .thenReturn(1);
+
+        RecoveryResult result = batch.runRecovery();
+
+        assertThat(result.success()).isEqualTo(1);
+        assertThat(result.alerted()).isZero();
+        assertThat(result.alreadyOpen()).isZero();
+        verify(alertRepository).resolveUnresolvedByTenantIdAndScheduleId(
+                eq(TENANT_A), eq(700L), any(LocalDateTime.class));
         verify(alertRepository, never()).save(any(SessionRecoveryAlert.class));
     }
 
@@ -292,6 +342,7 @@ class SessionDeductionRecoveryBatchTest {
         RecoveryResult result = batch.runRecovery();
 
         assertThat(result.alerted()).isEqualTo(1);
+        assertThat(result.alreadyOpen()).isZero();
         assertThat(result.success()).isZero();
         ArgumentCaptor<SessionRecoveryAlert> captor =
                 ArgumentCaptor.forClass(SessionRecoveryAlert.class);

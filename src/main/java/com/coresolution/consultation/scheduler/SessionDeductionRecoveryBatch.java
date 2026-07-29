@@ -1,5 +1,6 @@
 package com.coresolution.consultation.scheduler;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -28,6 +29,10 @@ import lombok.extern.slf4j.Slf4j;
  * + 상담사·내담자 모두 존재 + (COMPLETED 인 경우 ConsultationRecord 존재) 인 일정을 페이지 단위로
  * 순회하며 매핑 회기 차감을 시도한다. 결제 승인된 활성/입금대기 매핑이 없거나 잔여 회기가 0
  * 이면 {@link SessionRecoveryAlert} 를 적재하여 어드민이 인지할 수 있게 한다.</p>
+ *
+ * <p>이미 미해결(OPEN) 알람이 있는 일정은 신규 적재 없이 {@code alreadyOpen} 으로 집계해
+ * scheduled 로그의 {@code alerted} 노이즈를 줄인다. 차감 성공 또는
+ * {@code session_sequence} 가 이미 채워진 경우 해당 일정의 OPEN 알람을 auto-resolve 한다.</p>
  *
  * <p>운영 안전 가드: {@code mindgarden.batch.session-recovery.enabled=false} 로 즉시 비활성화 가능.</p>
  *
@@ -76,14 +81,16 @@ public class SessionDeductionRecoveryBatch {
     )
     public void runScheduledRecovery() {
         RecoveryResult result = runRecovery();
-        log.info("session deduction recovery batch (scheduled): total={}, success={}, skipped={}, alerted={}",
-                result.candidates(), result.success(), result.skipped(), result.alerted());
+        log.info("session deduction recovery batch (scheduled): total={}, success={}, skipped={}, "
+                        + "alerted={}, alreadyOpen={}",
+                result.candidates(), result.success(), result.skipped(),
+                result.alerted(), result.alreadyOpen());
     }
 
     /**
      * 보정 1회 실행. 어드민 단건 트리거({@code all=true}) 에서도 동일 메서드 호출.
      *
-     * @return 처리 결과 (candidates / success / skipped / alerted)
+     * @return 처리 결과 (candidates / success / skipped / alerted / alreadyOpen)
      */
     @Transactional
     public RecoveryResult runRecovery() {
@@ -91,11 +98,12 @@ public class SessionDeductionRecoveryBatch {
         List<Schedule> candidates = scheduleRepository.findRecoveryCandidates(
                 RECOVERY_STATUSES, PageRequest.of(0, effectivePageSize));
         if (candidates.isEmpty()) {
-            return new RecoveryResult(0, 0, 0, 0);
+            return new RecoveryResult(0, 0, 0, 0, 0);
         }
         int success = 0;
         int skipped = 0;
         int alerted = 0;
+        int alreadyOpen = 0;
         for (Schedule schedule : candidates) {
             String tenantId = schedule.getTenantId();
             if (tenantId == null || tenantId.isBlank()) {
@@ -111,6 +119,7 @@ public class SessionDeductionRecoveryBatch {
                 switch (outcome) {
                     case SUCCESS -> success++;
                     case ALERTED -> alerted++;
+                    case ALREADY_OPEN -> alreadyOpen++;
                     case SKIPPED -> skipped++;
                 }
             } catch (Exception ex) {
@@ -125,7 +134,7 @@ public class SessionDeductionRecoveryBatch {
                 }
             }
         }
-        return new RecoveryResult(candidates.size(), success, skipped, alerted);
+        return new RecoveryResult(candidates.size(), success, skipped, alerted, alreadyOpen);
     }
 
     private RecoveryOutcome recoverOne(Schedule schedule) {
@@ -137,50 +146,56 @@ public class SessionDeductionRecoveryBatch {
         }
         // 멱등성 재확인: findRecoveryCandidates 가 sessionSequence IS NULL 만 반환하지만
         // 동시 차감 레이스 대응(같은 schedule 2회 호출 시 두 번째 skip).
+        // session_sequence 가 이미 있으면 OPEN 알람도 함께 종결.
         if (schedule.getSessionSequence() != null) {
+            resolveOpenAlerts(tenantId, schedule.getId());
             return RecoveryOutcome.SKIPPED;
         }
         Optional<ConsultantClientMapping> opt = mappingRepository
                 .findActiveByConsultantAndClient(tenantId, consultantId, clientId);
         if (opt.isEmpty()) {
-            saveAlertIfAbsent(tenantId, schedule.getId(), null,
+            return saveAlertOrAlreadyOpen(tenantId, schedule.getId(), null,
                     SessionRecoveryAlert.REASON_ACTIVE_MAPPING_NOT_FOUND);
-            return RecoveryOutcome.ALERTED;
         }
         ConsultantClientMapping mapping = opt.get();
         Integer remaining = mapping.getRemainingSessions();
         if (remaining == null || remaining <= 0) {
-            saveAlertIfAbsent(tenantId, schedule.getId(), mapping.getId(),
+            return saveAlertOrAlreadyOpen(tenantId, schedule.getId(), mapping.getId(),
                     SessionRecoveryAlert.REASON_REMAINING_SESSIONS_ZERO);
-            return RecoveryOutcome.ALERTED;
         }
         try {
             scheduleService.useSessionForSpecificMapping(
                     tenantId, mapping.getId(), consultantId, clientId, schedule);
+            resolveOpenAlerts(tenantId, schedule.getId());
             log.info("session deduction recovery: scheduleId={}, mappingId={}, batch_recovery=true",
                     schedule.getId(), mapping.getId());
             return RecoveryOutcome.SUCCESS;
         } catch (IllegalStateException ex) {
             log.warn("session deduction recovery batch: scheduleId={} mapping guard skipped, reason={}",
                     schedule.getId(), ex.getMessage());
-            saveAlertIfAbsent(tenantId, schedule.getId(), mapping.getId(),
+            return saveAlertOrAlreadyOpen(tenantId, schedule.getId(), mapping.getId(),
                     SessionRecoveryAlert.REASON_MAPPING_STATUS_INVALID);
-            return RecoveryOutcome.ALERTED;
         } catch (RuntimeException ex) {
             log.error("session deduction recovery batch: scheduleId={} unexpected error, reason={}",
                     schedule.getId(), ex.getMessage(), ex);
-            saveAlertIfAbsent(tenantId, schedule.getId(), mapping.getId(),
+            return saveAlertOrAlreadyOpen(tenantId, schedule.getId(), mapping.getId(),
                     SessionRecoveryAlert.REASON_UNEXPECTED_ERROR);
-            return RecoveryOutcome.ALERTED;
         }
     }
 
     /**
-     * 멱등 적재: 동일 일정에 대해 미해결 알림이 이미 있으면 중복 적재하지 않는다.
+     * 멱등 적재: 미해결 알림이 이미 있으면 신규 적재 없이 {@link RecoveryOutcome#ALREADY_OPEN}.
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID
+     * @param mappingId 매핑 ID (없으면 null)
+     * @param reason 알림 사유
+     * @return ALERTED(신규 적재) 또는 ALREADY_OPEN(기존 OPEN)
      */
-    private void saveAlertIfAbsent(String tenantId, Long scheduleId, Long mappingId, String reason) {
+    private RecoveryOutcome saveAlertOrAlreadyOpen(String tenantId, Long scheduleId, Long mappingId,
+            String reason) {
         if (alertRepository.existsUnresolvedByTenantIdAndScheduleId(tenantId, scheduleId)) {
-            return;
+            return RecoveryOutcome.ALREADY_OPEN;
         }
         SessionRecoveryAlert alert = SessionRecoveryAlert.builder()
                 .scheduleId(scheduleId)
@@ -189,12 +204,38 @@ public class SessionDeductionRecoveryBatch {
                 .build();
         alert.setTenantId(tenantId);
         alertRepository.save(alert);
+        return RecoveryOutcome.ALERTED;
+    }
+
+    /**
+     * 해당 일정의 OPEN({@code resolved_at IS NULL}) 알람을 종결한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID
+     */
+    private void resolveOpenAlerts(String tenantId, Long scheduleId) {
+        if (tenantId == null || tenantId.isBlank() || scheduleId == null) {
+            return;
+        }
+        int resolved = alertRepository.resolveUnresolvedByTenantIdAndScheduleId(
+                tenantId, scheduleId, LocalDateTime.now());
+        if (resolved > 0) {
+            log.info("session deduction recovery: OPEN alerts auto-resolved scheduleId={}, count={}",
+                    scheduleId, resolved);
+        }
     }
 
     /**
      * 배치 1 사이클 처리 결과.
+     *
+     * @param candidates 후보 일정 수
+     * @param success 차감 성공 수
+     * @param skipped 스킵 수
+     * @param alerted 신규 알림 적재 수
+     * @param alreadyOpen 기존 OPEN 알림으로 신규 적재 생략 수
      */
-    public record RecoveryResult(int candidates, int success, int skipped, int alerted) {}
+    public record RecoveryResult(
+            int candidates, int success, int skipped, int alerted, int alreadyOpen) {}
 
     /**
      * 일정 1건 처리 결과 분기.
@@ -202,6 +243,8 @@ public class SessionDeductionRecoveryBatch {
     private enum RecoveryOutcome {
         SUCCESS,
         SKIPPED,
-        ALERTED
+        ALERTED,
+        /** 미해결 알림이 이미 있어 신규 적재하지 않음 (alerted 노이즈 분리). */
+        ALREADY_OPEN
     }
 }

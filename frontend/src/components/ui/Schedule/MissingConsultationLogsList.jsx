@@ -12,6 +12,9 @@
  *   - 'integrated' (기본): 「이번 달 모든 일정의 상담일지가 작성되었습니다」
  *   - 'dashboard'        : 「지난 일정의 모든 상담일지가 작성되었습니다」
  *
+ * 날짜 칩 클릭 시 onDateChipClick({ consultantId, consultantName, date, scheduleId, clientId })
+ * 를 호출한다. 부모가 상담일지 작성 모달/라우트로 연결한다.
+ *
  * @author Core Solution
  * @since 2026-06-06
  */
@@ -20,6 +23,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { lookupMissingLogIdsForDate } from '../../../utils/missingConsultationLogNavigation';
 
 /**
  * R4 (2026-06-09): 누락 일자 칩 라벨 — 'YYYY-MM-DD' → 'M/D'.
@@ -60,13 +64,17 @@ const resolveEmptyDefault = (variant) => (variant === 'dashboard'
  * @param {string} [props.sectionClassName='mg-v2-legend-section mg-v2-legend-missing-logs']
  * @param {string} [props.titleClassName='mg-v2-legend-title']
  * @param {boolean} [props.showTitle=true]                                   타이틀 노출 여부 (대시보드 카드는 외부 헤더로 대체 가능)
+ * @param {function} [props.onDateChipClick] 날짜 칩 클릭 핸들러
+ * @param {boolean} [props.dateChipsDisabled=false] 칩 비활성 (조회 중 등)
  */
 const MissingConsultationLogsList = ({
     items,
     variant = 'integrated',
     sectionClassName = 'mg-v2-legend-section mg-v2-legend-missing-logs',
     titleClassName = 'mg-v2-legend-title',
-    showTitle = true
+    showTitle = true,
+    onDateChipClick,
+    dateChipsDisabled = false
 }) => {
     const { t } = useTranslation();
 
@@ -76,6 +84,7 @@ const MissingConsultationLogsList = ({
 
     const titleLabel = t(resolveTitleKey(), { defaultValue: resolveTitleDefault() });
     const emptyLabel = t(resolveEmptyKey(variant), { defaultValue: resolveEmptyDefault(variant) });
+    const chipsInteractive = typeof onDateChipClick === 'function';
 
     return (
         <div className={sectionClassName}>
@@ -108,22 +117,52 @@ const MissingConsultationLogsList = ({
                                 <span className="mg-v2-legend-missing-logs__dates">
                                     {dates.map((date) => {
                                         const safeDate = toDisplayString(date, '');
+                                        const { scheduleId, clientId } = lookupMissingLogIdsForDate(
+                                            item,
+                                            safeDate
+                                        );
                                         const chipAria = t(
                                             'admin:mapping.schedule.legend.missingConsultationLogsDateAria',
                                             {
                                                 date: safeDate,
-                                                defaultValue: `${safeDate} 상담일지 미작성`
+                                                defaultValue: chipsInteractive
+                                                    ? `${safeDate} 상담일지 미작성, 작성하기`
+                                                    : `${safeDate} 상담일지 미작성`
                                             }
                                         );
+                                        const chipKey = `${item?.consultantId}-${safeDate}`;
+                                        if (!chipsInteractive) {
+                                            return (
+                                                <span
+                                                    key={chipKey}
+                                                    className="mg-v2-legend-missing-date-chip"
+                                                    title={safeDate}
+                                                    aria-label={chipAria}
+                                                >
+                                                    {formatToMonthDay(safeDate)}
+                                                </span>
+                                            );
+                                        }
                                         return (
-                                            <span
-                                                key={`${item?.consultantId}-${safeDate}`}
-                                                className="mg-v2-legend-missing-date-chip"
+                                            <button
+                                                key={chipKey}
+                                                type="button"
+                                                className="mg-v2-legend-missing-date-chip mg-v2-legend-missing-date-chip--action"
                                                 title={safeDate}
                                                 aria-label={chipAria}
+                                                disabled={dateChipsDisabled}
+                                                onClick={() => {
+                                                    onDateChipClick({
+                                                        consultantId: item?.consultantId,
+                                                        consultantName: name,
+                                                        date: safeDate,
+                                                        scheduleId,
+                                                        clientId
+                                                    });
+                                                }}
                                             >
                                                 {formatToMonthDay(safeDate)}
-                                            </span>
+                                            </button>
                                         );
                                     })}
                                 </span>
@@ -141,13 +180,17 @@ MissingConsultationLogsList.propTypes = {
         PropTypes.shape({
             consultantId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
             consultantName: PropTypes.string,
-            missingDates: PropTypes.arrayOf(PropTypes.string)
+            missingDates: PropTypes.arrayOf(PropTypes.string),
+            scheduleIdsByDate: PropTypes.object,
+            missingEntries: PropTypes.arrayOf(PropTypes.object)
         })
     ),
     variant: PropTypes.oneOf(['integrated', 'dashboard']),
     sectionClassName: PropTypes.string,
     titleClassName: PropTypes.string,
-    showTitle: PropTypes.bool
+    showTitle: PropTypes.bool,
+    onDateChipClick: PropTypes.func,
+    dateChipsDisabled: PropTypes.bool
 };
 
 export default MissingConsultationLogsList;

@@ -44,13 +44,22 @@ const normalize = (rawItems) => {
     }
     return rawItems
         .filter((item) => item && item.consultantId != null)
-        .map((item) => ({
-            consultantId: item.consultantId,
-            consultantName: typeof item.consultantName === 'string' ? item.consultantName : '',
-            missingDates: Array.isArray(item.missingDates)
-                ? item.missingDates.map((d) => String(d ?? ''))
-                : []
-        }));
+        .map((item) => {
+            const normalized = {
+                consultantId: item.consultantId,
+                consultantName: typeof item.consultantName === 'string' ? item.consultantName : '',
+                missingDates: Array.isArray(item.missingDates)
+                    ? item.missingDates.map((d) => String(d ?? ''))
+                    : []
+            };
+            if (item.scheduleIdsByDate && typeof item.scheduleIdsByDate === 'object') {
+                normalized.scheduleIdsByDate = item.scheduleIdsByDate;
+            }
+            if (Array.isArray(item.missingEntries)) {
+                normalized.missingEntries = item.missingEntries;
+            }
+            return normalized;
+        });
 };
 
 /**

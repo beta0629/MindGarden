@@ -629,6 +629,8 @@
       "monthlyTitle": "월별 상담 건수",
       "missingLogsTitle": "상담일지 누락",
       "missingLogsAllDone": "지난 일정의 모든 상담일지가 작성되었습니다",
+      "missingLogScheduleNotFound": "해당 날짜의 일정을 찾지 못했습니다. 상담일지 조회로 이동합니다.",
+      "missingLogOpenFailed": "상담일지 작성 화면을 열지 못했습니다.",
       "sessionBurnTitle": "회기 소진율",
       "sessionBurnHint": "현재 활성 매칭",
       "sessionBurnEmpty": "활성 매칭의 회기 소진 데이터가 없습니다",
@@ -2763,7 +2765,7 @@
         "missingConsultationLogs": "상담일지 미작성",
         "missingConsultationLogsAllDone": "이번 달 모든 일정의 상담일지가 작성되었습니다",
         "missingConsultationLogsItemAria": "{{name}}, 미작성 {{count}}건",
-        "missingConsultationLogsDateAria": "{{date}} 상담일지 미작성"
+        "missingConsultationLogsDateAria": "{{date}} 상담일지 미작성, 작성하기"
       }
     },
     "refund": {

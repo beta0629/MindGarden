@@ -94,6 +94,11 @@ const ScheduleLegend = ({
      */
     missingConsultationLogs = null,
     /**
+     * 상담일지 누락 날짜 칩 클릭 — 부모가 작성 모달/라우트로 연결.
+     * 미전달 시 칩은 비인터랙티브 span 유지 (회귀 0).
+     */
+    onMissingLogDateChipClick = null,
+    /**
      * R5 (2026-06-10) — 상담사 카운트 배지가 어느 월(N월) 의 COMPLETED 인지 라벨에 명시.
      * number (1-12) 또는 null/undefined. 미지정 시 기존 「상담사」 라벨 유지(회귀 0).
      * hasCounts 가 false 면 라벨 분기에 영향이 없으므로 month 만 전달돼도 안전.
@@ -298,6 +303,7 @@ const ScheduleLegend = ({
                 <MissingConsultationLogsList
                     items={missingConsultationLogs}
                     variant="integrated"
+                    onDateChipClick={onMissingLogDateChipClick || undefined}
                 />
             )}
         </>

@@ -79,6 +79,23 @@
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    border: none;
+    font-family: inherit;
+}
+
+.mg-v2-legend-missing-date-chip--action {
+    cursor: pointer;
+}
+
+.mg-v2-legend-missing-date-chip--action:hover:not(:disabled),
+.mg-v2-legend-missing-date-chip--action:focus-visible {
+    outline: var(--mg-focus-ring-width, 2px) solid var(--mg-status-warning-text, var(--mg-color-warning-dark));
+    outline-offset: var(--mg-focus-ring-offset, 2px);
+}
+
+.mg-v2-legend-missing-date-chip--action:disabled {
+    cursor: not-allowed;
+    opacity: var(--mg-opacity-disabled, 0.6);
 }
 
 .mg-v2-legend-missing-logs__empty {

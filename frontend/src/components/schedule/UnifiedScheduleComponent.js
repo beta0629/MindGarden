@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
@@ -19,6 +19,10 @@ import {
   hasConsultantScheduleTimeOverlap,
   isPastDateOnly
 } from '../../utils/scheduleRescheduleUtils';
+import {
+  buildMissingConsultationLogFallbackRoute,
+  resolveMissingLogSchedule
+} from '../../utils/missingConsultationLogNavigation';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
@@ -140,6 +144,8 @@ const UnifiedScheduleComponent = ({
   missingConsultationLogs = null
 }) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const missingLogChipResolvingRef = useRef(false);
     const resolvedDisableCalendarEventDrag =
         disableCalendarEventDragProp !== undefined && disableCalendarEventDragProp !== null
             ? Boolean(disableCalendarEventDragProp)
@@ -1078,6 +1084,56 @@ const UnifiedScheduleComponent = ({
         handleConsultationLogModalClose();
     };
 
+    const handleMissingLogDateChipClick = useCallback(async({
+        consultantId,
+        date,
+        scheduleId,
+        clientId
+    }) => {
+        if (missingLogChipResolvingRef.current) {
+            return;
+        }
+        missingLogChipResolvingRef.current = true;
+        try {
+            const resolved = await resolveMissingLogSchedule({
+                consultantId,
+                date,
+                scheduleId,
+                clientId
+            });
+            if (resolved?.id != null) {
+                handleConsultationLogModalOpen(resolved);
+                return;
+            }
+            notificationManager.warning(
+                t('admin:dashboard.consultationStats.missingLogScheduleNotFound', {
+                    defaultValue: '해당 날짜의 일정을 찾지 못했습니다. 상담일지 조회로 이동합니다.'
+                })
+            );
+            navigate(buildMissingConsultationLogFallbackRoute({
+                consultantId,
+                date,
+                scheduleId,
+                clientId
+            }));
+        } catch (err) {
+            console.warn('상담일지 누락 칩 → 스케줄 조회 실패:', err);
+            notificationManager.error(
+                t('admin:dashboard.consultationStats.missingLogOpenFailed', {
+                    defaultValue: '상담일지 작성 화면을 열지 못했습니다.'
+                })
+            );
+            navigate(buildMissingConsultationLogFallbackRoute({
+                consultantId,
+                date,
+                scheduleId,
+                clientId
+            }));
+        } finally {
+            missingLogChipResolvingRef.current = false;
+        }
+    }, [navigate, t]);
+
     const forceRefresh = useCallback(async() => {
         console.log('🔄 강제 새로고침 시작');
         setEvents([]);
@@ -1139,6 +1195,7 @@ const UnifiedScheduleComponent = ({
                 consultantCountsMonth={consultantCountsMonth}
                 sameDayPendingLegendContent={sameDayPendingLegendContent}
                 missingConsultationLogs={missingConsultationLogs}
+                onMissingLogDateChipClick={handleMissingLogDateChipClick}
             />
 
             {loading && (
@@ -1227,6 +1284,7 @@ const UnifiedScheduleComponent = ({
                     onClose={handleConsultationLogModalClose}
                     scheduleData={selectedSchedule}
                     onSave={handleConsultationLogSaved}
+                    isAdmin={isAdminLikeScheduleUserRole(userRole)}
                 />
             )}
 

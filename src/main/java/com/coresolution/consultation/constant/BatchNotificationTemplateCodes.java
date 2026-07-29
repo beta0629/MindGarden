@@ -51,6 +51,22 @@ public final class BatchNotificationTemplateCodes {
         java.util.List.of(INITIAL_GUIDE_OFFLINE, INITIAL_GUIDE_ONLINE);
 
     /**
+     * 예약 일정(SCHEDULE) SMS 3종 — 동일 스케줄·수신자에 대해
+     * <strong>같은 날(Asia/Seoul)</strong> 최종 1통만 허용할 때 교차 멱등 검사에 사용한다.
+     *
+     * <p>우선순위(충돌 시): 즉시예약확인({@link #RESERVATION_IMMEDIATE_SINGLE} /
+     * {@link #RESERVATION_IMMEDIATE_LATE} / 등록 시점 D2) &gt; D-0/D-1 배치 LATE &gt; D-2 배치.
+     * D-2→D-1→D-0 은 <em>상담일 기준 서로 다른 캘린더일</em>에 돌므로 일 단위 가드가
+     * 정상 리마인더 시퀀스를 막지 않는다. 충돌은 주로 업무시간 외 지연(pending→09:00)과
+     * 같은 시각 D-n 09:00 배치가 다른 템플릿 코드로 겹칠 때 발생한다.
+     */
+    public static final java.util.List<String> RESERVATION_SCHEDULE_SMS_CODES =
+        java.util.List.of(
+            RESERVATION_REMINDER_D2,
+            RESERVATION_IMMEDIATE_SINGLE,
+            RESERVATION_IMMEDIATE_LATE);
+
+    /**
      * 마케팅성 템플릿 식별 — SMS 폴백 정책 F2 가드에 사용된다.
      * 마케팅 메시지(현재 {@link #SESSION_RENEW_PROMPT} 1종)는 알림톡 실패 시에도
      * SMS 폴백을 수행하지 않는다(수신동의/수신거부 구문 운영 복잡도 회피).

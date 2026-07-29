@@ -103,6 +103,37 @@ public interface NotificationBatchSendLogRepository
         @Param("recipientUserId") Long recipientUserId);
 
     /**
+     * 여러 템플릿 코드 중 하나라도 동일 (target_type, target_id, recipient_user_id) 로
+     * {@code [sentAtFrom, sentAtTo)} 구간에 발송 로그가 있는지 — 예약 SMS 당일 1통 가드용.
+     *
+     * @param tenantId        테넌트 ID
+     * @param templateCodes   비교 대상 템플릿 코드 묶음
+     * @param targetType      대상 타입
+     * @param targetId        대상 엔티티 PK
+     * @param recipientUserId 발송 수신자 users.id
+     * @param sentAtFrom      구간 시작 inclusive
+     * @param sentAtTo        구간 끝 exclusive
+     * @return 구간 내 1건이라도 존재하면 true
+     */
+    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.templateCode IN :templateCodes "
+            + "AND l.targetType = :targetType "
+            + "AND l.targetId = :targetId "
+            + "AND l.recipientUserId = :recipientUserId "
+            + "AND l.sentAt >= :sentAtFrom "
+            + "AND l.sentAt < :sentAtTo "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    boolean existsByIdempotencyKeyAnyTemplateAndSentAtRange(
+        @Param("tenantId") String tenantId,
+        @Param("templateCodes") Collection<String> templateCodes,
+        @Param("targetType") String targetType,
+        @Param("targetId") Long targetId,
+        @Param("recipientUserId") Long recipientUserId,
+        @Param("sentAtFrom") LocalDateTime sentAtFrom,
+        @Param("sentAtTo") LocalDateTime sentAtTo);
+
+    /**
      * 테넌트 + 기간으로 로그 조회 (운영 모니터링용).
      *
      * @param tenantId 테넌트 ID

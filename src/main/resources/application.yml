@@ -767,6 +767,14 @@ scheduler:
     cron: ${SCHEDULER_SCHEDULE_CHANGE_NOTIFICATION_CRON:0 * * * * *}  # 매 1분
     debounce-minutes: ${SCHEDULER_SCHEDULE_CHANGE_NOTIFICATION_DEBOUNCE_MINUTES:10}
 
+  # 예약 즉시 SMS 업무시간(09:00~18:00 Asia/Seoul) 외 지연 발송
+  # t<09:00 → 당일 09:00 / t≥18:00 → 익일 09:00 / 그 외 즉시
+  immediate-reservation-sms:
+    enabled: ${SCHEDULER_IMMEDIATE_RESERVATION_SMS_ENABLED:true}
+    cron: ${SCHEDULER_IMMEDIATE_RESERVATION_SMS_CRON:0 * * * * *}  # 매 1분
+    business-start: ${SCHEDULER_IMMEDIATE_RESERVATION_SMS_BUSINESS_START:09:00}
+    business-end: ${SCHEDULER_IMMEDIATE_RESERVATION_SMS_BUSINESS_END:18:00}
+
   # 11. 스키마 변경 감지 스케줄러
   schema-change-detection:
     enabled: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_ENABLED:true}

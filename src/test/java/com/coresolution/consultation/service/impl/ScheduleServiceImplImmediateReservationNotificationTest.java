@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,7 @@ import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
@@ -119,6 +121,7 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
     private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
     @Mock private BatchNotificationDispatchService batchNotificationDispatchService;
     @Mock private ConsultantClientMappingHistoryService consultantClientMappingHistoryService;
+    @Mock private ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
@@ -130,6 +133,8 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
         when(commonCodeService.getCodeValue("ROLE", UserRole.CLIENT.name())).thenReturn("CLIENT");
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", "APPOINTMENT")).thenReturn("APPOINTMENT");
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", "NEW_APPOINTMENT")).thenReturn("NEW_APPOINTMENT");
+        when(immediateReservationSmsDeferralService.resolveDeferredFireAt())
+                .thenReturn(Optional.empty());
         stubConflictCheckAndAutoComplete();
     }
 
@@ -191,6 +196,29 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
         verify(batchNotificationDispatchService).dispatchReservationImmediateLate(SAVED_SCHEDULE_ID);
         verify(batchNotificationDispatchService, never())
             .dispatchReservationReminderD2(anyLong());
+    }
+
+    @Test
+    @DisplayName("업무시간 외 → 즉시 디스패치 대신 지연 enqueue (익일 09:00)")
+    void createConsultantSchedule_whenOutsideBusinessHours_enqueuesDeferred() {
+        stubMappingMultiSession();
+        stubScheduleSave();
+        LocalDateTime fireAt = LocalDateTime.of(2026, 7, 30, 9, 0);
+        when(immediateReservationSmsDeferralService.resolveDeferredFireAt())
+                .thenReturn(Optional.of(fireAt));
+
+        scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID, LocalDate.now(),
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "상담", "설명", "VIDEO", null, false);
+
+        verify(immediateReservationSmsDeferralService).enqueue(
+                eq(TENANT_ID),
+                eq(SAVED_SCHEDULE_ID),
+                eq("RESERVATION_IMMEDIATE_LATE"),
+                eq(fireAt));
+        verify(batchNotificationDispatchService, never())
+                .dispatchReservationImmediateLate(anyLong());
     }
 
     @Test

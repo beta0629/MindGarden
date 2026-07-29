@@ -1,8 +1,8 @@
 /**
  * §D 회기 소진율 — ACTIVE 매핑 상담사별 가중 집계.
  *
- * 집계(가중): burnRate = round(ΣusedSessions / ΣtotalSessions * 100).
- * 매핑 단순 평균과 달리 회기 수가 큰 매칭이 더 큰 비중을 갖는다.
+ * 집계(가중): burnRate = round(ΣusedSessions / ΣtotalSessions * 100) — 표시용.
+ * 랭킹: usedSessions(합산 사용 회기) 내림차순 → remainingSessions 오름차순 → consultantId.
  * Edge: totalSessions <= 0 매핑은 스킵. 동일 상담사에 유효 매핑이 없으면 랭킹 제외.
  * Edge: used > total 이면 표시율은 100으로 clamp (합산 분모는 유지).
  *
@@ -128,8 +128,8 @@ export function aggregateConsultantSessionBurnRates(mappings, options = {}) {
     })
     .sort(
       (a, b) =>
-        b.burnRate - a.burnRate ||
         b.usedSessions - a.usedSessions ||
+        a.remainingSessions - b.remainingSessions ||
         String(a.consultantId).localeCompare(String(b.consultantId))
     )
     .slice(0, Math.max(0, topLimit));

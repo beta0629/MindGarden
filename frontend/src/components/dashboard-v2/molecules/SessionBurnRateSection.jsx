@@ -19,8 +19,9 @@ import { toSafeNumber } from '../../../utils/safeDisplay';
  *   consultantId: number|string,
  *   consultantName: string,
  *   burnRate: number,
+ *   usedSessions?: number,
  *   remainingSessions?: number
- * }>} props.items — 집계된 랭킹 (이미 top N·정렬 완료)
+ * }>} props.items — 집계된 랭킹 (이미 top N·정렬 완료, 사용 회기 합산 기준)
  * @param {boolean} [props.showRemaining=true]
  */
 const SessionBurnRateSection = ({ items, showRemaining = true }) => {
@@ -31,7 +32,10 @@ const SessionBurnRateSection = ({ items, showRemaining = true }) => {
     defaultValue: '회기 소진율'
   });
   const hint = t('admin:dashboard.consultationStats.sessionBurnHint', {
-    defaultValue: '현재 활성 매칭'
+    defaultValue: '현재 활성 매칭 · 순위는 사용 회기 합산'
+  });
+  const sectionAria = t('admin:dashboard.consultationStats.sessionBurnSectionAria', {
+    defaultValue: '회기 소진율, 순위는 사용 회기 합산 기준'
   });
   const emptyLabel = t('admin:dashboard.consultationStats.sessionBurnEmpty', {
     defaultValue: '활성 매칭의 회기 소진 데이터가 없습니다'
@@ -40,7 +44,7 @@ const SessionBurnRateSection = ({ items, showRemaining = true }) => {
   return (
     <section
       className="mg-v2-ad-b0kla__session-burn-section"
-      aria-label={title}
+      aria-label={sectionAria}
     >
       <div className="mg-v2-ad-b0kla__session-burn-header">
         <h4 className="mg-v2-ad-b0kla__session-burn-title">{title}</h4>
@@ -55,11 +59,14 @@ const SessionBurnRateSection = ({ items, showRemaining = true }) => {
             const rank = index + 1;
             const rate = Math.min(100, Math.max(0, toSafeNumber(row.burnRate, 0)));
             const maskedName = maskEncryptedDisplay(row.consultantName, '상담사');
+            const used = toSafeNumber(row.usedSessions, 0);
             const remaining = toSafeNumber(row.remainingSessions, 0);
             const ariaLabel = t('admin:dashboard.consultationStats.sessionBurnRowAria', {
               name: maskedName,
+              used,
               rate,
-              defaultValue: `${maskedName} 회기 소진율 ${rate}%`
+              remaining,
+              defaultValue: `${maskedName} 사용 ${used}회, 소진율 ${rate}%, 잔여 ${remaining}회`
             });
 
             return (
@@ -111,6 +118,7 @@ SessionBurnRateSection.propTypes = {
       consultantId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
       consultantName: PropTypes.string,
       burnRate: PropTypes.number,
+      usedSessions: PropTypes.number,
       remainingSessions: PropTypes.number
     })
   ),

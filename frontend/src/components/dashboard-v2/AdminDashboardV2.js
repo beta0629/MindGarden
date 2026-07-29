@@ -63,6 +63,11 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { getConsultantColor } from '../../utils/consultantColor';
 import ConsultantCountsBadgeList from '../ui/Schedule/ConsultantCountsBadgeList';
 import MissingConsultationLogsList from '../ui/Schedule/MissingConsultationLogsList';
+import ConsultationLogModal from '../consultant/ConsultationLogModal';
+import {
+  buildMissingConsultationLogFallbackRoute,
+  resolveMissingLogSchedule
+} from '../../utils/missingConsultationLogNavigation';
 import KpiFlipCard from '../admin/AdminDashboard/molecules/KpiFlipCard';
 import CumulativeConsultantCountsChart from './molecules/CumulativeConsultantCountsChart';
 import './molecules/CumulativeConsultantCountsChart.css';
@@ -260,6 +265,69 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     integratedDataPeriodType === 'month' ? integratedDataMonth : null
   );
   const { items: missingConsultationLogsForCard } = useCumulativeMissingConsultationLogs();
+  const [missingLogModalSchedule, setMissingLogModalSchedule] = useState(null);
+  const [missingLogModalOpen, setMissingLogModalOpen] = useState(false);
+  const [missingLogChipResolving, setMissingLogChipResolving] = useState(false);
+
+  const handleMissingLogDateChipClick = useCallback(async({
+    consultantId,
+    date,
+    scheduleId,
+    clientId
+  }) => {
+    if (missingLogChipResolving) {
+      return;
+    }
+    setMissingLogChipResolving(true);
+    try {
+      const resolved = await resolveMissingLogSchedule({
+        consultantId,
+        date,
+        scheduleId,
+        clientId
+      });
+      if (resolved?.id != null) {
+        setMissingLogModalSchedule(resolved);
+        setMissingLogModalOpen(true);
+        return;
+      }
+      notificationManager.warning(
+        t('admin:dashboard.consultationStats.missingLogScheduleNotFound', {
+          defaultValue: '해당 날짜의 일정을 찾지 못했습니다. 상담일지 조회로 이동합니다.'
+        })
+      );
+      navigate(buildMissingConsultationLogFallbackRoute({
+        consultantId,
+        date,
+        scheduleId,
+        clientId
+      }));
+    } catch (err) {
+      console.warn('상담일지 누락 칩 → 스케줄 조회 실패:', err);
+      notificationManager.error(
+        t('admin:dashboard.consultationStats.missingLogOpenFailed', {
+          defaultValue: '상담일지 작성 화면을 열지 못했습니다.'
+        })
+      );
+      navigate(buildMissingConsultationLogFallbackRoute({
+        consultantId,
+        date,
+        scheduleId,
+        clientId
+      }));
+    } finally {
+      setMissingLogChipResolving(false);
+    }
+  }, [missingLogChipResolving, navigate, t]);
+
+  const handleMissingLogModalClose = useCallback(() => {
+    setMissingLogModalOpen(false);
+    setMissingLogModalSchedule(null);
+  }, []);
+
+  const handleMissingLogModalSave = useCallback(() => {
+    handleMissingLogModalClose();
+  }, [handleMissingLogModalClose]);
 
   const [searchValue, setSearchValue] = useState('');
   /** 헤더 통합 검색(placeholder 전용, 라우트/메뉴 연동 없음) */
@@ -1496,6 +1564,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               variant="dashboard"
               sectionClassName="mg-v2-ad-b0kla__missing-logs-body mg-v2-legend-missing-logs"
               showTitle={false}
+              onDateChipClick={handleMissingLogDateChipClick}
+              dateChipsDisabled={missingLogChipResolving}
             />
           </section>
 
@@ -1859,6 +1929,15 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         {mainContent}
       </AdminCommonLayout>
       <ConfirmModal />
+      {missingLogModalOpen && missingLogModalSchedule && (
+        <ConsultationLogModal
+          isOpen={missingLogModalOpen}
+          onClose={handleMissingLogModalClose}
+          onSave={handleMissingLogModalSave}
+          scheduleData={missingLogModalSchedule}
+          isAdmin
+        />
+      )}
     </>
   );
 };

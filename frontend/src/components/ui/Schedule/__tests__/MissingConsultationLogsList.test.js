@@ -13,13 +13,14 @@
  *  - L5: 칩 라벨이 'YYYY-MM-DD' → 'M/D' 로 포맷되고 title 은 원본 유지
  *  - L6: showTitle=false → 타이틀 미노출
  *  - L7: 칩 aria-label 에 「상담일지 미작성」 + 날짜 포함
+ *  - L8: onDateChipClick 전달 시 button 칩 + 클릭 시 consultantId/date 전달
  *
  * @author MindGarden core-coder
  * @since 2026-06-06
  */
 
 import React from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -126,5 +127,33 @@ describe('MissingConsultationLogsList', () => {
     expect(chip.getAttribute('aria-label')).toContain('2026-04-15');
     expect(chip.getAttribute('aria-label')).toContain('상담일지 미작성');
     expect(chip.getAttribute('title')).toBe('2026-04-15');
+  });
+
+  // ─── L8 ──────────────────────────────────────────────────────────
+  test('L8: onDateChipClick 전달 시 button 칩 + 클릭 payload', () => {
+    const onDateChipClick = jest.fn();
+    const items = [
+      {
+        consultantId: 3,
+        consultantName: 'DevConsultant-000003',
+        missingDates: ['2026-05-08'],
+        scheduleIdsByDate: { '2026-05-08': 101 }
+      }
+    ];
+    const { container } = render(
+      <MissingConsultationLogsList items={items} onDateChipClick={onDateChipClick} />
+    );
+    const chip = container.querySelector('button.mg-v2-legend-missing-date-chip--action');
+    expect(chip).toBeTruthy();
+    expect(chip.tagName).toBe('BUTTON');
+    expect(chip.getAttribute('aria-label')).toContain('작성하기');
+    fireEvent.click(chip);
+    expect(onDateChipClick).toHaveBeenCalledWith({
+      consultantId: 3,
+      consultantName: 'DevConsultant-000003',
+      date: '2026-05-08',
+      scheduleId: 101,
+      clientId: null
+    });
   });
 });

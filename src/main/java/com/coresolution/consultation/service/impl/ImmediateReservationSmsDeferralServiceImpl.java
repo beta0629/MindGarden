@@ -208,7 +208,14 @@ public class ImmediateReservationSmsDeferralServiceImpl
                 return true;
             }
 
-            dispatchByTemplateCode(pending.getTemplateCode(), pending.getScheduleId());
+            BatchNotificationDispatchService.DispatchOutcome outcome =
+                    dispatchByTemplateCode(pending.getTemplateCode(), pending.getScheduleId());
+            if (outcome != null
+                    && outcome.status()
+                            == BatchNotificationDispatchService.DispatchOutcome.Status.SKIPPED_DUPLICATE) {
+                mark(pending, ImmediateReservationSmsPendingStatus.SKIPPED_DUPLICATE);
+                return true;
+            }
             mark(pending, ImmediateReservationSmsPendingStatus.SENT);
             return true;
         } finally {
@@ -220,18 +227,20 @@ public class ImmediateReservationSmsDeferralServiceImpl
         }
     }
 
-    private void dispatchByTemplateCode(String templateCode, Long scheduleId) {
+    private BatchNotificationDispatchService.DispatchOutcome dispatchByTemplateCode(
+            String templateCode, Long scheduleId) {
         if (BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE.equals(templateCode)) {
-            batchNotificationDispatchService.dispatchReservationImmediateSingle(scheduleId);
+            return batchNotificationDispatchService.dispatchReservationImmediateSingle(scheduleId);
         } else if (BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2.equals(templateCode)) {
-            batchNotificationDispatchService.dispatchReservationReminderD2(scheduleId);
+            return batchNotificationDispatchService.dispatchReservationReminderD2(scheduleId);
         } else if (BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE.equals(templateCode)) {
-            batchNotificationDispatchService.dispatchReservationImmediateLate(scheduleId);
+            return batchNotificationDispatchService.dispatchReservationImmediateLate(scheduleId);
         } else {
             log.warn(
                     "즉시 SMS 지연 알 수 없는 templateCode: templateCode={}, scheduleId={}",
                     templateCode,
                     scheduleId);
+            return null;
         }
     }
 

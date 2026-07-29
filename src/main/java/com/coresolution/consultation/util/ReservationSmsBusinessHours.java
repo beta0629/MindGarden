@@ -78,4 +78,26 @@ public final class ReservationSmsBusinessHours {
         // t >= businessEndExclusive → 익일 업무 시작
         return Optional.of(LocalDateTime.of(date.plusDays(1), businessStartInclusive));
     }
+
+    /**
+     * 시계 기준 당일 00:00:00 (zone local, exclusive upper bound 와 짝).
+     *
+     * @param clock Asia/Seoul 등 zone 시계
+     * @return 당일 시작 LocalDateTime
+     */
+    public static LocalDateTime startOfToday(Clock clock) {
+        Objects.requireNonNull(clock, "clock");
+        return LocalDate.now(clock).atStartOfDay();
+    }
+
+    /**
+     * 시계 기준 익일 00:00:00 — 당일 윈도우 exclusive end.
+     *
+     * @param clock Asia/Seoul 등 zone 시계
+     * @return 익일 시작 LocalDateTime
+     */
+    public static LocalDateTime startOfTomorrow(Clock clock) {
+        Objects.requireNonNull(clock, "clock");
+        return LocalDate.now(clock).plusDays(1).atStartOfDay();
+    }
 }

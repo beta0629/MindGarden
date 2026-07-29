@@ -1,5 +1,6 @@
 package com.coresolution.consultation.scheduler;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -8,18 +9,21 @@ import java.util.Optional;
 import java.util.UUID;
 import com.coresolution.consultation.config.BatchNotificationProperties;
 import com.coresolution.consultation.constant.BookingReminderPushConstants;
+import com.coresolution.consultation.constant.ImmediateReservationSmsPendingStatus;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
-import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ImmediateReservationSmsPendingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.MobilePushMessageFormatter;
+import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
@@ -28,7 +32,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -58,6 +61,11 @@ import lombok.extern.slf4j.Slf4j;
  * {@link BookingReminderPushConstants#REMINDER_D1_DAYS_AHEAD} 푸시만 내담자·상담사 양쪽 fanout 한다.
  * D-1 SMS 배치는 동일 대상일에 병행 가능하며, D-0 은 SMS만 발송하며 푸시/인앱을 추가하지 않는다.
  *
+ * <p>2026-07-29: 업무시간 외 지연 즉시문자(pending→09:00)와 D-2/D-1/D-0 09:00 배치가
+ * 같은 스케줄에 겹치면 <strong>즉시예약 쪽을 우선</strong>하고 배치는 skip 한다.
+ * 추가로 {@link BatchNotificationDispatchService} 가 당일(KST) 교차 템플릿 1통 가드를 수행한다.
+ * D-2·D-1·D-0 은 상담일 기준 서로 다른 날에 대상이 되므로 동일 스케줄에 같은 날 동시 발송되지 않는다.
+ *
  * <p>ShedLock 미적용 — 운영 단일 호스트 가정.
  * 멱등성은 {@link BatchNotificationDispatchService} 가 멱등 로그 테이블로 보장한다.
  *
@@ -68,7 +76,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty(
     name = "notification.batch.reservation-reminder-enabled",
     havingValue = "true",
@@ -79,12 +86,83 @@ public class ReservationReminderScheduler {
     private final TenantService tenantService;
     private final ScheduleRepository scheduleRepository;
     private final ConsultantClientMappingRepository mappingRepository;
+    private final ImmediateReservationSmsPendingRepository immediateReservationSmsPendingRepository;
     private final BatchNotificationDispatchService dispatchService;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final BatchNotificationProperties properties;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
     private final SystemConfigService systemConfigService;
+    private final Clock clock;
+
+    /**
+     * 운영용 생성자 (Asia/Seoul 시계).
+     *
+     * @param tenantService                              테넌트
+     * @param scheduleRepository                         스케줄
+     * @param mappingRepository                          매핑
+     * @param immediateReservationSmsPendingRepository   즉시 SMS pending
+     * @param dispatchService                            SMS 디스패치
+     * @param mobilePushDispatchService                  푸시
+     * @param properties                                 배치 설정
+     * @param logService                                 실행 로그
+     * @param alertService                               알림
+     * @param systemConfigService                        플래그
+     */
+    public ReservationReminderScheduler(
+            TenantService tenantService,
+            ScheduleRepository scheduleRepository,
+            ConsultantClientMappingRepository mappingRepository,
+            ImmediateReservationSmsPendingRepository immediateReservationSmsPendingRepository,
+            BatchNotificationDispatchService dispatchService,
+            MobilePushDispatchService mobilePushDispatchService,
+            BatchNotificationProperties properties,
+            SchedulerExecutionLogService logService,
+            SchedulerAlertService alertService,
+            SystemConfigService systemConfigService) {
+        this(
+                tenantService,
+                scheduleRepository,
+                mappingRepository,
+                immediateReservationSmsPendingRepository,
+                dispatchService,
+                mobilePushDispatchService,
+                properties,
+                logService,
+                alertService,
+                systemConfigService,
+                Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL));
+    }
+
+    /**
+     * 테스트용 시계 주입 생성자.
+     *
+     * @param clock 당일 pending 윈도우 판정용
+     */
+    ReservationReminderScheduler(
+            TenantService tenantService,
+            ScheduleRepository scheduleRepository,
+            ConsultantClientMappingRepository mappingRepository,
+            ImmediateReservationSmsPendingRepository immediateReservationSmsPendingRepository,
+            BatchNotificationDispatchService dispatchService,
+            MobilePushDispatchService mobilePushDispatchService,
+            BatchNotificationProperties properties,
+            SchedulerExecutionLogService logService,
+            SchedulerAlertService alertService,
+            SystemConfigService systemConfigService,
+            Clock clock) {
+        this.tenantService = tenantService;
+        this.scheduleRepository = scheduleRepository;
+        this.mappingRepository = mappingRepository;
+        this.immediateReservationSmsPendingRepository = immediateReservationSmsPendingRepository;
+        this.dispatchService = dispatchService;
+        this.mobilePushDispatchService = mobilePushDispatchService;
+        this.properties = properties;
+        this.logService = logService;
+        this.alertService = alertService;
+        this.systemConfigService = systemConfigService;
+        this.clock = clock;
+    }
 
     /** 디버그·관측용. 외부 cron 변경은 {@code notification.batch.reservation-reminder-cron} 키. */
     @Value("${notification.batch.reservation-reminder-cron:0 0 9 * * *}")
@@ -282,6 +360,14 @@ public class ReservationReminderScheduler {
                     skipped++;
                     continue;
                 }
+                // 당일 fire_at pending(지연 즉시문자)이 있으면 즉시 경로 우선 → 배치 skip.
+                if (hasImmediatePendingForToday(tenantId, schedule.getId())) {
+                    log.info(
+                            "[{}] 당일 즉시 SMS pending 우선 skip: tenantId={}, scheduleId={}",
+                            logTag, tenantId, schedule.getId());
+                    skipped++;
+                    continue;
+                }
                 DispatchOutcome outcome = kind == ReminderSmsKind.D2
                     ? dispatchService.dispatchReservationReminderD2(schedule.getId())
                     : dispatchService.dispatchReservationImmediateLate(schedule.getId());
@@ -367,6 +453,24 @@ public class ReservationReminderScheduler {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 당일(Asia/Seoul) fire_at 인 즉시 SMS PENDING 존재 여부.
+     *
+     * @param tenantId   테넌트 ID
+     * @param scheduleId 스케줄 ID
+     * @return pending 있으면 true
+     */
+    private boolean hasImmediatePendingForToday(String tenantId, Long scheduleId) {
+        LocalDateTime dayStart = ReservationSmsBusinessHours.startOfToday(clock);
+        LocalDateTime dayEnd = ReservationSmsBusinessHours.startOfTomorrow(clock);
+        return immediateReservationSmsPendingRepository.existsPendingForScheduleAndFireAtRange(
+                tenantId,
+                scheduleId,
+                ImmediateReservationSmsPendingStatus.PENDING,
+                dayStart,
+                dayEnd);
     }
 
     /**

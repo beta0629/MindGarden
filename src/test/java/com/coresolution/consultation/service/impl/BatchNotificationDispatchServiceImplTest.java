@@ -259,6 +259,8 @@ class BatchNotificationDispatchServiceImplTest {
     @DisplayName("멱등성 — 동일 키 사전 가드 시 SKIPPED_DUPLICATE 반환, 외부 호출 없음")
     void dispatch_whenIdempotencyHits_skips() {
         givenScheduleAndUsers(SCHEDULE_ID, 3);
+        when(sendLogRepository.existsByIdempotencyKeyAnyTemplateAndSentAtRange(
+            anyString(), any(), anyString(), anyLong(), anyLong(), any(), any())).thenReturn(false);
         when(sendLogRepository.existsByIdempotencyKey(
             eq(TENANT_ID),
             eq(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE),
@@ -274,6 +276,28 @@ class BatchNotificationDispatchServiceImplTest {
         DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
 
         assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_DUPLICATE);
+        verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
+        verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("당일 교차 템플릿 — 다른 예약 SMS 이미 발송 시 SKIPPED_DUPLICATE (최종 1통)")
+    void dispatch_whenOtherReservationSmsSentToday_skips() {
+        givenScheduleAndUsers(SCHEDULE_ID, 3);
+        when(sendLogRepository.existsByIdempotencyKeyAnyTemplateAndSentAtRange(
+            eq(TENANT_ID),
+            eq(BatchNotificationTemplateCodes.RESERVATION_SCHEDULE_SMS_CODES),
+            eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
+            eq(SCHEDULE_ID),
+            eq(CLIENT_ID),
+            any(LocalDateTime.class),
+            any(LocalDateTime.class))).thenReturn(true);
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_DUPLICATE);
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString());
         verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
         verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
     }
@@ -767,6 +791,8 @@ class BatchNotificationDispatchServiceImplTest {
     private void givenIdempotencyNotExists() {
         when(sendLogRepository.existsByIdempotencyKey(
             anyString(), anyString(), anyString(), anyLong(), anyLong())).thenReturn(false);
+        when(sendLogRepository.existsByIdempotencyKeyAnyTemplateAndSentAtRange(
+            anyString(), any(), anyString(), anyLong(), anyLong(), any(), any())).thenReturn(false);
     }
 
     private void givenLoggerInsertSucceeds() {

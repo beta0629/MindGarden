@@ -96,4 +96,19 @@ class ReservationSmsBusinessHoursTest {
             assertThat(fireAt).contains(LocalDateTime.of(2026, 7, 30, 9, 0));
         }
     }
+
+    @Nested
+    @DisplayName("startOfToday / startOfTomorrow")
+    class DayBounds {
+
+        @Test
+        @DisplayName("당일·익일 00:00 경계")
+        void dayWindow() {
+            Clock clock = fixedAt("2026-07-29T15:30:00");
+            assertThat(ReservationSmsBusinessHours.startOfToday(clock))
+                    .isEqualTo(LocalDateTime.of(2026, 7, 29, 0, 0));
+            assertThat(ReservationSmsBusinessHours.startOfTomorrow(clock))
+                    .isEqualTo(LocalDateTime.of(2026, 7, 30, 0, 0));
+        }
+    }
 }

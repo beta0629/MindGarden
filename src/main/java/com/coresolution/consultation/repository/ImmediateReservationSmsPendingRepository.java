@@ -58,4 +58,29 @@ public interface ImmediateReservationSmsPendingRepository
      */
     boolean existsByTenantIdAndScheduleIdAndTemplateCodeAndStatusAndIsDeletedFalse(
             String tenantId, Long scheduleId, String templateCode, String status);
+
+    /**
+     * 동일 schedule 에 대해 fire_at 이 {@code [fireAtFrom, fireAtTo)} 인 PENDING 존재 여부.
+     * D-n 09:00 배치가 당일 지연 즉시문자와 충돌하지 않도록 배치 측에서 조회한다.
+     *
+     * @param tenantId   테넌트 ID
+     * @param scheduleId 스케줄 ID
+     * @param status     상태 ({@code PENDING})
+     * @param fireAtFrom 구간 시작 inclusive
+     * @param fireAtTo   구간 끝 exclusive
+     * @return PENDING 이 있으면 true
+     */
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM ImmediateReservationSmsPending p "
+            + "WHERE p.tenantId = :tenantId "
+            + "  AND p.scheduleId = :scheduleId "
+            + "  AND p.status = :status "
+            + "  AND p.fireAt >= :fireAtFrom "
+            + "  AND p.fireAt < :fireAtTo "
+            + "  AND p.isDeleted = false")
+    boolean existsPendingForScheduleAndFireAtRange(
+            @Param("tenantId") String tenantId,
+            @Param("scheduleId") Long scheduleId,
+            @Param("status") String status,
+            @Param("fireAtFrom") LocalDateTime fireAtFrom,
+            @Param("fireAtTo") LocalDateTime fireAtTo);
 }

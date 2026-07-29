@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,11 +28,11 @@ import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
+import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -58,7 +59,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BatchNotificationDispatchServiceImpl implements BatchNotificationDispatchService {
 
     private static final DateTimeFormatter DATE_FORMATTER =
@@ -79,6 +79,81 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final BatchNotificationProperties properties;
     private final SmsTemplateService smsTemplateService;
+    private final Clock reservationSmsClock;
+
+    /**
+     * 운영용 생성자 (예약 SMS 당일 가드용 Asia/Seoul 시계).
+     *
+     * @param scheduleRepository           스케줄
+     * @param mappingRepository            매핑
+     * @param userRepository               사용자
+     * @param userPrivacyConsentRepository 동의
+     * @param sendLogRepository            발송 로그
+     * @param sendLogger                   발송 로거
+     * @param dispatchHelper               채널 발송
+     * @param templateMappingResolver      알림톡 매핑
+     * @param encryptionUtil               복호화
+     * @param properties                   배치 설정
+     * @param smsTemplateService           SMS 템플릿
+     */
+    public BatchNotificationDispatchServiceImpl(
+            ScheduleRepository scheduleRepository,
+            ConsultantClientMappingRepository mappingRepository,
+            UserRepository userRepository,
+            UserPrivacyConsentRepository userPrivacyConsentRepository,
+            NotificationBatchSendLogRepository sendLogRepository,
+            NotificationBatchSendLogger sendLogger,
+            NotificationDispatchHelper dispatchHelper,
+            AlimtalkTemplateMappingResolver templateMappingResolver,
+            PersonalDataEncryptionUtil encryptionUtil,
+            BatchNotificationProperties properties,
+            SmsTemplateService smsTemplateService) {
+        this(
+                scheduleRepository,
+                mappingRepository,
+                userRepository,
+                userPrivacyConsentRepository,
+                sendLogRepository,
+                sendLogger,
+                dispatchHelper,
+                templateMappingResolver,
+                encryptionUtil,
+                properties,
+                smsTemplateService,
+                Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL));
+    }
+
+    /**
+     * 테스트용 시계 주입 생성자.
+     *
+     * @param reservationSmsClock 당일 윈도우 판정용 시계
+     */
+    BatchNotificationDispatchServiceImpl(
+            ScheduleRepository scheduleRepository,
+            ConsultantClientMappingRepository mappingRepository,
+            UserRepository userRepository,
+            UserPrivacyConsentRepository userPrivacyConsentRepository,
+            NotificationBatchSendLogRepository sendLogRepository,
+            NotificationBatchSendLogger sendLogger,
+            NotificationDispatchHelper dispatchHelper,
+            AlimtalkTemplateMappingResolver templateMappingResolver,
+            PersonalDataEncryptionUtil encryptionUtil,
+            BatchNotificationProperties properties,
+            SmsTemplateService smsTemplateService,
+            Clock reservationSmsClock) {
+        this.scheduleRepository = scheduleRepository;
+        this.mappingRepository = mappingRepository;
+        this.userRepository = userRepository;
+        this.userPrivacyConsentRepository = userPrivacyConsentRepository;
+        this.sendLogRepository = sendLogRepository;
+        this.sendLogger = sendLogger;
+        this.dispatchHelper = dispatchHelper;
+        this.templateMappingResolver = templateMappingResolver;
+        this.encryptionUtil = encryptionUtil;
+        this.properties = properties;
+        this.smsTemplateService = smsTemplateService;
+        this.reservationSmsClock = reservationSmsClock;
+    }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -369,6 +444,26 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         }
 
         String smsBody = buildSmsBodyForReservation(templateCode, params);
+
+        // 당일(Asia/Seoul) 교차 템플릿 1통 가드 — SINGLE/LATE/D2 중 이미 발송된 건이 있으면 skip.
+        // 템플릿별 lifetime UNIQUE 와 별개로, 지연 즉시문자 + D-n 09:00 배치 충돌을 막는다.
+        LocalDateTime dayStart = ReservationSmsBusinessHours.startOfToday(reservationSmsClock);
+        LocalDateTime dayEnd = ReservationSmsBusinessHours.startOfTomorrow(reservationSmsClock);
+        if (sendLogRepository.existsByIdempotencyKeyAnyTemplateAndSentAtRange(
+                tenantId,
+                BatchNotificationTemplateCodes.RESERVATION_SCHEDULE_SMS_CODES,
+                BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
+                scheduleId,
+                client.getId(),
+                dayStart,
+                dayEnd)) {
+            log.info(
+                    "예약 SMS 당일 1통 skip: tenantId={}, templateCode={}, scheduleId={}, recipientUserId={}, dayStart={}",
+                    tenantId, templateCode, scheduleId, client.getId(), dayStart);
+            return new DispatchOutcome(DispatchOutcome.Status.SKIPPED_DUPLICATE,
+                    null, false, null, null, null);
+        }
+
         return dispatchInternal(tenantId, templateCode,
             BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
             scheduleId, client.getId(), decryptedPhone, params, smsBody);

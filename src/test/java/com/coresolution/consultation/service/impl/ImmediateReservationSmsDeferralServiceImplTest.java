@@ -150,6 +150,10 @@ class ImmediateReservationSmsDeferralServiceImplTest {
                 TENANT_ID, 10L, BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE,
                 ImmediateReservationSmsPendingStatus.SENT))
                 .thenReturn(false);
+        when(batchNotificationDispatchService.dispatchReservationImmediateLate(10L))
+                .thenReturn(new BatchNotificationDispatchService.DispatchOutcome(
+                        BatchNotificationDispatchService.DispatchOutcome.Status.SMS_ONLY_SENT,
+                        "SMS", false, null, null, 99L));
 
         int processed = service.processDuePending();
 
@@ -157,6 +161,51 @@ class ImmediateReservationSmsDeferralServiceImplTest {
         verify(batchNotificationDispatchService).dispatchReservationImmediateLate(10L);
         verify(pendingRepository).save(pending);
         assertThat(pending.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.SENT);
+    }
+
+    @Test
+    @DisplayName("processDuePending — 당일 교차 멱등 SKIPPED_DUPLICATE 시 pending도 SKIPPED_DUPLICATE")
+    void processDuePending_dayCollisionMarksSkippedDuplicate() {
+        ImmediateReservationSmsPending pending = ImmediateReservationSmsPending.builder()
+                .tenantId(TENANT_ID)
+                .scheduleId(10L)
+                .templateCode(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE)
+                .fireAt(LocalDateTime.of(2026, 7, 30, 9, 0))
+                .status(ImmediateReservationSmsPendingStatus.PENDING)
+                .build();
+        pending.setId(3L);
+
+        Clock dueClock = Clock.fixed(
+                LocalDateTime.of(2026, 7, 30, 9, 1).atZone(SEOUL).toInstant(), SEOUL);
+        service = new ImmediateReservationSmsDeferralServiceImpl(
+                pendingRepository,
+                scheduleRepository,
+                batchNotificationDispatchService,
+                properties,
+                dueClock);
+
+        when(pendingRepository.findDuePending(
+                eq(ImmediateReservationSmsPendingStatus.PENDING), any(LocalDateTime.class)))
+                .thenReturn(Collections.singletonList(pending));
+
+        Schedule schedule = new Schedule();
+        schedule.setId(10L);
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, 10L)).thenReturn(Optional.of(schedule));
+        when(pendingRepository.existsByTenantIdAndScheduleIdAndTemplateCodeAndStatusAndIsDeletedFalse(
+                TENANT_ID, 10L, BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE,
+                ImmediateReservationSmsPendingStatus.SENT))
+                .thenReturn(false);
+        when(batchNotificationDispatchService.dispatchReservationImmediateSingle(10L))
+                .thenReturn(new BatchNotificationDispatchService.DispatchOutcome(
+                        BatchNotificationDispatchService.DispatchOutcome.Status.SKIPPED_DUPLICATE,
+                        null, false, null, null, null));
+
+        int processed = service.processDuePending();
+
+        assertThat(processed).isEqualTo(1);
+        assertThat(pending.getStatus())
+                .isEqualTo(ImmediateReservationSmsPendingStatus.SKIPPED_DUPLICATE);
     }
 
     @Test

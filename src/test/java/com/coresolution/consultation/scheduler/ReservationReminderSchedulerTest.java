@@ -13,6 +13,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatu
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ImmediateReservationSmsPendingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
@@ -75,6 +76,8 @@ class ReservationReminderSchedulerTest {
     @Mock
     private ConsultantClientMappingRepository mappingRepository;
     @Mock
+    private ImmediateReservationSmsPendingRepository immediateReservationSmsPendingRepository;
+    @Mock
     private BatchNotificationDispatchService dispatchService;
     @Mock
     private MobilePushDispatchService mobilePushDispatchService;
@@ -93,12 +96,15 @@ class ReservationReminderSchedulerTest {
         properties = new BatchNotificationProperties();
         properties.setReservationReminderDaysAhead(2);
         scheduler = new ReservationReminderScheduler(tenantService, scheduleRepository,
-            mappingRepository, dispatchService, mobilePushDispatchService, properties,
+            mappingRepository, immediateReservationSmsPendingRepository, dispatchService,
+            mobilePushDispatchService, properties,
             logService, alertService, systemConfigService);
         // 기본: DB 플래그 ON (기존 테스트 시나리오 그대로 동작).
         when(systemConfigService.getGlobalBoolean(
                 eq(NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED), anyBoolean()))
             .thenReturn(true);
+        when(immediateReservationSmsPendingRepository.existsPendingForScheduleAndFireAtRange(
+                any(), any(), any(), any(), any())).thenReturn(false);
         // D-0 SMS / D-1 SMS·푸시 배치 기본: 대상 없음 (개별 테스트에서 override).
         when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
                 any(), eq(LocalDate.now()), anyList()))
@@ -538,6 +544,24 @@ class ReservationReminderSchedulerTest {
         scheduler.runDailyReminder();
 
         verify(dispatchService).dispatchReservationReminderD2(101L);
+    }
+
+    @Test
+    @DisplayName("당일 즉시 SMS pending 존재 시 D-n 배치 dispatch 생략 (즉시 경로 우선)")
+    void runDailyReminder_skipsWhenImmediatePendingForToday() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule scheduleA = buildSchedule(101L, TENANT_A, 5001L, 6001L);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
+            .thenReturn(List.of(scheduleA));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(immediateReservationSmsPendingRepository.existsPendingForScheduleAndFireAtRange(
+                eq(TENANT_A), eq(101L), any(), any(), any())).thenReturn(true);
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService, never()).dispatchReservationReminderD2(any());
+        verify(dispatchService, never()).dispatchReservationImmediateLate(any());
     }
 
     // ---------------------------------------------------------------- fixtures

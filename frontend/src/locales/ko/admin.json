@@ -628,7 +628,12 @@
       "cumulativeRowAria": "{{name}} 누적 {{count}}회",
       "monthlyTitle": "월별 상담 건수",
       "missingLogsTitle": "상담일지 누락",
-      "missingLogsAllDone": "지난 일정의 모든 상담일지가 작성되었습니다"
+      "missingLogsAllDone": "지난 일정의 모든 상담일지가 작성되었습니다",
+      "sessionBurnTitle": "회기 소진율",
+      "sessionBurnHint": "현재 활성 매칭",
+      "sessionBurnEmpty": "활성 매칭의 회기 소진 데이터가 없습니다",
+      "sessionBurnRemaining": "잔여 {{count}}회",
+      "sessionBurnRowAria": "{{name}} 회기 소진율 {{rate}}%"
     },
     "formModal": {
       "createTitle": "대시보드 생성",

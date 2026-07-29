@@ -869,7 +869,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 /* ====================================================================
  * R6 (2026-06-06) Phase 3-B — 「상담사 별 통합데이터」 카드 확장 섹션.
  *
- * §A 누적 상담 건수 / §B 월별 상담 건수 / §C 상담일지 누락.
+ * §A 누적 상담 건수 / §B 월별 상담 건수 / §C 상담일지 누락 / §D 회기 소진율.
  * 모든 색·간격은 디자인 토큰 (`--ad-b0kla-*`, `--mg-*`) 만 사용 — 하드코딩 0 (D11 게이트).
  * 칩/배지는 ScheduleLegend.css 의 SSOT 클래스(`mg-v2-legend-*`, `mg-v2-count-badge--zero`,
  * `mg-v2-legend-missing-*`) 를 그대로 재사용한다.
@@ -903,10 +903,91 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   padding: 0;
 }
 
+/* ====================================================================
+ * §D 회기 소진율 (Session Burn Rate) — ACTIVE 매칭 스냅샷.
+ * Designer Phase 1: session-burn-* 최소 추가. VisualizationGroup 무변경.
+ * spacing: --mg-v2-space-* (design-v2). 불필요 min-height 금지.
+ * ==================================================================== */
+
+.mg-v2-ad-b0kla__session-burn-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3, var(--mg-spacing-md, 0.75rem));
+  margin-top: var(--mg-v2-space-6, var(--mg-spacing-lg, 1.5rem));
+  padding-top: var(--mg-v2-space-6, var(--mg-spacing-lg, 1.5rem));
+  border-top: 1px solid var(--mg-v2-color-border-default, var(--ad-b0kla-border));
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-v2-ad-b0kla__session-burn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm, 0.5rem));
+}
+
+.mg-v2-ad-b0kla__session-burn-title {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm, 0.5rem));
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md, var(--mg-font-size-sm, 0.875rem));
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--ad-b0kla-title-color, var(--mg-v2-color-text-primary));
+}
+
+.mg-v2-ad-b0kla__session-burn-title::before {
+  content: '';
+  width: var(--mg-v2-space-1, 0.25rem);
+  height: var(--mg-v2-font-size-body-md, 0.875rem);
+  border-radius: 0.125rem;
+  background-color: var(--mg-color-primary-main);
+  flex-shrink: 0;
+}
+
+.mg-v2-ad-b0kla__session-burn-hint {
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption, var(--mg-font-size-xs, 0.75rem));
+  white-space: nowrap;
+}
+
+.mg-v2-ad-b0kla__session-burn-empty {
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md, var(--mg-font-size-sm, 0.875rem));
+  text-align: center;
+  padding: var(--mg-v2-space-8, var(--mg-spacing-xl, 2rem)) 0;
+  background: var(--mg-v2-color-surface-raised);
+  border-radius: var(--mg-v2-radius-md, 0.625rem);
+}
+
+.mg-v2-ad-b0kla__session-burn-row {
+  grid-template-columns: auto minmax(5rem, 1fr) 1fr auto auto;
+  /* 스펙 §4: progress row padding-block ≥12px (base integrated-progress-row 0.5rem 보완) */
+  padding-block: var(--mg-v2-space-3, 0.75rem);
+}
+
+.mg-v2-ad-b0kla__session-burn-remaining {
+  color: var(--mg-v2-color-text-tertiary, var(--mg-v2-color-text-secondary));
+  font-size: var(--mg-v2-font-size-caption, var(--mg-font-size-xs, 0.75rem));
+  margin-left: var(--mg-v2-space-2, var(--mg-spacing-sm, 0.5rem));
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
   .mg-v2-ad-b0kla__cumulative-items,
   .mg-v2-ad-b0kla__monthly-counts-items {
     gap: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
+  }
+
+  .mg-v2-ad-b0kla__session-burn-row {
+    grid-template-columns: auto minmax(4rem, 1fr) 1fr auto;
+    padding-block: var(--mg-v2-space-3, 0.75rem);
+  }
+
+  .mg-v2-ad-b0kla__session-burn-remaining {
+    grid-column: 2 / -1;
+    margin-left: 0;
   }
 }
 

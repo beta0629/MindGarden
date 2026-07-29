@@ -28,6 +28,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.TenantService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -109,6 +110,7 @@ public class ReservationReminderScheduler {
      * @param alertService                               알림
      * @param systemConfigService                        플래그
      */
+    @Autowired
     public ReservationReminderScheduler(
             TenantService tenantService,
             ScheduleRepository scheduleRepository,

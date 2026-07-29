@@ -30,6 +30,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,6 +97,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @param properties                   배치 설정
      * @param smsTemplateService           SMS 템플릿
      */
+    @Autowired
     public BatchNotificationDispatchServiceImpl(
             ScheduleRepository scheduleRepository,
             ConsultantClientMappingRepository mappingRepository,

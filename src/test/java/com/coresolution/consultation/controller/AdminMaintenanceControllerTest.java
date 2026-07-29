@@ -125,7 +125,7 @@ class AdminMaintenanceControllerTest {
     @DisplayName("전체 — all=true → 배치 실행 후 결과 반환")
     void all_triggersBatch() {
         when(sessionDeductionRecoveryBatch.runRecovery())
-                .thenReturn(new RecoveryResult(10, 7, 1, 2));
+                .thenReturn(new RecoveryResult(10, 7, 1, 2, 0));
 
         SessionRecoveryRequest request = new SessionRecoveryRequest();
         request.setAll(Boolean.TRUE);

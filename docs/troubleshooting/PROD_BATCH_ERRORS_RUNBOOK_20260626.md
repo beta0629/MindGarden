@@ -59,14 +59,15 @@ WHERE tenant_id = 'tenant-incheon-counseling-001'
 
 ## P1 — SessionDeductionRecovery alerted=2
 
-**확인 SQL**:
+**확인 SQL** (SSOT: `docs/operations/P1B_P1C_OPERATIONS_REPORT_20260615.md` §2 — 테이블 `session_recovery_alerts`, OPEN=`resolved_at IS NULL`, 사유 컬럼=`reason`):
 
 ```sql
-SELECT id, tenant_id, schedule_id, mapping_id, alert_type, status, created_at
-FROM session_deduction_recovery_alerts
-WHERE status = 'OPEN'
+SELECT id, tenant_id, schedule_id, mapping_id, reason, resolved_at, created_at
+FROM session_recovery_alerts
+WHERE resolved_at IS NULL
+  AND is_deleted = 0
 ORDER BY created_at DESC
 LIMIT 20;
 ```
 
-매핑·스케줄 정합성 확인 후 alert `RESOLVED` 처리 또는 회기 수동 보정(ERP/어드민).
+매핑·스케줄 정합성 확인 후 `resolved_at=NOW()` 로 종결하거나 회기 수동 보정(ERP/어드민). 차감 성공·`session_sequence` 설정 시 배치는 OPEN을 auto-resolve 한다.

@@ -45,7 +45,7 @@ describe('aggregateConsultantSessionBurnRates', () => {
     expect(rows[0].remainingSessions).toBe(100);
   });
 
-  it('소진율 DESC 정렬 후 topLimit 적용', () => {
+  it('사용 회기(합산) DESC → 잔여 ASC 정렬 후 topLimit 적용', () => {
     const mappings = [];
     for (let i = 1; i <= 12; i += 1) {
       mappings.push({
@@ -60,8 +60,60 @@ describe('aggregateConsultantSessionBurnRates', () => {
     const rows = aggregateConsultantSessionBurnRates(mappings);
     expect(rows).toHaveLength(SESSION_BURN_TOP_LIMIT);
     expect(rows[0].consultantId).toBe(12);
-    expect(rows[0].burnRate).toBe(100);
+    expect(rows[0].usedSessions).toBe(12);
     expect(rows[rows.length - 1].consultantId).toBe(3);
+    expect(rows[rows.length - 1].usedSessions).toBe(3);
+  });
+
+  it('%가 높아도 사용 회기가 적으면 하위 순위', () => {
+    // 피드백 예: 57%·잔여17 vs 31%·잔여90 → 절대 사용 회기 기준이면 후자가 상위
+    const rows = aggregateConsultantSessionBurnRates([
+      {
+        status: MAPPING_STATUS_ACTIVE,
+        consultantId: 1,
+        consultantName: 'HighPct',
+        usedSessions: 17,
+        totalSessions: 30,
+        remainingSessions: 17
+      },
+      {
+        status: MAPPING_STATUS_ACTIVE,
+        consultantId: 2,
+        consultantName: 'HighUsed',
+        usedSessions: 40,
+        totalSessions: 130,
+        remainingSessions: 90
+      }
+    ]);
+    expect(rows[0].consultantId).toBe(2);
+    expect(rows[0].usedSessions).toBe(40);
+    expect(rows[0].burnRate).toBe(31);
+    expect(rows[1].consultantId).toBe(1);
+    expect(rows[1].usedSessions).toBe(17);
+    expect(rows[1].burnRate).toBe(57);
+  });
+
+  it('사용 회기 동점이면 잔여 적은 쪽이 우선', () => {
+    const rows = aggregateConsultantSessionBurnRates([
+      {
+        status: MAPPING_STATUS_ACTIVE,
+        consultantId: 10,
+        consultantName: 'MoreRemain',
+        usedSessions: 20,
+        totalSessions: 50,
+        remainingSessions: 30
+      },
+      {
+        status: MAPPING_STATUS_ACTIVE,
+        consultantId: 11,
+        consultantName: 'LessRemain',
+        usedSessions: 20,
+        totalSessions: 40,
+        remainingSessions: 20
+      }
+    ]);
+    expect(rows[0].consultantId).toBe(11);
+    expect(rows[1].consultantId).toBe(10);
   });
 
   it('used > total 이면 표시율은 100으로 clamp', () => {

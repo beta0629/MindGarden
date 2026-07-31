@@ -17,6 +17,7 @@ import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.service.TenantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -61,8 +62,15 @@ public class ErpAutomationScheduler {
     /**
      * ERP init + 백필 — 매일 00:08 (일별 통계 00:01 이후, 일 마감 00:10 이전)
      * 신규 테넌트 계정 매핑 초기화 후, INCOME 거래 중 분개 미생성 건 분개 생성·전기.
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-init-backfill.cron:0 8 0 * * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleErpInitAndBackfill",
+            lockAtMostFor = "PT30M",
+            lockAtLeastFor = "PT1M"
+    )
     public void scheduleErpInitAndBackfill() {
         runPerTenant("ErpInitAndBackfill", "daily", () -> {
             String tenantId = TenantContextHolder.getTenantId();
@@ -85,8 +93,15 @@ public class ErpAutomationScheduler {
      * 정기 일 마감(재무) — 매일 02:00 KST.
      * 합의서 §2 Q2: 운영 트래픽 회피 위해 02:00~02:30 KST 이동.
      * 토글: {@code mindgarden.scheduler.financial-close.daily-cron}.
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${mindgarden.scheduler.financial-close.daily-cron:0 0 2 * * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleDailyFinancialClose",
+            lockAtMostFor = "PT30M",
+            lockAtLeastFor = "PT1M"
+    )
     public void scheduleDailyFinancialClose() {
         LocalDate targetDate = LocalDate.now().minusDays(1);
         runPerTenant("DailyFinancialClose", targetDate.toString(),
@@ -97,8 +112,15 @@ public class ErpAutomationScheduler {
      * 정기 월 마감(재무) — 매월 1일 02:30 KST.
      * 합의서 §2 Q2: 일 마감(02:00) 이후 30분 시점.
      * 토글: {@code mindgarden.scheduler.financial-close.monthly-cron}.
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${mindgarden.scheduler.financial-close.monthly-cron:0 30 2 1 * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleMonthlyFinancialClose",
+            lockAtMostFor = "PT30M",
+            lockAtLeastFor = "PT1M"
+    )
     public void scheduleMonthlyFinancialClose() {
         YearMonth prevMonth = YearMonth.now().minusMonths(1);
         runPerTenant("MonthlyFinancialClose", prevMonth.toString(),
@@ -107,8 +129,15 @@ public class ErpAutomationScheduler {
 
     /**
      * 재무제표 생성 — 매월 1일 00:25 (전월 기준 대차/손익/캐시플로우)
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-financial-statement.cron:0 25 0 1 * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleFinancialStatementGeneration",
+            lockAtMostFor = "PT30M",
+            lockAtLeastFor = "PT1M"
+    )
     public void scheduleFinancialStatementGeneration() {
         YearMonth prevMonth = YearMonth.now().minusMonths(1);
         LocalDate periodEnd = prevMonth.atEndOfMonth();
@@ -129,8 +158,15 @@ public class ErpAutomationScheduler {
 
     /**
      * 재무 보고서(일) 생성 — 매일 01:05 (전일 기준)
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-daily-report.cron:0 5 1 * * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleDailyReportGeneration",
+            lockAtMostFor = "PT15M",
+            lockAtLeastFor = "PT30S"
+    )
     public void scheduleDailyReportGeneration() {
         String reportDate = LocalDate.now().minusDays(1).toString();
         runPerTenant("DailyReport", reportDate, () -> {
@@ -147,8 +183,15 @@ public class ErpAutomationScheduler {
 
     /**
      * 재무 보고서(월) 생성 — 매월 1일 00:10 (전월 기준)
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-monthly-report.cron:0 10 0 1 * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleMonthlyReportGeneration",
+            lockAtMostFor = "PT15M",
+            lockAtLeastFor = "PT30S"
+    )
     public void scheduleMonthlyReportGeneration() {
         YearMonth prev = YearMonth.now().minusMonths(1);
         String year = String.valueOf(prev.getYear());
@@ -167,8 +210,15 @@ public class ErpAutomationScheduler {
 
     /**
      * 재무 보고서(년) 생성 — 매년 1월 1일 00:15 (전년 기준)
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-yearly-report.cron:0 15 0 1 1 *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleYearlyReportGeneration",
+            lockAtMostFor = "PT15M",
+            lockAtLeastFor = "PT30S"
+    )
     public void scheduleYearlyReportGeneration() {
         String year = String.valueOf(LocalDate.now().getYear() - 1);
         runPerTenant("YearlyReport", year, () -> {
@@ -185,8 +235,15 @@ public class ErpAutomationScheduler {
 
     /**
      * 정기 주 마감(재무) — 매주 월요일 00:15 (전주 종료일 기준)
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-weekly-close.cron:0 15 0 * * MON}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleWeeklyFinancialClose",
+            lockAtMostFor = "PT30M",
+            lockAtLeastFor = "PT1M"
+    )
     public void scheduleWeeklyFinancialClose() {
         final LocalDate weekEnd = LocalDate.now().minusWeeks(1).with(java.time.DayOfWeek.SUNDAY);
         runPerTenant("WeeklyFinancialClose", weekEnd.toString(),
@@ -195,8 +252,15 @@ public class ErpAutomationScheduler {
 
     /**
      * 정산 배치 — 매월 1일 03:00 (전월 데이터 기준)
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-settlement.cron:0 0 3 1 * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleSettlementBatch",
+            lockAtMostFor = "PT30M",
+            lockAtLeastFor = "PT1M"
+    )
     public void scheduleSettlementBatch() {
         String period = YearMonth.now().minusMonths(1).format(YYYYMM);
         runPerTenant("SettlementBatch", period, () -> {
@@ -221,8 +285,15 @@ public class ErpAutomationScheduler {
 
     /**
      * 원장 동기화 — 매일 00:30 (경량 로직 또는 스텁)
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-ledger-sync.cron:0 30 0 * * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleLedgerSync",
+            lockAtMostFor = "PT10M",
+            lockAtLeastFor = "PT30S"
+    )
     public void scheduleLedgerSync() {
         LocalDate targetDate = LocalDate.now().minusDays(1);
         runPerTenant("LedgerSync", targetDate.toString(),
@@ -232,8 +303,15 @@ public class ErpAutomationScheduler {
 
     /**
      * HQ/지점 통합 재무 갱신 — 매일 04:00 (전일 기준 캐시/스냅샷 갱신)
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-consolidated-refresh.cron:0 0 4 * * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleConsolidatedFinancialRefresh",
+            lockAtMostFor = "PT15M",
+            lockAtLeastFor = "PT30S"
+    )
     public void scheduleConsolidatedFinancialRefresh() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         runPerTenant("ConsolidatedFinancialRefresh", yesterday.toString(), () -> {
@@ -251,8 +329,15 @@ public class ErpAutomationScheduler {
 
     /**
      * 매핑 일괄 동기화(선택) — 매일 01:00
+     *
+     * <p>blue/green 양 슬롯 동시 실행 차단을 위해 ShedLock 분산 락 적용.</p>
      */
     @Scheduled(cron = "${scheduler.erp-mapping-sync.cron:0 0 1 * * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleMappingSync",
+            lockAtMostFor = "PT15M",
+            lockAtLeastFor = "PT30S"
+    )
     public void scheduleMappingSync() {
         runPerTenant("MappingSync", "syncAll", () -> {
             try {

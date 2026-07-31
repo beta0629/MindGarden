@@ -43,10 +43,24 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *   <li>{@code StatisticsSchedulerServiceImpl#schedulePerformanceMonitoring} —
  *     lock name {@code "statistics-scheduler-performance-monitoring"}, lockAtMostFor {@code PT30M},
  *     lockAtLeastFor {@code PT5M}. (핫픽스 2026-05-25, N1)</li>
+ *   <li>{@code ErpAutomationScheduler} 전 {@code @Scheduled} 메서드 —
+ *     lock name {@code "ErpAutomationScheduler_<method>"}, 일/월 재무 마감 등
+ *     lockAtMostFor {@code PT30M} / lockAtLeastFor {@code PT1M}
+ *     (또는 경량 잡은 {@code PT10M}~{@code PT15M} / {@code PT30S}).
+ *     (핫픽스 2026-07-31, DailyFinancialClose blue+green 동시 실행 차단)</li>
+ *   <li>{@code SalaryBatchScheduler#checkAndExecuteSalaryBatch} —
+ *     lock name {@code "SalaryBatchScheduler_checkAndExecute"}, lockAtMostFor {@code PT30M},
+ *     lockAtLeastFor {@code PT1M}.</li>
+ *   <li>{@code SalaryBatchScheduler#monitorBatchStatus} —
+ *     lock name {@code "SalaryBatchScheduler_monitorBatchStatus"}, lockAtMostFor {@code PT10M},
+ *     lockAtLeastFor {@code PT30S}.</li>
+ *   <li>{@code SessionDeductionRecoveryBatch#runScheduledRecovery} —
+ *     lock name {@code "SessionDeductionRecoveryBatch"}, lockAtMostFor {@code PT10M},
+ *     lockAtLeastFor {@code PT30S}.</li>
  * </ul>
  *
  * @author CoreSolution
- * @version 1.2.0
+ * @version 1.3.0
  * @since 2026-05-23
  */
 @org.springframework.context.annotation.Configuration

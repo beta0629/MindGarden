@@ -78,34 +78,32 @@ public class SalaryBatchScheduler {
             // 모니터와 동일: 이전 달 급여 마감일 기준으로 실행 가능 여부 판단
             LocalDate previousMonth = now.minusMonths(1);
             
-            // 1. 배치 실행 가능 여부 확인 (이전 달 cutoff)
+            // 1. 배치 실행 가능 여부 확인 (이전 달 cutoff — 날짜만 사용, 테넌트 컨텍스트 불필요)
             if (!salaryBatchService.canExecuteBatch(previousMonth)) {
                 log.info("⏳ [SalaryBatch] 급여 배치 실행 시간이 아닙니다: targetMonth={}-{}, today={}",
                     previousMonth.getYear(), previousMonth.getMonthValue(), now);
                 return;
             }
             
-            // 2. 이미 처리되었는지 확인 (이전 달 기준)
-            SalaryBatchService.BatchStatus status = salaryBatchService.getBatchStatus(
-                previousMonth.getYear(), 
-                previousMonth.getMonthValue()
-            );
-            
-            if ("COMPLETED".equals(status.getStatus())) {
-                log.info("✅ [SalaryBatch] 이전 달 급여 배치가 이미 완료되었습니다: {}-{}", 
-                    previousMonth.getYear(), previousMonth.getMonthValue());
-                return;
-            }
-            
-            // 3. 활성 테넌트 목록 조회
+            // 2. 활성 테넌트 목록 조회
             List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
             log.info("📋 [SalaryBatch] 대상 테넌트 수: {}", activeTenantIds.size());
             
-            // 4. 테넌트별 실행
+            // 3. 테넌트별 실행 (COMPLETED 여부는 테넌트 컨텍스트 설정 후 조회)
             for (String tenantId : activeTenantIds) {
                 try {
                     // 테넌트 컨텍스트 설정
                     TenantContextHolder.setTenantId(tenantId);
+                    
+                    SalaryBatchService.BatchStatus status = salaryBatchService.getBatchStatus(
+                        previousMonth.getYear(),
+                        previousMonth.getMonthValue()
+                    );
+                    if ("COMPLETED".equals(status.getStatus())) {
+                        log.info("✅ [SalaryBatch] 테넌트 이전 달 급여 배치 이미 완료 — skip: tenantId={}, {}-{}",
+                            tenantId, previousMonth.getYear(), previousMonth.getMonthValue());
+                        continue;
+                    }
                     
                     log.debug("🔄 [SalaryBatch] 테넌트 실행 시작: tenantId={}", tenantId);
                     
@@ -170,14 +168,14 @@ public class SalaryBatchScheduler {
                 }
             }
             
-            // 5. 전체 실행 결과 로깅
+            // 4. 전체 실행 결과 로깅
             LocalDateTime endTime = LocalDateTime.now();
             long durationMs = Duration.between(startTime, endTime).toMillis();
             
             log.info("✅ [SalaryBatch] 스케줄러 완료: executionId={}, duration={}ms, success={}, failure={}", 
                 executionId, durationMs, successCount, failureCount);
             
-            // 6. 실행 요약 저장
+            // 5. 실행 요약 저장
             logService.saveSummaryLog(
                 executionId,
                 "SalaryBatchScheduler",
@@ -186,7 +184,7 @@ public class SalaryBatchScheduler {
                 durationMs
             );
             
-            // 7. 실패 알림 발송
+            // 6. 실패 알림 발송
             if (failureCount > 0) {
                 alertService.sendFailureAlert(
                     "SalaryBatchScheduler",

@@ -339,6 +339,53 @@ class BatchNotificationDispatchServiceImplTest {
     }
 
     @Test
+    @DisplayName("COMPLETED 스케줄 → SKIPPED_VALIDATION + SMS 미발송")
+    void dispatch_whenScheduleCompleted_skipsValidation() {
+        assertDispatchSkipsForNonEligibleStatus(ScheduleStatus.COMPLETED);
+    }
+
+    @Test
+    @DisplayName("CANCELLED 스케줄 → SKIPPED_VALIDATION + SMS 미발송")
+    void dispatch_whenScheduleCancelled_skipsValidation() {
+        assertDispatchSkipsForNonEligibleStatus(ScheduleStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("IN_PROGRESS 스케줄 → SKIPPED_VALIDATION + SMS 미발송")
+    void dispatch_whenScheduleInProgress_skipsValidation() {
+        assertDispatchSkipsForNonEligibleStatus(ScheduleStatus.IN_PROGRESS);
+    }
+
+    @Test
+    @DisplayName("VACATION 스케줄 → SKIPPED_VALIDATION + SMS 미발송")
+    void dispatch_whenScheduleVacation_skipsValidation() {
+        assertDispatchSkipsForNonEligibleStatus(ScheduleStatus.VACATION);
+    }
+
+    @Test
+    @DisplayName("AVAILABLE 스케줄 → SKIPPED_VALIDATION + SMS 미발송")
+    void dispatch_whenScheduleAvailable_skipsValidation() {
+        assertDispatchSkipsForNonEligibleStatus(ScheduleStatus.AVAILABLE);
+    }
+
+    private void assertDispatchSkipsForNonEligibleStatus(ScheduleStatus status) {
+        Schedule schedule = buildSchedule(SCHEDULE_ID, LocalDate.now().plusDays(2));
+        schedule.setStatus(status);
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, SCHEDULE_ID))
+            .thenReturn(Optional.of(schedule));
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateSingle(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_VALIDATION);
+        assertThat(outcome.errorCode())
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_TARGET_NOT_FOUND);
+        verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
+        verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString());
+    }
+
+    @Test
     @DisplayName("SESSION_RENEW_PROMPT 마케팅 동의 false → SKIPPED_VALIDATION + MARKETING_CONSENT_REQUIRED")
     void dispatchSessionRenewPrompt_whenMarketingConsentFalse_skips() {
         ConsultantClientMapping mapping = givenMapping(MAPPING_ID, 10, 0,

@@ -411,10 +411,13 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             return validationFailure(BatchNotificationTemplateCodes.ERROR_CODE_TARGET_NOT_FOUND,
                 "schedule not found or missing client/consultant: id=" + scheduleId);
         }
-        // CANCELLED 만 차단 — BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 등 점유 상태는 허용.
-        if (schedule.getStatus() == ScheduleStatus.CANCELLED) {
+        // 예약 SMS allowlist — BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT 만 통과.
+        // COMPLETED·CANCELLED·IN_PROGRESS 등 비허용 상태는 레이스·직접 호출에서도 차단.
+        ScheduleStatus scheduleStatus = schedule.getStatus();
+        if (scheduleStatus == null || !scheduleStatus.isReservationReminderSmsEligible()) {
             return validationFailure(BatchNotificationTemplateCodes.ERROR_CODE_TARGET_NOT_FOUND,
-                "schedule cancelled: id=" + scheduleId);
+                "schedule status not eligible for reservation SMS: id=" + scheduleId
+                    + ", status=" + scheduleStatus);
         }
 
         User client = userRepository

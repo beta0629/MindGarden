@@ -188,13 +188,8 @@ public class ImmediateReservationSmsDeferralServiceImpl
             }
             Schedule schedule = scheduleOpt.get();
             ScheduleStatus status = schedule.getStatus();
-            if (status == ScheduleStatus.CANCELLED) {
-                mark(pending, ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
-                return true;
-            }
-            if (status != ScheduleStatus.BOOKED
-                    && status != ScheduleStatus.CONFIRMED
-                    && status != ScheduleStatus.TENTATIVE_PENDING_PAYMENT) {
+            // CANCELLED·COMPLETED 등 allowlist 밖은 기존과 동일하게 SKIPPED_CANCELLED (배지 미표시).
+            if (status == null || !status.isReservationReminderSmsEligible()) {
                 mark(pending, ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
                 return true;
             }

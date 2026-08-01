@@ -244,4 +244,41 @@ class ImmediateReservationSmsDeferralServiceImplTest {
         verify(batchNotificationDispatchService, never()).dispatchReservationImmediateSingle(any());
         assertThat(pending.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
     }
+
+    @Test
+    @DisplayName("processDuePending — COMPLETED 스케줄은 SKIPPED_CANCELLED (배지 미표시 패턴 유지)")
+    void processDuePending_completedSkipped() {
+        ImmediateReservationSmsPending pending = ImmediateReservationSmsPending.builder()
+                .tenantId(TENANT_ID)
+                .scheduleId(11L)
+                .templateCode(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE)
+                .fireAt(LocalDateTime.of(2026, 7, 30, 9, 0))
+                .status(ImmediateReservationSmsPendingStatus.PENDING)
+                .build();
+        pending.setId(3L);
+
+        Clock dueClock = Clock.fixed(
+                Instant.parse("2026-07-30T00:01:00Z"), SEOUL);
+        service = new ImmediateReservationSmsDeferralServiceImpl(
+                pendingRepository,
+                scheduleRepository,
+                batchNotificationDispatchService,
+                properties,
+                dueClock);
+
+        when(pendingRepository.findDuePending(
+                eq(ImmediateReservationSmsPendingStatus.PENDING), any(LocalDateTime.class)))
+                .thenReturn(Collections.singletonList(pending));
+
+        Schedule schedule = new Schedule();
+        schedule.setId(11L);
+        schedule.setStatus(ScheduleStatus.COMPLETED);
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, 11L)).thenReturn(Optional.of(schedule));
+
+        int processed = service.processDuePending();
+
+        assertThat(processed).isEqualTo(1);
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateSingle(any());
+        assertThat(pending.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
+    }
 }

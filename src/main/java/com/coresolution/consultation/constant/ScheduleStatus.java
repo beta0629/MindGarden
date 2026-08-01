@@ -77,4 +77,15 @@ public enum ScheduleStatus {
     public boolean occupiesTimeForConflictCheck() {
         return this == BOOKED || this == TENTATIVE_PENDING_PAYMENT || this == CONFIRMED || this == IN_PROGRESS;
     }
+
+    /**
+     * 예약 리마인더/즉시 SMS(D-2·IMMEDIATE_SINGLE·IMMEDIATE_LATE) 발송 대상 상태인지 여부.
+     * allowlist: BOOKED / CONFIRMED / TENTATIVE_PENDING_PAYMENT.
+     * COMPLETED·CANCELLED·IN_PROGRESS·VACATION·AVAILABLE 등은 false.
+     *
+     * @return SMS 발송 허용이면 true
+     */
+    public boolean isReservationReminderSmsEligible() {
+        return this == BOOKED || this == CONFIRMED || this == TENTATIVE_PENDING_PAYMENT;
+    }
 }

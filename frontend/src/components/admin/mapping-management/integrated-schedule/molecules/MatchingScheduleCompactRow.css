@@ -138,6 +138,11 @@
   color: var(--mg-color-text-secondary);
 }
 
+.integrated-schedule__compact-row-secondary .integrated-schedule__reminder-sms-badge {
+  flex-shrink: 0;
+  margin-left: var(--mg-spacing-1, 0.25rem);
+}
+
 .integrated-schedule__compact-row-sep {
   flex-shrink: 0;
   color: var(--mg-gray-500);

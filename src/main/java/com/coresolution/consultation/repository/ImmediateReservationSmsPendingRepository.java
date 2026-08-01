@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.ImmediateReservationSmsPending;
@@ -83,4 +84,19 @@ public interface ImmediateReservationSmsPendingRepository
             @Param("status") String status,
             @Param("fireAtFrom") LocalDateTime fireAtFrom,
             @Param("fireAtTo") LocalDateTime fireAtTo);
+
+    /**
+     * 스케줄 ID 목록에 대한 pending 행 일괄 조회 (배지 enrich, 읽기 전용).
+     *
+     * @param tenantId    테넌트 ID
+     * @param scheduleIds 스케줄 ID 집합
+     * @return pending 목록
+     */
+    @Query("SELECT p FROM ImmediateReservationSmsPending p "
+            + "WHERE p.tenantId = :tenantId "
+            + "  AND p.scheduleId IN :scheduleIds "
+            + "  AND p.isDeleted = false")
+    List<ImmediateReservationSmsPending> findByTenantIdAndScheduleIdInAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("scheduleIds") Collection<Long> scheduleIds);
 }

@@ -351,6 +351,19 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("fromDate") LocalDate fromDate,
             @Param("statuses") Collection<ScheduleStatus> statuses);
 
+    /**
+     * mappingId 집합의 {@code fromDate} 이후 점유 상담 일정 (날짜·시각 오름차순).
+     * 다음 상담 schedule 단위 SMS 배지 enrich 용 — 호출부에서 mappingId별 첫 행을 사용.
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.mappingId IN :mappingIds AND s.date >= :fromDate AND s.status IN :statuses "
+            + "ORDER BY s.mappingId ASC, s.date ASC, s.startTime ASC, s.id ASC")
+    List<Schedule> findOccupyingSchedulesOnOrAfterByMappingIds(
+            @Param("tenantId") String tenantId,
+            @Param("mappingIds") Collection<Long> mappingIds,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
+
     // ==================== 시간 충돌 검사 ====================
     // 점유 상태: ScheduleServiceImpl.hasTimeConflict·ScheduleStatus#occupiesTimeForConflictCheck 와 동일 의미(Booked/확정 + 레거시 IN_PROGRESS).
 

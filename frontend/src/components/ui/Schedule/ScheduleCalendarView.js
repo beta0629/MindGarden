@@ -18,6 +18,8 @@ import {
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
+import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
+import ScheduleReminderSmsBadge from '../../admin/mapping-management/integrated-schedule/molecules/ScheduleReminderSmsBadge';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
@@ -363,6 +365,12 @@ const ScheduleCalendarView = ({
                     )}
                     <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
+                    <ScheduleReminderSmsBadge
+                        sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
+                        compact
+                        stopPropagation
+                        className="mg-v2-ad-calendar-event__reminder-sms"
+                    />
                     {sessionLabel ? (
                         <span
                             className={`mg-v2-ad-calendar-event__sessions${sessionVariantClass}`.trim()}
@@ -394,6 +402,11 @@ const ScheduleCalendarView = ({
                 <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
                 <div className="mg-v2-ad-calendar-event__title">
                     <span className="client-name">{clientName}</span>
+                    <ScheduleReminderSmsBadge
+                        sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
+                        stopPropagation
+                        className="mg-v2-ad-calendar-event__reminder-sms"
+                    />
                     {consultantName && (
                         <span className="counselor-name">{consultantName}</span>
                     )}

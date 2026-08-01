@@ -82,6 +82,7 @@ const MappingScheduleCard = ({
         hasConsultationSchedule={mapping?.hasConsultationSchedule}
         nextConsultationDate={mapping?.nextConsultationDate}
         paymentTiming={mapping?.paymentTiming}
+        clientReminderSms={mapping?.clientReminderSms}
       />
     </div>
     <CardActionGroup
@@ -119,7 +120,8 @@ MappingScheduleCard.propTypes = {
     remainingSessions: PropTypes.number,
     pendingSessionExtension: PropTypes.object,
     hasConsultationSchedule: PropTypes.bool,
-    nextConsultationDate: PropTypes.string
+    nextConsultationDate: PropTypes.string,
+    clientReminderSms: PropTypes.object
   }),
   eventData: PropTypes.object,
   isDraggable: PropTypes.bool,

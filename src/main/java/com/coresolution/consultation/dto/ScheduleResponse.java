@@ -119,6 +119,13 @@ public class ScheduleResponse {
     private Long clientLifetimeSessionCount;
 
     /**
+     * 내담자 예약 문자(SMS) 표시 상태 (SENT/PENDING/FAILED). 숨김 대상은 null.
+     *
+     * @since 2026-08-01
+     */
+    private ClientReminderSmsStatusDto clientReminderSms;
+
+    /**
      * {@link #pastSessionCount}, {@link #totalSessions}, {@link #remainingSessions},
      * {@link #sessionSequence} 를 기반으로 {@link #combinedUsedSessions},
      * {@link #combinedTotalSessions} 를 계산해 채운다.

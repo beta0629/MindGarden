@@ -39,6 +39,7 @@ import {
   parseClientScheduleNotesUnresolvedCount,
   parseScheduleSessionCount
 } from '../../constants/schedule';
+import { CLIENT_REMINDER_SMS_FIELD } from '../../constants/scheduleClientReminderSms';
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
 import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
 import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
@@ -572,7 +573,9 @@ const UnifiedScheduleComponent = ({
                             [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]:
                                 parseClientScheduleNotesClientWideUnresolvedCount(
                                     schedule[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
-                                )
+                                ),
+                            [CLIENT_REMINDER_SMS_FIELD]:
+                                schedule[CLIENT_REMINDER_SMS_FIELD] || schedule.client_reminder_sms || null
                         }
                     };
                 }).filter(event => event !== null); // null 제거
@@ -711,7 +714,9 @@ const UnifiedScheduleComponent = ({
                                 [CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]:
                                     parseClientScheduleNotesClientWideUnresolvedCount(
                                         schedule[CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD]
-                                    )
+                                    ),
+                                [CLIENT_REMINDER_SMS_FIELD]:
+                                    schedule[CLIENT_REMINDER_SMS_FIELD] || schedule.client_reminder_sms || null
                             }
                         };
                     }).filter(event => event !== null); // null 제거

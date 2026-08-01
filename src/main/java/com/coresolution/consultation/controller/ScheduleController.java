@@ -103,6 +103,8 @@ public class ScheduleController extends BaseApiController {
     private final com.coresolution.consultation.repository.ClientScheduleNoteRepository clientScheduleNoteRepository;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final com.coresolution.consultation.repository.ScheduleRepository scheduleRepository;
+    private final com.coresolution.consultation.service.ScheduleClientReminderSmsStatusService
+            scheduleClientReminderSmsStatusService;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -334,6 +336,10 @@ public class ScheduleController extends BaseApiController {
                         tenantIdVal, consultantClientMappingRepository);
         ScheduleResponse dto = convertToScheduleResponse(
                 schedule, unresolvedForSchedule, unresolvedForClient, mappingLookup);
+        Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> reminderSms =
+                scheduleClientReminderSmsStatusService.resolveByScheduleIds(
+                        tenantIdVal, List.of(schedule.getId()));
+        dto.setClientReminderSms(reminderSms.get(schedule.getId()));
         return success("스케줄 조회 성공", dto);
     }
 
@@ -1429,14 +1435,27 @@ public class ScheduleController extends BaseApiController {
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(
                         tenantId, consultantClientMappingRepository);
+        List<Long> scheduleIds = schedules.stream()
+                .map(Schedule::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> reminderSmsByScheduleId =
+                scheduleClientReminderSmsStatusService.resolveByScheduleIds(tenantId, scheduleIds);
 
         List<ScheduleResponse> scheduleResponses = schedules.stream()
-            .map(s -> convertToScheduleResponse(s,
-                    unresolvedByScheduleId.getOrDefault(s.getId(), 0),
-                    s.getClientId() != null
-                            ? unresolvedByClientId.getOrDefault(s.getClientId(), 0)
-                            : 0,
-                    mappingLookup))
+            .map(s -> {
+                ScheduleResponse response = convertToScheduleResponse(s,
+                        unresolvedByScheduleId.getOrDefault(s.getId(), 0),
+                        s.getClientId() != null
+                                ? unresolvedByClientId.getOrDefault(s.getClientId(), 0)
+                                : 0,
+                        mappingLookup);
+                if (s.getId() != null) {
+                    response.setClientReminderSms(reminderSmsByScheduleId.get(s.getId()));
+                }
+                return response;
+            })
             .collect(Collectors.toList());
         
         Map<String, Object> data = new HashMap<>();

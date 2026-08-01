@@ -20,6 +20,7 @@ import {
   MAPPING_DESYNC_KIND,
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
+import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
 import './CardMeta.css';
 
 const CardMeta = ({
@@ -29,7 +30,8 @@ const CardMeta = ({
   pendingSessionExtension,
   hasConsultationSchedule,
   nextConsultationDate,
-  paymentTiming
+  paymentTiming,
+  clientReminderSms
 }) => {
   const pendingSessions = toSafeNumber(pendingSessionExtension?.additionalSessions, null);
   const scheduleStatus = resolveMappingScheduleStatus({
@@ -82,6 +84,7 @@ const CardMeta = ({
         <SafeText>{scheduleLabel}</SafeText>
       </span>
     )}
+    <ScheduleReminderSmsBadge sms={clientReminderSms} />
   </div>
   );
 };
@@ -96,7 +99,13 @@ CardMeta.propTypes = {
   }),
   hasConsultationSchedule: PropTypes.bool,
   nextConsultationDate: PropTypes.string,
-  paymentTiming: PropTypes.string
+  paymentTiming: PropTypes.string,
+  clientReminderSms: PropTypes.shape({
+    status: PropTypes.string,
+    fireAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    sentAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    failureReason: PropTypes.string
+  })
 };
 
 CardMeta.defaultProps = {
@@ -106,7 +115,8 @@ CardMeta.defaultProps = {
   pendingSessionExtension: null,
   hasConsultationSchedule: false,
   nextConsultationDate: null,
-  paymentTiming: null
+  paymentTiming: null,
+  clientReminderSms: null
 };
 
 export default CardMeta;

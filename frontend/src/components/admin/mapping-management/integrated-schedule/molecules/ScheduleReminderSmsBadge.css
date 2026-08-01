@@ -1,0 +1,65 @@
+/**
+ * ScheduleReminderSmsBadge — 시맨틱 토큰만 사용 (Hex 금지)
+ * SSOT: INTEGRATED_SCHEDULE_CLIENT_REMINDER_SMS_BADGE_SPEC
+ */
+
+.integrated-schedule__reminder-sms-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.integrated-schedule__reminder-sms-badge--label {
+  gap: var(--mg-spacing-1, 0.25rem);
+}
+
+.integrated-schedule__reminder-sms-badge--emphasis .mg-common-badge--danger {
+  font-weight: 700;
+}
+
+.integrated-schedule__reminder-sms-badge__pill {
+  padding: var(--mg-spacing-1, 0.25rem) var(--mg-spacing-2, 0.5rem);
+  font-size: var(--mg-font-size-caption, var(--mg-font-xs, 0.75rem));
+  font-weight: 600;
+  border-radius: var(--mg-radius-sm, 0.25rem);
+}
+
+/* Compact: 색점 6px (0.375rem) + 툴팁/aria */
+.integrated-schedule__reminder-sms-badge--compact {
+  width: var(--mg-size-dot-sm, 0.375rem);
+  height: var(--mg-size-dot-sm, 0.375rem);
+  padding: 0;
+}
+
+.integrated-schedule__reminder-sms-badge__dot {
+  display: block;
+  width: var(--mg-size-dot-sm, 0.375rem);
+  height: var(--mg-size-dot-sm, 0.375rem);
+  border-radius: 50%;
+}
+
+.integrated-schedule__reminder-sms-badge__dot--success {
+  background-color: var(
+    --mg-color-semantic-success,
+    var(--mg-badge-status-success-text, var(--mg-success-600))
+  );
+}
+
+.integrated-schedule__reminder-sms-badge__dot--warning {
+  background-color: var(
+    --mg-color-semantic-warning,
+    var(--mg-badge-status-warning-text, var(--mg-warning-600))
+  );
+}
+
+.integrated-schedule__reminder-sms-badge__dot--danger {
+  background-color: var(
+    --mg-color-semantic-error,
+    var(--mg-badge-status-danger-text, var(--mg-error-600))
+  );
+}
+
+.integrated-schedule__card-meta .integrated-schedule__reminder-sms-badge {
+  margin: 0;
+}

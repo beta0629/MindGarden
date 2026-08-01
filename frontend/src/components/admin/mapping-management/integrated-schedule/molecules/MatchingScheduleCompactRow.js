@@ -20,6 +20,7 @@ import {
   MAPPING_DESYNC_KIND,
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
+import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
 import './MatchingScheduleCompactRow.css';
 
 const STATUS_ACCENT_CLASS = {
@@ -163,6 +164,10 @@ const MatchingScheduleCompactRow = ({
             </SafeText>
           </>
         ) : null}
+        <ScheduleReminderSmsBadge
+          sms={mapping?.clientReminderSms}
+          compact
+        />
       </span>
     </div>
   );
@@ -179,7 +184,8 @@ MatchingScheduleCompactRow.propTypes = {
     pendingSessionExtension: PropTypes.object,
     hasConsultationSchedule: PropTypes.bool,
     nextConsultationDate: PropTypes.string,
-    paymentTiming: PropTypes.string
+    paymentTiming: PropTypes.string,
+    clientReminderSms: PropTypes.object
   }),
   onOpenPeek: PropTypes.func,
   isActive: PropTypes.bool

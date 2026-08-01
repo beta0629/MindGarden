@@ -128,6 +128,8 @@ public class AdminController extends BaseApiController {
     private final OnboardingService onboardingService;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final UserRepository userRepository;
+    private final com.coresolution.consultation.service.ScheduleClientReminderSmsStatusService
+            scheduleClientReminderSmsStatusService;
 
     /**
      * /** 상담사 통계 정보 조회 (캐시 사용) /** GET /api/admin/consultants/with-stats/{id}
@@ -1043,6 +1045,14 @@ public class AdminController extends BaseApiController {
                 adminService.getMappingIdsWithOccupyingConsultationSchedules(tenantId);
         Map<Long, LocalDate> nextConsultationDateByMappingId =
                 adminService.getNextConsultationDateByMappingId(tenantId, occupyingScheduleFromDate);
+        List<Long> mappingIdsForSms = mappings.stream()
+                .map(ConsultantClientMapping::getId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> nextReminderSmsByMappingId =
+                scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
+                        tenantId, occupyingScheduleFromDate, mappingIdsForSms);
 
         List<Map<String, Object>> mappingData = mappings.stream().map(mapping -> {
             Map<String, Object> data = new java.util.HashMap<>();
@@ -1119,6 +1129,8 @@ public class AdminController extends BaseApiController {
                         : null;
                 data.put("nextConsultationDate",
                         nextConsultationDate != null ? nextConsultationDate.toString() : null);
+                data.put("clientReminderSms",
+                        mappingId != null ? nextReminderSmsByMappingId.get(mappingId) : null);
             } catch (Exception e) {
                 log.warn("매칭 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
                 data.put("id", mapping.getId());
@@ -1133,6 +1145,7 @@ public class AdminController extends BaseApiController {
                 data.put("hasUpcomingConsultationSchedule", false);
                 data.put("hasConsultationSchedule", false);
                 data.put("nextConsultationDate", null);
+                data.put("clientReminderSms", null);
             }
             return data;
         }).collect(java.util.stream.Collectors.toList());

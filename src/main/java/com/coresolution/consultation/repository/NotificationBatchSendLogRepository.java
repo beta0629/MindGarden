@@ -134,6 +134,27 @@ public interface NotificationBatchSendLogRepository
         @Param("sentAtTo") LocalDateTime sentAtTo);
 
     /**
+     * 스케줄(target_id) 단위 예약 SMS 발송 로그 일괄 조회 (배지 enrich, 읽기 전용).
+     *
+     * @param tenantId      테넌트 ID
+     * @param targetType    {@code SCHEDULE}
+     * @param targetIds     scheduleId 집합
+     * @param templateCodes 예약 SMS 템플릿 코드 묶음
+     * @return 발송 로그 목록
+     */
+    @Query("SELECT l FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.targetType = :targetType "
+            + "AND l.targetId IN :targetIds "
+            + "AND l.templateCode IN :templateCodes "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    List<NotificationBatchSendLog> findByTenantIdAndTargetTypeAndTargetIdInAndTemplateCodeIn(
+            @Param("tenantId") String tenantId,
+            @Param("targetType") String targetType,
+            @Param("targetIds") Collection<Long> targetIds,
+            @Param("templateCodes") Collection<String> templateCodes);
+
+    /**
      * 테넌트 + 기간으로 로그 조회 (운영 모니터링용).
      *
      * @param tenantId 테넌트 ID

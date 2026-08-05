@@ -1,6 +1,7 @@
 package com.coresolution.consultation.util;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.config.SessionTimeoutProperties;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,8 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class SessionManager {
+
+    private final SessionTimeoutProperties sessionTimeoutProperties;
 
     // PersonalDataEncryptionUtil은 제거 - 복호화된 데이터를 직접 받도록 수정
 
@@ -67,8 +70,8 @@ public class SessionManager {
                 session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.SOCIAL_PROVIDER, socialProvider);
             }
 
-            // 세션 타임아웃 설정
-            session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
+            // 세션 타임아웃 설정 — SSOT: SessionTimeoutProperties (HTTP_SESSION_MAX_INACTIVE)
+            session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
             log.info("로그인 세션 생성 완료: userId={}, email={}", user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
 
@@ -109,8 +112,9 @@ public class SessionManager {
             session.setAttribute(SessionConstants.BUSINESS_SESSION_NAMESPACE + "." + SessionConstants.USER_PROFILE, userProfile);
             session.setAttribute(SessionConstants.BUSINESS_SESSION_NAMESPACE + "." + SessionConstants.LAST_ACTIVITY_TIME, LocalDateTime.now());
 
-            // 비즈니스 세션 타임아웃 설정 (로그인 세션보다 길게)
-            int businessTimeout = Math.max(session.getMaxInactiveInterval(), SessionConstants.BUSINESS_SESSION_TIMEOUT_SECONDS);
+            // 비즈니스 세션 타임아웃 설정 (로그인 세션보다 짧게 두지 않음)
+            int timeoutSeconds = sessionTimeoutProperties.getTimeoutSeconds();
+            int businessTimeout = Math.max(session.getMaxInactiveInterval(), timeoutSeconds);
             session.setMaxInactiveInterval(businessTimeout);
 
             log.info("비즈니스 세션 생성 완료: userId={}", user.getId());
@@ -219,7 +223,7 @@ public class SessionManager {
                 LocalDateTime now = LocalDateTime.now();
                 int maxInactive = session.getMaxInactiveInterval();
                 if (maxInactive <= 0) {
-                    maxInactive = SessionConstants.SESSION_TIMEOUT_SECONDS;
+                    maxInactive = sessionTimeoutProperties.getTimeoutSeconds();
                 }
                 if (lastActivity.plusSeconds(maxInactive).isBefore(now)) {
                     log.info("세션이 만료되었습니다: userId={}", userId);

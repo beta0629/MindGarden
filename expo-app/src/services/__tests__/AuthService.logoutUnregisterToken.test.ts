@@ -200,8 +200,8 @@ describe('AuthService.logout — P0 푸시 토큰 격리 (NotificationService.un
     expect(apiPostMock).toHaveBeenCalledTimes(1);
     expect(storeLogoutSpy).toHaveBeenCalledTimes(1);
     expect(console.warn).toHaveBeenCalledWith(
-      '[AuthService.logout] unregister token failed',
-      expect.any(Error),
+      '[performSignOut] unregister token failed',
+      'network down',
     );
   });
 

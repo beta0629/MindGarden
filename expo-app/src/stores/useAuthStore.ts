@@ -195,6 +195,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
+        // SecureStore·메모리 토큰만 정리. clearTenant 는 호출하지 않음(register 403 방지).
         await SecureStore.deleteItemAsync(SECURE_KEY_ACCESS_TOKEN);
         await SecureStore.deleteItemAsync(SECURE_KEY_REFRESH_TOKEN);
         await clearJsessionId();

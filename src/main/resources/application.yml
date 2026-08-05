@@ -311,11 +311,12 @@ mindgarden:
       daily-cron: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_DAILY_CRON:0 0 2 * * *}
       monthly-cron: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_MONTHLY_CRON:0 30 2 1 * *}
 
-# JWT 설정 (프로파일별 설정에서 기본값 제공)
+# JWT TTL SSOT — JwtService·RefreshTokenServiceImpl 이 이 키만 참조. FE 별도 만료 상수와 드리프트 금지.
+# 세션 4h(HTTP_SESSION_MAX_INACTIVE) ≠ Access JWT 1h — 계층 분리. jwt.expiration / refresh-expiration 변경 금지.
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 3600000   # 1시간 (밀리초)
-  refresh-expiration: 604800000  # 7일 (밀리초)
+  expiration: 3600000   # Access JWT 1시간 (밀리초) — HttpSession 4h와 별개(세션 4h ≠ JWT 1h)
+  refresh-expiration: 604800000  # Refresh JWT·DB expires_at 7일 (밀리초)
 
 # 개인정보 암호화 설정 (프로파일별 설정에서 기본값 제공)
 encryption:
@@ -373,11 +374,12 @@ server:
       charset: UTF-8
       force: true
     session:
-      # 비활성 만료(슬라이딩). cookie.max-age를 timeout과 동일하게 명시해야
-      # 브라우저가 쿠키를 먼저 폐기하는 현상을 방지할 수 있다.
-      timeout: ${HTTP_SESSION_MAX_INACTIVE:8h}
+      # 웹용 HTTP 세션 비활성 만료(슬라이딩, 기본 4h). SSOT: HTTP_SESSION_MAX_INACTIVE.
+      # Access JWT(jwt.expiration=1h)와 별개 — 세션 4h ≠ JWT 1h.
+      # cookie.max-age를 timeout과 동일하게 명시해야 브라우저가 쿠키를 먼저 폐기하는 현상을 방지할 수 있다.
+      timeout: ${HTTP_SESSION_MAX_INACTIVE:4h}
       cookie:
-        max-age: ${HTTP_SESSION_MAX_INACTIVE:8h}
+        max-age: ${HTTP_SESSION_MAX_INACTIVE:4h}
         http-only: true
         # OAuth 콜백이 apex(예: core-solution.co.kr)이고 프론트가 테넌트 서브도메인(mindgarden.*)인 경우,
         # Domain 미설정 시 JSESSIONID가 콜백 호스트에만 묶여 서브도메인으로 돌아온 뒤 세션이 비는 현상 발생.
@@ -476,8 +478,8 @@ consultation:
     name: "통합 상담관리 시스템"
     version: "1.0.0"
     max-clients-per-consultant: 20
-    # 분 단위 참고값(UI/문서). 실제 세션 수명은 server.servlet.session.timeout(기본 8h) 및 SessionConstants와 정합.
-    session-timeout: 480
+    # 분 단위 참고값(UI/문서). 실제 세션 수명은 server.servlet.session.timeout(기본 4h) 및 HTTP_SESSION_MAX_INACTIVE와 정합.
+    session-timeout: 240
     notification:
       enabled: true
       real-time: true
@@ -801,11 +803,9 @@ security:
     max-attempts: ${SECURITY_LOGIN_MAX_ATTEMPTS:5}  # 최대 로그인 시도 횟수
     lockout-duration-minutes: ${SECURITY_LOGIN_LOCKOUT_DURATION:30}  # 계정 잠금 시간 (분)
 
-  # JWT 설정
+  # JWT 보안 메타(길이 등). TTL SSOT는 상위 jwt.expiration / jwt.refresh-expiration — 여기 validity 키는 사용하지 않음.
   jwt:
     secret-min-length: ${JWT_SECRET_MIN_LENGTH:32}  # JWT 비밀키 최소 길이
-    access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:3600000}  # 1시간 (ms)
-    refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:604800000}  # 7일 (ms)
 
   # 비밀번호 정책
   password:

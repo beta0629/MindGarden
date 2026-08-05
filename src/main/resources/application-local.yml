@@ -231,12 +231,13 @@ server:
   shutdown: graceful
   servlet:
     session:
-      timeout: 30m  # 세션 타임아웃 (30분)
+      # SSOT: HTTP_SESSION_MAX_INACTIVE (기본 4h). timeout·cookie.max-age 동일 키.
+      timeout: ${HTTP_SESSION_MAX_INACTIVE:4h}
       cookie:
         http-only: true  # XSS 공격 방지
         secure: false    # 로컬 환경에서는 false (HTTPS 사용 시 true)
         same-site: lax   # CSRF 공격 방지
-        max-age: 1800    # 쿠키 만료 시간 (30분)
+        max-age: ${HTTP_SESSION_MAX_INACTIVE:4h}
 
 # 보안 설정 (통합)
 security:

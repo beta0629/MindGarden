@@ -144,9 +144,13 @@ public final class SessionConstants {
     // ===== 세션 관리 관련 상수 =====
     
     /**
-     * HTTP 세션 비활성 타임아웃 (초). {@code server.servlet.session.timeout} 기본값(8h)과 맞출 것.
+     * HTTP 세션 비활성 타임아웃 폴백 (초).
+     * <p>SSOT: env {@code HTTP_SESSION_MAX_INACTIVE} /
+     * {@code server.servlet.session.timeout} (application.yml 기본 {@code 4h}).
+     * 런타임은 {@link com.coresolution.consultation.config.SessionTimeoutProperties} 를 우선 사용한다.</p>
+     * <p>웹 HttpSession TTL(기본 4h) ≠ Access JWT({@code jwt.expiration}=1h) — 계층 분리.</p>
      */
-    public static final int SESSION_TIMEOUT_SECONDS = 8 * 60 * 60;
+    public static final int SESSION_TIMEOUT_SECONDS = 4 * 60 * 60; // 14400 — HTTP_SESSION_MAX_INACTIVE:4h
 
     /**
      * 비즈니스 세션에서 요구하는 비활성 하한(초). 로그인 세션과 동일하게 두어 {@link #SESSION_TIMEOUT_SECONDS}와 정합.

@@ -25,7 +25,7 @@ export const AUTH_API = {
   LOGIN: '/api/v1/auth/login',
   REGISTER: '/api/v1/auth/register',
   LOGOUT: '/api/v1/auth/logout',
-  REFRESH_TOKEN: '/api/v1/auth/refresh',
+  REFRESH_TOKEN: '/api/v1/auth/refresh-token',
   GET_CURRENT_USER: '/api/v1/auth/current-user',
 
   /**

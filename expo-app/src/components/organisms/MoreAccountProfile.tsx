@@ -24,6 +24,7 @@ import { useTheme } from '@/theme';
 import { Avatar } from '@/components/atoms/Avatar';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { AuthService } from '@/services/AuthService';
+import { performSignOut } from '@/services/auth/performSignOut';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { maskKoreanMobileForDisplay } from '@/utils/phoneNormalize';
 import { useProfileImageUpload } from '@/api/hooks/useProfileImageUpload';
@@ -92,7 +93,7 @@ export function MoreAccountProfile({
             await AuthService.logout();
             router.replace('/(auth)/login');
           } catch {
-            await useAuthStore.getState().logout();
+            await performSignOut();
             router.replace('/(auth)/login');
           }
         },

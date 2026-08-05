@@ -44,10 +44,10 @@ public class JwtService {
     @Value("${jwt.secret:}")
     private String secretKey;
     
-    @Value("${jwt.expiration:3600000}") // 1시간 (밀리초) — application.yml jwt.expiration과 정합
+    @Value("${jwt.expiration:3600000}") // Access JWT 1시간(ms) — SSOT: jwt.expiration (세션 4h ≠ JWT 1h 계층 분리)
     private long jwtExpiration;
     
-    @Value("${jwt.refresh-expiration:604800000}") // 7일 (밀리초)
+    @Value("${jwt.refresh-expiration:604800000}") // Refresh 7일(ms) — SSOT: jwt.refresh-expiration (DB RefreshTokenServiceImpl 동일 키)
     private long refreshExpiration;
 
     /** OAuth 전화 계정 선택용 단기 JWT TTL (밀리초). 기본 10분. */

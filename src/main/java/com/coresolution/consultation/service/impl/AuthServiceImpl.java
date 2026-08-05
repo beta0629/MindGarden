@@ -205,12 +205,19 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public AuthResponse refreshToken(String refreshToken, HttpServletRequest request) {
+        // P0: /api/v1/auth 는 공개 API라 TenantContextFilter가 tenant를 강제하지 않음.
+        // loadUserByUsername → UserService.findByEmail 이 getRequiredTenantId()를 쓰므로
+        // refresh JWT(또는 조회된 User)의 tenantId를 반드시 컨텍스트에 올린다.
+        String previousTenantId = TenantContextHolder.peekTenantId();
         try {
             // 리프레시 토큰에서 사용자 ID 추출 (표준화 2025-12-08: username = userId)
             String userId = jwtService.extractUsername(refreshToken);
             
             // 리프레시 토큰에서 tenantId 추출 (있으면 사용, 없으면 전체 조회)
             String tenantId = jwtService.extractTenantId(refreshToken);
+            if (tenantId != null && !tenantId.trim().isEmpty()) {
+                TenantContextHolder.setTenantId(tenantId);
+            }
             
             // 사용자 정보 조회 (tenantId가 있으면 테넌트별 조회, 없으면 전체 조회)
             User user;
@@ -231,6 +238,11 @@ public class AuthServiceImpl implements AuthService {
                 } else {
                     throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: userId=" + userId + " (tenantId 없음)");
                 }
+            }
+
+            // 레거시 refresh JWT에 tenant 클레임이 없어도 User.tenantId로 컨텍스트 보강
+            if (user.getTenantId() != null && !user.getTenantId().trim().isEmpty()) {
+                TenantContextHolder.setTenantId(user.getTenantId());
             }
 
             // USER_LIFECYCLE_TERMINATION_POLICY §3.6 — refresh 시 lifecycle_state 게이트 (P1)
@@ -299,6 +311,8 @@ public class AuthServiceImpl implements AuthService {
             return AuthResponse.success("토큰 갱신 성공", newToken, newRefreshToken, userResponse);
         } catch (Exception e) {
             return AuthResponse.failure("토큰 갱신 실패: " + e.getMessage());
+        } finally {
+            TenantContextHolder.setTenantIdOrClear(previousTenantId);
         }
     }
     

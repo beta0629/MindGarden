@@ -20,7 +20,11 @@ jest.mock('@/stores/useAuthStore', () => ({
 }));
 
 jest.mock('@/services/NotificationService', () => ({
-  NotificationService: { registerToken: jest.fn().mockResolvedValue(undefined) },
+  NotificationService: { registerToken: jest.fn().mockResolvedValue(true) },
+}));
+
+jest.mock('@/components/organisms/InAppNotificationToast', () => ({
+  showInAppToast: jest.fn(),
 }));
 
 function fakeJwt(payload: Record<string, unknown>): string {

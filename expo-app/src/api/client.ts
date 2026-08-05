@@ -156,7 +156,8 @@ apiClient.interceptors.response.use(
       try {
         const { refreshToken } = useAuthStore.getState();
         if (!refreshToken) {
-          useAuthStore.getState().logout();
+          const { performSignOut } = await import('../services/auth/performSignOut');
+          await performSignOut();
           return Promise.reject(error);
         }
 
@@ -175,7 +176,8 @@ apiClient.interceptors.response.use(
         if (!newAccessToken || !newRefreshToken) {
           const parseErr = new Error('토큰 갱신 응답 형식이 올바르지 않습니다.');
           processQueue(parseErr, null);
-          await useAuthStore.getState().logout();
+          const { performSignOut } = await import('../services/auth/performSignOut');
+          await performSignOut();
           return Promise.reject(parseErr);
         }
 
@@ -193,7 +195,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        await useAuthStore.getState().logout();
+        const { performSignOut } = await import('../services/auth/performSignOut');
+        await performSignOut();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

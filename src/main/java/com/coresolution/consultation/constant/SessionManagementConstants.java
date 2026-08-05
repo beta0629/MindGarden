@@ -17,10 +17,12 @@ public final class SessionManagementConstants {
     // ===== 세션 관리 상수 =====
     
     /**
-     * 기본 세션 타임아웃 (분)
-     * SessionConstants.SESSION_TIMEOUT_SECONDS (8h) 및 application.yml server.servlet.session.timeout (8h)과 정합
+     * 기본 세션 타임아웃 (분).
+     * SSOT: {@code HTTP_SESSION_MAX_INACTIVE} / {@code server.servlet.session.timeout} (기본 4h=240분).
+     * SessionConstants.SESSION_TIMEOUT_SECONDS(4h)와 정합.
+     * 웹 HttpSession용 — Access JWT(jwt.expiration=1h)와 별개(세션 4h ≠ JWT 1h).
      */
-    public static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 480;
+    public static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 240;
     
     /**
      * 최대 동시 세션 수 (사용자당)

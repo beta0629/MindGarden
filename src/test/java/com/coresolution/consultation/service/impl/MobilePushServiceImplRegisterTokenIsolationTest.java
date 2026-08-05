@@ -53,7 +53,7 @@ class MobilePushServiceImplRegisterTokenIsolationTest {
         String hash = MobilePushTokenHasher.sha256Hex(RAW_TOKEN);
 
         when(mobilePushTokenRepository.deactivateOtherUsersWithSameTokenHash(
-                eq(TENANT_ID), eq(hash), eq(CURRENT_USER_ID), any(LocalDateTime.class)))
+                eq(hash), eq(CURRENT_USER_ID), any(LocalDateTime.class)))
                 .thenReturn(1);
 
         MobilePushToken existing = MobilePushToken.builder()
@@ -71,9 +71,9 @@ class MobilePushServiceImplRegisterTokenIsolationTest {
 
         mobilePushService.registerToken(TENANT_ID, CURRENT_USER_ID, RAW_TOKEN, MobilePushPlatform.ANDROID, null);
 
-        // D-1: 격리 메서드가 정확히 1회, 현재 사용자 PK를 보존 인자로 호출됨을 확인
+        // D-1: 교차 테넌트 전역 격리 — tenantId 없이 hash+currentUserId 만으로 호출
         verify(mobilePushTokenRepository, times(1)).deactivateOtherUsersWithSameTokenHash(
-                eq(TENANT_ID), eq(hash), eq(CURRENT_USER_ID), any(LocalDateTime.class));
+                eq(hash), eq(CURRENT_USER_ID), any(LocalDateTime.class));
 
         // 격리 이후 현재 사용자 행을 INSERT/UPDATE 했음을 확인
         ArgumentCaptor<MobilePushToken> savedCaptor = ArgumentCaptor.forClass(MobilePushToken.class);
@@ -88,7 +88,7 @@ class MobilePushServiceImplRegisterTokenIsolationTest {
     void registerToken_whenNoConflictingUser_savesNewRow() {
         String hash = MobilePushTokenHasher.sha256Hex(RAW_TOKEN);
         when(mobilePushTokenRepository.deactivateOtherUsersWithSameTokenHash(
-                eq(TENANT_ID), eq(hash), eq(CURRENT_USER_ID), any(LocalDateTime.class)))
+                eq(hash), eq(CURRENT_USER_ID), any(LocalDateTime.class)))
                 .thenReturn(0);
         when(mobilePushTokenRepository.findByTenantIdAndUserIdAndTokenSha256AndIsDeletedFalse(
                 eq(TENANT_ID), eq(CURRENT_USER_ID), eq(hash)))
@@ -97,7 +97,7 @@ class MobilePushServiceImplRegisterTokenIsolationTest {
         mobilePushService.registerToken(TENANT_ID, CURRENT_USER_ID, RAW_TOKEN, MobilePushPlatform.IOS, null);
 
         verify(mobilePushTokenRepository).deactivateOtherUsersWithSameTokenHash(
-                eq(TENANT_ID), eq(hash), anyLong(), any(LocalDateTime.class));
+                eq(hash), anyLong(), any(LocalDateTime.class));
         verify(mobilePushTokenRepository).save(any(MobilePushToken.class));
     }
 }

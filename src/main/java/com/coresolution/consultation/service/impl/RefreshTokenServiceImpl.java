@@ -8,10 +8,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import com.coresolution.core.security.PasswordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,9 +33,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordService passwordService;
-    
-    // Refresh Token 만료 시간 (7일)
-    private static final long REFRESH_TOKEN_EXPIRATION_DAYS = 7;
+
+    /**
+     * Refresh Token DB 만료 TTL (밀리초).
+     * SSOT: {@code application.yml} {@code jwt.refresh-expiration} (기본 7일) — JwtService.refreshExpiration과 동일 키.
+     */
+    @Value("${jwt.refresh-expiration:604800000}")
+    private long refreshExpirationMs = 604_800_000L;
     
     @Override
     @Transactional
@@ -46,8 +52,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         // Token ID 생성 (UUID)
         String tokenId = UUID.randomUUID().toString();
         
-        // 만료 시간 설정
-        LocalDateTime expiresAt = LocalDateTime.now().plusDays(REFRESH_TOKEN_EXPIRATION_DAYS);
+        // 만료 시간 — jwt.refresh-expiration (ms) SSOT
+        LocalDateTime expiresAt = LocalDateTime.now().plus(refreshExpirationMs, ChronoUnit.MILLIS);
         
         // IP 주소 및 User-Agent 추출
         String ipAddress = extractIpAddress(request);

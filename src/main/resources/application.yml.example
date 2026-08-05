@@ -112,10 +112,10 @@ mindgarden:
       android-apk-url: ""
       ios-store-url: ""
 
-# JWT 설정
+# JWT TTL SSOT — Access 1h / Refresh 7d (HttpSession 4h와 별개 — 세션 4h ≠ JWT 1h)
 jwt:
   secret: ${JWT_SECRET:}
-  expiration: 3600000   # 1시간 (밀리초)
+  expiration: 3600000   # Access JWT 1시간 (밀리초)
   refresh-expiration: 604800000  # 7일 (밀리초)
 
 # 개인정보 암호화 설정
@@ -152,11 +152,13 @@ server:
       charset: UTF-8
       force: true
     session:
+      # SSOT: HTTP_SESSION_MAX_INACTIVE (기본 4h). timeout·cookie.max-age 동일 키.
+      timeout: ${HTTP_SESSION_MAX_INACTIVE:4h}
       cookie:
         http-only: true
         secure: false  # 로컬 개발 환경에서는 false, 프로덕션에서는 true
         same-site: strict
-        max-age: 3600  # 1시간
+        max-age: ${HTTP_SESSION_MAX_INACTIVE:4h}
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
@@ -222,7 +224,7 @@ consultation:
     name: "통합 상담관리 시스템"
     version: "1.0.0"
     max-clients-per-consultant: 20
-    session-timeout: 30
+    session-timeout: 240
     notification:
       enabled: true
       real-time: true

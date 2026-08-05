@@ -38,11 +38,12 @@ public class MobilePushServiceImpl implements MobilePushService {
         validateToken(rawToken);
         String hash = MobilePushTokenHasher.sha256Hex(rawToken);
         String tid = tenantId.trim();
-        // D-1: 디바이스 1대당 마지막 로그인 사용자에게만 푸시. 동일 토큰 해시의 이전 사용자(active=true)는 비활성화.
+        // D-1: 디바이스 1대당 마지막 로그인 사용자에게만 푸시.
+        // 동일 token_sha256 은 교차 테넌트 전역 비활성(테넌트 스코프 제한 시 ownership 깨짐 방지).
         int isolatedCount = mobilePushTokenRepository
-                .deactivateOtherUsersWithSameTokenHash(tid, hash, userId, LocalDateTime.now());
+                .deactivateOtherUsersWithSameTokenHash(hash, userId, LocalDateTime.now());
         if (isolatedCount > 0) {
-            log.info("device-isolate: token_sha256={} prev_users={} -> current_user={}",
+            log.info("device-isolate(cross-tenant): token_sha256={} prev_rows={} -> current_user={}",
                     maskTokenHash(hash), isolatedCount, userId);
         }
         mobilePushTokenRepository

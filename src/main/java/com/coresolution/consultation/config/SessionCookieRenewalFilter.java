@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
  * 이 필터는 인증된 요청에 대해 쿠키의 {@code Max-Age}를 세션 타임아웃과 동기화하여,
  * 쿠키가 서버 세션보다 먼저 만료되는 문제를 방지한다.</p>
  *
- * <p>성능을 위해 갱신은 {@link #COOKIE_RENEWAL_INTERVAL_SECONDS} 간격으로 스로틀링된다.</p>
+ * <p>성능을 위해 갱신은 {@link #COOKIE_RENEWAL_INTERVAL_SECONDS} 간격으로 스로틀링된다.
+ * 이 값은 쿠키 Set-Cookie 헤더 갱신 빈도 제한이며, HttpSession TTL
+ * ({@code HTTP_SESSION_MAX_INACTIVE} / 기본 4h)과 무관하다.</p>
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -39,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SessionCookieRenewalFilter extends OncePerRequestFilter {
 
     /**
-     * 쿠키 갱신 스로틀링 간격 (초). 이 간격 내에는 중복 갱신하지 않는다.
+     * 쿠키 Set-Cookie 갱신 스로틀 간격 (초). 세션 TTL이 아님 — TTL SSOT는 HTTP_SESSION_MAX_INACTIVE(기본 4h).
      */
     private static final long COOKIE_RENEWAL_INTERVAL_SECONDS = 1800;
 

@@ -189,7 +189,26 @@ class SessionManager {
         return false;
       }
 
-      // 401 오류 시 로그인 페이지로 리다이렉트 (로그인 페이지가 아닐 때만)
+      // 401 오류 시 — refresh 재시도 후 current-user 재확인. 실패 시에만 로그인 리다이렉트.
+      if (userResponse.status === 401) {
+        const { refreshAccessTokenPair } = await import('./authTokenRefresh');
+        const refreshed = await refreshAccessTokenPair();
+        if (refreshed) {
+          try {
+            const retryHeaders = getDefaultApiHeaders();
+            userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
+              credentials: 'include',
+              method: 'GET',
+              mode: 'cors',
+              headers: retryHeaders
+            });
+          } catch (retryFetchError) {
+            console.log('🔍 토큰 갱신 후 세션 재확인 fetch 실패:', retryFetchError.message);
+            userResponse = { status: 401, ok: false };
+          }
+        }
+      }
+
       if (userResponse.status === 401) {
         console.log('🔍 세션 확인 실패: 401 Unauthorized');
         this.user = null;
@@ -517,8 +536,8 @@ class SessionManager {
       return csrfMeta.getAttribute('content');
     }
 
-    // 모두 찾지 못한 경우 빈 문자열 반환
-    console.warn('⚠️ CSRF 토큰을 찾을 수 없습니다. 쿠키:', document.cookie);
+    // 모두 찾지 못한 경우 빈 문자열 반환 (쿠키 원문 로그 금지)
+    console.warn('⚠️ CSRF 토큰을 찾을 수 없습니다.');
     return '';
   }
 

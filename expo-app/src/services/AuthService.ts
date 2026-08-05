@@ -7,7 +7,6 @@
  */
 import {
   login as kakaoSDKLogin,
-  logout as kakaoSDKLogout,
   getProfile as getKakaoProfile,
 } from '@react-native-seoul/kakao-login';
 import NaverLogin from '@react-native-seoul/naver-login';
@@ -46,8 +45,8 @@ import {
   isAppleSignInAvailable,
   performAppleNativeSignIn,
 } from './auth/appleSignIn';
-import { signInWithGoogle, signOutFromGoogle, type GoogleSignInOutcome } from './auth/googleSignIn';
-import { NotificationService } from './NotificationService';
+import { signInWithGoogle, type GoogleSignInOutcome } from './auth/googleSignIn';
+import { performSignOut } from './auth/performSignOut';
 import type { User, Tokens } from '../stores/useAuthStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
@@ -1950,39 +1949,11 @@ export const AuthService = {
   },
 
   /**
-   * 로그아웃 — SDK 로그아웃 + 로컬 토큰 삭제 + 서버 로그아웃.
-   *
-   * <p>Build #16 (2026-06-10) 마이그레이션: GOOGLE provider 도 Native SDK 세션을 정리한다.</p>
-   *
-   * <p>P0 (2026-06-10): 푸시 토큰 격리 — 서버 로그아웃 직전 {@link NotificationService#unregisterToken}
-   * 을 호출하여 이전 사용자 active=true 토큰이 디바이스에 잔류해 다음 사용자에게 푸시가 가는
-   * 격리 위반(D-1 무력화)을 차단한다. 서버 unregister 실패는 swallow 하여 로컬 로그아웃 흐름을
-   * 막지 않는다.</p>
+   * 로그아웃 — 공용 {@link performSignOut} (unregisterToken → POST logout → store clear).
+   * clearTenant 는 호출하지 않는다.
    */
   async logout(provider?: 'KAKAO' | 'NAVER' | 'GOOGLE'): Promise<void> {
-    try {
-      if (provider === 'KAKAO' && isKakaoNativeLinked()) {
-        await kakaoSDKLogout();
-      } else if (provider === 'NAVER' && isNaverNativeLinked()) {
-        await NaverLogin.logout();
-      } else if (provider === 'GOOGLE') {
-        await signOutFromGoogle();
-      }
-
-      try {
-        await NotificationService.unregisterToken();
-      } catch (error) {
-        // swallow: 서버 unregister 실패해도 로컬 로그아웃 진행 — 격리 디펜스는 신규 로그인 시
-        // registerToken 의 D-1 deactivateOtherUsersWithSameTokenHash 가 추가로 보강한다.
-        console.warn('[AuthService.logout] unregister token failed', error);
-      }
-
-      await apiPost(AUTH_API.LOGOUT).catch(() => {
-        // 서버 로그아웃 실패해도 로컬 정리 진행
-      });
-    } finally {
-      await useAuthStore.getState().logout();
-    }
+    await performSignOut(provider ? { provider } : undefined);
   },
 
   /**
@@ -1998,7 +1969,7 @@ export const AuthService = {
         return null;
       }
       if (raw.success === false) {
-        await useAuthStore.getState().logout();
+        await performSignOut();
         return null;
       }
       const inner = unwrapApiResponse<Record<string, unknown>>(raw) ?? raw;
@@ -2022,7 +1993,7 @@ export const AuthService = {
 
       return null;
     } catch {
-      await useAuthStore.getState().logout();
+      await performSignOut();
       return null;
     }
   },

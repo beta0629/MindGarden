@@ -7,18 +7,7 @@
 import { storage } from './common';
 import { getLegacyDashboardPath } from './dashboardUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
-
-// 세션 키 상수
-const SESSION_KEYS = {
-  ACCESS_TOKEN: 'accessToken',
-  REFRESH_TOKEN: 'refreshToken',
-  USER_INFO: 'user',
-  LOGIN_TIME: 'loginTime',
-  SESSION_EXPIRY: 'sessionExpiry'
-};
-
-// 세션 만료 시간 (8시간) — server.servlet.session.timeout(8h)과 정합
-const SESSION_DURATION = 8 * 60 * 60 * 1000;
+import { SESSION_DURATION, SESSION_KEYS } from '../constants/session';
 
 /**
  * 세션 초기화

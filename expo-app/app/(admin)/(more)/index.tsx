@@ -13,6 +13,7 @@ import { useTheme } from '@/theme';
 import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
 import { AuthService } from '@/services/AuthService';
+import { performSignOut } from '@/services/auth/performSignOut';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 import { isAdminRole } from '@/utils/adminRole';
@@ -47,7 +48,7 @@ export default function AdminMoreScreen() {
               await AuthService.logout();
               router.replace('/(auth)/login');
             } catch {
-              await useAuthStore.getState().logout();
+              await performSignOut();
               router.replace('/(auth)/login');
             }
           },

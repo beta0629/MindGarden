@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.config.SessionTimeoutProperties;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
@@ -29,6 +30,9 @@ public class UserSessionServiceImpl implements UserSessionService {
     
     @Autowired
     private UserSessionRepository userSessionRepository;
+
+    @Autowired
+    private SessionTimeoutProperties sessionTimeoutProperties;
     
     @Override
     public UserSession createSession(User user, String sessionId, String clientIp, String userAgent, 
@@ -53,7 +57,7 @@ public class UserSessionServiceImpl implements UserSessionService {
                     .user(user)
                     .sessionId(sessionId)
                     .lastActivityAt(now)
-                    .expiresAt(now.plusMinutes(SessionManagementConstants.DEFAULT_SESSION_TIMEOUT_MINUTES))
+                    .expiresAt(now.plusMinutes(sessionTimeoutProperties.getTimeoutMinutes()))
                     .clientIp(clientIp)
                     .userAgent(userAgent)
                     .loginType(loginType)

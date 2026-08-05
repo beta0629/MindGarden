@@ -22,6 +22,7 @@ import { ProfileCard } from '@/components/molecules/ProfileCard';
 import { CurrentAccountBanner } from '@/components/molecules/CurrentAccountBanner';
 import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { AuthService } from '@/services/AuthService';
+import { performSignOut } from '@/services/auth/performSignOut';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
 import {
@@ -53,7 +54,7 @@ export default function ClientMore() {
             await AuthService.logout();
             router.replace('/(auth)/login');
           } catch {
-            await useAuthStore.getState().logout();
+            await performSignOut();
             router.replace('/(auth)/login');
           }
         },

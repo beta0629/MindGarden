@@ -4,6 +4,8 @@
  * 하드코딩된 숫자들을 의미있는 상수로 변환
  */
 
+import { SESSION_DURATION } from './session';
+
 // 시간 관련 상수 (밀리초)
 export const TIME_CONSTANTS = {
   // 기본 시간 단위
@@ -18,7 +20,7 @@ export const TIME_CONSTANTS = {
   // 특정 시간 간격
   LOGIN_CHECK_DELAY: 5000,
   PERIODIC_CHECK_INTERVAL: 30000,
-  SESSION_TIMEOUT: 8 * 60 * 60 * 1000, // 8시간 — server.servlet.session.timeout(8h)과 정합
+  SESSION_TIMEOUT: SESSION_DURATION, // SSOT: constants/session.js SESSION_DURATION (4h)
   AUTO_SAVE_INTERVAL: 2000,
   DEBOUNCE_DELAY: 300,
   THROTTLE_DELAY: 100,
@@ -167,16 +169,16 @@ export const SECURITY_CONSTANTS = {
   MAX_PASSWORD_LENGTH: 128,
   PASSWORD_COMPLEXITY_REQUIRED: true,
   
-  // 토큰 관련
-  ACCESS_TOKEN_EXPIRY: 30 * 60 * 1000, // 30분
-  REFRESH_TOKEN_EXPIRY: 7 * 24 * 60 * 60 * 1000, // 7일
+  // 토큰 관련 — SSOT: application.yml jwt.expiration(1h) / jwt.refresh-expiration(7d). FE 단독 만료 판단 금지.
+  ACCESS_TOKEN_EXPIRY: 60 * 60 * 1000, // 1시간 — jwt.expiration과 정합
+  REFRESH_TOKEN_EXPIRY: 7 * 24 * 60 * 60 * 1000, // 7일 — jwt.refresh-expiration과 정합
   
   // 로그인 시도 관련
   MAX_LOGIN_ATTEMPTS: 5,
   LOCKOUT_DURATION: 30 * 60 * 1000, // 30분
   
-  // 세션 관련
-  SESSION_TIMEOUT: 8 * 60 * 60 * 1000, // 8시간 — server.servlet.session.timeout(8h)과 정합
+  // 세션 관련 — 웹 HttpSession(4h). Access JWT(1h)와 별개(세션 4h ≠ JWT 1h). SSOT: constants/session.js
+  SESSION_TIMEOUT: SESSION_DURATION,
   SESSION_EXTENSION_TIME: 5 * 60 * 1000 // 5분
 };
 

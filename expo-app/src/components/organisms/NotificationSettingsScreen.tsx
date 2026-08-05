@@ -31,6 +31,7 @@ import { useNotificationSettingsStore } from '@/stores/useNotificationSettingsSt
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useResolveTenantIdForApi } from '@/utils/resolveTenantIdForApi';
 import { PUSH_PERMISSION_COPY } from '@/constants/pushPermissionCopy';
+import { showInAppToast } from '@/components/organisms/InAppNotificationToast';
 import {
   getNotificationPermissionSnapshot,
   NotificationService,
@@ -145,7 +146,15 @@ export function NotificationSettingsScreen() {
       const granted = await NotificationService.requestPermission();
       await refreshPermission();
       if (granted) {
-        await NotificationService.registerToken();
+        const ok = await NotificationService.registerToken();
+        if (!ok) {
+          showInAppToast({
+            id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-perm-${Date.now()}`,
+            title: PUSH_PERMISSION_COPY.registerFailedTitle,
+            body: PUSH_PERMISSION_COPY.registerFailedBody,
+            icon: 'AlertTriangle',
+          });
+        }
       }
     } finally {
       setPermissionBusy(false);
@@ -159,8 +168,23 @@ export function NotificationSettingsScreen() {
   const handleReregisterToken = useCallback(async () => {
     setReregisterBusy(true);
     try {
-      await NotificationService.registerToken();
+      const ok = await NotificationService.registerToken();
       await refreshPermission();
+      if (ok) {
+        showInAppToast({
+          id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-ok-${Date.now()}`,
+          title: PUSH_PERMISSION_COPY.registerSuccessTitle,
+          body: PUSH_PERMISSION_COPY.registerSuccessBody,
+          icon: 'CheckCircle',
+        });
+      } else {
+        showInAppToast({
+          id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-fail-${Date.now()}`,
+          title: PUSH_PERMISSION_COPY.registerFailedTitle,
+          body: PUSH_PERMISSION_COPY.registerFailedBody,
+          icon: 'AlertTriangle',
+        });
+      }
     } finally {
       setReregisterBusy(false);
     }

@@ -26,6 +26,7 @@ import { useTheme } from '@/theme';
 import { ProfileCard } from '@/components/molecules/ProfileCard';
 import { MenuListItem } from '@/components/molecules/MenuListItem';
 import { AuthService } from '@/services/AuthService';
+import { performSignOut } from '@/services/auth/performSignOut';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { CONSULTANT_SALARY_SETTLEMENT_COPY } from '@/constants/consultantSalarySettlementCopy';
@@ -54,7 +55,7 @@ export default function ConsultantMore() {
             await AuthService.logout();
             router.replace('/(auth)/login');
           } catch {
-            await useAuthStore.getState().logout();
+            await performSignOut();
             router.replace('/(auth)/login');
           }
         },

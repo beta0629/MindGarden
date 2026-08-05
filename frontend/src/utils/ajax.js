@@ -13,6 +13,10 @@ import { getDefaultApiHeaders } from './apiHeaders';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import {
+  refreshAccessTokenPair,
+  shouldSkipTokenRefreshOn401
+} from './authTokenRefresh';
+import {
   AJAX_PARSE_RESPONSE_FAILED,
   AJAX_TENANT_INFO_MISSING_RELOGIN,
   AJAX_ACCESS_DENIED_DEFAULT,
@@ -62,6 +66,47 @@ const getErrorMessage = (status) => {
     default:
       return API_ERROR_MESSAGES.NETWORK_ERROR;
   }
+};
+
+/**
+ * 로그용 — JWT/비밀번호 등 민감 필드 마스킹
+ * @param {unknown} data
+ * @returns {unknown}
+ */
+const redactSensitivePayloadForLog = (data) => {
+  if (data == null || typeof data !== 'object' || Array.isArray(data)) {
+    return data;
+  }
+  const sensitiveKeys = new Set([
+    'refreshToken',
+    'accessToken',
+    'token',
+    'password',
+    'newPassword',
+    'currentPassword'
+  ]);
+  const out = {};
+  for (const [key, value] of Object.entries(data)) {
+    out[key] = sensitiveKeys.has(key) && value != null ? '***' : value;
+  }
+  return out;
+};
+
+/**
+ * 401 시 refresh 후 원 요청 재시도 가능 여부 (Expo client 와 동일)
+ * @param {string} requestUrl
+ * @param {boolean} alreadyRetried
+ * @returns {Promise<boolean>}
+ */
+const tryRefreshAccessTokenForRetry = async(requestUrl, alreadyRetried) => {
+  if (alreadyRetried) {
+    return false;
+  }
+  if (shouldSkipTokenRefreshOn401(requestUrl)) {
+    return false;
+  }
+  const tokens = await refreshAccessTokenPair();
+  return tokens != null;
 };
 
 // 세션 체크 및 리다이렉트 공통 함수
@@ -153,7 +198,7 @@ const handleError = (error, status) => {
 // GET 요청
 export const apiGet = async(endpoint, params = {}, options = {}) => {
   try {
-    const { unwrapApiEnvelope: unwrapApiEnvelopeOption, headers: optionHeaders, ...fetchOptions } = options;
+    const { unwrapApiEnvelope: unwrapApiEnvelopeOption, headers: optionHeaders, _authRetry, ...fetchOptions } = options;
     // endpoint가 이미 전체 URL인지 확인 (http:// 또는 https://로 시작)
     const isFullUrl = endpoint.startsWith('http://') || endpoint.startsWith('https://');
     
@@ -197,6 +242,12 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
     }
     
     if (!response.ok) {
+      // 401 → refresh → 새 access 로 1회 재요청 (Expo 와 동일). 실패 시에만 로그인 리다이렉트.
+      if (response.status === 401
+          && await tryRefreshAccessTokenForRetry(url, _authRetry === true)) {
+        return apiGet(endpoint, params, { ...options, _authRetry: true });
+      }
+
       // 400 Bad Request는 tenantId 부족 등 클라이언트 오류이므로 로그인 페이지로 리다이렉트
       if (response.status === 400) {
         try {
@@ -392,17 +443,26 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
   try {
     console.log('📤 POST 요청:', {
       url: endpoint,
-      data: data
+      data: redactSensitivePayloadForLog(data)
     });
-    
+
+    const { _authRetry, ...requestOptions } = options;
     const response = await csrfTokenManager.post(endpoint, data, {
-      ...options,
-      headers: { ...getDefaultHeaders(), ...options.headers }
+      ...requestOptions,
+      headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
     const jsonData = await response.json();
     
     if (!response.ok) {
+      const requestUrl = endpoint.startsWith('http')
+        ? endpoint
+        : `${getApiBaseUrl()}${endpoint}`;
+      if (response.status === 401
+          && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
+        return apiPost(endpoint, data, { ...options, _authRetry: true });
+      }
+
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {
@@ -447,9 +507,10 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
 // PUT 요청 (CSRF 토큰 자동 포함)
 export const apiPut = async(endpoint, data = {}, options = {}) => {
   try {
+    const { _authRetry, ...requestOptions } = options;
     const response = await csrfTokenManager.put(endpoint, data, {
-      ...options,
-      headers: { ...getDefaultHeaders(), ...options.headers }
+      ...requestOptions,
+      headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
     // 빈 응답(404, 204 등) 시 response.json()이 "Unexpected end of JSON input" 발생 방지
@@ -472,6 +533,14 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
     }
     
     if (!response.ok) {
+      const requestUrl = endpoint.startsWith('http')
+        ? endpoint
+        : `${getApiBaseUrl()}${endpoint}`;
+      if (response.status === 401
+          && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
+        return apiPut(endpoint, data, { ...options, _authRetry: true });
+      }
+
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {
@@ -507,9 +576,10 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
 // PATCH 요청 (CSRF 토큰 자동 포함)
 export const apiPatch = async(endpoint, data = {}, options = {}) => {
   try {
+    const { _authRetry, ...requestOptions } = options;
     const response = await csrfTokenManager.patch(endpoint, data, {
-      ...options,
-      headers: { ...getDefaultHeaders(), ...options.headers }
+      ...requestOptions,
+      headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
     let jsonData;
@@ -531,6 +601,14 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
     }
 
     if (!response.ok) {
+      const requestUrl = endpoint.startsWith('http')
+        ? endpoint
+        : `${getApiBaseUrl()}${endpoint}`;
+      if (response.status === 401
+          && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
+        return apiPatch(endpoint, data, { ...options, _authRetry: true });
+      }
+
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {
         return null;
@@ -562,7 +640,8 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
 // POST 요청 (FormData) — 운영(prod)은 CSRF 활성화이므로 X-XSRF-TOKEN 필수 (csrfTokenManager.fetchWithCsrfMultipart)
 export const apiPostFormData = async(endpoint, formData, options = {}) => {
   try {
-    const mergedHeaders = { ...getDefaultHeaders(), ...(options.headers || {}) };
+    const { _authRetry, ...requestOptions } = options;
+    const mergedHeaders = { ...getDefaultHeaders(), ...(requestOptions.headers || {}) };
     delete mergedHeaders['Content-Type'];
     delete mergedHeaders['content-type'];
 
@@ -585,6 +664,14 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
       }
       const serverMessage = errorBody.message || errorBody.error;
       const errorCode = errorBody.errorCode || errorBody.error;
+
+      const requestUrl = endpoint.startsWith('http')
+        ? endpoint
+        : `${getApiBaseUrl()}${endpoint}`;
+      if (response.status === 401
+          && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
+        return apiPostFormData(endpoint, formData, { ...options, _authRetry: true });
+      }
 
       // 세션 체크 및 리다이렉트 (400에서 tenantId 관련이면 리다이렉트할 수 있음)
       const redirected = await checkSessionAndRedirect(response);
@@ -614,14 +701,23 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
 // DELETE 요청 (CSRF 토큰 자동 포함)
 export const apiDelete = async(endpoint, options = {}) => {
   try {
+    const { _authRetry, ...requestOptions } = options;
     const response = await csrfTokenManager.delete(endpoint, {
-      ...options,
-      headers: { ...getDefaultHeaders(), ...options.headers }
+      ...requestOptions,
+      headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
     const jsonData = await response.json();
 
     if (!response.ok) {
+      const requestUrl = endpoint.startsWith('http')
+        ? endpoint
+        : `${getApiBaseUrl()}${endpoint}`;
+      if (response.status === 401
+          && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
+        return apiDelete(endpoint, { ...options, _authRetry: true });
+      }
+
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {
@@ -663,18 +759,27 @@ export const apiDelete = async(endpoint, options = {}) => {
 // 파일 업로드 요청
 export const apiUpload = async(endpoint, formData, options = {}) => {
   try {
+    const { _authRetry, ...requestOptions } = options;
     const headers = { ...getDefaultHeaders() };
     delete headers['Content-Type']; // multipart/form-data를 위해 제거
 
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { ...headers, ...options.headers },
+      headers: { ...headers, ...requestOptions.headers },
       body: formData,
       credentials: 'include', // 세션 쿠키 포함
-      ...options
+      ...requestOptions
     });
 
     if (!response.ok) {
+      const requestUrl = typeof endpoint === 'string' && endpoint.startsWith('http')
+        ? endpoint
+        : `${getApiBaseUrl()}${endpoint}`;
+      if (response.status === 401
+          && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
+        return apiUpload(endpoint, formData, { ...options, _authRetry: true });
+      }
+
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {

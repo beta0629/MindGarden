@@ -65,8 +65,9 @@ export const EXISTING_SESSION_CHECK_DELAY = 500; // OAuth2 콜백 후 세션 쿠
 // 정기 세션 확인 간격 (밀리초)
 export const PERIODIC_SESSION_CHECK_INTERVAL = 10 * 60 * 1000; // 10분
 
-// 세션 만료 시간 (밀리초) — server.servlet.session.timeout(8h)과 정합
-export const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8시간
+// 세션 만료 시간 폴백 (밀리초) — SSOT: HTTP_SESSION_MAX_INACTIVE / server.servlet.session.timeout(기본 4h).
+// 런타임 idle 경고는 session-info.maxInactiveInterval 우선 (SessionIdleWarningModal).
+export const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4시간 (14400000ms)
 
 // 세션 키 상수
 export const SESSION_KEYS = {

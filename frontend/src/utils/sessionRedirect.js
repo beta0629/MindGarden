@@ -16,8 +16,13 @@ export const redirectToLoginPageOnce = (options = {}) => {
   }
   redirectScheduled = true;
   try {
+    // 만료·401 soft 경로에서도 토큰·유저 힌트 잔존 방지 (강제 연장 없음)
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('sessionId');
+    localStorage.removeItem('sessionInfo');
   } catch {
     /* private mode 등 */
   }

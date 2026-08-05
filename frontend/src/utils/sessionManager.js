@@ -247,6 +247,8 @@ class SessionManager {
 
         if (!isPublicPage) {
           console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+          // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동
+          this.applyClientLogoutCleanupPreserveSubdomain();
           redirectToLoginPageOnce();
         } else {
           console.log('🔍 공개 페이지에 있음 - 리다이렉트 스킵');

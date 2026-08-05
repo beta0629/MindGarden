@@ -9,6 +9,7 @@
  * maxInactiveInterval, lastAccessedTime, serverNow 포함 확인 →
  * 만료 `SESSION_IDLE_WARNING_MS` 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
  * 로그아웃 시 SessionContext.logout 재사용.
+ * 카운트다운 remainingMs≤0 이면 강제 연장 없이 logout()으로 정리(토큰·세션 스토리지).
  * 남은 시간은 `lastAccessedTime`(ms) + `maxInactiveInterval`(s)×1000 만료 시각 기준이며,
  * 서버 `ApiResponse`는 sessionManager에서 `data` 언랩됨(미언랩 시 toSafeNumber가 -1로 떨어져 타이머가 비활성).
  * lastAccessedTime / maxInactiveInterval = Servlet HttpSession(밀리초/초), serverNow = 서버 now(ms),
@@ -106,6 +107,8 @@ const SessionIdleWarningModal = () => {
   const timerRef = useRef(null);
   const countdownIntervalRef = useRef(null);
   const warnPollIntervalRef = useRef(null);
+  /** 카운트다운 0 도달 시 logout 1회만 (중복 호출 방지) */
+  const expiryLogoutStartedRef = useRef(false);
 
   const isLoginPath = isSessionPublicPath(pathname);
   const sessionInfoRef = useRef(sessionInfo);
@@ -242,6 +245,25 @@ const SessionIdleWarningModal = () => {
       setIsOpen(false);
     }
   }, [isOpen, sessionInfo]);
+
+  /** 강제 연장 없이 만료(remainingMs≤0) 시 SessionContext.logout → 서버·스토리지 정리 */
+  useEffect(() => {
+    if (!isOpen) {
+      expiryLogoutStartedRef.current = false;
+      return;
+    }
+    if (!sessionInfo || expiryLogoutStartedRef.current) {
+      return;
+    }
+    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now());
+    // remainingSec 의존: 1초 틱마다 재평가. 모달 오픈 직후 remainingSec=0 잔존과 무관하게 remainingMs로 판정.
+    if (remainingMs == null || remainingMs > 0) {
+      return;
+    }
+    expiryLogoutStartedRef.current = true;
+    setIsOpen(false);
+    void logout();
+  }, [isOpen, sessionInfo, remainingSec, logout]);
 
   useEffect(() => {
     armWarnTimer();

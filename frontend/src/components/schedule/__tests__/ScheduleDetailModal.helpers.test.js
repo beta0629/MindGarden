@@ -305,10 +305,11 @@ describe('shouldShowConsultationLogLink (COMPLETED 단일 상태 가드)', () =>
 });
 
 describe('CONSULTATION_LOG_LINK_VISIBLE_STATUSES (COMPLETED 단일)', () => {
-  test('COMPLETED 만 포함 (BOOKED·CONFIRMED·TENTATIVE·CANCELLED 모두 제외)', () => {
+  test('COMPLETED 만 포함 (BOOKED·CONFIRMED·IN_PROGRESS·TENTATIVE·CANCELLED 모두 제외)', () => {
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).toContain('COMPLETED');
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('BOOKED');
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('CONFIRMED');
+    expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('IN_PROGRESS');
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('TENTATIVE_PENDING_PAYMENT');
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('CANCELLED');
     expect(CONSULTATION_LOG_LINK_VISIBLE_STATUSES).not.toContain('VACATION');
@@ -324,6 +325,10 @@ describe('shouldShowRescheduleAction (예약 변경 버튼 노출)', () => {
     expect(shouldShowRescheduleAction('CONFIRMED', true, false, false)).toBe(true);
   });
 
+  test('IN_PROGRESS + ADMIN → true (CONFIRMED와 동일)', () => {
+    expect(shouldShowRescheduleAction('IN_PROGRESS', true, false, false)).toBe(true);
+  });
+
   test('BOOKED + ADMIN → true', () => {
     expect(shouldShowRescheduleAction('BOOKED', true, false, false)).toBe(true);
   });
@@ -334,6 +339,10 @@ describe('shouldShowRescheduleAction (예약 변경 버튼 노출)', () => {
 
   test('CONFIRMED + 비관리자 → false (상담사 status-only PUT 정책과 정합)', () => {
     expect(shouldShowRescheduleAction('CONFIRMED', false, false, false)).toBe(false);
+  });
+
+  test('IN_PROGRESS + 비관리자 → false', () => {
+    expect(shouldShowRescheduleAction('IN_PROGRESS', false, false, false)).toBe(false);
   });
 
   test('COMPLETED → false', () => {
@@ -354,10 +363,11 @@ describe('shouldShowRescheduleAction (예약 변경 버튼 노출)', () => {
 });
 
 describe('RESCHEDULE_ACTION_ELIGIBLE_STATUSES', () => {
-  test('BOOKED·가예약·CONFIRMED 포함, COMPLETED·CANCELLED 제외', () => {
+  test('BOOKED·가예약·CONFIRMED·IN_PROGRESS 포함, COMPLETED·CANCELLED 제외', () => {
     expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).toContain('BOOKED');
     expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).toContain('TENTATIVE_PENDING_PAYMENT');
     expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).toContain('CONFIRMED');
+    expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).toContain('IN_PROGRESS');
     expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).not.toContain('COMPLETED');
     expect(RESCHEDULE_ACTION_ELIGIBLE_STATUSES).not.toContain('CANCELLED');
   });

@@ -53,7 +53,8 @@ const CONSULTATION_LOG_LINK_VISIBLE_STATUSES = Object.freeze([
 const RESCHEDULE_ACTION_ELIGIBLE_STATUSES = Object.freeze([
     'BOOKED',
     'TENTATIVE_PENDING_PAYMENT',
-    'CONFIRMED'
+    'CONFIRMED',
+    'IN_PROGRESS'
 ]);
 
 /**
@@ -199,7 +200,7 @@ function shouldShowConsultationLogLink(schedule, statusCode, isVacation, now = n
 
 /**
  * 일정 상세 푸터 "예약 변경" 버튼 노출 여부.
- * - BOOKED·가예약·CONFIRMED(회기 차감 후) 동일 — 취소 없이 date/time PUT
+ * - BOOKED·가예약·CONFIRMED·IN_PROGRESS(상담 시작 후) 동일 — 취소 없이 date/time PUT
  * - ADMIN 만 (RescheduleScheduleModal·UnifiedSchedule admin-like 와 정합)
  * - 내담자·휴가 일정 제외
  *
@@ -321,6 +322,7 @@ const ScheduleDetailModal = ({
         const knownCodes = [
             'BOOKED',
             'CONFIRMED',
+            'IN_PROGRESS',
             'COMPLETED',
             'CANCELLED',
             'VACATION',
@@ -337,6 +339,7 @@ const ScheduleDetailModal = ({
             if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(codeOrLabel)) {
                 return 'TENTATIVE_PENDING_PAYMENT';
             }
+            if (/진행\s*중/.test(codeOrLabel)) return 'IN_PROGRESS';
             if (/예약|예약됨/.test(codeOrLabel)) return 'BOOKED';
             if (/완료|완료됨/.test(codeOrLabel)) return 'COMPLETED';
             if (/확정|확정됨/.test(codeOrLabel)) return 'CONFIRMED';
@@ -677,6 +680,7 @@ const ScheduleDetailModal = ({
             BOOKED: t('schedule:ScheduleDetailModal.t_69692a2a'),
             COMPLETED: t('schedule:ScheduleDetailModal.t_1f74613e'),
             CONFIRMED: t('schedule:ScheduleDetailModal.t_b8a98744'),
+            IN_PROGRESS: t('schedule:ScheduleDetailModal.statusInProgress'),
             VACATION: t('schedule:ScheduleDetailModal.t_4cdf9ae5'),
             AVAILABLE: t('schedule:ScheduleDetailModal.t_9614672b'),
             TENTATIVE_PENDING_PAYMENT: t('schedule:ScheduleDetailModal.t_35205a43')
@@ -912,6 +916,12 @@ const ScheduleDetailModal = ({
         return isStatus(s, 'BOOKED') || isStatus(s, 'TENTATIVE_PENDING_PAYMENT');
     };
 
+    /** 확정(CONFIRMED)·상담 시작 후(IN_PROGRESS) 동일 푸터 액션(일지·완료·취소·예약변경) */
+    const isConfirmedOrInProgress = () => {
+        const s = resolveStatusForActions(displayData);
+        return isStatus(s, 'CONFIRMED') || isStatus(s, 'IN_PROGRESS');
+    };
+
     const renderMainActions = () => {
         if (isVacationEvent()) {
             return (
@@ -972,12 +982,12 @@ const ScheduleDetailModal = ({
                         </ActionBarButton>
                     </>
                 )}
-                {isStatus(resolveStatusForActions(displayData), 'CONFIRMED') && (() => {
+                {isConfirmedOrInProgress() && (() => {
                     const completedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'COMPLETED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_8d868037'))
                     )?.value || 'COMPLETED';
                     /**
-                     * CONFIRMED(진행 중) 상태에서는 상담일지 작성 진입을 항상 허용한다.
+                     * CONFIRMED·IN_PROGRESS(상담 시작 후) 상태에서는 상담일지 작성 진입을 항상 허용한다.
                      * - PR #129 가드(`consultationLogLinkVisible`)로 "보기/수정"은 COMPLETED + record 한정이므로
                      *   본 작성 버튼과의 중복 노출 위험이 없다.
                      * - record 가 이미 존재하는 경우(데이터 정합 이슈 또는 사전 작성)에도 작성 화면에서

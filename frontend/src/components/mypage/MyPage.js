@@ -14,9 +14,11 @@ import {
 } from '../../utils/mypageProfilePayload';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
+import SessionRemainingLabel from '../common/SessionRemainingLabel';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { useSession } from '../../contexts/SessionContext';
+import { SESSION_REMAINING_DISPLAY } from '../../constants/session';
 import ProfileSection from './components/ProfileSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
 import SettingsSection from './components/SettingsSection';
@@ -552,6 +554,7 @@ const MyPage = () => {
               titleId={MYPAGE_TITLE_ID}
               actions={
                 <div className="mg-mypage__header-actions">
+                  <SessionRemainingLabel className={`${SESSION_REMAINING_DISPLAY.CLASS_NAME}--mypage`} />
                   <MGButton
                     type="button"
                     variant="outline"

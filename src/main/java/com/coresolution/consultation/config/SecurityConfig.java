@@ -5,6 +5,7 @@ import java.util.List;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import com.coresolution.consultation.config.security.BearerTokenAuthCsrfMatcher;
+import com.coresolution.consultation.constant.SessionManagementConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
@@ -111,10 +112,10 @@ public class SecurityConfig {
                     )
                 )
                 
-                // 세션 관리 활성화
+                // 세션 관리 활성화 (동시 세션: SessionManagementConstants SSOT, 환경별)
                 .sessionManagement(session -> session
                     .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
-                    .maximumSessions(1) // 동시 세션 1개만 허용
+                    .maximumSessions(resolveMaxConcurrentSessions())
                     .maxSessionsPreventsLogin(false) // 초과 시 기존 세션 만료
                     .sessionRegistry(sessionRegistry())
                 )
@@ -300,7 +301,19 @@ public class SecurityConfig {
         return Arrays.stream(environment.getActiveProfiles())
                 .anyMatch(p -> "prod".equals(p) || "production".equals(p));
     }
-    
+
+    /**
+     * 환경별 최대 동시 세션 수.
+     * http DSL {@code maximumSessions}와 {@link ConcurrentSessionControlAuthenticationStrategy}가 동일 SSOT를 쓴다.
+     *
+     * @return 운영 {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_PRODUCTION},
+     *         그 외 {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_DEVELOPMENT}
+     */
+    private int resolveMaxConcurrentSessions() {
+        return isProductionEnvironment()
+                ? SessionManagementConstants.MAX_CONCURRENT_SESSIONS_PRODUCTION
+                : SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT;
+    }
     
     // 참고: 현재는 세션 기반 인증을 사용하고 있음
     // JWT 인증이 필요한 경우 JwtAuthenticationFilter를 구현하여 사용
@@ -501,12 +514,11 @@ public class SecurityConfig {
         ConcurrentSessionControlAuthenticationStrategy concurrentSessionControl = 
             new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry());
         
-        // 운영 환경에서는 더 엄격한 세션 제어
+        // 운영 환경에서는 더 엄격한 세션 제어 (최대 세션 수: resolveMaxConcurrentSessions SSOT)
+        concurrentSessionControl.setMaximumSessions(resolveMaxConcurrentSessions());
         if (isProductionEnvironment()) {
-            concurrentSessionControl.setMaximumSessions(1);  // 동시 세션 1개만 허용
             concurrentSessionControl.setExceptionIfMaximumExceeded(true);  // 초과 시 예외 발생
         } else {
-            concurrentSessionControl.setMaximumSessions(3);  // 개발 환경에서는 3개까지 허용
             concurrentSessionControl.setExceptionIfMaximumExceeded(false);
         }
         

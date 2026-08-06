@@ -25,9 +25,24 @@ public final class SessionManagementConstants {
     public static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 240;
     
     /**
-     * 최대 동시 세션 수 (사용자당)
+     * 운영 환경 최대 동시 세션 수 (사용자당).
+     * SSOT: {@code SecurityConfig} http DSL·{@code ConcurrentSessionControlAuthenticationStrategy}.
+     * 문서: {@code docs/standards/SECURITY_STANDARD.md} (운영 1 / 개발 3).
      */
-    public static final int MAX_CONCURRENT_SESSIONS = 3;
+    public static final int MAX_CONCURRENT_SESSIONS_PRODUCTION = 1;
+
+    /**
+     * 개발·로컬 등 비운영 환경 최대 동시 세션 수 (사용자당).
+     * SSOT: {@code SecurityConfig} http DSL·{@code ConcurrentSessionControlAuthenticationStrategy}.
+     */
+    public static final int MAX_CONCURRENT_SESSIONS_DEVELOPMENT = 3;
+
+    /**
+     * 최대 동시 세션 수 (사용자당) — 비운영 기본값.
+     * 환경별 분기는 {@link #MAX_CONCURRENT_SESSIONS_PRODUCTION} /
+     * {@link #MAX_CONCURRENT_SESSIONS_DEVELOPMENT} 를 사용한다.
+     */
+    public static final int MAX_CONCURRENT_SESSIONS = MAX_CONCURRENT_SESSIONS_DEVELOPMENT;
     
     /**
      * 세션 만료 체크 간격 (분)

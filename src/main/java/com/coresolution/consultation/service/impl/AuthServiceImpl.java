@@ -25,6 +25,7 @@ import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.TokenLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -505,7 +506,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void resetPassword(String token, String newPassword) {
         try {
-            log.info("비밀번호 재설정 처리: token={}", token);
+            log.info("비밀번호 재설정 처리: token={}", TokenLogMasking.maskForLog(token));
             
             // 토큰에서 이메일 추출
             String email = jwtService.extractUsername(token);
@@ -529,7 +530,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("비밀번호 재설정 완료: email={}", EmailLogMasking.maskForLog(email));
             
         } catch (Exception e) {
-            log.error("비밀번호 재설정 실패: token={}, error={}", token, e.getMessage(), e);
+            log.error("비밀번호 재설정 실패: token={}, error={}", TokenLogMasking.maskForLog(token), e.getMessage(), e);
             throw new RuntimeException("비밀번호 재설정에 실패했습니다: " + e.getMessage());
         }
     }

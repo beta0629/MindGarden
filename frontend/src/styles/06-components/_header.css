@@ -376,6 +376,24 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* 세션 잔여 시간 — 조용한 보조 텍스트 (JWT/쿠키 원문 미표시) */
+.mg-header__session-remaining {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular, 400);
+  color: var(--mg-v2-color-text-tertiary, var(--color-text-secondary));
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.mg-header__session-remaining--mypage {
+  align-self: center;
+  margin-inline-end: var(--spacing-sm, 0.5rem);
+}
+
 /* 햄버거 메뉴 버튼 */
 .mg-header__hamburger,
 .mg-header__hamburger.mg-button {

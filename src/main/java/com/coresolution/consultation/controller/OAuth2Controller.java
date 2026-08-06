@@ -11,7 +11,7 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.config.SessionTimeoutProperties;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.oauth.OAuthAccountSelectionUserFacingStrings;
 import com.coresolution.consultation.constant.oauth.OAuth2UserFacingMessages;
@@ -84,6 +84,8 @@ public class OAuth2Controller extends BaseApiController {
      * 봇 스캐닝과 실제 회귀를 분리하기 위한 지표.
      */
     private final MeterRegistry meterRegistry;
+    /** HTTP 세션 비활성 타임아웃 SSOT ({@code server.servlet.session.timeout} / HTTP_SESSION_MAX_INACTIVE). */
+    private final SessionTimeoutProperties sessionTimeoutProperties;
 
     /**
      * OAuth 콜백 tenant 미해결 분기 카운터 이름 (P3 진단). 태그: provider, reason.
@@ -2740,7 +2742,7 @@ public class OAuth2Controller extends BaseApiController {
                     session.setAttribute("SPRING_SECURITY_CONTEXT",
                             SecurityContextHolder.getContext());
 
-                    session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
+                    session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
                     log.info(
                             "네이버 OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}, clientType={}",
@@ -2817,7 +2819,7 @@ public class OAuth2Controller extends BaseApiController {
                     String cookieValue = String.format(
                             "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
                             sessionId,
-                            SessionConstants.SESSION_TIMEOUT_SECONDS);
+                            sessionTimeoutProperties.getTimeoutSeconds());
 
                     log.info("세션 쿠키 설정: {}", cookieValue);
                     logOAuthRedirectLocationSummary("네이버 웹 OAuth", redirectUrl);
@@ -3413,7 +3415,7 @@ public class OAuth2Controller extends BaseApiController {
                     session.setAttribute("SPRING_SECURITY_CONTEXT",
                             SecurityContextHolder.getContext());
 
-                    session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
+                    session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
                     log.info(
                             "카카오 OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}, clientType={}",
@@ -3485,7 +3487,7 @@ public class OAuth2Controller extends BaseApiController {
                     String cookieValue = String.format(
                             "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
                             sessionId,
-                            SessionConstants.SESSION_TIMEOUT_SECONDS);
+                            sessionTimeoutProperties.getTimeoutSeconds());
 
                     log.info("세션 쿠키 설정: {}", cookieValue);
                     logOAuthRedirectLocationSummary("카카오 웹 OAuth", redirectUrl);
@@ -3947,7 +3949,7 @@ public class OAuth2Controller extends BaseApiController {
                     setSpringSecurityAuthentication(user);
                     session.setAttribute("SPRING_SECURITY_CONTEXT",
                             SecurityContextHolder.getContext());
-                    session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
+                    session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
                     log.info("Google OAuth2 로그인 성공: userId={}, role={}, profileImageSummary={}",
                             user.getId(), user.getRole(),
@@ -3972,7 +3974,7 @@ public class OAuth2Controller extends BaseApiController {
                     String sessionId = session.getId();
                     String cookieValue = String.format(
                             "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
-                            sessionId, SessionConstants.SESSION_TIMEOUT_SECONDS);
+                            sessionId, sessionTimeoutProperties.getTimeoutSeconds());
 
                     logOAuthRedirectLocationSummary("Google 웹 OAuth", redirectUrl);
                     return ResponseEntity.status(302).header("Location", redirectUrl)
@@ -4428,7 +4430,7 @@ public class OAuth2Controller extends BaseApiController {
             String sessionId = sessionForLogin.getId();
             String cookieValue = String.format(
                     "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
-                    sessionId, SessionConstants.SESSION_TIMEOUT_SECONDS);
+                    sessionId, sessionTimeoutProperties.getTimeoutSeconds());
 
             log.info("Apple OAuth2 로그인 성공: userId={}, role={}", user.getId(), user.getRole());
             logOAuthRedirectLocationSummary("Apple 웹 OAuth", redirectUrl);
@@ -4517,7 +4519,7 @@ public class OAuth2Controller extends BaseApiController {
             // 세션에 SecurityContext 저장
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-            session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
+            session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
             log.info("모바일 OAuth2 콜백 - 세션 설정 완료: userId={}, role={}, sessionId={}", user.getId(),
                     user.getRole(), session.getId());
@@ -4856,7 +4858,7 @@ public class OAuth2Controller extends BaseApiController {
             // 세션에 SecurityContext 저장 (명시적으로 - 다른 메서드와 동일)
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-            session.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS);
+            session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
 
             // UserSession 엔티티 생성 (데이터베이스에 저장하여 SessionBasedAuthenticationFilter에서 조회 가능하도록)
             // 모바일 앱은 중복 로그인 체크를 우회하여 항상 새 세션을 생성

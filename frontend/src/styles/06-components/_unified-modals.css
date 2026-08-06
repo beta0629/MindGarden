@@ -399,6 +399,12 @@
   color: var(--mg-v2-color-warning-700, var(--mg-warning-600));
 }
 
+.session-idle-warning__expiry {
+  margin-top: var(--spacing-sm, 0.5rem);
+  text-align: center;
+  color: var(--mg-v2-color-text-tertiary, var(--mg-text-secondary, var(--mg-gray-600)));
+}
+
 /* 세션 연장: 테넌트 primary/배경 토큰과 무관하게 항상 대비 확보 (운영 가시성) */
 .session-idle-warning-modal.mg-modal .mg-modal__actions button[data-testid='session-idle-extend'] {
   background-color: var(--mg-success-500);

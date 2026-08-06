@@ -163,9 +163,12 @@ public final class SessionConstants {
     public static final int SESSION_REFRESH_INTERVAL_SECONDS = 300; // 5분
     
     /**
-     * 최대 동시 세션 수
+     * 최대 동시 세션 수 (비운영 기본).
+     * 환경별 SSOT: {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_PRODUCTION} /
+     * {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_DEVELOPMENT}.
      */
-    public static final int MAX_CONCURRENT_SESSIONS = 3;
+    public static final int MAX_CONCURRENT_SESSIONS =
+            SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT;
     
     // ===== 세션 상태 관련 상수 =====
     

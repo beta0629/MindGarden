@@ -69,6 +69,20 @@ export const PERIODIC_SESSION_CHECK_INTERVAL = 10 * 60 * 1000; // 10분
 // 런타임 idle 경고는 session-info.maxInactiveInterval 우선 (SessionIdleWarningModal).
 export const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4시간 (14400000ms)
 
+/**
+ * 세션 잔여/만료 시각 UI 표시 상수 (UnifiedHeader·SessionIdleWarningModal).
+ * JWT·쿠키 원문은 표시하지 않는다.
+ */
+export const SESSION_REMAINING_DISPLAY = Object.freeze({
+  LABEL_PREFIX: '세션 잔여',
+  EXPIRY_PREFIX: '만료 시각',
+  COUNTDOWN_LABEL: '남은 시간',
+  TICK_MS: 1000,
+  ARIA_LABEL: '세션 잔여 시간',
+  CLASS_NAME: 'mg-header__session-remaining',
+  MODAL_EXPIRY_CLASS: 'session-idle-warning__expiry'
+});
+
 // 세션 키 상수
 export const SESSION_KEYS = {
   ACCESS_TOKEN: 'accessToken',

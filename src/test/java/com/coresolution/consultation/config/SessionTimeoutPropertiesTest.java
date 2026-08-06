@@ -48,4 +48,15 @@ class SessionTimeoutPropertiesTest {
         assertThat(properties.getTimeoutSeconds())
                 .isEqualTo(SessionConstants.SESSION_TIMEOUT_SECONDS);
     }
+
+    @Test
+    @DisplayName("동시 세션 상수는 운영 1 / 개발 3 SSOT")
+    void maxConcurrentSessionsMatchSecuritySsot() {
+        assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_PRODUCTION).isEqualTo(1);
+        assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT).isEqualTo(3);
+        assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS)
+                .isEqualTo(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT);
+        assertThat(SessionConstants.MAX_CONCURRENT_SESSIONS)
+                .isEqualTo(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT);
+    }
 }

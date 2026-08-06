@@ -15,7 +15,8 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -24,6 +25,7 @@ import { ThemeProvider } from '../src/theme';
 import { useAuthStore } from '../src/stores/useAuthStore';
 import { hydrateJsessionCacheFromSecureStore } from '../src/utils/sessionCookie';
 import { useAppForegroundRefetch } from '../src/hooks/useAppForegroundRefetch';
+import { useSessionIdleSignOut } from '../src/hooks/useSessionIdleSignOut';
 import {
   queryClient,
   queryPersister,
@@ -57,6 +59,19 @@ SplashScreen.preventAutoHideAsync();
 function AppForegroundRefetchBridge() {
   useAppForegroundRefetch();
   return null;
+}
+
+/**
+ * 로그인 후 유휴 4h → performSignOut (웹 HTTP 세션 idle 정책 정합).
+ * 터치 캡처는 응답을 가로채지 않는다(onStartShouldSetResponderCapture → false).
+ */
+function SessionIdleSignOutBridge({ children }: { children: ReactNode }) {
+  const activityCaptureProps = useSessionIdleSignOut();
+  return (
+    <View style={{ flex: 1 }} collapsable={false} {...activityCaptureProps}>
+      {children}
+    </View>
+  );
 }
 
 export default function RootLayout() {
@@ -167,20 +182,22 @@ export default function RootLayout() {
             }}
           >
             <AppForegroundRefetchBridge />
-            <ThemeProvider role={role ?? 'client'}>
-              <ApiEnvironmentBanner />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(admin)" />
-                <Stack.Screen name="(consultant)" />
-                <Stack.Screen name="(client)" />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <OfflineBanner />
-              <InAppNotificationToast />
-              <StatusBar style="auto" />
-            </ThemeProvider>
+            <SessionIdleSignOutBridge>
+              <ThemeProvider role={role ?? 'client'}>
+                <ApiEnvironmentBanner />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(admin)" />
+                  <Stack.Screen name="(consultant)" />
+                  <Stack.Screen name="(client)" />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <OfflineBanner />
+                <InAppNotificationToast />
+                <StatusBar style="auto" />
+              </ThemeProvider>
+            </SessionIdleSignOutBridge>
           </PersistQueryClientProvider>
         </ForceUpdateGate>
       </SafeAreaProvider>

@@ -1,7 +1,7 @@
 # 보안 표준
 
-**버전**: 1.0.0  
-**최종 업데이트**: 2025-12-03  
+**버전**: 1.1.0  
+**최종 업데이트**: 2026-08-05  
 **상태**: 공식 표준
 
 ---
@@ -72,10 +72,12 @@ MindGarden 프로젝트의 포괄적인 보안 표준입니다.
 
 #### 세션 관리
 ```java
-// SessionBasedAuthenticationFilter
+// SessionBasedAuthenticationFilter + SessionTimeoutProperties
 - 세션 기반 인증 사용
-- 세션 타임아웃 설정
+- HTTP 세션 비활성(슬라이딩) TTL 기본 4h (14400초)
+  SSOT: HTTP_SESSION_MAX_INACTIVE / server.servlet.session.timeout
 - 동시 세션 제한 (운영: 1개, 개발: 3개)
+// 계층 분리: 세션 4h ≠ Access JWT 1h (아래 JWT 절)
 ```
 
 #### 세션 보안
@@ -86,11 +88,8 @@ public SessionAuthenticationStrategy sessionAuthenticationStrategy() {
     ConcurrentSessionControlAuthenticationStrategy concurrentSessionControl = 
         new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry());
     
-    if (isProductionEnvironment()) {
-        concurrentSessionControl.setMaximumSessions(1);  // 운영: 1개만
-    } else {
-        concurrentSessionControl.setMaximumSessions(3);  // 개발: 3개까지
-    }
+    // SSOT: SessionManagementConstants (운영 1 / 개발 3) — http DSL·전략 동일
+    concurrentSessionControl.setMaximumSessions(resolveMaxConcurrentSessions());
     
     return new CompositeSessionAuthenticationStrategy(
         Arrays.asList(concurrentSessionControl, registerSession)
@@ -102,10 +101,10 @@ public SessionAuthenticationStrategy sessionAuthenticationStrategy() {
 
 #### JWT 설정
 ```java
-// 환경 변수 필수
+// 환경 변수 필수 — Access 1h / Refresh 7d (세션 4h와 계층 분리)
 JWT_SECRET=<32자 이상의 강력한 비밀키>
-JWT_EXPIRATION=3600000  // 1시간
-JWT_REFRESH_EXPIRATION=604800000  // 7일
+JWT_EXPIRATION=3600000  // Access JWT 1시간
+JWT_REFRESH_EXPIRATION=604800000  // Refresh JWT 7일
 ```
 
 #### JWT 검증

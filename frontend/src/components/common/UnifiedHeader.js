@@ -12,6 +12,7 @@ import { RoleUtils } from '../../constants/roles';
 import notificationManager from '../../utils/notification';
 import { useBranding } from '../../hooks/useBranding';
 import { useSession } from '../../contexts/SessionContext';
+import SessionRemainingLabel from './SessionRemainingLabel';
 import '../../styles/main.css';
 // import UnifiedHeader from '../common/UnifiedHeader'; // 자기 자신을 import하지 않음
 import { useTranslation } from 'react-i18next';
@@ -440,6 +441,7 @@ const UnifiedHeader = ({
               {RoleUtils.isConsultant(user) ? t('common:header.user.consultantSuffix') : ''}
             </span>
             <span className="mg-header__user-role">{getTenantDisplayName()}</span>
+            <SessionRemainingLabel />
           </div>
         </div>
         <MGButton

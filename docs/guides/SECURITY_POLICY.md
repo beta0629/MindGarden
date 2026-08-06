@@ -4,8 +4,8 @@
 
 본 문서는 MindGarden 플랫폼의 보안 정책 및 규정 준수 사항을 명시합니다.
 
-**문서 버전:** 1.0.0  
-**최종 업데이트:** 2025-01-17  
+**문서 버전:** 1.1.0  
+**최종 업데이트:** 2026-08-05  
 **담당자:** 보안팀
 
 ---
@@ -103,16 +103,33 @@ PERSONAL_DATA_ENCRYPTION_IVS=v2:Q29vbElWMjMxMjM=,v1:QmFja3VwSXYxMjM=
 
 ### 4.2 세션 관리
 
-**세션 타임아웃:**
-- 기본: 1시간
-- 자동 연장: 활동 시 연장 (최대 8시간)
-- 비활성 타임아웃: 30분
+**HTTP 세션 비활성(슬라이딩) TTL — SSOT:**
+- 기본: **4시간** (14400초)
+- 설정: `HTTP_SESSION_MAX_INACTIVE` / `server.servlet.session.timeout`
+- 런타임: `SessionTimeoutProperties`
+- 활동 시 슬라이딩 연장(비활성 시계 리셋). 별도 “최대 절대 상한 8시간” 정책은 없음
+
+**클라이언트 idle (참고):**
+- 웹: idle 경고 모달 + 활동 ping
+- Expo: 클라이언트 idle 4시간 후 `performSignOut`
 
 **세션 보안:**
 - HTTP-only 쿠키 사용
 - Secure 쿠키 (HTTPS 환경)
 - SameSite=Strict 설정
 - 중복 로그인 방지
+
+### 4.2.1 JWT TTL (계층 분리)
+
+웹 HttpSession TTL과 Access JWT는 **별 계층**이다. (세션 4h ≠ Access JWT 1h)
+
+| 토큰/세션 | 기본 TTL | SSOT |
+|-----------|----------|------|
+| HTTP 세션(비활성) | 4h | `HTTP_SESSION_MAX_INACTIVE` / `server.servlet.session.timeout` |
+| Access JWT | 1h (3600000ms) | `jwt.expiration` / `JWT_EXPIRATION` |
+| Refresh JWT | 7d (604800000ms) | `jwt.refresh-expiration` / `JWT_REFRESH_EXPIRATION` |
+
+상세 구현 표준: [SECURITY_AUTHENTICATION_STANDARD.md](../standards/SECURITY_AUTHENTICATION_STANDARD.md), [SECURITY_STANDARD.md](../standards/SECURITY_STANDARD.md)
 
 ### 4.3 계정 보안
 

@@ -29,8 +29,13 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import SafeText from './SafeText';
 import { useSession } from '../../contexts/SessionContext';
-import { SESSION_IDLE_WARNING_MS, isSessionPublicPath } from '../../constants/session';
+import { SESSION_IDLE_WARNING_MS, SESSION_REMAINING_DISPLAY, isSessionPublicPath } from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
+import {
+  buildSessionExpiryLabel,
+  computeSessionExpiryState,
+  formatSessionCountdown
+} from '../../utils/sessionExpiryDisplay';
 
 /** setTimeout 콜백에서 “아직 1분+여유”면 모달을 열지 않고 타이머만 재스케줄 (스냅샷·갱신 레이스) */
 const SESSION_IDLE_WARN_OPEN_SLACK_MS = 2000;
@@ -57,7 +62,7 @@ function evaluateIdleWarnOpenFromSnapshot(snap, clientNowMs) {
   if (!si || si.isAuthenticated !== true) {
     return 'noop';
   }
-  const rem = computeSessionExpiryState(si, clientNowMs).remainingMs;
+  const rem = computeSessionExpiryState(si, clientNowMs, { allowFallback: false }).remainingMs;
   if (rem == null) {
     return 'noop';
   }
@@ -67,43 +72,12 @@ function evaluateIdleWarnOpenFromSnapshot(snap, clientNowMs) {
   return 'open';
 }
 
-/**
- * @param {object|null|undefined} si — sessionInfo
- * @param {number} clientNowMs
- * @returns {{ expiryMs: (number|null), offsetMs: number, remainingMs: (number|null) }}
- */
-function computeSessionExpiryState(si, clientNowMs) {
-  if (!si) {
-    return { expiryMs: null, offsetMs: 0, remainingMs: null };
-  }
-  const maxSec = toSafeNumber(si.maxInactiveInterval, -1);
-  const lastAcc = toSafeNumber(si.lastAccessedTime, -1);
-  if (maxSec <= 0 || lastAcc <= 0) {
-    return { expiryMs: null, offsetMs: 0, remainingMs: null };
-  }
-  const serverNow =
-    si.serverNow != null
-      ? toSafeNumber(si.serverNow, clientNowMs)
-      : clientNowMs;
-  const offsetMs = serverNow - clientNowMs;
-  const expiryMs = lastAcc + maxSec * 1000;
-  const remainingMs = expiryMs - (clientNowMs + offsetMs);
-  return { expiryMs, offsetMs, remainingMs };
-}
-
-/** 서버 만료 시각 기준 남은 초 → MM:SS (표시용, 음수는 0으로) */
-function formatSessionCountdown(totalSeconds) {
-  const s = Math.max(0, Math.floor(toSafeNumber(totalSeconds, 0)));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
-}
-
 const SessionIdleWarningModal = () => {
   const { pathname } = useLocation();
   const { user, sessionInfo, checkSession, logout } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [remainingSec, setRemainingSec] = useState(0);
+  const [expiryLabel, setExpiryLabel] = useState('');
   const timerRef = useRef(null);
   const countdownIntervalRef = useRef(null);
   const warnPollIntervalRef = useRef(null);
@@ -167,7 +141,9 @@ const SessionIdleWarningModal = () => {
     }
 
     const clientNow = Date.now();
-    const { remainingMs, expiryMs } = computeSessionExpiryState(si, clientNow);
+    const { remainingMs, expiryMs } = computeSessionExpiryState(si, clientNow, {
+      allowFallback: false
+    });
     if (remainingMs == null || expiryMs == null) {
       return;
     }
@@ -198,6 +174,7 @@ const SessionIdleWarningModal = () => {
     clearCountdownInterval();
     if (!isOpen || !sessionInfo) {
       setRemainingSec(0);
+      setExpiryLabel('');
       return undefined;
     }
 
@@ -205,16 +182,21 @@ const SessionIdleWarningModal = () => {
     const lastAcc = toSafeNumber(sessionInfo.lastAccessedTime, -1);
     if (maxSec <= 0 || lastAcc <= 0) {
       setRemainingSec(0);
+      setExpiryLabel('');
       return undefined;
     }
 
     const tick = () => {
-      const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now());
+      const { remainingMs, expiryMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+        allowFallback: false
+      });
       if (remainingMs == null) {
         setRemainingSec(0);
+        setExpiryLabel('');
         return;
       }
       setRemainingSec(Math.max(0, Math.floor(remainingMs / 1000)));
+      setExpiryLabel(buildSessionExpiryLabel(expiryMs));
     };
     tick();
     countdownIntervalRef.current = setInterval(tick, 1000);
@@ -237,7 +219,9 @@ const SessionIdleWarningModal = () => {
     if (!isOpen || !sessionInfo) {
       return;
     }
-    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now());
+    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+      allowFallback: false
+    });
     if (remainingMs == null) {
       return;
     }
@@ -255,7 +239,9 @@ const SessionIdleWarningModal = () => {
     if (!sessionInfo || expiryLogoutStartedRef.current) {
       return;
     }
-    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now());
+    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+      allowFallback: false
+    });
     // remainingSec 의존: 1초 틱마다 재평가. 모달 오픈 직후 remainingSec=0 잔존과 무관하게 remainingMs로 판정.
     if (remainingMs == null || remainingMs > 0) {
       return;
@@ -375,7 +361,9 @@ const SessionIdleWarningModal = () => {
           aria-live="polite"
           aria-atomic="true"
         >
-          <span className="session-idle-warning__countdown-label">남은 시간</span>
+          <span className="session-idle-warning__countdown-label">
+            {SESSION_REMAINING_DISPLAY.COUNTDOWN_LABEL}
+          </span>
           <time
             className="session-idle-warning__countdown-value"
             dateTime={`PT${Math.max(0, remainingSec)}S`}
@@ -383,6 +371,15 @@ const SessionIdleWarningModal = () => {
             {formatSessionCountdown(remainingSec)}
           </time>
         </p>
+        {expiryLabel ? (
+          <SafeText
+            tag="p"
+            className={`${SESSION_REMAINING_DISPLAY.MODAL_EXPIRY_CLASS} mg-v2-text-xs`}
+            fallback=""
+          >
+            {expiryLabel}
+          </SafeText>
+        ) : null}
       </div>
     </UnifiedModal>
   );

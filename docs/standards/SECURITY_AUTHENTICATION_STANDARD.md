@@ -36,6 +36,11 @@ CoreSolution 플랫폼의 보안 및 인증 시스템 표준입니다. JWT 토�
 
 ## 🔐 JWT 토큰 표준
 
+> **계층 분리:** 웹 HttpSession 비활성 TTL 기본 **4h** (`HTTP_SESSION_MAX_INACTIVE` /
+> `server.servlet.session.timeout`, `SessionTimeoutProperties`)와 Access JWT **1h** /
+> Refresh JWT **7d**는 별개다. 세션 4h ≠ Access JWT 1h. 정책 요약은
+> [SECURITY_POLICY.md §4.2](../guides/SECURITY_POLICY.md) 참고.
+
 ### 1. JWT 비밀키 관리
 
 #### 비밀키 요구사항
@@ -68,6 +73,7 @@ jwt:
   expiration: ${JWT_EXPIRATION:3600000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
   issuer: ${JWT_ISSUER:CoreSolution}
+# HTTP 세션(별 계층): server.servlet.session.timeout / HTTP_SESSION_MAX_INACTIVE 기본 4h
 ```
 
 ```bash
@@ -75,6 +81,7 @@ jwt:
 JWT_SECRET=<32자 이상의 강력한 비밀키>
 JWT_EXPIRATION=3600000
 JWT_REFRESH_EXPIRATION=604800000
+# HTTP_SESSION_MAX_INACTIVE=4h  (세션 비활성 TTL; Access JWT와 별개)
 ```
 
 #### 비밀키 검증

@@ -100,6 +100,11 @@ jest.mock('@/services/NotificationService', () => ({
   },
 }));
 
+jest.mock('@/components/organisms/InAppNotificationToast', () => ({
+  __esModule: true,
+  showInAppToast: jest.fn(),
+}));
+
 const apiPostMock = jest.fn().mockResolvedValue(undefined);
 jest.mock('@/api/client', () => ({
   __esModule: true,
@@ -160,6 +165,7 @@ jest.mock('@/utils/syncTenantFromAccessToken', () => ({
 }));
 
 import { AuthService } from '../AuthService';
+import { showInAppToast } from '@/components/organisms/InAppNotificationToast';
 
 describe('AuthService.logout — P0 푸시 토큰 격리 (NotificationService.unregisterToken 호출)', () => {
   beforeEach(() => {
@@ -191,7 +197,7 @@ describe('AuthService.logout — P0 푸시 토큰 격리 (NotificationService.un
     expect(storeLogoutSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('unregisterToken 실패해도 logout 흐름은 계속 진행되며 store.logout 까지 실행', async () => {
+  test('unregisterToken 실패해도 logout 흐름은 계속 진행되며 실패를 가시화한다', async () => {
     unregisterTokenSpy.mockRejectedValueOnce(new Error('network down'));
 
     await expect(AuthService.logout()).resolves.toBeUndefined();
@@ -203,6 +209,21 @@ describe('AuthService.logout — P0 푸시 토큰 격리 (NotificationService.un
       '[performSignOut] unregister token failed',
       'network down',
     );
+    expect(showInAppToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.any(String),
+        body: expect.any(String),
+      }),
+    );
+  });
+
+  test('unregisterToken 이 false 를 반환해도 logout 은 진행되고 토스트로 가시화한다', async () => {
+    unregisterTokenSpy.mockResolvedValueOnce(false);
+
+    await AuthService.logout();
+
+    expect(storeLogoutSpy).toHaveBeenCalledTimes(1);
+    expect(showInAppToast).toHaveBeenCalled();
   });
 
   test('provider=GOOGLE 인 경우에도 unregisterToken 이 호출된다', async () => {

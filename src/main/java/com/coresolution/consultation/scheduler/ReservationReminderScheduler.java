@@ -22,7 +22,6 @@ import com.coresolution.consultation.service.BatchNotificationDispatchService.Di
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.SystemConfigService;
-import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
@@ -538,10 +537,9 @@ public class ReservationReminderScheduler {
      */
     private void tryDispatchD1Push(String tenantId, Schedule schedule) {
         try {
-            String body = MobilePushMessageFormatter.buildBookingReminderLead(
-                BookingReminderPushConstants.REMINDER_D1_BODY_LEAD, schedule);
+            // D-1 title/body 는 Dispatch 가 역할별로 상수·Formatter 에서 조립(본문 인자 미사용).
             mobilePushDispatchService.dispatchBookingReminder(
-                tenantId, schedule, body, BookingReminderPushConstants.REMINDER_D1_SLOT_CODE);
+                tenantId, schedule, "", BookingReminderPushConstants.REMINDER_D1_SLOT_CODE);
         } catch (Exception pushError) {
             log.warn("⚠️ [ReservationReminderD1Push] D-1 푸시 실패(비차단): tenantId={}, scheduleId={}",
                 tenantId, schedule.getId(), pushError);

@@ -49,6 +49,8 @@ public final class MobilePushMessageFormatter {
     private static final String SHOP_FULFILLMENT_CLIENT_BODY_FMT = "주문번호 %s\n상담 패키지 주문 처리가 완료되었습니다.";
     private static final String SHOP_FULFILLMENT_CONSULTANT_BODY_FMT = "주문번호 %s\n내담자 상담 패키지 주문이 처리되었습니다.";
     private static final String BOOKING_REMINDER_SLOT_PREFIX = "\n\n일시: ";
+    private static final String BOOKING_REMINDER_D1_CLIENT_COUNTERPART_FMT = "\n상담사: %s";
+    private static final String BOOKING_REMINDER_D1_CONSULTANT_COUNTERPART_FMT = "\n내담자: %s";
 
     private MobilePushMessageFormatter() {
     }
@@ -224,6 +226,27 @@ public final class MobilePushMessageFormatter {
             return lead;
         }
         return lead + BOOKING_REMINDER_SLOT_PREFIX + slot;
+    }
+
+    /**
+     * D-1 예약 리마인드 본문(내담자·상담사 역할별 리드 + 상대방 표시명 + 일시).
+     *
+     * @param leadMessage 역할별 선행 문구({@link com.coresolution.consultation.constant.BookingReminderPushConstants})
+     * @param schedule 일정
+     * @param counterpartName 상대방 표시명(내담자 수신 시 상담사명, 상담사 수신 시 내담자명)
+     * @param forConsultant 상담사 수신이면 {@code true}
+     * @return 푸시 본문
+     */
+    public static String buildBookingReminderD1Body(
+            String leadMessage, Schedule schedule, String counterpartName, boolean forConsultant) {
+        String withSlot = buildBookingReminderLead(leadMessage, schedule);
+        String name = nonBlankOr(
+                counterpartName,
+                forConsultant ? FALLBACK_CLIENT_NAME : FALLBACK_CONSULTANT_NAME);
+        String counterpartLine = forConsultant
+                ? String.format(BOOKING_REMINDER_D1_CONSULTANT_COUNTERPART_FMT, name)
+                : String.format(BOOKING_REMINDER_D1_CLIENT_COUNTERPART_FMT, name);
+        return withSlot + counterpartLine;
     }
 
     public static String formatTime(LocalTime time) {

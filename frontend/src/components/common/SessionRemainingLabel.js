@@ -1,5 +1,5 @@
 /**
- * 로그인 후 세션 잔여 시간 보조 텍스트 (헤더·마이페이지용).
+ * 로그인 후 세션 잔여 시간 보조 텍스트 (UnifiedHeader·ProfileDropdown GNB·마이페이지용).
  * session-info 우선, SESSION_DURATION 폴백. JWT·쿠키 원문 미표시.
  * 표시 경계: SafeText / toDisplayString.
  *

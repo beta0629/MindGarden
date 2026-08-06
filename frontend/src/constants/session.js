@@ -70,7 +70,8 @@ export const PERIODIC_SESSION_CHECK_INTERVAL = 10 * 60 * 1000; // 10분
 export const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4시간 (14400000ms)
 
 /**
- * 세션 잔여/만료 시각 UI 표시 상수 (UnifiedHeader·SessionIdleWarningModal).
+ * 세션 잔여/만료 시각 UI 표시 상수
+ * (UnifiedHeader·ProfileDropdown GNB·MyPage·SessionIdleWarningModal).
  * JWT·쿠키 원문은 표시하지 않는다.
  */
 export const SESSION_REMAINING_DISPLAY = Object.freeze({

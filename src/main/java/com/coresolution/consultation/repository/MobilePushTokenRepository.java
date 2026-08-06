@@ -51,6 +51,20 @@ public interface MobilePushTokenRepository extends JpaRepository<MobilePushToken
     Optional<MobilePushToken> findByTenantIdAndPushTokenAndIsDeletedFalse(String tenantId, String pushToken);
 
     /**
+     * 동일 token_sha256 으로 다른 사용자가 이미 active 인 행이 있는지(ownership 충돌) 조회.
+     * 발송 전 단일 active 재검증용 — 토큰 원문은 조회하지 않는다.
+     *
+     * @param tokenSha256 토큰 SHA-256 hex
+     * @param userId 발송 대상(자기 자신은 제외)
+     * @return 충돌 active 행 수
+     */
+    @Query("SELECT COUNT(t) FROM MobilePushToken t WHERE t.tokenSha256 = :tokenSha256 "
+            + "AND t.userId <> :userId AND t.active = true AND t.isDeleted = false")
+    long countOtherActiveOwnersByTokenHash(
+            @Param("tokenSha256") String tokenSha256,
+            @Param("userId") Long userId);
+
+    /**
      * 동일 디바이스(token_sha256 동일) 이전 사용자 행을 전역(교차 테넌트) 비활성화한다.
      * 디바이스 1대당 마지막 로그인 사용자에게만 푸시가 가도록 ownership을 보장하며, 현재 사용자 행은 보존한다.
      *
@@ -66,7 +80,7 @@ public interface MobilePushTokenRepository extends JpaRepository<MobilePushToken
      * @param now updatedAt 적용 시각
      * @return 비활성화 처리된 행 수
      */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE MobilePushToken t SET t.active = false, t.updatedAt = :now "
             + "WHERE t.tokenSha256 = :tokenSha256 "
             + "AND t.userId <> :currentUserId AND t.active = true "

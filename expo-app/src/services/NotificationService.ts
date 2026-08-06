@@ -38,6 +38,7 @@ import {
   type AppAuthRole,
 } from '@/utils/adminRole';
 import { requestOsNotificationPermission } from '@/utils/notificationPermissionFlow';
+import { PUSH_PERMISSION_COPY } from '@/constants/pushPermissionCopy';
 
 /**
  * 백엔드가 푸시 발송 시 `system_notifications` 인박스에 row 를 적재한다(2026-05-26).
@@ -288,6 +289,7 @@ export const NotificationService = {
    * 푸시 토큰을 서버에 등록
    * `POST /api/v1/mobile/push-token/register` — Spring 미구현 시 실패·false 반환(앱은 계속 동작).
    * 서버에는 `resolveBackendPushToken` 결과(통상 `ExponentPushToken[...]`, 폴백 시 네이티브 디바이스 토큰)가 저장된다.
+   * 성공 시 서버가 동일 디바이스 토큰을 현재 userId 로 claim(이전 사용자 inactive)한다.
    */
   async registerToken(): Promise<boolean> {
     let resolvedToken: string | null = null;
@@ -339,29 +341,85 @@ export const NotificationService = {
   },
 
   /**
+   * 로그인 claim — register 1회 + 실패 시 토스트 후 재시도 1회.
+   * 계정 전환 후 이전 상담사 active 토큰 잔존을 막기 위한 필수 경로.
+   *
+   * @param options.notifyUser 실패 안내 토스트 표시(기본 true)
+   * @returns 최종 등록 성공 여부
+   */
+  async registerTokenWithClaimRetry(options?: { notifyUser?: boolean }): Promise<boolean> {
+    const notifyUser = options?.notifyUser !== false;
+    const firstOk = await this.registerToken();
+    if (firstOk) {
+      return true;
+    }
+    if (notifyUser) {
+      showInAppToast({
+        id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-claim-${Date.now()}`,
+        title: PUSH_PERMISSION_COPY.registerFailedTitle,
+        body: PUSH_PERMISSION_COPY.registerFailedBody,
+        icon: 'AlertTriangle',
+      });
+    }
+    console.warn('[NotificationService] registerToken claim retry', { attempt: 2 });
+    const retryOk = await this.registerToken();
+    if (!retryOk && notifyUser) {
+      showInAppToast({
+        id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-claim-final-${Date.now()}`,
+        title: PUSH_PERMISSION_COPY.registerFailedTitle,
+        body: PUSH_PERMISSION_COPY.registerFailedBody,
+        icon: 'AlertTriangle',
+      });
+    }
+    return retryOk;
+  },
+
+  /**
    * 푸시 토큰을 서버에서 해제
    * DELETE /api/v1/mobile/push-token/unregister
    * 해제 바디의 `token`은 등록 시와 동일하게 `resolveBackendPushToken`을 사용한다.
+   * 실패 시 reason 로그(토큰·JWT 원문 금지). false 반환 — 호출자가 가시화·흐름 지속을 결정한다.
    */
   async unregisterToken(): Promise<boolean> {
+    let resolvedToken: string | null = null;
+    const logFailure = (reason: string) => {
+      console.warn('[NotificationService] unregisterToken', {
+        outcome: 'failed',
+        reason,
+        token: resolvedToken ? maskPushTokenForLog(resolvedToken) : undefined,
+      });
+    };
+
     try {
-      const token = await this.resolveBackendPushToken();
-      if (!token) return false;
+      resolvedToken = await this.resolveBackendPushToken();
+      if (!resolvedToken) {
+        logFailure('push_token_unavailable');
+        return false;
+      }
 
       const { user } = useAuthStore.getState();
       const tenantId = resolveTenantIdForApi().trim();
 
-      if (!user?.id || !tenantId) return false;
+      if (!user?.id || !tenantId) {
+        logFailure('auth_or_tenant_missing');
+        return false;
+      }
 
       await apiPost(PUSH_API.UNREGISTER_TOKEN, {
         userId: user.id,
         tenantId,
-        token,
+        token: resolvedToken,
         platform: Platform.OS,
       });
 
+      console.warn('[NotificationService] unregisterToken', {
+        outcome: 'ok',
+        token: maskPushTokenForLog(resolvedToken),
+      });
       return true;
-    } catch {
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'unregister_api_error';
+      logFailure(reason);
       return false;
     }
   },

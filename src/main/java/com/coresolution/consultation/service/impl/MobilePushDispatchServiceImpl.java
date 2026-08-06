@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.config.ExpoPushProperties;
+import com.coresolution.consultation.constant.BookingReminderPushConstants;
 import com.coresolution.consultation.constant.MobilePushAllowedEvents;
 import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.MobilePushDispatchConstants;
@@ -78,20 +79,45 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         if (tid == null) {
             return;
         }
-        List<Long> targets = new ArrayList<>();
-        if (schedule.getClientId() != null) {
-            targets.add(schedule.getClientId());
-        }
-        if (schedule.getConsultantId() != null) {
-            targets.add(schedule.getConsultantId());
-        }
-        String title = "상담 리마인더";
-        String safeBody = truncate(body, MobilePushDispatchConstants.BODY_MAX_LENGTH);
         Map<String, String> data = buildScheduleData(tid, schedule, MobilePushCanonicalTypes.BOOKING_REMINDER);
         String dedupeEntity = String.valueOf(schedule.getId());
-        String dedupeBucket = reminderSlotCode + "|" + schedule.getDate();
-        dispatchFanout(tid, targets, MobilePushCanonicalTypes.BOOKING_REMINDER, title, safeBody, data, dedupeEntity,
-                dedupeBucket);
+        String slot = reminderSlotCode != null ? reminderSlotCode.trim() : "";
+        String dedupeBucketBase = slot + "|" + schedule.getDate();
+        boolean isD1 = BookingReminderPushConstants.REMINDER_D1_SLOT_CODE.equals(slot);
+
+        String consultantName = resolveUserDisplayName(tid, schedule.getConsultantId(),
+                MobilePushMessageFormatter.FALLBACK_CONSULTANT_NAME);
+        String clientName = resolveUserDisplayName(tid, schedule.getClientId(),
+                MobilePushMessageFormatter.FALLBACK_CLIENT_NAME);
+
+        if (schedule.getClientId() != null) {
+            String clientTitle = isD1
+                    ? BookingReminderPushConstants.REMINDER_D1_CLIENT_TITLE
+                    : "상담 리마인더";
+            String clientBody = isD1
+                    ? MobilePushMessageFormatter.buildBookingReminderD1Body(
+                            BookingReminderPushConstants.REMINDER_D1_CLIENT_BODY_LEAD,
+                            schedule,
+                            consultantName,
+                            false)
+                    : truncate(body, MobilePushDispatchConstants.BODY_MAX_LENGTH);
+            dispatchFanout(tid, List.of(schedule.getClientId()), MobilePushCanonicalTypes.BOOKING_REMINDER,
+                    clientTitle, clientBody, data, dedupeEntity, dedupeBucketBase);
+        }
+        if (schedule.getConsultantId() != null) {
+            String consultantTitle = isD1
+                    ? BookingReminderPushConstants.REMINDER_D1_CONSULTANT_TITLE
+                    : "상담 리마인더";
+            String consultantBody = isD1
+                    ? MobilePushMessageFormatter.buildBookingReminderD1Body(
+                            BookingReminderPushConstants.REMINDER_D1_CONSULTANT_BODY_LEAD,
+                            schedule,
+                            clientName,
+                            true)
+                    : truncate(body, MobilePushDispatchConstants.BODY_MAX_LENGTH);
+            dispatchFanout(tid, List.of(schedule.getConsultantId()), MobilePushCanonicalTypes.BOOKING_REMINDER,
+                    consultantTitle, consultantBody, data, dedupeEntity, dedupeBucketBase + "|consultant");
+        }
     }
 
     @Override
@@ -770,6 +796,13 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             log.debug("푸시 발송 생략: 활성 토큰 없음 type={} tenantId={}", canonicalType, tenantId);
             return;
         }
+        // P0 ownership: 동일 token_sha256 에 다른 user 의 active 행이 있으면 발송 제외(잔존 토큰 방어).
+        tokens = filterTokensByExclusiveOwnership(tokens);
+        if (tokens.isEmpty()) {
+            log.info("푸시 발송 생략: ownership 충돌로 활성 토큰 전부 제외 type={} tenantId={}",
+                    canonicalType, tenantId);
+            return;
+        }
         if (!mobilePushDispatchDedupService.tryClaim(tenantId, canonicalType, dedupeEntityId, dedupeTimeBucket)) {
             log.debug("푸시 멱등으로 스킵 type={} entity={} bucket={}", canonicalType, dedupeEntityId, dedupeTimeBucket);
             return;
@@ -814,6 +847,46 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                         tenantId, uid, canonicalType, ex.getMessage());
             }
         }
+    }
+
+    /**
+     * 발송 전 ownership 재검증 — 동일 token_sha256 이 다른 user 에도 active 이면 해당 토큰을 제외한다.
+     * (계정 전환 후 claim 실패로 잔존한 이전 상담사 토큰으로 푸시가 가는 것을 방어)
+     * 토큰 원문·해시는 로그에 마스킹만 남긴다.
+     *
+     * @param tokens 조회된 활성 토큰
+     * @return ownership 이 단일인 토큰만
+     */
+    private List<MobilePushToken> filterTokensByExclusiveOwnership(List<MobilePushToken> tokens) {
+        List<MobilePushToken> owned = new ArrayList<>(tokens.size());
+        for (MobilePushToken token : tokens) {
+            if (token == null || token.getUserId() == null) {
+                continue;
+            }
+            String hash = token.getTokenSha256();
+            if (hash == null || hash.isBlank()) {
+                owned.add(token);
+                continue;
+            }
+            long conflicts = mobilePushTokenRepository.countOtherActiveOwnersByTokenHash(hash, token.getUserId());
+            if (conflicts > 0) {
+                log.warn("push-ownership-skip: userId={} conflictOwners={} token_sha256={}",
+                        token.getUserId(), conflicts, maskTokenHashForLog(hash));
+                continue;
+            }
+            owned.add(token);
+        }
+        return owned;
+    }
+
+    /**
+     * 토큰 해시 로그 마스킹(원문 푸시 토큰·JWT 금지).
+     */
+    private static String maskTokenHashForLog(String hash) {
+        if (hash == null || hash.length() <= 12) {
+            return "***";
+        }
+        return hash.substring(0, 8) + "..." + hash.substring(hash.length() - 4);
     }
 
     private boolean isCategoryEnabledForUser(String tenantId, Long userId,

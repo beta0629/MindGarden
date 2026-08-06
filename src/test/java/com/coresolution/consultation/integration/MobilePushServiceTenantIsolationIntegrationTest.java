@@ -125,4 +125,59 @@ class MobilePushServiceTenantIsolationIntegrationTest {
         MobilePushSettingsPayload t2defaults = mobilePushService.getSettings(tenantId2, userOne.getId());
         assertThat(t2defaults.isMessage()).isTrue();
     }
+
+    @Test
+    @DisplayName("계정 전환 claim — 동일 디바이스 토큰을 새 사용자로 이전하고 이전 사용자는 inactive")
+    void registerToken_accountSwitch_claimsDeviceAndDeactivatesPreviousUser() {
+        User previousUser = new User();
+        previousUser.setUserId("mp-prev-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8));
+        previousUser.setEmail("mp-prev-" + UUID.randomUUID() + "@test.com");
+        previousUser.setPassword(passwordEncoder.encode("password12ab"));
+        previousUser.setName("이전상담사");
+        previousUser.setRole(UserRole.CONSULTANT);
+        previousUser.setTenantId(tenantId1);
+        previousUser.setIsActive(true);
+        previousUser.setIsPasswordChanged(true);
+        previousUser = userRepository.save(previousUser);
+
+        User nextUser = new User();
+        nextUser.setUserId("mp-next-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8));
+        nextUser.setEmail("mp-next-" + UUID.randomUUID() + "@test.com");
+        nextUser.setPassword(passwordEncoder.encode("password12ab"));
+        nextUser.setName("다음사용자");
+        nextUser.setRole(UserRole.CLIENT);
+        nextUser.setTenantId(tenantId1);
+        nextUser.setIsActive(true);
+        nextUser.setIsPasswordChanged(true);
+        nextUser = userRepository.save(nextUser);
+
+        String raw = "ExponentPushToken[account-switch-" + UUID.randomUUID() + "]";
+        String hash = MobilePushTokenHasher.sha256Hex(raw);
+
+        TenantContextHolder.setTenantId(tenantId1);
+        mobilePushService.registerToken(tenantId1, previousUser.getId(), raw, MobilePushPlatform.IOS, null);
+        assertThat(mobilePushTokenRepository
+                .findByTenantIdAndUserIdAndTokenSha256AndIsDeletedFalse(tenantId1, previousUser.getId(), hash))
+                .isPresent()
+                .get()
+                .extracting(t -> t.isActive())
+                .isEqualTo(true);
+
+        mobilePushService.registerToken(tenantId1, nextUser.getId(), raw, MobilePushPlatform.IOS, null);
+
+        assertThat(mobilePushTokenRepository
+                .findByTenantIdAndUserIdAndTokenSha256AndIsDeletedFalse(tenantId1, previousUser.getId(), hash))
+                .isPresent()
+                .get()
+                .extracting(t -> t.isActive())
+                .isEqualTo(false);
+        assertThat(mobilePushTokenRepository
+                .findByTenantIdAndUserIdAndTokenSha256AndIsDeletedFalse(tenantId1, nextUser.getId(), hash))
+                .isPresent()
+                .get()
+                .extracting(t -> t.isActive())
+                .isEqualTo(true);
+        assertThat(mobilePushTokenRepository.countOtherActiveOwnersByTokenHash(hash, nextUser.getId()))
+                .isZero();
+    }
 }

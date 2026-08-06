@@ -100,4 +100,30 @@ class MobilePushServiceImplRegisterTokenIsolationTest {
                 eq(hash), anyLong(), any(LocalDateTime.class));
         verify(mobilePushTokenRepository).save(any(MobilePushToken.class));
     }
+
+    @Test
+    @DisplayName("registerToken: 계정 전환 시 이전 사용자 동일 토큰을 inactive 후 새 사용자 active claim")
+    void registerToken_whenAccountSwitch_claimsDeviceForNewUser() {
+        Long previousUserId = 100L;
+        String hash = MobilePushTokenHasher.sha256Hex(RAW_TOKEN);
+
+        when(mobilePushTokenRepository.deactivateOtherUsersWithSameTokenHash(
+                eq(hash), eq(CURRENT_USER_ID), any(LocalDateTime.class)))
+                .thenReturn(1);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdAndTokenSha256AndIsDeletedFalse(
+                eq(TENANT_ID), eq(CURRENT_USER_ID), eq(hash)))
+                .thenReturn(Optional.empty());
+
+        mobilePushService.registerToken(TENANT_ID, CURRENT_USER_ID, RAW_TOKEN, MobilePushPlatform.ANDROID, null);
+
+        verify(mobilePushTokenRepository).deactivateOtherUsersWithSameTokenHash(
+                eq(hash), eq(CURRENT_USER_ID), any(LocalDateTime.class));
+        ArgumentCaptor<MobilePushToken> savedCaptor = ArgumentCaptor.forClass(MobilePushToken.class);
+        verify(mobilePushTokenRepository).save(savedCaptor.capture());
+        MobilePushToken saved = savedCaptor.getValue();
+        org.assertj.core.api.Assertions.assertThat(saved.getUserId()).isEqualTo(CURRENT_USER_ID);
+        org.assertj.core.api.Assertions.assertThat(saved.getUserId()).isNotEqualTo(previousUserId);
+        org.assertj.core.api.Assertions.assertThat(saved.isActive()).isTrue();
+        org.assertj.core.api.Assertions.assertThat(saved.getTokenSha256()).isEqualTo(hash);
+    }
 }

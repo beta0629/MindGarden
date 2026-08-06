@@ -1,6 +1,7 @@
 /**
  * ProfileDropdown 단위 테스트 - GNB 드롭다운 동작 검증
  * - 트리거 클릭 시 패널 열림, Portal이 document.body에 렌더, useDropdownPosition 스타일 적용, 클릭 아웃사이드/Escape 시 닫힘
+ * - 세션 잔여: 트리거 유저명 아래 + 드롭다운 프로필 영역
  * @see docs/standards/TESTING_STANDARD.md
  * @see docs/project-management/GNB_DROPDOWN_VERIFICATION_CHECKLIST.md
  */
@@ -8,15 +9,20 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ProfileDropdown from '../ProfileDropdown';
+import { SESSION_REMAINING_DISPLAY } from '../../../../constants/session';
 
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate
+  useNavigate: () => mockNavigate,
+  useLocation: () => ({ pathname: '/admin/dashboard' })
 }));
 
-const sessionState = { user: null };
+const sessionState = { user: null, sessionInfo: null };
 jest.mock('../../../../contexts/SessionContext', () => ({
-  useSession: () => ({ user: sessionState.user })
+  useSession: () => ({
+    user: sessionState.user,
+    sessionInfo: sessionState.sessionInfo
+  })
 }));
 
 jest.mock('../../../../hooks/useBranding', () => ({
@@ -31,22 +37,37 @@ describe('ProfileDropdown', () => {
     role: 'ADMIN'
   };
 
+  const sessionInfoWithRemaining = {
+    maxInactiveInterval: 3600,
+    lastAccessedTime: Date.now(),
+    serverNow: Date.now()
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     sessionState.user = defaultUser;
+    sessionState.sessionInfo = sessionInfoWithRemaining;
   });
 
   describe('렌더링', () => {
     it('user가 있으면 트리거(프로필 영역)가 렌더된다', () => {
       render(<ProfileDropdown />);
       expect(screen.getByText('테스트 사용자')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /프로필|사용자/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /테스트 사용자/ })).toBeInTheDocument();
     });
 
     it('user가 null이면 아무것도 렌더하지 않는다', () => {
       sessionState.user = null;
       const { container } = render(<ProfileDropdown />);
       expect(container.firstChild).toBeNull();
+    });
+
+    it('트리거 유저명 아래에 세션 잔여가 표시된다', () => {
+      render(<ProfileDropdown />);
+      const labels = screen.getAllByLabelText(SESSION_REMAINING_DISPLAY.ARIA_LABEL);
+      expect(labels.length).toBeGreaterThanOrEqual(1);
+      expect(labels[0]).toHaveTextContent(/세션 잔여/);
+      expect(labels[0].className).toContain('mg-header__session-remaining--gnb-trigger');
     });
   });
 
@@ -71,6 +92,18 @@ describe('ProfileDropdown', () => {
       await userEvent.click(trigger);
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('열린 드롭다운 프로필 영역에 세션 잔여가 표시된다', async() => {
+      render(<ProfileDropdown />);
+      await userEvent.click(screen.getByRole('button', { expanded: false }));
+
+      const labels = screen.getAllByLabelText(SESSION_REMAINING_DISPLAY.ARIA_LABEL);
+      const inDropdown = labels.find((el) =>
+        el.className.includes('mg-header__session-remaining--gnb-dropdown')
+      );
+      expect(inDropdown).toBeTruthy();
+      expect(inDropdown).toHaveTextContent(/세션 잔여/);
     });
   });
 

@@ -21,4 +21,8 @@ export const PUSH_PERMISSION_COPY = {
   registerFailedTitle: '푸시 등록 실패',
   registerFailedBody: '다시 시도하거나 알림 설정에서 ‘푸시 다시 등록’을 눌러 주세요.',
   registerRetryToastId: 'push-register-retry',
+  unregisterFailedTitle: '푸시 해제 실패',
+  unregisterFailedBody:
+    '기기 알림 등록 해제가 완료되지 않았습니다. 다른 계정으로 로그인하면 알림 설정에서 ‘푸시 다시 등록’을 눌러 주세요.',
+  unregisterFailToastId: 'push-unregister-fail',
 } as const;

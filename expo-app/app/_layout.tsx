@@ -153,7 +153,8 @@ export default function RootLayout() {
       clearTimeout(pushRegisterTimerRef.current);
     }
     pushRegisterTimerRef.current = setTimeout(() => {
-      void NotificationService.registerToken();
+      // hydrate 보완 경로 — 로그인 claim 토스트와 중복되지 않도록 조용히 재시도
+      void NotificationService.registerTokenWithClaimRetry({ notifyUser: false });
     }, PUSH_TOKEN_REGISTER_DEBOUNCE_MS);
 
     return () => {

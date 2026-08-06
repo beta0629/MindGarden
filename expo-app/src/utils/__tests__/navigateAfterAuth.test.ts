@@ -20,7 +20,10 @@ jest.mock('@/stores/useAuthStore', () => ({
 }));
 
 jest.mock('@/services/NotificationService', () => ({
-  NotificationService: { registerToken: jest.fn().mockResolvedValue(true) },
+  NotificationService: {
+    registerToken: jest.fn().mockResolvedValue(true),
+    registerTokenWithClaimRetry: jest.fn().mockResolvedValue(true),
+  },
 }));
 
 jest.mock('@/components/organisms/InAppNotificationToast', () => ({
@@ -48,7 +51,22 @@ describe('navigateAfterAuthenticated', () => {
     await navigateAfterAuthenticated();
 
     expect(router.replace).toHaveBeenCalledWith(POST_AUTH_HOME_ADMIN);
-    expect(NotificationService.registerToken).toHaveBeenCalled();
+    expect(NotificationService.registerTokenWithClaimRetry).toHaveBeenCalledWith({
+      notifyUser: false,
+    });
+  });
+
+  it('awaits push claim even when register fails', async () => {
+    (NotificationService.registerTokenWithClaimRetry as jest.Mock).mockResolvedValueOnce(false);
+    (useAuthStore.getState as jest.Mock).mockReturnValue({
+      role: 'consultant',
+      accessToken: fakeJwt({ role: 'CONSULTANT' }),
+    });
+
+    await navigateAfterAuthenticated();
+
+    expect(router.replace).toHaveBeenCalledWith(POST_AUTH_HOME_CONSULTANT);
+    expect(NotificationService.registerTokenWithClaimRetry).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to store role when JWT has no role claims', async () => {

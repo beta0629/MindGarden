@@ -1,5 +1,5 @@
 /**
- * 로그인 성공 후 역할별 홈으로 이동 + 푸시 토큰 등록
+ * 로그인 성공 후 역할별 홈으로 이동 + 푸시 토큰 claim(등록)
  *
  * `app/index.tsx` 진입 분기와 동일한 역할 순서를 유지한다.
  *
@@ -9,34 +9,28 @@
 import { router, type Href } from 'expo-router';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { NotificationService } from '@/services/NotificationService';
-import { showInAppToast } from '@/components/organisms/InAppNotificationToast';
-import { PUSH_PERMISSION_COPY } from '@/constants/pushPermissionCopy';
 import { resolveStoreRoleFromAccessToken } from '@/utils/adminRole';
 import { resolvePostAuthHomeHref } from '@/utils/resolvePostAuthHomeHref';
 
 export { resolvePostAuthHomeHref } from '@/utils/resolvePostAuthHomeHref';
 
-function toastPushRegisterFailure(): void {
-  showInAppToast({
-    id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-${Date.now()}`,
-    title: PUSH_PERMISSION_COPY.registerFailedTitle,
-    body: PUSH_PERMISSION_COPY.registerFailedBody,
-    icon: 'AlertTriangle',
-  });
-}
-
+/**
+ * 인증 완료 후 홈 이동 + 디바이스 푸시 토큰을 현재 사용자로 claim.
+ * 네비게이션을 먼저 수행한 뒤 claim 을 await 한다(홈 진입 차단 방지).
+ * claim 실패 시 토스트 + 1회 재시도는 {@link NotificationService.registerTokenWithClaimRetry} 가 담당.
+ */
 export async function navigateAfterAuthenticated(): Promise<void> {
   const { role: storeRole, accessToken } = useAuthStore.getState();
   const role = resolveStoreRoleFromAccessToken(accessToken) ?? storeRole;
   router.replace(resolvePostAuthHomeHref(role) as Href);
-  // 푸시 권한·Expo projectId 이슈로 대기하면 홈 진입이 막일 수 있어 네비게이션 후 비동기 등록
-  void NotificationService.registerToken()
-    .then((ok) => {
-      if (!ok) {
-        toastPushRegisterFailure();
-      }
-    })
-    .catch(() => {
-      toastPushRegisterFailure();
-    });
+  // applyAuthenticatedUser 에서도 claim 하지만, 네비 직후·테넌트 hydrate 타이밍을 위해 한 번 더 await.
+  // 서버 claim 은 멱등(동일 토큰 → 현재 user active, 이전 inactive).
+  try {
+    // applyAuthenticatedUser 에서 이미 토스트+재시도 — 여기서는 멱등 claim만 보강(토스트 중복 방지)
+    await NotificationService.registerTokenWithClaimRetry({ notifyUser: false });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'register_claim_error';
+    // eslint-disable-next-line no-console -- 토큰·JWT 원문 미포함
+    console.warn('[navigateAfterAuthenticated] push claim failed', { reason });
+  }
 }

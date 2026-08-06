@@ -74,6 +74,27 @@ class MobilePushMessageFormatterTest {
         assertThat(body).contains("일시: 2026-05-20 (수) 14:00–15:00");
     }
 
+    @Test
+    @DisplayName("buildBookingReminderD1Body — 내담자·상담사 역할별 리드·상대방")
+    void buildBookingReminderD1Body_roleSpecificCopy() {
+        Schedule schedule = sampleSchedule();
+
+        String clientBody = MobilePushMessageFormatter.buildBookingReminderD1Body(
+                "내일 상담 예약이 있습니다.", schedule, "김상담", false);
+        String consultantBody = MobilePushMessageFormatter.buildBookingReminderD1Body(
+                "내일 담당 상담 일정이 있습니다.", schedule, "이내담", true);
+
+        assertThat(clientBody)
+                .startsWith("내일 상담 예약이 있습니다.")
+                .contains("일시: 2026-05-20 (수) 14:00–15:00")
+                .contains("상담사: 김상담")
+                .doesNotContain("내담자:");
+        assertThat(consultantBody)
+                .startsWith("내일 담당 상담 일정이 있습니다.")
+                .contains("내담자: 이내담")
+                .doesNotContain("상담사:");
+    }
+
     private static Schedule sampleSchedule() {
         Schedule schedule = new Schedule();
         schedule.setDate(LocalDate.of(2026, 5, 20));

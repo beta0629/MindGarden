@@ -47,6 +47,7 @@ import {
 } from './auth/appleSignIn';
 import { signInWithGoogle, type GoogleSignInOutcome } from './auth/googleSignIn';
 import { performSignOut } from './auth/performSignOut';
+import { NotificationService } from './NotificationService';
 import type { User, Tokens } from '../stores/useAuthStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useTenantStore } from '../stores/useTenantStore';
@@ -794,6 +795,14 @@ async function applyAuthenticatedUser(
   }
   await useAuthStore.getState().login(enrichedUser, tokens);
   syncTenantFromAccessToken(tokens.accessToken);
+  // P0: 로그인 claim — 이전 상담사 active 토큰 잔존 방지. 실패는 토스트+1회 재시도 후 로그인 자체는 유지.
+  try {
+    await NotificationService.registerTokenWithClaimRetry();
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'register_claim_error';
+    // eslint-disable-next-line no-console -- 토큰·JWT 원문 미포함
+    console.warn('[AuthService] push claim after login failed', { reason });
+  }
 }
 
 function readSignupErrorMessage(err: unknown): string {

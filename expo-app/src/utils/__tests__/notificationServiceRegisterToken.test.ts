@@ -29,6 +29,18 @@ jest.mock('expo-device', () => ({
 
 jest.mock('expo-constants', () => ({
   expoConfig: { extra: { eas: { projectId: 'test-project-id' } } },
+  executionEnvironment: 'standalone',
+  ExecutionEnvironment: { StoreClient: 'storeClient', Standalone: 'standalone', Bare: 'bare' },
+}));
+
+jest.mock('@/lib/getMmkv', () => ({
+  getMmkv: jest.fn(() => ({
+    getString: jest.fn(),
+    set: jest.fn(),
+    delete: jest.fn(),
+  })),
+  isExpoGoApp: jest.fn(() => false),
+  createZustandMmkvPersistStorage: jest.fn(),
 }));
 
 jest.mock('@/utils/notificationPermissionFlow', () => ({
@@ -152,5 +164,32 @@ describe('NotificationService.registerToken tenant resolution', () => {
       '[NotificationService] registerToken',
       expect.objectContaining({ outcome: 'failed', reason: 'auth_or_tenant_missing' }),
     );
+  });
+
+  it('registerTokenWithClaimRetry retries once and toasts on failure', async () => {
+    const token = fakeJwt({ tenantId: 'tenant-from-jwt', sub: '42' });
+    (useAuthStore.getState as jest.Mock).mockReturnValue({
+      user: { id: 42, tenantId: 'tenant-from-jwt' },
+      accessToken: token,
+      _hasHydrated: true,
+      isLoading: false,
+      updateUser: jest.fn(),
+    });
+    (useTenantStore.getState as jest.Mock).mockReturnValue({
+      tenantId: 'tenant-from-jwt',
+      tenantCode: null,
+      tenantName: null,
+      recentTenants: [],
+      _hasHydrated: true,
+      setTenant: jest.fn(),
+    });
+    apiPostMock.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce(undefined);
+
+    const { showInAppToast } = jest.requireMock('@/components/organisms/InAppNotificationToast');
+    const ok = await NotificationService.registerTokenWithClaimRetry();
+
+    expect(ok).toBe(true);
+    expect(apiPostMock).toHaveBeenCalledTimes(2);
+    expect(showInAppToast).toHaveBeenCalledTimes(1);
   });
 });

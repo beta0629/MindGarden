@@ -366,7 +366,7 @@ class MobilePushDispatchServiceImplTest {
                 .thenReturn(Optional.of(settings));
 
         // 동일 디바이스에 두 사용자(이전·현재) 토큰이 active=true 로 남아 있는 격리 무력화 상황을 모사.
-        // dispatchBookingReminder 는 단일 fanout 으로 양쪽 user 토큰을 한 배치에 묶는다.
+        // D-1 은 역할별 fanout(내담자·상담사 각각) 으로 recipientUserId 를 동봉한다.
         MobilePushToken clientToken = new MobilePushToken();
         clientToken.setPushToken("ExponentPushToken[recipient-client]");
         clientToken.setUserId(77L);
@@ -374,7 +374,9 @@ class MobilePushDispatchServiceImplTest {
         consultantToken.setPushToken("ExponentPushToken[recipient-consultant]");
         consultantToken.setUserId(88L);
         when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
-                eq(List.of(77L, 88L)))).thenReturn(List.of(clientToken, consultantToken));
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
 
         when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_REMINDER),
                 eq("50"), anyString())).thenReturn(true);
@@ -383,7 +385,7 @@ class MobilePushDispatchServiceImplTest {
                 ArgumentCaptor.forClass(org.springframework.http.HttpEntity.class);
         when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), entityCaptor.capture(),
                 eq(String.class)))
-                .thenReturn("{\"data\":[{\"status\":\"ok\"},{\"status\":\"ok\"}]}");
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
 
         Schedule schedule = new Schedule();
         schedule.setId(50L);
@@ -396,17 +398,58 @@ class MobilePushDispatchServiceImplTest {
 
         mobilePushDispatchService.dispatchBookingReminder("tenant-a", schedule, "내일 상담 예약이 있습니다.", "D1");
 
+        assertThat(entityCaptor.getAllValues()).hasSize(2);
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> messages =
-                (List<Map<String, Object>>) entityCaptor.getValue().getBody();
-        assertThat(messages).isNotNull().hasSize(2);
+        List<Map<String, Object>> clientMessages =
+                (List<Map<String, Object>>) entityCaptor.getAllValues().get(0).getBody();
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> consultantMessages =
+                (List<Map<String, Object>>) entityCaptor.getAllValues().get(1).getBody();
+        assertThat(clientMessages).isNotNull().hasSize(1);
+        assertThat(consultantMessages).isNotNull().hasSize(1);
 
         @SuppressWarnings("unchecked")
-        Map<String, String> clientData = (Map<String, String>) messages.get(0).get("data");
+        Map<String, String> clientData = (Map<String, String>) clientMessages.get(0).get("data");
         @SuppressWarnings("unchecked")
-        Map<String, String> consultantData = (Map<String, String>) messages.get(1).get("data");
+        Map<String, String> consultantData = (Map<String, String>) consultantMessages.get(0).get("data");
         assertThat(clientData).containsEntry("recipientUserId", "77");
         assertThat(consultantData).containsEntry("recipientUserId", "88");
+        assertThat(clientMessages.get(0).get("title")).isEqualTo("내일 상담 안내");
+        assertThat(consultantMessages.get(0).get("title")).isEqualTo("내일 상담 일정");
+    }
+
+    @Test
+    @DisplayName("P0 ownership — 동일 token_sha256 에 다른 active owner 가 있으면 발송 스킵")
+    void dispatchFanout_skipsTokenWhenOwnershipConflict() {
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+
+        MobilePushSettings settings = new MobilePushSettings();
+        settings.setScheduleEnabled(true);
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(eq("tenant-a"), eq(88L)))
+                .thenReturn(Optional.of(settings));
+
+        String sharedHash = "abc12345deadbeef0123456789abcdef0123456789abcdef0123456789abcdef";
+        MobilePushToken staleConsultantToken = new MobilePushToken();
+        staleConsultantToken.setPushToken("ExponentPushToken[stale-shared]");
+        staleConsultantToken.setUserId(88L);
+        staleConsultantToken.setTokenSha256(sharedHash);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(88L)))).thenReturn(List.of(staleConsultantToken));
+        when(mobilePushTokenRepository.countOtherActiveOwnersByTokenHash(eq(sharedHash), eq(88L)))
+                .thenReturn(1L);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(70L);
+        schedule.setTenantId("tenant-a");
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 6, 12));
+        schedule.setStartTime(LocalTime.of(9, 0));
+        schedule.setEndTime(LocalTime.of(10, 0));
+
+        mobilePushDispatchService.dispatchBookingReminder("tenant-a", schedule, "", "D1");
+
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
     }
 
     @Test
@@ -864,7 +907,9 @@ class MobilePushDispatchServiceImplTest {
         consultantToken.setPushToken("ExponentPushToken[d2-consultant]");
         consultantToken.setUserId(88L);
         when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
-                anyList())).thenReturn(List.of(clientToken, consultantToken));
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
 
         when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"),
                 eq(MobilePushCanonicalTypes.BOOKING_REMINDER), eq("60"), anyString())).thenReturn(true);
@@ -882,10 +927,10 @@ class MobilePushDispatchServiceImplTest {
 
         mobilePushDispatchService.dispatchBookingReminder("tenant-a", schedule, "내일 상담 예약이 있습니다.", "D2");
 
-        // D-2 슬롯 dedupe 1회(양쪽 user 묶음) + Expo POST 1회.
-        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+        // 역할별 fanout 2회(내담자·상담사) + Expo POST 2회.
+        verify(mobilePushDispatchDedupService, times(2)).tryClaim(eq("tenant-a"),
                 eq(MobilePushCanonicalTypes.BOOKING_REMINDER), eq("60"), anyString());
-        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+        verify(restTemplate, times(2)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
                 eq(String.class));
     }
 
@@ -1070,12 +1115,14 @@ class MobilePushDispatchServiceImplTest {
         consultantToken.setPushToken("ExponentPushToken[reminder-consultant]");
         consultantToken.setUserId(88L);
         when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
-                eq(List.of(77L, 88L)))).thenReturn(List.of(clientToken, consultantToken));
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
 
         when(mobilePushDispatchDedupService.tryClaim(eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_REMINDER),
                 eq("50"), anyString())).thenReturn(true);
         when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
-                .thenReturn("{\"data\":[{\"status\":\"ok\"},{\"status\":\"ok\"}]}");
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
 
         Schedule schedule = new Schedule();
         schedule.setId(50L);
@@ -1088,12 +1135,14 @@ class MobilePushDispatchServiceImplTest {
 
         mobilePushDispatchService.dispatchBookingReminder("tenant-a", schedule, "내일 상담 예약이 있습니다.", "D2");
 
-        // 한번의 fanout 호출에 양쪽 사용자 ID 가 모두 들어간다(현 구현 — dispatchBookingReminder 는 단일 fanout).
+        // 역할별 fanout: 내담자·상담사 각각 토큰 조회·멱등·Expo POST.
         verify(mobilePushTokenRepository, times(1)).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
-                eq("tenant-a"), eq(List.of(77L, 88L)));
-        verify(mobilePushDispatchDedupService, times(1)).tryClaim(eq("tenant-a"),
+                eq("tenant-a"), eq(List.of(77L)));
+        verify(mobilePushTokenRepository, times(1)).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq("tenant-a"), eq(List.of(88L)));
+        verify(mobilePushDispatchDedupService, times(2)).tryClaim(eq("tenant-a"),
                 eq(MobilePushCanonicalTypes.BOOKING_REMINDER), eq("50"), anyString());
-        verify(restTemplate, times(1)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
+        verify(restTemplate, times(2)).postForObject(eq("https://exp.test/--/api/v2/push/send"), any(),
                 eq(String.class));
     }
 

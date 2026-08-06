@@ -12,6 +12,8 @@ import NaverLogin from '@react-native-seoul/naver-login';
 import { NativeModules } from 'react-native';
 import { apiPost } from '@/api/client';
 import { AUTH_API } from '@/api/endpoints';
+import { showInAppToast } from '@/components/organisms/InAppNotificationToast';
+import { PUSH_PERMISSION_COPY } from '@/constants/pushPermissionCopy';
 import { NotificationService } from '@/services/NotificationService';
 import { signOutFromGoogle } from '@/services/auth/googleSignIn';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -30,6 +32,15 @@ function isKakaoNativeLinked(): boolean {
 
 function isNaverNativeLinked(): boolean {
   return NativeModules.RNNaverLogin != null;
+}
+
+function toastUnregisterFailure(): void {
+  showInAppToast({
+    id: `${PUSH_PERMISSION_COPY.unregisterFailToastId}-${Date.now()}`,
+    title: PUSH_PERMISSION_COPY.unregisterFailedTitle,
+    body: PUSH_PERMISSION_COPY.unregisterFailedBody,
+    icon: 'AlertTriangle',
+  });
 }
 
 /**
@@ -67,11 +78,18 @@ export async function performSignOut(options?: PerformSignOutOptions): Promise<v
       }
 
       try {
-        await NotificationService.unregisterToken();
+        const unregistered = await NotificationService.unregisterToken();
+        if (!unregistered) {
+          // 로그아웃은 계속하되 실패를 가시화(조용히 삼키지 않음)
+          // eslint-disable-next-line no-console -- reason 은 unregisterToken 내부에서 이미 기록
+          console.warn('[performSignOut] unregister token returned false');
+          toastUnregisterFailure();
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unregister_failed';
         // eslint-disable-next-line no-console -- 토큰 원문 미포함, 메시지만
         console.warn('[performSignOut] unregister token failed', message);
+        toastUnregisterFailure();
       }
 
       try {

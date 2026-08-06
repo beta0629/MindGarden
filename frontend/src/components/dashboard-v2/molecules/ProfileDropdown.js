@@ -21,6 +21,9 @@ import {
   shouldShowProfileDropdownSettings
 } from '../../../utils/roleMypageSettingsPaths';
 import MGButton from '../../common/MGButton';
+import SafeText from '../../common/SafeText';
+import SessionRemainingLabel from '../../common/SessionRemainingLabel';
+import { SESSION_REMAINING_DISPLAY } from '../../../constants/session';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './ProfileDropdown.css';
@@ -134,7 +137,14 @@ const ProfileDropdown = ({ onLogout }) => {
           aria-controls={PROFILE_DROPDOWN_PANEL_ID}
         >
           <ProfileAvatar name={userName} imageUrl={avatarImageUrl} size="small" />
-          <span className="mg-v2-profile-trigger__name">{userName}</span>
+          <span className="mg-v2-profile-trigger__meta">
+            <span className="mg-v2-profile-trigger__name">
+              <SafeText fallback="사용자">{userName}</SafeText>
+            </span>
+            <SessionRemainingLabel
+              className={`${SESSION_REMAINING_DISPLAY.CLASS_NAME}--gnb-trigger`}
+            />
+          </span>
           <span className="mg-v2-profile-trigger__caret" aria-hidden="true">▼</span>
         </MGButton>
       </div>
@@ -151,13 +161,20 @@ const ProfileDropdown = ({ onLogout }) => {
         <div className="mg-v2-profile-dropdown__header">
           <ProfileAvatar name={userName} imageUrl={avatarImageUrl} size="medium" />
           <div className="mg-v2-profile-dropdown__info">
-            <div className="mg-v2-profile-dropdown__name">{userName}</div>
+            <div className="mg-v2-profile-dropdown__name">
+              <SafeText fallback="사용자">{userName}</SafeText>
+            </div>
+            <SessionRemainingLabel
+              className={`${SESSION_REMAINING_DISPLAY.CLASS_NAME}--gnb-dropdown`}
+            />
             {userEmail && (
-              <div className="mg-v2-profile-dropdown__email">{userEmail}</div>
+              <div className="mg-v2-profile-dropdown__email">
+                <SafeText fallback="">{userEmail}</SafeText>
+              </div>
             )}
             {roleLabel && (
               <span className={`mg-v2-badge mg-v2-badge-role mg-v2-badge-role--${userRole.toLowerCase()}`}>
-                {roleLabel}
+                <SafeText fallback="">{roleLabel}</SafeText>
               </span>
             )}
           </div>

@@ -354,7 +354,7 @@ const AdminShopOrdersPage = () => {
         />
         <ContentSection>
           {loading ? (
-            <UnifiedLoading message="주문 목록을 불러오는 중…" />
+            <UnifiedLoading type="inline" text="주문 목록을 불러오는 중…" />
           ) : tableRows.length === 0 ? (
             <EmptyState message="조회된 주문이 없습니다." />
           ) : (
@@ -386,7 +386,7 @@ const AdminShopOrdersPage = () => {
         )}
       >
         {detailLoading ? (
-          <UnifiedLoading message="상세를 불러오는 중…" />
+          <UnifiedLoading type="inline" text="상세를 불러오는 중…" />
         ) : detail ? (
           <OrderDetailBody
             detail={detail}

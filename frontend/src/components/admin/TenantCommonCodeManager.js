@@ -424,7 +424,7 @@ const TenantCommonCodeManager = () => {
   );
 
   return (
-    <AdminCommonLayout title={t('admin:tenantCommonCode.ui.layoutTitle')} loading={loading}>
+    <AdminCommonLayout title={t('admin:tenantCommonCode.ui.layoutTitle')}>
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={t('admin:tenantCommonCode.ui.contentAriaLabel')}>

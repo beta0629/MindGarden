@@ -43,6 +43,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './CommonCodeManagementB0KlA.css';
 import MGButton from '../common/MGButton';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0) — getLegacyCodeGroupsList 내부 SSOT
@@ -946,7 +947,7 @@ const CommonCodeManagement = () => {
                                 )}
 
                                 {loading && groupCodes.length === 0 ? (
-                                    <div className="mg-v2-ad-b0kla__loading-message">{t('admin:commonCode.ui.loading')}</div>
+                                    <UnifiedLoading type="inline" text={t('admin:commonCode.ui.loading')} />
                                 ) : (
                                     <table className="mg-v2-ad-b0kla__data-table mg-v2-ad-b0kla__data-table--comfortable">
                                         <thead>

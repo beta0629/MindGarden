@@ -15,9 +15,6 @@
   "systemConfig": {
     "pageTitle": "시스템 설정 관리",
     "pageSubtitle": "웰니스 자동 발송·세션 보안 등 시스템 설정을 관리합니다. AI API 키·프로바이더 선택은 'AI 프로바이더 관리'로 이전되었습니다.",
-    "action": {
-      "save": "설정 저장"
-    },
     "loading": {
       "session": "세션을 확인하는 중...",
       "config": "설정을 불러오는 중..."
@@ -47,6 +44,9 @@
       "descTargetRoles": "웰니스 대상 역할",
       "success": {
         "save": "웰니스 설정이 저장되었습니다."
+      },
+      "action": {
+        "saveFields": "발송 시각·대상 저장"
       },
       "targetRoles": {
         "label": "대상 역할",

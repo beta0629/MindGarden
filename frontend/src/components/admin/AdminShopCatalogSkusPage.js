@@ -275,7 +275,7 @@ const AdminShopCatalogSkusPage = () => {
           />
           <ContentSection>
             {loading ? (
-              <UnifiedLoading message="목록을 불러오는 중…" />
+              <UnifiedLoading type="inline" text="목록을 불러오는 중…" />
             ) : tableRows.length === 0 ? (
               <EmptyState message="등록된 상품이 없습니다." />
             ) : (
@@ -308,7 +308,7 @@ const AdminShopCatalogSkusPage = () => {
         )}
       >
         {priceHistoryLoading ? (
-          <UnifiedLoading message="가격 이력을 불러오는 중…" />
+          <UnifiedLoading type="inline" text="가격 이력을 불러오는 중…" />
         ) : priceHistoryTableRows.length === 0 ? (
           <EmptyState message={ADMIN_SHOP_PRICE_HISTORY_EMPTY_MESSAGE} />
         ) : (

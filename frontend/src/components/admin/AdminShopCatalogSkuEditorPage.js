@@ -226,7 +226,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
           <ContentSection>
             {loading ? (
               <div data-testid={ADMIN_SHOP_SKU_TEST_IDS.FORM_LOADING}>
-                <UnifiedLoading message="불러오는 중…" />
+                <UnifiedLoading type="inline" text="불러오는 중…" />
               </div>
             ) : (
               <div className="admin-shop-sku-editor__sections">

@@ -242,7 +242,7 @@ const AdminShopPointPoliciesPage = () => {
             </p>
           ) : null}
           {loading ? (
-            <UnifiedLoading message="정책을 불러오는 중…" />
+            <UnifiedLoading type="inline" text="정책을 불러오는 중…" />
           ) : loadError ? (
             <SafeErrorDisplay error={loadError} />
           ) : (

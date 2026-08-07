@@ -502,17 +502,6 @@ const SystemConfigManagement = () => {
             <ContentHeader
               title={pageTitle}
               subtitle={t('systemConfig.pageSubtitle')}
-              actions={
-                <ActionBarButton
-                  variant="primary"
-                  onClick={handleSave}
-                  loading={saving}
-                  title={t('systemConfig.wellness.action.saveFields')}
-                  className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
-                >
-                  {t('systemConfig.wellness.action.saveFields')}
-                </ActionBarButton>
-              }
             />
 
             {/* PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 (DB SSOT) */}
@@ -642,6 +631,16 @@ const SystemConfigManagement = () => {
                     {t('systemConfig.wellness.targetRoles.hint')}
                   </small>
                 </div>
+              </div>
+              <div className="section-actions">
+                <ActionBarButton
+                  variant="primary"
+                  onClick={handleSave}
+                  loading={saving}
+                  title={t('systemConfig.wellness.action.saveFields')}
+                >
+                  {t('systemConfig.wellness.action.saveFields')}
+                </ActionBarButton>
               </div>
             </div>
           </ContentArea>

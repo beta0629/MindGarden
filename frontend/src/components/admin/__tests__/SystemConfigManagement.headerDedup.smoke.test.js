@@ -120,7 +120,7 @@ jest.mock('../../common/modals/UnifiedModal', () => ({
 import SystemConfigManagement from '../SystemConfigManagement';
 
 describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
-  test('ContentHeader title SSOT, ACL title 생략, 부제·저장 액션 유지', async() => {
+  test('ContentHeader title SSOT, ACL title 생략, 상단 저장 CTA 없음·웰니스 섹션 CTA만', async() => {
     render(
       <MemoryRouter>
         <SystemConfigManagement />
@@ -135,7 +135,7 @@ describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
     expect(header).toHaveAttribute('data-has-title', 'true');
     expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
-    expect(screen.getByTestId('content-header-actions')).toBeInTheDocument();
+    expect(screen.queryByTestId('content-header-actions')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '발송 시각·대상 저장' })).toBeInTheDocument();
   });
 });

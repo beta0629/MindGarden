@@ -10,6 +10,7 @@ import PropTypes from 'prop-types';
 import MGButton from '../../../common/MGButton';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
 import CustomSelect from '../../../common/CustomSelect';
+import SettingSwitchRow from '../../../common/molecules/SettingSwitchRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import {
   getParentCodeGroupForSubcategory,
@@ -180,17 +181,13 @@ const TenantCommonCodeFormModal = ({
             />
           </div>
           <div className="mg-v2-ad-b0kla__form-group">
-            <label htmlFor="tenant-active" className="mg-v2-ad-b0kla__form-label">
-              {t('admin:tenantCommonCode.ui.formLabelActive')}
-            </label>
-            <div>
-              <input
-                id="tenant-active"
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => onFormChange({ ...formData, isActive: e.target.checked })}
-              />
-            </div>
+            <SettingSwitchRow
+              id="tenant-active"
+              label={t('admin:tenantCommonCode.ui.formLabelActive')}
+              checked={!!formData.isActive}
+              onCheckedChange={(next) => onFormChange({ ...formData, isActive: next })}
+              ariaLabel={t('admin:tenantCommonCode.ui.formLabelActive')}
+            />
           </div>
         </div>
         <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">

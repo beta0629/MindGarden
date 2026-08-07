@@ -21,6 +21,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import { ListTableView } from '../common';
 import EmptyState from '../common/EmptyState';
 import SafeText from '../common/SafeText';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -872,17 +873,14 @@ const AdminContentMasterPage = () => {
             />
           </div>
           <div className="mg-modal__form-group">
-            <label htmlFor={`${baseId}-psy-published`} className="mg-modal__label">
-              <input
-                id={`${baseId}-psy-published`}
-                type="checkbox"
-                checked={!!psychoForm.published}
-                onChange={(ev) => setPsychoForm((p) => ({ ...p, published: ev.target.checked }))}
-                disabled={saving}
-              />
-              {' '}
-              {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
-            </label>
+            <SettingSwitchRow
+              id={`${baseId}-psy-published`}
+              label={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
+              checked={!!psychoForm.published}
+              onCheckedChange={(next) => setPsychoForm((p) => ({ ...p, published: next }))}
+              disabled={saving}
+              ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
+            />
           </div>
         </>
       ) : null}
@@ -1019,17 +1017,14 @@ const AdminContentMasterPage = () => {
             />
           </div>
           <div className="mg-modal__form-group">
-            <label htmlFor={`${baseId}-heal-published`} className="mg-modal__label">
-              <input
-                id={`${baseId}-heal-published`}
-                type="checkbox"
-                checked={!!healingForm.published}
-                onChange={(ev) => setHealingForm((p) => ({ ...p, published: ev.target.checked }))}
-                disabled={saving}
-              />
-              {' '}
-              {ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
-            </label>
+            <SettingSwitchRow
+              id={`${baseId}-heal-published`}
+              label={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
+              checked={!!healingForm.published}
+              onCheckedChange={(next) => setHealingForm((p) => ({ ...p, published: next }))}
+              disabled={saving}
+              ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.CONTENT_FORM_LABEL_PUBLISHED}
+            />
           </div>
         </>
       ) : null}

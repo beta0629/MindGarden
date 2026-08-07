@@ -3,6 +3,7 @@ import { ICONS } from '../../constants/icons';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import { showNotification } from '../../utils/notification';
 import { testPgConnection } from '../../utils/pgApi';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -688,15 +689,13 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.testMode}
-                  onChange={(e) => handleChange('testMode', e.target.checked)}
-                  className="form-checkbox"
-                />
-                <span>{t('common:tenant.PgConfigurationForm.t_cfd49442')}</span>
-              </label>
+              <SettingSwitchRow
+                id="testModeKicc"
+                label={t('common:tenant.PgConfigurationForm.t_cfd49442')}
+                checked={!!formData.testMode}
+                onCheckedChange={(next) => handleChange('testMode', next)}
+                ariaLabel={t('common:tenant.PgConfigurationForm.t_cfd49442')}
+              />
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
                 테스트·운영 API 엔드포인트는 KICC 문서를 따릅니다.{' '}
@@ -996,15 +995,13 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.testMode}
-                  onChange={(e) => handleChange('testMode', e.target.checked)}
-                  className="form-checkbox"
-                />
-                <span>{t('common:tenant.PgConfigurationForm.t_cfd49442')}</span>
-              </label>
+              <SettingSwitchRow
+                id="testModeIamport"
+                label={t('common:tenant.PgConfigurationForm.t_cfd49442')}
+                checked={!!formData.testMode}
+                onCheckedChange={(next) => handleChange('testMode', next)}
+                ariaLabel={t('common:tenant.PgConfigurationForm.t_cfd49442')}
+              />
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
                 {t('common:tenant.PgConfigurationForm.t_6549da14')}
@@ -1251,15 +1248,13 @@ const PgConfigurationForm = ({
             </div>
 
             <div className="form-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.testMode}
-                  onChange={(e) => handleChange('testMode', e.target.checked)}
-                  className="form-checkbox"
-                />
-                <span>{t('common:tenant.PgConfigurationForm.t_cfd49442')}</span>
-              </label>
+              <SettingSwitchRow
+                id="testModeDefault"
+                label={t('common:tenant.PgConfigurationForm.t_cfd49442')}
+                checked={!!formData.testMode}
+                onCheckedChange={(next) => handleChange('testMode', next)}
+                ariaLabel={t('common:tenant.PgConfigurationForm.t_cfd49442')}
+              />
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
                 {t('common:tenant.PgConfigurationForm.t_ca86098c')}

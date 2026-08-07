@@ -13,6 +13,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import StandardizedApi from '../../utils/standardizedApi';
 import { API } from '../../constants/api';
 import { RoleUtils } from '../../constants/roles';
@@ -170,15 +171,16 @@ const AdminTenantSmsSettingsPage = () => {
               </ContentSection>
 
               <ContentSection title={t('settings:sms.section.enabled')}>
-                <label className="mg-tenant-sms__toggle" htmlFor={toggleId}>
-                  <input
-                    id={toggleId}
-                    type="checkbox"
-                    checked={Boolean(form.smsEnabled)}
-                    onChange={(ev) => handleChange('smsEnabled', ev.target.checked)}
-                  />
-                  {t('settings:sms.enabledLabel')}
-                </label>
+                <SettingSwitchRow
+                  id={toggleId}
+                  label={t('settings:sms.enabledLabel')}
+                  statusLabel={form.smsEnabled
+                    ? t('common:label.on')
+                    : t('common:label.off')}
+                  checked={Boolean(form.smsEnabled)}
+                  onCheckedChange={(next) => handleChange('smsEnabled', next)}
+                  ariaLabel={t('settings:sms.enabledLabel')}
+                />
               </ContentSection>
 
               <ContentSection variant="card" title={t('settings:sms.section.integration')}>

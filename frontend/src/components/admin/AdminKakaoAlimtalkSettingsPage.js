@@ -13,6 +13,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import StandardizedApi from '../../utils/standardizedApi';
 import { API } from '../../constants/api';
 import { RoleUtils } from '../../constants/roles';
@@ -199,15 +200,16 @@ const AdminKakaoAlimtalkSettingsPage = () => {
               </ContentSection>
 
               <ContentSection title={t('settings:kakao.section.enabled')}>
-                <label className="mg-kakao-alimtalk__toggle" htmlFor={toggleId}>
-                  <input
-                    id={toggleId}
-                    type="checkbox"
-                    checked={Boolean(form.alimtalkEnabled)}
-                    onChange={(ev) => handleChange('alimtalkEnabled', ev.target.checked)}
-                  />
-                  {t('settings:kakao.enabledLabel')}
-                </label>
+                <SettingSwitchRow
+                  id={toggleId}
+                  label={t('settings:kakao.enabledLabel')}
+                  statusLabel={form.alimtalkEnabled
+                    ? t('common:label.on')
+                    : t('common:label.off')}
+                  checked={Boolean(form.alimtalkEnabled)}
+                  onCheckedChange={(next) => handleChange('alimtalkEnabled', next)}
+                  ariaLabel={t('settings:kakao.enabledLabel')}
+                />
               </ContentSection>
 
               <ContentSection variant="card" title={t('settings:kakao.section.templates')}>

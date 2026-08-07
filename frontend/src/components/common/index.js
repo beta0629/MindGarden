@@ -11,6 +11,8 @@ export { default as ActionButton } from './ActionButton';
 export { default as CardContainer } from './CardContainer';
 export { default as CardActionGroup } from './CardActionGroup';
 export { default as ViewModeToggle, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from './ViewModeToggle';
+export { default as Switch } from './Switch';
+export { default as SettingSwitchRow } from './molecules/SettingSwitchRow';
 export { default as SmallCardGrid } from './SmallCardGrid';
 export { default as ListTableView } from './ListTableView';
 export { default as EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from './molecules/EntityRowActions';

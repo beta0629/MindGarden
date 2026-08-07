@@ -3,6 +3,7 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './CommonCodeForm.css';
 import { useTranslation } from 'react-i18next';
@@ -396,16 +397,13 @@ const CommonCodeForm = ({
                         </div>
 
                         <div className="form-group">
-                            <label className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    name="isActive"
-                                    checked={formData.isActive}
-                                    onChange={handleChange}
-                                />
-                                <span className="checkmark" />
-                                활성 상태
-                            </label>
+                            <SettingSwitchRow
+                                id="isActive"
+                                label="활성 상태"
+                                checked={!!formData.isActive}
+                                onCheckedChange={(next) => setFormData((prev) => ({ ...prev, isActive: next }))}
+                                ariaLabel="활성 상태"
+                            />
                         </div>
                     </div>
 

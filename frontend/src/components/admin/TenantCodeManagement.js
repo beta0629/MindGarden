@@ -25,6 +25,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ActionBar from '../common/ActionBar';
 import ActionBarButton from '../common/ActionBarButton';
@@ -633,15 +634,13 @@ const TenantCodeManagement = () => {
                             </div>
 
                             <div className="form-group full-width">
-                                <label className="checkbox-label" htmlFor="tenant-code-active">
-                                    <input
-                                        id="tenant-code-active"
-                                        type="checkbox"
-                                        checked={formData.isActive}
-                                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                    />
-                                    {UI_TEXT.FORM_ACTIVE}
-                                </label>
+                                <SettingSwitchRow
+                                    id="tenant-code-active"
+                                    label={UI_TEXT.FORM_ACTIVE}
+                                    checked={!!formData.isActive}
+                                    onCheckedChange={(next) => setFormData({ ...formData, isActive: next })}
+                                    ariaLabel={UI_TEXT.FORM_ACTIVE}
+                                />
                             </div>
                         </div>
                     </div>

@@ -26,6 +26,8 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import ActionBar from '../../common/ActionBar';
 import ActionBarButton from '../../common/ActionBarButton';
+import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
+import Switch from '../../common/Switch';
 import { useSession } from '../../../contexts/SessionContext';
 import { USER_ROLES, RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
@@ -360,30 +362,19 @@ const SmsTemplateManagementPage = () => {
             data-testid="sms-template-global-toggle"
             aria-label={t('smsTemplate.globalDispatch.title')}
           >
-            <div className="mg-admin-sms-template__global-toggle-text">
-              <h3 className="mg-admin-sms-template__global-toggle-title">
-                {t('smsTemplate.globalDispatch.title')}
-              </h3>
-              <p className="mg-admin-sms-template__global-toggle-description">
-                {t('smsTemplate.globalDispatch.description')}
-              </p>
-            </div>
-            <label className="mg-admin-sms-template__switch">
-              <input
-                type="checkbox"
-                className="mg-admin-sms-template__switch-input"
-                checked={globalDispatchEnabled}
-                onChange={(event) => handleGlobalToggle(event.target.checked)}
-                disabled={!isAdmin || submitting}
-                data-testid="sms-template-global-toggle-input"
-              />
-              <span className="mg-admin-sms-template__switch-slider" aria-hidden="true" />
-              <span className="mg-admin-sms-template__switch-label">
-                {globalDispatchEnabled
-                  ? t('smsTemplate.dispatch.badge.on')
-                  : t('smsTemplate.dispatch.badge.off')}
-              </span>
-            </label>
+            <SettingSwitchRow
+              id="sms-template-global-toggle-input"
+              label={t('smsTemplate.globalDispatch.title')}
+              hint={t('smsTemplate.globalDispatch.description')}
+              statusLabel={globalDispatchEnabled
+                ? t('smsTemplate.dispatch.badge.on')
+                : t('smsTemplate.dispatch.badge.off')}
+              checked={globalDispatchEnabled}
+              onCheckedChange={handleGlobalToggle}
+              disabled={!isAdmin || submitting}
+              data-testid="sms-template-global-toggle-input"
+              ariaLabel={t('smsTemplate.globalDispatch.title')}
+            />
           </section>
 
           <section
@@ -483,7 +474,7 @@ const SmsTemplateManagementPage = () => {
                               : t('smsTemplate.dispatch.badge.off')}
                           </span>
                         </button>
-                        <label
+                        <div
                           className={`mg-admin-sms-template__template-toggle${
                             !globalDispatchEnabled
                               ? ' mg-admin-sms-template__template-toggle--disabled'
@@ -495,24 +486,22 @@ const SmsTemplateManagementPage = () => {
                               : undefined
                           }
                         >
-                          <input
-                            type="checkbox"
-                            className="mg-admin-sms-template__switch-input"
+                          <Switch
                             checked={Boolean(item.tenantDispatchEnabled
                                 ?? item.effectiveDispatchEnabled)}
-                            onChange={(event) =>
-                              handleTemplateDispatchToggle(item.key, event.target.checked)
+                            onCheckedChange={(next) =>
+                              handleTemplateDispatchToggle(item.key, next)
                             }
                             disabled={
                               !isAdmin || submitting || !globalDispatchEnabled
                             }
+                            ariaLabel={t('smsTemplate.templateDispatch.label')}
                             data-testid={`sms-template-toggle-${item.key}`}
                           />
-                          <span className="mg-admin-sms-template__switch-slider" aria-hidden="true" />
-                          <span className="mg-admin-sms-template__switch-label">
+                          <span className="mg-admin-sms-template__template-toggle-label">
                             {t('smsTemplate.templateDispatch.label')}
                           </span>
-                        </label>
+                        </div>
                       </li>
                     ))}
                   </ul>

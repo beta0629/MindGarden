@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import AdminCommonLayout from '../../../layout/AdminCommonLayout';
 import ActionBar from '../../../common/ActionBar';
 import ActionBarButton from '../../../common/ActionBarButton';
+import SettingSwitchRow from '../../../common/molecules/SettingSwitchRow';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
@@ -282,17 +283,14 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                   />
                 </div>
                 <div>
-                  <label className="mg-v2-form-label mg-v2-package-pricing__form-label">
-                    {LABELS.LABEL_ACTIVE}
-                  </label>
-                  <select
-                    className="mg-v2-form-input mg-v2-package-pricing__form-control"
-                    value={form.isActive ? 'Y' : 'N'}
-                    onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.value === 'Y' }))}
-                  >
-                    <option value="Y">{LABELS.ACTIVE_YES}</option>
-                    <option value="N">{LABELS.ACTIVE_NO}</option>
-                  </select>
+                  <SettingSwitchRow
+                    id="package-pricing-is-active"
+                    label={LABELS.LABEL_ACTIVE}
+                    statusLabel={form.isActive ? LABELS.ACTIVE_YES : LABELS.ACTIVE_NO}
+                    checked={!!form.isActive}
+                    onCheckedChange={(next) => setForm((f) => ({ ...f, isActive: next }))}
+                    ariaLabel={LABELS.LABEL_ACTIVE}
+                  />
                 </div>
               </div>
             </section>

@@ -377,85 +377,10 @@
 }
 
 .mg-admin-sms-template__global-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md, 8px);
   padding: var(--spacing-md);
-}
-
-.mg-admin-sms-template__global-toggle-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.mg-admin-sms-template__global-toggle-title {
-  margin: 0;
-  font-size: var(--font-size-md, 1rem);
-  color: var(--color-text-primary);
-}
-
-.mg-admin-sms-template__global-toggle-description {
-  margin: 0;
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary);
-}
-
-.mg-admin-sms-template__switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  cursor: pointer;
-}
-
-.mg-admin-sms-template__switch-input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.mg-admin-sms-template__switch-slider {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  background: var(--color-bg-tertiary, var(--color-neutral-200));
-  border-radius: 999px;
-  transition: background-color 0.2s ease;
-}
-
-.mg-admin-sms-template__switch-slider::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: var(--color-bg-primary);
-  border-radius: 999px;
-  transition: transform 0.2s ease;
-}
-
-.mg-admin-sms-template__switch-input:checked + .mg-admin-sms-template__switch-slider {
-  background: var(--color-primary-500, var(--color-primary));
-}
-
-.mg-admin-sms-template__switch-input:checked + .mg-admin-sms-template__switch-slider::after {
-  transform: translateX(20px);
-}
-
-.mg-admin-sms-template__switch-input:disabled + .mg-admin-sms-template__switch-slider {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.mg-admin-sms-template__switch-label {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary);
 }
 
 .mg-admin-sms-template__template-toggle {
@@ -464,12 +389,16 @@
   gap: var(--spacing-xs);
   margin-top: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  cursor: pointer;
 }
 
 .mg-admin-sms-template__template-toggle--disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.mg-admin-sms-template__template-toggle-label {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary);
 }
 
 .mg-admin-sms-template__dispatch-badge {

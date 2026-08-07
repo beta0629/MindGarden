@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import BadgeSelect from '../../common/BadgeSelect';
+import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { normalizeApiListPayload } from '../../../constants/adminWebScaffold';
@@ -772,18 +773,17 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               );
             })}
           </select>
-          <label className={`${FORM_CLASS}__toggle`}>
-            <input
-              type="checkbox"
-              checked={templatesLive}
-              onChange={(e) => {
-                setTemplatesLive(e.target.checked);
-                setTemplateCode('');
-                setTemplateParams({});
-              }}
-            />
-            <span>{t('manualNotification.alimtalk.liveToggle')}</span>
-          </label>
+          <SettingSwitchRow
+            id="manual-notif-templates-live"
+            label={t('manualNotification.alimtalk.liveToggle')}
+            checked={templatesLive}
+            onCheckedChange={(next) => {
+              setTemplatesLive(next);
+              setTemplateCode('');
+              setTemplateParams({});
+            }}
+            ariaLabel={t('manualNotification.alimtalk.liveToggle')}
+          />
           {selectedTemplate && selectedTemplate.solapiTemplateIdPresent === false && (
             <p className={`${FORM_CLASS}__hint ${FORM_CLASS}__hint--warn`} role="note">
               {t('manualNotification.alimtalk.missingMappingHint')}

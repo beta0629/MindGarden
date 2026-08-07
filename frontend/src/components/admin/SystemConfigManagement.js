@@ -26,6 +26,7 @@ import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ChipMultiSelect from '../common/ChipMultiSelect';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import ActionBar from '../common/ActionBar';
 import ActionBarButton from '../common/ActionBarButton';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -349,10 +350,10 @@ const SystemConfigManagement = () => {
     try {
       setLoading(true);
       const [wEnabled, wTime, wRoles, dupLogin] = await Promise.all([
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED).catch(() => null),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME).catch(() => null),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES).catch(() => null),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED).catch(() => null)
+        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED)).catch(() => null),
+        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME)).catch(() => null),
+        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES)).catch(() => null),
+        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED)).catch(() => null)
       ]);
       setWellness({
         wellnessAutoSendEnabled: wEnabled?.success ? wEnabled.configValue === 'true' : DEFAULT_WELLNESS.wellnessAutoSendEnabled,
@@ -486,19 +487,23 @@ const SystemConfigManagement = () => {
               </p>
               <div className="config-grid">
                 <div className="config-item">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={duplicateLoginAllowed}
-                      onChange={(e) => setDuplicateLoginAllowed(e.target.checked)}
-                      data-testid="duplicate-login-allowed-toggle"
-                    />
-                    {' '}
-                    {t('systemConfig.sessionSecurity.duplicateLoginAllowed')}
-                  </label>
-                  <small className="help-text">
-                    {t('systemConfig.sessionSecurity.duplicateLoginAllowedHint')}
-                  </small>
+                  <SettingSwitchRow
+                    label={t('systemConfig.sessionSecurity.duplicateLoginAllowed')}
+                    hint={t('systemConfig.sessionSecurity.duplicateLoginAllowedHint')}
+                    statusLabel={duplicateLoginAllowed
+                      ? t('systemConfig.notificationScheduler.status.on')
+                      : t('systemConfig.notificationScheduler.status.off')}
+                    checked={duplicateLoginAllowed}
+                    onCheckedChange={setDuplicateLoginAllowed}
+                    data-testid="duplicate-login-allowed-toggle"
+                    ariaLabel={duplicateLoginAllowed
+                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                        label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
+                      })
+                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                        label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
+                      })}
+                  />
                 </div>
               </div>
             </div>
@@ -535,16 +540,26 @@ const SystemConfigManagement = () => {
               </p>
               <div className="config-grid">
                 <div className="config-item">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={wellness.wellnessAutoSendEnabled}
-                      onChange={(e) => setWellness((prev) => ({ ...prev, wellnessAutoSendEnabled: e.target.checked }))}
-                    />
-                    {' '}
-                    {t('systemConfig.wellness.autoSendEnabled')}
-                  </label>
-                  <small className="help-text">{t('systemConfig.wellness.autoSendHint')}</small>
+                  <SettingSwitchRow
+                    label={t('systemConfig.wellness.autoSendEnabled')}
+                    hint={t('systemConfig.wellness.autoSendHint')}
+                    statusLabel={wellness.wellnessAutoSendEnabled
+                      ? t('systemConfig.notificationScheduler.status.on')
+                      : t('systemConfig.notificationScheduler.status.off')}
+                    checked={wellness.wellnessAutoSendEnabled}
+                    onCheckedChange={(next) => setWellness((prev) => ({
+                      ...prev,
+                      wellnessAutoSendEnabled: next
+                    }))}
+                    data-testid="wellness-auto-send-toggle"
+                    ariaLabel={wellness.wellnessAutoSendEnabled
+                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                        label: t('systemConfig.wellness.autoSendEnabled')
+                      })
+                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                        label: t('systemConfig.wellness.autoSendEnabled')
+                      })}
+                  />
                 </div>
                 <div className="config-item">
                   <label htmlFor="sendTime">{t('systemConfig.wellness.sendTime')}</label>
@@ -599,7 +614,7 @@ const SystemConfigManagement = () => {
  * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 섹션 (presentational).
  *
  * 부모로부터 i18n {@code t}, 플래그 dict, 로딩/저장 상태, 토글 요청 핸들러를 주입받아 렌더링한다.
- * 4 종 라벨/힌트는 i18n 키로 정적 정의하며, role="switch" + aria-checked 로 접근성을 보장한다.
+ * 4 종 라벨/힌트는 i18n 키로 정적 정의하며, 공통 SettingSwitchRow(Switch Atom) 로 접근성을 보장한다.
  *
  * @param {object} props
  * @param {(key: string, fallback: string, vars?: object) => string} props.t i18n 함수
@@ -690,30 +705,16 @@ const NotificationSchedulerSection = ({ t, flags, loading, savingKey, onToggleRe
                 key={item.key}
                 className="mg-v2-notification-scheduler__item"
               >
-                <div className="mg-v2-notification-scheduler__item-main">
-                  <p className="mg-v2-notification-scheduler__item-label">{label}</p>
-                  <p className="mg-v2-notification-scheduler__item-hint">{hint}</p>
-                  <p className="mg-v2-notification-scheduler__item-meta">{lastUpdatedText}</p>
-                </div>
-                <div className="mg-v2-notification-scheduler__item-control">
-                  <span
-                    className={`mg-v2-notification-scheduler__status mg-v2-notification-scheduler__status--${value ? 'on' : 'off'}`}
-                    role="status"
-                  >
-                    {statusLabel}
-                  </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={value}
-                    aria-label={ariaLabel}
-                    disabled={isSaving}
-                    className={`mg-v2-notification-scheduler__switch mg-v2-notification-scheduler__switch--${value ? 'on' : 'off'}`}
-                    onClick={() => onToggleRequest(item.key, label, value)}
-                  >
-                    <span className="mg-v2-notification-scheduler__switch-knob" aria-hidden="true" />
-                  </button>
-                </div>
+                <SettingSwitchRow
+                  label={label}
+                  hint={hint}
+                  meta={lastUpdatedText}
+                  statusLabel={statusLabel}
+                  checked={value}
+                  disabled={isSaving}
+                  ariaLabel={ariaLabel}
+                  onCheckedChange={() => onToggleRequest(item.key, label, value)}
+                />
               </li>
             );
           })}

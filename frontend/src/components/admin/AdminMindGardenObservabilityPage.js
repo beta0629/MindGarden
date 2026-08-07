@@ -13,6 +13,7 @@ import { ListTableView } from '../common';
 import EmptyState from '../common/EmptyState';
 import SafeText from '../common/SafeText';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -150,9 +151,7 @@ const AdminMindGardenObservabilityPage = () => {
                   </li>
                 </ul>
               ) : !summaryError ? (
-                <p className="mg-v2-content-section__subtitle">
-                  <SafeText tag="span">요약을 불러오는 중…</SafeText>
-                </p>
+                <UnifiedLoading type="inline" />
               ) : null}
             </ContentSection>
             {listError ? (

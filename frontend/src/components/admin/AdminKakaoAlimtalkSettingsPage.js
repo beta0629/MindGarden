@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
-import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
@@ -241,14 +240,22 @@ const AdminKakaoAlimtalkSettingsPage = () => {
 
   if (sessionLoading || !allowed) {
     return (
-      <AdminCommonLayout title={t('settings:kakao.title')} className="mg-v2-dashboard-layout">
-        <UnifiedLoading text={t('settings:loadingShort')} />
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={t('settings:kakao.title')}
+        className="mg-v2-dashboard-layout"
+        loading
+        loadingText={t('settings:loadingShort')}
+      />
     );
   }
 
   return (
-    <AdminCommonLayout title={t('settings:kakao.title')} className="mg-v2-dashboard-layout">
+    <AdminCommonLayout
+      title={t('settings:kakao.title')}
+      className="mg-v2-dashboard-layout"
+      loading={loading}
+      loadingText={t('settings:kakao.loading')}
+    >
       <div className="mg-v2-ad-b0kla mg-v2-kakao-alimtalk-settings" data-testid="admin-kakao-alimtalk-settings">
         <ContentArea>
           <ContentHeader
@@ -256,95 +263,91 @@ const AdminKakaoAlimtalkSettingsPage = () => {
             title={t('settings:kakao.title')}
             subtitle={t('settings:kakao.subtitle')}
           />
-          {loading ? (
-            <UnifiedLoading text={t('settings:kakao.loading')} />
-          ) : (
-            <form className="mg-kakao-alimtalk__form" onSubmit={handleSubmit} noValidate>
-              <SafeErrorDisplay error={loadError} />
-              <SafeErrorDisplay error={saveError} />
+          <form className="mg-kakao-alimtalk__form" onSubmit={handleSubmit} noValidate>
+            <SafeErrorDisplay error={loadError} />
+            <SafeErrorDisplay error={saveError} />
 
-              <ContentSection title={t('settings:kakao.section.info')}>
-                <p className="mg-kakao-alimtalk__hint">
-                  {t('settings:kakao.infoHint')}
+            <ContentSection title={t('settings:kakao.section.info')}>
+              <p className="mg-kakao-alimtalk__hint">
+                {t('settings:kakao.infoHint')}
+              </p>
+              {tenantIdLine ? (
+                <p className="mg-kakao-alimtalk__readonly-line">
+                  {t('settings:kakao.tenantIdLabel')} {tenantIdLine}
                 </p>
-                {tenantIdLine ? (
-                  <p className="mg-kakao-alimtalk__readonly-line">
-                    {t('settings:kakao.tenantIdLabel')} {tenantIdLine}
-                  </p>
-                ) : null}
-              </ContentSection>
+              ) : null}
+            </ContentSection>
 
-              <ContentSection title={t('settings:kakao.section.enabled')}>
-                <SettingSwitchRow
-                  id={toggleId}
-                  label={t('settings:kakao.enabledLabel')}
-                  hint={t('settings:kakao.toggleImmediateHint')}
-                  statusLabel={form.alimtalkEnabled
-                    ? t('common:label.on')
-                    : t('common:label.off')}
-                  checked={Boolean(form.alimtalkEnabled)}
-                  onCheckedChange={onAlimtalkCheckedChange}
-                  disabled={alimtalkDisabled || saving}
-                  isPending={alimtalkBusy}
-                  ariaLabel={t('settings:kakao.enabledLabel')}
-                />
-              </ContentSection>
+            <ContentSection title={t('settings:kakao.section.enabled')}>
+              <SettingSwitchRow
+                id={toggleId}
+                label={t('settings:kakao.enabledLabel')}
+                hint={t('settings:kakao.toggleImmediateHint')}
+                statusLabel={form.alimtalkEnabled
+                  ? t('common:label.on')
+                  : t('common:label.off')}
+                checked={Boolean(form.alimtalkEnabled)}
+                onCheckedChange={onAlimtalkCheckedChange}
+                disabled={alimtalkDisabled || saving}
+                isPending={alimtalkBusy}
+                ariaLabel={t('settings:kakao.enabledLabel')}
+              />
+            </ContentSection>
 
-              <ContentSection variant="card" title={t('settings:kakao.section.templates')}>
-                {TEMPLATE_FIELD_SPECS.map((spec) => (
-                  <div key={spec.key} className="mg-kakao-alimtalk__field">
-                    <label htmlFor={`kakao-field-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
-                    <input
-                      id={`kakao-field-${spec.key}`}
-                      className="mg-kakao-alimtalk__input"
-                      type="text"
-                      maxLength={TEMPLATE_MAX_LEN}
-                      value={form[spec.key] || ''}
-                      onChange={(ev) => handleChange(spec.key, ev.target.value)}
-                      autoComplete="off"
-                    />
-                  </div>
-                ))}
-              </ContentSection>
+            <ContentSection variant="card" title={t('settings:kakao.section.templates')}>
+              {TEMPLATE_FIELD_SPECS.map((spec) => (
+                <div key={spec.key} className="mg-kakao-alimtalk__field">
+                  <label htmlFor={`kakao-field-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
+                  <input
+                    id={`kakao-field-${spec.key}`}
+                    className="mg-kakao-alimtalk__input"
+                    type="text"
+                    maxLength={TEMPLATE_MAX_LEN}
+                    value={form[spec.key] || ''}
+                    onChange={(ev) => handleChange(spec.key, ev.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+              ))}
+            </ContentSection>
 
-              <ContentSection title={t('settings:kakao.section.refs')}>
-                {REF_FIELD_SPECS.map((spec) => (
-                  <div key={spec.key} className="mg-kakao-alimtalk__field">
-                    <label htmlFor={`kakao-ref-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
-                    <input
-                      id={`kakao-ref-${spec.key}`}
-                      className="mg-kakao-alimtalk__input"
-                      type="text"
-                      maxLength={REF_MAX_LEN}
-                      value={form[spec.key] || ''}
-                      onChange={(ev) => handleChange(spec.key, ev.target.value)}
-                      autoComplete="off"
-                    />
-                  </div>
-                ))}
-              </ContentSection>
+            <ContentSection title={t('settings:kakao.section.refs')}>
+              {REF_FIELD_SPECS.map((spec) => (
+                <div key={spec.key} className="mg-kakao-alimtalk__field">
+                  <label htmlFor={`kakao-ref-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
+                  <input
+                    id={`kakao-ref-${spec.key}`}
+                    className="mg-kakao-alimtalk__input"
+                    type="text"
+                    maxLength={REF_MAX_LEN}
+                    value={form[spec.key] || ''}
+                    onChange={(ev) => handleChange(spec.key, ev.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+              ))}
+            </ContentSection>
 
-              <div className="mg-kakao-alimtalk__actions">
-                <MGButton
-                  type="submit"
-                  className={buildErpMgButtonClassName({ variant: 'primary' })}
-                  disabled={saving || alimtalkBusy}
-                  loading={saving}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                >
-                  {t('settings:kakao.action.saveTemplatesAndRefs')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  className={buildErpMgButtonClassName({ variant: 'outline' })}
-                  disabled={saving || loading || alimtalkBusy}
-                  onClick={() => loadSettings()}
-                >
-                  {t('settings:kakao.reload')}
-                </MGButton>
-              </div>
-            </form>
-          )}
+            <div className="mg-kakao-alimtalk__actions">
+              <MGButton
+                type="submit"
+                className={buildErpMgButtonClassName({ variant: 'primary' })}
+                disabled={saving || alimtalkBusy}
+                loading={saving}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              >
+                {t('settings:kakao.action.saveTemplatesAndRefs')}
+              </MGButton>
+              <MGButton
+                type="button"
+                className={buildErpMgButtonClassName({ variant: 'outline' })}
+                disabled={saving || loading || alimtalkBusy}
+                onClick={() => loadSettings()}
+              >
+                {t('settings:kakao.reload')}
+              </MGButton>
+            </div>
+          </form>
         </ContentArea>
       </div>
       <ConfirmEnableModal />

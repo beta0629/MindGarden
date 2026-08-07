@@ -1,6 +1,5 @@
 import { useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
@@ -88,9 +87,9 @@ const ComplianceDashboard = () => {
         titleId={COMPLIANCE_TITLE_ID}
         refreshDisabled
         onRefresh={loadComplianceData}
-      >
-        <UnifiedLoading type="inline" text="컴플라이언스 데이터를 불러오는 중..." />
-      </ComplianceDashboardShell>
+        loading
+        loadingText="컴플라이언스 데이터를 불러오는 중..."
+      />
     );
   }
 

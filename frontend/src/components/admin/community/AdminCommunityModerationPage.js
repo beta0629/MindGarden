@@ -12,6 +12,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { useToast } from '../../../contexts/ToastContext';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import {
   ADMIN_COMMUNITY_API,
   COMMUNITY_REPORT_RESOLUTION_ACTIONS,
@@ -174,7 +175,9 @@ const AdminCommunityModerationPage = () => {
         ))}
       </nav>
       {loading ? (
-        <div className="admin-cm__empty">불러오는 중...</div>
+        <div className="admin-cm__empty" aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text="불러오는 중..." />
+        </div>
       ) : items.length === 0 ? (
         <div className="admin-cm__empty" data-testid="admin-cm-empty">신고 항목이 없습니다.</div>
       ) : (

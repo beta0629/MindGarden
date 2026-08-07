@@ -335,7 +335,7 @@ const AdminShopOrdersPage = () => {
   const detailEvents = Array.isArray(detail?.fulfillmentEvents) ? detail.fulfillmentEvents : [];
 
   return (
-    <AdminCommonLayout title="온라인 주문">
+    <AdminCommonLayout title="온라인 주문" loading={loading}>
       <ContentArea>
         <ContentHeader
           titleId={PAGE_TITLE_ID}
@@ -353,9 +353,7 @@ const AdminShopOrdersPage = () => {
           )}
         />
         <ContentSection>
-          {loading ? (
-            <UnifiedLoading type="inline" text="주문 목록을 불러오는 중…" />
-          ) : tableRows.length === 0 ? (
+          {tableRows.length === 0 ? (
             <EmptyState message="조회된 주문이 없습니다." />
           ) : (
             <ListTableView
@@ -386,7 +384,7 @@ const AdminShopOrdersPage = () => {
         )}
       >
         {detailLoading ? (
-          <UnifiedLoading type="inline" text="상세를 불러오는 중…" />
+          <UnifiedLoading type="inline" />
         ) : detail ? (
           <OrderDetailBody
             detail={detail}

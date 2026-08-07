@@ -482,13 +482,10 @@ const SystemConfigManagement = () => {
       ? t('systemConfig.loading.session')
       : t('systemConfig.loading.config');
     return (
-      <AdminCommonLayout>
-        <div className="mg-v2-ad-b0kla mg-v2-system-config-management">
-          <div className="mg-v2-ad-b0kla__container" aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text={loadingText} variant="pulse" />
-          </div>
-        </div>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        loading
+        loadingText={loadingText}
+      />
     );
   }
 
@@ -734,7 +731,6 @@ const NotificationSchedulerSection = ({
         <UnifiedLoading
           type="inline"
           text={t('systemConfig.notificationScheduler.loading')}
-          variant="pulse"
         />
       ) : (
         <ul className="mg-v2-notification-scheduler__list">

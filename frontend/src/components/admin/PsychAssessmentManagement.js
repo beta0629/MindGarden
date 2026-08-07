@@ -14,7 +14,6 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ActionBarButton from '../common/ActionBarButton';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import UnifiedLoading from '../common/UnifiedLoading';
 import PsychKpiSection from './psych-assessment/organisms/PsychKpiSection';
 import PsychUploadSection from './psych-assessment/organisms/PsychUploadSection';
 import PsychDocumentListBlock from './psych-assessment/organisms/PsychDocumentListBlock';
@@ -308,19 +307,7 @@ const PsychAssessmentManagement = ({ user: propUser }) => {
   }
 
   if (loading) {
-    return (
-      <AdminCommonLayout>
-        <div className="mg-v2-ad-b0kla">
-          <div className="mg-v2-ad-b0kla__container">
-            <ContentArea ariaLabel="심리검사 리포트 관리 본문" className="mg-v2-psych-assessment-management">
-              <div aria-busy="true" aria-live="polite">
-                <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
-              </div>
-            </ContentArea>
-          </div>
-        </div>
-      </AdminCommonLayout>
-    );
+    return <AdminCommonLayout loading />;
   }
 
   return (

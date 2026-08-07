@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import UnifiedLoading from '../../common/UnifiedLoading';
 
 const ADMIN_CARD_CLASS = 'mg-v2-ad-b0kla__admin-card';
 
@@ -84,19 +84,13 @@ export function AdminMgmtActionCard({
           className="mg-v2-ad-b0kla__admin-action-icon-slot"
           aria-hidden
         >
-          <Loader2
-            className="mg-v2-ad-b0kla__admin-action-spinner"
-            size={28}
-            strokeWidth={2}
-          />
+          <UnifiedLoading type="button" size="sm" showText={false} />
         </span>
       ) : (
         <AdminMgmtCardIcon icon={icon} tone={tone} />
       )}
       <span className="mg-v2-ad-b0kla__admin-label">{label}</span>
-      <span className="mg-v2-ad-b0kla__admin-desc">
-        {loading ? '처리 중…' : description}
-      </span>
+      <span className="mg-v2-ad-b0kla__admin-desc">{description}</span>
     </button>
   );
 }

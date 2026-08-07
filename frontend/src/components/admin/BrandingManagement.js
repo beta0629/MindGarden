@@ -10,7 +10,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import UnifiedLoading from '../common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { AlertCircle } from 'lucide-react';
 import { useBranding } from '../../hooks/useBranding';
@@ -437,7 +436,11 @@ const BrandingManagement = () => {
     : (formData.favicon ? '현재 파비콘이 등록되어 있습니다.' : 'PNG 또는 ICO · 드래그하여 놓기');
 
   return (
-    <AdminCommonLayout title={t('admin:BrandingManagement.t_fe06000d')}>
+    <AdminCommonLayout
+      title={t('admin:BrandingManagement.t_fe06000d')}
+      loading={isLoading}
+      loadingText={t('admin:BrandingManagement.t_a70f6f09')}
+    >
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="브랜딩 관리 본문">
@@ -452,10 +455,7 @@ const BrandingManagement = () => {
               id="main-content"
               lang="ko"
             >
-              {isLoading ? (
-                <UnifiedLoading type="inline" text={t('admin:BrandingManagement.t_a70f6f09')} />
-              ) : (
-                <form
+              <form
                   id={BRANDING_FORM_ID}
                   className="mg-branding-settings__form"
                   onSubmit={handleSubmit}
@@ -846,7 +846,6 @@ const BrandingManagement = () => {
                     </div>
                   </footer>
                 </form>
-              )}
             </main>
           </ContentArea>
         </div>

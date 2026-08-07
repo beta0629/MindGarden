@@ -17,6 +17,7 @@ import CardHeader from '../ui/Card/CardHeader';
 import Icon from '../ui/Icon/Icon';
 import ThemeSelector from '../ui/ThemeSelector/ThemeSelector';
 import SafeText from '../common/SafeText';
+import UnifiedLoading from '../common/UnifiedLoading';
 import './UserSettings.css';
 import { useTranslation } from 'react-i18next';
 
@@ -275,10 +276,9 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
       default:
         return null;}};
 
-  if (!user) {return (<div className="mg-v2-v2-v2-loading">
-        <Icon name="LOADER" size="LG" color="PRIMARY" />
-        <p className="mg-v2-v2-v2-text-muted">{t('settings:status.loading')}</p>
-      </div>);}
+  if (!user) {
+    return <UnifiedLoading type="inline" text={t('settings:status.loading')} />;
+  }
 
   return (<SimpleLayout>
       <div className="mg-v2-v2-v2-user-settings">

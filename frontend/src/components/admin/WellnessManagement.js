@@ -20,7 +20,6 @@ import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { sessionManager } from '../../utils/sessionManager';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -309,7 +308,10 @@ const WellnessManagement = () => {
     const pageTitle = t('admin:wellnessMgmt.title');
 
     return (
-        <AdminCommonLayout loading={loading}>
+        <AdminCommonLayout
+            loading={loading}
+            loadingText={t('admin:wellnessMgmt.loading')}
+        >
             <div className="mg-v2-ad-b0kla mg-v2-wellness-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel={t('admin:wellnessMgmt.regionLabel')}>
@@ -370,11 +372,6 @@ const WellnessManagement = () => {
                         />
 
                         <main aria-labelledby={PAGE_TITLE_ID}>
-                {loading ? (
-                    <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
-                        <UnifiedLoading type="inline" text={t('admin:wellnessMgmt.loading')} />
-                    </div>
-                ) : (
                     <>
                 {/* 통계 카드 */}
                 <div className="mg-v2-stats-grid">
@@ -574,7 +571,6 @@ const WellnessManagement = () => {
                     </div>
                 </div>
                     </>
-                )}
                         </main>
                     </ContentArea>
                 </div>

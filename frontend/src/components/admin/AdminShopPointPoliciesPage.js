@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
-import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
@@ -226,7 +225,7 @@ const AdminShopPointPoliciesPage = () => {
   const statusOff = t('common:label.off');
 
   return (
-    <AdminCommonLayout title="리워드 정책">
+    <AdminCommonLayout title="리워드 정책" loading={loading}>
       <ContentArea>
         <ContentHeader
           titleId={PAGE_TITLE_ID}
@@ -241,9 +240,7 @@ const AdminShopPointPoliciesPage = () => {
               {tenantIdLine}
             </p>
           ) : null}
-          {loading ? (
-            <UnifiedLoading type="inline" text="정책을 불러오는 중…" />
-          ) : loadError ? (
+          {loadError ? (
             <SafeErrorDisplay error={loadError} />
           ) : (
             <form

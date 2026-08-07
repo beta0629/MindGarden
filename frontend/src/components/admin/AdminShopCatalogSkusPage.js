@@ -256,7 +256,7 @@ const AdminShopCatalogSkusPage = () => {
   };
 
   return (
-    <AdminCommonLayout title="상품(SKU) 관리">
+    <AdminCommonLayout title="상품(SKU) 관리" loading={loading}>
       <div className="mg-v2-ad-b0kla" data-testid="admin-shop-catalog-page">
         <ContentArea>
           <ContentHeader
@@ -274,9 +274,7 @@ const AdminShopCatalogSkusPage = () => {
             )}
           />
           <ContentSection>
-            {loading ? (
-              <UnifiedLoading type="inline" text="목록을 불러오는 중…" />
-            ) : tableRows.length === 0 ? (
+            {tableRows.length === 0 ? (
               <EmptyState message="등록된 상품이 없습니다." />
             ) : (
               <ListTableView
@@ -308,7 +306,7 @@ const AdminShopCatalogSkusPage = () => {
         )}
       >
         {priceHistoryLoading ? (
-          <UnifiedLoading type="inline" text="가격 이력을 불러오는 중…" />
+          <UnifiedLoading type="inline" />
         ) : priceHistoryTableRows.length === 0 ? (
           <EmptyState message={ADMIN_SHOP_PRICE_HISTORY_EMPTY_MESSAGE} />
         ) : (

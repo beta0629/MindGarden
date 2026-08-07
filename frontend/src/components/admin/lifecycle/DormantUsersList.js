@@ -16,7 +16,6 @@ import {
   buildErpMgButtonClassName,
   ERP_MG_BUTTON_LOADING_TEXT
 } from '../../erp/common/erpMgButtonProps';
-import UnifiedLoading from '../../common/UnifiedLoading';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 const formatDateTime = (value) => {
@@ -41,15 +40,9 @@ const DormantUsersList = ({
 }) => {
   const { t } = useTranslation('admin');
 
+  // 페이지 ACL loading 과 중복 방지 — 목록은 조용히 비움
   if (loading) {
-    return (
-      <UnifiedLoading
-        type="inline"
-        text={t('lifecycle.dormantUsers.pageSubtitle', '휴면 사용자 목록을 불러오는 중...')}
-        variant="spinner"
-        size="medium"
-      />
-    );
+    return null;
   }
 
   if (error) {

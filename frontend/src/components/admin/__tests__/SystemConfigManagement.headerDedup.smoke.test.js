@@ -14,9 +14,9 @@ const PAGE_SUBTITLE = '테넌트·알림·웰니스 등 시스템 옵션을 관�
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
   __esModule: true,
-  default: ({ children, title }) => (
+  default: ({ children, title, loading, loadingText }) => (
     <div data-testid="admin-common-layout" data-title={title ?? ''}>
-      {children}
+      {loading ? <div data-testid="loading">{loadingText}</div> : children}
     </div>
   )
 }));

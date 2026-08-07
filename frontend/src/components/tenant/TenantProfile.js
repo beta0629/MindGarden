@@ -18,7 +18,6 @@ const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
-import UnifiedLoading from '../common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
@@ -40,6 +39,8 @@ import {
 } from '../../constants/tenantApi';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import {
+  TENANT_PROFILE_LOADING_SESSION,
+  TENANT_PROFILE_LOADING_PROFILE,
   TENANT_PROFILE_NOTIFICATIONS_SECTION_TITLE,
   TENANT_PROFILE_KAKAO_ALIMTALK_LABEL,
   TENANT_PROFILE_KAKAO_ALIMTALK_SETTINGS_BUTTON,
@@ -250,21 +251,23 @@ const TenantProfile = () => {
     return <StatusBadge variant={config.variant}>{config.label}</StatusBadge>;
   };
 
+  const pageTitle = t('common:tenant.TenantProfile.t_326425a6');
+
   if (sessionLoading || !isLoggedIn || !user) {
     return (
-      <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
-        <div className="mg-v2-tenant-profile">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="inline" text={t('common:tenant.TenantProfile.t_42f5bfb9')} variant="pulse" />
-          </div>
-        </div>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={pageTitle}
+        loading
+        loadingText={t('common:tenant.TenantProfile.t_42f5bfb9', {
+          defaultValue: TENANT_PROFILE_LOADING_SESSION
+        })}
+      />
     );
   }
 
   if (!tenantId) {
     return (
-      <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
+      <AdminCommonLayout title={pageTitle}>
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <div className="tenant-profile-error">
@@ -279,19 +282,19 @@ const TenantProfile = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
-        <div className="mg-v2-tenant-profile">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="inline" text={t('common:tenant.TenantProfile.t_ca5bf104')} variant="pulse" />
-          </div>
-        </div>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={pageTitle}
+        loading
+        loadingText={t('common:tenant.TenantProfile.t_ca5bf104', {
+          defaultValue: TENANT_PROFILE_LOADING_PROFILE
+        })}
+      />
     );
   }
 
   if (!tenantInfo) {
     return (
-      <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
+      <AdminCommonLayout title={pageTitle}>
         <div className="mg-v2-tenant-profile">
           <div className="mg-v2-ad-b0kla__container">
             <div className="tenant-profile-error">
@@ -305,7 +308,7 @@ const TenantProfile = () => {
   }
 
   return (
-    <AdminCommonLayout title={t('common:tenant.TenantProfile.t_326425a6')}>
+    <AdminCommonLayout title={pageTitle}>
       <div className="mg-v2-tenant-profile">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={t('admin:tenantProfile.header.regionLabel')}>

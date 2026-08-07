@@ -11,7 +11,6 @@ import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
 import StatusBadge from '../common/StatusBadge';
 import MGButton from '../common/MGButton';
 import ActionBar from '../common/ActionBar';
@@ -158,11 +157,11 @@ const PgConfigurationList = () => {
   
   if (sessionLoading || (loading && configurations.length === 0)) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
-        <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
-          <UnifiedLoading type="inline" text={t('common:tenant.PgConfigurationList.t_38760583')} variant="pulse" />
-        </ContentArea>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={t('admin.labels.pgSettingsList')}
+        loading
+        loadingText={t('common:tenant.PgConfigurationList.t_38760583')}
+      />
     );
   }
   

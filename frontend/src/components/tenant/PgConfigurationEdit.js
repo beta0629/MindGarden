@@ -6,7 +6,6 @@ import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import PgConfigurationForm from './PgConfigurationForm';
@@ -76,13 +75,13 @@ const PgConfigurationEdit = () => {
   
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout title={t('admin.actions.editPgSettings')}>
-        <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="inline" text="PG 설정을 불러오는 중..." variant="pulse" />
-          </div>
-        </div>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={t('admin.actions.editPgSettings')}
+        loading
+        loadingText={t('common:tenant.PgConfigurationDetail.t_f7022e97', {
+          defaultValue: 'PG 설정을 불러오는 중...'
+        })}
+      />
     );
   }
 
@@ -102,13 +101,11 @@ const PgConfigurationEdit = () => {
 
   if (config.approvalStatus !== 'PENDING') {
     return (
-      <AdminCommonLayout title={t('admin.actions.editPgSettings')}>
-        <div className="mg-v2-ad-b0kla mg-v2-pg-config-edit">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading type="inline" text="상세 화면으로 이동합니다..." variant="pulse" />
-          </div>
-        </div>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={t('admin.actions.editPgSettings')}
+        loading
+        loadingText="상세 화면으로 이동합니다..."
+      />
     );
   }
 

@@ -229,7 +229,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         if (loading && consultants.length === 0) {
             return (
                 <div aria-busy="true" className="consultant-management-loading">
-                    <UnifiedLoading type="inline" text="상담사 목록을 불러오는 중..." />
+                    <UnifiedLoading type="inline" />
                 </div>
             );
         }

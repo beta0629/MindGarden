@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import UnifiedLoading from '../common/UnifiedLoading';
 import {
   User,
   Package,
@@ -660,7 +661,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
           <section className="mg-v2-mapping-creation-modal__step-content">
             <h3 className="mg-v2-mapping-creation-modal__step-title">{t('admin:mappingCreation.step.selectPackage')}</h3>
             {loadingPackageCodes ? (
-              <div className="mg-v2-mapping-creation-modal__loading">{t('admin:mappingCreation.packageLoading')}</div>
+              <div className="mg-v2-mapping-creation-modal__loading">
+                <UnifiedLoading type="inline" />
+              </div>
             ) : !packageOptions.length || packageOptions.every(p => !p.price || p.price <= 0) ? (
               <div className="mg-v2-mapping-creation-modal__missing-pkg">
                 <AlertCircle size={40} />

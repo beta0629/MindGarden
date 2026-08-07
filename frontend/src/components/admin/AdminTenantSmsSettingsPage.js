@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
-import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
@@ -207,14 +206,22 @@ const AdminTenantSmsSettingsPage = () => {
 
   if (sessionLoading || !allowed) {
     return (
-      <AdminCommonLayout title={t('settings:sms.title')} className="mg-v2-dashboard-layout">
-        <UnifiedLoading text={t('settings:loadingShort')} />
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={t('settings:sms.title')}
+        className="mg-v2-dashboard-layout"
+        loading
+        loadingText={t('settings:loadingShort')}
+      />
     );
   }
 
   return (
-    <AdminCommonLayout title={t('settings:sms.title')} className="mg-v2-dashboard-layout">
+    <AdminCommonLayout
+      title={t('settings:sms.title')}
+      className="mg-v2-dashboard-layout"
+      loading={loading}
+      loadingText={t('settings:sms.loading')}
+    >
       <div className="mg-v2-ad-b0kla mg-v2-tenant-sms-settings" data-testid="admin-tenant-sms-settings">
         <ContentArea>
           <ContentHeader
@@ -222,115 +229,111 @@ const AdminTenantSmsSettingsPage = () => {
             title={t('settings:sms.title')}
             subtitle={t('settings:sms.subtitle')}
           />
-          {loading ? (
-            <UnifiedLoading text={t('settings:sms.loading')} />
-          ) : (
-            <form className="mg-tenant-sms__form" onSubmit={handleSubmit} noValidate>
-              <SafeErrorDisplay error={loadError} />
-              <SafeErrorDisplay error={saveError} />
+          <form className="mg-tenant-sms__form" onSubmit={handleSubmit} noValidate>
+            <SafeErrorDisplay error={loadError} />
+            <SafeErrorDisplay error={saveError} />
 
-              <ContentSection title={t('settings:sms.section.info')}>
-                <p className="mg-tenant-sms__hint">
-                  {t('settings:sms.infoHint')}
+            <ContentSection title={t('settings:sms.section.info')}>
+              <p className="mg-tenant-sms__hint">
+                {t('settings:sms.infoHint')}
+              </p>
+              {tenantIdLine ? (
+                <p className="mg-tenant-sms__readonly-line">
+                  {t('settings:sms.tenantIdLabel')} {tenantIdLine}
                 </p>
-                {tenantIdLine ? (
-                  <p className="mg-tenant-sms__readonly-line">
-                    {t('settings:sms.tenantIdLabel')} {tenantIdLine}
-                  </p>
-                ) : null}
-              </ContentSection>
+              ) : null}
+            </ContentSection>
 
-              <ContentSection title={t('settings:sms.section.enabled')}>
-                <SettingSwitchRow
-                  id={toggleId}
-                  label={t('settings:sms.enabledLabel')}
-                  hint={t('settings:sms.toggleImmediateHint')}
-                  statusLabel={form.smsEnabled
-                    ? t('common:label.on')
-                    : t('common:label.off')}
-                  checked={Boolean(form.smsEnabled)}
-                  onCheckedChange={onSmsEnabledCheckedChange}
-                  disabled={smsEnabledDisabled || saving}
-                  isPending={smsEnabledBusy}
-                  ariaLabel={t('settings:sms.enabledLabel')}
+            <ContentSection title={t('settings:sms.section.enabled')}>
+              <SettingSwitchRow
+                id={toggleId}
+                label={t('settings:sms.enabledLabel')}
+                hint={t('settings:sms.toggleImmediateHint')}
+                statusLabel={form.smsEnabled
+                  ? t('common:label.on')
+                  : t('common:label.off')}
+                checked={Boolean(form.smsEnabled)}
+                onCheckedChange={onSmsEnabledCheckedChange}
+                disabled={smsEnabledDisabled || saving}
+                isPending={smsEnabledBusy}
+                ariaLabel={t('settings:sms.enabledLabel')}
+              />
+            </ContentSection>
+
+            <ContentSection variant="card" title={t('settings:sms.section.integration')}>
+              <div className="mg-tenant-sms__field">
+                <label htmlFor="tenant-sms-provider">{t('settings:sms.fields.provider')}</label>
+                <input
+                  id="tenant-sms-provider"
+                  className="mg-tenant-sms__input"
+                  type="text"
+                  maxLength={PROVIDER_MAX_LEN}
+                  value={form.provider || ''}
+                  onChange={(ev) => handleChange('provider', ev.target.value)}
+                  autoComplete="off"
                 />
-              </ContentSection>
-
-              <ContentSection variant="card" title={t('settings:sms.section.integration')}>
-                <div className="mg-tenant-sms__field">
-                  <label htmlFor="tenant-sms-provider">{t('settings:sms.fields.provider')}</label>
-                  <input
-                    id="tenant-sms-provider"
-                    className="mg-tenant-sms__input"
-                    type="text"
-                    maxLength={PROVIDER_MAX_LEN}
-                    value={form.provider || ''}
-                    onChange={(ev) => handleChange('provider', ev.target.value)}
-                    autoComplete="off"
-                  />
-                </div>
-                <div className="mg-tenant-sms__field">
-                  <label htmlFor="tenant-sms-sender">{t('settings:sms.fields.senderNumber')}</label>
-                  <input
-                    id="tenant-sms-sender"
-                    className="mg-tenant-sms__input"
-                    type="text"
-                    maxLength={SENDER_MAX_LEN}
-                    value={form.senderNumber || ''}
-                    onChange={(ev) => handleChange('senderNumber', ev.target.value)}
-                    autoComplete="off"
-                  />
-                </div>
-              </ContentSection>
-
-              <ContentSection title={t('settings:sms.section.refs')}>
-                <div className="mg-tenant-sms__field">
-                  <label htmlFor="tenant-sms-api-key-ref">{t('settings:sms.fields.apiKeyRef')}</label>
-                  <input
-                    id="tenant-sms-api-key-ref"
-                    className="mg-tenant-sms__input"
-                    type="text"
-                    maxLength={REF_MAX_LEN}
-                    value={form.apiKeyRef || ''}
-                    onChange={(ev) => handleChange('apiKeyRef', ev.target.value)}
-                    autoComplete="off"
-                  />
-                </div>
-                <div className="mg-tenant-sms__field">
-                  <label htmlFor="tenant-sms-api-secret-ref">{t('settings:sms.fields.apiSecretRef')}</label>
-                  <input
-                    id="tenant-sms-api-secret-ref"
-                    className="mg-tenant-sms__input"
-                    type="text"
-                    maxLength={REF_MAX_LEN}
-                    value={form.apiSecretRef || ''}
-                    onChange={(ev) => handleChange('apiSecretRef', ev.target.value)}
-                    autoComplete="off"
-                  />
-                </div>
-              </ContentSection>
-
-              <div className="mg-tenant-sms__actions">
-                <MGButton
-                  type="submit"
-                  className={buildErpMgButtonClassName({ variant: 'primary' })}
-                  disabled={saving || smsEnabledBusy}
-                  loading={saving}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                >
-                  {t('settings:sms.action.saveRefs')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  className={buildErpMgButtonClassName({ variant: 'outline' })}
-                  disabled={saving || loading || smsEnabledBusy}
-                  onClick={() => loadSettings()}
-                >
-                  {t('settings:sms.reload')}
-                </MGButton>
               </div>
-            </form>
-          )}
+              <div className="mg-tenant-sms__field">
+                <label htmlFor="tenant-sms-sender">{t('settings:sms.fields.senderNumber')}</label>
+                <input
+                  id="tenant-sms-sender"
+                  className="mg-tenant-sms__input"
+                  type="text"
+                  maxLength={SENDER_MAX_LEN}
+                  value={form.senderNumber || ''}
+                  onChange={(ev) => handleChange('senderNumber', ev.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+            </ContentSection>
+
+            <ContentSection title={t('settings:sms.section.refs')}>
+              <div className="mg-tenant-sms__field">
+                <label htmlFor="tenant-sms-api-key-ref">{t('settings:sms.fields.apiKeyRef')}</label>
+                <input
+                  id="tenant-sms-api-key-ref"
+                  className="mg-tenant-sms__input"
+                  type="text"
+                  maxLength={REF_MAX_LEN}
+                  value={form.apiKeyRef || ''}
+                  onChange={(ev) => handleChange('apiKeyRef', ev.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="mg-tenant-sms__field">
+                <label htmlFor="tenant-sms-api-secret-ref">{t('settings:sms.fields.apiSecretRef')}</label>
+                <input
+                  id="tenant-sms-api-secret-ref"
+                  className="mg-tenant-sms__input"
+                  type="text"
+                  maxLength={REF_MAX_LEN}
+                  value={form.apiSecretRef || ''}
+                  onChange={(ev) => handleChange('apiSecretRef', ev.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+            </ContentSection>
+
+            <div className="mg-tenant-sms__actions">
+              <MGButton
+                type="submit"
+                className={buildErpMgButtonClassName({ variant: 'primary' })}
+                disabled={saving || smsEnabledBusy}
+                loading={saving}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              >
+                {t('settings:sms.action.saveRefs')}
+              </MGButton>
+              <MGButton
+                type="button"
+                className={buildErpMgButtonClassName({ variant: 'outline' })}
+                disabled={saving || loading || smsEnabledBusy}
+                onClick={() => loadSettings()}
+              >
+                {t('settings:sms.reload')}
+              </MGButton>
+            </div>
+          </form>
         </ContentArea>
       </div>
       <ConfirmEnableModal />

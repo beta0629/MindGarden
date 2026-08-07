@@ -13,7 +13,6 @@ import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/cont
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
-import UnifiedLoading from '../common/UnifiedLoading';
 import ShopProductImageUpload from '../shop/organisms/ShopProductImageUpload';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ADMIN_SHOP_ROUTES } from '../../constants/adminShopApi';
@@ -192,7 +191,7 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
   }, [pendingPreviewUrl, form.thumbnailUrl, form.title, form.catalogCategory]);
 
   return (
-    <AdminCommonLayout title={pageTitle}>
+    <AdminCommonLayout title={pageTitle} loading={loading}>
       <div
         className="mg-v2-ad-b0kla admin-shop-sku-editor"
         data-testid={ADMIN_SHOP_SKU_TEST_IDS.FORM_PAGE}
@@ -224,16 +223,11 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
             )}
           />
           <ContentSection>
-            {loading ? (
-              <div data-testid={ADMIN_SHOP_SKU_TEST_IDS.FORM_LOADING}>
-                <UnifiedLoading type="inline" text="불러오는 중…" />
-              </div>
-            ) : (
-              <div className="admin-shop-sku-editor__sections">
-                <section className="admin-shop-sku-editor__section" aria-labelledby={`${baseId}-image`}>
-                  <h2 id={`${baseId}-image`} className="admin-shop-sku-editor__section-title">
-                    대표 이미지
-                  </h2>
+            <div className="admin-shop-sku-editor__sections">
+              <section className="admin-shop-sku-editor__section" aria-labelledby={`${baseId}-image`}>
+                <h2 id={`${baseId}-image`} className="admin-shop-sku-editor__section-title">
+                  대표 이미지
+                </h2>
                   <ShopProductImageUpload
                     previewUrl={editorPreviewUrl}
                     onFileSelect={(file) => setPendingImageFile(file)}
@@ -346,7 +340,6 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                   </div>
                 </section>
               </div>
-            )}
           </ContentSection>
         </ContentArea>
       </div>

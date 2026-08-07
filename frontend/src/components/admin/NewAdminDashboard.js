@@ -1,5 +1,5 @@
 // import React from 'react';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { useAdminDashboard } from '../../hooks';
 import { DashboardHeader } from '../common';
@@ -71,7 +71,6 @@ const NewAdminDashboard = ({ user: propUser }) => {
             <SimpleLayout>
                 <div className="loading-container" aria-busy="true" aria-live="polite">
                     <UnifiedLoading type="inline" text="관리자 대시보드를 불러오는 중..." />
-                    <p>관리자 대시보드를 불러오는 중...</p>
                 </div>
             </SimpleLayout>
         );

@@ -107,7 +107,11 @@ import notificationManager from '../../../utils/notification';
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
   __esModule: true,
-  default: ({ children }) => <div data-testid="admin-common-layout">{children}</div>
+  default: ({ children, loading, loadingText }) => (
+    <div data-testid="admin-common-layout">
+      {loading ? <div data-testid="unified-loading">{loadingText}</div> : children}
+    </div>
+  )
 }));
 
 jest.mock('../../common/UnifiedLoading', () => ({

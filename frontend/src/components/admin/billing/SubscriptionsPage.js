@@ -162,17 +162,11 @@ const SubscriptionsPage = () => {
 
   if (sessionLoading || !hasAccess) {
     return (
-      <AdminCommonLayout title={pageTitle}>
-        <div className="mg-admin-billing-subscriptions">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading
-              type="inline"
-              text={t('admin:billing.subscriptions.loading')}
-              variant="pulse"
-            />
-          </div>
-        </div>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={pageTitle}
+        loading
+        loadingText={t('admin:billing.subscriptions.loading')}
+      />
     );
   }
 
@@ -204,7 +198,6 @@ const SubscriptionsPage = () => {
                 <UnifiedLoading
                   type="inline"
                   text={t('admin:billing.subscriptions.loading')}
-                  variant="pulse"
                 />
               ) : subscriptions.length === 0 ? (
                 <EmptyState

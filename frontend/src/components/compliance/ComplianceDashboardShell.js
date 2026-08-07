@@ -14,17 +14,25 @@ import { useTranslation } from 'react-i18next';
  * @param {string} props.titleId
  * @param {boolean} props.refreshDisabled
  * @param {() => void} props.onRefresh
+ * @param {boolean} [props.loading]
+ * @param {string} [props.loadingText]
  */
 export function ComplianceDashboardShell({
   children,
   sectionSubtitle,
   titleId,
   refreshDisabled,
-  onRefresh
+  onRefresh,
+  loading = false,
+  loadingText = '컴플라이언스 데이터를 불러오는 중...'
 }) {
   const { t } = useTranslation();
   return (
-    <AdminCommonLayout title="컴플라이언스 관리">
+    <AdminCommonLayout
+      title="컴플라이언스 관리"
+      loading={loading}
+      loadingText={loadingText}
+    >
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel="컴플라이언스 관리 본문">

@@ -27,7 +27,6 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ActionBarButton from '../common/ActionBarButton';
-import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import {
@@ -211,7 +210,11 @@ const MenuPermissionManagement = () => {
     };
 
     return (
-        <AdminCommonLayout title={MENU_PERM_PAGE.TITLE}>
+        <AdminCommonLayout
+            title={MENU_PERM_PAGE.TITLE}
+            loading={loading && !selectedRole}
+            loadingText={MENU_PERM_PAGE.LOADING}
+        >
             <div className="mg-v2-ad-b0kla mg-v2-menu-permission-management">
                 <div className="mg-v2-ad-b0kla__container">
                     <ContentArea ariaLabel={MENU_PERM_PAGE.ARIA_MAIN}>
@@ -228,21 +231,15 @@ const MenuPermissionManagement = () => {
                             }
                         />
                         <main aria-labelledby="menu-permission-management-title">
-                            {loading && !selectedRole ? (
-                                <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
-                                    <UnifiedLoading type="inline" text={MENU_PERM_PAGE.LOADING} />
-                                </div>
-                            ) : (
-                                <MenuPermissionManagementUI
-                                    roles={roles}
-                                    selectedRole={selectedRole}
-                                    menuPermissions={menuPermissions}
-                                    loading={loading}
-                                    error={error}
-                                    onRoleSelect={handleRoleSelect}
-                                    onPermissionChange={handlePermissionChange}
-                                />
-                            )}
+                            <MenuPermissionManagementUI
+                                roles={roles}
+                                selectedRole={selectedRole}
+                                menuPermissions={menuPermissions}
+                                loading={loading}
+                                error={error}
+                                onRoleSelect={handleRoleSelect}
+                                onPermissionChange={handlePermissionChange}
+                            />
                         </main>
                     </ContentArea>
                 </div>

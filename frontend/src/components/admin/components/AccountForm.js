@@ -6,6 +6,7 @@ import {
   ACCOUNT_BUTTON_TEXT
 } from '../../../constants/account';
 import MGButton from '../../common/MGButton';
+import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
@@ -155,27 +156,23 @@ const AccountForm = ({
           </div>
 
           <div className="mg-v2-form-group">
-            <label className="mg-v2-form-checkbox" htmlFor="account-form-primary">
-              <input
-                id="account-form-primary"
-                type="checkbox"
-                checked={formData.isPrimary}
-                onChange={(e) => onFormDataChange('isPrimary', e.target.checked)}
-              />
-              <span>{ACCOUNT_FORM_LABELS.IS_PRIMARY}</span>
-            </label>
+            <SettingSwitchRow
+              id="account-form-primary"
+              label={ACCOUNT_FORM_LABELS.IS_PRIMARY}
+              checked={!!formData.isPrimary}
+              onCheckedChange={(next) => onFormDataChange('isPrimary', next)}
+              ariaLabel={ACCOUNT_FORM_LABELS.IS_PRIMARY}
+            />
           </div>
 
           <div className="mg-v2-form-group">
-            <label className="mg-v2-form-checkbox" htmlFor="account-form-active">
-              <input
-                id="account-form-active"
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => onFormDataChange('isActive', e.target.checked)}
-              />
-              <span>{ACCOUNT_FORM_LABELS.IS_ACTIVE}</span>
-            </label>
+            <SettingSwitchRow
+              id="account-form-active"
+              label={ACCOUNT_FORM_LABELS.IS_ACTIVE}
+              checked={!!formData.isActive}
+              onCheckedChange={(next) => onFormDataChange('isActive', next)}
+              ariaLabel={ACCOUNT_FORM_LABELS.IS_ACTIVE}
+            />
           </div>
 
           <div className="mg-v2-form-actions">

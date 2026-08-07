@@ -20,7 +20,9 @@ jest.mock('../../../../api/admin/smsTemplateApi', () => ({
   getSmsTemplates: jest.fn(),
   updateSmsTemplateTenantOverride: jest.fn(),
   deleteSmsTemplateTenantOverride: jest.fn(),
-  previewSmsTemplate: jest.fn()
+  previewSmsTemplate: jest.fn(),
+  patchGlobalDispatchFlag: jest.fn(),
+  patchTemplateDispatchFlag: jest.fn()
 }));
 
 jest.mock('../../../layout/AdminCommonLayout', () => ({
@@ -115,7 +117,12 @@ jest.mock('react-i18next', () => {
     'smsTemplate.audience.both': '내담자+상담사',
     'smsTemplate.audience.admin': '관리자',
     'smsTemplate.audience.system': '시스템',
-    'smsTemplate.editor.triggerLabel': '발송 조건'
+    'smsTemplate.editor.triggerLabel': '발송 조건',
+    'smsTemplate.globalDispatch.title': '글로벌 SMS 발송',
+    'smsTemplate.globalDispatch.description': '테넌트 전체 자동 SMS 게이트',
+    'smsTemplate.dispatch.badge.on': '켜짐',
+    'smsTemplate.dispatch.badge.off': '꺼짐',
+    'smsTemplate.templateDispatch.label': '템플릿 발송'
   };
   const mockT = (key, fallback) => {
     if (Object.prototype.hasOwnProperty.call(mockSeed, key)) {
@@ -134,7 +141,8 @@ import {
   getSmsTemplates,
   updateSmsTemplateTenantOverride,
   deleteSmsTemplateTenantOverride,
-  previewSmsTemplate
+  previewSmsTemplate,
+  patchTemplateDispatchFlag
 } from '../../../../api/admin/smsTemplateApi';
 
 import SmsTemplateManagementPage from '../SmsTemplateManagementPage';
@@ -291,3 +299,59 @@ describe('SmsTemplateManagementPage', () => {
     ));
   });
 });
+
+describe('SmsTemplateManagementPage — SettingSwitchRow/Switch 스모크', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('글로벌 게이트는 SettingSwitchRow(role=switch) 이고 checkbox 가 없다', async() => {
+    getSmsTemplates.mockResolvedValue({
+      success: true,
+      data: SAMPLE_ITEMS.map((item) => ({
+        ...item,
+        globalDispatchEnabled: false,
+        effectiveDispatchEnabled: false,
+        tenantDispatchEnabled: false
+      }))
+    });
+
+    render(<SmsTemplateManagementPage />);
+    await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
+
+    const globalSw = await screen.findByTestId('sms-template-global-toggle-input');
+    expect(globalSw).toHaveAttribute('role', 'switch');
+    expect(globalSw).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: '글로벌 SMS 발송' })).toBe(globalSw);
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('글로벌 ON 이면 종목 Switch 토글이 patchTemplateDispatchFlag 를 호출한다', async() => {
+    const itemsWithGlobalOn = SAMPLE_ITEMS.map((item) => ({
+      ...item,
+      globalDispatchEnabled: true,
+      effectiveDispatchEnabled: true,
+      tenantDispatchEnabled: true
+    }));
+    getSmsTemplates.mockResolvedValue({ success: true, data: itemsWithGlobalOn });
+    patchTemplateDispatchFlag.mockResolvedValue({ success: true });
+
+    render(<SmsTemplateManagementPage />);
+    await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
+
+    const templateSw = await screen.findByTestId('sms-template-toggle-PAYMENT_COMPLETED');
+    expect(templateSw).toHaveAttribute('role', 'switch');
+    expect(templateSw).toHaveAttribute('aria-checked', 'true');
+    expect(templateSw).not.toBeDisabled();
+
+    fireEvent.click(templateSw);
+
+    await waitFor(() =>
+      expect(patchTemplateDispatchFlag).toHaveBeenCalledWith(
+        'PAYMENT_COMPLETED',
+        { enabled: false }
+      )
+    );
+  });
+});
+

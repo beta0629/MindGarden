@@ -20,7 +20,7 @@ import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import ContentSection from '../dashboard-v2/content/ContentSection';
 import ContentCard from '../dashboard-v2/content/ContentCard';
-import { ViewModeToggle, SafeText, SidePeekShell, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../common';
+import { ViewModeToggle, SafeText, SidePeekShell, SettingSwitchRow, USER_MANAGEMENT_DEFAULT_VIEW_MODE } from '../common';
 import { SearchInput } from '../dashboard-v2/atoms';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -653,10 +653,9 @@ const StaffManagement = ({ embedded = false }) => {
   }, [staffDetailModal.open, staffDetailModal.staff, canEditAdminCounselingDual, roleOf]);
 
   const handleAdminCounselingToggle = useCallback(
-    async(e) => {
+    async(next) => {
       const st = staffDetailModal.staff;
       if (!st?.id || roleOf(st) !== ROLE_ADMIN || !canEditAdminCounselingDual) return;
-      const next = e.target.checked;
       setCounselingDetail((prev) => ({ ...prev, saving: true }));
       try {
         const res = await StandardizedApi.put(adminCounselingEnabledPath(st.id), {
@@ -1056,23 +1055,18 @@ const StaffManagement = ({ embedded = false }) => {
             </div>
             {roleOf(staffDetailModal.staff) === ROLE_ADMIN && canEditAdminCounselingDual && (
               <div>
-                <div className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.COUNSELING_DUAL_ROLE}</div>
-                <p className="mg-v2-form-help">{STAFF_MGMT_HELP.ADMIN_COUNSELING_DUAL_ROLE}</p>
                 {counselingDetail.loading ? (
                   <p className="mg-v2-text-secondary">{STAFF_MGMT_COUNSELING.LOADING_HINT}</p>
                 ) : (
-                  <label className="mg-v2-form-checkbox" htmlFor="staff-detail-admin-counseling-enabled">
-                    <input
-                      id="staff-detail-admin-counseling-enabled"
-                      type="checkbox"
-                      role="switch"
-                      aria-checked={Boolean(counselingDetail.enabled)}
-                      checked={Boolean(counselingDetail.enabled)}
-                      onChange={handleAdminCounselingToggle}
-                      disabled={counselingDetail.saving}
-                    />
-                    <span>{STAFF_MGMT_COUNSELING.TOGGLE_LABEL}</span>
-                  </label>
+                  <SettingSwitchRow
+                    id="staff-detail-admin-counseling-enabled"
+                    label={STAFF_MGMT_FORM_LABEL.COUNSELING_DUAL_ROLE}
+                    hint={STAFF_MGMT_HELP.ADMIN_COUNSELING_DUAL_ROLE}
+                    checked={Boolean(counselingDetail.enabled)}
+                    onCheckedChange={handleAdminCounselingToggle}
+                    disabled={counselingDetail.saving}
+                    ariaLabel={STAFF_MGMT_COUNSELING.TOGGLE_LABEL}
+                  />
                 )}
               </div>
             )}

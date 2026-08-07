@@ -12,6 +12,7 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import UnifiedLoading from '../common/UnifiedLoading';
 import ShopProductImageUpload from '../shop/organisms/ShopProductImageUpload';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -326,24 +327,22 @@ const AdminShopCatalogSkuEditorPage = ({ isNew: isNewProp = false }) => {
                       onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
                     />
 
-                    <label className="mg-v2-checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={form.catalogVisible}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, catalogVisible: e.target.checked }))
-                        }
-                      />
-                      <SafeText>카탈로그 노출</SafeText>
-                    </label>
-                    <label className="mg-v2-checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={form.active}
-                        onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
-                      />
-                      <SafeText>판매 활성</SafeText>
-                    </label>
+                    <SettingSwitchRow
+                      id={`${baseId}-catalog-visible`}
+                      label="카탈로그 노출"
+                      checked={!!form.catalogVisible}
+                      onCheckedChange={(next) =>
+                        setForm((f) => ({ ...f, catalogVisible: next }))
+                      }
+                      ariaLabel="카탈로그 노출"
+                    />
+                    <SettingSwitchRow
+                      id={`${baseId}-active`}
+                      label="판매 활성"
+                      checked={!!form.active}
+                      onCheckedChange={(next) => setForm((f) => ({ ...f, active: next }))}
+                      ariaLabel="판매 활성"
+                    />
                   </div>
                 </section>
               </div>

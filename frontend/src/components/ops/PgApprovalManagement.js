@@ -26,6 +26,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { PG_PROVIDER_NAMES } from '../../constants/billing';
@@ -634,18 +635,14 @@ const PgApprovalManagement = () => {
               </div>
 
               <div className="approval-options">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={approvalForm.testConnection}
-                    onChange={(e) => setApprovalForm(prev => ({ ...prev, testConnection: e.target.checked }))}
-                    className="form-checkbox"
-                  />
-                  <span>{t('common:ops.PgApprovalManagement.t_dc9d5407')}</span>
-                </label>
-                <small className="help-text">
-                  {t('common:ops.PgApprovalManagement.t_ec39cccf')}
-                </small>
+                <SettingSwitchRow
+                  id="pg-approval-test-connection"
+                  label={t('common:ops.PgApprovalManagement.t_dc9d5407')}
+                  hint={t('common:ops.PgApprovalManagement.t_ec39cccf')}
+                  checked={!!approvalForm.testConnection}
+                  onCheckedChange={(next) => setApprovalForm((prev) => ({ ...prev, testConnection: next }))}
+                  ariaLabel={t('common:ops.PgApprovalManagement.t_dc9d5407')}
+                />
 
                 {testResult && testResult.configId === selectedConfig.configId && (
                   <div className={`test-result-preview ${testResult.success ? 'success' : 'error'}`}>

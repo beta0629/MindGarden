@@ -8,6 +8,7 @@
 import React from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
+import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { USER_ROLES } from '../../../constants/roles';
@@ -178,26 +179,20 @@ const SystemNotificationFormModal = ({
             </div>
 
             <div className="mg-v2-form-group mg-v2-space-y-md">
-              <div className="mg-v2-checkbox-group">
-                <label className="mg-v2-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.isImportant}
-                    onChange={(e) => setFormData({ ...formData, isImportant: e.target.checked })}
-                    aria-label="중요"
-                  />
-                  <span className="mg-v2-checkbox-text">중요</span>
-                </label>
-                <label className="mg-v2-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.isUrgent}
-                    onChange={(e) => setFormData({ ...formData, isUrgent: e.target.checked })}
-                    aria-label={t('admin.labels.urgent')}
-                  />
-                  <span className="mg-v2-checkbox-text">{t('admin.labels.urgent')}</span>
-                </label>
-              </div>
+              <SettingSwitchRow
+                id="admin-notice-form-important"
+                label="중요"
+                checked={!!formData.isImportant}
+                onCheckedChange={(next) => setFormData({ ...formData, isImportant: next })}
+                ariaLabel="중요"
+              />
+              <SettingSwitchRow
+                id="admin-notice-form-urgent"
+                label={t('admin.labels.urgent')}
+                checked={!!formData.isUrgent}
+                onCheckedChange={(next) => setFormData({ ...formData, isUrgent: next })}
+                ariaLabel={t('admin.labels.urgent')}
+              />
             </div>
 
             <div className="mg-v2-form-group mg-v2-space-y-md">

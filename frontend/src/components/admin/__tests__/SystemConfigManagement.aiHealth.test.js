@@ -48,20 +48,44 @@ jest.mock('../../../utils/commonCodeApi', () => ({
   getCommonCodes: jest.fn()
 }));
 
-jest.mock('react-i18next', () => ({
-  __esModule: true,
-  useTranslation: () => ({
-    t: (key, defOrOpts, opts) => {
-      const hasDefault = typeof defOrOpts === 'string';
-      const fallback = hasDefault ? defOrOpts : key;
-      const variables = hasDefault ? (opts || {}) : (defOrOpts || {});
-      return Object.entries(variables).reduce(
-        (acc, [name, value]) => acc.replace(new RegExp(`{{${name}}}`, 'g'), String(value)),
-        fallback
-      );
+jest.mock('react-i18next', () => {
+  // eslint-disable-next-line global-require
+  const systemConfigKo = require('../../../locales/ko/systemConfig.json');
+
+  const lookup = (obj, path) => {
+    if (!path || !obj) {
+      return undefined;
     }
-  })
-}));
+    return path.split('.').reduce((acc, part) => {
+      if (acc == null || typeof acc !== 'object') {
+        return undefined;
+      }
+      return acc[part];
+    }, obj);
+  };
+
+  const t = (key, defOrOpts, opts) => {
+    const hasDefault = typeof defOrOpts === 'string';
+    const variables = hasDefault
+      ? (opts || {})
+      : (typeof defOrOpts === 'object' && defOrOpts !== null ? defOrOpts : {});
+    const stripped = typeof key === 'string' && key.startsWith('systemConfig.')
+      ? key.slice('systemConfig.'.length)
+      : key;
+    const fromResource = lookup(systemConfigKo, stripped);
+    const fallback = hasDefault
+      ? defOrOpts
+      : (typeof fromResource === 'string' ? fromResource : key);
+    return Object.entries(variables).reduce(
+      (acc, [name, value]) => acc.replace(new RegExp(`{{${name}}}`, 'g'), String(value)),
+      fallback
+    );
+  };
+  return {
+    __esModule: true,
+    useTranslation: () => ({ t })
+  };
+});
 
 // 세션 mock — 기본은 세션 복원 완료 + 로그인 상태.
 const sessionState = {
@@ -236,9 +260,14 @@ describe('SystemConfigManagement — PR-4 AI 섹션 분리 후 회귀 검증', (
     renderPage();
     await waitForLoaded();
 
-    expect(screen.getByLabelText(/자동 발송 활성화/)).toBeInTheDocument();
+    // SettingSwitchRow(Switch Atom) — checkbox/label 이 아니라 role=switch
+    const autoSendSwitch = screen.getByTestId('wellness-auto-send-toggle');
+    expect(autoSendSwitch).toHaveAttribute('role', 'switch');
+    expect(autoSendSwitch).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText('자동 발송 활성화')).toBeInTheDocument();
     expect(screen.getByLabelText(/발송 시간/)).toBeInTheDocument();
     expect(screen.getByLabelText(/대상 역할/)).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 });
 

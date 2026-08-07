@@ -24,6 +24,7 @@ jest.mock('../../../utils/ajax', () => ({
   apiDelete: jest.fn().mockResolvedValue({ success: true }),
   apiPostFormData: jest.fn().mockResolvedValue({ success: true })
 }));
+import { apiGet, apiPost } from '../../../utils/ajax';
 
 jest.mock('../../../utils/standardizedApi', () => ({
   __esModule: true,
@@ -43,20 +44,42 @@ jest.mock('../../../utils/commonCodeApi', () => ({
   getCommonCodes: jest.fn().mockResolvedValue([])
 }));
 
-jest.mock('react-i18next', () => ({
-  __esModule: true,
-  useTranslation: () => ({
-    t: (key, defOrOpts, opts) => {
-      const hasDefault = typeof defOrOpts === 'string';
-      const fallback = hasDefault ? defOrOpts : key;
-      const variables = hasDefault ? (opts || {}) : (defOrOpts || {});
-      return Object.entries(variables).reduce(
-        (acc, [name, value]) => acc.replace(new RegExp(`{{${name}}}`, 'g'), String(value)),
-        fallback
-      );
+jest.mock('react-i18next', () => {
+  // eslint-disable-next-line global-require
+  const systemConfigKo = require('../../../locales/ko/systemConfig.json');
+
+  const lookup = (obj, path) => {
+    if (!path || !obj) {
+      return undefined;
     }
-  })
-}));
+    return path.split('.').reduce((acc, part) => {
+      if (acc == null || typeof acc !== 'object') {
+        return undefined;
+      }
+      return acc[part];
+    }, obj);
+  };
+
+  const t = (key, defOrOpts, opts) => {
+    const hasDefault = typeof defOrOpts === 'string';
+    const variables = hasDefault ? (opts || {}) : (typeof defOrOpts === 'object' && defOrOpts !== null ? defOrOpts : {});
+    const stripped = typeof key === 'string' && key.startsWith('systemConfig.')
+      ? key.slice('systemConfig.'.length)
+      : key;
+    const fromResource = lookup(systemConfigKo, stripped);
+    const fallback = hasDefault
+      ? defOrOpts
+      : (typeof fromResource === 'string' ? fromResource : key);
+    return Object.entries(variables).reduce(
+      (acc, [name, value]) => acc.replace(new RegExp(`{{${name}}}`, 'g'), String(value)),
+      fallback
+    );
+  };
+  return {
+    __esModule: true,
+    useTranslation: () => ({ t })
+  };
+});
 
 const sessionState = {
   user: { id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-pr2-toggle' },
@@ -213,6 +236,8 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     sessionState.hasCheckedSession = true;
     sessionState.isLoggedIn = true;
     sessionState.user = { id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-pr2-toggle' };
+    apiGet.mockResolvedValue({ success: true, configValue: '' });
+    apiPost.mockResolvedValue({ success: true });
     mockStandardizedApi.get.mockResolvedValue(buildFlagsResponse());
     mockStandardizedApi.put.mockResolvedValue({ success: true, flag: null });
   });
@@ -379,5 +404,41 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     );
     const wellnessSwitch = await findToggleByLabel('웰니스 일일 팁');
     expect(wellnessSwitch).toHaveAttribute('aria-checked', 'false');
+  });
+});
+
+describe('SystemConfigManagement — 세션/웰니스 SettingSwitchRow (checkbox 아님)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    sessionState.hasCheckedSession = true;
+    sessionState.isLoggedIn = true;
+    sessionState.user = { id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-pr2-toggle' };
+    apiGet.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('duplicate-login')) {
+        return Promise.resolve({ success: true, configValue: 'true' });
+      }
+      if (typeof url === 'string' && url.includes('WELLNESS_AUTO_SEND')) {
+        return Promise.resolve({ success: true, configValue: 'false' });
+      }
+      return Promise.resolve({ success: true, configValue: '' });
+    });
+    apiPost.mockResolvedValue({ success: true });
+    mockStandardizedApi.get.mockResolvedValue(buildFlagsResponse());
+    mockStandardizedApi.put.mockResolvedValue({ success: true, flag: null });
+  });
+
+  it('중복 로그인·웰니스 자동발송이 role=switch 이며 checkbox 가 아니다', async() => {
+    renderPage();
+    await waitForLoaded();
+
+    const dupToggle = await screen.findByTestId('duplicate-login-allowed-toggle');
+    expect(dupToggle).toHaveAttribute('role', 'switch');
+    expect(dupToggle).toHaveAttribute('aria-checked', 'true');
+
+    const wellnessToggle = screen.getByTestId('wellness-auto-send-toggle');
+    expect(wellnessToggle).toHaveAttribute('role', 'switch');
+    expect(wellnessToggle).toHaveAttribute('aria-checked', 'false');
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 });

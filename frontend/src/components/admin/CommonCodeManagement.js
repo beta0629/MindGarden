@@ -9,6 +9,7 @@ import {
     getLegacyCodeGroupsList
 } from '../../utils/commonCodeApi';
 import CustomSelect from '../common/CustomSelect';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import {
     getParentCodeGroupForSubcategory,
     isSubcategoryCodeGroup
@@ -899,14 +900,14 @@ const CommonCodeManagement = () => {
                                                         className="mg-v2-ad-b0kla__form-input"
                                                     />
                                                 </div>
-                                                <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--inline-check">
-                                                    <input
-                                                        type="checkbox"
+                                                <div className="mg-v2-ad-b0kla__form-group">
+                                                    <SettingSwitchRow
                                                         id="isActiveCheckbox"
-                                                        checked={ newCodeData.isActive }
-                                                        onChange={ (e) => setNewCodeData({ ...newCodeData, isActive: e.target.checked })}
+                                                        label={t('admin:commonCode.ui.labelActiveState')}
+                                                        checked={!!newCodeData.isActive}
+                                                        onCheckedChange={(next) => setNewCodeData({ ...newCodeData, isActive: next })}
+                                                        ariaLabel={t('admin:commonCode.ui.labelActiveState')}
                                                     />
-                                                    <label htmlFor="isActiveCheckbox" className="mg-v2-ad-b0kla__form-label mg-v2-ad-b0kla__form-label--clickable">{t('admin:commonCode.ui.labelActiveState')}</label>
                                                 </div>
                                             </div>
                                             <div className="mg-v2-ad-b0kla__form-actions">

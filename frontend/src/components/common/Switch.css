@@ -1,0 +1,48 @@
+/**
+ * Switch Atom — NotificationScheduler 기존 스위치와 시각 일치
+ * @author CoreSolution
+ * @since 2026-08-07
+ */
+
+.mg-v2-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--mg-color-border-default);
+  background: var(--mg-color-surface-muted, var(--mg-glass-bg-light));
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.mg-v2-switch:focus-visible {
+  outline: 2px solid var(--mg-color-primary-main);
+  outline-offset: 2px;
+}
+
+.mg-v2-switch--on {
+  background: var(--mg-color-primary-main);
+  border-color: var(--mg-color-primary-main);
+}
+
+.mg-v2-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.mg-v2-switch__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mg-color-background-main, var(--mg-glass-bg-medium));
+  transition: transform 160ms ease;
+}
+
+.mg-v2-switch--on .mg-v2-switch__knob {
+  transform: translateX(20px);
+}

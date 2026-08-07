@@ -1,9 +1,9 @@
 /**
- * 시스템 설정 관리 페이지 — 웰니스 시스템 설정 전담.
+ * 시스템 설정 관리 페이지 — 웰니스·세션 보안·알림 스케줄러 토글.
  *
  * 트랙 B PR-4 (2026-05-24): AI provider 라디오 + 4종 키 입력 폼은 분리된
  * `AiProviderManagementPage` (`/admin/system/ai-providers`) 로 이전됨.
- * 본 페이지는 **웰니스 자동 발송·발송 시간·대상 역할** 만 잔류 (사용자 컨펌 Q3=(a)).
+ * 본 페이지는 웰니스 자동 발송·테넌트 세션 보안(중복 로그인)·알림 스케줄러 플래그를 관리한다.
  *
  * @author Core Solution
  * @author MindGarden
@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Database, Cpu, ExternalLink, BellRing } from 'lucide-react';
+import { Database, Cpu, ExternalLink, BellRing, Shield } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
@@ -26,6 +26,7 @@ import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ChipMultiSelect from '../common/ChipMultiSelect';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import ActionBar from '../common/ActionBar';
 import ActionBarButton from '../common/ActionBarButton';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -36,6 +37,21 @@ import './SystemConfigManagement.css';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED = '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME = '/api/v1/admin/system-config/WELLNESS_SEND_TIME';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES = '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES';
+
+/**
+ * 세션 보안 플래그 키 SSOT — 백엔드 {@code SessionSecurityFlagKeys} 와 1:1.
+ */
+const SESSION_SECURITY_FLAG_KEYS = Object.freeze({
+  DUPLICATE_LOGIN_ALLOWED: 'security.session.duplicate-login.allowed'
+});
+
+const SESSION_SECURITY_CATEGORY = 'SECURITY';
+
+const API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED =
+  `/api/v1/admin/system-config/${encodeURIComponent(SESSION_SECURITY_FLAG_KEYS.DUPLICATE_LOGIN_ALLOWED)}`;
+
+/** 테넌트 행 없을 때 UI 기본값 — 백엔드 DEFAULT_ALLOWED=false 와 정합 */
+const DEFAULT_DUPLICATE_LOGIN_ALLOWED = false;
 
 /**
  * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 어드민 토글 API 베이스 경로.
@@ -133,6 +149,7 @@ const SystemConfigManagement = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
+  const [duplicateLoginAllowed, setDuplicateLoginAllowed] = useState(DEFAULT_DUPLICATE_LOGIN_ALLOWED);
   const [roleCodes, setRoleCodes] = useState([]);
   const [rolesLoading, setRolesLoading] = useState(true);
 
@@ -332,16 +349,22 @@ const SystemConfigManagement = () => {
   const loadConfigs = useCallback(async() => {
     try {
       setLoading(true);
-      const [wEnabled, wTime, wRoles] = await Promise.all([
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED).catch(() => null),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME).catch(() => null),
-        apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES).catch(() => null)
+      const [wEnabled, wTime, wRoles, dupLogin] = await Promise.all([
+        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED)).catch(() => null),
+        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME)).catch(() => null),
+        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES)).catch(() => null),
+        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED)).catch(() => null)
       ]);
       setWellness({
         wellnessAutoSendEnabled: wEnabled?.success ? wEnabled.configValue === 'true' : DEFAULT_WELLNESS.wellnessAutoSendEnabled,
         wellnessSendTime: wTime?.success ? wTime.configValue : DEFAULT_WELLNESS.wellnessSendTime,
         wellnessTargetRoles: wRoles?.success ? wRoles.configValue : DEFAULT_WELLNESS.wellnessTargetRoles
       });
+      setDuplicateLoginAllowed(
+        dupLogin?.success && typeof dupLogin.configValue === 'string' && dupLogin.configValue.length > 0
+          ? dupLogin.configValue === 'true'
+          : DEFAULT_DUPLICATE_LOGIN_ALLOWED
+      );
     } catch (error) {
       console.error('설정 로드 실패:', error);
       notificationManager.show(t('systemConfig.error.load'), 'error');
@@ -389,6 +412,11 @@ const SystemConfigManagement = () => {
           configValue: wellness.wellnessTargetRoles,
           description: t('systemConfig.wellness.descTargetRoles'),
           category: 'WELLNESS'
+        }),
+        apiPost(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED, {
+          configValue: String(duplicateLoginAllowed),
+          description: t('systemConfig.sessionSecurity.descDuplicateLogin'),
+          category: SESSION_SECURITY_CATEGORY
         })
       ]);
       notificationManager.show(t('systemConfig.wellness.success.save'), 'success');
@@ -448,6 +476,38 @@ const SystemConfigManagement = () => {
               onToggleRequest={handleSchedulerToggleRequest}
             />
 
+            {/* 세션 보안 — 테넌트별 중복 로그인 허용 */}
+            <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section">
+              <h2 className="mg-v2-ad-b0kla__section-title">
+                <Shield size={20} aria-hidden="true" />
+                {t('systemConfig.sessionSecurity.title')}
+              </h2>
+              <p className="mg-v2-system-config__section-desc">
+                {t('systemConfig.sessionSecurity.sectionDesc')}
+              </p>
+              <div className="config-grid">
+                <div className="config-item">
+                  <SettingSwitchRow
+                    label={t('systemConfig.sessionSecurity.duplicateLoginAllowed')}
+                    hint={t('systemConfig.sessionSecurity.duplicateLoginAllowedHint')}
+                    statusLabel={duplicateLoginAllowed
+                      ? t('systemConfig.notificationScheduler.status.on')
+                      : t('systemConfig.notificationScheduler.status.off')}
+                    checked={duplicateLoginAllowed}
+                    onCheckedChange={setDuplicateLoginAllowed}
+                    data-testid="duplicate-login-allowed-toggle"
+                    ariaLabel={duplicateLoginAllowed
+                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                        label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
+                      })
+                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                        label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
+                      })}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* AI 프로바이더 관리 안내 카드 — 이전 사용자 동선 보존 */}
             <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section mg-v2-system-config__section--notice">
               <h2 className="mg-v2-ad-b0kla__section-title">
@@ -480,16 +540,26 @@ const SystemConfigManagement = () => {
               </p>
               <div className="config-grid">
                 <div className="config-item">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={wellness.wellnessAutoSendEnabled}
-                      onChange={(e) => setWellness((prev) => ({ ...prev, wellnessAutoSendEnabled: e.target.checked }))}
-                    />
-                    {' '}
-                    {t('systemConfig.wellness.autoSendEnabled')}
-                  </label>
-                  <small className="help-text">{t('systemConfig.wellness.autoSendHint')}</small>
+                  <SettingSwitchRow
+                    label={t('systemConfig.wellness.autoSendEnabled')}
+                    hint={t('systemConfig.wellness.autoSendHint')}
+                    statusLabel={wellness.wellnessAutoSendEnabled
+                      ? t('systemConfig.notificationScheduler.status.on')
+                      : t('systemConfig.notificationScheduler.status.off')}
+                    checked={wellness.wellnessAutoSendEnabled}
+                    onCheckedChange={(next) => setWellness((prev) => ({
+                      ...prev,
+                      wellnessAutoSendEnabled: next
+                    }))}
+                    data-testid="wellness-auto-send-toggle"
+                    ariaLabel={wellness.wellnessAutoSendEnabled
+                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                        label: t('systemConfig.wellness.autoSendEnabled')
+                      })
+                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                        label: t('systemConfig.wellness.autoSendEnabled')
+                      })}
+                  />
                 </div>
                 <div className="config-item">
                   <label htmlFor="sendTime">{t('systemConfig.wellness.sendTime')}</label>
@@ -544,7 +614,7 @@ const SystemConfigManagement = () => {
  * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 섹션 (presentational).
  *
  * 부모로부터 i18n {@code t}, 플래그 dict, 로딩/저장 상태, 토글 요청 핸들러를 주입받아 렌더링한다.
- * 4 종 라벨/힌트는 i18n 키로 정적 정의하며, role="switch" + aria-checked 로 접근성을 보장한다.
+ * 4 종 라벨/힌트는 i18n 키로 정적 정의하며, 공통 SettingSwitchRow(Switch Atom) 로 접근성을 보장한다.
  *
  * @param {object} props
  * @param {(key: string, fallback: string, vars?: object) => string} props.t i18n 함수
@@ -635,30 +705,16 @@ const NotificationSchedulerSection = ({ t, flags, loading, savingKey, onToggleRe
                 key={item.key}
                 className="mg-v2-notification-scheduler__item"
               >
-                <div className="mg-v2-notification-scheduler__item-main">
-                  <p className="mg-v2-notification-scheduler__item-label">{label}</p>
-                  <p className="mg-v2-notification-scheduler__item-hint">{hint}</p>
-                  <p className="mg-v2-notification-scheduler__item-meta">{lastUpdatedText}</p>
-                </div>
-                <div className="mg-v2-notification-scheduler__item-control">
-                  <span
-                    className={`mg-v2-notification-scheduler__status mg-v2-notification-scheduler__status--${value ? 'on' : 'off'}`}
-                    role="status"
-                  >
-                    {statusLabel}
-                  </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={value}
-                    aria-label={ariaLabel}
-                    disabled={isSaving}
-                    className={`mg-v2-notification-scheduler__switch mg-v2-notification-scheduler__switch--${value ? 'on' : 'off'}`}
-                    onClick={() => onToggleRequest(item.key, label, value)}
-                  >
-                    <span className="mg-v2-notification-scheduler__switch-knob" aria-hidden="true" />
-                  </button>
-                </div>
+                <SettingSwitchRow
+                  label={label}
+                  hint={hint}
+                  meta={lastUpdatedText}
+                  statusLabel={statusLabel}
+                  checked={value}
+                  disabled={isSaving}
+                  ariaLabel={ariaLabel}
+                  onCheckedChange={() => onToggleRequest(item.key, label, value)}
+                />
               </li>
             );
           })}

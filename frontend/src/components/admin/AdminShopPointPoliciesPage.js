@@ -12,6 +12,7 @@ import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/cont
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ADMIN_SHOP_API } from '../../constants/adminShopApi';
@@ -24,6 +25,7 @@ import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { useTranslation } from 'react-i18next';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 
@@ -94,6 +96,7 @@ function buildPatchBody(form) {
 
 const AdminShopPointPoliciesPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const baseId = useId();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
@@ -231,22 +234,26 @@ const AdminShopPointPoliciesPage = () => {
                 value={form.holdTtlMinutes}
                 onChange={(e) => setForm((f) => ({ ...f, holdTtlMinutes: e.target.value }))}
               />
-              <label className="mg-v2-checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={form.allowPgMix}
-                  onChange={(e) => setForm((f) => ({ ...f, allowPgMix: e.target.checked }))}
-                />
-                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPgMix}
-              </label>
-              <label className="mg-v2-checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={form.allowPointsOnly}
-                  onChange={(e) => setForm((f) => ({ ...f, allowPointsOnly: e.target.checked }))}
-                />
-                {ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPointsOnly}
-              </label>
+              <SettingSwitchRow
+                id={`${baseId}-allow-pg-mix`}
+                label={ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPgMix}
+                statusLabel={form.allowPgMix
+                  ? t('common:label.on')
+                  : t('common:label.off')}
+                checked={form.allowPgMix}
+                onCheckedChange={(next) => setForm((f) => ({ ...f, allowPgMix: next }))}
+                ariaLabel={ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPgMix}
+              />
+              <SettingSwitchRow
+                id={`${baseId}-allow-points-only`}
+                label={ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPointsOnly}
+                statusLabel={form.allowPointsOnly
+                  ? t('common:label.on')
+                  : t('common:label.off')}
+                checked={form.allowPointsOnly}
+                onCheckedChange={(next) => setForm((f) => ({ ...f, allowPointsOnly: next }))}
+                ariaLabel={ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPointsOnly}
+              />
               <div className="admin-shop-point-policies__actions">
                 <MGButton
                   type="submit"

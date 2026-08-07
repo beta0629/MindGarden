@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import MGButton from '../../common/MGButton';
 import BadgeSelect from '../../common/BadgeSelect';
+import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
@@ -508,18 +509,17 @@ const TestNotificationForm = ({ onSentSuccess }) => {
           );
         })}
       </select>
-      <label className="mg-test-notif-form__toggle">
-        <input
-          type="checkbox"
-          checked={templatesLive}
-          onChange={(e) => {
-            setTemplatesLive(e.target.checked);
-            setTemplateCode('');
-            setTemplateParams({});
-          }}
-        />
-        <span>{t('testNotification.alimtalk.liveToggle')}</span>
-      </label>
+      <SettingSwitchRow
+        id="test-notif-templates-live"
+        label={t('testNotification.alimtalk.liveToggle')}
+        checked={templatesLive}
+        onCheckedChange={(next) => {
+          setTemplatesLive(next);
+          setTemplateCode('');
+          setTemplateParams({});
+        }}
+        ariaLabel={t('testNotification.alimtalk.liveToggle')}
+      />
       {selectedTemplate && selectedTemplate.solapiTemplateIdPresent === false && (
         <p className="mg-test-notif-form__hint mg-test-notif-form__hint--warn">
           {t('testNotification.alimtalk.missingMappingHint')}

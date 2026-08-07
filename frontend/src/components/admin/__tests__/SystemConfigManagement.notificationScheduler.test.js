@@ -231,6 +231,21 @@ const findToggleByLabel = async(labelText) => {
 };
 
 describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토글 섹션', () => {
+  const installConfigAndFlagsGet = (flagsPayload = buildFlagsResponse()) => {
+    mockStandardizedApi.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('notification-scheduler')) {
+        return Promise.resolve(
+          typeof flagsPayload === 'function' ? flagsPayload() : flagsPayload
+        );
+      }
+      return Promise.resolve({ success: true, configValue: '' });
+    });
+  };
+
+  const countFlagsGets = () => mockStandardizedApi.get.mock.calls.filter(
+    ([url]) => typeof url === 'string' && url.includes('notification-scheduler')
+  ).length;
+
   beforeEach(() => {
     jest.clearAllMocks();
     sessionState.hasCheckedSession = true;
@@ -238,16 +253,16 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     sessionState.user = { id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-pr2-toggle' };
     apiGet.mockResolvedValue({ success: true, configValue: '' });
     apiPost.mockResolvedValue({ success: true });
-    mockStandardizedApi.get.mockResolvedValue(buildFlagsResponse());
+    installConfigAndFlagsGet();
     mockStandardizedApi.put.mockResolvedValue({ success: true, flag: null });
   });
 
-  it('마운트 시 GET /api/v1/admin/notification-scheduler/flags 1 회 호출', async() => {
+  it('마운트 시 GET /api/v1/admin/notification-scheduler/flags 를 호출한다', async() => {
     renderPage();
     await waitForLoaded();
 
     expect(mockStandardizedApi.get).toHaveBeenCalledWith('/api/v1/admin/notification-scheduler/flags');
-    expect(mockStandardizedApi.get).toHaveBeenCalledTimes(1);
+    expect(countFlagsGets()).toBe(1);
   });
 
   it('4 종 토글 라벨이 모두 렌더링되고 status(켜짐/꺼짐) 도 동기화된다', async() => {
@@ -266,7 +281,7 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
   });
 
   it('마지막 변경자/시각이 켜짐 항목에 포함되고, 변경 이력 없을 때는 fallback 표시', async() => {
-    mockStandardizedApi.get.mockResolvedValueOnce(
+    installConfigAndFlagsGet(
       buildFlagsResponse({
         [FLAG_KEY_WORKFLOW]: { updatedBy: '', updatedAt: '' }
       })
@@ -293,13 +308,21 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
         updatedAt: '2026-05-25T10:00:00'
       }
     });
-    mockStandardizedApi.get
-      .mockResolvedValueOnce(buildFlagsResponse())
-      .mockResolvedValueOnce(
-        buildFlagsResponse({
-          [FLAG_KEY_RECORD]: { value: true, updatedAt: '2026-05-25T10:00:00' }
-        })
-      );
+    let flagsCall = 0;
+    mockStandardizedApi.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('notification-scheduler')) {
+        flagsCall += 1;
+        if (flagsCall === 1) {
+          return Promise.resolve(buildFlagsResponse());
+        }
+        return Promise.resolve(
+          buildFlagsResponse({
+            [FLAG_KEY_RECORD]: { value: true, updatedAt: '2026-05-25T10:00:00' }
+          })
+        );
+      }
+      return Promise.resolve({ success: true, configValue: '' });
+    });
 
     renderPage();
     await waitForLoaded();
@@ -320,7 +343,7 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
       );
     });
     await waitFor(() => {
-      expect(mockStandardizedApi.get).toHaveBeenCalledTimes(2);
+      expect(countFlagsGets()).toBe(2);
     });
     expect(notificationShow).toHaveBeenCalledWith(
       '스케줄러 플래그가 저장되었습니다.',
@@ -358,23 +381,27 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     });
   });
 
-  it('취소 시 모달이 닫히고 PUT 호출이 발생하지 않는다', async() => {
+  it('취소 시 모달이 닫히고 PUT 미호출·aria-checked 유지 (optimistic false)', async() => {
     renderPage();
     await waitForLoaded();
 
     const wellnessSwitch = await findToggleByLabel('웰니스 일일 팁');
+    expect(wellnessSwitch).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(wellnessSwitch);
 
     const dialog = await screen.findByRole('dialog', { name: /자동 발송 토글 확인/ });
+    // confirm 전 UI 미변경 (optimistic:false) — 모달 subtitle 과 라벨 중복 시 switch 참조 재사용
+    expect(wellnessSwitch).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(within(dialog).getByText('취소'));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: /자동 발송 토글 확인/ })).not.toBeInTheDocument();
     });
     expect(mockStandardizedApi.put).not.toHaveBeenCalled();
+    expect(wellnessSwitch).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('PUT 실패 시 에러 토스트 + 모달은 유지 (재시도/취소 결정 가능)', async() => {
+  it('PUT 실패 시 에러 토스트 + 확인 모달은 닫힌다 (저장은 훅이 재시도 가능)', async() => {
     mockStandardizedApi.put.mockRejectedValueOnce(
       Object.assign(new Error('test'), { data: { message: '백엔드 거부' } })
     );
@@ -389,11 +416,16 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     await waitFor(() => {
       expect(notificationShow).toHaveBeenCalledWith('백엔드 거부', 'error');
     });
-    expect(screen.queryByRole('dialog', { name: /자동 발송 토글 확인/ })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: /자동 발송 토글 확인/ })).not.toBeInTheDocument();
   });
 
   it('초기 GET 실패 시 에러 토스트 + 토글은 fallback OFF 표시', async() => {
-    mockStandardizedApi.get.mockRejectedValueOnce(new Error('network'));
+    mockStandardizedApi.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('notification-scheduler')) {
+        return Promise.reject(new Error('network'));
+      }
+      return Promise.resolve({ success: true, configValue: '' });
+    });
 
     renderPage();
     await waitForLoaded();
@@ -413,7 +445,10 @@ describe('SystemConfigManagement — 세션/웰니스 SettingSwitchRow (checkbox
     sessionState.hasCheckedSession = true;
     sessionState.isLoggedIn = true;
     sessionState.user = { id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-pr2-toggle' };
-    apiGet.mockImplementation((url) => {
+    mockStandardizedApi.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('notification-scheduler')) {
+        return Promise.resolve(buildFlagsResponse());
+      }
       if (typeof url === 'string' && url.includes('duplicate-login')) {
         return Promise.resolve({ success: true, configValue: 'true' });
       }
@@ -422,8 +457,8 @@ describe('SystemConfigManagement — 세션/웰니스 SettingSwitchRow (checkbox
       }
       return Promise.resolve({ success: true, configValue: '' });
     });
+    apiGet.mockResolvedValue({ success: true, configValue: '' });
     apiPost.mockResolvedValue({ success: true });
-    mockStandardizedApi.get.mockResolvedValue(buildFlagsResponse());
     mockStandardizedApi.put.mockResolvedValue({ success: true, flag: null });
   });
 

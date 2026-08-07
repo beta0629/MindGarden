@@ -19,10 +19,14 @@ import { ADMIN_SHOP_API } from '../../constants/adminShopApi';
 import {
   ADMIN_SHOP_HOLD_TTL_DEFAULT_MINUTES,
   ADMIN_SHOP_POINT_POLICY_FIELD_LABELS,
-  ADMIN_SHOP_POINT_POLICY_KEYS
+  ADMIN_SHOP_POINT_POLICY_KEYS,
+  ADMIN_SHOP_POINT_POLICY_TOGGLE_IMMEDIATE_HINT,
+  ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_FAIL,
+  ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_SUCCESS
 } from '../../constants/adminShopPointPolicies';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
+import { useSettingToggleSave } from '../../hooks';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
@@ -80,18 +84,79 @@ function parseMinor(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function buildPatchBody(form) {
+/** 수치 필드만 — boolean 토글은 즉시 PATCH 경로와 분리 */
+function buildNumericPatchBody(form) {
   return {
     policies: {
       [ADMIN_SHOP_POINT_POLICY_KEYS.EARN_RATE]: { percentBps: parseMinor(form.earnRatePercentBps) },
       [ADMIN_SHOP_POINT_POLICY_KEYS.EARN_CAP_PER_ORDER]: { amountMinor: parseMinor(form.earnCapAmountMinor) },
       [ADMIN_SHOP_POINT_POLICY_KEYS.MIN_ORDER_FOR_REDEEM]: { amountMinor: parseMinor(form.minOrderForRedeemMinor) },
       [ADMIN_SHOP_POINT_POLICY_KEYS.MAX_REDEEM_PER_ORDER]: { amountMinor: parseMinor(form.maxRedeemAmountMinor) },
-      [ADMIN_SHOP_POINT_POLICY_KEYS.HOLD_TTL_MINUTES]: { minutes: parseMinor(form.holdTtlMinutes) },
-      [ADMIN_SHOP_POINT_POLICY_KEYS.ALLOW_PG_MIX]: Boolean(form.allowPgMix),
-      [ADMIN_SHOP_POINT_POLICY_KEYS.ALLOW_POINTS_ONLY]: Boolean(form.allowPointsOnly)
+      [ADMIN_SHOP_POINT_POLICY_KEYS.HOLD_TTL_MINUTES]: { minutes: parseMinor(form.holdTtlMinutes) }
     }
   };
+}
+
+function buildBooleanPatchBody(key, value) {
+  // 단일 정책 키만 — 수치 dirty 와 분리
+  return {
+    policies: {
+      [key]: Boolean(value)
+    }
+  };
+}
+
+/**
+ * 단일 boolean 정책 토글 행
+ */
+function PointPolicyBooleanToggle({
+  id,
+  label,
+  checked,
+  onValueChange,
+  policyKey,
+  statusOn,
+  statusOff,
+  disabled
+}) {
+  const save = useCallback(async(next) => {
+    await StandardizedApi.patch(
+      ADMIN_SHOP_API.POINT_POLICIES,
+      buildBooleanPatchBody(policyKey, next)
+    );
+  }, [policyKey]);
+
+  const { busy, disabled: hookDisabled, onCheckedChange } = useSettingToggleSave({
+    value: checked,
+    onValueChange,
+    save,
+    optimistic: true,
+    onSuccess: () => {
+      notificationManager.show(ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_SUCCESS, 'success');
+    },
+    onError: (e) => {
+      notificationManager.error(
+        e?.message != null
+          ? toDisplayString(e.message, ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_FAIL)
+          : ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_FAIL
+      );
+    },
+    isEnabled: !disabled
+  });
+
+  return (
+    <SettingSwitchRow
+      id={id}
+      label={label}
+      hint={ADMIN_SHOP_POINT_POLICY_TOGGLE_IMMEDIATE_HINT}
+      statusLabel={checked ? statusOn : statusOff}
+      checked={checked}
+      onCheckedChange={onCheckedChange}
+      disabled={hookDisabled || disabled}
+      isPending={busy}
+      ariaLabel={label}
+    />
+  );
 }
 
 const AdminShopPointPoliciesPage = () => {
@@ -145,7 +210,7 @@ const AdminShopPointPoliciesPage = () => {
   const handleSave = async() => {
     setSaving(true);
     try {
-      const body = buildPatchBody(form);
+      const body = buildNumericPatchBody(form);
       await StandardizedApi.patch(ADMIN_SHOP_API.POINT_POLICIES, body);
       notificationManager.show('리워드 정책이 저장되었습니다.', 'success');
       await loadPolicies();
@@ -155,6 +220,9 @@ const AdminShopPointPoliciesPage = () => {
       setSaving(false);
     }
   };
+
+  const statusOn = t('common:label.on');
+  const statusOff = t('common:label.off');
 
   return (
     <AdminCommonLayout title="리워드 정책">
@@ -234,25 +302,25 @@ const AdminShopPointPoliciesPage = () => {
                 value={form.holdTtlMinutes}
                 onChange={(e) => setForm((f) => ({ ...f, holdTtlMinutes: e.target.value }))}
               />
-              <SettingSwitchRow
+              <PointPolicyBooleanToggle
                 id={`${baseId}-allow-pg-mix`}
                 label={ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPgMix}
-                statusLabel={form.allowPgMix
-                  ? t('common:label.on')
-                  : t('common:label.off')}
                 checked={form.allowPgMix}
-                onCheckedChange={(next) => setForm((f) => ({ ...f, allowPgMix: next }))}
-                ariaLabel={ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPgMix}
+                onValueChange={(next) => setForm((f) => ({ ...f, allowPgMix: next }))}
+                policyKey={ADMIN_SHOP_POINT_POLICY_KEYS.ALLOW_PG_MIX}
+                statusOn={statusOn}
+                statusOff={statusOff}
+                disabled={saving}
               />
-              <SettingSwitchRow
+              <PointPolicyBooleanToggle
                 id={`${baseId}-allow-points-only`}
                 label={ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPointsOnly}
-                statusLabel={form.allowPointsOnly
-                  ? t('common:label.on')
-                  : t('common:label.off')}
                 checked={form.allowPointsOnly}
-                onCheckedChange={(next) => setForm((f) => ({ ...f, allowPointsOnly: next }))}
-                ariaLabel={ADMIN_SHOP_POINT_POLICY_FIELD_LABELS.allowPointsOnly}
+                onValueChange={(next) => setForm((f) => ({ ...f, allowPointsOnly: next }))}
+                policyKey={ADMIN_SHOP_POINT_POLICY_KEYS.ALLOW_POINTS_ONLY}
+                statusOn={statusOn}
+                statusOff={statusOff}
+                disabled={saving}
               />
               <div className="admin-shop-point-policies__actions">
                 <MGButton

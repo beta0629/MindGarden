@@ -75,6 +75,25 @@ describe('SettingSwitchRow', () => {
     expect(onCheckedChange).not.toHaveBeenCalled();
   });
 
+  it('isPending 이면 Switch 가 disabled + aria-busy 이고 콜백이 호출되지 않는다', () => {
+    const onCheckedChange = jest.fn();
+    render(
+      <SettingSwitchRow
+        label="저장 대기"
+        checked={false}
+        isPending
+        onCheckedChange={onCheckedChange}
+        data-testid="pending-toggle"
+      />
+    );
+
+    const sw = screen.getByTestId('pending-toggle');
+    expect(sw).toBeDisabled();
+    expect(sw).toHaveAttribute('aria-busy', 'true');
+    fireEvent.click(sw);
+    expect(onCheckedChange).not.toHaveBeenCalled();
+  });
+
   it('meta 가 있으면 메타 문구를 표시한다', () => {
     render(
       <SettingSwitchRow

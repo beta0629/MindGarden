@@ -162,6 +162,10 @@
     "reload": "다시 불러오기",
     "tenantIdLabel": "테넌트 ID:",
     "enabledLabel": "이 테넌트에서 카카오 알림톡 발송 사용",
+    "toggleImmediateHint": "토글 변경 시 즉시 반영됩니다. 나머지 필드는 저장 버튼으로 반영됩니다.",
+    "confirmEnableOn": "카카오 알림톡 발송을 켜시겠습니까?",
+    "toggleSaveSuccess": "알림톡 사용 설정이 저장되었습니다.",
+    "toggleSaveFail": "알림톡 사용 설정 저장에 실패했습니다.",
     "infoHint": "API 키·발신 키 등 시크릿은 이 화면에 입력하지 않습니다. 운영 시크릿 저장소에만 보관하고, 여기에는 참조 식별자만 등록하세요.",
     "section": {
       "info": "안내",
@@ -194,6 +198,10 @@
     "reload": "다시 불러오기",
     "tenantIdLabel": "테넌트 ID:",
     "enabledLabel": "이 테넌트에서 SMS 발송 사용",
+    "toggleImmediateHint": "토글 변경 시 즉시 반영됩니다. 나머지 필드는 저장 버튼으로 반영됩니다.",
+    "confirmEnableOn": "SMS 발송을 켜시겠습니까?",
+    "toggleSaveSuccess": "SMS 사용 설정이 저장되었습니다.",
+    "toggleSaveFail": "SMS 사용 설정 저장에 실패했습니다.",
     "infoHint": "발송 시 참조 문자열이 있으면 Spring 설정·환경 변수에서 값을 조회하고, 없으면 애플리케이션 기본 sms.auth 설정을 사용합니다.",
     "section": {
       "info": "안내",

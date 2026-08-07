@@ -65,6 +65,24 @@ describe('Switch', () => {
     expect(onCheckedChange).not.toHaveBeenCalled();
   });
 
+  it('isPending 이면 disabled + aria-busy 이고 클릭해도 콜백이 없다', () => {
+    const onCheckedChange = jest.fn();
+    render(
+      <Switch
+        checked={false}
+        isPending
+        onCheckedChange={onCheckedChange}
+        ariaLabel="대기 토글"
+      />
+    );
+
+    const sw = screen.getByRole('switch', { name: '대기 토글' });
+    expect(sw).toBeDisabled();
+    expect(sw).toHaveAttribute('aria-busy', 'true');
+    fireEvent.click(sw);
+    expect(onCheckedChange).not.toHaveBeenCalled();
+  });
+
   it('checkbox role 이 아니다', () => {
     render(<Switch checked={false} ariaLabel="역할 검증" />);
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();

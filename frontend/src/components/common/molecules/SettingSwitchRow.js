@@ -21,6 +21,7 @@ import './SettingSwitchRow.css';
  * @param {boolean} [props.checked=false]
  * @param {(next: boolean) => void} [props.onCheckedChange]
  * @param {boolean} [props.disabled=false]
+ * @param {boolean} [props.isPending=false] 저장 중 — Switch disabled + aria-busy
  * @param {string} [props.id]
  * @param {string} [props.ariaLabel]
  * @param {string} [props.className]
@@ -34,6 +35,7 @@ function SettingSwitchRow({
   checked = false,
   onCheckedChange,
   disabled = false,
+  isPending = false,
   id,
   ariaLabel,
   className = '',
@@ -79,6 +81,7 @@ function SettingSwitchRow({
           checked={checked}
           onCheckedChange={onCheckedChange}
           disabled={disabled}
+          isPending={isPending}
           ariaLabel={switchAria}
           data-testid={dataTestId}
         />
@@ -95,6 +98,7 @@ SettingSwitchRow.propTypes = {
   checked: PropTypes.bool,
   onCheckedChange: PropTypes.func,
   disabled: PropTypes.bool,
+  isPending: PropTypes.bool,
   id: PropTypes.string,
   ariaLabel: PropTypes.string,
   className: PropTypes.string,

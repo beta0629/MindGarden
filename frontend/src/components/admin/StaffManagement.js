@@ -68,6 +68,7 @@ import {
   useViewModePreference
 } from '../../hooks/useViewModePreference';
 import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import { useSettingToggleSave } from '../../hooks';
 import {
   USER_MANAGEMENT_SAVED_VIEW_PAGE_IDS,
   USER_MANAGEMENT_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
@@ -652,34 +653,50 @@ const StaffManagement = ({ embedded = false }) => {
     };
   }, [staffDetailModal.open, staffDetailModal.staff, canEditAdminCounselingDual, roleOf]);
 
-  const handleAdminCounselingToggle = useCallback(
-    async(next) => {
-      const st = staffDetailModal.staff;
-      if (!st?.id || roleOf(st) !== ROLE_ADMIN || !canEditAdminCounselingDual) return;
-      setCounselingDetail((prev) => ({ ...prev, saving: true }));
-      try {
-        const res = await StandardizedApi.put(adminCounselingEnabledPath(st.id), {
-          counselingEnabled: next
-        });
-        const raw = res?.counselingEnabled ?? res?.data?.counselingEnabled;
-        const enabled = typeof raw === 'boolean' ? raw : next;
-        setCounselingDetail({ loading: false, enabled, saving: false });
-        showSuccess(STAFF_MGMT_MSG.TOAST_ADMIN_COUNSELING_SAVED);
-        await loadUsers();
-        const refreshed = await StandardizedApi.get(adminUserDetailPath(st.id));
-        setCounselingDetail({
-          loading: false,
-          enabled: Boolean(refreshed?.counselingEnabled),
-          saving: false
-        });
-      } catch (err) {
-        console.error(err);
-        setCounselingDetail((prev) => ({ ...prev, saving: false }));
-        showError(err.message || STAFF_MGMT_MSG.ERR_SAVE_ADMIN_COUNSELING);
-      }
+  const saveAdminCounseling = useCallback(async(next) => {
+    const st = staffDetailModal.staff;
+    if (!st?.id) {
+      throw new Error(STAFF_MGMT_MSG.ERR_SAVE_ADMIN_COUNSELING);
+    }
+    const res = await StandardizedApi.put(adminCounselingEnabledPath(st.id), {
+      counselingEnabled: next
+    });
+    const raw = res?.counselingEnabled ?? res?.data?.counselingEnabled;
+    const enabled = typeof raw === 'boolean' ? raw : next;
+    setCounselingDetail({ loading: false, enabled, saving: false });
+    await loadUsers();
+    const refreshed = await StandardizedApi.get(adminUserDetailPath(st.id));
+    setCounselingDetail({
+      loading: false,
+      enabled: Boolean(refreshed?.counselingEnabled),
+      saving: false
+    });
+  }, [staffDetailModal.staff, loadUsers]);
+
+  const {
+    busy: counselingBusy,
+    disabled: counselingDisabled,
+    onCheckedChange: onCounselingCheckedChange
+  } = useSettingToggleSave({
+    value: Boolean(counselingDetail.enabled),
+    onValueChange: (next) => setCounselingDetail((prev) => ({
+      ...prev,
+      enabled: next
+    })),
+    save: saveAdminCounseling,
+    optimistic: true,
+    onSuccess: () => {
+      showSuccess(STAFF_MGMT_MSG.TOAST_ADMIN_COUNSELING_SAVED);
     },
-    [staffDetailModal.staff, roleOf, canEditAdminCounselingDual, loadUsers]
-  );
+    onError: (err) => {
+      console.error(err);
+      showError(err?.message || STAFF_MGMT_MSG.ERR_SAVE_ADMIN_COUNSELING);
+    },
+    isEnabled:
+      !counselingDetail.loading
+      && counselingDetail.enabled !== null
+      && canEditAdminCounselingDual
+  });
 
   const handleOpenRoleChange = useCallback(
     (user) => {
@@ -1063,8 +1080,9 @@ const StaffManagement = ({ embedded = false }) => {
                     label={STAFF_MGMT_FORM_LABEL.COUNSELING_DUAL_ROLE}
                     hint={STAFF_MGMT_HELP.ADMIN_COUNSELING_DUAL_ROLE}
                     checked={Boolean(counselingDetail.enabled)}
-                    onCheckedChange={handleAdminCounselingToggle}
-                    disabled={counselingDetail.saving}
+                    onCheckedChange={onCounselingCheckedChange}
+                    disabled={counselingDisabled}
+                    isPending={counselingBusy}
                     ariaLabel={STAFF_MGMT_COUNSELING.TOGGLE_LABEL}
                   />
                 )}

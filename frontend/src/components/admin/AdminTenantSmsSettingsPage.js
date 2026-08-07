@@ -5,7 +5,7 @@
  * @since 2026-04-25
  */
 
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
@@ -18,6 +18,7 @@ import StandardizedApi from '../../utils/standardizedApi';
 import { API } from '../../constants/api';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
+import { useConfirm, useSettingToggleSave } from '../../hooks';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import '../../styles/unified-design-tokens.css';
@@ -52,12 +53,22 @@ const mapApiToForm = (data) => {
   };
 };
 
+/** PUT 본문 — 확정 스냅샷 텍스트 + 지정 boolean (dirty 폼 텍스트 제외) */
+const buildSmsPutBodyFromCommitted = (committed, smsEnabled) => ({
+  smsEnabled: Boolean(smsEnabled),
+  provider: committed.provider || null,
+  senderNumber: committed.senderNumber || null,
+  apiKeyRef: committed.apiKeyRef || null,
+  apiSecretRef: committed.apiSecretRef || null
+});
+
 const AdminTenantSmsSettingsPage = () => {
   const { t } = useTranslation(['settings', 'common']);
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const toggleId = useId();
   const pageTitleId = 'admin-tenant-sms-settings-title';
+  const [confirmEnable, ConfirmEnableModal] = useConfirm({ variant: 'warning' });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,6 +76,8 @@ const AdminTenantSmsSettingsPage = () => {
   const [saveError, setSaveError] = useState(null);
   const [form, setForm] = useState(buildInitialForm);
   const [tenantIdLine, setTenantIdLine] = useState('');
+  /** 마지막 로드·저장 확정값 — 토글 PUT 시 dirty 텍스트 미포함 */
+  const committedRef = useRef(buildInitialForm());
 
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
@@ -74,7 +87,9 @@ const AdminTenantSmsSettingsPage = () => {
     try {
       const res = await StandardizedApi.get(API.TENANT_SMS_SETTINGS);
       if (res && res.success === true && res.data) {
-        setForm(mapApiToForm(res.data));
+        const mapped = mapApiToForm(res.data);
+        committedRef.current = mapped;
+        setForm(mapped);
         setTenantIdLine(toDisplayString(res.data.tenantId, ''));
       } else {
         setLoadError(t('settings:sms.loadFail'));
@@ -106,6 +121,59 @@ const AdminTenantSmsSettingsPage = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const saveSmsEnabled = useCallback(async(next) => {
+    const body = buildSmsPutBodyFromCommitted(committedRef.current, next);
+    const res = await StandardizedApi.put(API.TENANT_SMS_SETTINGS, body);
+    if (!(res && res.success === true)) {
+      throw new Error(t('settings:sms.toggleSaveFail'));
+    }
+    if (res.data) {
+      const serverForm = mapApiToForm(res.data);
+      committedRef.current = serverForm;
+      setForm((prev) => ({
+        ...prev,
+        smsEnabled: serverForm.smsEnabled
+      }));
+      setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
+    } else {
+      committedRef.current = {
+        ...committedRef.current,
+        smsEnabled: Boolean(next)
+      };
+    }
+  }, [t, tenantIdLine]);
+
+  const confirmSmsEnable = useCallback(async({ next }) => {
+    if (!next) {
+      return true;
+    }
+    return confirmEnable({
+      message: t('settings:sms.confirmEnableOn')
+    });
+  }, [confirmEnable, t]);
+
+  const {
+    busy: smsEnabledBusy,
+    disabled: smsEnabledDisabled,
+    onCheckedChange: onSmsEnabledCheckedChange
+  } = useSettingToggleSave({
+    value: Boolean(form.smsEnabled),
+    onValueChange: (next) => setForm((prev) => ({ ...prev, smsEnabled: next })),
+    save: saveSmsEnabled,
+    requireConfirm: (next) => next === true,
+    confirm: confirmSmsEnable,
+    optimistic: true,
+    onSuccess: () => {
+      notificationManager.success(t('settings:sms.toggleSaveSuccess'));
+    },
+    onError: (error) => {
+      const msg = error?.message != null
+        ? toDisplayString(error.message, t('settings:sms.toggleSaveFail'))
+        : t('settings:sms.toggleSaveFail');
+      notificationManager.show(msg, 'error');
+    }
+  });
+
   const handleSubmit = async(e) => {
     e.preventDefault();
     setSaveError(null);
@@ -122,7 +190,9 @@ const AdminTenantSmsSettingsPage = () => {
       if (res && res.success === true) {
         notificationManager.success(t('settings:sms.saveSuccess'));
         if (res.data) {
-          setForm(mapApiToForm(res.data));
+          const mapped = mapApiToForm(res.data);
+          committedRef.current = mapped;
+          setForm(mapped);
           setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
         }
       } else {
@@ -174,11 +244,14 @@ const AdminTenantSmsSettingsPage = () => {
                 <SettingSwitchRow
                   id={toggleId}
                   label={t('settings:sms.enabledLabel')}
+                  hint={t('settings:sms.toggleImmediateHint')}
                   statusLabel={form.smsEnabled
                     ? t('common:label.on')
                     : t('common:label.off')}
                   checked={Boolean(form.smsEnabled)}
-                  onCheckedChange={(next) => handleChange('smsEnabled', next)}
+                  onCheckedChange={onSmsEnabledCheckedChange}
+                  disabled={smsEnabledDisabled || saving}
+                  isPending={smsEnabledBusy}
                   ariaLabel={t('settings:sms.enabledLabel')}
                 />
               </ContentSection>
@@ -241,7 +314,7 @@ const AdminTenantSmsSettingsPage = () => {
                 <MGButton
                   type="submit"
                   className={buildErpMgButtonClassName({ variant: 'primary' })}
-                  disabled={saving}
+                  disabled={saving || smsEnabledBusy}
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
@@ -250,7 +323,7 @@ const AdminTenantSmsSettingsPage = () => {
                 <MGButton
                   type="button"
                   className={buildErpMgButtonClassName({ variant: 'outline' })}
-                  disabled={saving || loading}
+                  disabled={saving || loading || smsEnabledBusy}
                   onClick={() => loadSettings()}
                 >
                   {t('settings:sms.reload')}
@@ -260,6 +333,7 @@ const AdminTenantSmsSettingsPage = () => {
           )}
         </ContentArea>
       </div>
+      <ConfirmEnableModal />
     </AdminCommonLayout>
   );
 };

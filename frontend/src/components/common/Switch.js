@@ -16,6 +16,7 @@ import './Switch.css';
  * @param {boolean} [props.checked=false]
  * @param {(next: boolean) => void} [props.onCheckedChange]
  * @param {boolean} [props.disabled=false]
+ * @param {boolean} [props.isPending=false] 저장 중 — disabled + aria-busy
  * @param {string} [props.id]
  * @param {string} [props.ariaLabel]
  * @param {string} [props.className]
@@ -24,13 +25,16 @@ function Switch({
   checked = false,
   onCheckedChange,
   disabled = false,
+  isPending = false,
   id,
   ariaLabel,
   className = '',
   ...rest
 }) {
+  const isDisabled = disabled || isPending;
+
   const handleClick = () => {
-    if (disabled) {
+    if (isDisabled) {
       return;
     }
     if (typeof onCheckedChange === 'function') {
@@ -51,7 +55,8 @@ function Switch({
       id={id}
       aria-checked={checked}
       aria-label={resolvedAria || undefined}
-      disabled={disabled}
+      aria-busy={isPending ? true : undefined}
+      disabled={isDisabled}
       className={classes}
       onClick={handleClick}
       {...rest}
@@ -65,6 +70,7 @@ Switch.propTypes = {
   checked: PropTypes.bool,
   onCheckedChange: PropTypes.func,
   disabled: PropTypes.bool,
+  isPending: PropTypes.bool,
   id: PropTypes.string,
   ariaLabel: PropTypes.string,
   className: PropTypes.string

@@ -10,14 +10,14 @@
  * @since 2025-01-21
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Database, Cpu, ExternalLink, BellRing, Shield } from 'lucide-react';
-import { apiGet, apiPost } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { useSession } from '../../contexts/SessionContext';
+import { useConfirm, useSettingToggleSave } from '../../hooks';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -33,7 +33,6 @@ import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import './SystemConfigManagement.css';
-
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED = '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME = '/api/v1/admin/system-config/WELLNESS_SEND_TIME';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES = '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES';
@@ -153,13 +152,15 @@ const SystemConfigManagement = () => {
   const [roleCodes, setRoleCodes] = useState([]);
   const [rolesLoading, setRolesLoading] = useState(true);
 
-  // PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 상태.
-  // schedulerFlags 는 key 별 메타(value/updatedBy/updatedAt) 를 담은 dict.
   const [schedulerFlags, setSchedulerFlags] = useState({});
   const [schedulerLoading, setSchedulerLoading] = useState(true);
-  const [schedulerSavingKey, setSchedulerSavingKey] = useState(null);
   // 토글 확인 모달 상태 — null 이면 닫힘. { key, label, nextValue } 객체로 보관.
   const [schedulerConfirm, setSchedulerConfirm] = useState(null);
+  const schedulerConfirmResolverRef = useRef(null);
+
+  const [confirmWellnessOn, WellnessOnConfirmModal] = useConfirm({
+    variant: 'warning'
+  });
 
   const legacyLabelSuffix = t('systemConfig.wellness.targetRoles.legacy');
 
@@ -288,72 +289,60 @@ const SystemConfigManagement = () => {
   }, [t]);
 
   /**
-   * PR-2 (2026-05-25): 토글 클릭 — 확인 모달 오픈만 수행. 실제 PUT 은 confirm 핸들러에서.
+   * PR-2: 스케줄러 토글 확인 — Promise 로 주입 (useSettingToggleSave confirm).
+   * UnifiedModal 확인/취소가 resolve 한다. 저장은 훅이 수행한다.
    *
-   * @param {string} key 플래그 키 (NOTIFICATION_SCHEDULER_FLAG_KEYS)
-   * @param {string} label 사용자 표시용 라벨 (i18n 적용된 채널명)
-   * @param {boolean} currentValue 현재 값
+   * @param {{ key: string, label: string, nextValue: boolean }} payload
+   * @returns {Promise<boolean>}
    */
-  const handleSchedulerToggleRequest = useCallback((key, label, currentValue) => {
-    setSchedulerConfirm({ key, label, nextValue: !currentValue });
+  const requestSchedulerConfirm = useCallback((payload) => {
+    return new Promise((resolve) => {
+      schedulerConfirmResolverRef.current = resolve;
+      setSchedulerConfirm(payload);
+    });
   }, []);
 
   const handleSchedulerConfirmCancel = useCallback(() => {
     setSchedulerConfirm(null);
+    const resolver = schedulerConfirmResolverRef.current;
+    schedulerConfirmResolverRef.current = null;
+    if (typeof resolver === 'function') {
+      resolver(false);
+    }
   }, []);
 
-  /**
-   * PR-2 (2026-05-25): 확인 모달 → API 호출.
-   *
-   * 성공: 응답의 flag 메타로 schedulerFlags 즉시 갱신 + 성공 토스트 + 4 키 재조회로 완전 동기화.
-   * 실패: 에러 토스트 + 모달 유지 (사용자가 다시 시도하거나 취소 결정).
-   */
-  const handleSchedulerConfirmProceed = useCallback(async() => {
-    if (!schedulerConfirm) {
+  const handleSchedulerConfirmProceed = useCallback(() => {
+    setSchedulerConfirm(null);
+    const resolver = schedulerConfirmResolverRef.current;
+    schedulerConfirmResolverRef.current = null;
+    if (typeof resolver === 'function') {
+      resolver(true);
+    }
+  }, []);
+
+  const applySchedulerFlagFromResponse = useCallback((flag) => {
+    if (!flag || typeof flag.key !== 'string') {
       return;
     }
-    const { key, nextValue } = schedulerConfirm;
-    try {
-      setSchedulerSavingKey(key);
-      const response = await StandardizedApi.put(
-        `${API_ADMIN_NOTIFICATION_SCHEDULER_FLAGS}/${encodeURIComponent(key)}`,
-        { value: nextValue }
-      );
-      const flag = response?.flag;
-      if (flag && typeof flag.key === 'string') {
-        setSchedulerFlags((prev) => ({
-          ...prev,
-          [flag.key]: {
-            key: flag.key,
-            value: !!flag.value,
-            updatedBy: flag.updatedBy || '',
-            updatedAt: flag.updatedAt || ''
-          }
-        }));
+    setSchedulerFlags((prev) => ({
+      ...prev,
+      [flag.key]: {
+        key: flag.key,
+        value: !!flag.value,
+        updatedBy: flag.updatedBy || '',
+        updatedAt: flag.updatedAt || ''
       }
-      notificationManager.show(t('systemConfig.notificationScheduler.success.save'), 'success');
-      setSchedulerConfirm(null);
-      await loadSchedulerFlags();
-    } catch (error) {
-      console.error('알림 스케줄러 플래그 저장 실패:', error);
-      const backendMsg = error?.response?.data?.message || error?.data?.message;
-      notificationManager.show(
-        backendMsg || t('systemConfig.notificationScheduler.error.save'),
-        'error'
-      );
-    } finally {
-      setSchedulerSavingKey(null);
-    }
-  }, [schedulerConfirm, loadSchedulerFlags, t]);
+    }));
+  }, []);
 
   const loadConfigs = useCallback(async() => {
     try {
       setLoading(true);
       const [wEnabled, wTime, wRoles, dupLogin] = await Promise.all([
-        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED)).catch(() => null),
-        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME)).catch(() => null),
-        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES)).catch(() => null),
-        Promise.resolve(apiGet(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED)).catch(() => null)
+        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED).catch(() => null),
+        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME).catch(() => null),
+        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES).catch(() => null),
+        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED).catch(() => null)
       ]);
       setWellness({
         wellnessAutoSendEnabled: wEnabled?.success ? wEnabled.configValue === 'true' : DEFAULT_WELLNESS.wellnessAutoSendEnabled,
@@ -372,6 +361,74 @@ const SystemConfigManagement = () => {
       setLoading(false);
     }
   }, [t]);
+
+  /** 단일 키 POST — wellness time/roles 폼 dirty 와 분리 */
+  const saveDuplicateLoginAllowed = useCallback(async(next) => {
+    await StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED, {
+      configValue: String(next),
+      description: t('systemConfig.sessionSecurity.descDuplicateLogin'),
+      category: SESSION_SECURITY_CATEGORY
+    });
+  }, [t]);
+
+  const {
+    busy: duplicateLoginBusy,
+    disabled: duplicateLoginDisabled,
+    onCheckedChange: onDuplicateLoginCheckedChange
+  } = useSettingToggleSave({
+    value: duplicateLoginAllowed,
+    onValueChange: setDuplicateLoginAllowed,
+    save: saveDuplicateLoginAllowed,
+    optimistic: true,
+    onSuccess: () => {
+      notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
+    },
+    onError: (error) => {
+      const backendMsg = error?.response?.data?.message || error?.data?.message || error?.message;
+      notificationManager.show(backendMsg || t('systemConfig.error.save'), 'error');
+    }
+  });
+
+  const saveWellnessAutoSend = useCallback(async(next) => {
+    // 단일 키 POST — sendTime/targetRoles dirty 미포함
+    await StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED, {
+      configValue: String(next),
+      description: t('systemConfig.wellness.descAutoSend'),
+      category: 'WELLNESS'
+    });
+  }, [t]);
+
+  const confirmWellnessEnable = useCallback(async({ next }) => {
+    if (!next) {
+      return true;
+    }
+    return confirmWellnessOn({
+      message: t('systemConfig.wellness.confirmEnableOn')
+    });
+  }, [confirmWellnessOn, t]);
+
+  const {
+    busy: wellnessAutoSendBusy,
+    disabled: wellnessAutoSendDisabled,
+    onCheckedChange: onWellnessAutoSendCheckedChange
+  } = useSettingToggleSave({
+    value: wellness.wellnessAutoSendEnabled,
+    onValueChange: (next) => setWellness((prev) => ({
+      ...prev,
+      wellnessAutoSendEnabled: next
+    })),
+    save: saveWellnessAutoSend,
+    requireConfirm: (next) => next === true,
+    confirm: confirmWellnessEnable,
+    optimistic: true,
+    onSuccess: () => {
+      notificationManager.show(t('systemConfig.wellness.toggleSaveSuccess'), 'success');
+    },
+    onError: (error) => {
+      const backendMsg = error?.response?.data?.message || error?.data?.message || error?.message;
+      notificationManager.show(backendMsg || t('systemConfig.error.save'), 'error');
+    }
+  });
 
   useEffect(() => {
     // 세션 복원 완료 전에는 가드 발동을 보류 (새로고침 race 방지)
@@ -394,29 +451,20 @@ const SystemConfigManagement = () => {
     loadSchedulerFlags();
   }, [hasCheckedSession, isLoggedIn, user, loadConfigs, loadRoleOptions, loadSchedulerFlags]);
 
+  /** 수치·역할만 저장 — boolean 토글은 즉시 저장 경로와 분리 */
   const handleSave = async() => {
     try {
       setSaving(true);
       await Promise.all([
-        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED, {
-          configValue: String(wellness.wellnessAutoSendEnabled),
-          description: t('systemConfig.wellness.descAutoSend'),
-          category: 'WELLNESS'
-        }),
-        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME, {
+        StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME, {
           configValue: wellness.wellnessSendTime,
           description: t('systemConfig.wellness.descSendTime'),
           category: 'WELLNESS'
         }),
-        apiPost(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES, {
+        StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES, {
           configValue: wellness.wellnessTargetRoles,
           description: t('systemConfig.wellness.descTargetRoles'),
           category: 'WELLNESS'
-        }),
-        apiPost(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED, {
-          configValue: String(duplicateLoginAllowed),
-          description: t('systemConfig.sessionSecurity.descDuplicateLogin'),
-          category: SESSION_SECURITY_CATEGORY
         })
       ]);
       notificationManager.show(t('systemConfig.wellness.success.save'), 'success');
@@ -472,8 +520,9 @@ const SystemConfigManagement = () => {
               t={t}
               flags={schedulerFlags}
               loading={schedulerLoading}
-              savingKey={schedulerSavingKey}
-              onToggleRequest={handleSchedulerToggleRequest}
+              requestConfirm={requestSchedulerConfirm}
+              applyFlagFromResponse={applySchedulerFlagFromResponse}
+              reloadFlags={loadSchedulerFlags}
             />
 
             {/* 세션 보안 — 테넌트별 중복 로그인 허용 */}
@@ -494,7 +543,9 @@ const SystemConfigManagement = () => {
                       ? t('systemConfig.notificationScheduler.status.on')
                       : t('systemConfig.notificationScheduler.status.off')}
                     checked={duplicateLoginAllowed}
-                    onCheckedChange={setDuplicateLoginAllowed}
+                    onCheckedChange={onDuplicateLoginCheckedChange}
+                    disabled={duplicateLoginDisabled}
+                    isPending={duplicateLoginBusy}
                     data-testid="duplicate-login-allowed-toggle"
                     ariaLabel={duplicateLoginAllowed
                       ? t('systemConfig.notificationScheduler.toggleAriaOff', {
@@ -547,10 +598,9 @@ const SystemConfigManagement = () => {
                       ? t('systemConfig.notificationScheduler.status.on')
                       : t('systemConfig.notificationScheduler.status.off')}
                     checked={wellness.wellnessAutoSendEnabled}
-                    onCheckedChange={(next) => setWellness((prev) => ({
-                      ...prev,
-                      wellnessAutoSendEnabled: next
-                    }))}
+                    onCheckedChange={onWellnessAutoSendCheckedChange}
+                    disabled={wellnessAutoSendDisabled}
+                    isPending={wellnessAutoSendBusy}
                     data-testid="wellness-auto-send-toggle"
                     ariaLabel={wellness.wellnessAutoSendEnabled
                       ? t('systemConfig.notificationScheduler.toggleAriaOff', {
@@ -602,28 +652,36 @@ const SystemConfigManagement = () => {
       <NotificationSchedulerConfirmModal
         t={t}
         confirm={schedulerConfirm}
-        saving={schedulerSavingKey === schedulerConfirm?.key}
         onProceed={handleSchedulerConfirmProceed}
         onCancel={handleSchedulerConfirmCancel}
       />
+      <WellnessOnConfirmModal />
     </AdminCommonLayout>
   );
 };
 
 /**
- * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 섹션 (presentational).
+ * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 섹션 (presentational + 행별 훅).
  *
- * 부모로부터 i18n {@code t}, 플래그 dict, 로딩/저장 상태, 토글 요청 핸들러를 주입받아 렌더링한다.
- * 4 종 라벨/힌트는 i18n 키로 정적 정의하며, 공통 SettingSwitchRow(Switch Atom) 로 접근성을 보장한다.
+ * 부모로부터 i18n {@code t}, 플래그 dict, 로딩, confirm/apply/reload 콜백을 주입받는다.
+ * 각 행은 useSettingToggleSave(optimistic:false, requireConfirm) 로 정렬한다.
  *
  * @param {object} props
  * @param {(key: string, fallback: string, vars?: object) => string} props.t i18n 함수
  * @param {Object<string, {value: boolean, updatedBy: string, updatedAt: string}>} props.flags 키별 메타
  * @param {boolean} props.loading 4 키 일괄 로딩 중
- * @param {string|null} props.savingKey 저장 진행 중인 키 (해당 토글만 disabled)
- * @param {(key: string, label: string, currentValue: boolean) => void} props.onToggleRequest 토글 요청 핸들러
+ * @param {(payload: { key: string, label: string, nextValue: boolean }) => Promise<boolean>} props.requestConfirm
+ * @param {(flag: object) => void} props.applyFlagFromResponse
+ * @param {() => Promise<void>} props.reloadFlags
  */
-const NotificationSchedulerSection = ({ t, flags, loading, savingKey, onToggleRequest }) => {
+const NotificationSchedulerSection = ({
+  t,
+  flags,
+  loading,
+  requestConfirm,
+  applyFlagFromResponse,
+  reloadFlags
+}) => {
   const items = [
     {
       key: NOTIFICATION_SCHEDULER_FLAG_KEYS.WELLNESS_TIP,
@@ -654,7 +712,6 @@ const NotificationSchedulerSection = ({ t, flags, loading, savingKey, onToggleRe
       hintFallback: '매일 09:00 KST 예약 D-2 안내를 일괄 발송합니다.'
     }
   ];
-  // 표시 순서 강제 — 키만 반복하여 i18n 라벨 + flags 메타 매핑.
   const orderedItems = NOTIFICATION_SCHEDULER_FLAG_ORDER
     .map((key) => items.find((item) => item.key === key))
     .filter(Boolean);
@@ -687,33 +744,27 @@ const NotificationSchedulerSection = ({ t, flags, loading, savingKey, onToggleRe
             const value = !!(flag && flag.value);
             const label = t(item.labelKey, item.labelFallback);
             const hint = t(item.hintKey, item.hintFallback);
-            const statusLabel = value
-              ? t('systemConfig.notificationScheduler.status.on')
-              : t('systemConfig.notificationScheduler.status.off');
-            const ariaLabel = value
-              ? t('systemConfig.notificationScheduler.toggleAriaOff', { label })
-              : t('systemConfig.notificationScheduler.toggleAriaOn', { label });
             const lastUpdatedText = flag && flag.updatedAt
               ? t('systemConfig.notificationScheduler.lastUpdated', {
                 updatedBy: flag.updatedBy || '-',
                 updatedAt: formatLastUpdatedAt(flag.updatedAt)
               })
               : t('systemConfig.notificationScheduler.lastUpdatedNever');
-            const isSaving = savingKey === item.key;
             return (
               <li
                 key={item.key}
                 className="mg-v2-notification-scheduler__item"
               >
-                <SettingSwitchRow
+                <NotificationSchedulerFlagRow
+                  t={t}
+                  flagKey={item.key}
                   label={label}
                   hint={hint}
                   meta={lastUpdatedText}
-                  statusLabel={statusLabel}
-                  checked={value}
-                  disabled={isSaving}
-                  ariaLabel={ariaLabel}
-                  onCheckedChange={() => onToggleRequest(item.key, label, value)}
+                  value={value}
+                  requestConfirm={requestConfirm}
+                  applyFlagFromResponse={applyFlagFromResponse}
+                  reloadFlags={reloadFlags}
                 />
               </li>
             );
@@ -725,12 +776,87 @@ const NotificationSchedulerSection = ({ t, flags, loading, savingKey, onToggleRe
 };
 
 /**
+ * 스케줄러 단일 플래그 행 — useSettingToggleSave(optimistic:false) + UnifiedModal confirm.
+ *
+ * @param {object} props
+ */
+const NotificationSchedulerFlagRow = ({
+  t,
+  flagKey,
+  label,
+  hint,
+  meta,
+  value,
+  requestConfirm,
+  applyFlagFromResponse,
+  reloadFlags
+}) => {
+  const saveFlag = useCallback(async(next) => {
+    const response = await StandardizedApi.put(
+      `${API_ADMIN_NOTIFICATION_SCHEDULER_FLAGS}/${encodeURIComponent(flagKey)}`,
+      { value: next }
+    );
+    applyFlagFromResponse(response?.flag);
+  }, [flagKey, applyFlagFromResponse]);
+
+  const confirmToggle = useCallback(({ next }) => (
+    requestConfirm({ key: flagKey, label, nextValue: next })
+  ), [requestConfirm, flagKey, label]);
+
+  const onValueChange = useCallback(() => {
+    // optimistic:false — 값은 save 응답 apply + reloadFlags 로 동기화
+  }, []);
+
+  const { busy, disabled, onCheckedChange } = useSettingToggleSave({
+    value,
+    onValueChange,
+    save: saveFlag,
+    requireConfirm: true,
+    confirm: confirmToggle,
+    optimistic: false,
+    onSuccess: async() => {
+      notificationManager.show(t('systemConfig.notificationScheduler.success.save'), 'success');
+      await reloadFlags();
+    },
+    onError: (error) => {
+      console.error('알림 스케줄러 플래그 저장 실패:', error);
+      const backendMsg = error?.response?.data?.message || error?.data?.message;
+      notificationManager.show(
+        backendMsg || t('systemConfig.notificationScheduler.error.save'),
+        'error'
+      );
+    }
+  });
+
+  const statusLabel = value
+    ? t('systemConfig.notificationScheduler.status.on')
+    : t('systemConfig.notificationScheduler.status.off');
+  const ariaLabel = value
+    ? t('systemConfig.notificationScheduler.toggleAriaOff', { label })
+    : t('systemConfig.notificationScheduler.toggleAriaOn', { label });
+
+  return (
+    <SettingSwitchRow
+      label={label}
+      hint={hint}
+      meta={meta}
+      statusLabel={statusLabel}
+      checked={value}
+      disabled={disabled}
+      isPending={busy}
+      ariaLabel={ariaLabel}
+      onCheckedChange={onCheckedChange}
+    />
+  );
+};
+
+/**
  * PR-2 (2026-05-25): 토글 확인 모달.
  *
  * UnifiedModal 표준 (className="mg-v2-ad-b0kla") 을 사용한다. 켜기/끄기에 따라
- * 메시지가 달라지며 (즉시 중단 vs 다음 cron), 처리 중에는 확인 버튼이 disabled 가 된다.
+ * 메시지가 달라지며, 확인 시 Promise resolve(true) — 실제 PUT 은 행 훅이 수행한다.
  */
-const NotificationSchedulerConfirmModal = ({ t, confirm, saving, onProceed, onCancel }) => {
+const NotificationSchedulerConfirmModal = ({ t, confirm, onProceed, onCancel }) => {
   const isOpen = !!confirm;
   const message = !confirm
     ? ''
@@ -746,14 +872,14 @@ const NotificationSchedulerConfirmModal = ({ t, confirm, saving, onProceed, onCa
       subtitle={confirm ? confirm.label : ''}
       size="small"
       className="mg-v2-ad-b0kla"
-      backdropClick={!saving}
+      backdropClick
       showCloseButton
       actions={
         <ActionBar align="end" gap="md">
-          <ActionBarButton variant="outline" onClick={onCancel} disabled={saving}>
+          <ActionBarButton variant="outline" onClick={onCancel}>
             {t('systemConfig.notificationScheduler.cancel')}
           </ActionBarButton>
-          <ActionBarButton variant="primary" onClick={onProceed} loading={saving}>
+          <ActionBarButton variant="primary" onClick={onProceed}>
             {t('systemConfig.notificationScheduler.confirm')}
           </ActionBarButton>
         </ActionBar>

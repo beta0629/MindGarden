@@ -29,3 +29,10 @@ export const ADMIN_SHOP_POINT_POLICY_FIELD_LABELS = {
   allowPgMix: '포인트 + PG 혼합 결제 허용',
   allowPointsOnly: '포인트 전액 결제 허용'
 };
+
+/** 스위치 토글 즉시 반영 안내 (페이지 i18n 미연동 구간 SSOT) */
+export const ADMIN_SHOP_POINT_POLICY_TOGGLE_IMMEDIATE_HINT =
+  '토글 변경 시 즉시 반영됩니다. 수치 필드는 저장 버튼으로 반영됩니다.';
+
+export const ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_SUCCESS = '결제 허용 설정이 저장되었습니다.';
+export const ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_FAIL = '결제 허용 설정 저장에 실패했습니다.';

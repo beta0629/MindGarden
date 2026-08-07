@@ -19,6 +19,7 @@ import { MemoryRouter } from 'react-router-dom';
 import SystemConfigManagement from '../SystemConfigManagement';
 import * as ajax from '../../../utils/ajax';
 import * as commonCodeApi from '../../../utils/commonCodeApi';
+import StandardizedApi from '../../../utils/standardizedApi';
 
 jest.mock('../../../utils/ajax', () => ({
   __esModule: true,
@@ -183,7 +184,7 @@ const DEFAULT_ROLE_CODES = [
 ];
 
 const installAjaxDefaults = () => {
-  ajax.apiGet.mockImplementation((url) => {
+  const configGet = (url) => {
     if (url === '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED') {
       return Promise.resolve({ success: true, configValue: 'true' });
     }
@@ -193,9 +194,15 @@ const installAjaxDefaults = () => {
     if (url === '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES') {
       return Promise.resolve({ success: true, configValue: 'CLIENT,ROLE_CLIENT' });
     }
+    if (typeof url === 'string' && url.includes('notification-scheduler')) {
+      return Promise.resolve({ success: true, flags: [] });
+    }
     return Promise.resolve({ success: true, configValue: '' });
-  });
+  };
+  ajax.apiGet.mockImplementation(configGet);
+  StandardizedApi.get.mockImplementation(configGet);
   ajax.apiPost.mockResolvedValue({ success: true });
+  StandardizedApi.post.mockResolvedValue({ success: true });
   commonCodeApi.getCommonCodes.mockResolvedValue(DEFAULT_ROLE_CODES);
 };
 
@@ -325,7 +332,7 @@ describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI
   });
 
   it('드롭다운에서 옵션 클릭 시 칩이 추가되고, 저장 시 콤마 구분 페이로드로 PUT 된다', async() => {
-    ajax.apiGet.mockImplementation((url) => {
+    const configGet = (url) => {
       if (url === '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED') {
         return Promise.resolve({ success: true, configValue: 'true' });
       }
@@ -335,8 +342,13 @@ describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI
       if (url === '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES') {
         return Promise.resolve({ success: true, configValue: 'CLIENT' });
       }
+      if (typeof url === 'string' && url.includes('notification-scheduler')) {
+        return Promise.resolve({ success: true, flags: [] });
+      }
       return Promise.resolve({ success: true, configValue: '' });
-    });
+    };
+    ajax.apiGet.mockImplementation(configGet);
+    StandardizedApi.get.mockImplementation(configGet);
 
     renderPage();
     await waitForLoaded();
@@ -354,7 +366,7 @@ describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI
     fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
 
     await waitFor(() => {
-      expect(ajax.apiPost).toHaveBeenCalledWith(
+      expect(StandardizedApi.post).toHaveBeenCalledWith(
         '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES',
         expect.objectContaining({
           configValue: 'CLIENT,CONSULTANT',
@@ -377,7 +389,7 @@ describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI
     fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
 
     await waitFor(() => {
-      expect(ajax.apiPost).toHaveBeenCalledWith(
+      expect(StandardizedApi.post).toHaveBeenCalledWith(
         '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES',
         expect.objectContaining({ configValue: 'CLIENT' })
       );
@@ -416,6 +428,7 @@ describe('SystemConfigManagement — 세션 로딩 race 핫픽스', () => {
     expect(notificationManager.show).not.toHaveBeenCalled();
     expect(commonCodeApi.getCommonCodes).not.toHaveBeenCalled();
     expect(ajax.apiGet).not.toHaveBeenCalled();
+    expect(StandardizedApi.get).not.toHaveBeenCalled();
   });
 
   it('세션 복원 완료 + 로그아웃 상태에서만 "로그인 필요" 토스트가 발동한다', async() => {

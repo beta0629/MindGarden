@@ -16,7 +16,7 @@
  * @since 2026-05-29
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
@@ -29,6 +29,7 @@ import ActionBarButton from '../../common/ActionBarButton';
 import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import Switch from '../../common/Switch';
 import { useSession } from '../../../contexts/SessionContext';
+import { useSettingToggleSave } from '../../../hooks';
 import { USER_ROLES, RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
 import {
@@ -93,6 +94,7 @@ const SmsTemplateManagementPage = () => {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [globalEnableModalOpen, setGlobalEnableModalOpen] = useState(false);
+  const globalConfirmResolverRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -271,62 +273,59 @@ const SmsTemplateManagementPage = () => {
     }
   }, [selectedKey, loadList, t]);
 
-  const submitGlobalDispatchToggle = useCallback(async(enabled) => {
+  const requestGlobalOnConfirm = useCallback(() => new Promise((resolve) => {
+    globalConfirmResolverRef.current = resolve;
+    setGlobalEnableModalOpen(true);
+  }), []);
+
+  const resolveGlobalConfirm = useCallback((ok) => {
+    setGlobalEnableModalOpen(false);
+    const resolver = globalConfirmResolverRef.current;
+    globalConfirmResolverRef.current = null;
+    if (typeof resolver === 'function') {
+      resolver(ok);
+    }
+  }, []);
+
+  const saveGlobalDispatch = useCallback(async(enabled) => {
     setSubmitting(true);
     try {
       await patchGlobalDispatchFlag({ enabled });
+    } finally {
+      setSubmitting(false);
+    }
+  }, []);
+
+  const {
+    busy: globalBusy,
+    disabled: globalDisabled,
+    onCheckedChange: onGlobalCheckedChange
+  } = useSettingToggleSave({
+    value: globalDispatchEnabled,
+    onValueChange: () => {},
+    save: saveGlobalDispatch,
+    requireConfirm: (next) => next === true,
+    confirm: async() => requestGlobalOnConfirm(),
+    optimistic: false,
+    onSuccess: async() => {
       notificationManager.show(
         t('smsTemplate.action.dispatchUpdated'),
         'success'
       );
       await loadList();
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('SMS 글로벌 게이트 토글 실패', error);
       notificationManager.show(
         t('smsTemplate.action.dispatchUpdateFailed'),
         'error'
       );
-    } finally {
-      setSubmitting(false);
-      setGlobalEnableModalOpen(false);
-    }
-  }, [loadList, t]);
-
-  const handleGlobalToggle = useCallback((nextEnabled) => {
-    if (nextEnabled) {
-      // ON 으로 전환은 운영 게이트 해제 — 알림톡 검수 통과 확인 후에만 활성화 (확인 모달).
-      setGlobalEnableModalOpen(true);
-      return;
-    }
-    submitGlobalDispatchToggle(false);
-  }, [submitGlobalDispatchToggle]);
-
-  const handleTemplateDispatchToggle = useCallback(async(templateKey, nextEnabled) => {
-    if (!templateKey || !isAdmin) {
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await patchTemplateDispatchFlag(templateKey, { enabled: nextEnabled });
-      notificationManager.show(
-        t('smsTemplate.action.dispatchUpdated'),
-        'success'
-      );
-      await loadList();
-    } catch (error) {
-      console.error('SMS 종목 게이트 토글 실패', error);
-      notificationManager.show(
-        t('smsTemplate.action.dispatchUpdateFailed'),
-        'error'
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  }, [isAdmin, loadList, t]);
+    },
+    isEnabled: isAdmin && !submitting
+  });
 
   const pageTitle = t('smsTemplate.page.title');
   const pageSubtitle = t('smsTemplate.page.subtitle');
-
   if (sessionLoading || !hasAccess) {
     return (
       <AdminCommonLayout title={pageTitle} className="mg-v2-dashboard-layout">
@@ -370,8 +369,9 @@ const SmsTemplateManagementPage = () => {
                 ? t('smsTemplate.dispatch.badge.on')
                 : t('smsTemplate.dispatch.badge.off')}
               checked={globalDispatchEnabled}
-              onCheckedChange={handleGlobalToggle}
-              disabled={!isAdmin || submitting}
+              onCheckedChange={onGlobalCheckedChange}
+              disabled={globalDisabled || !isAdmin || submitting}
+              isPending={globalBusy}
               data-testid="sms-template-global-toggle-input"
               ariaLabel={t('smsTemplate.globalDispatch.title')}
             />
@@ -486,17 +486,16 @@ const SmsTemplateManagementPage = () => {
                               : undefined
                           }
                         >
-                          <Switch
+                          <SmsTemplateDispatchToggle
+                            templateKey={item.key}
                             checked={Boolean(item.tenantDispatchEnabled
                                 ?? item.effectiveDispatchEnabled)}
-                            onCheckedChange={(next) =>
-                              handleTemplateDispatchToggle(item.key, next)
-                            }
                             disabled={
                               !isAdmin || submitting || !globalDispatchEnabled
                             }
-                            ariaLabel={t('smsTemplate.templateDispatch.label')}
-                            data-testid={`sms-template-toggle-${item.key}`}
+                            t={t}
+                            onReload={loadList}
+                            setSubmitting={setSubmitting}
                           />
                           <span className="mg-admin-sms-template__template-toggle-label">
                             {t('smsTemplate.templateDispatch.label')}
@@ -736,19 +735,23 @@ const SmsTemplateManagementPage = () => {
 
       <UnifiedModal
         isOpen={globalEnableModalOpen}
-        onClose={() => setGlobalEnableModalOpen(false)}
+        onClose={() => resolveGlobalConfirm(false)}
         title={t('smsTemplate.globalDispatch.title')}
         subtitle={t('smsTemplate.globalDispatch.confirmOn')}
         variant="alert"
         actions={
           <ActionBar align="end" gap="md">
-            <ActionBarButton variant="outline" onClick={() => setGlobalEnableModalOpen(false)} disabled={submitting}>
+            <ActionBarButton
+              variant="outline"
+              onClick={() => resolveGlobalConfirm(false)}
+              disabled={submitting || globalBusy}
+            >
               {t('common:cancel')}
             </ActionBarButton>
             <ActionBarButton
               variant="primary"
-              onClick={() => submitGlobalDispatchToggle(true)}
-              loading={submitting}
+              onClick={() => resolveGlobalConfirm(true)}
+              loading={submitting || globalBusy}
               data-testid="sms-template-global-dispatch-confirm"
             >
               {t('smsTemplate.dispatch.badge.on')}
@@ -761,6 +764,61 @@ const SmsTemplateManagementPage = () => {
         </div>
       </UnifiedModal>
     </AdminCommonLayout>
+  );
+};
+
+/**
+ * 템플릿 행 발송 게이트 — useSettingToggleSave(optimistic:false) 정렬.
+ * 목록 갱신은 onReload 로 부모와 동기화한다.
+ */
+const SmsTemplateDispatchToggle = ({
+  templateKey,
+  checked,
+  disabled,
+  t,
+  onReload,
+  setSubmitting
+}) => {
+  const save = useCallback(async(next) => {
+    setSubmitting(true);
+    try {
+      await patchTemplateDispatchFlag(templateKey, { enabled: next });
+    } finally {
+      setSubmitting(false);
+    }
+  }, [templateKey, setSubmitting]);
+
+  const { busy, disabled: hookDisabled, onCheckedChange } = useSettingToggleSave({
+    value: checked,
+    onValueChange: () => {},
+    save,
+    optimistic: false,
+    onSuccess: async() => {
+      notificationManager.show(
+        t('smsTemplate.action.dispatchUpdated'),
+        'success'
+      );
+      await onReload();
+    },
+    onError: (error) => {
+      console.error('SMS 종목 게이트 토글 실패', error);
+      notificationManager.show(
+        t('smsTemplate.action.dispatchUpdateFailed'),
+        'error'
+      );
+    },
+    isEnabled: !disabled
+  });
+
+  return (
+    <Switch
+      checked={checked}
+      onCheckedChange={onCheckedChange}
+      disabled={hookDisabled || disabled}
+      isPending={busy}
+      ariaLabel={t('smsTemplate.templateDispatch.label')}
+      data-testid={`sms-template-toggle-${templateKey}`}
+    />
   );
 };
 

@@ -161,7 +161,18 @@ public final class SessionConstants {
      * 세션 갱신 간격 (초)
      */
     public static final int SESSION_REFRESH_INTERVAL_SECONDS = 300; // 5분
-    
+
+    /**
+     * DB {@code user_sessions} / JSESSIONID 쿠키 Max-Age 슬라이딩 스로틀 (초).
+     *
+     * <p>{@link com.coresolution.consultation.config.SessionCookieRenewalFilter} 와
+     * {@link com.coresolution.consultation.config.SessionBasedAuthenticationFilter} 가 공유한다.
+     * 이 값은 Set-Cookie·DB write 빈도 제한이며, 세션 TTL SSOT는
+     * {@link com.coresolution.consultation.config.SessionTimeoutProperties}
+     * ({@code HTTP_SESSION_MAX_INACTIVE})이다.</p>
+     */
+    public static final int SESSION_SLIDING_THROTTLE_SECONDS = 1800; // 30분
+
     /**
      * 최대 동시 세션 수 (비운영 기본).
      * 환경별 SSOT: {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_PRODUCTION} /

@@ -5,7 +5,8 @@
  * @since 2026-08-05
  */
 
-import { SESSION_DURATION } from '../../constants/session';
+import { SESSION_DURATION, SESSION_KEYS } from '../../constants/session';
+import { storage } from '../common';
 import {
   buildSessionExpiryLabel,
   buildSessionRemainingLabel,
@@ -17,18 +18,67 @@ import {
 describe('sessionExpiryDisplay', () => {
   const clientNow = 1_700_000_000_000;
 
+  afterEach(() => {
+    try {
+      storage.remove(SESSION_KEYS.SESSION_EXPIRY);
+      storage.remove(SESSION_KEYS.LOGIN_TIME);
+    } catch {
+      // ignore
+    }
+  });
+
   test('session-info timing → remainingMs / expiryMs', () => {
     const lastAcc = clientNow - 60_000;
     const maxSec = 3600;
     const si = {
       maxInactiveInterval: maxSec,
       lastAccessedTime: lastAcc,
-      serverNow: clientNow
+      serverNow: clientNow,
+      clientReceivedAt: clientNow
     };
     const state = computeSessionExpiryState(si, clientNow, { allowFallback: false });
     expect(state.source).toBe('session-info');
     expect(state.expiryMs).toBe(lastAcc + maxSec * 1000);
     expect(state.remainingMs).toBe(maxSec * 1000 - 60_000);
+  });
+
+  test('clientNow만 진행해도 remainingMs 감소 (오프셋 스냅샷 고정)', () => {
+    const lastAcc = clientNow - 60_000;
+    const maxSec = 3600;
+    const si = {
+      maxInactiveInterval: maxSec,
+      lastAccessedTime: lastAcc,
+      serverNow: clientNow,
+      clientReceivedAt: clientNow
+    };
+    const t0 = computeSessionExpiryState(si, clientNow, { allowFallback: false });
+    const t1 = computeSessionExpiryState(si, clientNow + 1000, { allowFallback: false });
+    expect(t1.remainingMs).toBe(t0.remainingMs - 1000);
+    expect(t1.offsetMs).toBe(t0.offsetMs);
+  });
+
+  test('session-info 갱신(활동 연장) 시 remaining이 ~maxInactive로 리필', () => {
+    const maxSec = 4 * 60 * 60;
+    const before = {
+      maxInactiveInterval: maxSec,
+      lastAccessedTime: clientNow - 30 * 60 * 1000,
+      serverNow: clientNow,
+      clientReceivedAt: clientNow
+    };
+    const afterSlide = {
+      maxInactiveInterval: maxSec,
+      lastAccessedTime: clientNow + 1000,
+      serverNow: clientNow + 1000,
+      clientReceivedAt: clientNow + 1000
+    };
+    const remBefore = computeSessionExpiryState(before, clientNow, {
+      allowFallback: false
+    }).remainingMs;
+    const remAfter = computeSessionExpiryState(afterSlide, clientNow + 1000, {
+      allowFallback: false
+    }).remainingMs;
+    expect(remBefore).toBeLessThan(maxSec * 1000);
+    expect(remAfter).toBe(maxSec * 1000);
   });
 
   test('allowFallback false + missing timing → null remaining', () => {
@@ -41,10 +91,26 @@ describe('sessionExpiryDisplay', () => {
 
   test('maxInactive 없을 때 SESSION_DURATION 폴백(lastAccessed 있음)', () => {
     const lastAcc = clientNow;
-    const si = { lastAccessedTime: lastAcc, serverNow: clientNow };
+    const si = {
+      lastAccessedTime: lastAcc,
+      serverNow: clientNow,
+      clientReceivedAt: clientNow
+    };
     const state = computeSessionExpiryState(si, clientNow, { allowFallback: true });
     expect(state.source).toBe('session-info');
     expect(state.remainingMs).toBe(SESSION_DURATION);
+  });
+
+  test('duration-fallback도 고정 expiry 기준으로 카운트다운', () => {
+    const t0 = computeSessionExpiryState(null, clientNow, { allowFallback: true });
+    expect(t0.source).toBe('duration-fallback');
+    expect(t0.remainingMs).toBe(SESSION_DURATION);
+    expect(t0.expiryMs).toBe(clientNow + SESSION_DURATION);
+
+    const t1 = computeSessionExpiryState(null, clientNow + 2000, { allowFallback: true });
+    expect(t1.source).toBe('storage-expiry');
+    expect(t1.remainingMs).toBe(SESSION_DURATION - 2000);
+    expect(t1.expiryMs).toBe(t0.expiryMs);
   });
 
   test('formatSessionCountdown pads MM:SS', () => {

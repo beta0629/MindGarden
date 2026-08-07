@@ -173,6 +173,9 @@
       "templates": "템플릿 코드",
       "refs": "키 참조"
     },
+    "action": {
+      "saveTemplatesAndRefs": "템플릿·참조 정보 저장"
+    },
     "templates": {
       "consultationConfirmed": "상담 확정",
       "consultationReminder": "상담 리마인더",
@@ -208,6 +211,9 @@
       "enabled": "SMS 사용",
       "integration": "연동",
       "refs": "키 참조"
+    },
+    "action": {
+      "saveRefs": "연동·참조 정보 저장"
     },
     "fields": {
       "provider": "프로바이더",

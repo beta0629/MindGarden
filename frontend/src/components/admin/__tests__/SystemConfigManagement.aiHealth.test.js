@@ -363,7 +363,7 @@ describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI
     expect(within(combobox).getByText('CLIENT')).toBeInTheDocument();
     expect(within(combobox).getByText('CONSULTANT')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '발송 시각·대상 저장' }));
 
     await waitFor(() => {
       expect(StandardizedApi.post).toHaveBeenCalledWith(
@@ -386,7 +386,7 @@ describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI
     const combobox = screen.getByRole('combobox', { name: /대상 역할/ });
     expect(within(combobox).queryByText(/ROLE_CLIENT/)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '발송 시각·대상 저장' }));
 
     await waitFor(() => {
       expect(StandardizedApi.post).toHaveBeenCalledWith(

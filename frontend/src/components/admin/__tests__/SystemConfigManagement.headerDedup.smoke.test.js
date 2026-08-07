@@ -43,7 +43,7 @@ jest.mock('react-i18next', () => ({
       const map = {
         'systemConfig.pageTitle': PAGE_TITLE,
         'systemConfig.pageSubtitle': PAGE_SUBTITLE,
-        'systemConfig.action.save': '저장',
+        'systemConfig.wellness.action.saveFields': '발송 시각·대상 저장',
         'systemConfig.loading.session': '세션 확인 중',
         'systemConfig.loading.config': '설정 로딩 중'
       };
@@ -136,6 +136,6 @@ describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
     expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
     expect(screen.getByTestId('content-header-actions')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '저장' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '발송 시각·대상 저장' })).toBeInTheDocument();
   });
 });

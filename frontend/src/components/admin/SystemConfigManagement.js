@@ -507,10 +507,10 @@ const SystemConfigManagement = () => {
                   variant="primary"
                   onClick={handleSave}
                   loading={saving}
-                  title={t('systemConfig.action.save')}
+                  title={t('systemConfig.wellness.action.saveFields')}
                   className="mg-v2-mapping-header-btn mg-v2-mapping-header-btn--primary"
                 >
-                  {t('systemConfig.action.save')}
+                  {t('systemConfig.wellness.action.saveFields')}
                 </ActionBarButton>
               }
             />

@@ -332,7 +332,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {t('common:actions.save')}
+                  {t('settings:kakao.action.saveTemplatesAndRefs')}
                 </MGButton>
                 <MGButton
                   type="button"

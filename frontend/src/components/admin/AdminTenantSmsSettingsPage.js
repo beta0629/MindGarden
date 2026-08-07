@@ -318,7 +318,7 @@ const AdminTenantSmsSettingsPage = () => {
                   loading={saving}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 >
-                  {t('common:actions.save')}
+                  {t('settings:sms.action.saveRefs')}
                 </MGButton>
                 <MGButton
                   type="button"

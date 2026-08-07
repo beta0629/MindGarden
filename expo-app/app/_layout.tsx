@@ -25,6 +25,7 @@ import { ThemeProvider } from '../src/theme';
 import { useAuthStore } from '../src/stores/useAuthStore';
 import { hydrateJsessionCacheFromSecureStore } from '../src/utils/sessionCookie';
 import { useAppForegroundRefetch } from '../src/hooks/useAppForegroundRefetch';
+import { useDuplicateLoginVictimGuard } from '../src/hooks/useDuplicateLoginVictimGuard';
 import { useSessionIdleSignOut } from '../src/hooks/useSessionIdleSignOut';
 import {
   queryClient,
@@ -58,6 +59,12 @@ SplashScreen.preventAutoHideAsync();
 
 function AppForegroundRefetchBridge() {
   useAppForegroundRefetch();
+  return null;
+}
+
+/** 중복 로그인 피해자 — 60s·포그라운드 폴링 후 performSignOut (웹 duplicateLoginManager 정합) */
+function DuplicateLoginVictimGuardBridge() {
+  useDuplicateLoginVictimGuard();
   return null;
 }
 
@@ -183,6 +190,7 @@ export default function RootLayout() {
             }}
           >
             <AppForegroundRefetchBridge />
+            <DuplicateLoginVictimGuardBridge />
             <SessionIdleSignOutBridge>
               <ThemeProvider role={role ?? 'client'}>
                 <ApiEnvironmentBanner />

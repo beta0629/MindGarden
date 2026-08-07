@@ -17,6 +17,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.RefreshToken;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.RefreshTokenService;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.UserSessionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -57,6 +58,9 @@ class AuthServiceImplDuplicateLoginHotfixTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private SystemConfigService systemConfigService;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -65,9 +69,23 @@ class AuthServiceImplDuplicateLoginHotfixTest {
     class CheckDuplicateLogin {
 
         @Test
+        @DisplayName("테넌트 allowed=true 이면 세션/토큰 존재해도 false (스킵)")
+        void skipsWhenTenantAllowsDuplicateLogin() {
+            User user = userWithTenant(TENANT_ID);
+            when(systemConfigService.isDuplicateLoginAllowedForTenant(TENANT_ID)).thenReturn(true);
+
+            boolean result = authService.checkDuplicateLogin(user);
+
+            assertThat(result).isFalse();
+            verify(userSessionService, never()).getActiveSessionCount(any());
+            verify(refreshTokenService, never()).findActiveTokensByUserIdAndTenantId(anyLong(), anyString());
+        }
+
+        @Test
         @DisplayName("U1 — user_sessions=0, refresh_token_store=1 → true (모바일 JWT 흐름 감지)")
         void detectsRefreshTokenOnlyDuplicate() {
             User user = userWithTenant(TENANT_ID);
+            when(systemConfigService.isDuplicateLoginAllowedForTenant(TENANT_ID)).thenReturn(false);
             when(userSessionService.getActiveSessionCount(user)).thenReturn(0L);
             when(refreshTokenService.findActiveTokensByUserIdAndTenantId(USER_ID, TENANT_ID))
                 .thenReturn(List.of(mockRefreshToken()));
@@ -83,6 +101,7 @@ class AuthServiceImplDuplicateLoginHotfixTest {
         @DisplayName("U2 — user_sessions=0, refresh_token_store=0 → false (정상 단일 로그인)")
         void returnsFalseWhenNoActiveSessionAndNoActiveToken() {
             User user = userWithTenant(TENANT_ID);
+            when(systemConfigService.isDuplicateLoginAllowedForTenant(TENANT_ID)).thenReturn(false);
             when(userSessionService.getActiveSessionCount(user)).thenReturn(0L);
             when(refreshTokenService.findActiveTokensByUserIdAndTenantId(USER_ID, TENANT_ID))
                 .thenReturn(Collections.emptyList());
@@ -98,6 +117,7 @@ class AuthServiceImplDuplicateLoginHotfixTest {
         @DisplayName("U3 — user_sessions ≥ 1 이면 refresh_token_store 조회 없이 즉시 true (short-circuit)")
         void shortCircuitsOnActiveUserSession() {
             User user = userWithTenant(TENANT_ID);
+            when(systemConfigService.isDuplicateLoginAllowedForTenant(TENANT_ID)).thenReturn(false);
             when(userSessionService.getActiveSessionCount(user)).thenReturn(2L);
 
             boolean result = authService.checkDuplicateLogin(user);
@@ -111,6 +131,7 @@ class AuthServiceImplDuplicateLoginHotfixTest {
         @DisplayName("U2b — tenantId 없음 + refresh_token_store=0 → false (글로벌 폴백 사용)")
         void usesGlobalFallbackWhenTenantIdMissing() {
             User user = userWithTenant(null);
+            when(systemConfigService.isDuplicateLoginAllowedForTenant(null)).thenReturn(false);
             when(userSessionService.getActiveSessionCount(user)).thenReturn(0L);
             when(refreshTokenService.findActiveTokensByUserId(USER_ID)).thenReturn(Collections.emptyList());
 
@@ -125,6 +146,7 @@ class AuthServiceImplDuplicateLoginHotfixTest {
         @DisplayName("예외 발생 시 false 반환 (보호적 차단 — 로그인 자체 차단하지 않음)")
         void returnsFalseOnException() {
             User user = userWithTenant(TENANT_ID);
+            when(systemConfigService.isDuplicateLoginAllowedForTenant(TENANT_ID)).thenReturn(false);
             when(userSessionService.getActiveSessionCount(user))
                 .thenThrow(new RuntimeException("DB error"));
 
@@ -142,11 +164,14 @@ class AuthServiceImplDuplicateLoginHotfixTest {
         @DisplayName("U5 — confirm 분기에서 user_sessions deactivate 후 refresh_token_store 도 revoke")
         void revokesRefreshTokensAfterDeactivatingSessions() {
             User user = userWithTenant(TENANT_ID);
-            when(userSessionService.deactivateAllUserSessions(eq(user), anyString())).thenReturn(0);
+            when(userSessionService.getActiveSessions(user)).thenReturn(List.of());
+            when(userSessionService.deactivateAllSessionsForTenantUser(
+                    eq(TENANT_ID), eq(USER_ID), anyString())).thenReturn(0);
 
             authService.cleanupUserSessions(user, "USER_CONFIRMED_TERMINATE");
 
-            verify(userSessionService).deactivateAllUserSessions(eq(user), eq("USER_CONFIRMED_TERMINATE"));
+            verify(userSessionService).deactivateAllSessionsForTenantUser(
+                eq(TENANT_ID), eq(USER_ID), eq("USER_CONFIRMED_TERMINATE"));
             verify(refreshTokenService).revokeAllUserTokens(USER_ID);
             verify(refreshTokenService, never()).revokeRefreshToken(anyString());
         }

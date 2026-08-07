@@ -98,6 +98,31 @@ public interface SystemConfigService {
     boolean getGlobalBoolean(String configKey, boolean defaultValue);
 
     /**
+     * 지정 테넌트의 불리언 설정 조회 ({@link com.coresolution.core.context.TenantContextHolder} 비의존).
+     *
+     * <p>로그인 경로처럼 TenantContext 가 아직 없거나 다른 테넌트일 때
+     * {@code user.getTenantId()} 로 직접 조회할 때 사용한다.
+     * 값 파싱은 {@link #getGlobalBoolean} 과 동일.
+     *
+     * @param tenantId     테넌트 ID (null/blank 이면 {@code defaultValue})
+     * @param configKey    설정 키
+     * @param defaultValue 행이 없거나 비활성일 때 반환할 기본값
+     * @return 플래그 값
+     */
+    boolean getBooleanForTenant(String tenantId, String configKey, boolean defaultValue);
+
+    /**
+     * 테넌트별 중복 로그인(동시 다중 세션) 허용 여부.
+     *
+     * <p>키 SSOT: {@link com.coresolution.consultation.constant.SessionSecurityFlagKeys#DUPLICATE_LOGIN_ALLOWED}.
+     * DB 행이 있으면 그 값, 없으면 env/기본({@link com.coresolution.consultation.constant.SessionSecurityFlagKeys#DEFAULT_ALLOWED}).
+     *
+     * @param tenantId 테넌트 ID
+     * @return {@code true} 이면 중복 체크 스킵·동시 접속 허용
+     */
+    boolean isDuplicateLoginAllowedForTenant(String tenantId);
+
+    /**
      * 알림 자동 발송 스케줄러 4 종 전역 플래그 일괄 조회.
      *
      * <p>키 SSOT: {@link com.coresolution.consultation.constant.NotificationSchedulerFlagKeys}.

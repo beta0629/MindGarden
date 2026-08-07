@@ -50,7 +50,7 @@ class SessionTimeoutPropertiesTest {
     }
 
     @Test
-    @DisplayName("동시 세션 상수는 운영 1 / 개발 3 SSOT")
+    @DisplayName("동시 세션 상수 — 레거시 운영1/개발3 + Spring CEILING(-1) SSOT")
     void maxConcurrentSessionsMatchSecuritySsot() {
         assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_PRODUCTION).isEqualTo(1);
         assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT).isEqualTo(3);
@@ -58,5 +58,8 @@ class SessionTimeoutPropertiesTest {
                 .isEqualTo(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT);
         assertThat(SessionConstants.MAX_CONCURRENT_SESSIONS)
                 .isEqualTo(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT);
+        assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_SPRING_CEILING).isEqualTo(-1);
+        assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_WHEN_DUPLICATE_ALLOWED)
+                .isEqualTo(-1);
     }
 }

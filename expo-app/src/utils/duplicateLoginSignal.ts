@@ -7,6 +7,9 @@
  *   - 본문 `requiresConfirmation === true`
  *   - `ApiResponse` 래퍼인 경우 `data.responseType` / `data.requiresConfirmation`
  *
+ * 테넌트 `security.session.duplicate-login.allowed=true` 이면 서버가 중복 체크를 스킵하므로
+ * 본 신호는 발생하지 않는다 (웹·Expo 동일 정책, 앱 전용 예외 없음).
+ *
  * axios 인터셉터(`src/api/client.ts`) 가 4xx 응답을 `{ status, message, originalError }` 형태로
  * reject 하므로, catch 측 에러의 `originalError.response.data` 도 함께 검사한다.
  *
@@ -21,6 +24,30 @@ export interface DuplicateLoginSignal {
 /** 기본 안내 문구(서버 메시지가 없을 때 사용) */
 export const DUPLICATE_LOGIN_FALLBACK_MESSAGE =
   '다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?';
+
+export type DuplicateLoginPollPayload = {
+  hasDuplicateLogin?: boolean;
+  duplicateLoginAllowed?: boolean;
+};
+
+/**
+ * 피해자 기기 폴링 응답에서 강제 signOut 여부.
+ * allowed=true 이면 웹과 같이 스킵. hasDuplicateLogin=true 이고 불가면 강제 종료.
+ *
+ * @param poll `/check-duplicate-login` data
+ * @returns 강제 signOut 해야 하면 true
+ */
+export function shouldForceSignOutFromDuplicatePoll(
+  poll: DuplicateLoginPollPayload | null | undefined,
+): boolean {
+  if (poll == null || typeof poll !== 'object') {
+    return false;
+  }
+  if (poll.duplicateLoginAllowed === true) {
+    return false;
+  }
+  return poll.hasDuplicateLogin === true;
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (value == null || typeof value !== 'object') {

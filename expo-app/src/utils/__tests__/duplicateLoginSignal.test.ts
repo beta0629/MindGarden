@@ -1,6 +1,7 @@
 import {
   DUPLICATE_LOGIN_FALLBACK_MESSAGE,
   detectDuplicateLoginConfirmation,
+  shouldForceSignOutFromDuplicatePoll,
 } from '@/utils/duplicateLoginSignal';
 
 describe('detectDuplicateLoginConfirmation', () => {
@@ -86,5 +87,34 @@ describe('detectDuplicateLoginConfirmation', () => {
         data: { responseType: 'normal' },
       }),
     ).toBeNull();
+  });
+});
+
+describe('shouldForceSignOutFromDuplicatePoll', () => {
+  it('returns true when hasDuplicateLogin and not allowed', () => {
+    expect(
+      shouldForceSignOutFromDuplicatePoll({
+        hasDuplicateLogin: true,
+        duplicateLoginAllowed: false,
+      }),
+    ).toBe(true);
+  });
+
+  it('returns false when tenant allows duplicate login', () => {
+    expect(
+      shouldForceSignOutFromDuplicatePoll({
+        hasDuplicateLogin: true,
+        duplicateLoginAllowed: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when no duplicate', () => {
+    expect(
+      shouldForceSignOutFromDuplicatePoll({
+        hasDuplicateLogin: false,
+        duplicateLoginAllowed: false,
+      }),
+    ).toBe(false);
   });
 });

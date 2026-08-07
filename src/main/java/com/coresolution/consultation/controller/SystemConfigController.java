@@ -106,7 +106,7 @@ public class SystemConfigController {
     /**
      * 설정 값 조회
      */
-    @GetMapping("/{configKey}")
+    @GetMapping("/{configKey:.+}")
     public ResponseEntity<Map<String, Object>> getConfig(@PathVariable String configKey, HttpSession session) {
         if (!hasAdminPermission(session)) {
             Map<String, Object> response = new HashMap<>();
@@ -137,7 +137,7 @@ public class SystemConfigController {
      * <p>트랙 B PR-3 (2026-05-23): configKey == {@code AI_DEFAULT_PROVIDER} 인 경우
      * 키 등록 여부 가드를 통과해야 저장 가능하며, 통과 시 프로바이더 캐시를 무효화한다.
      */
-    @PostMapping("/{configKey}")
+    @PostMapping("/{configKey:.+}")
     public ResponseEntity<Map<String, Object>> setConfig(
             @PathVariable String configKey,
             @RequestBody Map<String, String> request,

@@ -392,6 +392,14 @@ server:
         # state 검증/세션 연속성이 깨질 수 있으므로 Lax로 설정합니다.
         # - local 프로파일은 application-local.yml에서 secure=false로 오버라이드됩니다.
         secure: true
+
+# 중복 로그인 체크 (전역 기본). 테넌트 DB
+# security.session.duplicate-login.allowed 가 있으면 오버라이드.
+session:
+  duplicate-login-check:
+    enabled: ${SESSION_DUPLICATE_LOGIN_CHECK_ENABLED:true}
+    ask-user-confirmation: ${SESSION_DUPLICATE_LOGIN_ASK_USER_CONFIRMATION:false}
+    allowed-by-default: ${SESSION_DUPLICATE_LOGIN_ALLOWED_BY_DEFAULT:false}
         same-site: lax
   compression:
     enabled: true

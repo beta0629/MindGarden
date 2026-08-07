@@ -228,6 +228,30 @@ class AuthControllerDuplicateLoginHotfixTest {
         verify(refreshTokenService, never()).revokeAllUserTokens(anyLong());
         verify(refreshTokenService, never()).revokeRefreshToken(anyString());
         verify(authService).cleanupUserSessions(any(User.class), eq("USER_CONFIRMED_TERMINATE"));
+        verify(session).setAttribute(eq("sessionId"), eq(SESSION_ID));
+    }
+
+    @Test
+    @DisplayName("confirm 성공 시 SESSION_ID 세션 속성 설정 (폴링·필터 정합)")
+    void confirmDuplicateLogin_setsSessionIdAttribute() {
+        AuthResponse serviceResponse = AuthResponse.builder()
+            .success(true)
+            .message("로그인 성공")
+            .user(userDto())
+            .build();
+        when(authService.authenticateWithSession(anyString(), anyString(), anyString(), anyString(), anyString()))
+            .thenReturn(serviceResponse);
+        when(userService.findByLoginPrincipal(LOGIN_PRINCIPAL))
+            .thenReturn(Optional.of(userEntity()));
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("email", LOGIN_PRINCIPAL);
+        request.put("password", PASSWORD);
+        request.put("confirmTerminate", Boolean.TRUE);
+
+        authController.confirmDuplicateLogin(request, session, httpRequest);
+
+        verify(session).setAttribute(eq("sessionId"), eq(SESSION_ID));
     }
 
     // ---------------------------------------------------------------- //

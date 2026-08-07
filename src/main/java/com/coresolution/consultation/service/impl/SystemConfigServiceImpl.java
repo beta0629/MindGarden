@@ -6,12 +6,14 @@ import java.util.Optional;
 import java.util.Map;
 import java.util.Set;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
+import com.coresolution.consultation.constant.SessionSecurityFlagKeys;
 import com.coresolution.consultation.dto.NotificationSchedulerFlagDto;
 import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.repository.SystemConfigRepository;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.EncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,13 @@ import lombok.extern.slf4j.Slf4j;
 public class SystemConfigServiceImpl implements SystemConfigService {
     
     private final SystemConfigRepository systemConfigRepository;
+
+    /**
+     * 테넌트 DB 행이 없을 때 중복 로그인 허용 기본값 (env 오버라이드).
+     * SSOT 폴백: {@link SessionSecurityFlagKeys#DEFAULT_ALLOWED}.
+     */
+    @Value("${session.duplicate-login-check.allowed-by-default:false}")
+    private boolean duplicateLoginAllowedByDefault;
     
     @Override
     public Optional<String> getConfigValue(String configKey) {
@@ -249,6 +258,53 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             log.warn("전역 플래그 조회 실패 — 기본값 사용: key={}, default={}, error={}",
                     configKey, defaultValue, e.getMessage());
             return defaultValue;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean getBooleanForTenant(String tenantId, String configKey, boolean defaultValue) {
+        if (tenantId == null || tenantId.isBlank() || configKey == null || configKey.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return systemConfigRepository
+                    .findByTenantIdAndConfigKeyAndIsActiveTrue(tenantId, configKey)
+                    .map(SystemConfig::getConfigValue)
+                    .map(value -> value == null ? null : value.trim().toLowerCase())
+                    .map(TRUTHY_VALUES::contains)
+                    .orElse(defaultValue);
+        } catch (Exception e) {
+            log.warn("테넌트 플래그 조회 실패 — 기본값 사용: tenantId={}, key={}, default={}, error={}",
+                    tenantId, configKey, defaultValue, e.getMessage());
+            return defaultValue;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isDuplicateLoginAllowedForTenant(String tenantId) {
+        boolean envDefault = duplicateLoginAllowedByDefault
+                || SessionSecurityFlagKeys.DEFAULT_ALLOWED;
+        if (tenantId == null || tenantId.isBlank()) {
+            return envDefault;
+        }
+        try {
+            Optional<SystemConfig> row = systemConfigRepository
+                    .findByTenantIdAndConfigKeyAndIsActiveTrue(
+                            tenantId, SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED);
+            if (row.isEmpty()) {
+                return envDefault;
+            }
+            String raw = row.get().getConfigValue();
+            if (raw == null || raw.isBlank()) {
+                return envDefault;
+            }
+            return TRUTHY_VALUES.contains(raw.trim().toLowerCase());
+        } catch (Exception e) {
+            log.warn("중복 로그인 허용 플래그 조회 실패 — 기본값 사용: tenantId={}, default={}, error={}",
+                    tenantId, envDefault, e.getMessage());
+            return envDefault;
         }
     }
 

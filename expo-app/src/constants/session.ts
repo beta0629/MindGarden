@@ -24,6 +24,12 @@ export const SESSION_IDLE_MAX_MS = HTTP_SESSION_MAX_INACTIVE_SECONDS * 1000;
 export const SESSION_IDLE_CHECK_INTERVAL_MS = 60 * 1000;
 
 /**
+ * 중복 로그인 피해자 강제 로그아웃 폴링 간격(밀리초).
+ * 웹 `duplicateLoginManager` checkIntervalMs(60s) 와 정합.
+ */
+export const DUPLICATE_LOGIN_VICTIM_POLL_MS = 60 * 1000;
+
+/**
  * 터치 등 활동 기록 스로틀(밀리초). 매 프레임 터치로 lastActivity 갱신 폭주 방지.
  */
 export const SESSION_IDLE_ACTIVITY_THROTTLE_MS = 1000;

@@ -6,6 +6,7 @@ import {
   SESSION_CHECK_INTERVAL,
   SESSION_CHECK_COOLDOWN_MS,
   SESSION_ACTIVITY_PING_INTERVAL_MS,
+  SESSION_ACTIVITY_EVENTS,
   isSessionPublicPath
 } from '../constants/session';
 import { AUTH_MESSAGES } from '../constants/messages';
@@ -133,7 +134,10 @@ export const SessionContext = createContext(null);
 export const SessionProvider = ({ children }) => {
   const [state, dispatch] = useReducer(sessionReducer, SessionState);
   const stateRef = useRef(state);
+  /** silent 활동 ping 성공 시각. 실패 시 갱신하지 않아 다음 활동에서 재시도한다. */
   const lastActivityPingAtRef = useRef(0);
+  /** 동시 ping 폭주 방지(성공 전 lastActivityPingAt 미갱신 구간). */
+  const activityPingInFlightRef = useRef(false);
   
   // state가 변경될 때마다 ref 업데이트
   useEffect(() => {
@@ -456,7 +460,8 @@ export const SessionProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [checkSession]); // state.user, state.isLoading 제거 - stateRef로 최신 상태 참조
 
-  // 서블릿 세션 lastAccessedTime은 HTTP 요청 시에만 갱신되어 입력만으로는 연장되지 않았음; 스로틀된 checkSession(true)로 갱신한다.
+  // 서블릿 세션 lastAccessedTime은 HTTP 요청 시에만 갱신됨.
+  // 키보드·마우스·터치·스크롤·이동 모두 동일 onActivity + 공유 45s 스로틀 → silent checkSession으로 sessionInfo 리필.
   useEffect(() => {
     const onActivity = (event) => {
       // 세션 만료 임박 모달: pointerdown(capture)이 버튼 click보다 먼저 실행되어
@@ -470,25 +475,37 @@ export const SessionProvider = ({ children }) => {
         return;
       }
       const currentState = stateRef.current;
-      if (!currentState.user || currentState.isLoading) {
+      // isLoading 가드 없음: 비silent 체크 중에도 활동 ping이 막히지 않도록 함.
+      if (!currentState.user) {
         return;
       }
       const now = Date.now();
+      if (activityPingInFlightRef.current) {
+        return;
+      }
       if (now - lastActivityPingAtRef.current < SESSION_ACTIVITY_PING_INTERVAL_MS) {
         return;
       }
-      lastActivityPingAtRef.current = now;
-      void checkSession(true, { silent: true });
+      activityPingInFlightRef.current = true;
+      void checkSession(true, { silent: true })
+        .then((ok) => {
+          if (ok) {
+            lastActivityPingAtRef.current = Date.now();
+          }
+        })
+        .finally(() => {
+          activityPingInFlightRef.current = false;
+        });
     };
 
     const opts = { capture: true, passive: true };
-    document.addEventListener('input', onActivity, opts);
-    document.addEventListener('keydown', onActivity, opts);
-    document.addEventListener('pointerdown', onActivity, opts);
+    SESSION_ACTIVITY_EVENTS.forEach((type) => {
+      document.addEventListener(type, onActivity, opts);
+    });
     return () => {
-      document.removeEventListener('input', onActivity, opts);
-      document.removeEventListener('keydown', onActivity, opts);
-      document.removeEventListener('pointerdown', onActivity, opts);
+      SESSION_ACTIVITY_EVENTS.forEach((type) => {
+        document.removeEventListener(type, onActivity, opts);
+      });
     };
   }, [checkSession]);
 

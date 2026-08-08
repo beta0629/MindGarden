@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   CONSULTATION_LOG_LOCAL_AUTOSAVE_DEBOUNCE_MS,
   CONSULTATION_LOG_LOCAL_AUTOSAVE_MAX_INTERVAL_MS
 } from '../constants/consultationLogAutosaveConstants';
+import { SessionContext } from '../contexts/SessionContext';
 import {
   fetchConsultationLogDraftFromServer,
   pushConsultationLogDraftToServer
@@ -59,6 +60,12 @@ export function useConsultationLogLocalAutosave({
   const restoreHandledKeyRef = useRef('');
   const serverDraftVersionRef = useRef(null);
   const draftVersionSeedDoneKeyRef = useRef('');
+  // Provider 밖(단위 테스트 등)에서는 null — optional silent session 리필만 사용
+  const sessionCtx = useContext(SessionContext);
+  const checkSessionRef = useRef(sessionCtx?.checkSession);
+  useEffect(() => {
+    checkSessionRef.current = sessionCtx?.checkSession;
+  }, [sessionCtx?.checkSession]);
 
   const persistLocalDraftSnapshot = useCallback(() => {
     if (!tenantIdStr || !draftScope) return false;
@@ -92,6 +99,11 @@ export function useConsultationLogLocalAutosave({
               serverDraftVersionRef.current = Number(res.version);
             }
             setServerDraftSyncFailed(false);
+            // 서버 드래프트 push도 HttpSession을 갱신하므로 UI sessionInfo를 silent 리필
+            const checkSession = checkSessionRef.current;
+            if (typeof checkSession === 'function') {
+              void checkSession(true, { silent: true });
+            }
           } else if (!res.skipped) {
             setServerDraftSyncFailed(true);
           }

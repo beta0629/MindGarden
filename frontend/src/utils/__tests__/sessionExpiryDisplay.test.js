@@ -12,7 +12,8 @@ import {
   buildSessionRemainingLabel,
   computeSessionExpiryState,
   formatSessionCountdown,
-  formatSessionRemainingHms
+  formatSessionRemainingHms,
+  pickFresherSessionInfo
 } from '../sessionExpiryDisplay';
 
 describe('sessionExpiryDisplay', () => {
@@ -25,6 +26,38 @@ describe('sessionExpiryDisplay', () => {
     } catch {
       // ignore
     }
+  });
+
+  test('pickFresherSessionInfo prefers higher clientReceivedAt', () => {
+    const older = {
+      clientReceivedAt: clientNow,
+      lastAccessedTime: clientNow
+    };
+    const newer = {
+      clientReceivedAt: clientNow + 1000,
+      lastAccessedTime: clientNow + 500
+    };
+    expect(pickFresherSessionInfo(older, newer)).toBe(newer);
+    expect(pickFresherSessionInfo(newer, older)).toBe(newer);
+  });
+
+  test('pickFresherSessionInfo ties on receivedAt then uses lastAccessedTime', () => {
+    const a = {
+      clientReceivedAt: clientNow,
+      lastAccessedTime: clientNow
+    };
+    const b = {
+      clientReceivedAt: clientNow,
+      lastAccessedTime: clientNow + 2000
+    };
+    expect(pickFresherSessionInfo(a, b)).toBe(b);
+    expect(pickFresherSessionInfo(b, a)).toBe(b);
+  });
+
+  test('pickFresherSessionInfo falls back when one side missing', () => {
+    const only = { clientReceivedAt: clientNow, lastAccessedTime: clientNow };
+    expect(pickFresherSessionInfo(null, only)).toBe(only);
+    expect(pickFresherSessionInfo(only, null)).toBe(only);
   });
 
   test('session-info timing → remainingMs / expiryMs', () => {

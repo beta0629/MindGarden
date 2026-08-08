@@ -12,9 +12,11 @@ import { useLocation } from 'react-router-dom';
 import SafeText from './SafeText';
 import { useSession } from '../../contexts/SessionContext';
 import { SESSION_REMAINING_DISPLAY, isSessionPublicPath } from '../../constants/session';
+import { sessionManager } from '../../utils/sessionManager';
 import {
   buildSessionRemainingLabel,
-  computeSessionExpiryState
+  computeSessionExpiryState,
+  pickFresherSessionInfo
 } from '../../utils/sessionExpiryDisplay';
 
 /**
@@ -34,7 +36,12 @@ const SessionRemainingLabel = ({ className, show = true }) => {
     }
 
     const tick = () => {
-      const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now());
+      // Context가 stale여도 silent ping이 sessionManager만 갱신한 경우 GNB 잔여가 올라가도록 최신 스냅샷 사용
+      const effectiveInfo = pickFresherSessionInfo(
+        sessionInfo,
+        sessionManager.getSessionInfo()
+      );
+      const { remainingMs } = computeSessionExpiryState(effectiveInfo, Date.now());
       if (remainingMs == null) {
         setLabel('');
         return;

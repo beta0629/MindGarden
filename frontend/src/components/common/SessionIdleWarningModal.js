@@ -9,7 +9,8 @@
  * maxInactiveInterval, lastAccessedTime, serverNow 포함 확인 →
  * 만료 `SESSION_IDLE_WARNING_MS` 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
  * 로그아웃 시 SessionContext.logout 재사용.
- * 카운트다운 remainingMs≤0 이면 강제 연장 없이 logout()으로 정리(토큰·세션 스토리지).
+ * 카운트다운 remainingMs≤0 이면 logout 직전 silent checkSession으로 서버 session-info를 재확인.
+ * 재확인 후 remainingMs>0 이면 연장으로 보고 모달만 닫고, ≤0·세션 무효일 때만 logout()(토큰·스토리지 정리).
  * 남은 시간은 `lastAccessedTime`(ms) + `maxInactiveInterval`(s)×1000 만료 시각 기준이며,
  * 서버 `ApiResponse`는 sessionManager에서 `data` 언랩됨(미언랩 시 toSafeNumber가 -1로 떨어져 타이머가 비활성).
  * lastAccessedTime / maxInactiveInterval = Servlet HttpSession(밀리초/초), serverNow = 서버 now(ms),
@@ -31,10 +32,12 @@ import SafeText from './SafeText';
 import { useSession } from '../../contexts/SessionContext';
 import { SESSION_IDLE_WARNING_MS, SESSION_REMAINING_DISPLAY, isSessionPublicPath } from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
+import { sessionManager } from '../../utils/sessionManager';
 import {
   buildSessionExpiryLabel,
   computeSessionExpiryState,
-  formatSessionCountdown
+  formatSessionCountdown,
+  pickFresherSessionInfo
 } from '../../utils/sessionExpiryDisplay';
 
 /** setTimeout 콜백에서 “아직 1분+여유”면 모달을 열지 않고 타이머만 재스케줄 (스냅샷·갱신 레이스) */
@@ -230,7 +233,10 @@ const SessionIdleWarningModal = () => {
     }
   }, [isOpen, sessionInfo]);
 
-  /** 강제 연장 없이 만료(remainingMs≤0) 시 SessionContext.logout → 서버·스토리지 정리 */
+  /**
+   * 만료(remainingMs≤0) 직전 silent checkSession으로 서버 재확인.
+   * Context stale로 서버는 유효한데 끊기는 레이스를 막고, 중복 logout은 ref로 1회만.
+   */
   useEffect(() => {
     if (!isOpen) {
       expiryLogoutStartedRef.current = false;
@@ -247,9 +253,35 @@ const SessionIdleWarningModal = () => {
       return;
     }
     expiryLogoutStartedRef.current = true;
-    setIsOpen(false);
-    void logout();
-  }, [isOpen, sessionInfo, remainingSec, logout]);
+
+    void (async() => {
+      try {
+        await checkSession(true, { silent: true });
+      } catch {
+        // checkSession 내부에서 처리. 아래 스냅샷으로 최종 판정.
+      }
+      // 연장 버튼 등으로 이미 닫혔으면 logout 하지 않음
+      if (!isOpenRef.current) {
+        expiryLogoutStartedRef.current = false;
+        return;
+      }
+      const freshSi = pickFresherSessionInfo(
+        sessionInfoRef.current,
+        sessionManager.getSessionInfo()
+      );
+      const stillAuth = freshSi?.isAuthenticated === true;
+      const rem = computeSessionExpiryState(freshSi, Date.now(), {
+        allowFallback: false
+      }).remainingMs;
+      if (stillAuth && rem != null && rem > 0) {
+        expiryLogoutStartedRef.current = false;
+        setIsOpen(false);
+        return;
+      }
+      setIsOpen(false);
+      await logout();
+    })();
+  }, [isOpen, sessionInfo, remainingSec, logout, checkSession]);
 
   useEffect(() => {
     armWarnTimer();

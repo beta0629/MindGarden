@@ -13,6 +13,37 @@ import { storage } from './common';
 import { toDisplayString, toSafeNumber } from './safeDisplay';
 
 /**
+ * Context `sessionInfo`와 `sessionManager.getSessionInfo()` 중 더 최신 스냅샷을 고른다.
+ * `clientReceivedAt`이 더 큰 쪽 우선, 동률이면 `lastAccessedTime`이 더 큰 쪽.
+ *
+ * @param {object|null|undefined} contextInfo
+ * @param {object|null|undefined} managerInfo
+ * @returns {object|null|undefined}
+ */
+export function pickFresherSessionInfo(contextInfo, managerInfo) {
+  if (!managerInfo) {
+    return contextInfo;
+  }
+  if (!contextInfo) {
+    return managerInfo;
+  }
+  const ctxReceived = toSafeNumber(contextInfo.clientReceivedAt, 0);
+  const mgrReceived = toSafeNumber(managerInfo.clientReceivedAt, 0);
+  if (mgrReceived > ctxReceived) {
+    return managerInfo;
+  }
+  if (ctxReceived > mgrReceived) {
+    return contextInfo;
+  }
+  const ctxLast = toSafeNumber(contextInfo.lastAccessedTime, 0);
+  const mgrLast = toSafeNumber(managerInfo.lastAccessedTime, 0);
+  if (mgrLast > ctxLast) {
+    return managerInfo;
+  }
+  return contextInfo;
+}
+
+/**
  * @param {object|null|undefined} si — sessionInfo (session-info API).
  *   `clientReceivedAt`(클라 수신 epoch ms)이 있으면 서버-클라 offset을 그 시점에 고정한다.
  * @param {number} clientNowMs

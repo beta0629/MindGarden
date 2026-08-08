@@ -1372,33 +1372,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false }) => {
                     variant="spinner"
                     tone="primary"
                     size="md"
-                    text={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')}
                 />
             );
         }
         return (
-            <AdminCommonLayout title={t('admin:consultant.title')}>
-                <div className="mg-v2-ad-b0kla mg-v2-consultant-management">
-                    <div className="mg-v2-ad-b0kla__container">
-                        <ContentArea ariaLabel={t('admin:consultant.title')}>
-                            <ContentHeader
-                                title={t('admin:consultant.title')}
-                                subtitle={t('admin:consultant.subtitle')}
-                                titleId={CONSULTANT_COMP_MGMT_TITLE_ID}
-                            />
-                            <main aria-labelledby={CONSULTANT_COMP_MGMT_TITLE_ID}>
-                                <UnifiedLoading
-                                    type="inline"
-                                    variant="spinner"
-                                    tone="primary"
-                                    size="md"
-                                    text={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')}
-                                />
-                            </main>
-                        </ContentArea>
-                    </div>
-                </div>
-            </AdminCommonLayout>
+            <AdminCommonLayout
+                title={t('admin:consultant.title')}
+                loading
+                loadingText={t('admin:ConsultantComprehensiveManagement.t_ef1822ad')}
+            />
         );
     }
 

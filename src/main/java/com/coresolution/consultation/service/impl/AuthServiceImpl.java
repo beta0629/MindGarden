@@ -98,6 +98,16 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private PersonalDataEncryptionUtil encryptionUtil;
 
+    @Autowired
+    private com.coresolution.consultation.service.SystemConfigService systemConfigService;
+
+    @Autowired(required = false)
+    private com.coresolution.consultation.config.HttpSessionInvalidator httpSessionInvalidator;
+
+    @Autowired(required = false)
+    private com.coresolution.consultation.config.DuplicateLoginAccessBlockRegistry
+        duplicateLoginAccessBlockRegistry;
+
     /**
      * 다중 매치 계정 선택 토큰 1회 사용 추적용 in-memory 저장소.
      *
@@ -433,6 +443,13 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean checkDuplicateLogin(User user) {
         try {
+            if (user != null
+                    && systemConfigService.isDuplicateLoginAllowedForTenant(user.getTenantId())) {
+                log.info("🔓 테넌트 중복 로그인 허용 — 체크 스킵: userId={}, tenantId={}",
+                        user.getId(), user.getTenantId());
+                return false;
+            }
+
             // 1) HTTP 세션 — 웹(JSESSIONID) 흐름
             long activeSessionCount = userSessionService.getActiveSessionCount(user);
             if (activeSessionCount > 0) {
@@ -464,17 +481,42 @@ public class AuthServiceImpl implements AuthService {
     public void cleanupUserSessions(User user, String reason) {
         try {
             log.info("🧹 사용자 세션 정리: userId={}, reason={}", user.getId(), reason);
-            
-            int cleanedCount = userSessionService.deactivateAllUserSessions(user, reason);
-            
+
+            // HttpSession invalidate 는 DB deactivate 전에 sessionId 목록을 확보해야 한다.
+            java.util.List<com.coresolution.consultation.entity.UserSession> activeSessions =
+                userSessionService.getActiveSessions(user);
+            if (httpSessionInvalidator != null && activeSessions != null) {
+                for (com.coresolution.consultation.entity.UserSession activeSession : activeSessions) {
+                    if (activeSession != null && activeSession.getSessionId() != null) {
+                        httpSessionInvalidator.invalidateBySessionId(activeSession.getSessionId());
+                    }
+                }
+            }
+
+            int cleanedCount;
+            String tenantId = user.getTenantId();
+            if (tenantId != null && !tenantId.trim().isEmpty()) {
+                cleanedCount = userSessionService.deactivateAllSessionsForTenantUser(
+                    tenantId.trim(), user.getId(), reason);
+            } else {
+                log.warn("⚠️ cleanupUserSessions: tenantId 없음 — 전역(deprecated) deactivate 사용 userId={}",
+                    user.getId());
+                cleanedCount = userSessionService.deactivateAllUserSessions(user, reason);
+            }
+
             // P1 hotfix (2026-06-13) — refresh_token_store 도 함께 revoke (모바일 JWT 흐름 정합).
             // PR #293 silent skip 정책의 비대칭 회귀 해소: checkDuplicateLogin 은 user_sessions OR
             // refresh_token_store 둘 다 검사하지만 cleanupUserSessions 는 user_sessions 만 deactivate
             // 하던 결과 모달 "기존 세션 종료" 가 실효 없고 60초 폴링이 강제 로그아웃 알림을 띄움.
             refreshTokenService.revokeAllUserTokens(user.getId());
-            
+
+            // Expo Access JWT 짧은 차단 힌트 (동일 인스턴스). refresh revoke 후에도 Access TTL 잔존 방지.
+            if (duplicateLoginAccessBlockRegistry != null) {
+                duplicateLoginAccessBlockRegistry.blockUser(user.getId());
+            }
+
             log.info("✅ 사용자 세션 정리 완료: userId={}, cleanedCount={}", user.getId(), cleanedCount);
-            
+
         } catch (Exception e) {
             log.error("❌ 사용자 세션 정리 실패: userId={}, reason={}, error={}", 
                      user.getId(), reason, e.getMessage(), e);
@@ -934,6 +976,7 @@ public class AuthServiceImpl implements AuthService {
 
         validateCoreSolutionTenantAccess(user);
 
+        // 테넌트 허용 시 checkDuplicateLogin 내부에서 스킵. env enabled=false 도 전역 비활성.
         if (duplicateLoginCheckEnabled) {
             boolean hasDuplicateLogin = checkDuplicateLogin(user);
             if (hasDuplicateLogin) {
@@ -953,6 +996,11 @@ public class AuthServiceImpl implements AuthService {
 
         userSessionService.createSession(user, sessionId, clientIp, userAgent,
             SessionManagementConstants.LOGIN_TYPE_NORMAL, null);
+
+        // 신규 로그인 성공 — 직전 cleanup 의 Access 차단 힌트 해제 (본인 새 JWT 허용)
+        if (duplicateLoginAccessBlockRegistry != null) {
+            duplicateLoginAccessBlockRegistry.clearBlock(user.getId());
+        }
 
         userService.updateLastLoginTime(user.getId());
 

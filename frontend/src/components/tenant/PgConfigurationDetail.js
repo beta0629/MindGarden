@@ -19,7 +19,6 @@ import {
 } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -175,11 +174,11 @@ const PgConfigurationDetail = () => {
   
   if (sessionLoading || loading) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
-        <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
-          <UnifiedLoading type="inline" text={t('common:tenant.PgConfigurationDetail.t_f7022e97')} variant="pulse" />
-        </ContentArea>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={t('admin.labels.pgSettingsDetail')}
+        loading
+        loadingText={t('common:tenant.PgConfigurationDetail.t_f7022e97')}
+      />
     );
   }
   

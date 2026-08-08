@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.OtpDeliveryService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
@@ -80,6 +81,7 @@ public class AuthController extends BaseApiController {
     private final AuthService authService;
     private final BranchService branchService;
     private final UserSessionService userSessionService;
+    private final SystemConfigService systemConfigService;
     private final DynamicPermissionService dynamicPermissionService;
     private final UserService userService;
     private final UserRoleQueryService userRoleQueryService;
@@ -615,7 +617,11 @@ public class AuthController extends BaseApiController {
     }
     
     /**
-     * 중복 로그인 체크 API
+     * 중복 로그인 체크 API (웹 폴링용).
+     *
+     * <p>테넌트 {@code security.session.duplicate-login.allowed=true} 이면
+     * 동시 접속을 허용하므로 항상 {@code hasDuplicateLogin=false} 를 반환한다
+     * (오탐 강제로그아웃 방지).
      */
     @GetMapping("/check-duplicate-login")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkDuplicateLogin(HttpSession session) {
@@ -623,21 +629,30 @@ public class AuthController extends BaseApiController {
         if (user == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
-        
-        // 현재 세션을 제외한 중복 로그인 체크
-        // HTTP 세션 ID 대신 데이터베이스의 세션 ID를 사용
-        String currentSessionId = (String) session.getAttribute("sessionId");
-        if (currentSessionId == null) {
-            // 세션 ID가 없으면 HTTP 세션 ID를 사용 (하위 호환성)
-            currentSessionId = session.getId();
+
+        boolean duplicateLoginAllowed =
+                systemConfigService.isDuplicateLoginAllowedForTenant(user.getTenantId());
+
+        boolean hasDuplicateLogin = false;
+        if (!duplicateLoginAllowed) {
+            // 현재 세션을 제외한 중복 로그인 체크
+            // HTTP 세션 ID 대신 데이터베이스의 세션 ID를 사용
+            String currentSessionId = (String) session.getAttribute("sessionId");
+            if (currentSessionId == null) {
+                // 세션 ID가 없으면 HTTP 세션 ID를 사용 (하위 호환성)
+                currentSessionId = session.getId();
+            }
+            hasDuplicateLogin =
+                    userSessionService.checkDuplicateLoginExcludingCurrent(user, currentSessionId);
         }
-        
-        boolean hasDuplicateLogin = userSessionService.checkDuplicateLoginExcludingCurrent(user, currentSessionId);
-        
+
         Map<String, Object> data = new HashMap<>();
         data.put("hasDuplicateLogin", hasDuplicateLogin);
-        data.put("message", hasDuplicateLogin ? "다른 곳에서 로그인되어 있습니다." : "중복 로그인이 없습니다.");
-        
+        data.put("duplicateLoginAllowed", duplicateLoginAllowed);
+        data.put("message", hasDuplicateLogin
+                ? SessionManagementConstants.DUPLICATE_LOGIN_DETECTED_POLL_MESSAGE
+                : SessionManagementConstants.NO_DUPLICATE_LOGIN_MESSAGE);
+
         return success(data);
     }
     
@@ -669,7 +684,7 @@ public class AuthController extends BaseApiController {
             if (user == null) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }
-            authService.cleanupUserSessions(user, "USER_CONFIRMED_TERMINATE");
+            authService.cleanupUserSessions(user, SessionManagementConstants.END_REASON_USER_CONFIRMED_TERMINATE);
             log.info("🔄 사용자 확인으로 기존 세션 정리 완료: loginPrincipal={}", loginPrincipal);
         }
         
@@ -700,6 +715,12 @@ public class AuthController extends BaseApiController {
             }
             
             SessionUtils.setCurrentUser(session, sessionUser);
+
+            // 일반 /login 과 동일 — 폴링·필터가 DB sessionId 로 활성 검증할 수 있게 저장
+            session.setAttribute(SessionConstants.SESSION_ID, sessionId);
+            if (sessionUser.getTenantId() != null) {
+                session.setAttribute(SessionConstants.TENANT_ID, sessionUser.getTenantId());
+            }
             
             log.info("✅ 중복 로그인 확인 후 로그인 성공: {}", loginPrincipal);
 
@@ -768,7 +789,7 @@ public class AuthController extends BaseApiController {
         User targetUser = users.get(0);
         
         // 사용자 세션 강제 종료
-        authService.cleanupUserSessions(targetUser, "ADMIN_FORCE");
+        authService.cleanupUserSessions(targetUser, SessionManagementConstants.END_REASON_ADMIN_FORCE);
         
         log.info("🔓 강제 로그아웃 완료: email={}", EmailLogMasking.maskForLog(targetEmail));
         

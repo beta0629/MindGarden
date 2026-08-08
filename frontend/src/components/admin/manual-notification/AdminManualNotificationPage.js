@@ -23,7 +23,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../../dashboard-v2/content';
-import UnifiedLoading from '../../common/UnifiedLoading';
 import { useSession } from '../../../contexts/SessionContext';
 import { USER_ROLES, RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
@@ -70,9 +69,12 @@ const AdminManualNotificationPage = () => {
 
   if (sessionLoading || !hasAccess) {
     return (
-      <AdminCommonLayout title={pageTitle} className="mg-v2-dashboard-layout">
-        <UnifiedLoading text="로딩 중..." />
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={pageTitle}
+        className="mg-v2-dashboard-layout"
+        loading
+        loadingText={t('common:messages.loading', { defaultValue: '로딩 중...' })}
+      />
     );
   }
 

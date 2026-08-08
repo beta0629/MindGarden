@@ -398,6 +398,14 @@ server:
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
     min-response-size: 1024
 
+# 중복 로그인 체크 (전역 기본). 테넌트 DB
+# security.session.duplicate-login.allowed 가 있으면 오버라이드.
+session:
+  duplicate-login-check:
+    enabled: ${SESSION_DUPLICATE_LOGIN_CHECK_ENABLED:true}
+    ask-user-confirmation: ${SESSION_DUPLICATE_LOGIN_ASK_USER_CONFIRMATION:false}
+    allowed-by-default: ${SESSION_DUPLICATE_LOGIN_ALLOWED_BY_DEFAULT:false}
+
 # ERD 자동 생성 설정 (로컬/개발 환경에서는 비활성화)
 erd:
   auto-generation:

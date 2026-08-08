@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
+import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
@@ -188,6 +189,8 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                         log.debug("✅ TenantContextHolder에 tenantId 설정: {}", user.getTenantId());
                                     }
                                     log.info("🍎 iOS - SecurityContext에 사용자 정보 직접 설정 완료");
+                                    // HttpSession 없이 DB 세션만 복원한 경우에도 슬라이딩
+                                    slideDbSessionIfNeeded(null, jsessionIdFromCookie);
                                     // 세션에도 사용자 정보 저장 (다음 요청을 위해)
                                     // 하지만 session이 null이므로 저장할 수 없음
                                     // 대신 SecurityContext에만 설정
@@ -298,6 +301,18 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 
                 // 세션이 있으면 사용자 정보를 세션에서 가져오고, 없으면 SecurityContext에서 가져옴
                 if (session != null && user != null) {
+                    // 중복 로그인 cleanup 후: user_sessions 비활성이면 HttpSession User 를 신뢰하지 않음
+                    if (!isUserSessionActiveInDb(session, jsessionIdFromCookie)) {
+                        log.warn(
+                            "⚠️ user_sessions 비활성 — SecurityContext/세션 클리어: httpSessionId={}",
+                            session.getId());
+                        clearAuthenticationForInactiveSession(session);
+                        user = null;
+                        session = null;
+                    }
+                }
+
+                if (session != null && user != null) {
                     // 기존 인증 정보 확인
                     Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
                     log.info("🔍 기존 인증 정보: {}", existingAuth != null ? existingAuth.getName() : "null");
@@ -316,6 +331,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     
                     // 세션에 SecurityContext 저장 (명시적으로)
                     session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+                    
+                    // HttpSession·쿠키·DB user_sessions 동일 SSOT로 활동 슬라이딩
+                    slideDbSessionIfNeeded(session, jsessionIdFromCookie);
                     
                     // 세션 쿠키 설정 (운영 환경 호환성)
                     if (requestPath.contains("/social-account")) {
@@ -361,6 +379,104 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         
         // 다음 필터로 진행 (모바일 앱인 경우 래핑된 요청 사용, 웹은 원본 요청 사용)
         filterChain.doFilter(requestToUse, response);
+    }
+
+    /**
+     * {@code user_sessions} 에 활성 행이 있는지 확인한다.
+     * DB sessionId 속성 → 쿠키 JSESSIONID → HttpSession.getId() 순으로 조회 키를 고른다.
+     *
+     * @param session HttpSession
+     * @param jsessionIdFromCookie 쿠키에서 추출한 JSESSIONID (nullable)
+     * @return 활성 세션이면 true. userSessionService 미주입 시 true(검증 스킵)
+     */
+    private boolean isUserSessionActiveInDb(HttpSession session, String jsessionIdFromCookie) {
+        if (userSessionService == null || session == null) {
+            return true;
+        }
+        String dbSessionId = resolveDbSessionId(session, jsessionIdFromCookie);
+        if (dbSessionId == null || dbSessionId.isBlank()) {
+            return false;
+        }
+        try {
+            UserSession active = userSessionService.getActiveSession(dbSessionId);
+            return active != null;
+        } catch (Exception e) {
+            log.warn("⚠️ user_sessions 활성 검증 실패(통과 처리하지 않음): sessionId={}, error={}",
+                dbSessionId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 인증된 요청에서 DB {@code user_sessions} 를 HttpSession TTL과 동일 SSOT로 슬라이딩한다.
+     * CookieRenewal 과 같은 {@link SessionConstants#SESSION_SLIDING_THROTTLE_SECONDS} 스로틀.
+     * 실패해도 인증은 유지한다(다음 요청에서 재시도).
+     *
+     * @param session HttpSession (nullable — 모바일 DB 복원 경로)
+     * @param jsessionIdFromCookie 쿠키 JSESSIONID (nullable)
+     */
+    private void slideDbSessionIfNeeded(HttpSession session, String jsessionIdFromCookie) {
+        if (userSessionService == null) {
+            return;
+        }
+        String dbSessionId = resolveDbSessionId(session, jsessionIdFromCookie);
+        if (dbSessionId == null || dbSessionId.isBlank()) {
+            return;
+        }
+        try {
+            userSessionService.slideActiveSession(
+                    dbSessionId,
+                    sessionTimeoutProperties.getTimeoutMinutes(),
+                    SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
+        } catch (Exception e) {
+            log.warn("⚠️ user_sessions 슬라이딩 실패(인증 유지): sessionId={}, error={}",
+                    dbSessionId, e.getMessage());
+        }
+    }
+
+    /**
+     * DB {@code user_sessions.session_id} 조회 키를 결정한다.
+     *
+     * @param session HttpSession (nullable)
+     * @param jsessionIdFromCookie 쿠키 JSESSIONID (nullable)
+     * @return 세션 ID 또는 null
+     */
+    private String resolveDbSessionId(HttpSession session, String jsessionIdFromCookie) {
+        if (session != null) {
+            try {
+                Object attr = session.getAttribute(SessionConstants.SESSION_ID);
+                if (attr instanceof String && !((String) attr).isBlank()) {
+                    return (String) attr;
+                }
+            } catch (IllegalStateException e) {
+                return null;
+            }
+            if (jsessionIdFromCookie != null && !jsessionIdFromCookie.isBlank()) {
+                return jsessionIdFromCookie;
+            }
+            return session.getId();
+        }
+        return jsessionIdFromCookie;
+    }
+
+    /**
+     * 비활성 DB 세션에 대해 SecurityContext·세션 사용자 속성을 제거하고 HttpSession 을 invalidate 한다.
+     *
+     * @param session HttpSession
+     */
+    private void clearAuthenticationForInactiveSession(HttpSession session) {
+        SecurityContextHolder.clearContext();
+        if (session == null) {
+            return;
+        }
+        try {
+            session.removeAttribute(SessionConstants.USER_OBJECT);
+            session.removeAttribute(SessionConstants.SESSION_ID);
+            session.removeAttribute("SPRING_SECURITY_CONTEXT");
+            session.invalidate();
+        } catch (IllegalStateException e) {
+            log.debug("세션이 이미 무효화됨");
+        }
     }
 
     /**

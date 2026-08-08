@@ -19,6 +19,8 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.coresolution.consultation.constant.SessionConstants;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,9 +31,10 @@ import lombok.extern.slf4j.Slf4j;
  * 이 필터는 인증된 요청에 대해 쿠키의 {@code Max-Age}를 세션 타임아웃과 동기화하여,
  * 쿠키가 서버 세션보다 먼저 만료되는 문제를 방지한다.</p>
  *
- * <p>성능을 위해 갱신은 {@link #COOKIE_RENEWAL_INTERVAL_SECONDS} 간격으로 스로틀링된다.
+ * <p>성능을 위해 갱신은 {@link SessionConstants#SESSION_SLIDING_THROTTLE_SECONDS} 간격으로 스로틀링된다.
  * 이 값은 쿠키 Set-Cookie 헤더 갱신 빈도 제한이며, HttpSession TTL
- * ({@code HTTP_SESSION_MAX_INACTIVE} / 기본 4h)과 무관하다.</p>
+ * ({@code HTTP_SESSION_MAX_INACTIVE} / 기본 4h)과 무관하다.
+ * DB {@code user_sessions} 슬라이딩도 동일 스로틀을 사용한다.</p>
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -39,11 +42,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class SessionCookieRenewalFilter extends OncePerRequestFilter {
-
-    /**
-     * 쿠키 Set-Cookie 갱신 스로틀 간격 (초). 세션 TTL이 아님 — TTL SSOT는 HTTP_SESSION_MAX_INACTIVE(기본 4h).
-     */
-    private static final long COOKIE_RENEWAL_INTERVAL_SECONDS = 1800;
 
     /**
      * 세션에 마지막 쿠키 갱신 시각을 저장하는 속성 키
@@ -108,13 +106,13 @@ public class SessionCookieRenewalFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 스로틀링: 마지막 갱신으로부터 {@link #COOKIE_RENEWAL_INTERVAL_SECONDS} 이상 경과했는지 확인
+     * 스로틀링: 마지막 갱신으로부터 {@link SessionConstants#SESSION_SLIDING_THROTTLE_SECONDS} 이상 경과했는지 확인
      */
     private boolean shouldRenew(HttpSession session) {
         Object lastRenewedObj = session.getAttribute(SESSION_ATTR_COOKIE_LAST_RENEWED);
         if (lastRenewedObj instanceof Long lastRenewed) {
             long elapsed = Instant.now().getEpochSecond() - lastRenewed;
-            return elapsed >= COOKIE_RENEWAL_INTERVAL_SECONDS;
+            return elapsed >= SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS;
         }
         return true;
     }

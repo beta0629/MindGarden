@@ -9,6 +9,7 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { ListTableView } from '../../../common';
+import UnifiedLoading from '../../../common/UnifiedLoading';
 import SafeText from '../../../common/SafeText';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
 import {
@@ -53,7 +54,9 @@ const ManualMatchingQueue = ({ items = [], viewAllHref = '', loading = false }) 
       </header>
 
       {loading ? (
-        <p className="manual-matching-queue__empty">로딩 중...</p>
+        <div className="manual-matching-queue__empty">
+          <UnifiedLoading type="inline" />
+        </div>
       ) : displayItems.length > 0 ? (
         <ListTableView
           columns={MATCHING_COLUMNS}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link2, DollarSign, KeyRound, Calendar, Receipt } from 'lucide-react';
+import UnifiedLoading from '../../../common/UnifiedLoading';
 import PipelineStepCard from '../molecules/PipelineStepCard';
 import './CoreFlowPipeline.css';
 
@@ -50,7 +51,7 @@ const buildDefaultSteps = (stats = {}) => [
  * @param {Object} props
  * @param {Array<{title:string,badgeValue:string,badgeLabel?:string,variant?:string,icon?:React.Component}>} [props.steps] - 단계 배열 (미전달 시 stats로 기본 5단계 생성)
  * @param {Object} [props.stats] - 통계 객체 (totalMappings, pendingDepositCount, activeMappings, schedulePendingCount)
- * @param {boolean} [props.loading] - 로딩 중이면 스켈레톤/로딩 문구 표시
+ * @param {boolean} [props.loading] - 로딩 중이면 UnifiedLoading 표시
  * @author Core Solution
  * @since 2025-02-21
  */
@@ -64,8 +65,8 @@ const CoreFlowPipeline = ({ steps, stats = {}, loading = false }) => {
         aria-label="파이프라인 단계 목록, 가로 스크롤 가능"
       >
         {loading ? (
-          <div className="core-flow-pipeline__loading" aria-live="polite">
-            로딩 중…
+          <div className="core-flow-pipeline__loading">
+            <UnifiedLoading type="inline" />
           </div>
         ) : (
           pipelineSteps.map((step, index) => (

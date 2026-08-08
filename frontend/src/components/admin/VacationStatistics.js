@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AlertCircle } from 'lucide-react';
-// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
+import MGButton from '../../components/common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
@@ -210,8 +210,8 @@ const VacationStatistics = ({ className = "" }) => {
 
     if (loading) {
         return (
-            <div className={`vacation-statistics ${className}`}>
-                <div className="mg-loading">{t('admin:vacationStats.loading')}</div>
+            <div className={`vacation-statistics ${className}`} aria-busy="true" aria-live="polite">
+                <UnifiedLoading type="inline" text={t('admin:vacationStats.loading')} />
             </div>
         );
     }

@@ -144,15 +144,15 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
         </select>
       </div>
 
-      <div className="mg-mypage__form-row mg-mypage__form-row--stack">
-        <span className="mg-mypage__form-label" id="mg-mypage-postal-label">
+      <div className="mg-mypage__form-row">
+        <label className="mg-mypage__form-label" htmlFor="mg-mypage-postal-input">
           우편번호
-        </span>
+        </label>
         <div className="mg-mypage__postal-row">
           <input
             className="mg-mypage__form-control"
+            id="mg-mypage-postal-input"
             type="text"
-            aria-labelledby="mg-mypage-postal-label"
             value={localPostalCode}
             onChange={handlePostalCodeChange}
             disabled={!isEditing}

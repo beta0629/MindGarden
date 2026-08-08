@@ -338,7 +338,7 @@ const ProfileSection = ({
               />
             </div>
 
-            <div className="mg-mypage__form-row mg-mypage__form-row--stack">
+            <div className="mg-mypage__form-row">
               <span className="mg-mypage__form-label" id="mg-mypage-email-label">
                 {t('common.labels.email')}
               </span>
@@ -360,7 +360,7 @@ const ProfileSection = ({
               </div>
             </div>
 
-            <div className="mg-mypage__form-row mg-mypage__form-row--stack">
+            <div className="mg-mypage__form-row">
               <span className="mg-mypage__form-label" id="mg-mypage-phone-label">
                 휴대전화
               </span>

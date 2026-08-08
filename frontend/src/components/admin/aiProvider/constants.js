@@ -90,6 +90,7 @@ export const AI_PROVIDER_UNGUARDED_TOOLTIP = '키 등록 가드 미지원 (입�
 
 /** 로딩/에러 라벨 */
 export const AI_PROVIDER_LABELS = Object.freeze({
+  pageLoading: 'AI 프로바이더 정보를 불러오는 중...',
   healthRefresh: '헬스 새로고침',
   healthRefreshLoading: '확인 중...',
   healthLoading: '헬스체크 중...',

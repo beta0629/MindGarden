@@ -26,7 +26,6 @@ import React, { useState, useEffect } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import UnifiedLoading from '../common/UnifiedLoading';
 import {
     getAllPermissionGroups,
     grantPermissionGroup,
@@ -242,6 +241,16 @@ const PermissionGroupManagement = () => {
         ? `${selectedRole.nameKo || selectedRole.nameEn} 역할의 권한 그룹을 설정합니다.`
         : '역할을 선택한 뒤 권한 그룹을 부여하거나 회수합니다.';
 
+    if (loading && !selectedRole) {
+        return (
+            <AdminCommonLayout
+                title="권한 그룹 관리"
+                loading
+                loadingText="데이터를 불러오는 중..."
+            />
+        );
+    }
+
     return (
         <AdminCommonLayout title="권한 그룹 관리">
             <div className="mg-v2-ad-b0kla mg-v2-permission-group-management-page">
@@ -253,24 +262,18 @@ const PermissionGroupManagement = () => {
                             titleId="permission-group-management-title"
                         />
                         <main aria-labelledby="permission-group-management-title">
-                            {loading && !selectedRole ? (
-                                <div className="mg-dashboard-loading" aria-busy="true" aria-live="polite">
-                                    <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />
-                                </div>
-                            ) : (
-                                <PermissionGroupManagementUI
-                                    roles={roles}
-                                    selectedRole={selectedRole}
-                                    permissionGroups={permissionGroups}
-                                    rolePermissions={rolePermissions}
-                                    loading={loading}
-                                    error={error}
-                                    onRoleSelect={handleRoleSelect}
-                                    onGrantPermission={handleGrantPermission}
-                                    onRevokePermission={handleRevokePermission}
-                                    onBatchGrant={handleBatchGrant}
-                                />
-                            )}
+                            <PermissionGroupManagementUI
+                                roles={roles}
+                                selectedRole={selectedRole}
+                                permissionGroups={permissionGroups}
+                                rolePermissions={rolePermissions}
+                                loading={loading}
+                                error={error}
+                                onRoleSelect={handleRoleSelect}
+                                onGrantPermission={handleGrantPermission}
+                                onRevokePermission={handleRevokePermission}
+                                onBatchGrant={handleBatchGrant}
+                            />
                         </main>
                     </ContentArea>
                 </div>

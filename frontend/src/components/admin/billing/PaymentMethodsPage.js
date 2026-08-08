@@ -144,17 +144,11 @@ const PaymentMethodsPage = () => {
 
   if (sessionLoading || !hasAccess) {
     return (
-      <AdminCommonLayout title={pageTitle}>
-        <div className="mg-admin-billing-payment-methods">
-          <div className="mg-v2-ad-b0kla__container">
-            <UnifiedLoading
-              type="inline"
-              text={t('admin:billing.paymentMethods.loading')}
-              variant="pulse"
-            />
-          </div>
-        </div>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={pageTitle}
+        loading
+        loadingText={t('admin:billing.paymentMethods.loading')}
+      />
     );
   }
 
@@ -186,7 +180,6 @@ const PaymentMethodsPage = () => {
                 <UnifiedLoading
                   type="inline"
                   text={t('admin:billing.paymentMethods.loading')}
-                  variant="pulse"
                 />
               ) : paymentMethods.length === 0 ? (
                 <EmptyState

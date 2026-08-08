@@ -49,18 +49,19 @@ describe('CoreFlowPipeline', () => {
   });
 
   describe('로딩 상태', () => {
-    it('loading=true일 때 "로딩 중…" 문구가 표시된다', () => {
+    it('loading=true일 때 UnifiedLoading(상태)이 표시된다', () => {
       render(<CoreFlowPipeline stats={{}} loading />);
 
-      expect(screen.getByText('로딩 중…')).toBeInTheDocument();
+      expect(screen.getByRole('status')).toBeInTheDocument();
+      expect(screen.getByText('로딩 중...')).toBeInTheDocument();
       expect(screen.queryByText('내담자/상담사 매칭 (관리자)')).not.toBeInTheDocument();
     });
 
     it('loading=true일 때 로딩 영역에 aria-live="polite"가 있다', () => {
       render(<CoreFlowPipeline stats={{}} loading />);
 
-      const loadingEl = screen.getByText('로딩 중…').closest('[aria-live="polite"]');
-      expect(loadingEl).toBeInTheDocument();
+      const loadingEl = screen.getByRole('status');
+      expect(loadingEl).toHaveAttribute('aria-live', 'polite');
     });
   });
 

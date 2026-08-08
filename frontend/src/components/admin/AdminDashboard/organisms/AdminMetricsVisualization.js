@@ -17,6 +17,7 @@
 
 import React from 'react';
 import { Link2, DollarSign, KeyRound, Calendar, Receipt } from 'lucide-react';
+import UnifiedLoading from '../../../common/UnifiedLoading';
 import SafeErrorDisplay from '../../../common/SafeErrorDisplay';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import CoreFlowPipeline from './CoreFlowPipeline';
@@ -121,7 +122,9 @@ const AdminMetricsVisualization = ({
     const gridBlock = (
       <div className="admin-metrics-visualization__grid" role="list">
         {loading ? (
-          <p className="admin-metrics-visualization__loading" aria-live="polite">로딩 중…</p>
+          <div className="admin-metrics-visualization__loading">
+            <UnifiedLoading type="inline" />
+          </div>
         ) : (
           gridSteps.map((step, index) => {
             const Icon = step.icon;

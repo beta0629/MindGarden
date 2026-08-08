@@ -13,7 +13,8 @@ import { storage } from './common';
 import { toDisplayString, toSafeNumber } from './safeDisplay';
 
 /**
- * @param {object|null|undefined} si — sessionInfo (session-info API)
+ * @param {object|null|undefined} si — sessionInfo (session-info API).
+ *   `clientReceivedAt`(클라 수신 epoch ms)이 있으면 서버-클라 offset을 그 시점에 고정한다.
  * @param {number} clientNowMs
  * @param {{ fallbackExpiryMs?: (number|null), allowFallback?: boolean }} [options]
  * @returns {{ expiryMs: (number|null), offsetMs: number, remainingMs: (number|null), source: string }}
@@ -31,7 +32,9 @@ export function computeSessionExpiryState(si, clientNowMs, options = {}) {
     if (maxSec > 0 && lastAcc > 0) {
       const serverNow =
         si.serverNow != null ? toSafeNumber(si.serverNow, now) : now;
-      const offsetMs = serverNow - now;
+      // 오프셋은 session-info 스냅샷 시점(clientReceivedAt)에 고정. 매 틱 now로 재계산하면 remaining이 상수로 고정됨.
+      const receivedAt = toSafeNumber(si.clientReceivedAt, now);
+      const offsetMs = serverNow - receivedAt;
       const expiryMs = lastAcc + maxSec * 1000;
       const remainingMs = expiryMs - (now + offsetMs);
       return { expiryMs, offsetMs, remainingMs, source: 'session-info' };
@@ -80,10 +83,17 @@ export function computeSessionExpiryState(si, clientNowMs, options = {}) {
     // storage 미가용 시 duration 폴백으로 진행
   }
 
+  // 고정 expiry를 스냅샷·저장해 이후 틱에서 카운트다운되도록 함 (매 틱 now+duration이면 remaining 상수 고정)
+  const expiryMs = now + SESSION_DURATION;
+  try {
+    storage.set(SESSION_KEYS.SESSION_EXPIRY, expiryMs);
+  } catch {
+    // storage 미가용 시에도 이번 호출의 고정 expiry로 반환
+  }
   return {
-    expiryMs: now + SESSION_DURATION,
+    expiryMs,
     offsetMs: 0,
-    remainingMs: SESSION_DURATION,
+    remainingMs: expiryMs - now,
     source: 'duration-fallback'
   };
 }

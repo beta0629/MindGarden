@@ -15,7 +15,6 @@ import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SystemNotificationListBlock from './organisms/SystemNotificationListBlock';
-import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { useTranslation } from 'react-i18next';
@@ -50,8 +49,12 @@ const SystemNotificationManagement = () => {
     load();
   }, [sessionIsLoggedIn, sessionUser]);
 
-  const shell = (mainContent, headerActions = null) => (
-    <AdminCommonLayout title="시스템 공지 관리">
+  const shell = (mainContent, headerActions = null, layoutOpts = {}) => (
+    <AdminCommonLayout
+      title="시스템 공지 관리"
+      loading={layoutOpts.loading === true}
+      loadingText={layoutOpts.loadingText || '데이터를 불러오는 중...'}
+    >
       <div className="mg-v2-ad-b0kla">
         <div className="mg-v2-ad-b0kla__container">
           <ContentArea ariaLabel={SYSTEM_NOTIFICATION_CONTENT_ARIA_LABEL}>
@@ -80,11 +83,10 @@ const SystemNotificationManagement = () => {
   }
 
   if (permissionsLoading) {
-    return shell(
-      <div aria-busy="true" aria-live="polite">
-        <UnifiedLoading type="inline" text="권한을 확인하는 중..." />
-      </div>
-    );
+    return shell(null, null, {
+      loading: true,
+      loadingText: '권한을 확인하는 중...'
+    });
   }
 
   if (!hasManagePermission) {

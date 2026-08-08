@@ -8,8 +8,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
+import com.coresolution.consultation.config.DuplicateLoginAccessBlockRegistry;
+import com.coresolution.consultation.config.HttpSessionInvalidator;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.UserSessionService;
 import org.junit.jupiter.api.DisplayName;
@@ -20,28 +25,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * {@link AuthServiceImpl#cleanupUserSessions(User, String)} P1 회귀 핫픽스 단위 테스트.
- *
- * <p>배경 (2026-06-13 16:00 KST P1 운영 회귀):
- * <ul>
- *   <li>PR #293 의 silent skip 정책으로 {@link AuthServiceImpl#checkDuplicateLogin(User)} 은
- *       {@code user_sessions} OR {@code refresh_token_store} 양쪽을 검사하지만
- *       {@code cleanupUserSessions} 는 {@code user_sessions} 만 deactivate 했음.</li>
- *   <li>결과 — 모달 "기존 세션 종료" 클릭이 모바일 JWT 흐름에 무력화되고 60초 폴링이
- *       강제 로그아웃 알림을 띄움.</li>
- *   <li>핫픽스 — {@code cleanupUserSessions} 가
- *       {@link RefreshTokenService#revokeAllUserTokens(Long)} 를 호출하도록 통합.</li>
- * </ul>
+ * {@link AuthServiceImpl#cleanupUserSessions(User, String)} —
+ * refresh revoke + HttpSession invalidate + Access 차단 힌트.
  *
  * @author MindGarden
  * @since 2026-06-13
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AuthServiceImpl.cleanupUserSessions — refresh_token revoke 통합 (P1 핫픽스)")
+@DisplayName("AuthServiceImpl.cleanupUserSessions — refresh revoke + HttpSession invalidate")
 class AuthServiceImplCleanupUserSessionsTest {
 
     private static final Long USER_ID = 123L;
+    private static final String TENANT_ID = "tenant-cleanup-1";
     private static final String REASON = "USER_CONFIRMED_TERMINATE";
+    private static final String OLD_SESSION_ID = "JSESSIONID-OLD-1";
 
     @Mock
     private UserSessionService userSessionService;
@@ -49,14 +46,39 @@ class AuthServiceImplCleanupUserSessionsTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private HttpSessionInvalidator httpSessionInvalidator;
+
+    @Mock
+    private DuplicateLoginAccessBlockRegistry duplicateLoginAccessBlockRegistry;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
     @Test
-    @DisplayName("user_sessions 와 refresh_token_store 모두 정리한다")
-    void cleanupUserSessions_revokesUserSessionsAndRefreshTokens() {
-        User user = userWithId(USER_ID);
-        when(userSessionService.deactivateAllUserSessions(eq(user), eq(REASON))).thenReturn(2);
+    @DisplayName("테넌트 사용자 — HttpSession invalidate + tenant deactivate + refresh revoke + Access block")
+    void cleanupUserSessions_invalidatesHttpSessionsAndRevokesTokens() {
+        User user = userWithId(USER_ID, TENANT_ID);
+        UserSession active = UserSession.builder().sessionId(OLD_SESSION_ID).build();
+        when(userSessionService.getActiveSessions(user)).thenReturn(List.of(active));
+        when(userSessionService.deactivateAllSessionsForTenantUser(eq(TENANT_ID), eq(USER_ID), eq(REASON)))
+            .thenReturn(1);
+
+        authService.cleanupUserSessions(user, REASON);
+
+        verify(httpSessionInvalidator).invalidateBySessionId(OLD_SESSION_ID);
+        verify(userSessionService).deactivateAllSessionsForTenantUser(TENANT_ID, USER_ID, REASON);
+        verify(userSessionService, never()).deactivateAllUserSessions(any(User.class), anyString());
+        verify(refreshTokenService).revokeAllUserTokens(USER_ID);
+        verify(duplicateLoginAccessBlockRegistry).blockUser(USER_ID);
+    }
+
+    @Test
+    @DisplayName("tenantId 없음 — 전역 deactivate 폴백")
+    void cleanupUserSessions_fallsBackToGlobalDeactivateWithoutTenant() {
+        User user = userWithId(USER_ID, null);
+        when(userSessionService.getActiveSessions(user)).thenReturn(List.of());
+        when(userSessionService.deactivateAllUserSessions(eq(user), eq(REASON))).thenReturn(0);
 
         authService.cleanupUserSessions(user, REASON);
 
@@ -67,45 +89,38 @@ class AuthServiceImplCleanupUserSessionsTest {
     @Test
     @DisplayName("UserSessionService 예외 발생해도 swallow (로그인 흐름 차단 금지)")
     void cleanupUserSessions_swallowsExceptionFromUserSessionService() {
-        User user = userWithId(USER_ID);
-        when(userSessionService.deactivateAllUserSessions(any(User.class), anyString()))
+        User user = userWithId(USER_ID, TENANT_ID);
+        when(userSessionService.getActiveSessions(any(User.class)))
             .thenThrow(new RuntimeException("DB error"));
 
-        // 예외가 외부로 전파되지 않아야 함
         authService.cleanupUserSessions(user, REASON);
 
-        // user_sessions deactivate 단계에서 throw 됐기 때문에 refresh_token revoke 는 시도되지 않음
-        verify(userSessionService).deactivateAllUserSessions(eq(user), eq(REASON));
         verify(refreshTokenService, never()).revokeAllUserTokens(anyLong());
     }
 
     @Test
     @DisplayName("RefreshTokenService 예외 발생해도 swallow (catch 블록이 잡음)")
     void cleanupUserSessions_swallowsExceptionFromRefreshTokenService() {
-        User user = userWithId(USER_ID);
-        when(userSessionService.deactivateAllUserSessions(eq(user), eq(REASON))).thenReturn(1);
+        User user = userWithId(USER_ID, TENANT_ID);
+        when(userSessionService.getActiveSessions(user)).thenReturn(List.of());
+        when(userSessionService.deactivateAllSessionsForTenantUser(eq(TENANT_ID), eq(USER_ID), eq(REASON)))
+            .thenReturn(1);
         org.mockito.Mockito.doThrow(new RuntimeException("revoke failed"))
             .when(refreshTokenService).revokeAllUserTokens(USER_ID);
 
-        // 예외가 외부로 전파되지 않아야 함
         authService.cleanupUserSessions(user, REASON);
 
-        verify(userSessionService).deactivateAllUserSessions(eq(user), eq(REASON));
         verify(refreshTokenService).revokeAllUserTokens(USER_ID);
     }
 
-    private static User userWithId(Long id) {
+    private static User userWithId(Long id, String tenantId) {
         User user = User.builder()
             .userId("u-" + id)
             .email("u@example.com")
-            .password("{bcrypt}$2a$10$0123456789012345678901x")
-            .name("테스트")
             .role(UserRole.CLIENT)
-            .isActive(true)
-            .isPasswordChanged(true)
             .build();
         user.setId(id);
-        user.setTenantId("tenant-cleanup");
+        user.setTenantId(tenantId);
         return user;
     }
 }

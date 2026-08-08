@@ -34,7 +34,6 @@ const CommonCodeList = ({
                 <UnifiedLoading 
                     type="inline"
                     text="공통코드를 불러오는 중..."
-                    variant="pulse"
                 />
             </div>
         );

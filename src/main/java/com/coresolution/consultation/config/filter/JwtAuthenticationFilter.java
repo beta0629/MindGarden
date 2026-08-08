@@ -1,10 +1,15 @@
 package com.coresolution.consultation.config.filter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import com.coresolution.consultation.config.DuplicateLoginAccessBlockRegistry;
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
@@ -13,6 +18,7 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,7 +29,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -35,12 +40,23 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final DuplicateLoginAccessBlockRegistry duplicateLoginAccessBlockRegistry;
+
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            UserService userService,
+            UserRepository userRepository,
+            @Nullable DuplicateLoginAccessBlockRegistry duplicateLoginAccessBlockRegistry) {
+        this.jwtService = jwtService;
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.duplicateLoginAccessBlockRegistry = duplicateLoginAccessBlockRegistry;
+    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -121,6 +137,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 log.warn(
                                         "Inactive user request rejected: path={}, userId={}, lifecycleState={}, isActive={}",
                                         requestPath, user.getId(), lifecycleState, user.getIsActive());
+                                filterChain.doFilter(request, response);
+                                return;
+                            }
+                            // 중복 로그인 cleanup 후 구 Access JWT 즉시 거부 (Expo·Bearer 피해자 기기)
+                            if (!isOpsApi && isAccessTokenRevokedByDuplicateLogin(user, token)) {
+                                log.warn(
+                                        "Duplicate-login access rejected: path={}, userId={}",
+                                        requestPath, user.getId());
                                 filterChain.doFilter(request, response);
                                 return;
                             }
@@ -209,6 +233,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * 중복 로그인 cleanup 이후 발급된 구 Access JWT 여부.
+     * <ol>
+     *   <li>인메모리 {@link DuplicateLoginAccessBlockRegistry} (동일 인스턴스 즉시 차단)</li>
+     *   <li>{@code users.last_login_at} 이후 발급이 아닌 JWT (멀티 인스턴스·재시작 내구성)</li>
+     * </ol>
+     *
+     * @param user  DB 사용자
+     * @param token Access JWT
+     * @return 거부해야 하면 true
+     */
+    private boolean isAccessTokenRevokedByDuplicateLogin(User user, String token) {
+        if (user == null || user.getId() == null || token == null) {
+            return false;
+        }
+        if (duplicateLoginAccessBlockRegistry != null
+                && duplicateLoginAccessBlockRegistry.isBlocked(user.getId())) {
+            return true;
+        }
+        LocalDateTime lastLoginAt = user.getLastLoginAt();
+        if (lastLoginAt == null) {
+            return false;
+        }
+        Date issuedAt = jwtService.extractIssuedAt(token);
+        if (issuedAt == null) {
+            return false;
+        }
+        long graceSeconds = SessionManagementConstants.ACCESS_TOKEN_LAST_LOGIN_GRACE_SECONDS;
+        long cutoffEpochMs = lastLoginAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                - (graceSeconds * 1000L);
+        return issuedAt.getTime() < cutoffEpochMs;
     }
 
     @Override

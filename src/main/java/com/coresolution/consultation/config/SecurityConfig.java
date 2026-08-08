@@ -303,16 +303,18 @@ public class SecurityConfig {
     }
 
     /**
-     * 환경별 최대 동시 세션 수.
-     * http DSL {@code maximumSessions}와 {@link ConcurrentSessionControlAuthenticationStrategy}가 동일 SSOT를 쓴다.
+     * Spring ConcurrentSession 상한.
      *
-     * @return 운영 {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_PRODUCTION},
-     *         그 외 {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_DEVELOPMENT}
+     * <p>테넌트 {@code duplicate-login.allowed=true} 와 충돌하지 않도록
+     * {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_SPRING_CEILING}(-1 무제한)을 사용한다.
+     * 실효 중복 로그인 정책 SSOT 는 테넌트 system_config + {@code AuthServiceImpl#checkDuplicateLogin}.
+     * 레거시 참고값: {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_PRODUCTION} /
+     * {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_DEVELOPMENT}.
+     *
+     * @return Spring ConcurrentSession 상한 (-1 = 무제한)
      */
     private int resolveMaxConcurrentSessions() {
-        return isProductionEnvironment()
-                ? SessionManagementConstants.MAX_CONCURRENT_SESSIONS_PRODUCTION
-                : SessionManagementConstants.MAX_CONCURRENT_SESSIONS_DEVELOPMENT;
+        return SessionManagementConstants.MAX_CONCURRENT_SESSIONS_SPRING_CEILING;
     }
     
     // 참고: 현재는 세션 기반 인증을 사용하고 있음
@@ -505,6 +507,19 @@ public class SecurityConfig {
     public org.springframework.security.core.session.SessionRegistry sessionRegistry() {
         return new org.springframework.security.core.session.SessionRegistryImpl();
     }
+
+    /**
+     * {@link HttpSessionTracker} 를 서블릿 컨테이너 HttpSessionListener 로 등록.
+     *
+     * @param httpSessionTracker 세션 인덱스 빈
+     * @return 리스너 등록 빈
+     */
+    @Bean
+    public org.springframework.boot.web.servlet.ServletListenerRegistrationBean<HttpSessionTracker>
+            httpSessionTrackerListener(HttpSessionTracker httpSessionTracker) {
+        return new org.springframework.boot.web.servlet.ServletListenerRegistrationBean<>(
+            httpSessionTracker);
+    }
     
     /**
      * 세션 인증 전략 (환경별 설정)
@@ -514,13 +529,9 @@ public class SecurityConfig {
         ConcurrentSessionControlAuthenticationStrategy concurrentSessionControl = 
             new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry());
         
-        // 운영 환경에서는 더 엄격한 세션 제어 (최대 세션 수: resolveMaxConcurrentSessions SSOT)
+        // 테넌트 중복로그인 허용과 충돌 방지 — Spring 상한은 CEILING(-1), 실효 정책은 Auth 계층
         concurrentSessionControl.setMaximumSessions(resolveMaxConcurrentSessions());
-        if (isProductionEnvironment()) {
-            concurrentSessionControl.setExceptionIfMaximumExceeded(true);  // 초과 시 예외 발생
-        } else {
-            concurrentSessionControl.setExceptionIfMaximumExceeded(false);
-        }
+        concurrentSessionControl.setExceptionIfMaximumExceeded(false);
         
         RegisterSessionAuthenticationStrategy registerSession = 
             new RegisterSessionAuthenticationStrategy(sessionRegistry());

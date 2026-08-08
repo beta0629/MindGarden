@@ -88,6 +88,11 @@ class DuplicateLoginManager {
             const response = await ajax.get(AUTH_CHECK_DUPLICATE_LOGIN);
             
             if (response && typeof response === 'object') {
+                // 테넌트 허용(allowed=true) 시 서버가 hasDuplicateLogin=false + duplicateLoginAllowed=true
+                if (response.duplicateLoginAllowed === true) {
+                    console.debug('🔓 테넌트 중복 로그인 허용 — 폴링 강제로그아웃 스킵');
+                    return;
+                }
                 if (response.hasDuplicateLogin === true) {
                     console.warn('⚠️ 중복 로그인 감지됨:', response.message);
                     this.handleDuplicateLogin();
@@ -135,16 +140,37 @@ class DuplicateLoginManager {
     }
 
 /**
-     * 강제 로그아웃
+     * 강제 로그아웃 — 서버 세션 무효화(POST /logout) 후 로그인으로 이동.
+     * localStorage 만 지우면 checkSession 이 HttpSession 으로 복원되므로 반드시 서버 로그아웃을 호출한다.
      */
-    forceLogout() {
+    async forceLogout() {
         console.log('🔓 강제 로그아웃 실행');
-        
-        // 로컬 스토리지 정리
-        localStorage.removeItem('user');
-        localStorage.removeItem('sessionId');
-        sessionStorage.clear();
-        
+        this.stopChecking();
+
+        try {
+            const { sessionManager } = await import('./sessionManager');
+            if (sessionManager && typeof sessionManager.postLogoutInvalidateServerSession === 'function') {
+                await sessionManager.postLogoutInvalidateServerSession();
+            }
+            if (sessionManager && typeof sessionManager.applyClientLogoutCleanupPreserveSubdomain === 'function') {
+                sessionManager.applyClientLogoutCleanupPreserveSubdomain();
+            }
+            if (sessionManager && typeof sessionManager.setPostLogoutGateBeforeRedirect === 'function') {
+                sessionManager.setPostLogoutGateBeforeRedirect();
+            }
+        } catch (error) {
+            console.warn('⚠️ 강제 로그아웃 서버/클라이언트 정리 실패(리다이렉트 계속):', error);
+            try {
+                localStorage.removeItem('user');
+                localStorage.removeItem('sessionId');
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                sessionStorage.clear();
+            } catch {
+                /* private mode 등 */
+            }
+        }
+
         redirectToLoginPageOnce({ search: '?reason=duplicate-login' });
     }
 

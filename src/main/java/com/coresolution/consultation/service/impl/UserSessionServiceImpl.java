@@ -301,7 +301,38 @@ public class UserSessionServiceImpl implements UserSessionService {
             return false;
         }
     }
-    
+
+    @Override
+    public boolean slideActiveSession(String sessionId, int timeoutMinutes, long throttleSeconds) {
+        if (sessionId == null || sessionId.isBlank() || timeoutMinutes <= 0) {
+            return false;
+        }
+        try {
+            UserSession session = getActiveSession(sessionId);
+            if (session == null) {
+                return false;
+            }
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime lastActivity = session.getLastActivityAt();
+            if (throttleSeconds > 0
+                    && lastActivity != null
+                    && lastActivity.plusSeconds(throttleSeconds).isAfter(now)) {
+                log.debug("세션 슬라이딩 스로틀 스킵: sessionId={}, lastActivityAt={}",
+                        sessionId, lastActivity);
+                return true;
+            }
+            session.updateLastActivity();
+            session.extendExpiration(timeoutMinutes);
+            userSessionRepository.save(session);
+            log.debug("✅ 세션 슬라이딩 연장: sessionId={}, timeoutMinutes={}", sessionId, timeoutMinutes);
+            return true;
+        } catch (Exception e) {
+            log.error("❌ 세션 슬라이딩 실패: sessionId={}, timeoutMinutes={}, error={}",
+                    sessionId, timeoutMinutes, e.getMessage(), e);
+            return false;
+        }
+    }
+
     @Override
     public int cleanupDuplicateSessions(String sessionId) {
         try {

@@ -288,7 +288,12 @@ class SessionManager {
           });
           if (sessionResponse.ok) {
             const sessionResponseData = await sessionResponse.json();
-            this.sessionInfo = unwrapApiResponseData(sessionResponseData);
+            const sessionData = unwrapApiResponseData(sessionResponseData);
+            // clientReceivedAt: 서버-클라 오프셋 스냅샷 기준점 (잔여 카운트다운용)
+            this.sessionInfo =
+              sessionData && typeof sessionData === 'object'
+                ? { ...sessionData, clientReceivedAt: Date.now() }
+                : sessionData;
             console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
           }
         } catch (sessionError) {

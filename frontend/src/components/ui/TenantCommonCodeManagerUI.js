@@ -14,6 +14,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import CustomSelect from '../common/CustomSelect';
+import UnifiedLoading from '../common/UnifiedLoading';
 import {
     getParentCodeGroupForSubcategory,
     isSubcategoryCodeGroup
@@ -101,7 +102,7 @@ const TenantCommonCodeManagerUI = ({
                     </div>
                     {loading && !selectedGroup ? (
                         <div className="mg-v2-ad-b0kla__detail-empty">
-                            <p>{t('admin:tenantCommonCode.ui.loading')}</p>
+                            <UnifiedLoading type="inline" text={t('admin:tenantCommonCode.ui.loading')} />
                         </div>
                     ) : (
                         <div className="mg-v2-ad-b0kla__group-list">
@@ -194,7 +195,7 @@ const TenantCommonCodeManagerUI = ({
 
                             {loading ? (
                                 <div className="mg-v2-ad-b0kla__detail-empty">
-                                    <p>{t('admin:tenantCommonCode.ui.loading')}</p>
+                                    <UnifiedLoading type="inline" text={t('admin:tenantCommonCode.ui.loading')} />
                                 </div>
                             ) : codes.length === 0 ? (
                                 <div className="mg-v2-ad-b0kla__detail-empty">

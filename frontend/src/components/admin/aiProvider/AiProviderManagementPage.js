@@ -26,14 +26,13 @@ import notificationManager from '../../../utils/notification';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
-import UnifiedLoading from '../../common/UnifiedLoading';
 import useMediaQuery from '../../../hooks/useMediaQuery';
 import ActiveProviderCard from './sections/ActiveProviderCard';
 import ProviderSelector from './sections/ProviderSelector';
 import ApiKeyManager from './sections/ApiKeyManager';
 import UsageStatsDashboard from './sections/UsageStatsDashboard';
 import UsageLogsTable from './sections/UsageLogsTable';
-import { AI_PROVIDER_OPTIONS } from './constants';
+import { AI_PROVIDER_LABELS, AI_PROVIDER_OPTIONS } from './constants';
 import '../../../styles/unified-design-tokens.css';
 import './AiProviderManagementPage.css';
 
@@ -296,13 +295,11 @@ const AiProviderManagementPage = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout title="AI 프로바이더 관리">
-        <div className="mg-v2-ad-b0kla mg-ai-provider-page">
-          <div className="mg-v2-ad-b0kla__container" aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="AI 프로바이더 정보를 불러오는 중..." variant="pulse" />
-          </div>
-        </div>
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title="AI 프로바이더 관리"
+        loading
+        loadingText={AI_PROVIDER_LABELS.pageLoading}
+      />
     );
   }
 

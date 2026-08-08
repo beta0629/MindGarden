@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
-import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
@@ -20,6 +19,7 @@ import {
   ADMIN_SHOP_HOLD_TTL_DEFAULT_MINUTES,
   ADMIN_SHOP_POINT_POLICY_FIELD_LABELS,
   ADMIN_SHOP_POINT_POLICY_KEYS,
+  ADMIN_SHOP_POINT_POLICY_SAVE_POLICIES,
   ADMIN_SHOP_POINT_POLICY_TOGGLE_IMMEDIATE_HINT,
   ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_FAIL,
   ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_SUCCESS
@@ -225,7 +225,7 @@ const AdminShopPointPoliciesPage = () => {
   const statusOff = t('common:label.off');
 
   return (
-    <AdminCommonLayout title="리워드 정책">
+    <AdminCommonLayout title="리워드 정책" loading={loading}>
       <ContentArea>
         <ContentHeader
           titleId={PAGE_TITLE_ID}
@@ -240,9 +240,7 @@ const AdminShopPointPoliciesPage = () => {
               {tenantIdLine}
             </p>
           ) : null}
-          {loading ? (
-            <UnifiedLoading message="정책을 불러오는 중…" />
-          ) : loadError ? (
+          {loadError ? (
             <SafeErrorDisplay error={loadError} />
           ) : (
             <form
@@ -328,7 +326,7 @@ const AdminShopPointPoliciesPage = () => {
                   className={buildErpMgButtonClassName('primary')}
                   disabled={saving}
                 >
-                  {saving ? ERP_MG_BUTTON_LOADING_TEXT : '저장'}
+                  {saving ? ERP_MG_BUTTON_LOADING_TEXT : ADMIN_SHOP_POINT_POLICY_SAVE_POLICIES}
                 </MGButton>
               </div>
             </form>

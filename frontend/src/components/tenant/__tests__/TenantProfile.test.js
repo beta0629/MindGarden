@@ -80,7 +80,15 @@ jest.mock('../../../hooks/useConfirm', () => ({
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
   __esModule: true,
-  default: ({ children }) => <div data-testid="admin-layout">{children}</div>
+  default: ({ children, loading, loadingText }) => (
+    <div data-testid="admin-layout">
+      {loading ? (
+        <div role="status" data-testid="admin-layout-loading">{loadingText}</div>
+      ) : (
+        children
+      )}
+    </div>
+  )
 }));
 
 jest.mock('../../common/modals/UnifiedModal', () => ({

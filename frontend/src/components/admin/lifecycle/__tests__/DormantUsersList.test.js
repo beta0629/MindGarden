@@ -2,7 +2,7 @@
  * DormantUsersList 테스트 — Phase 4 어드민 휴면 사용자 목록 컴포넌트.
  *
  * 검증 시나리오:
- *  1) loading=true → UnifiedLoading 노출
+ *  1) loading=true → 테이블 미렌더 (페이지 ACL loading SSOT)
  *  2) error → 에러 노출
  *  3) 빈 목록 → empty 상태 노출
  *  4) 행 렌더링 + reactivate / forceAnonymize / 상세 클릭 콜백
@@ -50,7 +50,7 @@ describe('DormantUsersList', () => {
     jest.clearAllMocks();
   });
 
-  it('loading=true → loading 컴포넌트 노출 + 테이블 미렌더', () => {
+  it('loading=true → 테이블 미렌더 (ACL 중복 로딩 방지)', () => {
     render(<DormantUsersList loading page={null} />);
     expect(screen.queryByTestId('dormant-users-list')).not.toBeInTheDocument();
   });

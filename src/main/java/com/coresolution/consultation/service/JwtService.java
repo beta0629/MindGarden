@@ -253,6 +253,20 @@ public class JwtService {
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
+
+    /**
+     * JWT 토큰에서 발급 시각(iat) 추출.
+     *
+     * @param token Access 또는 Refresh JWT
+     * @return 발급 시각, 없거나 파싱 실패 시 null
+     */
+    public Date extractIssuedAt(String token) {
+        try {
+            return extractClaim(token, Claims::getIssuedAt);
+        } catch (Exception e) {
+            return null;
+        }
+    }
     
     /**
      * JWT 토큰에서 특정 클레임 추출

@@ -107,7 +107,11 @@ import notificationManager from '../../../utils/notification';
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
   __esModule: true,
-  default: ({ children }) => <div data-testid="admin-common-layout">{children}</div>
+  default: ({ children, loading, loadingText }) => (
+    <div data-testid="admin-common-layout">
+      {loading ? <div data-testid="unified-loading">{loadingText}</div> : children}
+    </div>
+  )
 }));
 
 jest.mock('../../common/UnifiedLoading', () => ({
@@ -363,7 +367,7 @@ describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI
     expect(within(combobox).getByText('CLIENT')).toBeInTheDocument();
     expect(within(combobox).getByText('CONSULTANT')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '발송 시각·대상 저장' }));
 
     await waitFor(() => {
       expect(StandardizedApi.post).toHaveBeenCalledWith(
@@ -386,7 +390,7 @@ describe('SystemConfigManagement — 웰니스 대상 역할 다중선택+칩 UI
     const combobox = screen.getByRole('combobox', { name: /대상 역할/ });
     expect(within(combobox).queryByText(/ROLE_CLIENT/)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '설정 저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '발송 시각·대상 저장' }));
 
     await waitFor(() => {
       expect(StandardizedApi.post).toHaveBeenCalledWith(

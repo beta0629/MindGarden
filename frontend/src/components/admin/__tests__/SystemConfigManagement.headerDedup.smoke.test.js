@@ -14,9 +14,9 @@ const PAGE_SUBTITLE = '테넌트·알림·웰니스 등 시스템 옵션을 관�
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
   __esModule: true,
-  default: ({ children, title }) => (
+  default: ({ children, title, loading, loadingText }) => (
     <div data-testid="admin-common-layout" data-title={title ?? ''}>
-      {children}
+      {loading ? <div data-testid="loading">{loadingText}</div> : children}
     </div>
   )
 }));
@@ -43,7 +43,7 @@ jest.mock('react-i18next', () => ({
       const map = {
         'systemConfig.pageTitle': PAGE_TITLE,
         'systemConfig.pageSubtitle': PAGE_SUBTITLE,
-        'systemConfig.action.save': '저장',
+        'systemConfig.wellness.action.saveFields': '발송 시각·대상 저장',
         'systemConfig.loading.session': '세션 확인 중',
         'systemConfig.loading.config': '설정 로딩 중'
       };
@@ -120,7 +120,7 @@ jest.mock('../../common/modals/UnifiedModal', () => ({
 import SystemConfigManagement from '../SystemConfigManagement';
 
 describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
-  test('ContentHeader title SSOT, ACL title 생략, 부제·저장 액션 유지', async() => {
+  test('ContentHeader title SSOT, ACL title 생략, 상단 저장 CTA 없음·웰니스 섹션 CTA만', async() => {
     render(
       <MemoryRouter>
         <SystemConfigManagement />
@@ -135,7 +135,7 @@ describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
     expect(header).toHaveAttribute('data-has-title', 'true');
     expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
     expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
-    expect(screen.getByTestId('content-header-actions')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '저장' })).toBeInTheDocument();
+    expect(screen.queryByTestId('content-header-actions')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '발송 시각·대상 저장' })).toBeInTheDocument();
   });
 });

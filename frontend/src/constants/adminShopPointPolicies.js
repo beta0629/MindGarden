@@ -36,3 +36,6 @@ export const ADMIN_SHOP_POINT_POLICY_TOGGLE_IMMEDIATE_HINT =
 
 export const ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_SUCCESS = '결제 허용 설정이 저장되었습니다.';
 export const ADMIN_SHOP_POINT_POLICY_TOGGLE_SAVE_FAIL = '결제 허용 설정 저장에 실패했습니다.';
+
+/** 수치 정책 폼 저장 CTA (토글 즉시 저장과 범위 구분) */
+export const ADMIN_SHOP_POINT_POLICY_SAVE_POLICIES = '수치 정책 저장';

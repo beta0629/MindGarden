@@ -25,17 +25,33 @@ public final class SessionManagementConstants {
     public static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 240;
     
     /**
-     * 운영 환경 최대 동시 세션 수 (사용자당).
-     * SSOT: {@code SecurityConfig} http DSL·{@code ConcurrentSessionControlAuthenticationStrategy}.
-     * 문서: {@code docs/standards/SECURITY_STANDARD.md} (운영 1 / 개발 3).
+     * 운영 환경 최대 동시 세션 수 (사용자당) — 레거시 참고값.
+     *
+     * <p>실효 중복 로그인 정책 SSOT 는 테넌트
+     * {@link SessionSecurityFlagKeys#DUPLICATE_LOGIN_ALLOWED} + {@code AuthServiceImpl}.
+     * Spring {@code maximumSessions} 는 테넌트 허용과 충돌하지 않도록
+     * {@link #MAX_CONCURRENT_SESSIONS_SPRING_CEILING} 을 사용한다.
+     * 문서: {@code docs/standards/SECURITY_STANDARD.md}.
      */
     public static final int MAX_CONCURRENT_SESSIONS_PRODUCTION = 1;
 
     /**
-     * 개발·로컬 등 비운영 환경 최대 동시 세션 수 (사용자당).
-     * SSOT: {@code SecurityConfig} http DSL·{@code ConcurrentSessionControlAuthenticationStrategy}.
+     * 개발·로컬 등 비운영 환경 최대 동시 세션 수 (사용자당) — 레거시 참고값.
      */
     public static final int MAX_CONCURRENT_SESSIONS_DEVELOPMENT = 3;
+
+    /**
+     * Spring ConcurrentSession 상한 (-1 = 무제한).
+     *
+     * <p>테넌트 {@code duplicate-login.allowed=true} 시 Spring 층이 동시 접속을 막지 않도록
+     * 완화한다. 불가(deny) 정책은 애플리케이션 계층({@code checkDuplicateLogin})이 강제한다.
+     */
+    public static final int MAX_CONCURRENT_SESSIONS_SPRING_CEILING = -1;
+
+    /**
+     * 테넌트 중복 로그인 허용 시 Spring ConcurrentSession 상한 (-1 = 무제한).
+     */
+    public static final int MAX_CONCURRENT_SESSIONS_WHEN_DUPLICATE_ALLOWED = -1;
 
     /**
      * 최대 동시 세션 수 (사용자당) — 비운영 기본값.
@@ -87,6 +103,11 @@ public final class SessionManagementConstants {
      * 관리자에 의한 강제 종료
      */
     public static final String END_REASON_ADMIN_FORCE = "ADMIN_FORCE";
+
+    /**
+     * 사용자가 중복 로그인 모달에서 기존 세션 종료를 확인
+     */
+    public static final String END_REASON_USER_CONFIRMED_TERMINATE = "USER_CONFIRMED_TERMINATE";
     
     /**
      * 시스템 오류로 인한 종료
@@ -96,7 +117,11 @@ public final class SessionManagementConstants {
     // ===== 중복 로그인 방지 정책 =====
     
     /**
-     * 중복 로그인 허용 여부
+     * 중복 로그인 허용 여부 — 레거시 상수.
+     *
+     * <p>실효 SSOT: {@link SessionSecurityFlagKeys#DUPLICATE_LOGIN_ALLOWED} (테넌트 DB)
+     * + env {@code session.duplicate-login-check.allowed-by-default}.
+     * 본 필드는 하위 호환용이며 신규 분기에 사용하지 않는다.
      */
     public static final boolean ALLOW_DUPLICATE_LOGIN = true;
     
@@ -112,6 +137,12 @@ public final class SessionManagementConstants {
     
     // ===== 세션 보안 상수 =====
     
+    /**
+     * Access JWT iat 와 {@code users.last_login_at} 비교 시 허용 오차(초).
+     * 로그인 응답에서 토큰 발급 후 lastLoginAt 갱신 순서·시계 오차로 인한 오탐 방지.
+     */
+    public static final long ACCESS_TOKEN_LAST_LOGIN_GRACE_SECONDS = 30L;
+
     /**
      * 세션 ID 최소 길이
      */
@@ -134,6 +165,16 @@ public final class SessionManagementConstants {
      * AuthServiceImpl#authenticateWithSession 에서 ask-user-confirmation 활성 시 사용
      */
     public static final String DUPLICATE_LOGIN_MESSAGE = "다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?";
+
+    /**
+     * 폴링 API({@code /check-duplicate-login}) — 타 세션 감지 메시지
+     */
+    public static final String DUPLICATE_LOGIN_DETECTED_POLL_MESSAGE = "다른 곳에서 로그인되어 있습니다.";
+
+    /**
+     * 폴링 API — 중복 없음 메시지
+     */
+    public static final String NO_DUPLICATE_LOGIN_MESSAGE = "중복 로그인이 없습니다.";
     
     /**
      * 세션 만료 메시지

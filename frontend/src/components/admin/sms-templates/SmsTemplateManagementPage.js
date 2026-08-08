@@ -328,9 +328,12 @@ const SmsTemplateManagementPage = () => {
   const pageSubtitle = t('smsTemplate.page.subtitle');
   if (sessionLoading || !hasAccess) {
     return (
-      <AdminCommonLayout title={pageTitle} className="mg-v2-dashboard-layout">
-        <UnifiedLoading text={t('common:loading')} />
-      </AdminCommonLayout>
+      <AdminCommonLayout
+        title={pageTitle}
+        className="mg-v2-dashboard-layout"
+        loading
+        loadingText={t('common:loading', { defaultValue: '로딩 중...' })}
+      />
     );
   }
 

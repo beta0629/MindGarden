@@ -605,15 +605,22 @@ public class AuthController extends BaseApiController {
     }
 
     /**
-     * HTTP 세션 비활성 타임아웃 계산용(클라이언트 idle 경고 등). 서버 시각 기준.
+     * HTTP 세션 비활성 타임아웃·잔여 계산용(클라이언트 idle 경고·GNB 잔여 등).
+     *
+     * <p>Servlet {@code HttpSession.getLastAccessedTime()}은 <strong>이전 요청</strong> 접근 시각이라
+     * FE 잔여 리필 SSOT로 부적합하다. session-info 호출 자체가 access이므로
+     * {@code serverNow}(현재 요청 접근 시각)를 {@code lastAccessedTime}으로 노출한다.
      *
      * @param map 응답 맵
      * @param session HTTP 세션
      */
     private void putHttpSessionTimingFields(Map<String, Object> map, HttpSession session) {
-        map.put("serverNow", System.currentTimeMillis());
+        long serverNow = System.currentTimeMillis();
+        map.put("serverNow", serverNow);
         map.put("maxInactiveInterval", session.getMaxInactiveInterval());
-        map.put("lastAccessedTime", session.getLastAccessedTime());
+        // Servlet getLastAccessedTime()은 previous request라 FE 잔여 리필 SSOT로 부적합.
+        // session-info 호출 자체가 access이므로 serverNow를 lastAccessedTime으로 노출.
+        map.put("lastAccessedTime", serverNow);
     }
     
     /**

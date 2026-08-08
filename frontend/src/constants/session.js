@@ -32,10 +32,26 @@ export const SESSION_CHECK_RECENT_SKIP_MS = 1000; // 1초
 export const SESSION_CHECK_COOLDOWN_MS = 3000; // 3초
 
 /**
- * 타이핑·포인터 등 활동 시 서버 HttpSession lastAccessedTime 갱신용 스로틀 간격.
- * SESSION_CHECK_COOLDOWN_MS·주기적 SESSION_CHECK_INTERVAL 보다 짧지 않게 둠.
+ * 타이핑·포인터·이동 등 활동 시 서버 HttpSession lastAccessedTime 갱신용 스로틀 간격.
+ * SESSION_CHECK_COOLDOWN_MS(3s)보다 길고, 키보드·마우스 어느 쪽이든 UI 리필이 체감되도록 30–60초 구간을 사용한다.
+ * mousemove/pointermove도 동일 간격으로만 ping한다(픽셀 단위 API 금지).
  */
-export const SESSION_ACTIVITY_PING_INTERVAL_MS = 90 * 1000;
+export const SESSION_ACTIVITY_PING_INTERVAL_MS = 45 * 1000;
+
+/**
+ * SessionContext 활동 ping에 등록하는 DOM 이벤트(공유 스로틀).
+ * 키보드·마우스·터치·스크롤 모두 동일 onActivity → silent checkSession.
+ */
+export const SESSION_ACTIVITY_EVENTS = Object.freeze([
+  'keydown',
+  'input',
+  'pointerdown',
+  'click',
+  'scroll',
+  'touchstart',
+  'mousemove',
+  'pointermove'
+]);
 
 /**
  * 로그인·회원가입·OAuth 콜백 등 — 세션 연장 ping·idle 경고에서 제외할 공개 경로.

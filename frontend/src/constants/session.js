@@ -40,7 +40,8 @@ export const SESSION_ACTIVITY_PING_INTERVAL_MS = 45 * 1000;
 
 /**
  * SessionContext 활동 ping에 등록하는 DOM 이벤트(공유 스로틀).
- * 키보드·마우스·터치·스크롤 모두 동일 onActivity → silent checkSession.
+ * 키보드·마우스·터치·스크롤·휠 모두 동일 onActivity → silent checkSession.
+ * (일부 환경에서 scroll이 document에 전달되지 않아 wheel로 보완)
  */
 export const SESSION_ACTIVITY_EVENTS = Object.freeze([
   'keydown',
@@ -48,6 +49,7 @@ export const SESSION_ACTIVITY_EVENTS = Object.freeze([
   'pointerdown',
   'click',
   'scroll',
+  'wheel',
   'touchstart',
   'mousemove',
   'pointermove'

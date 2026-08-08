@@ -27,6 +27,44 @@ function unwrapApiResponseData(body) {
   return body;
 }
 
+/**
+ * session-info 응답을 클라이언트 UI(잔여 리필)용으로 정규화.
+ * session-info 200 = 방금 접근이므로 lastAccessed가 serverNow보다 오래되면 승격한다.
+ *
+ * @param {unknown} sessionData
+ * @returns {unknown}
+ */
+function normalizeSessionInfoForClient(sessionData) {
+  if (!sessionData || typeof sessionData !== 'object') {
+    return sessionData;
+  }
+  const clientReceivedAt = Date.now();
+  let serverNow = Number(sessionData.serverNow);
+  if (!Number.isFinite(serverNow)) {
+    serverNow = clientReceivedAt;
+  }
+  let lastAccessedTime = Number(sessionData.lastAccessedTime);
+  if (!Number.isFinite(lastAccessedTime) || lastAccessedTime < serverNow) {
+    lastAccessedTime = serverNow;
+  }
+  return {
+    ...sessionData,
+    serverNow,
+    lastAccessedTime,
+    clientReceivedAt
+  };
+}
+
+/** hung fetch가 inflightCheckPromise를 영구 차단하지 않도록 AbortSignal 생성 */
+function createSessionCheckAbortSignal() {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(SESSION_CHECK_TIMEOUT);
+  }
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), SESSION_CHECK_TIMEOUT);
+  return controller.signal;
+}
+
 class SessionManager {
   constructor() {
     this.user = null;
@@ -172,6 +210,8 @@ class SessionManager {
           credentials: 'include',
           method: 'GET',
           mode: 'cors',
+          cache: 'no-store',
+          signal: createSessionCheckAbortSignal(),
           headers
         });
       } catch (fetchError) {
@@ -200,6 +240,8 @@ class SessionManager {
               credentials: 'include',
               method: 'GET',
               mode: 'cors',
+              cache: 'no-store',
+              signal: createSessionCheckAbortSignal(),
               headers: retryHeaders
             });
           } catch (retryFetchError) {
@@ -284,16 +326,15 @@ class SessionManager {
             credentials: 'include',
             method: 'GET',
             mode: 'cors',
+            cache: 'no-store',
+            signal: createSessionCheckAbortSignal(),
             headers: sessionHeaders
           });
           if (sessionResponse.ok) {
             const sessionResponseData = await sessionResponse.json();
             const sessionData = unwrapApiResponseData(sessionResponseData);
-            // clientReceivedAt: 서버-클라 오프셋 스냅샷 기준점 (잔여 카운트다운용)
-            this.sessionInfo =
-              sessionData && typeof sessionData === 'object'
-                ? { ...sessionData, clientReceivedAt: Date.now() }
-                : sessionData;
+            // clientReceivedAt + lastAccessed≈serverNow: UI 잔여 리필 SSOT
+            this.sessionInfo = normalizeSessionInfoForClient(sessionData);
             console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
           }
         } catch (sessionError) {

@@ -13,13 +13,14 @@ describe('SESSION_ACTIVITY_PING_INTERVAL_MS', () => {
 });
 
 describe('SESSION_ACTIVITY_EVENTS', () => {
-  test('키보드·마우스·터치·스크롤·이동 실질 활동을 모두 포함한다', () => {
+  test('키보드·마우스·터치·스크롤·휠·이동 실질 활동을 모두 포함한다', () => {
     const required = [
       'keydown',
       'input',
       'pointerdown',
       'click',
       'scroll',
+      'wheel',
       'touchstart',
       'mousemove',
       'pointermove'

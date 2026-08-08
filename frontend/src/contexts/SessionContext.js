@@ -461,7 +461,7 @@ export const SessionProvider = ({ children }) => {
   }, [checkSession]); // state.user, state.isLoading 제거 - stateRef로 최신 상태 참조
 
   // 서블릿 세션 lastAccessedTime은 HTTP 요청 시에만 갱신됨.
-  // 키보드·마우스·터치·스크롤·이동 모두 동일 onActivity + 공유 45s 스로틀 → silent checkSession으로 sessionInfo 리필.
+  // 키보드·마우스·터치·스크롤·휠·이동 모두 동일 onActivity + 공유 45s 스로틀 → silent checkSession으로 sessionInfo 리필.
   useEffect(() => {
     const onActivity = (event) => {
       // 세션 만료 임박 모달: pointerdown(capture)이 버튼 click보다 먼저 실행되어
@@ -486,10 +486,26 @@ export const SessionProvider = ({ children }) => {
       if (now - lastActivityPingAtRef.current < SESSION_ACTIVITY_PING_INTERVAL_MS) {
         return;
       }
+      // checkSession이 user 유지(true)만으로 성공해도 session-info 미갱신일 수 있음.
+      // 스로틀은 sessionInfo가 실제로 새로워졌을 때만 소비한다(실패 시 재시도 가능).
+      const prevInfo = sessionManager.getSessionInfo();
+      const prevClientReceivedAt = Number(prevInfo?.clientReceivedAt) || 0;
+      const prevLastAccessed = Number(prevInfo?.lastAccessedTime) || 0;
       activityPingInFlightRef.current = true;
       void checkSession(true, { silent: true })
         .then((ok) => {
-          if (ok) {
+          if (!ok) {
+            return;
+          }
+          const nextInfo = sessionManager.getSessionInfo();
+          if (!nextInfo) {
+            return;
+          }
+          const nextReceived = Number(nextInfo.clientReceivedAt) || 0;
+          const nextLastAcc = Number(nextInfo.lastAccessedTime) || 0;
+          const sessionInfoSynced =
+            nextReceived > prevClientReceivedAt || nextLastAcc > prevLastAccessed;
+          if (sessionInfoSynced) {
             lastActivityPingAtRef.current = Date.now();
           }
         })
@@ -501,10 +517,12 @@ export const SessionProvider = ({ children }) => {
     const opts = { capture: true, passive: true };
     SESSION_ACTIVITY_EVENTS.forEach((type) => {
       document.addEventListener(type, onActivity, opts);
+      window.addEventListener(type, onActivity, opts);
     });
     return () => {
       SESSION_ACTIVITY_EVENTS.forEach((type) => {
         document.removeEventListener(type, onActivity, opts);
+        window.removeEventListener(type, onActivity, opts);
       });
     };
   }, [checkSession]);

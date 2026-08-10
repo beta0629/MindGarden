@@ -10,13 +10,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.coresolution.consultation.constant.SessionConstants;
@@ -36,19 +34,15 @@ import lombok.extern.slf4j.Slf4j;
  * ({@code HTTP_SESSION_MAX_INACTIVE} / 기본 4h)과 무관하다.
  * DB {@code user_sessions} 슬라이딩도 동일 스로틀을 사용한다.</p>
  *
+ * <p>쿠키 Domain/HttpOnly/SameSite/Secure 는 {@link SessionCookieSupport} 로
+ * OAuth 초기 발급과 동일 속성을 유지한다 (속성 불일치 시 브라우저가 갱신을 무시할 수 있음).</p>
+ *
  * @author MindGarden
  * @since 2026-05-12
  */
 @Slf4j
 @Component
 public class SessionCookieRenewalFilter extends OncePerRequestFilter {
-
-    /**
-     * 세션에 마지막 쿠키 갱신 시각을 저장하는 속성 키
-     */
-    private static final String SESSION_ATTR_COOKIE_LAST_RENEWED = "SESSION_COOKIE_LAST_RENEWED";
-
-    private static final String JSESSIONID = "JSESSIONID";
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 
@@ -70,10 +64,13 @@ public class SessionCookieRenewalFilter extends OncePerRequestFilter {
             ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".map"
     );
 
-    private final Environment environment;
+    private final SessionCookieSupport sessionCookieSupport;
 
-    public SessionCookieRenewalFilter(Environment environment) {
-        this.environment = environment;
+    /**
+     * @param sessionCookieSupport JSESSIONID Set-Cookie 속성 SSOT
+     */
+    public SessionCookieRenewalFilter(SessionCookieSupport sessionCookieSupport) {
+        this.sessionCookieSupport = sessionCookieSupport;
     }
 
     @Override
@@ -109,7 +106,7 @@ public class SessionCookieRenewalFilter extends OncePerRequestFilter {
      * 스로틀링: 마지막 갱신으로부터 {@link SessionConstants#SESSION_SLIDING_THROTTLE_SECONDS} 이상 경과했는지 확인
      */
     private boolean shouldRenew(HttpSession session) {
-        Object lastRenewedObj = session.getAttribute(SESSION_ATTR_COOKIE_LAST_RENEWED);
+        Object lastRenewedObj = session.getAttribute(SessionConstants.SESSION_COOKIE_LAST_RENEWED);
         if (lastRenewedObj instanceof Long lastRenewed) {
             long elapsed = Instant.now().getEpochSecond() - lastRenewed;
             return elapsed >= SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS;
@@ -125,66 +122,13 @@ public class SessionCookieRenewalFilter extends OncePerRequestFilter {
             return;
         }
 
-        boolean httpOnly = resolveHttpOnly();
-        boolean secure = resolveSecure(request);
-        String sameSite = resolveSameSite();
-        String domain = resolveDomain();
+        ResponseCookie cookie = sessionCookieSupport.buildJsessionCookie(
+                session.getId(), maxAge, request);
+        response.addHeader("Set-Cookie", cookie.toString());
 
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie
-                .from(JSESSIONID, session.getId())
-                .path("/")
-                .httpOnly(httpOnly)
-                .secure(secure)
-                .sameSite(sameSite)
-                .maxAge(maxAge);
-
-        if (StringUtils.hasText(domain)) {
-            builder.domain(domain);
-        }
-
-        response.addHeader("Set-Cookie", builder.build().toString());
-
-        session.setAttribute(SESSION_ATTR_COOKIE_LAST_RENEWED, Instant.now().getEpochSecond());
+        session.setAttribute(SessionConstants.SESSION_COOKIE_LAST_RENEWED, Instant.now().getEpochSecond());
 
         log.debug("JSESSIONID 쿠키 Max-Age 갱신: maxAge={}s, sessionId={}", maxAge, session.getId());
-    }
-
-    /**
-     * {@code server.servlet.session.cookie.http-only} 설정 참조
-     */
-    private boolean resolveHttpOnly() {
-        return environment.getProperty(
-                "server.servlet.session.cookie.http-only", Boolean.class, true);
-    }
-
-    /**
-     * {@code server.servlet.session.cookie.secure} 설정 참조.
-     * 미설정 시 요청 프로토콜 기반 판단.
-     */
-    private boolean resolveSecure(HttpServletRequest request) {
-        String secureProp = environment.getProperty("server.servlet.session.cookie.secure");
-        if (secureProp != null) {
-            return Boolean.parseBoolean(secureProp);
-        }
-        return request.isSecure();
-    }
-
-    /**
-     * {@code server.servlet.session.cookie.same-site} 설정 참조
-     */
-    private String resolveSameSite() {
-        return environment.getProperty(
-                "server.servlet.session.cookie.same-site", "Lax");
-    }
-
-    /**
-     * {@code SESSION_COOKIE_DOMAIN} 환경변수 참조.
-     * 빈 문자열이면 도메인을 설정하지 않는다 (호스트 전용 쿠키).
-     *
-     * @see com.coresolution.core.config.SessionCookieDomainWebServerCustomizer
-     */
-    private String resolveDomain() {
-        return environment.getProperty("SESSION_COOKIE_DOMAIN");
     }
 
     @Override

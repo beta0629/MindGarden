@@ -74,6 +74,8 @@ class OAuth2ControllerSessionTimeoutTest {
     private AppleSignInService appleSignInService;
     @Mock
     private SessionTimeoutProperties sessionTimeoutProperties;
+    @Mock
+    private com.coresolution.consultation.config.SessionCookieSupport sessionCookieSupport;
 
     private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
 

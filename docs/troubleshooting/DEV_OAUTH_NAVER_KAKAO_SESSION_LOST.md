@@ -55,6 +55,7 @@
 
 2. **세션 쿠키 Domain**
    - 환경 변수 `SESSION_COOKIE_DOMAIN` 이 설정된 경우에만 적용 (`SessionCookieDomainWebServerCustomizer`). 미설정 시 호스트 전용 쿠키(로컬 기본).
+   - OAuth 콜백·`SessionCookieRenewalFilter` 갱신 Set-Cookie 는 `SessionCookieSupport` 로 Domain/HttpOnly/SameSite/Secure/Max-Age 를 동일하게 맞춤 (속성 불일치 시 브라우저가 갱신을 무시할 수 있음).
 
 3. **네이버/Kakao 개발자 콘솔**
    - **방식 A** 사용 시: 기존처럼 **루트 도메인**만 등록하면 됨.  

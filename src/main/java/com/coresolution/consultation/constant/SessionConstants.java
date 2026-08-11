@@ -138,6 +138,17 @@ public final class SessionConstants {
      * 세션 ID
      */
     public static final String SESSION_ID = "sessionId";
+
+    /**
+     * HTTP 세션 쿠키 이름 (컨테이너 기본과 동일).
+     */
+    public static final String SESSION_COOKIE_NAME = "JSESSIONID";
+
+    /**
+     * 세션에 마지막 JSESSIONID 쿠키 Max-Age 갱신 epoch 초를 저장하는 속성 키.
+     * {@link com.coresolution.consultation.config.SessionCookieRenewalFilter} 전용.
+     */
+    public static final String SESSION_COOKIE_LAST_RENEWED = "SESSION_COOKIE_LAST_RENEWED";
     
     // 참고: BRANCH_CODE는 제거됨 (브랜치 개념 제거 - TENANT_ROLE_SYSTEM_STANDARD.md 참조)
     
@@ -169,7 +180,8 @@ public final class SessionConstants {
      * {@link com.coresolution.consultation.config.SessionBasedAuthenticationFilter} 가 공유한다.
      * 이 값은 Set-Cookie·DB write 빈도 제한이며, 세션 TTL SSOT는
      * {@link com.coresolution.consultation.config.SessionTimeoutProperties}
-     * ({@code HTTP_SESSION_MAX_INACTIVE})이다.</p>
+     * ({@code HTTP_SESSION_MAX_INACTIVE})이다.
+     * FE session-info UI 리필(~45s)과 주기가 달라도 정상이다.</p>
      */
     public static final int SESSION_SLIDING_THROTTLE_SECONDS = 1800; // 30분
 

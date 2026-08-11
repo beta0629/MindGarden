@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.config.SessionCookieSupport;
 import com.coresolution.consultation.config.SessionTimeoutProperties;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.oauth.OAuthAccountSelectionUserFacingStrings;
@@ -86,6 +87,8 @@ public class OAuth2Controller extends BaseApiController {
     private final MeterRegistry meterRegistry;
     /** HTTP 세션 비활성 타임아웃 SSOT ({@code server.servlet.session.timeout} / HTTP_SESSION_MAX_INACTIVE). */
     private final SessionTimeoutProperties sessionTimeoutProperties;
+    /** JSESSIONID Set-Cookie 속성 SSOT (필터 갱신과 Domain/HttpOnly/SameSite/Secure 정합). */
+    private final SessionCookieSupport sessionCookieSupport;
 
     /**
      * OAuth 콜백 tenant 미해결 분기 카운터 이름 (P3 진단). 태그: provider, reason.
@@ -2812,14 +2815,12 @@ public class OAuth2Controller extends BaseApiController {
                                 .header("Content-Type", "text/html; charset=UTF-8").body(html);
                     }
 
-                    // 웹 클라이언트인 경우 기존 로직 사용
-                    // 세션 쿠키를 프론트엔드로 전달하기 위해 쿠키에 세션 ID를 포함
-                    // 프론트엔드에서 이 쿠키를 사용하여 세션을 복원
+                    // 웹 클라이언트: SessionCookieSupport 로 필터·SESSION_COOKIE_DOMAIN 과 동일 속성 발급
                     String sessionId = session.getId();
-                    String cookieValue = String.format(
-                            "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
+                    String cookieValue = sessionCookieSupport.buildJsessionSetCookieHeader(
                             sessionId,
-                            sessionTimeoutProperties.getTimeoutSeconds());
+                            sessionTimeoutProperties.getTimeoutSeconds(),
+                            request);
 
                     log.info("세션 쿠키 설정: {}", cookieValue);
                     logOAuthRedirectLocationSummary("네이버 웹 OAuth", redirectUrl);
@@ -3482,12 +3483,12 @@ public class OAuth2Controller extends BaseApiController {
                     String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
                             + buildOAuthWebCallbackQueryString(user, provider, tenantId, providerUserIdForCallback);
 
-                    // 세션 쿠키 설정을 명시적으로 추가
+                    // 세션 쿠키: SessionCookieSupport (필터·SESSION_COOKIE_DOMAIN 정합)
                     String sessionId = session.getId();
-                    String cookieValue = String.format(
-                            "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
+                    String cookieValue = sessionCookieSupport.buildJsessionSetCookieHeader(
                             sessionId,
-                            sessionTimeoutProperties.getTimeoutSeconds());
+                            sessionTimeoutProperties.getTimeoutSeconds(),
+                            request);
 
                     log.info("세션 쿠키 설정: {}", cookieValue);
                     logOAuthRedirectLocationSummary("카카오 웹 OAuth", redirectUrl);
@@ -3972,9 +3973,10 @@ public class OAuth2Controller extends BaseApiController {
                                     providerUserIdForCallback);
 
                     String sessionId = session.getId();
-                    String cookieValue = String.format(
-                            "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
-                            sessionId, sessionTimeoutProperties.getTimeoutSeconds());
+                    String cookieValue = sessionCookieSupport.buildJsessionSetCookieHeader(
+                            sessionId,
+                            sessionTimeoutProperties.getTimeoutSeconds(),
+                            request);
 
                     logOAuthRedirectLocationSummary("Google 웹 OAuth", redirectUrl);
                     return ResponseEntity.status(302).header("Location", redirectUrl)
@@ -4428,9 +4430,10 @@ public class OAuth2Controller extends BaseApiController {
                     + "&userId=" + URLEncoder.encode(String.valueOf(user.getId()), StandardCharsets.UTF_8);
 
             String sessionId = sessionForLogin.getId();
-            String cookieValue = String.format(
-                    "JSESSIONID=%s; Path=/; SameSite=None; Max-Age=%d; Secure; HttpOnly=false",
-                    sessionId, sessionTimeoutProperties.getTimeoutSeconds());
+            String cookieValue = sessionCookieSupport.buildJsessionSetCookieHeader(
+                    sessionId,
+                    sessionTimeoutProperties.getTimeoutSeconds(),
+                    request);
 
             log.info("Apple OAuth2 로그인 성공: userId={}, role={}", user.getId(), user.getRole());
             logOAuthRedirectLocationSummary("Apple 웹 OAuth", redirectUrl);
@@ -4906,10 +4909,11 @@ public class OAuth2Controller extends BaseApiController {
             log.info("네이티브 SDK 로그인 성공: userId={}, email={}, role={}, sessionId={}", user.getId(),
                     user.getEmail(), user.getRole(), session.getId());
 
-            // iOS 모바일 앱: Set-Cookie 헤더로 JSESSIONID를 명시적으로 설정
-            // (Spring이 자동으로 설정하지만, iOS에서는 명시적으로 설정하는 것이 더 안전)
-            response.setHeader("Set-Cookie", String
-                    .format("JSESSIONID=%s; Path=/; HttpOnly; SameSite=Lax", session.getId()));
+            // iOS 네이티브: SessionCookieSupport 로 웹/필터와 동일 속성(+ Max-Age) 발급
+            response.setHeader("Set-Cookie", sessionCookieSupport.buildJsessionSetCookieHeader(
+                    session.getId(),
+                    sessionTimeoutProperties.getTimeoutSeconds(),
+                    request));
 
             return ResponseEntity.ok(Map.of("success", true, "user",
                     Map.of("id", user.getId(), "email", user.getEmail(), "name", user.getName(),

@@ -386,6 +386,7 @@ server:
         # 도메인 값은 YAML placeholder(빈 기본값)로 두지 않음 — Spring Boot 3.x는 빈 문자열도 Domain에 적용될 수 있음.
         # 대신 com.coresolution.core.config.SessionCookieDomainWebServerCustomizer 가
         # SESSION_COOKIE_DOMAIN 이 비어 있지 않을 때만 Domain 을 설정(로컬·미설정은 호스트 전용 쿠키).
+        # OAuth·SessionCookieRenewalFilter Set-Cookie 도 SessionCookieSupport 로 동일 Domain/속성을 사용.
         # 운영/개발: EnvironmentFile 등에 SESSION_COOKIE_DOMAIN=core-solution.co.kr 또는 dev.core-solution.co.kr
         # (RFC 6265: 선행 점 없음). deployment/mindgarden.prod-env.example 참고.
         # OAuth2(카카오/네이버 등) 외부 리다이렉트 콜백에서는 SameSite=strict일 경우 세션 쿠키가 전송되지 않아

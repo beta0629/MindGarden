@@ -369,13 +369,78 @@ export function shouldShowCalendarSessionLabel(totalSessions, remainingSessions)
 }
 
 /**
- * 분수형 회기 라벨 SSOT — `used/total회` (SessionProgressIndicator와 동일 형식).
+ * 분수형 회기 라벨(캘린더 컴팩트) — `used/total회`.
+ * 매핑 카드·모달 요약은 {@link formatSessionUsageSummary} 사용.
  * @param {number} used
  * @param {number} total
  * @returns {string}
  */
 export function formatSessionFraction(used, total) {
   return `${used}/${total}회`;
+}
+
+/** 매핑 회기 요약 — 데이터 없음 */
+export const SESSION_USAGE_UNKNOWN_LABEL = '회기 정보 없음';
+
+/** 취소·재예약 회기 차감 보조 안내 (이모지 금지) */
+export const SESSION_CANCEL_RESTORE_HINT =
+  '취소 후 재예약 시, 잔여 회기가 복원된 후 다시 차감됩니다.';
+
+/** 취소·재예약 안내 aria */
+export const SESSION_CANCEL_RESTORE_HINT_ARIA =
+  '취소 및 재예약에 따른 회기 차감 안내';
+
+/**
+ * 회기 사용 수치 정규화 (음수·NaN → 0).
+ * @param {*} value
+ * @returns {number}
+ */
+function toNonNegativeSessionCount(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) {
+    return 0;
+  }
+  return Math.floor(n);
+}
+
+/**
+ * 매핑 회기 사용 요약 SSOT — `사용 {used} / 총 {total} · 잔여 {remaining}`.
+ * - used·total·remaining 모두 null/undefined → `회기 정보 없음`
+ * - 총 0 → `사용 0 / 총 0 · 잔여 0`
+ * @param {number|null|undefined} used
+ * @param {number|null|undefined} total
+ * @param {number|null|undefined} remaining remaining 미지정 시 total−used
+ * @returns {string}
+ */
+export function formatSessionUsageSummary(used, total, remaining) {
+  if (used == null && total == null && remaining == null) {
+    return SESSION_USAGE_UNKNOWN_LABEL;
+  }
+  const safeUsed = toNonNegativeSessionCount(used);
+  const safeTotal = toNonNegativeSessionCount(total);
+  const safeRemaining = remaining == null
+    ? Math.max(0, safeTotal - safeUsed)
+    : toNonNegativeSessionCount(remaining);
+  return `사용 ${safeUsed} / 총 ${safeTotal} · 잔여 ${safeRemaining}`;
+}
+
+/**
+ * 매핑 회기 사용 요약 aria-label — `총 {total}회 중 {used}회 사용, {remaining}회 남음`.
+ * @param {number|null|undefined} used
+ * @param {number|null|undefined} total
+ * @param {number|null|undefined} remaining
+ * @returns {string}
+ */
+export function formatSessionUsageAriaLabel(used, total, remaining) {
+  if (used == null && total == null && remaining == null) {
+    return SESSION_USAGE_UNKNOWN_LABEL;
+  }
+  const safeUsed = toNonNegativeSessionCount(used);
+  const safeTotal = toNonNegativeSessionCount(total);
+  const safeRemaining = remaining == null
+    ? Math.max(0, safeTotal - safeUsed)
+    : toNonNegativeSessionCount(remaining);
+  return `총 ${safeTotal}회 중 ${safeUsed}회 사용, ${safeRemaining}회 남음`;
 }
 
 /**

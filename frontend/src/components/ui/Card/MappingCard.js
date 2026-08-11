@@ -19,6 +19,12 @@ import SafeText from '../../common/SafeText';
 import MappingEntityRowActions from '../../admin/mapping-management/molecules/MappingEntityRowActions';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
+import {
+  formatSessionUsageAriaLabel,
+  formatSessionUsageSummary,
+  SESSION_CANCEL_RESTORE_HINT,
+  SESSION_CANCEL_RESTORE_HINT_ARIA
+} from '../../../constants/schedule';
 
 /**
  * statusInfo.variant (legacy) → StatusBadge variant 매핑
@@ -89,10 +95,20 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
           <div className="mg-v2-session-stat-value">{mapping.usedSessions}</div>
         </div>
         <div className="mg-v2-session-stat mg-v2-session-stat-remaining">
-          <div className="mg-v2-session-stat-label">남은</div>
+          <div className="mg-v2-session-stat-label">잔여</div>
           <div className="mg-v2-session-stat-value">{mapping.remainingSessions}</div>
         </div>
       </div>
+
+      {(mapping.hasCancelHistory === true
+        || Number(mapping.cancelledScheduleCount) > 0) && (
+        <p
+          className="mg-v2-mapping-card__session-hint"
+          aria-label={SESSION_CANCEL_RESTORE_HINT_ARIA}
+        >
+          {SESSION_CANCEL_RESTORE_HINT}
+        </p>
+      )}
 
       {actions && (
         <div className="mg-v2-mapping-card-actions">{actions}</div>
@@ -265,6 +281,8 @@ const MappingCardCompact = ({
   usedSessions,
   totalSessions,
   remainingSessions,
+  hasCancelHistory,
+  cancelledScheduleCount,
   startDate,
   endDate,
   createdAt,
@@ -344,13 +362,28 @@ const MappingCardCompact = ({
               <span className="mg-v2-mapping-card__value"><SafeText>{packageName}</SafeText></span>
             </div>
           )}
-          {(totalSessions != null || remainingSessions !== undefined) && (
+          {(totalSessions != null || remainingSessions !== undefined || usedSessions != null) && (
             <div className="mg-v2-mapping-card__row">
               <span className="mg-v2-mapping-card__label">회기</span>
-              <span className="mg-v2-mapping-card__value mg-v2-mapping-card__value--emphasis">
-                {usedSessions ?? 0}/{totalSessions ?? 0} (남은: {remainingSessions ?? 0})
+              <span
+                className="mg-v2-mapping-card__value mg-v2-mapping-card__value--emphasis"
+                aria-label={formatSessionUsageAriaLabel(
+                  usedSessions,
+                  totalSessions,
+                  remainingSessions
+                )}
+              >
+                {formatSessionUsageSummary(usedSessions, totalSessions, remainingSessions)}
               </span>
             </div>
+          )}
+          {(hasCancelHistory === true || Number(cancelledScheduleCount) > 0) && (
+            <p
+              className="mg-v2-mapping-card__session-hint"
+              aria-label={SESSION_CANCEL_RESTORE_HINT_ARIA}
+            >
+              {SESSION_CANCEL_RESTORE_HINT}
+            </p>
           )}
           <div className="mg-v2-mapping-card__row">
             <span className="mg-v2-mapping-card__label">시작일</span>
@@ -410,6 +443,8 @@ const mappingShape = PropTypes.shape({
   totalSessions: PropTypes.number,
   usedSessions: PropTypes.number,
   remainingSessions: PropTypes.number,
+  hasCancelHistory: PropTypes.bool,
+  cancelledScheduleCount: PropTypes.number,
   startDate: PropTypes.string,
   endDate: PropTypes.string,
   createdAt: PropTypes.string,
@@ -450,6 +485,8 @@ MappingCardCompact.propTypes = {
   usedSessions: PropTypes.number,
   totalSessions: PropTypes.number,
   remainingSessions: PropTypes.number,
+  hasCancelHistory: PropTypes.bool,
+  cancelledScheduleCount: PropTypes.number,
   startDate: PropTypes.string,
   endDate: PropTypes.string,
   createdAt: PropTypes.string,

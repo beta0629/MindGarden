@@ -123,7 +123,12 @@ const MappingListRow = ({
           <div className="mg-v2-mapping-list-row__sessions">
             <SessionProgressIndicator 
               used={mapping.usedSessions} 
-              total={mapping.totalSessions} 
+              total={mapping.totalSessions}
+              remaining={mapping.remainingSessions}
+              hasCancelHistory={
+                mapping.hasCancelHistory === true
+                || Number(mapping.cancelledScheduleCount) > 0
+              }
             />
           </div>
           <div className="mg-v2-mapping-list-row__date">

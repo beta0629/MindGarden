@@ -36,15 +36,19 @@ const MOCK_MAPPING = {
 };
 
 describe('MappingScheduleCard SessionProgress', () => {
-  it('renders SessionProgressIndicator with used/total from mapping', () => {
+  it('renders SessionProgressIndicator with used/total/remaining from mapping', () => {
     render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
 
-    const progress = screen.getByRole('progressbar', { name: '회기 진행 2/10회' });
+    const progress = screen.getByRole('progressbar', {
+      name: '총 10회 중 2회 사용, 8회 남음'
+    });
     expect(progress).toBeInTheDocument();
     expect(progress).toHaveAttribute('aria-valuenow', '20');
     expect(progress).toHaveAttribute('aria-valuemin', '0');
     expect(progress).toHaveAttribute('aria-valuemax', '100');
-    expect(screen.getByText('2/10회')).toBeInTheDocument();
+    expect(screen.getByText(/사용/)).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('8')).toBeInTheDocument();
   });
 
   it('keeps MappingPartiesRow visible alongside progress', () => {
@@ -60,14 +64,17 @@ describe('MappingScheduleCard SessionProgress', () => {
         mapping={{
           ...MOCK_MAPPING,
           usedSessions: undefined,
-          totalSessions: undefined
+          totalSessions: undefined,
+          remainingSessions: undefined
         }}
       />
     );
 
-    const progress = screen.getByRole('progressbar', { name: '회기 진행 0/0회' });
+    const progress = screen.getByRole('progressbar', {
+      name: '총 0회 중 0회 사용, 0회 남음'
+    });
     expect(progress).toHaveAttribute('aria-valuenow', '0');
-    expect(screen.getByText('0/0회')).toBeInTheDocument();
+    expect(screen.getByText(/사용/)).toBeInTheDocument();
   });
 
   it('renders compact package name when packageName is provided', () => {

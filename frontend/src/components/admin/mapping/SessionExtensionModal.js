@@ -10,6 +10,12 @@ import { toDisplayString, toErrorMessage, toSafeNumber } from '../../../utils/sa
 import { sessionManager } from '../../../utils/sessionManager';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { SESSION_EXTENSION_UI } from '../../../utils/sessionExtensionPending';
+import {
+  formatSessionUsageAriaLabel,
+  formatSessionUsageSummary,
+  SESSION_CANCEL_RESTORE_HINT,
+  SESSION_CANCEL_RESTORE_HINT_ARIA
+} from '../../../constants/schedule';
 import './SessionExtensionModal.css';
 
 const MSG_USER_REQUIRED = '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
@@ -145,6 +151,19 @@ const SessionExtensionModal = ({
   );
   const progressMax = Math.max(totalSessions, DEFAULT_ADDITIONAL_SESSIONS);
   const progressValue = Math.min(usedSessions, progressMax);
+  const sessionSummaryLabel = formatSessionUsageSummary(
+    usedSessions,
+    totalSessions,
+    remainingSessions
+  );
+  const sessionSummaryAria = formatSessionUsageAriaLabel(
+    usedSessions,
+    totalSessions,
+    remainingSessions
+  );
+  const hasCancelHistory =
+    mapping.hasCancelHistory === true
+    || Number(mapping.cancelledScheduleCount) > 0;
 
   return (
     <UnifiedModal
@@ -190,9 +209,20 @@ const SessionExtensionModal = ({
                 max={progressMax}
                 aria-label="현재 회기 사용 진행률"
               />
-              <p className="mg-extension__session-summary">
-                {`사용 ${usedSessions}회 / 남은 ${remainingSessions}회 / 총 ${totalSessions}회`}
+              <p
+                className="mg-extension__session-summary"
+                aria-label={sessionSummaryAria}
+              >
+                {sessionSummaryLabel}
               </p>
+              {hasCancelHistory && (
+                <p
+                  className="mg-extension__session-hint"
+                  aria-label={SESSION_CANCEL_RESTORE_HINT_ARIA}
+                >
+                  {SESSION_CANCEL_RESTORE_HINT}
+                </p>
+              )}
             </div>
           </section>
 

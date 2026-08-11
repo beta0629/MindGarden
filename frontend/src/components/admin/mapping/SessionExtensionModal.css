@@ -82,6 +82,13 @@
   line-height: var(--line-height-normal);
 }
 
+.mg-extension__session-hint {
+  margin: var(--mg-spacing-4, 0.25rem) 0 0;
+  color: var(--mg-color-text-secondary, var(--mg-text-secondary));
+  font-size: var(--mg-font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
 .mg-extension__inputs {
   display: flex;
   flex-direction: column;

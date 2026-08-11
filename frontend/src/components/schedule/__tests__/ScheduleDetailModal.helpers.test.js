@@ -30,7 +30,7 @@ describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금�
       sessionSequence: 1,
       pastSessionCount: 10
     });
-    expect(info).toEqual({ used: 1, total: 10 });
+    expect(info).toEqual({ used: 1, total: 10, remaining: 9 });
   });
 
   test('백엔드 combinedUsedSessions/combinedTotalSessions 가 있어도 무시 (raw 매핑 SSOT)', () => {
@@ -42,7 +42,7 @@ describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금�
       combinedUsedSessions: 17,
       combinedTotalSessions: 25
     });
-    expect(info).toEqual({ used: 12, total: 20 });
+    expect(info).toEqual({ used: 12, total: 20, remaining: 8 });
   });
 
   test('sessionSequence 가 없을 때 매핑 (total - remaining) fallback', () => {
@@ -52,7 +52,7 @@ describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금�
       sessionSequence: null,
       pastSessionCount: 4
     });
-    expect(info).toEqual({ used: 5, total: 20 });
+    expect(info).toEqual({ used: 5, total: 20, remaining: 15 });
   });
 
   test('pastSessionCount null → 무관 (raw 매핑만)', () => {
@@ -61,31 +61,31 @@ describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금�
       sessionSequence: 5,
       pastSessionCount: null
     });
-    expect(info).toEqual({ used: 5, total: 20 });
+    expect(info).toEqual({ used: 5, total: 20, remaining: 15 });
   });
 
   test('단회기(total=1) 도 raw 표시', () => {
     expect(resolveModalSessionInfo({ totalSessions: 1, remainingSessions: 0, sessionSequence: 1, pastSessionCount: 5 }))
-      .toEqual({ used: 1, total: 1 });
+      .toEqual({ used: 1, total: 1, remaining: 0 });
   });
 
   test('totalSessions 가 0 이하 또는 null 이면 라벨 미노출 (매핑 없음)', () => {
     expect(resolveModalSessionInfo({ totalSessions: 0, remainingSessions: 0 }))
-      .toEqual({ used: null, total: null });
+      .toEqual({ used: null, total: null, remaining: null });
     expect(resolveModalSessionInfo({ totalSessions: null, pastSessionCount: 5 }))
-      .toEqual({ used: null, total: null });
+      .toEqual({ used: null, total: null, remaining: null });
   });
 
   test('schedule null/undefined 입력 시 null 반환', () => {
-    expect(resolveModalSessionInfo(null)).toEqual({ used: null, total: null });
-    expect(resolveModalSessionInfo(undefined)).toEqual({ used: null, total: null });
+    expect(resolveModalSessionInfo(null)).toEqual({ used: null, total: null, remaining: null });
+    expect(resolveModalSessionInfo(undefined)).toEqual({ used: null, total: null, remaining: null });
   });
 
   test('비정상 음수·문자열 등은 null 처리', () => {
     expect(resolveModalSessionInfo({ totalSessions: -1, remainingSessions: 5 }))
-      .toEqual({ used: null, total: null });
+      .toEqual({ used: null, total: null, remaining: null });
     expect(resolveModalSessionInfo({ totalSessions: 'abc' }))
-      .toEqual({ used: null, total: null });
+      .toEqual({ used: null, total: null, remaining: null });
   });
 
   test('sessionSequence 가 total 을 초과해도 total 로 clamp (past 무관)', () => {
@@ -94,7 +94,7 @@ describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금�
       sessionSequence: 99,
       pastSessionCount: 2
     });
-    expect(info).toEqual({ used: 10, total: 10 });
+    expect(info).toEqual({ used: 10, total: 10, remaining: 0 });
   });
 
   test('remainingSessions 도 sequence 도 없으면 라벨 미노출', () => {
@@ -102,7 +102,7 @@ describe('resolveModalSessionInfo (회기 라벨 = 매핑 raw, past 합산 금�
       totalSessions: 20,
       pastSessionCount: 4
     });
-    expect(info).toEqual({ used: null, total: null });
+    expect(info).toEqual({ used: null, total: null, remaining: null });
   });
 });
 

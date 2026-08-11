@@ -2435,6 +2435,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     /**
      * 예약 취소 시 매핑 회기 1회 복원. {@code sessionSequence}가 있는 일정만 복원(실제 차감된 회기).
+     *
+     * <p>복원 성공 시에만 해당 일정의 {@code sessionSequence}를 해제한다.
+     * 다른 일정·COMPLETED 회차·전면 재부여는 수행하지 않는다.</p>
      */
     private void restoreSessionForMappingIfDeducted(Schedule schedule) {
         if (schedule == null || schedule.getSessionSequence() == null) {
@@ -2452,6 +2455,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null) {
             return;
         }
+        Integer restoredSequence = schedule.getSessionSequence();
         try {
             Optional<ConsultantClientMapping> mappingOpt = resolveMappingForSessionRestore(
                     tenantId, schedule, consultantId, clientId);
@@ -2463,8 +2467,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             ConsultantClientMapping mapping = mappingOpt.get();
             mapping.restoreSession();
             mappingRepository.save(mapping);
-            log.info("✅ 예약 취소로 회기 1회 복원: scheduleId={}, mappingId={}, sessionSequence={}, 남은 회기={}",
-                    schedule.getId(), mapping.getId(), schedule.getSessionSequence(), mapping.getRemainingSessions());
+            // A-lite: 복원 성공한 해당 스케줄만 sessionSequence 해제 (전면 재부여 금지)
+            schedule.setSessionSequence(null);
+            scheduleRepository.save(schedule);
+            log.info("✅ 예약 취소로 회기 1회 복원: scheduleId={}, mappingId={}, clearedSessionSequence={}, 남은 회기={}",
+                    schedule.getId(), mapping.getId(), restoredSequence, mapping.getRemainingSessions());
         } catch (Exception e) {
             log.warn("회기 복원 처리 실패(취소는 계속): scheduleId={}, {}", schedule.getId(), e.getMessage(), e);
         }

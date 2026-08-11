@@ -101,7 +101,7 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
     );
 
     expect(screen.getByRole('heading', { name: '기존패키지(10회)' })).toBeInTheDocument();
-    expect(screen.getByText('사용 1회 / 남은 3회 / 총 4회')).toBeInTheDocument();
+    expect(screen.getByText('사용 1 / 총 4 · 잔여 3')).toBeInTheDocument();
     expect(screen.queryByTestId('package-selector-mock')).not.toBeInTheDocument();
     expect(screen.queryByText('새로운 패키지를 선택')).not.toBeInTheDocument();
   });

@@ -104,22 +104,24 @@ function resolveModalLifetimeSessionInfo(schedule) {
 
 function resolveModalSessionInfo(schedule) {
     if (!schedule) {
-        return { used: null, total: null };
+        return { used: null, total: null, remaining: null };
     }
     const total = parseScheduleSessionCount(
         schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.totalSessions
     );
     if (total === null || total < 1) {
-        return { used: null, total: null };
+        return { used: null, total: null, remaining: null };
     }
     const sequence = parseScheduleSessionCount(
         schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
     );
     let used = null;
+    let remaining = null;
     if (sequence !== null && sequence > 0) {
         used = Math.min(sequence, total);
+        remaining = Math.max(0, total - used);
     } else {
-        const remaining = parseScheduleSessionCount(
+        remaining = parseScheduleSessionCount(
             schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
         );
         if (remaining !== null && remaining >= 0 && remaining <= total) {
@@ -127,9 +129,12 @@ function resolveModalSessionInfo(schedule) {
         }
     }
     if (used === null) {
-        return { used: null, total: null };
+        return { used: null, total: null, remaining: null };
     }
-    return { used, total };
+    if (remaining === null) {
+        remaining = Math.max(0, total - used);
+    }
+    return { used, total, remaining };
 }
 
 /**
@@ -1163,7 +1168,8 @@ const ScheduleDetailModal = ({
                                     <SafeText>
                                         {t('schedule:ScheduleDetailModal.sessionInfoValue', {
                                             used: sessionInfo.used,
-                                            total: sessionInfo.total
+                                            total: sessionInfo.total,
+                                            remaining: sessionInfo.remaining
                                         })}
                                     </SafeText>
                                 </span>

@@ -3,12 +3,40 @@ import {
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
   CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD,
   SCHEDULE_SESSION_SEQUENCE_FIELD,
+  SESSION_USAGE_UNKNOWN_LABEL,
   formatCalendarSessionLabel,
+  formatSessionUsageAriaLabel,
+  formatSessionUsageSummary,
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount,
   resolveCalendarSessionLabel,
   shouldShowCalendarSessionLabel
 } from '../schedule';
+
+describe('formatSessionUsageSummary', () => {
+  it('사용/총/잔여 형식으로 표시', () => {
+    expect(formatSessionUsageSummary(2, 10, 8)).toBe('사용 2 / 총 10 · 잔여 8');
+  });
+
+  it('총 0이면 사용 0 / 총 0 · 잔여 0', () => {
+    expect(formatSessionUsageSummary(0, 0, 0)).toBe('사용 0 / 총 0 · 잔여 0');
+  });
+
+  it('데이터 없음이면 회기 정보 없음', () => {
+    expect(formatSessionUsageSummary(null, null, null)).toBe(SESSION_USAGE_UNKNOWN_LABEL);
+    expect(formatSessionUsageSummary(undefined, undefined, undefined)).toBe(SESSION_USAGE_UNKNOWN_LABEL);
+  });
+
+  it('remaining 미지정 시 total−used', () => {
+    expect(formatSessionUsageSummary(3, 10)).toBe('사용 3 / 총 10 · 잔여 7');
+  });
+});
+
+describe('formatSessionUsageAriaLabel', () => {
+  it('aria 문구 형식', () => {
+    expect(formatSessionUsageAriaLabel(2, 10, 8)).toBe('총 10회 중 2회 사용, 8회 남음');
+  });
+});
 
 describe('parseClientScheduleNotesUnresolvedCount', () => {
   it('null·undefined·NaN·0·음수는 0', () => {

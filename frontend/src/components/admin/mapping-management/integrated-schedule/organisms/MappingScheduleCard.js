@@ -69,6 +69,11 @@ const MappingScheduleCard = ({
         className="integrated-schedule__card-progress"
         used={mapping?.usedSessions}
         total={mapping?.totalSessions}
+        remaining={mapping?.remainingSessions}
+        hasCancelHistory={
+          mapping?.hasCancelHistory === true
+          || Number(mapping?.cancelledScheduleCount) > 0
+        }
       />
       <MappingPartiesRow
         consultantName={mapping?.consultantName}

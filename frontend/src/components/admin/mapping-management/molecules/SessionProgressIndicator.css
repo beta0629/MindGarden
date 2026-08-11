@@ -34,8 +34,25 @@
 }
 
 .mg-v2-session-progress__text {
-  font-size: 13px;
-  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm, 0.8125rem);
+  color: var(--mg-color-text-secondary, var(--mg-text-secondary));
   font-weight: 500;
   white-space: nowrap;
+}
+
+.mg-v2-session-progress__used,
+.mg-v2-session-progress__remaining {
+  color: var(--mg-color-text-primary, var(--mg-text-primary));
+  font-weight: 600;
+}
+
+.mg-v2-session-progress__hint {
+  display: inline-flex;
+  align-items: center;
+  color: var(--mg-color-text-secondary, var(--mg-text-secondary));
+  flex-shrink: 0;
+}
+
+.mg-v2-session-progress__hint-icon {
+  color: inherit;
 }

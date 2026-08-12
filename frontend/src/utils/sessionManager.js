@@ -12,6 +12,7 @@ import {
 } from './subdomainUtils';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
+import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -255,6 +256,7 @@ class SessionManager {
         console.log('🔍 세션 확인 실패: 401 Unauthorized');
         this.user = null;
         this.sessionInfo = null;
+        clearStoredSessionExpiry();
         this.lastCheckTime = now;
         this.notifyListeners();
 
@@ -335,6 +337,8 @@ class SessionManager {
             const sessionData = unwrapApiResponseData(sessionResponseData);
             // clientReceivedAt + lastAccessed≈serverNow: UI 잔여 리필 SSOT
             this.sessionInfo = normalizeSessionInfoForClient(sessionData);
+            // storage 폴백 만료 시각도 함께 슬라이딩 (로그인 시각 기준 절대 4h 두 번째 시계 방지)
+            syncStoredSessionExpiry(this.sessionInfo);
             console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
           }
         } catch (sessionError) {
@@ -440,6 +444,7 @@ class SessionManager {
   applyClientLogoutCleanupPreserveSubdomain() {
     this.user = null;
     this.sessionInfo = null;
+    clearStoredSessionExpiry();
     this.lastCheckTime = 0;
     this.checkInProgress = false;
 

@@ -15,6 +15,7 @@
  * 서버 `ApiResponse`는 sessionManager에서 `data` 언랩됨(미언랩 시 toSafeNumber가 -1로 떨어져 타이머가 비활성).
  * lastAccessedTime / maxInactiveInterval = Servlet HttpSession(밀리초/초), serverNow = 서버 now(ms),
  * `AuthController.putHttpSessionTimingFields`와 동일.
+ * 미인증(`isAuthenticated !== true`) 응답에는 타이밍 필드가 없으므로(서버가 제외) 경고·카운트다운을 표시하지 않는다.
  *
  * 표시 경계: COMMON_DISPLAY_BOUNDARY_MEETING_20260322 — 본문은 정적 문구·SafeText, API 숫자 필드는 toSafeNumber.
  *
@@ -181,6 +182,12 @@ const SessionIdleWarningModal = () => {
       return undefined;
     }
 
+    if (sessionInfo.isAuthenticated !== true) {
+      setRemainingSec(0);
+      setExpiryLabel('');
+      return undefined;
+    }
+
     const maxSec = toSafeNumber(sessionInfo.maxInactiveInterval, -1);
     const lastAcc = toSafeNumber(sessionInfo.lastAccessedTime, -1);
     if (maxSec <= 0 || lastAcc <= 0) {
@@ -341,9 +348,12 @@ const SessionIdleWarningModal = () => {
   const bodyLine =
     '일정 시간 동안 사용이 없어 서버 세션이 곧 만료됩니다. 계속 사용하시려면 연장을 눌러 주세요.';
 
+  // 미인증·로그아웃 스냅샷에서는 잔여 카운트다운을 보여주지 않는다 (기존 만료 → logout 흐름은 유지)
+  const canShowWarning = !!user && !isLoginPath && sessionInfo?.isAuthenticated === true;
+
   return (
     <UnifiedModal
-      isOpen={isOpen}
+      isOpen={isOpen && canShowWarning}
       onClose={handleExtend}
       title="세션 만료 임박"
       size="small"

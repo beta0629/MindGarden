@@ -10,10 +10,12 @@ import { storage } from '../common';
 import {
   buildSessionExpiryLabel,
   buildSessionRemainingLabel,
+  clearStoredSessionExpiry,
   computeSessionExpiryState,
   formatSessionCountdown,
   formatSessionRemainingHms,
-  pickFresherSessionInfo
+  pickFresherSessionInfo,
+  syncStoredSessionExpiry
 } from '../sessionExpiryDisplay';
 
 describe('sessionExpiryDisplay', () => {
@@ -144,6 +146,40 @@ describe('sessionExpiryDisplay', () => {
     expect(t1.source).toBe('storage-expiry');
     expect(t1.remainingMs).toBe(SESSION_DURATION - 2000);
     expect(t1.expiryMs).toBe(t0.expiryMs);
+  });
+
+  test('syncStoredSessionExpiry: 인증 스냅샷이면 lastAccessed + maxInactive 로 슬라이딩 저장', () => {
+    const maxSec = SESSION_DURATION / 1000;
+    storage.set(SESSION_KEYS.SESSION_EXPIRY, clientNow);
+
+    const expiryMs = syncStoredSessionExpiry({
+      isAuthenticated: true,
+      maxInactiveInterval: maxSec,
+      lastAccessedTime: clientNow,
+      serverNow: clientNow,
+      clientReceivedAt: clientNow
+    });
+
+    expect(expiryMs).toBe(clientNow + maxSec * 1000);
+    expect(storage.get(SESSION_KEYS.SESSION_EXPIRY)).toBe(clientNow + maxSec * 1000);
+  });
+
+  test('syncStoredSessionExpiry: 미인증·타이밍 없음이면 저장값 제거', () => {
+    storage.set(SESSION_KEYS.SESSION_EXPIRY, clientNow + SESSION_DURATION);
+    expect(syncStoredSessionExpiry({ isAuthenticated: false })).toBeNull();
+    expect(storage.get(SESSION_KEYS.SESSION_EXPIRY)).toBeNull();
+
+    storage.set(SESSION_KEYS.SESSION_EXPIRY, clientNow + SESSION_DURATION);
+    expect(syncStoredSessionExpiry({ isAuthenticated: true })).toBeNull();
+    expect(storage.get(SESSION_KEYS.SESSION_EXPIRY)).toBeNull();
+  });
+
+  test('clearStoredSessionExpiry 후에는 storage-expiry 폴백이 없다', () => {
+    storage.set(SESSION_KEYS.SESSION_EXPIRY, clientNow + SESSION_DURATION);
+    clearStoredSessionExpiry();
+    const state = computeSessionExpiryState(null, clientNow, { allowFallback: false });
+    expect(state.remainingMs).toBeNull();
+    expect(storage.get(SESSION_KEYS.SESSION_EXPIRY)).toBeNull();
   });
 
   test('formatSessionCountdown pads MM:SS', () => {

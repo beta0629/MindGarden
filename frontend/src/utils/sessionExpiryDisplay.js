@@ -4,6 +4,10 @@
  * 폴백: storage SESSION_EXPIRY / LOGIN_TIME+SESSION_DURATION.
  * JWT·쿠키 원문은 다루지 않는다.
  *
+ * storage 폴백은 **절대 만료**(로그인 시각 + 4h)라 두 번째 시계가 되므로,
+ * session-info 동기화 때 `syncStoredSessionExpiry`로 함께 슬라이딩하고
+ * 미인증·로그아웃 시 `clearStoredSessionExpiry`로 제거한다.
+ *
  * @author CoreSolution
  * @since 2026-08-05
  */
@@ -41,6 +45,44 @@ export function pickFresherSessionInfo(contextInfo, managerInfo) {
     return managerInfo;
   }
   return contextInfo;
+}
+
+/**
+ * storage 폴백 만료 시각(SESSION_EXPIRY) 제거. 로그아웃·미인증 시 가짜 잔여 표시 방지.
+ */
+export function clearStoredSessionExpiry() {
+  try {
+    storage.remove(SESSION_KEYS.SESSION_EXPIRY);
+  } catch {
+    // storage 미가용 시 무시
+  }
+}
+
+/**
+ * session-info 스냅샷으로 storage 폴백 만료 시각을 슬라이딩한다.
+ * 인증·타이밍이 유효하면 `lastAccessedTime + maxInactiveInterval`, 아니면 제거한다.
+ *
+ * @param {object|null|undefined} si — sessionInfo (session-info API)
+ * @returns {number|null} 저장한 만료 epoch ms (제거했으면 null)
+ */
+export function syncStoredSessionExpiry(si) {
+  if (!si || si.isAuthenticated !== true) {
+    clearStoredSessionExpiry();
+    return null;
+  }
+  const maxSec = toSafeNumber(si.maxInactiveInterval, -1);
+  const lastAcc = toSafeNumber(si.lastAccessedTime, -1);
+  if (maxSec <= 0 || lastAcc <= 0) {
+    clearStoredSessionExpiry();
+    return null;
+  }
+  const expiryMs = lastAcc + maxSec * 1000;
+  try {
+    storage.set(SESSION_KEYS.SESSION_EXPIRY, expiryMs);
+  } catch {
+    return null;
+  }
+  return expiryMs;
 }
 
 /**

@@ -587,7 +587,7 @@ public class AuthController extends BaseApiController {
             emptySessionInfo.put("role", null);
             emptySessionInfo.put("sessionId", session.getId());
             emptySessionInfo.put("isAuthenticated", false);
-            putHttpSessionTimingFields(emptySessionInfo, session);
+            putHttpSessionTimingFields(emptySessionInfo, session, false);
             return success(emptySessionInfo);
         }
         
@@ -599,7 +599,7 @@ public class AuthController extends BaseApiController {
         sessionInfo.put("role", user.getRole());
         sessionInfo.put("sessionId", session.getId());
         sessionInfo.put("isAuthenticated", true);
-        putHttpSessionTimingFields(sessionInfo, session);
+        putHttpSessionTimingFields(sessionInfo, session, true);
         
         return success(sessionInfo);
     }
@@ -611,12 +611,20 @@ public class AuthController extends BaseApiController {
      * FE 잔여 리필 SSOT로 부적합하다. session-info 호출 자체가 access이므로
      * {@code serverNow}(현재 요청 접근 시각)를 {@code lastAccessedTime}으로 노출한다.
      *
+     * <p><strong>미인증 응답에는 타이밍 필드를 넣지 않는다.</strong> 넣으면 FE가 로그아웃 이후에도
+     * 잔여 시간을 계속 리필해 "세션 살아 있음" 착시가 생긴다. 시계 보정용 {@code serverNow}만 유지한다.</p>
+     *
      * @param map 응답 맵
      * @param session HTTP 세션
+     * @param authenticated 인증된 세션 여부 (false면 잔여 계산 필드 제외)
      */
-    private void putHttpSessionTimingFields(Map<String, Object> map, HttpSession session) {
+    private void putHttpSessionTimingFields(Map<String, Object> map, HttpSession session,
+                                            boolean authenticated) {
         long serverNow = System.currentTimeMillis();
         map.put("serverNow", serverNow);
+        if (!authenticated) {
+            return;
+        }
         map.put("maxInactiveInterval", session.getMaxInactiveInterval());
         // Servlet getLastAccessedTime()은 previous request라 FE 잔여 리필 SSOT로 부적합.
         // session-info 호출 자체가 access이므로 serverNow를 lastAccessedTime으로 노출.

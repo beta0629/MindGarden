@@ -10,7 +10,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -18,16 +20,29 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.util.TokenLogMasking;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * JSESSIONID 쿠키 Max-Age 슬라이딩 갱신 필터.
  *
- * <p>서버 세션의 {@code maxInactiveInterval}은 요청마다 자동으로 슬라이딩되지만,
- * 브라우저 쿠키의 {@code Max-Age}는 로그인 시 한 번만 설정되어 고정된다.
- * 이 필터는 인증된 요청에 대해 쿠키의 {@code Max-Age}를 세션 타임아웃과 동기화하여,
- * 쿠키가 서버 세션보다 먼저 만료되는 문제를 방지한다.</p>
+ * <p>Tomcat 은 세션 <strong>생성 시 1회만</strong> {@code Set-Cookie} 를 보내므로,
+ * {@code server.servlet.session.cookie.max-age} 가 설정된 환경에서는 사용자가 계속 활동해도
+ * 브라우저 쿠키가 로그인 시점 + TTL 에 삭제된다(절대 만료). 이 필터는 인증된 요청에서
+ * 쿠키 {@code Max-Age} 를 다시 발급해 <strong>쿠키·HttpSession·DB 세션이 함께</strong>
+ * 슬라이딩되도록 한다.</p>
+ *
+ * <p><strong>발급 시점</strong>: {@code Set-Cookie} 는 반드시 응답이 커밋되기 <strong>전</strong>에
+ * 넣어야 한다. Spring MVC 의 JSON 응답은 핸들러 내부 메시지 컨버터가 바디를 flush 하면서
+ * 응답을 커밋하므로, 체인 이후(post-chain)에 헤더를 추가하면 무효가 된다.
+ * 따라서 갱신은 {@code filterChain.doFilter(...)} <strong>호출 전(pre-chain)</strong> 에 수행하고,
+ * pre-chain 시점에 아직 인증이 없던 요청만 커밋되지 않은 응답에 대해 1회 폴백 재시도한다.
+ * (이 필터는 {@link SecurityConfig} 에서 {@code SessionBasedAuthenticationFilter} 뒤에 등록되어
+ * pre-chain 시점에 이미 {@code SecurityContextHolder} 가 채워져 있다.)</p>
+ *
+ * <p><strong>TTL SSOT</strong>: Max-Age 와 {@code HttpSession#setMaxInactiveInterval} 은 모두
+ * {@link SessionTimeoutProperties#getTimeoutSeconds()} ({@code HTTP_SESSION_MAX_INACTIVE}) 를 쓴다.</p>
  *
  * <p>성능을 위해 갱신은 {@link SessionConstants#SESSION_SLIDING_THROTTLE_SECONDS} 간격으로 스로틀링된다.
  * 이 값은 쿠키 Set-Cookie 헤더 갱신 빈도 제한이며, HttpSession TTL
@@ -65,12 +80,16 @@ public class SessionCookieRenewalFilter extends OncePerRequestFilter {
     );
 
     private final SessionCookieSupport sessionCookieSupport;
+    private final SessionTimeoutProperties sessionTimeoutProperties;
 
     /**
-     * @param sessionCookieSupport JSESSIONID Set-Cookie 속성 SSOT
+     * @param sessionCookieSupport     JSESSIONID Set-Cookie 속성 SSOT
+     * @param sessionTimeoutProperties HttpSession TTL SSOT ({@code HTTP_SESSION_MAX_INACTIVE})
      */
-    public SessionCookieRenewalFilter(SessionCookieSupport sessionCookieSupport) {
+    public SessionCookieRenewalFilter(SessionCookieSupport sessionCookieSupport,
+                                      SessionTimeoutProperties sessionTimeoutProperties) {
         this.sessionCookieSupport = sessionCookieSupport;
+        this.sessionTimeoutProperties = sessionTimeoutProperties;
     }
 
     @Override
@@ -79,27 +98,46 @@ public class SessionCookieRenewalFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        // JSON 응답은 핸들러 내부에서 커밋되므로 반드시 체인 호출 전에 Set-Cookie 를 넣는다.
+        boolean renewed = renewIfEligible(request, response);
+
         filterChain.doFilter(request, response);
 
-        if (response.isCommitted()) {
-            return;
+        // pre-chain 시점에 아직 인증이 없던 요청(뒤늦게 인증되는 경로) 폴백.
+        // 커밋된 응답에는 헤더 추가가 무효이므로 미커밋일 때만 1회 재시도한다.
+        if (!renewed && !response.isCommitted()) {
+            renewIfEligible(request, response);
         }
+    }
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return;
+    /**
+     * 인증·세션·스로틀 조건을 모두 만족하면 Set-Cookie 를 발급한다.
+     *
+     * @param request  요청
+     * @param response 응답
+     * @return 실제로 Set-Cookie 를 추가했으면 true
+     */
+    private boolean renewIfEligible(HttpServletRequest request, HttpServletResponse response) {
+        if (!isAuthenticated()) {
+            return false;
         }
 
         HttpSession session = request.getSession(false);
-        if (session == null) {
-            return;
+        if (session == null || !shouldRenew(session)) {
+            return false;
         }
 
-        if (!shouldRenew(session)) {
-            return;
-        }
+        return renewCookie(request, response, session);
+    }
 
-        renewCookie(request, response, session);
+    /**
+     * 익명 인증(AnonymousAuthenticationToken)은 로그인 세션이 아니므로 갱신 대상에서 제외한다.
+     */
+    private boolean isAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
     /**
@@ -114,21 +152,33 @@ public class SessionCookieRenewalFilter extends OncePerRequestFilter {
         return true;
     }
 
-    private void renewCookie(HttpServletRequest request,
-                             HttpServletResponse response,
-                             HttpSession session) {
-        int maxAge = session.getMaxInactiveInterval();
-        if (maxAge <= 0) {
-            return;
+    /**
+     * 쿠키 Max-Age 와 HttpSession {@code maxInactiveInterval} 을 TTL SSOT 로 함께 연장한다.
+     *
+     * @return Set-Cookie 를 추가했으면 true
+     */
+    private boolean renewCookie(HttpServletRequest request,
+                                HttpServletResponse response,
+                                HttpSession session) {
+        int ttlSeconds = sessionTimeoutProperties.getTimeoutSeconds();
+        if (ttlSeconds <= 0) {
+            return false;
+        }
+
+        // 컨테이너 세션과 쿠키가 서로 다른 만료를 갖지 않도록 SSOT 로 정렬 (UI 리필만으로 착시 금지)
+        if (session.getMaxInactiveInterval() != ttlSeconds) {
+            session.setMaxInactiveInterval(ttlSeconds);
         }
 
         ResponseCookie cookie = sessionCookieSupport.buildJsessionCookie(
-                session.getId(), maxAge, request);
-        response.addHeader("Set-Cookie", cookie.toString());
+                session.getId(), ttlSeconds, request);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         session.setAttribute(SessionConstants.SESSION_COOKIE_LAST_RENEWED, Instant.now().getEpochSecond());
 
-        log.debug("JSESSIONID 쿠키 Max-Age 갱신: maxAge={}s, sessionId={}", maxAge, session.getId());
+        log.info("JSESSIONID 쿠키 Max-Age 슬라이딩 갱신: maxAge={}s, sessionId={}",
+                ttlSeconds, TokenLogMasking.maskForLog(session.getId()));
+        return true;
     }
 
     @Override

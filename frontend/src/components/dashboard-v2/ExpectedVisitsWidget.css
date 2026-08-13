@@ -1,0 +1,199 @@
+/**
+ * ExpectedVisitsWidget — 미예약 예상 내담자 위젯
+ * B0KlA 디자인 토큰 기반
+ *
+ * @author CoreSolution
+ * @since 2026-08-13
+ */
+
+/* ── 위젯 래퍼 ── */
+.mg-v2-expected-visits {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ── 헤더 (제목 + 필터) ── */
+.mg-v2-expected-visits__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  margin-bottom: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-expected-visits__filter {
+  min-width: 120px;
+}
+
+.mg-v2-expected-visits__filter select {
+  padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--mg-v2-radius-sm, 6px);
+  background: var(--ad-b0kla-card-bg);
+  color: var(--ad-b0kla-text-primary, var(--mg-v2-color-text-primary));
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.mg-v2-expected-visits__disclaimer {
+  font-size: 0.75rem;
+  color: var(--ad-b0kla-text-secondary, var(--mg-v2-color-text-secondary));
+  margin: 0 0 var(--mg-spacing-md, 1rem) 0;
+}
+
+/* ── 데스크톱 테이블 ── */
+.mg-v2-expected-visits__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.mg-v2-expected-visits__thead th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-text-secondary, var(--mg-v2-color-text-secondary));
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-xs, 0.25rem);
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  white-space: nowrap;
+}
+
+.mg-v2-expected-visits__tbody td {
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-xs, 0.25rem);
+  font-size: 0.8125rem;
+  color: var(--ad-b0kla-text-primary, var(--mg-v2-color-text-primary));
+  border-bottom: 1px solid var(--ad-b0kla-border);
+  vertical-align: middle;
+}
+
+.mg-v2-expected-visits__row:last-child td {
+  border-bottom: none;
+}
+
+.mg-v2-expected-visits__row--dismissed {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 0.25s ease-out, max-height 0.25s ease-out;
+}
+
+/* ── 액션 셀 ── */
+.mg-v2-expected-visits__actions {
+  display: flex;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  align-items: center;
+}
+
+/* ── 모바일 카드 레이아웃 ── */
+.mg-v2-expected-visits__card-list {
+  display: none;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-expected-visits__card-item {
+  background: var(--ad-b0kla-card-bg);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--mg-v2-radius-sm, 6px);
+  padding: var(--mg-spacing-md, 1rem);
+}
+
+.mg-v2-expected-visits__card-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-expected-visits__card-item-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-text-primary, var(--mg-v2-color-text-primary));
+}
+
+.mg-v2-expected-visits__card-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-md, 1rem);
+  margin-bottom: var(--mg-spacing-sm, 0.5rem);
+}
+
+.mg-v2-expected-visits__card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mg-v2-expected-visits__card-label {
+  font-size: 0.6875rem;
+  color: var(--ad-b0kla-text-secondary, var(--mg-v2-color-text-secondary));
+  font-weight: 500;
+}
+
+.mg-v2-expected-visits__card-value {
+  font-size: 0.8125rem;
+  color: var(--ad-b0kla-text-primary, var(--mg-v2-color-text-primary));
+}
+
+.mg-v2-expected-visits__card-actions {
+  display: flex;
+  gap: var(--mg-spacing-xs, 0.25rem);
+  justify-content: flex-end;
+  padding-top: var(--mg-spacing-sm, 0.5rem);
+  border-top: 1px solid var(--ad-b0kla-border);
+}
+
+/* ── 모달 폼 ── */
+.mg-v2-expected-visits__modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.mg-v2-expected-visits__modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs, 0.25rem);
+}
+
+.mg-v2-expected-visits__modal-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ad-b0kla-text-primary, var(--mg-v2-color-text-primary));
+}
+
+.mg-v2-expected-visits__modal-value {
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-text-primary, var(--mg-v2-color-text-primary));
+  padding: var(--mg-spacing-sm, 0.5rem);
+  background: var(--mg-v2-color-surface-raised, var(--ad-b0kla-card-bg));
+  border-radius: var(--mg-v2-radius-sm, 6px);
+  border: 1px solid var(--ad-b0kla-border);
+}
+
+.mg-v2-expected-visits__modal-input {
+  padding: var(--mg-spacing-sm, 0.5rem);
+  border: 1px solid var(--ad-b0kla-border);
+  border-radius: var(--mg-v2-radius-sm, 6px);
+  font-size: 0.875rem;
+  color: var(--ad-b0kla-text-primary, var(--mg-v2-color-text-primary));
+  background: var(--ad-b0kla-card-bg);
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .mg-v2-expected-visits__table-wrap {
+    display: none;
+  }
+
+  .mg-v2-expected-visits__card-list {
+    display: flex;
+  }
+}
+
+@media (min-width: 769px) {
+  .mg-v2-expected-visits__card-list {
+    display: none;
+  }
+}

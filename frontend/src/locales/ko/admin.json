@@ -2907,6 +2907,23 @@
       "searchPlaceholder": "이름·전화 검색",
       "emptyOptions": "내담자가 없습니다",
       "ariaLabel": "내담자 필터 — {{count}}명 선택됨"
+    },
+    "sidePeek": {
+      "clientLabel": "내담자",
+      "consultantLabel": "상담사",
+      "packageLabel": "패키지",
+      "statusLabel": "상태",
+      "remainingSessionsLabel": "남은 회기",
+      "vehiclePlateLabel": "차량번호",
+      "placeholderNote": "타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다."
+    },
+    "vehiclePlate": {
+      "registerCta": "차량 등록",
+      "modalTitle": "차량번호 등록",
+      "save": "저장",
+      "required": "차량번호를 입력해 주세요.",
+      "saveSuccess": "차량번호가 등록되었습니다.",
+      "saveFailed": "차량번호 등록에 실패했습니다."
     }
   },
   "aiProvider": {

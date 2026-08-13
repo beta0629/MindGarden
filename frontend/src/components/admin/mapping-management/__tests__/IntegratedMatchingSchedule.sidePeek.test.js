@@ -10,7 +10,22 @@ import { render, screen, fireEvent, waitFor, act, within } from '@testing-librar
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: (key) => key }),
+  useTranslation: () => ({
+    t: (key) => {
+      const map = {
+        'admin:integratedSchedule.sidePeek.placeholderNote':
+          '타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다.',
+        'admin:integratedSchedule.sidePeek.clientLabel': '내담자',
+        'admin:integratedSchedule.sidePeek.consultantLabel': '상담사',
+        'admin:integratedSchedule.sidePeek.packageLabel': '패키지',
+        'admin:integratedSchedule.sidePeek.statusLabel': '상태',
+        'admin:integratedSchedule.sidePeek.remainingSessionsLabel': '남은 회기',
+        'admin:integratedSchedule.sidePeek.vehiclePlateLabel': '차량번호',
+        'admin:integratedSchedule.vehiclePlate.registerCta': '차량 등록'
+      };
+      return map[key] || key;
+    }
+  }),
   initReactI18next: { type: '3rdParty', init: jest.fn() }
 }));
 

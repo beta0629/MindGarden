@@ -46,3 +46,14 @@
   border-radius: var(--mg-radius-md);
   border: 1px solid var(--mg-color-border-main);
 }
+
+.integrated-schedule-side-peek-stub__package-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-xs);
+}
+
+.integrated-schedule-side-peek-stub__chip {
+  font-size: var(--font-size-sm);
+  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+}

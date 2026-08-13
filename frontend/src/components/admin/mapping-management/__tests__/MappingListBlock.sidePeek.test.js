@@ -18,7 +18,16 @@ jest.mock('react-i18next', () => ({
         'admin.labels.client': '내담자',
         'common.labels.schedule': '스케줄',
         'common.actions.edit': '수정',
-        'admin.actions.paymentConfirm': '결제 확인'
+        'admin.actions.paymentConfirm': '결제 확인',
+        'admin:integratedSchedule.sidePeek.clientLabel': '내담자',
+        'admin:integratedSchedule.sidePeek.consultantLabel': '상담사',
+        'admin:integratedSchedule.sidePeek.packageLabel': '패키지',
+        'admin:integratedSchedule.sidePeek.statusLabel': '상태',
+        'admin:integratedSchedule.sidePeek.remainingSessionsLabel': '남은 회기',
+        'admin:integratedSchedule.sidePeek.vehiclePlateLabel': '차량번호',
+        'admin:integratedSchedule.sidePeek.placeholderNote':
+          '타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다.',
+        'admin:integratedSchedule.vehiclePlate.registerCta': '차량 등록'
       };
       return map[key] || key;
     }

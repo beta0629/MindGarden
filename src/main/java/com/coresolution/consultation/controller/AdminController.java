@@ -23,6 +23,7 @@ import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
 import com.coresolution.consultation.entity.Client;
@@ -2819,6 +2820,41 @@ public class AdminController extends BaseApiController {
         ConsultationsByDayOfWeekResponse data = adminService.getConsultationsByDayOfWeek(safeMonths);
         log.info("📊 consultations-by-day-of-week 응답: tenantId={}, peakDay={}",
                 tenantId, data.getPeakDayOfWeek());
+        return success(data);
+    }
+
+    /**
+     * 주간 예약 현황 통계 (월~일 캘린더 주).
+     *
+     * <p>weekOffset 0=이번 주, -1=지난주. dayOfWeek는 ISO 1=월 … 7=일.
+     * 집계 상태: BOOKED, CONFIRMED, COMPLETED, CANCELLED.</p>
+     *
+     * @param weekOffset 주 오프셋 (0 또는 -1, 그 외는 0으로 처리)
+     * @param session    세션
+     * @return 총량·전주 대비·요일별·상태별
+     */
+    @GetMapping("/statistics/weekly-reservations")
+    public ResponseEntity<ApiResponse<WeeklyReservationsResponse>> getWeeklyReservations(
+            @RequestParam(required = false, defaultValue = "0") int weekOffset,
+            HttpSession session) {
+        log.info("📊 주간 예약 현황 통계 조회: weekOffset={}", weekOffset);
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalArgumentException(String.format(
+                    "테넌트 정보가 없습니다. 사용자 ID: %d, 역할: %s. 관리자에게 문의하세요.",
+                    currentUser.getId(), currentUser.getRole()));
+        }
+
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        WeeklyReservationsResponse data = adminService.getWeeklyReservations(weekOffset);
+        log.info("📊 weekly-reservations 응답: tenantId={}, weekOffset={}, total={}",
+                tenantId, data.getWeekOffset(), data.getTotalCount());
         return success(data);
     }
 

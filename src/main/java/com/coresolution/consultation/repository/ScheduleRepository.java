@@ -854,6 +854,59 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("excludedStatuses") List<ScheduleStatus> excludedStatuses);
+
+    /**
+     * 날짜별 스케줄 수 (포함 상태 목록 — 주간 예약 현황용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param startDate 시작일(포함)
+     * @param endDate 종료일(포함)
+     * @param statuses 집계 대상 상태
+     * @return Object[]{LocalDate date, Long count}
+     */
+    @Query("SELECT s.date, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.status IN :statuses AND s.date BETWEEN :startDate AND :endDate "
+            + "GROUP BY s.date ORDER BY s.date")
+    List<Object[]> countSchedulesByDateBetweenAndStatuses(
+            @Param("tenantId") String tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") List<ScheduleStatus> statuses);
+
+    /**
+     * 상태별 스케줄 수 (기간·포함 상태 — 주간 예약 현황용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param startDate 시작일(포함)
+     * @param endDate 종료일(포함)
+     * @param statuses 집계 대상 상태
+     * @return Object[]{ScheduleStatus status, Long count}
+     */
+    @Query("SELECT s.status, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.status IN :statuses AND s.date BETWEEN :startDate AND :endDate "
+            + "GROUP BY s.status")
+    List<Object[]> countSchedulesByStatusBetweenAndStatuses(
+            @Param("tenantId") String tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") List<ScheduleStatus> statuses);
+
+    /**
+     * 기간·상태 목록 내 스케줄 총건수 (주간 예약 현황용).
+     *
+     * @param tenantId 테넌트 ID
+     * @param startDate 시작일(포함)
+     * @param endDate 종료일(포함)
+     * @param statuses 집계 대상 상태
+     * @return 건수
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.status IN :statuses AND s.date BETWEEN :startDate AND :endDate")
+    long countByDateBetweenAndStatuses(
+            @Param("tenantId") String tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") List<ScheduleStatus> statuses);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

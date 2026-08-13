@@ -11,6 +11,7 @@ import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
@@ -497,6 +498,14 @@ public interface AdminService {
      * @return 요일 항목 + peakDayOfWeek
      */
     ConsultationsByDayOfWeekResponse getConsultationsByDayOfWeek(int lastMonths);
+
+    /**
+     * 주간 예약 현황 집계 (월~일 캘린더 주, tenant 격리, DB COUNT).
+     *
+     * @param weekOffset 0=이번 주, -1=지난주
+     * @return 총량·전주 대비·요일별·상태별
+     */
+    WeeklyReservationsResponse getWeeklyReservations(int weekOffset);
 
     /**
      * 모든 스케줄 조회

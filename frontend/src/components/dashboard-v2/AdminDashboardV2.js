@@ -32,6 +32,7 @@ import {
   Merge,
   MessageCircle,
   Package,
+  RefreshCw,
   Settings,
   Shield,
   Sparkles,
@@ -119,6 +120,7 @@ import {
   DASHBOARD_KPI_IDS,
   API_ADMIN_SCHEDULES,
   DASHBOARD_REFUND_SECTION_CTA_LABEL,
+  DASHBOARD_KPI_ZONE_REFRESH_TEST_ID,
   MAPPING_STATUS_ACTIVE
 } from '../../constants/adminDashboardWidgetConstants';
 import {
@@ -224,6 +226,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     totalUsersGrowthRate: null
   });
   const [loading, setLoading] = useState(false);
+  /** KPI/통계 구역 개별 새로고침 — layout setLoading 과 분리 */
+  const [statsRefreshing, setStatsRefreshing] = useState(false);
   const [newClientStats, setNewClientStats] = useState(null);
   const [consultationsByDow, setConsultationsByDow] = useState(null);
   const [inflowDowLoading, setInflowDowLoading] = useState(false);
@@ -347,6 +351,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     legend: DASHBOARD_CHART_CANVAS_FALLBACK.LEGEND
   });
   const isInitialized = useRef(false);
+  /** 초기 로드 완료 후 loadStats는 layout blank(setLoading) 없이 silent 갱신 */
+  const hasLoadedStatsOnceRef = useRef(false);
 
   /** B0KlA 상태 시리즈·축 색상: CSS 변수를 resolved 값으로 읽어 Canvas에 전달 */
   useEffect(() => {
@@ -498,9 +504,17 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     setTimeout(() => setShowToastState(false), 3000);
   }, []);
 
-  const loadStats = useCallback(async() => {
-    setLoading(true);
-    setInflowDowLoading(true);
+  /**
+   * 대시보드 통계 로드.
+   * @param {{ silent?: boolean }} [options] - silent면 AdminCommonLayout loading blank 없이 부분 갱신
+   *   (초기 로드 이후·refresh 이벤트·visibilitychange는 기본 silent)
+   */
+  const loadStats = useCallback(async(options = {}) => {
+    const silent = options.silent === true || hasLoadedStatsOnceRef.current;
+    if (!silent) {
+      setLoading(true);
+      setInflowDowLoading(true);
+    }
     try {
       const headers = { 'Content-Type': 'application/json', ...getDefaultApiHeaders() };
       /** fetch 실패(rejected) 시 res.ok 체크를 통과하지 않도록 쓰는 더미 */
@@ -651,8 +665,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       console.error('통계 데이터 로드 실패:', error);
       showToast('통계 데이터 로드에 실패했습니다.', 'danger');
     } finally {
-      setInflowDowLoading(false);
-      setLoading(false);
+      hasLoadedStatsOnceRef.current = true;
+      if (!silent) {
+        setInflowDowLoading(false);
+        setLoading(false);
+      }
     }
   }, [showToast, propUser, sessionUser, loadTodayStats]);
 
@@ -728,6 +745,23 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       setPendingDepositList([]);
     }
   }, [t]);
+
+  /**
+   * KPI/통계 구역 개별 새로고침.
+   * silent loadStats만 사용 — AdminCommonLayout blank/전체 loading 금지.
+   */
+  const handleKpiStatsRefresh = useCallback(async() => {
+    setStatsRefreshing(true);
+    try {
+      await Promise.all([
+        loadStats({ silent: true }),
+        loadTodayStats(),
+        loadPendingDepositStats()
+      ]);
+    } finally {
+      setStatsRefreshing(false);
+    }
+  }, [loadStats, loadTodayStats, loadPendingDepositStats]);
 
   const loadSchedulePendingList = useCallback(async() => {
     try {
@@ -899,10 +933,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     loadTodayStats
   ]);
 
-  /** 상담사/내담자 등록·예약 확정 등 시 대시보드 KPI 및 오늘 통계 재조회 */
+  /** 상담사/내담자 등록·예약 확정 등 시 KPI/today/대기 섹션만 silent refetch (layout blank 금지) */
   useEffect(() => {
     const handler = () => {
-      loadStats();
+      loadStats({ silent: true });
       loadTodayStats();
       loadSchedulePendingList();
       loadPendingDepositStats();
@@ -911,10 +945,12 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     return () => window.removeEventListener('admin-dashboard-refresh-stats', handler);
   }, [loadStats, loadTodayStats, loadSchedulePendingList, loadPendingDepositStats]);
 
-  /** 탭 포커스 복귀 시 KPI 한 번 재조회 (다른 탭에서 등록 후 돌아온 경우 등) */
+  /** 탭 포커스 복귀 시 KPI silent 재조회 (layout loading 금지) */
   useEffect(() => {
     const handler = () => {
-      if (document.visibilityState === 'visible') loadStats();
+      if (document.visibilityState === 'visible') {
+        loadStats({ silent: true });
+      }
     };
     document.addEventListener('visibilitychange', handler);
     return () => document.removeEventListener('visibilitychange', handler);
@@ -1146,9 +1182,34 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         className="mg-v2-dashboard-kpi-zone mg-v2-dashboard-kpi-zone--compact"
         aria-labelledby="admin-dashboard-kpi-zone-title"
       >
-        <h2 id="admin-dashboard-kpi-zone-title" className="sr-only">
-          {t('admin:dashboard.v2.title')}
-        </h2>
+        <header className="mg-v2-content-section__header">
+          <div className="mg-v2-content-section__title-wrap">
+            <h2 id="admin-dashboard-kpi-zone-title" className="sr-only">
+              {t('admin:dashboard.v2.title')}
+            </h2>
+          </div>
+          <div className="mg-v2-content-section__actions">
+            <MGButton
+              type="button"
+              variant="secondary"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                loading: statsRefreshing
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleKpiStatsRefresh}
+              disabled={statsRefreshing}
+              loading={statsRefreshing}
+              preventDoubleClick={false}
+              aria-label={t('common.actions.refresh')}
+              data-testid={DASHBOARD_KPI_ZONE_REFRESH_TEST_ID}
+            >
+              <RefreshCw size={14} aria-hidden="true" />
+            </MGButton>
+          </div>
+        </header>
         <div className="mg-v2-kpi-flip-row" role="list" aria-label="핵심 KPI">
         <KpiFlipCard
           id={DASHBOARD_KPI_IDS.TODAY_BOOKINGS}

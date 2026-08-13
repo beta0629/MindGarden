@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarPlus, EyeOff } from 'lucide-react';
+import { CalendarPlus, EyeOff, RefreshCw } from 'lucide-react';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ContentSection } from './content';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -205,20 +205,41 @@ const ExpectedVisitsWidget = () => {
     setBookTarget(null);
   }, []);
 
-  /* ── 기간 필터 ── */
-  const filterSelect = (
-    <div className={CSS.FILTER}>
-      <select
-        value={period}
-        onChange={(e) => setPeriod(e.target.value)}
-        aria-label={S.ARIA_PERIOD_FILTER}
-        className="mg-v2-ad-b0kla__select mg-v2-ad-b0kla__select--sm"
+  /* ── 기간 필터 + 개별 새로고침 (layout setLoading 금지) ── */
+  const sectionActions = (
+    <>
+      <div className={CSS.FILTER}>
+        <select
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+          aria-label={S.ARIA_PERIOD_FILTER}
+          className="mg-v2-ad-b0kla__select mg-v2-ad-b0kla__select--sm"
+        >
+          {PERIOD_FILTER_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+      <MGButton
+        type="button"
+        variant="secondary"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'secondary',
+          size: 'sm',
+          loading
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={loadData}
+        disabled={loading}
+        loading={loading}
+        preventDoubleClick={false}
+        aria-label={t('common.actions.refresh', { defaultValue: S.ARIA_REFRESH })}
+        data-testid="expected-visits-refresh"
       >
-        {PERIOD_FILTER_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-    </div>
+        <RefreshCw size={14} aria-hidden="true" />
+      </MGButton>
+    </>
   );
 
   /* ── 신뢰도 배지 ── */
@@ -478,7 +499,7 @@ const ExpectedVisitsWidget = () => {
       <ContentSection
         title={S.WIDGET_TITLE}
         subtitle={S.WIDGET_SUBTITLE}
-        actions={filterSelect}
+        actions={sectionActions}
         className={CSS.WIDGET}
         dataTestId="expected-visits-widget"
       >

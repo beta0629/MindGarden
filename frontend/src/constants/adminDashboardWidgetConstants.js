@@ -25,6 +25,9 @@ export const DASHBOARD_KPI_IDS = {
   ACTIVE_SESSIONS: 'active-sessions'
 };
 
+/** KPI/통계 구역 개별 새로고침 (layout blank 금지) */
+export const DASHBOARD_KPI_ZONE_REFRESH_TEST_ID = 'admin-dashboard-kpi-zone-refresh';
+
 /** 매칭 status — §D 회기 소진율 모집단 */
 export const MAPPING_STATUS_ACTIVE = 'ACTIVE';
 

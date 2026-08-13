@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 jest.mock('react-i18next', () => {
   const stableT = (key, fallbackOrOpts) => {
@@ -16,6 +16,7 @@ jest.mock('react-i18next', () => {
     }
     if (key === 'admin:dashboard.v2.title') return '대시보드';
     if (key === 'admin:dashboard.subtitle') return '운영 현황을 한눈에 확인하세요';
+    if (key === 'common.actions.refresh') return '새로고침';
     return key;
   };
   return {
@@ -179,6 +180,21 @@ describe('AdminDashboardV2 AdminCommonLayout 스모크', () => {
 
     await waitFor(() => {
       expect(screen.getAllByTestId('kpi-flip-card')).toHaveLength(4);
+    });
+  });
+
+  test('KPI 구역 새로고침 버튼 클릭 시 layout loading 이 false 유지', async() => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-dashboard-kpi-zone-refresh')).toBeInTheDocument();
+    });
+
+    const layout = screen.getByTestId('admin-common-layout');
+    fireEvent.click(screen.getByTestId('admin-dashboard-kpi-zone-refresh'));
+
+    await waitFor(() => {
+      expect(layout).toHaveAttribute('data-loading', 'false');
     });
   });
 

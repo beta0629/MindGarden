@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CalendarDays } from 'lucide-react';
+import { AlertCircle, CalendarDays, RefreshCw } from 'lucide-react';
 import StandardizedApi from '../../utils/standardizedApi';
 import { ContentSection } from './content';
 import { EmptyState, StatusBadge } from '../common';
@@ -148,14 +148,35 @@ const WeeklyReservationsWidget = () => {
     }));
   }, [data?.byStatus]);
 
-  const weekToggle = (
-    <SegmentedTabs
-      ariaLabel={S.ARIA_WEEK_TOGGLE}
-      items={WEEK_OFFSET_OPTIONS}
-      activeValue={weekOffset}
-      onChange={handleWeekChange}
-      size="sm"
-    />
+  const sectionActions = (
+    <>
+      <SegmentedTabs
+        ariaLabel={S.ARIA_WEEK_TOGGLE}
+        items={WEEK_OFFSET_OPTIONS}
+        activeValue={weekOffset}
+        onChange={handleWeekChange}
+        size="sm"
+      />
+      <MGButton
+        type="button"
+        variant="secondary"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'secondary',
+          size: 'sm',
+          loading
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={loadData}
+        disabled={loading}
+        loading={loading}
+        preventDoubleClick={false}
+        aria-label={S.ARIA_REFRESH}
+        data-testid="weekly-reservations-refresh"
+      >
+        <RefreshCw size={14} aria-hidden="true" />
+      </MGButton>
+    </>
   );
 
   const renderBody = () => {
@@ -277,7 +298,7 @@ const WeeklyReservationsWidget = () => {
     <ContentSection
       title={S.WIDGET_TITLE}
       subtitle={subtitle}
-      actions={weekToggle}
+      actions={sectionActions}
       className={CSS.WIDGET}
       dataTestId="weekly-reservations-widget"
     >

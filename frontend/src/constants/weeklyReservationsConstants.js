@@ -48,6 +48,7 @@ export const WEEKLY_RESERVATIONS_STRINGS = {
   ERROR: '데이터를 불러오지 못했습니다.',
   RETRY: '다시 시도',
   ARIA_WEEK_TOGGLE: '주간 기간 선택',
+  ARIA_REFRESH: '새로고침',
   CHANGE_UP_PREFIX: '+',
   CHANGE_SAME: '변동 없음'
 };

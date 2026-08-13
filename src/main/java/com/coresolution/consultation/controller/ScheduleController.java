@@ -105,6 +105,7 @@ public class ScheduleController extends BaseApiController {
     private final com.coresolution.consultation.repository.ScheduleRepository scheduleRepository;
     private final com.coresolution.consultation.service.ScheduleClientReminderSmsStatusService
             scheduleClientReminderSmsStatusService;
+    private final com.coresolution.consultation.repository.ClientRepository clientRepository;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -525,8 +526,10 @@ public class ScheduleController extends BaseApiController {
             Map<String, ConsultantClientMapping> mappingLookup =
                     ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(
                             tenantId, consultantClientMappingRepository);
+            Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, scheduleList);
             schedules = scheduleList.stream()
-                .map(schedule -> convertToScheduleResponse(schedule, 0, 0, mappingLookup))
+                .map(schedule -> convertToScheduleResponse(
+                        schedule, 0, 0, mappingLookup, vehiclePlateByClientId))
                 .collect(java.util.stream.Collectors.toList());
         } else {
             schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, UserRole.CONSULTANT.name());
@@ -1442,6 +1445,7 @@ public class ScheduleController extends BaseApiController {
                 .collect(Collectors.toList());
         Map<Long, com.coresolution.consultation.dto.ClientReminderSmsStatusDto> reminderSmsByScheduleId =
                 scheduleClientReminderSmsStatusService.resolveByScheduleIds(tenantId, scheduleIds);
+        Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
 
         List<ScheduleResponse> scheduleResponses = schedules.stream()
             .map(s -> {
@@ -1450,7 +1454,8 @@ public class ScheduleController extends BaseApiController {
                         s.getClientId() != null
                                 ? unresolvedByClientId.getOrDefault(s.getClientId(), 0)
                                 : 0,
-                        mappingLookup);
+                        mappingLookup,
+                        vehiclePlateByClientId);
                 if (s.getId() != null) {
                     response.setClientReminderSms(reminderSmsByScheduleId.get(s.getId()));
                 }
@@ -1983,6 +1988,7 @@ public class ScheduleController extends BaseApiController {
                 schedule,
                 clientScheduleNotesUnresolvedCount,
                 clientScheduleNotesClientWideUnresolvedCount,
+                null,
                 null);
     }
 
@@ -1991,6 +1997,20 @@ public class ScheduleController extends BaseApiController {
             int clientScheduleNotesUnresolvedCount,
             int clientScheduleNotesClientWideUnresolvedCount,
             Map<String, ConsultantClientMapping> mappingLookup) {
+        return convertToScheduleResponse(
+                schedule,
+                clientScheduleNotesUnresolvedCount,
+                clientScheduleNotesClientWideUnresolvedCount,
+                mappingLookup,
+                null);
+    }
+
+    private ScheduleResponse convertToScheduleResponse(
+            Schedule schedule,
+            int clientScheduleNotesUnresolvedCount,
+            int clientScheduleNotesClientWideUnresolvedCount,
+            Map<String, ConsultantClientMapping> mappingLookup,
+            Map<Long, String> vehiclePlateByClientId) {
         String consultantName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String clientName = AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;
         String consultantPhone = "";
@@ -2000,6 +2020,7 @@ public class ScheduleController extends BaseApiController {
         String consultantProfessionalProviderTypeCode = null;
         String clientPhone = "";
         String clientEmail = "";
+        String vehiclePlate = null;
         String tenantId = schedule.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
@@ -2031,6 +2052,8 @@ public class ScheduleController extends BaseApiController {
                     clientProfileImageUrl = nullableUserProfileImageUrl(client);
                     clientPastSessionCount = client.getPastSessionCount();
                 }
+                vehiclePlate = resolveVehiclePlateForClient(
+                        tenantId, schedule.getClientId(), vehiclePlateByClientId);
             }
         } catch (Exception e) {
             log.warn("⚠️ 사용자 정보 조회 실패: consultantId={}, clientId={}, error={}", 
@@ -2052,6 +2075,7 @@ public class ScheduleController extends BaseApiController {
             .clientName(clientName)
             .clientPhone(clientPhone)
             .clientEmail(clientEmail)
+            .vehiclePlate(vehiclePlate)
             .clientProfileImageUrl(clientProfileImageUrl)
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
@@ -2099,6 +2123,78 @@ public class ScheduleController extends BaseApiController {
         }
         response.applyClientLifetimeSession(clientPastSessionCount, lifetimeSequenceCount);
         return response;
+    }
+
+    /**
+     * 스케줄 목록의 clientId 기준 차량번호 맵 (clients 배치 조회).
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedules 스케줄 목록
+     * @return clientId → vehiclePlate (미등록은 키 없음 또는 null)
+     */
+    private Map<Long, String> buildVehiclePlateByClientId(String tenantId, List<Schedule> schedules) {
+        if (tenantId == null || tenantId.isEmpty() || schedules == null || schedules.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> clientIds = schedules.stream()
+                .map(Schedule::getClientId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        return loadVehiclePlateByClientId(tenantId, clientIds);
+    }
+
+    /**
+     * clients 배치 조회로 차량번호 맵 구성.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientIds 내담자 PK 목록
+     * @return clientId → vehiclePlate
+     */
+    private Map<Long, String> loadVehiclePlateByClientId(String tenantId, List<Long> clientIds) {
+        if (tenantId == null || tenantId.isEmpty() || clientIds == null || clientIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            Map<Long, String> out = new HashMap<>();
+            clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, clientIds)
+                    .forEach(client -> out.put(client.getId(), client.getVehiclePlate()));
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 내담자 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    /**
+     * 배치 맵이 있으면 사용하고, 없으면 단건 clients 조회로 차량번호를 해석한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 ID
+     * @param vehiclePlateByClientId 사전 로드 맵(null 허용)
+     * @return 차량번호 또는 null
+     */
+    private String resolveVehiclePlateForClient(
+            String tenantId,
+            Long clientId,
+            Map<Long, String> vehiclePlateByClientId) {
+        if (clientId == null) {
+            return null;
+        }
+        if (vehiclePlateByClientId != null) {
+            return vehiclePlateByClientId.get(clientId);
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            return null;
+        }
+        try {
+            return clientRepository.findByTenantIdAndId(tenantId, clientId)
+                    .map(com.coresolution.consultation.entity.Client::getVehiclePlate)
+                    .orElse(null);
+        } catch (Exception e) {
+            log.warn("⚠️ 내담자 차량번호 단건 조회 실패: clientId={}, error={}", clientId, e.getMessage());
+            return null;
+        }
     }
 
     private static String nullableUserProfileImageUrl(User user) {

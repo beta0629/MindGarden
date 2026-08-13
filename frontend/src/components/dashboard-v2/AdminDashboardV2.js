@@ -72,6 +72,7 @@ import KpiFlipCard from '../admin/AdminDashboard/molecules/KpiFlipCard';
 import CumulativeConsultantCountsChart from './molecules/CumulativeConsultantCountsChart';
 import './molecules/CumulativeConsultantCountsChart.css';
 import SessionBurnRateSection from './molecules/SessionBurnRateSection';
+import ExpectedVisitsWidget from './ExpectedVisitsWidget';
 import Chart from '../common/Chart';
 import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STATUS_SERIES_COLOR_VARS } from '../../constants/charts';
 import { resolveCssColorVarToHex } from '../../utils/resolveCssColorVarToHex';
@@ -1644,6 +1645,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           viewAllHref={ADMIN_ROUTES.INTEGRATED_SCHEDULE}
         />
       </div>
+
+      <ExpectedVisitsWidget />
 
       <ContentSection
         title={t('common:dashboard-v2.AdminDashboardV2.t_e05c0827')}

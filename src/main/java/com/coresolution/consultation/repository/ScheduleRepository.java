@@ -1324,4 +1324,30 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     java.util.Optional<Schedule> findFirstByTenantIdAndMappingIdAndIsDeletedFalseOrderByDateAscStartTimeAsc(
             String tenantId, Long mappingId);
+
+    // ==================== 방문 예측(Visit Prediction) ====================
+
+    /**
+     * 테넌트 내 특정 날짜 범위에 점유(BOOKED/CONFIRMED/IN_PROGRESS) 상태인 (consultantId, clientId) 쌍 조회.
+     *
+     * <p>미예약 예상 방문 판정 시, 해당 기간에 이미 예약이 잡힌 내담자를 제외하기 위해 사용한다.</p>
+     *
+     * @param tenantId  테넌트 ID
+     * @param startDate 시작일(포함)
+     * @param endDate   종료일(포함)
+     * @param statuses  점유 상태 목록
+     * @return [0]=consultantId(Long), [1]=clientId(Long)
+     * @since 2026-08-13
+     */
+    @Query("SELECT s.consultantId, s.clientId FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId AND s.isDeleted = false "
+            + "AND s.date BETWEEN :startDate AND :endDate "
+            + "AND s.status IN :statuses "
+            + "AND s.consultantId IS NOT NULL AND s.clientId IS NOT NULL "
+            + "GROUP BY s.consultantId, s.clientId")
+    List<Object[]> findBookedConsultantClientPairsInDateRange(
+            @Param("tenantId") String tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") Collection<ScheduleStatus> statuses);
 }

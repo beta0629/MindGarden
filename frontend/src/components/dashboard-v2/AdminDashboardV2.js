@@ -73,6 +73,7 @@ import CumulativeConsultantCountsChart from './molecules/CumulativeConsultantCou
 import './molecules/CumulativeConsultantCountsChart.css';
 import SessionBurnRateSection from './molecules/SessionBurnRateSection';
 import ExpectedVisitsWidget from './ExpectedVisitsWidget';
+import WeeklyReservationsWidget from './WeeklyReservationsWidget';
 import Chart from '../common/Chart';
 import { CHART_TYPES, B0KLA_CHART_BAR_FALLBACK, B0KLA_STATUS_SERIES_COLOR_VARS } from '../../constants/charts';
 import { resolveCssColorVarToHex } from '../../utils/resolveCssColorVarToHex';
@@ -1646,6 +1647,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         />
       </div>
 
+      <WeeklyReservationsWidget />
       <ExpectedVisitsWidget />
 
       <ContentSection

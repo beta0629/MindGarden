@@ -1,0 +1,184 @@
+/**
+ * WeeklyReservationsWidget — 주간 예약 현황
+ * B0KlA / mg-color 토큰만 사용 (하드코딩 색 금지)
+ *
+ * @author CoreSolution
+ * @since 2026-08-13
+ */
+
+.mg-v2-weekly-reservations {
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-v2-weekly-reservations__body--loading {
+  min-height: 12.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-v2-weekly-reservations__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--mg-spacing-xl);
+  align-items: stretch;
+}
+
+/* ── KPI ── */
+.mg-v2-weekly-reservations__kpi {
+  position: relative;
+  padding-left: var(--mg-spacing-md);
+  border-left: var(--mg-radius-sm) solid var(--mg-color-primary-main);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--mg-spacing-xs);
+  min-width: 0;
+}
+
+.mg-v2-weekly-reservations__kpi-label {
+  margin: 0;
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-weekly-reservations__kpi-value {
+  margin: 0;
+  font-size: var(--mg-font-size-4xl);
+  font-weight: 700;
+  color: var(--mg-color-text-main);
+  line-height: 1.2;
+}
+
+.mg-v2-weekly-reservations__kpi-value span {
+  margin-left: var(--mg-spacing-xs);
+  font-size: var(--mg-font-size-sm);
+  font-weight: 500;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-weekly-reservations__kpi-change {
+  margin: 0;
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-weekly-reservations__kpi-change--up {
+  color: var(--mg-color-primary-main);
+}
+
+.mg-v2-weekly-reservations__kpi-change--down {
+  color: var(--mg-color-text-secondary);
+}
+
+/* ── 요일 미니 바 ── */
+.mg-v2-weekly-reservations__days,
+.mg-v2-weekly-reservations__status {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-v2-weekly-reservations__days-title,
+.mg-v2-weekly-reservations__status-title {
+  margin: 0;
+  font-size: var(--mg-font-size-sm);
+  font-weight: 600;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-weekly-reservations__bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--mg-spacing-xs);
+  min-height: 7.5rem;
+  width: 100%;
+}
+
+.mg-v2-weekly-reservations__bar-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+}
+
+.mg-v2-weekly-reservations__bar-count {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  line-height: 1;
+}
+
+.mg-v2-weekly-reservations__bar-track {
+  width: 100%;
+  max-width: 1.5rem;
+  height: 5rem;
+  display: flex;
+  align-items: flex-end;
+  background: var(--mg-color-border-main);
+  border-radius: var(--mg-radius-sm);
+  overflow: hidden;
+}
+
+.mg-v2-weekly-reservations__bar-fill {
+  width: 100%;
+  height: var(--wr-bar-height, 0%);
+  min-height: 0;
+  background: var(--mg-color-primary-light);
+  border-radius: var(--mg-radius-sm) var(--mg-radius-sm) 0 0;
+  transition: height 0.2s ease;
+}
+
+.mg-v2-weekly-reservations__bar-fill--peak {
+  background: var(--mg-color-primary-main);
+}
+
+.mg-v2-weekly-reservations__bar-label {
+  font-size: var(--mg-font-size-xs);
+  color: var(--mg-color-text-secondary);
+  line-height: 1;
+}
+
+/* ── 상태 요약 ── */
+.mg-v2-weekly-reservations__status-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-v2-weekly-reservations__status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+}
+
+.mg-v2-weekly-reservations__status-count {
+  font-size: var(--mg-font-size-sm);
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .mg-v2-weekly-reservations__grid {
+    grid-template-columns: 1fr;
+    gap: var(--mg-spacing-lg);
+  }
+
+  .mg-v2-weekly-reservations__bars {
+    min-height: 6rem;
+  }
+
+  .mg-v2-weekly-reservations__bar-track {
+    height: 4rem;
+    max-width: 1.25rem;
+  }
+}

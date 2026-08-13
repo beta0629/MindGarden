@@ -5735,6 +5735,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             AdminServiceUserFacingMessages.MSG_CONSULTANT_NOT_FOUND_WITH_ID_FMT, consultantId)));
             
             List<Schedule> schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
+
+            Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientIdForSchedules(tenantId, schedules);
             
             List<Map<String, Object>> scheduleMaps = schedules.stream()
                     .map(schedule -> {
@@ -5780,6 +5782,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
                         if (schedule.getClientId() != null) {
                             scheduleMap.put("clientId", schedule.getClientId());
+                            scheduleMap.put("vehiclePlate", vehiclePlateByClientId.get(schedule.getClientId()));
                             try {
                                 User clientUser = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                                 if (clientUser != null) {
@@ -5802,6 +5805,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             scheduleMap.put("clientEmail", "");
                             scheduleMap.put("clientPhone", "");
+                            scheduleMap.put("vehiclePlate", null);
                         }
                         
                         return scheduleMap;
@@ -6253,6 +6257,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
             List<Schedule> schedules = scheduleRepository.findByTenantId(tenantId);
+            Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientIdForSchedules(tenantId, schedules);
             
             List<Map<String, Object>> scheduleMaps = schedules.stream()
                     .map(schedule -> {
@@ -6298,6 +6303,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         
                         if (schedule.getClientId() != null) {
                             scheduleMap.put("clientId", schedule.getClientId());
+                            scheduleMap.put("vehiclePlate", vehiclePlateByClientId.get(schedule.getClientId()));
                             try {
                                 User clientUser = userRepository.findByTenantIdAndId(tenantId, schedule.getClientId()).orElse(null);
                                 if (clientUser != null) {
@@ -6320,6 +6326,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             scheduleMap.put("clientName", AdminServiceUserFacingMessages.PAYMENT_METHOD_UNSPECIFIED);
                             scheduleMap.put("clientEmail", "");
                             scheduleMap.put("clientPhone", "");
+                            scheduleMap.put("vehiclePlate", null);
                         }
                         
                         return scheduleMap;
@@ -6332,6 +6339,37 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.error("❌ 모든 스케줄 조회 실패", e);
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 스케줄 목록의 clientId 기준 차량번호 배치 맵 ({@code clients.vehicle_plate}).
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedules 스케줄 목록
+     * @return clientId → vehiclePlate
+     * @since 2026-08-13
+     */
+    private Map<Long, String> buildVehiclePlateByClientIdForSchedules(String tenantId, List<Schedule> schedules) {
+        if (tenantId == null || tenantId.isEmpty() || schedules == null || schedules.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> clientIds = schedules.stream()
+                .map(Schedule::getClientId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (clientIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            Map<Long, String> out = new HashMap<>();
+            clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, clientIds)
+                    .forEach(client -> out.put(client.getId(), client.getVehiclePlate()));
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 내담자 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            return Map.of();
         }
     }
     

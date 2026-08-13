@@ -36,6 +36,12 @@ public class ScheduleResponse {
     private String clientName;
     private String clientPhone;
     private String clientEmail;
+    /**
+     * 내담자 차량번호 ({@code clients.vehicle_plate}). 미등록·clients 행 없음이면 null.
+     *
+     * @since 2026-08-13
+     */
+    private String vehiclePlate;
     /** 상담사 프로필 이미지 URL (일반적으로 평문 URL; 앱·웹 아바타용) */
     private String consultantProfileImageUrl;
     /** 내담자 프로필 이미지 URL */

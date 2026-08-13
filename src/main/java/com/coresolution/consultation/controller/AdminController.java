@@ -130,6 +130,7 @@ public class AdminController extends BaseApiController {
     private final UserRepository userRepository;
     private final com.coresolution.consultation.service.ScheduleClientReminderSmsStatusService
             scheduleClientReminderSmsStatusService;
+    private final com.coresolution.consultation.repository.ClientRepository clientRepository;
 
     /**
      * /** 상담사 통계 정보 조회 (캐시 사용) /** GET /api/admin/consultants/with-stats/{id}
@@ -1054,6 +1055,21 @@ public class AdminController extends BaseApiController {
                 scheduleClientReminderSmsStatusService.resolveForNextConsultationByMappingIds(
                         tenantId, occupyingScheduleFromDate, mappingIdsForSms);
 
+        List<Long> mappingClientIds = mappings.stream()
+                .map(m -> m.getClient() != null ? m.getClient().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, String> vehiclePlateByClientId = new HashMap<>();
+        if (!mappingClientIds.isEmpty()) {
+            try {
+                clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingClientIds)
+                        .forEach(client -> vehiclePlateByClientId.put(client.getId(), client.getVehiclePlate()));
+            } catch (Exception e) {
+                log.warn("⚠️ 매핑 목록 차량번호 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
+            }
+        }
+
         List<Map<String, Object>> mappingData = mappings.stream().map(mapping -> {
             Map<String, Object> data = new java.util.HashMap<>();
             try {
@@ -1086,9 +1102,11 @@ public class AdminController extends BaseApiController {
                     String clientName = decryptedClient != null ? decryptedClient.get("name")
                             : mapping.getClient().getName();
                     data.put("clientName", clientName != null ? clientName : "알 수 없음");
+                    data.put("vehiclePlate", vehiclePlateByClientId.get(mapping.getClient().getId()));
                 } else {
                     data.put("clientId", null);
                     data.put("clientName", "알 수 없음");
+                    data.put("vehiclePlate", null);
                 }
 
                 data.put("status",
@@ -1138,6 +1156,7 @@ public class AdminController extends BaseApiController {
                 data.put("consultantName", "오류");
                 data.put("clientId", null);
                 data.put("clientName", "오류");
+                data.put("vehiclePlate", null);
                 data.put("status", "ERROR");
                 data.put("paymentStatus", "ERROR");
                 data.put("assignedAt", null);

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Client;
@@ -35,6 +36,18 @@ public interface ClientRepository extends BaseRepository<Client, Long> {
      */
     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.id = :id")
     Optional<Client> findByTenantIdAndIdIncludingDeleted(@Param("tenantId") String tenantId, @Param("id") Long id);
+
+    /**
+     * 스케줄·매핑 목록용 내담자(clients) 배치 조회. 요청 ID 중 다른 테넌트·삭제·미존재는 누락된다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param ids 내담자 PK 목록 ({@code users.id} = {@code clients.id})
+     * @return 미삭제 내담자 목록(요청 순서 미보장)
+     * @since 2026-08-13
+     */
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.id IN :ids AND c.isDeleted = false")
+    List<Client> findByTenantIdAndIdInAndIsDeletedFalse(@Param("tenantId") String tenantId,
+            @Param("ids") Collection<Long> ids);
     
     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isEmergencyContact = :isEmergencyContact AND c.isDeleted = false")
     List<Client> findByTenantIdAndIsEmergencyContactAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("isEmergencyContact") Boolean isEmergencyContact);

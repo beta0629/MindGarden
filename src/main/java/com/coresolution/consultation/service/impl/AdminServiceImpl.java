@@ -8,6 +8,7 @@ import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -31,6 +32,9 @@ import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.NewClientMonthlyItemResponse;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.WeeklyReservationDayItemResponse;
+import com.coresolution.consultation.dto.WeeklyReservationStatusItemResponse;
+import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.dto.ResolvedProfessionalRegistration;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
@@ -6143,6 +6147,167 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ 요일별 상담 건수 조회 실패: {}", e.getMessage(), e);
             return ConsultationsByDayOfWeekUtils.buildResponse(null);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WeeklyReservationsResponse getWeeklyReservations(int weekOffset) {
+        int safeOffset = (weekOffset == -1) ? -1 : 0;
+        try {
+            String tenantId = getTenantId();
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ getWeeklyReservations: tenantId 없음");
+                return emptyWeeklyReservations(safeOffset);
+            }
+
+            LocalDate today = DashboardTrendPeriodUtils.todayInTrendZone();
+            LocalDate thisMonday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(
+                    java.time.DayOfWeek.MONDAY));
+            LocalDate weekStart = thisMonday.plusWeeks(safeOffset);
+            LocalDate weekEnd = weekStart.plusDays(6);
+            LocalDate previousWeekStart = weekStart.minusWeeks(1);
+            LocalDate previousWeekEnd = weekStart.minusDays(1);
+
+            List<ScheduleStatus> statuses = List.of(
+                    ScheduleStatus.BOOKED,
+                    ScheduleStatus.CONFIRMED,
+                    ScheduleStatus.COMPLETED,
+                    ScheduleStatus.CANCELLED);
+
+            long totalCount = scheduleRepository.countByDateBetweenAndStatuses(
+                    tenantId, weekStart, weekEnd, statuses);
+            long previousWeekTotalCount = scheduleRepository.countByDateBetweenAndStatuses(
+                    tenantId, previousWeekStart, previousWeekEnd, statuses);
+            long changeAbs = totalCount - previousWeekTotalCount;
+            Double changePercent = ConsultationsByDayOfWeekUtils.calcGrowthRatePercent(
+                    totalCount, previousWeekTotalCount);
+
+            List<Object[]> dateRows = scheduleRepository.countSchedulesByDateBetweenAndStatuses(
+                    tenantId, weekStart, weekEnd, statuses);
+            List<WeeklyReservationDayItemResponse> byDayOfWeek = buildWeeklyByDayOfWeek(dateRows);
+
+            List<Object[]> statusRows = scheduleRepository.countSchedulesByStatusBetweenAndStatuses(
+                    tenantId, weekStart, weekEnd, statuses);
+            List<WeeklyReservationStatusItemResponse> byStatus = buildWeeklyByStatus(statusRows, statuses);
+
+            WeeklyReservationsResponse response = WeeklyReservationsResponse.builder()
+                    .weekStart(weekStart)
+                    .weekEnd(weekEnd)
+                    .weekOffset(safeOffset)
+                    .totalCount(totalCount)
+                    .previousWeekTotalCount(previousWeekTotalCount)
+                    .changeAbs(changeAbs)
+                    .changePercent(changePercent)
+                    .byDayOfWeek(byDayOfWeek)
+                    .byStatus(byStatus)
+                    .build();
+            log.info("✅ 주간 예약 현황 조회 완료: tenantId={}, weekOffset={}, total={}, prev={}",
+                    tenantId, safeOffset, totalCount, previousWeekTotalCount);
+            return response;
+        } catch (Exception e) {
+            log.error("❌ 주간 예약 현황 조회 실패: {}", e.getMessage(), e);
+            return emptyWeeklyReservations(safeOffset);
+        }
+    }
+
+    /**
+     * 일자별 COUNT 행을 월~일 7버킷으로 변환한다.
+     *
+     * @param dateCountRows Object[]{LocalDate, Number}
+     * @return 월~일 7항목
+     */
+    private List<WeeklyReservationDayItemResponse> buildWeeklyByDayOfWeek(List<Object[]> dateCountRows) {
+        Map<java.time.DayOfWeek, Long> counts = new EnumMap<>(java.time.DayOfWeek.class);
+        for (java.time.DayOfWeek dow : java.time.DayOfWeek.values()) {
+            counts.put(dow, 0L);
+        }
+        if (dateCountRows != null) {
+            for (Object[] row : dateCountRows) {
+                if (row == null || row.length < 2 || !(row[0] instanceof LocalDate)) {
+                    continue;
+                }
+                LocalDate date = (LocalDate) row[0];
+                long count = row[1] instanceof Number ? ((Number) row[1]).longValue() : 0L;
+                if (count <= 0L) {
+                    continue;
+                }
+                java.time.DayOfWeek dow = date.getDayOfWeek();
+                counts.put(dow, counts.get(dow) + count);
+            }
+        }
+        List<WeeklyReservationDayItemResponse> items = new ArrayList<>(7);
+        for (java.time.DayOfWeek dow : java.time.DayOfWeek.values()) {
+            items.add(WeeklyReservationDayItemResponse.builder()
+                    .dayOfWeek(dow.getValue())
+                    .dayOfWeekCode(dow.name().substring(0, 3))
+                    .count(counts.get(dow))
+                    .build());
+        }
+        return items;
+    }
+
+    /**
+     * 상태별 COUNT 행을 BOOKED~CANCELLED 고정 순서로 변환한다.
+     *
+     * @param statusRows Object[]{ScheduleStatus, Number}
+     * @param statuses   출력 순서·포함 상태
+     * @return 상태별 항목
+     */
+    private List<WeeklyReservationStatusItemResponse> buildWeeklyByStatus(
+            List<Object[]> statusRows, List<ScheduleStatus> statuses) {
+        Map<ScheduleStatus, Long> counts = new EnumMap<>(ScheduleStatus.class);
+        for (ScheduleStatus status : statuses) {
+            counts.put(status, 0L);
+        }
+        if (statusRows != null) {
+            for (Object[] row : statusRows) {
+                if (row == null || row.length < 2 || !(row[0] instanceof ScheduleStatus)) {
+                    continue;
+                }
+                ScheduleStatus status = (ScheduleStatus) row[0];
+                long count = row[1] instanceof Number ? ((Number) row[1]).longValue() : 0L;
+                if (counts.containsKey(status)) {
+                    counts.put(status, count);
+                }
+            }
+        }
+        List<WeeklyReservationStatusItemResponse> items = new ArrayList<>(statuses.size());
+        for (ScheduleStatus status : statuses) {
+            items.add(WeeklyReservationStatusItemResponse.builder()
+                    .status(status.name())
+                    .count(counts.get(status))
+                    .build());
+        }
+        return items;
+    }
+
+    /**
+     * tenant 없거나 오류 시 빈 주간 예약 응답.
+     *
+     * @param weekOffset 0 또는 -1
+     * @return 빈 응답
+     */
+    private WeeklyReservationsResponse emptyWeeklyReservations(int weekOffset) {
+        LocalDate today = DashboardTrendPeriodUtils.todayInTrendZone();
+        LocalDate weekStart = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(
+                java.time.DayOfWeek.MONDAY)).plusWeeks(weekOffset);
+        LocalDate weekEnd = weekStart.plusDays(6);
+        List<ScheduleStatus> statuses = List.of(
+                ScheduleStatus.BOOKED,
+                ScheduleStatus.CONFIRMED,
+                ScheduleStatus.COMPLETED,
+                ScheduleStatus.CANCELLED);
+        return WeeklyReservationsResponse.builder()
+                .weekStart(weekStart)
+                .weekEnd(weekEnd)
+                .weekOffset(weekOffset)
+                .totalCount(0L)
+                .previousWeekTotalCount(0L)
+                .changeAbs(0L)
+                .changePercent(null)
+                .byDayOfWeek(buildWeeklyByDayOfWeek(null))
+                .byStatus(buildWeeklyByStatus(null, statuses))
+                .build();
     }
     
     @Override

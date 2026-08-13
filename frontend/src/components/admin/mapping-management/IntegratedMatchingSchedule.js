@@ -267,6 +267,20 @@ const IntegratedMatchingSchedule = () => {
     setPeekMapping(null);
   }, []);
 
+  const handleVehiclePlateRegistered = useCallback(({ clientId, vehiclePlate }) => {
+    if (clientId == null) {
+      return;
+    }
+    const idKey = String(clientId);
+    setMappings((prev) => prev.map((m) => (
+      String(m.clientId) === idKey ? { ...m, vehiclePlate } : m
+    )));
+    setPeekMapping((prev) => (
+      prev && String(prev.clientId) === idKey ? { ...prev, vehiclePlate } : prev
+    ));
+    setRefetchTrigger((t) => t + 1);
+  }, []);
+
   useEffect(() => {
     if (savedViewFiltersRestoredRef.current) {
       return;
@@ -995,7 +1009,10 @@ const IntegratedMatchingSchedule = () => {
           title="상세"
           ariaLabel={peekMapping ? `${peekMapping.clientName || '매칭'} 상세` : '상세'}
         >
-          <MappingScheduleSidePeekContent mapping={peekMapping} />
+          <MappingScheduleSidePeekContent
+            mapping={peekMapping}
+            onVehiclePlateRegistered={handleVehiclePlateRegistered}
+          />
         </SidePeekShell>
         </div>
           </div>

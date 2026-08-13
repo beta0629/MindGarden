@@ -26,6 +26,7 @@ import SegmentedTabs from '../common/SegmentedTabs';
 import ActionBar from '../common/ActionBar';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
+import VehiclePlateQuickRegisterModal from '../admin/mapping-management/integrated-schedule/molecules/VehiclePlateQuickRegisterModal';
 import { ProfileCard } from '../ui/Card/index';
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 import { getProfessionalProviderTypeLabel } from '../../constants/professionalProviderRoles';
@@ -263,6 +264,8 @@ const ScheduleDetailModal = ({
     const [clientNotesUnresolvedCount, setClientNotesUnresolvedCount] = useState(0);
     /** ADMIN/STAFF: 내담자·상담사 읽기 전용 요약(중첩 UnifiedModal 1겹) */
     const [partyQuickView, setPartyQuickView] = useState(null);
+    /** 내담자 차량번호 빠른 등록 모달 */
+    const [vehiclePlateRegisterOpen, setVehiclePlateRegisterOpen] = useState(false);
     const clientPartyTriggerRef = useRef(null);
     const consultantPartyTriggerRef = useRef(null);
     const partyQuickViewRef = useRef(null);
@@ -870,7 +873,9 @@ const ScheduleDetailModal = ({
             const clientPhoneRaw =
                 displayData.clientPhone || displayData.clientMobile || displayData.phone;
             const clientEmailRaw = displayData.clientEmail || displayData.email;
-            return [
+            const plateRaw = displayData.vehiclePlate;
+            const plateTrimmed = plateRaw != null ? String(plateRaw).trim() : '';
+            const rows = [
                 { label: t('schedule:ScheduleDetailModal.t_9aa18e50'), value: toDisplayString(parsedClientName, dash) },
                 { label: t('schedule:ScheduleDetailModal.t_7db258e6'), value: toDisplayString(displayData.clientId, dash) },
                 {
@@ -888,6 +893,13 @@ const ScheduleDetailModal = ({
                 { label: t('schedule:ScheduleDetailModal.t_c6c6281f'), value: typeLine },
                 { label: t('schedule:ScheduleDetailModal.t_abfcf6cf'), value: dateTimeLine }
             ];
+            if (plateTrimmed) {
+                rows.splice(4, 0, {
+                    label: t('schedule:ScheduleDetailModal.vehiclePlateLabel'),
+                    value: toDisplayString(plateTrimmed, dash)
+                });
+            }
+            return rows;
         }
 
         return [
@@ -1279,6 +1291,36 @@ const ScheduleDetailModal = ({
                         <ClientSummaryField label={t('schedule:ScheduleDetailModal.t_bff20dc3')} className="schedule-detail-modal__detail-row">
                             <SafeText>{displayData.title}</SafeText>
                         </ClientSummaryField>
+                        {!isVacationEvent() && (() => {
+                            const plateRaw = displayData.vehiclePlate;
+                            const plateTrimmed = plateRaw != null ? String(plateRaw).trim() : '';
+                            if (plateTrimmed) {
+                                return (
+                                    <ClientSummaryField
+                                        label={t('schedule:ScheduleDetailModal.vehiclePlateLabel')}
+                                        className="schedule-detail-modal__detail-row"
+                                    >
+                                        <SafeText>{plateTrimmed}</SafeText>
+                                    </ClientSummaryField>
+                                );
+                            }
+                            if (canPartyQuickSummary && displayData.clientId) {
+                                return (
+                                    <ClientSummaryField
+                                        label={t('schedule:ScheduleDetailModal.vehiclePlateLabel')}
+                                        className="schedule-detail-modal__detail-row"
+                                    >
+                                        <ActionBarButton
+                                            variant="outline"
+                                            onClick={() => setVehiclePlateRegisterOpen(true)}
+                                        >
+                                            {t('schedule:ScheduleDetailModal.vehiclePlateRegisterCta')}
+                                        </ActionBarButton>
+                                    </ClientSummaryField>
+                                );
+                            }
+                            return null;
+                        })()}
                         {isVacationEvent() && (
                             <ClientSummaryField label={t('schedule:ScheduleDetailModal.t_772af33f')} className="schedule-detail-modal__detail-row">
                                 <SafeText fallback="사유 없음">{displayData.description ?? displayData.reason}</SafeText>
@@ -1301,6 +1343,23 @@ const ScheduleDetailModal = ({
                     rows={buildPartySummaryRows(partyQuickView)}
                     userManagementType={partyQuickView}
                     onOpenInUserManagement={handleOpenUserManagementFromParty}
+                />
+            ) : null}
+
+            {canPartyQuickSummary && displayData.clientId ? (
+                <VehiclePlateQuickRegisterModal
+                    isOpen={vehiclePlateRegisterOpen}
+                    onClose={() => setVehiclePlateRegisterOpen(false)}
+                    clientId={displayData.clientId}
+                    clientName={parsedClientName}
+                    zIndex={SCHEDULE_DETAIL_Z_INDEX_CONFIRM}
+                    onRegistered={({ vehiclePlate }) => {
+                        const base = localScheduleOverride ?? scheduleData;
+                        setLocalScheduleOverride({ ...base, vehiclePlate });
+                        if (typeof onScheduleUpdated === 'function') {
+                            onScheduleUpdated();
+                        }
+                    }}
                 />
             ) : null}
 

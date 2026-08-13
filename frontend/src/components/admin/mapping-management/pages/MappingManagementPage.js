@@ -222,6 +222,19 @@ const MappingManagementPage = () => {
     setPeekMapping(null);
   }, []);
 
+  const handleVehiclePlateRegistered = useCallback(({ clientId, vehiclePlate }) => {
+    if (clientId == null) {
+      return;
+    }
+    const idKey = String(clientId);
+    setMappings((prev) => prev.map((m) => (
+      String(m.clientId) === idKey ? { ...m, vehiclePlate } : m
+    )));
+    setPeekMapping((prev) => (
+      prev && String(prev.clientId) === idKey ? { ...prev, vehiclePlate } : prev
+    ));
+  }, []);
+
   const loadMappings = async() => {
     if (isLoadingMappings) return;
     setIsLoadingMappings(true);
@@ -636,7 +649,10 @@ const MappingManagementPage = () => {
                   : '상세'
               }
             >
-              <MappingScheduleSidePeekContent mapping={peekMapping} />
+              <MappingScheduleSidePeekContent
+                mapping={peekMapping}
+                onVehiclePlateRegistered={handleVehiclePlateRegistered}
+              />
             </SidePeekShell>
           </div>
         </section>

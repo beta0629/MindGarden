@@ -609,9 +609,8 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
  */
 const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: propBusinessType = null }) => {
   const { t } = useTranslation();
-  const { layout, widgets, theme, cardLayout, refresh } = dashboardConfig;
+  const { layout, widgets, theme, cardLayout } = dashboardConfig;
   const [businessType, setBusinessType] = useState(propBusinessType);
-  const [widgetLayoutRemountKey, setWidgetLayoutRemountKey] = useState(0);
   
   // 업종 정보 동적 로드 (tenantId 기반)
   useEffect(() => {
@@ -928,17 +927,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
     }
   }
   
-  // 자동 새로고침 설정
-  useEffect(() => {
-    if (refresh?.enabled && refresh?.interval) {
-      const interval = setInterval(() => {
-        // 전체 document reload 대신 위젯 트리 재마운트로 각 위젯 데이터 재조회 유도
-        setWidgetLayoutRemountKey((k) => k + 1);
-      }, refresh.interval);
-
-      return () => clearInterval(interval);
-    }
-  }, [refresh]);
+  // refresh.interval 일괄 soft remount 제거: 위젯별 useWidget / config.refreshInterval만 유지
   
   return (
     <AdminCommonLayout title={t('admin.labels.dashboard')}>
@@ -949,7 +938,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
             <p className="dashboard-description">{dashboard.description}</p>
           )}
         </div>
-        <div className="dashboard-content" key={widgetLayoutRemountKey}>
+        <div className="dashboard-content">
           {renderLayout()}
         </div>
       </div>

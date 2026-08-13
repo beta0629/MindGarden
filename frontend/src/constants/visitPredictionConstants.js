@@ -53,7 +53,8 @@ export const EXPECTED_VISITS_STRINGS = {
   LABEL_LAST_VISIT: '마지막 방문',
   LABEL_CONFIDENCE: '신뢰도',
   LABEL_ACTIONS: '작업',
-  ARIA_PERIOD_FILTER: '기간 필터 선택'
+  ARIA_PERIOD_FILTER: '기간 필터 선택',
+  ARIA_REFRESH: '새로고침'
 };
 
 /** CSS 클래스 상수 */

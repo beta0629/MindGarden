@@ -81,8 +81,11 @@
   position: relative;
   display: flex;
   flex-shrink: 0;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
+  width: max-content;
+  max-width: 100%;
   overflow: visible;
 }
 
@@ -98,6 +101,7 @@
   text-shadow: 0 0 14px color-mix(in srgb, var(--mg-white) 55%, transparent);
   text-align: center;
   white-space: nowrap;
+  word-break: keep-all;
 }
 
 .mg-v2-login-hero-title-outline {
@@ -105,6 +109,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  max-width: none;
   overflow: visible;
   pointer-events: none;
 }
@@ -136,32 +141,35 @@
   pointer-events: none;
 }
 
-/* 워드마크: 읽히는 채움 + Traveling Highlight (느린 호흡) */
+/*
+ * 워드마크: 흰 채움(가독) + 대비색 traveling light (골드/앰버)
+ * duration 36s — 아주 천천히 빛이 이동
+ */
 .mg-v2-login-hero-title-outline path {
   fill: color-mix(in srgb, var(--mg-white) 88%, transparent) !important;
-  stroke: color-mix(in srgb, var(--mg-white) 92%, transparent);
+  stroke: var(--mg-client-primary-light, var(--mg-v2-color-accent-light));
   stroke-width: 1.5px;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--mg-white) 75%, transparent));
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mg-client-primary-light, var(--mg-v2-color-accent-light)) 80%, transparent));
   stroke-dasharray: 60 2000;
   stroke-dashoffset: 2000;
-  animation: mg-v2-traveling-highlight 20s linear infinite;
+  animation: mg-v2-traveling-highlight 36s linear infinite;
 }
 
-/* 나비 로고: PNG 위 외곽 traveling만 (채움 없음) */
+/* 나비 로고: PNG 위 외곽 traveling만 (채움 없음, 동일 호흡·대비색) */
 .mg-v2-login-hero-logo-outline path {
   fill: transparent !important;
-  stroke: color-mix(in srgb, var(--mg-white) 90%, transparent);
+  stroke: var(--mg-client-primary-light, var(--mg-v2-color-accent-light));
   stroke-width: 1.5px;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--mg-white) 70%, transparent));
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mg-client-primary-light, var(--mg-v2-color-accent-light)) 75%, transparent));
   stroke-dasharray: 60 2000;
   stroke-dashoffset: 2000;
-  animation: mg-v2-traveling-highlight 20s linear infinite;
+  animation: mg-v2-traveling-highlight 36s linear infinite;
 }
 
 .mg-v2-login-hero-logo-outline g {

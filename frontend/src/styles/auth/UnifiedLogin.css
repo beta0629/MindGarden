@@ -22,7 +22,7 @@
   background-size: cover;
   background-repeat: no-repeat;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   padding: var(--mg-v2-space-8, 32px);
 }
@@ -59,15 +59,22 @@
   );
 }
 
-/* 브랜드 스택: MindGarden(상단) → 나비 PNG(중앙) */
+/* 브랜드 스택: MindGarden(상단) → 나비 PNG(하단). 세로 중앙 뭉침 없음 */
 .mg-v2-login-hero-brand {
+  --mg-login-hero-draw-duration: 3.5s;
+  --mg-login-hero-logo-draw-delay: 0.45s;
   position: relative;
   z-index: 2;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--mg-v2-space-10, 40px);
+  justify-content: space-between;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+  padding-block: var(--mg-v2-space-4);
+  gap: 0;
   max-width: 100%;
   pointer-events: none;
 }
@@ -75,8 +82,10 @@
 .mg-v2-login-hero-title-wrapper {
   position: relative;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 .mg-v2-login-hero-title {
@@ -84,9 +93,10 @@
   font-family: 'Great Vibes', cursive;
   font-size: clamp(4rem, 5.5vw, 5rem);
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1.25;
   letter-spacing: 0.02em;
-  color: var(--mg-color-primary-dark);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
   text-align: center;
   white-space: nowrap;
 }
@@ -102,9 +112,10 @@
 
 .mg-v2-login-hero-logo-wrapper {
   position: relative;
+  flex: 0 1 auto;
   width: min(240px, 42vw);
-  aspect-ratio: 723 / 1024;
-  flex-shrink: 0;
+  max-height: 55%;
+  aspect-ratio: 595 / 842;
 }
 
 .mg-v2-login-hero-butterfly,
@@ -126,18 +137,17 @@
   pointer-events: none;
 }
 
-/* 브랜드 외곽 라인 — primary-dark, 흰 stroke 금지 */
-.mg-v2-path-brand-title {
-  fill: none;
-  font-family: 'Great Vibes', cursive;
-  font-size: clamp(4rem, 5.5vw, 5rem);
-  stroke: var(--mg-color-primary-dark);
-  stroke-width: 2.5px;
+/* 브랜드 외곽 라인 — 골드 토큰, 흰 stroke 금지, pathLength=1 dash-draw */
+.mg-v2-login-hero-title-outline path {
+  fill: color-mix(in srgb, var(--mg-color-accent-main) 8%, transparent);
+  stroke: var(--mg-color-accent-main);
+  stroke-width: var(--mg-v2-space-2);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 2000;
-  stroke-dashoffset: 2000;
-  animation: mg-v2-draw-brand-line 3.5s ease-out forwards;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: mg-v2-draw-brand-line var(--mg-login-hero-draw-duration, 3.5s) ease-out forwards;
 }
 
 .mg-v2-login-hero-logo-outline g {
@@ -147,31 +157,30 @@
 
 .mg-v2-login-hero-logo-outline path {
   fill: none;
-  stroke: var(--mg-color-primary-dark);
-  stroke-width: 28;
+  stroke: var(--mg-color-warning-500);
+  stroke-width: var(--mg-v2-space-2);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 5000;
-  stroke-dashoffset: 5000;
-  animation: mg-v2-draw-brand-line 3.5s ease-out 0.35s forwards;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: mg-v2-draw-brand-line var(--mg-login-hero-draw-duration, 3.5s) ease-out var(--mg-login-hero-logo-draw-delay, 0.45s) forwards;
 }
 
 @keyframes mg-v2-draw-brand-line {
   from {
-    opacity: 0.4;
+    stroke-dashoffset: 1;
   }
   to {
     stroke-dashoffset: 0;
-    opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mg-v2-path-brand-title,
+  .mg-v2-login-hero-title-outline path,
   .mg-v2-login-hero-logo-outline path {
     animation: none;
     stroke-dashoffset: 0;
-    opacity: 1;
   }
 }
 
@@ -652,7 +661,7 @@
     height: min(48vh, 380px);
     min-height: 300px;
     background-position: center center, 0 0;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     padding: var(--mg-v2-space-4, 16px);
   }
@@ -662,16 +671,17 @@
   }
 
   .mg-v2-login-hero-brand {
-    gap: var(--mg-v2-space-6, 24px);
+    gap: var(--mg-v2-space-3);
+    padding-block: var(--mg-v2-space-2);
   }
 
-  .mg-v2-login-hero-title,
-  .mg-v2-path-brand-title {
+  .mg-v2-login-hero-title {
     font-size: clamp(3rem, 12vw, 3.5rem);
   }
 
   .mg-v2-login-hero-logo-wrapper {
     width: min(160px, 38vw);
+    max-height: 48%;
   }
 
   .mg-v2-login-content {

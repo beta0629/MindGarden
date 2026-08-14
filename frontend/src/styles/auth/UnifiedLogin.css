@@ -63,6 +63,9 @@
 .mg-v2-login-hero-brand {
   --mg-login-hero-draw-duration: 3.5s;
   --mg-login-hero-logo-draw-delay: 0.45s;
+  --mg-login-hero-wordmark-travel-duration: 4s;
+  --mg-login-hero-wordmark-dash-on: 0.12;
+  --mg-login-hero-wordmark-dash-off: 0.88;
   position: relative;
   z-index: 2;
   display: flex;
@@ -137,17 +140,30 @@
   pointer-events: none;
 }
 
-/* 브랜드 외곽 라인 — 골드 토큰, 흰 stroke 금지, pathLength=1 dash-draw */
+/* 워드마크 공통 — 연한 채움, pathLength=1 */
 .mg-v2-login-hero-title-outline path {
   fill: color-mix(in srgb, var(--mg-color-accent-main) 8%, transparent);
-  stroke: var(--mg-color-accent-main);
-  stroke-width: var(--mg-v2-space-2);
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: mg-v2-draw-brand-line var(--mg-login-hero-draw-duration, 3.5s) ease-out forwards;
+}
+
+/* 베이스: 골드/accent 얇은 전체 윤곽 (글자가 항상 읽히도록) */
+.mg-v2-login-hero-title-outline--base path {
+  stroke: var(--mg-color-accent-main);
+  stroke-width: var(--mg-v2-space-1);
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+}
+
+/* 하이라이트: 흰 traveling dash 무한 루프 (draw-once 금지) */
+.mg-v2-login-hero-title-outline--highlight path {
+  fill: none;
+  stroke: var(--mg-color-white, var(--mg-white));
+  stroke-width: var(--mg-v2-space-2);
+  stroke-dasharray: var(--mg-login-hero-wordmark-dash-on, 0.12) var(--mg-login-hero-wordmark-dash-off, 0.88);
+  stroke-dashoffset: 0;
+  animation: mg-v2-travel-wordmark-dash var(--mg-login-hero-wordmark-travel-duration, 4s) linear infinite;
 }
 
 .mg-v2-login-hero-logo-outline g {
@@ -176,8 +192,21 @@
   }
 }
 
+@keyframes mg-v2-travel-wordmark-dash {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mg-v2-login-hero-title-outline path,
+  .mg-v2-login-hero-title-outline--highlight {
+    display: none;
+  }
+
+  .mg-v2-login-hero-title-outline--highlight path,
   .mg-v2-login-hero-logo-outline path {
     animation: none;
     stroke-dashoffset: 0;

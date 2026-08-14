@@ -93,8 +93,9 @@
   font-weight: 400;
   line-height: 1.25;
   letter-spacing: 0.02em;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  color: var(--mg-white);
+  -webkit-text-fill-color: var(--mg-white);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--mg-white) 55%, transparent);
   text-align: center;
   white-space: nowrap;
 }
@@ -135,19 +136,32 @@
   pointer-events: none;
 }
 
-/* 워드마크 및 로고 공통 (Traveling Highlight) */
-.mg-v2-login-hero-title-outline path,
-.mg-v2-login-hero-logo-outline path {
-  fill: transparent !important;
-  stroke: rgba(255, 255, 255, 0.9);
+/* 워드마크: 읽히는 채움 + Traveling Highlight (느린 호흡) */
+.mg-v2-login-hero-title-outline path {
+  fill: color-mix(in srgb, var(--mg-white) 88%, transparent) !important;
+  stroke: color-mix(in srgb, var(--mg-white) 92%, transparent);
   stroke-width: 1.5px;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--mg-white) 75%, transparent));
   stroke-dasharray: 60 2000;
   stroke-dashoffset: 2000;
-  animation: mg-v2-traveling-highlight 8s linear infinite;
+  animation: mg-v2-traveling-highlight 20s linear infinite;
+}
+
+/* 나비 로고: PNG 위 외곽 traveling만 (채움 없음) */
+.mg-v2-login-hero-logo-outline path {
+  fill: transparent !important;
+  stroke: color-mix(in srgb, var(--mg-white) 90%, transparent);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--mg-white) 70%, transparent));
+  stroke-dasharray: 60 2000;
+  stroke-dashoffset: 2000;
+  animation: mg-v2-traveling-highlight 20s linear infinite;
 }
 
 .mg-v2-login-hero-logo-outline g {
@@ -168,9 +182,12 @@
   .mg-v2-login-hero-title-outline path,
   .mg-v2-login-hero-logo-outline path {
     animation: none !important;
-    opacity: 0.3;
     stroke-dasharray: none;
     stroke-dashoffset: 0;
+  }
+
+  .mg-v2-login-hero-logo-outline path {
+    opacity: 0.3;
   }
 }
 

@@ -1,46 +1,66 @@
 /**
- * 로그인 히어로 라인 오버레이 (모션 SSOT)
- * 수채화 히어로(1024×1536) 실윤곽에 맞춘 SVG Path 네이티브 애니메이션
- * prefers-reduced-motion 설정은 CSS 단에서 처리
+ * 로그인 히어로 중앙 로고 + SVG stroke-dash 윤곽 오버레이
+ * 원본 나비 로고 PNG 위에 윤곽 라인만 애니메이트 (비트맵 미수정)
+ * prefers-reduced-motion 은 CSS 단에서 처리
  *
  * @author CoreSolution
  * @since 2026-08-14
  */
 import React from 'react';
+import coreLogoButterfly from '../../assets/images/auth/core-logo-butterfly.png';
+
+const BUTTERFLY_PATHS = [
+  {
+    key: 'upperL',
+    d: 'M 230 220 C 180 150, 120 100, 80 120 C 40 140, 50 220, 90 260 C 130 300, 190 280, 230 260 Z'
+  },
+  {
+    key: 'upperR',
+    d: 'M 282 220 C 332 150, 392 100, 432 120 C 472 140, 462 220, 422 260 C 382 300, 322 280, 282 260 Z'
+  },
+  {
+    key: 'lowerL',
+    d: 'M 230 280 C 180 320, 140 380, 160 420 C 180 460, 220 440, 240 380 C 250 350, 240 310, 230 280 Z'
+  },
+  {
+    key: 'lowerR',
+    d: 'M 282 280 C 332 320, 372 380, 352 420 C 332 460, 292 440, 272 380 C 262 350, 272 310, 282 280 Z'
+  },
+  {
+    key: 'antennaL',
+    d: 'M 240 180 C 230 140, 210 110, 190 100'
+  },
+  {
+    key: 'antennaR',
+    d: 'M 272 180 C 282 140, 302 110, 322 100'
+  }
+];
 
 const LoginHeroLineOverlay = () => {
   return (
-    <div className="mg-v2-login-hero-overlay" aria-hidden="true">
+    <div className="mg-v2-login-hero-logo-stage" aria-hidden="true">
+      <img
+        className="mg-v2-login-hero-butterfly"
+        src={coreLogoButterfly}
+        alt=""
+        width={723}
+        height={1024}
+        decoding="async"
+      />
       <svg
-        className="mg-v2-hero-svg"
-        viewBox="0 0 1024 1536"
-        preserveAspectRatio="xMidYMid slice"
+        className="mg-v2-login-hero-outline"
+        viewBox="0 0 512 512"
+        preserveAspectRatio="xMidYMid meet"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <path
-          className="mg-v2-hero-path mg-v2-path-frame"
-          d="M 835 0 Q 842 400 838 1000"
-        />
-        <path
-          className="mg-v2-hero-path mg-v2-path-sill"
-          d="M -20 985 Q 512 1010 1044 990 M -20 1105 Q 512 1130 1044 1110"
-        />
-        <path
-          className="mg-v2-hero-path mg-v2-path-mug"
-          d="M 455 865 C 455 920 460 970 465 980 C 490 995 540 995 565 980 C 570 970 575 920 575 865 C 575 880 455 880 455 865 C 455 850 575 850 575 865 M 575 890 C 620 890 620 950 572 955"
-        />
-        <path
-          className="mg-v2-hero-path mg-v2-path-cushion"
-          d="M 700 995 C 710 820 850 780 940 990"
-        />
-        <path
-          className="mg-v2-hero-path mg-v2-path-curtain"
-          d="M 140 -20 Q 180 400 150 1010 M 260 -20 Q 220 500 280 1000 M 380 -20 Q 360 450 400 980"
-        />
-        <path
-          className="mg-v2-hero-path mg-v2-path-foliage"
-          d="M -20 150 C 100 120 180 200 200 300 C 100 320 0 280 -20 250 M 150 -20 C 180 100 280 150 350 120 C 320 40 280 -10 250 -20"
-        />
+        {BUTTERFLY_PATHS.map((path) => (
+          <path
+            key={path.key}
+            className="mg-v2-login-hero-outline-path"
+            d={path.d}
+            fill="none"
+          />
+        ))}
       </svg>
     </div>
   );

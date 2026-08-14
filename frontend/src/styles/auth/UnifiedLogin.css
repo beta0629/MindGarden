@@ -56,78 +56,77 @@
   );
 }
 
-/* SVG 라인 오버레이 — hero media cover(slice)와 동일 좌표계, scale 금지 */
-.mg-v2-login-hero-overlay {
+/* 중앙 원본 로고 + SVG stroke 윤곽 오버레이 (동일 박스 겹침) */
+.mg-v2-login-hero-logo-stage {
   position: absolute;
-  inset: 0;
-  z-index: 1;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: min(40vw, 280px);
+  aspect-ratio: 723 / 1024;
+  transform: translate(-50%, -50%);
   pointer-events: none;
-  overflow: hidden;
-}
-.mg-v2-hero-svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.mg-v2-hero-path {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.5;
-  stroke-dasharray: 2000;
-  stroke-dashoffset: 2000;
-  animation: mg-v2-draw-line 8s ease-in-out infinite alternate;
-}
-.mg-v2-path-frame {
-  stroke: rgba(245, 243, 239, 0.4);
-  stroke-width: 1.5;
-  animation-duration: 12s;
-}
-.mg-v2-path-sill {
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.5;
-}
-.mg-v2-path-mug {
-  stroke: rgba(245, 243, 239, 0.4);
-  stroke-width: 1.5;
-}
-.mg-v2-path-cushion {
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.5;
-}
-.mg-v2-path-curtain {
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.5;
-}
-.mg-v2-path-foliage {
-  stroke: rgba(245, 243, 239, 0.4);
-  stroke-width: 1.5;
-}
-.mg-v2-delay-1 { animation-delay: 1.5s; }
-.mg-v2-delay-2 { animation-delay: 3s; }
-.mg-v2-delay-3 { animation-delay: 4.5s; }
-@keyframes mg-v2-draw-line {
-  0% { stroke-dashoffset: 2000; opacity: 0; }
-  20% { opacity: 1; }
-  80% { stroke-dashoffset: 0; opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0.2; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .mg-v2-hero-path { animation: none; stroke-dashoffset: 0; opacity: 0.4; }
 }
 
+.mg-v2-login-hero-butterfly {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.mg-v2-login-hero-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: none;
+  overflow: visible;
+}
+
+.mg-v2-login-hero-outline-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation: mg-v2-hero-outline-draw 3s ease-in-out alternate infinite;
+}
+
+@keyframes mg-v2-hero-outline-draw {
+  0% {
+    stroke-dashoffset: 900;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-login-hero-outline-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 텍스트 카드 — 중앙 로고가 주인공이 되도록 하단 앵커 */
 .mg-v2-login-hero-content {
   position: relative;
   z-index: 10;
+  align-self: flex-end;
   text-align: left;
-  max-width: min(380px, 92%);
+  max-width: min(320px, 88%);
   color: var(--mg-text-primary, var(--mg-dark-bg-900));
   background: rgba(250, 249, 247, 0.94);
   border: 1px solid rgba(61, 82, 70, 0.12);
   border-left: 4px solid var(--mg-primary-color, var(--mg-color-primary-main));
   border-radius: 0 12px 12px 0;
-  padding: clamp(20px, 3vw, 28px) clamp(22px, 3vw, 32px) clamp(20px, 3vw, 28px) clamp(18px, 2.5vw, 24px);
+  padding: clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px) clamp(14px, 2vw, 20px) clamp(14px, 2vw, 18px);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow:
@@ -628,11 +627,16 @@
 
   .mg-v2-login-hero {
     flex: none;
-    height: 200px;
+    height: 240px;
     background-position: center 30%, 0 0;
     align-items: flex-end;
     justify-content: center;
-    padding: 0 16px 20px;
+    padding: 0 16px 12px;
+  }
+
+  .mg-v2-login-hero-logo-stage {
+    width: min(32vw, 110px);
+    top: 42%;
   }
 
   .mg-v2-login-hero-content {
@@ -642,17 +646,17 @@
     border-left: none;
     border-top: 3px solid var(--mg-primary-color, var(--mg-color-primary-main));
     border-radius: 0 0 12px 12px;
-    padding: 14px 18px 16px;
+    padding: 10px 14px 12px;
   }
 
   .mg-v2-login-hero-logo {
-    font-size: 22px;
-    margin-bottom: 8px;
+    font-size: 18px;
+    margin-bottom: 6px;
   }
   
   .mg-v2-login-hero-slogan {
-    font-size: 14px;
-    padding-top: 10px;
+    font-size: 13px;
+    padding-top: 8px;
     text-align: center;
   }
 

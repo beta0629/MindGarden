@@ -888,6 +888,10 @@ const UnifiedLogin = () => {
             <span className="mg-v2-sparkle s2"></span>
             <span className="mg-v2-sparkle s3"></span>
             <span className="mg-v2-sparkle s4"></span>
+            <span className="mg-v2-sparkle s5"></span>
+            <span className="mg-v2-sparkle s6"></span>
+            <span className="mg-v2-sparkle s7"></span>
+            <span className="mg-v2-sparkle s8"></span>
           </div>
           <div className="mg-v2-login-hero-sweep" aria-hidden="true" />
           <div className="mg-v2-login-hero-content">

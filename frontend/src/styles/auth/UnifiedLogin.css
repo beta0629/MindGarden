@@ -69,16 +69,22 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.5) 0%, rgba(250, 249, 247, 0) 65%);
-  mix-blend-mode: overlay;
+  background: radial-gradient(
+    circle at 28% 28%,
+    color-mix(in srgb, var(--mg-white, var(--cs-white)) 85%, transparent) 0%,
+    color-mix(in srgb, var(--mg-white, var(--cs-white)) 45%, transparent) 32%,
+    color-mix(in srgb, var(--mg-white, var(--cs-white)) 12%, transparent) 58%,
+    transparent 82%
+  );
+  mix-blend-mode: screen;
   will-change: transform, opacity;
-  animation: bloom-pulse 12s ease-in-out infinite alternate;
+  animation: bloom-pulse 7s ease-in-out infinite alternate;
 }
 
 @keyframes bloom-pulse {
-  0% { opacity: 0.4; transform: scale(0.95); }
-  50% { opacity: 0.7; transform: scale(1.05); }
-  100% { opacity: 0.4; transform: scale(0.95); }
+  0% { opacity: 0.55; transform: scale(0.9); }
+  50% { opacity: 0.95; transform: scale(1.15); }
+  100% { opacity: 0.55; transform: scale(0.9); }
 }
 
 .mg-v2-login-hero-sparkles {
@@ -89,24 +95,31 @@
 }
 
 .mg-v2-sparkle {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.4);
+  background: color-mix(in srgb, var(--mg-white, var(--cs-white)) 95%, transparent);
+  box-shadow:
+    0 0 10px 3px color-mix(in srgb, var(--mg-white, var(--cs-white)) 70%, transparent),
+    0 0 22px 6px color-mix(in srgb, var(--mg-white, var(--cs-white)) 35%, transparent);
   position: absolute;
   animation: sparkle-twinkle infinite;
 }
 
-.mg-v2-sparkle.s1 { top: 20%; left: 30%; animation-duration: 4s; animation-delay: 0s; }
-.mg-v2-sparkle.s2 { top: 45%; left: 60%; animation-duration: 5.5s; animation-delay: 1.2s; }
-.mg-v2-sparkle.s3 { top: 70%; left: 20%; animation-duration: 4.5s; animation-delay: 2.5s; }
-.mg-v2-sparkle.s4 { top: 15%; left: 75%; animation-duration: 6s; animation-delay: 0.8s; }
+/* 잎/밝은 영역 위주 — 하단 그라데이션·로고 텍스트 과도 가림 방지 */
+.mg-v2-sparkle.s1 { top: 18%; left: 28%; width: 10px; height: 10px; animation-duration: 2.4s; animation-delay: 0s; }
+.mg-v2-sparkle.s2 { top: 32%; left: 42%; width: 12px; height: 12px; animation-duration: 3.1s; animation-delay: 0.6s; }
+.mg-v2-sparkle.s3 { top: 22%; left: 55%; width: 8px; height: 8px; animation-duration: 2.6s; animation-delay: 1.3s; }
+.mg-v2-sparkle.s4 { top: 38%; left: 22%; width: 11px; height: 11px; animation-duration: 3.4s; animation-delay: 0.35s; }
+.mg-v2-sparkle.s5 { top: 14%; left: 48%; width: 9px; height: 9px; animation-duration: 2.2s; animation-delay: 1.8s; }
+.mg-v2-sparkle.s6 { top: 42%; left: 52%; width: 10px; height: 10px; animation-duration: 2.9s; animation-delay: 0.95s; }
+.mg-v2-sparkle.s7 { top: 26%; left: 18%; width: 8px; height: 8px; animation-duration: 3.3s; animation-delay: 2.1s; }
+.mg-v2-sparkle.s8 { top: 12%; left: 35%; width: 12px; height: 12px; animation-duration: 2.7s; animation-delay: 1.5s; }
 
 @keyframes sparkle-twinkle {
-  0% { opacity: 0; transform: scale(0.5); }
-  50% { opacity: 1; transform: scale(1.2); }
-  100% { opacity: 0; transform: scale(0.5); }
+  0% { opacity: 0; transform: scale(0.45); }
+  45% { opacity: 0.98; transform: scale(1.35); }
+  100% { opacity: 0; transform: scale(0.45); }
 }
 
 /* 대각 soft light sweep — 수채화 위 밝은 하이라이트만 */

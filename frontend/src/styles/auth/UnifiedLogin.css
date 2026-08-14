@@ -61,68 +61,59 @@
   );
 }
 
-/* SVG 라인 오버레이 — hero media cover(slice)와 동일 좌표계, scale 금지 */
+/*
+ * 필기체 MindGarden 워드마크 — 히어로 상단 중앙
+ * media(z:0) 위, 하단 콘텐츠 카드(z:10) 아래. 장면 path/흰 stroke 없음.
+ */
 .mg-v2-login-hero-overlay {
   position: absolute;
-  inset: 0;
-  z-index: 1;
+  top: clamp(1.25rem, 4vh, 2.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
   pointer-events: none;
-  overflow: hidden;
+  width: min(92%, 36rem);
+  max-height: 28%;
+  overflow: visible;
 }
 
-.mg-v2-hero-svg {
-  width: 100%;
-  height: 100%;
+.mg-v2-login-hero-wordmark {
   display: block;
-  fill: none;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.mg-v2-login-hero-wordmark-text {
+  font-family: 'Great Vibes', cursive;
+  font-weight: 400;
+  fill: var(--mg-primary-color, var(--mg-color-primary-main));
+  stroke: var(--mg-color-primary-dark);
+  stroke-width: 6;
+  paint-order: stroke fill;
   stroke-linecap: round;
   stroke-linejoin: round;
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+  animation: mg-v2-wordmark-draw 2.8s ease-out forwards;
 }
 
-.mg-v2-hero-path {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.5;
-  stroke-dasharray: 2000;
-  stroke-dashoffset: 2000;
-  animation: mg-v2-draw-line 8s ease-in-out infinite alternate;
-}
-
-.mg-v2-path-frame {
-  stroke: rgba(245, 243, 239, 0.4);
-  stroke-width: 1.5;
-  animation-duration: 12s;
-}
-
-.mg-v2-path-sill,
-.mg-v2-path-cushion,
-.mg-v2-path-curtain {
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.5;
-}
-
-.mg-v2-path-mug,
-.mg-v2-path-foliage {
-  stroke: rgba(245, 243, 239, 0.4);
-  stroke-width: 1.5;
-}
-
-.mg-v2-delay-1 { animation-delay: 1.5s; }
-.mg-v2-delay-2 { animation-delay: 3s; }
-.mg-v2-delay-3 { animation-delay: 4.5s; }
-
-@keyframes mg-v2-draw-line {
-  0% { stroke-dashoffset: 2000; opacity: 0; }
-  20% { opacity: 1; }
-  80% { stroke-dashoffset: 0; opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0.2; }
+@keyframes mg-v2-wordmark-draw {
+  0% {
+    stroke-dashoffset: 1600;
+  }
+  70% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mg-v2-hero-path {
+  .mg-v2-login-hero-wordmark-text {
     animation: none;
     stroke-dashoffset: 0;
-    opacity: 0.4;
   }
 }
 
@@ -645,6 +636,16 @@
     align-items: flex-end;
     justify-content: center;
     padding: 0 16px 12px;
+  }
+
+  .mg-v2-login-hero-overlay {
+    top: 0.75rem;
+    width: min(88%, 18rem);
+    max-height: 36%;
+  }
+
+  .mg-v2-login-hero-wordmark-text {
+    stroke-width: 5;
   }
 
   .mg-v2-login-hero-media {

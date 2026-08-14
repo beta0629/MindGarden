@@ -56,17 +56,57 @@
   );
 }
 
-/* SVG 라인 오버레이 — 컨테이너 scale 금지, pointer-events 없음 */
+/* SVG 라인 오버레이 — hero media cover(slice)와 동일 좌표계, scale 금지 */
 .mg-v2-login-hero-overlay {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: hidden;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
 }
-.mg-v2-hero-svg { width: 100%; height: 100%; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.mg-v2-hero-path { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: mg-v2-draw-line 8s ease-in-out infinite alternate; }
-.mg-v2-path-frame { stroke: rgba(255, 255, 255, 0.3); stroke-width: 1.5px; animation-duration: 12s; }
-.mg-v2-path-branch { stroke: var(--mg-color-primary-main, #8B7355); opacity: 0.6; stroke-width: 2px; }
-.mg-v2-path-leaf { stroke: rgba(255, 255, 255, 0.6); stroke-width: 1.5px; }
+.mg-v2-hero-svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mg-v2-hero-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.5;
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  animation: mg-v2-draw-line 8s ease-in-out infinite alternate;
+}
+.mg-v2-path-frame {
+  stroke: rgba(245, 243, 239, 0.4);
+  stroke-width: 1.5;
+  animation-duration: 12s;
+}
+.mg-v2-path-sill {
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.5;
+}
+.mg-v2-path-mug {
+  stroke: rgba(245, 243, 239, 0.4);
+  stroke-width: 1.5;
+}
+.mg-v2-path-cushion {
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.5;
+}
+.mg-v2-path-curtain {
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.5;
+}
+.mg-v2-path-foliage {
+  stroke: rgba(245, 243, 239, 0.4);
+  stroke-width: 1.5;
+}
 .mg-v2-delay-1 { animation-delay: 1.5s; }
 .mg-v2-delay-2 { animation-delay: 3s; }
+.mg-v2-delay-3 { animation-delay: 4.5s; }
 @keyframes mg-v2-draw-line {
   0% { stroke-dashoffset: 2000; opacity: 0; }
   20% { opacity: 1; }

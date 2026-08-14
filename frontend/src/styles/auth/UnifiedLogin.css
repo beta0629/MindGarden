@@ -28,16 +28,17 @@
   padding: 0 0 clamp(32px, 6vw, 56px) clamp(24px, 5vw, 56px);
 }
 
-/* 수채화 히어로 — 정적 cover 배경만 (라인 오버레이는 중앙 로고 stroke SSOT) */
+/* 수채화 히어로 — img cover (SVG slice 와 동일 absolute inset 0 박스) */
 .mg-v2-login-hero-media {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image: url('../../assets/images/auth/login-hero-watercolor.png'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
-  background-position: center, 0 0;
-  background-size: cover, cover;
-  background-repeat: no-repeat, no-repeat;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .mg-v2-login-hero::before {
@@ -56,86 +57,72 @@
   );
 }
 
-/* 중앙 원본 로고 + SVG stroke 윤곽 오버레이 (동일 박스 겹침, contain/meet) */
-.mg-v2-login-hero-logo-stage {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  z-index: 2;
-  width: min(40vw, 280px);
-  aspect-ratio: 723 / 1024;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.mg-v2-login-hero-butterfly {
+/* SVG 라인 오버레이 — hero media cover(slice)와 동일 좌표계, scale 금지 */
+.mg-v2-login-hero-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mg-v2-hero-svg {
   width: 100%;
   height: 100%;
-  object-fit: contain;
   display: block;
-}
-
-.mg-v2-login-hero-outline {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
   fill: none;
-  overflow: visible;
-}
-
-.mg-v2-login-hero-outline-path {
-  fill: none;
-  stroke: var(--mg-primary-color, rgba(30, 40, 35, 0.92));
-  stroke-width: 4.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-  filter:
-    drop-shadow(0 0 1px rgba(255, 255, 255, 0.95))
-    drop-shadow(0 1px 2px rgba(20, 28, 24, 0.75));
 }
 
-/* 정적 base — dash 애니 중에도 윤곽이 비지 않도록 */
-.mg-v2-login-hero-outline-path--base {
-  opacity: 0.55;
-  stroke-dasharray: none;
-  stroke-dashoffset: 0;
-  animation: none;
+.mg-v2-hero-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.5;
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  animation: mg-v2-draw-line 8s ease-in-out infinite alternate;
 }
 
-.mg-v2-login-hero-outline-path--draw {
-  stroke-dasharray: 0.42 0.58;
-  stroke-dashoffset: 1;
-  animation: mg-v2-hero-outline-draw 2.8s ease-in-out alternate infinite;
+.mg-v2-path-frame {
+  stroke: rgba(245, 243, 239, 0.4);
+  stroke-width: 1.5;
+  animation-duration: 12s;
 }
 
-@keyframes mg-v2-hero-outline-draw {
-  0% {
-    stroke-dashoffset: 1;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+.mg-v2-path-sill,
+.mg-v2-path-cushion,
+.mg-v2-path-curtain {
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.5;
+}
+
+.mg-v2-path-mug,
+.mg-v2-path-foliage {
+  stroke: rgba(245, 243, 239, 0.4);
+  stroke-width: 1.5;
+}
+
+.mg-v2-delay-1 { animation-delay: 1.5s; }
+.mg-v2-delay-2 { animation-delay: 3s; }
+.mg-v2-delay-3 { animation-delay: 4.5s; }
+
+@keyframes mg-v2-draw-line {
+  0% { stroke-dashoffset: 2000; opacity: 0; }
+  20% { opacity: 1; }
+  80% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.2; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mg-v2-login-hero-outline-path--draw {
+  .mg-v2-hero-path {
     animation: none;
-    stroke-dasharray: none;
     stroke-dashoffset: 0;
-    opacity: 0;
-  }
-
-  .mg-v2-login-hero-outline-path--base {
-    opacity: 1;
+    opacity: 0.4;
   }
 }
 
-/* 텍스트 카드 — 중앙 로고가 주인공이 되도록 하단 앵커 */
+/* 텍스트 카드 — 하단·좌측 앵커 */
 .mg-v2-login-hero-content {
   position: relative;
   z-index: 10;
@@ -655,9 +642,8 @@
     padding: 0 16px 12px;
   }
 
-  .mg-v2-login-hero-logo-stage {
-    width: min(32vw, 110px);
-    top: 42%;
+  .mg-v2-login-hero-media {
+    object-position: center 30%;
   }
 
   .mg-v2-login-hero-content {

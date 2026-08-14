@@ -50,6 +50,7 @@ import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 // @deprecated 레거시 함수는 하위 호환성을 위해 유지하되, 새로운 코드에서는 사용하지 않음
 // import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import '../../styles/auth/UnifiedLogin.css';
+import loginHeroWatercolor from '../../assets/images/auth/login-hero-watercolor.png';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { SESSION_SUBDOMAIN_TENANT_NAME_KEY } from '../../utils/tenantDisplayName';
@@ -883,7 +884,13 @@ const UnifiedLogin = () => {
       <div className="mg-v2-login-container">
         {/* 좌측: 브랜딩 이미지 영역 */}
         <div className="mg-v2-login-hero">
-          <div className="mg-v2-login-hero-media" aria-hidden="true" />
+          <img
+            className="mg-v2-login-hero-media"
+            src={loginHeroWatercolor}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+          />
           <Suspense fallback={null}>
             <LoginHeroLineOverlay />
           </Suspense>

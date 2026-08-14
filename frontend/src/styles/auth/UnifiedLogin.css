@@ -28,7 +28,7 @@
   padding: 0 0 clamp(32px, 6vw, 56px) clamp(24px, 5vw, 56px);
 }
 
-/* 수채화 히어로 — 정적 cover (모션은 Lottie 오버레이 SSOT) */
+/* 수채화 히어로 — 정적 cover 배경만 (라인 오버레이는 중앙 로고 stroke SSOT) */
 .mg-v2-login-hero-media {
   position: absolute;
   inset: 0;
@@ -56,7 +56,7 @@
   );
 }
 
-/* 중앙 원본 로고 + SVG stroke 윤곽 오버레이 (동일 박스 겹침) */
+/* 중앙 원본 로고 + SVG stroke 윤곽 오버레이 (동일 박스 겹침, contain/meet) */
 .mg-v2-login-hero-logo-stage {
   position: absolute;
   top: 50%;
@@ -89,18 +89,33 @@
 
 .mg-v2-login-hero-outline-path {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.6);
-  stroke-width: 2;
+  stroke: var(--mg-primary-color, rgba(30, 40, 35, 0.92));
+  stroke-width: 4.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 900;
-  stroke-dashoffset: 900;
-  animation: mg-v2-hero-outline-draw 3s ease-in-out alternate infinite;
+  vector-effect: non-scaling-stroke;
+  filter:
+    drop-shadow(0 0 1px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 1px 2px rgba(20, 28, 24, 0.75));
+}
+
+/* 정적 base — dash 애니 중에도 윤곽이 비지 않도록 */
+.mg-v2-login-hero-outline-path--base {
+  opacity: 0.55;
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  animation: none;
+}
+
+.mg-v2-login-hero-outline-path--draw {
+  stroke-dasharray: 0.42 0.58;
+  stroke-dashoffset: 1;
+  animation: mg-v2-hero-outline-draw 2.8s ease-in-out alternate infinite;
 }
 
 @keyframes mg-v2-hero-outline-draw {
   0% {
-    stroke-dashoffset: 900;
+    stroke-dashoffset: 1;
   }
   100% {
     stroke-dashoffset: 0;
@@ -108,9 +123,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mg-v2-login-hero-outline-path {
+  .mg-v2-login-hero-outline-path--draw {
     animation: none;
+    stroke-dasharray: none;
     stroke-dashoffset: 0;
+    opacity: 0;
+  }
+
+  .mg-v2-login-hero-outline-path--base {
+    opacity: 1;
   }
 }
 

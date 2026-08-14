@@ -883,6 +883,12 @@ const UnifiedLogin = () => {
         <div className="mg-v2-login-hero">
           <div className="mg-v2-login-hero-media" aria-hidden="true" />
           <div className="mg-v2-login-hero-motion-layer" aria-hidden="true" />
+          <div className="mg-v2-login-hero-sparkles" aria-hidden="true">
+            <span className="mg-v2-sparkle s1"></span>
+            <span className="mg-v2-sparkle s2"></span>
+            <span className="mg-v2-sparkle s3"></span>
+            <span className="mg-v2-sparkle s4"></span>
+          </div>
           <div className="mg-v2-login-hero-sweep" aria-hidden="true" />
           <div className="mg-v2-login-hero-content">
             <h1 className="mg-v2-login-hero-logo">{t('auth:unifiedLogin.heroLogo', 'CoreSolution')}</h1>

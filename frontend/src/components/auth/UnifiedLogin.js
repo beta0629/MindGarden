@@ -68,7 +68,7 @@ import {
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
 
-const LoginHeroLottieOverlay = lazy(() => import('./LoginHeroLottieOverlay'));
+const LoginHeroLineOverlay = lazy(() => import('./LoginHeroLineOverlay'));
 
 const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
@@ -885,7 +885,7 @@ const UnifiedLogin = () => {
         <div className="mg-v2-login-hero">
           <div className="mg-v2-login-hero-media" aria-hidden="true" />
           <Suspense fallback={null}>
-            <LoginHeroLottieOverlay />
+            <LoginHeroLineOverlay />
           </Suspense>
           <div className="mg-v2-login-hero-content">
             <h1 className="mg-v2-login-hero-logo">{t('auth:unifiedLogin.heroLogo', 'CoreSolution')}</h1>

@@ -22,16 +22,14 @@
   background-size: cover;
   background-repeat: no-repeat;
   display: flex;
-  /* 중앙 떠 있음 방지: 하단·좌측에 붙여 레이아웃 닻 */
-  align-items: flex-end;
-  justify-content: flex-start;
-  padding: 0 0 clamp(32px, 6vw, 56px) clamp(24px, 5vw, 56px);
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-v2-space-8, 32px);
 }
 
 /*
  * 수채화 히어로 — img cover
  * object-position 은 전 BP 에서 center 고정.
- * SVG(preserveAspectRatio xMidYMid slice) 와 커버 앵커를 반드시 동일하게 유지.
  */
 .mg-v2-login-hero-media {
   position: absolute;
@@ -56,113 +54,125 @@
   pointer-events: none;
   background: linear-gradient(
     to top,
-    color-mix(in srgb, var(--mg-login-bg-base, var(--mg-color-background-main)) 80%, transparent) 0%,
-    color-mix(in srgb, var(--mg-login-bg-base, var(--mg-color-background-main)) 0%, transparent) 50%
+    color-mix(in srgb, var(--mg-login-bg-base, var(--mg-color-background-main)) 35%, transparent) 0%,
+    color-mix(in srgb, var(--mg-login-bg-base, var(--mg-color-background-main)) 0%, transparent) 45%
   );
 }
 
-/* SVG 라인 오버레이 — hero media cover(slice)와 동일 좌표계, scale 금지 */
-.mg-v2-login-hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+/* 브랜드 스택: MindGarden(상단) → 나비 PNG(중앙) */
+.mg-v2-login-hero-brand {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-space-10, 40px);
+  max-width: 100%;
   pointer-events: none;
-  overflow: hidden;
 }
 
-.mg-v2-hero-svg {
+.mg-v2-login-hero-title-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-v2-login-hero-title {
+  margin: 0;
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(4rem, 5.5vw, 5rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--mg-color-primary-dark);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mg-v2-login-hero-title-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mg-v2-login-hero-logo-wrapper {
+  position: relative;
+  width: min(240px, 42vw);
+  aspect-ratio: 723 / 1024;
+  flex-shrink: 0;
+}
+
+.mg-v2-login-hero-butterfly,
+.mg-v2-login-hero-logo-outline {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
+}
+
+.mg-v2-login-hero-butterfly {
+  object-fit: contain;
+  object-position: center center;
+}
+
+.mg-v2-login-hero-logo-outline {
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* 브랜드 외곽 라인 — primary-dark, 흰 stroke 금지 */
+.mg-v2-path-brand-title {
   fill: none;
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(4rem, 5.5vw, 5rem);
+  stroke: var(--mg-color-primary-dark);
+  stroke-width: 2.5px;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.mg-v2-hero-path {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.5;
   stroke-dasharray: 2000;
   stroke-dashoffset: 2000;
-  animation: mg-v2-draw-line 8s ease-in-out infinite alternate;
+  animation: mg-v2-draw-brand-line 3.5s ease-out forwards;
 }
 
-.mg-v2-path-frame {
-  stroke: rgba(245, 243, 239, 0.4);
-  stroke-width: 1.5;
-  animation-duration: 12s;
+.mg-v2-login-hero-logo-outline g {
+  fill: none;
+  stroke: none;
 }
 
-.mg-v2-path-sill,
-.mg-v2-path-cushion,
-.mg-v2-path-curtain {
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1.5;
+.mg-v2-login-hero-logo-outline path {
+  fill: none;
+  stroke: var(--mg-color-primary-dark);
+  stroke-width: 28;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 5000;
+  stroke-dashoffset: 5000;
+  animation: mg-v2-draw-brand-line 3.5s ease-out 0.35s forwards;
 }
 
-.mg-v2-path-mug,
-.mg-v2-path-foliage {
-  stroke: rgba(245, 243, 239, 0.4);
-  stroke-width: 1.5;
-}
-
-.mg-v2-delay-1 { animation-delay: 1.5s; }
-.mg-v2-delay-2 { animation-delay: 3s; }
-.mg-v2-delay-3 { animation-delay: 4.5s; }
-
-@keyframes mg-v2-draw-line {
-  0% { stroke-dashoffset: 2000; opacity: 0; }
-  20% { opacity: 1; }
-  80% { stroke-dashoffset: 0; opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0.2; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mg-v2-hero-path {
-    animation: none;
-    stroke-dashoffset: 0;
+@keyframes mg-v2-draw-brand-line {
+  from {
     opacity: 0.4;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
 }
 
-/* 텍스트 카드 — 하단·좌측 앵커 */
-.mg-v2-login-hero-content {
-  position: relative;
-  z-index: 10;
-  align-self: flex-end;
-  text-align: left;
-  max-width: min(320px, 88%);
-  color: var(--mg-text-primary, var(--mg-dark-bg-900));
-  background: rgba(250, 249, 247, 0.94);
-  border: 1px solid rgba(61, 82, 70, 0.12);
-  border-left: 4px solid var(--mg-primary-color, var(--mg-color-primary-main));
-  border-radius: 0 12px 12px 0;
-  padding: clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px) clamp(14px, 2vw, 20px) clamp(14px, 2vw, 18px);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.65) inset,
-    0 10px 40px rgba(20, 28, 24, 0.15);
-}
-
-.mg-v2-login-hero-logo {
-  font-size: clamp(26px, 2.5vw, 32px);
-  font-weight: 700;
-  margin: 0 0 12px 0;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  color: var(--mg-primary-color, var(--mg-color-primary-main));
-}
-
-.mg-v2-login-hero-slogan {
-  margin: 0;
-  padding-top: 14px;
-  border-top: 1px solid rgba(61, 82, 70, 0.12);
-  font-size: clamp(15px, 1.4vw, 17px);
-  font-weight: 500;
-  line-height: 1.55;
-  color: var(--mg-color-text-secondary);
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-path-brand-title,
+  .mg-v2-login-hero-logo-outline path {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
 }
 
 /* 우측: 로그인 폼 영역 (Calm Forest 정합) */
@@ -639,37 +649,29 @@
 
   .mg-v2-login-hero {
     flex: none;
-    height: 240px;
-    /* img/SVG cover 앵커와 동일 — center (30% 단독 금지) */
+    height: min(48vh, 380px);
+    min-height: 300px;
     background-position: center center, 0 0;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    padding: 0 16px 12px;
+    padding: var(--mg-v2-space-4, 16px);
   }
 
   .mg-v2-login-hero-media {
     object-position: center center;
   }
 
-  .mg-v2-login-hero-content {
-    max-width: 100%;
-    width: 100%;
-    text-align: center;
-    border-left: none;
-    border-top: 3px solid var(--mg-primary-color, var(--mg-color-primary-main));
-    border-radius: 0 0 12px 12px;
-    padding: 10px 14px 12px;
+  .mg-v2-login-hero-brand {
+    gap: var(--mg-v2-space-6, 24px);
   }
 
-  .mg-v2-login-hero-logo {
-    font-size: 18px;
-    margin-bottom: 6px;
+  .mg-v2-login-hero-title,
+  .mg-v2-path-brand-title {
+    font-size: clamp(3rem, 12vw, 3.5rem);
   }
-  
-  .mg-v2-login-hero-slogan {
-    font-size: 13px;
-    padding-top: 8px;
-    text-align: center;
+
+  .mg-v2-login-hero-logo-wrapper {
+    width: min(160px, 38vw);
   }
 
   .mg-v2-login-content {

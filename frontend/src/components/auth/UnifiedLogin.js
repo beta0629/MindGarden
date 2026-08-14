@@ -21,7 +21,7 @@
  * @since 2025-01-XX
  */
 
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -51,6 +51,12 @@ import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 // import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import '../../styles/auth/UnifiedLogin.css';
 import loginHeroWatercolor from '../../assets/images/auth/login-hero-watercolor.png';
+import coreLogoButterfly from '../../assets/images/auth/core-logo-butterfly.png';
+import {
+  LOGIN_HERO_BRAND_TITLE,
+  LoginHeroLogoOutline,
+  LoginHeroTitleOutline
+} from './LoginHeroLineOverlay';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import { SESSION_SUBDOMAIN_TENANT_NAME_KEY } from '../../utils/tenantDisplayName';
@@ -68,8 +74,6 @@ import {
   OAUTH_SIGNUP_REQUIRED_PROMPT,
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
-
-const LoginHeroLineOverlay = lazy(() => import('./LoginHeroLineOverlay'));
 
 const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
@@ -891,12 +895,21 @@ const UnifiedLogin = () => {
             aria-hidden="true"
             decoding="async"
           />
-          <Suspense fallback={null}>
-            <LoginHeroLineOverlay />
-          </Suspense>
-          <div className="mg-v2-login-hero-content">
-            <h1 className="mg-v2-login-hero-logo">{t('auth:unifiedLogin.heroLogo', 'CoreSolution')}</h1>
-            <p className="mg-v2-login-hero-slogan">{t('auth:unifiedLogin.heroSlogan')}</p>
+          <div className="mg-v2-login-hero-brand">
+            <div className="mg-v2-login-hero-title-wrapper">
+              <h1 className="mg-v2-login-hero-title">{LOGIN_HERO_BRAND_TITLE}</h1>
+              <LoginHeroTitleOutline />
+            </div>
+            <div className="mg-v2-login-hero-logo-wrapper">
+              <img
+                className="mg-v2-login-hero-butterfly"
+                src={coreLogoButterfly}
+                alt=""
+                aria-hidden="true"
+                decoding="async"
+              />
+              <LoginHeroLogoOutline />
+            </div>
           </div>
         </div>
 

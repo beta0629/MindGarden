@@ -16,7 +16,7 @@
   position: relative;
   isolation: isolate;
   background-color: var(--mg-primary-color, var(--mg-color-primary-main));
-  background-image: url('../../assets/images/auth/login-hero-storybook.png'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
+  background-image: url('../../assets/images/auth/login-hero-core-solution.webp'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
   background-position: center, 0 0;
   background-size: cover, cover;
   background-repeat: no-repeat, no-repeat;
@@ -44,7 +44,7 @@
   inset: 0;
   z-index: 1; 
   pointer-events: none;
-  background: radial-gradient(circle at 30% 40%, rgba(255, 245, 225, 0.12) 0%, rgba(255, 245, 225, 0) 65%);
+  background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.12) 0%, rgba(40, 90, 70, 0.04) 40%, rgba(40, 90, 70, 0) 65%);
   animation: mg-v2-hero-breathe 18s ease-in-out infinite alternate;
 }
 

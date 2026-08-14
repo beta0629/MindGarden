@@ -3,13 +3,6 @@
  * Phase 3: 통합 로그인 시스템
  */
 
-/* 히어로 테두리 시머용 각도 (로컬/개발 샘플) */
-@property --mg-v2-login-hero-border-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
 .mg-v2-login-container {
   display: flex;
   height: 100vh;
@@ -22,9 +15,8 @@
   flex: 1;
   position: relative;
   isolation: isolate;
-  --mg-v2-login-hero-border-angle: 0deg;
   background-color: var(--mg-primary-color, var(--mg-color-primary-main));
-  background-image: url('../../assets/images/auth/login-hero-artifact.webp'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
+  background-image: url('../../assets/images/auth/login-hero-storybook.png'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
   background-position: center, 0 0;
   background-size: cover, cover;
   background-repeat: no-repeat, no-repeat;
@@ -44,65 +36,34 @@
   bottom: 0;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(to top, rgba(44, 44, 44, 0.8) 0%, rgba(44, 44, 44, 0) 50%);
+  background: linear-gradient(to top, rgba(44, 40, 35, 0.75) 0%, rgba(44, 40, 35, 0) 50%);
 }
 
-/*
- * 로컬/개발 샘플: 히어로 테두리만 두꺼운 시머 보더
- * conic-gradient 회전 + mask로 보더 링만 노출 (폼·카드 미적용)
- */
-.mg-v2-login-hero::after {
-  content: '';
+.mg-v2-login-hero-motion-layer {
   position: absolute;
   inset: 0;
-  z-index: 2;
-  box-sizing: border-box;
+  z-index: 1; 
   pointer-events: none;
-  padding: var(--border-width-thick, 4px);
-  background: conic-gradient(
-    from var(--mg-v2-login-hero-border-angle),
-    transparent 0deg,
-    var(--mg-primary-light, var(--mg-color-primary-light)) 24deg,
-    var(--mg-color-brand-olive-light) 42deg,
-    transparent 72deg,
-    transparent 150deg,
-    var(--mg-primary-color, var(--mg-color-primary-main)) 178deg,
-    var(--mg-color-brand-olive-light) 198deg,
-    var(--mg-primary-light, var(--mg-color-primary-light)) 214deg,
-    transparent 248deg,
-    transparent 300deg,
-    var(--mg-color-brand-olive-light) 328deg,
-    transparent 360deg
-  );
-  -webkit-mask:
-    linear-gradient(var(--mg-white, white) 0 0) content-box,
-    linear-gradient(var(--mg-white, white) 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(var(--mg-white, white) 0 0) content-box,
-    linear-gradient(var(--mg-white, white) 0 0);
-  mask-composite: exclude;
-  animation: mg-v2-login-hero-border-shimmer 5.5s linear infinite;
-  opacity: 0.95;
+  background: radial-gradient(circle at 30% 40%, rgba(255, 245, 225, 0.12) 0%, rgba(255, 245, 225, 0) 65%);
+  animation: mg-v2-hero-breathe 18s ease-in-out infinite alternate;
 }
 
-@keyframes mg-v2-login-hero-border-shimmer {
-  to {
-    --mg-v2-login-hero-border-angle: 360deg;
-  }
+@keyframes mg-v2-hero-breathe {
+  0% { opacity: 0.3; transform: scale(1) translate(0, 0); }
+  100% { opacity: 0.8; transform: scale(1.04) translate(1%, 1%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mg-v2-login-hero::after {
+  .mg-v2-login-hero-motion-layer {
     animation: none;
-    --mg-v2-login-hero-border-angle: 135deg;
-    opacity: 0.55;
+    opacity: 0.5;
+    transform: none;
   }
 }
 
 .mg-v2-login-hero-content {
   position: relative;
-  z-index: 1;
+  z-index: 2; /* 콘텐츠 z-index 상향 */
   text-align: left;
   max-width: min(380px, 92%);
   color: var(--mg-text-primary, var(--mg-dark-bg-900));

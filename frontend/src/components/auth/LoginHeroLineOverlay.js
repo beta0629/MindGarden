@@ -16,28 +16,16 @@ export const LOGIN_HERO_BRAND_TITLE = 'MindGarden';
 /** PNG / potrace 공통 viewBox (595×842) */
 export const BUTTERFLY_LOGO_VIEWBOX = '0 0 595 842';
 
-const CLASS_TITLE_OUTLINE = 'mg-v2-login-hero-title-outline';
-const CLASS_TITLE_OUTLINE_BASE = `${CLASS_TITLE_OUTLINE} ${CLASS_TITLE_OUTLINE}--base`;
-const CLASS_TITLE_OUTLINE_HIGHLIGHT = `${CLASS_TITLE_OUTLINE} ${CLASS_TITLE_OUTLINE}--highlight`;
-
 /**
  * MindGarden Great Vibes 워드마크 외곽 path
  * title-wrapper 위에 absolute overlay (h1은 레이아웃·접근성)
- * 베이스(연한 골드 전체 윤곽) + 흰 traveling dash 하이라이트
  */
 export const LoginHeroTitleOutline = () => (
-  <>
-    <WordmarkTraceSvg
-      className={CLASS_TITLE_OUTLINE_BASE}
-      preserveAspectRatio="xMidYMid meet"
-      aria-hidden="true"
-    />
-    <WordmarkTraceSvg
-      className={CLASS_TITLE_OUTLINE_HIGHLIGHT}
-      preserveAspectRatio="xMidYMid meet"
-      aria-hidden="true"
-    />
-  </>
+  <WordmarkTraceSvg
+    className="mg-v2-login-hero-title-outline"
+    preserveAspectRatio="xMidYMid meet"
+    aria-hidden="true"
+  />
 );
 
 /**

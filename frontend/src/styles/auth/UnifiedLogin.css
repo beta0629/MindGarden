@@ -61,11 +61,6 @@
 
 /* 브랜드 스택: MindGarden(상단) → 나비 PNG(하단). 세로 중앙 뭉침 없음 */
 .mg-v2-login-hero-brand {
-  --mg-login-hero-draw-duration: 3.5s;
-  --mg-login-hero-logo-draw-delay: 0.45s;
-  --mg-login-hero-wordmark-travel-duration: 4s;
-  --mg-login-hero-wordmark-dash-on: 0.12;
-  --mg-login-hero-wordmark-dash-off: 0.88;
   position: relative;
   z-index: 2;
   display: flex;
@@ -140,75 +135,41 @@
   pointer-events: none;
 }
 
-/* 워드마크 공통 — 연한 채움, pathLength=1 */
-.mg-v2-login-hero-title-outline path {
-  fill: color-mix(in srgb, var(--mg-color-accent-main) 8%, transparent);
+/* 워드마크 및 로고 공통 (Traveling Highlight) */
+.mg-v2-login-hero-title-outline path,
+.mg-v2-login-hero-logo-outline path {
+  fill: transparent !important;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 1.5px;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-}
-
-/* 베이스: 골드/accent 얇은 전체 윤곽 (글자가 항상 읽히도록) */
-.mg-v2-login-hero-title-outline--base path {
-  stroke: var(--mg-color-accent-main);
-  stroke-width: var(--mg-v2-space-1);
-  stroke-dasharray: none;
-  stroke-dashoffset: 0;
-}
-
-/* 하이라이트: 흰 traveling dash 무한 루프 (draw-once 금지) */
-.mg-v2-login-hero-title-outline--highlight path {
-  fill: none;
-  stroke: var(--mg-color-white, var(--mg-white));
-  stroke-width: var(--mg-v2-space-2);
-  stroke-dasharray: var(--mg-login-hero-wordmark-dash-on, 0.12) var(--mg-login-hero-wordmark-dash-off, 0.88);
-  stroke-dashoffset: 0;
-  animation: mg-v2-travel-wordmark-dash var(--mg-login-hero-wordmark-travel-duration, 4s) linear infinite;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+  stroke-dasharray: 60 2000;
+  stroke-dashoffset: 2000;
+  animation: mg-v2-traveling-highlight 8s linear infinite;
 }
 
 .mg-v2-login-hero-logo-outline g {
-  fill: none;
+  fill: transparent !important;
   stroke: none;
 }
 
-.mg-v2-login-hero-logo-outline path {
-  fill: none;
-  stroke: var(--mg-color-warning-500);
-  stroke-width: var(--mg-v2-space-2);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: mg-v2-draw-brand-line var(--mg-login-hero-draw-duration, 3.5s) ease-out var(--mg-login-hero-logo-draw-delay, 0.45s) forwards;
-}
-
-@keyframes mg-v2-draw-brand-line {
-  from {
-    stroke-dashoffset: 1;
+@keyframes mg-v2-traveling-highlight {
+  0% {
+    stroke-dashoffset: 2000;
   }
-  to {
+  100% {
     stroke-dashoffset: 0;
-  }
-}
-
-@keyframes mg-v2-travel-wordmark-dash {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mg-v2-login-hero-title-outline--highlight {
-    display: none;
-  }
-
-  .mg-v2-login-hero-title-outline--highlight path,
+  .mg-v2-login-hero-title-outline path,
   .mg-v2-login-hero-logo-outline path {
-    animation: none;
+    animation: none !important;
+    opacity: 0.3;
+    stroke-dasharray: none;
     stroke-dashoffset: 0;
   }
 }

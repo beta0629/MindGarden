@@ -66,25 +66,38 @@
 
 .mg-v2-login-hero-motion-layer {
   position: absolute;
-  inset: 0;
+  /* overflow 클리핑 가장자리에서 사각 실루엣이 보이지 않도록 살짝 넘김 */
+  inset: -12%;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(
+  background-image: radial-gradient(
     circle at 28% 28%,
-    color-mix(in srgb, var(--mg-white, var(--cs-white)) 85%, transparent) 0%,
-    color-mix(in srgb, var(--mg-white, var(--cs-white)) 45%, transparent) 32%,
-    color-mix(in srgb, var(--mg-white, var(--cs-white)) 12%, transparent) 58%,
-    transparent 82%
+    color-mix(in srgb, var(--mg-white, var(--cs-white)) 72%, transparent) 0%,
+    color-mix(in srgb, var(--mg-white, var(--cs-white)) 36%, transparent) 28%,
+    color-mix(in srgb, var(--mg-white, var(--cs-white)) 10%, transparent) 52%,
+    transparent 78%
   );
+  background-repeat: no-repeat;
+  background-position: 28% 28%;
+  background-size: 85% 85%;
   mix-blend-mode: screen;
-  will-change: transform, opacity;
+  will-change: opacity, background-size;
   animation: bloom-pulse 7s ease-in-out infinite alternate;
 }
 
 @keyframes bloom-pulse {
-  0% { opacity: 0.55; transform: scale(0.9); }
-  50% { opacity: 0.95; transform: scale(1.15); }
-  100% { opacity: 0.55; transform: scale(0.9); }
+  0% {
+    opacity: 0.38;
+    background-size: 70% 70%;
+  }
+  50% {
+    opacity: 0.7;
+    background-size: 115% 115%;
+  }
+  100% {
+    opacity: 0.38;
+    background-size: 70% 70%;
+  }
 }
 
 .mg-v2-login-hero-sparkles {
@@ -118,7 +131,7 @@
 
 @keyframes sparkle-twinkle {
   0% { opacity: 0; transform: scale(0.45); }
-  45% { opacity: 0.98; transform: scale(1.35); }
+  45% { opacity: 0.82; transform: scale(1.2); }
   100% { opacity: 0; transform: scale(0.45); }
 }
 

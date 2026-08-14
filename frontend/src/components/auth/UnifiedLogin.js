@@ -881,9 +881,8 @@ const UnifiedLogin = () => {
       <div className="mg-v2-login-container">
         {/* 좌측: 브랜딩 이미지 영역 */}
         <div className="mg-v2-login-hero">
-          {/* 가벼운 숨결 모션 레이어 추가 */}
-          <div className="mg-v2-login-hero-motion-layer" aria-hidden="true"></div>
-
+          <div className="mg-v2-login-hero-media" aria-hidden="true" />
+          <div className="mg-v2-login-hero-motion-layer" aria-hidden="true" />
           <div className="mg-v2-login-hero-content">
             <h1 className="mg-v2-login-hero-logo">{t('auth:unifiedLogin.heroLogo', 'CoreSolution')}</h1>
             <p className="mg-v2-login-hero-slogan">{t('auth:unifiedLogin.heroSlogan')}</p>

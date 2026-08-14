@@ -15,16 +15,36 @@
   flex: 1;
   position: relative;
   isolation: isolate;
+  overflow: hidden;
   background-color: var(--mg-primary-color, var(--mg-color-primary-main));
-  background-image: url('../../assets/images/auth/login-hero-counseling-bright.png'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
-  background-position: center, 0 0;
-  background-size: cover, cover;
-  background-repeat: no-repeat, no-repeat;
+  background-image: linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
+  background-position: 0 0;
+  background-size: cover;
+  background-repeat: no-repeat;
   display: flex;
   /* 중앙 떠 있음 방지: 하단·좌측에 붙여 레이아웃 닻 */
   align-items: flex-end;
   justify-content: flex-start;
   padding: 0 0 clamp(32px, 6vw, 56px) clamp(24px, 5vw, 56px);
+}
+
+/* 수채화 히어로 + ken-burns (미디어 레이어만 스케일) */
+.mg-v2-login-hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url('../../assets/images/auth/login-hero-watercolor.png'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
+  background-position: center, 0 0;
+  background-size: cover, cover;
+  background-repeat: no-repeat, no-repeat;
+  transform-origin: center center;
+  animation: mg-v2-hero-ken-burns 24s ease-in-out infinite alternate;
+}
+
+@keyframes mg-v2-hero-ken-burns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
 }
 
 .mg-v2-login-hero::before {
@@ -34,30 +54,43 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
-  background: linear-gradient(to top, rgba(250, 249, 247, 0.8) 0%, rgba(250, 249, 247, 0) 50%);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--mg-login-bg-base, var(--mg-color-background-main)) 80%, transparent) 0%,
+    color-mix(in srgb, var(--mg-login-bg-base, var(--mg-color-background-main)) 0%, transparent) 50%
+  );
 }
 
 .mg-v2-login-hero-motion-layer {
   position: absolute;
   inset: 0;
-  z-index: 1; 
+  z-index: 1;
   pointer-events: none;
-  background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.4) 0%, rgba(245, 247, 245, 0.15) 40%, rgba(255, 255, 255, 0) 65%);
-  animation: mg-v2-hero-breathe 18s ease-in-out infinite alternate;
+  background: radial-gradient(
+    circle at 30% 40%,
+    color-mix(in srgb, var(--mg-white, var(--cs-white)) 55%, transparent) 0%,
+    color-mix(in srgb, var(--mg-login-bg-base, var(--mg-color-background-main)) 28%, transparent) 40%,
+    transparent 70%
+  );
+  animation: mg-v2-hero-breathe 14s ease-in-out infinite alternate;
 }
 
 @keyframes mg-v2-hero-breathe {
-  0% { opacity: 0.3; transform: scale(1) translate(0, 0); }
-  100% { opacity: 0.8; transform: scale(1.04) translate(1%, 1%); }
+  0% { opacity: 0.2; transform: scale(1) translate(0, 0); }
+  100% { opacity: 0.9; transform: scale(1.1) translate(2.5%, 2%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .mg-v2-login-hero-media,
   .mg-v2-login-hero-motion-layer {
     animation: none;
-    opacity: 0.5;
     transform: none;
+  }
+
+  .mg-v2-login-hero-motion-layer {
+    opacity: 0.5;
   }
 }
 

@@ -21,7 +21,7 @@
  * @since 2025-01-XX
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -67,6 +67,8 @@ import {
   OAUTH_SIGNUP_REQUIRED_PROMPT,
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
+
+const LoginHeroLottieOverlay = lazy(() => import('./LoginHeroLottieOverlay'));
 
 const UnifiedLogin = () => {
   console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
@@ -882,18 +884,9 @@ const UnifiedLogin = () => {
         {/* 좌측: 브랜딩 이미지 영역 */}
         <div className="mg-v2-login-hero">
           <div className="mg-v2-login-hero-media" aria-hidden="true" />
-          <div className="mg-v2-login-hero-motion-layer" aria-hidden="true" />
-          <div className="mg-v2-login-hero-sparkles" aria-hidden="true">
-            <span className="mg-v2-sparkle s1"></span>
-            <span className="mg-v2-sparkle s2"></span>
-            <span className="mg-v2-sparkle s3"></span>
-            <span className="mg-v2-sparkle s4"></span>
-            <span className="mg-v2-sparkle s5"></span>
-            <span className="mg-v2-sparkle s6"></span>
-            <span className="mg-v2-sparkle s7"></span>
-            <span className="mg-v2-sparkle s8"></span>
-          </div>
-          <div className="mg-v2-login-hero-sweep" aria-hidden="true" />
+          <Suspense fallback={null}>
+            <LoginHeroLottieOverlay />
+          </Suspense>
           <div className="mg-v2-login-hero-content">
             <h1 className="mg-v2-login-hero-logo">{t('auth:unifiedLogin.heroLogo', 'CoreSolution')}</h1>
             <p className="mg-v2-login-hero-slogan">{t('auth:unifiedLogin.heroSlogan')}</p>

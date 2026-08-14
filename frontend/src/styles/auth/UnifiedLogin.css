@@ -28,7 +28,11 @@
   padding: 0 0 clamp(32px, 6vw, 56px) clamp(24px, 5vw, 56px);
 }
 
-/* 수채화 히어로 — img cover (SVG slice 와 동일 absolute inset 0 박스) */
+/*
+ * 수채화 히어로 — img cover
+ * object-position 은 전 BP 에서 center 고정.
+ * SVG(preserveAspectRatio xMidYMid slice) 와 커버 앵커를 반드시 동일하게 유지.
+ */
 .mg-v2-login-hero-media {
   position: absolute;
   inset: 0;
@@ -37,7 +41,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  object-position: center center;
   display: block;
 }
 
@@ -636,14 +640,15 @@
   .mg-v2-login-hero {
     flex: none;
     height: 240px;
-    background-position: center 30%, 0 0;
+    /* img/SVG cover 앵커와 동일 — center (30% 단독 금지) */
+    background-position: center center, 0 0;
     align-items: flex-end;
     justify-content: center;
     padding: 0 16px 12px;
   }
 
   .mg-v2-login-hero-media {
-    object-position: center 30%;
+    object-position: center center;
   }
 
   .mg-v2-login-hero-content {

@@ -84,31 +84,30 @@
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  width: max-content;
+  width: min(90vw, 28rem);
   max-width: 100%;
   overflow: visible;
 }
 
-.mg-v2-login-hero-title {
-  margin: 0;
-  font-family: 'Great Vibes', cursive;
-  font-size: clamp(4rem, 5.5vw, 5rem);
-  font-weight: 400;
-  line-height: 1.25;
-  letter-spacing: 0.02em;
-  color: var(--mg-white);
-  -webkit-text-fill-color: var(--mg-white);
-  text-shadow: 0 0 14px color-mix(in srgb, var(--mg-white) 55%, transparent);
-  text-align: center;
+/* 접근성용 제목만 — 시각 워드마크는 SVG 하나 */
+.mg-v2-login-hero-title.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
-  word-break: keep-all;
+  border: 0;
 }
 
 .mg-v2-login-hero-title-outline {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 4932 / 1390;
   max-width: none;
   overflow: visible;
   pointer-events: none;
@@ -711,8 +710,8 @@
     padding-block: var(--mg-v2-space-2);
   }
 
-  .mg-v2-login-hero-title {
-    font-size: clamp(3rem, 12vw, 3.5rem);
+  .mg-v2-login-hero-title-wrapper {
+    width: min(92vw, 22rem);
   }
 
   .mg-v2-login-hero-logo-wrapper {

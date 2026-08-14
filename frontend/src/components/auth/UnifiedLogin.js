@@ -897,7 +897,7 @@ const UnifiedLogin = () => {
           />
           <div className="mg-v2-login-hero-brand">
             <div className="mg-v2-login-hero-title-wrapper">
-              <h1 className="mg-v2-login-hero-title">{LOGIN_HERO_BRAND_TITLE}</h1>
+              <h1 className="mg-v2-login-hero-title sr-only">{LOGIN_HERO_BRAND_TITLE}</h1>
               <LoginHeroTitleOutline />
             </div>
             <div className="mg-v2-login-hero-logo-wrapper">

@@ -142,8 +142,9 @@
 }
 
 /*
- * 워드마크: 흰 채움(가독) + 대비색 traveling light (골드/앰버)
- * duration 36s — 아주 천천히 빛이 이동
+ * 워드마크: 흰 채움(가독) + 대비색(골드) stroke draw-on
+ * pathLength=2000 기준 — 시작→끝까지 한 획이 천천히 그려짐 (handwriting)
+ * 사이클 ~34s (그리기 ~26s + 유지 ~5s + 리셋)
  */
 .mg-v2-login-hero-title-outline path {
   fill: color-mix(in srgb, var(--mg-white) 88%, transparent) !important;
@@ -153,12 +154,15 @@
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mg-client-primary-light, var(--mg-v2-color-accent-light)) 80%, transparent));
-  stroke-dasharray: 60 2000;
+  stroke-dasharray: 2000;
   stroke-dashoffset: 2000;
-  animation: mg-v2-traveling-highlight 36s linear infinite;
+  animation: mg-v2-wordmark-draw-on 34s linear infinite;
 }
 
-/* 나비 로고: PNG 위 외곽 traveling만 (채움 없음, 동일 호흡·대비색) */
+/*
+ * 나비 로고: PNG 위 외곽 traveling light만
+ * dash+gap = pathLength(2000) → 한 바퀴 = 1사이클, ~50s로 아주 느리게
+ */
 .mg-v2-login-hero-logo-outline path {
   fill: transparent !important;
   stroke: var(--mg-client-primary-light, var(--mg-v2-color-accent-light));
@@ -167,9 +171,9 @@
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mg-client-primary-light, var(--mg-v2-color-accent-light)) 75%, transparent));
-  stroke-dasharray: 60 2000;
+  stroke-dasharray: 100 1900;
   stroke-dashoffset: 2000;
-  animation: mg-v2-traveling-highlight 36s linear infinite;
+  animation: mg-v2-logo-traveling-light 50s linear infinite;
 }
 
 .mg-v2-login-hero-logo-outline g {
@@ -177,7 +181,24 @@
   stroke: none;
 }
 
-@keyframes mg-v2-traveling-highlight {
+/* 글씨: offset 2000→0 으로 path 전체가 처음부터 끝까지 그려짐 */
+@keyframes mg-v2-wordmark-draw-on {
+  0% {
+    stroke-dashoffset: 2000;
+  }
+  76% {
+    stroke-dashoffset: 0;
+  }
+  90% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 2000;
+  }
+}
+
+/* 로고: path 한 바퀴를 천천히 순회 */
+@keyframes mg-v2-logo-traveling-light {
   0% {
     stroke-dashoffset: 2000;
   }

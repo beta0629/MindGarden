@@ -1,6 +1,6 @@
 /**
  * 로그인 히어로 브랜드 라인 오버레이
- * MindGarden 필기체 path 외곽 + 나비(potrace) 외곽 dash-draw
+ * MindGarden 필기체 path draw-on(쓰기) + 나비(potrace) 외곽 traveling light
  * 장면(창틀/가지 등) path 없음
  *
  * @author CoreSolution

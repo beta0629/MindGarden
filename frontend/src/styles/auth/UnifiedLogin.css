@@ -16,7 +16,7 @@
   position: relative;
   isolation: isolate;
   background-color: var(--mg-primary-color, var(--mg-color-primary-main));
-  background-image: url('../../assets/images/auth/login-hero-core-solution.webp'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
+  background-image: url('../../assets/images/auth/login-hero-counseling-bright.png'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
   background-position: center, 0 0;
   background-size: cover, cover;
   background-repeat: no-repeat, no-repeat;
@@ -36,7 +36,7 @@
   bottom: 0;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(to top, rgba(44, 40, 35, 0.75) 0%, rgba(44, 40, 35, 0) 50%);
+  background: linear-gradient(to top, rgba(250, 249, 247, 0.8) 0%, rgba(250, 249, 247, 0) 50%);
 }
 
 .mg-v2-login-hero-motion-layer {
@@ -44,7 +44,7 @@
   inset: 0;
   z-index: 1; 
   pointer-events: none;
-  background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.12) 0%, rgba(40, 90, 70, 0.04) 40%, rgba(40, 90, 70, 0) 65%);
+  background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.4) 0%, rgba(245, 247, 245, 0.15) 40%, rgba(255, 255, 255, 0) 65%);
   animation: mg-v2-hero-breathe 18s ease-in-out infinite alternate;
 }
 

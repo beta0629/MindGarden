@@ -8,7 +8,9 @@ import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
@@ -53,6 +55,10 @@ class ScheduleServiceImplUpdateSchedulePushTest {
     private ScheduleCreatedNotificationHelper scheduleCreatedNotificationHelper;
     @Mock
     private ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
+    @Mock
+    private NotificationBatchSendLogRepository notificationBatchSendLogRepository;
+    @Mock
+    private ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;

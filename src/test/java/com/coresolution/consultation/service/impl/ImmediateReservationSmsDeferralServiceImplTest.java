@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -280,5 +281,88 @@ class ImmediateReservationSmsDeferralServiceImplTest {
         assertThat(processed).isEqualTo(1);
         verify(batchNotificationDispatchService, never()).dispatchReservationImmediateSingle(any());
         assertThat(pending.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
+    }
+
+    @Test
+    @DisplayName("슬롯 변경 pending 취소 — D2/LATE PENDING 만 SKIPPED_CANCELLED, SINGLE 유지, 즉시 dispatch 없음")
+    void cancelPendingReservationReminders_marksD2LatePending() {
+        ImmediateReservationSmsPending d2 = ImmediateReservationSmsPending.builder()
+                .tenantId(TENANT_ID)
+                .scheduleId(10L)
+                .templateCode(BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2)
+                .fireAt(LocalDateTime.of(2026, 7, 30, 9, 0))
+                .status(ImmediateReservationSmsPendingStatus.PENDING)
+                .build();
+        d2.setId(21L);
+        ImmediateReservationSmsPending late = ImmediateReservationSmsPending.builder()
+                .tenantId(TENANT_ID)
+                .scheduleId(10L)
+                .templateCode(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE)
+                .fireAt(LocalDateTime.of(2026, 7, 30, 9, 0))
+                .status(ImmediateReservationSmsPendingStatus.PENDING)
+                .build();
+        late.setId(22L);
+        ImmediateReservationSmsPending single = ImmediateReservationSmsPending.builder()
+                .tenantId(TENANT_ID)
+                .scheduleId(10L)
+                .templateCode(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE)
+                .fireAt(LocalDateTime.of(2026, 7, 30, 9, 0))
+                .status(ImmediateReservationSmsPendingStatus.PENDING)
+                .build();
+        single.setId(23L);
+
+        when(pendingRepository.findPendingByTenantScheduleAndTemplateCodes(
+                eq(TENANT_ID),
+                eq(10L),
+                eq(ImmediateReservationSmsPendingStatus.PENDING),
+                eq(BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES)))
+                .thenReturn(java.util.List.of(d2, late));
+
+        int cancelled = service.cancelPendingReservationReminders(
+                TENANT_ID, 10L, BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES);
+
+        assertThat(cancelled).isEqualTo(2);
+        assertThat(d2.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
+        assertThat(late.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
+        assertThat(single.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.PENDING);
+        verify(batchNotificationDispatchService, never()).dispatchReservationReminderD2(any());
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateLate(any());
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateSingle(any());
+        verify(pendingRepository, times(2)).save(any(ImmediateReservationSmsPending.class));
+    }
+
+    @Test
+    @DisplayName("tenantId 없으면 pending 취소 0건")
+    void cancelPendingReservationReminders_blankTenant_skips() {
+        int cancelled = service.cancelPendingReservationReminders(
+                " ", 10L, BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES);
+        assertThat(cancelled).isZero();
+        verify(pendingRepository, never()).findPendingByTenantScheduleAndTemplateCodes(
+                any(), any(), any(), any());
+        verify(batchNotificationDispatchService, never()).dispatchReservationReminderD2(any());
+    }
+
+    @Test
+    @DisplayName("scheduleId 없으면 pending 취소 0건")
+    void cancelPendingReservationReminders_nullSchedule_skips() {
+        int cancelled = service.cancelPendingReservationReminders(
+                TENANT_ID, null, BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES);
+        assertThat(cancelled).isZero();
+        verify(pendingRepository, never()).findPendingByTenantScheduleAndTemplateCodes(
+                any(), any(), any(), any());
+        verify(batchNotificationDispatchService, never()).dispatchReservationReminderD2(any());
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateLate(any());
+    }
+
+    @Test
+    @DisplayName("templateCodes 비면 pending 취소 0건")
+    void cancelPendingReservationReminders_emptyCodes_skips() {
+        int cancelled = service.cancelPendingReservationReminders(
+                TENANT_ID, 10L, java.util.List.of());
+        assertThat(cancelled).isZero();
+        verify(pendingRepository, never()).findPendingByTenantScheduleAndTemplateCodes(
+                any(), any(), any(), any());
+        verify(batchNotificationDispatchService, never()).dispatchReservationReminderD2(any());
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateLate(any());
     }
 }

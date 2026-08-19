@@ -122,6 +122,71 @@ class NotificationBatchSendLogPushMonitoringTest {
         assertThat(repository.findByIdAndTenantId(mine.getId(), otherTenant)).isEmpty();
     }
 
+    @Test
+    @DisplayName("물리 삭제 — D2/LATE UNIQUE 해제, SINGLE·타테넌트 유지, 동일 키 재삽입 가능")
+    void deleteByTenantScheduleCodes_physicalDeleteFreesUniqueKeepsSingle() {
+        String tenantId = UUID.randomUUID().toString();
+        String otherTenant = UUID.randomUUID().toString();
+        LocalDateTime now = LocalDateTime.now();
+        long scheduleId = 501L;
+
+        repository.save(buildLogWithCode(tenantId, BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2,
+                now, scheduleId));
+        repository.save(buildLogWithCode(tenantId, BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE,
+                now, scheduleId));
+        repository.save(buildLogWithCode(tenantId, BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE,
+                now, scheduleId));
+        repository.save(buildLogWithCode(otherTenant, BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2,
+                now, scheduleId));
+        repository.flush();
+
+        int deleted = repository.deleteByTenantIdAndTargetTypeAndTargetIdAndTemplateCodeIn(
+                tenantId,
+                BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
+                scheduleId,
+                BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES);
+
+        assertThat(deleted).isEqualTo(2);
+
+        assertThat(repository.existsByIdempotencyKey(
+                tenantId,
+                BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2,
+                BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
+                scheduleId,
+                1L)).isFalse();
+        assertThat(repository.existsByIdempotencyKey(
+                tenantId,
+                BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE,
+                BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
+                scheduleId,
+                1L)).isFalse();
+        assertThat(repository.existsByIdempotencyKey(
+                tenantId,
+                BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE,
+                BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
+                scheduleId,
+                1L)).isTrue();
+        assertThat(repository.existsByIdempotencyKey(
+                otherTenant,
+                BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2,
+                BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
+                scheduleId,
+                1L)).isTrue();
+
+        NotificationBatchSendLog reinserted = buildLogWithCode(
+                tenantId, BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2, now, scheduleId);
+        repository.saveAndFlush(reinserted);
+        assertThat(reinserted.getId()).isNotNull();
+    }
+
+    private NotificationBatchSendLog buildLogWithCode(String tenantId, String templateCode,
+            LocalDateTime sentAt, long targetId) {
+        NotificationBatchSendLog row = buildLog(tenantId,
+                BatchNotificationTemplateCodes.CHANNEL_SMS, sentAt, true, null, targetId);
+        row.setTemplateCode(templateCode);
+        return row;
+    }
+
     private NotificationBatchSendLog buildLog(String tenantId, String channelUsed,
             LocalDateTime sentAt, boolean success, String errorCode, long targetId) {
         NotificationBatchSendLog row = NotificationBatchSendLog.builder()

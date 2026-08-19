@@ -275,6 +275,33 @@ public interface NotificationBatchSendLogRepository
         Pageable pageable);
 
     /**
+     * 예약 일시(슬롯) 변경 시 D-2/D-1 배치 멱등 로그를 <strong>물리 삭제</strong>한다.
+     *
+     * <p>{@code uq_nbsl_dispatch_idempotency} 에 {@code is_deleted} 가 없어 soft-delete 만으로는
+     * 다음 09:00 배치 INSERT 가 UNIQUE 충돌({@code SKIPPED_DUPLICATE}) 한다.
+     * 호출자는 {@code RESERVATION_REMINDER_DN_CODES}(D2·LATE)만 넘기고 SINGLE 은 제외한다.
+     *
+     * @param tenantId      테넌트 ID (필수)
+     * @param targetType    대상 타입 ({@code SCHEDULE})
+     * @param targetId      스케줄 ID
+     * @param templateCodes 삭제 대상 템플릿 코드 묶음
+     * @return 삭제된 row 수
+     * @author MindGarden
+     * @since 2026-08-19
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.targetType = :targetType "
+            + "AND l.targetId = :targetId "
+            + "AND l.templateCode IN :templateCodes")
+    int deleteByTenantIdAndTargetTypeAndTargetIdAndTemplateCodeIn(
+            @Param("tenantId") String tenantId,
+            @Param("targetType") String targetType,
+            @Param("targetId") Long targetId,
+            @Param("templateCodes") Collection<String> templateCodes);
+
+    /**
      * 보관기간 초과 row 일괄 삭제 (시스템 잡 전용 — tenant 무관 전역).
      *
      * <p>네이티브 SQL {@code LIMIT} 으로 1회 호출당 삭제량을 제한해 락 시간을 짧게 유지한다.

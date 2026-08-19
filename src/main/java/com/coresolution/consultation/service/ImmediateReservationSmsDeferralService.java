@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -37,4 +38,21 @@ public interface ImmediateReservationSmsDeferralService {
      * @return 처리(상태 전이) 건수
      */
     int processDuePending();
+
+    /**
+     * 스케줄의 D-2/D-1 PENDING 을 {@code SKIPPED_CANCELLED} 로 전이한다.
+     *
+     * <p>예약 일시(슬롯) 변경 시 옛 {@code fire_at} 이 당일 09:00 배치를 가로채지 않게 한다.
+     * {@code templateCodes} 에 해당하는 PENDING 만 취소한다 ({@code RESERVATION_IMMEDIATE_SINGLE} 제외).
+     * 즉시 디스패치는 수행하지 않는다.
+     *
+     * @param tenantId      테넌트 ID (필수)
+     * @param scheduleId    스케줄 ID
+     * @param templateCodes 취소 대상 템플릿 코드 (D2·LATE)
+     * @return 취소(상태 전이) 건수
+     * @author MindGarden
+     * @since 2026-08-19
+     */
+    int cancelPendingReservationReminders(
+            String tenantId, Long scheduleId, Collection<String> templateCodes);
 }

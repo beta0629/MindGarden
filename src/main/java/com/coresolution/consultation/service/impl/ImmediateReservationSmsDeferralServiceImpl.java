@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.config.ImmediateReservationSmsProperties;
@@ -167,6 +168,48 @@ public class ImmediateReservationSmsDeferralServiceImpl
             }
         }
         return processed;
+    }
+
+    /**
+     * 슬롯 변경 시 D-2/D-1 PENDING 을 {@code SKIPPED_CANCELLED} 로 전이한다. 즉시 dispatch 없음.
+     *
+     * @param tenantId      테넌트 ID
+     * @param scheduleId    스케줄 ID
+     * @param templateCodes D2·LATE 코드 묶음
+     * @return 취소 건수
+     * @author MindGarden
+     * @since 2026-08-19
+     */
+    @Override
+    @Transactional
+    public int cancelPendingReservationReminders(
+            String tenantId, Long scheduleId, Collection<String> templateCodes) {
+        if (!StringUtils.hasText(tenantId) || scheduleId == null
+                || templateCodes == null || templateCodes.isEmpty()) {
+            log.warn(
+                    "즉시 SMS pending 취소 생략: tenantId={}, scheduleId={}, templateCodes={}",
+                    tenantId,
+                    scheduleId,
+                    templateCodes);
+            return 0;
+        }
+        List<ImmediateReservationSmsPending> pendings =
+                pendingRepository.findPendingByTenantScheduleAndTemplateCodes(
+                        tenantId,
+                        scheduleId,
+                        ImmediateReservationSmsPendingStatus.PENDING,
+                        templateCodes);
+        for (ImmediateReservationSmsPending pending : pendings) {
+            mark(pending, ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
+        }
+        if (!pendings.isEmpty()) {
+            log.info(
+                    "즉시 SMS pending 취소(슬롯 변경): tenantId={}, scheduleId={}, cancelled={}",
+                    tenantId,
+                    scheduleId,
+                    pendings.size());
+        }
+        return pendings.size();
     }
 
     private boolean processOne(ImmediateReservationSmsPending pending) {

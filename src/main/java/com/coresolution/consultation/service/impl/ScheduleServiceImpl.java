@@ -45,6 +45,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
+import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
@@ -126,6 +127,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final ConsultantClientMappingHistoryService consultantClientMappingHistoryService;
     private final ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
     private final ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService;
+    private final NotificationBatchSendLogRepository notificationBatchSendLogRepository;
     private final ObjectMapper sessionHistoryObjectMapper = new ObjectMapper();
 
     /**
@@ -179,7 +181,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             BatchNotificationDispatchService batchNotificationDispatchService,
             ConsultantClientMappingHistoryService consultantClientMappingHistoryService,
             ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService,
-            ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService) {
+            ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService,
+            NotificationBatchSendLogRepository notificationBatchSendLogRepository) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -205,6 +208,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.consultantClientMappingHistoryService = consultantClientMappingHistoryService;
         this.scheduleChangeNotificationDebounceService = scheduleChangeNotificationDebounceService;
         this.immediateReservationSmsDeferralService = immediateReservationSmsDeferralService;
+        this.notificationBatchSendLogRepository = notificationBatchSendLogRepository;
     }
     
     
@@ -361,6 +365,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // SCHEDULE_CHANGED 외부채널(알림톡/SMS)은 10분 디바운스 pending 등록.
             // 실제 발송은 ScheduleChangeNotificationScheduler 가 fire_at 경과 후 수행.
             tryEnqueueScheduleChangedExternalChannels(saved, previousDate, previousStartTime);
+            resetReservationReminderMarksIfSlotChanged(saved);
         }
 
         boolean wasOccupyingConsultation = previousStatus != null
@@ -407,6 +412,57 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } catch (Exception e) {
             log.warn(
                     "일정 변경 디바운스 pending 등록 실패(본 처리 롤백 없음): scheduleId={}, {}",
+                    saved.getId(),
+                    e.getMessage());
+        }
+    }
+
+    /**
+     * 예약 일시(슬롯) 변경 시 D-2/D-1 배치 멱등 로그를 물리 삭제하고 PENDING 을 취소한다.
+     *
+     * <p>즉시 SMS 재발송은 하지 않는다. 다음 09:00 {@code ReservationReminderScheduler} 가
+     * 새 {@code Schedule.date} 기준으로 D-2/D-1 을 다시 집계한다.
+     * {@code RESERVATION_IMMEDIATE_SINGLE} 로그는 삭제하지 않는다.
+     *
+     * @param saved 슬롯 변경 후 스케줄
+     * @author MindGarden
+     * @since 2026-08-19
+     */
+    private void resetReservationReminderMarksIfSlotChanged(Schedule saved) {
+        if (saved == null || saved.getId() == null) {
+            return;
+        }
+        String resolvedTenantId = TenantContextHolder.getTenantId();
+        if (resolvedTenantId == null || resolvedTenantId.isEmpty()) {
+            resolvedTenantId = saved.getTenantId();
+        }
+        if (resolvedTenantId == null || resolvedTenantId.isEmpty()) {
+            log.warn(
+                    "예약 리마인드 마킹 리셋 생략: tenantId 없음, scheduleId={}",
+                    saved.getId());
+            return;
+        }
+        try {
+            int deleted = notificationBatchSendLogRepository
+                    .deleteByTenantIdAndTargetTypeAndTargetIdAndTemplateCodeIn(
+                            resolvedTenantId,
+                            BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
+                            saved.getId(),
+                            BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES);
+            int cancelled = immediateReservationSmsDeferralService
+                    .cancelPendingReservationReminders(
+                            resolvedTenantId,
+                            saved.getId(),
+                            BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES);
+            log.info(
+                    "예약 리마인드 마킹 리셋: scheduleId={}, newDate={}, deletedLogs={}, cancelledPending={}",
+                    saved.getId(),
+                    saved.getDate(),
+                    deleted,
+                    cancelled);
+        } catch (Exception e) {
+            log.warn(
+                    "예약 리마인드 마킹 리셋 실패(본 처리 롤백 없음): scheduleId={}, {}",
                     saved.getId(),
                     e.getMessage());
         }

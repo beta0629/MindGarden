@@ -99,4 +99,27 @@ public interface ImmediateReservationSmsPendingRepository
     List<ImmediateReservationSmsPending> findByTenantIdAndScheduleIdInAndIsDeletedFalse(
             @Param("tenantId") String tenantId,
             @Param("scheduleIds") Collection<Long> scheduleIds);
+
+    /**
+     * 스케줄·템플릿 묶음의 PENDING 행 조회 (슬롯 변경 시 당일 배치 skip 방지용 취소 대상).
+     *
+     * @param tenantId      테넌트 ID (필수)
+     * @param scheduleId    스케줄 ID
+     * @param status        상태 ({@code PENDING})
+     * @param templateCodes 템플릿 코드 묶음 (D2·LATE)
+     * @return PENDING 목록
+     * @author MindGarden
+     * @since 2026-08-19
+     */
+    @Query("SELECT p FROM ImmediateReservationSmsPending p "
+            + "WHERE p.tenantId = :tenantId "
+            + "  AND p.scheduleId = :scheduleId "
+            + "  AND p.status = :status "
+            + "  AND p.templateCode IN :templateCodes "
+            + "  AND p.isDeleted = false")
+    List<ImmediateReservationSmsPending> findPendingByTenantScheduleAndTemplateCodes(
+            @Param("tenantId") String tenantId,
+            @Param("scheduleId") Long scheduleId,
+            @Param("status") String status,
+            @Param("templateCodes") Collection<String> templateCodes);
 }

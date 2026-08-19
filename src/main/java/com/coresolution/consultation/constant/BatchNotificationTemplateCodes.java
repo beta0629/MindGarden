@@ -67,6 +67,17 @@ public final class BatchNotificationTemplateCodes {
             RESERVATION_IMMEDIATE_LATE);
 
     /**
+     * D-2/D-1 배치 리마인드 코드 — 예약 <strong>일시(슬롯)</strong> 변경 시 멱등 UNIQUE 해제 대상.
+     *
+     * <p>{@link #RESERVATION_SCHEDULE_SMS_CODES} 중 D2·LATE만.
+     * {@link #RESERVATION_IMMEDIATE_SINGLE} · WELCOME · INITIAL_GUIDE 는 포함하지 않는다.
+     *
+     * @since 2026-08-19
+     */
+    public static final java.util.List<String> RESERVATION_REMINDER_DN_CODES =
+        java.util.List.of(RESERVATION_REMINDER_D2, RESERVATION_IMMEDIATE_LATE);
+
+    /**
      * 마케팅성 템플릿 식별 — SMS 폴백 정책 F2 가드에 사용된다.
      * 마케팅 메시지(현재 {@link #SESSION_RENEW_PROMPT} 1종)는 알림톡 실패 시에도
      * SMS 폴백을 수행하지 않는다(수신동의/수신거부 구문 운영 복잡도 회피).

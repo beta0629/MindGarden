@@ -6168,27 +6168,26 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             LocalDate previousWeekStart = weekStart.minusWeeks(1);
             LocalDate previousWeekEnd = weekStart.minusDays(1);
 
-            List<ScheduleStatus> statuses = List.of(
-                    ScheduleStatus.BOOKED,
-                    ScheduleStatus.CONFIRMED,
-                    ScheduleStatus.COMPLETED,
-                    ScheduleStatus.CANCELLED);
+            // total·요일 막대: 취소 제외 / byStatus: 취소 포함(상태별 섹션용)
+            List<ScheduleStatus> activeStatuses = weeklyReservationActiveStatuses();
+            List<ScheduleStatus> statusBreakdownStatuses = weeklyReservationStatusBreakdownStatuses();
 
             long totalCount = scheduleRepository.countByDateBetweenAndStatuses(
-                    tenantId, weekStart, weekEnd, statuses);
+                    tenantId, weekStart, weekEnd, activeStatuses);
             long previousWeekTotalCount = scheduleRepository.countByDateBetweenAndStatuses(
-                    tenantId, previousWeekStart, previousWeekEnd, statuses);
+                    tenantId, previousWeekStart, previousWeekEnd, activeStatuses);
             long changeAbs = totalCount - previousWeekTotalCount;
             Double changePercent = ConsultationsByDayOfWeekUtils.calcGrowthRatePercent(
                     totalCount, previousWeekTotalCount);
 
             List<Object[]> dateRows = scheduleRepository.countSchedulesByDateBetweenAndStatuses(
-                    tenantId, weekStart, weekEnd, statuses);
+                    tenantId, weekStart, weekEnd, activeStatuses);
             List<WeeklyReservationDayItemResponse> byDayOfWeek = buildWeeklyByDayOfWeek(dateRows);
 
             List<Object[]> statusRows = scheduleRepository.countSchedulesByStatusBetweenAndStatuses(
-                    tenantId, weekStart, weekEnd, statuses);
-            List<WeeklyReservationStatusItemResponse> byStatus = buildWeeklyByStatus(statusRows, statuses);
+                    tenantId, weekStart, weekEnd, statusBreakdownStatuses);
+            List<WeeklyReservationStatusItemResponse> byStatus =
+                    buildWeeklyByStatus(statusRows, statusBreakdownStatuses);
 
             WeeklyReservationsResponse response = WeeklyReservationsResponse.builder()
                     .weekStart(weekStart)
@@ -6282,6 +6281,31 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
+     * 주간 예약 KPI·요일 막대에 합산할 상태 (취소 제외).
+     *
+     * @return BOOKED, CONFIRMED, COMPLETED
+     */
+    private List<ScheduleStatus> weeklyReservationActiveStatuses() {
+        return List.of(
+                ScheduleStatus.BOOKED,
+                ScheduleStatus.CONFIRMED,
+                ScheduleStatus.COMPLETED);
+    }
+
+    /**
+     * 주간 예약 상태별 섹션에 표시할 상태 (취소 포함).
+     *
+     * @return BOOKED, CONFIRMED, COMPLETED, CANCELLED
+     */
+    private List<ScheduleStatus> weeklyReservationStatusBreakdownStatuses() {
+        return List.of(
+                ScheduleStatus.BOOKED,
+                ScheduleStatus.CONFIRMED,
+                ScheduleStatus.COMPLETED,
+                ScheduleStatus.CANCELLED);
+    }
+
+    /**
      * tenant 없거나 오류 시 빈 주간 예약 응답.
      *
      * @param weekOffset 0 또는 -1
@@ -6292,11 +6316,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         LocalDate weekStart = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(
                 java.time.DayOfWeek.MONDAY)).plusWeeks(weekOffset);
         LocalDate weekEnd = weekStart.plusDays(6);
-        List<ScheduleStatus> statuses = List.of(
-                ScheduleStatus.BOOKED,
-                ScheduleStatus.CONFIRMED,
-                ScheduleStatus.COMPLETED,
-                ScheduleStatus.CANCELLED);
         return WeeklyReservationsResponse.builder()
                 .weekStart(weekStart)
                 .weekEnd(weekEnd)
@@ -6306,7 +6325,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .changeAbs(0L)
                 .changePercent(null)
                 .byDayOfWeek(buildWeeklyByDayOfWeek(null))
-                .byStatus(buildWeeklyByStatus(null, statuses))
+                .byStatus(buildWeeklyByStatus(null, weeklyReservationStatusBreakdownStatuses()))
                 .build();
     }
     

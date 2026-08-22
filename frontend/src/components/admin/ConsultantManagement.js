@@ -18,9 +18,19 @@ import {
 } from '../../constants/professionalProviderRoles';
 import { CONSULTANT_COMP_PROFESSIONAL_TYPE_FORM } from '../../constants/consultantComprehensiveStrings';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { validateEmail, validatePhone } from '../../utils/validationUtils';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
+
+const ERR_USER_ID_REQUIRED = '사용자 ID를 입력해주세요.';
+const ERR_EMAIL_REQUIRED = '이메일을 입력해주세요.';
+const ERR_EMAIL_INVALID = '이메일 형식이 올바르지 않습니다.';
+const ERR_PASSWORD_REQUIRED = '비밀번호를 입력해주세요.';
+const ERR_NAME_REQUIRED = '이름을 입력해주세요.';
+const ERR_PHONE_REQUIRED = '전화번호를 입력해주세요.';
+const ERR_PHONE_INVALID = '전화번호 형식이 올바르지 않습니다.';
+const ERR_PROFESSIONAL_TYPE_REQUIRED = '전문 유형을 선택해주세요.';
 
 const ConsultantManagement = ({ onUpdate, showToast }) => {
     const { t } = useTranslation(['admin', 'common']);
@@ -28,6 +38,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     const [consultants, setConsultants] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [formErrors, setFormErrors] = useState({});
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [loading, setLoading] = useState(false);
     const [professionalTypeOptions, setProfessionalTypeOptions] = useState([]);
@@ -149,11 +160,56 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             specialization: '',
             professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE
         });
+        setFormErrors({});
         setShowModal(true);
     }, []);
 
+    const updateFormField = (field, value) => {
+        setForm((prev) => ({ ...prev, [field]: value }));
+        if (formErrors[field]) {
+            setFormErrors((prev) => ({ ...prev, [field]: '' }));
+        }
+    };
+
+    /**
+     * 등록 submit 전 필수·이메일 포맷 JS validate.
+     * @returns {boolean}
+     */
+    const validateCreateForm = () => {
+        const newErrors = {};
+        if (!(form.userId || '').trim()) {
+            newErrors.userId = ERR_USER_ID_REQUIRED;
+        }
+        const email = (form.email || '').trim();
+        if (!email) {
+            newErrors.email = ERR_EMAIL_REQUIRED;
+        } else if (!validateEmail(email)) {
+            newErrors.email = ERR_EMAIL_INVALID;
+        }
+        if (!(form.password || '').trim()) {
+            newErrors.password = ERR_PASSWORD_REQUIRED;
+        }
+        if (!(form.name || '').trim()) {
+            newErrors.name = ERR_NAME_REQUIRED;
+        }
+        const phone = (form.phone || '').trim();
+        if (!phone) {
+            newErrors.phone = ERR_PHONE_REQUIRED;
+        } else if (!validatePhone(phone)) {
+            newErrors.phone = ERR_PHONE_INVALID;
+        }
+        if (!(form.professionalTypeCode || '').trim()) {
+            newErrors.professionalTypeCode = ERR_PROFESSIONAL_TYPE_REQUIRED;
+        }
+        setFormErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = async(e) => {
         e.preventDefault();
+        if (!validateCreateForm()) {
+            return;
+        }
         try {
             const professionalTypeCode =
                 form.professionalTypeCode != null && String(form.professionalTypeCode).trim() !== ''
@@ -174,6 +230,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             if (user && (user.id != null || user.email)) {
                 showToast('상담사가 성공적으로 등록되었습니다.');
                 setShowModal(false);
+                setFormErrors({});
                 setForm({
                     userId: '',
                     email: '',
@@ -315,51 +372,82 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                     backdropClick
                     showCloseButton
                 >
-                    <Form onSubmit={handleSubmit}>
+                    <Form onSubmit={handleSubmit} noValidate>
                         <Form.Group className="mb-3">
-                            <Form.Label>사용자 ID</Form.Label>
+                            <Form.Label>
+                                사용자 ID
+                                <span className="mg-v2-form-label-required">*</span>
+                            </Form.Label>
                             <Form.Control
                                 type="text"
                                 value={form.userId}
-                                onChange={(e) => setForm({ ...form, userId: e.target.value })}
-                                required
+                                onChange={(e) => updateFormField('userId', e.target.value)}
+                                className={formErrors.userId ? 'mg-v2-form-input-error' : undefined}
+                                isInvalid={!!formErrors.userId}
                             />
+                            {formErrors.userId ? (
+                                <span className="mg-v2-form-error" role="alert">{formErrors.userId}</span>
+                            ) : null}
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>{t('admin.labels.email')}</Form.Label>
+                            <Form.Label>
+                                {t('admin.labels.email')}
+                                <span className="mg-v2-form-label-required">*</span>
+                            </Form.Label>
                             <Form.Control
                                 type="email"
                                 value={form.email}
-                                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                required
+                                onChange={(e) => updateFormField('email', e.target.value)}
+                                isInvalid={!!formErrors.email}
                             />
+                            {formErrors.email ? (
+                                <span className="mg-v2-form-error" role="alert">{formErrors.email}</span>
+                            ) : null}
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>비밀번호</Form.Label>
+                            <Form.Label>
+                                비밀번호
+                                <span className="mg-v2-form-label-required">*</span>
+                            </Form.Label>
                             <Form.Control
                                 type="password"
                                 value={form.password}
-                                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                required
+                                onChange={(e) => updateFormField('password', e.target.value)}
+                                isInvalid={!!formErrors.password}
                             />
+                            {formErrors.password ? (
+                                <span className="mg-v2-form-error" role="alert">{formErrors.password}</span>
+                            ) : null}
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>{t('common.labels.name')}</Form.Label>
+                            <Form.Label>
+                                {t('common.labels.name')}
+                                <span className="mg-v2-form-label-required">*</span>
+                            </Form.Label>
                             <Form.Control
                                 type="text"
                                 value={form.name}
-                                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                required
+                                onChange={(e) => updateFormField('name', e.target.value)}
+                                isInvalid={!!formErrors.name}
                             />
+                            {formErrors.name ? (
+                                <span className="mg-v2-form-error" role="alert">{formErrors.name}</span>
+                            ) : null}
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>전화번호</Form.Label>
+                            <Form.Label>
+                                전화번호
+                                <span className="mg-v2-form-label-required">*</span>
+                            </Form.Label>
                             <Form.Control
                                 type="tel"
                                 value={form.phone}
-                                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                                required
+                                onChange={(e) => updateFormField('phone', e.target.value)}
+                                isInvalid={!!formErrors.phone}
                             />
+                            {formErrors.phone ? (
+                                <span className="mg-v2-form-error" role="alert">{formErrors.phone}</span>
+                            ) : null}
                         </Form.Group>
                         <div className="mg-v2-form-group mb-3">
                             <label htmlFor="legacy-consultant-professional-type" className="mg-v2-form-label">
@@ -368,10 +456,9 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                             <select
                                 id="legacy-consultant-professional-type"
                                 name="professionalTypeCode"
-                                className="mg-v2-form-input"
+                                className={`mg-v2-form-input${formErrors.professionalTypeCode ? ' mg-v2-form-input-error' : ''}`}
                                 value={form.professionalTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE}
-                                onChange={(e) => setForm({ ...form, professionalTypeCode: e.target.value })}
-                                required
+                                onChange={(e) => updateFormField('professionalTypeCode', e.target.value)}
                             >
                                 {selectOptions.map((opt) => (
                                     <option key={opt.value} value={opt.value}>
@@ -379,13 +466,16 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                                     </option>
                                 ))}
                             </select>
+                            {formErrors.professionalTypeCode ? (
+                                <span className="mg-v2-form-error" role="alert">{formErrors.professionalTypeCode}</span>
+                            ) : null}
                         </div>
                         <Form.Group className="mb-3">
                             <Form.Label>전문분야</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={form.specialization}
-                                onChange={(e) => setForm({ ...form, specialization: e.target.value })}
+                                onChange={(e) => updateFormField('specialization', e.target.value)}
                             />
                         </Form.Group>
                         <div className="d-flex justify-content-end gap-2">

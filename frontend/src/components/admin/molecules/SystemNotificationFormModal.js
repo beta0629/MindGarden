@@ -30,6 +30,9 @@ const TYPE_OPTIONS = [
   { value: 'UPDATE', label: '업데이트 안내' }
 ];
 
+const ERR_TITLE_REQUIRED = '제목을 입력해주세요.';
+const ERR_CONTENT_REQUIRED = '내용을 입력해주세요.';
+
 const SystemNotificationFormModal = ({
   isOpen,
   onClose,
@@ -47,9 +50,11 @@ const SystemNotificationFormModal = ({
     isUrgent: false,
     expiresAt: ''
   });
+  const [errors, setErrors] = React.useState({});
 
   React.useEffect(() => {
     if (isOpen) {
+      setErrors({});
       if (initialData) {
         setFormData({
           targetType: initialData.targetType || 'ALL',
@@ -74,9 +79,39 @@ const SystemNotificationFormModal = ({
     }
   }, [isOpen, initialData]);
 
+  const updateField = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  /**
+   * 저장 전 필드 errors + 필수 검사. toast만 의존하지 않음.
+   * @returns {boolean}
+   */
+  const validateForm = () => {
+    const newErrors = {};
+    if (!(formData.title || '').trim()) {
+      newErrors.title = ERR_TITLE_REQUIRED;
+    }
+    if (!(formData.content || '').trim()) {
+      newErrors.content = ERR_CONTENT_REQUIRED;
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const trySave = () => {
+    if (!validateForm()) {
+      return;
+    }
+    onSave?.(formData);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave?.(formData);
+    trySave();
   };
 
   const title = initialData ? '공지 수정' : '공지 작성';
@@ -109,7 +144,7 @@ const SystemNotificationFormModal = ({
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             aria-label={t('common.actions.save')}
-            onClick={() => onSave?.(formData)}
+            onClick={trySave}
             disabled={loading}
           >
             {t('common.actions.save')}
@@ -118,7 +153,7 @@ const SystemNotificationFormModal = ({
       }
     >
       <div className="mg-v2-ad-b0kla-modal__body">
-        <form onSubmit={handleSubmit} aria-label="공지 작성 폼">
+        <form onSubmit={handleSubmit} aria-label="공지 작성 폼" noValidate>
           <fieldset className="mg-v2-ad-notifications__form-fieldset">
             <legend className="sr-only">공지 정보</legend>
 
@@ -128,7 +163,7 @@ const SystemNotificationFormModal = ({
                 id="admin-notice-form-target"
                 className="mg-v2-ad-b0kla__form-select mg-v2-select"
                 value={formData.targetType}
-                onChange={(e) => setFormData({ ...formData, targetType: e.target.value })}
+                onChange={(e) => updateField('targetType', e.target.value)}
                 aria-label="대상 선택"
               >
                 {TARGET_OPTIONS.map((o) => (
@@ -138,29 +173,43 @@ const SystemNotificationFormModal = ({
             </div>
 
             <div className="mg-v2-form-group mg-v2-space-y-md">
-              <label htmlFor="admin-notice-form-title" className="mg-v2-label">제목</label>
+              <label htmlFor="admin-notice-form-title" className="mg-v2-label">
+                제목
+                <span className="mg-v2-form-label-required">*</span>
+              </label>
               <input
                 type="text"
                 id="admin-notice-form-title"
-                className="mg-v2-ad-b0kla__form-input mg-v2-input"
+                className={`mg-v2-ad-b0kla__form-input mg-v2-input${errors.title ? ' mg-v2-form-input-error' : ''}`}
                 placeholder="제목"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) => updateField('title', e.target.value)}
                 aria-label="제목"
+                aria-invalid={errors.title ? true : undefined}
               />
+              {errors.title ? (
+                <span className="mg-v2-form-error" role="alert">{errors.title}</span>
+              ) : null}
             </div>
 
             <div className="mg-v2-form-group mg-v2-space-y-md">
-              <label htmlFor="admin-notice-form-body" className="mg-v2-label">내용</label>
+              <label htmlFor="admin-notice-form-body" className="mg-v2-label">
+                내용
+                <span className="mg-v2-form-label-required">*</span>
+              </label>
               <textarea
                 id="admin-notice-form-body"
-                className="mg-v2-ad-b0kla__form-textarea mg-v2-textarea"
+                className={`mg-v2-ad-b0kla__form-textarea mg-v2-textarea${errors.content ? ' mg-v2-form-input-error' : ''}`}
                 placeholder="내용"
                 rows={10}
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                onChange={(e) => updateField('content', e.target.value)}
                 aria-label="내용"
+                aria-invalid={errors.content ? true : undefined}
               />
+              {errors.content ? (
+                <span className="mg-v2-form-error" role="alert">{errors.content}</span>
+              ) : null}
             </div>
 
             <div className="mg-v2-form-group mg-v2-space-y-md">
@@ -169,7 +218,7 @@ const SystemNotificationFormModal = ({
                 id="admin-notice-form-type"
                 className="mg-v2-ad-b0kla__form-select mg-v2-select"
                 value={formData.notificationType}
-                onChange={(e) => setFormData({ ...formData, notificationType: e.target.value })}
+                onChange={(e) => updateField('notificationType', e.target.value)}
                 aria-label="유형 선택"
               >
                 {TYPE_OPTIONS.map((o) => (
@@ -183,14 +232,14 @@ const SystemNotificationFormModal = ({
                 id="admin-notice-form-important"
                 label="중요"
                 checked={!!formData.isImportant}
-                onCheckedChange={(next) => setFormData({ ...formData, isImportant: next })}
+                onCheckedChange={(next) => updateField('isImportant', next)}
                 ariaLabel="중요"
               />
               <SettingSwitchRow
                 id="admin-notice-form-urgent"
                 label={t('admin.labels.urgent')}
                 checked={!!formData.isUrgent}
-                onCheckedChange={(next) => setFormData({ ...formData, isUrgent: next })}
+                onCheckedChange={(next) => updateField('isUrgent', next)}
                 ariaLabel={t('admin.labels.urgent')}
               />
             </div>
@@ -202,7 +251,7 @@ const SystemNotificationFormModal = ({
                 id="admin-notice-form-expiry"
                 className="mg-v2-ad-b0kla__form-input mg-v2-input"
                 value={formData.expiresAt}
-                onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                onChange={(e) => updateField('expiresAt', e.target.value)}
                 aria-label="만료일"
               />
             </div>

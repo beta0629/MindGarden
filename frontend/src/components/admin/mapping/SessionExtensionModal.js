@@ -21,6 +21,8 @@ import './SessionExtensionModal.css';
 const MSG_USER_REQUIRED = '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
 const MSG_SUBMIT_FAILED = '회기 추가 요청에 실패했습니다.';
 const MSG_PACKAGE_REQUIRED = '현재 매핑의 패키지 정보를 확인할 수 없습니다.';
+const ERR_SESSIONS_REQUIRED = '추가할 회기 수는 1회 이상이어야 합니다.';
+const ERR_AMOUNT_REQUIRED = '추가분 결제 금액을 입력해 주세요. (회기 수와 다를 수 있습니다)';
 const DEFAULT_ADDITIONAL_SESSIONS = 1;
 const DEFAULT_EXTENSION_AMOUNT = 0;
 
@@ -41,6 +43,7 @@ const SessionExtensionModal = ({
   const [extensionAmount, setExtensionAmount] = useState(DEFAULT_EXTENSION_AMOUNT);
   const [reason, setReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const submittingRef = useRef(false);
 
   useEffect(() => {
@@ -50,6 +53,7 @@ const SessionExtensionModal = ({
     setAdditionalSessions(DEFAULT_ADDITIONAL_SESSIONS);
     setExtensionAmount(DEFAULT_EXTENSION_AMOUNT);
     setReason('');
+    setErrors({});
     setIsLoading(false);
     submittingRef.current = false;
   }, [isOpen, mapping]);
@@ -61,7 +65,24 @@ const SessionExtensionModal = ({
     setAdditionalSessions(DEFAULT_ADDITIONAL_SESSIONS);
     setExtensionAmount(DEFAULT_EXTENSION_AMOUNT);
     setReason('');
+    setErrors({});
     onClose();
+  };
+
+  /**
+   * 필드별 errors + 필수 검사. toast 가드를 필드로 이전.
+   * @returns {boolean}
+   */
+  const validateForm = () => {
+    const newErrors = {};
+    if (additionalSessions < DEFAULT_ADDITIONAL_SESSIONS) {
+      newErrors.additionalSessions = ERR_SESSIONS_REQUIRED;
+    }
+    if (!Number.isFinite(extensionAmount) || extensionAmount < DEFAULT_EXTENSION_AMOUNT) {
+      newErrors.extensionAmount = ERR_AMOUNT_REQUIRED;
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async(event) => {
@@ -74,12 +95,7 @@ const SessionExtensionModal = ({
       notificationManager.warning(SESSION_EXTENSION_UI.DUPLICATE_PENDING);
       return;
     }
-    if (additionalSessions < DEFAULT_ADDITIONAL_SESSIONS) {
-      notificationManager.error('추가할 회기 수는 1회 이상이어야 합니다.');
-      return;
-    }
-    if (!Number.isFinite(extensionAmount) || extensionAmount < DEFAULT_EXTENSION_AMOUNT) {
-      notificationManager.error('추가분 결제 금액을 입력해 주세요. (회기 수와 다를 수 있습니다)');
+    if (!validateForm()) {
       return;
     }
 
@@ -236,41 +252,63 @@ const SessionExtensionModal = ({
             </header>
             <div className="mg-extension__input-grid">
               <label className="mg-extension__field" htmlFor="mg-extension-count">
-                <span className="mg-extension__label">추가 회기 수</span>
+                <span className="mg-extension__label">
+                  추가 회기 수
+                  <span className="mg-v2-form-label-required">*</span>
+                </span>
                 <input
                   id="mg-extension-count"
                   type="number"
-                  className="mg-v2-input"
+                  className={`mg-v2-input${errors.additionalSessions ? ' mg-v2-form-input-error' : ''}`}
                   value={additionalSessions}
                   min={DEFAULT_ADDITIONAL_SESSIONS}
                   step={DEFAULT_ADDITIONAL_SESSIONS}
-                  onChange={(event) => setAdditionalSessions(toSafeNumber(
-                    event.target.value,
-                    DEFAULT_ADDITIONAL_SESSIONS
-                  ))}
+                  onChange={(event) => {
+                    setAdditionalSessions(toSafeNumber(
+                      event.target.value,
+                      DEFAULT_ADDITIONAL_SESSIONS
+                    ));
+                    if (errors.additionalSessions) {
+                      setErrors((prev) => ({ ...prev, additionalSessions: '' }));
+                    }
+                  }}
                   disabled={isLoading}
-                  required
+                  aria-invalid={errors.additionalSessions ? true : undefined}
                 />
+                {errors.additionalSessions ? (
+                  <span className="mg-v2-form-error" role="alert">{errors.additionalSessions}</span>
+                ) : null}
               </label>
               <label className="mg-extension__field" htmlFor="mg-extension-amount">
-                <span className="mg-extension__label">추가분 결제 금액(원)</span>
+                <span className="mg-extension__label">
+                  추가분 결제 금액(원)
+                  <span className="mg-v2-form-label-required">*</span>
+                </span>
                 <span className="mg-extension__amount-control">
                   <input
                     id="mg-extension-amount"
                     type="number"
-                    className="mg-v2-input"
+                    className={`mg-v2-input${errors.extensionAmount ? ' mg-v2-form-input-error' : ''}`}
                     aria-label="추가분 결제 금액(원)"
                     value={extensionAmount}
                     min={DEFAULT_EXTENSION_AMOUNT}
-                    onChange={(event) => setExtensionAmount(toSafeNumber(
-                      event.target.value,
-                      DEFAULT_EXTENSION_AMOUNT
-                    ))}
+                    onChange={(event) => {
+                      setExtensionAmount(toSafeNumber(
+                        event.target.value,
+                        DEFAULT_EXTENSION_AMOUNT
+                      ));
+                      if (errors.extensionAmount) {
+                        setErrors((prev) => ({ ...prev, extensionAmount: '' }));
+                      }
+                    }}
                     disabled={isLoading}
-                    required
+                    aria-invalid={errors.extensionAmount ? true : undefined}
                   />
                   <span className="mg-extension__unit" aria-hidden="true">원</span>
                 </span>
+                {errors.extensionAmount ? (
+                  <span className="mg-v2-form-error" role="alert">{errors.extensionAmount}</span>
+                ) : null}
               </label>
             </div>
             <label className="mg-extension__field" htmlFor="mg-extension-reason">

@@ -115,7 +115,9 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /추가 회기 수/ }), {
+      target: { value: '5' }
+    });
 
     expect(screen.getByText('9회')).toBeInTheDocument();
     expect(screen.getByText('8회')).toBeInTheDocument();
@@ -132,8 +134,12 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
-    fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /추가 회기 수/ }), {
+      target: { value: '5' }
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /추가분 결제 금액/ }), {
+      target: { value: '400000' }
+    });
     await act(async () => {
       fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });
@@ -154,8 +160,12 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
-    fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /추가 회기 수/ }), {
+      target: { value: '5' }
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /추가분 결제 금액/ }), {
+      target: { value: '400000' }
+    });
     await act(async () => {
       fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });
@@ -188,8 +198,12 @@ describe('SessionExtensionModal — 동일 패키지 승계', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('추가 회기 수'), { target: { value: '5' } });
-    fireEvent.change(screen.getByLabelText('추가분 결제 금액(원)'), { target: { value: '400000' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /추가 회기 수/ }), {
+      target: { value: '5' }
+    });
+    fireEvent.change(screen.getByRole('spinbutton', { name: /추가분 결제 금액/ }), {
+      target: { value: '400000' }
+    });
     await act(async () => {
       fireEvent.click(screen.getByText('+5회기 추가 요청'));
     });

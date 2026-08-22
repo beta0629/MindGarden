@@ -33,6 +33,51 @@ const TenantCommonCodeFormModal = ({
 }) => {
   const { t } = useTranslation(['admin']);
   const showParentInModal = isSubcategoryCodeGroup(formData.codeGroup || '');
+  const [errors, setErrors] = React.useState({});
+
+  React.useEffect(() => {
+    if (showModal) {
+      setErrors({});
+    }
+  }, [showModal, modalMode]);
+
+  const updateForm = (next) => {
+    onFormChange(next);
+    setErrors((prev) => {
+      const cleared = { ...prev };
+      if (next.codeValue !== formData.codeValue) cleared.codeValue = '';
+      if (next.codeLabel !== formData.codeLabel) cleared.codeLabel = '';
+      if (next.parentCodeValue !== formData.parentCodeValue) cleared.parentCodeValue = '';
+      return cleared;
+    });
+  };
+
+  /**
+   * codeValue/codeLabel JS validate. HTML required만 의존하지 않음.
+   * @returns {boolean}
+   */
+  const validateForm = () => {
+    const newErrors = {};
+    if (!(formData.codeValue || '').trim()) {
+      newErrors.codeValue = t('admin:tenantCommonCode.msg.errCodeValueRequired', '코드값을 입력해주세요.');
+    }
+    if (!(formData.codeLabel || '').trim()) {
+      newErrors.codeLabel = t('admin:tenantCommonCode.msg.errCodeLabelRequired', '코드명을 입력해주세요.');
+    }
+    if (showParentInModal && !(formData.parentCodeValue || '').trim()) {
+      newErrors.parentCodeValue = t('admin:tenantCommonCode.msg.errSelectParentCategory');
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
+    onFormSubmit(e);
+  };
 
   return (
     <UnifiedModal
@@ -75,7 +120,7 @@ const TenantCommonCodeFormModal = ({
         </>
       )}
     >
-      <form id={TENANT_COMMON_CODE_FORM_ID} onSubmit={onFormSubmit}>
+      <form id={TENANT_COMMON_CODE_FORM_ID} onSubmit={handleSubmit} noValidate>
         <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
           <label htmlFor="tenant-code-group" className="mg-v2-ad-b0kla__form-label">
             {t('admin:tenantCommonCode.ui.formLabelCodeGroup')}
@@ -92,42 +137,51 @@ const TenantCommonCodeFormModal = ({
           <div className="mg-v2-ad-b0kla__form-group">
             <label htmlFor="tenant-code-value" className="mg-v2-ad-b0kla__form-label">
               {t('admin:tenantCommonCode.ui.formLabelCodeValue')}
+              <span className="mg-v2-form-label-required">*</span>
             </label>
             <input
               id="tenant-code-value"
               type="text"
               value={formData.codeValue}
-              onChange={(e) => onFormChange({ ...formData, codeValue: e.target.value })}
+              onChange={(e) => updateForm({ ...formData, codeValue: e.target.value })}
               disabled={modalMode === 'edit'}
-              required
-              className="mg-v2-ad-b0kla__form-input"
+              className={`mg-v2-ad-b0kla__form-input${errors.codeValue ? ' mg-v2-form-input-error' : ''}`}
               placeholder={t('admin:tenantCommonCode.ui.formPlaceholderCodeValue')}
+              aria-invalid={errors.codeValue ? true : undefined}
             />
+            {errors.codeValue ? (
+              <span className="mg-v2-form-error" role="alert">{errors.codeValue}</span>
+            ) : null}
           </div>
           <div className="mg-v2-ad-b0kla__form-group">
             <label htmlFor="tenant-code-label" className="mg-v2-ad-b0kla__form-label">
               {t('admin:tenantCommonCode.ui.formLabelCodeName')}
+              <span className="mg-v2-form-label-required">*</span>
             </label>
             <input
               id="tenant-code-label"
               type="text"
               value={formData.codeLabel}
-              onChange={(e) => onFormChange({ ...formData, codeLabel: e.target.value })}
-              required
-              className="mg-v2-ad-b0kla__form-input"
+              onChange={(e) => updateForm({ ...formData, codeLabel: e.target.value })}
+              className={`mg-v2-ad-b0kla__form-input${errors.codeLabel ? ' mg-v2-form-input-error' : ''}`}
               placeholder={t('admin:tenantCommonCode.ui.formPlaceholderCodeName')}
+              aria-invalid={errors.codeLabel ? true : undefined}
             />
+            {errors.codeLabel ? (
+              <span className="mg-v2-form-error" role="alert">{errors.codeLabel}</span>
+            ) : null}
           </div>
         </div>
         {showParentInModal && (
           <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
             <label htmlFor="tenant-parent-category" className="mg-v2-ad-b0kla__form-label">
               {t('admin:tenantCommonCode.ui.formLabelParentCategory')}
+              <span className="mg-v2-form-label-required">*</span>
             </label>
             <CustomSelect
               options={parentCategoryOptions}
               value={formData.parentCodeValue || ''}
-              onChange={(v) => onFormChange({
+              onChange={(v) => updateForm({
                 ...formData,
                 parentCodeGroup: getParentCodeGroupForSubcategory(formData.codeGroup) || '',
                 parentCodeValue: v
@@ -136,6 +190,9 @@ const TenantCommonCodeFormModal = ({
               disabled={parentOptionsLoading || parentCategoryOptions.length === 0}
               loading={parentOptionsLoading}
             />
+            {errors.parentCodeValue ? (
+              <span className="mg-v2-form-error" role="alert">{errors.parentCodeValue}</span>
+            ) : null}
           </div>
         )}
         <div className="mg-v2-ad-b0kla__form-group mg-v2-ad-b0kla__form-group--full-width">
@@ -146,7 +203,7 @@ const TenantCommonCodeFormModal = ({
             id="tenant-korean-name"
             type="text"
             value={formData.koreanName}
-            onChange={(e) => onFormChange({ ...formData, koreanName: e.target.value })}
+            onChange={(e) => updateForm({ ...formData, koreanName: e.target.value })}
             className="mg-v2-ad-b0kla__form-input"
             placeholder={t('admin:tenantCommonCode.ui.formPlaceholderKorean')}
           />
@@ -158,7 +215,7 @@ const TenantCommonCodeFormModal = ({
           <textarea
             id="tenant-code-desc"
             value={formData.codeDescription}
-            onChange={(e) => onFormChange({ ...formData, codeDescription: e.target.value })}
+            onChange={(e) => updateForm({ ...formData, codeDescription: e.target.value })}
             className="mg-v2-ad-b0kla__form-textarea"
             rows={3}
             placeholder={t('admin:tenantCommonCode.ui.formPlaceholderDescription')}
@@ -173,7 +230,7 @@ const TenantCommonCodeFormModal = ({
               id="tenant-sort-order"
               type="number"
               value={formData.sortOrder}
-              onChange={(e) => onFormChange({
+              onChange={(e) => updateForm({
                 ...formData,
                 sortOrder: parseInt(e.target.value, 10)
               })}
@@ -185,7 +242,7 @@ const TenantCommonCodeFormModal = ({
               id="tenant-active"
               label={t('admin:tenantCommonCode.ui.formLabelActive')}
               checked={!!formData.isActive}
-              onCheckedChange={(next) => onFormChange({ ...formData, isActive: next })}
+              onCheckedChange={(next) => updateForm({ ...formData, isActive: next })}
               ariaLabel={t('admin:tenantCommonCode.ui.formLabelActive')}
             />
           </div>
@@ -197,7 +254,7 @@ const TenantCommonCodeFormModal = ({
           <textarea
             id="tenant-extra-json"
             value={formData.extraData}
-            onChange={(e) => onFormChange({ ...formData, extraData: e.target.value })}
+            onChange={(e) => updateForm({ ...formData, extraData: e.target.value })}
             className="mg-v2-ad-b0kla__form-textarea"
             rows={3}
             placeholder={t('admin:tenantCommonCode.ui.formHelpExtraJson')}

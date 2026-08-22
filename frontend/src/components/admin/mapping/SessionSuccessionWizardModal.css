@@ -320,6 +320,12 @@
   font-size: var(--mg-font-size-sm);
 }
 
+.session-succession-wizard__inline-hint {
+  margin: var(--mg-spacing-sm) 0 0;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
 .session-succession-wizard__error {
   display: flex;
   flex-direction: column;

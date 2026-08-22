@@ -19,6 +19,7 @@ import {
 } from '../../../constants/sessionSuccession';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import notificationManager from '../../../utils/notification';
+import { asArray } from '../../../utils/apiResponseNormalize';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../../utils/safeDisplay';
 import StandardizedApi from '../../../utils/standardizedApi';
 import SuccessionSourceSummary from './session-succession/SuccessionSourceSummary';
@@ -27,17 +28,46 @@ import SuccessionCountStep from './session-succession/SuccessionCountStep';
 import SuccessionConfirmStep from './session-succession/SuccessionConfirmStep';
 import './SessionSuccessionWizardModal.css';
 
-const unwrapList = (payload) => {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-  if (Array.isArray(payload?.data)) {
-    return payload.data;
-  }
-  if (Array.isArray(payload?.content)) {
-    return payload.content;
-  }
-  return [];
+/**
+ * with-mapping-info 응답 → CustomSelect options.
+ * API 실체: `{ clients: [...], count }` (AdminController.getAllClientsWithMappingInfo).
+ * 소스 CLIENT와 동일인은 제외(스펙).
+ *
+ * @param {*} payload StandardizedApi.get 결과
+ * @param {string|number|null} sourceClientId 이전 당사자 id
+ * @returns {{ value: string, label: string }[]}
+ */
+export const mapSessionSuccessionClientOptions = (payload, sourceClientId) => {
+  const clients = asArray(payload, 'clients');
+  return clients
+    .filter((c) => c?.id != null && String(c.id) !== String(sourceClientId))
+    .map((c) => ({
+      value: String(c.id),
+      label: toDisplayString(c.name || c.clientName, `내담자 #${c.id}`)
+    }));
+};
+
+/**
+ * with-stats 응답 → CustomSelect options.
+ * API 실체: `{ consultants: [{ consultant: { id, name, ... }, ... }], count }`.
+ *
+ * @param {*} payload StandardizedApi.get 결과
+ * @returns {{ value: string, label: string }[]}
+ */
+export const mapSessionSuccessionConsultantOptions = (payload) => {
+  const consultants = asArray(payload, 'consultants');
+  return consultants
+    .map((item) => {
+      const c = item?.consultant && typeof item.consultant === 'object' ? item.consultant : item;
+      if (c?.id == null) {
+        return null;
+      }
+      return {
+        value: String(c.id),
+        label: toDisplayString(c.name || c.consultantName, `상담사 #${c.id}`)
+      };
+    })
+    .filter(Boolean);
 };
 
 const SessionSuccessionWizardModal = ({
@@ -137,24 +167,8 @@ const SessionSuccessionWizardModal = ({
         StandardizedApi.get(API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS)
       ]);
-      const clients = unwrapList(clientsRaw?.data ?? clientsRaw);
-      const consultants = unwrapList(consultantsRaw?.data ?? consultantsRaw);
-      setClientOptions(
-        clients
-          .filter((c) => c?.id != null && String(c.id) !== String(sourceClientId))
-          .map((c) => ({
-            value: String(c.id),
-            label: toDisplayString(c.name || c.clientName, `내담자 #${c.id}`)
-          }))
-      );
-      setConsultantOptions(
-        consultants
-          .filter((c) => c?.id != null)
-          .map((c) => ({
-            value: String(c.id),
-            label: toDisplayString(c.name || c.consultantName, `상담사 #${c.id}`)
-          }))
-      );
+      setClientOptions(mapSessionSuccessionClientOptions(clientsRaw, sourceClientId));
+      setConsultantOptions(mapSessionSuccessionConsultantOptions(consultantsRaw));
     } catch (error) {
       console.error('회기 승계 옵션 로드 실패:', error);
       setClientOptions([]);

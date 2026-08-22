@@ -51,7 +51,9 @@ export const SESSION_SUCCESSION_UI = {
   EXECUTE_FAILED: '회기 승계에 실패했습니다.',
   CONSULTANT_HELPER: '상담사를 변경하여 승계할 수 있습니다.',
   REASON_PLACEHOLDER: '사유 (선택)',
-  CONSULTANT_PLACEHOLDER: '상담사 선택'
+  CONSULTANT_PLACEHOLDER: '상담사 선택',
+  CLIENT_LIST_EMPTY: '선택 가능한 기존 내담자가 없습니다.',
+  CLIENT_LIST_PLACEHOLDER: '내담자 선택'
 };
 
 export const SESSION_SUCCESSION_STEPS = {

@@ -1,6 +1,5 @@
 /**
- * 회기 승계 마법사 — UnifiedModal 3스텝 (+완료).
- * PLAN/SCREEN_SPEC_SESSION_SUCCESSION.
+ * 회기 승계 마법사 — UnifiedModal 3스텝 (+완료). DESIGN_SPEC_SESSION_SUCCESSION v2.
  *
  * @author CoreSolution
  * @since 2026-08-22
@@ -10,7 +9,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PropTypes from 'prop-types';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
-import CustomSelect from '../../common/CustomSelect';
+import ErrorBoundary from '../../common/ErrorBoundary';
+import SafeErrorDisplay from '../../common/SafeErrorDisplay';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import {
   SESSION_SUCCESSION_BENEFICIARY_MODE,
@@ -21,6 +21,10 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import notificationManager from '../../../utils/notification';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../../utils/safeDisplay';
 import StandardizedApi from '../../../utils/standardizedApi';
+import SuccessionSourceSummary from './session-succession/SuccessionSourceSummary';
+import BeneficiaryPickerStep from './session-succession/BeneficiaryPickerStep';
+import SuccessionCountStep from './session-succession/SuccessionCountStep';
+import SuccessionConfirmStep from './session-succession/SuccessionConfirmStep';
 import './SessionSuccessionWizardModal.css';
 
 const unwrapList = (payload) => {
@@ -316,6 +320,13 @@ const SessionSuccessionWizardModal = ({
     return found?.label || toDisplayString(targetConsultantId, '—');
   }, [consultantOptions, targetConsultantId]);
 
+  const sameClientInline =
+    beneficiaryMode === SESSION_SUCCESSION_BENEFICIARY_MODE.EXISTING
+    && beneficiaryClientId
+    && String(beneficiaryClientId) === String(sourceClientId)
+      ? SESSION_SUCCESSION_UI.SAME_CLIENT_ERROR
+      : '';
+
   const footerActions = (() => {
     if (step === SESSION_SUCCESSION_STEPS.DONE) {
       return (
@@ -383,6 +394,10 @@ const SessionSuccessionWizardModal = ({
     );
   })();
 
+  const showSourceSummary =
+    step !== SESSION_SUCCESSION_STEPS.DONE
+    && (previewLoading || !previewError);
+
   return (
     <UnifiedModal
       isOpen={isOpen}
@@ -390,274 +405,181 @@ const SessionSuccessionWizardModal = ({
       title={SESSION_SUCCESSION_UI.MODAL_TITLE}
       subtitle={subtitle}
       size="large"
-      className="mg-v2-ad-b0kla session-succession-wizard"
-      loading={previewLoading && !preview}
+      className="mg-v2-ad-b0kla mg-v2-ad-b0kla__modal session-succession-wizard"
+      loading={false}
       actions={footerActions}
       backdropClick={!submitting}
     >
-      <div className="session-succession-wizard__body">
-        {step !== SESSION_SUCCESSION_STEPS.DONE && (
-          <nav className="session-succession-wizard__steps" aria-label="회기 승계 단계">
-            <span className={step === SESSION_SUCCESSION_STEPS.BENEFICIARY ? 'is-active' : ''}>
-              1 {SESSION_SUCCESSION_UI.STEP_BENEFICIARY}
-            </span>
-            <span className={step === SESSION_SUCCESSION_STEPS.COUNT ? 'is-active' : ''}>
-              2 {SESSION_SUCCESSION_UI.STEP_CONSULTANT_SESSIONS}
-            </span>
-            <span className={step === SESSION_SUCCESSION_STEPS.CONFIRM ? 'is-active' : ''}>
-              3 {SESSION_SUCCESSION_UI.STEP_CONFIRM}
-            </span>
-          </nav>
-        )}
-
-        {previewError && (
-          <div className="session-succession-wizard__error" role="alert">
-            <p>{toDisplayString(previewError, SESSION_SUCCESSION_UI.PREVIEW_FAILED)}</p>
-            <MGButton
-              type="button"
-              variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-              loading={false}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={loadPreview}
-              preventDoubleClick={false}
-            >
-              {SESSION_SUCCESSION_UI.RETRY_LABEL}
-            </MGButton>
-          </div>
-        )}
-
-        {!previewError && (
-          <section className="session-succession-wizard__summary" aria-label="소스 요약">
-            <p className="session-succession-wizard__summary-row">
-              <span>패키지</span>
-              <strong>{toDisplayString(preview?.packageName ?? mapping?.packageName, '—')}</strong>
-            </p>
-            <p className="session-succession-wizard__summary-row">
-              <span>사용 / 남은 / 총</span>
-              <strong>
-                {toSafeNumber(preview?.usedSessions ?? mapping?.usedSessions, 0)}
-                {' / '}
-                {remaining}
-                {' / '}
-                {toSafeNumber(preview?.totalSessions ?? mapping?.totalSessions, 0)}
-              </strong>
-            </p>
-            <p className="session-succession-wizard__summary-row">
-              <span>점유 스케줄</span>
-              <strong>{occupying}건</strong>
-            </p>
-            <p className="session-succession-wizard__summary-row">
-              <span>승계가능</span>
-              <strong>{transferable}회</strong>
-            </p>
-            {transferable < 1 && !previewLoading && (
-              <p className="session-succession-wizard__zero" role="status">
-                {SESSION_SUCCESSION_UI.ZERO_TRANSFERABLE}
-              </p>
-            )}
-          </section>
-        )}
-
-        {step === SESSION_SUCCESSION_STEPS.BENEFICIARY && !previewError && (
-          <section className="session-succession-wizard__section">
-            <div className="session-succession-wizard__tabs" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={beneficiaryMode === SESSION_SUCCESSION_BENEFICIARY_MODE.EXISTING}
+      <ErrorBoundary>
+        <div className="session-succession-wizard__body">
+          {step !== SESSION_SUCCESSION_STEPS.DONE && (
+            <nav className="session-succession-wizard__steps" aria-label="회기 승계 단계">
+              <span
                 className={
-                  beneficiaryMode === SESSION_SUCCESSION_BENEFICIARY_MODE.EXISTING
-                    ? 'is-active'
-                    : ''
+                  step === SESSION_SUCCESSION_STEPS.BENEFICIARY
+                    ? 'session-succession-wizard__step is-active'
+                    : 'session-succession-wizard__step'
                 }
-                onClick={() => setBeneficiaryMode(SESSION_SUCCESSION_BENEFICIARY_MODE.EXISTING)}
               >
-                {SESSION_SUCCESSION_UI.MODE_EXISTING}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={beneficiaryMode === SESSION_SUCCESSION_BENEFICIARY_MODE.NEW}
+                <span className="session-succession-wizard__step-full">
+                  1.
+                  {' '}
+                  {SESSION_SUCCESSION_UI.STEP_BENEFICIARY}
+                </span>
+                <span className="session-succession-wizard__step-short">
+                  1/3 수혜자
+                </span>
+              </span>
+              <span
                 className={
-                  beneficiaryMode === SESSION_SUCCESSION_BENEFICIARY_MODE.NEW ? 'is-active' : ''
+                  step === SESSION_SUCCESSION_STEPS.COUNT
+                    ? 'session-succession-wizard__step is-active'
+                    : 'session-succession-wizard__step'
                 }
-                onClick={() => setBeneficiaryMode(SESSION_SUCCESSION_BENEFICIARY_MODE.NEW)}
               >
-                {SESSION_SUCCESSION_UI.MODE_NEW}
-              </button>
-            </div>
-            {beneficiaryMode === SESSION_SUCCESSION_BENEFICIARY_MODE.EXISTING ? (
-              <CustomSelect
-                options={clientOptions}
-                value={beneficiaryClientId}
-                onChange={setBeneficiaryClientId}
-                placeholder={SESSION_SUCCESSION_UI.MODE_EXISTING}
-                loading={listsLoading}
-                disabled={listsLoading}
-              />
-            ) : (
-              <div className="session-succession-wizard__new-client">
-                <label>
-                  이름
-                  <input
-                    type="text"
-                    className="mg-v2-input"
-                    value={newClientName}
-                    onChange={(e) => setNewClientName(e.target.value)}
-                    autoComplete="name"
-                  />
-                </label>
-                <label>
-                  휴대폰
-                  <input
-                    type="tel"
-                    className="mg-v2-input"
-                    value={newClientPhone}
-                    onChange={(e) => setNewClientPhone(e.target.value)}
-                    autoComplete="tel"
-                  />
-                </label>
-                <label>
-                  이메일
-                  <input
-                    type="email"
-                    className="mg-v2-input"
-                    value={newClientEmail}
-                    onChange={(e) => setNewClientEmail(e.target.value)}
-                    autoComplete="email"
-                  />
-                </label>
-              </div>
-            )}
-          </section>
-        )}
+                <span className="session-succession-wizard__step-full">
+                  2.
+                  {' '}
+                  {SESSION_SUCCESSION_UI.STEP_CONSULTANT_SESSIONS}
+                </span>
+                <span className="session-succession-wizard__step-short">
+                  2/3 회기
+                </span>
+              </span>
+              <span
+                className={
+                  step === SESSION_SUCCESSION_STEPS.CONFIRM
+                    ? 'session-succession-wizard__step is-active'
+                    : 'session-succession-wizard__step'
+                }
+              >
+                <span className="session-succession-wizard__step-full">
+                  3.
+                  {' '}
+                  {SESSION_SUCCESSION_UI.STEP_CONFIRM}
+                </span>
+                <span className="session-succession-wizard__step-short">
+                  3/3 확인
+                </span>
+              </span>
+            </nav>
+          )}
 
-        {step === SESSION_SUCCESSION_STEPS.COUNT && !previewError && (
-          <section className="session-succession-wizard__section">
-            <p className="session-succession-wizard__helper">
-              {SESSION_SUCCESSION_UI.CONSULTANT_HELPER}
-            </p>
-            <label className="session-succession-wizard__field-label">타깃 상담사</label>
-            <CustomSelect
-              options={consultantOptions}
-              value={targetConsultantId}
-              onChange={setTargetConsultantId}
-              placeholder="상담사 선택"
-              loading={listsLoading}
-              disabled={listsLoading}
-            />
-            <label className="session-succession-wizard__field-label" htmlFor="session-succession-n">
-              이전 횟수 N (최대 {transferable})
-            </label>
-            <div className="session-succession-wizard__count-row">
-              <input
-                id="session-succession-n"
-                type="number"
-                className="mg-v2-input"
-                min={1}
-                max={Math.max(1, transferable)}
-                value={sessionCount}
-                onChange={(e) => handleSessionCountChange(e.target.value)}
+          {previewError && (
+            <div className="session-succession-wizard__error" role="alert">
+              <SafeErrorDisplay
+                error={previewError}
+                variant="inline"
+                fallback={SESSION_SUCCESSION_UI.PREVIEW_FAILED}
               />
               <MGButton
                 type="button"
-                variant="secondary"
+                variant="outline"
                 size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'secondary',
-                  size: 'sm',
-                  loading: false
-                })}
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
                 loading={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setSessionCount(transferable)}
-                disabled={transferable < 1}
+                onClick={loadPreview}
                 preventDoubleClick={false}
               >
-                {SESSION_SUCCESSION_UI.FULL_AMOUNT_LABEL}
+                {SESSION_SUCCESSION_UI.RETRY_LABEL}
               </MGButton>
             </div>
-            <div className="session-succession-wizard__projection" aria-live="polite">
-              <p>
-                소스 남은 {remaining}
-                {' → '}
-                {Math.max(0, remaining - toSafeNumber(sessionCount, 0))}
-              </p>
-              <p>타깃 +{toSafeNumber(sessionCount, 0)}</p>
+          )}
+
+          {showSourceSummary && step === SESSION_SUCCESSION_STEPS.BENEFICIARY && (
+            <div className="session-succession-wizard__layout">
+              <SuccessionSourceSummary
+                packageName={preview?.packageName ?? mapping?.packageName}
+                usedSessions={toSafeNumber(preview?.usedSessions ?? mapping?.usedSessions, 0)}
+                remainingSessions={remaining}
+                totalSessions={toSafeNumber(preview?.totalSessions ?? mapping?.totalSessions, 0)}
+                transferableSessions={transferable}
+                occupyingScheduleCount={occupying}
+                loading={previewLoading && !preview}
+                showZeroBanner={transferable < 1 && !previewLoading && !previewError}
+              />
+              {!previewError && !(previewLoading && !preview) && (
+                <div className="session-succession-wizard__main">
+                  <BeneficiaryPickerStep
+                    beneficiaryMode={beneficiaryMode}
+                    onModeChange={setBeneficiaryMode}
+                    clientOptions={clientOptions}
+                    beneficiaryClientId={beneficiaryClientId}
+                    onBeneficiaryClientIdChange={setBeneficiaryClientId}
+                    listsLoading={listsLoading}
+                    newClientName={newClientName}
+                    newClientPhone={newClientPhone}
+                    newClientEmail={newClientEmail}
+                    onNewClientNameChange={setNewClientName}
+                    onNewClientPhoneChange={setNewClientPhone}
+                    onNewClientEmailChange={setNewClientEmail}
+                    sameClientError={sameClientInline}
+                  />
+                </div>
+              )}
             </div>
-            <p className="session-succession-wizard__banner" role="note">
-              {`${SESSION_SUCCESSION_UI.OCCUPYING_BANNER_PREFIX} ${occupying}${SESSION_SUCCESSION_UI.OCCUPYING_BANNER_SUFFIX}`}
-            </p>
-          </section>
-        )}
+          )}
 
-        {step === SESSION_SUCCESSION_STEPS.CONFIRM && !previewError && (
-          <section className="session-succession-wizard__section">
-            <ul className="session-succession-wizard__confirm-list">
-              <li>
-                <span>수혜자</span>
-                <strong>{selectedBeneficiaryLabel}</strong>
-              </li>
-              <li>
-                <span>타깃 상담사</span>
-                <strong>{selectedConsultantLabel}</strong>
-              </li>
-              <li>
-                <span>이전 횟수</span>
-                <strong>{toSafeNumber(sessionCount, 0)}회</strong>
-              </li>
-              <li>
-                <span>승계가능</span>
-                <strong>{transferable}회</strong>
-              </li>
-              <li>
-                <span>점유 제외</span>
-                <strong>{occupying}건</strong>
-              </li>
-            </ul>
-            <p className="session-succession-wizard__banner" role="note">
-              {`${SESSION_SUCCESSION_UI.OCCUPYING_BANNER_PREFIX} ${occupying}${SESSION_SUCCESSION_UI.OCCUPYING_BANNER_SUFFIX}`}
-            </p>
-            <p className="session-succession-wizard__payment-notice" role="note">
-              {SESSION_SUCCESSION_UI.PAYMENT_NOTICE}
-            </p>
-            <label className="session-succession-wizard__field-label" htmlFor="session-succession-reason">
-              {SESSION_SUCCESSION_UI.REASON_PLACEHOLDER}
-            </label>
-            <textarea
-              id="session-succession-reason"
-              className="mg-v2-input session-succession-wizard__reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
+          {step === SESSION_SUCCESSION_STEPS.COUNT && !previewError && (
+            <SuccessionCountStep
+              consultantOptions={consultantOptions}
+              targetConsultantId={targetConsultantId}
+              onTargetConsultantIdChange={setTargetConsultantId}
+              listsLoading={listsLoading}
+              sessionCount={sessionCount}
+              transferable={transferable}
+              remaining={remaining}
+              occupying={occupying}
+              onSessionCountChange={handleSessionCountChange}
+              onApplyFullAmount={() => setSessionCount(transferable)}
             />
-          </section>
-        )}
+          )}
 
-        {step === SESSION_SUCCESSION_STEPS.DONE && result && (
-          <section className="session-succession-wizard__section" aria-live="polite">
-            <p>
-              이전 {toSafeNumber(result.transferredCount, 0)}회 완료.
-            </p>
-            <p>
-              소스 남은 회기:{' '}
-              {toSafeNumber(result.sourceMapping?.remainingSessions, 0)}
-            </p>
-            <p>
-              타깃 남은 회기:{' '}
-              {toSafeNumber(result.targetMapping?.remainingSessions, 0)}
-            </p>
-          </section>
-        )}
+          {step === SESSION_SUCCESSION_STEPS.CONFIRM && !previewError && (
+            <SuccessionConfirmStep
+              beneficiaryLabel={selectedBeneficiaryLabel}
+              consultantLabel={selectedConsultantLabel}
+              sessionCount={sessionCount}
+              reason={reason}
+              onReasonChange={setReason}
+            />
+          )}
 
-        {inlineError && (
-          <p className="session-succession-wizard__inline-error" role="alert">
-            {toDisplayString(inlineError, SESSION_SUCCESSION_UI.EXECUTE_FAILED)}
-          </p>
-        )}
-      </div>
+          {step === SESSION_SUCCESSION_STEPS.DONE && result && (
+            <section
+              className="session-succession-wizard__section session-succession-wizard__section--panel"
+              aria-live="polite"
+            >
+              <p>
+                이전
+                {' '}
+                {toSafeNumber(result.transferredCount, 0)}
+                회 완료.
+              </p>
+              <p>
+                소스 남은 회기:
+                {' '}
+                {toSafeNumber(result.sourceMapping?.remainingSessions, 0)}
+              </p>
+              <p>
+                타깃 남은 회기:
+                {' '}
+                {toSafeNumber(result.targetMapping?.remainingSessions, 0)}
+              </p>
+            </section>
+          )}
+
+          {inlineError && (
+            <SafeErrorDisplay
+              error={inlineError}
+              variant="inline"
+              className="session-succession-wizard__inline-error"
+              fallback={SESSION_SUCCESSION_UI.EXECUTE_FAILED}
+            />
+          )}
+        </div>
+      </ErrorBoundary>
     </UnifiedModal>
   );
 };

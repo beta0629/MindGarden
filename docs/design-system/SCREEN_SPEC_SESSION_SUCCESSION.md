@@ -1,10 +1,10 @@
 # 화면설계서 — 회기 승계 (Session Succession)
 
-**문서 버전**: 1.0  
+**문서 버전**: 1.1 (디자인 개정 반영)  
 **작성일**: 2026-08-22  
 **작성**: core-planner (`/core-solution-planning` §0.4·§0.5)  
 **기획 SSOT**: [SESSION_SUCCESSION_PLAN.md](../project-management/SESSION_SUCCESSION_PLAN.md)  
-**디자인 핸드오프**: [DESIGN_SPEC_SESSION_SUCCESSION.md](./DESIGN_SPEC_SESSION_SUCCESSION.md)  
+**디자인 핸드오프**: [DESIGN_SPEC_SESSION_SUCCESSION.md](./DESIGN_SPEC_SESSION_SUCCESSION.md) (B0KlA 어드민 대시보드 샘플 기반 전면 개정)  
 **권장 라우트**: `/admin/integrated-schedule` (신규 전용 페이지 없음 — 모달 마법사)
 
 ---

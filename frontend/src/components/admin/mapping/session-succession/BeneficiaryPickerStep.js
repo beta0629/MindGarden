@@ -62,10 +62,15 @@ const BeneficiaryPickerStep = ({
           options={clientOptions}
           value={beneficiaryClientId}
           onChange={onBeneficiaryClientIdChange}
-          placeholder={SESSION_SUCCESSION_UI.MODE_EXISTING}
+          placeholder={SESSION_SUCCESSION_UI.CLIENT_LIST_PLACEHOLDER}
           loading={listsLoading}
           disabled={listsLoading}
         />
+        {!listsLoading && (!clientOptions || clientOptions.length === 0) ? (
+          <p className="session-succession-wizard__inline-hint" role="status">
+            {SESSION_SUCCESSION_UI.CLIENT_LIST_EMPTY}
+          </p>
+        ) : null}
         {sameClientError ? (
           <p className="session-succession-wizard__inline-error" role="alert">
             {toDisplayString(sameClientError, SESSION_SUCCESSION_UI.SAME_CLIENT_ERROR)}

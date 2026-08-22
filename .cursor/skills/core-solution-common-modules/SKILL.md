@@ -35,6 +35,7 @@ description: 새 기능 구현 시 공통 모듈(UnifiedModal, ContentHeader, Ba
 ### 3. 상황별 추천
 
 - **모달**: UnifiedModal만 사용. ConfirmModal은 확인/취소 2버튼만 필요할 때.
+- **폼·입력**: FormInput 등 공통 입력 + `required`·기존 검증 패턴 사용. 필수 표시·submit/다음 전 validate는 `/core-solution-frontend` 「폼·입력 validate」필수.
 - **배지 선택(소수 옵션)**: BadgeSelect. 드롭다운이 필요하면 CustomSelect.
 - **빈 목록/결과**: EmptyState. 리스트·테이블 뷰: ListTableView.
 - **카드 하단 액션**: CardActionGroup, ActionButton. 상태 배지: StatusBadge.

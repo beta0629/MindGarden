@@ -22,11 +22,35 @@ import notificationManager from '../../../utils/notification';
 import { asArray } from '../../../utils/apiResponseNormalize';
 import { toDisplayString, toErrorMessage, toSafeNumber } from '../../../utils/safeDisplay';
 import StandardizedApi from '../../../utils/standardizedApi';
+import { validateEmail, validatePhone } from '../../../utils/validationUtils';
 import SuccessionSourceSummary from './session-succession/SuccessionSourceSummary';
 import BeneficiaryPickerStep from './session-succession/BeneficiaryPickerStep';
 import SuccessionCountStep from './session-succession/SuccessionCountStep';
 import SuccessionConfirmStep from './session-succession/SuccessionConfirmStep';
 import './SessionSuccessionWizardModal.css';
+
+const EMPTY_NEW_CLIENT_FIELD_ERRORS = {
+  name: '',
+  phone: '',
+  email: ''
+};
+
+/** FormInput id 규칙(`input-${name}`)에 맞춰 첫 오류 필드로 포커스 */
+const focusNewClientField = (fieldKey) => {
+  const nameByKey = {
+    name: 'session-succession-new-name',
+    phone: 'session-succession-new-phone',
+    email: 'session-succession-new-email'
+  };
+  const inputName = nameByKey[fieldKey];
+  if (!inputName || typeof document === 'undefined') {
+    return;
+  }
+  const el = document.getElementById(`input-${inputName}`);
+  if (el && typeof el.focus === 'function') {
+    el.focus();
+  }
+};
 
 /**
  * with-mapping-info 응답 → CustomSelect options.
@@ -87,6 +111,7 @@ const SessionSuccessionWizardModal = ({
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientEmail, setNewClientEmail] = useState('');
+  const [newClientFieldErrors, setNewClientFieldErrors] = useState(EMPTY_NEW_CLIENT_FIELD_ERRORS);
   const [targetConsultantId, setTargetConsultantId] = useState('');
   const [sessionCount, setSessionCount] = useState(1);
   const [reason, setReason] = useState('');
@@ -125,6 +150,7 @@ const SessionSuccessionWizardModal = ({
     setNewClientName('');
     setNewClientPhone('');
     setNewClientEmail('');
+    setNewClientFieldErrors(EMPTY_NEW_CLIENT_FIELD_ERRORS);
     setTargetConsultantId('');
     setSessionCount(1);
     setReason('');
@@ -192,8 +218,45 @@ const SessionSuccessionWizardModal = ({
     [sourceClientName, sourceConsultantName]
   );
 
+  const clearNewClientFieldError = useCallback((fieldKey) => {
+    setNewClientFieldErrors((prev) => {
+      if (!prev[fieldKey]) {
+        return prev;
+      }
+      return { ...prev, [fieldKey]: '' };
+    });
+  }, []);
+
+  const handleBeneficiaryModeChange = useCallback((mode) => {
+    setBeneficiaryMode(mode);
+    setInlineError('');
+    setNewClientFieldErrors(EMPTY_NEW_CLIENT_FIELD_ERRORS);
+  }, []);
+
+  const handleNewClientNameChange = useCallback((value) => {
+    setNewClientName(value);
+    clearNewClientFieldError('name');
+  }, [clearNewClientFieldError]);
+
+  const handleNewClientPhoneChange = useCallback((value) => {
+    setNewClientPhone(value);
+    clearNewClientFieldError('phone');
+  }, [clearNewClientFieldError]);
+
+  const handleNewClientEmailChange = useCallback((value) => {
+    setNewClientEmail(value);
+    clearNewClientFieldError('email');
+  }, [clearNewClientFieldError]);
+
+  /**
+   * 신규 내담자: ClientComprehensiveManagement create 규칙과 동일.
+   * 이름 필수 · 이메일|휴대폰 중 최소 하나 · 입력 시 형식 검증.
+   *
+   * @returns {boolean}
+   */
   const validateBeneficiaryStep = () => {
     if (beneficiaryMode === SESSION_SUCCESSION_BENEFICIARY_MODE.EXISTING) {
+      setNewClientFieldErrors(EMPTY_NEW_CLIENT_FIELD_ERRORS);
       if (!beneficiaryClientId) {
         setInlineError(SESSION_SUCCESSION_UI.BENEFICIARY_REQUIRED);
         return false;
@@ -203,12 +266,44 @@ const SessionSuccessionWizardModal = ({
         return false;
       }
     } else {
-      if (!newClientName.trim()) {
-        setInlineError(SESSION_SUCCESSION_UI.NEW_NAME_REQUIRED);
-        return false;
+      const nameTrim = newClientName.trim();
+      const phoneTrim = newClientPhone.trim();
+      const emailTrim = newClientEmail.trim();
+      const nextErrors = { ...EMPTY_NEW_CLIENT_FIELD_ERRORS };
+      let firstInvalidKey = null;
+
+      if (!nameTrim) {
+        nextErrors.name = SESSION_SUCCESSION_UI.NEW_NAME_REQUIRED;
+        firstInvalidKey = 'name';
       }
-      if (!newClientPhone.trim() && !newClientEmail.trim()) {
-        setInlineError(SESSION_SUCCESSION_UI.NEW_CONTACT_REQUIRED);
+      if (!phoneTrim && !emailTrim) {
+        nextErrors.phone = SESSION_SUCCESSION_UI.NEW_CONTACT_REQUIRED;
+        nextErrors.email = SESSION_SUCCESSION_UI.NEW_CONTACT_REQUIRED;
+        if (!firstInvalidKey) {
+          firstInvalidKey = 'phone';
+        }
+      } else {
+        if (phoneTrim && !validatePhone(phoneTrim)) {
+          nextErrors.phone = SESSION_SUCCESSION_UI.NEW_INVALID_PHONE;
+          if (!firstInvalidKey) {
+            firstInvalidKey = 'phone';
+          }
+        }
+        if (emailTrim && !validateEmail(emailTrim)) {
+          nextErrors.email = SESSION_SUCCESSION_UI.NEW_INVALID_EMAIL;
+          if (!firstInvalidKey) {
+            firstInvalidKey = 'email';
+          }
+        }
+      }
+
+      setNewClientFieldErrors(nextErrors);
+      if (firstInvalidKey) {
+        setInlineError(
+          nextErrors[firstInvalidKey]
+          || SESSION_SUCCESSION_UI.BENEFICIARY_REQUIRED
+        );
+        focusNewClientField(firstInvalidKey);
         return false;
       }
     }
@@ -217,6 +312,7 @@ const SessionSuccessionWizardModal = ({
       return false;
     }
     setInlineError('');
+    setNewClientFieldErrors(EMPTY_NEW_CLIENT_FIELD_ERRORS);
     return true;
   };
 
@@ -517,7 +613,7 @@ const SessionSuccessionWizardModal = ({
                 <div className="session-succession-wizard__main">
                   <BeneficiaryPickerStep
                     beneficiaryMode={beneficiaryMode}
-                    onModeChange={setBeneficiaryMode}
+                    onModeChange={handleBeneficiaryModeChange}
                     clientOptions={clientOptions}
                     beneficiaryClientId={beneficiaryClientId}
                     onBeneficiaryClientIdChange={setBeneficiaryClientId}
@@ -525,9 +621,10 @@ const SessionSuccessionWizardModal = ({
                     newClientName={newClientName}
                     newClientPhone={newClientPhone}
                     newClientEmail={newClientEmail}
-                    onNewClientNameChange={setNewClientName}
-                    onNewClientPhoneChange={setNewClientPhone}
-                    onNewClientEmailChange={setNewClientEmail}
+                    onNewClientNameChange={handleNewClientNameChange}
+                    onNewClientPhoneChange={handleNewClientPhoneChange}
+                    onNewClientEmailChange={handleNewClientEmailChange}
+                    newClientFieldErrors={newClientFieldErrors}
                     sameClientError={sameClientInline}
                   />
                 </div>

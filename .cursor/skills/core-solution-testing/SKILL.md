@@ -38,6 +38,7 @@ description: Core Solution(MindGarden) 테스트 표준 요약. 단위·통합·
 - **Jest**: `*.test.js`, `__tests__/*.test.js` (예: frontend-trinity, frontend)
 - **Playwright**: `tests/e2e/playwright.config.ts`, `tests/e2e/tests/**/*.spec.ts`
 - E2E: baseURL·chromium/firefox/webkit 프로젝트 설정 준수
+- **폼·모달·마법사**: 필수 표시·validate(미입력 시 submit/다음·API 차단) 검증 포함. `/core-solution-frontend` 「폼·입력 validate」.
 
 ## 실행·커버리지
 
@@ -52,6 +53,7 @@ description: Core Solution(MindGarden) 테스트 표준 요약. 단위·통합·
 - [ ] 테스트 데이터 동적 생성, 프로덕션 데이터 미사용
 - [ ] 통합 테스트 인증·X-Tenant-ID 포함
 - [ ] 테스트 독립성·테넌트 격리 반영
+- [ ] (폼·등록/수정 UI) 필수 표시·validate·미통과 시 API/다음 스텝 차단 확인
 
 ## E2E·수동 스모크용 로그인 계정 (필요 시)
 

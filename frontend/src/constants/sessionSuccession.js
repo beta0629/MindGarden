@@ -35,6 +35,11 @@ export const SESSION_SUCCESSION_UI = {
   NEW_CLIENT_NAME_LABEL: '이름',
   NEW_CLIENT_PHONE_LABEL: '휴대폰',
   NEW_CLIENT_EMAIL_LABEL: '이메일',
+  /** ClientModal create 과 동일: 이메일·휴대폰 중 하나 필수 안내 */
+  NEW_CLIENT_CONTACT_HELP: '이메일 또는 휴대폰 번호 중 하나는 입력해 주세요.',
+  NEW_INVALID_EMAIL: '올바른 이메일 형식을 입력해주세요.',
+  NEW_INVALID_PHONE:
+    '휴대폰 번호만 입력해 주세요. 010·011·016~019이며 하이픈은 입력해도 됩니다.',
   OCCUPYING_BANNER_PREFIX: '스케줄에 이미 등록된',
   OCCUPYING_BANNER_SUFFIX: '건은 승계되지 않고 이전 당사자에게 남습니다.',
   OCCUPYING_BANNER_STATIC:

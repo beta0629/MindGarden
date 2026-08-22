@@ -1,6 +1,6 @@
 ---
 name: core-solution-frontend
-description: Core Solution(MindGarden) 프론트엔드 React/JS/TS 코딩 시 적용할 룰. StandardizedApi 사용, 디자인 토큰, 상수화, 컴포넌트 구조.
+description: Core Solution(MindGarden) 프론트엔드 React/JS/TS 코딩 시 적용할 룰. StandardizedApi 사용, 디자인 토큰, 상수화, 컴포넌트 구조, 폼·입력 validate 필수.
 ---
 
 # Core Solution 프론트엔드 룰
@@ -18,6 +18,15 @@ React/JavaScript/TypeScript 코드를 작성·수정할 때 이 스킬을 적용
 - **UnifiedModal 사용**: 새 모달은 `frontend/src/components/common/modals/UnifiedModal.js` 사용. `size` prop으로 small/medium/large/fullscreen 지정.
 - MgModal, mg-v2-ad-modal, BaseModal, ErpModal 등 사용 금지.
 - 참조: `/core-solution-unified-modal` 스킬, `docs/standards/MODAL_STANDARD.md`
+
+### 폼·입력 validate (필수)
+
+FE **폼·모달·마법사·등록/수정 UI** 구현·수정 시:
+
+- **필수 필드 표시** + **submit/다음 전 validate** 필수. 누락 금지.
+- 기존 **공통 검증**·**FormInput `required`** 패턴·**어드민 동일 화면** 규칙을 먼저 맞출 것.
+- **validate 없이 API 호출·다음 스텝 진행 금지**.
+- **core-coder** 완료 조건·**core-tester** 체크에 **필수 표시 + validate** 포함.
 
 ## When to Use
 

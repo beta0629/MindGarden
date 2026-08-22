@@ -218,6 +218,7 @@ const StaffManagement = ({ embedded = false }) => {
   const [isCheckingStaffEmail, setIsCheckingStaffEmail] = useState(false);
   const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
+  const [createFormErrors, setCreateFormErrors] = useState({});
   const staffEditPhoneBaselineRef = useRef('');
   const { viewMode, setViewMode } = useViewModePreference({
     storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), STAFF_VIEW_MODE_PAGE_ID),
@@ -434,6 +435,7 @@ const StaffManagement = ({ embedded = false }) => {
     });
     setStaffEmailCheckStatus(null);
     setStaffPhoneCheckStatus(null);
+    setCreateFormErrors({});
     setCreateStaffModal({ open: true, submitting: false });
   }, []);
 
@@ -445,6 +447,7 @@ const StaffManagement = ({ embedded = false }) => {
     });
     setStaffEmailCheckStatus(null);
     setStaffPhoneCheckStatus(null);
+    setCreateFormErrors({});
   }, []);
 
   const handleCreateFormChange = useCallback((e) => {
@@ -452,6 +455,9 @@ const StaffManagement = ({ embedded = false }) => {
     setCreateForm((prev) => ({ ...prev, [name]: value }));
     if (name === 'email') setStaffEmailCheckStatus(null);
     if (name === 'phone') setStaffPhoneCheckStatus(null);
+    if (name === 'name') {
+      setCreateFormErrors((prev) => (prev.name ? { ...prev, name: '' } : prev));
+    }
   }, []);
 
   const handleStaffEmailDuplicateCheck = useCallback(async() => {
@@ -534,10 +540,20 @@ const StaffManagement = ({ embedded = false }) => {
       e.preventDefault();
       const email = (createForm.email || '').trim().toLowerCase();
       const name = (createForm.name || '').trim();
+      const fieldErrors = {};
+      if (!name) {
+        fieldErrors.name = STAFF_MGMT_MSG.VAL_NAME_REQUIRED;
+      }
       if (!email) {
         showError(VALIDATION_MESSAGES.REQUIRED_EMAIL);
+        setCreateFormErrors(fieldErrors);
         return;
       }
+      if (Object.keys(fieldErrors).length > 0) {
+        setCreateFormErrors(fieldErrors);
+        return;
+      }
+      setCreateFormErrors({});
       const phoneNorm = normalizeKoreanMobileDigits((createForm.phone || '').trim());
       if (phoneNorm && isValidKoreanMobileDigits(phoneNorm) && staffPhoneCheckStatus !== 'available') {
         showError(VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED);
@@ -547,7 +563,7 @@ const StaffManagement = ({ embedded = false }) => {
       try {
         const payload = {
           email,
-          name: name || undefined,
+          name,
           password: (createForm.password || '').trim() || undefined,
           phone: (createForm.phone || '').trim() || undefined,
           profileImageUrl: (createForm.profileImageUrl || '').trim() || undefined,
@@ -1445,10 +1461,13 @@ const StaffManagement = ({ embedded = false }) => {
                 value={createForm.name}
                 onChange={handleCreateFormChange}
                 placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_NAME}
-                className="mg-v2-form-input"
-                required
+                className={`mg-v2-form-input${createFormErrors.name ? ' mg-v2-form-input-error' : ''}`}
                 disabled={createStaffModal.submitting}
+                aria-invalid={createFormErrors.name ? true : undefined}
               />
+              {createFormErrors.name ? (
+                <span className="mg-v2-form-error" role="alert">{createFormErrors.name}</span>
+              ) : null}
             </div>
             <KoreanMobileDuplicateField
               label={STAFF_MGMT_FORM_LABEL.PHONE}

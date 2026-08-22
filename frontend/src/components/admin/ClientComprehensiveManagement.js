@@ -965,9 +965,14 @@ const ClientComprehensiveManagement = ({ embedded = false }) => {
                                             return;
                                         }
                                     }
+                                    const nameTrim = dataToUse.name != null ? String(dataToUse.name).trim() : '';
                                     const emailTrim = dataToUse.email != null ? String(dataToUse.email).trim() : '';
                                     const phoneTrim = dataToUse.phone != null ? String(dataToUse.phone).trim() : '';
                                     if (modalType === 'create' || modalType === 'edit') {
+                                        if (!nameTrim) {
+                                            showError(VALIDATION_MESSAGES.REQUIRED_NAME);
+                                            return;
+                                        }
                                         if (!emailTrim && !phoneTrim) {
                                             showError(VALIDATION_MESSAGES.EMAIL_OR_PHONE_ONE_REQUIRED);
                                             return;

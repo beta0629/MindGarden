@@ -7,31 +7,30 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import BadgeSelect from '../../common/BadgeSelect';
 import { useTranslation } from 'react-i18next';
+
+const ERR_PAYMENT_METHOD = '결제 방법을 선택해주세요.';
+const ERR_PAYMENT_REFERENCE = '결제 참조번호를 입력해주세요.';
+const ERR_PAYMENT_AMOUNT = '결제 금액은 1원 이상이어야 합니다.';
+
 /**
  * 매칭 입금확인 모달 컴포넌트
-/**
  * - 결제 방법 선택 (계좌이체, 신용카드, 현금)
-/**
  * - 결제 참조번호 자동 생성 및 수정 가능
-/**
  * - 입금확인 처리
-/**
- * 
-/**
+ *
  * @author Core Solution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-16
  */
-const MappingPaymentModal = ({ 
-    isOpen, 
-    onClose, 
-    mapping, 
-    onPaymentConfirmed 
+const MappingPaymentModal = ({
+    isOpen,
+    onClose,
+    mapping,
+    onPaymentConfirmed
 }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
     const [paymentData, setPaymentData] = useState({
         paymentMethod: 'BANK_TRANSFER',
         paymentReference: '',
@@ -42,7 +41,7 @@ const MappingPaymentModal = ({
     const generateReferenceNumber = (method = 'BANK_TRANSFER') => {
         const now = new Date();
         const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-        
+
         if (method === 'CASH') {
             return `CASH_${timestamp}`;
         }
@@ -62,12 +61,13 @@ const MappingPaymentModal = ({
     useEffect(() => {
         if (isOpen && mapping) {
             const referenceNumber = generateReferenceNumber('BANK_TRANSFER');
-            
+
             setPaymentData({
                 paymentMethod: 'BANK_TRANSFER',
                 paymentReference: referenceNumber,
                 paymentAmount: mapping.packagePrice || 0
             });
+            setErrors({});
         }
     }, [isOpen, mapping]);
 
@@ -80,11 +80,44 @@ const MappingPaymentModal = ({
             paymentMethod: method,
             paymentReference: reference
         }));
+        if (errors.paymentMethod || errors.paymentReference) {
+            setErrors((prev) => ({
+                ...prev,
+                paymentMethod: '',
+                paymentReference: ''
+            }));
+        }
+    };
+
+    /**
+     * 입금확인 전 JS validate. mapping 존재만으로 API 호출하지 않음.
+     * @returns {boolean}
+     */
+    const validateForm = () => {
+        const newErrors = {};
+        if (!paymentData.paymentMethod) {
+            newErrors.paymentMethod = ERR_PAYMENT_METHOD;
+        }
+        if (paymentData.paymentMethod !== 'CASH') {
+            const ref = (paymentData.paymentReference || '').trim();
+            if (!ref) {
+                newErrors.paymentReference = ERR_PAYMENT_REFERENCE;
+            }
+        }
+        const amount = Number(paymentData.paymentAmount);
+        if (!Number.isFinite(amount) || amount < 1) {
+            newErrors.paymentAmount = ERR_PAYMENT_AMOUNT;
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     // 입금확인 처리
     const handleConfirmPayment = async() => {
         if (!mapping) return;
+        if (!validateForm()) {
+            return;
+        }
 
         setLoading(true);
         try {
@@ -203,6 +236,7 @@ const MappingPaymentModal = ({
                 <div className="mg-v2-form-group">
                     <label className="mg-v2-form-label">
                         {t('admin.labels.paymentMethod')}
+                        <span className="mg-v2-form-label-required">*</span>
                     </label>
                     <BadgeSelect
                         value={paymentData.paymentMethod}
@@ -211,12 +245,16 @@ const MappingPaymentModal = ({
                         className="mg-v2-form-badge-select"
                         aria-label={t('admin.labels.paymentMethod')}
                     />
+                    {errors.paymentMethod ? (
+                        <span className="mg-v2-form-error" role="alert">{errors.paymentMethod}</span>
+                    ) : null}
                 </div>
 
                 {paymentData.paymentMethod !== 'CASH' && (
                     <div className="mg-v2-form-group">
                         <label className="mg-v2-form-label">
                             결제 참조번호
+                            <span className="mg-v2-form-label-required">*</span>
                         </label>
                         <input
                             type="text"
@@ -226,30 +264,47 @@ const MappingPaymentModal = ({
                                     ...prev,
                                     paymentReference: e.target.value
                                 }));
+                                if (errors.paymentReference) {
+                                    setErrors((prev) => ({ ...prev, paymentReference: '' }));
+                                }
                             }}
                             placeholder={referencePlaceholder}
-                            className="mg-v2-form-input"
+                            className={`mg-v2-form-input${errors.paymentReference ? ' mg-v2-form-input-error' : ''}`}
+                            aria-invalid={errors.paymentReference ? true : undefined}
                         />
                         <small className="mg-v2-form-help">
                             {referenceHelpText}
                         </small>
+                        {errors.paymentReference ? (
+                            <span className="mg-v2-form-error" role="alert">{errors.paymentReference}</span>
+                        ) : null}
                     </div>
                 )}
 
                 <div className="mg-v2-form-group">
                     <label className="mg-v2-form-label">
                         결제 금액
+                        <span className="mg-v2-form-label-required">*</span>
                     </label>
                     <input
                         type="number"
                         value={paymentData.paymentAmount}
-                        onChange={(e) => setPaymentData(prev => ({
-                            ...prev,
-                            paymentAmount: parseInt(e.target.value) || 0
-                        }))}
+                        onChange={(e) => {
+                            setPaymentData(prev => ({
+                                ...prev,
+                                paymentAmount: parseInt(e.target.value, 10) || 0
+                            }));
+                            if (errors.paymentAmount) {
+                                setErrors((prev) => ({ ...prev, paymentAmount: '' }));
+                            }
+                        }}
                         placeholder="결제 금액을 입력하세요"
-                        className="mg-v2-form-input"
+                        className={`mg-v2-form-input${errors.paymentAmount ? ' mg-v2-form-input-error' : ''}`}
+                        aria-invalid={errors.paymentAmount ? true : undefined}
                     />
+                    {errors.paymentAmount ? (
+                        <span className="mg-v2-form-error" role="alert">{errors.paymentAmount}</span>
+                    ) : null}
                 </div>
             </div>
         </UnifiedModal>

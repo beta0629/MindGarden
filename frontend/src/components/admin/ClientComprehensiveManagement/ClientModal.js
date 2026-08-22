@@ -11,7 +11,7 @@ import BadgeSelect from '../../common/BadgeSelect';
 import {
   VALIDATION_MESSAGES
 } from '../../../constants/messages';
-import { isValidVehiclePlateOptional } from '../../../utils/validationUtils';
+import { isValidVehiclePlateOptional, validateEmail } from '../../../utils/validationUtils';
 import SafeText from '../../common/SafeText';
 import { formatConsultantGenderLabel, getConsultantAgeYears } from '../../../utils/consultantHelper';
 import { getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
@@ -86,6 +86,7 @@ const ClientModal = ({
     const [phoneCheckStatus, setPhoneCheckStatus] = useState(null);
     const [isCheckingPhone, setIsCheckingPhone] = useState(false);
     const [vehiclePlateError, setVehiclePlateError] = useState('');
+    const [errors, setErrors] = useState({});
     const [clientSummary, setClientSummary] = useState(null);
     const [summaryLoading, setSummaryLoading] = useState(false);
     const clientRef = useRef(client);
@@ -240,6 +241,13 @@ const ClientModal = ({
             [name]: value
         }));
 
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: '' }));
+        }
+        if ((name === 'email' || name === 'phone') && errors.contact) {
+            setErrors((prev) => ({ ...prev, contact: '' }));
+        }
+
         if (name === 'vehiclePlate') {
             if (value.trim() && !isValidVehiclePlateOptional(value)) {
                 setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
@@ -255,6 +263,37 @@ const ClientModal = ({
         if (name === 'phone') {
             setPhoneCheckStatus(null);
         }
+    };
+
+    /**
+     * 저장 전 JS validate. type=button 저장이 HTML required를 우회하므로 필수.
+     * @returns {boolean} 유효하면 true
+     */
+    const validateForm = () => {
+        if (type !== 'create' && type !== 'edit') {
+            return true;
+        }
+        const newErrors = {};
+        const nameTrim = formData.name != null ? String(formData.name).trim() : '';
+        if (!nameTrim) {
+            newErrors.name = VALIDATION_MESSAGES.REQUIRED_NAME;
+        }
+        const emailTrim = formData.email != null ? String(formData.email).trim() : '';
+        const phoneTrim = formData.phone != null ? String(formData.phone).trim() : '';
+        if (type === 'create' && !emailTrim && !phoneTrim) {
+            newErrors.contact = VALIDATION_MESSAGES.EMAIL_OR_PHONE_ONE_REQUIRED;
+        }
+        if (emailTrim && !validateEmail(emailTrim)) {
+            newErrors.email = VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT;
+        }
+        if (phoneTrim) {
+            const phoneNorm = normalizeKoreanMobileDigits(phoneTrim);
+            if (!isValidKoreanMobileDigits(phoneNorm)) {
+                newErrors.phone = VALIDATION_MESSAGES.INVALID_PHONE;
+            }
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleClientPhoneDuplicateCheck = useCallback(async() => {
@@ -363,6 +402,9 @@ const ClientModal = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return undefined;
+        }
         const plateRaw = formData.vehiclePlate;
         if (plateRaw != null && String(plateRaw).trim() !== '' && !isValidVehiclePlateOptional(plateRaw)) {
             setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
@@ -618,18 +660,26 @@ const ClientModal = ({
                     </div>
                 )}
                 <div className="mg-v2-form-group">
-                    <label htmlFor="name" className="mg-v2-form-label">{t('admin:labels.name')} {type === 'create' && '*'}</label>
+                    <label htmlFor="name" className="mg-v2-form-label">
+                        {t('admin:labels.name')}
+                        {(type === 'create' || type === 'edit') && (
+                            <span className="mg-v2-form-label-required">*</span>
+                        )}
+                    </label>
                     <input
                         type="text"
                         id="name"
                         name="name"
                         value={safeFormData.name}
                         onChange={handleInputChange}
-                        required={type === 'create'}
                         placeholder={t('admin:clientModal.namePlaceholder')}
-                        className="mg-v2-form-input"
+                        className={`mg-v2-form-input${errors.name ? ' mg-v2-form-input-error' : ''}`}
                         readOnly={type === 'view'}
+                        aria-invalid={errors.name ? true : undefined}
                     />
+                    {errors.name ? (
+                        <span className="mg-v2-form-error" role="alert">{errors.name}</span>
+                    ) : null}
                 </div>
                 <KoreanMobileDuplicateField
                     mode={type === 'view' ? 'inputOnly' : 'withDuplicate'}
@@ -660,6 +710,12 @@ const ClientModal = ({
                         <small className="mg-v2-form-help">
                             {VALIDATION_MESSAGES.HELP_EMAIL_OR_PHONE_ONE_REQUIRED}
                         </small>
+                    ) : null}
+                    {errors.phone ? (
+                        <span className="mg-v2-form-error" role="alert">{errors.phone}</span>
+                    ) : null}
+                    {errors.contact ? (
+                        <span className="mg-v2-form-error" role="alert">{errors.contact}</span>
                     ) : null}
                 </KoreanMobileDuplicateField>
                 <div className="mg-v2-form-group">
@@ -814,6 +870,9 @@ const ClientModal = ({
                     {type === 'edit' && (
                         <small className="mg-v2-form-help">{VALIDATION_MESSAGES.HELP_EMAIL_READONLY}</small>
                     )}
+                    {errors.email ? (
+                        <span className="mg-v2-form-error" role="alert">{errors.email}</span>
+                    ) : null}
                     {type === 'create' && emailCheckStatus === 'duplicate' && (
                         <small className="mg-v2-form-help mg-v2-form-help--error">⚠️ {VALIDATION_MESSAGES.EMAIL_EXISTS}</small>
                     )}

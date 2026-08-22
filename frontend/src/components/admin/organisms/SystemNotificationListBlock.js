@@ -151,7 +151,9 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
   };
 
   const handleSave = async(formData) => {
-    if (!formData.title || !formData.content) {
+    const titleTrim = formData?.title != null ? String(formData.title).trim() : '';
+    const contentTrim = formData?.content != null ? String(formData.content).trim() : '';
+    if (!titleTrim || !contentTrim) {
       notificationManager.show('제목과 내용을 입력해주세요.', 'warning');
       return;
     }
@@ -160,10 +162,15 @@ const SystemNotificationListBlock = ({ hasManagePermission, onOpenCreate }) => {
       const endpoint = editingNotification
         ? `/api/v1/system-notifications/admin/${editingNotification.id}`
         : API_SYSTEM_NOTIFICATIONS_ADMIN;
+      const payload = {
+        ...formData,
+        title: titleTrim,
+        content: contentTrim
+      };
       if (editingNotification) {
-        await StandardizedApi.put(endpoint, formData);
+        await StandardizedApi.put(endpoint, payload);
       } else {
-        await StandardizedApi.post(endpoint, formData);
+        await StandardizedApi.post(endpoint, payload);
       }
       notificationManager.show(
         editingNotification ? '공지가 수정되었습니다.' : '공지가 작성되었습니다.',

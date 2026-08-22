@@ -317,6 +317,14 @@ const TenantCommonCodeManager = () => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
+    if (!(formData.codeValue || '').trim()) {
+      notificationManager.error(t('admin:tenantCommonCode.msg.errCodeValueRequired', '코드값을 입력해주세요.'));
+      return;
+    }
+    if (!(formData.codeLabel || '').trim()) {
+      notificationManager.error(t('admin:tenantCommonCode.msg.errCodeLabelRequired', '코드명을 입력해주세요.'));
+      return;
+    }
     const gn = formData.codeGroup;
     if (isSubcategoryCodeGroup(gn)) {
       if (!formData.parentCodeValue || !String(formData.parentCodeValue).trim()) {

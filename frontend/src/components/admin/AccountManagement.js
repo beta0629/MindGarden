@@ -17,7 +17,8 @@ import {
   ACCOUNT_BUTTON_TEXT,
   ACCOUNT_MESSAGES,
   ACCOUNT_PAGE_TITLES,
-  ACCOUNT_SECTION_TITLES
+  ACCOUNT_SECTION_TITLES,
+  ACCOUNT_VALIDATION
 } from '../../constants/account';
 import {
   createAccount,
@@ -39,6 +40,33 @@ const EMPTY_FORM_DATA = {
   isPrimary: false,
   isActive: true,
   description: ''
+};
+
+/**
+ * 부모 저장 경로 방어 validate (AccountForm JS validate와 정합).
+ * @param {object} data
+ * @returns {string|null} 에러 메시지 또는 null
+ */
+const getAccountFormValidationError = (data) => {
+  if (!data?.bankCode) {
+    return '은행을 선택해주세요.';
+  }
+  const accountNumber = (data.accountNumber || '').trim();
+  if (!accountNumber) {
+    return '계좌번호를 입력해주세요.';
+  }
+  if (
+    !ACCOUNT_VALIDATION.ACCOUNT_NUMBER_PATTERN.test(accountNumber)
+    || accountNumber.length < ACCOUNT_VALIDATION.MIN_ACCOUNT_NUMBER_LENGTH
+    || accountNumber.length > ACCOUNT_VALIDATION.MAX_ACCOUNT_NUMBER_LENGTH
+  ) {
+    return '계좌번호 형식이 올바르지 않습니다.';
+  }
+  const accountHolder = (data.accountHolder || '').trim();
+  if (!accountHolder) {
+    return '예금주명을 입력해주세요.';
+  }
+  return null;
 };
 
 const AccountManagement = () => {
@@ -82,6 +110,11 @@ const AccountManagement = () => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
+    const validationError = getAccountFormValidationError(formData);
+    if (validationError) {
+      notificationManager.show(validationError, 'warning');
+      return;
+    }
     try {
       setLoading(true);
       if (editingAccount) {

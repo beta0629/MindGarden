@@ -175,9 +175,28 @@ const DiscountPaymentConfirmationModal = ({
     notificationManager.info('할인이 제거되었습니다.');
   };
 
-  const handleConfirmPayment = async() => {
+  /**
+   * 결제 확인 전 JS validate. errors 상태를 필드에 표시한다.
+   * @returns {boolean}
+   */
+  const validateForm = () => {
+    const newErrors = {};
     if (selectedMappings.length === 0) {
-      notificationManager.warning('선택된 매핑이 없습니다.');
+      newErrors.selectedMappings = '선택된 매핑이 없습니다.';
+    }
+    if (!paymentData.method) {
+      newErrors.method = '결제 방법을 선택해주세요.';
+    }
+    const amount = Number(paymentData.amount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      newErrors.amount = '결제 금액이 유효하지 않습니다.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleConfirmPayment = async() => {
+    if (!validateForm()) {
       return;
     }
     
@@ -256,6 +275,9 @@ const DiscountPaymentConfirmationModal = ({
           {/* 선택된 매핑 정보 */}
           <div className="mg-v2-form-section">
             <h3 className="mg-v2-section-title">선택된 매핑</h3>
+            {errors.selectedMappings ? (
+              <span className="mg-v2-form-error" role="alert">{errors.selectedMappings}</span>
+            ) : null}
             <div className="mg-v2-mapping-list">
               {selectedMappings.map(mapping => (
                 <div key={mapping.id} className="mg-v2-mapping-card">
@@ -373,11 +395,17 @@ const DiscountPaymentConfirmationModal = ({
             <h3 className="mg-v2-section-title">
               <CreditCard size={20} />
               {t('admin.labels.paymentMethod')}
+              <span className="mg-v2-form-label-required">*</span>
             </h3>
             <div className="mg-v2-form-group">
               <BadgeSelect
                 value={paymentData.method}
-                onChange={(val) => setPaymentData(prev => ({ ...prev, method: val }))}
+                onChange={(val) => {
+                  setPaymentData(prev => ({ ...prev, method: val }));
+                  if (errors.method) {
+                    setErrors((prev) => ({ ...prev, method: '' }));
+                  }
+                }}
                 options={[
                   { value: 'CARD', label: '카드' },
                   { value: 'BANK_TRANSFER', label: '계좌이체' },
@@ -388,6 +416,12 @@ const DiscountPaymentConfirmationModal = ({
                 className="mg-v2-select"
                 aria-label={t('admin.labels.paymentMethod')}
               />
+              {errors.method ? (
+                <span className="mg-v2-form-error" role="alert">{errors.method}</span>
+              ) : null}
+              {errors.amount ? (
+                <span className="mg-v2-form-error" role="alert">{errors.amount}</span>
+              ) : null}
             </div>
           </div>
           

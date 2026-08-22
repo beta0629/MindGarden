@@ -49,6 +49,7 @@ const MatchingScheduleList = ({
   viewFilter,
   statusFilter,
   activePeekMappingId,
+  highlightedMappingId,
   onOpenPeek,
   onScheduleFromCard,
   onPayment,
@@ -79,6 +80,17 @@ const MatchingScheduleList = ({
     });
     return () => draggable.destroy();
   }, [loading, mappings]);
+
+  useEffect(() => {
+    if (!highlightedMappingId || loading || !listRef.current) {
+      return;
+    }
+    const selector = `[data-mapping-id="${String(highlightedMappingId)}"]`;
+    const el = listRef.current.querySelector(selector);
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [highlightedMappingId, loading, mappings]);
 
   if (loading) {
     return (
@@ -118,6 +130,8 @@ const MatchingScheduleList = ({
             const eventData = buildEventData(mapping);
             const isPeekActive = activePeekMappingId != null
               && String(activePeekMappingId) === String(mapping.id);
+            const isHighlighted = highlightedMappingId != null
+              && String(highlightedMappingId) === String(mapping.id);
 
             if (isCompact) {
               return (
@@ -125,13 +139,15 @@ const MatchingScheduleList = ({
                   key={mapping.id}
                   className={`integrated-schedule__card integrated-schedule__card--compact${
                     scheduleable ? ' fc-event' : ''
-                  }`}
+                  }${isHighlighted ? ' integrated-schedule__card--highlighted' : ''}`}
+                  data-mapping-id={mapping.id}
                   data-event={scheduleable ? JSON.stringify(eventData) : undefined}
                 >
                   <MatchingScheduleCompactRow
                     mapping={mapping}
                     onOpenPeek={onOpenPeek}
                     isActive={isPeekActive}
+                    isHighlighted={isHighlighted}
                   />
                 </li>
               );
@@ -140,7 +156,10 @@ const MatchingScheduleList = ({
             return (
               <li
                 key={mapping.id}
-                className={`integrated-schedule__card${scheduleable ? ' fc-event' : ''}`}
+                className={`integrated-schedule__card${scheduleable ? ' fc-event' : ''}${
+                  isHighlighted ? ' integrated-schedule__card--highlighted' : ''
+                }`}
+                data-mapping-id={mapping.id}
                 data-event={scheduleable ? JSON.stringify(eventData) : undefined}
               >
                 <MappingScheduleCard
@@ -190,6 +209,7 @@ MatchingScheduleList.propTypes = {
   viewFilter: PropTypes.string,
   statusFilter: PropTypes.string,
   activePeekMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  highlightedMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onOpenPeek: PropTypes.func,
   onScheduleFromCard: PropTypes.func.isRequired,
   onPayment: PropTypes.func,
@@ -216,6 +236,7 @@ MatchingScheduleList.defaultProps = {
   viewFilter: '',
   statusFilter: '',
   activePeekMappingId: null,
+  highlightedMappingId: null,
   onOpenPeek: null,
   onPayment: null,
   onDeposit: null,

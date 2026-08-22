@@ -54,7 +54,8 @@ const MatchingScheduleSidebar = ({
   cancelTargetMappingId,
   desyncProcessing,
   desyncTargetMappingId,
-  activePeekMappingId
+  activePeekMappingId,
+  highlightedMappingId
 }) => {
   const { t } = useTranslation('admin');
 
@@ -237,6 +238,7 @@ const MatchingScheduleSidebar = ({
           cancelTargetMappingId={cancelTargetMappingId}
           desyncProcessing={desyncProcessing}
           desyncTargetMappingId={desyncTargetMappingId}
+          highlightedMappingId={highlightedMappingId}
         />
       </div>
     </aside>
@@ -274,7 +276,8 @@ MatchingScheduleSidebar.propTypes = {
   cancelTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   desyncProcessing: PropTypes.bool,
   desyncTargetMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  activePeekMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  activePeekMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  highlightedMappingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 MatchingScheduleSidebar.defaultProps = {
@@ -300,7 +303,8 @@ MatchingScheduleSidebar.defaultProps = {
   cancelTargetMappingId: null,
   desyncProcessing: false,
   desyncTargetMappingId: null,
-  activePeekMappingId: null
+  activePeekMappingId: null,
+  highlightedMappingId: null
 };
 
 export default MatchingScheduleSidebar;

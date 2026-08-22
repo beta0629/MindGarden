@@ -326,6 +326,31 @@
   font-size: var(--mg-font-size-sm);
 }
 
+.session-succession-wizard__new-client-notice {
+  margin: 0;
+}
+
+.session-succession-wizard__done {
+  gap: var(--mg-spacing-lg);
+}
+
+.session-succession-wizard__done-lead {
+  margin: 0;
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-base);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.session-succession-wizard__done-guidance {
+  margin: 0;
+  padding: var(--mg-spacing-md);
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-color-primary-50, var(--mg-color-background-main));
+  color: var(--mg-color-primary-main);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+}
+
 .session-succession-wizard__error {
   display: flex;
   flex-direction: column;

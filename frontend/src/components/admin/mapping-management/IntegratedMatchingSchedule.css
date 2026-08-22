@@ -543,6 +543,24 @@
   cursor: grabbing;
 }
 
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card--highlighted .mg-v2-card-container {
+  border-color: var(--mg-color-primary-main);
+  box-shadow: 0 0 0 2px color-mix(
+    in srgb,
+    var(--mg-color-primary-light) 45%,
+    transparent
+  );
+}
+
+.integrated-schedule__sidebar .integrated-schedule__list > li.integrated-schedule__card--highlighted.integrated-schedule__card--compact {
+  border-radius: var(--mg-radius-md);
+  box-shadow: 0 0 0 2px color-mix(
+    in srgb,
+    var(--mg-color-primary-light) 45%,
+    transparent
+  );
+}
+
 /* 우측 캘린더 — 옵션 A: 가용 공간 모두 차지 (좌측·상단 collapse 시 풀 폭) */
 .integrated-schedule__calendar-wrapper {
   flex: 1 1 auto;

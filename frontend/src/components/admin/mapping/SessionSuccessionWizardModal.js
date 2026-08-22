@@ -27,6 +27,7 @@ import SuccessionSourceSummary from './session-succession/SuccessionSourceSummar
 import BeneficiaryPickerStep from './session-succession/BeneficiaryPickerStep';
 import SuccessionCountStep from './session-succession/SuccessionCountStep';
 import SuccessionConfirmStep from './session-succession/SuccessionConfirmStep';
+import SuccessionDoneStep from './session-succession/SuccessionDoneStep';
 import './SessionSuccessionWizardModal.css';
 
 const EMPTY_NEW_CLIENT_FIELD_ERRORS = {
@@ -658,27 +659,7 @@ const SessionSuccessionWizardModal = ({
           )}
 
           {step === SESSION_SUCCESSION_STEPS.DONE && result && (
-            <section
-              className="session-succession-wizard__section session-succession-wizard__section--panel"
-              aria-live="polite"
-            >
-              <p>
-                이전
-                {' '}
-                {toSafeNumber(result.transferredCount, 0)}
-                회 완료.
-              </p>
-              <p>
-                소스 남은 회기:
-                {' '}
-                {toSafeNumber(result.sourceMapping?.remainingSessions, 0)}
-              </p>
-              <p>
-                타깃 남은 회기:
-                {' '}
-                {toSafeNumber(result.targetMapping?.remainingSessions, 0)}
-              </p>
-            </section>
+            <SuccessionDoneStep result={result} />
           )}
 
           {inlineError && (

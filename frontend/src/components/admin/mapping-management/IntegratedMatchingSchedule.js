@@ -60,6 +60,7 @@ import {
   NEW_DAYS,
   VIEW_FILTER_NEW,
   VIEW_FILTER_REMAINING,
+  VIEW_FILTER_ALL,
   PAYMENT_TIMING_SAME_DAY_CARD,
   isOngoingMapping,
   getMappingDate
@@ -88,6 +89,7 @@ import { toErrorMessage } from '../../../utils/safeDisplay';
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
 const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
+const SESSION_SUCCESSION_HIGHLIGHT_CLEAR_MS = 8000;
 const INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW = buildIntegratedScheduleDefaultSavedView(
   SIDEBAR_DENSITY_COMFORTABLE
 );
@@ -139,6 +141,8 @@ const IntegratedMatchingSchedule = () => {
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
   const [sessionExtensionMapping, setSessionExtensionMapping] = useState(null);
   const [sessionSuccessionMapping, setSessionSuccessionMapping] = useState(null);
+  const [highlightedMappingId, setHighlightedMappingId] = useState(null);
+  const successionHighlightTimerRef = useRef(null);
   const [sessionExtensionPaymentRequest, setSessionExtensionPaymentRequest] = useState(null);
   const [sessionExtensionCancellingId, setSessionExtensionCancellingId] = useState('');
   const [packagePaymentHistoryClientId, setPackagePaymentHistoryClientId] = useState(null);
@@ -498,6 +502,22 @@ const IntegratedMatchingSchedule = () => {
     loadMappings();
   }, [loadMappings]);
 
+  useEffect(() => () => {
+    if (successionHighlightTimerRef.current) {
+      clearTimeout(successionHighlightTimerRef.current);
+    }
+  }, []);
+
+  const scheduleSuccessionHighlightClear = useCallback(() => {
+    if (successionHighlightTimerRef.current) {
+      clearTimeout(successionHighlightTimerRef.current);
+    }
+    successionHighlightTimerRef.current = setTimeout(() => {
+      setHighlightedMappingId(null);
+      successionHighlightTimerRef.current = null;
+    }, SESSION_SUCCESSION_HIGHLIGHT_CLEAR_MS);
+  }, []);
+
   const cutoff = Date.now() - NEW_DAYS * 24 * 60 * 60 * 1000;
   let byView;
   if (viewFilter === VIEW_FILTER_NEW) {
@@ -804,9 +824,18 @@ const IntegratedMatchingSchedule = () => {
     setSessionSuccessionMapping(mapping);
   }, []);
 
-  const handleSessionSuccessionSucceeded = useCallback(() => {
-    loadMappings();
-  }, [loadMappings]);
+  const handleSessionSuccessionSucceeded = useCallback(async(payload) => {
+    const targetId = payload?.targetMapping?.id ?? payload?.targetMapping?.mappingId ?? null;
+    await loadMappings();
+    if (targetId == null) {
+      return;
+    }
+    setIsSidebarCollapsed(false);
+    setViewFilter(VIEW_FILTER_ALL);
+    setStatusFilter(INTEGRATED_SCHEDULE_DEFAULT_STATUS_FILTER);
+    setHighlightedMappingId(String(targetId));
+    scheduleSuccessionHighlightClear();
+  }, [loadMappings, scheduleSuccessionHighlightClear]);
 
   const handlePackagePaymentHistoryFromCard = useCallback((mapping) => {
     const clientId = mapping?.clientId ?? mapping?.client?.id ?? null;
@@ -966,6 +995,7 @@ const IntegratedMatchingSchedule = () => {
           desyncProcessing={desyncProcessing}
           desyncTargetMappingId={desyncTarget?.mappingId ?? null}
           activePeekMappingId={peekMapping?.id ?? null}
+          highlightedMappingId={highlightedMappingId}
         />
 
         <div

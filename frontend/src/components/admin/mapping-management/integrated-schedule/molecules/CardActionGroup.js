@@ -129,10 +129,10 @@ const CardActionGroup = ({
     {canOfferSuccession && (
       <MGButton
         type="button"
-        variant="secondary"
+        variant="outline"
         size="small"
         className={buildErpMgButtonClassName({
-          variant: 'secondary',
+          variant: 'outline',
           size: 'sm',
           loading: false,
           className: 'integrated-schedule__btn-session-succession'

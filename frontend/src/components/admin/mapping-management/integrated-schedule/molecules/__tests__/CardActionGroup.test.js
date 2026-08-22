@@ -317,4 +317,29 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
       expect(screen.queryByTestId('mapping-desync-complete-77')).toBeNull();
     });
   });
+
+  describe('회기 승계 CTA', () => {
+    test('ACTIVE + remaining > 0 + onSessionSuccession → 회기 승계 버튼', () => {
+      const onSessionSuccession = jest.fn();
+      render(
+        <CardActionGroup
+          mapping={{ id: 55, status: 'ACTIVE', remainingSessions: 3 }}
+          onSessionSuccession={onSessionSuccession}
+        />
+      );
+      fireEvent.click(screen.getByTestId('mapping-session-succession-55'));
+      expect(onSessionSuccession).toHaveBeenCalledTimes(1);
+      expect(onSessionSuccession.mock.calls[0][0].id).toBe(55);
+    });
+
+    test('ACTIVE + remaining 0 → 회기 승계 미노출', () => {
+      render(
+        <CardActionGroup
+          mapping={{ id: 56, status: 'ACTIVE', remainingSessions: 0 }}
+          onSessionSuccession={jest.fn()}
+        />
+      );
+      expect(screen.queryByTestId('mapping-session-succession-56')).toBeNull();
+    });
+  });
 });

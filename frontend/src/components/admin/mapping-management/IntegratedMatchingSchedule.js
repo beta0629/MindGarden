@@ -17,6 +17,7 @@ import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
 import ScheduleModal from '../../schedule/ScheduleModal';
 import MappingCreationModal from '../MappingCreationModal';
 import SessionExtensionModal from '../mapping/SessionExtensionModal';
+import SessionSuccessionWizardModal from '../mapping/SessionSuccessionWizardModal';
 import SessionExtensionPaymentConfirmModal from '../mapping/SessionExtensionPaymentConfirmModal';
 import PackagePaymentHistoryModal from '../package-payment-history/PackagePaymentHistoryModal';
 import { PACKAGE_PAYMENT_HISTORY_UI } from '../../../constants/packagePaymentHistory';
@@ -137,6 +138,7 @@ const IntegratedMatchingSchedule = () => {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [createMappingModalOpen, setCreateMappingModalOpen] = useState(false);
   const [sessionExtensionMapping, setSessionExtensionMapping] = useState(null);
+  const [sessionSuccessionMapping, setSessionSuccessionMapping] = useState(null);
   const [sessionExtensionPaymentRequest, setSessionExtensionPaymentRequest] = useState(null);
   const [sessionExtensionCancellingId, setSessionExtensionCancellingId] = useState('');
   const [packagePaymentHistoryClientId, setPackagePaymentHistoryClientId] = useState(null);
@@ -795,6 +797,17 @@ const IntegratedMatchingSchedule = () => {
     setSessionExtensionMapping(mapping);
   }, []);
 
+  const handleSessionSuccessionFromCard = useCallback((mapping) => {
+    if (!mapping?.id) {
+      return;
+    }
+    setSessionSuccessionMapping(mapping);
+  }, []);
+
+  const handleSessionSuccessionSucceeded = useCallback(() => {
+    loadMappings();
+  }, [loadMappings]);
+
   const handlePackagePaymentHistoryFromCard = useCallback((mapping) => {
     const clientId = mapping?.clientId ?? mapping?.client?.id ?? null;
     if (clientId == null) {
@@ -943,6 +956,7 @@ const IntegratedMatchingSchedule = () => {
           onCancelPendingMapping={handleRequestCancelPendingMapping}
           onDesyncAction={handleRequestDesyncAction}
           onSessionExtension={handleSessionExtensionFromCard}
+          onSessionSuccession={handleSessionSuccessionFromCard}
           onConfirmSessionExtensionPayment={handleConfirmSessionExtensionPayment}
           onCancelSessionExtension={handleCancelSessionExtensionFromCard}
           onPackagePaymentHistory={handlePackagePaymentHistoryFromCard}
@@ -1045,6 +1059,15 @@ const IntegratedMatchingSchedule = () => {
           onClose={() => setSessionExtensionMapping(null)}
           mapping={sessionExtensionMapping}
           onSessionExtensionRequested={handleSessionExtensionRequested}
+        />
+      )}
+
+      {sessionSuccessionMapping && (
+        <SessionSuccessionWizardModal
+          isOpen={!!sessionSuccessionMapping}
+          onClose={() => setSessionSuccessionMapping(null)}
+          mapping={sessionSuccessionMapping}
+          onSucceeded={handleSessionSuccessionSucceeded}
         />
       )}
 

@@ -58,6 +58,7 @@ const MatchingScheduleList = ({
   onCancelPendingMapping,
   onDesyncAction,
   onSessionExtension,
+  onSessionSuccession,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
   onPackagePaymentHistory,
@@ -159,6 +160,7 @@ const MatchingScheduleList = ({
                   onCancelPendingMapping={onCancelPendingMapping}
                   onDesyncAction={onDesyncAction}
                   onSessionExtension={onSessionExtension}
+                  onSessionSuccession={onSessionSuccession}
                   onConfirmSessionExtensionPayment={onConfirmSessionExtensionPayment}
                   onCancelSessionExtension={onCancelSessionExtension}
                   onPackagePaymentHistory={onPackagePaymentHistory}
@@ -197,6 +199,7 @@ MatchingScheduleList.propTypes = {
   onCancelPendingMapping: PropTypes.func,
   onDesyncAction: PropTypes.func,
   onSessionExtension: PropTypes.func,
+  onSessionSuccession: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
   onPackagePaymentHistory: PropTypes.func,
@@ -221,6 +224,7 @@ MatchingScheduleList.defaultProps = {
   onCancelPendingMapping: null,
   onDesyncAction: null,
   onSessionExtension: null,
+  onSessionSuccession: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
   onPackagePaymentHistory: null,

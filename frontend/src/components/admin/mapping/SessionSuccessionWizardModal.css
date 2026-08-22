@@ -1,0 +1,170 @@
+/**
+ * 회기 승계 마법사 — 디자인 토큰만 사용 (하드코딩 HEX/px 금지).
+ */
+
+.session-succession-wizard__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-16);
+}
+
+.session-succession-wizard__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-8);
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
+.session-succession-wizard__steps .is-active {
+  color: var(--mg-color-text-main);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.session-succession-wizard__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-8);
+  padding: var(--mg-spacing-16);
+  background: var(--mg-color-surface-elevated);
+  border: var(--border-width-thin) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+}
+
+.session-succession-wizard__summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mg-spacing-16);
+  margin: 0;
+  color: var(--mg-color-text-main);
+}
+
+.session-succession-wizard__zero {
+  margin: 0;
+  color: var(--mg-color-warning-main);
+}
+
+.session-succession-wizard__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-12);
+}
+
+.session-succession-wizard__tabs {
+  display: flex;
+  gap: var(--mg-spacing-8);
+}
+
+.session-succession-wizard__tabs button {
+  flex: 1;
+  padding: var(--mg-spacing-8) var(--mg-spacing-12);
+  border: var(--border-width-thin) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-color-background-main);
+  color: var(--mg-color-text-secondary);
+  cursor: pointer;
+}
+
+.session-succession-wizard__tabs button.is-active {
+  border-color: var(--mg-color-primary-main);
+  color: var(--mg-color-primary-main);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.session-succession-wizard__new-client {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-12);
+}
+
+.session-succession-wizard__new-client label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-4);
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+}
+
+.session-succession-wizard__field-label {
+  color: var(--mg-color-text-main);
+  font-size: var(--mg-font-size-sm);
+  font-weight: var(--mg-font-weight-medium);
+}
+
+.session-succession-wizard__helper {
+  margin: 0;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
+.session-succession-wizard__count-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-8);
+}
+
+.session-succession-wizard__count-row .mg-v2-input {
+  max-width: calc(var(--mg-spacing-24) * 4);
+}
+
+.session-succession-wizard__projection {
+  padding: var(--mg-spacing-12);
+  background: var(--mg-color-background-main);
+  border: var(--border-width-thin) solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+  color: var(--mg-color-text-main);
+}
+
+.session-succession-wizard__projection p {
+  margin: 0;
+}
+
+.session-succession-wizard__banner {
+  margin: 0;
+  padding: var(--mg-spacing-12);
+  border-radius: var(--mg-radius-md);
+  border: var(--border-width-thin) solid var(--mg-color-warning-main);
+  color: var(--mg-color-warning-main);
+  background: var(--mg-color-surface-elevated);
+  font-size: var(--mg-font-size-sm);
+}
+
+.session-succession-wizard__payment-notice {
+  margin: 0;
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
+.session-succession-wizard__confirm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-8);
+}
+
+.session-succession-wizard__confirm-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mg-spacing-16);
+  color: var(--mg-color-text-main);
+}
+
+.session-succession-wizard__reason {
+  min-height: calc(var(--mg-spacing-24) * 2);
+  resize: vertical;
+}
+
+.session-succession-wizard__error,
+.session-succession-wizard__inline-error {
+  color: var(--mg-color-error-main);
+  font-size: var(--mg-font-size-sm);
+}
+
+.session-succession-wizard__error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-8);
+}

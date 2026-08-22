@@ -304,6 +304,31 @@ public class ConsultantClientMapping extends BaseEntity {
         }
     }
 
+    /**
+     * 회기 승계용 소스 차감. usedSessions는 변경하지 않고 remaining·total만 N만큼 줄인다.
+     *
+     * <p>PLAN §8: remaining→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이.</p>
+     *
+     * @param sessionCount 차감할 회기 수 (1 이상, remaining 이하)
+     * @throws IllegalArgumentException 회기 수가 유효하지 않거나 remaining 초과
+     */
+    public void deductSessionsForSuccession(Integer sessionCount) {
+        if (sessionCount == null || sessionCount < 1) {
+            throw new IllegalArgumentException("이전 회기 수는 1 이상이어야 합니다.");
+        }
+        int currentRemaining = this.remainingSessions == null ? 0 : this.remainingSessions;
+        int currentTotal = this.totalSessions == null ? 0 : this.totalSessions;
+        if (sessionCount > currentRemaining) {
+            throw new IllegalArgumentException("남은 회기를 초과하여 차감할 수 없습니다.");
+        }
+        this.remainingSessions = currentRemaining - sessionCount;
+        this.totalSessions = Math.max(0, currentTotal - sessionCount);
+        if (this.remainingSessions <= 0) {
+            this.status = MappingStatus.SESSIONS_EXHAUSTED;
+            this.endDate = LocalDateTime.now();
+        }
+    }
+
      /**
      * 매핑 활성화
      */

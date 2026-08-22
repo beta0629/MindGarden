@@ -48,7 +48,8 @@ const buildPartiesLabel = (consultantName, clientName, clientHonorific) => {
 const MatchingScheduleCompactRow = ({
   mapping,
   onOpenPeek,
-  isActive
+  isActive,
+  isHighlighted
 }) => {
   const { t } = useTranslation('admin');
   const clientHonorific = t('labels.client');
@@ -126,7 +127,9 @@ const MatchingScheduleCompactRow = ({
     <div
       className={`integrated-schedule__compact-row ${accentClass}${
         isActive ? ' integrated-schedule__compact-row--active' : ''
-      }${onOpenPeek ? ' integrated-schedule__compact-row--interactive' : ''}`}
+      }${isHighlighted ? ' integrated-schedule__compact-row--highlighted' : ''}${
+        onOpenPeek ? ' integrated-schedule__compact-row--interactive' : ''
+      }`}
       role={onOpenPeek ? 'button' : undefined}
       tabIndex={onOpenPeek ? 0 : undefined}
       onClick={onOpenPeek ? handleClick : undefined}
@@ -188,13 +191,15 @@ MatchingScheduleCompactRow.propTypes = {
     clientReminderSms: PropTypes.object
   }),
   onOpenPeek: PropTypes.func,
-  isActive: PropTypes.bool
+  isActive: PropTypes.bool,
+  isHighlighted: PropTypes.bool
 };
 
 MatchingScheduleCompactRow.defaultProps = {
   mapping: null,
   onOpenPeek: null,
-  isActive: false
+  isActive: false,
+  isHighlighted: false
 };
 
 export default MatchingScheduleCompactRow;

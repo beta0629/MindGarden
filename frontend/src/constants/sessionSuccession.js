@@ -58,7 +58,17 @@ export const SESSION_SUCCESSION_UI = {
   REASON_PLACEHOLDER: '사유 (선택)',
   CONSULTANT_PLACEHOLDER: '상담사 선택',
   CLIENT_LIST_EMPTY: '선택 가능한 기존 내담자가 없습니다.',
-  CLIENT_LIST_PLACEHOLDER: '내담자 선택'
+  CLIENT_LIST_PLACEHOLDER: '내담자 선택',
+  /** 신규 등록 탭 — execute 전 매핑 미생성 안내 */
+  NEW_CLIENT_EXECUTE_NOTICE:
+    '신규 내담자 등록과 매핑 생성은 승계 실행 단계에서 한 번에 처리됩니다.',
+  DONE_SUCCESS_LEAD: '{count}회 승계가 완료되었습니다.',
+  DONE_BENEFICIARY_LABEL: '수혜자',
+  DONE_CONSULTANT_LABEL: '담당 상담사',
+  DONE_MAPPING_ID_LABEL: '생성된 매핑 ID',
+  DONE_REMAINING_SUFFIX: '남은 회기 {count}회',
+  DONE_SIDEBAR_GUIDANCE:
+    '통합스케줄 사이드바에서 {beneficiaryName} 카드를 확인하세요.'
 };
 
 export const SESSION_SUCCESSION_STEPS = {

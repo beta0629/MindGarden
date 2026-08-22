@@ -92,6 +92,12 @@ const BeneficiaryPickerStep = ({
         </>
       ) : (
         <div className="session-succession-wizard__new-client">
+          <p
+            className="session-succession-wizard__banner session-succession-wizard__new-client-notice"
+            role="note"
+          >
+            {SESSION_SUCCESSION_UI.NEW_CLIENT_EXECUTE_NOTICE}
+          </p>
           <FormInput
             type="text"
             name="session-succession-new-name"

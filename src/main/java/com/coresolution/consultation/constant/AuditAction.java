@@ -76,7 +76,14 @@ public enum AuditAction {
      *
      * <p>보안: OTP 코드 평문은 절대 metadata 에 적재하지 않는다.</p>
      */
-    OTP_SENT("OTP_SENT", "enums.AuditAction.OTP_SENT");
+    OTP_SENT("OTP_SENT", "enums.AuditAction.OTP_SENT"),
+
+    /**
+     * 회기 승계 — 소스 매핑 remaining을 수혜자(타깃) 매핑으로 전량·부분 이전.
+     * ERP 거래 재작성 없음. metadata에 source/target mapping·sessionCount·점유건수 등 기록.
+     */
+    MAPPING_SESSION_SUCCESSION(
+            "MAPPING_SESSION_SUCCESSION", "enums.AuditAction.MAPPING_SESSION_SUCCESSION");
 
     private final String code;
     private final String messageKey;

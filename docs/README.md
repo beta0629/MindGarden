@@ -78,6 +78,7 @@
 - [ERP 현황 분석 — DB·로직](./project-management/ERP_CURRENT_STATE_DB_AND_LOGIC_ANALYSIS.md) — 테이블 맵·흐름·진단·개선 후보(마스터 플랜 연계)
 - [공통 UI 캡슐화·모듈화 계획](./project-management/COMMON_UI_ENCAPSULATION_PLAN.md) — 버튼·배지·카드 공통 컴포넌트 통합
 - [통합 스케줄 카드 디자인 개선](./project-management/INTEGRATED_SCHEDULE_CARD_DESIGN_PLAN.md)
+- **[회기 승계(전량·부분) 기획](./project-management/SESSION_SUCCESSION_PLAN.md)** — 통합스케줄 진입·스케줄 점유 제외 산식·API 초안. [화면설계](./design-system/SCREEN_SPEC_SESSION_SUCCESSION.md) · [디자인 핸드오프](./design-system/DESIGN_SPEC_SESSION_SUCCESSION.md)
 - [어드민 UX 구현 진행 체크리스트 (2026-06-30)](./project-management/2026-06-30/ADMIN_IMPLEMENTATION_PROGRESS_CHECKLIST.md) — V0~V3+ Seq·good SHA SSOT
 - [결제·일정 알림 UAT ↔ API·시드 정합표](./project-management/PAYMENT_SCHEDULE_NOTIFICATION_UAT_API_SEED_ALIGNMENT.md) — V3+ Seq 28h
 - [카드 시각 통합 스펙](./design-system/v2/CARD_VISUAL_UNIFIED_SPEC.md)

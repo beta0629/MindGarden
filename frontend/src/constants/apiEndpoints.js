@@ -70,7 +70,13 @@ export const API_ENDPOINTS = {
       CLEANUP_PENDING_PAYMENT: (mappingId) =>
         `/api/v1/admin/mappings/${mappingId}/cleanup-pending-payment`,
       PENDING_PAYMENT_DIRTY_BULK_CLEANUP:
-        '/api/v1/admin/mappings/pending-payment-dirty/bulk-cleanup'
+        '/api/v1/admin/mappings/pending-payment-dirty/bulk-cleanup',
+      /** 회기 승계 미리보기 (상담사 이전 transfer 와 별도) */
+      SESSION_SUCCESSION_PREVIEW: (sourceMappingId) =>
+        `/api/v1/admin/mappings/${sourceMappingId}/session-succession/preview`,
+      /** 회기 승계 실행 */
+      SESSION_SUCCESSION: (sourceMappingId) =>
+        `/api/v1/admin/mappings/${sourceMappingId}/session-succession`
     },
 
     /** 회기 동기화 — ACTIVE→SESSIONS_EXHAUSTED 등 상태 정합 (desync-status CTA) */

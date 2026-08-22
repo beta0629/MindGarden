@@ -12,6 +12,7 @@ import MGButton from '../../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import MappingMatchActions from '../../molecules/MappingMatchActions';
 import { SESSION_EXTENSION_UI } from '../../../../../utils/sessionExtensionPending';
+import { SESSION_SUCCESSION_UI } from '../../../../../constants/sessionSuccession';
 import { PACKAGE_PAYMENT_HISTORY_UI } from '../../../../../constants/packagePaymentHistory';
 import {
   MAPPING_DESYNC_CTA_TYPE,
@@ -31,6 +32,7 @@ const CardActionGroup = ({
   onCancelPendingMapping,
   onDesyncAction,
   onSessionExtension,
+  onSessionSuccession,
   onConfirmSessionExtensionPayment,
   onCancelSessionExtension,
   onPackagePaymentHistory,
@@ -51,6 +53,12 @@ const CardActionGroup = ({
     && onDesyncAction;
   const emphasizeCancelDanger = desync.kind === MAPPING_DESYNC_KIND.CANCEL;
   const desyncCtaLabel = toDisplayString(desync.ctaLabel, '');
+  const remainingSessions = Number(mapping?.remainingSessions);
+  const canOfferSuccession =
+    mapping?.status === 'ACTIVE'
+    && !hasPendingExtension
+    && onSessionSuccession
+    && (Number.isFinite(remainingSessions) ? remainingSessions > 0 : true);
 
   return (
   <CommonCardActionGroup className="integrated-schedule__card-actions">
@@ -116,6 +124,30 @@ const CardActionGroup = ({
         preventDoubleClick={false}
       >
         {SESSION_EXTENSION_UI.ADD_LABEL}
+      </MGButton>
+    )}
+    {canOfferSuccession && (
+      <MGButton
+        type="button"
+        variant="secondary"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'secondary',
+          size: 'sm',
+          loading: false,
+          className: 'integrated-schedule__btn-session-succession'
+        })}
+        loading={false}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={(event) => {
+          event.stopPropagation();
+          onSessionSuccession(mapping);
+        }}
+        aria-label={SESSION_SUCCESSION_UI.ACTION_LABEL}
+        preventDoubleClick={false}
+        data-testid={`mapping-session-succession-${mapping?.id ?? 'unknown'}`}
+      >
+        {SESSION_SUCCESSION_UI.ACTION_LABEL}
       </MGButton>
     )}
     {mapping?.status === 'ACTIVE' && onPackagePaymentHistory && (
@@ -261,6 +293,7 @@ CardActionGroup.propTypes = {
   onCancelPendingMapping: PropTypes.func,
   onDesyncAction: PropTypes.func,
   onSessionExtension: PropTypes.func,
+  onSessionSuccession: PropTypes.func,
   onConfirmSessionExtensionPayment: PropTypes.func,
   onCancelSessionExtension: PropTypes.func,
   onPackagePaymentHistory: PropTypes.func,
@@ -280,6 +313,7 @@ CardActionGroup.defaultProps = {
   onCancelPendingMapping: null,
   onDesyncAction: null,
   onSessionExtension: null,
+  onSessionSuccession: null,
   onConfirmSessionExtensionPayment: null,
   onCancelSessionExtension: null,
   onPackagePaymentHistory: null,

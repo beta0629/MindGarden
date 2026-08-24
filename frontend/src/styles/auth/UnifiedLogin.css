@@ -59,7 +59,10 @@
   );
 }
 
-/* 브랜드 스택: MindGarden(상단) → 나비 PNG(하단). 세로 중앙 뭉침 없음 */
+/*
+ * 브랜드 락업: Core Solution 실드(상) + 워드마크(하) — 한 컴포지션
+ * HQ 기본 브랜드 (MindGarden 필기체/나비 쇼케이스 아님)
+ */
 .mg-v2-login-hero-brand {
   position: relative;
   z-index: 2;
@@ -67,7 +70,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   align-self: stretch;
   width: 100%;
   min-height: 0;
@@ -77,19 +80,18 @@
   pointer-events: none;
 }
 
-.mg-v2-login-hero-title-wrapper {
+.mg-v2-login-hero-lockup-wrapper {
   position: relative;
   display: flex;
   flex-shrink: 0;
-  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  width: min(90vw, 28rem);
+  width: min(88vw, 22rem);
   max-width: 100%;
   overflow: visible;
 }
 
-/* 접근성용 제목만 — 시각 워드마크는 SVG 하나 */
+/* 접근성용 제목만 — 시각 브랜드는 SVG 락업 */
 .mg-v2-login-hero-title.sr-only {
   position: absolute;
   width: 1px;
@@ -102,120 +104,124 @@
   border: 0;
 }
 
-.mg-v2-login-hero-title-outline {
+.mg-v2-login-hero-lockup {
   position: relative;
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4932 / 1390;
+  aspect-ratio: 400 / 176;
   max-width: none;
   overflow: visible;
   pointer-events: none;
-}
-
-.mg-v2-login-hero-logo-wrapper {
-  position: relative;
-  flex: 0 1 auto;
-  width: min(240px, 42vw);
-  max-height: 55%;
-  aspect-ratio: 595 / 842;
-}
-
-.mg-v2-login-hero-butterfly,
-.mg-v2-login-hero-logo-outline {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.mg-v2-login-hero-butterfly {
-  object-fit: contain;
-  object-position: center center;
-}
-
-.mg-v2-login-hero-logo-outline {
-  overflow: visible;
-  pointer-events: none;
+  color: var(--mg-white);
 }
 
 /*
- * 워드마크: 흰 채움(가독) + 대비색(골드) stroke draw-on
- * pathLength=2000 기준 — 시작→끝까지 한 획이 천천히 그려짐 (handwriting)
- * 사이클 ~34s (그리기 ~26s + 유지 ~5s + 리셋)
+ * 실드/체크: pathLength=100 — stroke draw 1회 후 fill 유지
+ * 워드마크: stroke→fill 1회 (infinite/erase/neon glow 없음)
  */
-.mg-v2-login-hero-title-outline path {
-  fill: color-mix(in srgb, var(--mg-white) 88%, transparent) !important;
-  stroke: var(--mg-client-primary-light, var(--mg-v2-color-accent-light));
-  stroke-width: 1.5px;
+.mg-v2-login-hero-lockup__shield {
+  fill: var(--mg-white);
+  fill-opacity: 0;
+  stroke: var(--mg-white);
+  stroke-width: 1.25px;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mg-client-primary-light, var(--mg-v2-color-accent-light)) 80%, transparent));
-  stroke-dasharray: 2000;
-  stroke-dashoffset: 2000;
-  animation: mg-v2-wordmark-draw-on 34s linear infinite;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: mg-v2-lockup-draw-fill 3s ease-out 1 forwards;
 }
 
-/*
- * 나비 로고: PNG 위 외곽 traveling light만
- * dash+gap = pathLength(2000) → 한 바퀴 = 1사이클, ~50s로 아주 느리게
- */
-.mg-v2-login-hero-logo-outline path {
-  fill: transparent !important;
-  stroke: var(--mg-client-primary-light, var(--mg-v2-color-accent-light));
-  stroke-width: 1.5px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mg-client-primary-light, var(--mg-v2-color-accent-light)) 75%, transparent));
-  stroke-dasharray: 100 1900;
-  stroke-dashoffset: 2000;
-  animation: mg-v2-logo-traveling-light 50s linear infinite;
-}
-
-.mg-v2-login-hero-logo-outline g {
-  fill: transparent !important;
+.mg-v2-login-hero-lockup__shield-shade {
+  fill: color-mix(in srgb, var(--mg-v2-color-text-primary, var(--mg-color-text-primary)) 22%, transparent);
+  fill-opacity: 0;
   stroke: none;
+  animation: mg-v2-lockup-fill-in 3s ease-out 1 forwards;
 }
 
-/* 글씨: offset 2000→0 으로 path 전체가 처음부터 끝까지 그려짐 */
+.mg-v2-login-hero-lockup__check {
+  fill: var(--mg-primary-color, var(--mg-v2-color-primary-main));
+  fill-opacity: 0;
+  stroke: var(--mg-primary-color, var(--mg-v2-color-primary-main));
+  stroke-width: 1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: mg-v2-lockup-draw-fill 3s ease-out 0.15s 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__wordmark {
+  fill: var(--mg-white);
+  fill-opacity: 0;
+  stroke: var(--mg-white);
+  stroke-width: 1.1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: mg-v2-wordmark-draw-on 3.4s ease-out 0.25s 1 forwards;
+}
+
+/* 실드/체크: dashoffset 100→0 후 fill 유지 (리셋 없음) */
+@keyframes mg-v2-lockup-draw-fill {
+  0% {
+    stroke-dashoffset: 100;
+    fill-opacity: 0;
+  }
+
+  72% {
+    stroke-dashoffset: 0;
+    fill-opacity: 0;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+  }
+}
+
+@keyframes mg-v2-lockup-fill-in {
+  0%,
+  72% {
+    fill-opacity: 0;
+  }
+
+  100% {
+    fill-opacity: 1;
+  }
+}
+
+/* 워드마크: stroke 그리기 후 fill 유지 */
 @keyframes mg-v2-wordmark-draw-on {
   0% {
-    stroke-dashoffset: 2000;
+    stroke-dashoffset: 800;
+    fill-opacity: 0;
   }
-  76% {
-    stroke-dashoffset: 0;
-  }
-  90% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: 2000;
-  }
-}
 
-/* 로고: path 한 바퀴를 천천히 순회 */
-@keyframes mg-v2-logo-traveling-light {
-  0% {
-    stroke-dashoffset: 2000;
+  70% {
+    stroke-dashoffset: 0;
+    fill-opacity: 0;
   }
+
   100% {
     stroke-dashoffset: 0;
+    fill-opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mg-v2-login-hero-title-outline path,
-  .mg-v2-login-hero-logo-outline path {
+  .mg-v2-login-hero-lockup__shield,
+  .mg-v2-login-hero-lockup__shield-shade,
+  .mg-v2-login-hero-lockup__check,
+  .mg-v2-login-hero-lockup__wordmark {
     animation: none !important;
     stroke-dasharray: none;
     stroke-dashoffset: 0;
-  }
-
-  .mg-v2-login-hero-logo-outline path {
-    opacity: 0.3;
+    fill-opacity: 1;
   }
 }
 
@@ -710,13 +716,8 @@
     padding-block: var(--mg-v2-space-2);
   }
 
-  .mg-v2-login-hero-title-wrapper {
-    width: min(92vw, 22rem);
-  }
-
-  .mg-v2-login-hero-logo-wrapper {
-    width: min(160px, 38vw);
-    max-height: 48%;
+  .mg-v2-login-hero-lockup-wrapper {
+    width: min(86vw, 18rem);
   }
 
   .mg-v2-login-content {

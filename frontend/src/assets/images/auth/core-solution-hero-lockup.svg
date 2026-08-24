@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 176" fill="none" preserveAspectRatio="xMidYMid meet">
+  <!--
+    Core Solution HQ login hero lockup (Calm Forest shield + wordmark).
+    Paths use pathLength for one-shot stroke-dashoffset draw-on (CSS).
+  -->
+  <g class="mg-v2-login-hero-lockup__mark" transform="translate(160 2) scale(2)">
+    <path
+      class="mg-v2-login-hero-lockup__shield"
+      pathLength="100"
+      d="M20 0L0 7.5V20C0 31.5 8.5 42 20 45C31.5 42 40 31.5 40 20V7.5L20 0Z"
+    />
+    <path
+      class="mg-v2-login-hero-lockup__shield-shade"
+      pathLength="100"
+      d="M20 0V45C31.5 42 40 31.5 40 20V7.5L20 0Z"
+    />
+    <path
+      class="mg-v2-login-hero-lockup__check"
+      pathLength="100"
+      d="M18 30L9 21L12 18L18 24L29 13L32 16L18 30Z"
+    />
+  </g>
+  <text
+    class="mg-v2-login-hero-lockup__wordmark"
+    x="200"
+    y="148"
+    text-anchor="middle"
+    font-family="'Noto Sans KR', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="34"
+    font-weight="700"
+    letter-spacing="-0.6"
+  >Core Solution</text>
+</svg>

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 292" fill="none" preserveAspectRatio="xMidYMid meet">
   <!--
-    Core Solution login hero lockup  Secure Core (�H 05).
-    Mark colors via CSS classes � design tokens. pathLength for one-shot draw-on.
+    Core Solution login hero lockup — Secure Core (시안 05).
+    Mark colors via CSS classes → design tokens. pathLength for one-shot draw-on.
   -->
   <g class="mg-v2-login-hero-lockup__mark" transform="translate(110 12)">
     <!-- Plate: rounded square #0F172A -->
@@ -26,11 +26,13 @@
       pathLength="100"
       d="M50 22L70 30.5V47C70 61 61.5 72.5 50 78C38.5 72.5 30 61 30 47V30.5L50 22Z"
     />
-    <!-- Mint core #CCFBF1 -->
-    <path
+    <!-- Mint core #CCFBF1 — circle (시안 05) -->
+    <circle
       class="mg-v2-login-hero-lockup__core"
       pathLength="100"
-      d="M50 32L62 37.5V48C62 56.5 56.5 63.5 50 67C43.5 63.5 38 56.5 38 48V37.5L50 32Z"
+      cx="50"
+      cy="50"
+      r="16"
     />
     <!-- Teal lock (body + shackle) -->
     <g class="mg-v2-login-hero-lockup__lock">
@@ -77,7 +79,7 @@
     font-size="16"
     font-weight="500"
     letter-spacing="0.2"
-  >T� ��X</text>
+  >코어 솔루션</text>
 
   <text
     class="mg-v2-login-hero-lockup__tagline"
@@ -88,5 +90,5 @@
     font-size="14"
     font-weight="400"
     letter-spacing="0.1"
-  >��<0 All-in-One �</text>
+  >상담센터 All-in-One 운영</text>
 </svg>

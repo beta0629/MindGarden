@@ -87,12 +87,14 @@ class ScheduleServiceImplUpdateSchedulePushTest {
         existing.setClientId(10L);
         existing.setConsultantId(20L);
         existing.setStatus(ScheduleStatus.CONFIRMED);
-        existing.setDate(LocalDate.of(2026, 5, 20));
+        LocalDate baseDate = LocalDate.now(com.coresolution.consultation.util.ReservationSmsBusinessHours.ZONE_SEOUL)
+                .plusDays(10);
+        existing.setDate(baseDate);
         existing.setStartTime(LocalTime.of(10, 0));
         existing.setEndTime(LocalTime.of(11, 0));
 
         Schedule patch = new Schedule();
-        patch.setDate(LocalDate.of(2026, 5, 21));
+        patch.setDate(baseDate.plusDays(1));
         patch.setStartTime(LocalTime.of(14, 0));
         patch.setEndTime(LocalTime.of(15, 0));
 
@@ -105,7 +107,7 @@ class ScheduleServiceImplUpdateSchedulePushTest {
         verify(mobilePushDispatchService).dispatchBookingRescheduled(
                 eq(TENANT_ID),
                 any(Schedule.class),
-                eq(LocalDate.of(2026, 5, 20)),
+                eq(baseDate),
                 eq(LocalTime.of(10, 0)),
                 eq(LocalTime.of(11, 0)),
                 isNull());

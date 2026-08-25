@@ -293,6 +293,18 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         LocalDate previousDate = existingSchedule.getDate();
         LocalTime previousStartTime = existingSchedule.getStartTime();
         LocalTime previousEndTime = existingSchedule.getEndTime();
+
+        // 완료·취소 스케줄: 슬롯(date/start/end)이 실제로 바뀔 때만 거부 (동일 값 재저장·상태만 변경은 허용)
+        LocalDate intendedDate = updateData.getDate() != null ? updateData.getDate() : previousDate;
+        LocalTime intendedStartTime = updateData.getStartTime() != null
+                ? updateData.getStartTime() : previousStartTime;
+        LocalTime intendedEndTime = updateData.getEndTime() != null
+                ? updateData.getEndTime() : previousEndTime;
+        boolean slotWouldChange = !Objects.equals(previousDate, intendedDate)
+                || !Objects.equals(previousStartTime, intendedStartTime)
+                || !Objects.equals(previousEndTime, intendedEndTime);
+        rejectSlotChangeIfLocked(
+                previousStatus, previousDate, previousEndTime, slotWouldChange);
         
         copyScheduleFields(updateData, existingSchedule);
         
@@ -468,9 +480,47 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
-     /**
-     * Schedule 필드 복사 (부분 업데이트용)
+    /**
+     * 완료·취소·과거 스케줄의 일시(슬롯) 변경을 거부한다.
+     *
+     * <p>과거 판정: Asia/Seoul 기준 날짜가 오늘 이전이거나,
+     * 당일이면서 종료 시각이 현재 시각 이후가 아닌 경우({@code now.isAfter(endTime)}).</p>
+     *
+     * @param previousStatus 변경 전 상태
+     * @param previousDate 변경 전 날짜
+     * @param previousEndTime 변경 전 종료 시각
+     * @param slotWouldChange date/startTime/endTime 중 하나라도 변경되는지
+     * @throws IllegalStateException 잠금 대상에서 슬롯 변경 시
      */
+    private void rejectSlotChangeIfLocked(
+            ScheduleStatus previousStatus,
+            LocalDate previousDate,
+            LocalTime previousEndTime,
+            boolean slotWouldChange) {
+        if (!slotWouldChange) {
+            return;
+        }
+        String denyMessage = com.coresolution.consultation.util.ScheduleSlotGuard
+                .resolveSlotChangeDenyMessage(previousStatus, previousDate, previousEndTime);
+        if (denyMessage != null) {
+            log.warn("❌ 스케줄 슬롯 변경 거부: status={}, date={}, endTime={}, message={}",
+                    previousStatus, previousDate, previousEndTime, denyMessage);
+            throw new IllegalStateException(denyMessage);
+        }
+    }
+
+    /**
+     * Asia/Seoul 기준 스케줄 슬롯이 과거인지 여부.
+     *
+     * @param date 스케줄 날짜
+     * @param endTime 종료 시각 (null이면 당일 종료 판정 생략, 날짜만 비교)
+     * @return 과거이면 true
+     * @see com.coresolution.consultation.util.ScheduleSlotGuard#isScheduleSlotInPast
+     */
+    static boolean isScheduleSlotInPast(LocalDate date, LocalTime endTime) {
+        return com.coresolution.consultation.util.ScheduleSlotGuard.isScheduleSlotInPast(date, endTime);
+    }
+
     private void copyScheduleFields(Schedule source, Schedule target) {
         if (source.getDate() != null) target.setDate(source.getDate());
         if (source.getStartTime() != null) target.setStartTime(source.getStartTime());

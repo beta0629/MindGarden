@@ -93,7 +93,9 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
         s.setClientId(CLIENT_ID);
         s.setConsultantId(CONSULTANT_ID);
         s.setStatus(ScheduleStatus.CONFIRMED);
-        s.setDate(LocalDate.of(2026, 5, 20));
+        LocalDate baseDate = LocalDate.now(com.coresolution.consultation.util.ReservationSmsBusinessHours.ZONE_SEOUL)
+                .plusDays(10);
+        s.setDate(baseDate);
         s.setStartTime(LocalTime.of(10, 0));
         s.setEndTime(LocalTime.of(11, 0));
         return s;
@@ -103,8 +105,9 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     @DisplayName("date/time 변경 시 enqueueScheduleChanged 호출 — sendScheduleChanged 즉시 미호출")
     void slotChange_enqueuesDebounce_doesNotSendImmediately() {
         Schedule existing = existingConfirmed();
+        LocalDate previousDate = existing.getDate();
         Schedule patch = new Schedule();
-        patch.setDate(LocalDate.of(2026, 5, 21));
+        patch.setDate(previousDate.plusDays(1));
         patch.setStartTime(LocalTime.of(14, 0));
         patch.setEndTime(LocalTime.of(15, 0));
 
@@ -117,7 +120,7 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
         verify(scheduleChangeNotificationDebounceService).enqueueScheduleChanged(
                 eq(TENANT_ID),
                 any(Schedule.class),
-                eq(LocalDate.of(2026, 5, 20)),
+                eq(previousDate),
                 eq(LocalTime.of(10, 0)));
         verify(notificationService, never())
                 .sendScheduleChanged(any(), any(), any(), any());
@@ -141,7 +144,7 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     void cancellingNow_doesNotEnqueue() {
         Schedule existing = existingConfirmed();
         Schedule patch = new Schedule();
-        patch.setDate(LocalDate.of(2026, 5, 21));
+        patch.setDate(existing.getDate().plusDays(1));
         patch.setStartTime(LocalTime.of(14, 0));
         patch.setEndTime(LocalTime.of(15, 0));
         patch.setStatus(ScheduleStatus.CANCELLED);
@@ -171,7 +174,7 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
         Schedule existing = existingConfirmed();
         existing.setClientId(null);
         Schedule patch = new Schedule();
-        patch.setDate(LocalDate.of(2026, 5, 21));
+        patch.setDate(existing.getDate().plusDays(1));
         patch.setStartTime(LocalTime.of(14, 0));
         patch.setEndTime(LocalTime.of(15, 0));
 
@@ -230,7 +233,7 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
         verify(scheduleChangeNotificationDebounceService).enqueueScheduleChanged(
                 eq(TENANT_ID),
                 any(Schedule.class),
-                eq(LocalDate.of(2026, 5, 20)),
+                eq(existing.getDate()),
                 eq(LocalTime.of(10, 0)));
         verify(notificationBatchSendLogRepository)
                 .deleteByTenantIdAndTargetTypeAndTargetIdAndTemplateCodeIn(
@@ -252,7 +255,7 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     void slotChange_invalidatesD2AndLateLogs_notSingle_noImmediateDispatch() {
         Schedule existing = existingConfirmed();
         Schedule patch = new Schedule();
-        patch.setDate(LocalDate.of(2026, 6, 1));
+        patch.setDate(existing.getDate().plusDays(12));
         patch.setStartTime(LocalTime.of(9, 0));
         patch.setEndTime(LocalTime.of(10, 0));
 

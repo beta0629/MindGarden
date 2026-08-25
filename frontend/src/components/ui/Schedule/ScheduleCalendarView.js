@@ -18,6 +18,7 @@ import {
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
+import { isScheduleCalendarDragLocked } from '../../../utils/scheduleRescheduleUtils';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
 import ScheduleReminderSmsBadge from '../../admin/mapping-management/integrated-schedule/molecules/ScheduleReminderSmsBadge';
 import {
@@ -57,6 +58,7 @@ const ScheduleCalendarView = ({
     onDateClick,
     onEventClick,
     onEventDrop,
+    onEventResize,
     onExternalEventReceive,
     integratedMonthEventLayout = false,
     calendarSkin,
@@ -230,16 +232,34 @@ const ScheduleCalendarView = ({
         return eventDate < today ? ['fc-event-past'] : [];
     };
 
-    // 과거 또는 완료된 예약 여부 (디저블 스타일 적용 대상)
+    // 과거 또는 완료·취소 예약 여부 (디저블 스타일 적용 대상)
     const isEventPastOrCompleted = (ev) => {
-        const eventStart = new Date(ev.start);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        eventStart.setHours(0, 0, 0, 0);
-        const isPast = eventStart < today;
-        const status = ev.extendedProps?.status;
-        const isCompleted = status === 'COMPLETED' || status === 'CANCELLED';
-        return isPast || isCompleted;
+        return isScheduleCalendarDragLocked({
+            status: ev.extendedProps?.status,
+            start: ev.start,
+            end: ev.end
+        });
+    };
+
+    /**
+     * 완료·취소·과거 스케줄의 드래그·리사이즈 사전 차단 (FullCalendar eventAllow).
+     * 원본 잠금은 extendedProps.slotDragLocked(매핑 시점 SSOT)로 판정한다.
+     */
+    const handleEventAllow = (dropInfo, draggedEvent) => {
+        if (draggedEvent?.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
+            return false;
+        }
+        if (draggedEvent?.extendedProps?.type === CALENDAR_EXTENDED_TYPE_VACATION) {
+            return false;
+        }
+        if (draggedEvent?.extendedProps?.slotDragLocked === true) {
+            return false;
+        }
+        return !isScheduleCalendarDragLocked({
+            status: draggedEvent?.extendedProps?.status,
+            start: draggedEvent?.start,
+            end: draggedEvent?.end
+        });
     };
 
     /**
@@ -443,6 +463,8 @@ const ScheduleCalendarView = ({
                 dateClick={onDateClick}
                 eventClick={onEventClick}
                 eventDrop={onEventDrop}
+                eventResize={onEventResize || onEventDrop}
+                eventAllow={handleEventAllow}
                 eventReceive={acceptExternalCalendarDrops ? handleEventReceive : undefined}
                 editable={!disableCalendarEventDrag && isScheduleCalendarEditableRole(userRole)}
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}

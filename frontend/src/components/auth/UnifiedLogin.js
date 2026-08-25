@@ -51,11 +51,9 @@ import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 // import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import '../../styles/auth/UnifiedLogin.css';
 import loginHeroWatercolor from '../../assets/images/auth/login-hero-watercolor.png';
-import coreLogoButterfly from '../../assets/images/auth/core-logo-butterfly.png';
 import {
   LOGIN_HERO_BRAND_TITLE,
-  LoginHeroLogoOutline,
-  LoginHeroTitleOutline
+  LoginHeroBrandLockup
 } from './LoginHeroLineOverlay';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
@@ -896,19 +894,9 @@ const UnifiedLogin = () => {
             decoding="async"
           />
           <div className="mg-v2-login-hero-brand">
-            <div className="mg-v2-login-hero-title-wrapper">
+            <div className="mg-v2-login-hero-lockup-wrapper">
               <h1 className="mg-v2-login-hero-title sr-only">{LOGIN_HERO_BRAND_TITLE}</h1>
-              <LoginHeroTitleOutline />
-            </div>
-            <div className="mg-v2-login-hero-logo-wrapper">
-              <img
-                className="mg-v2-login-hero-butterfly"
-                src={coreLogoButterfly}
-                alt=""
-                aria-hidden="true"
-                decoding="async"
-              />
-              <LoginHeroLogoOutline />
+              <LoginHeroBrandLockup />
             </div>
           </div>
         </div>

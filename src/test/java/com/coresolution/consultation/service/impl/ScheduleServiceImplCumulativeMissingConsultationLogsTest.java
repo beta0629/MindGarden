@@ -259,6 +259,29 @@ class ScheduleServiceImplCumulativeMissingConsultationLogsTest {
         assertThat(dates).containsExactly(LocalDate.of(2026, 6, 30), LocalDate.of(2026, 7, 1));
     }
 
+    // ─── C7 ──────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("C7: consultantId 스코프 → 해당 상담사 건만 반환")
+    void c7_consultantIdScope_filtersToSelf() {
+        when(scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
+                eq(TENANT_ID), anyCollection(), any(LocalDate.class)))
+                .thenReturn(Arrays.asList(
+                        new Object[]{3L, LocalDate.of(2026, 6, 30)},
+                        new Object[]{4L, LocalDate.of(2026, 6, 30)},
+                        new Object[]{3L, LocalDate.of(2026, 7, 1)}));
+        when(userRepository.findByTenantIdAndIdInAndIsDeletedFalse(eq(TENANT_ID), anyCollection()))
+                .thenReturn(Collections.singletonList(user(3L)));
+
+        CumulativeMissingConsultationLogsResponse response =
+                scheduleService.getCumulativeMissingConsultationLogs(3L);
+
+        assertThat(response.getItems()).hasSize(1);
+        ConsultantMissingLogs only = findById(response, 3L);
+        assertThat(only.getMissingDates())
+                .containsExactly(LocalDate.of(2026, 6, 30), LocalDate.of(2026, 7, 1));
+    }
+
     // ─── helpers ─────────────────────────────────────────────────────────
 
     private User user(Long id) {

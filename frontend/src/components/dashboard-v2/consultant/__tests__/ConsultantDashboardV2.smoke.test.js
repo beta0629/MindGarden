@@ -78,7 +78,30 @@ jest.mock('../../../common/ListTableView', () => ({
 }));
 
 jest.mock('../../../consultant/ConsultationLogModal', () => () => null);
+jest.mock('../../ExpectedVisitsWidget', () => () => null);
 jest.mock('../../../ui/Icon/Icon', () => () => null);
+jest.mock('../../../ui/Schedule/MissingConsultationLogsList', () => ({
+  __esModule: true,
+  default: ({ items }) => (
+    <div data-testid="missing-consultation-logs-list">
+      {Array.isArray(items) ? `items:${items.length}` : 'items:null'}
+    </div>
+  )
+}));
+
+jest.mock('../../../../hooks/useCumulativeMissingConsultationLogs', () => ({
+  __esModule: true,
+  default: () => ({
+    items: [{ consultantId: 42, consultantName: '김상담', missingDates: ['2026-08-18'] }],
+    isLoading: false,
+    error: null
+  })
+}));
+
+jest.mock('../../../../utils/notification', () => ({
+  __esModule: true,
+  default: { warning: jest.fn(), error: jest.fn(), success: jest.fn() }
+}));
 
 const mockStatsResponse = {
   newClients: 1,
@@ -157,6 +180,8 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     });
 
     expect(screen.getByTestId('consultant-dashboard-quick-action-bar')).toBeInTheDocument();
+    expect(screen.getByTestId('consultant-dashboard-missing-logs')).toBeInTheDocument();
+    expect(screen.getByTestId('missing-consultation-logs-list')).toHaveTextContent('items:1');
     expect(screen.getByTestId('consultant-dashboard-recent-schedules')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-upcoming-schedules')).toBeInTheDocument();
     expect(screen.getByTestId('consultant-dashboard-notifications')).toBeInTheDocument();

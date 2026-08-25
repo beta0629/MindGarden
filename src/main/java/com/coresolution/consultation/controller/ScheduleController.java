@@ -224,30 +224,46 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
-     * 어드민 대시보드 — 상담사별 상담일지 미작성(누락, 누적·전체 기간).
+     * 어드민·상담사 대시보드 — 상담사별 상담일지 미작성(누락, 누적·전체 기간).
      *
      * <p>{@code GET /api/v1/schedules/cumulative-missing-consultation-logs}.
-     * 어드민 대시보드 {@code section.mg-v2-ad-b0kla__missing-logs-section} SSOT.
+     * {@code section.mg-v2-ad-b0kla__missing-logs-section} SSOT.
      * {@code monthly-missing-consultation-logs} 가 특정 월로 제한되는 것과 달리, «지난
      * 일정»({@code date < today}) 전체에서 상태가 {@code {COMPLETED, CONFIRMED, BOOKED}}
      * 이고 ConsultationRecord(비삭제)가 없는 일정을 상담사별로 그룹화한다. 누락 0건
      * 상담사는 응답에서 제외. 대시보드 섹션이 달이 바뀌어도 이전 달 누락 건을 놓치지
      * 않도록 월 경계에 의존하지 않는다.</p>
      *
-     * <p>가드: {@code @PreAuthorize} (ADMIN/STAFF) + {@code TenantContextHolder#getRequiredTenantId}
-     * 이중 가드.</p>
+     * <p>가드: {@code @PreAuthorize} (ADMIN/STAFF/CONSULTANT) +
+     * {@code TenantContextHolder#getRequiredTenantId} 이중 가드.
+     * CONSULTANT 는 본인({@code currentUser.id}) 건만 반환.</p>
      *
+     * @param session HTTP 세션 (테넌트·역할·본인 스코프)
      * @return 표준 {@link ApiResponse} 래퍼 + {@link CumulativeMissingConsultationLogsResponse}
      * @author CoreSolution
      * @since 2026-07-03
      */
     @GetMapping("/cumulative-missing-consultation-logs")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<ApiResponse<CumulativeMissingConsultationLogsResponse>> getCumulativeMissingConsultationLogs() {
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF', 'CONSULTANT')")
+    public ResponseEntity<ApiResponse<CumulativeMissingConsultationLogsResponse>> getCumulativeMissingConsultationLogs(
+            HttpSession session) {
+        ensureTenantContextFromSession(session);
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        log.info("📝 누적 상담사 상담일지 누락 조회: tenantId={}", tenantId);
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        Long scopedConsultantId = null;
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+            scopedConsultantId = currentUser.getId();
+        }
+
+        log.info("📝 누적 상담사 상담일지 누락 조회: tenantId={}, scopedConsultantId={}",
+                tenantId, scopedConsultantId);
         CumulativeMissingConsultationLogsResponse response =
-                scheduleService.getCumulativeMissingConsultationLogs();
+                scheduleService.getCumulativeMissingConsultationLogs(scopedConsultantId);
         return success(response);
     }
 

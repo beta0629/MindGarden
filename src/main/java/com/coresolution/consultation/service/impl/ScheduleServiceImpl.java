@@ -3622,7 +3622,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 어드민 대시보드 — 상담사별 «상담일지 누락(누적, 전체 기간)» 조회.
+     * 어드민·상담사 대시보드 — 상담사별 «상담일지 누락(누적, 전체 기간)» 조회.
      *
      * <p>SSOT 정합:</p>
      * <ul>
@@ -3634,24 +3634,39 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      *       누락 건이 7월 범위 밖으로 빠져 미집계되던 버그 보정.)</li>
      *   <li>행 → 상담사별 그룹핑·표시명 복호화·정렬은
      *       {@link #buildConsultantMissingLogItems(String, List)} 공통 로직 재사용.</li>
+     *   <li>{@code consultantId} non-null 이면 해당 상담사 행만 유지 (CONSULTANT 본인
+     *       스코프). null 이면 테넌트 전체.</li>
      * </ul>
      */
     @Override
     @Transactional(readOnly = true)
-    public CumulativeMissingConsultationLogsResponse getCumulativeMissingConsultationLogs() {
+    public CumulativeMissingConsultationLogsResponse getCumulativeMissingConsultationLogs(Long consultantId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         // 월별 조회(getMonthlyMissingConsultationLogs)와 동일한 시계 처리 패턴(LocalDate.now()).
         LocalDate today = LocalDate.now();
 
-        log.info("📝 누적 상담사 상담일지 누락 일자 조회: tenantId={}, today={}, statuses={}",
-                tenantId, today, MISSING_LOG_TARGET_STATUSES);
+        log.info("📝 누적 상담사 상담일지 누락 일자 조회: tenantId={}, today={}, statuses={}, consultantId={}",
+                tenantId, today, MISSING_LOG_TARGET_STATUSES, consultantId);
 
         List<Object[]> rows = scheduleRepository.findMissingConsultationLogScheduleRowsBeforeDate(
                 tenantId, MISSING_LOG_TARGET_STATUSES, today);
+        if (consultantId != null) {
+            List<Object[]> scoped = new ArrayList<>();
+            for (Object[] row : rows) {
+                if (row == null || row.length < 1 || row[0] == null) {
+                    continue;
+                }
+                if (consultantId.equals(((Number) row[0]).longValue())) {
+                    scoped.add(row);
+                }
+            }
+            rows = scoped;
+        }
 
         List<ConsultantMissingLogs> items = buildConsultantMissingLogItems(tenantId, rows);
 
-        log.info("✅ 누적 상담사 상담일지 누락 일자 응답: tenantId={}, items={}", tenantId, items.size());
+        log.info("✅ 누적 상담사 상담일지 누락 일자 응답: tenantId={}, consultantId={}, items={}",
+                tenantId, consultantId, items.size());
 
         return CumulativeMissingConsultationLogsResponse.builder()
                 .items(items)

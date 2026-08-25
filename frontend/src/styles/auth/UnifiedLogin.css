@@ -10,67 +10,296 @@
   background-color: var(--mg-v2-color-surface-bg, var(--mg-bg-primary, var(--mg-color-background-main)));
 }
 
-/* 좌측: 브랜딩 이미지 영역 (이미지 로드 실패 시 그라데이션/단색 fallback) */
+/* 좌측: Core Solution Secure Core 히어로 (full-bleed slate→teal, 흰 inset 없음) */
 .mg-v2-login-hero {
+  --mg-login-hero-bg-start: var(--cs-slate-900);
+  --mg-login-hero-bg-mid: var(--cs-slate-800);
+  --mg-login-hero-bg-end: var(--cs-teal-900);
+  --mg-login-hero-mark-plate: var(--cs-slate-900);
+  --mg-login-hero-shield-outer: var(--cs-teal-900);
+  --mg-login-hero-shield-inner: var(--cs-teal-600);
+  --mg-login-hero-core: var(--cs-teal-100);
+  --mg-login-hero-lock: var(--cs-teal-700);
+
   flex: 1;
   position: relative;
-  background-color: var(--mg-primary-color, var(--mg-color-primary-main));
-  background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80'), linear-gradient(135deg, var(--mg-primary-color, var(--mg-color-primary-main)) 0%, var(--mg-color-brand-olive-muted) 100%);
-  background-position: center, 0 0;
-  background-size: cover, cover;
-  background-repeat: no-repeat, no-repeat;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--mg-login-hero-bg-start);
+  background-image: linear-gradient(
+    160deg,
+    var(--mg-login-hero-bg-start) 0%,
+    var(--mg-login-hero-bg-mid) 42%,
+    var(--mg-login-hero-bg-end) 100%
+  );
+  background-position: 0 0;
+  background-size: cover;
+  background-repeat: no-repeat;
   display: flex;
-  /* 중앙 떠 있음 방지: 하단·좌측에 붙여 레이아웃 닻 */
-  align-items: flex-end;
-  justify-content: flex-start;
-  padding: 0 0 clamp(32px, 6vw, 56px) clamp(24px, 5vw, 56px);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
-.mg-v2-login-hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(44, 44, 44, 0.4);
-}
-
-.mg-v2-login-hero-content {
+/*
+ * 브랜드 락업: Secure Core mark + CoreSolution + 한국어 + 태그라인
+ * HQ 플랫폼 브랜드 (MindGarden 필기체/나비/수채화 아님)
+ */
+.mg-v2-login-hero-brand {
   position: relative;
-  z-index: 1;
-  text-align: left;
-  max-width: min(380px, 92%);
-  color: var(--mg-text-primary, var(--mg-dark-bg-900));
-  background: rgba(250, 249, 247, 0.94);
-  border: 1px solid rgba(61, 82, 70, 0.12);
-  border-left: 4px solid var(--mg-primary-color, var(--mg-color-primary-main));
-  border-radius: 0 12px 12px 0;
-  padding: clamp(20px, 3vw, 28px) clamp(22px, 3vw, 32px) clamp(20px, 3vw, 28px) clamp(18px, 2.5vw, 24px);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.65) inset,
-    0 10px 40px rgba(20, 28, 24, 0.15);
+  z-index: 2;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+  padding-block: var(--mg-v2-space-6, 24px);
+  padding-inline: var(--mg-v2-space-4, 16px);
+  gap: 0;
+  max-width: 100%;
+  pointer-events: none;
 }
 
-.mg-v2-login-hero-logo {
-  font-size: clamp(26px, 2.5vw, 32px);
-  font-weight: 700;
-  margin: 0 0 12px 0;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  color: var(--mg-primary-color, var(--mg-color-primary-main));
+.mg-v2-login-hero-lockup-wrapper {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: min(88vw, 20rem);
+  max-width: 100%;
+  overflow: visible;
 }
 
-.mg-v2-login-hero-slogan {
-  margin: 0;
-  padding-top: 14px;
-  border-top: 1px solid rgba(61, 82, 70, 0.12);
-  font-size: clamp(15px, 1.4vw, 17px);
-  font-weight: 500;
-  line-height: 1.55;
-  color: var(--mg-color-text-secondary);
+/* 접근성용 제목만 — 시각 브랜드는 SVG 락업 */
+.mg-v2-login-hero-title.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mg-v2-login-hero-lockup {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 320 / 292;
+  max-width: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* —— Secure Core mark fills (토큰) —— */
+.mg-v2-login-hero-lockup__plate {
+  fill: var(--mg-login-hero-mark-plate);
+  fill-opacity: 0;
+  stroke: none;
+  animation: mg-v2-lockup-fill-in 2.8s ease-out 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__shield-outer {
+  fill: var(--mg-login-hero-shield-outer);
+  fill-opacity: 0;
+  stroke: var(--mg-login-hero-shield-outer);
+  stroke-width: 1.25px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: mg-v2-lockup-draw-fill 2.8s ease-out 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__shield-inner {
+  fill: var(--mg-login-hero-shield-inner);
+  fill-opacity: 0;
+  stroke: var(--mg-login-hero-shield-inner);
+  stroke-width: 1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: mg-v2-lockup-draw-fill 2.8s ease-out 0.12s 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__core {
+  fill: var(--mg-login-hero-core);
+  fill-opacity: 0;
+  stroke: var(--mg-login-hero-core);
+  stroke-width: 0.75px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: mg-v2-lockup-draw-fill 2.8s ease-out 0.2s 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__lock-shackle {
+  fill: none;
+  stroke: var(--mg-login-hero-lock);
+  stroke-width: 2.25px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  opacity: 0;
+  animation: mg-v2-lockup-stroke-in 2.8s ease-out 0.28s 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__lock-body {
+  fill: var(--mg-login-hero-lock);
+  fill-opacity: 0;
+  stroke: var(--mg-login-hero-lock);
+  stroke-width: 1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: mg-v2-lockup-draw-fill 2.8s ease-out 0.32s 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__lock-keyhole {
+  fill: var(--mg-login-hero-core);
+  fill-opacity: 0;
+  stroke: none;
+  animation: mg-v2-lockup-fill-in 2.8s ease-out 0.4s 1 forwards;
+}
+
+/* Wordmark: stroke draw once → fill stay (~3s ease-out) */
+.mg-v2-login-hero-lockup__wordmark {
+  fill: var(--mg-white, var(--cs-white));
+  fill-opacity: 0;
+  stroke: var(--mg-white, var(--cs-white));
+  stroke-width: 1.1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: mg-v2-wordmark-draw-on 3s ease-out 0.35s 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__ko {
+  fill: color-mix(in srgb, var(--mg-white, var(--cs-white)) 90%, transparent);
+  fill-opacity: 0;
+  stroke: none;
+  animation: mg-v2-lockup-fade-in 0.7s ease-out 2.2s 1 forwards;
+}
+
+.mg-v2-login-hero-lockup__tagline {
+  fill: color-mix(in srgb, var(--mg-white, var(--cs-white)) 70%, transparent);
+  fill-opacity: 0;
+  stroke: none;
+  animation: mg-v2-lockup-fade-in 0.7s ease-out 2.35s 1 forwards;
+}
+
+/* Shield/lock: dashoffset → 0 then fill stay (no reset) */
+@keyframes mg-v2-lockup-draw-fill {
+  0% {
+    stroke-dashoffset: 100;
+    fill-opacity: 0;
+  }
+
+  68% {
+    stroke-dashoffset: 0;
+    fill-opacity: 0;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+  }
+}
+
+@keyframes mg-v2-lockup-stroke-in {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+
+  40% {
+    opacity: 1;
+  }
+
+  68% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes mg-v2-lockup-fill-in {
+  0%,
+  68% {
+    fill-opacity: 0;
+  }
+
+  100% {
+    fill-opacity: 1;
+  }
+}
+
+@keyframes mg-v2-wordmark-draw-on {
+  0% {
+    stroke-dashoffset: 800;
+    fill-opacity: 0;
+  }
+
+  70% {
+    stroke-dashoffset: 0;
+    fill-opacity: 0;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+  }
+}
+
+@keyframes mg-v2-lockup-fade-in {
+  0% {
+    fill-opacity: 0;
+  }
+
+  100% {
+    fill-opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-login-hero-lockup__plate,
+  .mg-v2-login-hero-lockup__shield-outer,
+  .mg-v2-login-hero-lockup__shield-inner,
+  .mg-v2-login-hero-lockup__core,
+  .mg-v2-login-hero-lockup__lock-shackle,
+  .mg-v2-login-hero-lockup__lock-body,
+  .mg-v2-login-hero-lockup__lock-keyhole,
+  .mg-v2-login-hero-lockup__wordmark,
+  .mg-v2-login-hero-lockup__ko,
+  .mg-v2-login-hero-lockup__tagline {
+    animation: none !important;
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+    opacity: 1;
+  }
 }
 
 /* 우측: 로그인 폼 영역 (Calm Forest 정합) */
@@ -547,32 +776,21 @@
 
   .mg-v2-login-hero {
     flex: none;
-    height: 200px;
-    background-position: center 30%, 0 0;
-    align-items: flex-end;
+    height: min(42vh, 340px);
+    min-height: 260px;
+    background-position: 0 0;
+    align-items: center;
     justify-content: center;
-    padding: 0 16px 20px;
+    padding: 0;
   }
 
-  .mg-v2-login-hero-content {
-    max-width: 100%;
-    width: 100%;
-    text-align: center;
-    border-left: none;
-    border-top: 3px solid var(--mg-primary-color, var(--mg-color-primary-main));
-    border-radius: 0 0 12px 12px;
-    padding: 14px 18px 16px;
+  .mg-v2-login-hero-brand {
+    gap: var(--mg-v2-space-3);
+    padding-block: var(--mg-v2-space-3);
   }
 
-  .mg-v2-login-hero-logo {
-    font-size: 22px;
-    margin-bottom: 8px;
-  }
-  
-  .mg-v2-login-hero-slogan {
-    font-size: 14px;
-    padding-top: 10px;
-    text-align: center;
+  .mg-v2-login-hero-lockup-wrapper {
+    width: min(86vw, 16rem);
   }
 
   .mg-v2-login-content {

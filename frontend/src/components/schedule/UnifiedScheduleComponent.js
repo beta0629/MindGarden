@@ -16,8 +16,11 @@ import { apiGet } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
   buildScheduleDatetimeUpdateBody,
+  getScheduleCalendarDragLockedMessage,
   hasConsultantScheduleTimeOverlap,
-  isPastDateOnly
+  isPastDateOnly,
+  isScheduleCalendarDragLocked,
+  SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE
 } from '../../utils/scheduleRescheduleUtils';
 import {
   buildMissingConsultationLogFallbackRoute,
@@ -514,7 +517,11 @@ const UnifiedScheduleComponent = ({
                         return null;
                     }
                     
-                    const isCompleted = schedule.status === 'COMPLETED' || schedule.status === t('schedule:UnifiedScheduleComponent.t_1f74613e');
+                    const isDragLocked = isScheduleCalendarDragLocked({
+                        status: schedule.status,
+                        start: startDateStr,
+                        end: endDateStr
+                    });
                     return {
                         id: schedule.id,
                         title: schedule.title || t('schedule:UnifiedScheduleComponent.t_c023a4c5'),
@@ -523,9 +530,12 @@ const UnifiedScheduleComponent = ({
                         backgroundColor: getConsultantColor(schedule.consultantId),
                         borderColor: getConsultantColor(schedule.consultantId),
                         className: `schedule-event status-${schedule.status?.toLowerCase()}`,
-                        editable: !isCompleted,
+                        editable: !isDragLocked,
+                        startEditable: !isDragLocked,
+                        durationEditable: !isDragLocked,
                         extendedProps: {
                             id: schedule.id,
+                            slotDragLocked: isDragLocked,
                             [SCHEDULE_MAPPING_ID_FIELD]: schedule[SCHEDULE_MAPPING_ID_FIELD]
                                 || schedule.mappingId
                                 || schedule.scheduleMappingId
@@ -655,7 +665,11 @@ const UnifiedScheduleComponent = ({
                             return null;
                         }
                         
-                        const isCompleted = schedule.status === 'COMPLETED' || schedule.status === t('schedule:UnifiedScheduleComponent.t_1f74613e');
+                        const isDragLocked = isScheduleCalendarDragLocked({
+                            status: schedule.status,
+                            start: startDateStr,
+                            end: endDateStr
+                        });
                         return {
                             id: schedule.id,
                             title: schedule.title || t('schedule:UnifiedScheduleComponent.t_c023a4c5'),
@@ -664,9 +678,12 @@ const UnifiedScheduleComponent = ({
                             backgroundColor: getConsultantColor(schedule.consultantId),
                             borderColor: getConsultantColor(schedule.consultantId),
                             className: `schedule-event status-${schedule.status?.toLowerCase()}`,
-                            editable: !isCompleted,
+                            editable: !isDragLocked,
+                            startEditable: !isDragLocked,
+                            durationEditable: !isDragLocked,
                             extendedProps: {
                                 id: schedule.id,
+                                slotDragLocked: isDragLocked,
                                 [SCHEDULE_MAPPING_ID_FIELD]: schedule[SCHEDULE_MAPPING_ID_FIELD]
                                     || schedule.mappingId
                                     || schedule.scheduleMappingId
@@ -1000,11 +1017,17 @@ const UnifiedScheduleComponent = ({
         }
 
         const status = event.extendedProps?.status;
-
-        // 완료된 스케줄은 드래그 이동 불가
-        if (status === 'COMPLETED' || status === t('schedule:UnifiedScheduleComponent.t_1f74613e')) {
+        const originalStart = info.oldEvent?.start ?? event.start;
+        const originalEnd = info.oldEvent?.end ?? event.end;
+        const lockedMessage = getScheduleCalendarDragLockedMessage({
+            status,
+            start: originalStart,
+            end: originalEnd
+        });
+        // 완료·취소·과거 스케줄은 드래그/리사이즈 이동 불가
+        if (lockedMessage) {
             info.revert();
-            notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_5c8ac544'));
+            notificationManager.warning(lockedMessage);
             return;
         }
 
@@ -1013,7 +1036,7 @@ const UnifiedScheduleComponent = ({
 
         if (isPastDateOnly(newStart)) {
             info.revert();
-            notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_07d3fa9e'));
+            notificationManager.warning(SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE);
             return;
         }
 
@@ -1039,6 +1062,8 @@ const UnifiedScheduleComponent = ({
             notificationManager.error(t('schedule:UnifiedScheduleComponent.t_68ed75e7'));
         }
     };
+
+    const handleEventResize = handleEventDrop;
 
     const handleModalClose = () => {
         setIsModalOpen(false);
@@ -1216,6 +1241,7 @@ const UnifiedScheduleComponent = ({
                 onDateClick={handleDateClick}
                 onEventClick={handleEventClick}
                 onEventDrop={handleEventDrop}
+                onEventResize={handleEventResize}
                 onExternalEventReceive={onDropFromExternal}
                 integratedMonthEventLayout={integratedMonthEventLayout}
                 calendarSkin={calendarSkin}

@@ -665,6 +665,11 @@ public class ScheduleController extends BaseApiController {
         } else {
             log.info("✅ 본인 일정 상태만 변경 — SCHEDULE_MODIFY 생략: scheduleId={}, userId={}", id, currentUser.getId());
         }
+
+        ScheduleStatus statusBeforeSlotUpdate = existingSchedule.getStatus();
+        LocalDate dateBeforeSlotUpdate = existingSchedule.getDate();
+        LocalTime startBeforeSlotUpdate = existingSchedule.getStartTime();
+        LocalTime endBeforeSlotUpdate = existingSchedule.getEndTime();
         
         if (updateData.containsKey("status")) {
             String newStatus = (String) updateData.get("status");
@@ -682,18 +687,34 @@ public class ScheduleController extends BaseApiController {
         if (updateData.containsKey("consultationType")) {
             existingSchedule.setConsultationType((String) updateData.get("consultationType"));
         }
+
+        if (isScheduleSlotChangeRequested(
+                updateData, dateBeforeSlotUpdate, startBeforeSlotUpdate, endBeforeSlotUpdate)) {
+            String denyMessage = com.coresolution.consultation.util.ScheduleSlotGuard
+                    .resolveSlotChangeDenyMessage(
+                            statusBeforeSlotUpdate, dateBeforeSlotUpdate, endBeforeSlotUpdate);
+            if (denyMessage != null) {
+                log.warn("❌ 스케줄 슬롯 변경 거부: scheduleId={}, status={}, date={}, message={}",
+                        id, statusBeforeSlotUpdate, dateBeforeSlotUpdate, denyMessage);
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error(denyMessage));
+            }
+        }
         
         if (updateData.containsKey("date")) {
             String dateStr = (String) updateData.get("date");
             try {
                 java.time.LocalDate newDate = java.time.LocalDate.parse(dateStr);
-                if (newDate.isBefore(java.time.LocalDate.now())) {
+                if (newDate.isBefore(java.time.LocalDate.now(
+                        com.coresolution.consultation.util.ReservationSmsBusinessHours.ZONE_SEOUL))) {
                     log.warn("❌ 과거 날짜로 스케줄 수정 거부: newDate={}", newDate);
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(ApiResponse.error("과거 날짜에는 예약할 수 없습니다."));
                 }
                 existingSchedule.setDate(newDate);
                 log.info("📝 스케줄 날짜 변경: {}", dateStr);
+            } catch (IllegalArgumentException e) {
+                throw e;
             } catch (Exception e) {
                 log.warn("⚠️ 유효하지 않은 날짜 형식: {}", dateStr);
                 throw new IllegalArgumentException("유효하지 않은 날짜 형식입니다: " + dateStr);
@@ -737,7 +758,7 @@ public class ScheduleController extends BaseApiController {
             log.info("✅ 스케줄 수정 완료: ID {}", updatedSchedule.getId());
             return updated("스케줄이 성공적으로 수정되었습니다.", data);
         } catch (IllegalStateException e) {
-            log.warn("⚠️ 스케줄 완료 처리 거부 (상담일지 미작성): id={}, message={}", id, e.getMessage());
+            log.warn("⚠️ 스케줄 수정 거부: id={}, message={}", id, e.getMessage());
             return ResponseEntity.badRequest()
                 .body(com.coresolution.core.dto.ApiResponse.<Map<String, Object>>error(e.getMessage()));
         }
@@ -1360,6 +1381,44 @@ public class ScheduleController extends BaseApiController {
         }
         
         return schedule;
+    }
+
+    /**
+     * 요청 본문의 date/startTime/endTime이 기존 슬롯과 다른지 여부.
+     * 키가 없거나 동일 값이면 false (상태만 변경·멱등 재저장 허용).
+     */
+    private boolean isScheduleSlotChangeRequested(
+            Map<String, Object> updateData,
+            LocalDate currentDate,
+            LocalTime currentStart,
+            LocalTime currentEnd) {
+        if (updateData == null) {
+            return false;
+        }
+        try {
+            if (updateData.containsKey("date") && updateData.get("date") != null) {
+                LocalDate newDate = LocalDate.parse(updateData.get("date").toString());
+                if (!Objects.equals(newDate, currentDate)) {
+                    return true;
+                }
+            }
+            if (updateData.containsKey("startTime") && updateData.get("startTime") != null) {
+                LocalTime newStart = LocalTime.parse(updateData.get("startTime").toString());
+                if (!Objects.equals(newStart, currentStart)) {
+                    return true;
+                }
+            }
+            if (updateData.containsKey("endTime") && updateData.get("endTime") != null) {
+                LocalTime newEnd = LocalTime.parse(updateData.get("endTime").toString());
+                if (!Objects.equals(newEnd, currentEnd)) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            // 형식 오류는 이후 parse 블록에서 IllegalArgumentException 처리
+            log.debug("슬롯 변경 여부 사전 파싱 실패(후속 검증으로 위임): {}", e.getMessage());
+        }
+        return false;
     }
     
      /**

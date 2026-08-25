@@ -24,7 +24,11 @@ public class CommonCodeCreateRequest {
     @Size(max = 50, message = "코드 그룹은 50자 이하여야 합니다.")
     private String codeGroup;
     
-    @NotBlank(message = "코드 값은 필수입니다.")
+    /**
+     * 코드 값.
+     * <p>테넌트 {@code CONSULTATION_PACKAGE} 생성 시 비어 있으면 서버가 자동 발급한다.
+     * 그 외 그룹은 서비스에서 필수로 검증한다.</p>
+     */
     @Size(max = 50, message = "코드 값은 50자 이하여야 합니다.")
     private String codeValue;
     

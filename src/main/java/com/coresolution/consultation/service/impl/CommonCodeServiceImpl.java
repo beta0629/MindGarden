@@ -663,21 +663,26 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             log.warn("⚠️ 권한 없음: userId={}, codeType={}", createdBy, codeType);
             throw new SecurityException(message);
         }
+
+        if (request.getCodeValue() == null || request.getCodeValue().trim().isEmpty()) {
+            throw new IllegalArgumentException("코드 값은 필수입니다.");
+        }
+        String normalizedCodeValue = request.getCodeValue().trim();
         
         // 중복 체크 (tenant_id 포함)
         Optional<CommonCode> existing = tenantId != null && !tenantId.isEmpty()
-            ? commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, request.getCodeGroup(), request.getCodeValue())
-            : commonCodeRepository.findCoreCodeByGroupAndValue(request.getCodeGroup(), request.getCodeValue());
+            ? commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, request.getCodeGroup(), normalizedCodeValue)
+            : commonCodeRepository.findCoreCodeByGroupAndValue(request.getCodeGroup(), normalizedCodeValue);
         
         if (existing.isPresent()) {
-            throw new RuntimeException("이미 존재하는 코드입니다: " + request.getCodeGroup() + " - " + request.getCodeValue());
+            throw new RuntimeException("이미 존재하는 코드입니다: " + request.getCodeGroup() + " - " + normalizedCodeValue);
         }
         
         // 한글명 필수 검증
         String koreanName = request.getKoreanName();
         if (koreanName == null || koreanName.trim().isEmpty()) {
-            koreanName = request.getCodeLabel() != null ? request.getCodeLabel() : request.getCodeValue();
-            log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", request.getCodeValue(), koreanName);
+            koreanName = request.getCodeLabel() != null ? request.getCodeLabel() : normalizedCodeValue;
+            log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", normalizedCodeValue, koreanName);
         }
 
         String parentGroup = request.getParentCodeGroup();
@@ -689,7 +694,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         
         CommonCode commonCode = CommonCode.builder()
                 .codeGroup(request.getCodeGroup())
-                .codeValue(request.getCodeValue())
+                .codeValue(normalizedCodeValue)
                 .codeLabel(request.getCodeLabel())
                 .codeDescription(request.getCodeDescription())
                 .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)

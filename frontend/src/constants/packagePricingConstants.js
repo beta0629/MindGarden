@@ -11,6 +11,12 @@ export const API = {
   TENANT_COMMON_CODES: '/api/v1/tenant/common-codes'
 };
 
+/** 패키지 코드 발급 방식 (신규 생성) */
+export const CODE_ISSUE_MODE = {
+  AUTO: 'AUTO',
+  MANUAL: 'MANUAL'
+};
+
 export const LABELS = {
   PAGE_TITLE: '패키지 요금 관리',
   PAGE_SUBTITLE: '상담 패키지별 가격과 회기 수를 관리합니다',
@@ -29,6 +35,12 @@ export const LABELS = {
   MODAL_ADD_TITLE: '새 패키지 추가',
   MODAL_EDIT_TITLE: '패키지 수정',
   LABEL_CODE: '패키지 코드',
+  LABEL_CODE_ISSUE: '코드 발급',
+  CODE_ISSUE_AUTO: '자동',
+  CODE_ISSUE_MANUAL: '수동',
+  CODE_AUTO_HINT: '저장 시 자동 생성됩니다',
+  CODE_MANUAL_PLACEHOLDER: '예: BASIC, SINGLE_80000',
+  CODE_REQUIRED: '패키지 코드를 입력하세요.',
   LABEL_NAME: '패키지명(한글)',
   LABEL_SESSIONS: '회기 수',
   LABEL_PRICE: '가격(원)',

@@ -121,6 +121,10 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).toMatch(/<SchedulePendingList[\s\S]*?items=\{schedulePendingList\.map/);
     expect(source).toContain('viewAllHref={ADMIN_ROUTES.INTEGRATED_SCHEDULE}');
 
+    const matchingBlock = source.match(/<ManualMatchingQueue[\s\S]*?\/>/)?.[0] || '';
+    expect(matchingBlock).toContain('viewAllHref={ADMIN_ROUTES.MAPPING_MANAGEMENT}');
+    expect(matchingBlock).not.toContain('CLIENT_COMPREHENSIVE');
+
     expect(source).not.toContain('onScheduleRegister');
     expect(source).not.toMatch(/<SchedulePendingList[^>]*\sitems=\{\[\]\}/);
 
@@ -142,6 +146,10 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).toContain("StandardizedApi.get(API_ADMIN_SCHEDULES, { status: 'BOOKED' })");
     expect(source).toMatch(/schedulePendingCount:\s*schedulePendingList\.length/);
     expect(source).toMatch(/<SchedulePendingList[\s\S]*?items=\{schedulePendingList\.map/);
+
+    const matchingBlock = source.match(/<ManualMatchingQueue[\s\S]*?\/>/)?.[0] || '';
+    expect(matchingBlock).toContain('viewAllHref={ADMIN_ROUTES.MAPPING_MANAGEMENT}');
+    expect(matchingBlock).not.toContain('CLIENT_COMPREHENSIVE');
 
     const scheduleBlock = source.match(/<SchedulePendingList[\s\S]*?\/>/)?.[0] || '';
     expect(scheduleBlock).not.toContain('pendingDepositList');

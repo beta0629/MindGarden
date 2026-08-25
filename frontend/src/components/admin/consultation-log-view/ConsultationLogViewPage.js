@@ -132,6 +132,33 @@ export const hasConsultationLogDeepLinkQuery = (queryFilter) => Boolean(
   || queryFilter?.scheduleId
 );
 
+/**
+ * Deep link `scheduleId` 와 목록 레코드를 매칭해 모달용 record id 를 반환.
+ * 백엔드 레코드는 일정 ID를 `consultationId`(또는 `scheduleId`)로 담는다.
+ *
+ * @param {Array<object>|null|undefined} records
+ * @param {number|null|undefined} scheduleId
+ * @returns {number|string|null}
+ */
+export const findRecordIdByScheduleDeepLink = (records, scheduleId) => {
+  if (scheduleId == null || !Array.isArray(records) || records.length === 0) {
+    return null;
+  }
+  const target = Number(scheduleId);
+  if (!Number.isFinite(target) || !Number.isInteger(target) || target <= 0) {
+    return null;
+  }
+  const matched = records.find((r) => {
+    if (!r || typeof r !== 'object') {
+      return false;
+    }
+    const consultationId = r.consultationId != null ? Number(r.consultationId) : null;
+    const recordScheduleId = r.scheduleId != null ? Number(r.scheduleId) : null;
+    return consultationId === target || recordScheduleId === target;
+  });
+  return matched?.id != null ? matched.id : null;
+};
+
 const ConsultationLogViewPage = () => {
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
@@ -178,6 +205,8 @@ const ConsultationLogViewPage = () => {
   const [modalRecordId, setModalRecordId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(VIEW_MODE_LIST);
+  /** Deep link scheduleId 모달 자동 오픈 1회 가드 */
+  const deepLinkAutoOpenedRef = useRef(false);
 
   const {
     savedView,
@@ -248,7 +277,9 @@ const ConsultationLogViewPage = () => {
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       clientId: r.clientId,
-      consultantId: r.consultantId
+      consultantId: r.consultantId,
+      consultationId: r.consultationId,
+      scheduleId: r.scheduleId
     }));
   }, []);
 
@@ -339,6 +370,26 @@ const ConsultationLogViewPage = () => {
     setModalRecordId(recordId);
     setModalOpen(true);
   };
+
+  /**
+   * Deep link `?scheduleId=` 매칭 시 ConsultationLogModal 1회 자동 오픈.
+   * (스케줄 상세 → navigate fallback / 북마크 UX)
+   */
+  useEffect(() => {
+    if (deepLinkAutoOpenedRef.current || loading) {
+      return;
+    }
+    const scheduleId = initialQueryFilter.scheduleId;
+    if (scheduleId == null) {
+      return;
+    }
+    const recordId = findRecordIdByScheduleDeepLink(records, scheduleId);
+    if (recordId == null) {
+      return;
+    }
+    deepLinkAutoOpenedRef.current = true;
+    handleOpenModal(recordId);
+  }, [loading, records, initialQueryFilter.scheduleId]);
 
   const handleModalClose = () => {
     setModalOpen(false);

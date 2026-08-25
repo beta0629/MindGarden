@@ -224,7 +224,7 @@
     "sessionCancelRestoreHint": "취소 후 재예약 시, 잔여 회기가 복원된 후 다시 차감됩니다.",
     "sessionCancelRestoreHintAria": "취소 및 재예약에 따른 회기 차감 안내",
     "openConsultationLogView": "상담일지 보기/수정",
-    "openConsultationLogViewAria": "{{date}} 상담일지 조회 페이지로 이동",
+    "openConsultationLogViewAria": "{{date}} 상담일지 보기/수정 열기",
     "vehiclePlateLabel": "차량번호",
     "vehiclePlateRegisterCta": "차량 등록"
   },

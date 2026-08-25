@@ -15,6 +15,7 @@
 import {
   resolveModalSessionInfo,
   resolveModalLifetimeSessionInfo,
+  resolveConsultationLogOpenStrategy,
   shouldShowConsultationLogLink,
   shouldShowRescheduleAction,
   toIsoDateString,
@@ -163,6 +164,22 @@ describe('toIsoDateString', () => {
     expect(toIsoDateString(undefined)).toBeNull();
     expect(toIsoDateString('')).toBeNull();
     expect(toIsoDateString('not-a-date')).toBeNull();
+  });
+});
+
+describe('resolveConsultationLogOpenStrategy (모달 즉시 오픈 vs navigate)', () => {
+  test('onConsultationLogOpen 이 함수면 modal', () => {
+    expect(resolveConsultationLogOpenStrategy(() => {})).toBe('modal');
+  });
+
+  test('콜백 없으면 navigate fallback', () => {
+    expect(resolveConsultationLogOpenStrategy(undefined)).toBe('navigate');
+    expect(resolveConsultationLogOpenStrategy(null)).toBe('navigate');
+  });
+
+  test('함수가 아닌 값은 navigate', () => {
+    expect(resolveConsultationLogOpenStrategy('open')).toBe('navigate');
+    expect(resolveConsultationLogOpenStrategy({})).toBe('navigate');
   });
 });
 

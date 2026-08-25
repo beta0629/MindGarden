@@ -11,7 +11,7 @@ import { toSafeNumber } from '../../../utils/safeDisplay';
 
 export const DASHBOARD_CHART_ROLLING_DAYS = 14;
 export const DASHBOARD_CHART_ROLLING_WEEKS = 6;
-export const DASHBOARD_CHART_ROLLING_MONTHS = 6;
+export const DASHBOARD_CHART_ROLLING_MONTHS = 12;
 export const DASHBOARD_CHART_ROLLING_YEARS = 5;
 
 export const DASHBOARD_CHART_PERIOD = Object.freeze({

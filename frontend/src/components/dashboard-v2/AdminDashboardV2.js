@@ -108,6 +108,7 @@ import {
   extractSparklineValues
 } from './utils/dashboardKpiSparklineUtils';
 import { aggregateConsultantSessionBurnRates } from './utils/aggregateConsultantSessionBurnRates';
+import { DASHBOARD_CHART_ROLLING_MONTHS } from './utils/dashboardChartPeriodUtils';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/responsive-layout-tokens.css';
@@ -525,8 +526,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         fetch(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, { headers, credentials: 'include' }),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
         StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION),
-        StandardizedApi.get(API_ADMIN_STATISTICS_NEW_CLIENTS, { months: 6 }),
-        StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATIONS_BY_DOW, { months: 6 })
+        StandardizedApi.get(API_ADMIN_STATISTICS_NEW_CLIENTS, { months: DASHBOARD_CHART_ROLLING_MONTHS }),
+        StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATIONS_BY_DOW, { months: DASHBOARD_CHART_ROLLING_MONTHS })
       ]);
       const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
       const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();

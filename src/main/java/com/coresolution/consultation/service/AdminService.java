@@ -444,7 +444,7 @@ public interface AdminService {
     /**
      * 최근 N개월 월별 상담 완료 건수 추이 (전체 상담사 합계, tenantId 기준)
      *
-     * @param lastMonths 최근 개월 수 (예: 6)
+     * @param lastMonths 최근 개월 수 (예: 12)
      * @return period("YYYY-MM"), bookedCount, inProgressCount, completedCount 포함 Map 리스트 (과거→현재 순)
      */
     List<Map<String, Object>> getConsultationMonthlyTrend(int lastMonths);
@@ -486,7 +486,7 @@ public interface AdminService {
     /**
      * 월별 신규 내담자(CLIENT) 유입 집계 (tenant 격리, created_at 기준).
      *
-     * @param lastMonths 최근 개월 수 (예: 6)
+     * @param lastMonths 최근 개월 수 (예: 12)
      * @return period / newClientCount / growthRate 포함 응답
      */
     NewClientsStatisticsResponse getNewClientMonthlyStatistics(int lastMonths);
@@ -494,7 +494,7 @@ public interface AdminService {
     /**
      * 요일별(월~일) 상담 건수 집계 (tenant 격리, 취소 제외).
      *
-     * @param lastMonths 최근 개월 수 범위 (예: 6)
+     * @param lastMonths 최근 개월 수 범위 (예: 12)
      * @return 요일 항목 + peakDayOfWeek
      */
     ConsultationsByDayOfWeekResponse getConsultationsByDayOfWeek(int lastMonths);

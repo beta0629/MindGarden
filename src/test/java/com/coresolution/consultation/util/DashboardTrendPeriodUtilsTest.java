@@ -18,39 +18,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DashboardTrendPeriodUtilsTest {
 
     @Test
-    @DisplayName("7월 기준 rolling 6개월은 2~7월을 포함한다 (연초 고정 아님)")
-    void rollingMonthStarts_july_includesFebThroughJul() {
+    @DisplayName("7월 기준 rolling 12개월은 전년 8월~당월을 포함한다 (연초 고정 아님)")
+    void rollingMonthStarts_july_includesPriorAugThroughJul() {
         LocalDate today = LocalDate.of(2026, 7, 2);
-        List<String> periods = DashboardTrendPeriodUtils.rollingMonthStarts(6, today).stream()
+        List<String> periods = DashboardTrendPeriodUtils.rollingMonthStarts(
+                        DashboardTrendPeriodUtils.DEFAULT_ROLLING_MONTHS, today).stream()
                 .map(d -> d.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM")))
                 .collect(Collectors.toList());
 
         assertThat(periods).containsExactly(
-                "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07");
+                "2025-08", "2025-09", "2025-10", "2025-11", "2025-12",
+                "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07");
     }
 
     @Test
-    @DisplayName("6월 기준 rolling 6개월은 1~6월을 포함한다")
-    void rollingMonthStarts_june_includesJanThroughJun() {
+    @DisplayName("6월 기준 rolling 12개월은 전년 7월~당월을 포함한다")
+    void rollingMonthStarts_june_includesPriorJulThroughJun() {
         LocalDate today = LocalDate.of(2026, 6, 30);
-        List<String> periods = DashboardTrendPeriodUtils.rollingMonthStarts(6, today).stream()
+        List<String> periods = DashboardTrendPeriodUtils.rollingMonthStarts(
+                        DashboardTrendPeriodUtils.DEFAULT_ROLLING_MONTHS, today).stream()
                 .map(d -> d.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM")))
                 .collect(Collectors.toList());
 
         assertThat(periods).containsExactly(
+                "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12",
                 "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06");
     }
 
     @Test
-    @DisplayName("3월 기준 rolling 6개월은 전년 10월부터 당월까지 포함한다")
+    @DisplayName("3월 기준 rolling 12개월은 전년 4월부터 당월까지 포함한다")
     void rollingMonthStarts_march_crossesYearBoundary() {
         LocalDate today = LocalDate.of(2026, 3, 15);
-        List<String> periods = DashboardTrendPeriodUtils.rollingMonthStarts(6, today).stream()
+        List<String> periods = DashboardTrendPeriodUtils.rollingMonthStarts(
+                        DashboardTrendPeriodUtils.DEFAULT_ROLLING_MONTHS, today).stream()
                 .map(d -> d.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM")))
                 .collect(Collectors.toList());
 
         assertThat(periods).containsExactly(
+                "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09",
                 "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03");
+    }
+
+    @Test
+    @DisplayName("DEFAULT_ROLLING_MONTHS는 12이다")
+    void defaultRollingMonths_isTwelve() {
+        assertThat(DashboardTrendPeriodUtils.DEFAULT_ROLLING_MONTHS).isEqualTo(12);
     }
 
     @Test

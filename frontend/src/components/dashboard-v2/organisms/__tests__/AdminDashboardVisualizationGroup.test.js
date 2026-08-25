@@ -30,7 +30,7 @@ jest.mock('react-i18next', () => ({
         'admin:dashboard.v2.viz.multiLineTitle': '추이 비교',
         'admin:dashboard.v2.viz.subtitleDaily': '최근 14일',
         'admin:dashboard.v2.viz.subtitleWeekly': '최근 6주',
-        'admin:dashboard.v2.viz.subtitleMonthly': '최근 6개월',
+        'admin:dashboard.v2.viz.subtitleMonthly': '최근 12개월',
         'admin:dashboard.v2.viz.subtitleYearly': '최근 5년',
         'admin:dashboard.v2.viz.emptyPeriod': '해당 기간의 데이터가 없습니다',
         'admin:dashboard.v2.viz.seriesBooked': '예약',
@@ -64,12 +64,12 @@ jest.mock('react-i18next', () => ({
         'common:actions.close': '닫기',
         'action.close': '닫기',
         'admin:dashboard.v2.viz.newClientsTitle': '신규 내담자 유입',
-        'admin:dashboard.v2.viz.newClientsSubtitle': '최근 6개월 신규 등록',
+        'admin:dashboard.v2.viz.newClientsSubtitle': '최근 12개월 신규 등록',
         'admin:dashboard.v2.viz.totalClientsLabel': '총 내담자 현황',
         'admin:dashboard.v2.viz.newClientsCountUnit': '명',
         'admin:dashboard.v2.viz.emptyInflowPeriod': '해당 기간에 집계된 데이터가 없습니다.',
         'admin:dashboard.v2.viz.dowTitle': '요일별 상담 건수',
-        'admin:dashboard.v2.viz.dowSubtitle': '최근 6개월 요일별 합계',
+        'admin:dashboard.v2.viz.dowSubtitle': '최근 12개월 요일별 합계',
         'admin:dashboard.v2.viz.dowPeakBadge': '최다 · {{count}}건',
         'admin:dashboard.v2.viz.dowPeakGroupLabel': '최다 요일',
         'admin:dashboard.v2.viz.dowShort.mon': '월',
@@ -312,8 +312,8 @@ describe('AdminDashboardVisualizationGroup', () => {
       .toHaveTextContent('완료 지난달 대비 ▲ 33%');
   });
 
-  test('6개월 버킷·직전 완료값>0이면 상담 현황 카드에 증감 배지가 나온다', () => {
-    const sixMonthStats = {
+  test('월간 버킷·직전 완료값>0이면 상담 현황 카드에 증감 배지가 나온다', () => {
+    const twelveMonthStats = {
       ...sampleStats,
       monthlyData: [
         { period: '2026-02', bookedCount: 0, inProgressCount: 0, completedCount: 0 },
@@ -325,7 +325,7 @@ describe('AdminDashboardVisualizationGroup', () => {
       ]
     };
     render(
-      <AdminDashboardVisualizationGroup consultationStats={sixMonthStats} loading={false} />
+      <AdminDashboardVisualizationGroup consultationStats={twelveMonthStats} loading={false} />
     );
     const stackedCard = screen.getByTestId('viz-stacked-bar-card');
     const completedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-completed');

@@ -50,12 +50,9 @@ import PasswordChangeModal from '../mypage/components/PasswordChangeModal';
 // @deprecated 레거시 함수는 하위 호환성을 위해 유지하되, 새로운 코드에서는 사용하지 않음
 // import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import '../../styles/auth/UnifiedLogin.css';
-import loginHeroWatercolor from '../../assets/images/auth/login-hero-watercolor.png';
-import coreLogoButterfly from '../../assets/images/auth/core-logo-butterfly.png';
 import {
   LOGIN_HERO_BRAND_TITLE,
-  LoginHeroLogoOutline,
-  LoginHeroTitleOutline
+  LoginHeroBrandLockup
 } from './LoginHeroLineOverlay';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
@@ -886,29 +883,12 @@ const UnifiedLogin = () => {
   return (
     <CommonPageTemplate bodyClass="login-page">
       <div className="mg-v2-login-container">
-        {/* 좌측: 브랜딩 이미지 영역 */}
+        {/* 좌측: Core Solution Secure Core 히어로 (플랫폼 브랜드) */}
         <div className="mg-v2-login-hero">
-          <img
-            className="mg-v2-login-hero-media"
-            src={loginHeroWatercolor}
-            alt=""
-            aria-hidden="true"
-            decoding="async"
-          />
           <div className="mg-v2-login-hero-brand">
-            <div className="mg-v2-login-hero-title-wrapper">
+            <div className="mg-v2-login-hero-lockup-wrapper">
               <h1 className="mg-v2-login-hero-title sr-only">{LOGIN_HERO_BRAND_TITLE}</h1>
-              <LoginHeroTitleOutline />
-            </div>
-            <div className="mg-v2-login-hero-logo-wrapper">
-              <img
-                className="mg-v2-login-hero-butterfly"
-                src={coreLogoButterfly}
-                alt=""
-                aria-hidden="true"
-                decoding="async"
-              />
-              <LoginHeroLogoOutline />
+              <LoginHeroBrandLockup />
             </div>
           </div>
         </div>

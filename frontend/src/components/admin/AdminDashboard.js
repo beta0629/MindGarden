@@ -952,7 +952,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 clientName: client.name || '-',
                 clientMeta: client.email || '매칭 없음'
               }))}
-              viewAllHref={ADMIN_ROUTES.CLIENT_COMPREHENSIVE}
+              viewAllHref={ADMIN_ROUTES.MAPPING_MANAGEMENT}
               loading={matchingQueueLoading}
             />
 

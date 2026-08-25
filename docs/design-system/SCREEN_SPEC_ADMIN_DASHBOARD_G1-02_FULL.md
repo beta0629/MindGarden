@@ -15,6 +15,7 @@
 - **CTA ≤ 1 원칙**: 각 위젯 및 행(row)별 인라인 버튼은 제거하고 '전체 보기' 링크 1개만 위젯 상단/하단에 배치.
   - **환불 StatCard**: 4개의 분산된 CTA를 단일 CTA 섹션(예: '환불 관리 가기')으로 통합.
 - **ManualMatchingQueue**: `ListTableView` SSOT 적용, 인라인 다중 버튼 제거, overflow 메뉴 또는 단일 CTA(매칭하기)만 유지.
+  - **전체 보기 `viewAllHref` SSOT**: `ADMIN_ROUTES.MAPPING_MANAGEMENT` (`/admin/mapping-management`). 내담자 종합(`CLIENT_COMPREHENSIVE`) 금지. 입금/스케줄 Pending List와 동일하게 도메인 전용 페이지로 라우팅.
 - **위젯 Organism 정합**: 위젯 컨테이너는 `AdminCommonLayout`의 섹션 블록 스타일(`mg-v2-ad-b0kla__section`) 적용.
 
 ### PR-DASH-02: 데이터 와이어링 및 데드코드 제거 (P0 갭)

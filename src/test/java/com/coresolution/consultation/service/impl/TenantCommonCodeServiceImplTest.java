@@ -6,12 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
+import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
+import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
+import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -19,12 +24,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * {@link TenantCommonCodeServiceImpl} — 요청 tenantId 기준 조회·코어 ID 안내.
+ * {@link TenantCommonCodeServiceImpl} — 요청 tenantId 기준 조회·코어 ID 안내·패키지 코드 발급.
  *
  * @author CoreSolution
  * @since 2026-04-07
@@ -102,6 +108,99 @@ class TenantCommonCodeServiceImplTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> tenantCommonCodeService.validateTenantCodeOwnership(TENANT, 77L));
         assertEquals("존재하지 않는 코드입니다: 77", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: CONSULTATION_PACKAGE 빈 codeValue → max 시퀀스 다음 값 자동 발급")
+    void createTenantCode_packageBlankCode_autoGeneratesFromMaxSequence() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of(
+                packageRow("PACKAGE_001"),
+                packageRow("SINGLE_80000"),
+                packageRow("PACKAGE_003")));
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), eq("PACKAGE_004")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode saved = inv.getArgument(0);
+            saved.setId(100L);
+            return saved;
+        });
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
+            .codeValue("  ")
+            .codeLabel("신규")
+            .koreanName("신규")
+            .build();
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, request);
+
+        assertEquals("PACKAGE_004", response.getCodeValue());
+        ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
+        verify(commonCodeRepository).save(captor.capture());
+        assertEquals("PACKAGE_004", captor.getValue().getCodeValue());
+        assertEquals(TENANT, captor.getValue().getTenantId());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 수동 codeValue trim 후 중복이면 예외")
+    void createTenantCode_manualDuplicate_throws() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP, "BASIC"))
+            .thenReturn(Optional.of(packageRow("BASIC")));
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
+            .codeValue("  BASIC  ")
+            .codeLabel("기본")
+            .koreanName("기본")
+            .build();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+            () -> tenantCommonCodeService.createTenantCode(TENANT, request));
+
+        assertTrue(ex.getMessage().contains("BASIC"));
+        verify(commonCodeRepository, never()).save(any(CommonCode.class));
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 다른 그룹 빈 codeValue → 필수 예외 (자동발급 부작용 없음)")
+    void createTenantCode_otherGroupBlank_requiresCodeValue() {
+        stubTenantGroupMetadata("ASSESSMENT_TYPE");
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup("ASSESSMENT_TYPE")
+            .codeValue(null)
+            .codeLabel("평가")
+            .koreanName("평가")
+            .build();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+            () -> tenantCommonCodeService.createTenantCode(TENANT, request));
+
+        assertEquals(ConsultationPackageCodeConstants.CODE_VALUE_REQUIRED_MESSAGE, ex.getMessage());
+        verify(commonCodeRepository, never()).findTenantCodesByGroup(any(), any());
+    }
+
+    private void stubTenantGroupMetadata(String groupName) {
+        CodeGroupMetadata metadata = new CodeGroupMetadata();
+        metadata.setGroupName(groupName);
+        metadata.setCodeType("TENANT");
+        when(codeGroupMetadataRepository.findByGroupName(groupName)).thenReturn(Optional.of(metadata));
+    }
+
+    private static CommonCode packageRow(String codeValue) {
+        CommonCode c = CommonCode.builder()
+            .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
+            .codeValue(codeValue)
+            .codeLabel(codeValue)
+            .koreanName(codeValue)
+            .build();
+        c.setTenantId(TENANT);
+        return c;
     }
 
     private static CommonCode baseRow(Long id, String tenantId) {

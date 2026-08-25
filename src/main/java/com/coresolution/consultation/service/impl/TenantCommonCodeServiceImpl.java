@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
 import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeResponse;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
@@ -13,8 +14,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -65,22 +68,17 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     @Override
     @Transactional
     public CommonCodeResponse createTenantCode(String tenantId, CommonCodeCreateRequest request) {
-        log.info("테넌트 공통코드 생성: tenantId={}, codeGroup={}, codeValue={}", 
+        log.info("테넌트 공통코드 생성: tenantId={}, codeGroup={}, codeValue={}",
             tenantId, request.getCodeGroup(), request.getCodeValue());
 
         requireNonBlankTenantId(tenantId);
-        
-        // 코드 그룹이 테넌트 타입인지 검증
+
         validateTenantCodeGroup(request.getCodeGroup());
-        
-        // 중복 체크
-        commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, request.getCodeGroup(), request.getCodeValue())
-            .ifPresent(code -> {
-                throw new IllegalArgumentException(
-                    String.format("이미 존재하는 코드입니다: %s.%s", request.getCodeGroup(), request.getCodeValue())
-                );
-            });
-        
+
+        String codeValue = resolveCodeValueForCreate(tenantId, request.getCodeGroup(), request.getCodeValue());
+
+        assertCodeValueUnique(tenantId, request.getCodeGroup(), codeValue);
+
         String parentGroup = request.getParentCodeGroup();
         String parentValue = request.getParentCodeValue();
         if (CommonCodeSubcategoryParents.isSubcategoryGroup(request.getCodeGroup())) {
@@ -88,10 +86,9 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             CommonCodeSubcategoryParents.requireValidParent(request.getCodeGroup(), parentGroup, parentValue);
         }
 
-        // 엔티티 생성
         CommonCode code = CommonCode.builder()
             .codeGroup(request.getCodeGroup())
-            .codeValue(request.getCodeValue())
+            .codeValue(codeValue)
             .codeLabel(request.getCodeLabel())
             .koreanName(request.getKoreanName() != null ? request.getKoreanName() : request.getCodeLabel())
             .codeDescription(request.getCodeDescription())
@@ -103,13 +100,21 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             .icon(request.getIcon())
             .colorCode(request.getColorCode())
             .build();
-        
+
         code.setTenantId(tenantId);
-        
-        CommonCode savedCode = commonCodeRepository.save(code);
-        log.info("테넌트 공통코드 생성 완료: id={}", savedCode.getId());
-        
-        return toResponse(savedCode);
+
+        try {
+            CommonCode savedCode = commonCodeRepository.save(code);
+            log.info("테넌트 공통코드 생성 완료: id={}, codeValue={}", savedCode.getId(), savedCode.getCodeValue());
+            return toResponse(savedCode);
+        } catch (DataIntegrityViolationException ex) {
+            throw new IllegalArgumentException(
+                String.format(
+                    ConsultationPackageCodeConstants.DUPLICATE_CODE_MESSAGE_FMT,
+                    request.getCodeGroup(),
+                    codeValue),
+                ex);
+        }
     }
 
     @Override
@@ -234,12 +239,9 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
             throw new RuntimeException("JSON 변환 실패", e);
         }
         
-        // 코드 값 생성 (예: PACKAGE_001)
-        String codeValue = generateCodeValue(tenantId, "CONSULTATION_PACKAGE", "PACKAGE");
-        
         CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
-            .codeGroup("CONSULTATION_PACKAGE")
-            .codeValue(codeValue)
+            .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
+            .codeValue(null)
             .codeLabel(packageName)
             .koreanName(packageName)
             .codeDescription(description)
@@ -361,10 +363,86 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    /**
+     * 생성 요청의 codeValue를 결정한다.
+     * <p>{@code CONSULTATION_PACKAGE} 이고 값이 비어 있으면 max 시퀀스 기반 자동 발급.
+     * 그 외 그룹은 값이 필수이다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     * @param requestedCodeValue 요청 코드 값(수동 또는 null/blank)
+     * @return trim 된 수동 값 또는 자동 발급 값
+     */
+    private String resolveCodeValueForCreate(String tenantId, String codeGroup, String requestedCodeValue) {
+        if (StringUtils.hasText(requestedCodeValue)) {
+            return requestedCodeValue.trim();
+        }
+        if (ConsultationPackageCodeConstants.CODE_GROUP.equals(codeGroup)) {
+            return generateCodeValue(
+                tenantId,
+                ConsultationPackageCodeConstants.CODE_GROUP,
+                ConsultationPackageCodeConstants.CODE_PREFIX);
+        }
+        throw new IllegalArgumentException(ConsultationPackageCodeConstants.CODE_VALUE_REQUIRED_MESSAGE);
+    }
+
+    private void assertCodeValueUnique(String tenantId, String codeGroup, String codeValue) {
+        commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, codeGroup, codeValue)
+            .ifPresent(code -> {
+                throw new IllegalArgumentException(
+                    String.format(
+                        ConsultationPackageCodeConstants.DUPLICATE_CODE_MESSAGE_FMT,
+                        codeGroup,
+                        codeValue));
+            });
+    }
+
+    /**
+     * 테넌트·그룹 스코프에서 prefix_NNN 형식의 max 시퀀스 + 1을 발급한다.
+     * 선체크 충돌 시 시퀀스를 올려 재시도한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     * @param prefix 코드 접두사 (예: PACKAGE)
+     * @return 신규 codeValue
+     */
     private String generateCodeValue(String tenantId, String codeGroup, String prefix) {
         List<CommonCode> existingCodes = commonCodeRepository.findTenantCodesByGroup(tenantId, codeGroup);
-        int nextNumber = existingCodes.size() + 1;
-        return String.format("%s_%03d", prefix, nextNumber);
+        String sequencePrefix = prefix + "_";
+        int maxSeq = 0;
+        for (CommonCode existing : existingCodes) {
+            int seq = parseSequenceSuffix(existing.getCodeValue(), sequencePrefix);
+            if (seq > maxSeq) {
+                maxSeq = seq;
+            }
+        }
+
+        for (int attempt = 0; attempt < ConsultationPackageCodeConstants.GENERATION_MAX_ATTEMPTS; attempt++) {
+            int nextSeq = maxSeq + 1 + attempt;
+            String candidate = String.format(
+                "%s_%0" + ConsultationPackageCodeConstants.CODE_SEQ_WIDTH + "d",
+                prefix,
+                nextSeq);
+            if (commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, codeGroup, candidate).isEmpty()) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException(ConsultationPackageCodeConstants.AUTO_GENERATION_FAILED_MESSAGE);
+    }
+
+    private static int parseSequenceSuffix(String codeValue, String sequencePrefix) {
+        if (!StringUtils.hasText(codeValue) || !codeValue.startsWith(sequencePrefix)) {
+            return 0;
+        }
+        String suffix = codeValue.substring(sequencePrefix.length());
+        if (!suffix.matches("\\d+")) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(suffix);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     /**

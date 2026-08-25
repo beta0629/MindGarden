@@ -122,6 +122,10 @@ public class TenantCommonCodeController {
             log.error("테넌트 공통코드 생성 실패: {}", e.getMessage());
             return ResponseEntity.badRequest()
                 .body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalStateException e) {
+            log.error("테넌트 공통코드 생성 실패(상태): {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
         }
     }
 

@@ -16,6 +16,9 @@ public final class DashboardTrendPeriodUtils {
 
     public static final ZoneId TREND_ZONE = ZoneId.of("Asia/Seoul");
 
+    /** 어드민 대시보드 월간 시각화 기본 rolling 개월 수 (1년). */
+    public static final int DEFAULT_ROLLING_MONTHS = 12;
+
     private DashboardTrendPeriodUtils() {
     }
 

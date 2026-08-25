@@ -37,9 +37,15 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
     expect(getKstDateParts(july2026)).toEqual({ year: 2026, month: 7, day: 2 });
   });
 
-  test('7월 기준 빈 월간 데이터는 2~7월 rolling 6개월', () => {
+  test('7월 기준 빈 월간 데이터는 전년 8월~당월 rolling 12개월', () => {
     const rows = getEmptyMonthlyChartData(DASHBOARD_CHART_ROLLING_MONTHS, july2026);
     expect(rows.map((row) => row.period)).toEqual([
+      '2025-08',
+      '2025-09',
+      '2025-10',
+      '2025-11',
+      '2025-12',
+      '2026-01',
       '2026-02',
       '2026-03',
       '2026-04',
@@ -50,9 +56,15 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
     expect(rows.every((row) => row.inProgressCount === 0 && row.bookedCount === 0)).toBe(true);
   });
 
-  test('6월 기준 빈 월간 데이터는 1~6월 rolling 6개월', () => {
+  test('6월 기준 빈 월간 데이터는 전년 7월~당월 rolling 12개월', () => {
     const rows = getEmptyMonthlyChartData(DASHBOARD_CHART_ROLLING_MONTHS, june2026);
     expect(rows.map((row) => row.period)).toEqual([
+      '2025-07',
+      '2025-08',
+      '2025-09',
+      '2025-10',
+      '2025-11',
+      '2025-12',
       '2026-01',
       '2026-02',
       '2026-03',
@@ -85,7 +97,7 @@ describe('dashboardChartPeriodUtils — rolling chart periods', () => {
 
   test('API 데이터가 없으면 KST rolling 빈 월간 데이터를 사용', () => {
     const resolved = resolveRollingMonthlyChartRows([]);
-    expect(resolved).toHaveLength(6);
+    expect(resolved).toHaveLength(DASHBOARD_CHART_ROLLING_MONTHS);
     expect(resolved.every((row) => row.completedCount === 0)).toBe(true);
     expect(resolved.every((row) => /^\d{4}-\d{2}$/.test(row.period))).toBe(true);
   });

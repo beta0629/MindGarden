@@ -50,6 +50,7 @@ import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
@@ -2714,7 +2715,8 @@ public class AdminController extends BaseApiController {
         // 표준화 2025-12-08: branchCode 제거, tenantId 기반으로만 조회
         List<Map<String, Object>> statistics =
                 adminService.getConsultationCompletionStatistics(period);
-        List<Map<String, Object>> monthlyData = adminService.getConsultationMonthlyTrend(6);
+        List<Map<String, Object>> monthlyData = adminService.getConsultationMonthlyTrend(
+                DashboardTrendPeriodUtils.DEFAULT_ROLLING_MONTHS);
         List<Map<String, Object>> weeklyData = adminService.getConsultationWeeklyTrend(6);
         List<Map<String, Object>> dailyData = adminService.getConsultationDailyTrend(14);
         List<Map<String, Object>> yearlyData = adminService.getConsultationYearlyTrend(5);
@@ -2760,13 +2762,13 @@ public class AdminController extends BaseApiController {
     /**
      * 월별 신규 내담자(CLIENT) 유입 통계.
      *
-     * @param months  최근 개월 수 (기본 6)
+     * @param months  최근 개월 수 (기본 {@link DashboardTrendPeriodUtils#DEFAULT_ROLLING_MONTHS})
      * @param session 세션
      * @return period / newClientCount / growthRate
      */
     @GetMapping("/statistics/new-clients")
     public ResponseEntity<ApiResponse<NewClientsStatisticsResponse>> getNewClientStatistics(
-            @RequestParam(required = false, defaultValue = "6") int months,
+            @RequestParam(required = false, defaultValue = "12") int months,
             HttpSession session) {
         log.info("📊 월별 신규 내담자 유입 통계 조회: months={}", months);
 
@@ -2783,7 +2785,7 @@ public class AdminController extends BaseApiController {
         }
 
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
-        int safeMonths = months > 0 ? months : 6;
+        int safeMonths = months > 0 ? months : DashboardTrendPeriodUtils.DEFAULT_ROLLING_MONTHS;
         NewClientsStatisticsResponse data = adminService.getNewClientMonthlyStatistics(safeMonths);
         log.info("📊 new-clients 응답: tenantId={}, items={}", tenantId,
                 data.getItems() != null ? data.getItems().size() : 0);
@@ -2793,13 +2795,13 @@ public class AdminController extends BaseApiController {
     /**
      * 요일별(월~일) 상담 건수 통계 (취소 제외).
      *
-     * @param months  집계 기간(최근 N개월, 기본 6)
+     * @param months  집계 기간(최근 N개월, 기본 {@link DashboardTrendPeriodUtils#DEFAULT_ROLLING_MONTHS})
      * @param session 세션
      * @return items + peakDayOfWeek
      */
     @GetMapping("/statistics/consultations-by-day-of-week")
     public ResponseEntity<ApiResponse<ConsultationsByDayOfWeekResponse>> getConsultationsByDayOfWeek(
-            @RequestParam(required = false, defaultValue = "6") int months,
+            @RequestParam(required = false, defaultValue = "12") int months,
             HttpSession session) {
         log.info("📊 요일별 상담 건수 통계 조회: months={}", months);
 
@@ -2816,7 +2818,7 @@ public class AdminController extends BaseApiController {
         }
 
         com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
-        int safeMonths = months > 0 ? months : 6;
+        int safeMonths = months > 0 ? months : DashboardTrendPeriodUtils.DEFAULT_ROLLING_MONTHS;
         ConsultationsByDayOfWeekResponse data = adminService.getConsultationsByDayOfWeek(safeMonths);
         log.info("📊 consultations-by-day-of-week 응답: tenantId={}, peakDay={}",
                 tenantId, data.getPeakDayOfWeek());

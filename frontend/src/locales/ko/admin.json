@@ -713,7 +713,7 @@
         "donutTitle": "단계별 상태 비율",
         "subtitleDaily": "최근 14일 예약·완료",
         "subtitleWeekly": "최근 6주 예약·완료",
-        "subtitleMonthly": "최근 6개월 예약·완료",
+        "subtitleMonthly": "최근 12개월 예약·완료",
         "subtitleYearly": "최근 5년 예약·완료",
         "emptyPeriod": "해당 기간의 데이터가 없습니다",
         "seriesBooked": "예약",
@@ -748,12 +748,12 @@
           "errorMax": "목표는 {{max}}건 이하여야 합니다."
         },
         "newClientsTitle": "신규 내담자 유입",
-        "newClientsSubtitle": "최근 6개월 신규 등록",
+        "newClientsSubtitle": "최근 12개월 신규 등록",
         "totalClientsLabel": "총 내담자 현황",
         "newClientsCountUnit": "명",
         "emptyInflowPeriod": "해당 기간에 집계된 데이터가 없습니다.",
         "dowTitle": "요일별 상담 건수",
-        "dowSubtitle": "최근 6개월 요일별 합계",
+        "dowSubtitle": "최근 12개월 요일별 합계",
         "dowPeakBadge": "최다 · {{count}}건",
         "dowPeakGroupLabel": "최다 요일",
         "dowShort": {
@@ -913,7 +913,7 @@
     },
     "chartTitle": "상담 현황 추이",
     "chartWeeklySubtitle": "최근 6주 간의 완료 추이",
-    "chartSubtitle": "최근 6개월 간의 예약 및 완료 추이",
+    "chartSubtitle": "최근 12개월 간의 예약 및 완료 추이",
     "totalVacationDays": "총 휴가일수",
     "avgVacationDays": "평균 휴가일수"
   },

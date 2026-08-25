@@ -14,7 +14,7 @@ describe('ManualMatchingQueue G1-02', () => {
           items={[
             { id: '1', clientName: '홍길동', clientMeta: 'hong@example.com' }
           ]}
-          viewAllHref="/admin/client-comprehensive"
+          viewAllHref="/admin/mapping-management"
         />
       </MemoryRouter>
     );
@@ -23,7 +23,7 @@ describe('ManualMatchingQueue G1-02', () => {
     expect(screen.getByText('hong@example.com')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '전체 보기' })).toHaveAttribute(
       'href',
-      '/admin/client-comprehensive'
+      '/admin/mapping-management'
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
@@ -31,7 +31,7 @@ describe('ManualMatchingQueue G1-02', () => {
   test('빈 목록이어도 위젯·전체 보기 CTA는 유지', () => {
     render(
       <MemoryRouter>
-        <ManualMatchingQueue items={[]} viewAllHref="/admin/client-comprehensive" />
+        <ManualMatchingQueue items={[]} viewAllHref="/admin/mapping-management" />
       </MemoryRouter>
     );
 

@@ -3,7 +3,8 @@
  *
  * 데이터에 scheduleId 가 있으면 바로 사용하고, 없으면
  * GET /api/v1/schedules/consultant/{id}/date?date= 로 최소 조회 후 스케줄을 고른다.
- * 조회 실패 시 어드민 상담일지 조회 deep-link(consultantId·date) 로 폴백한다.
+ * 조회 실패 시 역할별 deep-link 로 폴백한다
+ * (어드민: 상담일지 조회, 상담사: 상담일지 목록 incomplete 필터).
  *
  * @author Core Solution
  * @since 2026-07-29
@@ -12,6 +13,7 @@
 import StandardizedApi from './standardizedApi';
 import { SCHEDULE_API } from '../constants/api';
 import { ADMIN_ROUTES } from '../constants/adminRoutes';
+import { buildConsultantConsultationRecordsRoute } from '../constants/consultantDashboardRoutes';
 import { STATUS } from '../constants/schedule';
 
 /** 누락 일지 작성 대상에서 제외할 스케줄 상태 */
@@ -32,6 +34,7 @@ export const buildConsultantSchedulesByDateEndpoint = (consultantId) => (
 
 /**
  * @param {{ consultantId?: number|string|null, date?: string|null, scheduleId?: number|string|null, clientId?: number|string|null }} params
+ * @param {{ basePath?: string }} [options]
  * @returns {string}
  */
 export const buildMissingConsultationLogFallbackRoute = ({
@@ -39,7 +42,8 @@ export const buildMissingConsultationLogFallbackRoute = ({
   date,
   scheduleId,
   clientId
-} = {}) => {
+} = {}, options = {}) => {
+  const basePath = options.basePath || ADMIN_ROUTES.CONSULTATION_LOGS;
   const params = new URLSearchParams();
   if (date) {
     params.set('date', String(date));
@@ -54,10 +58,25 @@ export const buildMissingConsultationLogFallbackRoute = ({
     params.set('clientId', String(clientId));
   }
   const query = params.toString();
-  return query
-    ? `${ADMIN_ROUTES.CONSULTATION_LOGS}?${query}`
-    : ADMIN_ROUTES.CONSULTATION_LOGS;
+  return query ? `${basePath}?${query}` : basePath;
 };
+
+/**
+ * 상담사 대시보드 — 누락 칩 폴백 (본인 미작성 일지 목록).
+ *
+ * @param {{ date?: string|null, scheduleId?: number|string|null, clientId?: number|string|null }} [params]
+ * @returns {string}
+ */
+export const buildConsultantMissingConsultationLogFallbackRoute = ({
+  date,
+  scheduleId,
+  clientId
+} = {}) => buildConsultantConsultationRecordsRoute({
+  filter: 'incomplete',
+  date: date || undefined,
+  scheduleId: scheduleId || undefined,
+  clientId: clientId || undefined
+});
 
 /**
  * @param {unknown} schedule

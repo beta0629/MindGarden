@@ -7,6 +7,7 @@
 
 import {
   buildConsultantSchedulesByDateEndpoint,
+  buildConsultantMissingConsultationLogFallbackRoute,
   buildMissingConsultationLogFallbackRoute,
   lookupMissingLogIdsForDate,
   pickMissingLogScheduleFromList,
@@ -15,6 +16,7 @@ import {
 } from '../missingConsultationLogNavigation';
 import StandardizedApi from '../standardizedApi';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { CONSULTANT_DASHBOARD_ROUTES } from '../../constants/consultantDashboardRoutes';
 
 jest.mock('../standardizedApi', () => ({
   __esModule: true,
@@ -47,6 +49,16 @@ describe('missingConsultationLogNavigation', () => {
       clientId: 7
     })).toBe(
       `${ADMIN_ROUTES.CONSULTATION_LOGS}?date=2026-05-08&consultantId=3&scheduleId=99&clientId=7`
+    );
+  });
+
+  test('buildConsultantMissingConsultationLogFallbackRoute — incomplete 필터 + date', () => {
+    expect(buildConsultantMissingConsultationLogFallbackRoute({
+      date: '2026-08-18',
+      scheduleId: 99,
+      clientId: 7
+    })).toBe(
+      `${CONSULTANT_DASHBOARD_ROUTES.CONSULTATION_RECORDS}?filter=incomplete&date=2026-08-18&scheduleId=99&clientId=7`
     );
   });
 

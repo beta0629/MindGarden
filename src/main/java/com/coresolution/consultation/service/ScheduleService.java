@@ -519,19 +519,33 @@ public interface ScheduleService {
     MonthlyMissingConsultationLogsResponse getMonthlyMissingConsultationLogs(int year, int month);
 
     /**
-     * 어드민 대시보드 — 상담사별 «상담일지 누락(누적, 전체 기간)» 조회.
+     * 어드민·상담사 대시보드 — 상담사별 «상담일지 누락(누적, 전체 기간)» 조회.
      *
      * <p>{@link #getMonthlyMissingConsultationLogs(int, int)} 가 월 범위로 제한되는 것과
      * 달리, «지난 일정»({@code date < today}) 전체를 대상으로 누락 상담일지를 상담사별로
      * 그룹화한다. 대시보드 «상담일지 누락» 섹션은 달이 바뀌어도 이전 달 누락 건이 사라지면
      * 안 되므로 월 경계에 의존하지 않는다. 상태·LEFT JOIN·테넌트 격리 정합은 월별과 동일.</p>
      *
+     * <p>{@code consultantId} 가 non-null 이면 해당 상담사 건만 반환한다 (CONSULTANT 본인
+     * 스코프). null 이면 테넌트 전체(ADMIN/STAFF).</p>
+     *
+     * @param consultantId 상담사 스코프 (null = 테넌트 전체)
      * @return 상담사별 누락 일자 응답 DTO (누락 0건 상담사 제외)
      * @throws IllegalStateException 테넌트 컨텍스트 미설정 시
      * @author CoreSolution
      * @since 2026-07-03
      */
-    CumulativeMissingConsultationLogsResponse getCumulativeMissingConsultationLogs();
+    CumulativeMissingConsultationLogsResponse getCumulativeMissingConsultationLogs(Long consultantId);
+
+    /**
+     * 테넌트 전체 누적 상담일지 누락 조회 (ADMIN/STAFF).
+     *
+     * @return 상담사별 누락 일자 응답 DTO
+     * @see #getCumulativeMissingConsultationLogs(Long)
+     */
+    default CumulativeMissingConsultationLogsResponse getCumulativeMissingConsultationLogs() {
+        return getCumulativeMissingConsultationLogs(null);
+    }
 
     /**
      * 스케줄 상태를 한글로 변환

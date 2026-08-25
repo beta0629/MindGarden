@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, ClipboardList, MessageSquare, UserPlus } from 'lucide-react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import Icon from '../../ui/Icon/Icon';
-import { ContentArea, ContentHeader, ContentSection, ContentKpiRow } from '../content';
+import { ContentArea, ContentHeader, ContentSection, ContentKpiRow, ContentCard } from '../content';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../../constants/api';
 import QuickActionBar from './QuickActionBar';
@@ -12,12 +12,20 @@ import IncompleteRecordsAlert from './IncompleteRecordsAlert';
 import NextConsultationCard from './NextConsultationCard';
 import UrgentClientsSection from './UrgentClientsSection';
 import ConsultantDashboardListSection from './ConsultantDashboardListSection';
+import ExpectedVisitsWidget from '../ExpectedVisitsWidget';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
+import MissingConsultationLogsList from '../../ui/Schedule/MissingConsultationLogsList';
 import SafeText from '../../common/SafeText';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { renderCompactPackageName } from '../../../utils/packagePricing';
+import useCumulativeMissingConsultationLogs from '../../../hooks/useCumulativeMissingConsultationLogs';
+import notificationManager from '../../../utils/notification';
+import {
+  buildConsultantMissingConsultationLogFallbackRoute,
+  resolveMissingLogSchedule
+} from '../../../utils/missingConsultationLogNavigation';
 import {
   CONSULTANT_DASHBOARD_TITLE_ID,
   CONSULTANT_DASHBOARD_PAGE_TEST_ID,
@@ -39,6 +47,7 @@ import {
 } from '../../../constants/consultantDashboardRoutes';
 import '../../../styles/unified-design-tokens.css';
 import '../../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import '../../ui/Schedule/ScheduleLegend.css';
 import './ConsultantDashboard.css';
 import './ConsultantDashboardListSection.css';
 import { USER_ROLES } from '../../../constants/roles';
@@ -100,6 +109,21 @@ const ConsultantDashboardV2 = ({ user }) => {
   const [nextConsultation, setNextConsultation] = useState(null);
   const [showConsultationLogModal, setShowConsultationLogModal] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [missingLogChipResolving, setMissingLogChipResolving] = useState(false);
+
+  const { items: cumulativeMissingLogItems } = useCumulativeMissingConsultationLogs();
+  const missingConsultationLogsForCard = useMemo(() => {
+    if (!Array.isArray(cumulativeMissingLogItems)) {
+      return cumulativeMissingLogItems;
+    }
+    if (user?.id == null) {
+      return [];
+    }
+    const selfId = String(user.id);
+    return cumulativeMissingLogItems.filter(
+      (item) => item != null && String(item.consultantId) === selfId
+    );
+  }, [cumulativeMissingLogItems, user?.id]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -519,6 +543,62 @@ const ConsultantDashboardV2 = ({ user }) => {
     }
   };
 
+  const handleMissingLogDateChipClick = useCallback(async({
+    consultantId,
+    date,
+    scheduleId,
+    clientId
+  }) => {
+    if (missingLogChipResolving) {
+      return;
+    }
+    const scopedConsultantId = user?.id != null ? user.id : consultantId;
+    setMissingLogChipResolving(true);
+    try {
+      const resolved = await resolveMissingLogSchedule({
+        consultantId: scopedConsultantId,
+        date,
+        scheduleId,
+        clientId
+      });
+      if (resolved?.id != null) {
+        setSelectedSchedule({
+          ...resolved,
+          id: resolved.id,
+          consultantId: resolved.consultantId ?? scopedConsultantId,
+          clientId: resolved.clientId ?? clientId ?? undefined,
+          sessionDate: resolved.sessionDate ?? resolved.date ?? date
+        });
+        setShowConsultationLogModal(true);
+        return;
+      }
+      notificationManager.warning(
+        t('admin:dashboard.consultationStats.missingLogScheduleNotFound', {
+          defaultValue: '해당 날짜의 일정을 찾지 못했습니다. 상담일지 조회로 이동합니다.'
+        })
+      );
+      navigate(buildConsultantMissingConsultationLogFallbackRoute({
+        date,
+        scheduleId,
+        clientId
+      }));
+    } catch (err) {
+      console.warn('상담일지 누락 칩 → 스케줄 조회 실패:', err);
+      notificationManager.error(
+        t('admin:dashboard.consultationStats.missingLogOpenFailed', {
+          defaultValue: '상담일지 작성 화면을 열지 못했습니다.'
+        })
+      );
+      navigate(buildConsultantMissingConsultationLogFallbackRoute({
+        date,
+        scheduleId,
+        clientId
+      }));
+    } finally {
+      setMissingLogChipResolving(false);
+    }
+  }, [missingLogChipResolving, navigate, t, user?.id]);
+
   const handleViewPreviousRecords = (clientId) => {
     navigate(buildConsultantConsultationRecordsRoute({ clientId }));
   };
@@ -657,6 +737,32 @@ const ConsultantDashboardV2 = ({ user }) => {
           onAction={handleIncompleteRecordsAction}
         />
 
+        <div className="mg-v2-content-growth-row consultant-dashboard-v2__missing-logs-row">
+          <ContentCard className="consultant-dashboard-v2__missing-logs-card">
+            <section
+              className="mg-v2-ad-b0kla__missing-logs-section"
+              aria-label={t('admin:dashboard.consultationStats.missingLogsTitle', {
+                defaultValue: '상담일지 누락'
+              })}
+              data-testid="consultant-dashboard-missing-logs"
+            >
+              <h4 className="mg-v2-ad-b0kla__missing-logs-title">
+                {t('admin:dashboard.consultationStats.missingLogsTitle', {
+                  defaultValue: '상담일지 누락'
+                })}
+              </h4>
+              <MissingConsultationLogsList
+                items={missingConsultationLogsForCard}
+                variant="dashboard"
+                sectionClassName="mg-v2-ad-b0kla__missing-logs-body mg-v2-legend-missing-logs"
+                showTitle={false}
+                onDateChipClick={handleMissingLogDateChipClick}
+                dateChipsDisabled={missingLogChipResolving}
+              />
+            </section>
+          </ContentCard>
+        </div>
+
         <NextConsultationCard
           consultation={nextConsultation}
           onViewPreviousRecords={handleViewPreviousRecords}
@@ -788,6 +894,8 @@ const ConsultantDashboardV2 = ({ user }) => {
             onRetry={kpiUnavailable ? fetchDashboardData : undefined}
           />
         </div>
+
+        <ExpectedVisitsWidget />
 
         <ContentSection
           title={t('common:dashboard-v2.ConsultantDashboardV2.t_2a22e022')}

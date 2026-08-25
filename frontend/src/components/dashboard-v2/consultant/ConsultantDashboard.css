@@ -66,6 +66,22 @@
   min-width: 0;
 }
 
+/* 상담일지 누락 — 어드민 B0KlA 섹션 단독 카드 (성장 행 안) */
+.consultant-dashboard-v2__missing-logs-row {
+  margin-bottom: var(--mg-v2-spacing-xl, 1.5rem);
+}
+
+.consultant-dashboard-v2__missing-logs-card {
+  width: 100%;
+  min-width: 0;
+}
+
+.consultant-dashboard-v2 .mg-v2-ad-b0kla__missing-logs-section {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 @media (max-width: 1024px) {
   .consultant-dashboard-v2__lists-row {
     grid-template-columns: 1fr;

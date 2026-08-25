@@ -1,7 +1,7 @@
 /**
  * useCumulativeMissingConsultationLogs — 누적 상담사 «상담일지 미작성» 일자 공통 hook.
  *
- * 어드민 대시보드 section.mg-v2-ad-b0kla__missing-logs-section SSOT.
+ * 어드민·상담사 대시보드 section.mg-v2-ad-b0kla__missing-logs-section SSOT.
  * useMissingConsultationLogs(year, month) 가 특정 월로 제한되는 것과 달리, «지난 일정»
  * (date < today) 전체의 누락 상담일지를 반환한다. 대시보드 섹션은 달이 바뀌어도 이전 달
  * 누락 건이 사라지면 안 되므로 월 경계에 의존하지 않는다. (7/3 접속 시 6/30 누락 건이
@@ -10,6 +10,7 @@
  * SSOT API: GET /api/v1/schedules/cumulative-missing-consultation-logs
  *   응답: { items: [{ consultantId, consultantName, missingDates: [...] }] }
  *   - 누락 0건 상담사는 응답 자체에서 제외 (백엔드 결정).
+ *   - CONSULTANT 호출 시 백엔드가 본인 건만 반환.
  *
  * 캐시 정책 (월별과 다름 — year/month 키 없음):
  *   - 키: `${tenantId}` (컴포넌트 스코프 useRef Map — 단일 entry)

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 292" fill="none" preserveAspectRatio="xMidYMid meet">
+  <!--
+    Core Solution login hero lockup — Secure Core (시안 05).
+    Mark colors via CSS classes → design tokens. pathLength for one-shot draw-on.
+  -->
+  <g class="mg-v2-login-hero-lockup__mark" transform="translate(110 12)">
+    <!-- Plate: rounded square #0F172A -->
+    <rect
+      class="mg-v2-login-hero-lockup__plate"
+      x="0"
+      y="0"
+      width="100"
+      height="100"
+      rx="22"
+      ry="22"
+    />
+    <!-- Outer shield #134E4A -->
+    <path
+      class="mg-v2-login-hero-lockup__shield-outer"
+      pathLength="100"
+      d="M50 14L78 24.5V46.5C78 64.5 66.5 79.5 50 86C33.5 79.5 22 64.5 22 46.5V24.5L50 14Z"
+    />
+    <!-- Inner shield #0D9488 -->
+    <path
+      class="mg-v2-login-hero-lockup__shield-inner"
+      pathLength="100"
+      d="M50 22L70 30.5V47C70 61 61.5 72.5 50 78C38.5 72.5 30 61 30 47V30.5L50 22Z"
+    />
+    <!-- Mint core #CCFBF1 — circle (시안 05) -->
+    <circle
+      class="mg-v2-login-hero-lockup__core"
+      pathLength="100"
+      cx="50"
+      cy="50"
+      r="16"
+    />
+    <!-- Teal lock (body + shackle) -->
+    <g class="mg-v2-login-hero-lockup__lock">
+      <path
+        class="mg-v2-login-hero-lockup__lock-shackle"
+        pathLength="100"
+        d="M44 48.5V44.5C44 41.2 46.7 38.5 50 38.5C53.3 38.5 56 41.2 56 44.5V48.5"
+      />
+      <rect
+        class="mg-v2-login-hero-lockup__lock-body"
+        pathLength="100"
+        x="42"
+        y="48"
+        width="16"
+        height="14"
+        rx="2.5"
+      />
+      <circle
+        class="mg-v2-login-hero-lockup__lock-keyhole"
+        cx="50"
+        cy="54.5"
+        r="1.6"
+      />
+    </g>
+  </g>
+
+  <text
+    class="mg-v2-login-hero-lockup__wordmark"
+    x="160"
+    y="152"
+    text-anchor="middle"
+    font-family="'Noto Sans KR', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="36"
+    font-weight="700"
+    letter-spacing="-0.8"
+  >CoreSolution</text>
+
+  <text
+    class="mg-v2-login-hero-lockup__ko"
+    x="160"
+    y="186"
+    text-anchor="middle"
+    font-family="'Noto Sans KR', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="16"
+    font-weight="500"
+    letter-spacing="0.2"
+  >코어 솔루션</text>
+
+  <text
+    class="mg-v2-login-hero-lockup__tagline"
+    x="160"
+    y="214"
+    text-anchor="middle"
+    font-family="'Noto Sans KR', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="14"
+    font-weight="400"
+    letter-spacing="0.1"
+  >상담센터 All-in-One 운영</text>
+</svg>

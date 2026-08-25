@@ -172,6 +172,17 @@ function toIsoDateString(raw) {
 }
 
 /**
+ * 「상담일지 보기/수정」클릭 시 즉시 모달 오픈 vs 목록 deep link navigate 분기.
+ * 부모에서 onConsultationLogOpen 을 넘기면 모달 우선 (목록 경유 없음).
+ *
+ * @param {Function|null|undefined} onConsultationLogOpen
+ * @returns {'modal'|'navigate'}
+ */
+function resolveConsultationLogOpenStrategy(onConsultationLogOpen) {
+    return typeof onConsultationLogOpen === 'function' ? 'modal' : 'navigate';
+}
+
+/**
  * 상담일지 deep link("보기/수정") 가 노출 가능한 일정인지 판정.
  * - 과거 또는 당일 (date <= today) 일정만 노출 (미래 제외)
  * - 상태가 COMPLETED 인 경우만 (BOOKED·CONFIRMED·TENTATIVE·CANCELLED 모두 제외)
@@ -782,12 +793,17 @@ const ScheduleDetailModal = ({
     };
 
 /**
-     * 상담일지 조회/수정 페이지로 이동 (과거·당일 일정 한정).
-     * 쿼리 파라미터로 scheduleId/date/clientId 를 전달해 자동 필터링.
+     * 상담일지 보기/수정 — ConsultationLogModal 즉시 오픈 우선 (작성 버튼과 동일).
+     * onConsultationLogOpen 이 없을 때만 목록 deep link navigate fallback.
      */
     const handleOpenConsultationLogView = () => {
         if (!scheduleData?.id) {
             notificationManager.error(t('schedule:ScheduleDetailModal.t_70e5dfa5'));
+            return;
+        }
+        onClose();
+        if (resolveConsultationLogOpenStrategy(onConsultationLogOpen) === 'modal') {
+            onConsultationLogOpen(scheduleData);
             return;
         }
         const data = localScheduleOverride ?? scheduleData;
@@ -808,7 +824,6 @@ const ScheduleDetailModal = ({
         const target = queryString
             ? `${ADMIN_ROUTES.CONSULTATION_LOGS}?${queryString}`
             : ADMIN_ROUTES.CONSULTATION_LOGS;
-        onClose();
         navigate(target);
     };
 
@@ -1372,6 +1387,7 @@ export default ScheduleDetailModal;
 export {
     resolveModalSessionInfo,
     resolveModalLifetimeSessionInfo,
+    resolveConsultationLogOpenStrategy,
     shouldShowConsultationLogLink,
     shouldShowRescheduleAction,
     toIsoDateString,

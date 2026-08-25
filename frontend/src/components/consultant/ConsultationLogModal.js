@@ -659,7 +659,10 @@ const ConsultationLogModal = ({
 
       let loadedRecord = null;
       try {
-        const recordResponse = await apiGet(`/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`);
+        const recordUrl = isAdmin
+          ? `/api/v1/schedules/consultation-records?consultationId=${scheduleData.id}`
+          : `/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`;
+        const recordResponse = await apiGet(recordUrl);
         const recordList = recordResponse?.records ?? recordResponse?.data?.records ?? (Array.isArray(recordResponse?.data) ? recordResponse.data : Array.isArray(recordResponse) ? recordResponse : []);
         const hasRecord = recordList.length > 0 && (recordResponse?.success !== false);
         if (hasRecord && recordList[0]) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -33,6 +33,24 @@ const KR_SUBSTITUTE_EVE_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-substitute-eve-
 const SUBSTITUTE_EVE_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--kr-substitute-eve';
 const WEEKEND_SAT_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sat';
 const WEEKEND_SUN_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sun';
+
+/** FullCalendar 뷰 타입 — 월/주 날짜 클릭 시 일간 확대용 */
+const CALENDAR_VIEW_MONTH = 'dayGridMonth';
+const CALENDAR_VIEW_WEEK = 'timeGridWeek';
+const CALENDAR_VIEW_DAY = 'timeGridDay';
+const CALENDAR_VIEWS_ZOOM_FROM = new Set([CALENDAR_VIEW_MONTH, CALENDAR_VIEW_WEEK]);
+const ZOOM_OUT_BUTTON_ID = 'zoomOut';
+const ZOOM_OUT_BUTTON_TEXT = '전체 보기';
+/** opacity fade 전용. transform/scale 금지(DnD 히트테스트 보호). --animation-duration-fast(0.15s)와 맞춤 */
+const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
+const VIEW_FADE_MS = 150;
+
+const prefersReducedMotion = () => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+};
 
 /**
  * 통합 스케줄 외부 카드 드롭 등 «신규 생성» UX — 관리자형(4종 SSOT ADMIN/STAFF)만.
@@ -87,6 +105,12 @@ const ScheduleCalendarView = ({
 }) => {
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
+    /** 날짜 클릭으로 일간 확대하기 직전 뷰(month/week). 툴바「전체 보기」복귀용 */
+    const previousViewBeforeZoomRef = useRef(null);
+    const viewFadeTimerRef = useRef(null);
+    /** datesSet에서 day→month/week 이탈 시에만 줌 상태 해제 (확대 직전 헤더 갱신 레이스 방지) */
+    const lastViewTypeRef = useRef(null);
+    const [isDayZoomed, setIsDayZoomed] = useState(false);
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();
@@ -98,6 +122,34 @@ const ScheduleCalendarView = ({
             calendarApi.updateSize();
         });
     }, []);
+
+    /**
+     * 뷰 전환 시 컨테이너 opacity fade만 적용.
+     * transform/scale/zoom 금지 — FullCalendar DnD·외부 드롭 좌표가 깨지지 않도록.
+     */
+    const runViewFadeTransition = useCallback((applyChange) => {
+        const wrapperEl = calendarWrapperRef.current;
+        if (viewFadeTimerRef.current != null) {
+            window.clearTimeout(viewFadeTimerRef.current);
+            viewFadeTimerRef.current = null;
+        }
+
+        if (!wrapperEl || prefersReducedMotion()) {
+            applyChange();
+            updateCalendarSize();
+            return;
+        }
+
+        wrapperEl.classList.add(VIEW_FADE_CLASS);
+        viewFadeTimerRef.current = window.setTimeout(() => {
+            viewFadeTimerRef.current = null;
+            applyChange();
+            requestAnimationFrame(() => {
+                wrapperEl.classList.remove(VIEW_FADE_CLASS);
+                updateCalendarSize();
+            });
+        }, VIEW_FADE_MS);
+    }, [updateCalendarSize]);
 
     useEffect(() => {
         updateCalendarSize();
@@ -121,8 +173,99 @@ const ScheduleCalendarView = ({
         return () => {
             window.removeEventListener('resize', handleWindowResize);
             resizeObserver.disconnect();
+            if (viewFadeTimerRef.current != null) {
+                window.clearTimeout(viewFadeTimerRef.current);
+                viewFadeTimerRef.current = null;
+            }
         };
     }, [updateCalendarSize]);
+
+    const zoomToDayView = useCallback((date, fromViewType) => {
+        const calendarApi = calendarRef.current?.getApi?.();
+        if (!calendarApi || !date) {
+            return;
+        }
+
+        previousViewBeforeZoomRef.current =
+            CALENDAR_VIEWS_ZOOM_FROM.has(fromViewType)
+                ? fromViewType
+                : CALENDAR_VIEW_MONTH;
+        setIsDayZoomed(true);
+
+        runViewFadeTransition(() => {
+            calendarApi.gotoDate(date);
+            calendarApi.changeView(CALENDAR_VIEW_DAY);
+        });
+    }, [runViewFadeTransition]);
+
+    const zoomOutToPreviousView = useCallback(() => {
+        const calendarApi = calendarRef.current?.getApi?.();
+        if (!calendarApi) {
+            return;
+        }
+
+        const restoreView = previousViewBeforeZoomRef.current || CALENDAR_VIEW_MONTH;
+        previousViewBeforeZoomRef.current = null;
+        setIsDayZoomed(false);
+
+        runViewFadeTransition(() => {
+            calendarApi.changeView(restoreView);
+        });
+    }, [runViewFadeTransition]);
+
+    /**
+     * 제스처 분리 (DnD·editable 미변경):
+     * - 월간/주간 dateClick → 해당일 timeGridDay 확대(등록 모달 열지 않음)
+     * - 일간 dateClick → 기존 onDateClick(스케줄/휴가 등록 모달)
+     * 이유: 저해상도에서 일정 가림 완화가 주 목적이고, dateClick 한 경로만 분기해
+     * 더블클릭/셀 영역 분리보다 FullCalendar·모달 회귀가 적다.
+     */
+    const handleDateClick = useCallback((info) => {
+        const viewType = info?.view?.type;
+        if (CALENDAR_VIEWS_ZOOM_FROM.has(viewType)) {
+            zoomToDayView(info.date, viewType);
+            return;
+        }
+        onDateClick?.(info);
+    }, [onDateClick, zoomToDayView]);
+
+    const handleDatesSet = useCallback((arg) => {
+        const viewType = arg.view?.type;
+        const previousViewType = lastViewTypeRef.current;
+        lastViewTypeRef.current = viewType || null;
+
+        if (
+            previousViewType === CALENDAR_VIEW_DAY
+            && viewType
+            && viewType !== CALENDAR_VIEW_DAY
+        ) {
+            previousViewBeforeZoomRef.current = null;
+            setIsDayZoomed(false);
+        }
+
+        onMonthChange?.({
+            start: arg.start,
+            end: arg.end,
+            activeStart: arg.view?.activeStart,
+            currentStart: arg.view?.currentStart,
+            view: viewType
+        });
+    }, [onMonthChange]);
+
+    const customButtons = useMemo(() => ({
+        [ZOOM_OUT_BUTTON_ID]: {
+            text: ZOOM_OUT_BUTTON_TEXT,
+            click: zoomOutToPreviousView
+        }
+    }), [zoomOutToPreviousView]);
+
+    const headerToolbar = useMemo(() => ({
+        left: 'prev,next today',
+        center: 'title',
+        right: isDayZoomed
+            ? `${ZOOM_OUT_BUTTON_ID} ${CALENDAR_VIEW_MONTH},${CALENDAR_VIEW_WEEK},${CALENDAR_VIEW_DAY}`
+            : `${CALENDAR_VIEW_MONTH},${CALENDAR_VIEW_WEEK},${CALENDAR_VIEW_DAY}`
+    }), [isDayZoomed]);
 
     /**
      * 로컬 날짜가 KR 공휴일 표에 있으면 셀에 표식.
@@ -144,7 +287,7 @@ const ScheduleCalendarView = ({
         if (getKrSubstituteHolidayEveHintForLocalDate(arg.date)) {
           list.push(SUBSTITUTE_EVE_DAY_CELL_CLASS);
         }
-        if (arg.view?.type === 'dayGridMonth') {
+        if (arg.view?.type === CALENDAR_VIEW_MONTH) {
           const dow = arg.date.getDay();
           if (dow === 6) {
             list.push(WEEKEND_SAT_DAY_CELL_CLASS);
@@ -162,7 +305,7 @@ const ScheduleCalendarView = ({
      * frame 말단+absolute는 day-events/bg보다 아래에 깔리거나 스크롤에 묻히므로 day-top(일자 아래)에 배치.
      */
     const handleDayCellDidMount = useCallback((info) => {
-        if (info.view?.type !== 'dayGridMonth') {
+        if (info.view?.type !== CALENDAR_VIEW_MONTH) {
             return;
         }
         const dayTop = info.el.querySelector('.fc-daygrid-day-top');
@@ -289,7 +432,7 @@ const ScheduleCalendarView = ({
             return null;
         }
         const { extendedProps } = event;
-        const isMonthView = eventInfo.view?.type === 'dayGridMonth';
+        const isMonthView = eventInfo.view?.type === CALENDAR_VIEW_MONTH;
         const isPastOrCompleted = isEventPastOrCompleted(event);
         const pastClass = isPastOrCompleted ? ' mg-v2-ad-calendar-event--past' : '';
         const eventStart = new Date(event.start);
@@ -441,13 +584,10 @@ const ScheduleCalendarView = ({
             <FullCalendar
                 ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                headerToolbar={{
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                }}
-                initialView="dayGridMonth"
-                defaultView="dayGridMonth"
+                headerToolbar={headerToolbar}
+                customButtons={customButtons}
+                initialView={CALENDAR_VIEW_MONTH}
+                defaultView={CALENDAR_VIEW_MONTH}
                 locale="ko"
                 selectable={true}
                 selectMirror={true}
@@ -460,7 +600,7 @@ const ScheduleCalendarView = ({
                 dayCellWillUnmount={handleDayCellWillUnmount}
                 eventClassNames={eventClassNames}
                 eventContent={renderEventContent}
-                dateClick={onDateClick}
+                dateClick={handleDateClick}
                 eventClick={onEventClick}
                 eventDrop={onEventDrop}
                 eventResize={onEventResize || onEventDrop}
@@ -484,13 +624,7 @@ const ScheduleCalendarView = ({
                 expandRows={true}
                 stickyHeaderDates={true}
                 windowResize={updateCalendarSize}
-                datesSet={(arg) => onMonthChange?.({
-                    start: arg.start,
-                    end: arg.end,
-                    activeStart: arg.view?.activeStart,
-                    currentStart: arg.view?.currentStart,
-                    view: arg.view?.type
-                })}
+                datesSet={handleDatesSet}
             />
         </div>
     );

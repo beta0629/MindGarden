@@ -3,6 +3,22 @@
 .mg-v2-schedule-calendar-view {
     position: relative;
     z-index: 1;
+    /* 뷰 전환: opacity만. transform/scale/zoom 금지(DnD 히트테스트 보호) */
+    transition: opacity var(--animation-duration-fast) var(--animation-easing-out);
+}
+
+.mg-v2-schedule-calendar-view.mg-v2-schedule-calendar-view--fading {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mg-v2-schedule-calendar-view {
+        transition: none;
+    }
+
+    .mg-v2-schedule-calendar-view.mg-v2-schedule-calendar-view--fading {
+        opacity: 1;
+    }
 }
 
 /* FullCalendar 기본 스타일 오버라이드 */

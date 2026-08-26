@@ -14,11 +14,29 @@ const FRONTEND_ROOT = path.resolve(__dirname, '..', '..', '..');
 const readCss = (relativePath) =>
   fs.readFileSync(path.join(FRONTEND_ROOT, relativePath), 'utf8');
 
+/**
+ * Extract a CSS rule body for selectors that include the given fragment
+ * and target modal actions primary/outline buttons.
+ */
+const extractModalActionsButtonBlocks = (css) => {
+  const blocks = [];
+  const re =
+    /\.mg-modal(?:\.mg-v2-ad-b0kla)?\s+\.mg-modal__actions[^{]*\{[^}]*\}/g;
+  let match = re.exec(css);
+  while (match) {
+    blocks.push(match[0]);
+    match = re.exec(css);
+  }
+  return blocks;
+};
+
 describe('MGButton equal-height box model (outline vs solid)', () => {
   const mgButtonCss = readCss('src/components/common/MGButton.css');
   const designSystemCss = readCss('src/styles/mindgarden-design-system.css');
   const unifiedModalsCss = readCss('src/styles/06-components/_unified-modals.css');
   const actionBarCss = readCss('src/components/common/ActionBar.css');
+  const mappingCreationModalCss = readCss('src/components/admin/MappingCreationModal.css');
+  const b0klaCss = readCss('src/components/admin/AdminDashboard/AdminDashboardB0KlA.css');
 
   test('MGButton locks height/min/max and 1px border on base', () => {
     expect(mgButtonCss).toMatch(/border-width:\s*1px\s*!important/);
@@ -33,6 +51,21 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
       /\.mg-button--medium\s*\{[^}]*max-height:\s*var\(--button-height-default\)\s*!important/s
     );
     expect(mgButtonCss).not.toMatch(/translateY\(-1px\)/);
+  });
+
+  test('MGButton locks 1px border on outline and solid variants', () => {
+    expect(mgButtonCss).toMatch(
+      /\.mg-button\.mg-button--outline[\s\S]*?border-width:\s*1px\s*!important/
+    );
+    expect(mgButtonCss).toMatch(
+      /\.mg-button\.mg-button--primary[\s\S]*?border-width:\s*1px\s*!important/
+    );
+    expect(mgButtonCss).toMatch(
+      /\.mg-button\.mg-button--success[\s\S]*?border-width:\s*1px\s*!important/
+    );
+    expect(mgButtonCss).toMatch(
+      /\.mg-button\.mg-button--danger[\s\S]*?border-width:\s*1px\s*!important/
+    );
   });
 
   test('mindgarden-design-system does not reset border to none or vertical padding sizes', () => {
@@ -66,5 +99,42 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(actionBarCss).toMatch(/height:\s*var\(--mg-actionbar-action-min-height\)\s*!important/);
     expect(actionBarCss).toMatch(/max-height:\s*var\(--mg-actionbar-action-min-height\)\s*!important/);
     expect(actionBarCss).toMatch(/transform:\s*none\s*!important/);
+  });
+
+  test('MappingCreationModal modal-actions do not use border:none or border:2px on buttons', () => {
+    const actionBlocks = extractModalActionsButtonBlocks(mappingCreationModalCss);
+    expect(actionBlocks.length).toBeGreaterThan(0);
+
+    const primaryOrOutlineBlocks = actionBlocks.filter(
+      (block) =>
+        /mg-button--primary|mg-v2-button-primary|mg-button--outline|mg-v2-button-outline/.test(
+          block
+        )
+    );
+    expect(primaryOrOutlineBlocks.length).toBeGreaterThan(0);
+
+    primaryOrOutlineBlocks.forEach((block) => {
+      expect(block).not.toMatch(/border:\s*none/);
+      expect(block).not.toMatch(/border:\s*2px/);
+    });
+
+    expect(mappingCreationModalCss).toMatch(
+      /\.mg-modal\.mg-v2-ad-b0kla\s+\.mg-modal__actions\s+\.mg-button--primary[\s\S]*?border-color:\s*transparent/
+    );
+    expect(mappingCreationModalCss).toMatch(
+      /\.mg-modal\.mg-v2-ad-b0kla\s+\.mg-modal__actions\s+\.mg-button--outline[\s\S]*?border-color:\s*var\(--ad-b0kla-green\)/
+    );
+  });
+
+  test('B0KlA outline button uses 1px border, not 2px shorthand', () => {
+    expect(b0klaCss).toMatch(
+      /\.mg-v2-ad-b0kla\s+\.mg-v2-button-outline\s*\{[^}]*border-width:\s*1px/s
+    );
+    expect(b0klaCss).toMatch(
+      /\.mg-v2-ad-b0kla\s+\.mg-v2-button-outline\s*\{[^}]*border-color:\s*var\(--ad-b0kla-green\)/s
+    );
+    expect(b0klaCss).not.toMatch(
+      /\.mg-v2-ad-b0kla\s+\.mg-v2-button-outline\s*\{[^}]*border:\s*2px\s+solid/s
+    );
   });
 });

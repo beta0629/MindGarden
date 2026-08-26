@@ -8,7 +8,7 @@ import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ConfirmModal from '../common/ConfirmModal';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../../constants/consultationLogAutosaveStrings';
 import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../constants/consultationLogAutosaveConstants';
@@ -1027,7 +1027,6 @@ const ConsultationLogModal = ({
         type="button"
         variant="outline"
         size="medium"
-        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={requestClose}
         disabled={saving}
@@ -1039,7 +1038,6 @@ const ConsultationLogModal = ({
         type="button"
         variant="primary"
         size="medium"
-        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: saving })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleSave}
         disabled={saving}
@@ -1052,7 +1050,6 @@ const ConsultationLogModal = ({
         type="button"
         variant="success"
         size="medium"
-        className={buildErpMgButtonClassName({ variant: 'success', size: 'md', loading: saving })}
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         onClick={handleComplete}
         disabled={saving}

@@ -48,13 +48,13 @@ const baseItems = [
 ];
 
 describe('ContentKpiRow', () => {
-  test('KPI 카드 3개와 악센트 클래스를 렌더한다', () => {
+  test('KPI 카드 3개를 렌더하고 좌측 악센트 레일은 없다', () => {
     render(<ContentKpiRow items={baseItems} />);
     expect(screen.getByTestId('content-kpi-row')).toBeInTheDocument();
     const cards = screen.getAllByRole('listitem');
     expect(cards).toHaveLength(3);
     expect(cards[0]).toHaveClass('mg-v2-content-kpi-card--accent-green');
-    expect(cards[0].querySelector('.mg-v2-content-kpi-card__accent')).toBeInTheDocument();
+    expect(cards[0].querySelector('.mg-v2-content-kpi-card__accent')).not.toBeInTheDocument();
   });
 
   test('sparklineData가 있는 카드에 스파크라인을 렌더한다', () => {

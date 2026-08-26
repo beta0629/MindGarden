@@ -24,7 +24,6 @@
   align-items: center;
   gap: var(--mg-spacing-md, 1.25rem);
   padding: var(--mg-layout-section-padding, var(--mg-spacing-lg, 1.5rem));
-  padding-inline-start: calc(var(--mg-layout-section-padding, var(--mg-spacing-lg, 1.5rem)) + var(--mg-spacing-xs, 4px));
   min-width: 0; /* flex 자식 수축 시 그리드 셀 넘침 방지 */
   background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
   border: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
@@ -32,30 +31,6 @@
   box-shadow: var(--ad-b0kla-shadow);
   transition: box-shadow 0.2s;
   overflow: hidden;
-}
-
-.mg-v2-content-kpi-card__accent {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  width: 4px;
-  background: var(--mg-content-kpi-accent, var(--mg-color-border-main));
-}
-
-.mg-v2-content-kpi-card--accent-green {
-  --mg-content-kpi-accent: var(--mg-color-b0kla-green-500, var(--mg-color-success-main));
-}
-
-.mg-v2-content-kpi-card--accent-orange {
-  --mg-content-kpi-accent: var(--mg-color-b0kla-orange-300, var(--cs-orange-400));
-}
-
-.mg-v2-content-kpi-card--accent-blue {
-  --mg-content-kpi-accent: var(--mg-color-b0kla-blue-400, var(--mg-color-primary-main));
-}
-
-.mg-v2-content-kpi-card--accent-gray {
-  --mg-content-kpi-accent: var(--mg-color-text-secondary);
 }
 
 .mg-v2-content-kpi-card--loading {

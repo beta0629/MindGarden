@@ -17097,6 +17097,7 @@ body {
 .mg-button--small {
   height: var(--button-height-sm);
   min-height: var(--button-height-sm);
+  max-height: var(--button-height-sm);
   padding: var(--button-padding-sm);
   font-size: var(--cs-text-sm, 0.875rem);
   line-height: 1;
@@ -17106,6 +17107,7 @@ body {
 .mg-button--medium {
   height: var(--button-height-default);
   min-height: var(--button-height-default);
+  max-height: var(--button-height-default);
   padding: var(--button-padding-default);
   font-size: var(--cs-text-md, 1rem);
   line-height: 1;
@@ -17115,6 +17117,7 @@ body {
 .mg-button--large {
   height: var(--button-height-lg);
   min-height: var(--button-height-lg);
+  max-height: var(--button-height-lg);
   padding: var(--button-padding-lg);
   font-size: var(--cs-text-lg, 1.125rem);
   line-height: 1;

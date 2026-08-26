@@ -768,10 +768,6 @@ const AdminDashboardVisualizationGroup = ({
     >
       <div className="mg-v2-content-visualization-group__header">
         <div className="mg-v2-content-visualization-group__title-wrap">
-          <span
-            className="mg-v2-content-visualization-group__accent"
-            aria-hidden="true"
-          />
           <h2
             id="admin-viz-group-title"
             className="mg-v2-content-visualization-group__title"

@@ -7,7 +7,7 @@ import './KpiFlipCard.css';
  * KpiFlipCard — 3D Flip KPI 카드 (Molecule)
  *
  * 클릭/탭 시 Y축 180도 회전(앞면 요약 ↔ 뒷면 상세).
- * Dashboard KPI Zone pilot: 좌측 악센트 바 + 선택적 스파크라인·추세 배지.
+ * Dashboard KPI Zone pilot: 선택적 스파크라인·추세 배지 (장식용 좌측 레일 없음).
  *
  * @param {Object} props
  * @param {string} props.id - 카드 고유 ID
@@ -19,7 +19,7 @@ import './KpiFlipCard.css';
  * @param {Function} [props.onCtaClick] - CTA 클릭 핸들러
  * @param {boolean} props.isFlipped - 현재 flip 상태
  * @param {Function} props.onFlip - flip 토글 (id) => void
- * @param {'green'|'orange'|'blue'|'gray'} [props.variant='blue'] - 좌측 악센트·스파크라인 색
+ * @param {'green'|'orange'|'blue'|'gray'} [props.variant='blue'] - 추세 배지·스파크라인 색
  * @param {number[]|null} [props.sparklineData] - 미니 추세선 데이터
  * @param {string|null} [props.trendBadge] - 앞면 증감 배지 텍스트
  * @param {string|null} [props.trendAriaLabel] - 스크린리더용 추세 설명
@@ -75,7 +75,6 @@ const KpiFlipCard = ({
       <div className="mg-v2-kpi-flip-card__inner">
         {/* Front — 요약 */}
         <div className="mg-v2-kpi-flip-card__front" aria-hidden={isFlipped}>
-          <div className="mg-v2-kpi-flip-card__accent" aria-hidden="true" />
           <div className="mg-v2-kpi-flip-card__front-top">
             <span className="mg-v2-kpi-flip-card__label">{label}</span>
             {trendBadge != null && trendBadge !== '' ? (

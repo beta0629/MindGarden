@@ -30,7 +30,7 @@
   margin: 0;
 }
 
-/* grid: 5단계 타일 그리드 (B0KlA 카드·악센트·radius 16px) */
+/* grid: 5단계 타일 그리드 (B0KlA 카드·quiet chrome·radius 16px) */
 .admin-metrics-visualization__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -51,7 +51,7 @@
   background: var(--ad-b0kla-card-bg, var(--mg-white));
   border: 1px solid var(--mg-color-border-main);
   border-radius: 16px;
-  padding: 1rem 1rem 1rem calc(1rem + 4px);
+  padding: 1rem;
   min-width: 0;
   box-shadow: var(--ad-b0kla-shadow, 0 8px 24px rgba(0, 0, 0, 0.05));
   transition: box-shadow 0.2s;
@@ -60,35 +60,6 @@
 
 .admin-metrics-visualization__grid-tile:hover {
   box-shadow: var(--ad-b0kla-shadow-hover, 0 12px 32px rgba(0, 0, 0, 0.08));
-}
-
-.admin-metrics-visualization__grid-tile-accent {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  width: 4px;
-  display: block;
-  background: var(--mg-metrics-tile-accent, var(--mg-color-border-main));
-}
-
-.admin-metrics-visualization__grid-tile--success {
-  --mg-metrics-tile-accent: var(--ad-b0kla-green, var(--mg-success-600));
-}
-
-.admin-metrics-visualization__grid-tile--warning {
-  --mg-metrics-tile-accent: var(--ad-b0kla-orange, var(--cs-orange-400));
-}
-
-.admin-metrics-visualization__grid-tile--info {
-  --mg-metrics-tile-accent: var(--ad-b0kla-blue, var(--mg-primary-400));
-}
-
-.admin-metrics-visualization__grid-tile--auto {
-  --mg-metrics-tile-accent: var(--mg-color-text-secondary);
-}
-
-.admin-metrics-visualization__grid-tile--neutral {
-  --mg-metrics-tile-accent: var(--mg-color-border-main);
 }
 
 .admin-metrics-visualization__grid-tile-content {

@@ -1,5 +1,6 @@
 /**
  * ProfileDropdown - 프로필 메뉴 드롭다운 (Molecule)
+ * 테넌트 헤더 클러스터: identity(비버튼) + chevron 아이콘 트리거 분리
  * Portal + position:fixed 로 전역 overflow/transform 영향 없음
  *
  * @author CoreSolution
@@ -9,7 +10,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { ProfileAvatar } from '../atoms';
+import { NavIcon, ProfileAvatar } from '../atoms';
 import { useSession } from '../../../contexts/SessionContext';
 import { useBranding } from '../../../hooks/useBranding';
 import { getCustomLogoSrc } from '../../../utils/brandingUtils';
@@ -27,6 +28,7 @@ import GnbDropdownPortal from './GnbDropdownPortal';
 import './ProfileDropdown.css';
 
 const PROFILE_DROPDOWN_PANEL_ID = 'mg-v2-profile-dropdown-panel';
+const PROFILE_MENU_TRIGGER_ARIA_LABEL = '프로필 메뉴';
 
 const ROLE_LABELS = {
   ADMIN: '관리자',
@@ -122,26 +124,31 @@ const ProfileDropdown = ({ onLogout }) => {
 
   return (
     <div className="mg-v2-profile-dropdown" ref={dropdownRef}>
-      <div ref={triggerRef} className="mg-v2-profile-trigger-outer">
-        <button
-          type="button"
-          className="mg-v2-profile-trigger"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-expanded={isOpen}
-          aria-haspopup="menu"
-          aria-controls={PROFILE_DROPDOWN_PANEL_ID}
-        >
+      <div className="mg-v2-tenant-header-cluster">
+        <div className="mg-v2-tenant-header-cluster__identity">
           <ProfileAvatar name={userName} imageUrl={avatarImageUrl} size="small" />
-          <span className="mg-v2-profile-trigger__meta">
-            <span className="mg-v2-profile-trigger__name">
+          <div className="mg-v2-tenant-header-cluster__text">
+            <span className="mg-v2-tenant-header-cluster__name">
               <SafeText fallback="사용자">{userName}</SafeText>
             </span>
             <SessionRemainingLabel
               className={`${SESSION_REMAINING_DISPLAY.CLASS_NAME}--gnb-trigger`}
             />
-          </span>
-          <span className="mg-v2-profile-trigger__caret" aria-hidden="true">▼</span>
-        </button>
+          </div>
+        </div>
+        <div className="mg-v2-tenant-header-cluster__actions">
+          <div ref={triggerRef} className="mg-v2-tenant-header-cluster__trigger-wrap">
+            <NavIcon
+              icon="CHEVRON_DOWN"
+              label={PROFILE_MENU_TRIGGER_ARIA_LABEL}
+              onClick={() => setIsOpen(!isOpen)}
+              className="mg-v2-tenant-header-icon-btn"
+              aria-expanded={isOpen}
+              aria-haspopup="menu"
+              aria-controls={PROFILE_DROPDOWN_PANEL_ID}
+            />
+          </div>
+        </div>
       </div>
 
       <GnbDropdownPortal

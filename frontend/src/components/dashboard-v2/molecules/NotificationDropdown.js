@@ -1,7 +1,7 @@
 /**
  * NotificationDropdown - GNB 통합 알림 드롭다운 (Molecule)
  * 탭: 시스템 공지 | 메시지. NotificationContext 통합 카운트 사용.
- * StandardizedApi 사용. 퍼블 마크업(gnb-notification-dropdown.html) 구조 반영.
+ * Flush native rows + gap-less SegmentedTabs panel variant.
  *
  * @author CoreSolution
  * @since 2026-03-09
@@ -9,26 +9,24 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { NavIcon, NotificationBadge } from '../atoms';
+import { Bell } from 'lucide-react';
+import { NavIcon, NotificationBadge, HeaderMenuRow } from '../atoms';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useSession } from '../../../contexts/SessionContext';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { getConsultationMessagesListPath } from '../../../utils/consultationMessagesApi';
 import { toDisplayString, htmlToPlainText } from '../../../utils/safeDisplay';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
 import SegmentedTabs from '../../common/SegmentedTabs';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import ActionBar from '../../common/ActionBar';
 import ActionBarButton from '../../common/ActionBarButton';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './NotificationDropdown.css';
 import { useTranslation } from 'react-i18next';
+import { ICON_SIZES } from '../../../constants/icons';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_PERSONAL_NOTIFICATIONS = '/api/v1/notifications';
-
 
 const NOTIFICATION_PANEL_ID = 'mg-v2-notification-panel';
 
@@ -147,12 +145,10 @@ const NotificationDropdown = () => {
       if ((unreadSystemCount || 0) > 0) {
         await markAllSystemNotificationsAsRead();
       }
-      // 핫픽스 2026-05-23: 기존 messageList(상위 LIST_SIZE 건) for-loop → 단일 일괄 API 호출.
       try {
         await markAllMessagesAsRead();
       } catch (msgErr) {
         console.error('메시지 일괄 읽음 처리 실패:', msgErr);
-        // 사용자 토스트는 P3 범위, 본 핫픽스에서는 console.error 만 유지
       }
       refreshNotifications();
       await loadUnreadCount();
@@ -282,6 +278,57 @@ const NotificationDropdown = () => {
     setSelectedItem(null);
   };
 
+  const renderNotificationRow = (item, type) => {
+    const isUnread = !item.isRead;
+    const sn = toDisplayString(item.senderName, '');
+    const rn = toDisplayString(item.receiverName, '');
+    const senderLabel = sn && rn ? `${sn} → ${rn}` : sn || '메시지';
+    const title =
+      type === TAB_SYSTEM
+        ? toDisplayString(item.title, '제목 없음')
+        : item.title != null && item.title !== ''
+          ? toDisplayString(item.title, '메시지')
+          : sliceContentPreview(item.content) || '메시지';
+    const metaLabel = type === TAB_SYSTEM ? '시스템' : senderLabel;
+    const onClick =
+      type === TAB_SYSTEM
+        ? (event) => handleSystemItemClick(event, item)
+        : (event) => handleMessageItemClick(event, item);
+
+    return (
+      <li key={item.id}>
+        <HeaderMenuRow
+          role={null}
+          className={`mg-v2-notification-item ${isUnread ? 'mg-v2-notification-item--unread' : ''}`}
+          onClick={onClick}
+          onKeyDown={(event) => handleNotificationItemKeyDown(event, item, type)}
+        >
+          {isUnread && (
+            <span
+              className="mg-v2-notification-item__unread-dot"
+              aria-hidden="true"
+            />
+          )}
+          <div className="mg-v2-notification-item__content">
+            <div className="mg-v2-notification-item__header">
+              <span className="mg-v2-notification-item__title">{title}</span>
+              <span className="mg-v2-notification-item__time">
+                {formatTime(item.createdAt)}
+              </span>
+            </div>
+            <p
+              className={`mg-v2-notification-item__message${
+                type === TAB_MESSAGES ? ' mg-v2-notification-item__sender' : ''
+              }`}
+            >
+              {metaLabel}
+            </p>
+          </div>
+        </HeaderMenuRow>
+      </li>
+    );
+  };
+
   return (
     <nav
       className="mg-v2-notification-dropdown"
@@ -316,30 +363,28 @@ const NotificationDropdown = () => {
         <div className="mg-v2-dropdown-panel__header">
           <h2 className="mg-v2-dropdown-panel__title">{t('admin.labels.notification')}</h2>
           {totalUnread > 0 && (
-            <MGButton
+            <button
               type="button"
-              variant="outline"
-              preventDoubleClick={false}
-              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: 'mg-v2-btn-text mg-v2-btn-sm' })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              className="mg-v2-notification-mark-all"
               aria-label="모두 읽음으로 표시"
               onClick={handleMarkAllRead}
             >
               모두 읽음
-            </MGButton>
+            </button>
           )}
         </div>
 
         <SegmentedTabs
           ariaLabel="알림 유형"
+          variant="panel"
           items={[
             { value: TAB_SYSTEM, label: '시스템 공지', id: 'tab-system', ariaControls: 'panel-system' },
-            { value: TAB_MESSAGES, label: t('admin.labels.message'), id: 'tab-messages', ariaControls: 'panel-messages' },
+            { value: TAB_MESSAGES, label: t('admin.labels.message'), id: 'tab-messages', ariaControls: 'panel-messages' }
           ]}
           activeValue={activeTab}
           onChange={setActiveTab}
           size="md"
-          className="mg-v2-notification-dropdown__tabs"
+          className="mg-v2-notification-segmented"
         />
 
         <div
@@ -357,51 +402,14 @@ const NotificationDropdown = () => {
             )}
             {!loadingSystem && systemList.length === 0 && (
               <li>
-                <div className="mg-v2-notification-empty">새로운 공지가 없습니다</div>
+                <div className="mg-v2-notification-empty">
+                  <Bell size={ICON_SIZES.XXXL} aria-hidden="true" className="mg-v2-notification-empty__icon" />
+                  <span>새로운 공지가 없습니다</span>
+                </div>
               </li>
             )}
             {!loadingSystem &&
-              systemList.map((item) => {
-                const isUnread = !item.isRead;
-                return (
-                  <li key={item.id}>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      preventDoubleClick={false}
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'md',
-                        loading: false,
-                        className: `mg-v2-notification-item ${isUnread ? 'mg-v2-notification-item--unread' : ''}`
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={(event) => handleSystemItemClick(event, item)}
-                      onKeyDown={(event) =>
-                        handleNotificationItemKeyDown(event, item, TAB_SYSTEM)
-                      }
-                    >
-                      {isUnread && (
-                        <span
-                          className="mg-v2-notification-item__unread-dot"
-                          aria-hidden="true"
-                        />
-                      )}
-                      <div className="mg-v2-notification-item__content">
-                        <div className="mg-v2-notification-item__header">
-                          <span className="mg-v2-notification-item__title">
-                            {toDisplayString(item.title, '제목 없음')}
-                          </span>
-                          <span className="mg-v2-notification-item__time">
-                            {formatTime(item.createdAt)}
-                          </span>
-                        </div>
-                        <p className="mg-v2-notification-item__message">시스템</p>
-                      </div>
-                    </MGButton>
-                  </li>
-                );
-              })}
+              systemList.map((item) => renderNotificationRow(item, TAB_SYSTEM))}
           </ul>
         </div>
 
@@ -420,63 +428,18 @@ const NotificationDropdown = () => {
             )}
             {!loadingMessages && messageList.length === 0 && (
               <li>
-                <div className="mg-v2-notification-empty">새로운 메시지가 없습니다</div>
+                <div className="mg-v2-notification-empty">
+                  <Bell size={ICON_SIZES.XXXL} aria-hidden="true" className="mg-v2-notification-empty__icon" />
+                  <span>새로운 메시지가 없습니다</span>
+                </div>
               </li>
             )}
             {!loadingMessages &&
-              messageList.map((item) => {
-                const isUnread = !item.isRead;
-                const sn = toDisplayString(item.senderName, '');
-                const rn = toDisplayString(item.receiverName, '');
-                const senderLabel =
-                  sn && rn ? `${sn} → ${rn}` : sn || '메시지';
-                return (
-                  <li key={item.id}>
-                    <MGButton
-                      type="button"
-                      variant="outline"
-                      preventDoubleClick={false}
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'md',
-                        loading: false,
-                        className: `mg-v2-notification-item ${isUnread ? 'mg-v2-notification-item--unread' : ''}`
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={(event) => handleMessageItemClick(event, item)}
-                      onKeyDown={(event) =>
-                        handleNotificationItemKeyDown(event, item, TAB_MESSAGES)
-                      }
-                    >
-                      {isUnread && (
-                        <span
-                          className="mg-v2-notification-item__unread-dot"
-                          aria-hidden="true"
-                        />
-                      )}
-                      <div className="mg-v2-notification-item__content">
-                        <div className="mg-v2-notification-item__header">
-                          <span className="mg-v2-notification-item__title">
-                            {item.title != null && item.title !== ''
-                              ? toDisplayString(item.title, '메시지')
-                              : sliceContentPreview(item.content) || '메시지'}
-                          </span>
-                          <span className="mg-v2-notification-item__time">
-                            {formatTime(item.createdAt)}
-                          </span>
-                        </div>
-                        <p className="mg-v2-notification-item__message mg-v2-notification-item__sender">
-                          {senderLabel}
-                        </p>
-                      </div>
-                    </MGButton>
-                  </li>
-                );
-              })}
+              messageList.map((item) => renderNotificationRow(item, TAB_MESSAGES))}
           </ul>
         </div>
 
-        <div className="mg-v2-dropdown-panel__footer">
+        <div className="mg-v2-notification-footer mg-v2-dropdown-panel__footer">
           <Link
             to="/notifications"
             className="mg-v2-dropdown-panel__footer-link"

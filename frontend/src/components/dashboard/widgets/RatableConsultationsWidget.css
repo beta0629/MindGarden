@@ -30,17 +30,6 @@
   color: var(--cs-text-secondary);
 }
 
-.ratable-consultations-empty-icon {
-  font-size: 3rem;
-  margin-bottom: var(--cs-spacing-md);
-  opacity: 0.6;
-  color: var(--cs-primary-400);
-}
-
-.ratable-consultations-empty-icon.warning {
-  color: var(--cs-warning-500);
-}
-
 .ratable-consultations-empty-text {
   font-size: var(--cs-text-lg);
   font-weight: var(--cs-font-medium);
@@ -82,21 +71,6 @@
   transform: translateY(-1px);
   box-shadow: var(--cs-shadow-md);
   border-color: var(--cs-primary-200);
-}
-
-/* ============================================================================
-   상담 아이콘
-   ============================================================================ */
-.ratable-consultation-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--cs-primary-400), var(--cs-primary-600));
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
 /* ============================================================================
@@ -292,10 +266,6 @@
     align-items: stretch;
     text-align: center;
     gap: var(--cs-spacing-sm);
-  }
-
-  .ratable-consultation-icon {
-    align-self: center;
   }
 
   .ratable-consultation-content {

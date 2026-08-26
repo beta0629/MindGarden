@@ -59,7 +59,7 @@ const RatableConsultationsWidget = ({ widget, user }) => {
 
   // 평가하기 버튼 핸들러
   const handleRateConsultant = (schedule) => {
-    console.log('💖 평가하기 버튼 클릭:', schedule);
+    console.log('평가하기 버튼 클릭:', schedule);
     setSelectedSchedule(schedule);
     setShowRatingModal(true);
   };
@@ -109,7 +109,6 @@ const RatableConsultationsWidget = ({ widget, user }) => {
     if (error) {
       return (
         <div className="ratable-consultations-empty">
-          <div className="ratable-consultations-empty-icon warning" />
           <p className="ratable-consultations-empty-text">평가 시스템 준비 중입니다</p>
           <p className="ratable-consultations-empty-hint">
             데이터베이스 테이블 생성 중... 잠시 후 다시 시도해주세요
@@ -122,7 +121,6 @@ const RatableConsultationsWidget = ({ widget, user }) => {
     if (isEmpty || !Array.isArray(ratableSchedules) || ratableSchedules.length === 0) {
       return (
         <div className="ratable-consultations-empty">
-          <div className="ratable-consultations-empty-icon" />
           <p className="ratable-consultations-empty-text">평가 가능한 상담이 없습니다</p>
           <p className="ratable-consultations-empty-hint">
             상담을 완료하시면 평가할 수 있어요
@@ -136,7 +134,6 @@ const RatableConsultationsWidget = ({ widget, user }) => {
       <div className="ratable-consultations-list">
         {ratableSchedules.map(schedule => (
           <div key={schedule.scheduleId} className="ratable-consultation-item">
-            <div className="ratable-consultation-icon" />
             <div className="ratable-consultation-content">
               <div className="ratable-consultation-header">
                 <h4 className="ratable-consultation-title">

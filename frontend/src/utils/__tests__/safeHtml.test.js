@@ -41,4 +41,12 @@ describe('sanitizeHealingHtml — Apple T3 XSS 가드', () => {
     expect(out).toContain('본문');
     expect(out).not.toContain('<!--');
   });
+
+  it('표시용 이모지 문자는 제거한다 (메트릭 불변, display-only)', () => {
+    const input = '<p>마음의 평화 💚 되시길</p>';
+    const out = sanitizeHealingHtml(input);
+    expect(out).toContain('마음의 평화');
+    expect(out).toContain('되시길');
+    expect(out).not.toContain('💚');
+  });
 });

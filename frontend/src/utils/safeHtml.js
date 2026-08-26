@@ -40,9 +40,8 @@ export function stripDisplayEmoji(text) {
 
 /**
  * 모든 HTML 태그를 제거한다 (DOM 미사용 fallback).
- * 단일 패스 `/&lt;[^&gt;]*&gt;/g` 는 중첩·깨진 태그(예: scr+script 재구성)를
- * 남길 수 있으므로, 결과가 안정될 때까지 반복 제거한다.
- * 남은 `&lt;`/`&gt;` 는 추가 제거해 재구성 XSS 를 막는다.
+ * 단일 패스 태그 제거는 중첩·깨진 태그(예: scr+script 재구성)를 남길 수 있으므로,
+ * 결과가 안정될 때까지 반복 제거한다. 남은 꺾쇠(<, >)도 제거해 재구성 XSS 를 막는다.
  *
  * @param {string} text 원본 문자열
  * @returns {string} 태그가 제거된 평문

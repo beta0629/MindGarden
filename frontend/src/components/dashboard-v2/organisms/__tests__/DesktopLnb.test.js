@@ -152,6 +152,14 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
       const activeLink = container.querySelector('[aria-current="page"]');
       expect(activeLink).not.toBeNull();
     });
+
+    it('활성 NavLink 에 on-fill 대비용 --active 클래스가 있고 text-primary 의존 클래스는 없다', () => {
+      const { container } = renderLnb('/admin/dashboard');
+      const activeLink = container.querySelector('.mg-v2-nav-link--active');
+      expect(activeLink).not.toBeNull();
+      expect(activeLink.className).toContain('mg-v2-nav-link--active');
+      expect(activeLink.className).not.toMatch(/text-primary/);
+    });
   });
 
   describe('그룹 하위 메뉴 렌더', () => {

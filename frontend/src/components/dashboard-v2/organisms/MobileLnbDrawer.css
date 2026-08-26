@@ -87,11 +87,17 @@
 
 .mg-v2-mobile-lnb-drawer__group-head:hover {
   background: var(--mg-color-surface-hover, var(--mg-v2-color-surface-hover));
+  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+}
+
+.mg-v2-mobile-lnb-drawer__group-head:hover .mg-v2-nav-link,
+.mg-v2-mobile-lnb-drawer__group-head:hover .mg-v2-mobile-lnb-drawer__group-chevron {
+  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
 }
 
 .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head {
   background: var(--mg-layout-sidebar-active-bg, var(--mg-v2-color-state-active));
-  color: var(--mg-v2-color-text-on-sidebar-active, var(--mg-v2-color-text-primary));
+  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
 }
 
 .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head::before {
@@ -119,14 +125,14 @@
   border: none;
   border-radius: 0;
   box-shadow: none;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   transition: color 0.2s;
 }
 
 .mg-v2-mobile-lnb-drawer__group-chevron:hover,
 .mg-v2-mobile-lnb-drawer__group-chevron:focus-visible {
-  color: var(--mg-white, var(--mg-v2-color-text-on-sidebar-active));
+  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
   background: none;
   outline: none;
 }
@@ -136,7 +142,7 @@
 }
 
 .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-chevron {
-  color: var(--mg-v2-color-text-on-sidebar-active, var(--mg-v2-color-text-primary));
+  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
 }
 
 .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link {

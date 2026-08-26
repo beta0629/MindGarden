@@ -1,7 +1,7 @@
 /**
  * NavIcon - 44×44px 아이콘 버튼
  * B0KlA, RESPONSIVE_LAYOUT_SPEC
- * 네이티브 button — MGButton cascade 보정 불필요
+ * 네이티브 button — border 없음 (GNB 아이콘 트리거 chrome-free)
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -16,17 +16,17 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0;
-  background: var(--ad-b0kla-card-bg, var(--mg-white));
-  border: 1px solid var(--mg-color-border-main);
-  border-radius: 50%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   color: var(--mg-color-text-secondary-dark);
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s;
   box-shadow: none;
 }
 
 .mg-v2-nav-icon:hover:not(:disabled) {
-  background: var(--mg-color-background-main);
+  background: var(--mg-color-surface-hover, var(--mg-v2-color-state-hover, var(--mg-color-background-main)));
 }
 
 .mg-v2-nav-icon:disabled {
@@ -52,10 +52,9 @@
   display: block;
 }
 
-/* Phase 1 Set C — GNB 아이콘 버튼 다크 모드 */
+/* Phase 1 Set C — GNB 아이콘 버튼 다크 모드 (border 미재도입) */
 [data-theme="dark"] .mg-v2-nav-icon {
-  background: var(--mg-v2-color-surface-raised, var(--mg-color-surface-main));
-  border-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
+  background: transparent;
   color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
 }
 

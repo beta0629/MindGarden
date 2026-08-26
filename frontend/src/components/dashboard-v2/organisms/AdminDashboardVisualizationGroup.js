@@ -25,6 +25,7 @@ import {
 import { resolveViewModeStorageScope } from '../../../hooks/useViewModePreference';
 import { resolveCssColorVarToHex } from '../../../utils/resolveCssColorVarToHex';
 import { toSafeNumber, toDisplayString } from '../../../utils/safeDisplay';
+import { KpiNumeral } from '../atoms';
 import {
   DASHBOARD_CHART_PERIOD,
   formatChartPeriodLabel,
@@ -47,16 +48,18 @@ import './AdminDashboardVisualizationGroup.css';
 
 ensureMgVizBarValueLabelsPlugin();
 
-/** 축·범례는 text-primary, 그리드는 border-default로 시리즈(진한 그린) 대비만 보강 */
+/** 축·범례·수치 라벨은 text-primary, 그리드는 border-default */
 const CHART_CANVAS_FALLBACK = Object.freeze({
   TICK: 'var(--mg-v2-color-text-primary)',
   GRID: 'var(--mg-v2-color-border-default)',
   TOOLTIP_BACKGROUND: 'var(--mg-v2-color-surface-raised)',
   TOOLTIP_TEXT: 'var(--mg-v2-color-text-primary)',
   LEGEND: 'var(--mg-v2-color-text-primary)',
-  VALUE_LABEL: 'var(--mg-v2-color-text-secondary)',
+  VALUE_LABEL: 'var(--mg-v2-color-text-primary)',
   VALUE_LABEL_PEAK: 'var(--mg-v2-color-text-primary)'
 });
+
+const CHART_VALUE_LABEL_FONT_SIZE = 14;
 
 const INFLOW_SERIES_COLOR_VARS = Object.freeze({
   PRIMARY: '--mg-color-primary-main',
@@ -247,9 +250,11 @@ function VizGrowthKpiCard({
     >
       <p className="mg-v2-viz-summary-kpi__label">{toDisplayString(label)}</p>
       <div className="mg-v2-viz-summary-kpi__value-row">
-        <p className="mg-v2-viz-summary-kpi__value">
-          {`${toSafeNumber(value, 0)}${countUnit}`}
-        </p>
+        <KpiNumeral
+          value={toSafeNumber(value, 0)}
+          unit={countUnit}
+          className="mg-v2-viz-summary-kpi__value"
+        />
         {badgeState ? (
           <StatusBadge
             variant={resolveGrowthBadgeVariant(badgeState)}
@@ -535,7 +540,7 @@ const AdminDashboardVisualizationGroup = ({
         )
       ),
       label: resolveCssColorVarToHex(
-        '--mg-v2-color-text-secondary',
+        '--mg-v2-color-text-primary',
         CHART_CANVAS_FALLBACK.VALUE_LABEL
       ),
       labelPeak: resolveCssColorVarToHex(
@@ -1088,15 +1093,12 @@ const AdminDashboardVisualizationGroup = ({
                 />
               ) : (
                 <p className="mg-v2-viz-new-clients-header__kpi-value-row">
-                  <span
+                  <KpiNumeral
+                    value={totalClientsDisplay}
+                    unit={peopleUnit}
                     className="mg-v2-viz-new-clients-header__kpi-value"
                     data-testid="viz-total-clients-value"
-                  >
-                    {toDisplayString(totalClientsDisplay)}
-                  </span>
-                  <span className="mg-v2-viz-new-clients-header__kpi-unit">
-                    {toDisplayString(peopleUnit)}
-                  </span>
+                  />
                 </p>
               )}
             </div>
@@ -1142,7 +1144,7 @@ const AdminDashboardVisualizationGroup = ({
                       color: inflowDowColors.label,
                       peakColor: inflowDowColors.labelPeak,
                       peakIndex: -1,
-                      fontSize: 12
+                      fontSize: CHART_VALUE_LABEL_FONT_SIZE
                     }
                   },
                   scales: {
@@ -1229,7 +1231,7 @@ const AdminDashboardVisualizationGroup = ({
                       color: inflowDowColors.label,
                       peakColor: inflowDowColors.labelPeak,
                       peakIndex,
-                      fontSize: 12
+                      fontSize: CHART_VALUE_LABEL_FONT_SIZE
                     }
                   },
                   scales: {

@@ -1,0 +1,29 @@
+/**
+ * KpiNumeral — 큰 건수 타이포 (카드용 h2 스케일)
+ * 디자인 토큰만 사용 (§17 / §1.3 하드코딩 금지)
+ *
+ * @author CoreSolution
+ * @since 2026-08-26
+ */
+
+.mg-v2-kpi-numeral {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--mg-v2-space-1, 0.25rem);
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
+  font-weight: 700;
+  line-height: var(--mg-v2-font-line-height-subheading, 1.3);
+  color: var(--mg-v2-color-text-primary);
+  margin: 0;
+}
+
+.mg-v2-kpi-numeral__value {
+  font: inherit;
+  color: inherit;
+}
+
+.mg-v2-kpi-numeral__unit {
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+}

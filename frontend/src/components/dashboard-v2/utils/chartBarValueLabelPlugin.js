@@ -11,7 +11,8 @@ import { toSafeNumber } from '../../../utils/safeDisplay';
 
 export const MG_VIZ_BAR_VALUE_LABELS_PLUGIN_ID = 'mgVizBarValueLabels';
 
-const DEFAULT_FONT_SIZE = 12;
+/** body 스케일 (~14px). caption 12 gray 지양 */
+const DEFAULT_FONT_SIZE = 14;
 
 /**
  * @type {import('chart.js').Plugin}
@@ -24,7 +25,7 @@ export const mgVizBarValueLabelsPlugin = {
       return;
     }
     const { ctx } = chart;
-    const color = opts.color || 'var(--mg-v2-color-text-secondary)';
+    const color = opts.color || 'var(--mg-v2-color-text-primary)';
     const peakColor = opts.peakColor || 'var(--mg-v2-color-text-primary)';
     const peakIndex = opts.peakIndex != null ? Number(opts.peakIndex) : -1;
     const fontSize = toSafeNumber(opts.fontSize, DEFAULT_FONT_SIZE);

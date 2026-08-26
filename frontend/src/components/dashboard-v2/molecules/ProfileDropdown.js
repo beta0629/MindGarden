@@ -20,11 +20,9 @@ import {
   getSettingsPathForRole,
   shouldShowProfileDropdownSettings
 } from '../../../utils/roleMypageSettingsPaths';
-import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import SessionRemainingLabel from '../../common/SessionRemainingLabel';
 import { SESSION_REMAINING_DISPLAY } from '../../../constants/session';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './ProfileDropdown.css';
 
@@ -125,12 +123,9 @@ const ProfileDropdown = ({ onLogout }) => {
   return (
     <div className="mg-v2-profile-dropdown" ref={dropdownRef}>
       <div ref={triggerRef} className="mg-v2-profile-trigger-outer">
-        <MGButton
+        <button
           type="button"
-          variant="outline"
-          preventDoubleClick={false}
-          className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-profile-trigger' })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          className="mg-v2-profile-trigger"
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-haspopup="menu"
@@ -146,7 +141,7 @@ const ProfileDropdown = ({ onLogout }) => {
             />
           </span>
           <span className="mg-v2-profile-trigger__caret" aria-hidden="true">▼</span>
-        </MGButton>
+        </button>
       </div>
 
       <GnbDropdownPortal
@@ -181,43 +176,32 @@ const ProfileDropdown = ({ onLogout }) => {
         </div>
 
         <div className="mg-v2-profile-dropdown__menu">
-          <MGButton
+          <button
             type="button"
-            variant="outline"
-            preventDoubleClick={false}
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-profile-menu-item' })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            className="mg-v2-profile-menu-item"
+            role="menuitem"
             onClick={() => handleMenuClick('mypage')}
           >
             <span>내 정보</span>
-          </MGButton>
+          </button>
           {showSettingsItem && (
-            <MGButton
+            <button
               type="button"
-              variant="outline"
-              preventDoubleClick={false}
-              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-profile-menu-item' })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              className="mg-v2-profile-menu-item"
+              role="menuitem"
               onClick={() => handleMenuClick('settings')}
             >
               <span>설정</span>
-            </MGButton>
+            </button>
           )}
-          <MGButton
+          <button
             type="button"
-            variant="outline"
-            preventDoubleClick={false}
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'md',
-              loading: false,
-              className: 'mg-v2-profile-menu-item mg-v2-profile-menu-item--danger'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            className="mg-v2-profile-menu-item mg-v2-profile-menu-item--danger"
+            role="menuitem"
             onClick={() => handleMenuClick('logout')}
           >
             <span>로그아웃</span>
-          </MGButton>
+          </button>
         </div>
       </GnbDropdownPortal>
     </div>

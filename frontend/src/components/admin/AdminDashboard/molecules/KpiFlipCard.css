@@ -191,9 +191,10 @@
   line-height: var(--mg-v2-font-line-height-caption);
 }
 
-.mg-v2-kpi-flip-card__value {
-  font-size: var(--mg-v2-font-size-h3);
-  font-weight: var(--mg-v2-font-weight-bold);
+.mg-v2-kpi-flip-card__value,
+.mg-v2-kpi-flip-card__value.mg-v2-kpi-numeral {
+  font-size: var(--mg-v2-font-size-h2, var(--mg-v2-font-size-h3));
+  font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--mg-v2-color-text-primary);
   margin: 0 0 var(--mg-v2-space-2);
   line-height: var(--mg-v2-font-line-height-subheading);

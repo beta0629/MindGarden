@@ -44,6 +44,8 @@ const ZOOM_OUT_BUTTON_TEXT = '전체 보기';
 /** opacity fade 전용. transform/scale 금지(DnD 히트테스트 보호). --animation-duration-fast(0.15s)와 맞춤 */
 const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
 const VIEW_FADE_MS = 150;
+/** 일/주 풀 카드 최소 높이(px) — --mg-v2-space-16(4rem)와 정합, 짧은 슬롯 본문 압착 방지 */
+const EVENT_MIN_HEIGHT_PX = 64;
 
 const prefersReducedMotion = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -555,12 +557,11 @@ const ScheduleCalendarView = ({
             );
         }
 
-        // 주간/일간 뷰: 풀 카드 유지
+        // 주간/일간 뷰: 풀 카드 유지 (상태 텍스트로 구분 — 좌측 색 레일 없음)
         return (
             <div
                 className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
                 title={`${clientName} - ${statusKorean}`}
-                style={{ borderLeftColor: borderColor }}
             >
                 <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
                 <div className="mg-v2-ad-calendar-event__title">
@@ -609,6 +610,7 @@ const ScheduleCalendarView = ({
                 editable={!disableCalendarEventDrag && isScheduleCalendarEditableRole(userRole)}
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
                 height="100%"
+                eventMinHeight={EVENT_MIN_HEIGHT_PX}
                 slotMinTime="08:00:00"
                 slotMaxTime="20:00:00"
                 slotDuration="00:30:00"

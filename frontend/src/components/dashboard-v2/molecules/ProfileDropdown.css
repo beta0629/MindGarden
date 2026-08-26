@@ -220,64 +220,20 @@
   color: var(--mg-color-error-500, var(--mg-error-500));
 }
 
-/* MGButton(G8): 프로필 트리거·메뉴 — outline 기본·내부 래퍼 보정 */
-.mg-v2-profile-trigger.mg-button.mg-button--outline {
-  border: none;
-  background-color: transparent;
-  min-height: 44px;
-  justify-content: flex-start;
-  color: inherit;
+.mg-v2-profile-menu-item--danger:hover {
+  color: var(--mg-color-error-500, var(--mg-error-500));
 }
 
-.mg-v2-profile-trigger.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-surface-main);
-  color: inherit;
-  transform: none;
-  box-shadow: none;
-}
-
-[data-theme="dark"] .mg-v2-profile-trigger:hover,
-[data-theme="dark"] .mg-v2-profile-trigger.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+[data-theme="dark"] .mg-v2-profile-trigger:hover {
   background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
   color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 
-[data-theme="dark"] .mg-v2-profile-trigger:hover .mg-v2-profile-trigger__name,
-[data-theme="dark"] .mg-v2-profile-trigger.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) .mg-v2-profile-trigger__name {
+[data-theme="dark"] .mg-v2-profile-trigger:hover .mg-v2-profile-trigger__name {
   color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 
-[data-theme="dark"] .mg-v2-profile-menu-item:hover,
-[data-theme="dark"] .mg-v2-profile-menu-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+[data-theme="dark"] .mg-v2-profile-menu-item:hover {
   background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
   color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
-}
-
-.mg-v2-profile-trigger.mg-button .mg-button__text {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.mg-v2-profile-menu-item.mg-button.mg-button--outline {
-  border: none;
-  background: none;
-  min-height: unset;
-  justify-content: flex-start;
-  font-weight: inherit;
-}
-
-.mg-v2-profile-menu-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
-  transform: none;
-  box-shadow: none;
-  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
-}
-
-.mg-v2-profile-menu-item.mg-button .mg-button__text {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
 }

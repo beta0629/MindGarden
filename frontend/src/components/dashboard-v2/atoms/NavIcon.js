@@ -1,14 +1,13 @@
 /**
  * NavIcon - GNB/LNB icon button (44x44 touch target)
  * RESPONSIVE_LAYOUT_SPEC: minimum 44px touch area
+ * 네이티브 button — MGButton outline chrome(1px solid !important) 미사용
  *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
 import React from 'react';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { ICONS, ICON_SIZES } from '../../../constants/icons';
 import './NavIcon.css';
 
@@ -19,13 +18,9 @@ import './NavIcon.css';
 const NavIcon = ({ icon, label, onClick, className = '', disabled = false, ...rest }) => {
   const LucideIcon = icon ? ICONS[icon] : null;
   return (
-    <MGButton
+    <button
       type="button"
-      variant="outline"
-      size="small"
-      preventDoubleClick={false}
-      className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false, className: `mg-v2-nav-icon ${className}` })}
-      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+      className={`mg-v2-nav-icon ${className}`.trim()}
       onClick={onClick}
       disabled={disabled}
       aria-label={label || 'Icon button'}
@@ -36,7 +31,7 @@ const NavIcon = ({ icon, label, onClick, className = '', disabled = false, ...re
           <LucideIcon size={ICON_SIZES.LG} strokeWidth={2} />
         </span>
       ) : null}
-    </MGButton>
+    </button>
   );
 };
 

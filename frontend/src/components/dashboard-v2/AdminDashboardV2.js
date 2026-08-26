@@ -1290,7 +1290,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
       <ContentCard className="mg-v2-content-card--pipeline">
         <AdminMetricsVisualization
-          variant="option-c"
+          variant="grid"
           loading={loading}
           stats={{
             totalMappings: stats.totalMappings,

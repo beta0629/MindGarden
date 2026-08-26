@@ -23,6 +23,7 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
 import '../admin/CommonCodeManagementB0KlA.css';
 import './TenantCommonCodeManagerB0KlA.css';
+import { AlertCircle } from 'lucide-react';
 
 const TENANT_COMMON_CODE_FORM_ID = 'tenant-common-code-manager-form';
 
@@ -78,7 +79,7 @@ const TenantCommonCodeManagerUI = ({
         <div className="mg-v2-ad-b0kla__tenant-common-root">
             {error && (
                 <div className="mg-v2-ad-b0kla__tenant-error" role="alert">
-                    <span className="mg-v2-ad-b0kla__tenant-error-icon" aria-hidden="true">⚠️</span>
+                    <span className="mg-v2-ad-b0kla__tenant-error-icon" aria-hidden="true"><AlertCircle size={16} strokeWidth={1.75} /></span>
                     {error}
                 </div>
             )}
@@ -128,7 +129,7 @@ const TenantCommonCodeManagerUI = ({
                                     >
                                         <div className="mg-v2-ad-b0kla__group-card-header">
                                             <span className="mg-v2-ad-b0kla__group-icon" aria-hidden="true">
-                                                {group.icon || '📁'}
+                                                {group.icon || ''}
                                             </span>
                                             <h3 className="mg-v2-ad-b0kla__group-title">
                                                 {group.displayKoreanName || group.koreanName || groupName}

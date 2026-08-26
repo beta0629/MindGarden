@@ -311,7 +311,7 @@ const ClientMessageScreen = () => {
 
             {messages.length === 0 ? (
               <div className="client-message-screen-empty-state">
-                <div className="client-message-screen-empty-icon">📭</div>
+                <div className="client-message-screen-empty-icon" aria-hidden="true"></div>
                 <div className="client-message-screen-empty-title">받은 메시지가 없습니다</div>
                 <div className="client-message-screen-empty-message">상담사로부터 메시지를 받으면 여기에 표시됩니다.</div>
               </div>

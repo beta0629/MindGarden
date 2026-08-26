@@ -112,7 +112,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
   const headerConfig = {
     title: (
       <div className="consultation-record-header-title">
-        📝 상담일지
+        상담일지
       </div>
     ),
     actions: (
@@ -168,7 +168,7 @@ const ConsultationRecordWidget = ({ widget, user }) => {
     if (isEmpty || recordStats.totalRecords === 0) {
       return (
         <div className="consultation-record-empty">
-          <div className="consultation-record-empty-icon">📝</div>
+          <div className="consultation-record-empty-icon" aria-hidden="true"></div>
           <div className="consultation-record-empty-text">
             아직 작성된 상담일지가 없습니다
           </div>

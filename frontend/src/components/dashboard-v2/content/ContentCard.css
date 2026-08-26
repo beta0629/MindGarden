@@ -6,11 +6,11 @@
  * @since 2025-02-22
  */
 .mg-v2-content-card {
-  background: var(--ad-b0kla-card-bg);
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-v2-color-border-default));
+  border-radius: var(--ad-b0kla-radius, var(--mg-v2-radius-lg));
   box-shadow: var(--ad-b0kla-shadow);
-  padding: var(--mg-layout-section-padding, 1.5rem);
+  padding: var(--mg-layout-section-padding, var(--mg-spacing-lg, 1.5rem));
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -18,10 +18,10 @@
   overflow: hidden;
 }
 
-/* 파이프라인 래퍼: B0KlA 통일 좌측 악센트 4px, radius 16px */
+/* 파이프라인 래퍼: B0KlA 통일 좌측 악센트, 공통 card radius */
 .mg-v2-content-card--pipeline {
   overflow: visible;
-  padding-block: var(--mg-spacing-md, 12px);
+  padding-block: var(--mg-spacing-md);
   padding-inline: var(--mg-spacing-lg);
-  border-radius: 16px;
+  border-radius: var(--ad-b0kla-radius, var(--mg-v2-radius-lg));
 }

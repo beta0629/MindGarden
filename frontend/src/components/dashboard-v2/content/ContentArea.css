@@ -48,13 +48,9 @@
   margin-bottom: var(--mg-spacing-md, 1rem);
 }
 
+/* quiet chrome — 좌측 악센트 레일 제거 (마크업 잔여 시에도 비가시) */
 .mg-v2-content-visualization-group__accent {
-  width: 4px;
-  min-width: 4px;
-  height: 1.25em;
-  background: var(--mg-color-primary-main);
-  border-radius: 2px;
-  flex-shrink: 0;
+  display: none;
 }
 
 .mg-v2-content-visualization-group__title {

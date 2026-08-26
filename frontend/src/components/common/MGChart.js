@@ -126,7 +126,7 @@ const MGChart = ({
     return (
       <div className={getChartClasses()}>
         <div className="mg-chart__error">
-          <span className="mg-chart__error-icon">📊</span>
+          <span className="mg-chart__error-icon" aria-hidden="true"></span>
           <span className="mg-chart__error-message">차트를 불러올 수 없습니다</span>
           <SafeErrorDisplay
             error={error}

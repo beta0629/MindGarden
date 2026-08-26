@@ -277,7 +277,7 @@ const AIUsageWidget = ({ widget, user }) => {
             'mg-alert--warning',
             'mg-mt-md'
           )}>
-            <span className="mg-alert__icon">⚠️</span>
+            <span className="mg-alert__icon" aria-hidden="true"></span>
             <div className="mg-alert__message">
               월 예산의 {budgetUsage.toFixed(0)}%를 사용했습니다.
             </div>

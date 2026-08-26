@@ -74,14 +74,14 @@ const CommonCodeForm = ({
             setCommonCodeGroupOptions([
                 { value: 'PACKAGE_TYPE', label: '패키지 유형', icon: '📦', color: 'var(--mg-primary-500)', description: '상담 패키지 유형' },
                 { value: 'PAYMENT_METHOD', label: '결제 방법', icon: '💳', color: 'var(--mg-success-500)', description: '결제 수단' },
-                { value: 'RESPONSIBILITY', label: '책임', icon: '👤', color: 'var(--mg-warning-500)', description: '책임 및 역할' },
+                { value: 'RESPONSIBILITY', label: '책임', color: 'var(--mg-warning-500)', description: '책임 및 역할' },
                 { value: 'CONSULTATION_TYPE', label: '상담 유형', icon: '💬', color: 'var(--mg-purple-500)', description: '상담의 유형' },
                 { value: 'GENDER', label: '성별', icon: '⚧', color: 'var(--mg-error-500)', description: '사용자 성별' },
                 { value: 'ROLE', label: '역할', icon: '👑', color: 'var(--mg-info-500)', description: '사용자 역할' },
                 { value: 'STATUS', label: '상태', icon: '🔄', color: 'var(--mg-warning-500)', description: '일반적인 상태' },
                 { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: 'var(--mg-error-500)', description: '우선순위 구분' },
                 { value: 'NOTIFICATION_TYPE', label: '알림 유형', icon: '🔔', color: 'var(--mg-primary-500)', description: '알림의 유형' },
-                { value: 'STATUS', label: '일정 상태', icon: '📅', color: 'var(--mg-success-500)', description: '일정의 상태' }
+                { value: 'STATUS', label: '일정 상태', color: 'var(--mg-success-500)', description: '일정의 상태' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -360,7 +360,7 @@ const CommonCodeForm = ({
                                 value={formData.icon}
                                 onChange={handleChange}
                                 className="form-control"
-                                placeholder="예: ⭐, 📅, ✅, 🔴"
+                                placeholder="예: Check, Calendar, Star"
                                 maxLength="10"
                             />
                             <small className="form-text text-muted">

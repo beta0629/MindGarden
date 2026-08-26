@@ -134,9 +134,9 @@ const ProfileSection = ({
       } catch (error) {
         console.error('성별 코드 로드 실패:', error);
         setGenderOptions([
-          { value: 'MALE', label: '남성', icon: '♂️' },
-          { value: 'FEMALE', label: '여성', icon: '♀️' },
-          { value: 'OTHER', label: '기타', icon: '⚧' }
+          { value: 'MALE', label: '남성' },
+          { value: 'FEMALE', label: '여성' },
+          { value: 'OTHER', label: '기타' }
         ]);
       } finally {
         setLoadingCodes(false);

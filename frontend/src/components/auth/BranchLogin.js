@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Store, XCircle } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
@@ -263,7 +264,7 @@ const BranchLogin = () => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                 </MGButton>
               </div>
             </div>

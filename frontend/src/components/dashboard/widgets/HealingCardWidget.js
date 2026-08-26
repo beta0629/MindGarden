@@ -108,7 +108,6 @@ const HealingCardWidget = ({ widget, user }) => {
 
   // 기본 힐링 데이터 (API 실패 시 사용)
   const defaultHealingData = {
-    emoji: '💚',
     title: '오늘의 힐링',
     content: '마음의 평화를 찾는 하루가 되시길 바랍니다.',
     category: 'GENERAL'
@@ -134,12 +133,8 @@ const HealingCardWidget = ({ widget, user }) => {
       ]}
     >
       <div className="healing-card-widget-content">
-        {/* 힐링 카드 헤더 */}
         <div className="healing-card-header">
           <div className="healing-title-section">
-            {currentHealingData?.emoji && (
-              <span className="healing-emoji">{currentHealingData.emoji}</span>
-            )}
             <h3 className="healing-title">
               {currentHealingData?.title || '오늘의 힐링'}
             </h3>
@@ -147,6 +142,7 @@ const HealingCardWidget = ({ widget, user }) => {
           <MGButton
             type="button"
             variant="outline"
+            size="medium"
             className={buildErpMgButtonClassName({
               variant: 'outline',
               size: 'md',
@@ -164,35 +160,31 @@ const HealingCardWidget = ({ widget, user }) => {
           </MGButton>
         </div>
 
-        {/* 힐링 컨텐츠 */}
         <div className="healing-content-section">
-          <div 
+          <div
             className="healing-content"
             dangerouslySetInnerHTML={{
-              __html: currentHealingData?.content || '마음의 평화를 찾는 하루가 되시길 바랍니다. 💚'
+              __html: currentHealingData?.content || '마음의 평화를 찾는 하루가 되시길 바랍니다.'
             }}
           />
         </div>
 
-        {/* 카테고리 배지 */}
         {currentHealingData?.category && (
           <div className="healing-category-section">
             <span className="healing-category-badge">
-              
               {getCategoryDisplayName(currentHealingData.category)}
             </span>
           </div>
         )}
 
-        {/* 역할별 맞춤 메시지 */}
         <div className="healing-role-message">
           {RoleUtils.isConsultant(user) ? (
             <p className="role-specific-message consultant">
-              🌟 상담사님의 하루에 따뜻함을 더해드려요
+              상담사님의 하루에 따뜻함을 더해드려요
             </p>
           ) : (
             <p className="role-specific-message client">
-              🌸 오늘도 소중한 당신을 응원합니다
+              오늘도 소중한 당신을 응원합니다
             </p>
           )}
         </div>

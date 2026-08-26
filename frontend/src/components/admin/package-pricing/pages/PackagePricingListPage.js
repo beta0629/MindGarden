@@ -147,8 +147,13 @@ function PackagePricingListPage() {
                       <div className="mg-v2-package-pricing-card__actions">
                         <MGButton
                           type="button"
-                          variant="secondary"
-                          className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+                          variant="outline"
+                          size="small"
+                          className={buildErpMgButtonClassName({
+                            variant: 'outline',
+                            size: 'sm',
+                            loading: false
+                          })}
                           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                           onClick={() => navigate(`/admin/package-pricing/${row.id}`)}
                         >

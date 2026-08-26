@@ -143,7 +143,7 @@ const BaseWidget = ({
                    WIDGET_CONSTANTS.CSS_CLASSES.MG_ALIGN_CENTER} ${  
                    WIDGET_CONSTANTS.CSS_CLASSES.MG_PY_XL}`}>
       <div className="mg-empty-icon mg-empty-icon--widget">
-        {config.emptyIcon || '📭'}
+        {config.emptyIcon || ''}
       </div>
       <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
         {config.emptyMessage || '표시할 데이터가 없습니다'}

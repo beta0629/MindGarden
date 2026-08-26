@@ -51,7 +51,7 @@ const ConsultationRecordScreen = () => {
         const options = response.map(code => ({
           value: code.codeValue,
           label: code.codeLabel,
-          icon: code.icon,
+          icon: null,
           color: code.colorCode,
           description: code.codeDescription
         }));
@@ -320,7 +320,7 @@ const ConsultationRecordScreen = () => {
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           value: code.codeValue === 'COMPLETED',
           label: code.codeLabel,
-          icon: code.icon,
+          icon: null,
           color: code.colorCode,
           description: code.codeDescription
         })));
@@ -328,8 +328,8 @@ const ConsultationRecordScreen = () => {
     } catch (error) {
       console.error('완료 상태 코드 로드 실패:', error);
       setCompletionStatusOptions([
-        { value: true, label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
-        { value: false, label: '미완료', icon: '❌', color: 'var(--mg-error-500)', description: '작업 미완료' }
+        { value: true, label: '완료', color: 'var(--mg-success-500)', description: '작업 완료' },
+        { value: false, label: '미완료', color: 'var(--mg-error-500)', description: '작업 미완료' }
       ]);
     } finally {
       setLoadingCompletionCodes(false);

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
+import { Eye, EyeOff } from 'lucide-react';
 import {
   getTenantSubdomainFromHost,
   shouldRedirectWrongPath,
@@ -486,7 +487,7 @@ const TabletRegister = () => {
                     preventDoubleClick={false}
                     aria-label={showPassword ? '비밀번호 숨기기' : t('auth:TabletRegister.t_11759640')}
                   >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                    {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                   </MGButton>
                 </div>
                 {errors.password && <span className="mg-v2-error-text">{errors.password}</span>}
@@ -516,7 +517,7 @@ const TabletRegister = () => {
                     preventDoubleClick={false}
                     aria-label={showConfirmPassword ? '비밀번호 숨기기' : t('auth:TabletRegister.t_11759640')}
                   >
-                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                    {showConfirmPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                   </MGButton>
                 </div>
                 {errors.confirmPassword && <span className="mg-v2-error-text">{errors.confirmPassword}</span>}

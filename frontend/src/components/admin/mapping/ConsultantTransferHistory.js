@@ -107,7 +107,7 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
           {/* 로딩은 UnifiedModal loading prop(UnifiedLoading)만 사용 — 본문 스피너 중복 금지 */}
           {loading ? null : error ? (
             <div className="transfer-history-error">
-              <p>❌ {error}</p>
+              <p>{error}</p>
               <MGButton
                 type="button"
                 variant="primary"

@@ -78,7 +78,7 @@ const ConsultationRecordView = () => {
     return (
       <AdminCommonLayout title="상담기록 조회">
         <div className="mg-v2-empty-state">
-          <div className="mg-v2-empty-state-icon">⚠️</div>
+          <div className="mg-v2-empty-state-icon" aria-hidden="true"></div>
           <div className="mg-v2-empty-state-text">{error}</div>
           <MGButton
             variant="secondary"

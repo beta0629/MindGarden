@@ -205,7 +205,7 @@
 }
 
 .content-subtitle::before {
-  content: '✨';
+  content: '';
   position: absolute;
   left: -8px;
   top: 50%;

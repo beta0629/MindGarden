@@ -72,16 +72,16 @@
   --mg-layout-grid-gap-2k: 32px;
   --mg-layout-grid-gap-4k: 40px;
 
-  /* ===== 사이드바 / 헤더 색상 ===== */
-  --mg-layout-sidebar-bg: #2C2C2C;
-  --mg-layout-sidebar-active-bg: #3D5246;
-  --mg-layout-sidebar-text: rgba(255, 255, 255, 0.7);
-  --mg-layout-header-bg: #FAF9F7;
-  --mg-layout-header-border: #D4CFC8;
-  --mg-layout-main-bg-start: #FAF9F7;
-  --mg-layout-main-bg-end: #F2EDE8;
-  --mg-layout-section-bg: #F5F3EF;
-  --mg-layout-section-border: #D4CFC8;
+  /* ===== 사이드바 / 헤더 색상 — Clinic OS v2 ===== */
+  --mg-layout-sidebar-bg: var(--mg-v2-color-surface-sidebar);
+  --mg-layout-sidebar-active-bg: var(--mg-v2-color-primary-main);
+  --mg-layout-sidebar-text: rgba(248, 250, 252, 0.75);
+  --mg-layout-header-bg: var(--mg-v2-color-surface-card);
+  --mg-layout-header-border: var(--mg-v2-color-border-default);
+  --mg-layout-main-bg-start: var(--mg-v2-color-surface-bg);
+  --mg-layout-main-bg-end: var(--mg-v2-color-surface-bg);
+  --mg-layout-section-bg: var(--mg-v2-color-surface-stone);
+  --mg-layout-section-border: var(--mg-v2-color-border-default);
 
   /* ===== 기본값 (모바일 우선) ===== */
   --mg-layout-page-padding: var(--mg-layout-page-padding-mobile);
@@ -161,8 +161,10 @@
   --mg-layout-section-bg: var(--mg-color-surface-main);
   --mg-layout-section-border: var(--mg-color-border-main);
 
-  /* Phase 2 Set F C-2b — LNB/Sidebar */
+  /* Phase 2 Set F C-2b — LNB/Sidebar
+   * active bg = raised slate (state-active) + near-white label (not navy primary-100)
+   */
   --mg-layout-sidebar-bg: var(--mg-dark-lnb-bg);
-  --mg-layout-sidebar-active-bg: var(--mg-dark-lnb-hover);
+  --mg-layout-sidebar-active-bg: var(--mg-v2-color-state-active, var(--mg-dark-lnb-hover));
   --mg-layout-sidebar-text: var(--mg-dark-lnb-text);
 }

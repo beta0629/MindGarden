@@ -2,12 +2,13 @@
  * DarkModeContext 단위 테스트.
  *
  * 검증 항목:
- *   1) toggle() 는 auto → light → dark → auto cycle 을 유지한다.
- *   2) mode 변경 시 localStorage('mg-dark-mode') 에 저장한다.
- *   3) mode='dark' 시 <html data-theme="dark">.
- *   4) mode='light' 시 <html data-theme> 제거.
- *   5) mode='auto' 시 prefers-color-scheme 에 따라 resolved 가 바뀐다.
- *   6) mode='dark' 인 상태에서 외부 시스템이 attribute 를 비웠다가 다시 렌더되어도 'dark' 유지.
+ *   1) toggle() 는 resolved 기준 light ↔ dark 양방향이다 (auto cycle 아님).
+ *   2) OS dark + mode=dark 에서 toggle 시 명시 light → data-theme="light".
+ *   3) mode 변경 시 localStorage('mg-dark-mode') 에 저장한다.
+ *   4) mode='dark' 시 <html data-theme="dark">.
+ *   5) mode='light' 시 <html data-theme="light"> (OS dark 덮임 방지).
+ *   6) mode='auto' 시 prefers-color-scheme 에 따라 resolved 가 바뀐다.
+ *   7) mode='dark' 인 상태에서 외부 시스템이 attribute 를 비웠다가 다시 렌더되어도 'dark' 유지.
  *
  * @author CoreSolution
  * @since 2026-06-15
@@ -92,26 +93,67 @@ describe('DarkModeContext', () => {
     const { getCtx } = await renderProvider();
     expect(getCtx().mode).toBe(DARK_MODE_VALUES.AUTO);
     expect(getCtx().resolved).toBe(DARK_MODE_VALUES.LIGHT);
-    expect(document.documentElement.getAttribute('data-theme')).toBeNull();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('toggle() 호출 시 auto → light → dark → auto cycle', async() => {
+  it('toggle() 는 resolved 기준 light ↔ dark 양방향', async() => {
     const { getCtx } = await renderProvider();
 
     await act(async() => {
       getCtx().toggle();
     });
+    expect(getCtx().mode).toBe(DARK_MODE_VALUES.DARK);
+    expect(getCtx().resolved).toBe(DARK_MODE_VALUES.DARK);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+
+    await act(async() => {
+      getCtx().toggle();
+    });
     expect(getCtx().mode).toBe(DARK_MODE_VALUES.LIGHT);
+    expect(getCtx().resolved).toBe(DARK_MODE_VALUES.LIGHT);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
 
     await act(async() => {
       getCtx().toggle();
     });
     expect(getCtx().mode).toBe(DARK_MODE_VALUES.DARK);
+    expect(getCtx().resolved).toBe(DARK_MODE_VALUES.DARK);
+  });
+
+  it('OS dark + mode=dark 에서 toggle 시 명시 light 로 복귀 (auto 함정 없음)', async() => {
+    installMatchMediaMock(true);
+    window.localStorage.setItem(DARK_MODE_STORAGE_KEY, DARK_MODE_VALUES.DARK);
+
+    const { getCtx } = await renderProvider();
+    expect(getCtx().resolved).toBe(DARK_MODE_VALUES.DARK);
 
     await act(async() => {
       getCtx().toggle();
     });
+
+    expect(getCtx().mode).toBe(DARK_MODE_VALUES.LIGHT);
+    expect(getCtx().resolved).toBe(DARK_MODE_VALUES.LIGHT);
+    await waitFor(() =>
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    );
+  });
+
+  it('OS dark + mode=auto 에서 toggle 시 명시 light (다시 dark 로 안 보임)', async() => {
+    installMatchMediaMock(true);
+
+    const { getCtx } = await renderProvider();
     expect(getCtx().mode).toBe(DARK_MODE_VALUES.AUTO);
+    expect(getCtx().resolved).toBe(DARK_MODE_VALUES.DARK);
+
+    await act(async() => {
+      getCtx().toggle();
+    });
+
+    expect(getCtx().mode).toBe(DARK_MODE_VALUES.LIGHT);
+    expect(getCtx().resolved).toBe(DARK_MODE_VALUES.LIGHT);
+    await waitFor(() =>
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    );
   });
 
   it('mode 변경 시 localStorage(mg-dark-mode) 에 저장', async() => {
@@ -140,7 +182,7 @@ describe('DarkModeContext', () => {
     );
   });
 
-  it('mode=light → data-theme attribute 제거', async() => {
+  it('mode=light → <html data-theme="light">', async() => {
     document.documentElement.setAttribute('data-theme', 'dark');
     const { getCtx } = await renderProvider();
 
@@ -149,7 +191,7 @@ describe('DarkModeContext', () => {
     });
 
     await waitFor(() =>
-      expect(document.documentElement.getAttribute('data-theme')).toBeNull()
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light')
     );
   });
 
@@ -169,7 +211,7 @@ describe('DarkModeContext', () => {
       mediaCtl.fireChange(false);
     });
     await waitFor(() => expect(getCtx().resolved).toBe(DARK_MODE_VALUES.LIGHT));
-    expect(document.documentElement.getAttribute('data-theme')).toBeNull();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
   it('localStorage 에 dark 가 저장돼 있으면 초기화 시 즉시 data-theme="dark"', async() => {

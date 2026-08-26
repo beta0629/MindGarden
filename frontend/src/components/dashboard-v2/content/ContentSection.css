@@ -17,7 +17,7 @@
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius);
   box-shadow: var(--ad-b0kla-shadow);
-  padding: 1.5rem;
+  padding: var(--mg-layout-section-padding, var(--mg-spacing-lg, 1.5rem));
 }
 
 .mg-v2-content-section--plain {
@@ -73,16 +73,18 @@
 }
 
 .mg-v2-content-section__title {
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--ad-b0kla-title-color);
   margin: 0;
+  line-height: var(--mg-v2-font-line-height-heading);
 }
 
 .mg-v2-content-section__subtitle {
-  font-size: 13px;
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--ad-b0kla-text-secondary);
-  margin: 0.25rem 0 0 0;
+  margin: var(--mg-v2-space-1, 0.25rem) 0 0 0;
+  line-height: var(--mg-v2-font-line-height-caption);
 }
 
 .mg-v2-content-section__actions {

@@ -360,7 +360,7 @@ const ClientSelector = ({
         return (
             <div className="client-selector">
                 <div className="no-clients">
-                    <div className="no-clients-icon">👤</div>
+                    <div className="no-clients-icon" aria-hidden="true"></div>
                     <p>사용 가능한 내담자가 없습니다.</p>
                     <small>결제가 승인되고 세션이 남은 내담자가 없습니다.</small>
                 </div>

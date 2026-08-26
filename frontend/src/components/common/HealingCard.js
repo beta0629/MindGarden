@@ -61,7 +61,7 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
     };
 
     const safeContentHtml = useMemo(() => {
-        const raw = healingData?.content || '마음의 평화를 찾는 하루가 되시길 바랍니다. 💚';
+        const raw = healingData?.content || '마음의 평화를 찾는 하루가 되시길 바랍니다.';
         return sanitizeHealingHtml(raw);
     }, [healingData?.content]);
 
@@ -154,7 +154,6 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
             <div className="mg-card">
                 <div className="mg-card__header">
                     <div className="mg-card__title">
-                        {healingData?.emoji && <span className="healing-emoji">{healingData.emoji}</span>}
                         {healingData?.title || '오늘의 힐링'}
                     </div>
                     <MGButton
@@ -172,7 +171,7 @@ const HealingCard = ({ userRole = USER_ROLES.CLIENT, category = null }) => {
                         size="small"
                         preventDoubleClick={false}
                     >
-                        🔄
+                        {t('admin.actions.refresh')}
                     </MGButton>
                 </div>
 

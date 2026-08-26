@@ -1,6 +1,7 @@
 /**
  * GnbDropdownPortal — GNB 드롭다운 공통: body 포털 + 오버레이 + 패널 래퍼
  * ProfileDropdown, QuickActionsDropdown, NotificationDropdown에서 사용
+ * 오버레이는 네이티브 button — MGButton display:!important 와 충돌하지 않음
  *
  * @author CoreSolution
  * @since 2026-04-11
@@ -8,8 +9,6 @@
 
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import '../styles/dropdown-common.css';
 
 const GnbDropdownPortal = ({
@@ -30,14 +29,12 @@ const GnbDropdownPortal = ({
 
   return ReactDOM.createPortal(
     <>
-      <MGButton
+      <button
         type="button"
-        variant="outline"
-        preventDoubleClick={false}
-        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-dropdown-overlay' })}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        className="mg-v2-dropdown-overlay"
         onClick={onRequestClose}
         aria-label="드롭다운 닫기"
+        tabIndex={-1}
       />
       <div
         ref={panelRef}

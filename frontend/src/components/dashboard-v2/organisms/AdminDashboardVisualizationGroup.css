@@ -112,11 +112,12 @@
   gap: var(--mg-spacing-sm, 0.5rem);
 }
 
-.mg-v2-viz-summary-kpi__value {
+.mg-v2-viz-summary-kpi__value,
+.mg-v2-viz-summary-kpi__value.mg-v2-kpi-numeral {
   margin: 0;
-  font-size: var(--mg-font-size-2xl, 1.5rem);
-  font-weight: 600;
-  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
+  font-size: var(--mg-v2-font-size-h2, var(--mg-font-size-2xl, 1.5rem));
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary, var(--ad-b0kla-title-color, var(--mg-color-text-main)));
   line-height: 1.2;
 }
 
@@ -373,13 +374,15 @@
   margin: 0;
 }
 
-.mg-v2-viz-new-clients-header__kpi-value {
-  font-size: var(--mg-font-size-2xl, 1.5rem);
+.mg-v2-viz-new-clients-header__kpi-value,
+.mg-v2-viz-new-clients-header__kpi-value.mg-v2-kpi-numeral {
+  font-size: var(--mg-v2-font-size-h2, var(--mg-font-size-2xl, 1.5rem));
   font-weight: var(--mg-font-weight-bold, 700);
   color: var(--mg-v2-color-text-primary);
   line-height: 1.2;
 }
 
+.mg-v2-viz-new-clients-header__kpi-value .mg-v2-kpi-numeral__unit,
 .mg-v2-viz-new-clients-header__kpi-unit {
   font-size: var(--mg-font-size-sm, 0.875rem);
   color: var(--mg-v2-color-text-secondary);

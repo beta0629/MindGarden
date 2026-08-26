@@ -1,13 +1,14 @@
 /**
  * NavIcon - 44×44px 아이콘 버튼
  * B0KlA, RESPONSIVE_LAYOUT_SPEC
+ * 네이티브 button — MGButton cascade 보정 불필요
  *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
 .mg-v2-nav-icon {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
@@ -21,6 +22,7 @@
   color: var(--mg-color-text-secondary-dark);
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
+  box-shadow: none;
 }
 
 .mg-v2-nav-icon:hover:not(:disabled) {
@@ -32,32 +34,9 @@
   cursor: not-allowed;
 }
 
-/* MGButton(G8): GNB 아이콘 — outline·small 보정 */
-.mg-v2-nav-icon.mg-button.mg-button--outline {
-  min-width: 44px;
-  min-height: 44px;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border-radius: 50%;
-  border: 1px solid var(--mg-color-border-main);
-  background: var(--ad-b0kla-card-bg, var(--mg-white));
-  color: inherit;
-  justify-content: center;
-}
-
-.mg-v2-nav-icon.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--mg-color-background-main);
-  transform: none;
-  box-shadow: none;
-  color: var(--mg-color-text-secondary-dark, var(--mg-v2-color-text-secondary));
-}
-
-.mg-v2-nav-icon.mg-button .mg-button__text {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 0;
+.mg-v2-nav-icon:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--mg-color-primary-300, var(--mg-v2-color-state-focus-ring));
 }
 
 /* Lucide 직접 렌더 — Icon(TRANSPARENT/mg-v2 토큰) 미의존, B0KlA 아이콘색 고정 */
@@ -66,6 +45,7 @@
   align-items: center;
   justify-content: center;
   color: var(--mg-color-text-secondary-dark);
+  line-height: 0;
 }
 
 .mg-v2-nav-icon__lucide svg {
@@ -73,21 +53,18 @@
 }
 
 /* Phase 1 Set C — GNB 아이콘 버튼 다크 모드 */
-[data-theme="dark"] .mg-v2-nav-icon,
-[data-theme="dark"] .mg-v2-nav-icon.mg-button.mg-button--outline {
+[data-theme="dark"] .mg-v2-nav-icon {
   background: var(--mg-v2-color-surface-raised, var(--mg-color-surface-main));
   border-color: var(--mg-v2-color-border-default, var(--mg-color-border-main));
   color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
 }
 
-[data-theme="dark"] .mg-v2-nav-icon:hover:not(:disabled),
-[data-theme="dark"] .mg-v2-nav-icon.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+[data-theme="dark"] .mg-v2-nav-icon:hover:not(:disabled) {
   background: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
   color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 
-[data-theme="dark"] .mg-v2-nav-icon:hover:not(:disabled) .mg-v2-nav-icon__lucide,
-[data-theme="dark"] .mg-v2-nav-icon.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) .mg-v2-nav-icon__lucide {
+[data-theme="dark"] .mg-v2-nav-icon:hover:not(:disabled) .mg-v2-nav-icon__lucide {
   color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 

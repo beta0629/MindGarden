@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { RotateCcw } from 'lucide-react';
 import KpiSparkline from '../../../dashboard-v2/atoms/KpiSparkline';
+import KpiNumeral from '../../../dashboard-v2/atoms/KpiNumeral';
 import './KpiFlipCard.css';
 
 /**
@@ -12,7 +13,8 @@ import './KpiFlipCard.css';
  * @param {Object} props
  * @param {string} props.id - 카드 고유 ID
  * @param {string} props.label - KPI 라벨 (예: "오늘 상담 일정")
- * @param {string|number} props.value - KPI 숫자 (24px Bold)
+ * @param {string|number} props.value - KPI 숫자 (또는 이미 단위 포함 문자열)
+ * @param {string} [props.unit='건'] - KpiNumeral 단위 (value가 문자열에 단위 포함이면 '')
  * @param {string} props.summary - 앞면 보조 텍스트
  * @param {React.ReactNode} props.backContent - 뒷면 상세 콘텐츠 (JSX)
  * @param {string} [props.ctaLabel] - 뒷면 CTA 라벨 (없으면 미표시)
@@ -30,6 +32,7 @@ const KpiFlipCard = ({
   id,
   label,
   value,
+  unit = '건',
   summary,
   backContent,
   ctaLabel,
@@ -62,13 +65,19 @@ const KpiFlipCard = ({
     onCtaClick?.();
   }, [onCtaClick]);
 
+  const isNumericValue = typeof value === 'number';
+  const displayUnit = isNumericValue ? unit : '';
+  const ariaValue = isNumericValue
+    ? `${value}${displayUnit}`
+    : String(value ?? '');
+
   return (
     <div
       className={`mg-v2-kpi-flip-card mg-v2-kpi-flip-card--accent-${variant}${isFlipped ? ' mg-v2-kpi-flip-card--flipped' : ''}`}
       role="button"
       tabIndex={0}
       aria-expanded={isFlipped}
-      aria-label={`${label}: ${value}`}
+      aria-label={`${label}: ${ariaValue}`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
@@ -86,7 +95,11 @@ const KpiFlipCard = ({
               </span>
             ) : null}
           </div>
-          <span className="mg-v2-kpi-flip-card__value">{value}</span>
+          <KpiNumeral
+            value={value}
+            unit={displayUnit}
+            className="mg-v2-kpi-flip-card__value"
+          />
           <p className="mg-v2-kpi-flip-card__summary">{summary}</p>
           {Array.isArray(sparklineData) && sparklineData.length > 0 ? (
             <KpiSparkline data={sparklineData} variant={variant} />

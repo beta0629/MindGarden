@@ -555,12 +555,11 @@ const ScheduleCalendarView = ({
             );
         }
 
-        // 주간/일간 뷰: 풀 카드 유지
+        // 주간/일간 뷰: 풀 카드 유지 (상태 텍스트로 구분 — 좌측 색 레일 없음)
         return (
             <div
                 className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
                 title={`${clientName} - ${statusKorean}`}
-                style={{ borderLeftColor: borderColor }}
             >
                 <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
                 <div className="mg-v2-ad-calendar-event__title">
@@ -609,6 +608,7 @@ const ScheduleCalendarView = ({
                 editable={!disableCalendarEventDrag && isScheduleCalendarEditableRole(userRole)}
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
                 height="100%"
+                eventMinHeight={64}
                 slotMinTime="08:00:00"
                 slotMaxTime="20:00:00"
                 slotDuration="00:30:00"

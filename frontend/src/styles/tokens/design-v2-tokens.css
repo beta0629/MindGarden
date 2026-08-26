@@ -340,7 +340,7 @@
     --mg-v2-color-surface-overlay: #1E293B;
     --mg-v2-color-surface-sidebar: #0F172A;
     --mg-v2-color-surface-disabled: #334155;
-    --mg-v2-color-surface-hover: rgba(248, 250, 252, 0.06);
+    --mg-v2-color-surface-hover: rgba(248, 250, 252, 0.12);
     --mg-v2-color-surface-active: rgba(248, 250, 252, 0.12);
     --mg-v2-color-surface-stone: #1E293B;
 
@@ -361,8 +361,8 @@
     --mg-v2-color-border-dark: #94A3B8;
     --mg-v2-color-border-focus: #2DD4BF;
 
-    --mg-v2-color-state-hover: rgba(248, 250, 252, 0.06);
-    --mg-v2-color-state-active: rgba(248, 250, 252, 0.12);
+    --mg-v2-color-state-hover: rgba(248, 250, 252, 0.12);
+    --mg-v2-color-state-active: rgba(248, 250, 252, 0.18);
     --mg-v2-color-state-selected: rgba(45, 212, 191, 0.15);
     --mg-v2-color-state-focus-ring: rgba(45, 212, 191, 0.35);
     --mg-v2-color-state-disabled-bg: #334155;
@@ -432,7 +432,7 @@
   --mg-v2-color-surface-overlay: #1E293B;
   --mg-v2-color-surface-sidebar: #0F172A;
   --mg-v2-color-surface-disabled: #334155;
-  --mg-v2-color-surface-hover: rgba(248, 250, 252, 0.06);
+  --mg-v2-color-surface-hover: rgba(248, 250, 252, 0.12);
   --mg-v2-color-surface-active: rgba(248, 250, 252, 0.12);
   --mg-v2-color-surface-stone: #1E293B;
 
@@ -453,8 +453,8 @@
   --mg-v2-color-border-dark: #94A3B8;
   --mg-v2-color-border-focus: #2DD4BF;
 
-  --mg-v2-color-state-hover: rgba(248, 250, 252, 0.06);
-  --mg-v2-color-state-active: rgba(248, 250, 252, 0.12);
+  --mg-v2-color-state-hover: rgba(248, 250, 252, 0.12);
+  --mg-v2-color-state-active: rgba(248, 250, 252, 0.18);
   --mg-v2-color-state-selected: rgba(45, 212, 191, 0.15);
   --mg-v2-color-state-focus-ring: rgba(45, 212, 191, 0.35);
   --mg-v2-color-state-disabled-bg: #334155;

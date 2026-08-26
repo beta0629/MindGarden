@@ -165,15 +165,19 @@
   border-top: 1px solid var(--ad-b0kla-border);
 }
 
-.mg-v2-package-pricing-card__actions .mg-v2-button {
+/* MGButton 루트는 .mg-button — .mg-v2-button 만 타면 높이 불일치 */
+.mg-v2-package-pricing-card__actions .mg-v2-button,
+.mg-v2-package-pricing-card__actions .mg-button {
   flex: 1;
   min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  font-size: 13px;
+  gap: var(--mg-v2-space-1);
+  min-height: var(--button-height-sm);
+  padding: var(--button-padding-sm);
+  font-size: var(--cs-text-sm, var(--mg-v2-font-size-body-sm));
+  box-sizing: border-box;
 }
 
 /* ===== T8-C1-4: 등록/상세 폼 인라인 스타일 추출 ===== */

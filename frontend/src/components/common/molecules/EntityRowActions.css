@@ -127,7 +127,14 @@
 .mg-v2-entity-row-actions__menu-item[role="menuitem"]:hover:not(:disabled),
 .mg-v2-entity-row-actions__menu-item[role="menuitem"]:focus-visible {
   background: var(--ad-b0kla-green-bg, var(--mg-color-background-sub));
+  color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
   outline: none;
+}
+
+[data-theme="dark"] .mg-v2-entity-row-actions__menu-item[role="menuitem"]:hover:not(:disabled),
+[data-theme="dark"] .mg-v2-entity-row-actions__menu-item[role="menuitem"]:focus-visible {
+  background: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 
 .mg-v2-entity-row-actions__menu-item[role="menuitem"]:disabled {

@@ -1120,11 +1120,11 @@
      다크 hex 는 다크 모드 오버라이드 블록(D5 T-B 신규)에서 정의.   */
   --mg-color-brand-olive: #6b7c32;
 
-  /* --- 3. 공통 색상 토큰 (역할 무관) — v2 SSOT bridge --- */
-  --mg-color-text-main: var(--mg-v2-color-text-primary);
-  --mg-color-text-secondary: var(--mg-v2-color-text-secondary);
-  --mg-color-text-on-primary: var(--mg-v2-color-text-inverse);
-  --mg-color-border-main: var(--mg-v2-color-border-default);
+  /* --- 3. 공통 색상 토큰 (역할 무관) — clinic-OS hex (T-D 가드 해석 가능) --- */
+  --mg-color-text-main: #0F172A;
+  --mg-color-text-secondary: #475569;
+  --mg-color-text-on-primary: #FFFFFF;
+  --mg-color-border-main: #D4CFC8;
   --mg-color-error: #E57373;
   /* 성공 — D5 §4 옵션 A: emerald-600 통합 (#059669, success-600 폐기 흡수, WCAG AA) */
   --mg-color-success: #059669;
@@ -1317,22 +1317,22 @@
    ======================================== */
 
 :root {
-  /* 브랜드 primary — Core Solution Teal (v2 SSOT bridge; Calm Forest olive 제거) */
-  --mg-color-primary-main: var(--mg-v2-color-primary-main);
-  --mg-color-primary-light: var(--mg-v2-color-primary-light);
-  --mg-color-primary-dark: var(--mg-v2-color-primary-dark);
+  /* 브랜드 primary — clinic-OS teal hex (T-D 가드; Calm Forest olive 제거) */
+  --mg-color-primary-main: #0F766E;
+  --mg-color-primary-light: #14B8A6;
+  --mg-color-primary-dark: #115E59;
   --mg-color-white: #ffffff;
-  --mg-primary-color: var(--mg-v2-color-primary-main);
-  --mg-primary-light: var(--mg-v2-color-primary-light);
+  --mg-primary-color: #0F766E;
+  --mg-primary-light: #14B8A6;
 }
 
 :root[data-theme="dark"] {
-  --mg-color-primary-main: var(--mg-v2-color-primary-main);
-  --mg-color-primary-light: var(--mg-v2-color-primary-light);
-  --mg-color-primary-dark: var(--mg-v2-color-primary-dark);
+  --mg-color-primary-main: #2DD4BF;
+  --mg-color-primary-light: #5EEAD4;
+  --mg-color-primary-dark: #14B8A6;
   --mg-color-white: #f8fafc;
-  --mg-primary-color: var(--mg-v2-color-primary-main);
-  --mg-primary-light: var(--mg-v2-color-primary-light);
+  --mg-primary-color: #2DD4BF;
+  --mg-primary-light: #5EEAD4;
 }
 
 /* ========================================
@@ -1573,8 +1573,8 @@
   --mg-color-surface-blue-soft: #164e63;
   --mg-color-success-50: #064e3b;
 
-  /* D8 T-TextMain-Dark — text-main 다크 cascade 분리 (#E5E5E5, AAA 12.3:1) */
-  --mg-color-text-main: #E5E5E5;
+  /* D8 T-TextMain-Dark — clinic-OS slate text (on dark AA) */
+  --mg-color-text-main: #F8FAFC;
 
   /* D8 T-Top100 통합 — 다크 cascade (P1 §2.3 "light/dark 동일 hex" 결정) */
   --mg-color-warning-500: #f59e0b;
@@ -1609,11 +1609,11 @@
 }
 
 :root[data-theme="dark"] {
-  /* D9 §C4 WARN4 다크 cascade — Tailwind palette 답습 (P1 §2.3 결정표) */
-  --mg-color-border-main: #3A3A3A;     /* Tailwind neutral-700 톤 */
+  /* D9 §C4 WARN4 다크 cascade — clinic-OS slate (design-v2 정렬) */
+  --mg-color-border-main: #334155;     /* clinic slate border, AA ≥3:1 */
   --mg-color-error: #fca5a5;           /* Tailwind red-300 톤, on dark 6.2:1 PASS */
   --mg-color-info: #93c5fd;            /* Tailwind blue-300 톤, on dark 7.6:1 PASS */
-  --mg-color-text-secondary: #9CA3AF;  /* Tailwind gray-400 톤, on dark 5.0:1 PASS */
+  --mg-color-text-secondary: #CBD5E1;  /* clinic slate secondary */
 
   /* D9 §C5 warning 다크 cascade (P1 §2.4 결정표) */
   --mg-color-warning-100: #78350f;     /* Tailwind amber-900 톤, 다크 표면 대비 반전 */
@@ -1783,14 +1783,14 @@
    ======================================== */
 
 :root {
-  /* D10 §C7 B0KlA primary — Core Solution Teal (olive → teal SSOT) */
-  --mg-color-b0kla-green-500: var(--mg-v2-color-primary-main);
+  /* D10 §C7 B0KlA primary — clinic-OS teal CTA (olive 제거, T-D hex) */
+  --mg-color-b0kla-green-500: #0F766E;
   /* D10 §C7 B0KlA accent orange-warm (Large Text/UI Component 한정) */
   --mg-color-b0kla-orange-300: #e8a87c;
   /* D10 §C7 B0KlA accent blue-muted (Large Text/UI Component 한정) */
   --mg-color-b0kla-blue-400: #6d9dc5;
   /* D10 §C7 B0KlA green soft bg — mint rare wash */
-  --mg-color-b0kla-green-50: var(--mg-v2-color-primary-subtle);
+  --mg-color-b0kla-green-50: #CCFBF1;
   /* D10 §C7 B0KlA orange soft bg (admin 경고/알림 표면) */
   --mg-color-b0kla-orange-50: #fcf3ed;
   /* D10 §C7 B0KlA blue soft bg (admin 정보/안내 표면) */
@@ -1798,10 +1798,10 @@
 }
 
 :root[data-theme="dark"] {
-  --mg-color-b0kla-green-500: var(--mg-v2-color-primary-main);
+  --mg-color-b0kla-green-500: #2DD4BF;
   --mg-color-b0kla-orange-300: #f4b988;
   --mg-color-b0kla-blue-400: #9bb8d3;
-  --mg-color-b0kla-green-50: var(--mg-v2-color-primary-subtle);
+  --mg-color-b0kla-green-50: rgba(45, 212, 191, 0.15);
   --mg-color-b0kla-orange-50: #2d1f15;
   --mg-color-b0kla-blue-50: #1c2733;
 }

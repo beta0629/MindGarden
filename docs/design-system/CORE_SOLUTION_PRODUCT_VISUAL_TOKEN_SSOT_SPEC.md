@@ -10,7 +10,49 @@
 
 ---
 
-## 1. 개요 및 설계 원칙 (Overview & Architecture Principles)
+## 1. 개요 및 사용자 최종 잠금 원칙 (Overview & User Final Lock)
+
+### 1.0 사용자 최종 잠금 (User Final Lock — Commercial-Grade Clinic OS)
+
+> **질문**: “commercial-grade color, pattern, contrast for a professional counseling platform”이 너무 넓은가?  
+> **답: GOAL은 넓지 않다.** — 작은 비주얼 시스템을 잠그고 **토큰으로 적용**하면 된다. 화면별 취향 restyle을 전면 금지하며, Cursor developer-tool aesthetic(near-black IDE, marketing hero) **복제를 엄격히 금지**한다. Cursor는 오직 **컴포지션 품질 기준(composition quality bar only: tidy density, no stickers, tokens not hardcoded)**으로만 참조한다.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                    VISUAL SYSTEM TO LOCK (Counseling / Clinical SaaS)                       │
+├───────────────────┬───────────────────┬───────────────────────┬─────────────────────────────┤
+│ 1. Color (Identity│ 2. Pattern (Zero) │ 3. Contrast (WCAG AA) │ 4. Default Look             │
+│    Calm & Stable) │                   │                       │                             │
+│ - Slate #0F172A   │ - 거의 없음       │ - WCAG 2.1 AA 양 테마 │ • Primary: Light Clinic OS  │
+│ - Teal #0D9488    │ - 장식 배경 금지  │ - 임상/상담 필수 가독 │   (주간 상담 센터 환경)     │
+│ - Mint #CCFBF1    │ - 이모지/스티커 X │   (라벨/헬퍼/테이블   │ • Deep Slate Dark (#0F172A) │
+│ - Light: Stone/   │ - 1px 선/정렬/    │    /비활성/플레이스   │   (순수 #000 / #121212 지양)│
+│   Warm Off-White  │   위계/스페이싱   │    홀더 완전 식별)    │ • 정보 밀도(Dense) 100% 보존│
+└───────────────────┴───────────────────┴───────────────────────┴─────────────────────────────┘
+```
+
+#### [비주얼 시스템 잠금 핵심 요약]
+1. **Color (Core Solution Identity — Calm it Down)**:
+   - **브랜드 자산**: Slate `#0F172A`, Teal `#0D9488`, Mint `#CCFBF1`, sian 05 shield lockup.
+   - **Clinic OS 느낌 (테크 랜딩/IDE 아님)**:
+     - **Light Surface**: **Warm off-white / Stone surfaces** (캔버스: `#FAF9F7`, 서페이스: `#F5F3EF` 및 `#FFFFFF` 웜 톤, 테두리: `#E2E8F0`/`#D4CFC8` 스톤 틴트). 순수 차가운 블루 슬레이트(`--slate-50/100`)만 남발하거나 병원 느낌의 시린 순백만을 사용하지 않음.
+     - **Dark Surface**: **Deep Slate `#0F172A` 계열** (순수 `#000000` 또는 거친 `#121212` 지양).
+     - **Teal**: **Primary CTA 및 포커스 링 전용**.
+     - **Mint**: **Rare Wash 전용** (10~15% 틴트 뱃지/선택 하이라이트 배경만 허용, **Mint 배경 위에 큰 본문/헤드라인 텍스트 배치 절대 금지**).
+   - **Neutrals가 본업을 수행**: 본문, 테이블, 테두리는 정돈된 뉴트럴(Slate)이 담당. 크롬에 무지개색 뱃지/칩 남발 금지 (상태 표시는 AA 대비를 만족하는 절제된 Semantic 뮤트 톤으로 통일).
+   - **팔레트 추가 금지**: 새로운 임의 팔레트 추가 금지. MindGarden 테넌트의 나비/골드/수채화 스타일 플랫폼 크롬 침범 금지.
+2. **Pattern (장식 전면 배제)**:
+   - 장식용 기하학 패턴 배경, UI 크롬 이모지, 일러스트 SVG, 노이즈 그라데이션 일체 배제.
+   - UI 구조는 **1px 얇은 보더, 정교한 정렬, 그룹핑, 타이포그래피 위계, 4px 스페이싱 스케일**만으로 형성.
+3. **Contrast (WCAG 2.1 AA 엄수)**:
+   - 라이트와 다크 모드 양쪽 모두 **WCAG 2.1 AA** 준수.
+   - 상담 및 임상 운영용 플랫폼 특성상 라벨, 헬퍼 텍스트, 테이블 크롬, 비활성 텍스트, 플레이스홀더가 모두 명확히 읽혀야 함.
+4. **Still True (불변의 원칙)**:
+   - **Dense SaaS stays dense**: 정리 정돈(Tidy)은 데이터 컬럼이나 필드를 비우는(Emptying) 것이 아님. 기존 정보량 100% 유지.
+   - **Tokens First**: 화면별 one-off hex 하드코딩 paint job 전면 금지. 모든 스타일은 SSOT 토큰으로 수렴.
+   - **Default Commercial Look = Light**: 주간 상담실/오피스 환경에 최적화된 **라이트 모드가 메인 상용 룩**이며, 다크 모드는 Deep Slate 기반의 AA 완성도를 갖춤.
+
+---
 
 ### 1.1 배경 및 범위 정정 요약
 기존 다크 모드 및 이모지 중심의 부분 개선은 범위가 협소하여 제품 전반의 시각적 불일치와 하드코딩 누적 문제를 근본적으로 해결하지 못했습니다. 본 스펙은 제품 전체의 고품질 비주얼 언어(라이트 + 다크)를 일관된 **단일 진실 공급원(SSOT)** 토큰 체계로 통일하고, dense한 B2B SaaS의 정보 밀도를 유지하면서 정돈된(tidy) UI를 확립하는 설계 기준입니다.
@@ -27,24 +69,37 @@
 ```
 
 ### 1.2 플랫폼 브랜드 정체성 (Core Solution — sian 05 Secure Core)
-Core Solution은 신뢰성과 보안성을 제공하는 엔터프라이즈 B2B 플랫폼입니다.
+Core Solution은 신뢰성과 보안성을 제공하는 엔터프라이즈 B2B 상담 운영 SaaS 플랫폼입니다.
 - **핵심 브랜드 팔레트**:
   - **Slate**: `#0F172A` (Slate-900), `#1E293B` (Slate-800), `#334155` (Slate-700), `#475569` (Slate-600), `#64748B` (Slate-500), `#94A3B8` (Slate-400), `#CBD5E1` (Slate-300), `#E2E8F0` (Slate-200), `#F8FAFC` (Slate-50)
   - **Teal**: `#0D9488` (Teal-600), `#14B8A6` (Teal-500), `#2DD4BF` (Teal-400), `#5EEAD4` (Teal-300), `#CCFBF1` (Teal-100), `#F0FDFA` (Teal-50)
   - **Mint**: `#CCFBF1` (Mint-100), `#F0FDFA` (Mint-50)
+  - **Stone / Warm Neutral**: `#FAF9F7` (Warm Off-White Canvas), `#F5F3EF` (Warm Stone Surface), `#D4CFC8` (Stone Border)
 - **금지 원칙**:
-  1. **Cursor 로고 복제 금지**: 외부 제품 브랜드 아이콘/로고 직접 차용 금지.
+  1. **Cursor 개발자 툴 / 마케팅 히어로 복제 금지**: 외부 개발자 도구의 Near-black IDE 에디터 화면, 마케팅 랜딩 히어로 스타일 차용 금지.
   2. **MindGarden 테넌트 스타일로 플랫폼 재브랜딩 금지**: Calm Forest Olive (`#3D5246`), 나비, 수채화 일러스트, 골드 필기체 스크립트는 플랫폼 chrome/토큰에 사용하지 않음.
   3. **화면별 one-off paint job 금지**: 페이지별 개별 hex/rgb 선언 금지.
 
-### 1.3 High Quality Bar — "Cursor the Product (Dense yet Tidy)"
-- **목표 수준**: 수많은 파일 트리, 터미널, 에디터 패널, 복합 컨트롤이 공존하면서도 질서정연하게 정돈된 고밀도 전문가 도구 수준의 완성도.
+### 1.3 컴포지션 품질 기준 (Composition Quality Bar Only — NOT Cursor Developer IDE Clone)
+- **적용 의미**: Cursor는 오직 **컴포지션 품질 기준(Composition Quality Bar)**으로만 참조합니다.
+  - 수많은 테이블, 상세 차트, 검색 필터, 복합 액션 바가 공존하면서도 질서정연하게 정돈된 고밀도 전문가 도구 수준의 완성도.
+  - **Near-black IDE 화면이나 개발자 마케팅 히어로를 복제하는 것이 아님**.
+  - 본 제품은 **상담센터 전문 운영 OS (Clinic OS)**이며, **라이트 모드가 기본 상용 룩(Primary Commercial Look)**입니다.
 - **특징**:
-  - **One Type Scale**: 8단계 이내의 절제된 타이포그래피.
-  - **One Spacing Scale**: 4px 기반 리듬(`--mg-v2-space-*`).
+  - **One Type Scale**: 8단계 이내의 절제된 타이포그래피 (`--mg-v2-font-size-*`).
+  - **One Spacing Scale**: 4px 기반 리듬 (`--mg-v2-space-*`).
   - **One Accent (Teal)**: 집중이 필요한 단 하나의 주요 액션에만 절제하여 사용.
   - **Thin 1px Borders & Reduced Shadows**: 과도한 그림자/글래스모피즘 대신 1px 얇은 선으로 경계 구분.
   - **No Emoji in Chrome**: 텍스트 라벨과 1.5px/2px 스트로크 기하학 아이콘으로 표현.
+
+### 1.4 Teal & Mint 전용 사용 규칙표 (Teal & Mint Authority Matrix)
+
+Teal과 Mint는 시각적 오염을 방지하고 전문적인 임상 SaaS의 침착함을 유지하기 위해 엄격히 제한된 용도로만 사용합니다.
+
+| 색상 계열 | 토큰명 | 허용 용도 (Allowed Usage) | 엄격 금지 용도 (Strictly Forbidden) |
+|---|---|---|---|
+| **Teal (Primary CTA & Focus)** | `--mg-v2-color-primary-main`<br>`--mg-v2-color-border-focus`<br>`--mg-v2-color-state-focus-ring` | • 단일 주요 액션 버튼 (Primary Solid CTA)<br>• 인풋 폼 포커스 링 (3px glow) 및 포커스 보더<br>• LNB 좌측 사이드바 활성 메뉴 인디케이터 (3px 바)<br>• 본문 텍스트 링크 및 활성 탭 인디케이터 | • 대형 카드나 섹션 배경 전체를 Teal로 채우기<br>• 한 화면에 3개 이상의 Solid Teal 버튼 남발<br>• 비활성 UI나 장식 박스에 Teal 도배<br>• 테이블 헤더나 전체 캔버스 배경에 적용 |
+| **Mint (Rare Wash Only)** | `--mg-v2-color-primary-subtle`<br>`--mg-v2-color-accent-subtle` | • 상태 뱃지/칩의 은은한 배경 틴트 (10~15% wash)<br>• 선택된 행/항목의 초미세 하이라이트 배경<br>• 완료/성공 지표의 미세 서페이스 틴트 | • **Mint 배경 위에 큰 본문/헤드라인 텍스트 배치 (가독성 파괴)**<br>• 버튼 배경 전체를 Solid Mint로 채우기<br>• 섹션 블록이나 카드 본체 배경으로 넓게 깔기 |
 
 ---
 
@@ -137,39 +192,42 @@ Core Solution은 신뢰성과 보안성을 제공하는 엔터프라이즈 B2B �
 
 ## 5. 라이트 & 다크 컬러 토큰 및 WCAG 2.1 AA 대비 분석표 (Color Tokens & AA Matrix)
 
-모든 텍스트는 일반 텍스트 기준 **대비비 ≥ 4.5:1 (AA)**, 대형 텍스트 및 UI 테두리/아이콘 기준 **대비비 ≥ 3.0:1 (AA Non-text)**을 준수합니다.
+모든 텍스트는 일반 텍스트 기준 **대비비 ≥ 4.5:1 (AA)**, 대형 텍스트 및 UI 테두리/아이콘 기준 **대비비 ≥ 3.0:1 (AA Non-text)**을 준수합니다. 특히 임상 및 상담 전문 플랫폼 특성상 라벨, 헬퍼 텍스트, 테이블 크롬, 비활성 필드, 플레이스홀더가 흐릿하지 않고 선명하게 판독되어야 합니다.
 
 ```
-[라이트 모드 기준 배경]
-- Base Canvas BG: #FAF9F7 (Warm Canvas) / #F8FAFC (Slate-50)
-- Surface/Card BG: #FFFFFF (Pure White) / #F1F5F9 (Slate-100)
-- Raised/Modal BG: #FFFFFF
+[라이트 모드 기준 배경 (Clinic OS Warm Off-White / Stone)]
+- Base Canvas BG: #FAF9F7 (Warm Canvas)
+- Surface/Card BG: #FFFFFF (Crisp Card Surface) / #F5F3EF (Warm Stone Block Surface)
+- Raised/Modal BG: #FFFFFF (Crisp Raised)
+- Border Subtle/Default: #E2E8F0 / #D4CFC8 (Warm Stone Border)
 
-[다크 모드 기준 배경]
-- Base Canvas BG: #0F172A (Slate-900)
-- Surface/Card BG: #1E293B (Slate-800)
-- Raised/Modal BG: #334155 (Slate-700)
+[다크 모드 기준 배경 (Deep Slate — Pure Black/121212 지양)]
+- Base Canvas BG: #0F172A (Deep Slate-900 Canvas)
+- Surface/Card BG: #1E293B (Deep Slate-800 Surface)
+- Raised/Modal BG: #334155 (Slate-700 Raised)
+- Border Subtle/Default: #334155 / #475569 (Slate Border)
 ```
 
 ### 5.1 텍스트 및 전경색 토큰 (Text & Foreground Tokens)
 
-| 토큰명 (CSS Variable) | Light Hex (Role) | Light BG 대비비 | Dark Hex (Role) | Dark BG 대비비 | WCAG 기준 | 설계 설명 |
+| 토큰명 (CSS Variable) | Light Hex (Role) | Light BG 대비비 (Canvas/Stone) | Dark Hex (Role) | Dark BG 대비비 (Deep Slate) | WCAG 기준 | 설계 설명 (Clinic 가독성 보장) |
 |---|---|---|---|---|---|---|
-| `--mg-v2-color-text-primary` | `#0F172A` (Slate-900) | **16.2:1 (AAA)** on `#FAF9F7`<br>**18.1:1 (AAA)** on `#FFFFFF` | `#F8FAFC` (Slate-50) | **15.6:1 (AAA)** on `#0F172A`<br>**12.8:1 (AAA)** on `#1E293B` | AA (≥4.5:1) | 주요 제목, 본문 텍스트, 활성 메뉴 텍스트 |
-| `--mg-v2-color-text-secondary` | `#475569` (Slate-600) | **6.4:1 (AA)** on `#FAF9F7`<br>**7.0:1 (AAA)** on `#FFFFFF` | `#CBD5E1` (Slate-300) | **9.5:1 (AAA)** on `#0F172A`<br>**7.8:1 (AAA)** on `#1E293B` | AA (≥4.5:1) | 서브타이틀, 폼 라벨, 보조 설명 텍스트 |
-| `--mg-v2-color-text-tertiary` | `#64748B` (Slate-500) | **4.6:1 (AA)** on `#FAF9F7`<br>**4.9:1 (AA)** on `#FFFFFF` | `#94A3B8` (Slate-400) | **5.4:1 (AA)** on `#0F172A`<br>**4.5:1 (AA)** on `#1E293B` | AA (≥4.5:1) | 캡션, 타임스탬프, 메타데이터, 플레이스홀더 |
-| `--mg-v2-color-text-disabled` | `#94A3B8` (Slate-400) | **2.9:1 (Disabled)** on `#FAF9F7` | `#64748B` (Slate-500) | **3.1:1 (UI AA)** on `#0F172A` | AA Non-text | 비활성화 필드 및 비활성 버튼 텍스트 |
+| `--mg-v2-color-text-primary` | `#0F172A` (Slate-900) | **16.2:1 (AAA)** on `#FAF9F7`<br>**15.3:1 (AAA)** on `#F5F3EF`<br>**18.1:1 (AAA)** on `#FFFFFF` | `#F8FAFC` (Slate-50) | **15.6:1 (AAA)** on `#0F172A`<br>**12.8:1 (AAA)** on `#1E293B` | AA (≥4.5:1) | 주요 제목, 본문 텍스트, 활성 메뉴 텍스트 |
+| `--mg-v2-color-text-secondary` | `#475569` (Slate-600) | **6.4:1 (AA)** on `#FAF9F7`<br>**6.1:1 (AA)** on `#F5F3EF`<br>**7.0:1 (AAA)** on `#FFFFFF` | `#CBD5E1` (Slate-300) | **9.5:1 (AAA)** on `#0F172A`<br>**7.8:1 (AAA)** on `#1E293B` | AA (≥4.5:1) | 서브타이틀, **필수 폼 라벨**, 테이블 보조 텍스트 |
+| `--mg-v2-color-text-tertiary` | `#5C6B61` / `#64748B` (Slate-500) | **4.6:1 (AA)** on `#FAF9F7`<br>**4.5:1 (AA)** on `#F5F3EF`<br>**4.9:1 (AA)** on `#FFFFFF` | `#94A3B8` (Slate-400) | **5.4:1 (AA)** on `#0F172A`<br>**4.5:1 (AA)** on `#1E293B` | AA (≥4.5:1) | **인풋 헬퍼 텍스트**, 캡션, 타임스탬프, 메타데이터 |
+| `--mg-v2-color-text-disabled` | `#94A3B8` (Slate-400) | **3.0:1 (AA Non-text)** on `#FAF9F7` | `#64748B` (Slate-500) | **3.1:1 (AA Non-text)** on `#0F172A` | AA Non-text | 비활성화 필드 및 비활성 버튼 텍스트 (판독 가능) |
+| `--mg-v2-color-text-placeholder` | `#64748B` (Slate-500) | **4.6:1 (AA)** on `#FAF9F7`<br>**4.9:1 (AA)** on `#FFFFFF` | `#94A3B8` (Slate-400) | **5.4:1 (AA)** on `#0F172A` | AA (≥4.5:1) | 입력 필드 플레이스홀더 (흐릿하지 않고 선명함) |
 | `--mg-v2-color-text-link` | `#0D9488` (Teal-600) | **4.8:1 (AA)** on `#FAF9F7`<br>**5.3:1 (AA)** on `#FFFFFF` | `#2DD4BF` (Teal-400) | **9.6:1 (AAA)** on `#0F172A`<br>**7.9:1 (AAA)** on `#1E293B` | AA (≥4.5:1) | 본문 하이퍼링크, 활성 액션 텍스트 |
 | `--mg-v2-color-text-link-hover` | `#0F766E` (Teal-700) | **6.6:1 (AA)** on `#FAF9F7` | `#5EEAD4` (Teal-300) | **12.4:1 (AAA)** on `#0F172A` | AA (≥4.5:1) | 링크 마우스 호버 시 강조 |
-| `--mg-v2-color-text-inverse` | `#FFFFFF` | N/A (Dark UI 전용) | `#0F172A` | N/A (Light UI 전용) | AA (≥4.5:1) | 솔리드 버튼 및 뱃지 내부 텍스트 |
+| `--mg-v2-color-text-inverse` | `#FFFFFF` | N/A (Solid Dark/Teal UI 전용) | `#0F172A` | N/A (Mint Wash 전용) | AA (≥4.5:1) | 솔리드 버튼 및 뱃지 내부 텍스트 |
 
 ### 5.2 테두리 및 UI 구조 토큰 (Border & Structural Tokens)
 
 | 토큰명 (CSS Variable) | Light Hex | Light Surface 대비 | Dark Hex | Dark Surface 대비 | 목표 기준 | 설계 설명 |
 |---|---|---|---|---|---|---|
-| `--mg-v2-color-border-default` | `#E2E8F0` (Slate-200) | **1.25:1** (Subtle Card) | `#334155` (Slate-700) | **2.1:1** on `#1E293B` | UI Subtle | 기본 카드 외곽선, 테이블 헤더 구분선 |
-| `--mg-v2-color-border-subtle` | `#F1F5F9` (Slate-100) | **1.1:1** (Divider) | `#1E293B` (Slate-800) | **1.5:1** on `#0F172A` | UI Divider | 목록 간 디바이더, 테이블 행 구분선 |
-| `--mg-v2-color-border-strong` | `#CBD5E1` (Slate-300) | **3.1:1 (AA)** on `#FFFFFF` | `#475569` (Slate-600) | **3.2:1 (AA)** on `#0F172A` | AA Non-text (≥3.0:1) | 인풋 폼 테두리, 모달 외곽선, 독립 위젯 경계 |
+| `--mg-v2-color-border-default` | `#E2E8F0` / `#D4CFC8` (Stone Subtle) | **1.3:1** (Subtle Card) | `#334155` (Slate-700) | **2.1:1** on `#1E293B` | UI Subtle | 기본 카드 외곽선, 테이블 헤더 구분선 |
+| `--mg-v2-color-border-subtle` | `#F1F5F9` / `#EBE6DF` (Divider) | **1.15:1** (Divider) | `#1E293B` (Slate-800) | **1.5:1** on `#0F172A` | UI Divider | 목록 간 디바이더, 테이블 행 구분선 |
+| `--mg-v2-color-border-strong` | `#CBD5E1` / `#B8B2A8` (Stone Strong) | **3.1:1 (AA)** on `#FFFFFF` | `#475569` (Slate-600) | **3.2:1 (AA)** on `#0F172A` | AA Non-text (≥3.0:1) | **인풋 폼 테두리**, 모달 외곽선, 독립 위젯 경계 |
 | `--mg-v2-color-border-focus` | `#0D9488` (Teal-600) | **5.3:1 (AA)** on `#FFFFFF` | `#2DD4BF` (Teal-400) | **7.9:1 (AA)** on `#1E293B` | AA Non-text (≥3.0:1) | 폼 필드 포커스 링, 선택된 카드 테두리 |
 | `--mg-v2-color-state-focus-ring` | `rgba(13, 148, 136, 0.25)` | Focus Indicator | `rgba(45, 212, 191, 0.35)` | Focus Indicator | A11y Focus | 키보드 내비게이션 포커스 링 (3px glow) |
 
@@ -177,11 +235,11 @@ Core Solution은 신뢰성과 보안성을 제공하는 엔터프라이즈 B2B �
 
 | 토큰명 (CSS Variable) | Light Hex / 값 | Dark Hex / 값 | 시각적 위계 (Elevation Layer) |
 |---|---|---|---|
-| `--mg-v2-color-surface-bg` | `#FAF9F7` (Warm Canvas) | `#0F172A` (Slate-900 Canvas) | 가장 바닥면 전체 캔버스 배경 (L0) |
-| `--mg-v2-color-surface-card` | `#FFFFFF` (Pure White) | `#1E293B` (Slate-800 Surface) | 기본 컨텐츠 카드, 섹션 블록, 테이블 컨테이너 (L1) |
+| `--mg-v2-color-surface-bg` | `#FAF9F7` (Warm Off-White Canvas) | `#0F172A` (Deep Slate-900 Canvas) | 가장 바닥면 전체 캔버스 배경 (L0) |
+| `--mg-v2-color-surface-card` | `#FFFFFF` (Crisp White) / `#F5F3EF` (Warm Stone) | `#1E293B` (Deep Slate-800 Surface) | 기본 컨텐츠 카드, 섹션 블록, 테이블 컨테이너 (L1) |
 | `--mg-v2-color-surface-raised` | `#FFFFFF` | `#334155` (Slate-700 Raised) | 툴팁, 팝오버, 드롭다운 메뉴, 플로팅 바 (L2) |
-| `--mg-v2-color-surface-overlay` | `#FFFFFF` | `#1E293B` (Slate-800 Overlay) | 모달 대화상자 본체 (L3) |
-| `--mg-v2-color-surface-sidebar` | `#0F172A` (Dark Slate) | `#0F172A` (Dark Slate) | LNB 좌측 사이드바 (Light/Dark 공통 다크 셸) |
+| `--mg-v2-color-surface-overlay` | `#FFFFFF` | `#1E293B` (Deep Slate-800 Overlay) | 모달 대화상자 본체 (L3) |
+| `--mg-v2-color-surface-sidebar` | `#0F172A` (Deep Dark Slate) | `#0F172A` (Deep Dark Slate) | LNB 좌측 사이드바 (Light/Dark 공통 다크 셸) |
 | `--mg-v2-color-surface-hover` | `rgba(15, 23, 42, 0.04)` | `rgba(248, 250, 252, 0.06)` | 테이블 행 및 리스트 아이템 마우스 호버 |
 | `--mg-v2-color-surface-active` | `rgba(15, 23, 42, 0.08)` | `rgba(248, 250, 252, 0.12)` | 버튼 및 메뉴 아이템 클릭/선택 상태 |
 
@@ -194,18 +252,18 @@ Core Solution은 신뢰성과 보안성을 제공하는 엔터프라이즈 B2B �
      - Card: `box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05);` (`--mg-v2-shadow-sm`)
      - Dropdown/Popover: `box-shadow: 0 4px 12px 0 rgba(15, 23, 42, 0.08);` (`--mg-v2-shadow-md`)
      - Modal: `box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15);` (`--mg-v2-shadow-lg`)
-   - **다크 모드**: **모든 그림자 전면 제거 (`box-shadow: none;`)**. 그림자 대신 1px의 테두리 밝기 차이(Border Elevation)로 계층을 구분합니다.
+   - **다크 모드**: **모든 그림자 전면 제거 (`box-shadow: none;`)**. 그림자 대신 1px의 테두리 밝기 차이(Border Elevation: `#334155`, `#475569`)로 계층을 구분합니다.
 3. **중첩 카드 증후군(Nested Cards) 방지**:
    - 카드 안에 또 다른 카드를 3~4겹 중첩하는 패턴 금지.
    - 섹션 컨테이너 내부의 데이터 그룹핑은 중첩 카드가 아닌 **1px 디바이더(`--mg-v2-color-border-subtle`)** 또는 **미세 배경 틴트(`--mg-v2-color-surface-bg`)** 구역으로 구분합니다.
 
 ---
 
-## 6. 상태색 (Semantic Status Tokens) — 절제된 피드백 체계
+## 6. 상태색 (Semantic Status Tokens) — 절제된 피드백 체계 (Muted Semantic with AA)
 
-크롬 영역에 불필요한 무지개빛(Rainbow Chrome)을 남발하지 않고, 기능적 피드백이 필요한 상태에만 절제된 팔레트를 사용합니다.
+크롬 영역에 불필요한 무지개빛(Rainbow Chrome)을 남발하지 않고, 기능적 피드백이 필요한 상태에만 절제된 뮤트 톤 팔레트를 사용합니다.
 
-| 상태 (Semantic) | 역할 (Role) | Light Text / Icon | Light BG (Tint) | Dark Text / Icon | Dark BG (Tint) | AA 판정 (Text/BG) |
+| 상태 (Semantic) | 역할 (Role) | Light Text / Icon | Light BG (Muted Tint) | Dark Text / Icon | Dark BG (Muted Tint) | AA 판정 (Text/BG) |
 |---|---|---|---|---|---|---|
 | **Success** | 완료, 정상, 승인 | `#059669` (Emerald-600) | `#ECFDF5` (Emerald-50) | `#34D399` (Emerald-400) | `#064E3B` (Emerald-900/30%) | **6.1:1 / 8.2:1 (PASS)** |
 | **Warning** | 대기, 주의, 미입금 | `#D97706` (Amber-600) | `#FFFBEB` (Amber-50) | `#FBBF24` (Amber-400) | `#78350F` (Amber-900/30%) | **5.2:1 / 7.4:1 (PASS)** |
@@ -305,21 +363,21 @@ Core Solution은 대량의 상담 일정, 결제 내역, 내담자 차트, 통�
 
 `core-coder`가 코드 수정 시 기계적으로 치환할 수 있는 종합 사전입니다.
 
-| 기존 레거시 토큰 / 리터럴 | New SSOT 토큰명 (Light & Dark 공통) | Light 모드 적용값 | Dark 모드 적용값 | 용도 |
+| 기존 레거시 토큰 / 리터럴 | New SSOT 토큰명 (Light & Dark 공통) | Light 모드 적용값 (Clinic Stone) | Dark 모드 적용값 (Deep Slate) | 용도 |
 |---|---|---|---|---|
-| `--color-primary` / `--mg-primary-500` | `--mg-v2-color-primary-main` | `#0D9488` (Teal-600) | `#2DD4BF` (Teal-400) | 주요 브랜드 액션, 링크 |
+| `--color-primary` / `--mg-primary-500` | `--mg-v2-color-primary-main` | `#0D9488` (Teal-600) | `#2DD4BF` (Teal-400) | 주요 브랜드 단일 CTA 액션, 링크 |
 | `--color-primary-hover` | `--mg-v2-color-primary-hover` | `#0F766E` (Teal-700) | `#5EEAD4` (Teal-300) | Primary 호버 |
-| `--color-bg-primary` / `--mg-white` / `#faf9f7` | `--mg-v2-color-surface-bg` | `#FAF9F7` | `#0F172A` | 페이지 기본 배경 (Canvas) |
-| `--color-bg-secondary` / `--mg-bg-card` / `#ffffff` | `--mg-v2-color-surface-card` | `#FFFFFF` | `#1E293B` | 카드, 섹션 블록, 테이블 |
-| `--color-bg-tertiary` / `#f1f5f9` | `--mg-v2-color-surface-raised` | `#FFFFFF` / `#F8FAFC` | `#334155` | 드롭다운, 팝오버, 툴바 |
-| `--color-text-primary` / `#2c2c2c` / `#0f172a` | `--mg-v2-color-text-primary` | `#0F172A` | `#F8FAFC` | 본문 텍스트, 제목 |
-| `--color-text-secondary` / `#5c6b61` / `#475569` | `--mg-v2-color-text-secondary` | `#475569` | `#CBD5E1` | 서브타이틀, 폼 라벨 |
-| `--color-text-tertiary` / `#9c958c` / `#94a3b8` | `--mg-v2-color-text-tertiary` | `#64748B` | `#94A3B8` | 캡션, 메타데이터, 힌트 |
+| `--color-bg-primary` / `--mg-white` / `#faf9f7` | `--mg-v2-color-surface-bg` | `#FAF9F7` (Warm Off-White) | `#0F172A` (Deep Slate-900) | 페이지 기본 배경 (Canvas) |
+| `--color-bg-secondary` / `--mg-bg-card` / `#ffffff` | `--mg-v2-color-surface-card` | `#FFFFFF` / `#F5F3EF` (Stone) | `#1E293B` (Deep Slate-800) | 카드, 섹션 블록, 테이블 컨테이너 |
+| `--color-bg-tertiary` / `#f1f5f9` | `--mg-v2-color-surface-raised` | `#FFFFFF` | `#334155` (Slate-700 Raised) | 드롭다운, 팝오버, 툴바 레이어 |
+| `--color-text-primary` / `#2c2c2c` / `#0f172a` | `--mg-v2-color-text-primary` | `#0F172A` (Slate-900) | `#F8FAFC` (Slate-50) | 본문 텍스트, 제목 |
+| `--color-text-secondary` / `#5c6b61` / `#475569` | `--mg-v2-color-text-secondary` | `#475569` (Slate-600) | `#CBD5E1` (Slate-300) | 서브타이틀, 폼 라벨 (필수 가독) |
+| `--color-text-tertiary` / `#9c958c` / `#94a3b8` | `--mg-v2-color-text-tertiary` | `#5C6B61` / `#64748B` | `#94A3B8` (Slate-400) | 캡션, 메타데이터, 헬퍼 텍스트 |
 | `--color-text-muted` / `#7a7a7a` | `--mg-v2-color-text-tertiary` | `#64748B` | `#94A3B8` | 보조 안내 텍스트 |
-| `--color-border-primary` / `#e2e8f0` / `#334155` | `--mg-v2-color-border-default` | `#E2E8F0` | `#334155` | 기본 테두리 |
-| `--color-border-secondary` / `#cbd5e1` / `#475569` | `--mg-v2-color-border-strong` | `#CBD5E1` | `#475569` | 인풋 테두리, 모달 테두리 |
-| `--ad-b0kla-card-bg` | `--mg-v2-color-surface-card` | `#FFFFFF` | `#1E293B` | 어드민 B0KlA 카드 배경 |
-| `--ad-b0kla-border` | `--mg-v2-color-border-default` | `#E2E8F0` | `#334155` | 어드민 B0KlA 테두리 |
+| `--color-border-primary` / `#e2e8f0` / `#334155` | `--mg-v2-color-border-default` | `#E2E8F0` / `#D4CFC8` | `#334155` (Slate-700) | 기본 외곽선 및 디바이더 |
+| `--color-border-secondary` / `#cbd5e1` / `#475569` | `--mg-v2-color-border-strong` | `#CBD5E1` / `#B8B2A8` | `#475569` (Slate-600) | 인풋 테두리, 모달 외곽선 |
+| `--ad-b0kla-card-bg` | `--mg-v2-color-surface-card` | `#FFFFFF` / `#F5F3EF` | `#1E293B` | 어드민 B0KlA 카드 배경 |
+| `--ad-b0kla-border` | `--mg-v2-color-border-default` | `#E2E8F0` / `#D4CFC8` | `#334155` | 어드민 B0KlA 테두리 |
 | `--ad-b0kla-title-color` | `--mg-v2-color-text-primary` | `#0F172A` | `#F8FAFC` | 어드민 B0KlA 타이틀 |
 | `--ad-b0kla-subtitle-color` | `--mg-v2-color-text-secondary` | `#475569` | `#CBD5E1` | 어드민 B0KlA 서브타이틀 |
 
@@ -329,7 +387,7 @@ Core Solution은 대량의 상담 일정, 결제 내역, 내담자 차트, 통�
 
 ### 11.1 AdminCommonLayout / DesktopLayout / MobileLayout
 - **골격 구조 유지**: GNB(64px) + LNB(260px) + Main Content 계층 보존.
-- **배경 토큰**: `.mg-v2-desktop-layout` → `background-color: var(--mg-v2-color-surface-bg)`.
+- **배경 토큰**: `.mg-v2-desktop-layout` → `background-color: var(--mg-v2-color-surface-bg)` (`#FAF9F7` / `#0F172A`).
 - **스크롤 컨테이너**: `.mg-v2-desktop-layout__main`에 단일 스크롤 적용, 여백은 상하 `--mg-v2-space-6`, 좌우 `--mg-v2-space-8` 통일.
 
 ### 11.2 ContentHeader
@@ -384,17 +442,18 @@ Core Solution은 대량의 상담 일정, 결제 내역, 내담자 차트, 통�
 ## 12. 핸드오프 및 검증 게이트 (Handoff & Verification Gate)
 
 ### 12.1 core-coder 이행 체크리스트
-- [ ] 1. `design-v2-tokens.css` 본체에 Light/Dark Slate/Teal/Mint 및 타이포/스페이싱 SSOT 통합.
+- [ ] 1. `design-v2-tokens.css` 본체에 Light (Warm Off-White/Stone) / Dark (Deep Slate `#0F172A`) 및 Slate/Teal/Mint SSOT 통합.
 - [ ] 2. `unified-design-tokens.css`, `dashboard-tokens-extension.css` 등 하위 파일에서 SSOT 변수 참조 연결.
-- [ ] 3. chrome/layout 전반의 하드코딩된 hex/rgb/px를 SSOT 토큰으로 100% 치환.
+- [ ] 3. chrome/layout 전반의 하드코딩된 hex/rgb/px를 SSOT 토큰으로 100% 치환 (화면별 one-off paint job 금지).
 - [ ] 4. 중복 선언된 local CSS 및 무의미한 다크 오버라이드 삭제.
 - [ ] 5. 컴포넌트 내 UI 이모지를 Lucide Stroke 아이콘 또는 텍스트 라벨로 교체.
 - [ ] 6. 장식용 수채화/나비 일러스트 제거 확인 및 LoginHero Core Solution 락업/패스드로우 유지.
 - [ ] 7. 정보 밀도(Dense SaaS) 훼손 없이 모든 데이터 컬럼과 컨트롤 보존.
+- [ ] 8. Teal은 주요 CTA/포커스에만 사용하고, Mint는 희귀 워시(Rare Wash)로만 제한 적용 확인.
 
 ### 12.2 core-tester 검증 항목
 - [ ] 1. **Light / Dark 전환 스모크**: 로그인, 대시보드, 폼, 테이블, 설정 화면이 깜빡임이나 깨짐 없이 즉시 반응하는가?
-- [ ] 2. **WCAG 2.1 AA 대비비 검증**: 텍스트(≥4.5:1), 테두리(≥3.0:1)가 Light와 Dark 모두에서 통과하는가?
+- [ ] 2. **WCAG 2.1 AA 대비비 검증**: 라벨, 헬퍼 텍스트, 테이블 크롬, 비활성, 플레이스홀더를 포함한 모든 텍스트(≥4.5:1), 테두리(≥3.0:1)가 Light(Warm Stone)와 Dark(Deep Slate) 모두에서 통과하는가?
 - [ ] 3. **정보 밀도 보존 확인**: 기존 필드나 컬럼이 레이아웃 정리 과정에서 삭제되지 않았는가?
 - [ ] 4. **이모지 잔존 여부**: 주요 대면 UI(로그인, 테이블, 뱃지, 토스트)에 잔여 이모지가 없는가?
-- [ ] 5. **브랜드 정체성 정합**: MindGarden 올리브/수채화가 아닌 Core Solution Slate/Teal 언어로 렌더링되는가?
+- [ ] 5. **브랜드 정체성 정합**: MindGarden 올리브/수채화 또는 Cursor Near-black IDE 복제가 아닌, Core Solution Slate/Teal Clinic OS 언어로 렌더링되는가?

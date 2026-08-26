@@ -38,6 +38,29 @@ export function stripDisplayEmoji(text) {
   return text.replace(EMOJI_DISPLAY_PATTERN, '');
 }
 
+/**
+ * 모든 HTML 태그를 제거한다 (DOM 미사용 fallback).
+ * 단일 패스 `/&lt;[^&gt;]*&gt;/g` 는 중첩·깨진 태그(예: scr+script 재구성)를
+ * 남길 수 있으므로, 결과가 안정될 때까지 반복 제거한다.
+ * 남은 `&lt;`/`&gt;` 는 추가 제거해 재구성 XSS 를 막는다.
+ *
+ * @param {string} text 원본 문자열
+ * @returns {string} 태그가 제거된 평문
+ */
+export function stripAllHtmlTags(text) {
+  if (typeof text !== 'string' || text.length === 0) {
+    return '';
+  }
+  let previous;
+  let current = text;
+  do {
+    previous = current;
+    current = current.replace(/<[^>]*>/g, '');
+  } while (current !== previous);
+  // 깨진 태그 잔여물로 재구성되지 않도록 남은 꺾쇠도 제거
+  return current.replace(/[<>]/g, '');
+}
+
 function sanitizeElement(element) {
   if (!element) {
     return;
@@ -89,7 +112,7 @@ export function sanitizeHealingHtml(html) {
     return '';
   }
   if (typeof window === 'undefined' || typeof window.document === 'undefined') {
-    return stripDisplayEmoji(html.replace(/<[^>]*>/g, ''));
+    return stripDisplayEmoji(stripAllHtmlTags(html));
   }
   try {
     const wrapper = window.document.createElement('div');
@@ -97,6 +120,6 @@ export function sanitizeHealingHtml(html) {
     sanitizeElement(wrapper);
     return stripDisplayEmoji(wrapper.innerHTML);
   } catch (_) {
-    return stripDisplayEmoji(html.replace(/<[^>]*>/g, ''));
+    return stripDisplayEmoji(stripAllHtmlTags(html));
   }
 }

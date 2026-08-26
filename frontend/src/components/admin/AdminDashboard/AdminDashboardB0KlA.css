@@ -32,7 +32,9 @@
 .mg-v2-ad-b0kla .mg-v2-button-outline {
   background: transparent;
   color: var(--ad-b0kla-green);
-  border: 2px solid var(--ad-b0kla-green);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--ad-b0kla-green);
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-outline:hover:not(:disabled) {

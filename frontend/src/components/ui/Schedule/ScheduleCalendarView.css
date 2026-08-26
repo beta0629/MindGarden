@@ -34,7 +34,7 @@
     color: inherit !important;
 }
 
-/* 새 이벤트 배지 디자인 */
+/* 주간/일간 풀 카드 — 텍스트 클리핑 방지 (토큰 min-height, overflow visible) */
 .mg-v2-ad-calendar-event {
     position: relative;
     display: flex;
@@ -42,14 +42,21 @@
     background-color: var(--cs-brown-50);
     border-radius: 6px;
     border: 1px solid var(--cs-brown-300);
-    border-left-width: 4px;
+    border-left-width: 1px;
     border-left-style: solid;
-    padding: 6px 8px;
-    overflow: hidden;
+    padding: var(--mg-v2-space-2, var(--mg-spacing-sm, 8px)) var(--mg-v2-space-3, 0.75rem);
+    overflow: visible;
     transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
-    min-height: 48px;
+    min-height: var(--mg-v2-space-16, 4rem);
+    height: auto;
     box-sizing: border-box;
+    gap: var(--mg-v2-space-1, 0.25rem);
+}
+
+/* 월간 컴팩트는 좌측 악센트 유지 */
+.mg-v2-ad-calendar-event--compact {
+    border-left-width: 4px;
 }
 
 .mg-v2-ad-calendar-event:hover {
@@ -76,10 +83,12 @@
     box-shadow: var(--cs-shadow-sm-multi);
 }
 
-/* 취소된 예약: 별도 표기 (일반/완료와 시각적 구분) */
+/* 취소된 예약: 상태 텍스트로 구분 — 풀 카드 좌측 레일 제거, 컴팩트만 유지 */
 .mg-v2-ad-calendar-event--cancelled {
-    border-left-color: var(--mg-error-500) !important;
     background-color: var(--mg-color-surface-sub);
+}
+.mg-v2-ad-calendar-event--cancelled.mg-v2-ad-calendar-event--compact {
+    border-left-color: var(--mg-error-500) !important;
 }
 .mg-v2-ad-calendar-event--cancelled .mg-v2-ad-calendar-event__client {
     text-decoration: line-through;

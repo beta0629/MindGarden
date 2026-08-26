@@ -1829,14 +1829,21 @@
   background-color: var(--mg-gray-50);
   border: 1px solid var(--mg-gray-300);
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-3, 0.75rem);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--mg-v2-space-1, 0.25rem);
   box-shadow: var(--cs-shadow-xs);
-  overflow: hidden;
-  height: 100%;
+  overflow: visible;
+  min-height: var(--mg-v2-space-16, 4rem);
+  height: auto;
   box-sizing: border-box;
+}
+
+.mg-v2-ad-calendar-event--compact {
+  overflow: hidden;
+  min-height: auto;
+  height: auto;
 }
 
 .mg-v2-ad-calendar-event__time {

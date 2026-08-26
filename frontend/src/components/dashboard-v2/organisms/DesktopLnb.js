@@ -8,7 +8,7 @@
  *   - 1차: 단독(대시보드/통합 스케줄/사용자 관리) + 그룹 — designer §2/§3 정합
  *   - 활성 항목 좌측 4px accent bar (`--mg-color-primary-500`) — CSS pseudo-element
  *   - ARIA: role="navigation" + aria-expanded(그룹) + aria-current=page(react-router NavLink 자동)
- *   - 그룹 토글 키보드: Enter/Space (MGButton 기본 지원)
+ *   - 그룹 토글: 네이티브 button (Enter/Space 기본 지원) — MGButton chrome 미사용
  *   - React key: menuCode 또는 label::to (동일 path 숏컷·그룹 병존 시 충돌 방지)
  *
  * @author CoreSolution
@@ -21,8 +21,6 @@ import { NavLinkWithRouter } from '../atoms';
 import Icon from '../../ui/Icon/Icon';
 import { LnbMenuItem } from '../molecules';
 import SafeText from '../../common/SafeText';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import './DesktopLnb.css';
 
@@ -47,6 +45,19 @@ const getInitialExpandedKey = (items, pathname) => {
         ))
   );
   return group ? getLnbItemKey(group) : null;
+};
+
+/** 그룹 본인 또는 하위가 현재 경로면 그룹 헤드 활성 */
+const isGroupPathActive = (item, pathname) => {
+  if (!item) {
+    return false;
+  }
+  if (pathname === item.to || pathname.startsWith(`${item.to}/`)) {
+    return true;
+  }
+  return (item.children || []).some(
+    (sub) => pathname === sub.to || pathname.startsWith(`${sub.to}/`)
+  );
 };
 
 const sublistId = (prefix, itemKey) =>
@@ -78,22 +89,13 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
             return hasChildren(item) ? (
               <li
                 key={itemKey}
-                className={`mg-v2-desktop-lnb__group ${expandedGroupKey === itemKey ? 'mg-v2-desktop-lnb__group--expanded' : ''}`}
+                className={`mg-v2-desktop-lnb__group ${expandedGroupKey === itemKey ? 'mg-v2-desktop-lnb__group--expanded' : ''} ${isGroupPathActive(item, pathname) ? 'mg-v2-desktop-lnb__group--active' : ''}`}
               >
                 <div className="mg-v2-desktop-lnb__group-head">
-                  <MGButton
+                  <button
                     type="button"
-                    variant="outline"
-                    size="small"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'sm',
-                      loading: false,
-                      className: 'mg-v2-desktop-lnb__group-chevron'
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    className="mg-v2-desktop-lnb__group-chevron"
                     onClick={(e) => handleGroupToggle(e, itemKey)}
-                    preventDoubleClick={false}
                     aria-expanded={expandedGroupKey === itemKey}
                     aria-controls={sublistId('mg-v2-desktop-lnb', itemKey)}
                     aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === itemKey ? '접기' : '펼치기'}`}
@@ -103,7 +105,7 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                     ) : (
                       <Icon name="CHEVRON_RIGHT" size="MD" color="TRANSPARENT" aria-hidden />
                     )}
-                  </MGButton>
+                  </button>
                   <NavLinkWithRouter
                     to={item.to}
                     icon={item.icon}

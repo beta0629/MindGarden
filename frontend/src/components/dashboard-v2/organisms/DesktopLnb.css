@@ -48,60 +48,89 @@
   padding: 0;
 }
 
-/* 그룹 메인 행: div + chevron 버튼 + NavLink (li 아님, HTML 유효성 준수) */
+/* 그룹 메인 행: chevron + NavLink 를 한 행 표면으로 (대시보드와 정렬) */
 .mg-v2-desktop-lnb__group-head {
+  position: relative;
   margin: 0;
   padding: 0;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
+  min-height: 44px;
+  border-radius: 10px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mg-v2-desktop-lnb__group-head:hover {
+  background: var(--mg-color-surface-hover, var(--mg-v2-color-surface-hover));
+}
+
+.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head {
+  background: var(--mg-layout-sidebar-active-bg, var(--mg-v2-color-state-active));
+  color: var(--mg-v2-color-text-on-sidebar-active, var(--mg-v2-color-text-primary));
+}
+
+.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--mg-color-primary-500, var(--mg-v2-color-text-link));
+  z-index: 1;
 }
 
 .mg-v2-desktop-lnb__group-chevron {
   flex-shrink: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
+  margin-left: var(--mg-spacing-sm, 8px);
   padding: 0;
-  background: transparent;
+  background: none;
   border: none;
-  border-radius: 6px;
+  border-radius: 0;
+  box-shadow: none;
   color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
-  transition: color 0.2s, background 0.2s;
+  transition: color 0.2s;
 }
 
-.mg-v2-desktop-lnb__group-chevron:hover {
-  color: var(--mg-white);
-  background: var(--mg-color-surface-hover);
+.mg-v2-desktop-lnb__group-chevron:hover,
+.mg-v2-desktop-lnb__group-chevron:focus-visible {
+  color: var(--mg-white, var(--mg-v2-color-text-on-sidebar-active));
+  background: none;
+  outline: none;
 }
 
-.mg-v2-desktop-lnb__group-chevron.mg-button.mg-button--outline {
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+.mg-v2-desktop-lnb__group-chevron:focus-visible {
+  box-shadow: 0 0 0 2px var(--mg-color-primary-300);
 }
 
-.mg-v2-desktop-lnb__group-chevron.mg-button {
-  min-height: unset;
-  box-shadow: none;
+.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-chevron {
+  color: var(--mg-v2-color-text-on-sidebar-active, var(--mg-v2-color-text-primary));
 }
 
-.mg-v2-desktop-lnb__group-chevron.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: none;
-}
-
-.mg-v2-desktop-lnb__group-chevron .mg-button__content,
-.mg-v2-desktop-lnb__group-chevron .mg-button__text {
-  display: contents;
-}
-
+/* 그룹 헤드 내부 NavLink — 행 전체가 활성/호버 표면이므로 자체 배경·액센트 제거 */
 .mg-v2-desktop-lnb__group-head .mg-v2-nav-link {
   flex: 1;
   font-weight: 600;
   font-size: 13px;
+  background: transparent;
+  min-width: 0;
+}
+
+.mg-v2-desktop-lnb__group-head .mg-v2-nav-link:hover,
+.mg-v2-desktop-lnb__group-head .mg-v2-nav-link.mg-v2-nav-link--active {
+  background: transparent;
+}
+
+.mg-v2-desktop-lnb__group-head .mg-v2-nav-link--active::before {
+  display: none;
 }
 
 /* 아코디언: 접힌 상태에서는 서브리스트 비노출 */

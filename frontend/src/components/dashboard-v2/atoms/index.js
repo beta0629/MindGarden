@@ -10,3 +10,4 @@ export { default as SearchInput, PLACEHOLDER as SEARCH_PLACEHOLDER } from './Sea
 export { default as NotificationBadge } from './NotificationBadge';
 export { default as ProfileAvatar } from './ProfileAvatar';
 export { default as KpiSparkline } from './KpiSparkline';
+export { default as KpiNumeral } from './KpiNumeral';

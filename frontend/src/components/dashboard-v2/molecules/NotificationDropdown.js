@@ -298,7 +298,7 @@ const NotificationDropdown = () => {
     return (
       <li key={item.id}>
         <HeaderMenuRow
-          role={null}
+          omitRole
           className={`mg-v2-notification-item ${isUnread ? 'mg-v2-notification-item--unread' : ''}`}
           onClick={onClick}
           onKeyDown={(event) => handleNotificationItemKeyDown(event, item, type)}

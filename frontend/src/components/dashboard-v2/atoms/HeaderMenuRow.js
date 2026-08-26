@@ -18,6 +18,7 @@ const HEADER_MENU_ROW_BASE = 'mg-v2-header-menu-row';
  * @param {React.ReactNode} props.children
  * @param {boolean} [props.danger]
  * @param {string|null} [props.role] — 기본 menuitem; null이면 role 미설정
+ * @param {boolean} [props.omitRole] — true이면 role attribute를 DOM에 넣지 않음 (리스트 내 button 등)
  * @param {string} [props.className]
  * @param {boolean} [props.disabled]
  */
@@ -26,6 +27,7 @@ const HeaderMenuRow = ({
   children,
   danger = false,
   role = 'menuitem',
+  omitRole = false,
   className = '',
   disabled = false,
   ...rest
@@ -38,7 +40,8 @@ const HeaderMenuRow = ({
     .filter(Boolean)
     .join(' ');
 
-  const roleProps = role == null ? {} : { role };
+  // null/undefined 또는 omitRole — role attribute를 DOM에 넣지 않음 (jsx-a11y/aria-role 회피)
+  const roleProps = omitRole || role == null ? {} : { role };
 
   return (
     <button
@@ -59,6 +62,7 @@ HeaderMenuRow.propTypes = {
   children: PropTypes.node.isRequired,
   danger: PropTypes.bool,
   role: PropTypes.oneOfType([PropTypes.string, PropTypes.oneOf([null])]),
+  omitRole: PropTypes.bool,
   className: PropTypes.string,
   disabled: PropTypes.bool
 };

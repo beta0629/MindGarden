@@ -195,7 +195,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                         </div>
                         {consultation.clientName && (
                           <div className="consultation-client">
-                            <span className="consultation-icon">👥</span>
+                          <span className="consultation-icon" aria-hidden="true"></span>
                             {consultation.clientName}
                           </div>
                         )}

@@ -88,7 +88,7 @@ Icon.propTypes = { /** 아이콘 이름 (ICONS 객체의 키) */
   size: PropTypes.oneOf(['XS', 'SM', 'MD', 'LG', 'XL', 'XXL', 'XXXL', 'HUGE']),
   
   /** 아이콘 색상 */
-  color: PropTypes.oneOf(['PRIMARY', 'SECONDARY', 'SUCCESS', 'WARNING', 'ERROR', 'INFO', 'MUTED', 'TRANSPARENT']),
+  color: PropTypes.oneOf(['PRIMARY', 'SECONDARY', 'SUCCESS', 'WARNING', 'ERROR', 'INFO', 'MUTED', 'TRANSPARENT', 'INHERIT']),
   
   /** 사용자 역할 (테마 적용) */
   userRole: PropTypes.oneOf([USER_ROLES.CLIENT, USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]),

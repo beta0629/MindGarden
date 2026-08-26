@@ -129,7 +129,9 @@ jest.mock('../../common/BadgeSelect', () => ({
 
 jest.mock('../../common/Avatar', () => ({
   __esModule: true,
-  default: ({ className }) => <div data-testid="avatar-mock" className={className} />
+  default: ({ className }) => (
+    <div data-testid="avatar-mock" className={`mg-v2-avatar ${className || ''}`.trim()} />
+  )
 }));
 
 jest.mock('../../common/SafeText', () => ({
@@ -680,12 +682,16 @@ describe('MappingCreationModal — person picker cards', () => {
     expect(card.tagName).toBe('BUTTON');
     expect(card.className).not.toMatch(/mg-button/);
     expect(card).toHaveAttribute('aria-pressed', 'false');
-    expect(card.querySelector('.mg-v2-mapping-creation-modal__avatar')).toBeTruthy();
+    const avatar = card.querySelector('.mg-v2-mapping-creation-modal__avatar');
+    expect(avatar).toBeTruthy();
+    expect(avatar.classList.contains('mg-v2-avatar')).toBe(true);
     expect(card.querySelector('.mg-v2-mapping-creation-modal__card-info')).toBeTruthy();
 
     fireEvent.click(card);
     expect(card).toHaveAttribute('aria-pressed', 'true');
     expect(card.classList.contains('mg-v2-mapping-creation-modal__card--selected')).toBe(true);
+    // selected 시에도 동일 카드 클래스 — padding calc 축소 클래스 없음
+    expect(card.className).not.toMatch(/flush|compact|tight/);
   });
 
   it('내담자 카드도 native selectable 구조를 유지한다', async() => {

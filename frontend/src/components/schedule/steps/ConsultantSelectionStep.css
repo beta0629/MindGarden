@@ -178,11 +178,17 @@
 /* mg-consultant-cards-grid--schedule-select (스케줄 모달 B0KlA용) */
 .mg-consultant-cards-grid--schedule-select {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--spacing-md, 1rem);
   flex: 1;
   min-height: 0;
   width: 100%;
+}
+
+@media (max-width: 767px) {
+  .mg-consultant-cards-grid--schedule-select {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* mg-consultant-card--schedule-select (48px 아바타, 전문분야 1줄, 선택하기/상세보기) */

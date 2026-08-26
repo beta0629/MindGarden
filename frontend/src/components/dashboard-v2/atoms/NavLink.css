@@ -2,6 +2,7 @@
  * NavLink - 아이콘+텍스트 메뉴 링크
  * RESPONSIVE_LAYOUT_SPEC: LNB 메뉴 항목 44px 높이
  * Hover/Active: on-fill / text-on-primary only (never slate text-primary on dark fill)
+ * Icon color="INHERIT" → currentColor; SVG stroke follows parent color
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -33,8 +34,11 @@
 }
 
 .mg-v2-nav-link:hover .mg-v2-nav-link__icon,
-.mg-v2-nav-link:hover .mg-v2-nav-link__text {
+.mg-v2-nav-link:hover .mg-v2-nav-link__text,
+.mg-v2-nav-link:hover .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-nav-link:hover .mg-v2-nav-link__icon svg {
   color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+  stroke: currentColor;
 }
 
 /*
@@ -48,8 +52,11 @@
 }
 
 .mg-v2-nav-link--active .mg-v2-nav-link__icon,
-.mg-v2-nav-link--active .mg-v2-nav-link__text {
+.mg-v2-nav-link--active .mg-v2-nav-link__text,
+.mg-v2-nav-link--active .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-nav-link--active .mg-v2-nav-link__icon svg {
   color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+  stroke: currentColor;
 }
 
 .mg-v2-nav-link--active::before {
@@ -74,11 +81,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: inherit;
+}
+
+.mg-v2-nav-link__icon .mg-v2-icon {
+  background-color: transparent;
+  color: inherit;
+}
+
+.mg-v2-nav-link__icon .mg-v2-icon svg {
+  stroke: currentColor;
 }
 
 .mg-v2-nav-link__text {
   flex: 1;
   text-align: left;
+  color: inherit;
 }
 
 /* MGButton(G8): LNB asButton — outline·내부 래퍼 보정 */

@@ -113,6 +113,15 @@
   color: var(--mg-v2-primary);
 }
 
+.mg-v2-icon--inherit {
+  background-color: transparent;
+  color: inherit;
+}
+
+.mg-v2-icon--inherit svg {
+  stroke: currentColor;
+}
+
 /* ============================================
    Icon 변형 스타일
    ============================================ */

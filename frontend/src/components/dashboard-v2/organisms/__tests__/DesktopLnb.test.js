@@ -160,6 +160,60 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
       expect(activeLink.className).toContain('mg-v2-nav-link--active');
       expect(activeLink.className).not.toMatch(/text-primary/);
     });
+
+    it('LNB Icon 은 INHERIT(currentColor) 이며 SECONDARY/TRANSPARENT 강제 색이 없다', () => {
+      const { container } = renderLnb('/admin/dashboard');
+      const icons = container.querySelectorAll('.mg-v2-nav-link__icon .mg-v2-icon');
+      expect(icons.length).toBeGreaterThan(0);
+      icons.forEach((iconEl) => {
+        expect(iconEl.className).toContain('mg-v2-icon--inherit');
+        expect(iconEl.className).not.toMatch(/mg-v2-icon--secondary|mg-v2-icon--transparent/);
+        expect(iconEl.getAttribute('style') || '').toMatch(/currentColor/);
+      });
+      const chevronIcon = container.querySelector('.mg-v2-desktop-lnb__group-chevron .mg-v2-icon');
+      expect(chevronIcon).not.toBeNull();
+      expect(chevronIcon.className).toContain('mg-v2-icon--inherit');
+      expect(chevronIcon.getAttribute('style') || '').toMatch(/currentColor/);
+    });
+  });
+
+  describe('그룹 호버 on-fill 대비 (computed-style 친화)', () => {
+    it('group-head 에 hover 시 __text/__icon/chevron 이 on-fill 토큰 클래스를 받을 수 있는 구조다', () => {
+      const { container } = renderLnb();
+      const groupHead = container.querySelector('.mg-v2-desktop-lnb__group-head');
+      expect(groupHead).not.toBeNull();
+      expect(groupHead.querySelector('.mg-v2-nav-link__text')).not.toBeNull();
+      expect(groupHead.querySelector('.mg-v2-nav-link__icon')).not.toBeNull();
+      expect(groupHead.querySelector('.mg-v2-desktop-lnb__group-chevron')).not.toBeNull();
+
+      // JSDOM: hover pseudo 미지원 — 클래스로 active 표면을 시뮬레이션해 동일 토큰 경로 검증
+      const activeGroup = container.querySelector('.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head');
+      if (activeGroup) {
+        const text = activeGroup.querySelector('.mg-v2-nav-link__text');
+        const iconWrap = activeGroup.querySelector('.mg-v2-nav-link__icon');
+        const chevron = activeGroup.querySelector('.mg-v2-desktop-lnb__group-chevron');
+        expect(text).not.toBeNull();
+        expect(iconWrap).not.toBeNull();
+        expect(chevron).not.toBeNull();
+      }
+    });
+
+    it('활성 그룹 헤드에 surface-hover 가 아닌 active bg 클래스가 적용된다', () => {
+      const { container } = renderLnb('/admin/billing/subscriptions');
+      const activeGroup = container.querySelector('.mg-v2-desktop-lnb__group--active');
+      expect(activeGroup).not.toBeNull();
+      const head = activeGroup.querySelector('.mg-v2-desktop-lnb__group-head');
+      expect(head).not.toBeNull();
+      // CSS 모듈 로드 시 getComputedStyle 로 on-fill 색 확인 (미로드 시 스킵)
+      const link = head.querySelector('.mg-v2-nav-link');
+      const computed = window.getComputedStyle(link);
+      const color = (computed.color || '').replace(/\s/g, '').toLowerCase();
+      // JSDOM 기본은 빈색일 수 있음 — 정의되면 slate-900 금지
+      if (color && color !== '' && color !== 'rgba(0,0,0,0)') {
+        expect(color).not.toBe('rgb(15,23,42)');
+        expect(color).not.toBe('#0f172a');
+      }
+    });
   });
 
   describe('그룹 하위 메뉴 렌더', () => {

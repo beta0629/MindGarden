@@ -17,7 +17,7 @@
 .mg-v2-tenant-header-cluster {
   display: flex;
   align-items: center;
-  gap: var(--mg-spacing-sm);
+  gap: var(--mg-spacing-12, 12px);
   min-width: 0;
 }
 
@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: var(--mg-spacing-sm);
+  gap: var(--mg-spacing-12, 12px);
 }
 
 .mg-v2-tenant-header-cluster__trigger-wrap {
@@ -68,7 +68,7 @@
 
 /*
  * GNB 아이콘 트리거 — 전역 button ellipsis/overflow 탈출
- * (unified-design-tokens :not 예외와 이중 방어)
+ * chevron-only (#620): 공유 pill/rounded border 없음, ⋮ 와 시각 분리
  */
 .mg-v2-tenant-header-icon-btn,
 .mg-v2-tenant-header-cluster .mg-v2-nav-icon {
@@ -78,6 +78,13 @@
   border: none;
   background: transparent;
   box-shadow: none;
+  border-radius: 0;
+  flex-shrink: 0;
+  width: var(--touch-target-min, 2.75rem);
+  height: var(--touch-target-min, 2.75rem);
+  min-width: var(--touch-target-min, 2.75rem);
+  min-height: var(--touch-target-min, 2.75rem);
+  padding: 0;
 }
 
 .mg-v2-tenant-header-icon-btn:focus:not(:focus-visible),

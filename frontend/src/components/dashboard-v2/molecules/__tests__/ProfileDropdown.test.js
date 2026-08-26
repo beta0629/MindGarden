@@ -100,6 +100,9 @@ describe('ProfileDropdown', () => {
       expect(identity.contains(actions)).toBe(false);
       expect(container.querySelector('.mg-v2-profile-trigger')).toBeNull();
       expect(container.querySelector('.mg-v2-profile-trigger-outer')).toBeNull();
+      // actions: chevron-only, flex-shrink 0 구조
+      expect(actions.querySelectorAll('button').length).toBe(1);
+      expect(actions.querySelector('.mg-v2-tenant-header-cluster__trigger-wrap')).toBeTruthy();
     });
 
     it('트리거 버튼에 mg-button / ActionBarButton 클래스가 없다', () => {

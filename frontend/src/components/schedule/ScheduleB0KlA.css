@@ -138,16 +138,20 @@
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--ad-b0kla-radius-sm);
   box-shadow: var(--ad-b0kla-shadow);
+  padding: var(--mg-spacing-md, 16px);
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 .mg-v2-ad-b0kla .mg-consultant-card--schedule-select:hover {
-  border-color: var(--ad-b0kla-green);
+  border: 1px solid var(--ad-b0kla-green);
   box-shadow: var(--ad-b0kla-shadow);
 }
 
 .mg-v2-ad-b0kla .mg-consultant-card--schedule-select.mg-consultant-card--selected {
   background: var(--ad-b0kla-green-bg);
-  border-color: var(--ad-b0kla-green);
+  border: 1px solid var(--ad-b0kla-green);
+  box-shadow: none;
 }
 
 .mg-v2-ad-b0kla .mg-consultant-card__name--schedule-select {
@@ -161,8 +165,15 @@
 }
 
 .mg-v2-ad-b0kla .mg-consultant-card__avatar--schedule-select {
+  --avatar-size: 48px;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  min-width: var(--avatar-size);
+  min-height: var(--avatar-size);
+  flex-shrink: 0;
   background: linear-gradient(135deg, var(--ad-b0kla-green), var(--mg-primary-600));
   color: var(--ad-b0kla-card-bg);
+  align-self: center;
 }
 
 /* schedule-select 카드 버튼 B0KlA (Button 컴포넌트 mg-button--primary / mg-button--outline 호환) */
@@ -239,8 +250,14 @@
   align-content: start;
   overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--cs-spacing-md);
+}
+
+@media (max-width: 767px) {
+  .mg-v2-ad-b0kla .mg-v2-ad-client-step .mg-client-cards-grid--schedule-client {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mg-v2-ad-b0kla .mg-v2-ad-client-step__empty .mg-v2-btn--primary,
@@ -270,15 +287,20 @@
 }
 
 .mg-v2-ad-b0kla .mg-client-card.mg-client-card--selected {
-  border-color: var(--ad-b0kla-green);
+  border: 1px solid var(--ad-b0kla-green);
   background: var(--ad-b0kla-green-bg);
+  box-shadow: none;
 }
 
 /* ClientCard 아바타 B0KlA (CLIENT_SELECTION_CARD_AVATAR_SPEC) */
 .mg-v2-ad-b0kla .mg-client-cards-grid--schedule-client .mg-client-card.mg-client-card--detailed .mg-client-card__avatar--large {
-  width: 56px;
-  height: 56px;
+  --avatar-size: 56px;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  min-width: var(--avatar-size);
+  min-height: var(--avatar-size);
   flex-shrink: 0;
+  align-self: center;
   overflow: hidden;
   border-radius: 50%;
   position: relative;
@@ -319,9 +341,12 @@
 .mg-v2-ad-b0kla .mg-client-card--detailed.mg-client-card--b0kla-select {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--cs-spacing-md);
-  padding: var(--cs-spacing-md) var(--cs-spacing-lg);
+  padding: var(--mg-spacing-md, 16px);
+  min-height: 76px;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 .mg-v2-ad-b0kla .mg-client-card--b0kla-select .mg-client-card__info {

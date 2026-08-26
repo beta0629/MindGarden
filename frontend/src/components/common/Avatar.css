@@ -4,8 +4,8 @@
  * - 크기: 상위 클래스에서 지정하거나 Avatar에 size 전달 시 --avatar-size 사용 (토큰/상위 권장)
  */
 .mg-v2-avatar {
-  width: var(--avatar-size);
-  height: var(--avatar-size);
+  width: var(--avatar-size, 2.75rem);
+  height: var(--avatar-size, 2.75rem);
   overflow: hidden;
   border-radius: 50%;
   position: relative;

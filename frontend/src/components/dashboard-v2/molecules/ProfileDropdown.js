@@ -1,6 +1,6 @@
 /**
  * ProfileDropdown - 프로필 메뉴 드롭다운 (Molecule)
- * 테넌트 헤더 클러스터: identity(비버튼) + chevron 아이콘 트리거 분리
+ * 테넌트 헤더 클러스터: TenantHeaderCluster (identity + chevron 트리거)
  * 테마 전환 행(useDarkMode) + HeaderMenuRow flush menu
  *
  * @author CoreSolution
@@ -10,7 +10,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { NavIcon, ProfileAvatar, HeaderMenuRow } from '../atoms';
+import { ProfileAvatar, HeaderMenuRow } from '../atoms';
+import TenantHeaderCluster from './TenantHeaderCluster';
 import { useSession } from '../../../contexts/SessionContext';
 import { useDarkMode, DARK_MODE_VALUES } from '../../../contexts/DarkModeContext';
 import { useBranding } from '../../../hooks/useBranding';
@@ -30,7 +31,6 @@ import GnbDropdownPortal from './GnbDropdownPortal';
 import './ProfileDropdown.css';
 
 const PROFILE_DROPDOWN_PANEL_ID = 'mg-v2-profile-dropdown-panel';
-const PROFILE_MENU_TRIGGER_ARIA_LABEL = '프로필 메뉴';
 const THEME_LABEL = '화면 테마';
 const THEME_LIGHT_LABEL = '라이트';
 const THEME_DARK_LABEL = '다크';
@@ -132,32 +132,14 @@ const ProfileDropdown = ({ onLogout }) => {
 
   return (
     <div className="mg-v2-profile-dropdown" ref={dropdownRef}>
-      <div className="mg-v2-tenant-header-cluster">
-        <div className="mg-v2-tenant-header-cluster__identity">
-          <ProfileAvatar name={userName} imageUrl={avatarImageUrl} size="small" />
-          <div className="mg-v2-tenant-header-cluster__text">
-            <span className="mg-v2-tenant-header-cluster__name">
-              <SafeText fallback="사용자">{userName}</SafeText>
-            </span>
-            <SessionRemainingLabel
-              className={`${SESSION_REMAINING_DISPLAY.CLASS_NAME}--gnb-trigger`}
-            />
-          </div>
-        </div>
-        <div className="mg-v2-tenant-header-cluster__actions">
-          <div ref={triggerRef} className="mg-v2-tenant-header-cluster__trigger-wrap">
-            <NavIcon
-              icon="CHEVRON_DOWN"
-              label={PROFILE_MENU_TRIGGER_ARIA_LABEL}
-              onClick={() => setIsOpen(!isOpen)}
-              className="mg-v2-tenant-header-icon-btn"
-              aria-expanded={isOpen}
-              aria-haspopup="menu"
-              aria-controls={PROFILE_DROPDOWN_PANEL_ID}
-            />
-          </div>
-        </div>
-      </div>
+      <TenantHeaderCluster
+        userName={userName}
+        avatarImageUrl={avatarImageUrl}
+        isOpen={isOpen}
+        onToggle={() => setIsOpen(!isOpen)}
+        triggerRef={triggerRef}
+        panelId={PROFILE_DROPDOWN_PANEL_ID}
+      />
 
       <GnbDropdownPortal
         isOpen={isOpen}

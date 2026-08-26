@@ -89,29 +89,30 @@ describe('ProfileDropdown', () => {
       expect(nameEl.closest('button')).toBeNull();
     });
 
-    it('클러스터 identity와 actions가 분리되고 공유 border wrapper가 없다', () => {
+    it('클러스터 identity와 menu-trigger가 분리되고 공유 border wrapper가 없다', () => {
       const { container } = renderWithProviders(<ProfileDropdown />);
       const cluster = container.querySelector('.mg-v2-tenant-header-cluster');
       const identity = container.querySelector('.mg-v2-tenant-header-cluster__identity');
-      const actions = container.querySelector('.mg-v2-tenant-header-cluster__actions');
+      const menuTrigger = container.querySelector('.mg-v2-tenant-header-cluster__menu-trigger');
       expect(cluster).toBeTruthy();
       expect(identity).toBeTruthy();
-      expect(actions).toBeTruthy();
-      expect(identity.contains(actions)).toBe(false);
+      expect(menuTrigger).toBeTruthy();
+      expect(identity.contains(menuTrigger)).toBe(false);
       expect(container.querySelector('.mg-v2-profile-trigger')).toBeNull();
       expect(container.querySelector('.mg-v2-profile-trigger-outer')).toBeNull();
-      // actions: chevron-only, flex-shrink 0 구조
-      expect(actions.querySelectorAll('button').length).toBe(1);
-      expect(actions.querySelector('.mg-v2-tenant-header-cluster__trigger-wrap')).toBeTruthy();
+      expect(container.querySelector('.mg-v2-tenant-header-cluster__actions')).toBeNull();
+      expect(container.querySelector('.mg-v2-tenant-header-cluster__trigger-wrap')).toBeNull();
+      expect(cluster.querySelectorAll('button').length).toBe(1);
     });
 
-    it('트리거 버튼에 mg-button / ActionBarButton 클래스가 없다', () => {
+    it('트리거 버튼에 mg-button / NavIcon / ActionBarButton 클래스가 없다', () => {
       renderWithProviders(<ProfileDropdown />);
       const trigger = getProfileMenuTrigger();
       expect(trigger.className).not.toMatch(/mg-button/);
       expect(trigger.className).not.toMatch(/ActionBarButton/);
-      expect(trigger.classList.contains('mg-v2-nav-icon')).toBe(true);
-      expect(trigger.classList.contains('mg-v2-tenant-header-icon-btn')).toBe(true);
+      expect(trigger.classList.contains('mg-v2-nav-icon')).toBe(false);
+      expect(trigger.classList.contains('mg-v2-tenant-header-icon-btn')).toBe(false);
+      expect(trigger.classList.contains('mg-v2-tenant-header-cluster__menu-trigger')).toBe(true);
     });
 
     it('클러스터 텍스트 아래에 세션 잔여가 표시된다', () => {

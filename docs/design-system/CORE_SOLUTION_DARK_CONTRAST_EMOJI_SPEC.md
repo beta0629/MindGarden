@@ -1,6 +1,16 @@
-# Core Solution 다크 모드 WCAG 2.1 AA 토큰 스펙 및 이모지/장식 SVG 제거 가이드
+# SUPERSEDED — 다크 전용 스펙 (사용 금지)
 
-- **문서 ID**: `CORE_SOLUTION_DARK_CONTRAST_EMOJI_SPEC`
+> **상태**: **SUPERSEDED** (2026-08-26)  
+> **사유**: 사용자 정정 — 다크 AA + 이모지만으로는 범위 오류. 제품 **전체** 비주얼 언어(라이트+다크)·**토큰 SSOT**·dense tidy chrome이 필요.  
+> **대체**: Phase 2를 **재호출**하여 `docs/design-system/CORE_SOLUTION_PRODUCT_VISUAL_TOKEN_SSOT_SPEC.md` 를 새로 받을 것.  
+> **오케스트레이션**: `docs/project-management/CORE_SOLUTION_PRODUCT_VISUAL_TOKEN_SSOT_ORCHESTRATION.md`  
+> **코더**: 본 문서로 구현하지 말 것. 다크 hex 표는 참고만 가능.
+
+---
+
+# (archived) Core Solution 다크 모드 WCAG 2.1 AA 토큰 스펙 및 이모지/장식 SVG 제거 가이드
+
+- **문서 ID**: `CORE_SOLUTION_DARK_CONTRAST_EMOJI_SPEC` (**SUPERSEDED**)
 - **작성자**: core-designer
 - **기준 브랜치**: `cursor/core-solution-dark-contrast-emoji-efe3`
 - **대상**: 플랫폼 어드민·내담자·상담사 공통 UI (Frontend Web)

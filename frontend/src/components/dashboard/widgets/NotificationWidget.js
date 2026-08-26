@@ -161,7 +161,7 @@ const NotificationWidget = ({ widget, user }) => {
               onClick={() => handleNotificationClick(notification)}
             >
               <div className="notification-icon">
-                {notification.type === 'system' ? '📢' : '📨'}
+                {notification.type === 'system' ? '공지' : '메시지'}
               </div>
               <div className="notification-content">
                 <div className="notification-title"><SafeText>{notification.title}</SafeText></div>

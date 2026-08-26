@@ -1,4 +1,5 @@
-# Auth login hero Lottie
+# Auth Lottie assets
 
-- `login-hero-soft-glow.json`: project-authored soft cream/green glow + leaf-like particles (CC0 / MindGarden original).
-- Motions SSOT for login hero overlay; no external hotlink.
+MindGarden soft-glow / watercolor leaf animation is deprecated and isolated under `deprecated-mindgarden/`.
+
+HQ login hero uses Core Solution Secure Core lockup SVG path-draw only (`LoginHeroBrandLockup`).

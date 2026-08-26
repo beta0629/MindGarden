@@ -137,7 +137,7 @@ const SystemNotificationWidget = ({ widget, user }) => {
           >
             <div className="system-notification-item-header">
               <div className="system-notification-item-icon">
-                {item.systemNotificationId || item.id?.toString().startsWith('system-') ? '📢' : '📨'}
+                {item.systemNotificationId || item.id?.toString().startsWith('system-') ? '공지' : '메시지'}
               </div>
               <div className="system-notification-item-content">
                 <div className="system-notification-item-title">

@@ -64,7 +64,7 @@ const TodayStats = () => {
     }, []);
 
     if (loading) return <UnifiedLoading type="inline" text="통계를 불러오는 중..." />;
-    if (error) return <div className="mg-v2-text-danger">❌ {error}</div>;
+    if (error) return <div className="mg-v2-text-danger">{error}</div>;
 
     const kpiItems = [
         {

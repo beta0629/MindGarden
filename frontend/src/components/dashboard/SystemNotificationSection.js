@@ -108,7 +108,7 @@ const SystemNotificationSection = () => {
               >
                 <div className="mg-v2-message-card-header">
                   <div className="mg-v2-message-card-icon">
-                    {item.systemNotificationId || item.id?.toString().startsWith('system-') ? '📢' : '📨'}
+                    {item.systemNotificationId || item.id?.toString().startsWith('system-') ? '공지' : '메시지'}
                   </div>
                   <div className="mg-v2-message-card-content">
                     <div className="mg-v2-message-card-title">{item.title}</div>

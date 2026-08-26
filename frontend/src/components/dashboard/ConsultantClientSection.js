@@ -160,7 +160,7 @@ const ConsultantClientSection = ({ userId }) => {
       <div className="mg-v2-card">
         <div className="mg-v2-card-body">
           <div className="mg-v2-empty-state">
-            <div className="mg-v2-empty-state-icon">⚠️</div>
+            <div className="mg-v2-empty-state-icon" aria-hidden="true">!</div>
             <div className="mg-v2-empty-state-text">
               <h3>오류가 발생했습니다</h3>
               <p>{error}</p>

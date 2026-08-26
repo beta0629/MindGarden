@@ -73,7 +73,7 @@ const WelcomeWidget = ({ config }) => {
                 <h3 className="summary-title">오늘의 할 일</h3>
                 <div className="summary-cards">
                     <div className="summary-card pending">
-                        <div className="card-icon">📋</div>
+                        <div className="card-icon" aria-hidden="true"></div>
                         <div className="card-content">
                             <span className="card-number">{todayStats.pendingTasks}</span>
                             <span className="card-label">대기 중인 작업</span>

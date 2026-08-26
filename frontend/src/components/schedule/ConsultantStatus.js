@@ -176,7 +176,7 @@ const ConsultantStatus = () => {
         return (
             <div className="consultant-status">
                 <div className="consultant-status-error">
-                    <span>❌ {error}</span>
+                    <span>{error}</span>
                 </div>
             </div>
         );

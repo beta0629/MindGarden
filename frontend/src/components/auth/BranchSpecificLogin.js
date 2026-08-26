@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useParams, useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
@@ -296,7 +297,7 @@ const BranchSpecificLogin = () => {
                   preventDoubleClick={false}
                   aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                 </MGButton>
               </div>
             </div>

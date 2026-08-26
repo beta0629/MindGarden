@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { CheckCircle2, XCircle, AlertTriangle, Info } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import '../../styles/main.css'; // Ensure main.css is imported for mg-notification styles
 import { useTranslation } from 'react-i18next';
+
+const NOTIFICATION_ICON_SIZE = 20;
+const NOTIFICATION_ICON_STROKE = 1.75;
 
 const NOTIFICATION_ACTION_VARIANTS = new Set([
   'primary',
@@ -165,14 +169,23 @@ const UnifiedNotification = ({
     removeNotification(notificationId);
   };
 
-  // 알림 아이콘 반환
+  // 알림 아이콘 반환 (이모지 → Lucide stroke)
   const getIcon = (variant) => {
+    const iconProps = {
+      size: NOTIFICATION_ICON_SIZE,
+      strokeWidth: NOTIFICATION_ICON_STROKE,
+      'aria-hidden': true
+    };
     switch (variant) {
-      case 'success': return '✅';
-      case 'error': return '❌';
-      case 'warning': return '⚠️';
-      case 'info': 
-      default: return 'ℹ️';
+      case 'success':
+        return <CheckCircle2 {...iconProps} />;
+      case 'error':
+        return <XCircle {...iconProps} />;
+      case 'warning':
+        return <AlertTriangle {...iconProps} />;
+      case 'info':
+      default:
+        return <Info {...iconProps} />;
     }
   };
 

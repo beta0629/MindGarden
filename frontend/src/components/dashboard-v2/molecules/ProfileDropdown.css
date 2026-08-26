@@ -165,13 +165,13 @@
 }
 
 .mg-v2-badge-role--consultant {
-  background-color: #6B7F72;
-  color: var(--mg-white);
+  background-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-inverse);
 }
 
 .mg-v2-badge-role--client {
-  background-color: #8B7355;
-  color: var(--mg-white);
+  background-color: var(--mg-v2-color-secondary-main);
+  color: var(--mg-v2-color-text-inverse);
 }
 
 .mg-v2-badge-role--staff {

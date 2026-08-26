@@ -173,7 +173,7 @@
 
 .mg-v2-list-block__table tbody tr:hover,
 .mg-v2-list-block__list tbody tr:hover {
-  background: var(--ad-b0kla-green-bg, var(--mg-color-background-sub));
+  background: var(--ad-b0kla-table-row-hover, var(--mg-dark-table-row-hover, var(--mg-v2-color-state-hover, var(--mg-color-bg-hover, var(--mg-color-background-sub)))));
 }
 
 .mg-v2-list-block__table tbody tr[role="button"],

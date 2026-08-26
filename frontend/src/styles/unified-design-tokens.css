@@ -1320,18 +1320,26 @@
   --mg-color-primary-main: #0E5F5A;
   --mg-color-primary-light: #145A55;
   --mg-color-primary-dark: #0A4F4B;
+  /* Solid CTA fill — light equals primary-main; dark uses AA-safe darker teal */
+  --mg-color-primary-solid: var(--mg-v2-color-primary-solid, #0E5F5A);
   --mg-color-white: #ffffff;
   --mg-primary-color: #0E5F5A;
   --mg-primary-light: #145A55;
 }
 
 :root[data-theme="dark"] {
+  /* Accent / outline / link companion — keep muted teal #4AA99E */
   --mg-color-primary-main: #4AA99E;
   --mg-color-primary-light: #5FBBB0;
-  --mg-color-primary-dark: #3D8F86;
+  /* Darker solid for CTA hover (white on #0E5F5A = 7.49:1) */
+  --mg-color-primary-dark: #0E5F5A;
+  /* Solid CTA / selected chip — white on #0F766E ≈ 5.47:1 */
+  --mg-color-primary-solid: var(--mg-v2-color-primary-solid, #0F766E);
   --mg-color-white: #f8fafc;
   --mg-primary-color: #4AA99E;
   --mg-primary-light: #5FBBB0;
+  /* White stays valid because solid fill is darkened */
+  --mg-color-text-on-primary: #FFFFFF;
 }
 
 /* ========================================
@@ -1659,8 +1667,8 @@
   --mg-color-legacy-primary: #60a5fa;
   /* D9 §C2 다크 brand olive muted — #86a793 (mg-warm-gray 호환 olive 밝힘, 다크 5.2:1 PASS) */
   --mg-color-brand-olive-muted: #86a793;
-  /* D9 §C3 다크 hover 상태 — #374151 (Tailwind gray-700) */
-  --mg-color-bg-hover: #374151;
+  /* D9 §C3 다크 hover — v2 state-hover solid slate (#334155, text #F8FAFC ≈ 9.9:1) */
+  --mg-color-bg-hover: var(--mg-v2-color-state-hover, #334155);
 }
 
 /* ========================================
@@ -1733,13 +1741,13 @@
   --mg-color-primary-50: #1e3a8a;
   --mg-color-primary-200: #1e40af;
   --mg-color-primary-300: #1d4ed8;
-  /* LNB IA 재배치 — 다크 모드 primary 신규 step alias (alias 의 cascade 로 자동 반전됨) */
-  --mg-color-primary-100: var(--mg-color-primary-200);
+  /* LNB active label — NEVER navy primary-200; use near-white on slate active bg */
+  --mg-color-primary-100: var(--mg-v2-color-text-on-sidebar-active, var(--mg-v2-color-text-primary, #F8FAFC));
   --mg-color-primary-500: var(--mg-color-primary-main);
   --mg-color-primary-700: var(--mg-color-primary-light);
   --mg-color-primary-900: var(--mg-color-primary-dark);
-  /* LNB hover surface (다크 모드) — 사이드바는 항상 다크이지만 명시 정의 */
-  --mg-color-surface-hover: rgba(255, 255, 255, 0.12);
+  /* LNB hover surface — bridge to v2 surface-hover (sidebar wash) */
+  --mg-color-surface-hover: var(--mg-v2-color-surface-hover, rgba(248, 250, 252, 0.12));
   /* D10 §C2 다크 warning amber (Tailwind amber-900/800 표면 + amber-300/400 텍스트) */
   --mg-color-warning-50: #451a03;
   --mg-color-warning-200: #78350f;
@@ -19085,7 +19093,8 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
   /* LNB (Sidebar) */
   --mg-dark-lnb-bg: #2C2C2C;
   --mg-dark-lnb-text: var(--mg-gray-200, #E5E7EB);
-  --mg-dark-lnb-hover: #374151;
+  /* Align with v2 state-hover — #F8FAFC on #334155 ≈ 9.9:1 */
+  --mg-dark-lnb-hover: var(--mg-v2-color-state-hover, #334155);
   --mg-dark-lnb-border: #4B5563;
 
   /* ContentArea */
@@ -19097,6 +19106,7 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
   --mg-dark-card-bg: var(--mg-gray-800, #374151);
   --mg-dark-card-border: var(--mg-gray-700, #4B5563);
   --mg-dark-table-row-bg: transparent;
-  --mg-dark-table-row-hover: #4B5563;
+  /* Row hover — secondary #CBD5E1 on #334155 ≈ 7.0:1 */
+  --mg-dark-table-row-hover: var(--mg-v2-color-state-hover, #334155);
   --mg-dark-table-header-bg: #1F2937;
 }

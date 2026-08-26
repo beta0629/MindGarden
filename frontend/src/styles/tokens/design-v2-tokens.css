@@ -31,6 +31,8 @@
   --mg-v2-color-primary-hover: #0A4F4B;
   --mg-v2-color-primary-active: #0A4F4B;
   --mg-v2-color-primary-subtle: #DCE8E5;
+  /* Solid CTA fill — light equals primary-main (white on #0E5F5A = 7.49:1) */
+  --mg-v2-color-primary-solid: #0E5F5A;
 
   --mg-v2-color-secondary-main: #475569;
   --mg-v2-color-secondary-light: #64748B;
@@ -98,6 +100,7 @@
   --mg-v2-color-text-inverse: #FFFFFF;
   --mg-v2-color-text-link: #0E5F5A;
   --mg-v2-color-text-link-hover: #0A4F4B;
+  --mg-v2-color-text-on-sidebar-active: #F8FAFC;
 
   /* ----------------------------------------------------------
      1-6. COLOR — Border
@@ -300,12 +303,16 @@
    ================================================================ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    /* Accent / outline / link companion — muted teal (NOT solid CTA fill) */
     --mg-v2-color-primary-main: #4AA99E;
     --mg-v2-color-primary-light: #5FBBB0;
-    --mg-v2-color-primary-dark: #3D8F86;
+    /* Darker solid for CTA hover / pressed (white on #0E5F5A = 7.49:1) */
+    --mg-v2-color-primary-dark: #0E5F5A;
     --mg-v2-color-primary-hover: #5FBBB0;
-    --mg-v2-color-primary-active: #3D8F86;
+    --mg-v2-color-primary-active: #0E5F5A;
     --mg-v2-color-primary-subtle: rgba(74, 169, 158, 0.15);
+    /* Solid CTA / selected chip fill — white on #0F766E ≈ 5.47:1 AA */
+    --mg-v2-color-primary-solid: #0F766E;
 
     --mg-v2-color-secondary-main: #94A3B8;
     --mg-v2-color-secondary-light: #CBD5E1;
@@ -349,8 +356,9 @@
     --mg-v2-color-surface-overlay: #1E293B;
     --mg-v2-color-surface-sidebar: #0F172A;
     --mg-v2-color-surface-disabled: #334155;
+    /* Sidebar wash OK with near-white label (#F8FAFC ≈ 12:1 on blended hover) */
     --mg-v2-color-surface-hover: rgba(248, 250, 252, 0.12);
-    --mg-v2-color-surface-active: rgba(248, 250, 252, 0.12);
+    --mg-v2-color-surface-active: rgba(248, 250, 252, 0.18);
     --mg-v2-color-surface-stone: #1E293B;
 
     --mg-v2-color-text-primary: #F8FAFC;
@@ -361,6 +369,7 @@
     --mg-v2-color-text-inverse: #0F172A;
     --mg-v2-color-text-link: #4AA99E;
     --mg-v2-color-text-link-hover: #5FBBB0;
+    --mg-v2-color-text-on-sidebar-active: #F8FAFC;
 
     --mg-v2-color-border-default: #334155;
     --mg-v2-color-border-subtle: #1E293B;
@@ -370,8 +379,10 @@
     --mg-v2-color-border-dark: #94A3B8;
     --mg-v2-color-border-focus: #5FBBB0;
 
-    --mg-v2-color-state-hover: rgba(248, 250, 252, 0.12);
-    --mg-v2-color-state-active: rgba(248, 250, 252, 0.18);
+    /* Menus/dropdowns: solid slate so #F8FAFC ≈ 9.9:1 */
+    --mg-v2-color-state-hover: #334155;
+    --mg-v2-color-state-active: #475569;
+    /* Teal wash OK only with primary/secondary light text — not navy */
     --mg-v2-color-state-selected: rgba(74, 169, 158, 0.15);
     --mg-v2-color-state-focus-ring: rgba(74, 169, 158, 0.35);
     --mg-v2-color-state-disabled-bg: #334155;
@@ -392,12 +403,16 @@
 
 /* 수동 다크 테마 — html[data-theme="dark"] / [data-theme="dark"] */
 [data-theme="dark"] {
+  /* Accent / outline / link companion — muted teal (NOT solid CTA fill) */
   --mg-v2-color-primary-main: #4AA99E;
   --mg-v2-color-primary-light: #5FBBB0;
-  --mg-v2-color-primary-dark: #3D8F86;
+  /* Darker solid for CTA hover / pressed (white on #0E5F5A = 7.49:1) */
+  --mg-v2-color-primary-dark: #0E5F5A;
   --mg-v2-color-primary-hover: #5FBBB0;
-  --mg-v2-color-primary-active: #3D8F86;
+  --mg-v2-color-primary-active: #0E5F5A;
   --mg-v2-color-primary-subtle: rgba(74, 169, 158, 0.15);
+  /* Solid CTA / selected chip fill — white on #0F766E ≈ 5.47:1 AA */
+  --mg-v2-color-primary-solid: #0F766E;
 
   --mg-v2-color-secondary-main: #94A3B8;
   --mg-v2-color-secondary-light: #CBD5E1;
@@ -441,8 +456,9 @@
   --mg-v2-color-surface-overlay: #1E293B;
   --mg-v2-color-surface-sidebar: #0F172A;
   --mg-v2-color-surface-disabled: #334155;
+  /* Sidebar wash OK with near-white label (#F8FAFC ≈ 12:1 on blended hover) */
   --mg-v2-color-surface-hover: rgba(248, 250, 252, 0.12);
-  --mg-v2-color-surface-active: rgba(248, 250, 252, 0.12);
+  --mg-v2-color-surface-active: rgba(248, 250, 252, 0.18);
   --mg-v2-color-surface-stone: #1E293B;
 
   --mg-v2-color-text-primary: #F8FAFC;
@@ -453,6 +469,7 @@
   --mg-v2-color-text-inverse: #0F172A;
   --mg-v2-color-text-link: #4AA99E;
   --mg-v2-color-text-link-hover: #5FBBB0;
+  --mg-v2-color-text-on-sidebar-active: #F8FAFC;
 
   --mg-v2-color-border-default: #334155;
   --mg-v2-color-border-subtle: #1E293B;
@@ -462,8 +479,10 @@
   --mg-v2-color-border-dark: #94A3B8;
   --mg-v2-color-border-focus: #5FBBB0;
 
-  --mg-v2-color-state-hover: rgba(248, 250, 252, 0.12);
-  --mg-v2-color-state-active: rgba(248, 250, 252, 0.18);
+  /* Menus/dropdowns: solid slate so #F8FAFC ≈ 9.9:1 */
+  --mg-v2-color-state-hover: #334155;
+  --mg-v2-color-state-active: #475569;
+  /* Teal wash OK only with primary/secondary light text — not navy */
   --mg-v2-color-state-selected: rgba(74, 169, 158, 0.15);
   --mg-v2-color-state-focus-ring: rgba(74, 169, 158, 0.35);
   --mg-v2-color-state-disabled-bg: #334155;

@@ -84,13 +84,19 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
 
   test('unified modal actions lock height trio + 1px border contract', () => {
     expect(unifiedModalsCss).toMatch(
-      /\.mg-modal__actions\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-default\)/
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-default\)\s*!important/
     );
     expect(unifiedModalsCss).toMatch(
-      /\.mg-modal__actions\s+\.mg-button[\s\S]*?max-height:\s*var\(--button-height-default\)/
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?max-height:\s*var\(--button-height-default\)\s*!important/
     );
     expect(unifiedModalsCss).toMatch(
-      /\.mg-modal__actions\s+\.mg-button[\s\S]*?border-width:\s*1px/
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?min-height:\s*var\(--button-height-default\)\s*!important/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?box-sizing:\s*border-box\s*!important/
+    );
+    expect(unifiedModalsCss).toMatch(
+      /\.mg-modal__actions\s+\.mg-button[\s\S]*?border-width:\s*1px\s*!important/
     );
   });
 
@@ -136,5 +142,35 @@ describe('MGButton equal-height box model (outline vs solid)', () => {
     expect(b0klaCss).not.toMatch(
       /\.mg-v2-ad-b0kla\s+\.mg-v2-button-outline\s*\{[^}]*border:\s*2px\s+solid/s
     );
+  });
+
+  test('B0KlA modal-actions MGButton height/border contract uses !important', () => {
+    expect(b0klaCss).toMatch(
+      /\.mg-modal\.mg-v2-ad-b0kla\s+\.mg-modal__actions\s+\.mg-button[\s\S]*?height:\s*var\(--button-height-default\)\s*!important/
+    );
+    expect(b0klaCss).toMatch(
+      /\.mg-modal\.mg-v2-ad-b0kla\s+\.mg-modal__actions\s+\.mg-button[\s\S]*?min-height:\s*var\(--button-height-default\)\s*!important/
+    );
+    expect(b0klaCss).toMatch(
+      /\.mg-modal\.mg-v2-ad-b0kla\s+\.mg-modal__actions\s+\.mg-button[\s\S]*?max-height:\s*var\(--button-height-default\)\s*!important/
+    );
+    expect(b0klaCss).toMatch(
+      /\.mg-modal\.mg-v2-ad-b0kla\s+\.mg-modal__actions\s+\.mg-button[\s\S]*?box-sizing:\s*border-box\s*!important/
+    );
+    expect(b0klaCss).toMatch(
+      /\.mg-modal\.mg-v2-ad-b0kla\s+\.mg-modal__actions\s+\.mg-button[\s\S]*?border-width:\s*1px\s*!important/
+    );
+  });
+
+  test('ConsultationLogModal footer uses ActionBar+ActionBarButton (not MGButton)', () => {
+    const modalSrc = readCss('src/components/consultant/ConsultationLogModal.js');
+    expect(modalSrc).toMatch(/import ActionBar from ['"]\.\.\/common\/ActionBar['"]/);
+    expect(modalSrc).toMatch(/import ActionBarButton from ['"]\.\.\/common\/ActionBarButton['"]/);
+    expect(modalSrc).toMatch(/<ActionBar\s+align="center"\s+gap="md"/);
+    expect(modalSrc).toMatch(/variant="outline"[\s\S]*?common\.actions\.cancel/);
+    expect(modalSrc).toMatch(/variant="primary"[\s\S]*?저장/);
+    expect(modalSrc).toMatch(/variant="primary"[\s\S]*?완료/);
+    expect(modalSrc).not.toMatch(/import MGButton from/);
+    expect(modalSrc).not.toMatch(/<MGButton[\s\S]*?저장/);
   });
 });

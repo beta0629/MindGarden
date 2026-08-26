@@ -1,7 +1,8 @@
 /**
- * ProfileDropdown 단위 테스트 - GNB 드롭다운 동작 검증
- * - 트리거 클릭 시 패널 열림, Portal이 document.body에 렌더, useDropdownPosition 스타일 적용, 클릭 아웃사이드/Escape 시 닫힘
- * - 세션 잔여: 트리거 유저명 아래 + 드롭다운 프로필 영역
+ * ProfileDropdown 단위 테스트 - GNB 테넌트 헤더 클러스터 + 드롭다운
+ * - identity(비버튼) + chevron 아이콘 트리거 분리
+ * - 트리거 클릭 시 패널 열림, Portal·useDropdownPosition·Escape 유지
+ * - 세션 잔여: 클러스터 텍스트 + 드롭다운 프로필 영역
  * @see docs/standards/TESTING_STANDARD.md
  * @see docs/project-management/GNB_DROPDOWN_VERIFICATION_CHECKLIST.md
  */
@@ -29,6 +30,11 @@ jest.mock('../../../../hooks/useBranding', () => ({
   useBranding: () => ({ brandingInfo: null })
 }));
 
+const PROFILE_MENU_TRIGGER_LABEL = '프로필 메뉴';
+
+const getProfileMenuTrigger = () =>
+  screen.getByRole('button', { name: PROFILE_MENU_TRIGGER_LABEL });
+
 describe('ProfileDropdown', () => {
   const defaultUser = {
     name: '테스트 사용자',
@@ -50,11 +56,11 @@ describe('ProfileDropdown', () => {
     sessionState.sessionInfo = sessionInfoWithRemaining;
   });
 
-  describe('렌더링', () => {
-    it('user가 있으면 트리거(프로필 영역)가 렌더된다', () => {
+  describe('렌더링 · 클러스터 구조', () => {
+    it('user가 있으면 identity 이름과 chevron 트리거가 렌더된다', () => {
       render(<ProfileDropdown />);
       expect(screen.getByText('테스트 사용자')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /테스트 사용자/ })).toBeInTheDocument();
+      expect(getProfileMenuTrigger()).toBeInTheDocument();
     });
 
     it('user가 null이면 아무것도 렌더하지 않는다', () => {
@@ -63,7 +69,38 @@ describe('ProfileDropdown', () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it('트리거 유저명 아래에 세션 잔여가 표시된다', () => {
+    it('테넌트명 텍스트는 버튼이 아니다', () => {
+      render(<ProfileDropdown />);
+      expect(
+        screen.queryByRole('button', { name: /테스트 사용자/ })
+      ).not.toBeInTheDocument();
+      const nameEl = screen.getByText('테스트 사용자');
+      expect(nameEl.closest('button')).toBeNull();
+    });
+
+    it('클러스터 identity와 actions가 분리되고 공유 border wrapper가 없다', () => {
+      const { container } = render(<ProfileDropdown />);
+      const cluster = container.querySelector('.mg-v2-tenant-header-cluster');
+      const identity = container.querySelector('.mg-v2-tenant-header-cluster__identity');
+      const actions = container.querySelector('.mg-v2-tenant-header-cluster__actions');
+      expect(cluster).toBeTruthy();
+      expect(identity).toBeTruthy();
+      expect(actions).toBeTruthy();
+      expect(identity.contains(actions)).toBe(false);
+      expect(container.querySelector('.mg-v2-profile-trigger')).toBeNull();
+      expect(container.querySelector('.mg-v2-profile-trigger-outer')).toBeNull();
+    });
+
+    it('트리거 버튼에 mg-button / ActionBarButton 클래스가 없다', () => {
+      render(<ProfileDropdown />);
+      const trigger = getProfileMenuTrigger();
+      expect(trigger.className).not.toMatch(/mg-button/);
+      expect(trigger.className).not.toMatch(/ActionBarButton/);
+      expect(trigger.classList.contains('mg-v2-nav-icon')).toBe(true);
+      expect(trigger.classList.contains('mg-v2-tenant-header-icon-btn')).toBe(true);
+    });
+
+    it('클러스터 텍스트 아래에 세션 잔여가 표시된다', () => {
       render(<ProfileDropdown />);
       const labels = screen.getAllByLabelText(SESSION_REMAINING_DISPLAY.ARIA_LABEL);
       expect(labels.length).toBeGreaterThanOrEqual(1);
@@ -73,9 +110,10 @@ describe('ProfileDropdown', () => {
   });
 
   describe('트리거 클릭 시 패널 열림', () => {
-    it('트리거 클릭 시 패널(role=menu)이 열린다', async() => {
+    it('chevron 트리거 클릭 시 패널(role=menu)이 열린다', async() => {
       render(<ProfileDropdown />);
-      const trigger = screen.getByRole('button', { expanded: false });
+      const trigger = getProfileMenuTrigger();
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
 
       await userEvent.click(trigger);
@@ -86,7 +124,7 @@ describe('ProfileDropdown', () => {
 
     it('트리거 다시 클릭 시 패널이 닫힌다', async() => {
       render(<ProfileDropdown />);
-      const trigger = screen.getByRole('button', { expanded: false });
+      const trigger = getProfileMenuTrigger();
       await userEvent.click(trigger);
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
@@ -97,7 +135,7 @@ describe('ProfileDropdown', () => {
 
     it('열린 드롭다운 프로필 영역에 세션 잔여가 표시된다', async() => {
       render(<ProfileDropdown />);
-      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      await userEvent.click(getProfileMenuTrigger());
 
       const labels = screen.getAllByLabelText(SESSION_REMAINING_DISPLAY.ARIA_LABEL);
       const inDropdown = labels.find((el) =>
@@ -111,17 +149,28 @@ describe('ProfileDropdown', () => {
   describe('Portal 렌더링', () => {
     it('패널이 열리면 document.body 직계 자식에 패널이 존재한다', async() => {
       render(<ProfileDropdown />);
-      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      await userEvent.click(getProfileMenuTrigger());
 
       const panel = screen.getByRole('menu');
       expect(panel.parentElement).toBe(document.body);
+    });
+
+    it('패널이 닫히면 overlay/portal이 없다', async() => {
+      render(<ProfileDropdown />);
+      const trigger = getProfileMenuTrigger();
+      await userEvent.click(trigger);
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+
+      await userEvent.click(trigger);
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(document.querySelector('.mg-v2-profile-dropdown__panel')).toBeNull();
     });
   });
 
   describe('useDropdownPosition 스타일 적용', () => {
     it('열린 패널에 position: fixed 및 zIndex가 적용된다', async() => {
       render(<ProfileDropdown />);
-      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      await userEvent.click(getProfileMenuTrigger());
 
       const panel = screen.getByRole('menu');
       expect(panel).toHaveStyle({ position: 'fixed' });
@@ -133,7 +182,7 @@ describe('ProfileDropdown', () => {
   describe('Escape 키로 닫힘', () => {
     it('패널이 열린 상태에서 Escape 키를 누르면 패널이 닫힌다', async() => {
       render(<ProfileDropdown />);
-      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      await userEvent.click(getProfileMenuTrigger());
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
       await userEvent.keyboard('{Escape}');
@@ -144,7 +193,7 @@ describe('ProfileDropdown', () => {
   describe('메뉴 클릭', () => {
     it('내 정보 클릭 시 navigate 호출 후 패널이 닫힌다', async() => {
       render(<ProfileDropdown />);
-      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      await userEvent.click(getProfileMenuTrigger());
       await userEvent.click(screen.getByText('내 정보'));
 
       expect(mockNavigate).toHaveBeenCalledWith('/admin/mypage');
@@ -154,7 +203,7 @@ describe('ProfileDropdown', () => {
     it('로그아웃 클릭 시 onLogout이 있으면 호출된다', async() => {
       const onLogout = jest.fn();
       render(<ProfileDropdown onLogout={onLogout} />);
-      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      await userEvent.click(getProfileMenuTrigger());
       await userEvent.click(screen.getByText('로그아웃'));
 
       expect(onLogout).toHaveBeenCalled();
@@ -163,7 +212,7 @@ describe('ProfileDropdown', () => {
     it('상담사는 설정 메뉴가 보이지 않는다', async() => {
       sessionState.user = { ...defaultUser, role: 'CONSULTANT' };
       render(<ProfileDropdown />);
-      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      await userEvent.click(getProfileMenuTrigger());
       expect(screen.getByText('내 정보')).toBeInTheDocument();
       expect(screen.queryByText('설정')).not.toBeInTheDocument();
     });
@@ -171,7 +220,7 @@ describe('ProfileDropdown', () => {
     it('내담자는 설정 메뉴가 보이지 않는다', async() => {
       sessionState.user = { ...defaultUser, role: 'CLIENT' };
       render(<ProfileDropdown />);
-      await userEvent.click(screen.getByRole('button', { expanded: false }));
+      await userEvent.click(getProfileMenuTrigger());
       expect(screen.getByText('내 정보')).toBeInTheDocument();
       expect(screen.queryByText('설정')).not.toBeInTheDocument();
     });

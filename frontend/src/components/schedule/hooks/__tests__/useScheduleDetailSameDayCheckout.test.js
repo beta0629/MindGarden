@@ -168,4 +168,20 @@ describe('useScheduleDetailSameDayCheckout hook', () => {
     );
     expect(result.current.checkoutSameDayMapping).toBeNull();
   });
+
+  test('handleCheckoutSameDayCompleted → mapping clear + onCheckoutCompleted', () => {
+    const onCheckoutCompleted = jest.fn();
+    const { result } = renderHook(() => useScheduleDetailSameDayCheckout({
+      enabled: true,
+      user: { role: 'ADMIN' },
+      onCheckoutCompleted
+    }));
+
+    act(() => {
+      result.current.handleCheckoutSameDayCompleted();
+    });
+
+    expect(result.current.checkoutSameDayMapping).toBeNull();
+    expect(onCheckoutCompleted).toHaveBeenCalledTimes(1);
+  });
 });

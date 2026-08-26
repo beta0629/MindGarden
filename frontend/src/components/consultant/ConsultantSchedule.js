@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
@@ -29,13 +29,18 @@ const CONSULTANT_SCHEDULE_TITLE_ID = 'consultant-schedule-page-title';
 const ConsultantSchedule = () => {
   const { t } = useTranslation();
   const { user, isLoading: sessionLoading } = useSession();
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const handleCheckoutReload = useCallback(() => {
+    setRefetchTrigger((t) => t + 1);
+  }, []);
   const {
     onCheckoutSameDayFromDetail,
     checkoutSameDayMapping,
     closeCheckoutSameDay,
     handleCheckoutSameDayCompleted
   } = useScheduleDetailSameDayCheckout({
-    user
+    user,
+    onCheckoutCompleted: handleCheckoutReload
   });
 
   console.log('📅 ConsultantSchedule 렌더링:', { user, sessionLoading });
@@ -101,6 +106,7 @@ const ConsultantSchedule = () => {
             userId={user.id}
             integratedMonthEventLayout
             calendarSkin="integrated"
+            refetchTrigger={refetchTrigger}
             onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}
           />
         </div>

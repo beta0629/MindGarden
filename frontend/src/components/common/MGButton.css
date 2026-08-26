@@ -1,14 +1,22 @@
-/* MG Button — B0KlA/아토믹 디자인 (MG_BUTTON_B0KLA_ATOMIC_SPEC) */
+/* MG Button — B0KlA/아토믹 디자인 (MG_BUTTON_B0KLA_ATOMIC_SPEC)
+ * SSOT: 동일 size → 모든 variant 동일 제어 높이.
+ * - height + border-box + border-width 1px 고정 (outline/solid 높이 차이 방지)
+ * - vertical padding 0 (clinic-OS --mg-v2-component-padding-* / --button-padding-*)
+ * - variant는 색·fill·border-color만 변경
+ */
 
 .mg-button {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
   border-radius: var(--mg-button-radius, 10px);
   font-family: var(--font-family-base, inherit);
   font-weight: var(--cs-font-medium);
+  line-height: 1;
   text-decoration: none;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
@@ -17,6 +25,7 @@
   box-sizing: border-box;
   min-width: fit-content;
   overflow: hidden;
+  vertical-align: middle;
 }
 
 .mg-button:focus-visible {
@@ -50,26 +59,61 @@
   width: 100%;
 }
 
-/* Size — §4 */
+/* Size — §4: height/min-height + 수평 padding만. vertical은 0(토큰). */
 .mg-button--small {
+  height: var(--button-height-sm);
+  min-height: var(--button-height-sm);
   padding: var(--button-padding-sm);
   font-size: var(--cs-text-sm);
-  min-height: var(--button-height-sm);
 }
 
 .mg-button--medium {
+  height: var(--button-height-default);
+  min-height: var(--button-height-default);
   padding: var(--button-padding-default);
   font-size: var(--cs-text-md);
-  min-height: var(--button-height-default);
 }
 
 .mg-button--large {
+  height: var(--button-height-lg);
+  min-height: var(--button-height-lg);
   padding: var(--button-padding-lg);
   font-size: var(--cs-text-lg);
-  min-height: var(--button-height-lg);
 }
 
-/* Variants — B0KlA primary var(--mg-color-primary-main), radius 10px */
+/*
+ * buildErpMgButtonClassName이 붙이는 .mg-v2-button / .mg-v2-button-* 가
+ * padding·min-height·border-width를 덮어쓰지 않도록 size 계약을 특이도로 고정.
+ */
+.mg-button.mg-v2-button {
+  box-sizing: border-box;
+  border-width: 1px;
+  border-style: solid;
+  line-height: 1;
+}
+
+.mg-button.mg-v2-button.mg-button--small {
+  height: var(--button-height-sm);
+  min-height: var(--button-height-sm);
+  padding: var(--button-padding-sm);
+  font-size: var(--cs-text-sm);
+}
+
+.mg-button.mg-v2-button.mg-button--medium {
+  height: var(--button-height-default);
+  min-height: var(--button-height-default);
+  padding: var(--button-padding-default);
+  font-size: var(--cs-text-md);
+}
+
+.mg-button.mg-v2-button.mg-button--large {
+  height: var(--button-height-lg);
+  min-height: var(--button-height-lg);
+  padding: var(--button-padding-lg);
+  font-size: var(--cs-text-lg);
+}
+
+/* Variants — 색·fill만 다름. border-width는 항상 1px(베이스). */
 .mg-button--primary {
   background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
   color: var(--mg-color-text-on-primary, var(--mg-white));
@@ -181,7 +225,15 @@
 .mg-button--outline {
   background-color: transparent;
   color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
-  border: 1px solid var(--mg-color-border-main, var(--mg-layout-header-border));
+  border-color: var(--mg-color-border-main, var(--mg-layout-header-border));
+}
+
+/* 레거시 .mg-v2-button-outline(2px) 등이 border-width를 키우지 못하도록 */
+.mg-button.mg-button--outline,
+.mg-button.mg-v2-button-outline,
+.mg-button.mg-v2-button.mg-v2-button-outline {
+  border-width: 1px;
+  border-style: solid;
 }
 
 .mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
@@ -306,23 +358,29 @@
   flex-direction: row-reverse;
 }
 
-/* 반응형 — 토큰만 사용 */
+/* 반응형 — 높이는 size 토큰 유지, 폰트만 축소 (vertical padding 변경 금지) */
 @media (max-width: 768px) {
-  .mg-button--small {
-    padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  .mg-button--small,
+  .mg-button.mg-v2-button.mg-button--small {
+    padding: var(--button-padding-sm);
     font-size: var(--cs-text-xs);
+    height: var(--button-height-sm);
     min-height: var(--button-height-sm);
   }
 
-  .mg-button--medium {
-    padding: var(--cs-spacing-sm) var(--cs-spacing-md);
+  .mg-button--medium,
+  .mg-button.mg-v2-button.mg-button--medium {
+    padding: var(--button-padding-default);
     font-size: var(--cs-text-sm);
+    height: var(--button-height-default);
     min-height: var(--button-height-default);
   }
 
-  .mg-button--large {
-    padding: var(--cs-spacing-md) var(--cs-spacing-lg);
+  .mg-button--large,
+  .mg-button.mg-v2-button.mg-button--large {
+    padding: var(--button-padding-lg);
     font-size: var(--cs-text-md);
+    height: var(--button-height-lg);
     min-height: var(--button-height-lg);
   }
 }

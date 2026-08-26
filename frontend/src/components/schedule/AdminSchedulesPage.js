@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
@@ -16,6 +16,10 @@ const ADMIN_SCHEDULES_TITLE_ID = 'admin-schedules-title';
  * @since 2026-03-21
  */
 const AdminSchedulesPage = ({ userRole, userId }) => {
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const handleCheckoutReload = useCallback(() => {
+    setRefetchTrigger((t) => t + 1);
+  }, []);
   const {
     onCheckoutSameDayFromDetail,
     checkoutSameDayMapping,
@@ -23,7 +27,8 @@ const AdminSchedulesPage = ({ userRole, userId }) => {
     handleCheckoutSameDayCompleted
   } = useScheduleDetailSameDayCheckout({
     enabled: true,
-    user: { role: userRole }
+    user: { role: userRole },
+    onCheckoutCompleted: handleCheckoutReload
   });
 
   return (
@@ -46,6 +51,7 @@ const AdminSchedulesPage = ({ userRole, userId }) => {
                 userId={userId}
                 integratedMonthEventLayout
                 calendarSkin="integrated"
+                refetchTrigger={refetchTrigger}
                 onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}
               />
             </main>

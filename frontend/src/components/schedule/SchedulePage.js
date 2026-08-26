@@ -8,7 +8,7 @@
  * @updated 2025-02-22 - AdminDashboardV2 레이아웃 및 아토믹 디자인 적용
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
@@ -33,6 +33,7 @@ const SchedulePage = ({ user: propUser }) => {
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   // 사용자 정보 결정 (prop > session > null)
   const displayUser = propUser || sessionUser;
@@ -44,6 +45,9 @@ const SchedulePage = ({ user: propUser }) => {
   const sameDayCheckoutEnabled = canRegisterSchedulerByRoleString(
     displayUser?.role || userRole
   );
+  const handleCheckoutReload = useCallback(() => {
+    setRefetchTrigger((t) => t + 1);
+  }, []);
   const {
     onCheckoutSameDayFromDetail,
     checkoutSameDayMapping,
@@ -51,7 +55,8 @@ const SchedulePage = ({ user: propUser }) => {
     handleCheckoutSameDayCompleted
   } = useScheduleDetailSameDayCheckout({
     enabled: sameDayCheckoutEnabled,
-    user: displayUser
+    user: displayUser,
+    onCheckoutCompleted: handleCheckoutReload
   });
 
   useEffect(() => {
@@ -186,6 +191,7 @@ const SchedulePage = ({ user: propUser }) => {
                     userId={isScheduleRegisterActor() ? 0 : userId}
                     integratedMonthEventLayout
                     calendarSkin="integrated"
+                    refetchTrigger={refetchTrigger}
                     onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}
                   />
                 </div>

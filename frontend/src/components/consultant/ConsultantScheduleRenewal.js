@@ -190,14 +190,7 @@ const ConsultantScheduleRenewal = () => {
   const { user, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
-  const {
-    onCheckoutSameDayFromDetail,
-    checkoutSameDayMapping,
-    closeCheckoutSameDay,
-    handleCheckoutSameDayCompleted
-  } = useScheduleDetailSameDayCheckout({
-    user
-  });
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [viewType, setViewType] = useState(VIEW_TYPES.WEEKLY);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [baseDate, setBaseDate] = useState(new Date());
@@ -228,6 +221,28 @@ const ConsultantScheduleRenewal = () => {
       setLoading(false);
     }
   }, [user?.id, weekDates]);
+
+  /**
+   * 당일결제 성공 후 캘린더 갱신.
+   * 데스크탑: UnifiedScheduleComponent refetchTrigger.
+   * 모바일(day-bar): fetchSchedules (모달이 열린 경우 대비).
+   */
+  const handleCheckoutReload = useCallback(() => {
+    setRefetchTrigger((t) => t + 1);
+    if (!isDesktop) {
+      fetchSchedules();
+    }
+  }, [isDesktop, fetchSchedules]);
+
+  const {
+    onCheckoutSameDayFromDetail,
+    checkoutSameDayMapping,
+    closeCheckoutSameDay,
+    handleCheckoutSameDayCompleted
+  } = useScheduleDetailSameDayCheckout({
+    user,
+    onCheckoutCompleted: handleCheckoutReload
+  });
 
   useEffect(() => {
     if (sessionLoading) {
@@ -331,6 +346,7 @@ const ConsultantScheduleRenewal = () => {
           userId={user?.id}
           integratedMonthEventLayout
           calendarSkin="integrated"
+          refetchTrigger={refetchTrigger}
           onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}
         />
         {checkoutSameDayMapping && (

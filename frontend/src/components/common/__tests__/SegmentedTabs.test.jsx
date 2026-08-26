@@ -229,5 +229,21 @@ describe('SegmentedTabs SSOT 컴포넌트', () => {
       );
       expect(container.querySelector('.mg-segmented-tabs--md')).toBeInTheDocument();
     });
+
+    test('variant="panel" 시 mg-segmented-tabs--panel 클래스가 부여된다', () => {
+      const { container } = render(
+        <SegmentedTabs
+          items={ITEMS}
+          activeValue="detail"
+          onChange={() => {}}
+          ariaLabel="테스트 탭"
+          variant="panel"
+          className="mg-v2-notification-segmented"
+        />
+      );
+      const root = container.querySelector('.mg-segmented-tabs--panel');
+      expect(root).toBeInTheDocument();
+      expect(root).toHaveClass('mg-v2-notification-segmented');
+    });
   });
 });

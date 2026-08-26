@@ -9,5 +9,6 @@ export { default as NavLink, NavLinkWithRouter } from './NavLink';
 export { default as SearchInput, PLACEHOLDER as SEARCH_PLACEHOLDER } from './SearchInput';
 export { default as NotificationBadge } from './NotificationBadge';
 export { default as ProfileAvatar } from './ProfileAvatar';
+export { default as HeaderMenuRow } from './HeaderMenuRow';
 export { default as KpiSparkline } from './KpiSparkline';
 export { default as KpiNumeral } from './KpiNumeral';

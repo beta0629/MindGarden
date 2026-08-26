@@ -103,6 +103,53 @@
   background: rgba(5, 150, 105, 0.18);
 }
 
+/*
+ * panel variant — GNB gap-less solid segmented (NotificationDropdown SSOT)
+ * 전역 default SSOT(갭+pill)는 유지. panel만 gap:0 + full-width track.
+ */
+.mg-segmented-tabs--panel {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: var(--mg-spacing-xs, 4px);
+  background: var(--mg-color-background-muted);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-v2-radius-lg, 8px);
+}
+
+.mg-segmented-tabs--panel .mg-segmented-tabs__tab {
+  flex: 1 1 0;
+  min-height: 34px;
+  padding: 0 var(--mg-spacing-sm, 8px);
+  font-size: var(--font-size-xs, 0.8125rem);
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.mg-segmented-tabs--panel .mg-segmented-tabs__tab--active {
+  background: var(--mg-color-primary-solid);
+  color: var(--mg-color-text-on-primary);
+  font-weight: 600;
+  box-shadow: var(--mg-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.mg-segmented-tabs--panel .mg-segmented-tabs__tab--inactive {
+  background: transparent;
+  color: var(--mg-color-text-secondary);
+}
+
+.mg-segmented-tabs--panel .mg-segmented-tabs__tab--inactive:hover:not(:disabled) {
+  color: var(--mg-color-text-main);
+  background: var(--mg-color-bg-hover);
+}
+
+.mg-segmented-tabs--panel .mg-segmented-tabs__tab--active:hover:not(:disabled) {
+  background: var(--mg-color-primary-solid);
+  color: var(--mg-color-text-on-primary);
+}
+
 /* ===== 모바일 (≤ 768px) ===== */
 @media (max-width: 768px) {
   .mg-segmented-tabs {
@@ -113,6 +160,11 @@
     min-height: 44px;
     font-size: 13px;
     padding: 0 12px;
+  }
+
+  .mg-segmented-tabs--panel .mg-segmented-tabs__tab {
+    min-height: 34px;
+    font-size: var(--font-size-xs, 0.8125rem);
   }
 }
 

@@ -1,5 +1,7 @@
 /**
  * QuickActionsDropdown - 역할별 빠른 액션 드롭다운 스타일
+ * Flush menu rows inside panel (8px list padding). No per-row border.
+ *
  * @author CoreSolution
  * @since 2026-03-09
  */
@@ -14,7 +16,7 @@
 
 .mg-v2-quick-actions-dropdown__panel {
   width: 280px;
-  max-height: 400px;
+  max-height: 420px;
   min-height: 180px;
   display: flex;
   flex-direction: column;
@@ -23,87 +25,62 @@
 
 @media (max-width: 767px) {
   .mg-v2-quick-actions-dropdown__panel {
-    width: 260px;
-    max-width: calc(100vw - 32px);
+    width: calc(100vw - 32px);
+    max-width: 280px;
     max-height: 360px;
   }
 }
 
 .mg-v2-quick-actions-list {
-  padding: 8px 0;
+  padding: var(--mg-spacing-sm, 8px);
   overflow-y: auto;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .mg-v2-quick-action-item {
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: background-color 150ms;
-  width: 100%;
-  text-align: left;
-  background: none;
+  gap: 10px;
+  min-height: 42px;
+  padding: 10px 12px;
   border: none;
-  font-family: inherit;
-}
-
-.mg-v2-quick-action-item:hover {
-  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
 }
 
 .mg-v2-quick-action-item__icon {
-  color: var(--mg-color-primary-main, var(--mg-color-primary-main));
+  color: var(--mg-color-primary-solid);
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mg-v2-quick-action-item__label {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 14px;
+  font-size: var(--font-size-sm, 0.875rem);
   font-weight: 500;
-  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
-  flex: 1;
-}
-
-.mg-v2-quick-action-item__arrow {
-  color: var(--mg-color-text-secondary, var(--mg-color-text-secondary));
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-/* MGButton(G8): 빠른 액션 행 — outline·내부 래퍼 보정 */
-.mg-v2-quick-action-item.mg-button.mg-button--outline {
-  border: none;
-  background: none;
-  min-height: unset;
-  justify-content: flex-start;
-  font-weight: inherit;
-}
-
-.mg-v2-quick-action-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: none;
-  box-shadow: none;
-  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
-  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
-}
-
-.mg-v2-quick-action-item.mg-button .mg-button__text {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
+  color: var(--mg-color-text-main);
   flex: 1;
   min-width: 0;
 }
 
-[data-theme="dark"] .mg-v2-quick-action-item:hover,
-[data-theme="dark"] .mg-v2-quick-action-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
-  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+.mg-v2-quick-action-item__arrow {
+  color: var(--mg-color-text-secondary);
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
-[data-theme="dark"] .mg-v2-quick-action-item:hover .mg-v2-quick-action-item__label,
-[data-theme="dark"] .mg-v2-quick-action-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) .mg-v2-quick-action-item__label {
-  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+.mg-v2-quick-action-item:hover .mg-v2-quick-action-item__label,
+.mg-v2-quick-action-item:focus-visible .mg-v2-quick-action-item__label {
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-quick-action-item:active .mg-v2-quick-action-item__label {
+  color: var(--mg-color-primary-solid);
+}
+
+[data-theme="dark"] .mg-v2-quick-action-item:hover .mg-v2-quick-action-item__label {
+  color: var(--mg-color-text-main);
 }

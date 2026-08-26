@@ -17,7 +17,7 @@
 .mg-v2-tenant-header-cluster {
   display: flex;
   align-items: center;
-  gap: var(--mg-spacing-sm);
+  gap: var(--mg-spacing-12, 12px);
   min-width: 0;
 }
 
@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: var(--mg-spacing-sm);
+  gap: var(--mg-spacing-12, 12px);
 }
 
 .mg-v2-tenant-header-cluster__trigger-wrap {
@@ -68,7 +68,7 @@
 
 /*
  * GNB 아이콘 트리거 — 전역 button ellipsis/overflow 탈출
- * (unified-design-tokens :not 예외와 이중 방어)
+ * chevron-only (#620): 공유 pill/rounded border 없음, ⋮ 와 시각 분리
  */
 .mg-v2-tenant-header-icon-btn,
 .mg-v2-tenant-header-cluster .mg-v2-nav-icon {
@@ -78,6 +78,13 @@
   border: none;
   background: transparent;
   box-shadow: none;
+  border-radius: 0;
+  flex-shrink: 0;
+  width: var(--touch-target-min, 2.75rem);
+  height: var(--touch-target-min, 2.75rem);
+  min-width: var(--touch-target-min, 2.75rem);
+  min-height: var(--touch-target-min, 2.75rem);
+  padding: 0;
 }
 
 .mg-v2-tenant-header-icon-btn:focus:not(:focus-visible),
@@ -207,55 +214,85 @@
 }
 
 .mg-v2-profile-dropdown__menu {
-  padding: var(--mg-spacing-sm) 0;
+  padding: var(--mg-spacing-sm, 8px);
   overflow-y: auto;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .mg-v2-profile-menu-item {
-  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  /* HeaderMenuRow base + profile domain */
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-profile-menu-item.mg-v2-header-menu-row--danger {
+  color: var(--mg-color-error-500, var(--mg-error-500));
+}
+
+.mg-v2-profile-theme-row {
   display: flex;
   align-items: center;
-  gap: var(--mg-spacing-sm);
-  cursor: pointer;
-  transition: background-color 150ms;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: var(--font-size-sm, 0.875rem);
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm, 8px);
+  padding: 10px var(--mg-spacing-md, 16px);
+  min-height: 42px;
+  box-sizing: border-box;
 }
 
-.mg-v2-profile-menu-item:hover {
-  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
-  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
+.mg-v2-profile-theme-row__label {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+  font-size: var(--font-size-xs, 0.8125rem);
+  font-weight: 500;
+  color: var(--mg-color-text-main);
+  min-width: 0;
 }
 
-.mg-v2-profile-menu-item svg {
-  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
+.mg-v2-profile-theme-row__icon {
+  display: inline-flex;
+  color: var(--mg-color-text-secondary);
   flex-shrink: 0;
 }
 
-.mg-v2-profile-menu-item--danger {
-  color: var(--mg-color-error-500, var(--mg-error-500));
+.mg-v2-theme-switch {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 6px;
+  background: var(--mg-color-background-muted);
+  border: 1px solid var(--mg-color-border-main);
+  flex-shrink: 0;
 }
 
-.mg-v2-profile-menu-item--danger svg {
-  color: var(--mg-color-error-500, var(--mg-error-500));
+.mg-v2-theme-switch__btn {
+  padding: var(--mg-spacing-xs, 4px) 10px;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 500;
+  border: none;
+  border-radius: var(--mg-v2-radius-sm, 4px);
+  cursor: pointer;
+  background: transparent;
+  color: var(--mg-color-text-secondary);
+  font-family: inherit;
 }
 
-.mg-v2-profile-menu-item--danger:hover {
-  color: var(--mg-color-error-500, var(--mg-error-500));
+.mg-v2-theme-switch__btn--active {
+  background: var(--mg-color-primary-solid);
+  color: var(--mg-color-text-on-primary);
+  font-weight: 600;
 }
 
 [data-theme="dark"] .mg-v2-tenant-header-cluster__name {
-  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+  color: var(--mg-color-text-main);
 }
 
 [data-theme="dark"] .mg-v2-profile-menu-item:hover {
-  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
-  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+  background-color: var(--mg-color-bg-hover);
+  color: var(--mg-color-text-main);
+}
+
+[data-theme="dark"] .mg-v2-profile-menu-item.mg-v2-header-menu-row--danger:hover {
+  color: var(--mg-color-error-500, var(--mg-error-500));
 }

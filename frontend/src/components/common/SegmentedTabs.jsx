@@ -33,6 +33,7 @@ const SegmentedTabs = ({
   onChange,
   ariaLabel,
   size = 'md',
+  variant = 'default',
   className = '',
 }) => {
   const tabRefs = useRef([]);
@@ -63,9 +64,18 @@ const SegmentedTabs = ({
     [items, onChange]
   );
 
+  const rootClass = [
+    'mg-segmented-tabs',
+    `mg-segmented-tabs--${size}`,
+    variant === 'panel' ? 'mg-segmented-tabs--panel' : '',
+    className
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div
-      className={`mg-segmented-tabs mg-segmented-tabs--${size} ${className}`.trim()}
+      className={rootClass}
       role="tablist"
       aria-label={ariaLabel}
     >
@@ -123,6 +133,8 @@ SegmentedTabs.propTypes = {
   onChange: PropTypes.func.isRequired,
   ariaLabel: PropTypes.string.isRequired,
   size: PropTypes.oneOf(['sm', 'md']),
+  /** default = 갭+pill SSOT; panel = GNB gap-less solid segmented */
+  variant: PropTypes.oneOf(['default', 'panel']),
   className: PropTypes.string,
 };
 

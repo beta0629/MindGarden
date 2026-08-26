@@ -95,16 +95,16 @@ const PaymentManagement = () => {
         console.error('결제 상태 코드 로드 실패:', error);
         setPaymentStatusOptions([
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'PENDING', label: '대기중', icon: '⏳', color: 'var(--mg-warning-500)', description: '결제 대기 중' },
-          { value: 'PROCESSING', label: '처리중', icon: '🔄', color: 'var(--mg-primary-500)', description: '결제 처리 중' },
+          { value: 'PENDING', label: '대기중', color: 'var(--mg-warning-500)', description: '결제 대기 중' },
+          { value: 'PROCESSING', label: '처리중', color: 'var(--mg-primary-500)', description: '결제 처리 중' },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'APPROVED', label: '승인됨', icon: '✅', color: 'var(--mg-success-500)', description: '결제 승인 완료' },
-          { value: 'FAILED', label: '실패', icon: '❌', color: 'var(--mg-error-500)', description: '결제 실패' },
+          { value: 'APPROVED', label: '승인됨', color: 'var(--mg-success-500)', description: '결제 승인 완료' },
+          { value: 'FAILED', label: '실패', color: 'var(--mg-error-500)', description: '결제 실패' },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: 'var(--mg-gray-500)', description: '결제 취소' },
-          { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: 'var(--mg-warning-500)', description: '결제 환불' },
-          { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: 'var(--mg-gray-600)', description: '결제 만료' },
-          { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: 'var(--mg-warning-500)', description: '부분 환불' }
+          { value: 'CANCELLED', label: '취소됨', color: 'var(--mg-gray-500)', description: '결제 취소' },
+          { value: 'REFUNDED', label: '환불됨', color: 'var(--mg-warning-500)', description: '결제 환불' },
+          { value: 'EXPIRED', label: '만료됨', color: 'var(--mg-gray-600)', description: '결제 만료' },
+          { value: 'PARTIAL_REFUND', label: '부분환불', color: 'var(--mg-warning-500)', description: '부분 환불' }
         ]);
       } finally {
         setLoadingCodes(false);
@@ -131,11 +131,11 @@ const PaymentManagement = () => {
     } catch (error) {
       console.error('결제 게이트웨이 코드 로드 실패:', error);
       setPaymentGatewayOptions([
-        { value: 'TOSS', label: '토스페이먼츠', icon: '💙', color: 'var(--mg-primary-500)', description: '토스페이먼츠 결제' },
-        { value: 'IAMPORT', label: '아임포트', icon: '🏦', color: 'var(--mg-gray-700)', description: '아임포트 결제' },
-        { value: 'KAKAO', label: '카카오페이', icon: '💛', color: 'var(--mg-yellow-500)', description: '카카오페이 결제' },
-        { value: 'NAVER', label: '네이버페이', icon: '💚', color: 'var(--mg-green-500)', description: '네이버페이 결제' },
-        { value: 'PAYPAL', label: '페이팔', icon: '💳', color: 'var(--mg-blue-500)', description: '페이팔 결제' }
+        { value: 'TOSS', label: '토스페이먼츠', color: 'var(--mg-primary-500)', description: '토스페이먼츠 결제' },
+        { value: 'IAMPORT', label: '아임포트', color: 'var(--mg-gray-700)', description: '아임포트 결제' },
+        { value: 'KAKAO', label: '카카오페이', color: 'var(--mg-yellow-500)', description: '카카오페이 결제' },
+        { value: 'NAVER', label: '네이버페이', color: 'var(--mg-green-500)', description: '네이버페이 결제' },
+        { value: 'PAYPAL', label: '페이팔', color: 'var(--mg-blue-500)', description: '페이팔 결제' }
       ]);
     } finally {
       setLoadingGatewayCodes(false);
@@ -163,11 +163,11 @@ const PaymentManagement = () => {
     } catch (error) {
       console.error('결제 방법 코드 로드 실패:', error);
       setPaymentMethodOptions([
-        { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
-        { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
-        { value: 'VIRTUAL_ACCOUNT', label: '가상계좌', icon: '🏧', color: 'var(--mg-purple-500)', description: '가상계좌 결제' },
-        { value: 'MOBILE', label: '모바일결제', icon: '📱', color: 'var(--mg-warning-500)', description: '모바일 결제' },
-        { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' }
+        { value: 'CARD', label: '카드', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
+        { value: 'BANK_TRANSFER', label: '계좌이체', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
+        { value: 'VIRTUAL_ACCOUNT', label: '가상계좌', color: 'var(--mg-purple-500)', description: '가상계좌 결제' },
+        { value: 'MOBILE', label: '모바일결제', color: 'var(--mg-warning-500)', description: '모바일 결제' },
+        { value: 'CASH', label: '현금', color: 'var(--mg-warning-500)', description: '현금 결제' }
       ]);
     } finally {
       setLoadingMethodCodes(false);

@@ -30,7 +30,7 @@ const TreatmentOutcomeChart = ({ prediction }) => {
 
     return (
         <div className="treatment-outcome-chart">
-            <h3>🎯 치료 경과 예측</h3>
+            <h3>치료 경과 예측</h3>
 
             <div className="outcome-display">
                 <div

@@ -54,12 +54,12 @@ const SOAPNoteEditor = ({ report, onSave }) => {
                 onSave(data.report);
             }
 
-            setSaveMessage('✅ 저장되었습니다.');
+            setSaveMessage('저장되었습니다.');
             setTimeout(() => setSaveMessage(''), 3000);
 
         } catch (error) {
             console.error('저장 실패:', error);
-            setSaveMessage('❌ 저장에 실패했습니다.');
+            setSaveMessage('저장에 실패했습니다.');
         } finally {
             setIsSaving(false);
         }
@@ -110,7 +110,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
             <div className="editor-header">
                 <h4>SOAP 노트 편집</h4>
                 <div className="editor-info">
-                    <span className="ai-badge">🤖 AI 생성</span>
+                    <span className="ai-badge">AI 생성</span>
                     {editedReport.aiModelUsed && (
                         <span className="model-badge">{editedReport.aiModelUsed}</span>
                     )}
@@ -129,7 +129,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
 
             {editedReport.humanReviewed && (
                 <div className="approved-badge">
-                    ✅ 검토 완료 (승인일: {new Date(editedReport.reviewedAt).toLocaleString('ko-KR')})
+                    검토 완료 (승인일: {new Date(editedReport.reviewedAt).toLocaleString('ko-KR')})
                 </div>
             )}
 
@@ -199,7 +199,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
 
             {/* 저장 메시지 */}
             {saveMessage && (
-                <div className={`save-message ${saveMessage.includes('✅') ? 'success' : 'error'}`}>
+                <div className={`save-message ${saveMessage.includes('실패') ? 'error' : 'success'}`}>
                     {saveMessage}
                 </div>
             )}
@@ -219,7 +219,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     variant="secondary"
                 >
-                    💾 저장
+                    저장
                 </MGButton>
 
                 <MGButton
@@ -235,7 +235,7 @@ const SOAPNoteEditor = ({ report, onSave }) => {
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     variant="success"
                 >
-                    ✅ 최종 승인
+                    최종 승인
                 </MGButton>
 
                 {editedReport.humanReviewed && (

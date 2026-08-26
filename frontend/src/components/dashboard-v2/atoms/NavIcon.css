@@ -50,7 +50,7 @@
   background: var(--mg-color-background-main);
   transform: none;
   box-shadow: none;
-  color: inherit;
+  color: var(--mg-color-text-secondary-dark, var(--mg-v2-color-text-secondary));
 }
 
 .mg-v2-nav-icon.mg-button .mg-button__text {
@@ -82,7 +82,13 @@
 
 [data-theme="dark"] .mg-v2-nav-icon:hover:not(:disabled),
 [data-theme="dark"] .mg-v2-nav-icon.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--mg-v2-color-state-hover, var(--mg-color-bg-hover));
+  background: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+}
+
+[data-theme="dark"] .mg-v2-nav-icon:hover:not(:disabled) .mg-v2-nav-icon__lucide,
+[data-theme="dark"] .mg-v2-nav-icon.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) .mg-v2-nav-icon__lucide {
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }
 
 [data-theme="dark"] .mg-v2-nav-icon__lucide {

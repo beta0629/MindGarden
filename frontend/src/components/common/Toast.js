@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { CheckCircle2, XCircle, AlertTriangle, Info, Bell, Wrench } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './Toast.css';
+
+const TOAST_ICON_SIZE = 20;
+const TOAST_ICON_STROKE = 1.75;
 
 /**
  * 공통 Toast 알림 컴포넌트
@@ -101,22 +105,27 @@ const Toast = () => {
 };
 
 /**
- * 알림 타입별 아이콘 반환
+ * 알림 타입별 아이콘 반환 (이모지 → Lucide stroke)
  */
 const getIcon = (type) => {
+    const iconProps = {
+        size: TOAST_ICON_SIZE,
+        strokeWidth: TOAST_ICON_STROKE,
+        'aria-hidden': true
+    };
     switch (type) {
         case 'success':
-            return '✅';
+            return <CheckCircle2 {...iconProps} />;
         case 'error':
-            return '❌';
+            return <XCircle {...iconProps} />;
         case 'warning':
-            return '⚠️';
+            return <AlertTriangle {...iconProps} />;
         case 'info':
-            return 'ℹ️';
+            return <Info {...iconProps} />;
         case 'system':
-            return '🔧';
+            return <Wrench {...iconProps} />;
         default:
-            return '📢';
+            return <Bell {...iconProps} />;
     }
 };
 

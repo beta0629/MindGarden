@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Info, Check } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { apiPost, apiGet } from '../../utils/ajax';
@@ -184,7 +185,7 @@ const ResetPassword = () => {
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
-                      {showPassword ? '👁️' : '👁️‍🗨️'}
+                      {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                     </MGButton>
                   </div>
                 </div>
@@ -211,13 +212,13 @@ const ResetPassword = () => {
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       preventDoubleClick={false}
                     >
-                      {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                      {showConfirmPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                     </MGButton>
                   </div>
                 </div>
 
                 <div className="mg-v2-auth-hint mg-v2-auth-hint--password">
-                  <p>💡 <strong>비밀번호 요구사항</strong></p>
+                  <p><Info size={16} strokeWidth={1.75} aria-hidden="true" /> <strong>비밀번호 요구사항</strong></p>
                   <ul>
                     <li>8자 이상 100자 이하</li>
                     <li>영문과 숫자 포함</li>
@@ -240,8 +241,8 @@ const ResetPassword = () => {
             </>
           ) : (
             <div className="mg-v2-auth-success">
-              <div className="mg-v2-auth-success-icon">
-                ✅
+              <div className="mg-v2-auth-success-icon" aria-hidden="true">
+                <Check size={32} strokeWidth={1.75} />
               </div>
               
               <div>

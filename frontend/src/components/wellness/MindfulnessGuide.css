@@ -193,7 +193,7 @@
 }
 
 .steps-title::before {
-  content: "📋";
+  content: "";
   font-size: var(--mg-body-large-size);
 }
 

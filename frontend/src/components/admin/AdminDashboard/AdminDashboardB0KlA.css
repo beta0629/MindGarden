@@ -16,7 +16,9 @@
 .mg-v2-ad-b0kla .mg-button--primary {
   background: var(--ad-b0kla-green);
   color: var(--mg-white);
-  border: none;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-primary:hover:not(:disabled),
@@ -43,7 +45,9 @@
 .mg-v2-ad-b0kla .mg-v2-button--success {
   background: var(--ad-b0kla-green);
   color: var(--mg-white);
-  border: none;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-success:hover:not(:disabled),
@@ -84,7 +88,9 @@
 .mg-v2-ad-b0kla .mg-v2-button--danger {
   background: var(--ad-b0kla-danger);
   color: var(--mg-white);
-  border: none;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-danger:hover:not(:disabled),
@@ -937,15 +943,6 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   color: var(--ad-b0kla-title-color, var(--mg-v2-color-text-primary));
 }
 
-.mg-v2-ad-b0kla__session-burn-title::before {
-  content: '';
-  width: var(--mg-v2-space-1, 0.25rem);
-  height: var(--mg-v2-font-size-body-md, 0.875rem);
-  border-radius: 0.125rem;
-  background-color: var(--mg-color-primary-main);
-  flex-shrink: 0;
-}
-
 .mg-v2-ad-b0kla__session-burn-hint {
   color: var(--mg-v2-color-text-secondary);
   font-size: var(--mg-v2-font-size-caption, var(--mg-font-size-xs, 0.75rem));
@@ -1578,7 +1575,7 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
   padding: var(--mg-spacing-lg, 1rem) var(--mg-spacing-xl, 1.5rem);
 }
 
-/* B0KlA 모달 액션 버튼 크기 통일 (아이콘 유무와 관계없이 동일) */
+/* B0KlA 모달 액션 버튼 크기 통일 (아이콘 유무와 관계없이 동일) — ActionBar/MGButton box model */
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-button,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions > button,
 .mg-modal.mg-v2-ad-b0kla .mg-modal__actions .mg-v2-button,
@@ -1587,8 +1584,18 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
   flex: 0 0 auto;
   width: auto;
   min-width: 112px;
-  min-height: 40px;
+  height: var(--button-height-default);
+  min-height: var(--button-height-default);
+  max-height: var(--button-height-default);
   box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+  border-width: 1px;
+  border-style: solid;
+  transform: none;
 }
 
 /*
@@ -1882,20 +1889,18 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
   opacity: 1;
 }
 
-/* 섹션 제목 (좌측 악센트 적용) */
+/* 섹션 제목 (quiet chrome — 좌측 레일 없음) */
 .mg-v2-ad-b0kla__section-title {
   font-size: var(--mg-v2-font-size-body-lg, 1rem);
   font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--ad-b0kla-title-color);
   margin: 0 0 var(--mg-v2-space-4, 1rem) 0;
-  padding-left: var(--mg-v2-space-3, 12px);
-  border-left: 4px solid var(--ad-b0kla-green);
+  padding: 0;
 }
 
-/* ContentSection 제목 B0KlA 통일: 좌측 악센트 4px, 16px 600 */
+/* ContentSection 제목 B0KlA 통일: quiet spacing, 16px 600 */
 .mg-v2-ad-b0kla .mg-v2-content-section__title-wrap {
-  padding-left: var(--mg-v2-space-3, 12px);
-  border-left: 4px solid var(--ad-b0kla-green);
+  padding: 0;
 }
 
 .mg-v2-ad-b0kla .mg-v2-content-section__title {
@@ -2028,8 +2033,17 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
   }
 }
 
-/* MGButton + B0KlA (G8-B7a): 래퍼 언랩 및 카드·필·아이콘·토스트 닫기 외형 유지 */
-button.mg-v2-ad-b0kla__admin-card.mg-button {
+/* MGButton + B0KlA (G8-B7a): 래퍼 언랩 및 카드·필·아이콘·토스트 닫기 외형 유지.
+ * MGButton.css height/max-height !important 고정은 빠른 액션 아이콘을 클리핑하므로
+ * admin-card 한정으로 height/max-height를 해제한다 (전역 equal-height 회귀 금지).
+ * size 특이도(.mg-button.mg-v2-button.mg-button--*)가 더 높으므로 size 변형도 함께 해제. */
+button.mg-v2-ad-b0kla__admin-card.mg-button,
+button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--small,
+button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--medium,
+button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--large,
+button.mg-v2-ad-b0kla__admin-card.mg-button.mg-v2-button.mg-button--small,
+button.mg-v2-ad-b0kla__admin-card.mg-button.mg-v2-button.mg-button--medium,
+button.mg-v2-ad-b0kla__admin-card.mg-button.mg-v2-button.mg-button--large {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2037,7 +2051,9 @@ button.mg-v2-ad-b0kla__admin-card.mg-button {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  min-height: unset;
+  height: auto !important;
+  max-height: none !important;
+  min-height: unset !important;
   font-weight: inherit;
   line-height: inherit;
   font-size: inherit;
@@ -2046,9 +2062,9 @@ button.mg-v2-ad-b0kla__admin-card.mg-button {
   border: 1px solid var(--ad-b0kla-border);
   border-radius: var(--mg-v2-radius-xl, 16px);
   box-shadow: none;
-  padding: var(--mg-v2-space-6, 1.5rem);
+  padding: var(--mg-v2-space-6, 1.5rem) !important;
   text-align: center;
-  overflow: visible;
+  overflow: visible !important;
 }
 
 button.mg-v2-ad-b0kla__admin-card.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {
@@ -2073,11 +2089,28 @@ button.mg-v2-ad-b0kla__admin-card.mg-button .mg-button__content {
   justify-content: center;
   gap: var(--mg-spacing-md, 1rem);
   width: 100%;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
 }
 
 button.mg-v2-ad-b0kla__admin-card.mg-button .mg-button__text {
   display: contents;
   white-space: normal;
+}
+
+button.mg-v2-ad-b0kla__admin-card.mg-button .mg-v2-ad-b0kla__admin-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-inline: auto;
+}
+
+button.mg-v2-ad-b0kla__admin-card.mg-button .mg-v2-ad-b0kla__admin-icon svg {
+  display: block;
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 button.mg-v2-ad-b0kla__admin-card.mg-button .mg-v2-ad-b0kla__admin-label,
@@ -2091,6 +2124,23 @@ button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--loading {
   opacity: 1;
   background: var(--ad-b0kla-card-bg);
   color: inherit;
+}
+
+/* MGButton 반응형 size !important 재적용 방어 (admin-card 한정) */
+@media (max-width: 768px) {
+  button.mg-v2-ad-b0kla__admin-card.mg-button,
+  button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--small,
+  button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--medium,
+  button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--large,
+  button.mg-v2-ad-b0kla__admin-card.mg-button.mg-v2-button.mg-button--small,
+  button.mg-v2-ad-b0kla__admin-card.mg-button.mg-v2-button.mg-button--medium,
+  button.mg-v2-ad-b0kla__admin-card.mg-button.mg-v2-button.mg-button--large {
+    height: auto !important;
+    max-height: none !important;
+    min-height: unset !important;
+    padding: var(--mg-v2-space-6, 1.5rem) !important;
+    overflow: visible !important;
+  }
 }
 
 button.mg-v2-ad-b0kla__pill.mg-button {

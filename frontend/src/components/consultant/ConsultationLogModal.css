@@ -216,19 +216,4 @@
   background: var(--text-secondary);
 }
 
-/* 상담 일지 섹션별 아이콘 */
-.form-section:nth-child(1) .section-title::before {
-  content: "📅 ";
-}
-
-.form-section:nth-child(2) .section-title::before {
-  content: "💭 ";
-}
-
-.form-section:nth-child(3) .section-title::before {
-  content: "📈 ";
-}
-
-.form-section:nth-child(4) .section-title::before {
-  content: "📊 ";
-}
+/* 상담 일지 섹션 타이틀 — 이모지 장식 제거 (plain text) */

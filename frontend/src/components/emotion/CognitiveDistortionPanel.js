@@ -128,7 +128,7 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
                     </div>
                 ) : (
                     <div className="no-distortions">
-                        ✅ 인지 왜곡 패턴이 발견되지 않았습니다.
+                        인지 왜곡 패턴이 발견되지 않았습니다.
                     </div>
                 )}
             </div>
@@ -136,7 +136,7 @@ const CognitiveDistortionPanel = ({ emotionId }) => {
             {/* 위험도 경고 */}
             {emotionData.distortionRiskLevel === 'HIGH' && (
                 <div className="risk-warning high">
-                    ⚠️ 높은 수준의 인지 왜곡이 감지되었습니다. 인지 행동 치료를 고려하세요.
+                    높은 수준의 인지 왜곡이 감지되었습니다. 인지 행동 치료를 고려하세요.
                 </div>
             )}
         </div>

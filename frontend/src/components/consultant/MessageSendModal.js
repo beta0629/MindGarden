@@ -62,11 +62,11 @@ const MessageSendModal = ({
         console.error('메시지 유형 코드 로드 실패:', error);
         // 실패 시 기본값 설정
         setMessageTypeOptions([
-          { value: 'GENERAL', label: '일반 메시지', icon: '💬', color: 'var(--mg-secondary-500)', description: '일반적인 메시지' },
-          { value: 'FOLLOW_UP', label: '후속 조치', icon: '🔄', color: 'var(--mg-primary-500)', description: '후속 조치 안내 메시지' },
-          { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: 'var(--mg-success-500)', description: '과제 및 숙제 안내 메시지' },
-          { value: 'APPOINTMENT', label: '약속 안내', icon: '📅', color: 'var(--mg-warning-500)', description: '약속 및 일정 안내 메시지' },
-          { value: 'EMERGENCY', label: '긴급 안내', icon: '🚨', color: 'var(--mg-error-500)', description: '긴급 상황 안내 메시지' }
+          { value: 'GENERAL', label: '일반 메시지', color: 'var(--mg-secondary-500)', description: '일반적인 메시지' },
+          { value: 'FOLLOW_UP', label: '후속 조치', color: 'var(--mg-primary-500)', description: '후속 조치 안내 메시지' },
+          { value: 'HOMEWORK', label: '과제 안내', color: 'var(--mg-success-500)', description: '과제 및 숙제 안내 메시지' },
+          { value: 'APPOINTMENT', label: '약속 안내', color: 'var(--mg-warning-500)', description: '약속 및 일정 안내 메시지' },
+          { value: 'EMERGENCY', label: '긴급 안내', color: 'var(--mg-error-500)', description: '긴급 상황 안내 메시지' }
         ]);
       } finally {
         setLoadingCodes(false);

@@ -47,20 +47,25 @@
    표준 버튼 스타일
    ============================================ */
 
-/* 기본 버튼 */
+/*
+ * 기본 버튼 — MGButton.css 가 size/border box model SSOT.
+ * 여기서는 색·레이아웃 힌트만 두고, border:none / 세로 padding / 이중 size 체계를 두지 않는다.
+ */
 .mg-button {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  vertical-align: middle;
   gap: var(--spacing-xs, 0.5rem);
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--border-radius-md, 0.5rem);
   font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-weight: var(--font-weight-semibold, 600);
+  line-height: 1;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
   user-select: none;
   outline: none;
   box-sizing: border-box;
@@ -69,77 +74,85 @@
   text-overflow: ellipsis;
 }
 
-/* 버튼 크기 */
+/* 버튼 크기 — MGButton size 토큰과 동일 (고정 height, 세로 padding 0) */
 .mg-button--small {
-  padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
-  font-size: var(--font-size-sm, 0.875rem);
-  min-height: 32px;
-  line-height: 1.2;
+  height: var(--button-height-sm);
+  min-height: var(--button-height-sm);
+  max-height: var(--button-height-sm);
+  padding: var(--button-padding-sm);
+  font-size: var(--mg-v2-font-size-body-md, var(--font-size-sm, 0.875rem));
+  line-height: 1;
+  box-sizing: border-box;
 }
 
 .mg-button--medium {
-  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
-  font-size: var(--font-size-base, 1rem);
-  min-height: 40px;
-  line-height: 1.4;
+  height: var(--button-height-default);
+  min-height: var(--button-height-default);
+  max-height: var(--button-height-default);
+  padding: var(--button-padding-default);
+  font-size: var(--mg-v2-font-size-body-md, var(--font-size-base, 1rem));
+  line-height: 1;
+  box-sizing: border-box;
 }
 
 .mg-button--large {
-  padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
-  font-size: var(--font-size-lg, 1.125rem);
-  min-height: 48px;
-  line-height: 1.5;
+  height: var(--button-height-lg);
+  min-height: var(--button-height-lg);
+  max-height: var(--button-height-lg);
+  padding: var(--button-padding-lg);
+  font-size: var(--mg-v2-font-size-body-md, var(--font-size-lg, 1.125rem));
+  line-height: 1;
+  box-sizing: border-box;
 }
 
-/* 버튼 변형 */
+/* 버튼 변형 — border-width는 건드리지 않고 border-color만 */
 .mg-button--primary {
   background-color: var(--cs-primary-500, var(--mg-primary-500));
   color: var(--color-white, var(--mg-white));
+  border-color: transparent;
 }
 
 .mg-button--primary:hover:not(.mg-button--disabled) {
-  background-color: var(--cs-primary-600, #2563eb);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background-color: var(--cs-primary-600, var(--mg-primary-600));
+  box-shadow: var(--cs-shadow-soft, var(--mg-shadow-md));
 }
 
 .mg-button--primary:active:not(.mg-button--disabled) {
-  background-color: var(--cs-primary-700, #1d4ed8);
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+  background-color: var(--cs-primary-700, var(--mg-primary-700));
+  box-shadow: var(--cs-shadow-xs, var(--mg-shadow-sm));
 }
 
 .mg-button--secondary {
-  background-color: var(--cs-secondary-500, #6b7280);
+  background-color: var(--cs-secondary-500, var(--mg-secondary-500));
   color: var(--color-white, var(--mg-white));
-  border: 1px solid var(--cs-secondary-300, #d1d5db);
+  border-color: var(--cs-secondary-300, var(--mg-secondary-300));
 }
 
 .mg-button--secondary:hover:not(.mg-button--disabled) {
-  background-color: var(--cs-secondary-600, #4b5563);
-  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
+  background-color: var(--cs-secondary-600, var(--mg-secondary-600));
+  box-shadow: var(--cs-shadow-soft, var(--mg-shadow-md));
 }
 
 .mg-button--success {
   background-color: var(--cs-success-500, var(--mg-success-500));
   color: var(--color-white, var(--mg-white));
+  border-color: transparent;
 }
 
 .mg-button--success:hover:not(.mg-button--disabled) {
-  background-color: var(--cs-success-600, #059669);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  background-color: var(--cs-success-600, var(--mg-success-600));
+  box-shadow: var(--cs-shadow-soft, var(--mg-shadow-md));
 }
 
 .mg-button--danger {
   background-color: var(--cs-error-500, var(--mg-error-500));
   color: var(--color-white, var(--mg-white));
+  border-color: transparent;
 }
 
 .mg-button--danger:hover:not(.mg-button--disabled) {
-  background-color: var(--cs-error-600, #dc2626);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  background-color: var(--cs-error-600, var(--mg-error-600));
+  box-shadow: var(--cs-shadow-soft, var(--mg-shadow-md));
 }
 
 /* 버튼 상태 */
@@ -248,41 +261,40 @@
    표준 카드 스타일
    ============================================ */
 
-/* 기본 카드 */
+/* 기본 카드 — ContentCard / B0KlA 섹션 크롬과 동일 토큰 */
 .mg-card {
   position: relative;
-  background: var(--color-white, var(--mg-white));
-  border: 1px solid var(--cs-secondary-200, #e5e7eb);
-  border-radius: var(--border-radius-lg, 0.75rem);
-  box-shadow: 0 1px 3px var(--mg-shadow-light), 0 1px 2px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-v2-color-border-default, var(--cs-secondary-200)));
+  border-radius: var(--ad-b0kla-radius, var(--mg-v2-radius-lg, var(--border-radius-lg, 0.75rem)));
+  box-shadow: var(--ad-b0kla-shadow, var(--mg-shadow-sm));
+  transition: box-shadow 0.2s ease;
   overflow: hidden;
 }
 
 /* 카드 변형 */
 .mg-card--default {
-  background: var(--color-white, var(--mg-white));
-  border-color: var(--cs-secondary-200, #e5e7eb);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
+  border-color: var(--ad-b0kla-border, var(--mg-v2-color-border-default));
 }
 
 .mg-card--elevated {
-  background: var(--color-white, var(--mg-white));
-  border-color: transparent;
-  box-shadow: 0 10px 15px -3px var(--mg-shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
+  border-color: var(--ad-b0kla-border, var(--mg-v2-color-border-default));
+  box-shadow: var(--ad-b0kla-shadow, var(--mg-shadow-md));
 }
 
 .mg-card--outlined {
   background: transparent;
-  border-width: 2px;
-  border-color: var(--cs-secondary-300, #d1d5db);
+  border-width: 1px;
+  border-color: var(--ad-b0kla-border, var(--mg-v2-color-border-default));
   box-shadow: none;
 }
 
 .mg-card--glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px var(--mg-shadow-light);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-v2-color-border-default));
+  box-shadow: var(--ad-b0kla-shadow, var(--mg-shadow-sm));
 }
 
 /* 카드 패딩 */

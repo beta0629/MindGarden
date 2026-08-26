@@ -43,7 +43,7 @@ const MindfulnessGuide = () => {
     {
       id: 'breathing',
       title: '호흡법 가이드',
-      icon: '🌬️',
+      icon: null,
       content: {
         title: '마음을 진정시키는 호흡법',
         description: '스트레스와 불안을 줄이고 마음을 평온하게 만드는 다양한 호흡법을 배워보세요.',
@@ -84,7 +84,7 @@ const MindfulnessGuide = () => {
     {
       id: 'meditation',
       title: '명상 가이드',
-      icon: '🧘',
+      icon: null,
       content: {
         title: '마음챙김 명상',
         description: '현재 순간에 집중하여 마음의 평화를 찾는 명상법을 알아보세요.',
@@ -128,7 +128,7 @@ const MindfulnessGuide = () => {
     {
       id: 'stress',
       title: '스트레스 관리',
-      icon: '😌',
+      icon: null,
       content: {
         title: '일상 스트레스 관리법',
         description: '일상에서 쉽게 실천할 수 있는 스트레스 완화 방법들을 알아보세요.',
@@ -172,7 +172,7 @@ const MindfulnessGuide = () => {
     {
       id: 'sleep',
       title: '수면 가이드',
-      icon: '😴',
+      icon: null,
       content: {
         title: '건강한 수면을 위한 가이드',
         description: '숙면을 위한 환경 조성과 수면 습관을 개선하는 방법을 알아보세요.',

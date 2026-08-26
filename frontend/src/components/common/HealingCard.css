@@ -23,12 +23,6 @@
     line-height: 1.2;
 }
 
-/* 이모지 스타일 */
-.healing-emoji {
-    font-size: var(--mg-font-size-xl);
-    margin-right: var(--mg-spacing-xs);
-}
-
 /* 힐링 컨텐츠 영역 */
 .healing-content {
     line-height: var(--mg-line-height-relaxed);
@@ -123,10 +117,6 @@
     .healing-content h3 {
         font-size: var(--mg-font-size-md);
     }
-    
-    .healing-emoji {
-        font-size: var(--mg-font-size-lg);
-    }
 }
 
 @media (max-width: 480px) {
@@ -138,10 +128,6 @@
     .healing-content h3 {
         font-size: var(--mg-font-size-sm);
         padding-left: var(--mg-spacing-xs);
-    }
-    
-    .healing-emoji {
-        font-size: var(--mg-font-size-md);
     }
 }
 

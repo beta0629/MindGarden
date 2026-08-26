@@ -253,7 +253,7 @@ const SecurityMonitoringDashboard = () => {
                   </div>
                   
                   <div className="guide-item">
-                    <div className="guide-icon">📊</div>
+                    <div className="guide-icon" aria-hidden="true"></div>
                     <div className="guide-content">
                       <h4>지속적인 모니터링</h4>
                       <p>보안 이벤트를 실시간으로 모니터링하세요.</p>

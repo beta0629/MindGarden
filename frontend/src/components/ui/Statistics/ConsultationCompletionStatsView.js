@@ -89,9 +89,7 @@ const ConsultationCompletionStatsView = ({
                 {/* 요약 정보 카드 */}
                 <div className="mg-v2-stats-grid mg-mt-lg">
                     <div className="mg-v2-stat-card mg-v2-text-center">
-                        <div className="mg-v2-stat-icon primary">
-                            👥
-                        </div>
+                        <div className="mg-v2-stat-icon primary" aria-hidden="true"></div>
                         <div className="mg-v2-stat-value mg-v2-color-primary mg-mb-sm">
                             {statistics.length}
                         </div>
@@ -101,9 +99,7 @@ const ConsultationCompletionStatsView = ({
                     </div>
                     
                     <div className="mg-v2-stat-card mg-v2-text-center">
-                        <div className="mg-v2-stat-icon success">
-                            ✅
-                        </div>
+                        <div className="mg-v2-stat-icon success" aria-hidden="true"></div>
                         <div className="mg-v2-stat-value mg-v2-color-success mg-mb-sm">
                             {statistics.reduce((sum, stat) => sum + stat.completedCount, 0)}
                         </div>
@@ -113,9 +109,7 @@ const ConsultationCompletionStatsView = ({
                     </div>
                     
                     <div className="mg-v2-stat-card mg-v2-text-center">
-                        <div className="mg-v2-stat-icon warning">
-                            📊
-                        </div>
+                        <div className="mg-v2-stat-icon warning" aria-hidden="true"></div>
                         <div className="mg-v2-stat-value mg-v2-stat-value-warning">
                             {statistics.length > 0 
                                 ? Math.round(statistics.reduce((sum, stat) => sum + stat.completedCount, 0) / statistics.length)
@@ -148,9 +142,7 @@ const ConsultationCompletionStatsView = ({
 
             {statistics.length === 0 && (
                 <div className="mg-v2-card mg-v2-text-center mg-v2-pt-xl mg-v2-px-xxl mg-v2-mt-md">
-                    <div className="mg-v2-empty-state-icon mg-v2-empty-state-icon-large">
-                        📊
-                    </div>
+                    <div className="mg-v2-empty-state-icon mg-v2-empty-state-icon-large" aria-hidden="true"></div>
                     <h3 className="mg-v2-empty-title">
                         {t('statistics:completion.noData')}
                     </h3>

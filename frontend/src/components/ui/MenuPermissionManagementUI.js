@@ -45,7 +45,7 @@ const MenuPermissionManagementUI = ({
         <div className="mg-menu-permission-management">
             {error && (
                 <div className="mg-error-message">
-                    <span className="mg-error-icon">⚠️</span>
+                    <span className="mg-error-icon" aria-hidden="true"></span>
                     {error}
                 </div>
             )}

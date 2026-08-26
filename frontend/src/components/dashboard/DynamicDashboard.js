@@ -311,7 +311,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
           type: 'statistics',
           position: { row: 2, col: 1, colspan: 1, rowspan: 1 },
           config: {
-            title: '👤 현재 사용자',
+            title: '현재 사용자',
             color: 'info',
             dataSource: {
               type: 'api',
@@ -324,7 +324,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
           type: 'statistics',
           position: { row: 2, col: 2, colspan: 1, rowspan: 1 },
           config: {
-            title: '🏢 상담소 정보',
+            title: '상담소 정보',
             color: 'success',
             dataSource: {
               type: 'api',
@@ -523,7 +523,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             type: 'today-stats',
             position: { row: 2, col: 1, colspan: 2, rowspan: 1 },
             config: {
-              title: '📊 오늘의 현황',
+              title: '오늘의 현황',
               subtitle: '실시간 상담 및 사용자 통계',
               refreshInterval: 300000
             }
@@ -533,7 +533,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             type: 'system-overview',
             position: { row: 3, col: 1, colspan: 2, rowspan: 1 },
             config: {
-              title: '🏢 시스템 개요',
+              title: '시스템 개요',
               subtitle: '전체 시스템 현황 요약',
               refreshInterval: 30000
             }
@@ -1015,7 +1015,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
       type: 'today-stats',
       position: { row: 2, col: 1, colspan: 1, rowspan: 1 },
       config: {
-        title: '📊 오늘의 현황',
+        title: '오늘의 현황',
         subtitle: '실시간 상담 및 사용자 통계'
       }
     },
@@ -1024,7 +1024,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
       type: 'system-overview',
       position: { row: 2, col: 2, colspan: 1, rowspan: 1 },
       config: {
-        title: '🏢 시스템 개요',
+        title: '시스템 개요',
         subtitle: '전체 시스템 현황 요약'
       }
     },

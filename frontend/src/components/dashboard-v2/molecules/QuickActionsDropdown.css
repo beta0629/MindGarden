@@ -50,7 +50,7 @@
 }
 
 .mg-v2-quick-action-item:hover {
-  background-color: var(--mg-color-background-main, var(--mg-color-background-main));
+  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
 }
 
 .mg-v2-quick-action-item__icon {
@@ -62,7 +62,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
   flex: 1;
 }
 
@@ -84,7 +84,8 @@
 .mg-v2-quick-action-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   transform: none;
   box-shadow: none;
-  color: inherit;
+  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
 }
 
 .mg-v2-quick-action-item.mg-button .mg-button__text {
@@ -94,4 +95,15 @@
   width: 100%;
   flex: 1;
   min-width: 0;
+}
+
+[data-theme="dark"] .mg-v2-quick-action-item:hover,
+[data-theme="dark"] .mg-v2-quick-action-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+}
+
+[data-theme="dark"] .mg-v2-quick-action-item:hover .mg-v2-quick-action-item__label,
+[data-theme="dark"] .mg-v2-quick-action-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) .mg-v2-quick-action-item__label {
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
 }

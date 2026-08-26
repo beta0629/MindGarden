@@ -126,7 +126,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                 variant="outline"
                 preventDoubleClick={false}
             >
-                <span className="alert-icon">⚠️</span>
+                <span className="alert-icon" aria-hidden="true"></span>
                 {unreadCount > 0 && (
                     <span className="alert-count-badge">{unreadCount}</span>
                 )}
@@ -144,7 +144,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                     {/* 알림 목록 */}
                     <div className="alert-dropdown">
                         <div className="alert-dropdown-header">
-                            <h4>🚨 위험 징후 알림</h4>
+                            <h4>위험 징후 알림</h4>
                             <MGButton
                                 type="button"
                                 className={buildErpMgButtonClassName({
@@ -161,7 +161,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                                 loading={isLoading}
                                 preventDoubleClick={false}
                             >
-                                🔄
+                                {t('common.actions.refresh')}
                             </MGButton>
                         </div>
 
@@ -175,7 +175,7 @@ const RiskAlertBadge = ({ tenantId }) => {
 
                             {!isLoading && alerts.length === 0 && (
                                 <div className="no-alerts">
-                                    <div className="no-alerts-icon">✅</div>
+                                    <div className="no-alerts-icon" aria-hidden="true"></div>
                                     <p>현재 위험 징후 알림이 없습니다.</p>
                                 </div>
                             )}
@@ -221,7 +221,7 @@ const RiskAlertBadge = ({ tenantId }) => {
 
                                         <div className="alert-item-footer">
                                             <span className="alert-source">
-                                                {alert.alertSource === 'AI_DETECTED' ? '🤖 AI 감지' : '🔍 키워드 매칭'}
+                                                {alert.alertSource === 'AI_DETECTED' ? 'AI 감지' : '키워드 매칭'}
                                             </span>
                                             {alert.confidenceScore && (
                                                 <span className="confidence">

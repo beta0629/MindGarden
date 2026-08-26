@@ -190,12 +190,12 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                           </div>
                         </div>
                         <div className="consultation-consultant">
-                          <span className="consultation-icon">👤</span>
+                          <span className="consultation-icon" aria-hidden="true"></span>
                           {consultation.consultantName} 상담사
                         </div>
                         {consultation.clientName && (
                           <div className="consultation-client">
-                            <span className="consultation-icon">👥</span>
+                          <span className="consultation-icon" aria-hidden="true"></span>
                             {consultation.clientName}
                           </div>
                         )}
@@ -207,7 +207,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               ) : (
                 <div className="mg-v2-flex-1 mg-d-flex mg-align-center mg-justify-center mg-text-center mg-v2-p-lg">
                   <div>
-                    <div className="mg-v2-text-3xl mg-v2-mb-md">📅</div>
+                    <div className="mg-v2-text-3xl mg-v2-mb-md" aria-hidden="true"></div>
                     <div>오늘 예정된 상담이 없습니다</div>
                   </div>
                 </div>

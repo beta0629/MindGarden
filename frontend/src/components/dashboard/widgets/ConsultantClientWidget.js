@@ -190,7 +190,7 @@ const ConsultantClientWidget = ({ widget, user }) => {
     if (isEmpty || clients.length === 0) {
       return (
         <div className="consultant-client-empty">
-          <div className="consultant-client-empty-icon">👤</div>
+          <div className="consultant-client-empty-icon" aria-hidden="true"></div>
           <div className="consultant-client-empty-text">
             아직 매칭된 내담자가 없습니다
           </div>

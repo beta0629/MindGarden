@@ -129,7 +129,7 @@ const MappingPaymentModal = ({
 
             // apiPost는 ApiResponse의 data만 반환하므로, response가 존재하면 성공
             if (response) {
-                notificationManager.success('✅ 결제 확인 완료! ERP 시스템에 미수금 거래가 자동 등록되었습니다.');
+                notificationManager.success('결제 확인 완료! ERP 시스템에 미수금 거래가 자동 등록되었습니다.');
                 onPaymentConfirmed?.(mapping.id);
                 onClose();
             } else {

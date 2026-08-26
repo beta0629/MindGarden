@@ -50,16 +50,16 @@ export const STATUS_COLORS = {
 };
 
 export const STATUS_ICONS = {
-  [STATUS.AVAILABLE]: '✅',
+  [STATUS.AVAILABLE]: null,
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.BOOKED]: '📅',
+  [STATUS.BOOKED]: null,
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.CONFIRMED]: '✅',
-  [STATUS.VACATION]: '🏖️',
+  [STATUS.CONFIRMED]: null,
+  [STATUS.VACATION]: null,
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.COMPLETED]: '✅',
+  [STATUS.COMPLETED]: null,
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  [STATUS.CANCELLED]: '❌'
+  [STATUS.CANCELLED]: null
 };
 
 export const STATUS_TEXT_COLORS = {

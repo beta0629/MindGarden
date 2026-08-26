@@ -121,27 +121,21 @@ const ConsultationRecordSection = ({ consultantId }) => {
           {/* 통계 카드 */}
           <div className="mg-dashboard-stats mg-mb-lg">
             <div className="mg-dashboard-stat-card">
-              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-olive">
-                📊
-              </div>
+              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-olive" aria-hidden="true"></div>
               <div className="mg-dashboard-stat-content">
                 <div className="mg-dashboard-stat-value">{recordStats.totalRecords}</div>
                 <div className="mg-dashboard-stat-label">총 일지</div>
               </div>
             </div>
             <div className="mg-dashboard-stat-card">
-              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-mint">
-                📅
-              </div>
+              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-mint" aria-hidden="true"></div>
               <div className="mg-dashboard-stat-content">
                 <div className="mg-dashboard-stat-value">{recordStats.todayRecords}</div>
                 <div className="mg-dashboard-stat-label">오늘 작성</div>
               </div>
             </div>
             <div className="mg-dashboard-stat-card">
-              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-cocoa">
-                ⏳
-              </div>
+              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-cocoa" aria-hidden="true"></div>
               <div className="mg-dashboard-stat-content">
                 <div className="mg-dashboard-stat-value">{recordStats.pendingRecords}</div>
                 <div className="mg-dashboard-stat-label">미완료</div>

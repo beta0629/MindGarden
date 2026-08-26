@@ -552,7 +552,7 @@ const OAuth2Callback = () => {
     return (
       <div className="oauth2-callback-error">
         <div className="oauth2-callback-error-title">
-          ❌ 로그인 실패
+          로그인 실패
         </div>
         <div className="oauth2-callback-error-message">
           {error}

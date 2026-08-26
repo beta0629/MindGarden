@@ -43,7 +43,7 @@ const SimpleTestWidget = ({ widget, user }) => {
           </div>
           
           <div className="test-status">
-            ✅ 위젯 로딩 성공
+            위젯 로딩 성공
           </div>
         </div>
       </div>

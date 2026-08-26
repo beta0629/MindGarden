@@ -161,7 +161,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
         <>
         <div className={CLINICAL_CSS.DIAGNOSTIC_REPORT_EDITOR}>
             <div className="editor-header">
-                <h3>📋 {t('report:diagnostic.title')}</h3>
+                <h3>{t('report:diagnostic.title')}</h3>
                 <div className="header-actions">
                     {!report && (
                         <MGButton
@@ -177,7 +177,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                             variant="primary"
                         >
-                            🤖 {t('report:diagnostic.generateBtn')}
+                            {t('report:diagnostic.generateBtn')}
                         </MGButton>
                     )}
 
@@ -193,7 +193,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                             onClick={exportToPDF}
                             variant="secondary"
                         >
-                            📄 {t('report:diagnostic.exportPdf')}
+                            {t('report:diagnostic.exportPdf')}
                         </MGButton>
                     )}
                 </div>
@@ -202,14 +202,14 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
             {/* 에러 메시지 */}
             {error && (
                 <div className="error-message">
-                    ⚠️ {error}
+                    {error}
                 </div>
             )}
 
             {/* 보고서 없음 안내 */}
             {!report && !isGenerating && (
                 <div className="no-report-message">
-                    <div className="icon">📋</div>
+                    <div className="icon" aria-hidden="true"></div>
                     <h4>{t('report:diagnostic.noReport')}</h4>
                     <p>{t('report:diagnostic.noReportDesc')}</p>
                     <MGButton
@@ -224,7 +224,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                         variant="primary"
                         size="large"
                     >
-                        🤖 {t('report:diagnostic.generateBtnLarge')}
+                        {t('report:diagnostic.generateBtnLarge')}
                     </MGButton>
                 </div>
             )}
@@ -239,12 +239,12 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                         </span>
                         {report.generationTimeMs && (
                             <span className="meta-item">
-                                ⏱️ {t('report:diagnostic.generationTimeLabel')} {(report.generationTimeMs / 1000).toFixed(1)}{t('report:diagnostic.secondsUnit')}
+                                {t('report:diagnostic.generationTimeLabel')} {(report.generationTimeMs / 1000).toFixed(1)}{t('report:diagnostic.secondsUnit')}
                             </span>
                         )}
                         {report.humanReviewed && (
                             <span className="meta-item reviewed">
-                                ✅ {t('report:diagnostic.reviewed')}
+                                {t('report:diagnostic.reviewed')}
                             </span>
                         )}
                     </div>
@@ -299,7 +299,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
 
                     {/* 저장 메시지 */}
                     {saveMessage && (
-                        <div className={`save-message ${saveMessage.includes('✅') ? 'success' : 'error'}`}>
+                        <div className={`save-message ${saveMessage.includes('실패') || saveMessage.toLowerCase().includes('fail') ? 'error' : 'success'}`}>
                             {saveMessage}
                         </div>
                     )}
@@ -320,7 +320,7 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="secondary"
                             >
-                                💾 {t('report:diagnostic.saveBtn')}
+                                {t('report:diagnostic.saveBtn')}
                             </MGButton>
 
                             <MGButton
@@ -334,14 +334,14 @@ const DiagnosticReportEditor = ({ consultationRecordId }) => {
                                 onClick={handleApprove}
                                 variant="success"
                             >
-                                ✅ {t('report:diagnostic.approveBtn')}
+                                {t('report:diagnostic.approveBtn')}
                             </MGButton>
                         </div>
                     )}
 
                     {/* 주의사항 */}
                     <div className="report-disclaimer">
-                        <strong>⚠️ {t('report:diagnostic.disclaimerLabel')}</strong>
+                        <strong>{t('report:diagnostic.disclaimerLabel')}</strong>
                         <p>
                             {t('report:diagnostic.disclaimer')}
                         </p>

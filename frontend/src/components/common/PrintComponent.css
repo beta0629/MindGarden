@@ -209,7 +209,7 @@
 
 /* 프린트 버튼 아이콘 */
 .print-button::before {
-  content: "🖨️";
+  content: "";
   margin-right: var(--spacing-xs);
 }
 

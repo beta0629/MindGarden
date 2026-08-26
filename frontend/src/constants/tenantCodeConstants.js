@@ -176,7 +176,7 @@ export const UI_TEXT = {
     PLACEHOLDER_CODE_LABEL: '예: Basic Package',
     PLACEHOLDER_KOREAN_NAME: '예: 기본 패키지',
     PLACEHOLDER_DESCRIPTION: '코드에 대한 설명을 입력하세요',
-    PLACEHOLDER_ICON: '예: 📦, 💎, ⭐',
+    PLACEHOLDER_ICON: '예: Package, Diamond, Star',
     
     // 버튼 텍스트
     BTN_CANCEL: '취소',

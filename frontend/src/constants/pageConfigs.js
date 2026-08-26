@@ -20,10 +20,10 @@ export const MYPAGE_CONFIG = {
   PAGE_HEADER: {
     TITLE: '내 정보를 안전하게 관리하세요',
     DESCRIPTION: '프로필, 보안 설정, 개인정보 등을 체계적으로 관리하고 업데이트할 수 있습니다.',
-    ICON: '👤',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '보안 설정',
-      ICON: '🔒',
+      ICON: null,
       VARIANT: 'secondary',
       SIZE: 'md'
     }
@@ -41,10 +41,10 @@ export const SCHEDULE_PAGE_CONFIG = {
   PAGE_HEADER: {
     TITLE: '일정을 효율적으로 관리하세요',
     DESCRIPTION: '상담 일정, 휴가 신청, 상담사 현황을 한눈에 확인하고 관리할 수 있습니다.',
-    ICON: '📅',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '일정 추가',
-      ICON: '➕',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -59,10 +59,10 @@ export const SESSION_MANAGEMENT_CONFIG = {
   PAGE_HEADER: {
     TITLE: '시스템 현황을 한눈에 확인하고 관리하세요',
     DESCRIPTION: '상담사와 내담자의 세션 매핑을 효율적으로 관리하고, 회기 현황을 실시간으로 모니터링할 수 있습니다.',
-    ICON: '📊',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '통계 보기',
-      ICON: '📊',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -77,10 +77,10 @@ export const ADMIN_DASHBOARD_CONFIG = {
   PAGE_HEADER: {
     TITLE: '시스템을 체계적으로 관리하세요',
     DESCRIPTION: '사용자, 권한, 시스템 상태를 한눈에 확인하고 효율적으로 관리할 수 있습니다.',
-    ICON: '⚙️',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '시스템 설정',
-      ICON: '⚙️',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -95,10 +95,10 @@ export const ERP_DASHBOARD_CONFIG = {
   PAGE_HEADER: {
     TITLE: 'ERP 시스템을 통합 관리하세요',
     DESCRIPTION: '재무, 구매, 예산, 인사 등 모든 ERP 기능을 한 곳에서 효율적으로 관리할 수 있습니다.',
-    ICON: '💼',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '새로고침',
-      ICON: '🔄',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -113,10 +113,10 @@ export const USER_MANAGEMENT_CONFIG = {
   PAGE_HEADER: {
     TITLE: '사용자를 체계적으로 관리하세요',
     DESCRIPTION: '계정 생성, 권한 설정, 역할 관리를 통해 안전하고 효율적인 사용자 관리를 할 수 있습니다.',
-    ICON: '👥',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '사용자 추가',
-      ICON: '➕',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -131,10 +131,10 @@ export const CONSULTATION_RECORD_CONFIG = {
   PAGE_HEADER: {
     TITLE: '상담을 체계적으로 기록하세요',
     DESCRIPTION: '상담 내용, 진단, 치료 계획을 상세하게 기록하고 관리할 수 있습니다.',
-    ICON: '📝',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '기록 추가',
-      ICON: '➕',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -149,10 +149,10 @@ export const CLIENT_SETTINGS_CONFIG = {
   PAGE_HEADER: {
     TITLE: '개인화된 설정을 관리하세요',
     DESCRIPTION: '알림, 개인정보, 상담 환경을 원하는 대로 설정할 수 있습니다.',
-    ICON: '⚙️',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '설정 저장',
-      ICON: '💾',
+      ICON: null,
       VARIANT: 'secondary',
       SIZE: 'md'
     }
@@ -167,10 +167,10 @@ export const BRANCH_MANAGEMENT_CONFIG = {
   PAGE_HEADER: {
     TITLE: '지점을 체계적으로 관리하세요',
     DESCRIPTION: '지점별 직원, 매출, 설정을 통합적으로 관리하고 모니터링할 수 있습니다.',
-    ICON: '🏢',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '지점 추가',
-      ICON: '➕',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -185,10 +185,10 @@ export const COMPLIANCE_DASHBOARD_CONFIG = {
   PAGE_HEADER: {
     TITLE: '규정 준수를 체계적으로 관리하세요',
     DESCRIPTION: '법적 요구사항, 감사 내역, 규정 준수 상태를 실시간으로 모니터링할 수 있습니다.',
-    ICON: '📋',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '감사 보고서',
-      ICON: '📊',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -203,10 +203,10 @@ export const HQ_DASHBOARD_CONFIG = {
   PAGE_HEADER: {
     TITLE: '전체 시스템을 통합 관리하세요',
     DESCRIPTION: '모든 지점의 현황, 성과, 이슈를 실시간으로 모니터링하고 관리할 수 있습니다.',
-    ICON: '🏢',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '전체 현황',
-      ICON: '📊',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -221,10 +221,10 @@ export const INTEGRATED_FINANCE_DASHBOARD_CONFIG = {
   PAGE_HEADER: {
     TITLE: '재무를 통합적으로 관리하세요',
     DESCRIPTION: '수입, 지출, 예산, 현금흐름을 한눈에 확인하고 실시간으로 모니터링할 수 있습니다.',
-    ICON: '💰',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '재무 분석',
-      ICON: '📊',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -239,10 +239,10 @@ export const COMMON_DASHBOARD_CONFIG = {
   PAGE_HEADER: {
     TITLE: '현황을 한눈에 확인하세요',
     DESCRIPTION: '시스템 전반의 현황과 주요 지표를 실시간으로 모니터링할 수 있습니다.',
-    ICON: '📊',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '상세 보기',
-      ICON: '🔍',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }
@@ -257,10 +257,10 @@ export const SYSTEM_TOOLS_CONFIG = {
   PAGE_HEADER: {
     TITLE: '시스템을 체계적으로 관리하세요',
     DESCRIPTION: '시스템 상태 확인, 로그 조회, 캐시 관리, 백업 생성 등 시스템 유지보수 도구를 제공합니다.',
-    ICON: '🔧',
+    ICON: null,
     ACTION_BUTTON: {
       TEXT: '시스템 상태',
-      ICON: '📊',
+      ICON: null,
       VARIANT: 'primary',
       SIZE: 'md'
     }

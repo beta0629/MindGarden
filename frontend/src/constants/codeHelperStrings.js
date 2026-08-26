@@ -54,27 +54,27 @@ export const USER_GRADE_KOREAN_NAME_MAP = {
 export const USER_GRADE_KOREAN_DEFAULT = '브론즈';
 
 export const USER_GRADE_ICON_MAP = {
-  CLIENT_BRONZE: '🥉',
-  CLIENT_SILVER: '🥈',
-  CLIENT_GOLD: '🥇',
-  CLIENT_PLATINUM: '💎',
-  CLIENT_DIAMOND: '💠',
-  BRONZE: '🥉',
-  SILVER: '🥈',
-  GOLD: '🥇',
-  PLATINUM: '💎',
-  DIAMOND: '💠',
+  CLIENT_BRONZE: '',
+  CLIENT_SILVER: '',
+  CLIENT_GOLD: '',
+  CLIENT_PLATINUM: '',
+  CLIENT_DIAMOND: '',
+  BRONZE: '',
+  SILVER: '',
+  GOLD: '',
+  PLATINUM: '',
+  DIAMOND: '',
   CONSULTANT_JUNIOR: '⭐',
   CONSULTANT_SENIOR: '⭐⭐',
   CONSULTANT_EXPERT: '⭐⭐⭐',
   JUNIOR: '⭐',
   SENIOR: '⭐⭐',
   EXPERT: '⭐⭐⭐',
-  ADMIN: '👑'
+  ADMIN: ''
 };
 
-export const USER_GRADE_ICON_FALLBACK_ASYNC = '🥉';
-export const USER_GRADE_ICON_FALLBACK_SYNC = '👤';
+export const USER_GRADE_ICON_FALLBACK_ASYNC = '';
+export const USER_GRADE_ICON_FALLBACK_SYNC = '';
 
 export const MAPPING_STATUS_KOREAN_NAME_ASYNC_MAP = {
   PENDING_PAYMENT: '결제 대기',
@@ -121,7 +121,7 @@ export const SPECIALTY_KOREAN_NAME_MAP = {
   FAMIL: '가족상담'
 };
 
-export const SPECIALTY_DEFAULT_ICON = '🎯';
+export const SPECIALTY_DEFAULT_ICON = '';
 
 export const CONSULTANT_EXPERIENCE_NONE = '경력 정보 없음';
 export const CONSULTANT_YEAR_SUFFIX = '년';

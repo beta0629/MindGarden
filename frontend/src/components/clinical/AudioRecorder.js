@@ -289,7 +289,7 @@ export const AudioRecorder = ({
     return (
         <div className={CLINICAL_CSS.AUDIO_RECORDER}>
             <div className="audio-recorder-header">
-                <h3>🎤 음성 녹음</h3>
+                <h3>음성 녹음</h3>
                 {recordingTime > 0 && (
                     <div className="recording-time">
                         {isRecording && <span className="recording-indicator">●</span>}
@@ -316,7 +316,7 @@ export const AudioRecorder = ({
             {/* 에러 메시지 */}
             {error && (
                 <div className="error-message">
-                    ⚠️ {error}
+                    {error}
                 </div>
             )}
 
@@ -334,7 +334,7 @@ export const AudioRecorder = ({
                         onClick={startRecording}
                         variant="primary"
                     >
-                        🎤 녹음 시작
+                        녹음 시작
                     </MGButton>
                 )}
 
@@ -351,7 +351,7 @@ export const AudioRecorder = ({
                             onClick={togglePause}
                             variant="secondary"
                         >
-                            {isPaused ? '▶️ 재개' : '⏸️ 일시정지'}
+                            {isPaused ? '재개' : '일시정지'}
                         </MGButton>
                         <MGButton
                             className={buildErpMgButtonClassName({
@@ -364,7 +364,7 @@ export const AudioRecorder = ({
                             onClick={stopRecording}
                             variant="danger"
                         >
-                            ⏹️ 중지
+                            중지
                         </MGButton>
                     </>
                 )}
@@ -382,7 +382,7 @@ export const AudioRecorder = ({
                             onClick={uploadRecording}
                             variant="success"
                         >
-                            ⬆️ 업로드 및 전사 시작
+                            업로드 및 전사 시작
                         </MGButton>
                         <MGButton
                             className={buildErpMgButtonClassName({
@@ -395,7 +395,7 @@ export const AudioRecorder = ({
                             onClick={cancelRecording}
                             variant="secondary"
                         >
-                            ❌ 취소
+                            취소
                         </MGButton>
                     </>
                 )}

@@ -90,7 +90,7 @@ const CalendarWidget = ({ widget, user }) => {
         
         <div className="calendar-placeholder">
           <i className="bi bi-calendar3" />
-          <p>📅 캘린더 위젯</p>
+          <p>캘린더 위젯</p>
           <p className="calendar-info">
             {hasData && Array.isArray(data) ? `${data.length}개의 일정` : '일정 없음'}
           </p>

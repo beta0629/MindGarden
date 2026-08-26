@@ -4,7 +4,8 @@
 import {
   isTentativePendingPaymentStatus,
   resolveScheduleDetailPaymentActions,
-  resolveScheduleSlotBounds
+  resolveScheduleSlotBounds,
+  resolveSameDayActivationPrimaryAction
 } from '../scheduleDetailSameDayPaymentActions';
 
 describe('scheduleDetailSameDayPaymentActions', () => {
@@ -114,6 +115,20 @@ describe('scheduleDetailSameDayPaymentActions', () => {
       );
       expect(completedPast.showSameDayPaymentActivation).toBe(false);
       expect(completedPast.showScheduleConfirm).toBe(false);
+    });
+  });
+
+  describe('resolveSameDayActivationPrimaryAction (cancel-only 방지)', () => {
+    test('과거 가예약 + checkout 콜백 있음 → checkout CTA', () => {
+      expect(resolveSameDayActivationPrimaryAction({ hasCheckoutCallback: true }))
+        .toBe('checkout');
+    });
+
+    test('과거 가예약 + checkout 콜백 없음 → 확정 fallback (cancel-only 금지)', () => {
+      expect(resolveSameDayActivationPrimaryAction({ hasCheckoutCallback: false }))
+        .toBe('confirm');
+      expect(resolveSameDayActivationPrimaryAction({}))
+        .toBe('confirm');
     });
   });
 });

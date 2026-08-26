@@ -1,0 +1,98 @@
+/**
+ * TenantHeaderCluster - GNB 테넌트 헤더 우측 클러스터
+ * identity(비버튼) + chevron-only menu trigger — bordered pill/NavIcon 없음
+ *
+ * @author CoreSolution
+ * @since 2026-08-26
+ */
+
+.mg-v2-tenant-header-cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-12, 12px);
+  min-width: 0;
+}
+
+.mg-v2-tenant-header-cluster__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mg-v2-tenant-header-cluster__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  overflow: hidden;
+  max-width: var(--mg-profile-trigger-meta-max-width, 8.5rem);
+}
+
+.mg-v2-tenant-header-cluster__name {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-tenant-header-cluster__text .mg-header__session-remaining--gnb-trigger {
+  max-width: 100%;
+}
+
+.mg-v2-tenant-header-cluster__menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--mg-color-text-secondary, var(--mg-v2-color-text-secondary));
+  cursor: pointer;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.mg-v2-tenant-header-cluster__menu-trigger:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.mg-v2-tenant-header-cluster__menu-trigger:focus-visible {
+  outline: 2px solid var(--mg-color-primary-main, var(--mg-v2-color-primary-main));
+  outline-offset: 2px;
+}
+
+.mg-v2-tenant-header-cluster__menu-trigger svg {
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-tenant-header-cluster__text {
+    display: none;
+  }
+}
+
+[data-theme="dark"] .mg-v2-tenant-header-cluster__name {
+  color: var(--mg-color-text-main);
+}
+
+[data-theme="dark"] .mg-v2-tenant-header-cluster__menu-trigger {
+  color: var(--mg-color-text-secondary);
+}

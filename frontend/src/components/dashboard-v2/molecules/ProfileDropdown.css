@@ -1,6 +1,7 @@
 /**
- * ProfileDropdown - 테넌트 헤더 클러스터 + 프로필 드롭다운
- * identity(비버튼)와 chevron 아이콘 트리거 분리 — 공유 bordered pill 없음
+ * ProfileDropdown - 프로필 드롭다운 패널 스타일
+ * 테넌트 헤더 클러스터 스타일은 TenantHeaderCluster.css
+ *
  * @author CoreSolution
  * @since 2026-03-09
  */
@@ -11,100 +12,6 @@
   display: flex;
   align-items: center;
   min-width: 0;
-}
-
-/* —— Tenant header cluster (GNB 우측) —— */
-.mg-v2-tenant-header-cluster {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-12, 12px);
-  min-width: 0;
-}
-
-.mg-v2-tenant-header-cluster__identity {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.mg-v2-tenant-header-cluster__text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-  overflow: hidden;
-  max-width: var(--mg-profile-trigger-meta-max-width, 8.5rem);
-}
-
-.mg-v2-tenant-header-cluster__name {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: var(--font-size-sm, 0.875rem);
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mg-v2-tenant-header-cluster__text .mg-header__session-remaining--gnb-trigger {
-  max-width: 100%;
-}
-
-.mg-v2-tenant-header-cluster__actions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: var(--mg-spacing-12, 12px);
-}
-
-.mg-v2-tenant-header-cluster__trigger-wrap {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/*
- * GNB 아이콘 트리거 — 전역 button ellipsis/overflow 탈출
- * chevron-only (#620): 공유 pill/rounded border 없음, ⋮ 와 시각 분리
- */
-.mg-v2-tenant-header-icon-btn,
-.mg-v2-tenant-header-cluster .mg-v2-nav-icon {
-  overflow: visible;
-  text-overflow: clip;
-  white-space: normal;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  flex-shrink: 0;
-  width: var(--touch-target-min, 2.75rem);
-  height: var(--touch-target-min, 2.75rem);
-  min-width: var(--touch-target-min, 2.75rem);
-  min-height: var(--touch-target-min, 2.75rem);
-  padding: 0;
-}
-
-.mg-v2-tenant-header-icon-btn:focus:not(:focus-visible),
-.mg-v2-tenant-header-cluster .mg-v2-nav-icon:focus:not(:focus-visible) {
-  outline: none;
-  box-shadow: none;
-}
-
-.mg-v2-tenant-header-icon-btn .mg-v2-nav-icon__lucide,
-.mg-v2-tenant-header-cluster .mg-v2-nav-icon__lucide {
-  overflow: visible;
-  text-overflow: clip;
-  white-space: normal;
-  max-width: none;
-}
-
-@media (max-width: 767px) {
-  .mg-v2-tenant-header-cluster__text {
-    display: none;
-  }
 }
 
 /* 드롭다운 프로필 영역 — 모바일에서도 세션 잔여 유지 */
@@ -282,10 +189,6 @@
   background: var(--mg-color-primary-solid);
   color: var(--mg-color-text-on-primary);
   font-weight: 600;
-}
-
-[data-theme="dark"] .mg-v2-tenant-header-cluster__name {
-  color: var(--mg-color-text-main);
 }
 
 [data-theme="dark"] .mg-v2-profile-menu-item:hover {

@@ -12,13 +12,14 @@
  * @since 2025-11-29
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { RoleUtils, USER_ROLES } from '../../../constants/roles';
+import { sanitizeHealingHtml } from '../../../utils/safeHtml';
 import './HealingCardWidget.css';
 import '../../../components/common/HealingCard.css';
 import { useTranslation } from 'react-i18next';
@@ -69,6 +70,20 @@ const HealingCardWidget = ({ widget, user }) => {
     retryCount: 3
   });
 
+  // 기본 힐링 데이터 (API 실패 시 사용)
+  const defaultHealingData = {
+    title: '오늘의 힐링',
+    content: '마음의 평화를 찾는 하루가 되시길 바랍니다.',
+    category: 'GENERAL'
+  };
+
+  const currentHealingData = healingData || defaultHealingData;
+
+  const safeContentHtml = useMemo(() => {
+    const raw = currentHealingData?.content || '마음의 평화를 찾는 하루가 되시길 바랍니다.';
+    return sanitizeHealingHtml(raw);
+  }, [currentHealingData?.content]);
+
   // 내담자와 상담사만 표시 (다른 역할은 숨김)
   if (!RoleUtils.isClient(user) && !RoleUtils.isConsultant(user)) {
     return null;
@@ -105,16 +120,6 @@ const HealingCardWidget = ({ widget, user }) => {
       default: return '힐링';
     }
   };
-
-  // 기본 힐링 데이터 (API 실패 시 사용)
-  const defaultHealingData = {
-    title: '오늘의 힐링',
-    content: '마음의 평화를 찾는 하루가 되시길 바랍니다.',
-    category: 'GENERAL'
-  };
-
-  // 실제 데이터 또는 기본값 사용
-  const currentHealingData = healingData || defaultHealingData;
 
   return (
     <BaseWidget
@@ -164,7 +169,7 @@ const HealingCardWidget = ({ widget, user }) => {
           <div
             className="healing-content"
             dangerouslySetInnerHTML={{
-              __html: currentHealingData?.content || '마음의 평화를 찾는 하루가 되시길 바랍니다.'
+              __html: safeContentHtml
             }}
           />
         </div>

@@ -300,7 +300,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
           type: 'message',
           position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
           config: {
-            title: '🏥 Core Solution 상담소 관리자',
+            title: 'Core Solution 상담소 관리자',
             message: '테스트 상담소에 오신 것을 환영합니다. 오늘도 좋은 하루 되세요!',
             color: 'primary',
             icon: 'welcome'
@@ -337,7 +337,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
           type: 'quick-actions',
           position: { row: 3, col: 1, colspan: 2, rowspan: 1 },
           config: {
-            title: '⚡ 관리자 빠른 작업',
+            title: '관리자 빠른 작업',
             actions: [
               { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
               { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },
@@ -513,7 +513,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             type: 'message',
             position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
             config: {
-              title: '🏥 Core Solution 관리자 대시보드',
+              title: 'Core Solution 관리자 대시보드',
               message: '환영합니다! 효율적인 상담소 운영을 위한 통합 관리 시스템입니다.',
               variant: 'primary'
             }
@@ -543,7 +543,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             type: 'management-grid',
             position: { row: 4, col: 1, colspan: 2, rowspan: 2 },
             config: {
-              title: '⚙️ 관리 기능',
+              title: '관리 기능',
               subtitle: 'Core Solution 관리 도구',
               columns: 3
             }
@@ -553,7 +553,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             type: 'quick-actions',
             position: { row: 6, col: 1, colspan: 2, rowspan: 1 },
             config: {
-              title: '⚡ 빠른 작업',
+              title: '빠른 작업',
               subtitle: '자주 사용하는 관리 기능',
               columns: 3,
               actions: [
@@ -1005,7 +1005,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
       type: 'message',
       position: { row: 1, col: 1, colspan: 3, rowspan: 1 },
       config: {
-        title: '🏥 CoreSolution 상담소 관리자',
+        title: 'CoreSolution 상담소 관리자',
         message: '환영합니다! 효율적인 상담소 운영을 위한 대시보드입니다.',
         variant: 'primary'
       }
@@ -1033,7 +1033,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
       type: 'consultation-stats',
       position: { row: 2, col: 3, colspan: 1, rowspan: 1 },
       config: {
-        title: '💬 상담 통계',
+        title: '상담 통계',
         subtitle: '상담 현황 및 성과 지표',
         dataSource: {
           type: 'api',
@@ -1073,7 +1073,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
       type: 'notification',
       position: { row: 3, col: 1, colspan: 1, rowspan: 1 },
       config: {
-        title: '🔔 알림',
+        title: '알림',
         subtitle: '최근 알림 및 공지사항',
         maxItems: 5,
         showUnreadOnly: true
@@ -1084,7 +1084,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
       type: 'quick-actions',
       position: { row: 3, col: 2, colspan: 2, rowspan: 1 },
       config: {
-        title: '⚡ 빠른 작업',
+        title: '빠른 작업',
         actions: [
           { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/user-management?type=consultant' },
           { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/user-management?type=client' },

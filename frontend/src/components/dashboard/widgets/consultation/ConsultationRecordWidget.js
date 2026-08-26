@@ -75,7 +75,6 @@ const ConsultationRecordWidget = ({ widget, user }) => {
     if (!hasData) {
       return (
         <div className="record-empty-state">
-          <div className="empty-icon-wrapper" />
           <h3 className="empty-title">상담 기록 없음</h3>
           <p className="empty-description">상담 완료 후 기록이 표시됩니다.</p>
         </div>
@@ -89,7 +88,6 @@ const ConsultationRecordWidget = ({ widget, user }) => {
         <div className="record-list">
           {records.map((record) => (
             <div key={record.id} className="record-item">
-              <div className="record-icon" />
               <div className="record-info">
                 <SafeText tag="div" className="record-title" fallback="상담 기록">{record.title}</SafeText>
                 <div className="record-details">

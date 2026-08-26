@@ -1,4 +1,31 @@
-import { sanitizeHealingHtml } from '../safeHtml';
+import { sanitizeHealingHtml, stripAllHtmlTags } from '../safeHtml';
+
+describe('stripAllHtmlTags — incomplete multi-character sanitization', () => {
+  it('빈/비문자 입력은 빈 문자열을 반환한다', () => {
+    expect(stripAllHtmlTags('')).toBe('');
+    expect(stripAllHtmlTags(null)).toBe('');
+    expect(stripAllHtmlTags(undefined)).toBe('');
+    expect(stripAllHtmlTags(123)).toBe('');
+  });
+
+  it('중첩·깨진 태그를 반복 제거해 script 재구성을 막는다', () => {
+    const nested = '<scr<script>ipt>alert(1)</scr</script>ipt>';
+    const out = stripAllHtmlTags(nested);
+    expect(out).not.toMatch(/<script/i);
+    expect(out).not.toMatch(/<\/script/i);
+    expect(out).not.toContain('<');
+    expect(out).not.toContain('>');
+    expect(out).toContain('alert(1)');
+  });
+
+  it('단일 패스로 남는 깨진 꺾쇠도 제거한다', () => {
+    const out = stripAllHtmlTags('<div>ok<script>x</script');
+    expect(out).not.toContain('<');
+    expect(out).not.toContain('>');
+    expect(out).toContain('ok');
+    expect(out).toContain('x');
+  });
+});
 
 describe('sanitizeHealingHtml — Apple T3 XSS 가드', () => {
   it('빈/비문자 입력은 빈 문자열을 반환한다', () => {
@@ -40,5 +67,38 @@ describe('sanitizeHealingHtml — Apple T3 XSS 가드', () => {
     const out = sanitizeHealingHtml(input);
     expect(out).toContain('본문');
     expect(out).not.toContain('<!--');
+  });
+
+  it('표시용 이모지 문자는 제거한다 (메트릭 불변, display-only)', () => {
+    const input = '<p>마음의 평화 💚 되시길</p>';
+    const out = sanitizeHealingHtml(input);
+    expect(out).toContain('마음의 평화');
+    expect(out).toContain('되시길');
+    expect(out).not.toContain('💚');
+  });
+
+  it('no-DOM fallback 에서도 중첩 태그가 script 로 재구성되지 않는다', () => {
+    const originalDocument = window.document;
+    try {
+      // jsdom 환경에서도 no-DOM 분기를 강제해 fallback 경로를 검증한다.
+      Object.defineProperty(window, 'document', {
+        configurable: true,
+        get() {
+          return undefined;
+        }
+      });
+      const nested = '<scr<script>ipt>alert(1)</scr</script>ipt>';
+      const out = sanitizeHealingHtml(nested);
+      expect(out).not.toMatch(/<script/i);
+      expect(out).not.toContain('<');
+      expect(out).not.toContain('>');
+      expect(out).toContain('alert(1)');
+    } finally {
+      Object.defineProperty(window, 'document', {
+        configurable: true,
+        writable: true,
+        value: originalDocument
+      });
+    }
   });
 });

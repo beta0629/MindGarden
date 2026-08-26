@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { Heart, Star } from 'lucide-react';
 import { API_BASE_URL, RATING_API } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import UnifiedLoading from '../common/UnifiedLoading';
 
+const RATING_STAR_SIZE = 16;
+const RATING_EMPTY_ICON_SIZE = 40;
+const RATING_STAT_ICON_SIZE = 22;
+const RATING_MAX_SCORE = 5;
+
 /**
  * 상담사용 평가 표시 컴포넌트
-/**
  * - 상담사가 받은 하트 평가 통계 및 목록 표시
-/**
  * - 평균 점수, 점수별 분포, 최근 평가 등
-/**
- * 
-/**
+ *
  * @author Core Solution
-/**
  * @version 1.0.0
-/**
  * @since 2025-09-17
  */
 const ConsultantRatingDisplay = ({ consultantId }) => {
@@ -58,7 +58,28 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
     };
 
     const renderHeartScore = (score) => {
-        return '💖'.repeat(score) + '🤍'.repeat(5 - score);
+        const safeScore = (!score || score < 1 || score > RATING_MAX_SCORE) ? 0 : Number(score);
+        return (
+            <span
+                className="mg-flex mg-align-center"
+                aria-label={`${safeScore}/${RATING_MAX_SCORE}`}
+            >
+                {Array.from({ length: RATING_MAX_SCORE }, (_, index) => {
+                    const filled = index < safeScore;
+                    return (
+                        <Star
+                            key={index}
+                            size={RATING_STAR_SIZE}
+                            aria-hidden="true"
+                            fill={filled ? 'currentColor' : 'none'}
+                            className={filled
+                                ? 'mg-v2-color-primary'
+                                : 'mg-v2-color-text-secondary'}
+                        />
+                    );
+                })}
+            </span>
+        );
     };
 
     if (loading) {
@@ -81,12 +102,14 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             <div className="mg-v2-card">
                 <div className="mg-v2-card-header">
                     <h3 className="mg-h4 mg-mb-0">
-                        💖 내담자 평가
+                        내담자 평가
                     </h3>
                 </div>
                 <div className="mg-v2-card-body">
                     <div className="mg-empty-state">
-                        <div className="mg-empty-state__icon">💖</div>
+                        <div className="mg-empty-state__icon" aria-hidden="true">
+                            <Heart size={RATING_EMPTY_ICON_SIZE} strokeWidth={1.75} />
+                        </div>
                         <div className="mg-empty-state__text">
                             아직 받은 평가가 없습니다.
                         </div>
@@ -104,7 +127,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             {/* 카드 헤더 */}
             <div className="mg-v2-card-header mg-flex mg-justify-between mg-align-center">
                 <h3 className="mg-h4 mg-mb-0">
-                    💖 내담자 평가
+                    내담자 평가
                     <span className="mg-badge mg-badge-primary mg-ml-sm">
                         {ratingStats.totalRatingCount}개
                     </span>
@@ -117,8 +140,8 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                 <div className="mg-dashboard-stats mg-mb-lg">
                     {/* 평균 점수 */}
                     <div className="mg-dashboard-stat-card">
-                        <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-olive">
-                            💖
+                        <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-olive" aria-hidden="true">
+                            <Star size={RATING_STAT_ICON_SIZE} fill="currentColor" />
                         </div>
                         <div className="mg-dashboard-stat-content">
                             <div className="mg-dashboard-stat-value">
@@ -130,7 +153,9 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
                     {/* 총 평가 수 */}
                     <div className="mg-dashboard-stat-card">
-                        <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-mint" aria-hidden="true"></div>
+                        <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-mint" aria-hidden="true">
+                            <Heart size={RATING_STAT_ICON_SIZE} />
+                        </div>
                         <div className="mg-dashboard-stat-content">
                             <div className="mg-dashboard-stat-value">
                                 {ratingStats.totalRatingCount}
@@ -155,7 +180,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                             return (
                                 <div key={score} className="rating-schedule-item">
                                     <div className="mg-v2-text-center mg-mb-xs">
-                                        {'💖'.repeat(score)}
+                                        {renderHeartScore(score)}
                                     </div>
                                     <div className="mg-v2-text-center mg-font-semibold">
                                         {count}개

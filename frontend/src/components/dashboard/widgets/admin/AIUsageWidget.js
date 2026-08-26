@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, BarChart3, DollarSign } from 'lucide-react';
+import { Zap, BarChart3, DollarSign, AlertTriangle } from 'lucide-react';
 
 import { useWidget } from '../../../../hooks/useWidget';
 import BaseWidget from '../BaseWidget';
@@ -277,7 +277,9 @@ const AIUsageWidget = ({ widget, user }) => {
             'mg-alert--warning',
             'mg-mt-md'
           )}>
-            <span className="mg-alert__icon" aria-hidden="true"></span>
+            <span className="mg-alert__icon" aria-hidden="true">
+              <AlertTriangle size={MG_STATS_LUCIDE_SIZE} />
+            </span>
             <div className="mg-alert__message">
               월 예산의 {budgetUsage.toFixed(0)}%를 사용했습니다.
             </div>

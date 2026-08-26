@@ -1,10 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Heart, Star } from 'lucide-react';
 
 import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import './ConsultantRatingWidget.css';
+
+const RATING_STAR_SIZE = 16;
+const RATING_EMPTY_ICON_SIZE = 40;
+const RATING_STAT_ICON_SIZE = 22;
+const RATING_MAX_SCORE = 5;
+
 const ConsultantRatingWidget = ({ widget, user }) => {
   // 데이터 소스 설정 (상담사 전용)
   const getDataSourceConfig = () => {
@@ -53,10 +60,30 @@ const ConsultantRatingWidget = ({ widget, user }) => {
     return null;
   }
 
-  // 하트 점수 렌더링
+  // 점수 렌더링 (Lucide Star — 동일 점수 데이터 유지)
   const renderHeartScore = (score) => {
-    if (!score || score < 1 || score > 5) return '🤍🤍🤍🤍🤍';
-    return '💖'.repeat(score) + '🤍'.repeat(5 - score);
+    const safeScore = (!score || score < 1 || score > RATING_MAX_SCORE) ? 0 : Number(score);
+    return (
+      <span
+        className="consultant-rating-stars"
+        aria-label={`${safeScore}/${RATING_MAX_SCORE}`}
+      >
+        {Array.from({ length: RATING_MAX_SCORE }, (_, index) => {
+          const filled = index < safeScore;
+          return (
+            <Star
+              key={index}
+              size={RATING_STAR_SIZE}
+              aria-hidden="true"
+              className={filled
+                ? 'consultant-rating-star consultant-rating-star--filled'
+                : 'consultant-rating-star consultant-rating-star--empty'}
+              fill={filled ? 'currentColor' : 'none'}
+            />
+          );
+        })}
+      </span>
+    );
   };
 
   // 날짜 포맷팅
@@ -73,7 +100,7 @@ const ConsultantRatingWidget = ({ widget, user }) => {
   const headerConfig = {
     title: (
       <div className="consultant-rating-header-title">
-        💖 내담자 평가
+        내담자 평가
         {hasData && ratingStats?.totalRatingCount > 0 && (
           <span className="consultant-rating-badge">
             {ratingStats.totalRatingCount}개
@@ -89,7 +116,9 @@ const ConsultantRatingWidget = ({ widget, user }) => {
     if (isEmpty || !ratingStats || ratingStats.totalRatingCount === 0) {
       return (
         <div className="consultant-rating-empty">
-          <div className="consultant-rating-empty-icon">💖</div>
+          <div className="consultant-rating-empty-icon" aria-hidden="true">
+            <Heart size={RATING_EMPTY_ICON_SIZE} strokeWidth={1.75} />
+          </div>
           <div className="consultant-rating-empty-text">
             아직 받은 평가가 없습니다.
           </div>
@@ -106,7 +135,9 @@ const ConsultantRatingWidget = ({ widget, user }) => {
         <div className="consultant-rating-stats">
           {/* 평균 점수 */}
           <div className="consultant-rating-stat-card primary">
-            <div className="consultant-rating-stat-icon" />
+            <div className="consultant-rating-stat-icon" aria-hidden="true">
+              <Star size={RATING_STAT_ICON_SIZE} fill="currentColor" />
+            </div>
             <div className="consultant-rating-stat-content">
               <div className="consultant-rating-stat-value">
                 {ratingStats.averageHeartScore || '0.0'}
@@ -117,7 +148,9 @@ const ConsultantRatingWidget = ({ widget, user }) => {
 
           {/* 총 평가 수 */}
           <div className="consultant-rating-stat-card secondary">
-            <div className="consultant-rating-stat-icon" />
+            <div className="consultant-rating-stat-icon" aria-hidden="true">
+              <Heart size={RATING_STAT_ICON_SIZE} />
+            </div>
             <div className="consultant-rating-stat-content">
               <div className="consultant-rating-stat-value">
                 {ratingStats.totalRatingCount || 0}
@@ -130,7 +163,6 @@ const ConsultantRatingWidget = ({ widget, user }) => {
         {/* 점수별 분포 */}
         <div className="consultant-rating-distribution">
           <h4 className="consultant-rating-section-title">
-            
             하트 점수 분포
           </h4>
           <div className="consultant-rating-distribution-grid">
@@ -161,7 +193,7 @@ const ConsultantRatingWidget = ({ widget, user }) => {
         {ratingStats.recentRatings && ratingStats.recentRatings.length > 0 && (
           <div className="consultant-rating-recent">
             <h4 className="consultant-rating-section-title">
-              💭 최근 평가
+              최근 평가
             </h4>
             <div className="consultant-rating-recent-list">
               {ratingStats.recentRatings.slice(0, 5).map(rating => (

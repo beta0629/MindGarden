@@ -1,6 +1,7 @@
 /**
  * HeaderMenuRow — GNB 드롭다운 flush native menu row (Atom)
  * MGButton outline chrome 미사용. Portal 패널 내부 메뉴 행 전용.
+ * Deploy retrigger marker for develop frontend-dev after #623.
  *
  * @author CoreSolution
  * @since 2026-08-26

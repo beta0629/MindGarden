@@ -17,6 +17,8 @@ import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
+import CheckoutSameDayModal from '../admin/mapping/CheckoutSameDayModal';
+import useScheduleDetailSameDayCheckout from '../schedule/hooks/useScheduleDetailSameDayCheckout';
 import SegmentedTabs from '../common/SegmentedTabs';
 import { USER_ROLES } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -188,6 +190,14 @@ const ConsultantScheduleRenewal = () => {
   const { user, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
+  const {
+    onCheckoutSameDayFromDetail,
+    checkoutSameDayMapping,
+    closeCheckoutSameDay,
+    handleCheckoutSameDayCompleted
+  } = useScheduleDetailSameDayCheckout({
+    user
+  });
   const [viewType, setViewType] = useState(VIEW_TYPES.WEEKLY);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [baseDate, setBaseDate] = useState(new Date());
@@ -321,7 +331,16 @@ const ConsultantScheduleRenewal = () => {
           userId={user?.id}
           integratedMonthEventLayout
           calendarSkin="integrated"
+          onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}
         />
+        {checkoutSameDayMapping && (
+          <CheckoutSameDayModal
+            isOpen={!!checkoutSameDayMapping}
+            onClose={closeCheckoutSameDay}
+            mapping={checkoutSameDayMapping}
+            onCheckoutCompleted={handleCheckoutSameDayCompleted}
+          />
+        )}
       </div>
     );
   }

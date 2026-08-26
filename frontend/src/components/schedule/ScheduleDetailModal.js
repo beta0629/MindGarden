@@ -1009,7 +1009,7 @@ const ScheduleDetailModal = ({
             <>
                 {paymentActions.showSameDayPaymentActivation ? (
                     <>
-                        {typeof onCheckoutSameDay === 'function' && (
+                        {typeof onCheckoutSameDay === 'function' ? (
                             <ActionBarButton
                                 variant="primary"
                                 onClick={handleCheckoutSameDayClick}
@@ -1017,6 +1017,15 @@ const ScheduleDetailModal = ({
                                 data-testid="schedule-detail-checkout-same-day"
                             >
                                 {t('admin:mapping.card.actions.checkoutSameDayPayment')}
+                            </ActionBarButton>
+                        ) : (
+                            <ActionBarButton
+                                variant="primary"
+                                onClick={() => setShowConfirmModal(true)}
+                                disabled={loading}
+                                data-testid="schedule-detail-confirm-fallback"
+                            >
+                                {t('schedule:ScheduleDetailModal.t_a64e8746')}
                             </ActionBarButton>
                         )}
                         {paymentActions.showCancel && (

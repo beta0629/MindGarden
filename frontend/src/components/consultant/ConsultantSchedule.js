@@ -4,6 +4,8 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import CheckoutSameDayModal from '../admin/mapping/CheckoutSameDayModal';
+import useScheduleDetailSameDayCheckout from '../schedule/hooks/useScheduleDetailSameDayCheckout';
 import { useSession } from '../../contexts/SessionContext';
 import { USER_ROLES } from '../../constants/roles';
 import '../../styles/unified-design-tokens.css';
@@ -27,6 +29,14 @@ const CONSULTANT_SCHEDULE_TITLE_ID = 'consultant-schedule-page-title';
 const ConsultantSchedule = () => {
   const { t } = useTranslation();
   const { user, isLoading: sessionLoading } = useSession();
+  const {
+    onCheckoutSameDayFromDetail,
+    checkoutSameDayMapping,
+    closeCheckoutSameDay,
+    handleCheckoutSameDayCompleted
+  } = useScheduleDetailSameDayCheckout({
+    user
+  });
 
   console.log('📅 ConsultantSchedule 렌더링:', { user, sessionLoading });
 
@@ -44,6 +54,14 @@ const ConsultantSchedule = () => {
           </main>
         </ContentArea>
       </div>
+      {checkoutSameDayMapping && (
+        <CheckoutSameDayModal
+          isOpen={!!checkoutSameDayMapping}
+          onClose={closeCheckoutSameDay}
+          mapping={checkoutSameDayMapping}
+          onCheckoutCompleted={handleCheckoutSameDayCompleted}
+        />
+      )}
     </div>
   );
 
@@ -83,6 +101,7 @@ const ConsultantSchedule = () => {
             userId={user.id}
             integratedMonthEventLayout
             calendarSkin="integrated"
+            onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}
           />
         </div>
       )}

@@ -258,3 +258,14 @@ export function resolveScheduleDetailPaymentActions(scheduleLike, opts = {}) {
     showReschedule: (isBooked || isConfirmedOrInProgress) && !isSessionEnded
   };
 }
+
+/**
+ * 과거 가예약 ActionBar primary CTA.
+ * 호스트가 onCheckoutSameDay 를 넘기면 당일결제, 없으면 확정 fallback (cancel-only 금지).
+ *
+ * @param {{ hasCheckoutCallback?: boolean }} [opts]
+ * @returns {'checkout'|'confirm'}
+ */
+export function resolveSameDayActivationPrimaryAction(opts = {}) {
+  return opts.hasCheckoutCallback === true ? 'checkout' : 'confirm';
+}

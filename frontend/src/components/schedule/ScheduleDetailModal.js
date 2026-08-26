@@ -28,6 +28,7 @@ import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
 import VehiclePlateQuickRegisterModal from '../admin/mapping-management/integrated-schedule/molecules/VehiclePlateQuickRegisterModal';
 import { ProfileCard } from '../ui/Card/index';
+import { resolveScheduleDetailPaymentActions } from '../../utils/scheduleDetailSameDayPaymentActions';
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
 import { getProfessionalProviderTypeLabel } from '../../constants/professionalProviderRoles';
 import { useTranslation } from 'react-i18next';
@@ -256,7 +257,9 @@ const ScheduleDetailModal = ({
     onClose, 
     scheduleData, 
     onScheduleUpdated,
-    onConsultationLogOpen
+    onConsultationLogOpen,
+    /** 가예약 과거 슬롯 — 「당일 결제 + 활성화」(옵션 B). 부모(통합 스케줄)만 전달. */
+    onCheckoutSameDay
 }) => {
     const { t } = useTranslation();
     const { user } = useSession();
@@ -851,12 +854,13 @@ const ScheduleDetailModal = ({
     const displayData = localScheduleOverride ?? scheduleData;
     const statusForDisplay = resolveStatusForActions(displayData) ?? displayData.status;
     const statusCodeForActions = getStatusCodeValue(resolveStatusForActions(displayData));
+    const paymentActions = resolveScheduleDetailPaymentActions(displayData);
     const showRescheduleAction = shouldShowRescheduleAction(
         statusCodeForActions,
         canRescheduleByRole,
         isVacationEvent(),
         isClient
-    );
+    ) && paymentActions.showReschedule;
     const showNotesTab = !isVacationEvent() && (RoleUtils.isAdmin(user) || RoleUtils.isStaff(user));
     const canPartyQuickSummary = showNotesTab;
     const { parsedClientName, parsedConsultantName } = partyNameParse;
@@ -993,25 +997,59 @@ const ScheduleDetailModal = ({
             ) : null
         );
 
+        const handleCheckoutSameDayClick = () => {
+            if (typeof onCheckoutSameDay !== 'function') {
+                return;
+            }
+            onCheckoutSameDay(displayData);
+            onClose();
+        };
+
         return (
             <>
-                {isBookedOrTentativePending() && (
+                {paymentActions.showSameDayPaymentActivation ? (
+                    <>
+                        {typeof onCheckoutSameDay === 'function' && (
+                            <ActionBarButton
+                                variant="primary"
+                                onClick={handleCheckoutSameDayClick}
+                                disabled={loading}
+                                data-testid="schedule-detail-checkout-same-day"
+                            >
+                                {t('admin:mapping.card.actions.checkoutSameDayPayment')}
+                            </ActionBarButton>
+                        )}
+                        {paymentActions.showCancel && (
+                            <ActionBarButton
+                                variant="danger"
+                                onClick={() => setShowCancelConfirm(true)}
+                                disabled={loading}
+                            >
+                                {t('schedule:ScheduleDetailModal.t_7f40dc74')}
+                            </ActionBarButton>
+                        )}
+                    </>
+                ) : isBookedOrTentativePending() && (
                     <>
                         {renderRescheduleButton()}
-                        <ActionBarButton
-                            variant="primary"
-                            onClick={() => setShowConfirmModal(true)}
-                            disabled={loading}
-                        >
-                            {t('schedule:ScheduleDetailModal.t_a64e8746')}
-                        </ActionBarButton>
-                        <ActionBarButton
-                            variant="danger"
-                            onClick={() => setShowCancelConfirm(true)}
-                            disabled={loading}
-                        >
-                            {t('schedule:ScheduleDetailModal.t_7f40dc74')}
-                        </ActionBarButton>
+                        {paymentActions.showScheduleConfirm && (
+                            <ActionBarButton
+                                variant="primary"
+                                onClick={() => setShowConfirmModal(true)}
+                                disabled={loading}
+                            >
+                                {t('schedule:ScheduleDetailModal.t_a64e8746')}
+                            </ActionBarButton>
+                        )}
+                        {paymentActions.showCancel && (
+                            <ActionBarButton
+                                variant="danger"
+                                onClick={() => setShowCancelConfirm(true)}
+                                disabled={loading}
+                            >
+                                {t('schedule:ScheduleDetailModal.t_7f40dc74')}
+                            </ActionBarButton>
+                        )}
                     </>
                 )}
                 {isConfirmedOrInProgress() && (() => {

@@ -607,14 +607,19 @@ const IntegratedMatchingSchedule = () => {
   /**
    * 옵션 B SAME_DAY_CARD 사이드바 카드 액션 — "당일 결제 + 활성화" 버튼.
    * P0 핫픽스 2026-05-28 가드와 동일하게 매핑 정보 누락 시 모달 진입을 차단한다.
+   * @param {object} mapping
+   * @param {{ sameDaySessionScheduleId?: string|number|null }} [extras]
    */
-  const handleOpenCheckoutSameDayFromCard = (mapping) => {
+  const handleOpenCheckoutSameDayFromCard = (mapping, extras = {}) => {
     if (!mapping?.consultantId || !mapping?.packageName) {
       notificationManager.warning(
         '이 매칭은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 매칭을 다시 생성해 주세요.'
       );
       return;
     }
+    const scheduleId = extras.sameDaySessionScheduleId
+      ?? mapping.sameDaySessionScheduleId
+      ?? null;
     setCheckoutSameDayMapping({
       id: mapping.id,
       consultantId: mapping.consultantId,
@@ -624,7 +629,35 @@ const IntegratedMatchingSchedule = () => {
       packageName: mapping.packageName,
       packagePrice: mapping.packagePrice ?? null,
       paymentAmount: mapping.paymentAmount ?? null,
-      totalSessions: mapping.totalSessions ?? null
+      totalSessions: mapping.totalSessions ?? null,
+      sameDaySessionScheduleId: scheduleId
+    });
+  };
+
+  /**
+   * 스케줄 상세(가예약 과거) — 「당일 결제 + 활성화」.
+   * mappingId 로 사이드바 mappings 를 찾아 기존 CheckoutSameDayModal 진입.
+   */
+  const handleCheckoutSameDayFromDetail = (scheduleData) => {
+    const mappingId = scheduleData?.mappingId
+      ?? scheduleData?.extendedProps?.mappingId
+      ?? null;
+    if (mappingId == null) {
+      notificationManager.error(
+        '연결된 매칭을 찾을 수 없어 당일 결제를 진행할 수 없습니다.'
+      );
+      return;
+    }
+    const mapping = mappings.find((m) => String(m.id) === String(mappingId));
+    if (!mapping) {
+      notificationManager.error(
+        '연결된 매칭을 찾을 수 없어 당일 결제를 진행할 수 없습니다.'
+      );
+      return;
+    }
+    const scheduleId = scheduleData?.id ?? scheduleData?.scheduleId ?? null;
+    handleOpenCheckoutSameDayFromCard(mapping, {
+      sameDaySessionScheduleId: scheduleId
     });
   };
 
@@ -1018,6 +1051,7 @@ const IntegratedMatchingSchedule = () => {
               userId={user?.id ?? undefined}
               refetchTrigger={refetchTrigger}
               onDropFromExternal={handleDropFromExternal}
+              onCheckoutSameDayFromDetail={handleCheckoutSameDayFromDetail}
               hideScheduleTitle
               integratedMonthEventLayout
               calendarSkin="integrated"

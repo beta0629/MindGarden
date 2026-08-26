@@ -87,8 +87,8 @@
     "approveBtn": "최종 승인",
     "exportPdf": "PDF 내보내기",
     "pdfComingSoon": "PDF 내보내기 기능은 곧 추가됩니다.",
-    "saveSuccess": "✅ 저장되었습니다.",
-    "saveFail": "❌ 저장에 실패했습니다.",
+    "saveSuccess": "저장되었습니다.",
+    "saveFail": "저장에 실패했습니다.",
     "loadFail": "보고서 로드 실패",
     "generateFail": "진단 보고서 생성 실패",
     "generateError": "진단 보고서 생성에 실패했습니다.",
@@ -100,21 +100,21 @@
     "disclaimerLabel": "주의사항:",
     "reviewed": "검토 완료",
     "generationTimeLabel": "생성 시간:",
-    "aiModelLabel": "🤖 AI 모델:",
+    "aiModelLabel": "AI 모델:",
     "secondsUnit": "초",
     "sections": {
       "summary": {
-        "title": "📊 진단 요약 (Diagnosis Summary)",
+        "title": "진단 요약 (Diagnosis Summary)",
         "guide": "내담자의 주요 증상과 전반적인 상태를 간결하게 요약합니다.",
         "placeholder": "진단 요약을 입력하세요..."
       },
       "impressions": {
-        "title": "🔍 진단적 인상 (Diagnostic Impressions)",
+        "title": "진단적 인상 (Diagnostic Impressions)",
         "guide": "DSM-5/ICD-11 기준을 참고한 임상적 관찰 및 인상을 기록합니다.",
         "placeholder": "진단적 인상을 입력하세요..."
       },
       "recommendations": {
-        "title": "💊 치료 권고사항 (Treatment Recommendations)",
+        "title": "치료 권고사항 (Treatment Recommendations)",
         "guide": "근거 기반 치료 방법 및 권고사항을 제시합니다.",
         "placeholder": "치료 권고사항을 입력하세요..."
       }

@@ -105,21 +105,15 @@ export const DarkModeProvider = ({ children }) => {
     [mode, systemDark]
   );
 
-  // resolved 변경 시 <html data-theme="..."> attribute 동기화
+  // resolved 변경 시 <html data-theme="light|dark"> 명시 동기화
+  // light 시 attribute 제거만 하면 OS dark + prefers-color-scheme 미디어가
+  // :root:not([data-theme="light"]) 다크 토큰으로 덮어쓰므로 light 도 명시 설정
   useEffect(() => {
     if (typeof document === 'undefined') {
       return undefined;
     }
     const root = document.documentElement;
-    if (resolved === DARK_MODE_VALUES.DARK) {
-      root.setAttribute('data-theme', 'dark');
-    } else {
-      // attribute 가 'dark' 가 아닐 때만 removeAttribute 호출
-      // (외부 시스템이 다른 값을 넣어둔 경우 보존)
-      if (root.getAttribute('data-theme') === 'dark') {
-        root.removeAttribute('data-theme');
-      }
-    }
+    root.setAttribute('data-theme', resolved);
     return undefined;
   }, [resolved]);
 

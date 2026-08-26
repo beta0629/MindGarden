@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Building2, XCircle } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
@@ -184,7 +185,7 @@ const HeadquartersLogin = () => {
         <div className="branch-login-container">
           <div className="login-card">
             <div className="error-state">
-              <div className="error-icon">❌</div>
+              <div className="error-icon" aria-hidden="true"><XCircle size={20} strokeWidth={1.75} /></div>
               <h3>{t('auth:HeadquartersLogin.t_fb94c0c5')}</h3>
               <p>{error}</p>
               <div className="error-actions">
@@ -233,7 +234,7 @@ const HeadquartersLogin = () => {
           {headquartersInfo && (
             <div className="branch-info-header">
               <div className="branch-info headquarters-info">
-                <h2>🏢 {headquartersInfo.name}</h2>
+                <h2><Building2 size={20} strokeWidth={1.75} aria-hidden="true" /> {headquartersInfo.name}</h2>
                 <p className="branch-description">{headquartersInfo.description}</p>
                 <div className="branch-stats">
                   <span className="stat-item">
@@ -292,7 +293,7 @@ const HeadquartersLogin = () => {
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                 </MGButton>
               </div>
             </div>

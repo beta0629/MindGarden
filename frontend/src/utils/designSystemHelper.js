@@ -41,10 +41,12 @@ export const setTheme = (theme) => {
   // 'ios' 등 그 외 값은 data-theme 를 변경하지 않는다.
   // (E1: setTheme('ios') 가 DarkModeProvider 의 data-theme="dark" 를
   //  무조건 제거해 다크 캐스케이드가 유실되던 레이스 방지)
+  // light 는 attribute 제거가 아니라 data-theme="light" 명시 —
+  // OS dark + prefers-color-scheme 미디어가 :root:not([data-theme="light"]) 로 덮는 것 방지
   if (theme === 'dark') {
     root.setAttribute('data-theme', 'dark');
   } else if (theme === 'light') {
-    root.removeAttribute('data-theme');
+    root.setAttribute('data-theme', 'light');
   }
 
   console.log('🎨 테마 변경:', theme);

@@ -24,6 +24,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Eye, EyeOff } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { API_BASE_URL } from '../../constants/api';
 import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
@@ -987,7 +988,7 @@ const UnifiedLogin = () => {
                     preventDoubleClick={false}
                     aria-label={showPassword ? t('auth:common.passwordHide') : t('auth:common.passwordShow')}
                   >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                    {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                   </MGButton>
                 </div>
               </div>

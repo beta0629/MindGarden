@@ -44,12 +44,12 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
       } catch (error) {
         console.error('주소 유형 코드 로드 실패:', error);
         setAddressTypeOptions([
-          { value: 'HOME', label: '집', icon: '🏠' },
-          { value: 'WORK', label: '회사', icon: '🏢' },
-          { value: 'OFFICE', label: '사무실', icon: '🏛️' },
-          { value: 'BRANCH', label: '지점', icon: '🏪' },
-          { value: 'EMERGENCY', label: '비상연락처', icon: '🚨' },
-          { value: 'OTHER', label: '기타', icon: '📍' }
+          { value: 'HOME', label: '자택' },
+          { value: 'WORK', label: '직장' },
+          { value: 'OFFICE', label: '사무실' },
+          { value: 'BRANCH', label: '지점' },
+          { value: 'EMERGENCY', label: '비상연락처' },
+          { value: 'OTHER', label: '기타' }
         ]);
       } finally {
         setLoadingCodes(false);

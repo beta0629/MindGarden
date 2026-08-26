@@ -17292,8 +17292,15 @@ body {
    전체 버튼 스타일 통합 및 최적화
    ============================================ */
 
-/* 모든 버튼 공통 기본 스타일 */
-button, .btn, [class*="btn-"], [class*="mg-btn"], [class*="mg-button"] {
+/* 모든 버튼 공통 기본 스타일
+ * GNB chrome-free 아이콘(.mg-v2-nav-icon, .mg-v2-tenant-header-icon-btn)은
+ * overflow/ellipsis 제외 — 쉐브론 옆 CSS … 아티팩트 방지
+ */
+button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn),
+.btn,
+[class*="btn-"],
+[class*="mg-btn"],
+[class*="mg-button"] {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -17303,7 +17310,11 @@ button, .btn, [class*="btn-"], [class*="mg-btn"], [class*="mg-button"] {
 }
 
 /* 버튼 내부 텍스트 최적화 */
-button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="mg-button"] span {
+button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn) span,
+.btn span,
+[class*="btn-"] span,
+[class*="mg-btn"] span,
+[class*="mg-button"] span {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -17312,7 +17323,11 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
 
 /* 모바일 전용 버튼 최적화 */
 @media (max-width: 768px) {
-  button, .btn, [class*="btn-"], [class*="mg-btn"], [class*="mg-button"] {
+  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn),
+  .btn,
+  [class*="btn-"],
+  [class*="mg-btn"],
+  [class*="mg-button"] {
     font-size: 0.8rem !important; /* 13px - 모바일 통일 */
     padding: 6px 10px !important;
     min-height: 32px !important;
@@ -17338,7 +17353,11 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
 
 /* 초소형 화면 (480px 이하) 최적화 */
 @media (max-width: 480px) {
-  button, .btn, [class*="btn-"], [class*="mg-btn"], [class*="mg-button"] {
+  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn),
+  .btn,
+  [class*="btn-"],
+  [class*="mg-btn"],
+  [class*="mg-button"] {
     font-size: 0.75rem !important; /* 12px */
     padding: 4px 8px !important;
     min-height: 28px !important;

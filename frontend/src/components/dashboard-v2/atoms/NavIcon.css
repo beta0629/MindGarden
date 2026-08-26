@@ -23,6 +23,10 @@
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
   box-shadow: none;
+  /* 전역 button { overflow:hidden; text-overflow:ellipsis } 탈출 */
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .mg-v2-nav-icon:hover:not(:disabled) {
@@ -46,6 +50,10 @@
   justify-content: center;
   color: var(--mg-color-text-secondary-dark);
   line-height: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  max-width: none;
 }
 
 .mg-v2-nav-icon__lucide svg {

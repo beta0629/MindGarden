@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Inbox } from 'lucide-react';
 
 import { useNotification } from '../../../contexts/NotificationContext';
 import Badge from '../../common/Badge';
@@ -119,7 +120,9 @@ const SystemNotificationWidget = ({ widget, user }) => {
     if (displayItems.length === 0) {
       return (
         <div className="system-notification-empty">
-          <div className="system-notification-empty-icon">📭</div>
+          <div className="system-notification-empty-icon" aria-hidden="true">
+            <Inbox size={28} strokeWidth={1.75} />
+          </div>
           <div className="system-notification-empty-text">
             읽지 않은 알림이 없습니다.
           </div>

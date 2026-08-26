@@ -19,12 +19,15 @@
 
   /* ----------------------------------------------------------
      1-1. COLOR — Brand (Teal Primary / Slate Secondary / Mint Wash)
+     AA after (2026-03): Solid CTA / link text use Teal-700 #0F766E
+     (white on #0F766E = 5.47:1; #0F766E on #FAF9F7/#FFFFFF = 5.20/5.47).
+     Teal-600 #0D9488 retained for focus/icon UI fill (≥3:1 non-text).
      ---------------------------------------------------------- */
-  --mg-v2-color-primary-main: #0D9488;
+  --mg-v2-color-primary-main: #0F766E;
   --mg-v2-color-primary-light: #14B8A6;
-  --mg-v2-color-primary-dark: #0F766E;
-  --mg-v2-color-primary-hover: #0F766E;
-  --mg-v2-color-primary-active: #0F766E;
+  --mg-v2-color-primary-dark: #115E59;
+  --mg-v2-color-primary-hover: #115E59;
+  --mg-v2-color-primary-active: #115E59;
   --mg-v2-color-primary-subtle: #CCFBF1;
 
   --mg-v2-color-secondary-main: #475569;
@@ -91,15 +94,16 @@
   --mg-v2-color-text-disabled: #94A3B8;
   --mg-v2-color-text-placeholder: #64748B;
   --mg-v2-color-text-inverse: #FFFFFF;
-  --mg-v2-color-text-link: #0D9488;
-  --mg-v2-color-text-link-hover: #0F766E;
+  --mg-v2-color-text-link: #0F766E;
+  --mg-v2-color-text-link-hover: #115E59;
 
   /* ----------------------------------------------------------
      1-6. COLOR — Border
+     border-strong after: #86807A on #FFFFFF = 3.90:1 (≥3.0 non-text)
      ---------------------------------------------------------- */
   --mg-v2-color-border-default: #D4CFC8;
   --mg-v2-color-border-subtle: #EBE6DF;
-  --mg-v2-color-border-strong: #B8B2A8;
+  --mg-v2-color-border-strong: #86807A;
   --mg-v2-color-border-light: #EBE6DF;
   --mg-v2-color-border-dark: #94A3B8;
   --mg-v2-color-border-focus: #0D9488;
@@ -351,9 +355,10 @@
 
     --mg-v2-color-border-default: #334155;
     --mg-v2-color-border-subtle: #1E293B;
-    --mg-v2-color-border-strong: #475569;
+    /* border-strong after: #64748B on #0F172A = 3.75:1 (≥3.0 non-text) */
+    --mg-v2-color-border-strong: #64748B;
     --mg-v2-color-border-light: #1E293B;
-    --mg-v2-color-border-dark: #64748B;
+    --mg-v2-color-border-dark: #94A3B8;
     --mg-v2-color-border-focus: #2DD4BF;
 
     --mg-v2-color-state-hover: rgba(248, 250, 252, 0.06);
@@ -371,8 +376,8 @@
     --mg-v2-shadow-focus: 0 0 0 3px var(--mg-v2-color-state-focus-ring);
 
     --mg-v2-border-elevation-1: 1px solid #334155;
-    --mg-v2-border-elevation-2: 1px solid #475569;
-    --mg-v2-border-elevation-3: 1px solid #64748B;
+    --mg-v2-border-elevation-2: 1px solid #64748B;
+    --mg-v2-border-elevation-3: 1px solid #94A3B8;
   }
 }
 
@@ -442,9 +447,10 @@
 
   --mg-v2-color-border-default: #334155;
   --mg-v2-color-border-subtle: #1E293B;
-  --mg-v2-color-border-strong: #475569;
+  /* border-strong after: #64748B on #0F172A = 3.75:1 (≥3.0 non-text) */
+  --mg-v2-color-border-strong: #64748B;
   --mg-v2-color-border-light: #1E293B;
-  --mg-v2-color-border-dark: #64748B;
+  --mg-v2-color-border-dark: #94A3B8;
   --mg-v2-color-border-focus: #2DD4BF;
 
   --mg-v2-color-state-hover: rgba(248, 250, 252, 0.06);
@@ -462,8 +468,8 @@
   --mg-v2-shadow-focus: 0 0 0 3px var(--mg-v2-color-state-focus-ring);
 
   --mg-v2-border-elevation-1: 1px solid #334155;
-  --mg-v2-border-elevation-2: 1px solid #475569;
-  --mg-v2-border-elevation-3: 1px solid #64748B;
+  --mg-v2-border-elevation-2: 1px solid #64748B;
+  --mg-v2-border-elevation-3: 1px solid #94A3B8;
 }
 
 /* ================================================================

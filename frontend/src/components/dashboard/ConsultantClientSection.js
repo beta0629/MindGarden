@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -208,7 +209,9 @@ const ConsultantClientSection = ({ userId }) => {
       <div className="mg-v2-card-body">
         {clients.length === 0 ? (
           <div className="mg-v2-empty-state">
-            <div className="mg-v2-empty-state-icon">👤</div>
+            <div className="mg-v2-empty-state-icon" aria-hidden="true">
+              <User size={28} strokeWidth={1.75} />
+            </div>
             <div className="mg-v2-empty-state-text">아직 매칭된 내담자가 없습니다</div>
           </div>
         ) : (

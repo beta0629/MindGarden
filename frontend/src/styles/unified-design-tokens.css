@@ -6422,7 +6422,7 @@ body {
 }
 
 .mg-status-badge.terminated::before {
-    content: "❌";
+    content: "×";
     color: var(--color-text-inverse);
     filter: brightness(0) invert(1);
 }

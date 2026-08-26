@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Bell, Calendar, MessageCircle } from 'lucide-react';
 import { useSession } from '../../../contexts/SessionContext';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -56,7 +57,7 @@ const WelcomeWidget = ({ config }) => {
             {/* 헤더 섹션 */}
             <div className="welcome-header">
                 <div className="greeting-section">
-                    <h2 className="greeting-text">{getGreeting()}, {user?.name || '사용자'}님! 👋</h2>
+                    <h2 className="greeting-text">{getGreeting()}, {user?.name || '사용자'}님!</h2>
                     <p className="date-text">{getFormattedDate()}</p>
                 </div>
                 <div className="user-avatar">
@@ -80,14 +81,18 @@ const WelcomeWidget = ({ config }) => {
                         </div>
                     </div>
                     <div className="summary-card messages">
-                        <div className="card-icon">💬</div>
+                        <div className="card-icon" aria-hidden="true">
+                            <MessageCircle size={22} strokeWidth={1.75} />
+                        </div>
                         <div className="card-content">
                             <span className="card-number">{todayStats.newMessages}</span>
                             <span className="card-label">새 메시지</span>
                         </div>
                     </div>
                     <div className="summary-card sessions">
-                        <div className="card-icon">📅</div>
+                        <div className="card-icon" aria-hidden="true">
+                            <Calendar size={22} strokeWidth={1.75} />
+                        </div>
                         <div className="card-content">
                             <span className="card-number">{todayStats.upcomingSessions}</span>
                             <span className="card-label">예정된 일정</span>
@@ -148,7 +153,9 @@ const WelcomeWidget = ({ config }) => {
             {/* 최근 활동 알림 */}
             <div className="recent-activity">
                 <div className="activity-item">
-                    <span className="activity-icon">🔔</span>
+                    <span className="activity-icon" aria-hidden="true">
+                        <Bell size={18} strokeWidth={1.75} />
+                    </span>
                     <span className="activity-text">새로운 상담 요청이 2건 있습니다.</span>
                 </div>
             </div>

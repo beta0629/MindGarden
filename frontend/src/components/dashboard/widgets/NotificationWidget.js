@@ -16,6 +16,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Inbox } from 'lucide-react';
 import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { apiPost } from '../../../utils/ajax';
@@ -173,7 +174,9 @@ const NotificationWidget = ({ widget, user }) => {
         </div>
       ) : (
         <div className="widget-empty">
-          <div className="widget-empty-icon">📭</div>
+          <div className="widget-empty-icon" aria-hidden="true">
+            <Inbox size={28} strokeWidth={1.75} />
+          </div>
           <div className="widget-empty-text">{config.emptyMessage || '읽지 않은 알림이 없습니다'}</div>
         </div>
       )}

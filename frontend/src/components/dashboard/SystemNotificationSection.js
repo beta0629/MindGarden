@@ -1,4 +1,4 @@
-// import React from 'react';
+import { Inbox } from 'lucide-react';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
@@ -95,7 +95,9 @@ const SystemNotificationSection = () => {
           <div className="mg-loading">로딩중...</div>
         ) : displayItems.length === 0 ? (
           <div className="mg-v2-empty-state">
-            <div className="mg-v2-empty-state-icon">📭</div>
+            <div className="mg-v2-empty-state-icon" aria-hidden="true">
+              <Inbox size={28} strokeWidth={1.75} />
+            </div>
             <div className="mg-v2-empty-state-text">읽지 않은 알림이 없습니다.</div>
           </div>
         ) : (

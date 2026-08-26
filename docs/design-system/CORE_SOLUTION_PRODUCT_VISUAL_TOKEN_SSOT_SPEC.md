@@ -72,7 +72,7 @@
 Core Solution은 신뢰성과 보안성을 제공하는 엔터프라이즈 B2B 상담 운영 SaaS 플랫폼입니다.
 - **핵심 브랜드 팔레트**:
   - **Slate**: `#0F172A` (Slate-900), `#1E293B` (Slate-800), `#334155` (Slate-700), `#475569` (Slate-600), `#64748B` (Slate-500), `#94A3B8` (Slate-400), `#CBD5E1` (Slate-300), `#E2E8F0` (Slate-200), `#F8FAFC` (Slate-50)
-  - **Teal**: `#0D9488` (Teal-600), `#14B8A6` (Teal-500), `#2DD4BF` (Teal-400), `#5EEAD4` (Teal-300), `#CCFBF1` (Teal-100), `#F0FDFA` (Teal-50)
+  - **Teal**: `#115E59` (Teal-800), `#0F766E` (Teal-700, Solid CTA / link text AA), `#0D9488` (Teal-600, focus/icon fill ≥3:1), `#14B8A6` (Teal-500), `#2DD4BF` (Teal-400), `#5EEAD4` (Teal-300), `#CCFBF1` (Teal-100), `#F0FDFA` (Teal-50)
   - **Mint**: `#CCFBF1` (Mint-100), `#F0FDFA` (Mint-50)
   - **Stone / Warm Neutral**: `#FAF9F7` (Warm Off-White Canvas), `#F5F3EF` (Warm Stone Surface), `#D4CFC8` (Stone Border)
 - **금지 원칙**:
@@ -217,9 +217,9 @@ Teal과 Mint는 시각적 오염을 방지하고 전문적인 임상 SaaS의 침
 | `--mg-v2-color-text-tertiary` | `#5C6B61` / `#64748B` (Slate-500) | **4.6:1 (AA)** on `#FAF9F7`<br>**4.5:1 (AA)** on `#F5F3EF`<br>**4.9:1 (AA)** on `#FFFFFF` | `#94A3B8` (Slate-400) | **5.4:1 (AA)** on `#0F172A`<br>**4.5:1 (AA)** on `#1E293B` | AA (≥4.5:1) | **인풋 헬퍼 텍스트**, 캡션, 타임스탬프, 메타데이터 |
 | `--mg-v2-color-text-disabled` | `#94A3B8` (Slate-400) | **3.0:1 (AA Non-text)** on `#FAF9F7` | `#64748B` (Slate-500) | **3.1:1 (AA Non-text)** on `#0F172A` | AA Non-text | 비활성화 필드 및 비활성 버튼 텍스트 (판독 가능) |
 | `--mg-v2-color-text-placeholder` | `#64748B` (Slate-500) | **4.6:1 (AA)** on `#FAF9F7`<br>**4.9:1 (AA)** on `#FFFFFF` | `#94A3B8` (Slate-400) | **5.4:1 (AA)** on `#0F172A` | AA (≥4.5:1) | 입력 필드 플레이스홀더 (흐릿하지 않고 선명함) |
-| `--mg-v2-color-text-link` | `#0D9488` (Teal-600) | **4.8:1 (AA)** on `#FAF9F7`<br>**5.3:1 (AA)** on `#FFFFFF` | `#2DD4BF` (Teal-400) | **9.6:1 (AAA)** on `#0F172A`<br>**7.9:1 (AAA)** on `#1E293B` | AA (≥4.5:1) | 본문 하이퍼링크, 활성 액션 텍스트 |
-| `--mg-v2-color-text-link-hover` | `#0F766E` (Teal-700) | **6.6:1 (AA)** on `#FAF9F7` | `#5EEAD4` (Teal-300) | **12.4:1 (AAA)** on `#0F172A` | AA (≥4.5:1) | 링크 마우스 호버 시 강조 |
-| `--mg-v2-color-text-inverse` | `#FFFFFF` | N/A (Solid Dark/Teal UI 전용) | `#0F172A` | N/A (Mint Wash 전용) | AA (≥4.5:1) | 솔리드 버튼 및 뱃지 내부 텍스트 |
+| `--mg-v2-color-text-link` | `#0F766E` (Teal-700, after) | **5.20:1 (AA)** on `#FAF9F7`<br>**5.47:1 (AA)** on `#FFFFFF` | `#2DD4BF` (Teal-400) | **9.6:1 (AAA)** on `#0F172A`<br>**7.9:1 (AAA)** on `#1E293B` | AA (≥4.5:1) | 본문 하이퍼링크, 활성 액션 텍스트. Teal-600 `#0D9488`은 fill/icon UI(≥3:1)용 |
+| `--mg-v2-color-text-link-hover` | `#115E59` (Teal-800, after) | **7.21:1 (AA)** on `#FAF9F7` | `#5EEAD4` (Teal-300) | **12.4:1 (AAA)** on `#0F172A` | AA (≥4.5:1) | 링크 마우스 호버 시 강조 |
+| `--mg-v2-color-text-inverse` | `#FFFFFF` | **5.47:1 (AA)** on Solid CTA `#0F766E` | `#0F172A` | N/A (Mint Wash 전용) | AA (≥4.5:1) | 솔리드 버튼 및 뱃지 내부 텍스트 |
 
 ### 5.2 테두리 및 UI 구조 토큰 (Border & Structural Tokens)
 
@@ -227,8 +227,8 @@ Teal과 Mint는 시각적 오염을 방지하고 전문적인 임상 SaaS의 침
 |---|---|---|---|---|---|---|
 | `--mg-v2-color-border-default` | `#E2E8F0` / `#D4CFC8` (Stone Subtle) | **1.3:1** (Subtle Card) | `#334155` (Slate-700) | **2.1:1** on `#1E293B` | UI Subtle | 기본 카드 외곽선, 테이블 헤더 구분선 |
 | `--mg-v2-color-border-subtle` | `#F1F5F9` / `#EBE6DF` (Divider) | **1.15:1** (Divider) | `#1E293B` (Slate-800) | **1.5:1** on `#0F172A` | UI Divider | 목록 간 디바이더, 테이블 행 구분선 |
-| `--mg-v2-color-border-strong` | `#CBD5E1` / `#B8B2A8` (Stone Strong) | **3.1:1 (AA)** on `#FFFFFF` | `#475569` (Slate-600) | **3.2:1 (AA)** on `#0F172A` | AA Non-text (≥3.0:1) | **인풋 폼 테두리**, 모달 외곽선, 독립 위젯 경계 |
-| `--mg-v2-color-border-focus` | `#0D9488` (Teal-600) | **5.3:1 (AA)** on `#FFFFFF` | `#2DD4BF` (Teal-400) | **7.9:1 (AA)** on `#1E293B` | AA Non-text (≥3.0:1) | 폼 필드 포커스 링, 선택된 카드 테두리 |
+| `--mg-v2-color-border-strong` | `#86807A` (Stone Strong, after) | **3.90:1 (AA)** on `#FFFFFF`<br>**3.71:1 (AA)** on `#FAF9F7` | `#64748B` (Slate-500, after) | **3.75:1 (AA)** on `#0F172A`<br>**3.07:1 (AA)** on `#1E293B` | AA Non-text (≥3.0:1) | **인풋 폼 테두리**, 모달 외곽선, 독립 위젯 경계 |
+| `--mg-v2-color-border-focus` | `#0D9488` (Teal-600, icon/focus UI) | **3.74:1 (AA)** on `#FFFFFF` | `#2DD4BF` (Teal-400) | **7.9:1 (AA)** on `#1E293B` | AA Non-text (≥3.0:1) | 폼 필드 포커스 링, 선택된 카드 테두리 |
 | `--mg-v2-color-state-focus-ring` | `rgba(13, 148, 136, 0.25)` | Focus Indicator | `rgba(45, 212, 191, 0.35)` | Focus Indicator | A11y Focus | 키보드 내비게이션 포커스 링 (3px glow) |
 
 ### 5.3 서페이스 및 배경 토큰 (Surface & Elevation Tokens)
@@ -365,8 +365,8 @@ Core Solution은 대량의 상담 일정, 결제 내역, 내담자 차트, 통�
 
 | 기존 레거시 토큰 / 리터럴 | New SSOT 토큰명 (Light & Dark 공통) | Light 모드 적용값 (Clinic Stone) | Dark 모드 적용값 (Deep Slate) | 용도 |
 |---|---|---|---|---|
-| `--color-primary` / `--mg-primary-500` | `--mg-v2-color-primary-main` | `#0D9488` (Teal-600) | `#2DD4BF` (Teal-400) | 주요 브랜드 단일 CTA 액션, 링크 |
-| `--color-primary-hover` | `--mg-v2-color-primary-hover` | `#0F766E` (Teal-700) | `#5EEAD4` (Teal-300) | Primary 호버 |
+| `--color-primary` / `--mg-primary-500` | `--mg-v2-color-primary-main` | `#0F766E` (Teal-700, Solid CTA AA) | `#2DD4BF` (Teal-400) | 주요 브랜드 단일 CTA 액션. 링크도 Teal-700. Teal-600 `#0D9488`은 focus/icon fill |
+| `--color-primary-hover` | `--mg-v2-color-primary-hover` | `#115E59` (Teal-800) | `#5EEAD4` (Teal-300) | Primary 호버 |
 | `--color-bg-primary` / `--mg-white` / `#faf9f7` | `--mg-v2-color-surface-bg` | `#FAF9F7` (Warm Off-White) | `#0F172A` (Deep Slate-900) | 페이지 기본 배경 (Canvas) |
 | `--color-bg-secondary` / `--mg-bg-card` / `#ffffff` | `--mg-v2-color-surface-card` | `#FFFFFF` / `#F5F3EF` (Stone) | `#1E293B` (Deep Slate-800) | 카드, 섹션 블록, 테이블 컨테이너 |
 | `--color-bg-tertiary` / `#f1f5f9` | `--mg-v2-color-surface-raised` | `#FFFFFF` | `#334155` (Slate-700 Raised) | 드롭다운, 팝오버, 툴바 레이어 |
@@ -375,7 +375,7 @@ Core Solution은 대량의 상담 일정, 결제 내역, 내담자 차트, 통�
 | `--color-text-tertiary` / `#9c958c` / `#94a3b8` | `--mg-v2-color-text-tertiary` | `#5C6B61` / `#64748B` | `#94A3B8` (Slate-400) | 캡션, 메타데이터, 헬퍼 텍스트 |
 | `--color-text-muted` / `#7a7a7a` | `--mg-v2-color-text-tertiary` | `#64748B` | `#94A3B8` | 보조 안내 텍스트 |
 | `--color-border-primary` / `#e2e8f0` / `#334155` | `--mg-v2-color-border-default` | `#E2E8F0` / `#D4CFC8` | `#334155` (Slate-700) | 기본 외곽선 및 디바이더 |
-| `--color-border-secondary` / `#cbd5e1` / `#475569` | `--mg-v2-color-border-strong` | `#CBD5E1` / `#B8B2A8` | `#475569` (Slate-600) | 인풋 테두리, 모달 외곽선 |
+| `--color-border-secondary` / `#cbd5e1` / `#475569` | `--mg-v2-color-border-strong` | `#86807A` | `#64748B` (Slate-500) | 인풋 테두리, 모달 외곽선 |
 | `--ad-b0kla-card-bg` | `--mg-v2-color-surface-card` | `#FFFFFF` / `#F5F3EF` | `#1E293B` | 어드민 B0KlA 카드 배경 |
 | `--ad-b0kla-border` | `--mg-v2-color-border-default` | `#E2E8F0` / `#D4CFC8` | `#334155` | 어드민 B0KlA 테두리 |
 | `--ad-b0kla-title-color` | `--mg-v2-color-text-primary` | `#0F172A` | `#F8FAFC` | 어드민 B0KlA 타이틀 |

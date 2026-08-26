@@ -237,6 +237,39 @@
   border-style: solid;
 }
 
+/*
+ * Solid variants — 레거시 .mg-v2-button-* { border: none } 이 와도
+ * border-width 1px 유지(transparent OK). outline과 동일 제어 높이.
+ * border: none 금지(shorthand가 width를 0으로 리셋함).
+ */
+.mg-button.mg-button--primary,
+.mg-button.mg-button--secondary,
+.mg-button.mg-button--success,
+.mg-button.mg-button--danger,
+.mg-button.mg-button--warning,
+.mg-button.mg-button--info,
+.mg-button.mg-v2-button-primary,
+.mg-button.mg-v2-button-secondary,
+.mg-button.mg-v2-button-success,
+.mg-button.mg-v2-button-danger,
+.mg-button.mg-v2-button-warning,
+.mg-button.mg-v2-button-info,
+.mg-button.mg-v2-button--primary,
+.mg-button.mg-v2-button--secondary,
+.mg-button.mg-v2-button--success,
+.mg-button.mg-v2-button--danger,
+.mg-button.mg-v2-button--warning,
+.mg-button.mg-v2-button--info,
+.mg-button.mg-v2-button.mg-v2-button-primary,
+.mg-button.mg-v2-button.mg-v2-button-secondary,
+.mg-button.mg-v2-button.mg-v2-button-success,
+.mg-button.mg-v2-button.mg-v2-button-danger,
+.mg-button.mg-v2-button.mg-v2-button-warning,
+.mg-button.mg-v2-button.mg-v2-button-info {
+  border-width: 1px;
+  border-style: solid;
+}
+
 .mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
   color: var(--mg-color-text-on-primary, var(--mg-white));

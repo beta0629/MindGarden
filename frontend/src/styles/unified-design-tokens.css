@@ -12247,7 +12247,9 @@ body {
 }
 
 .mg-v2-button--primary {
-    border: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
     background-color: var(--color-primary);
     color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
 }
@@ -12261,13 +12263,17 @@ body {
 }
 
 .mg-v2-button--danger {
-    border: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
     background-color: var(--color-error);
     color: var(--color-background-primary);
 }
 
 .mg-v2-button--warning {
-    border: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
     background-color: var(--color-warning);
     color: var(--color-background-primary);
 }
@@ -12280,7 +12286,9 @@ body {
 .mg-v2-button-primary {
     background-color: var(--mg-color-primary-main, var(--color-primary));
     color: var(--mg-color-text-on-primary, var(--color-text-on-primary));
-    border: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
 }
 
 .mg-v2-button-primary:hover:not(:disabled) {
@@ -12293,7 +12301,9 @@ body {
 .mg-v2-button-secondary {
     background-color: var(--color-secondary);
     color: white;
-    border: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
 }
 
 .mg-v2-button-secondary:hover:not(:disabled) {
@@ -12304,7 +12314,9 @@ body {
 .mg-v2-button-danger {
     background-color: var(--mg-error-500, var(--mg-error-500));
     color: white;
-    border: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
 }
 
 .mg-v2-button-danger:hover:not(:disabled) {
@@ -12395,7 +12407,9 @@ body {
 .mg-v2-button-success {
     background-color: var(--status-success);
     color: white;
-    border: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
 }
 
 .mg-v2-button-success:hover:not(:disabled) {
@@ -12423,7 +12437,9 @@ body {
 .mg-v2-button-danger {
     background-color: var(--status-error);
     color: white;
-    border: none;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
 }
 
 .mg-v2-button-danger:hover:not(:disabled) {

@@ -147,10 +147,10 @@ function PackagePricingListPage() {
                       <div className="mg-v2-package-pricing-card__actions">
                         <MGButton
                           type="button"
-                          variant="secondary"
+                          variant="outline"
                           size="small"
                           className={buildErpMgButtonClassName({
-                            variant: 'secondary',
+                            variant: 'outline',
                             size: 'sm',
                             loading: false
                           })}

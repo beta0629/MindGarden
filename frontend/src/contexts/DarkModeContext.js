@@ -1,8 +1,9 @@
 /**
  * Dark Mode Context
  *
- * Admin Dashboard V2 ContentHeader 우측 「테마」 버튼의 3단 토글
- * (auto → light → dark → auto) 상태를 관리한다.
+ * Admin Dashboard V2 ContentHeader 「테마」 토글은 resolved 기준
+ * light ↔ dark 양방향 전환한다. (OS dark 에서 dark→auto 시 다시 dark 로
+ * 보이는 함정을 피한다. auto 는 setMode 로만 유지.)
  *
  * 책임:
  * - localStorage(`mg-dark-mode`)에 사용자 override 저장 / 복원
@@ -31,18 +32,12 @@ const DarkModeContext = createContext(null);
 /** localStorage 키 (기존 `mindgarden-theme` 와 충돌 회피) */
 export const DARK_MODE_STORAGE_KEY = 'mg-dark-mode';
 
-/** 다크 모드 토글 상태 (auto → light → dark → auto cycle) */
+/** 다크 모드 저장 값 (auto | light | dark). UI toggle 은 light↔dark 만 사용. */
 export const DARK_MODE_VALUES = Object.freeze({
   AUTO: 'auto',
   LIGHT: 'light',
   DARK: 'dark'
 });
-
-const DARK_MODE_CYCLE = {
-  [DARK_MODE_VALUES.AUTO]: DARK_MODE_VALUES.LIGHT,
-  [DARK_MODE_VALUES.LIGHT]: DARK_MODE_VALUES.DARK,
-  [DARK_MODE_VALUES.DARK]: DARK_MODE_VALUES.AUTO
-};
 
 const MEDIA_QUERY_DARK = '(prefers-color-scheme: dark)';
 
@@ -159,9 +154,15 @@ export const DarkModeProvider = ({ children }) => {
     };
   }, []);
 
+  /** resolved 기준 light ↔ dark. auto+OS dark 에서도 명시 light 로 복귀 가능. */
   const toggle = useCallback(() => {
-    setMode((current) => DARK_MODE_CYCLE[current] || DARK_MODE_VALUES.AUTO);
-  }, []);
+    setMode((current) => {
+      const currentResolved = computeResolved(current, systemDark);
+      return currentResolved === DARK_MODE_VALUES.DARK
+        ? DARK_MODE_VALUES.LIGHT
+        : DARK_MODE_VALUES.DARK;
+    });
+  }, [systemDark]);
 
   const setModeExplicit = useCallback((next) => {
     if (

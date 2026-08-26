@@ -121,7 +121,7 @@
   padding: var(--spacing-lg);
 }
 
-/* 액션 버튼 크기 통일: 아이콘 유무와 관계없이 동일한 최소 크기 (취소/등록 등) */
+/* 액션 버튼 크기 통일: MGButton size 토큰(medium = --button-height-default) */
 .mg-modal__actions .mg-button,
 .mg-modal__actions > button,
 .mg-modal__actions .mg-v2-button,
@@ -130,7 +130,7 @@
   flex: 0 0 auto;
   width: auto;
   min-width: 112px;
-  min-height: 40px;
+  min-height: var(--button-height-default);
   box-sizing: border-box;
   overflow: visible; /* 전역 .mg-button/.mg-v2-button ellipsis 방지 */
   text-overflow: clip;
@@ -235,6 +235,8 @@
 .mg-modal__actions .mg-button.mg-button--outline {
   background-color: transparent;
   color: var(--mg-color-primary-main, var(--mg-primary-500));
+  border-width: 1px;
+  border-style: solid;
   border-color: var(--mg-color-border-main, var(--mg-border-color));
   box-shadow: none;
 }

@@ -556,7 +556,7 @@ const VacationManagementModal = ({
                                         <div className="form-group">
                                             <label>{t('admin:vacation.label.date')}</label>
                                             <div className="selected-date-display">
-                                                📅 {selectedDate.toLocaleDateString('ko-KR', {
+                                                {selectedDate.toLocaleDateString('ko-KR', {
                                                     year: 'numeric',
                                                     month: 'long',
                                                     day: 'numeric',

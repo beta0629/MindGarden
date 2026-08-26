@@ -109,7 +109,7 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                                     </div>
                                 </div>
                                 <div className="rank-badge">
-                                    {index < 3 ? '🥇🥈🥉'[index] : ''}
+                                    {''}
                                 </div>
                             </div>
                         ))}

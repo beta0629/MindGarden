@@ -221,17 +221,14 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = USER_RO
             <div className="mg-v2-info-box mg-v2-mb-md">
               {consultationLogStatus.loading ? (
                 <div className="mg-v2-info-box-title">
-                  <span className="mg-v2-text-lg">⏳</span>
                   상담일지 상태 확인 중...
                 </div>
               ) : consultationLogStatus.hasRecord ? (
                 <div className="mg-v2-info-box-title mg-v2-color-success">
-                  <span className="mg-v2-text-lg">✅</span>
                   상담일지가 작성되었습니다
                 </div>
               ) : (
                 <div className="mg-v2-info-box-title mg-v2-color-warning">
-                  <span className="mg-v2-text-lg">⚠️</span>
                   상담일지를 작성해야 합니다
                 </div>
               )}

@@ -22,10 +22,10 @@ const StepIndicator = ({
     currentStep, 
     totalSteps, 
     steps = [
-        { id: 1, title: '상담사 선택', icon: '👨‍⚕️' },
-        { id: 2, title: '내담자 선택', icon: '👤' },
-        { id: 3, title: '시간 선택', icon: '⏰' },
-        { id: 4, title: '세부사항', icon: '📝' }
+        { id: 1, title: '상담사 선택', icon: null },
+        { id: 2, title: '내담자 선택', icon: null },
+        { id: 3, title: '시간 선택', icon: null },
+        { id: 4, title: '세부사항', icon: null }
     ]
 }) => {
     const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;

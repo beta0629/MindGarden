@@ -39,7 +39,7 @@ export const WIDGET_CONSTANTS = {
     // 에러 상태  
     ERROR_CONTAINER: 'mg-error-container mg-p-md',
     MG_ALERT_ERROR: 'mg-alert mg-alert--error mg-flex mg-align-center mg-gap-sm',
-    MG_ALERT_ICON: 'mg-alert__icon',
+    MG_ALERT_ICON: null,
     MG_ALERT_MESSAGE: 'mg-alert__message',
     
     // 텍스트 스타일
@@ -138,17 +138,17 @@ export const WIDGET_CONSTANTS = {
   
   // 아이콘 매핑
   ICONS: {
-    LOADING: '⏳',
-    ERROR: '⚠️',
-    SUCCESS: '✅',
-    INFO: 'ℹ️',
-    WARNING: '⚠️',
-    REFRESH: '🔄',
-    SETTINGS: '⚙️',
-    STATS: '📊',
-    USERS: '👥',
-    CALENDAR: '📅',
-    CHART: '📈'
+    LOADING: null,
+    ERROR: null,
+    SUCCESS: null,
+    INFO: null,
+    WARNING: null,
+    REFRESH: null,
+    SETTINGS: null,
+    STATS: null,
+    USERS: null,
+    CALENDAR: null,
+    CHART: null
   },
   
   // 유틸리티 함수들
@@ -226,12 +226,12 @@ export const WIDGET_SPECIFIC_CONSTANTS = {
         COLOR: 'success'
       },
       MAPPINGS: {
-        ICON: '🔗',
+        ICON: null,
         LABEL: '매칭',
         COLOR: 'info'
       },
       ACTIVE_MAPPINGS: {
-        ICON: '✅',
+        ICON: null,
         LABEL: '활성 매칭',
         COLOR: 'warning'
       }
@@ -251,7 +251,7 @@ export const WIDGET_SPECIFIC_CONSTANTS = {
         COLOR: 'success'
       },
       PENDING_TODAY: {
-        ICON: '⏰',
+        ICON: null,
         LABEL: '대기 중인 상담',
         COLOR: 'warning'
       }
@@ -261,17 +261,17 @@ export const WIDGET_SPECIFIC_CONSTANTS = {
   QUICK_ACTIONS: {
     ACTIONS: {
       MANAGE_CONSULTANTS: {
-        ICON: '👨‍⚕️',
+        ICON: null,
         LABEL: '상담사 관리',
         URL: '/admin/user-management?type=consultant'
       },
       MANAGE_CLIENTS: {
-        ICON: '👥',
+        ICON: null,
         LABEL: '내담자 관리',
         URL: '/admin/user-management?type=client'
       },
       VIEW_MAPPINGS: {
-        ICON: '🔗',
+        ICON: null,
         LABEL: '매칭 관리',
         URL: '/admin/mapping-management'
       },

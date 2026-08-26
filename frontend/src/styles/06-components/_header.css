@@ -832,6 +832,16 @@
   background: var(--cs-glass-primary-10);
 }
 
+[data-theme="dark"] .mg-header__nav-item {
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
+}
+
+[data-theme="dark"] .mg-header__nav-item:hover,
+[data-theme="dark"] .mg-header__nav-item.active {
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+  background: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
+}
+
 .mg-header__nav-item.active::after {
   content: '';
   position: absolute;

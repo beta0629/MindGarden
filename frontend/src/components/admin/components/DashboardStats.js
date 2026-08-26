@@ -13,35 +13,35 @@ const DashboardStats = ({
     {
       title: '총 상담사',
       value: stats.totalConsultants || 0,
-      icon: '👨‍⚕️',
+      icon: null,
       color: 'primary',
       id: 'consultants'
     },
     {
       title: '총 고객',
       value: stats.totalClients || 0,
-      icon: '👥',
+      icon: null,
       color: 'success',
       id: 'clients'
     },
     {
       title: '총 매핑',
       value: stats.totalMappings || 0,
-      icon: '🔗',
+      icon: null,
       color: 'warning',
       id: 'mappings'
     },
     {
       title: '활성 매칭',
       value: stats.activeMappings || 0,
-      icon: '✅',
+      icon: null,
       color: 'info',
       id: 'active-mappings'
     },
     {
       title: '환불 건수',
       value: refundStats.totalRefundCount || 0,
-      icon: '💸',
+      icon: null,
       color: 'danger',
       id: 'refunds',
       change: refundStats.averageRefundPerCase ? {
@@ -52,7 +52,7 @@ const DashboardStats = ({
     {
       title: '대기 입금',
       value: pendingDepositStats.count || 0,
-      icon: '⏳',
+      icon: null,
       color: 'warning',
       id: 'pending-deposits',
       change: pendingDepositStats.oldestHours ? {

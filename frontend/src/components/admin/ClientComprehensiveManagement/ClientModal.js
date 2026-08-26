@@ -877,7 +877,7 @@ const ClientModal = ({
                         <small className="mg-v2-form-help mg-v2-form-help--error">⚠️ {VALIDATION_MESSAGES.EMAIL_EXISTS}</small>
                     )}
                     {type === 'create' && emailCheckStatus === 'available' && (
-                        <small className="mg-v2-form-help mg-v2-form-help--success">✅ {VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
+                        <small className="mg-v2-form-help mg-v2-form-help--success">{VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
                     )}
                 </div>
                 {type === 'create' && (

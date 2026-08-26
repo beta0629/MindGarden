@@ -16,7 +16,9 @@
 .mg-v2-ad-b0kla .mg-button--primary {
   background: var(--ad-b0kla-green);
   color: var(--mg-white);
-  border: none;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-primary:hover:not(:disabled),
@@ -43,7 +45,9 @@
 .mg-v2-ad-b0kla .mg-v2-button--success {
   background: var(--ad-b0kla-green);
   color: var(--mg-white);
-  border: none;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-success:hover:not(:disabled),
@@ -84,7 +88,9 @@
 .mg-v2-ad-b0kla .mg-v2-button--danger {
   background: var(--ad-b0kla-danger);
   color: var(--mg-white);
-  border: none;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
 }
 
 .mg-v2-ad-b0kla .mg-v2-button-danger:hover:not(:disabled),
@@ -1587,7 +1593,7 @@ button.mg-v2-ad-b0kla__admin-card:not(.mg-button):disabled {
   flex: 0 0 auto;
   width: auto;
   min-width: 112px;
-  min-height: 40px;
+  min-height: var(--button-height-default);
   box-sizing: border-box;
 }
 

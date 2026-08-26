@@ -161,8 +161,10 @@
   --mg-layout-section-bg: var(--mg-color-surface-main);
   --mg-layout-section-border: var(--mg-color-border-main);
 
-  /* Phase 2 Set F C-2b — LNB/Sidebar */
+  /* Phase 2 Set F C-2b — LNB/Sidebar
+   * active bg = raised slate (state-active) + near-white label (not navy primary-100)
+   */
   --mg-layout-sidebar-bg: var(--mg-dark-lnb-bg);
-  --mg-layout-sidebar-active-bg: var(--mg-dark-lnb-hover);
+  --mg-layout-sidebar-active-bg: var(--mg-v2-color-state-active, var(--mg-dark-lnb-hover));
   --mg-layout-sidebar-text: var(--mg-dark-lnb-text);
 }

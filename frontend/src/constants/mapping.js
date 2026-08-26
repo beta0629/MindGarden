@@ -167,13 +167,13 @@ export const MAPPING_ACTION_BUTTONS = {
 
 export const MAPPING_STAT_ICONS = {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    PENDING: '⏳',
+    PENDING: null,
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    ACTIVE: '✅',
-    PAYMENT_CONFIRMED: '💰',
-    TOTAL: '📊',
-    TERMINATED: '❌',
-    SESSIONS_EXHAUSTED: '🔚'
+    ACTIVE: null,
+    PAYMENT_CONFIRMED: null,
+    TOTAL: null,
+    TERMINATED: null,
+    SESSIONS_EXHAUSTED: null
 };
 
 export const MAPPING_STAT_LABELS = {

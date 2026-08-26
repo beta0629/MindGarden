@@ -34,12 +34,11 @@ const API_SCHEDULES_CONSULTATION_RECORDS = '/api/v1/schedules/consultation-recor
 
 /** PRIORITY 공통코드가 비어 있거나 로드 실패 시 — 목표 달성도와 동일하게 칩으로 바로 선택 */
 const DEFAULT_RISK_LEVEL_OPTIONS = [
-  { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
-  { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
-  { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-warning-600)', description: '높은 우선순위' },
-  { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
-  /** 긴급(🔴)과 구분: 원형 이모지 통일 */
-  { value: 'CRITICAL', label: '위험', icon: '🟣', color: 'var(--mg-color-secondary-main)', description: '치명적 위험' }
+  { value: 'LOW', label: '낮음', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
+  { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
+  { value: 'HIGH', label: '높음', color: 'var(--mg-warning-600)', description: '높은 우선순위' },
+  { value: 'URGENT', label: '긴급', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
+  { value: 'CRITICAL', label: '위험', color: 'var(--mg-color-secondary-main)', description: '치명적 위험' }
 ];
 
 /** API codeLabel이 영문이어도 UI는 항상 한글·동일 아이콘 */
@@ -432,33 +431,33 @@ const ConsultationLogModal = ({
         setCompletionStatusOptions(list.map((code, index) => ({
           value: code.codeValue,
           label: code.codeLabel,
-          icon: code.icon || '📋',
+          icon: null,
           color: code.colorCode,
           description: code.codeDescription
         })));
       } else {
         setCompletionStatusOptions([
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'COMPLETED', label: t('common:consultant.ConsultationLogModal.t_8d868037'), icon: '✅', color: 'var(--mg-success-500)', description: t('common:consultant.ConsultationLogModal.t_0ea90460') },
+          { value: 'COMPLETED', label: t('common:consultant.ConsultationLogModal.t_8d868037'), color: 'var(--mg-success-500)', description: t('common:consultant.ConsultationLogModal.t_0ea90460') },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'PENDING', label: t('common:consultant.ConsultationLogModal.t_df72a875'), icon: '⏳', color: 'var(--mg-warning-500)', description: t('common:consultant.ConsultationLogModal.t_f1fea4e3') },
+          { value: 'PENDING', label: t('common:consultant.ConsultationLogModal.t_df72a875'), color: 'var(--mg-warning-500)', description: t('common:consultant.ConsultationLogModal.t_f1fea4e3') },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'IN_PROGRESS', label: t('common:consultant.ConsultationLogModal.t_0dae9079'), icon: '🔄', color: 'var(--mg-info-500)', description: t('common:consultant.ConsultationLogModal.t_b52f3df3') },
+          { value: 'IN_PROGRESS', label: t('common:consultant.ConsultationLogModal.t_0dae9079'), color: 'var(--mg-info-500)', description: t('common:consultant.ConsultationLogModal.t_b52f3df3') },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'CANCELLED', label: t('common:consultant.ConsultationLogModal.t_19b2d19b'), icon: '❌', color: 'var(--mg-error-500)', description: t('common:consultant.ConsultationLogModal.t_ca1719e1') }
+          { value: 'CANCELLED', label: t('common:consultant.ConsultationLogModal.t_19b2d19b'), color: 'var(--mg-error-500)', description: t('common:consultant.ConsultationLogModal.t_ca1719e1') }
         ]);
       }
     } catch (error) {
       console.error('완료 상태 코드 로드 실패:', error);
       setCompletionStatusOptions([
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'COMPLETED', label: t('common:consultant.ConsultationLogModal.t_8d868037'), icon: '✅', color: 'var(--mg-success-500)', description: t('common:consultant.ConsultationLogModal.t_0ea90460') },
+        { value: 'COMPLETED', label: t('common:consultant.ConsultationLogModal.t_8d868037'), color: 'var(--mg-success-500)', description: t('common:consultant.ConsultationLogModal.t_0ea90460') },
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'PENDING', label: t('common:consultant.ConsultationLogModal.t_df72a875'), icon: '⏳', color: 'var(--mg-warning-500)', description: t('common:consultant.ConsultationLogModal.t_f1fea4e3') },
+        { value: 'PENDING', label: t('common:consultant.ConsultationLogModal.t_df72a875'), color: 'var(--mg-warning-500)', description: t('common:consultant.ConsultationLogModal.t_f1fea4e3') },
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'IN_PROGRESS', label: t('common:consultant.ConsultationLogModal.t_0dae9079'), icon: '🔄', color: 'var(--mg-info-500)', description: t('common:consultant.ConsultationLogModal.t_b52f3df3') },
+        { value: 'IN_PROGRESS', label: t('common:consultant.ConsultationLogModal.t_0dae9079'), color: 'var(--mg-info-500)', description: t('common:consultant.ConsultationLogModal.t_b52f3df3') },
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'CANCELLED', label: t('common:consultant.ConsultationLogModal.t_19b2d19b'), icon: '❌', color: 'var(--mg-error-500)', description: t('common:consultant.ConsultationLogModal.t_ca1719e1') }
+        { value: 'CANCELLED', label: t('common:consultant.ConsultationLogModal.t_19b2d19b'), color: 'var(--mg-error-500)', description: t('common:consultant.ConsultationLogModal.t_ca1719e1') }
       ]);
     } finally {
       setLoadingCompletionCodes(false);
@@ -1047,7 +1046,7 @@ const ConsultationLogModal = ({
         loading={saving}
         preventDoubleClick={false}
       >
-        💾 저장
+        저장
       </MGButton>
       <MGButton
         type="button"
@@ -1060,7 +1059,7 @@ const ConsultationLogModal = ({
         loading={saving}
         preventDoubleClick={false}
       >
-        ✅ 완료
+        완료
       </MGButton>
     </>
   );

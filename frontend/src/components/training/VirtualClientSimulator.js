@@ -162,7 +162,7 @@ const VirtualClientSimulator = ({ consultantId }) => {
         <div className="virtual-client-simulator">
             {!isSessionActive ? (
                 <div className="simulator-setup">
-                    <h2>🤖 가상 내담자 시뮬레이터</h2>
+                    <h2>가상 내담자 시뮬레이터</h2>
                     <p>다양한 시나리오로 상담 기술을 연습하세요</p>
 
                     <div className="setup-form">

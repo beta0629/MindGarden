@@ -468,7 +468,7 @@ const ConsultantMessageScreen = () => {
       {/* 내담자 정보 카드 */}
       <div className="mg-v2-card mg-mb-lg">
         <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
-          👤 내담자 정보
+          내담자 정보
         </h2>
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
@@ -580,7 +580,7 @@ const ConsultantMessageScreen = () => {
                   onChange={handleInputChange}
                   style={styles.checkbox}
                 />
-                <label style={styles.checkboxLabel}>⚠️ 긴급 메시지</label>
+                <label style={styles.checkboxLabel}>긴급 메시지</label>
               </div>
             </div>
           </div>

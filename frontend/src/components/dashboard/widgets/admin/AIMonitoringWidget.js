@@ -217,7 +217,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
             {recentAnomalies.length === 0 ? (
               <div className="mg-empty-state">
                 <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
-                  ✅ 최근 이상 탐지 없음
+                  최근 이상 탐지 없음
                 </p>
               </div>
             ) : (
@@ -296,7 +296,7 @@ const AIMonitoringWidget = ({ widget, user }) => {
             {recentThreats.length === 0 ? (
               <div className="mg-empty-state">
                 <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
-                  ✅ 최근 보안 위협 없음
+                  최근 보안 위협 없음
                 </p>
               </div>
             ) : (

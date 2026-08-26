@@ -175,21 +175,21 @@ const SalaryExportModal = ({
             </h4>
             <div className="mg-v2-form-grid">
               <div className="mg-v2-card-item">
-                <div className="salary-export-modal__summary-emoji">👤</div>
+                <div className="salary-export-modal__summary-emoji" aria-hidden="true"></div>
                 <div>
                   <div className="salary-export-modal__summary-label">{t('common.labels.consultant')}</div>
                   <div className="salary-export-modal__summary-value">{consultantName || '정보 없음'}</div>
                 </div>
               </div>
               <div className="mg-v2-card-item">
-                <div className="salary-export-modal__summary-emoji">📅</div>
+                <div className="salary-export-modal__summary-emoji" aria-hidden="true"></div>
                 <div>
                   <div className="salary-export-modal__summary-label">기간</div>
                   <div className="salary-export-modal__summary-value">{period || '정보 없음'}</div>
                 </div>
               </div>
               <div className="mg-v2-card-item">
-                <div className="salary-export-modal__summary-emoji">💵</div>
+                <div className="salary-export-modal__summary-emoji" aria-hidden="true"></div>
                 <div>
                   <div className="salary-export-modal__summary-label">총 급여</div>
                   <div className="salary-export-modal__summary-value salary-export-modal__summary-value--total">
@@ -276,7 +276,7 @@ const SalaryExportModal = ({
           {/* 오류 메시지 */}
           {error && (
             <div className="salary-export-modal__error">
-              ❌ {error}
+              {error}
             </div>
           )}
         </div>

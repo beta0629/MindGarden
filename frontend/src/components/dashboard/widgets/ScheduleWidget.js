@@ -107,9 +107,6 @@ const ScheduleWidget = ({ widget, user }) => {
 
         {/* 상담사 전용 안내 메시지 */}
         <div className="schedule-consultant-message">
-          <div className="consultant-message-icon">
-            💼
-          </div>
           <p className="consultant-message-text">
             상담사님의 효율적인 스케줄 관리를 위한 전용 공간입니다
           </p>

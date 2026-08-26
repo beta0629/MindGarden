@@ -160,7 +160,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
             {audioFileId && (
                 <section className="section-transcription">
                     <div className="section-header">
-                        <h3>📝 전사 결과</h3>
+                        <h3>전사 결과</h3>
                         <span className={`status-badge status-${transcriptionStatus.toLowerCase()}`}>
                             {getStatusLabel(transcriptionStatus)}
                         </span>
@@ -176,9 +176,9 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                     {transcription && (
                         <div className="transcription-result">
                             <div className="transcription-info">
-                                <span>📊 신뢰도: {transcription.confidenceScore}</span>
-                                <span>📏 단어 수: {transcription.wordCount}개</span>
-                                <span>⏱️ 처리 시간: {transcription.processingTime}</span>
+                                <span>신뢰도: {transcription.confidenceScore}</span>
+                                <span>단어 수: {transcription.wordCount}개</span>
+                                <span>처리 시간: {transcription.processingTime}</span>
                             </div>
                             <textarea
                                 className="transcription-text"
@@ -199,7 +199,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                                 onClick={analyzeRisks}
                                 variant="warning"
                             >
-                                🔍 위험 징후 분석
+                                위험 징후 분석
                             </MGButton>
                         </div>
                     )}
@@ -210,7 +210,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
             {transcription && (
                 <section className="section-clinical-notes">
                     <div className="section-header">
-                        <h3>🏥 임상 노트 자동 생성</h3>
+                        <h3>임상 노트 자동 생성</h3>
                     </div>
 
                     {/* 형식 선택 */}
@@ -253,7 +253,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="primary"
                             >
-                                🤖 SOAP 노트 자동 생성
+                                SOAP 노트 자동 생성
                             </MGButton>
                         )}
 
@@ -271,7 +271,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                 variant="primary"
                             >
-                                🤖 DAP 노트 자동 생성
+                                DAP 노트 자동 생성
                             </MGButton>
                         )}
                     </div>
@@ -279,7 +279,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
                     {/* 에러 메시지 */}
                     {error && (
                         <div className="error-message">
-                            ⚠️ {error}
+                            {error}
                         </div>
                     )}
 
@@ -327,7 +327,7 @@ const SmartNoteTab = ({ consultationRecordId, consultationId }) => {
             {/* 안내 메시지 */}
             {!audioFileId && (
                 <div className="guide-message">
-                    <h4>💡 사용 방법</h4>
+                    <h4>사용 방법</h4>
                     <ol>
                         <li>상담 중 음성을 녹음합니다</li>
                         <li>녹음이 완료되면 자동으로 텍스트로 변환됩니다</li>

@@ -48,15 +48,16 @@
 }
 
 .mg-v2-badge-select__item--selected {
-  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
-  border-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
-  color: var(--mg-color-background-main, var(--mg-color-background-main));
+  background-color: var(--mg-color-primary-solid, var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg)));
+  border-color: var(--mg-color-primary-solid, var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg)));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
   font-weight: 600;
 }
 
 .mg-v2-badge-select__item--selected:hover:not(.mg-v2-badge-select__item--disabled) {
-  background-color: var(--mg-color-brand-olive-muted);
-  border-color: var(--mg-color-brand-olive-muted);
+  background-color: var(--mg-color-primary-dark, var(--mg-v2-color-primary-dark));
+  border-color: var(--mg-color-primary-dark, var(--mg-v2-color-primary-dark));
+  color: var(--mg-color-text-on-primary, var(--mg-white));
 }
 
 .mg-v2-badge-select__item:focus {
@@ -119,15 +120,15 @@
 }
 
 .mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-badge-select__item--selected {
-  background-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
-  border-color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
+  background-color: var(--mg-color-primary-solid, var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg)));
+  border-color: var(--mg-color-primary-solid, var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg)));
   color: var(--mg-color-text-on-primary, var(--mg-white));
   font-weight: 600;
 }
 
 .mg-v2-badge-select .mg-v2-badge-select__item.mg-button.mg-button--outline.mg-v2-button-outline.mg-v2-badge-select__item--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-brand-olive-muted);
-  border-color: var(--mg-color-brand-olive-muted);
+  background-color: var(--mg-color-primary-dark, var(--mg-v2-color-primary-dark));
+  border-color: var(--mg-color-primary-dark, var(--mg-v2-color-primary-dark));
   color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
 }

@@ -190,7 +190,7 @@ const PermissionGroupManagementUI = ({
         <div className="mg-permission-group-management">
             {error && (
                 <div className="mg-error-message">
-                    <span className="mg-error-icon">⚠️</span>
+                    <span className="mg-error-icon" aria-hidden="true"></span>
                     {error}
                 </div>
             )}

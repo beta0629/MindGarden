@@ -94,7 +94,7 @@ export const MGFormGroup = ({
       )}
       {error && (
         <div className="flex items-center gap-1 text-xs text-red-500">
-          <span>⚠️</span>
+          <span aria-hidden="true"></span>
           {error}
         </div>
       )}

@@ -85,13 +85,13 @@ const ScheduleList = ({
     } catch (error) {
       console.error('필터 옵션 로드 실패:', error);
       setFilterOptions([
-        { value: 'ALL', label: '전체', icon: '📋', color: 'var(--mg-color-text-secondary)', description: '모든 일정' },
-        { value: 'TODAY', label: '오늘', icon: '📅', color: 'var(--mg-primary-500)', description: '오늘 일정' },
-        { value: 'THIS_WEEK', label: '이번 주', icon: '📅', color: 'var(--mg-success-500)', description: '이번 주 일정' },
-        { value: 'THIS_MONTH', label: '이번 달', icon: '📅', color: 'var(--mg-warning-500)', description: '이번 달 일정' },
-        { value: 'UPCOMING', label: '예정된 일정', icon: '⏰', color: 'var(--mg-purple-500)', description: '예정된 일정' },
+        { value: 'ALL', label: '전체', color: 'var(--mg-color-text-secondary)', description: '모든 일정' },
+        { value: 'TODAY', label: '오늘', color: 'var(--mg-primary-500)', description: '오늘 일정' },
+        { value: 'THIS_WEEK', label: '이번 주', color: 'var(--mg-success-500)', description: '이번 주 일정' },
+        { value: 'THIS_MONTH', label: '이번 달', color: 'var(--mg-warning-500)', description: '이번 달 일정' },
+        { value: 'UPCOMING', label: '예정된 일정', color: 'var(--mg-purple-500)', description: '예정된 일정' },
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        { value: 'COMPLETED', label: '완료된 일정', icon: '✅', color: 'var(--mg-color-success)', description: '완료된 일정' }
+        { value: 'COMPLETED', label: '완료된 일정', color: 'var(--mg-color-success)', description: '완료된 일정' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -114,12 +114,12 @@ const ScheduleList = ({
     } catch (error) {
       console.error('정렬 옵션 로드 실패:', error);
       setSortOptions([
-        { value: 'DATE_ASC', label: '날짜 오름차순', icon: '📅', color: 'var(--mg-primary-500)', description: '날짜 오름차순 정렬' },
-        { value: 'DATE_DESC', label: '날짜 내림차순', icon: '📅', color: 'var(--mg-error-500)', description: '날짜 내림차순 정렬' },
-        { value: 'TITLE_ASC', label: '제목 오름차순', icon: '🔤', color: 'var(--mg-success-500)', description: '제목 오름차순 정렬' },
-        { value: 'TITLE_DESC', label: '제목 내림차순', icon: '🔤', color: 'var(--mg-warning-500)', description: '제목 내림차순 정렬' },
-        { value: 'STATUS_ASC', label: '상태 오름차순', icon: '🔄', color: 'var(--mg-purple-500)', description: '상태 오름차순 정렬' },
-        { value: 'STATUS_DESC', label: '상태 내림차순', icon: '🔄', color: '#06b6d4', description: '상태 내림차순 정렬' }
+        { value: 'DATE_ASC', label: '날짜 오름차순', color: 'var(--mg-primary-500)', description: '날짜 오름차순 정렬' },
+        { value: 'DATE_DESC', label: '날짜 내림차순', color: 'var(--mg-error-500)', description: '날짜 내림차순 정렬' },
+        { value: 'TITLE_ASC', label: '제목 오름차순', color: 'var(--mg-success-500)', description: '제목 오름차순 정렬' },
+        { value: 'TITLE_DESC', label: '제목 내림차순', color: 'var(--mg-warning-500)', description: '제목 내림차순 정렬' },
+        { value: 'STATUS_ASC', label: '상태 오름차순', color: 'var(--mg-purple-500)', description: '상태 오름차순 정렬' },
+        { value: 'STATUS_DESC', label: '상태 내림차순', color: 'var(--mg-info-500)', description: '상태 내림차순 정렬' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -384,14 +384,14 @@ const ScheduleList = ({
             <CustomSelect
               value={selectedConsultantId}
               onChange={(value) => setSelectedConsultantId(value)}
-              placeholder="👥 전체 상담사"
+              placeholder="전체 상담사"
               className="schedule-consultant-select"
               loading={loadingConsultants}
               options={[
-                { value: '', label: '👥 전체 상담사' },
+                { value: '', label: '전체 상담사' },
                 ...consultants.map(consultant => ({
                   value: consultant.id,
-                  label: `👤 ${toDisplayString(consultant.name, '')}`
+                  label: `${toDisplayString(consultant.name, '')}`
                 }))
               ]}
             />

@@ -73,7 +73,7 @@ const MappingDepositModal = ({
             );
 
             if (response?.success !== false) {
-                notificationManager.success('✅ 입금이 성공적으로 확인되었습니다.');
+                notificationManager.success('입금이 성공적으로 확인되었습니다.');
                 onDepositConfirmed?.(mapping.id);
                 handleClose();
             } else {

@@ -235,6 +235,9 @@
   box-shadow: none;
   /* selected 시에도 padding 16px 유지 (1px border만, calc 축소 없음) */
   padding: var(--mg-spacing-md, 16px);
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .mg-v2-mapping-creation-modal__card:focus-visible {

@@ -1,12 +1,15 @@
 /**
  * DesktopLnb - LNB 260px 다크 사이드바
  * RESPONSIVE_LAYOUT_SPEC: var(--mg-dark-bg-800), 메뉴 항목 44px
+ * Hover/Active on-fill: --mg-v2-color-text-on-sidebar-active (#F8FAFC) 우선
+ * 스코프 특이도로 전역 a / a:hover · text-primary 덮어쓰기 차단
  *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
 .mg-v2-desktop-lnb {
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
   width: 260px;
   min-width: 260px;
   height: 100%;
@@ -63,35 +66,38 @@
 
 .mg-v2-desktop-lnb__group-head:hover {
   background: var(--mg-color-surface-hover, var(--mg-v2-color-surface-hover));
-  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+  color: var(--mg-v2-lnb-on-fill);
 }
 
-.mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link,
-.mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link__text,
-.mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link__icon,
-.mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link__icon .mg-v2-icon,
-.mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link__icon svg,
-.mg-v2-desktop-lnb__group-head:hover .mg-v2-desktop-lnb__group-chevron,
-.mg-v2-desktop-lnb__group-head:hover .mg-v2-desktop-lnb__group-chevron .mg-v2-icon,
-.mg-v2-desktop-lnb__group-head:hover .mg-v2-desktop-lnb__group-chevron svg {
-  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover a.mg-v2-nav-link,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link__text,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link__icon,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover .mg-v2-nav-link__icon svg,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover .mg-v2-desktop-lnb__group-chevron,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover .mg-v2-desktop-lnb__group-chevron .mg-v2-icon,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group-head:hover .mg-v2-desktop-lnb__group-chevron svg {
+  color: var(--mg-v2-lnb-on-fill);
   stroke: currentColor;
+  text-decoration: none;
 }
 
 .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head {
   background: var(--mg-layout-sidebar-active-bg, var(--mg-v2-color-state-active));
-  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+  color: var(--mg-v2-lnb-on-fill);
 }
 
-.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link,
-.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link__text,
-.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link__icon,
-.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link__icon .mg-v2-icon,
-.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link__icon svg,
-.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-desktop-lnb__group-chevron,
-.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-desktop-lnb__group-chevron .mg-v2-icon,
-.mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-desktop-lnb__group-chevron svg {
-  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head a.mg-v2-nav-link,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link__text,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link__icon,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-nav-link__icon svg,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-desktop-lnb__group-chevron,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-desktop-lnb__group-chevron .mg-v2-icon,
+.mg-v2-desktop-lnb .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-head .mg-v2-desktop-lnb__group-chevron svg {
+  color: var(--mg-v2-lnb-on-fill);
   stroke: currentColor;
 }
 
@@ -142,7 +148,7 @@
 
 .mg-v2-desktop-lnb__group-chevron:hover,
 .mg-v2-desktop-lnb__group-chevron:focus-visible {
-  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+  color: var(--mg-v2-lnb-on-fill);
   background: none;
   outline: none;
 }
@@ -152,7 +158,36 @@
 }
 
 .mg-v2-desktop-lnb__group--active .mg-v2-desktop-lnb__group-chevron {
-  color: var(--mg-color-text-on-primary, var(--mg-v2-color-text-on-sidebar-active));
+  color: var(--mg-v2-lnb-on-fill);
+}
+
+/* 사이드바 스코프 — leaf NavLink hover/active on-fill (전역 a:hover 압도) */
+.mg-v2-desktop-lnb a.mg-v2-nav-link:hover,
+.mg-v2-desktop-lnb a.mg-v2-nav-link.mg-v2-nav-link--active,
+.mg-v2-desktop-lnb .mg-v2-nav-link:hover,
+.mg-v2-desktop-lnb .mg-v2-nav-link--active {
+  color: var(--mg-v2-lnb-on-fill);
+  text-decoration: none;
+}
+
+.mg-v2-desktop-lnb a.mg-v2-nav-link:hover .mg-v2-nav-link__text,
+.mg-v2-desktop-lnb a.mg-v2-nav-link:hover .mg-v2-nav-link__icon,
+.mg-v2-desktop-lnb a.mg-v2-nav-link:hover .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-desktop-lnb a.mg-v2-nav-link:hover .mg-v2-nav-link__icon svg,
+.mg-v2-desktop-lnb a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__text,
+.mg-v2-desktop-lnb a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon,
+.mg-v2-desktop-lnb a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-desktop-lnb a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon svg,
+.mg-v2-desktop-lnb .mg-v2-nav-link:hover .mg-v2-nav-link__text,
+.mg-v2-desktop-lnb .mg-v2-nav-link:hover .mg-v2-nav-link__icon,
+.mg-v2-desktop-lnb .mg-v2-nav-link:hover .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-desktop-lnb .mg-v2-nav-link:hover .mg-v2-nav-link__icon svg,
+.mg-v2-desktop-lnb .mg-v2-nav-link--active .mg-v2-nav-link__text,
+.mg-v2-desktop-lnb .mg-v2-nav-link--active .mg-v2-nav-link__icon,
+.mg-v2-desktop-lnb .mg-v2-nav-link--active .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-desktop-lnb .mg-v2-nav-link--active .mg-v2-nav-link__icon svg {
+  color: var(--mg-v2-lnb-on-fill);
+  stroke: currentColor;
 }
 
 /* 그룹 헤드 내부 NavLink — 행 전체가 활성/호버 표면이므로 자체 배경·액센트 제거 */

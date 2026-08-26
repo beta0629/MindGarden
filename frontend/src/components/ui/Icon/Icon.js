@@ -29,7 +29,8 @@ const Icon = ({ name,
   // 크기 설정
   const iconSize = ICON_SIZES[size] || ICON_SIZES.MD;
   
-  // 색상 설정
+  // 색상 설정 — INHERIT 는 CSS currentColor 위임 (inline color 금지)
+  const isInheritColor = color === 'INHERIT';
   const iconColor = userRole && ICON_COLORS_BY_ROLE[userRole]
     ? ICON_COLORS_BY_ROLE[userRole][color] || ICON_COLORS_BY_ROLE[userRole].PRIMARY
     : ICON_COLORS[color] || ICON_COLORS.PRIMARY;
@@ -44,15 +45,16 @@ const Icon = ({ name,
     onClick ? 'mg-v2-icon--clickable' : '',
     className].filter(Boolean).join(' ');
 
-  // 스타일 객체
+  // 스타일 객체 — INHERIT 시 color/background 미설정 → 부모·CSS stroke/fill currentColor
   const iconStyle = {
     width: `${iconSize}px`,
     height: `${iconSize}px`,
-    color: iconColor.color,
-    backgroundColor: iconColor.background,
     cursor: onClick && !disabled ? 'pointer' : 'default',
     opacity: disabled ? 0.5 : 1,
-    transition: 'all 0.2s ease-in-out'
+    transition: 'all 0.2s ease-in-out',
+    ...(isInheritColor
+      ? { backgroundColor: 'transparent' }
+      : { color: iconColor.color, backgroundColor: iconColor.background })
   };
 
   // 클릭 핸들러
@@ -75,9 +77,9 @@ const Icon = ({ name,
     >
       {loading ? (<div className="mg-v2-v2-v2-icon-spinner">
           <div className="mg-v2-v2-v2-icon-spinner-inner" />
-        </div>) : (<IconComponent 
-          size={iconSize} 
-          color={iconColor.color}
+        </div>) : (<IconComponent
+          size={iconSize}
+          {...(isInheritColor ? {} : { color: iconColor.color })}
         />)}
     </span>);};
 

@@ -161,19 +161,21 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
       expect(activeLink.className).not.toMatch(/text-primary/);
     });
 
-    it('LNB Icon 은 INHERIT(currentColor) 이며 SECONDARY/TRANSPARENT 강제 색이 없다', () => {
+    it('LNB Icon 은 INHERIT 이며 inline color 를 넣지 않는다 (CSS currentColor)', () => {
       const { container } = renderLnb('/admin/dashboard');
       const icons = container.querySelectorAll('.mg-v2-nav-link__icon .mg-v2-icon');
       expect(icons.length).toBeGreaterThan(0);
       icons.forEach((iconEl) => {
         expect(iconEl.className).toContain('mg-v2-icon--inherit');
         expect(iconEl.className).not.toMatch(/mg-v2-icon--secondary|mg-v2-icon--transparent/);
-        expect(iconEl.getAttribute('style') || '').toMatch(/currentColor/);
+        const style = iconEl.getAttribute('style') || '';
+        expect(style).not.toMatch(/(?:^|;)\s*color\s*:/i);
+        expect(style).not.toMatch(/#0[Ff]172[Aa]|rgb\(\s*15\s*,\s*23\s*,\s*42\s*\)/);
       });
       const chevronIcon = container.querySelector('.mg-v2-desktop-lnb__group-chevron .mg-v2-icon');
       expect(chevronIcon).not.toBeNull();
       expect(chevronIcon.className).toContain('mg-v2-icon--inherit');
-      expect(chevronIcon.getAttribute('style') || '').toMatch(/currentColor/);
+      expect(chevronIcon.getAttribute('style') || '').not.toMatch(/(?:^|;)\s*color\s*:/i);
     });
   });
 
@@ -213,6 +215,33 @@ describe('DesktopLnb (LNB IA 재배치)', () => {
         expect(color).not.toBe('rgb(15,23,42)');
         expect(color).not.toBe('#0f172a');
       }
+    });
+
+    it('DesktopLnb/NavLink CSS 는 sidebar-active 하드 토큰을 쓰고 text-primary 를 hover/active 에 쓰지 않는다', () => {
+      const fs = require('fs');
+      const path = require('path');
+      const desktopCss = fs.readFileSync(
+        path.join(__dirname, '../DesktopLnb.css'),
+        'utf8'
+      );
+      const navLinkCss = fs.readFileSync(
+        path.join(__dirname, '../../atoms/NavLink.css'),
+        'utf8'
+      );
+      expect(desktopCss).toContain('--mg-v2-color-text-on-sidebar-active');
+      expect(desktopCss).toContain('--mg-v2-lnb-on-fill');
+      expect(desktopCss).toContain('.mg-v2-desktop-lnb a.mg-v2-nav-link:hover');
+      expect(desktopCss).toMatch(/color:\s*var\(--mg-v2-lnb-on-fill\)/);
+      expect(navLinkCss).toContain('--mg-v2-color-text-on-sidebar-active');
+      expect(navLinkCss).toContain('a.mg-v2-nav-link:hover');
+      // hover/active 블록에 slate text-primary 금지
+      const hoverBlocks = `${desktopCss}\n${navLinkCss}`;
+      expect(hoverBlocks).not.toMatch(
+        /:hover[^{]*\{[^}]*--mg-v2-color-text-primary/
+      );
+      expect(hoverBlocks).not.toMatch(
+        /--active[^{]*\{[^}]*--mg-v2-color-text-primary/
+      );
     });
   });
 

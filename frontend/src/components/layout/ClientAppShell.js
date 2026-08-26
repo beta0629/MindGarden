@@ -10,13 +10,14 @@
  */
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import {
   Home, Calendar, Bookmark, Heart, MoreHorizontal
 } from 'lucide-react';
 import AppTopBar from './AppTopBar';
 import BottomNavigation from './BottomNavigation';
 import { useNotification } from '../../contexts/NotificationContext';
+import './ConsultantAppShell.css';
 import './ClientAppShell.css';
 
 const CLIENT_NAV_ITEMS = [
@@ -29,8 +30,16 @@ const CLIENT_NAV_ITEMS = [
 
 const SIDEBAR_ICON_MAP = { Home, Calendar, Bookmark, Heart, MoreHorizontal };
 
+const isClientNavActive = (pathname, path) => {
+  if (path === '/client') {
+    return pathname === '/client' || pathname === '/client/';
+  }
+  return pathname === path || pathname.startsWith(`${path}/`);
+};
+
 const ClientAppShell = ({ title = '', showBack = false, onBack, children }) => {
   const { unreadCount } = useNotification();
+  const location = useLocation();
 
   return (
     <div className="mg-app-shell mg-app-shell--client">
@@ -42,11 +51,12 @@ const ClientAppShell = ({ title = '', showBack = false, onBack, children }) => {
         <nav className="mg-app-shell__sidebar-nav">
           {CLIENT_NAV_ITEMS.map((item) => {
             const Icon = SIDEBAR_ICON_MAP[item.icon] || Home;
+            const isActive = isClientNavActive(location.pathname, item.path);
             return (
               <a
                 key={item.path}
                 href={item.path}
-                className="mg-app-shell__sidebar-item"
+                className={`mg-app-shell__sidebar-item ${isActive ? 'mg-app-shell__sidebar-item--active' : ''}`}
               >
                 <Icon size={22} />
                 <span>{item.label}</span>

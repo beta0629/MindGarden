@@ -140,7 +140,10 @@
   box-shadow: var(--ad-b0kla-shadow);
   padding: var(--mg-spacing-md, 16px);
   box-sizing: border-box;
+  /* 전역 button overflow/ellipsis·모바일 padding 탈출 */
   overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .mg-v2-ad-b0kla .mg-consultant-card--schedule-select:hover {

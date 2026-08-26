@@ -690,8 +690,10 @@ describe('MappingCreationModal — person picker cards', () => {
     fireEvent.click(card);
     expect(card).toHaveAttribute('aria-pressed', 'true');
     expect(card.classList.contains('mg-v2-mapping-creation-modal__card--selected')).toBe(true);
-    // selected 시에도 동일 카드 클래스 — padding calc 축소 클래스 없음
+    // selected 시에도 padding calc 축소 클래스 없음 · 전역 button overflow 탈출 클래스 유지
     expect(card.className).not.toMatch(/flush|compact|tight/);
+    expect(card.className).toContain('mg-v2-mapping-creation-modal__card');
+    expect(avatar.classList.contains('mg-v2-mapping-creation-modal__avatar')).toBe(true);
   });
 
   it('내담자 카드도 native selectable 구조를 유지한다', async() => {

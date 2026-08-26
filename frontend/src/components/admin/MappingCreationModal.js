@@ -619,33 +619,28 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             </div>
             <div className="mg-v2-mapping-creation-modal__grid">
               {filteredConsultants.length > 0 ? (
-                filteredConsultants.map(c => (
-                  <MGButton
-                    key={c.id}
-                    type="button"
-                    variant="outline"
-                    aria-pressed={selectedConsultant?.id === c.id}
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'md',
-                      loading: false,
-                      className: `mg-v2-mapping-creation-modal__card ${selectedConsultant?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`
-                    })}
-                    onClick={() => setSelectedConsultant(c)}
-                    preventDoubleClick={false}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  >
-                    <Avatar
-                      profileImageUrl={c.profileImageUrl}
-                      displayName={toDisplayString(c.name)}
-                      className="mg-v2-mapping-creation-modal__avatar"
-                    />
-                    <div className="mg-v2-mapping-creation-modal__card-info">
-                      <strong><SafeText tag="span">{c.name}</SafeText></strong>
-                      <span title={toDisplayString(c.email) || undefined}>{toDisplayString(c.email)}</span>
-                    </div>
-                  </MGButton>
-                ))
+                filteredConsultants.map(c => {
+                  const isSelected = selectedConsultant?.id === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      className={`mg-v2-mapping-creation-modal__card${isSelected ? ' mg-v2-mapping-creation-modal__card--selected' : ''}`}
+                      onClick={() => setSelectedConsultant(c)}
+                    >
+                      <Avatar
+                        profileImageUrl={c.profileImageUrl}
+                        displayName={toDisplayString(c.name)}
+                        className="mg-v2-mapping-creation-modal__avatar"
+                      />
+                      <div className="mg-v2-mapping-creation-modal__card-info">
+                        <strong><SafeText tag="span">{c.name}</SafeText></strong>
+                        <span title={toDisplayString(c.email) || undefined}>{toDisplayString(c.email)}</span>
+                      </div>
+                    </button>
+                  );
+                })
               ) : (
                 <div className="mg-v2-mapping-creation-modal__empty">
                   <Search size={32} />
@@ -793,33 +788,28 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             </div>
             <div className="mg-v2-mapping-creation-modal__grid">
               {filteredClients.length > 0 ? (
-                filteredClients.map(c => (
-                  <MGButton
-                    key={c.id}
-                    type="button"
-                    variant="outline"
-                    aria-pressed={selectedClient?.id === c.id}
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'md',
-                      loading: false,
-                      className: `mg-v2-mapping-creation-modal__card ${selectedClient?.id === c.id ? 'mg-v2-mapping-creation-modal__card--selected' : ''}`
-                    })}
-                    onClick={() => setSelectedClient(c)}
-                    preventDoubleClick={false}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  >
-                    <Avatar
-                      profileImageUrl={c.profileImageUrl}
-                      displayName={toDisplayString(c.name)}
-                      className="mg-v2-mapping-creation-modal__avatar"
-                    />
-                    <div className="mg-v2-mapping-creation-modal__card-info">
-                      <strong><SafeText tag="span">{c.name}</SafeText></strong>
-                      <span title={toDisplayString(c.email) || undefined}>{toDisplayString(c.email)}</span>
-                    </div>
-                  </MGButton>
-                ))
+                filteredClients.map(c => {
+                  const isSelected = selectedClient?.id === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      className={`mg-v2-mapping-creation-modal__card${isSelected ? ' mg-v2-mapping-creation-modal__card--selected' : ''}`}
+                      onClick={() => setSelectedClient(c)}
+                    >
+                      <Avatar
+                        profileImageUrl={c.profileImageUrl}
+                        displayName={toDisplayString(c.name)}
+                        className="mg-v2-mapping-creation-modal__avatar"
+                      />
+                      <div className="mg-v2-mapping-creation-modal__card-info">
+                        <strong><SafeText tag="span">{c.name}</SafeText></strong>
+                        <span title={toDisplayString(c.email) || undefined}>{toDisplayString(c.email)}</span>
+                      </div>
+                    </button>
+                  );
+                })
               ) : (
                 <div className="mg-v2-mapping-creation-modal__empty">
                   <Search size={32} />

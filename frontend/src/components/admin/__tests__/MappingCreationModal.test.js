@@ -129,7 +129,7 @@ jest.mock('../../common/BadgeSelect', () => ({
 
 jest.mock('../../common/Avatar', () => ({
   __esModule: true,
-  default: () => <div data-testid="avatar-mock" />
+  default: ({ className }) => <div data-testid="avatar-mock" className={className} />
 }));
 
 jest.mock('../../common/SafeText', () => ({
@@ -655,5 +655,51 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(screen.getByTestId('active-mapping-merge-hint')).toHaveTextContent(
       '추가 패키지 결제 시 기존 활성 매칭 회기에 합산됩니다.'
     );
+  });
+});
+
+describe('MappingCreationModal — person picker cards', () => {
+  beforeEach(() => {
+    getAllConsultantsWithStats.mockReset();
+    getAllConsultantsWithStats.mockResolvedValue(consultantFixture);
+    apiGet.mockReset();
+    apiGet.mockResolvedValue({ clients: clientFixture });
+    getTenantCodes.mockReset();
+    getTenantCodes.mockResolvedValue(packageCodeFixture);
+  });
+
+  it('상담사 카드가 native selectable button + 스펙 클래스를 가진다', async() => {
+    const { container } = renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+
+    const grid = container.querySelector('.mg-v2-mapping-creation-modal__grid');
+    expect(grid).toBeTruthy();
+
+    const card = screen.getByText('상담사A').closest('button.mg-v2-mapping-creation-modal__card');
+    expect(card).toBeTruthy();
+    expect(card.tagName).toBe('BUTTON');
+    expect(card.className).not.toMatch(/mg-button/);
+    expect(card).toHaveAttribute('aria-pressed', 'false');
+    expect(card.querySelector('.mg-v2-mapping-creation-modal__avatar')).toBeTruthy();
+    expect(card.querySelector('.mg-v2-mapping-creation-modal__card-info')).toBeTruthy();
+
+    fireEvent.click(card);
+    expect(card).toHaveAttribute('aria-pressed', 'true');
+    expect(card.classList.contains('mg-v2-mapping-creation-modal__card--selected')).toBe(true);
+  });
+
+  it('내담자 카드도 native selectable 구조를 유지한다', async() => {
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async() => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+
+    const card = screen.getByText('내담자A').closest('button.mg-v2-mapping-creation-modal__card');
+    expect(card).toBeTruthy();
+    expect(card.className).not.toMatch(/mg-button/);
+    expect(card.querySelector('.mg-v2-mapping-creation-modal__card-info')).toHaveTextContent('c@example.com');
   });
 });

@@ -60,7 +60,11 @@ const CheckoutSameDayModal = ({ isOpen, onClose, mapping = null, onCheckoutCompl
       setPaymentAmount(mapping.packagePrice != null
         ? String(mapping.packagePrice)
         : (mapping.paymentAmount != null ? String(mapping.paymentAmount) : ''));
-      setSameDaySessionScheduleId('');
+      setSameDaySessionScheduleId(
+        mapping.sameDaySessionScheduleId != null && mapping.sameDaySessionScheduleId !== ''
+          ? String(mapping.sameDaySessionScheduleId)
+          : ''
+      );
       // 모달이 열릴 때마다 신규 X-Request-Id 1건 생성 — 사용자 의도적 재시도(닫고 재오픈)는 신규 키.
       // 한 번 열린 모달 내 동일 결제 요청 재시도는 동일 키 → 백엔드 멱등성 가드 발동.
       setRequestId(generateRequestId());
@@ -325,7 +329,8 @@ CheckoutSameDayModal.propTypes = {
     packageName: PropTypes.string,
     packagePrice: PropTypes.number,
     paymentAmount: PropTypes.number,
-    totalSessions: PropTypes.number
+    totalSessions: PropTypes.number,
+    sameDaySessionScheduleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   }),
   onCheckoutCompleted: PropTypes.func
 };

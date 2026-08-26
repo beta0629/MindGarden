@@ -145,7 +145,12 @@ const UnifiedScheduleComponent = ({
    * null/undefined : ScheduleLegend 의 미작성 섹션 자체 미노출 (다른 라우트 회귀 0).
    * 빈 배열 : «모두 작성됨» placeholder 노출.
    */
-  missingConsultationLogs = null
+  missingConsultationLogs = null,
+  /**
+   * 가예약 과거 슬롯 상세 — 「당일 결제 + 활성화」 콜백.
+   * 통합 스케줄(IntegratedMatchingSchedule)만 전달. ScheduleDetailModal 로 그대로 전달.
+   */
+  onCheckoutSameDayFromDetail = null
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -1270,6 +1275,7 @@ const UnifiedScheduleComponent = ({
                     scheduleData={selectedSchedule}
                     onScheduleUpdated={handleScheduleUpdated}
                     onConsultationLogOpen={handleConsultationLogModalOpen}
+                    onCheckoutSameDay={onCheckoutSameDayFromDetail}
                 />
             )}
 
@@ -1381,7 +1387,8 @@ UnifiedScheduleComponent.propTypes = {
     consultantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     consultantName: PropTypes.string,
     missingDates: PropTypes.arrayOf(PropTypes.string)
-  }))
+  })),
+  onCheckoutSameDayFromDetail: PropTypes.func
 };
 
 export default UnifiedScheduleComponent;

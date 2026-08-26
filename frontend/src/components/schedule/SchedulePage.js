@@ -8,7 +8,7 @@
  * @updated 2025-02-22 - AdminDashboardV2 레이아웃 및 아토믹 디자인 적용
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
@@ -18,6 +18,8 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
+import CheckoutSameDayModal from '../admin/mapping/CheckoutSameDayModal';
+import useScheduleDetailSameDayCheckout from './hooks/useScheduleDetailSameDayCheckout';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
 import './SchedulePage.css';
@@ -31,9 +33,31 @@ const SchedulePage = ({ user: propUser }) => {
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   // 사용자 정보 결정 (prop > session > null)
   const displayUser = propUser || sessionUser;
+
+  /**
+   * 관리자/스태프형 등록 행위자만 당일결제 콜백 활성.
+   * 그 외(상담사)는 null → ScheduleDetailModal 확정 fallback.
+   */
+  const sameDayCheckoutEnabled = canRegisterSchedulerByRoleString(
+    displayUser?.role || userRole
+  );
+  const handleCheckoutReload = useCallback(() => {
+    setRefetchTrigger((t) => t + 1);
+  }, []);
+  const {
+    onCheckoutSameDayFromDetail,
+    checkoutSameDayMapping,
+    closeCheckoutSameDay,
+    handleCheckoutSameDayCompleted
+  } = useScheduleDetailSameDayCheckout({
+    enabled: sameDayCheckoutEnabled,
+    user: displayUser,
+    onCheckoutCompleted: handleCheckoutReload
+  });
 
   useEffect(() => {
     if (sessionLoading) {
@@ -167,6 +191,8 @@ const SchedulePage = ({ user: propUser }) => {
                     userId={isScheduleRegisterActor() ? 0 : userId}
                     integratedMonthEventLayout
                     calendarSkin="integrated"
+                    refetchTrigger={refetchTrigger}
+                    onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}
                   />
                 </div>
               </ContentSection>
@@ -183,6 +209,14 @@ const SchedulePage = ({ user: propUser }) => {
           </div>
         </ContentArea>
       </div>
+      {checkoutSameDayMapping && (
+        <CheckoutSameDayModal
+          isOpen={!!checkoutSameDayMapping}
+          onClose={closeCheckoutSameDay}
+          mapping={checkoutSameDayMapping}
+          onCheckoutCompleted={handleCheckoutSameDayCompleted}
+        />
+      )}
     </div>
   );
 

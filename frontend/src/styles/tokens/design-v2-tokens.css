@@ -2,8 +2,9 @@
  * Core Solution 디자인 v2 토큰 SSOT (Clinic OS)
  *
  * 승자 SSOT — 모든 --mg-v2-* 의 단일 진실 공급원.
- * Light = warm stone commercial default / Dark = deep slate AA.
- * Primary = Teal (Calm Forest olive 제거). Mint = rare wash only.
+ * Light = warm stone (#FAF9F7) commercial default / Dark = deep slate AA.
+ * Primary = muted dusty clinic teal #0E5F5A (neon #2DD4BF/#14B8A6 제거).
+ * Mint wash = greyer #DCE8E5 계열 (rare wash only). Danger = muted brick #A84848.
  *
  * Cascade: design-v2-tokens → refine → unified bridge → dashboard → themes
  * Spec: docs/design-system/CORE_SOLUTION_PRODUCT_VISUAL_TOKEN_SSOT_SPEC.md
@@ -18,26 +19,27 @@
 :root {
 
   /* ----------------------------------------------------------
-     1-1. COLOR — Brand (Teal Primary / Slate Secondary / Mint Wash)
-     AA after (2026-03): Solid CTA / link text use Teal-700 #0F766E
-     (white on #0F766E = 5.47:1; #0F766E on #FAF9F7/#FFFFFF = 5.20/5.47).
-     Teal-600 #0D9488 retained for focus/icon UI fill (≥3:1 non-text).
+     1-1. COLOR — Brand (Muted Clinic Teal / Slate / Mint Wash)
+     AA (2026-08 muted): Solid CTA / link use dusty teal #0E5F5A
+     (white on #0E5F5A = 7.49:1; #0E5F5A on #FAF9F7 = 7.12:1).
+     Teal-600 #0D9488 retained for focus ring only (rare, ≥3:1 non-text).
+     Punchy #14B8A6 / billboard #0D9488 are NOT primary-main.
      ---------------------------------------------------------- */
-  --mg-v2-color-primary-main: #0F766E;
-  --mg-v2-color-primary-light: #14B8A6;
-  --mg-v2-color-primary-dark: #115E59;
-  --mg-v2-color-primary-hover: #115E59;
-  --mg-v2-color-primary-active: #115E59;
-  --mg-v2-color-primary-subtle: #CCFBF1;
+  --mg-v2-color-primary-main: #0E5F5A;
+  --mg-v2-color-primary-light: #145A55;
+  --mg-v2-color-primary-dark: #0A4F4B;
+  --mg-v2-color-primary-hover: #0A4F4B;
+  --mg-v2-color-primary-active: #0A4F4B;
+  --mg-v2-color-primary-subtle: #DCE8E5;
 
   --mg-v2-color-secondary-main: #475569;
   --mg-v2-color-secondary-light: #64748B;
   --mg-v2-color-secondary-dark: #334155;
 
-  --mg-v2-color-accent-main: #14B8A6;
-  --mg-v2-color-accent-light: #5EEAD4;
-  --mg-v2-color-accent-dark: #0D9488;
-  --mg-v2-color-accent-subtle: #F0FDFA;
+  --mg-v2-color-accent-main: #145A55;
+  --mg-v2-color-accent-light: #4AA99E;
+  --mg-v2-color-accent-dark: #0A4F4B;
+  --mg-v2-color-accent-subtle: #E4EEEC;
 
   /* ----------------------------------------------------------
      1-2. COLOR — Neutral Scale (Stone warm + Slate bridge)
@@ -64,9 +66,9 @@
   --mg-v2-color-semantic-warning-light: #FFFBEB;
   --mg-v2-color-semantic-warning-dark: #B45309;
 
-  --mg-v2-color-semantic-error: #DC2626;
-  --mg-v2-color-semantic-error-light: #FEF2F2;
-  --mg-v2-color-semantic-error-dark: #B91C1C;
+  --mg-v2-color-semantic-error: #A84848;
+  --mg-v2-color-semantic-error-light: #F3E8E8;
+  --mg-v2-color-semantic-error-dark: #8F3D3D;
 
   --mg-v2-color-semantic-info: #0284C7;
   --mg-v2-color-semantic-info-light: #F0F9FF;
@@ -94,8 +96,8 @@
   --mg-v2-color-text-disabled: #94A3B8;
   --mg-v2-color-text-placeholder: #64748B;
   --mg-v2-color-text-inverse: #FFFFFF;
-  --mg-v2-color-text-link: #0F766E;
-  --mg-v2-color-text-link-hover: #115E59;
+  --mg-v2-color-text-link: #0E5F5A;
+  --mg-v2-color-text-link-hover: #0A4F4B;
 
   /* ----------------------------------------------------------
      1-6. COLOR — Border
@@ -113,28 +115,35 @@
      ---------------------------------------------------------- */
   --mg-v2-color-state-hover: rgba(15, 23, 42, 0.04);
   --mg-v2-color-state-active: rgba(15, 23, 42, 0.08);
-  --mg-v2-color-state-selected: rgba(13, 148, 136, 0.12);
+  --mg-v2-color-state-selected: rgba(14, 95, 90, 0.12);
   --mg-v2-color-state-focus-ring: rgba(13, 148, 136, 0.25);
   --mg-v2-color-state-disabled-bg: #EBE6DF;
   --mg-v2-color-state-disabled-text: #94A3B8;
 
   /* ----------------------------------------------------------
-     2. FONT — Typography (8-step scale)
+     2. FONT — Typography (4-step clinic-OS SSOT)
+     page title  → --mg-v2-font-size-h1
+     section title → --mg-v2-font-size-h2
+     body / button label → --mg-v2-font-size-body-md
+     meta / helper → --mg-v2-font-size-caption
+     Legacy names (display/h3/h4/h5/body-lg/body-sm/micro) alias to these 4.
      ---------------------------------------------------------- */
   --mg-v2-font-family-base: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
   --mg-v2-font-family-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Menlo, monospace;
 
-  --mg-v2-font-size-display: 2rem;
   --mg-v2-font-size-h1: 1.75rem;
   --mg-v2-font-size-h2: 1.375rem;
-  --mg-v2-font-size-h3: 1.125rem;
-  --mg-v2-font-size-h4: 1rem;
-  --mg-v2-font-size-h5: 0.875rem;
-  --mg-v2-font-size-body-lg: 1rem;
   --mg-v2-font-size-body-md: 0.875rem;
-  --mg-v2-font-size-body-sm: 0.8125rem;
   --mg-v2-font-size-caption: 0.75rem;
-  --mg-v2-font-size-micro: 0.6875rem;
+
+  /* Aliases → 4-step SSOT (do not introduce new sizes) */
+  --mg-v2-font-size-display: var(--mg-v2-font-size-h1);
+  --mg-v2-font-size-h3: var(--mg-v2-font-size-h2);
+  --mg-v2-font-size-h4: var(--mg-v2-font-size-body-md);
+  --mg-v2-font-size-h5: var(--mg-v2-font-size-body-md);
+  --mg-v2-font-size-body-lg: var(--mg-v2-font-size-body-md);
+  --mg-v2-font-size-body-sm: var(--mg-v2-font-size-caption);
+  --mg-v2-font-size-micro: var(--mg-v2-font-size-caption);
 
   --mg-v2-font-weight-regular: 400;
   --mg-v2-font-weight-medium: 500;
@@ -291,21 +300,21 @@
    ================================================================ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --mg-v2-color-primary-main: #2DD4BF;
-    --mg-v2-color-primary-light: #5EEAD4;
-    --mg-v2-color-primary-dark: #14B8A6;
-    --mg-v2-color-primary-hover: #5EEAD4;
-    --mg-v2-color-primary-active: #14B8A6;
-    --mg-v2-color-primary-subtle: rgba(45, 212, 191, 0.15);
+    --mg-v2-color-primary-main: #4AA99E;
+    --mg-v2-color-primary-light: #5FBBB0;
+    --mg-v2-color-primary-dark: #3D8F86;
+    --mg-v2-color-primary-hover: #5FBBB0;
+    --mg-v2-color-primary-active: #3D8F86;
+    --mg-v2-color-primary-subtle: rgba(74, 169, 158, 0.15);
 
     --mg-v2-color-secondary-main: #94A3B8;
     --mg-v2-color-secondary-light: #CBD5E1;
     --mg-v2-color-secondary-dark: #64748B;
 
-    --mg-v2-color-accent-main: #2DD4BF;
-    --mg-v2-color-accent-light: #5EEAD4;
-    --mg-v2-color-accent-dark: #14B8A6;
-    --mg-v2-color-accent-subtle: rgba(45, 212, 191, 0.12);
+    --mg-v2-color-accent-main: #4AA99E;
+    --mg-v2-color-accent-light: #5FBBB0;
+    --mg-v2-color-accent-dark: #3D8F86;
+    --mg-v2-color-accent-subtle: rgba(74, 169, 158, 0.12);
 
     --mg-v2-color-neutral-50: #0F172A;
     --mg-v2-color-neutral-100: #1E293B;
@@ -326,9 +335,9 @@
     --mg-v2-color-semantic-warning-light: #78350F;
     --mg-v2-color-semantic-warning-dark: #FCD34D;
 
-    --mg-v2-color-semantic-error: #F87171;
+    --mg-v2-color-semantic-error: #C97A7A;
     --mg-v2-color-semantic-error-light: #7F1D1D;
-    --mg-v2-color-semantic-error-dark: #FCA5A5;
+    --mg-v2-color-semantic-error-dark: #D98989;
 
     --mg-v2-color-semantic-info: #38BDF8;
     --mg-v2-color-semantic-info-light: #0C4A6E;
@@ -350,8 +359,8 @@
     --mg-v2-color-text-disabled: #64748B;
     --mg-v2-color-text-placeholder: #94A3B8;
     --mg-v2-color-text-inverse: #0F172A;
-    --mg-v2-color-text-link: #2DD4BF;
-    --mg-v2-color-text-link-hover: #5EEAD4;
+    --mg-v2-color-text-link: #4AA99E;
+    --mg-v2-color-text-link-hover: #5FBBB0;
 
     --mg-v2-color-border-default: #334155;
     --mg-v2-color-border-subtle: #1E293B;
@@ -359,12 +368,12 @@
     --mg-v2-color-border-strong: #64748B;
     --mg-v2-color-border-light: #1E293B;
     --mg-v2-color-border-dark: #94A3B8;
-    --mg-v2-color-border-focus: #2DD4BF;
+    --mg-v2-color-border-focus: #5FBBB0;
 
     --mg-v2-color-state-hover: rgba(248, 250, 252, 0.12);
     --mg-v2-color-state-active: rgba(248, 250, 252, 0.18);
-    --mg-v2-color-state-selected: rgba(45, 212, 191, 0.15);
-    --mg-v2-color-state-focus-ring: rgba(45, 212, 191, 0.35);
+    --mg-v2-color-state-selected: rgba(74, 169, 158, 0.15);
+    --mg-v2-color-state-focus-ring: rgba(74, 169, 158, 0.35);
     --mg-v2-color-state-disabled-bg: #334155;
     --mg-v2-color-state-disabled-text: #64748B;
 
@@ -383,21 +392,21 @@
 
 /* 수동 다크 테마 — html[data-theme="dark"] / [data-theme="dark"] */
 [data-theme="dark"] {
-  --mg-v2-color-primary-main: #2DD4BF;
-  --mg-v2-color-primary-light: #5EEAD4;
-  --mg-v2-color-primary-dark: #14B8A6;
-  --mg-v2-color-primary-hover: #5EEAD4;
-  --mg-v2-color-primary-active: #14B8A6;
-  --mg-v2-color-primary-subtle: rgba(45, 212, 191, 0.15);
+  --mg-v2-color-primary-main: #4AA99E;
+  --mg-v2-color-primary-light: #5FBBB0;
+  --mg-v2-color-primary-dark: #3D8F86;
+  --mg-v2-color-primary-hover: #5FBBB0;
+  --mg-v2-color-primary-active: #3D8F86;
+  --mg-v2-color-primary-subtle: rgba(74, 169, 158, 0.15);
 
   --mg-v2-color-secondary-main: #94A3B8;
   --mg-v2-color-secondary-light: #CBD5E1;
   --mg-v2-color-secondary-dark: #64748B;
 
-  --mg-v2-color-accent-main: #2DD4BF;
-  --mg-v2-color-accent-light: #5EEAD4;
-  --mg-v2-color-accent-dark: #14B8A6;
-  --mg-v2-color-accent-subtle: rgba(45, 212, 191, 0.12);
+  --mg-v2-color-accent-main: #4AA99E;
+  --mg-v2-color-accent-light: #5FBBB0;
+  --mg-v2-color-accent-dark: #3D8F86;
+  --mg-v2-color-accent-subtle: rgba(74, 169, 158, 0.12);
 
   --mg-v2-color-neutral-50: #0F172A;
   --mg-v2-color-neutral-100: #1E293B;
@@ -418,9 +427,9 @@
   --mg-v2-color-semantic-warning-light: #78350F;
   --mg-v2-color-semantic-warning-dark: #FCD34D;
 
-  --mg-v2-color-semantic-error: #F87171;
+  --mg-v2-color-semantic-error: #C97A7A;
   --mg-v2-color-semantic-error-light: #7F1D1D;
-  --mg-v2-color-semantic-error-dark: #FCA5A5;
+  --mg-v2-color-semantic-error-dark: #D98989;
 
   --mg-v2-color-semantic-info: #38BDF8;
   --mg-v2-color-semantic-info-light: #0C4A6E;
@@ -442,8 +451,8 @@
   --mg-v2-color-text-disabled: #64748B;
   --mg-v2-color-text-placeholder: #94A3B8;
   --mg-v2-color-text-inverse: #0F172A;
-  --mg-v2-color-text-link: #2DD4BF;
-  --mg-v2-color-text-link-hover: #5EEAD4;
+  --mg-v2-color-text-link: #4AA99E;
+  --mg-v2-color-text-link-hover: #5FBBB0;
 
   --mg-v2-color-border-default: #334155;
   --mg-v2-color-border-subtle: #1E293B;
@@ -451,12 +460,12 @@
   --mg-v2-color-border-strong: #64748B;
   --mg-v2-color-border-light: #1E293B;
   --mg-v2-color-border-dark: #94A3B8;
-  --mg-v2-color-border-focus: #2DD4BF;
+  --mg-v2-color-border-focus: #5FBBB0;
 
   --mg-v2-color-state-hover: rgba(248, 250, 252, 0.12);
   --mg-v2-color-state-active: rgba(248, 250, 252, 0.18);
-  --mg-v2-color-state-selected: rgba(45, 212, 191, 0.15);
-  --mg-v2-color-state-focus-ring: rgba(45, 212, 191, 0.35);
+  --mg-v2-color-state-selected: rgba(74, 169, 158, 0.15);
+  --mg-v2-color-state-focus-ring: rgba(74, 169, 158, 0.35);
   --mg-v2-color-state-disabled-bg: #334155;
   --mg-v2-color-state-disabled-text: #64748B;
 

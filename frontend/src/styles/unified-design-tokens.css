@@ -15,18 +15,18 @@
   
   /* ===== CORE DESIGN SYSTEM VARIABLES ===== */
   
-  /* 기본 색상 팔레트 — Core Solution Teal (Clinic OS SSOT bridge) */
-  --cs-primary-50: #F0FDFA;
-  --cs-primary-100: #CCFBF1;
-  --cs-primary-200: #99F6E4;
-  --cs-primary-300: #5EEAD4;
-  --cs-primary-400: #2DD4BF;
+  /* 기본 색상 팔레트 — Core Solution Teal (Clinic OS muted SSOT bridge) */
+  --cs-primary-50: #E4EEEC;
+  --cs-primary-100: #DCE8E5;
+  --cs-primary-200: #B8D4CF;
+  --cs-primary-300: #5FBBB0;
+  --cs-primary-400: #4AA99E;
   /* Break circular ref: mg-primary-500 <-> cs-primary-500 (invalid computed color) */
   --cs-primary-500: #0D9488;
-  --cs-primary-600: #0F766E;
-  --cs-primary-700: #0F766E;
-  --cs-primary-800: #115E59;
-  --cs-primary-900: #134E4A;
+  --cs-primary-600: #0E5F5A;
+  --cs-primary-700: #0E5F5A;
+  --cs-primary-800: #0A4F4B;
+  --cs-primary-900: #0A4F4B;
   
   --cs-secondary-50: #f9fafb;
   --cs-secondary-100: #f3f4f6;
@@ -53,16 +53,16 @@
   --cs-success-900: #064e3b;
   
   /* 오류 색상 */
-  --cs-error-50: #fef2f2;
-  --cs-error-100: #fee2e2;
-  --cs-error-200: #fecaca;
-  --cs-error-300: #fca5a5;
-  --cs-error-400: #f87171;
-  --cs-error-500: #ef4444;
-  --cs-error-600: #dc2626;
-  --cs-error-700: #b91c1c;
-  --cs-error-800: #991b1b;
-  --cs-error-900: #7f1d1d;
+  --cs-error-50: #f3e8e8;
+  --cs-error-100: #edd5d5;
+  --cs-error-200: #d9a8a8;
+  --cs-error-300: #d98989;
+  --cs-error-400: #c97a7a;
+  --cs-error-500: #a84848;
+  --cs-error-600: #8f3d3d;
+  --cs-error-700: #8f3d3d;
+  --cs-error-800: #7a3434;
+  --cs-error-900: #5c2828;
   
   /* 경고 색상 */
   --cs-warning-50: #fffbeb;
@@ -1126,7 +1126,7 @@
   --mg-color-text-secondary: #475569;
   --mg-color-text-on-primary: #FFFFFF;
   --mg-color-border-main: #D4CFC8;
-  --mg-color-error: #E57373;
+  --mg-color-error: #A84848;
   /* 성공 — D5 §4 옵션 A: emerald-600 통합 (#059669, success-600 폐기 흡수, WCAG AA) */
   --mg-color-success: #059669;
   --mg-color-info: #3B82F6;
@@ -1136,7 +1136,7 @@
   --mg-client-primary-light-rgb: 242, 204, 143;
   --mg-consultant-primary-rgb: 61, 82, 70;
   --mg-warm-gray-50-rgb: 250, 249, 247;
-  --mg-color-error-rgb: 229, 115, 115;
+  --mg-color-error-rgb: 168, 72, 72;
   /* 성공 RGB — D5 §4 통합 후 emerald-600 (#059669) 채널 (5, 150, 105) */
   --mg-color-success-rgb: 5, 150, 105;
   --mg-color-info-rgb: 59, 130, 246;
@@ -1308,32 +1308,30 @@
    - styles/shop/ClientShop.css (상품 카드 액센트)
    - common/MGButton.css, BadgeSelect.css (primary 버튼/뱃지 — 폴백 보호)
    - homepage/Homepage.css, landing/Counseling*.css (랜딩 액센트)
-   값 근거: --mg-color-primary-main = #3D5246
-            (= 기존 --mg-consultant-primary L1109,
-               responsive-layout-tokens.css --mg-layout-sidebar-active-bg L67)
-          --mg-primary-light = #4A6354
-            (= UnifiedLogin.css L18 그라데이션 fallback 값 승격)
+   값 근거: --mg-color-primary-main = #0E5F5A (muted clinic teal, T-D)
+          --mg-color-primary-light = #145A55
           --mg-color-white = #ffffff (브랜드 무채색)
-          --mg-primary-color = #3D5246 (alias, 동일 값)
+          --mg-primary-color = #0E5F5A (alias, 동일 값)
+          Dark: #4AA99E / #5FBBB0 / #3D8F86 (neon teal 제거)
    ======================================== */
 
 :root {
-  /* 브랜드 primary — clinic-OS teal hex (T-D 가드; Calm Forest olive 제거) */
-  --mg-color-primary-main: #0F766E;
-  --mg-color-primary-light: #14B8A6;
-  --mg-color-primary-dark: #115E59;
+  /* 브랜드 primary — clinic-OS muted teal hex (T-D 가드; punchy teal 제거) */
+  --mg-color-primary-main: #0E5F5A;
+  --mg-color-primary-light: #145A55;
+  --mg-color-primary-dark: #0A4F4B;
   --mg-color-white: #ffffff;
-  --mg-primary-color: #0F766E;
-  --mg-primary-light: #14B8A6;
+  --mg-primary-color: #0E5F5A;
+  --mg-primary-light: #145A55;
 }
 
 :root[data-theme="dark"] {
-  --mg-color-primary-main: #2DD4BF;
-  --mg-color-primary-light: #5EEAD4;
-  --mg-color-primary-dark: #14B8A6;
+  --mg-color-primary-main: #4AA99E;
+  --mg-color-primary-light: #5FBBB0;
+  --mg-color-primary-dark: #3D8F86;
   --mg-color-white: #f8fafc;
-  --mg-primary-color: #2DD4BF;
-  --mg-primary-light: #5EEAD4;
+  --mg-primary-color: #4AA99E;
+  --mg-primary-light: #5FBBB0;
 }
 
 /* ========================================
@@ -1558,7 +1556,7 @@
      체크 토큰 SSOT 가드의 alias chain 추적이 `--mg-color-*` 네임스페이스
      내부에서만 동작하므로 hex 를 직접 정의한다 (P1 §2.3 "기존 SSOT 흡수" 정합). */
   --mg-color-warning-500: #f59e0b;
-  --mg-color-error-500: #ef4444;
+  --mg-color-error-500: #a84848;
 }
 
 :root[data-theme="dark"] {
@@ -1577,9 +1575,9 @@
   /* D8 T-TextMain-Dark — clinic-OS slate text (on dark AA) */
   --mg-color-text-main: #F8FAFC;
 
-  /* D8 T-Top100 통합 — 다크 cascade (P1 §2.3 "light/dark 동일 hex" 결정) */
+  /* D8 T-Top100 통합 — 다크 cascade (muted clinic danger) */
   --mg-color-warning-500: #f59e0b;
-  --mg-color-error-500: #ef4444;
+  --mg-color-error-500: #c97a7a;
 }
 
 /* ========================================
@@ -1612,7 +1610,7 @@
 :root[data-theme="dark"] {
   /* D9 §C4 WARN4 다크 cascade — clinic-OS slate (design-v2 정렬) */
   --mg-color-border-main: #334155;     /* clinic slate border, AA ≥3:1 */
-  --mg-color-error: #fca5a5;           /* Tailwind red-300 톤, on dark 6.2:1 PASS */
+  --mg-color-error: #C97A7A;           /* muted brick on slate, AA ≥4.5 */
   --mg-color-info: #93c5fd;            /* Tailwind blue-300 톤, on dark 7.6:1 PASS */
   --mg-color-text-secondary: #CBD5E1;  /* clinic slate secondary */
 
@@ -1784,14 +1782,14 @@
    ======================================== */
 
 :root {
-  /* D10 §C7 B0KlA primary — clinic-OS teal CTA (olive 제거, T-D hex) */
-  --mg-color-b0kla-green-500: #0F766E;
+  /* D10 §C7 B0KlA primary — clinic-OS muted teal CTA (olive 제거, T-D hex) */
+  --mg-color-b0kla-green-500: #0E5F5A;
   /* D10 §C7 B0KlA accent orange-warm (Large Text/UI Component 한정) */
   --mg-color-b0kla-orange-300: #e8a87c;
   /* D10 §C7 B0KlA accent blue-muted (Large Text/UI Component 한정) */
   --mg-color-b0kla-blue-400: #6d9dc5;
-  /* D10 §C7 B0KlA green soft bg — mint rare wash */
-  --mg-color-b0kla-green-50: #CCFBF1;
+  /* D10 §C7 B0KlA green soft bg — grey-green mint rare wash */
+  --mg-color-b0kla-green-50: #DCE8E5;
   /* D10 §C7 B0KlA orange soft bg (admin 경고/알림 표면) */
   --mg-color-b0kla-orange-50: #fcf3ed;
   /* D10 §C7 B0KlA blue soft bg (admin 정보/안내 표면) */
@@ -1799,10 +1797,10 @@
 }
 
 :root[data-theme="dark"] {
-  --mg-color-b0kla-green-500: #2DD4BF;
+  --mg-color-b0kla-green-500: #4AA99E;
   --mg-color-b0kla-orange-300: #f4b988;
   --mg-color-b0kla-blue-400: #9bb8d3;
-  --mg-color-b0kla-green-50: rgba(45, 212, 191, 0.15);
+  --mg-color-b0kla-green-50: rgba(74, 169, 158, 0.15);
   --mg-color-b0kla-orange-50: #2d1f15;
   --mg-color-b0kla-blue-50: #1c2733;
 }

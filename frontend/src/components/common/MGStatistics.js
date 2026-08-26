@@ -40,9 +40,9 @@ const MGStatistics = ({
   const getChangeIcon = () => {
     switch (changeType) {
       case 'positive':
-        return '↗️';
+        return '';
       case 'negative':
-        return '↘️';
+        return '';
       default:
         return '';
     }
@@ -150,7 +150,7 @@ export const MGStatisticsChart = ({
       <div className="mg-statistics-chart__content">
         {/* 여기에 차트 구현 */}
         <div className="mg-statistics-chart__placeholder">
-          <span className="mg-statistics-chart__placeholder-icon">📊</span>
+          <span className="mg-statistics-chart__placeholder-icon" aria-hidden="true"></span>
           <span className="mg-statistics-chart__placeholder-text">차트 데이터</span>
         </div>
       </div>

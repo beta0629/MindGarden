@@ -57,7 +57,7 @@ const MGHeader = ({
       <div className="mg-header__container">
         {/* 로고 */}
         <div className="mg-header__logo" onClick={handleLogoClick}>
-          <div className="mg-header__logo-icon">🌱</div>
+          <div className="mg-header__logo-icon" aria-hidden="true"></div>
           <span className="mg-header__logo-text">{logo}</span>
         </div>
 
@@ -113,7 +113,7 @@ const MGHeader = ({
             onClick={handleNotificationToggle}
             preventDoubleClick={false}
           >
-            <span className="mg-header__notification-icon">🔔</span>
+            <span className="mg-header__notification-icon" aria-hidden="true"></span>
             {notifications > 0 && (
               <span className="mg-header__notification-badge">
                 {notifications > 99 ? '99+' : notifications}
@@ -166,15 +166,15 @@ const MGHeader = ({
                 </div>
                 <div className="mg-header__user-menu-items">
                   <a href="/profile" className="mg-header__menu-item">
-                    <span className="mg-header__menu-icon">👤</span>
+                    <span className="mg-header__menu-icon" aria-hidden="true"></span>
                     {t('common.labels.profile')}
                   </a>
                   <a href="/settings" className="mg-header__menu-item">
-                    <span className="mg-header__menu-icon">⚙️</span>
+                    <span className="mg-header__menu-icon" aria-hidden="true"></span>
                     설정
                   </a>
                   <a href="/help" className="mg-header__menu-item">
-                    <span className="mg-header__menu-icon">❓</span>
+                    <span className="mg-header__menu-icon" aria-hidden="true"></span>
                     도움말
                   </a>
                   <div className="mg-header__menu-divider" />
@@ -189,7 +189,7 @@ const MGHeader = ({
                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                     preventDoubleClick={false}
                   >
-                    <span className="mg-header__menu-icon">🚪</span>
+                    <span className="mg-header__menu-icon" aria-hidden="true"></span>
                     로그아웃
                   </MGButton>
                 </div>
@@ -218,7 +218,7 @@ const MGHeader = ({
               </div>
               <div className="mg-header__notification-list">
                 <div className="mg-header__notification-item">
-                  <div className="mg-header__notification-item-icon">💬</div>
+                  <div className="mg-header__notification-item-icon" aria-hidden="true"></div>
                   <div className="mg-header__notification-item-content">
                     <div className="mg-header__notification-item-title">
                       새로운 상담 요청
@@ -229,7 +229,7 @@ const MGHeader = ({
                   </div>
                 </div>
                 <div className="mg-header__notification-item">
-                  <div className="mg-header__notification-item-icon">✅</div>
+                  <div className="mg-header__notification-item-icon" aria-hidden="true"></div>
                   <div className="mg-header__notification-item-content">
                     <div className="mg-header__notification-item-title">
                       상담 완료
@@ -240,7 +240,7 @@ const MGHeader = ({
                   </div>
                 </div>
                 <div className="mg-header__notification-item">
-                  <div className="mg-header__notification-item-icon">📊</div>
+                  <div className="mg-header__notification-item-icon" aria-hidden="true"></div>
                   <div className="mg-header__notification-item-content">
                     <div className="mg-header__notification-item-title">
                       월간 리포트 생성 완료

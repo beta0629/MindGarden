@@ -25,11 +25,10 @@
   align-items: stretch;
 }
 
-/* ── KPI ── */
+/* ── KPI (quiet chrome — 좌측 레일 없음) ── */
 .mg-v2-weekly-reservations__kpi {
   position: relative;
-  padding-left: var(--mg-spacing-md);
-  border-left: var(--mg-radius-sm) solid var(--mg-color-primary-main);
+  padding-left: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;

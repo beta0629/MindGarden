@@ -265,7 +265,7 @@ export const validateMenuPath = (path) => {
  */
 export const logPermissionCheck = (action, resource, allowed) => {
     const user = sessionManager.getUser();
-    const status = allowed ? '✅ 허용' : '❌ 거부';
+    const status = allowed ? '허용' : '거부';
     
     console.log(`🔒 권한 검증 [${status}]: ${action} - ${resource}`, {
         user: user?.email,

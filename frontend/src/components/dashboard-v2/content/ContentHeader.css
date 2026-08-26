@@ -1,5 +1,5 @@
 /**
- * ContentHeader — B0KlA headerRow → Phase 3 --mg-v2-* 토큰 정합
+ * ContentHeader — Clinic OS chrome (v2 SSOT)
  * @author CoreSolution
  * @since 2025-02-22
  */
@@ -9,44 +9,34 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--mg-v2-space-4, 1rem);
-  margin-bottom: var(--mg-v2-space-4, 1rem);
+  gap: var(--mg-v2-space-4);
+  margin-bottom: var(--mg-v2-space-4);
 }
 
 .mg-v2-content-header__right {
   display: flex;
   align-items: center;
-  gap: var(--mg-v2-space-3, 0.75rem);
+  gap: var(--mg-v2-space-3);
 }
 
 .mg-v2-content-header__left {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-1, 4px);
+  gap: var(--mg-v2-space-1);
 }
 
 .mg-v2-content-header__title {
-  font-size: var(--mg-v2-font-size-h2, 28px);
-  font-weight: var(--mg-v2-font-weight-bold, 700);
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-v2-color-text-primary);
   margin: 0;
-  line-height: var(--mg-v2-font-line-height-heading, 1.3);
+  line-height: var(--mg-v2-font-line-height-heading);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
 }
 
 .mg-v2-content-header__subtitle {
-  font-size: var(--mg-v2-font-size-body-md, 15px);
+  font-size: var(--mg-v2-font-size-body-md);
   color: var(--mg-v2-color-text-secondary);
   margin: 0;
-  line-height: var(--mg-v2-font-line-height-body, 1.5);
-}
-
-/* Admin Dark Mode C-2 Phase 1 — title/subtitle token cascade
- * SSOT: docs/design-system/SCREEN_SPEC_ADMIN_DARK_MODE_C2_CONTENT_HEADER.md
- */
-[data-theme="dark"] .mg-v2-content-header__title {
-  color: var(--mg-v2-color-text-primary);
-}
-
-[data-theme="dark"] .mg-v2-content-header__subtitle {
-  color: var(--mg-v2-color-text-secondary);
+  line-height: var(--mg-v2-font-line-height-body);
 }

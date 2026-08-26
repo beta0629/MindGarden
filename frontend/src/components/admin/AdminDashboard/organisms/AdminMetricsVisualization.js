@@ -134,7 +134,6 @@ const AdminMetricsVisualization = ({
                 className={`admin-metrics-visualization__grid-tile admin-metrics-visualization__grid-tile--${step.variant || 'neutral'}`}
                 role="listitem"
               >
-                <div className="admin-metrics-visualization__grid-tile-accent" aria-hidden="true" />
                 <div className="admin-metrics-visualization__grid-tile-content">
                   {Icon && (
                     <div className="admin-metrics-visualization__grid-tile-icon" aria-hidden="true">

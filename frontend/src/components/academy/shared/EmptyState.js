@@ -23,7 +23,7 @@ import './EmptyState.css';
 const EmptyState = ({ message = '데이터가 없습니다.', actionLabel = null, onAction = null }) => {
   return (
     <div className="academy-empty-state">
-      <div className="academy-empty-icon">📭</div>
+      <div className="academy-empty-icon" aria-hidden="true"></div>
       <p className="academy-empty-message">{message}</p>
       {actionLabel && onAction && (
         <MGButton

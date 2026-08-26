@@ -5,6 +5,7 @@ import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './AuthPageCommon.css';
+import { Mail, Info } from 'lucide-react';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_PASSWORD_RESET_SEND_EMAIL = '/api/v1/auth/password-reset/send-email';
@@ -120,7 +121,7 @@ const ForgotPassword = () => {
           ) : (
             <div className="mg-v2-auth-success">
               <div className="mg-v2-auth-success-icon" aria-hidden="true">
-                ✉️
+                <Mail size={32} strokeWidth={1.75} />
               </div>
               <div>
                 <h2 className="mg-v2-auth-title">이메일을 확인해주세요</h2>
@@ -132,7 +133,7 @@ const ForgotPassword = () => {
               </div>
 
               <div className="mg-v2-auth-hint">
-                <p>💡 <strong>안내사항</strong></p>
+                <p><Info size={16} strokeWidth={1.75} aria-hidden="true" /> <strong>안내사항</strong></p>
                 <ul>
                   <li>이메일이 보이지 않으면 스팸함을 확인해주세요.</li>
                   <li>재설정 링크는 24시간 후 만료됩니다.</li>

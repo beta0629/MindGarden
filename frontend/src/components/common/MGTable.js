@@ -104,7 +104,7 @@ const MGTable = ({
                 className="mg-table__empty-cell"
               >
                 <div className="mg-table__empty">
-                  <span className="mg-table__empty-icon">📊</span>
+                  <span className="mg-table__empty-icon" aria-hidden="true"></span>
                   <span className="mg-table__empty-message">{emptyMessage}</span>
                 </div>
               </td>

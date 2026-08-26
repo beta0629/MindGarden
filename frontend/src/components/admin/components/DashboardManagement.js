@@ -13,7 +13,7 @@ const DashboardManagement = ({
       id: 'schedule',
       title: '스케줄 관리',
       description: '상담 일정을 관리합니다',
-      icon: '📅',
+      icon: null,
       color: 'schedule',
       onClick: () => onNavigate('/admin/schedule-management'),
       permission: 'SCHEDULE_MANAGEMENT'
@@ -22,7 +22,7 @@ const DashboardManagement = ({
       id: 'sessions',
       title: '상담 세션',
       description: '진행 중인 상담을 확인합니다',
-      icon: '💬',
+      icon: null,
       color: 'sessions',
       onClick: () => onNavigate('/admin/session-management'),
       permission: 'SESSION_MANAGEMENT'
@@ -31,7 +31,7 @@ const DashboardManagement = ({
       id: 'consultants',
       title: '상담사 관리',
       description: '상담사 정보를 관리합니다',
-      icon: '👨‍⚕️',
+      icon: null,
       color: 'consultants',
       onClick: () => onNavigate('/admin/consultant-management'),
       permission: 'CONSULTANT_MANAGEMENT'
@@ -40,7 +40,7 @@ const DashboardManagement = ({
       id: 'clients',
       title: '고객 관리',
       description: '고객 정보를 관리합니다',
-      icon: '👥',
+      icon: null,
       color: 'clients',
       onClick: () => onNavigate('/admin/client-management'),
       permission: 'CLIENT_MANAGEMENT'
@@ -49,7 +49,7 @@ const DashboardManagement = ({
       id: 'user-management',
       title: '사용자 관리',
       description: '시스템 사용자를 관리합니다',
-      icon: '👤',
+      icon: null,
       color: 'user-management',
       onClick: () => onNavigate('/admin/user-management'),
       permission: 'USER_MANAGEMENT'
@@ -58,7 +58,7 @@ const DashboardManagement = ({
       id: 'mappings',
       title: '매핑 관리',
       description: '상담사-고객 매핑을 관리합니다',
-      icon: '🔗',
+      icon: null,
       color: 'mappings',
       onClick: () => onNavigate('/admin/mapping-management'),
       permission: 'MAPPING_MANAGEMENT'
@@ -67,7 +67,7 @@ const DashboardManagement = ({
       id: 'finance',
       title: '재무 관리',
       description: '수입과 지출을 관리합니다',
-      icon: '💰',
+      icon: null,
       color: 'finance',
       onClick: () => onNavigate('/admin/finance-management'),
       permission: 'FINANCE_MANAGEMENT'
@@ -76,7 +76,7 @@ const DashboardManagement = ({
       id: 'reports',
       title: '보고서',
       description: '통계 및 분석 보고서',
-      icon: '📊',
+      icon: null,
       color: 'reports',
       onClick: () => onNavigate('/admin/reports'),
       permission: 'REPORT_ACCESS'

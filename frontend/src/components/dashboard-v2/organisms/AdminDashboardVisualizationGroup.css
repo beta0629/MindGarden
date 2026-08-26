@@ -96,20 +96,7 @@
   border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-border-radius-md, 8px);
   background: var(--mg-color-surface-main);
-  border-left-width: 4px;
   min-width: 0;
-}
-
-.mg-v2-viz-summary-kpi--booked {
-  border-left-color: var(--mg-color-secondary-main, var(--mg-secondary-500));
-}
-
-.mg-v2-viz-summary-kpi--completed {
-  border-left-color: var(--mg-color-primary-main);
-}
-
-.mg-v2-viz-summary-kpi--target {
-  border-left-color: var(--mg-color-primary-main);
 }
 
 .mg-v2-viz-summary-kpi__label {

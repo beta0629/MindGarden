@@ -130,9 +130,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
                     {/* 총 평가 수 */}
                     <div className="mg-dashboard-stat-card">
-                        <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-mint">
-                            📊
-                        </div>
+                        <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-mint" aria-hidden="true"></div>
                         <div className="mg-dashboard-stat-content">
                             <div className="mg-dashboard-stat-value">
                                 {ratingStats.totalRatingCount}

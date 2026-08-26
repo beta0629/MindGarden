@@ -30,10 +30,10 @@ const ConsultationReport = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [periodOptions, setPeriodOptions] = useState([
-    { value: 'MONTH', label: t('report:consultation.periodOption.monthly'), icon: '📅', color: 'var(--mg-primary-500)', description: t('report:consultation.periodOption.monthlyDesc') },
-    { value: 'YEAR', label: t('report:consultation.periodOption.yearly'), icon: '📊', color: 'var(--mg-success-500)', description: t('report:consultation.periodOption.yearlyDesc') },
-    { value: 'QUARTER', label: t('report:consultation.periodOption.quarterly'), icon: '📈', color: 'var(--mg-warning-500)', description: t('report:consultation.periodOption.quarterlyDesc') },
-    { value: 'WEEK', label: t('report:consultation.periodOption.weekly'), icon: '📋', color: 'var(--mg-purple-500)', description: t('report:consultation.periodOption.weeklyDesc') }
+    { value: 'MONTH', label: t('report:consultation.periodOption.monthly'), icon: null, color: 'var(--mg-primary-500)', description: t('report:consultation.periodOption.monthlyDesc') },
+    { value: 'YEAR', label: t('report:consultation.periodOption.yearly'), icon: null, color: 'var(--mg-success-500)', description: t('report:consultation.periodOption.yearlyDesc') },
+    { value: 'QUARTER', label: t('report:consultation.periodOption.quarterly'), color: 'var(--mg-warning-500)', description: t('report:consultation.periodOption.quarterlyDesc') },
+    { value: 'WEEK', label: t('report:consultation.periodOption.weekly'), color: 'var(--mg-purple-500)', description: t('report:consultation.periodOption.weeklyDesc') }
   ]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [yearOptions, setYearOptions] = useState(() => {
@@ -41,7 +41,7 @@ const ConsultationReport = () => {
     return Array.from({ length: 5 }, (_, i) => ({
       value: baseYear - i,
       label: t('report:consultation.yearLabel', { year: baseYear - i }),
-      icon: '📅',
+      icon: null,
       color: 'var(--mg-primary-500)',
       description: t('report:consultation.yearLabel', { year: baseYear - i })
     }));
@@ -50,7 +50,7 @@ const ConsultationReport = () => {
     return Array.from({ length: 12 }, (_, i) => ({
       value: i + 1,
       label: t('report:consultation.monthLabel', { month: i + 1 }),
-      icon: '📅',
+      icon: null,
       color: 'var(--mg-primary-500)',
       description: t('report:consultation.monthLabel', { month: i + 1 })
     }));
@@ -366,7 +366,7 @@ const ConsultationReport = () => {
               <i className="bi bi-arrow-left" />
             </MGButton>
             <div className="header-text">
-              <h1>📊 {t('report:consultation.title')}</h1>
+              <h1>{t('report:consultation.title')}</h1>
               <p>{t('report:consultation.description')}</p>
             </div>
           </div>

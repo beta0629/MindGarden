@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Store, XCircle } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useParams, useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
@@ -192,7 +193,9 @@ const BranchSpecificLogin = () => {
         <div className="branch-login-container">
           <div className="login-card">
             <div className="error-state">
-              <div className="error-icon">❌</div>
+              <div className="error-icon" aria-hidden="true">
+                <XCircle size={28} strokeWidth={1.75} />
+              </div>
               <h3>지점 정보를 불러올 수 없습니다</h3>
               <p>{error}</p>
               <div className="error-actions">
@@ -241,7 +244,11 @@ const BranchSpecificLogin = () => {
           {branchInfo && (
             <div className="branch-info-header">
               <div className="branch-info">
-                <h2>🏪 {branchInfo.branchName}</h2>
+                <h2>
+                  <Store size={22} strokeWidth={1.75} aria-hidden="true" />
+                  {' '}
+                  {branchInfo.branchName}
+                </h2>
                 <p className="branch-code">지점 코드: {branchInfo.branchCode}</p>
                 <p className="branch-address">{branchInfo.fullAddress}</p>
                 <div className="branch-stats">
@@ -296,7 +303,7 @@ const BranchSpecificLogin = () => {
                   preventDoubleClick={false}
                   aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                 </MGButton>
               </div>
             </div>
@@ -318,7 +325,11 @@ const BranchSpecificLogin = () => {
           {/* 지점 로그인 안내 */}
           <div className="login-info">
             <div className="info-box branch-info">
-              <h4>🏪 지점 로그인</h4>
+              <h4>
+                <Store size={18} strokeWidth={1.75} aria-hidden="true" />
+                {' '}
+                지점 로그인
+              </h4>
               <ul>
                 <li>해당 지점에 소속된 사용자만 로그인 가능</li>
                 <li>지점별 상담사/내담자 관리</li>

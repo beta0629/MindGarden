@@ -1,85 +1,71 @@
-/* ===== 라이트 테마 ===== */
+/* ===== 라이트 테마 — Core Solution Clinic OS (v2 SSOT alias) ===== */
 [data-theme="light"] {
-  /* 기본 색상 */
-  --color-primary: var(--mg-primary-500);
-  --color-primary-hover: var(--cs-primary-600);
-  --color-primary-active: var(--cs-primary-700);
-  --color-primary-light: var(--cs-primary-100);
-  --color-primary-dark: var(--cs-primary-800);
+  --color-primary: var(--mg-v2-color-primary-main);
+  --color-primary-hover: var(--mg-v2-color-primary-hover);
+  --color-primary-active: var(--mg-v2-color-primary-active);
+  --color-primary-light: var(--mg-v2-color-primary-subtle);
+  --color-primary-dark: var(--mg-v2-color-primary-dark);
 
-  --color-secondary: var(--cs-secondary-500);
-  --color-secondary-hover: var(--cs-secondary-600);
-  --color-secondary-active: var(--cs-secondary-700);
-  --color-secondary-light: var(--cs-secondary-100);
-  --color-secondary-dark: var(--cs-secondary-900);
+  --color-secondary: var(--mg-v2-color-secondary-main);
+  --color-secondary-hover: var(--mg-v2-color-secondary-dark);
+  --color-secondary-active: var(--mg-v2-color-secondary-dark);
+  --color-secondary-light: var(--mg-v2-color-secondary-light);
+  --color-secondary-dark: var(--mg-v2-color-secondary-dark);
 
-  /* 배경 색상 */
-  --color-bg-primary: var(--mg-white);
-  --color-bg-secondary: var(--cs-slate-50);
-  --color-bg-tertiary: var(--cs-slate-100);
-  --color-bg-accent: var(--cs-slate-200);
-  --color-bg-glass: var(--cs-glass-light);
-  --color-bg-glass-strong: var(--cs-glass-strong);
+  --color-bg-primary: var(--mg-v2-color-surface-bg);
+  --color-bg-secondary: var(--mg-v2-color-surface-card);
+  --color-bg-tertiary: var(--mg-v2-color-surface-stone);
+  --color-bg-accent: var(--mg-v2-color-neutral-200);
+  --color-bg-glass: rgba(255, 255, 255, 0.85);
+  --color-bg-glass-strong: rgba(255, 255, 255, 0.95);
 
-  /* 텍스트 색상 */
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #64748b;
-  --color-text-muted: #94a3b8;
-  --color-text-inverse: var(--mg-white);
+  --color-text-primary: var(--mg-v2-color-text-primary);
+  --color-text-secondary: var(--mg-v2-color-text-secondary);
+  --color-text-tertiary: var(--mg-v2-color-text-tertiary);
+  --color-text-muted: var(--mg-v2-color-text-disabled);
+  --color-text-inverse: var(--mg-v2-color-text-inverse);
 
-  /* 테두리 색상 */
-  --color-border-primary: #e2e8f0;
-  --color-border-secondary: #cbd5e1;
-  --color-border-accent: #94a3b8;
-  --color-border-focus: var(--mg-primary-500);
+  --color-border-primary: var(--mg-v2-color-border-default);
+  --color-border-secondary: var(--mg-v2-color-border-strong);
+  --color-border-accent: var(--mg-v2-color-border-dark);
+  --color-border-focus: var(--mg-v2-color-border-focus);
 
-  /* 상태 색상 */
-  --color-success: var(--mg-success-500);
-  --color-success-light: #d1fae5;
-  --color-success-dark: #059669;
+  --color-success: var(--mg-v2-color-semantic-success);
+  --color-success-light: var(--mg-v2-color-semantic-success-light);
+  --color-success-dark: var(--mg-v2-color-semantic-success-dark);
 
-  --color-warning: var(--mg-warning-500);
-  --color-warning-light: #fef3c7;
-  --color-warning-dark: #d97706;
+  --color-warning: var(--mg-v2-color-semantic-warning);
+  --color-warning-light: var(--mg-v2-color-semantic-warning-light);
+  --color-warning-dark: var(--mg-v2-color-semantic-warning-dark);
 
-  --color-error: var(--mg-error-500);
-  --color-error-light: #fee2e2;
-  --color-error-dark: #dc2626;
+  --color-error: var(--mg-v2-color-semantic-error);
+  --color-error-light: var(--mg-v2-color-semantic-error-light);
+  --color-error-dark: var(--mg-v2-color-semantic-error-dark);
 
-  --color-info: #06b6d4;
-  --color-info-light: #cffafe;
-  --color-info-dark: #0891b2;
+  --color-info: var(--mg-v2-color-semantic-info);
+  --color-info-light: var(--mg-v2-color-semantic-info-light);
+  --color-info-dark: var(--mg-v2-color-semantic-info-dark);
 
-  /* 그림자 */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px var(--mg-shadow-light), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px var(--mg-shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  --shadow-glass-strong: 0 8px 32px 0 rgba(31, 38, 135, 0.6);
+  --shadow-sm: var(--mg-v2-shadow-sm);
+  --shadow-md: var(--mg-v2-shadow-md);
+  --shadow-lg: var(--mg-v2-shadow-lg);
+  --shadow-xl: var(--mg-v2-shadow-xl);
+  --shadow-glass: var(--mg-v2-shadow-md);
+  --shadow-glass-strong: var(--mg-v2-shadow-lg);
 
-  /* iOS 스타일 색상 */
-  --ios-bg-primary: rgba(255, 255, 255, 0.95);
-  --ios-bg-secondary: rgba(248, 250, 252, 0.95);
-  --ios-border: rgba(226, 232, 240, 0.8);
-  --ios-text-primary: #1e293b;
-  --ios-text-secondary: #475569;
+  --ios-bg-primary: var(--mg-v2-color-surface-card);
+  --ios-bg-secondary: var(--mg-v2-color-surface-bg);
+  --ios-border: var(--mg-v2-color-border-default);
+  --ios-text-primary: var(--mg-v2-color-text-primary);
+  --ios-text-secondary: var(--mg-v2-color-text-secondary);
 
-  /* 헤더 특화 */
-  --header-bg: rgba(255, 255, 255, 0.95);
-  --header-border: rgba(226, 232, 240, 0.8);
-  --header-text: #1e293b;
-  --header-text-muted: #64748b;
+  --header-bg: var(--mg-v2-color-surface-card);
+  --header-border: var(--mg-v2-color-border-default);
+  --header-text: var(--mg-v2-color-text-primary);
+  --header-text-muted: var(--mg-v2-color-text-tertiary);
 
-  /* 모달 특화 */
-  --modal-bg: rgba(255, 255, 255, 0.98);
+  --modal-bg: var(--mg-v2-color-surface-overlay);
   --modal-backdrop: rgba(15, 23, 42, 0.3);
-  --modal-border: rgba(226, 232, 240, 0.8);
-  --modal-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-
-  /* 드롭다운 특화 */
-  --dropdown-bg: rgba(255, 255, 255, 0.98);
-  --dropdown-border: rgba(226, 232, 240, 0.8);
-  --dropdown-shadow: 0 10px 15px -3px var(--mg-shadow-light);
+  --modal-border: var(--mg-v2-color-border-default);
+  --modal-shadow: var(--mg-v2-shadow-lg);
 }

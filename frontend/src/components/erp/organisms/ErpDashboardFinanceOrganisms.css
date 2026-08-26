@@ -16,8 +16,6 @@
 .erp-finance-summary {
   padding: var(--mg-spacing-lg, 24px) 0;
   gap: var(--mg-spacing-md, 16px);
-  border-left: 4px solid var(--mg-primary-500, var(--ad-b0kla-green));
-  padding-left: var(--mg-spacing-md, 16px);
   margin-bottom: var(--mg-spacing-xl, 1.5rem);
 }
 
@@ -30,9 +28,18 @@
 /* ========== 차트 ========== */
 .erp-finance-chart {
   margin-bottom: var(--mg-spacing-xl, 1.5rem);
-  padding: var(--mg-spacing-lg, 24px) 0;
-  border-left: 4px solid var(--mg-primary-300);
-  padding-left: var(--mg-spacing-md, 16px);
+  padding: var(--mg-spacing-lg, 24px);
+  background: var(--ad-b0kla-card-bg, var(--mg-color-surface-main));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-xl, var(--radius-md, 8px));
+}
+
+.erp-finance-chart .erp-finance__section-title {
+  font-size: var(--mg-v2-font-size-body-lg, 1rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-color-text-main);
+  margin: 0 0 var(--mg-spacing-md, 1rem);
+  padding: 0;
 }
 
 .erp-finance-chart__grid {
@@ -43,22 +50,45 @@
 
 .erp-finance-chart__item {
   margin: 0;
-  padding: var(--mg-spacing-md, 16px);
-  background: var(--ad-b0kla-surface-muted, var(--mg-gray-50));
-  border-radius: var(--radius-md, 8px);
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.erp-finance-chart__plot {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  height: 240px;
 }
 
 .erp-finance-chart__placeholder {
-  min-height: 200px;
+  min-height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
   color: var(--mg-color-text-secondary);
+  text-align: center;
+  margin: 0;
+  padding: var(--mg-spacing-md, 1rem);
+}
+
+.erp-finance-chart__empty {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: var(--mg-spacing-md, 1rem);
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  color: var(--mg-color-text-secondary);
+  text-align: center;
+  line-height: var(--mg-v2-font-line-height-body, 1.5);
 }
 
 .erp-finance-chart__caption {
-  font-size: var(--mg-font-size-xs, 0.75rem);
+  font-size: var(--mg-v2-font-size-caption, var(--mg-font-size-xs, 0.75rem));
   color: var(--mg-color-text-secondary);
   margin-top: var(--mg-spacing-sm, 8px);
   text-align: center;
@@ -68,8 +98,6 @@
 .erp-finance-tx {
   margin-bottom: var(--mg-spacing-xl, 1.5rem);
   padding: var(--mg-spacing-lg, 24px) 0;
-  border-left: 4px solid var(--mg-primary-300);
-  padding-left: var(--mg-spacing-md, 16px);
 }
 
 .erp-finance-tx__header {

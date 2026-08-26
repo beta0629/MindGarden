@@ -68,12 +68,12 @@
 }
 
 .mg-v2-notification-dropdown__tab:hover {
-  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
 }
 
 .mg-v2-notification-dropdown__tab--active {
   font-weight: 600;
-  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
   border-bottom-color: var(--mg-color-primary-main, var(--mg-color-primary-main));
   border-radius: 2px;
 }

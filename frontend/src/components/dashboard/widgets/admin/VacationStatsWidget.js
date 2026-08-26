@@ -45,7 +45,7 @@ const VacationStatsWidget = ({ widget, user }) => {
     return (
       <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_GRID}>
         <StatCard
-          icon={<span>📊</span>}
+          icon={<span aria-hidden="true"></span>}
           value={formatValue(data?.count || 0, 'number')}
           label="데이터 수"
           color={MG_DESIGN_TOKENS.COLORS.PRIMARY}

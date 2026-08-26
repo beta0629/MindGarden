@@ -25,10 +25,10 @@
      ──────────────────────────────────────────────────────────────── */
   /* §4.1 컬러 토큰 (Light Mode) */
   --mg-v2-onboarding-color-navy: #0F172A;
-  --mg-v2-onboarding-color-primary: #3B82F6;
-  --mg-v2-onboarding-color-primary-rgb: 59, 130, 246;
-  --mg-v2-onboarding-color-accent: #8B5CF6;
-  --mg-v2-onboarding-color-accent-rgb: 139, 92, 246;
+  --mg-v2-onboarding-color-primary: var(--mg-v2-color-primary-main);
+  --mg-v2-onboarding-color-primary-rgb: 13, 148, 136;
+  --mg-v2-onboarding-color-accent: var(--mg-v2-color-primary-light);
+  --mg-v2-onboarding-color-accent-rgb: 20, 184, 166;
   --mg-v2-onboarding-color-border: #E2E8F0;
   --mg-v2-onboarding-color-text-muted: #64748B;
   --mg-v2-onboarding-color-white: #FFFFFF;

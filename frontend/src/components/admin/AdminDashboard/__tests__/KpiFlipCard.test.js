@@ -52,12 +52,12 @@ describe('KpiFlipCard', () => {
       expect(screen.getByText('5% 상승')).toHaveClass('sr-only');
     });
 
-    it('variant별 accent 클래스가 적용된다', () => {
+    it('variant별 클래스가 적용되고 좌측 악센트 레일은 없다', () => {
       const { container } = render(
         <KpiFlipCard {...defaultProps} variant="green" />
       );
       expect(container.querySelector('.mg-v2-kpi-flip-card--accent-green')).toBeInTheDocument();
-      expect(container.querySelector('.mg-v2-kpi-flip-card__accent')).toBeInTheDocument();
+      expect(container.querySelector('.mg-v2-kpi-flip-card__accent')).not.toBeInTheDocument();
     });
   });
 

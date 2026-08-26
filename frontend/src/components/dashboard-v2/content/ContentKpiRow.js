@@ -1,7 +1,7 @@
 /**
  * ContentKpiRow - B0KlA KPI 카드 행
  * mindgarden-design-system.pen B0KlA kpiRow 스펙
- * Dashboard KPI Zone pilot: 좌측 악센트 바 + 선택적 스파크라인
+ * Dashboard KPI Zone pilot: 선택적 스파크라인 (장식용 좌측 레일 없음)
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -95,7 +95,6 @@ const ContentKpiRow = ({ items = [], loading = false, className = '', ariaLabel 
               className={`${cardClassName} mg-v2-content-kpi-card--clickable-split`}
               role="listitem"
             >
-              <div className="mg-v2-content-kpi-card__accent" aria-hidden="true" />
               {iconEl}
               <MGButton
                 type="button"
@@ -118,7 +117,6 @@ const ContentKpiRow = ({ items = [], loading = false, className = '', ariaLabel 
         }
         return (
           <div key={item.id || idx} className={cardClassName} role="listitem">
-            <div className="mg-v2-content-kpi-card__accent" aria-hidden="true" />
             {iconEl}
             {infoEl}
           </div>

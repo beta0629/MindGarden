@@ -103,7 +103,7 @@ const PredictionDashboard = ({ clientId }) => {
     return (
         <div className={PREDICTION_CSS.DASHBOARD}>
             <div className={PREDICTION_CSS.DASHBOARD_HEADER}>
-                <h2>📊 예측 기반 경과 모니터링</h2>
+                <h2>예측 기반 경과 모니터링</h2>
                 <MGButton
                     className={buildErpMgButtonClassName({
                         variant: 'secondary',

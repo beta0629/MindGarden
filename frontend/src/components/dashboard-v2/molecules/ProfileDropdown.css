@@ -44,7 +44,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
-  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -124,7 +124,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
   margin: 0 0 4px 0;
   width: 100%;
   max-width: 100%;
@@ -165,13 +165,13 @@
 }
 
 .mg-v2-badge-role--consultant {
-  background-color: #6B7F72;
-  color: var(--mg-white);
+  background-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-inverse);
 }
 
 .mg-v2-badge-role--client {
-  background-color: #8B7355;
-  color: var(--mg-white);
+  background-color: var(--mg-v2-color-secondary-main);
+  color: var(--mg-v2-color-text-inverse);
 }
 
 .mg-v2-badge-role--staff {
@@ -195,7 +195,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
   width: 100%;
   text-align: left;
   background: none;
@@ -203,11 +203,12 @@
 }
 
 .mg-v2-profile-menu-item:hover {
-  background-color: var(--mg-color-background-main, var(--mg-color-background-main));
+  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
 }
 
 .mg-v2-profile-menu-item svg {
-  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
   flex-shrink: 0;
 }
 
@@ -235,6 +236,23 @@
   box-shadow: none;
 }
 
+[data-theme="dark"] .mg-v2-profile-trigger:hover,
+[data-theme="dark"] .mg-v2-profile-trigger.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+}
+
+[data-theme="dark"] .mg-v2-profile-trigger:hover .mg-v2-profile-trigger__name,
+[data-theme="dark"] .mg-v2-profile-trigger.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) .mg-v2-profile-trigger__name {
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+}
+
+[data-theme="dark"] .mg-v2-profile-menu-item:hover,
+[data-theme="dark"] .mg-v2-profile-menu-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+}
+
 .mg-v2-profile-trigger.mg-button .mg-button__text {
   display: flex;
   align-items: center;
@@ -251,10 +269,10 @@
 }
 
 .mg-v2-profile-menu-item.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-color-background-main, var(--mg-color-background-main));
+  background-color: var(--mg-color-bg-hover, var(--mg-v2-color-state-hover));
   transform: none;
   box-shadow: none;
-  color: inherit;
+  color: var(--mg-color-text-main, var(--mg-v2-color-text-primary));
 }
 
 .mg-v2-profile-menu-item.mg-button .mg-button__text {

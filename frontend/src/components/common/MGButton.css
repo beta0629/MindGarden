@@ -1,43 +1,47 @@
 /* MG Button — B0KlA/아토믹 디자인 (MG_BUTTON_B0KLA_ATOMIC_SPEC)
- * SSOT: 동일 size → 모든 variant 동일 제어 높이.
- * - height + border-box + border-width 1px 고정 (outline/solid 높이 차이 방지)
- * - vertical padding 0 (clinic-OS --mg-v2-component-padding-* / --button-padding-*)
+ * SSOT: 동일 size → 모든 variant 동일 제어 높이 (ActionBar box model 이식).
+ * - height = min-height = max-height + border-box + border-width 1px 고정
+ * - vertical padding 0 (clinic-OS --button-padding-*)
  * - variant는 색·fill·border-color만 변경
+ * - box model은 !important로 mindgarden-design-system / mg-v2 캐스케이드 차단
  */
 
 .mg-button {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-width: 1px;
-  border-style: solid;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  border-width: 1px !important;
+  border-style: solid !important;
   border-color: transparent;
   border-radius: var(--mg-button-radius, 10px);
   font-family: var(--font-family-base, inherit);
   font-weight: var(--cs-font-medium);
-  line-height: 1;
+  line-height: 1 !important;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
   user-select: none;
   outline: none;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   min-width: fit-content;
   overflow: hidden;
-  vertical-align: middle;
+  transform: none !important;
 }
 
 .mg-button:focus-visible {
-  outline: 2px solid var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
 }
 
 .mg-button.mg-button--disabled {
   cursor: not-allowed;
   background-color: var(--cs-secondary-100) !important;
   color: var(--cs-secondary-400) !important;
-  border: 1px solid var(--cs-secondary-300) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--cs-secondary-300) !important;
   opacity: 1;
   pointer-events: none;
   box-shadow: none !important;
@@ -49,6 +53,8 @@
   background-color: var(--mg-color-primary-solid, var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg))) !important;
   opacity: 0.6;
   color: var(--mg-color-text-on-primary, var(--mg-white)) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
   border-color: transparent !important;
   pointer-events: none;
   box-shadow: none !important;
@@ -59,62 +65,74 @@
   width: 100%;
 }
 
-/* Size — §4: height/min-height + 수평 padding만. vertical은 0(토큰).
- * Label type: clinic-OS 4-step body-md only (size changes height, not type). */
+/* Size — ActionBar와 동일: height/min/max 고정, 수평 padding만, line-height 1 */
 .mg-button--small {
-  height: var(--button-height-sm);
-  min-height: var(--button-height-sm);
-  padding: var(--button-padding-sm);
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  padding: var(--button-padding-sm) !important;
   font-size: var(--mg-v2-font-size-body-md);
+  line-height: 1 !important;
+  box-sizing: border-box !important;
 }
 
 .mg-button--medium {
-  height: var(--button-height-default);
-  min-height: var(--button-height-default);
-  padding: var(--button-padding-default);
+  height: var(--button-height-default) !important;
+  min-height: var(--button-height-default) !important;
+  max-height: var(--button-height-default) !important;
+  padding: var(--button-padding-default) !important;
   font-size: var(--mg-v2-font-size-body-md);
+  line-height: 1 !important;
+  box-sizing: border-box !important;
 }
 
 .mg-button--large {
-  height: var(--button-height-lg);
-  min-height: var(--button-height-lg);
-  padding: var(--button-padding-lg);
+  height: var(--button-height-lg) !important;
+  min-height: var(--button-height-lg) !important;
+  max-height: var(--button-height-lg) !important;
+  padding: var(--button-padding-lg) !important;
   font-size: var(--mg-v2-font-size-body-md);
+  line-height: 1 !important;
+  box-sizing: border-box !important;
 }
 
 /*
  * buildErpMgButtonClassName이 붙이는 .mg-v2-button / .mg-v2-button-* 가
- * padding·min-height·border-width를 덮어쓰지 않도록 size 계약을 특이도로 고정.
+ * padding·height·border-width를 덮어쓰지 않도록 size 계약을 특이도로 고정.
  */
 .mg-button.mg-v2-button {
-  box-sizing: border-box;
-  border-width: 1px;
-  border-style: solid;
-  line-height: 1;
+  box-sizing: border-box !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  line-height: 1 !important;
+  transform: none !important;
 }
 
 .mg-button.mg-v2-button.mg-button--small {
-  height: var(--button-height-sm);
-  min-height: var(--button-height-sm);
-  padding: var(--button-padding-sm);
+  height: var(--button-height-sm) !important;
+  min-height: var(--button-height-sm) !important;
+  max-height: var(--button-height-sm) !important;
+  padding: var(--button-padding-sm) !important;
   font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-button.mg-v2-button.mg-button--medium {
-  height: var(--button-height-default);
-  min-height: var(--button-height-default);
-  padding: var(--button-padding-default);
+  height: var(--button-height-default) !important;
+  min-height: var(--button-height-default) !important;
+  max-height: var(--button-height-default) !important;
+  padding: var(--button-padding-default) !important;
   font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-button.mg-v2-button.mg-button--large {
-  height: var(--button-height-lg);
-  min-height: var(--button-height-lg);
-  padding: var(--button-padding-lg);
+  height: var(--button-height-lg) !important;
+  min-height: var(--button-height-lg) !important;
+  max-height: var(--button-height-lg) !important;
+  padding: var(--button-padding-lg) !important;
   font-size: var(--mg-v2-font-size-body-md);
 }
 
-/* Variants — 색·fill만 다름. border-width는 항상 1px(베이스). */
+/* Variants — 색·fill·border-color만. border-width는 항상 1px(베이스). */
 .mg-button--primary {
   background-color: var(--mg-color-primary-solid, var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg)));
   color: var(--mg-color-text-on-primary, var(--mg-white));
@@ -125,11 +143,9 @@
   background-color: var(--mg-color-primary-dark, var(--mg-v2-color-primary-dark));
   color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
-  transform: translateY(-1px);
 }
 
 .mg-button--primary:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }
 
@@ -143,11 +159,9 @@
   background-color: var(--mg-color-secondary-light, var(--cs-secondary-600));
   color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
-  transform: translateY(-1px);
 }
 
 .mg-button--secondary:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }
 
@@ -161,11 +175,9 @@
   background-color: var(--cs-success-600);
   color: var(--mg-white);
   box-shadow: var(--cs-shadow-soft);
-  transform: translateY(-1px);
 }
 
 .mg-button--success:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }
 
@@ -179,11 +191,9 @@
   background-color: var(--cs-error-600);
   color: var(--mg-white);
   box-shadow: var(--cs-shadow-soft);
-  transform: translateY(-1px);
 }
 
 .mg-button--danger:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }
 
@@ -197,11 +207,9 @@
   background-color: var(--cs-warning-600);
   color: var(--mg-white);
   box-shadow: var(--cs-shadow-soft);
-  transform: translateY(-1px);
 }
 
 .mg-button--warning:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }
 
@@ -215,11 +223,9 @@
   background-color: var(--mg-color-primary-dark, var(--mg-v2-color-primary-dark));
   color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
-  transform: translateY(-1px);
 }
 
 .mg-button--info:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }
 
@@ -229,16 +235,16 @@
   border-color: var(--mg-color-border-main, var(--mg-layout-header-border));
 }
 
-/* 레거시 .mg-v2-button-outline(2px) 등이 border-width를 키우지 못하도록 */
+/* 레거시 .mg-v2-button-outline(2px) / border:none 이 와도 1px solid 유지 */
 .mg-button.mg-button--outline,
 .mg-button.mg-v2-button-outline,
 .mg-button.mg-v2-button.mg-v2-button-outline {
-  border-width: 1px;
-  border-style: solid;
+  border-width: 1px !important;
+  border-style: solid !important;
 }
 
 /*
- * Solid variants — 레거시 .mg-v2-button-* { border: none } 이 와도
+ * Solid variants — 레거시 .mg-v2-button-* { border: none } / mindgarden border:none 이 와도
  * border-width 1px 유지(transparent OK). outline과 동일 제어 높이.
  * border: none 금지(shorthand가 width를 0으로 리셋함).
  */
@@ -248,6 +254,8 @@
 .mg-button.mg-button--danger,
 .mg-button.mg-button--warning,
 .mg-button.mg-button--info,
+.mg-button.mg-button--ghost,
+.mg-button.mg-button--progress,
 .mg-button.mg-v2-button-primary,
 .mg-button.mg-v2-button-secondary,
 .mg-button.mg-v2-button-success,
@@ -266,15 +274,14 @@
 .mg-button.mg-v2-button.mg-v2-button-danger,
 .mg-button.mg-v2-button.mg-v2-button-warning,
 .mg-button.mg-v2-button.mg-v2-button-info {
-  border-width: 1px;
-  border-style: solid;
+  border-width: 1px !important;
+  border-style: solid !important;
 }
 
 .mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background-color: var(--mg-color-primary-solid, var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg)));
   color: var(--mg-color-text-on-primary, var(--mg-white));
   box-shadow: var(--cs-shadow-soft);
-  transform: translateY(-1px);
 }
 
 /* Dark: outline hover must not fill light teal + white (~2.81:1 FAIL) */
@@ -292,7 +299,6 @@
 }
 
 .mg-button--outline:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }
 
@@ -306,11 +312,9 @@
   background-color: var(--ad-b0kla-bg, var(--mg-color-background-sub));
   color: var(--ad-b0kla-title-color, var(--mg-color-text-main));
   box-shadow: none;
-  transform: none;
 }
 
 .mg-button--ghost:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: none;
   box-shadow: none;
 }
 
@@ -323,11 +327,9 @@
 
 .mg-button--progress:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   box-shadow: var(--cs-shadow-soft);
-  transform: translateY(-1px);
 }
 
 .mg-button--progress:active:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: translateY(0);
   box-shadow: var(--cs-shadow-xs);
 }
 
@@ -410,25 +412,28 @@
 @media (max-width: 768px) {
   .mg-button--small,
   .mg-button.mg-v2-button.mg-button--small {
-    padding: var(--button-padding-sm);
+    padding: var(--button-padding-sm) !important;
     font-size: var(--mg-v2-font-size-body-md);
-    height: var(--button-height-sm);
-    min-height: var(--button-height-sm);
+    height: var(--button-height-sm) !important;
+    min-height: var(--button-height-sm) !important;
+    max-height: var(--button-height-sm) !important;
   }
 
   .mg-button--medium,
   .mg-button.mg-v2-button.mg-button--medium {
-    padding: var(--button-padding-default);
+    padding: var(--button-padding-default) !important;
     font-size: var(--mg-v2-font-size-body-md);
-    height: var(--button-height-default);
-    min-height: var(--button-height-default);
+    height: var(--button-height-default) !important;
+    min-height: var(--button-height-default) !important;
+    max-height: var(--button-height-default) !important;
   }
 
   .mg-button--large,
   .mg-button.mg-v2-button.mg-button--large {
-    padding: var(--button-padding-lg);
+    padding: var(--button-padding-lg) !important;
     font-size: var(--mg-v2-font-size-body-md);
-    height: var(--button-height-lg);
-    min-height: var(--button-height-lg);
+    height: var(--button-height-lg) !important;
+    min-height: var(--button-height-lg) !important;
+    max-height: var(--button-height-lg) !important;
   }
 }

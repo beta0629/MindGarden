@@ -41,6 +41,19 @@ const getInitialExpandedKey = (items, pathname) => {
   return group ? getLnbItemKey(group) : null;
 };
 
+/** 그룹 본인 또는 하위가 현재 경로면 그룹 헤드 활성 */
+const isGroupPathActive = (item, pathname) => {
+  if (!item) {
+    return false;
+  }
+  if (pathname === item.to || pathname.startsWith(`${item.to}/`)) {
+    return true;
+  }
+  return (item.children || []).some(
+    (sub) => pathname === sub.to || pathname.startsWith(`${sub.to}/`)
+  );
+};
+
 const sublistId = (prefix, itemKey) =>
   `${prefix}-sublist-${String(itemKey).replaceAll('/', '-').replace(/^-/, '')}`;
 
@@ -92,22 +105,13 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
               return hasChildren(item) ? (
                 <li
                   key={itemKey}
-                  className={`mg-v2-mobile-lnb-drawer__group ${expandedGroupKey === itemKey ? 'mg-v2-mobile-lnb-drawer__group--expanded' : ''}`}
+                  className={`mg-v2-mobile-lnb-drawer__group ${expandedGroupKey === itemKey ? 'mg-v2-mobile-lnb-drawer__group--expanded' : ''} ${isGroupPathActive(item, pathname) ? 'mg-v2-mobile-lnb-drawer__group--active' : ''}`}
                 >
                   <div className="mg-v2-mobile-lnb-drawer__group-head">
-                    <MGButton
+                    <button
                       type="button"
-                      variant="outline"
-                      size="small"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'sm',
-                        loading: false,
-                        className: 'mg-v2-mobile-lnb-drawer__group-chevron'
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      className="mg-v2-mobile-lnb-drawer__group-chevron"
                       onClick={(e) => handleGroupToggle(e, itemKey)}
-                      preventDoubleClick={false}
                       aria-expanded={expandedGroupKey === itemKey}
                       aria-controls={sublistId('mg-v2-mobile-lnb', itemKey)}
                       aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === itemKey ? '접기' : '펼치기'}`}
@@ -117,7 +121,7 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '시�
                       ) : (
                         <Icon name="CHEVRON_RIGHT" size="MD" color="TRANSPARENT" aria-hidden />
                       )}
-                    </MGButton>
+                    </button>
                     <NavLinkWithRouter
                       to={item.to}
                       icon={item.icon}

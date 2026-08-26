@@ -38,6 +38,7 @@ describe('ProfileDropdown', () => {
   };
 
   const sessionInfoWithRemaining = {
+    isAuthenticated: true,
     maxInactiveInterval: 3600,
     lastAccessedTime: Date.now(),
     serverNow: Date.now()

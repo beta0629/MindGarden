@@ -248,41 +248,40 @@
    표준 카드 스타일
    ============================================ */
 
-/* 기본 카드 */
+/* 기본 카드 — ContentCard / B0KlA 섹션 크롬과 동일 토큰 */
 .mg-card {
   position: relative;
-  background: var(--color-white, var(--mg-white));
-  border: 1px solid var(--cs-secondary-200, #e5e7eb);
-  border-radius: var(--border-radius-lg, 0.75rem);
-  box-shadow: 0 1px 3px var(--mg-shadow-light), 0 1px 2px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-v2-color-border-default, var(--cs-secondary-200)));
+  border-radius: var(--ad-b0kla-radius, var(--mg-v2-radius-lg, var(--border-radius-lg, 0.75rem)));
+  box-shadow: var(--ad-b0kla-shadow, var(--mg-shadow-sm));
+  transition: box-shadow 0.2s ease;
   overflow: hidden;
 }
 
 /* 카드 변형 */
 .mg-card--default {
-  background: var(--color-white, var(--mg-white));
-  border-color: var(--cs-secondary-200, #e5e7eb);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
+  border-color: var(--ad-b0kla-border, var(--mg-v2-color-border-default));
 }
 
 .mg-card--elevated {
-  background: var(--color-white, var(--mg-white));
-  border-color: transparent;
-  box-shadow: 0 10px 15px -3px var(--mg-shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
+  border-color: var(--ad-b0kla-border, var(--mg-v2-color-border-default));
+  box-shadow: var(--ad-b0kla-shadow, var(--mg-shadow-md));
 }
 
 .mg-card--outlined {
   background: transparent;
-  border-width: 2px;
-  border-color: var(--cs-secondary-300, #d1d5db);
+  border-width: 1px;
+  border-color: var(--ad-b0kla-border, var(--mg-v2-color-border-default));
   box-shadow: none;
 }
 
 .mg-card--glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px var(--mg-shadow-light);
+  background: var(--ad-b0kla-card-bg, var(--mg-v2-color-surface-card, var(--mg-white)));
+  border: 1px solid var(--ad-b0kla-border, var(--mg-v2-color-border-default));
+  box-shadow: var(--ad-b0kla-shadow, var(--mg-shadow-sm));
 }
 
 /* 카드 패딩 */

@@ -59,26 +59,27 @@
   width: 100%;
 }
 
-/* Size — §4: height/min-height + 수평 padding만. vertical은 0(토큰). */
+/* Size — §4: height/min-height + 수평 padding만. vertical은 0(토큰).
+ * Label type: clinic-OS 4-step body-md only (size changes height, not type). */
 .mg-button--small {
   height: var(--button-height-sm);
   min-height: var(--button-height-sm);
   padding: var(--button-padding-sm);
-  font-size: var(--cs-text-sm);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-button--medium {
   height: var(--button-height-default);
   min-height: var(--button-height-default);
   padding: var(--button-padding-default);
-  font-size: var(--cs-text-md);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-button--large {
   height: var(--button-height-lg);
   min-height: var(--button-height-lg);
   padding: var(--button-padding-lg);
-  font-size: var(--cs-text-lg);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 /*
@@ -96,21 +97,21 @@
   height: var(--button-height-sm);
   min-height: var(--button-height-sm);
   padding: var(--button-padding-sm);
-  font-size: var(--cs-text-sm);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-button.mg-v2-button.mg-button--medium {
   height: var(--button-height-default);
   min-height: var(--button-height-default);
   padding: var(--button-padding-default);
-  font-size: var(--cs-text-md);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-button.mg-v2-button.mg-button--large {
   height: var(--button-height-lg);
   min-height: var(--button-height-lg);
   padding: var(--button-padding-lg);
-  font-size: var(--cs-text-lg);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 /* Variants — 색·fill만 다름. border-width는 항상 1px(베이스). */
@@ -358,12 +359,12 @@
   flex-direction: row-reverse;
 }
 
-/* 반응형 — 높이는 size 토큰 유지, 폰트만 축소 (vertical padding 변경 금지) */
+/* 반응형 — 높이는 size 토큰 유지, 라벨은 body-md 고정 (vertical padding 변경 금지) */
 @media (max-width: 768px) {
   .mg-button--small,
   .mg-button.mg-v2-button.mg-button--small {
     padding: var(--button-padding-sm);
-    font-size: var(--cs-text-xs);
+    font-size: var(--mg-v2-font-size-body-md);
     height: var(--button-height-sm);
     min-height: var(--button-height-sm);
   }
@@ -371,7 +372,7 @@
   .mg-button--medium,
   .mg-button.mg-v2-button.mg-button--medium {
     padding: var(--button-padding-default);
-    font-size: var(--cs-text-sm);
+    font-size: var(--mg-v2-font-size-body-md);
     height: var(--button-height-default);
     min-height: var(--button-height-default);
   }
@@ -379,7 +380,7 @@
   .mg-button--large,
   .mg-button.mg-v2-button.mg-button--large {
     padding: var(--button-padding-lg);
-    font-size: var(--cs-text-md);
+    font-size: var(--mg-v2-font-size-body-md);
     height: var(--button-height-lg);
     min-height: var(--button-height-lg);
   }

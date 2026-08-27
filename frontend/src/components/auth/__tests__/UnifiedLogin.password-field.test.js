@@ -34,6 +34,17 @@ describe('UnifiedLogin 정적 계약 — password field mobile layout', () => {
   });
 
   test('UnifiedLogin.css contains padding-right rule for password input.', () => {
-    expect(cssSource).toMatch(/\.mg-v2-password-wrapper\s+\.mg-v2-input[\s\S]*?padding-right:\s*48px/);
+    expect(cssSource).toMatch(
+      /\.mg-v2-login-container\s+\.mg-v2-password-wrapper\s+\.mg-v2-input[\s\S]*?padding-right:\s*48px/
+    );
+  });
+
+  test('UnifiedLogin.css login inputs use auto height and touch-friendly min-height.', () => {
+    expect(cssSource).toMatch(
+      /\.mg-v2-login-container\s+\.mg-v2-input\s*\{[\s\S]*?height:\s*auto;[\s\S]*?min-height:\s*44px;/
+    );
+    expect(cssSource).toMatch(
+      /\.mg-v2-login-container\s+\.mg-v2-input\s*\{[\s\S]*?padding-top:\s*11px;[\s\S]*?padding-bottom:\s*11px;/
+    );
   });
 });

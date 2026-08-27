@@ -415,19 +415,44 @@
 
 .mg-v2-password-wrapper {
   position: relative;
-  display: flex;
-  align-items: center;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-v2-password-wrapper .mg-v2-input {
+  display: block;
+  width: 100%;
+  padding-right: 48px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .mg-v2-password-toggle {
   position: absolute;
+  top: 50%;
   right: 12px;
-  background: none;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
   border: none;
+  box-shadow: none;
   cursor: pointer;
-  padding: 4px;
-  font-size: 16px;
   color: var(--mg-text-secondary, var(--mg-gray-600));
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-v2-password-toggle:focus-visible {
+  outline: 2px solid var(--mg-v2-color-border-focus, var(--mg-primary-color));
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* 버튼 */
@@ -772,6 +797,10 @@
 @media (max-width: 767px) {
   .mg-v2-login-container {
     flex-direction: column;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   .mg-v2-login-hero {
@@ -797,9 +826,18 @@
     padding: 24px;
     align-items: flex-start;
     padding-top: 40px;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .mg-v2-login-form-wrapper {
     max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .mg-v2-login-container .mg-v2-input {
+    font-size: 16px;
   }
 }

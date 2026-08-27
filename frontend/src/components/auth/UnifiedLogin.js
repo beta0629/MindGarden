@@ -978,18 +978,14 @@ const UnifiedLogin = () => {
                     placeholder={t('auth:unifiedLogin.passwordPlaceholder')}
                     required
                   />
-                  <MGButton
+                  <button
                     type="button"
-                    variant="outline"
-                    size="small"
+                    className="mg-v2-password-toggle"
                     onClick={togglePassword}
-                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    preventDoubleClick={false}
                     aria-label={showPassword ? t('auth:common.passwordHide') : t('auth:common.passwordShow')}
                   >
                     {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
-                  </MGButton>
+                  </button>
                 </div>
               </div>
 

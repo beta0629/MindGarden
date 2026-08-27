@@ -6,7 +6,6 @@
  */
 
 import PropTypes from 'prop-types';
-import MGButton from '../../../common/MGButton';
 import {
   FM_FILTER,
   FM_FILTER_TX_TYPE_OPTIONS,
@@ -14,7 +13,6 @@ import {
   FM_LEDGER_VIEW_OPTIONS,
   FM_LEDGER_VIEW_ARIA
 } from '../../../../constants/financialManagementStrings';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
 /**
  * @param {object} props
@@ -75,25 +73,25 @@ const LedgerInlineFilter = ({ filters, onFiltersChange, viewMode, onViewModeChan
       </div>
     </div>
     <div className="operator-ledger-view-toggle" role="group" aria-label={FM_LEDGER_VIEW_ARIA}>
-      {FM_LEDGER_VIEW_OPTIONS.map((opt) => (
-        <MGButton
-          key={opt.value}
-          type="button"
-          variant={viewMode === opt.value ? 'primary' : 'outline'}
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: viewMode === opt.value ? 'primary' : 'outline',
-            size: 'sm',
-            loading: false
-          })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={() => onViewModeChange(opt.value)}
-          aria-pressed={viewMode === opt.value}
-          preventDoubleClick={false}
-        >
-          {opt.label}
-        </MGButton>
-      ))}
+      {FM_LEDGER_VIEW_OPTIONS.map((opt) => {
+        const isActive = viewMode === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            className={[
+              'operator-ledger-view-toggle__seg',
+              isActive
+                ? 'operator-ledger-view-toggle__seg--active'
+                : 'operator-ledger-view-toggle__seg--inactive'
+            ].join(' ')}
+            onClick={() => onViewModeChange(opt.value)}
+            aria-pressed={isActive}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   </div>
 );

@@ -33,6 +33,7 @@ jobs:
           port: 22
           source: "scripts/server-management/ssl/ensure-auto-renewal.sh"
           target: "/tmp/"
+          strip_components: 3
 
       - name: 🔍 개발 서버 SSL 점검
         if: inputs.target == 'dev'
@@ -54,6 +55,7 @@ jobs:
           port: 22
           source: "scripts/server-management/ssl/ensure-auto-renewal.sh"
           target: "/tmp/"
+          strip_components: 3
 
       - name: 🔍 운영 서버 SSL 점검
         if: inputs.target == 'prod'

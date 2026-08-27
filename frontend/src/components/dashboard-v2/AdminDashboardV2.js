@@ -1150,7 +1150,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           <Calendar size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
         </MGButton>
         <EntityRowActions
-          layout={ENTITY_ROW_ACTIONS_LAYOUT.CORNER}
+          layout={ENTITY_ROW_ACTIONS_LAYOUT.CARD}
           ariaLabel={t('common:dashboard-v2.AdminDashboardV2.t_header_overflow', {
             defaultValue: '대시보드 추가 작업'
           })}

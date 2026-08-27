@@ -16,6 +16,13 @@ import './TenantHeaderCluster.css';
 
 const PROFILE_MENU_TRIGGER_ARIA_LABEL = '프로필 메뉴';
 
+const handleMenuTriggerKeyDown = (event, onToggle) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    onToggle();
+  }
+};
+
 const TenantHeaderCluster = ({
   userName,
   avatarImageUrl,
@@ -39,18 +46,21 @@ const TenantHeaderCluster = ({
           />
         </div>
       </div>
-      <button
+      <span
         ref={triggerRef}
-        type="button"
+        role="button"
+        tabIndex={0}
         className="mg-v2-tenant-header-cluster__menu-trigger"
+        data-gnb-chrome-free="true"
         aria-label={PROFILE_MENU_TRIGGER_ARIA_LABEL}
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-controls={panelId}
         onClick={onToggle}
+        onKeyDown={(event) => handleMenuTriggerKeyDown(event, onToggle)}
       >
         <ChevronDown size={ICON_SIZES.MD} strokeWidth={2} aria-hidden="true" />
-      </button>
+      </span>
     </div>
   );
 };

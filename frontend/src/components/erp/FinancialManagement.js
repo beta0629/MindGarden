@@ -22,7 +22,6 @@ import FinancialTransactionForm from './FinancialTransactionForm';
 import { ERP_API } from '../../constants/api';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea } from '../dashboard-v2/content';
-import FinancialCalendarView from './FinancialCalendarView';
 import ErpPageShell from './shell/ErpPageShell';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { ErpSafeText, useErpSilentRefresh } from './common';
@@ -51,6 +50,7 @@ import {
   LedgerSummaryStrip,
   LedgerInlineFilter,
   LedgerTable,
+  LedgerCalendar,
   TaxDisclosureSection,
   MoneyRecordModal
 } from './financial/ledger';
@@ -173,6 +173,7 @@ const FinancialManagement = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, transaction: null });
   const [editModal, setEditModal] = useState({ open: false, transaction: null });
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
 
   const [summary, setSummary] = useState({
     totalIncome: 0,
@@ -504,6 +505,7 @@ const FinancialManagement = () => {
       } else {
         notificationManager.success(FM_TOAST.DELETE_SUCCESS);
         setDeleteModal({ isOpen: false, transaction: null });
+        setCalendarRefreshKey((n) => n + 1);
         loadData({ silent: true });
       }
     } catch (err) {
@@ -514,6 +516,11 @@ const FinancialManagement = () => {
   };
 
   const hasSearch = Boolean(filters.searchText && filters.searchText.trim());
+
+  const refreshLedgerViews = useCallback(() => {
+    setCalendarRefreshKey((n) => n + 1);
+    loadData({ silent: true });
+  }, [loadData]);
 
   const forbiddenEqualTabsVisible = useMemo(() => {
     // Guard for tests: default view must not surface accountant equal tabs
@@ -592,22 +599,24 @@ const FinancialManagement = () => {
             {/* Explicit: no 차변/대변/대차대조표 equal tabs in default view */}
             {!forbiddenEqualTabsVisible && mainView === FM_LEDGER_VIEW.TABLE && (
               <>
-                {loading && !silentListRefreshing ? (
-                  <UnifiedLoading type="inline" text={FM_SESSION.LOADING} />
-                ) : (
-                  <LedgerTable
-                    transactions={transactions}
-                    loading={loading}
-                    hasSearch={hasSearch}
-                    onRecordClick={() => setShowMoneyRecord(true)}
-                    onView={(tx) => {
-                      setSelectedTransaction(tx);
-                      setShowDetailModal(true);
-                    }}
-                    onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
-                    onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
-                  />
-                )}
+                <div className="operator-ledger-stage" data-testid="operator-ledger-stage">
+                  {loading && !silentListRefreshing ? (
+                    <UnifiedLoading type="inline" text={FM_SESSION.LOADING} />
+                  ) : (
+                    <LedgerTable
+                      transactions={transactions}
+                      loading={loading}
+                      hasSearch={hasSearch}
+                      onRecordClick={() => setShowMoneyRecord(true)}
+                      onView={(tx) => {
+                        setSelectedTransaction(tx);
+                        setShowDetailModal(true);
+                      }}
+                      onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
+                      onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                    />
+                  )}
+                </div>
                 {pagination.totalPages > 1 && (
                   <nav className="operator-ledger-pagination" aria-label={FM_PAGINATION.NEXT}>
                     <ul className="pagination">
@@ -656,7 +665,21 @@ const FinancialManagement = () => {
             )}
 
             {mainView === FM_LEDGER_VIEW.CALENDAR && (
-              <FinancialCalendarView />
+              <div className="operator-ledger-stage" data-testid="operator-ledger-stage">
+                <LedgerCalendar
+                  monthYm={filters.monthYm}
+                  transactionType={filters.transactionType}
+                  category={filters.category}
+                  searchText={filters.searchText}
+                  refreshKey={calendarRefreshKey}
+                  onView={(tx) => {
+                    setSelectedTransaction(tx);
+                    setShowDetailModal(true);
+                  }}
+                  onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
+                  onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                />
+              </div>
             )}
 
             <TaxDisclosureSection />
@@ -667,7 +690,7 @@ const FinancialManagement = () => {
       <MoneyRecordModal
         isOpen={showMoneyRecord}
         onClose={() => setShowMoneyRecord(false)}
-        onSuccess={() => loadData({ silent: true })}
+        onSuccess={refreshLedgerViews}
       />
 
       {showDetailModal && selectedTransaction && (
@@ -784,6 +807,7 @@ const FinancialManagement = () => {
           initialTransaction={editModal.transaction}
           onClose={() => setEditModal({ open: false, transaction: null })}
           onSuccess={() => {
+            setCalendarRefreshKey((n) => n + 1);
             loadData({ silent: true });
             setEditModal({ open: false, transaction: null });
           }}

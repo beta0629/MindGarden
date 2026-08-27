@@ -132,7 +132,7 @@
 .operator-ledger-toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--mg-v2-space-4);
   width: 100%;
@@ -141,7 +141,7 @@
 .operator-ledger-toolbar__filters {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--mg-v2-space-3);
   flex: 1 1 auto;
 }
@@ -185,13 +185,29 @@
   border-radius: var(--mg-v2-radius-md, 0.5rem);
 }
 
+/* ——— Shared main stage (table OR calendar) ——— */
+.operator-ledger-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 36rem;
+  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-lg, 0.75rem);
+  background: var(--mg-v2-color-neutral-50);
+  overflow: hidden;
+}
+
 /* ——— Ledger table ——— */
 .operator-ledger-table-wrap {
   width: 100%;
   overflow-x: auto;
-  border: 0.0625rem solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg, 0.75rem);
-  background: var(--mg-v2-color-neutral-50);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.operator-ledger-stage .operator-ledger-empty {
+  flex: 1 1 auto;
 }
 
 .operator-ledger-table {

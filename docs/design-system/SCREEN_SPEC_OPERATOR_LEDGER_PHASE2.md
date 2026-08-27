@@ -161,10 +161,12 @@ Phase 1에서 `/erp/dashboard`를 운영자 전용 **머니 콕핏(Money Cockpit
   - 구분선: 1px solid `var(--mg-v2-color-neutral-300)`
   - Empty State: `해당 기간에 등록된 내역이 없습니다.` (`EmptyState` 컴포넌트, 이모지 없음)
 
-#### 3.3.3 달력 뷰 토글 시 (`FinancialCalendarView`)
-- 뷰 토글에서 `달력` 선택 시 테이블 영역이 `FinancialCalendarView`로 전환된다.
-- 일자별 들어온 돈(녹색 톤/티일), 나간 돈(슬레이트 톤)의 일간 합계 칩이 캘린더 셀 내에 표시된다.
-- 날짜 클릭 시 해당 날짜의 상세 내역 리스트 팝오버 또는 하단 바가 표시된다.
+#### 3.3.3 달력 뷰 토글 시 (`LedgerCalendar`)
+- 테이블·달력은 동일 `.operator-ledger-stage` 카드 지오메트리(테두리·radius·배경·`min-height: 36rem`)를 공유한다. 이중 크롬·독립 KPI·내부 월 네비 금지.
+- `monthYm`은 페이지 기간 필터가 SSOT. 달력은 해당 월만 `size: 1000`으로 별도 fetch(테이블 페이지네이션과 분리).
+- 셀: 좌상단 일자 번호 + 최대 2줄 `formatKrw`(들어온 `+` primary / 나간 `−` text-primary). 모바일은 점(dot)만.
+- 일자 클릭 시 같은 stage 안(하단 또는 wide desktop 우측)에 당일 목록. 빈 날: `이 날짜에 등록된 내역이 없습니다.`
+- `올해` 기간이어도 히트맵이 아니라 `monthYm` 한 달 그리드.
 
 ---
 
@@ -347,6 +349,7 @@ Phase 1에서 `/erp/dashboard`를 운영자 전용 **머니 콕핏(Money Cockpit
 | **Organism** | `LedgerQuietHeader` | 제목 + 기간 세그먼트 + `돈 기록` CTA 결합 헤더 |
 | **Organism** | `LedgerSummaryStrip` | 3개 요약 셀(`들어온 합`, `나간 합`, `남은 돈`) 그리드 스트립 |
 | **Organism** | `LedgerTable` | 일자, 내용, 들어온 금액, 나간 금액 4컬럼 테이블 |
+| **Organism** | `LedgerCalendar` | 공유 stage 월 그리드 + 일자 상세 목록 (`monthYm` SSOT) |
 | **Organism** | `TaxDisclosureSection` | `세무사용 자료` 접이식 섹션 + 재무제표 탭 컨테이너 |
 | **Organism** | `MoneyRecordModal` | `UnifiedModal` 기반 들어온 돈/나간 돈 단일 등록 폼 |
 | **Template/Page**| `OperatorLedgerPage` | `/erp/financial`의 4단 구조 조립 페이지 (`AdminCommonLayout` 내부) |

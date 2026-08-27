@@ -24,19 +24,28 @@ jest.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: jest.fn() }
 }));
 
-jest.mock('../../../../../common/MGButton', () => ({
+jest.mock('../../../../../common/ActionBar', () => ({
   __esModule: true,
-  default: ({ children, onClick, 'aria-label': ariaLabel, disabled, 'data-testid': testId }) => (
-    <button type="button" onClick={onClick} aria-label={ariaLabel} disabled={disabled} data-testid={testId}>
-      {children}
-    </button>
+  default: ({ children, className }) => (
+    <div data-testid="action-bar" className={className}>{children}</div>
   )
 }));
 
-jest.mock('../../../../../erp/common/erpMgButtonProps', () => ({
+jest.mock('../../../../../common/ActionBarButton', () => ({
   __esModule: true,
-  buildErpMgButtonClassName: () => 'mg-erp-mock-btn',
-  ERP_MG_BUTTON_LOADING_TEXT: 'loading...'
+  default: ({ children, onClick, 'aria-label': ariaLabel, disabled, loading, 'data-testid': testId, className }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      data-testid={testId}
+      className={className}
+    >
+      {children}
+    </button>
+  )
 }));
 
 jest.mock('../../../../../common', () => ({

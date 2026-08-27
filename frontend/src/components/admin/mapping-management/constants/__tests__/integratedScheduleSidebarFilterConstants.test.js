@@ -10,7 +10,8 @@ import {
   MAPPING_STATUS_PENDING_PAYMENT,
   MAPPING_STATUS_PAYMENT_CONFIRMED,
   PAYMENT_TIMING_ADVANCE,
-  PAYMENT_TIMING_SAME_DAY_CARD
+  PAYMENT_TIMING_SAME_DAY_CARD,
+  STATUS_FILTER_OPTIONS
 } from '../integratedScheduleSidebarFilterConstants';
 
 describe('integratedScheduleSidebarFilterConstants', () => {
@@ -215,4 +216,27 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(isSameDayCardPending({})).toBe(false);
     });
   });
+
+  describe('STATUS_FILTER_OPTIONS', () => {
+    it('고정 10개 옵션·순서를 유지한다 (사이드바 2열 그리드 계약)', () => {
+      expect(STATUS_FILTER_OPTIONS).toHaveLength(10);
+      expect(STATUS_FILTER_OPTIONS.map((o) => o.value)).toEqual([
+        'ongoing',
+        '',
+        'PENDING_PAYMENT',
+        'PAYMENT_CONFIRMED',
+        'DEPOSIT_PENDING',
+        'ACTIVE',
+        'INACTIVE',
+        'TERMINATED',
+        'SESSIONS_EXHAUSTED',
+        'SUSPENDED'
+      ]);
+      STATUS_FILTER_OPTIONS.forEach((opt) => {
+        expect(typeof opt.label).toBe('string');
+        expect(opt.label.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
 });

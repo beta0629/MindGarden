@@ -33,11 +33,11 @@ describe('scheduleReminderSmsDisplay', () => {
       });
       expect(result).toMatchObject({
         status: 'SENT',
-        label: '발송됨',
+        label: '문자발송됨',
         tooltip: '발송: 14:00',
         statusVariant: 'success'
       });
-      expect(result.ariaLabel).toContain('발송됨');
+      expect(result.ariaLabel).toContain('문자발송됨');
     });
 
     it('maps PENDING with fireAt', () => {

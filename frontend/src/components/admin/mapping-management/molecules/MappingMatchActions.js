@@ -1,5 +1,5 @@
 /**
- * MappingMatchActions — 결제/입금/승인 매칭 액션 (MGButton + ERP 클래스 계약)
+ * MappingMatchActions — 결제/입금/승인 매칭 액션 (ActionBarButton SSOT)
  * openModal·API·navigate는 부모에서 콜백으로만 연결한다.
  *
  * @author CoreSolution
@@ -8,19 +8,16 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import MGButton from '../../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import ActionBarButton from '../../../common/ActionBarButton';
 import { useTranslation } from 'react-i18next';
 import {
   MAPPING_STATUS_PENDING_PAYMENT,
   PAYMENT_TIMING_SAME_DAY_CARD
 } from '../constants/integratedScheduleSidebarFilterConstants';
 
-const BTN_SM = 'sm';
-// R4 v2.0 (디자이너 시안 docs/project-management/2026-05-28/R4_BUTTON_REDESIGN_V2.md, 옵션 A2):
-// 텍스트 링크에서 정식 보조 버튼(풀-width Danger Outline)으로 리디자인.
 // testid 는 RTL 회귀 0 유지를 위해 기존 `mapping-cancel-pending-trigger` 그대로 사용.
 const CANCEL_BUTTON_TEST_ID = 'mapping-cancel-pending-trigger';
+const ACTION_SIZE = 'sm';
 
 const MappingMatchActions = ({
   mapping,
@@ -41,7 +38,7 @@ const MappingMatchActions = ({
   }
 
   const { status, id, paymentTiming } = mapping;
-  const btnExtra = ['mg-v2-mapping-match-actions__btn', buttonClassName].filter(Boolean).join(' ');
+  const btnClassName = ['mg-v2-mapping-match-actions__btn', buttonClassName].filter(Boolean).join(' ');
 
   const isSameDayCardPending = status === MAPPING_STATUS_PENDING_PAYMENT
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
@@ -62,101 +59,72 @@ const MappingMatchActions = ({
   return (
     <div className="mg-v2-mapping-match-actions" data-testid="mapping-match-actions">
       {showCheckoutSameDay && (
-        <MGButton
+        <ActionBarButton
           type="button"
           variant="primary"
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: 'primary',
-            size: BTN_SM,
-            loading: false,
-            className: btnExtra
-          })}
-          loading={false}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          size={ACTION_SIZE}
+          className={btnClassName}
           onClick={() => onCheckoutSameDay(mapping)}
           aria-label={t('admin:mapping.card.actions.checkoutSameDayPayment')}
-          preventDoubleClick={false}
         >
           {t('admin:mapping.card.actions.checkoutSameDayPayment')}
-        </MGButton>
+        </ActionBarButton>
       )}
       {showPayment && (
-        <MGButton
-          type="button"
-          variant="success"
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: 'success',
-            size: BTN_SM,
-            loading: false,
-            className: btnExtra
-          })}
-          loading={false}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={() => onPayment(mapping)}
-          aria-label={t('admin.actions.paymentConfirm')}
-          preventDoubleClick={false}
-        >
-          {t('admin.actions.paymentConfirm')}
-        </MGButton>
-      )}
-      {showDeposit && (
-        <MGButton
+        <ActionBarButton
           type="button"
           variant="primary"
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: 'primary',
-            size: BTN_SM,
-            loading: false,
-            className: btnExtra
-          })}
-          loading={false}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          size={ACTION_SIZE}
+          className={btnClassName}
+          onClick={() => onPayment(mapping)}
+          aria-label={t('admin.actions.paymentConfirm')}
+        >
+          {t('admin.actions.paymentConfirm')}
+        </ActionBarButton>
+      )}
+      {showDeposit && (
+        <ActionBarButton
+          type="button"
+          variant="primary"
+          size={ACTION_SIZE}
+          className={btnClassName}
           onClick={() => onDeposit(mapping)}
           aria-label="입금 확인"
-          preventDoubleClick={false}
         >
           입금 확인
-        </MGButton>
+        </ActionBarButton>
       )}
       {showApprove && (
-        <MGButton
+        <ActionBarButton
           type="button"
-          variant="success"
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: 'success',
-            size: BTN_SM,
-            loading,
-            className: btnExtra
-          })}
+          variant="primary"
+          size={ACTION_SIZE}
+          className={btnClassName}
           disabled={disabled}
           loading={loading}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => onApprove(id)}
           aria-label="승인"
-          preventDoubleClick={false}
         >
           승인
-        </MGButton>
+        </ActionBarButton>
       )}
       {showCancelPending && (
-        <button
+        <ActionBarButton
           type="button"
+          variant="danger"
+          size={ACTION_SIZE}
           className={[
-            'mg-v2-mapping-match-actions__cancel-btn',
+            btnClassName,
             emphasizeCancelDanger ? 'integrated-schedule__action-danger' : ''
           ].filter(Boolean).join(' ')}
           onClick={() => onCancelPendingMapping(mapping)}
           disabled={cancelPendingProcessing}
+          loading={cancelPendingProcessing}
           aria-label={t('admin:mapping.card.actions.cancel')}
-          aria-busy={cancelPendingProcessing}
           data-testid={CANCEL_BUTTON_TEST_ID}
         >
           {t('admin:mapping.card.actions.cancel')}
-        </button>
+        </ActionBarButton>
       )}
     </div>
   );

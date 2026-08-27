@@ -23,15 +23,14 @@
   flex-direction: column;
   gap: var(--mg-spacing-sm);
   min-height: 0;
-  padding-block: var(--mg-spacing-sm);
-  padding-inline: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
   font-size: var(--font-size-sm);
   background-color: var(--mg-color-surface-main);
   border-color: var(--mg-color-border-main);
 }
 
 .integrated-schedule__sidebar .integrated-schedule__card-body {
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   min-height: 0;
   gap: var(--mg-spacing-sm);
@@ -43,7 +42,7 @@
 }
 
 .integrated-schedule__sidebar .integrated-schedule__card-meta {
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
   min-height: 0;
   gap: var(--mg-spacing-xs);
@@ -74,18 +73,41 @@
   width: 100%;
 }
 
-.integrated-schedule__sidebar .mg-v2-card-actions .mg-v2-button,
-.integrated-schedule__sidebar .mg-v2-card-actions .mg-button,
-.integrated-schedule__sidebar .mg-v2-mapping-match-actions .mg-v2-button,
-.integrated-schedule__sidebar .mg-v2-mapping-match-actions .mg-button,
-.integrated-schedule__sidebar .mg-v2-mapping-match-actions__cancel-btn {
+.integrated-schedule__sidebar .mg-v2-card-actions .mg-action-btn,
+.integrated-schedule__sidebar .mg-v2-mapping-match-actions .mg-action-btn,
+.integrated-schedule__sidebar .integrated-schedule__card-actionbar .mg-action-btn {
   width: 100%;
   min-width: 0;
-  min-height: var(--mg-spacing-xl);
-  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
-  font-size: var(--font-size-xs);
-  white-space: nowrap;
   margin: 0;
+}
+
+.integrated-schedule__sidebar .integrated-schedule__card-actionbar.mg-actionbar {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--mg-spacing-sm);
+  width: 100%;
+  padding: 0;
+}
+
+.integrated-schedule__sidebar .integrated-schedule__btn-detail-peek.mg-action-btn {
+  width: auto;
+  align-self: flex-start;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  min-width: 0;
+  padding: 0;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--mg-color-text-secondary);
+  background: transparent;
+}
+
+.integrated-schedule__sidebar .integrated-schedule__btn-detail-peek.mg-action-btn:hover:not(:disabled) {
+  background: transparent;
+  color: var(--mg-color-text-main);
+  text-decoration: underline;
 }
 
 /* Compact 밀도 — 리스트 간격·카드 패딩 축소 */

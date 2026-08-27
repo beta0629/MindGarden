@@ -11,6 +11,20 @@
   min-width: 0;
 }
 
+.integrated-schedule__card-package {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium, 500);
+  line-height: 1.4;
+  color: var(--mg-color-text-secondary);
+}
+
+.integrated-schedule__card-body {
+  padding: 0;
+}
+
 /*
  * R4 v2.0 — 매칭 취소 보조 버튼 (옵션 A2: 풀-width Danger Outline).
  * 디자이너 시안 (R4_BUTTON_REDESIGN_V2.md):

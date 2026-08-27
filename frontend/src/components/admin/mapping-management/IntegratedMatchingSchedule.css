@@ -349,114 +349,86 @@
 }
 
 .integrated-schedule__status-btns {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--mg-spacing-xs);
 }
 
 .integrated-schedule__status-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--mg-spacing-xs);
-  padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
-  min-height: var(--touch-target-min);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: var(--mg-v2-component-height-sm);
+  min-height: var(--mg-v2-component-height-sm);
+  padding: 0 var(--mg-spacing-sm);
+  font-family: inherit;
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--mg-color-text-secondary);
-  background-color: transparent;
-  border: none;
-  border-radius: var(--mg-radius-pill, 9999px);
+  line-height: 1;
+  color: var(--mg-color-text-main);
+  background-color: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .integrated-schedule__status-btn:hover {
-  color: var(--mg-color-text-main);
-  background-color: var(--ad-b0kla-bg, var(--mg-color-background-sub));
+  background-color: var(--mg-color-background-sub);
 }
 
 .integrated-schedule__status-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--ad-b0kla-green-bg, var(--mg-color-primary-light));
+  box-shadow: 0 0 0 2px var(--mg-color-primary-light);
 }
 
-/* B0KlA ghost 필터 칩 — 비선택: muted ghost, 선택: primary subtle 채움 (outline 없음) */
-.mg-v2-ad-b0kla.integrated-schedule .integrated-schedule__status-btn.mg-button.mg-button--ghost.mg-v2-button-ghost:not(.integrated-schedule__status-btn--selected) {
-  background-color: transparent;
-  color: var(--mg-color-text-secondary);
-  border: none;
+.integrated-schedule__status-btn--selected {
+  background-color: var(--mg-color-primary-main);
+  border-color: var(--mg-color-primary-main);
+  color: var(--mg-color-white);
 }
 
-.mg-v2-ad-b0kla.integrated-schedule .integrated-schedule__status-btn.mg-button.mg-button--ghost.mg-v2-button-ghost:not(.integrated-schedule__status-btn--selected):hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  color: var(--mg-color-text-main);
-  background-color: var(--ad-b0kla-bg, var(--mg-color-background-sub));
-  transform: none;
-  box-shadow: none;
+.integrated-schedule__status-btn--selected:hover {
+  background-color: var(--mg-color-primary-main);
+  border-color: var(--mg-color-primary-main);
+  color: var(--mg-color-white);
 }
 
-.integrated-schedule__status-btn.mg-button.mg-button--ghost.mg-v2-button-ghost.integrated-schedule__status-btn--selected {
-  background-color: var(--ad-b0kla-green-bg, color-mix(in srgb, var(--mg-color-primary-main, var(--mg-primary-500)) 14%, var(--mg-white)));
-  color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-700)));
-  border: none;
-}
-
-.integrated-schedule__status-btn.mg-button.mg-button--ghost.mg-v2-button-ghost.integrated-schedule__status-btn--selected:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--ad-b0kla-green-bg, color-mix(in srgb, var(--mg-color-primary-main, var(--mg-primary-500)) 20%, var(--mg-white)));
-  color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-700)));
-  filter: brightness(1.02);
-  transform: none;
-  box-shadow: none;
-}
-
-.integrated-schedule__status-btn.mg-button.mg-button--ghost.mg-v2-button-ghost.integrated-schedule__status-btn--selected:focus-visible {
+.integrated-schedule__status-btn--selected:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--ad-b0kla-green-bg, var(--mg-color-primary-light));
-}
-
-.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .mg-button__text,
-.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text {
-  color: inherit;
+  box-shadow: 0 0 0 2px var(--mg-color-primary-light);
 }
 
 .integrated-schedule__status-btn-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
+  color: inherit;
 }
 
 .integrated-schedule__status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  padding: 2px 6px;
-  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+  display: inline;
+  min-width: 0;
+  padding: 0;
+  font-size: inherit;
   font-weight: 600;
-  border-radius: var(--mg-radius-full, 9999px);
-  background-color: var(--mg-color-surface-sub);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  border-radius: 0;
+  background: none;
   color: var(--mg-color-text-secondary);
 }
 
-.integrated-schedule__status-btn.mg-button.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
-  background-color: var(--ad-b0kla-green, var(--mg-color-primary-main, var(--mg-primary-500)));
-  color: var(--mg-white);
-}
-
-.integrated-schedule__status-btn.mg-button.mg-button--ghost.mg-v2-button-ghost {
-  font-family: inherit;
-  box-shadow: none;
-}
-
-.integrated-schedule__status-btn.mg-button.mg-button--ghost.mg-v2-button-ghost:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  transform: none;
-}
-
-.integrated-schedule__status-btn.mg-button .mg-button__content {
-  display: contents;
-}
-
-.integrated-schedule__status-btn.mg-button .mg-button__text {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mg-spacing-6, 6px);
+.integrated-schedule__status-btn--selected .integrated-schedule__status-btn-text,
+.integrated-schedule__status-btn--selected .integrated-schedule__status-badge {
+  color: var(--mg-color-white);
 }
 
 .integrated-schedule__filter-label {

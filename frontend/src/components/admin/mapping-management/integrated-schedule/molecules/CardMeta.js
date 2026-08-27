@@ -12,7 +12,6 @@ import PropTypes from 'prop-types';
 import StatusBadge from '../../../../common/StatusBadge';
 import RemainingSessionsBadge from '../../../../common/RemainingSessionsBadge';
 import SafeText from '../../../../common/SafeText';
-import { renderCompactPackageName } from '../../../../../utils/packagePricing';
 import { SESSION_EXTENSION_UI } from '../../../../../utils/sessionExtensionPending';
 import { toSafeNumber, toDisplayString } from '../../../../../utils/safeDisplay';
 import { resolveMappingScheduleStatus } from '../utils/mappingScheduleStatusDisplay';
@@ -26,7 +25,6 @@ import './CardMeta.css';
 const CardMeta = ({
   status,
   remainingSessions,
-  packageName,
   pendingSessionExtension,
   hasConsultationSchedule,
   nextConsultationDate,
@@ -63,11 +61,6 @@ const CardMeta = ({
         {pendingSessions != null ? ` +${pendingSessions}회기` : ''}
       </StatusBadge>
     ) : null}
-    {packageName && (
-      <span className="integrated-schedule__card-package">
-        {renderCompactPackageName(packageName)}
-      </span>
-    )}
     <RemainingSessionsBadge remainingSessions={remainingSessions} />
     {showDesyncBadge ? (
       <span
@@ -92,7 +85,6 @@ const CardMeta = ({
 CardMeta.propTypes = {
   status: PropTypes.string,
   remainingSessions: PropTypes.number,
-  packageName: PropTypes.string,
   pendingSessionExtension: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     additionalSessions: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
@@ -111,7 +103,6 @@ CardMeta.propTypes = {
 CardMeta.defaultProps = {
   status: '',
   remainingSessions: null,
-  packageName: '',
   pendingSessionExtension: null,
   hasConsultationSchedule: false,
   nextConsultationDate: null,

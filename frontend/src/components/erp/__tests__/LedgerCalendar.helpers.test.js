@@ -1,5 +1,5 @@
 /**
- * LedgerCalendar — day aggregation helpers
+ * LedgerCalendar — day aggregation + month navigation helpers
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -7,7 +7,12 @@
 
 import {
   buildMonthGridDays,
-  groupTransactionsByDate
+  canNavigateNextMonth,
+  canNavigatePrevMonth,
+  getMonthBounds,
+  groupTransactionsByDate,
+  LEDGER_CALENDAR_MIN_MONTH_YM,
+  shiftMonthYm
 } from '../financial/ledger/LedgerCalendar';
 
 describe('LedgerCalendar helpers', () => {
@@ -46,5 +51,33 @@ describe('LedgerCalendar helpers', () => {
     expect(grouped['2026-08-15'].transactions).toHaveLength(2);
     expect(grouped['2026-08-16'].income).toBe(50000);
     expect(grouped['2026-08-16'].expense).toBe(0);
+  });
+
+  it('shiftMonthYm moves forward and backward across year boundary', () => {
+    expect(shiftMonthYm('2026-08', -1)).toBe('2026-07');
+    expect(shiftMonthYm('2026-01', -1)).toBe('2025-12');
+    expect(shiftMonthYm('2025-12', 1)).toBe('2026-01');
+  });
+
+  it('getMonthBounds returns inclusive first and last day', () => {
+    expect(getMonthBounds('2026-02')).toEqual({
+      startDate: '2026-02-01',
+      endDate: '2026-02-28',
+      year: 2026,
+      month: 2,
+      daysInMonth: 28
+    });
+  });
+
+  it('canNavigatePrevMonth blocks below 2020-01', () => {
+    expect(LEDGER_CALENDAR_MIN_MONTH_YM).toBe('2020-01');
+    expect(canNavigatePrevMonth('2020-01')).toBe(false);
+    expect(canNavigatePrevMonth('2020-02')).toBe(true);
+  });
+
+  it('canNavigateNextMonth blocks past current month', () => {
+    expect(canNavigateNextMonth('2026-08', '2026-08')).toBe(false);
+    expect(canNavigateNextMonth('2026-07', '2026-08')).toBe(true);
+    expect(canNavigateNextMonth('2026-09', '2026-08')).toBe(false);
   });
 });

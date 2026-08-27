@@ -54,6 +54,7 @@ import {
   TaxDisclosureSection,
   MoneyRecordModal
 } from './financial/ledger';
+import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
@@ -174,6 +175,10 @@ const FinancialManagement = () => {
   const [editModal, setEditModal] = useState({ open: false, transaction: null });
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
+  const [moneyRecordPrefill, setMoneyRecordPrefill] = useState({
+    date: null,
+    type: 'INCOME'
+  });
 
   const [summary, setSummary] = useState({
     totalIncome: 0,
@@ -479,6 +484,57 @@ const FinancialManagement = () => {
     setPagination((prev) => ({ ...prev, currentPage: 0 }));
   };
 
+  /**
+   * Calendar month prev/next — mutates page filters.monthYm SSOT only.
+   * @param {string} nextYm YYYY-MM
+   */
+  const handleCalendarMonthChange = (nextYm) => {
+    if (!isValidMonthYm(nextYm)) {
+      return;
+    }
+    const currentYm = getCurrentMonthYm();
+    if (nextYm > currentYm || nextYm < LEDGER_CALENDAR_MIN_MONTH_YM) {
+      return;
+    }
+    const [y, m] = nextYm.split('-').map(Number);
+    const startDate = `${nextYm}-01`;
+    const endDate = formatLocalDateYmd(new Date(y, m, 0));
+    const lastMonthYm = addMonthsYm(currentYm, -1);
+    const isThisMonth = nextYm === currentYm;
+    const isLastMonth = nextYm === lastMonthYm;
+
+    setFilters((prev) => ({
+      ...prev,
+      monthYm: nextYm,
+      startDate,
+      endDate,
+      dateRange: isThisMonth || isLastMonth ? 'MONTH' : 'CUSTOM'
+    }));
+    setPeriod(
+      isThisMonth
+        ? FM_PERIOD.THIS_MONTH
+        : isLastMonth
+          ? FM_PERIOD.LAST_MONTH
+          : FM_PERIOD.CUSTOM
+    );
+    setPagination((prev) => ({ ...prev, currentPage: 0 }));
+  };
+
+  const openMoneyRecordDefault = () => {
+    setMoneyRecordPrefill({ date: null, type: 'INCOME' });
+    setShowMoneyRecord(true);
+  };
+
+  const handleCalendarAddOnDate = (ymd) => {
+    setMoneyRecordPrefill({ date: ymd, type: 'EXPENSE' });
+    setShowMoneyRecord(true);
+  };
+
+  const closeMoneyRecord = () => {
+    setShowMoneyRecord(false);
+    setMoneyRecordPrefill({ date: null, type: 'INCOME' });
+  };
+
   const handleFiltersPatch = (patch) => {
     setFilters((prev) => ({ ...prev, ...patch }));
     setPagination((prev) => ({ ...prev, currentPage: 0 }));
@@ -561,7 +617,7 @@ const FinancialManagement = () => {
               startDate={filters.startDate}
               endDate={filters.endDate}
               onCustomDateChange={handleCustomDateChange}
-              onRecordClick={() => setShowMoneyRecord(true)}
+              onRecordClick={openMoneyRecordDefault}
             />
 
             <LedgerSummaryStrip
@@ -607,7 +663,7 @@ const FinancialManagement = () => {
                       transactions={transactions}
                       loading={loading}
                       hasSearch={hasSearch}
-                      onRecordClick={() => setShowMoneyRecord(true)}
+                      onRecordClick={openMoneyRecordDefault}
                       onView={(tx) => {
                         setSelectedTransaction(tx);
                         setShowDetailModal(true);
@@ -672,6 +728,8 @@ const FinancialManagement = () => {
                   category={filters.category}
                   searchText={filters.searchText}
                   refreshKey={calendarRefreshKey}
+                  onMonthChange={handleCalendarMonthChange}
+                  onAddOnDate={handleCalendarAddOnDate}
                   onView={(tx) => {
                     setSelectedTransaction(tx);
                     setShowDetailModal(true);
@@ -689,8 +747,10 @@ const FinancialManagement = () => {
 
       <MoneyRecordModal
         isOpen={showMoneyRecord}
-        onClose={() => setShowMoneyRecord(false)}
+        onClose={closeMoneyRecord}
         onSuccess={refreshLedgerViews}
+        defaultType={moneyRecordPrefill.type}
+        initialDate={moneyRecordPrefill.date}
       />
 
       {showDetailModal && selectedTransaction && (

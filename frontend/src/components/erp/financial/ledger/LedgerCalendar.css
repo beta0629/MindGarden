@@ -14,6 +14,35 @@
   padding: var(--mg-v2-space-4);
 }
 
+.ledger-calendar__month-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+}
+
+.ledger-calendar__month-caption {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  color: var(--cs-slate-900, var(--mg-v2-color-text-primary));
+}
+
+.ledger-calendar__month-nav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.ledger-calendar__month-nav-btn {
+  color: var(--cs-slate-900, var(--mg-v2-color-text-primary));
+}
+
 .ledger-calendar__layout {
   display: flex;
   flex-direction: column;
@@ -168,12 +197,25 @@
   border-top: 0.0625rem solid var(--mg-v2-color-neutral-300);
 }
 
+.ledger-calendar__detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+  width: 100%;
+}
+
 .ledger-calendar__detail-title {
   margin: 0;
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: 700;
-  color: var(--mg-v2-color-text-primary);
+  color: var(--cs-slate-900, var(--mg-v2-color-text-primary));
   font-variant-numeric: tabular-nums;
+}
+
+.ledger-calendar__add-on-date {
+  color: var(--mg-v2-color-primary-main);
 }
 
 .ledger-calendar__detail-empty {

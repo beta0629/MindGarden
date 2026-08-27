@@ -50,7 +50,13 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).toContain('EntityRowActions');
     expect(source).toContain('ENTITY_ROW_ACTIONS_LAYOUT.CARD');
     expect(source).toContain('mg-v2-ad-b0kla__header-primary-btn');
+    expect(source).toContain("id: 'notifications'");
     expect(source).not.toContain('mg-v2-ad-b0kla__icon-group');
+    // 페이지 헤더 overflow에서 모드변경(테마 토글) 제거 — GNB ProfileDropdown 토글은 유지
+    expect(source).not.toContain("id: 'theme'");
+    expect(source).not.toContain('themeButtonLabel');
+    expect(source).not.toContain('toggleDarkMode');
+    expect(source).not.toMatch(/theme_\$\{/);
   });
 
   it('AdminDashboardV2 환불 StatCard가 toSafeNumber로 null 방어한다 (PR-DASH-04)', () => {

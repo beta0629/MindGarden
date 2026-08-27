@@ -159,7 +159,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [confirm, ConfirmModal] = useConfirm();
   const navigate = useNavigate();
   const { user: sessionUser, isLoading: sessionLoading, logout, hasRole } = useSession();
-  const { resolved: darkResolved, toggle: toggleDarkMode } = useDarkMode();
+  const { resolved: darkResolved } = useDarkMode();
   const dashboardUser = propUser || sessionUser;
 
   const canManageClients = hasRole(USER_ROLES.ADMIN) || hasRole(USER_ROLES.STAFF);
@@ -1122,13 +1122,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
   const HEADER_ICON_SIZE = 20;
 
-  // 테마 라벨 = 다음에 적용될 모드 (resolved 기준 light↔dark)
-  const themeButtonLabel = t(
-    `common:dashboard-v2.AdminDashboardV2.theme_${
-      darkResolved === 'dark' ? 'light' : 'dark'
-    }`
-  );
-
   const headerActions = (
       <div className="mg-v2-ad-b0kla__header-actions">
         <MGButton
@@ -1159,11 +1152,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
               id: 'notifications',
               label: t('admin.labels.notification'),
               onClick: () => navigate(ADMIN_ROUTES.MESSAGES)
-            },
-            {
-              id: 'theme',
-              label: themeButtonLabel,
-              onClick: toggleDarkMode
             }
           ]}
         />

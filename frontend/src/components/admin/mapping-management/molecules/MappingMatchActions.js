@@ -115,6 +115,7 @@ const MappingMatchActions = ({
           size={ACTION_SIZE}
           className={[
             btnClassName,
+            'integrated-schedule__btn-cancel-pending',
             emphasizeCancelDanger ? 'integrated-schedule__action-danger' : ''
           ].filter(Boolean).join(' ')}
           onClick={() => onCancelPendingMapping(mapping)}

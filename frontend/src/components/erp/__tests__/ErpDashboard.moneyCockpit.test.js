@@ -1,17 +1,18 @@
 /**
- * ErpDashboard 머니 콕핏 — hero / 차트 / 금지 요소 스모크
+ * ErpDashboard 머니 콕핏 — hero / 차트 / 금지 요소 / won·0원 스모크
  *
  * @author CoreSolution
  * @since 2026-08-27
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
   OFD_CHART,
   OFD_HERO,
-  OFD_PAGE_TITLE
+  OFD_PAGE_TITLE,
+  OFD_WORKBENCH
 } from '../../../constants/operatorFinanceDashboardStrings';
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
@@ -77,7 +78,9 @@ jest.mock('../../common/EmptyState', () => ({
 jest.mock('../../dashboard-v2/atoms/KpiNumeral', () => ({
   __esModule: true,
   default: ({ value, unit }) => (
-    <span data-testid="kpi-numeral">{`${value}${unit || ''}`}</span>
+    <span data-testid="kpi-numeral" data-unit={unit || ''}>
+      {`${value}${unit || ''}`}
+    </span>
   )
 }));
 
@@ -151,7 +154,11 @@ describe('ErpDashboard money cockpit', () => {
     jest.clearAllMocks();
     mockGet.mockImplementation((url) => {
       const path = String(url);
-      if (path.includes('/auth/') || path.includes('current-user') || path.includes('me')) {
+      if (
+        path.includes('/auth/')
+        || path.includes('current-user')
+        || /\/me(?:\?|$)/.test(path)
+      ) {
         return Promise.resolve({ id: 1, role: 'ADMIN', tenantId: 't1' });
       }
       if (path.includes('/finance/dashboard')) {
@@ -167,8 +174,10 @@ describe('ErpDashboard money cockpit', () => {
                 id: 1,
                 date: '2026-08-01',
                 type: 'INCOME',
+                category: 'CONSULTATION',
                 description: '상담료',
-                amount: 500000
+                amount: 500000,
+                relatedEntityType: 'CONSULTANT_CLIENT_MAPPING'
               },
               {
                 id: 2,
@@ -180,6 +189,7 @@ describe('ErpDashboard money cockpit', () => {
               }
             ],
             categoryBreakdown: {
+              CONSULTATION: 1000000,
               SALARY: 200000,
               RENT: 100000
             }
@@ -216,7 +226,6 @@ describe('ErpDashboard money cockpit', () => {
       expect(screen.getByTestId('money-hero-band')).toBeInTheDocument();
     });
 
-    // NEW layout 필수: hero band 라벨
     expect(screen.getByText('들어온 돈')).toBeInTheDocument();
     expect(screen.getByText('나간 돈')).toBeInTheDocument();
     expect(screen.getByText('남은 돈')).toBeInTheDocument();
@@ -224,6 +233,97 @@ describe('ErpDashboard money cockpit', () => {
     expect(screen.getByText(OFD_HERO.EXPENSE_LABEL)).toBeInTheDocument();
     expect(screen.getByText(OFD_HERO.REMAINING_LABEL)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: OFD_PAGE_TITLE })).toBeInTheDocument();
+  });
+
+  test('hero·ledger 금액이 1,000,000원 형식이면 raw 1000000은 없다', async() => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('money-hero-band')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      const numerals = screen.getAllByTestId('kpi-numeral');
+      expect(numerals.some((el) => el.textContent === '1,000,000원')).toBe(true);
+    });
+
+    const hero = screen.getByTestId('money-hero-band');
+    expect(within(hero).queryByText(/^1000000$/)).not.toBeInTheDocument();
+    expect(within(hero).queryByText(/1000000원/)).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('money-ledger-strip')).toBeInTheDocument();
+    });
+    const ledger = screen.getByTestId('money-ledger-strip');
+    expect(within(ledger).getByText('500,000원')).toBeInTheDocument();
+    expect(within(ledger).getByText('200,000원')).toBeInTheDocument();
+    expect(ledger.textContent).not.toMatch(/(?<![,\d])1000000(?![,\d])/);
+  });
+
+  test('hero KpiNumeral unit은 원이며 KPI unit 건이 없다', async() => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('money-hero-band')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      const numerals = screen.getAllByTestId('kpi-numeral');
+      expect(numerals.length).toBeGreaterThan(0);
+      numerals.forEach((el) => {
+        expect(el).toHaveAttribute('data-unit', '원');
+      });
+    });
+
+    const cockpit = screen.getByTestId('money-cockpit');
+    const kpiWithGeon = within(cockpit)
+      .queryAllByTestId('kpi-numeral')
+      .filter((el) => el.getAttribute('data-unit') === '건');
+    expect(kpiWithGeon).toHaveLength(0);
+  });
+
+  test('hollow captions(상담료 위주·급여·임대·지난달 대비)가 없다', async() => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('money-hero-band')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('상담료 위주')).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText('급여·임대')).not.toBeInTheDocument();
+    expect(screen.queryByText('지난달 대비')).not.toBeInTheDocument();
+  });
+
+  test('fetch 성공 시 todo 3행이 0원으로 보인다', async() => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(OFD_WORKBENCH.PENDING_CONSULTATION)).toBeInTheDocument();
+    });
+    expect(screen.getByText(OFD_WORKBENCH.PENDING_SALARY)).toBeInTheDocument();
+    expect(screen.getByText(OFD_WORKBENCH.REFUND)).toBeInTheDocument();
+
+    const todo = screen.getByTestId('money-todo-list');
+    const zeroAmounts = within(todo).getAllByText('0원');
+    expect(zeroAmounts.length).toBeGreaterThanOrEqual(3);
+  });
+
+  test('수입 믹스·지출 믹스가 있다', async() => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('money-income-mix')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('money-outflow-mix')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(OFD_WORKBENCH.INCOME_MIX_TITLE)).toBeInTheDocument();
+    expect(screen.getByText(OFD_WORKBENCH.EXPENSE_MIX_TITLE)).toBeInTheDocument();
+    expect(within(screen.getByTestId('money-income-mix')).getByText('상담료')).toBeInTheDocument();
+    expect(within(screen.getByTestId('money-outflow-mix')).getByText('급여')).toBeInTheDocument();
   });
 
   test('조달 KPI(총 아이템/승인 대기/총 주문/예산 사용률)가 없다', async() => {
@@ -265,7 +365,6 @@ describe('ErpDashboard money cockpit', () => {
     expect(screen.queryByText('분개 초기화')).not.toBeInTheDocument();
     expect(screen.queryByText('백필')).not.toBeInTheDocument();
     expect(screen.queryByText(/ErpFinanceAdminSyncCard/i)).not.toBeInTheDocument();
-    // 히어로(및 페이지)에 순이익 라벨 부재
     expect(screen.queryByText('순이익')).not.toBeInTheDocument();
     expect(screen.queryByText('데이터 새로고침')).not.toBeInTheDocument();
   });
@@ -277,18 +376,13 @@ describe('ErpDashboard money cockpit', () => {
       expect(screen.getByTestId('money-cockpit')).toBeInTheDocument();
     });
 
-    // ErpFilterToolbar / secondary 새로고침
     expect(screen.queryByText('데이터 새로고침')).not.toBeInTheDocument();
     expect(document.querySelector('.erp-filter-toolbar')).toBeNull();
-
-    // quick-action admin-card grid (조달·품목/거래·정산/승인센터)
     expect(document.querySelector('.mg-v2-ad-b0kla__admin-card')).toBeNull();
     expect(screen.queryByText('조달')).not.toBeInTheDocument();
     expect(screen.queryByText('품목')).not.toBeInTheDocument();
     expect(screen.queryByText('거래·정산')).not.toBeInTheDocument();
     expect(screen.queryByText('승인센터')).not.toBeInTheDocument();
-
-    // 테넌트 서브타이틀
     expect(screen.queryByText(/\(터넌트:/)).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
 /**
- * MoneyTodoList — 지금 손볼 일 (최대 3행, 값 없으면 생략)
+ * MoneyTodoList — 지금 손볼 일 (fetch 성공 시 0원 포함 표시, null만 생략)
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -8,7 +8,7 @@
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { OFD_LINKS, OFD_WORKBENCH } from '../../../../constants/operatorFinanceDashboardStrings';
-import { formatWonAmount } from './moneyCockpitData';
+import { formatWonDisplay } from './moneyCockpitData';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import { ErpSafeText } from '../../common';
 
@@ -17,16 +17,18 @@ import { ErpSafeText } from '../../common';
  * @param {number|null|undefined} props.pendingConsultation
  * @param {number|null|undefined} props.pendingSalary
  * @param {number|null|undefined} props.refundAmount
+ * @param {string[]} [props.denseFacts]
  */
 const MoneyTodoList = ({
   pendingConsultation = null,
   pendingSalary = null,
-  refundAmount = null
+  refundAmount = null,
+  denseFacts = []
 }) => {
   const navigate = useNavigate();
 
   const rows = [];
-  if (pendingConsultation != null && toSafeNumber(pendingConsultation) > 0) {
+  if (pendingConsultation != null) {
     rows.push({
       id: 'pending-consultation',
       label: OFD_WORKBENCH.PENDING_CONSULTATION,
@@ -35,7 +37,7 @@ const MoneyTodoList = ({
       linkLabel: OFD_LINKS.FINANCIAL.label
     });
   }
-  if (pendingSalary != null && toSafeNumber(pendingSalary) > 0) {
+  if (pendingSalary != null) {
     rows.push({
       id: 'pending-salary',
       label: OFD_WORKBENCH.PENDING_SALARY,
@@ -44,7 +46,7 @@ const MoneyTodoList = ({
       linkLabel: OFD_LINKS.SALARY.label
     });
   }
-  if (refundAmount != null && toSafeNumber(refundAmount) > 0) {
+  if (refundAmount != null) {
     rows.push({
       id: 'refund',
       label: OFD_WORKBENCH.REFUND,
@@ -55,7 +57,8 @@ const MoneyTodoList = ({
   }
 
   const limited = rows.slice(0, 3);
-  if (limited.length === 0) {
+  const facts = Array.isArray(denseFacts) ? denseFacts.filter(Boolean) : [];
+  if (limited.length === 0 && facts.length === 0) {
     return null;
   }
 
@@ -66,28 +69,39 @@ const MoneyTodoList = ({
       aria-label={OFD_WORKBENCH.TODO_ARIA}
     >
       <h2 className="money-workbench__title">{OFD_WORKBENCH.TODO_TITLE}</h2>
-      <ul className="money-todo-list">
-        {limited.map((row) => (
-          <li key={row.id} className="money-todo-list__row">
-            <div>
-              <span className="money-todo-list__label">
-                <ErpSafeText value={row.label} />
+      {limited.length > 0 ? (
+        <ul className="money-todo-list">
+          {limited.map((row) => (
+            <li key={row.id} className="money-todo-list__row">
+              <div>
+                <span className="money-todo-list__label">
+                  <ErpSafeText value={row.label} />
+                </span>
+                {' '}
+                <button
+                  type="button"
+                  className="money-todo-list__link"
+                  onClick={() => navigate(row.linkPath)}
+                >
+                  {row.linkLabel}
+                </button>
+              </div>
+              <span className="money-todo-list__amount">
+                {formatWonDisplay(row.amount)}
               </span>
-              {' '}
-              <button
-                type="button"
-                className="money-todo-list__link"
-                onClick={() => navigate(row.linkPath)}
-              >
-                {row.linkLabel}
-              </button>
-            </div>
-            <span className="money-todo-list__amount">
-              {formatWonAmount(row.amount)}원
-            </span>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {facts.length > 0 ? (
+        <ul className="money-workbench__facts" data-testid="money-dense-facts">
+          {facts.map((fact) => (
+            <li key={fact} className="money-workbench__fact">
+              <ErpSafeText value={fact} />
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </section>
   );
 };
@@ -95,7 +109,8 @@ const MoneyTodoList = ({
 MoneyTodoList.propTypes = {
   pendingConsultation: PropTypes.number,
   pendingSalary: PropTypes.number,
-  refundAmount: PropTypes.number
+  refundAmount: PropTypes.number,
+  denseFacts: PropTypes.arrayOf(PropTypes.string)
 };
 
 

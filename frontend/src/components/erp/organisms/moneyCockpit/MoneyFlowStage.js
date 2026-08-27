@@ -12,6 +12,7 @@ import EmptyState from '../../../common/EmptyState';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import { OFD_CHART } from '../../../../constants/operatorFinanceDashboardStrings';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
+import { formatAxisTick, formatWonDisplay } from './moneyCockpitData';
 
 /** 데스크톱 차트 기준 높이(px) — CSS clamp가 실제 레이아웃을 지배 */
 const MONEY_FLOW_CHART_HEIGHT_PX = 480;
@@ -56,25 +57,6 @@ function readChartColors() {
     grid: pick(CHART_TOKEN_VARS.GRID),
     tick: pick(CHART_TOKEN_VARS.TICK)
   };
-}
-
-/**
- * @param {number} value
- * @returns {string|number}
- */
-function formatAxisTick(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return value;
-  if (n >= 100000000) {
-    return `${(n / 100000000).toFixed(n % 100000000 === 0 ? 0 : 1)}억`;
-  }
-  if (n >= 10000) {
-    return `${(n / 10000).toFixed(n % 10000 === 0 ? 0 : 1)}만`;
-  }
-  if (n >= 1000) {
-    return `${(n / 1000).toFixed(0)}K`;
-  }
-  return n;
 }
 
 /**
@@ -134,7 +116,7 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
           label: (ctx) => {
             const raw = ctx.parsed?.y;
             if (raw == null || Number.isNaN(raw)) return null;
-            return `${ctx.dataset?.label || ''}: ${Number(raw).toLocaleString('ko-KR')}원`;
+            return `${ctx.dataset?.label || ''}: ${formatWonDisplay(raw)}`;
           }
         }
       }

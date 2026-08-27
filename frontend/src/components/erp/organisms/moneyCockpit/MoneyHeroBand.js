@@ -18,27 +18,38 @@ import { toSafeNumber } from '../../../../utils/safeDisplay';
  * @param {number} props.income
  * @param {number} props.expense
  * @param {number} props.remaining
+ * @param {string} [props.incomeCaption]
+ * @param {string} [props.expenseCaption]
+ * @param {string} [props.remainingCaption]
  */
-const MoneyHeroBand = ({ loading = false, income = 0, expense = 0, remaining = 0 }) => {
+const MoneyHeroBand = ({
+  loading = false,
+  income = 0,
+  expense = 0,
+  remaining = 0,
+  incomeCaption = '',
+  expenseCaption = '',
+  remainingCaption = ''
+}) => {
   const cells = [
     {
       id: 'income',
       label: OFD_HERO.INCOME_LABEL,
-      caption: OFD_HERO.INCOME_CAPTION,
+      caption: incomeCaption,
       value: income,
       remainingTone: false
     },
     {
       id: 'expense',
       label: OFD_HERO.EXPENSE_LABEL,
-      caption: OFD_HERO.EXPENSE_CAPTION,
+      caption: expenseCaption,
       value: expense,
       remainingTone: false
     },
     {
       id: 'remaining',
       label: OFD_HERO.REMAINING_LABEL,
-      caption: OFD_HERO.REMAINING_CAPTION,
+      caption: remainingCaption,
       value: remaining,
       remainingTone: true
     }
@@ -67,7 +78,9 @@ const MoneyHeroBand = ({ loading = false, income = 0, expense = 0, remaining = 0
               />
             )}
           </div>
-          <p className="money-hero-band__caption">{cell.caption}</p>
+          {cell.caption ? (
+            <p className="money-hero-band__caption">{cell.caption}</p>
+          ) : null}
         </article>
       ))}
     </section>
@@ -78,7 +91,10 @@ MoneyHeroBand.propTypes = {
   loading: PropTypes.bool,
   income: PropTypes.number,
   expense: PropTypes.number,
-  remaining: PropTypes.number
+  remaining: PropTypes.number,
+  incomeCaption: PropTypes.string,
+  expenseCaption: PropTypes.string,
+  remainingCaption: PropTypes.string
 };
 
 

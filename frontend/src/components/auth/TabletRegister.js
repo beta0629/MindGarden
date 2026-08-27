@@ -477,18 +477,14 @@ const TabletRegister = () => {
                     required
                     minLength="8"
                   />
-                  <MGButton
+                  <button
                     type="button"
-                    variant="outline"
-                    size="small"
-                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
+                    className="mg-v2-password-toggle"
                     onClick={() => togglePassword('password')}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    preventDoubleClick={false}
                     aria-label={showPassword ? '비밀번호 숨기기' : t('auth:TabletRegister.t_11759640')}
                   >
                     {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
-                  </MGButton>
+                  </button>
                 </div>
                 {errors.password && <span className="mg-v2-error-text">{errors.password}</span>}
               </div>
@@ -507,18 +503,14 @@ const TabletRegister = () => {
                     required
                     minLength="8"
                   />
-                  <MGButton
+                  <button
                     type="button"
-                    variant="outline"
-                    size="small"
-                    className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
+                    className="mg-v2-password-toggle"
                     onClick={() => togglePassword('confirmPassword')}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    preventDoubleClick={false}
                     aria-label={showConfirmPassword ? '비밀번호 숨기기' : t('auth:TabletRegister.t_11759640')}
                   >
                     {showConfirmPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
-                  </MGButton>
+                  </button>
                 </div>
                 {errors.confirmPassword && <span className="mg-v2-error-text">{errors.confirmPassword}</span>}
               </div>

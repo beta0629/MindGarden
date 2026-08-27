@@ -1,8 +1,8 @@
 # 운영 반영(Go-Live) 전 체크리스트
 
 **문서 유형**: 운영 준비 · 전 에이전트 합의용  
-**버전**: 2.1.0  
-**최종 갱신**: 2026-05-26 (§5.8 자동 발송 스케줄러 플래그 검증 게이트 추가 — wellness-tip 자동 발송 차단 핫픽스)
+**버전**: 2.2.0  
+**최종 갱신**: 2026-06-12 (§10 하드코딩 게이트 — 운영 반영 전 필수 신설; pre-commit ≠ 운영 게이트 명문화. STANDARDIZATION_ROADMAP v2 §H5)
 **상태**: 상시 업데이트 (배포 직전 반드시 최신본 확인)
 
 > **오케스트레이션 위임**: 운영 반영 플랜 수립·실행을 **core-planner(기획)** 에게 위임하면, 본 체크리스트·데이터 선별·서브에이전트(shell·core-debugger·core-tester·문서정리 등) 분배실행을 주관하여 오케스트레이션한다. "운영 반영 플랜 수립해줘", "Go-Live 오케스트레이션 진행해줘" 등으로 호출.
@@ -192,13 +192,128 @@ SELECT config_key, config_value, is_active, updated_at, updated_by
 
 ---
 
-## 10. Go / No-Go 판정
+## 10. 하드코딩 게이트 — 운영 반영 전 필수
 
-| 조건 | 판정 |
-|------|------|
-| 1·2·3·4절 미충족 항목 없음 + 5.1 백업 완료 + 9절 스모크 통과 | **GO** |
-| TLS/OAuth/CORS/백업 중任一 불충족 | **NO-GO** |
+> 이 절은 **`docs/project-management/2026-06-11/STANDARDIZATION_ROADMAP.md` §H5** 의 명문화 대상이며, **`mindgarden-subagents.mdc` §4 (운영 반영 준비 — 하드코딩)** 와 1:1 정합한다. 인용 소스: PR #228 사전 커밋 훅 하드코딩 정리 권고 (커밋 `33daeb86`).
+
+### 10.0 핵심 원칙 (반드시 합의)
+
+> **로컬 `pre-commit` 훅 통과 ≠ 운영 반영 게이트 통과.**  
+> 사전 커밋 훅은 **개발 중** 신규 하드코딩이 들어오는 것을 막기 위한 **개발 시간 게이트**일 뿐이며, 운영 반영 게이트는 **별도**다. 운영 반영(Go-Live·Hotfix·DB 절차 포함) 직전에는 **CI/BI 검사 + `check-hardcode` 스크립트 + 리뷰 식별 항목**을 모두 통과해야 한다.
+
+| 게이트 종류 | 기준 | 통과 기준 |
+|-------------|------|-----------|
+| **개발 중 게이트** (참고) | 로컬 `pre-commit` 훅 — `scripts/design-system/automation/pre-commit-hardcoding-check.sh` | "스테이지된 변경 파일에 신규 색상 하드코딩 0건" (스테이지 외 잔존 무시) |
+| **운영 반영 게이트** (필수) | CI 정적 검사 + `config/shell-scripts/check-hardcode.sh` 전체 스캔 + 리뷰 식별 항목 | **저장소 전체 스캔 결과 errors = 0** + 리뷰 지적 0건 + 토큰화 합의 미이행 0건 |
+
+> **즉, "커밋이 통과했으니 운영 반영해도 된다"는 판단은 금지.** 본 §10 의 4단계 절차를 **모두** 통과한 뒤에만 §11 Go-Live 판정으로 진입한다.
+
+### 10.1 절차 (4단계, 순서대로 모두 수행)
+
+#### 10.1.1 1단계 — 저장소 표준 스크립트 전체 스캔 (필수)
+
+운영 반영 PR(또는 release 브랜치) 머지 직전, 저장소 루트에서 다음을 실행하여 **errors = 0** 을 확인한다.
+
+```bash
+# 운영 반영 게이트 — 저장소 전체 하드코딩 스캔
+# 실제 실행: node scripts/design-system/css-tools/check-hardcoding-enhanced.js
+config/shell-scripts/check-hardcode.sh
+```
+
+| 항목 | 값 |
+|------|----|
+| 검사 스크립트 (Node) | `scripts/design-system/css-tools/check-hardcoding-enhanced.js` |
+| 래퍼 (Bash) | `config/shell-scripts/check-hardcode.sh` (저장소 루트에서 실행, 내부적으로 위 Node 스크립트 호출) |
+| 검사 대상 디렉터리 | `src/`, `frontend/src/` (확장자: `.java`, `.js`, `.jsx`, `.ts`, `.tsx`) |
+| 종료 코드 | errors > 0 → exit 1 / errors = 0 → exit 0 |
+| JSON 리포트 | `test-reports/hardcoding/hardcoding-report-<timestamp>.json` 생성 |
+
+> **참고**: `config-old/shell-scripts/check-hardcode.sh` 는 `frontend-ops` 등 운영 부속 영역 전용 **레거시 래퍼**로 목적이 다를 수 있다. 운영 반영 게이트는 **`config/shell-scripts/check-hardcode.sh`(현행)** 만 사용한다.
+
+#### 10.1.2 2단계 — CI/BI 워크플로 결과 확인 (필수)
+
+GitHub Actions 두 워크플로의 **하드코딩 관련 step 모두 ✅ green** 임을 PR 체크에서 확인.
+
+| 워크플로 | 파일 | 관련 Step | 종료 정책 |
+|----------|------|-----------|-----------|
+| 코드 품질 검사 | `.github/workflows/code-quality-check.yml` | `🔍 하드코딩 검사` (line 53–55) — `node scripts/design-system/css-tools/check-hardcoding-enhanced.js \|\| exit 1` | errors > 0 → job 실패 (`exit 1`) |
+| CI/BI 보호 | `.github/workflows/ci-bi-protection.yml` | 하드코딩 카운트 + 듀얼 메트릭 dry-run (line 34–60, 215–221) | 임계 초과 시 경고/차단 |
+
+#### 10.1.3 3단계 — 리뷰·코드 검색 식별 항목 정리 (예외 없음)
+
+PR 코드 리뷰·`grep`/`rg` 검색·서브에이전트(explore·core-coder) 보고에서 **하드코딩으로 지적된 모든 항목**을 운영 반영 PR scope 안에서 정리한다.
+
+- **색상·스타일 하드코딩** → `frontend/src/styles/unified-design-tokens.css` 의 `var(--mg-*)` 토큰으로 치환. 자동 변환 보조: `node scripts/design-system/color-management/convert-hardcoded-colors.js`.
+- **도메인·URL·포트** → 환경 변수·`frontend/src/constants/api.js` 등 상수 모듈로 추출.
+- **상태값·코드값** (한글 비즈니스 문자열 포함) → 공통코드/API 조회(`getCommonCodes` 등) 또는 `src/main/java/com/coresolution/consultation/constant/` 상수 모듈.
+- **비밀·키** → 절대 저장소 미기입. GitHub Secrets / 서버 env 만 사용 (참조: `docs/standards/SECURITY_AUTHENTICATION_STANDARD.md`).
+
+> **금지 사항**: "다음 PR 에서 정리" 또는 "운영 반영 후 hotfix" 식의 deferral 은 **본 게이트 통과 사유가 되지 않는다.** scope 안에서 모두 정리하거나, 정리가 불가능한 경우 §10.2 합의 예외 절차를 따른다.
+
+#### 10.1.4 4단계 — 토큰·팔레트 부재 시 디자인 합의 → 코드 치환
+
+검사·리뷰에서 잡힌 항목 중 **현재 디자인 토큰·팔레트로 표현 불가능**한 케이스(예: 신규 브랜드 색, 토큰 미정의 시각 상태)는 다음 순서로 처리한다.
+
+1. **`core-designer`** 에 위임 → 토큰 명·값·사용 컨텍스트 스펙 합의 (`docs/standards/DESIGN_CENTRALIZATION_STANDARD.md`, 어드민 대시보드 샘플 참조).
+2. **`core-coder`** 에 위임 → `unified-design-tokens.css` 등 SSOT 에 토큰 추가 + 사용처 치환.
+3. 본 PR 또는 동일 운영 반영 batch 안에서 합의 → 치환 → 검사 통과까지 완료. **별 PR 로 미루지 말 것.**
+
+위임 절차 표준: **`docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`** 의 "디자인 변경 → 코더 치환" 흐름.
+
+### 10.2 합의 예외 (단 하나의 허용 경로)
+
+본 게이트는 "errors = 0" 이 원칙이지만, **자산 SSOT** 또는 **외부 표준 강제 사항** 으로 토큰화가 불가능한 경우에만 다음 조건을 모두 만족할 때 예외를 허용한다.
+
+| 예외 조건 | 요구 |
+|-----------|------|
+| **단일 SSOT 파일에서만 정의** | 예: `expo-app/src/theme/tokens.ts`, `expo-app/src/constants/oauthProviderBrand.ts`, `frontend/src/components/auth/GoogleBrandLogo.js` (Google Brand Guidelines 4색 다색 로고) — `pre-commit-hardcoding-check.sh` 의 `if [[ "$FILE" == ... ]]; then ... continue; fi` 분기와 동일 정책. |
+| **표준 문서에 기록** | `docs/standards/EXPO_APP_HARDCODING_AND_COLORS.md` 등에 예외 사유·범위·점검 주기 명시. |
+| **Go-Live 메모에 인라인 기재** | 본 PR 또는 배포 티켓에 "예외 ID·파일·라인·사유" 명시. |
+
+> **그 외 경우는 모두 errors = 0 정책을 따른다.** 예외를 늘리지 않는 것이 본 게이트의 목적이다.
+
+### 10.3 차단 정책 (운영 반영 NO-GO)
+
+다음 중 하나라도 충족되지 않으면 **운영 반영 차단(NO-GO)** 으로 판정한다 (§11 와 정합).
+
+- [ ] 10.1.1 `config/shell-scripts/check-hardcode.sh` 실행 결과 **errors = 0**
+- [ ] 10.1.2 `code-quality-check.yml` 의 `🔍 하드코딩 검사` step **PASS** (PR 체크 ✅)
+- [ ] 10.1.3 리뷰·코드 검색 식별 하드코딩 항목 **잔존 0건** (또는 §10.2 예외 합의 문서화 완료)
+- [ ] 10.1.4 토큰·팔레트 부재로 인한 신규 하드코딩이 본 PR 안에서 **모두 치환 완료**
+- [ ] (스모크 §9.S1~S6 영향) 색상·스타일 토큰화 결과 **시각 회귀 없음** — `frontend && npm run build:ci` 통과
+
+### 10.4 적용 스킬 (위임 시 인용 필수)
+
+본 게이트를 위임할 때 다음 스킬을 **모두** 인용한다.
+
+- **`/core-solution-standardization`** — 운영 반영 전 표준화·하드코딩 정책의 단일 출처
+- **`/core-solution-frontend`** — `unified-design-tokens.css` · `var(--mg-*)` 사용 및 React/JS 표준
+- **`/core-solution-deployment`** — GitHub Actions 워크플로(`code-quality-check.yml`·`ci-bi-protection.yml`) 정합
+- **`/core-solution-design-system-css`** — 디자인 시스템 정리·재구축 시 레거시 CSS 제거 원칙
+- **`/core-solution-documentation`** — 본 체크리스트·표준 문서 갱신·cross-link 정합
+- **`mindgarden-subagents.mdc` §4** — 운영 반영 준비 — 하드코딩 (메타 룰)
+
+### 10.5 정합 문서 (cross-link)
+
+본 §10 의 검사 항목·완료 조건은 다음 문서들과 일관해야 한다.
+
+- **`docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` §17** — 어드민 LNB 레이아웃 통일 운영 반영 준비 — 하드코딩 제거 (필수). 검사 명령·완료 조건 동일.
+- **`docs/project-management/SETTINGS_PAGES_LAYOUT_UNIFICATION_ORCHESTRATION.md` §1.3** — 테넌트 설정 페이지 레이아웃 운영 반영 전 하드코딩 제거. §17 을 단일 출처로 인용.
+- **`docs/project-management/2026-06-11/STANDARDIZATION_ROADMAP.md` §H5·H6** — H5(본 절 명문화) → H6(`pre-commit-hardcoding-check.sh` 운영 게이트 기준 일치 강화).
+- **`mindgarden-subagents.mdc` §4** — 위임 메타 룰의 단일 출처.
+
+> **변경 시 위 문서들과 동시에 갱신**. 본 §10 만 단독으로 변경하지 않는다 (정합 깨짐).
 
 ---
 
-**문서 끝.** 변경 시 `docs/운영반영/README.md` 및 [PRODUCTION_DEPLOYMENT_READINESS_MEETING.md](./PRODUCTION_DEPLOYMENT_READINESS_MEETING.md)에 개정 이력을 한 줄 추가할 것.
+## 11. Go / No-Go 판정
+
+| 조건 | 판정 |
+|------|------|
+| 1·2·3·4절 미충족 항목 없음 + 5.1 백업 완료 + 9절 스모크 통과 + **§10 하드코딩 게이트 4단계 모두 통과** | **GO** |
+| TLS/OAuth/CORS/백업 중 任一 불충족 | **NO-GO** |
+| **§10 하드코딩 게이트 4단계 중 任一 불충족** (CI 실패·리뷰 잔존·토큰 미합의 등) | **NO-GO** |
+
+---
+
+**문서 끝.** 변경 시 `docs/운영반영/README.md` 및 [PRODUCTION_DEPLOYMENT_READINESS_MEETING.md](./PRODUCTION_DEPLOYMENT_READINESS_MEETING.md)에 개정 이력을 한 줄 추가할 것. §10 변경 시에는 §10.5 정합 문서 4종도 함께 갱신할 것.

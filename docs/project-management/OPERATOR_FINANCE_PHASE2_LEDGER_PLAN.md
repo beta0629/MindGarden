@@ -59,11 +59,11 @@
 
 ## 6. 완료 기준
 
-- [ ] `/erp/financial` 타이틀 `들어온 돈 · 나간 돈`
-- [ ] `/admin/erp/financial` → `/erp/financial` (query 보존)
-- [ ] 기본 뷰에 차변/대변/대차대조표 equal-tab 없음
-- [ ] 금액에 `원` + ko-KR grouping (`formatKrw`)
-- [ ] moneyCockpit 경로 미수정
+- [x] `/erp/financial` 타이틀 `들어온 돈 · 나간 돈`
+- [x] `/admin/erp/financial` → `/erp/financial` (query 보존)
+- [x] 기본 뷰에 차변/대변/대차대조표 equal-tab 없음
+- [x] 금액에 `원` + ko-KR grouping (`formatKrw`)
+- [x] moneyCockpit 경로 미수정
 - [ ] core-tester 통과
 - [ ] PR → develop
 

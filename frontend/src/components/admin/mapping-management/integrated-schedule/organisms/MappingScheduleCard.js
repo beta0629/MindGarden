@@ -17,6 +17,7 @@ import MappingPartiesRow from '../molecules/MappingPartiesRow';
 import CardMeta from '../molecules/CardMeta';
 import CardActionGroup from '../molecules/CardActionGroup';
 import SessionProgressIndicator from '../../molecules/SessionProgressIndicator';
+import { renderCompactPackageName } from '../../../../../utils/packagePricing';
 import './MappingScheduleCard.css';
 
 const MappingScheduleCard = ({
@@ -80,10 +81,14 @@ const MappingScheduleCard = ({
         consultantName={mapping?.consultantName}
         clientName={mapping?.clientName}
       />
+      {mapping?.packageName ? (
+        <div className="integrated-schedule__card-package">
+          {renderCompactPackageName(mapping.packageName)}
+        </div>
+      ) : null}
       <CardMeta
         status={mapping?.status}
         remainingSessions={mapping?.remainingSessions}
-        packageName={mapping?.packageName}
         pendingSessionExtension={mapping?.pendingSessionExtension}
         hasConsultationSchedule={mapping?.hasConsultationSchedule}
         nextConsultationDate={mapping?.nextConsultationDate}

@@ -2,11 +2,11 @@
 .integrated-schedule__card-parties {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: baseline;
   gap: var(--mg-spacing-xs) var(--mg-spacing-sm);
   width: 100%;
-  text-align: center;
+  text-align: left;
   line-height: 1.5;
   word-break: break-word;
   font-size: var(--font-size-sm);
@@ -17,7 +17,7 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--mg-spacing-xs);
   max-width: 100%;
 }

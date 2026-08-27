@@ -44,13 +44,20 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).toContain('mg-v2-dashboard-kpi-zone--compact');
   });
 
-  it('AdminDashboardV2 헤더가 Primary 1 + EntityRowActions overflow를 사용한다 (PR-DASH-04)', () => {
+  it('AdminDashboardV2 ContentHeader에 EntityRowActions/kebab이 없고 Primary 일정만 유지한다', () => {
     const source = fs.readFileSync(DASHBOARD_PATH, 'utf8');
 
-    expect(source).toContain('EntityRowActions');
-    expect(source).toContain('ENTITY_ROW_ACTIONS_LAYOUT.CARD');
+    // Primary 일정 버튼 유지 — 페이지 헤더 bordered ⋮(EntityRowActions)는 GNB 중복으로 제거
     expect(source).toContain('mg-v2-ad-b0kla__header-primary-btn');
+    expect(source).not.toContain('EntityRowActions');
+    expect(source).not.toContain('ENTITY_ROW_ACTIONS_LAYOUT');
+    expect(source).not.toContain('ENTITY_ROW_ACTIONS_LAYOUT.CARD');
+    expect(source).not.toContain("id: 'notifications'");
     expect(source).not.toContain('mg-v2-ad-b0kla__icon-group');
+    expect(source).not.toContain("id: 'theme'");
+    expect(source).not.toContain('themeButtonLabel');
+    expect(source).not.toContain('toggleDarkMode');
+    expect(source).not.toMatch(/theme_\$\{/);
   });
 
   it('AdminDashboardV2 환불 StatCard가 toSafeNumber로 null 방어한다 (PR-DASH-04)', () => {

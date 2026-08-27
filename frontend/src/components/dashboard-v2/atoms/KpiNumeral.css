@@ -1,5 +1,5 @@
 /**
- * KpiNumeral — 큰 건수 타이포 (카드용 h2 스케일)
+ * KpiNumeral — 큰 건수 타이포 (카드용 h2 스케일) + calm digit-roll
  * 디자인 토큰만 사용 (§17 / §1.3 하드코딩 금지)
  *
  * @author CoreSolution
@@ -7,6 +7,16 @@
  */
 
 .mg-v2-kpi-numeral {
+  /* slow(500ms) + normal(300ms) = 800ms — 스펙 600–900ms 구간 */
+  --mg-v2-kpi-numeral-roll-duration: calc(
+    var(--mg-v2-transition-duration-slow, 500ms)
+    + var(--mg-v2-transition-duration-normal, 300ms)
+  );
+  --mg-v2-kpi-numeral-roll-easing: var(
+    --mg-v2-transition-easing-out,
+    var(--animation-ease-out, ease-out)
+  );
+
   display: inline-flex;
   align-items: baseline;
   gap: var(--mg-v2-space-1, 0.25rem);
@@ -18,12 +28,98 @@
 }
 
 .mg-v2-kpi-numeral__value {
+  position: relative;
+  display: inline-block;
   font: inherit;
   color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-v2-kpi-numeral__plaintext {
+  font: inherit;
+  color: inherit;
+}
+
+/* 롤 레이어가 보일 때 레이아웃용 plaintext는 투명 (textContent·포맷 유지) */
+.mg-v2-kpi-numeral__value--rolling .mg-v2-kpi-numeral__plaintext {
+  color: transparent;
+}
+
+.mg-v2-kpi-numeral__roll-layer {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--mg-v2-color-text-primary);
+  pointer-events: none;
 }
 
 .mg-v2-kpi-numeral__unit {
   font-size: var(--mg-v2-font-size-body-md, 0.875rem);
   font-weight: var(--mg-v2-font-weight-semibold, 600);
   color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-kpi-numeral__roll {
+  display: inline-flex;
+  align-items: baseline;
+  height: 100%;
+}
+
+.mg-v2-kpi-numeral__static {
+  display: inline-block;
+  font: inherit;
+  color: inherit;
+}
+
+.mg-v2-kpi-numeral__digit {
+  display: inline-block;
+  overflow: hidden;
+  height: 1em;
+  line-height: 1;
+  vertical-align: baseline;
+  font: inherit;
+  color: inherit;
+}
+
+.mg-v2-kpi-numeral__digit-ribbon {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  transform: translate3d(0, calc(var(--mg-v2-kpi-numeral-digit-offset, 0) * -1em), 0);
+}
+
+.mg-v2-kpi-numeral__digit-ribbon--rolling {
+  animation: mg-v2-kpi-numeral-digit-roll
+    var(--mg-v2-kpi-numeral-roll-duration)
+    var(--mg-v2-kpi-numeral-roll-easing)
+    forwards;
+}
+
+.mg-v2-kpi-numeral__digit-glyph {
+  display: block;
+  height: 1em;
+  line-height: 1;
+  text-align: center;
+  font: inherit;
+  color: inherit;
+}
+
+@keyframes mg-v2-kpi-numeral-digit-roll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, calc(var(--mg-v2-kpi-numeral-digit-offset, 0) * -1em), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-kpi-numeral__digit-ribbon,
+  .mg-v2-kpi-numeral__digit-ribbon--rolling {
+    animation: none;
+    transform: translate3d(0, calc(var(--mg-v2-kpi-numeral-digit-offset, 0) * -1em), 0);
+    will-change: auto;
+  }
 }

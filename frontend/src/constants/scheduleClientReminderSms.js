@@ -14,9 +14,9 @@ export const CLIENT_REMINDER_SMS_STATUS = Object.freeze({
   FAILED: 'FAILED'
 });
 
-/** UI 노출 라벨 (스펙: 발송됨 / 대기 / 실패) */
+/** UI 노출 라벨 (스펙: 문자발송됨 / 대기 / 실패) */
 export const CLIENT_REMINDER_SMS_LABEL = Object.freeze({
-  SENT: '발송됨',
+  SENT: '문자발송됨',
   PENDING: '대기',
   FAILED: '실패'
 });

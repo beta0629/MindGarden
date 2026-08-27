@@ -9,8 +9,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import MGButton from '../../../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
   VIEW_FILTER_NEW,
@@ -183,24 +181,15 @@ const MatchingScheduleSidebar = ({
               const count = getStatusCount(opt.value);
               const isSelected = statusFilter === opt.value;
               return (
-                <MGButton
+                <button
                   key={opt.value || 'all'}
                   type="button"
-                  variant="ghost"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'ghost',
-                    size: 'sm',
-                    loading: false,
-                    className: `integrated-schedule__status-btn ${
-                      isSelected ? 'integrated-schedule__status-btn--selected' : ''
-                    }`
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  className={`integrated-schedule__status-btn${
+                    isSelected ? ' integrated-schedule__status-btn--selected' : ''
+                  }`}
                   onClick={() => onStatusFilterChange(opt.value)}
                   aria-pressed={isSelected}
                   aria-label={`${toDisplayString(opt.label)} (${count}건)`}
-                  preventDoubleClick={false}
                 >
                   <span className="integrated-schedule__status-btn-text">
                     {toDisplayString(opt.label)}
@@ -208,7 +197,7 @@ const MatchingScheduleSidebar = ({
                   <span className="integrated-schedule__status-badge" aria-hidden="true">
                     {count}
                   </span>
-                </MGButton>
+                </button>
               );
             })}
           </div>

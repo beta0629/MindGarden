@@ -9,5 +9,6 @@ export { default as LedgerQuietHeader } from './LedgerQuietHeader';
 export { default as LedgerSummaryStrip } from './LedgerSummaryStrip';
 export { default as LedgerInlineFilter } from './LedgerInlineFilter';
 export { default as LedgerTable } from './LedgerTable';
+export { default as LedgerCalendar } from './LedgerCalendar';
 export { default as TaxDisclosureSection } from './TaxDisclosureSection';
 export { default as MoneyRecordModal } from './MoneyRecordModal';

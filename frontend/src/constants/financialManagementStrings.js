@@ -69,6 +69,17 @@ export const FM_LEDGER_VIEW_OPTIONS = [
 
 export const FM_LEDGER_VIEW_ARIA = '장부 보기 전환';
 
+/** Operator ledger calendar organism — Korean Clinic-OS copy (no lucide/i18n keys) */
+export const FM_LEDGER_CALENDAR = {
+  WEEKDAYS: ['일', '월', '화', '수', '목', '금', '토'],
+  GRID_ARIA: '장부 달력',
+  DAY_LIST_ARIA: '선택한 날짜 거래 목록',
+  EMPTY_DAY: '이 날짜에 등록된 내역이 없습니다.',
+  INCOME_PREFIX: '+',
+  EXPENSE_PREFIX: '−',
+  TIME_FALLBACK: '—'
+};
+
 /** @deprecated Phase 2 — equal peer tabs removed; kept for legacy tests/compat */
 export const FM_VIEW_TABS = {
   ARIA_LABEL: '재무 뷰 전환',

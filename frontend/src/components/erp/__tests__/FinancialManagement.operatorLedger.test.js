@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
   FM_PAGE_TITLE,
@@ -88,9 +88,13 @@ jest.mock('../../common/modals/UnifiedModal', () => ({
     ) : null)
 }));
 
-jest.mock('../FinancialCalendarView', () => ({
+jest.mock('../financial/ledger/LedgerCalendar', () => ({
   __esModule: true,
-  default: () => <div data-testid="financial-calendar-view">calendar</div>
+  default: ({ monthYm }) => (
+    <div data-testid="ledger-calendar" data-month-ym={monthYm}>
+      ledger-calendar
+    </div>
+  )
 }));
 
 jest.mock('../FinancialTransactionForm', () => ({
@@ -275,5 +279,35 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
         '/erp/financial?period=lastMonth&tax=1'
       );
     });
+  });
+
+  it('calendar toggle mounts LedgerCalendar inside shared operator-ledger-stage', async() => {
+    render(
+      <MemoryRouter initialEntries={['/erp/financial']}>
+        <Routes>
+          <Route path="/erp/financial" element={<FinancialManagement />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('operator-ledger')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('operator-ledger-stage')).toBeInTheDocument();
+    expect(screen.queryByTestId('ledger-calendar')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('financial-calendar-view')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('달력'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ledger-calendar')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('operator-ledger-stage')).toBeInTheDocument();
+    expect(screen.getByTestId('operator-ledger-stage')).toContainElement(
+      screen.getByTestId('ledger-calendar')
+    );
+    expect(screen.queryByTestId('financial-calendar-view')).not.toBeInTheDocument();
+    expect(screen.getByText(FM_TAX_DISCLOSURE.TITLE)).toBeInTheDocument();
   });
 });

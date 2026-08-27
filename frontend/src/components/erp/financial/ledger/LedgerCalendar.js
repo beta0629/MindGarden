@@ -304,7 +304,7 @@ const LedgerCalendar = ({
                 className={cellClass}
                 role="gridcell"
                 aria-label={ymd}
-                aria-pressed={isSelected}
+                aria-selected={isSelected}
                 onClick={() => handleDayClick(day)}
               >
                 <span className="ledger-calendar__day-num">{day}</span>

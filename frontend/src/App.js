@@ -23,7 +23,6 @@ import ConsultationRecordView from './components/consultant/ConsultationRecordVi
 import PurchaseManagement from './components/erp/PurchaseManagement';
 import FinancialManagement from './components/erp/FinancialManagement';
 import BudgetManagement from './components/erp/BudgetManagement';
-import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ConsultantDashboardRenewal from './components/consultant/ConsultantDashboardRenewal';
 import ConsultantScheduleRenewal from './components/consultant/ConsultantScheduleRenewal';
@@ -1007,13 +1006,10 @@ function AppContent() {
             {/* Admin ERP 라우트 — STAFF_PERMISSION_POLICY_PHASE2: 실제 페이지(/admin/erp/financial, /admin/erp/reports)만 ADMIN 가드, 단순 리다이렉트는 가드 없이 둠(목적지에서 차단) */}
             <Route path="/admin/erp/dashboard" element={<Navigate to="/erp/dashboard" replace />} />
             <Route path="/admin/erp/purchase" element={<Navigate to="/erp/purchase-requests" replace />} />
+            {/* Operator Finance Phase 2 — legacy admin path → canonical ledger (query 보존) */}
             <Route
               path="/admin/erp/financial"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <IntegratedFinanceDashboard />
-                </ProtectedRoute>
-              }
+              element={<RedirectWithSearch to="/erp/financial" />}
             />
             <Route path="/admin/erp/budget" element={<Navigate to="/erp/budget" replace />} />
             <Route

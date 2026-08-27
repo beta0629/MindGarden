@@ -49,11 +49,14 @@ const FinancialTransactionForm = ({
   onClose,
   onSuccess,
   mode = 'create',
-  initialTransaction = null
+  initialTransaction = null,
+  modalTitle = null,
+  defaultTransactionType = 'INCOME',
+  clinicTypeLabels = false
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    transactionType: 'EXPENSE',
+    transactionType: defaultTransactionType === 'EXPENSE' ? 'EXPENSE' : 'INCOME',
     category: '',
     subcategory: '',
     amount: '',
@@ -294,7 +297,10 @@ const FinancialTransactionForm = ({
     <UnifiedModal
       isOpen={true}
       onClose={onClose}
-      title={mode === 'edit' ? '거래 수정' : t('erp:FinancialTransactionForm.t_84c4996a')}
+      title={
+        modalTitle
+          || (mode === 'edit' ? '거래 수정' : t('erp:FinancialTransactionForm.t_84c4996a'))
+      }
       size="medium"
       backdropClick={true}
       showCloseButton={true}
@@ -327,7 +333,7 @@ const FinancialTransactionForm = ({
           {/* 거래 유형 */}
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">
-              거래 유형
+              {clinicTypeLabels ? '유형' : '거래 유형'}
             </label>
             <div className="financial-transaction-form-radio-row">
               <label className="financial-transaction-form-radio-label">
@@ -340,7 +346,7 @@ const FinancialTransactionForm = ({
                   disabled={isApprovedReadOnly}
                   className="financial-transaction-form-radio-input"
                 />
-                <span>수입</span>
+                <span>{clinicTypeLabels ? '들어온 돈 (+)' : '수입'}</span>
               </label>
               <label className="financial-transaction-form-radio-label">
                 <input
@@ -352,7 +358,7 @@ const FinancialTransactionForm = ({
                   disabled={isApprovedReadOnly}
                   className="financial-transaction-form-radio-input"
                 />
-                <span>지출</span>
+                <span>{clinicTypeLabels ? '나간 돈 (-)' : '지출'}</span>
               </label>
             </div>
           </div>

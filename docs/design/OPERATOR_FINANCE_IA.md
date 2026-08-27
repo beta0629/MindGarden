@@ -85,7 +85,16 @@
 
 ## Phase 2 / 3
 
-- **Phase 2**: `/erp/financial` + `/admin/erp/financial` 병합
+### Phase 2 — ONE operator ledger (`/erp/financial`) ✅ additive status
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Canonical `/erp/financial` = 들어온 돈 · 나간 돈 | [x] | Quiet header · summary strip · table/calendar · `돈 기록` |
+| `/admin/erp/financial` → `/erp/financial` (query 보존) | [x] | `RedirectWithSearch` |
+| 회계 도구는 `세무사용 자료` disclosure | [x] | 분개·원장·재무제표·리포트·정산 — equal tab 아님 |
+| moneyCockpit / `operatorFinanceDashboardStrings` 비겹침 | [x] | Phase 1 파일 미수정 |
+| LNB 라벨 | [ ] | Phase 3 — `거래·정산` 유지 가능 |
+
 - **Phase 3**: LNB 클리닉 라벨 + 패키지 요금 money group
 
 ---

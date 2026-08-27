@@ -1,9 +1,15 @@
 /**
- * FinancialManagement 사용자 노출 한글 UI 문자열
- * (OPS-02 에픽 — 상수 분리)
+ * FinancialManagement / Operator Ledger (`/erp/financial`) 사용자 노출 한글 UI 문자열
+ * Operator Finance Phase 2 — Clinic-OS 장부 언어
+ *
+ * @author CoreSolution
+ * @since 2026-08-27
  */
 
-export const FM_PAGE_TITLE = '재무 관리';
+/** Canonical page title */
+export const FM_PAGE_TITLE = '들어온 돈 · 나간 돈';
+export const FM_PAGE_TITLE_ID = 'operator-ledger-page-title';
+export const FM_MAIN_ARIA_LABEL = '들어온 돈 · 나간 돈 본문';
 
 export const FM_SESSION = {
   SUBTITLE_CHECKING: '세션 정보를 확인하는 중입니다.',
@@ -11,49 +17,97 @@ export const FM_SESSION = {
 };
 
 export const FM_LOGIN = {
-  SUBTITLE: '재무 거래 및 회계를 관리하려면 로그인해주세요.',
+  SUBTITLE: '돈의 움직임을 확인·기록하려면 로그인해주세요.',
   HEADING: '로그인이 필요합니다.',
-  BODY: '재무 관리 기능을 사용하려면 로그인해주세요.'
+  BODY: '장부 기능을 사용하려면 로그인해주세요.'
 };
 
 export const fmFinancialPageSubtitleWithBranch = (branchName) =>
-  `재무 거래 및 회계를 관리합니다. (${branchName})`;
+  `들어온 돈과 나간 돈을 관리합니다. (${branchName})`;
 
-export const FM_FINANCIAL_PAGE_SUBTITLE_DEFAULT = '재무 거래 및 회계를 관리할 수 있습니다.';
+export const FM_FINANCIAL_PAGE_SUBTITLE_DEFAULT = '들어온 돈과 나간 돈을 확인·기록합니다.';
 
-export const FM_EXPORT = {
-  ARIA_LABEL: '거래 목록 내보내기',
-  BUTTON: '내보내기'
+/** Period segment (quiet header) */
+export const FM_PERIOD = {
+  THIS_MONTH: 'THIS_MONTH',
+  LAST_MONTH: 'LAST_MONTH',
+  THIS_YEAR: 'THIS_YEAR',
+  CUSTOM: 'CUSTOM'
 };
 
+export const FM_PERIOD_OPTIONS = [
+  { value: FM_PERIOD.THIS_MONTH, label: '이번 달' },
+  { value: FM_PERIOD.LAST_MONTH, label: '지난달' },
+  { value: FM_PERIOD.THIS_YEAR, label: '올해' },
+  { value: FM_PERIOD.CUSTOM, label: '직접' }
+];
+
+export const FM_PERIOD_ARIA_LABEL = '조회 기간';
+
+export const FM_RECORD_CTA = '돈 기록';
+export const FM_RECORD_CTA_ARIA = '돈 기록하기';
+
+/** Compact summary strip — 순이익/건 금지 */
+export const FM_SUMMARY = {
+  INCOME_LABEL: '들어온 합',
+  EXPENSE_LABEL: '나간 합',
+  REMAINING_LABEL: '남은 돈',
+  BAND_ARIA: '기간 합계',
+  DASH: '—'
+};
+
+/** Main stage view toggle — table | calendar only (not dashboard peer) */
+export const FM_LEDGER_VIEW = {
+  TABLE: 'table',
+  CALENDAR: 'calendar'
+};
+
+export const FM_LEDGER_VIEW_OPTIONS = [
+  { value: FM_LEDGER_VIEW.TABLE, label: '테이블' },
+  { value: FM_LEDGER_VIEW.CALENDAR, label: '달력' }
+];
+
+export const FM_LEDGER_VIEW_ARIA = '장부 보기 전환';
+
+/** @deprecated Phase 2 — equal peer tabs removed; kept for legacy tests/compat */
 export const FM_VIEW_TABS = {
   ARIA_LABEL: '재무 뷰 전환',
   TRANSACTIONS: '거래 내역',
-  CALENDAR: '달력 뷰',
+  CALENDAR: '달력',
   DASHBOARD: '대시보드'
 };
 
 /** PER_PAGE G3-01: 재무 거래 목록 기본 보기 = 테이블 */
 export const FM_TRANSACTION_DEFAULT_VIEW_MODE = 'table';
 
+/** Legacy card/compact options (saved-view compat); primary UI uses table|calendar */
 export const FM_TRANSACTION_VIEW_MODE_OPTIONS = [
   { value: 'card', label: '카드' },
   { value: 'compact', label: '작은 카드' },
   { value: 'table', label: '테이블' }
 ];
 
+export const FM_EXPORT = {
+  ARIA_LABEL: '거래 목록 내보내기',
+  BUTTON: '내보내기'
+};
+
 export const FM_TX_TABLE_LABELS = {
   TRANSACTION_DATE: '일자',
+  DESCRIPTION: '내용',
+  INCOME_AMOUNT: '들어온 금액',
+  EXPENSE_AMOUNT: '나간 금액',
   TRANSACTION_TYPE: '유형',
   CATEGORY: '카테고리',
   STATUS: '상태',
   MAPPING: '매핑',
-  ACTIONS: '작업'
+  ACTIONS: '관리'
 };
 
 export const FM_TX_TYPE = {
-  INCOME: '수입',
-  EXPENSE: '지출'
+  INCOME: '들어온 돈',
+  EXPENSE: '나간 돈',
+  ALL: '전체'
 };
 
 export const FM_CATEGORY_DISPLAY = {
@@ -124,7 +178,7 @@ export const FM_ROW_ACTIONS = {
 };
 
 export const FM_FILTER = {
-  ARIA_TOOLBAR: '재무 거래 필터',
+  ARIA_TOOLBAR: '거래 필터',
   PERIOD: '기간',
   DATE_RANGE_ALL: '전체',
   DATE_RANGE_TODAY: '일간',
@@ -137,10 +191,10 @@ export const FM_FILTER = {
   ALL_PERIOD_HINT: '전체 기간은 데이터가 많을 수 있습니다. 필요할 때만 선택해 주세요.',
   START_DATE: '시작일',
   END_DATE: '종료일',
-  TRANSACTION_TYPE: '거래 유형',
+  TRANSACTION_TYPE: '유형',
   CATEGORY: '카테고리',
   SEARCH: '검색',
-  SEARCH_PLACEHOLDER: '상담사명, 내담자명, 설명 검색...',
+  SEARCH_PLACEHOLDER: '내용 검색...',
   SEARCH_SCOPE_BADGE: '이 목록에서만 검색',
   SEARCH_SCOPE_HINT: '다른 페이지에 있을 수 있는 거래는 다음 페이지를 눌러 확인하세요.',
   SUBMIT: '검색'
@@ -148,8 +202,8 @@ export const FM_FILTER = {
 
 export const FM_FILTER_TX_TYPE_OPTIONS = [
   { value: 'ALL', label: '전체' },
-  { value: 'INCOME', label: '수입' },
-  { value: 'EXPENSE', label: '지출' }
+  { value: 'INCOME', label: '들어온 돈' },
+  { value: 'EXPENSE', label: '나간 돈' }
 ];
 
 export const FM_FILTER_CATEGORY_OPTIONS = [
@@ -200,9 +254,11 @@ export const FM_TAX_SUMMARY = {
 };
 
 export const FM_TX_LIST_SECTION = {
-  TITLE: '재무 거래 내역',
+  TITLE: '거래 내역',
   VIEW_TOGGLE_ARIA: '목록 보기 전환',
-  EMPTY: '거래 내역이 없습니다.'
+  EMPTY: '선택한 기간에 등록된 내역이 없습니다.',
+  EMPTY_SEARCH: '일치하는 거래 내역이 없습니다. 검색어나 필터를 변경해보세요.',
+  EMPTY_CTA: '돈 기록하기'
 };
 
 export const FM_CARD_LABELS = {
@@ -217,12 +273,13 @@ export const FM_PAGINATION = {
   SERVER_TOTAL_HINT: '아래 페이지 수는 기간·유형·카테고리 조건 기준입니다. 검색어는 불러온 목록 안에서만 적용됩니다.'
 };
 
+/** @deprecated Phase 2 — dashboard peer removed; labels kept for i18n fallback */
 export const FM_DASHBOARD = {
   SECTION_ARIA: '재무 대시보드',
   SECTION_TITLE: '재무 대시보드',
-  KPI_INCOME: '수입 합계',
-  KPI_EXPENSE: '지출 합계',
-  KPI_NET: '순이익',
+  KPI_INCOME: '들어온 합',
+  KPI_EXPENSE: '나간 합',
+  KPI_NET: '남은 돈',
   KPI_TX_COUNT: '거래 건수',
   KPI_THIS_MONTH: '이번 달',
   MAPPING_STATUS_TITLE: '매핑 연동 현황',
@@ -285,3 +342,31 @@ export const FM_DETAIL_MODAL = {
 
 export const FM_WITHHOLDING_DETAIL_HINT =
   '(입금 총액 대비 사업소득 원천징수 예정: 국세 3%, 지방세 0.3%, 합계 3.3%. 부가세와 별개)';
+
+/** Tax disclosure — accountant tools behind fold */
+export const FM_TAX_DISCLOSURE = {
+  TITLE: '세무사용 자료',
+  CAPTION: '세무사·회계사 제출용 법정 재무제표 및 상세 회계 리포트',
+  ARIA: '세무사용 자료 펼치기'
+};
+
+export const FM_TAX_STATEMENT_TABS = [
+  { key: 'income-statement', label: '손익 현황' },
+  { key: 'balance-sheet', label: '자산·부채 현황' },
+  { key: 'cash-flow', label: '현금 흐름' },
+  { key: 'journal-entries', label: '거래 정리' },
+  { key: 'ledgers', label: '계정별 내역' },
+  { key: 'daily', label: '일간 리포트' },
+  { key: 'monthly', label: '월간 리포트' },
+  { key: 'yearly', label: '연간 리포트' },
+  { key: 'settlement', label: '정산 관리' }
+];
+
+export const FM_MONEY_RECORD = {
+  TITLE: '돈 기록',
+  TYPE_LABEL: '유형',
+  TYPE_INCOME: '들어온 돈 (+)',
+  TYPE_EXPENSE: '나간 돈 (-)',
+  SUBMIT: '기록하기',
+  CANCEL: '취소'
+};

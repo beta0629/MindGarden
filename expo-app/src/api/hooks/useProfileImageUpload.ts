@@ -15,6 +15,7 @@ import { apiPost } from '../client';
 import { PROFILE_API } from '../endpoints';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
+import { normalizeProfileImageUploadPayload } from '@/utils/profileImageUploadPayload';
 import { MESSAGE_QUERY_KEYS } from './useMessages';
 import { CLIENT_QUERY_KEYS } from './useClients';
 import { CONSULTATION_QUERY_KEYS } from './useConsultations';
@@ -35,24 +36,6 @@ export interface ProfileImageUploadInput {
   readonly fileName?: string | null;
 }
 
-const DEFAULT_MIME_TYPE = 'image/jpeg';
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-function resolveExtensionFromMime(mime: string): string {
-  switch (mime) {
-    case 'image/png':
-      return 'png';
-    case 'image/webp':
-      return 'webp';
-    default:
-      return 'jpg';
-  }
-}
-
-function buildDefaultFileName(mime: string): string {
-  return `profile_${Date.now()}.${resolveExtensionFromMime(mime)}`;
-}
-
 function extractProfileImageUrl(raw: unknown): string | null {
   const data = unwrapApiResponse<Record<string, unknown>>(raw);
   if (!data || typeof data !== 'object') {
@@ -71,23 +54,12 @@ export function useProfileImageUpload() {
       if (!u) {
         throw new Error('로그인이 필요합니다.');
       }
-      if (!input || !input.uri) {
-        throw new Error('업로드할 이미지를 선택해주세요.');
-      }
-      const rawMime = (input.mimeType ?? DEFAULT_MIME_TYPE).toLowerCase();
-      const mime = ALLOWED_MIME_TYPES.includes(rawMime) ? rawMime : DEFAULT_MIME_TYPE;
-      const name = input.fileName && input.fileName.trim() !== ''
-        ? input.fileName
-        : buildDefaultFileName(mime);
+      const payload = normalizeProfileImageUploadPayload(input);
 
       const formData = new FormData();
       // React Native FormData — { uri, name, type } 객체를 직접 append.
       // axios 가 multipart boundary 를 자동 생성하므로 Content-Type 헤더는 명시하지 않는다.
-      formData.append('file', {
-        uri: input.uri,
-        name,
-        type: mime,
-      } as unknown as Blob);
+      formData.append('file', payload as unknown as Blob);
 
       return apiPost<unknown>(PROFILE_API.uploadProfileImage(u.id), formData, {
         headers: {

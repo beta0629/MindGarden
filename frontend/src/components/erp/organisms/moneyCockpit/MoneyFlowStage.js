@@ -10,12 +10,19 @@ import PropTypes from 'prop-types';
 import MGChart from '../../../common/MGChart';
 import EmptyState from '../../../common/EmptyState';
 import UnifiedLoading from '../../../common/UnifiedLoading';
+import {
+  MG_VIZ_BAR_VALUE_LABELS_PLUGIN_ID,
+  mgVizBarValueLabelsPlugin
+} from '../../../dashboard-v2/utils/chartBarValueLabelPlugin';
 import { OFD_CHART } from '../../../../constants/operatorFinanceDashboardStrings';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import { formatAxisTick, formatWonDisplay } from './moneyCockpitData';
 
 /** 데스크톱 차트 기준 높이(px) — CSS clamp가 실제 레이아웃을 지배 */
 const MONEY_FLOW_CHART_HEIGHT_PX = 480;
+
+/** caption 스케일 — 막대 라벨 최소 12 (축소 금지) */
+const BAR_VALUE_LABEL_FONT_SIZE = 12;
 
 const CHART_TOKEN_VARS = {
   INCOME_FILL: '--mg-primary-500',
@@ -119,6 +126,12 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
             return `${ctx.dataset?.label || ''}: ${formatWonDisplay(raw)}`;
           }
         }
+      },
+      [MG_VIZ_BAR_VALUE_LABELS_PLUGIN_ID]: {
+        enabled: true,
+        formatter: formatWonDisplay,
+        fontSize: BAR_VALUE_LABEL_FONT_SIZE,
+        color: colors.tick
       }
     },
     scales: {
@@ -160,6 +173,7 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
             error={null}
             data={chartData}
             options={chartOptions}
+            plugins={[mgVizBarValueLabelsPlugin]}
           />
         </div>
       )}

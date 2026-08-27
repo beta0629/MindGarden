@@ -14,9 +14,7 @@
  */
 
 import {
-  OFD_AXIS_COMPACT_THRESHOLD,
   OFD_CATEGORY_LABELS,
-  OFD_CHART,
   OFD_FACTS,
   OFD_HERO,
   OFD_LEDGER,
@@ -520,24 +518,13 @@ export function formatWonDisplay(amount) {
 }
 
 /**
- * 차트 Y축 눈금 — 가능하면 `1,200,000원`, overflow면 `120만 원` / `1.2억 원`
+ * 차트 Y축 눈금 — 항상 전체 원 표기 (`1,200,000원`). 0 → `0원`. 만/억 축약 없음.
  * @param {number} value
  * @returns {string|number}
  */
 export function formatAxisTick(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return value;
-  const abs = Math.abs(n);
-  if (abs >= 100000000) {
-    const eok = n / 100000000;
-    const digits = n % 100000000 === 0 ? 0 : 1;
-    return `${eok.toFixed(digits)}${OFD_CHART.AXIS_EOK_SUFFIX}`;
-  }
-  if (abs >= OFD_AXIS_COMPACT_THRESHOLD) {
-    const man = n / 10000;
-    const digits = n % 10000 === 0 ? 0 : 1;
-    return `${man.toFixed(digits)}${OFD_CHART.AXIS_MAN_SUFFIX}`;
-  }
   return formatWonDisplay(n);
 }
 

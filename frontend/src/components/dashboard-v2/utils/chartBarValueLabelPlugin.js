@@ -43,12 +43,15 @@ export const mgVizBarValueLabelsPlugin = {
         }
         const { x, y } = element.getProps(['x', 'y'], true);
         const isPeak = peakIndex === index;
+        const labelText = typeof opts.formatter === 'function'
+          ? opts.formatter(value)
+          : String(value);
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillStyle = isPeak ? peakColor : color;
         ctx.font = `${isPeak ? '600' : '400'} ${fontSize}px sans-serif`;
-        ctx.fillText(String(value), x, y - 2);
+        ctx.fillText(labelText, x, y - 2);
         ctx.restore();
       });
     });

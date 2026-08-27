@@ -38,11 +38,15 @@ jest.mock('../../dashboard-v2/content', () => ({
 
 jest.mock('../../common/MGChart', () => ({
   __esModule: true,
-  default: function MockMGChart({ data }) {
+  default: function MockMGChart({ data, options, plugins }) {
+    const labelOpts = options?.plugins?.mgVizBarValueLabels;
     return (
       <div
         data-testid="mock-mg-chart"
         data-labels={data?.labels?.join(',')}
+        data-bar-labels-enabled={labelOpts?.enabled ? 'true' : 'false'}
+        data-has-formatter={typeof labelOpts?.formatter === 'function' ? 'true' : 'false'}
+        data-plugins-count={Array.isArray(plugins) ? String(plugins.length) : '0'}
       />
     );
   }
@@ -352,6 +356,11 @@ describe('ErpDashboard money cockpit', () => {
       const empty = screen.queryByText('최근 12개월에 등록된 수입·지출이 없습니다.');
       const emptyConst = screen.queryByText(OFD_CHART.EMPTY);
       expect(chart || empty || emptyConst).toBeTruthy();
+      if (chart) {
+        expect(chart).toHaveAttribute('data-bar-labels-enabled', 'true');
+        expect(chart).toHaveAttribute('data-has-formatter', 'true');
+        expect(Number(chart.getAttribute('data-plugins-count'))).toBeGreaterThan(0);
+      }
     });
   });
 

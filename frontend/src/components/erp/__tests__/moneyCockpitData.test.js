@@ -32,11 +32,14 @@ describe('moneyCockpitData format helpers', () => {
     expect(formatWonDisplay(NaN)).toBe(OFD_LEDGER.DASH);
   });
 
-  test('formatAxisTick에 원이 포함된다', () => {
+  test('formatAxisTick는 항상 전체 원 표기 (만/억 축약 없음)', () => {
+    expect(formatAxisTick(6000000)).toBe('6,000,000원');
+    expect(formatAxisTick(12000000)).toBe('12,000,000원');
+    expect(formatAxisTick(0)).toBe('0원');
     expect(formatAxisTick(1200000)).toBe('1,200,000원');
-    expect(String(formatAxisTick(12000000))).toMatch(/원/);
+    expect(String(formatAxisTick(12000000))).not.toMatch(/만/);
+    expect(String(formatAxisTick(12000000))).not.toMatch(/억/);
     expect(String(formatAxisTick(12000000))).not.toMatch(/K/);
-    expect(String(formatAxisTick(1200000))).not.toBe('120만');
   });
 });
 

@@ -216,6 +216,10 @@ describe('ErpDashboard money cockpit', () => {
       expect(screen.getByTestId('money-hero-band')).toBeInTheDocument();
     });
 
+    // NEW layout 필수: hero band 라벨
+    expect(screen.getByText('들어온 돈')).toBeInTheDocument();
+    expect(screen.getByText('나간 돈')).toBeInTheDocument();
+    expect(screen.getByText('남은 돈')).toBeInTheDocument();
     expect(screen.getByText(OFD_HERO.INCOME_LABEL)).toBeInTheDocument();
     expect(screen.getByText(OFD_HERO.EXPENSE_LABEL)).toBeInTheDocument();
     expect(screen.getByText(OFD_HERO.REMAINING_LABEL)).toBeInTheDocument();
@@ -230,9 +234,9 @@ describe('ErpDashboard money cockpit', () => {
     });
 
     expect(screen.queryByTestId('content-kpi-row')).not.toBeInTheDocument();
-    expect(screen.queryByText('총 아이템 수')).not.toBeInTheDocument();
-    expect(screen.queryByText('승인 대기 요청')).not.toBeInTheDocument();
-    expect(screen.queryByText('총 주문 수')).not.toBeInTheDocument();
+    expect(screen.queryByText(/총 아이템/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/승인 대기/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/총 주문/)).not.toBeInTheDocument();
     expect(screen.queryByText('예산 사용률')).not.toBeInTheDocument();
   });
 
@@ -245,8 +249,9 @@ describe('ErpDashboard money cockpit', () => {
 
     await waitFor(() => {
       const chart = screen.queryByTestId('mock-mg-chart');
-      const empty = screen.queryByText(OFD_CHART.EMPTY);
-      expect(chart || empty).toBeTruthy();
+      const empty = screen.queryByText('최근 12개월에 등록된 수입·지출이 없습니다.');
+      const emptyConst = screen.queryByText(OFD_CHART.EMPTY);
+      expect(chart || empty || emptyConst).toBeTruthy();
     });
   });
 
@@ -260,7 +265,30 @@ describe('ErpDashboard money cockpit', () => {
     expect(screen.queryByText('분개 초기화')).not.toBeInTheDocument();
     expect(screen.queryByText('백필')).not.toBeInTheDocument();
     expect(screen.queryByText(/ErpFinanceAdminSyncCard/i)).not.toBeInTheDocument();
+    // 히어로(및 페이지)에 순이익 라벨 부재
     expect(screen.queryByText('순이익')).not.toBeInTheDocument();
     expect(screen.queryByText('데이터 새로고침')).not.toBeInTheDocument();
+  });
+
+  test('레거시 툴바·퀵액션·터넌트 서브타이틀이 없다', async() => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('money-cockpit')).toBeInTheDocument();
+    });
+
+    // ErpFilterToolbar / secondary 새로고침
+    expect(screen.queryByText('데이터 새로고침')).not.toBeInTheDocument();
+    expect(document.querySelector('.erp-filter-toolbar')).toBeNull();
+
+    // quick-action admin-card grid (조달·품목/거래·정산/승인센터)
+    expect(document.querySelector('.mg-v2-ad-b0kla__admin-card')).toBeNull();
+    expect(screen.queryByText('조달')).not.toBeInTheDocument();
+    expect(screen.queryByText('품목')).not.toBeInTheDocument();
+    expect(screen.queryByText('거래·정산')).not.toBeInTheDocument();
+    expect(screen.queryByText('승인센터')).not.toBeInTheDocument();
+
+    // 테넌트 서브타이틀
+    expect(screen.queryByText(/\(터넌트:/)).not.toBeInTheDocument();
   });
 });

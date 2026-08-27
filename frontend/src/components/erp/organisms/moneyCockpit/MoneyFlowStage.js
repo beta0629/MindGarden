@@ -16,16 +16,27 @@ import {
 } from '../../../dashboard-v2/utils/chartBarValueLabelPlugin';
 import { OFD_CHART } from '../../../../constants/operatorFinanceDashboardStrings';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
-import { formatAxisTick, formatWonDisplay } from './moneyCockpitData';
+import {
+  computeSeriesMonthlyAverages,
+  formatAxisTick,
+  formatWonDisplay
+} from './moneyCockpitData';
+import {
+  MONEY_FLOW_AVG_LINES_PLUGIN_ID,
+  moneyFlowAverageLinesPlugin
+} from './moneyFlowAverageLinesPlugin';
 
 /** 데스크톱 차트 기준 높이(px) — CSS clamp가 실제 레이아웃을 지배 */
 const MONEY_FLOW_CHART_HEIGHT_PX = 480;
 
 /** Chart.js plugins — 모듈 스코프 고정 (매 렌더 새 배열 → MGChart 재생성 방지) */
-const MONEY_FLOW_CHART_PLUGINS = [mgVizBarValueLabelsPlugin];
+const MONEY_FLOW_CHART_PLUGINS = [mgVizBarValueLabelsPlugin, moneyFlowAverageLinesPlugin];
 
 /** caption 스케일 — 막대 라벨 최소 12 (축소 금지) */
 const BAR_VALUE_LABEL_FONT_SIZE = 12;
+
+/** 평균 점선 라벨 — 막대 라벨보다 한 단계 작게 */
+const AVG_LINE_LABEL_FONT_SIZE = 11;
 
 const CHART_TOKEN_VARS = {
   INCOME_FILL: '--mg-primary-500',
@@ -82,6 +93,11 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
       (row) => toSafeNumber(row?.income) > 0 || toSafeNumber(row?.expense) > 0
     );
 
+  const monthlyAverages = useMemo(
+    () => computeSeriesMonthlyAverages(series),
+    [series]
+  );
+
   const chartData = useMemo(() => {
     const labels = (series || []).map((row) => row.label);
     return {
@@ -135,6 +151,16 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
         formatter: formatWonDisplay,
         fontSize: BAR_VALUE_LABEL_FONT_SIZE,
         color: colors.tick
+      },
+      [MONEY_FLOW_AVG_LINES_PLUGIN_ID]: {
+        enabled: true,
+        incomeAvg: monthlyAverages.incomeAvg,
+        expenseAvg: monthlyAverages.expenseAvg,
+        incomeColor: colors.incomeBorder || colors.incomeFill,
+        expenseColor: colors.expenseBorder || colors.expenseFill,
+        formatter: formatWonDisplay,
+        labelPrefix: OFD_CHART.AVG_PREFIX,
+        fontSize: AVG_LINE_LABEL_FONT_SIZE
       }
     },
     scales: {
@@ -148,7 +174,10 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
         ticks: { color: colors.tick, callback: formatAxisTick }
       }
     }
-  }), [colors]);
+  }), [colors, monthlyAverages]);
+
+  const incomeAvgCaption = `${OFD_CHART.SERIES_INCOME} ${OFD_CHART.AVG_PREFIX} ${formatWonDisplay(monthlyAverages.incomeAvg)}`;
+  const expenseAvgCaption = `${OFD_CHART.SERIES_EXPENSE} ${OFD_CHART.AVG_PREFIX} ${formatWonDisplay(monthlyAverages.expenseAvg)}`;
 
   return (
     <section
@@ -167,18 +196,29 @@ const MoneyFlowStage = ({ loading = false, series = [] }) => {
           <EmptyState title={OFD_CHART.EMPTY} />
         </div>
       ) : (
-        <div className="money-flow-stage__plot" data-testid="money-flow-stage-plot">
-          <MGChart
-            type="bar"
-            height={MONEY_FLOW_CHART_HEIGHT_PX}
-            variant="minimal"
-            loading={false}
-            error={null}
-            data={chartData}
-            options={chartOptions}
-            plugins={MONEY_FLOW_CHART_PLUGINS}
-          />
-        </div>
+        <>
+          <div className="money-flow-stage__plot" data-testid="money-flow-stage-plot">
+            <MGChart
+              type="bar"
+              height={MONEY_FLOW_CHART_HEIGHT_PX}
+              variant="minimal"
+              loading={false}
+              error={null}
+              data={chartData}
+              options={chartOptions}
+              plugins={MONEY_FLOW_CHART_PLUGINS}
+            />
+          </div>
+          <p
+            className="money-flow-stage__avg-caption"
+            data-testid="money-flow-stage-avg-caption"
+            aria-label={OFD_CHART.AVG_CAPTION_ARIA}
+          >
+            <span className="money-flow-stage__avg-caption-income">{incomeAvgCaption}</span>
+            <span className="money-flow-stage__avg-caption-sep" aria-hidden="true"> · </span>
+            <span className="money-flow-stage__avg-caption-expense">{expenseAvgCaption}</span>
+          </p>
+        </>
       )}
     </section>
   );

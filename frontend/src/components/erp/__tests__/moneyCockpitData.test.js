@@ -8,6 +8,7 @@
 import {
   buildIncomeMixItems,
   buildOutflowMixItems,
+  computeSeriesMonthlyAverages,
   formatAxisTick,
   formatWonAmount,
   formatWonDisplay,
@@ -43,6 +44,44 @@ describe('moneyCockpitData format helpers', () => {
   });
 });
 
+describe('moneyCockpitData computeSeriesMonthlyAverages', () => {
+  test('빈 배열 → 0', () => {
+    expect(computeSeriesMonthlyAverages([])).toEqual({ incomeAvg: 0, expenseAvg: 0 });
+    expect(computeSeriesMonthlyAverages(null)).toEqual({ incomeAvg: 0, expenseAvg: 0 });
+  });
+
+  test('12개월 산술 평균 — 0원 월 포함', () => {
+    const series = [
+      { income: 12000000, expense: 6000000 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 },
+      { income: 0, expense: 0 }
+    ];
+    expect(computeSeriesMonthlyAverages(series)).toEqual({
+      incomeAvg: 1000000,
+      expenseAvg: 500000
+    });
+  });
+
+  test('균등 값 → 동일 평균', () => {
+    const series = Array.from({ length: 12 }, () => ({
+      income: 6000000,
+      expense: 3000000
+    }));
+    expect(computeSeriesMonthlyAverages(series)).toEqual({
+      incomeAvg: 6000000,
+      expenseAvg: 3000000
+    });
+  });
+});
 describe('moneyCockpitData pending sums (성공 시 0)', () => {
   test('sumPendingConsultationFees: 빈 목록 → 0 (null 아님)', () => {
     expect(sumPendingConsultationFees([])).toBe(0);

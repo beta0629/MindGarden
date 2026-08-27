@@ -529,6 +529,30 @@ export function formatAxisTick(value) {
 }
 
 /**
+ * 표시 중인 N개월 series의 들어옴·나감 산술 평균.
+ * 0원 월 포함. 빈 배열이면 0.
+ * @param {Array<{ income?: number, expense?: number }>|null|undefined} series
+ * @returns {{ incomeAvg: number, expenseAvg: number }}
+ */
+export function computeSeriesMonthlyAverages(series) {
+  const rows = Array.isArray(series) ? series : [];
+  const n = rows.length;
+  if (n === 0) {
+    return { incomeAvg: 0, expenseAvg: 0 };
+  }
+  let incomeSum = 0;
+  let expenseSum = 0;
+  rows.forEach((row) => {
+    incomeSum += toSafeNumber(row?.income);
+    expenseSum += toSafeNumber(row?.expense);
+  });
+  return {
+    incomeAvg: incomeSum / n,
+    expenseAvg: expenseSum / n
+  };
+}
+
+/**
  * 거래가 수입인지
  * @param {object} tx
  * @returns {boolean}

@@ -102,7 +102,10 @@ describe('ProfileDropdown', () => {
       expect(container.querySelector('.mg-v2-profile-trigger-outer')).toBeNull();
       expect(container.querySelector('.mg-v2-tenant-header-cluster__actions')).toBeNull();
       expect(container.querySelector('.mg-v2-tenant-header-cluster__trigger-wrap')).toBeNull();
-      expect(cluster.querySelectorAll('button').length).toBe(1);
+      expect(cluster.querySelectorAll('button').length).toBe(0);
+      expect(menuTrigger.tagName).toBe('SPAN');
+      expect(menuTrigger).toHaveAttribute('role', 'button');
+      expect(menuTrigger).toHaveAttribute('data-gnb-chrome-free', 'true');
     });
 
     it('트리거 버튼에 mg-button / NavIcon / ActionBarButton 클래스가 없다', () => {

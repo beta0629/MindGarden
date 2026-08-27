@@ -1,6 +1,6 @@
 /**
  * TenantHeaderCluster 단위 테스트 — GNB 테넌트 헤더 클러스터
- * identity(비버튼) + chevron-only menu trigger, NavIcon/EntityRowActions 미사용
+ * identity(비버튼) + chevron-only menu trigger (span[role=button]), NavIcon/EntityRowActions 미사용
  *
  * @see docs/standards/TESTING_STANDARD.md
  */
@@ -53,15 +53,25 @@ describe('TenantHeaderCluster', () => {
     const nameEl = screen.getByText('테스트 사용자');
     expect(nameEl).toBeInTheDocument();
     expect(nameEl.closest('button')).toBeNull();
+    expect(nameEl.closest('[role="button"]')).toBeNull();
   });
 
-  it('정확히 하나의 메뉴 트리거 버튼만 있다', () => {
+  it('정확히 하나의 메뉴 트리거([role=button])만 있고 native button은 없다', () => {
     const { container } = render(<TenantHeaderCluster {...defaultProps} />);
     const cluster = container.querySelector('.mg-v2-tenant-header-cluster');
-    expect(cluster.querySelectorAll('button').length).toBe(1);
+    expect(cluster.querySelectorAll('button').length).toBe(0);
+    expect(cluster.querySelectorAll('[aria-label="프로필 메뉴"]').length).toBe(1);
     expect(
       screen.getByRole('button', { name: PROFILE_MENU_TRIGGER_ARIA_LABEL })
     ).toBeInTheDocument();
+  });
+
+  it('메뉴 트리거는 span[role=button]이며 data-gnb-chrome-free가 있다', () => {
+    render(<TenantHeaderCluster {...defaultProps} />);
+    const trigger = screen.getByRole('button', { name: PROFILE_MENU_TRIGGER_ARIA_LABEL });
+    expect(trigger.tagName).toBe('SPAN');
+    expect(trigger).toHaveAttribute('data-gnb-chrome-free', 'true');
+    expect(trigger).toHaveAttribute('tabIndex', '0');
   });
 
   it('NavIcon/EntityRowActions/MGButton/bordered trigger wrapper가 없다', () => {
@@ -96,6 +106,17 @@ describe('TenantHeaderCluster', () => {
       screen.getByRole('button', { name: PROFILE_MENU_TRIGGER_ARIA_LABEL })
     );
     expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('트리거 Enter/Space 키로 onToggle이 호출된다', async() => {
+    const onToggle = jest.fn();
+    render(<TenantHeaderCluster {...defaultProps} onToggle={onToggle} />);
+    const trigger = screen.getByRole('button', { name: PROFILE_MENU_TRIGGER_ARIA_LABEL });
+    trigger.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    await userEvent.keyboard(' ');
+    expect(onToggle).toHaveBeenCalledTimes(2);
   });
 
   it('isOpen에 따라 aria-expanded가 갱신된다', () => {

@@ -559,17 +559,13 @@ const TabletRegister = () => {
                 required
               />
               <label htmlFor="agreeTerms">
-                <MGButton
+                <button
                   type="button"
-                  variant="outline"
-                  size="small"
-                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-link-button`}
+                  className="mg-v2-link-button"
                   onClick={(e) => { e.preventDefault(); setTermsModalOpen(true); }}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  preventDoubleClick={false}
                 >
                   이용약관
-                </MGButton>
+                </button>
                 {' '}에 동의합니다
               </label>
             </div>
@@ -589,17 +585,13 @@ const TabletRegister = () => {
                 required
               />
               <label htmlFor="agreePrivacy">
-                <MGButton
+                <button
                   type="button"
-                  variant="outline"
-                  size="small"
-                  className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-link-button`}
+                  className="mg-v2-link-button"
                   onClick={(e) => { e.preventDefault(); setPrivacyModalOpen(true); }}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  preventDoubleClick={false}
                 >
                   개인정보처리방침
-                </MGButton>
+                </button>
                 {' '}에 동의합니다
               </label>
             </div>

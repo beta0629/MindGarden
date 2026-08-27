@@ -285,9 +285,11 @@
   padding-right: 48px;
 }
 
-/* 체크박스 그룹 */
+/* 체크박스 그룹 — row 고정 (글로벌 tokens column 오버라이드) */
 .mg-v2-checkbox-group {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   margin-bottom: 24px;
@@ -310,6 +312,39 @@
 .mg-v2-checkbox-group a {
   color: var(--mg-primary-color, var(--mg-color-primary-main));
   text-decoration: underline;
+}
+
+/* 인증 컨테이너 스코프 — 모바일에서도 체크박스+링크 한 줄 유지 */
+.mg-v2-auth-container .mg-v2-checkbox-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+.mg-v2-auth-container .mg-v2-checkbox-group > input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.mg-v2-auth-container .mg-v2-checkbox-group > label {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
 }
 
 /* 버튼 */
@@ -390,6 +425,25 @@
 
 .mg-v2-link-button:hover {
   text-decoration: none;
+}
+
+.mg-v2-auth-container .mg-v2-link-button {
+  display: inline;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--mg-primary-color, var(--mg-color-primary-main));
+  text-decoration: underline;
+  cursor: pointer;
+  transform: none;
+  min-width: 0;
 }
 
 /* 모달 내 약관/개인정보 본문 스크롤 영역 */

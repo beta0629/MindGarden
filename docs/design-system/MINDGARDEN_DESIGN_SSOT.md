@@ -1,7 +1,8 @@
 # MindGarden Design SSOT (Single Source of Truth)
 
 ## 1. 문서 지위
-본 문서는 MindGarden 프로젝트의 디자인 토큰, 레이아웃, 공통 패턴에 대한 **단일 진입점(SSOT)** 역할을 수행합니다. 모든 UI/UX 설계 및 프론트엔드 구현은 본 문서의 기준을 최우선으로 따릅니다.
+본 문서는 MindGarden 프로젝트의 디자인 토큰, 레이아웃, 공통 패턴에 대한 **단일 진입점(SSOT)** 역할을 수행합니다. 모든 UI/UX 설계 및 프론트엔드 구현은 본 문서의 기준을 최우선으로 따릅니다.  
+**운영자/어드민 비주얼**: [CLINIC_OS_ADMIN_VISUAL_SSOT.md](./CLINIC_OS_ADMIN_VISUAL_SSOT.md) (Pencil/B0KlA 가이드는 신규 어드민에 사용하지 않음).
 
 ## 2. P0~P6 롤아웃 우선순위 (Rollout Priority)
 | 단계 | 대상 | 설명 |

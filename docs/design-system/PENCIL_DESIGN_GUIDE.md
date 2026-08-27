@@ -1,8 +1,16 @@
+> **⚠️ 운영자/어드민 비주얼 SSOT 변경**  
+> Core Solution **운영자·어드민** 화면의 시각 기준은 이제  
+> [`CLINIC_OS_ADMIN_VISUAL_SSOT.md`](./CLINIC_OS_ADMIN_VISUAL_SSOT.md) 이다.  
+> 본 Pencil/B0KlA 가이드는 **역사 문서**이며, B0KlA·`.pen` 아티팩트 참조용으로만 남긴다.  
+> **신규·개편 어드민 화면**에 이 가이드(forest primary, 좌측 악센트 바, B0KlA 레일 등)를  
+> 적용하지 말 것. 코더·디자이너는 Clinic-OS SSOT의 토큰·크롬·금지 목록을 따른다.
+
 # 펜슬(Pencil) 디자인 가이드 — 디자이너 필수 숙지
 
 **대상**: core-designer 및 디자인 산출물을 작성하는 모든 담당자  
 **목적**: `mindgarden-design-system.pen`, `pencil-new.pen`을 단일 소스로 이해하고 숙지하여 **일관된 디자인·레이아웃**을 내기 위함.  
-**참조**: 어드민 대시보드 샘플 https://mindgarden.dev.core-solution.co.kr/admin-dashboard-sample
+**참조**: 어드민 대시보드 샘플 https://mindgarden.dev.core-solution.co.kr/admin-dashboard-sample  
+**범위 주의**: 운영자/어드민 **신규** 화면은 위 SSOT를 사용. 아래는 B0KlA/Pencil 역사 가이드.
 
 ---
 

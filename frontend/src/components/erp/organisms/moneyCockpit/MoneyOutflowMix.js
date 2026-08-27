@@ -1,5 +1,5 @@
 /**
- * MoneyOutflowMix — 이번 달 돈이 나간 곳 (가로 바 리스트)
+ * MoneyOutflowMix — 들어온 곳 / 나간 곳 카테고리 가로 바 리스트
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -7,15 +7,23 @@
 
 import PropTypes from 'prop-types';
 import { OFD_WORKBENCH } from '../../../../constants/operatorFinanceDashboardStrings';
-import { formatWonAmount } from './moneyCockpitData';
+import { formatWonDisplay } from './moneyCockpitData';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import { ErpSafeText } from '../../common';
 
 /**
  * @param {object} props
  * @param {Array<{ id: string, label: string, amount: number }>} props.items
+ * @param {string} [props.title]
+ * @param {string} [props.ariaLabel]
+ * @param {string} [props.testId]
  */
-const MoneyOutflowMix = ({ items = [] }) => {
+const MoneyOutflowMix = ({
+  items = [],
+  title = OFD_WORKBENCH.EXPENSE_MIX_TITLE,
+  ariaLabel = OFD_WORKBENCH.EXPENSE_MIX_ARIA,
+  testId = 'money-outflow-mix'
+}) => {
   if (!Array.isArray(items) || items.length === 0) {
     return null;
   }
@@ -25,10 +33,10 @@ const MoneyOutflowMix = ({ items = [] }) => {
   return (
     <section
       className="money-workbench__panel"
-      data-testid="money-outflow-mix"
-      aria-label={OFD_WORKBENCH.MIX_ARIA}
+      data-testid={testId}
+      aria-label={ariaLabel}
     >
-      <h2 className="money-workbench__title">{OFD_WORKBENCH.MIX_TITLE}</h2>
+      <h2 className="money-workbench__title">{title}</h2>
       <ul className="money-outflow-mix__list">
         {items.map((item) => {
           const amount = toSafeNumber(item.amount);
@@ -45,7 +53,7 @@ const MoneyOutflowMix = ({ items = [] }) => {
                 />
               </span>
               <span className="money-outflow-mix__amount">
-                {formatWonAmount(amount)}원
+                {formatWonDisplay(amount)}
               </span>
             </li>
           );
@@ -62,7 +70,10 @@ MoneyOutflowMix.propTypes = {
       label: PropTypes.string.isRequired,
       amount: PropTypes.number.isRequired
     })
-  )
+  ),
+  title: PropTypes.string,
+  ariaLabel: PropTypes.string,
+  testId: PropTypes.string
 };
 
 

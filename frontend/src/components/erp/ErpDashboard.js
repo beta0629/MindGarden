@@ -34,9 +34,18 @@ import {
   OFD_PAGE_TITLE,
   OFD_PERIOD
 } from '../../constants/operatorFinanceDashboardStrings';
-import { getPeriodRange, getRolling12MonthKeys } from './organisms/moneyCockpit/moneyCockpitPeriod';
 import {
+  getPeriodRange,
+  getPreviousComparableRange,
+  getRolling12MonthKeys
+} from './organisms/moneyCockpit/moneyCockpitPeriod';
+import {
+  buildDenseFactCaptions,
+  buildIncomeMixItems,
   buildOutflowMixItems,
+  buildRemainingVsPreviousCaption,
+  buildTopExpenseCaption,
+  buildTopIncomeCaption,
   parseFinanceDashboardPayload,
   parseMonthlyReportTotals,
   sumPendingConsultationFees,
@@ -89,8 +98,15 @@ const ErpDashboard = ({ user: propUser }) => {
   const [financeError, setFinanceError] = useState(null);
 
   const [hero, setHero] = useState({ income: 0, expense: 0, remaining: 0 });
+  const [heroCaptions, setHeroCaptions] = useState({
+    income: '',
+    expense: '',
+    remaining: ''
+  });
   const [ledgerTx, setLedgerTx] = useState([]);
-  const [mixItems, setMixItems] = useState([]);
+  const [incomeMixItems, setIncomeMixItems] = useState([]);
+  const [expenseMixItems, setExpenseMixItems] = useState([]);
+  const [denseFacts, setDenseFacts] = useState([]);
   const [monthSeries, setMonthSeries] = useState([]);
   const [pendingConsultation, setPendingConsultation] = useState(null);
   const [pendingSalary, setPendingSalary] = useState(null);
@@ -114,15 +130,56 @@ const ErpDashboard = ({ user: propUser }) => {
         return db.localeCompare(da);
       });
       setLedgerTx(sortedTx);
-      setMixItems(buildOutflowMixItems(parsed.categoryBreakdown, parsed.transactions));
+
+      const incomeMix = buildIncomeMixItems(parsed.categoryBreakdown, parsed.transactions);
+      const expenseMix = buildOutflowMixItems(parsed.categoryBreakdown, parsed.transactions);
+      setIncomeMixItems(incomeMix);
+      setExpenseMixItems(expenseMix);
+      setDenseFacts(buildDenseFactCaptions(parsed.transactions));
+
       const refund = sumRefundFromTransactions(parsed.transactions);
-      setRefundAmount(refund > 0 ? refund : null);
+      setRefundAmount(refund);
+
+      const incomeCaption = buildTopIncomeCaption(
+        parsed.categoryBreakdown,
+        parsed.transactions
+      );
+      const expenseCaption = buildTopExpenseCaption(expenseMix);
+
+      let remainingCaption = '';
+      const prevRange = getPreviousComparableRange(periodKey);
+      if (prevRange) {
+        try {
+          const prevRaw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, {
+            startDate: prevRange.startDate,
+            endDate: prevRange.endDate
+          });
+          const prevParsed = parseFinanceDashboardPayload(prevRaw);
+          remainingCaption = buildRemainingVsPreviousCaption(
+            parsed.remaining,
+            prevParsed.remaining
+          );
+        } catch (prevErr) {
+          if (isDevEnv) {
+            console.warn('이전 기간 비교 생략:', prevErr);
+          }
+        }
+      }
+
+      setHeroCaptions({
+        income: incomeCaption,
+        expense: expenseCaption,
+        remaining: remainingCaption
+      });
     } catch (err) {
       console.error('머니 콕핏 대시보드 로드 실패:', err);
       setFinanceError(err?.message || OFD_ERRORS.FINANCE_LOAD);
       setHero({ income: 0, expense: 0, remaining: 0 });
+      setHeroCaptions({ income: '', expense: '', remaining: '' });
       setLedgerTx([]);
-      setMixItems([]);
+      setIncomeMixItems([]);
+      setExpenseMixItems([]);
+      setDenseFacts([]);
       setRefundAmount(null);
     } finally {
       setHeroLoading(false);
@@ -312,9 +369,12 @@ const ErpDashboard = ({ user: propUser }) => {
       setHeroLoading(false);
       setChartLoading(false);
       setHero({ income: 0, expense: 0, remaining: 0 });
+      setHeroCaptions({ income: '', expense: '', remaining: '' });
       setMonthSeries([]);
       setLedgerTx([]);
-      setMixItems([]);
+      setIncomeMixItems([]);
+      setExpenseMixItems([]);
+      setDenseFacts([]);
       setPendingConsultation(null);
       setPendingSalary(null);
       setRefundAmount(null);
@@ -375,13 +435,18 @@ const ErpDashboard = ({ user: propUser }) => {
               income={hero.income}
               expense={hero.expense}
               remaining={hero.remaining}
+              incomeCaption={heroCaptions.income}
+              expenseCaption={heroCaptions.expense}
+              remainingCaption={heroCaptions.remaining}
             />
             <MoneyFlowStage loading={chartLoading} series={monthSeries} />
             <MoneyWorkbench
-              mixItems={mixItems}
+              incomeMixItems={incomeMixItems}
+              expenseMixItems={expenseMixItems}
               pendingConsultation={pendingConsultation}
               pendingSalary={pendingSalary}
               refundAmount={refundAmount}
+              denseFacts={denseFacts}
             />
             <MoneyLedgerStrip loading={heroLoading} transactions={ledgerTx} />
           </div>

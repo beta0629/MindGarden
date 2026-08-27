@@ -16,7 +16,7 @@ import {
   buildRecentTransactionRowKey,
   formatRecentTransactionDate
 } from '../../../../utils/erpFinanceDisplay';
-import { formatWonAmount, isIncomeTransaction } from './moneyCockpitData';
+import { formatWonDisplay, isIncomeTransaction } from './moneyCockpitData';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import { ErpSafeText } from '../../common';
@@ -74,7 +74,7 @@ const MoneyLedgerStrip = ({ loading = false, transactions = [] }) => {
               {rows.map((tx) => {
                 const income = isIncomeTransaction(tx);
                 const amount = toSafeNumber(tx?.amount);
-                const amountText = `${formatWonAmount(amount)}원`;
+                const amountText = formatWonDisplay(amount);
                 return (
                   <tr key={buildRecentTransactionRowKey(tx)}>
                     <td>

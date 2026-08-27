@@ -1,0 +1,397 @@
+/**
+ * `/erp/dashboard` 머니 콕핏 — Clinic-OS 토큰만 사용
+ * 차트 높이: clamp(420px, 48vh, 560px) — 스펙 SSOT (leftover 240px 금지)
+ *
+ * @author CoreSolution
+ * @since 2026-08-27
+ */
+
+.money-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-6);
+  width: 100%;
+}
+
+@media (min-width: 1280px) {
+  .money-cockpit {
+    gap: var(--mg-v2-space-8);
+  }
+}
+
+/* ——— Quiet header ——— */
+.money-quiet-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+}
+
+.money-quiet-header__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: 700;
+  line-height: var(--mg-v2-font-line-height-subheading, 1.3);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.money-quiet-header__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-4);
+}
+
+.money-quiet-header__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+}
+
+.money-quiet-header__link {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 500;
+  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  cursor: pointer;
+}
+
+.money-quiet-header__link:hover,
+.money-quiet-header__link:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+@media (max-width: 767px) {
+  .money-quiet-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .money-quiet-header__controls {
+    width: 100%;
+  }
+}
+
+/* ——— Hero band ——— */
+.money-hero-band {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-6);
+  width: 100%;
+  padding: var(--mg-v2-space-6) var(--mg-v2-space-8);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-color-surface-subtle, var(--mg-color-surface-main)));
+  border-radius: var(--mg-v2-radius-md, var(--radius-md, 0.5rem));
+}
+
+.money-hero-band__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+  padding-inline: var(--mg-v2-space-4);
+}
+
+.money-hero-band__cell + .money-hero-band__cell {
+  border-inline-start: 1px solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
+}
+
+.money-hero-band__label {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.money-hero-band__amount {
+  margin: 0;
+}
+
+/* KpiNumeral hero: h1 1.75rem · weight 700 */
+.money-hero-band__amount .mg-v2-kpi-numeral {
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.money-hero-band__cell--remaining .money-hero-band__amount .mg-v2-kpi-numeral {
+  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+}
+
+.money-hero-band__caption {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 400;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+@media (max-width: 767px) {
+  .money-hero-band {
+    grid-template-columns: 1fr;
+    gap: var(--mg-v2-space-4);
+    padding: var(--mg-v2-space-5);
+  }
+
+  .money-hero-band__cell + .money-hero-band__cell {
+    border-inline-start: none;
+    border-block-start: 1px solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
+    padding-block-start: var(--mg-v2-space-4);
+  }
+}
+
+/* ——— Main chart stage ——— */
+.money-flow-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+}
+
+.money-flow-stage__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.money-flow-stage__plot {
+  width: 100%;
+  height: clamp(420px, 48vh, 560px);
+  min-height: 420px;
+}
+
+.money-flow-stage__plot .mg-chart {
+  height: 100%;
+  --chart-height: 100%;
+}
+
+.money-flow-stage__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: clamp(420px, 48vh, 560px);
+  min-height: 420px;
+}
+
+@media (max-width: 767px) {
+  .money-flow-stage__plot,
+  .money-flow-stage__empty {
+    height: clamp(320px, 42vh, 420px);
+    min-height: 320px;
+  }
+}
+
+/* ——— Workbench 7:5 ——— */
+.money-workbench {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: var(--mg-v2-space-6);
+  width: 100%;
+}
+
+.money-workbench--single {
+  grid-template-columns: 1fr;
+}
+
+.money-workbench__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-5) var(--mg-v2-space-6);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-color-surface-subtle, var(--mg-color-surface-main)));
+  border-radius: var(--mg-v2-radius-md, var(--radius-md, 0.5rem));
+  min-width: 0;
+}
+
+.money-workbench__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.money-outflow-mix__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+}
+
+.money-outflow-mix__row {
+  display: grid;
+  grid-template-columns: minmax(4rem, auto) 1fr auto;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+}
+
+.money-outflow-mix__label {
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.money-outflow-mix__track {
+  height: var(--mg-v2-space-2);
+  background: var(--mg-v2-color-border-subtle, var(--mg-color-border-light, var(--mg-color-border-main)));
+  border-radius: var(--mg-v2-radius-full, 999px);
+  overflow: hidden;
+}
+
+.money-outflow-mix__fill {
+  display: block;
+  height: 100%;
+  width: var(--money-outflow-pct, 0%);
+  background: var(--mg-v2-color-primary-solid, var(--mg-v2-color-primary-main, var(--mg-color-primary-main)));
+  border-radius: inherit;
+  max-width: 100%;
+}
+
+.money-outflow-mix__amount {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-variant-numeric: tabular-nums;
+  color: var(--mg-v2-color-text-primary);
+  white-space: nowrap;
+}
+
+.money-todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.money-todo-list__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-4);
+  min-height: calc(var(--mg-v2-space-8) + var(--mg-v2-space-2));
+  padding-block: var(--mg-v2-space-3);
+  border-block-end: 1px solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
+}
+
+.money-todo-list__row:last-child {
+  border-block-end: none;
+}
+
+.money-todo-list__label {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 500;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.money-todo-list__amount {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.money-todo-list__link {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 1279px) {
+  .money-workbench {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ——— Ledger ——— */
+.money-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+}
+
+.money-ledger__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+}
+
+.money-ledger__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.money-ledger__more {
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
+  background: transparent;
+  border: none;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.money-ledger__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.money-ledger__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.money-ledger__table th,
+.money-ledger__table td {
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-2);
+  text-align: left;
+  border-block-end: 1px solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
+  color: var(--mg-v2-color-text-primary);
+  vertical-align: middle;
+}
+
+.money-ledger__table th {
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.money-ledger__table tbody tr {
+  height: calc(var(--mg-v2-space-8) + var(--mg-v2-space-2));
+}
+
+.money-ledger__desc {
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.money-ledger__amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.money-ledger__empty {
+  margin: 0;
+  padding: var(--mg-v2-space-6);
+  text-align: center;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md);
+}

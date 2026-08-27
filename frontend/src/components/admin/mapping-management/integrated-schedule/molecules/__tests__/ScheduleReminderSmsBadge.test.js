@@ -23,8 +23,8 @@ describe('ScheduleReminderSmsBadge', () => {
         sms={{ status: 'SENT', sentAt: '2026-08-01T14:00:00' }}
       />
     );
-    expect(screen.getByText('발송됨')).toBeInTheDocument();
-    expect(screen.getByLabelText(/예약 문자 발송 상태: 발송됨/)).toBeInTheDocument();
+    expect(screen.getByText('문자발송됨')).toBeInTheDocument();
+    expect(screen.getByLabelText(/예약 문자 발송 상태: 문자발송됨/)).toBeInTheDocument();
   });
 
   it('renders compact dot with aria-label', () => {

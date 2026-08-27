@@ -89,6 +89,9 @@ describe('MappingScheduleCard SessionProgress', () => {
     
     expect(screen.getByText('Package A')).toBeInTheDocument();
     expect(screen.getByText('+1')).toBeInTheDocument();
+    const packageEl = screen.getByText('Package A').closest('.integrated-schedule__card-package');
+    expect(packageEl).toBeTruthy();
+    expect(packageEl.closest('.integrated-schedule__card-meta')).toBeNull();
   });
 
   it('renders schedule status badge for registered next date', () => {

@@ -176,17 +176,14 @@ const ResetPassword = () => {
                       className="mg-v2-input"
                       disabled={isLoading}
                     />
-                    <MGButton
+                    <button
                       type="button"
-                      variant="outline"
-                      size="small"
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
+                      className="mg-v2-password-toggle"
                       onClick={() => setShowPassword(!showPassword)}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      preventDoubleClick={false}
+                      aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                     >
                       {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
-                    </MGButton>
+                    </button>
                   </div>
                 </div>
 
@@ -203,17 +200,14 @@ const ResetPassword = () => {
                       className="mg-v2-input"
                       disabled={isLoading}
                     />
-                    <MGButton
+                    <button
                       type="button"
-                      variant="outline"
-                      size="small"
-                      className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })} mg-v2-password-toggle`}
+                      className="mg-v2-password-toggle"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      preventDoubleClick={false}
+                      aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                     >
                       {showConfirmPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
-                    </MGButton>
+                    </button>
                   </div>
                 </div>
 

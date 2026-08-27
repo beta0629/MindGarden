@@ -222,19 +222,67 @@
 
 .mg-v2-password-wrapper {
   position: relative;
-  display: flex;
-  align-items: center;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.mg-v2-password-wrapper .mg-v2-input,
+.mg-v2-password-wrapper .mg-v2-form-input {
+  display: block;
+  width: 100%;
+  padding-right: 48px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .mg-v2-password-toggle {
   position: absolute;
+  top: 50%;
   right: 12px;
-  background: none;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
   border: none;
+  box-shadow: none;
   cursor: pointer;
-  padding: 4px;
-  font-size: 16px;
   color: var(--mg-text-secondary, var(--mg-gray-600));
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mg-v2-password-toggle:focus-visible {
+  outline: 2px solid var(--mg-primary-color, var(--mg-color-primary-main));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 모바일 타이핑 영역: 고정 height 충돌 방지 + 아이콘 여백 */
+.mg-v2-auth-container .mg-v2-input,
+.mg-v2-auth-container .mg-v2-auth-form .mg-v2-form-input,
+.mg-v2-auth-container .mg-v2-form-input {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 44px;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  padding-left: 16px;
+  padding-right: 16px;
+  font-size: 16px;
+  line-height: 1.25;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mg-v2-auth-container .mg-v2-password-wrapper .mg-v2-input,
+.mg-v2-auth-container .mg-v2-password-wrapper .mg-v2-form-input {
+  padding-right: 48px;
 }
 
 /* 체크박스 그룹 */
@@ -431,6 +479,10 @@
 @media (max-width: 767px) {
   .mg-v2-auth-container {
     flex-direction: column;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   .mg-v2-auth-hero {
@@ -454,10 +506,16 @@
     padding-top: 40px;
     height: auto;
     overflow-y: visible;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   .mg-v2-auth-form-wrapper {
     max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .mg-v2-form-row {

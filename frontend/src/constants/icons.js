@@ -217,6 +217,11 @@ export const ICON_COLORS = {
   TRANSPARENT: {
     background: 'transparent',
     color: 'var(--mg-v2-primary)'
+  },
+  /** LNB 등 부모 color 상속 (hover/active on-fill) */
+  INHERIT: {
+    background: 'transparent',
+    color: 'currentColor'
   }
 };
 

@@ -238,6 +238,13 @@
   flex-wrap: wrap;
 }
 
+/* ContentHeader 인라인 overflow — CORNER absolute가 GNB tenant trigger와 겹치지 않도록 */
+.mg-v2-ad-b0kla__header-actions .mg-v2-entity-row-actions--card {
+  position: static;
+  width: auto;
+  flex: 0 0 auto;
+}
+
 .mg-v2-ad-b0kla__header-primary-btn {
   display: inline-flex;
   align-items: center;

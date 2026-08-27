@@ -1,8 +1,9 @@
 /**
  * MindGarden v2 - 공통 드롭다운 스타일
- * 
- * NotificationDropdown, QuickActionsDropdown, ProfileDropdown에서 공통으로 사용
- * 
+ *
+ * Header popover shell SSOT: GnbDropdownPortal + .mg-v2-dropdown-panel
+ * (Notification / QuickActions / Profile 공유 surface)
+ *
  * @author CoreSolution
  * @since 2026-03-09
  */
@@ -47,9 +48,9 @@
   position: fixed;
   /* top, left, right는 useDropdownPosition 훅에서 인라인으로 설정 */
   background-color: var(--mg-color-surface-main);
-  border: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-xl, 16px);
+  box-shadow: var(--mg-shadow-lg);
   z-index: var(--z-dropdown);
   opacity: 0;
   transform: translateY(-8px);
@@ -73,8 +74,8 @@
 
 /* 드롭다운 패널 헤더 (공통) */
 .mg-v2-dropdown-panel__header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-color-border-main));
+  padding: 14px var(--mg-spacing-md, 16px);
+  border-bottom: 1px solid var(--mg-color-border-main);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -83,7 +84,7 @@
 
 .mg-v2-dropdown-panel__title {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--mg-color-text-main, var(--mg-dark-bg-800));
+  color: var(--mg-color-text-main);
 }

@@ -125,3 +125,41 @@ describe('NotificationDropdown.handleMarkAllRead', () => {
     errSpy.mockRestore();
   });
 });
+
+describe('NotificationDropdown — segmented / native rows', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockCtx.unreadSystemCount = 0;
+    mockCtx.unreadMessageCount = 5;
+  });
+
+  it('gap-less panel SegmentedTabs 와 notification-segmented 클래스가 적용된다', async() => {
+    render(<NotificationDropdown />);
+    await openPanel();
+
+    const tabs = document.querySelector('.mg-v2-notification-segmented');
+    expect(tabs).toBeTruthy();
+    expect(tabs.classList.contains('mg-segmented-tabs--panel')).toBe(true);
+    expect(screen.getByRole('tab', { name: '시스템 공지' })).toBeInTheDocument();
+    expect(screen.getByRole('tablist', { name: '알림 유형' })).toBeInTheDocument();
+  });
+
+  it('모두 읽음 / 알림 행에 MGButton 클래스가 없다', async() => {
+    render(<NotificationDropdown />);
+    await openPanel();
+
+    const markAll = screen.getByText('모두 읽음');
+    expect(markAll.tagName).toBe('BUTTON');
+    expect(markAll.className).not.toMatch(/mg-button/);
+    expect(markAll.classList.contains('mg-v2-notification-mark-all')).toBe(true);
+  });
+
+  it('빈 목록 empty state 클래스가 렌더된다', async() => {
+    render(<NotificationDropdown />);
+    await openPanel();
+
+    await waitFor(() => {
+      expect(document.querySelector('.mg-v2-notification-empty')).toBeTruthy();
+    });
+  });
+});

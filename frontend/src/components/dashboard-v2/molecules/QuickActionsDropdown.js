@@ -1,6 +1,7 @@
 /**
  * QuickActionsDropdown - 역할별 빠른 액션 드롭다운 (Molecule)
  * Portal + position:fixed 로 전역 overflow/transform 영향 없음
+ * Flush HeaderMenuRow — MGButton outline chrome 미사용
  *
  * @author CoreSolution
  * @since 2026-03-09
@@ -9,13 +10,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { NavIcon } from '../atoms';
+import { NavIcon, HeaderMenuRow } from '../atoms';
 import { sessionManager } from '../../../utils/sessionManager';
 import { getQuickActionsForRole } from '../../../constants/gnbQuickActions';
 import { useDropdownPosition } from '../hooks/useDropdownPosition';
 import SafeText from '../../common/SafeText';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import { ICONS, ICON_SIZES } from '../../../constants/icons';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './QuickActionsDropdown.css';
 import { USER_ROLES } from '../../../constants/roles';
@@ -91,6 +91,8 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
     return null;
   }
 
+  const ChevronIcon = ICONS.CHEVRON_RIGHT;
+
   return (
     <div className="mg-v2-quick-actions-dropdown" ref={dropdownRef}>
       <div ref={triggerRef}>
@@ -118,20 +120,31 @@ const QuickActionsDropdown = ({ onModalAction, navigateQuickActionsFromLnb }) =>
           <span className="mg-v2-dropdown-panel__title">빠른 액션</span>
         </div>
 
-        <div className="mg-v2-quick-actions-list">
-          {actions.map((action) => (
-              <MGButton
+        <div className="mg-v2-quick-actions-list" role="none">
+          {actions.map((action) => {
+            const ActionIcon = action.icon ? ICONS[action.icon] : null;
+            return (
+              <HeaderMenuRow
                 key={action.id}
-                type="button"
-                variant="outline"
-                preventDoubleClick={false}
-                className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-v2-quick-action-item' })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                className="mg-v2-quick-action-item"
                 onClick={() => handleActionClick(action)}
               >
-                <SafeText className="mg-v2-quick-action-item__label" tag="span">{action.label}</SafeText>
-              </MGButton>
-          ))}
+                {ActionIcon ? (
+                  <span className="mg-v2-quick-action-item__icon" aria-hidden="true">
+                    <ActionIcon size={ICON_SIZES.LG} strokeWidth={2} />
+                  </span>
+                ) : null}
+                <SafeText className="mg-v2-quick-action-item__label" tag="span">
+                  {action.label}
+                </SafeText>
+                {ChevronIcon ? (
+                  <span className="mg-v2-quick-action-item__arrow" aria-hidden="true">
+                    <ChevronIcon size={ICON_SIZES.MD} strokeWidth={2} />
+                  </span>
+                ) : null}
+              </HeaderMenuRow>
+            );
+          })}
         </div>
       </GnbDropdownPortal>
     </div>

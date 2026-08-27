@@ -1,7 +1,7 @@
 /**
  * ProfileDropdown - 프로필 메뉴 드롭다운 (Molecule)
- * 테넌트 헤더 클러스터: identity(비버튼) + chevron 아이콘 트리거 분리
- * Portal + position:fixed 로 전역 overflow/transform 영향 없음
+ * 테넌트 헤더 클러스터: TenantHeaderCluster (identity + chevron 트리거)
+ * 테마 전환 행(useDarkMode) + HeaderMenuRow flush menu
  *
  * @author CoreSolution
  * @since 2026-03-09
@@ -10,8 +10,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { NavIcon, ProfileAvatar } from '../atoms';
+import { ProfileAvatar, HeaderMenuRow } from '../atoms';
+import TenantHeaderCluster from './TenantHeaderCluster';
 import { useSession } from '../../../contexts/SessionContext';
+import { useDarkMode, DARK_MODE_VALUES } from '../../../contexts/DarkModeContext';
 import { useBranding } from '../../../hooks/useBranding';
 import { getCustomLogoSrc } from '../../../utils/brandingUtils';
 import { getTenantGnbLabel, DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
@@ -24,11 +26,14 @@ import {
 import SafeText from '../../common/SafeText';
 import SessionRemainingLabel from '../../common/SessionRemainingLabel';
 import { SESSION_REMAINING_DISPLAY } from '../../../constants/session';
+import { ICONS, ICON_SIZES } from '../../../constants/icons';
 import GnbDropdownPortal from './GnbDropdownPortal';
 import './ProfileDropdown.css';
 
 const PROFILE_DROPDOWN_PANEL_ID = 'mg-v2-profile-dropdown-panel';
-const PROFILE_MENU_TRIGGER_ARIA_LABEL = '프로필 메뉴';
+const THEME_LABEL = '화면 테마';
+const THEME_LIGHT_LABEL = '라이트';
+const THEME_DARK_LABEL = '다크';
 
 const ROLE_LABELS = {
   ADMIN: '관리자',
@@ -46,6 +51,7 @@ const ProfileDropdown = ({ onLogout }) => {
   const panelStyle = useDropdownPosition(triggerRef, panelRef, isOpen);
   const { user } = useSession();
   const { brandingInfo } = useBranding({ autoLoad: Boolean(user) });
+  const { resolved, setMode } = useDarkMode();
 
   const userName = useMemo(() => {
     if (!user) {
@@ -121,35 +127,19 @@ const ProfileDropdown = ({ onLogout }) => {
   const userRole = user.role || '';
   const roleLabel = ROLE_LABELS[userRole] || userRole;
   const showSettingsItem = shouldShowProfileDropdownSettings(userRole);
+  const isDark = resolved === DARK_MODE_VALUES.DARK;
+  const ThemeIcon = isDark ? ICONS.MOON : ICONS.SUN;
 
   return (
     <div className="mg-v2-profile-dropdown" ref={dropdownRef}>
-      <div className="mg-v2-tenant-header-cluster">
-        <div className="mg-v2-tenant-header-cluster__identity">
-          <ProfileAvatar name={userName} imageUrl={avatarImageUrl} size="small" />
-          <div className="mg-v2-tenant-header-cluster__text">
-            <span className="mg-v2-tenant-header-cluster__name">
-              <SafeText fallback="사용자">{userName}</SafeText>
-            </span>
-            <SessionRemainingLabel
-              className={`${SESSION_REMAINING_DISPLAY.CLASS_NAME}--gnb-trigger`}
-            />
-          </div>
-        </div>
-        <div className="mg-v2-tenant-header-cluster__actions">
-          <div ref={triggerRef} className="mg-v2-tenant-header-cluster__trigger-wrap">
-            <NavIcon
-              icon="CHEVRON_DOWN"
-              label={PROFILE_MENU_TRIGGER_ARIA_LABEL}
-              onClick={() => setIsOpen(!isOpen)}
-              className="mg-v2-tenant-header-icon-btn"
-              aria-expanded={isOpen}
-              aria-haspopup="menu"
-              aria-controls={PROFILE_DROPDOWN_PANEL_ID}
-            />
-          </div>
-        </div>
-      </div>
+      <TenantHeaderCluster
+        userName={userName}
+        avatarImageUrl={avatarImageUrl}
+        isOpen={isOpen}
+        onToggle={() => setIsOpen(!isOpen)}
+        triggerRef={triggerRef}
+        panelId={PROFILE_DROPDOWN_PANEL_ID}
+      />
 
       <GnbDropdownPortal
         isOpen={isOpen}
@@ -183,32 +173,61 @@ const ProfileDropdown = ({ onLogout }) => {
         </div>
 
         <div className="mg-v2-profile-dropdown__menu">
-          <button
-            type="button"
+          <HeaderMenuRow
             className="mg-v2-profile-menu-item"
-            role="menuitem"
             onClick={() => handleMenuClick('mypage')}
           >
             <span>내 정보</span>
-          </button>
+          </HeaderMenuRow>
+
+          <div className="mg-v2-profile-theme-row" role="none">
+            <div className="mg-v2-profile-theme-row__label">
+              {ThemeIcon ? (
+                <span className="mg-v2-profile-theme-row__icon" aria-hidden="true">
+                  <ThemeIcon size={ICON_SIZES.MD} strokeWidth={2} />
+                </span>
+              ) : null}
+              <span>{THEME_LABEL}</span>
+            </div>
+            <div
+              className="mg-v2-theme-switch"
+              role="group"
+              aria-label={THEME_LABEL}
+            >
+              <button
+                type="button"
+                className={`mg-v2-theme-switch__btn${!isDark ? ' mg-v2-theme-switch__btn--active' : ''}`}
+                aria-pressed={!isDark}
+                onClick={() => setMode(DARK_MODE_VALUES.LIGHT)}
+              >
+                {THEME_LIGHT_LABEL}
+              </button>
+              <button
+                type="button"
+                className={`mg-v2-theme-switch__btn${isDark ? ' mg-v2-theme-switch__btn--active' : ''}`}
+                aria-pressed={isDark}
+                onClick={() => setMode(DARK_MODE_VALUES.DARK)}
+              >
+                {THEME_DARK_LABEL}
+              </button>
+            </div>
+          </div>
+
           {showSettingsItem && (
-            <button
-              type="button"
+            <HeaderMenuRow
               className="mg-v2-profile-menu-item"
-              role="menuitem"
               onClick={() => handleMenuClick('settings')}
             >
               <span>설정</span>
-            </button>
+            </HeaderMenuRow>
           )}
-          <button
-            type="button"
-            className="mg-v2-profile-menu-item mg-v2-profile-menu-item--danger"
-            role="menuitem"
+          <HeaderMenuRow
+            className="mg-v2-profile-menu-item"
+            danger
             onClick={() => handleMenuClick('logout')}
           >
             <span>로그아웃</span>
-          </button>
+          </HeaderMenuRow>
         </div>
       </GnbDropdownPortal>
     </div>

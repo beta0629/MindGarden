@@ -1,6 +1,6 @@
 /**
  * ConsultantAppShell 스타일
- * 상담사 테마 — 그린 톤
+ * 상담사 테마 — 메인 영역 그린 톤, 사이드바는 항상 다크 표면 + on-fill
  * 디자인 토큰만 사용
  */
 
@@ -8,6 +8,7 @@
   --shell-primary: var(--mg-consultant-primary);
   --shell-bg: var(--mg-consultant-bg-main);
   --shell-surface: var(--mg-consultant-surface);
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
 }
 
 .mg-app-shell {
@@ -17,7 +18,7 @@
   font-family: var(--mg-font-family-body);
 }
 
-/* 사이드바 — 데스크톱 전용 */
+/* 사이드바 — 데스크톱 전용, 항상 다크 표면 (어드민 DesktopLnb 와 동일 on-fill) */
 .mg-app-shell__sidebar {
   display: none;
   position: fixed;
@@ -25,11 +26,12 @@
   left: 0;
   bottom: 0;
   width: 260px;
-  background-color: var(--shell-surface);
-  border-right: 1px solid var(--mg-color-border-main);
+  background-color: var(--mg-v2-color-surface-sidebar, var(--mg-layout-sidebar-bg, var(--mg-dark-bg-800)));
+  border-right: 1px solid var(--mg-glass-bg-light, transparent);
   z-index: 1001;
   flex-direction: column;
   padding: var(--mg-spacing-lg) 0;
+  color: var(--mg-v2-color-text-inverse, #F8FAFC);
 }
 
 .mg-app-shell__sidebar-logo {
@@ -57,21 +59,48 @@
   padding: var(--mg-spacing-md) var(--mg-spacing-md);
   border-radius: var(--mg-radius-lg);
   text-decoration: none;
-  color: var(--mg-color-text-secondary);
+  color: var(--mg-layout-sidebar-text, rgba(248, 250, 252, 0.75));
   font-size: var(--mg-font-size-base);
   font-weight: var(--mg-font-weight-medium);
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.mg-app-shell__sidebar-item:hover {
-  background-color: rgba(var(--mg-consultant-primary-rgb), var(--mg-opacity-subtle));
-  color: var(--shell-primary);
+/* 전역 a:hover(primary-700) 압도 — hover/active 라벨+아이콘 on-fill */
+.mg-app-shell a.mg-app-shell__sidebar-item:hover,
+.mg-app-shell .mg-app-shell__sidebar-item:hover {
+  background-color: var(--mg-color-surface-hover, rgba(255, 255, 255, 0.08));
+  color: var(--mg-v2-lnb-on-fill);
+  text-decoration: none;
 }
 
-.mg-app-shell__sidebar-item--active {
-  background-color: rgba(var(--mg-consultant-primary-rgb), var(--mg-opacity-light));
-  color: var(--shell-primary);
+.mg-app-shell a.mg-app-shell__sidebar-item:hover span,
+.mg-app-shell a.mg-app-shell__sidebar-item:hover svg,
+.mg-app-shell .mg-app-shell__sidebar-item:hover span,
+.mg-app-shell .mg-app-shell__sidebar-item:hover svg {
+  color: var(--mg-v2-lnb-on-fill);
+  stroke: currentColor;
+}
+
+.mg-app-shell a.mg-app-shell__sidebar-item--active,
+.mg-app-shell .mg-app-shell__sidebar-item--active {
+  background-color: var(--mg-layout-sidebar-active-bg, var(--mg-v2-color-state-active));
+  color: var(--mg-v2-lnb-on-fill);
   font-weight: var(--mg-font-weight-semibold);
+}
+
+.mg-app-shell a.mg-app-shell__sidebar-item--active span,
+.mg-app-shell a.mg-app-shell__sidebar-item--active svg,
+.mg-app-shell .mg-app-shell__sidebar-item--active span,
+.mg-app-shell .mg-app-shell__sidebar-item--active svg {
+  color: var(--mg-v2-lnb-on-fill);
+  stroke: currentColor;
+}
+
+.mg-app-shell a.mg-app-shell__sidebar-item--active:hover,
+.mg-app-shell .mg-app-shell__sidebar-item--active:hover {
+  background-color: var(--mg-layout-sidebar-active-bg, var(--mg-v2-color-state-active));
+  color: var(--mg-v2-lnb-on-fill);
+  text-decoration: none;
 }
 
 /* 메인 영역 */

@@ -48,7 +48,7 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     const source = fs.readFileSync(DASHBOARD_PATH, 'utf8');
 
     expect(source).toContain('EntityRowActions');
-    expect(source).toContain('ENTITY_ROW_ACTIONS_LAYOUT.CORNER');
+    expect(source).toContain('ENTITY_ROW_ACTIONS_LAYOUT.CARD');
     expect(source).toContain('mg-v2-ad-b0kla__header-primary-btn');
     expect(source).not.toContain('mg-v2-ad-b0kla__icon-group');
   });

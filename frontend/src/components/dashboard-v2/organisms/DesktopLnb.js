@@ -101,9 +101,9 @@ const DesktopLnb = ({ menuItems = [], headerTitle = '시스템 관리' }) => {
                     aria-label={`${toDisplayString(item.label)} 메뉴 ${expandedGroupKey === itemKey ? '접기' : '펼치기'}`}
                   >
                     {expandedGroupKey === itemKey ? (
-                      <Icon name="CHEVRON_DOWN" size="MD" color="TRANSPARENT" aria-hidden />
+                      <Icon name="CHEVRON_DOWN" size="MD" color="INHERIT" aria-hidden />
                     ) : (
-                      <Icon name="CHEVRON_RIGHT" size="MD" color="TRANSPARENT" aria-hidden />
+                      <Icon name="CHEVRON_RIGHT" size="MD" color="INHERIT" aria-hidden />
                     )}
                   </button>
                   <NavLinkWithRouter

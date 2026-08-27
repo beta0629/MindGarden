@@ -1,12 +1,17 @@
 /**
  * NavLink - 아이콘+텍스트 메뉴 링크
  * RESPONSIVE_LAYOUT_SPEC: LNB 메뉴 항목 44px 높이
+ * Hover/Active: on-fill via --mg-v2-color-text-on-sidebar-active (#F8FAFC)
+ *   Never slate --mg-v2-color-text-primary on dark/teal fill.
+ * Icon color="INHERIT" → no inline color; SVG stroke/fill currentColor
  *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
+/* LNB on-fill 라벨 — 하드 토큰 우선 (라이트·다크 공통 #F8FAFC) */
 .mg-v2-nav-link {
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
   position: relative;
   display: flex;
   align-items: center;
@@ -25,20 +30,51 @@
   transition: background 0.2s, color 0.2s;
 }
 
-/* LNB hover — surface-hover wash + near-white label (AA on sidebar) */
-.mg-v2-nav-link:hover {
+/* LNB hover — surface-hover wash + near-white label (AA on sidebar)
+ * a.mg-v2-nav-link:hover beats global a:hover (primary-700 / near-black)
+ */
+.mg-v2-nav-link:hover,
+a.mg-v2-nav-link:hover {
   background: var(--mg-color-surface-hover, var(--mg-v2-color-surface-hover));
-  color: var(--mg-v2-color-text-primary, var(--mg-v2-color-text-on-sidebar-active, #F8FAFC));
+  color: var(--mg-v2-lnb-on-fill);
+  text-decoration: none;
+}
+
+.mg-v2-nav-link:hover .mg-v2-nav-link__icon,
+.mg-v2-nav-link:hover .mg-v2-nav-link__text,
+.mg-v2-nav-link:hover .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-nav-link:hover .mg-v2-nav-link__icon svg,
+a.mg-v2-nav-link:hover .mg-v2-nav-link__icon,
+a.mg-v2-nav-link:hover .mg-v2-nav-link__text,
+a.mg-v2-nav-link:hover .mg-v2-nav-link__icon .mg-v2-icon,
+a.mg-v2-nav-link:hover .mg-v2-nav-link__icon svg {
+  color: var(--mg-v2-lnb-on-fill);
+  stroke: currentColor;
+  fill: none;
 }
 
 /*
- * LNB active — slate active bg + near-white label.
- * Never use --mg-color-primary-100 for label (dark alias was navy #1e40af → ~1.18:1 FAIL).
- * Accent bar keeps primary-500 / link teal.
+ * LNB active — teal wash + near-white label.
+ * Never use --mg-v2-color-text-primary (slate/black) on teal or dark hover fill.
  */
-.mg-v2-nav-link--active {
+.mg-v2-nav-link--active,
+a.mg-v2-nav-link.mg-v2-nav-link--active {
   background: var(--mg-layout-sidebar-active-bg, var(--mg-v2-color-state-active));
-  color: var(--mg-v2-color-text-on-sidebar-active, var(--mg-v2-color-text-primary, #F8FAFC));
+  color: var(--mg-v2-lnb-on-fill);
+  font-weight: 600;
+}
+
+.mg-v2-nav-link--active .mg-v2-nav-link__icon,
+.mg-v2-nav-link--active .mg-v2-nav-link__text,
+.mg-v2-nav-link--active .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-nav-link--active .mg-v2-nav-link__icon svg,
+a.mg-v2-nav-link--active .mg-v2-nav-link__icon,
+a.mg-v2-nav-link--active .mg-v2-nav-link__text,
+a.mg-v2-nav-link--active .mg-v2-nav-link__icon .mg-v2-icon,
+a.mg-v2-nav-link--active .mg-v2-nav-link__icon svg {
+  color: var(--mg-v2-lnb-on-fill);
+  stroke: currentColor;
+  fill: none;
 }
 
 .mg-v2-nav-link--active::before {
@@ -49,7 +85,7 @@
   bottom: 6px;
   width: 4px;
   border-radius: 2px;
-  background: var(--mg-color-primary-500, var(--mg-v2-color-text-link));
+  background: var(--mg-color-primary-solid, var(--mg-color-primary-500));
 }
 
 /* LNB IA 재배치 — focus-visible: active 시각 + 2px primary-300 ring (designer §3) */
@@ -63,14 +99,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: inherit;
+}
+
+.mg-v2-nav-link__icon .mg-v2-icon {
+  background-color: transparent;
+  color: inherit;
+}
+
+.mg-v2-nav-link__icon .mg-v2-icon svg {
+  stroke: currentColor;
+  fill: none;
 }
 
 .mg-v2-nav-link__text {
   flex: 1;
   text-align: left;
+  color: inherit;
 }
 
-/* MGButton(G8): LNB asButton — outline·내부 래퍼 보정 */
+/* MGButton(G8): LNB asButton — outline·내부 래퍼 보정 · chrome 금지 */
 .mg-v2-nav-link.mg-button.mg-button--outline {
   border: none;
   background: transparent;
@@ -96,17 +144,17 @@
   transform: none;
   box-shadow: none;
   background: var(--mg-color-surface-hover, var(--mg-v2-color-surface-hover));
-  color: var(--mg-v2-color-text-primary, var(--mg-v2-color-text-on-sidebar-active, #F8FAFC));
+  color: var(--mg-v2-lnb-on-fill);
 }
 
 .mg-v2-nav-link--active.mg-button.mg-button--outline {
   background: var(--mg-layout-sidebar-active-bg, var(--mg-v2-color-state-active));
-  color: var(--mg-v2-color-text-on-sidebar-active, var(--mg-v2-color-text-primary, #F8FAFC));
+  color: var(--mg-v2-lnb-on-fill);
 }
 
 .mg-v2-nav-link--active.mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--mg-layout-sidebar-active-bg, var(--mg-v2-color-state-active));
-  color: var(--mg-v2-color-text-on-sidebar-active, var(--mg-v2-color-text-primary, #F8FAFC));
+  color: var(--mg-v2-lnb-on-fill);
   transform: none;
   box-shadow: none;
 }

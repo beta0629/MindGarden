@@ -1,7 +1,7 @@
 /**
  * ClientAppShell 스타일
- * 내담자 테마 — 코랄·크림 톤
- * ConsultantAppShell.css의 공통 구조를 공유하며 색상만 오버라이드.
+ * 내담자 테마 — 코랄·크림 톤 (메인 영역)
+ * 사이드바는 ConsultantAppShell 공통 구조 + 다크 on-fill (shell-primary 라벨 금지)
  * 디자인 토큰만 사용
  */
 
@@ -9,14 +9,28 @@
   --shell-primary: var(--mg-client-primary);
   --shell-bg: var(--mg-client-bg-main);
   --shell-surface: var(--mg-client-surface);
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-sidebar-active, var(--mg-color-text-on-primary, #F8FAFC));
 }
 
-.mg-app-shell--client .mg-app-shell__sidebar-item:hover {
-  background-color: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-subtle));
-  color: var(--shell-primary);
+/* 클라이언트도 공통 on-fill 유지 — coral shell-primary 로 hover/active 덮지 않음 */
+.mg-app-shell--client a.mg-app-shell__sidebar-item:hover,
+.mg-app-shell--client .mg-app-shell__sidebar-item:hover,
+.mg-app-shell--client a.mg-app-shell__sidebar-item--active,
+.mg-app-shell--client .mg-app-shell__sidebar-item--active,
+.mg-app-shell--client a.mg-app-shell__sidebar-item--active:hover,
+.mg-app-shell--client .mg-app-shell__sidebar-item--active:hover {
+  color: var(--mg-v2-lnb-on-fill);
+  text-decoration: none;
 }
 
-.mg-app-shell--client .mg-app-shell__sidebar-item--active {
-  background-color: rgba(var(--mg-client-primary-rgb), var(--mg-opacity-light));
-  color: var(--shell-primary);
+.mg-app-shell--client a.mg-app-shell__sidebar-item:hover span,
+.mg-app-shell--client a.mg-app-shell__sidebar-item:hover svg,
+.mg-app-shell--client .mg-app-shell__sidebar-item:hover span,
+.mg-app-shell--client .mg-app-shell__sidebar-item:hover svg,
+.mg-app-shell--client a.mg-app-shell__sidebar-item--active span,
+.mg-app-shell--client a.mg-app-shell__sidebar-item--active svg,
+.mg-app-shell--client .mg-app-shell__sidebar-item--active span,
+.mg-app-shell--client .mg-app-shell__sidebar-item--active svg {
+  color: var(--mg-v2-lnb-on-fill);
+  stroke: currentColor;
 }

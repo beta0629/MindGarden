@@ -17293,14 +17293,14 @@ body {
    ============================================ */
 
 /* 모든 버튼 공통 기본 스타일
- * GNB chrome-free 아이콘(.mg-v2-nav-icon, .mg-v2-tenant-header-icon-btn)은
- * overflow/ellipsis 제외 — 쉐브론 옆 CSS … 아티팩트 방지
+ * chrome-free 아이콘·인물 선택 카드·LNB 쉐브론·헤더 메뉴 행은
+ * overflow/ellipsis·강제 padding 제외 — fake … / avatar flush 방지
  */
-button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn),
-.btn,
-[class*="btn-"],
-[class*="mg-btn"],
-[class*="mg-button"] {
+button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-desktop-lnb__group-chevron):not(.mg-v2-mobile-lnb-drawer__group-chevron):not(.mg-v2-mapping-creation-modal__card):not(.mg-v2-mapping-creation-modal__payment-timing-card):not(.mg-consultant-card--schedule-select):not(.mg-client-card--b0kla-select):not(.mg-v2-entity-row-actions__trigger):not(.mg-v2-header-menu-row):not(.mg-v2-quick-action-item):not(.mg-v2-theme-switch__btn):not(.mg-v2-notification-segmented__tab):not([data-gnb-chrome-free="true"]),
+.btn:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+[class*="btn-"]:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+[class*="mg-btn"]:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+[class*="mg-button"]:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]) {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -17310,11 +17310,11 @@ button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn),
 }
 
 /* 버튼 내부 텍스트 최적화 */
-button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn) span,
-.btn span,
-[class*="btn-"] span,
-[class*="mg-btn"] span,
-[class*="mg-button"] span {
+button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-desktop-lnb__group-chevron):not(.mg-v2-mobile-lnb-drawer__group-chevron):not(.mg-v2-mapping-creation-modal__card):not(.mg-v2-mapping-creation-modal__payment-timing-card):not(.mg-consultant-card--schedule-select):not(.mg-client-card--b0kla-select):not(.mg-v2-entity-row-actions__trigger):not(.mg-v2-header-menu-row):not(.mg-v2-quick-action-item):not(.mg-v2-theme-switch__btn):not(.mg-v2-notification-segmented__tab):not([data-gnb-chrome-free="true"]) span,
+.btn:not(.mg-v2-entity-row-actions__trigger) span,
+[class*="btn-"]:not(.mg-v2-entity-row-actions__trigger) span,
+[class*="mg-btn"]:not(.mg-v2-entity-row-actions__trigger) span,
+[class*="mg-button"]:not(.mg-v2-entity-row-actions__trigger) span {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -17323,11 +17323,11 @@ button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn) span,
 
 /* 모바일 전용 버튼 최적화 */
 @media (max-width: 768px) {
-  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn),
-  .btn,
-  [class*="btn-"],
-  [class*="mg-btn"],
-  [class*="mg-button"] {
+  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-desktop-lnb__group-chevron):not(.mg-v2-mobile-lnb-drawer__group-chevron):not(.mg-v2-mapping-creation-modal__card):not(.mg-v2-mapping-creation-modal__payment-timing-card):not(.mg-consultant-card--schedule-select):not(.mg-client-card--b0kla-select):not(.mg-v2-entity-row-actions__trigger):not(.mg-v2-header-menu-row):not(.mg-v2-quick-action-item):not(.mg-v2-theme-switch__btn):not(.mg-v2-notification-segmented__tab):not([data-gnb-chrome-free="true"]),
+  .btn:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+  [class*="btn-"]:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+  [class*="mg-btn"]:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+  [class*="mg-button"]:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]) {
     font-size: 0.8rem !important; /* 13px - 모바일 통일 */
     padding: 6px 10px !important;
     min-height: 32px !important;
@@ -17353,11 +17353,11 @@ button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn) span,
 
 /* 초소형 화면 (480px 이하) 최적화 */
 @media (max-width: 480px) {
-  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-icon-btn),
-  .btn,
-  [class*="btn-"],
-  [class*="mg-btn"],
-  [class*="mg-button"] {
+  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-desktop-lnb__group-chevron):not(.mg-v2-mobile-lnb-drawer__group-chevron):not(.mg-v2-mapping-creation-modal__card):not(.mg-v2-mapping-creation-modal__payment-timing-card):not(.mg-consultant-card--schedule-select):not(.mg-client-card--b0kla-select):not(.mg-v2-entity-row-actions__trigger):not(.mg-v2-header-menu-row):not(.mg-v2-quick-action-item):not(.mg-v2-theme-switch__btn):not(.mg-v2-notification-segmented__tab):not([data-gnb-chrome-free="true"]),
+  .btn:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+  [class*="btn-"]:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+  [class*="mg-btn"]:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
+  [class*="mg-button"]:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]) {
     font-size: 0.75rem !important; /* 12px */
     padding: 4px 8px !important;
     min-height: 28px !important;

@@ -50,7 +50,7 @@
   z-index: var(--z-dropdown-menu, var(--z-dropdown, 1000));
 }
 
-/* B0KlA ghost icon-only ⋮ 트리거 */
+/* B0KlA ghost icon-only ⋮ 트리거 — 전역 ellipsis chrome 탈출 (공유 pill 없음) */
 .mg-v2-entity-row-actions__trigger.mg-button {
   min-width: var(--touch-target-min, 2.75rem);
   min-height: var(--touch-target-min, 2.75rem);
@@ -60,6 +60,10 @@
   justify-content: center;
   border: none;
   box-shadow: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  flex-shrink: 0;
 }
 
 .mg-v2-entity-row-actions__trigger.mg-button .mg-button__content,
@@ -67,6 +71,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  max-width: none;
 }
 
 .mg-v2-entity-row-actions__trigger.mg-button:hover:not(.mg-button--disabled):not(.mg-button--loading) {

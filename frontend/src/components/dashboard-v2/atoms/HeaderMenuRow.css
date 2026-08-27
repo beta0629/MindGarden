@@ -1,0 +1,66 @@
+/**
+ * HeaderMenuRow — flush native menu row
+ * Surface rewrite: no MGButton chrome, no per-row outline border
+ *
+ * @author CoreSolution
+ * @since 2026-08-26
+ */
+
+.mg-v2-header-menu-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm, 8px);
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  margin: 0;
+  border: none;
+  border-radius: var(--mg-v2-radius-lg, 8px);
+  background: transparent;
+  color: var(--mg-color-text-main);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.mg-v2-header-menu-row:hover,
+.mg-v2-header-menu-row:focus-visible {
+  background: var(--mg-color-bg-hover);
+  color: var(--mg-color-text-main);
+}
+
+.mg-v2-header-menu-row:focus-visible {
+  outline: 2px solid var(--mg-color-primary-solid);
+  outline-offset: -2px;
+}
+
+.mg-v2-header-menu-row:active {
+  background: var(--mg-color-b0kla-green-50);
+  color: var(--mg-color-primary-solid);
+}
+
+.mg-v2-header-menu-row:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mg-v2-header-menu-row--danger {
+  color: var(--mg-color-error-500, var(--mg-error-500));
+}
+
+.mg-v2-header-menu-row--danger:hover,
+.mg-v2-header-menu-row--danger:focus-visible {
+  color: var(--mg-color-error-500, var(--mg-error-500));
+}
+
+[data-theme="dark"] .mg-v2-header-menu-row:hover,
+[data-theme="dark"] .mg-v2-header-menu-row:focus-visible {
+  background: var(--mg-color-bg-hover);
+  color: var(--mg-color-text-main);
+}
+
+/* deploy-retrigger 2026-08-26T16:22:50Z */

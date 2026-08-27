@@ -25,7 +25,7 @@ const NavLink = ({ to, icon, children, active, className = '', asButton = false,
     <>
       {icon ? (
         <span className="mg-v2-nav-link__icon" aria-hidden="true">
-          <Icon name={icon} size="MD" userRole="ADMIN" color="SECONDARY" />
+          <Icon name={icon} size="MD" color="INHERIT" />
         </span>
       ) : null}
       <span className="mg-v2-nav-link__text">{children}</span>
@@ -75,7 +75,7 @@ export const NavLinkWithRouter = ({ to, icon, children, end = false, onClick }) 
     >
       {icon ? (
         <span className="mg-v2-nav-link__icon" aria-hidden="true">
-          <Icon name={icon} size="MD" userRole="ADMIN" color="SECONDARY" />
+          <Icon name={icon} size="MD" color="INHERIT" />
         </span>
       ) : null}
       <span className="mg-v2-nav-link__text">{children}</span>

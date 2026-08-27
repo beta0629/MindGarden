@@ -99,7 +99,6 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { toSafeNumber, toDisplayString } from '../../utils/safeDisplay';
 import MGButton from '../common/MGButton';
-import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../common';
 import SegmentedTabs from '../common/SegmentedTabs';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import Icon from '../ui/Icon/Icon';
@@ -1142,19 +1141,6 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         >
           <Calendar size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
         </MGButton>
-        <EntityRowActions
-          layout={ENTITY_ROW_ACTIONS_LAYOUT.CARD}
-          ariaLabel={t('common:dashboard-v2.AdminDashboardV2.t_header_overflow', {
-            defaultValue: '대시보드 추가 작업'
-          })}
-          items={[
-            {
-              id: 'notifications',
-              label: t('admin.labels.notification'),
-              onClick: () => navigate(ADMIN_ROUTES.MESSAGES)
-            }
-          ]}
-        />
       </div>
     );
 

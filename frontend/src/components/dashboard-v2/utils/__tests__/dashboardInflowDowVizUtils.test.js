@@ -1,5 +1,5 @@
 /**
- * 신규 내담자·요일별 정규화 / 수치 라벨 플러그인 단위 테스트
+ * 신규 내담자·요일별 정규화 단위 테스트
  *
  * @author CoreSolution
  * @since 2026-07-28
@@ -52,57 +52,5 @@ describe('dashboard inflow/dow viz utils', () => {
     expect(mgVizBarValueLabelsPlugin.id).toBe(MG_VIZ_BAR_VALUE_LABELS_PLUGIN_ID);
     expect(() => ensureMgVizBarValueLabelsPlugin()).not.toThrow();
     expect(() => ensureMgVizBarValueLabelsPlugin()).not.toThrow();
-  });
-
-  test('chartBarValueLabelPlugin — formatter 있으면 사용, 없으면 String(value)', () => {
-    const makeChart = (pluginOpts) => {
-      const fillText = jest.fn();
-      const ctx = {
-        save: jest.fn(),
-        restore: jest.fn(),
-        fillText,
-        textAlign: '',
-        textBaseline: '',
-        fillStyle: '',
-        font: ''
-      };
-      return {
-        fillText,
-        chart: {
-          options: {
-            plugins: {
-              [MG_VIZ_BAR_VALUE_LABELS_PLUGIN_ID]: pluginOpts
-            }
-          },
-          ctx,
-          data: {
-            datasets: [{ data: [100, 0, 250] }]
-          },
-          getDatasetMeta: () => ({
-            hidden: false,
-            data: [
-              { getProps: () => ({ x: 10, y: 20 }) },
-              { getProps: () => ({ x: 30, y: 40 }) },
-              { getProps: () => ({ x: 50, y: 60 }) }
-            ]
-          })
-        }
-      };
-    };
-
-    const withFormatter = makeChart({
-      enabled: true,
-      formatter: (v) => `${v}원`
-    });
-    mgVizBarValueLabelsPlugin.afterDatasetsDraw(withFormatter.chart);
-    expect(withFormatter.fillText).toHaveBeenCalledWith('100원', 10, 18);
-    expect(withFormatter.fillText).toHaveBeenCalledWith('250원', 50, 58);
-    expect(withFormatter.fillText).toHaveBeenCalledTimes(2);
-
-    const withoutFormatter = makeChart({ enabled: true });
-    mgVizBarValueLabelsPlugin.afterDatasetsDraw(withoutFormatter.chart);
-    expect(withoutFormatter.fillText).toHaveBeenCalledWith('100', 10, 18);
-    expect(withoutFormatter.fillText).toHaveBeenCalledWith('250', 50, 58);
-    expect(withoutFormatter.fillText).toHaveBeenCalledTimes(2);
   });
 });

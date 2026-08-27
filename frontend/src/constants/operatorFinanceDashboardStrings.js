@@ -44,7 +44,10 @@ export const OFD_CHART = {
   EMPTY: '최근 12개월에 등록된 수입·지출이 없습니다.',
   LOADING: '차트를 불러오는 중...',
   AXIS_MAN_SUFFIX: '만 원',
-  AXIS_EOK_SUFFIX: '억 원'
+  AXIS_EOK_SUFFIX: '억 원',
+  /** 평균 점선·캡션 접두 — 예: `월 평균 6,000,000원` */
+  AVG_PREFIX: '월 평균',
+  AVG_CAPTION_ARIA: '최근 12개월 월 평균'
 };
 
 export const OFD_WORKBENCH = {

@@ -181,6 +181,25 @@
   --chart-height: 100%;
 }
 
+.money-flow-stage__avg-caption {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: 400;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.money-flow-stage__avg-caption-income {
+  color: var(--mg-primary-700);
+}
+
+.money-flow-stage__avg-caption-expense {
+  color: var(--mg-error-700);
+}
+
+.money-flow-stage__avg-caption-sep {
+  color: var(--mg-v2-color-text-secondary);
+}
+
 .money-flow-stage__empty {
   display: flex;
   align-items: center;

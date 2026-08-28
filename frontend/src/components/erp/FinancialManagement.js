@@ -6,7 +6,7 @@
  * @since 2026-08-27
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
@@ -52,7 +52,8 @@ import {
   LedgerTable,
   LedgerCalendar,
   TaxDisclosureSection,
-  MoneyRecordModal
+  MoneyRecordModal,
+  MonthlyRecurringExpensesPanel
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
 import '../../styles/unified-design-tokens.css';
@@ -175,6 +176,7 @@ const FinancialManagement = () => {
   const [editModal, setEditModal] = useState({ open: false, transaction: null });
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
+  const recurringPanelRef = useRef(null);
   const [moneyRecordPrefill, setMoneyRecordPrefill] = useState({
     date: null,
     type: 'INCOME'
@@ -339,6 +341,11 @@ const FinancialManagement = () => {
       setLoading(true);
       setError(null);
       try {
+        try {
+          await StandardizedApi.post(ERP_API.RECURRING_EXPENSES_CATCH_UP, {});
+        } catch {
+          // catch-up 실패 시에도 장부 목록은 로드
+        }
         const pageForRequest = pagination.currentPage;
         const now = new Date();
         const toStr = (d) => formatLocalDateYmd(d);
@@ -578,6 +585,10 @@ const FinancialManagement = () => {
     loadData({ silent: true });
   }, [loadData]);
 
+  const scrollToRecurringPanel = useCallback(() => {
+    recurringPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   const forbiddenEqualTabsVisible = useMemo(() => {
     // Guard for tests: default view must not surface accountant equal tabs
     return false;
@@ -618,6 +629,7 @@ const FinancialManagement = () => {
               endDate={filters.endDate}
               onCustomDateChange={handleCustomDateChange}
               onRecordClick={openMoneyRecordDefault}
+              onRecurringClick={scrollToRecurringPanel}
             />
 
             <LedgerSummaryStrip
@@ -625,6 +637,11 @@ const FinancialManagement = () => {
               totalIncome={summary.totalIncome}
               totalExpense={summary.totalExpense}
               remaining={summary.remaining}
+            />
+
+            <MonthlyRecurringExpensesPanel
+              panelRef={recurringPanelRef}
+              onRulesChanged={refreshLedgerViews}
             />
 
             <LedgerInlineFilter

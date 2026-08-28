@@ -94,4 +94,16 @@ public interface RecurringExpenseService {
      * 처리 예정 알림 목록 조회
      */
     List<RecurringExpense> getUpcomingRecurringExpenses(int daysAhead);
+
+    /**
+     * 테넌트의 모든 반복 지출 조회 (비활성 포함 — 운영자 설정 UI)
+     */
+    List<RecurringExpense> getAllRecurringExpensesForTenant();
+
+    /**
+     * 시작 달부터 현재(Asia/Seoul) 월까지 누락된 월별 EXPENSE 자동 기록 (멱등).
+     *
+     * @return 새로 생성된 거래 건수
+     */
+    int catchUpMonthlyRecurringExpenses();
 }

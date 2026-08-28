@@ -121,6 +121,24 @@
   cursor: pointer;
 }
 
+.financial-transaction-form-category-hint {
+  margin: 0 0 var(--spacing-xs);
+}
+
+.financial-transaction-form-category-chips,
+.financial-transaction-form-subcategory-chips {
+  gap: var(--spacing-xs, 8px);
+}
+
+.financial-transaction-form-category-chips .mg-v2-badge-select,
+.financial-transaction-form-subcategory-chips .mg-v2-badge-select {
+  flex-wrap: wrap;
+}
+
+.financial-transaction-form-subcategory-group {
+  margin-top: calc(-1 * var(--spacing-xs));
+}
+
 .financial-transaction-form-field-hint {
   margin-top: var(--spacing-xs);
 }

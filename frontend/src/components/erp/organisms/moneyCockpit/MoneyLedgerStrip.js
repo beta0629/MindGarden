@@ -19,7 +19,9 @@ import {
 import { formatWonDisplay, isIncomeTransaction } from './moneyCockpitData';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import UnifiedLoading from '../../../common/UnifiedLoading';
+import MGButton from '../../../common/MGButton';
 import { ErpSafeText } from '../../common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
 /**
  * @param {object} props
@@ -41,13 +43,22 @@ const MoneyLedgerStrip = ({ loading = false, transactions = [] }) => {
     >
       <div className="money-ledger__header">
         <h2 className="money-ledger__title">{OFD_LEDGER.TITLE}</h2>
-        <button
+        <MGButton
           type="button"
-          className="money-ledger__more"
+          variant="ghost"
+          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'ghost',
+            size: 'sm',
+            loading: false,
+            className: 'money-ledger__action'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={() => navigate(OFD_LINKS.FINANCIAL.path)}
+          preventDoubleClick={false}
         >
           {OFD_LEDGER.VIEW_MORE}
-        </button>
+        </MGButton>
       </div>
       <div className="money-ledger__table-wrap">
         {loading ? (

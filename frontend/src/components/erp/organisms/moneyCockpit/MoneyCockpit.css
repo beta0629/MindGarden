@@ -51,21 +51,8 @@
   gap: var(--mg-v2-space-3);
 }
 
-.money-quiet-header__link {
-  font-size: var(--mg-v2-font-size-body-md);
-  font-weight: 500;
-  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
-  text-decoration: none;
-  background: transparent;
-  border: none;
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
-  cursor: pointer;
-}
-
-.money-quiet-header__link:hover,
-.money-quiet-header__link:focus-visible {
-  text-decoration: underline;
-  outline: none;
+.money-quiet-header__action {
+  flex-shrink: 0;
 }
 
 @media (max-width: 767px) {
@@ -336,10 +323,24 @@
   border-block-end: none;
 }
 
+.money-todo-list__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+}
+
 .money-todo-list__label {
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: 500;
   color: var(--mg-v2-color-text-primary);
+}
+
+.money-todo-list__action {
+  display: inline-flex;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .money-todo-list__amount {
@@ -347,16 +348,6 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--mg-v2-color-text-primary);
-}
-
-.money-todo-list__link {
-  font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-decoration: underline;
 }
 
 @media (max-width: 1279px) {
@@ -388,14 +379,8 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-.money-ledger__more {
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
-  background: transparent;
-  border: none;
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
-  cursor: pointer;
-  text-decoration: underline;
+.money-ledger__action {
+  flex-shrink: 0;
 }
 
 .money-ledger__table-wrap {

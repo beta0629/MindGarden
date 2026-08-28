@@ -7,10 +7,12 @@
 
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import MGButton from '../../../common/MGButton';
 import { OFD_LINKS, OFD_WORKBENCH } from '../../../../constants/operatorFinanceDashboardStrings';
 import { formatWonDisplay } from './moneyCockpitData';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import { ErpSafeText } from '../../common';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
 /**
  * @param {object} props
@@ -73,18 +75,26 @@ const MoneyTodoList = ({
         <ul className="money-todo-list">
           {limited.map((row) => (
             <li key={row.id} className="money-todo-list__row">
-              <div>
+              <div className="money-todo-list__meta">
                 <span className="money-todo-list__label">
                   <ErpSafeText value={row.label} />
                 </span>
-                {' '}
-                <button
+                <MGButton
                   type="button"
-                  className="money-todo-list__link"
+                  variant="ghost"
+                  size="small"
+                  className={buildErpMgButtonClassName({
+                    variant: 'ghost',
+                    size: 'sm',
+                    loading: false,
+                    className: 'money-todo-list__action'
+                  })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   onClick={() => navigate(row.linkPath)}
+                  preventDoubleClick={false}
                 >
                   {row.linkLabel}
-                </button>
+                </MGButton>
               </div>
               <span className="money-todo-list__amount">
                 {formatWonDisplay(row.amount)}

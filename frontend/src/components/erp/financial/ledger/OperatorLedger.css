@@ -655,6 +655,75 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
+/* ——— Collapsible card fee panel (default collapsed) ——— */
+.operator-ledger-recurring--collapsible {
+  padding: 0;
+  overflow: hidden;
+}
+
+.operator-ledger-recurring__toggle-head {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.operator-ledger-recurring__toggle-head:hover,
+.operator-ledger-recurring__toggle-head:focus-visible {
+  background: var(--mg-v2-color-neutral-100);
+  outline: none;
+}
+
+.operator-ledger-recurring__chevron {
+  flex-shrink: 0;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-recurring__toggle-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+}
+
+.operator-ledger-recurring--collapsible .operator-ledger-recurring__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h3);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.operator-ledger-recurring__summary {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-sm);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.operator-ledger-recurring__body {
+  padding: 0 var(--mg-v2-space-5) var(--mg-v2-space-5);
+  border-top: 0.0625rem solid var(--mg-v2-color-neutral-200);
+}
+
+.operator-ledger-recurring__body > .operator-ledger-recurring__caption {
+  margin: var(--mg-v2-space-4) 0 0;
+}
+
+.operator-ledger-recurring__body > .operator-ledger-recurring__form,
+.operator-ledger-recurring__body > .operator-ledger-recurring__muted {
+  margin-top: var(--mg-v2-space-4);
+}
+
+.operator-ledger-recurring__body .operator-ledger-recurring__head {
+  margin-bottom: var(--mg-v2-space-3);
+}
+
 .operator-ledger-pagination {
   display: flex;
   justify-content: center;

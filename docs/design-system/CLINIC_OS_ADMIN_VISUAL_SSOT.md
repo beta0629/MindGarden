@@ -4,6 +4,19 @@
 **범위**: docs only — 이 문서는 스펙이다. 제품 UI 리스타일 금지.  
 **배경**: 센터장(이재학) — 문제는 **불일치**. Clinic-OS LOCKED와 Legacy B0KlA/Pencil **두 디자인 언어**가 공존한다. 이후 어드민은 **이 문서 한 언어**만 따른다.
 
+## Default format = Admin Dashboard V2 (opening contract)
+
+**기본 포맷은 Admin Dashboard V2다.** 폰트·버튼 색·레이아웃 등 기본 요소는 **통일감**을 지킨다. 신규·리스타일 대상: 장부(`/erp/financial`), 이번 달 돈, 급여, 경비, 통합스케줄, 상담일지 및 기타 운영자/어드민 본문.
+
+| # | 영역 | 계약 |
+|---|------|------|
+| 1 | **Type** | 4단계만 — h1 1.75rem/700, h2 1.375rem/700, body-md 0.875rem, caption 0.75rem. **추가 크기 금지.** `--mg-v2-font-family-base`(Admin Dashboard V2 폰트 스택, Pretendard/`Noto Sans KR`/system) 사용. |
+| 2 | **Buttons** | `MGButton` **solid primary** dusty teal `#0E5F5A` / hover `#0A4F4B` / label `#FAF9F7`. Ghost = slate `#0F172A`. Danger = muted brick `#A84848` (**삭제만**). 페이지별 hex·one-off CSS 금지. dashboard CTA와 동일 높이·radius (~40px / 44px mobile, radius 10px). |
+| 3 | **Layout** | quiet header + summary strip + **main stage 카드 하나**. 왼쪽 4px accent bar·스프라이트·Pencil/B0KlA 금지. spacing = `--mg-v2-space-*`. 테이블↔캘린더 등 뷰 토글 시 **동일 stage 기하**. |
+| 4 | **Conformance** | 위와 다르면 **로컬 스타일이 아니라 SSOT 위반(버그)**. dashboard V2와 어긋나면 수정 대상. |
+
+아래 §A–G는 위 opening contract의 **토큰·체크리스트 상세**다.
+
 ---
 
 ## A. Source of truth
@@ -35,9 +48,9 @@ Hex는 **참고만**. 구현은 토큰. 새 팔레트 금지. 신규/개편 화�
 
 > 구스펙의 `danger-main` 토큰명은 **존재하지 않는다**. danger는 반드시 `--mg-v2-color-semantic-error`만 쓴다.
 
-### Button color contract (admin / operator pages) — **HARD RULE**
+### Button color contract — detail (§ opening #2)
 
-페이지마다 버튼 색이 달라지면 **버그**다. 모든 운영자/어드민 화면은 Admin Dashboard V2 primary CTA와 **동일한 MGButton 변형**만 쓴다.
+페이지마다 버튼 색이 달라지면 **버그**다. [Default format §2](#default-format--admin-dashboard-v2-opening-contract)와 동일.
 
 | 역할 | 구현 | 색·토큰 |
 |------|------|---------|
@@ -60,7 +73,7 @@ Hex는 **참고만**. 구현은 토큰. 새 팔레트 금지. 신규/개편 화�
 
 ## C. Type
 
-4단계만. 5번째 추가 금지. caption 미만 축소 금지.
+[Default format §1](#default-format--admin-dashboard-v2-opening-contract) 상세. 4단계만. 5번째 추가 금지. caption 미만 축소 금지.
 
 | 용도 | 토큰 | 크기 |
 |------|------|------|
@@ -76,6 +89,8 @@ Hex는 **참고만**. 구현은 토큰. 새 팔레트 금지. 신규/개편 화�
 ---
 
 ## D. Chrome contract (모든 어드민 페이지)
+
+[Default format §3](#default-format--admin-dashboard-v2-opening-contract) 상세.
 
 1. **Quiet page header**: 제목(h1) + 선택적 기간 세그먼트 + primary `MGButton` CTA **하나**. 테넌트 서브타이틀·「새로고침」 두번째 툴바 행·`ErpFilterToolbar`를 페이지 크롬으로 쓰지 않는다.
 2. **선택 요약 스트립**: 동일 너비 3셀, surface + hairline. **왼쪽 4px 악센트 바 금지**. lucide/아이콘 타일 금지.
@@ -119,6 +134,8 @@ Admin Dashboard V2는 **레퍼런스**다. 1차 패스에서 리스타일하지 
 ## G. Per-page checklist (복사해서 사용)
 
 ```text
+[ ] Default format = Admin Dashboard V2 (type · buttons · layout 통일 — 어긋나면 버그)
+[ ] Type: 4단계만 h1/h2/body-md/caption · V2 font stack · 추가 크기 없음
 [ ] Quiet header: h1 + (선택) 기간 + primary MGButton 하나
 [ ] 테넌트 서브타이틀 / 새로고침 2열 / ErpFilterToolbar 페이지 크롬 없음
 [ ] 요약 스트립 있으면 3등분 · surface+hairline · 좌측 4px 바·아이콘 타일 없음

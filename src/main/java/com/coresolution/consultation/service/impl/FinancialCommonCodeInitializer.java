@@ -279,6 +279,8 @@ public class FinancialCommonCodeInitializer {
                     FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_OFFICE_SUPPLIES_DESCRIPTION},
             {"TAX", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_TAX_DISPLAY,
                     FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_TAX_DESCRIPTION},
+            {"MEAL", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MEAL_DISPLAY,
+                    FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MEAL_DESCRIPTION},
             {"MARKETING", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MARKETING_DISPLAY,
                     FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MARKETING_DESCRIPTION},
             {"EQUIPMENT", FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_EQUIPMENT_DISPLAY,

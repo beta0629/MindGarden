@@ -439,6 +439,9 @@ export const FM_RECURRING = {
 /** 카드 수수료 설정 */
 export const FM_CARD_FEE = {
   TITLE: '카드 수수료',
+  COLLAPSED_AVERAGE_SUMMARY: (rate) => `평균 ${rate}%`,
+  TOGGLE_EXPAND: '카드 수수료 설정 펼치기',
+  TOGGLE_COLLAPSE: '카드 수수료 설정 접기',
   CAPTION:
     '결제·정산 연동 전까지 카드로 들어온 돈에 평균 요율을 적용합니다. VAN·PG 혼합 요율을 직접 적어 두면 들어온 돈 기록 시 수수료가 빠지지 않습니다. 연동 후에는 정산·수수료가 자동 반영됩니다.',
   AVERAGE_RATE_LABEL: '평균 요율',

@@ -8,6 +8,8 @@
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import BadgeSelect from '../../../common/BadgeSelect';
+import MGButton from '../../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 import {
   OFD_LINKS,
   OFD_PAGE_TITLE,
@@ -42,14 +44,23 @@ const MoneyQuietHeader = ({ period, onPeriodChange }) => {
         />
         <nav className="money-quiet-header__links" aria-label="바로가기">
           {LINK_ITEMS.map((item) => (
-            <button
+            <MGButton
               key={item.path}
               type="button"
-              className="money-quiet-header__link"
+              variant="ghost"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'ghost',
+                size: 'sm',
+                loading: false,
+                className: 'money-quiet-header__action'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate(item.path)}
+              preventDoubleClick={false}
             >
               {item.label}
-            </button>
+            </MGButton>
           ))}
         </nav>
       </div>

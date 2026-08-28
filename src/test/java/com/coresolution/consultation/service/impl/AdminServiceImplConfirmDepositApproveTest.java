@@ -37,7 +37,9 @@ import com.coresolution.consultation.service.UserIdGenerator;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -115,6 +117,8 @@ class AdminServiceImplConfirmDepositApproveTest {
     private NotificationService notificationService;
     @Mock
     private FinancialTransactionService financialTransactionService;
+    @Mock
+    private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
     @Mock
     private RealTimeStatisticsService realTimeStatisticsService;
     @Mock
@@ -201,6 +205,7 @@ class AdminServiceImplConfirmDepositApproveTest {
                 branchService,
                 notificationService,
                 financialTransactionService,
+                cardMerchantFeeResolutionService,
                 realTimeStatisticsService,
                 financialTransactionRepository,
                 amountManagementService,

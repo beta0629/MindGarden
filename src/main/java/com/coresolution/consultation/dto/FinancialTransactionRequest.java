@@ -115,9 +115,15 @@ public class FinancialTransactionRequest {
     @DecimalMin(value = "0.0", message = "카드 수수료는 0 이상이어야 합니다.")
     private BigDecimal cardMerchantFeeAmount;
 
+    /**
+     * 결제 수단 (요청 전용, DB 미저장). CARD/카드 등 — 수수료 산출에만 사용.
+     */
     @Size(max = 20, message = "결제 수단은 20자 이하여야 합니다.")
     private String paymentMethod;
 
+    /**
+     * 카드사 (요청 전용, DB 미저장). issuer 요율 매칭에만 사용.
+     */
     @Size(max = 50, message = "카드사명은 50자 이하여야 합니다.")
     private String cardIssuer;
     

@@ -144,7 +144,8 @@ const FinancialTransactionForm = ({
       description: tx.description || '',
       transactionDate: dateStr,
       taxIncluded: !!tx.taxIncluded,
-      paymentMethod: tx.paymentMethod || '',
+      paymentMethod: tx.paymentMethod
+        || (toSafeNumber(tx.cardMerchantFeeAmount) > 0 ? 'CARD' : ''),
       cardIssuer: tx.cardIssuer || ''
     });
   }, [mode, initialTransaction]);
@@ -292,9 +293,6 @@ const FinancialTransactionForm = ({
         }
         if (initialTransaction.withholdingTaxAmount != null) {
           payload.withholdingTaxAmount = initialTransaction.withholdingTaxAmount;
-        }
-        if (initialTransaction.cardMerchantFeeAmount != null) {
-          payload.cardMerchantFeeAmount = initialTransaction.cardMerchantFeeAmount;
         }
         if (initialTransaction.amountBeforeTax != null) {
           payload.amountBeforeTax = initialTransaction.amountBeforeTax;

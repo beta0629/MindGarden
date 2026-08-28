@@ -39,11 +39,25 @@ import { useTranslation } from 'react-i18next';
 const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
 
 
+const TRANSACTION_DATE_YMD_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * @param {string|null|undefined} value
+ * @returns {string}
+ */
+const resolveDefaultTransactionDate = (value) => {
+  if (typeof value === 'string' && TRANSACTION_DATE_YMD_REGEX.test(value)) {
+    return value;
+  }
+  return formatLocalDateYmd(new Date());
+};
+
 /**
  * 수입/지출 거래 등록·수정 폼 컴포넌트 (공통 코드 사용)
  *
  * @param {'create'|'edit'} mode 등록 또는 수정
  * @param {object} [initialTransaction] 수정 시 단건 데이터(id·관련 엔티티 등 포함)
+ * @param {string} [defaultTransactionDate] create 모드 초기 거래일 (YYYY-MM-DD)
  */
 const FinancialTransactionForm = ({
   onClose,
@@ -52,6 +66,7 @@ const FinancialTransactionForm = ({
   initialTransaction = null,
   modalTitle = null,
   defaultTransactionType = 'INCOME',
+  defaultTransactionDate = null,
   clinicTypeLabels = false
 }) => {
   const { t } = useTranslation();
@@ -61,7 +76,7 @@ const FinancialTransactionForm = ({
     subcategory: '',
     amount: '',
     description: '',
-    transactionDate: formatLocalDateYmd(new Date()),
+    transactionDate: resolveDefaultTransactionDate(defaultTransactionDate),
     taxIncluded: false
   });
   const [loading, setLoading] = useState(false);

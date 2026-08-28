@@ -1,5 +1,6 @@
 /**
  * LedgerCalendar — Operator Ledger month grid (shared stage, no dual chrome)
+ * Month caption + prev/next mutate page filters.monthYm only (no local month state).
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -13,6 +14,7 @@ import { formatKrw } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
 import { formatLocalDateYmd } from '../../../../utils/erpFinanceDisplay';
 import {
+  FM_FILTER,
   FM_LEDGER_CALENDAR,
   FM_SUMMARY,
   FM_ROW_ACTIONS,
@@ -25,23 +27,62 @@ const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
 const MONTH_YM_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 const CALENDAR_PAGE_SIZE = 1000;
 
+/** Earliest navigable month (inclusive) */
+export const LEDGER_CALENDAR_MIN_MONTH_YM = '2020-01';
+
+/**
+ * @returns {string} YYYY-MM
+ */
+export function getLedgerCurrentMonthYm() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 /**
  * @param {string|null|undefined} monthYm
  * @returns {string}
  */
-function resolveMonthYm(monthYm) {
+export function resolveMonthYm(monthYm) {
   if (typeof monthYm === 'string' && MONTH_YM_REGEX.test(monthYm)) {
     return monthYm;
   }
-  const d = new Date();
+  return getLedgerCurrentMonthYm();
+}
+
+/**
+ * @param {string} monthYm
+ * @param {number} delta
+ * @returns {string}
+ */
+export function shiftMonthYm(monthYm, delta) {
+  const ym = resolveMonthYm(monthYm);
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * @param {string} monthYm
+ * @returns {boolean}
+ */
+export function canNavigatePrevMonth(monthYm) {
+  return resolveMonthYm(monthYm) > LEDGER_CALENDAR_MIN_MONTH_YM;
+}
+
+/**
+ * @param {string} monthYm
+ * @param {string} [currentYm]
+ * @returns {boolean}
+ */
+export function canNavigateNextMonth(monthYm, currentYm = getLedgerCurrentMonthYm()) {
+  return resolveMonthYm(monthYm) < currentYm;
 }
 
 /**
  * @param {string} monthYm
  * @returns {{ startDate: string, endDate: string, year: number, month: number, daysInMonth: number }}
  */
-function getMonthBounds(monthYm) {
+export function getMonthBounds(monthYm) {
   const ym = resolveMonthYm(monthYm);
   const [y, m] = ym.split('-').map(Number);
   const startDate = `${ym}-01`;
@@ -148,6 +189,8 @@ function formatLedgerDateTime(dateValue) {
  * @param {string} [props.category]
  * @param {string} [props.searchText]
  * @param {number|string} [props.refreshKey]
+ * @param {(nextMonthYm: string) => void} [props.onMonthChange]
+ * @param {(ymd: string) => void} [props.onAddOnDate]
  * @param {(tx: object) => void} [props.onView]
  * @param {(tx: object) => void} [props.onEdit]
  * @param {(tx: object) => void} [props.onDelete]
@@ -158,13 +201,21 @@ const LedgerCalendar = ({
   category = 'ALL',
   searchText = '',
   refreshKey = 0,
+  onMonthChange,
+  onAddOnDate,
   onView,
   onEdit,
   onDelete
 }) => {
   const resolvedYm = resolveMonthYm(monthYm);
-  const { startDate, endDate } = useMemo(() => getMonthBounds(resolvedYm), [resolvedYm]);
+  const { startDate, endDate, year, month } = useMemo(
+    () => getMonthBounds(resolvedYm),
+    [resolvedYm]
+  );
   const gridDays = useMemo(() => buildMonthGridDays(resolvedYm), [resolvedYm]);
+  const currentYm = useMemo(() => getLedgerCurrentMonthYm(), []);
+  const canPrev = canNavigatePrevMonth(resolvedYm);
+  const canNext = canNavigateNextMonth(resolvedYm, currentYm);
 
   const [dayMap, setDayMap] = useState({});
   const [selectedDate, setSelectedDate] = useState(null);
@@ -255,8 +306,78 @@ const LedgerCalendar = ({
     setSelectedDate(ymd);
   }, [resolvedYm]);
 
+  const handlePrevMonth = useCallback(() => {
+    if (!canPrev || !onMonthChange) {
+      return;
+    }
+    onMonthChange(shiftMonthYm(resolvedYm, -1));
+  }, [canPrev, onMonthChange, resolvedYm]);
+
+  const handleNextMonth = useCallback(() => {
+    if (!canNext || !onMonthChange) {
+      return;
+    }
+    onMonthChange(shiftMonthYm(resolvedYm, 1));
+  }, [canNext, onMonthChange, resolvedYm]);
+
+  const handleAddOnDate = useCallback(() => {
+    if (!selectedDate || !onAddOnDate) {
+      return;
+    }
+    onAddOnDate(selectedDate);
+  }, [selectedDate, onAddOnDate]);
+
   return (
     <div className="ledger-calendar" data-testid="ledger-calendar">
+      <div
+        className="ledger-calendar__month-nav"
+        role="group"
+        aria-label={FM_FILTER.MONTH_QUERY}
+        data-testid="ledger-calendar-month-nav"
+      >
+        <p className="ledger-calendar__month-caption">
+          {FM_LEDGER_CALENDAR.MONTH_CAPTION(year, month)}
+        </p>
+        <div className="ledger-calendar__month-nav-actions">
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'ledger-calendar__month-nav-btn'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handlePrevMonth}
+            disabled={!canPrev || !onMonthChange}
+            aria-label={FM_FILTER.PREV_MONTH}
+            preventDoubleClick={false}
+          >
+            {FM_FILTER.PREV_MONTH}
+          </MGButton>
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false,
+              className: 'ledger-calendar__month-nav-btn'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handleNextMonth}
+            disabled={!canNext || !onMonthChange}
+            aria-label={FM_FILTER.NEXT_MONTH}
+            preventDoubleClick={false}
+          >
+            {FM_FILTER.NEXT_MONTH}
+          </MGButton>
+        </div>
+      </div>
+
       <div className="ledger-calendar__layout">
         <div
           className="ledger-calendar__grid"
@@ -340,9 +461,30 @@ const LedgerCalendar = ({
           aria-label={FM_LEDGER_CALENDAR.DAY_LIST_ARIA}
           data-testid="ledger-calendar-day-detail"
         >
-          <h3 className="ledger-calendar__detail-title">
-            {selectedDate || FM_SUMMARY.DASH}
-          </h3>
+          <div className="ledger-calendar__detail-header">
+            <h3 className="ledger-calendar__detail-title">
+              {selectedDate || FM_SUMMARY.DASH}
+            </h3>
+            {selectedDate && onAddOnDate ? (
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'ledger-calendar__add-on-date'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={handleAddOnDate}
+                aria-label={FM_LEDGER_CALENDAR.ADD_ON_DATE}
+                preventDoubleClick={false}
+              >
+                {FM_LEDGER_CALENDAR.ADD_ON_DATE}
+              </MGButton>
+            ) : null}
+          </div>
           {selectedRows.length === 0 ? (
             <p className="ledger-calendar__detail-empty">{FM_LEDGER_CALENDAR.EMPTY_DAY}</p>
           ) : (
@@ -436,6 +578,8 @@ LedgerCalendar.propTypes = {
   category: PropTypes.string,
   searchText: PropTypes.string,
   refreshKey: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onMonthChange: PropTypes.func,
+  onAddOnDate: PropTypes.func,
   onView: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func

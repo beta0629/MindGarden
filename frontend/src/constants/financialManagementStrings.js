@@ -77,7 +77,10 @@ export const FM_LEDGER_CALENDAR = {
   EMPTY_DAY: '이 날짜에 등록된 내역이 없습니다.',
   INCOME_PREFIX: '+',
   EXPENSE_PREFIX: '−',
-  TIME_FALLBACK: '—'
+  TIME_FALLBACK: '—',
+  /** @param {number} year @param {number} month 1–12 */
+  MONTH_CAPTION: (year, month) => `${year}년 ${month}월`,
+  ADD_ON_DATE: '이 날짜에 기록'
 };
 
 /** @deprecated Phase 2 — equal peer tabs removed; kept for legacy tests/compat */

@@ -252,7 +252,7 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
       await StandardizedApi.put(ERP_API.RECURRING_EXPENSE_BY_ID(rule.id), {
         ...rule,
         isActive: !rule.isActive,
-        autoProcess: isVariableRule(rule) ? false : true
+        autoProcess: !isVariableRule(rule)
       });
       await refreshAfterChange();
     } catch (err) {

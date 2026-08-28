@@ -135,7 +135,8 @@ export const FM_CATEGORY_DISPLAY = {
   TAX: '세금',
   PURCHASE: '구매',
   PAYMENT: '결제',
-  OTHER: '기타'
+  OTHER: '기타',
+  MEAL: '식대'
 };
 
 /**
@@ -381,6 +382,10 @@ export const FM_MONEY_RECORD = {
   TYPE_LABEL: '유형',
   TYPE_INCOME: '들어온 돈 (+)',
   TYPE_EXPENSE: '나간 돈 (-)',
+  CATEGORY_LABEL: '카테고리',
+  CATEGORY_PLACEHOLDER: '카테고리를 선택하세요',
+  SUBCATEGORY_LABEL: '세부 카테고리',
+  SUBCATEGORY_PLACEHOLDER: '세부 카테고리를 선택하세요',
   SUBMIT: '기록하기',
   CANCEL: '취소'
 };

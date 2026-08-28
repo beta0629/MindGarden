@@ -35,7 +35,14 @@ import {
   isCardPaymentMethod,
   resolveCardMerchantFeeRate
 } from '../../utils/cardMerchantFeeCalculation';
-import { FM_CARD_FEE } from '../../constants/financialManagementStrings';
+import { FM_CARD_FEE, FM_MONEY_RECORD } from '../../constants/financialManagementStrings';
+import {
+  buildFixedCategoryOptions,
+  buildSubcategoryPickerOptions,
+  parseSubcategoryPickerValue,
+  resolvePrimaryCategoryHighlight,
+  resolveSubcategoryPickerValue
+} from '../../utils/financialTransactionCategoryPicker';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import './FinancialTransactionForm.css';
 import './FinancialManagement.css';
@@ -174,12 +181,20 @@ const FinancialTransactionForm = ({
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-      // 카테고리가 변경되면 세부 카테고리 초기화
-      ...(name === 'category' && { subcategory: '' })
-    }));
+    setFormData(prev => {
+      const next = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+      if (name === 'category') {
+        next.subcategory = '';
+      }
+      if (name === 'transactionType') {
+        next.category = '';
+        next.subcategory = '';
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async(e) => {
@@ -332,18 +347,117 @@ const FinancialTransactionForm = ({
   };
 
   // 현재 거래 유형에 따른 카테고리와 세부 카테고리
-  const currentCategories = formData.transactionType === 'INCOME' 
-    ? commonCodes.incomeCategories 
+  const currentCategories = formData.transactionType === 'INCOME'
+    ? commonCodes.incomeCategories
     : commonCodes.expenseCategories;
-  
-  const currentSubcategories = formData.transactionType === 'INCOME' 
-    ? commonCodes.incomeSubcategories 
+
+  const currentSubcategories = formData.transactionType === 'INCOME'
+    ? commonCodes.incomeSubcategories
     : commonCodes.expenseSubcategories;
 
-  // 선택된 카테고리에 해당하는 세부 카테고리 필터링
-  const filteredSubcategories = currentSubcategories.filter(sub => 
-    sub.parentCodeValue === formData.category
-  );
+  const useClinicCategoryPicker = clinicTypeLabels;
+
+  const clinicFixedCategoryOptions = useMemo(() => {
+    if (!useClinicCategoryPicker) {
+      return [];
+    }
+    return buildFixedCategoryOptions(formData.transactionType, currentCategories);
+  }, [useClinicCategoryPicker, formData.transactionType, currentCategories]);
+
+  const clinicSubcategoryOptions = useMemo(() => {
+    if (!useClinicCategoryPicker || !formData.category) {
+      return [];
+    }
+    return buildSubcategoryPickerOptions(
+      formData.transactionType,
+      formData.category,
+      currentCategories,
+      currentSubcategories
+    );
+  }, [
+    useClinicCategoryPicker,
+    formData.transactionType,
+    formData.category,
+    currentCategories,
+    currentSubcategories
+  ]);
+
+  const clinicShowSubcategoryRow = useClinicCategoryPicker && clinicSubcategoryOptions.length > 0;
+
+  const clinicPrimaryCategoryValue = useMemo(() => {
+    if (!useClinicCategoryPicker) {
+      return formData.category;
+    }
+    return resolvePrimaryCategoryHighlight(formData.transactionType, formData.category);
+  }, [useClinicCategoryPicker, formData.transactionType, formData.category]);
+
+  const clinicSubcategoryPickerValue = useMemo(() => {
+    if (!useClinicCategoryPicker) {
+      return formData.subcategory;
+    }
+    return resolveSubcategoryPickerValue(
+      formData.transactionType,
+      formData.category,
+      formData.subcategory
+    );
+  }, [
+    useClinicCategoryPicker,
+    formData.transactionType,
+    formData.category,
+    formData.subcategory
+  ]);
+
+  const legacyCategoryOptions = useMemo(() => (
+    currentCategories.map((category) => ({
+      value: category.codeValue,
+      label: category.codeLabel
+    }))
+  ), [currentCategories]);
+
+  const legacyFilteredSubcategories = useMemo(() => (
+    currentSubcategories.filter((sub) => sub.parentCodeValue === formData.category)
+  ), [currentSubcategories, formData.category]);
+
+  const legacySubcategoryOptions = useMemo(() => (
+    legacyFilteredSubcategories.map((subcategory) => ({
+      value: subcategory.codeValue,
+      label: subcategory.codeLabel
+    }))
+  ), [legacyFilteredSubcategories]);
+
+  const handleClinicCategoryChange = (val) => {
+    setFormData((prev) => ({
+      ...prev,
+      category: val,
+      subcategory: ''
+    }));
+  };
+
+  const handleClinicSubcategoryChange = (val) => {
+    const parsed = parseSubcategoryPickerValue(val, formData.category);
+    setFormData((prev) => {
+      const next = { ...prev };
+      if (parsed.category) {
+        next.category = parsed.category;
+      }
+      if (parsed.subcategory !== undefined) {
+        next.subcategory = parsed.subcategory;
+      }
+      return next;
+    });
+  };
+
+  const handleLegacyCategoryChange = (val) => {
+    setFormData((prev) => ({
+      ...prev,
+      category: val,
+      subcategory: ''
+    }));
+  };
+
+  const handleLegacySubcategoryChange = (val) => {
+    setFormData((prev) => ({ ...prev, subcategory: val }));
+  };
 
   const showSystemAmountsBlock =
     mode === 'edit' &&
@@ -454,27 +568,29 @@ const FinancialTransactionForm = ({
           </div>
 
           {/* 카테고리 */}
-          <div className="mg-v2-form-group">
+          <div className="mg-v2-form-group financial-transaction-form-category-group">
             <label className="mg-v2-form-label">
-              카테고리
+              {useClinicCategoryPicker ? FM_MONEY_RECORD.CATEGORY_LABEL : '카테고리'}
             </label>
+            {useClinicCategoryPicker && !formData.category && (
+              <p className="financial-transaction-form-category-hint mg-v2-text-xs mg-v2-text-secondary">
+                {FM_MONEY_RECORD.CATEGORY_PLACEHOLDER}
+              </p>
+            )}
+            {!useClinicCategoryPicker && !formData.category && (
+              <p className="financial-transaction-form-category-hint mg-v2-text-xs mg-v2-text-secondary">
+                {t('erp:FinancialTransactionForm.t_8289d31e')}
+              </p>
+            )}
             <BadgeSelect
-              value={formData.category}
-              onChange={(val) => setFormData(prev => ({
-                ...prev,
-                category: val,
-                subcategory: ''
-              }))}
-              options={[
-                { value: '', label: t('erp:FinancialTransactionForm.t_8289d31e') },
-                ...currentCategories.map(category => ({
-                  value: category.codeValue,
-                  label: category.codeLabel
-                }))
-              ]}
-              placeholder="카테고리를 선택하세요"
+              value={useClinicCategoryPicker ? clinicPrimaryCategoryValue : formData.category}
+              onChange={useClinicCategoryPicker ? handleClinicCategoryChange : handleLegacyCategoryChange}
+              options={useClinicCategoryPicker ? clinicFixedCategoryOptions : legacyCategoryOptions}
               disabled={loadingCodes || isApprovedReadOnly}
-              className="mg-v2-form-badge-select"
+              className="mg-v2-form-badge-select financial-transaction-form-category-chips"
+              aria-label={useClinicCategoryPicker
+                ? FM_MONEY_RECORD.CATEGORY_LABEL
+                : '카테고리'}
             />
             {loadingCodes && (
               <UnifiedLoading
@@ -487,31 +603,53 @@ const FinancialTransactionForm = ({
             )}
           </div>
 
-          {/* 세부 카테고리 */}
-          <div className="mg-v2-form-group">
-            <label className="mg-v2-form-label">
-              세부 카테고리
-            </label>
-            <BadgeSelect
-              value={formData.subcategory}
-              onChange={(val) => setFormData(prev => ({ ...prev, subcategory: val }))}
-              options={[
-                { value: '', label: t('erp:FinancialTransactionForm.t_ae1beb82') },
-                ...filteredSubcategories.map(subcategory => ({
-                  value: subcategory.codeValue,
-                  label: subcategory.codeLabel
-                }))
-              ]}
-              placeholder="세부 카테고리를 선택하세요"
-              disabled={!formData.category || loadingCodes || isApprovedReadOnly}
-              className="mg-v2-form-badge-select"
-            />
-            {!formData.category && (
-              <div className="mg-v2-text-xs mg-v2-text-secondary financial-transaction-form-field-hint">
-                먼저 카테고리를 선택해주세요
-              </div>
-            )}
-          </div>
+          {/* 세부 카테고리 — Clinic: 고정 카테고리 선택 후, 세부가 있을 때만 */}
+          {(useClinicCategoryPicker && clinicShowSubcategoryRow) && (
+            <div className="mg-v2-form-group financial-transaction-form-subcategory-group">
+              <label className="mg-v2-form-label">
+                {FM_MONEY_RECORD.SUBCATEGORY_LABEL}
+              </label>
+              {!clinicSubcategoryPickerValue && (
+                <p className="financial-transaction-form-category-hint mg-v2-text-xs mg-v2-text-secondary">
+                  {FM_MONEY_RECORD.SUBCATEGORY_PLACEHOLDER}
+                </p>
+              )}
+              <BadgeSelect
+                value={clinicSubcategoryPickerValue}
+                onChange={handleClinicSubcategoryChange}
+                options={clinicSubcategoryOptions}
+                disabled={loadingCodes || isApprovedReadOnly}
+                className="mg-v2-form-badge-select financial-transaction-form-subcategory-chips"
+                aria-label={FM_MONEY_RECORD.SUBCATEGORY_LABEL}
+              />
+            </div>
+          )}
+
+          {!useClinicCategoryPicker && (
+            <div className="mg-v2-form-group financial-transaction-form-subcategory-group">
+              <label className="mg-v2-form-label">
+                세부 카테고리
+              </label>
+              {!formData.category && (
+                <p className="financial-transaction-form-category-hint mg-v2-text-xs mg-v2-text-secondary">
+                  먼저 카테고리를 선택해주세요
+                </p>
+              )}
+              {formData.category && !formData.subcategory && legacySubcategoryOptions.length > 0 && (
+                <p className="financial-transaction-form-category-hint mg-v2-text-xs mg-v2-text-secondary">
+                  {t('erp:FinancialTransactionForm.t_ae1beb82')}
+                </p>
+              )}
+              <BadgeSelect
+                value={formData.subcategory}
+                onChange={handleLegacySubcategoryChange}
+                options={legacySubcategoryOptions}
+                disabled={!formData.category || loadingCodes || isApprovedReadOnly}
+                className="mg-v2-form-badge-select financial-transaction-form-subcategory-chips"
+                aria-label="세부 카테고리"
+              />
+            </div>
+          )}
 
           {/* 금액 (목록·상세와 동일 SSOT 라벨) */}
           <div className="mg-v2-form-group">

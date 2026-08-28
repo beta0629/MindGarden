@@ -225,7 +225,8 @@
 }
 
 .ledger-calendar__add-on-date {
-  color: var(--mg-v2-color-primary-main);
+  flex-shrink: 0;
+  min-height: var(--mg-v2-touch-target-min, 2.75rem);
 }
 
 .ledger-calendar__detail-empty {

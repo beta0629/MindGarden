@@ -1,9 +1,9 @@
 -- =============================================================================
 -- V20260828_001__create_card_merchant_fee_settings.sql
--- 카드 가맹점 수수료 설정 및 financial_transactions 결제 수단 컬럼
+-- 카드 가맹점 수수료 설정 테이블 (테넌트별 평균·카드사별 요율)
 --
--- 운영 영향: 신규 테이블 2건, financial_transactions 컬럼 2건 추가.
--- 요율 시드 없음 — 테넌트별 설정 UI에서만 입력.
+-- 운영 영향: 신규 테이블 2건. 요율 시드 없음 — 설정 UI에서만 입력.
+-- cardMerchantFeeAmount(D5)는 financial_transactions 기존 컬럼 사용.
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS card_merchant_fee_settings (
@@ -44,7 +44,3 @@ CREATE TABLE IF NOT EXISTS card_merchant_fee_issuer_rates (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
   COMMENT='카드사별 수수료 요율 (선택적 override)';
-
-ALTER TABLE financial_transactions
-    ADD COLUMN IF NOT EXISTS payment_method VARCHAR(20) NULL COMMENT '결제 수단 (CARD, CASH, BANK_TRANSFER 등)',
-    ADD COLUMN IF NOT EXISTS card_issuer VARCHAR(50) NULL COMMENT '카드사 (수수료 재계산용)';

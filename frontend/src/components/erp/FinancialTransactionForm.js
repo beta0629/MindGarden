@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
@@ -30,6 +30,12 @@ import {
   FINANCIAL_CARD_MERCHANT_FEE_LABEL,
   FINANCIAL_CARD_NET_DEPOSIT_LABEL
 } from '../../utils/erpFinancialAmountStack';
+import {
+  calculateCardMerchantFee,
+  isCardPaymentMethod,
+  resolveCardMerchantFeeRate
+} from '../../utils/cardMerchantFeeCalculation';
+import { FM_CARD_FEE } from '../../constants/financialManagementStrings';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import './FinancialTransactionForm.css';
 import './FinancialManagement.css';
@@ -37,6 +43,12 @@ import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
+
+const PAYMENT_METHOD_OPTIONS = [
+  { value: 'CASH', label: FM_CARD_FEE.PAYMENT_METHOD_CASH },
+  { value: 'CARD', label: FM_CARD_FEE.PAYMENT_METHOD_CARD },
+  { value: 'BANK_TRANSFER', label: FM_CARD_FEE.PAYMENT_METHOD_TRANSFER }
+];
 
 
 const TRANSACTION_DATE_YMD_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -77,11 +89,14 @@ const FinancialTransactionForm = ({
     amount: '',
     description: '',
     transactionDate: resolveDefaultTransactionDate(defaultTransactionDate),
-    taxIncluded: false
+    taxIncluded: false,
+    paymentMethod: '',
+    cardIssuer: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [cardFeeSettings, setCardFeeSettings] = useState(null);
   const [commonCodes, setCommonCodes] = useState({
     transactionTypes: [],
     incomeCategories: [],
@@ -95,7 +110,22 @@ const FinancialTransactionForm = ({
   // 공통 코드 로드
   useEffect(() => {
     loadCommonCodes();
+    loadCardFeeSettings();
   }, []);
+
+  const loadCardFeeSettings = async () => {
+    try {
+      const envelope = await StandardizedApi.get(
+        ERP_API.CARD_MERCHANT_FEE_SETTINGS,
+        {},
+        { unwrapApiEnvelope: false }
+      );
+      const data = envelope?.data ?? envelope;
+      setCardFeeSettings(data?.success === false ? null : data);
+    } catch {
+      setCardFeeSettings(null);
+    }
+  };
 
   useEffect(() => {
     if (mode !== 'edit' || !initialTransaction) {
@@ -113,7 +143,9 @@ const FinancialTransactionForm = ({
       amount: tx.amount != null && tx.amount !== '' ? String(tx.amount) : '',
       description: tx.description || '',
       transactionDate: dateStr,
-      taxIncluded: !!tx.taxIncluded
+      taxIncluded: !!tx.taxIncluded,
+      paymentMethod: tx.paymentMethod || '',
+      cardIssuer: tx.cardIssuer || ''
     });
   }, [mode, initialTransaction]);
 
@@ -228,6 +260,26 @@ const FinancialTransactionForm = ({
         payload.description = descTrim;
       }
 
+      if (formData.transactionType === 'INCOME') {
+        const paymentTrim = (formData.paymentMethod || '').trim();
+        if (paymentTrim) {
+          payload.paymentMethod = paymentTrim;
+        }
+        if (isCardPaymentMethod(paymentTrim)) {
+          const issuerTrim = (formData.cardIssuer || '').trim();
+          if (issuerTrim) {
+            payload.cardIssuer = issuerTrim;
+          }
+          const previewRate = resolveCardMerchantFeeRate(cardFeeSettings, issuerTrim);
+          const previewFee = previewRate != null
+            ? calculateCardMerchantFee(amount, previewRate)
+            : 0;
+          if (previewFee > 0) {
+            payload.cardMerchantFeeAmount = previewFee;
+          }
+        }
+      }
+
       if (mode === 'edit' && initialTransaction?.id != null) {
         if (initialTransaction.relatedEntityId != null) {
           payload.relatedEntityId = initialTransaction.relatedEntityId;
@@ -307,6 +359,31 @@ const FinancialTransactionForm = ({
         shouldShowCardSettlementSection(tx)
       );
     })();
+
+  const cardIssuerOptions = useMemo(() => {
+    const rows = Array.isArray(cardFeeSettings?.issuerRates) ? cardFeeSettings.issuerRates : [];
+    return [
+      { value: '', label: FM_CARD_FEE.CARD_ISSUER_PLACEHOLDER },
+      ...rows
+        .filter((row) => row?.issuerLabel)
+        .map((row) => ({ value: row.issuerLabel, label: row.issuerLabel }))
+    ];
+  }, [cardFeeSettings]);
+
+  const cardFeePreviewAmount = useMemo(() => {
+    if (formData.transactionType !== 'INCOME' || !isCardPaymentMethod(formData.paymentMethod)) {
+      return 0;
+    }
+    const amountNum = Number(String(formData.amount || '').replace(/,/g, ''));
+    const rate = resolveCardMerchantFeeRate(cardFeeSettings, formData.cardIssuer);
+    if (!Number.isFinite(amountNum) || amountNum <= 0 || rate == null) {
+      return 0;
+    }
+    return calculateCardMerchantFee(amountNum, rate);
+  }, [formData.transactionType, formData.paymentMethod, formData.amount, formData.cardIssuer, cardFeeSettings]);
+
+  const showIncomePaymentMethod = formData.transactionType === 'INCOME';
+  const showCardIssuerSelect = showIncomePaymentMethod && isCardPaymentMethod(formData.paymentMethod);
 
   return (
     <UnifiedModal
@@ -463,6 +540,50 @@ const FinancialTransactionForm = ({
               disabled={isApprovedReadOnly}
             />
           </div>
+
+          {showIncomePaymentMethod ? (
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
+                {FM_CARD_FEE.PAYMENT_METHOD_LABEL}
+              </label>
+              <BadgeSelect
+                value={formData.paymentMethod}
+                onChange={(val) => setFormData((prev) => ({
+                  ...prev,
+                  paymentMethod: val,
+                  cardIssuer: isCardPaymentMethod(val) ? prev.cardIssuer : ''
+                }))}
+                options={[
+                  { value: '', label: '선택 (선택 사항)' },
+                  ...PAYMENT_METHOD_OPTIONS
+                ]}
+                placeholder={FM_CARD_FEE.PAYMENT_METHOD_LABEL}
+                disabled={isApprovedReadOnly}
+                className="mg-v2-form-badge-select"
+              />
+            </div>
+          ) : null}
+
+          {showCardIssuerSelect ? (
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
+                {FM_CARD_FEE.CARD_ISSUER_LABEL}
+              </label>
+              <BadgeSelect
+                value={formData.cardIssuer}
+                onChange={(val) => setFormData((prev) => ({ ...prev, cardIssuer: val }))}
+                options={cardIssuerOptions}
+                placeholder={FM_CARD_FEE.CARD_ISSUER_PLACEHOLDER}
+                disabled={isApprovedReadOnly}
+                className="mg-v2-form-badge-select"
+              />
+              {cardFeePreviewAmount > 0 ? (
+                <p className="mg-v2-text-xs mg-v2-text-secondary financial-transaction-form-field-hint">
+                  {FM_CARD_FEE.FEE_PREVIEW(formatKrw(cardFeePreviewAmount))}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* 거래일 */}
           <div className="mg-v2-form-group">

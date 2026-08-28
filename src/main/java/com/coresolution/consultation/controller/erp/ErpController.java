@@ -24,6 +24,9 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.service.erp.ErpService;
+import com.coresolution.consultation.dto.CardMerchantFeeSettingsRequest;
+import com.coresolution.consultation.dto.CardMerchantFeeSettingsResponse;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeeSettingsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.util.EmailLogMasking;
@@ -102,6 +105,7 @@ public class ErpController extends BaseApiController {
 
     private final ErpService erpService;
     private final FinancialTransactionService financialTransactionService;
+    private final CardMerchantFeeSettingsService cardMerchantFeeSettingsService;
     private final RecurringExpenseService recurringExpenseService;
     private final CommonCodeService commonCodeService;
     private final DynamicPermissionService dynamicPermissionService;
@@ -2416,6 +2420,29 @@ public class ErpController extends BaseApiController {
         Map<String, Object> forecast = recurringExpenseService.getMonthlyRecurringExpenseForecast();
 
         return success(forecast);
+    }
+
+    // ==================== 카드 수수료 설정 ====================
+
+    /**
+     * 카드 가맹점 수수료 설정 조회
+     */
+    @GetMapping("/card-merchant-fee-settings")
+    public ResponseEntity<ApiResponse<CardMerchantFeeSettingsResponse>> getCardMerchantFeeSettings() {
+        log.info("카드 수수료 설정 조회");
+        CardMerchantFeeSettingsResponse settings = cardMerchantFeeSettingsService.getSettings();
+        return success(settings);
+    }
+
+    /**
+     * 카드 가맹점 수수료 설정 저장
+     */
+    @PutMapping("/card-merchant-fee-settings")
+    public ResponseEntity<ApiResponse<CardMerchantFeeSettingsResponse>> saveCardMerchantFeeSettings(
+            @Valid @RequestBody CardMerchantFeeSettingsRequest request) {
+        log.info("카드 수수료 설정 저장");
+        CardMerchantFeeSettingsResponse saved = cardMerchantFeeSettingsService.saveSettings(request);
+        return updated("카드 수수료 설정이 저장되었습니다.", saved);
     }
 
     // ==================== 공통 코드 관리 ====================

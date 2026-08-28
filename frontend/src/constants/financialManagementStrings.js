@@ -435,3 +435,29 @@ export const FM_RECURRING = {
     return m ? `${Number(m)}월` : yearMonth;
   }
 };
+
+/** 카드 수수료 설정 */
+export const FM_CARD_FEE = {
+  TITLE: '카드 수수료',
+  CAPTION: '카드로 들어온 돈에 카드사 요율을 적용합니다. 비율은 가맹 계약 기준으로 적으세요.',
+  AVERAGE_RATE_LABEL: '평균 요율',
+  AVERAGE_RATE_CAPTION: '카드사를 모르거나 고르지 않았을 때 쓰는 요율(%)',
+  AVERAGE_RATE_PLACEHOLDER: '예: 2.5',
+  ISSUER_SECTION_TITLE: '카드사별 요율 (선택)',
+  ISSUER_LABEL: '카드사',
+  ISSUER_RATE: '요율 (%)',
+  ADD_ISSUER: '카드사 추가',
+  REMOVE_ISSUER: '삭제',
+  SAVE: '저장',
+  SAVE_OK: '카드 수수료 설정이 저장되었습니다.',
+  SAVE_FAIL: '저장 중 오류가 발생했습니다.',
+  LOAD_FAIL: '카드 수수료 설정을 불러올 수 없습니다.',
+  EMPTY_ISSUERS: '카드사별 요율을 쓰려면 행을 추가하세요.',
+  FEE_PREVIEW: (amount) => `수수료 ${amount}`,
+  PAYMENT_METHOD_LABEL: '결제 수단',
+  PAYMENT_METHOD_CASH: '현금',
+  PAYMENT_METHOD_CARD: '카드',
+  PAYMENT_METHOD_TRANSFER: '계좌이체',
+  CARD_ISSUER_LABEL: '카드사 (선택)',
+  CARD_ISSUER_PLACEHOLDER: '카드사를 고르면 해당 요율이 적용됩니다'
+};

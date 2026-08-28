@@ -35,6 +35,7 @@ import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;

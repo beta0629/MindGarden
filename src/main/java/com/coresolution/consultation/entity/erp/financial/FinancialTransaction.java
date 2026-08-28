@@ -213,20 +213,6 @@ public class FinancialTransaction extends BaseEntity {
     @Column(name = "card_merchant_fee_amount", nullable = false, precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal cardMerchantFeeAmount = BigDecimal.ZERO;
-
-    /**
-     * 결제 수단 (CARD, CASH, BANK_TRANSFER 등).
-     */
-    @Size(max = 20, message = "결제 수단은 20자 이하여야 합니다.")
-    @Column(name = "payment_method", length = 20)
-    private String paymentMethod;
-
-    /**
-     * 카드사 (수수료 재계산·요율 매칭용).
-     */
-    @Size(max = 50, message = "카드사명은 50자 이하여야 합니다.")
-    @Column(name = "card_issuer", length = 50)
-    private String cardIssuer;
     
     /**
      * 레거시 지점 코드. 브랜치 코드 기반 필터링은 사용하지 않습니다.

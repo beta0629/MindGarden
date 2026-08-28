@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
-import com.coresolution.consultation.constant.CardMerchantFeeConstants;
 import com.coresolution.consultation.dto.AccountTypeForJournalDto;
 import com.coresolution.consultation.dto.erp.accounting.AccountingEntryDetailDto;
 import com.coresolution.consultation.dto.erp.accounting.AccountingEntryListDto;
@@ -237,13 +236,6 @@ public class AccountingServiceImpl implements AccountingService {
         String tenantId = transaction.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             log.warn("FinancialTransaction에 tenantId가 없어 분개를 생성할 수 없습니다: transactionId={}",
-                    transaction.getId());
-            return null;
-        }
-
-        if (transaction.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE
-                && CardMerchantFeeConstants.RELATED_ENTITY_TYPE.equals(transaction.getRelatedEntityType())) {
-            log.debug("카드 수수료 연동 지출 분개 생략(수입 D5 분개에 포함): transactionId={}",
                     transaction.getId());
             return null;
         }

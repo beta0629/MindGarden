@@ -91,8 +91,8 @@ export const FM_VIEW_TABS = {
   DASHBOARD: '대시보드'
 };
 
-/** PER_PAGE G3-01: 재무 거래 목록 기본 보기 = 테이블 */
-export const FM_TRANSACTION_DEFAULT_VIEW_MODE = 'table';
+/** PER_PAGE G3-01: Operator Ledger (`/erp/financial`) 기본 보기 = 달력 */
+export const FM_TRANSACTION_DEFAULT_VIEW_MODE = 'calendar';
 
 /** Legacy card/compact options (saved-view compat); primary UI uses table|calendar */
 export const FM_TRANSACTION_VIEW_MODE_OPTIONS = [

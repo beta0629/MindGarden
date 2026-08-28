@@ -19,8 +19,8 @@ describe('FinancialManagement 거래 목록 기본 보기 (G3-01)', () => {
     localStorage.clear();
   });
 
-  it('기본 viewMode는 table이다', () => {
-    expect(FM_TRANSACTION_DEFAULT_VIEW_MODE).toBe('table');
+  it('기본 viewMode는 calendar이다', () => {
+    expect(FM_TRANSACTION_DEFAULT_VIEW_MODE).toBe('calendar');
   });
 
   it('ViewModeToggle options에 table이 포함된다', () => {

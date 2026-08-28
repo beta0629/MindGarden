@@ -455,6 +455,12 @@ export const ERP_API = {
   FINANCE_TRANSACTIONS: '/api/v1/erp/finance/transactions',
   FINANCE_TRANSACTION_BY_ID: (id) => `/api/v1/erp/finance/transactions/${id}`,
 
+  /** 매월 나가는 돈 (반복 지출 — ErpController) */
+  RECURRING_EXPENSES: '/api/v1/erp/recurring-expenses',
+  RECURRING_EXPENSE_BY_ID: (id) => `/api/v1/erp/recurring-expenses/${id}`,
+  RECURRING_EXPENSES_CATCH_UP: '/api/v1/erp/recurring-expenses/catch-up',
+  COMMON_CODES_FINANCIAL: '/api/v1/erp/common-codes/financial',
+
   /** 예산 관리 (CRUD — 프론트 표준 경로, 백엔드와 동일 유지) */
   BUDGETS: '/api/v1/erp/budgets',
   BUDGET_BY_ID: (id) => `/api/v1/erp/budgets/${id}`,

@@ -14,7 +14,7 @@
 
 | 문서 | 설명 |
 |------|------|
-| [Clinic-OS 운영자/어드민 비주얼 SSOT](./CLINIC_OS_ADMIN_VISUAL_SSOT.md) | **운영자·어드민 화면의 시각 단일 기준**. Admin Dashboard V2 레퍼런스, `--mg-v2-*` 토큰, 크롬 계약·**버튼 색상 HARD RULE (primary = MGButton solid teal, 페이지마다 다르면 버그)**·금지·page-walk·페이지 체크리스트. 신규·개편 어드민은 이 문서만 따른다. |
+| [Clinic-OS 운영자/어드민 비주얼 SSOT](./CLINIC_OS_ADMIN_VISUAL_SSOT.md) | **운영자·어드민 시각 단일 기준**. **Default format = Admin Dashboard V2** (type·buttons·layout 통일, 어긋나면 버그). `--mg-v2-*` 토큰, 크롬 계약·page-walk·체크리스트. 신규·개편 어드민은 이 문서만 따른다. |
 
 ---
 

@@ -64,6 +64,8 @@ import static com.coresolution.consultation.constant.financial.FinancialCommonCo
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_CONSULTING_DISPLAY;
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_EQUIPMENT_DESCRIPTION;
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_EQUIPMENT_DISPLAY;
+import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MEAL_DESCRIPTION;
+import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MEAL_DISPLAY;
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MARKETING_DESCRIPTION;
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_MARKETING_DISPLAY;
 import static com.coresolution.consultation.constant.financial.FinancialCommonCodeSeedStrings.EXPENSE_CATEGORY_OFFICE_SUPPLIES_DESCRIPTION;
@@ -470,20 +472,23 @@ public final class TenantOnboardingSalaryAndFinancialSeedDefinitions {
         rows.add(new SeedRow("EXPENSE_CATEGORY", "TAX", EXPENSE_CATEGORY_TAX_DISPLAY, EXPENSE_CATEGORY_TAX_DISPLAY,
                 EXPENSE_CATEGORY_TAX_DESCRIPTION, null, 5, null,
                 null));
+        rows.add(new SeedRow("EXPENSE_CATEGORY", "MEAL", EXPENSE_CATEGORY_MEAL_DISPLAY,
+                EXPENSE_CATEGORY_MEAL_DISPLAY, EXPENSE_CATEGORY_MEAL_DESCRIPTION, null, 6, null,
+                null));
         rows.add(new SeedRow("EXPENSE_CATEGORY", "MARKETING", EXPENSE_CATEGORY_MARKETING_DISPLAY,
-                EXPENSE_CATEGORY_MARKETING_DISPLAY, EXPENSE_CATEGORY_MARKETING_DESCRIPTION, null, 6,
+                EXPENSE_CATEGORY_MARKETING_DISPLAY, EXPENSE_CATEGORY_MARKETING_DESCRIPTION, null, 7,
                 null, null));
         rows.add(new SeedRow("EXPENSE_CATEGORY", "EQUIPMENT", EXPENSE_CATEGORY_EQUIPMENT_DISPLAY,
-                EXPENSE_CATEGORY_EQUIPMENT_DISPLAY, EXPENSE_CATEGORY_EQUIPMENT_DESCRIPTION, null, 7, null,
+                EXPENSE_CATEGORY_EQUIPMENT_DISPLAY, EXPENSE_CATEGORY_EQUIPMENT_DESCRIPTION, null, 8, null,
                 null));
         rows.add(new SeedRow("EXPENSE_CATEGORY", "SOFTWARE", EXPENSE_CATEGORY_SOFTWARE_DISPLAY,
                 EXPENSE_CATEGORY_SOFTWARE_DISPLAY, EXPENSE_CATEGORY_SOFTWARE_DESCRIPTION,
-                null, 8, null, null));
+                null, 9, null, null));
         rows.add(new SeedRow("EXPENSE_CATEGORY", "CONSULTING", EXPENSE_CATEGORY_CONSULTING_DISPLAY,
                 EXPENSE_CATEGORY_CONSULTING_DISPLAY, EXPENSE_CATEGORY_CONSULTING_DESCRIPTION, null,
-                9, null, null));
+                10, null, null));
         rows.add(new SeedRow("EXPENSE_CATEGORY", "OTHER", EXPENSE_CATEGORY_OTHER_DISPLAY,
-                EXPENSE_CATEGORY_OTHER_DISPLAY, EXPENSE_CATEGORY_OTHER_DESCRIPTION, null, 10,
+                EXPENSE_CATEGORY_OTHER_DISPLAY, EXPENSE_CATEGORY_OTHER_DESCRIPTION, null, 11,
                 null, null));
 
         rows.add(new SeedRow("INCOME_SUBCATEGORY", "INDIVIDUAL_CONSULTATION",

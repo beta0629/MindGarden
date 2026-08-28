@@ -76,6 +76,7 @@ import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
 import com.coresolution.consultation.service.MappingSettlementScenario;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
@@ -158,6 +159,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final BranchService branchService;
     private final NotificationService notificationService;
     private final FinancialTransactionService financialTransactionService;
+    private final CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final FinancialTransactionRepository financialTransactionRepository;
     private final AmountManagementService amountManagementService;
@@ -1003,6 +1005,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .taxAmount(consultationTax.getVatAmount())
                 .withholdingTaxAmount(withholdingTax)
                 .amountBeforeTax(consultationTax.getAmountExcludingTax())
+                .cardMerchantFeeAmount(resolveMappingCardMerchantFee(
+                        tenantId, consultationTax.getAmountIncludingTax(), mapping))
                 .description(incomeDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
@@ -1010,7 +1014,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
-                .paymentMethod(resolveCardPaymentMethodForMapping(mapping))
                 .remarks(withholdingTax.compareTo(BigDecimal.ZERO) > 0
                         ? AdminServiceUserFacingMessages.REMARKS_WITHHOLDING_VS_VAT_NOTE
                         : null)
@@ -1043,16 +1046,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 매핑 결제 수단이 카드로 명확할 때만 CARD를 반환. 불명확하면 null(수수료 자동 적용 생략).
+     * 매핑 결제 수단이 카드일 때 테넌트 평균(또는 issuer) 요율로 {@code cardMerchantFeeAmount} 산출.
+     * 카드/현금 불명확하면 0.
      */
-    private String resolveCardPaymentMethodForMapping(ConsultantClientMapping mapping) {
+    private BigDecimal resolveMappingCardMerchantFee(String tenantId, BigDecimal grossAmount,
+            ConsultantClientMapping mapping) {
         if (mapping == null || mapping.getPaymentMethod() == null) {
-            return null;
+            return BigDecimal.ZERO;
         }
-        if (CardMerchantFeeConstants.isCardPaymentMethod(mapping.getPaymentMethod())) {
-            return CardMerchantFeeConstants.PAYMENT_METHOD_CARD;
+        if (!CardMerchantFeeConstants.isCardPaymentMethod(mapping.getPaymentMethod())) {
+            return BigDecimal.ZERO;
         }
-        return null;
+        return cardMerchantFeeResolutionService.resolveFeeAmount(
+                tenantId,
+                grossAmount,
+                CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
+                null);
     }
     
      /**
@@ -1120,6 +1129,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .taxAmount(additionalTax.getVatAmount())
                 .withholdingTaxAmount(withholdingAdditional)
                 .amountBeforeTax(additionalTax.getAmountExcludingTax())
+                .cardMerchantFeeAmount(resolveMappingCardMerchantFee(
+                        tenantIdForAdditional, additionalTax.getAmountIncludingTax(), mapping))
                 .description(additionalDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())

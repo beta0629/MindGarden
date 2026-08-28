@@ -39,6 +39,7 @@ import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContext;
 import com.coresolution.core.context.TenantContextHolder;
@@ -123,6 +124,7 @@ class AdminServiceImplCheckoutSameDayTenantContextTest {
     @Mock private BranchService branchService;
     @Mock private NotificationService notificationService;
     @Mock private FinancialTransactionService financialTransactionService;
+    @Mock private CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
     @Mock private AmountManagementService amountManagementService;
@@ -189,6 +191,7 @@ class AdminServiceImplCheckoutSameDayTenantContextTest {
                 branchService,
                 notificationService,
                 financialTransactionService,
+                cardMerchantFeeResolutionService,
                 realTimeStatisticsService,
                 financialTransactionRepository,
                 amountManagementService,

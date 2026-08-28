@@ -385,10 +385,10 @@ export const FM_MONEY_RECORD = {
   CANCEL: '취소'
 };
 
-/** 매월 나가는 돈 (반복 고정 지출) */
+/** 매월 나가는 돈 (반복 고정·변동 지출) */
 export const FM_RECURRING = {
   TITLE: '매월 나가는 돈',
-  CAPTION: '임대료처럼 매달 같은 금액은 한 번만 정해 두면 됩니다.',
+  CAPTION: '임대료처럼 매달 같은 금액은 한 번만 정해 두고, 카드대금처럼 날짜만 같으면 매달 금액을 입력하세요.',
   AMOUNT_EDIT_CAPTION: '이미 기록된 달은 그대로 두고, 다음 달부터 바뀐 금액이 적용됩니다.',
   HEADER_BUTTON: '매월 나가는 돈',
   HEADER_BUTTON_ARIA: '매월 나가는 돈 설정',
@@ -406,6 +406,7 @@ export const FM_RECURRING = {
   LABEL_DAY: '매월 N일',
   LABEL_START_MONTH: '시작 달',
   PLACEHOLDER_NAME: '예: 월 임대료',
+  PLACEHOLDER_NAME_VARIABLE: '예: 카드대금',
   REQUIRED: '필수 항목을 입력해주세요.',
   AMOUNT_POSITIVE: '금액은 0보다 커야 합니다.',
   SAVE_OK: '매월 나가는 돈이 저장되었습니다.',
@@ -416,5 +417,21 @@ export const FM_RECURRING = {
   DELETE_FAIL: '삭제 중 오류가 발생했습니다.',
   DAY_SUFFIX: '일',
   FORM_TITLE_ADD: '매월 나가는 돈 추가',
-  FORM_TITLE_EDIT: '매월 나가는 돈 수정'
+  FORM_TITLE_EDIT: '매월 나가는 돈 수정',
+  MODE_FIXED: '금액이 매월 같아요',
+  MODE_FIXED_HINT: '임대료·관리비처럼 매달 같은 금액이 나갈 때',
+  MODE_VARIABLE: '날짜만 같고 금액은 달라요',
+  MODE_VARIABLE_HINT: '카드대금처럼 매달 금액을 직접 입력할 때',
+  VARIABLE_AMOUNT_LABEL: '매달 금액 입력',
+  VARIABLE_RULE_META: '매달 금액 입력 · 매월 {day}일',
+  RECORD: '기록',
+  RECORD_OK: '지출이 기록되었습니다.',
+  RECORD_FAIL: '기록 중 오류가 발생했습니다.',
+  MISSING_SECTION_TITLE: '금액 입력 필요',
+  missingMonthLabel: (name, monthLabel, day) =>
+    `${name} · ${monthLabel} ${day}일 · 금액 입력`,
+  formatMonthLabel: (yearMonth) => {
+    const [y, m] = String(yearMonth).split('-');
+    return m ? `${Number(m)}월` : yearMonth;
+  }
 };

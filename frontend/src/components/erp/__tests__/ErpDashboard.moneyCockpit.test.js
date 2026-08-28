@@ -11,6 +11,8 @@ import { MemoryRouter } from 'react-router-dom';
 import {
   OFD_CHART,
   OFD_HERO,
+  OFD_LEDGER,
+  OFD_LINKS,
   OFD_PAGE_TITLE,
   OFD_WORKBENCH
 } from '../../../constants/operatorFinanceDashboardStrings';
@@ -312,6 +314,36 @@ describe('ErpDashboard money cockpit', () => {
     const todo = screen.getByTestId('money-todo-list');
     const zeroAmounts = within(todo).getAllByText('0원');
     expect(zeroAmounts.length).toBeGreaterThanOrEqual(3);
+  });
+
+  test('머니 콕핏 보조 CTA는 MGButton ghost small이다', async() => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('money-cockpit')).toBeInTheDocument();
+    });
+
+    const cockpit = screen.getByTestId('money-cockpit');
+    const headerNav = within(cockpit).getByRole('navigation', { name: '바로가기' });
+
+    [OFD_LINKS.SALARY.label, OFD_LINKS.FINANCIAL.label, OFD_LINKS.PURCHASE.label].forEach((label) => {
+      const button = within(headerNav).getByRole('button', { name: label });
+      expect(button).toHaveClass('mg-button--ghost');
+      expect(button).toHaveClass('mg-v2-button-ghost');
+    });
+
+    const ledger = screen.getByTestId('money-ledger-strip');
+    const viewMore = within(ledger).getByRole('button', { name: OFD_LEDGER.VIEW_MORE });
+    expect(viewMore).toHaveClass('mg-button--ghost');
+    expect(viewMore).toHaveClass('mg-v2-button-ghost');
+
+    const todo = screen.getByTestId('money-todo-list');
+    const todoButtons = within(todo).getAllByRole('button');
+    expect(todoButtons.length).toBeGreaterThanOrEqual(1);
+    todoButtons.forEach((button) => {
+      expect(button).toHaveClass('mg-button--ghost');
+      expect(button).toHaveClass('mg-v2-button-ghost');
+    });
   });
 
   test('수입 믹스·지출 믹스가 있다', async() => {

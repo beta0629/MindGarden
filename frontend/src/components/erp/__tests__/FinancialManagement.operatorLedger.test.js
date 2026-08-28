@@ -117,38 +117,46 @@ jest.mock('../../../contexts/SessionContext', () => ({
   })
 }));
 
+const mockTransactionsResponse = {
+  success: true,
+  data: [
+    {
+      id: 101,
+      transactionDate: '2026-08-15',
+      transactionType: 'INCOME',
+      category: 'CONSULTATION',
+      description: '상담료 입금',
+      amount: 1500000,
+      status: 'APPROVED'
+    },
+    {
+      id: 102,
+      transactionDate: '2026-08-16',
+      transactionType: 'EXPENSE',
+      category: 'RENT',
+      description: '임대료',
+      amount: 800000,
+      status: 'APPROVED'
+    }
+  ],
+  currentPage: 0,
+  totalPages: 1,
+  totalCount: 2,
+  size: 20
+};
+
 jest.mock('../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
-    get: jest.fn(async() => ({
-      success: true,
-      data: [
-        {
-          id: 101,
-          transactionDate: '2026-08-15',
-          transactionType: 'INCOME',
-          category: 'CONSULTATION',
-          description: '상담료 입금',
-          amount: 1500000,
-          status: 'APPROVED'
-        },
-        {
-          id: 102,
-          transactionDate: '2026-08-16',
-          transactionType: 'EXPENSE',
-          category: 'RENT',
-          description: '임대료',
-          amount: 800000,
-          status: 'APPROVED'
-        }
-      ],
-      currentPage: 0,
-      totalPages: 1,
-      totalCount: 2,
-      size: 20
-    })),
-    delete: jest.fn(async() => ({ success: true }))
+    get: jest.fn(),
+    post: jest.fn(),
+    delete: jest.fn()
   }
+}));
+
+jest.mock('../financial/ledger/MonthlyRecurringExpensesPanel', () => ({
+  __esModule: true,
+  default: () => null
 }));
 
 jest.mock('../../../utils/sessionRedirect', () => ({
@@ -171,6 +179,17 @@ import StandardizedApi from '../../../utils/standardizedApi';
 describe('FinancialManagement Operator Ledger Phase 2', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      if (String(endpoint).includes('financial-transactions')) {
+        return mockTransactionsResponse;
+      }
+      if (String(endpoint).includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+    StandardizedApi.post.mockResolvedValue({ success: true });
+    StandardizedApi.delete.mockResolvedValue({ success: true });
   });
 
   it('canonical /erp/financial renders 들어온 돈 · 나간 돈', async() => {
@@ -281,7 +300,7 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     });
   });
 
-  it('calendar toggle mounts LedgerCalendar inside shared operator-ledger-stage', async() => {
+  it('calendar is default and mounts LedgerCalendar inside shared operator-ledger-stage', async() => {
     render(
       <MemoryRouter initialEntries={['/erp/financial']}>
         <Routes>
@@ -294,19 +313,28 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
       expect(screen.getByTestId('operator-ledger')).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('operator-ledger-stage')).toBeInTheDocument();
-    expect(screen.queryByTestId('ledger-calendar')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('financial-calendar-view')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('달력'));
+    await waitFor(() => {
+      expect(StandardizedApi.get).toHaveBeenCalled();
+    });
 
     await waitFor(() => {
-      expect(screen.getByTestId('ledger-calendar')).toBeInTheDocument();
+      expect(screen.getByTestId('ledger-summary-income').textContent).toContain('1,500,000원');
     });
+
     expect(screen.getByTestId('operator-ledger-stage')).toBeInTheDocument();
+    expect(screen.getByTestId('ledger-calendar')).toBeInTheDocument();
+    expect(screen.queryByTestId('financial-calendar-view')).not.toBeInTheDocument();
     expect(screen.getByTestId('operator-ledger-stage')).toContainElement(
       screen.getByTestId('ledger-calendar')
     );
+
+    fireEvent.click(screen.getByText('테이블'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('ledger-calendar')).not.toBeInTheDocument();
+      expect(screen.getByTestId('operator-ledger-table')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('operator-ledger-stage')).toBeInTheDocument();
     expect(screen.queryByTestId('financial-calendar-view')).not.toBeInTheDocument();
     expect(screen.getByText(FM_TAX_DISCLOSURE.TITLE)).toBeInTheDocument();
   });

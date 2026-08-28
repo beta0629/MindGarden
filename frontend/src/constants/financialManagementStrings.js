@@ -384,3 +384,37 @@ export const FM_MONEY_RECORD = {
   SUBMIT: '기록하기',
   CANCEL: '취소'
 };
+
+/** 매월 나가는 돈 (반복 고정 지출) */
+export const FM_RECURRING = {
+  TITLE: '매월 나가는 돈',
+  CAPTION: '임대료처럼 매달 같은 금액은 한 번만 정해 두면 됩니다.',
+  AMOUNT_EDIT_CAPTION: '이미 기록된 달은 그대로 두고, 다음 달부터 바뀐 금액이 적용됩니다.',
+  HEADER_BUTTON: '매월 나가는 돈',
+  HEADER_BUTTON_ARIA: '매월 나가는 돈 설정',
+  EMPTY: '아직 매월 나가는 돈이 없습니다.',
+  ADD: '추가',
+  EDIT: '수정',
+  DELETE: '삭제',
+  SAVE: '저장',
+  CANCEL: '취소',
+  ACTIVE: '사용 중',
+  INACTIVE: '사용 안 함',
+  LABEL_NAME: '내용',
+  LABEL_AMOUNT: '금액 (부가세 포함)',
+  LABEL_CATEGORY: '카테고리',
+  LABEL_DAY: '매월 N일',
+  LABEL_START_MONTH: '시작 달',
+  PLACEHOLDER_NAME: '예: 월 임대료',
+  REQUIRED: '필수 항목을 입력해주세요.',
+  AMOUNT_POSITIVE: '금액은 0보다 커야 합니다.',
+  SAVE_OK: '매월 나가는 돈이 저장되었습니다.',
+  DELETE_OK: '매월 나가는 돈이 삭제되었습니다.',
+  DELETE_CONFIRM: '앞으로 자동 기록을 멈춥니다. 이미 기록된 달은 그대로 둡니다. 삭제할까요?',
+  LOAD_FAIL: '매월 나가는 돈 목록을 불러올 수 없습니다.',
+  SAVE_FAIL: '저장 중 오류가 발생했습니다.',
+  DELETE_FAIL: '삭제 중 오류가 발생했습니다.',
+  DAY_SUFFIX: '일',
+  FORM_TITLE_ADD: '매월 나가는 돈 추가',
+  FORM_TITLE_EDIT: '매월 나가는 돈 수정'
+};

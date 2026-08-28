@@ -22,6 +22,12 @@ public interface RecurringExpenseRepository extends BaseRepository<RecurringExpe
      */
     @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.isActive = true")
     List<RecurringExpense> findByTenantIdAndIsActiveTrue(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트별 모든 반복 지출 (활성/비활성 포함)
+     */
+    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId ORDER BY re.isActive DESC, re.expenseName ASC")
+    List<RecurringExpense> findAllByTenantId(@Param("tenantId") String tenantId);
     
     /**
      * @Deprecated - 🚨 위험: 모든 테넌트 반복 지출 정보 노출!

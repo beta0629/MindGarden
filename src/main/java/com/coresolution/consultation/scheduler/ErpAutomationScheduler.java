@@ -5,6 +5,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.service.PlSqlMappingSyncService;
 import com.coresolution.consultation.service.PlSqlFinancialService;
 import com.coresolution.consultation.service.erp.ErpFinancialCloseService;
@@ -53,6 +54,8 @@ public class ErpAutomationScheduler {
     private final PlSqlFinancialService plSqlFinancialService;
     private final PlSqlMappingSyncService plSqlMappingSyncService;
     private final AccountingService accountingService;
+    private final RecurringExpenseService recurringExpenseService;
+
     /**
      * Discord 알람 컴포넌트 (선택 의존성).
      * {@code monitoring.discord.webhook-url} 미설정 시 빈 자체가 없으므로 graceful skip 한다.
@@ -347,6 +350,31 @@ public class ErpAutomationScheduler {
                 String tenantId = TenantContextHolder.getTenantId();
                 log.warn("[ErpAutomation] 매핑 동기화 실패: tenantId={}, error={}", tenantId, e.getMessage());
                 notifyFailureSafely("MappingSync", tenantId, e);
+            }
+        });
+    }
+
+    /**
+     * 매월 나가는 돈(반복 지출) catch-up — 매일 02:15 KST.
+     * 페이지 로드 catch-up과 동일 로직; cron은 누락 월 보완용.
+     */
+    @Scheduled(cron = "${scheduler.recurring-expense.cron:0 15 2 * * *}")
+    @SchedulerLock(
+            name = "ErpAutomationScheduler_scheduleRecurringExpenseCatchUp",
+            lockAtMostFor = "PT30M",
+            lockAtLeastFor = "PT1M"
+    )
+    public void scheduleRecurringExpenseCatchUp() {
+        runPerTenant("RecurringExpenseCatchUp", LocalDate.now().toString(), () -> {
+            try {
+                int created = recurringExpenseService.catchUpMonthlyRecurringExpenses();
+                log.info("[ErpAutomation] 반복 지출 catch-up: tenantId={}, created={}",
+                    TenantContextHolder.getTenantId(), created);
+            } catch (Exception e) {
+                String tenantId = TenantContextHolder.getTenantId();
+                log.warn("[ErpAutomation] 반복 지출 catch-up 실패: tenantId={}, error={}",
+                    tenantId, e.getMessage());
+                notifyFailureSafely("RecurringExpenseCatchUp", tenantId, e);
             }
         });
     }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.service.PlSqlMappingSyncService;
 import com.coresolution.consultation.service.PlSqlFinancialService;
 import com.coresolution.consultation.service.erp.ErpFinancialCloseService;
@@ -77,6 +78,9 @@ class ErpAutomationSchedulerTest {
 
     @Mock
     private AccountingService accountingService;
+
+    @Mock
+    private RecurringExpenseService recurringExpenseService;
 
     @Mock
     private ObjectProvider<SchedulerFailureNotifier> failureNotifierProvider;

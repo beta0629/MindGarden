@@ -1,5 +1,5 @@
 /**
- * Operator ledger — 매월 나가는 돈 (고정 반복 지출) quiet panel
+ * Operator ledger — 매월 나가는 돈 (고정·변동 반복 지출) quiet panel
  *
  * @author CoreSolution
  * @since 2026-08-28
@@ -21,12 +21,16 @@ import {
 } from '../../../../constants/financialManagementStrings';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
+const AMOUNT_MODE_FIXED = 'fixed';
+const AMOUNT_MODE_VARIABLE = 'variable';
+
 const getCurrentMonthYm = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 };
 
 const emptyForm = () => ({
+  amountMode: AMOUNT_MODE_FIXED,
   expenseName: '',
   amount: '',
   category: '',
@@ -51,14 +55,20 @@ const parseExpenseList = (envelope) => {
   return [];
 };
 
+const isVariableRule = (rule) => rule?.autoProcess === false;
+
+const parseAmountInput = (value) => Number(String(value).replace(/,/g, ''));
+
 const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [recordingKey, setRecordingKey] = useState(null);
   const [rules, setRules] = useState([]);
   const [categories, setCategories] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [pendingAmounts, setPendingAmounts] = useState({});
 
   const categoryOptions = useMemo(
     () => categories.map((cat) => ({
@@ -67,6 +77,30 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
     })),
     [categories]
   );
+
+  const missingEntries = useMemo(() => {
+    const entries = [];
+    rules.forEach((rule) => {
+      if (!isVariableRule(rule) || rule.isActive === false) {
+        return;
+      }
+      const months = Array.isArray(rule.missingMonths) ? rule.missingMonths : [];
+      months.forEach((yearMonth) => {
+        entries.push({
+          key: `${rule.id}-${yearMonth}`,
+          rule,
+          yearMonth
+        });
+      });
+    });
+    return entries.sort((a, b) => {
+      const monthCmp = String(a.yearMonth).localeCompare(String(b.yearMonth));
+      if (monthCmp !== 0) {
+        return monthCmp;
+      }
+      return String(a.rule.expenseName).localeCompare(String(b.rule.expenseName));
+    });
+  }, [rules]);
 
   const loadRules = useCallback(async () => {
     setLoading(true);
@@ -77,6 +111,7 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
         { unwrapApiEnvelope: false }
       );
       setRules(parseExpenseList(envelope));
+      setPendingAmounts({});
     } catch {
       notificationManager.error(FM_RECURRING.LOAD_FAIL);
       setRules([]);
@@ -122,10 +157,12 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
 
   const openEdit = (rule) => {
     const startYm = rule.startDate ? String(rule.startDate).slice(0, 7) : getCurrentMonthYm();
+    const variable = isVariableRule(rule);
     setEditingRule(rule);
     setForm({
+      amountMode: variable ? AMOUNT_MODE_VARIABLE : AMOUNT_MODE_FIXED,
       expenseName: rule.expenseName || '',
-      amount: rule.amount != null ? String(rule.amount) : '',
+      amount: variable || rule.amount == null ? '' : String(rule.amount),
       category: rule.category || '',
       recurrenceDay: String(rule.recurrenceDay ?? 1),
       startMonthYm: startYm,
@@ -145,9 +182,15 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
 
   const handleSave = async () => {
     const name = form.expenseName.trim();
-    const amountNum = Number(String(form.amount).replace(/,/g, ''));
     const dayNum = Number(form.recurrenceDay);
-    if (!name || !form.category || !Number.isFinite(amountNum) || amountNum <= 0) {
+    const isVariable = form.amountMode === AMOUNT_MODE_VARIABLE;
+    const amountNum = parseAmountInput(form.amount);
+
+    if (!name || !form.category) {
+      notificationManager.error(FM_RECURRING.REQUIRED);
+      return;
+    }
+    if (!isVariable && (!Number.isFinite(amountNum) || amountNum <= 0)) {
       notificationManager.error(FM_RECURRING.REQUIRED);
       return;
     }
@@ -158,15 +201,16 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
 
     const payload = {
       expenseName: name,
-      amount: amountNum,
+      amount: isVariable ? 0 : amountNum,
       category: form.category,
       expenseType: form.category,
       recurrenceType: 'MONTHLY',
       recurrenceDay: dayNum,
       startDate: toStartDate(form.startMonthYm),
-      autoProcess: true,
+      autoProcess: !isVariable,
       isActive: form.isActive,
-      isVatApplicable: true
+      isVatApplicable: true,
+      paymentMethod: isVariable ? 'CARD' : undefined
     };
 
     setSaving(true);
@@ -208,7 +252,7 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
       await StandardizedApi.put(ERP_API.RECURRING_EXPENSE_BY_ID(rule.id), {
         ...rule,
         isActive: !rule.isActive,
-        autoProcess: true
+        autoProcess: isVariableRule(rule) ? false : true
       });
       await refreshAfterChange();
     } catch (err) {
@@ -216,6 +260,41 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleRecordMonth = async (entry) => {
+    const { key, rule, yearMonth } = entry;
+    const amountNum = parseAmountInput(pendingAmounts[key] ?? '');
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      notificationManager.error(FM_RECURRING.AMOUNT_POSITIVE);
+      return;
+    }
+
+    setRecordingKey(key);
+    try {
+      await StandardizedApi.post(ERP_API.RECURRING_EXPENSE_RECORD_MONTH(rule.id), {
+        yearMonth,
+        amount: amountNum
+      });
+      notificationManager.success(FM_RECURRING.RECORD_OK);
+      await refreshAfterChange();
+    } catch (err) {
+      notificationManager.error(err?.message || FM_RECURRING.RECORD_FAIL);
+    } finally {
+      setRecordingKey(null);
+    }
+  };
+
+  const renderRuleMeta = (rule) => {
+    const parts = [
+      getCategoryDisplayLabel(rule.category),
+      `매월 ${rule.recurrenceDay}${FM_RECURRING.DAY_SUFFIX}`,
+      `${String(rule.startDate || '').slice(0, 7)}~`
+    ];
+    if (isVariableRule(rule)) {
+      return parts.join(' · ');
+    }
+    return [formatKrw(rule.amount), ...parts].join(' · ');
   };
 
   return (
@@ -246,6 +325,60 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
         </MGButton>
       </div>
 
+      {!loading && missingEntries.length > 0 ? (
+        <div className="operator-ledger-recurring__missing">
+          <h3 className="operator-ledger-recurring__missing-title">
+            {FM_RECURRING.MISSING_SECTION_TITLE}
+          </h3>
+          <ul className="operator-ledger-recurring__missing-list">
+            {missingEntries.map((entry) => (
+              <li key={entry.key} className="operator-ledger-recurring__missing-item">
+                <span className="operator-ledger-recurring__missing-label">
+                  {FM_RECURRING.missingMonthLabel(
+                    toDisplayString(entry.rule.expenseName),
+                    FM_RECURRING.formatMonthLabel(entry.yearMonth),
+                    entry.rule.recurrenceDay
+                  )}
+                </span>
+                <div className="operator-ledger-recurring__missing-actions">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    className="operator-ledger-recurring__missing-input"
+                    value={pendingAmounts[entry.key] ?? ''}
+                    onChange={(e) => setPendingAmounts((prev) => ({
+                      ...prev,
+                      [entry.key]: e.target.value
+                    }))}
+                    placeholder={FM_RECURRING.LABEL_AMOUNT}
+                    aria-label={`${entry.rule.expenseName} ${entry.yearMonth} 금액`}
+                    disabled={recordingKey === entry.key || saving}
+                  />
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    size="small"
+                    className={buildErpMgButtonClassName({
+                      variant: 'primary',
+                      size: 'sm',
+                      loading: recordingKey === entry.key
+                    })}
+                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    onClick={() => handleRecordMonth(entry)}
+                    loading={recordingKey === entry.key}
+                    disabled={saving}
+                    preventDoubleClick
+                  >
+                    {FM_RECURRING.RECORD}
+                  </MGButton>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {loading ? (
         <p className="operator-ledger-recurring__muted">불러오는 중...</p>
       ) : rules.length === 0 ? (
@@ -259,14 +392,13 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
                   {toDisplayString(rule.expenseName)}
                 </span>
                 <span className="operator-ledger-recurring__item-meta">
-                  {formatKrw(rule.amount)}
-                  {' · '}
-                  {getCategoryDisplayLabel(rule.category)}
-                  {' · '}
-                  매월 {rule.recurrenceDay}{FM_RECURRING.DAY_SUFFIX}
-                  {' · '}
-                  {String(rule.startDate || '').slice(0, 7)}~
+                  {renderRuleMeta(rule)}
                 </span>
+                {isVariableRule(rule) ? (
+                  <span className="operator-ledger-recurring__item-badge">
+                    {FM_RECURRING.VARIABLE_AMOUNT_LABEL}
+                  </span>
+                ) : null}
               </div>
               <div className="operator-ledger-recurring__item-actions">
                 <button
@@ -345,27 +477,71 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
         )}
       >
         <div className="operator-ledger-recurring__form">
+          {!editingRule ? (
+            <fieldset className="operator-ledger-recurring__mode">
+              <legend className="operator-ledger-recurring__mode-legend">지출 유형</legend>
+              <label className="operator-ledger-recurring__mode-option">
+                <input
+                  type="radio"
+                  name="amountMode"
+                  value={AMOUNT_MODE_FIXED}
+                  checked={form.amountMode === AMOUNT_MODE_FIXED}
+                  onChange={() => setForm((prev) => ({ ...prev, amountMode: AMOUNT_MODE_FIXED }))}
+                />
+                <span>
+                  <strong>{FM_RECURRING.MODE_FIXED}</strong>
+                  <small>{FM_RECURRING.MODE_FIXED_HINT}</small>
+                </span>
+              </label>
+              <label className="operator-ledger-recurring__mode-option">
+                <input
+                  type="radio"
+                  name="amountMode"
+                  value={AMOUNT_MODE_VARIABLE}
+                  checked={form.amountMode === AMOUNT_MODE_VARIABLE}
+                  onChange={() => setForm((prev) => ({
+                    ...prev,
+                    amountMode: AMOUNT_MODE_VARIABLE,
+                    expenseName: prev.expenseName || FM_RECURRING.PLACEHOLDER_NAME_VARIABLE.replace('예: ', '')
+                  }))}
+                />
+                <span>
+                  <strong>{FM_RECURRING.MODE_VARIABLE}</strong>
+                  <small>{FM_RECURRING.MODE_VARIABLE_HINT}</small>
+                </span>
+              </label>
+            </fieldset>
+          ) : null}
           <label className="operator-ledger-recurring__field">
             <span>{FM_RECURRING.LABEL_NAME}</span>
             <input
               type="text"
               value={form.expenseName}
               onChange={(e) => setForm((prev) => ({ ...prev, expenseName: e.target.value }))}
-              placeholder={FM_RECURRING.PLACEHOLDER_NAME}
+              placeholder={
+                form.amountMode === AMOUNT_MODE_VARIABLE
+                  ? FM_RECURRING.PLACEHOLDER_NAME_VARIABLE
+                  : FM_RECURRING.PLACEHOLDER_NAME
+              }
             />
           </label>
-          <label className="operator-ledger-recurring__field">
-            <span>{FM_RECURRING.LABEL_AMOUNT}</span>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={form.amount}
-              onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
-            />
-          </label>
-          {editingRule ? (
+          {form.amountMode === AMOUNT_MODE_FIXED ? (
+            <label className="operator-ledger-recurring__field">
+              <span>{FM_RECURRING.LABEL_AMOUNT}</span>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={form.amount}
+                onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+              />
+            </label>
+          ) : null}
+          {editingRule && form.amountMode === AMOUNT_MODE_FIXED ? (
             <p className="operator-ledger-recurring__hint">{FM_RECURRING.AMOUNT_EDIT_CAPTION}</p>
+          ) : null}
+          {form.amountMode === AMOUNT_MODE_VARIABLE && !editingRule ? (
+            <p className="operator-ledger-recurring__hint">{FM_RECURRING.MODE_VARIABLE_HINT}</p>
           ) : null}
           <label className="operator-ledger-recurring__field">
             <span>{FM_RECURRING.LABEL_CATEGORY}</span>

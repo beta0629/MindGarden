@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -104,6 +106,10 @@ public class RecurringExpense extends BaseEntity {
     
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
+
+    /** autoProcess=false 규칙의 미기록 연월 (API 응답 전용, DB 비저장) */
+    @Transient
+    private List<String> missingMonths;
     
     @PrePersist
     protected void onCreate() {

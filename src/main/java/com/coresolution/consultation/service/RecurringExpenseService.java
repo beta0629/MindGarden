@@ -106,4 +106,20 @@ public interface RecurringExpenseService {
      * @return 새로 생성된 거래 건수
      */
     int catchUpMonthlyRecurringExpenses();
+
+    /**
+     * 변동 금액 규칙(autoProcess=false)의 특정 연월 EXPENSE 수동 기록 (멱등).
+     *
+     * @param recurringExpenseId 규칙 ID
+     * @param yearMonth 기록 연월 (예: 2026-08)
+     * @param amount 부가세 포함 지급액 (0 초과)
+     * @return true if a new transaction was created, false if already recorded
+     */
+    boolean recordRecurringExpenseMonth(Long recurringExpenseId, String yearMonth,
+            java.math.BigDecimal amount);
+
+    /**
+     * 테넌트 반복 지출 목록 — 변동 규칙에 missingMonths 포함.
+     */
+    List<RecurringExpense> getAllRecurringExpensesForTenantWithMissingMonths();
 }

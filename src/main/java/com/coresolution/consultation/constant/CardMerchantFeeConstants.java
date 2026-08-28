@@ -10,15 +10,6 @@ import java.util.List;
  */
 public final class CardMerchantFeeConstants {
 
-    /** 연동 지출 relatedEntityType */
-    public static final String RELATED_ENTITY_TYPE = "CARD_MERCHANT_FEE";
-
-    /** 자동 기록 지출 remarks 마커 */
-    public static final String AUTO_REMARKS = "AUTO_CARD_MERCHANT_FEE";
-
-    /** 자동 기록 지출 설명 */
-    public static final String EXPENSE_DESCRIPTION = "카드수수료";
-
     /** 결제 수단 — 카드 (영문) */
     public static final String PAYMENT_METHOD_CARD = "CARD";
 

@@ -24,6 +24,7 @@ import {
   OFD_SALARY_PAID_STATUS
 } from '../../../../constants/operatorFinanceDashboardStrings';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
+import { getKstDateParts } from './moneyCockpitPeriod';
 
 const INCOME_CATEGORY_KEYS = new Set([
   'CONSULTATION',
@@ -529,23 +530,91 @@ export function formatAxisTick(value) {
 }
 
 /**
- * 표시 중인 N개월 series의 들어옴·나감 산술 평균.
- * 0원 월 포함. 빈 배열이면 0.
- * @param {Array<{ income?: number, expense?: number }>|null|undefined} series
+ * 행에 유효한 year/month가 있는지
+ * @param {object} row
+ * @returns {boolean}
+ */
+function hasSeriesYearMonth(row) {
+  const year = Number(row?.year);
+  const month = Number(row?.month);
+  return Number.isFinite(year) && Number.isFinite(month) && month >= 1 && month <= 12;
+}
+
+/**
+ * (year, month)가 기준 연·월 이하인지
+ * @param {object} row
+ * @param {number} currentYear
+ * @param {number} currentMonth
+ * @returns {boolean}
+ */
+function isSeriesMonthOnOrBefore(row, currentYear, currentMonth) {
+  if (!hasSeriesYearMonth(row)) {
+    return false;
+  }
+  const year = Number(row.year);
+  const month = Number(row.month);
+  if (year < currentYear) return true;
+  if (year > currentYear) return false;
+  return month <= currentMonth;
+}
+
+/**
+ * 운영 시작달 → KST 이번 달(포함) 구간의 들어옴·나감 월 평균.
+ *
+ * 규칙:
+ * - 시작 = income > 0 또는 expense > 0 인 첫 행 (운영 시작월)
+ * - 끝 = Asia/Seoul 현재 연·월 이하인 마지막 행 (미래 월 제외)
+ * - 구간 안 0원 월은 분모에 포함. 시작 전·현재 이후 월은 제외.
+ * - year/month가 모든 행에 없으면(레거시): 롤링이 지금으로 끝난다고 보고
+ *   시작 활동 행부터 시리즈 끝까지 사용.
+ *
+ * @param {Array<{
+ *   income?: number,
+ *   expense?: number,
+ *   year?: number,
+ *   month?: number
+ * }>|null|undefined} series
+ * @param {Date} [now] 테스트용 기준 시각. 기본 `new Date()`
  * @returns {{ incomeAvg: number, expenseAvg: number }}
  */
-export function computeSeriesMonthlyAverages(series) {
+export function computeSeriesMonthlyAverages(series, now = new Date()) {
   const rows = Array.isArray(series) ? series : [];
-  const n = rows.length;
-  if (n === 0) {
+  if (rows.length === 0) {
     return { incomeAvg: 0, expenseAvg: 0 };
   }
+
+  const startIndex = rows.findIndex((row) => (
+    toSafeNumber(row?.income) > 0 || toSafeNumber(row?.expense) > 0
+  ));
+  if (startIndex < 0) {
+    return { incomeAvg: 0, expenseAvg: 0 };
+  }
+
+  const { year: currentYear, month: currentMonth } = getKstDateParts(now);
+  const allLackDates = rows.every((row) => !hasSeriesYearMonth(row));
+
+  let endIndex = -1;
+  if (allLackDates) {
+    endIndex = rows.length - 1;
+  } else {
+    for (let i = startIndex; i < rows.length; i += 1) {
+      if (isSeriesMonthOnOrBefore(rows[i], currentYear, currentMonth)) {
+        endIndex = i;
+      }
+    }
+  }
+
+  if (endIndex < startIndex) {
+    return { incomeAvg: 0, expenseAvg: 0 };
+  }
+
+  const n = endIndex - startIndex + 1;
   let incomeSum = 0;
   let expenseSum = 0;
-  rows.forEach((row) => {
-    incomeSum += toSafeNumber(row?.income);
-    expenseSum += toSafeNumber(row?.expense);
-  });
+  for (let i = startIndex; i <= endIndex; i += 1) {
+    incomeSum += toSafeNumber(rows[i]?.income);
+    expenseSum += toSafeNumber(rows[i]?.expense);
+  }
   return {
     incomeAvg: incomeSum / n,
     expenseAvg: expenseSum / n

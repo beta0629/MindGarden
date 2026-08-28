@@ -208,13 +208,21 @@ const ErpDashboard = ({ user: propUser }) => {
         return {
           label: key.label,
           income: totals.income,
-          expense: totals.expense
+          expense: totals.expense,
+          year: key.year,
+          month: key.month
         };
       });
       setMonthSeries(series);
     } catch (err) {
       console.error('롤링 12개월 차트 로드 실패:', err);
-      setMonthSeries(keys.map((key) => ({ label: key.label, income: 0, expense: 0 })));
+      setMonthSeries(keys.map((key) => ({
+        label: key.label,
+        income: 0,
+        expense: 0,
+        year: key.year,
+        month: key.month
+      })));
     } finally {
       setChartLoading(false);
     }

@@ -76,6 +76,8 @@ public class FinancialTransactionResponse {
      * 카드 실입금액(D5): 승인액({@link #amount}) − 수수료.
      */
     private BigDecimal cardNetDepositAmount;
+    private String paymentMethod;
+    private String cardIssuer;
     private String remarks;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -22,6 +22,7 @@ import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.accounting.FinancialStatementService;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeeSettingsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.settlement.SettlementService;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -73,6 +74,7 @@ class ErpStaffStillForbiddenTest {
     @Mock private FinancialStatementService financialStatementService;
     @Mock private ErpService erpService;
     @Mock private FinancialTransactionService financialTransactionService;
+    @Mock private CardMerchantFeeSettingsService cardMerchantFeeSettingsService;
     @Mock private RecurringExpenseService recurringExpenseService;
     @Mock private CommonCodeService commonCodeService;
     @Mock private UserRepository userRepository;
@@ -162,8 +164,8 @@ class ErpStaffStillForbiddenTest {
         // environment.acceptsProfiles 는 stub 하지 않음 — Mockito 기본값 false 로
         // local/dev 분기를 건너뛰고 동적 ERP_ACCESS 체크로 떨어진다.
         ErpController controller = new ErpController(erpService, financialTransactionService,
-                recurringExpenseService, commonCodeService, dynamicPermissionService,
-                userRepository, environment);
+                cardMerchantFeeSettingsService, recurringExpenseService, commonCodeService,
+                dynamicPermissionService, userRepository, environment);
 
         ResponseEntity<Map<String, Object>> response = controller.getAllItems(session);
 

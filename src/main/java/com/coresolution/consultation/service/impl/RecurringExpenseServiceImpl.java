@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,14 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
         }
         if (recurringExpense.getIsVatApplicable() == null) {
             recurringExpense.setIsVatApplicable(true);
+        }
+        if (!Boolean.TRUE.equals(recurringExpense.getAutoProcess())) {
+            if (recurringExpense.getAmount() == null) {
+                recurringExpense.setAmount(BigDecimal.ZERO);
+            }
+            if (recurringExpense.getPaymentMethod() == null) {
+                recurringExpense.setPaymentMethod("CARD");
+            }
         }
 
         if (recurringExpense.getNextDueDate() == null && recurringExpense.getStartDate() != null) {
@@ -159,6 +168,16 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<RecurringExpense> getAllRecurringExpensesForTenantWithMissingMonths() {
+        List<RecurringExpense> expenses = getAllRecurringExpensesForTenant();
+        for (RecurringExpense expense : expenses) {
+            expense.setMissingMonths(computeMissingMonths(expense));
+        }
+        return expenses;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<RecurringExpense> getRecurringExpensesByType(String expenseType) {
         log.info("지출 유형별 반복 지출 조회: {}", expenseType);
         return recurringExpenseRepository.findByExpenseTypeAndIsActiveTrue(expenseType);
@@ -199,18 +218,57 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
             if (expense.getStartDate() == null || expense.getAmount() == null) {
                 continue;
             }
+            if (expense.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
             YearMonth startMonth = YearMonth.from(expense.getStartDate());
             if (startMonth.isAfter(currentMonth)) {
                 continue;
             }
             for (YearMonth ym = startMonth; !ym.isAfter(currentMonth); ym = ym.plusMonths(1)) {
-                if (postExpenseForMonthIfMissing(expense, ym)) {
+                if (postExpenseForMonthIfMissing(expense, ym, expense.getAmount())) {
                     createdCount++;
                 }
             }
         }
         log.info("반복 지출 catch-up 완료: tenantId={}, created={}", tenantId, createdCount);
         return createdCount;
+    }
+
+    @Override
+    public boolean recordRecurringExpenseMonth(Long recurringExpenseId, String yearMonthStr,
+            BigDecimal amount) {
+        log.info("변동 반복 지출 월별 기록: id={}, month={}, amount={}",
+            recurringExpenseId, yearMonthStr, amount);
+
+        RecurringExpense expense = getRecurringExpenseById(recurringExpenseId);
+        if (Boolean.TRUE.equals(expense.getAutoProcess())) {
+            throw new IllegalArgumentException("고정 금액 규칙은 월별 금액 입력 API를 사용할 수 없습니다.");
+        }
+        if (!Boolean.TRUE.equals(expense.getIsActive())) {
+            throw new IllegalArgumentException("비활성 규칙은 기록할 수 없습니다.");
+        }
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("금액은 0보다 커야 합니다.");
+        }
+        if (yearMonthStr == null || yearMonthStr.isBlank()) {
+            throw new IllegalArgumentException("기록할 연월을 입력해주세요.");
+        }
+
+        YearMonth yearMonth = YearMonth.parse(yearMonthStr.trim());
+        YearMonth currentMonth = YearMonth.now(SEOUL);
+        if (yearMonth.isAfter(currentMonth)) {
+            throw new IllegalArgumentException("미래 달은 기록할 수 없습니다.");
+        }
+        if (expense.getStartDate() == null) {
+            throw new IllegalArgumentException("시작 달이 설정되지 않았습니다.");
+        }
+        YearMonth startMonth = YearMonth.from(expense.getStartDate());
+        if (yearMonth.isBefore(startMonth)) {
+            throw new IllegalArgumentException("시작 달 이전은 기록할 수 없습니다.");
+        }
+
+        return postExpenseForMonthIfMissing(expense, yearMonth, amount);
     }
 
     @Override
@@ -243,7 +301,9 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
         recurringExpense.setIsActive(true);
         recurringExpense.setUpdatedAt(LocalDateTime.now());
         recurringExpenseRepository.save(recurringExpense);
-        catchUpMonthlyRecurringExpenses();
+        if (Boolean.TRUE.equals(recurringExpense.getAutoProcess())) {
+            catchUpMonthlyRecurringExpenses();
+        }
     }
 
     // ==================== 통계 및 분석 ====================
@@ -339,7 +399,8 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
 
     // ==================== 헬퍼 메서드 ====================
 
-    private boolean postExpenseForMonthIfMissing(RecurringExpense expense, YearMonth yearMonth) {
+    private boolean postExpenseForMonthIfMissing(RecurringExpense expense, YearMonth yearMonth,
+            BigDecimal amount) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         String relatedEntityType = buildRelatedEntityType(yearMonth);
         boolean exists = financialTransactionRepository
@@ -351,8 +412,45 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
         if (exists) {
             return false;
         }
-        postExpenseForMonth(expense, yearMonth, expense.getAmount());
+        postExpenseForMonth(expense, yearMonth, amount);
         return true;
+    }
+
+    private List<String> computeMissingMonths(RecurringExpense expense) {
+        if (Boolean.TRUE.equals(expense.getAutoProcess())) {
+            return List.of();
+        }
+        if (!Boolean.TRUE.equals(expense.getIsActive())) {
+            return List.of();
+        }
+        if (!"MONTHLY".equalsIgnoreCase(expense.getRecurrenceType())) {
+            return List.of();
+        }
+        if (expense.getStartDate() == null) {
+            return List.of();
+        }
+
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        YearMonth currentMonth = YearMonth.now(SEOUL);
+        YearMonth startMonth = YearMonth.from(expense.getStartDate());
+        if (startMonth.isAfter(currentMonth)) {
+            return List.of();
+        }
+
+        List<String> missing = new ArrayList<>();
+        for (YearMonth ym = startMonth; !ym.isAfter(currentMonth); ym = ym.plusMonths(1)) {
+            String relatedEntityType = buildRelatedEntityType(ym);
+            boolean exists = financialTransactionRepository
+                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                    tenantId,
+                    expense.getId(),
+                    relatedEntityType,
+                    FinancialTransaction.TransactionType.EXPENSE);
+            if (!exists) {
+                missing.add(ym.toString());
+            }
+        }
+        return missing;
     }
 
     private void postExpenseForMonth(RecurringExpense expense, YearMonth yearMonth, BigDecimal amount) {

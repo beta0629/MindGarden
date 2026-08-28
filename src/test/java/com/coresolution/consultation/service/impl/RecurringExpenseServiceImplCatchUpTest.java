@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -163,6 +164,71 @@ class RecurringExpenseServiceImplCatchUpTest {
         assertThat(request.getRelatedEntityType())
             .isEqualTo(RecurringExpenseServiceImpl.buildRelatedEntityType(current));
         assertThat(request.getRelatedEntityId()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("autoProcess=false(카드대금) 규칙은 catch-up에서 거래를 만들지 않음")
+    void catchUp_skipsVariableAmountRules() {
+        YearMonth current = YearMonth.now(SEOUL);
+        RecurringExpense rule = activeMonthlyRule(
+            4L, current.minusMonths(2).atDay(1), BigDecimal.ZERO, 15);
+        rule.setAutoProcess(false);
+        rule.setExpenseName("카드대금");
+        when(recurringExpenseRepository.findByTenantIdAndIsActiveTrue(TENANT_ID))
+            .thenReturn(List.of(rule));
+
+        int created = recurringExpenseService.catchUpMonthlyRecurringExpenses();
+
+        assertThat(created).isEqualTo(0);
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("record-month: 2026-08 1,234,000원 1회 기록, 두 번째 호출은 중복 없음")
+    void recordMonth_postsOnceAndIsIdempotent() {
+        YearMonth target = YearMonth.of(2026, 8);
+        RecurringExpense rule = activeMonthlyRule(
+            5L, LocalDate.of(2026, 4, 1), BigDecimal.ZERO, 15);
+        rule.setAutoProcess(false);
+        rule.setExpenseName("카드대금");
+        when(recurringExpenseRepository.findByTenantIdAndId(TENANT_ID, 5L))
+            .thenReturn(java.util.Optional.of(rule));
+        when(financialTransactionRepository
+            .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                eq(TENANT_ID),
+                eq(5L),
+                eq(RecurringExpenseServiceImpl.buildRelatedEntityType(target)),
+                eq(FinancialTransaction.TransactionType.EXPENSE)))
+            .thenReturn(false)
+            .thenReturn(true);
+        when(recurringExpenseRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        boolean first = recurringExpenseService.recordRecurringExpenseMonth(
+            5L, "2026-08", new BigDecimal("1234000"));
+        boolean second = recurringExpenseService.recordRecurringExpenseMonth(
+            5L, "2026-08", new BigDecimal("1234000"));
+
+        assertThat(first).isTrue();
+        assertThat(second).isFalse();
+        verify(financialTransactionService, times(1))
+            .createTransaction(any(FinancialTransactionRequest.class), eq(null));
+    }
+
+    @Test
+    @DisplayName("record-month: 0원 이하 금액 거부")
+    void recordMonth_rejectsZeroOrNegativeAmount() {
+        RecurringExpense rule = activeMonthlyRule(
+            6L, LocalDate.of(2026, 4, 1), BigDecimal.ZERO, 15);
+        rule.setAutoProcess(false);
+        when(recurringExpenseRepository.findByTenantIdAndId(TENANT_ID, 6L))
+            .thenReturn(java.util.Optional.of(rule));
+
+        assertThatThrownBy(() -> recurringExpenseService.recordRecurringExpenseMonth(
+            6L, "2026-08", BigDecimal.ZERO))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("0보다");
+
+        verify(financialTransactionService, never()).createTransaction(any(), any());
     }
 
     private RecurringExpense activeMonthlyRule(

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.dto.RecurringExpenseRecordMonthRequest;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.dto.FinancialTransactionResponse;
 import com.coresolution.consultation.dto.ItemCreateRequest;
@@ -2287,7 +2288,8 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllRecurringExpenses() {
         log.info("모든 반복 지출 조회");
 
-        List<RecurringExpense> expenses = recurringExpenseService.getAllRecurringExpensesForTenant();
+        List<RecurringExpense> expenses =
+            recurringExpenseService.getAllRecurringExpensesForTenantWithMissingMonths();
 
         Map<String, Object> data = new HashMap<>();
         data.put("expenses", expenses);
@@ -2350,6 +2352,33 @@ public class ErpController extends BaseApiController {
         data.put("deleted", deleted);
 
         return deleted("반복 지출이 성공적으로 삭제되었습니다.");
+    }
+
+    /**
+     * 변동 금액 반복 지출(카드대금 등) — 특정 연월 수동 기록 (멱등)
+     */
+    @PostMapping("/recurring-expenses/{id}/record-month")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> recordRecurringExpenseMonth(
+            @PathVariable Long id,
+            @RequestBody RecurringExpenseRecordMonthRequest request) {
+        log.info("변동 반복 지출 월별 기록 요청: id={}, month={}", id,
+            request != null ? request.getYearMonth() : null);
+
+        if (request == null) {
+            throw new IllegalArgumentException("요청 본문이 필요합니다.");
+        }
+
+        boolean created = recurringExpenseService.recordRecurringExpenseMonth(
+            id, request.getYearMonth(), request.getAmount());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("created", created);
+        data.put("yearMonth", request.getYearMonth());
+
+        String message = created
+            ? "해당 달 지출이 기록되었습니다."
+            : "이미 기록된 달입니다.";
+        return success(message, data);
     }
 
     /**

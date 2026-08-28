@@ -60,6 +60,10 @@ public final class FinancialCommonCodeSeedStrings {
 
     public static final String EXPENSE_CATEGORY_TAX_DESCRIPTION = "각종 세금";
 
+    public static final String EXPENSE_CATEGORY_MEAL_DISPLAY = "식대";
+
+    public static final String EXPENSE_CATEGORY_MEAL_DESCRIPTION = "식대·간식 등";
+
     public static final String EXPENSE_CATEGORY_MARKETING_DISPLAY = "마케팅";
 
     public static final String EXPENSE_CATEGORY_MARKETING_DESCRIPTION = "마케팅 비용";

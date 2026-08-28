@@ -215,7 +215,12 @@ const getDefaultPermissionsForRole = (user) => {
  * 통합 재무 대시보드 컴포넌트
  * ERP와 회계 시스템을 통합한 수입/지출 관리 화면
  */
-const IntegratedFinanceDashboard = ({ user: propUser }) => {
+const IntegratedFinanceDashboard = ({
+  user: propUser,
+  embedded = false,
+  forcedTab = null,
+  hideChrome = false
+}) => {
   const { t } = useTranslation(['erp']);
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [userPermissions, setUserPermissions] = useState([]);
@@ -225,7 +230,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+  const initialTab =
+    forcedTab
+    || searchParams.get('tab')
+    || (embedded ? 'income-statement' : 'overview');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showQuickExpenseForm, setShowQuickExpenseForm] = useState(false);
@@ -283,13 +292,17 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     setTimeout(checkSessionWithDelay, 100);
   }, [sessionLoading, isLoggedIn, navigate]); // user 의존성 제거
 
-  // URL 파라미터에서 탭 읽기
+  // URL 파라미터에서 탭 읽기 (embedded forcedTab 우선)
   useEffect(() => {
+    if (forcedTab) {
+      setActiveTab(forcedTab);
+      return;
+    }
     const tabFromUrl = searchParams.get('tab');
     if (tabFromUrl) {
       setActiveTab(tabFromUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, forcedTab]);
 
   // 권한 체크 및 데이터 로드
   useEffect(() => {
@@ -509,7 +522,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     </div>
   );
 
-  if (error) {
+  if (error && !embedded) {
     return (
       <AdminCommonLayout title={t('erp:finance.page.title')}>
         <ContentArea ariaLabel={t('erp:finance.accessibility.contentBody')}>
@@ -528,6 +541,69 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
     );
   }
 
+  const renderStatementTabsBody = () => (
+    <div
+      className="integrated-finance-content"
+      role="region"
+      aria-labelledby={embedded ? undefined : INTEGRATED_FINANCE_TITLE_ID}
+    >
+      {loading ? (
+        <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
+          <UnifiedLoading type="inline" text={t('erp:finance.display.loadingData')} />
+        </div>
+      ) : error && embedded ? (
+        <SafeErrorDisplay error={error} variant="inline" prefix={t('erp:finance.display.errorPrefix')} />
+      ) : (
+        <>
+          {!embedded && (
+            <div className="mg-w-full mg-mb-md">
+              <ErpFilterToolbar
+                ariaLabel={t('erp:finance.accessibility.toolbar')}
+                secondaryRow={(
+                  <div className="integrated-finance__toolbar-actions">
+                    <MGButton
+                      variant="secondary"
+                      size="small"
+                      className={buildErpMgButtonClassName({
+                        variant: 'secondary',
+                        size: 'sm',
+                        loading: silentListRefreshing
+                      })}
+                      onClick={handleSilentDashboardRefresh}
+                      loading={silentListRefreshing}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      aria-label={t('erp:finance.accessibility.refresh')}
+                    >
+                      {t('erp:finance.accessibility.refresh')}
+                    </MGButton>
+                  </div>
+                )}
+              />
+            </div>
+          )}
+          {activeTab === 'overview' && !embedded && <OverviewTab data={dashboardData} />}
+          {activeTab === 'journal-entries' && <JournalEntriesTab />}
+          {activeTab === 'ledgers' && <LedgersTab />}
+          {activeTab === 'balance-sheet' && <BalanceSheetTab />}
+          {activeTab === 'income-statement' && <IncomeStatementTab />}
+          {activeTab === 'cash-flow' && <CashFlowStatementTab />}
+          {activeTab === 'settlement' && <SettlementTab />}
+          {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
+          {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
+          {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
+        </>
+      )}
+    </div>
+  );
+
+  if (embedded || hideChrome) {
+    return (
+      <div className="integrated-finance-embedded" data-testid="integrated-finance-embedded">
+        {renderStatementTabsBody()}
+      </div>
+    );
+  }
+
   return (
     <AdminCommonLayout title={t('erp:finance.page.title')}>
       <ContentArea ariaLabel={t('erp:finance.accessibility.contentBody')}>
@@ -537,54 +613,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           tabsSlot={renderIntegratedFinanceTabsSlot(loading)}
           mainAriaLabel={t('erp:finance.accessibility.tabMain')}
         >
-          <div
-            className="integrated-finance-content"
-            role="region"
-            aria-labelledby={INTEGRATED_FINANCE_TITLE_ID}
-          >
-            {loading ? (
-              <div className="mg-v2-erp-dashboard-block" role="status" aria-live="polite" aria-busy="true">
-                <UnifiedLoading type="inline" text={t('erp:finance.display.loadingData')} />
-              </div>
-            ) : (
-              <>
-                <div className="mg-w-full mg-mb-md">
-                  <ErpFilterToolbar
-                    ariaLabel={t('erp:finance.accessibility.toolbar')}
-                    secondaryRow={(
-                      <div className="integrated-finance__toolbar-actions">
-                        <MGButton
-                          variant="secondary"
-                          size="small"
-                          className={buildErpMgButtonClassName({
-                            variant: 'secondary',
-                            size: 'sm',
-                            loading: silentListRefreshing
-                          })}
-                          onClick={handleSilentDashboardRefresh}
-                          loading={silentListRefreshing}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          aria-label={t('erp:finance.accessibility.refresh')}
-                        >
-                          {t('erp:finance.accessibility.refresh')}
-                        </MGButton>
-                      </div>
-                    )}
-                  />
-                </div>
-                {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
-                {activeTab === 'journal-entries' && <JournalEntriesTab />}
-                {activeTab === 'ledgers' && <LedgersTab />}
-                {activeTab === 'balance-sheet' && <BalanceSheetTab />}
-                {activeTab === 'income-statement' && <IncomeStatementTab />}
-                {activeTab === 'cash-flow' && <CashFlowStatementTab />}
-                {activeTab === 'settlement' && <SettlementTab />}
-                {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
-                {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
-                {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
-              </>
-            )}
-          </div>
+          {renderStatementTabsBody()}
         </ErpPageShell>
       </ContentArea>
 

@@ -14,7 +14,7 @@
 
 | 문서 | 설명 |
 |------|------|
-| [Clinic-OS 운영자/어드민 비주얼 SSOT](./CLINIC_OS_ADMIN_VISUAL_SSOT.md) | **운영자·어드민 화면의 시각 단일 기준**. Admin Dashboard V2 레퍼런스, `--mg-v2-*` 토큰, 크롬 계약·금지·page-walk·페이지 체크리스트. 신규·개편 어드민은 이 문서만 따른다. |
+| [Clinic-OS 운영자/어드민 비주얼 SSOT](./CLINIC_OS_ADMIN_VISUAL_SSOT.md) | **운영자·어드민 화면의 시각 단일 기준**. Admin Dashboard V2 레퍼런스, `--mg-v2-*` 토큰, 크롬 계약·**버튼 색상 HARD RULE (primary = MGButton solid teal, 페이지마다 다르면 버그)**·금지·page-walk·페이지 체크리스트. 신규·개편 어드민은 이 문서만 따른다. |
 
 ---
 
@@ -32,7 +32,7 @@
 
 | 문서 | 설명 |
 |------|------|
-| [펜슬(Pencil) 디자인 가이드](./PENCIL_DESIGN_GUIDE.md) | **역사 문서**. B0KlA·`.pen` 아티팩트 참조용. **신규 어드민 화면에 사용 금지** — [Clinic-OS 비주얼 SSOT](./CLINIC_OS_ADMIN_VISUAL_SSOT.md)를 쓴다. |
+| [펜슬(Pencil) 디자인 가이드](./PENCIL_DESIGN_GUIDE.md) | **역사 문서**. B0KlA·`.pen` 아티팩트 참조용. **신규 어드민 화면에 사용 금지** — [Clinic-OS 비주얼 SSOT](./CLINIC_OS_ADMIN_VISUAL_SSOT.md)(버튼 색 = dashboard MGButton solid primary)를 쓴다. |
 
 ## 아토믹 디자인·가이드
 
@@ -44,4 +44,4 @@
 
 ---
 
-**최종 업데이트**: 2026-08-27
+**최종 업데이트**: 2026-08-28

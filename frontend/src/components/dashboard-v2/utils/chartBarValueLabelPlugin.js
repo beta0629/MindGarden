@@ -2,6 +2,10 @@
  * Chart.js 막대 상단 수치 라벨 플러그인 (datalabels 대체).
  * 값이 0이면 라벨 숨김. peakIndex는 굵게 강조.
  *
+ * Chart.js ^4.5: `chart.options.plugins[id]` 는 scriptable PROXY.
+ * formatter를 그 경로에서 읽으면 함수가 호출되어 문자열이 되므로,
+ * 반드시 훅 3번째 인자(pluginOpts, scriptable:false)를 사용한다.
+ *
  * @author CoreSolution
  * @since 2026-07-28
  */
@@ -19,11 +23,19 @@ const DEFAULT_FONT_SIZE = 14;
  */
 export const mgVizBarValueLabelsPlugin = {
   id: MG_VIZ_BAR_VALUE_LABELS_PLUGIN_ID,
-  afterDatasetsDraw(chart) {
-    const opts = chart.options?.plugins?.[MG_VIZ_BAR_VALUE_LABELS_PLUGIN_ID];
+  /**
+   * Chart.js options proxy가 formatter를 호출하지 않도록 제외.
+   * 훅 3번째 인자는 이미 scriptable:false 이지만, chart.options.plugins 경로 보호용.
+   */
+  descriptors: {
+    _scriptable: (name) => name !== 'formatter',
+    _indexable: false
+  },
+  afterDatasetsDraw(chart, _args, opts) {
     if (!opts || opts.enabled === false) {
       return;
     }
+    const format = typeof opts.formatter === 'function' ? opts.formatter : null;
     const { ctx } = chart;
     const color = opts.color || 'var(--mg-v2-color-text-primary)';
     const peakColor = opts.peakColor || 'var(--mg-v2-color-text-primary)';
@@ -43,12 +55,13 @@ export const mgVizBarValueLabelsPlugin = {
         }
         const { x, y } = element.getProps(['x', 'y'], true);
         const isPeak = peakIndex === index;
+        const labelText = format ? format(value) : String(value);
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillStyle = isPeak ? peakColor : color;
         ctx.font = `${isPeak ? '600' : '400'} ${fontSize}px sans-serif`;
-        ctx.fillText(String(value), x, y - 2);
+        ctx.fillText(labelText, x, y - 2);
         ctx.restore();
       });
     });

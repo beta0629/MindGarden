@@ -1,3 +1,11 @@
+/**
+ * ERP 운영자 머니 콕핏 (`/erp/dashboard`)
+ * 스켈레톤: Quiet header → Hero → 12개월 차트 → Workbench → Ledger
+ *
+ * @author CoreSolution
+ * @since 2026-08-27
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
@@ -5,243 +13,262 @@ import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { RoleUtils } from '../../constants/roles';
 import { AUTH_API, ERP_API } from '../../constants/api';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
-import { formatCurrency } from '../../utils/formatUtils';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
+import { ContentArea } from '../dashboard-v2/content';
+import ErpPageShell from './shell/ErpPageShell';
 import {
-  ContentArea,
-  ContentHeader,
-  ContentKpiRow
-} from '../dashboard-v2/content';
-import { Package, Clock, ShoppingCart, TrendingUp } from 'lucide-react';
+  MoneyQuietHeader,
+  MoneyHeroBand,
+  MoneyFlowStage,
+  MoneyWorkbench,
+  MoneyLedgerStrip
+} from './organisms/moneyCockpit';
 import {
-  ErpIncomeExpenseSummarySection,
-  ErpIncomeExpenseBarChartSection,
-  ErpRecentTransactionsTable,
-  ErpFinanceAdminSyncCard,
-  ErpQuickActionsPanel,
-  ErpRecentActivityFeed
-} from './organisms';
+  OFD_ERRORS,
+  OFD_LOADING,
+  OFD_MAIN_ARIA_LABEL,
+  OFD_PAGE_TITLE,
+  OFD_PERIOD
+} from '../../constants/operatorFinanceDashboardStrings';
+import {
+  getPeriodRange,
+  getPreviousComparableRange,
+  getRolling12MonthKeys
+} from './organisms/moneyCockpit/moneyCockpitPeriod';
+import {
+  buildDenseFactCaptions,
+  buildIncomeMixItems,
+  buildOutflowMixItems,
+  buildRemainingVsPreviousCaption,
+  buildTopExpenseCaption,
+  buildTopIncomeCaption,
+  parseFinanceDashboardPayload,
+  parseMonthlyReportTotals,
+  sumPendingConsultationFees,
+  sumPendingSalaryNet,
+  sumRefundFromTransactions
+} from './organisms/moneyCockpit/moneyCockpitData';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ErpCommon.css';
-import './ErpDashboard.css';
-import './organisms/ErpDashboardFinanceOrganisms.css';
-import ErpPageShell from './shell/ErpPageShell';
-import { ErpFilterToolbar, useErpSilentRefresh } from './common';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
-import MGButton from '../common/MGButton';
-
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ERP_ITEMS = '/api/v1/erp/items';
-const API_ERP_PURCHASE_REQUESTS_PENDING_ADMIN = '/api/v1/erp/purchase-requests/pending-admin';
-const API_ERP_PURCHASE_ORDERS = '/api/v1/erp/purchase-orders';
-const API_ERP_BUDGETS = '/api/v1/erp/budgets';
-const API_ERP_ACCOUNTING_INIT_TENANT_ERP = '/api/v1/erp/accounting/init-tenant-erp';
-const API_ERP_ACCOUNTING_BACKFILL_JOURNAL_ENTRIES = '/api/v1/erp/accounting/backfill-journal-entries';
-
-
-const ERP_DASHBOARD_PAGE_TITLE_ID = 'erp-dashboard-page-title';
+import './organisms/moneyCockpit/MoneyCockpit.css';
 
 const isDevEnv = process.env.NODE_ENV === 'development';
 
 /**
  * 권한 조회 실패 시 사용자 역할 기반 기본 권한 설정
+ * @param {object} user
+ * @param {Function} setUserPermissions
  */
 const setDefaultPermissionsForRole = (user, setUserPermissions) => {
   if (!user || !user.role) {
-    console.warn('사용자 정보 없음, 기본 권한 설정 불가');
     setUserPermissions([]);
     return;
   }
 
   const defaultPermissions = [];
-
-  // 관리자 역할이면 모든 ERP 권한 부여 (4종 SSOT: ADMIN — 레거시 TENANT_ADMIN/PRINCIPAL/OWNER 포함)
   if (RoleUtils.isAdmin(user)) {
     defaultPermissions.push(
       PERMISSIONS.ERP_ACCESS,
       PERMISSIONS.ERP_DASHBOARD_VIEW,
-      PERMISSIONS.PURCHASE_REQUEST_VIEW,
-      PERMISSIONS.PURCHASE_REQUEST_MANAGE,
-      PERMISSIONS.APPROVAL_MANAGE,
-      PERMISSIONS.ITEM_MANAGE,
-      PERMISSIONS.BUDGET_MANAGE,
-      PERMISSIONS.SALARY_MANAGE,
-      PERMISSIONS.TAX_MANAGE,
-      PERMISSIONS.REFUND_MANAGE,
-      PERMISSIONS.INTEGRATED_FINANCE_VIEW
+      PERMISSIONS.INTEGRATED_FINANCE_VIEW,
+      PERMISSIONS.SALARY_MANAGE
     );
-    if (isDevEnv) {
-      console.log('관리자 역할 기본 권한 설정:', defaultPermissions);
-    }
   }
-
   setUserPermissions(defaultPermissions);
 };
 
 /**
- * ERP 메인 대시보드 컴포넌트 - Core Solution 디자인 시스템 적용
+ * ERP 메인 대시보드 — 머니 콕핏
+ * @param {{ user?: object }} props
  */
 const ErpDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
   const [userPermissions, setUserPermissions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [permissionChecks, setPermissionChecks] = useState({});
-  const [stats, setStats] = useState({
-    totalItems: 0,
-    pendingRequests: 0,
-    approvedRequests: 0,
-    totalOrders: 0,
-    totalBudget: 0,
-    usedBudget: 0
-  });
-  const [initLoading, setInitLoading] = useState(false);
-  const [initResult, setInitResult] = useState(null);
-  const [backfillLoading, setBackfillLoading] = useState(false);
-  const [backfillResult, setBackfillResult] = useState(null);
+  const [permissionReady, setPermissionReady] = useState(false);
+  const [period, setPeriod] = useState(OFD_PERIOD.THIS_MONTH);
 
-  // 수입·지출 대시보드 (GET /api/v1/erp/finance/dashboard)
-  const [financialData, setFinancialData] = useState(null);
-  const [recentTransactions, setRecentTransactions] = useState([]);
-  const [financeLoading, setFinanceLoading] = useState(false);
+  const [heroLoading, setHeroLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
   const [financeError, setFinanceError] = useState(null);
-  const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
-  const [activityRefreshNonce, setActivityRefreshNonce] = useState(0);
 
-  /** 이번 달 1일~말일 기준 수입·지출 대시보드 조회 (권한 있을 때만 호출) */
-  const loadIncomeExpenseSummary = useCallback(async(options = {}) => {
-    const silent = options.silent === true;
+  const [hero, setHero] = useState({ income: 0, expense: 0, remaining: 0 });
+  const [heroCaptions, setHeroCaptions] = useState({
+    income: '',
+    expense: '',
+    remaining: ''
+  });
+  const [ledgerTx, setLedgerTx] = useState([]);
+  const [incomeMixItems, setIncomeMixItems] = useState([]);
+  const [expenseMixItems, setExpenseMixItems] = useState([]);
+  const [denseFacts, setDenseFacts] = useState([]);
+  const [monthSeries, setMonthSeries] = useState([]);
+  const [pendingConsultation, setPendingConsultation] = useState(null);
+  const [pendingSalary, setPendingSalary] = useState(null);
+  const [refundAmount, setRefundAmount] = useState(null);
+
+  const loadPeriodFinance = useCallback(async(periodKey) => {
     setFinanceError(null);
-    if (!silent) {
-      setFinanceLoading(true);
-    }
+    setHeroLoading(true);
+    const { startDate, endDate } = getPeriodRange(periodKey);
     try {
-      const now = new Date();
-      const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       const raw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, { startDate, endDate });
-      const data = raw?.data ?? raw;
-      const financialData = data?.financialData ?? data;
-      const totalIncome = financialData?.totalIncome ?? financialData?.summary?.totalRevenue ?? 0;
-      const totalExpense = financialData?.totalExpense ?? financialData?.summary?.totalExpenses ?? 0;
-      const netProfit = financialData?.netProfit ?? financialData?.summary?.netProfit ?? 0;
-      setFinancialData({
-        totalIncome,
-        totalExpense,
-        netProfit,
-        ...(financialData?.summary ? { summary: financialData.summary } : {}),
-        ...(financialData?.transactions ? { transactions: financialData.transactions } : {})
+      const parsed = parseFinanceDashboardPayload(raw);
+      setHero({
+        income: parsed.totalRevenue,
+        expense: parsed.totalExpenses,
+        remaining: parsed.remaining
       });
-      const rawRecent = data?.financialData?.transactions ?? data?.recentTransactions ?? [];
-      setRecentTransactions(Array.isArray(rawRecent) ? rawRecent : []);
-    } catch (err) {
-      console.error('수입·지출 대시보드 로드 실패:', err);
-      setFinanceError(err?.message || '수입·지출 데이터를 불러올 수 없습니다.');
-      setFinancialData(null);
-      setRecentTransactions([]);
-    } finally {
-      if (!silent) {
-        setFinanceLoading(false);
-      }
-    }
-  }, []);
+      const sortedTx = [...parsed.transactions].sort((a, b) => {
+        const da = String(a?.transactionDate ?? a?.date ?? '');
+        const db = String(b?.transactionDate ?? b?.date ?? '');
+        return db.localeCompare(da);
+      });
+      setLedgerTx(sortedTx);
 
-  const loadDashboardData = useCallback(async(options = {}) => {
-    const silent = options.silent === true;
-    if (!silent) {
-      setLoading(true);
-    }
-    try {
-      const results = await Promise.allSettled([
-        StandardizedApi.get(API_ERP_ITEMS),
-        StandardizedApi.get(API_ERP_PURCHASE_REQUESTS_PENDING_ADMIN),
-        StandardizedApi.get(API_ERP_PURCHASE_ORDERS),
-        StandardizedApi.get(API_ERP_BUDGETS)
-      ]);
+      const incomeMix = buildIncomeMixItems(parsed.categoryBreakdown, parsed.transactions);
+      const expenseMix = buildOutflowMixItems(parsed.categoryBreakdown, parsed.transactions);
+      setIncomeMixItems(incomeMix);
+      setExpenseMixItems(expenseMix);
+      setDenseFacts(buildDenseFactCaptions(parsed.transactions));
 
-      const toListAndCount = (value) => {
-        if (value == null) return { list: [], count: 0 };
-        if (Array.isArray(value)) return { list: value, count: value.length };
-        const count = value?.count ?? value?.totalItems ?? value?.totalElements ?? value?.size ?? 0;
-        const listRaw = value?.data ?? value?.content ?? [];
-        const list = Array.isArray(listRaw) ? listRaw : [];
-        return { list, count };
-      };
+      const refund = sumRefundFromTransactions(parsed.transactions);
+      setRefundAmount(refund);
 
-      const items = results[0].status === 'fulfilled' ? toListAndCount(results[0].value) : { list: [], count: 0 };
-      const pending = results[1].status === 'fulfilled' ? toListAndCount(results[1].value) : { list: [], count: 0 };
-      const orders = results[2].status === 'fulfilled' ? toListAndCount(results[2].value) : { list: [], count: 0 };
-      const budgets = results[3].status === 'fulfilled' ? toListAndCount(results[3].value) : { list: [], count: 0 };
-      const budgetsList = budgets.list;
+      const incomeCaption = buildTopIncomeCaption(
+        parsed.categoryBreakdown,
+        parsed.transactions
+      );
+      const expenseCaption = buildTopExpenseCaption(expenseMix);
 
-      results.forEach((r, i) => {
-        if (r.status === 'rejected') {
-          console.warn(`대시보드 API ${i + 1}/4 실패:`, r.reason);
+      let remainingCaption = '';
+      const prevRange = getPreviousComparableRange(periodKey);
+      if (prevRange) {
+        try {
+          const prevRaw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, {
+            startDate: prevRange.startDate,
+            endDate: prevRange.endDate
+          });
+          const prevParsed = parseFinanceDashboardPayload(prevRaw);
+          remainingCaption = buildRemainingVsPreviousCaption(
+            parsed.remaining,
+            prevParsed.remaining
+          );
+        } catch (prevErr) {
+          if (isDevEnv) {
+            console.warn('이전 기간 비교 생략:', prevErr);
+          }
         }
-      });
-
-      const totalBudget = budgetsList.reduce((sum, budget) => sum + parseFloat(budget.totalBudget || 0), 0);
-      const usedBudget = budgetsList.reduce((sum, budget) => sum + parseFloat(budget.usedBudget || 0), 0);
-
-      setStats({
-        totalItems: items.count,
-        pendingRequests: pending.count,
-        approvedRequests: 0,
-        totalOrders: orders.count,
-        totalBudget,
-        usedBudget
-      });
-    } catch (error) {
-      console.error('대시보드 데이터 로드 실패:', error);
-    } finally {
-      if (!silent) {
-        setLoading(false);
       }
+
+      setHeroCaptions({
+        income: incomeCaption,
+        expense: expenseCaption,
+        remaining: remainingCaption
+      });
+    } catch (err) {
+      console.error('머니 콕핏 대시보드 로드 실패:', err);
+      setFinanceError(err?.message || OFD_ERRORS.FINANCE_LOAD);
+      setHero({ income: 0, expense: 0, remaining: 0 });
+      setHeroCaptions({ income: '', expense: '', remaining: '' });
+      setLedgerTx([]);
+      setIncomeMixItems([]);
+      setExpenseMixItems([]);
+      setDenseFacts([]);
+      setRefundAmount(null);
+    } finally {
+      setHeroLoading(false);
     }
   }, []);
 
-  const handleSilentRefresh = useCallback(async() => {
-    await runSilentListRefresh(async() => {
-      await loadDashboardData({ silent: true });
-      const cu = propUser || sessionUser;
-      const admin = cu && RoleUtils.isAdmin(cu);
-      const hasIF =
-        (permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ??
-          PermissionChecks.canViewIntegratedFinance(userPermissions, cu)) || admin;
-      if (hasIF) {
-        await loadIncomeExpenseSummary({ silent: true });
-      }
-      setActivityRefreshNonce((n) => n + 1);
-    });
-  }, [
-    runSilentListRefresh,
-    loadDashboardData,
-    loadIncomeExpenseSummary,
-    permissionChecks,
-    userPermissions,
-    propUser,
-    sessionUser
-  ]);
+  const loadRolling12Chart = useCallback(async() => {
+    setChartLoading(true);
+    const keys = getRolling12MonthKeys();
+    try {
+      const results = await Promise.all(
+        keys.map((key) =>
+          StandardizedApi.get(ERP_API.FINANCE_MONTHLY_REPORT, {
+            year: key.year,
+            month: key.month
+          }).catch((err) => {
+            if (isDevEnv) {
+              console.warn('월간 리포트 로드 실패:', key, err);
+            }
+            return null;
+          })
+        )
+      );
+      const series = keys.map((key, index) => {
+        const totals = parseMonthlyReportTotals(results[index]);
+        return {
+          label: key.label,
+          income: totals.income,
+          expense: totals.expense
+        };
+      });
+      setMonthSeries(series);
+    } catch (err) {
+      console.error('롤링 12개월 차트 로드 실패:', err);
+      setMonthSeries(keys.map((key) => ({ label: key.label, income: 0, expense: 0 })));
+    } finally {
+      setChartLoading(false);
+    }
+  }, []);
 
-  // 세션 체크 및 권한 확인
+  const loadSecondaryTodos = useCallback(async(periodKey) => {
+    const { startDate, endDate } = getPeriodRange(periodKey);
+
+    try {
+      const pendingRaw = await StandardizedApi.get(
+        API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT
+      );
+      setPendingConsultation(sumPendingConsultationFees(pendingRaw));
+    } catch (err) {
+      if (isDevEnv) {
+        console.warn('미수 상담료 로드 생략:', err);
+      }
+      setPendingConsultation(null);
+    }
+
+    try {
+      const salaryRaw = await StandardizedApi.get(
+        SALARY_API_ENDPOINTS.CALCULATIONS_BY_PERIOD,
+        { startDate, endDate }
+      );
+      setPendingSalary(sumPendingSalaryNet(salaryRaw));
+    } catch (err) {
+      if (isDevEnv) {
+        console.warn('상담사 지급 예정 로드 생략:', err);
+      }
+      setPendingSalary(null);
+    }
+  }, []);
+
+  const sessionUserId = sessionUser?.id;
+  const sessionUserRole = sessionUser?.role;
+  const propUserId = propUser?.id;
+  const propUserRole = propUser?.role;
+
   useEffect(() => {
     if (sessionLoading) {
       return;
     }
 
-    const checkSessionWithDelay = async() => {
-      let currentUser = propUser || sessionUser;
+    let cancelled = false;
 
-      if (!currentUser || !currentUser.role) {
+    const checkSessionWithDelay = async() => {
+      let user = propUser || sessionUser;
+
+      if (!user || !user.role) {
         try {
           const userData = await StandardizedApi.get(AUTH_API.GET_CURRENT_USER);
           if (userData && userData.role) {
-            currentUser = userData;
+            user = userData;
           }
         } catch (error) {
           if (isDevEnv) {
@@ -249,357 +276,179 @@ const ErpDashboard = ({ user: propUser }) => {
           }
         }
 
-        if (!currentUser || !currentUser.role) {
-          currentUser = sessionManager.getUser();
-          if (!currentUser || !currentUser.role) {
+        if (!user || !user.role) {
+          user = sessionManager.getUser();
+          if (!user || !user.role) {
             navigate('/login', { replace: true });
             return;
           }
         }
       }
 
-      // 권한 조회 시도 (실패해도 계속 진행)
       try {
         const permissions = await fetchUserPermissions(setUserPermissions);
         if (!permissions || permissions.length === 0) {
-          console.warn('권한 조회 결과가 비어있음, 기본 권한 설정');
-          setDefaultPermissionsForRole(currentUser, setUserPermissions);
+          setDefaultPermissionsForRole(user, setUserPermissions);
         }
       } catch (error) {
         console.warn('권한 조회 실패 (기본 권한 설정):', error);
-        setDefaultPermissionsForRole(currentUser, setUserPermissions);
+        setDefaultPermissionsForRole(user, setUserPermissions);
       }
 
-      // 동적 권한 체크 (백엔드 API 호출)
       if (hasPermission) {
-        const permissionCodes = [
-          PERMISSIONS.PURCHASE_REQUEST_VIEW,
-          PERMISSIONS.PURCHASE_REQUEST_MANAGE,
-          PERMISSIONS.APPROVAL_MANAGE,
-          PERMISSIONS.ITEM_MANAGE,
-          PERMISSIONS.BUDGET_MANAGE,
-          PERMISSIONS.SALARY_MANAGE,
-          PERMISSIONS.TAX_MANAGE,
-          PERMISSIONS.INTEGRATED_FINANCE_VIEW,
-          PERMISSIONS.REFUND_MANAGE
-        ];
-
-        const checks = {};
-        for (const code of permissionCodes) {
-          try {
-            checks[code] = await hasPermission(code);
-          } catch (error) {
-            console.warn(`권한 체크 실패 (${code}):`, error);
-            checks[code] = false;
+        try {
+          await hasPermission(PERMISSIONS.INTEGRATED_FINANCE_VIEW);
+        } catch (error) {
+          if (isDevEnv) {
+            console.warn('권한 체크 실패:', error);
           }
         }
-        setPermissionChecks(checks);
+      }
+
+      if (!cancelled) {
+        setPermissionReady(true);
       }
     };
 
-    setTimeout(checkSessionWithDelay, 100);
-  }, [sessionLoading, isLoggedIn, navigate, hasPermission]); // propUser, sessionUser 의존성 제거
+    const timerId = setTimeout(checkSessionWithDelay, 100);
+    return () => {
+      cancelled = true;
+      clearTimeout(timerId);
+    };
+  // hasPermission 참조 불안정 시 세션 부트스트랩 반복 방지
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap once per user identity
+  }, [
+    sessionLoading,
+    isLoggedIn,
+    navigate,
+    propUserId,
+    propUserRole,
+    sessionUserId,
+    sessionUserRole,
+    propUser,
+    sessionUser
+  ]);
 
-  // 권한이 로드된 후 또는 타임아웃 후 ERP 접근 권한 확인 (동적 권한 시스템)
+  const permissionKey = userPermissions.join('|');
+
   useEffect(() => {
-    // 권한 조회 성공 시 즉시 체크
-    if (userPermissions.length > 0) {
-      const currentUser = propUser || sessionUser;
-      // 관리자 역할 체크 (PermissionGroupGuard와 동일한 로직)
-      const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
-
-      // 표준화 2025-12-08: 하드코딩 제거, 데이터베이스 기반 동적 권한 체크만 사용
-      // PermissionChecks.canAccessERP가 이제 user를 받아서 관리자 권한을 자동으로 허용
-      const hasErpPermission = PermissionChecks.canAccessERP(userPermissions, currentUser) || isAdmin;
-
-      if (!hasErpPermission) {
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-      const hasIntegratedFinanceView =
-        PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser) || isAdmin;
-      loadDashboardData();
-      if (hasIntegratedFinanceView) loadIncomeExpenseSummary();
+    if (!permissionReady) {
       return;
     }
 
-    // 권한 조회 실패 시 타임아웃 후 기본 권한 체크 (3초 후)
-    const timeoutId = setTimeout(() => {
-      const currentUser = propUser || sessionUser;
-      if (currentUser && currentUser.role) {
-        // 권한 조회 실패 시에도 사용자 역할 기반으로 기본 권한 설정
-        setDefaultPermissionsForRole(currentUser, setUserPermissions);
+    const user = propUser || sessionUser;
+    const admin = user && RoleUtils.isAdmin(user);
+    const hasErp = PermissionChecks.canAccessERP(userPermissions, user) || admin;
 
-        // 관리자 역할이면 일단 대시보드 로드 (백엔드에서 최종 권한 체크)
-        // 4종 SSOT: ADMIN — 레거시 TENANT_ADMIN/PRINCIPAL/OWNER 도 매핑됨
-        const isAdmin = RoleUtils.isAdmin(currentUser);
-
-        if (isAdmin) {
-          loadDashboardData();
-          loadIncomeExpenseSummary();
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+    if (!hasErp) {
+      if (userPermissions.length === 0) {
+        const timeoutId = setTimeout(() => {
+          const u = propUser || sessionUser;
+          if (u && RoleUtils.isAdmin(u)) {
+            setDefaultPermissionsForRole(u, setUserPermissions);
+            return;
+          }
+          if (u && u.role) {
+            navigate('/dashboard', { replace: true });
+          }
+        }, 3000);
+        return () => clearTimeout(timeoutId);
       }
-    }, 3000);
-
-    return () => clearTimeout(timeoutId);
-  }, [userPermissions, navigate, propUser, sessionUser, loadDashboardData, loadIncomeExpenseSummary]);
-
-  const handleInitTenantErp = async() => {
-    setInitResult(null);
-    setInitLoading(true);
-    try {
-      const json = await StandardizedApi.post(API_ERP_ACCOUNTING_INIT_TENANT_ERP, {});
-      const data = json?.data ?? json;
-      const ok = json?.success !== false;
-      setInitResult(
-        ok
-          ? { ok: true, message: data?.message || '완료' }
-          : { ok: false, message: json?.message || data?.message || '실패' }
-      );
-    } catch (e) {
-      setInitResult({ ok: false, message: e?.message || '네트워크 오류' });
-    } finally {
-      setInitLoading(false);
+      navigate('/dashboard', { replace: true });
+      return;
     }
-  };
 
-  const handleBackfillJournalEntries = async() => {
-    setBackfillResult(null);
-    setBackfillLoading(true);
-    try {
-      const json = await StandardizedApi.post(API_ERP_ACCOUNTING_BACKFILL_JOURNAL_ENTRIES, {});
-      const data = json?.data ?? json;
-      const ok = json?.success !== false;
-      const processed = data?.processedCount ?? 0;
-      const failed = data?.failedCount ?? 0;
-      const skipped = data?.skippedCount ?? 0;
-      setBackfillResult(
-        ok
-          ? { ok: true, message: `처리 ${processed}건, 스킵 ${skipped}건, 실패 ${failed}건` }
-          : { ok: false, message: json?.message || '실패' }
-      );
-    } catch (e) {
-      setBackfillResult({ ok: false, message: e?.message || '네트워크 오류' });
-    } finally {
-      setBackfillLoading(false);
+    const hasFinance =
+      PermissionChecks.canViewIntegratedFinance(userPermissions, user) || admin;
+
+    if (hasFinance) {
+      loadPeriodFinance(period);
+      loadRolling12Chart();
+      loadSecondaryTodos(period);
+    } else {
+      setHeroLoading(false);
+      setChartLoading(false);
+      setHero({ income: 0, expense: 0, remaining: 0 });
+      setHeroCaptions({ income: '', expense: '', remaining: '' });
+      setMonthSeries([]);
+      setLedgerTx([]);
+      setIncomeMixItems([]);
+      setExpenseMixItems([]);
+      setDenseFacts([]);
+      setPendingConsultation(null);
+      setPendingSalary(null);
+      setRefundAmount(null);
     }
-  };
+    // userPermissions는 permissionKey로 내용 비교
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable identity for permission array
+  }, [
+    permissionReady,
+    permissionKey,
+    period,
+    propUserId,
+    sessionUserId,
+    navigate,
+    loadPeriodFinance,
+    loadRolling12Chart,
+    loadSecondaryTodos
+  ]);
 
-  const getBudgetUsagePercentage = () => {
-    if (stats.totalBudget === 0) return 0;
-    return Math.round((stats.usedBudget / stats.totalBudget) * 100);
-  };
-
-  const layoutContentClassName = 'erp-dashboard__content mg-v2-erp-dashboard-block';
+  const layoutContentClassName = 'erp-dashboard__content money-cockpit-page';
 
   if (sessionLoading) {
     return (
       <AdminCommonLayout>
-        <ContentHeader
-          title="운영 현황"
-          subtitle="세션 정보를 확인하는 중입니다."
-          titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
-        />
-        <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
+        <ContentArea className={layoutContentClassName} ariaLabel={OFD_PAGE_TITLE}>
           <div className="erp-dashboard__session-load" aria-busy="true">
-            <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+            <UnifiedLoading type="inline" text={OFD_LOADING.SESSION} />
           </div>
         </ContentArea>
       </AdminCommonLayout>
     );
   }
 
-  if (loading) {
+  if (!permissionReady) {
     return (
       <AdminCommonLayout>
-        <ContentHeader
-          title="운영 현황"
-          subtitle="운영 지표와 재무 요약을 불러오는 중입니다."
-          titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
-        />
-        <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
+        <ContentArea className={layoutContentClassName} ariaLabel={OFD_PAGE_TITLE}>
           <div className="erp-dashboard__data-load" aria-busy="true">
-            <UnifiedLoading type="inline" text="불러오는 중..." />
+            <UnifiedLoading type="inline" text={OFD_LOADING.DATA} />
           </div>
         </ContentArea>
       </AdminCommonLayout>
     );
   }
-
-  const currentUser = propUser || sessionUser;
-  const tenantId = currentUser?.tenantId || sessionManager.getSessionInfo()?.tenantId || '알 수 없음';
-  const subtitleWithTenant =
-    tenantId && tenantId !== '알 수 없음'
-      ? `수입·지출·구매를 한눈에 (터넌트: ${tenantId})`
-      : '수입·지출·구매를 한눈에';
-
-  const kpiItems = [
-    {
-      id: 'totalItems',
-      icon: <Package size={28} />,
-      label: '총 아이템 수',
-      value: stats.totalItems.toLocaleString(),
-      subtitle: '등록된 비품 수',
-      iconVariant: 'green',
-      onClick: () => navigate('/erp/items')
-    },
-    {
-      id: 'pendingRequests',
-      icon: <Clock size={28} />,
-      label: '승인 대기 요청',
-      value: stats.pendingRequests.toLocaleString(),
-      subtitle: '관리자 승인 대기',
-      iconVariant: 'orange',
-      onClick: () => navigate('/erp/approvals')
-    },
-    {
-      id: 'totalOrders',
-      icon: <ShoppingCart size={28} />,
-      label: '총 주문 수',
-      value: stats.totalOrders.toLocaleString(),
-      subtitle: '완료된 구매 주문',
-      iconVariant: 'blue',
-      onClick: () => navigate('/erp/purchase-orders')
-    },
-    {
-      id: 'budgetUsage',
-      icon: <TrendingUp size={28} />,
-      label: '예산 사용률',
-      value: `${getBudgetUsagePercentage()}%`,
-      subtitle: `${formatCurrency(stats.usedBudget)} / ${formatCurrency(stats.totalBudget)}`,
-      iconVariant: 'gray',
-      onClick: () => navigate('/erp/budget')
-    }
-  ];
-
-  const isAdmin = currentUser && RoleUtils.isAdmin(currentUser);
-  const hasPurchaseRequestView =
-    (permissionChecks[PERMISSIONS.PURCHASE_REQUEST_VIEW] ??
-      permissionChecks[PERMISSIONS.PURCHASE_REQUEST_MANAGE] ??
-      (PermissionChecks.canViewPurchaseRequests(userPermissions, currentUser) ||
-        PermissionChecks.canManagePurchaseRequests(userPermissions, currentUser))) ||
-    isAdmin;
-  const hasApprovalManage =
-    (permissionChecks[PERMISSIONS.APPROVAL_MANAGE] ??
-      PermissionChecks.canManageApprovals(userPermissions, currentUser)) || isAdmin;
-  const hasItemManage =
-    (permissionChecks[PERMISSIONS.ITEM_MANAGE] ?? PermissionChecks.canManageItems(userPermissions, currentUser)) ||
-    isAdmin;
-  const hasBudgetManage =
-    (permissionChecks[PERMISSIONS.BUDGET_MANAGE] ?? PermissionChecks.canManageBudget(userPermissions, currentUser)) ||
-    isAdmin;
-  const hasSalaryManage =
-    (permissionChecks[PERMISSIONS.SALARY_MANAGE] ?? PermissionChecks.canManageSalary(userPermissions, currentUser)) ||
-    isAdmin;
-  const hasTaxManage =
-    (permissionChecks[PERMISSIONS.TAX_MANAGE] ?? PermissionChecks.canManageTax(userPermissions, currentUser)) ||
-    isAdmin;
-  const hasIntegratedFinanceView =
-    (permissionChecks[PERMISSIONS.INTEGRATED_FINANCE_VIEW] ??
-      PermissionChecks.canViewIntegratedFinance(userPermissions, currentUser)) || isAdmin;
-  const hasRefundManage =
-    (permissionChecks[PERMISSIONS.REFUND_MANAGE] ?? PermissionChecks.canManageRefund(userPermissions, currentUser)) ||
-    isAdmin;
-
-  const nowForFinancePeriod = new Date();
-  const financePeriodYear = nowForFinancePeriod.getFullYear();
-  const financePeriodMonth = nowForFinancePeriod.getMonth() + 1;
-  const financePeriodLastDay = new Date(
-    nowForFinancePeriod.getFullYear(),
-    nowForFinancePeriod.getMonth() + 1,
-    0
-  ).getDate();
-  const recentTransactionsSubtitle = `${financePeriodYear}년 ${financePeriodMonth}월 1일 ~ ${financePeriodMonth}월 ${financePeriodLastDay}일 기준 당월 거래입니다.`;
-  const recentTransactionsPeriodChipLabel = '이번 달';
 
   return (
     <AdminCommonLayout>
-      <ContentHeader
-        title="운영 현황"
-        subtitle={subtitleWithTenant}
-        titleId={ERP_DASHBOARD_PAGE_TITLE_ID}
-      />
-      <ContentArea className={layoutContentClassName} ariaLabel="운영 현황">
-        <ErpPageShell mainAriaLabel="운영 현황 본문">
-          <div className="mg-w-full mg-mb-md">
-            <ErpFilterToolbar
-              ariaLabel="운영 현황 도구"
-              secondaryRow={(
-                <div className="erp-dashboard__toolbar-actions">
-                  <MGButton
-                    variant="secondary"
-                    size="small"
-                    className={buildErpMgButtonClassName({
-                      variant: 'secondary',
-                      size: 'sm',
-                      loading: silentListRefreshing
-                    })}
-                    onClick={handleSilentRefresh}
-                    loading={silentListRefreshing}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    aria-label="데이터 새로고침"
-                  >
-                    데이터 새로고침
-                  </MGButton>
-                </div>
-              )}
+      <ContentArea className={layoutContentClassName} ariaLabel={OFD_PAGE_TITLE}>
+        <ErpPageShell mainAriaLabel={OFD_MAIN_ARIA_LABEL}>
+          <div className="money-cockpit" data-testid="money-cockpit">
+            <MoneyQuietHeader period={period} onPeriodChange={setPeriod} />
+            {financeError ? (
+              <p role="alert" className="money-ledger__empty">
+                {financeError}
+              </p>
+            ) : null}
+            <MoneyHeroBand
+              loading={heroLoading}
+              income={hero.income}
+              expense={hero.expense}
+              remaining={hero.remaining}
+              incomeCaption={heroCaptions.income}
+              expenseCaption={heroCaptions.expense}
+              remainingCaption={heroCaptions.remaining}
             />
-          </div>
-          {hasIntegratedFinanceView && (
-            <ErpIncomeExpenseSummarySection
-              financeError={financeError}
-              financeLoading={financeLoading}
-              financialData={financialData}
+            <MoneyFlowStage loading={chartLoading} series={monthSeries} />
+            <MoneyWorkbench
+              incomeMixItems={incomeMixItems}
+              expenseMixItems={expenseMixItems}
+              pendingConsultation={pendingConsultation}
+              pendingSalary={pendingSalary}
+              refundAmount={refundAmount}
+              denseFacts={denseFacts}
             />
-          )}
-
-          <ContentKpiRow items={kpiItems} />
-
-          {hasIntegratedFinanceView && !financeError && (
-            <ErpIncomeExpenseBarChartSection
-              financeLoading={financeLoading}
-              financialData={financialData}
-            />
-          )}
-
-          {hasIntegratedFinanceView && (
-            <ErpRecentTransactionsTable
-              financeLoading={financeLoading}
-              recentTransactions={recentTransactions}
-              recentTransactionsSubtitle={recentTransactionsSubtitle}
-              recentTransactionsPeriodChipLabel={recentTransactionsPeriodChipLabel}
-            />
-          )}
-
-          {hasIntegratedFinanceView && (
-            <ErpFinanceAdminSyncCard
-              initLoading={initLoading}
-              initResult={initResult}
-              backfillLoading={backfillLoading}
-              backfillResult={backfillResult}
-              onInitTenantErp={handleInitTenantErp}
-              onBackfillJournalEntries={handleBackfillJournalEntries}
-            />
-          )}
-
-          <ErpQuickActionsPanel
-            hasPurchaseRequestView={hasPurchaseRequestView}
-            hasApprovalManage={hasApprovalManage}
-            hasItemManage={hasItemManage}
-            hasBudgetManage={hasBudgetManage}
-            hasSalaryManage={hasSalaryManage}
-            hasTaxManage={hasTaxManage}
-            hasIntegratedFinanceView={hasIntegratedFinanceView}
-            hasRefundManage={hasRefundManage}
-          />
-
-          <div data-testid="erp-dashboard-recent-activity">
-            <ErpRecentActivityFeed
-              hasPurchaseRequestView={hasPurchaseRequestView}
-              refreshNonce={activityRefreshNonce}
-            />
+            <MoneyLedgerStrip loading={heroLoading} transactions={ledgerTx} />
           </div>
         </ErpPageShell>
       </ContentArea>

@@ -11,6 +11,7 @@ const MGChart = ({
   type = 'line', // 'line', 'bar', 'pie', 'doughnut', 'area', 'radar'
   data = {},
   options = {},
+  plugins = [],
   loading = false,
   error = null,
   height = 300,
@@ -91,11 +92,12 @@ const MGChart = ({
           ...options
         };
 
-        // 차트 생성
+        // 차트 생성 (per-chart plugins — chart.js/auto 인스턴스에 전달)
         chartInstanceRef.current = new Chart(canvasRef.current, {
           type: type,
           data: data,
-          options: defaultOptions
+          options: defaultOptions,
+          plugins
         });
       } catch (err) {
         console.error('Chart.js 로드 실패:', err);
@@ -110,7 +112,7 @@ const MGChart = ({
         chartInstanceRef.current.destroy();
       }
     };
-  }, [type, data, options]);
+  }, [type, data, options, plugins]);
 
   const getChartClasses = () => {
     return [

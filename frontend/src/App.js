@@ -23,7 +23,6 @@ import ConsultationRecordView from './components/consultant/ConsultationRecordVi
 import PurchaseManagement from './components/erp/PurchaseManagement';
 import FinancialManagement from './components/erp/FinancialManagement';
 import BudgetManagement from './components/erp/BudgetManagement';
-import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ConsultantDashboardRenewal from './components/consultant/ConsultantDashboardRenewal';
 import ConsultantScheduleRenewal from './components/consultant/ConsultantScheduleRenewal';
@@ -1009,11 +1008,7 @@ function AppContent() {
             <Route path="/admin/erp/purchase" element={<Navigate to="/erp/purchase-requests" replace />} />
             <Route
               path="/admin/erp/financial"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}>
-                  <IntegratedFinanceDashboard />
-                </ProtectedRoute>
-              }
+              element={<RedirectWithSearch to="/erp/financial" />}
             />
             <Route path="/admin/erp/budget" element={<Navigate to="/erp/budget" replace />} />
             <Route

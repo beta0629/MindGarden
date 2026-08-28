@@ -146,7 +146,7 @@ const FinancialManagement = () => {
   const location = useLocation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [period, setPeriod] = useState(FM_PERIOD.THIS_MONTH);
-  const [mainView, setMainView] = useState(FM_LEDGER_VIEW.TABLE);
+  const [mainView, setMainView] = useState(FM_LEDGER_VIEW.CALENDAR);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const { silentListRefreshing, setSilentListRefreshing } = useErpSilentRefresh();

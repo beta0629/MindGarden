@@ -5,8 +5,27 @@
  * @since 2026-08-27
  */
 
+import { DEFAULT_VALUES } from '../../../../constants/magicNumbers';
 import { OFD_PERIOD } from '../../../../constants/operatorFinanceDashboardStrings';
 import { formatLocalDateYmd } from '../../../../utils/erpFinanceDisplay';
+
+const KST_TIMEZONE = DEFAULT_VALUES.DEFAULT_TIMEZONE;
+
+/**
+ * Asia/Seoul 기준 연·월·일 (Intl en-CA).
+ * @param {Date} [date]
+ * @returns {{ year: number, month: number, day: number }}
+ */
+export function getKstDateParts(date = new Date()) {
+  const iso = new Intl.DateTimeFormat('en-CA', {
+    timeZone: KST_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date);
+  const [year, month, day] = iso.split('-').map(Number);
+  return { year, month, day };
+}
 
 /**
  * @param {Date} [now]
@@ -83,16 +102,19 @@ export function getPreviousComparableRange(periodKey, now = new Date()) {
 
 /**
  * 롤링 12개월 (오래된 달 → 최근 달). 차트 전용 — 기간 세그먼트와 무관.
+ * 기준 시각은 Asia/Seoul 현재 연·월.
  *
  * @param {Date} [now]
  * @returns {Array<{ year: number, month: number, label: string }>}
  */
 export function getRolling12MonthKeys(now = new Date()) {
+  const { year: currentYear, month: currentMonth } = getKstDateParts(now);
   const keys = [];
   for (let offset = 11; offset >= 0; offset -= 1) {
-    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
+    // UTC 달 산술로 KST 현재 월에서 offset개월 역산 (로컬 TZ 드리프트 방지)
+    const anchor = new Date(Date.UTC(currentYear, currentMonth - 1 - offset, 1));
+    const year = anchor.getUTCFullYear();
+    const month = anchor.getUTCMonth() + 1;
     keys.push({
       year,
       month,

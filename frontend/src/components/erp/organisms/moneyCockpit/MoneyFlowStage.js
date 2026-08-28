@@ -230,7 +230,9 @@ MoneyFlowStage.propTypes = {
     PropTypes.shape({
       label: PropTypes.string,
       income: PropTypes.number,
-      expense: PropTypes.number
+      expense: PropTypes.number,
+      year: PropTypes.number,
+      month: PropTypes.number
     })
   )
 };

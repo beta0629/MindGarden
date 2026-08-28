@@ -12,10 +12,11 @@ import ActionBarButton from '../common/ActionBarButton';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_RECURRING_EXPENSES = '/api/v1/admin/recurring-expenses';
-const API_ADMIN_STATISTICS_RECURRING_EXPENSES = '/api/v1/admin/statistics/recurring-expenses';
-const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=FINANCIAL_CATEGORY';
+// T5 표준화 2026-05-21: ERP recurring-expenses API (운영자 장부와 동일)
+const API_ERP_RECURRING_EXPENSES = '/api/v1/erp/recurring-expenses';
+const API_ERP_RECURRING_EXPENSE_BY_ID = (id) => `/api/v1/erp/recurring-expenses/${id}`;
+const API_ERP_RECURRING_STATUS = '/api/v1/erp/recurring-expenses/status';
+const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
 
 
 /**
@@ -44,13 +45,15 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     const [showForm, setShowForm] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [formData, setFormData] = useState({
-        name: '',
+        expenseName: '',
         amount: '',
         category: '',
-        frequency: 'monthly',
+        recurrenceType: 'MONTHLY',
+        recurrenceDay: '1',
         startDate: '',
         endDate: '',
-        description: ''
+        description: '',
+        isActive: true
     });
     const [categories, setCategories] = useState([]);
 
@@ -78,10 +81,11 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             console.log('🔄 반복 지출 목록 API 호출 시작');
-            const response = await apiGet(API_ADMIN_RECURRING_EXPENSES);
+            const response = await apiGet(API_ERP_RECURRING_EXPENSES);
             console.log('📋 반복 지출 목록 API 응답:', response);
             if (response && response.success !== false) {
-                setExpenses(response.data || []);
+                const list = response.data?.expenses || response.data || [];
+                setExpenses(Array.isArray(list) ? list : []);
             }
         } catch (error) {
             console.error('❌ 반복 지출 목록 로드 실패:', error);
@@ -96,7 +100,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadStatistics = async() => {
         try {
-            const response = await apiGet(API_ADMIN_STATISTICS_RECURRING_EXPENSES);
+            const response = await apiGet(API_ERP_RECURRING_STATUS);
             if (response && response.success !== false) {
                 setStatistics(response.data);
             }
@@ -110,11 +114,11 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadCategories = async() => {
         try {
-            const response = await apiGet(API_COMMON_CODES);
-            if (response && Array.isArray(response)) {
-                setCategories(response);
-            } else if (response && response.success !== false) {
-                setCategories(response.data || []);
+            const response = await apiGet(API_ERP_COMMON_CODES_FINANCIAL);
+            if (response && response.success !== false) {
+                setCategories(response.data?.expenseCategories || []);
+            } else if (response && Array.isArray(response?.expenseCategories)) {
+                setCategories(response.expenseCategories);
             }
         } catch (error) {
             console.error('카테고리 목록 로드 실패:', error);
@@ -136,13 +140,15 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const resetForm = () => {
         setFormData({
-            name: '',
+            expenseName: '',
             amount: '',
             category: '',
-            frequency: 'monthly',
+            recurrenceType: 'MONTHLY',
+            recurrenceDay: '1',
             startDate: new Date().toISOString().split('T')[0],
             endDate: '',
-            description: ''
+            description: '',
+            isActive: true
         });
         setEditingExpense(null);
     };
@@ -160,13 +166,15 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const handleEditExpense = (expense) => {
         setFormData({
-            name: expense.name || '',
+            expenseName: expense.expenseName || '',
             amount: expense.amount?.toString() || '',
             category: expense.category || '',
-            frequency: expense.frequency || 'monthly',
+            recurrenceType: expense.recurrenceType || 'MONTHLY',
+            recurrenceDay: String(expense.recurrenceDay ?? 1),
             startDate: expense.startDate || '',
             endDate: expense.endDate || '',
-            description: expense.description || ''
+            description: expense.description || '',
+            isActive: expense.isActive !== false
         });
         setEditingExpense(expense);
         setShowForm(true);
@@ -176,24 +184,34 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      * 반복 지출 저장
      */
     const handleSaveExpense = async() => {
-        if (!formData.name.trim() || !formData.amount || !formData.category) {
+        if (!formData.expenseName.trim() || !formData.amount || !formData.category) {
             notificationManager.error('필수 항목을 모두 입력해주세요.');
             return;
         }
 
         try {
             setLoading(true);
-            
+
             const expenseData = {
-                ...formData,
-                amount: parseFloat(formData.amount)
+                expenseName: formData.expenseName.trim(),
+                amount: parseFloat(formData.amount),
+                category: formData.category,
+                expenseType: formData.category,
+                recurrenceType: formData.recurrenceType || 'MONTHLY',
+                recurrenceDay: Number(formData.recurrenceDay) || 1,
+                startDate: formData.startDate,
+                endDate: formData.endDate || null,
+                description: formData.description || '',
+                autoProcess: true,
+                isActive: formData.isActive !== false,
+                isVatApplicable: true
             };
 
             let response;
             if (editingExpense) {
-                response = await apiPut(`/api/admin/recurring-expenses/${editingExpense.id}`, expenseData);
+                response = await apiPut(API_ERP_RECURRING_EXPENSE_BY_ID(editingExpense.id), expenseData);
             } else {
-                response = await apiPost(API_ADMIN_RECURRING_EXPENSES, expenseData);
+                response = await apiPost(API_ERP_RECURRING_EXPENSES, expenseData);
             }
             
             if (response && response.success !== false) {
@@ -231,7 +249,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             
-            const response = await apiDelete(`/api/admin/recurring-expenses/${expenseId}`);
+            const response = await apiDelete(API_ERP_RECURRING_EXPENSE_BY_ID(expenseId));
             
             if (response && response.success !== false) {
                 notificationManager.success('반복 지출이 삭제되었습니다.');
@@ -331,16 +349,16 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                 {expenses.map(expense => (
                                     <div key={expense.id} className="mg-v2-list-item">
                                         <div className="mg-v2-list-item-content">
-                                            <div className="mg-v2-list-item-title"><SafeText>{expense.name}</SafeText></div>
+                                            <div className="mg-v2-list-item-title"><SafeText>{expense.expenseName}</SafeText></div>
                                             <div className="mg-v2-list-item-subtitle">
                                                 <SafeText>
                                                   {expense.amount != null ? `${expense.amount.toLocaleString()}원` : '—'}
                                                 </SafeText>
                                                 {' · '}
                                                 <SafeText>
-                                                  {expense.frequency === 'monthly' ? '월간'
-                                                    : expense.frequency === 'quarterly' ? '분기별'
-                                                      : expense.frequency === 'yearly' ? '연간' : expense.frequency}
+                                                  {expense.recurrenceType === 'MONTHLY' ? '월간'
+                                                    : expense.recurrenceType === 'QUARTERLY' ? '분기별'
+                                                      : expense.recurrenceType === 'YEARLY' ? '연간' : expense.recurrenceType}
                                                 </SafeText>
                                                 {' · '}
                                                 <SafeText>{expense.category}</SafeText>
@@ -424,14 +442,14 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                             }
                         >
                                     <div className="mg-v2-form-group">
-                                        <label htmlFor="name" className="mg-v2-form-label">
+                                        <label htmlFor="expenseName" className="mg-v2-form-label">
                                             지출명 <span className="mg-v2-form-label-required">*</span>
                                         </label>
                                         <input
                                             type="text"
-                                            id="name"
-                                            value={formData.name}
-                                            onChange={(e) => handleInputChange('name', e.target.value)}
+                                            id="expenseName"
+                                            value={formData.expenseName}
+                                            onChange={(e) => handleInputChange('expenseName', e.target.value)}
                                             placeholder="예: 사무실 임대료"
                                             disabled={loading}
                                             className="mg-v2-form-input"
@@ -441,7 +459,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                     <div className="mg-v2-form-row">
                                         <div className="mg-v2-form-group">
                                             <label htmlFor="amount" className="mg-v2-form-label">
-                                                금액 <span className="mg-v2-form-label-required">*</span>
+                                                금액 (부가세 포함) <span className="mg-v2-form-label-required">*</span>
                                             </label>
                                             <input
                                                 type="number"
@@ -455,23 +473,23 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         </div>
 
                                         <div className="mg-v2-form-group">
-                                            <label htmlFor="frequency" className="mg-v2-form-label">
-                                                주기 <span className="mg-v2-form-label-required">*</span>
+                                            <label htmlFor="recurrenceDay" className="mg-v2-form-label">
+                                                매월 N일 <span className="mg-v2-form-label-required">*</span>
                                             </label>
-                                            <BadgeSelect
-                                                value={formData.frequency}
-                                                onChange={(val) => handleInputChange('frequency', val)}
-                                                options={[
-                                                    { value: 'monthly', label: '월간' },
-                                                    { value: 'quarterly', label: '분기별' },
-                                                    { value: 'yearly', label: '연간' }
-                                                ]}
-                                                placeholder={t('common.messages.pleaseSelect')}
+                                            <input
+                                                type="number"
+                                                id="recurrenceDay"
+                                                min="1"
+                                                max="31"
+                                                value={formData.recurrenceDay}
+                                                onChange={(e) => handleInputChange('recurrenceDay', e.target.value)}
                                                 disabled={loading}
-                                                className="mg-v2-form-badge-select"
+                                                className="mg-v2-form-input"
                                             />
                                         </div>
                                     </div>
+
+                                    <input type="hidden" value={formData.recurrenceType} readOnly />
 
                                     <div className="mg-v2-form-group">
                                         <label htmlFor="category" className="mg-v2-form-label">

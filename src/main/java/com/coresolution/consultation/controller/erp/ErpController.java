@@ -2287,13 +2287,28 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllRecurringExpenses() {
         log.info("모든 반복 지출 조회");
 
-        List<RecurringExpense> expenses = recurringExpenseService.getAllActiveRecurringExpenses();
+        List<RecurringExpense> expenses = recurringExpenseService.getAllRecurringExpensesForTenant();
 
         Map<String, Object> data = new HashMap<>();
         data.put("expenses", expenses);
         data.put("total", expenses.size());
 
         return success(data);
+    }
+
+    /**
+     * 반복 지출 catch-up — 시작 달부터 현재 월까지 누락 EXPENSE 자동 기록 (멱등)
+     */
+    @PostMapping("/recurring-expenses/catch-up")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> catchUpRecurringExpenses() {
+        log.info("반복 지출 catch-up 요청");
+
+        int createdCount = recurringExpenseService.catchUpMonthlyRecurringExpenses();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("createdCount", createdCount);
+
+        return success("반복 지출 catch-up이 완료되었습니다.", data);
     }
 
     /**

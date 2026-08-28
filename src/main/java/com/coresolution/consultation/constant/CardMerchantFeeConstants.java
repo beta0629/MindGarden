@@ -10,6 +10,12 @@ import java.util.List;
  */
 public final class CardMerchantFeeConstants {
 
+    /** 레거시 연동 지출 relatedEntityType (V20260828_001~002 구간). 정리·soft-delete 용 */
+    public static final String LEGACY_LINKED_EXPENSE_RELATED_ENTITY_TYPE = "CARD_MERCHANT_FEE";
+
+    /** 레거시 자동 기록 지출 remarks 마커 */
+    public static final String LEGACY_AUTO_REMARKS = "AUTO_CARD_MERCHANT_FEE";
+
     /** 결제 수단 — 카드 (영문) */
     public static final String PAYMENT_METHOD_CARD = "CARD";
 

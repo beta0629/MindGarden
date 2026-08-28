@@ -217,10 +217,16 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         transaction.setWithholdingTaxAmount(request.getWithholdingTaxAmount() != null
                 ? request.getWithholdingTaxAmount() : BigDecimal.ZERO);
         transaction.setAmountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount());
-        transaction.setCardMerchantFeeAmount(resolveCardMerchantFeeForRequest(tenantId, request));
+        BigDecimal resolvedFee = resolveCardMerchantFeeForRequest(tenantId, request);
+        transaction.setCardMerchantFeeAmount(resolvedFee);
         transaction.setRemarks(request.getRemarks());
         
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
+
+        if (savedTransaction.getTransactionType() == FinancialTransaction.TransactionType.INCOME
+                && resolvedFee.compareTo(BigDecimal.ZERO) <= 0) {
+            softDeleteLegacyLinkedCardMerchantFeeExpenses(tenantId, savedTransaction.getId());
+        }
         
         log.info("✅ 회계 거래 수정 완료: ID={}", savedTransaction.getId());
         return convertToResponse(savedTransaction);
@@ -238,6 +244,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         // ERP P0-2 PR-B (합의서 §2 Q3): 마감된 기간 의 거래 삭제 차단.
         guardPeriodClosed(tenantId, transaction.getTransactionDate());
 
+        if (transaction.getTransactionType() == FinancialTransaction.TransactionType.INCOME
+                && transaction.getId() != null) {
+            softDeleteLegacyLinkedCardMerchantFeeExpenses(tenantId, transaction.getId());
+        }
+
         transaction.setIsDeleted(true);
         financialTransactionRepository.save(transaction);
         
@@ -246,28 +257,49 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
 
     /**
      * 요청·테넌트 설정으로 {@link FinancialTransaction#cardMerchantFeeAmount} 를 산출합니다.
-     * 카드가 아니면 0. 이미 요청에 수수료가 있으면 그 값을 사용합니다.
+     * PG JSON·매핑 등에서 이미 채워진 수수료는 유지합니다. 카드가 아니면 0.
      */
     private BigDecimal resolveCardMerchantFeeForRequest(String tenantId, FinancialTransactionRequest request) {
-        if (request == null || !"INCOME".equals(request.getTransactionType())) {
-            if (request != null && request.getCardMerchantFeeAmount() != null) {
-                return request.getCardMerchantFeeAmount();
-            }
-            return BigDecimal.ZERO;
-        }
-        if (!com.coresolution.consultation.constant.CardMerchantFeeConstants
-                .isCardPaymentMethod(request.getPaymentMethod())) {
+        if (request == null) {
             return BigDecimal.ZERO;
         }
         if (request.getCardMerchantFeeAmount() != null
                 && request.getCardMerchantFeeAmount().compareTo(BigDecimal.ZERO) > 0) {
             return request.getCardMerchantFeeAmount();
         }
+        if (!"INCOME".equals(request.getTransactionType())) {
+            return BigDecimal.ZERO;
+        }
+        if (!com.coresolution.consultation.constant.CardMerchantFeeConstants
+                .isCardPaymentMethod(request.getPaymentMethod())) {
+            return BigDecimal.ZERO;
+        }
         return cardMerchantFeeResolutionService.resolveFeeAmount(
                 tenantId,
                 request.getAmount(),
                 request.getPaymentMethod(),
                 request.getCardIssuer());
+    }
+
+    /**
+     * 레거시 CARD_MERCHANT_FEE 연동 지출(구 posting 서비스) soft-delete.
+     */
+    private void softDeleteLegacyLinkedCardMerchantFeeExpenses(String tenantId, Long incomeTransactionId) {
+        if (tenantId == null || tenantId.isBlank() || incomeTransactionId == null) {
+            return;
+        }
+        List<FinancialTransaction> linked = financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        tenantId,
+                        incomeTransactionId,
+                        com.coresolution.consultation.constant.CardMerchantFeeConstants
+                                .LEGACY_LINKED_EXPENSE_RELATED_ENTITY_TYPE);
+        for (FinancialTransaction expense : linked) {
+            expense.setIsDeleted(true);
+            financialTransactionRepository.save(expense);
+            log.info("레거시 카드수수료 연동 지출 soft-delete: incomeId={}, expenseId={}",
+                    incomeTransactionId, expense.getId());
+        }
     }
 
     /**
@@ -814,6 +846,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .relatedEntityType(paymentEntityType)
                 .taxIncluded(true)
                 .build();
+        if (payment.getMethod() == com.coresolution.consultation.entity.Payment.PaymentMethod.CARD) {
+            request.setPaymentMethod(
+                    com.coresolution.consultation.constant.CardMerchantFeeConstants.PAYMENT_METHOD_CARD);
+        }
         
         return createTransaction(request, null); // 시스템 자동 생성
     }

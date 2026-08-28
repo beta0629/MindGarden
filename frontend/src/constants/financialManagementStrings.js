@@ -439,9 +439,11 @@ export const FM_RECURRING = {
 /** 카드 수수료 설정 */
 export const FM_CARD_FEE = {
   TITLE: '카드 수수료',
-  CAPTION: '카드로 들어온 돈에 카드사 요율을 적용합니다. 비율은 가맹 계약 기준으로 적으세요.',
+  CAPTION:
+    '결제·정산 연동 전까지 카드로 들어온 돈에 평균 요율을 적용합니다. VAN·PG 혼합 요율을 직접 적어 두면 들어온 돈 기록 시 수수료가 빠지지 않습니다. 연동 후에는 정산·수수료가 자동 반영됩니다.',
   AVERAGE_RATE_LABEL: '평균 요율',
-  AVERAGE_RATE_CAPTION: '카드사를 모르거나 고르지 않았을 때 쓰는 요율(%)',
+  AVERAGE_RATE_CAPTION:
+    '카드사를 모르거나 고르지 않았을 때 쓰는 혼합 요율(%). 가맹 계약 기준으로 적으세요.',
   AVERAGE_RATE_PLACEHOLDER: '예: 2.5',
   ISSUER_SECTION_TITLE: '카드사별 요율 (선택)',
   ISSUER_LABEL: '카드사',

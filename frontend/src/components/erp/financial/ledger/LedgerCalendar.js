@@ -410,12 +410,16 @@ const LedgerCalendar = ({
             }
             const ymd = `${resolvedYm}-${String(day).padStart(2, '0')}`;
             const dayData = dayMap[ymd];
+            const hasIncome = Boolean(dayData && dayData.income > 0);
+            const hasExpense = Boolean(dayData && dayData.expense > 0);
             const isToday = ymd === todayYmd;
             const isSelected = ymd === selectedDate;
             const cellClass = [
               'ledger-calendar__cell',
               isToday ? 'ledger-calendar__cell--today' : '',
-              isSelected ? 'ledger-calendar__cell--selected' : ''
+              isSelected ? 'ledger-calendar__cell--selected' : '',
+              hasIncome ? 'ledger-calendar__cell--has-income' : '',
+              hasExpense ? 'ledger-calendar__cell--has-expense' : ''
             ].filter(Boolean).join(' ');
 
             return (

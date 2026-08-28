@@ -47,6 +47,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
+import com.coresolution.consultation.constant.CardMerchantFeeConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.exception.AdminDeleteBlockedException;
@@ -1009,6 +1010,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .tenantId(tenantId) // 테넌트 명시: createTransaction 시 tenantId 누락 방지
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
+                .paymentMethod(resolveCardPaymentMethodForMapping(mapping))
                 .remarks(withholdingTax.compareTo(BigDecimal.ZERO) > 0
                         ? AdminServiceUserFacingMessages.REMARKS_WITHHOLDING_VS_VAT_NOTE
                         : null)
@@ -1038,6 +1040,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원", 
             mapping.getId(), accurateAmount);
+    }
+
+    /**
+     * 매핑 결제 수단이 카드로 명확할 때만 CARD를 반환. 불명확하면 null(수수료 자동 적용 생략).
+     */
+    private String resolveCardPaymentMethodForMapping(ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getPaymentMethod() == null) {
+            return null;
+        }
+        if (CardMerchantFeeConstants.isCardPaymentMethod(mapping.getPaymentMethod())) {
+            return CardMerchantFeeConstants.PAYMENT_METHOD_CARD;
+        }
+        return null;
     }
     
      /**

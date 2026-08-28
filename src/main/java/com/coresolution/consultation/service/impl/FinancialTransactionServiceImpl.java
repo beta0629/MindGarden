@@ -35,6 +35,7 @@ import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.erp.financial.CardMerchantFeePostingService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
@@ -79,6 +80,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final FinancialPeriodRepository financialPeriodRepository;
+    private final CardMerchantFeePostingService cardMerchantFeePostingService;
 
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -118,6 +120,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .amountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount())
                 .cardMerchantFeeAmount(request.getCardMerchantFeeAmount() != null
                         ? request.getCardMerchantFeeAmount() : BigDecimal.ZERO)
+                .paymentMethod(request.getPaymentMethod())
+                .cardIssuer(request.getCardIssuer())
                 .remarks(request.getRemarks())
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(FinancialTransaction.TransactionStatus.PENDING)
@@ -127,6 +131,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         }
         
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
+
+        applyCardMerchantFeeIfNeeded(savedTransaction);
+        savedTransaction = reloadTransaction(savedTransaction);
         
         try {
             // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
@@ -216,9 +223,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         transaction.setAmountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount());
         transaction.setCardMerchantFeeAmount(request.getCardMerchantFeeAmount() != null
                 ? request.getCardMerchantFeeAmount() : BigDecimal.ZERO);
+        transaction.setPaymentMethod(request.getPaymentMethod());
+        transaction.setCardIssuer(request.getCardIssuer());
         transaction.setRemarks(request.getRemarks());
         
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
+
+        applyCardMerchantFeeIfNeeded(savedTransaction);
+        savedTransaction = reloadTransaction(savedTransaction);
         
         log.info("✅ 회계 거래 수정 완료: ID={}", savedTransaction.getId());
         return convertToResponse(savedTransaction);
@@ -240,6 +252,25 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         financialTransactionRepository.save(transaction);
         
         log.info("✅ 회계 거래 삭제 완료: ID={}", id);
+    }
+
+    /**
+     * 수입·카드 결제 거래에 카드 수수료 자동 적용.
+     */
+    private void applyCardMerchantFeeIfNeeded(FinancialTransaction transaction) {
+        if (transaction.getTransactionType() != FinancialTransaction.TransactionType.INCOME) {
+            return;
+        }
+        cardMerchantFeePostingService.applyCardMerchantFeeForIncome(transaction);
+    }
+
+    private FinancialTransaction reloadTransaction(FinancialTransaction transaction) {
+        if (transaction.getId() == null || transaction.getTenantId() == null) {
+            return transaction;
+        }
+        return financialTransactionRepository
+                .findByTenantIdAndId(transaction.getTenantId(), transaction.getId())
+                .orElse(transaction);
     }
 
     /**
@@ -879,6 +910,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .amountBeforeTax(transaction.getAmountBeforeTax())
                 .cardMerchantFeeAmount(transaction.getCardMerchantFeeAmount())
                 .cardNetDepositAmount(transaction.resolveCardNetDepositAmount())
+                .paymentMethod(transaction.getPaymentMethod())
+                .cardIssuer(transaction.getCardIssuer())
                 .remarks(transaction.getRemarks())
                 .createdAt(transaction.getCreatedAt())
                 .updatedAt(transaction.getUpdatedAt());

@@ -114,6 +114,12 @@ public class FinancialTransactionRequest {
      */
     @DecimalMin(value = "0.0", message = "카드 수수료는 0 이상이어야 합니다.")
     private BigDecimal cardMerchantFeeAmount;
+
+    @Size(max = 20, message = "결제 수단은 20자 이하여야 합니다.")
+    private String paymentMethod;
+
+    @Size(max = 50, message = "카드사명은 50자 이하여야 합니다.")
+    private String cardIssuer;
     
     @Size(max = 1000, message = "비고는 1000자 이하여야 합니다.")
     private String remarks;

@@ -53,7 +53,8 @@ import {
   LedgerCalendar,
   TaxDisclosureSection,
   MoneyRecordModal,
-  MonthlyRecurringExpensesPanel
+  MonthlyRecurringExpensesPanel,
+  CardMerchantFeeSettingsPanel
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
 import '../../styles/unified-design-tokens.css';
@@ -643,6 +644,8 @@ const FinancialManagement = () => {
               panelRef={recurringPanelRef}
               onRulesChanged={refreshLedgerViews}
             />
+
+            <CardMerchantFeeSettingsPanel />
 
             <LedgerInlineFilter
               filters={filters}

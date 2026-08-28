@@ -468,11 +468,11 @@ const LedgerCalendar = ({
             {selectedDate && onAddOnDate ? (
               <MGButton
                 type="button"
-                variant="outline"
-                size="small"
+                variant="primary"
+                size="medium"
                 className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'sm',
+                  variant: 'primary',
+                  size: 'md',
                   loading: false,
                   className: 'ledger-calendar__add-on-date'
                 })}

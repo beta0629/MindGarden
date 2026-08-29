@@ -102,10 +102,13 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             : getTenantIdOrNull();
 
         BigDecimal cardMerchantFee = resolveCardMerchantFeeForRequest(tenantId, request);
+
+        String remappedCategory = FinancialTransactionConstants.remapCategoryToSsot(
+                request.getCategory(), request.getTransactionType());
         
         FinancialTransaction transaction = FinancialTransaction.builder()
                 .transactionType(FinancialTransaction.TransactionType.valueOf(request.getTransactionType()))
-                .category(request.getCategory())
+                .category(remappedCategory)
                 .subcategory(request.getSubcategory())
                 .amount(request.getAmount())
                 .description(request.getDescription())
@@ -202,7 +205,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         }
         
         transaction.setTransactionType(FinancialTransaction.TransactionType.valueOf(request.getTransactionType()));
-        transaction.setCategory(request.getCategory());
+        transaction.setCategory(FinancialTransactionConstants.remapCategoryToSsot(
+                request.getCategory(), request.getTransactionType()));
         transaction.setSubcategory(request.getSubcategory());
         transaction.setAmount(request.getAmount());
         transaction.setDescription(request.getDescription());
@@ -759,13 +763,12 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + salaryCalculationId));
         
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
         String consultantSalarySubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTANT_SALARY", "상담사급여");
         String salaryEntityType = getSafeCodeName("ENTITY_TYPE", "SALARY", "SALARY");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
-                .category(salaryCategory)
+                .category(FinancialTransactionConstants.CATEGORY_SALARY)
                 .subcategory(consultantSalarySubcategory)
                 .amount(salary.getNetSalary())
                 .description(description != null ? description : "상담사 급여 지급")
@@ -870,12 +873,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createRentTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String rentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "RENT", "임대료");
         String officeRentSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_RENT", "사무실임대료");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
-                .category(rentCategory)
+                .category(FinancialTransactionConstants.CATEGORY_RENT)
                 .subcategory(officeRentSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "사무실 임대료")
@@ -889,12 +891,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createManagementFeeTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String managementFeeCategory = getSafeCodeName("FINANCIAL_CATEGORY", "MANAGEMENT_FEE", "관리비");
         String officeManagementFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_MANAGEMENT_FEE", "사무실관리비");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
-                .category(managementFeeCategory)
+                .category(FinancialTransactionConstants.CATEGORY_UTILITY)
                 .subcategory(officeManagementFeeSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "사무실 관리비")
@@ -908,12 +909,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     @Override
     public FinancialTransactionResponse createTaxTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-        String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
         String corporateTaxSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CORPORATE_TAX", "법인세");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(expenseType)
-                .category(taxCategory)
+                .category(FinancialTransactionConstants.CATEGORY_TAX)
                 .subcategory(corporateTaxSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "법인세")

@@ -253,7 +253,7 @@ public class ErpProcedureJournalEntryIntegrationTest {
         com.coresolution.consultation.dto.FinancialTransactionRequest request = 
             com.coresolution.consultation.dto.FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category("CONSULTATION")
+                .category("상담료")
                 .subcategory("PACKAGE_SALE")
                 .amount(new BigDecimal("50000"))
                 .description("테스트 거래")

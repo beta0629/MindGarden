@@ -498,7 +498,8 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   margin: var(--mg-v2-space-1, 0.25rem) 0 0 0;
 }
 
-/* 트랙은 shrink-to-fit — 내부 pill 높이에 맞춰 외곽이 작아짐 (fill/stretch 금지) */
+/* 트랙은 shrink-to-fit — 내부 pill 높이에 맞춰 외곽이 작아짐 (fill/stretch 금지).
+ * SSOT: complete pill geometry — overflow visible so end-corner strokes/curves stay fully painted. */
 .mg-v2-ad-b0kla__pill-toggle {
   display: inline-flex;
   align-items: center;
@@ -511,8 +512,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   border: 1px solid var(--ad-b0kla-border);
   background: var(--ad-b0kla-bg);
   box-sizing: border-box;
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: visible;
 }
 
 .mg-v2-ad-b0kla__chart-header .mg-v2-ad-b0kla__pill-toggle {
@@ -2155,31 +2155,40 @@ button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--loading {
 }
 
 /*
- * MGButton 기본 height/max-height !important + overflow:hidden 이 pill 라운드·패딩을
- * 자르므로 admin-card 와 동일하게 pill 스코프만 auto/visible 로 복원 (전역 계약 유지).
+ * Period-control pill SSOT (Clinic-OS segmented): complete pill geometry.
+ * MGButton size !important (.mg-button.mg-v2-button.mg-button--medium 등) must not win —
+ * height/padding/line-height/overflow are locked here with equal-or-higher specificity.
  */
-button.mg-v2-ad-b0kla__pill.mg-button {
+button.mg-v2-ad-b0kla__pill.mg-button,
+button.mg-v2-ad-b0kla__pill.mg-button.mg-button--small,
+button.mg-v2-ad-b0kla__pill.mg-button.mg-button--medium,
+button.mg-v2-ad-b0kla__pill.mg-button.mg-button--large,
+button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-button.mg-button--small,
+button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-button.mg-button--medium,
+button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-button.mg-button--large {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   height: auto !important;
   max-height: none !important;
-  min-height: var(--mg-v2-component-touch-target, 44px);
+  min-height: var(--mg-v2-component-touch-target, 44px) !important;
   font-weight: var(--mg-v2-font-weight-semibold, 600);
-  line-height: var(--mg-v2-font-line-height-body, 1.5);
+  line-height: var(--mg-v2-font-line-height-body, 1.5) !important;
   font-size: inherit;
   background: var(--mg-color-surface-main);
   color: var(--ad-b0kla-text-secondary);
-  border: none;
+  border-style: solid;
+  border-color: var(--ad-b0kla-text-secondary);
   border-radius: var(--mg-v2-radius-pill, 9999px);
   box-shadow: none;
-  padding: var(--mg-v2-space-3, 12px) var(--mg-v2-space-5, 20px);
+  padding: var(--mg-v2-space-3, 12px) var(--mg-v2-space-5, 20px) !important;
   overflow: visible !important;
 }
 
-button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-ad-b0kla__pill--sm {
-  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
+button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-ad-b0kla__pill--sm,
+button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-button.mg-v2-ad-b0kla__pill--sm {
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem) !important;
   font-size: var(--mg-v2-font-size-body-sm, 0.75rem);
 }
 
@@ -2187,23 +2196,44 @@ button.mg-v2-ad-b0kla__pill.mg-button:hover:not(.mg-button--disabled):not(.mg-bu
   transform: none;
   color: var(--ad-b0kla-title-color);
   background: var(--mg-color-surface-main);
+  border-color: var(--ad-b0kla-text-secondary);
 }
 
 button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-ad-b0kla__pill--active:not(.mg-button--loading) {
   background: var(--mg-color-primary-main);
   color: var(--mg-white);
+  border-color: var(--mg-color-primary-main);
   box-shadow: var(--ad-b0kla-shadow);
 }
 
 button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-ad-b0kla__pill--active:hover:not(.mg-button--disabled):not(.mg-button--loading) {
   background: var(--mg-color-primary-main);
   color: var(--mg-white);
+  border-color: var(--mg-color-primary-main);
   filter: brightness(1.05);
 }
 
 button.mg-v2-ad-b0kla__pill.mg-button .mg-button__content,
 button.mg-v2-ad-b0kla__pill.mg-button .mg-button__text {
   display: contents;
+}
+
+/* MGButton 반응형 size !important 재적용 방어 (pill 한정) */
+@media (max-width: 768px) {
+  button.mg-v2-ad-b0kla__pill.mg-button,
+  button.mg-v2-ad-b0kla__pill.mg-button.mg-button--small,
+  button.mg-v2-ad-b0kla__pill.mg-button.mg-button--medium,
+  button.mg-v2-ad-b0kla__pill.mg-button.mg-button--large,
+  button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-button.mg-button--small,
+  button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-button.mg-button--medium,
+  button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-button.mg-button--large {
+    height: auto !important;
+    max-height: none !important;
+    min-height: var(--mg-v2-component-touch-target, 44px) !important;
+    padding: var(--mg-v2-space-3, 12px) var(--mg-v2-space-5, 20px) !important;
+    line-height: var(--mg-v2-font-line-height-body, 1.5) !important;
+    overflow: visible !important;
+  }
 }
 
 button.mg-v2-ad-b0kla__icon-btn.mg-button {

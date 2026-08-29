@@ -651,7 +651,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 return BigDecimal.ZERO;
             }
             
-            String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
+            // Flyway SSOT: FINANCIAL_CATEGORY TAX 는 코드값 "TAX" (한글 라벨 "세금"으로 조회 시 누락)
+            String taxCategory = FinancialTransactionConstants.CATEGORY_TAX;
             List<FinancialTransaction> taxTransactions = financialTransactionRepository
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, taxCategory);
             
@@ -663,9 +664,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+            // 결제 수입은 상담료(CATEGORY_CONSULTATION_FEE)로 저장 — taxAmount(부가세) 합산
+            String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
-                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, paymentCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, consultationFeeCategory);
             
             BigDecimal totalVatAmount = paymentTransactions.stream()
                     .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
@@ -1126,7 +1128,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                         .build();
             }
             
-            String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
+            // Flyway SSOT: SALARY 코드값 (한글 라벨 "급여"로 조회 시 누락)
+            String salaryCategory = FinancialTransactionConstants.CATEGORY_SALARY;
             List<FinancialTransaction> salaryTransactions = financialTransactionRepository
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, salaryCategory);
             
@@ -1135,7 +1138,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
+            // 기존 로직 유지(급여 목록 내 category=TAX 필터). SSOT 문자열만 교체
+            String taxCategory = FinancialTransactionConstants.CATEGORY_TAX;
             BigDecimal totalTaxWithheld = salaryTransactions.stream()
                     .filter(t -> taxCategory.equals(t.getCategory()))
                     .map(FinancialTransaction::getAmount)
@@ -1294,9 +1298,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                         .build();
             }
             
-            String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+            // 결제 수입 SSOT: category=상담료 + relatedEntityType=PAYMENT
+            String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
+            String paymentEntityType = getSafeCodeName("ENTITY_TYPE", "PAYMENT", "PAYMENT");
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
-                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, paymentCategory);
+                    .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, consultationFeeCategory)
+                    .stream()
+                    .filter(t -> paymentEntityType.equals(t.getRelatedEntityType()))
+                    .collect(Collectors.toList());
             
             BigDecimal totalPaymentAmount = paymentTransactions.stream()
                     .filter(t -> "INCOME".equals(t.getTransactionType().name()))

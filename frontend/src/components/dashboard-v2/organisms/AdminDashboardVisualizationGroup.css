@@ -23,8 +23,7 @@
 
 .mg-v2-content-visualization-group__pills {
   flex-shrink: 0;
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: visible;
   max-width: 100%;
   padding-block: var(--mg-v2-space-1, 0.25rem);
   box-sizing: border-box;

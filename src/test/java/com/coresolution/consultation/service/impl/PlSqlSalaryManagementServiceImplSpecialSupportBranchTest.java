@@ -71,7 +71,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
         when(dataSource.getConnection()).thenReturn(connection);
         when(connection.prepareCall(anyString())).thenReturn(callableStatement);
-        when(connection.createStatement()).thenReturn(utf8Statement);
+        lenient().when(connection.createStatement()).thenReturn(utf8Statement);
         lenient().when(utf8Statement.execute(anyString())).thenReturn(false);
         lenient().when(jdbcTemplate.queryForList(anyString(), anyString())).thenReturn(Collections.emptyList());
         lenient().when(consultantSalaryProfileRepository
@@ -322,8 +322,8 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     void recalcUnpaid_whenThreeCompleted_mapsCompleted3AndGross90000SameId() throws Exception {
         when(callableStatement.getObject(4)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(5)).thenReturn("미지급 급여 재계산이 완료되었습니다.");
-        when(callableStatement.getObject(6)).thenReturn(501L);
         when(callableStatement.getLong(6)).thenReturn(501L);
+        when(callableStatement.wasNull()).thenReturn(false);
         when(callableStatement.getInt(7)).thenReturn(3);
         when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("90000.00"));
         when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("87030.00"));
@@ -343,7 +343,8 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     void recalcUnpaid_whenPaid_refuses() throws Exception {
         when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
         when(callableStatement.getString(5)).thenReturn("지급 완료된 급여는 재계산할 수 없습니다. 추가 정산을 사용하세요.");
-        when(callableStatement.getObject(6)).thenReturn(null);
+        when(callableStatement.getLong(6)).thenReturn(0L);
+        when(callableStatement.wasNull()).thenReturn(true);
         when(callableStatement.getInt(7)).thenReturn(0);
         when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
         when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
@@ -360,8 +361,8 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     void insertAdjustment_whenOneLateSession_mapsDelta30000AndTax990() throws Exception {
         when(callableStatement.getObject(4)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(5)).thenReturn("빠진 회기 추가 정산이 생성되었습니다.");
-        when(callableStatement.getObject(6)).thenReturn(902L);
         when(callableStatement.getLong(6)).thenReturn(902L);
+        when(callableStatement.wasNull()).thenReturn(false);
         when(callableStatement.getInt(7)).thenReturn(1);
         when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("30000.00"));
         when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("29010.00"));
@@ -383,7 +384,8 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     void insertAdjustment_whenCalculated_refuses() throws Exception {
         when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
         when(callableStatement.getString(5)).thenReturn("추가 정산은 지급완료(PAID) 급여에만 가능합니다.");
-        when(callableStatement.getObject(6)).thenReturn(null);
+        when(callableStatement.getLong(6)).thenReturn(0L);
+        when(callableStatement.wasNull()).thenReturn(true);
         when(callableStatement.getInt(7)).thenReturn(0);
         when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
         when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
@@ -400,7 +402,8 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     void insertAdjustment_whenNoDelta_refusesNoExtraSessions() throws Exception {
         when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
         when(callableStatement.getString(5)).thenReturn("추가 완료 회기가 없습니다");
-        when(callableStatement.getObject(6)).thenReturn(null);
+        when(callableStatement.getLong(6)).thenReturn(0L);
+        when(callableStatement.wasNull()).thenReturn(true);
         when(callableStatement.getInt(7)).thenReturn(0);
         when(callableStatement.getBigDecimal(8)).thenReturn(BigDecimal.ZERO);
         when(callableStatement.getBigDecimal(9)).thenReturn(BigDecimal.ZERO);
@@ -422,8 +425,8 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(callableStatement.getInt(9)).thenReturn(3);
         when(callableStatement.getInt(10)).thenReturn(2);
         when(callableStatement.getInt(11)).thenReturn(1);
-        when(callableStatement.getObject(12)).thenReturn(501L);
         when(callableStatement.getLong(12)).thenReturn(501L);
+        when(callableStatement.wasNull()).thenReturn(false);
         when(callableStatement.getString(13)).thenReturn("CALCULATED");
 
         Map<String, Object> result = service.getSalaryPreConfirmWarning(

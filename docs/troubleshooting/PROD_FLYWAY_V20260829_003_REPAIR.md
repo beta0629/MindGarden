@@ -34,8 +34,8 @@
 
 3. **Guarded one-shot** in `.github/workflows/deploy-production.yml`  
    (step `🔄 블루그린 백엔드·Nginx 적용`, after ACTIVE/INACTIVE, **before** inactive `systemctl restart`):  
-   delete `flyway_schema_history` rows where `success = 0` and version/script matches `20260829.003` only.
-
+   delete `flyway_schema_history` rows where `success = 0` and version/script matches `20260829.003` only.  
+   Uses `sudo mysql` (root) then `mysql` (mindgarden); **fails the deploy hard** (`exit 1`) if mysql cannot run or `PRODUCTION_DB_PASSWORD` is empty — continuing always fails Flyway validate when a `success = 0` row remains.
 **Do not** edit V20260511 / V20260512 history migrations.  
 **Do not** hardcode combined tax rate `0.033` (use `WITHHOLDING_NATIONAL` 0.03 + `WITHHOLDING_LOCAL` 0.003).
 

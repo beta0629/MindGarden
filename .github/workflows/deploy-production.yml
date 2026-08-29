@@ -834,28 +834,44 @@ jobs:
             # [핫픽스 2026-08-29] V20260829_003 Flyway success=0 원샷 repair
             # 배경: prod run 2069 — DROP PROCEDURE CalculateSalaryPreview → ERROR 1227 SYSTEM_USER.
             # seed-only 마이그 재적용을 위해 실패 행만 제거. success=1 은 절대 삭제하지 않음.
+            # mysql 호출 실패·비밀번호 부재 시 배포 중단 (계속하면 Flyway validate 실패) — hardening 2026-08-29.
             # 참조: docs/troubleshooting/PROD_FLYWAY_V20260829_003_REPAIR.md
             echo "🔧 [V20260829_003] flyway_schema_history success=0 원샷 repair (비활성 슬롯 재시작 전)"
             if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
-              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — V20260829_003 flyway success=0 repair 스킵 (배포는 계속)"
-            else
-              FLYWAY_003_DELETED=$(mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "
-                DELETE FROM flyway_schema_history
-                WHERE success = 0
-                  AND (
-                    version IN ('20260829.003', '20260829_003')
-                    OR script LIKE '%V20260829_003%'
-                  );
-                SELECT ROW_COUNT();
-              " 2>/dev/null || echo "ERR")
-              if [ "$FLYWAY_003_DELETED" = "ERR" ] || [ -z "$FLYWAY_003_DELETED" ]; then
-                echo "::warning::V20260829_003 flyway success=0 repair mysql 호출 실패 — 배포는 계속 (수동 repair 문서 참고)"
-              elif [ "$FLYWAY_003_DELETED" = "0" ]; then
-                echo "::notice::V20260829_003 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
-              else
-                echo "✅ V20260829_003 flyway success=0 행 삭제: ${FLYWAY_003_DELETED}건"
-              fi
+              echo "::error::PRODUCTION_DB_PASSWORD 비어 있음 — V20260829_003 flyway success=0 repair 불가. success=0 행이 남아 있으면 Flyway validate 실패하므로 배포 중단"
+              exit 1
             fi
+            FLYWAY_003_SQL="
+              DELETE FROM flyway_schema_history
+              WHERE success = 0
+                AND (
+                  version IN ('20260829.003', '20260829_003')
+                  OR script LIKE '%V20260829_003%'
+                );
+              SELECT ROW_COUNT();
+            "
+            rm -f /tmp/flyway_003_repair.err
+            # root 우선(sudo mysql) → mindgarden 재시도 — 매핑 프로시저 배포와 동일 패턴
+            FLYWAY_003_DELETED=$(sudo mysql -h localhost -u root -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "$FLYWAY_003_SQL" 2>/tmp/flyway_003_repair.err) \
+              || FLYWAY_003_DELETED=""
+            if ! echo "${FLYWAY_003_DELETED}" | grep -Eq '^[0-9]+$'; then
+              FLYWAY_003_ERR_HINT=$(tr -d '\r' </tmp/flyway_003_repair.err 2>/dev/null | grep -viE 'password|passwd|secret' | head -c 200 || true)
+              echo "⚠️ root mysql repair 실패 — mindgarden 계정으로 재시도... hint: ${FLYWAY_003_ERR_HINT:-none}"
+              FLYWAY_003_DELETED=$(mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "$FLYWAY_003_SQL" 2>/tmp/flyway_003_repair.err) \
+                || FLYWAY_003_DELETED="ERR"
+            fi
+            if [ "$FLYWAY_003_DELETED" = "ERR" ] || ! echo "${FLYWAY_003_DELETED}" | grep -Eq '^[0-9]+$'; then
+              FLYWAY_003_ERR_HINT=$(tr -d '\r' </tmp/flyway_003_repair.err 2>/dev/null | grep -viE 'password|passwd|secret' | head -c 200 || true)
+              echo "::error::V20260829_003 flyway success=0 repair mysql 호출 실패 — 배포 중단 (계속하면 Flyway validate 실패). hint: ${FLYWAY_003_ERR_HINT:-none}"
+              echo "수동 repair: docs/troubleshooting/PROD_FLYWAY_V20260829_003_REPAIR.md"
+              rm -f /tmp/flyway_003_repair.err
+              exit 1
+            elif [ "$FLYWAY_003_DELETED" = "0" ]; then
+              echo "::notice::V20260829_003 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
+            else
+              echo "✅ V20260829_003 flyway success=0 행 삭제: ${FLYWAY_003_DELETED}건"
+            fi
+            rm -f /tmp/flyway_003_repair.err
           
             echo "🔄 비활성 슬롯 서비스 재시작: $INACTIVE_UNIT"
             sudo systemctl restart "$INACTIVE_UNIT" || true

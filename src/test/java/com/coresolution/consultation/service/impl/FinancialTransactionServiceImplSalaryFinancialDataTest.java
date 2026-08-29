@@ -93,9 +93,8 @@ class FinancialTransactionServiceImplSalaryFinancialDataTest {
     @Test
     @DisplayName("totalSalaryPaid는 EXPENSE+SALARY 합만 반영하고 INCOME은 제외")
     void getSalaryFinancialData_sumsExpenseSalaryOnly() throws Exception {
-        when(commonCodeService.getCodeName("FINANCIAL_CATEGORY", "SALARY")).thenReturn(SALARY_CATEGORY);
+        // SALARY/TAX 카테고리는 FinancialTransactionConstants SSOT 사용 — commonCode stub 불필요
         when(commonCodeService.getCodeName("TRANSACTION_TYPE", "EXPENSE")).thenReturn(EXPENSE_TYPE);
-        when(commonCodeService.getCodeName("FINANCIAL_CATEGORY", "TAX")).thenReturn("TAX");
 
         FinancialTransaction expenseSalary = FinancialTransaction.builder()
                 .transactionType(FinancialTransaction.TransactionType.EXPENSE)

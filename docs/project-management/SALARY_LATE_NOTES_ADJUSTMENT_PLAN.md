@@ -84,7 +84,7 @@
 | `parent_calculation_id` | ADJUSTMENT → 해당 월 PRIMARY id (NULL on PRIMARY) |
 | Unique | 비삭제 PRIMARY 1건 per `(tenant_id, consultant_id, calculation_period)` |
 | ADJUSTMENT | 동일 triple 다건 허용 |
-| Flyway | **`V20260829_003`** 또는 **`V20260830_001`**부터. `V20260829_001/002`(#681) **편집·사용 금지** |
+| Flyway | **`V20260829_004`** 이상. `V20260829_001/002`(#681), `V20260829_003`(#682) **편집·사용 금지** |
 | tip | 현재 tip `V20260828_003` |
 
 ---
@@ -187,7 +187,7 @@ PR base develop. main/merge 금지. 논리 단위 커밋·푸시.
 1) Flyway 2) SP(+deploy twin) 3) Entity/Service/Controller 4) 테스트
 
 ## Flyway
-- 파일: V20260829_003__salary_calculation_kind_and_parent.sql 권장
+- 파일: V20260829_004__salary_calculation_kind_and_parent.sql 권장
   (V20260829_001/002는 #681 예약 — 편집·사용 금지. tip=V20260828_003)
 - calculation_kind VARCHAR NOT NULL DEFAULT 'PRIMARY' (또는 ENUM)
 - parent_calculation_id BIGINT NULL (FK → salary_calculations.id, ADJUSTMENT만)

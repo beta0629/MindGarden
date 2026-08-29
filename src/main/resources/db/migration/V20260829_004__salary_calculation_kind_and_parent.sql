@@ -1,5 +1,5 @@
 -- =============================================================================
--- V20260829_003 — salary_calculations: calculation_kind / parent_calculation_id
+-- V20260829_004 — salary_calculations: calculation_kind / parent_calculation_id
 -- ---------------------------------------------------------------------------
 -- 계획서: docs/project-management/SALARY_LATE_NOTES_ADJUSTMENT_PLAN.md
 -- tip 기준: V20260828_003. V20260829_001/002 는 #681 예약 — 본 파일만 사용.
@@ -83,7 +83,7 @@ SET @duplicatePrimaryCount = (
 );
 
 SET @msg = CONCAT(
-    'V20260829_003 ABORT — salary_calculations 비삭제 PRIMARY 중복 ',
+    'V20260829_004 ABORT — salary_calculations 비삭제 PRIMARY 중복 ',
     @duplicatePrimaryCount,
     ' 건. 정리 후 재실행 필요.'
 );

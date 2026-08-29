@@ -151,6 +151,8 @@ export const TAX_BREAKDOWN_LABELS = {
  */
 export const SALARY_TAX_ROW_TYPE_LABELS = {
   WITHHOLDING_TAX: '원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)',
+  WITHHOLDING_NATIONAL: '원천징수 국세(3%)',
+  WITHHOLDING_LOCAL: '원천징수 지방세(0.3%)',
   LOCAL_INCOME_TAX: '지방소득세(정규직 등)',
   VAT: '부가가치세',
   INCOME_TAX: '소득세',
@@ -236,10 +238,14 @@ export const SALARY_PAY_DAY_FALLBACK_OPTIONS = [
 /** 급여 미리보기 카드: 특별지원금(공통코드 SPECIAL_SUPPORT_SALARY) 한 줄 라벨 */
 export const SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL = '특별지원금';
 
-/** 프리랜서 미리보기: 상담료(등급 요율×건수)만 표시할 때 라벨 */
+/**
+ * 미리보기 상담료 라벨.
+ * SP OUT gross = 상담료(earnings)+특별지원. consultationGross = gross - SS (없으면 FE에서 동일 파생).
+ * preview net/gross/tax 는 confirm(salary_calculations) 과 동일 SSOT.
+ */
 export const SALARY_PREVIEW_CONSULTATION_FEE_LABEL = '상담료';
 
-/** 프리랜서 미리보기: 상담료+특별지원 합(세전 과세표준) */
+/** 미리보기: 세전 합계(= gross OUT, earnings+SS) */
 export const SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL = '세전 합계';
 
 /** 급여 계산 내역·인쇄: 기본·가변 구분 라벨 */

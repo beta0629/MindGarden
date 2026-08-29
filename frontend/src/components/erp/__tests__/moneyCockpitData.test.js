@@ -187,6 +187,121 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({ label: '상담료', amount: 0 });
   });
+
+  test('income: 한글 상담료 tx 3건 합산 (breakdown 없음)', () => {
+    const transactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 },
+      { type: 'INCOME', category: '상담료', amount: 90000 },
+      { type: 'INCOME', category: '상담료', amount: 300000 }
+    ];
+    const items = buildIncomeMixItems({}, transactions);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('income: CONSULTATION + 한글 상담료 breakdown 병합 (canonical=상담료)', () => {
+    const items = buildIncomeMixItems(
+      { CONSULTATION: 100000, 상담료: 320000 },
+      []
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      id: 'income-상담료',
+      label: '상담료',
+      amount: 420000
+    });
+  });
+
+  test('income: 카드결제+상담료 breakdown/tx 합이 한 막대', () => {
+    const itemsFromBreakdown = buildIncomeMixItems(
+      { 카드결제: 150000, 상담료: 270000 },
+      []
+    );
+    expect(itemsFromBreakdown).toHaveLength(1);
+    expect(itemsFromBreakdown[0]).toMatchObject({
+      id: 'income-상담료',
+      label: '상담료',
+      amount: 420000
+    });
+
+    const itemsFromTx = buildIncomeMixItems(
+      {},
+      [
+        { type: 'INCOME', category: '카드결제', amount: 100000 },
+        { type: 'INCOME', category: '현금결제', amount: 50000 },
+        { type: 'INCOME', category: '상담료', amount: 270000 },
+        { type: 'INCOME', category: 'PAYMENT', amount: 30000 }
+      ]
+    );
+    expect(itemsFromTx).toHaveLength(1);
+    expect(itemsFromTx[0]).toMatchObject({
+      label: '상담료',
+      amount: 450000
+    });
+  });
+
+  test('income: breakdown 기간 합 우선 (최근 한 건과 무관)', () => {
+    const transactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 }
+    ];
+    const items = buildIncomeMixItems({ 상담료: 420000 }, transactions);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  /**
+   * 운영 재현: 이번 달 돈 들어온 곳 상담료 = 여러 상담료 행 합
+   * (구 CONSULTATION·결제수단-as-category 누수 포함) → 420,000원
+   */
+  test('income: 운영 재현 — 상담료+카드결제+CONSULTATION 합 420000 (tx·breakdown·기간합 우선)', () => {
+    const leakyTransactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 },
+      { type: 'INCOME', category: '카드결제', amount: 90000 },
+      { type: 'INCOME', category: 'CONSULTATION', amount: 300000 }
+    ];
+    const itemsFromTx = buildIncomeMixItems({}, leakyTransactions);
+    expect(itemsFromTx).toHaveLength(1);
+    expect(itemsFromTx[0]).toMatchObject({ label: '상담료', amount: 420000 });
+
+    const leakyBreakdown = { 상담료: 30000, 카드결제: 90000, CONSULTATION: 300000 };
+    const itemsFromBreakdown = buildIncomeMixItems(leakyBreakdown, []);
+    expect(itemsFromBreakdown).toHaveLength(1);
+    expect(itemsFromBreakdown[0]).toMatchObject({ label: '상담료', amount: 420000 });
+
+    const recentOnly = [{ type: 'INCOME', category: '상담료', amount: 30000 }];
+    const itemsPeriodOverRecent = buildIncomeMixItems(
+      { 상담료: 420000 },
+      recentOnly
+    );
+    expect(itemsPeriodOverRecent).toHaveLength(1);
+    expect(itemsPeriodOverRecent[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('income: SALARY 등 지출 키는 수입 mix에 미포함', () => {
+    const items = buildIncomeMixItems(
+      { 상담료: 420000, SALARY: 200000, RENT: 100000 },
+      []
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('outflow: 급여+SALARY 병합', () => {
+    const items = buildOutflowMixItems({ SALARY: 100000, 급여: 50000 }, []);
+    expect(items.find((i) => i.id === 'salary')).toEqual({
+      id: 'salary',
+      label: '급여',
+      amount: 150000
+    });
+  });
+
+  test('outflow: 임대료·관리비 별칭을 임대·관리로 병합', () => {
+    const items = buildOutflowMixItems(
+      { 임대료: 200000, 관리비: 30000, MANAGEMENT_FEE: 20000 },
+      []
+    );
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(250000);
+  });
 });
 
 describe('moneyCockpitData parseFinanceDashboardPayload fee', () => {

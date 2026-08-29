@@ -179,7 +179,7 @@ BEGIN
             related_entity_id, related_entity_type, branch_code, 
             transaction_date, status, created_at, discount_code
         ) VALUES (
-            'INCOME', 'CONSULTATION', 'PACKAGE_SALE', p_original_amount,
+            'INCOME', '상담료', 'PACKAGE_SALE', p_original_amount,
             CONCAT('패키지 판매 - 원래 금액 (할인코드: ', IFNULL(p_discount_code, 'N/A'), ')'),
             p_mapping_id, 'CONSULTANT_CLIENT_MAPPING', p_branch_code,
             NOW(), 'COMPLETED', NOW(), p_discount_code

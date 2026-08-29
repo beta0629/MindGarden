@@ -501,8 +501,8 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             options={[
                                                 { value: '', label: '카테고리를 선택하세요' },
                                                 ...categories.map(category => ({
-                                                    value: category.codeLabel,
-                                                    label: category.codeLabel
+                                                    value: category.codeValue,
+                                                    label: category.codeLabel || category.codeValue
                                                 }))
                                             ]}
                                             placeholder="카테고리를 선택하세요"

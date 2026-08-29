@@ -137,8 +137,8 @@ const ErpDashboard = ({ user: propUser }) => {
       });
       setLedgerTx(sortedTx);
 
-      const incomeMix = buildIncomeMixItems(parsed.categoryBreakdown, parsed.transactions);
-      const expenseMix = buildOutflowMixItems(parsed.categoryBreakdown, parsed.transactions);
+      const incomeMix = buildIncomeMixItems(parsed.incomeCategoryBreakdown, parsed.transactions);
+      const expenseMix = buildOutflowMixItems(parsed.expenseCategoryBreakdown, parsed.transactions);
       setIncomeMixItems(incomeMix);
       setExpenseMixItems(expenseMix);
       setDenseFacts(buildDenseFactCaptions(parsed.transactions));
@@ -147,7 +147,7 @@ const ErpDashboard = ({ user: propUser }) => {
       setRefundAmount(refund);
 
       const incomeCaption = buildTopIncomeCaption(
-        parsed.categoryBreakdown,
+        parsed.incomeCategoryBreakdown,
         parsed.transactions
       );
       const expenseCaption = buildTopExpenseCaption(expenseMix);

@@ -26,6 +26,7 @@ import MappingDepositModal from '../mapping/MappingDepositModal';
 import CheckoutSameDayModal from '../mapping/CheckoutSameDayModal';
 import MappingCancelModal from './molecules/MappingCancelModal';
 import MappingDesyncConfirmModal from './integrated-schedule/molecules/MappingDesyncConfirmModal';
+import PendingPackageEditModal from './PendingPackageEditModal';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import MGButton from '../../common/MGButton';
@@ -217,6 +218,7 @@ const IntegratedMatchingSchedule = () => {
   // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 관리자 취소 확인 모달 대상 + 처리 중 플래그.
   const [cancelTargetMapping, setCancelTargetMapping] = useState(null);
   const [cancelPendingProcessing, setCancelPendingProcessing] = useState(false);
+  const [pendingPackageEditMapping, setPendingPackageEditMapping] = useState(null);
   const [desyncTarget, setDesyncTarget] = useState(null);
   const [desyncProcessing, setDesyncProcessing] = useState(false);
   const [peekMapping, setPeekMapping] = useState(null);
@@ -773,6 +775,30 @@ const IntegratedMatchingSchedule = () => {
     });
   }, []);
 
+  /**
+   * 가계약(PENDING_PAYMENT) 전용 패키지 변경 — 동일 매핑 write SSOT.
+   * 과거 스케줄 시각과 무관. 일반 PUT /mappings/{id} 경로 사용 금지.
+   */
+  const handleRequestChangePendingPackage = useCallback((mapping) => {
+    if (!mapping?.id) {
+      return;
+    }
+    if (mapping.status !== 'PENDING_PAYMENT') {
+      notificationManager.warning('결제 대기 매칭만 패키지를 변경할 수 있습니다.');
+      return;
+    }
+    setPendingPackageEditMapping(mapping);
+  }, []);
+
+  const handlePendingPackageEditClose = useCallback(() => {
+    setPendingPackageEditMapping(null);
+  }, []);
+
+  const handlePendingPackageEditSuccess = useCallback(() => {
+    setPendingPackageEditMapping(null);
+    loadMappings();
+  }, [loadMappings]);
+
   const handleCancelModalClose = useCallback(() => {
     if (cancelPendingProcessing) {
       return;
@@ -1064,6 +1090,7 @@ const IntegratedMatchingSchedule = () => {
           onApprove={handleApprove}
           onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
           onCancelPendingMapping={handleRequestCancelPendingMapping}
+          onChangePendingPackage={handleRequestChangePendingPackage}
           onDesyncAction={handleRequestDesyncAction}
           onSessionExtension={handleSessionExtensionFromCard}
           onSessionSuccession={handleSessionSuccessionFromCard}
@@ -1245,6 +1272,14 @@ const IntegratedMatchingSchedule = () => {
           onClose={handleCancelModalClose}
           onConfirm={handleConfirmCancelPendingMapping}
           processing={cancelPendingProcessing}
+        />
+      )}
+      {pendingPackageEditMapping && (
+        <PendingPackageEditModal
+          isOpen={!!pendingPackageEditMapping}
+          onClose={handlePendingPackageEditClose}
+          mapping={pendingPackageEditMapping}
+          onSuccess={handlePendingPackageEditSuccess}
         />
       )}
       {desyncTarget && (

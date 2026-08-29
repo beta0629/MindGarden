@@ -446,6 +446,25 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String PACKAGE_NAME_ESTIMATED_SESSIONS_FMT = "%d회 패키지 (추정)";
 
+    /**
+     * 가계약(PENDING_PAYMENT) 전용 패키지 변경 — 허용 상태가 아닐 때 사용자 메시지.
+     * 회계/ERP 용어 금지. 1인 클리닉 카피.
+     */
+    public static final String MSG_PENDING_PACKAGE_STATUS_NOT_ALLOWED =
+            "결제 대기 매칭만 패키지를 변경할 수 있습니다.";
+
+    /** 가계약 패키지 변경 — paymentStatus 가 PENDING 이 아닐 때. */
+    public static final String MSG_PENDING_PACKAGE_PAYMENT_STATUS_NOT_ALLOWED =
+            "아직 결제가 진행되지 않은 매칭만 패키지를 변경할 수 있습니다.";
+
+    /** 가계약 패키지 변경 — 요청 본문 누락. */
+    public static final String MSG_PENDING_PACKAGE_REQUEST_REQUIRED =
+            "패키지명·가격·회기 수를 모두 입력해 주세요.";
+
+    /** 가계약 패키지 변경 성공 메시지 (컨트롤러). */
+    public static final String MSG_PENDING_PACKAGE_UPDATED = "패키지가 수정되었습니다.";
+
+
     /** 환불 설명 파싱·표시 기본값 */
     public static final String REFUND_REASON_FALLBACK_ETC = "기타";
 

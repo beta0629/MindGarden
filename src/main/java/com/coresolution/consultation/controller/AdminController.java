@@ -23,6 +23,7 @@ import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
@@ -2153,6 +2154,28 @@ public class AdminController extends BaseApiController {
 
         ConsultantClientMapping mapping = adminService.updateMapping(id, request, updatedBy);
         return updated("매칭 정보가 성공적으로 수정되었습니다", mapping);
+    }
+
+    /**
+     * 가계약(PENDING_PAYMENT) 전용 패키지·가격 수정 — 동일 매핑 write SSOT.
+     *
+     * <p>일반 {@code PUT /mappings/{id}} 는 remaining=total-used·ERP UpdateMappingInfo 를 타므로
+     * PENDING 에 재사용하지 않는다. 본 엔드포인트는 패키지 필드만 갱신하며 스케줄/ERP/FT 를 건드리지 않는다.
+     * 연결된 스케줄 start_time 과거 여부와 무관(ScheduleSlotGuard 미호출).</p>
+     */
+    @PostMapping("/mappings/{id}/pending-package")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<ConsultantClientMapping>> updatePendingPaymentPackage(
+            @PathVariable Long id,
+            @Valid @RequestBody PendingPaymentPackageUpdateRequest request,
+            HttpSession session) {
+        log.info("가계약 패키지 변경: ID={}", id);
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        String updatedBy = currentUser != null ? currentUser.getName() : "System";
+
+        ConsultantClientMapping mapping = adminService.updatePendingPaymentPackage(id, request, updatedBy);
+        return updated(AdminServiceUserFacingMessages.MSG_PENDING_PACKAGE_UPDATED, mapping);
     }
 
     /**

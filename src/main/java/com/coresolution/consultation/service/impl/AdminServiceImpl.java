@@ -33,6 +33,7 @@ import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.NewClientMonthlyItemResponse;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.WeeklyReservationDayItemResponse;
 import com.coresolution.consultation.dto.WeeklyReservationStatusItemResponse;
 import com.coresolution.consultation.dto.WeeklyReservationsResponse;
@@ -3236,6 +3237,72 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 savedMapping.getPackagePrice(), savedMapping.getTotalSessions());
         
         return savedMapping;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public ConsultantClientMapping updatePendingPaymentPackage(
+            Long id,
+            PendingPaymentPackageUpdateRequest request,
+            String updatedBy) {
+        if (request == null
+                || request.getPackageName() == null || request.getPackageName().isBlank()
+                || request.getPackagePrice() == null
+                || request.getTotalSessions() == null) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_PENDING_PACKAGE_REQUEST_REQUIRED);
+        }
+
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+
+        String pendingPaymentStatus = getMappingStatusCode(MappingStatusConstants.PENDING_PAYMENT);
+        ConsultantClientMapping.MappingStatus currentStatus = mapping.getStatus();
+        if (currentStatus == null || !pendingPaymentStatus.equals(currentStatus.name())) {
+            log.warn("가계약 패키지 변경 거부 (status): mappingId={}, status={}", id, currentStatus);
+            throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_PENDING_PACKAGE_STATUS_NOT_ALLOWED);
+        }
+
+        String pendingPaymentCode = getPaymentStatusCode(MappingStatusConstants.PENDING);
+        ConsultantClientMapping.PaymentStatus currentPaymentStatus = mapping.getPaymentStatus();
+        if (currentPaymentStatus == null || !pendingPaymentCode.equals(currentPaymentStatus.name())) {
+            log.warn("가계약 패키지 변경 거부 (paymentStatus): mappingId={}, paymentStatus={}",
+                    id, currentPaymentStatus);
+            throw new IllegalStateException(
+                    AdminServiceUserFacingMessages.MSG_PENDING_PACKAGE_PAYMENT_STATUS_NOT_ALLOWED);
+        }
+
+        Integer preservedRemaining = mapping.getRemainingSessions();
+        Integer preservedUsed = mapping.getUsedSessions();
+
+        log.info("가계약 패키지 변경: id={}, packageName={}, packagePrice={}, totalSessions={}, remaining={}, used={}, by={}",
+                id,
+                request.getPackageName(),
+                request.getPackagePrice(),
+                request.getTotalSessions(),
+                preservedRemaining,
+                preservedUsed,
+                updatedBy);
+
+        mapping.setPackageName(request.getPackageName().trim());
+        mapping.setPackagePrice(request.getPackagePrice());
+        mapping.setTotalSessions(request.getTotalSessions());
+        // remaining=total-used 재계산 금지 — 가계약은 remaining/used 모두 0 유지
+        mapping.setRemainingSessions(preservedRemaining);
+        mapping.setUsedSessions(preservedUsed);
+
+        ConsultantClientMapping saved = mappingRepository.save(mapping);
+        // UpdateMappingInfo / createConsultationIncome / FT / schedule / ScheduleSlotGuard 호출 금지
+        log.info("가계약 패키지 변경 완료: id={}, packageName={}, packagePrice={}, totalSessions={}, remaining={}, used={}",
+                saved.getId(),
+                saved.getPackageName(),
+                saved.getPackagePrice(),
+                saved.getTotalSessions(),
+                saved.getRemainingSessions(),
+                saved.getUsedSessions());
+        return saved;
     }
 
     @Override

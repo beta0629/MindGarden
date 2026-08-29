@@ -157,6 +157,14 @@ describe('moneyCockpitData pending sums (성공 시 0)', () => {
     expect(sumPendingSalaryNet([])).toBe(0);
   });
 
+  test('sumPendingSalaryNet: 미지급 ADJUSTMENT net 포함 · PAID 제외', () => {
+    expect(sumPendingSalaryNet([
+      { status: 'PAID', netSalary: 500000, calculationKind: 'PRIMARY' },
+      { status: 'CALCULATED', netSalary: 29100, calculationKind: 'ADJUSTMENT' },
+      { status: 'APPROVED', netSalary: 1000, calculationKind: 'PRIMARY' }
+    ])).toBe(30100);
+  });
+
   test('sumPendingSalaryNet: PAID 상태는 합산에서 제외', () => {
     expect(sumPendingSalaryNet([
       { status: 'PAID', netSalary: 100000 },

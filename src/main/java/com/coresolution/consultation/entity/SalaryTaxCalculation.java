@@ -56,7 +56,7 @@ public class SalaryTaxCalculation {
     
     @DecimalMin(value = "0.0", message = "세율은 0 이상이어야 합니다.")
     @Column(name = "tax_rate", precision = 5, scale = 4, nullable = false)
-    private BigDecimal taxRate; // 0.03, 0.003, 0.10, 0.15 등
+    private BigDecimal taxRate; // WITHHOLDING_NATIONAL 0.03, LOCAL 0.003, VAT 등 (합산 0.033 미사용)
     
     @DecimalMin(value = "0.0", message = "기준금액은 0 이상이어야 합니다.")
     @Column(name = "base_amount", precision = 10, scale = 2, nullable = false)

@@ -79,6 +79,20 @@ public class SalaryCalculation extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private SalaryStatus status;
+
+    /**
+     * 급여 계산 종류: PRIMARY(월 본정산) / ADJUSTMENT(늦은 회기 추가정산).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "calculation_kind", nullable = false, length = 20)
+    @Builder.Default
+    private CalculationKind calculationKind = CalculationKind.PRIMARY;
+
+    /**
+     * ADJUSTMENT 행이 참조하는 PRIMARY salary_calculations.id. PRIMARY 는 NULL.
+     */
+    @Column(name = "parent_calculation_id")
+    private Long parentCalculationId;
     
     @Column(name = "calculated_at", nullable = false)
     private LocalDateTime calculatedAt;
@@ -110,5 +124,13 @@ public class SalaryCalculation extends BaseEntity {
     
     public enum SalaryStatus {
         PENDING, CALCULATED, APPROVED, PAID, CANCELLED
+    }
+
+    /**
+     * 급여 계산 종류.
+     */
+    public enum CalculationKind {
+        PRIMARY,
+        ADJUSTMENT
     }
 }

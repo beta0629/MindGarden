@@ -10,6 +10,7 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
+import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidationService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
 
     /**
      * SimpleJdbcCall 카탈로그(=DB명) 명시용 SSOT.
@@ -192,6 +194,11 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
             response.put("completed", completed);
             response.put("message", result.get("p_message"));
             response.put("success", true);
+
+            if (Boolean.TRUE.equals(completed)) {
+                salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(
+                        tenantId, consultantId, sessionDate);
+            }
             
             log.info("✅ PL/SQL 스케줄 자동 완료 처리 완료: 결과={}", response);
             return response;

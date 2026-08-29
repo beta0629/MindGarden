@@ -71,7 +71,7 @@ class PlSqlScheduleValidationServiceImplCreateReminderCallableTest {
                 eq(Integer.class),
                 eq("CreateConsultationRecordReminder")))
                 .thenReturn(1);
-        service = new PlSqlScheduleValidationServiceImpl(jdbcTemplate);
+        service = new PlSqlScheduleValidationServiceImpl(jdbcTemplate, org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryLateSessionAutoSyncService.class));
     }
 
     @AfterEach

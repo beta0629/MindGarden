@@ -572,6 +572,7 @@ export function sumPendingConsultationFees(raw) {
 
 /**
  * salary period 계산 — non-PAID netSalary 합.
+ * PRIMARY·ADJUSTMENT 모두 포함(미지급 ADJUSTMENT net 포함).
  * 성공 응답(빈 배열 포함) → number(0 가능). 파싱 불가면 null.
  * @param {unknown} raw
  * @returns {number|null}

@@ -64,6 +64,7 @@ import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
+import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
@@ -128,6 +129,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService;
     private final ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService;
     private final NotificationBatchSendLogRepository notificationBatchSendLogRepository;
+    private final SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
     private final ObjectMapper sessionHistoryObjectMapper = new ObjectMapper();
 
     /**
@@ -182,7 +184,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             ConsultantClientMappingHistoryService consultantClientMappingHistoryService,
             ScheduleChangeNotificationDebounceService scheduleChangeNotificationDebounceService,
             ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService,
-            NotificationBatchSendLogRepository notificationBatchSendLogRepository) {
+            NotificationBatchSendLogRepository notificationBatchSendLogRepository,
+            SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -209,6 +212,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.scheduleChangeNotificationDebounceService = scheduleChangeNotificationDebounceService;
         this.immediateReservationSmsDeferralService = immediateReservationSmsDeferralService;
         this.notificationBatchSendLogRepository = notificationBatchSendLogRepository;
+        this.salaryLateSessionAutoSyncService = salaryLateSessionAutoSyncService;
     }
     
     
@@ -352,6 +356,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             saved = update(tenantId, existingSchedule);
         } else {
             saved = scheduleRepository.save(existingSchedule);
+        }
+
+        // COMPLETED 전이 직후: 확정 급여가 있으면 자동 재계산/추가정산 (fail-soft)
+        if (previousStatus != ScheduleStatus.COMPLETED
+                && saved.getStatus() == ScheduleStatus.COMPLETED) {
+            salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(saved);
         }
         
         // 상태가 CANCELLED로 바뀐 경우 회기 1회 복원 (예약·확정·진행 중이었을 때만)
@@ -1500,6 +1510,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setStatus(ScheduleStatus.COMPLETED);
         
         Schedule completedSchedule = scheduleRepository.save(schedule);
+        salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(completedSchedule);
         
         try {
             log.info("📊 상담 완료 후 통계 자동 업데이트 시작: scheduleId={}", scheduleId);
@@ -3221,6 +3232,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                             latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                             latestSchedule.setUpdatedAt(LocalDateTime.now());
                             scheduleRepository.save(latestSchedule);
+                            salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(latestSchedule);
                             completedCount++;
                             log.info("✅ 오늘 확정 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
                                 latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getStartTime());
@@ -3253,6 +3265,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                             latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                             latestSchedule.setUpdatedAt(LocalDateTime.now());
                             scheduleRepository.save(latestSchedule);
+                            salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(latestSchedule);
                             completedCount++;
                             log.info("✅ 지난 예약 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
                                 latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getDate(), latestSchedule.getStartTime());
@@ -3280,6 +3293,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                             latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                             latestSchedule.setUpdatedAt(LocalDateTime.now());
                             scheduleRepository.save(latestSchedule);
+                            salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(latestSchedule);
                             completedCount++;
                             log.info("✅ 지난 확정 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
                                 latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getDate(), latestSchedule.getStartTime());
@@ -3309,6 +3323,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                             latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                             latestSchedule.setUpdatedAt(LocalDateTime.now());
                             scheduleRepository.save(latestSchedule);
+                            salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(latestSchedule);
                             completedCount++;
                             log.info("✅ 지난 진행중 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}",
                                     latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getDate(), latestSchedule.getStartTime());

@@ -1,5 +1,7 @@
 -- =====================================================
 -- 급여 지급 및 ERP 동기화 프로시저 (표준화 버전)
+-- calculation_id 기준 status flip + erp_sync_logs 만 (PRIMARY·ADJUSTMENT 동일).
+-- financial_transactions INSERT 없음.
 -- =====================================================
 DELIMITER //
 

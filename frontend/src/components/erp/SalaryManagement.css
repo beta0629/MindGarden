@@ -152,28 +152,9 @@
   color: var(--mg-color-text-secondary);
 }
 
+/* MGButton에 붙는 레이아웃용만 — border/padding/background는 MGButton SSOT에 위임 */
 .salary-filter-block__period-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   margin-left: var(--mg-spacing-xs);
-  padding: var(--mg-spacing-xs);
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--mg-color-text-secondary);
-  cursor: pointer;
-}
-
-.salary-filter-block__period-link:hover {
-  color: var(--mg-color-primary-main);
-  background: var(--mg-color-surface-main);
-}
-
-.salary-management__header-btn--primary {
-  background: var(--mg-color-primary-main);
-  color: var(--mg-color-background-main);
-  border: none;
 }
 
 /* ========== 탭 래퍼 ========== */
@@ -713,15 +694,6 @@
 
 [data-theme="dark"] .salary-management__main .mg-v2-form-label {
   color: var(--mg-v2-form-label);
-}
-
-[data-theme="dark"] .salary-management__main .salary-filter-block__period-link {
-  color: var(--mg-v2-form-label);
-}
-
-[data-theme="dark"] .salary-management__main .salary-filter-block__period-link:hover {
-  color: var(--mg-dark-chip-active-text);
-  background: var(--mg-dark-chip-bg);
 }
 
 /* 탭 */

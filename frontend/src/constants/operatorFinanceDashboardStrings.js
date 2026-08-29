@@ -77,6 +77,7 @@ export const OFD_MIX_CATEGORY = {
 
 /** categoryBreakdown / tx.category 코드 → 클리닉 라벨 (존재하는 키만 매핑) */
 export const OFD_CATEGORY_LABELS = {
+  상담료: OFD_MIX_CATEGORY.CONSULTATION,
   CONSULTATION: OFD_MIX_CATEGORY.CONSULTATION,
   CONSULTATION_FEE: OFD_MIX_CATEGORY.CONSULTATION_FEE,
   INCOME: OFD_MIX_CATEGORY.INCOME,
@@ -94,6 +95,32 @@ export const OFD_FACTS = {
   MAPPING_INCOME_PREFIX: '매핑으로 들어온 상담료 ',
   MAPPING_REFUND_PREFIX: '매핑 환불 '
 };
+
+/**
+ * 1인 클리닉 급여·국세청 체크리스트 문구 (지금 손볼 일 dense facts)
+ * 축하/완료 문구는 두지 않음.
+ */
+export const OFD_SALARY_CHECKLIST = {
+  PAYDAY_BEFORE_PREFIX: '급여일 ',
+  PAYDAY_BEFORE_DAY_SUFFIX: '일 · 아직 지급 전',
+  PAYDAY_BEFORE_LAST_DAY: '급여일 말일 · 아직 지급 전',
+  PAYDAY_TODAY: '오늘 급여일 · 상담사 지급',
+  PAYDAY_AFTER: '급여일 지남 · 아직 안 줌',
+  NTS_WITHHOLDING: '지급 후 원천세 신고',
+  BUSINESS_REG: '상담사 사업자 등록 여부 확인'
+};
+
+/**
+ * 급여일 전 + 미지급 코멘트
+ * @param {number} dayOfMonth 1–28 등. 0이면 말일
+ * @returns {string}
+ */
+export function formatPaydayBeforeComment(dayOfMonth) {
+  if (dayOfMonth === 0) {
+    return OFD_SALARY_CHECKLIST.PAYDAY_BEFORE_LAST_DAY;
+  }
+  return `${OFD_SALARY_CHECKLIST.PAYDAY_BEFORE_PREFIX}${dayOfMonth}${OFD_SALARY_CHECKLIST.PAYDAY_BEFORE_DAY_SUFFIX}`;
+}
 
 export const OFD_MAPPING_ENTITY = {
   INCOME: 'CONSULTANT_CLIENT_MAPPING',

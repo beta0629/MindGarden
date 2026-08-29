@@ -1,8 +1,13 @@
 -- =====================================================
 -- 통합 급여 계산 프로시저 (표준화 버전)
--- 운영 반영: 표준 시그니처 5 IN + 8 OUT (특별지원금 OUT 포함). 구버전 12파라미터는 PlSqlSalaryManagementServiceImpl 레거시 분기.
--- 배포: 저장소 `.github/workflows/deploy-procedures-production-mysql.yml` 또는 `database/schema/procedures_standardized/deploy_standardized_procedures.sh` 로 동일 본문을 적용하세요.
--- schedules 기간: 상담 일자는 date(DATE); start_time/end_time은 TIME(6)만 저장 → 기간은 s.date BETWEEN ...
+-- 시그니처: 5 IN + 8 OUT (13 params). PlSqlSalaryManagementServiceImpl JDBC 유지.
+-- 공식 SSOT: CalculateSalaryPreview 과 동일 (preview/confirm/paid net·gross·tax 일치)
+--   - FLOOR 원절사, COMPLETED hours + GREATEST overnight, gross=earnings+SS
+--   - SALARY_TAX_RATE common_codes SSOT (국세/지방세 분리 persist, 합산 0.033 금지)
+--   - FREELANCE_BASE_RATE fail closed (30000 fallback 금지)
+--   - calculation_kind PRIMARY 중복 확정 방지 (#684 late-notes)
+-- 배포: deploy-procedures-production-mysql.yml 또는 deploy_standardized_procedures.sh
+-- schedules 기간: s.date BETWEEN ...
 -- =====================================================
 DELIMITER //
 
@@ -37,9 +42,10 @@ BEGIN
     DECLARE v_total_hours DECIMAL(8,2) DEFAULT 0;
     DECLARE v_consultation_earnings DECIMAL(15,2) DEFAULT 0;
     DECLARE v_hourly_earnings DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_earnings DECIMAL(15,2) DEFAULT 0;
     DECLARE v_grade VARCHAR(20);
     DECLARE v_freelance_rate_code VARCHAR(50) DEFAULT NULL;
-    DECLARE v_grade_rate DECIMAL(10,2) DEFAULT 30000;
+    DECLARE v_grade_rate DECIMAL(10,2) DEFAULT NULL;
     DECLARE v_calculation_exists INT DEFAULT 0;
     DECLARE v_calculation_period VARCHAR(20);
     DECLARE v_consultant_count INT DEFAULT 0;
@@ -246,60 +252,72 @@ BEGIN
                         SET v_fk_salary_profile_id = LAST_INSERT_ID();
                     END IF;
 
-                    -- 프리랜서 등급별 요율: FREELANCE_BASE_RATE (users.grade CONSULTANT_* ↔ JUNIOR_RATE 등)
-                    IF v_salary_type = 'FREELANCE' AND v_grade IS NOT NULL AND v_grade != '' THEN
-                        SET v_freelance_rate_code = CASE TRIM(v_grade)
-                            WHEN 'CONSULTANT_JUNIOR' THEN 'JUNIOR_RATE'
-                            WHEN 'CONSULTANT_SENIOR' THEN 'SENIOR_RATE'
-                            WHEN 'CONSULTANT_EXPERT' THEN 'EXPERT_RATE'
-                            WHEN 'CONSULTANT_MASTER' THEN 'MASTER_RATE'
-                            ELSE CONCAT(TRIM(v_grade), '_RATE')
-                        END;
-                        SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(10,2)) INTO v_grade_rate
-                        FROM common_codes cc
-                        WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
-                          AND cc.code_group = 'FREELANCE_BASE_RATE'
-                          AND cc.code_value = v_freelance_rate_code
-                          AND cc.is_active = TRUE
-                          AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
-                        ORDER BY cc.tenant_id IS NULL ASC
-                        LIMIT 1;
-                        IF v_grade_rate IS NULL OR v_grade_rate <= 0 THEN
-                            SET v_grade_rate = 30000;
+                    -- 프리랜서 등급별 요율: FREELANCE_BASE_RATE fail closed (30000 fallback 금지)
+                    IF v_salary_type = 'FREELANCE' THEN
+                        SET v_grade_rate = NULL;
+                        IF v_grade IS NOT NULL AND v_grade != '' THEN
+                            SET v_freelance_rate_code = CASE TRIM(v_grade)
+                                WHEN 'CONSULTANT_JUNIOR' THEN 'JUNIOR_RATE'
+                                WHEN 'CONSULTANT_SENIOR' THEN 'SENIOR_RATE'
+                                WHEN 'CONSULTANT_EXPERT' THEN 'EXPERT_RATE'
+                                WHEN 'CONSULTANT_MASTER' THEN 'MASTER_RATE'
+                                ELSE CONCAT(TRIM(v_grade), '_RATE')
+                            END;
+                            SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(10,2)) INTO v_grade_rate
+                            FROM common_codes cc
+                            WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+                              AND cc.code_group = 'FREELANCE_BASE_RATE'
+                              AND cc.code_value = v_freelance_rate_code
+                              AND cc.is_active = TRUE
+                              AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+                            ORDER BY cc.tenant_id IS NULL ASC
+                            LIMIT 1;
                         END IF;
-                    ELSEIF v_salary_type = 'FREELANCE' THEN
-                        SET v_grade_rate = 30000;
+                        IF v_grade_rate IS NULL OR v_grade_rate <= 0 THEN
+                            SET p_success = FALSE;
+                            SET p_message = CONCAT(
+                                '프리랜서 등급 요율(FREELANCE_BASE_RATE)을 찾을 수 없습니다. grade=',
+                                IFNULL(v_grade, 'NULL'));
+                            SET p_calculation_id = NULL;
+                            SET p_gross_salary = 0;
+                            SET p_net_salary = 0;
+                            SET p_tax_amount = 0;
+                            SET p_erp_sync_id = NULL;
+                            SET p_special_support_amount = 0;
+                            ROLLBACK;
+                        END IF;
                     END IF;
-                    -- 5. 상담 통계 조회 (테넌트 격리)
-            SELECT 
-                COUNT(*) as total_consultations,
-                SUM(CASE WHEN s.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_consultations,
-                COALESCE(SUM(TIMESTAMPDIFF(MINUTE, s.start_time, s.end_time) / 60.0), 0) as total_hours
+
+                    IF p_success = TRUE THEN
+                    -- 5. 상담 통계 (COMPLETED 건수·시간만. overnight end<start → 0)
+                    SELECT
+                        COUNT(*) as total_consultations,
+                        COALESCE(SUM(CASE WHEN s.status = 'COMPLETED' THEN 1 ELSE 0 END), 0) as completed_consultations,
+                        COALESCE(SUM(CASE WHEN s.status = 'COMPLETED'
+                            THEN GREATEST(TIMESTAMPDIFF(MINUTE, s.start_time, s.end_time) / 60.0, 0)
+                            ELSE 0 END), 0) as total_hours
                     INTO v_total_consultations, v_completed_consultations, v_total_hours
                     FROM schedules s
-                    WHERE s.consultant_id = p_consultant_id 
+                    WHERE s.consultant_id = p_consultant_id
                       AND s.tenant_id = p_tenant_id
                       AND s.date BETWEEN p_period_start AND p_period_end
                       AND s.is_deleted = FALSE;
-                    
-                    -- 6. 급여 계산
+
+                    -- 6. 급여 계산 (v_earnings = preview 패리티)
                     IF v_salary_type = 'FREELANCE' THEN
-                        -- 프리랜서: 상담 건수 * 등급별 요율
                         SET v_consultation_earnings = v_completed_consultations * v_grade_rate;
-                        SET p_gross_salary = v_consultation_earnings;
                         SET v_hourly_earnings = 0;
+                        SET v_earnings = v_consultation_earnings;
                     ELSEIF v_salary_type = 'REGULAR' THEN
-                        -- 정규직: 기본급 + 시간당 급여
                         SET v_hourly_earnings = v_total_hours * COALESCE(v_hourly_rate, 0);
-                        SET p_gross_salary = v_base_salary + v_hourly_earnings;
                         SET v_consultation_earnings = 0;
+                        SET v_earnings = v_base_salary + v_hourly_earnings;
                     ELSE
-                        -- 기타: 기본급만
-                        SET p_gross_salary = v_base_salary;
                         SET v_hourly_earnings = 0;
                         SET v_consultation_earnings = 0;
+                        SET v_earnings = v_base_salary;
                     END IF;
-                    
+
                     -- 6b. 특별지원금 산출 (세금 전; 프리랜서 과세표준에 합산)
                     SET v_ss_total = 0;
                     SET p_special_support_amount = 0;
@@ -516,7 +534,7 @@ BEGIN
                         ROLLBACK;
                     ELSE
 
-                    -- 7. 세금 및 공제 계산
+                    -- 7. 세금 및 공제 계산 (FLOOR 원절사 — preview/confirm 패리티)
                     SET p_tax_amount = 0;
                     SET v_national_amount = 0;
                     SET v_local_wh_amount = 0;
@@ -525,60 +543,50 @@ BEGIN
                     SET v_local_income_tax = 0;
                     SET v_income_tax_amount = 0;
                     SET v_4insurance_amount = 0;
-                    
+
                     IF v_salary_type = 'FREELANCE' THEN
-                        -- 프리랜서 세금 계산 (과세표준 = 상담료 + 특별지원금)
-                        SET v_freelance_taxable = p_gross_salary + IFNULL(v_ss_total, 0);
-                        -- 1) 원천징수 = 국세 + 지방세 (합산 리터럴 금지)
-                        SET v_national_amount = v_freelance_taxable * v_national_rate;
-                        SET v_local_wh_amount = v_freelance_taxable * v_local_wh_rate;
+                        -- 과세표준 = earnings + 특별지원금 (합산 0.033 리터럴 금지)
+                        SET v_freelance_taxable = v_earnings + IFNULL(v_ss_total, 0);
+                        SET v_tax_base_gross = v_freelance_taxable;
+                        SET v_national_amount = FLOOR(v_freelance_taxable * v_national_rate);
+                        SET v_local_wh_amount = FLOOR(v_freelance_taxable * v_local_wh_rate);
                         SET v_withholding_amount = v_national_amount + v_local_wh_amount;
                         SET p_tax_amount = p_tax_amount + v_withholding_amount;
-                        
-                        -- 2) 부가세 (사업자 등록 프리랜서만) — rate from SALARY_TAX_RATE
                         IF v_is_business_registered = TRUE THEN
-                            SET v_vat_amount = v_freelance_taxable * v_vat;
+                            SET v_vat_amount = FLOOR(v_freelance_taxable * v_vat);
                             SET p_tax_amount = p_tax_amount + v_vat_amount;
                         END IF;
-                        
                     ELSEIF v_salary_type = 'REGULAR' THEN
-                        -- 정규직 세금 및 공제 계산
-                        -- 1) 소득세 (소득 구간별 차등 적용)
+                        SET v_tax_base_gross = v_earnings;
                         SET v_income_tax_rate = CASE
-                            WHEN p_gross_salary <= v_it_max1 THEN v_it_rate1
-                            WHEN p_gross_salary <= v_it_max2 THEN v_it_rate2
-                            WHEN p_gross_salary <= v_it_max3 THEN v_it_rate3
-                            WHEN p_gross_salary <= v_it_max4 THEN v_it_rate4
-                            WHEN p_gross_salary <= v_it_max5 THEN v_it_rate5
-                            WHEN p_gross_salary <= v_it_max6 THEN v_it_rate6
+                            WHEN v_earnings <= v_it_max1 THEN v_it_rate1
+                            WHEN v_earnings <= v_it_max2 THEN v_it_rate2
+                            WHEN v_earnings <= v_it_max3 THEN v_it_rate3
+                            WHEN v_earnings <= v_it_max4 THEN v_it_rate4
+                            WHEN v_earnings <= v_it_max5 THEN v_it_rate5
+                            WHEN v_earnings <= v_it_max6 THEN v_it_rate6
                             ELSE v_it_rate7
                         END;
-                        
-                        SET v_income_tax_amount = p_gross_salary * v_income_tax_rate;
+                        SET v_income_tax_amount = FLOOR(v_earnings * v_income_tax_rate);
                         SET p_tax_amount = p_tax_amount + v_income_tax_amount;
-                        -- 지방소득세: 소득세 × LOCAL_INCOME_OF_INCOME_TAX
-                        SET v_local_income_tax = ROUND(v_income_tax_amount * v_local_income_of_it, 0);
+                        -- 지방소득세: 소득세 × LOCAL_INCOME_OF_INCOME_TAX (common_codes)
+                        SET v_local_income_tax = FLOOR(v_income_tax_amount * v_local_income_of_it);
                         SET p_tax_amount = p_tax_amount + v_local_income_tax;
-                        
-                        -- 2) 4대보험 (연봉 하한: FOUR_INSURANCE_ANNUAL_MIN)
-                        IF p_gross_salary * 12 >= v_four_ins_annual_min THEN
-                            SET v_4insurance_amount = (p_gross_salary * v_pension_rate) + 
-                                                    (p_gross_salary * v_health_rate) + 
-                                                    (p_gross_salary * v_longterm_rate) + 
-                                                    (p_gross_salary * v_employment_rate);
+                        IF v_earnings * 12 >= v_four_ins_annual_min THEN
+                            SET v_4insurance_amount =
+                                FLOOR(v_earnings * v_pension_rate) +
+                                FLOOR(v_earnings * v_health_rate) +
+                                FLOOR(v_earnings * v_longterm_rate) +
+                                FLOOR(v_earnings * v_employment_rate);
                             SET p_tax_amount = p_tax_amount + v_4insurance_amount;
                         END IF;
-                    END IF;
-                    
-                    IF v_salary_type = 'FREELANCE' THEN
-                        SET v_tax_base_gross = v_freelance_taxable;
                     ELSE
-                        SET v_tax_base_gross = p_gross_salary;
+                        SET v_tax_base_gross = v_earnings;
                     END IF;
-                    
-                    SET p_net_salary = p_gross_salary + IFNULL(v_ss_total, 0) - p_tax_amount;
-                    SET p_gross_salary = p_gross_salary + IFNULL(v_ss_total, 0);
-                    
+
+                    SET p_gross_salary = v_earnings + IFNULL(v_ss_total, 0);
+                    SET p_net_salary = p_gross_salary - p_tax_amount;
+
                     -- 8. 급여 계산 데이터 저장 (테넌트 격리)
                     INSERT INTO salary_calculations (
                         consultant_id, 
@@ -728,6 +736,7 @@ BEGIN
                     
                     COMMIT;
                     END IF; -- SALARY_TAX_RATE fail-closed
+                    END IF; -- p_success after FREELANCE_BASE_RATE
                 END IF;
             END IF;
         END IF;

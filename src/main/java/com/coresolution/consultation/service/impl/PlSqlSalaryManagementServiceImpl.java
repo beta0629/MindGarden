@@ -15,13 +15,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.Optional;
-import java.math.RoundingMode;
 import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
-import com.coresolution.consultation.entity.ConsultantSalaryProfile;
-import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
-import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -73,8 +68,6 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             "급여 통계 조회에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
 
     private final JdbcTemplate jdbcTemplate;
-
-    private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     
     @Override
     public Map<String, Object> processIntegratedSalaryCalculation(
@@ -1058,7 +1051,8 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
                 return result;
             }
             if (Boolean.TRUE.equals(result.get("success"))) {
-                applyFreelancePreviewTotalsWithSpecialSupport(consultantId, tenantId, result);
+                // Preview/confirm 동일 SSOT: SP OUT만 사용. tax/net 재계산 금지.
+                derivePreviewDisplayTotalsFromSpOut(result);
             }
             log.info("✅ PL/SQL 급여 미리보기 완료: ConsultantID={}, GrossSalary={}, NetSalary={}, ConsultationCount={}",
                     consultantId, result.get("grossSalary"), result.get("netSalary"), result.get("consultationCount"));
@@ -1079,38 +1073,18 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     }
 
     /**
-     * Freelance preview: add special support to taxable gross, recompute withholding 3.3pct only
-     * (rate already includes national + local components), optional VAT 10pct for business-registered profiles.
+     * SP OUT {@code grossSalary}=earnings+특별지원. UI 상담료 라벨용으로 {@code consultationGrossSalary=gross-SS}만 파생.
+     * taxAmount/netSalary는 SP 값을 그대로 유지한다(Java 2차 계산기 금지).
      */
-    private void applyFreelancePreviewTotalsWithSpecialSupport(
-            Long consultantId, String tenantId, Map<String, Object> result) {
-        Optional<ConsultantSalaryProfile> profileOpt =
-                consultantSalaryProfileRepository.findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(
-                        tenantId, consultantId);
-        if (profileOpt.isEmpty()) {
-            return;
-        }
-        ConsultantSalaryProfile profile = profileOpt.get();
-        if (!FreelanceWithholdingTaxUtil.CONSULTANT_SALARY_TYPE_FREELANCE.equals(profile.getSalaryType())) {
-            return;
-        }
-        BigDecimal consultationGross = toBigDecimalAmount(result.get("grossSalary"));
+    private void derivePreviewDisplayTotalsFromSpOut(Map<String, Object> result) {
+        BigDecimal gross = toBigDecimalAmount(result.get("grossSalary"));
         BigDecimal specialSupport = toBigDecimalAmount(result.get("specialSupportAmount"));
-        if (specialSupport.compareTo(BigDecimal.ZERO) <= 0) {
-            return;
+        BigDecimal consultationGross = gross.subtract(specialSupport);
+        if (consultationGross.compareTo(BigDecimal.ZERO) < 0) {
+            consultationGross = BigDecimal.ZERO;
         }
-        BigDecimal taxableGross = consultationGross.add(specialSupport);
-        BigDecimal withholding = FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(taxableGross);
-        BigDecimal vat = BigDecimal.ZERO;
-        if (Boolean.TRUE.equals(profile.getIsBusinessRegistered())) {
-            vat = taxableGross.multiply(new BigDecimal("0.10")).setScale(0, RoundingMode.FLOOR);
-        }
-        BigDecimal totalTax = withholding.add(vat);
-        BigDecimal net = taxableGross.subtract(totalTax);
         result.put("consultationGrossSalary", consultationGross);
-        result.put("taxableGrossSalary", taxableGross);
-        result.put("taxAmount", totalTax);
-        result.put("netSalary", net);
+        result.put("taxableGrossSalary", gross);
     }
 
     private static BigDecimal toBigDecimalAmount(Object value) {

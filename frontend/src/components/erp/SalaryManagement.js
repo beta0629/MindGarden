@@ -197,7 +197,8 @@ const SalaryManagement = () => {
 
   /**
    * YYYY-MM 형식의 period에서 기산일 기준 {periodStart, periodEnd} 산출.
-   * 백엔드 calculation-period 응답을 우선 사용하고, 실패·미응답 시 해당 월 1일~말일로 폴백한다.
+   * 백엔드 /calculation-period(SALARY_BASE_DATE.MONTHLY_BASE_DAY)만 사용.
+   * 실패·미응답 시 calendar month silent fallback 금지 — null 반환.
    * @param {string} period YYYY-MM
    * @returns {Promise<{periodStart: string, periodEnd: string} | null>}
    */
@@ -206,8 +207,9 @@ const SalaryManagement = () => {
     const [y, m] = period.split('-');
     const yearN = parseInt(y, 10);
     const monthN = parseInt(m, 10);
-    let periodStart;
-    let periodEnd;
+    if (!Number.isFinite(yearN) || !Number.isFinite(monthN)) {
+      return null;
+    }
     try {
       const response = await StandardizedApi.get(
         SALARY_API_ENDPOINTS.CALCULATION_PERIOD,
@@ -215,18 +217,15 @@ const SalaryManagement = () => {
       );
       const data = (response && (response.data || response)) || null;
       if (data && data.periodStart && data.periodEnd) {
-        periodStart = data.periodStart;
-        periodEnd = data.periodEnd;
+        return {
+          periodStart: data.periodStart,
+          periodEnd: data.periodEnd
+        };
       }
     } catch (e) {
-      // 폴백 — 월 단위 1일~말일
+      console.error('급여 계산 기간(calculation-period) 조회 실패:', e);
     }
-    if (!periodStart || !periodEnd) {
-      periodStart = `${y}-${m}-01`;
-      const lastDay = new Date(yearN, monthN, 0).getDate();
-      periodEnd = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
-    }
-    return { periodStart, periodEnd };
+    return null;
   };
 
   /**
@@ -431,12 +430,17 @@ const SalaryManagement = () => {
         periodStart = calculationPeriodDisplay.periodStart;
         periodEnd = calculationPeriodDisplay.periodEnd;
       } else {
-        const [y, m] = selectedPeriod.split('-');
-        periodStart = `${y}-${m}-01`;
-        const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
-        periodEnd = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+        const range = await resolvePeriodRange(selectedPeriod);
+        if (!range) {
+          showNotification('급여 미리보기 기간을 산출하지 못했습니다. calculation-period API를 확인해주세요.', 'error');
+          setLoading(false);
+          return;
+        }
+        periodStart = range.periodStart;
+        periodEnd = range.periodEnd;
+        setCalculationPeriodDisplay({ periodStart, periodEnd });
       }
-      // selectedPayDay(급여 지급일 코드)는 미리보기 API에 미전달. 기간은 calculation-period·월 범위로만 산출.
+      // selectedPayDay는 미리보기 API에 미전달. 기간은 기산일(calculation-period)만 사용.
       const queryParams = new URLSearchParams({
         consultantId: selectedConsultant.id,
         periodStart,
@@ -451,19 +455,30 @@ const SalaryManagement = () => {
       } else if (response && typeof response === 'object') {
         const data = response.data ?? response;
         showNotification('급여 계산 미리보기가 완료되었습니다.', 'success');
+        const grossSalary = toSalaryNumber(data?.grossSalary);
+        const specialSupportAmount = toSalaryNumber(data?.specialSupportAmount);
+        const consultationGrossFromApi = data?.consultationGrossSalary;
+        const consultationGrossSalary =
+          consultationGrossFromApi != null && consultationGrossFromApi !== ''
+            ? toSalaryNumber(consultationGrossFromApi)
+            : Math.max(0, grossSalary - specialSupportAmount);
+        const taxableGrossSalary =
+          data?.taxableGrossSalary != null && data?.taxableGrossSalary !== ''
+            ? toSalaryNumber(data.taxableGrossSalary)
+            : grossSalary;
         setPreviewResult({
           consultantId: selectedConsultant.id,
           consultantName: selectedConsultant.name,
           period: selectedPeriod,
           periodStart,
           periodEnd,
-          grossSalary: data?.grossSalary ?? 0,
+          grossSalary,
           netSalary: data?.netSalary ?? 0,
           taxAmount: data?.taxAmount ?? 0,
           consultationCount: data?.consultationCount ?? 0,
-          specialSupportAmount: data?.specialSupportAmount ?? 0,
-          consultationGrossSalary: data?.consultationGrossSalary,
-          taxableGrossSalary: data?.taxableGrossSalary,
+          specialSupportAmount,
+          consultationGrossSalary,
+          taxableGrossSalary,
           calculatedAt: new Date().toISOString()
         });
         loadSalaryCalculations(selectedConsultant.id);
@@ -769,7 +784,13 @@ const SalaryManagement = () => {
         return;
       }
       const range = await resolvePeriodRange(selectedPeriod);
-      if (cancelled || !range) return;
+      if (cancelled) return;
+      if (!range) {
+        setCalculationPeriodDisplay(null);
+        setSalaryCalculations([]);
+        showNotification('급여 계산 기간을 가져오지 못했습니다. 기산일(calculation-period) 설정을 확인해주세요.', 'error');
+        return;
+      }
       setCalculationPeriodDisplay({
         periodStart: range.periodStart,
         periodEnd: range.periodEnd
@@ -888,8 +909,6 @@ const SalaryManagement = () => {
 
   const previewFreelanceSpecialSupportBreakdown =
     previewResult != null
-    && previewResult.consultationGrossSalary != null
-    && previewResult.consultationGrossSalary !== ''
     && toSalaryNumber(previewResult.specialSupportAmount) > 0;
 
   return (
@@ -997,11 +1016,7 @@ const SalaryManagement = () => {
                         <span className="salary-filter-block__period-text">
                           {calculationPeriodDisplay
                             ? `${calculationPeriodDisplay.periodStart} ~ ${calculationPeriodDisplay.periodEnd} (기산일 기준)`
-                            : (() => {
-                                const [y, m] = selectedPeriod.split('-');
-                                const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
-                                return `${y}-${m}-01 ~ ${y}-${m}-${String(lastDay).padStart(2, '0')} (기산일 기준, 조회 중…)`;
-                              })()}
+                            : '기산일 기간 조회 중… (calculation-period)'}
                         </span>
                         <MGButton
                           type="button"
@@ -1357,8 +1372,7 @@ const SalaryManagement = () => {
                                   {formatCurrency(
                                     previewResult.taxableGrossSalary != null && previewResult.taxableGrossSalary !== ''
                                       ? previewResult.taxableGrossSalary
-                                      : toSalaryNumber(previewResult.consultationGrossSalary)
-                                          + toSalaryNumber(previewResult.specialSupportAmount)
+                                      : previewResult.grossSalary
                                   )}
                                 </span>
                               </div>

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.PaymentNotificationCopy;
 import com.coresolution.consultation.dto.PaymentRequest;
@@ -817,22 +818,16 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         return "sha256=" + Integer.toHexString(data.hashCode());
     }
     
-     /**
-     * 결제 방법에 따른 수입 카테고리 분류
+    /**
+     * 결제 수입 category — 항상 상담료(SSOT).
+     * 결제수단은 {@link #getPaymentSubcategory(Payment)} 에만 둔다.
+     * (과거 카드결제/현금결제 등이 category 에 들어가 GROUP BY 가 쪼개지던 누수 방지)
+     *
+     * @param payment 결제 엔티티 (미사용, 시그니처 유지)
+     * @return {@link FinancialTransactionConstants#CATEGORY_CONSULTATION_FEE}
      */
     private String getPaymentCategory(Payment payment) {
-        switch (payment.getMethod()) {
-            case CARD:
-                return "카드결제";
-            case CASH:
-                return "현금결제";
-            case BANK_TRANSFER:
-                return "계좌이체";
-            case VIRTUAL_ACCOUNT:
-                return "가상계좌";
-            default:
-                return "기타결제";
-        }
+        return FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
     }
     
      /**

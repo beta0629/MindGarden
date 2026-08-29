@@ -7,16 +7,23 @@
 
 import {
   buildIncomeMixItems,
+  buildNtsChecklistComments,
   buildOutflowMixItems,
+  buildPaydayChecklistComment,
   computeSeriesMonthlyAverages,
   formatAxisTick,
   formatWonAmount,
   formatWonDisplay,
   parseFinanceDashboardPayload,
+  resolveSalaryPayDayFromCodes,
   sumPendingConsultationFees,
   sumPendingSalaryNet
 } from '../organisms/moneyCockpit/moneyCockpitData';
-import { OFD_LEDGER } from '../../../constants/operatorFinanceDashboardStrings';
+import {
+  OFD_LEDGER,
+  OFD_SALARY_CHECKLIST
+} from '../../../constants/operatorFinanceDashboardStrings';
+import { SALARY_TYPE } from '../../../constants/salaryConstants';
 
 describe('moneyCockpitData format helpers', () => {
   test('formatWonAmount(1000000) → 1,000,000', () => {
@@ -158,6 +165,14 @@ describe('moneyCockpitData pending sums (성공 시 0)', () => {
     ])).toBe(30100);
   });
 
+  test('sumPendingSalaryNet: PAID 상태는 합산에서 제외', () => {
+    expect(sumPendingSalaryNet([
+      { status: 'PAID', netSalary: 100000 },
+      { status: 'PENDING', netSalary: 50000 },
+      { paymentStatus: 'PAID', netSalary: 20000 }
+    ])).toBe(50000);
+  });
+
   test('파싱 불가 raw → null (호출부에서 행 hide)', () => {
     expect(sumPendingConsultationFees(null)).toBeNull();
     expect(sumPendingConsultationFees({ data: { notList: true } })).toBeNull();
@@ -190,10 +205,289 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     });
   });
 
+  test('미지급 급여 net은 나간 곳 mix에 넣지 않는다', () => {
+    const pendingNet = sumPendingSalaryNet([
+      { status: 'PENDING', netSalary: 999999 }
+    ]);
+    expect(pendingNet).toBe(999999);
+    const items = buildOutflowMixItems({}, []);
+    expect(items.find((i) => i.id === 'salary')).toBeUndefined();
+    expect(items.some((i) => i.amount === pendingNet)).toBe(false);
+  });
+
   test('income: breakdown 수입 키만', () => {
     const items = buildIncomeMixItems({ CONSULTATION: 0, SALARY: 200000 }, []);
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({ label: '상담료', amount: 0 });
+  });
+
+  test('income: 한글 상담료 tx 3건 합산 (breakdown 없음)', () => {
+    const transactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 },
+      { type: 'INCOME', category: '상담료', amount: 90000 },
+      { type: 'INCOME', category: '상담료', amount: 300000 }
+    ];
+    const items = buildIncomeMixItems({}, transactions);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('income: CONSULTATION + 한글 상담료 breakdown 병합 (canonical=상담료)', () => {
+    const items = buildIncomeMixItems(
+      { CONSULTATION: 100000, 상담료: 320000 },
+      []
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      id: 'income-상담료',
+      label: '상담료',
+      amount: 420000
+    });
+  });
+
+  test('income: 카드결제+상담료 breakdown/tx 합이 한 막대', () => {
+    const itemsFromBreakdown = buildIncomeMixItems(
+      { 카드결제: 150000, 상담료: 270000 },
+      []
+    );
+    expect(itemsFromBreakdown).toHaveLength(1);
+    expect(itemsFromBreakdown[0]).toMatchObject({
+      id: 'income-상담료',
+      label: '상담료',
+      amount: 420000
+    });
+
+    const itemsFromTx = buildIncomeMixItems(
+      {},
+      [
+        { type: 'INCOME', category: '카드결제', amount: 100000 },
+        { type: 'INCOME', category: '현금결제', amount: 50000 },
+        { type: 'INCOME', category: '상담료', amount: 270000 },
+        { type: 'INCOME', category: 'PAYMENT', amount: 30000 }
+      ]
+    );
+    expect(itemsFromTx).toHaveLength(1);
+    expect(itemsFromTx[0]).toMatchObject({
+      label: '상담료',
+      amount: 450000
+    });
+  });
+
+  test('income: breakdown 기간 합 우선 (최근 한 건과 무관)', () => {
+    const transactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 }
+    ];
+    const items = buildIncomeMixItems({ 상담료: 420000 }, transactions);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  /**
+   * 운영 재현: 이번 달 돈 들어온 곳 상담료 = 여러 상담료 행 합
+   * (구 CONSULTATION·결제수단-as-category 누수 포함) → 420,000원
+   */
+  test('income: 운영 재현 — 상담료+카드결제+CONSULTATION 합 420000 (tx·breakdown·기간합 우선)', () => {
+    const leakyTransactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 },
+      { type: 'INCOME', category: '카드결제', amount: 90000 },
+      { type: 'INCOME', category: 'CONSULTATION', amount: 300000 }
+    ];
+    const itemsFromTx = buildIncomeMixItems({}, leakyTransactions);
+    expect(itemsFromTx).toHaveLength(1);
+    expect(itemsFromTx[0]).toMatchObject({ label: '상담료', amount: 420000 });
+
+    const leakyBreakdown = { 상담료: 30000, 카드결제: 90000, CONSULTATION: 300000 };
+    const itemsFromBreakdown = buildIncomeMixItems(leakyBreakdown, []);
+    expect(itemsFromBreakdown).toHaveLength(1);
+    expect(itemsFromBreakdown[0]).toMatchObject({ label: '상담료', amount: 420000 });
+
+    const recentOnly = [{ type: 'INCOME', category: '상담료', amount: 30000 }];
+    const itemsPeriodOverRecent = buildIncomeMixItems(
+      { 상담료: 420000 },
+      recentOnly
+    );
+    expect(itemsPeriodOverRecent).toHaveLength(1);
+    expect(itemsPeriodOverRecent[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('income: SALARY 등 지출 키는 수입 mix에 미포함', () => {
+    const items = buildIncomeMixItems(
+      { 상담료: 420000, SALARY: 200000, RENT: 100000 },
+      []
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('outflow: 급여+SALARY 병합', () => {
+    const items = buildOutflowMixItems({ SALARY: 100000, 급여: 50000 }, []);
+    expect(items.find((i) => i.id === 'salary')).toEqual({
+      id: 'salary',
+      label: '급여',
+      amount: 150000
+    });
+  });
+
+  test('outflow: 임대료·관리비 별칭을 임대·관리로 병합', () => {
+    const items = buildOutflowMixItems(
+      { 임대료: 200000, 관리비: 30000, MANAGEMENT_FEE: 20000 },
+      []
+    );
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(250000);
+  });
+});
+
+describe('moneyCockpitData salary checklist helpers', () => {
+  test('resolveSalaryPayDayFromCodes: isDefault 우선', () => {
+    const resolved = resolveSalaryPayDayFromCodes([
+      {
+        codeValue: 'TENTH',
+        extraData: JSON.stringify({ dayOfMonth: 10, isDefault: false })
+      },
+      {
+        codeValue: 'TWENTY_FIFTH',
+        extraData: JSON.stringify({ dayOfMonth: 25, isDefault: true })
+      }
+    ]);
+    expect(resolved).toEqual({ codeValue: 'TWENTY_FIFTH', dayOfMonth: 25 });
+  });
+
+  test('resolveSalaryPayDayFromCodes: default 없으면 TENTH', () => {
+    const resolved = resolveSalaryPayDayFromCodes([
+      {
+        codeValue: 'TWENTY_FIFTH',
+        extraData: { dayOfMonth: 25, isDefault: false }
+      },
+      {
+        codeValue: 'TENTH',
+        extraData: { dayOfMonth: 10, isDefault: false }
+      }
+    ]);
+    expect(resolved).toEqual({ codeValue: 'TENTH', dayOfMonth: 10 });
+  });
+
+  test('resolveSalaryPayDayFromCodes: 빈 목록 → TENTH 폴백', () => {
+    expect(resolveSalaryPayDayFromCodes([])).toEqual({
+      codeValue: 'TENTH',
+      dayOfMonth: 10
+    });
+  });
+
+  test('resolveSalaryPayDayFromCodes: LAST_DAY dayOfMonth 0', () => {
+    const resolved = resolveSalaryPayDayFromCodes([
+      {
+        codeValue: 'LAST_DAY',
+        extraData: JSON.stringify({ dayOfMonth: 0, isDefault: true })
+      }
+    ]);
+    expect(resolved).toEqual({ codeValue: 'LAST_DAY', dayOfMonth: 0 });
+  });
+
+  test('buildPaydayChecklistComment: 미지급 + 급여일 전', () => {
+    expect(buildPaydayChecklistComment({
+      today: new Date(2026, 7, 5),
+      dayOfMonth: 10,
+      hasUnpaid: true
+    })).toBe('급여일 10일 · 아직 지급 전');
+  });
+
+  test('buildPaydayChecklistComment: 미지급 + 오늘 급여일', () => {
+    expect(buildPaydayChecklistComment({
+      today: new Date(2026, 7, 10),
+      dayOfMonth: 10,
+      hasUnpaid: true
+    })).toBe(OFD_SALARY_CHECKLIST.PAYDAY_TODAY);
+  });
+
+  test('buildPaydayChecklistComment: 미지급 + 급여일 지남', () => {
+    expect(buildPaydayChecklistComment({
+      today: new Date(2026, 7, 15),
+      dayOfMonth: 10,
+      hasUnpaid: true
+    })).toBe(OFD_SALARY_CHECKLIST.PAYDAY_AFTER);
+  });
+
+  test('buildPaydayChecklistComment: 말일 전 코멘트', () => {
+    expect(buildPaydayChecklistComment({
+      today: new Date(2026, 7, 20),
+      dayOfMonth: 0,
+      hasUnpaid: true
+    })).toBe(OFD_SALARY_CHECKLIST.PAYDAY_BEFORE_LAST_DAY);
+  });
+
+  test('buildPaydayChecklistComment: 전원 지급 시 null', () => {
+    expect(buildPaydayChecklistComment({
+      today: new Date(2026, 7, 5),
+      dayOfMonth: 10,
+      hasUnpaid: false
+    })).toBeNull();
+  });
+
+  test('buildNtsChecklistComments: 프리랜서 활동 → 원천세', () => {
+    const comments = buildNtsChecklistComments({
+      profiles: [
+        {
+          consultantId: 1,
+          salaryType: SALARY_TYPE.FREELANCE,
+          isActive: true,
+          isBusinessRegistered: true
+        }
+      ],
+      salaryCalculations: [
+        { consultantId: 1, status: 'PAID', netSalary: 100000 }
+      ]
+    });
+    expect(comments).toContain(OFD_SALARY_CHECKLIST.NTS_WITHHOLDING);
+    expect(comments).not.toContain(OFD_SALARY_CHECKLIST.BUSINESS_REG);
+  });
+
+  test('buildNtsChecklistComments: calc에 salaryType 없어도 프로필 join', () => {
+    const comments = buildNtsChecklistComments({
+      profiles: [
+        {
+          consultantId: 7,
+          salaryType: SALARY_TYPE.FREELANCE,
+          isActive: true,
+          isBusinessRegistered: true
+        }
+      ],
+      salaryCalculations: [
+        { consultantId: 7, status: 'PENDING', netSalary: 80000 }
+      ]
+    });
+    expect(comments).toEqual([OFD_SALARY_CHECKLIST.NTS_WITHHOLDING]);
+  });
+
+  test('buildNtsChecklistComments: 사업자 미등록 프리랜서', () => {
+    const comments = buildNtsChecklistComments({
+      profiles: [
+        {
+          consultantId: 2,
+          salaryType: SALARY_TYPE.FREELANCE,
+          isActive: true,
+          isBusinessRegistered: false
+        }
+      ],
+      salaryCalculations: []
+    });
+    expect(comments).toEqual([OFD_SALARY_CHECKLIST.BUSINESS_REG]);
+  });
+
+  test('buildNtsChecklistComments: 정규직만이면 빈 배열', () => {
+    const comments = buildNtsChecklistComments({
+      profiles: [
+        {
+          consultantId: 3,
+          salaryType: SALARY_TYPE.REGULAR,
+          isActive: true,
+          isBusinessRegistered: false
+        }
+      ],
+      salaryCalculations: [
+        { consultantId: 3, salaryType: SALARY_TYPE.REGULAR, status: 'PENDING' }
+      ]
+    });
+    expect(comments).toEqual([]);
   });
 });
 

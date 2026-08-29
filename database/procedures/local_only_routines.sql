@@ -179,7 +179,7 @@ BEGIN
             related_entity_id, related_entity_type, branch_code, 
             transaction_date, status, created_at, discount_code
         ) VALUES (
-            'INCOME', 'CONSULTATION', 'PACKAGE_SALE', p_original_amount,
+            'INCOME', '상담료', 'PACKAGE_SALE', p_original_amount,
             CONCAT('패키지 판매 - 원래 금액 (할인코드: ', IFNULL(p_discount_code, 'N/A'), ')'),
             p_mapping_id, 'CONSULTANT_CLIENT_MAPPING', p_branch_code,
             NOW(), 'COMPLETED', NOW(), p_discount_code
@@ -380,7 +380,8 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `CalculateSalaryPreview` */;
+/*!50003 -- !!! SSOT 2026-08-29: use procedures_standardized + V20260829_003__salary_preview_confirm_parity.sql (not this dump body)
+DROP PROCEDURE IF EXISTS `CalculateSalaryPreview` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;

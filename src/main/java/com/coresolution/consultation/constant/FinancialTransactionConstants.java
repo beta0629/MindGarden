@@ -3,8 +3,9 @@ package com.coresolution.consultation.constant;
 /**
  * 재무 거래 카테고리 관련 상수
  * <p>
- * 상담료: "CONSULTATION"과 "상담료"를 "상담료"로 통일.
- * 신규 거래는 "상담료" 사용, 기존 CONSULTATION 데이터는 필터 시 둘 다 매칭(하위호환).
+ * 상담료 SSOT: {@link #CATEGORY_CONSULTATION_FEE} ("상담료").
+ * 레거시 "CONSULTATION" 은 읽기 하위호환·필터 매칭만 허용하고, 쓰기 경로는
+ * {@link #remapCategoryToSsot(String, String)} 로 통일한다.
  * </p>
  *
  * @author MindGarden
@@ -18,6 +19,27 @@ public final class FinancialTransactionConstants {
     /** @deprecated 하위호환용. 신규 거래에는 CATEGORY_CONSULTATION_FEE 사용 */
     @Deprecated
     public static final String CATEGORY_CONSULTATION_LEGACY = "CONSULTATION";
+
+    /** 급여 지출 SSOT */
+    public static final String CATEGORY_SALARY = "SALARY";
+
+    /** 임대 지출 SSOT */
+    public static final String CATEGORY_RENT = "RENT";
+
+    /** 관리비 지출 SSOT (레거시 MANAGEMENT_FEE 통합) */
+    public static final String CATEGORY_UTILITY = "UTILITY";
+
+    /** 세금 지출 SSOT */
+    public static final String CATEGORY_TAX = "TAX";
+
+    /** 식대 지출 SSOT */
+    public static final String CATEGORY_MEAL = "MEAL";
+
+    /** 기타(수입/지출 type 내) SSOT */
+    public static final String CATEGORY_OTHER = "OTHER";
+
+    private static final String TX_TYPE_INCOME = "INCOME";
+    private static final String TX_TYPE_EXPENSE = "EXPENSE";
 
     private FinancialTransactionConstants() {
     }
@@ -53,6 +75,77 @@ public final class FinancialTransactionConstants {
             return filterCategory.equals(transactionCategory);
         }
         return isConsultationCategory(transactionCategory);
+    }
+
+    /**
+     * 쓰기 경로 category 를 확정 SSOT 로 재매핑한다.
+     * <p>
+     * 확정 쌍만 변환. PACKAGE·환불 subcategory 는 대상 아님.
+     * INCOME 결제수단 category(카드결제/PAYMENT 등) 는 상담료로 통일한다.
+     * </p>
+     *
+     * @param category 요청 category (null 허용)
+     * @param transactionType INCOME 또는 EXPENSE (null 허용 — CONSULTATION 만 type 무관 변환)
+     * @return SSOT category. null/빈값이면 그대로 반환
+     */
+    public static String remapCategoryToSsot(String category, String transactionType) {
+        if (category == null || category.isEmpty()) {
+            return category;
+        }
+        if (CATEGORY_CONSULTATION_LEGACY.equals(category)) {
+            return CATEGORY_CONSULTATION_FEE;
+        }
+
+        String type = transactionType != null ? transactionType.trim().toUpperCase() : "";
+
+        if (TX_TYPE_EXPENSE.equals(type)) {
+            if ("급여".equals(category)) {
+                return CATEGORY_SALARY;
+            }
+            if ("임대료".equals(category)) {
+                return CATEGORY_RENT;
+            }
+            if ("MANAGEMENT_FEE".equals(category) || "관리비".equals(category)) {
+                return CATEGORY_UTILITY;
+            }
+            if ("세금".equals(category)) {
+                return CATEGORY_TAX;
+            }
+            if ("식대".equals(category)) {
+                return CATEGORY_MEAL;
+            }
+            if ("기타".equals(category) || "기타잡비".equals(category)) {
+                return CATEGORY_OTHER;
+            }
+        }
+
+        if (TX_TYPE_INCOME.equals(type)) {
+            if (isPaymentMethodAsIncomeCategory(category)) {
+                return CATEGORY_CONSULTATION_FEE;
+            }
+            if ("기타".equals(category) || "기타수입".equals(category)) {
+                return CATEGORY_OTHER;
+            }
+        }
+
+        return category;
+    }
+
+    /**
+     * INCOME category 에 결제수단이 들어간 레거시 값 여부.
+     * (카드결제 등이 category 로 저장되어 상담료 GROUP BY 가 쪼개지던 누수)
+     *
+     * @param category category 문자열
+     * @return 결제수단-as-category 이면 true
+     */
+    private static boolean isPaymentMethodAsIncomeCategory(String category) {
+        return "카드결제".equals(category)
+                || "현금결제".equals(category)
+                || "계좌이체".equals(category)
+                || "가상계좌".equals(category)
+                || "기타결제".equals(category)
+                || "PAYMENT".equals(category)
+                || "결제".equals(category);
     }
 
     /** 환불 관련 서브카테고리 (부채 계정 경유 분개 적용) */

@@ -23,6 +23,15 @@ class SalaryTaxTypeDisplayLabelsTest {
     }
 
     @Test
+    @DisplayName("WITHHOLDING_NATIONAL / LOCAL → 분리 라벨")
+    void withholdingNationalLocal_labels() {
+        assertEquals("원천징수 국세(3%)",
+                SalaryTaxTypeDisplayLabels.labelForTaxType("WITHHOLDING_NATIONAL"));
+        assertEquals("원천징수 지방세(0.3%)",
+                SalaryTaxTypeDisplayLabels.labelForTaxType("WITHHOLDING_LOCAL"));
+    }
+
+    @Test
     @DisplayName("미등록 코드는 기타(코드) 형식")
     void unknownCode_miscFormat() {
         assertEquals("기타(UNKNOWN_TAX_X)", SalaryTaxTypeDisplayLabels.labelForTaxType("UNKNOWN_TAX_X"));

@@ -8,9 +8,12 @@ import java.math.RoundingMode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.coresolution.consultation.constant.salary.SalaryTaxRates;
+import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
+
 /**
  * 늦은 회기 Recalc/Adjustment 금액 정책(expected vs actual) 단위 검증.
- * SP 본문 SSOT와 동일 규칙: FREELANCE rate×sessions, withholding 3.3%, silent 30000 fallback 금지.
+ * SP 본문 SSOT와 동일 규칙: FREELANCE rate×sessions, 원천 = 국세+지방, silent 30000 fallback 금지.
  *
  * @author CoreSolution
  * @since 2026-08-29
@@ -19,7 +22,6 @@ import org.junit.jupiter.api.Test;
 class SalaryLateNotesAdjustmentNumericPolicyTest {
 
     private static final BigDecimal FREELANCE_RATE = new BigDecimal("30000");
-    private static final BigDecimal WITHHOLDING_RATE = new BigDecimal("0.033");
 
     @Test
     @DisplayName("Confirm 2 sessions × 30000 = 60000; Recalc 3 → 90000")
@@ -33,15 +35,23 @@ class SalaryLateNotesAdjustmentNumericPolicyTest {
     }
 
     @Test
-    @DisplayName("Adjustment delta 1 × 30000; tax on 30000 only = 990; net = 29010")
+    @DisplayName("Adjustment delta 1 × 30000; tax = 30000×0.03 + 30000×0.003 = 900+90 = 990; net = 29010")
     void freelanceAdjustmentTaxOnDeltaOnly() {
         BigDecimal gross = FREELANCE_RATE.multiply(BigDecimal.valueOf(1));
-        BigDecimal tax = gross.multiply(WITHHOLDING_RATE).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal national = gross.multiply(SalaryTaxRates.WITHHOLDING_NATIONAL_RATE)
+                .setScale(0, RoundingMode.HALF_UP);
+        BigDecimal local = gross.multiply(SalaryTaxRates.WITHHOLDING_LOCAL_RATE)
+                .setScale(0, RoundingMode.HALF_UP);
+        BigDecimal tax = national.add(local);
         BigDecimal net = gross.subtract(tax);
 
         assertThat(gross).isEqualByComparingTo("30000");
-        assertThat(tax).isEqualByComparingTo("990.00");
-        assertThat(net).isEqualByComparingTo("29010.00");
+        assertThat(national).isEqualByComparingTo("900");
+        assertThat(local).isEqualByComparingTo("90");
+        assertThat(tax).isEqualByComparingTo("990");
+        assertThat(net).isEqualByComparingTo("29010");
+        assertThat(FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(gross))
+                .isEqualByComparingTo("990");
     }
 
     @Test

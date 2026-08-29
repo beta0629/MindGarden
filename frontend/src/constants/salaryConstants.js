@@ -165,6 +165,8 @@ export const TAX_BREAKDOWN_LABELS = {
  */
 export const SALARY_TAX_ROW_TYPE_LABELS = {
   WITHHOLDING_TAX: '원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)',
+  WITHHOLDING_NATIONAL: '원천징수 국세(3%)',
+  WITHHOLDING_LOCAL: '원천징수 지방세(0.3%)',
   LOCAL_INCOME_TAX: '지방소득세(정규직 등)',
   VAT: '부가가치세',
   INCOME_TAX: '소득세',

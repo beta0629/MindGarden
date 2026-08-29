@@ -495,7 +495,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                 taxByType.put(taxType, sum);
                 switch (taxType) {
                     case "WITHHOLDING_TAX":
-                        breakdown.put("withholdingTax", sum);
+                    case "WITHHOLDING_NATIONAL":
+                    case "WITHHOLDING_LOCAL":
+                        breakdown.put("withholdingTax",
+                                Optional.ofNullable(breakdown.get("withholdingTax")).orElse(BigDecimal.ZERO)
+                                        .add(sum));
                         break;
                     case "LOCAL_INCOME_TAX":
                         breakdown.put("localIncomeTax", sum);

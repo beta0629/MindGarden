@@ -385,4 +385,51 @@ describe('filterHiddenAdminLnbItems', () => {
     expect(filterHiddenAdminLnbItems(null)).toBeNull();
     expect(filterHiddenAdminLnbItems(undefined)).toBeUndefined();
   });
+
+  test('운영·재무 그룹에서 미사용 조달·재고·구매 경로만 제거', () => {
+    const items = [
+      {
+        to: '/erp/dashboard',
+        label: '운영·재무',
+        icon: 'BRIEFCASE',
+        end: false,
+        children: [
+          { to: '/erp/dashboard', label: '운영 현황', icon: 'LINE_CHART', end: true },
+          { to: '/erp/purchase', label: '조달·품목', icon: 'SHOPPING_CART', end: true },
+          { to: '/erp/items', label: '아이템', icon: 'PACKAGE', end: true },
+          { to: '/erp/inventory', label: '재고', icon: 'BOX', end: true },
+          { to: '/erp/purchase-requests', label: '구매 요청', icon: 'SHOPPING_CART', end: true },
+          { to: '/erp/orders', label: '주문', icon: 'TRUCK', end: true },
+          { to: '/admin/erp/purchase', label: '구매(어드민)', icon: 'SHOPPING_CART', end: true },
+          { to: '/erp/financial', label: '거래·정산', icon: 'CALCULATOR', end: true },
+          { to: '/erp/budget', label: '예산 관리', icon: 'PIE_CHART', end: true },
+          { to: '/erp/salary', label: '급여 관리', icon: 'BANKNOTE', end: true }
+        ]
+      }
+    ];
+
+    const result = filterHiddenAdminLnbItems(items);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].children.map((c) => c.to)).toEqual([
+      '/erp/dashboard',
+      '/erp/financial',
+      '/erp/budget',
+      '/erp/salary'
+    ]);
+  });
+
+  test('루트에 purchase/items 숨김 경로가 있으면 해당 항목 제거', () => {
+    const items = [
+      { to: '/erp/dashboard', label: '운영 현황', icon: 'LAYOUT_DASHBOARD', end: true },
+      { to: '/erp/purchase', label: '조달·품목', icon: 'SHOPPING_CART', end: true },
+      { to: '/erp/items', label: '아이템', icon: 'PACKAGE', end: true },
+      { to: '/erp/budget', label: '예산 관리', icon: 'PIE_CHART', end: true }
+    ];
+
+    const result = filterHiddenAdminLnbItems(items);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((c) => c.to)).toEqual(['/erp/dashboard', '/erp/budget']);
+  });
 });

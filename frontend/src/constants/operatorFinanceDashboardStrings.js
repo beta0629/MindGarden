@@ -115,8 +115,7 @@ export const OFD_LEDGER = {
 
 export const OFD_LINKS = {
   FINANCIAL: { label: '장부', path: '/erp/financial' },
-  SALARY: { label: '상담사 지급', path: '/erp/salary' },
-  PURCHASE: { label: '센터 경비', path: '/erp/purchase' }
+  SALARY: { label: '상담사 지급', path: '/erp/salary' }
 };
 
 export const OFD_LOADING = {

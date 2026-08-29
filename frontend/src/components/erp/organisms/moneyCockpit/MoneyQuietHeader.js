@@ -18,7 +18,7 @@ import {
   OFD_PERIOD_OPTIONS
 } from '../../../../constants/operatorFinanceDashboardStrings';
 
-const LINK_ITEMS = [OFD_LINKS.FINANCIAL, OFD_LINKS.SALARY, OFD_LINKS.PURCHASE];
+const LINK_ITEMS = [OFD_LINKS.FINANCIAL, OFD_LINKS.SALARY];
 
 /**
  * @param {object} props

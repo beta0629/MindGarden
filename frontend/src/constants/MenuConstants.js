@@ -190,18 +190,6 @@ const DEFAULT_MENU_CONFIG = {
     order: 30,
     requiresFeature: 'ERP_ENABLED'
   },
-  'purchase-management': {
-    category: MENU_CATEGORIES.ERP,
-    permission: MENU_PERMISSION_LEVELS.PERMISSION_BASED,
-    requiredPermission: 'ERP_ACCESS', // 동적 권한 시스템 사용
-    menuGroup: 'ERP_MENU', // 권한 그룹 참조
-    label: '구매 관리',
-    path: '/erp/purchase',
-    icon: 'shopping_cart',
-    order: 31,
-    requiresFeature: 'ERP_ENABLED'
-  },
-  
   // 관리자 메뉴
   'admin-dashboard': {
     category: MENU_CATEGORIES.ADMIN,

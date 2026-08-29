@@ -852,16 +852,23 @@ jobs:
             "
             rm -f /tmp/flyway_003_repair.err
             # root 우선(sudo mysql) → mindgarden 재시도 — 매핑 프로시저 배포와 동일 패턴
+            # stderr 힌트: CLI password 경고만 제거하고 Access denied 본문은 유지(using password: *** 로 치환)
             FLYWAY_003_DELETED=$(sudo mysql -h localhost -u root -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "$FLYWAY_003_SQL" 2>/tmp/flyway_003_repair.err) \
               || FLYWAY_003_DELETED=""
             if ! echo "${FLYWAY_003_DELETED}" | grep -Eq '^[0-9]+$'; then
-              FLYWAY_003_ERR_HINT=$(tr -d '\r' </tmp/flyway_003_repair.err 2>/dev/null | grep -viE 'password|passwd|secret' | head -c 200 || true)
+              FLYWAY_003_ERR_HINT=$(tr -d '\r' </tmp/flyway_003_repair.err 2>/dev/null \
+                | grep -vi 'Using a password on the command line' \
+                | sed -E 's/(using password: )(YES|NO)/\1***/Ig; s/-p[^[:space:]]*/-p***/g' \
+                | head -n 2 | tr '\n' ' ' | head -c 200 || true)
               echo "⚠️ root mysql repair 실패 — mindgarden 계정으로 재시도... hint: ${FLYWAY_003_ERR_HINT:-none}"
               FLYWAY_003_DELETED=$(mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "$FLYWAY_003_SQL" 2>/tmp/flyway_003_repair.err) \
                 || FLYWAY_003_DELETED="ERR"
             fi
             if [ "$FLYWAY_003_DELETED" = "ERR" ] || ! echo "${FLYWAY_003_DELETED}" | grep -Eq '^[0-9]+$'; then
-              FLYWAY_003_ERR_HINT=$(tr -d '\r' </tmp/flyway_003_repair.err 2>/dev/null | grep -viE 'password|passwd|secret' | head -c 200 || true)
+              FLYWAY_003_ERR_HINT=$(tr -d '\r' </tmp/flyway_003_repair.err 2>/dev/null \
+                | grep -vi 'Using a password on the command line' \
+                | sed -E 's/(using password: )(YES|NO)/\1***/Ig; s/-p[^[:space:]]*/-p***/g' \
+                | head -n 2 | tr '\n' ' ' | head -c 200 || true)
               echo "::error::V20260829_003 flyway success=0 repair mysql 호출 실패 — 배포 중단 (계속하면 Flyway validate 실패). hint: ${FLYWAY_003_ERR_HINT:-none}"
               echo "수동 repair: docs/troubleshooting/PROD_FLYWAY_V20260829_003_REPAIR.md"
               rm -f /tmp/flyway_003_repair.err

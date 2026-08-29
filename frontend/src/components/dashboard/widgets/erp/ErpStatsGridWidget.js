@@ -142,9 +142,6 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       case 'expenses':
         navigate('/erp/financial-management?tab=expenses');
         break;
-      case 'purchase':
-        navigate('/erp/purchase-management');
-        break;
       case 'budget':
         // 앱 라우트는 /erp/budget · /erp/budgets (예산 관리 단일 화면)
         navigate('/erp/budget');
@@ -201,17 +198,6 @@ const ErpStatsGridWidget = ({ widget, user }) => {
       value: formatPercent(displayStats.profitMargin / 100),
       category: 'margin',
       onClick: () => handleStatClick('revenue')
-    },
-    {
-      id: 'purchase-requests',
-      title: '구매 요청',
-      value: displayStats.purchaseRequests.toLocaleString(),
-      category: 'purchase',
-      badge: displayStats.purchaseRequests > 0 ? {
-        text: `${displayStats.approvedRequests}/승인`,
-        variant: 'info'
-      } : null,
-      onClick: () => handleStatClick('purchase')
     },
     {
       id: 'budget',

@@ -125,16 +125,6 @@ const ErpManagementGridWidget = ({ widget, user }) => {
       roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]
     },
     {
-      id: 'purchase-management',
-      title: '구매 관리',
-      description: '구매 요청 및 승인 관리',
-      iconName: 'SHOPPING_CART',
-      url: '/erp/purchase',
-      permission: 'ERP_PURCHASE_READ',
-      category: 'purchase',
-      roles: [USER_ROLES.CONSULTANT, USER_ROLES.ADMIN]
-    },
-    {
       id: 'budget-management',
       title: '예산 관리',
       description: '예산 계획 및 모니터링',

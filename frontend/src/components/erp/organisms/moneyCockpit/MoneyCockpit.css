@@ -435,7 +435,8 @@
   white-space: nowrap;
 }
 
-.money-ledger__amount {
+.money-ledger__table th.money-ledger__amount,
+.money-ledger__table td.money-ledger__amount {
   text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

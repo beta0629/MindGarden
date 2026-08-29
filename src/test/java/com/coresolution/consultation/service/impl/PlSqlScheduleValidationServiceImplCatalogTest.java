@@ -49,7 +49,7 @@ class PlSqlScheduleValidationServiceImplCatalogTest {
     @BeforeEach
     void setUp() {
         jdbcTemplate = Mockito.mock(JdbcTemplate.class);
-        service = new PlSqlScheduleValidationServiceImpl(jdbcTemplate);
+        service = new PlSqlScheduleValidationServiceImpl(jdbcTemplate, org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryLateSessionAutoSyncService.class));
         ReflectionTestUtils.setField(service, "dbSchemaName", UT_SCHEMA);
     }
 
@@ -134,7 +134,7 @@ class PlSqlScheduleValidationServiceImplCatalogTest {
     @DisplayName("dbSchemaName 기본값(@Value 미주입)도 core_solution — P0 회귀 차단")
     void dbSchemaName_defaultsToCoreSolution() {
         PlSqlScheduleValidationServiceImpl freshService =
-                new PlSqlScheduleValidationServiceImpl(jdbcTemplate);
+                new PlSqlScheduleValidationServiceImpl(jdbcTemplate, org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryLateSessionAutoSyncService.class));
         Object dbSchemaName = ReflectionTestUtils.getField(freshService, "dbSchemaName");
         assertThat(dbSchemaName).isEqualTo("core_solution");
     }

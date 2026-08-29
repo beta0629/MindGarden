@@ -199,6 +199,7 @@ class AdminServiceImplRefundHistoryDateFormatTest {
                 userService,
                 consultantSalaryProfileRepository,
                 scheduleService,
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryLateSessionAutoSyncService.class),
                 professionalProviderTypeService,
                 mappingSettlementNotificationHelper,
                 batchNotificationDispatchService,

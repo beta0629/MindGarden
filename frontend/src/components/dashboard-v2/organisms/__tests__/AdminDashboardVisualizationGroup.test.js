@@ -32,6 +32,10 @@ jest.mock('react-i18next', () => ({
         'admin:dashboard.v2.viz.subtitleWeekly': '최근 6주',
         'admin:dashboard.v2.viz.subtitleMonthly': '최근 12개월',
         'admin:dashboard.v2.viz.subtitleYearly': '최근 5년',
+        'admin:dashboard.v2.viz.subtitleTrendDaily': '최근 14일 추이',
+        'admin:dashboard.v2.viz.subtitleTrendWeekly': '최근 6주 추이',
+        'admin:dashboard.v2.viz.subtitleTrendMonthly': '최근 12개월 추이',
+        'admin:dashboard.v2.viz.subtitleTrendYearly': '최근 5년 추이',
         'admin:dashboard.v2.viz.emptyPeriod': '해당 기간의 데이터가 없습니다',
         'admin:dashboard.v2.viz.seriesBooked': '예약',
         'admin:dashboard.v2.viz.seriesCompleted': '완료',
@@ -353,7 +357,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(bookedGrowth).toHaveTextContent('▲ 신규');
   });
 
-  test('감소 시 info(블루) 배지, 동일 시 neutral 배지를 노출한다', () => {
+  test('감소 시 neutral(teal CSS)·동일 시 neutral 배지를 노출한다', () => {
     const downFlatStats = {
       ...sampleStats,
       monthlyData: [
@@ -366,7 +370,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     );
     const bookedGrowth = screen.getByTestId('viz-kpi-card-booked-growth');
     const completedGrowth = screen.getByTestId('viz-kpi-card-completed-growth');
-    expect(bookedGrowth).toHaveAttribute('data-variant', 'info');
+    expect(bookedGrowth).toHaveAttribute('data-variant', 'neutral');
     expect(bookedGrowth).toHaveAttribute('data-tone', 'down');
     expect(bookedGrowth).toHaveTextContent('▼ 50%');
     expect(completedGrowth).toHaveAttribute('data-variant', 'neutral');
@@ -391,7 +395,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     expect(screen.queryByTestId('viz-stacked-bar-growth-completed')).not.toBeInTheDocument();
   });
 
-  test('차트 카드 감소 배지는 info(블루)·상담 현황 제목 옆에 노출한다', () => {
+  test('차트 카드 감소 배지는 neutral(teal)·상담 현황 제목 옆에 노출한다', () => {
     const downStats = {
       ...sampleStats,
       monthlyData: [
@@ -404,7 +408,7 @@ describe('AdminDashboardVisualizationGroup', () => {
     );
     const stackedCard = screen.getByTestId('viz-stacked-bar-card');
     const completedBadge = within(stackedCard).getByTestId('viz-stacked-bar-growth-completed');
-    expect(completedBadge).toHaveAttribute('data-variant', 'info');
+    expect(completedBadge).toHaveAttribute('data-variant', 'neutral');
     expect(completedBadge).toHaveAttribute('data-tone', 'down');
     expect(completedBadge).toHaveTextContent('완료 지난달 대비 ▼ 50%');
   });

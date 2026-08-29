@@ -831,30 +831,95 @@ jobs:
               sudo rm -f "$INCOMING"
             fi
 
-            # [핫픽스 2026-08-29] V20260829_003 Flyway success=0 원샷 repair
+            # [핫픽스 2026-08-29] V20260829_003 Flyway success=0 원샷 repair (fail-closed)
             # 배경: prod run 2069 — DROP PROCEDURE CalculateSalaryPreview → ERROR 1227 SYSTEM_USER.
+            # 배경: prod run 2070 (Actions 33235859586) — repair 가 mind_garden 하드코딩 + stderr 삼킴 +
+            #       mindgarden 계정 DELETE 실패를 warning 만 하고 계속 → success=0 잔존 → green FlywayValidateException.
             # seed-only 마이그 재적용을 위해 실패 행만 제거. success=1 은 절대 삭제하지 않음.
+            # DB_* SSOT: /etc/mindgarden/prod.env → inactive unit Environment → PRODUCTION_DB_PASSWORD.
+            # 기본 DB_NAME=core_solution (mind_garden 하드코딩 금지).
             # 참조: docs/troubleshooting/PROD_FLYWAY_V20260829_003_REPAIR.md
-            echo "🔧 [V20260829_003] flyway_schema_history success=0 원샷 repair (비활성 슬롯 재시작 전)"
-            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
-              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — V20260829_003 flyway success=0 repair 스킵 (배포는 계속)"
+            echo "🔧 [V20260829_003] flyway_schema_history success=0 원샷 repair (비활성 슬롯 재시작 전, fail-closed)"
+            FLYWAY_003_PROD_ENV="/etc/mindgarden/prod.env"
+            # prod.env 키 안전 파싱 (source 금지 — 비밀·기타 키 로그 누출 방지). SESSION_COOKIE_DOMAIN 파싱과 동일 패턴.
+            _flyway003_parse_env_key() {
+              _f3_file="$1"
+              _f3_key="$2"
+              _f3_raw=$(grep -E "^[[:space:]]*${_f3_key}[[:space:]]*=" "$_f3_file" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | tr -d '\r')
+              _f3_raw=$(printf '%s' "$_f3_raw" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              _f3_raw=$(printf '%s' "$_f3_raw" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+              printf '%s' "$_f3_raw"
+            }
+            DBH=""
+            DBU=""
+            DBP=""
+            DBN=""
+            if [ -f "$FLYWAY_003_PROD_ENV" ]; then
+              DBH="$(_flyway003_parse_env_key "$FLYWAY_003_PROD_ENV" DB_HOST)"
+              DBU="$(_flyway003_parse_env_key "$FLYWAY_003_PROD_ENV" DB_USERNAME)"
+              DBP="$(_flyway003_parse_env_key "$FLYWAY_003_PROD_ENV" DB_PASSWORD)"
+              DBN="$(_flyway003_parse_env_key "$FLYWAY_003_PROD_ENV" DB_NAME)"
+              echo "📋 [V20260829_003] DB_* 로드: $FLYWAY_003_PROD_ENV (host/user/name only; password 미출력)"
+            fi
+            # Fallback: inactive unit Environment (health-check 스텝과 동일 패턴)
+            for kv in $(systemctl show "$INACTIVE_UNIT" -p Environment --value 2>/dev/null | tr ' ' '\n' | grep '^DB_'); do
+              case "$kv" in
+                DB_HOST=*) [ -z "$DBH" ] && DBH="${kv#DB_HOST=}" ;;
+                DB_USERNAME=*) [ -z "$DBU" ] && DBU="${kv#DB_USERNAME=}" ;;
+                DB_PASSWORD=*) [ -z "$DBP" ] && DBP="${kv#DB_PASSWORD=}" ;;
+                DB_NAME=*) [ -z "$DBN" ] && DBN="${kv#DB_NAME=}" ;;
+              esac
+            done
+            if [ -z "$DBP" ] && [ -n "${PRODUCTION_DB_PASSWORD:-}" ]; then
+              DBP="$PRODUCTION_DB_PASSWORD"
+              echo "📋 [V20260829_003] DB_PASSWORD fallback: PRODUCTION_DB_PASSWORD"
+            fi
+            # SSOT 이후에도 비어 있을 때만 기본값 (DB_NAME 은 core_solution — mind_garden 금지)
+            DBH="${DBH:-localhost}"
+            DBU="${DBU:-mindgarden}"
+            DBN="${DBN:-core_solution}"
+            echo "📋 [V20260829_003] repair target: host=$DBH user=$DBU db=$DBN"
+            if [ -z "$DBP" ]; then
+              echo "::error::V20260829_003 flyway success=0 repair 실패 — DB_PASSWORD/PRODUCTION_DB_PASSWORD 없음. 비활성 슬롯 재시작·Nginx 전환 중단. 수동 repair: docs/troubleshooting/PROD_FLYWAY_V20260829_003_REPAIR.md"
+              exit 1
+            fi
+            FLYWAY_003_SQL="DELETE FROM flyway_schema_history WHERE success = 0 AND (version IN ('20260829.003', '20260829_003') OR script LIKE '%V20260829_003%'); SELECT ROW_COUNT();"
+            FLYWAY_003_ERR="/tmp/flyway_003_repair.err.$$"
+            FLYWAY_003_DELETED=""
+            FLYWAY_003_RC=1
+            FLYWAY_003_VIA=""
+            rm -f "$FLYWAY_003_ERR"
+            # Attempt 1: app user (prod.env / unit DB_*) — stderr 보존, 삼키지 않음
+            FLYWAY_003_DELETED=$(mysql -h "$DBH" -u "$DBU" -p"$DBP" "$DBN" -N -e "$FLYWAY_003_SQL" 2>"$FLYWAY_003_ERR") && FLYWAY_003_RC=0 || FLYWAY_003_RC=$?
+            if [ "$FLYWAY_003_RC" -eq 0 ]; then
+              FLYWAY_003_VIA="app-user($DBU)"
             else
-              FLYWAY_003_DELETED=$(mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "
-                DELETE FROM flyway_schema_history
-                WHERE success = 0
-                  AND (
-                    version IN ('20260829.003', '20260829_003')
-                    OR script LIKE '%V20260829_003%'
-                  );
-                SELECT ROW_COUNT();
-              " 2>/dev/null || echo "ERR")
-              if [ "$FLYWAY_003_DELETED" = "ERR" ] || [ -z "$FLYWAY_003_DELETED" ]; then
-                echo "::warning::V20260829_003 flyway success=0 repair mysql 호출 실패 — 배포는 계속 (수동 repair 문서 참고)"
-              elif [ "$FLYWAY_003_DELETED" = "0" ]; then
-                echo "::notice::V20260829_003 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
-              else
-                echo "✅ V20260829_003 flyway success=0 행 삭제: ${FLYWAY_003_DELETED}건"
+              FLYWAY_003_ERR_SNIP=$(head -c 240 "$FLYWAY_003_ERR" 2>/dev/null | tr '\n' ' ' | sed 's/-p[^ ]*/-p***/g' || true)
+              echo "⚠️ [V20260829_003] app-user mysql 실패 (rc=$FLYWAY_003_RC): ${FLYWAY_003_ERR_SNIP:-"(no stderr)"} — root 재시도"
+              # Attempt 2: sudo mysql root (매핑 프로시저 블록과 동일 패턴) — PRODUCTION_DB_PASSWORD 사용
+              if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
+                echo "::error::V20260829_003 flyway success=0 repair 실패 — app-user DELETE 실패 후 PRODUCTION_DB_PASSWORD 없어 root 재시도 불가. 비활성 슬롯 재시작·Nginx 전환 중단. 수동 repair: docs/troubleshooting/PROD_FLYWAY_V20260829_003_REPAIR.md"
+                rm -f "$FLYWAY_003_ERR"
+                exit 1
               fi
+              rm -f "$FLYWAY_003_ERR"
+              FLYWAY_003_DELETED=$(sudo mysql -h localhost -u root -p"$PRODUCTION_DB_PASSWORD" "$DBN" -N -e "$FLYWAY_003_SQL" 2>"$FLYWAY_003_ERR") && FLYWAY_003_RC=0 || FLYWAY_003_RC=$?
+              if [ "$FLYWAY_003_RC" -eq 0 ]; then
+                FLYWAY_003_VIA="root"
+              else
+                FLYWAY_003_ERR_SNIP=$(head -c 240 "$FLYWAY_003_ERR" 2>/dev/null | tr '\n' ' ' | sed 's/-p[^ ]*/-p***/g' || true)
+                echo "::error::V20260829_003 flyway success=0 repair mysql 전부 실패 (app-user+root). rc=$FLYWAY_003_RC err=${FLYWAY_003_ERR_SNIP:-"(no stderr)"}. 비활성 슬롯 재시작·Nginx 전환 중단. 수동 repair: docs/troubleshooting/PROD_FLYWAY_V20260829_003_REPAIR.md"
+                rm -f "$FLYWAY_003_ERR"
+                exit 1
+              fi
+            fi
+            rm -f "$FLYWAY_003_ERR"
+            FLYWAY_003_DELETED=$(printf '%s' "$FLYWAY_003_DELETED" | tr -d '\r' | tail -n1 | tr -d '[:space:]')
+            echo "✅ [V20260829_003] repair 성공 via=$FLYWAY_003_VIA deleted_rows=${FLYWAY_003_DELETED:-0}"
+            if [ "${FLYWAY_003_DELETED:-0}" = "0" ]; then
+              echo "::notice::V20260829_003 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
+            else
+              echo "✅ V20260829_003 flyway success=0 행 삭제: ${FLYWAY_003_DELETED}건"
             fi
           
             echo "🔄 비활성 슬롯 서비스 재시작: $INACTIVE_UNIT"

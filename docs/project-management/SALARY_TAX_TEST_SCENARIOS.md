@@ -155,7 +155,7 @@
 | U-PARITY-05 | FREELANCE_BASE_RATE 없음 | 실패 메시지 (30000 폴백 금지) |
 | U-PARITY-06 | Java preview | `applyFreelancePreviewTotalsWithSpecialSupport` 제거; SP OUT 유지 + consultationGross=gross−SS 파생만 |
 
-**구현 참조**: `V20260829_001__salary_preview_confirm_parity.sql`, `SalaryPreviewConfirmParityFormulaTest`, `PlSqlSalaryManagementServiceImplSpecialSupportBranchTest`.
+**구현 참조**: `V20260829_003__salary_preview_confirm_parity.sql`, `SalaryPreviewConfirmParityFormulaTest`, `PlSqlSalaryManagementServiceImplSpecialSupportBranchTest`.
 
 ---
 

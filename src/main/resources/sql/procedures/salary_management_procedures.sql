@@ -3,7 +3,7 @@
 -- 본 파일은 레거시 아카이브입니다. 운영·개발 프로시저 배포 스크립트에 포함하지 마세요.
 -- SSOT: database/schema/procedures_standardized/CalculateSalaryPreview_standardized.sql
 --       database/schema/procedures_standardized/ProcessIntegratedSalaryCalculation_standardized.sql
---       + Flyway V20260829_001__salary_preview_confirm_parity.sql
+--       + Flyway V20260829_003__salary_preview_confirm_parity.sql
 -- =====================================================
 -- 급여관리 PL/SQL 프로시저 (레거시 — 구버전 시그니처·30000 폴백 포함, 배포 금지)
 -- 한글 인코딩 설정

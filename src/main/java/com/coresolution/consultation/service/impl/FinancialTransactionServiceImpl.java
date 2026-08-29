@@ -257,10 +257,20 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
 
     /**
      * 요청·테넌트 설정으로 {@link FinancialTransaction#cardMerchantFeeAmount} 를 산출합니다.
-     * PG JSON·매핑 등에서 이미 채워진 수수료는 유지합니다. 카드가 아니면 0.
+     * <p>
+     * 거래일이 {@link com.coresolution.consultation.constant.CardMerchantFeeConstants#FEE_EFFECTIVE_FROM}
+     * 미만이면 요청에 fee&gt;0이 있어도 0을 강제합니다.
+     * 적용일 이후·요청 fee&gt;0이면 PG/미리보기 값을 유지하고, 아니면 평균 요율로 산출합니다.
+     * </p>
      */
     private BigDecimal resolveCardMerchantFeeForRequest(String tenantId, FinancialTransactionRequest request) {
         if (request == null) {
+            return BigDecimal.ZERO;
+        }
+        java.time.LocalDate transactionDate = request.getTransactionDate();
+        if (transactionDate == null
+                || transactionDate.isBefore(
+                        com.coresolution.consultation.constant.CardMerchantFeeConstants.FEE_EFFECTIVE_FROM)) {
             return BigDecimal.ZERO;
         }
         if (request.getCardMerchantFeeAmount() != null
@@ -278,7 +288,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 tenantId,
                 request.getAmount(),
                 request.getPaymentMethod(),
-                request.getCardIssuer());
+                request.getCardIssuer(),
+                transactionDate);
     }
 
     /**
@@ -817,14 +828,23 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         com.coresolution.consultation.util.TaxCalculationUtil.TaxCalculationResult taxResult = 
             com.coresolution.consultation.util.TaxCalculationUtil.calculateTaxFromPayment(payment.getAmount());
 
+        java.time.LocalDate paymentTransactionDate = payment.getCreatedAt() != null
+                ? payment.getCreatedAt().toLocalDate()
+                : null;
         BigDecimal cardMerchantFee = resolveCardMerchantFeeFromPayment(payment);
-        if (payment.getMethod() == com.coresolution.consultation.entity.Payment.PaymentMethod.CARD
+        if (paymentTransactionDate == null
+                || paymentTransactionDate.isBefore(
+                        com.coresolution.consultation.constant.CardMerchantFeeConstants.FEE_EFFECTIVE_FROM)) {
+            // 적용일 전: PG JSON fee>0이어도 0 강제
+            cardMerchantFee = BigDecimal.ZERO;
+        } else if (payment.getMethod() == com.coresolution.consultation.entity.Payment.PaymentMethod.CARD
                 && cardMerchantFee.compareTo(BigDecimal.ZERO) <= 0) {
             cardMerchantFee = cardMerchantFeeResolutionService.resolveFeeAmount(
                     tenantId,
                     payment.getAmount(),
                     com.coresolution.consultation.constant.CardMerchantFeeConstants.PAYMENT_METHOD_CARD,
-                    null);
+                    null,
+                    paymentTransactionDate);
         }
         
         String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
@@ -841,7 +861,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .taxAmount(taxResult.getVatAmount()) // 부가세 금액
                 .cardMerchantFeeAmount(cardMerchantFee)
                 .description(description != null ? description : payment.getDescription())
-                .transactionDate(payment.getCreatedAt().toLocalDate())
+                .transactionDate(paymentTransactionDate)
                 .relatedEntityId(paymentId)
                 .relatedEntityType(paymentEntityType)
                 .taxIncluded(true)
@@ -1394,8 +1414,16 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .filter(t -> FinancialTransaction.TransactionType.EXPENSE.equals(t.getTransactionType()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-            BigDecimal netProfit = totalRevenue.subtract(totalExpenses);
+
+            BigDecimal totalCardMerchantFee = transactions.stream()
+                    .filter(t -> FinancialTransaction.TransactionType.INCOME.equals(t.getTransactionType()))
+                    .map(t -> t.getCardMerchantFeeAmount() != null
+                            ? t.getCardMerchantFeeAmount() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 가상 EXPENSE 없이 D5 fee를 지출 차감에 반영
+            BigDecimal totalExpensesEffective = totalExpenses.add(totalCardMerchantFee);
+            BigDecimal netProfit = totalRevenue.subtract(totalExpensesEffective);
             
             List<Map<String, Object>> transactionList = transactions.stream()
                     .map(this::convertTransactionToMap)
@@ -1421,7 +1449,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             Map<String, Object> result = new HashMap<>();
             result.put("summary", Map.of(
                 "totalRevenue", totalRevenue.longValue(),
-                "totalExpenses", totalExpenses.longValue(),
+                "totalExpenses", totalExpensesEffective.longValue(),
+                "totalCardMerchantFee", totalCardMerchantFee.longValue(),
                 "netProfit", netProfit.longValue(),
                 "transactionCount", transactions.size()
             ));
@@ -1429,8 +1458,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             result.put("categoryBreakdown", categoryBreakdown);
             result.put("monthlyStats", monthlyStats);
             
-            log.info("✅ 재무 데이터 조회 완료 (테넌트 전체): 수익={}, 지출={}, 순이익={}", 
-                    totalRevenue, totalExpenses, netProfit);
+            log.info("✅ 재무 데이터 조회 완료 (테넌트 전체): 수익={}, 지출(수수료포함)={}, 카드수수료={}, 순이익={}", 
+                    totalRevenue, totalExpensesEffective, totalCardMerchantFee, netProfit);
             
             return result;
             
@@ -1441,6 +1470,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             result.put("summary", Map.of(
                 "totalRevenue", 0L,
                 "totalExpenses", 0L,
+                "totalCardMerchantFee", 0L,
                 "netProfit", 0L,
                 "transactionCount", 0
             ));
@@ -1467,6 +1497,11 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         map.put("description", transaction.getDescription());
         map.put("amount", transaction.getAmount().longValue());
         map.put("status", transaction.getStatus() != null ? transaction.getStatus().name() : "UNKNOWN");
+        BigDecimal fee = transaction.getCardMerchantFeeAmount() != null
+                ? transaction.getCardMerchantFeeAmount() : BigDecimal.ZERO;
+        map.put("cardMerchantFeeAmount", fee.longValue());
+        BigDecimal netDeposit = transaction.resolveCardNetDepositAmount();
+        map.put("cardNetDepositAmount", netDeposit != null ? netDeposit.longValue() : null);
         return map;
     }
     

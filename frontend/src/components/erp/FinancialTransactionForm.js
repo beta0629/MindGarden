@@ -31,9 +31,8 @@ import {
   FINANCIAL_CARD_NET_DEPOSIT_LABEL
 } from '../../utils/erpFinancialAmountStack';
 import {
-  calculateCardMerchantFee,
   isCardPaymentMethod,
-  resolveCardMerchantFeeRate
+  resolveCardMerchantFeeAmount
 } from '../../utils/cardMerchantFeeCalculation';
 import { FM_CARD_FEE, FM_MONEY_RECORD } from '../../constants/financialManagementStrings';
 import {
@@ -286,10 +285,13 @@ const FinancialTransactionForm = ({
           if (issuerTrim) {
             payload.cardIssuer = issuerTrim;
           }
-          const previewRate = resolveCardMerchantFeeRate(cardFeeSettings, issuerTrim);
-          const previewFee = previewRate != null
-            ? calculateCardMerchantFee(amount, previewRate)
-            : 0;
+          const previewFee = resolveCardMerchantFeeAmount(
+            cardFeeSettings,
+            amount,
+            paymentTrim,
+            issuerTrim,
+            formData.transactionDate
+          );
           if (previewFee > 0) {
             payload.cardMerchantFeeAmount = previewFee;
           }
@@ -487,12 +489,24 @@ const FinancialTransactionForm = ({
       return 0;
     }
     const amountNum = Number(String(formData.amount || '').replace(/,/g, ''));
-    const rate = resolveCardMerchantFeeRate(cardFeeSettings, formData.cardIssuer);
-    if (!Number.isFinite(amountNum) || amountNum <= 0 || rate == null) {
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
       return 0;
     }
-    return calculateCardMerchantFee(amountNum, rate);
-  }, [formData.transactionType, formData.paymentMethod, formData.amount, formData.cardIssuer, cardFeeSettings]);
+    return resolveCardMerchantFeeAmount(
+      cardFeeSettings,
+      amountNum,
+      formData.paymentMethod,
+      formData.cardIssuer,
+      formData.transactionDate
+    );
+  }, [
+    formData.transactionType,
+    formData.paymentMethod,
+    formData.amount,
+    formData.cardIssuer,
+    formData.transactionDate,
+    cardFeeSettings
+  ]);
 
   const showIncomePaymentMethod = formData.transactionType === 'INCOME';
   const showCardIssuerSelect = showIncomePaymentMethod && isCardPaymentMethod(formData.paymentMethod);

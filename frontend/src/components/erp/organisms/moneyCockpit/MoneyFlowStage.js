@@ -39,10 +39,10 @@ const BAR_VALUE_LABEL_FONT_SIZE = 12;
 const AVG_LINE_LABEL_FONT_SIZE = 11;
 
 const CHART_TOKEN_VARS = {
-  INCOME_FILL: '--mg-primary-500',
-  INCOME_BORDER: '--mg-primary-700',
-  EXPENSE_FILL: '--mg-color-error',
-  EXPENSE_BORDER: '--mg-error-700',
+  INCOME_FILL: '--mg-color-error',
+  INCOME_BORDER: '--mg-error-700',
+  EXPENSE_FILL: '--mg-v2-color-semantic-info',
+  EXPENSE_BORDER: '--mg-v2-color-semantic-info-dark',
   GRID: '--mg-color-border-main',
   TICK: '--mg-color-text-secondary'
 };

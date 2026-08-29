@@ -317,12 +317,12 @@
 
 .operator-ledger-table__amount--income {
   font-weight: 600;
-  color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-semantic-error);
 }
 
 .operator-ledger-table__amount--expense {
   font-weight: 600;
-  color: var(--mg-v2-color-text-primary);
+  color: var(--mg-v2-color-semantic-info);
 }
 
 .operator-ledger-table__amount-stack {

@@ -129,6 +129,7 @@ export const getConsultantGradeUpdateUrl = (consultantId) =>
  */
 export const TAX_BREAKDOWN_ORDER = [
   'withholdingTax',
+  'localWithholdingTax',
   'localIncomeTax',
   'vat',
   'incomeTax',
@@ -137,7 +138,8 @@ export const TAX_BREAKDOWN_ORDER = [
 ];
 
 export const TAX_BREAKDOWN_LABELS = {
-  withholdingTax: '국세·지방세(원천징수, 합계 3.3%)',
+  withholdingTax: '원천징수(국세 3%)',
+  localWithholdingTax: '원천징수(지방세 0.3%)',
   localIncomeTax: '지방소득세(정규직 등)',
   vat: '부가가치세',
   incomeTax: '소득세',
@@ -147,10 +149,11 @@ export const TAX_BREAKDOWN_LABELS = {
 
 /**
  * salary_tax_calculations.tax_type 및 세금 내역 API 한글 표시
- * 사업소득 원천징수: 국세 3% + 지방세 0.3% = 합계 3.3%(원 미만 절사는 별도 유틸 규칙)
+ * 사업소득 원천징수: 국세 3% + 지방세 0.3% 각각 FLOOR 후 합산 (결합 3.3% 단일 곱셈 금지)
  */
 export const SALARY_TAX_ROW_TYPE_LABELS = {
-  WITHHOLDING_TAX: '원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)',
+  WITHHOLDING_TAX: '원천징수(국세 3%)',
+  LOCAL_WITHHOLDING_TAX: '원천징수(지방세 0.3%)',
   LOCAL_INCOME_TAX: '지방소득세(정규직 등)',
   VAT: '부가가치세',
   INCOME_TAX: '소득세',

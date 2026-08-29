@@ -106,6 +106,7 @@ const TaxManagement = () => {
 
     const taxTypes = [
         { value: 'WITHHOLDING_TAX', label: SALARY_TAX_ROW_TYPE_LABELS.WITHHOLDING_TAX, colorKey: 'primary' },
+        { value: 'LOCAL_WITHHOLDING_TAX', label: SALARY_TAX_ROW_TYPE_LABELS.LOCAL_WITHHOLDING_TAX, colorKey: 'primary' },
         { value: 'VAT', label: SALARY_TAX_ROW_TYPE_LABELS.VAT, colorKey: 'success' },
         { value: 'INCOME_TAX', label: SALARY_TAX_ROW_TYPE_LABELS.INCOME_TAX, colorKey: 'error' },
         { value: 'FOUR_INSURANCE', label: SALARY_TAX_ROW_TYPE_LABELS.FOUR_INSURANCE, colorKey: 'info' },

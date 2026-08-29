@@ -52,7 +52,8 @@ BEGIN
     DECLARE v_require_paid BOOLEAN DEFAULT TRUE;
     DECLARE v_paid_flag_txt VARCHAR(32);
 
-    DECLARE v_withholding_tax DECIMAL(5,4) DEFAULT 0.033;
+    DECLARE v_national_withholding_rate DECIMAL(5,4) DEFAULT NULL;
+    DECLARE v_local_withholding_rate DECIMAL(5,4) DEFAULT NULL;
     DECLARE v_vat DECIMAL(5,4) DEFAULT 0.10;
     DECLARE v_income_tax_rate DECIMAL(5,4) DEFAULT 0;
     DECLARE v_income_tax_amount DECIMAL(15,2) DEFAULT 0;
@@ -63,6 +64,8 @@ BEGIN
     DECLARE v_employment_rate DECIMAL(5,4) DEFAULT 0.009;
 
     DECLARE v_withholding_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_national_withholding_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_local_withholding_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_vat_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_local_income_tax DECIMAL(15,2) DEFAULT 0;
     DECLARE v_4insurance_amount DECIMAL(15,2) DEFAULT 0;
@@ -255,6 +258,44 @@ BEGIN
                             SET p_erp_sync_id = NULL;
                             SET p_special_support_amount = 0;
                             ROLLBACK;
+                        ELSE
+                            SET v_national_withholding_rate = NULL;
+                            SET v_local_withholding_rate = NULL;
+                            SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+                                INTO v_national_withholding_rate
+                            FROM common_codes cc
+                            WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+                              AND cc.code_group = 'FREELANCE_WITHHOLDING_TAX'
+                              AND cc.code_value = 'NATIONAL'
+                              AND cc.is_active = TRUE
+                              AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+                            ORDER BY cc.tenant_id IS NULL ASC
+                            LIMIT 1;
+                            SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+                                INTO v_local_withholding_rate
+                            FROM common_codes cc
+                            WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+                              AND cc.code_group = 'FREELANCE_WITHHOLDING_TAX'
+                              AND cc.code_value = 'LOCAL'
+                              AND cc.is_active = TRUE
+                              AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+                            ORDER BY cc.tenant_id IS NULL ASC
+                            LIMIT 1;
+                            IF v_national_withholding_rate IS NULL OR v_national_withholding_rate <= 0
+                               OR v_local_withholding_rate IS NULL OR v_local_withholding_rate <= 0 THEN
+                                SET p_success = FALSE;
+                                SET p_message = CONCAT(
+                                    '프리랜서 원천징수 요율(FREELANCE_WITHHOLDING_TAX NATIONAL/LOCAL)을 찾을 수 없습니다. ',
+                                    'national=', IFNULL(v_national_withholding_rate, 'NULL'),
+                                    ', local=', IFNULL(v_local_withholding_rate, 'NULL'));
+                                SET p_calculation_id = NULL;
+                                SET p_gross_salary = 0;
+                                SET p_net_salary = 0;
+                                SET p_tax_amount = 0;
+                                SET p_erp_sync_id = NULL;
+                                SET p_special_support_amount = 0;
+                                ROLLBACK;
+                            END IF;
                         END IF;
                     END IF;
 
@@ -337,6 +378,8 @@ BEGIN
 
                     SET p_tax_amount = 0;
                     SET v_withholding_amount = 0;
+                    SET v_national_withholding_amount = 0;
+                    SET v_local_withholding_amount = 0;
                     SET v_vat_amount = 0;
                     SET v_local_income_tax = 0;
                     SET v_income_tax_amount = 0;
@@ -345,7 +388,9 @@ BEGIN
                     IF v_salary_type = 'FREELANCE' THEN
                         SET v_freelance_taxable = v_earnings + IFNULL(v_ss_total, 0);
                         SET v_tax_base_gross = v_freelance_taxable;
-                        SET v_withholding_amount = FLOOR(v_freelance_taxable * v_withholding_tax);
+                        SET v_national_withholding_amount = FLOOR(v_freelance_taxable * v_national_withholding_rate);
+                        SET v_local_withholding_amount = FLOOR(v_freelance_taxable * v_local_withholding_rate);
+                        SET v_withholding_amount = v_national_withholding_amount + v_local_withholding_amount;
                         SET p_tax_amount = p_tax_amount + v_withholding_amount;
                         IF v_is_business_registered = TRUE THEN
                             SET v_vat_amount = FLOOR(v_freelance_taxable * v_vat);
@@ -462,13 +507,24 @@ BEGIN
                           AND (v_require_paid = FALSE OR m.payment_status IN ('CONFIRMED', 'PAY', 'DEP', 'APPROVED'));
                     END IF;
 
-                    IF v_withholding_amount > 0 THEN
+                    IF v_national_withholding_amount > 0 THEN
                         INSERT INTO salary_tax_calculations (
                             tenant_id, calculation_id, tax_type, tax_name, tax_rate,
                             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
                         ) VALUES (
-                            p_tenant_id, p_calculation_id, 'WITHHOLDING_TAX', '원천징수', v_withholding_tax,
-                            v_tax_base_gross, v_tax_base_gross, v_withholding_amount, '프리랜서 원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)', TRUE, NOW(), NOW()
+                            p_tenant_id, p_calculation_id, 'WITHHOLDING_TAX', '원천징수(국세)', v_national_withholding_rate,
+                            v_tax_base_gross, v_tax_base_gross, v_national_withholding_amount,
+                            '프리랜서 사업소득 원천징수 국세', TRUE, NOW(), NOW()
+                        );
+                    END IF;
+                    IF v_local_withholding_amount > 0 THEN
+                        INSERT INTO salary_tax_calculations (
+                            tenant_id, calculation_id, tax_type, tax_name, tax_rate,
+                            base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
+                        ) VALUES (
+                            p_tenant_id, p_calculation_id, 'LOCAL_WITHHOLDING_TAX', '원천징수(지방세)', v_local_withholding_rate,
+                            v_tax_base_gross, v_tax_base_gross, v_local_withholding_amount,
+                            '프리랜서 사업소득 원천징수 지방세', TRUE, NOW(), NOW()
                         );
                     END IF;
                     IF v_local_income_tax > 0 THEN

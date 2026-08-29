@@ -5,10 +5,11 @@
 --   5–11 OUT: success, message, gross_salary, net_salary, tax_amount, consultation_count, special_support_amount
 -- 공식 SSOT: ProcessIntegratedSalaryCalculation 과 동일 (preview/confirm/paid net·gross·tax 일치)
 --   - REGULAR tax: 소득세 + 지방소득세 10% (FLOOR)
---   - Hours: COMPLETED 만 TIMESTAMPDIFF 합산
+--   - Hours: COMPLETED 만, GREATEST(TIMESTAMPDIFF(...), 0)
 --   - Gross OUT = earnings + 특별지원금; Net = gross - tax
---   - 원 단위: withholding/VAT/income/local/4insurance 각 FLOOR
---   - FREELANCE rate: FREELANCE_BASE_RATE 미해석 시 실패 (30000 폴백 금지)
+--   - 원 단위: national/local withholding/VAT/income/local/4insurance 각 FLOOR
+--   - FREELANCE base: FREELANCE_BASE_RATE 미해석 시 실패 (30000 폴백 금지)
+--   - FREELANCE withholding: FREELANCE_WITHHOLDING_TAX NATIONAL+LOCAL (결합 0.033 금지)
 -- 기간 필터: schedules.date BETWEEN period
 -- =====================================================
 DELIMITER //
@@ -50,7 +51,8 @@ BEGIN
     DECLARE v_require_paid BOOLEAN DEFAULT TRUE;
     DECLARE v_paid_flag_txt VARCHAR(32);
 
-    DECLARE v_withholding_tax DECIMAL(5,4) DEFAULT 0.033;
+    DECLARE v_national_withholding_rate DECIMAL(5,4) DEFAULT NULL;
+    DECLARE v_local_withholding_rate DECIMAL(5,4) DEFAULT NULL;
     DECLARE v_vat DECIMAL(5,4) DEFAULT 0.10;
     DECLARE v_income_tax_rate DECIMAL(5,4) DEFAULT 0;
     DECLARE v_income_tax_amount DECIMAL(15,2) DEFAULT 0;
@@ -61,6 +63,8 @@ BEGIN
     DECLARE v_employment_rate DECIMAL(5,4) DEFAULT 0.009;
 
     DECLARE v_withholding_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_national_withholding_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_local_withholding_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_vat_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_local_income_tax DECIMAL(15,2) DEFAULT 0;
     DECLARE v_4insurance_amount DECIMAL(15,2) DEFAULT 0;
@@ -190,6 +194,43 @@ BEGIN
             SET p_special_support_amount = 0;
             LEAVE main;
         END IF;
+
+        SET v_national_withholding_rate = NULL;
+        SET v_local_withholding_rate = NULL;
+        SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+            INTO v_national_withholding_rate
+        FROM common_codes cc
+        WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+          AND cc.code_group = 'FREELANCE_WITHHOLDING_TAX'
+          AND cc.code_value = 'NATIONAL'
+          AND cc.is_active = TRUE
+          AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+        ORDER BY cc.tenant_id IS NULL ASC
+        LIMIT 1;
+        SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+            INTO v_local_withholding_rate
+        FROM common_codes cc
+        WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+          AND cc.code_group = 'FREELANCE_WITHHOLDING_TAX'
+          AND cc.code_value = 'LOCAL'
+          AND cc.is_active = TRUE
+          AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+        ORDER BY cc.tenant_id IS NULL ASC
+        LIMIT 1;
+        IF v_national_withholding_rate IS NULL OR v_national_withholding_rate <= 0
+           OR v_local_withholding_rate IS NULL OR v_local_withholding_rate <= 0 THEN
+            SET p_success = FALSE;
+            SET p_message = CONCAT(
+                '프리랜서 원천징수 요율(FREELANCE_WITHHOLDING_TAX NATIONAL/LOCAL)을 찾을 수 없습니다. ',
+                'national=', IFNULL(v_national_withholding_rate, 'NULL'),
+                ', local=', IFNULL(v_local_withholding_rate, 'NULL'));
+            SET p_gross_salary = 0;
+            SET p_net_salary = 0;
+            SET p_tax_amount = 0;
+            SET p_consultation_count = 0;
+            SET p_special_support_amount = 0;
+            LEAVE main;
+        END IF;
     END IF;
 
     -- COMPLETED 건수·시간만 (cancelled 등 제외). overnight(end<start) TIMESTAMPDIFF 음수 → 0
@@ -270,6 +311,8 @@ BEGIN
 
     SET p_tax_amount = 0;
     SET v_withholding_amount = 0;
+    SET v_national_withholding_amount = 0;
+    SET v_local_withholding_amount = 0;
     SET v_vat_amount = 0;
     SET v_local_income_tax = 0;
     SET v_income_tax_amount = 0;
@@ -277,7 +320,9 @@ BEGIN
 
     IF v_salary_type = 'FREELANCE' THEN
         SET v_freelance_taxable = v_earnings + IFNULL(v_ss_total, 0);
-        SET v_withholding_amount = FLOOR(v_freelance_taxable * v_withholding_tax);
+        SET v_national_withholding_amount = FLOOR(v_freelance_taxable * v_national_withholding_rate);
+        SET v_local_withholding_amount = FLOOR(v_freelance_taxable * v_local_withholding_rate);
+        SET v_withholding_amount = v_national_withholding_amount + v_local_withholding_amount;
         SET p_tax_amount = p_tax_amount + v_withholding_amount;
         IF v_is_business_registered = TRUE THEN
             SET v_vat_amount = FLOOR(v_freelance_taxable * v_vat);

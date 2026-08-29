@@ -151,9 +151,11 @@
 | U-PARITY-01 | FREELANCE COMPLETED 2 + CANCELLED 1, rate 50000 | earnings 100000 (CANCELLED 제외) |
 | U-PARITY-02 | REGULAR hours | COMPLETED만 TIMESTAMPDIFF 합산 |
 | U-PARITY-03 | REGULAR tax | 소득세 FLOOR + 지방소득세 FLOOR(income×0.10); Preview=Confirm |
-| U-PARITY-04 | SS>0 FREELANCE | gross=earnings+SS, tax=FLOOR((e+SS)×0.033), net=gross−tax; Preview=Confirm 0원 차 |
+| U-PARITY-04 | SS>0 FREELANCE | gross=earnings+SS, tax=FLOOR(g×0.03)+FLOOR(g×0.003), net=gross−tax; Preview=Confirm 0원 차 |
 | U-PARITY-05 | FREELANCE_BASE_RATE 없음 | 실패 메시지 (30000 폴백 금지) |
 | U-PARITY-06 | Java preview | `applyFreelancePreviewTotalsWithSpecialSupport` 제거; SP OUT 유지 + consultationGross=gross−SS 파생만 |
+| U-PARITY-07 | FREELANCE withholding 30000 | 국세 900 + 지방세 90 (결합 0.033 리터럴·단일 곱셈 금지; NATIONAL/LOCAL common_codes) |
+| U-PARITY-08 | FREELANCE_WITHHOLDING_TAX 없음 | Preview/Confirm fail closed (p_success=FALSE) |
 
 **구현 참조**: `V20260829_003__salary_preview_confirm_parity.sql`, `SalaryPreviewConfirmParityFormulaTest`, `PlSqlSalaryManagementServiceImplSpecialSupportBranchTest`.
 

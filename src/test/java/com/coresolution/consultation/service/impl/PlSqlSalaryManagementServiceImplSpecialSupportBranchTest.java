@@ -103,7 +103,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
                 argThat((String sql) -> sql.contains("CalculateSalaryPreview") && sql.contains("COUNT")),
                 eq(Integer.class)))
                 .thenReturn(11);
-        // SP SSOT: gross=earnings+SS=130000, tax=FLOOR(130000*0.033)=4290, net=125710
+        // SP SSOT: gross=earnings+SS=130000, tax=FLOOR(130000*0.03)+FLOOR(130000*0.003)=3900+390=4290, net=125710
         when(callableStatement.getObject(5)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(6)).thenReturn("ok");
         when(callableStatement.getBigDecimal(7)).thenReturn(new BigDecimal("130000"));

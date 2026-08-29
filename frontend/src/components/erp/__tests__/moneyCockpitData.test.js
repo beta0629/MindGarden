@@ -186,13 +186,17 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
   });
 
-  test('income: CONSULTATION + 한글 상담료 breakdown 병합', () => {
+  test('income: CONSULTATION + 한글 상담료 breakdown 병합 (canonical=상담료)', () => {
     const items = buildIncomeMixItems(
       { CONSULTATION: 100000, 상담료: 320000 },
       []
     );
     expect(items).toHaveLength(1);
-    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+    expect(items[0]).toMatchObject({
+      id: 'income-상담료',
+      label: '상담료',
+      amount: 420000
+    });
   });
 
   test('income: breakdown 기간 합 우선 (최근 한 건과 무관)', () => {
@@ -211,5 +215,22 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     );
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('outflow: 급여+SALARY 병합', () => {
+    const items = buildOutflowMixItems({ SALARY: 100000, 급여: 50000 }, []);
+    expect(items.find((i) => i.id === 'salary')).toEqual({
+      id: 'salary',
+      label: '급여',
+      amount: 150000
+    });
+  });
+
+  test('outflow: 임대료·관리비 별칭을 임대·관리로 병합', () => {
+    const items = buildOutflowMixItems(
+      { 임대료: 200000, 관리비: 30000, MANAGEMENT_FEE: 20000 },
+      []
+    );
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(250000);
   });
 });

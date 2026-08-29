@@ -12,7 +12,7 @@
 
 /** 유형 선택 후 1행에 항상 노출할 codeValue (API 존재 시만 칩 렌더) */
 export const FM_TX_FIXED_CATEGORY_CODES = {
-  INCOME: ['CONSULTATION', 'OTHER'],
+  INCOME: ['상담료', 'OTHER'],
   EXPENSE: ['RENT', 'SALARY', 'UTILITY', 'TAX', 'MEAL', 'OTHER']
 };
 

@@ -125,6 +125,7 @@ export const FM_TX_TYPE = {
 };
 
 export const FM_CATEGORY_DISPLAY = {
+  상담료: '상담료',
   CONSULTATION: '상담료',
   CONSULTATION_FEE: '상담료',
   SALARY: '급여',
@@ -223,7 +224,7 @@ export const FM_FILTER_TX_TYPE_OPTIONS = [
 
 export const FM_FILTER_CATEGORY_OPTIONS = [
   { value: 'ALL', label: '전체' },
-  { value: 'CONSULTATION', label: '상담료' },
+  { value: '상담료', label: '상담료' },
   { value: 'SALARY', label: '급여' },
   { value: 'RENT', label: '임대료' },
   { value: 'UTILITY', label: '관리비' },

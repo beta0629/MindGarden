@@ -1,7 +1,7 @@
 /**
  * LedgerCalendar — Operator Ledger month grid (Clinic-OS tokens only)
  *
- * Calendar money figures: blue = income, red = expense (scanability).
+ * Calendar money figures (Korean stock): red = income (들어온 돈), blue = expense (나간 돈).
  * Page chrome / CTAs stay dashboard teal — see CLINIC_OS_ADMIN_VISUAL_SSOT.md §B.
  *
  * @author CoreSolution
@@ -148,18 +148,18 @@
 }
 
 .ledger-calendar__cell--has-income:not(.ledger-calendar__cell--selected) {
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 8%, var(--mg-v2-color-neutral-50));
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 8%, var(--mg-v2-color-neutral-50));
 }
 
 .ledger-calendar__cell--has-expense:not(.ledger-calendar__cell--selected) {
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 8%, var(--mg-v2-color-neutral-50));
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 8%, var(--mg-v2-color-neutral-50));
 }
 
 .ledger-calendar__cell--has-income.ledger-calendar__cell--has-expense:not(.ledger-calendar__cell--selected) {
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--mg-v2-color-semantic-info) 10%, var(--mg-v2-color-neutral-50)) 50%,
-    color-mix(in srgb, var(--mg-v2-color-semantic-error) 10%, var(--mg-v2-color-neutral-50)) 50%
+    color-mix(in srgb, var(--mg-v2-color-semantic-error) 10%, var(--mg-v2-color-neutral-50)) 50%,
+    color-mix(in srgb, var(--mg-v2-color-semantic-info) 10%, var(--mg-v2-color-neutral-50)) 50%
   );
 }
 
@@ -204,13 +204,13 @@
 }
 
 .ledger-calendar__amount--income {
-  color: var(--mg-v2-color-semantic-info);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
+  color: var(--mg-v2-color-semantic-error);
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 12%, transparent);
 }
 
 .ledger-calendar__amount--expense {
-  color: var(--mg-v2-color-semantic-error);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 12%, transparent);
+  color: var(--mg-v2-color-semantic-info);
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
 }
 
 .ledger-calendar__dots {
@@ -227,11 +227,11 @@
 }
 
 .ledger-calendar__dot--income {
-  background: var(--mg-v2-color-semantic-info);
+  background: var(--mg-v2-color-semantic-error);
 }
 
 .ledger-calendar__dot--expense {
-  background: var(--mg-v2-color-semantic-error);
+  background: var(--mg-v2-color-semantic-info);
 }
 
 .ledger-calendar__detail {
@@ -343,13 +343,13 @@
 }
 
 .ledger-calendar__detail-amount--income {
-  color: var(--mg-v2-color-semantic-info);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
+  color: var(--mg-v2-color-semantic-error);
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 12%, transparent);
 }
 
 .ledger-calendar__detail-amount--expense {
-  color: var(--mg-v2-color-semantic-error);
-  background: color-mix(in srgb, var(--mg-v2-color-semantic-error) 12%, transparent);
+  color: var(--mg-v2-color-semantic-info);
+  background: color-mix(in srgb, var(--mg-v2-color-semantic-info) 12%, transparent);
 }
 
 .ledger-calendar__detail-actions {

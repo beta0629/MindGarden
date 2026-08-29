@@ -80,7 +80,8 @@ public final class FinancialTransactionConstants {
     /**
      * 쓰기 경로 category 를 확정 SSOT 로 재매핑한다.
      * <p>
-     * 확정 쌍만 변환. 결제수단(PAYMENT/카드결제 등)·PACKAGE·환불 subcategory 는 대상 아님.
+     * 확정 쌍만 변환. PACKAGE·환불 subcategory 는 대상 아님.
+     * INCOME 결제수단 category(카드결제/PAYMENT 등) 는 상담료로 통일한다.
      * </p>
      *
      * @param category 요청 category (null 허용)
@@ -119,12 +120,32 @@ public final class FinancialTransactionConstants {
         }
 
         if (TX_TYPE_INCOME.equals(type)) {
+            if (isPaymentMethodAsIncomeCategory(category)) {
+                return CATEGORY_CONSULTATION_FEE;
+            }
             if ("기타".equals(category) || "기타수입".equals(category)) {
                 return CATEGORY_OTHER;
             }
         }
 
         return category;
+    }
+
+    /**
+     * INCOME category 에 결제수단이 들어간 레거시 값 여부.
+     * (카드결제 등이 category 로 저장되어 상담료 GROUP BY 가 쪼개지던 누수)
+     *
+     * @param category category 문자열
+     * @return 결제수단-as-category 이면 true
+     */
+    private static boolean isPaymentMethodAsIncomeCategory(String category) {
+        return "카드결제".equals(category)
+                || "현금결제".equals(category)
+                || "계좌이체".equals(category)
+                || "가상계좌".equals(category)
+                || "기타결제".equals(category)
+                || "PAYMENT".equals(category)
+                || "결제".equals(category);
     }
 
     /** 환불 관련 서브카테고리 (부채 계정 경유 분개 적용) */

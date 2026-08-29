@@ -831,13 +831,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         }
         
         String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
-        String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+        // fallback category 는 상담료 SSOT (PAYMENT/결제 금지 — 결제수단은 subcategory)
+        String consultationFeeCategory = FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE;
         String consultationFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTATION_FEE", "상담료");
         String paymentEntityType = getSafeCodeName("ENTITY_TYPE", "PAYMENT", "PAYMENT");
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType(incomeType)
-                .category(category != null ? category : paymentCategory)
+                .category(category != null ? category : consultationFeeCategory)
                 .subcategory(subcategory != null ? subcategory : consultationFeeSubcategory)
                 .amount(payment.getAmount()) // 부가세 포함 금액(승인·청구 총액, D5)
                 .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액

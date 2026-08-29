@@ -199,6 +199,34 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     });
   });
 
+  test('income: 카드결제+상담료 breakdown/tx 합이 한 막대', () => {
+    const itemsFromBreakdown = buildIncomeMixItems(
+      { 카드결제: 150000, 상담료: 270000 },
+      []
+    );
+    expect(itemsFromBreakdown).toHaveLength(1);
+    expect(itemsFromBreakdown[0]).toMatchObject({
+      id: 'income-상담료',
+      label: '상담료',
+      amount: 420000
+    });
+
+    const itemsFromTx = buildIncomeMixItems(
+      {},
+      [
+        { type: 'INCOME', category: '카드결제', amount: 100000 },
+        { type: 'INCOME', category: '현금결제', amount: 50000 },
+        { type: 'INCOME', category: '상담료', amount: 270000 },
+        { type: 'INCOME', category: 'PAYMENT', amount: 30000 }
+      ]
+    );
+    expect(itemsFromTx).toHaveLength(1);
+    expect(itemsFromTx[0]).toMatchObject({
+      label: '상담료',
+      amount: 450000
+    });
+  });
+
   test('income: breakdown 기간 합 우선 (최근 한 건과 무관)', () => {
     const transactions = [
       { type: 'INCOME', category: '상담료', amount: 30000 }

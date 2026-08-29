@@ -55,18 +55,36 @@ class FinancialTransactionConstantsTest {
     }
 
     @Test
-    @DisplayName("확정 외 값·결제수단·PACKAGE 는 변경하지 않음")
+    @DisplayName("INCOME 결제수단-as-category → 상담료")
+    void remapPaymentMethodAsIncomeCategoryToConsultationFee() {
+        assertThat(FinancialTransactionConstants.remapCategoryToSsot("카드결제", "INCOME"))
+                .isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
+        assertThat(FinancialTransactionConstants.remapCategoryToSsot("현금결제", "INCOME"))
+                .isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
+        assertThat(FinancialTransactionConstants.remapCategoryToSsot("계좌이체", "INCOME"))
+                .isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
+        assertThat(FinancialTransactionConstants.remapCategoryToSsot("가상계좌", "INCOME"))
+                .isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
+        assertThat(FinancialTransactionConstants.remapCategoryToSsot("기타결제", "INCOME"))
+                .isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
+        assertThat(FinancialTransactionConstants.remapCategoryToSsot("PAYMENT", "INCOME"))
+                .isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
+        assertThat(FinancialTransactionConstants.remapCategoryToSsot("결제", "INCOME"))
+                .isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE);
+    }
+
+    @Test
+    @DisplayName("PACKAGE·이미 SSOT·null 은 변경하지 않음 (결제수단은 INCOME 에서만 remap)")
     void remapLeavesUnconfirmedCategoriesUntouched() {
         assertThat(FinancialTransactionConstants.remapCategoryToSsot("PACKAGE", "INCOME"))
                 .isEqualTo("PACKAGE");
-        assertThat(FinancialTransactionConstants.remapCategoryToSsot("PAYMENT", "INCOME"))
-                .isEqualTo("PAYMENT");
-        assertThat(FinancialTransactionConstants.remapCategoryToSsot("카드결제", "INCOME"))
-                .isEqualTo("카드결제");
         assertThat(FinancialTransactionConstants.remapCategoryToSsot("SALARY", "EXPENSE"))
                 .isEqualTo("SALARY");
         assertThat(FinancialTransactionConstants.remapCategoryToSsot("상담료", "INCOME"))
                 .isEqualTo("상담료");
+        // 결제수단 문자열은 EXPENSE 에서는 그대로 (INCOME 전용 remap)
+        assertThat(FinancialTransactionConstants.remapCategoryToSsot("카드결제", "EXPENSE"))
+                .isEqualTo("카드결제");
         assertThat(FinancialTransactionConstants.remapCategoryToSsot(null, "INCOME")).isNull();
     }
 

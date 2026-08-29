@@ -46,7 +46,15 @@ const INCOME_CONSULTATION_CANONICAL = CATEGORY_CONSULTATION_FEE_KO;
 const CONSULTATION_CATEGORY_ALIASES = new Set([
   'CONSULTATION',
   'CONSULTATION_FEE',
-  CATEGORY_CONSULTATION_FEE_KO
+  CATEGORY_CONSULTATION_FEE_KO,
+  // 결제수단-as-category 레거시 (백엔드 remap·V20260829_001 백필과 동일)
+  '카드결제',
+  '현금결제',
+  '계좌이체',
+  '가상계좌',
+  '기타결제',
+  'PAYMENT',
+  '결제'
 ]);
 
 /** 나간 곳 급여 별칭 */
@@ -178,7 +186,7 @@ function isIncomeCategoryKey(key) {
 }
 
 /**
- * 상담료 계열(CONSULTATION / CONSULTATION_FEE / 상담료) → 상담료(SSOT) 하나로 합산
+ * 상담료 계열(CONSULTATION / 상담료 / 결제수단-as-category) → 상담료(SSOT) 하나로 합산
  * @param {string} key
  * @returns {string}
  */

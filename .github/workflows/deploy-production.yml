@@ -830,6 +830,32 @@ jobs:
               echo "✅ [B1] ${INACTIVE} 슬롯 JAR atomic mv 완료: $AFTER_STAT (SHA-256=$INCOMING_SHA)"
               sudo rm -f "$INCOMING"
             fi
+
+            # [핫픽스 2026-08-29] V20260829_003 Flyway success=0 원샷 repair
+            # 배경: prod run 2069 — DROP PROCEDURE CalculateSalaryPreview → ERROR 1227 SYSTEM_USER.
+            # seed-only 마이그 재적용을 위해 실패 행만 제거. success=1 은 절대 삭제하지 않음.
+            # 참조: docs/troubleshooting/PROD_FLYWAY_V20260829_003_REPAIR.md
+            echo "🔧 [V20260829_003] flyway_schema_history success=0 원샷 repair (비활성 슬롯 재시작 전)"
+            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
+              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — V20260829_003 flyway success=0 repair 스킵 (배포는 계속)"
+            else
+              FLYWAY_003_DELETED=$(mysql -h localhost -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "
+                DELETE FROM flyway_schema_history
+                WHERE success = 0
+                  AND (
+                    version IN ('20260829.003', '20260829_003')
+                    OR script LIKE '%V20260829_003%'
+                  );
+                SELECT ROW_COUNT();
+              " 2>/dev/null || echo "ERR")
+              if [ "$FLYWAY_003_DELETED" = "ERR" ] || [ -z "$FLYWAY_003_DELETED" ]; then
+                echo "::warning::V20260829_003 flyway success=0 repair mysql 호출 실패 — 배포는 계속 (수동 repair 문서 참고)"
+              elif [ "$FLYWAY_003_DELETED" = "0" ]; then
+                echo "::notice::V20260829_003 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
+              else
+                echo "✅ V20260829_003 flyway success=0 행 삭제: ${FLYWAY_003_DELETED}건"
+              fi
+            fi
           
             echo "🔄 비활성 슬롯 서비스 재시작: $INACTIVE_UNIT"
             sudo systemctl restart "$INACTIVE_UNIT" || true

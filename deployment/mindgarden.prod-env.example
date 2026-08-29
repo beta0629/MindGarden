@@ -1,4 +1,5 @@
 # MindGarden systemd EnvironmentFile= 예시 — 운영 SSOT
+# Retrigger note (2026-08-29): #2071 rejected after required_reviewers deleted mid-wait; main push retriggers deploy-production (paths include this file).
 # 운영 SSOT: /etc/mindgarden/prod.env  (perm 600, owner root:root)
 #   docs/standards/DB_ENV_SSOT_POLICY.md §1, deployment/systemd/mindgarden-core-{blue,green}.service.example 참조
 # 복사: sudo cp mindgarden.prod-env.example /etc/mindgarden/prod.env && sudo chmod 600 /etc/mindgarden/prod.env

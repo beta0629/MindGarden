@@ -38,6 +38,22 @@ public final class FinancialTransactionConstants {
     /** 기타(수입/지출 type 내) SSOT */
     public static final String CATEGORY_OTHER = "OTHER";
 
+    /**
+     * 매칭 연동 재무 거래 relatedEntityType (입금 확인 INCOME).
+     */
+    public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING = "CONSULTANT_CLIENT_MAPPING";
+
+    /**
+     * 매칭 환불 EXPENSE relatedEntityType.
+     */
+    public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND =
+            "CONSULTANT_CLIENT_MAPPING_REFUND";
+
+    /**
+     * 결제 연동 재무 거래 relatedEntityType.
+     */
+    public static final String RELATED_ENTITY_PAYMENT = "PAYMENT";
+
     private static final String TX_TYPE_INCOME = "INCOME";
     private static final String TX_TYPE_EXPENSE = "EXPENSE";
 

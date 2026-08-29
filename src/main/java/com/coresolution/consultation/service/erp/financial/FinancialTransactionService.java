@@ -77,6 +77,37 @@ public interface FinancialTransactionService {
      */
     Page<FinancialTransactionResponse> getTransactionsFiltered(String transactionType, String category,
             LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 장부 KPI용 기간 전체 posted 합계(페이지 무관).
+     * <p>
+     * 목록({@link #getTransactionsFiltered})과 동일 날짜·유형·카테고리 필터를 쓰되,
+     * {@code CANCELLED}/{@code REJECTED}는 제외하고 전 건을 합산한다.
+     * </p>
+     *
+     * @param transactionType 거래 유형, null/ALL이면 전체
+     * @param category        카테고리, null/ALL이면 전체
+     * @param startDate       시작일(포함), null이면 하한 없음
+     * @param endDate         종료일(포함), null이면 상한 없음
+     * @return {@code totalIncome}, {@code totalExpense}, {@code totalCardMerchantFee}, {@code remaining}
+     * @author CoreSolution
+     * @since 2026-08-29
+     */
+    Map<String, Object> getTransactionsFilteredSummary(String transactionType, String category,
+            LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 관련 엔티티에 묶인 미삭제 INCOME 거래를 CANCELLED로 전이한다(멱등).
+     * 이미 CANCELLED/REJECTED인 건은 건너뛴다.
+     *
+     * @param relatedEntityId   관련 엔티티 PK
+     * @param relatedEntityType {@link com.coresolution.consultation.constant.FinancialTransactionConstants}
+     *                          의 RELATED_ENTITY_* 값
+     * @return 이번에 CANCELLED로 전이한 건수
+     * @author CoreSolution
+     * @since 2026-08-29
+     */
+    int cancelRelatedPostedIncomeTransactions(Long relatedEntityId, String relatedEntityType);
     
     /**
      * 승인 대기 거래 목록 조회

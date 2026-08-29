@@ -1141,6 +1141,26 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         >
           <Calendar size={HEADER_ICON_SIZE} strokeWidth={2} aria-hidden />
         </MGButton>
+        <MGButton
+          type="button"
+          variant="ghost"
+          size="small"
+          className={buildErpMgButtonClassName({
+            variant: 'ghost',
+            size: 'sm',
+            loading: statsRefreshing,
+            className: 'mg-v2-ad-b0kla__header-primary-btn'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={handleKpiStatsRefresh}
+          disabled={statsRefreshing}
+          loading={statsRefreshing}
+          preventDoubleClick={false}
+          aria-label={t('common.actions.refresh')}
+          data-testid={DASHBOARD_KPI_ZONE_REFRESH_TEST_ID}
+        >
+          <RefreshCw size={14} aria-hidden="true" />
+        </MGButton>
       </div>
     );
 
@@ -1159,34 +1179,9 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         className="mg-v2-dashboard-kpi-zone mg-v2-dashboard-kpi-zone--compact"
         aria-labelledby="admin-dashboard-kpi-zone-title"
       >
-        <header className="mg-v2-content-section__header">
-          <div className="mg-v2-content-section__title-wrap">
-            <h2 id="admin-dashboard-kpi-zone-title" className="sr-only">
-              {t('admin:dashboard.v2.title')}
-            </h2>
-          </div>
-          <div className="mg-v2-content-section__actions">
-            <MGButton
-              type="button"
-              variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'sm',
-                loading: statsRefreshing
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={handleKpiStatsRefresh}
-              disabled={statsRefreshing}
-              loading={statsRefreshing}
-              preventDoubleClick={false}
-              aria-label={t('common.actions.refresh')}
-              data-testid={DASHBOARD_KPI_ZONE_REFRESH_TEST_ID}
-            >
-              <RefreshCw size={14} aria-hidden="true" />
-            </MGButton>
-          </div>
-        </header>
+        <h2 id="admin-dashboard-kpi-zone-title" className="sr-only">
+          {t('admin:dashboard.v2.title')}
+        </h2>
         <div className="mg-v2-kpi-flip-row" role="list" aria-label="핵심 KPI">
         <KpiFlipCard
           id={DASHBOARD_KPI_IDS.TODAY_BOOKINGS}

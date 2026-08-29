@@ -97,10 +97,22 @@ const MoneyLedgerStrip = ({ loading = false, transactions = [] }) => {
                         fallback={OFD_LEDGER.DASH}
                       />
                     </td>
-                    <td className="money-ledger__amount">
+                    <td
+                      className={
+                        income
+                          ? 'money-ledger__amount money-ledger__amount--in'
+                          : 'money-ledger__amount'
+                      }
+                    >
                       {income ? amountText : OFD_LEDGER.DASH}
                     </td>
-                    <td className="money-ledger__amount">
+                    <td
+                      className={
+                        !income
+                          ? 'money-ledger__amount money-ledger__amount--out'
+                          : 'money-ledger__amount'
+                      }
+                    >
                       {!income ? amountText : OFD_LEDGER.DASH}
                     </td>
                   </tr>

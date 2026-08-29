@@ -219,24 +219,29 @@ export const SALARY_LATE_NOTES_LABELS = {
   ADJUSTMENT_BADGE: '추가 정산',
   RECALC: '다시 계산',
   CREATE_ADJUSTMENT: '빠진 회기 추가 정산',
-  PRE_CONFIRM_NOT_COMPLETED_PREFIX: '이 기간에 완료 아닌 회기',
+  PRE_CONFIRM_NOT_COMPLETED_PREFIX: '완료 아닌 회기',
   PRE_CONFIRM_MISSING_RECORD_PREFIX: '일지 미작성',
-  EXTRA_COMPLETED_PREFIX: '확정 후 추가 완료 회기',
+  EXTRA_COMPLETED_PREFIX: '빠진 회기',
   COUNT_SUFFIX: '건',
   ADJUSTMENT_SESSION_PREFIX: '+'
 };
 
 export const SALARY_LATE_NOTES_MESSAGES = {
-  RECALC_APPROVED_CONFIRM:
-    '급여를 다시 계산하면 승인 상태가 \'계산완료\'로 변경되어 재승인이 필요합니다. 계속하시겠습니까?',
-  RECALC_CONFIRM: '빠진 회기를 반영해 다시 계산할까요?',
-  ADJUSTMENT_CONFIRM_PREFIX: '지급 완료된 급여 외에 추가로 완료된',
-  ADJUSTMENT_CONFIRM_SUFFIX: '건에 대해 추가 정산 내역을 생성합니다.',
-  RECALC_SUCCESS: '다시 계산이 완료되었습니다.',
-  ADJUSTMENT_SUCCESS: '추가 정산이 생성되었습니다.',
-  RECALC_ERROR: '다시 계산에 실패했습니다.',
-  ADJUSTMENT_ERROR: '추가 정산에 실패했습니다.'
+  RECALC_APPROVED_CONFIRM: '다시 계산 시 재승인 필요. 계속할까요?',
+  RECALC_CONFIRM: '빠진 회기 다시 계산할까요?',
+  ADJUSTMENT_CONFIRM_PREFIX: '빠진 회기',
+  ADJUSTMENT_CONFIRM_SUFFIX: '건 추가 정산할까요?',
+  RECALC_SUCCESS: '다시 계산 완료',
+  ADJUSTMENT_SUCCESS: '추가 정산 완료',
+  RECALC_ERROR: '다시 계산 실패',
+  ADJUSTMENT_ERROR: '추가 정산 실패'
 };
+
+/**
+ * calc 탭 활성·포그라운드일 때만 쓰는 silent period 재조회 간격(ms).
+ * focus/visibility 재조회가 핵심이며, 과도한 폴링 금지.
+ */
+export const SALARY_CALC_SILENT_REFETCH_INTERVAL_MS = 45000;
 
 /** 급여 계산 카드/배너 BEM 클래스 (Clinic-OS 토큰 스타일) */
 export const SALARY_LATE_NOTES_CSS = {

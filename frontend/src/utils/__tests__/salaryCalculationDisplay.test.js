@@ -3,14 +3,17 @@ import {
   SALARY_CALC_DETAIL_CONSULTATION_LABEL,
   SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL,
   SALARY_CALC_DETAIL_OPTION_LABEL,
-  SALARY_CALCULATION_KIND
+  SALARY_CALCULATION_KIND,
+  SALARY_LATE_NOTES_LABELS,
+  SALARY_LATE_NOTES_MESSAGES
 } from '../../constants/salaryConstants';
 import {
   buildSalaryCalculationComponentRows,
   isSalaryAdjustmentCalculation,
   normalizeSalaryCalculationKind,
   normalizeSalaryCalculationStatus,
-  orderSalaryCalculationsPrimaryThenAdjustment
+  orderSalaryCalculationsPrimaryThenAdjustment,
+  toSalaryLateNotesErrorMessage
 } from '../salaryCalculationDisplay';
 
 const toNum = (v) => {
@@ -44,6 +47,29 @@ describe('normalizeSalaryCalculationKind / order', () => {
       primary,
       adj
     ]);
+  });
+});
+
+describe('toSalaryLateNotesErrorMessage', () => {
+  it('replaces English ADJUSTMENT/PRIMARY jargon with Korean labels', () => {
+    expect(
+      toSalaryLateNotesErrorMessage(
+        '추가 정산(ADJUSTMENT) 행은 재계산할 수 없습니다.',
+        SALARY_LATE_NOTES_MESSAGES.RECALC_ERROR
+      )
+    ).toBe(`추가 정산(${SALARY_LATE_NOTES_LABELS.ADJUSTMENT_BADGE}) 행은 재계산할 수 없습니다.`);
+    expect(
+      toSalaryLateNotesErrorMessage(
+        '추가 정산은 지급완료 PRIMARY 급여에만 가능합니다.',
+        SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR
+      )
+    ).toBe('추가 정산은 지급완료 본정산 급여에만 가능합니다.');
+  });
+
+  it('falls back when message is empty', () => {
+    expect(
+      toSalaryLateNotesErrorMessage(null, SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR)
+    ).toBe(SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR);
   });
 });
 

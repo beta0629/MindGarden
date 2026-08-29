@@ -7,7 +7,7 @@
  * @since 2025-03-16
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -28,6 +28,7 @@ import {
   SALARY_LATE_NOTES_LABELS,
   SALARY_LATE_NOTES_MESSAGES,
   SALARY_LATE_NOTES_CSS,
+  SALARY_CALC_SILENT_REFETCH_INTERVAL_MS,
   TAX_BREAKDOWN_ORDER,
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
@@ -35,7 +36,8 @@ import {
   buildSalaryCalculationComponentRows,
   normalizeSalaryCalculationStatus,
   isSalaryAdjustmentCalculation,
-  orderSalaryCalculationsPrimaryThenAdjustment
+  orderSalaryCalculationsPrimaryThenAdjustment,
+  toSalaryLateNotesErrorMessage
 } from '../../utils/salaryCalculationDisplay';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
@@ -133,10 +135,11 @@ const SalaryManagement = () => {
   const [consultantsInitialFetchDone, setConsultantsInitialFetchDone] = useState(false);
   /** 확정 전 미리보기 경고 (완료 아닌 회기 / 일지 미작성). */
   const [preConfirmWarning, setPreConfirmWarning] = useState(null);
-  /** PRIMARY id → 확정 후 추가 완료 회기(delta) 등. */
+  /** 본정산 id → 빠진 회기(delta) 등. */
   const [lateSessionByPrimaryId, setLateSessionByPrimaryId] = useState({});
   const [recalcLoadingId, setRecalcLoadingId] = useState(null);
   const [adjustmentLoadingId, setAdjustmentLoadingId] = useState(null);
+  const refreshCalculationsListRef = useRef(null);
 
   useEffect(() => {
     const t = searchParams.get('tab');
@@ -259,7 +262,7 @@ const SalaryManagement = () => {
   };
 
   /**
-   * PRIMARY 행별 확정 후 추가 완료 회기(delta) 조회.
+   * 본정산 행별 빠진 회기(delta) 조회.
    * @param {Array<object>} list
    */
   const refreshLateSessionWarnings = async(list) => {
@@ -308,7 +311,7 @@ const SalaryManagement = () => {
             : query.fallbackPrimaryId;
           return [primaryId, parsed];
         } catch (error) {
-          console.error('확정 후 추가 회기 경고 조회 실패:', error);
+          console.error('빠진 회기 경고 조회 실패:', error);
           return null;
         }
       })
@@ -563,6 +566,7 @@ const SalaryManagement = () => {
       );
     }
   };
+  refreshCalculationsListRef.current = refreshCalculationsList;
 
   /**
    * 계산완료(CALCULATED) 건만 승인 API 호출 후 목록 갱신.
@@ -602,7 +606,7 @@ const SalaryManagement = () => {
   };
 
   /**
-   * 미지급 PRIMARY 제자리 다시 계산 (수동 fallback).
+   * 미지급 본정산 제자리 다시 계산 (수동 fallback).
    * @param {object} calculation
    * @param {number} extraCompletedCount
    */
@@ -626,7 +630,7 @@ const SalaryManagement = () => {
       );
       if (res && typeof res === 'object' && res.success === false) {
         showNotification(
-          toErrorMessage(res?.message, SALARY_LATE_NOTES_MESSAGES.RECALC_ERROR),
+          toSalaryLateNotesErrorMessage(res?.message, SALARY_LATE_NOTES_MESSAGES.RECALC_ERROR),
           'error'
         );
       } else {
@@ -636,7 +640,7 @@ const SalaryManagement = () => {
     } catch (err) {
       console.error('다시 계산 API 오류:', err);
       showNotification(
-        toErrorMessage(err, SALARY_LATE_NOTES_MESSAGES.RECALC_ERROR),
+        toSalaryLateNotesErrorMessage(err, SALARY_LATE_NOTES_MESSAGES.RECALC_ERROR),
         'error'
       );
     } finally {
@@ -645,7 +649,7 @@ const SalaryManagement = () => {
   };
 
   /**
-   * 지급완료 PRIMARY 기준 빠진 회기 추가 정산 (수동 fallback).
+   * 지급완료 본정산 기준 빠진 회기 추가 정산 (수동 fallback).
    * @param {object} calculation
    * @param {number} extraCompletedCount
    */
@@ -666,7 +670,7 @@ const SalaryManagement = () => {
       );
       if (res && typeof res === 'object' && res.success === false) {
         showNotification(
-          toErrorMessage(res?.message, SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR),
+          toSalaryLateNotesErrorMessage(res?.message, SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR),
           'error'
         );
       } else {
@@ -676,7 +680,7 @@ const SalaryManagement = () => {
     } catch (err) {
       console.error('추가 정산 API 오류:', err);
       showNotification(
-        toErrorMessage(err, SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR),
+        toSalaryLateNotesErrorMessage(err, SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR),
         'error'
       );
     } finally {
@@ -722,14 +726,14 @@ const SalaryManagement = () => {
         ]);
       } else if (activeTab === TAB_CALC) {
         await Promise.all([loadConsultants(silent), loadSalaryProfiles(silent)]);
-        if (selectedConsultant?.id) {
-          await loadSalaryCalculations(selectedConsultant.id, silent);
+        if (refreshCalculationsListRef.current) {
+          await refreshCalculationsListRef.current({ silent: true });
         }
       } else if (activeTab === TAB_TAX) {
         await loadTaxStatistics(selectedPeriod, silent);
       }
     });
-  }, [activeTab, selectedConsultant, selectedPeriod, runSilentListRefresh]);
+  }, [activeTab, selectedPeriod, runSilentListRefresh]);
 
   useEffect(() => {
     loadConsultants();
@@ -777,6 +781,48 @@ const SalaryManagement = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod]);
+
+  /**
+   * calc 탭: 창 focus / 탭 가시성 복귀 시 period 계산 목록 silent 재조회.
+   * 자동 다시 계산·추가 정산 결과가 새로고침 없이 목록 금액에 반영되도록 한다.
+   * 탭이 보일 때만 짧은 interval(보조). focus 재조회가 핵심.
+   */
+  useEffect(() => {
+    if (activeTab !== TAB_CALC) {
+      return undefined;
+    }
+
+    const runSilentPeriodRefetch = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+      if (refreshCalculationsListRef.current) {
+        void refreshCalculationsListRef.current({ silent: true });
+      }
+    };
+
+    const onWindowFocus = () => {
+      runSilentPeriodRefetch();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        runSilentPeriodRefetch();
+      }
+    };
+
+    window.addEventListener('focus', onWindowFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    const intervalId = window.setInterval(
+      runSilentPeriodRefetch,
+      SALARY_CALC_SILENT_REFETCH_INTERVAL_MS
+    );
+
+    return () => {
+      window.removeEventListener('focus', onWindowFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.clearInterval(intervalId);
+    };
+  }, [activeTab]);
 
   /** 미리보기 확정 전: 완료 아닌 회기·일지 미작성 건수 (n>0만 배너). */
   useEffect(() => {

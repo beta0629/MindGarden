@@ -326,11 +326,12 @@ describe('ErpDashboard money cockpit', () => {
     const cockpit = screen.getByTestId('money-cockpit');
     const headerNav = within(cockpit).getByRole('navigation', { name: '바로가기' });
 
-    [OFD_LINKS.SALARY.label, OFD_LINKS.FINANCIAL.label, OFD_LINKS.PURCHASE.label].forEach((label) => {
+    [OFD_LINKS.SALARY.label, OFD_LINKS.FINANCIAL.label].forEach((label) => {
       const button = within(headerNav).getByRole('button', { name: label });
       expect(button).toHaveClass('mg-button--ghost');
       expect(button).toHaveClass('mg-v2-button-ghost');
     });
+    expect(within(headerNav).queryByRole('button', { name: '센터 경비' })).not.toBeInTheDocument();
 
     const ledger = screen.getByTestId('money-ledger-strip');
     const viewMore = within(ledger).getByRole('button', { name: OFD_LEDGER.VIEW_MORE });

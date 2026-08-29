@@ -7,7 +7,7 @@ import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import {
   resolveRollingMonthlyChartRows
 } from '../dashboard-v2/utils/dashboardChartPeriodUtils';
-import { FaUsers, FaDollarSign, FaChartLine, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
+import { FaUsers, FaDollarSign, FaChartLine, FaCheckCircle, FaWallet, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
 import {
     Activity,
     AlertTriangle,
@@ -1686,14 +1686,6 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">{t('admin:AdminDashboard.t_234f86e4')}</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
-                            <div className="mg-management-icon">
-                                <FaShoppingCart />
-                            </div>
-                            <h3>{t('admin:AdminDashboard.t_eb7ad905')}</h3>
-                            <p className="mg-management-description">{t('admin:AdminDashboard.t_fa037cbe')}</p>
-                        </div>
-                        
                         <div className="mg-management-card" onClick={() => navigate(buildErpApprovalHubPath('admin'))}>
                             <div className="mg-management-icon">
                                 <FaCheckCircle />
@@ -1710,14 +1702,6 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">{t('admin:AdminDashboard.t_f92efbf4')}</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
-                            <div className="mg-management-icon">
-                                <FaBox />
-                            </div>
-                            <h3>{t('admin:AdminDashboard.t_145d6a1a')}</h3>
-                            <p className="mg-management-description">{t('admin:AdminDashboard.t_818316a0')}</p>
-                        </div>
-                        
                         <div className="mg-management-card" onClick={() => setShowErpReport(true)}>
                             <div className="mg-management-icon">
                                 <FaFileExport />
@@ -1732,14 +1716,6 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                             <h3>{t('admin:AdminDashboard.t_caa5739a')}</h3>
                             <p className="mg-management-description">{t('admin:AdminDashboard.t_8db0f5af')}</p>
-                        </div>
-                        
-                        <div className="mg-management-card" onClick={() => navigate('/erp/orders')}>
-                            <div className="mg-management-icon">
-                                <FaTruck />
-                            </div>
-                            <h3>{t('admin:AdminDashboard.t_0078005e')}</h3>
-                            <p className="mg-management-description">{t('admin:AdminDashboard.t_60658851')}</p>
                         </div>
                         
                         <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.ERP_FINANCIAL)}>

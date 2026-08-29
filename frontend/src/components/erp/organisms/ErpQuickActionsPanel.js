@@ -10,9 +10,7 @@ import {
   Calculator,
   ClipboardCheck,
   LineChart,
-  Package,
   RotateCcw,
-  ShoppingCart,
   Wallet
 } from 'lucide-react';
 import MGButton from '../../common/MGButton';
@@ -23,9 +21,9 @@ const ERP_QUICK_ICON_SIZE = 28;
 
 /**
  * @param {object} props
- * @param {boolean} props.hasPurchaseRequestView
+ * @param {boolean} [props.hasPurchaseRequestView] 미사용(호출부 호환용, 렌더 안 함)
  * @param {boolean} props.hasApprovalManage
- * @param {boolean} props.hasItemManage
+ * @param {boolean} [props.hasItemManage] 미사용(호출부 호환용, 렌더 안 함)
  * @param {boolean} props.hasBudgetManage
  * @param {boolean} props.hasSalaryManage
  * @param {boolean} props.hasTaxManage
@@ -33,9 +31,9 @@ const ERP_QUICK_ICON_SIZE = 28;
  * @param {boolean} props.hasRefundManage
  */
 const ErpQuickActionsPanel = ({
-  hasPurchaseRequestView,
+  hasPurchaseRequestView: _hasPurchaseRequestView,
   hasApprovalManage,
-  hasItemManage,
+  hasItemManage: _hasItemManage,
   hasBudgetManage,
   hasSalaryManage,
   hasTaxManage,
@@ -49,26 +47,6 @@ const ErpQuickActionsPanel = ({
     <div className="mg-v2-ad-b0kla__card erp-quick-actions">
       <h2 className="mg-v2-ad-b0kla__section-title">{t('erp:ErpQuickActionsPanel.t_15e878d3')}</h2>
       <div className="mg-v2-ad-b0kla__admin-grid erp-quick-actions__grid">
-        {hasPurchaseRequestView && (
-          <MGButton
-            type="button"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'sm',
-              loading: false,
-              className: 'mg-v2-ad-b0kla__admin-card'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => navigate('/erp/purchase-requests')}
-            preventDoubleClick={false}
-          >
-            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--green" aria-hidden>
-              <ShoppingCart size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
-            </div>
-            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_0d17bd87')}</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_7206e8ed')}</span>
-          </MGButton>
-        )}
         {hasApprovalManage && (
           <MGButton
             type="button"
@@ -87,26 +65,6 @@ const ErpQuickActionsPanel = ({
             </div>
             <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_492092db')}</span>
             <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_c06444e2')}</span>
-          </MGButton>
-        )}
-        {hasItemManage && (
-          <MGButton
-            type="button"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'sm',
-              loading: false,
-              className: 'mg-v2-ad-b0kla__admin-card'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => navigate('/erp/items')}
-            preventDoubleClick={false}
-          >
-            <div className="mg-v2-ad-b0kla__admin-icon mg-v2-ad-b0kla__admin-icon--blue" aria-hidden>
-              <Package size={ERP_QUICK_ICON_SIZE} strokeWidth={1.75} />
-            </div>
-            <span className="mg-v2-ad-b0kla__admin-label">{t('erp:ErpQuickActionsPanel.t_145d6a1a')}</span>
-            <span className="mg-v2-ad-b0kla__admin-desc">{t('erp:ErpQuickActionsPanel.t_676f0b4e')}</span>
           </MGButton>
         )}
         {hasBudgetManage && (

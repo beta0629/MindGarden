@@ -1,5 +1,7 @@
 # Prod Flyway V20260829_003 repair (ERROR 1227 DROP PROCEDURE)
 
+> Note (2026-08-29): Prod deploy run **#2071** was rejected mid-wait when `required_reviewers` was deleted on environment `prod`. A new push to `main` retriggers 🚀 Core Solution 운영 배포 (wait_timer=5; no Approve needed). / 운영 배포 #2071은 wait 중 `required_reviewers` 삭제로 거절됨. `main` 새 푸시로 재트리거.
+
 **대상**: 운영 Flyway SSOT 스키마는 **`core_solution`** (`application.yml` 기본 `DB_NAME:core_solution`).  
 **NOT** `mind_garden` — `deploy-standardized-procedures.sh` 가 `mind_garden` 을 차단하며, procedure-deploy 단계의 `PROD_DB_NAME` 기본값도 `core_solution` 이다.
 

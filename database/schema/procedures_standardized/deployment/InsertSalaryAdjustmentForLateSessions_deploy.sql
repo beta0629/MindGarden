@@ -3,7 +3,7 @@
 -- 정책: SALARY_LATE_NOTES_ADJUSTMENT_PLAN.md
 -- - PAID PRIMARY 만 허용. PRIMARY 불변.
 -- - delta = current COMPLETED − (PRIMARY.completed + SUM ADJUSTMENT.completed)
--- - FREELANCE: delta×요율, tax on adjustment만 (3.3% + VAT if biz). local 10% 없음
+-- - FREELANCE: delta×요율, tax on adjustment만 (국세+지방 원천 + VAT if biz). local 10% 없음
 -- - REGULAR: 증가 시간분 × hourly_rate 만 (base_salary 재지급 금지)
 -- - special_support INSERT 금지, bonus/SS=0
 -- - FREELANCE_BASE_RATE 없으면 거절 (30000 fallback 금지)
@@ -54,20 +54,39 @@ proc_main: BEGIN
     DECLARE v_consultation_earnings DECIMAL(15,2) DEFAULT 0;
     DECLARE v_hourly_earnings DECIMAL(15,2) DEFAULT 0;
     DECLARE v_tax_base_gross DECIMAL(15,2) DEFAULT 0;
-    DECLARE v_withholding_tax DECIMAL(5,4) DEFAULT 0.033;
-    DECLARE v_vat DECIMAL(5,4) DEFAULT 0.10;
+    DECLARE v_row_count INT DEFAULT 0;
+
+    DECLARE v_national_rate DECIMAL(5,4);
+    DECLARE v_local_wh_rate DECIMAL(5,4);
+    DECLARE v_vat DECIMAL(5,4);
+    DECLARE v_local_income_of_it DECIMAL(5,4);
     DECLARE v_income_tax_rate DECIMAL(5,4) DEFAULT 0;
     DECLARE v_income_tax_amount DECIMAL(15,2) DEFAULT 0;
-    DECLARE v_pension_rate DECIMAL(5,4) DEFAULT 0.045;
-    DECLARE v_health_rate DECIMAL(5,4) DEFAULT 0.03545;
-    DECLARE v_longterm_rate DECIMAL(5,4) DEFAULT 0.00545;
-    DECLARE v_employment_rate DECIMAL(5,4) DEFAULT 0.009;
+    DECLARE v_pension_rate DECIMAL(5,4);
+    DECLARE v_health_rate DECIMAL(5,4);
+    DECLARE v_longterm_rate DECIMAL(5,4);
+    DECLARE v_employment_rate DECIMAL(5,4);
+    DECLARE v_four_ins_annual_min DECIMAL(15,2);
+    DECLARE v_it_max1 DECIMAL(15,2);
+    DECLARE v_it_rate1 DECIMAL(5,4);
+    DECLARE v_it_max2 DECIMAL(15,2);
+    DECLARE v_it_rate2 DECIMAL(5,4);
+    DECLARE v_it_max3 DECIMAL(15,2);
+    DECLARE v_it_rate3 DECIMAL(5,4);
+    DECLARE v_it_max4 DECIMAL(15,2);
+    DECLARE v_it_rate4 DECIMAL(5,4);
+    DECLARE v_it_max5 DECIMAL(15,2);
+    DECLARE v_it_rate5 DECIMAL(5,4);
+    DECLARE v_it_max6 DECIMAL(15,2);
+    DECLARE v_it_rate6 DECIMAL(5,4);
+    DECLARE v_it_rate7 DECIMAL(5,4);
+    DECLARE v_national_amount DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_local_wh_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_withholding_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_vat_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_local_income_tax DECIMAL(15,2) DEFAULT 0;
     DECLARE v_4insurance_amount DECIMAL(15,2) DEFAULT 0;
-    DECLARE v_row_count INT DEFAULT 0;
-
+    
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         GET DIAGNOSTICS CONDITION 1
@@ -253,16 +272,181 @@ proc_main: BEGIN
         LEAVE proc_main;
     END IF;
 
+    -- SALARY_TAX_RATE SSOT (common_codes). NO DEFAULT rate literal. fail closed.
+    SET v_national_rate = NULL;
+    SET v_local_wh_rate = NULL;
+    SET v_vat = NULL;
+    SET v_local_income_of_it = NULL;
+    SET v_pension_rate = NULL;
+    SET v_health_rate = NULL;
+    SET v_longterm_rate = NULL;
+    SET v_employment_rate = NULL;
+    SET v_four_ins_annual_min = NULL;
+    SET v_it_max1 = NULL; SET v_it_rate1 = NULL;
+    SET v_it_max2 = NULL; SET v_it_rate2 = NULL;
+    SET v_it_max3 = NULL; SET v_it_rate3 = NULL;
+    SET v_it_max4 = NULL; SET v_it_rate4 = NULL;
+    SET v_it_max5 = NULL; SET v_it_rate5 = NULL;
+    SET v_it_max6 = NULL; SET v_it_rate6 = NULL;
+    SET v_it_rate7 = NULL;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_national_rate
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'WITHHOLDING_NATIONAL'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_local_wh_rate
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'WITHHOLDING_LOCAL'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_vat
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'VAT'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_local_income_of_it
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'LOCAL_INCOME_OF_INCOME_TAX'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_pension_rate
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'PENSION'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_health_rate
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'HEALTH'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_longterm_rate
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'LONGTERM'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_employment_rate
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'EMPLOYMENT'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.amount')) AS DECIMAL(15,2)) INTO v_four_ins_annual_min
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'FOUR_INSURANCE_ANNUAL_MIN'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.monthlyMax')) AS DECIMAL(15,2)),
+           CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+      INTO v_it_max1, v_it_rate1
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'INCOME_TAX_BRACKET_1'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.monthlyMax')) AS DECIMAL(15,2)),
+           CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+      INTO v_it_max2, v_it_rate2
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'INCOME_TAX_BRACKET_2'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.monthlyMax')) AS DECIMAL(15,2)),
+           CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+      INTO v_it_max3, v_it_rate3
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'INCOME_TAX_BRACKET_3'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.monthlyMax')) AS DECIMAL(15,2)),
+           CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+      INTO v_it_max4, v_it_rate4
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'INCOME_TAX_BRACKET_4'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.monthlyMax')) AS DECIMAL(15,2)),
+           CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+      INTO v_it_max5, v_it_rate5
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'INCOME_TAX_BRACKET_5'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.monthlyMax')) AS DECIMAL(15,2)),
+           CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4))
+      INTO v_it_max6, v_it_rate6
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'INCOME_TAX_BRACKET_6'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(cc.extra_data, '$.rate')) AS DECIMAL(5,4)) INTO v_it_rate7
+    FROM common_codes cc
+    WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
+      AND cc.code_group = 'SALARY_TAX_RATE' AND cc.code_value = 'INCOME_TAX_BRACKET_7'
+      AND cc.is_active = TRUE AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
+    ORDER BY cc.tenant_id IS NULL ASC LIMIT 1;
+
+
+    IF v_national_rate IS NULL OR v_local_wh_rate IS NULL OR v_vat IS NULL
+       OR v_local_income_of_it IS NULL
+       OR v_pension_rate IS NULL OR v_health_rate IS NULL
+       OR v_longterm_rate IS NULL OR v_employment_rate IS NULL
+       OR v_four_ins_annual_min IS NULL
+       OR v_it_max1 IS NULL OR v_it_rate1 IS NULL
+       OR v_it_max2 IS NULL OR v_it_rate2 IS NULL
+       OR v_it_max3 IS NULL OR v_it_rate3 IS NULL
+       OR v_it_max4 IS NULL OR v_it_rate4 IS NULL
+       OR v_it_max5 IS NULL OR v_it_rate5 IS NULL
+       OR v_it_max6 IS NULL OR v_it_rate6 IS NULL
+       OR v_it_rate7 IS NULL THEN
+
+        SET p_message = 'SALARY_TAX_RATE 공통코드(세율)가 없어 추가 정산할 수 없습니다.';
+        ROLLBACK;
+        LEAVE proc_main;
+    END IF;
+
     SET p_tax_amount = 0;
     SET v_withholding_amount = 0;
     SET v_vat_amount = 0;
     SET v_local_income_tax = 0;
     SET v_income_tax_amount = 0;
     SET v_4insurance_amount = 0;
+    SET v_national_amount = 0;
+    SET v_local_wh_amount = 0;
 
     IF v_salary_type = 'FREELANCE' THEN
         SET v_tax_base_gross = p_gross_salary;
-        SET v_withholding_amount = v_tax_base_gross * v_withholding_tax;
+        SET v_national_amount = v_tax_base_gross * v_national_rate;
+        SET v_local_wh_amount = v_tax_base_gross * v_local_wh_rate;
+        SET v_withholding_amount = v_national_amount + v_local_wh_amount;
         SET p_tax_amount = p_tax_amount + v_withholding_amount;
         IF v_is_business_registered = TRUE THEN
             SET v_vat_amount = v_tax_base_gross * v_vat;
@@ -271,19 +455,19 @@ proc_main: BEGIN
     ELSEIF v_salary_type = 'REGULAR' THEN
         SET v_tax_base_gross = p_gross_salary;
         SET v_income_tax_rate = CASE
-            WHEN p_gross_salary <= 1200000 THEN 0.06
-            WHEN p_gross_salary <= 4600000 THEN 0.15
-            WHEN p_gross_salary <= 8800000 THEN 0.24
-            WHEN p_gross_salary <= 15000000 THEN 0.35
-            WHEN p_gross_salary <= 30000000 THEN 0.38
-            WHEN p_gross_salary <= 50000000 THEN 0.40
-            ELSE 0.42
+            WHEN p_gross_salary <= v_it_max1 THEN v_it_rate1
+            WHEN p_gross_salary <= v_it_max2 THEN v_it_rate2
+            WHEN p_gross_salary <= v_it_max3 THEN v_it_rate3
+            WHEN p_gross_salary <= v_it_max4 THEN v_it_rate4
+            WHEN p_gross_salary <= v_it_max5 THEN v_it_rate5
+            WHEN p_gross_salary <= v_it_max6 THEN v_it_rate6
+            ELSE v_it_rate7
         END;
         SET v_income_tax_amount = p_gross_salary * v_income_tax_rate;
         SET p_tax_amount = p_tax_amount + v_income_tax_amount;
-        SET v_local_income_tax = ROUND(v_income_tax_amount * 0.10, 0);
+        SET v_local_income_tax = ROUND(v_income_tax_amount * v_local_income_of_it, 0);
         SET p_tax_amount = p_tax_amount + v_local_income_tax;
-        IF p_gross_salary * 12 >= 12000000 THEN
+        IF p_gross_salary * 12 >= v_four_ins_annual_min THEN
             SET v_4insurance_amount = (p_gross_salary * v_pension_rate)
                                     + (p_gross_salary * v_health_rate)
                                     + (p_gross_salary * v_longterm_rate)
@@ -353,14 +537,24 @@ proc_main: BEGIN
     SET p_new_calculation_id = LAST_INSERT_ID();
     SET p_completed_delta = v_delta;
 
-    IF v_withholding_amount > 0 THEN
+    IF v_national_amount > 0 THEN
         INSERT INTO salary_tax_calculations (
             tenant_id, calculation_id, tax_type, tax_name, tax_rate,
             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
         ) VALUES (
-            p_tenant_id, p_new_calculation_id, 'WITHHOLDING_TAX', '원천징수', v_withholding_tax,
-            v_tax_base_gross, v_tax_base_gross, v_withholding_amount,
-            '추가정산 프리랜서 원천징수 3.3%', TRUE, NOW(), NOW()
+            p_tenant_id, p_new_calculation_id, 'WITHHOLDING_NATIONAL', '원천징수 국세', v_national_rate,
+            v_tax_base_gross, v_tax_base_gross, v_national_amount,
+            '추가정산 프리랜서 원천징수 국세', TRUE, NOW(), NOW()
+        );
+    END IF;
+    IF v_local_wh_amount > 0 THEN
+        INSERT INTO salary_tax_calculations (
+            tenant_id, calculation_id, tax_type, tax_name, tax_rate,
+            base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
+        ) VALUES (
+            p_tenant_id, p_new_calculation_id, 'WITHHOLDING_LOCAL', '원천징수 지방세', v_local_wh_rate,
+            v_tax_base_gross, v_tax_base_gross, v_local_wh_amount,
+            '추가정산 프리랜서 원천징수 지방세', TRUE, NOW(), NOW()
         );
     END IF;
     IF v_vat_amount > 0 THEN
@@ -377,7 +571,7 @@ proc_main: BEGIN
             tenant_id, calculation_id, tax_type, tax_name, tax_rate,
             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
         ) VALUES (
-            p_tenant_id, p_new_calculation_id, 'LOCAL_INCOME_TAX', '지방소득세', 0.10,
+            p_tenant_id, p_new_calculation_id, 'LOCAL_INCOME_TAX', '지방소득세', v_local_income_of_it,
             v_income_tax_amount, v_income_tax_amount, v_local_income_tax,
             '추가정산 정규직 지방소득세', TRUE, NOW(), NOW()
         );

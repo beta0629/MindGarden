@@ -88,7 +88,7 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
                     // 프로시저는 INCOME 타입의 매출 거래와 EXPENSE 타입의 할인 거래를 생성
                     transactions = transactions.stream()
                         .filter(t -> {
-                            // 매출 거래: INCOME, category='CONSULTATION', subcategory='PACKAGE_SALE'
+                            // 매출 거래: INCOME, category='상담료', subcategory='PACKAGE_SALE'
                             boolean isRevenue = t.getTransactionType() == FinancialTransaction.TransactionType.INCOME &&
                                               FinancialTransactionConstants.isConsultationCategory(t.getCategory()) &&
                                               "PACKAGE_SALE".equals(t.getSubcategory());

@@ -415,6 +415,60 @@
   border-top: 1px solid var(--mg-color-border-main);
 }
 
+/* 확정 전 경고 · 늦은 회기 알림 · 추가 정산 배지 (Clinic-OS 토큰만) */
+.salary-calc-block__pre-confirm-warning {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-sm));
+  padding: var(--mg-v2-space-3, var(--mg-spacing-md)) var(--mg-v2-space-4, var(--mg-spacing-md));
+  margin-bottom: var(--mg-spacing-md);
+  background: var(--mg-v2-color-semantic-warning-light);
+  border: 1px solid var(--mg-v2-color-semantic-warning);
+  border-radius: var(--mg-v2-radius-md, var(--mg-radius-md, 10px));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  line-height: 1.5;
+}
+
+.salary-calc-block__pre-confirm-warning-item {
+  margin: 0;
+}
+
+.salary-calc-block__late-session-notice {
+  margin: 0 0 var(--mg-spacing-md) 0;
+  padding: var(--mg-v2-space-2, var(--mg-spacing-sm)) var(--mg-v2-space-3, var(--mg-spacing-md));
+  background: var(--mg-v2-color-semantic-info-light);
+  border: 1px solid var(--mg-v2-color-semantic-info);
+  border-radius: var(--mg-v2-radius-sm, 6px);
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  line-height: 1.5;
+}
+
+.salary-calc-block__card-header-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
+.salary-calc-block__adjustment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--mg-v2-space-1, 4px) var(--mg-v2-space-2, var(--mg-spacing-sm));
+  background: var(--mg-v2-color-semantic-info-light);
+  color: var(--mg-v2-color-semantic-info-dark);
+  border: 1px solid var(--mg-v2-color-semantic-info);
+  border-radius: var(--mg-v2-radius-sm, 6px);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.salary-calc-block__card--adjustment {
+  border-color: var(--mg-v2-color-semantic-info);
+}
+
 /* ========== 세금 관리 블록 ========== */
 .salary-tax-block__header {
   display: flex;
@@ -558,11 +612,24 @@
   .salary-calc-block__actions,
   .mg-v2-card-actions.salary-calc-block__actions {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .salary-calc-block__actions .mg-v2-button,
   .mg-v2-card-actions.salary-calc-block__actions .mg-v2-button {
     width: 100%;
+    min-height: var(--mg-v2-touch-target-min, 44px);
+  }
+
+  .salary-calc-block__pre-confirm-warning,
+  .salary-calc-block__late-session-notice {
+    width: 100%;
+  }
+
+  .salary-calc-block__card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--mg-spacing-sm);
   }
 }
 

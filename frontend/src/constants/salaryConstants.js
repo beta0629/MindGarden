@@ -21,6 +21,12 @@ export const SALARY_STATUS = {
   CANCELLED: 'CANCELLED'
 };
 
+/** API·DB calculation_kind 값 (화면 라벨에는 쓰지 않음 — UI는 SALARY_LATE_NOTES_LABELS) */
+export const SALARY_CALCULATION_KIND = {
+  PRIMARY: 'PRIMARY',
+  ADJUSTMENT: 'ADJUSTMENT'
+};
+
 export const SALARY_STATUS_LABELS = {
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   [SALARY_STATUS.PENDING]: '대기',
@@ -91,6 +97,14 @@ export const SALARY_API_ENDPOINTS = {
   CONFIRM: '/api/v1/admin/salary/confirm',
   /** POST 본문 없음: `/approve/{calculationId}` */
   APPROVE: '/api/v1/admin/salary/approve',
+  /** GET ?consultantId&periodStart&periodEnd — 확정 전 경고(정보만, hard-block 아님) */
+  PRE_CONFIRM_WARNING: '/api/v1/admin/salary/pre-confirm-warning',
+  /** POST 미지급 제자리 재계산: RECALC + '/' + calculationId */
+  RECALC: '/api/v1/admin/salary/recalc',
+  /** POST 지급완료 후 추가 정산: ADJUSTMENT + '/' + calculationId */
+  ADJUSTMENT: '/api/v1/admin/salary/adjustment',
+  getRecalcUrl: (calculationId) => `/api/v1/admin/salary/recalc/${calculationId}`,
+  getAdjustmentUrl: (calculationId) => `/api/v1/admin/salary/adjustment/${calculationId}`,
 
   CONFIGS: '/api/v1/admin/salary/configs',
   CONFIG_OPTIONS: '/api/v1/admin/salary/config-options',
@@ -195,6 +209,43 @@ export const SALARY_CSS_CLASSES = {
 /** 급여 관리(ERP) 화면 액션 버튼 라벨 */
 export const SALARY_ACTION_LABELS = {
   APPROVE: '승인'
+};
+
+/**
+ * 늦은 회기·추가 정산 UI 카피 (1인 상담센터 — 짧은 한국어 명사구만).
+ * 화면·라벨에 PRIMARY/ADJUSTMENT/recalc/variance/ERP 전문용어 금지.
+ */
+export const SALARY_LATE_NOTES_LABELS = {
+  ADJUSTMENT_BADGE: '추가 정산',
+  RECALC: '다시 계산',
+  CREATE_ADJUSTMENT: '빠진 회기 추가 정산',
+  PRE_CONFIRM_NOT_COMPLETED_PREFIX: '이 기간에 완료 아닌 회기',
+  PRE_CONFIRM_MISSING_RECORD_PREFIX: '일지 미작성',
+  EXTRA_COMPLETED_PREFIX: '확정 후 추가 완료 회기',
+  COUNT_SUFFIX: '건',
+  ADJUSTMENT_SESSION_PREFIX: '+'
+};
+
+export const SALARY_LATE_NOTES_MESSAGES = {
+  RECALC_APPROVED_CONFIRM:
+    '급여를 다시 계산하면 승인 상태가 \'계산완료\'로 변경되어 재승인이 필요합니다. 계속하시겠습니까?',
+  RECALC_CONFIRM: '빠진 회기를 반영해 다시 계산할까요?',
+  ADJUSTMENT_CONFIRM_PREFIX: '지급 완료된 급여 외에 추가로 완료된',
+  ADJUSTMENT_CONFIRM_SUFFIX: '건에 대해 추가 정산 내역을 생성합니다.',
+  RECALC_SUCCESS: '다시 계산이 완료되었습니다.',
+  ADJUSTMENT_SUCCESS: '추가 정산이 생성되었습니다.',
+  RECALC_ERROR: '다시 계산에 실패했습니다.',
+  ADJUSTMENT_ERROR: '추가 정산에 실패했습니다.'
+};
+
+/** 급여 계산 카드/배너 BEM 클래스 (Clinic-OS 토큰 스타일) */
+export const SALARY_LATE_NOTES_CSS = {
+  PRE_CONFIRM_WARNING: 'salary-calc-block__pre-confirm-warning',
+  PRE_CONFIRM_WARNING_ITEM: 'salary-calc-block__pre-confirm-warning-item',
+  LATE_SESSION_NOTICE: 'salary-calc-block__late-session-notice',
+  ADJUSTMENT_BADGE: 'salary-calc-block__adjustment-badge',
+  CARD_ADJUSTMENT: 'salary-calc-block__card--adjustment',
+  CARD_HEADER_BADGES: 'salary-calc-block__card-header-badges'
 };
 
 export const SALARY_MESSAGES = {

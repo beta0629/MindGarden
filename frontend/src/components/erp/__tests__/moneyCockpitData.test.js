@@ -150,6 +150,14 @@ describe('moneyCockpitData pending sums (성공 시 0)', () => {
     expect(sumPendingSalaryNet([])).toBe(0);
   });
 
+  test('sumPendingSalaryNet: 미지급 ADJUSTMENT net 포함 · PAID 제외', () => {
+    expect(sumPendingSalaryNet([
+      { status: 'PAID', netSalary: 500000, calculationKind: 'PRIMARY' },
+      { status: 'CALCULATED', netSalary: 29100, calculationKind: 'ADJUSTMENT' },
+      { status: 'APPROVED', netSalary: 1000, calculationKind: 'PRIMARY' }
+    ])).toBe(30100);
+  });
+
   test('파싱 불가 raw → null (호출부에서 행 hide)', () => {
     expect(sumPendingConsultationFees(null)).toBeNull();
     expect(sumPendingConsultationFees({ data: { notList: true } })).toBeNull();

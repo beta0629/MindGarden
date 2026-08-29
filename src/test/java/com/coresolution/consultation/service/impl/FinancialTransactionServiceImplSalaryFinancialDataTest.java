@@ -93,6 +93,7 @@ class FinancialTransactionServiceImplSalaryFinancialDataTest {
     @Test
     @DisplayName("totalSalaryPaid는 EXPENSE+SALARY 합만 반영하고 INCOME은 제외")
     void getSalaryFinancialData_sumsExpenseSalaryOnly() throws Exception {
+        // getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", ...) 경로만 commonCodeService 사용
         when(commonCodeService.getCodeName("TRANSACTION_TYPE", "EXPENSE")).thenReturn(EXPENSE_TYPE);
 
         FinancialTransaction expenseSalary = FinancialTransaction.builder()

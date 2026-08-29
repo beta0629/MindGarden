@@ -107,6 +107,14 @@
   color: var(--mg-v2-color-text-primary);
 }
 
+.money-hero-band__cell--income .money-hero-band__amount .mg-v2-kpi-numeral {
+  color: var(--mg-v2-color-semantic-info);
+}
+
+.money-hero-band__cell--expense .money-hero-band__amount .mg-v2-kpi-numeral {
+  color: var(--mg-v2-color-semantic-error);
+}
+
 .money-hero-band__cell--remaining .money-hero-band__amount .mg-v2-kpi-numeral {
   color: var(--mg-v2-color-primary-main, var(--mg-color-primary-main));
 }
@@ -362,6 +370,9 @@
   flex-direction: column;
   gap: var(--mg-v2-space-3);
   width: 100%;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-surface-secondary, var(--mg-color-surface-subtle, var(--mg-color-surface-main)));
+  border-radius: var(--mg-v2-radius-md, var(--radius-md, 0.5rem));
 }
 
 .money-ledger__header {
@@ -404,8 +415,13 @@
 }
 
 .money-ledger__table th {
+  font-size: var(--mg-v2-font-size-caption);
   font-weight: 600;
   color: var(--mg-v2-color-text-secondary);
+  background: var(
+    --mg-v2-color-surface-hover,
+    var(--mg-v2-color-surface-stone, var(--mg-v2-color-neutral-100, var(--mg-color-surface-main)))
+  );
 }
 
 .money-ledger__table tbody tr {
@@ -419,10 +435,25 @@
   white-space: nowrap;
 }
 
-.money-ledger__amount {
+.money-ledger__table th.money-ledger__amount,
+.money-ledger__table td.money-ledger__amount {
   text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.money-ledger__table tbody .money-ledger__amount {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.money-ledger__table tbody .money-ledger__amount--in {
+  color: var(--mg-v2-color-semantic-info);
+  font-weight: 600;
+}
+
+.money-ledger__table tbody .money-ledger__amount--out {
+  color: var(--mg-v2-color-semantic-error);
+  font-weight: 600;
 }
 
 .money-ledger__empty {

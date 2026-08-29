@@ -37,21 +37,21 @@ const MoneyHeroBand = ({
       label: OFD_HERO.INCOME_LABEL,
       caption: incomeCaption,
       value: income,
-      remainingTone: false
+      cellModifier: 'money-hero-band__cell--income'
     },
     {
       id: 'expense',
       label: OFD_HERO.EXPENSE_LABEL,
       caption: expenseCaption,
       value: expense,
-      remainingTone: false
+      cellModifier: 'money-hero-band__cell--expense'
     },
     {
       id: 'remaining',
       label: OFD_HERO.REMAINING_LABEL,
       caption: remainingCaption,
       value: remaining,
-      remainingTone: true
+      cellModifier: 'money-hero-band__cell--remaining'
     }
   ];
 
@@ -65,7 +65,7 @@ const MoneyHeroBand = ({
       {cells.map((cell) => (
         <article
           key={cell.id}
-          className={`money-hero-band__cell${cell.remainingTone ? ' money-hero-band__cell--remaining' : ''}`}
+          className={`money-hero-band__cell ${cell.cellModifier}`}
         >
           <p className="money-hero-band__label">{cell.label}</p>
           <div className="money-hero-band__amount">

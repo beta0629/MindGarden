@@ -18,11 +18,17 @@ class SalaryTaxTypeDisplayLabelsTest {
     @DisplayName("WITHHOLDING_TAX → 프론트와 동일 한글 라벨")
     void withholdingTax_matchesFrontendConstant() {
         assertEquals(
-                "원천징수(국세 3%)",
+                "원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)",
                 SalaryTaxTypeDisplayLabels.labelForTaxType("WITHHOLDING_TAX"));
-        assertEquals(
-                "원천징수(지방세 0.3%)",
-                SalaryTaxTypeDisplayLabels.labelForTaxType("LOCAL_WITHHOLDING_TAX"));
+    }
+
+    @Test
+    @DisplayName("WITHHOLDING_NATIONAL / LOCAL → 분리 라벨")
+    void withholdingNationalLocal_labels() {
+        assertEquals("원천징수 국세(3%)",
+                SalaryTaxTypeDisplayLabels.labelForTaxType("WITHHOLDING_NATIONAL"));
+        assertEquals("원천징수 지방세(0.3%)",
+                SalaryTaxTypeDisplayLabels.labelForTaxType("WITHHOLDING_LOCAL"));
     }
 
     @Test

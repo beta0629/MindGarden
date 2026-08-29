@@ -12,8 +12,9 @@ import java.util.Map;
 public final class SalaryTaxTypeDisplayLabels {
 
     private static final Map<String, String> BY_CODE = Map.ofEntries(
-            Map.entry("WITHHOLDING_TAX", "원천징수(국세 3%)"),
-            Map.entry("LOCAL_WITHHOLDING_TAX", "원천징수(지방세 0.3%)"),
+            Map.entry("WITHHOLDING_TAX", "원천징수(국세 3%, 지방세 0.3%, 합계 3.3%)"),
+            Map.entry("WITHHOLDING_NATIONAL", "원천징수 국세(3%)"),
+            Map.entry("WITHHOLDING_LOCAL", "원천징수 지방세(0.3%)"),
             Map.entry("LOCAL_INCOME_TAX", "지방소득세(정규직 등)"),
             Map.entry("VAT", "부가가치세"),
             Map.entry("INCOME_TAX", "소득세"),

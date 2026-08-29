@@ -265,8 +265,8 @@ BEGIN
                                 INTO v_national_withholding_rate
                             FROM common_codes cc
                             WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
-                              AND cc.code_group = 'FREELANCE_WITHHOLDING_TAX'
-                              AND cc.code_value = 'NATIONAL'
+                              AND cc.code_group = 'SALARY_TAX_RATE'
+                              AND cc.code_value = 'WITHHOLDING_NATIONAL'
                               AND cc.is_active = TRUE
                               AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
                             ORDER BY cc.tenant_id IS NULL ASC
@@ -275,8 +275,8 @@ BEGIN
                                 INTO v_local_withholding_rate
                             FROM common_codes cc
                             WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
-                              AND cc.code_group = 'FREELANCE_WITHHOLDING_TAX'
-                              AND cc.code_value = 'LOCAL'
+                              AND cc.code_group = 'SALARY_TAX_RATE'
+                              AND cc.code_value = 'WITHHOLDING_LOCAL'
                               AND cc.is_active = TRUE
                               AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
                             ORDER BY cc.tenant_id IS NULL ASC
@@ -285,7 +285,7 @@ BEGIN
                                OR v_local_withholding_rate IS NULL OR v_local_withholding_rate <= 0 THEN
                                 SET p_success = FALSE;
                                 SET p_message = CONCAT(
-                                    '프리랜서 원천징수 요율(FREELANCE_WITHHOLDING_TAX NATIONAL/LOCAL)을 찾을 수 없습니다. ',
+                                    '프리랜서 원천징수 요율(SALARY_TAX_RATE WITHHOLDING_NATIONAL/LOCAL)을 찾을 수 없습니다. ',
                                     'national=', IFNULL(v_national_withholding_rate, 'NULL'),
                                     ', local=', IFNULL(v_local_withholding_rate, 'NULL'));
                                 SET p_calculation_id = NULL;
@@ -512,7 +512,7 @@ BEGIN
                             tenant_id, calculation_id, tax_type, tax_name, tax_rate,
                             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
                         ) VALUES (
-                            p_tenant_id, p_calculation_id, 'WITHHOLDING_TAX', '원천징수(국세)', v_national_withholding_rate,
+                            p_tenant_id, p_calculation_id, 'WITHHOLDING_NATIONAL', '원천징수(국세)', v_national_withholding_rate,
                             v_tax_base_gross, v_tax_base_gross, v_national_withholding_amount,
                             '프리랜서 사업소득 원천징수 국세', TRUE, NOW(), NOW()
                         );
@@ -522,7 +522,7 @@ BEGIN
                             tenant_id, calculation_id, tax_type, tax_name, tax_rate,
                             base_amount, taxable_amount, tax_amount, description, is_active, created_at, updated_at
                         ) VALUES (
-                            p_tenant_id, p_calculation_id, 'LOCAL_WITHHOLDING_TAX', '원천징수(지방세)', v_local_withholding_rate,
+                            p_tenant_id, p_calculation_id, 'WITHHOLDING_LOCAL', '원천징수(지방세)', v_local_withholding_rate,
                             v_tax_base_gross, v_tax_base_gross, v_local_withholding_amount,
                             '프리랜서 사업소득 원천징수 지방세', TRUE, NOW(), NOW()
                         );

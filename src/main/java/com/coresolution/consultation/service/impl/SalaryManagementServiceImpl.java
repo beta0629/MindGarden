@@ -468,7 +468,6 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         
         Map<String, BigDecimal> breakdown = new HashMap<>();
         breakdown.put("withholdingTax", BigDecimal.ZERO);
-        breakdown.put("localWithholdingTax", BigDecimal.ZERO);
         breakdown.put("localIncomeTax", BigDecimal.ZERO);
         breakdown.put("vat", BigDecimal.ZERO);
         breakdown.put("incomeTax", BigDecimal.ZERO);
@@ -487,10 +486,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                 taxByType.put(taxType, sum);
                 switch (taxType) {
                     case "WITHHOLDING_TAX":
-                        breakdown.put("withholdingTax", sum);
-                        break;
-                    case "LOCAL_WITHHOLDING_TAX":
-                        breakdown.put("localWithholdingTax", sum);
+                    case "WITHHOLDING_NATIONAL":
+                    case "WITHHOLDING_LOCAL":
+                        breakdown.put("withholdingTax",
+                                Optional.ofNullable(breakdown.get("withholdingTax")).orElse(BigDecimal.ZERO)
+                                        .add(sum));
                         break;
                     case "LOCAL_INCOME_TAX":
                         breakdown.put("localIncomeTax", sum);
@@ -516,7 +516,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
 
         /*
          * F9: withholding 등 세목 breakdown은 salary_tax_calculations(stored)만 사용.
-         * FREELANCE Java FLOOR 결합 3.3% fallback 금지 — preview/confirm SP SSOT(국세+지방세)와 어긋남.
+         * FREELANCE Java FLOOR 결합 0.033 fallback 금지 — preview/confirm SP SSOT(국세+지방세)와 어긋남.
          */
 
         Map<String, Object> result = new HashMap<>();

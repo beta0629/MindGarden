@@ -2,6 +2,7 @@ package com.coresolution.consultation.salary;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.coresolution.consultation.constant.salary.SalaryTaxRates;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,6 +25,14 @@ class SalaryPreviewConfirmParityFormulaTest {
         return value.setScale(0, RoundingMode.FLOOR);
     }
 
+    private static BigDecimal nationalWithholding(BigDecimal gross) {
+        return floor(gross.multiply(SalaryTaxRates.WITHHOLDING_NATIONAL_RATE));
+    }
+
+    private static BigDecimal localWithholding(BigDecimal gross) {
+        return floor(gross.multiply(SalaryTaxRates.WITHHOLDING_LOCAL_RATE));
+    }
+
     @Test
     @DisplayName("FREELANCE: 2 COMPLETED + 1 cancelled, rate 50k → earnings 100k")
     void freelance_completedCountOnly_excludesCancelled() {
@@ -39,8 +48,8 @@ class SalaryPreviewConfirmParityFormulaTest {
         BigDecimal earnings = new BigDecimal("120000");
         BigDecimal ss = new BigDecimal("10000");
         BigDecimal taxable = earnings.add(ss);
-        BigDecimal national = FreelanceWithholdingTaxUtil.calculateNationalWithholdingTaxAmount(taxable);
-        BigDecimal local = FreelanceWithholdingTaxUtil.calculateLocalWithholdingTaxAmount(taxable);
+        BigDecimal national = nationalWithholding(taxable);
+        BigDecimal local = localWithholding(taxable);
         BigDecimal tax = national.add(local);
         BigDecimal gross = earnings.add(ss);
         BigDecimal net = gross.subtract(tax);
@@ -57,13 +66,14 @@ class SalaryPreviewConfirmParityFormulaTest {
     @DisplayName("FREELANCE: gross 30000 → 국세 900 + 지방세 90 (결합 0.033 금지)")
     void freelance_gross30000_splitsNational900_local90() {
         BigDecimal gross = new BigDecimal("30000");
-        BigDecimal national = FreelanceWithholdingTaxUtil.calculateNationalWithholdingTaxAmount(gross);
-        BigDecimal local = FreelanceWithholdingTaxUtil.calculateLocalWithholdingTaxAmount(gross);
+        BigDecimal national = nationalWithholding(gross);
+        BigDecimal local = localWithholding(gross);
         assertThat(national).isEqualByComparingTo("900");
         assertThat(local).isEqualByComparingTo("90");
         assertThat(national.add(local)).isEqualByComparingTo("990");
-        assertThat(FreelanceWithholdingTaxUtil.NATIONAL_RATE).isEqualByComparingTo("0.03");
-        assertThat(FreelanceWithholdingTaxUtil.LOCAL_RATE).isEqualByComparingTo("0.003");
+        assertThat(FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(gross)).isEqualByComparingTo("990");
+        assertThat(SalaryTaxRates.WITHHOLDING_NATIONAL_RATE).isEqualByComparingTo("0.03");
+        assertThat(SalaryTaxRates.WITHHOLDING_LOCAL_RATE).isEqualByComparingTo("0.003");
     }
 
     @Test
@@ -119,9 +129,7 @@ class SalaryPreviewConfirmParityFormulaTest {
         BigDecimal taxWithBannedExtraLocal = withholding.add(floor(withholding.multiply(LOCAL_INCOME_ON_INCOME_TAX)));
         assertThat(taxWithoutExtraLocal).isEqualByComparingTo("3300");
         assertThat(taxWithBannedExtraLocal).isNotEqualByComparingTo(taxWithoutExtraLocal);
-        assertThat(FreelanceWithholdingTaxUtil.calculateNationalWithholdingTaxAmount(taxable))
-                .isEqualByComparingTo("3000");
-        assertThat(FreelanceWithholdingTaxUtil.calculateLocalWithholdingTaxAmount(taxable))
-                .isEqualByComparingTo("300");
+        assertThat(nationalWithholding(taxable)).isEqualByComparingTo("3000");
+        assertThat(localWithholding(taxable)).isEqualByComparingTo("300");
     }
 }

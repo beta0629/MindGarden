@@ -9,7 +9,7 @@
 --   - Gross OUT = earnings + 특별지원금; Net = gross - tax
 --   - 원 단위: national/local withholding/VAT/income/local/4insurance 각 FLOOR
 --   - FREELANCE base: FREELANCE_BASE_RATE 미해석 시 실패 (30000 폴백 금지)
---   - FREELANCE withholding: FREELANCE_WITHHOLDING_TAX NATIONAL+LOCAL (결합 0.033 금지)
+--   - FREELANCE withholding: SALARY_TAX_RATE WITHHOLDING_NATIONAL+WITHHOLDING_LOCAL (결합 0.033 금지)
 -- 기간 필터: schedules.date BETWEEN period
 -- =====================================================
 DELIMITER //
@@ -201,8 +201,8 @@ BEGIN
             INTO v_national_withholding_rate
         FROM common_codes cc
         WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
-          AND cc.code_group = 'FREELANCE_WITHHOLDING_TAX'
-          AND cc.code_value = 'NATIONAL'
+          AND cc.code_group = 'SALARY_TAX_RATE'
+          AND cc.code_value = 'WITHHOLDING_NATIONAL'
           AND cc.is_active = TRUE
           AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
         ORDER BY cc.tenant_id IS NULL ASC
@@ -211,8 +211,8 @@ BEGIN
             INTO v_local_withholding_rate
         FROM common_codes cc
         WHERE (cc.tenant_id = p_tenant_id OR cc.tenant_id IS NULL)
-          AND cc.code_group = 'FREELANCE_WITHHOLDING_TAX'
-          AND cc.code_value = 'LOCAL'
+          AND cc.code_group = 'SALARY_TAX_RATE'
+          AND cc.code_value = 'WITHHOLDING_LOCAL'
           AND cc.is_active = TRUE
           AND (cc.is_deleted = FALSE OR cc.is_deleted IS NULL)
         ORDER BY cc.tenant_id IS NULL ASC
@@ -221,7 +221,7 @@ BEGIN
            OR v_local_withholding_rate IS NULL OR v_local_withholding_rate <= 0 THEN
             SET p_success = FALSE;
             SET p_message = CONCAT(
-                '프리랜서 원천징수 요율(FREELANCE_WITHHOLDING_TAX NATIONAL/LOCAL)을 찾을 수 없습니다. ',
+                '프리랜서 원천징수 요율(SALARY_TAX_RATE WITHHOLDING_NATIONAL/LOCAL)을 찾을 수 없습니다. ',
                 'national=', IFNULL(v_national_withholding_rate, 'NULL'),
                 ', local=', IFNULL(v_local_withholding_rate, 'NULL'));
             SET p_gross_salary = 0;

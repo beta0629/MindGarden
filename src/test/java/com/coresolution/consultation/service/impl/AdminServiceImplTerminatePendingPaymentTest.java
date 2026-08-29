@@ -87,13 +87,13 @@ import static org.mockito.Mockito.when;
  * <p>매트릭스:
  * <ul>
  *   <li>PENDING_PAYMENT + SAME_DAY_CARD + 연결된 TENTATIVE_PENDING_PAYMENT 가예약 1건
- *       → TERMINATED + paymentStatus REJECTED + 가예약 CANCELLED + 환불/4채널 통지 우회</li>
+ *       → CANCELLED + paymentStatus REJECTED + 가예약 CANCELLED + 환불/4채널 통지 우회</li>
  *   <li>PENDING_PAYMENT + ADVANCE + TENTATIVE 가예약 없음
- *       → TERMINATED + paymentStatus REJECTED + 가예약 조회만 + 환불 우회</li>
+ *       → CANCELLED + paymentStatus REJECTED + 가예약 조회만 + 환불 우회</li>
  *   <li>PENDING_PAYMENT + 다른 매칭의 TENTATIVE 가예약 (mappingId 불일치)
- *       → 본 매칭만 TERMINATED + 타 매칭 가예약 미침범</li>
- *   <li>ACTIVE 매칭 → 기존 환불·일정 취소·통지 흐름 회귀 0</li>
- *   <li>이미 TERMINATED 매칭 → RuntimeException ("이미 종료된 매칭입니다")</li>
+ *       → 본 매칭만 CANCELLED + 타 매칭 가예약 미침범</li>
+ *   <li>ACTIVE 매칭 → CANCELLED + REFUNDED + 환불·일정 취소·통지 흐름</li>
+ *   <li>이미 TERMINATED/CANCELLED 매칭 → RuntimeException ("이미 종료된 매칭입니다")</li>
  * </ul>
  *
  * @author MindGarden
@@ -225,7 +225,7 @@ class AdminServiceImplTerminatePendingPaymentTest {
     }
 
     @Test
-    @DisplayName("PENDING_PAYMENT + SAME_DAY_CARD + 연결 가예약 1건 → TERMINATED + paymentStatus REJECTED + 가예약 CANCELLED + 환불 우회")
+    @DisplayName("PENDING_PAYMENT + SAME_DAY_CARD + 연결 가예약 1건 → CANCELLED + paymentStatus REJECTED + 가예약 CANCELLED + 환불 우회")
     void terminateMapping_pendingPayment_sameDayCard_cancelsTentativeAndSkipsRefund() {
         Long mappingId = 700L;
         Long consultantId = 80L;
@@ -241,8 +241,12 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REJECTED")))
+                .thenReturn(PaymentStatus.REJECTED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
                 .thenReturn(ScheduleStatus.CANCELLED.name());
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
@@ -251,7 +255,7 @@ class AdminServiceImplTerminatePendingPaymentTest {
 
         adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON);
 
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
         assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REJECTED);
         assertThat(mapping.getTerminatedAt()).isNotNull();
         assertThat(mapping.getRemainingSessions()).isZero();
@@ -273,7 +277,7 @@ class AdminServiceImplTerminatePendingPaymentTest {
     }
 
     @Test
-    @DisplayName("PENDING_PAYMENT + ADVANCE + 가예약 0건 → TERMINATED + paymentStatus REJECTED + 가예약 변경 0건")
+    @DisplayName("PENDING_PAYMENT + ADVANCE + 가예약 0건 → CANCELLED + paymentStatus REJECTED + 가예약 변경 0건")
     void terminateMapping_pendingPayment_advance_noSchedules_simpleTerminate() {
         Long mappingId = 701L;
         Long consultantId = 81L;
@@ -287,8 +291,12 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REJECTED")))
+                .thenReturn(PaymentStatus.REJECTED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
                 .thenReturn(ScheduleStatus.CANCELLED.name());
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
@@ -297,7 +305,7 @@ class AdminServiceImplTerminatePendingPaymentTest {
 
         adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON);
 
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
         assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REJECTED);
         assertThat(mapping.getNotes()).contains("취소 가예약 0건");
         verify(scheduleRepository, never()).save(any(Schedule.class));
@@ -327,8 +335,12 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REJECTED")))
+                .thenReturn(PaymentStatus.REJECTED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
                 .thenReturn(ScheduleStatus.CANCELLED.name());
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
@@ -347,8 +359,8 @@ class AdminServiceImplTerminatePendingPaymentTest {
     }
 
     @Test
-    @DisplayName("ACTIVE 매칭 → 기존 환불·일정 취소·4채널 통지 흐름 회귀 0 (R4 분기 우회)")
-    void terminateMapping_activeMapping_retainsExistingRefundFlow() {
+    @DisplayName("ACTIVE 매칭 유료 전액 취소 → CANCELLED + REFUNDED + 환불·일정 취소·4채널 통지")
+    void terminateMapping_activeMapping_setsCancelledAndRefunded() {
         Long mappingId = 704L;
         Long consultantId = 83L;
         Long clientId = 93L;
@@ -364,8 +376,12 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
                 .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
+                .thenReturn(PaymentStatus.REFUNDED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
                 .thenReturn(ScheduleStatus.BOOKED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
@@ -375,12 +391,15 @@ class AdminServiceImplTerminatePendingPaymentTest {
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
                 eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
                 .thenReturn(List.of(futureBooked));
+        when(financialTransactionRepository
+                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                        anyString(), anyLong(), anyString(), any()))
+                .thenReturn(false);
 
         adminService.terminateMapping(mappingId, "ACTIVE 매칭 강제 종료 — 회귀 0 검증");
 
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
-        // ACTIVE 흐름: paymentStatus 는 변경하지 않는다 (기존 행위 회귀 0).
-        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
         // ACTIVE 흐름: usedSessions = totalSessions 으로 채워 invariant 유지 (기존 행위).
         assertThat(mapping.getRemainingSessions()).isZero();
         assertThat(mapping.getUsedSessions()).isEqualTo(mapping.getTotalSessions());
@@ -392,6 +411,7 @@ class AdminServiceImplTerminatePendingPaymentTest {
         // ACTIVE 흐름: 4채널 의무 통지 오케스트레이터가 호출되어야 한다.
         verify(refundAutoCancelNotificationService).dispatchRefundAutoCancelNotification(
                 eq(TEST_TENANT_ID), any(), eq(mappingId), eq(1), anyString());
+        verify(financialTransactionService, atLeastOnce()).createTransaction(any(), any());
     }
 
     @Test
@@ -405,6 +425,8 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 .thenReturn(Optional.of(mapping));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
 
         org.assertj.core.api.Assertions
                 .assertThatThrownBy(() -> adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON))
@@ -413,6 +435,28 @@ class AdminServiceImplTerminatePendingPaymentTest {
 
         verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
         verifyNoInteractions(refundAutoCancelNotificationService);
+    }
+
+    @Test
+    @DisplayName("이미 CANCELLED 매칭 → RuntimeException (\"이미 종료된 매칭입니다\")")
+    void terminateMapping_alreadyCancelled_throwsRuntime() {
+        Long mappingId = 706L;
+        ConsultantClientMapping mapping = newPendingPaymentMapping(mappingId, 85L, 95L, "ADVANCE");
+        mapping.setStatus(MappingStatus.CANCELLED);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
+
+        org.assertj.core.api.Assertions
+                .assertThatThrownBy(() -> adminService.terminateMapping(mappingId, ADMIN_CANCEL_REASON))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("이미 종료된 매칭입니다");
+
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
     }
 
     private ConsultantClientMapping newPendingPaymentMapping(Long mappingId, Long consultantId,

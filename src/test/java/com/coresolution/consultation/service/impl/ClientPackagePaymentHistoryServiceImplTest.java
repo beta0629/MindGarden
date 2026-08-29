@@ -202,6 +202,73 @@ class ClientPackagePaymentHistoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("CANCELLED 매핑은 status=CANCELLED 로 그대로 반환한다 (display 매핑 없음)")
+    void returnsCancelledStatusPassthrough() {
+        User client = user(CLIENT_ID, "김내담");
+        User consultant = user(CONSULTANT_A_ID, "박상담");
+
+        ConsultantClientMapping cancelled = mapping(
+                20L, client, consultant,
+                ConsultantClientMapping.MappingStatus.CANCELLED,
+                "취소된 10회권", 10, 0, 500_000L,
+                LocalDateTime.of(2026, 8, 25, 18, 0),
+                "PENDING_PAYMENT 매칭 취소");
+
+        when(mappingRepository.findAllByTenantIdAndClientIdWithDetails(eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(List.of(cancelled));
+        when(sessionExtensionRequestRepository.findByTenantIdAndClientIdWithDetails(
+                eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(Collections.emptyList());
+
+        ClientPackagePaymentHistoryResponse response =
+                service.getPackagePaymentHistory(CLIENT_ID, null);
+
+        assertThat(response.getItems()).hasSize(1);
+        assertThat(response.getItems().get(0).getStatus())
+                .isEqualTo(ConsultantClientMapping.MappingStatus.CANCELLED.name());
+        assertThat(response.getItems().get(0).getType())
+                .isEqualTo(PackagePaymentHistoryType.INITIAL_MAPPING);
+    }
+
+    @Test
+    @DisplayName("SESSIONS_EXHAUSTED 및 비취소 TERMINATED 는 각각 원래 status 로 반환한다")
+    void returnsSessionsExhaustedAndNonCancelTerminatedUnchanged() {
+        User client = user(CLIENT_ID, "김내담");
+        User consultant = user(CONSULTANT_A_ID, "박상담");
+
+        ConsultantClientMapping exhausted = mapping(
+                30L, client, consultant,
+                ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED,
+                "소진 패키지", 10, 0, 400_000L,
+                LocalDateTime.of(2026, 5, 1, 10, 0), null);
+
+        ConsultantClientMapping terminatedMerge = mapping(
+                31L, client, consultant,
+                ConsultantClientMapping.MappingStatus.TERMINATED,
+                "추가 패키지", 5, 0, 200_000L,
+                LocalDateTime.of(2026, 6, 1, 10, 0),
+                String.format(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT, 30L, 5));
+
+        when(mappingRepository.findAllByTenantIdAndClientIdWithDetails(eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(List.of(exhausted, terminatedMerge));
+        when(sessionExtensionRequestRepository.findByTenantIdAndClientIdWithDetails(
+                eq(TENANT_A), eq(CLIENT_ID)))
+                .thenReturn(Collections.emptyList());
+
+        ClientPackagePaymentHistoryResponse response =
+                service.getPackagePaymentHistory(CLIENT_ID, null);
+
+        assertThat(response.getItems())
+                .extracting(PackagePaymentHistoryItemResponse::getStatus)
+                .contains(
+                        ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED.name(),
+                        ConsultantClientMapping.MappingStatus.TERMINATED.name());
+        assertThat(response.getItems())
+                .extracting(PackagePaymentHistoryItemResponse::getStatus)
+                .doesNotContain(ConsultantClientMapping.MappingStatus.CANCELLED.name());
+    }
+
+    @Test
     @DisplayName("tenantId 미설정 시 조회를 거부한다")
     void requiresTenantId() {
         TenantContextHolder.clear();

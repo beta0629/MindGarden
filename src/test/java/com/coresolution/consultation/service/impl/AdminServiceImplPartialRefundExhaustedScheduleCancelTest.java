@@ -200,6 +200,12 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.service.AdminRequestIdempotencyService.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
+        org.mockito.Mockito.lenient()
+                .when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.CANCELLED.name());
+        org.mockito.Mockito.lenient()
+                .when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.TERMINATED.name());
     }
 
     @AfterEach
@@ -333,11 +339,48 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
         // remaining 3 (> 0) 이므로 상태 변경 + 일정 취소 미수행
         assertThat(mapping.getRemainingSessions()).isEqualTo(3);
         assertThat(mapping.getStatus()).isEqualTo(ConsultantClientMapping.MappingStatus.ACTIVE);
+        assertThat(mapping.getStatus()).isNotEqualTo(ConsultantClientMapping.MappingStatus.CANCELLED);
         org.mockito.Mockito.verify(scheduleRepository, org.mockito.Mockito.never())
                 .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
                         eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class));
         // 회기가 남아있으면 4채널 의무 통지 오케스트레이터도 호출되지 않는다 (자동 취소된 일정 없음).
         org.mockito.Mockito.verifyNoInteractions(refundAutoCancelNotificationService);
+    }
+
+    @Test
+    @DisplayName("부분환불 FT 이미 존재 시 createTransaction 미호출 (existsBy 멱등) — 전액 CONSULTATION_REFUND 이중 insert 없음")
+    void partialRefundMapping_whenPartialRefundFtExists_skipsDuplicateFinancialTransaction() {
+        Long mappingId = 558L;
+        Long consultantId = 13L;
+        Long clientId = 23L;
+
+        ConsultantClientMapping mapping = buildMappingWithRemaining(mappingId, consultantId, clientId, 5, 5, 10);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(ConsultantClientMapping.MappingStatus.CANCELLED.name());
+        when(amountManagementService.checkAmountConsistency(eq(mappingId)))
+                .thenReturn(new AmountManagementService.AmountConsistencyResult(
+                        true, null, Map.of(), null));
+        when(financialTransactionRepository
+                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                        eq(TEST_TENANT_ID),
+                        eq(mappingId),
+                        eq("CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND"),
+                        eq(com.coresolution.consultation.entity.erp.financial.FinancialTransaction.TransactionType.EXPENSE)))
+                .thenReturn(true);
+
+        adminService.partialRefundMapping(mappingId, 2, "부분환불 FT 멱등");
+
+        assertThat(mapping.getRemainingSessions()).isEqualTo(3);
+        assertThat(mapping.getStatus()).isEqualTo(ConsultantClientMapping.MappingStatus.ACTIVE);
+        org.mockito.Mockito.verify(financialTransactionService, org.mockito.Mockito.never())
+                .createTransaction(any(), any());
     }
 
     @Test

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
+import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -143,6 +144,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     /** {@link #dedupRefundTransactionsByMapping} 에서 우선순위 비교에 쓰는 전체환불 subcategory 값. */
     private static final String REFUND_SUBCATEGORY_FULL = "CONSULTATION_REFUND";
+
+    /** 전체 환불 FT relatedEntityType (createConsultationRefundTransaction SSOT). */
+    private static final String RELATED_ENTITY_TYPE_MAPPING_REFUND = "CONSULTANT_CLIENT_MAPPING_REFUND";
+
+    /** 부분 환불 FT relatedEntityType (createPartialConsultationRefundTransaction SSOT). */
+    private static final String RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND =
+            "CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND";
 
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
@@ -1215,6 +1223,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
         }
+        if (tenantId != null && !tenantId.isEmpty() && mapping.getId() != null) {
+            boolean exists = financialTransactionRepository
+                    .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                            tenantId, mapping.getId(), RELATED_ENTITY_TYPE_MAPPING_REFUND,
+                            FinancialTransaction.TransactionType.EXPENSE);
+            if (exists) {
+                log.warn("🚫 중복 환불 거래 방지: MappingID={} 전체환불 FT 이미 존재", mapping.getId());
+                return;
+            }
+        }
         BigDecimal grossRefundBd = BigDecimal.valueOf(refundAmount);
         TaxCalculationUtil.TaxCalculationResult refundTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossRefundBd);
@@ -1230,7 +1248,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
                 .category(FinancialTransactionConstants.CATEGORY_OTHER)
-                .subcategory("CONSULTATION_REFUND") // 환불 세부카테고리
+                .subcategory(REFUND_SUBCATEGORY_FULL) // 환불 세부카테고리
                 .amount(refundTax.getAmountIncludingTax())
                 .taxAmount(refundTax.getVatAmount())
                 .amountBeforeTax(refundTax.getAmountExcludingTax())
@@ -1274,6 +1292,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (tenantIdForPartial == null || tenantIdForPartial.isEmpty()) {
             tenantIdForPartial = TenantContextHolder.getTenantId();
         }
+        if (tenantIdForPartial != null && !tenantIdForPartial.isEmpty() && mapping.getId() != null) {
+            boolean existsPartial = financialTransactionRepository
+                    .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                            tenantIdForPartial, mapping.getId(), RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND,
+                            FinancialTransaction.TransactionType.EXPENSE);
+            if (existsPartial) {
+                log.warn("🚫 중복 부분환불 거래 방지: MappingID={} 부분환불 FT 이미 존재", mapping.getId());
+                return;
+            }
+        }
         BigDecimal grossPartialBd = BigDecimal.valueOf(refundAmount);
         TaxCalculationUtil.TaxCalculationResult partialRefundTax =
                 TaxCalculationUtil.calculateTaxFromPayment(grossPartialBd);
@@ -1299,7 +1327,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .description(partialRefundDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND")
+                .relatedEntityType(RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND)
                 .tenantId(tenantIdForPartial)
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
@@ -3909,8 +3937,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
 
-        String terminatedStatus = getMappingStatusCode("TERMINATED");
-        if (mapping.getStatus().name().equals(terminatedStatus)) {
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
+        if (isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus)) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
         }
 
@@ -3918,9 +3947,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
         // 결제가 발생하지 않은 매칭이므로 환불 (sendRefundToErp / 4채널 통지) 트리거를 우회하고,
         // 연결된 TENTATIVE_PENDING_PAYMENT 가예약과 paymentStatus 만 정리한다.
-        String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
+        String pendingPaymentStatus = getMappingStatusCode(MappingStatusConstants.PENDING_PAYMENT);
         if (mapping.getStatus().name().equals(pendingPaymentStatus)) {
-            terminatePendingPaymentMapping(mapping, tenantId, reason, terminatedStatus);
+            terminatePendingPaymentMapping(mapping, tenantId, reason, cancelledStatus);
             return;
         }
 
@@ -3947,7 +3976,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
         }
         
-        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
+        // 유료 전액 취소 SSOT: CANCELLED + paymentStatus REFUNDED (TERMINATED는 이관·병합·자연종료용)
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(cancelledStatus));
+        String refundedPaymentStatus = getPaymentStatusCode(MappingStatusConstants.REFUNDED);
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(refundedPaymentStatus));
         mapping.setTerminatedAt(LocalDateTime.now());
         
         String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
@@ -3989,8 +4021,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.error("❌ 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
         }
         
-        log.info("✅ 매칭 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
-                id, refundedSessions, refundAmount, mapping.getConsultant().getName(), mapping.getClient().getName());
+        log.info("✅ 매칭 강제 종료(취소) 완료: ID={}, status={}, paymentStatus={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
+                id, mapping.getStatus(), mapping.getPaymentStatus(), refundedSessions, refundAmount,
+                mapping.getConsultant().getName(), mapping.getClient().getName());
     }
 
     /**
@@ -4001,7 +4034,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 다음만 수행한다.</p>
      * <ol>
      *   <li>연결된 {@code TENTATIVE_PENDING_PAYMENT} 가예약 일정 {@code CANCELLED} 전이.</li>
-     *   <li>매칭 상태 {@code TERMINATED} + {@code paymentStatus REJECTED} (PENDING → REJECTED).</li>
+     *   <li>매칭 상태 {@code CANCELLED} + {@code paymentStatus REJECTED} (PENDING → REJECTED).</li>
      *   <li>매핑 {@code notes} 에 audit 한 줄 누적 (취소 사유 + 취소된 가예약 수).</li>
      * </ol>
      *
@@ -4012,10 +4045,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * @param mapping           대상 매핑 (PENDING_PAYMENT, consultant/client 초기화 필수)
      * @param tenantId          테넌트 ID
      * @param reason            관리자 취소 사유 (audit 누적 + 스케줄 notes prefix 뒤 사유)
-     * @param terminatedStatus  공통코드에서 조회한 TERMINATED 상태 코드명 (재조회 회피)
+     * @param cancelledStatus   공통코드에서 조회한 CANCELLED 상태 코드명 (재조회 회피)
      */
     private void terminatePendingPaymentMapping(ConsultantClientMapping mapping, String tenantId,
-            String reason, String terminatedStatus) {
+            String reason, String cancelledStatus) {
         Long mappingId = mapping.getId();
         log.info("🧹 R4 결제 대기 매칭 관리자 취소: MappingID={}, paymentTiming={}, 사유={}",
                 mappingId, mapping.getPaymentTiming(), reason);
@@ -4024,8 +4057,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 mapping, tenantId,
                 AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE);
 
-        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
-        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(cancelledStatus));
+        String rejectedPaymentStatus = getPaymentStatusCode(MappingStatusConstants.REJECTED);
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(rejectedPaymentStatus));
         mapping.setTerminatedAt(LocalDateTime.now());
 
         String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
@@ -4043,8 +4077,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         mappingRepository.save(mapping);
 
-        log.info("✅ R4 결제 대기 매칭 취소 완료: MappingID={}, 취소 가예약={}건, 상담사={}, 내담자={}",
+        log.info("✅ R4 결제 대기 매칭 취소 완료: MappingID={}, status={}, 취소 가예약={}건, 상담사={}, 내담자={}",
                 mappingId,
+                mapping.getStatus(),
                 cancelledTentativeCount,
                 mapping.getConsultant() != null ? mapping.getConsultant().getName() : null,
                 mapping.getClient() != null ? mapping.getClient().getName() : null);
@@ -4311,8 +4346,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
         
-        String terminatedStatus = getMappingStatusCode("TERMINATED");
-        if (mapping.getStatus().name().equals(terminatedStatus)) {
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
+        if (isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus)) {
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
         }
         
@@ -4386,7 +4422,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantIdForErp = getTenantIdFromMapping(mapping);
         if (tenantIdForErp == null) tenantIdForErp = getTenantIdOrNull();
         try {
-            runInNewTransaction(tenantIdForErp, () -> sendRefundToErp(mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason));
+            // 부분환불: ERP 페이로드만 전송. 전액 CONSULTATION_REFUND FT 는 생성하지 않음
+            // (createPartialConsultationRefundTransaction 단일 write + existsBy 멱등).
+            runInNewTransaction(tenantIdForErp, () -> sendRefundToErp(
+                    mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason, false));
             log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {
@@ -4478,10 +4517,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         startDate = getRefundPeriodStartDate(period);
         
-        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
         // 표준화 2025-12-06: 브랜치 코드 필터링 제거 - tenantId만 사용
+        // 유료 전액 취소는 CANCELLED 로 persist (레거시 TERMINATED + 강제 종료 notes 포함)
         List<ConsultantClientMapping> terminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
-                .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
+                .filter(mapping -> isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
@@ -4762,9 +4803,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
         
-        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
         List<ConsultantClientMapping> terminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
-                .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
+                .filter(mapping -> isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
@@ -4918,9 +4960,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
         
-        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
         List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
-                .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
+                .filter(mapping -> isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
@@ -5487,6 +5530,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return codeValue;
         }
         return statusName;
+    }
+
+    /**
+     * 매핑이 이미 종료(TERMINATED) 또는 취소(CANCELLED) 상태인지 여부.
+     *
+     * @param status 현재 매핑 status
+     * @param terminatedStatus 공통코드 TERMINATED 값
+     * @param cancelledStatus 공통코드 CANCELLED 값
+     * @return 종료/취소면 true
+     */
+    private boolean isClosedMappingStatus(ConsultantClientMapping.MappingStatus status,
+            String terminatedStatus, String cancelledStatus) {
+        if (status == null) {
+            return false;
+        }
+        String name = status.name();
+        return name.equals(terminatedStatus) || name.equals(cancelledStatus);
     }
 
     /**

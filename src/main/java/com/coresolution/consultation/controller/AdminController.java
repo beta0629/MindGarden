@@ -560,7 +560,8 @@ public class AdminController extends BaseApiController {
         List<Map<String, Object>> activeMappings = mappings.stream()
                 .filter(mapping -> {
                     // 표준화 2025-12-08: 필터링 로직 개선 - 모든 활성 매핑 포함
-                    boolean isActive = mapping.getStatus() != ConsultantClientMapping.MappingStatus.TERMINATED;
+                    boolean isActive = mapping.getStatus() != ConsultantClientMapping.MappingStatus.TERMINATED
+                            && mapping.getStatus() != ConsultantClientMapping.MappingStatus.CANCELLED;
                     boolean hasValidPaymentStatus = mapping.getPaymentStatus() != null
                             && (statusCodeHelper.isStatus("PAYMENT_STATUS",
                                     mapping.getPaymentStatus().toString(), "APPROVED")
@@ -2644,7 +2645,10 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 매칭 결제 취소
+     * 매칭 결제 취소 — {@link AdminService#terminateMapping} 위임 (write-path SSOT).
+     *
+     * <p>메모리만 REJECTED 로 바꾸던 stub 을 제거. PENDING_PAYMENT 는 CANCELLED+REJECTED,
+     * 유료 전액은 CANCELLED+REFUNDED 로 persist 된다.</p>
      */
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelMappingPayment(
@@ -2658,25 +2662,28 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("매칭 ID가 필요합니다.");
         }
 
-        log.info("결제 취소 처리: mappingIds={}", mappingIds);
+        String reason = request.get("reason") != null
+                ? String.valueOf(request.get("reason"))
+                : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST;
 
+        log.info("결제 취소 처리(terminateMapping 위임): mappingIds={}, reason={}", mappingIds, reason);
+
+        List<Long> cancelledMappings = new ArrayList<>();
+        List<Long> failedMappings = new ArrayList<>();
         for (Long mappingId : mappingIds) {
             try {
-                ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
-                if (mapping != null) {
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                    mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
-                    mapping.setUpdatedAt(java.time.LocalDateTime.now());
-
-                    log.info("매칭 ID {} 결제 취소 완료", mappingId);
-                }
+                adminService.terminateMapping(mappingId, reason);
+                cancelledMappings.add(mappingId);
+                log.info("매칭 ID {} 결제 취소(terminate) 완료", mappingId);
             } catch (Exception e) {
+                failedMappings.add(mappingId);
                 log.error("매칭 ID {} 결제 취소 실패: {}", mappingId, e.getMessage());
             }
         }
 
         Map<String, Object> data = new HashMap<>();
-        data.put("cancelledMappings", mappingIds);
+        data.put("cancelledMappings", cancelledMappings);
+        data.put("failedMappings", failedMappings);
         data.put("cancelledAt", System.currentTimeMillis());
 
         return success("결제가 성공적으로 취소되었습니다.", data);

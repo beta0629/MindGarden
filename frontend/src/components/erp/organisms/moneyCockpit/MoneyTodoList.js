@@ -1,5 +1,7 @@
 /**
- * MoneyTodoList — 지금 손볼 일 (fetch 성공 시 0원 포함 표시, null만 생략)
+ * MoneyTodoList — 지금 손볼 일
+ * - 상담료·환불: fetch 성공 시 0원 포함 표시, null만 생략
+ * - 상담사 지급 예정: pendingSalary > 0 일 때만 표시
  *
  * @author CoreSolution
  * @since 2026-08-27
@@ -39,7 +41,7 @@ const MoneyTodoList = ({
       linkLabel: OFD_LINKS.FINANCIAL.label
     });
   }
-  if (pendingSalary != null) {
+  if (pendingSalary != null && pendingSalary > 0) {
     rows.push({
       id: 'pending-salary',
       label: OFD_WORKBENCH.PENDING_SALARY,

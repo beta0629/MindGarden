@@ -895,7 +895,7 @@ const SalaryManagement = () => {
                     items={[
                       { value: TAB_PROFILES, label: t('erp:SalaryManagement.t_053a17e1'), ariaControls: 'salary-profile-panel', id: 'tab-profiles' },
                       { value: TAB_CALC, label: t('erp:SalaryManagement.t_b2e25782'), ariaControls: 'salary-calc-panel', id: 'tab-calculations' },
-                      { value: TAB_TAX, label: t('erp:SalaryManagement.t_780e38c6'), ariaControls: 'salary-tax-panel', id: 'tab-tax' },
+                      { value: TAB_TAX, label: t('erp:SalaryManagement.t_780e38c6'), ariaControls: 'salary-tax-panel', id: 'tab-tax' }
                     ]}
                     activeValue={activeTab}
                     onChange={setActiveTabAndUrl}

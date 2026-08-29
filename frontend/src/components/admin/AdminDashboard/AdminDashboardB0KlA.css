@@ -505,12 +505,14 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   height: auto;
   width: fit-content;
   max-width: 100%;
-  padding: 0;
+  padding: var(--mg-v2-space-1, 0.25rem);
   gap: var(--mg-v2-space-1, 0.25rem);
   border-radius: var(--mg-v2-radius-pill, 9999px);
   border: 1px solid var(--ad-b0kla-border);
   background: var(--ad-b0kla-bg);
   box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .mg-v2-ad-b0kla__chart-header .mg-v2-ad-b0kla__pill-toggle {
@@ -2152,12 +2154,17 @@ button.mg-v2-ad-b0kla__admin-card.mg-button.mg-button--loading {
   }
 }
 
+/*
+ * MGButton 기본 height/max-height !important + overflow:hidden 이 pill 라운드·패딩을
+ * 자르므로 admin-card 와 동일하게 pill 스코프만 auto/visible 로 복원 (전역 계약 유지).
+ */
 button.mg-v2-ad-b0kla__pill.mg-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  height: auto;
+  height: auto !important;
+  max-height: none !important;
   min-height: var(--mg-v2-component-touch-target, 44px);
   font-weight: var(--mg-v2-font-weight-semibold, 600);
   line-height: var(--mg-v2-font-line-height-body, 1.5);
@@ -2168,6 +2175,7 @@ button.mg-v2-ad-b0kla__pill.mg-button {
   border-radius: var(--mg-v2-radius-pill, 9999px);
   box-shadow: none;
   padding: var(--mg-v2-space-3, 12px) var(--mg-v2-space-5, 20px);
+  overflow: visible !important;
 }
 
 button.mg-v2-ad-b0kla__pill.mg-button.mg-v2-ad-b0kla__pill--sm {

@@ -380,7 +380,8 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `CalculateSalaryPreview` */;
+/*!50003 -- !!! SSOT 2026-08-29: use procedures_standardized + V20260829_001__salary_preview_confirm_parity.sql (not this dump body)
+DROP PROCEDURE IF EXISTS `CalculateSalaryPreview` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;

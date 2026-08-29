@@ -29,6 +29,7 @@ BEGIN
     DECLARE v_erp_sync_id BIGINT;
     DECLARE v_calc_success BOOLEAN;
     DECLARE v_calc_message TEXT;
+    DECLARE v_special_support_amount DECIMAL(15,2);
     
     DECLARE consultant_cursor CURSOR FOR
         SELECT u.id FROM users u 
@@ -110,7 +111,7 @@ BEGIN
             LEAVE consultant_loop;
         END IF;
         
-        -- 급여 계산 프로시저 호출 (테넌트 격리)
+        -- 급여 계산 프로시저 호출 (SSOT 13-param: 특별지원금 OUT 포함)
         CALL ProcessIntegratedSalaryCalculation(
             v_consultant_id,
             v_period_start,
@@ -123,7 +124,8 @@ BEGIN
             v_tax_amount,
             v_erp_sync_id,
             v_calc_success,
-            v_calc_message
+            v_calc_message,
+            v_special_support_amount
         );
         
         IF v_calc_success = TRUE THEN

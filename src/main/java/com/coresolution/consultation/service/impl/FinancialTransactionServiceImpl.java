@@ -1149,8 +1149,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             List<FinancialTransaction> salaryTransactions = financialTransactionRepository
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, salaryCategory);
             
+            // 급여 원장은 EXPENSE로 기록됨(createSalaryTransaction). INCOME 필터 시 totalSalaryPaid=0.
+            String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
             BigDecimal totalSalaryPaid = salaryTransactions.stream()
-                    .filter(t -> "INCOME".equals(t.getTransactionType().name()))
+                    .filter(t -> isExpenseTransactionType(t.getTransactionType(), expenseType))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -1602,6 +1604,30 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             }
         }
         return getTenantId();
+    }
+
+     /**
+     * 거래 유형이 지출(EXPENSE)인지 판별한다.
+     * 엔티티는 {@link FinancialTransaction.TransactionType} enum으로 저장되므로
+     * enum 상수 우선 비교하고, 공통코드명(코드값·표시명)과도 안전하게 매칭한다.
+     *
+     * @param type 엔티티 거래 유형
+     * @param expenseTypeCodeName {@code getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", ...)} 결과
+     * @return 지출이면 true
+     */
+    private static boolean isExpenseTransactionType(FinancialTransaction.TransactionType type,
+                                                    String expenseTypeCodeName) {
+        if (type == null) {
+            return false;
+        }
+        if (FinancialTransaction.TransactionType.EXPENSE.equals(type)) {
+            return true;
+        }
+        if (expenseTypeCodeName == null || expenseTypeCodeName.isBlank()) {
+            return false;
+        }
+        return expenseTypeCodeName.equals(type.name())
+                || expenseTypeCodeName.equals(type.getDisplayName());
     }
 
      /**

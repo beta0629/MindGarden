@@ -1,7 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -18,10 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.sql.DataSource;
-import com.coresolution.consultation.entity.ConsultantSalaryProfile;
-import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +31,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 /**
  * {@link PlSqlSalaryManagementServiceImpl}의 CalculateSalaryPreview / ProcessIntegratedSalaryCalculation
  * 파라미터 개수 분기 및 {@code specialSupportAmount} OUT 매핑 단위 검증(Mock JDBC).
+ * Preview는 SP OUT만 사용(Java 2차 tax/net 재계산 없음).
  *
  * @author MindGarden
  * @since 2026-05-10
@@ -60,9 +57,6 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     @Mock
     private Statement utf8Statement;
 
-    @Mock
-    private ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
-
     private PlSqlSalaryManagementServiceImpl service;
 
     @BeforeEach
@@ -74,10 +68,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         when(connection.createStatement()).thenReturn(utf8Statement);
         lenient().when(utf8Statement.execute(anyString())).thenReturn(false);
         lenient().when(jdbcTemplate.queryForList(anyString(), anyString())).thenReturn(Collections.emptyList());
-        lenient().when(consultantSalaryProfileRepository
-                .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(eq(UT_TENANT), anyLong()))
-                .thenReturn(Optional.empty());
-        service = new PlSqlSalaryManagementServiceImpl(jdbcTemplate, consultantSalaryProfileRepository);
+        service = new PlSqlSalaryManagementServiceImpl(jdbcTemplate);
     }
 
     @AfterEach
@@ -100,30 +91,26 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         assertThat(result)
                 .containsEntry("success", true)
                 .containsEntry("specialSupportAmount", new BigDecimal("12345.67"))
-                .containsEntry("grossSalary", new BigDecimal("100000"));
+                .containsEntry("grossSalary", new BigDecimal("100000"))
+                .containsEntry("consultationGrossSalary", new BigDecimal("87654.33"))
+                .containsEntry("taxableGrossSalary", new BigDecimal("100000"));
     }
 
     @Test
-    @DisplayName("프리랜서+특별지원: 세전(상담료+특별지원) 기준 원천 3.3%·실지급 재산출")
-    void calculateSalaryPreview_freelanceWithSpecialSupport_rewritesTaxAndNetFromTaxableGross() throws Exception {
+    @DisplayName("SS>0: SP tax/net 유지, consultationGross=gross-SS 파생만")
+    void calculateSalaryPreview_withSpecialSupport_keepsSpTaxNetAndDerivesConsultationGross() throws Exception {
         when(jdbcTemplate.queryForObject(
                 argThat((String sql) -> sql.contains("CalculateSalaryPreview") && sql.contains("COUNT")),
                 eq(Integer.class)))
                 .thenReturn(11);
+        // SP SSOT: gross=earnings+SS=130000, tax=FLOOR(130000*0.033)=4290, net=125710
         when(callableStatement.getObject(5)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(6)).thenReturn("ok");
-        when(callableStatement.getBigDecimal(7)).thenReturn(new BigDecimal("120000"));
-        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("116040"));
-        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("3960"));
+        when(callableStatement.getBigDecimal(7)).thenReturn(new BigDecimal("130000"));
+        when(callableStatement.getBigDecimal(8)).thenReturn(new BigDecimal("125710"));
+        when(callableStatement.getBigDecimal(9)).thenReturn(new BigDecimal("4290"));
         when(callableStatement.getInt(10)).thenReturn(3);
         when(callableStatement.getBigDecimal(11)).thenReturn(new BigDecimal("10000"));
-
-        ConsultantSalaryProfile profile = new ConsultantSalaryProfile();
-        profile.setSalaryType("FREELANCE");
-        profile.setIsBusinessRegistered(false);
-        when(consultantSalaryProfileRepository
-                .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(eq(UT_TENANT), eq(99L)))
-                .thenReturn(Optional.of(profile));
 
         Map<String, Object> result = service.calculateSalaryPreview(99L,
                 LocalDate.of(2024, 4, 1), LocalDate.of(2024, 4, 30));
@@ -133,7 +120,8 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
                 .containsEntry("consultationGrossSalary", new BigDecimal("120000"))
                 .containsEntry("taxableGrossSalary", new BigDecimal("130000"))
                 .containsEntry("taxAmount", new BigDecimal("4290"))
-                .containsEntry("netSalary", new BigDecimal("125710"));
+                .containsEntry("netSalary", new BigDecimal("125710"))
+                .containsEntry("grossSalary", new BigDecimal("130000"));
     }
 
     @Test

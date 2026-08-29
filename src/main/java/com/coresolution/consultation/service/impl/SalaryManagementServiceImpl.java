@@ -25,7 +25,6 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SalaryManagementService;
-import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -254,36 +253,28 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public SalaryCalculation approveSalaryCalculation(Long calculationId, String approvedBy) {
-        log.info("✅ 급여 승인: CalculationID={}, ApprovedBy={}", calculationId, approvedBy);
-        
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        SalaryCalculation calculation = salaryCalculationRepository.findByTenantIdAndId(tenantId, calculationId)
-                .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + calculationId));
-        
-        if (calculation.getStatus() != SalaryCalculation.SalaryStatus.CALCULATED) {
-            throw new RuntimeException("승인 가능한 상태가 아닙니다: " + calculation.getStatus());
-        }
-        
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        calculation.setStatus(SalaryCalculation.SalaryStatus.APPROVED);
-        return salaryCalculationRepository.save(calculation);
+        /*
+         * UNUSED / legacy path: HTTP 승인·ERP 동기화는 SalaryManagementController →
+         * PlSqlSalaryManagementService.approveSalaryWithErpSync(ApproveSalaryWithErpSync SP)만 사용.
+         * 이 메서드에서 financial_transactions INSERT·2차 pay path를 만들지 않는다.
+         */
+        log.warn("approveSalaryCalculation is unused; use PlSqlSalaryManagementService.approveSalaryWithErpSync. calculationId={}, approvedBy={}",
+                calculationId, approvedBy);
+        throw new UnsupportedOperationException(
+                "급여 승인은 PlSqlSalaryManagementService.approveSalaryWithErpSync(ApproveSalaryWithErpSync)를 사용하세요.");
     }
     
     @Override
     public SalaryCalculation markAsPaid(Long calculationId, String paidBy) {
-        log.info("💳 급여 지급 완료: CalculationID={}, PaidBy={}", calculationId, paidBy);
-        
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        SalaryCalculation calculation = salaryCalculationRepository.findByTenantIdAndId(tenantId, calculationId)
-                .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + calculationId));
-        
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        if (calculation.getStatus() != SalaryCalculation.SalaryStatus.APPROVED) {
-            throw new RuntimeException("지급 가능한 상태가 아닙니다: " + calculation.getStatus());
-        }
-        
-        calculation.setStatus(SalaryCalculation.SalaryStatus.PAID);
-        return salaryCalculationRepository.save(calculation);
+        /*
+         * UNUSED / legacy path: HTTP 지급은 SalaryManagementController →
+         * PlSqlSalaryManagementService.processSalaryPaymentWithErpSync(ProcessSalaryPaymentWithErpSync SP)만 사용.
+         * financial_transactions INSERT·별도 pay calculator 금지.
+         */
+        log.warn("markAsPaid is unused; use PlSqlSalaryManagementService.processSalaryPaymentWithErpSync. calculationId={}, paidBy={}",
+                calculationId, paidBy);
+        throw new UnsupportedOperationException(
+                "급여 지급은 PlSqlSalaryManagementService.processSalaryPaymentWithErpSync(ProcessSalaryPaymentWithErpSync)를 사용하세요.");
     }
     
     @Override
@@ -495,7 +486,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                 taxByType.put(taxType, sum);
                 switch (taxType) {
                     case "WITHHOLDING_TAX":
-                        breakdown.put("withholdingTax", sum);
+                    case "WITHHOLDING_NATIONAL":
+                    case "WITHHOLDING_LOCAL":
+                        breakdown.put("withholdingTax",
+                                Optional.ofNullable(breakdown.get("withholdingTax")).orElse(BigDecimal.ZERO)
+                                        .add(sum));
                         break;
                     case "LOCAL_INCOME_TAX":
                         breakdown.put("localIncomeTax", sum);
@@ -520,31 +515,9 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         }
 
         /*
-         * salary_tax_calculations에 WITHHOLDING_TAX 행이 없는 경우(구버전 계산·프로시저 미배포 등):
-         * 활성 ConsultantSalaryProfile이 FREEL인 급여 건에 대해 총급여 기준 3.3%를 표시용으로 보강한다.
+         * F9: withholding 등 세목 breakdown은 salary_tax_calculations(stored)만 사용.
+         * FREELANCE Java FLOOR 결합 0.033 fallback 금지 — preview/confirm SP SSOT(국세+지방세)와 어긋남.
          */
-        BigDecimal dbWithholding = Optional.ofNullable(breakdown.get("withholdingTax")).orElse(BigDecimal.ZERO);
-        if (dbWithholding.compareTo(BigDecimal.ZERO) == 0 && !calculations.isEmpty()) {
-            BigDecimal fallbackWh = BigDecimal.ZERO;
-            for (SalaryCalculation sc : calculations) {
-                if (sc.getConsultant() == null || sc.getGrossSalary() == null
-                        || sc.getGrossSalary().compareTo(BigDecimal.ZERO) <= 0) {
-                    continue;
-                }
-                Long cid = sc.getConsultant().getId();
-                Optional<ConsultantSalaryProfile> profileOpt = consultantSalaryProfileRepository
-                        .findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(tenantId, cid);
-                if (profileOpt.isPresent()
-                        && FreelanceWithholdingTaxUtil.CONSULTANT_SALARY_TYPE_FREELANCE.equals(
-                                profileOpt.get().getSalaryType())) {
-                    fallbackWh = fallbackWh.add(
-                            FreelanceWithholdingTaxUtil.calculateWithholdingTaxAmount(sc.getGrossSalary()));
-                }
-            }
-            if (fallbackWh.compareTo(BigDecimal.ZERO) > 0) {
-                breakdown.put("withholdingTax", fallbackWh);
-            }
-        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("period", period);
@@ -574,7 +547,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         
         BigDecimal baseAmount = request.getGrossAmount() != null ? request.getGrossAmount() : BigDecimal.ZERO;
         BigDecimal taxRate = request.getTaxRate() != null ? request.getTaxRate() : BigDecimal.ZERO;
-        BigDecimal taxAmount = baseAmount.multiply(taxRate).setScale(0, java.math.RoundingMode.HALF_UP);
+        BigDecimal taxAmount = baseAmount.multiply(taxRate).setScale(0, java.math.RoundingMode.FLOOR);
         
         String taxName = request.getTaxName() != null && !request.getTaxName().isBlank()
                 ? request.getTaxName() : request.getTaxType();

@@ -142,7 +142,26 @@
 
 ---
 
-## 5. 참조
+## 5. Preview / Confirm / Paid 패리티 (2026-08-29)
+
+**목표**: `CalculateSalaryPreview` 와 `ProcessIntegratedSalaryCalculation` 이 **동일 공식**. 지급(`ProcessSalaryPaymentWithErpSync`)은 APPROVED row의 `net_salary`만 사용(재계산 금지).
+
+| ID | 시나리오 | 기대 |
+|----|----------|------|
+| U-PARITY-01 | FREELANCE COMPLETED 2 + CANCELLED 1, rate 50000 | earnings 100000 (CANCELLED 제외) |
+| U-PARITY-02 | REGULAR hours | COMPLETED만 TIMESTAMPDIFF 합산 |
+| U-PARITY-03 | REGULAR tax | 소득세 FLOOR + 지방소득세 FLOOR(income×0.10); Preview=Confirm |
+| U-PARITY-04 | SS>0 FREELANCE | gross=earnings+SS, tax=FLOOR(g×0.03)+FLOOR(g×0.003), net=gross−tax; Preview=Confirm 0원 차 |
+| U-PARITY-05 | FREELANCE_BASE_RATE 없음 | 실패 메시지 (30000 폴백 금지) |
+| U-PARITY-06 | Java preview | `applyFreelancePreviewTotalsWithSpecialSupport` 제거; SP OUT 유지 + consultationGross=gross−SS 파생만 |
+| U-PARITY-07 | FREELANCE withholding 30000 | 국세 900 + 지방세 90 (결합 0.033 리터럴·단일 곱셈 금지; NATIONAL/LOCAL common_codes) |
+| U-PARITY-08 | SALARY_TAX_RATE WITHHOLDING_NATIONAL/LOCAL 없음 | Preview/Confirm fail closed (p_success=FALSE) |
+
+**구현 참조**: `V20260829_003__salary_preview_confirm_parity.sql`, `SalaryPreviewConfirmParityFormulaTest`, `PlSqlSalaryManagementServiceImplSpecialSupportBranchTest`.
+
+---
+
+## 6. 참조
 
 - `docs/project-management/SALARY_TAX_VERIFICATION_MEETING_RESULT.md` — Phase 5 테스트 도입, core-tester 보고
 - `docs/debug/SALARY_TAX_LOGIC_VERIFICATION_REPORT.md` — §4 체크리스트(테넌트 격리, period 검증, NPE, placeholder 12개 등)

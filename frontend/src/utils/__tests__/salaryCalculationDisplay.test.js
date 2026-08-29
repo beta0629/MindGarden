@@ -2,11 +2,15 @@ import {
   SALARY_CALC_DETAIL_BASE_LABEL,
   SALARY_CALC_DETAIL_CONSULTATION_LABEL,
   SALARY_CALC_DETAIL_MERGED_DEDUP_LABEL,
-  SALARY_CALC_DETAIL_OPTION_LABEL
+  SALARY_CALC_DETAIL_OPTION_LABEL,
+  SALARY_CALCULATION_KIND
 } from '../../constants/salaryConstants';
 import {
   buildSalaryCalculationComponentRows,
-  normalizeSalaryCalculationStatus
+  isSalaryAdjustmentCalculation,
+  normalizeSalaryCalculationKind,
+  normalizeSalaryCalculationStatus,
+  orderSalaryCalculationsPrimaryThenAdjustment
 } from '../salaryCalculationDisplay';
 
 const toNum = (v) => {
@@ -22,6 +26,24 @@ describe('normalizeSalaryCalculationStatus', () => {
 
   it('reads enum-like object name', () => {
     expect(normalizeSalaryCalculationStatus({ name: 'CALCULATED' })).toBe('CALCULATED');
+  });
+});
+
+describe('normalizeSalaryCalculationKind / order', () => {
+  it('defaults missing kind to PRIMARY', () => {
+    expect(normalizeSalaryCalculationKind(null)).toBe(SALARY_CALCULATION_KIND.PRIMARY);
+  });
+
+  it('detects ADJUSTMENT and orders under parent', () => {
+    const primary = { id: 1, calculationKind: 'PRIMARY' };
+    const adj = { id: 2, calculationKind: 'ADJUSTMENT', parentCalculationId: 1 };
+    const other = { id: 3, calculationKind: 'PRIMARY' };
+    expect(isSalaryAdjustmentCalculation(adj)).toBe(true);
+    expect(orderSalaryCalculationsPrimaryThenAdjustment([adj, other, primary])).toEqual([
+      other,
+      primary,
+      adj
+    ]);
   });
 });
 

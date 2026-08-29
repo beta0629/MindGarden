@@ -832,6 +832,7 @@ jobs:
             fi
 
             # [핫픽스 2026-08-29] V20260829_003 Flyway success=0 원샷 repair
+            # [2026-08-29] force backend_changed path: chore-only retriggers skipped BG; this touch re-queues cutover+repair.
             # 배경: prod run 2069 — DROP PROCEDURE CalculateSalaryPreview → ERROR 1227 SYSTEM_USER.
             # follow-up: repair 가 mind_garden 을 쳐서 실패(#689 이후 Validate failed) → SSOT DB 는 core_solution.
             # seed-only 마이그 재적용을 위해 실패 행만 제거. success=1 은 절대 삭제하지 않음.

@@ -3297,6 +3297,9 @@ public class AdminController extends BaseApiController {
                     financialTransactionService.getTransactionsFiltered(
                             transactionType, category, parsedStart, parsedEnd, pageable);
 
+            Map<String, Object> ledgerSummary = financialTransactionService.getTransactionsFilteredSummary(
+                    transactionType, category, parsedStart, parsedEnd);
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", transactions.getContent());
@@ -3304,9 +3307,10 @@ public class AdminController extends BaseApiController {
             response.put("totalPages", transactions.getTotalPages());
             response.put("currentPage", transactions.getNumber());
             response.put("size", transactions.getSize());
+            response.put("summary", ledgerSummary);
 
-            log.info("✅ 재무 거래 목록 조회 완료: tenantId={}, 총 {}건", tenantId,
-                    transactions.getTotalElements());
+            log.info("✅ 재무 거래 목록 조회 완료: tenantId={}, 총 {}건, summaryIncome={}", tenantId,
+                    transactions.getTotalElements(), ledgerSummary.get("totalIncome"));
 
             return ResponseEntity.ok(response);
 

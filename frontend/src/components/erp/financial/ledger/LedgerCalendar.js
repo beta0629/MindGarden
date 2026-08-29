@@ -25,7 +25,9 @@ import './LedgerCalendar.css';
 
 const API_ADMIN_FINANCIAL_TRANSACTIONS = '/api/v1/admin/financial-transactions';
 const MONTH_YM_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
-const CALENDAR_PAGE_SIZE = 1000;
+/** 서버 PaginationUtils.MAX_PAGE_SIZE=20 — 캘린더는 페이지 루프로 월 전체 로드 */
+const CALENDAR_PAGE_SIZE = 20;
+const CALENDAR_MAX_PAGES = 50;
 
 /** Earliest navigable month (inclusive) */
 export const LEDGER_CALENDAR_MIN_MONTH_YM = '2020-01';
@@ -231,36 +233,48 @@ const LedgerCalendar = ({
 
     const loadMonth = async() => {
       try {
-        const params = {
-          page: 0,
+        const baseParams = {
           size: CALENDAR_PAGE_SIZE,
           startDate,
           endDate
         };
         if (transactionType && transactionType !== 'ALL') {
-          params.transactionType = transactionType;
+          baseParams.transactionType = transactionType;
         }
         if (category && category !== 'ALL') {
-          params.category = category;
+          baseParams.category = category;
         }
 
-        const envelope = await StandardizedApi.get(
-          API_ADMIN_FINANCIAL_TRANSACTIONS,
-          params,
-          { unwrapApiEnvelope: false }
-        );
-
         let rows = [];
-        if (Array.isArray(envelope)) {
-          rows = envelope;
-        } else if (envelope && typeof envelope === 'object') {
+        let page = 0;
+        let totalPages = 1;
+        while (page < totalPages && page < CALENDAR_MAX_PAGES) {
+          const envelope = await StandardizedApi.get(
+            API_ADMIN_FINANCIAL_TRANSACTIONS,
+            { ...baseParams, page },
+            { unwrapApiEnvelope: false }
+          );
+
+          if (Array.isArray(envelope)) {
+            rows = rows.concat(envelope);
+            break;
+          }
+          if (!envelope || typeof envelope !== 'object') {
+            break;
+          }
           if (envelope.success === false) {
             if (!cancelled) {
               setDayMap({});
             }
             return;
           }
-          rows = Array.isArray(envelope.data) ? envelope.data : [];
+          const pageRows = Array.isArray(envelope.data) ? envelope.data : [];
+          rows = rows.concat(pageRows);
+          totalPages = typeof envelope.totalPages === 'number' ? envelope.totalPages : 1;
+          if (pageRows.length === 0) {
+            break;
+          }
+          page += 1;
         }
 
         const inRange = (dateStr) => dateStr >= startDate && dateStr <= endDate;

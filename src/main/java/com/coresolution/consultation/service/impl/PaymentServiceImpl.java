@@ -483,6 +483,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         payment = paymentRepository.save(payment);
         log.info("결제 취소 완료: {}", paymentId);
+        cancelRelatedPaymentIncomeTransactions(payment);
         
         return buildPaymentResponse(payment, null);
     }
@@ -512,8 +513,31 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         payment = paymentRepository.save(payment);
         log.info("결제 환불 완료: {}", paymentId);
+        // 전액 환불 시에만 관련 INCOME CANCELLED (부분 환불은 원본 INCOME 유지)
+        if (refundAmount.compareTo(payment.getAmount()) == 0) {
+            cancelRelatedPaymentIncomeTransactions(payment);
+        }
         
         return buildPaymentResponse(payment, null);
+    }
+
+    /**
+     * 결제에 연동된 posted INCOME 재무 거래를 CANCELLED로 전이한다(멱등).
+     *
+     * @param payment 결제 엔티티 (id 필수)
+     */
+    private void cancelRelatedPaymentIncomeTransactions(Payment payment) {
+        if (payment == null || payment.getId() == null) {
+            return;
+        }
+        try {
+            int cancelled = financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                    payment.getId(), FinancialTransactionConstants.RELATED_ENTITY_PAYMENT);
+            log.info("🛑 결제 연동 INCOME CANCELLED: paymentPk={}, count={}", payment.getId(), cancelled);
+        } catch (Exception e) {
+            log.error("❌ 결제 연동 INCOME 취소 실패: paymentPk={}, error={}",
+                    payment.getId(), e.getMessage(), e);
+        }
     }
     
     @Override

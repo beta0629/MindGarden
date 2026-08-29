@@ -114,7 +114,9 @@ const OUTFLOW_KNOWN_KEYS = new Set([
  *   totalExpenses: number,
  *   remaining: number,
  *   transactions: Array<object>,
- *   categoryBreakdown: Record<string, number>
+ *   categoryBreakdown: Record<string, number>,
+ *   incomeCategoryBreakdown: Record<string, number>,
+ *   expenseCategoryBreakdown: Record<string, number>
  * }}
  */
 export function parseFinanceDashboardPayload(raw) {
@@ -139,15 +141,32 @@ export function parseFinanceDashboardPayload(raw) {
     ? summaryExpenses
     : summaryExpenses + totalCardMerchantFee;
   const remaining = totalRevenue - totalExpenses;
-  const breakdownRaw = financialData?.categoryBreakdown ?? data?.categoryBreakdown ?? {};
-  const categoryBreakdown = normalizeBreakdownMap(breakdownRaw);
+  const incomeBreakdownRaw =
+    financialData?.incomeCategoryBreakdown
+    ?? data?.incomeCategoryBreakdown
+    ?? null;
+  const expenseBreakdownRaw =
+    financialData?.expenseCategoryBreakdown
+    ?? data?.expenseCategoryBreakdown
+    ?? null;
+  const legacyBreakdownRaw = financialData?.categoryBreakdown ?? data?.categoryBreakdown ?? {};
+  // 신규: income/expense 분리. 구버전 혼합 breakdown 은 양쪽 fallback (mix 빌더가 키 필터).
+  const incomeCategoryBreakdown = normalizeBreakdownMap(
+    incomeBreakdownRaw != null ? incomeBreakdownRaw : legacyBreakdownRaw
+  );
+  const expenseCategoryBreakdown = normalizeBreakdownMap(
+    expenseBreakdownRaw != null ? expenseBreakdownRaw : legacyBreakdownRaw
+  );
+  const categoryBreakdown = incomeCategoryBreakdown;
   return {
     totalRevenue,
     totalExpenses,
     totalCardMerchantFee,
     remaining,
     transactions,
-    categoryBreakdown
+    categoryBreakdown,
+    incomeCategoryBreakdown,
+    expenseCategoryBreakdown
   };
 }
 

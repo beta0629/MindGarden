@@ -211,7 +211,21 @@ const FinancialManagement = () => {
     }
   }, [filters.dateRange, filters.monthYm, filters.startDate, filters.endDate]);
 
-  const calculateSummary = useCallback((transactionData) => {
+  /**
+   * 서버 summary(기간 전체 posted 합) 우선. 없으면 현재 페이지 행으로 폴백.
+   * @param {Array<object>} transactionData
+   * @param {object|null|undefined} serverSummary
+   */
+  const applyLedgerSummary = useCallback((transactionData, serverSummary) => {
+    if (serverSummary && typeof serverSummary === 'object') {
+      const totalIncome = Number(serverSummary.totalIncome) || 0;
+      const totalExpense = Number(serverSummary.totalExpense) || 0;
+      const remaining = serverSummary.remaining != null
+        ? (Number(serverSummary.remaining) || 0)
+        : (totalIncome - totalExpense);
+      setSummary({ totalIncome, totalExpense, remaining });
+      return;
+    }
     const active = (transactionData || []).filter((tx) => {
       const status = String(tx.status || '').toUpperCase();
       return status !== 'REJECTED' && status !== 'CANCELLED';
@@ -285,7 +299,7 @@ const FinancialManagement = () => {
       size: typeof envelope.size === 'number' ? envelope.size : prev.size
     }));
     setError(null);
-    calculateSummary(filteredTransactions);
+    applyLedgerSummary(filteredTransactions, envelope.summary);
   }, [
     pagination.currentPage,
     pagination.size,
@@ -293,7 +307,7 @@ const FinancialManagement = () => {
     filters.category,
     filters.searchText,
     getDateRangeForFilter,
-    calculateSummary
+    applyLedgerSummary
   ]);
 
   const loadData = useCallback(async(options = {}) => {
@@ -425,7 +439,7 @@ const FinancialManagement = () => {
             size: nextSize
           };
         });
-        calculateSummary(filteredTransactions);
+        applyLedgerSummary(filteredTransactions, envelope.summary);
       } catch (err) {
         if (cancelled) {
           return;
@@ -453,7 +467,7 @@ const FinancialManagement = () => {
     pagination.currentPage,
     pagination.size,
     filtersKey,
-    calculateSummary
+    applyLedgerSummary
   ]);
 
   /** MONTH → sync ?month= */

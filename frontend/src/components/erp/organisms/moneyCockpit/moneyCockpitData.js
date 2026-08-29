@@ -34,6 +34,21 @@ const INCOME_CATEGORY_KEYS = new Set([
   'OTHER_INCOME'
 ]);
 
+/**
+ * 백엔드 SSOT FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE
+ * @type {string}
+ */
+const CATEGORY_CONSULTATION_FEE_KO = OFD_MIX_CATEGORY.CONSULTATION;
+
+/** 상담료 계열 → 수입 mix 정규화 키 */
+const INCOME_CONSULTATION_CANONICAL = 'CONSULTATION';
+
+const CONSULTATION_CATEGORY_ALIASES = new Set([
+  INCOME_CONSULTATION_CANONICAL,
+  'CONSULTATION_FEE',
+  CATEGORY_CONSULTATION_FEE_KO
+]);
+
 const OUTFLOW_KNOWN_KEYS = new Set([
   'SALARY',
   'RENT',
@@ -129,9 +144,28 @@ function hasBreakdownKey(map, key) {
  * @returns {boolean}
  */
 function isIncomeCategoryKey(key) {
-  const upper = String(key || '').toUpperCase();
+  const raw = String(key || '').trim();
+  if (!raw) return false;
+  if (CONSULTATION_CATEGORY_ALIASES.has(raw) || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+    return true;
+  }
+  const upper = raw.toUpperCase();
   if (INCOME_CATEGORY_KEYS.has(upper)) return true;
   return upper.includes('REVENUE') || upper.includes('INCOME');
+}
+
+/**
+ * 상담료 계열(CONSULTATION / CONSULTATION_FEE / 상담료) → CONSULTATION 하나로 합산
+ * @param {string} key
+ * @returns {string}
+ */
+function canonicalizeIncomeCategoryKey(key) {
+  const raw = String(key || '').trim();
+  if (!raw) return '';
+  if (CONSULTATION_CATEGORY_ALIASES.has(raw) || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+    return INCOME_CONSULTATION_CANONICAL;
+  }
+  return raw.toUpperCase();
 }
 
 /**
@@ -139,6 +173,10 @@ function isIncomeCategoryKey(key) {
  * @returns {string}
  */
 export function resolveCategoryLabel(key) {
+  const canonical = canonicalizeIncomeCategoryKey(key);
+  if (OFD_CATEGORY_LABELS[canonical]) {
+    return OFD_CATEGORY_LABELS[canonical];
+  }
   const upper = String(key || '').toUpperCase();
   if (OFD_CATEGORY_LABELS[upper]) {
     return OFD_CATEGORY_LABELS[upper];
@@ -254,6 +292,7 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
 
 /**
  * 들어온 곳 mix — payload 수입 키 또는 수입 tx 관측 카테고리만. 0원이어도 표시.
+ * breakdown 우선(기간 합). 없으면 tx amount 합산. 상담료 계열은 canonical 하나로 병합.
  * @param {Record<string, number>} categoryBreakdown
  * @param {Array<object>} transactions
  * @returns {Array<{ id: string, label: string, amount: number }>}
@@ -261,23 +300,26 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
 export function buildIncomeMixItems(categoryBreakdown, transactions) {
   const breakdown = categoryBreakdown || {};
   const amounts = {};
+  const fromBreakdown = new Set();
   const txList = Array.isArray(transactions) ? transactions : [];
 
   Object.keys(breakdown).forEach((key) => {
     if (!isIncomeCategoryKey(key)) return;
-    const upper = String(key).toUpperCase();
-    amounts[upper] = toSafeNumber(breakdown[key]);
+    const canonical = canonicalizeIncomeCategoryKey(key);
+    if (!canonical) return;
+    amounts[canonical] = (amounts[canonical] || 0) + toSafeNumber(breakdown[key]);
+    fromBreakdown.add(canonical);
   });
 
   txList.forEach((tx) => {
     if (!isIncomeTransaction(tx)) return;
     const key = readTxCategoryKey(tx);
     if (!key) return;
-    // breakdown에 이미 있으면 이중 집계 금지 — 관측만 필요한 신규 키만 합산
-    if (Object.prototype.hasOwnProperty.call(amounts, key)) {
-      return;
-    }
-    amounts[key] = toSafeNumber(tx?.amount);
+    const canonical = canonicalizeIncomeCategoryKey(key);
+    if (!canonical) return;
+    // breakdown에서 이미 canonical 채움 → 이중 집계 금지
+    if (fromBreakdown.has(canonical)) return;
+    amounts[canonical] = (amounts[canonical] || 0) + toSafeNumber(tx?.amount);
   });
 
   return Object.keys(amounts).map((key) => ({

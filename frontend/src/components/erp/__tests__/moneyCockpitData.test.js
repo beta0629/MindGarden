@@ -174,4 +174,42 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({ label: '상담료', amount: 0 });
   });
+
+  test('income: 한글 상담료 tx 3건 합산 (breakdown 없음)', () => {
+    const transactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 },
+      { type: 'INCOME', category: '상담료', amount: 90000 },
+      { type: 'INCOME', category: '상담료', amount: 300000 }
+    ];
+    const items = buildIncomeMixItems({}, transactions);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('income: CONSULTATION + 한글 상담료 breakdown 병합', () => {
+    const items = buildIncomeMixItems(
+      { CONSULTATION: 100000, 상담료: 320000 },
+      []
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('income: breakdown 기간 합 우선 (최근 한 건과 무관)', () => {
+    const transactions = [
+      { type: 'INCOME', category: '상담료', amount: 30000 }
+    ];
+    const items = buildIncomeMixItems({ 상담료: 420000 }, transactions);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
+
+  test('income: SALARY 등 지출 키는 수입 mix에 미포함', () => {
+    const items = buildIncomeMixItems(
+      { 상담료: 420000, SALARY: 200000, RENT: 100000 },
+      []
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ label: '상담료', amount: 420000 });
+  });
 });
